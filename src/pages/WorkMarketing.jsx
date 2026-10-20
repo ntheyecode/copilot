@@ -431,7 +431,8 @@ function CoverageChat({ go }) {
         </button>
       )}
       {open && (
-        <div className="wm-cov" role="dialog" aria-label="Coverage assistant">
+        <div className="wm-cov-overlay" onClick={() => setOpen(false)}>
+        <div className="wm-cov" role="dialog" aria-modal="true" aria-label="Coverage assistant" onClick={(e) => e.stopPropagation()}>
           {fire && (
             <div className="wm-fw" aria-hidden>
               {Array.from({ length: 7 }).map((_, i) => <span key={i} className={`wm-fw-burst b${i}`}>{Array.from({ length: 12 }).map((__, j) => <i key={j} style={{ '--a': `${j * 30}deg` }} />)}</span>)}
@@ -464,6 +465,7 @@ function CoverageChat({ go }) {
               {busy ? '...' : <ArrowRight size={16} />}
             </button>
           </div>
+        </div>
         </div>
       )}
     </>
@@ -1299,7 +1301,10 @@ const CSS = `
 /* COVERAGE CHAT (floating, theme-aware via the vars) */
 .wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
 .wm-cov-launch:hover{transform:translateY(-2px)}
-.wm-cov{position:fixed;right:20px;bottom:20px;z-index:61;width:min(380px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 40px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.45)}
+.wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(3px);animation:wm-cov-fade .18s ease}
+.wm-cov{z-index:71;width:min(480px,calc(100vw - 40px));max-height:min(640px,calc(100vh - 80px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 50px 120px -30px rgba(0,0,0,.5);animation:wm-cov-pop .2s cubic-bezier(.2,.8,.2,1)}
+@keyframes wm-cov-fade{from{opacity:0}to{opacity:1}}
+@keyframes wm-cov-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 .wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}
 .wm-cov-head-t{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:15px;color:var(--tx)}
 .wm-cov-head-t svg{color:var(--em2)}
