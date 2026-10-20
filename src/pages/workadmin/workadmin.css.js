@@ -5,41 +5,42 @@
 export const WORKADMIN_CSS = `
 .wka, .wka * { box-sizing: border-box; }
 .wka {
-  --wka-bg: #f5f7fb;
-  --wka-bg-2: #eef1f6;
+  --wka-bg: #f6f8fb;
+  --wka-bg-2: #f6f9fc;
   --wka-panel: #ffffff;
   --wka-panel-2: #f7f9fc;
-  --wka-line: #e4e8ef;
-  --wka-line-2: #d6dce5;
-  --wka-text: #141726;
-  --wka-muted: #5a6172;
-  --wka-faint: #8a93a3;
+  --wka-line: #e6e9ef;
+  --wka-line-2: #dfe3ea;
+  --wka-text: #1a1f36;
+  --wka-muted: #3c4257;
+  --wka-faint: #8792a2;
+  --wka-accent: #635bff;
+  --wka-accent-dark: #4b45d6;
+  --wka-accent-soft: rgba(99,91,255,0.09);
   --wka-emerald: #0a9d66;
-  --wka-cyan: #0a86cf;
+  --wka-cyan: #635bff;   /* re-pointed to the indigo accent: all interactive refs adopt it */
   --wka-amber: #b5790f;
   --wka-red: #c0392b;
-  --wka-radius: 14px;
+  --wka-radius: 12px;
   position: fixed;
   inset: 0;
   display: flex;
   flex-direction: column;
-  background: radial-gradient(1200px 600px at 80% -10%, rgba(57,211,255,0.08), transparent 60%),
-              radial-gradient(1000px 500px at 0% 110%, rgba(140,245,196,0.06), transparent 55%),
-              var(--wka-bg);
+  background: var(--wka-bg);
   color: var(--wka-text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   font-size: 14px;
-  line-height: 1.45;
+  line-height: 1.5;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Top bar */
 .wka-top {
   display: flex; align-items: center; gap: 16px;
-  padding: 14px 22px;
+  padding: 14px 24px;
   border-bottom: 1px solid var(--wka-line);
-  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(246,248,251,0.92));
-  backdrop-filter: blur(8px);
+  background: #ffffff;
 }
 .wka-brand { display: flex; flex-direction: column; gap: 2px; }
 .wka-brand b { font-size: 15px; letter-spacing: 0.2px; }
@@ -69,12 +70,12 @@ export const WORKADMIN_CSS = `
   color: var(--wka-muted); cursor: pointer; border: 1px solid transparent;
   font-weight: 500; user-select: none;
 }
-.wka-nav-item:hover { background: var(--wka-panel); color: var(--wka-text); }
+.wka-nav-item:hover { background: #eef0f6; color: var(--wka-text); }
 .wka-nav-item.active {
-  background: linear-gradient(90deg, rgba(57,211,255,0.14), rgba(140,245,196,0.08));
-  color: var(--wka-text); border-color: var(--wka-line-2);
+  background: var(--wka-accent-soft);
+  color: var(--wka-accent-dark); border-color: transparent; font-weight: 600;
 }
-.wka-nav-item.active svg { color: var(--wka-cyan); }
+.wka-nav-item.active svg { color: var(--wka-accent); }
 .wka-nav-foot { margin-top: auto; font-size: 11px; color: var(--wka-faint); padding: 10px 13px; }
 
 .wka-main { flex: 1; min-width: 0; overflow: auto; padding: 26px 30px 48px; }
@@ -84,21 +85,23 @@ export const WORKADMIN_CSS = `
 /* Cards */
 .wka-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 26px; }
 .wka-card {
-  background: linear-gradient(180deg, var(--wka-panel), var(--wka-bg-2));
+  background: var(--wka-panel);
   border: 1px solid var(--wka-line); border-radius: var(--wka-radius);
   padding: 18px 18px 16px;
+  box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 1px 1px rgba(31,41,55,0.03);
 }
 .wka-card .k { font-size: 12px; color: var(--wka-muted); display: flex; align-items: center; gap: 8px; }
-.wka-card .k svg { color: var(--wka-cyan); }
+.wka-card .k svg { color: var(--wka-accent); }
 .wka-card .v { font-size: 28px; font-weight: 680; margin-top: 10px; letter-spacing: -0.5px; }
 .wka-card .foot { font-size: 11px; color: var(--wka-faint); margin-top: 6px; }
-.wka-card.accent { border-color: rgba(140,245,196,0.3); }
+.wka-card.accent { border-color: rgba(140,245,196,0.4); }
 .wka-card.accent .v { color: var(--wka-emerald); }
 
 /* Panels */
 .wka-panel {
   background: var(--wka-panel); border: 1px solid var(--wka-line);
   border-radius: var(--wka-radius); padding: 20px; margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 1px 1px rgba(31,41,55,0.03);
 }
 .wka-panel h2 { font-size: 15px; margin: 0 0 4px; font-weight: 620; }
 .wka-panel .desc { color: var(--wka-muted); font-size: 12px; margin: 0 0 16px; }
@@ -109,18 +112,19 @@ export const WORKADMIN_CSS = `
   background: var(--wka-bg); border: 1px solid var(--wka-line-2); color: var(--wka-text);
   border-radius: 10px; padding: 9px 12px; font-size: 13px; outline: none; min-width: 0;
 }
-.wka-input:focus { border-color: var(--wka-cyan); box-shadow: 0 0 0 3px rgba(57,211,255,0.12); }
+.wka-input:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-search { flex: 1; min-width: 180px; max-width: 360px; }
 
-.wka-table-wrap { overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; }
+.wka-table-wrap { overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; background: var(--wka-panel); box-shadow: 0 1px 2px rgba(31,41,55,0.04); }
 table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
 .wka-table th {
-  text-align: left; padding: 11px 14px; color: var(--wka-muted); font-weight: 600;
-  background: var(--wka-bg-2); border-bottom: 1px solid var(--wka-line);
+  text-align: left; padding: 10px 14px; color: var(--wka-faint); font-weight: 600;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+  background: var(--wka-panel-2); border-bottom: 1px solid var(--wka-line);
   white-space: nowrap; cursor: pointer; user-select: none;
 }
 .wka-table th.no-sort { cursor: default; }
-.wka-table th .arrow { color: var(--wka-cyan); margin-left: 5px; }
+.wka-table th .arrow { color: var(--wka-accent); margin-left: 5px; }
 .wka-table td { padding: 11px 14px; border-bottom: 1px solid var(--wka-line); vertical-align: middle; }
 .wka-table tr:last-child td { border-bottom: none; }
 .wka-table tbody tr:hover { background: var(--wka-panel-2); }
@@ -132,7 +136,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
   font-size: 11px; font-weight: 600; border: 1px solid var(--wka-line-2); white-space: nowrap;
 }
 .wka-badge.basic { color: var(--wka-muted); }
-.wka-badge.advanced { color: var(--wka-cyan); border-color: rgba(57,211,255,0.35); }
+.wka-badge.advanced { color: var(--wka-accent); border-color: rgba(99,91,255,0.35); }
 .wka-badge.premium { color: var(--wka-emerald); border-color: rgba(140,245,196,0.4); }
 .wka-badge.active { color: var(--wka-emerald); border-color: rgba(140,245,196,0.4); }
 .wka-badge.ended { color: var(--wka-faint); }
@@ -151,12 +155,14 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
   border: 1px solid var(--wka-line-2); background: var(--wka-panel-2); color: var(--wka-text);
   border-radius: 10px; padding: 9px 15px; font-size: 13px; font-weight: 550;
 }
-.wka-btn:hover:not(:disabled) { border-color: var(--wka-cyan); }
+.wka-btn:hover:not(:disabled) { border-color: var(--wka-accent); color: var(--wka-accent-dark); }
 .wka-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .wka-btn.primary {
-  background: linear-gradient(90deg, var(--wka-cyan), var(--wka-emerald));
-  color: #04120c; border: none; font-weight: 650;
+  background: var(--wka-accent);
+  color: #ffffff; border: 1px solid var(--wka-accent); font-weight: 600;
+  box-shadow: 0 1px 2px rgba(99,91,255,0.25);
 }
+.wka-btn.primary:hover:not(:disabled) { background: var(--wka-accent-dark); border-color: var(--wka-accent-dark); color: #fff; }
 .wka-btn.ghost { background: transparent; }
 .wka-btn.sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
 
@@ -203,7 +209,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
   position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
   background: #fff; transition: left 0.15s;
 }
-.wka-toggle.on .track { background: linear-gradient(90deg, var(--wka-cyan), var(--wka-emerald)); }
+.wka-toggle.on .track { background: var(--wka-accent); }
 .wka-toggle.on .track .knob { left: 23px; }
 .wka-toggle.disabled { opacity: 0.5; cursor: not-allowed; }
 
