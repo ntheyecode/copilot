@@ -522,8 +522,23 @@ if (!gotLock) {
 } else {
   app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus() } })
 
+  // Auto-update from the WorkCoPilot feed (electron-updater, generic provider).
+  // Packaged builds only; silent on any failure so an update problem never
+  // affects the overlay. Checks on launch and every 6 hours for long sessions.
+  function setupAutoUpdate() {
+    let au
+    try { au = require('electron-updater').autoUpdater } catch { return }
+    au.autoDownload = true
+    au.autoInstallOnAppQuit = true
+    au.on('error', () => { /* never surface an updater error to the user */ })
+    const check = () => { try { au.checkForUpdatesAndNotify() } catch { /* ignore */ } }
+    check()
+    setInterval(check, 6 * 60 * 60 * 1000)
+  }
+
   app.whenReady().then(() => {
     createWindow()
+    if (app.isPackaged) setupAutoUpdate()
     globalShortcut.register('CommandOrControl+H', toggleHideShow)
     globalShortcut.register('CommandOrControl+Alt+H', toggleHideShow)
     // Interact-behind: toggle click-through so clicks pass to the app you are

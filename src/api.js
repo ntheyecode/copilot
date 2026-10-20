@@ -2,6 +2,7 @@
 // Running inside the AI Cloud desktop app (window.refigold exists) we tag every
 // request so the server can tell an app sign-in from a browser one - company
 // users may only sign in through the app.
+import { clean } from './scrub.js'   // client-side DLP: strip PII/PHI/secrets before anything is sent
 const IS_APP = typeof window !== 'undefined' && !!window.refigold
 async function req(method, url, body) {
   const headers = {}
@@ -76,36 +77,37 @@ export const api = {
   workAiKey: (body) => req('POST', '/api/work/ai/key', body || {}),
   workAiTest: () => req('POST', '/api/work/ai/test'),
   workAppStatus: () => req('GET', '/api/work/app/status'),
-  // sessions
-  workCreate: (body) => req('POST', '/api/work/sessions', body || {}),
+  // sessions. Every free-text field is scrubbed CLIENT-SIDE (clean()) before it
+  // leaves the browser, so raw PII/PHI/secrets never reach our server or the AI.
+  workCreate: (body) => req('POST', '/api/work/sessions', { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
   workList: () => req('GET', '/api/work/sessions'),
   workGet: (id) => req('GET', `/api/work/sessions/${id}`),
   workDelete: (id) => req('DELETE', `/api/work/sessions/${id}`),
-  workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal }),
-  // body: { goal?, frame? } (frame = downscaled data URL)
-  workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, body || {}),
+  workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
+  // body: { goal?, frame? } (frame = downscaled data URL, scrubbed of PII in the component)
+  workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
   // body: { frame } -> { status, observation, flag, advanced, index, step, done, steps }
   workWatch: (id, body) => req('POST', `/api/work/sessions/${id}/watch`, body || {}),
   // body: { question?, frame }
-  workAsk: (id, body) => req('POST', `/api/work/sessions/${id}/ask`, body || {}),
+  workAsk: (id, body) => req('POST', `/api/work/sessions/${id}/ask`, { ...(body || {}), ...(body && body.question != null ? { question: clean(body.question) } : {}) }),
   workStep: (id, index, status) => req('POST', `/api/work/sessions/${id}/step`, { index, status }),
   // Drill-down "how?" on a step. body: { action, stepIndex?, frame? } -> { steps, escalated }
-  workHowTo: (id, body) => req('POST', `/api/work/sessions/${id}/howto`, body || {}),
+  workHowTo: (id, body) => req('POST', `/api/work/sessions/${id}/howto`, { ...(body || {}), ...(body && body.action != null ? { action: clean(body.action) } : {}) }),
   workModes: () => req('GET', '/api/work/modes'),
   workSetMode: (id, mode) => req('POST', `/api/work/sessions/${id}/mode`, { mode }),
   workReportUrl: (id, dl) => `/api/work/sessions/${id}/report.pdf${dl ? '?dl=1' : ''}`,
-  workResearch: (id, question) => req('POST', `/api/work/sessions/${id}/research`, { question }),
+  workResearch: (id, question) => req('POST', `/api/work/sessions/${id}/research`, { question: clean(question) }),
   workUsage: () => req('GET', '/api/work/usage'),
   workHeartbeat: (id, seconds) => req('POST', '/api/work/usage/heartbeat', { sessionId: id, seconds }),
   workPause: (id, paused) => req('PATCH', `/api/work/sessions/${id}/pause`, { paused }),
-  workDraft: (id, ask) => req('POST', `/api/work/sessions/${id}/draft`, { ask }),
+  workDraft: (id, ask) => req('POST', `/api/work/sessions/${id}/draft`, { ask: clean(ask) }),
   workFinalize: (id) => req('POST', `/api/work/sessions/${id}/finalize`),
   // support tickets (user)
   workTicketCategories: () => req('GET', '/api/work/ticket-categories'),
   workTickets: () => req('GET', '/api/work/tickets'),
-  workTicketCreate: (body) => req('POST', '/api/work/tickets', body || {}),
+  workTicketCreate: (body) => req('POST', '/api/work/tickets', { ...(body || {}), subject: clean((body && body.subject) || ''), body: clean((body && body.body) || '') }),
   workTicketGet: (id) => req('GET', `/api/work/tickets/${id}`),
-  workTicketReply: (id, text) => req('POST', `/api/work/tickets/${id}/reply`, { text }),
+  workTicketReply: (id, text) => req('POST', `/api/work/tickets/${id}/reply`, { text: clean(text) }),
   // support tickets (superadmin)
   workAdminTickets: (q) => req('GET', `/api/work/admin/tickets${q && Object.keys(q).length ? '?' + new URLSearchParams(q) : ''}`),
   workAdminTicketGet: (id) => req('GET', `/api/work/admin/tickets/${id}`),

@@ -5,19 +5,19 @@
 export const WORKADMIN_CSS = `
 .wka, .wka * { box-sizing: border-box; }
 .wka {
-  --wka-bg: #07090c;
-  --wka-bg-2: #0b0f14;
-  --wka-panel: #0f141b;
-  --wka-panel-2: #131a22;
-  --wka-line: #1d2630;
-  --wka-line-2: #273340;
-  --wka-text: #e7eef5;
-  --wka-muted: #8aa0b2;
-  --wka-faint: #5e7285;
-  --wka-emerald: #8cf5c4;
-  --wka-cyan: #39d3ff;
-  --wka-amber: #ffcf7a;
-  --wka-red: #ff8a8a;
+  --wka-bg: #f5f7fb;
+  --wka-bg-2: #eef1f6;
+  --wka-panel: #ffffff;
+  --wka-panel-2: #f7f9fc;
+  --wka-line: #e4e8ef;
+  --wka-line-2: #d6dce5;
+  --wka-text: #141726;
+  --wka-muted: #5a6172;
+  --wka-faint: #8a93a3;
+  --wka-emerald: #0a9d66;
+  --wka-cyan: #0a86cf;
+  --wka-amber: #b5790f;
+  --wka-red: #c0392b;
   --wka-radius: 14px;
   position: fixed;
   inset: 0;
@@ -38,7 +38,7 @@ export const WORKADMIN_CSS = `
   display: flex; align-items: center; gap: 16px;
   padding: 14px 22px;
   border-bottom: 1px solid var(--wka-line);
-  background: linear-gradient(180deg, rgba(19,26,34,0.9), rgba(11,15,20,0.9));
+  background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(246,248,251,0.92));
   backdrop-filter: blur(8px);
 }
 .wka-brand { display: flex; flex-direction: column; gap: 2px; }

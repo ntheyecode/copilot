@@ -6,6 +6,7 @@ import {
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { cleanAlways } from '../scrub.js'   // strip PII/PHI before the scenario leaves the browser (public form: always on)
 
 // AdmireVeda WorkCoPilot - marketing landing (admireveda.com).
 // Motion-rich, benefits-first. Never names a model, never mentions limits.
@@ -139,6 +140,20 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* SECURITY / ENTERPRISE BAND */}
+      <section className="wm-sec wm-security" id="security">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><ShieldCheck size={14} /> Enterprise-ready &middot; security-first</div>
+          <h2 className="wm-h2" data-reveal>Your data never leaves your device unprotected.</h2>
+          <p className="wm-sub" data-reveal>Built for security, healthcare, finance and government teams. Turn on a redaction policy and sensitive data is stripped before anything is sent.</p>
+          <div className="wm-sec-grid">
+            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><Lock size={18} /></span><h3>Stripped on-device</h3><p>With a redaction policy on, PII, PHI, secrets, passwords, IP addresses and private hosts are removed on your machine before anything reaches our server or the AI.</p></div>
+            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><ScanEye size={18} /></span><h3>Read-only by design</h3><p>It watches and guides. It never clicks, types or runs anything for you, and it hides itself from screen shares. You stay in control.</p></div>
+            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><FileText size={18} /></span><h3>Audited &amp; yours</h3><p>A downloadable per-session log shows exactly what was sent and when. Bring your own AI keys or a self-hosted model. Works on locked-down machines.</p></div>
+          </div>
+        </div>
+      </section>
+
       {/* BENEFITS */}
       <section className="wm-sec">
         <div className="wm-wrap">
@@ -265,6 +280,25 @@ export default function WorkMarketing() {
               </div>
             ))}
           </div>
+          {/* Enterprise - a strong colored anchor, no public price */}
+          <div className="wm-ent" data-reveal>
+            <div className="wm-ent-l">
+              <div className="wm-ent-eyebrow"><ShieldCheck size={14} /> Enterprise</div>
+              <h3>Built for regulated teams.</h3>
+              <p>On-device PII/PHI redaction policies, your own AI keys or a self-hosted model, SSO, and a signed DPA. For security, healthcare, finance and government teams.</p>
+            </div>
+            <div className="wm-ent-r">
+              <ul>
+                <li><Check size={15} /> Everything in Premium</li>
+                <li><Check size={15} /> SSO / SAML & team provisioning</li>
+                <li><Check size={15} /> Bring your own AI keys or self-hosted model</li>
+                <li><Check size={15} /> On-device PII / PHI / secret redaction policy controls</li>
+                <li><Check size={15} /> Custom data-retention, on-prem option</li>
+                <li><Check size={15} /> DPA, security review & priority SLA</li>
+              </ul>
+              <a className="wm-cta" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={16} /></a>
+            </div>
+          </div>
           {price && <p className="wm-fineprint" data-reveal>Need more? Top up extra hours anytime. Premium adds generated visuals, and image packs start from {money(price.image.premium)} each (min {price.imageMinBulk}). Purchased time never expires.</p>}
         </div>
       </section>
@@ -308,21 +342,25 @@ function CoverageChat({ go }) {
   const [busy, setBusy] = useState(false)
   const [res, setRes] = useState(null)
   const [err, setErr] = useState('')
+  const [fire, setFire] = useState(false)
   const taRef = useRef(null)
   useEffect(() => { if (open && taRef.current) taRef.current.focus() }, [open])
 
   const ask = async () => {
     const question = q.trim()
     if (!question || busy) return
-    setBusy(true); setErr(''); setRes(null)
+    setBusy(true); setErr(''); setRes(null); setFire(false)
     try {
       const r = await fetch('/api/work/coverage', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question }),
+        body: JSON.stringify({ question: cleanAlways(question) }),   // scrub PII/PHI before it leaves the browser
       })
       const data = await r.json()
       if (!r.ok) { setErr(data.error || 'Please try again.'); }
-      else setRes(data)
+      else {
+        setRes(data); setQ('')
+        if (data.verdict === 'covered') { setFire(true); setTimeout(() => setFire(false), 1800) }  // celebrate a yes
+      }
     } catch { setErr('Could not reach the assistant. Please try again.') }
     finally { setBusy(false) }
   }
@@ -343,6 +381,11 @@ function CoverageChat({ go }) {
       )}
       {open && (
         <div className="wm-cov" role="dialog" aria-label="Coverage assistant">
+          {fire && (
+            <div className="wm-fw" aria-hidden>
+              {Array.from({ length: 7 }).map((_, i) => <span key={i} className={`wm-fw-burst b${i}`}>{Array.from({ length: 12 }).map((__, j) => <i key={j} style={{ '--a': `${j * 30}deg` }} />)}</span>)}
+            </div>
+          )}
           <div className="wm-cov-head">
             <div className="wm-cov-head-t"><ScanEye size={16} /> Is it covered?</div>
             <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label="Close">&times;</button>
@@ -990,6 +1033,25 @@ const CSS = `
 .wm-tier-topup{text-align:center;color:var(--mut);font-size:12.5px;margin-top:12px}
 .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
 
+/* colored eyebrow kicker (kills grey, ties sections to brand) */
+.wm-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
+.wm-eyebrow svg{color:var(--em)}
+/* SECURITY / ENTERPRISE BAND */
+.wm-sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px}
+.wm-sec-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
+.wm-sec-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
+.wm-sec-card h3{font-family:"Bricolage Grotesque";font-size:18px;margin:0 0 8px}
+.wm-sec-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
+/* ENTERPRISE pricing anchor (premium dark block) */
+.wm-ent{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;background:linear-gradient(135deg,#0f1626,#0b1f1a);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:34px 38px;box-shadow:0 44px 86px -42px rgba(17,23,38,.5)}
+.wm-ent-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8cf5c4;margin-bottom:10px}
+.wm-ent h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(24px,3vw,32px);color:#fff;margin:0 0 10px;letter-spacing:-.02em}
+.wm-ent-l p{color:#aeb9cc;font-size:15.5px;margin:0;max-width:46ch;line-height:1.6}
+.wm-ent-r ul{list-style:none;padding:0;margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.wm-ent-r li{display:flex;gap:8px;align-items:flex-start;color:#e7ecf5;font-size:14px}
+.wm-ent-r li svg{color:#8cf5c4;flex-shrink:0;margin-top:2px}
+@media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent{grid-template-columns:1fr;gap:20px}.wm-ent-r ul{grid-template-columns:1fr}}
+
 /* FINAL */
 .wm-final{padding:96px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}
 .wm-final-in h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(32px,5vw,52px);letter-spacing:-.025em;margin:16px 0 14px}
@@ -1037,36 +1099,86 @@ const CSS = `
    stay dark (they read as device screenshots on a light page).
    ============================================================ */
 .wm:not([data-wm="dark"]){
-  --ink:#f5f7fb; --panel:#ffffff; --line:rgba(14,18,34,.12);
-  --tx:#121726; --mut:#596074;
-  --em:#0a9d66; --em2:#0a86cf;   /* readable on white; gradients darken acceptably */
+  --ink:#f4f7fb; --panel:#ffffff; --line:#e2e7f0;
+  --tx:#0c1222; --mut:#3f4a5c; --ink-brand:#062a22;
+  --em:#0a9d66; --em2:#0a86cf;
   --warm:#ff9a4d; --warm2:#f26a43;
+  background:
+    radial-gradient(1000px 520px at 85% -8%, rgba(10,134,207,.16), transparent 60%),
+    radial-gradient(820px 480px at -6% 4%, rgba(10,157,102,.14), transparent 58%),
+    var(--ink);
 }
-/* The "screen" mockups stay dark on the light page (they read as device
-   screenshots). Re-scope the DARK variables onto each so their inner text,
-   hairlines and accents render light-on-dark exactly as designed - otherwise
-   the globally-flipped light vars make them dark-on-dark. */
+.wm:not([data-wm="dark"]) .wm-grain{opacity:.03}
+.wm:not([data-wm="dark"]) .orb{opacity:.30;filter:blur(68px)}
+.wm:not([data-wm="dark"]) .o3{opacity:.18}
+/* deep brand-green ink for display headings (ties to brand, not flat black) */
+.wm:not([data-wm="dark"]) .wm-hero h1,
+.wm:not([data-wm="dark"]) .wm-h2,
+.wm:not([data-wm="dark"]) .wm-final-in h2,
+.wm:not([data-wm="dark"]) .wm-band-copy h2{color:var(--ink-brand)}
+/* lead/intro copy off the muted grey so the page is not grey-dominant */
+.wm:not([data-wm="dark"]) .wm-lead{color:var(--tx);font-weight:450}
+.wm:not([data-wm="dark"]) .wm-badge{color:#07784f;background:rgba(10,157,102,.1);border-color:rgba(10,157,102,.28)}
+
+/* The product "screen" cards stay DARK on the light page - the contrast gives
+   the page depth. Re-scope dark vars + set color so inner text/hairlines/accents
+   render light-on-dark exactly as designed (the global light vars would otherwise
+   make them dark-on-dark). */
 .wm:not([data-wm="dark"]) .wm-demo,
 .wm:not([data-wm="dark"]) .bv,
 .wm:not([data-wm="dark"]) .wm-flow-viz,
-.wm:not([data-wm="dark"]) .wm-spot-viz,
+.wm:not([data-wm="dark"]) .wm-spot-stage,
 .wm:not([data-wm="dark"]) .wm-photo figcaption{
-  --tx:#eef0f6; --mut:#9aa0b4; --line:rgba(255,255,255,.12);
-  --panel:#12141d; --em:#8cf5c4; --em2:#39d3ff;
+  --tx:#eef1f8; --mut:#9aa6ba; --line:rgba(255,255,255,.12);
+  --panel:#141924; --em:#8cf5c4; --em2:#5bd0ff;
+  color:var(--tx);
 }
-.wm:not([data-wm="dark"]) .orb{opacity:.14;filter:blur(84px)}
-.wm:not([data-wm="dark"]) .wm-nav{background:rgba(255,255,255,.78)}
-.wm:not([data-wm="dark"]) .wm-ghost:hover{border-color:rgba(14,18,34,.3)}
+.wm:not([data-wm="dark"]) .wm-demo-step,
+.wm:not([data-wm="dark"]) .wm-demo-now,
+.wm:not([data-wm="dark"]) .wm-spot-card h3,
+.wm:not([data-wm="dark"]) .wm-spot-card p,
+.wm:not([data-wm="dark"]) .wm-spot-points li{color:var(--tx)}
+
+/* nav */
+.wm:not([data-wm="dark"]) .wm-nav{background:rgba(255,255,255,.82);box-shadow:0 1px 0 rgba(17,23,38,.05),0 12px 34px -26px rgba(17,23,38,.35)}
+.wm:not([data-wm="dark"]) .wm-ghost{background:#fff}
+.wm:not([data-wm="dark"]) .wm-ghost:hover{border-color:rgba(17,23,38,.28)}
 .wm:not([data-wm="dark"]) .wm-cta.alt{background:#fff;border:1px solid var(--line);color:var(--tx)}
-.wm:not([data-wm="dark"]) .wm-bcard{background:#fff}
-.wm:not([data-wm="dark"]) .wm-way{background:#fff}
-.wm:not([data-wm="dark"]) .wm-way.feat{background:linear-gradient(180deg,rgba(10,134,207,.08),#fff)}
-.wm:not([data-wm="dark"]) .wm-flow-node{background:#fff}
-.wm:not([data-wm="dark"]) .wm-tier{background:#fff}
-.wm:not([data-wm="dark"]) .wm-tier.pop{background:linear-gradient(180deg,rgba(10,157,102,.10),#fff)}
-.wm:not([data-wm="dark"]) .wm-spot-prog{background:rgba(14,18,34,.10)}
-.wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#eef1f6}
-.wm:not([data-wm="dark"]) .wm-photo{box-shadow:0 30px 70px -48px rgba(14,18,34,.5)}
+
+/* elevated white cards - real depth so the page never looks flat */
+.wm:not([data-wm="dark"]) .wm-bcard,
+.wm:not([data-wm="dark"]) .wm-way,
+.wm:not([data-wm="dark"]) .wm-flow-node,
+.wm:not([data-wm="dark"]) .wm-tier,
+.wm:not([data-wm="dark"]) .wm-ucard{
+  background:#fff;
+  box-shadow:0 1px 2px rgba(17,23,38,.04), 0 18px 42px -26px rgba(17,23,38,.22);
+}
+.wm:not([data-wm="dark"]) .wm-bcard:hover,
+.wm:not([data-wm="dark"]) .wm-way:hover,
+.wm:not([data-wm="dark"]) .wm-ucard:hover{box-shadow:0 1px 2px rgba(17,23,38,.05), 0 28px 56px -26px rgba(17,23,38,.3)}
+.wm:not([data-wm="dark"]) .wm-way.feat{background:linear-gradient(180deg,rgba(10,134,207,.07),#fff);border-color:rgba(10,134,207,.38)}
+.wm:not([data-wm="dark"]) .wm-tier.pop{background:linear-gradient(180deg,rgba(10,157,102,.09),#fff);border-color:rgba(10,157,102,.45);box-shadow:0 32px 66px -30px rgba(10,157,102,.42)}
+
+/* spotlight stage = premium dark card (matches the demo), with real elevation */
+.wm:not([data-wm="dark"]) .wm-spot-stage{
+  background:linear-gradient(165deg,#1a2030,#0f131d);
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 40px 82px -40px rgba(17,23,38,.5);
+}
+.wm:not([data-wm="dark"]) .wm-spot-prog{background:rgba(17,23,38,.10)}
+/* mini "screen" thumbnails -> solid dark so their content reads crisp (not faint on grey) */
+.wm:not([data-wm="dark"]) .bv,
+.wm:not([data-wm="dark"]) .wm-flow-viz{background:#141924;border-color:rgba(255,255,255,.08)}
+
+/* subtle section atmosphere so bands read on the light page */
+.wm:not([data-wm="dark"]) .wm-pillars{background:linear-gradient(180deg,rgba(10,157,102,.045),transparent)}
+.wm:not([data-wm="dark"]) .wm-how{background:linear-gradient(180deg,rgba(10,134,207,.05),transparent)}
+.wm:not([data-wm="dark"]) .wm-final{background:radial-gradient(60% 130% at 50% 0%,rgba(10,157,102,.1),transparent)}
+.wm:not([data-wm="dark"]) .wm-band-in{background:linear-gradient(110deg,rgba(10,134,207,.08),rgba(10,157,102,.05));border-color:rgba(10,134,207,.22)}
+
+.wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#e9edf4}
+.wm:not([data-wm="dark"]) .wm-photo{box-shadow:0 30px 64px -40px rgba(17,23,38,.5)}
 
 /* COVERAGE CHAT (floating, theme-aware via the vars) */
 .wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
@@ -1095,4 +1207,11 @@ const CSS = `
 .wm-cov-send{flex:0 0 auto;width:40px;height:40px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .wm-cov-send:disabled{opacity:.5;cursor:default}
 @media(max-width:560px){.wm-cov-launch{right:12px;bottom:12px}.wm-cov{right:8px;bottom:8px}}
+/* celebratory fireworks when the answer is "Covered" */
+.wm-fw{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:18px}
+.wm-fw-burst{position:absolute;width:0;height:0}
+.wm-fw-burst.b0{left:22%;top:34%}.wm-fw-burst.b1{left:70%;top:26%}.wm-fw-burst.b2{left:46%;top:46%}.wm-fw-burst.b3{left:30%;top:62%}.wm-fw-burst.b4{left:78%;top:56%}.wm-fw-burst.b5{left:56%;top:22%}.wm-fw-burst.b6{left:16%;top:50%}
+.wm-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,56%);box-shadow:0 0 6px currentColor;animation:wm-fw-pop 1.25s cubic-bezier(.15,.7,.3,1) forwards}
+.wm-fw-burst.b1 i{animation-delay:.12s}.wm-fw-burst.b2 i{animation-delay:.22s}.wm-fw-burst.b3 i{animation-delay:.34s}.wm-fw-burst.b4 i{animation-delay:.18s}.wm-fw-burst.b5 i{animation-delay:.3s}.wm-fw-burst.b6 i{animation-delay:.4s}
+@keyframes wm-fw-pop{0%{transform:rotate(var(--a)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(var(--a)) translateX(58px) scale(.25);opacity:0}}
 `

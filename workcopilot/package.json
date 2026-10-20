@@ -10,6 +10,9 @@
     "start": "electron .",
     "dist": "electron-builder --win --x64"
   },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
   "devDependencies": {
     "electron": "^30.0.0",
     "electron-builder": "^24.0.0"
@@ -17,6 +20,9 @@
   "build": {
     "appId": "com.workcopilot.desktop",
     "productName": "WorkCoPilot",
+    "publish": [
+      { "provider": "generic", "url": "https://admireveda.com/work-updates/" }
+    ],
     "directories": {
       "output": "release-workcopilot"
     },

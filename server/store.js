@@ -264,7 +264,21 @@ export function publicWorkUser(u) {
   return {
     id: u.id, username: u.username, role: u.role || 'user', root: !!u.root,
     createdAt: u.createdAt, onboarded: !!u.onboarded, displayName: u.displayName || null,
+    scrub: !!u.scrub,   // superadmin-controlled: strip PII/PHI/secrets before anything is sent
   }
+}
+// Superadmin control: turn the PII/PHI/secret scrubber on/off for one user.
+// It is OFF by default and applied conditionally (per the operator's policy).
+export function setWorkUserScrub(userId, enabled) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  u.scrub = !!enabled
+  persist()
+  return publicWorkUser(u)
+}
+export function workUserScrubOn(userId) {
+  const u = getUser(userId)
+  return !!(u && u.scrub)
 }
 // The account IS the work record. ensureWorkUser resolves (and lazily backfills
 // the work fields on) the account, so every ported work* function keeps working.
