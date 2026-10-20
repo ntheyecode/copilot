@@ -436,7 +436,17 @@ function Home({ user, onOpen, onSignOut }) {
   // Billing: a free-signup account can see the dashboard but needs a plan to
   // guide. Show the chooser up front when the account is not covered, and also
   // when a gated action comes back 402 needsSubscription.
-  const [needsSub, setNeedsSub] = useState(!(user && user.canUseService))
+  // Who is covered (so the plan chooser never shows to someone who does not
+  // need it): superadmins/admins bypass billing, company members are covered by
+  // their company, and a personal plan (active/trialing/comp) covers the user.
+  const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
+  const isCompanyMember = !!(user && user.companyId)
+  const covered = isAdmin || isCompanyMember || !!(user && user.canUseService)
+  const [billingOn, setBillingOn] = useState(false)
+  // Show the plan chooser ONLY to a genuine free user, and only once billing is
+  // actually configured. Admins/members/subscribers never see it. A 402 from a
+  // gated action also flips this on as a server-authoritative fallback.
+  const [needsSub, setNeedsSub] = useState(false)
   const [pricing, setPricing] = useState(null)
   const [subBusy, setSubBusy] = useState('')     // the plan whose checkout is starting
   const [subErr, setSubErr] = useState('')
@@ -463,6 +473,14 @@ function Home({ user, onOpen, onSignOut }) {
     api.workAppStatus().then(setAppStatus).catch(() => {})
     api.workUsage().then(setUsage).catch(() => {})
     fetch('/api/work/pricing').then((r) => r.json()).then(setPricing).catch(() => {})
+    // Is billing actually live? Only then does a free user see the plan chooser.
+    api.workSubscription().then((r) => {
+      const on = !!(r && r.configured)
+      setBillingOn(on)
+      const adm = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
+      const cov = adm || !!(user && (user.companyId || user.canUseService))
+      setNeedsSub(!cov && on)
+    }).catch(() => {})
     if (user && !user.companyId) api.workInvoices().then((r) => setInvoices(r.invoices || [])).catch(() => setInvoices([]))
   }, [user])
   // Open the Stripe Customer Portal (update card, cancel, download invoices).
@@ -517,6 +535,8 @@ function Home({ user, onOpen, onSignOut }) {
   const del = async (id) => { try { await api.workDelete(id); load() } catch {} }
   const pickCat = (c) => { setGoal(c.sample); setTab('dashboard'); setTimeout(() => goalRef.current && goalRef.current.focus(), 60) }
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
+  const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
+  const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || 'Active'
   const low = !!usage && (usage.exhausted || (usage.remainingSeconds != null && usage.remainingSeconds <= 900))
 
   return (
@@ -551,9 +571,26 @@ function Home({ user, onOpen, onSignOut }) {
             <div className="wd-hello">
               <h1>Hi {user.displayName || user.username}. <span>What are we getting done?</span></h1>
               {usage
-                ? <div className="wd-plan"><span className="wd-plan-dot" /> {usage.tier} plan &middot; {minsLeft} min of guidance left today</div>
+                ? <div className="wd-plan"><span className="wd-plan-dot" /> {
+                    isAdmin
+                      ? 'Administrator access · guidance unlocked'
+                      : isCompanyMember
+                        ? `${user.companyName || 'Your company'} team · ${minsLeft} min of guidance left today`
+                        : covered
+                          ? `${planName} plan · ${minsLeft} min of guidance left today`
+                          : needsSub
+                            ? 'Free account · choose a plan to start guiding'
+                            : `Free access · ${minsLeft} min of guidance left today`
+                  }</div>
                 : <div className="wd-plan-skel wd-skel" style={{ padding: 0, border: 'none', background: 'var(--track)' }} aria-hidden />}
             </div>
+
+            {isAdmin && (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '0 0 18px', padding: '11px 14px', borderRadius: 12, background: 'rgba(10,134,207,.08)', border: '1px solid rgba(10,134,207,.28)', fontSize: 13.5 }}>
+                <LayoutDashboard size={16} style={{ color: '#0a86cf', flexShrink: 0 }} />
+                <span>You have administrator access, so live guidance is unlocked for you. <a href="/work/admin" style={{ color: '#0a86cf', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>Open the admin console</a></span>
+              </div>
+            )}
 
             {needsSub && (
               <div className="wd-sub" role="note">
@@ -577,9 +614,13 @@ function Home({ user, onOpen, onSignOut }) {
                 </div>
                 {subErr && <div className="wd-sub-err"><AlertTriangle size={14} /> {subErr}</div>}
                 <div className="wd-sub-note">On a team plan? If your company covers WorkCoPilot, ask your administrator to add you and guidance unlocks automatically.</div>
+                <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13.5 }}>
+                  Not ready to subscribe? <a href="/demo" style={{ color: '#0a86cf', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>See exactly how it works in the demo</a>
+                </div>
               </div>
             )}
 
+            {!needsSub && (<>
             {(showBuy || low) && (
               <div className="wd-buy" role="note">
                 <span className="ic"><Zap size={18} /></span>
@@ -614,6 +655,7 @@ function Home({ user, onOpen, onSignOut }) {
                 ))}
               </div>
             </div>
+            </>)}
 
             <div className="wd-sessions">
               <div className="wd-sec-head">
@@ -1687,9 +1729,11 @@ export default function WorkPage() {
       }
     } catch { /* ignore */ }
   }, [loadMe])
-  const signOut = async () => { try { await api.logout() } catch {} ; window.location.href = '/login' }
+  // Sign-out and the not-signed-in bounce both stay on the WorkCoPilot sign-in
+  // (/workcopilot), never the shared multi-product login.
+  const signOut = async () => { try { await api.logout() } catch {} ; window.location.href = '/workcopilot' }
   if (sess === undefined) return <div style={{ ...shell, display: 'grid', placeItems: 'center' }}><Loader2 className="spin" /></div>
-  if (!sess.signedIn) { try { localStorage.setItem('meet-login-product', 'work') } catch {} ; window.location.href = '/login'; return null }
+  if (!sess.signedIn) { window.location.href = '/workcopilot'; return null }
   if (!sess.access) return <NoAccess onSignOut={signOut} />
   const user = sess.user
   if (openId) return <><AppUpdateBanner /><Console sessionId={openId} onBack={() => setOpenId(null)} /></>
