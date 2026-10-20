@@ -329,7 +329,18 @@ export function userCanUseService(userId) {
     }
   }
   const s = u.subscription
-  return !!(s && (s.status === 'trialing' || s.status === 'active'))
+  // 'comp' = free access granted by a superadmin (no Stripe needed).
+  return !!(s && (s.status === 'trialing' || s.status === 'active' || s.status === 'comp'))
+}
+// Superadmin grant/revoke of free (comped) access for a standalone user.
+export function setUserFreeAccess(userId, free) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const s = ensureSubscription(u)
+  s.status = free ? 'comp' : 'none'
+  if (free) s.plan = s.plan || 'premium'
+  persist()
+  return publicWorkUser(u)
 }
 // Webhook mapping: resolve the account a Stripe object belongs to.
 export function findUserByStripeCustomer(customerId) {
@@ -500,7 +511,7 @@ export function setUserCompany(userId, companyId, companyRole) {
 }
 // Create a user as a superadmin or a company admin. companyId/companyRole
 // optional; tier/scrub optional. Reuses createWorkUser then applies membership.
-export function createManagedUser({ username, password, companyId = null, companyRole = 'member', tier = 'basic', scrub = false } = {}) {
+export function createManagedUser({ username, password, companyId = null, companyRole = 'member', tier = 'basic', scrub = false, free = false } = {}) {
   const pub = createWorkUser({ username, password })      // validates + role 'user'
   const u = getUser(pub.id)
   if (companyId) {
@@ -510,6 +521,9 @@ export function createManagedUser({ username, password, companyId = null, compan
   }
   if (tier && ['basic', 'advanced', 'premium'].includes(tier)) u.tier = tier
   if (scrub) u.scrub = true
+  // free = superadmin-comped access (use the service without Stripe). Company
+  // members are already covered by the company, so this is for standalone users.
+  if (free && !companyId) { const s = ensureSubscription(u); s.status = 'comp'; s.plan = s.plan || tier || 'premium' }
   persist()
   return publicWorkUser(u)
 }

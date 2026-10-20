@@ -281,12 +281,17 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json(store.updateCompany(req.params.id, { scrub: !!(req.body && req.body.enabled) }))
   }))
   // Create a user (optionally into a company, as member or company_admin).
+  // `free: true` grants comped access (use the service without Stripe).
   app.post('/api/work/admin/users', requireAuth, superGate, w((req, res) => {
-    const { username, password, companyId, companyRole, tier, scrub } = req.body || {}
-    res.json(store.createManagedUser({ username, password, companyId: companyId || null, companyRole, tier, scrub: !!scrub }))
+    const { username, password, companyId, companyRole, tier, scrub, free } = req.body || {}
+    res.json(store.createManagedUser({ username, password, companyId: companyId || null, companyRole, tier, scrub: !!scrub, free: !!free }))
   }))
   app.post('/api/work/admin/users/:id/scrub', requireAuth, superGate, w((req, res) => {
     res.json(store.setWorkUserScrub(req.params.id, !!(req.body && req.body.enabled)))
+  }))
+  // Grant/revoke free (comped) access for a user - no Stripe needed.
+  app.post('/api/work/admin/users/:id/access', requireAuth, superGate, w((req, res) => {
+    res.json(store.setUserFreeAccess(req.params.id, !!(req.body && req.body.free)))
   }))
   app.post('/api/work/admin/users/:id/company', requireAuth, superGate, w((req, res) => {
     const { companyId, companyRole } = req.body || {}

@@ -110,7 +110,7 @@ export default function Companies({ isSuperAdmin }) {
   const [form, setForm] = useState({ name: '', plan: 'basic', seats: '', scrub: false })
   const [openId, setOpenId] = useState(null)
   const [detail, setDetail] = useState(null)
-  const [uForm, setUForm] = useState({ username: '', password: '', companyRole: 'member', tier: 'basic' })
+  const [uForm, setUForm] = useState({ username: '', password: '', companyRole: 'member', tier: 'basic', free: false })
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -140,12 +140,17 @@ export default function Companies({ isSuperAdmin }) {
   const addUser = async (companyId) => {
     if (busy || !uForm.username.trim() || !uForm.password) { setMsg('Username (3+) and password (6+) required.'); return }
     setBusy(true); setMsg('')
-    try { await workAdminApi.createUser({ ...uForm, companyId }); setUForm({ username: '', password: '', companyRole: 'member', tier: 'basic' }); refreshDetail(companyId) }
+    try { await workAdminApi.createUser({ ...uForm, companyId }); setUForm({ username: '', password: '', companyRole: 'member', tier: 'basic', free: false }); refreshDetail(companyId) }
     catch (e) { setMsg(e.message || 'Could not add the user.') } finally { setBusy(false) }
   }
   const toggleUserScrub = async (u, companyId) => {
     if (!isSuperAdmin) return
     try { await workAdminApi.userScrub(u.id, !u.scrub); refreshDetail(companyId) } catch (e) { setMsg(e.message) }
+  }
+  const isFree = (u) => u.subscription && u.subscription.status === 'comp'
+  const toggleUserFree = async (u, companyId) => {
+    if (!isSuperAdmin) return
+    try { await workAdminApi.userFreeAccess(u.id, !isFree(u)); refreshDetail(companyId) } catch (e) { setMsg(e.message) }
   }
 
   if (state.loading) return <Loading label="Loading companies" />
@@ -192,9 +197,9 @@ export default function Companies({ isSuperAdmin }) {
                           {isSuperAdmin && <button className="wka-btn sm" onClick={() => toggleCompanyScrub(c)}>{c.scrub ? 'Turn redaction off' : 'Turn redaction on'}</button>}
                         </div>
                         <table className="wka-table co-users">
-                          <thead><tr><th>User</th><th>Role</th><th>Tier</th><th>Redaction</th></tr></thead>
+                          <thead><tr><th>User</th><th>Role</th><th>Tier</th><th>Redaction</th><th>Free access</th></tr></thead>
                           <tbody>
-                            {detail.users.length === 0 && <tr><td colSpan={4} className="co-empty">No users yet.</td></tr>}
+                            {detail.users.length === 0 && <tr><td colSpan={5} className="co-empty">No users yet.</td></tr>}
                             {detail.users.map((u) => (
                               <tr key={u.id}>
                                 <td>{u.username}</td>
@@ -203,6 +208,9 @@ export default function Companies({ isSuperAdmin }) {
                                 <td>{isSuperAdmin
                                   ? <button className={`co-toggle ${u.scrub ? 'on' : ''}`} onClick={() => toggleUserScrub(u, c.id)}>{u.scrub ? 'On' : 'Off'}</button>
                                   : (u.scrub ? 'On' : 'Off')}</td>
+                                <td>{isSuperAdmin
+                                  ? <button className={`co-toggle ${isFree(u) ? 'on' : ''}`} onClick={() => toggleUserFree(u, c.id)}>{isFree(u) ? 'Free' : 'Paid'}</button>
+                                  : (isFree(u) ? 'Free' : 'Paid')}</td>
                               </tr>
                             ))}
                           </tbody>
@@ -213,6 +221,7 @@ export default function Companies({ isSuperAdmin }) {
                           <input className="wka-input" type="password" placeholder="Password" value={uForm.password} onChange={(e) => setUForm({ ...uForm, password: e.target.value })} />
                           <select className="wka-input" value={uForm.companyRole} onChange={(e) => setUForm({ ...uForm, companyRole: e.target.value })}><option value="member">Member</option><option value="company_admin">Company admin</option></select>
                           <select className="wka-input" value={uForm.tier} onChange={(e) => setUForm({ ...uForm, tier: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
+                          <label className="co-chk" title="Let this user use the service without Stripe"><input type="checkbox" checked={uForm.free} onChange={(e) => setUForm({ ...uForm, free: e.target.checked })} /> Free access</label>
                           <button className="wka-btn primary" disabled={busy} onClick={() => addUser(c.id)}>{busy ? <Loader2 size={14} className="spin" /> : 'Add user'}</button>
                         </div>
                         {isSuperAdmin && <SsoPanel company={detail.company} onSaved={() => refreshDetail(c.id)} />}

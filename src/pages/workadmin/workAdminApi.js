@@ -72,6 +72,7 @@ export const workAdminApi = {
   setCompanySso: (id, cfg) => request('POST', `/api/work/admin/companies/${id}/sso`, cfg || {}),
   createUser: (body) => request('POST', '/api/work/admin/users', body),
   userScrub: (id, enabled) => request('POST', `/api/work/admin/users/${id}/scrub`, { enabled: !!enabled }),
+  userFreeAccess: (id, free) => request('POST', `/api/work/admin/users/${id}/access`, { free: !!free }),
   userCompany: (id, companyId, companyRole) => request('POST', `/api/work/admin/users/${id}/company`, { companyId, companyRole }),
 
   // Per-user writes (existing: superadmin-only). userId is the account id.
