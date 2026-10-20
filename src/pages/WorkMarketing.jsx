@@ -106,7 +106,7 @@ export default function WorkMarketing() {
         <div className="wm-wrap wm-nav-in">
           <a href="#top" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
           <nav className="wm-links">
-            <a href="#how">How it works</a><a href="#ways">Anywhere</a><a href="/workcopilot/use-cases">Use cases</a><a href="#pricing">Pricing</a>
+            <a href="#how">How it works</a><a href="#ways">Anywhere</a><a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="#pricing">Pricing</a>
           </nav>
           <div className="wm-navcta">
             <button className="wm-ghost" onClick={() => go('')}>Sign in</button>
@@ -126,6 +126,7 @@ export default function WorkMarketing() {
             </p>
             <div className="wm-hero-cta" data-reveal>
               <button className="wm-cta" onClick={() => go('')}>Start guiding me <ArrowRight size={16} /></button>
+              <button className="wm-cta alt" onClick={() => nav('/demo')}>See a 60-second demo <ArrowRight size={16} /></button>
               <a className="wm-link" href="#how">See how it works</a>
             </div>
           </div>
