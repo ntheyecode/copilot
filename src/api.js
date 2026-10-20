@@ -80,6 +80,9 @@ export const api = {
   // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
   workCheckout: (plan) => req('POST', '/api/work/checkout', { plan }),
   workSubscription: () => req('GET', '/api/work/subscription'),
+  // The account's Stripe invoices, and a Customer Portal link to manage/cancel.
+  workInvoices: () => req('GET', '/api/work/invoices'),
+  workBillingPortal: () => req('POST', '/api/work/billing/portal'),
   // sessions. Every free-text field is scrubbed CLIENT-SIDE (clean()) before it
   // leaves the browser, so raw PII/PHI/secrets never reach our server or the AI.
   workCreate: (body) => req('POST', '/api/work/sessions', { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),

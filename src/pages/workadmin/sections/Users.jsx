@@ -2,7 +2,7 @@
 // a grant-hours action, both superadmin-only (the server enforces it; the UI
 // disables the controls and explains why for a non-superadmin admin).
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
@@ -66,6 +66,33 @@ export default function UsersSection({ isSuperAdmin }) {
       setGrantFor(null); setGrantHours('1')
     } catch (error) {
       setMsg(user.id, 'err', error.message || 'Could not grant hours')
+    } finally { setBusyId(null) }
+  }
+
+  // Refund the user's most recent Stripe charge. Confirmed first because it moves
+  // real money. A missing Stripe key comes back as a clear message, not a crash.
+  const applyRefund = async (user) => {
+    if (!window.confirm(`Refund the most recent payment for ${user.username}? This cannot be undone.`)) return
+    setBusyId(user.id)
+    try {
+      const r = await workAdminApi.refundUser(user.id, { last: true })
+      const amt = r && r.refund ? (r.refund.amount / 100).toFixed(2) : null
+      setMsg(user.id, 'ok', amt != null ? `Refunded ${amt} ${(r.refund.currency || 'usd').toUpperCase()}` : 'Refund processed')
+    } catch (error) {
+      setMsg(user.id, 'err', error.message || 'Could not process the refund')
+    } finally { setBusyId(null) }
+  }
+
+  // Cancel the user's subscription immediately. The webhook also syncs, but the
+  // store is updated now so the change shows without waiting.
+  const applyCancel = async (user) => {
+    if (!window.confirm(`Cancel the subscription for ${user.username} now? Their guiding access will stop.`)) return
+    setBusyId(user.id)
+    try {
+      await workAdminApi.cancelUserSubscription(user.id, false)
+      setMsg(user.id, 'ok', 'Subscription canceled')
+    } catch (error) {
+      setMsg(user.id, 'err', error.message || 'Could not cancel the subscription')
     } finally { setBusyId(null) }
   }
 
@@ -150,10 +177,20 @@ export default function UsersSection({ isSuperAdmin }) {
                           <button type="button" className="wka-btn sm ghost" onClick={() => { setGrantFor(null); setGrantHours('1') }}>Cancel</button>
                         </span>
                       ) : (
-                        <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Grant purchased hours' : 'Superadmin only'}
-                          onClick={() => { setGrantFor(u.id); setGrantHours('1') }}>
-                          <Plus size={13} /> <Clock size={13} /> Grant hours
-                        </button>
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Grant purchased hours' : 'Superadmin only'}
+                            onClick={() => { setGrantFor(u.id); setGrantHours('1') }}>
+                            <Plus size={13} /> <Clock size={13} /> Grant hours
+                          </button>
+                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? 'Refund the most recent payment' : 'Superadmin only'}
+                            onClick={() => applyRefund(u)}>
+                            <RotateCcw size={13} /> Refund last
+                          </button>
+                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? 'Cancel the subscription now' : 'Superadmin only'}
+                            onClick={() => applyCancel(u)}>
+                            <Ban size={13} /> Cancel sub
+                          </button>
+                        </span>
                       )}
                     </td>
                   </tr>

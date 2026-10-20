@@ -79,6 +79,16 @@ export const workAdminApi = {
   setTier: (userId, tier) => request('POST', '/api/work/admin/tier', { userId, tier }),
   // Grant purchased time. The server takes minutes; the UI collects hours.
   grantHours: (userId, hours) => request('POST', '/api/work/admin/grant-minutes', { userId, minutes: Math.round((Number(hours) || 0) * 60) }),
+
+  // Stripe billing config (superadmin). GET returns booleans + ids only (never a
+  // secret); POST writes config (secrets are write-only, blank keeps stored).
+  getBilling: () => request('GET', '/api/work/admin/billing'),
+  setBilling: (patch) => request('POST', '/api/work/admin/billing', patch || {}),
+  // Per-user Stripe actions (superadmin). refund with no id refunds the latest
+  // charge; cancel ends the subscription (atPeriodEnd keeps it to period end).
+  userInvoices: (id) => request('GET', `/api/work/admin/users/${id}/invoices`),
+  refundUser: (id, body) => request('POST', `/api/work/admin/users/${id}/refund`, body || {}),
+  cancelUserSubscription: (id, atPeriodEnd) => request('POST', `/api/work/admin/users/${id}/cancel-subscription`, { atPeriodEnd: !!atPeriodEnd }),
 }
 
 export default workAdminApi

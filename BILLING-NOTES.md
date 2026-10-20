@@ -77,3 +77,94 @@ Use `sk_test_...` keys, test price ids, and the Stripe CLI to forward webhooks:
 
 Pay with Stripe's test card `4242 4242 4242 4242`, any future expiry and any
 CVC. The subscription should flip to `active` and the gate should open.
+
+---
+
+# What this `feat-billing2` branch adds
+
+The Checkout + gating above still works unchanged. This branch completes the
+billing system: configure Stripe from the UI, invoices, self-serve manage and
+cancel, superadmin refund and cancel, and the full automatic lifecycle.
+
+`npm install stripe` is still required on the server to actually call Stripe.
+Everything stays guarded: with no key or no package, every billing route returns
+a clear 503 and the app runs normally without the paywall.
+
+## 1. Configure Stripe from the admin console (no env edit needed)
+
+The Stripe config now lives in the database (`db.billing`) and can be set
+entirely from the admin console, so a fresh deploy needs no `.env` change.
+
+- Open the WorkCoPilot admin console and pick the new **Billing** section
+  (superadmin only).
+- Paste the **secret key**, the **webhook signing secret**, and the three plan
+  **price ids** (Basic, Advanced, Premium). An optional **publishable key** field
+  is stored for any future in-page card form.
+- The two secrets are **write-only**: once saved they are never shown back, and
+  leaving a field blank keeps whatever is stored. Price ids are plain text and a
+  blank value clears them.
+- A **Billing on/off** toggle lets you pause store-held billing without deleting
+  the keys. When off, the stored keys are ignored (any env vars still apply).
+- The page shows configured / not-configured status for each field and a
+  reminder of the webhook URL `https://admireveda.com/api/work/stripe/webhook`
+  with a copy button.
+
+Resolution order: **store first, environment variable fallback.** A value set in
+the console takes priority; an operator who prefers env vars still works. The
+subscription gate treats billing as "configured" when a usable secret key exists
+from either source.
+
+New endpoints: `GET /api/work/admin/billing` (returns booleans + ids only, never
+a secret) and `POST /api/work/admin/billing` (superadmin; writes config).
+
+## 2. Invoices (dashboard)
+
+`GET /api/work/invoices` (signed-in user) lists the account's Stripe invoices
+(`stripe.invoices.list` by customer): amount, status, date, plus the hosted
+invoice URL and the invoice PDF link. The dashboard shows them in a **Billing**
+panel with **View** and **PDF** links. No Stripe customer yet (never checked
+out) returns an empty list, not an error.
+
+Superadmin: `GET /api/work/admin/users/:id/invoices` views any user's invoices.
+
+## 3. Self-serve manage and cancel (Stripe Customer Portal)
+
+`POST /api/work/billing/portal` creates a Stripe Customer Portal session for the
+signed-in user and returns `{ url }`. The dashboard **Manage billing** button
+redirects there, where the user can update their card, change or cancel their
+plan, and download invoices. The portal returns them to `/work`.
+
+(Configure the portal once in the Stripe dashboard under Settings > Billing >
+Customer portal: choose what customers may do, for example cancel and update
+payment method.)
+
+## 4. Superadmin refund and cancel
+
+From the admin console **Users** section, each row has two billing actions
+(superadmin only, each asks for confirmation first):
+
+- **Refund last** - `POST /api/work/admin/users/:id/refund`. With no id in the
+  body it refunds the account's most recent charge (`stripe.charges.list` then
+  `stripe.refunds.create`). A `paymentIntentId` or `chargeId` in the body refunds
+  that specific one instead.
+- **Cancel sub** - `POST /api/work/admin/users/:id/cancel-subscription`. Cancels
+  immediately (`stripe.subscriptions.cancel`) and sets the stored status to
+  `canceled`. Pass `{ atPeriodEnd: true }` to instead set
+  `cancel_at_period_end` so it runs to the end of the paid period.
+
+Both return a clear 503 when Stripe is not configured.
+
+## 5. Automatic blocks (full lifecycle)
+
+The webhook now handles these events and `userCanUseService` (which allows only
+`trialing` / `active` / `comp`, plus company members) does the blocking for free:
+
+    checkout.session.completed        -> active / trialing   (service unlocks)
+    customer.subscription.updated     -> mapped status        (active, trialing, past_due, canceled)
+    invoice.payment_failed            -> past_due             (service blocks)
+    customer.subscription.deleted     -> canceled             (service blocks)
+
+Lifecycle: checkout -> active -> (failed renewal) past_due -> (fixed) active
+again, or -> canceled on cancel / expiry -> blocked. Add `invoice.payment_failed`
+to the webhook's event subscriptions in the Stripe dashboard (alongside the three
+events listed in step 3 above) so past_due is applied automatically.

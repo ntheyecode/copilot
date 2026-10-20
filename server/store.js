@@ -62,6 +62,10 @@ const EMPTY = {
   workDocs: {},         // uploaded reference doc metadata, keyed by userId (text on disk)
   workTickets: [],      // support tickets (id 'tk'+n): category, subject, thread, status
   companies: [],        // tenancy (id 'co'+n): name, plan, seats, scrub default, sso config
+  // Stripe billing config (superadmin-set, UI or env). Secrets live here but are
+  // NEVER returned to a client (getBillingPublic strips them). enabled defaults
+  // on so saving a key works at once; an operator can turn store billing off.
+  billing: { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', publishableKey: '', enabled: true },
 }
 
 function ensureDir() {
@@ -350,6 +354,59 @@ export function findUserByStripeCustomer(customerId) {
 export function findUserByStripeSubscription(subscriptionId) {
   if (!subscriptionId) return null
   return (db.users || []).find((u) => u.subscription && u.subscription.stripeSubscriptionId === subscriptionId) || null
+}
+
+// ---- Stripe billing configuration (superadmin, UI or env) -----------------
+// The Stripe secret key, webhook secret, price ids and publishable key live in
+// db.billing so the superadmin can configure billing from the admin console
+// without touching the environment. getBillingConfig is SERVER-ONLY (it carries
+// the secrets, for billing.js). getBillingPublic is the client-safe view: it
+// reports only whether each secret is set, never its value. setBillingConfig
+// treats the two secrets as write-only (a blank value keeps the stored one); the
+// non-secret fields (price ids, publishable key) are cleared by a blank value.
+function billingState() {
+  if (!db.billing || typeof db.billing !== 'object') {
+    db.billing = { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', publishableKey: '', enabled: true }
+  }
+  return db.billing
+}
+export function getBillingConfig() {
+  const b = billingState()
+  return {
+    secretKey: b.secretKey || '',
+    webhookSecret: b.webhookSecret || '',
+    priceBasic: b.priceBasic || '',
+    priceAdvanced: b.priceAdvanced || '',
+    pricePremium: b.pricePremium || '',
+    publishableKey: b.publishableKey || '',
+    enabled: b.enabled !== false,
+  }
+}
+export function getBillingPublic() {
+  const b = billingState()
+  return {
+    enabled: b.enabled !== false,
+    hasSecretKey: !!(b.secretKey && String(b.secretKey).trim()),
+    hasWebhookSecret: !!(b.webhookSecret && String(b.webhookSecret).trim()),
+    priceBasic: b.priceBasic || '',
+    priceAdvanced: b.priceAdvanced || '',
+    pricePremium: b.pricePremium || '',
+    publishableKey: b.publishableKey || '',
+  }
+}
+export function setBillingConfig(patch = {}) {
+  const b = billingState()
+  // Secrets are write-only: only overwrite when a non-blank value is supplied.
+  if (patch.secretKey != null && String(patch.secretKey).trim() !== '') b.secretKey = String(patch.secretKey).trim()
+  if (patch.webhookSecret != null && String(patch.webhookSecret).trim() !== '') b.webhookSecret = String(patch.webhookSecret).trim()
+  // Price ids + publishable key are not secret: a blank value clears them.
+  if (patch.priceBasic !== undefined) b.priceBasic = String(patch.priceBasic || '').trim()
+  if (patch.priceAdvanced !== undefined) b.priceAdvanced = String(patch.priceAdvanced || '').trim()
+  if (patch.pricePremium !== undefined) b.pricePremium = String(patch.pricePremium || '').trim()
+  if (patch.publishableKey !== undefined) b.publishableKey = String(patch.publishableKey || '').trim()
+  if (patch.enabled !== undefined) b.enabled = !!patch.enabled
+  persist()
+  return getBillingPublic()
 }
 
 // Superadmin control: turn the PII/PHI/secret scrubber on/off for one user.

@@ -26,7 +26,7 @@ import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
-import { registerWorkBillingRoutes, workStripeWebhook } from './billing.js'
+import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
 import { scrubSensitive, redactionSummary } from './work-scrub.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -112,8 +112,9 @@ function requireWorkAuth(req, res, next) {
 function requireWorkSubscription(req, res, next) {
   // Enforce subscriptions only once billing is actually configured (so existing
   // users are never locked out before Stripe is set up), and always let admins
-  // and superadmins through for operator testing.
-  if (!process.env.STRIPE_SECRET_KEY) return next()
+  // and superadmins through for operator testing. "Configured" is a usable
+  // secret key from the store (superadmin set it in the console) OR the env var.
+  if (!billingConfigured(store)) return next()
   if (req.user && (req.user.role === 'superadmin' || req.user.role === 'admin')) return next()
   if (!store.userCanUseService(req.workUser.id)) {
     return res.status(402).json({ error: 'A subscription is needed to start guiding.', needsSubscription: true })
@@ -789,7 +790,7 @@ registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
-registerWorkBillingRoutes(app, { store, requireWorkAuth, wrap })
+registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, wrap })
 
 // Unknown API route -> JSON 404 (never the SPA HTML).
 app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' }))

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
@@ -263,6 +263,30 @@ const WD_CSS = `
 .wd-sub-note{margin-top:12px;color:var(--mut);font-size:12.5px}
 @media(max-width:720px){.wd-sub-plans{grid-template-columns:1fr}}
 
+/* Billing panel (manage subscription + invoices) */
+.wd-bill{margin-top:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.wd-bill-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
+.wd-bill-head .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
+.wd-bill-head h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:16px;margin-bottom:4px}
+.wd-bill-head p{color:var(--mut);font-size:13.5px}
+.wd-bill-status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:3px 9px;border:1px solid var(--line-2);color:var(--mut);text-transform:capitalize;margin-top:6px}
+.wd-bill-status.good{color:var(--em);border-color:var(--em-line);background:var(--em-fill)}
+.wd-bill-status.warn{color:var(--warm);border-color:var(--warm-line);background:var(--warm-fill)}
+.wd-manage{margin-left:auto;display:inline-flex;align-items:center;gap:7px;background:var(--em);color:var(--on-em);border:none;font:inherit;font-size:13.5px;font-weight:700;border-radius:11px;padding:9px 14px;cursor:pointer;flex-shrink:0;transition:filter .15s}
+.wd-manage:hover{filter:brightness(1.05)}
+.wd-manage:disabled{opacity:.6;cursor:default}
+.wd-inv{margin-top:16px;display:flex;flex-direction:column;gap:2px}
+.wd-inv-row{display:flex;align-items:center;gap:12px;padding:11px 2px;border-top:1px solid var(--line);font-size:13.5px}
+.wd-inv-row .amt{font-weight:700;color:var(--tx);min-width:92px}
+.wd-inv-row .dt{color:var(--mut);flex:1}
+.wd-inv-row .st{font-size:12px;font-weight:600;text-transform:capitalize;color:var(--mut);border:1px solid var(--line-2);border-radius:999px;padding:2px 8px}
+.wd-inv-row .st.paid{color:var(--em);border-color:var(--em-line)}
+.wd-inv-links{display:inline-flex;gap:10px}
+.wd-inv-links a{display:inline-flex;align-items:center;gap:4px;color:var(--em-2);font-weight:600;text-decoration:none}
+.wd-inv-links a:hover{text-decoration:underline}
+.wd-bill-empty{margin-top:14px;color:var(--mut);font-size:13px}
+.wd-bill-err{margin-top:12px;display:flex;align-items:center;gap:7px;color:var(--warm);font-size:13px}
+
 .wd-setup{margin-top:20px;border:1px solid var(--warm-line);background:var(--warm-fill);border-radius:16px;padding:16px}
 .wd-setup-note{color:var(--warm);font-size:13.5px;margin-bottom:10px;font-weight:600}
 
@@ -416,6 +440,11 @@ function Home({ user, onOpen, onSignOut }) {
   const [pricing, setPricing] = useState(null)
   const [subBusy, setSubBusy] = useState('')     // the plan whose checkout is starting
   const [subErr, setSubErr] = useState('')
+  // Billing panel: the account's invoices + a Customer Portal link to manage or
+  // cancel. Only a personal (non company) account that has a plan sees it.
+  const [invoices, setInvoices] = useState(null) // null = not loaded; [] = none
+  const [portalBusy, setPortalBusy] = useState(false)
+  const [billErr, setBillErr] = useState('')
   const goalRef = useRef(null)
 
   useEffect(() => {
@@ -426,12 +455,27 @@ function Home({ user, onOpen, onSignOut }) {
       document.head.appendChild(l)
     }
   }, [])
+  // A personal account that has (or had) a plan sees the billing panel. Company
+  // members are covered by their company, so they have no personal billing here.
+  const hasPlan = !!(user && !user.companyId && user.subscription && ['active', 'trialing', 'past_due', 'canceled'].includes(user.subscription.status))
   const load = useCallback(() => {
     api.workList().then((r) => setSessions(r.sessions || [])).catch(() => {}).finally(() => setSessLoaded(true))
     api.workAppStatus().then(setAppStatus).catch(() => {})
     api.workUsage().then(setUsage).catch(() => {})
     fetch('/api/work/pricing').then((r) => r.json()).then(setPricing).catch(() => {})
-  }, [])
+    if (user && !user.companyId) api.workInvoices().then((r) => setInvoices(r.invoices || [])).catch(() => setInvoices([]))
+  }, [user])
+  // Open the Stripe Customer Portal (update card, cancel, download invoices).
+  const openPortal = async () => {
+    setBillErr(''); setPortalBusy(true)
+    try {
+      const r = await api.workBillingPortal()
+      if (r && r.url) { window.location = r.url; return }
+      setBillErr('Could not open billing. Please try again.')
+    } catch (e) {
+      setBillErr(e && e.message ? e.message : 'Billing is not available right now.')
+    } finally { setPortalBusy(false) }
+  }
   useEffect(() => { load() }, [load])
   const create = async (g) => {
     if (!ready) return
@@ -455,6 +499,16 @@ function Home({ user, onOpen, onSignOut }) {
     } finally { setSubBusy('') }
   }
   const money = (n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
+  // Stripe reports invoice amounts in the currency's minor unit (cents).
+  const invMoney = (cents, cur) => {
+    const v = (Number(cents) || 0) / 100
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format(v) }
+    catch { return `$${v.toFixed(2)}` }
+  }
+  const invDate = (iso) => { try { return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) } catch { return '' } }
+  const showBilling = hasPlan || (Array.isArray(invoices) && invoices.length > 0)
+  const subStatus = (user && user.subscription && user.subscription.status) || 'none'
+  const statusCls = subStatus === 'active' || subStatus === 'trialing' ? 'good' : (subStatus === 'past_due' ? 'warn' : '')
   const PLAN_META = [
     { id: 'basic', name: 'Basic', hrs: 2 },
     { id: 'advanced', name: 'Advanced', hrs: 4 },
@@ -602,6 +656,44 @@ function Home({ user, onOpen, onSignOut }) {
                 </div>
               )}
             </div>
+
+            {showBilling && (
+              <div className="wd-bill" role="region" aria-label="Billing">
+                <div className="wd-bill-head">
+                  <span className="ic"><CreditCard size={18} /></span>
+                  <div>
+                    <h3>Billing</h3>
+                    <p>Update your card, change plan, download invoices or cancel anytime through the secure Stripe portal.</p>
+                    <span className={`wd-bill-status ${statusCls}`}>
+                      <span className="wd-plan-dot" style={{ width: 7, height: 7 }} /> {subStatus === 'none' ? 'No active plan' : subStatus}
+                    </span>
+                  </div>
+                  <button className="wd-manage" onClick={openPortal} disabled={portalBusy}>
+                    {portalBusy ? <Loader2 size={15} className="spin" /> : <ExternalLink size={15} />} Manage billing
+                  </button>
+                </div>
+                {billErr && <div className="wd-bill-err"><AlertTriangle size={14} /> {billErr}</div>}
+                {invoices == null ? (
+                  <div className="wd-bill-empty">Loading invoices...</div>
+                ) : invoices.length === 0 ? (
+                  <div className="wd-bill-empty">No invoices yet. They appear here after your first payment.</div>
+                ) : (
+                  <div className="wd-inv">
+                    {invoices.map((inv) => (
+                      <div key={inv.id} className="wd-inv-row">
+                        <span className="amt">{invMoney(inv.amount, inv.currency)}</span>
+                        <span className="dt">{invDate(inv.created)}{inv.number ? ` · ${inv.number}` : ''}</span>
+                        <span className={`st${inv.status === 'paid' ? ' paid' : ''}`}>{inv.status || 'open'}</span>
+                        <span className="wd-inv-links">
+                          {inv.hostedInvoiceUrl && <a href={inv.hostedInvoiceUrl} target="_blank" rel="noopener noreferrer"><ExternalLink size={13} /> View</a>}
+                          {inv.invoicePdf && <a href={inv.invoicePdf} target="_blank" rel="noopener noreferrer"><FileText size={13} /> PDF</a>}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="wd-apps">
               <div className="wd-sec-head"><h2>Use it your way</h2><span className="wd-sec-count">One subscription, all three</span></div>

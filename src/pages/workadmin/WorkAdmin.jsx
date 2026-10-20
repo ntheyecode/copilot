@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, Loader2, LifeBuoy, Building2 } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, Loader2, LifeBuoy, Building2, CreditCard } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
@@ -18,6 +18,7 @@ import Overview from './sections/Overview.jsx'
 import UsersSection from './sections/Users.jsx'
 import Pricing from './sections/Pricing.jsx'
 import AiConfig from './sections/AiConfig.jsx'
+import Billing from './sections/Billing.jsx'
 import Sessions from './sections/Sessions.jsx'
 
 const SECTIONS = [
@@ -25,6 +26,7 @@ const SECTIONS = [
   { id: 'companies', label: 'Companies', icon: Building2, title: 'Companies', sub: 'Tenancy: companies, company admins, users and redaction policy.' },
   { id: 'users', label: 'Users', icon: Users, title: 'Users', sub: 'Tiers, balances and granted hours.' },
   { id: 'pricing', label: 'Pricing', icon: Tags, title: 'Pricing', sub: 'Plan prices, extra-hour and image rates.' },
+  { id: 'billing', label: 'Billing', icon: CreditCard, title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
   { id: 'sessions', label: 'Sessions', icon: ListChecks, title: 'Sessions', sub: 'Recent guided sessions across users.' },
   { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
@@ -59,6 +61,7 @@ export default function WorkAdmin() {
       case 'companies': return <Companies isSuperAdmin={isSuperAdmin} />
       case 'users': return <UsersSection isSuperAdmin={isSuperAdmin} />
       case 'pricing': return <Pricing isSuperAdmin={isSuperAdmin} />
+      case 'billing': return <Billing isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions />
       case 'tickets': return <SupportTickets mode="admin" />
