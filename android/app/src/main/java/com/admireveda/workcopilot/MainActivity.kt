@@ -59,6 +59,11 @@ class MainActivity : AppCompatActivity() {
             mediaPlaybackRequiresUserGesture = false   // let the camera stream start without a tap
             allowFileAccess = true
             cacheMode = WebSettings.LOAD_DEFAULT
+            // Honor the page's width=device-width viewport so the responsive /work
+            // console scales correctly on phones, phone-pads, and Android tablets
+            // (any screen size / density), fitting the whole width on first paint.
+            useWideViewPort = true
+            loadWithOverviewMode = true
             userAgentString = "$userAgentString WorkCoPilotAndroid/1.0"
         }
 
