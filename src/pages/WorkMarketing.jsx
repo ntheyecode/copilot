@@ -116,7 +116,6 @@ export default function WorkMarketing() {
 
       {/* HERO */}
       <section className="wm-hero" id="top">
-        <video className="wm-hero-vid" autoPlay muted loop playsInline poster="/hero-aurora.jpg" aria-hidden><source src="/hero-aurora.mp4" type="video/mp4" /></video>
         <div className="wm-wrap wm-hero-grid">
           <div className="wm-hero-copy">
             <div className="wm-badge" data-reveal><Sparkles size={13} /> Your expert, on every screen</div>
@@ -950,4 +949,42 @@ const CSS = `
  .wm-lead{font-size:17px}
  .wm-demo{transform:none}
 }
+
+/* ============================================================
+   LIGHT THEME - the default. The original rules above remain the
+   DARK theme, preserved and re-enabled by setting data-wm="dark"
+   on the .wm root. Code/terminal/diff/screen mockups deliberately
+   stay dark (they read as device screenshots on a light page).
+   ============================================================ */
+.wm:not([data-wm="dark"]){
+  --ink:#f5f7fb; --panel:#ffffff; --line:rgba(14,18,34,.12);
+  --tx:#121726; --mut:#596074;
+  --em:#0a9d66; --em2:#0a86cf;   /* readable on white; gradients darken acceptably */
+  --warm:#ff9a4d; --warm2:#f26a43;
+}
+/* The "screen" mockups stay dark on the light page (they read as device
+   screenshots). Re-scope the DARK variables onto each so their inner text,
+   hairlines and accents render light-on-dark exactly as designed - otherwise
+   the globally-flipped light vars make them dark-on-dark. */
+.wm:not([data-wm="dark"]) .wm-demo,
+.wm:not([data-wm="dark"]) .bv,
+.wm:not([data-wm="dark"]) .wm-flow-viz,
+.wm:not([data-wm="dark"]) .wm-spot-viz,
+.wm:not([data-wm="dark"]) .wm-photo figcaption{
+  --tx:#eef0f6; --mut:#9aa0b4; --line:rgba(255,255,255,.12);
+  --panel:#12141d; --em:#8cf5c4; --em2:#39d3ff;
+}
+.wm:not([data-wm="dark"]) .orb{opacity:.14;filter:blur(84px)}
+.wm:not([data-wm="dark"]) .wm-nav{background:rgba(255,255,255,.78)}
+.wm:not([data-wm="dark"]) .wm-ghost:hover{border-color:rgba(14,18,34,.3)}
+.wm:not([data-wm="dark"]) .wm-cta.alt{background:#fff;border:1px solid var(--line);color:var(--tx)}
+.wm:not([data-wm="dark"]) .wm-bcard{background:#fff}
+.wm:not([data-wm="dark"]) .wm-way{background:#fff}
+.wm:not([data-wm="dark"]) .wm-way.feat{background:linear-gradient(180deg,rgba(10,134,207,.08),#fff)}
+.wm:not([data-wm="dark"]) .wm-flow-node{background:#fff}
+.wm:not([data-wm="dark"]) .wm-tier{background:#fff}
+.wm:not([data-wm="dark"]) .wm-tier.pop{background:linear-gradient(180deg,rgba(10,157,102,.10),#fff)}
+.wm:not([data-wm="dark"]) .wm-spot-prog{background:rgba(14,18,34,.10)}
+.wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#eef1f6}
+.wm:not([data-wm="dark"]) .wm-photo{box-shadow:0 30px 70px -48px rgba(14,18,34,.5)}
 `
