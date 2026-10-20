@@ -241,6 +241,27 @@ const WD_CSS = `
 .wd-buy .x{margin-left:auto;background:none;border:none;color:var(--mut);padding:4px;border-radius:8px;flex-shrink:0}
 .wd-buy .x:hover{color:var(--tx)}
 
+/* Plan chooser (free signup needs a plan to guide) */
+.wd-sub{margin-top:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:18px;padding:18px 18px 16px;box-shadow:var(--shadow)}
+.wd-sub-head{display:flex;gap:13px;align-items:flex-start}
+.wd-sub-head .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
+.wd-sub-head h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:17px;margin-bottom:5px}
+.wd-sub-head p{color:var(--mut);font-size:13.5px;max-width:62ch}
+.wd-sub-plans{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.wd-sub-plan{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px 14px 13px;cursor:pointer;transition:transform .15s,border-color .15s}
+.wd-sub-plan:hover{transform:translateY(-2px);border-color:var(--em)}
+.wd-sub-plan:disabled{opacity:.7;cursor:default;transform:none}
+.wd-sub-plan.pop{border-color:var(--em)}
+.wd-sub-plan .tag{position:absolute;top:-9px;right:12px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--em);color:#06281c;padding:3px 8px;border-radius:999px}
+.wd-sub-plan .nm{font-family:"Bricolage Grotesque";font-weight:700;font-size:15px}
+.wd-sub-plan .pr{font-family:"Bricolage Grotesque";font-weight:800;font-size:24px;line-height:1}
+.wd-sub-plan .pr i{font-style:normal;font-size:12px;font-weight:600;color:var(--mut);margin-left:2px}
+.wd-sub-plan .hr{font-size:12.5px;color:var(--mut)}
+.wd-sub-plan .go{margin-top:8px;display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--em)}
+.wd-sub-err{margin-top:12px;display:flex;align-items:center;gap:7px;color:var(--warm);font-size:13px}
+.wd-sub-note{margin-top:12px;color:var(--mut);font-size:12.5px}
+@media(max-width:720px){.wd-sub-plans{grid-template-columns:1fr}}
+
 .wd-setup{margin-top:20px;border:1px solid var(--warm-line);background:var(--warm-fill);border-radius:16px;padding:16px}
 .wd-setup-note{color:var(--warm);font-size:13.5px;margin-bottom:10px;font-weight:600}
 
@@ -387,6 +408,13 @@ function Home({ user, onOpen, onSignOut }) {
   const [goal, setGoal] = useState('')
   const [busy, setBusy] = useState(false)
   const [showBuy, setShowBuy] = useState(false)
+  // Billing: a free-signup account can see the dashboard but needs a plan to
+  // guide. Show the chooser up front when the account is not covered, and also
+  // when a gated action comes back 402 needsSubscription.
+  const [needsSub, setNeedsSub] = useState(!(user && user.canUseService))
+  const [pricing, setPricing] = useState(null)
+  const [subBusy, setSubBusy] = useState('')     // the plan whose checkout is starting
+  const [subErr, setSubErr] = useState('')
   const goalRef = useRef(null)
 
   useEffect(() => {
@@ -401,14 +429,36 @@ function Home({ user, onOpen, onSignOut }) {
     api.workList().then((r) => setSessions(r.sessions || [])).catch(() => {}).finally(() => setSessLoaded(true))
     api.workAppStatus().then(setAppStatus).catch(() => {})
     api.workUsage().then(setUsage).catch(() => {})
+    fetch('/api/work/pricing').then((r) => r.json()).then(setPricing).catch(() => {})
   }, [])
   useEffect(() => { load() }, [load])
   const create = async (g) => {
     if (!ready) return
     setBusy(true)
     try { const r = await api.workCreate({ goal: (typeof g === 'string' ? g : goal).trim() || null }); onOpen(r.session.id) }
-    catch { setBusy(false) }
+    catch (e) {
+      setBusy(false)
+      if (e && e.status === 402) setNeedsSub(true)   // no plan: surface the chooser
+    }
   }
+  // Start Stripe Checkout for a plan. On success we are redirected to Stripe; a
+  // missing/incomplete billing config returns a clear message instead.
+  const startCheckout = async (plan) => {
+    setSubErr(''); setSubBusy(plan)
+    try {
+      const r = await api.workCheckout(plan)
+      if (r && r.url) { window.location = r.url; return }
+      setSubErr('Could not start checkout. Please try again.')
+    } catch (e) {
+      setSubErr(e && e.message ? e.message : 'Billing is not available right now.')
+    } finally { setSubBusy('') }
+  }
+  const money = (n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
+  const PLAN_META = [
+    { id: 'basic', name: 'Basic', hrs: 2 },
+    { id: 'advanced', name: 'Advanced', hrs: 4 },
+    { id: 'premium', name: 'Premium', hrs: 6 },
+  ]
   const del = async (id) => { try { await api.workDelete(id); load() } catch {} }
   const pickCat = (c) => { setGoal(c.sample); setTab('dashboard'); setTimeout(() => goalRef.current && goalRef.current.focus(), 60) }
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
@@ -446,6 +496,31 @@ function Home({ user, onOpen, onSignOut }) {
                 ? <div className="wd-plan"><span className="wd-plan-dot" /> {usage.tier} plan &middot; {minsLeft} min of guidance left today</div>
                 : <div className="wd-plan-skel wd-skel" style={{ padding: 0, border: 'none', background: 'var(--track)' }} aria-hidden />}
             </div>
+
+            {needsSub && (
+              <div className="wd-sub" role="note">
+                <div className="wd-sub-head">
+                  <span className="ic"><Rocket size={18} /></span>
+                  <div>
+                    <h3>Choose a plan to start</h3>
+                    <p>Your account is ready. Pick a plan to unlock live guidance. You can change or cancel anytime, and your daily guided hours reset at 11:59 PM ET.</p>
+                  </div>
+                </div>
+                <div className="wd-sub-plans">
+                  {PLAN_META.map((p) => (
+                    <button key={p.id} className={`wd-sub-plan${p.id === 'advanced' ? ' pop' : ''}`} disabled={!!subBusy} onClick={() => startCheckout(p.id)}>
+                      {p.id === 'advanced' && <span className="tag">Most popular</span>}
+                      <span className="nm">{p.name}</span>
+                      <span className="pr">{pricing ? money(pricing.plans[p.id]) : ''}<i>/mo</i></span>
+                      <span className="hr">{p.hrs} hours a day</span>
+                      <span className="go">{subBusy === p.id ? <Loader2 size={15} className="spin" /> : <>Choose {p.name} <ArrowRight size={14} /></>}</span>
+                    </button>
+                  ))}
+                </div>
+                {subErr && <div className="wd-sub-err"><AlertTriangle size={14} /> {subErr}</div>}
+                <div className="wd-sub-note">On a team plan? If your company covers WorkCoPilot, ask your administrator to add you and guidance unlocks automatically.</div>
+              </div>
+            )}
 
             {(showBuy || low) && (
               <div className="wd-buy" role="note">
@@ -1498,7 +1573,21 @@ function NoAccess({ onSignOut }) {
 export default function WorkPage() {
   const [sess, setSess] = useState(undefined)   // undefined=loading; {signedIn, access, user}
   const [openId, setOpenId] = useState(null)
-  useEffect(() => { api.workMe().then(setSess).catch(() => setSess({ signedIn: false, access: false, user: null })) }, [])
+  const loadMe = useCallback(() => api.workMe().then(setSess).catch(() => setSess({ signedIn: false, access: false, user: null })), [])
+  useEffect(() => { loadMe() }, [loadMe])
+  // Coming back from Stripe Checkout (success_url = /work?checkout=success):
+  // re-hydrate so the new plan shows, then drop the query so a refresh is clean.
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      if (sp.get('checkout') === 'success') {
+        loadMe()
+        sp.delete('checkout')
+        const q = sp.toString()
+        window.history.replaceState({}, '', window.location.pathname + (q ? '?' + q : ''))
+      }
+    } catch { /* ignore */ }
+  }, [loadMe])
   const signOut = async () => { try { await api.logout() } catch {} ; window.location.href = '/login' }
   if (sess === undefined) return <div style={{ ...shell, display: 'grid', placeItems: 'center' }}><Loader2 className="spin" /></div>
   if (!sess.signedIn) { try { localStorage.setItem('meet-login-product', 'work') } catch {} ; window.location.href = '/login'; return null }

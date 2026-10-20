@@ -77,6 +77,9 @@ export const api = {
   workAiKey: (body) => req('POST', '/api/work/ai/key', body || {}),
   workAiTest: () => req('POST', '/api/work/ai/test'),
   workAppStatus: () => req('GET', '/api/work/app/status'),
+  // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
+  workCheckout: (plan) => req('POST', '/api/work/checkout', { plan }),
+  workSubscription: () => req('GET', '/api/work/subscription'),
   // sessions. Every free-text field is scrubbed CLIENT-SIDE (clean()) before it
   // leaves the browser, so raw PII/PHI/secrets never reach our server or the AI.
   workCreate: (body) => req('POST', '/api/work/sessions', { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),

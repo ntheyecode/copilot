@@ -2,23 +2,29 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Loader2, Check, MonitorPlay } from 'lucide-react'
 import { useAuth } from '../auth.jsx'
+import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 
 // ---------------------------------------------------------------------------
-// AdmireVeda WorkCoPilot - the product's own sign-in page (/workcopilot/login).
-// A separate, graphical login: a branded product panel on the left, the sign-in
-// form on the right. Reuses the shared auth. Lands you on /work.
+// AdmireVeda WorkCoPilot - the product's own sign-in / sign-up page
+// (/workcopilot). A branded product panel on the left, the form on the right.
+// Free signup gives dashboard access right away. When a plan was chosen on the
+// marketing page (?plan=basic|advanced|premium), Stripe Checkout starts the
+// moment the account is ready. Reuses the shared auth. Lands you on /work.
 // ---------------------------------------------------------------------------
 export default function WorkLogin() {
   const nav = useNavigate()
-  const { user, login, verify } = useAuth()
+  const { user, login, signup } = useAuth()
   const [sp] = useSearchParams()
-  const plan = sp.get('plan') || ''
+  const plan = (sp.get('plan') || '').toLowerCase()
   const planName = { basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }[plan] || ''
 
+  // A chosen plan means a new customer, so default to create-account; otherwise
+  // default to sign-in. The visitor can switch either way.
+  const [mode, setMode] = useState(plan ? 'signup' : 'signin')
   const [uName, setUName] = useState(''); const [uPass, setUPass] = useState('')
-  const [code, setCode] = useState(''); const [stage, setStage] = useState('password')
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  const [checkingOut, setCheckingOut] = useState(false)
 
   useEffect(() => {
     const id = 'wm-fonts'
@@ -28,20 +34,38 @@ export default function WorkLogin() {
       document.head.appendChild(l)
     }
   }, [])
-  useEffect(() => { if (user) nav('/work', { replace: true }) }, [user, nav])
+
+  // Once the account is ready: if a plan was chosen, start Checkout; otherwise
+  // open the dashboard. If billing is not configured, we still open the
+  // dashboard (the plan chooser there explains the next step).
+  useEffect(() => {
+    if (!user || checkingOut) return
+    let cancelled = false
+    const run = async () => {
+      if (plan) {
+        setCheckingOut(true)
+        try {
+          const r = await api.workCheckout(plan)
+          if (!cancelled && r && r.url) { window.location = r.url; return }
+        } catch { /* billing not ready: fall through to the dashboard */ }
+      }
+      if (!cancelled) nav('/work', { replace: true })
+    }
+    run()
+    return () => { cancelled = true }
+  }, [user, plan, checkingOut, nav])
 
   const submit = async (e) => {
     e && e.preventDefault(); setBusy(true); setErr('')
     try {
-      if (stage === 'password') {
-        const r = await login(uName.trim(), uPass)
-        if (r.user) { nav('/work', { replace: true }); return }
-        if (r.twofaRequired) { setStage('code'); return }
-        setErr('Could not sign in.')
-      } else {
-        await verify(code.trim()); nav('/work', { replace: true })
-      }
-    } catch (e2) { setErr(e2.message || 'Could not sign in. Check your details.') } finally { setBusy(false) }
+      const u = uName.trim()
+      if (mode === 'signup') await signup(u, uPass)
+      else await login(u, uPass)
+      // the effect above reacts to `user` and routes to checkout or /work
+    } catch (e2) {
+      setErr(e2.message || (mode === 'signup' ? 'Could not create your account.' : 'Could not sign in. Check your details.'))
+      setBusy(false)
+    }
   }
 
   return (
@@ -71,30 +95,25 @@ export default function WorkLogin() {
         </div>
       </aside>
 
-      {/* Sign-in */}
+      {/* Sign in / create account */}
       <main className="wl-main">
         <div className="wl-card">
           <div className="wl-card-brand"><AVMark size={18} id="avlc" /> WorkCoPilot <span className="wl-by">by AdmireVeda</span></div>
-          <h2>{stage === 'code' ? 'Enter your code' : (planName ? `Sign in to start ${planName}` : 'Sign in')}</h2>
-          <p className="wl-sub">{stage === 'code' ? 'Open your authenticator and enter the 6-digit code.' : 'Welcome back. Pick up right where you left off.'}</p>
+          <h2>{mode === 'signup' ? (planName ? `Create your account for ${planName}` : 'Create your account') : (planName ? `Sign in to start ${planName}` : 'Sign in')}</h2>
+          <p className="wl-sub">{mode === 'signup' ? 'It is free to sign up. Pick a plan when you are ready to start guiding.' : 'Welcome back. Pick up right where you left off.'}</p>
           <form onSubmit={submit}>
-            {stage === 'password' ? (
-              <>
-                <label>Username</label>
-                <input autoFocus value={uName} onChange={(e) => setUName(e.target.value)} autoComplete="username" placeholder="your username" />
-                <label>Password</label>
-                <input type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete="current-password" placeholder="your password" />
-              </>
-            ) : (
-              <>
-                <label>Verification code</label>
-                <input autoFocus inputMode="numeric" maxLength={9} value={code} onChange={(e) => setCode(e.target.value)} placeholder="6-digit code" />
-              </>
-            )}
+            <label>Username</label>
+            <input autoFocus value={uName} onChange={(e) => setUName(e.target.value)} autoComplete="username" placeholder="your username" />
+            <label>Password</label>
+            <input type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} placeholder={mode === 'signup' ? 'choose a password (6+ characters)' : 'your password'} />
             {err && <div className="wl-err">{err}</div>}
-            <button className="wl-cta" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wl-spin" /> : null} {stage === 'code' ? 'Verify' : 'Sign in'} <ArrowRight size={16} /></button>
+            <button className="wl-cta" type="submit" disabled={busy || checkingOut}>{(busy || checkingOut) ? <Loader2 size={16} className="wl-spin" /> : null} {mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={16} /></button>
           </form>
-          <div className="wl-foot">New here? Ask your administrator for access. <a href="/login">Another product?</a></div>
+          <div className="wl-foot">
+            {mode === 'signup'
+              ? <>Already have an account? <a href="#signin" onClick={(e) => { e.preventDefault(); setErr(''); setMode('signin') }}>Sign in</a></>
+              : <>New here? <a href="#signup" onClick={(e) => { e.preventDefault(); setErr(''); setMode('signup') }}>Create an account</a></>}
+          </div>
           <div className="wl-legal">Lawful, legitimate work only. Harmful or illegal requests are declined.</div>
         </div>
       </main>

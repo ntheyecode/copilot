@@ -25,6 +25,7 @@ import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
+import { registerWorkBillingRoutes, workStripeWebhook } from './billing.js'
 import { scrubSensitive, redactionSummary } from './work-scrub.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -40,6 +41,10 @@ const WORK_TAVILY_KEY = process.env.WORK_TAVILY_KEY || ''
 
 const app = express()
 app.disable('x-powered-by')
+// Stripe webhook MUST read the RAW body to verify the signature, so it is
+// mounted BEFORE the json parser (otherwise express.json consumes the body and
+// the signature check fails). Guarded so a missing key never crashes anything.
+app.post('/api/work/stripe/webhook', express.raw({ type: '*/*' }), workStripeWebhook({ store }))
 app.use(express.json({ limit: '16mb' })) // generous: pasted base64 frames + uploaded reference docs (base64)
 
 // express-session's default MemoryStore does not survive a restart, which would
@@ -96,6 +101,17 @@ function requireWorkAuth(req, res, next) {
   }
   req.user = u
   req.workUser = store.ensureWorkUser(u.id, u.username)
+  next()
+}
+// Billing gate for the "use the service" actions (start a session + the
+// guidance calls). Free signup still gives dashboard access, so /me, /signup
+// and viewing are never gated - only the actions that actually guide. Runs
+// AFTER requireWorkAuth (needs req.workUser). Company members are covered by the
+// company; a personal account needs a live plan.
+function requireWorkSubscription(req, res, next) {
+  if (!store.userCanUseService(req.workUser.id)) {
+    return res.status(402).json({ error: 'A subscription is needed to start guiding.', needsSubscription: true })
+  }
   next()
 }
 const ADMIN_ROLES = new Set(['admin', 'superadmin'])
@@ -390,7 +406,7 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 // ===========================================================================
 // Sessions
 // ===========================================================================
-app.post('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
+app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
   const { title, goal } = req.body || {}
   res.json({ session: store.createWorkSession(req.workUser.id, { title, goal }) })
 }))
@@ -410,7 +426,7 @@ app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
 }))
 
 // Plan: turn the goal (plus an optional first frame) into the ordered checklist.
-app.post('/api/work/sessions/:id/plan', requireWorkAuth, async (req, res) => {
+app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription, async (req, res) => {
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
@@ -467,7 +483,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, async (req, res) => {
 // Watch: the continuous navigator. Reads the WHOLE screen against the WHOLE
 // checklist every changed frame, relocates the user, advances the plan, and
 // returns a fresh screen-specific instruction for the step they are actually on.
-app.post('/api/work/sessions/:id/watch', requireWorkAuth, async (req, res) => {
+app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscription, async (req, res) => {
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
@@ -503,7 +519,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, async (req, res) => {
 })
 
 // Ask: on-demand "what is this / what do I do here", grounded in the goal + frame.
-app.post('/api/work/sessions/:id/ask', requireWorkAuth, async (req, res) => {
+app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription, async (req, res) => {
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
@@ -532,7 +548,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, async (req, res) => {
 
 // Drill-down: expand ONE action ("how do I do this?") into a detailed sub-step
 // checklist, grounded + scrubbed, stored under the step so it is part of the goal.
-app.post('/api/work/sessions/:id/howto', requireWorkAuth, async (req, res) => {
+app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscription, async (req, res) => {
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
@@ -765,6 +781,7 @@ registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requi
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
+registerWorkBillingRoutes(app, { store, requireWorkAuth, wrap })
 
 // Unknown API route -> JSON 404 (never the SPA HTML).
 app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' }))
