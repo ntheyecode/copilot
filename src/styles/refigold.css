@@ -1,0 +1,1193 @@
+/* ==========================================================================
+   Refigoldmine - component styles (login, modal, rich editor, groups, viewer)
+   Reuses the Yerra design tokens; adds only what the new surfaces need.
+   ========================================================================== */
+
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---- alerts / hints ---------------------------------------------------- */
+.alert-error {
+  background: var(--danger-soft); color: var(--danger);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: var(--r-sm); padding: 10px 12px; font-size: var(--fs-sm);
+  margin-bottom: var(--sp-4); font-weight: 550;
+}
+.seed-hint {
+  margin-top: 22px; padding: 12px 14px; border-radius: var(--r-sm);
+  background: var(--surface-2); border: 1px dashed var(--border-strong); font-size: var(--fs-sm);
+}
+.seed-hint code {
+  background: var(--surface-3); padding: 1px 7px; border-radius: 6px;
+  font-family: var(--font-mono, ui-monospace, monospace); color: var(--brand-600); font-weight: 650;
+}
+
+/* ---- topbar title ------------------------------------------------------ */
+.topbar-title { display: flex; flex-direction: column; line-height: 1.2; margin-left: 4px; }
+.topbar-title b { font-size: var(--fs-md); }
+
+/* ---- role picker ------------------------------------------------------- */
+.role-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; }
+.role-opt {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  padding: 12px; border: 1.5px solid var(--border-strong); border-radius: var(--r-md);
+  background: var(--surface); color: var(--text);
+  transition: border-color var(--dur), background var(--dur), transform var(--dur);
+}
+.role-opt:hover { transform: translateY(-1px); }
+.role-opt div { display: flex; flex-direction: column; line-height: 1.25; }
+.role-opt b { font-size: var(--fs-sm); }
+.role-opt span { font-size: var(--fs-xs); color: var(--text-muted); }
+.role-opt.on { border-color: var(--brand-500); background: var(--brand-soft); }
+.role-opt.on b, .role-opt.on svg { color: var(--brand-600); }
+
+/* ---- modal ------------------------------------------------------------- */
+.modal-backdrop {
+  position: fixed; inset: 0; z-index: 100;
+  background: color-mix(in srgb, #0b0e1a 55%, transparent);
+  backdrop-filter: blur(3px);
+  display: grid; place-items: center; padding: 24px;
+  animation: mb-in 160ms ease;
+}
+@keyframes mb-in { from { opacity: 0; } to { opacity: 1; } }
+.modal-card {
+  width: 100%; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  display: flex; flex-direction: column; max-height: calc(100vh - 48px);
+  animation: mc-in 200ms var(--ease);
+}
+@keyframes mc-in { from { opacity: 0; transform: translateY(12px) scale(0.98); } to { opacity: 1; transform: none; } }
+.modal-sm { max-width: 440px; }
+.modal-md { max-width: 640px; }
+.modal-lg { max-width: 860px; }
+.modal-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  padding: 18px 20px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: var(--fs-lg); }
+.modal-body { padding: 20px; overflow-y: auto; }
+.modal-foot {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 14px 20px; border-top: 1px solid var(--border);
+}
+
+/* viewer body: a fixed, comfortable reading square that scrolls */
+.viewer-body { min-height: 220px; max-height: min(70vh, 620px); }
+
+/* ---- rich editor ------------------------------------------------------- */
+.rich-editor { border: 1px solid var(--border-strong); border-radius: var(--r-md); overflow: hidden; background: var(--surface); }
+.re-toolbar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 2px;
+  padding: 6px 8px; background: var(--surface-2); border-bottom: 1px solid var(--border);
+}
+.re-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 30px; min-width: 30px; padding: 0 6px; border-radius: 7px;
+  background: transparent; border: 1px solid transparent; color: var(--text-muted);
+  position: relative; transition: background var(--dur), color var(--dur);
+}
+.re-btn:hover { background: var(--surface-3); color: var(--text); }
+.re-color input[type="color"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.re-sep { width: 1px; height: 20px; background: var(--border-strong); margin: 0 4px; }
+.re-select {
+  height: 30px; padding: 0 6px; border-radius: 7px; border: 1px solid transparent;
+  background: transparent; color: var(--text); font-size: var(--fs-sm); cursor: pointer; max-width: 118px;
+}
+.re-select:hover { background: var(--surface-3); }
+.re-select-sm { max-width: 74px; }
+.re-surface {
+  padding: 16px 18px; outline: none; font-size: var(--fs-base); line-height: 1.65; color: var(--text);
+  overflow-y: auto; max-height: 46vh;
+}
+.re-surface:empty::before { content: attr(data-placeholder); color: var(--text-faint); }
+.re-surface img { max-width: 100%; border-radius: 8px; margin: 6px 0; }
+.re-surface h2 { font-size: 1.35em; margin: 10px 0 4px; }
+.re-surface h3 { font-size: 1.15em; margin: 8px 0 4px; }
+.re-surface blockquote { border-left: 3px solid var(--brand-500); margin: 8px 0; padding: 2px 12px; color: var(--text-muted); }
+.re-surface pre { background: var(--surface-3); padding: 10px 12px; border-radius: 8px; overflow-x: auto; font-family: ui-monospace, monospace; font-size: 0.9em; }
+.re-surface ul, .re-surface ol { padding-left: 22px; margin: 6px 0; }
+.re-surface a { color: var(--brand-600); text-decoration: underline; }
+
+/* ---- rendered tip content (viewer) ------------------------------------- */
+.tip-content { font-size: var(--fs-base); line-height: 1.7; color: var(--text); word-break: break-word; }
+.tip-content img { max-width: 100%; border-radius: 10px; margin: 8px 0; }
+.tip-content h2 { font-size: 1.4em; margin: 14px 0 6px; }
+.tip-content h3 { font-size: 1.18em; margin: 12px 0 6px; }
+.tip-content p { margin: 8px 0; }
+.tip-content ul, .tip-content ol { padding-left: 22px; margin: 8px 0; }
+.tip-content blockquote { border-left: 3px solid var(--brand-500); margin: 10px 0; padding: 4px 14px; color: var(--text-muted); }
+.tip-content pre { background: var(--surface-3); padding: 12px 14px; border-radius: 8px; overflow-x: auto; font-family: ui-monospace, monospace; }
+.tip-content a { color: var(--brand-600); text-decoration: underline; }
+.tip-content table { border-collapse: collapse; width: 100%; }
+.tip-content td, .tip-content th { border: 1px solid var(--border); padding: 6px 10px; }
+
+/* ---- groups + links ---------------------------------------------------- */
+.group-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: var(--sp-5); }
+.group-card { display: flex; flex-direction: column; transition: box-shadow var(--dur), transform var(--dur); }
+.group-card:hover { box-shadow: var(--shadow-md); }
+.grp-ic {
+  display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0;
+  border-radius: 9px; background: var(--brand-soft); color: var(--brand-600);
+}
+.tip-list { display: flex; flex-direction: column; gap: 2px; }
+.tip-row {
+  display: flex; align-items: center; gap: 6px; border-radius: var(--r-sm);
+  transition: background var(--dur);
+}
+.tip-row:hover { background: var(--surface-2); }
+.tip-link {
+  flex: 1; min-width: 0; display: flex; align-items: center; gap: 9px;
+  padding: 9px 10px; background: transparent; border: 0; text-align: left;
+  color: var(--text); font-size: var(--fs-base); font-weight: 550; cursor: pointer;
+}
+.tip-link span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tip-link svg { color: var(--brand-500); flex-shrink: 0; }
+.tip-link:hover { color: var(--brand-600); }
+.tip-actions { display: flex; gap: 0; opacity: 0; transition: opacity var(--dur); padding-right: 4px; }
+.tip-row:hover .tip-actions { opacity: 1; }
+
+/* ---- empty state ------------------------------------------------------- */
+.empty-state { text-align: center; padding: 44px 24px; }
+.empty-state .stat-ic { margin: 0 auto; }
+
+@media (max-width: 560px) {
+  .role-pick { grid-template-columns: 1fr; }
+  .group-grid { grid-template-columns: 1fr; }
+  .topbar-title { display: none; }
+}
+
+/* ==========================================================================
+   Storefront - green group bands with a multi-column grid of clickable tooltips
+   ========================================================================== */
+.grp-band {
+  border: 1px solid var(--border); border-radius: var(--r-lg); overflow: hidden;
+  background: var(--surface); box-shadow: var(--shadow-sm); margin-bottom: var(--sp-5);
+}
+.grp-band-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 13px 18px; color: #fff;
+  background: linear-gradient(90deg, var(--brand-700), var(--brand-500));
+}
+.grp-band-head svg { color: #fff; }
+.grp-band-title {
+  color: #fff; font-size: var(--fs-md); font-weight: 650;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.grp-band-count {
+  background: rgba(255, 255, 255, 0.22); color: #fff; border-radius: 999px;
+  padding: 1px 10px; font-size: var(--fs-xs); font-weight: 700; flex-shrink: 0;
+}
+.grp-band-add {
+  display: inline-flex; align-items: center; gap: 5px; height: 30px; padding: 0 12px;
+  border-radius: var(--r-sm); background: rgba(255, 255, 255, 0.18); color: #fff;
+  font-weight: 600; font-size: var(--fs-sm); transition: background var(--dur);
+}
+.grp-band-add:hover { background: rgba(255, 255, 255, 0.30); }
+.grp-band-ic { color: #fff; }
+.grp-band-ic:hover { background: rgba(255, 255, 255, 0.18); }
+.grp-empty { padding: 16px 18px; color: var(--text-muted); font-size: var(--fs-sm); }
+.linklike { background: none; border: 0; color: var(--brand-600); font-weight: 600; cursor: pointer; padding: 0; }
+
+/* multi-column table of clickable tooltip cells (wraps ~4-5 across) */
+.store-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 10px; padding: 16px 18px;
+}
+.store-cell-wrap { position: relative; }
+.store-cell {
+  width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+  border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface);
+  text-align: left; cursor: pointer; color: var(--text);
+  transition: border-color var(--dur), background var(--dur), transform var(--dur), box-shadow var(--dur);
+}
+.store-cell:hover { border-color: var(--brand-500); background: var(--brand-soft); transform: translateY(-1px); box-shadow: var(--shadow-sm); }
+.store-ic {
+  display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0;
+  border-radius: 8px; background: var(--brand-soft); color: var(--brand-600); transition: background var(--dur);
+}
+.store-cell:hover .store-ic { background: #fff; }
+.store-title { flex: 1; min-width: 0; font-weight: 600; font-size: var(--fs-base); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.store-cell-actions {
+  position: absolute; top: 6px; right: 6px; display: flex; gap: 2px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2px;
+  box-shadow: var(--shadow-sm); opacity: 0; transition: opacity var(--dur);
+}
+.store-cell-wrap:hover .store-cell-actions { opacity: 1; }
+.cell-act {
+  display: inline-flex; width: 24px; height: 24px; align-items: center; justify-content: center;
+  border-radius: 6px; background: transparent; border: 0; color: var(--text-muted); cursor: pointer;
+}
+.cell-act:hover { background: var(--surface-3); color: var(--text); }
+.cell-del:hover { color: var(--danger); }
+
+@media (max-width: 560px) { .store-grid { grid-template-columns: 1fr 1fr; } }
+
+/* ---- screen-share guard ------------------------------------------------ */
+.btn-guard-on { background: var(--brand-500); color: #fff; }
+.btn-guard-on:hover { background: var(--brand-600); }
+.guard-cover {
+  position: fixed; inset: 0; z-index: 500;
+  background: var(--bg);
+  display: grid; place-items: center; padding: 24px;
+  animation: mb-in 120ms ease;
+}
+.guard-cover-inner {
+  text-align: center; max-width: 420px;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+  box-shadow: var(--shadow-lg); padding: 34px 30px;
+}
+.guard-cover-inner h2 { font-size: var(--fs-lg); margin-top: 12px; }
+.guard-cover-inner p { margin-top: 8px; font-size: var(--fs-sm); }
+.guard-lock {
+  display: inline-flex; align-items: center; justify-content: center; width: 64px; height: 64px;
+  border-radius: 50%; background: var(--brand-soft); color: var(--brand-600);
+}
+
+/* ---- admin AI settings ------------------------------------------------- */
+.note-band {
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 16px; margin-top: var(--sp-4);
+  background: var(--brand-soft); border: 1px solid color-mix(in srgb, var(--brand-500) 25%, transparent);
+  border-radius: var(--r-md); font-size: var(--fs-sm); color: var(--text);
+}
+.note-band svg { color: var(--brand-600); flex-shrink: 0; margin-top: 1px; }
+.ai-provider { transition: border-color var(--dur), box-shadow var(--dur); }
+.ai-provider.active { border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-soft); }
+.ai-logo {
+  display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; flex-shrink: 0;
+  border-radius: 11px; background: linear-gradient(135deg, var(--brand-500), var(--accent-500)); color: #fff;
+}
+.hint code, .note-band code { background: var(--surface-3); padding: 1px 6px; border-radius: 5px; font-family: ui-monospace, monospace; font-size: 0.9em; }
+
+/* ---- Listen & Respond -------------------------------------------------- */
+.lr-card { overflow: hidden; }
+.lr-off { border-style: dashed; }
+.lr-badge {
+  display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; flex-shrink: 0;
+  border-radius: 10px; background: linear-gradient(135deg, var(--brand-500), var(--accent-500)); color: #fff;
+}
+.lr-head { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 18px; background: transparent; border: 0; cursor: pointer; }
+.lr-head:hover { background: var(--surface-2); }
+.lr-body { padding: 4px 18px 18px; border-top: 1px solid var(--border); }
+.lr-controls { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; padding-top: 14px; }
+.lr-mic {
+  display: inline-flex; align-items: center; gap: 9px; height: 46px; padding: 0 20px;
+  border-radius: var(--r-full); border: 0; cursor: pointer; font-weight: 650; font-size: var(--fs-md);
+  background: var(--brand-500); color: #fff; transition: background var(--dur), transform var(--dur);
+}
+.lr-mic:hover { background: var(--brand-600); }
+.lr-mic:active { transform: translateY(1px); }
+.lr-mic:disabled { opacity: 0.7; cursor: default; }
+.lr-mic.on { background: var(--danger); position: relative; }
+.lr-pulse { width: 9px; height: 9px; border-radius: 50%; background: #fff; animation: lr-blink 1s ease-in-out infinite; }
+@keyframes lr-blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.lr-orsep { display: flex; align-items: center; gap: 10px; color: var(--text-faint); font-size: var(--fs-xs); margin: 16px 0 12px; }
+.lr-orsep::before, .lr-orsep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.lr-result { margin-top: 16px; }
+.lr-transcript { font-size: var(--fs-sm); color: var(--text-muted); margin-bottom: 10px; }
+.lr-answer {
+  background: var(--surface-2); border: 1px solid var(--border); border-left: 3px solid var(--brand-500);
+  border-radius: var(--r-md); padding: 14px 16px; font-size: var(--fs-base); line-height: 1.65; white-space: pre-wrap;
+}
+
+.mb-6 { margin-bottom: var(--sp-6); }
+
+.modeltag {
+  display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-xs); font-weight: 600;
+  color: var(--brand-600); background: var(--brand-soft); border: 0; border-radius: 999px;
+  padding: 2px 9px; cursor: pointer; transition: background var(--dur);
+}
+.modeltag:hover:not(:disabled) { background: color-mix(in srgb, var(--brand-500) 20%, transparent); }
+.modeltag:disabled { opacity: 0.5; cursor: default; color: var(--text-muted); background: var(--surface-3); }
+
+/* ---- session documents ------------------------------------------------- */
+.doc-list { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.doc-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border: 1px solid var(--border); border-radius: var(--r-sm); background: var(--surface); }
+.doc-ic { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; flex-shrink: 0; border-radius: 7px; background: var(--brand-soft); color: var(--brand-600); }
+/* Show the FULL file name - wrap it instead of truncating with an ellipsis, so
+   the operator can see exactly what they added. Size sits under the name. */
+.doc-name { flex: 1; min-width: 0; font-weight: 600; font-size: var(--fs-sm); line-height: 1.35; overflow-wrap: anywhere; word-break: break-word; }
+.doc-row .doc-size { font-size: var(--fs-xs); color: var(--text-muted); white-space: nowrap; }
+.doc-row .icon-btn { flex-shrink: 0; margin-left: auto; }
+.doc-meter { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.doc-meter > span { display: block; height: 100%; background: var(--brand-500); border-radius: 999px; transition: width var(--dur); }
+.doc-note { display: flex; align-items: flex-start; gap: 6px; margin-top: 14px; font-size: var(--fs-xs); color: var(--text-muted); }
+.doc-note svg { flex-shrink: 0; margin-top: 1px; color: var(--brand-600); }
+
+/* ---- Listen & Respond conversation thread ------------------------------ */
+.lr-thread { display: flex; flex-direction: column; gap: 12px; max-height: 46vh; overflow-y: auto; padding: 14px 2px 6px; }
+.lr-msg { display: flex; flex-direction: column; gap: 3px; }
+.lr-msg-role { font-size: var(--fs-xs); font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--text-faint); }
+.lr-msg.user { align-items: flex-end; }
+.lr-msg.user .lr-msg-role { text-align: right; }
+.lr-msg-user {
+  max-width: 85%; background: var(--brand-500); color: #fff; border-radius: 12px 12px 3px 12px;
+  padding: 10px 14px; font-size: var(--fs-base); line-height: 1.55;
+}
+.lr-msg.assistant .lr-answer { max-width: 92%; border-radius: 3px 12px 12px 12px; margin: 0; }
+
+/* ---- license activation / locked screen -------------------------------- */
+.license-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; background: var(--bg); }
+.license-card {
+  width: 100%; max-width: 460px; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg); padding: 34px 30px; text-align: center;
+}
+.license-ic {
+  display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px;
+  border-radius: 16px; background: var(--brand-soft); color: var(--brand-600);
+}
+.license-ic.locked { background: var(--danger-soft); color: var(--danger); }
+.license-card .label { text-align: left; }
+.mid-row { display: flex; align-items: center; gap: 8px; }
+.mid-code {
+  flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; text-align: left;
+  background: var(--surface-3); border: 1px solid var(--border); border-radius: var(--r-sm);
+  padding: 8px 10px; font-family: ui-monospace, monospace; font-size: 11px; color: var(--text);
+}
+
+/* ---- saved AI instructions panel --------------------------------------- */
+.saved-prompt { margin-top: 16px; border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+.saved-prompt-head {
+  display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: var(--brand-soft);
+  color: var(--brand-600); font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+}
+.saved-prompt-body { padding: 12px 14px; font-size: var(--fs-sm); line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+
+/* ---- AI connection test modal ------------------------------------------ */
+.test-state { text-align: center; padding: 20px 8px; }
+.test-ic { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 56px; border-radius: 50%; }
+.test-ic.ok { background: var(--success-soft); color: var(--success); }
+.test-ic.err { background: var(--danger-soft); color: var(--danger); }
+.test-sample {
+  margin-top: 14px; padding: 10px 14px; background: var(--surface-2); border: 1px solid var(--border);
+  border-left: 3px solid var(--brand-500); border-radius: var(--r-sm); font-size: var(--fs-sm); font-style: italic; color: var(--text-muted);
+}
+
+/* ---- desktop floating orb (Electron only - window itself is shrunk) ---- */
+.orb-root {
+  position: fixed; inset: 0; display: grid; place-items: center;
+  background: transparent; -webkit-app-region: drag; z-index: 999;
+}
+.orb-btn {
+  position: relative; width: 64px; height: 64px; border-radius: 50%; border: 0;
+  display: grid; place-items: center; cursor: pointer; -webkit-app-region: no-drag;
+  background: linear-gradient(135deg, var(--brand-500), var(--accent-500)); color: #fff;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.35); transition: transform 120ms ease;
+}
+.orb-btn:hover { transform: scale(1.06); }
+.orb-btn.thinking { cursor: default; }
+.orb-ring {
+  position: absolute; inset: -6px; border-radius: 50%; border: 2px solid var(--danger);
+  animation: orb-pulse 1.4s ease-out infinite;
+}
+@keyframes orb-pulse {
+  0% { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+/* top-center modal variant (e.g. the tooltip viewer) */
+.modal-backdrop-top { align-items: flex-start; padding-top: 88px; }
+
+/* ---- floating AI assistant panel - top-center rectangle (global trigger) */
+.floater-trigger-on { background: var(--brand-soft); color: var(--brand-600); }
+.floater-panel {
+  position: fixed; top: 88px; left: 50%; transform: translateX(-50%); z-index: 300;
+  width: min(460px, calc(100vw - 32px)); max-height: calc(100vh - 130px);
+  transition: opacity 120ms ease;
+}
+.floater-panel-inner {
+  position: relative; max-height: calc(100vh - 130px); overflow-y: auto;
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg);
+  background: var(--surface); border: 1px solid var(--border);
+}
+.floater-panel-bar {
+  display: flex; align-items: center; gap: 10px; padding: 8px 44px 8px 14px;
+  border-bottom: 1px solid var(--border); background: var(--surface-2);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+}
+.floater-opacity-slider { flex: 1; accent-color: var(--brand-500); cursor: pointer; }
+.floater-drag {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 6px; border: 0; background: transparent;
+  color: var(--text-muted); cursor: grab; touch-action: none; flex-shrink: 0;
+}
+.floater-drag:hover { background: var(--surface-3); color: var(--text); }
+.floater-drag:active { cursor: grabbing; }
+.floater-close {
+  position: absolute; top: 8px; right: 10px; z-index: 2;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%; border: 0; cursor: pointer;
+  background: var(--surface-3); color: var(--text-muted);
+}
+.floater-close:hover { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.floater-panel-inner .lr-card { border: 0; box-shadow: none; border-radius: 0; margin-bottom: 0; }
+@media (max-width: 560px) { .floater-panel { top: 64px; left: 12px; right: 12px; width: auto; transform: none; } }
+
+.lr-answer p { margin: 0 0 6px; }
+.lr-answer p:last-child { margin-bottom: 0; }
+.lr-answer-list { margin: 4px 0; padding-left: 20px; }
+.lr-answer-list li { margin: 2px 0; }
+
+/* ---- Electron AI floater window (route /floater) ------------------------ */
+body.floater-mode { background: transparent !important; }
+body.floater-mode #root { background: transparent; }
+/* The assistant window is a portrait rectangle: its own title bar on top, then
+   the conversation filling the rest. Column layout (this was a row, which put
+   the bar beside the card instead of above it). The min-height:0 chain is what
+   lets the thread scroll instead of stretching the window. */
+.floater-wrap {
+  height: 100vh; display: flex; flex-direction: column;
+  padding: 10px; background: transparent; overflow: hidden;
+}
+.floater-wrap .lr-card {
+  width: 100%; margin-bottom: 0; flex: 1 1 auto; min-height: 0;
+  display: flex; flex-direction: column;
+}
+.floater-wrap .lr-body { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+.floater-wrap .lr-thread { flex: 1 1 auto; min-height: 0; max-height: none; }
+.floater-wrap .lr-controls { flex: 0 0 auto; }
+/* Labelled upload slots. Three columns on a desktop, stacking on narrow
+   screens - each slot states what it is FOR, because the kind changes how the
+   assistant uses the document, not just how it is filed. */
+.doc-slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(248px, 1fr)); gap: 14px; }
+.doc-slot { border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--surface); transition: border-color var(--dur), box-shadow var(--dur); }
+.doc-slot:hover { border-color: var(--brand-400, var(--brand-500)); box-shadow: 0 1px 4px rgba(16,24,40,.06); }
+.doc-slot.filled { border-color: var(--brand-500); box-shadow: inset 3px 0 0 var(--brand-500); }
+.doc-slot-head { display: flex; align-items: center; gap: 8px; min-height: 26px; }
+.doc-slot-ic { display: inline-flex; flex-shrink: 0; color: var(--brand-500); }
+.doc-slot-label { flex: 1; min-width: 0; font-weight: 600; font-size: var(--fs-sm); line-height: 1.3; }
+.doc-slot-status { margin-left: auto; flex-shrink: 0; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 600; letter-spacing: .01em; padding: 3px 9px; border-radius: 999px; background: var(--surface-3); color: var(--text-muted); border: 1px solid var(--border); }
+.doc-slot-status.is-added { background: rgba(22,163,74,.12); color: var(--success, #16a34a); border-color: rgba(22,163,74,.3); }
+.doc-slot-why { line-height: 1.5; }
+.doc-slot-btn { align-self: stretch; justify-content: center; margin-top: auto; }
+/* The answer being written right now. Given breathing room above so that when
+   it is scrolled to the top of the panel it does not sit flush against the
+   edge, and a left rule so it reads as the current one at a glance. */
+.fp-live { scroll-margin-top: 8px; border-left: 2px solid var(--brand-500); padding-left: 10px; margin-left: -12px; position: relative; }
+/* Careful-mode (gap-probe -> stronger model) cue: red left border + a small red
+   "thinking…" dot top-right, telling the candidate to keep talking with the
+   filler for a beat while the more thorough answer loads. */
+.fp-live.fp-deep { border-left-color: #e5484d; }
+.fp-deepdot { position: absolute; top: -2px; right: 0; display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; letter-spacing: .02em; color: #e5484d; text-transform: lowercase; }
+.fp-deepdot-dot { width: 8px; height: 8px; border-radius: 50%; background: #e5484d; box-shadow: 0 0 0 0 rgba(229,72,77,0.6); animation: fp-deeppulse 1.1s ease-out infinite; }
+@keyframes fp-deeppulse { 0% { box-shadow: 0 0 0 0 rgba(229,72,77,0.55); } 70% { box-shadow: 0 0 0 7px rgba(229,72,77,0); } 100% { box-shadow: 0 0 0 0 rgba(229,72,77,0); } }
+.fp-thinking { font-size: 12px; color: var(--text-muted); font-style: italic; }
+/* The filler opener reads like the answer (the candidate speaks it), not muted. */
+.fp-filler { display: inline; }
+
+/* Assistant readiness alert. Amber when the assistant still works but a
+   capability is missing; red when nothing will work at all. */
+.floater-alert { border-radius: 8px; padding: 8px 10px; margin: 0 0 8px; font-size: 12px; line-height: 1.45; border: 1px solid; }
+.floater-alert.warn { border-color: var(--warning); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.floater-alert.bad  { border-color: var(--danger);  background: color-mix(in srgb, var(--danger) 14%, transparent); }
+.floater-alert .fa-head { display: flex; align-items: center; gap: 6px; letter-spacing: .03em; }
+.floater-alert .fa-body { margin-top: 5px; color: var(--text); }
+.floater-alert .fa-tip { margin-top: 6px; padding-top: 6px; border-top: 1px dashed var(--border); color: var(--text-muted); }
+
+/* Setup wizard: three steps, reusing the real pages. */
+.wiz { display: flex; flex-direction: column; gap: 16px; }
+.wiz-steps { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; }
+.wiz-step-btn { display: flex; align-items: flex-start; gap: 10px; width: 100%; text-align: left; background: transparent; border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; color: var(--text); cursor: pointer; }
+.wiz-step-btn:disabled { cursor: default; }
+.wiz-dot { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border-strong); color: var(--text-muted); }
+.wiz-label { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.wiz-label b { font-size: 13px; }
+.wiz-label em { font-style: normal; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+.wiz-step.now .wiz-step-btn { border-color: var(--brand-500); }
+.wiz-step.now .wiz-dot { border-color: var(--brand-500); color: var(--brand-600); background: var(--brand-soft); }
+.wiz-step.done .wiz-dot { border-color: var(--success, #16a34a); color: var(--success, #16a34a); }
+.wiz-step.todo .wiz-step-btn { opacity: .6; }
+.wiz-nav { display: flex; align-items: center; gap: 10px; }
+.wiz-done { text-align: center; }
+.wiz-done h2 { margin: 10px 0 6px; font-size: 20px; }
+.wiz-done p { color: var(--text-muted); max-width: 52ch; margin: 0 auto 16px; line-height: 1.6; }
+.wiz-done-ic { display: inline-flex; color: var(--brand-600); }
+
+/* Help guide + New Interview review. */
+.help-card { max-width: 820px; }
+.help-h2 { font-size: 17px; margin: 0 0 6px; }
+.help-step { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.help-step:first-of-type { border-top: 0; }
+.help-ic { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; flex-shrink: 0; border-radius: 9px; background: var(--brand-soft); color: var(--brand-600); }
+.help-qa { padding: 10px 0; border-top: 1px solid var(--border); }
+.help-foot { display: flex; align-items: center; gap: 8px; margin-top: 20px; padding-top: 14px; border-top: 1px dashed var(--border); font-size: 12px; color: var(--text-muted); }
+.ni-checklist { display: flex; flex-direction: column; gap: 8px; }
+.ni-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.ni-item.ok { color: var(--success); }
+.ni-item.warn { color: var(--warning); }
+.ni-item.muted { color: var(--text-muted); }
+.ni-links { display: flex; gap: 16px; margin-top: 14px; }
+.ni-start { display: flex; align-items: center; gap: 14px; margin-top: 20px; flex-wrap: wrap; }
+
+/* Interview Practice - live conversation + report. */
+.prac-grid { display: grid; grid-template-columns: 1fr; gap: 16px; }
+@media (min-width: 900px) { .prac-grid.has-cam { grid-template-columns: 1fr 320px; } }
+.prac-convo { display: flex; flex-direction: column; min-height: 420px; }
+.prac-status { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+.prac-roletag { margin-left: auto; font-size: 11px; text-transform: capitalize; border: 1px solid var(--brand-500); color: var(--brand-600); border-radius: 999px; padding: 2px 9px; }
+.prac-roletag + .prac-timer { margin-left: 10px; }
+
+/* AI-not-configured overlay: sits ON TOP of the practice stage and blocks it. */
+.prac-aiblock { position: absolute; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center;
+  background: color-mix(in srgb, var(--bg, #fff) 72%, transparent); backdrop-filter: blur(3px); border-radius: 14px; }
+.prac-aiblock-card { display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  padding: 28px 32px; background: var(--surface, #fff); border: 1px solid var(--border, #e5e7eb);
+  border-radius: 14px; box-shadow: 0 12px 40px rgba(0,0,0,.16); max-width: 480px; }
+.prac-aiblock-title { font-size: 20px; font-weight: 700; color: var(--danger); letter-spacing: .3px; }
+.prac-timer { margin-left: auto; font-variant-numeric: tabular-nums; font-weight: 600; }
+.prac-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--text-faint); flex-shrink: 0; }
+.prac-dot.ai { background: var(--brand-500); animation: pulse 1.2s infinite; }
+.prac-dot.listening { background: var(--success, #16a34a); animation: pulse 1.2s infinite; }
+.prac-dot.thinking { background: var(--warning); }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
+.prac-thread { display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1; padding-right: 4px; }
+.prac-msg { display: flex; gap: 10px; align-items: flex-start; }
+.prac-msg.candidate { flex-direction: row-reverse; }
+.prac-ava { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex-shrink: 0; border-radius: 50%; }
+.prac-msg.interviewer .prac-ava { background: var(--brand-soft); color: var(--brand-600); }
+.prac-msg.candidate .prac-ava { background: var(--surface-3); color: var(--text); }
+.prac-bubble { max-width: 78%; padding: 10px 13px; border-radius: 12px; font-size: 14px; line-height: 1.55; }
+.prac-msg.interviewer .prac-bubble { background: var(--surface-2); border-top-left-radius: 3px; }
+.prac-msg.candidate .prac-bubble { background: var(--brand-500); color: #fff; border-top-right-radius: 3px; }
+.prac-bubble.interim { opacity: .6; font-style: italic; }
+/* The AI-suggested model answer the candidate reads aloud - own accent so it is
+   clearly the answer, not the interviewer's line. */
+.prac-msg.model { flex-direction: row-reverse; }
+.prac-msg.model .prac-ava { background: var(--accent-soft, var(--brand-soft)); color: var(--accent-600, var(--brand-600)); }
+.prac-msg.model .prac-bubble { background: var(--accent-soft, var(--brand-soft)); border: 1px solid color-mix(in srgb, var(--accent-500, var(--brand-500)) 35%, transparent); border-top-right-radius: 3px; max-width: 82%; }
+.prac-answer-label { font-size: 11px; font-weight: 600; color: var(--accent-600, var(--brand-600)); margin-bottom: 5px; text-transform: uppercase; letter-spacing: .3px; }
+.prac-setup { display: flex; gap: 26px; margin-top: 16px; flex-wrap: wrap; align-items: flex-start; }
+.prac-setup-group .label { margin-bottom: 6px; }
+.prac-cam { align-self: start; }
+.prac-video { width: 100%; border-radius: 10px; background: #000; transform: scaleX(-1); }
+
+/* Practice materials (collapsible) + mini camera inside the floater */
+.prac-materials-toggle {
+  display: inline-flex; align-items: center; gap: 6px; margin-top: 14px;
+  background: transparent; border: 0; color: var(--brand-600); cursor: pointer;
+  font-size: 13px; font-weight: 600; padding: 0;
+}
+.prac-materials { margin-top: 10px; }
+.prac-cam-mini { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; }
+.prac-cam-mini .prac-video { width: 220px; max-width: 100%; }
+.prac-cam-mini.live .prac-video { width: 180px; }
+
+/* AI Training Assistant floater (mimics the assistant floater shell) */
+.train-shell { min-width: 340px; }
+.train-brand { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--brand-500); letter-spacing: .2px; }
+.train-body { display: flex; flex-direction: column; padding: 10px 14px 14px; gap: 2px; }
+.train-tb { display: flex; align-items: center; gap: 8px; }
+.train-status { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; }
+.train-status.muted { color: var(--text-muted); font-weight: 500; }
+.train-status.live { color: var(--text); }
+.train-setup-wrap { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 2px; }
+.train-thread { margin-top: 12px; max-height: 46vh; }
+.train-locked { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 22px 16px; }
+.train-wrapup { border-top: 1px solid var(--border); margin-top: 10px; padding-top: 12px; }
+.train-wrapup textarea { font-family: inherit; font-size: 13px; }
+.train-ready { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin: 0 0 12px; }
+.train-ready-item { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; }
+.train-ready-item.ok { color: var(--success); }
+.train-ready-item.warn { color: var(--warning); }
+.train-ready-item.muted { color: var(--text-muted); font-weight: 500; }
+.train-ready-link { font-size: 12px; color: var(--brand-600); cursor: pointer; margin-left: auto; }
+.train-meter { margin-top: 8px; height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+.train-meter i { display: block; height: 100%; background: var(--brand-500); transition: width 90ms linear; }
+
+/* Stealth cursor: hide the REAL OS cursor over the assistant windows (removes it
+   from screen capture too) and draw a synthetic one that only the operator sees. */
+body.floater-mode, body.floater-mode * { cursor: none !important; }
+.stealth-cursor {
+  position: fixed; top: 0; left: 0; z-index: 2147483647; pointer-events: none;
+  will-change: transform; filter: drop-shadow(0 1px 1px rgba(0,0,0,.5));
+  margin-left: -1px; margin-top: -1px;
+}
+
+/* Practice report */
+.pr-overall { display: flex; align-items: center; gap: 18px; margin-bottom: 16px; }
+.pr-score-big { display: flex; align-items: center; gap: 8px; font-size: 34px; font-weight: 700; color: var(--brand-600); white-space: nowrap; }
+.pr-score-big span { font-size: 16px; color: var(--text-muted); }
+.pr-sections { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.pr-section { border: 1px solid var(--border); border-radius: 12px; padding: 14px; }
+.pr-improve { display: flex; flex-direction: column; gap: 12px; }
+.pr-improve-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; background: var(--surface-2); }
+.pr-improve-head { display: flex; align-items: center; gap: 6px; font-size: 14px; }
+.pr-section-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.pr-ic { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border-radius: 8px; background: var(--brand-soft); color: var(--brand-600); }
+.pr-bar { height: 6px; border-radius: 3px; background: var(--surface-3); overflow: hidden; }
+.pr-bar span { display: block; height: 100%; background: var(--brand-500); border-radius: 3px; }
+.pr-list { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.pr-list li { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; line-height: 1.5; }
+
+/* Auth: link buttons and the code input. */
+.link-btn { background: none; border: 0; color: var(--brand-600); font-size: 13px; cursor: pointer; padding: 0; }
+.link-btn:hover { text-decoration: underline; }
+.otp-input { letter-spacing: 0.4em; text-align: center; font-variant-numeric: tabular-nums; font-size: 18px; }
+
+/* Admin forms: toggle rows, provider chips, dimmed/sub table rows. */
+.switch-row { display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; }
+.switch-row input { width: 16px; height: 16px; }
+.prov-pick { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
+.prov-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.prov-chip input { width: 14px; height: 14px; }
+.row-dim td { opacity: .55; }
+.row-sub td { background: var(--surface-2); font-size: 12px; }
+
+/* First sign-in: the speaker profile, before anything else. */
+.firstrun { min-height: 100vh; background: var(--bg); padding: 40px 20px; overflow-y: auto; }
+.firstrun-inner { max-width: 760px; margin: 0 auto; }
+.firstrun-lead { margin-bottom: 20px; }
+.firstrun-lead h1 { font-size: 24px; margin: 0 0 8px; }
+.firstrun-lead p { color: var(--text-muted); font-size: 14px; line-height: 1.6; margin: 0; max-width: 62ch; }
+.firstrun-next { display: flex; align-items: center; gap: 10px; margin-top: 16px; padding: 12px 14px; border: 1px dashed var(--border); border-radius: 10px; font-size: 13px; color: var(--text-muted); line-height: 1.5; }
+
+/* About You - the speaker profile form. */
+.ay-head { display: flex; align-items: center; gap: 12px; }
+.ay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 14px; margin-top: 16px; }
+.ay-field { display: flex; flex-direction: column; gap: 5px; }
+.ay-field > span { font-size: var(--fs-base); font-weight: 600; }
+.ay-field input, .ay-field select { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font-size: var(--fs-base); }
+.ay-field input:focus, .ay-field select:focus { outline: none; border-color: var(--brand-500); }
+.ay-field em { font-style: normal; font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.45; }
+.ay-actions { display: flex; align-items: center; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
+
+/* Teach My Voice - spoken calibration. */
+.vp-list { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; }
+.vp-item { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+.vp-item.done { border-color: var(--brand-500); }
+.vp-q { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.45; }
+.vp-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.vp-heard { margin-top: 8px; font-style: italic; }
+.vp-style { margin-top: 18px; border: 1px solid var(--border); border-radius: 10px; padding: 14px; background: var(--surface-2, var(--surface)); }
+.vp-style-body { white-space: pre-wrap; font-family: inherit; font-size: 13px; line-height: 1.6; margin: 0; color: var(--text); }
+
+.doc-url { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+.doc-url-ic { color: var(--text-muted); flex-shrink: 0; }
+.doc-url input { flex: 1; min-width: 0; font-size: 12px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 7px; background: var(--surface); color: var(--text); }
+.doc-url input:focus { outline: none; border-color: var(--brand-500); }
+
+/* What the assistant is working from. Quiet when correct, amber when the
+   resume is missing - that is the case worth noticing before an interview. */
+.floater-ctx { font-size: 10px; letter-spacing: .02em; border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; flex-shrink: 0; white-space: nowrap; color: var(--text-muted); }
+.floater-ctx.warn { color: var(--warning); border-color: var(--warning); }
+
+.floater-clock { font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+/* Shown only when a newer shell is downloaded and waiting for the app to
+   close. Deliberately quiet - it is information, not a call to action. */
+.floater-upd { font-size: 10px; letter-spacing: .02em; color: var(--text-muted); border: 1px solid var(--border); border-radius: 999px; padding: 1px 7px; flex-shrink: 0; white-space: nowrap; }
+
+/* ---- Listen & Respond text-size control ----------------------------------
+   The size class rides on the toolbar's own view (.lr-thread/.lr-answer) AND on
+   the separate answer-panel window (.floater-panel-wrap.lr-font-*), so BOTH must
+   be targeted. The answer window renders .fp-scroll (question + answer + prose);
+   it sets no font-size of its own, so sizing it cascades to the whole answer.
+   Fenced code keeps its own fixed 12px (.ab-code) on purpose - code must stay
+   monospaced and stable, not grow with the prose. This selector list was the
+   bug: it only named .lr-thread/.lr-answer, which the panel never renders, so
+   the size control changed nothing in the answer window. */
+.lr-font-sm .lr-thread, .lr-font-sm .lr-answer, .lr-font-sm .lr-msg-user, .lr-font-sm .fp-scroll { font-size: 12px; }
+.lr-font-md .lr-thread, .lr-font-md .lr-answer, .lr-font-md .lr-msg-user, .lr-font-md .fp-scroll { font-size: var(--fs-base); }
+.lr-font-lg .lr-thread, .lr-font-lg .lr-answer, .lr-font-lg .lr-msg-user, .lr-font-lg .fp-scroll { font-size: 18px; }
+.lr-font-xl .lr-thread, .lr-font-xl .lr-answer, .lr-font-xl .lr-msg-user, .lr-font-xl .fp-scroll { font-size: 22px; }
+
+/* ---- desktop window opacity controls ------------------------------------ */
+.opacity-menu { min-width: 200px; padding: 10px 12px; }
+.opacity-menu-body { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+.opacity-menu-body input[type="range"] { flex: 1; accent-color: var(--brand-500); cursor: pointer; }
+/* ---- assistant window chrome (its own title bar) ------------------------ */
+/* Compact dark control strip, sized like a real title bar rather than a row of
+   app buttons - it has to read as chrome, not content. */
+/* One surface for the whole toolbar; the rows inside are transparent so it
+   reads as a single bar rather than two detached pills. */
+.floater-shell {
+  flex: 0 0 auto; cursor: move; border-radius: 10px; overflow: hidden;
+  background: #16181d; border: 1px solid #2a2e37;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.35);
+}
+.floater-page-bar {
+  display: flex; align-items: center; gap: 8px; flex: 0 0 auto;
+  padding: 5px 8px; border-bottom: 1px solid #23262e;
+}
+.floater-row-2 { display: flex; align-items: center; gap: 8px; padding: 5px 8px; }
+.floater-page-bar .icon-btn { color: #9aa3b2; }
+.floater-page-bar .icon-btn:hover { background: #242832; color: #fff; }
+.floater-page-bar .opacity-inline { color: #9aa3b2; }
+.floater-grip { color: var(--text-faint); flex-shrink: 0; }
+.floater-winbtn { width: 28px; height: 28px; flex-shrink: 0; border-radius: 7px; }
+.floater-winbtn.danger:hover { background: var(--danger); color: #fff; }
+/* Collapsed toolbar: a single slim strip - no second row, so drop the divider. */
+.floater-bar-min { border-bottom: none; padding: 4px 8px; }
+/* Floater custom dropdown (answer length, code language). In-DOM list - NOT a
+   native <select> (whose OS popup renders behind the always-on-top window). */
+.lr-dd { display: flex; flex-direction: column; gap: 4px; }
+.lr-dd-trigger {
+  display: flex; align-items: center; gap: 7px; width: 100%;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.14);
+  color: #cfd5e6; border-radius: 7px; padding: 5px 9px; font-size: 12px; cursor: pointer;
+}
+.lr-dd-trigger:hover { background: rgba(255,255,255,0.09); }
+.lr-dd-label { white-space: nowrap; color: #9aa4b2; }
+.lr-dd-value { margin-left: auto; font-weight: 600; color: #e8eaf6; white-space: nowrap; }
+.lr-dd-list {
+  display: flex; flex-direction: column; gap: 2px; max-height: 190px; overflow-y: auto;
+  padding: 4px; border: 1px solid rgba(255,255,255,0.14); border-radius: 7px; background: #1b1e24;
+}
+.lr-dd-opt {
+  text-align: left; background: transparent; border: none; color: #cfd5e6;
+  border-radius: 5px; padding: 6px 9px; font-size: 12px; cursor: pointer; white-space: nowrap;
+}
+.lr-dd-opt:hover { background: rgba(255,255,255,0.09); }
+.lr-dd-opt.on { background: var(--brand-500, #16a34a); color: #fff; font-weight: 600; }
+/* Collapse keeps the shell + ListenRespond MOUNTED (so listening never stops)
+   and simply hides everything below the slim strip. Hiding (not unmounting) is
+   what lets the fit observer shrink the window to just the strip while the
+   engine keeps running underneath. */
+.floater-collapsed .floater-collapsible { display: none; }
+.floater-page-bar .icon-btn.on { background: var(--brand-500); color: #fff; }
+
+/* Always-visible opacity slider - a dropdown panel gets clipped inside the
+   small assistant window, which is why the control appeared to be missing. */
+.opacity-inline { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); cursor: pointer; }
+.opacity-inline input[type="range"] { width: 88px; accent-color: var(--brand-500); cursor: pointer; }
+
+/* Live "listening" indicator in the assistant header. */
+.lr-live { color: var(--danger); display: inline-flex; align-items: center; gap: 6px; }
+.lr-live-dot {
+  width: 7px; height: 7px; border-radius: 50%; background: var(--danger);
+  animation: lr-live-pulse 1.2s ease-in-out infinite; flex-shrink: 0;
+}
+@keyframes lr-live-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.25; } }
+
+/* Answers are plain text - preserve the model's own line breaks, no markup. */
+.lr-answer { white-space: pre-wrap; }
+
+/* Desktop-only drag strip for the frameless dashboard window (no-op on web).
+   Dragging is handled entirely in JS (useWindowDrag.js) rather than the
+   native -webkit-app-region: drag CSS - that mechanism proved unreliable on
+   Windows for a window that is transparent + frameless + content-protected
+   all at once (confirmed live: no-ops instead of erroring, even after other
+   fixes). cursor:move is just the visual affordance now, nothing functional
+   depends on app-region drag/no-drag anymore. */
+.topbar-spacer { cursor: move; }
+.topbar-title { cursor: move; }
+
+/* Kept as defense-in-depth even though JS-driven drag no longer depends on
+   it: backdrop-filter on an ancestor is known to break -webkit-app-region:
+   drag hit-testing in Chromium/Electron (electron/electron#20944). */
+body.desktop-shell .topbar { backdrop-filter: none; -webkit-backdrop-filter: none; }
+
+/* Slim drag strip for frameless screens with no topbar (login, license).
+   Without it the window cannot be moved at all before sign-in. */
+.desktop-dragbar {
+  position: fixed; top: 0; left: 0; right: 0; height: 30px; z-index: 390;
+  display: flex; align-items: center; justify-content: center;
+  cursor: move; color: var(--text-faint);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  border-bottom: 1px solid var(--border);
+}
+
+/* ---- desktop-only close button (no title bar, no taskbar icon exists) --- */
+.desktop-close-btn {
+  position: fixed; top: 14px; right: 14px; z-index: 400;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--border);
+  background: var(--surface); color: var(--text-muted); cursor: pointer;
+  box-shadow: var(--shadow-sm); -webkit-app-region: no-drag;
+}
+.desktop-close-btn:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+.desktop-hotkey-hint {
+  position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%); z-index: 400;
+  font-size: 11px; color: var(--text-faint); background: var(--surface);
+  border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px;
+  box-shadow: var(--shadow-sm); white-space: nowrap;
+}
+
+/* ---- assistant TOOLBAR compact controls row ----------------------------- */
+/* The control strip must WRAP, never clip. Buttons were being pushed off the
+   460px window edge as controls were added, which is how "Analyse Screen"
+   became invisible. The window auto-fits its height (see fit-bar), so wrapping
+   simply makes the toolbar one row taller instead of hiding controls. */
+.lr-compact {
+  display: flex; align-items: center; gap: 5px; flex: 0 0 auto; flex-wrap: wrap;
+  padding: 5px 8px; background: transparent; border: 0;
+}
+.lr-compact .icon-btn { color: #9aa3b2; width: 27px; height: 27px; border-radius: 7px; }
+.lr-compact .icon-btn:hover { background: #242832; color: #fff; }
+/* MANUAL mode: the question being collected, on its OWN full-width line above the
+   controls (so it reads cleanly and never jumbles the toolbar). Wraps; capped
+   height with scroll for a very long question. */
+.lr-compact .lr-pendingq {
+  flex: 1 0 100%; display: flex; align-items: flex-start; gap: 8px;
+  padding: 6px 10px; margin-bottom: 2px;
+  background: rgba(31, 111, 67, 0.12); border: 1px solid #2a3a30; border-radius: 8px;
+  /* FIXED height (not max-height) so a growing question scrolls INSIDE the box and
+     never changes the bar's height - that resize was the flicker. ~2 lines tall. */
+  height: 46px; overflow-y: auto;
+}
+.lr-pendingq-tag { flex: 0 0 auto; font-weight: 700; color: #4ade80; font-size: 12px; margin-top: 1px; }
+.lr-pendingq-text { color: #e5e9f0; font-size: 13px; line-height: 1.35; white-space: pre-wrap; word-break: break-word; }
+/* The answer-history nav is a tidy HORIZONTAL group that stays together (never
+   stacks) and wraps as one unit if the row runs out of room. */
+.lr-compact .lr-navrow { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+/* Prev/Current/Next QUESTION nav: text buttons (use the empty space), not icon-only. */
+/* The base .icon-btn is display:grid (stacks icon + label). Force a real flex ROW
+   so the chevron and the text sit SIDE BY SIDE. */
+.lr-compact .icon-btn.lr-navbtn { display: inline-flex; flex-direction: row; align-items: center; justify-content: center; width: auto; height: 26px; padding: 0 8px; gap: 4px; font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid #2a2f3a; }
+.lr-compact .icon-btn.lr-navbtn svg { flex: 0 0 auto; }
+/* Compact the text buttons (mode toggle, Snap, Analyse Screen) so the row fits. */
+.lr-compact .btn-sm { padding: 4px 9px; font-size: 11.5px; min-height: 0; line-height: 1.1; }
+.lr-compact .btn-sm svg { width: 13px; height: 13px; }
+/* The active position (where you are in the answer history) is highlighted. */
+.lr-compact .icon-btn.lr-navbtn.on { background: #1f6f43; color: #fff; }
+.lr-compact .icon-btn.lr-navbtn.on:hover { background: #24814e; color: #fff; }
+/* A thin divider between control groups so the row reads as tidy clusters, not a
+   wall of tiny icons. */
+.lr-divider { width: 1px; height: 18px; background: rgba(255,255,255,0.12); flex: 0 0 auto; margin: 0 1px; }
+/* Answer-length segmented control, inline in the toolbar (Auto / S / M / L). */
+.lr-lenseg { display: inline-flex; align-items: center; gap: 2px; flex: 0 0 auto; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 2px; }
+.lr-lenbtn { font-size: 11.5px; font-weight: 700; padding: 4px 7px; border-radius: 6px; border: 0; background: transparent; color: #9aa3b2; cursor: pointer; line-height: 1; min-width: 22px; }
+.lr-lenbtn:hover { background: #242832; color: #fff; }
+.lr-lenbtn.on { background: var(--brand-500); color: #fff; }
+/* Mode toggle (Auto Answer / Manual Answer): the current mode is shown green. */
+.lr-compact .lr-modebtn.on { background: var(--brand-500); color: #fff; border-color: var(--brand-500); }
+.lr-compact .lr-modebtn.on:hover { background: var(--brand-600, #16a34a); color: #fff; }
+.lr-compact-status {
+  font-size: 11px; display: inline-flex; align-items: center; gap: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  flex: 1 1 auto; min-width: 0;   /* truncate rather than push the buttons out */
+}
+.lr-compact-err { color: var(--danger); display: inline-flex; }
+.lr-stop-btn { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+
+/* ---- assistant ANSWER window (separate, always click-through) -----------
+   Intentionally plain: one soft surface, then just text. No cards, no
+   bubbles, no per-message boxes - the operator is reading this while working
+   in another app, so chrome is noise. */
+.floater-panel-wrap {
+  height: 100vh; padding: 0 10px 10px; background: transparent;
+  overflow: hidden; display: flex; flex-direction: column;
+  /* MUST be column: the children are stacked strips (heard transcription, the
+     history bar) ABOVE the scrollable answer box. Without flex-direction the
+     default is ROW, which put the live "heard" strip BESIDE the answer box and
+     stole its width - as that strip appeared/grew/vanished during the
+     question->answer cycle, the answer box swung ~34px <-> full width. That was
+     the "answer window dancing left-right". (Proven: row collapses the box to
+     ~34px; column keeps it full width regardless of the heard text.) */
+}
+/* Visible resize grip, bottom-right of the answer panel. Native edge-resize is
+   blocked on the overlay (it grew uncontrollably + the cursor never showed), so
+   this grabbable handle drives a controlled resize through the main process. */
+.fp-resize-grip {
+  position: fixed; right: 0; bottom: 0; width: 30px; height: 30px;
+  cursor: se-resize; z-index: 60; opacity: 0.65; border-radius: 0 0 8px 0;
+  background: linear-gradient(135deg,
+    transparent 0 40%, rgba(255,255,255,0.6) 40% 52%, transparent 52% 62%,
+    rgba(255,255,255,0.6) 62% 74%, transparent 74% 84%, rgba(255,255,255,0.6) 84% 96%, transparent 96%);
+}
+.fp-resize-grip:hover { opacity: 1; }
+/* Invisible wide grab strips along the right edge (width) and bottom edge (height).
+   Native edge-resize is blocked on the overlay, so these give the familiar
+   edge-drag; both drive the same cursor-follow resize. */
+.fp-resize-e { position: fixed; top: 0; right: 0; width: 18px; height: 100vh; cursor: ew-resize; z-index: 59; }
+.fp-resize-w { position: fixed; top: 0; left: 0; width: 18px; height: 100vh; cursor: ew-resize; z-index: 59; }
+.fp-resize-s { position: fixed; left: 0; bottom: 0; width: 100vw; height: 18px; cursor: ns-resize; z-index: 59; }
+.fp-resize-e:hover, .fp-resize-w:hover, .fp-resize-s:hover { background: rgba(92,160,56,0.28); }
+/* bottom-LEFT corner grip (mirror of the bottom-right one) */
+.fp-resize-grip-sw {
+  position: fixed; left: 0; bottom: 0; width: 30px; height: 30px;
+  cursor: sw-resize; z-index: 60; opacity: 0.65; border-radius: 0 0 0 8px;
+  background: linear-gradient(225deg,
+    transparent 0 40%, rgba(255,255,255,0.6) 40% 52%, transparent 52% 62%,
+    rgba(255,255,255,0.6) 62% 74%, transparent 74% 84%, rgba(255,255,255,0.6) 84% 96%, transparent 96%);
+}
+.fp-resize-grip-sw:hover { opacity: 1; }
+.fp-scroll {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: 14px 16px; border-radius: 12px;
+  /* Scroll-past-end: extra room BELOW the text so the operator can push the
+     last lines up to a comfortable reading height instead of them being pinned
+     to the bottom edge of the panel. Without this, once the text ends you
+     cannot scroll further and the final answer sits jammed against the frame. */
+  padding-bottom: 60vh;
+  background: #16181d; border: 1px solid #2a2e37;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.45);
+  color: #e8eaf6; line-height: 1.55;
+}
+.fp-label { color: #8b93a5; font-weight: 650; }
+.fp-label-a { margin: 0 0 4px; }
+.fp-q { margin: 0 0 12px; color: #cfd5e6; }
+.fp-a { margin: 0 0 20px; }
+.fp-text { white-space: pre-wrap; color: #e8eaf6; }
+/* Calm "ready" state shown before the first answer, so the answer panel is
+   visibly present from session start rather than an invisible, empty window. */
+.fp-ready {
+  display: flex; align-items: center; gap: 9px;
+  color: #8b93a5; font-size: 13.5px; font-style: italic; letter-spacing: .01em;
+}
+.fp-ready-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #22c55e; flex: 0 0 auto;
+  animation: lr-live-pulse 1.4s ease-in-out infinite;
+}
+.fp-scroll::-webkit-scrollbar { width: 8px; }
+.fp-scroll::-webkit-scrollbar-thumb { background: #2f3542; border-radius: 4px; }
+
+/* ---- admin licences ----------------------------------------------------- */
+.lic-list { display: grid; gap: var(--sp-4); }
+.lic-row { border-left: 3px solid var(--brand-500); }
+.lic-row.lic-off { border-left-color: var(--danger); opacity: 0.75; }
+.lic-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.lic-toggle, .lic-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; font-size: var(--fs-sm); }
+.lic-check { margin-top: 12px; color: var(--text-muted); }
+.lic-usage { display: grid; grid-template-columns: 1fr 1fr; gap: var(--sp-4); margin-bottom: 14px; }
+.lic-bar { height: 5px; border-radius: 3px; background: var(--surface-3); margin-top: 6px; overflow: hidden; }
+.lic-bar span { display: block; height: 100%; background: var(--brand-500); }
+.lic-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--sp-4); }
+@media (max-width: 640px) { .lic-usage { grid-template-columns: 1fr; } }
+
+/* Manual question box - revealed by the toolbar toggle, hidden by default. */
+.lr-ask-row { display: flex; align-items: center; gap: 6px; padding: 0 8px 6px; }
+.lr-ask-input {
+  flex: 1; height: 30px; padding: 0 10px; font-size: var(--fs-sm);
+  background: #0f1115; border: 1px solid #2a2e37; color: #e8eaf6; border-radius: 7px;
+}
+.lr-ask-input::placeholder { color: #6b7280; }
+.lr-ask-input:focus { outline: none; border-color: var(--brand-500); }
+
+/* Live capture level. Windows loopback always follows the DEFAULT playback
+   device and the API offers no way to pick one, so the operator needs to SEE
+   whether sound is actually reaching us. */
+.lr-meter { width: 34px; height: 4px; border-radius: 2px; background: #2a2e37; overflow: hidden; flex-shrink: 0; }
+.lr-meter i { display: block; height: 100%; background: var(--success); transition: width 90ms linear; }
+.lr-meter.deaf { background: var(--danger-soft); box-shadow: 0 0 0 1px var(--danger); }
+.lr-meter.deaf i { background: var(--danger); }
+.lr-meter.lr-meter-off { visibility: hidden; }   /* reserve the slot, no reflow when Listen toggles */
+
+/* ---- answer body: plain prose + copy-able code -------------------------- */
+.ab-text { white-space: pre-wrap; margin-bottom: 10px; }
+.ab-code { margin: 8px 0 12px; border: 1px solid #2a2e37; border-radius: 8px; overflow: hidden; background: #0f1115; }
+.ab-code-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 4px 8px; background: #1b1e26; border-bottom: 1px solid #2a2e37;
+  font-size: 10px; color: #8b93a5; text-transform: lowercase;
+}
+.ab-copy {
+  display: inline-flex; align-items: center; gap: 4px; cursor: pointer;
+  background: transparent; border: 1px solid #2a2e37; color: #9aa3b2;
+  border-radius: 5px; padding: 2px 7px; font-size: 10px;
+}
+.ab-copy:hover { background: var(--brand-500); border-color: var(--brand-500); color: #fff; }
+.ab-code pre { margin: 0; padding: 10px 12px; overflow-x: auto; }
+.ab-code code { font-family: ui-monospace, Consolas, monospace; font-size: 12px; color: #e8eaf6; white-space: pre; }
+/* Line-by-line code with SPEAKABLE notes highlighted, so the operator can glance
+   at a line and say it aloud without reading the whole file. */
+.ab-code-lines { padding: 8px 0; overflow-x: auto; font-family: ui-monospace, Consolas, monospace; font-size: 12px; }
+.ab-cl { display: block; white-space: pre; color: #e8eaf6; padding: 1px 12px; }
+.ab-cl.speak {
+  background: rgba(92, 160, 56, 0.16);
+  border-left: 3px solid var(--brand-500, #5ca038);
+  padding-left: 9px;
+}
+.ab-cl-say {
+  display: inline-flex; align-items: center; gap: 3px; margin-left: 10px;
+  font-family: var(--font-body, system-ui), sans-serif; font-weight: 700;
+  color: #a7e07f; white-space: normal;
+}
+.ab-cl-say svg { flex-shrink: 0; }
+/* Critical points in prose answers: the model wraps them in **..**, shown bold
+   (with a soft highlight) so the candidate can spot and stress them. */
+.ab-p { margin: 0 0 8px; }
+.ab-p:last-child { margin-bottom: 0; }
+.ab-ul { margin: 4px 0 8px; padding-left: 20px; list-style: disc; }
+.ab-ul:last-child { margin-bottom: 0; }
+.ab-li { margin: 2px 0; padding-left: 2px; }
+.ab-key {
+  font-weight: 800; color: inherit; background: rgba(92, 160, 56, 0.32);
+  border-radius: 3px; padding: 0 4px; text-decoration: underline;
+  text-decoration-color: rgba(92, 160, 56, 0.9); text-decoration-thickness: 2px; text-underline-offset: 2px;
+}
+/* Delivery pause cue: bold red dots the candidate glances at to slow down. */
+.ab-pause {
+  font-weight: 900; color: #e11d48; letter-spacing: 2px;
+  margin: 0 5px; white-space: nowrap; user-select: none;
+}
+/* {THINK}: a longer "pause and think for a second or two" cue - red dots with a
+   bold, underlined, RED "THINK" in the middle, so it stands out from a plain pause. */
+.ab-think {
+  font-weight: 900; color: #dc2626; letter-spacing: 2px;
+  margin: 0 6px; white-space: nowrap; user-select: none;
+}
+.ab-think b { font-weight: 900; text-decoration: underline; color: #dc2626; letter-spacing: 1px; }
+/* Sentence punctuation shown in RED as pause cues: a comma/;/: is a short
+   breath; a full stop (.!?) is a hard stop, so it is bolder. Lets the candidate
+   see where to pause so a read-out answer sounds spoken, not rushed. */
+.ab-pausemark { color: #f87171; font-weight: 700; }
+.ab-pausemark.hard { color: #ef4444; font-weight: 900; }
+/* A critical SENTENCE (prep pack): highlighted so the candidate sees the line
+   that matters most. Distinct from the keyword highlight above. */
+.ab-crit {
+  background: rgba(245, 158, 11, 0.28); color: inherit; font-weight: 600;
+  box-shadow: inset 0 -3px 0 rgba(245, 158, 11, 0.95);
+  border-radius: 3px; padding: 1px 4px;
+}
+/* "I am sorry, can you please repeat the question?" - the one line we show when
+   the model genuinely could not understand the question. RED + UNDERLINE + BOLD
+   so the candidate instantly reads it as "it did not get that, ask them to
+   repeat" and never mistakes it for a real answer. */
+.ab-repeat {
+  color: #e11d48; font-weight: 800; text-decoration: underline;
+  text-decoration-color: #e11d48; text-decoration-thickness: 2px; text-underline-offset: 3px;
+}
+
+/* ---- saved interviews --------------------------------------------------- */
+.iv-list { display: grid; gap: var(--sp-4); }
+/* Interview card: a clean vertical stack - header (title + badges) and meta on
+   top, then a full-width action toolbar below a divider - instead of the old
+   side-by-side row where the buttons squeezed the title into a narrow column and
+   forced the badges to wrap onto separate lines. */
+.iv-row { display: flex; flex-direction: column; align-items: stretch; gap: 10px; }
+.iv-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border); }
+.iv-actions .iv-del { margin-left: auto; }
+/* Curation in progress: a pulsing pill + a soft shimmer sweep over the row. */
+@keyframes curatePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@keyframes curateShimmer { to { transform: translateX(100%); } }
+.curating-pill { background: var(--brand-soft); color: var(--brand-600); animation: curatePulse 1.3s ease-in-out infinite; }
+.iv-curating { position: relative; overflow: hidden; box-shadow: 0 0 0 1px rgba(92, 160, 56, 0.35); }
+.iv-curating::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(100deg, transparent 30%, rgba(92, 160, 56, 0.10) 50%, transparent 70%);
+  transform: translateX(-100%); animation: curateShimmer 1.8s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) { .iv-curating::after, .curating-pill { animation: none; } }
+.iv-first { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.iv-doc { display: flex; flex-direction: column; gap: 22px; }
+.iv-turn { border-left: 3px solid var(--brand-500); padding-left: 14px; }
+.iv-q { font-weight: 650; color: var(--brand-600); margin-bottom: 8px; }
+
+/* Assistant sign-in (the app authenticates against the hosted server). */
+.floater-login { display: flex; flex-direction: column; }
+.floater-login-row { display: flex; align-items: center; gap: 6px; padding: 0 8px 6px; }
+.floater-login-row .lr-ask-input { flex: 1; min-width: 0; }
+.floater-login-err { padding: 0 8px 8px; font-size: 11px; color: var(--danger); }
+.floater-limit { padding: 4px 10px 6px; font-size: 11px; color: var(--danger); }
+
+/* ---- assistant app download -------------------------------------------- */
+.dl-card { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-4); flex-wrap: wrap; }
+/* Download card: bold highlighted live version + a pulsing "Latest" tag + an
+   animated Download button, so users see the current build and grab it. */
+.dl-verline { display: flex; align-items: center; gap: 7px; margin-top: 5px; flex-wrap: wrap; }
+.dl-ver { font-weight: 800; color: #fff; background: var(--brand-500); border-radius: 999px; padding: 2px 10px; font-size: 12.5px; letter-spacing: .3px; }
+.dl-new { font-weight: 800; color: var(--brand-600); background: rgba(92,160,56,0.14); border: 1px solid rgba(92,160,56,0.45); border-radius: 999px; padding: 1px 9px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .6px; animation: dlNewPulse 1.8s ease-in-out infinite; }
+@keyframes dlNewPulse { 0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(92,160,56,0.55); } 50% { opacity: .82; box-shadow: 0 0 0 6px rgba(92,160,56,0); } }
+.dl-btn-pulse { animation: dlBtnPulse 2.1s ease-in-out infinite; }
+.dl-btn-pulse:hover { animation: none; }
+@keyframes dlBtnPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(92,160,56,0.5); transform: translateZ(0); } 50% { box-shadow: 0 0 0 8px rgba(92,160,56,0); } }
+@media (prefers-reduced-motion: reduce) { .dl-new, .dl-btn-pulse { animation: none; } }
+.dl-ic {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+  background: var(--brand-soft); color: var(--brand-600);
+}
+.dl-points { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--sp-4); }
+.dl-steps { margin: 10px 0 0; padding-left: 20px; line-height: 1.9; color: var(--text-muted); font-size: var(--fs-sm); }
+.dl-steps b { color: var(--text); }
+
+/* ---- screen-reading (vision) capability banner -------------------------- */
+.vis-band {
+  display: flex; align-items: flex-start; gap: 10px; margin-top: var(--sp-5);
+  padding: 12px 14px; border-radius: var(--r-md); font-size: var(--fs-sm);
+  border: 1px solid var(--border);
+}
+.vis-band.good { background: var(--success-soft); color: var(--success); border-color: color-mix(in srgb, var(--success) 30%, transparent); }
+.vis-band.bad { background: var(--danger-soft); color: var(--danger); border-color: color-mix(in srgb, var(--danger) 30%, transparent); }
+.vis-band.checking { background: var(--surface-2); color: var(--text-muted); }
+.vis-band code { background: var(--surface-3); padding: 1px 6px; border-radius: 5px; font-size: 0.92em; }
+.vis-band a { text-decoration: underline; white-space: nowrap; }
+.vis-list { margin: 8px 0; padding-left: 20px; line-height: 1.8; }
+
+/* ---- Two-factor (authenticator) enrolment + settings -------------------- */
+.twofa-enroll { text-align: center; }
+.twofa-h { display: flex; align-items: center; gap: 6px; justify-content: center; font-size: 16px; margin: 0 0 8px; }
+.twofa-steps { text-align: left; margin: 0 auto 14px; padding-left: 18px; max-width: 340px; color: var(--text-muted, #666); font-size: 13px; line-height: 1.7; }
+.twofa-qr { display: block; margin: 0 auto 8px; border-radius: 12px; background: #fff; padding: 8px; box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+.twofa-qr-load { display: grid; place-items: center; height: 200px; }
+.twofa-secret { font-size: 12px; color: var(--text-muted, #666); margin-bottom: 12px; }
+.twofa-secret code, .twofa-backup code, .twofa-recovery-key { font-family: ui-monospace, Consolas, monospace; }
+.twofa-secret code { background: var(--surface-2, #f2f4f7); padding: 2px 6px; border-radius: 6px; letter-spacing: 1px; }
+.twofa-backup { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin: 6px 0; }
+.twofa-backup code { background: var(--surface-2, #f2f4f7); border: 1px solid var(--border, #e5e7eb); border-radius: 8px; padding: 8px; text-align: center; letter-spacing: 1px; font-size: 14px; }
+.twofa-recovery { margin-top: 12px; text-align: left; }
+.twofa-recovery-label { font-size: 12px; color: var(--text-muted, #666); margin-bottom: 4px; }
+.twofa-recovery-key { display: block; background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; border-radius: 8px; padding: 10px; text-align: center; letter-spacing: 2px; font-size: 15px; font-weight: 600; }
+.twofa-reveal { border: 1px dashed var(--border, #e5e7eb); border-radius: 12px; margin-top: 14px; background: var(--surface-2, #fafafa); }
+.twofa-stepup { margin: 12px 0; }
+.twofa-devices { list-style: none; margin: 6px 0 0; padding: 0; }
+.twofa-device { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-top: 1px solid var(--border, #eee); }
+.twofa-device-meta { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.twofa-device-name { background: none; border: none; padding: 0; text-align: left; font-weight: 600; color: var(--text, #111); cursor: pointer; }
+.twofa-device-name:hover { text-decoration: underline; }
+.enforce-row { display: flex; flex-direction: column; gap: 12px; }
+.enforce-toggle { display: flex; align-items: center; gap: 10px; font-size: 14px; cursor: pointer; }
+.enforce-toggle input { width: 18px; height: 18px; }
+
+/* ---- Interview diagnostic log ------------------------------------------- */
+.iv-log-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+.iv-log-row { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 6px 8px; border: 1px solid var(--border, #eee); border-radius: 8px; background: var(--surface-2, #fafafa); }
+.iv-log-tx { flex-basis: 100%; color: var(--text-muted, #666); font-style: italic; }
+
+/* Floater 2FA-setup redirect note (enrolment happens in the dashboard, not here) */
+.floater-login-note { padding: 4px 2px; color: var(--text-muted, #9aa3b2); line-height: 1.5; }
+
+/* ===== New Interview wizard (namespaced niw- so it never collides with the
+   training wizard's .wiz-*). Horizontal stepper + choice cards + ready card. === */
+.niw-steps { display: flex; align-items: center; gap: 0; margin: 2px 0 18px; flex-wrap: wrap; }
+.niw-step { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+.niw-dot { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; flex-shrink: 0;
+  border-radius: 50%; border: 1px solid var(--border-strong); background: var(--surface); font-size: 12px; font-weight: 700; }
+.niw-slabel { font-size: 13px; font-weight: 600; white-space: nowrap; }
+.niw-bar { width: 32px; height: 2px; background: var(--border-strong); margin: 0 10px; border-radius: 2px; }
+.niw-step.on { color: var(--brand-600); }
+.niw-step.on .niw-dot { border-color: var(--brand-500); color: var(--brand-600); background: var(--brand-soft); box-shadow: 0 0 0 3px var(--brand-soft); }
+.niw-step.done { color: var(--text); }
+.niw-step.done .niw-dot { border-color: var(--brand-500); background: var(--brand-500); color: #fff; }
+.niw-nav { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
+
+/* New vs next-round choice cards */
+.choice-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 7px; text-align: left;
+  background: var(--surface); border: 1.5px solid var(--border); border-radius: 14px; padding: 16px; cursor: pointer;
+  transition: border-color .16s, box-shadow .16s, transform .16s; }
+.choice:hover:not(:disabled) { border-color: var(--border-strong); transform: translateY(-1px); }
+.choice.on { border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-soft); }
+.choice:disabled { opacity: .5; cursor: not-allowed; }
+.choice b { font-size: 15px; }
+.choice-ic { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 42px; border-radius: 11px; }
+
+/* Step 4 - ready + active celebration */
+.iv-ready { text-align: center; padding: 30px 22px; }
+.iv-ready-badge { display: inline-flex; align-items: center; justify-content: center; width: 60px; height: 60px;
+  border-radius: 50%; background: var(--brand-soft); color: var(--brand-600); animation: iv-pop .4s var(--ease, ease) both; }
+.iv-active-pill { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 700; color: #fff; background: var(--brand-500); box-shadow: 0 0 0 0 var(--brand-soft); animation: iv-glow 1.8s ease-in-out infinite; }
+.iv-ready-checks { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 16px; font-size: 13px; }
+.iv-ready-checks span { display: inline-flex; align-items: center; gap: 5px; color: var(--text-muted); }
+.iv-ready-checks span.ok { color: var(--success); }
+.iv-ready-checks span.warn { color: var(--warning, #d97706); }
+
+/* Animated ACTIVE state in My Interviews so the operator always sees which one
+   the assistant will use. */
+.iv-row.iv-active { border-color: var(--brand-500); box-shadow: 0 0 0 1px var(--brand-500), 0 0 22px -6px var(--brand-500); }
+.iv-active-badge { animation: iv-glow 1.8s ease-in-out infinite; }
+
+@keyframes iv-pop { 0% { transform: scale(.6); opacity: 0; } 60% { transform: scale(1.1); } 100% { transform: scale(1); opacity: 1; } }
+@keyframes iv-glow {
+  0%,100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand-500) 55%, transparent); }
+  50% { box-shadow: 0 0 0 5px color-mix(in srgb, var(--brand-500) 0%, transparent); }
+}
+@media (prefers-reduced-motion: reduce) { .iv-active-pill, .iv-active-badge, .iv-ready-badge { animation: none; } }
+
+/* Each wizard step animates in (keyed by step, so it remounts on change). */
+.niw-stepbody { animation: niw-fade .3s var(--ease, ease) both; }
+@keyframes niw-fade { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .niw-stepbody { animation: none; } }

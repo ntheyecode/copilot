@@ -1,0 +1,102 @@
+/* ==========================================================================
+   Yerra Dashboard - Design Tokens
+   Original design system. Colors, spacing, radius, shadows, typography.
+   ========================================================================== */
+
+:root {
+  /* Brand */
+  --brand-500: #52a331;
+  --brand-600: #468a29;
+  --brand-700: #3a7021;
+  --brand-soft: rgba(82, 163, 49, 0.12);
+  --accent-500: #12b3a6;
+  --accent-soft: rgba(18, 179, 166, 0.12);
+
+  /* Semantic */
+  --success: #16b364;
+  --success-soft: rgba(22, 179, 100, 0.12);
+  --warning: #f79009;
+  --warning-soft: rgba(247, 144, 9, 0.12);
+  --danger: #f0384b;
+  --danger-soft: rgba(240, 56, 75, 0.12);
+  --info: #2e90fa;
+  --info-soft: rgba(46, 144, 250, 0.12);
+
+  /* Radius */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 12px;
+  --r-lg: 16px;
+  --r-xl: 22px;
+  --r-full: 999px;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* Typography */
+  --font-sans: 'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Type scale bumped up for readability - the old 11-14px base read too small
+     on the dashboard. Everything that uses these tokens grows uniformly. */
+  --fs-xs: 12.5px;
+  --fs-sm: 13.5px;
+  --fs-base: 15.5px;
+  --fs-md: 17px;
+  --fs-lg: 20px;
+  --fs-xl: 24px;
+  --fs-2xl: 30px;
+  --fs-3xl: 38px;
+
+  /* Layout */
+  --sidebar-w: 260px;
+  --sidebar-w-collapsed: 78px;
+  --topbar-h: 64px;
+
+  /* Motion */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur: 180ms;
+}
+
+/* ---------- Light theme ---------- */
+:root,
+[data-theme='light'] {
+  --bg: #f4f5fb;
+  --surface: #ffffff;
+  --surface-2: #f8f9fd;
+  --surface-3: #eef0f8;
+  --sidebar-bg: #ffffff;
+  --border: #e7e9f2;
+  --border-strong: #d6d9e8;
+  --text: #1b2033;
+  --text-muted: #6b7191;
+  --text-faint: #9aa0bd;
+  --shadow-sm: 0 1px 2px rgba(24, 28, 50, 0.06);
+  --shadow-md: 0 6px 20px rgba(24, 28, 50, 0.08);
+  --shadow-lg: 0 18px 46px rgba(24, 28, 50, 0.12);
+}
+
+/* ---------- Dark theme ---------- */
+[data-theme='dark'] {
+  --bg: #0e1020;
+  --surface: #171a2e;
+  --surface-2: #1c2038;
+  --surface-3: #232746;
+  --sidebar-bg: #12142a;
+  --border: #262a45;
+  --border-strong: #333858;
+  --text: #e8eaf6;
+  --text-muted: #a1a7c9;
+  --text-faint: #6f76a0;
+  --brand-soft: rgba(82, 163, 49, 0.18);
+  --accent-soft: rgba(18, 179, 166, 0.18);
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 20px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 18px 46px rgba(0, 0, 0, 0.55);
+}

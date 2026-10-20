@@ -1,0 +1,188 @@
+// ---------------------------------------------------------------------------
+// WorkCoPilot - guided session -> PDF
+//
+// Streamed straight to the HTTP response, so a long session never has to be
+// buffered in memory on a small server.
+//
+// Step detail may contain fenced code blocks (commands / file contents). Prose
+// is set in Helvetica; code is set in Courier on a tinted panel so it stays
+// readable and copy-pasteable out of the PDF.
+// ---------------------------------------------------------------------------
+import PDFDocument from 'pdfkit'
+
+const INK = '#1a1a1a'
+const MUTED = '#6b7280'
+const ACCENT = '#2f6f3e'
+const CODE_BG = '#f4f5f7'
+
+// Split a block into prose and fenced-code segments, in order.
+function segments(text) {
+  const out = []
+  const re = /```[ \t]*([A-Za-z0-9+#._-]*)[ \t]*\r?\n([\s\S]*?)```/g
+  let last = 0
+  let m
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) out.push({ type: 'text', body: text.slice(last, m.index) })
+    out.push({ type: 'code', lang: m[1] || '', body: m[2].replace(/\s+$/, '') })
+    last = re.lastIndex
+  }
+  if (last < text.length) out.push({ type: 'text', body: text.slice(last) })
+  return out.filter((s) => s.body.trim())
+}
+
+// ---- WorkCoPilot session report -> PDF ------------------------------------
+// A keepable record of a guided session: the task, every step in detail (with
+// the exact commands/code), what was achieved, any warnings, and the on-demand
+// questions/analysis. Streamed straight to the response.
+export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel = '' } = {}) {
+  const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 60, right: 60 }, bufferPages: true })
+  doc.pipe(stream)
+  const W = doc.page.width - 120
+  const steps = Array.isArray(session.steps) ? session.steps : []
+  const doneN = steps.filter((s) => s.status === 'done').length
+  const started = session.startedAt ? new Date(session.startedAt) : null
+
+  // Phase 3: per-step screenshots. Group session.shots by stepIndex so each
+  // step can show its own captures beneath it, ordered by capture time ('at').
+  // A session with no shots renders exactly as before.
+  const shotsByStep = new Map()
+  for (const sh of (Array.isArray(session.shots) ? session.shots : [])) {
+    if (!sh || typeof sh !== 'object' || !sh.path) continue
+    const k = Number(sh.stepIndex)
+    if (!Number.isInteger(k)) continue
+    if (!shotsByStep.has(k)) shotsByStep.set(k, [])
+    shotsByStep.get(k).push(sh)
+  }
+  for (const arr of shotsByStep.values()) {
+    arr.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')))
+  }
+
+  const rule = () => { doc.moveTo(60, doc.y).lineTo(doc.page.width - 60, doc.y).strokeColor('#d8dbe0').lineWidth(1).stroke() }
+  const heading = (t) => {
+    if (doc.y + 60 > doc.page.height - 60) doc.addPage()
+    doc.moveDown(0.4); doc.font('Helvetica-Bold').fontSize(13).fillColor(INK).text(t); doc.moveDown(0.3)
+  }
+  const prose = (text, { size = 11, color = INK } = {}) => {
+    for (const seg of segments(String(text || ''))) {
+      if (seg.type === 'code') codeBlock(doc, seg.body)
+      else { doc.font('Helvetica').fontSize(size).fillColor(color).text(seg.body.trim(), { width: W }); doc.moveDown(0.4) }
+    }
+  }
+
+  // Title
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text('WorkCoPilot session report')
+  doc.moveDown(0.2)
+  doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(
+    [session.title, started ? started.toLocaleString() : null, session.appContext ? ('App: ' + session.appContext) : null, modeLabel ? ('Guide style: ' + modeLabel) : null]
+      .filter(Boolean).join('   -   '), { width: W })
+  doc.moveDown(0.4); rule(); doc.moveDown(0.6)
+
+  // The task
+  heading('The task')
+  doc.font('Helvetica').fontSize(11).fillColor(INK).text(session.goal || '(no goal recorded)', { width: W })
+
+  // What was achieved
+  heading('What was achieved')
+  doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(`${doneN} of ${steps.length} step${steps.length === 1 ? '' : 's'} completed.`, { width: W })
+  doc.moveDown(0.2)
+  if (String(achieved || '').trim()) prose(achieved)
+  else if (doneN > 0) prose(steps.filter((s) => s.status === 'done').map((s) => '- ' + s.text).join('\n'), { size: 10 })
+  else doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were confirmed done yet.', { width: W })
+
+  // Steps in detail
+  heading('Steps, in detail')
+  if (!steps.length) doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were planned.', { width: W })
+  steps.forEach((s, i) => {
+    if (doc.y + 50 > doc.page.height - 60) doc.addPage()
+    const mark = s.status === 'done' ? '[done]' : s.status === 'current' ? '[in progress]' : '[not done]'
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(s.status === 'done' ? ACCENT : INK).text(`${i + 1}. ${s.text}   ${mark}`, { width: W })
+    if (s.url) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Open: ' + s.url, { width: W, link: s.url, underline: true })
+    if (s.validate) doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Done when: ' + s.validate, { width: W })
+    if (Array.isArray(s.commands) && s.commands.length) codeBlock(doc, s.commands.map((c) => '$ ' + c).join('\n'))
+    if (s.code && s.code.content) {
+      doc.font('Helvetica').fontSize(8).fillColor(MUTED).text('File: ' + (s.code.file || 'code'), { width: W })
+      codeBlock(doc, s.code.content)
+    }
+    stepShots(doc, shotsByStep.get(i), W)
+    doc.moveDown(0.5)
+  })
+
+  // Notes and warnings
+  const flags = (session.events || []).filter((e) => e.kind === 'flag')
+  if (flags.length) {
+    heading('Notes and warnings')
+    for (const f of flags) { if (doc.y + 24 > doc.page.height - 60) doc.addPage(); doc.font('Helvetica').fontSize(10).fillColor(INK).text('- ' + String(f.text || ''), { width: W }); doc.moveDown(0.2) }
+  }
+
+  // Questions and analysis (on-demand asks/answers, in order)
+  const qa = (session.events || []).filter((e) => e.kind === 'ask' || e.kind === 'answer')
+  if (qa.length) {
+    heading('Questions and analysis')
+    for (const e of qa) {
+      if (doc.y + 30 > doc.page.height - 60) doc.addPage()
+      if (e.kind === 'ask') { doc.font('Helvetica-Bold').fontSize(10).fillColor(ACCENT).text('Q: ' + String(e.text || ''), { width: W }); doc.moveDown(0.15) }
+      else prose(e.text, { size: 10 })
+    }
+  }
+
+  // Page numbers
+  const range = doc.bufferedPageRange()
+  for (let i = 0; i < range.count; i++) {
+    doc.switchToPage(range.start + i)
+    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(
+      `WorkCoPilot  -  Page ${i + 1} of ${range.count}`, 60, doc.page.height - 42,
+      { width: W, align: 'center' })
+  }
+  doc.end()
+}
+
+// Render the screenshots captured for one step, beneath that step. Each image
+// is fitted to the content width and a sensible max height so the PDF stays
+// small, with its caption (if any) in the muted small style. A missing or
+// unreadable file is skipped in a try/catch so a lost shot can never break the
+// report. Images near the page bottom move to the next page.
+function stepShots(doc, shots, W) {
+  if (!Array.isArray(shots) || !shots.length) return
+  const MAX_H = 220
+  const bottom = doc.page.height - doc.page.margins.bottom
+  for (const shot of shots) {
+    try {
+      const img = doc.openImage(shot.path)
+      const scale = Math.min(W / img.width, MAX_H / img.height, 1)
+      const drawH = img.height * scale
+      // Page-break BEFORE drawing so the image never runs off the page edge.
+      if (doc.y + drawH + 16 > bottom) doc.addPage()
+      doc.image(shot.path, { fit: [W, MAX_H], align: 'center' })
+      doc.moveDown(0.2)
+      const cap = shot.caption != null ? String(shot.caption).trim() : ''
+      if (cap) {
+        if (doc.y + 14 > bottom) doc.addPage()
+        doc.font('Helvetica').fontSize(9).fillColor(MUTED).text(cap, { width: W, align: 'center' })
+      }
+      doc.moveDown(0.3)
+    } catch {
+      // Missing or unreadable image: skip it, keep the report intact.
+    }
+  }
+}
+
+function codeBlock(doc, body) {
+  const lines = body.split('\n')
+  const lineH = 12
+  const padding = 8
+  const width = doc.page.width - doc.page.margins.left - doc.page.margins.right
+
+  for (const line of lines) {
+    // Page-break BEFORE drawing, so a block never runs off the page edge.
+    if (doc.y + lineH + padding > doc.page.height - doc.page.margins.bottom) doc.addPage()
+    const y = doc.y
+    doc.rect(doc.page.margins.left, y - 2, width, lineH + 2).fill(CODE_BG)
+    doc.fillColor(INK).font('Courier').fontSize(9)
+      .text(line.length ? line : ' ', doc.page.margins.left + padding, y, {
+        width: width - padding * 2,
+        lineBreak: false,   // keep indentation; long lines are clipped, not reflowed
+      })
+    doc.y = y + lineH
+  }
+  doc.moveDown(0.6)
+}

@@ -1,0 +1,49 @@
+{
+  "name": "workcopilot-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "WorkCoPilot desktop - an always-on-top, read-only overlay that loads the WorkCoPilot web console (/work). Opacity + interact-behind (click-through) so it floats over the app you are working in; content-protected so it stays out of its own screen capture.",
+  "main": "main.js",
+  "author": "COE Security LLC",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --x64"
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.0.0"
+  },
+  "build": {
+    "appId": "com.workcopilot.desktop",
+    "productName": "WorkCoPilot",
+    "directories": {
+      "output": "release-workcopilot"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "node_modules/**/*"
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        "nsis"
+      ],
+      "certificateSha1": "71D78BF55B844DCEEC51ED85DD664BD617C5C71D",
+      "signingHashAlgorithms": [
+        "sha256"
+      ],
+      "rfc3161TimeStampServer": "http://timestamp.digicert.com",
+      "publisherName": "COE Security LLC"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": false,
+      "artifactName": "WorkCoPilot-Setup.exe",
+      "menuCategory": false,
+      "runAfterFinish": true
+    }
+  }
+}

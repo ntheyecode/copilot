@@ -1,0 +1,14 @@
+node_modules/
+dist/
+data/
+release*/
+out/
+*.local
+*.pat
+*.env
+.env
+.DS_Store
+*.log
+workcopilot/node_modules/
+workcopilot/dist/
+workcopilot/release*/

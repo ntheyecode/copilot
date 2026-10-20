@@ -1,0 +1,200 @@
+/* ==========================================================================
+   Yerra Dashboard - Base / reset / utilities
+   ========================================================================== */
+
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+html, body, #root { height: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-base);
+  line-height: 1.55;
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+a { color: inherit; text-decoration: none; }
+/* Bare buttons must not fall back to the UA "buttonface" fill/border - that
+   renders as white boxes in dark mode (the .dd-item menu bug). Styled button
+   classes (.btn, .userbtn, .icon-btn, .dd-item:hover) set their own background,
+   so this transparent default never fights them. Single source of truth for
+   how an unstyled <button> looks in either theme. */
+button { font-family: inherit; cursor: pointer; color: inherit; background: transparent; border: 0; }
+h1, h2, h3, h4, h5 { margin: 0; font-weight: 650; letter-spacing: -0.01em; color: var(--text); }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+img { max-width: 100%; display: block; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 999px; border: 3px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-faint); }
+
+:focus-visible { outline: 2px solid var(--brand-500); outline-offset: 2px; }
+
+/* ---------- Reusable atoms ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-sm);
+}
+.card-pad { padding: var(--sp-6); }
+.card-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: var(--sp-4);
+  padding: var(--sp-5) var(--sp-6);
+  border-bottom: 1px solid var(--border);
+}
+.card-title { font-size: var(--fs-md); font-weight: 650; }
+.card-sub { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 2px; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  height: 38px; padding: 0 var(--sp-4);
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  font-size: var(--fs-base); font-weight: 550; white-space: nowrap;
+  transition: background var(--dur) var(--ease), border-color var(--dur), transform var(--dur), color var(--dur);
+}
+.btn:active { transform: translateY(1px); }
+.btn-sm { height: 32px; padding: 0 var(--sp-3); font-size: var(--fs-sm); }
+.btn-lg { height: 46px; padding: 0 var(--sp-6); font-size: var(--fs-md); }
+.btn-block { width: 100%; }
+.btn-primary { background: var(--brand-500); color: #fff; }
+.btn-primary:hover { background: var(--brand-600); }
+.btn-accent { background: var(--accent-500); color: #06323a; }
+.btn-outline { background: transparent; border-color: var(--border-strong); color: var(--text); }
+.btn-outline:hover { background: var(--surface-2); }
+.btn-ghost { background: transparent; color: var(--text-muted); }
+.btn-ghost:hover { background: var(--surface-2); color: var(--text); }
+.btn-danger { background: var(--danger); color: #fff; }
+.btn-danger:hover { filter: brightness(0.95); }
+.btn-success { background: var(--success); color: #fff; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  height: 22px; padding: 0 10px; border-radius: var(--r-full);
+  font-size: var(--fs-xs); font-weight: 600; letter-spacing: 0.02em;
+}
+.badge-brand { background: var(--brand-soft); color: var(--brand-600); }
+.badge-success { background: var(--success-soft); color: var(--success); }
+.badge-warning { background: var(--warning-soft); color: var(--warning); }
+.badge-danger { background: var(--danger-soft); color: var(--danger); }
+.badge-info { background: var(--info-soft); color: var(--info); }
+.badge-muted { background: var(--surface-3); color: var(--text-muted); }
+.badge-dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+.avatar {
+  width: 38px; height: 38px; border-radius: 50%; object-fit: cover;
+  background: var(--surface-3); display: inline-flex; align-items: center; justify-content: center;
+  font-weight: 650; font-size: var(--fs-sm); color: var(--brand-600); flex-shrink: 0;
+}
+.avatar-sm { width: 30px; height: 30px; font-size: var(--fs-xs); }
+.avatar-lg { width: 64px; height: 64px; font-size: var(--fs-lg); }
+
+.input, .select, .textarea {
+  width: 100%; height: 40px; padding: 0 var(--sp-3);
+  background: var(--surface); border: 1px solid var(--border-strong); border-radius: var(--r-sm);
+  color: var(--text); font-size: var(--fs-base); font-family: inherit;
+  transition: border-color var(--dur), box-shadow var(--dur);
+}
+.textarea { height: auto; min-height: 96px; padding: var(--sp-3); resize: vertical; }
+.input:focus, .select:focus, .textarea:focus {
+  outline: none; border-color: var(--brand-500); box-shadow: 0 0 0 3px var(--brand-soft);
+}
+.input::placeholder, .textarea::placeholder { color: var(--text-faint); }
+.field { margin-bottom: var(--sp-4); }
+.label { display: block; font-size: var(--fs-sm); font-weight: 600; margin-bottom: 6px; color: var(--text); }
+.hint { font-size: var(--fs-xs); color: var(--text-muted); margin-top: 5px; }
+
+.table-wrap { width: 100%; overflow-x: auto; }
+table.data { width: 100%; border-collapse: collapse; font-size: var(--fs-base); }
+table.data th {
+  text-align: left; font-size: var(--fs-xs); text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--text-muted); font-weight: 650; padding: var(--sp-3) var(--sp-4);
+  border-bottom: 1px solid var(--border); white-space: nowrap;
+}
+table.data td { padding: var(--sp-3) var(--sp-4); border-bottom: 1px solid var(--border); vertical-align: middle; }
+table.data tbody tr { transition: background var(--dur); }
+table.data tbody tr:hover { background: var(--surface-2); }
+table.data tbody tr:last-child td { border-bottom: 0; }
+
+/* Responsive tables: a wide `table.data` scrolls horizontally on a phone, which
+   hid the last column (row actions like Edit) off-screen. Adding the `cards`
+   class turns each row into a stacked card on narrow screens, with every cell
+   labelled (via each td's data-label) and the actions always visible. The first
+   cell spans the card as its title. Opt-in so only tables with data-labels use
+   it. */
+@media (max-width: 640px) {
+  table.data.cards, table.data.cards thead, table.data.cards tbody,
+  table.data.cards tr, table.data.cards th, table.data.cards td { display: block; width: 100%; }
+  table.data.cards thead { position: absolute; left: -9999px; }
+  table.data.cards tbody tr {
+    border: 1px solid var(--border); border-radius: var(--radius, 12px);
+    background: var(--surface); margin-bottom: 12px; padding: 6px 14px;
+  }
+  table.data.cards tbody tr:hover { background: var(--surface); }
+  table.data.cards td {
+    border: 0; border-bottom: 1px solid var(--border); padding: 10px 0;
+    display: flex; align-items: center; justify-content: space-between; gap: 14px;
+    text-align: right; min-width: 0;
+  }
+  table.data.cards td:last-child { border-bottom: 0; }
+  /* The value side must be allowed to shrink/wrap so a long email can't push the
+     card wider than the screen (which brought back horizontal scroll). */
+  table.data.cards td > * { min-width: 0; overflow-wrap: anywhere; }
+  table.data.cards td::before {
+    content: attr(data-label); font-size: var(--fs-xs); text-transform: uppercase;
+    letter-spacing: 0.04em; color: var(--text-muted); font-weight: 650;
+    text-align: left; flex: 0 0 auto; white-space: nowrap;
+  }
+  /* First cell is the card title: full width, no label, left aligned, wraps. */
+  table.data.cards td:first-child { text-align: left; padding-top: 12px; display: block; overflow-wrap: anywhere; }
+  table.data.cards td:first-child::before { content: none; }
+  /* Actions never wrap off the card; they stay grouped and tappable. */
+  table.data.cards td:last-child .flex { flex-wrap: wrap; justify-content: flex-end; }
+  /* Action icon buttons stay grouped on the right and are easy to tap. */
+  table.data.cards td .flex { justify-content: flex-end; }
+  table.data.cards td .icon-btn { width: 38px; height: 38px; }
+}
+
+.divider { height: 1px; background: var(--border); border: 0; margin: var(--sp-5) 0; }
+.progress { height: 8px; border-radius: var(--r-full); background: var(--surface-3); overflow: hidden; }
+.progress > span { display: block; height: 100%; border-radius: var(--r-full); background: var(--brand-500); }
+
+/* ---------- Layout helpers ---------- */
+.page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-4); margin-bottom: var(--sp-6); flex-wrap: wrap; }
+.page-title { font-size: var(--fs-xl); }
+.crumb { font-size: var(--fs-sm); color: var(--text-muted); margin-top: 4px; }
+.crumb a:hover { color: var(--brand-600); }
+.grid { display: grid; gap: var(--sp-5); }
+.g-1 { grid-template-columns: 1fr; }
+.g-2 { grid-template-columns: repeat(2, 1fr); }
+.g-3 { grid-template-columns: repeat(3, 1fr); }
+.g-4 { grid-template-columns: repeat(4, 1fr); }
+.flex { display: flex; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: var(--sp-2); }
+.gap-3 { gap: var(--sp-3); }
+.gap-4 { gap: var(--sp-4); }
+.wrap { flex-wrap: wrap; }
+.muted { color: var(--text-muted); }
+.text-sm { font-size: var(--fs-sm); }
+.text-xs { font-size: var(--fs-xs); }
+.fw-600 { font-weight: 600; }
+.mt-2 { margin-top: var(--sp-2); } .mt-4 { margin-top: var(--sp-4); } .mt-6 { margin-top: var(--sp-6); }
+.mb-0 { margin-bottom: 0; }
+
+@media (max-width: 1100px) { .g-4 { grid-template-columns: repeat(2, 1fr); } .g-3 { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 720px) { .g-2, .g-3, .g-4 { grid-template-columns: 1fr; } }
+
+/* fade-in for route content */
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.route-anim { animation: fade-up 320ms var(--ease); }

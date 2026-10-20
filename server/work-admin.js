@@ -1,0 +1,232 @@
+// ===========================================================================
+// WorkCoPilot admin routes - SELF-CONTAINED, decoupled register module.
+//
+// This file adds only the READ endpoints the WorkCoPilot admin console needs
+// that did not already exist. The write endpoints it relies on (set tier,
+// grant minutes, set pricing, platform-AI toggle) already live in
+// server/index.js and are REUSED by the client as-is - we do not re-register
+// their paths here (single source of truth; no parallel route list).
+//
+// Wiring (owner does this in server/index.js, after the existing work routes):
+//   import { registerWorkAdminRoutes } from './work-admin.js'
+//   registerWorkAdminRoutes(app, {
+//     store, work, ai, requireAuth, requireAdmin, requireSuperAdmin, wrap, resolveWorkRuntime,
+//   })
+//
+// deps it reads (confirmed against server/index.js):
+//   - store                : the store.js module namespace (functions below)
+//   - requireAuth          : index.js:97  sets req.user, 401 when not signed in
+//   - requireAdmin         : index.js:1034 403 unless req.user.role in ADMIN_ROLES
+//   - requireSuperAdmin    : index.js:1346 403 unless req.user.role === 'superadmin'
+//   - wrap                 : index.js:93  try/catch wrapper for sync handlers
+//   (work, ai, resolveWorkRuntime are accepted for forward-compat / symmetry
+//    with the other work routes but this read-only surface does not need them.)
+//
+// existing store functions relied on (confirmed in server/store.js):
+//   - listUsers()          : store.js:548  all accounts as publicUser() (has .products, .role)
+//   - getWorkUser(id)       : store.js:3452
+//   - getWorkTier(id)       : store.js:3504
+//   - getWorkUsage(id)      : store.js:3520 { tier, dailySeconds, usedSeconds, purchasedSeconds, freeLeft, remainingSeconds, exhausted, resetLabel }
+//   - listWorkSessions(id)  : store.js:3705
+//   - getWorkPricing()      : store.js:3571
+//   - getWorkPlatformAllowed(): store.js:3608
+//   - getActiveRuntime()    : store.js:1144 { providerId, apiKey, chatModel, ... } | null
+//   - WORK_TIERS            : store.js:3490 ['basic','advanced','premium']
+//
+// store functions I WISH existed (owner: optional, would make this exhaustive
+// and O(1) instead of O(users); the fallbacks below work today without them):
+//   - listAllWorkUsers()    -> raw db.workUsers array (would also surface any
+//                              legacy 'w'-prefixed records not in db.users).
+//   - listAllWorkSessions() -> raw db.workSessions array (avoids the per-user
+//                              fan-out when building the global sessions view).
+// Both are auto-detected: if present they are used, else we derive from the
+// 'work'-entitled accounts returned by listUsers().
+// ===========================================================================
+
+// Eastern "today" key, matching store.js day boundaries closely enough for a
+// dashboard count (calendar day in America/New_York).
+function easternDay(ts) {
+  try {
+    const fmt = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/New_York', year: 'numeric', month: '2-digit', day: '2-digit',
+    })
+    return fmt.format(new Date(ts))
+  } catch { return new Date(ts).toISOString().slice(0, 10) }
+}
+
+// The set of people who can use WorkCoPilot. Prefer a dedicated store function
+// if the owner adds one; otherwise derive from accounts that hold the 'work'
+// entitlement (admins/superadmins hold every product, so they appear too).
+function workRoster(store) {
+  if (typeof store.listAllWorkUsers === 'function') {
+    const rows = store.listAllWorkUsers() || []
+    return rows.map((u) => ({ id: u.id, username: u.username })).filter((x) => x && x.id)
+  }
+  const accts = (typeof store.listUsers === 'function') ? (store.listUsers() || []) : []
+  return accts
+    .filter((a) => Array.isArray(a.products) && a.products.includes('work'))
+    .map((a) => ({ id: a.id, username: a.username }))
+}
+
+// Every session across all users. Prefer a dedicated store function; else fan
+// out over the roster. Guard each lookup so one bad record never 500s the view.
+function allWorkSessions(store, roster) {
+  if (typeof store.listAllWorkSessions === 'function') {
+    return store.listAllWorkSessions() || []
+  }
+  const nameById = new Map(roster.map((r) => [r.id, r.username]))
+  const out = []
+  for (const r of roster) {
+    let list = []
+    try { list = store.listWorkSessions(r.id) || [] } catch { list = [] }
+    for (const s of list) {
+      if (!s || !s.id) continue
+      out.push(s.username ? s : { ...s, username: nameById.get(s.workUserId) || r.username })
+    }
+  }
+  return out
+}
+
+function stepCounts(s) {
+  const steps = Array.isArray(s.steps) ? s.steps : []
+  const done = steps.filter((x) => x && x.status === 'done').length
+  return { total: steps.length, done }
+}
+
+// A session row trimmed to what the console shows (no internal event logs, no
+// AI config). username is resolved from the roster when the record lacks it.
+function sessionRow(s, nameById) {
+  const c = stepCounts(s)
+  return {
+    id: s.id,
+    userId: s.workUserId || null,
+    username: s.username || nameById.get(s.workUserId) || 'unknown',
+    title: s.title || null,
+    goal: s.goal || null,
+    status: s.status || 'active',
+    paused: !!s.paused,
+    stepTotal: c.total,
+    stepDone: c.done,
+    currentStep: Number(s.currentStep) || 0,
+    startedAt: s.startedAt || null,
+    endedAt: s.endedAt || null,
+    lastActivityAt: s.lastActivityAt || null,
+  }
+}
+
+export function registerWorkAdminRoutes(app, deps = {}) {
+  const { store, requireAuth, requireAdmin, wrap } = deps
+  if (!app || !store || !requireAuth || !requireAdmin || !wrap) {
+    throw new Error('registerWorkAdminRoutes: missing required deps (app, store, requireAuth, requireAdmin, wrap)')
+  }
+  // A plain pass-through when wrap is given; keeps the same try/catch shape.
+  const w = (fn) => wrap(fn)
+
+  // -- Overview: headline aggregates + the signed-in viewer's role (so the UI
+  //    can gate superadmin-only write controls without guessing). -------------
+  app.get('/api/work/admin/overview', requireAuth, requireAdmin, w((req, res) => {
+    const roster = workRoster(store)
+    const byTier = { basic: 0, advanced: 0, premium: 0 }
+    let purchasedSeconds = 0
+    for (const r of roster) {
+      let tier = 'basic'
+      try { tier = store.getWorkTier(r.id) } catch { tier = 'basic' }
+      if (byTier[tier] == null) byTier[tier] = 0
+      byTier[tier] += 1
+      try { purchasedSeconds += (store.getWorkUsage(r.id).purchasedSeconds || 0) } catch { /* skip */ }
+    }
+
+    const sessions = allWorkSessions(store, roster)
+    const today = easternDay(Date.now())
+    const activeCut = Date.now() - 5 * 60 * 1000
+    let sessionsToday = 0
+    let activeNow = 0
+    for (const s of sessions) {
+      if (s.startedAt && easternDay(Date.parse(s.startedAt)) === today) sessionsToday += 1
+      if ((s.status || 'active') === 'active' && !s.paused && (s.lastActivityAt || 0) >= activeCut) activeNow += 1
+    }
+
+    let platformConfigured = false
+    try { platformConfigured = !!store.getActiveRuntime() } catch { platformConfigured = false }
+    const platformAiAllowed = (() => { try { return !!store.getWorkPlatformAllowed() } catch { return false } })()
+
+    res.json({
+      viewer: {
+        username: req.user.username,
+        role: req.user.role,
+        isSuperAdmin: req.user.role === 'superadmin',
+      },
+      stats: {
+        totalUsers: roster.length,
+        byTier,
+        sessionsToday,
+        activeNow,
+        totalSessions: sessions.length,
+        purchasedHoursOutstanding: Math.round((purchasedSeconds / 3600) * 10) / 10,
+        platformAiAllowed,
+        platformConfigured,
+        platformReady: platformAiAllowed && platformConfigured,
+      },
+    })
+  }))
+
+  // -- Users: every WorkCoPilot user with tier + today's balance + session count.
+  app.get('/api/work/admin/users', requireAuth, requireAdmin, w((req, res) => {
+    const roster = workRoster(store)
+    const sessions = allWorkSessions(store, roster)
+    const countById = new Map()
+    for (const s of sessions) {
+      const k = s.workUserId || (s.userId || null)
+      if (k) countById.set(k, (countById.get(k) || 0) + 1)
+    }
+    const users = roster.map((r) => {
+      let usage = null
+      try { usage = store.getWorkUsage(r.id) } catch { usage = null }
+      const wu = (() => { try { return store.getWorkUser(r.id) } catch { return null } })()
+      return {
+        id: r.id,
+        username: r.username,
+        displayName: (wu && wu.displayName) || null,
+        tier: usage ? usage.tier : ((() => { try { return store.getWorkTier(r.id) } catch { return 'basic' } })()),
+        dailySeconds: usage ? usage.dailySeconds : 0,
+        usedSeconds: usage ? usage.usedSeconds : 0,
+        freeLeftSeconds: usage ? usage.freeLeft : 0,
+        purchasedSeconds: usage ? usage.purchasedSeconds : 0,
+        remainingSeconds: usage ? usage.remainingSeconds : 0,
+        exhausted: usage ? !!usage.exhausted : false,
+        sessionCount: countById.get(r.id) || 0,
+      }
+    }).sort((a, b) => a.username.localeCompare(b.username))
+    res.json({ users, tiers: store.WORK_TIERS || ['basic', 'advanced', 'premium'] })
+  }))
+
+  // -- Sessions: recent sessions across all users (newest first, capped). ------
+  app.get('/api/work/admin/sessions', requireAuth, requireAdmin, w((req, res) => {
+    const roster = workRoster(store)
+    const nameById = new Map(roster.map((r) => [r.id, r.username]))
+    const raw = allWorkSessions(store, roster)
+    const limit = Math.max(1, Math.min(500, Number(req.query.limit) || 200))
+    const sessions = raw
+      .slice()
+      .sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')))
+      .slice(0, limit)
+      .map((s) => sessionRow(s, nameById))
+    res.json({ sessions, total: raw.length })
+  }))
+
+  // -- AI state: booleans only (SUPREME RULE III - surface state, never leak a
+  //    key or a provider/model name). Complements the existing platform-ai
+  //    toggle at GET/POST /api/work/admin/platform-ai (not re-registered here).
+  app.get('/api/work/admin/ai-state', requireAuth, requireAdmin, w((req, res) => {
+    const platformAiAllowed = (() => { try { return !!store.getWorkPlatformAllowed() } catch { return false } })()
+    let platformConfigured = false
+    try { platformConfigured = !!store.getActiveRuntime() } catch { platformConfigured = false }
+    res.json({
+      platformAiAllowed,
+      platformConfigured,
+      platformReady: platformAiAllowed && platformConfigured,
+    })
+  }))
+}
+
+export default { registerWorkAdminRoutes }
