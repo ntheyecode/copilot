@@ -140,16 +140,39 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* FOR COMPANIES & TEAMS - the killer, up top */}
+      <section className="wm-sec wm-roi" id="roi">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies & teams</div>
+          <h2 className="wm-h2" data-reveal>Do more, with the team you already have.</h2>
+          <p className="wm-sub" data-reveal>Lean teams take on the toughest projects and ship like specialists. Faster, secure, documented, in-house.</p>
+          <div className="wm-roi-stats" data-reveal>
+            <CountStat value={70} prefix="+" suffix="%" label="faster to done" />
+            <CountStat value={50} prefix="-" suffix="%" label="outsourcing spend" />
+            <CountStat value={100} suffix="%" label="documented" />
+            <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to market</span></div>
+          </div>
+          <div className="wm-roi-grid">
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Layers size={18} /></span><h3>Toughest projects, in-house</h3><p>Your team delivers specialist work the first time. No new hires.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Zap size={18} /></span><h3>Faster to market</h3><p>Pending work clears up to 70% faster. Ship weeks sooner.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Rocket size={18} /></span><h3>Adopt new tech and tools</h3><p>Stand up any new framework, platform or tool correctly, the first time.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><ShieldCheck size={18} /></span><h3>Secure by default</h3><p>Hardened setups, reviewed code, real pentest steps. Mistakes caught early.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><FileText size={18} /></span><h3>Everything documented</h3><p>Every change, config and pentest ends with a write-up and an audit log.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Gauge size={18} /></span><h3>Kill contractor &amp; partner spend</h3><p>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</p></div>
+          </div>
+        </div>
+      </section>
+
       {/* SECURITY / ENTERPRISE BAND */}
       <section className="wm-sec wm-security" id="security">
         <div className="wm-wrap">
           <div className="wm-eyebrow" data-reveal><ShieldCheck size={14} /> Enterprise-ready &middot; security-first</div>
           <h2 className="wm-h2" data-reveal>Your data never leaves your device unprotected.</h2>
-          <p className="wm-sub" data-reveal>Built for security, healthcare, finance and government teams. Turn on a redaction policy and sensitive data is stripped before anything is sent.</p>
+          <p className="wm-sub" data-reveal>For security, healthcare, finance and government. Turn on redaction and sensitive data never leaves the device.</p>
           <div className="wm-sec-grid">
-            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><Lock size={18} /></span><h3>Stripped on-device</h3><p>With a redaction policy on, PII, PHI, secrets, passwords, IP addresses and private hosts are removed on your machine before anything reaches our server or the AI.</p></div>
-            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><ScanEye size={18} /></span><h3>Read-only by design</h3><p>It watches and guides. It never clicks, types or runs anything for you, and it hides itself from screen shares. You stay in control.</p></div>
-            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><FileText size={18} /></span><h3>Audited &amp; yours</h3><p>A downloadable per-session log shows exactly what was sent and when. Bring your own AI keys or a self-hosted model. Works on locked-down machines.</p></div>
+            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><Lock size={18} /></span><h3>Stripped on-device</h3><p>PII, PHI, secrets, passwords and IPs removed on your machine before anything is sent.</p></div>
+            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><ScanEye size={18} /></span><h3>Read-only by design</h3><p>It watches and guides. Never clicks, types or runs anything. Hidden on screen-share.</p></div>
+            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><FileText size={18} /></span><h3>Audited and yours</h3><p>A per-session log of exactly what was sent. Bring your own keys or self-hosted model.</p></div>
           </div>
         </div>
       </section>
@@ -177,17 +200,17 @@ export default function WorkMarketing() {
           <p className="wm-sub" data-reveal>Real tasks, real pressure, and a clear next move the whole way through.</p>
           <div className="wm-people-grid">
             <figure className="wm-photo" data-reveal>
-              <video src="/people-focus.mp4" poster="/people-focus.jpg" autoPlay muted loop playsInline aria-label="A person working at a laptop in warm light, finishing a task with a quiet smile" />
+              <img src="/ent-team.webp" alt="Two colleagues solving a hard problem together at a laptop in warm light" loading="lazy" width="1200" height="900" />
               <figcaption>
-                <span className="wm-photo-tag">Set up the cloud, step by step</span>
-                <span className="wm-photo-cap">First time in a new console. It opens the right page, names the exact setting, and flags a wrong turn before it costs you.</span>
+                <span className="wm-photo-tag">The toughest work, in-house</span>
+                <span className="wm-photo-cap">A lean team ships specialist work, guided to the exact next step.</span>
               </figcaption>
             </figure>
             <figure className="wm-photo" data-reveal style={{ transitionDelay: '90ms' }}>
-              <img src="/people-done.jpg" alt="A person smiling at a laptop in warm light while finishing their work" loading="lazy" width="1400" height="939" />
+              <img src="/ent-focus.webp" alt="A professional finishing a complex task at a laptop with quiet confidence" loading="lazy" width="1200" height="900" />
               <figcaption>
                 <span className="wm-photo-tag">Unstuck in seconds</span>
-                <span className="wm-photo-cap">Halfway through and lost. Snap a photo of the screen, get the precise next move, and finish while it still matters.</span>
+                <span className="wm-photo-cap">Lost halfway through. Get the precise next move and finish.</span>
               </figcaption>
             </figure>
           </div>
@@ -258,31 +281,6 @@ export default function WorkMarketing() {
           </div>
           <div style={{ textAlign: 'center', marginTop: 28 }} data-reveal>
             <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>Explore every use case in detail <ArrowRight size={15} /></button>
-          </div>
-        </div>
-      </section>
-
-      {/* HOW COMPANIES BENEFIT - ROI */}
-      <section className="wm-sec wm-roi" id="roi">
-        <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies &amp; teams</div>
-          <h2 className="wm-h2" data-reveal>More gets done. With the team you already have.</h2>
-          <p className="wm-sub" data-reveal>WorkCoPilot turns anyone into an expert on the task in front of them, applies the secure, proven way, and documents every step. Lean teams take on the <b>toughest projects</b>, cloud migrations, security hardening, pentests, full builds, and ship like specialists.</p>
-
-          <div className="wm-roi-stats" data-reveal>
-            <CountStat value={70} prefix="+" suffix="%" label="faster through stuck & pending work" />
-            <CountStat value={50} prefix="-" suffix="%" label="outsourcing spend, quality kept" />
-            <CountStat value={100} suffix="%" label="documented, every change & config" />
-            <div className="wm-roi-stat"><b>Days&nbsp;&rarr;&nbsp;hrs</b><span>on work nobody had time for</span></div>
-          </div>
-
-          <div className="wm-roi-grid">
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Layers size={18} /></span><h3>Take on the toughest projects</h3><p>No new hires, no long ramp. Your existing team or a lean consultant is guided to deliver specialist, complex work, infrastructure, cloud, security, builds, the first time, correctly, in-house.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Zap size={18} /></span><h3>Clear the backlog</h3><p>The tasks that pile up because &ldquo;no one has time&rdquo; or &ldquo;only one person knows how&rdquo; finally get done, step by step, with each step verified, up to 70% faster.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><ShieldCheck size={18} /></span><h3>Secure &amp; best-practice by default</h3><p>It applies the current, proven way, hardened cloud setups, reviewed code, real pentest steps, correct configurations, and catches mistakes before they cost you. No shortcuts, no guesswork.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><FileText size={18} /></span><h3>Everything documented</h3><p>Every implementation, code change, configuration, pentest and cloud setup ends with a clean, shareable write-up, and a per-session audit log. Audit-ready, knowledge that stays in the company.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Gauge size={18} /></span><h3>Cut outsourcing, keep control</h3><p>Bring work back in-house. Reduce external spend by up to half while raising consistency, and keep the context, data and institutional knowledge on your side.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Lock size={18} /></span><h3>Safe for regulated work</h3><p>On-device redaction of PII, PHI, secrets and IPs plus read-only guidance means even sensitive, compliance-bound work can be done in-house, safely.</p></div>
           </div>
         </div>
       </section>
