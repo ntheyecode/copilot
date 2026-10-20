@@ -310,6 +310,7 @@ export default function WorkMarketing() {
       {/* PRICING */}
       <section className="wm-sec wm-pricing" id="pricing">
         <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Zap size={14} /> Pricing</div>
           <h2 className="wm-h2" data-reveal>Simple plans. Real guided time.</h2>
           <p className="wm-sub" data-reveal>Hours of live guidance every day. Pause anytime, and come back right where you left off.</p>
           <div className="wm-tiers">
@@ -324,6 +325,11 @@ export default function WorkMarketing() {
                 <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
               </div>
             ))}
+          </div>
+          <div className="wm-trust" data-reveal>
+            <span><Lock size={14} /> Secure checkout, powered by Stripe</span>
+            <span><Check size={14} /> Cancel anytime, no contract</span>
+            <span><ShieldCheck size={14} /> Purchased time never expires</span>
           </div>
           {/* Enterprise - a strong colored anchor, no public price */}
           <div className="wm-ent" data-reveal>
@@ -1120,6 +1126,9 @@ const CSS = `
 .wm-tier li svg{color:var(--em);flex-shrink:0;margin-top:3px}
 .wm-tier .wm-cta{width:100%;justify-content:center}
 .wm-tier-topup{text-align:center;color:var(--mut);font-size:12.5px;margin-top:12px}
+.wm-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 28px;margin-top:26px}
+.wm-trust span{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:13.5px;font-weight:500}
+.wm-trust span svg{color:var(--em);flex-shrink:0}
 .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
 
 /* uniform dark "message box" on top of every icon card */
