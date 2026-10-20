@@ -1,0 +1,57 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.admireveda.workcopilot'
+    compileSdk 35
+
+    defaultConfig {
+        applicationId "com.admireveda.workcopilot"
+        minSdk 26
+        targetSdk 35
+        versionCode 1
+        versionName "1.0.0"
+    }
+
+    // Release signing is supplied via environment variables so no keystore or
+    // password is ever committed. Set WC_STORE_FILE / WC_STORE_PASSWORD /
+    // WC_KEY_ALIAS / WC_KEY_PASSWORD before `gradlew assembleRelease`. When they
+    // are absent (a plain debug build) this config is simply unused.
+    signingConfigs {
+        release {
+            def ksPath = System.getenv("WC_STORE_FILE")
+            if (ksPath != null && !ksPath.isEmpty()) {
+                storeFile file(ksPath)
+                storePassword System.getenv("WC_STORE_PASSWORD")
+                keyAlias System.getenv("WC_KEY_ALIAS")
+                keyPassword System.getenv("WC_KEY_PASSWORD")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (System.getenv("WC_STORE_FILE") != null && !System.getenv("WC_STORE_FILE").isEmpty()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.activity:activity-ktx:1.9.3'
+}

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "WorkCoPilot" mark: a guiding cursor/arrow inside the adaptive-icon safe
+     zone (the inner 72x72 of the 108x108 canvas). Accent green on transparent. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Pointer arrow -->
+    <path
+        android:fillColor="#5CA038"
+        android:pathData="M42,34 L42,74 L52,64 L59,79 L66,76 L59,61 L73,61 Z" />
+    <!-- Guidance spark -->
+    <path
+        android:fillColor="#8BD450"
+        android:pathData="M64,30 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+</vector>
