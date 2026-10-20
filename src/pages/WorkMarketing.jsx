@@ -7,6 +7,8 @@ import {
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI before the scenario leaves the browser (public form: always on)
+import { useAuth } from '../auth.jsx'
+import { api } from '../api.js'
 
 // AdmireVeda WorkCoPilot - marketing landing (admireveda.com).
 // Motion-rich, benefits-first. Never names a model, never mentions limits.
@@ -44,6 +46,21 @@ export default function WorkMarketing() {
   }, [price])
 
   const go = (plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)
+  const { user } = useAuth()
+  // Choose a plan: a signed-in visitor goes straight to Stripe Checkout; a new
+  // visitor is sent to sign up with the plan carried along, and checkout starts
+  // right after they create their account.
+  const choosePlan = async (plan) => {
+    if (user) {
+      try {
+        const r = await api.workCheckout(plan)
+        if (r && r.url) { window.location = r.url; return }
+      } catch { /* billing not ready: fall through to the dashboard */ }
+      nav('/work')
+      return
+    }
+    go(plan)
+  }
   const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
   const tilt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; e.currentTarget.style.transform = `perspective(700px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg) translateY(-4px)` }
   const untilt = (e) => { e.currentTarget.style.transform = '' }
@@ -303,7 +320,7 @@ export default function WorkMarketing() {
                 <div className="wm-tier-price">{money(t.price)}<span>/mo</span></div>
                 <div className="wm-tier-hrs">{t.hrs} hours a day</div>
                 <ul>{t.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
-                <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => go(t.id)}>Choose {t.name}</button>
+                <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => choosePlan(t.id)}>Choose {t.name}</button>
                 <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
               </div>
             ))}

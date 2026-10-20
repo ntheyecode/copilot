@@ -206,6 +206,7 @@ function seed() {
       purchasedSeconds: 0,
       imageCredits: 0,
       ai: null,                 // the account's own AI key (used only when platform AI is not allowed)
+      subscription: freshSubscription(),  // Stripe billing state (never leaks stripe ids to the client)
     })
     changed = true
     console.log('[store] seeded superadmin  ->  username: admin   password: ' + pw)
@@ -270,8 +271,76 @@ export function publicWorkUser(u) {
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
     companyName: co ? co.name : null,
+    // Billing state the client needs to know (status + plan only, never stripe ids).
+    subscription: {
+      status: (u.subscription && u.subscription.status) || 'none',
+      plan: (u.subscription && u.subscription.plan) || null,
+    },
+    canUseService: userCanUseService(u.id),      // company-covered OR a live personal plan
   }
 }
+
+// ---- Subscription (Stripe billing state) ----------------------------------
+// Each account carries a subscription island. Free signup starts at status
+// 'none' (dashboard access, but guiding is gated); a completed Stripe Checkout
+// moves it to 'trialing'/'active'. Company members are covered by the company,
+// so they do not need a personal subscription. No stripe id ever leaves to the
+// client (publicWorkUser exposes status+plan only).
+export function freshSubscription() {
+  return { status: 'none', plan: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
+}
+function ensureSubscription(u) {
+  if (!u.subscription || typeof u.subscription !== 'object') u.subscription = freshSubscription()
+  return u.subscription
+}
+// Safe shape (no stripe ids) for the client + the GET /subscription endpoint.
+export function getSubscription(userId) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const s = u.subscription || {}
+  return { status: s.status || 'none', plan: s.plan || null, currentPeriodEnd: s.currentPeriodEnd || null }
+}
+// Merge a patch (from the webhook) into the account's subscription. Only known
+// fields are written, so a malformed event can never inject arbitrary keys.
+export function setSubscription(userId, patch = {}) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const s = ensureSubscription(u)
+  for (const k of ['status', 'plan', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
+    if (patch[k] !== undefined) s[k] = patch[k]
+  }
+  persist()
+  return getSubscription(userId)
+}
+// TRUE when the user may USE the service (start a session, run guidance). A
+// company member is covered by the company (company pays; seats respected only
+// when a positive seat count is set). Otherwise a live personal plan is needed.
+export function userCanUseService(userId) {
+  const u = getUser(userId)
+  if (!u) return false
+  if (u.companyId) {
+    const c = (db.companies || []).find((x) => x.id === u.companyId)
+    if (c) {
+      if (!c.seats || c.seats <= 0) return true   // unseated company: all members covered
+      const members = (db.users || []).filter((x) => x.companyId === c.id)
+        .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
+      const idx = members.findIndex((x) => x.id === u.id)
+      return idx >= 0 && idx < c.seats            // covered up to the seat count
+    }
+  }
+  const s = u.subscription
+  return !!(s && (s.status === 'trialing' || s.status === 'active'))
+}
+// Webhook mapping: resolve the account a Stripe object belongs to.
+export function findUserByStripeCustomer(customerId) {
+  if (!customerId) return null
+  return (db.users || []).find((u) => u.subscription && u.subscription.stripeCustomerId === customerId) || null
+}
+export function findUserByStripeSubscription(subscriptionId) {
+  if (!subscriptionId) return null
+  return (db.users || []).find((u) => u.subscription && u.subscription.stripeSubscriptionId === subscriptionId) || null
+}
+
 // Superadmin control: turn the PII/PHI/secret scrubber on/off for one user.
 // OFF by default; a user is also scrubbed if their company's default is on.
 export function setWorkUserScrub(userId, enabled) {
@@ -456,6 +525,7 @@ export function ensureWorkUser(uid, username) {
   if (u.imageCredits == null) { u.imageCredits = 0; changed = true }
   if (u.onboarded == null) { u.onboarded = false; changed = true }
   if (u.ai === undefined) { u.ai = null; changed = true }
+  if (u.subscription === undefined || u.subscription === null) { u.subscription = freshSubscription(); changed = true }
   if (changed) persist()
   return u
 }
@@ -482,6 +552,7 @@ export function createWorkUser({ username, password }) {
     purchasedSeconds: 0,
     imageCredits: 0,
     ai: null,
+    subscription: freshSubscription(),   // free signup: dashboard access now, a plan unlocks guiding
   }
   db.users.push(u)
   indexUsers()
