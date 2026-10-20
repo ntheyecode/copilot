@@ -130,23 +130,21 @@ export default function WorkLogin() {
             <button className="wl-cta" type="submit" disabled={busy || checkingOut}>{(busy || checkingOut) ? <Loader2 size={16} className="wl-spin" /> : null} {mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={16} /></button>
           </form>
 
-          {stage === 'password' && (
-            <div className="wl-sso">
-              <div className="wl-or"><span>or</span></div>
-              {!ssoOpen ? (
-                <button type="button" className="wl-sso-btn" onClick={() => { setSsoOpen(true); setSsoErr('') }}>
-                  <Building2 size={16} /> Sign in with your company (SSO)
-                </button>
-              ) : (
-                <form onSubmit={startSso} className="wl-sso-form">
-                  <label>Company email domain</label>
-                  <input autoFocus value={ssoDomain} onChange={(e) => setSsoDomain(e.target.value)} placeholder="example.com" />
-                  <button type="submit" className="wl-sso-go" disabled={ssoBusy}>{ssoBusy ? <Loader2 size={15} className="wl-spin" /> : null} Continue <ArrowRight size={15} /></button>
-                </form>
-              )}
-              {ssoErr && <div className="wl-err wl-sso-err">{ssoErr}</div>}
-            </div>
-          )}
+          <div className="wl-sso">
+            <div className="wl-or"><span>or</span></div>
+            {!ssoOpen ? (
+              <button type="button" className="wl-sso-btn" onClick={() => { setSsoOpen(true); setSsoErr('') }}>
+                <Building2 size={16} /> Sign in with your company (SSO)
+              </button>
+            ) : (
+              <form onSubmit={startSso} className="wl-sso-form">
+                <label>Company email domain</label>
+                <input autoFocus value={ssoDomain} onChange={(e) => setSsoDomain(e.target.value)} placeholder="example.com" />
+                <button type="submit" className="wl-sso-go" disabled={ssoBusy}>{ssoBusy ? <Loader2 size={15} className="wl-spin" /> : null} Continue <ArrowRight size={15} /></button>
+              </form>
+            )}
+            {ssoErr && <div className="wl-err wl-sso-err">{ssoErr}</div>}
+          </div>
 
           <div className="wl-foot">
             {mode === 'signup'
