@@ -292,7 +292,87 @@ export default function WorkMarketing() {
           <button className="wm-link" onClick={() => go('')}>Sign in</button>
         </div>
       </footer>
+
+      <CoverageChat go={go} />
     </div>
+  )
+}
+
+// Floating "is my scenario covered?" assistant. Scoped by design: it only tells
+// a visitor whether WorkCoPilot can guide their task, how it is covered, and
+// which plan fits. The server (POST /api/work/coverage) enforces the guardrail -
+// anything that is not a coverage question comes back as "offtopic".
+function CoverageChat({ go }) {
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [res, setRes] = useState(null)
+  const [err, setErr] = useState('')
+  const taRef = useRef(null)
+  useEffect(() => { if (open && taRef.current) taRef.current.focus() }, [open])
+
+  const ask = async () => {
+    const question = q.trim()
+    if (!question || busy) return
+    setBusy(true); setErr(''); setRes(null)
+    try {
+      const r = await fetch('/api/work/coverage', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      })
+      const data = await r.json()
+      if (!r.ok) { setErr(data.error || 'Please try again.'); }
+      else setRes(data)
+    } catch { setErr('Could not reach the assistant. Please try again.') }
+    finally { setBusy(false) }
+  }
+  const onKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ask() } }
+  const verdictMeta = {
+    covered: { label: 'Covered', cls: 'ok' },
+    partial: { label: 'Partly covered', cls: 'mid' },
+    no: { label: 'Not a fit', cls: 'no' },
+    offtopic: { label: 'Ask about a task', cls: 'off' },
+  }
+
+  return (
+    <>
+      {!open && (
+        <button className="wm-cov-launch" onClick={() => setOpen(true)} aria-label="Check if your scenario is covered">
+          <Sparkles size={16} /> Is your scenario covered?
+        </button>
+      )}
+      {open && (
+        <div className="wm-cov" role="dialog" aria-label="Coverage assistant">
+          <div className="wm-cov-head">
+            <div className="wm-cov-head-t"><ScanEye size={16} /> Is it covered?</div>
+            <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label="Close">&times;</button>
+          </div>
+          <div className="wm-cov-body">
+            <p className="wm-cov-intro">Describe your task or scenario and I will tell you whether WorkCoPilot can guide you through it, how, and which plan fits.</p>
+            {res && (
+              <div className="wm-cov-ans">
+                {res.verdict && verdictMeta[res.verdict] && (
+                  <span className={`wm-cov-chip ${verdictMeta[res.verdict].cls}`}>{verdictMeta[res.verdict].label}</span>
+                )}
+                <p className="wm-cov-text">{res.answer}</p>
+                {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
+                {res.verdict !== 'offtopic' && (
+                  <button className="wm-cta sm" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>Get started <ArrowRight size={14} /></button>
+                )}
+              </div>
+            )}
+            {err && <p className="wm-cov-err">{err}</p>}
+          </div>
+          <div className="wm-cov-input">
+            <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder="e.g. Set up a VPC on AWS and lock it down, or reconcile last month's books in Excel"
+              onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} />
+            <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()}>
+              {busy ? '...' : <ArrowRight size={16} />}
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   )
 }
 
@@ -987,4 +1067,32 @@ const CSS = `
 .wm:not([data-wm="dark"]) .wm-spot-prog{background:rgba(14,18,34,.10)}
 .wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#eef1f6}
 .wm:not([data-wm="dark"]) .wm-photo{box-shadow:0 30px 70px -48px rgba(14,18,34,.5)}
+
+/* COVERAGE CHAT (floating, theme-aware via the vars) */
+.wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
+.wm-cov-launch:hover{transform:translateY(-2px)}
+.wm-cov{position:fixed;right:20px;bottom:20px;z-index:61;width:min(380px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 40px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 40px 90px -30px rgba(0,0,0,.45)}
+.wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}
+.wm-cov-head-t{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:15px;color:var(--tx)}
+.wm-cov-head-t svg{color:var(--em2)}
+.wm-cov-x{background:none;border:none;color:var(--mut);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+.wm-cov-x:hover{color:var(--tx)}
+.wm-cov-body{flex:1;overflow-y:auto;padding:15px}
+.wm-cov-intro{color:var(--mut);font-size:13.5px;line-height:1.55;margin:0}
+.wm-cov-ans{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:13px;background:linear-gradient(180deg,rgba(140,245,196,.06),transparent)}
+.wm-cov-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 10px;border-radius:999px;margin-bottom:9px}
+.wm-cov-chip.ok{color:#06603f;background:rgba(10,157,102,.16)}
+.wm-cov-chip.mid{color:#8a5a00;background:rgba(255,179,92,.2)}
+.wm-cov-chip.no{color:#9a2b2b;background:rgba(255,99,99,.16)}
+.wm-cov-chip.off{color:var(--mut);background:rgba(120,130,150,.14)}
+.wm-cov-text{color:var(--tx);font-size:14px;line-height:1.55;margin:0}
+.wm-cov-plan{margin-top:10px;font-size:13px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}
+.wm-cov-ans .wm-cta{margin-top:12px}
+.wm-cov-err{margin-top:12px;color:#c0392b;font-size:13px}
+.wm-cov-input{display:flex;gap:8px;align-items:flex-end;padding:12px 15px;border-top:1px solid var(--line)}
+.wm-cov-input textarea{flex:1;resize:none;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:9px 11px;color:var(--tx);font:inherit;font-size:13.5px;line-height:1.45;outline:none}
+.wm-cov-input textarea:focus{border-color:var(--em2)}
+.wm-cov-send{flex:0 0 auto;width:40px;height:40px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.wm-cov-send:disabled{opacity:.5;cursor:default}
+@media(max-width:560px){.wm-cov-launch{right:12px;bottom:12px}.wm-cov{right:8px;bottom:8px}}
 `

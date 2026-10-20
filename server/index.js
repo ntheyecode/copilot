@@ -608,6 +608,40 @@ app.patch('/api/work/sessions/:id/pause', requireWorkAuth, wrap((req, res) => {
 }))
 // Pricing is public (the marketing site reads it); superadmin can change it.
 app.get('/api/work/pricing', wrap((req, res) => { res.json(store.getWorkPricing()) }))
+
+// Public "is my scenario covered?" assistant for the marketing site. The
+// guardrail lives in work.workCoverage's system prompt: only a described
+// task/scenario gets a real answer; everything else returns verdict
+// "offtopic" and never reaches a useful KB answer. Rate-limited per IP so the
+// public endpoint cannot be used as a free general-purpose AI.
+const coverageHits = new Map()
+function coverageRateOk(ip) {
+  const now = Date.now(), win = 60 * 60 * 1000, max = 30
+  const rec = coverageHits.get(ip) || { t: now, n: 0 }
+  if (now - rec.t > win) { rec.t = now; rec.n = 0 }
+  rec.n++; coverageHits.set(ip, rec)
+  if (coverageHits.size > 5000) { for (const [k, v] of coverageHits) if (now - v.t > win) coverageHits.delete(k) }
+  return rec.n <= max
+}
+app.post('/api/work/coverage', wrap(async (req, res) => {
+  const question = String((req.body && req.body.question) || '').trim()
+  if (!question) return res.status(400).json({ error: 'Describe your task or scenario.' })
+  if (question.length > 1200) return res.status(400).json({ error: 'Please keep it under about 1200 characters.' })
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
+  if (!coverageRateOk(ip)) return res.status(429).json({ error: 'A few too many checks just now - please try again in a little while.' })
+  const generic = {
+    verdict: 'covered', plan: null, product: 'WorkCoPilot', degraded: true,
+    answer: 'WorkCoPilot guides you through almost any task on your screen, in any field, one exact step at a time. Sign in and describe your task to see exactly how it is covered.',
+  }
+  if (!store.getWorkPlatformAllowed()) return res.json(generic)
+  const cfg = store.getActiveRuntime()
+  if (!cfg) return res.json(generic)
+  try {
+    res.json(await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing() }))
+  } catch (e) {
+    res.json(generic)   // never show a public visitor an error; flagged degraded
+  }
+}))
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))
 
 // Manual step control (the user ticks/unticks or skips).
