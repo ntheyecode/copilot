@@ -79,6 +79,7 @@ export default function WorkMarketing() {
     'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
   ]
   const pillars = [
+    { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction for regulated teams.', points: ['PII, PHI, secrets and IPs stripped on-device before anything is sent', 'Never clicks, types or runs anything, and hidden on screen-share', 'A per-session audit log of exactly what was sent'] },
     { icon: Rocket, t: 'Powerful', claim: 'From a one-liner to a full enterprise build.', d: 'Whatever the task, it carries it end to end.', points: ['Simplest task to the most advanced', 'Any tool, any stack, any field', 'Nothing left half-done'] },
     { icon: Target, t: 'Accurate', claim: 'It only tells you what is really on your screen.', d: 'No guessing, no invented menus.', points: ['Never invents a button or setting', 'Catches a wrong value before you save', 'Says "I cannot see that" instead of guessing'] },
     { icon: Gauge, t: 'Fast', claim: 'The next step before you finish reading this.', d: 'It keeps pace with you, not the other way round.', points: ['Guidance in a blink', 'No waiting, no spinning', 'Moves the plan as you move'] },
@@ -87,7 +88,6 @@ export default function WorkMarketing() {
     { icon: Globe2, t: 'Deep research', claim: 'Always up to date, never stale.', d: 'It checks the latest before it guides.', points: ['The current way, not last year\'s', 'Real official links and steps', 'Matches how tools work today'] },
     { icon: Compass, t: 'All around your goal', claim: 'Every step points at what you want.', d: 'It never loses the thread.', points: ['The goal is always in view', 'No busywork, no detours', 'Knows the moment you are done'] },
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
-    { icon: Lock, t: 'Safe and private', claim: 'It guides. It never touches your work.', d: 'Read-only by design, and private when it matters.', points: ['Strips secrets and personal data before the AI sees it', 'Never clicks, types or runs anything for you', 'Refuses harmful work, hidden on screen-share'] },
   ]
   const tiers = price ? [
     { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, feats: ['2 hours a day of live guidance', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps & diagrams', 'Floating guide + session write-up'], hour: price.hour.basic },
@@ -667,6 +667,15 @@ function PViz({ t }) {
     <div className="pv pv-goal"><span className="pv-ring g3" /><span className="pv-ring g2" /><span className="pv-ring g1" /><Target size={24} /></div>)
   if (t === 'Recorded & hand-held') return (
     <div className="pv pv-doc2"><div className="pv-page"><span className="w70" /><span className="w90" /><span className="w50" /><span className="w80" /><b>PDF</b></div></div>)
+  if (t === 'Safe and private') return (
+    <div className="pv pv-safe">
+      <div className="pv-shield"><Lock size={22} /></div>
+      <div className="pv-redact">
+        <span className="chip">[PII]</span><span className="chip">[PHI]</span><span className="chip">[SSN]</span>
+        <span className="chip">[CARD]</span><span className="chip">[IP]</span><span className="chip">[SECRET]</span>
+      </div>
+      <span className="pv-cap">stripped on-device, before anything is sent</span>
+    </div>)
   return null
 }
 
@@ -910,6 +919,13 @@ const CSS = `
 .pv-doc2 .pv-page span{height:6px;border-radius:3px;background:#2b3345}
 .pv-doc2 .pv-page .w90{width:90%}.pv-doc2 .pv-page .w70{width:70%}.pv-doc2 .pv-page .w50{width:50%}.pv-doc2 .pv-page .w80{width:80%}
 .pv-doc2 .pv-page b{position:absolute;right:-8px;bottom:-8px;font-size:10px;color:var(--em);background:#12141d;border:1px solid rgba(140,245,196,.35);border-radius:6px;padding:3px 8px}
+/* Safe & private flagship viz: on-device redaction */
+.pv-safe{flex-direction:column;gap:16px}
+.pv-safe .pv-shield{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(140,245,196,.24),rgba(57,211,255,.15));color:var(--em);box-shadow:0 0 34px -6px rgba(140,245,196,.6)}
+.pv-safe .pv-redact{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:240px}
+.pv-safe .chip{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;font-weight:700;color:var(--em);border:1px solid rgba(140,245,196,.4);background:rgba(140,245,196,.1);border-radius:7px;padding:4px 10px;animation:wm-demo-fade .4s ease-out both}
+.pv-safe .chip:nth-child(2){animation-delay:.06s}.pv-safe .chip:nth-child(3){animation-delay:.12s}.pv-safe .chip:nth-child(4){animation-delay:.18s}.pv-safe .chip:nth-child(5){animation-delay:.24s}.pv-safe .chip:nth-child(6){animation-delay:.3s}
+.pv-safe .pv-cap{font-size:11px;color:var(--em2);text-align:center}
 .wm-spot-card h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-.02em;margin:0 0 10px}
 .wm-spot-card p{color:var(--mut);font-size:18px;max-width:40ch;margin:0}
 
