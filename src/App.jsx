@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import WorkMarketing from './pages/WorkMarketing.jsx'
+import WorkDemo from './pages/WorkDemo.jsx'
 import WorkLogin from './pages/WorkLogin.jsx'
 import WorkUseCases from './pages/WorkUseCases.jsx'
 import WorkPage from './pages/WorkPage.jsx'
@@ -32,6 +33,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />
+      {/* Public scripted demo (no login, no AI, all canned). */}
+      <Route path="/demo" element={<WorkDemo />} />
       {/* The product's own branded sign-in page. */}
       <Route path="/workcopilot" element={<WorkLogin />} />
       <Route path="/workcopilot/login" element={<WorkLogin />} />
