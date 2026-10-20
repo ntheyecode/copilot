@@ -258,6 +258,40 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     if (!t) return res.status(404).json({ error: 'Not found' })
     res.json(store.setWorkTicketStatus(req.params.id, String((req.body && req.body.status) || '')))
   }))
+
+  // -- Tenancy (superadmin): companies, managed users, and the per-user /
+  //    per-company PII-PHI scrub policy. Company admins get their own scoped
+  //    routes in index.js; these are the global superadmin controls.
+  app.get('/api/work/admin/companies', requireAuth, superGate, w((req, res) => {
+    res.json({ companies: store.listCompanies() })
+  }))
+  app.post('/api/work/admin/companies', requireAuth, superGate, w((req, res) => {
+    const { name, plan, seats, scrub } = req.body || {}
+    res.json(store.createCompany({ name, plan, seats, scrub }))
+  }))
+  app.get('/api/work/admin/companies/:id', requireAuth, superGate, w((req, res) => {
+    const c = store.getCompany(req.params.id)
+    if (!c) return res.status(404).json({ error: 'Company not found' })
+    res.json({ company: c, users: store.listCompanyUsers(req.params.id) })
+  }))
+  app.patch('/api/work/admin/companies/:id', requireAuth, superGate, w((req, res) => {
+    res.json(store.updateCompany(req.params.id, req.body || {}))
+  }))
+  app.post('/api/work/admin/companies/:id/scrub', requireAuth, superGate, w((req, res) => {
+    res.json(store.updateCompany(req.params.id, { scrub: !!(req.body && req.body.enabled) }))
+  }))
+  // Create a user (optionally into a company, as member or company_admin).
+  app.post('/api/work/admin/users', requireAuth, superGate, w((req, res) => {
+    const { username, password, companyId, companyRole, tier, scrub } = req.body || {}
+    res.json(store.createManagedUser({ username, password, companyId: companyId || null, companyRole, tier, scrub: !!scrub }))
+  }))
+  app.post('/api/work/admin/users/:id/scrub', requireAuth, superGate, w((req, res) => {
+    res.json(store.setWorkUserScrub(req.params.id, !!(req.body && req.body.enabled)))
+  }))
+  app.post('/api/work/admin/users/:id/company', requireAuth, superGate, w((req, res) => {
+    const { companyId, companyRole } = req.body || {}
+    res.json(store.setUserCompany(req.params.id, companyId || null, companyRole))
+  }))
 }
 
 export default { registerWorkAdminRoutes }

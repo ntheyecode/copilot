@@ -9,8 +9,9 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, Loader2, LifeBuoy } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, Loader2, LifeBuoy, Building2 } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
+import Companies from './sections/Companies.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { workAdminApi } from './workAdminApi.js'
 import Overview from './sections/Overview.jsx'
@@ -21,6 +22,7 @@ import Sessions from './sections/Sessions.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
+  { id: 'companies', label: 'Companies', icon: Building2, title: 'Companies', sub: 'Tenancy: companies, company admins, users and redaction policy.' },
   { id: 'users', label: 'Users', icon: Users, title: 'Users', sub: 'Tiers, balances and granted hours.' },
   { id: 'pricing', label: 'Pricing', icon: Tags, title: 'Pricing', sub: 'Plan prices, extra-hour and image rates.' },
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
@@ -54,6 +56,7 @@ export default function WorkAdmin() {
 
   const renderSection = () => {
     switch (active) {
+      case 'companies': return <Companies isSuperAdmin={isSuperAdmin} />
       case 'users': return <UsersSection isSuperAdmin={isSuperAdmin} />
       case 'pricing': return <Pricing isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />

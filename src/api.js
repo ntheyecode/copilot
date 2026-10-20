@@ -113,6 +113,20 @@ export const api = {
   workAdminTicketGet: (id) => req('GET', `/api/work/admin/tickets/${id}`),
   workAdminTicketReply: (id, text) => req('POST', `/api/work/admin/tickets/${id}/reply`, { text }),
   workAdminTicketStatus: (id, status) => req('POST', `/api/work/admin/tickets/${id}/status`, { status }),
+  // tenancy (superadmin): companies, managed users, scrub policy
+  workAdminCompanies: () => req('GET', '/api/work/admin/companies'),
+  workAdminCreateCompany: (body) => req('POST', '/api/work/admin/companies', body || {}),
+  workAdminCompany: (id) => req('GET', `/api/work/admin/companies/${id}`),
+  workAdminUpdateCompany: (id, patch) => req('PATCH', `/api/work/admin/companies/${id}`, patch || {}),
+  workAdminCompanyScrub: (id, enabled) => req('POST', `/api/work/admin/companies/${id}/scrub`, { enabled }),
+  workAdminCreateUser: (body) => req('POST', '/api/work/admin/users', body || {}),
+  workAdminUserScrub: (id, enabled) => req('POST', `/api/work/admin/users/${id}/scrub`, { enabled }),
+  workAdminUserCompany: (id, companyId, companyRole) => req('POST', `/api/work/admin/users/${id}/company`, { companyId, companyRole }),
+  // company admin: manage own-company users
+  workCompanyUsers: () => req('GET', '/api/work/company/users'),
+  workCompanyCreateUser: (body) => req('POST', '/api/work/company/users', body || {}),
+  // audit log download URL (per session)
+  workAuditUrl: (id) => `/api/work/sessions/${id}/audit.log`,
   // superadmin WorkCoPilot config
   workAdminGetPlatformAi: () => req('GET', '/api/work/admin/platform-ai'),
   workAdminSetPlatformAi: (allowed) => req('POST', '/api/work/admin/platform-ai', { allowed }),

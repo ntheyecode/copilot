@@ -107,6 +107,14 @@ function requireSuperAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'superadmin') return res.status(403).json({ error: 'Superadmin only.' })
   next()
 }
+// A company admin manages users within their OWN company. Superadmin passes too.
+// Must run AFTER requireWorkAuth (needs req.user + req.workUser).
+function requireCompanyAdmin(req, res, next) {
+  if (req.user && req.user.role === 'superadmin') return next()
+  const wu = req.workUser
+  if (!wu || wu.companyRole !== 'company_admin' || !wu.companyId) return res.status(403).json({ error: 'Company admin access required.' })
+  next()
+}
 // Scrub a session's user-text (goal + event text) before it is sent to an AI
 // provider - but ONLY when scrubbing is enabled for this user (superadmin sets
 // it per user; off by default). This is the server-side defense-in-depth layer;
@@ -434,6 +442,12 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, async (req, res) => {
     for (const c of [goalScrub.counts, docScrub.counts]) for (const [k, v] of Object.entries(c)) scrubCounts[k] = (scrubCounts[k] || 0) + v
     const redacted = Object.values(scrubCounts).reduce((a, b) => a + b, 0)
     if (redacted > 0) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(scrubCounts) })
+    // Audit: record exactly what was transmitted to the AI for this plan.
+    store.appendWorkAudit(req.params.id, {
+      call: 'plan', model: call.visionModel || (call.rt && call.rt.chatModel) || null, scrub: scrubOn, redacted,
+      frame: frame ? 'screenshot sent' : null,
+      sent: safeGoal + (userDocs ? '\n[+ your reference documents]' : '') + (research ? '\n[+ current research notes]' : ''),
+    })
     const plan = await work.workPlan(ai, call.rt, {
       base: store.getSystemPrompt(), mode: useMode, goal: safeGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, strong: call.backup,
     })
@@ -464,8 +478,11 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, async (req, res) => {
     }
     const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
+    const watchScrubOn = store.workUserScrubOn(req.workUser.id)
+    const watchGoal = scrubForAi(s, watchScrubOn).goal
+    store.appendWorkAudit(req.params.id, { call: 'watch', model: call.visionModel || rr.visionModel || null, scrub: watchScrubOn, frame: 'screenshot sent', sent: `[continuous screen navigation against the plan] goal: ${watchGoal}` })
     const r = await work.workNavigate(ai, call.rt, {
-      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: scrubForAi(s, store.workUserScrubOn(req.workUser.id)).goal, steps: s.steps, currentStep: s.currentStep,
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
       frame, visionModel: call.visionModel, strong: call.backup,
     })
     const escalated = r.escalated || call.forcedStrong
@@ -497,6 +514,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, async (req, res) => {
     const askScrubOn = store.workUserScrubOn(req.workUser.id)
     const sa = scrubForAi(s, askScrubOn)
     const qScrub = askScrubOn ? scrubSensitive(question || '') : { clean: question || '', counts: {}, total: 0 }
+    store.appendWorkAudit(req.params.id, { call: 'ask', model: call.visionModel || rr.visionModel || null, scrub: askScrubOn, redacted: qScrub.total, frame: 'screenshot sent', sent: qScrub.clean || '[question about the current screen]' })
     const out = await work.workAsk(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
       question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0,
@@ -561,6 +579,21 @@ app.post('/api/work/sessions/:id/mode', requireWorkAuth, wrap((req, res) => {
 }))
 
 // Post-session report (PDF). ?dl=1 forces a download; else it opens inline.
+// Downloadable per-session audit log: exactly what was transmitted to the AI,
+// with timestamps, for compliance/auditing. Owner (or superadmin) only.
+app.get('/api/work/sessions/:id/audit.log', requireWorkAuth, wrap((req, res) => {
+  let s = store.getWorkSession(req.workUser.id, req.params.id)
+  if (!s && req.user && req.user.role === 'superadmin') {
+    // superadmin can pull any session's audit log
+    s = (store.listAllWorkSessions ? store.listAllWorkSessions() : []).find((x) => x.id === req.params.id) || { id: req.params.id, goal: '' }
+  }
+  if (!s) return res.status(404).json({ error: 'Session not found' })
+  const text = store.formatWorkAuditLog(req.params.id, s)
+  res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="workcopilot-${req.params.id}-audit.log"`)
+  res.send(text)
+}))
+
 app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) => {
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
@@ -671,6 +704,19 @@ app.post('/api/work/tickets/:id/reply', requireWorkAuth, wrap((req, res) => {
   const text = String((req.body && req.body.text) || '').trim()
   if (!text) return res.status(400).json({ error: 'Write a message.' })
   res.json(store.addWorkTicketMessage(req.params.id, { from: 'user', by: req.user.username, text }))
+}))
+
+// ---- Company admin: manage users within your own company -----------------
+app.get('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  res.json({ company: store.getCompany(cid), users: store.listCompanyUsers(cid) })
+}))
+app.post('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  const { username, password, companyRole, tier } = req.body || {}
+  // A company admin can only create into their OWN company. Scrub stays governed
+  // by the company policy (they cannot grant a weaker policy than the company's).
+  res.json(store.createManagedUser({ username, password, companyId: cid, companyRole: companyRole === 'company_admin' ? 'company_admin' : 'member', tier }))
 }))
 
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))

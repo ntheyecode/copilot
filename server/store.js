@@ -61,6 +61,7 @@ const EMPTY = {
   workImageUsage: {},   // premium image metering: `${userId}:${easternDay}` -> { count }
   workDocs: {},         // uploaded reference doc metadata, keyed by userId (text on disk)
   workTickets: [],      // support tickets (id 'tk'+n): category, subject, thread, status
+  companies: [],        // tenancy (id 'co'+n): name, plan, seats, scrub default, sso config
 }
 
 function ensureDir() {
@@ -261,14 +262,18 @@ export function publicUser(u) {
 // The shape the WorkCoPilot client expects for a signed-in user.
 export function publicWorkUser(u) {
   if (!u) return null
+  const co = u.companyId ? (db.companies || []).find((c) => c.id === u.companyId) : null
   return {
     id: u.id, username: u.username, role: u.role || 'user', root: !!u.root,
     createdAt: u.createdAt, onboarded: !!u.onboarded, displayName: u.displayName || null,
-    scrub: !!u.scrub,   // superadmin-controlled: strip PII/PHI/secrets before anything is sent
+    scrub: workUserScrubOn(u.id),   // EFFECTIVE policy (own flag OR company default)
+    companyId: u.companyId || null,
+    companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
+    companyName: co ? co.name : null,
   }
 }
 // Superadmin control: turn the PII/PHI/secret scrubber on/off for one user.
-// It is OFF by default and applied conditionally (per the operator's policy).
+// OFF by default; a user is also scrubbed if their company's default is on.
 export function setWorkUserScrub(userId, enabled) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')
@@ -278,7 +283,82 @@ export function setWorkUserScrub(userId, enabled) {
 }
 export function workUserScrubOn(userId) {
   const u = getUser(userId)
-  return !!(u && u.scrub)
+  if (!u) return false
+  if (u.scrub) return true
+  if (u.companyId) { const c = (db.companies || []).find((x) => x.id === u.companyId); if (c && c.scrub) return true }
+  return false
+}
+
+// ===========================================================================
+// Tenancy: companies, company admins, company users. Global role stays
+// superadmin|admin|user; within a company a user also has companyRole
+// ('company_admin' can manage that company's users; 'member' is a normal user).
+// ===========================================================================
+function publicCompany(c) {
+  if (!c) return null
+  const users = (db.users || []).filter((u) => u.companyId === c.id)
+  return {
+    id: c.id, name: c.name, plan: c.plan || 'basic', seats: c.seats || 0,
+    scrub: !!c.scrub, createdAt: c.createdAt,
+    sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
+    userCount: users.length,
+    adminCount: users.filter((u) => u.companyRole === 'company_admin').length,
+  }
+}
+export function createCompany({ name, plan = 'basic', seats = 0, scrub = false } = {}) {
+  const nm = String(name || '').trim()
+  if (nm.length < 2) throw httpErr(400, 'Company name is required.')
+  if (!db.companies) db.companies = []
+  if (db.companies.some((c) => c.name.toLowerCase() === nm.toLowerCase())) throw httpErr(409, 'A company with that name already exists.')
+  const c = { id: 'co' + id(), name: nm, plan: String(plan || 'basic'), seats: Number(seats) || 0, scrub: !!scrub, sso: null, createdAt: now() }
+  db.companies.push(c)
+  persist()
+  return publicCompany(c)
+}
+export function listCompanies() {
+  return (db.companies || []).slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).map(publicCompany)
+}
+export function getCompany(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  return c ? publicCompany(c) : null
+}
+export function updateCompany(companyId, patch = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  if (patch.name != null) { const nm = String(patch.name).trim(); if (nm.length >= 2) c.name = nm }
+  if (patch.plan != null) c.plan = String(patch.plan)
+  if (patch.seats != null) c.seats = Number(patch.seats) || 0
+  if (patch.scrub != null) c.scrub = !!patch.scrub
+  if (patch.sso !== undefined) c.sso = patch.sso || null
+  persist()
+  return publicCompany(c)
+}
+export function listCompanyUsers(companyId) {
+  return (db.users || []).filter((u) => u.companyId === companyId).map(publicWorkUser)
+}
+export function setUserCompany(userId, companyId, companyRole) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  if (companyId && !(db.companies || []).some((c) => c.id === companyId)) throw httpErr(404, 'Company not found.')
+  u.companyId = companyId || null
+  u.companyRole = companyId ? (companyRole === 'company_admin' ? 'company_admin' : 'member') : null
+  persist()
+  return publicWorkUser(u)
+}
+// Create a user as a superadmin or a company admin. companyId/companyRole
+// optional; tier/scrub optional. Reuses createWorkUser then applies membership.
+export function createManagedUser({ username, password, companyId = null, companyRole = 'member', tier = 'basic', scrub = false } = {}) {
+  const pub = createWorkUser({ username, password })      // validates + role 'user'
+  const u = getUser(pub.id)
+  if (companyId) {
+    if (!(db.companies || []).some((c) => c.id === companyId)) throw httpErr(404, 'Company not found.')
+    u.companyId = companyId
+    u.companyRole = companyRole === 'company_admin' ? 'company_admin' : 'member'
+  }
+  if (tier && ['basic', 'advanced', 'premium'].includes(tier)) u.tier = tier
+  if (scrub) u.scrub = true
+  persist()
+  return publicWorkUser(u)
 }
 // The account IS the work record. ensureWorkUser resolves (and lazily backfills
 // the work fields on) the account, so every ported work* function keeps working.
@@ -975,4 +1055,58 @@ export function setWorkTicketStatus(ticketId, status) {
   t.updatedAt = new Date().toISOString()
   persist()
   return publicTicket(t)
+}
+
+// ===========================================================================
+// Per-session audit log (disk, append-only). Records exactly what text was
+// transmitted to the AI for a session, with timestamps, for compliance.
+// Downloadable as a .log. Best-effort: auditing must never break a scan.
+// ===========================================================================
+const AUDIT_DIR = path.join(DATA_DIR, 'audit')
+export function appendWorkAudit(sessionId, entry) {
+  if (!sessionId) return
+  try {
+    if (!fs.existsSync(AUDIT_DIR)) fs.mkdirSync(AUDIT_DIR, { recursive: true, mode: 0o700 })
+    const line = JSON.stringify({ at: new Date().toISOString(), ...entry }) + '\n'
+    fs.appendFileSync(path.join(AUDIT_DIR, `${sessionId}.log`), line, { mode: 0o600 })
+  } catch { /* never break the scan on an audit write */ }
+}
+export function readWorkAuditRaw(sessionId) {
+  try {
+    const f = path.join(AUDIT_DIR, `${String(sessionId).replace(/[^\w-]/g, '')}.log`)
+    if (!fs.existsSync(f)) return ''
+    return fs.readFileSync(f, 'utf8')
+  } catch { return '' }
+}
+// Human-readable .log for download.
+export function formatWorkAuditLog(sessionId, session) {
+  const raw = readWorkAuditRaw(sessionId)
+  const lines = raw.split('\n').filter(Boolean)
+  const head = [
+    'WorkCoPilot - session audit log',
+    `Session: ${sessionId}`,
+    session ? `Goal: ${session.goal || '(none)'}` : null,
+    `Generated: ${new Date().toISOString()}`,
+    `Transmissions logged: ${lines.length}`,
+    'This log records the text transmitted to the AI for this session, with timestamps.',
+    'When a redaction policy is on, sensitive values were stripped on the device before transmission.',
+    '='.repeat(74), '',
+  ].filter((x) => x != null).join('\n')
+  const body = lines.map((l) => {
+    try {
+      const e = JSON.parse(l)
+      const meta = [`[${e.at}]`, String(e.call || 'ai').toUpperCase()]
+      if (e.model) meta.push(`model=${e.model}`)
+      if (e.scrub != null) meta.push(`redaction=${e.scrub ? 'on' : 'off'}`)
+      if (e.redacted) meta.push(`redacted=${e.redacted}`)
+      if (e.frame) meta.push(`frame=${e.frame}`)
+      let out = meta.join('  ')
+      if (e.sent) out += '\n    SENT: ' + String(e.sent).replace(/\n/g, '\n          ')
+      return out
+    } catch { return l }
+  }).join('\n\n')
+  return head + body + '\n'
+}
+export function deleteWorkAudit(sessionId) {
+  try { const f = path.join(AUDIT_DIR, `${String(sessionId).replace(/[^\w-]/g, '')}.log`); if (fs.existsSync(f)) fs.unlinkSync(f) } catch { /* best effort */ }
 }

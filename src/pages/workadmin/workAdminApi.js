@@ -60,6 +60,16 @@ export const workAdminApi = {
   getPricing: () => request('GET', '/api/work/pricing'),
   setPricing: (patch) => request('POST', '/api/work/admin/pricing', patch || {}),
 
+  // Tenancy (superadmin): companies, managed users, scrub policy.
+  companies: () => request('GET', '/api/work/admin/companies'),
+  createCompany: (body) => request('POST', '/api/work/admin/companies', body),
+  company: (id) => request('GET', `/api/work/admin/companies/${id}`),
+  updateCompany: (id, patch) => request('PATCH', `/api/work/admin/companies/${id}`, patch),
+  companyScrub: (id, enabled) => request('POST', `/api/work/admin/companies/${id}/scrub`, { enabled: !!enabled }),
+  createUser: (body) => request('POST', '/api/work/admin/users', body),
+  userScrub: (id, enabled) => request('POST', `/api/work/admin/users/${id}/scrub`, { enabled: !!enabled }),
+  userCompany: (id, companyId, companyRole) => request('POST', `/api/work/admin/users/${id}/company`, { companyId, companyRole }),
+
   // Per-user writes (existing: superadmin-only). userId is the account id.
   setTier: (userId, tier) => request('POST', '/api/work/admin/tier', { userId, tier }),
   // Grant purchased time. The server takes minutes; the UI collects hours.
