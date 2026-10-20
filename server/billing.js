@@ -70,6 +70,29 @@ async function getStripe(secret) {
   return _stripe
 }
 
+// Resolve a configured id to a usable Checkout price id. A price id (price_...)
+// is used as-is; a product id (prod_...) is resolved to that product's default
+// price once and cached. This lets a superadmin paste EITHER the price id or the
+// product id from the Stripe dashboard and have checkout work either way.
+const _priceByProduct = new Map()
+async function resolvePriceId(s, configuredId) {
+  const id = String(configuredId || '').trim()
+  if (!id) return ''
+  if (id.startsWith('price_')) return id
+  if (!id.startsWith('prod_')) return id   // unknown shape: pass through, Stripe validates
+  if (_priceByProduct.has(id)) return _priceByProduct.get(id)
+  try {
+    const product = await s.products.retrieve(id)
+    const dp = product && product.default_price
+    const priceId = (typeof dp === 'string' ? dp : (dp && dp.id)) || ''
+    if (priceId) _priceByProduct.set(id, priceId)
+    return priceId
+  } catch (e) {
+    console.warn(`[billing] could not resolve default price for product ${id}: ` + (e && e.message))
+    return ''
+  }
+}
+
 // Map Stripe subscription status -> our enum (store expects none|trialing|
 // active|past_due|canceled). Unknown-but-usable states fall back to active.
 function mapStatus(st) {
@@ -88,9 +111,15 @@ function mapStatus(st) {
 function planFromSub(sub, price) {
   try {
     const items = sub && sub.items && sub.items.data
-    const priceId = items && items[0] && items[0].price && items[0].price.id
-    if (!priceId) return null
-    for (const p of PLANS) if (price[p] && price[p] === priceId) return p
+    const p0 = items && items[0] && items[0].price
+    const priceId = p0 && p0.id
+    const productId = p0 && (typeof p0.product === 'string' ? p0.product : (p0.product && p0.product.id))
+    if (!priceId && !productId) return null
+    // The configured id may be a price id or a product id, so match on either.
+    for (const p of PLANS) {
+      const cfgId = price[p]
+      if (cfgId && (cfgId === priceId || cfgId === productId)) return p
+    }
   } catch { /* fall through */ }
   return null
 }
@@ -227,8 +256,10 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       if (!PLANS.includes(plan)) return res.status(400).json({ error: 'Pick a plan: basic, advanced or premium.' })
       const { secret, price } = cfg(store)
       const s = await getStripe(secret)
-      const priceId = price[plan]
-      if (!s || !priceId) return res.status(503).json({ error: 'Billing is not configured yet.' })
+      const configuredId = price[plan]
+      if (!s || !configuredId) return res.status(503).json({ error: 'Billing is not configured yet.' })
+      const priceId = await resolvePriceId(s, configuredId)
+      if (!priceId) return res.status(503).json({ error: 'That plan is not set up correctly in Stripe (no price found for the configured id). Check the price or product id in the admin console.' })
 
       const u = req.workUser
       const existingCustomer = (u.subscription && u.subscription.stripeCustomerId) || null
