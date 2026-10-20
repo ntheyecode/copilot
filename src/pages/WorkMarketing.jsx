@@ -153,12 +153,12 @@ export default function WorkMarketing() {
             <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to market</span></div>
           </div>
           <div className="wm-roi-grid">
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Layers size={18} /></span><h3>Toughest projects, in-house</h3><p>Your team delivers specialist work the first time. No new hires.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Zap size={18} /></span><h3>Faster to market</h3><p>Pending work clears up to 70% faster. Ship weeks sooner.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Rocket size={18} /></span><h3>Adopt new tech and tools</h3><p>Stand up any new framework, platform or tool correctly, the first time.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><ShieldCheck size={18} /></span><h3>Secure by default</h3><p>Hardened setups, reviewed code, real pentest steps. Mistakes caught early.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><FileText size={18} /></span><h3>Everything documented</h3><p>Every change, config and pentest ends with a write-up and an audit log.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Gauge size={18} /></span><h3>Kill contractor &amp; partner spend</h3><p>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</p></div>
+            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">migrations</span><span className="cb-chip">hardening</span><span className="cb-chip">pentests</span><span className="cb-chip">builds</span></div><div className="wm-bhead"><span className="wm-bicon sm"><Layers size={16} /></span><h3>Toughest projects, in-house</h3></div><p>Your team delivers specialist work the first time. No new hires.</p></div>
+            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><b>weeks</b> <span className="cb-arrow">&rarr;</span> <b>days</b> <span className="cb-dim">to market</span></div><div className="wm-bhead"><span className="wm-bicon sm"><Zap size={16} /></span><h3>Faster to market</h3></div><p>Pending work clears up to 70% faster. Ship weeks sooner.</p></div>
+            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><span className="cb-dim">any</span> <span className="cb-chip">framework</span><span className="cb-chip">platform</span><span className="cb-chip">tool</span></div><div className="wm-bhead"><span className="wm-bicon sm"><Rocket size={16} /></span><h3>Adopt new tech and tools</h3></div><p>Stand up any new framework, platform or tool correctly, the first time.</p></div>
+            <div className="wm-roi-card" data-reveal><div className="wm-cardbox">hardened <span className="cb-arrow">&middot;</span> reviewed <span className="cb-arrow">&middot;</span> pentested <span className="cb-arrow">&middot;</span> <b>verified</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ShieldCheck size={16} /></span><h3>Secure by default</h3></div><p>Hardened setups, reviewed code, real pentest steps. Mistakes caught early.</p></div>
+            <div className="wm-roi-card" data-reveal><div className="wm-cardbox">every step <span className="cb-arrow">&rarr;</span> <b>write-up</b> + <b>audit log</b></div><div className="wm-bhead"><span className="wm-bicon sm"><FileText size={16} /></span><h3>Everything documented</h3></div><p>Every change, config and pentest ends with a write-up and an audit log.</p></div>
+            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><span className="cb-dim">contractors &middot; consultants &middot; partners</span> <span className="cb-arrow">&rarr;</span> <b>in-house</b></div><div className="wm-bhead"><span className="wm-bicon sm"><Gauge size={16} /></span><h3>Kill contractor &amp; partner spend</h3></div><p>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</p></div>
           </div>
         </div>
       </section>
@@ -170,9 +170,9 @@ export default function WorkMarketing() {
           <h2 className="wm-h2" data-reveal>Your data never leaves your device unprotected.</h2>
           <p className="wm-sub" data-reveal>For security, healthcare, finance and government. Turn on redaction and sensitive data never leaves the device.</p>
           <div className="wm-sec-grid">
-            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><Lock size={18} /></span><h3>Stripped on-device</h3><p>PII, PHI, secrets, passwords and IPs removed on your machine before anything is sent.</p></div>
-            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><ScanEye size={18} /></span><h3>Read-only by design</h3><p>It watches and guides. Never clicks, types or runs anything. Hidden on screen-share.</p></div>
-            <div className="wm-sec-card" data-reveal><span className="wm-sec-ic"><FileText size={18} /></span><h3>Audited and yours</h3><p>A per-session log of exactly what was sent. Bring your own keys or self-hosted model.</p></div>
+            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span><span className="cb-chip">IP</span> <span className="cb-arrow">&rarr;</span> stripped</div><div className="wm-bhead"><span className="wm-bicon sm"><Lock size={16} /></span><h3>Stripped on-device</h3></div><p>PII, PHI, secrets, passwords and IPs removed on your machine before anything is sent.</p></div>
+            <div className="wm-sec-card" data-reveal><div className="wm-cardbox">watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ScanEye size={16} /></span><h3>Read-only by design</h3></div><p>It watches and guides. Never clicks, types or runs anything. Hidden on screen-share.</p></div>
+            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><b>session-audit.log</b> <span className="cb-dim">exactly what was sent</span></div><div className="wm-bhead"><span className="wm-bicon sm"><FileText size={16} /></span><h3>Audited and yours</h3></div><p>A per-session log of exactly what was sent. Bring your own keys or self-hosted model.</p></div>
           </div>
         </div>
       </section>
@@ -250,17 +250,20 @@ export default function WorkMarketing() {
           <p className="wm-sub" data-reveal>Install the desktop or mobile app, or run it right in your browser when you cannot install a thing. <b style={{ color: 'var(--em)' }}>Every plan includes all three, on one subscription.</b></p>
           <div className="wm-ways-grid">
             <div className="wm-way" data-reveal onMouseMove={tilt} onMouseLeave={untilt}>
-              <span className="wm-bicon"><Monitor size={20} /></span><h3>Desktop app</h3>
-              <p><b>Stealth on screen-share.</b> Invisible when you present or record. See-through and click-behind give you full control of your work underneath.</p>
+              <div className="wm-cardbox">stealth <span className="cb-arrow">&middot;</span> see-through <span className="cb-arrow">&middot;</span> <b>click-behind</b></div>
+              <div className="wm-bhead"><span className="wm-bicon sm"><Monitor size={16} /></span><h3>Desktop app</h3></div>
+              <p><b>Stealth on screen-share.</b> Invisible when you present or record. Full control of your work underneath.</p>
             </div>
             <div className="wm-way feat" data-reveal style={{ transitionDelay: '70ms' }} onMouseMove={tilt} onMouseLeave={untilt}>
               <span className="wm-feat-ribbon"><Zap size={12} /> No install</span>
-              <span className="wm-bicon alt"><AppWindow size={20} /></span><h3>Browser overlay</h3>
-              <p>Nothing to install. Works on locked-down machines, restricted laptops and virtual desktops where you cannot add software.</p>
+              <div className="wm-cardbox"><b>no install</b> <span className="cb-arrow">&middot;</span> <span className="cb-dim">locked-down ready</span></div>
+              <div className="wm-bhead"><span className="wm-bicon sm alt"><AppWindow size={16} /></span><h3>Browser overlay</h3></div>
+              <p>Nothing to install. Works on locked-down machines, restricted laptops and virtual desktops.</p>
             </div>
             <div className="wm-way" data-reveal style={{ transitionDelay: '140ms' }} onMouseMove={tilt} onMouseLeave={untilt}>
-              <span className="wm-bicon"><Smartphone size={20} /></span><h3>Mobile app</h3>
-              <p><b>Snap a photo or live-watch.</b> Point your phone camera at a screen or a device, ask about what it sees, and get guided on the go.</p>
+              <div className="wm-cardbox">snap a photo <span className="cb-arrow">&middot;</span> <b>live watch</b></div>
+              <div className="wm-bhead"><span className="wm-bicon sm"><Smartphone size={16} /></span><h3>Mobile app</h3></div>
+              <p><b>Snap a photo or live-watch.</b> Point your phone camera at a screen or device and get guided on the go.</p>
             </div>
           </div>
         </div>
@@ -274,7 +277,8 @@ export default function WorkMarketing() {
           <div className="wm-cards">
             {cards.map((c, i) => (
               <div className={`wm-ucard t-${c.tone}`} data-reveal style={{ transitionDelay: `${i * 45}ms`, cursor: 'pointer' }} key={c.k} onMouseMove={tilt} onMouseLeave={untilt} onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
-                <Layers size={18} /><h3>{c.k}</h3><p>{c.d}</p>
+                <div className="wm-cardbox"><span className="cb-dim">{c.d}</span></div>
+                <div className="wm-bhead"><span className="wm-bicon sm"><Layers size={16} /></span><h3>{c.k}</h3></div>
                 <span className="wm-ucard-go">See in detail <ArrowRight size={14} /></span>
               </div>
             ))}
@@ -1100,6 +1104,12 @@ const CSS = `
 .wm-tier-topup{text-align:center;color:var(--mut);font-size:12.5px;margin-top:12px}
 .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
 
+/* uniform dark "message box" on top of every icon card */
+.wm-cardbox{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;min-height:58px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);margin-bottom:16px;padding:10px 14px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:#aeb9cc;text-align:center;line-height:1.4}
+.wm-cardbox b{color:#8cf5c4;font-weight:700}
+.wm-cardbox .cb-chip{font-weight:700;color:#8cf5c4;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.1);border-radius:6px;padding:3px 8px;font-size:10.5px}
+.wm-cardbox .cb-arrow{color:#5bd0ff;font-weight:700}
+.wm-cardbox .cb-dim{color:#8894a8}
 /* colored eyebrow kicker (kills grey, ties sections to brand) */
 .wm-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
 .wm-eyebrow svg{color:var(--em)}
