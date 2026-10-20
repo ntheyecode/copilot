@@ -92,7 +92,7 @@ export default function Billing({ isSuperAdmin }) {
 
       <div className="wka-panel">
         <h2><CreditCard size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Stripe configuration</h2>
-        <p className="desc">Paste your Stripe keys and the three plan price ids here. The secret key and webhook secret are write-only: once saved they are never shown again, and leaving them blank keeps the stored value. Values set here take priority over environment variables.</p>
+        <p className="desc">Paste your Stripe keys and the three plan ids here. Each plan takes a price id (price_...) or a product id (prod_...), whichever you copy from Stripe. The secret key and webhook secret are write-only: once saved they are never shown again, and leaving them blank keeps the stored value. Values set here take priority over environment variables.</p>
 
         <div style={{ display: 'grid', gap: 16, maxWidth: 640 }}>
           <div className="wka-field">
@@ -110,16 +110,16 @@ export default function Billing({ isSuperAdmin }) {
           </div>
 
           <div className="wka-field">
-            <label>Basic plan price id</label>
-            <input className="wka-input" placeholder="price_..." value={form.priceBasic} onChange={set('priceBasic')} disabled={!isSuperAdmin} />
+            <label>Basic plan price or product id</label>
+            <input className="wka-input" placeholder="price_... or prod_..." value={form.priceBasic} onChange={set('priceBasic')} disabled={!isSuperAdmin} />
           </div>
           <div className="wka-field">
-            <label>Advanced plan price id</label>
-            <input className="wka-input" placeholder="price_..." value={form.priceAdvanced} onChange={set('priceAdvanced')} disabled={!isSuperAdmin} />
+            <label>Advanced plan price or product id</label>
+            <input className="wka-input" placeholder="price_... or prod_..." value={form.priceAdvanced} onChange={set('priceAdvanced')} disabled={!isSuperAdmin} />
           </div>
           <div className="wka-field">
-            <label>Premium plan price id</label>
-            <input className="wka-input" placeholder="price_..." value={form.pricePremium} onChange={set('pricePremium')} disabled={!isSuperAdmin} />
+            <label>Premium plan price or product id</label>
+            <input className="wka-input" placeholder="price_... or prod_..." value={form.pricePremium} onChange={set('pricePremium')} disabled={!isSuperAdmin} />
           </div>
           <div className="wka-field">
             <label>Publishable key (optional)</label>
