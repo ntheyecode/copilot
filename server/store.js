@@ -336,6 +336,90 @@ export function updateCompany(companyId, patch = {}) {
 export function listCompanyUsers(companyId) {
   return (db.users || []).filter((u) => u.companyId === companyId).map(publicWorkUser)
 }
+// --- SSO (OIDC) config -----------------------------------------------------
+// The FULL config (including the client secret) is stored on c.sso for server
+// use. publicCompany/getCompany only ever expose provider/connected/domain, so
+// the secret never reaches a client. setCompanySso is the only writer.
+const SSO_PROVIDERS = ['google', 'microsoft', 'okta']
+export function setCompanySso(companyId, cfg = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const provider = String(cfg.provider || '').trim().toLowerCase()
+  if (!SSO_PROVIDERS.includes(provider)) throw httpErr(400, 'Pick a provider: Google, Microsoft or Okta.')
+  const issuer = String(cfg.issuer || '').trim().replace(/\/+$/, '')
+  if (!/^https:\/\/[^\s]+$/i.test(issuer)) throw httpErr(400, 'The issuer must be a full https URL.')
+  const clientId = String(cfg.clientId || '').trim()
+  if (!clientId) throw httpErr(400, 'A client id is required.')
+  // Keep the existing secret when the admin saves without re-typing it (the UI
+  // never reads the secret back, so an empty field means "leave unchanged").
+  const prior = c.sso || {}
+  const clientSecret = cfg.clientSecret != null && String(cfg.clientSecret).trim() !== ''
+    ? String(cfg.clientSecret).trim()
+    : (prior.clientSecret || '')
+  if (!clientSecret) throw httpErr(400, 'A client secret is required.')
+  const domain = String(cfg.domain || '').trim().toLowerCase().replace(/^@/, '')
+  c.sso = { provider, issuer, clientId, clientSecret, domain, connected: true }
+  persist()
+  return publicCompany(c)
+}
+// Server-only: the full SSO config (with the secret) for one company, or null.
+export function getCompanySsoConfig(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  return (c && c.sso) ? { ...c.sso } : null
+}
+// Public resolver: a connected company whose SSO domain matches, non-secret.
+export function findCompanyBySsoDomain(domain) {
+  const d = String(domain || '').trim().toLowerCase().replace(/^@/, '')
+  if (!d) return null
+  const c = (db.companies || []).find((x) => x.sso && x.sso.connected && x.sso.domain && x.sso.domain === d)
+  return c ? publicCompany(c) : null
+}
+// Find-or-create a company member for an SSO sign-in. The email is the stable
+// key (stored as ssoEmail). Username is the email local part, deduped globally
+// because usernames are unique. Seats are enforced when the company sets them.
+// SSO users have no usable password (a random hash), so they can only sign in
+// through their identity provider.
+export function provisionSsoUser({ companyId, email } = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const mail = String(email || '').trim().toLowerCase()
+  if (!mail.includes('@')) throw httpErr(400, 'The identity provider did not share a valid email address.')
+  // Already provisioned in THIS company?
+  const existing = (db.users || []).find((u) => u.companyId === companyId && u.ssoEmail === mail)
+  if (existing) return existing
+  // Seat limit (0 = unlimited). Count current members of this company.
+  const seats = Number(c.seats) || 0
+  if (seats > 0) {
+    const used = (db.users || []).filter((u) => u.companyId === companyId).length
+    if (used >= seats) throw httpErr(403, 'Your company has used all of its seats. Ask your administrator to add more.')
+  }
+  const local = mail.split('@')[0].replace(/[^a-z0-9._+-]/gi, '')
+  const stem = local.length >= 3 ? local : mail
+  let username = stem
+  let i = 1
+  while (findUser(username)) username = `${stem}-${i++}`
+  const u = {
+    id: id(),
+    username,
+    passwordHash: bcrypt.hashSync(crypto.randomBytes(24).toString('hex'), 10), // no usable password; SSO only
+    role: 'user',
+    root: false,
+    createdAt: now(),
+    onboarded: false,
+    displayName: null,
+    tier: 'basic',
+    purchasedSeconds: 0,
+    imageCredits: 0,
+    ai: null,
+    companyId,
+    companyRole: 'member',
+    ssoEmail: mail,
+  }
+  db.users.push(u)
+  indexUsers()
+  persist()
+  return u
+}
 export function setUserCompany(userId, companyId, companyRole) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')

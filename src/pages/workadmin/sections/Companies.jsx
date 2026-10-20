@@ -1,9 +1,108 @@
 // Companies (tenancy): superadmin creates companies, adds company admins and
 // company users, and sets the per-company / per-user PII-PHI redaction policy.
 import React, { useEffect, useState, useCallback } from 'react'
-import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus } from 'lucide-react'
+import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState } from './_shared.jsx'
+
+// Per-provider issuer hints shown under the issuer field, so an admin pastes the
+// right thing. The config is issuer-driven, so Microsoft's tenant lives in the
+// issuer the admin enters.
+const SSO_ISSUER_HINT = {
+  google: 'https://accounts.google.com',
+  microsoft: 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0',
+  okta: 'https://YOUR_ORG.okta.com',
+}
+
+// Connect SSO for one company. The client secret is write-only: the server never
+// sends it back, so an empty secret field means "keep the one already stored".
+function SsoPanel({ company, onSaved }) {
+  const connected = !!(company.sso && company.sso.connected)
+  const [open, setOpen] = useState(false)
+  const [form, setForm] = useState({
+    provider: (company.sso && company.sso.provider) || 'google',
+    issuer: '',
+    clientId: '',
+    clientSecret: '',
+    domain: (company.sso && company.sso.domain) || '',
+  })
+  const [hasSecret, setHasSecret] = useState(connected)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [done, setDone] = useState(false)
+  const redirectUri = (typeof window !== 'undefined' ? window.location.origin : 'https://admireveda.com') + '/api/work/sso/callback'
+
+  // Prefill the non-secret fields (issuer, client id, domain, provider) the
+  // first time the panel is opened. The client secret is never returned.
+  useEffect(() => {
+    if (!open) return
+    let alive = true
+    workAdminApi.companySso(company.id).then((d) => {
+      if (!alive || !d || !d.sso) return
+      const s = d.sso
+      setHasSecret(!!s.hasSecret)
+      setForm((f) => ({ ...f, provider: s.provider || f.provider, issuer: s.issuer || '', clientId: s.clientId || '', domain: s.domain || '' }))
+    }).catch(() => {})
+    return () => { alive = false }
+  }, [open, company.id])
+
+  const save = async () => {
+    if (busy) return
+    setBusy(true); setMsg(''); setDone(false)
+    try {
+      await workAdminApi.setCompanySso(company.id, form)
+      setForm((f) => ({ ...f, clientSecret: '' }))
+      setHasSecret(true)
+      setDone(true)
+      onSaved && onSaved()
+    } catch (e) { setMsg(e.message || 'Could not save the SSO settings.') } finally { setBusy(false) }
+  }
+
+  return (
+    <div className="co-sso">
+      <button className="co-sso-head" onClick={() => setOpen((v) => !v)}>
+        <KeyRound size={15} />
+        <span>Single sign-on</span>
+        <span className={`co-sso-state ${connected ? 'on' : ''}`}>{connected ? <><Check size={12} /> Connected ({company.sso.provider})</> : 'Not connected'}</span>
+        {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+      </button>
+      {open && (
+        <div className="co-sso-body">
+          <div className="co-sso-row">
+            <label>Provider</label>
+            <select className="wka-input" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
+              <option value="google">Google</option>
+              <option value="microsoft">Microsoft (Entra)</option>
+              <option value="okta">Okta</option>
+            </select>
+          </div>
+          <div className="co-sso-row">
+            <label>Issuer URL</label>
+            <input className="wka-input" placeholder={SSO_ISSUER_HINT[form.provider]} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} />
+          </div>
+          <div className="co-sso-hint">Example for {form.provider}: {SSO_ISSUER_HINT[form.provider]}</div>
+          <div className="co-sso-row">
+            <label>Client ID</label>
+            <input className="wka-input" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} />
+          </div>
+          <div className="co-sso-row">
+            <label>Client secret</label>
+            <input className="wka-input" type="password" placeholder={hasSecret ? 'Stored. Leave blank to keep it.' : 'Paste the secret'} value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} />
+          </div>
+          <div className="co-sso-row">
+            <label>Email domain</label>
+            <input className="wka-input" placeholder="example.com" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} />
+          </div>
+          <div className="co-sso-hint">Users who enter this domain on the sign-in page are sent to this provider.</div>
+          <div className="co-sso-redirect">Set the redirect URI in your provider to: <code>{redirectUri}</code></div>
+          {msg && <div className="co-msg">{msg}</div>}
+          {done && <div className="co-sso-ok"><Check size={13} /> Saved.</div>}
+          <button className="wka-btn primary" disabled={busy} onClick={save}>{busy ? <Loader2 size={14} className="spin" /> : (connected ? 'Update SSO' : 'Connect SSO')}</button>
+        </div>
+      )}
+    </div>
+  )
+}
 
 export default function Companies({ isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null, companies: [] })
@@ -116,6 +215,7 @@ export default function Companies({ isSuperAdmin }) {
                           <select className="wka-input" value={uForm.tier} onChange={(e) => setUForm({ ...uForm, tier: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
                           <button className="wka-btn primary" disabled={busy} onClick={() => addUser(c.id)}>{busy ? <Loader2 size={14} className="spin" /> : 'Add user'}</button>
                         </div>
+                        {isSuperAdmin && <SsoPanel company={detail.company} onSaved={() => refreshDetail(c.id)} />}
                       </>
                     )}
                   </div>
@@ -151,5 +251,18 @@ const CSS = `
 .co-adduser{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--wka-line)}
 .co-adduser svg{color:var(--wka-cyan)}
 .spin{animation:co-spin 1s linear infinite}@keyframes co-spin{to{transform:rotate(360deg)}}
-@media(max-width:720px){.co-meta{margin-left:0;width:100%}.co-adduser{flex-direction:column;align-items:stretch}}
+.co-sso{margin-top:14px;border-top:1px solid var(--wka-line);padding-top:12px}
+.co-sso-head{width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;font:inherit;font-weight:700;font-size:13.5px;color:var(--wka-text);padding:4px 0}
+.co-sso-head svg{color:var(--wka-cyan)}
+.co-sso-state{margin-left:auto;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--wka-faint);border:1px solid var(--wka-line-2);border-radius:999px;padding:3px 10px}
+.co-sso-state.on{color:var(--wka-emerald);border-color:rgba(10,157,102,.4);background:rgba(10,157,102,.08)}
+.co-sso-body{display:flex;flex-direction:column;gap:9px;padding:14px;margin-top:10px;border:1px solid var(--wka-line);border-radius:12px;background:var(--wka-panel)}
+.co-sso-row{display:flex;align-items:center;gap:10px}
+.co-sso-row label{width:120px;flex:none;font-size:12.5px;color:var(--wka-muted)}
+.co-sso-row .wka-input{flex:1}
+.co-sso-hint{font-size:11.5px;color:var(--wka-faint);margin:-4px 0 2px 130px}
+.co-sso-redirect{font-size:12px;color:var(--wka-muted);background:var(--wka-bg-2);border:1px solid var(--wka-line);border-radius:9px;padding:9px 11px}
+.co-sso-redirect code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--wka-text);word-break:break-all}
+.co-sso-ok{display:inline-flex;align-items:center;gap:6px;color:var(--wka-emerald);font-size:12.5px;font-weight:700}
+@media(max-width:720px){.co-meta{margin-left:0;width:100%}.co-adduser{flex-direction:column;align-items:stretch}.co-sso-row{flex-direction:column;align-items:stretch}.co-sso-row label{width:auto}.co-sso-hint{margin-left:0}}
 `
