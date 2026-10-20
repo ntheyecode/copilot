@@ -267,21 +267,21 @@ export default function WorkMarketing() {
         <div className="wm-wrap">
           <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies &amp; teams</div>
           <h2 className="wm-h2" data-reveal>More gets done. With the team you already have.</h2>
-          <p className="wm-sub" data-reveal>WorkCoPilot turns anyone into an expert on the task in front of them, applies the secure, proven way, and documents every step. Lean teams take on the <b>toughest projects</b> &mdash; cloud migrations, security hardening, pentests, full builds &mdash; and ship like specialists.</p>
+          <p className="wm-sub" data-reveal>WorkCoPilot turns anyone into an expert on the task in front of them, applies the secure, proven way, and documents every step. Lean teams take on the <b>toughest projects</b>, cloud migrations, security hardening, pentests, full builds, and ship like specialists.</p>
 
           <div className="wm-roi-stats" data-reveal>
             <CountStat value={70} prefix="+" suffix="%" label="faster through stuck & pending work" />
             <CountStat value={50} prefix="-" suffix="%" label="outsourcing spend, quality kept" />
-            <CountStat value={100} suffix="%" label="documented — every change & config" />
+            <CountStat value={100} suffix="%" label="documented, every change & config" />
             <div className="wm-roi-stat"><b>Days&nbsp;&rarr;&nbsp;hrs</b><span>on work nobody had time for</span></div>
           </div>
 
           <div className="wm-roi-grid">
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Layers size={18} /></span><h3>Take on the toughest projects</h3><p>No new hires, no long ramp. Your existing team or a lean consultant is guided to deliver specialist, complex work &mdash; infrastructure, cloud, security, builds &mdash; the first time, correctly, in-house.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Zap size={18} /></span><h3>Clear the backlog</h3><p>The tasks that pile up because &ldquo;no one has time&rdquo; or &ldquo;only one person knows how&rdquo; finally get done &mdash; step by step, with each step verified, up to 70% faster.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><ShieldCheck size={18} /></span><h3>Secure &amp; best-practice by default</h3><p>It applies the current, proven way &mdash; hardened cloud setups, reviewed code, real pentest steps, correct configurations &mdash; and catches mistakes before they cost you. No shortcuts, no guesswork.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><FileText size={18} /></span><h3>Everything documented</h3><p>Every implementation, code change, configuration, pentest and cloud setup ends with a clean, shareable write-up &mdash; and a per-session audit log. Audit-ready, knowledge that stays in the company.</p></div>
-            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Gauge size={18} /></span><h3>Cut outsourcing, keep control</h3><p>Bring work back in-house. Reduce external spend by up to half while raising consistency &mdash; and keep the context, data and institutional knowledge on your side.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Layers size={18} /></span><h3>Take on the toughest projects</h3><p>No new hires, no long ramp. Your existing team or a lean consultant is guided to deliver specialist, complex work, infrastructure, cloud, security, builds, the first time, correctly, in-house.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Zap size={18} /></span><h3>Clear the backlog</h3><p>The tasks that pile up because &ldquo;no one has time&rdquo; or &ldquo;only one person knows how&rdquo; finally get done, step by step, with each step verified, up to 70% faster.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><ShieldCheck size={18} /></span><h3>Secure &amp; best-practice by default</h3><p>It applies the current, proven way, hardened cloud setups, reviewed code, real pentest steps, correct configurations, and catches mistakes before they cost you. No shortcuts, no guesswork.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><FileText size={18} /></span><h3>Everything documented</h3><p>Every implementation, code change, configuration, pentest and cloud setup ends with a clean, shareable write-up, and a per-session audit log. Audit-ready, knowledge that stays in the company.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Gauge size={18} /></span><h3>Cut outsourcing, keep control</h3><p>Bring work back in-house. Reduce external spend by up to half while raising consistency, and keep the context, data and institutional knowledge on your side.</p></div>
             <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Lock size={18} /></span><h3>Safe for regulated work</h3><p>On-device redaction of PII, PHI, secrets and IPs plus read-only guidance means even sensitive, compliance-bound work can be done in-house, safely.</p></div>
           </div>
         </div>
