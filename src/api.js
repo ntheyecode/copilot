@@ -125,6 +125,13 @@ export const api = {
   // company admin: manage own-company users
   workCompanyUsers: () => req('GET', '/api/work/company/users'),
   workCompanyCreateUser: (body) => req('POST', '/api/work/company/users', body || {}),
+  // SSO (OIDC). Login page resolves a company domain, then does a full-page
+  // redirect to the start URL (the server bounces the browser to the IdP).
+  workSsoResolve: (domain) => req('GET', `/api/work/sso/resolve?domain=${encodeURIComponent(domain || '')}`),
+  workSsoStartUrl: (companyId) => `/api/work/sso/${companyId}/start`,
+  // Company admin: read / set SSO for their own company (secret is write-only).
+  workCompanyGetSso: () => req('GET', '/api/work/company/sso'),
+  workCompanySetSso: (cfg) => req('POST', '/api/work/company/sso', cfg || {}),
   // audit log download URL (per session)
   workAuditUrl: (id) => `/api/work/sessions/${id}/audit.log`,
   // superadmin WorkCoPilot config

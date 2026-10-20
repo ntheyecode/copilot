@@ -25,6 +25,7 @@ import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
+import { registerSsoRoutes } from './sso.js'
 import { scrubSensitive, redactionSummary } from './work-scrub.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -765,6 +766,8 @@ registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requi
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
+// OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
+registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 
 // Unknown API route -> JSON 404 (never the SPA HTML).
 app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' }))
