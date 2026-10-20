@@ -159,14 +159,14 @@ export default function WorkLogin() {
 }
 
 const CSS = `
-.wl{--ink:#0a0b10;--panel:#14161f;--line:rgba(255,255,255,.1);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;
+.wl{--ink:#f6f8fb;--panel:#ffffff;--line:rgba(17,23,38,.12);--tx:#0f1a16;--mut:#5a6472;--em:#0a9d66;--em2:#0a86cf;--warm:#ffb35c;--warm2:#ff7a59;
   position:relative;min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:var(--ink);color:var(--tx);
   font-family:"Figtree",system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
 .wl *{box-sizing:border-box}
 .wl h1,.wl h2{color:var(--tx);margin:0}
 .wl a{color:inherit;text-decoration:none}
-.wl-aurora{position:absolute;inset:-30% 40% auto -10%;height:90vh;filter:blur(80px);opacity:.5;pointer-events:none;
-  background:radial-gradient(45% 60% at 30% 20%,rgba(57,211,255,.4),transparent 70%),radial-gradient(45% 55% at 60% 60%,rgba(140,245,196,.32),transparent 70%),radial-gradient(40% 50% at 20% 80%,rgba(255,122,89,.2),transparent 70%);
+.wl-aurora{position:absolute;inset:-30% 40% auto -10%;height:90vh;filter:blur(90px);opacity:.5;pointer-events:none;
+  background:radial-gradient(45% 60% at 30% 20%,rgba(10,157,102,.22),transparent 70%),radial-gradient(45% 55% at 60% 60%,rgba(10,134,207,.16),transparent 70%),radial-gradient(40% 50% at 20% 80%,rgba(140,245,196,.18),transparent 70%);
   animation:wldrift 16s ease-in-out infinite alternate}
 @keyframes wldrift{to{transform:translateY(5%) scale(1.06)}}
 
@@ -182,7 +182,8 @@ const CSS = `
 .wl-pitch ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:11px}
 .wl-pitch li{display:flex;gap:9px;align-items:center;color:var(--tx);font-size:15px}
 .wl-pitch li svg{color:var(--em)}
-.wl-mock{background:rgba(21,23,32,.8);border:1px solid var(--line);border-radius:16px;padding:16px;max-width:400px}
+.wl-mock{background:#141924;border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:16px;max-width:400px;box-shadow:0 24px 50px -30px rgba(17,23,38,.5)}
+.wl-mock-step{color:#eef0f6}
 .wl-mock-label{font-size:10px;letter-spacing:.14em;color:var(--em);font-weight:700;display:flex;align-items:center;gap:6px;margin-bottom:7px}
 .wl-mock-step{font-weight:600;margin-bottom:10px}
 .wl-mock code{display:block;background:#0c1222;color:#d6e9d6;font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:10px;border-radius:9px;overflow-x:auto;white-space:nowrap}
@@ -195,9 +196,9 @@ const CSS = `
 .wl-card h2{font-family:"Bricolage Grotesque";font-size:30px;letter-spacing:-.02em}
 .wl-sub{color:var(--mut);margin:7px 0 26px}
 .wl-card label{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px;letter-spacing:.02em}
-.wl-card input{width:100%;background:#0b0c12;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:16px;outline:none}
+.wl-card input{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:16px;outline:none}
 .wl-card input:focus{border-color:var(--em)}
-.wl-err{color:#ff8a8a;font-size:13.5px;margin:-6px 0 14px}
+.wl-err{color:#c0392b;font-size:13.5px;margin:-6px 0 14px}
 .wl-cta{width:100%;justify-content:center;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:12px;padding:14px;font:inherit;font-weight:600;font-size:16px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 12px 34px -12px rgba(255,122,89,.65);transition:transform .15s}
 .wl-cta:hover{transform:translateY(-2px)}
 .wl-cta:disabled{opacity:.7;cursor:default;transform:none}
@@ -208,13 +209,13 @@ const CSS = `
 .wl-sso{margin-top:18px}
 .wl-or{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:12px;margin:4px 0 14px}
 .wl-or::before,.wl-or::after{content:"";flex:1;height:1px;background:var(--line)}
-.wl-sso-btn{width:100%;justify-content:center;background:#0b0c12;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:border-color .15s}
+.wl-sso-btn{width:100%;justify-content:center;background:#ffffff;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:9px;transition:border-color .15s}
 .wl-sso-btn:hover{border-color:var(--em)}
 .wl-sso-btn svg{color:var(--em2)}
 .wl-sso-form label{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px;letter-spacing:.02em}
-.wl-sso-form input{width:100%;background:#0b0c12;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:12px;outline:none}
+.wl-sso-form input{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:12px;outline:none}
 .wl-sso-form input:focus{border-color:var(--em)}
-.wl-sso-go{width:100%;justify-content:center;background:#0b0c12;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
+.wl-sso-go{width:100%;justify-content:center;background:#ffffff;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .wl-sso-go:hover{border-color:var(--em)}
 .wl-sso-go:disabled{opacity:.7;cursor:default}
 .wl-sso-err{margin-top:10px}
