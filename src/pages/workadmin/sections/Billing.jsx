@@ -4,10 +4,14 @@
 // leaving a field blank keeps whatever is stored. The three price ids and the
 // optional publishable key are plain text and can be edited or cleared.
 //
+// UX: once a configuration is saved it collapses to a read-only summary with an
+// Edit button; the form only appears when adding or editing. A Test connection
+// button validates the stored keys against Stripe live.
+//
 // Nothing here ever displays a stored secret value (SUPREME RULE III style: the
 // state is surfaced plainly as configured / not configured, never leaked).
 import React, { useEffect, useState, useCallback } from 'react'
-import { Lock, CheckCircle2, XCircle, CreditCard, Link2, Copy, Check } from 'lucide-react'
+import { Lock, CheckCircle2, XCircle, CreditCard, Link2, Copy, Check, Pencil, Zap, AlertTriangle } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag } from './_shared.jsx'
 
@@ -25,12 +29,32 @@ function StateRow({ ok, label, detail }) {
   )
 }
 
+// One line of the saved summary: a label on the left, the value (or a masked
+// "Set") on the right, with a small status dot.
+function SummaryRow({ label, value, ok, neutral }) {
+  const color = neutral ? 'var(--wka-faint)' : (ok ? 'var(--wka-emerald)' : 'var(--wka-red)')
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderBottom: '1px solid var(--wka-line)' }}>
+      <span style={{ color: 'var(--wka-muted)', fontSize: 13 }}>{label}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 13, minWidth: 0 }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
+        <span className="wka-mono" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{value}</span>
+      </span>
+    </div>
+  )
+}
+
 export default function Billing({ isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null, billing: null, webhookUrl: '', envFallback: null })
+  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
   const [copied, setCopied] = useState(false)
+  // Test connection
+  const [testing, setTesting] = useState(false)
+  const [testResult, setTestResult] = useState(null)
+  const [testErr, setTestErr] = useState(null)
   // Form fields. Secrets start blank (write-only); blank on save keeps stored.
   const [form, setForm] = useState({ secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', publishableKey: '', enabled: true })
 
@@ -45,6 +69,11 @@ export default function Billing({ isSuperAdmin }) {
         priceBasic: b.priceBasic || '', priceAdvanced: b.priceAdvanced || '', pricePremium: b.pricePremium || '',
         publishableKey: b.publishableKey || '', enabled: b.enabled !== false,
       })
+      // Collapse to the summary when something is already configured; open the
+      // form on a first-time (empty) configuration.
+      const env = data.envFallback || {}
+      const configured = !!(b.hasSecretKey || env.secretKey || (b.priceBasic && b.priceAdvanced && b.pricePremium))
+      setEditing(!configured)
     } catch (error) { setState((s) => ({ ...s, loading: false, error })) }
   }, [])
 
@@ -67,9 +96,22 @@ export default function Billing({ isSuperAdmin }) {
       const b = data.billing || {}
       setState((s) => ({ ...s, billing: b }))
       setForm((f) => ({ ...f, secretKey: '', webhookSecret: '' }))   // clear the write-only fields
+      setTestResult(null); setTestErr(null)
       setSaved(true); setTimeout(() => setSaved(false), 3000)
+      setEditing(false)   // collapse back to the summary after a save
     } catch (error) { setSaveError(error) }
     finally { setSaving(false) }
+  }
+
+  const test = async () => {
+    if (testing) return
+    setTesting(true); setTestErr(null); setTestResult(null)
+    try {
+      const r = await workAdminApi.testBilling()
+      if (r && r.ok === false && r.error) setTestErr(new Error(r.error))
+      setTestResult(r)
+    } catch (error) { setTestErr(error) }
+    finally { setTesting(false) }
   }
 
   const copyWebhook = async () => {
@@ -86,60 +128,124 @@ export default function Billing({ isSuperAdmin }) {
   const pricesSet = !!(b.priceBasic && b.priceAdvanced && b.pricePremium)
   const ready = secretSet && pricesSet && b.enabled !== false
 
+  const money = (n, cur) => {
+    if (n == null) return ''
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format(n) }
+    catch { return `$${n}` }
+  }
+  const PLAN_ROWS = [['basic', 'Basic'], ['advanced', 'Advanced'], ['premium', 'Premium']]
+
   return (
     <div>
       {!isSuperAdmin ? <div className="wka-note"><Lock size={14} /> Only a superadmin can change the billing configuration. The current state is shown below.</div> : null}
 
       <div className="wka-panel">
         <h2><CreditCard size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Stripe configuration</h2>
-        <p className="desc">Paste your Stripe keys and the three plan ids here. Each plan takes a price id (price_...) or a product id (prod_...), whichever you copy from Stripe. The secret key and webhook secret are write-only: once saved they are never shown again, and leaving them blank keeps the stored value. Values set here take priority over environment variables.</p>
 
-        <div style={{ display: 'grid', gap: 16, maxWidth: 640 }}>
-          <div className="wka-field">
-            <label>Secret key {secretSet ? <span style={{ color: 'var(--wka-emerald)' }}>(set)</span> : <span style={{ color: 'var(--wka-red)' }}>(not set)</span>}</label>
-            <input className="wka-input" type="password" autoComplete="off" placeholder={secretSet ? 'Set. Type a new key to replace it.' : 'sk_live_... or sk_test_...'}
-              value={form.secretKey} onChange={set('secretKey')} disabled={!isSuperAdmin} />
-            <span className="hint">Server side only. Never leaves the server and is never shown back.</span>
-          </div>
+        {!editing ? (
+          <>
+            <p className="desc">Your Stripe keys and plan ids are saved. Secrets are never shown back. Use Test connection to confirm they work, or Edit to change them.</p>
+            <div style={{ maxWidth: 640 }}>
+              <SummaryRow label="Secret key" value={secretSet ? 'Set, hidden' : 'Not set'} ok={secretSet} />
+              <SummaryRow label="Webhook signing secret" value={webhookSet ? 'Set, hidden' : 'Not set'} ok={webhookSet} />
+              <SummaryRow label="Basic plan" value={b.priceBasic || 'Not set'} ok={!!b.priceBasic} />
+              <SummaryRow label="Advanced plan" value={b.priceAdvanced || 'Not set'} ok={!!b.priceAdvanced} />
+              <SummaryRow label="Premium plan" value={b.pricePremium || 'Not set'} ok={!!b.pricePremium} />
+              <SummaryRow label="Publishable key" value={b.publishableKey || 'Not set (optional)'} ok={!!b.publishableKey} neutral={!b.publishableKey} />
+              <SummaryRow label="Billing" value={b.enabled !== false ? 'On' : 'Off'} ok={b.enabled !== false} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
+              <button type="button" className="wka-btn primary" disabled={!isSuperAdmin} onClick={() => { setTestResult(null); setTestErr(null); setEditing(true) }}>
+                <Pencil size={14} /> Edit configuration
+              </button>
+              <button type="button" className="wka-btn" disabled={!secretSet || testing} onClick={test}>
+                {testing ? <Spinning /> : <Zap size={14} />} Test connection
+              </button>
+              <SavedTag show={saved} />
+            </div>
 
-          <div className="wka-field">
-            <label>Webhook signing secret {webhookSet ? <span style={{ color: 'var(--wka-emerald)' }}>(set)</span> : <span style={{ color: 'var(--wka-red)' }}>(not set)</span>}</label>
-            <input className="wka-input" type="password" autoComplete="off" placeholder={webhookSet ? 'Set. Type a new secret to replace it.' : 'whsec_...'}
-              value={form.webhookSecret} onChange={set('webhookSecret')} disabled={!isSuperAdmin} />
-            <span className="hint">From the webhook endpoint you create in Stripe (see below).</span>
-          </div>
+            {testErr ? <div style={{ marginTop: 14 }}><ErrorBox error={testErr} /></div> : null}
+            {testResult && !testErr ? (
+              <div style={{ marginTop: 16, border: `1px solid ${testResult.ok ? 'rgba(10,157,102,.35)' : 'rgba(181,121,15,.35)'}`, background: testResult.ok ? 'rgba(10,157,102,.06)' : 'rgba(181,121,15,.06)', borderRadius: 12, padding: '14px 16px', maxWidth: 640 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontWeight: 700, marginBottom: 10 }}>
+                  {testResult.ok ? <CheckCircle2 size={17} style={{ color: 'var(--wka-emerald)' }} /> : <AlertTriangle size={17} style={{ color: 'var(--wka-amber)' }} />}
+                  {testResult.ok ? 'Connected to Stripe. Checkout is ready.' : 'Connected, but something is incomplete.'}
+                </div>
+                <div style={{ fontSize: 13, color: 'var(--wka-muted)', marginBottom: 10 }}>
+                  Account: <b style={{ color: 'var(--wka-text)' }}>{testResult.account || 'unknown'}</b>
+                  {' · '}<span style={{ color: testResult.livemode ? 'var(--wka-emerald)' : 'var(--wka-amber)', fontWeight: 600 }}>{testResult.livemode ? 'LIVE mode' : 'TEST mode'}</span>
+                  {' · '}Webhook secret {testResult.webhookSet ? 'set' : 'missing'}
+                </div>
+                {PLAN_ROWS.map(([id, name]) => {
+                  const p = (testResult.plans && testResult.plans[id]) || {}
+                  return (
+                    <div key={id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, padding: '4px 0' }}>
+                      {p.ok ? <CheckCircle2 size={15} style={{ color: 'var(--wka-emerald)', flexShrink: 0 }} /> : <XCircle size={15} style={{ color: 'var(--wka-red)', flexShrink: 0 }} />}
+                      <b>{name}</b>
+                      <span style={{ color: 'var(--wka-muted)' }}>
+                        {p.ok ? `${money(p.amount, p.currency)} / ${p.interval}` : (p.error || 'not set')}
+                      </span>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : null}
+          </>
+        ) : (
+          <>
+            <p className="desc">Paste your Stripe keys and the three plan ids here. Each plan takes a price id (price_...) or a product id (prod_...), whichever you copy from Stripe. The secret key and webhook secret are write-only: once saved they are never shown again, and leaving them blank keeps the stored value. Values set here take priority over environment variables.</p>
 
-          <div className="wka-field">
-            <label>Basic plan price or product id</label>
-            <input className="wka-input" placeholder="price_... or prod_..." value={form.priceBasic} onChange={set('priceBasic')} disabled={!isSuperAdmin} />
-          </div>
-          <div className="wka-field">
-            <label>Advanced plan price or product id</label>
-            <input className="wka-input" placeholder="price_... or prod_..." value={form.priceAdvanced} onChange={set('priceAdvanced')} disabled={!isSuperAdmin} />
-          </div>
-          <div className="wka-field">
-            <label>Premium plan price or product id</label>
-            <input className="wka-input" placeholder="price_... or prod_..." value={form.pricePremium} onChange={set('pricePremium')} disabled={!isSuperAdmin} />
-          </div>
-          <div className="wka-field">
-            <label>Publishable key (optional)</label>
-            <input className="wka-input" placeholder="pk_live_... or pk_test_..." value={form.publishableKey} onChange={set('publishableKey')} disabled={!isSuperAdmin} />
-            <span className="hint">Not required for Checkout. Stored for any future in-page card form.</span>
-          </div>
+            <div style={{ display: 'grid', gap: 16, maxWidth: 640 }}>
+              <div className="wka-field">
+                <label>Secret key {secretSet ? <span style={{ color: 'var(--wka-emerald)' }}>(set)</span> : <span style={{ color: 'var(--wka-red)' }}>(not set)</span>}</label>
+                <input className="wka-input" type="password" autoComplete="off" placeholder={secretSet ? 'Set. Type a new key to replace it.' : 'sk_live_... or sk_test_...'}
+                  value={form.secretKey} onChange={set('secretKey')} disabled={!isSuperAdmin} />
+                <span className="hint">Server side only. Never leaves the server and is never shown back.</span>
+              </div>
 
-          <div className={`wka-toggle${form.enabled ? ' on' : ''}${!isSuperAdmin ? ' disabled' : ''}`} onClick={() => isSuperAdmin && setForm((f) => ({ ...f, enabled: !f.enabled }))} role="switch" aria-checked={form.enabled}>
-            <span className="track"><span className="knob" /></span>
-            <span style={{ fontWeight: 600 }}>{form.enabled ? 'Billing on: the stored keys are used' : 'Billing off: the stored keys are ignored (env vars, if set, still apply)'}</span>
-          </div>
+              <div className="wka-field">
+                <label>Webhook signing secret {webhookSet ? <span style={{ color: 'var(--wka-emerald)' }}>(set)</span> : <span style={{ color: 'var(--wka-red)' }}>(not set)</span>}</label>
+                <input className="wka-input" type="password" autoComplete="off" placeholder={webhookSet ? 'Set. Type a new secret to replace it.' : 'whsec_...'}
+                  value={form.webhookSecret} onChange={set('webhookSecret')} disabled={!isSuperAdmin} />
+                <span className="hint">From the webhook endpoint you create in Stripe (see below).</span>
+              </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <button type="button" className="wka-btn primary" disabled={!isSuperAdmin || saving} onClick={save}>
-              {saving ? <Spinning /> : null} Save configuration
-            </button>
-            <SavedTag show={saved} />
-          </div>
-          {saveError ? <ErrorBox error={saveError} /> : null}
-        </div>
+              <div className="wka-field">
+                <label>Basic plan price or product id</label>
+                <input className="wka-input" placeholder="price_... or prod_..." value={form.priceBasic} onChange={set('priceBasic')} disabled={!isSuperAdmin} />
+              </div>
+              <div className="wka-field">
+                <label>Advanced plan price or product id</label>
+                <input className="wka-input" placeholder="price_... or prod_..." value={form.priceAdvanced} onChange={set('priceAdvanced')} disabled={!isSuperAdmin} />
+              </div>
+              <div className="wka-field">
+                <label>Premium plan price or product id</label>
+                <input className="wka-input" placeholder="price_... or prod_..." value={form.pricePremium} onChange={set('pricePremium')} disabled={!isSuperAdmin} />
+              </div>
+              <div className="wka-field">
+                <label>Publishable key (optional)</label>
+                <input className="wka-input" placeholder="pk_live_... or pk_test_..." value={form.publishableKey} onChange={set('publishableKey')} disabled={!isSuperAdmin} />
+                <span className="hint">Not required for Checkout. Stored for any future in-page card form.</span>
+              </div>
+
+              <div className={`wka-toggle${form.enabled ? ' on' : ''}${!isSuperAdmin ? ' disabled' : ''}`} onClick={() => isSuperAdmin && setForm((f) => ({ ...f, enabled: !f.enabled }))} role="switch" aria-checked={form.enabled}>
+                <span className="track"><span className="knob" /></span>
+                <span style={{ fontWeight: 600 }}>{form.enabled ? 'Billing on: the stored keys are used' : 'Billing off: the stored keys are ignored (env vars, if set, still apply)'}</span>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
+                <button type="button" className="wka-btn primary" disabled={!isSuperAdmin || saving} onClick={save}>
+                  {saving ? <Spinning /> : null} Save configuration
+                </button>
+                {(secretSet || pricesSet) && (
+                  <button type="button" className="wka-btn ghost" disabled={saving} onClick={() => { setSaveError(null); load() }}>Cancel</button>
+                )}
+                <SavedTag show={saved} />
+              </div>
+              {saveError ? <ErrorBox error={saveError} /> : null}
+            </div>
+          </>
+        )}
       </div>
 
       <div className="wka-panel">

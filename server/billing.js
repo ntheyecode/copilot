@@ -343,6 +343,43 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json({ billing: store.setBillingConfig(req.body || {}) })
     }))
 
+    // Validate the stored config end to end: the secret key is accepted by
+    // Stripe, and each configured plan id (price_... or prod_...) resolves to a
+    // real price. Returns per-plan amounts so the operator sees it is wired.
+    // Never returns a secret.
+    app.post('/api/work/admin/billing/test', requireAuth, requireSuperAdmin, async (req, res) => {
+      const { secret, webhookSecret, price } = cfg(store)
+      const s = await getStripe(secret)
+      if (!s) return res.json({ ok: false, error: 'No Stripe secret key is set. Add it above and Save first.' })
+      const out = { ok: false, account: null, accountId: null, livemode: /^sk_live_/.test(secret), webhookSet: !!webhookSecret, plans: {} }
+      try {
+        const acct = await s.accounts.retrieve()
+        out.accountId = (acct && acct.id) || null
+        out.account = (acct && acct.business_profile && acct.business_profile.name) || out.accountId
+      } catch (e) {
+        return res.json({ ok: false, livemode: out.livemode, error: 'Stripe rejected the secret key: ' + ((e && e.message) || 'invalid key') })
+      }
+      for (const p of PLANS) {
+        const configured = price[p]
+        if (!configured) { out.plans[p] = { ok: false, error: 'not set' }; continue }
+        try {
+          const priceId = await resolvePriceId(s, configured)
+          if (!priceId) { out.plans[p] = { ok: false, error: 'no price found for this id' }; continue }
+          const pr = await s.prices.retrieve(priceId)
+          out.plans[p] = {
+            ok: true,
+            amount: (pr.unit_amount != null ? pr.unit_amount / 100 : null),
+            currency: pr.currency || 'usd',
+            interval: (pr.recurring && pr.recurring.interval) || 'one-time',
+          }
+        } catch (e) {
+          out.plans[p] = { ok: false, error: (e && e.message) || 'could not load this price' }
+        }
+      }
+      out.ok = !!out.accountId && PLANS.every((p) => out.plans[p] && out.plans[p].ok)
+      res.json(out)
+    })
+
     // Any user's invoices (for support).
     app.get('/api/work/admin/users/:id/invoices', requireAuth, requireSuperAdmin, async (req, res) => {
       try {

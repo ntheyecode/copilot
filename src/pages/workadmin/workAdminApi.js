@@ -84,6 +84,8 @@ export const workAdminApi = {
   // secret); POST writes config (secrets are write-only, blank keeps stored).
   getBilling: () => request('GET', '/api/work/admin/billing'),
   setBilling: (patch) => request('POST', '/api/work/admin/billing', patch || {}),
+  // Validate the stored config against Stripe (secret key + each plan price).
+  testBilling: () => request('POST', '/api/work/admin/billing/test'),
   // Per-user Stripe actions (superadmin). refund with no id refunds the latest
   // charge; cancel ends the subscription (atPeriodEnd keeps it to period end).
   userInvoices: (id) => request('GET', `/api/work/admin/users/${id}/invoices`),
