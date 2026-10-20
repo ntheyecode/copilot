@@ -262,6 +262,31 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* HOW COMPANIES BENEFIT - ROI */}
+      <section className="wm-sec wm-roi" id="roi">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies &amp; teams</div>
+          <h2 className="wm-h2" data-reveal>More gets done. With the team you already have.</h2>
+          <p className="wm-sub" data-reveal>WorkCoPilot turns anyone into an expert on the task in front of them, applies the secure, proven way, and documents every step. Lean teams take on the <b>toughest projects</b> &mdash; cloud migrations, security hardening, pentests, full builds &mdash; and ship like specialists.</p>
+
+          <div className="wm-roi-stats" data-reveal>
+            <CountStat value={70} prefix="+" suffix="%" label="faster through stuck & pending work" />
+            <CountStat value={50} prefix="-" suffix="%" label="outsourcing spend, quality kept" />
+            <CountStat value={100} suffix="%" label="documented — every change & config" />
+            <div className="wm-roi-stat"><b>Days&nbsp;&rarr;&nbsp;hrs</b><span>on work nobody had time for</span></div>
+          </div>
+
+          <div className="wm-roi-grid">
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Layers size={18} /></span><h3>Take on the toughest projects</h3><p>No new hires, no long ramp. Your existing team or a lean consultant is guided to deliver specialist, complex work &mdash; infrastructure, cloud, security, builds &mdash; the first time, correctly, in-house.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Zap size={18} /></span><h3>Clear the backlog</h3><p>The tasks that pile up because &ldquo;no one has time&rdquo; or &ldquo;only one person knows how&rdquo; finally get done &mdash; step by step, with each step verified, up to 70% faster.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><ShieldCheck size={18} /></span><h3>Secure &amp; best-practice by default</h3><p>It applies the current, proven way &mdash; hardened cloud setups, reviewed code, real pentest steps, correct configurations &mdash; and catches mistakes before they cost you. No shortcuts, no guesswork.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><FileText size={18} /></span><h3>Everything documented</h3><p>Every implementation, code change, configuration, pentest and cloud setup ends with a clean, shareable write-up &mdash; and a per-session audit log. Audit-ready, knowledge that stays in the company.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Gauge size={18} /></span><h3>Cut outsourcing, keep control</h3><p>Bring work back in-house. Reduce external spend by up to half while raising consistency &mdash; and keep the context, data and institutional knowledge on your side.</p></div>
+            <div className="wm-roi-card" data-reveal><span className="wm-roi-ic"><Lock size={18} /></span><h3>Safe for regulated work</h3><p>On-device redaction of PII, PHI, secrets and IPs plus read-only guidance means even sensitive, compliance-bound work can be done in-house, safely.</p></div>
+          </div>
+        </div>
+      </section>
+
       {/* PRICING */}
       <section className="wm-sec wm-pricing" id="pricing">
         <div className="wm-wrap">
@@ -679,6 +704,34 @@ function PViz({ t }) {
   return null
 }
 
+// Animated count-up stat: ticks from 0 to the target the first time it scrolls
+// into view (eased), for a dynamic "numbers that move" feel.
+function CountStat({ value, prefix = '', suffix = '', label, dur = 1300 }) {
+  const ref = useRef(null)
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    const el = ref.current; if (!el) return
+    let done = false
+    const io = new IntersectionObserver((ents) => {
+      ents.forEach((e) => {
+        if (e.isIntersecting && !done) {
+          done = true; io.disconnect()
+          const t0 = performance.now()
+          const tick = (t) => {
+            const p = Math.min(1, (t - t0) / dur)
+            const eased = 1 - Math.pow(1 - p, 3)
+            setN(Math.round(eased * value))
+            if (p < 1) requestAnimationFrame(tick)
+          }
+          requestAnimationFrame(tick)
+        }
+      })
+    }, { threshold: 0.45 })
+    io.observe(el); return () => io.disconnect()
+  }, [value, dur])
+  return <div className="wm-roi-stat" ref={ref}><b>{prefix}{n}{suffix}</b><span>{label}</span></div>
+}
+
 // Small purpose-built graphics for the benefit cards - show, do not tell.
 function BViz({ k }) {
   if (k === 'steps') return (
@@ -1066,6 +1119,18 @@ const CSS = `
 .wm-ent-r ul{list-style:none;padding:0;margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .wm-ent-r li{display:flex;gap:8px;align-items:flex-start;color:#e7ecf5;font-size:14px}
 .wm-ent-r li svg{color:#8cf5c4;flex-shrink:0;margin-top:2px}
+/* HOW COMPANIES BENEFIT (ROI) */
+.wm-roi-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:6px 0 30px}
+.wm-roi-stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 20px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
+.wm-roi-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
+.wm-roi-stat span{display:block;margin-top:8px;color:var(--mut);font-size:13px;line-height:1.4}
+.wm-roi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.wm-roi-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22);transition:border-color .2s,transform .15s}
+.wm-roi-card:hover{border-color:rgba(10,157,102,.4);transform:translateY(-2px)}
+.wm-roi-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
+.wm-roi-card h3{font-family:"Bricolage Grotesque",sans-serif;font-size:18px;margin:0 0 8px}
+.wm-roi-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
+@media(max-width:900px){.wm-roi-stats{grid-template-columns:1fr 1fr}.wm-roi-grid{grid-template-columns:1fr}}
 @media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent{grid-template-columns:1fr;gap:20px}.wm-ent-r ul{grid-template-columns:1fr}}
 
 /* FINAL */
