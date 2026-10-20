@@ -642,6 +642,27 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
     res.json(generic)   // never show a public visitor an error; flagged degraded
   }
 }))
+// ---- Support tickets (user side: open + thread with the superadmin) -------
+app.get('/api/work/ticket-categories', (req, res) => res.json({ categories: store.workTicketCategories() }))
+app.get('/api/work/tickets', requireWorkAuth, wrap((req, res) => res.json({ tickets: store.listWorkTicketsForUser(req.workUser.id) })))
+app.post('/api/work/tickets', requireWorkAuth, wrap((req, res) => {
+  const { category, subject, body } = req.body || {}
+  if (!String(subject || '').trim() && !String(body || '').trim()) return res.status(400).json({ error: 'Add a subject and a short description.' })
+  res.json(store.createWorkTicket(req.workUser.id, { category, subject, body }))
+}))
+app.get('/api/work/tickets/:id', requireWorkAuth, wrap((req, res) => {
+  const t = store.getWorkTicket(req.params.id)
+  if (!t || t.userId !== req.workUser.id) return res.status(404).json({ error: 'Not found' })
+  res.json(t)
+}))
+app.post('/api/work/tickets/:id/reply', requireWorkAuth, wrap((req, res) => {
+  const t = store.getWorkTicket(req.params.id)
+  if (!t || t.userId !== req.workUser.id) return res.status(404).json({ error: 'Not found' })
+  const text = String((req.body && req.body.text) || '').trim()
+  if (!text) return res.status(400).json({ error: 'Write a message.' })
+  res.json(store.addWorkTicketMessage(req.params.id, { from: 'user', by: req.user.username, text }))
+}))
+
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))
 
 // Manual step control (the user ticks/unticks or skips).

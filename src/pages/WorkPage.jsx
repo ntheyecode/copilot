@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy } from 'lucide-react'
+import SupportTickets from '../components/SupportTickets.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 
 const linkHost = (u) => { try { return new URL(u).host.replace(/^www\./, '') } catch { return 'link' } }
@@ -424,6 +425,7 @@ function Home({ user, onOpen, onSignOut }) {
           <nav className="wd-tabs" aria-label="Sections">
             <button className={tab === 'dashboard' ? 'on' : ''} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')}><LayoutDashboard size={16} /> <span>Dashboard</span></button>
             <button className={tab === 'help' ? 'on' : ''} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')}><BookOpen size={16} /> <span>How-to</span></button>
+            <button className={tab === 'support' ? 'on' : ''} aria-current={tab === 'support' ? 'page' : undefined} onClick={() => setTab('support')}><LifeBuoy size={16} /> <span>Support</span></button>
           </nav>
           <div className="wd-top-right">
             {usage == null
@@ -544,6 +546,8 @@ function Home({ user, onOpen, onSignOut }) {
               </div>
             </div>
           </>
+        ) : tab === 'support' ? (
+          <div style={{ padding: '26px 20px', maxWidth: 1080, margin: '0 auto' }}><SupportTickets mode="user" /></div>
         ) : (
           <HelpDocs onStart={() => setTab('dashboard')} />
         )}

@@ -60,6 +60,7 @@ const EMPTY = {
   workUsage: {},        // metering: `${userId}:${easternDay}` -> { usedSeconds } (FREE daily, resets 11:59 ET)
   workImageUsage: {},   // premium image metering: `${userId}:${easternDay}` -> { count }
   workDocs: {},         // uploaded reference doc metadata, keyed by userId (text on disk)
+  workTickets: [],      // support tickets (id 'tk'+n): category, subject, thread, status
 }
 
 function ensureDir() {
@@ -873,4 +874,91 @@ export function deleteWorkSession(workUserId, sessionId) {
 export function idleWorkSessionsToFinalize(idleMs) {
   const cut = Date.now() - idleMs
   return (db.workSessions || []).filter((x) => x.status === 'active' && (x.lastActivityAt || 0) < cut)
+}
+
+// ===========================================================================
+// Support tickets. A WorkCoPilot user opens a ticket (feature request, bug,
+// billing, access, other) from their dashboard; a superadmin responds. Both
+// sides' messages live in one thread. Status: open -> answered (admin replied)
+// -> open again (user replied) -> closed (admin). Crash-safe via persist().
+// ===========================================================================
+const WORK_TICKET_CATEGORIES = ['feature', 'bug', 'billing', 'access', 'other']
+export function workTicketCategories() { return WORK_TICKET_CATEGORIES.slice() }
+
+function publicTicket(t) {
+  if (!t) return null
+  const u = _usersById.get(t.userId)
+  return { ...t, username: t.username || (u && u.username) || 'unknown' }
+}
+
+export function createWorkTicket(userId, { category, subject, body } = {}) {
+  if (!db.workTickets) db.workTickets = []
+  const cat = WORK_TICKET_CATEGORIES.includes(String(category)) ? String(category) : 'other'
+  const subj = String(subject || '').trim().slice(0, 160) || '(no subject)'
+  const text = String(body || '').trim().slice(0, 8000)
+  const u = _usersById.get(userId)
+  const now = new Date().toISOString()
+  const rec = {
+    id: 'tk' + id(),
+    userId,
+    username: (u && u.username) || 'unknown',
+    category: cat,
+    subject: subj,
+    status: 'open',
+    createdAt: now,
+    updatedAt: now,
+    messages: text ? [{ from: 'user', by: (u && u.username) || 'user', text, at: now }] : [],
+  }
+  db.workTickets.push(rec)
+  persist()
+  return publicTicket(rec)
+}
+
+export function listWorkTicketsForUser(userId) {
+  return (db.workTickets || [])
+    .filter((t) => t.userId === userId)
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .map(publicTicket)
+}
+
+export function listAllWorkTickets({ status = null, category = null } = {}) {
+  return (db.workTickets || [])
+    .filter((t) => (!status || t.status === status) && (!category || t.category === category))
+    .sort((a, b) => (b.updatedAt || '').localeCompare(a.updatedAt || ''))
+    .map(publicTicket)
+}
+
+export function getWorkTicket(ticketId) {
+  const t = (db.workTickets || []).find((x) => x.id === ticketId)
+  return t ? publicTicket(t) : null
+}
+
+export function addWorkTicketMessage(ticketId, { from, by, text }) {
+  const t = (db.workTickets || []).find((x) => x.id === ticketId)
+  if (!t) return null
+  const msg = {
+    from: from === 'admin' ? 'admin' : 'user',
+    by: String(by || (from === 'admin' ? 'support' : 'user')).slice(0, 80),
+    text: String(text || '').trim().slice(0, 8000),
+    at: new Date().toISOString(),
+  }
+  if (!msg.text) return publicTicket(t)
+  if (!t.messages) t.messages = []
+  t.messages.push(msg)
+  t.updatedAt = msg.at
+  // admin reply -> answered; user reply -> reopen (unless already closed by admin just now)
+  if (msg.from === 'admin') { if (t.status !== 'closed') t.status = 'answered' }
+  else { if (t.status !== 'closed') t.status = 'open'; else t.status = 'open' }
+  persist()
+  return publicTicket(t)
+}
+
+export function setWorkTicketStatus(ticketId, status) {
+  const ok = ['open', 'answered', 'closed']
+  const t = (db.workTickets || []).find((x) => x.id === ticketId)
+  if (!t || !ok.includes(status)) return getWorkTicket(ticketId)
+  t.status = status
+  t.updatedAt = new Date().toISOString()
+  persist()
+  return publicTicket(t)
 }

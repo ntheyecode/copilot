@@ -100,6 +100,17 @@ export const api = {
   workPause: (id, paused) => req('PATCH', `/api/work/sessions/${id}/pause`, { paused }),
   workDraft: (id, ask) => req('POST', `/api/work/sessions/${id}/draft`, { ask }),
   workFinalize: (id) => req('POST', `/api/work/sessions/${id}/finalize`),
+  // support tickets (user)
+  workTicketCategories: () => req('GET', '/api/work/ticket-categories'),
+  workTickets: () => req('GET', '/api/work/tickets'),
+  workTicketCreate: (body) => req('POST', '/api/work/tickets', body || {}),
+  workTicketGet: (id) => req('GET', `/api/work/tickets/${id}`),
+  workTicketReply: (id, text) => req('POST', `/api/work/tickets/${id}/reply`, { text }),
+  // support tickets (superadmin)
+  workAdminTickets: (q) => req('GET', `/api/work/admin/tickets${q && Object.keys(q).length ? '?' + new URLSearchParams(q) : ''}`),
+  workAdminTicketGet: (id) => req('GET', `/api/work/admin/tickets/${id}`),
+  workAdminTicketReply: (id, text) => req('POST', `/api/work/admin/tickets/${id}/reply`, { text }),
+  workAdminTicketStatus: (id, status) => req('POST', `/api/work/admin/tickets/${id}/status`, { status }),
   // superadmin WorkCoPilot config
   workAdminGetPlatformAi: () => req('GET', '/api/work/admin/platform-ai'),
   workAdminSetPlatformAi: (allowed) => req('POST', '/api/work/admin/platform-ai', { allowed }),

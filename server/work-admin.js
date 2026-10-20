@@ -115,7 +115,7 @@ function sessionRow(s, nameById) {
 }
 
 export function registerWorkAdminRoutes(app, deps = {}) {
-  const { store, requireAuth, requireAdmin, wrap } = deps
+  const { store, requireAuth, requireAdmin, requireSuperAdmin, wrap } = deps
   if (!app || !store || !requireAuth || !requireAdmin || !wrap) {
     throw new Error('registerWorkAdminRoutes: missing required deps (app, store, requireAuth, requireAdmin, wrap)')
   }
@@ -226,6 +226,37 @@ export function registerWorkAdminRoutes(app, deps = {}) {
       platformConfigured,
       platformReady: platformAiAllowed && platformConfigured,
     })
+  }))
+
+  // -- Support tickets (superadmin responds). Users open tickets from their
+  //    dashboard (routes in index.js); here the superadmin reads them all,
+  //    replies, and sets status. requireSuperAdmin when present, else the
+  //    admin gate (both keep it to trusted operators).
+  const superGate = requireSuperAdmin || requireAdmin
+  app.get('/api/work/admin/tickets', requireAuth, superGate, w((req, res) => {
+    const status = req.query.status ? String(req.query.status) : null
+    const category = req.query.category ? String(req.query.category) : null
+    const tickets = store.listAllWorkTickets({ status, category })
+    const counts = { open: 0, answered: 0, closed: 0 }
+    for (const t of store.listAllWorkTickets({})) if (counts[t.status] != null) counts[t.status]++
+    res.json({ tickets, counts, categories: store.workTicketCategories() })
+  }))
+  app.get('/api/work/admin/tickets/:id', requireAuth, superGate, w((req, res) => {
+    const t = store.getWorkTicket(req.params.id)
+    if (!t) return res.status(404).json({ error: 'Not found' })
+    res.json(t)
+  }))
+  app.post('/api/work/admin/tickets/:id/reply', requireAuth, superGate, w((req, res) => {
+    const t = store.getWorkTicket(req.params.id)
+    if (!t) return res.status(404).json({ error: 'Not found' })
+    const text = String((req.body && req.body.text) || '').trim()
+    if (!text) return res.status(400).json({ error: 'Write a reply.' })
+    res.json(store.addWorkTicketMessage(req.params.id, { from: 'admin', by: req.user.username, text }))
+  }))
+  app.post('/api/work/admin/tickets/:id/status', requireAuth, superGate, w((req, res) => {
+    const t = store.getWorkTicket(req.params.id)
+    if (!t) return res.status(404).json({ error: 'Not found' })
+    res.json(store.setWorkTicketStatus(req.params.id, String((req.body && req.body.status) || '')))
   }))
 }
 
