@@ -494,6 +494,11 @@ function CoverageChat({ go }) {
                   </div>
                 )}
                 <p className="wm-cov-text">{typingDone ? renderRich(res.answer) : <>{typed}<span className="wm-cov-caret" /></>}</p>
+                {res.points && res.points.length > 0 && (
+                  <ul className={`wm-cov-points${typingDone ? ' show' : ''}`}>
+                    {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
+                  </ul>
+                )}
                 <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
                   {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
                   {res.verdict !== 'offtopic' && (
@@ -1400,6 +1405,10 @@ const CSS = `
 .wm-cov-code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:rgba(57,211,255,.12);color:var(--em2);border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:normal;overflow-wrap:anywhere}
 .wm-cov-caret{display:inline-block;width:2px;height:1.05em;background:var(--em2);margin-left:2px;vertical-align:-2px;animation:wm-cov-blink .8s step-end infinite}
 @keyframes wm-cov-blink{50%{opacity:0}}
+.wm-cov-points{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:11px;opacity:0;transform:translateY(6px);transition:opacity .4s ease .08s,transform .4s ease .08s}
+.wm-cov-points.show{opacity:1;transform:none}
+.wm-cov-points li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.55;color:var(--tx)}
+.wm-cov-points li svg{color:var(--em);flex-shrink:0;margin-top:3px}
 .wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
 .wm-cov-foot.show{opacity:1;transform:none;pointer-events:auto}
 .wm-cov-plan{margin-top:14px;font-size:14px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}
