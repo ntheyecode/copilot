@@ -495,7 +495,14 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const scopeAnswers = (Array.isArray(req.body && req.body.scope) ? req.body.scope : null) || (Array.isArray(s.scope) ? s.scope : null)
     let scopeBrief = scopeAnswers ? work.workScopeBrief(scopeAnswers) : ''
     if (scopeBrief && (pol || scrubOn)) scopeBrief = scrubText(scopeBrief).clean
+    // Re-plan flow: a reason (updated instructions) and whether to keep progress
+    // (re-plan only the remaining work, preserving the already-done steps).
+    const reasonText = (typeof (req.body && req.body.reason) === 'string' && req.body.reason.trim()) ? scrubText(req.body.reason).clean.slice(0, 600) : ''
+    const keepProgress = !!(req.body && req.body.keepProgress)
+    const doneSteps = keepProgress ? ((s.steps || []).filter((x) => x.status === 'done')) : []
     const planGoal = safeGoal + (scopeBrief ? '\n\n' + scopeBrief : '')
+      + (reasonText ? `\n\nWHY RE-PLANNING (updated instructions from the user - honour these): ${reasonText}` : '')
+      + (doneSteps.length ? `\n\nALREADY DONE (do NOT repeat these; plan ONLY the remaining work, continuing from where the user is now):\n${doneSteps.map((d, i) => `${i + 1}. ${d.text}`).join('\n')}` : '')
     const research = await Promise.race([
       workResearchNotes(safeGoal),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
@@ -530,7 +537,8 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       return res.json({ session: cur, steps: cur.steps, refusal: plan.refusal })
     }
     if (frame && (plan.escalated || call.forcedStrong)) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Planned with a stronger model (${call.strongModel || 'backup'})${call.forcedStrong ? ' - deep pass you asked for' : ' to get a usable plan'}.` })
-    store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+    if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
+    else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
     const updated = store.getWorkSession(req.workUser.id, req.params.id)
     res.json({ session: updated, steps: updated.steps, appContext: updated.appContext })

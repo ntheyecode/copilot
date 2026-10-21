@@ -1432,6 +1432,8 @@ const CONSOLE_CSS = `
 .wc-step.done .wc-step-title{text-decoration:line-through;color:var(--text-faint);font-weight:500}
 .wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;border-radius:7px}
 .wc-step-doneat{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--success);margin-top:6px;font-weight:600}
+.wc-done-toggle{display:flex;align-items:center;gap:7px;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:color .15s,border-color .15s}
+.wc-done-toggle:hover{color:var(--text)}
 
 /* All-done confirmation + flags */
 .wc-alldone{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;background:var(--success-soft);border-radius:11px;color:var(--success);font-weight:650;font-size:13.5px}
@@ -1456,7 +1458,8 @@ const CONSOLE_CSS = `
 
 /* Ask / analyse bar + answer */
 .wc-ask{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:10px 11px}
-.wc-ask .wc-ask-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.wc-ask .wc-ask-row{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}
+.wc-ask-ta{flex:1;min-width:140px;resize:vertical;min-height:40px;max-height:220px;line-height:1.5;font-family:inherit;font-size:14px}
 .wc-ask input.input{flex:1;min-width:170px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
 .wc-ask input.input:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
 .wc-ask-answer{margin-top:11px;padding-top:11px;border-top:1px solid var(--border);font-size:14px;line-height:1.55}
@@ -1741,6 +1744,10 @@ function Console({ sessionId, onBack }) {
   const [strongUsed, setStrongUsed] = useState(false)   // a recent call used the stronger model (auto or a Deep pass)
   const [deliverOpen, setDeliverOpen] = useState(false) // the review -> prompts panel
   const [endState, setEndState] = useState(null)        // null | 'finishing' | 'done' (End flow)
+  const [replanOpen, setReplanOpen] = useState(false)   // Re-plan modal
+  const [replanReason, setReplanReason] = useState('')
+  const [replanScope, setReplanScope] = useState('here')  // 'here' (keep progress) | 'start'
+  const [doneOpen, setDoneOpen] = useState(false)       // show the collapsed completed steps
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
   // Usage metering (Phase 1): remaining minutes, daily cap, pause.
@@ -1889,7 +1896,10 @@ function Console({ sessionId, onBack }) {
   }
   const clearPhoto = () => { photoFrameRef.current = null; setPhotoFrame(null) }
 
-  const plan = async () => {
+  const plan = async (opts) => {
+    // opts: { reason, keepProgress } from the Re-plan modal. onClick passes an
+    // event, so only read opts when it is a plain options object.
+    const o = (opts && typeof opts === 'object' && !opts.nativeEvent && !opts.target) ? opts : {}
     if (outOfMinutes()) return
     setBusy(true); setErr('')
     try {
@@ -1900,7 +1910,7 @@ function Console({ sessionId, onBack }) {
       // injected into the plan for this call only (never stored on the server).
       let docsText = ''
       try { if (window.workDesktop) docsText = sessionStorage.getItem('wd_docs_' + sessionId) || '' } catch { /* ignore */ }
-      const r = await api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}) })
+      const r = await api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) })
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       if (r.refusal) { setErr(r.refusal); return }   // declined at goal entry (not supported)
       // Start the continuous guide right away - the user should never have to
@@ -1963,6 +1973,14 @@ function Console({ sessionId, onBack }) {
       setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
     } catch (e) { setErr(e.message || 'Could not refresh the screen') } finally { setBusy(false) }
   }
+  // Re-plan with a reason, keeping progress (continue from here) or from scratch.
+  const confirmReplan = async () => {
+    const keep = replanScope === 'here'
+    const reason = replanReason.trim()
+    setReplanOpen(false)
+    await plan({ reason, keepProgress: keep })
+    setReplanReason('')
+  }
 
   // Heartbeat: while actively guiding (watching or a call in flight) and not
   // paused, accrue ~15s of real used time. Stops counting when idle or paused.
@@ -2022,8 +2040,10 @@ function Console({ sessionId, onBack }) {
     if (outOfMinutes()) return
     setBusy(true); setErr(''); setAnswer('')
     try {
-      if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
-      const frame = grabFrame()
+      // Include the screen only if we are already capturing - so pasting a big API
+      // response or a long error and hitting Ask does NOT trigger a screen-share
+      // prompt. The pasted text is analysed with the goal + plan context.
+      const frame = capturing ? grabFrame() : (photoFrameRef.current || null)
       const r = await api.workAsk(sessionId, { question: q, frame })
       noteStrong(r); setAnswer(r.answer || ''); if (typeof qText !== 'string') setQuestion('')
     } catch (e) { setErr(e.message || 'Could not answer') } finally { setBusy(false) }
@@ -2150,6 +2170,29 @@ function Console({ sessionId, onBack }) {
           {sess && sess.status !== 'ended' && <button className="wc-tbtn" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
         {/* End flow: a finishing animation, a completion message, then back to plan. */}
+        {replanOpen && (
+          <div className="wd-modal-ov" onClick={() => setReplanOpen(false)}>
+            <div className="wd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(460px,calc(100vw - 36px))' }}>
+              <h3 style={{ color: 'var(--text)' }}><RefreshCw size={17} /> Re-plan</h3>
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', margin: '2px 0 7px' }}>Why re-plan? <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>(what changed, what to add or fix)</span></label>
+              <textarea rows={3} autoFocus value={replanReason} onChange={(e) => setReplanReason(e.target.value)} placeholder="e.g. the UI changed, add a firewall rule step, skip the VPN part" style={{ width: '100%', resize: 'vertical', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 11, color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }} />
+              <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
+                <button type="button" onClick={() => setReplanScope('here')} style={{ flex: 1, textAlign: 'left', padding: '11px 13px', borderRadius: 11, cursor: 'pointer', background: replanScope === 'here' ? 'var(--brand-soft)' : 'var(--surface-2)', border: `1px solid ${replanScope === 'here' ? 'var(--brand-600)' : 'var(--border)'}`, color: 'var(--text)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>Continue from here</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>Keep what's done, re-plan the rest</div>
+                </button>
+                <button type="button" onClick={() => setReplanScope('start')} style={{ flex: 1, textAlign: 'left', padding: '11px 13px', borderRadius: 11, cursor: 'pointer', background: replanScope === 'start' ? 'var(--brand-soft)' : 'var(--surface-2)', border: `1px solid ${replanScope === 'start' ? 'var(--brand-600)' : 'var(--border)'}`, color: 'var(--text)' }}>
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>From the start</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>Rebuild the whole plan</div>
+                </button>
+              </div>
+              <div className="wd-modal-btns">
+                <button className="btn btn-ghost" onClick={() => setReplanOpen(false)}>Cancel</button>
+                <button className="btn btn-primary" onClick={confirmReplan} disabled={busy}><RefreshCw size={15} /> Re-plan</button>
+              </div>
+            </div>
+          </div>
+        )}
         {endState && (
           <div className="wd-modal-ov" onClick={() => endState === 'done' && setEndState(null)}>
             <div className="wd-modal" onClick={(e) => e.stopPropagation()}>
@@ -2161,10 +2204,13 @@ function Console({ sessionId, onBack }) {
               ) : (
                 <>
                   <h3 style={{ color: 'var(--text)' }}><Check size={18} style={{ color: 'var(--success)' }} /> Session complete</h3>
-                  <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>Your session is saved. The report, prompts and audit log are available any time from <b>Pick up where you left off</b>.</p>
+                  {sess && sess.summary
+                    ? <p style={{ color: 'var(--text)', fontSize: 14, lineHeight: 1.55, margin: '2px 0 0', maxHeight: 180, overflow: 'auto' }}>{(() => { const t = String(sess.summary).replace(/\s+/g, ' ').trim(); return t.length > 360 ? t.slice(0, 360) + '…' : t })()}</p>
+                    : <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>Your session is saved.</p>}
+                  <p style={{ color: 'var(--text-dim)', fontSize: 12, margin: '10px 0 0' }}>The full report, prompts and audit log are under <b>Pick up where you left off</b>.</p>
                   <div className="wd-modal-btns">
                     <button className="btn btn-ghost" onClick={() => setEndState(null)}>Stay here</button>
-                    <button className="btn btn-primary" onClick={() => { setEndState(null); onBack() }}><ArrowRight size={15} /> Back to plan</button>
+                    <button className="btn btn-primary" onClick={() => { setEndState(null); onBack() }}><Check size={15} /> OK, back to plan</button>
                   </div>
                 </>
               )}
@@ -2229,7 +2275,7 @@ function Console({ sessionId, onBack }) {
             <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
             {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
             {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
-            <button className="wc-tbtn ghost" style={{ marginLeft: 'auto' }} onClick={plan} disabled={busy} title="Rebuild the steps from what is on screen now">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
+            <button className="wc-tbtn ghost" style={{ marginLeft: 'auto' }} onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
             {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%' }}>{err}</div>}
             {photoFrame && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
@@ -2294,9 +2340,17 @@ function Console({ sessionId, onBack }) {
                 </div>
               )
             })()}
+            {steps.filter((s) => s.status === 'done').length > 0 && (
+              <button type="button" className="wc-done-toggle" onClick={() => setDoneOpen((v) => !v)}>
+                <ChevronRight size={14} style={{ transform: doneOpen ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
+                <Check size={13} /> {steps.filter((s) => s.status === 'done').length} completed
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-dim)' }}>{doneOpen ? 'hide' : 'show'}</span>
+              </button>
+            )}
             {steps.map((s, i) => {
               const isDone = s.status === 'done', isNow = s.status === 'current'
               const isPending = !isDone && !isNow
+              if (isDone && !doneOpen) return null   // completed steps collapsed by default
               // Show the whole roadmap, but grey out steps not reached yet and
               // keep their exact commands/code hidden until the step is active -
               // so the focus stays on the one step to do now.
@@ -2327,7 +2381,7 @@ function Console({ sessionId, onBack }) {
             (goal + plan + what is on screen) to answer and keep you moving. */}
         <div className="wc-ask">
           <div className="wc-ask-row wc-askrow">
-            <input className="input" placeholder={source === 'camera' ? 'Ask about what the camera sees…' : 'Ask anything in the moment — I answer and keep the plan moving'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') ask() }} />
+            <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees…' : 'Ask, or paste an API response / long error and I will analyze it and tell you the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} />
             <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
             <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
             <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
@@ -2378,98 +2432,160 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   const cycleDim = () => setDim((d) => DIM_LEVELS[(DIM_LEVELS.indexOf(d) + 1) % DIM_LEVELS.length] || 1)
 
   const light = theme === 'light'
+  // Fluent / Wiz language, same as the main guiding panel: a single blue
+  // accent (used for bars, chips, fills and the primary button - never as
+  // body-text colour), high-contrast text in both themes, green only for the
+  // done check. Everything here is inline because the PiP document carries
+  // none of the app's CSS.
   const c = light
-    ? { panel: '#ffffff', border: '#e6e8f1', text: '#1b1b26', dim: '#6b6b7b', accent: '#5b4bff', accentSoft: 'rgba(91,75,255,0.08)', good: '#16a34a', inputBg: '#f3f4f9', flagBg: '#fff4e0', flagText: '#8a5a00', chip: '#eef0f7' }
-    : { panel: '#171722', border: '#2a2a3c', text: '#e8e8f2', dim: '#9696ad', accent: '#8b7cff', accentSoft: 'rgba(124,108,255,0.14)', good: '#35d07f', inputBg: '#0e0e18', flagBg: '#3a2e12', flagText: '#ffd27a', chip: '#20202e' }
+    ? { canvas: '#f3f5f9', panel: '#ffffff', panel2: '#f5f7fb', border: '#e2e6ed', borderStrong: '#c6cdd8', text: '#171a21', muted: '#58606e', faint: '#8b93a1',
+        accent: '#0f6cbd', accentHi: '#2b88d8', accentSoft: 'rgba(15,108,189,.10)', accentRing: 'rgba(15,108,189,.28)',
+        good: '#107c41', goodSoft: 'rgba(16,124,65,.12)', warn: '#b86e00', warnSoft: 'rgba(245,158,11,.14)', danger: '#c42b1c',
+        inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)', heroShadow: '0 2px 4px rgba(15,108,189,.06), 0 14px 32px -16px rgba(15,108,189,.35)' }
+    : { canvas: '#0f1218', panel: '#181c25', panel2: '#1f2430', border: '#2a3140', borderStrong: '#3b4455', text: '#eef1f6', muted: '#aab2c0', faint: '#7b8493',
+        accent: '#62abf5', accentHi: '#479ef5', accentSoft: 'rgba(98,171,245,.16)', accentRing: 'rgba(98,171,245,.35)',
+        good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5b041', warnSoft: 'rgba(245,176,65,.14)', danger: '#ff7a6b',
+        inputBg: '#0f1218', track: '#2a3140', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(98,171,245,.35)' }
 
-  const wrap = { padding: 12, display: 'flex', flexDirection: 'column', gap: 10, minHeight: '100vh', opacity: dim, color: c.text }
-  const box = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 12, padding: 11 }
-  const iconBtn = { background: 'transparent', color: c.dim, border: 'none', borderRadius: 7, padding: 5, display: 'inline-flex', alignItems: 'center' }
-  const ghost = { background: c.chip, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, padding: '6px 10px', fontSize: 12.5, display: 'inline-flex', alignItems: 'center', gap: 5 }
-  const primary = { background: c.accent, color: '#fff', border: 'none', borderRadius: 9, padding: '7px 12px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 5 }
+  const FONT = '"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",sans-serif'
+  const wrap = { padding: 12, display: 'flex', flexDirection: 'column', gap: 10, minHeight: '100vh', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5 }
+  const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, padding: 12, boxShadow: c.shadow }
+  // One small-button family: icon (header), ghost (secondary), primary (the one action).
+  const iconBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .15s, color .15s' }
+  const ghost = { background: c.panel2, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, height: 32, padding: '0 11px', fontSize: 12.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'background .15s, border-color .15s, color .15s' }
+  const primary = { background: `linear-gradient(180deg, ${c.accentHi}, ${c.accent})`, color: '#fff', border: '1px solid transparent', borderRadius: 9, height: 32, padding: '0 13px', fontSize: 12.5, fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', boxShadow: `0 1px 2px rgba(0,0,0,.12), 0 0 0 1px ${c.accentRing} inset` }
+  const navBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }
+  const eyebrow = { fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }
+  const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accentHi}, ${c.accent})` }
+
+  const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : 0
+  const status = paused
+    ? { label: 'Paused', color: c.warn, soft: c.warnSoft }
+    : watching
+      ? { label: 'Live', color: c.accent, soft: c.accentSoft }
+      : { label: 'Idle', color: c.muted, soft: c.panel2 }
 
   return (
     <div style={wrap}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-        <span style={{ width: 9, height: 9, borderRadius: '50%', background: c.accent, display: 'inline-block', boxShadow: `0 0 8px ${c.accent}` }} />
-        <div style={{ flex: 1, display: 'flex', alignItems: 'baseline', gap: 6 }}>
-          <strong style={{ fontSize: 13, letterSpacing: 0.2 }}>WorkCoPilot</strong>
-          {usage && <span style={{ fontSize: 11, color: usage.exhausted ? '#ff6b6b' : c.dim }}>{Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+      {/* Header: brand, live/paused state, minutes, icon controls */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
+        <span style={{ width: 22, height: 22, borderRadius: 7, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset` }}>
+          <Eye size={13} color="#fff" strokeWidth={2.4} />
+        </span>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4 }}>
+          <strong style={{ fontSize: 13.5, fontWeight: 650, letterSpacing: '-.01em', whiteSpace: 'nowrap' }}>WorkCoPilot</strong>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: status.color, background: status.soft, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: status.color, boxShadow: watching && !paused ? `0 0 0 3px ${c.accentSoft}` : 'none' }} />
+            {status.label}
+          </span>
+          {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{minsLeft}m left</span>}
         </div>
-        <button style={{ ...iconBtn, color: paused ? c.accent : c.dim }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={15} />}</button>
+        <button style={{ ...iconBtn, color: paused ? c.accent : c.muted, background: paused ? c.accentSoft : 'transparent' }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={14} />}</button>
         <button style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: run this one frame on the stronger model and weave it back into the steps, then continue on the fast model."><Zap size={15} /></button>
         <button style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
-        <button style={{ ...iconBtn, fontSize: 11, color: c.dim }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
+        <button style={{ ...iconBtn, width: 'auto', padding: '0 7px', fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
         <button style={iconBtn} onClick={onClose} title="Close overlay"><X size={16} /></button>
       </div>
 
-      <button style={{ ...ghost, justifyContent: 'center', ...(watching ? { color: c.accent, borderColor: c.accent } : {}) }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Play size={13} /> Watch me</>}</button>
+      {/* Watch toggle: the one control that makes the panel live */}
+      <button style={watching
+        ? { ...ghost, justifyContent: 'center', height: 36, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
+        : { ...primary, justifyContent: 'center', height: 36, fontSize: 13 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Play size={14} /> Watch me</>}</button>
 
       {watching && (
-        <div style={{ fontSize: 12, color: c.accent, display: 'flex', gap: 5, alignItems: 'center' }}><Loader2 size={12} className="spin" /> Reading your screen. {observation}</div>
+        <div style={{ fontSize: 12, color: c.muted, display: 'flex', gap: 7, alignItems: 'flex-start', padding: '0 2px', lineHeight: 1.45 }}><Loader2 size={13} className="spin" style={{ color: c.accent, flexShrink: 0, marginTop: 2 }} /> <span>Reading your screen. {observation}</span></div>
+      )}
+
+      {/* Flags first: anything to be careful about sits above the action */}
+      {flags.length > 0 && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {flags.map((f, i) => (
+            <div key={i} style={{ position: 'relative', display: 'flex', gap: 9, alignItems: 'flex-start', padding: '9px 11px 9px 14px', background: c.warnSoft, borderRadius: 11, fontSize: 12.5, lineHeight: 1.5, color: c.text, overflow: 'hidden' }}>
+              <span style={{ ...accentBar, width: 3, background: c.warn }} />
+              <AlertTriangle size={14} style={{ color: c.warn, flexShrink: 0, marginTop: 2 }} />
+              <span>{f.text}</span>
+            </div>
+          ))}
+        </div>
       )}
 
       {current ? (
-        <div style={{ ...box, borderColor: c.accent, background: c.accentSoft }}>
+        <>
+          {/* DO THIS NOW hero: the action dominates */}
+          <div style={{ ...card, position: 'relative', overflow: 'hidden', padding: '13px 13px 12px 16px', borderColor: light ? c.border : 'transparent', boxShadow: c.heroShadow }}>
+            <span style={accentBar} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7, flexWrap: 'wrap' }}>
+              <span style={{ ...eyebrow, color: c.accent, background: c.accentSoft, padding: '3px 9px', borderRadius: 999 }}>Do this now</span>
+              {!watching && <span style={{ fontSize: 11, color: c.faint }}>press Watch me to keep it live</span>}
+            </div>
+            <div style={{ fontWeight: 650, fontSize: 15.5, lineHeight: 1.45, letterSpacing: '-.01em', color: c.text }}>{guidance || current.text}</div>
+            {guidance && <div style={{ fontSize: 12, color: c.muted, marginTop: 7, lineHeight: 1.45 }}><span style={{ fontWeight: 700, color: c.faint }}>Step </span>{current.text}</div>}
+            {!guidance && current.validate && <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: c.muted, marginTop: 8, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7 }}><Eye size={11} /> done when: {current.validate}</div>}
+            {current.url && <div><a href={current.url} target="_blank" rel="noopener noreferrer" style={{ ...ghost, marginTop: 10, textDecoration: 'none', color: c.accent, height: 30, borderColor: c.accentRing }}><ExternalLink size={13} /> Open {linkHost(current.url)}</a></div>}
+            {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
+            {current.code && current.code.content && <CodeBlock file={current.code.file} content={current.code.content} />}
+            <button style={{ ...primary, marginTop: 12, width: '100%', justifyContent: 'center', height: 36, fontSize: 13 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={15} strokeWidth={2.5} /> Mark done</button>
+          </div>
+
+          {/* Prev · Step N of M · Next, with a progress track */}
           {steps.length > 1 && onNav && (() => {
             const no = steps.indexOf(current)
+            const locked = steps[no] && steps[no].status !== 'done'
             return (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
-                <button style={{ ...iconBtn, color: no <= 0 ? c.dim : c.accent, opacity: no <= 0 ? 0.4 : 1 }} disabled={no <= 0} onClick={() => onNav(-1)} title="Previous step"><ChevronLeft size={16} /></button>
-                <span style={{ fontSize: 11, fontWeight: 700, color: c.dim, letterSpacing: 0.3 }}>STEP {no + 1} / {steps.length}</span>
-                <button style={{ ...iconBtn, color: no >= steps.length - 1 ? c.dim : c.accent, opacity: no >= steps.length - 1 ? 0.4 : 1 }} disabled={no >= steps.length - 1} onClick={() => onNav(1)} title="Next step"><ChevronRight size={16} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px' }}>
+                <button style={navBtn} disabled={no <= 0} onClick={() => onNav(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
+                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center' }}>
+                  <span style={{ ...eyebrow, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: c.muted, whiteSpace: 'nowrap' }}>Step {no + 1} of {steps.length}</span>
+                  <div style={{ width: '100%', height: 4, borderRadius: 999, background: c.track, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${((no + 1) / steps.length) * 100}%`, borderRadius: 999, background: `linear-gradient(90deg, ${c.accentHi}, ${c.accent})`, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
+                  </div>
+                </div>
+                <button style={navBtn} disabled={no >= steps.length - 1 || locked} onClick={() => onNav(1)} title={locked ? 'Finish this step first - it advances on its own when done' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
               </div>
             )
           })()}
-          <div style={{ fontSize: 10.5, color: c.accent, marginBottom: 4, letterSpacing: 0.6, fontWeight: 700 }}>DO THIS NOW</div>
-          <div style={{ fontWeight: 600, fontSize: 14.5, lineHeight: 1.45 }}>{guidance || current.text}</div>
-          {guidance && <div style={{ fontSize: 11.5, color: c.dim, marginTop: 5 }}>Step: {current.text}</div>}
-          {!guidance && current.validate && <div style={{ fontSize: 11.5, color: c.dim, marginTop: 5 }}>Done when: {current.validate}</div>}
-          {current.url && <a href={current.url} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, display: 'inline-flex', gap: 5, alignItems: 'center', fontSize: 12.5, color: c.accent, textDecoration: 'none', border: `1px solid ${c.accent}`, borderRadius: 8, padding: '5px 9px' }}><ExternalLink size={13} /> Open {linkHost(current.url)}</a>}
-          {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
-          {current.code && current.code.content && <CodeBlock file={current.code.file} content={current.code.content} />}
-          <button style={{ ...primary, marginTop: 10 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={14} /> Mark done</button>
-        </div>
+        </>
       ) : done ? (
-        <div style={{ ...box, borderColor: c.good, color: c.good, display: 'flex', gap: 7, alignItems: 'center', fontWeight: 600 }}><Check size={16} /> All steps confirmed on screen.</div>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 13px', background: c.goodSoft, borderRadius: 11, color: c.good, fontWeight: 650, fontSize: 13 }}><Check size={16} strokeWidth={2.5} /> All steps confirmed on screen.</div>
       ) : steps.length === 0 ? (
-        <div style={{ ...box, color: c.dim, fontSize: 13 }}>Plan your steps in the main window, then they appear here.</div>
+        <div style={{ ...card, color: c.muted, fontSize: 13, textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none' }}>Plan your steps in the main window, then they appear here.</div>
       ) : null}
 
+      {/* Roadmap: current leads, pending recedes, done is struck */}
       {steps.length > 0 && (
-        <div style={{ ...box, maxHeight: 155, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <div style={{ maxHeight: 190, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 1 }}>
           {steps.map((s, i) => {
             const isDone = s.status === 'done', isNow = s.status === 'current'
             const isPending = !isDone && !isNow
             return (
-              <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, opacity: isPending ? 0.5 : 1 }}>
-                <button style={{ background: 'none', border: 'none', color: isDone ? c.good : c.dim, padding: 0, lineHeight: 1, marginTop: 1, cursor: 'pointer' }} onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={15} /> : <Square size={14} />}</button>
-                <span style={{ color: isNow ? c.accent : c.text, fontWeight: isNow ? 600 : 400, textDecoration: isDone ? 'line-through' : 'none' }}>{s.text}</span>
+              <div key={i} style={{ position: 'relative', display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 11px 9px 13px', borderRadius: 11, overflow: 'hidden',
+                background: isDone ? c.panel2 : c.panel, border: `1px solid ${isNow ? 'transparent' : c.border}`, boxShadow: isNow ? c.shadow : 'none', opacity: isPending ? 0.55 : 1, transition: 'opacity .16s, box-shadow .16s' }}>
+                {isNow && <span style={{ ...accentBar, width: 3 }} />}
+                <button style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center', padding: 0, marginTop: 1, cursor: 'pointer',
+                  border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
+                  onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <Square size={12} />}</button>
+                <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.45, color: isDone ? c.faint : isNow ? c.text : c.muted, fontWeight: isNow ? 650 : 500, textDecoration: isDone ? 'line-through' : 'none' }}>{s.text}</span>
               </div>
             )
           })}
         </div>
       )}
 
-      {flags.length > 0 && (
-        <div style={{ background: c.flagBg, color: c.flagText, borderRadius: 10, padding: '8px 10px', fontSize: 12.5, display: 'flex', gap: 7 }}><AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> <span>{flags[0].text}</span></div>
-      )}
-
-      <div style={box}>
-        <div style={{ fontSize: 11.5, color: c.dim, marginBottom: 6, letterSpacing: 0.3 }}>ASK OR ANALYZE THIS SCREEN</div>
+      {/* Ask row */}
+      <div style={{ ...card, padding: 10, marginTop: 'auto' }}>
         <input
-          style={{ width: '100%', background: c.inputBg, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, padding: '8px 10px', outline: 'none' }}
+          style={{ width: '100%', height: 36, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 9, padding: '0 11px', outline: 'none', fontSize: 13, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
           placeholder="Ask, or type what to analyze" value={floatQ}
           onChange={(e) => setFloatQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && floatQ.trim()) onAsk(floatQ.trim()) }}
         />
-        <div style={{ display: 'flex', gap: 6, marginTop: 6 }}>
-          <button style={{ ...primary, flex: 1, justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : 'Ask'}</button>
-          <button style={{ ...ghost, flex: 1, justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title="Screenshot now and analyze. Type a focus above, or leave blank for a full read."><ScanLine size={13} /> Analyze</button>
-          <button style={{ ...ghost, flex: 1, justifyContent: 'center' }} disabled={busy} onClick={onResearch} title="Look up the latest on the web, then answer (only when you tap it)."><Globe size={13} /> Research</button>
+        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+          <button style={{ ...primary, flex: 1.2, justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : <><ArrowRight size={14} /> Ask</>}</button>
+          <button style={{ ...ghost, flex: 1, justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title="Screenshot now and analyze. Type a focus above, or leave blank for a full read."><ScanLine size={14} /> Analyze</button>
+          <button style={{ ...ghost, flex: 1, justifyContent: 'center' }} disabled={busy} onClick={onResearch} title="Look up the latest on the web, then answer (only when you tap it)."><Globe size={14} /> Research</button>
         </div>
-        {answer && <div style={{ marginTop: 9, fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.5 }}>{answer}</div>}
-        {err && <div style={{ marginTop: 8, fontSize: 12, color: '#ff6b6b' }}>{err}</div>}
+        {answer && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}`, fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.55, color: c.text }}>{answer}</div>}
+        {err && <div style={{ marginTop: 8, display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12, color: c.danger, lineHeight: 1.45 }}><AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{err}</span></div>}
       </div>
     </div>
   )

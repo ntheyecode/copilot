@@ -1229,6 +1229,32 @@ export function setWorkSessionSteps(workUserId, sessionId, steps) {
   persist()
   return s
 }
+// Re-plan "from where you are": keep the already-done steps (with their doneAt),
+// append the freshly-planned remaining steps, and make the first not-done step
+// current.
+export function replanKeepingProgress(workUserId, sessionId, newSteps) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) throw httpErr(404, 'Session not found')
+  const done = (s.steps || []).filter((x) => x.status === 'done')
+  const fresh = (Array.isArray(newSteps) ? newSteps : []).map((x) => ({
+    text: String((x && (x.text || x.step || x)) || '').trim(),
+    validate: String((x && x.validate) || '').trim() || null,
+    url: (x && typeof x.url === 'string' && /^https?:\/\/\S+$/i.test(x.url.trim())) ? x.url.trim() : null,
+    commands: Array.isArray(x && x.commands) ? x.commands.map((c) => String(c || '').trim()).filter(Boolean) : [],
+    code: (x && x.code && String((x.code.content || '')).trim()) ? { file: String(x.code.file || '').trim() || null, content: String(x.code.content) } : null,
+    status: 'pending',
+    doneAt: null,
+  })).filter((x) => x.text)
+  const all = [...done, ...fresh].map((x, i) => ({ ...x, n: i + 1 }))
+  const curIdx = all.findIndex((x) => x.status !== 'done')
+  all.forEach((x, i) => { if (x.status !== 'done') x.status = (i === curIdx ? 'current' : 'pending') })
+  s.steps = all
+  s.currentStep = curIdx < 0 ? all.length : curIdx
+  s.guidance = null
+  s.lastActivityAt = Date.now()
+  persist()
+  return s
+}
 export function applyWorkNav(workUserId, sessionId, { completed = [], curIdx = null, guidance = null } = {}) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
