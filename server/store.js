@@ -1236,8 +1236,11 @@ export function applyWorkNav(workUserId, sessionId, { completed = [], curIdx = n
   let cur = (curIdx == null || curIdx < 0) ? s.steps.findIndex((x) => x.status !== 'done') : curIdx
   if (cur < 0) cur = s.steps.length
   s.steps.forEach((x, i) => {
-    if (x.status === 'done') return
+    // Stamp when a step is truly done (confirmed on screen); clear it if it is
+    // no longer done.
+    if (x.status === 'done') { if (!x.doneAt) x.doneAt = new Date().toISOString(); return }
     x.status = (i === cur) ? 'current' : 'pending'
+    x.doneAt = null
   })
   s.currentStep = cur
   if (guidance != null) s.guidance = String(guidance || '').trim() || null
@@ -1250,6 +1253,7 @@ export function updateWorkStep(workUserId, sessionId, index, status) {
   if (!s) throw httpErr(404, 'Session not found')
   if (index < 0 || index >= s.steps.length) throw httpErr(400, 'No such step')
   s.steps[index].status = status
+  s.steps[index].doneAt = status === 'done' ? new Date().toISOString() : null   // timestamp when marked done
   if (status === 'done') {
     const next = s.steps.findIndex((x) => x.status === 'pending')
     if (next >= 0) { s.steps[next].status = 'current'; s.currentStep = next }
@@ -1276,6 +1280,7 @@ export function setWorkCurrentStep(workUserId, sessionId, index) {
     if (k !== i && s.steps[k].status === 'current') s.steps[k].status = 'pending'
   }
   s.steps[i].status = 'current'
+  s.steps[i].doneAt = null
   s.currentStep = i
   s.lastActivityAt = Date.now()
   persistSoon()

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
@@ -1332,7 +1332,11 @@ const CONSOLE_CSS = `
    --text-dim / --brand-50 are aliased to real tokens so they resolve
    correctly in BOTH light and dark (they are otherwise undefined).
    =================================================================== */
-.wc{--text-dim:var(--text-muted);--brand-50:var(--brand-soft)}
+/* Match the Fluent blue of the desktop title bar: retune the accent tokens to
+   blue inside the guiding panel (green stays only for the "done" check). */
+.wc{--text-dim:var(--text-muted);
+  --brand-500:#2b88d8;--brand-600:#0f6cbd;--brand-700:#0a5aa0;--brand-soft:rgba(15,108,189,.12);--brand-50:rgba(15,108,189,.12)}
+[data-theme='dark'] .wc{--brand-500:#62abf5;--brand-600:#479ef5;--brand-700:#2b88d8;--brand-soft:rgba(98,171,245,.16);--brand-50:rgba(98,171,245,.16)}
 
 /* Header toolbar — one tidy row that holds at 460px */
 .wc-top{display:flex;align-items:center;gap:6px;margin-bottom:14px;min-width:0}
@@ -1382,8 +1386,17 @@ const CONSOLE_CSS = `
 
 /* Live-reading indicator */
 .wc-live{display:flex;align-items:center;gap:9px;margin:10px 2px;font-size:12px;color:var(--text-muted);line-height:1.4}
-.wc-live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--brand-500);box-shadow:0 0 0 0 rgba(82,163,49,.5);animation:wc-pulse 1.6s infinite}
-@keyframes wc-pulse{0%{box-shadow:0 0 0 0 rgba(82,163,49,.5)}70%{box-shadow:0 0 0 7px rgba(82,163,49,0)}100%{box-shadow:0 0 0 0 rgba(82,163,49,0)}}
+.wc-live .pulse,.wc-live-pill .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--brand-500);box-shadow:0 0 0 0 rgba(43,136,216,.5);animation:wc-pulse 1.6s infinite}
+@keyframes wc-pulse{0%{box-shadow:0 0 0 0 rgba(43,136,216,.5)}70%{box-shadow:0 0 0 7px rgba(43,136,216,0)}100%{box-shadow:0 0 0 0 rgba(43,136,216,0)}}
+.wc-live-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:6px 12px;border-radius:999px}
+.wc-live-pill.paused{color:var(--text-dim);background:var(--surface-2,rgba(128,128,128,.12))}
+.wc-live-pill.out{color:var(--danger);background:rgba(200,50,40,.12)}
+.wc-live-min{opacity:.85;font-weight:600}
+.wc-plan-title{font-size:16px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wd-modal-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
+.wd-modal{width:min(420px,calc(100vw - 36px));background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.5)}
+.wd-modal h3{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;margin:0 0 6px}
+.wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 
 /* DO THIS NOW hero — the single strongest focus on the screen */
 .wc-hero{position:relative;margin-top:12px;padding:16px 18px 13px 21px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-md);overflow:hidden}
@@ -1418,6 +1431,7 @@ const CONSOLE_CSS = `
 .wc-step.now .wc-step-title{color:var(--text);font-weight:650}
 .wc-step.done .wc-step-title{text-decoration:line-through;color:var(--text-faint);font-weight:500}
 .wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;border-radius:7px}
+.wc-step-doneat{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--success);margin-top:6px;font-weight:600}
 
 /* All-done confirmation + flags */
 .wc-alldone{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;background:var(--success-soft);border-radius:11px;color:var(--success);font-weight:650;font-size:13.5px}
@@ -1726,6 +1740,7 @@ function Console({ sessionId, onBack }) {
   // its own when the fast model fails or returns a weak result.
   const [strongUsed, setStrongUsed] = useState(false)   // a recent call used the stronger model (auto or a Deep pass)
   const [deliverOpen, setDeliverOpen] = useState(false) // the review -> prompts panel
+  const [endState, setEndState] = useState(null)        // null | 'finishing' | 'done' (End flow)
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
   // Usage metering (Phase 1): remaining minutes, daily cap, pause.
@@ -1933,6 +1948,21 @@ function Console({ sessionId, onBack }) {
     tick()
   }
   const pauseWatching = () => { setWatching(false); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null } }
+  // Refresh screen: force an immediate re-read of the current screen (bypasses the
+  // change-detector) and update the guidance, steps and flags now.
+  const refreshScreen = async () => {
+    if (outOfMinutes()) return
+    if (!capturing) { const ok = await startCapture(); if (!ok) return; await new Promise((r) => setTimeout(r, 400)) }
+    const frame = grabFrame(); if (!frame) return
+    setBusy(true); setErr('')
+    try {
+      const r = await api.workWatch(sessionId, { frame })
+      if (r.guidance != null) setGuidance(r.guidance || '')
+      if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
+      if (r.observation) setObservation(r.observation)
+      setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
+    } catch (e) { setErr(e.message || 'Could not refresh the screen') } finally { setBusy(false) }
+  }
 
   // Heartbeat: while actively guiding (watching or a call in flight) and not
   // paused, accrue ~15s of real used time. Stops counting when idle or paused.
@@ -1952,12 +1982,27 @@ function Console({ sessionId, onBack }) {
   }, [sessionId])
 
   // Pause freezes the meter and the watch loop; it holds until the user resumes.
+  // One control for the whole session: Pause stops watching AND freezes the
+  // meter; Resume starts watching again and the meter counts. There is no
+  // separate "Watch me" - guiding watches by default.
   const togglePause = async () => {
     const np = !paused
     setPaused(np)
+    try { await api.workPause(sessionId, np) } catch { /* ignore */ }
     if (np) pauseWatching()
-    try { await api.workPause(sessionId, np) } catch {}
+    else startWatching()
   }
+  // Guiding watches by default - no "Watch me" button. Start watching once when a
+  // planned, unpaused, active session is open and nothing is watching yet. (A
+  // fresh plan already started watching; a paused session waits for Resume.)
+  const autoWatchRef = useRef(false)
+  useEffect(() => {
+    if (autoWatchRef.current || !sess) return
+    if (((sess.steps || []).length) === 0) return
+    if (paused || watching || done || busy || sess.status === 'ended') return
+    autoWatchRef.current = true
+    startWatching()
+  }, [sess, paused, watching, done, busy])   // eslint-disable-line
   // Leaving work mode for the plan/Home screen freezes the session as a PAUSED
   // plan: the meter stops and it shows in "Pick up where you left off" with a
   // Resume button. Same behaviour on web and in the desktop app (the desktop
@@ -2075,6 +2120,13 @@ function Console({ sessionId, onBack }) {
     try { const r = await api.workFinalize(sessionId); setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture() }
     catch (e) { setErr(e.message || 'Could not finalize') } finally { setBusy(false) }
   }
+  // End flow: show a finishing animation, run finalize, then a completion message
+  // with a clear "Back to plan" navigation.
+  const endSession = async () => {
+    setEndState('finishing')
+    try { const r = await api.workFinalize(sessionId); setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture(); setEndState('done') }
+    catch (e) { setErr(e.message || 'Could not finalize'); setEndState(null) }
+  }
 
   const steps = (sess && sess.steps) || []
   const done = steps.length > 0 && steps.every((x) => x.status === 'done')
@@ -2087,18 +2139,38 @@ function Console({ sessionId, onBack }) {
             theme, a truncating plan name, then the minutes pill and the
             session controls. Nothing wraps accidentally. */}
         <div className="wc-top">
-          <button className="wc-ib" onClick={leaveToPlan} title="Back to planning. Your session pauses and waits for you under Pick up where you left off." aria-label="Back to plan"><ChevronLeft size={17} /></button>
+          {/* Back appears only once you Pause - so leaving is a deliberate, paused exit. */}
+          {paused && <button className="wc-ib" onClick={leaveToPlan} title="Back to planning. Your paused session waits under Pick up where you left off." aria-label="Back to plan"><ChevronLeft size={17} /></button>}
           <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
-          <span className="wc-top-title" title={sess ? (sess.title || sess.goal || '') : ''}>{sess ? ((sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')) : ''}</span>
-          {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" />{Math.ceil((usage.remainingSeconds || 0) / 60)}m</span>}
-          {usage && usage.exhausted && <button className="wc-tbtn" disabled title="Buying time arrives in the billing phase">Buy time</button>}
-          {sess && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume: your minutes count again once you watch' : 'Pause: freeze your minutes while you do other work'}>{paused ? 'Resume' : 'Pause'}</button>}
-          {/* Clean guiding screen: overlay toggles live on the desktop title bar; Deep pass is under Options; Report / Print / Audit / Review live on a COMPLETED task (below). */}
+          <span style={{ flex: 1 }} />
+          {sess && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume everything - watching and your minutes' : 'Pause everything - stop watching and freeze your minutes'}>{paused ? 'Resume' : 'Pause'}</button>}
           {floatCapable && sess && sess.status !== 'ended' && (pipWin
             ? <button className="wc-ib on" title={pipSupported ? 'Close the floating window (Unfloat)' : 'Close the pop-out window'} aria-label="Close floating window" onClick={closeFloat}><PictureInPicture2 size={16} /></button>
             : <button className="wc-ib" title={pipSupported ? 'Float the steps on top of your work' : 'Pop the steps out into a separate window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={16} /></button>)}
-          {sess && sess.status !== 'ended' && <button className="wc-tbtn" onClick={finalize} disabled={busy} title="End the session and build a summary">End</button>}
+          {sess && sess.status !== 'ended' && <button className="wc-tbtn" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
+        {/* End flow: a finishing animation, a completion message, then back to plan. */}
+        {endState && (
+          <div className="wd-modal-ov" onClick={() => endState === 'done' && setEndState(null)}>
+            <div className="wd-modal" onClick={(e) => e.stopPropagation()}>
+              {endState === 'finishing' ? (
+                <>
+                  <h3 style={{ color: 'var(--text)' }}><Loader2 size={17} className="spin" /> Wrapping up…</h3>
+                  <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>Finishing the current step and writing your summary. One moment.</p>
+                </>
+              ) : (
+                <>
+                  <h3 style={{ color: 'var(--text)' }}><Check size={18} style={{ color: 'var(--success)' }} /> Session complete</h3>
+                  <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>Your session is saved. The report, prompts and audit log are available any time from <b>Pick up where you left off</b>.</p>
+                  <div className="wd-modal-btns">
+                    <button className="btn btn-ghost" onClick={() => setEndState(null)}>Stay here</button>
+                    <button className="btn btn-primary" onClick={() => { setEndState(null); onBack() }}><ArrowRight size={15} /> Back to plan</button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
         {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
 
         {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
@@ -2149,9 +2221,11 @@ function Console({ sessionId, onBack }) {
         ) : (
           // Post-plan: the step card below is the main view. Keep only a slim bar.
           <div className="wc-guidebar">
-            {watching
-              ? <button className="wc-tbtn live" onClick={pauseWatching}><Square size={14} /> Pause watching</button>
-              : <button className="wc-tbtn primary" onClick={startWatching} disabled={done}><Play size={14} /> {done ? 'All done' : 'Watch me'}</button>}
+            <span className={`wc-live-pill${paused ? ' paused' : ''}${usage && usage.exhausted ? ' out' : ''}`} title={usage ? `${usage.tier} plan, resets ${usage.resetLabel}` : ''}>
+              {paused ? <><Square size={12} /> Paused</> : watching ? <><span className="pulse" /> Watching live</> : <><Loader2 size={12} className="spin" /> Starting…</>}
+              {usage && <span className="wc-live-min">· {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+            </span>
+            <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>
             <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
             {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
             {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
@@ -2164,6 +2238,10 @@ function Console({ sessionId, onBack }) {
               </div>
             )}
           </div>
+        )}
+        {/* Plan title lives with the guiding content (not in the header menu). */}
+        {sess && steps.length > 0 && (sess.title || sess.goal) && (
+          <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
         )}
         {/* hidden camera-photo picker, always mounted */}
         <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
@@ -2212,7 +2290,7 @@ function Console({ sessionId, onBack }) {
                     <span className="wc-nav-count">Step {no + 1} of {steps.length}</span>
                     <div className="wc-nav-track"><div className="wc-nav-fill" style={{ width: `${((no + 1) / steps.length) * 100}%` }} /></div>
                   </div>
-                  <button className="wc-nav-btn" disabled={no >= steps.length - 1} onClick={() => navStep(1)} title="Go to the next step">Next <ChevronRight size={15} /></button>
+                  <button className="wc-nav-btn" disabled={no >= steps.length - 1 || (steps[no] && steps[no].status !== 'done')} onClick={() => navStep(1)} title={steps[no] && steps[no].status !== 'done' ? 'Finish this step first - it advances on its own when done' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
                 </div>
               )
             })()}
@@ -2234,6 +2312,7 @@ function Console({ sessionId, onBack }) {
                     {reveal && s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                     {reveal && s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
                     {isNow && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: {s.validate}</div>}
+                    {isDone && s.doneAt && <div className="wc-step-doneat"><Check size={11} /> Done {(() => { try { return new Date(s.doneAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } catch { return '' } })()}</div>}
                     <HowButton open={!!(howTo['step-' + i] && howTo['step-' + i].open)} loading={!!(howTo['step-' + i] && howTo['step-' + i].loading)} onClick={() => drillHow('step-' + i, s.text, i)} />
                     <HowDetail entry={howTo['step-' + i]} onRetry={() => drillHow('step-' + i, s.text, i)} />
                   </div>
@@ -2440,7 +2519,10 @@ function NoAccess({ onSignOut }) {
 }
 export default function WorkPage() {
   const [sess, setSess] = useState(undefined)   // undefined=loading; {signedIn, access, user}
-  const [openId, setOpenId] = useState(null)
+  // Remember the open guiding session so a reload (Ctrl+R in the desktop app)
+  // returns you to it instead of the plan screen.
+  const [openId, setOpenId] = useState(() => { try { return sessionStorage.getItem('wc_open') || null } catch { return null } })
+  useEffect(() => { try { if (openId) sessionStorage.setItem('wc_open', openId); else sessionStorage.removeItem('wc_open') } catch { /* ignore */ } }, [openId])
   const loadMe = useCallback(() => api.workMe().then(setSess).catch(() => setSess({ signedIn: false, access: false, user: null })), [])
   useEffect(() => { loadMe() }, [loadMe])
   // Coming back from Stripe Checkout (success_url = /work?checkout=success):
