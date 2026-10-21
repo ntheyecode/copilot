@@ -196,7 +196,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
             {!lead && (
               <form className="wm-cov-body lv-form" onSubmit={submitLead}>
                 {ftop && <p className="wm-cov-err lv-top-err">{ftop}</p>}
-                <p className="wm-cov-intro">Quick intro, then we validate your scenario <b>live</b> — real AI, checking your exact task right now, not a canned FAQ.</p>
+                <p className="wm-cov-intro">Tell us who you are, then put in your real task. We check it <b>live</b> and tell you whether WorkCoPilot can guide you through it, step by step.</p>
                 <div className="lv-grid">
                   {field('firstName', 'First name', { placeholder: 'Jordan', half: true, inputRef: firstRef, autoComplete: 'given-name' })}
                   {field('lastName', 'Last name', { placeholder: 'Rivera', half: true, autoComplete: 'family-name' })}
@@ -215,7 +215,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
             {lead && (
               <>
                 <div className="wm-cov-body">
-                  {!res && !busy && <p className="wm-cov-intro">Describe your real task or scenario and our AI will validate, <b>live</b>, whether WorkCoPilot can guide you through it, how, and which plan fits.</p>}
+                  {!res && !busy && <p className="wm-cov-intro">Put in your real task or scenario. We check it <b>live</b> and tell you whether WorkCoPilot can guide you through it, how, and which plan fits.</p>}
                   {busy && <div className="wm-cov-think"><span /><span /><span /> Validating it live…</div>}
                   {res && (
                     <div className="wm-cov-ans" key={res.answer}>
@@ -235,7 +235,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                         <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
                           <div className="wm-cov-live">
                             <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
-                            <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on — the steps below are only a static taste.</div>
+                            <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on. The steps below are only a static taste.</div>
                           </div>
                           <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A taste of the step-by-step</div>
                           <ol className="wm-cov-steps">

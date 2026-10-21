@@ -25,7 +25,7 @@ const STEPS = [
     step: 'Create the VPC',
     how: [
       { do: 'Click **Create VPC**', tip: 'Top-right of the VPC dashboard' },
-      { do: 'Choose **VPC only** and name it', tip: 'e.g. prod-vpc — keep the name meaningful' },
+      { do: 'Choose **VPC only** and name it', tip: 'e.g. prod-vpc, something meaningful' },
       { do: 'Set the IPv4 CIDR to **10.0.0.0/16**', tip: 'Leave IPv6 off unless you need it' },
       { do: 'Click **Create VPC** to finish', tip: 'It appears in the list within a second' },
     ],
@@ -35,7 +35,7 @@ const STEPS = [
   {
     sees: 'You typed CIDR 10.0.0.0/24',
     fix: {
-      say: 'A /24 is only 256 addresses — too small to grow into later.',
+      say: 'A /24 is only 256 addresses, too small to grow into later.',
       do: 'Change the CIDR to 10.0.0.0/16 before you create it.',
     },
     done: 'the range reads 10.0.0.0/16',
@@ -169,6 +169,7 @@ function DemoPlayer() {
   const [typed, setTyped] = useState('')
   const [si, setSi] = useState(0)        // current step index
   const [planShown, setPlanShown] = useState(0)  // how many plan lines are in
+  const [fw, setFw] = useState(0)        // fireworks round (1..3) when the goal is completed
   const timers = useRef([])
 
   const clearAll = () => { timers.current.forEach(clearTimeout); timers.current = [] }
@@ -213,6 +214,16 @@ function DemoPlayer() {
       else setSi((x) => x + 1)
     }, dwell)
   }, [stage, si])
+
+  // Celebrate the completed goal with fireworks - THREE bursts. Each round
+  // re-keys the overlay so the one-shot burst animation replays.
+  useEffect(() => {
+    if (stage !== 'done') { setFw(0); return }
+    setFw(1)
+    let n = 1
+    const id = setInterval(() => { n += 1; if (n > 3) { clearInterval(id); return } setFw(n) }, 1150)
+    return () => clearInterval(id)
+  }, [stage])
 
   const s = STEPS[si] || STEPS[0]
   const isFix = !!s.fix
@@ -306,6 +317,16 @@ function DemoPlayer() {
             </div>
           </div>
         )}
+
+        {stage === 'done' && fw > 0 && (
+          <div className="wkd-fw" key={fw} aria-hidden>
+            {Array.from({ length: 7 }).map((_, i) => (
+              <span key={i} className={`wkd-fw-burst b${i}`}>
+                {Array.from({ length: 12 }).map((__, j) => <i key={j} style={{ '--a': j * 30 }} />)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -341,7 +362,10 @@ const CSS = `
 .wkd-note{color:var(--mut);font-size:13px}
 
 .wkd-stage-wrap{width:100%;max-width:640px}
-.wkd-demo{background:linear-gradient(180deg,#0f1424,#0b0f1c);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 30px 70px rgba(5,10,30,.5);padding:16px;text-align:left;color:#e8ecf7;min-height:420px}
+/* Fixed height = the tallest stage, so the card never expands then shrinks as
+   stages change (measured max 594px; 612 gives headroom). overflow:hidden keeps
+   any stray pixel and the fireworks inside the rounded card. */
+.wkd-demo{background:linear-gradient(180deg,#0f1424,#0b0f1c);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 30px 70px rgba(5,10,30,.5);padding:16px;text-align:left;color:#e8ecf7;height:612px;position:relative;overflow:hidden}
 .wkd-demo-head{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}
 .wkd-demo-head .dot{width:11px;height:11px;border-radius:50%}
 .wkd-demo-head .dot.r{background:#ff5f57}.wkd-demo-head .dot.y{background:#febc2e}.wkd-demo-head .dot.g{background:#28c840}
@@ -421,5 +445,12 @@ const CSS = `
 .wkd-foot-in a{color:var(--mut);text-decoration:none;font-weight:600;font-size:14px}
 .wkd-foot-in a:hover{color:var(--tx)}
 
-@media (max-width:560px){.wkd-links{display:none}.wkd-demo{min-height:0}}
+/* fireworks on completion (3 bursts) - matches the marketing celebration */
+.wkd-fw{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden;border-radius:18px}
+.wkd-fw-burst{position:absolute;width:0;height:0}
+.wkd-fw-burst.b0{left:24%;top:30%}.wkd-fw-burst.b1{left:70%;top:26%}.wkd-fw-burst.b2{left:48%;top:48%}.wkd-fw-burst.b3{left:30%;top:64%}.wkd-fw-burst.b4{left:76%;top:58%}.wkd-fw-burst.b5{left:58%;top:22%}.wkd-fw-burst.b6{left:18%;top:46%}
+.wkd-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,58%);box-shadow:0 0 7px currentColor;animation:wkd-fw-pop 1.15s cubic-bezier(.15,.7,.3,1) forwards}
+.wkd-fw-burst.b1 i{animation-delay:.1s}.wkd-fw-burst.b2 i{animation-delay:.2s}.wkd-fw-burst.b3 i{animation-delay:.32s}.wkd-fw-burst.b4 i{animation-delay:.16s}.wkd-fw-burst.b5 i{animation-delay:.28s}.wkd-fw-burst.b6 i{animation-delay:.38s}
+@keyframes wkd-fw-pop{0%{transform:rotate(calc(var(--a) * 1deg)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(calc(var(--a) * 1deg)) translateX(70px) scale(.25);opacity:0}}
+@media (max-width:560px){.wkd-links{display:none}.wkd-demo{height:auto;min-height:0;overflow:visible}}
 `
