@@ -509,6 +509,33 @@ app.post('/api/work/scope', requireWorkAuth, requireWorkSubscription, async (req
   } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
 })
 
+// Deliverables: for a review/design task, analyze the captured page(s) + the
+// goal + the scope and return the findings and the two generation prompts, plus
+// the assembled Markdown document. Vision when frames are supplied; platform model.
+app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+  try {
+    const s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const frames = Array.isArray(req.body && req.body.frames)
+      ? req.body.frames.filter((f) => typeof f === 'string' && f.startsWith('data:')).slice(0, 8) : []
+    const goal = s.goal || ''
+    if (!String(goal).trim()) return res.status(400).json({ error: 'This session has no goal yet.' })
+    const r = await resolveWorkRuntime(req, res, { needVision: frames.length > 0 }); if (!r) return
+    const call = workCallRuntime(r, false)
+    const scrubOn = store.workUserScrubOn(req.workUser.id)
+    const safeGoal = scrubOn ? scrubSensitive(goal).clean : goal
+    const scope = Array.isArray(s.scope) ? s.scope : []
+    store.appendWorkAudit(req.params.id, {
+      call: 'deliverables', model: call.visionModel || (call.rt && call.rt.chatModel) || null, scrub: scrubOn,
+      frame: frames.length ? (frames.length + ' screenshot(s) sent') : null, sent: safeGoal,
+    })
+    const d = await work.workDeliverables(ai, call.rt, { goal: safeGoal, scope, frames, visionModel: call.visionModel })
+    const documentMd = work.workDeliverablesDocument({ goal: safeGoal, d })
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Built the review and the generation prompts.' })
+    res.json({ deliverables: d, documentMd })
+  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+})
+
 // Watch: the continuous navigator. Reads the WHOLE screen against the WHOLE
 // checklist every changed frame, relocates the user, advances the plan, and
 // returns a fresh screen-specific instruction for the step they are actually on.

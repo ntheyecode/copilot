@@ -94,6 +94,8 @@ export const api = {
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
   // Scope wizard: get the goal-specific requirement questions before planning.
   workScope: (goal) => req('POST', '/api/work/scope', { goal: clean(goal) }),
+  // Deliverables: analyze captured page(s) -> findings + two generation prompts + a document.
+  workDeliverables: (id, frames) => req('POST', `/api/work/sessions/${id}/deliverables`, { frames: frames || [] }),
   // body: { frame } -> { status, observation, flag, advanced, index, step, done, steps }
   workWatch: (id, body) => req('POST', `/api/work/sessions/${id}/watch`, body || {}),
   // body: { question?, frame }

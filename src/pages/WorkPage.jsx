@@ -1055,6 +1055,38 @@ const CONSOLE_CSS = `
   .wc-askrow .btn{flex:1 1 auto;justify-content:center}
   .wc-caprow .wc-grow{flex:1 1 100%;justify-content:center}
 }
+/* Deliverables panel (review -> prompts + document) */
+.wc-dl{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,7,14,.6);backdrop-filter:blur(4px)}
+.wc-dl-card{width:min(680px,calc(100vw - 28px));max-height:min(86vh,760px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.wc-dl-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+.wc-dl-head b{display:inline-flex;align-items:center;gap:8px;font-size:16px}
+.wc-dl-head svg{color:var(--em-2)}
+.wc-dl-x{background:none;border:none;color:var(--mut);font-size:24px;line-height:1;cursor:pointer;padding:0 4px}
+.wc-dl-body{padding:18px 20px;overflow:auto}
+.wc-dl-lead{color:var(--mut);font-size:14px;line-height:1.6;margin:0 0 14px}
+.wc-dl-thumbs{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.wc-dl-thumb{position:relative;width:92px;height:62px;border-radius:9px;overflow:hidden;border:1px solid var(--line-2)}
+.wc-dl-thumb img{width:100%;height:100%;object-fit:cover}
+.wc-dl-thumb span{position:absolute;left:4px;bottom:3px;font-size:10px;font-weight:700;color:#fff;background:rgba(0,0,0,.6);border-radius:4px;padding:0 5px}
+.wc-dl-thumb button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;cursor:pointer}
+.wc-dl-empty{color:var(--mut);font-size:13px;padding:14px 0}
+.wc-dl-err{color:var(--danger);font-size:13px;margin-bottom:10px}
+.wc-dl-note{background:var(--warm-fill);border:1px solid var(--warm-line);color:var(--warm);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
+.wc-dl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+.wc-dl-summary{font-size:14.5px;line-height:1.6;color:var(--tx);margin:0 0 16px}
+.wc-dl-sec{margin-bottom:16px}
+.wc-dl-sec h4{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
+.wc-dl-issue{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
+.wc-dl-issue .sev{flex-shrink:0;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:999px}
+.wc-dl-issue .sev.critical{color:#fff;background:#c0392b}.wc-dl-issue .sev.high{color:#fff;background:#e0742b}
+.wc-dl-issue .sev.medium{color:#7a5300;background:rgba(255,179,92,.3)}.wc-dl-issue .sev.low{color:var(--mut);background:var(--chip)}
+.wc-dl-issue b{font-size:14px}
+.wc-dl-issue .ctrl{display:inline-block;margin-left:7px;font-size:11px;font-weight:600;color:var(--em-2)}
+.wc-dl-issue .fix{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.5}
+.wc-dl-prompt{margin:14px 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.wc-dl-prompt .ph{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--panel-2);border-bottom:1px solid var(--line);font-size:13px}
+.wc-dl-prompt pre{margin:0;padding:12px;white-space:pre-wrap;word-break:break-word;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.55;color:var(--tx-2);max-height:220px;overflow:auto}
+@media(max-width:640px){.wc-dl-card{width:calc(100vw - 20px);max-height:92vh}.wc-dl-actions .btn{flex:1 1 auto;justify-content:center}}
 `
 
 // Copy text reliably across the main page AND the floating PiP / pop-out window.
@@ -1183,6 +1215,77 @@ function HowDetail({ entry, onRetry }) {
   )
 }
 
+// ---- Deliverables: capture page(s) -> review + two generation prompts + doc --
+// Self-contained: it only uses the passed grabFrame and the sessionId, so it
+// cannot destabilize the Console. For review/design tasks (architecture,
+// diagrams, configs) the person snaps each page, then Finish builds the review
+// and the prompts they take to their own LLM / diagram tool.
+function DeliverablesPanel({ sessionId, grabFrame, onClose }) {
+  const [frames, setFrames] = useState([])
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const [result, setResult] = useState(null)
+  const [copied, setCopied] = useState('')
+  const snap = () => {
+    setErr('')
+    try { const f = grabFrame && grabFrame(); if (f) setFrames((xs) => [...xs, f].slice(0, 8)); else setErr('Put the page on screen first, and start sharing your screen.') }
+    catch { setErr('Could not capture the screen.') }
+  }
+  const build = async () => {
+    setBusy(true); setErr('')
+    try { const r = await api.workDeliverables(sessionId, frames); if (r && r.deliverables) setResult(r); else setErr('No result came back. Try again.') }
+    catch (e) { setErr((e && e.message) || 'Could not build this. Try again.') }
+    finally { setBusy(false) }
+  }
+  const copy = async (which, text) => { try { await navigator.clipboard.writeText(text || ''); setCopied(which); setTimeout(() => setCopied(''), 1500) } catch { /* clipboard blocked */ } }
+  const download = () => {
+    try {
+      const blob = new Blob([(result && result.documentMd) || ''], { type: 'text/markdown' })
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'workcopilot-review.md'
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000)
+    } catch { /* ignore */ }
+  }
+  const d = result && result.deliverables
+  const Issue = ({ a }) => (
+    <div className="wc-dl-issue"><span className={'sev ' + String(a.severity || '').toLowerCase()}>{a.severity}</span>
+      <div><b>{a.issue}</b>{a.control ? <span className="ctrl">{a.control}</span> : null}<div className="fix">{a.fix}</div></div></div>
+  )
+  return (
+    <div className="wc-dl" onClick={onClose}>
+      <div className="wc-dl-card" onClick={(e) => e.stopPropagation()}>
+        <div className="wc-dl-head"><b><Sparkles size={15} /> Review &amp; generation prompts</b><button className="wc-dl-x" onClick={onClose} aria-label="Close">&times;</button></div>
+        {!d ? (
+          <div className="wc-dl-body">
+            <p className="wc-dl-lead">Put each page you want reviewed on screen and tap <b>Snap</b>. Add as many as you need, then <b>Finish</b>. I will find the issues and build you two prompts to generate the corrected design in your own tools.</p>
+            <div className="wc-dl-thumbs">
+              {frames.map((f, i) => <div key={i} className="wc-dl-thumb"><img src={f} alt={'page ' + (i + 1)} /><span>{i + 1}</span><button onClick={() => setFrames(frames.filter((_, j) => j !== i))} aria-label="Remove">&times;</button></div>)}
+              {!frames.length && <div className="wc-dl-empty">No pages captured yet</div>}
+            </div>
+            {err && <div className="wc-dl-err">{err}</div>}
+            <div className="wc-dl-actions">
+              <button className="btn btn-outline" onClick={snap} disabled={busy}><Camera size={15} /> Snap{frames.length ? ' (' + frames.length + ')' : ''}</button>
+              <button className="btn btn-primary" onClick={build} disabled={busy || !frames.length}>{busy ? <Loader2 size={15} className="spin" /> : null} Finish &amp; build</button>
+            </div>
+          </div>
+        ) : (
+          <div className="wc-dl-body">
+            {d.needMore && <div className="wc-dl-note">{d.needMore}</div>}
+            {d.summary && <p className="wc-dl-summary">{d.summary}</p>}
+            {d.architecture && d.architecture.length > 0 && <div className="wc-dl-sec"><h4>Architecture issues</h4>{d.architecture.map((a, i) => <Issue key={i} a={a} />)}</div>}
+            {d.security && d.security.length > 0 && <div className="wc-dl-sec"><h4>Security issues</h4>{d.security.map((a, i) => <Issue key={i} a={a} />)}</div>}
+            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 1 — current design, problems marked</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p1', d.promptIssues)}>{copied === 'p1' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptIssues}</pre></div>
+            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2 — recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
+            <div className="wc-dl-actions">
+              <button className="btn btn-outline" onClick={() => setResult(null)}>Capture more</button>
+              <button className="btn btn-primary" onClick={download}><Download size={15} /> Download document (.md)</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function Console({ sessionId, onBack }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
@@ -1205,6 +1308,7 @@ function Console({ sessionId, onBack }) {
   // fast model. It is never a persistent mode. The server also auto-escalates on
   // its own when the fast model fails or returns a weak result.
   const [strongUsed, setStrongUsed] = useState(false)   // a recent call used the stronger model (auto or a Deep pass)
+  const [deliverOpen, setDeliverOpen] = useState(false) // the review -> prompts panel
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
   // Usage metering (Phase 1): remaining minutes, daily cap, pause.
@@ -1537,6 +1641,7 @@ function Console({ sessionId, onBack }) {
             ? <button className="btn btn-primary btn-sm" title="Close the floating window" onClick={closeFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Unfloat' : 'Close pop-out'}</button>
             : <button className="btn btn-outline btn-sm" title={pipSupported ? 'Float the steps on top of your work (Chrome, Edge, Brave, Opera)' : 'Pop the steps out into a separate window (Firefox, Safari)'} onClick={openFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
           {sess && <button className="btn btn-ghost btn-sm" title="Deep pass: run this one screenshot on the stronger model and weave the result back into your steps, then carry on with the fast model." onClick={() => analyze(question, true)} disabled={busy}><Zap size={14} /> Deep pass</button>}
+          {sess && <button className="btn btn-ghost btn-sm" title="Review what is on screen (a diagram, an architecture, a config) and get two generation prompts plus a document" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>}
           {strongUsed && <span style={{ fontSize: 11, color: 'var(--brand-600)' }} title="A stronger model was just used on this frame"><Zap size={11} style={{ verticalAlign: -2 }} /> stronger model</span>}
           {sess && <button className="btn btn-ghost btn-sm" title="Generate and download a PDF report of this session" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report</button>}
           {sess && <button className="btn btn-ghost btn-sm" title="Open a printable report" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>}
@@ -1544,6 +1649,7 @@ function Console({ sessionId, onBack }) {
           <span style={{ fontSize: 11, color: 'var(--text-dim)' }}><Eye size={12} style={{ verticalAlign: -2 }} /> {frames} frames sent</span>
           {sess && sess.status !== 'ended' && <button className="btn btn-outline btn-sm" onClick={finalize} disabled={busy}>End and summarize</button>}
         </div>
+        {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} onClose={() => setDeliverOpen(false)} />}
 
         {usage && usage.exhausted && (
           <div style={{ background: 'var(--danger)', color: '#fff', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 10 }}>

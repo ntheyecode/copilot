@@ -777,3 +777,94 @@ export function workScopeBrief(answers) {
     .map((a) => `- ${String(a.q).trim()} => ${String(a.a).trim()}`)
   return rows.length ? `WHAT THE PERSON TOLD US WHEN SCOPING (these are the requirement - honor them):\n${rows.join('\n')}` : ''
 }
+
+// ===========================================================================
+// DELIVERABLES: for a review/design task (an architecture or diagram, a config,
+// a document), analyze the captured page(s) + the goal + the scoping answers and
+// produce: a review (issues with severity + control + fix) and TWO ready-to-use
+// prompts the person pastes into their own LLM / diagram tool - one to generate
+// the CURRENT design with the problems marked, one to generate the RECOMMENDED
+// corrected design. WorkCoPilot guides and hands over the prompts; the person
+// generates in their own tools. Runs on the platform model (vision when frames
+// are supplied).
+// ===========================================================================
+export function workDeliverablesSystem() {
+  return [
+    'You are WorkCoPilot producing the deliverables for a REVIEW or DESIGN task. You are a principal architect and security reviewer. You never do the task for the person: you review what they show you and hand them ready-to-use prompts to generate the result in their own tools.',
+    'You are given the GOAL, the person\'s scoping answers, and ONE OR MORE SCREENSHOTS of what they are working from (for example a network architecture diagram, which may span several pages). Treat all the screenshots together as one artifact.',
+    'Produce, honestly and concretely (if something is not visible or is unclear, SAY SO and name what you still need, never invent):',
+    '1. summary: 2 to 4 sentences of what you understand the design to be.',
+    '2. architecture issues: structural problems (single points of failure, missing segmentation, weak resilience/scalability, tight coupling, missing HA/DR, misplaced components). Each: issue, severity (Critical/High/Medium/Low), fix.',
+    '3. security issues: exposed surfaces, flat networks, unencrypted flows, over-permissive access, weak IAM/least-privilege, missing WAF/IDS/EDR, secrets handling, logging/monitoring gaps, lateral-movement risk. Each: issue, severity, control (a CIS / NIST 800-53 / PCI-DSS control id where it applies, else ""), fix.',
+    '4. promptIssues: a COMPLETE, self-contained prompt the person can paste into any LLM or diagram tool to generate their CURRENT architecture as a diagram with every problem marked exactly where it occurs. Embed the understood design, their stated expectations, and your findings, so the other model needs no extra context.',
+    '5. promptTarget: a COMPLETE, self-contained prompt to generate the RECOMMENDED corrected architecture with all components, resolving the issues, honoring their expectations and constraints.',
+    'Both prompts must stand entirely on their own and tell the other model exactly what to draw and label.',
+    'Return ONLY JSON, nothing else:',
+    '{"summary":"...","architecture":[{"issue":"...","severity":"Critical|High|Medium|Low","fix":"..."}],"security":[{"issue":"...","severity":"Critical|High|Medium|Low","control":"...","fix":"..."}],"promptIssues":"<full prompt>","promptTarget":"<full prompt>","needMore":"<if you need more pages or detail, say what; else empty>"}'
+  ].join('\n')
+}
+export function workDeliverablesUser({ goal, scope = [], research = '' }) {
+  const brief = workScopeBrief(scope)
+  return (
+    'GOAL:\n"""' + String(goal || '').trim().slice(0, 1500) + '"""\n\n' +
+    (brief ? brief + '\n\n' : '') +
+    (String(research || '').trim() ? 'REFERENCE (current best practice notes):\n' + String(research).trim().slice(0, 4000) + '\n\n' : '') +
+    'Analyze the screenshot(s) and return the deliverables JSON now.'
+  )
+}
+export async function workDeliverables(ai, cfg, { goal, scope = [], frames = [], visionModel = null, research = '' }) {
+  const system = workDeliverablesSystem()
+  const user = workDeliverablesUser({ goal, scope, research })
+  let raw
+  if (Array.isArray(frames) && frames.length && visionModel) {
+    raw = await ai.analyseImages(cfg, system + '\n\n' + user, frames.slice(0, 8), visionModel)
+  } else {
+    raw = await ai.generate(cfg, system, user)
+  }
+  const p = extractJson(raw) || {}
+  const sev = (s) => ['Critical', 'High', 'Medium', 'Low'].includes(String(s)) ? String(s) : 'Medium'
+  const list = (arr, withControl) => (Array.isArray(arr) ? arr : []).slice(0, 25).map((x) => ({
+    issue: scrubAiLanguage(String((x && x.issue) || '').trim()).slice(0, 400),
+    severity: sev(x && x.severity),
+    control: withControl ? String((x && x.control) || '').trim().slice(0, 60) : undefined,
+    fix: scrubAiLanguage(String((x && x.fix) || '').trim()).slice(0, 600),
+  })).filter((x) => x.issue)
+  return {
+    summary: scrubAiLanguage(String(p.summary || '').trim()),
+    architecture: list(p.architecture, false),
+    security: list(p.security, true),
+    // The prompts are instructions for ANOTHER model - do NOT AI-language-scrub
+    // them (that would mangle intent); just trim and bound.
+    promptIssues: String(p.promptIssues || '').trim().slice(0, 6000),
+    promptTarget: String(p.promptTarget || '').trim().slice(0, 6000),
+    needMore: scrubAiLanguage(String(p.needMore || '').trim()).slice(0, 300),
+  }
+}
+// Assemble the full engagement document (Markdown) the person downloads.
+export function workDeliverablesDocument({ goal, d }) {
+  const sevTag = (s) => `**${s}**`
+  const lines = []
+  lines.push('# WorkCoPilot review and generation prompts')
+  lines.push('')
+  lines.push('**Goal:** ' + String(goal || '').trim())
+  lines.push('')
+  if (d.summary) { lines.push('## Understanding'); lines.push(''); lines.push(d.summary); lines.push('') }
+  if (d.architecture && d.architecture.length) {
+    lines.push('## Architecture issues'); lines.push('')
+    lines.push('| Issue | Severity | Fix |'); lines.push('|---|---|---|')
+    for (const a of d.architecture) lines.push('| ' + a.issue.replace(/\|/g, '/') + ' | ' + sevTag(a.severity) + ' | ' + a.fix.replace(/\|/g, '/') + ' |')
+    lines.push('')
+  }
+  if (d.security && d.security.length) {
+    lines.push('## Security issues'); lines.push('')
+    lines.push('| Issue | Severity | Control | Fix |'); lines.push('|---|---|---|---|')
+    for (const s of d.security) lines.push('| ' + s.issue.replace(/\|/g, '/') + ' | ' + sevTag(s.severity) + ' | ' + (s.control || '-') + ' | ' + s.fix.replace(/\|/g, '/') + ' |')
+    lines.push('')
+  }
+  lines.push('## Prompt 1 - current design with the problems marked'); lines.push('')
+  lines.push('```text'); lines.push(d.promptIssues || '(none)'); lines.push('```'); lines.push('')
+  lines.push('## Prompt 2 - recommended corrected design'); lines.push('')
+  lines.push('```text'); lines.push(d.promptTarget || '(none)'); lines.push('```'); lines.push('')
+  lines.push('---'); lines.push('_Produced by WorkCoPilot. Paste a prompt into your own LLM or diagram tool to generate the design._')
+  return lines.join('\n')
+}
