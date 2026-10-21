@@ -1075,7 +1075,7 @@ const CSS = `
 .wm-cyc-b.on{color:var(--tx);background:linear-gradient(135deg,rgba(140,245,196,.16),rgba(57,211,255,.14))}
 .wm-cyc-save{font-size:11px;font-weight:800;letter-spacing:.02em;color:#06603f;background:rgba(10,157,102,.16);border-radius:999px;padding:2px 8px}
 /* 3 plans + Enterprise = a 4-up pricing row */
-.wm-tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
+.wm-tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:stretch}
 @media(max-width:1080px){.wm-tiers{grid-template-columns:repeat(2,1fr)}}
 .wm-tier-cyc{font-size:12.5px;color:var(--mut);margin-top:4px;min-height:1.2em}
 .wm-tier-cyc.dim{opacity:.75}
@@ -1083,14 +1083,14 @@ const CSS = `
 .wm-tier-custom{font-size:34px}
 .wm-tier-ent{border-color:rgba(57,211,255,.35);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.008))}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
-.wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative}
-.wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55);transform:translateY(-10px)}
+.wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
+.wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}
 .wm-tier-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--em),var(--em2));color:#042;font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px}
 .wm-tier-name{font-family:"Bricolage Grotesque";font-weight:800;font-size:21px}
 .wm-tier-price{font-family:"Bricolage Grotesque";font-weight:800;font-size:48px;letter-spacing:-.03em;margin:4px 0 0}
 .wm-tier-price span{font-size:17px;color:var(--mut);font-weight:400}
 .wm-tier-hrs{color:var(--em);font-size:14px;margin-bottom:20px}
-.wm-tier ul{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:11px}
+.wm-tier ul{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:11px;flex:1 0 auto}
 .wm-tier li{display:flex;gap:9px;align-items:flex-start;color:var(--tx);font-size:14.5px}
 .wm-tier li svg{color:var(--em);flex-shrink:0;margin-top:3px}
 .wm-tier .wm-cta{width:100%;justify-content:center}
