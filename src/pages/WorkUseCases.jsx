@@ -5,6 +5,7 @@ import {
   ArrowRight, Check, ChevronLeft,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 
 // AdmireVeda WorkCoPilot - detailed use cases (/workcopilot/use-cases).
 // Every use case explained, each with a worked mini-guide graphic.
@@ -135,6 +136,7 @@ export default function WorkUseCases() {
           <span>&copy; {new Date().getFullYear()} AdmireVeda &middot; WorkCoPilot is a product of AdmireVeda</span>
         </div>
       </footer>
+      <LiveValidate theme="light" source="use-cases" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
     </div>
   )
 }

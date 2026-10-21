@@ -61,6 +61,7 @@ const EMPTY = {
   workImageUsage: {},   // premium image metering: `${userId}:${easternDay}` -> { count }
   workDocs: {},         // uploaded reference doc metadata, keyed by userId (text on disk)
   workTickets: [],      // support tickets (id 'tk'+n): category, subject, thread, status
+  leads: [],            // public "Validate it live" leads (id 'ld'+n): name, email, phone, company, source, createdAt
   companies: [],        // tenancy (id 'co'+n): name, plan, seats, scrub default, sso config
   // Stripe billing config (superadmin-set, UI or env). Secrets live here but are
   // NEVER returned to a client (getBillingPublic strips them). enabled defaults
@@ -617,6 +618,47 @@ export function createCompany({ name, plan = 'basic', seats = 0, scrub = false }
 export function listCompanies() {
   return (db.companies || []).slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || '')).map(publicCompany)
 }
+
+// --- Public "Validate it live" leads ---------------------------------------
+// A visitor fills First/Last/Email/Phone/Company ONCE per session before the
+// live coverage check. We store each with a timestamp + which page it came from
+// so the superadmin Leads grid is an append-only log. Trimmed + length-capped;
+// never scrubbed (these are the contact details the visitor chose to share).
+const LEAD_CAP = (s, n) => String(s == null ? '' : s).trim().slice(0, n)
+export function addWorkLead({ firstName, lastName, email, phone, company, source } = {}, meta = {}) {
+  const rec = {
+    id: 'ld' + id(),
+    firstName: LEAD_CAP(firstName, 80),
+    lastName: LEAD_CAP(lastName, 80),
+    email: LEAD_CAP(email, 160).toLowerCase(),
+    phone: LEAD_CAP(phone, 40),
+    company: LEAD_CAP(company, 140),
+    source: LEAD_CAP(source || 'site', 24),
+    scenario: '',                 // filled when they run their first live check (noteWorkLeadQuestion)
+    ip: LEAD_CAP(meta.ip, 60),
+    createdAt: now(),
+  }
+  if (!rec.firstName || !rec.email) throw httpErr(400, 'Name and email are required.')
+  if (!db.leads) db.leads = []
+  db.leads.push(rec)
+  persistSoon()                   // a lead is low-stakes; batch the write
+  return { id: rec.id }
+}
+// Attach the first scenario the lead asked about (best-effort; keeps the grid
+// useful without a second form). Silent no-op if the lead id is unknown.
+export function noteWorkLeadQuestion(leadId, scenario) {
+  if (!leadId) return
+  const l = (db.leads || []).find((x) => x.id === leadId)
+  if (!l || l.scenario) return    // keep the FIRST scenario only
+  l.scenario = LEAD_CAP(scenario, 400)
+  persistSoon()
+}
+export function listWorkLeads({ limit = 1000 } = {}) {
+  return (db.leads || []).slice()
+    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+    .slice(0, limit)
+}
+export function workLeadCount() { return (db.leads || []).length }
 export function getCompany(companyId) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   return c ? publicCompany(c) : null

@@ -5,6 +5,7 @@ import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
+import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the public sign-in page too
 
 const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 
@@ -163,6 +164,7 @@ export default function WorkLogin() {
           <div className="wl-legal">Lawful, legitimate work only. Harmful or illegal requests are declined.</div>
         </div>
       </main>
+      <LiveValidate theme="light" source="login" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
     </div>
   )
 }

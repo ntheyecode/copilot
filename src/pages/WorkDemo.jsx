@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
 
 // WorkCoPilot - scripted 60-second demo (admireveda.com/demo).
 // Fully canned: no login, no AI, no network calls. It replays one real guided
@@ -15,18 +16,26 @@ const GOAL = 'Set up a private network (VPC) on AWS'
 
 // One real walkthrough. A step is either a normal DO THIS NOW (step + how +
 // optional exact command) or a HOLD ON correction (fix.say + fix.do).
+// Each "how" sub-step is { do, tip }: the exact action, plus the precise where /
+// label / value underneath it - so the demo shows the real DEPTH the product
+// gives (not a one-line hint). A `key` word in a `do` is emphasised.
 const STEPS = [
   {
     sees: 'You are in the VPC dashboard',
     step: 'Create the VPC',
-    how: ['Click Create VPC', 'Choose "VPC only" and give it a name', 'Set the IPv4 CIDR, then Create VPC'],
+    how: [
+      { do: 'Click **Create VPC**', tip: 'Top-right of the VPC dashboard' },
+      { do: 'Choose **VPC only** and name it', tip: 'e.g. prod-vpc — keep the name meaningful' },
+      { do: 'Set the IPv4 CIDR to **10.0.0.0/16**', tip: 'Leave IPv6 off unless you need it' },
+      { do: 'Click **Create VPC** to finish', tip: 'It appears in the list within a second' },
+    ],
     cmd: '$ aws ec2 create-vpc --cidr-block 10.0.0.0/16',
     done: 'the VPC is listed',
   },
   {
     sees: 'You typed CIDR 10.0.0.0/24',
     fix: {
-      say: 'A /24 is only 256 addresses, too small to grow into later.',
+      say: 'A /24 is only 256 addresses — too small to grow into later.',
       do: 'Change the CIDR to 10.0.0.0/16 before you create it.',
     },
     done: 'the range reads 10.0.0.0/16',
@@ -34,17 +43,42 @@ const STEPS = [
   {
     sees: 'The VPC has no path to the internet',
     step: 'Attach an internet gateway',
-    how: ['Open Internet gateways, click Create, name it', 'Select it, open Actions, Attach to VPC', 'Pick your VPC, then Attach'],
+    how: [
+      { do: 'Open **Internet gateways** → **Create**', tip: 'Left nav, under Virtual private cloud' },
+      { do: 'Name it, then click **Create**', tip: 'e.g. prod-igw' },
+      { do: 'Select it → **Actions** → **Attach to VPC**', tip: 'It has to be Detached to attach' },
+      { do: 'Pick your VPC and click **Attach**', tip: 'Status flips to Attached' },
+    ],
     done: 'the gateway shows Attached',
   },
   {
     sees: 'Traffic still has nowhere to go',
     step: 'Route outbound traffic to the gateway',
-    how: ['Open the VPC route table', 'Add a route for 0.0.0.0/0', 'Point it at the internet gateway'],
+    how: [
+      { do: "Open your VPC's **route table**", tip: 'Route tables → the one tied to your VPC' },
+      { do: 'Click **Edit routes** → **Add route**', tip: 'Opens the editable route list' },
+      { do: 'Set the destination to **0.0.0.0/0**', tip: 'That means all outbound IPv4 traffic' },
+      { do: 'Target your **internet gateway**, then **Save**', tip: 'Pick the igw-… you just attached' },
+    ],
     cmd: '$ aws ec2 create-route --route-table-id rtb-0a1b --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0c2d',
     done: '0.0.0.0/0 points at the igw',
   },
 ]
+
+// Emphasise **bold** spans inside a "do" (the exact button, menu or value).
+function demoRich(text) {
+  const s = String(text || '')
+  const out = []
+  const re = /\*\*([^*]+)\*\*/g
+  let last = 0, m, k = 0
+  while ((m = re.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index))
+    out.push(<b key={k++}>{m[1]}</b>)
+    last = m.index + m[0].length
+  }
+  if (last < s.length) out.push(s.slice(last))
+  return out
+}
 
 // The write-up it hands you at the end (the record you keep).
 const WRITEUP = [
@@ -119,6 +153,7 @@ export default function WorkDemo() {
           <a href="/workcopilot">Sign in</a>
         </div>
       </footer>
+      <LiveValidate theme="light" source="demo" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
     </div>
   )
 }
@@ -235,8 +270,18 @@ function DemoPlayer() {
                     <div className="wkd-now-step" key={'ns' + si}>{s.step}</div>
                   </div>
                   <div className="wkd-how" key={'hw' + si}>
-                    <div className="wkd-how-lbl">EXACTLY HOW</div>
-                    <ol>{s.how.map((h, k) => <li key={k} style={{ animationDelay: `${90 + k * 90}ms` }}>{h}</li>)}</ol>
+                    <div className="wkd-how-lbl">EXACTLY HOW <span className="wkd-how-cnt">{s.how.length} steps</span></div>
+                    <ol className="wkd-how-list">
+                      {s.how.map((h, k) => (
+                        <li key={k} style={{ animationDelay: `${90 + k * 85}ms` }}>
+                          <span className="wkd-how-n">{k + 1}</span>
+                          <div className="wkd-how-c">
+                            <div className="do">{demoRich(h.do)}</div>
+                            {h.tip && <div className="tip">{h.tip}</div>}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
                   </div>
                 </>
               )}
@@ -335,9 +380,16 @@ const CSS = `
 .wkd-now-lbl,.wkd-how-lbl{font-size:10px;font-weight:800;letter-spacing:.1em;color:#7dd3fc}
 .wkd-now-step{font-size:17px;font-weight:700;color:#fff;margin-top:5px;animation:wkd-fade .4s ease both}
 .wkd-now-lbl .no,.wkd-fix-h .no{float:right;color:#6b7694;font-weight:700;letter-spacing:0}
-.wkd-how{margin-top:12px}
-.wkd-how ol{margin:6px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
-.wkd-how li{color:#cdd6ec;font-size:13.5px;line-height:1.4;opacity:0;animation:wkd-slide .4s ease forwards}
+.wkd-how{margin-top:14px}
+.wkd-how-cnt{float:right;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#93a0c0;background:rgba(125,211,252,.12);border:1px solid rgba(125,211,252,.22);border-radius:999px;padding:2px 8px}
+.wkd-how-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
+.wkd-how-list li{display:flex;gap:11px;align-items:flex-start;position:relative;opacity:0;animation:wkd-slide .42s cubic-bezier(.2,.8,.2,1) forwards}
+.wkd-how-list li:not(:last-child):before{content:'';position:absolute;left:11px;top:24px;bottom:-9px;width:2px;background:linear-gradient(180deg,rgba(125,211,252,.35),rgba(125,211,252,.05))}
+.wkd-how-n{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#06283b;background:linear-gradient(135deg,#7dd3fc,#5eead4);z-index:1}
+.wkd-how-c{flex:1;min-width:0;padding-top:1px}
+.wkd-how-c .do{color:#eaf0fb;font-size:13.5px;line-height:1.45;font-weight:500}
+.wkd-how-c .do b{color:#fff;font-weight:800;background:linear-gradient(transparent 60%,rgba(125,211,252,.28) 0);padding:0 2px;border-radius:2px}
+.wkd-how-c .tip{color:#8f9cbd;font-size:12px;line-height:1.4;margin-top:2px}
 .wkd-fix{background:linear-gradient(180deg,rgba(254,188,46,.1),transparent);border:1px solid rgba(254,188,46,.4);border-radius:12px;padding:12px 14px;animation:wkd-fade .4s ease both}
 .wkd-fix-h{font-size:11px;font-weight:800;letter-spacing:.08em;color:#fbbf24;display:flex;align-items:center;gap:6px}
 .wkd-fix-say{color:#fde8b0;font-size:14px;line-height:1.45;margin-top:8px}

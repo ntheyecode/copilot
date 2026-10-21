@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
@@ -21,6 +21,7 @@ import Pricing from './sections/Pricing.jsx'
 import AiConfig from './sections/AiConfig.jsx'
 import Billing from './sections/Billing.jsx'
 import Sessions from './sections/Sessions.jsx'
+import Leads from './sections/Leads.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
@@ -31,6 +32,7 @@ const SECTIONS = [
   { id: 'billing', label: 'Billing', icon: CreditCard, title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
   { id: 'sessions', label: 'Sessions', icon: ListChecks, title: 'Sessions', sub: 'Recent guided sessions across users.' },
+  { id: 'leads', label: 'Leads', icon: UserPlus, title: 'Leads', sub: 'Everyone who ran a live validation on the demo or sign-in page - newest first.' },
   { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
 ]
 
@@ -67,6 +69,7 @@ export default function WorkAdmin() {
       case 'billing': return <Billing isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions />
+      case 'leads': return <Leads />
       case 'tickets': return <SupportTickets mode="admin" />
       case 'overview':
       default: return <Overview />

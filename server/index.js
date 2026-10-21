@@ -851,6 +851,11 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   if (question.length > 1200) return res.status(400).json({ error: 'Please keep it under about 1200 characters.' })
   const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
   if (!coverageRateOk(ip)) return res.status(429).json({ error: 'A few too many checks just now - please try again in a little while.' })
+  // If a captured lead ran this check, record the first scenario on the lead so
+  // the superadmin Leads grid shows WHAT they wanted to validate. Done BEFORE the
+  // generic fallbacks so we capture it even when platform AI is off.
+  const leadId = String((req.body && req.body.leadId) || '').trim()
+  if (leadId) { try { store.noteWorkLeadQuestion(leadId, question) } catch { /* non-fatal */ } }
   const generic = {
     verdict: 'covered', plan: null, product: 'WorkCoPilot', degraded: true,
     answer: 'WorkCoPilot guides you through almost any task on your screen, in any field, one exact step at a time. Sign in and describe your task to see exactly how it is covered.',
@@ -863,6 +868,25 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   } catch (e) {
     res.json(generic)   // never show a public visitor an error; flagged degraded
   }
+}))
+
+// Public lead capture for the "Validate it live" widget. Captured once per
+// browser session (the client gates on sessionStorage) BEFORE the first live
+// check. Rate-limited per IP (reuses the coverage limiter) so it cannot be
+// hammered. These are contact details the visitor chose to share - stored as
+// typed, never scrubbed - and they surface in the superadmin Leads grid.
+app.post('/api/work/leads', wrap((req, res) => {
+  const b = req.body || {}
+  const email = String(b.email || '').trim()
+  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || !String(b.company || '').trim()) {
+    return res.status(400).json({ error: 'First name, last name, email and company are required.' })
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
+  if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
+  res.json(store.addWorkLead({
+    firstName: b.firstName, lastName: b.lastName, email, phone: b.phone, company: b.company, source: b.source,
+  }, { ip }))
 }))
 // ---- Support tickets (user side: open + thread with the superadmin) -------
 app.get('/api/work/ticket-categories', (req, res) => res.json({ categories: store.workTicketCategories() }))

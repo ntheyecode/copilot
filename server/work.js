@@ -724,7 +724,7 @@ export function workCoverageSystem(pricing = null) {
     'OUTPUT - reply with ONLY a JSON object, nothing else:',
     '{"verdict":"covered"|"partial"|"no"|"offtopic","answer":"one or two short sentences as a lead","points":["2 to 4 short bullets, each naming ONE concrete thing WorkCoPilot does for THIS scenario"],"preview":[{"do":"a concrete action for THIS scenario, in the real order","cmd":"the exact command, click-path or official link for that action if one clearly and safely applies, else empty string","how":["2 to 4 detailed sub-steps that spell out HOW to do this step - the exact clicks, fields, values or sub-commands a beginner follows, so there is real depth, not just a one-line instruction"]}],"plan":"Basic"|"Advanced"|"Premium"|null,"product":"WorkCoPilot"|"MeetAiGene"|"AI Cloud"|null}',
     'The "points" are the heart of the answer: short, scannable, each a single concrete capability for this exact scenario (not generic marketing). For offtopic, return an empty points array.',
-    'The "preview" is a short TASTE of the real step-by-step the visitor would get: 2 to 3 ordered steps for THIS exact scenario. Each has a concrete action in "do"; the exact command / click-path / official link in "cmd" when one obviously and safely applies to a widely-known tool (e.g. `terraform init`, `kubectl get pods`, Settings > Billing > Add card), else empty; AND a "how" array of 2 to 4 DETAILED sub-steps that expand that step - the exact clicks, fields, values, menu paths or sub-commands a beginner would follow - so the visitor sees there is real DEPTH behind each step, not just a one-liner. Never invent a command or a path you are not sure of. Empty array for offtopic, "no", or when you cannot give safe concrete steps.',
+    'The "preview" is a short TASTE of the real step-by-step the visitor would get: 2 to 3 ordered steps for THIS exact scenario. Each has a concrete action in "do"; the exact command / click-path / official link in "cmd" when one obviously and safely applies to a widely-known tool (e.g. `terraform init`, `kubectl get pods`, Settings > Billing > Add card), else empty; AND a "how" array of 2 to 4 DETAILED sub-steps that expand that step - the exact clicks, fields, values, menu paths or sub-commands a beginner would follow - so the visitor sees there is real DEPTH behind each step, not just a one-liner. Each "how" sub-step is a short plain-English instruction; wrap ANY literal code, command, file path, dependency line, identifier or exact value inside it in `backticks` (for example: add `implementation "androidx.core:core-ktx:1.12.0"` to the dependencies block) so it is shown verbatim and never reworded - put full command lines in "cmd", not inline in "do". Never invent a command or a path you are not sure of. Empty array for offtopic, "no", or when you cannot give safe concrete steps.',
     'If the scenario involves sensitive, regulated or confidential data (health/PHI, finance, security, personal data, secrets, internal systems), ADD one points bullet on privacy: sensitive data is stripped or tokenized on the person device so the AI never sees it, under a policy aligned to their framework (GDPR, HIPAA, PCI, SOC 2), with a full audit. Say "supports your compliance", never "makes you compliant".',
     'FORMAT the lead and the points so they are easy to scan. Backticks: wrap ONLY a single tool, command, service or setting NAME, one or two words at most, no commas and no surrounding words (good: `kubectl`, `aws eks`, `RBAC`, `MongoDB`, `Excel`). Bold: wrap the most important capability phrase in each point in double asterisks (for example **exact step-by-step commands**, **tokenized on your device**). Never bold or code the plan name.',
     'When covered: the lead says plainly it is covered; the points name the real things it does; set the plan that fits. When partial or no: be honest in the lead and points about the limit. When offtopic: one friendly lead asking them to describe a task, empty points. Plain spoken words, no marketing fluff, no em dashes.'
@@ -762,7 +762,24 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
   // A short taste of the real step-by-step: ordered actions, each with its exact
   // command / link when one safely applies. Keeps the flow + commands the lead
   // and points only describe. Dropped entirely for offtopic / "no".
-  const cleanStep = (s) => scrubAiLanguage(String(s || '').trim()).replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '').replace(/[ \t]{2,}/g, ' ').trim()
+  // The prose scrubber (word-swaps, connector/sequence strip) is right for the
+  // lead and points, but it MANGLES a literal command, path, dependency line or
+  // code token inside a step (e.g. `implementation 'androidx.core:core-ktx:1.9.0'`
+  // once chewed into "g. 0'"). So scrub ONLY the prose and keep anything inside
+  // `backticks` verbatim: split on code spans, scrub the gaps, rejoin. This kills
+  // the whole class, not just the one reported sub-step.
+  const scrubProse = (s) => scrubAiLanguage(String(s || '')).replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '')
+  const cleanStep = (s) => {
+    const str = String(s || '').trim()
+    if (!str) return ''
+    if (!str.includes('`')) return scrubProse(str).replace(/[ \t]{2,}/g, ' ').trim()
+    const out = str.split(/(`[^`]*`)/g).map((seg) => {
+      if (seg.startsWith('`')) return seg                 // code span: keep exactly
+      const lead = (seg.match(/^\s*/) || [''])[0], tail = (seg.match(/\s*$/) || [''])[0]
+      return lead + scrubProse(seg).trim() + tail         // scrub prose, preserve the spaces hugging the code
+    }).join('')
+    return out.replace(/[ \t]{2,}/g, ' ').trim()
+  }
   const preview = (Array.isArray(parsed.preview) ? parsed.preview : [])
     .map((p) => ({
       do: cleanStep(p && p.do),

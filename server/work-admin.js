@@ -291,6 +291,14 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   app.get('/api/work/admin/companies/:id/consumption', requireAuth, superGate, w((req, res) => {
     res.json(store.companyConsumption(req.params.id))
   }))
+  // Leads: the public "Validate it live" captures (superadmin). Append-only log
+  // with a timestamp + which page each came from.
+  app.get('/api/work/admin/leads', requireAuth, superGate, w((req, res) => {
+    const limit = Math.min(5000, Math.max(1, parseInt(req.query.limit, 10) || 1000))
+    const leads = typeof store.listWorkLeads === 'function' ? store.listWorkLeads({ limit }) : []
+    res.json({ leads, total: typeof store.workLeadCount === 'function' ? store.workLeadCount() : leads.length })
+  }))
+
   // Create a user (optionally into a company, as member or company_admin).
   // `free: true` grants comped access (use the service without Stripe).
   app.post('/api/work/admin/users', requireAuth, superGate, w((req, res) => {

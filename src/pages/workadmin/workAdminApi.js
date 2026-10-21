@@ -50,6 +50,7 @@ export const workAdminApi = {
   overview: () => request('GET', '/api/work/admin/overview'),
   users: () => request('GET', '/api/work/admin/users'),
   sessions: (limit) => request('GET', `/api/work/admin/sessions${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
+  leads: (limit) => request('GET', `/api/work/admin/leads${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   aiState: () => request('GET', '/api/work/admin/ai-state'),
 
   // Platform AI toggle (existing: GET requireAdmin, POST superadmin-only)
