@@ -617,28 +617,63 @@ ipcMain.handle('work:get-state', () => ({
 // nothing is uploaded and nothing is stored on the server. pdf-parse / mammoth
 // are required lazily so a build without them still handles text / markdown.
 const DOC_TEXT_EXT = /\.(txt|md|markdown|csv|tsv|json|log|ya?ml|xml|html?|js|ts|jsx|tsx|py|java|c|cpp|h|hpp|cs|go|rb|rs|php|sh|sql|ini|conf|env|toml)$/i
+const DOC_IMG_EXT = /\.(png|jpe?g|webp|bmp|gif|tiff?)$/i
+
+// On-device OCR (tesseract.js) so diagrams, screenshots and scanned pages read
+// as TEXT on this machine - no pixels leave. The language data is bundled in
+// ./ocr-lang so OCR works fully offline. One lazily-created worker is reused.
+let ocrWorker = null
+async function getOcrWorker() {
+  if (ocrWorker) return ocrWorker
+  const { createWorker } = require('tesseract.js')
+  let cachePath
+  try { cachePath = path.join(app.getPath('userData'), 'ocr-cache') } catch { cachePath = path.join(__dirname, 'ocr-lang') }
+  ocrWorker = await createWorker('eng', 1, {
+    langPath: path.join(__dirname, 'ocr-lang'),   // bundled eng.traineddata (offline)
+    cachePath,
+    gzip: false,
+  })
+  return ocrWorker
+}
+async function ocrImage(buf) {
+  const w = await getOcrWorker()
+  const { data } = await w.recognize(buf)
+  return { text: ((data && data.text) || '').trim(), confidence: Math.round((data && data.confidence) || 0) }
+}
+
+// Returns { text, method:'text'|'ocr', confidence? }. Text files read directly;
+// PDFs via their text layer (a scanned PDF with no text layer is reported so the
+// user can export a page as an image); Word via mammoth; images via on-device OCR.
 async function extractDocLocally(filePath) {
   const buf = fs.readFileSync(filePath)
   const lower = String(filePath).toLowerCase()
-  if (DOC_TEXT_EXT.test(lower)) return buf.toString('utf8')
+  if (DOC_TEXT_EXT.test(lower)) return { text: buf.toString('utf8'), method: 'text' }
+  if (DOC_IMG_EXT.test(lower)) {
+    const o = await ocrImage(buf)
+    if (!o.text) throw new Error('No readable text found in the image')
+    return { text: o.text, method: 'ocr', confidence: o.confidence }
+  }
   if (lower.endsWith('.pdf')) {
     const { PDFParse } = require('pdf-parse')
     const parser = new PDFParse({ data: buf })
-    try { const r = await parser.getText(); return ((r && r.text) || '').trim() } finally { if (parser.destroy) await parser.destroy() }
+    let t = ''
+    try { const r = await parser.getText(); t = ((r && r.text) || '').trim() } finally { if (parser.destroy) await parser.destroy() }
+    if (t.length < 20) throw new Error('This PDF has no text layer (looks scanned). Export the page as a PNG and add that, or show it on screen.')
+    return { text: t, method: 'text' }
   }
   if (lower.endsWith('.docx')) {
     const mammoth = require('mammoth')
     const r = await mammoth.extractRawText({ buffer: buf })
-    return ((r && r.value) || '').trim()
+    return { text: ((r && r.value) || '').trim(), method: 'text' }
   }
   throw new Error('Unsupported file type')
 }
 ipcMain.handle('work:pick-doc', async () => {
   try {
     const r = await dialog.showOpenDialog(win && !win.isDestroyed() ? win : undefined, {
-      title: 'Add reference documents - they stay on this computer',
+      title: 'Add reference documents or diagrams - they stay on this computer',
       properties: ['openFile', 'multiSelections'],
-      filters: [{ name: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md', 'markdown'] }],
+      filters: [{ name: 'Documents & diagrams', extensions: ['pdf', 'docx', 'txt', 'md', 'markdown', 'png', 'jpg', 'jpeg', 'webp', 'bmp', 'gif', 'tif', 'tiff'] }],
     })
     if (r.canceled || !r.filePaths || !r.filePaths.length) return { ok: true, docs: [] }
     const out = []
@@ -647,9 +682,10 @@ ipcMain.handle('work:pick-doc', async () => {
       try {
         const stat = fs.statSync(fp)
         if (stat.size > 10 * 1024 * 1024) { out.push({ name, error: 'Too large (10 MB max)' }); continue }
-        const text = ((await extractDocLocally(fp)) || '').trim()
+        const res = await extractDocLocally(fp)
+        const text = ((res && res.text) || '').trim()
         if (!text) { out.push({ name, error: 'No readable text (image-only or protected?)' }); continue }
-        out.push({ name, chars: text.length, text })
+        out.push({ name, chars: text.length, text, method: res.method, confidence: res.confidence })
       } catch (e) { out.push({ name, error: (e && e.message) || 'Could not read this file' }) }
     }
     return { ok: true, docs: out }

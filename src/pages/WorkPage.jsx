@@ -403,6 +403,8 @@ const WD_CSS = `
 .wd-docs-chip{display:inline-flex;align-items:center;gap:6px;max-width:260px;background:var(--em-fill);border:1px solid var(--em-line);border-radius:9px;padding:5px 7px 5px 10px;font-size:12.5px;color:var(--tx)}
 .wd-docs-chip svg{color:var(--em);flex-shrink:0}
 .wd-docs-chip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-docs-ocr{font-size:9.5px;font-weight:800;letter-spacing:.04em;color:var(--em-2);background:var(--em-fill-2);border:1px solid var(--em-line);border-radius:5px;padding:1px 5px;flex-shrink:0}
+.wd-docs-ocr.low{color:var(--warm);background:var(--warm-fill);border-color:var(--warm-line)}
 .wd-docs-chip button{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;border:none;background:transparent;color:var(--mut);cursor:pointer;flex-shrink:0}
 .wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
@@ -593,7 +595,7 @@ function DocsAttach({ tier, onDesktopDocs }) {
       const bad = (r.docs || []).filter((d) => d.error)
       if (bad.length) setErr(bad.map((b) => `${b.name}: ${b.error}`).join(' · '))
       const next = [...docs]
-      for (const d of good) next.push({ name: d.name, chars: d.chars, text: clean(d.text) })   // govern on-device
+      for (const d of good) next.push({ name: d.name, chars: d.chars, text: clean(d.text), method: d.method, confidence: d.confidence })   // govern on-device
       pushDesktop(next)
     } catch (e) { setErr((e && e.message) || 'Could not read the documents') } finally { setBusy(false) }
   }
@@ -638,13 +640,13 @@ function DocsAttach({ tier, onDesktopDocs }) {
       {docs.length > 0 && (
         <div className="wd-docs-list">
           {docs.map((d, i) => (
-            <span key={d.id || i} className="wd-docs-chip" title={d.chars ? `${d.chars} characters` : ''}><FileText size={12} /> <span className="nm">{d.name}</span> <button type="button" onClick={() => remove(d, i)} aria-label={`Remove ${d.name}`}><X size={12} /></button></span>
+            <span key={d.id || i} className="wd-docs-chip" title={d.chars ? `${d.chars} characters` : ''}><FileText size={12} /> <span className="nm">{d.name}</span>{d.method === 'ocr' && <span className={`wd-docs-ocr${d.confidence != null && d.confidence < 70 ? ' low' : ''}`}>OCR{d.confidence != null ? ` ${d.confidence}%` : ''}</span>} <button type="button" onClick={() => remove(d, i)} aria-label={`Remove ${d.name}`}><X size={12} /></button></span>
           ))}
         </div>
       )}
       {err && <div className="wd-docs-err"><AlertTriangle size={12} /> {err}</div>}
       <div className="wd-docs-note">{desktop
-        ? 'The file never leaves your computer. Only governed text is used to plan this session, and it is not stored on our servers.'
+        ? 'Text, PDFs, Word, and diagrams/screenshots (read on-device by OCR) all stay on your computer. Only governed text is used to plan this session, and it is not stored on our servers.'
         : 'Text is extracted on our server, scrubbed, and used to ground your plan.'}</div>
     </div>
   )
