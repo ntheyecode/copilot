@@ -111,6 +111,7 @@ function sessionRow(s, nameById) {
     startedAt: s.startedAt || null,
     endedAt: s.endedAt || null,
     lastActivityAt: s.lastActivityAt || null,
+    costUsd: Number(s.costUsd || 0),   // estimated AI cost for this session
   }
 }
 

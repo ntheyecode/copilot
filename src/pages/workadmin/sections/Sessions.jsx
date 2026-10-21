@@ -83,6 +83,7 @@ export default function Sessions() {
                 <th className="no-sort">Progress</th>
                 <th className="no-sort">Started</th>
                 <th className="no-sort">Status</th>
+                <th className="no-sort" title="Estimated AI cost (list prices, chars/4 estimate)">Est. cost</th>
               </tr>
             </thead>
             <tbody>
@@ -97,6 +98,7 @@ export default function Sessions() {
                   <td><Progress done={s.stepDone} total={s.stepTotal} current={s.currentStep} /></td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(s.startedAt)}</td>
                   <td>{statusBadge(s)}</td>
+                  <td className="wka-mono" style={{ whiteSpace: 'nowrap' }} title="Estimated from list prices">{(s.costUsd || 0) > 0 ? ((s.costUsd || 0) < 0.01 ? '<$0.01' : '$' + (s.costUsd || 0).toFixed(2)) : '-'}</td>
                 </tr>
               ))}
             </tbody>

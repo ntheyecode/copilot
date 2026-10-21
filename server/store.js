@@ -1184,6 +1184,16 @@ export function setWorkDeliverables(workUserId, sessionId, deliverables) {
   persist()
   return s
 }
+// Accumulate an estimated AI cost (USD) on a session, for the per-session cost
+// shown to operators. Best-effort; never throws on the hot path.
+export function addWorkSessionCost(sessionId, usd) {
+  const n = Number(usd) || 0
+  if (!(n > 0)) return
+  const s = (db.workSessions || []).find((x) => x.id === sessionId)
+  if (!s) return
+  s.costUsd = Number(((s.costUsd || 0) + n).toFixed(6))
+  persist()
+}
 export function getWorkSession(workUserId, sessionId) { return findWorkSession(workUserId, sessionId) }
 export function listWorkSessions(workUserId) {
   return (db.workSessions || [])

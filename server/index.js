@@ -29,6 +29,7 @@ import { registerSsoRoutes } from './sso.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
+import { estimateCostUsd } from './model-prices.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -164,6 +165,14 @@ function scrubForAi(s, on, userId) {
 }
 // Scrub one string, policy-aware. Pass the request's userId for policy enforcement.
 function scrubIf(on, text, userId) { return govScrub(userId, text, on) }
+// Accumulate an estimated AI cost on a session (operator transparency; the AI
+// module does not surface exact token counts, so this is a chars/4 estimate).
+function meterCost(sessionId, model, inText, outText) {
+  try {
+    const usd = estimateCostUsd(model, String(inText || '').length, String(outText || '').length)
+    if (usd > 0) store.addWorkSessionCost(sessionId, usd)
+  } catch (_) { /* never break a request over metering */ }
+}
 
 // ---- WorkCoPilot vision model resolution ----------------------------------
 // WorkCoPilot needs a VISION model (it reads the screen). Pick the cheapest
@@ -505,6 +514,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const plan = await work.workPlan(ai, call.rt, {
       base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, strong: call.backup,
     })
+    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []))
     if (plan.refusal) {
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Declined: ' + plan.refusal })
       const cur = store.getWorkSession(req.workUser.id, req.params.id)
@@ -556,6 +566,7 @@ app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubs
       frame: frames.length ? (frames.length + ' screenshot(s) sent') : null, sent: safeGoal,
     })
     const d = await work.workDeliverables(ai, call.rt, { goal: safeGoal, scope, frames, visionModel: call.visionModel })
+    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), safeGoal, JSON.stringify(d))
     const documentMd = work.workDeliverablesDocument({ goal: safeGoal, d })
     store.setWorkDeliverables(req.workUser.id, req.params.id, d)   // so the PDF endpoint can render it
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Built the review and the generation prompts.' })
@@ -618,6 +629,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     })
     const escalated = r.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (r.escalated ? call.strongModel : rr.visionModel)
+    meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''))
     const updated = store.applyWorkNav(req.workUser.id, req.params.id, {
       completed: r.completed, curIdx: (r.current != null ? r.current : null), guidance: r.guidance,
     })
@@ -654,6 +666,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     if (qScrub.total) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(qScrub.counts) })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)
+    meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '')
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ''}.` })

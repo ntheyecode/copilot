@@ -62,3 +62,15 @@ export const MODEL_PRICES = {
 };
 
 export const PRICES_UPDATED = "2026-10-21";
+
+// Estimate a call's cost in USD from character counts (~4 chars per token). This
+// is an operator-transparency ESTIMATE, not billing-grade (the AI module does
+// not surface exact token usage). Unknown model -> 0.
+export function estimateCostUsd(modelId, inChars = 0, outChars = 0) {
+  const key = String(modelId || '')
+  const p = MODEL_PRICES[key] || MODEL_PRICES[key.split('/').pop()] || null
+  if (!p) return 0
+  const inTok = Math.max(0, Number(inChars) || 0) / 4
+  const outTok = Math.max(0, Number(outChars) || 0) / 4
+  return (inTok / 1e6) * (p.input || 0) + (outTok / 1e6) * (p.output || 0)
+}
