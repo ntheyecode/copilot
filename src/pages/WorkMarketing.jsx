@@ -387,6 +387,23 @@ export default function WorkMarketing() {
 // a visitor whether WorkCoPilot can guide their task, how it is covered, and
 // which plan fits. The server (POST /api/work/coverage) enforces the guardrail -
 // anything that is not a coverage question comes back as "offtopic".
+// Render light markdown emphasis in the answer: **bold** and `code`, so the
+// response reads as structured guidance, not flat running text.
+function renderRich(text) {
+  const out = []
+  const s = String(text || '')
+  const re = /(\*\*([^*]+)\*\*|`([^`]+)`)/g
+  let last = 0, m, k = 0
+  while ((m = re.exec(s))) {
+    if (m.index > last) out.push(s.slice(last, m.index))
+    if (m[2] !== undefined) out.push(<strong key={k++} className="wm-cov-b">{m[2]}</strong>)
+    else out.push(<code key={k++} className="wm-cov-code">{m[3]}</code>)
+    last = m.index + m[0].length
+  }
+  if (last < s.length) out.push(s.slice(last))
+  return out
+}
+
 function CoverageChat({ go }) {
   const [open, setOpen] = useState(false)
   const [q, setQ] = useState('')
@@ -402,7 +419,7 @@ function CoverageChat({ go }) {
   // Reveal the answer with a snappy typewriter - cool and attention grabbing.
   useEffect(() => {
     if (!res || !res.answer) { setTyped(''); setTypingDone(false); return }
-    const full = String(res.answer)
+    const full = String(res.answer).replace(/\*\*/g, '').replace(/`/g, '')   // type plain text; format on completion
     setTyped(''); setTypingDone(false)
     let i = 0
     const id = setInterval(() => {
@@ -435,11 +452,13 @@ function CoverageChat({ go }) {
   }
   const onKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ask() } }
   const verdictMeta = {
-    covered: { label: 'Covered', cls: 'ok' },
-    partial: { label: 'Partly covered', cls: 'mid' },
-    no: { label: 'Not a fit', cls: 'no' },
-    offtopic: { label: 'Ask about a task', cls: 'off' },
+    covered: { label: 'Covered', cls: 'ok', Icon: Check },
+    partial: { label: 'Partly covered', cls: 'mid', Icon: AlertTriangle },
+    no: { label: 'Not a fit', cls: 'no', Icon: AlertTriangle },
+    offtopic: { label: 'Ask about a task', cls: 'off', Icon: Sparkles },
   }
+  const vm = res ? verdictMeta[res.verdict] : null
+  const VIcon = vm ? vm.Icon : null
 
   return (
     <>
@@ -465,10 +484,13 @@ function CoverageChat({ go }) {
             {busy && <div className="wm-cov-think"><span /><span /><span /> Thinking it through…</div>}
             {res && (
               <div className="wm-cov-ans" key={res.answer}>
-                {res.verdict && verdictMeta[res.verdict] && (
-                  <span className={`wm-cov-chip ${verdictMeta[res.verdict].cls}`}>{verdictMeta[res.verdict].label}</span>
+                {vm && (
+                  <div className={`wm-cov-verdict ${vm.cls}`}>
+                    <span className="wm-cov-vbadge">{VIcon && <VIcon size={22} />}</span>
+                    <span className="wm-cov-vlabel">{vm.label}</span>
+                  </div>
                 )}
-                <p className="wm-cov-text">{typed}{!typingDone && <span className="wm-cov-caret" />}</p>
+                <p className="wm-cov-text">{typingDone ? renderRich(res.answer) : <>{typed}<span className="wm-cov-caret" /></>}</p>
                 <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
                   {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
                   {res.verdict !== 'offtopic' && (
@@ -483,7 +505,7 @@ function CoverageChat({ go }) {
             <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder="e.g. Set up a VPC on AWS and lock it down, or reconcile last month's books in Excel"
               onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} />
             <div className="wm-cov-ibtns">
-              {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title="Clear and ask a new question" aria-label="Clear"><RotateCcw size={16} /></button>}
+              {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title="Clear and ask a new question" aria-label="Clear"><RotateCcw size={15} /> Clear</button>}
               <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()} aria-label="Ask">
                 {busy ? <span className="wm-cov-sdots"><i /><i /><i /></span> : <ArrowRight size={18} />}
               </button>
@@ -1348,7 +1370,19 @@ const CSS = `
 .wm-cov-chip.mid{color:#8a5a00;background:rgba(255,179,92,.22)}
 .wm-cov-chip.no{color:#9a2b2b;background:rgba(255,99,99,.18)}
 .wm-cov-chip.off{color:var(--mut);background:rgba(120,130,150,.16)}
-.wm-cov-text{color:var(--tx);font-size:16px;line-height:1.65;margin:0;min-height:1.2em}
+.wm-cov-verdict{display:inline-flex;align-items:center;gap:13px;margin-bottom:16px;animation:wm-cov-vpop .5s cubic-bezier(.2,1.4,.4,1)}
+@keyframes wm-cov-vpop{0%{opacity:0;transform:scale(.55)}55%{transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
+.wm-cov-vbadge{width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.wm-cov-vlabel{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:27px;letter-spacing:-.01em;line-height:1}
+.wm-cov-verdict.ok .wm-cov-vbadge{background:rgba(10,157,102,.18);color:#0a9d66;animation:wm-cov-glow 1.7s ease-in-out infinite}
+.wm-cov-verdict.ok .wm-cov-vlabel{color:#0a9d66}
+@keyframes wm-cov-glow{0%,100%{box-shadow:0 0 0 5px rgba(10,157,102,.09)}50%{box-shadow:0 0 0 11px rgba(10,157,102,.14)}}
+.wm-cov-verdict.mid .wm-cov-vbadge{background:rgba(255,179,92,.22);color:#b5790f}.wm-cov-verdict.mid .wm-cov-vlabel{color:#b5790f}
+.wm-cov-verdict.no .wm-cov-vbadge{background:rgba(255,99,99,.18);color:#c0392b}.wm-cov-verdict.no .wm-cov-vlabel{color:#c0392b}
+.wm-cov-verdict.off .wm-cov-vbadge{background:rgba(120,130,150,.16);color:var(--mut)}.wm-cov-verdict.off .wm-cov-vlabel{color:var(--mut);font-size:21px}
+.wm-cov-text{color:var(--tx);font-size:16px;line-height:1.7;margin:0;min-height:1.2em}
+.wm-cov-b{font-weight:800;color:var(--tx);background:linear-gradient(transparent 62%,rgba(140,245,196,.45) 0);padding:0 1px}
+.wm-cov-code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:rgba(57,211,255,.12);color:var(--em2);border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:nowrap}
 .wm-cov-caret{display:inline-block;width:2px;height:1.05em;background:var(--em2);margin-left:2px;vertical-align:-2px;animation:wm-cov-blink .8s step-end infinite}
 @keyframes wm-cov-blink{50%{opacity:0}}
 .wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
@@ -1360,7 +1394,7 @@ const CSS = `
 .wm-cov-input textarea{flex:1;resize:none;background:var(--ink);border:1px solid var(--line);border-radius:13px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none}
 .wm-cov-input textarea:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.12)}
 .wm-cov-ibtns{display:flex;align-items:center;gap:8px}
-.wm-cov-clear{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
+.wm-cov-clear{flex:0 0 auto;height:46px;padding:0 15px;border-radius:13px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
 .wm-cov-clear:hover{color:var(--tx);border-color:var(--em2)}
 .wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .wm-cov-send:disabled{opacity:.5;cursor:default}

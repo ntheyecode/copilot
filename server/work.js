@@ -698,6 +698,7 @@ export function workCoverageSystem(pricing = null) {
     '',
     'OUTPUT - reply with ONLY a JSON object, nothing else:',
     '{"verdict":"covered"|"partial"|"no"|"offtopic","answer":"2 to 4 short sentences","plan":"Basic"|"Advanced"|"Premium"|null,"product":"WorkCoPilot"|"MeetAiGene"|"AI Cloud"|null}',
+    'FORMAT the answer so it is easy to scan, not flat running text: wrap specific tools, commands, services, settings or file names in single backticks (for example `kubectl`, `aws eks`, `RBAC`, `VPC`, `Excel`), and wrap the two or three most important capability phrases in double asterisks for bold (for example **exact step-by-step commands** or **catches mistakes as they happen**). Use only a few of each, never a whole sentence, and never bold or code the plan name.',
     'When covered: say plainly it is covered, name a couple of the real things WorkCoPilot would do for THIS scenario, and which plan fits and why. When partial or no: be honest about the limit. When offtopic: one friendly line asking them to describe a task. Plain spoken words, no marketing fluff, no em dashes.'
   ].join('\n')
 }
