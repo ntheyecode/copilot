@@ -20,7 +20,7 @@ import * as store from './store.js'
 import * as ai from './ai.js'
 import * as docs from './docs.js'
 import * as work from './work.js'
-import { buildWorkReportPdf } from './pdf.js'
+import { buildWorkReportPdf, buildDeliverablesPdf } from './pdf.js'
 import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
@@ -531,9 +531,19 @@ app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubs
     })
     const d = await work.workDeliverables(ai, call.rt, { goal: safeGoal, scope, frames, visionModel: call.visionModel })
     const documentMd = work.workDeliverablesDocument({ goal: safeGoal, d })
+    store.setWorkDeliverables(req.workUser.id, req.params.id, d)   // so the PDF endpoint can render it
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Built the review and the generation prompts.' })
     res.json({ deliverables: d, documentMd })
   } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+})
+
+// The review deliverables as a PDF (built from what the last review stored).
+app.get('/api/work/sessions/:id/deliverables.pdf', requireWorkAuth, (req, res) => {
+  const s = store.getWorkSession(req.workUser.id, req.params.id)
+  if (!s || !s.deliverables) return res.status(404).json({ error: 'No review has been built for this session yet.' })
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="workcopilot-review.pdf"`)
+  buildDeliverablesPdf(s.deliverables, s.goal || '', res)
 })
 
 // Watch: the continuous navigator. Reads the WHOLE screen against the WHOLE

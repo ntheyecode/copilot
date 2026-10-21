@@ -166,6 +166,44 @@ function stepShots(doc, shots, W) {
   }
 }
 
+// ---- Review deliverables -> PDF -------------------------------------------
+// The engagement document: understanding, architecture + security issues, and
+// the two generation prompts, streamed straight to the response.
+export function buildDeliverablesPdf(d = {}, goal = '', stream) {
+  const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 60, right: 60 }, bufferPages: true })
+  doc.pipe(stream)
+  const W = doc.page.width - 120
+  const rule = () => { doc.moveTo(60, doc.y).lineTo(doc.page.width - 60, doc.y).strokeColor('#d8dbe0').lineWidth(1).stroke() }
+  const heading = (t) => { if (doc.y + 60 > doc.page.height - 60) doc.addPage(); doc.moveDown(0.4); doc.font('Helvetica-Bold').fontSize(13).fillColor(INK).text(t); doc.moveDown(0.3) }
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text('WorkCoPilot review and generation prompts')
+  doc.moveDown(0.2)
+  doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(new Date().toLocaleString(), { width: W })
+  doc.moveDown(0.4); rule(); doc.moveDown(0.6)
+  heading('Goal'); doc.font('Helvetica').fontSize(11).fillColor(INK).text(String(goal || '(none)'), { width: W })
+  if (d.summary) { heading('Understanding'); doc.font('Helvetica').fontSize(11).fillColor(INK).text(String(d.summary), { width: W }) }
+  const issues = (title, arr, withCtrl) => {
+    if (!Array.isArray(arr) || !arr.length) return
+    heading(title)
+    for (const a of arr) {
+      if (doc.y + 44 > doc.page.height - 60) doc.addPage()
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(INK).text(String(a.severity || '') + '  -  ' + String(a.issue || ''), { width: W })
+      if (withCtrl && a.control) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Control: ' + String(a.control), { width: W })
+      if (a.fix) doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Fix: ' + String(a.fix), { width: W })
+      doc.moveDown(0.3)
+    }
+  }
+  issues('Architecture issues', d.architecture, false)
+  issues('Security issues', d.security, true)
+  heading('Prompt 1 - current design, with the problems marked'); codeBlock(doc, String(d.promptIssues || '(none)'))
+  heading('Prompt 2 - recommended corrected design'); codeBlock(doc, String(d.promptTarget || '(none)'))
+  const range = doc.bufferedPageRange()
+  for (let i = 0; i < range.count; i++) {
+    doc.switchToPage(range.start + i)
+    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text('WorkCoPilot  -  Page ' + (i + 1) + ' of ' + range.count, 60, doc.page.height - 42, { width: W, align: 'center' })
+  }
+  doc.end()
+}
+
 function codeBlock(doc, body) {
   const lines = body.split('\n')
   const lineH = 12

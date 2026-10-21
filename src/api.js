@@ -96,6 +96,7 @@ export const api = {
   workScope: (goal) => req('POST', '/api/work/scope', { goal: clean(goal) }),
   // Deliverables: analyze captured page(s) -> findings + two generation prompts + a document.
   workDeliverables: (id, frames) => req('POST', `/api/work/sessions/${id}/deliverables`, { frames: frames || [] }),
+  workDeliverablesPdfUrl: (id, dl) => `/api/work/sessions/${id}/deliverables.pdf${dl ? '?dl=1' : ''}`,
   // body: { frame } -> { status, observation, flag, advanced, index, step, done, steps }
   workWatch: (id, body) => req('POST', `/api/work/sessions/${id}/watch`, body || {}),
   // body: { question?, frame }

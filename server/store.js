@@ -1069,6 +1069,15 @@ export function createWorkSession(workUserId, { title, goal, scope } = {}) {
   persist()
   return rec
 }
+// Store the last-built review deliverables on the session, so the PDF endpoint
+// can render them without the client re-sending.
+export function setWorkDeliverables(workUserId, sessionId, deliverables) {
+  const s = (db.workSessions || []).find((x) => x.id === sessionId && x.workUserId === workUserId)
+  if (!s) return null
+  s.deliverables = deliverables || null
+  persist()
+  return s
+}
 export function getWorkSession(workUserId, sessionId) { return findWorkSession(workUserId, sessionId) }
 export function listWorkSessions(workUserId) {
   return (db.workSessions || [])

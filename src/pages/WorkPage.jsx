@@ -1071,6 +1071,11 @@ const CONSOLE_CSS = `
 .wc-dl-thumb button{position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;border:none;background:rgba(0,0,0,.6);color:#fff;font-size:13px;line-height:1;cursor:pointer}
 .wc-dl-empty{color:var(--mut);font-size:13px;padding:14px 0}
 .wc-dl-err{color:var(--danger);font-size:13px;margin-bottom:10px}
+.wc-dl-auto{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:var(--tx);cursor:pointer;margin-bottom:12px;font-weight:500}
+.wc-dl-auto input{width:16px;height:16px;accent-color:var(--em-2);cursor:pointer}
+.wc-dl-watch{display:flex;align-items:center;gap:9px;background:var(--em-fill);border:1px solid var(--em-line);border-radius:10px;padding:9px 12px;font-size:12.5px;color:var(--tx-2);margin-bottom:12px}
+.wc-dl-watch .dot{width:9px;height:9px;border-radius:50%;background:var(--em-2);box-shadow:0 0 0 0 var(--em-2);animation:wc-dl-pulse 1.4s infinite}
+@keyframes wc-dl-pulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.5)}70%{box-shadow:0 0 0 7px rgba(56,189,248,0)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
 .wc-dl-note{background:var(--warm-fill);border:1px solid var(--warm-line);color:var(--warm);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .wc-dl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .wc-dl-summary{font-size:14.5px;line-height:1.6;color:var(--tx);margin:0 0 16px}
@@ -1220,12 +1225,35 @@ function HowDetail({ entry, onRetry }) {
 // cannot destabilize the Console. For review/design tasks (architecture,
 // diagrams, configs) the person snaps each page, then Finish builds the review
 // and the prompts they take to their own LLM / diagram tool.
-function DeliverablesPanel({ sessionId, grabFrame, onClose }) {
+function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
   const [frames, setFrames] = useState([])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [result, setResult] = useState(null)
   const [copied, setCopied] = useState('')
+  const [autoOn, setAutoOn] = useState(false)
+  const autoRef = useRef({ prev: null, stable: 0, captured: null })
+  // Auto-capture on settle: watch the shared screen and, when it stops changing
+  // for ~1.2s on a NEW page, snap it. No click interception - pure change
+  // detection (reuses signatureFromVideo/changed). Manual Snap still works.
+  useEffect(() => {
+    if (!autoOn || result) return
+    autoRef.current.prev = null; autoRef.current.stable = 0
+    const SETTLE = 3
+    const h = setInterval(() => {
+      const v = videoRef && videoRef.current
+      const sig = v ? signatureFromVideo(v) : null
+      if (!sig) return
+      const st = autoRef.current
+      if (st.prev && changed(st.prev, sig, 6)) { st.stable = 0; st.prev = sig; return }
+      st.prev = sig; st.stable++
+      if (st.stable === SETTLE && (!st.captured || changed(st.captured, sig, 10))) {
+        const f = frameFromVideo(v)
+        if (f) { setFrames((xs) => (xs.length >= 8 ? xs : [...xs, f])); st.captured = sig }
+      }
+    }, 400)
+    return () => clearInterval(h)
+  }, [autoOn, result])   // eslint-disable-line
   const snap = () => {
     setErr('')
     try { const f = grabFrame && grabFrame(); if (f) setFrames((xs) => [...xs, f].slice(0, 8)); else setErr('Put the page on screen first, and start sharing your screen.') }
@@ -1257,6 +1285,8 @@ function DeliverablesPanel({ sessionId, grabFrame, onClose }) {
         {!d ? (
           <div className="wc-dl-body">
             <p className="wc-dl-lead">Put each page you want reviewed on screen and tap <b>Snap</b>. Add as many as you need, then <b>Finish</b>. I will find the issues and build you two prompts to generate the corrected design in your own tools.</p>
+            <label className="wc-dl-auto"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} /> Auto-capture — snap each page as I settle on it</label>
+            {autoOn && <div className="wc-dl-watch"><span className="dot" /> Watching the shared screen. Open each page and hold still a moment; I capture it, then you move to the next.</div>}
             <div className="wc-dl-thumbs">
               {frames.map((f, i) => <div key={i} className="wc-dl-thumb"><img src={f} alt={'page ' + (i + 1)} /><span>{i + 1}</span><button onClick={() => setFrames(frames.filter((_, j) => j !== i))} aria-label="Remove">&times;</button></div>)}
               {!frames.length && <div className="wc-dl-empty">No pages captured yet</div>}
@@ -1277,7 +1307,8 @@ function DeliverablesPanel({ sessionId, grabFrame, onClose }) {
             <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2 — recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
             <div className="wc-dl-actions">
               <button className="btn btn-outline" onClick={() => setResult(null)}>Capture more</button>
-              <button className="btn btn-primary" onClick={download}><Download size={15} /> Download document (.md)</button>
+              <button className="btn btn-outline" onClick={download}><Download size={15} /> Markdown</button>
+              <button className="btn btn-primary" onClick={() => window.open(api.workDeliverablesPdfUrl(sessionId, true), '_blank')}><Download size={15} /> Download PDF</button>
             </div>
           </div>
         )}
@@ -1649,7 +1680,7 @@ function Console({ sessionId, onBack }) {
           <span style={{ fontSize: 11, color: 'var(--text-dim)' }}><Eye size={12} style={{ verticalAlign: -2 }} /> {frames} frames sent</span>
           {sess && sess.status !== 'ended' && <button className="btn btn-outline btn-sm" onClick={finalize} disabled={busy}>End and summarize</button>}
         </div>
-        {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} onClose={() => setDeliverOpen(false)} />}
+        {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
 
         {usage && usage.exhausted && (
           <div style={{ background: 'var(--danger)', color: '#fff', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
