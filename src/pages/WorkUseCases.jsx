@@ -32,49 +32,49 @@ export default function WorkUseCases() {
       id: 'config', icon: ServerCog, tone: 'a', tag: 'Technical setup & config',
       blurb: 'Stand up and lock down infrastructure the right way, step by step. Firewalls, IDS/IPS, cloud networking, servers and DevOps: WorkCoPilot walks you through the console or the terminal, names the exact setting, and checks each change is live before moving on.',
       can: ['Configure a firewall or security group', 'Harden a Linux server', 'Set up IDS / IPS rules', 'Wire up a CI/CD pipeline'],
-      guide: { goal: 'Lock down the server firewall', step: 'Allow only SSH and HTTPS', how: ['Run: sudo ufw default deny incoming', 'Allow 22 and 443', 'Turn it on: sudo ufw enable'], cmd: '$ sudo ufw allow 443/tcp', done: 'ufw status shows only 22 and 443 open' },
+      guide: { goal: 'Harden a public production Linux server', step: 'Kill password SSH, least-privilege the firewall, auto-ban attackers', how: ['Set PermitRootLogin no and PasswordAuthentication no in /etc/ssh/sshd_config', 'Default-deny the firewall, then allow only 22 and 443', 'Install fail2ban so repeated SSH failures get banned automatically', 'Reload sshd and confirm from a second session before you log out of the first'], cmd: '$ sudo ufw default deny incoming && sudo ufw allow 22,443/tcp && sudo ufw enable', done: 'ss -tlnp shows only 22 and 443, and a password login is refused' },
     },
     {
       id: 'build', icon: Blocks, tone: 'b', tag: 'Build & implement',
       blurb: 'Take an idea from an empty folder to a running system. Pipelines, integrations, data flows and end-to-end builds: it gives you the exact commands and code, in order, and catches the mistakes that usually cost hours.',
       can: ['Scaffold a new app or service', 'Connect two systems with an API', 'Build a data pipeline', 'Deploy to the cloud'],
-      guide: { goal: 'Connect Stripe to your app', step: 'Add the webhook endpoint', how: ['Create a POST route at /webhooks/stripe', 'Verify the signature with your secret', 'Return 200 fast, then handle the event'], cmd: '$ stripe listen --forward-to localhost:3000/webhooks/stripe', done: 'a test event shows 200 in the CLI' },
+      guide: { goal: 'Add bullet-proof Stripe webhooks', step: 'Verify every event and make the handler idempotent', how: ['Create a raw-body POST /webhooks/stripe (no JSON parser on that one route)', 'Verify the signature with stripe.webhooks.constructEvent before trusting anything', 'Record each event id and skip it if you have seen it, so retries never double-charge', 'Return 200 within two seconds, then process the event in a background job'], cmd: '$ stripe trigger checkout.session.completed', done: 'a replayed event is accepted once and ignored the second time' },
     },
     {
       id: 'ai', icon: Sparkles, tone: 'c', tag: 'AI & automation',
       blurb: 'Build agents, RAG assistants and automations without getting lost. n8n flows, vector search and enterprise AI: it guides each node, each setting and each connection, so the automation actually runs.',
       can: ['Build an n8n workflow', 'Stand up a RAG assistant', 'Automate a repetitive task', 'Wire an AI into your tools'],
-      guide: { goal: 'Build a business phone AI in n8n', step: 'Add a Webhook trigger for the call', how: ['Add the Webhook node, method POST', 'Copy the URL into your phone provider', 'Add the AI and voice nodes after it'], cmd: null, done: 'a test call reaches the Webhook node' },
+      guide: { goal: 'Ship a RAG assistant that cites its sources', step: 'Wire retrieval before generation, and make it refuse when unsure', how: ['Split your docs into ~500-token chunks with slight overlap, keeping each source id', 'Embed every chunk and upsert it into the vector store', 'On a question, retrieve the top matches, rerank them, and pass only those as context', 'Make the prompt cite the chunk it used and answer "I do not know" when nothing matches'], cmd: null, done: 'answers quote the right document and refuse when the answer is not in the corpus' },
     },
     {
       id: 'product', icon: Rocket, tone: 'd', tag: 'Product & innovation',
       blurb: 'Turn a brand new idea into something real. Prototype, validate and ship: it guides tools you have never opened before and keeps everything pointed at the outcome you want.',
       can: ['Prototype a new feature', 'Spin up a landing page', 'Run a quick experiment', 'Ship a first version'],
-      guide: { goal: 'Ship a landing page today', step: 'Publish the page', how: ['Pick a template, drop in your copy', 'Connect your domain in Settings', 'Hit Publish, open the live URL'], cmd: null, done: 'the live URL loads your page' },
+      guide: { goal: 'Ship and instrument a landing page today', step: 'Publish on your domain and prove the tracking fires', how: ['Build the page, then connect your domain with the exact DNS records it shows', 'Add the analytics snippet just before the closing head tag', 'Set a conversion event on the signup button, not just a page view', 'Open the live URL and confirm a test signup lands in real-time analytics'], cmd: null, done: 'the live URL loads and a test signup appears as a conversion' },
     },
     {
       id: 'marketing', icon: Megaphone, tone: 'e', tag: 'Marketing & growth',
       blurb: 'Launch campaigns, read the numbers and grow, without second-guessing every button. It walks you through the ad manager and the analytics, and tells you what each number means.',
       can: ['Launch an ad campaign', 'Set up conversion tracking', 'Read a traffic report', 'Plan a product launch'],
-      guide: { goal: 'Launch a Google Ads campaign', step: 'Set the budget and audience', how: ['Create a Search campaign', 'Set a daily budget and locations', 'Add keywords, then Review'], cmd: null, done: 'the campaign shows Eligible' },
+      guide: { goal: 'Launch a Google Ads search campaign that converts', step: 'Set budget, keywords and conversion tracking together', how: ['Install the Google tag and import the conversion from GA4 first', 'Create a Search campaign with exact and phrase-match keywords, not broad', 'Set a daily cap, the right locations, and a target CPA', 'Add three responsive search ads, then submit for review'], cmd: null, done: 'the campaign reads Eligible and the conversion shows Recording' },
     },
     {
       id: 'office', icon: Calculator, tone: 'a', tag: 'Accounting & office',
       blurb: 'Close the books, build the report, file the thing: guided click by click. Reconciliations, spreadsheets, invoices and filings: it shows exactly what to enter and flags what does not add up.',
       can: ['Reconcile a bank statement', 'Build a financial report', 'Create and send invoices', 'Prepare a filing'],
-      guide: { goal: 'Reconcile the bank statement', step: 'Match the deposits', how: ['Open the month in your tool', 'Match each deposit to a transaction', 'Flag anything unmatched'], cmd: null, done: 'the balance matches the statement' },
+      guide: { goal: 'Reconcile the month to the penny', step: 'Match everything, then hunt the variance', how: ['Import the bank CSV and lock the opening balance', 'Auto-match the deposits, then clear each withdrawal one by one', 'When it does not tie out, filter to uncleared and compare dates and amounts', 'Post the bank fees and interest the statement shows but your books do not'], cmd: null, done: 'the cleared balance equals the statement to the cent' },
     },
     {
       id: 'legal', icon: Scale, tone: 'b', tag: 'Legal & compliance',
       blurb: 'Move through reviews, forms and checks with a steady hand. It guides the process, points to what to look for, and keeps a clean record of what was done.',
       can: ['Review a contract clause by clause', 'Complete a compliance checklist', 'Fill a regulatory form', 'Prepare an audit trail'],
-      guide: { goal: 'Review a vendor contract', step: 'Check the key clauses', how: ['Open the contract side by side', 'Check term, liability and termination', 'Note anything to flag for counsel'], cmd: null, done: 'every key clause is checked or flagged' },
+      guide: { goal: 'Red-line a vendor contract', step: 'Check the clauses that actually carry risk', how: ['Open the contract next to your playbook or standard positions', 'Check the liability cap, indemnity, term and auto-renewal', 'Check data processing, breach-notice windows and sub-processors', 'Flag every deviation with a suggested red-line for counsel to approve'], cmd: null, done: 'every high-risk clause is checked, flagged or accepted' },
     },
     {
       id: 'general', icon: Compass, tone: 'c', tag: 'Everyday & anything else',
       blurb: 'Anything else on a screen. A new tool you have never opened, a form you are stuck on, an error you do not understand: point WorkCoPilot at it and get walked through to done.',
       can: ['Learn a new tool fast', 'Fix a confusing error', 'Fill a tricky form', 'Get unstuck on anything'],
-      guide: { goal: 'Fix this error on screen', step: 'Read the error, apply the fix', how: ['Ask what the error means', 'Apply the exact fix it shows', 'Re-run and confirm it is gone'], cmd: null, done: 'the error no longer appears' },
+      guide: { goal: 'Decode and fix a cryptic error', step: 'Find the real cause, not the symptom, then fix it', how: ['Paste the whole error, it reads the full stack, not just the last line', 'It names the real cause and which file and line to change', 'Apply the exact config or code fix it shows, in the right place', 'Re-run and confirm the error is gone, not just moved somewhere else'], cmd: null, done: 'the task finishes with a clean log and no error' },
     },
   ]
 
@@ -162,20 +162,23 @@ function MiniGuide({ g, tag }) {
 }
 
 const CSS = `
-.uc{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;
-  position:relative;min-height:100vh;background:var(--ink);color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+/* Light theme - matches the rest of the site. The WorkCoPilot "screen" mockup
+   (.uc-mini) re-scopes dark vars below so it stays a dark device screenshot. */
+.uc{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--ink-brand:#062a22;
+  position:relative;min-height:100vh;color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(1000px 520px at 85% -8%,rgba(10,134,207,.14),transparent 60%),radial-gradient(820px 480px at -6% 4%,rgba(10,157,102,.12),transparent 58%),var(--ink)}
 .uc *{box-sizing:border-box}.uc a{color:inherit;text-decoration:none}
 .uc h1,.uc h2{color:var(--tx);margin:0}.uc p{margin:0}
 .uc em{font-style:normal;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .uc-wrap{max-width:1140px;margin:0 auto;padding:0 24px;position:relative;z-index:3}
 .uc-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.4}
+.orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.26}
 .o1{width:46vw;height:46vw;left:-12vw;top:-16vw;background:radial-gradient(circle,rgba(57,211,255,.5),transparent 65%)}
 .o2{width:42vw;height:42vw;right:-12vw;top:30vh;background:radial-gradient(circle,rgba(140,245,196,.42),transparent 65%)}
 .uc [data-reveal]{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
 .uc [data-reveal].in{opacity:1;transform:none}
 
-.uc-nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);background:rgba(7,8,16,.62);border-bottom:1px solid var(--line)}
+.uc-nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);background:rgba(255,255,255,.72);border-bottom:1px solid var(--line)}
 .uc-nav-in{display:flex;align-items:center;gap:16px;height:68px}
 .uc-navcta{margin-left:auto;display:flex;align-items:center;gap:16px}
 .uc-back{display:inline-flex;align-items:center;gap:5px;color:var(--mut);font-size:15px}.uc-back:hover{color:var(--tx)}
@@ -187,7 +190,7 @@ const CSS = `
 .uc-hero h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(38px,6vw,64px);line-height:1.02;letter-spacing:-.03em;margin:0 0 20px}
 .uc-hero p{color:var(--mut);font-size:19px;max-width:62ch;margin:0 auto 26px}
 .uc-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:760px;margin:0 auto}
-.uc-chip{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--mut);border:1px solid var(--line);background:rgba(255,255,255,.03);border-radius:999px;padding:8px 14px;transition:color .2s,border-color .2s}
+.uc-chip{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;color:var(--mut);border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:8px 14px;box-shadow:0 1px 2px rgba(17,23,38,.04);transition:color .2s,border-color .2s}
 .uc-chip:hover{color:var(--tx);border-color:rgba(140,245,196,.4)}
 .uc-chip svg{color:var(--em)}
 
@@ -205,7 +208,7 @@ const CSS = `
 .uc-can li svg{color:var(--em);flex-shrink:0;margin-top:3px}
 
 /* mini guide graphic */
-.uc-mini{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:20px;padding:16px;box-shadow:0 40px 90px -45px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05)}
+.uc-mini{--tx:#eef1f8;--mut:#9aa6ba;--line:rgba(255,255,255,.12);--em:#8cf5c4;--em2:#5bd0ff;color:var(--tx);background:linear-gradient(180deg,#12141d,#0b0f1c);border:1px solid rgba(255,255,255,.1);border-radius:20px;padding:16px;box-shadow:0 44px 90px -42px rgba(10,20,45,.5),inset 0 1px 0 rgba(255,255,255,.05)}
 .uc-mini-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:2px 4px 12px}
 .uc-mini-head b{font-family:"Bricolage Grotesque";margin-left:6px}
 .uc-mini-head .d{width:9px;height:9px;border-radius:50%}
