@@ -165,6 +165,93 @@ function AiSetup({ onReady, bare }) {
   )
 }
 
+// ---- Scope wizard: a short, adaptive requirement intake before planning -----
+// Our platform model asks a few goal-specific questions (like a consultant
+// scoping a job), then the answers are stored on the session and folded into
+// the plan. Tier-gated steps show an upgrade nudge but never block.
+function tierRank(t) { return ({ basic: 0, advanced: 1, premium: 2 })[t] != null ? ({ basic: 0, advanced: 1, premium: 2 })[t] : 0 }
+function ScopeWizard({ goal, tier, onCancel, onReady }) {
+  const [phase, setPhase] = useState('loading')   // loading | ask | error
+  const [questions, setQuestions] = useState([])
+  const [idx, setIdx] = useState(0)
+  const [answers, setAnswers] = useState([])
+  const [txt, setTxt] = useState('')
+  const [err, setErr] = useState('')
+  useEffect(() => {
+    let alive = true
+    api.workScope(goal).then((r) => {
+      if (!alive) return
+      const qs = (r && r.questions) || []
+      if (!qs.length) { onReady([]); return }
+      setQuestions(qs); setPhase('ask')
+    }).catch((e) => { if (alive) { setErr((e && e.message) || 'Could not scope this.'); setPhase('error') } })
+    return () => { alive = false }
+  }, [])   // eslint-disable-line
+  const cur = questions[idx]
+  const advance = (a) => {
+    const rec = (a != null && String(a).trim()) ? [...answers, { id: cur.id, q: cur.text, a: String(a).trim() }] : answers
+    setAnswers(rec); setTxt('')
+    if (idx + 1 >= questions.length) onReady(rec)
+    else setIdx(idx + 1)
+  }
+  const back = () => { if (idx > 0) { setIdx(idx - 1); setTxt('') } }
+
+  return (
+    <div className="wd-wiz" onClick={() => onCancel()}>
+      <div className="wd-wiz-card" onClick={(e) => e.stopPropagation()}>
+        {phase === 'loading' && <div className="wd-wiz-load"><Loader2 size={18} className="spin" /> Understanding what you need…</div>}
+        {phase === 'error' && (
+          <div>
+            <div style={{ color: 'var(--danger)', marginBottom: 14 }}>{err}</div>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="btn btn-outline" onClick={() => onCancel()}>Back</button>
+              <button className="btn btn-primary" onClick={() => onReady([])}>Plan anyway</button>
+            </div>
+          </div>
+        )}
+        {phase === 'ask' && cur && (() => {
+          const gated = cur.tierGate && tierRank(tier) < tierRank(cur.tierGate)
+          const last = idx + 1 >= questions.length
+          return (
+            <>
+              <div className="wd-wiz-top">
+                <span className="wd-wiz-eyebrow"><Sparkles size={13} /> Scoping your plan</span>
+                <button className="wd-wiz-x" onClick={() => onCancel()} aria-label="Cancel">&times;</button>
+              </div>
+              <div className="wd-wiz-prog">{questions.map((_, i) => <span key={i} className={i <= idx ? 'on' : ''} />)}</div>
+              <div className="wd-wiz-q">{cur.text}</div>
+              {gated && (
+                <div className="wd-wiz-gate">
+                  <span><Zap size={13} /> Grounding on your own documents is on Advanced & Premium. Answer anyway, I plan with what your plan allows.</span>
+                  <button className="btn btn-sm btn-primary" onClick={() => onCancel('upgrade')}>Upgrade</button>
+                </div>
+              )}
+              {cur.kind === 'text' ? (
+                <div className="wd-wiz-text">
+                  <textarea rows={2} autoFocus placeholder={cur.placeholder || 'Type your answer'} value={txt} onChange={(e) => setTxt(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); advance(txt) } }} />
+                  <button className="btn btn-primary" onClick={() => advance(txt)}>{last ? 'Build my plan' : 'Next'} <ArrowRight size={15} /></button>
+                </div>
+              ) : (
+                <div className="wd-wiz-choices">
+                  {(cur.kind === 'yesno' ? ['Yes', 'No'] : cur.options).map((o) => (
+                    <button key={o} className="wd-wiz-choice" onClick={() => advance(o)}>{o}</button>
+                  ))}
+                </div>
+              )}
+              <div className="wd-wiz-foot">
+                {idx > 0 && <button className="wd-wiz-link" onClick={back}><ChevronLeft size={14} /> Back</button>}
+                <button className="wd-wiz-link" onClick={() => advance(null)}>Skip</button>
+                <button className="wd-wiz-link strong" onClick={() => onReady(answers)}>I'm ready, build my plan <ArrowRight size={13} /></button>
+              </div>
+            </>
+          )
+        })()}
+      </div>
+    </div>
+  )
+}
+
 // ---- Home: start a session, resume saved ones, get the apps ---------------
 const WD_CSS = `
 .wd{
@@ -411,6 +498,33 @@ const WD_CSS = `
 @media(prefers-reduced-motion:reduce){
  .wd *{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
+/* Scope wizard */
+.wd-wiz{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,14,.55);backdrop-filter:blur(4px);animation:wd-wiz-fade .18s ease}
+@keyframes wd-wiz-fade{from{opacity:0}to{opacity:1}}
+.wd-wiz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,680px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 28px;box-shadow:var(--shadow);animation:wd-wiz-pop .22s cubic-bezier(.2,.8,.2,1)}
+@keyframes wd-wiz-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
+.wd-wiz-load{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:15px;font-weight:500;padding:14px 0}
+.wd-wiz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.wd-wiz-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
+.wd-wiz-x{background:none;border:none;color:var(--mut);font-size:24px;line-height:1;cursor:pointer;padding:0 4px}
+.wd-wiz-x:hover{color:var(--tx)}
+.wd-wiz-prog{display:flex;gap:6px;margin-bottom:20px}
+.wd-wiz-prog span{height:5px;flex:1;border-radius:999px;background:var(--track);transition:background .25s}
+.wd-wiz-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2))}
+.wd-wiz-q{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:21px;line-height:1.3;color:var(--tx);margin-bottom:18px}
+.wd-wiz-gate{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;background:var(--warm-fill);border:1px solid var(--warm-line);border-radius:12px;padding:10px 13px;margin-bottom:16px;font-size:12.5px;color:var(--warm)}
+.wd-wiz-gate span{display:inline-flex;align-items:center;gap:7px}
+.wd-wiz-choices{display:flex;flex-direction:column;gap:10px}
+.wd-wiz-choice{text-align:left;background:var(--card-a);border:1px solid var(--line-2);border-radius:13px;padding:14px 16px;color:var(--tx);font:inherit;font-size:15px;font-weight:500;cursor:pointer;transition:border-color .15s,background .15s}
+.wd-wiz-choice:hover{border-color:var(--em-2);background:var(--em-fill)}
+.wd-wiz-text{display:flex;flex-direction:column;gap:12px}
+.wd-wiz-text textarea{resize:none;background:var(--field);border:1px solid var(--line-2);border-radius:13px;padding:13px 15px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none}
+.wd-wiz-text textarea:focus{border-color:var(--em-2)}
+.wd-wiz-text .btn{align-self:flex-end}
+.wd-wiz-foot{display:flex;align-items:center;gap:18px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.wd-wiz-link{background:none;border:none;color:var(--mut);font:inherit;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0}
+.wd-wiz-link:hover{color:var(--tx)}
+.wd-wiz-link.strong{margin-left:auto;color:var(--em-2);font-weight:600}
 `
 
 const WD_CATS = [
@@ -427,6 +541,7 @@ const WD_CATS = [
 function Home({ user, onOpen, onSignOut }) {
   const [tab, setTab] = useState('dashboard')
   const [ready, setReady] = useState(false)
+  const [scoping, setScoping] = useState(false)
   const [sessions, setSessions] = useState([])
   const [sessLoaded, setSessLoaded] = useState(false)
   const [appStatus, setAppStatus] = useState(null)
@@ -505,6 +620,16 @@ function Home({ user, onOpen, onSignOut }) {
       if (e && e.status === 402) setNeedsSub(true)   // no plan: surface the chooser
     }
   }
+  // The plan phase is a short scoping wizard (forced). "Start guiding me" opens
+  // it; the answers are stored on the session and folded into the plan.
+  const tier = (usage && usage.tier) || 'basic'
+  const beginScope = () => { if (!ready || busy || !goal.trim()) return; setScoping(true) }
+  const runWithScope = async (answers) => {
+    setScoping(false); setBusy(true)
+    try { const r = await api.workCreate({ goal: goal.trim(), scope: answers || [] }); onOpen(r.session.id) }
+    catch (e) { setBusy(false); if (e && e.status === 402) setNeedsSub(true) }
+  }
+  const cancelScope = (reason) => { setScoping(false); if (reason === 'upgrade') setNeedsSub(true) }
   // Start Stripe Checkout for a plan. On success we are redirected to Stripe; a
   // missing/incomplete billing config returns a clear message instead.
   const startCheckout = async (plan) => {
@@ -640,7 +765,7 @@ function Home({ user, onOpen, onSignOut }) {
               <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
               <div className="wd-start-row">
                 <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Set up your AI above to begin.'}</span>
-                <button className="wd-cta" disabled={!ready || busy || !goal.trim()} onClick={() => create()}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
+                <button className="wd-cta" disabled={!ready || busy || !goal.trim()} onClick={beginScope}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
               </div>
             </div>
 
@@ -768,6 +893,7 @@ function Home({ user, onOpen, onSignOut }) {
           <HelpDocs onStart={() => setTab('dashboard')} />
         )}
       </main>
+      {scoping && <ScopeWizard goal={goal} tier={tier} onCancel={cancelScope} onReady={runWithScope} />}
     </div>
   )
 }

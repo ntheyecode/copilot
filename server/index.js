@@ -414,8 +414,8 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 // Sessions
 // ===========================================================================
 app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
-  const { title, goal } = req.body || {}
-  res.json({ session: store.createWorkSession(req.workUser.id, { title, goal }) })
+  const { title, goal, scope } = req.body || {}
+  res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }) })
 }))
 app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
   res.json({ sessions: store.listWorkSessions(req.workUser.id) })
@@ -451,6 +451,11 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const scrubOn = store.workUserScrubOn(req.workUser.id)
     const goalScrub = scrubOn ? scrubSensitive(useGoal) : { clean: useGoal, counts: {}, total: 0 }
     const safeGoal = goalScrub.clean
+    // Fold the scoping wizard answers into the plan (scrubbed too when enabled).
+    const scopeAnswers = (Array.isArray(req.body && req.body.scope) ? req.body.scope : null) || (Array.isArray(s.scope) ? s.scope : null)
+    let scopeBrief = scopeAnswers ? work.workScopeBrief(scopeAnswers) : ''
+    if (scopeBrief && scrubOn) scopeBrief = scrubSensitive(scopeBrief).clean
+    const planGoal = safeGoal + (scopeBrief ? '\n\n' + scopeBrief : '')
     const research = await Promise.race([
       workResearchNotes(safeGoal),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
@@ -472,7 +477,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       sent: safeGoal + (userDocs ? '\n[+ your reference documents]' : '') + (research ? '\n[+ current research notes]' : ''),
     })
     const plan = await work.workPlan(ai, call.rt, {
-      base: store.getSystemPrompt(), mode: useMode, goal: safeGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, strong: call.backup,
+      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, strong: call.backup,
     })
     if (plan.refusal) {
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Declined: ' + plan.refusal })
@@ -484,6 +489,23 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
     const updated = store.getWorkSession(req.workUser.id, req.params.id)
     res.json({ session: updated, steps: updated.steps, appContext: updated.appContext })
+  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+})
+
+// Scope: the requirement wizard that runs BEFORE planning. Text-only call on the
+// platform model; returns a short, goal-specific question set. The answers are
+// sent back on /plan (scope) and folded into the checklist.
+app.post('/api/work/scope', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+  try {
+    const goal = String((req.body || {}).goal || '').trim()
+    if (!goal) return res.status(400).json({ error: 'Say what you want to get done first.' })
+    const r = await resolveWorkRuntime(req, res, { needVision: false }); if (!r) return
+    const call = workCallRuntime(r, false)
+    const scrubOn = store.workUserScrubOn(req.workUser.id)
+    const safeGoal = scrubOn ? scrubSensitive(goal).clean : goal
+    const tier = (store.getWorkUsage(req.workUser.id) || {}).tier || 'basic'
+    const out = await work.workScope(ai, call.rt, { goal: safeGoal, tier })
+    res.json(out)
   } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
 })
 

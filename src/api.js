@@ -92,6 +92,8 @@ export const api = {
   workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
   // body: { goal?, frame? } (frame = downscaled data URL, scrubbed of PII in the component)
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
+  // Scope wizard: get the goal-specific requirement questions before planning.
+  workScope: (goal) => req('POST', '/api/work/scope', { goal: clean(goal) }),
   // body: { frame } -> { status, observation, flag, advanced, index, step, done, steps }
   workWatch: (id, body) => req('POST', `/api/work/sessions/${id}/watch`, body || {}),
   // body: { question?, frame }

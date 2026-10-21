@@ -729,3 +729,51 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
   }
   return { verdict, answer, plan: verdict === 'offtopic' ? null : plan, product }
 }
+
+// ===========================================================================
+// SCOPE WIZARD: adaptive requirements intake BEFORE planning. A person gives a
+// short goal; the AI returns a tight, goal-specific set of questions (like a
+// senior consultant scoping a job). The answers are folded into the plan so the
+// checklist is grounded in the real requirement. Runs on the platform model.
+// ===========================================================================
+export function workScopeSystem(tier = 'basic') {
+  return [
+    'You are the scoping step of WorkCoPilot, a read-only, screen-aware guide that walks a person through ANY task step by step and never does the task for them.',
+    'A person has given a short goal. BEFORE planning, produce a SHORT, high-value set of questions to understand the requirement well enough to generate an excellent, tailored plan. Think like a senior consultant scoping a job: ask only what MATERIALLY changes the plan.',
+    'Rules:',
+    '- Return BETWEEN 2 AND 6 questions, most-important first. Fewer is better; never pad.',
+    '- Every question must be specific to THIS goal, not generic. Drop any question whose answer would not change the plan.',
+    '- Cover, when they matter for this goal: what "done" looks like, the environment / stack / constraints, whether they have their own documents or a diagram to work from, the depth they want (exact step-by-step vs a high-level plan), and any must-haves or deadlines.',
+    '- If the goal is to review or design something (an architecture, a diagram, a config, a document), include a question asking whether they want the issues identified and a ready-to-use prompt to generate a corrected version in their own tools.',
+    '- The person is on the ' + String(tier).toUpperCase() + ' plan. Uploading their OWN documents to ground the work is an Advanced/Premium feature. You MAY still ask whether they have documents or a diagram (mark that question tierGate "advanced"), so Basic users see what upgrading unlocks, but it is NEVER required and the plan must proceed without it.',
+    'Question kinds: "choice" (2 to 5 short options), "yesno", or "text" (one short free-text answer). Prefer choice/yesno; use text only when options cannot capture it.',
+    'Return ONLY JSON, nothing else:',
+    '{"questions":[{"id":"<short-slug>","text":"<the question>","kind":"choice|yesno|text","options":["<opt>"],"tierGate":"advanced"|"premium"|null,"placeholder":"<hint for text kind>"}]}'
+  ].join('\n')
+}
+export function workScopeUser(goal) {
+  return `GOAL:\n"""${String(goal || '').trim().slice(0, 1500)}"""\n\nReturn the scoping questions JSON now.`
+}
+export async function workScope(ai, cfg, { goal, tier = 'basic' }) {
+  const raw = await ai.generate(cfg, workScopeSystem(tier), workScopeUser(goal))
+  let parsed = {}
+  try { const a = String(raw).indexOf('{'), z = String(raw).lastIndexOf('}'); if (a >= 0 && z > a) parsed = JSON.parse(String(raw).slice(a, z + 1)) } catch (_) {}
+  let qs = Array.isArray(parsed.questions) ? parsed.questions : []
+  qs = qs.slice(0, 6).map((q, i) => ({
+    id: String((q && q.id) || ('q' + i)).slice(0, 40),
+    text: String((q && q.text) || '').slice(0, 240),
+    kind: ['choice', 'yesno', 'text'].includes(q && q.kind) ? q.kind : 'text',
+    options: Array.isArray(q && q.options) ? q.options.slice(0, 5).map((o) => String(o).slice(0, 80)).filter(Boolean) : [],
+    tierGate: ['advanced', 'premium'].includes(q && q.tierGate) ? q.tierGate : null,
+    placeholder: String((q && q.placeholder) || '').slice(0, 120),
+  })).filter((q) => q.text && (q.kind !== 'choice' || q.options.length >= 2))
+  return { questions: qs }
+}
+// Fold the scoping answers into a context block that is appended to the goal at
+// plan time, so the checklist honors what the person told us.
+export function workScopeBrief(answers) {
+  const rows = (Array.isArray(answers) ? answers : [])
+    .filter((a) => a && a.q && String(a.a || '').trim())
+    .map((a) => `- ${String(a.q).trim()} => ${String(a.a).trim()}`)
+  return rows.length ? `WHAT THE PERSON TOLD US WHEN SCOPING (these are the requirement - honor them):\n${rows.join('\n')}` : ''
+}

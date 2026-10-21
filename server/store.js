@@ -1045,13 +1045,14 @@ export function workAiStatus(workUserId) {
 function findWorkSession(workUserId, sessionId) {
   return (db.workSessions || []).find((x) => x.id === sessionId && x.workUserId === workUserId) || null
 }
-export function createWorkSession(workUserId, { title, goal } = {}) {
+export function createWorkSession(workUserId, { title, goal, scope } = {}) {
   if (!db.workSessions) db.workSessions = []
   const rec = {
     id: 'ws' + id(),
     workUserId,
     title: String(title || '').trim() || `Session ${new Date().toLocaleString()}`,
     goal: String(goal || '').trim() || null,
+    scope: Array.isArray(scope) ? scope.slice(0, 12).map((a) => ({ q: String((a && a.q) || '').slice(0, 240), a: String((a && a.a) || '').slice(0, 600) })).filter((a) => a.q && a.a) : null,
     status: 'active',
     steps: [],
     currentStep: 0,
