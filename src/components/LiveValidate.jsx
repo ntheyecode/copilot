@@ -20,7 +20,7 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, Building2,
-  ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2,
+  ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 
@@ -231,37 +231,58 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
                         </ul>
                       )}
-                      {res.preview && res.preview.length > 0 && (
-                        <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
-                          <div className="wm-cov-live">
-                            <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
-                            <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on. The steps below are only a static taste.</div>
-                          </div>
-                          <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A taste of the step-by-step</div>
-                          <ol className="wm-cov-steps">
-                            {res.preview.map((p, i) => (
-                              <li key={i}>
-                                <span className="n">{i + 1}</span>
-                                <div className="s">
-                                  <div className="do">{renderRich(p.do)}</div>
-                                  {p.cmd && (
-                                    <div className="cmd">
-                                      <code>{p.cmd}</code>
-                                      <button onClick={() => copyCmd(p.cmd, i)} title="Copy" aria-label="Copy command">{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
+                      {res.preview && res.preview.length > 0 && (() => {
+                        const preview = res.preview
+                        const shown = preview.length
+                        // The whole-task roadmap; fall back to the preview titles if the
+                        // model did not return a longer one. The first `shown` are
+                        // expanded; the rest are upcoming guided steps.
+                        const roadmap = (Array.isArray(res.roadmap) && res.roadmap.length >= shown) ? res.roadmap : preview.map((p) => p.do)
+                        const total = roadmap.length
+                        const remaining = total - shown
+                        return (
+                          <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
+                            <div className="wm-cov-live">
+                              <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
+                              <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on. This is the start of the plan — the real session runs the whole thing.</div>
+                            </div>
+                            {res.sees && <div className="wm-cov-sees"><ScanEye size={13} /> <b>I can see</b> {res.sees}</div>}
+                            <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A {total}-step plan{remaining > 0 ? <span className="wm-cov-flow-sub"> · first {shown} shown in full</span> : null}</div>
+                            <ol className="wm-cov-steps">
+                              {roadmap.map((title, i) => {
+                                if (i >= shown) return (
+                                  <li key={i} className="next">
+                                    <span className="n play"><Play size={10} /></span>
+                                    <div className="s"><div className="do up">{renderRich(title)}</div></div>
+                                  </li>
+                                )
+                                const p = preview[i]
+                                return (
+                                  <li key={i}>
+                                    <span className="n">{i + 1}</span>
+                                    <div className="s">
+                                      <div className="do">{renderRich(p.do)}</div>
+                                      {p.cmd && (
+                                        <div className="cmd">
+                                          <code>{p.cmd}</code>
+                                          <button onClick={() => copyCmd(p.cmd, i)} title="Copy" aria-label="Copy command">{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
+                                        </div>
+                                      )}
+                                      {p.how && p.how.length > 0 && (
+                                        <details className="wm-cov-how">
+                                          <summary>Show how</summary>
+                                          <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
+                                        </details>
+                                      )}
                                     </div>
-                                  )}
-                                  {p.how && p.how.length > 0 && (
-                                    <details className="wm-cov-how">
-                                      <summary>Show how</summary>
-                                      <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
-                                    </details>
-                                  )}
-                                </div>
-                              </li>
-                            ))}
-                          </ol>
-                        </div>
-                      )}
+                                  </li>
+                                )
+                              })}
+                            </ol>
+                            {remaining > 0 && <div className="wm-cov-more"><Play size={12} /> {remaining} more guided step{remaining === 1 ? '' : 's'} in a real session, each the same depth</div>}
+                          </div>
+                        )
+                      })()}
                       {res.verdict !== 'offtopic' && (
                         <div className={`wm-cov-trust${typingDone ? ' show' : ''}`}>
                           <div className="wm-cov-trust-row">
@@ -377,6 +398,15 @@ const LV_CSS = `
 .wm-cov-flow{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(57,211,255,.05);opacity:0;transform:translateY(6px);transition:opacity .4s ease .12s,transform .4s ease .12s}
 .wm-cov-flow.show{opacity:1;transform:none}
 .wm-cov-flow-h{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em2);margin-bottom:12px}
+.wm-cov-flow-sub{color:var(--mut);font-weight:700;letter-spacing:.02em;text-transform:none}
+.wm-cov-sees{display:flex;align-items:flex-start;gap:7px;margin-bottom:12px;font-size:13px;line-height:1.5;color:var(--mut)}
+.wm-cov-sees b{color:var(--em2);font-weight:700;margin-right:1px}
+.wm-cov-sees svg{color:var(--em2);flex-shrink:0;margin-top:2px}
+.wm-cov-steps li.next{opacity:.85}
+.wm-cov-steps .n.play{background:rgba(255,255,255,.06);color:var(--mut);border:1px solid var(--line)}
+.wm-cov-steps .do.up{color:var(--mut);font-size:14px;padding-top:2px}
+.wm-cov-more{display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mut)}
+.wm-cov-more svg{color:var(--em2);flex-shrink:0}
 .wm-cov-live{display:flex;gap:11px;align-items:flex-start;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(57,211,255,.14),rgba(140,245,196,.11));border:1px solid rgba(57,211,255,.32)}
 .wm-cov-live-ic{flex:0 0 32px;width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--em),var(--em2));color:#042}
 .wm-cov-live div{font-size:13.5px;line-height:1.55;color:var(--tx)}
