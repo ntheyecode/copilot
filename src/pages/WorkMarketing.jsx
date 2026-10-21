@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
   ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
-  Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle,
+  Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI before the scenario leaves the browser (public form: always on)
@@ -394,13 +394,31 @@ function CoverageChat({ go }) {
   const [res, setRes] = useState(null)
   const [err, setErr] = useState('')
   const [fire, setFire] = useState(false)
+  const [typed, setTyped] = useState('')         // typewriter progress of the answer
+  const [typingDone, setTypingDone] = useState(false)
   const taRef = useRef(null)
   useEffect(() => { if (open && taRef.current) taRef.current.focus() }, [open])
+
+  // Reveal the answer with a snappy typewriter - cool and attention grabbing.
+  useEffect(() => {
+    if (!res || !res.answer) { setTyped(''); setTypingDone(false); return }
+    const full = String(res.answer)
+    setTyped(''); setTypingDone(false)
+    let i = 0
+    const id = setInterval(() => {
+      i += 2
+      if (i >= full.length) { setTyped(full); setTypingDone(true); clearInterval(id) }
+      else setTyped(full.slice(0, i))
+    }, 16)
+    return () => clearInterval(id)
+  }, [res])
+
+  const clearAll = () => { setQ(''); setRes(null); setErr(''); setTyped(''); setTypingDone(false); setFire(false); setTimeout(() => taRef.current && taRef.current.focus(), 0) }
 
   const ask = async () => {
     const question = q.trim()
     if (!question || busy) return
-    setBusy(true); setErr(''); setRes(null); setFire(false)
+    setBusy(true); setErr(''); setRes(null); setFire(false); setTyped(''); setTypingDone(false)
     try {
       const r = await fetch('/api/work/coverage', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -439,21 +457,24 @@ function CoverageChat({ go }) {
             </div>
           )}
           <div className="wm-cov-head">
-            <div className="wm-cov-head-t"><ScanEye size={16} /> Is it covered?</div>
+            <div className="wm-cov-head-t"><ScanEye size={18} /> Is it covered?</div>
             <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label="Close">&times;</button>
           </div>
           <div className="wm-cov-body">
-            <p className="wm-cov-intro">Describe your task or scenario and I will tell you whether WorkCoPilot can guide you through it, how, and which plan fits.</p>
+            {!res && !busy && <p className="wm-cov-intro">Describe your task or scenario and I will tell you whether WorkCoPilot can guide you through it, how, and which plan fits.</p>}
+            {busy && <div className="wm-cov-think"><span /><span /><span /> Thinking it through…</div>}
             {res && (
-              <div className="wm-cov-ans">
+              <div className="wm-cov-ans" key={res.answer}>
                 {res.verdict && verdictMeta[res.verdict] && (
                   <span className={`wm-cov-chip ${verdictMeta[res.verdict].cls}`}>{verdictMeta[res.verdict].label}</span>
                 )}
-                <p className="wm-cov-text">{res.answer}</p>
-                {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
-                {res.verdict !== 'offtopic' && (
-                  <button className="wm-cta sm" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>Get started <ArrowRight size={14} /></button>
-                )}
+                <p className="wm-cov-text">{typed}{!typingDone && <span className="wm-cov-caret" />}</p>
+                <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
+                  {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
+                  {res.verdict !== 'offtopic' && (
+                    <button className="wm-cta sm" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>Get started <ArrowRight size={14} /></button>
+                  )}
+                </div>
               </div>
             )}
             {err && <p className="wm-cov-err">{err}</p>}
@@ -461,9 +482,12 @@ function CoverageChat({ go }) {
           <div className="wm-cov-input">
             <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder="e.g. Set up a VPC on AWS and lock it down, or reconcile last month's books in Excel"
               onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} />
-            <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()}>
-              {busy ? '...' : <ArrowRight size={16} />}
-            </button>
+            <div className="wm-cov-ibtns">
+              {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title="Clear and ask a new question" aria-label="Clear"><RotateCcw size={16} /></button>}
+              <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()} aria-label="Ask">
+                {busy ? <span className="wm-cov-sdots"><i /><i /><i /></span> : <ArrowRight size={18} />}
+              </button>
+            </div>
           </div>
         </div>
         </div>
@@ -1301,33 +1325,47 @@ const CSS = `
 /* COVERAGE CHAT (floating, theme-aware via the vars) */
 .wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
 .wm-cov-launch:hover{transform:translateY(-2px)}
-.wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(3px);animation:wm-cov-fade .18s ease}
-.wm-cov{z-index:71;width:min(480px,calc(100vw - 40px));max-height:min(640px,calc(100vh - 80px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;box-shadow:0 50px 120px -30px rgba(0,0,0,.5);animation:wm-cov-pop .2s cubic-bezier(.2,.8,.2,1)}
+.wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(4px);animation:wm-cov-fade .18s ease}
+.wm-cov{z-index:71;width:min(600px,calc(100vw - 36px));max-height:min(760px,calc(100vh - 72px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 60px 140px -34px rgba(0,0,0,.55);animation:wm-cov-pop .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes wm-cov-fade{from{opacity:0}to{opacity:1}}
-@keyframes wm-cov-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
-.wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:13px 15px;border-bottom:1px solid var(--line)}
-.wm-cov-head-t{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:15px;color:var(--tx)}
+@keyframes wm-cov-pop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
+.wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(57,211,255,.06),transparent)}
+.wm-cov-head-t{display:inline-flex;align-items:center;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:19px;color:var(--tx)}
 .wm-cov-head-t svg{color:var(--em2)}
-.wm-cov-x{background:none;border:none;color:var(--mut);font-size:22px;line-height:1;cursor:pointer;padding:0 4px}
+.wm-cov-x{background:none;border:none;color:var(--mut);font-size:26px;line-height:1;cursor:pointer;padding:0 6px}
 .wm-cov-x:hover{color:var(--tx)}
-.wm-cov-body{flex:1;overflow-y:auto;padding:15px}
-.wm-cov-intro{color:var(--mut);font-size:13.5px;line-height:1.55;margin:0}
-.wm-cov-ans{margin-top:14px;border:1px solid var(--line);border-radius:13px;padding:13px;background:linear-gradient(180deg,rgba(140,245,196,.06),transparent)}
-.wm-cov-chip{display:inline-flex;align-items:center;font-size:11px;font-weight:700;letter-spacing:.04em;padding:3px 10px;border-radius:999px;margin-bottom:9px}
-.wm-cov-chip.ok{color:#06603f;background:rgba(10,157,102,.16)}
-.wm-cov-chip.mid{color:#8a5a00;background:rgba(255,179,92,.2)}
-.wm-cov-chip.no{color:#9a2b2b;background:rgba(255,99,99,.16)}
-.wm-cov-chip.off{color:var(--mut);background:rgba(120,130,150,.14)}
-.wm-cov-text{color:var(--tx);font-size:14px;line-height:1.55;margin:0}
-.wm-cov-plan{margin-top:10px;font-size:13px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}
-.wm-cov-ans .wm-cta{margin-top:12px}
-.wm-cov-err{margin-top:12px;color:#c0392b;font-size:13px}
-.wm-cov-input{display:flex;gap:8px;align-items:flex-end;padding:12px 15px;border-top:1px solid var(--line)}
-.wm-cov-input textarea{flex:1;resize:none;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:9px 11px;color:var(--tx);font:inherit;font-size:13.5px;line-height:1.45;outline:none}
-.wm-cov-input textarea:focus{border-color:var(--em2)}
-.wm-cov-send{flex:0 0 auto;width:40px;height:40px;border-radius:11px;border:none;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.wm-cov-body{flex:1;overflow-y:auto;padding:22px 24px;min-height:130px}
+.wm-cov-intro{color:var(--mut);font-size:15px;line-height:1.6;margin:0}
+.wm-cov-think{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;font-weight:500}
+.wm-cov-think span{width:8px;height:8px;border-radius:50%;background:var(--em2);animation:wm-cov-bounce 1s infinite}
+.wm-cov-think span:nth-child(2){animation-delay:.15s}.wm-cov-think span:nth-child(3){animation-delay:.3s}
+@keyframes wm-cov-bounce{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
+.wm-cov-ans{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:linear-gradient(180deg,rgba(140,245,196,.08),transparent);animation:wm-cov-rise .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes wm-cov-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+.wm-cov-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;padding:5px 13px;border-radius:999px;margin-bottom:13px;animation:wm-cov-chip-pop .35s cubic-bezier(.2,1.3,.4,1)}
+@keyframes wm-cov-chip-pop{from{opacity:0;transform:scale(.7)}to{opacity:1;transform:none}}
+.wm-cov-chip.ok{color:#06603f;background:rgba(10,157,102,.18)}
+.wm-cov-chip.mid{color:#8a5a00;background:rgba(255,179,92,.22)}
+.wm-cov-chip.no{color:#9a2b2b;background:rgba(255,99,99,.18)}
+.wm-cov-chip.off{color:var(--mut);background:rgba(120,130,150,.16)}
+.wm-cov-text{color:var(--tx);font-size:16px;line-height:1.65;margin:0;min-height:1.2em}
+.wm-cov-caret{display:inline-block;width:2px;height:1.05em;background:var(--em2);margin-left:2px;vertical-align:-2px;animation:wm-cov-blink .8s step-end infinite}
+@keyframes wm-cov-blink{50%{opacity:0}}
+.wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
+.wm-cov-foot.show{opacity:1;transform:none;pointer-events:auto}
+.wm-cov-plan{margin-top:14px;font-size:14px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}
+.wm-cov-foot .wm-cta{margin-top:14px}
+.wm-cov-err{margin-top:12px;color:#c0392b;font-size:14px}
+.wm-cov-input{display:flex;gap:10px;align-items:flex-end;padding:16px 20px;border-top:1px solid var(--line)}
+.wm-cov-input textarea{flex:1;resize:none;background:var(--ink);border:1px solid var(--line);border-radius:13px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none}
+.wm-cov-input textarea:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.12)}
+.wm-cov-ibtns{display:flex;align-items:center;gap:8px}
+.wm-cov-clear{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;transition:color .15s,border-color .15s}
+.wm-cov-clear:hover{color:var(--tx);border-color:var(--em2)}
+.wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .wm-cov-send:disabled{opacity:.5;cursor:default}
-@media(max-width:560px){.wm-cov-launch{right:12px;bottom:12px}.wm-cov{right:8px;bottom:8px}}
+.wm-cov-sdots{display:inline-flex;gap:3px}.wm-cov-sdots i{width:5px;height:5px;border-radius:50%;background:#042;animation:wm-cov-bounce 1s infinite}.wm-cov-sdots i:nth-child(2){animation-delay:.15s}.wm-cov-sdots i:nth-child(3){animation-delay:.3s}
+@media(max-width:560px){.wm-cov-launch{right:12px;bottom:12px}.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
 /* celebratory fireworks when the answer is "Covered" */
 .wm-fw{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:18px}
 .wm-fw-burst{position:absolute;width:0;height:0}
