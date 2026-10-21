@@ -66,6 +66,8 @@ export const workAdminApi = {
   company: (id) => request('GET', `/api/work/admin/companies/${id}`),
   updateCompany: (id, patch) => request('PATCH', `/api/work/admin/companies/${id}`, patch),
   companyScrub: (id, enabled) => request('POST', `/api/work/admin/companies/${id}/scrub`, { enabled: !!enabled }),
+  companyAiKeys: (id, body) => request('POST', `/api/work/admin/companies/${id}/ai-keys`, body || {}),
+  companyConsumption: (id) => request('GET', `/api/work/admin/companies/${id}/consumption`),
   // SSO (OIDC) per company. GET returns non-secret status; POST sets the config
   // (leave clientSecret empty to keep the stored one unchanged).
   companySso: (id) => request('GET', `/api/work/admin/companies/${id}/sso`),

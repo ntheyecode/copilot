@@ -490,7 +490,17 @@ function publicCompany(c) {
     aiSource: c.aiSource || null,
     imageGen: !!c.imageGen,
     trial: t ? { sessions: t.sessions || 0, used: t.used || 0, remaining: Math.max(0, (t.sessions || 0) - (t.used || 0)), minutesPer: t.minutesPer || 60 } : null,
-    hasCompanyAi: !!(c.companyAi && Object.keys(c.companyAi).length),
+    hasCompanyAi: !!(c.companyAi && c.companyAi.apiKey),
+    // AI keys are returned masked only (never the raw key). owner = who set them:
+    // 'corporate' (superadmin, per-company keys we manage) or 'company' (their own).
+    companyAi: (c.companyAi && c.companyAi.apiKey) ? {
+      providerId: c.companyAi.providerId || null,
+      chatModel: c.companyAi.chatModel || null,
+      visionModel: c.companyAi.visionModel || null,
+      owner: c.companyAi.owner || 'corporate',
+      keyMasked: '••••' + String(c.companyAi.apiKey).slice(-4),
+      setAt: c.companyAi.setAt || null,
+    } : null,
   }
 }
 export function setCompanyAiSource(companyId, source) {
@@ -498,6 +508,60 @@ export function setCompanyAiSource(companyId, source) {
   if (!c) throw httpErr(404, 'Company not found')
   c.aiSource = ['platform', 'company'].includes(source) ? source : null
   persist(); return publicCompany(c)
+}
+// Set a company's AI keys. owner='corporate' = superadmin-managed per-company keys
+// (so we attribute usage per company); owner='company' = the company's own keys set
+// from their admin dashboard. An empty apiKey clears them.
+export function setCompanyAiKeys(companyId, { providerId, apiKey, chatModel, visionModel } = {}, owner = 'corporate') {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  const key = String(apiKey || '').trim()
+  if (!key) { c.companyAi = {} }
+  else {
+    c.companyAi = {
+      providerId: String(providerId || '').trim() || null,
+      apiKey: key,
+      chatModel: String(chatModel || '').trim() || null,
+      visionModel: String(visionModel || '').trim() || null,
+      owner: owner === 'company' ? 'company' : 'corporate',
+      setAt: new Date().toISOString(),
+    }
+    c.aiSource = 'company'   // having keys means the company runs on them
+  }
+  persist(); return publicCompany(c)
+}
+// The runtime for a user whose company runs on its own/corporate keys (else null,
+// so the caller falls back to platform or the user's own key).
+export function getCompanyRuntime(workUserId) {
+  const u = getUser(workUserId)
+  if (!u || !u.companyId) return null
+  const c = (db.companies || []).find((x) => x.id === u.companyId)
+  if (!c || c.aiSource !== 'company') return null
+  const k = c.companyAi || {}
+  if (!k.apiKey) return null
+  return { providerId: k.providerId || null, apiKey: k.apiKey, chatModel: k.chatModel || null, visionModel: k.visionModel || null, companyId: c.id }
+}
+// Per-company AI consumption (estimated $), so we know exactly what each company
+// is using. Aggregates the costUsd we already meter on every session.
+export function companyConsumption(companyId) {
+  const members = (db.users || []).filter((u) => u.companyId === companyId)
+  const ids = new Set(members.map((u) => u.id))
+  const sessions = (db.workSessions || []).filter((s) => ids.has(s.workUserId))
+  const perUser = {}
+  let totalUsd = 0
+  for (const s of sessions) {
+    const usd = Number(s.costUsd || 0)
+    totalUsd += usd
+    if (!perUser[s.workUserId]) perUser[s.workUserId] = { usd: 0, sessions: 0 }
+    perUser[s.workUserId].usd += usd
+    perUser[s.workUserId].sessions += 1
+  }
+  const byUser = members.map((u) => ({
+    id: u.id, username: u.username, displayName: u.displayName || u.username,
+    usd: Number(((perUser[u.id] || {}).usd || 0).toFixed(4)),
+    sessions: (perUser[u.id] || {}).sessions || 0,
+  })).sort((a, b) => b.usd - a.usd)
+  return { companyId, totalUsd: Number(totalUsd.toFixed(4)), sessionCount: sessions.length, userCount: members.length, byUser }
 }
 export function setCompanyImageGen(companyId, on) {
   const c = (db.companies || []).find((x) => x.id === companyId)

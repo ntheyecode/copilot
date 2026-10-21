@@ -92,6 +92,8 @@ export const api = {
   workGet: (id) => req('GET', `/api/work/sessions/${id}`),
   workDelete: (id, reason) => req('DELETE', `/api/work/sessions/${id}${reason ? `?reason=${encodeURIComponent(reason)}` : ''}`),
   workTeamActivity: () => req('GET', '/api/work/team/activity'),
+  workTeamAi: () => req('GET', '/api/work/team/ai'),
+  workTeamSetAiKeys: (body) => req('POST', '/api/work/team/ai-keys', body || {}),
   workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
   // body: { goal?, frame? } (frame = downscaled data URL, scrubbed of PII in the component)
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),

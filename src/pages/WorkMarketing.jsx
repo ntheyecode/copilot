@@ -517,6 +517,12 @@ function CoverageChat({ go }) {
                                 <button onClick={() => copyCmd(p.cmd, i)} title="Copy" aria-label="Copy command">{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
                               </div>
                             )}
+                            {p.how && p.how.length > 0 && (
+                              <details className="wm-cov-how">
+                                <summary>Show how</summary>
+                                <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
+                              </details>
+                            )}
                           </div>
                         </li>
                       ))}
@@ -532,7 +538,7 @@ function CoverageChat({ go }) {
                       <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence that support your compliance under the frameworks you choose - never a certification claim.</p></div></div>
                     </div>
                     <div className="wm-cov-chips">
-                      {['GDPR', 'HIPAA', 'PCI-DSS', 'SOC 2', 'ISO 27001', 'CCPA'].map((c) => <span key={c}>{c}</span>)}
+                      {['GDPR', 'HIPAA', 'PCI-DSS', 'SOC 2', 'ISO 27001', 'CCPA', 'FedRAMP', 'NIST 800-53', 'HITRUST'].map((c) => <span key={c}>{c}</span>)}
                     </div>
                   </div>
                 )}
@@ -1459,6 +1465,13 @@ const CSS = `
 .wm-cov-steps .cmd code{flex:1;min-width:0;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;color:#8ff0c4;white-space:pre-wrap;overflow-wrap:anywhere}
 .wm-cov-steps .cmd button{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;cursor:pointer;transition:background .14s}
 .wm-cov-steps .cmd button:hover{background:rgba(255,255,255,.12)}
+.wm-cov-how{margin-top:9px}
+.wm-cov-how summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--em2);list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none}
+.wm-cov-how summary::-webkit-details-marker{display:none}
+.wm-cov-how summary:before{content:'▸';display:inline-block;transition:transform .15s}
+.wm-cov-how[open] summary:before{transform:rotate(90deg)}
+.wm-cov-how ol{margin:9px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+.wm-cov-how li{font-size:13px;line-height:1.55;color:var(--mut)}
 .wm-cov-flow-note{margin-top:11px;font-size:12.5px;color:var(--mut);line-height:1.5}
 /* trust band: enterprise-grade / security-first / compliant + framework chips */
 .wm-cov-trust{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:15px 16px;background:linear-gradient(180deg,rgba(140,245,196,.06),transparent);opacity:0;transform:translateY(6px);transition:opacity .4s ease .16s,transform .4s ease .16s}

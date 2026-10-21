@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
-import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check, FileText, Trash2 } from 'lucide-react'
+import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check, FileText, Trash2, KeyRound } from 'lucide-react'
 
 // Company-admin Team page. A company admin sees the users in their own company
 // and can add a new one. Backend:
@@ -28,6 +28,13 @@ export default function WorkTeam() {
   const [activity, setActivity] = useState(null)
   const loadActivity = useCallback(() => { api.workTeamActivity().then((r) => setActivity(r.activity || [])).catch(() => setActivity([])) }, [])
   useEffect(() => { if (view === 'activity') loadActivity() }, [view, loadActivity])
+  // Company's own AI keys (overrides the corporate keys we set).
+  const [aiCompany, setAiCompany] = useState(null)
+  const [aiForm, setAiForm] = useState({ providerId: '', apiKey: '', chatModel: '', visionModel: '' })
+  const loadAi = useCallback(() => { api.workTeamAi().then((c) => setAiCompany(c || null)).catch(() => {}) }, [])
+  useEffect(() => { if (view === 'ai') loadAi() }, [view, loadAi])
+  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk('Your AI keys are saved — WorkCoPilot now runs on them.'); setAiForm({ providerId: '', apiKey: '', chatModel: '', visionModel: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not save keys.') } finally { setBusy(false) } }
+  const clearOwnKeys = async () => { setBusy(true); setErr(''); try { await api.workTeamSetAiKeys({ apiKey: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not clear keys.') } finally { setBusy(false) } }
 
   const load = useCallback(() => {
     api.workCompanyUsers()
@@ -67,6 +74,7 @@ export default function WorkTeam() {
               <p>Add people to your company and set what they can do. New users sign in with the username and password you set here.</p>
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
+              <button className="wt-btn" onClick={() => setView('ai')}><KeyRound size={15} /> AI keys</button>
               <button className="wt-btn" onClick={() => setView('activity')}><FileText size={15} /> User activity</button>
               <button className="wt-btn primary" onClick={() => { setErr(''); setOk(''); setView('new') }}><Plus size={15} /> Add user</button>
             </div>
@@ -122,6 +130,45 @@ export default function WorkTeam() {
                 </ul>
               )}
           {err && <div className="wt-err">{err}</div>}
+        </>
+      )}
+
+      {view === 'ai' && (
+        <>
+          <div className="wt-head">
+            <div>
+              <h2><KeyRound size={20} /> AI keys</h2>
+              <p>By default WorkCoPilot runs on the keys we set for your company. You can switch to your <b>own</b> provider keys here — then your usage is billed on your account, not ours.</p>
+            </div>
+            <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
+          </div>
+          {aiCompany && (
+            <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--text,#141726)', border: '1px solid var(--line,#e3e6ee)' }}>
+              {aiCompany.companyAi
+                ? <span>Current: <b>{aiCompany.companyAi.providerId || 'provider'}</b> · key {aiCompany.companyAi.keyMasked} · {aiCompany.companyAi.chatModel || 'default model'} · {aiCompany.companyAi.owner === 'company' ? 'your own keys' : 'company keys set by WorkCoPilot'}</span>
+                : <span>No keys set yet — your company is on the platform AI.</span>}
+            </div>
+          )}
+          <div className="wt-form" style={{ maxWidth: 560 }}>
+            <label className="wt-label">Provider
+              <input value={aiForm.providerId} placeholder="gemini, openai, groq…" onChange={(e) => setAiForm({ ...aiForm, providerId: e.target.value })} />
+            </label>
+            <label className="wt-label">API key
+              <input value={aiForm.apiKey} placeholder="Paste your provider API key" onChange={(e) => setAiForm({ ...aiForm, apiKey: e.target.value })} />
+            </label>
+            <label className="wt-label">Chat model <span style={{ fontWeight: 400, color: 'var(--text-dim,#667)' }}>(optional)</span>
+              <input value={aiForm.chatModel} placeholder="e.g. gpt-4o-mini" onChange={(e) => setAiForm({ ...aiForm, chatModel: e.target.value })} />
+            </label>
+            <label className="wt-label">Vision model <span style={{ fontWeight: 400, color: 'var(--text-dim,#667)' }}>(reads the screen)</span>
+              <input value={aiForm.visionModel} placeholder="e.g. gpt-4o, gemini-1.5-flash" onChange={(e) => setAiForm({ ...aiForm, visionModel: e.target.value })} />
+            </label>
+            {err && <div className="wt-err">{err}</div>}
+            {ok && <div className="wt-ok"><Check size={14} /> {ok}</div>}
+            <div className="wt-actions">
+              {aiCompany && aiCompany.companyAi && aiCompany.companyAi.owner === 'company' && <button className="wt-btn" disabled={busy} onClick={clearOwnKeys}>Remove my keys</button>}
+              <button className="wt-btn primary" disabled={busy || !aiForm.apiKey.trim()} onClick={saveOwnKeys}>{busy ? <Loader2 size={15} className="spin" /> : 'Use my keys'}</button>
+            </div>
+          </div>
         </>
       )}
 

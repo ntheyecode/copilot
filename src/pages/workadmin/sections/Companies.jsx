@@ -142,6 +142,13 @@ export default function Companies({ isSuperAdmin }) {
     if (!isSuperAdmin) return
     try { await workAdminApi.updateCompany(id, patch); refreshDetail(id) } catch (e) { setMsg(e.message) }
   }
+  // Corporate AI keys (superadmin sets per company) + per-company consumption.
+  const [aiForm, setAiForm] = useState({})
+  const setAiField = (id, k, v) => setAiForm((f) => ({ ...f, [id]: { ...(f[id] || {}), [k]: v } }))
+  const saveAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, aiForm[id] || {}); setAiForm((f) => ({ ...f, [id]: {} })); refreshDetail(id); setMsg('Corporate AI keys saved.') } catch (e) { setMsg(e.message) } }
+  const clearAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, { apiKey: '' }); refreshDetail(id); setMsg('AI keys cleared.') } catch (e) { setMsg(e.message) } }
+  const [consumption, setConsumption] = useState({})
+  const loadConsumption = async (id) => { try { const r = await workAdminApi.companyConsumption(id); setConsumption((cc) => ({ ...cc, [id]: r })) } catch (e) { setMsg(e.message) } }
   const addUser = async (companyId) => {
     if (busy || !uForm.username.trim() || !uForm.password) { setMsg('Username (3+) and password (6+) required.'); return }
     setBusy(true); setMsg('')
@@ -213,6 +220,29 @@ export default function Companies({ isSuperAdmin }) {
                             <button className={`co-toggle ${detail.company.imageGen ? 'on' : ''}`} onClick={() => patchCompany(c.id, { imageGen: !detail.company.imageGen })} title="Image generation for this company (off by default)">Image gen: {detail.company.imageGen ? 'On' : 'Off'}</button>
                             {detail.company.trial && <span style={{ fontSize: 13, color: 'var(--wka-muted)' }}>Trial: <b>{detail.company.trial.remaining}</b> of {detail.company.trial.sessions} sessions left <button className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => patchCompany(c.id, { trial: { resetUsed: true } })}>reset</button></span>}
                             {!detail.company.aiSource && <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>Select an AI source to activate this company.</span>}
+                          </div>
+                        )}
+                        {isSuperAdmin && detail.company.aiSource === 'company' && (
+                          <div className="co-detail-top" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
+                            <div style={{ fontSize: 12.5, fontWeight: 700 }}>Corporate AI keys — we manage them per company, so usage is attributed to {c.name}.</div>
+                            {detail.company.companyAi
+                              ? <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Current: <b>{detail.company.companyAi.providerId || 'provider'}</b> · key {detail.company.companyAi.keyMasked} · {detail.company.companyAi.chatModel || 'default model'} · {detail.company.companyAi.owner === 'company' ? 'set by the company admin (their own keys)' : 'corporate (set by us)'}</div>
+                              : <div style={{ fontSize: 12, color: 'var(--wka-amber)' }}>No keys yet — add the corporate keys below, or the company can add their own from their dashboard.</div>}
+                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                              <input className="wka-input" placeholder="provider (gemini / openai / groq…)" value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 200 }} />
+                              <input className="wka-input" placeholder="API key" value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 230 }} />
+                              <input className="wka-input" placeholder="chat model" value={(aiForm[c.id]?.chatModel) || ''} onChange={(e) => setAiField(c.id, 'chatModel', e.target.value)} style={{ width: 150 }} />
+                              <input className="wka-input" placeholder="vision model" value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 150 }} />
+                              <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>Save corporate keys</button>
+                              {detail.company.companyAi && <button className="wka-btn sm ghost" onClick={() => clearAiKeys(c.id)}>Clear</button>}
+                            </div>
+                            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 2 }}>
+                              <button className="wka-btn sm ghost" onClick={() => loadConsumption(c.id)}>View consumption</button>
+                              {consumption[c.id] && <span style={{ fontSize: 12.5 }}>Total <b>${consumption[c.id].totalUsd.toFixed(2)}</b> · {consumption[c.id].sessionCount} sessions · {consumption[c.id].userCount} users</span>}
+                            </div>
+                            {consumption[c.id] && consumption[c.id].byUser.length > 0 && (
+                              <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>{consumption[c.id].byUser.slice(0, 8).map((u) => `${u.displayName}: $${u.usd.toFixed(2)} (${u.sessions})`).join('  ·  ')}</div>
+                            )}
                           </div>
                         )}
                         <table className="wka-table co-users">

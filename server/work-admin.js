@@ -281,6 +281,16 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   app.post('/api/work/admin/companies/:id/scrub', requireAuth, superGate, w((req, res) => {
     res.json(store.updateCompany(req.params.id, { scrub: !!(req.body && req.body.enabled) }))
   }))
+  // Superadmin: set a company's CORPORATE AI keys (we manage them per company so we
+  // attribute usage per company). An empty apiKey clears them.
+  app.post('/api/work/admin/companies/:id/ai-keys', requireAuth, superGate, w((req, res) => {
+    const { providerId, apiKey, chatModel, visionModel } = req.body || {}
+    res.json(store.setCompanyAiKeys(req.params.id, { providerId, apiKey, chatModel, visionModel }, 'corporate'))
+  }))
+  // Superadmin: per-company AI consumption (estimated $), who used what.
+  app.get('/api/work/admin/companies/:id/consumption', requireAuth, superGate, w((req, res) => {
+    res.json(store.companyConsumption(req.params.id))
+  }))
   // Create a user (optionally into a company, as member or company_admin).
   // `free: true` grants comped access (use the service without Stripe).
   app.post('/api/work/admin/users', requireAuth, superGate, w((req, res) => {

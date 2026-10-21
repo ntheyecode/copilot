@@ -231,6 +231,12 @@ async function findWorkVisionStrong(req, primary) {
 // Groq). Own-key path: the user's tested key. The chosen vision model serves
 // both the vision calls and the text calls (one cheap multimodal model).
 async function findWorkVision(req) {
+  // Company on its own/corporate keys: use them for vision too.
+  const companyRt = store.getCompanyRuntime(req.workUser.id)
+  if (companyRt && companyRt.apiKey) {
+    const vm = await pickWorkVision(companyRt)
+    return vm ? { rt: { ...companyRt, chatModel: vm, visionModel: vm }, visionModel: vm } : null
+  }
   if (store.getWorkPlatformAllowed()) {
     const PREF = ['gemini', 'openai', 'groq']
     const cfgs = store.getConfiguredRuntimes()
@@ -252,8 +258,10 @@ async function findWorkVision(req) {
 async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
   const v = await findWorkVision(req)
   if (v) { try { v.strong = await findWorkVisionStrong(req, v) } catch { v.strong = null } return v }
+  // A company on its own/corporate keys uses those; else platform, else the user's key.
+  const companyRt = store.getCompanyRuntime(req.workUser.id)
   const platform = store.getWorkPlatformAllowed()
-  const base = platform ? store.getActiveRuntime() : store.getWorkUserRuntime(req.workUser.id)
+  const base = companyRt || (platform ? store.getActiveRuntime() : store.getWorkUserRuntime(req.workUser.id))
   if (!base || !base.apiKey) {
     res.status(503).json({
       error: platform
@@ -463,6 +471,15 @@ app.delete('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
 // Company admin: the user activity log (session deletions etc.) for their company.
 app.get('/api/work/team/activity', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   res.json({ activity: store.listWorkActivity({ companyId: req.workUser.companyId }) })
+}))
+// Company admin: use the company's OWN AI keys (overrides our corporate keys).
+// An empty apiKey clears them and the company falls back to what the superadmin set.
+app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const { providerId, apiKey, chatModel, visionModel } = req.body || {}
+  res.json(store.setCompanyAiKeys(req.workUser.companyId, { providerId, apiKey, chatModel, visionModel }, 'company'))
+}))
+app.get('/api/work/team/ai', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  res.json(store.getCompany(req.workUser.companyId))
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
   res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal) })
