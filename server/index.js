@@ -457,7 +457,12 @@ app.get('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
   res.json({ session: s })
 }))
 app.delete('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
-  res.json(store.deleteWorkSession(req.workUser.id, req.params.id))
+  const reason = (req.query && req.query.reason) || (req.body && req.body.reason) || ''
+  res.json(store.deleteWorkSession(req.workUser.id, req.params.id, reason))
+}))
+// Company admin: the user activity log (session deletions etc.) for their company.
+app.get('/api/work/team/activity', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  res.json({ activity: store.listWorkActivity({ companyId: req.workUser.companyId }) })
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
   res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal) })

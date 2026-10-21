@@ -19,47 +19,59 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Pin, Eye, EyeOff, Contrast, MousePointer2, PictureInPicture2 } from 'lucide-react'
 
 const OPACITIES = [1, 0.85, 0.6, 0.4]   // mirrors the shell's own cycle
-const BAR_H = 40
+const BAR_H = 32
 
 const CSS = `
 .wshell{position:fixed;top:0;left:0;right:0;height:${BAR_H}px;z-index:2147483000;
   display:flex;align-items:stretch;
   font-family:"Segoe UI Variable Display","Segoe UI Variable","Segoe UI",system-ui,sans-serif;
-  font-size:12.5px;color:#1b1b1b;background:#f3f3f3;
-  border-bottom:1px solid rgba(0,0,0,.10);
+  font-size:11.5px;color:#4a4a52;background:#eceef2;
+  border-bottom:1px solid rgba(0,0,0,.07);
   -webkit-app-region:drag;user-select:none}
-[data-theme='dark'] .wshell{color:#eaeaec;background:#202020;border-bottom:1px solid rgba(255,255,255,.08)}
-.wshell-brand{display:flex;align-items:center;gap:9px;padding:0 10px 0 14px;min-width:0}
-.wshell-dot{width:16px;height:16px;border-radius:5px;flex-shrink:0;
-  background:linear-gradient(135deg,#0a9d66,#0b8fd6);box-shadow:0 1px 3px rgba(11,143,214,.45)}
-.wshell-name{font-weight:600;letter-spacing:.1px;white-space:nowrap}
-.wshell-mode{margin-left:4px;padding:2px 9px;border-radius:999px;font-size:11px;font-weight:600;white-space:nowrap;
-  background:rgba(14,159,110,.14);color:#0a7d52;border:1px solid rgba(14,159,110,.28)}
-.wshell-mode.guide{background:rgba(11,143,214,.14);color:#0a6fa8;border-color:rgba(11,143,214,.30)}
-[data-theme='dark'] .wshell-mode{background:rgba(110,231,183,.14);color:#6ee7b7;border-color:rgba(110,231,183,.26)}
-[data-theme='dark'] .wshell-mode.guide{background:rgba(56,189,248,.16);color:#7dd3fc;border-color:rgba(56,189,248,.28)}
+[data-theme='dark'] .wshell{color:#b7b7c2;background:#15161d;border-bottom:1px solid rgba(255,255,255,.06)}
+.wshell-brand{display:flex;align-items:center;gap:7px;padding:0 8px 0 11px;min-width:0}
+.wshell-dot{width:13px;height:13px;border-radius:4px;flex-shrink:0;
+  background:linear-gradient(135deg,#0a9d66,#0b8fd6)}
+.wshell-name{font-weight:600;font-size:11.5px;letter-spacing:.1px;white-space:nowrap;color:#3a3a42}
+[data-theme='dark'] .wshell-name{color:#d6d6e0}
+.wshell-mode{margin-left:6px;padding:1px 8px;border-radius:999px;font-size:10px;font-weight:700;letter-spacing:.02em;white-space:nowrap;
+  background:rgba(14,159,110,.12);color:#0a7d52;border:1px solid rgba(14,159,110,.24)}
+.wshell-mode.guide{background:rgba(11,143,214,.12);color:#0a6fa8;border-color:rgba(11,143,214,.26)}
+[data-theme='dark'] .wshell-mode{background:rgba(110,231,183,.12);color:#6ee7b7;border-color:rgba(110,231,183,.22)}
+[data-theme='dark'] .wshell-mode.guide{background:rgba(56,189,248,.14);color:#7dd3fc;border-color:rgba(56,189,248,.24)}
 .wshell-spacer{flex:1 1 auto;min-width:8px}
-.wshell-tools{display:flex;align-items:center;gap:2px;padding:0 6px;-webkit-app-region:no-drag}
-.wshell-tool{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:7px;
-  border:1px solid transparent;background:transparent;color:inherit;cursor:pointer;font:inherit;font-weight:500;
+.wshell-tools{display:flex;align-items:center;gap:1px;padding:0 4px;-webkit-app-region:no-drag}
+.wshell-tool{display:inline-flex;align-items:center;justify-content:flex-start;gap:5px;height:23px;padding:0 9px;border-radius:6px;
+  border:1px solid rgba(0,0,0,.10);background:rgba(0,0,0,.045);color:inherit;cursor:pointer;font:inherit;font-size:11px;font-weight:600;
   transition:background .12s,border-color .12s,color .12s}
-.wshell-tool:hover{background:rgba(0,0,0,.06)}
-[data-theme='dark'] .wshell-tool:hover{background:rgba(255,255,255,.08)}
-.wshell-tool.on{background:rgba(11,143,214,.14);border-color:rgba(11,143,214,.34);color:#0a6fa8}
-[data-theme='dark'] .wshell-tool.on{background:rgba(56,189,248,.18);border-color:rgba(56,189,248,.34);color:#7dd3fc}
-.wshell-tool.warn.on{background:rgba(200,90,22,.16);border-color:rgba(200,90,22,.36);color:#b4530f}
-[data-theme='dark'] .wshell-tool.warn.on{background:rgba(255,160,80,.18);border-color:rgba(255,160,80,.34);color:#ffb561}
+.wshell-tool svg{flex-shrink:0}
+.wshell-tool:hover{background:rgba(0,0,0,.09);border-color:rgba(0,0,0,.16)}
+.wshell-tool:disabled{opacity:.4;cursor:default}
+.wshell-tool:disabled:hover{background:rgba(0,0,0,.045);border-color:rgba(0,0,0,.10)}
+[data-theme='dark'] .wshell-tool{border-color:rgba(255,255,255,.12);background:rgba(255,255,255,.06)}
+[data-theme='dark'] .wshell-tool:hover{background:rgba(255,255,255,.11);border-color:rgba(255,255,255,.18)}
+[data-theme='dark'] .wshell-tool:disabled:hover{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.12)}
+/* fixed widths so a label swap (Hidden/On share, See-through/NN%) never shifts neighbours */
+.wshell-tool.w-top{min-width:64px}
+.wshell-tool.w-share{min-width:84px}
+.wshell-tool.w-see{min-width:104px}
+.wshell-tool.w-behind{min-width:104px}
+.wshell-tool.w-buddy{min-width:62px}
+.wshell-tool.on{background:rgba(11,143,214,.14);border-color:rgba(11,143,214,.36);color:#0a6fa8}
+[data-theme='dark'] .wshell-tool.on{background:rgba(56,189,248,.16);border-color:rgba(56,189,248,.30);color:#7dd3fc}
+.wshell-tool.warn.on{background:rgba(200,90,22,.14);border-color:rgba(200,90,22,.32);color:#b4530f}
+[data-theme='dark'] .wshell-tool.warn.on{background:rgba(255,160,80,.16);border-color:rgba(255,160,80,.30);color:#ffb561}
 .wshell-tlabel{white-space:nowrap}
-.wshell-div{width:1px;align-self:center;height:20px;margin:0 6px;background:rgba(0,0,0,.12)}
-[data-theme='dark'] .wshell-div{background:rgba(255,255,255,.12)}
+.wshell-div{width:1px;align-self:center;height:16px;margin:0 5px;background:rgba(0,0,0,.10)}
+[data-theme='dark'] .wshell-div{background:rgba(255,255,255,.10)}
 .wshell-caps{display:flex;align-items:stretch;-webkit-app-region:no-drag}
-.wshell-cap{width:46px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;
+.wshell-cap{width:42px;display:inline-flex;align-items:center;justify-content:center;border:0;background:transparent;
   color:inherit;cursor:pointer;transition:background .12s,color .12s}
-.wshell-cap:hover{background:rgba(0,0,0,.08)}
-[data-theme='dark'] .wshell-cap:hover{background:rgba(255,255,255,.09)}
+.wshell-cap:hover{background:rgba(0,0,0,.07)}
+[data-theme='dark'] .wshell-cap:hover{background:rgba(255,255,255,.08)}
 .wshell-cap.close:hover{background:#c42b1c;color:#fff}
 .wshell-cap svg{display:block}
-@media (max-width:620px){.wshell-tlabel{display:none}.wshell-tool{padding:0 8px}}
+@media (max-width:640px){.wshell-tlabel{display:none}.wshell-tool{padding:0 7px;min-width:0}}
 `
 
 function injectOnce() {
@@ -120,28 +132,26 @@ export default function WorkShell({ authed = false }) {
 
       {authed && (
         <div className="wshell-tools">
-          <button type="button" className={`wshell-tool${st.onTop ? ' on' : ''}`} onClick={toggleTop}
+          <button type="button" className={`wshell-tool w-top${st.onTop ? ' on' : ''}`} onClick={toggleTop}
             title="Keep WorkCoPilot above other windows (Ctrl+Alt+T)">
-            <Pin size={14} /><span className="wshell-tlabel">On top</span>
+            <Pin size={13} /><span className="wshell-tlabel">On top</span>
           </button>
-          <button type="button" className={`wshell-tool warn${!st.contentProtected ? ' on' : ''}`} onClick={toggleShare}
+          <button type="button" className={`wshell-tool warn w-share${!st.contentProtected ? ' on' : ''}`} onClick={toggleShare}
             title={st.contentProtected ? 'Hidden from screen shares - click to show it on a share (Ctrl+Alt+S)' : 'Visible on screen shares - click to hide it again (Ctrl+Alt+S)'}>
-            {st.contentProtected ? <EyeOff size={14} /> : <Eye size={14} />}
+            {st.contentProtected ? <EyeOff size={13} /> : <Eye size={13} />}
             <span className="wshell-tlabel">{st.contentProtected ? 'Hidden' : 'On share'}</span>
           </button>
-          <button type="button" className={`wshell-tool${st.opacity < 1 ? ' on' : ''}`} onClick={cycleSee}
+          <button type="button" className={`wshell-tool w-see${st.opacity < 1 ? ' on' : ''}`} onClick={cycleSee}
             title="See-through: let the work behind show through (Ctrl+Alt+O)">
-            <Contrast size={14} /><span className="wshell-tlabel">{st.opacity < 1 ? `${Math.round(st.opacity * 100)}%` : 'See-through'}</span>
+            <Contrast size={13} /><span className="wshell-tlabel">{st.opacity < 1 ? `${Math.round(st.opacity * 100)}%` : 'See-through'}</span>
           </button>
-          {guiding && (
-            <button type="button" className={`wshell-tool${st.clickThrough ? ' on' : ''}`} onClick={toggleBehind}
-              title="Click-behind: let your clicks pass to the app underneath (Ctrl+Alt+W)">
-              <MousePointer2 size={14} /><span className="wshell-tlabel">Click-behind</span>
-            </button>
-          )}
-          <button type="button" className="wshell-tool" onClick={toBuddy}
+          <button type="button" className={`wshell-tool w-behind${st.clickThrough ? ' on' : ''}`} onClick={toggleBehind} disabled={!guiding}
+            title={guiding ? 'Click-behind: let your clicks pass to the app underneath (Ctrl+Alt+W)' : 'Click-behind is available while guiding'}>
+            <MousePointer2 size={13} /><span className="wshell-tlabel">Click-behind</span>
+          </button>
+          <button type="button" className="wshell-tool w-buddy" onClick={toBuddy}
             title="Shrink to the buddy card (Ctrl+Alt+B)">
-            <PictureInPicture2 size={14} /><span className="wshell-tlabel">Buddy</span>
+            <PictureInPicture2 size={13} /><span className="wshell-tlabel">Buddy</span>
           </button>
           <span className="wshell-div" />
         </div>

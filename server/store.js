@@ -1329,12 +1329,41 @@ export function setWorkSessionPaused(workUserId, sessionId, paused) {
   persistSoon()
   return s
 }
-export function deleteWorkSession(workUserId, sessionId) {
+export function deleteWorkSession(workUserId, sessionId, reason = '') {
   const i = (db.workSessions || []).findIndex((x) => x.id === sessionId && x.workUserId === workUserId)
   if (i < 0) throw httpErr(404, 'Session not found')
+  const s = db.workSessions[i]
+  const u = getUser(workUserId)
+  const steps = Array.isArray(s.steps) ? s.steps : []
+  // Accountable deletion: log who/what/when/why BEFORE removing it, so a company
+  // admin can see it in their user logs. Kept even though the session is gone.
+  if (!db.workActivity) db.workActivity = []
+  db.workActivity.push({
+    id: 'act' + id(),
+    type: 'session_deleted',
+    workUserId,
+    username: (u && u.username) || '',
+    displayName: (u && u.displayName) || '',
+    companyId: (u && u.companyId) || null,
+    sessionId,
+    title: s.title || null,
+    goal: s.goal || null,
+    status: s.status || null,
+    stepsDone: steps.filter((x) => x.status === 'done').length,
+    stepsTotal: steps.length,
+    reason: String(reason || '').trim().slice(0, 500),
+    at: new Date().toISOString(),
+  })
+  if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
   db.workSessions.splice(i, 1)
   persist()
   return { ok: true }
+}
+// Company-scoped activity log (deletions etc.) for the company admin dashboard.
+export function listWorkActivity({ companyId, limit = 300 } = {}) {
+  let arr = db.workActivity || []
+  if (companyId) arr = arr.filter((a) => a.companyId === companyId)
+  return arr.slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, limit)
 }
 // Sessions left active but quiet past idleMs (the idle sweep finalizes them).
 export function idleWorkSessionsToFinalize(idleMs) {

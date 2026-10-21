@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
@@ -387,6 +387,20 @@ const WD_CSS = `
 .wd-start textarea{width:100%;resize:vertical;min-height:84px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--tx);font:inherit;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
 .wd-start textarea::placeholder{color:var(--mut)}
 .wd-start textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
+.wd-nameinput{width:100%;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
+.wd-nameinput::placeholder{color:var(--mut)}
+.wd-nameinput:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
+.wd-modal-ov{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
+.wd-modal{width:min(440px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.wd-modal h3{display:flex;align-items:center;gap:9px;font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;margin:0 0 12px}
+.wd-modal h3 svg{color:var(--danger)}
+.wd-modal-sess{font-size:14px;font-weight:600;color:var(--tx);background:var(--chip);border:1px solid var(--chip-line);border-radius:10px;padding:9px 12px;margin-bottom:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-modal label{display:block;font-size:13px;font-weight:600;color:var(--tx-2);margin-bottom:7px}
+.wd-modal label .req{color:var(--danger);font-weight:600;font-size:11.5px;margin-left:4px}
+.wd-modal textarea{width:100%;resize:vertical;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:11px;color:var(--tx);font:inherit;font-size:14px;outline:none}
+.wd-modal textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
+.wd-modal-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.5}
+.wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
 .wd-start-row{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
 .wd-hint{color:var(--mut);font-size:13px;flex:1;min-width:180px}
 .wd-docs{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
@@ -633,8 +647,8 @@ function DocsAttach({ tier, onDesktopDocs }) {
       <div className="wd-docs-row">
         <span className="wd-docs-lead"><FileText size={14} /> Reference documents <span className="wd-docs-sub">{desktop ? 'stay on this computer' : 'ground your plan'}</span></span>
         {desktop
-          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} Add from this computer</button>
-          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} Attach</button>}
+          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} Add documents</button>
+          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} Add documents</button>}
         <input ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple style={{ display: 'none' }} onChange={addWeb} />
       </div>
       {docs.length > 0 && (
@@ -654,8 +668,15 @@ function DocsAttach({ tier, onDesktopDocs }) {
 
 function Home({ user, onOpen, onSignOut }) {
   const { theme, toggle: toggleTheme } = useTheme()
+  // Team is a company-admin surface: show it only for a company admin who is
+  // actually attached to a company (role alone is not enough).
+  const isCompanyAdmin = user.companyRole === 'company_admin' && !!user.companyId
   const [tab, setTab] = useState('dashboard')
+  const [planTitle, setPlanTitle] = useState('')    // name the user gives the plan/session, carried everywhere
   const [deskDocs, setDeskDocs] = useState([])   // desktop on-device governed docs (ephemeral, client-only)
+  const [delTarget, setDelTarget] = useState(null)  // session pending delete (reason modal)
+  const [delReason, setDelReason] = useState('')
+  const [delBusy, setDelBusy] = useState(false)
   const [ready, setReady] = useState(false)
   const [scoping, setScoping] = useState(false)
   const [sessions, setSessions] = useState([])
@@ -739,11 +760,11 @@ function Home({ user, onOpen, onSignOut }) {
   // The plan phase is a short scoping wizard (forced). "Start guiding me" opens
   // it; the answers are stored on the session and folded into the plan.
   const tier = (usage && usage.tier) || 'basic'
-  const beginScope = () => { if (!ready || busy || !goal.trim()) return; setScoping(true) }
+  const beginScope = () => { if (!ready || busy || !goal.trim() || !planTitle.trim()) return; setScoping(true) }
   const runWithScope = async (answers) => {
     setScoping(false); setBusy(true)
     try {
-      const r = await api.workCreate({ goal: goal.trim(), scope: answers || [] })
+      const r = await api.workCreate({ title: planTitle.trim() || undefined, goal: goal.trim(), scope: answers || [] })
       // Desktop on-device docs: stash the governed text for THIS session so the
       // console can inject it into the plan. Client-only (sessionStorage), never
       // uploaded or persisted on the server.
@@ -782,7 +803,14 @@ function Home({ user, onOpen, onSignOut }) {
     { id: 'advanced', name: 'Advanced', hrs: 4 },
     { id: 'premium', name: 'Premium', hrs: 6 },
   ]
-  const del = async (id) => { try { await api.workDelete(id); load() } catch {} }
+  // Deletion is accountable: capture a reason before removing. The server logs
+  // who / what / when / why to the company admin's user activity log.
+  const confirmDelete = async () => {
+    if (!delTarget || !delReason.trim()) return
+    setDelBusy(true)
+    try { await api.workDelete(delTarget.id, delReason.trim()); setDelTarget(null); setDelReason(''); load() }
+    catch { /* keep modal open on error */ } finally { setDelBusy(false) }
+  }
   const pickCat = (c) => { setGoal(c.sample); setTab('dashboard'); setTimeout(() => goalRef.current && goalRef.current.focus(), 60) }
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
   const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
@@ -801,7 +829,7 @@ function Home({ user, onOpen, onSignOut }) {
             <button className={tab === 'dashboard' ? 'on' : ''} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')}><LayoutDashboard size={16} /> <span>Dashboard</span></button>
             <button className={tab === 'help' ? 'on' : ''} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')}><BookOpen size={16} /> <span>How-to</span></button>
             <button className={tab === 'support' ? 'on' : ''} aria-current={tab === 'support' ? 'page' : undefined} onClick={() => setTab('support')}><LifeBuoy size={16} /> <span>Support</span></button>
-            {user.companyRole === 'company_admin' && (
+            {isCompanyAdmin && (
               <button className={tab === 'team' ? 'on' : ''} aria-current={tab === 'team' ? 'page' : undefined} onClick={() => setTab('team')}><Users size={16} /> <span>Team</span></button>
             )}
           </nav>
@@ -886,11 +914,13 @@ function Home({ user, onOpen, onSignOut }) {
             {!ready && <div className="wd-setup"><div className="wd-setup-note">Set up your AI once to begin. It is used to read your screen and guide you.</div><AiSetup onReady={setReady} /></div>}
 
             <div className="wd-start">
-              <label htmlFor="wd-goal">Your goal</label>
+              <label htmlFor="wd-name">Name this plan <span style={{ color: 'var(--warm)' }}>*</span></label>
+              <input id="wd-name" className="wd-nameinput" placeholder="e.g. API pentest - transactional broker" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
+              <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span style={{ color: 'var(--warm)' }}>*</span></label>
               <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
               <div className="wd-start-row">
                 <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Set up your AI above to begin.'}</span>
-                <button className="wd-cta" disabled={!ready || busy || !goal.trim()} onClick={beginScope}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
+                <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
               </div>
               <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
             </div>
@@ -938,12 +968,12 @@ function Home({ user, onOpen, onSignOut }) {
                     return (
                       <div key={s.id} className="wd-sess">
                         <div className="wd-sess-main">
-                          <div className="wd-sess-title">{s.goal || s.title}</div>
+                          <div className="wd-sess-title">{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}</div>
                           <div className="wd-sess-meta">{s.status === 'ended' ? 'Completed' : (cur ? `You were at: ${cur.text}` : 'Not started yet')} &middot; <span className="wd-sess-done">{done}/{tot}</span> steps{tot > 0 ? <> &middot; {pct}%</> : null}</div>
                           {tot > 0 && <div className="wd-sess-bar"><i style={{ width: `${pct}%` }} /></div>}
                         </div>
                         <button className="wd-resume" onClick={() => onOpen(s.id)}><span>{s.status === 'ended' ? 'Open' : 'Resume'}</span> <ArrowRight size={14} /></button>
-                        <button className="wd-del" title="Delete session" aria-label="Delete session" onClick={() => del(s.id)}><Trash2 size={15} /></button>
+                        <button className="wd-del" title="Delete session" aria-label="Delete session" onClick={() => { setDelTarget(s); setDelReason('') }}><Trash2 size={15} /></button>
                       </div>
                     )
                   })}
@@ -989,37 +1019,31 @@ function Home({ user, onOpen, onSignOut }) {
               </div>
             )}
 
-            <div className="wd-apps">
-              <div className="wd-sec-head"><h2>Use it your way</h2><span className="wd-sec-count">One subscription, all three</span></div>
-              <div className="wd-apps-grid">
-                <div className="wd-app">
-                  <span className="wd-app-ic"><Monitor size={20} /></span>
-                  <h3>Desktop app</h3><p>A quiet overlay on top of your work, with see-through and click-behind, hidden from screen shares.</p>
-                  <a className={`wd-app-btn${appStatus?.desktop?.available ? '' : ' off'}`} href={appStatus?.desktop?.available ? '/api/work/app/desktop' : undefined} aria-disabled={appStatus?.desktop?.available ? undefined : 'true'}><Download size={14} /> {appStatus?.desktop?.available ? 'Download' : 'Soon'}</a>
-                </div>
-                <div className="wd-app feat">
-                  <span className="wd-app-ribbon">No install</span>
-                  <span className="wd-app-ic alt"><AppWindow size={20} /></span>
-                  <h3>Browser overlay</h3><p>Nothing to install. Works on locked-down machines, right here in your browser. Share your whole screen to be guided through any app.</p>
-                  <span className="wd-app-here"><Check size={13} /> You are using it now</span>
-                </div>
-                <div className="wd-app">
-                  <span className="wd-app-ic"><Smartphone size={20} /></span>
-                  <h3>Mobile app</h3><p>Point your phone camera at a screen, a device or paper, and get guided. Snap a photo or let it watch live.</p>
-                  <a className={`wd-app-btn${appStatus?.android?.available ? '' : ' off'}`} href={appStatus?.android?.available ? '/api/work/app/android' : undefined} aria-disabled={appStatus?.android?.available ? undefined : 'true'}><Download size={14} /> {appStatus?.android?.available ? 'Download' : 'Soon'}</a>
-                </div>
-              </div>
-            </div>
           </>
         ) : tab === 'support' ? (
           <div style={{ padding: '26px 20px', maxWidth: 1080, margin: '0 auto' }}><SupportTickets mode="user" /></div>
-        ) : tab === 'team' && user.companyRole === 'company_admin' ? (
+        ) : tab === 'team' && isCompanyAdmin ? (
           <div style={{ padding: '26px 20px', maxWidth: 1080, margin: '0 auto' }}><WorkTeam /></div>
         ) : (
           <HelpDocs onStart={() => setTab('dashboard')} />
         )}
       </main>
       {scoping && <ScopeWizard goal={goal} tier={tier} onCancel={cancelScope} onReady={runWithScope} />}
+      {delTarget && (
+        <div className="wd-modal-ov" onClick={() => !delBusy && setDelTarget(null)}>
+          <div className="wd-modal" onClick={(e) => e.stopPropagation()}>
+            <h3><Trash2 size={17} /> Delete this session?</h3>
+            <div className="wd-modal-sess">{(delTarget.title && !/^Session \d/.test(delTarget.title)) ? delTarget.title : (delTarget.goal || 'Untitled session')}</div>
+            <label htmlFor="wd-delreason">Why are you deleting it? <span className="req">required</span></label>
+            <textarea id="wd-delreason" rows={3} value={delReason} onChange={(e) => setDelReason(e.target.value)} placeholder="e.g. duplicate, created by mistake, task no longer needed" autoFocus />
+            <div className="wd-modal-note">This is recorded in your company's user activity log — who deleted it, when, the reason, and what the session was about.</div>
+            <div className="wd-modal-btns">
+              <button className="btn btn-ghost" onClick={() => setDelTarget(null)} disabled={delBusy}>Cancel</button>
+              <button className="btn btn-danger" onClick={confirmDelete} disabled={delBusy || !delReason.trim()}>{delBusy ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />} Delete session</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1040,11 +1064,17 @@ const HELP_SECTIONS = [
   { id: 'faq', t: 'FAQ' },
 ]
 function HelpDocs({ onStart }) {
-  const [active, setActive] = useState('start')
+  const desktop = typeof window !== 'undefined' ? !!window.workDesktop : false
+  // In the desktop app, lead with desktop-specific guidance + its own security
+  // and safety FAQ, then the shared how-to.
+  const sections = desktop
+    ? [{ id: 'desktop', t: 'The desktop app' }, { id: 'desktopsec', t: 'Security & safety (desktop)' }, { id: 'desktopfaq', t: 'Desktop FAQ' }, ...HELP_SECTIONS]
+    : HELP_SECTIONS
+  const [active, setActive] = useState(sections[0].id)
   const jump = (id) => { setActive(id); const el = document.getElementById('help-' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
-    const els = HELP_SECTIONS.map((s) => document.getElementById('help-' + s.id)).filter(Boolean)
+    const els = sections.map((s) => document.getElementById('help-' + s.id)).filter(Boolean)
     if (!els.length) return
     const obs = new IntersectionObserver((entries) => {
       const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)
@@ -1052,17 +1082,63 @@ function HelpDocs({ onStart }) {
     }, { rootMargin: '-82px 0px -62% 0px', threshold: 0 })
     els.forEach((el) => obs.observe(el))
     return () => obs.disconnect()
-  }, [])
+  }, [])   // eslint-disable-line
   return (
     <div className="wd-help">
       <aside className="wd-help-nav">
         <div className="wd-help-navlabel">How-to guide</div>
-        {HELP_SECTIONS.map((s) => <button key={s.id} className={active === s.id ? 'on' : ''} aria-current={active === s.id ? 'true' : undefined} onClick={() => jump(s.id)}>{s.t}</button>)}
+        {sections.map((s) => <button key={s.id} className={active === s.id ? 'on' : ''} aria-current={active === s.id ? 'true' : undefined} onClick={() => jump(s.id)}>{s.t}</button>)}
         <button className="wd-help-start" onClick={onStart}><Play size={13} /> Start a task</button>
       </aside>
       <div className="wd-help-body">
-        <h1>How to use WorkCoPilot</h1>
+        <h1>{desktop ? 'How to use the WorkCoPilot desktop app' : 'How to use WorkCoPilot'}</h1>
         <p className="wd-help-lead">An expert that watches your screen and tells you the exact next move, one step at a time, until the job is done. Here is everything it does and how to get the most from it.</p>
+
+        {desktop && (<>
+          <section id="help-desktop"><h2>The desktop app</h2>
+            <p>The desktop app is a quiet overlay that floats over whatever you are working in. It runs <b>read-only</b> - it shows the next move, it never clicks, types or runs anything for you.</p>
+            <h3 className="sub">Two modes</h3>
+            <ul>
+              <li><b>Planning</b> - a normal, resizable window (expand it to full screen) for setting your goal, answering the quick scoping questions and adding documents. It does not sit on top of other windows here.</li>
+              <li><b>Guiding</b> - once a plan starts it becomes a compact overlay that floats on top of your work, with see-through and click-behind so you can work underneath it.</li>
+              <li><b>Buddy</b> - minimize and it shrinks to a small card that keeps the current step in view. Bring it back any time.</li>
+            </ul>
+            <h3 className="sub">The title bar (after you sign in)</h3>
+            <ul>
+              <li><b>On top</b> - keep the window above everything else.</li>
+              <li><b>Hidden / On share</b> - hide the window from screen shares and recordings (on by default), or reveal it when you want to show it.</li>
+              <li><b>See-through</b> - cycle the window's transparency so the work behind shows through.</li>
+              <li><b>Click-behind</b> (while guiding) - let your clicks pass straight to the app underneath.</li>
+              <li><b>Buddy</b> - shrink to the buddy card.</li>
+            </ul>
+            <h3 className="sub">Keyboard shortcuts</h3>
+            <ul>
+              <li><b>Ctrl+H</b> hide / show &middot; <b>Ctrl+Alt+S</b> hide-from-share &middot; <b>Ctrl+Alt+T</b> on top</li>
+              <li><b>Ctrl+Alt+O</b> see-through &middot; <b>Ctrl+Alt+W</b> click-behind &middot; <b>Ctrl+Alt+B</b> buddy &middot; <b>Ctrl+Alt+M</b> choose monitor</li>
+            </ul>
+            <h3 className="sub">Your own documents &amp; diagrams</h3>
+            <p>On the goal card, use <b>Add documents</b> to ground the plan in your own material - PDFs, Word, text, and <b>diagrams or screenshots</b> (read on-device by OCR). The file stays on your machine; only the extracted, governed text is used to plan.</p>
+          </section>
+
+          <section id="help-desktopsec"><h2>Security &amp; safety (desktop)</h2>
+            <ul>
+              <li><b>Read-only by design.</b> It never clicks, types, runs commands or changes anything. You stay in control of every action.</li>
+              <li><b>Hidden from screen shares.</b> The overlay is content-protected by default, so it stays out of Zoom / Teams / Meet shares and recordings. Toggle it with <b>On share</b> or Ctrl+Alt+S when you want it visible.</li>
+              <li><b>Your documents stay on your computer.</b> Files you add are read and OCR'd locally. The raw file is never uploaded, and the text is not stored on our servers - it is used only to plan that session.</li>
+              <li><b>Least data leaves.</b> To guide you, downscaled screen frames and the governed text go to the AI model (ours, or your company's own keys). When governance is on, sensitive values are stripped or tokenized <b>before</b> anything is sent, and rebuilt on your device.</li>
+              <li><b>Signed &amp; updated safely.</b> The app is code-signed (COE Security) and updates are delivered over HTTPS.</li>
+            </ul>
+            <p className="wd-tip"><ShieldCheck size={14} /> These are controls and audit evidence that support your compliance (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA). They do not, by themselves, make you certified.</p>
+          </section>
+
+          <section id="help-desktopfaq"><h2>Desktop FAQ</h2>
+            <div className="wd-faq"><b>Can people on a call see the overlay?</b><p>No, not while it is hidden (the default). It is excluded from screen capture and recording. Press Ctrl+Alt+S or the On share button if you deliberately want to show it.</p></div>
+            <div className="wd-faq"><b>Does my diagram or document get uploaded?</b><p>No. On the desktop app the file is read on your computer, OCR included. Only the governed text is sent to the model to plan, and it is not stored on our servers.</p></div>
+            <div className="wd-faq"><b>Will it do things on my machine?</b><p>Never. It is read-only. It reads the screen and tells you the next step; you perform every action yourself.</p></div>
+            <div className="wd-faq"><b>How do I keep it out of the way?</b><p>Use See-through and Click-behind while guiding, minimize to the Buddy card, or Ctrl+H to hide it entirely. It keeps working while minimized.</p></div>
+            <div className="wd-faq"><b>Does it update itself?</b><p>Yes. It checks for a signed update over HTTPS on launch and installs it on the next restart.</p></div>
+          </section>
+        </>)}
 
         <section id="help-start"><h2>Getting started</h2>
           <ol className="wd-steps">
@@ -1484,6 +1560,21 @@ function Console({ sessionId, onBack }) {
   useEffect(() => { api.workModes().then((r) => setModes(r.modes || [])).catch(() => {}) }, [])
   const changeMode = async (m) => { setMode(m); try { await api.workSetMode(sessionId, m) } catch {} }
 
+  // Light/dark for the guiding panel (same global theme as the dashboard).
+  const { theme: appTheme, toggle: toggleAppTheme } = useTheme()
+
+  // Launch straight into guidance: once the session + goal are loaded and there
+  // is no plan yet, plan automatically so the user lands on the step card, not a
+  // second setup form. A resumed session already has steps, so we skip it.
+  const autoPlannedRef = useRef(false)
+  useEffect(() => {
+    if (autoPlannedRef.current || !sess) return
+    if (((sess.steps || []).length) > 0) { autoPlannedRef.current = true; return }
+    if (!(goal && goal.trim())) return
+    autoPlannedRef.current = true
+    plan()   // defined below; the effect body runs after render
+  }, [sess, goal])   // eslint-disable-line
+
   const [clickThrough, setClickThrough] = useState(false)
   const desktop = typeof window !== 'undefined' ? window.workDesktop : null
 
@@ -1808,24 +1899,30 @@ function Console({ sessionId, onBack }) {
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, rowGap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
           <button className="btn btn-ghost btn-sm" onClick={leaveToPlan} title="Back to planning. Your session pauses and waits for you under Pick up where you left off."><ChevronLeft size={15} /> Back to plan</button>
+          <button className="btn btn-ghost btn-sm" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}</button>
+          {sess && <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300, marginLeft: 4 }} title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</span>}
           <div style={{ flex: 1 }} />
           {usage && <span style={{ fontSize: 12, fontWeight: 600, color: usage.exhausted ? 'var(--danger)' : 'var(--text-dim)' }} title={`${usage.tier} plan, resets ${usage.resetLabel}`}>{Math.ceil((usage.remainingSeconds || 0) / 60)} min left</span>}
           {usage && usage.exhausted && <button className="btn btn-primary btn-sm" disabled title="Buying time arrives in the billing phase">Buy time</button>}
           {sess && <button className={`btn btn-sm ${paused ? 'btn-primary' : 'btn-ghost'}`} onClick={togglePause} title={paused ? 'Resume: your minutes count again once you watch' : 'Pause: freeze your minutes while you do other work'}>{paused ? 'Resume' : 'Pause'}</button>}
-          {/* On-top, see-through and click-behind now live on the desktop title bar (WorkShell). */}
-          {floatCapable && (pipWin
+          {/* Clean guiding screen: overlay toggles live on the desktop title bar; Deep pass is under Options; Report / Print / Audit / Review live on a COMPLETED task (below). */}
+          {floatCapable && sess && sess.status !== 'ended' && (pipWin
             ? <button className="btn btn-primary btn-sm" title="Close the floating window" onClick={closeFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Unfloat' : 'Close pop-out'}</button>
-            : <button className="btn btn-outline btn-sm" title={pipSupported ? 'Float the steps on top of your work (Chrome, Edge, Brave, Opera)' : 'Pop the steps out into a separate window (Firefox, Safari)'} onClick={openFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
-          {sess && <button className="btn btn-ghost btn-sm" title="Deep pass: run this one screenshot on the stronger model and weave the result back into your steps, then carry on with the fast model." onClick={() => analyze(question, true)} disabled={busy}><Zap size={14} /> Deep pass</button>}
-          {sess && <button className="btn btn-ghost btn-sm" title="Review what is on screen (a diagram, an architecture, a config) and get two generation prompts plus a document" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>}
-          {strongUsed && <span style={{ fontSize: 11, color: 'var(--brand-600)' }} title="A stronger model was just used on this frame"><Zap size={11} style={{ verticalAlign: -2 }} /> stronger model</span>}
-          {sess && <button className="btn btn-ghost btn-sm" title="Generate and download a PDF report of this session" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report</button>}
-          {sess && <button className="btn btn-ghost btn-sm" title="Open a printable report" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>}
-          {sess && <a className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }} href={api.workAuditUrl(sessionId)} download title="Download this session's audit log: exactly what was sent, line by line"><FileText size={14} /> Download audit log</a>}
-          <span style={{ fontSize: 11, color: 'var(--text-dim)' }}><Eye size={12} style={{ verticalAlign: -2 }} /> {frames} frames sent</span>
-          {sess && sess.status !== 'ended' && <button className="btn btn-outline btn-sm" onClick={finalize} disabled={busy}>End and summarize</button>}
+            : <button className="btn btn-outline btn-sm" title={pipSupported ? 'Float the steps on top of your work' : 'Pop the steps out into a separate window'} onClick={openFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
+          {sess && sess.status !== 'ended' && <button className="btn btn-outline btn-sm" onClick={finalize} disabled={busy}>End &amp; summarize</button>}
         </div>
         {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
+
+        {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
+        {sess && sess.status === 'ended' && (
+          <div style={{ ...card, padding: 14, marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: 13, fontWeight: 600, marginRight: 4 }}><Check size={15} style={{ verticalAlign: -2, color: 'var(--success)' }} /> Completed - download what you need:</span>
+            <button className="btn btn-outline btn-sm" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report (PDF)</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>
+            <a className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }} href={api.workAuditUrl(sessionId)} download><FileText size={14} /> Audit log</a>
+          </div>
+        )}
 
         {usage && usage.exhausted && (
           <div style={{ background: 'var(--danger)', color: '#fff', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -1839,43 +1936,51 @@ function Console({ sessionId, onBack }) {
           </div>
         )}
 
-        <div style={{ ...card, padding: 14 }}>
-          <label className="label" style={{ fontSize: 12, color: 'var(--text-dim)' }}>Your goal (type or paste)</label>
-          <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical', marginTop: 4 }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
-          <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
-            {!isMobile && <>
-              <label style={{ fontSize: 12, color: 'var(--text-dim)' }}>Read from</label>
-              <select className="select" value={source} onChange={(e) => { if (!capturing) setSource(e.target.value) }} disabled={capturing} style={{ width: 'auto' }}>
-                <option value="screen">My screen</option>
-                <option value="camera">Phone / camera</option>
-              </select>
-            </>}
-            {desktop && source === 'screen' && <button className="btn btn-outline btn-sm" onClick={() => { try { desktop.pickMonitor && desktop.pickMonitor() } catch {} }} title="Choose which monitor WorkCoPilot watches (for a multi-monitor setup)">Choose monitor</button>}
-            {isMobile && <button className="btn btn-outline btn-sm wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper with your camera, then Plan, Ask or Analyze reads it"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}
-            <label style={{ fontSize: 12, color: 'var(--text-dim)' }}>Guide style</label>
-            <select className="select" value={mode} onChange={(e) => changeMode(e.target.value)} style={{ width: 'auto' }}
-              title={(modes.find((m) => m.id === mode) || {}).hint || ''}>
-              {(modes.length ? modes : [{ id: 'stepwise', label: 'Step by step' }]).map((m) => (
-                <option key={m.id} value={m.id} title={m.hint || ''}>{m.label}</option>
-              ))}
-            </select>
-            <button className="btn btn-primary btn-sm" onClick={plan} disabled={busy || !goal.trim()}>{busy ? <Loader2 size={14} className="spin" /> : null} {steps.length ? 'Re-plan' : 'Plan the steps'}</button>
-            {steps.length > 0 && (watching
-              ? <button className="btn btn-danger btn-sm" onClick={pauseWatching}><Square size={14} /> Pause watching</button>
-              : <button className="btn btn-outline btn-sm" onClick={startWatching} disabled={done}><Play size={14} /> {done ? 'All done' : 'Watch me'}</button>)}
-          </div>
-          {err && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 8 }}>{err}</div>}
-          {source === 'screen' && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>Frames are downscaled to 1280px and sent only when the screen changes, so watching costs a few cents an hour. Share your <b>whole screen</b> (not just a tab) to be guided through an IDE, a terminal or any other desktop app; the Float window stays on top of them.</div>}
-          {source === 'camera' && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>{isMobile ? 'Tap Photo to snap the screen, device or paper you need help with, then Plan, Ask or Analyze reads that shot. Or tap Watch me to let the camera watch live.' : 'Point the back camera at the screen, device or paper you need help with. It reads a downscaled frame only when the view changes, so it costs a few cents an hour.'}</div>}
-          <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
-          {photoFrame && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 10 }}>
-              <img src={photoFrame} alt="Captured photo" style={{ width: 92, height: 69, objectFit: 'cover', borderRadius: 10, border: '1px solid var(--border)', flexShrink: 0 }} />
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', flex: 1, minWidth: 0 }}>Photo ready. Plan, Ask and Analyze use this shot. Retake to update it.</div>
-              <button className="btn btn-ghost btn-sm" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear</button>
+        {steps.length === 0 ? (
+          // Pre-plan: a minimal starter. Guidance auto-plans on open, so this is
+          // only seen briefly, or as a fallback if screen-share was declined.
+          <div style={{ ...card, padding: 14 }}>
+            <label className="label" style={{ fontSize: 12, color: 'var(--text-dim)' }}>Your goal (type or paste)</label>
+            <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical', marginTop: 4 }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
+            <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
+              {isMobile && <button className="btn btn-outline btn-sm wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}
+              <button className="btn btn-primary btn-sm" onClick={plan} disabled={busy || !goal.trim()}>{busy ? <><Loader2 size={14} className="spin" /> Planning…</> : <><Play size={14} /> Plan the steps</>}</button>
             </div>
-          )}
-        </div>
+            {err && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 8 }}>{err}</div>}
+            {!isMobile && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>Share your <b>whole screen</b> (not just a tab) so it can guide you through any app. If you have more than one monitor, it asks which to watch when it starts. Guide style comes from your plan and can be changed under Options.</div>}
+            {isMobile && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>Tap Photo to snap the screen, device or paper, then Plan reads it. Or Watch me to let the camera watch live.</div>}
+          </div>
+        ) : (
+          // Post-plan: the step card below is the main view. Keep only a slim bar.
+          <div className="wc-guidebar" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+            {watching
+              ? <button className="btn btn-danger btn-sm" onClick={pauseWatching}><Square size={14} /> Pause watching</button>
+              : <button className="btn btn-primary btn-sm" onClick={startWatching} disabled={done}><Play size={14} /> {done ? 'All done' : 'Watch me'}</button>}
+            <button className="btn btn-outline btn-sm" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
+            {strongUsed && <span style={{ fontSize: 11, color: 'var(--brand-600)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={11} /> stronger model</span>}
+            {isMobile && <button className="btn btn-outline btn-sm" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
+            <details className="wc-opts" style={{ marginLeft: 'auto' }}>
+              <summary style={{ cursor: 'pointer', fontSize: 12.5, color: 'var(--text-dim)' }}>Options</summary>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
+                <label style={{ fontSize: 12, color: 'var(--text-dim)' }}>Guide style</label>
+                <select className="select" value={mode} onChange={(e) => changeMode(e.target.value)} style={{ width: 'auto' }} title={(modes.find((m) => m.id === mode) || {}).hint || ''}>
+                  {(modes.length ? modes : [{ id: 'stepwise', label: 'Step by step' }]).map((m) => <option key={m.id} value={m.id} title={m.hint || ''}>{m.label}</option>)}
+                </select>
+                <button className="btn btn-outline btn-sm" onClick={plan} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
+                {desktop && <button className="btn btn-outline btn-sm" onClick={() => { try { desktop.pickMonitor && desktop.pickMonitor() } catch {} }}>Choose monitor</button>}
+              </div>
+            </details>
+            {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%' }}>{err}</div>}
+            {photoFrame && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+                <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+                <button className="btn btn-ghost btn-sm" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
+              </div>
+            )}
+          </div>
+        )}
+        {/* hidden camera-photo picker, always mounted */}
+        <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
 
         {/* Always mounted so the capture ref exists; shown as a live viewfinder
             only for the phone/camera source so you can aim it. The screen source
@@ -1948,15 +2053,15 @@ function Console({ sessionId, onBack }) {
           </div>
         )}
 
-        <div style={{ ...card, padding: 14, marginTop: 16 }}>
-          <div style={{ fontWeight: 600, marginBottom: 8 }}><HelpCircle size={15} style={{ verticalAlign: -2 }} /> {source === 'camera' ? 'Take a photo and ask' : 'Ask or analyze this screen'}</div>
-          <div className="wc-askrow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1, minWidth: 180 }} placeholder={source === 'camera' ? 'Type your question about what the camera sees (optional)' : 'Ask a question, or type what to analyze (leave blank for a full read)'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') ask() }} />
-            <button className="btn btn-outline" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : null} Ask</button>
-            <button className="btn btn-outline" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Take a photo now and answer your question about it, in the context of your goal' : 'Take a screenshot now and analyze it. Type what to analyze above, or leave blank for a full read.'}>{source === 'camera' ? <><Camera size={14} /> Photo</> : <><ScanLine size={14} /> Analyze</>}</button>
-            <button className="btn btn-outline" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer (only runs when you tap it)."><Globe size={14} /> Research</button>
+        {/* In-the-moment ask: a single clean prompt. It uses the whole session
+            (goal + plan + what is on screen) to answer and keep you moving. */}
+        <div style={{ ...card, padding: 12, marginTop: 14 }}>
+          <div className="wc-askrow" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+            <input className="input" style={{ flex: 1, minWidth: 180 }} placeholder={source === 'camera' ? 'Ask about what the camera sees…' : 'Ask anything in the moment — I answer and keep the plan moving'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') ask() }} />
+            <button className="btn btn-primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+            <button className="btn btn-ghost btn-sm" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
           </div>
-          <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>{source === 'camera' ? 'Photo snaps what the camera sees now and answers your question about it, tied to your goal and steps.' : 'Analyze screenshots the screen now and reads it; add a prompt above to focus it (for example "check this IAM policy for risky permissions").'} It uses the whole session: your goal, the plan and recent notes.</div>
           {answer && <div style={{ marginTop: 10, fontSize: 14 }}><AnswerBody text={answer} /></div>}
         </div>
 

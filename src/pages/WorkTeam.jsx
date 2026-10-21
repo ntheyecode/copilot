@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
-import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check } from 'lucide-react'
+import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check, FileText, Trash2 } from 'lucide-react'
 
 // Company-admin Team page. A company admin sees the users in their own company
 // and can add a new one. Backend:
@@ -15,6 +15,7 @@ const TIERS = [
   { id: 'premium', name: 'Premium' },
 ]
 const fmt = (s) => { try { return new Date(s).toLocaleDateString() } catch { return '' } }
+const fmtDT = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
 
 export default function WorkTeam() {
   const [company, setCompany] = useState(null)
@@ -24,6 +25,9 @@ export default function WorkTeam() {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const [ok, setOk] = useState('')
+  const [activity, setActivity] = useState(null)
+  const loadActivity = useCallback(() => { api.workTeamActivity().then((r) => setActivity(r.activity || [])).catch(() => setActivity([])) }, [])
+  useEffect(() => { if (view === 'activity') loadActivity() }, [view, loadActivity])
 
   const load = useCallback(() => {
     api.workCompanyUsers()
@@ -62,7 +66,10 @@ export default function WorkTeam() {
               <h2><Users size={20} /> Your team{company && company.name ? ` · ${company.name}` : ''}</h2>
               <p>Add people to your company and set what they can do. New users sign in with the username and password you set here.</p>
             </div>
-            <button className="wt-btn primary" onClick={() => { setErr(''); setOk(''); setView('new') }}><Plus size={15} /> Add user</button>
+            <div style={{ display: 'flex', gap: 10 }}>
+              <button className="wt-btn" onClick={() => setView('activity')}><FileText size={15} /> User activity</button>
+              <button className="wt-btn primary" onClick={() => { setErr(''); setOk(''); setView('new') }}><Plus size={15} /> Add user</button>
+            </div>
           </div>
 
           {ok && <div className="wt-ok"><Check size={14} /> {ok}</div>}
@@ -80,6 +87,36 @@ export default function WorkTeam() {
                         {ROLE_LABEL[u.companyRole] || 'Member'}
                       </span>
                       <span className="wt-when">Added {fmt(u.createdAt)}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+          {err && <div className="wt-err">{err}</div>}
+        </>
+      )}
+
+      {view === 'activity' && (
+        <>
+          <div className="wt-head">
+            <div>
+              <h2><FileText size={20} /> User activity</h2>
+              <p>Session deletions across your company — who deleted it, when, why, and what it was about.</p>
+            </div>
+            <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
+          </div>
+          {activity == null ? <div className="wt-empty"><Loader2 size={18} className="spin" /> Loading activity…</div>
+            : activity.length === 0 ? <div className="wt-empty">No activity yet. Session deletions will appear here.</div>
+              : (
+                <ul className="wt-acts">
+                  {activity.map((a) => (
+                    <li key={a.id}>
+                      <span className="wt-act-ic"><Trash2 size={14} /></span>
+                      <div className="wt-act-main">
+                        <div className="wt-act-top"><b>{a.displayName || a.username || 'A user'}</b> deleted a session</div>
+                        <div className="wt-act-sess">{(a.title && !/^Session \d/.test(a.title)) ? a.title : (a.goal || 'Untitled session')}{a.stepsTotal ? ` · ${a.stepsDone}/${a.stepsTotal} steps` : ''}{a.status ? ` · ${a.status}` : ''}</div>
+                        {a.reason && <div className="wt-act-reason">&ldquo;{a.reason}&rdquo;</div>}
+                      </div>
+                      <span className="wt-when">{fmtDT(a.at)}</span>
                     </li>
                   ))}
                 </ul>
@@ -138,6 +175,14 @@ const CSS = `
 .r-company_admin{background:rgba(10,157,102,.15);color:#06603f}
 .r-member{background:rgba(120,130,150,.15);color:#596074}
 .wt-when{color:var(--text-dim,#667);font-size:12px;white-space:nowrap}
+.wt-acts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
+.wt-acts li{display:flex;align-items:flex-start;gap:12px;background:var(--panel,#fff);border:1px solid var(--line,#e3e6ee);border-radius:12px;padding:12px 15px}
+.wt-act-ic{width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center;color:#c0392b;background:rgba(192,57,43,.12)}
+.wt-act-main{flex:1;min-width:0}
+.wt-act-top{font-size:13.5px;color:var(--text,#141726)}
+.wt-act-sess{font-size:12.5px;color:var(--text-dim,#667);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-act-reason{font-size:13px;color:var(--text,#141726);margin-top:6px;font-style:italic}
+@media(max-width:560px){.wt-acts li{flex-wrap:wrap}.wt-acts .wt-when{order:4;width:100%}}
 .wt-empty{color:var(--text-dim,#667);padding:26px 0;text-align:center;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
 .wt-err{color:#c0392b;font-size:13px;margin-top:12px}
 .wt-ok{display:inline-flex;align-items:center;gap:7px;color:#06603f;background:rgba(10,157,102,.12);border:1px solid rgba(10,157,102,.3);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;margin-bottom:14px}
