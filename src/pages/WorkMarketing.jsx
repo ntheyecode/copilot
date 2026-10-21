@@ -486,13 +486,11 @@ function LiveDemo({ tilt, untilt }) {
       ],
     },
     {
-      tag: 'Automation', app: 'n8n', goal: 'Build a business phone line with an AI receptionist in n8n',
+      tag: 'Incident response', app: 'Grafana + kubectl', goal: 'Find why p99 latency spiked and stop the bleeding',
       steps: [
-        { sees: 'You are on the n8n sign-in page', step: 'Sign in to n8n', how: ['Open app.n8n.cloud', 'Type your email and password', 'Click Sign in'], click: 'Sign in', done: 'the Workflows list opens' },
-        { sees: 'An empty workflow canvas is open', step: 'Add the incoming-call webhook', how: ['Click "+ Add first step" on the canvas', 'Search Webhook and add it', 'Copy the Production URL it shows'], click: '+ Add Webhook', done: 'a Webhook node appears' },
-        { sees: 'The webhook method is set to GET', fix: { say: 'Phone providers POST the call, so GET would drop every call', do: 'Open the node and switch HTTP Method to POST' }, click: 'Method: POST', done: 'the method now reads POST' },
-        { sees: 'The webhook is live with a URL', step: 'Point your phone number at it', how: ['Open Twilio, open your number', 'Under "A call comes in" choose Webhook', 'Paste the URL, click Save'], click: 'Save', done: 'a test call reaches n8n' },
-        { sees: 'The transcript node returned text', step: 'Answer in the AI voice', how: ['Add an OpenAI "Message a model" node', 'Paste your receptionist instructions', 'Reply through Twilio Say'], click: 'Message a model', done: 'the caller hears the AI answer' },
+        { sees: 'p99 jumped from 120ms to 2.4s at 14:03', fix: { say: 'A latency cliff at a sharp timestamp is a deploy or a dependency, not organic load', do: 'Overlay the deploy markers and the DB dashboard on 14:03' }, click: 'Overlay deploys', done: 'the spike lines up with a rollout' },
+        { sees: 'The new pod runs an N+1 query per request', fix: { say: 'Each request now fans out to hundreds of DB calls - that is your latency', do: 'Roll the deploy back now, then fix the query - stop the bleeding first' }, click: 'Roll back', cmd: '$ kubectl rollout undo deploy/orders', done: 'p99 falls back under 200ms' },
+        { sees: 'The root cause is a missing eager-load', step: 'Fix the N+1 at the source, not the symptom', how: ['Eager-load the association so it is one query, not N', 'Add the missing index on the foreign key', 'Add a p99 alert so this pages before customers feel it'], click: 'Open PR', done: 'the fix is in review with an alert attached' },
       ],
     },
     {
@@ -512,11 +510,11 @@ function LiveDemo({ tilt, untilt }) {
       ],
     },
     {
-      tag: 'Cloud', app: 'AWS Console', goal: 'Set up a private network (VPC) on AWS',
+      tag: 'Cloud security', app: 'AWS IAM', goal: 'Replace a wildcard IAM policy with least privilege',
       steps: [
-        { sees: 'You are in the VPC dashboard', step: 'Create the VPC', how: ['In the VPC console, click Create VPC', 'Choose "VPC only" and give it a name', 'Set IPv4 CIDR to 10.0.0.0/16, click Create VPC'], click: 'Create VPC', cmd: '$ aws ec2 create-vpc --cidr-block 10.0.0.0/16', done: 'the VPC is listed' },
-        { sees: 'You typed CIDR 10.0.0.0/24', fix: { say: 'A /24 is only 256 addresses, too small to grow into', do: 'Change the CIDR to 10.0.0.0/16' }, click: 'CIDR /16', done: 'the range is 10.0.0.0/16' },
-        { sees: 'The VPC has no path to the internet', step: 'Attach an internet gateway', how: ['Open Internet gateways, click Create, name it', 'Select it, open Actions, Attach to VPC', 'Pick your VPC, click Attach'], click: 'Attach to VPC', done: 'the gateway shows Attached' },
+        { sees: 'The role grants Action "*" on Resource "*"', fix: { say: 'That is full admin - one leaked key owns the whole account', do: 'Scope it to exactly the actions this app makes, on its own resources' }, diff: { file: 'role-policy.json', old: '"Action": "*",  "Resource": "*"', new: '"Action": ["s3:GetObject","s3:PutObject"], "Resource": "arn:aws:s3:::app-data/*"' }, click: 'Edit policy', done: 'the policy is scoped to one bucket' },
+        { sees: 'CloudTrail shows the role also calls SQS', step: 'Add only what it really uses', how: ['Open CloudTrail, filter events by this role', 'List the distinct API calls it actually makes', 'Grant exactly those - nothing speculative'], click: 'Add sqs:SendMessage', done: 'every real call is allowed, nothing more' },
+        { sees: 'Access Analyzer flags the bucket as public', fix: { say: 'The bucket policy still allows a wildcard principal, so anyone can read it', do: 'Remove Principal "*" so only this role can reach the data' }, click: 'Fix bucket policy', done: 'Access Analyzer goes green' },
       ],
     },
     {

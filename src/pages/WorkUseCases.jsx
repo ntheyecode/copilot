@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ServerCog, Blocks, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass,
-  ArrowRight, Check, ChevronLeft,
+  ArrowRight, Check, ChevronLeft, ScanEye, Play,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
@@ -32,49 +32,49 @@ export default function WorkUseCases() {
       id: 'config', icon: ServerCog, tone: 'a', tag: 'Technical setup & config',
       blurb: 'Stand up and lock down infrastructure the right way, step by step. Firewalls, IDS/IPS, cloud networking, servers and DevOps: WorkCoPilot walks you through the console or the terminal, names the exact setting, and checks each change is live before moving on.',
       can: ['Configure a firewall or security group', 'Harden a Linux server', 'Set up IDS / IPS rules', 'Wire up a CI/CD pipeline'],
-      guide: { goal: 'Harden a public production Linux server', step: 'Kill password SSH, least-privilege the firewall, auto-ban attackers', how: ['Set PermitRootLogin no and PasswordAuthentication no in /etc/ssh/sshd_config', 'Default-deny the firewall, then allow only 22 and 443', 'Install fail2ban so repeated SSH failures get banned automatically', 'Reload sshd and confirm from a second session before you log out of the first'], cmd: '$ sudo ufw default deny incoming && sudo ufw allow 22,443/tcp && sudo ufw enable', done: 'ss -tlnp shows only 22 and 443, and a password login is refused' },
+      guide: { goal: 'Harden a public production Linux server', sees: 'You are logged into the server as root', active: 2, plan: ['Create a non-root sudo user', 'Add your SSH key and test it', 'Kill password SSH, least-privilege the firewall, auto-ban attackers', 'Turn on unattended security updates', 'Disable unused services and harden sysctl', 'Set up log alerts, then snapshot the box'], how: ['Set PermitRootLogin no and PasswordAuthentication no in /etc/ssh/sshd_config', 'Default-deny the firewall, then allow only 22 and 443', 'Install fail2ban so repeated SSH failures get banned automatically', 'Reload sshd and confirm from a second session before you log out of the first'], cmd: '$ sudo ufw default deny incoming && sudo ufw allow 22,443/tcp && sudo ufw enable', done: 'ss -tlnp shows only 22 and 443, and a password login is refused' },
     },
     {
       id: 'build', icon: Blocks, tone: 'b', tag: 'Build & implement',
       blurb: 'Take an idea from an empty folder to a running system. Pipelines, integrations, data flows and end-to-end builds: it gives you the exact commands and code, in order, and catches the mistakes that usually cost hours.',
       can: ['Scaffold a new app or service', 'Connect two systems with an API', 'Build a data pipeline', 'Deploy to the cloud'],
-      guide: { goal: 'Add bullet-proof Stripe webhooks', step: 'Verify every event and make the handler idempotent', how: ['Create a raw-body POST /webhooks/stripe (no JSON parser on that one route)', 'Verify the signature with stripe.webhooks.constructEvent before trusting anything', 'Record each event id and skip it if you have seen it, so retries never double-charge', 'Return 200 within two seconds, then process the event in a background job'], cmd: '$ stripe trigger checkout.session.completed', done: 'a replayed event is accepted once and ignored the second time' },
+      guide: { goal: 'Add bullet-proof Stripe webhooks', sees: 'Your app is open, the Stripe keys are in your env file', active: 2, plan: ['Create the Stripe account and copy your keys', 'Add the raw-body webhook route', 'Verify every event and make the handler idempotent', 'Handle the events you care about (payments, cancels)', 'Replay test events and watch the logs', 'Switch to live keys and monitor the first charges'], how: ['Create a raw-body POST /webhooks/stripe (no JSON parser on that one route)', 'Verify the signature with stripe.webhooks.constructEvent before trusting anything', 'Record each event id and skip it if you have seen it, so retries never double-charge', 'Return 200 within two seconds, then process the event in a background job'], cmd: '$ stripe trigger checkout.session.completed', done: 'a replayed event is accepted once and ignored the second time' },
     },
     {
       id: 'ai', icon: Sparkles, tone: 'c', tag: 'AI & automation',
       blurb: 'Build agents, RAG assistants and automations without getting lost. n8n flows, vector search and enterprise AI: it guides each node, each setting and each connection, so the automation actually runs.',
       can: ['Build an n8n workflow', 'Stand up a RAG assistant', 'Automate a repetitive task', 'Wire an AI into your tools'],
-      guide: { goal: 'Ship a RAG assistant that cites its sources', step: 'Wire retrieval before generation, and make it refuse when unsure', how: ['Split your docs into ~500-token chunks with slight overlap, keeping each source id', 'Embed every chunk and upsert it into the vector store', 'On a question, retrieve the top matches, rerank them, and pass only those as context', 'Make the prompt cite the chunk it used and answer "I do not know" when nothing matches'], cmd: null, done: 'answers quote the right document and refuse when the answer is not in the corpus' },
+      guide: { goal: 'Ship a RAG assistant that cites its sources', sees: 'Your source docs are in a folder, the vector store is empty', active: 2, plan: ['Collect and clean your source documents', 'Chunk, embed and index them', 'Wire retrieval before generation, cite sources and refuse when unsure', 'Add reranking so the best chunks win', 'Evaluate answers against known questions', 'Deploy behind your app with auth'], how: ['Split your docs into ~500-token chunks with slight overlap, keeping each source id', 'Embed every chunk and upsert it into the vector store', 'On a question, retrieve the top matches, rerank them, and pass only those as context', 'Make the prompt cite the chunk it used and answer "I do not know" when nothing matches'], cmd: null, done: 'answers quote the right document and refuse when the answer is not in the corpus' },
     },
     {
       id: 'product', icon: Rocket, tone: 'd', tag: 'Product & innovation',
       blurb: 'Turn a brand new idea into something real. Prototype, validate and ship: it guides tools you have never opened before and keeps everything pointed at the outcome you want.',
       can: ['Prototype a new feature', 'Spin up a landing page', 'Run a quick experiment', 'Ship a first version'],
-      guide: { goal: 'Ship and instrument a landing page today', step: 'Publish on your domain and prove the tracking fires', how: ['Build the page, then connect your domain with the exact DNS records it shows', 'Add the analytics snippet just before the closing head tag', 'Set a conversion event on the signup button, not just a page view', 'Open the live URL and confirm a test signup lands in real-time analytics'], cmd: null, done: 'the live URL loads and a test signup appears as a conversion' },
+      guide: { goal: 'Ship and instrument a landing page today', sees: 'A blank landing-page builder is open', active: 2, plan: ['Pick the template and write the copy', 'Build the page and connect your domain', 'Publish and prove the tracking fires', 'Add an A/B test on the headline', 'Wire the signup through to your CRM', 'Watch conversions and iterate'], how: ['Build the page, then connect your domain with the exact DNS records it shows', 'Add the analytics snippet just before the closing head tag', 'Set a conversion event on the signup button, not just a page view', 'Open the live URL and confirm a test signup lands in real-time analytics'], cmd: null, done: 'the live URL loads and a test signup appears as a conversion' },
     },
     {
       id: 'marketing', icon: Megaphone, tone: 'e', tag: 'Marketing & growth',
       blurb: 'Launch campaigns, read the numbers and grow, without second-guessing every button. It walks you through the ad manager and the analytics, and tells you what each number means.',
       can: ['Launch an ad campaign', 'Set up conversion tracking', 'Read a traffic report', 'Plan a product launch'],
-      guide: { goal: 'Launch a Google Ads search campaign that converts', step: 'Set budget, keywords and conversion tracking together', how: ['Install the Google tag and import the conversion from GA4 first', 'Create a Search campaign with exact and phrase-match keywords, not broad', 'Set a daily cap, the right locations, and a target CPA', 'Add three responsive search ads, then submit for review'], cmd: null, done: 'the campaign reads Eligible and the conversion shows Recording' },
+      guide: { goal: 'Launch a Google Ads search campaign that converts', sees: 'The Google Ads dashboard, no campaigns yet', active: 2, plan: ['Install the Google tag and import the GA4 conversion', 'Research keywords and write the ads', 'Set budget, keywords and conversion tracking together', 'Submit for review and go live', 'Add negative keywords from the search terms', 'Scale the winners, cut the losers'], how: ['Install the Google tag and import the conversion from GA4 first', 'Create a Search campaign with exact and phrase-match keywords, not broad', 'Set a daily cap, the right locations, and a target CPA', 'Add three responsive search ads, then submit for review'], cmd: null, done: 'the campaign reads Eligible and the conversion shows Recording' },
     },
     {
       id: 'office', icon: Calculator, tone: 'a', tag: 'Accounting & office',
       blurb: 'Close the books, build the report, file the thing: guided click by click. Reconciliations, spreadsheets, invoices and filings: it shows exactly what to enter and flags what does not add up.',
       can: ['Reconcile a bank statement', 'Build a financial report', 'Create and send invoices', 'Prepare a filing'],
-      guide: { goal: 'Reconcile the month to the penny', step: 'Match everything, then hunt the variance', how: ['Import the bank CSV and lock the opening balance', 'Auto-match the deposits, then clear each withdrawal one by one', 'When it does not tie out, filter to uncleared and compare dates and amounts', 'Post the bank fees and interest the statement shows but your books do not'], cmd: null, done: 'the cleared balance equals the statement to the cent' },
+      guide: { goal: 'Reconcile the month to the penny', sees: 'Your accounting tool, this month still unreconciled', active: 2, plan: ['Import the bank statement and your books', 'Lock the opening balance', 'Match everything, then hunt the variance', 'Post the bank fees and interest adjustments', 'Lock the period so it cannot change', 'Export the reconciliation report'], how: ['Import the bank CSV and lock the opening balance', 'Auto-match the deposits, then clear each withdrawal one by one', 'When it does not tie out, filter to uncleared and compare dates and amounts', 'Post the bank fees and interest the statement shows but your books do not'], cmd: null, done: 'the cleared balance equals the statement to the cent' },
     },
     {
       id: 'legal', icon: Scale, tone: 'b', tag: 'Legal & compliance',
       blurb: 'Move through reviews, forms and checks with a steady hand. It guides the process, points to what to look for, and keeps a clean record of what was done.',
       can: ['Review a contract clause by clause', 'Complete a compliance checklist', 'Fill a regulatory form', 'Prepare an audit trail'],
-      guide: { goal: 'Red-line a vendor contract', step: 'Check the clauses that actually carry risk', how: ['Open the contract next to your playbook or standard positions', 'Check the liability cap, indemnity, term and auto-renewal', 'Check data processing, breach-notice windows and sub-processors', 'Flag every deviation with a suggested red-line for counsel to approve'], cmd: null, done: 'every high-risk clause is checked, flagged or accepted' },
+      guide: { goal: 'Red-line a vendor contract', sees: 'The vendor contract open next to your playbook', active: 2, plan: ['Load the contract next to your playbook', 'Map the parties, term and payment', 'Check the clauses that carry real risk', 'Draft a red-line for every deviation', 'Send to counsel with your notes', 'Track changes through to signature'], how: ['Open the contract next to your playbook or standard positions', 'Check the liability cap, indemnity, term and auto-renewal', 'Check data processing, breach-notice windows and sub-processors', 'Flag every deviation with a suggested red-line for counsel to approve'], cmd: null, done: 'every high-risk clause is checked, flagged or accepted' },
     },
     {
       id: 'general', icon: Compass, tone: 'c', tag: 'Everyday & anything else',
       blurb: 'Anything else on a screen. A new tool you have never opened, a form you are stuck on, an error you do not understand: point WorkCoPilot at it and get walked through to done.',
       can: ['Learn a new tool fast', 'Fix a confusing error', 'Fill a tricky form', 'Get unstuck on anything'],
-      guide: { goal: 'Decode and fix a cryptic error', step: 'Find the real cause, not the symptom, then fix it', how: ['Paste the whole error, it reads the full stack, not just the last line', 'It names the real cause and which file and line to change', 'Apply the exact config or code fix it shows, in the right place', 'Re-run and confirm the error is gone, not just moved somewhere else'], cmd: null, done: 'the task finishes with a clean log and no error' },
+      guide: { goal: 'Decode and fix a cryptic error', sees: 'A red error filling the console', active: 1, plan: ['Reproduce the error reliably', 'Find the real cause, not the symptom', 'Apply the exact fix in the right place', 'Re-run and confirm it is truly gone', 'Add a guard so it cannot come back'], how: ['Paste the whole error, it reads the full stack, not just the last line', 'It names the real cause and which file and line to change', 'Apply the exact config or code fix it shows, in the right place', 'Re-run and confirm the error is gone, not just moved somewhere else'], cmd: null, done: 'the task finishes with a clean log and no error' },
     },
   ]
 
@@ -141,22 +141,56 @@ export default function WorkUseCases() {
   )
 }
 
-// A worked example graphic: the real shape of a guided step.
+// A worked example graphic: the real shape of a guided session - NOT one step in
+// isolation. It reads the screen ("I can see"), shows the whole multi-step plan
+// with the done steps ticked and the ones still to come (each a guided step),
+// and expands the ONE step happening now with its exact how, command and check.
+// That makes the depth obvious: this is step X of N, not the end of the solution.
 function MiniGuide({ g, tag }) {
+  const plan = g.plan && g.plan.length ? g.plan : [g.step || g.goal]
+  const active = Math.min(Math.max(g.active || 0, 0), plan.length - 1)
+  const total = plan.length
+  const remaining = total - active - 1
   return (
     <div className="uc-mini">
-      <div className="uc-mini-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>WorkCoPilot</b><span className="uc-mini-tag">{tag.split(' ')[0]}</span></div>
+      <div className="uc-mini-head">
+        <span className="d r" /><span className="d y" /><span className="d g" />
+        <b>WorkCoPilot</b>
+        <span className="uc-mini-live"><i /> watching</span>
+        <span className="uc-mini-tag">{tag.split(' ')[0]}</span>
+      </div>
       <div className="uc-mini-goal"><span>GOAL</span> {g.goal}</div>
-      <div className="uc-mini-now">
-        <div className="uc-mini-label">DO THIS NOW</div>
-        <div className="uc-mini-step">{g.step}</div>
+      {g.sees && <div className="uc-mini-sees"><ScanEye size={12} /> <b>I can see</b> {g.sees}</div>}
+      <div className="uc-mini-prog">
+        <span className="uc-mini-pc">Step {active + 1} of {total}</span>
+        <div className="uc-mini-bar"><i style={{ width: `${Math.round(((active + 1) / total) * 100)}%` }} /></div>
       </div>
-      <div className="uc-mini-how">
-        <div className="uc-mini-hl">EXACTLY HOW</div>
-        <ol>{g.how.map((h, k) => <li key={k}>{h}</li>)}</ol>
-      </div>
-      {g.cmd && <div className="uc-mini-term"><div className="uc-mini-th">TERMINAL <span>Copy</span></div><code>{g.cmd}</code></div>}
-      <div className="uc-mini-done"><Check size={13} /> done when {g.done}</div>
+      <ol className="uc-plan">
+        {plan.map((title, i) => {
+          if (i < active) return (
+            <li className="done" key={i}><span className="pn ok"><Check size={12} /></span><span className="pt">{title}</span></li>
+          )
+          if (i > active) return (
+            <li className="next" key={i}><span className="pn play"><Play size={9} /></span><span className="pt">{title}</span></li>
+          )
+          return (
+            <li className="active" key={i}>
+              <span className="pn cur">{i + 1}</span>
+              <div className="pbody">
+                <div className="uc-mini-label">DO THIS NOW</div>
+                <div className="uc-mini-step">{title}</div>
+                <div className="uc-mini-how">
+                  <div className="uc-mini-hl">EXACTLY HOW</div>
+                  <ol>{g.how.map((h, k) => <li key={k}>{h}</li>)}</ol>
+                </div>
+                {g.cmd && <div className="uc-mini-term"><div className="uc-mini-th">TERMINAL <span>Copy</span></div><code>{g.cmd}</code></div>}
+                <div className="uc-mini-done"><Check size={13} /> done when {g.done}</div>
+              </div>
+            </li>
+          )
+        })}
+      </ol>
+      {remaining > 0 && <div className="uc-mini-foot"><Play size={11} /> {remaining} more guided step{remaining === 1 ? '' : 's'} after this, each the same depth</div>}
     </div>
   )
 }
@@ -216,9 +250,30 @@ const CSS = `
 .uc-mini-tag{margin-left:auto;font-size:11px;color:var(--em);border:1px solid rgba(140,245,196,.3);border-radius:999px;padding:2px 10px}
 .uc-mini-goal{font-size:14px;background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:10px 12px}
 .uc-mini-goal span{font-size:10px;letter-spacing:.14em;color:var(--mut);font-weight:700;margin-right:8px}
-.uc-mini-now{margin-top:10px;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.06);border-radius:12px;padding:12px}
+.uc-mini-live{display:inline-flex;align-items:center;gap:6px;margin-left:10px;font-size:11px;color:#6ee7b7}
+.uc-mini-live i{width:7px;height:7px;border-radius:50%;background:#34d399;animation:uc-pulse 1.6s infinite}
+@keyframes uc-pulse{0%{box-shadow:0 0 0 0 rgba(52,211,153,.5)}70%{box-shadow:0 0 0 6px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.uc-mini-sees{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:13px;color:var(--mut);line-height:1.4}
+.uc-mini-sees b{color:#7dd3fc;font-weight:700;margin-right:1px}.uc-mini-sees svg{color:#7dd3fc;flex-shrink:0}
+.uc-mini-prog{display:flex;align-items:center;gap:12px;margin:13px 2px 11px}
+.uc-mini-pc{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--mut);white-space:nowrap}
+.uc-mini-bar{flex:1;height:5px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
+.uc-mini-bar i{display:block;height:100%;border-radius:999px;background:linear-gradient(90deg,var(--em),var(--em2));transition:width .5s ease}
+.uc-plan{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.uc-plan>li{display:flex;gap:11px;align-items:flex-start}
+.uc-plan .pn{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;margin-top:1px}
+.uc-plan .pn.ok{background:rgba(52,211,153,.18);color:#34d399}
+.uc-plan .pn.play{background:rgba(255,255,255,.05);color:var(--mut);border:1px solid var(--line)}
+.uc-plan .pn.cur{background:linear-gradient(135deg,var(--em),var(--em2));color:#042}
+.uc-plan .pt{font-size:13.5px;line-height:1.5;padding-top:2px}
+.uc-plan li.done .pt{color:var(--mut)}
+.uc-plan li.next .pt{color:var(--mut);opacity:.82}
+.uc-plan li.active{align-items:stretch}
+.uc-plan li.active .pbody{flex:1;min-width:0;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.07);border-radius:12px;padding:12px}
 .uc-mini-label{font-size:10px;letter-spacing:.14em;color:var(--em);font-weight:700;margin-bottom:4px}
 .uc-mini-step{font-weight:600}
+.uc-mini-foot{display:flex;align-items:center;gap:8px;margin-top:12px;padding-top:11px;border-top:1px solid var(--line);font-size:12px;color:var(--mut)}
+.uc-mini-foot svg{color:var(--em2);flex-shrink:0}
 .uc-mini-how{margin-top:10px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:rgba(255,255,255,.02)}
 .uc-mini-hl{font-size:10px;letter-spacing:.14em;color:var(--em2);font-weight:700;margin-bottom:8px}
 .uc-mini-how ol{margin:0;padding:0;list-style:none;counter-reset:h;display:flex;flex-direction:column;gap:8px}
