@@ -241,6 +241,9 @@ function DemoPlayer() {
 
         <div className="wkd-demo-goal"><span className="k">GOAL</span> {typed}{stage === 'type' && <span className="caret" />}</div>
 
+        {/* The stage area fills the card and centres its screen, so the fixed
+            height never leaves an empty gap below short stages (the write-up). */}
+        <div className="wkd-stagearea">
         {stage === 'plan' && (
           <div className="wkd-plan">
             <div className="wkd-plan-head"><ScanEye size={13} /> Reading your screen, here is the plan</div>
@@ -317,6 +320,7 @@ function DemoPlayer() {
             </div>
           </div>
         )}
+        </div>
 
         {stage === 'done' && fw > 0 && (
           <div className="wkd-fw" key={fw} aria-hidden>
@@ -365,7 +369,12 @@ const CSS = `
 /* Fixed height = the tallest stage, so the card never expands then shrinks as
    stages change (measured max 594px; 612 gives headroom). overflow:hidden keeps
    any stray pixel and the fireworks inside the rounded card. */
-.wkd-demo{background:linear-gradient(180deg,#0f1424,#0b0f1c);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 30px 70px rgba(5,10,30,.5);padding:16px;text-align:left;color:#e8ecf7;height:612px;position:relative;overflow:hidden}
+.wkd-demo{background:linear-gradient(180deg,#0f1424,#0b0f1c);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 30px 70px rgba(5,10,30,.5);padding:16px;text-align:left;color:#e8ecf7;height:612px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+/* Each screen fills the card and sits centred, so the fixed height never leaves
+   a dead gap below a short stage (the write-up) - it reads as composed, not
+   cut off. Reveal animations are opacity/transform only, so centring never
+   jitters. */
+.wkd-stagearea{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
 .wkd-demo-head{display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:1px solid rgba(255,255,255,.07)}
 .wkd-demo-head .dot{width:11px;height:11px;border-radius:50%}
 .wkd-demo-head .dot.r{background:#ff5f57}.wkd-demo-head .dot.y{background:#febc2e}.wkd-demo-head .dot.g{background:#28c840}

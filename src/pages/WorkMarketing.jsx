@@ -4,7 +4,7 @@ import {
   MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
   ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
-  Building2, BadgeCheck, Copy,
+  Building2, BadgeCheck, Copy, Download,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
@@ -46,12 +46,20 @@ export default function WorkMarketing() {
     els.forEach((el) => io.observe(el)); return () => io.disconnect()
   }, [price])
 
-  const go = (plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)
+  const [cycle, setCycle] = useState('monthly')   // 'monthly' | 'annual' (annual = 20% off)
+  const go = (plan, cyc) => {
+    const qs = []
+    if (plan) qs.push(`plan=${plan}`)
+    if (cyc && cyc !== 'monthly') qs.push(`cycle=${cyc}`)
+    return nav(`/workcopilot${qs.length ? `?${qs.join('&')}` : ''}`)
+  }
   const { user } = useAuth()
-  // Choose a plan: a signed-in visitor goes straight to Stripe Checkout; a new
-  // visitor is sent to sign up with the plan carried along, and checkout starts
-  // right after they create their account.
+  // Choose a plan. Monthly: a signed-in visitor goes straight to Stripe Checkout;
+  // a new visitor signs up with the plan carried along. Annual (20% off) is
+  // carried to sign-up with the cycle so the correct annual price is applied
+  // there - we never start a monthly checkout for an annual selection.
   const choosePlan = async (plan) => {
+    if (cycle === 'annual') { go(plan, 'annual'); return }
     if (user) {
       try {
         const r = await api.workCheckout(plan)
@@ -63,6 +71,9 @@ export default function WorkMarketing() {
     go(plan)
   }
   const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
+  // Annual = 20% off the monthly rate, shown as a per-month figure billed yearly.
+  const monthlyRate = (p) => (cycle === 'annual' ? Math.round(Number(p) * 0.8) : Number(p))
+  const annualTotal = (p) => Math.round(Number(p) * 0.8) * 12
   const tilt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; e.currentTarget.style.transform = `perspective(700px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg) translateY(-4px)` }
   const untilt = (e) => { e.currentTarget.style.transform = '' }
 
@@ -126,7 +137,7 @@ export default function WorkMarketing() {
         <div className="wm-wrap wm-nav-in">
           <a href="#top" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
           <nav className="wm-links">
-            <a href="#how">How it works</a><a href="#ways">Anywhere</a><a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="#pricing">Pricing</a>
+            <a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="#pricing">Pricing</a>
           </nav>
           <div className="wm-navcta">
             <button className="wm-ghost" onClick={() => go('')}>Sign in</button>
@@ -170,6 +181,7 @@ export default function WorkMarketing() {
           <div className="wm-roi-stats" data-reveal>
             <CountStat value={70} prefix="+" suffix="%" label="faster to done" />
             <CountStat value={50} prefix="-" suffix="%" label="outsourcing spend" />
+            <CountStat value={100} suffix="%" label="read-only, never acts" />
             <CountStat value={100} suffix="%" label="documented" />
             <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to market</span></div>
           </div>
@@ -214,6 +226,8 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* Sections below hidden per request (people / pillars / how / ways) - flip to true to restore */}
+      {false && (<>
       {/* PEOPLE / OUTCOMES - real human moments */}
       <section className="wm-sec wm-people">
         <div className="wm-wrap">
@@ -289,6 +303,7 @@ export default function WorkMarketing() {
           </div>
         </div>
       </section>
+      </>)}
 
       {/* USE CASES */}
       <section className="wm-sec" id="cards">
@@ -316,43 +331,47 @@ export default function WorkMarketing() {
           <div className="wm-eyebrow" data-reveal><Zap size={14} /> Pricing</div>
           <h2 className="wm-h2" data-reveal>Simple plans. Real guided time.</h2>
           <p className="wm-sub" data-reveal>Hours of live guidance every day. Pause anytime, and come back right where you left off.</p>
+          <div className="wm-cyc" data-reveal role="tablist" aria-label="Billing period">
+            <button role="tab" aria-selected={cycle === 'monthly'} className={`wm-cyc-b${cycle === 'monthly' ? ' on' : ''}`} onClick={() => setCycle('monthly')}>Monthly</button>
+            <button role="tab" aria-selected={cycle === 'annual'} className={`wm-cyc-b${cycle === 'annual' ? ' on' : ''}`} onClick={() => setCycle('annual')}>Annual <span className="wm-cyc-save">Save 20%</span></button>
+          </div>
           <div className="wm-tiers">
             {tiers.map((t) => (
               <div className={`wm-tier${t.popular ? ' pop' : ''}`} data-reveal key={t.id}>
                 {t.popular && <div className="wm-tier-tag">Most popular</div>}
                 <div className="wm-tier-name">{t.name}</div>
-                <div className="wm-tier-price">{money(t.price)}<span>/mo</span></div>
+                <div className="wm-tier-price">{money(monthlyRate(t.price))}<span>/mo</span></div>
+                {cycle === 'annual'
+                  ? <div className="wm-tier-cyc"><s>{money(t.price)}/mo</s> billed annually &middot; {money(annualTotal(t.price))}/yr</div>
+                  : <div className="wm-tier-cyc dim">billed monthly</div>}
                 <div className="wm-tier-hrs">{t.hrs} hours a day</div>
                 <ul>{t.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => choosePlan(t.id)}>Choose {t.name}</button>
                 <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
               </div>
             ))}
+            {/* Enterprise - a full pricing card, custom-priced, routes to sales. */}
+            <div className="wm-tier wm-tier-ent" data-reveal key="enterprise">
+              <div className="wm-tier-name">Enterprise</div>
+              <div className="wm-tier-price wm-tier-custom">Custom</div>
+              <div className="wm-tier-cyc dim">for regulated teams</div>
+              <div className="wm-tier-hrs">Unlimited seats</div>
+              <ul>
+                <li><Check size={15} /> Everything in Premium</li>
+                <li><Check size={15} /> SSO / SAML &amp; team provisioning</li>
+                <li><Check size={15} /> Per-company AI keys, or bring your own</li>
+                <li><Check size={15} /> On-device PII / PHI redaction policy</li>
+                <li><Check size={15} /> Audit log, DPA &amp; priority SLA</li>
+                <li><Check size={15} /> Self-hosted / on-prem option</li>
+              </ul>
+              <a className="wm-cta alt" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={15} /></a>
+              <div className="wm-tier-topup">We reply within one business day</div>
+            </div>
           </div>
           <div className="wm-trust" data-reveal>
             <span><Lock size={14} /> Secure checkout, powered by Stripe</span>
             <span><Check size={14} /> Cancel anytime, no contract</span>
             <span><ShieldCheck size={14} /> Purchased time never expires</span>
-          </div>
-          {/* Enterprise - a strong colored anchor, no public price */}
-          <div className="wm-ent" data-reveal>
-            <div className="wm-ent-l">
-              <div className="wm-ent-eyebrow"><ShieldCheck size={14} /> Enterprise</div>
-              <h3>Built for regulated teams.</h3>
-              <p>On-device PII/PHI redaction policies, your own AI keys or a self-hosted model, SSO, and a signed DPA. For security, healthcare, finance and government teams.</p>
-            </div>
-            <div className="wm-ent-r">
-              <ul>
-                <li><Check size={15} /> Everything in Premium</li>
-                <li><Check size={15} /> SSO / SAML & team provisioning</li>
-                <li><Check size={15} /> Per-company AI keys with usage visibility, or bring your own</li>
-                <li><Check size={15} /> On-device PII / PHI / secret redaction &amp; tokenize policy</li>
-                <li><Check size={15} /> Accountable deletion &amp; a company activity log</li>
-                <li><Check size={15} /> Custom data-retention, on-prem option</li>
-                <li><Check size={15} /> DPA, security review & priority SLA</li>
-              </ul>
-              <a className="wm-cta" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={16} /></a>
-            </div>
           </div>
           {price && <p className="wm-fineprint" data-reveal>Need more? Top up extra hours anytime. Premium adds generated visuals, and image packs start from {money(price.image.premium)} each (min {price.imageMinBulk}). Purchased time never expires.</p>}
         </div>
@@ -365,6 +384,22 @@ export default function WorkMarketing() {
           <h2>Stop guessing. Start being guided.</h2>
           <p>Bring any task. WorkCoPilot takes it from the very first step to done.</p>
           <button className="wm-cta big" onClick={() => go('')}>Get started <ArrowRight size={18} /></button>
+          <div className="wm-dl" data-reveal>
+            <span className="wm-dl-lbl">Two ways to run it</span>
+            <div className="wm-dl-row">
+              <button className="wm-dl-btn" onClick={() => go('')} aria-label="Get the Windows desktop app">
+                <Monitor size={22} />
+                <span className="wm-dl-t"><b>Windows app</b><i>Desktop overlay</i></span>
+                <Download size={16} />
+              </button>
+              <button className="wm-dl-btn" onClick={() => go('')} aria-label="Get the Android app">
+                <Smartphone size={22} />
+                <span className="wm-dl-t"><b>Android app</b><i>Phone &amp; camera</i></span>
+                <Download size={16} />
+              </button>
+            </div>
+            <span className="wm-dl-note">Free account, then download for your device.</span>
+          </div>
         </div>
       </section>
 
@@ -926,7 +961,10 @@ const CSS = `
 .wm-spot-card h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-.02em;margin:0 0 10px}
 .wm-spot-card p{color:var(--mut);font-size:18px;max-width:40ch;margin:0}
 
-.wm-benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+/* 8 cards in two even rows of four - a clean 4x2 block, no half-empty row. */
+.wm-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+@media(max-width:1080px){.wm-benefits{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.wm-benefits{grid-template-columns:1fr}}
 .wm-bcard{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:18px;padding:26px;transition:transform .15s ease-out,border-color .2s;transform-style:preserve-3d;position:relative;overflow:hidden}
 .wm-bcard:hover{border-color:rgba(140,245,196,.4)}
 .wm-bcard:after{content:"";position:absolute;inset:0;border-radius:18px;padding:1px;background:linear-gradient(130deg,rgba(140,245,196,.5),transparent 40%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .25s}
@@ -1031,7 +1069,20 @@ const CSS = `
 
 /* PRICING */
 .wm-pricing{border-top:1px solid var(--line)}
-.wm-tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;align-items:start}
+/* Monthly / Annual toggle */
+.wm-cyc{display:inline-flex;gap:4px;margin:4px auto 26px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
+.wm-cyc-b{display:inline-flex;align-items:center;gap:8px;border:none;background:none;color:var(--mut);font:inherit;font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;transition:color .15s,background .15s}
+.wm-cyc-b.on{color:var(--tx);background:linear-gradient(135deg,rgba(140,245,196,.16),rgba(57,211,255,.14))}
+.wm-cyc-save{font-size:11px;font-weight:800;letter-spacing:.02em;color:#06603f;background:rgba(10,157,102,.16);border-radius:999px;padding:2px 8px}
+/* 3 plans + Enterprise = a 4-up pricing row */
+.wm-tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;align-items:start}
+@media(max-width:1080px){.wm-tiers{grid-template-columns:repeat(2,1fr)}}
+.wm-tier-cyc{font-size:12.5px;color:var(--mut);margin-top:4px;min-height:1.2em}
+.wm-tier-cyc.dim{opacity:.75}
+.wm-tier-cyc s{color:var(--mut);opacity:.8;margin-right:5px}
+.wm-tier-custom{font-size:34px}
+.wm-tier-ent{border-color:rgba(57,211,255,.35);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.008))}
+.wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55);transform:translateY(-10px)}
 .wm-tier-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--em),var(--em2));color:#042;font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px}
@@ -1073,7 +1124,7 @@ const CSS = `
 .wm-ent-r li{display:flex;gap:8px;align-items:flex-start;color:#e7ecf5;font-size:14px}
 .wm-ent-r li svg{color:#8cf5c4;flex-shrink:0;margin-top:2px}
 /* HOW COMPANIES BENEFIT (ROI) */
-.wm-roi-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:6px 0 30px}
+.wm-roi-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:6px 0 30px}
 .wm-roi-stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 20px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
 .wm-roi-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
 .wm-roi-stat span{display:block;margin-top:8px;color:var(--mut);font-size:13px;line-height:1.4}
@@ -1090,6 +1141,19 @@ const CSS = `
 .wm-final{padding:96px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}
 .wm-final-in h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(32px,5vw,52px);letter-spacing:-.025em;margin:16px 0 14px}
 .wm-final-in p{color:var(--mut);font-size:19px;margin:0 0 28px}
+/* two-app download strip: shows visitors there is a Windows desktop app and an
+   Android app. Routes to get-started (sign in to download). */
+.wm-dl{margin-top:34px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.wm-dl-lbl{font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--mut)}
+.wm-dl-row{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.wm-dl-btn{display:inline-flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 18px;cursor:pointer;color:var(--tx);font:inherit;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -28px rgba(17,23,38,.3);transition:transform .15s,border-color .2s}
+.wm-dl-btn:hover{transform:translateY(-2px);border-color:var(--em2)}
+.wm-dl-btn > svg:first-child{color:var(--em2)}
+.wm-dl-t{display:flex;flex-direction:column;align-items:flex-start;line-height:1.2}
+.wm-dl-t b{font-size:15px;font-weight:700}
+.wm-dl-t i{font-style:normal;font-size:12px;color:var(--mut)}
+.wm-dl-btn > svg:last-child{color:var(--mut)}
+.wm-dl-note{font-size:12.5px;color:var(--mut)}
 
 /* DISCLAIMER + FOOT */
 .wm-disclaimer-wrap{border-top:1px solid var(--line);background:rgba(255,255,255,.015);padding:20px 0}
@@ -1101,7 +1165,7 @@ const CSS = `
 
 @media(max-width:900px){
  .wm-hero-grid{grid-template-columns:1fr;gap:38px}
- .wm-benefits,.wm-steps,.wm-ways-grid,.wm-tiers,.wm-people-grid{grid-template-columns:1fr}
+ .wm-steps,.wm-ways-grid,.wm-tiers,.wm-people-grid{grid-template-columns:1fr}
  .wm-cards{grid-template-columns:1fr 1fr}
  .wm-flow{flex-direction:column}
  .wm-flow-arrow{transform:rotate(90deg);padding:12px 0;align-self:center}

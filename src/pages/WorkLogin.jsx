@@ -21,6 +21,7 @@ export default function WorkLogin() {
   const { user, login, signup } = useAuth()
   const [sp] = useSearchParams()
   const plan = (sp.get('plan') || '').toLowerCase()
+  const cycle = (sp.get('cycle') || 'monthly').toLowerCase()   // annual selections are not auto-charged monthly
   const planName = { basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }[plan] || ''
 
   // A chosen plan means a new customer, so default to create-account; otherwise
@@ -71,7 +72,11 @@ export default function WorkLogin() {
     if (!user || checkingOut) return
     let cancelled = false
     const run = async () => {
-      if (plan) {
+      // Monthly: start Stripe Checkout right away. Annual (20% off) is NOT
+      // auto-charged here - annual billing uses annual prices set on the
+      // dashboard/billing, so we land on the dashboard to complete it rather
+      // than silently running a monthly charge for an annual selection.
+      if (plan && cycle !== 'annual') {
         setCheckingOut(true)
         try {
           const r = await api.workCheckout(plan)
@@ -82,7 +87,7 @@ export default function WorkLogin() {
     }
     run()
     return () => { cancelled = true }
-  }, [user, plan, checkingOut, nav])
+  }, [user, plan, cycle, checkingOut, nav])
 
   const submit = async (e) => {
     e && e.preventDefault(); setBusy(true); setErr('')
