@@ -426,6 +426,49 @@ export function workUserScrubOn(userId) {
   return false
 }
 
+// ---- Governance policy (DLP) ----------------------------------------------
+// A policy per company or per user governs what leaves the device. Armed makes
+// it the enforced criteria; locked needs an explicit unlock to change.
+function policyKey(scope) {
+  if (scope && scope.companyId) return 'co:' + scope.companyId
+  if (scope && scope.userId) return 'u:' + scope.userId
+  return null
+}
+function defaultWorkPolicy(scope) {
+  return { scope: scope || {}, armed: false, locked: false, frameworks: [], regions: [], categories: {}, blockWords: [], mode: 'scrub', updatedBy: null, updatedAt: null, version: 0 }
+}
+export function getWorkPolicy(scope) {
+  const k = policyKey(scope); if (!k) return defaultWorkPolicy(scope)
+  if (!db.workPolicies) db.workPolicies = {}
+  return db.workPolicies[k] || defaultWorkPolicy(scope)
+}
+export function setWorkPolicy(scope, patch = {}, by = null) {
+  const k = policyKey(scope); if (!k) throw httpErr(400, 'Bad policy scope')
+  if (!db.workPolicies) db.workPolicies = {}
+  const cur = db.workPolicies[k] || defaultWorkPolicy(scope)
+  if (cur.locked && !patch._unlock) throw httpErr(423, 'This policy is locked. Unlock it before changing it.')
+  const next = {
+    ...cur,
+    frameworks: Array.isArray(patch.frameworks) ? patch.frameworks.slice(0, 12).map(String) : cur.frameworks,
+    regions: Array.isArray(patch.regions) ? patch.regions.slice(0, 12).map(String) : cur.regions,
+    categories: (patch.categories && typeof patch.categories === 'object') ? patch.categories : cur.categories,
+    blockWords: Array.isArray(patch.blockWords) ? patch.blockWords.slice(0, 200).map((w) => String(w || '').trim()).filter((w) => w.length >= 2) : cur.blockWords,
+    mode: ['scrub', 'tokenize'].includes(patch.mode) ? patch.mode : cur.mode,
+    armed: patch.armed != null ? !!patch.armed : cur.armed,
+    locked: patch.locked != null ? !!patch.locked : cur.locked,
+    updatedBy: by || cur.updatedBy, updatedAt: now(), version: (cur.version || 0) + 1, scope: scope || cur.scope,
+  }
+  db.workPolicies[k] = next; persist(); return next
+}
+// The policy actually enforced for a user's outbound calls: their company's
+// armed policy if they are in a company, else their own armed policy, else null.
+export function getEffectiveWorkPolicy(userId) {
+  const u = getUser(userId); if (!u) return null
+  if (u.companyId) { const p = getWorkPolicy({ companyId: u.companyId }); if (p && p.armed) return p }
+  const pu = getWorkPolicy({ userId }); if (pu && pu.armed) return pu
+  return null
+}
+
 // ===========================================================================
 // Tenancy: companies, company admins, company users. Global role stays
 // superadmin|admin|user; within a company a user also has companyRole

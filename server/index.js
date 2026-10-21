@@ -27,7 +27,8 @@ import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
-import { scrubSensitive, redactionSummary } from './work-scrub.js'
+import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
+import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -142,15 +143,27 @@ function requireCompanyAdmin(req, res, next) {
 // provider - but ONLY when scrubbing is enabled for this user (superadmin sets
 // it per user; off by default). This is the server-side defense-in-depth layer;
 // when on, the client has already scrubbed too. See server/work-scrub.js.
-function scrubForAi(s, on) {
-  if (!on) return { goal: (s && s.goal) || '', events: ((s && s.events) || []) }
+// Policy-aware scrub: an ARMED governance policy for the user (their company's,
+// else their own) is the enforced criteria and takes precedence; otherwise the
+// legacy on/off scrub. govScrub is the single chokepoint outbound text passes
+// through. Pass the request's userId so the policy (block words + per-category
+// actions) is applied.
+function govScrub(userId, text, on) {
+  const pol = userId ? store.getEffectiveWorkPolicy(userId) : null
+  if (pol) return scrubWithPolicy(String(text || ''), pol).clean
+  return on ? scrubSensitive(String(text || '')).clean : String(text || '')
+}
+function scrubForAi(s, on, userId) {
+  const pol = userId ? store.getEffectiveWorkPolicy(userId) : null
+  if (!on && !pol) return { goal: (s && s.goal) || '', events: ((s && s.events) || []) }
+  const one = (t) => govScrub(userId, t, on)
   return {
-    goal: scrubSensitive((s && s.goal) || '').clean,
-    events: (((s && s.events) || [])).map((e) => ({ ...e, text: scrubSensitive(e.text || '').clean })),
+    goal: one((s && s.goal) || ''),
+    events: (((s && s.events) || [])).map((e) => ({ ...e, text: one(e.text || '') })),
   }
 }
-// Scrub one string only when scrubbing is on for this request's user.
-function scrubIf(on, text) { return on ? scrubSensitive(String(text || '')).clean : String(text || '') }
+// Scrub one string, policy-aware. Pass the request's userId for policy enforcement.
+function scrubIf(on, text, userId) { return govScrub(userId, text, on) }
 
 // ---- WorkCoPilot vision model resolution ----------------------------------
 // WorkCoPilot needs a VISION model (it reads the screen). Pick the cheapest
@@ -449,19 +462,23 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // before anything (web search, prompt) leaves to an AI provider - but only
     // when scrubbing is enabled for this user (superadmin policy; off by default).
     const scrubOn = store.workUserScrubOn(req.workUser.id)
-    const goalScrub = scrubOn ? scrubSensitive(useGoal) : { clean: useGoal, counts: {}, total: 0 }
+    // An armed governance policy (block words + per-category actions) takes
+    // precedence; else the legacy on/off scrub. Returns { clean, counts }.
+    const pol = store.getEffectiveWorkPolicy(req.workUser.id)
+    const scrubText = (t) => pol ? scrubWithPolicy(String(t || ''), pol) : (scrubOn ? scrubSensitive(String(t || '')) : { clean: String(t || ''), counts: {}, total: 0 })
+    const goalScrub = scrubText(useGoal)
     const safeGoal = goalScrub.clean
     // Fold the scoping wizard answers into the plan (scrubbed too when enabled).
     const scopeAnswers = (Array.isArray(req.body && req.body.scope) ? req.body.scope : null) || (Array.isArray(s.scope) ? s.scope : null)
     let scopeBrief = scopeAnswers ? work.workScopeBrief(scopeAnswers) : ''
-    if (scopeBrief && scrubOn) scopeBrief = scrubSensitive(scopeBrief).clean
+    if (scopeBrief && (pol || scrubOn)) scopeBrief = scrubText(scopeBrief).clean
     const planGoal = safeGoal + (scopeBrief ? '\n\n' + scopeBrief : '')
     const research = await Promise.race([
       workResearchNotes(safeGoal),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
     ]).catch(() => '')
     const rawDocs = store.getWorkDocsText(req.workUser.id, { maxChars: 6000 })
-    const docScrub = scrubOn ? scrubSensitive(rawDocs) : { clean: rawDocs, counts: {}, total: 0 }
+    const docScrub = scrubText(rawDocs)
     const userDocs = docScrub.clean
     const groundedResearch = userDocs
       ? (`USER-PROVIDED REFERENCE DOCUMENTS (ground the steps in these and fit the user's environment, but verify against best practice: if a document is wrong, outdated, risky or suboptimal, flag it, give the best proven alternative, and note why - do not follow it blindly):\n${userDocs}\n\n` + (research || ''))
@@ -546,6 +563,29 @@ app.get('/api/work/sessions/:id/deliverables.pdf', requireWorkAuth, (req, res) =
   buildDeliverablesPdf(s.deliverables, s.goal || '', res)
 })
 
+// ---- Governance policy (DLP) ----------------------------------------------
+// Superadmin/admin manage any scope; a company admin manages their own company;
+// a user manages their own policy. The wizard seeds category defaults from the
+// framework presets. getEffectiveWorkPolicy enforces the armed policy on sends.
+function canManagePolicy(req, scope) {
+  const role = req.user && req.user.role
+  if (role === 'superadmin' || role === 'admin') return true
+  if (scope && scope.companyId && req.workUser && req.workUser.companyRole === 'company_admin' && String(req.workUser.companyId) === String(scope.companyId)) return true
+  if (scope && scope.userId && req.workUser && String(req.workUser.id) === String(scope.userId)) return true
+  return false
+}
+app.get('/api/work/policy', requireWorkAuth, wrap((req, res) => {
+  const scope = req.query.companyId ? { companyId: req.query.companyId } : (req.query.userId ? { userId: req.query.userId } : { userId: req.workUser.id })
+  if (!canManagePolicy(req, scope)) return res.status(403).json({ error: 'You cannot manage this policy.' })
+  res.json({ policy: store.getWorkPolicy(scope), presets: COMPLIANCE_PRESETS, labels: COMPLIANCE_LABELS, categories: POLICY_CATEGORIES })
+}))
+app.post('/api/work/policy', requireWorkAuth, wrap((req, res) => {
+  const b = req.body || {}
+  const scope = b.companyId ? { companyId: b.companyId } : (b.userId ? { userId: b.userId } : { userId: req.workUser.id })
+  if (!canManagePolicy(req, scope)) return res.status(403).json({ error: 'You cannot manage this policy.' })
+  res.json({ policy: store.setWorkPolicy(scope, b, (req.workUser && req.workUser.username) || null) })
+}))
+
 // Watch: the continuous navigator. Reads the WHOLE screen against the WHOLE
 // checklist every changed frame, relocates the user, advances the plan, and
 // returns a fresh screen-specific instruction for the step they are actually on.
@@ -561,7 +601,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
     const watchScrubOn = store.workUserScrubOn(req.workUser.id)
-    const watchGoal = scrubForAi(s, watchScrubOn).goal
+    const watchGoal = scrubForAi(s, watchScrubOn, req.workUser.id).goal
     store.appendWorkAudit(req.params.id, { call: 'watch', model: call.visionModel || rr.visionModel || null, scrub: watchScrubOn, frame: 'screenshot sent', sent: `[continuous screen navigation against the plan] goal: ${watchGoal}` })
     const r = await work.workNavigate(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
@@ -594,7 +634,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
     const askScrubOn = store.workUserScrubOn(req.workUser.id)
-    const sa = scrubForAi(s, askScrubOn)
+    const sa = scrubForAi(s, askScrubOn, req.workUser.id)
     const qScrub = askScrubOn ? scrubSensitive(question || '') : { clean: question || '', counts: {}, total: 0 }
     store.appendWorkAudit(req.params.id, { call: 'ask', model: call.visionModel || rr.visionModel || null, scrub: askScrubOn, redacted: qScrub.total, frame: 'screenshot sent', sent: qScrub.clean || '[question about the current screen]' })
     const out = await work.workAsk(ai, call.rt, {
@@ -620,16 +660,16 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
     if (!s) return res.status(404).json({ error: 'Session not found' })
     const { action, stepIndex, frame } = req.body || {}
     const scrubOn = store.workUserScrubOn(req.workUser.id)
-    const act = scrubIf(scrubOn, String(action || '').trim())
+    const act = scrubIf(scrubOn, String(action || "").trim(), req.workUser.id)
     if (!act) return res.status(400).json({ error: 'No action to explain.' })
     const rr = await resolveWorkRuntime(req, res, { needVision: !!frame }); if (!rr) return
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
-    const safeGoal = scrubIf(scrubOn, s.goal || '')
+    const safeGoal = scrubIf(scrubOn, s.goal || "", req.workUser.id)
     const notes = await Promise.race([
       workResearchNotes(`${act} ${safeGoal}`),
       new Promise((resolve) => setTimeout(() => resolve(''), 12000)),
     ]).catch(() => '')
-    const userDocs = scrubIf(scrubOn, store.getWorkDocsText(req.workUser.id, { maxChars: 4000 }))
+    const userDocs = scrubIf(scrubOn, store.getWorkDocsText(req.workUser.id, { maxChars: 4000 }), req.workUser.id)
     const grounded = userDocs
       ? (`USER REFERENCE DOCUMENTS (ground in these, but verify against best practice and flag anything wrong):\n${userDocs}\n\n` + (notes || ''))
       : notes
@@ -684,7 +724,7 @@ app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) =
     if (!achieved) {
       try {
         const rt = store.getWorkUserRuntime(req.workUser.id)
-        if (rt) { achieved = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(req.workUser.id)) }); if (achieved) store.setWorkSessionSummary(req.workUser.id, req.params.id, achieved) }
+        if (rt) { achieved = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(req.workUser.id), req.workUser.id) }); if (achieved) store.setWorkSessionSummary(req.workUser.id, req.params.id, achieved) }
       } catch { /* leave empty; the PDF falls back to the list of done steps */ }
     }
     const modeLabel = (work.WORK_MODES.find((m) => m.id === work.normalizeMode(s.mode)) || {}).label || ''
@@ -704,8 +744,8 @@ app.post('/api/work/sessions/:id/research', requireWorkAuth, async (req, res) =>
     const question = String((req.body || {}).question || '').trim()
     const rr = await resolveWorkRuntime(req, res, { needVision: false }); if (!rr) return
     const scrubOn = store.workUserScrubOn(req.workUser.id)
-    const safeQuestion = scrubIf(scrubOn, question)
-    const safeGoal = scrubIf(scrubOn, s.goal || '')
+    const safeQuestion = scrubIf(scrubOn, question, req.workUser.id)
+    const safeGoal = scrubIf(scrubOn, s.goal || "", req.workUser.id)
     const notes = await Promise.race([
       workResearchNotes(safeQuestion || safeGoal),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
@@ -828,7 +868,7 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
     const rr = await resolveWorkRuntime(req, res, {}); if (!rr) return
-    const summary = await work.workSummarize(ai, rr.rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(req.workUser.id)) })
+    const summary = await work.workSummarize(ai, rr.rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(req.workUser.id), req.workUser.id) })
     store.setWorkSessionSummary(req.workUser.id, req.params.id, summary)
     const ended = store.endWorkSession(req.workUser.id, req.params.id)
     res.json({ ok: true, summary, session: { id: ended.id, status: ended.status, endedAt: ended.endedAt } })
@@ -888,7 +928,7 @@ async function sweepIdleWorkSessions() {
       try {
         const rt = store.getWorkUserRuntime(s.workUserId)
         if (rt && rt.apiKey && !s.summary && (s.steps || []).length) {
-          const summary = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(s.workUserId)) })
+          const summary = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(s.workUserId), s.workUserId) })
           store.setWorkSessionSummary(s.workUserId, s.id, summary)
         }
         store.endWorkSession(s.workUserId, s.id)

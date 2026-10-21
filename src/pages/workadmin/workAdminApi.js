@@ -80,6 +80,11 @@ export const workAdminApi = {
   // Grant purchased time. The server takes minutes; the UI collects hours.
   grantHours: (userId, hours) => request('POST', '/api/work/admin/grant-minutes', { userId, minutes: Math.round((Number(hours) || 0) * 60) }),
 
+  // Governance (DLP) policy per company. GET returns the policy + framework
+  // presets + the category list; POST saves it. Superadmin manages any company.
+  policy: (companyId) => request('GET', `/api/work/policy?companyId=${encodeURIComponent(companyId)}`),
+  setPolicy: (body) => request('POST', '/api/work/policy', body),
+
   // Stripe billing config (superadmin). GET returns booleans + ids only (never a
   // secret); POST writes config (secrets are write-only, blank keeps stored).
   getBilling: () => request('GET', '/api/work/admin/billing'),
