@@ -2,7 +2,7 @@
 // Running inside the AI Cloud desktop app (window.refigold exists) we tag every
 // request so the server can tell an app sign-in from a browser one - company
 // users may only sign in through the app.
-import { clean } from './scrub.js'   // client-side DLP: strip PII/PHI/secrets before anything is sent
+import { clean, rehydrateDeep } from './scrub.js'   // client-side DLP: strip/tokenize before sending, rehydrate tokens in responses
 const IS_APP = typeof window !== 'undefined' && !!window.refigold
 async function req(method, url, body) {
   const headers = {}
@@ -21,7 +21,9 @@ async function req(method, url, body) {
     err.status = res.status
     throw err
   }
-  return data
+  // On-device rehydrate: substitute tokenized values back into the response so
+  // the user sees the full answer (no-op unless tokenize mode captured something).
+  return rehydrateDeep(data)
 }
 
 export const api = {

@@ -180,6 +180,95 @@ export function scrub(input) {
   return scrubSensitive(input).clean
 }
 
+// ===========================================================================
+// TOKENIZE + REHYDRATE (on-device). Instead of deleting a sensitive value,
+// replace it with a STABLE, TYPED, REVERSIBLE token and keep a token->value map.
+// The map lives ONLY on the device; the model sees tokens; the device rebuilds
+// the full answer by substituting the values back. Same value -> same token.
+//
+// Per the policy action: "tokenize" -> reversible token; "withhold"/"mask" ->
+// irreversible [TAG]; "send" -> keep the value. Block words are always removed.
+// Only "whole-match" categories (the match IS the value) are reversibly
+// tokenized; labelled PII/PHI (value inside a label) is redacted, not tokenized.
+// ===========================================================================
+const TOKEN_PREFIX = { email: 'EMAIL', phone: 'PHONE', ip: 'IP', ssn: 'SSN', iban: 'IBAN', card: 'CARD', secret: 'SECRET', private_key: 'KEY', private_host: 'HOST', pii: 'DATA', phi: 'DATA' }
+const WHOLE_TYPES = new Set(['email', 'phone', 'ip', 'ssn', 'iban', 'card', 'secret', 'private_key', 'private_host'])
+function catOfType(type) {
+  for (const [cat, types] of Object.entries(CATEGORY_TYPES)) if (types.includes(type)) return cat
+  return 'pii'
+}
+// Returns { clean, map, counts }. `map` is token->value; pass the running map in
+// to keep tokens stable across calls in one session.
+export function tokenizeSensitive(input, { policy = null, map = {} } = {}) {
+  let text = String(input == null ? '' : input)
+  const counts = {}
+  if (!text) return { clean: '', map, counts }
+  const bump = (t, n = 1) => { counts[t] = (counts[t] || 0) + n }
+  const cats = (policy && policy.categories) || {}
+  const hasCats = Object.keys(cats).length > 0
+  // Default action in tokenize mode: tokenize if not specified.
+  const actionForCat = (cat) => (hasCats ? (cats[cat] || 'withhold') : 'tokenize')
+  const valueToToken = {}
+  for (const [tok, val] of Object.entries(map)) valueToToken[val] = tok
+  let counter = Object.keys(map).length
+  const tokenFor = (type, value) => {
+    if (valueToToken[value]) return valueToToken[value]
+    counter++
+    const tok = `[[${TOKEN_PREFIX[type] || 'DATA'}_${counter}]]`
+    map[tok] = value; valueToToken[value] = tok
+    return tok
+  }
+
+  // 1) Block words -> removed (never reversible).
+  for (const w of (Array.isArray(policy && policy.blockWords) ? policy.blockWords : [])) {
+    const word = String(w || '').trim(); if (word.length < 2) continue
+    try { const re = new RegExp('(^|[^\\w])(' + reEscape(word) + ')(?=[^\\w]|$)', 'gi'); text = text.replace(re, (m, pre) => { bump('blocked'); return pre + '[BLOCKED]' }) } catch (_) {}
+  }
+
+  // Helper to handle a whole-match value per its category action.
+  const handle = (type, value, fixedTag) => {
+    const action = actionForCat(catOfType(type))
+    if (action === 'send') return value
+    bump(type)
+    if (action === 'tokenize') return tokenFor(type, value)
+    return fixedTag   // withhold / mask -> irreversible
+  }
+
+  // 2) Cards (whole match).
+  text = text.replace(/\b(?:\d[ -]?){13,19}\b/g, (m) => {
+    const digits = m.replace(/[ -]/g, '')
+    if (!(digits.length >= 13 && digits.length <= 19 && luhnValid(digits))) return m
+    return handle('card', m, '[CARD]')
+  })
+  // 3) Whole-match RULES (secrets, email, phone, ssn, iban, private_host...).
+  for (const r of RULES) {
+    if (!WHOLE_TYPES.has(r.type)) {
+      // labelled PII/PHI: redact unless the category is "send".
+      if (actionForCat(catOfType(r.type)) === 'send') continue
+      text = text.replace(r.re, (...args) => { bump(r.type); return typeof r.tag === 'function' ? r.tag(...args) : r.tag })
+      continue
+    }
+    text = text.replace(r.re, (m) => handle(r.type, m, typeof r.tag === 'function' ? '[REDACTED]' : r.tag))
+  }
+  // 4) IPv4 (whole match, version-guarded).
+  text = text.replace(/(v(?:ersion)?[\s.]?)?\b(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})\b(\.\d)?/gi, (m, vguard, ip, trailing) => {
+    if (vguard || trailing || !validIpv4(ip)) return m
+    return handle('ip', ip, '[IP]')
+  })
+
+  return { clean: text, map, counts }
+}
+// Rebuild the original text by substituting token -> value. Safe if a token is
+// missing (leaves it as-is; never guesses).
+export function rehydrate(text, map) {
+  let out = String(text == null ? '' : text)
+  if (!map) return out
+  for (const [tok, val] of Object.entries(map)) {
+    try { out = out.split(tok).join(val) } catch (_) {}
+  }
+  return out
+}
+
 // A short, human one-liner describing what was redacted, for the operator.
 export function redactionSummary(counts) {
   const label = { private_key: 'private key', secret: 'secret', ssn: 'SSN', card: 'card number', iban: 'IBAN', email: 'email', phone: 'phone number', ip: 'IP address', private_host: 'private host', phi: 'PHI field', pii: 'personal detail' }

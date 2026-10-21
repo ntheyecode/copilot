@@ -1,24 +1,46 @@
-// Client-side DLP. When ENABLED for this user (superadmin policy, off by
-// default), it strips PII / PHI / secrets / network identifiers from text
-// BEFORE it leaves the browser or installed app, so raw sensitive data never
-// reaches our server or any AI provider. Uses the SAME scrubber as the server
-// (single source of truth); the server scrubs again as defense in depth.
-import { scrubSensitive } from '../server/work-scrub.js'
+// Client-side DLP. Uses the SAME engine as the server (single source of truth).
+//
+// Three modes, decided by the user's effective governance policy from /me:
+//  - no policy, scrub flag on -> scrubSensitive (strip before sending)
+//  - armed policy, mode "scrub" -> scrubWithPolicy (per-category + block words)
+//  - armed policy, mode "tokenize" -> replace sensitive values with device-only
+//    tokens before sending, then REHYDRATE them back into responses on-device,
+//    so the model never sees the values but the user still gets a full answer.
+// The token->value map lives ONLY here, in memory, and never leaves the device.
+import { scrubSensitive, scrubWithPolicy, tokenizeSensitive, rehydrate } from '../server/work-scrub.js'
 
 let enabled = false
-// Set from /api/work/me (the user's superadmin-controlled `scrub` flag).
+let govPolicy = null         // effective policy {armed, mode, categories, blockWords}
+const tokenMap = {}          // session token -> value, device-only
+
 export function setScrubEnabled(v) { enabled = !!v }
 export function isScrubEnabled() { return enabled }
+// Set from /api/work/me (the user's effective, armed governance policy or null).
+export function setGovPolicy(p) { govPolicy = (p && p.armed) ? p : null }
+export function isTokenizeMode() { return !!(govPolicy && govPolicy.mode === 'tokenize') }
+export function resetTokenMap() { for (const k of Object.keys(tokenMap)) delete tokenMap[k] }
 
-// Gated scrub: only redacts when enabled; otherwise returns the text unchanged
-// so guidance quality is untouched for users without the policy.
+// Gated clean of outbound text: tokenize (reversible) or scrub per the policy;
+// otherwise the legacy on/off scrub; otherwise untouched.
 export function clean(s) {
   const str = s == null ? '' : String(s)
+  if (govPolicy) {
+    if (govPolicy.mode === 'tokenize') return tokenizeSensitive(str, { policy: govPolicy, map: tokenMap }).clean
+    return scrubWithPolicy(str, govPolicy).clean
+  }
   return enabled ? scrubSensitive(str).clean : str
 }
-// Ungated scrub (always redact) - for the public coverage widget where there is
-// no per-user policy to consult and scrubbing a public input is a safe default.
-export function cleanAlways(s) {
-  return scrubSensitive(String(s == null ? '' : s)).clean
+// Ungated scrub (always redact) - for the public coverage widget.
+export function cleanAlways(s) { return scrubSensitive(String(s == null ? '' : s)).clean }
+
+// Rehydrate a response on-device: substitute the token map back so the user sees
+// the full answer. Deep-walks objects/arrays; only our tokens are replaced, so
+// it is a no-op when not in tokenize mode or nothing was tokenized.
+export function rehydrateDeep(v) {
+  if (!isTokenizeMode() || !Object.keys(tokenMap).length) return v
+  if (typeof v === 'string') return rehydrate(v, tokenMap)
+  if (Array.isArray(v)) return v.map(rehydrateDeep)
+  if (v && typeof v === 'object') { const o = {}; for (const k of Object.keys(v)) o[k] = rehydrateDeep(v[k]); return o }
+  return v
 }
 export { scrubSensitive }

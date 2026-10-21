@@ -281,6 +281,9 @@ export function publicWorkUser(u) {
       plan: (u.subscription && u.subscription.plan) || null,
     },
     canUseService: userCanUseService(u.id),      // company-covered OR a live personal plan
+    // Effective governance policy the device enforces (null when none armed).
+    // blockWords travel to the device because the device needs them to block.
+    govPolicy: (() => { const e = getEffectiveWorkPolicy(u.id); return e ? { armed: true, mode: e.mode || 'scrub', categories: e.categories || {}, blockWords: e.blockWords || [] } : null })(),
   }
 }
 

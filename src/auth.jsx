@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import { api } from './api.js'
-import { setScrubEnabled } from './scrub.js'
+import { setScrubEnabled, setGovPolicy } from './scrub.js'
 
 // ---------------------------------------------------------------------------
 // WorkCoPilot auth - work-only, no 2FA, no multi-product entitlement. A
@@ -18,7 +18,8 @@ export function AuthProvider({ children }) {
       const r = await api.workMe()
       const u = (r && r.signedIn && r.user) ? r.user : null
       setUser(u)
-      setScrubEnabled(!!(u && u.scrub))   // apply the user's superadmin-set PII/PHI scrub policy client-side
+      setScrubEnabled(!!(u && u.scrub))   // legacy on/off scrub
+      setGovPolicy(u && u.govPolicy)      // armed governance policy: scrub-with-policy or on-device tokenize
     } catch (e) {
       // Only a DEFINITIVE server refusal ends the session: we reached the server
       // and it said no (401 not-signed-in / 403 suspended). A transient network
