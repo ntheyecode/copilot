@@ -698,7 +698,7 @@ export function workCoverageSystem(pricing = null) {
     '',
     'OUTPUT - reply with ONLY a JSON object, nothing else:',
     '{"verdict":"covered"|"partial"|"no"|"offtopic","answer":"2 to 4 short sentences","plan":"Basic"|"Advanced"|"Premium"|null,"product":"WorkCoPilot"|"MeetAiGene"|"AI Cloud"|null}',
-    'FORMAT the answer so it is easy to scan, not flat running text: wrap specific tools, commands, services, settings or file names in single backticks (for example `kubectl`, `aws eks`, `RBAC`, `VPC`, `Excel`), and wrap the two or three most important capability phrases in double asterisks for bold (for example **exact step-by-step commands** or **catches mistakes as they happen**). Use only a few of each, never a whole sentence, and never bold or code the plan name.',
+    'FORMAT the answer so it is easy to scan, not flat running text. Backticks: wrap ONLY a single tool, command, service or setting NAME, one or two words at most, with NO commas and NO surrounding words like "a", "and" or "backend" (good: `kubectl`, `aws eks`, `RBAC`, `MongoDB`, `Excel`; bad: `Node.js backend, a`, `front end, and a`). Bold: wrap the two or three most important capability phrases in double asterisks (for example **exact step-by-step commands**). Use only a few of each, never a whole sentence, and never bold or code the plan name.',
     'When covered: say plainly it is covered, name a couple of the real things WorkCoPilot would do for THIS scenario, and which plan fits and why. When partial or no: be honest about the limit. When offtopic: one friendly line asking them to describe a task. Plain spoken words, no marketing fluff, no em dashes.'
   ].join('\n')
 }
@@ -719,6 +719,9 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
   const product = ['WorkCoPilot', 'MeetAiGene', 'AI Cloud'].includes(parsed.product)
     ? parsed.product : (verdict === 'offtopic' ? null : 'WorkCoPilot')
   let answer = scrubAiLanguage(String(parsed.answer || '').trim())
+  // Strip stray speech/SSML-style control tokens some models emit (e.g. {PAUSE},
+  // {BREAK}) and tidy any doubled spaces they leave behind.
+  answer = answer.replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '').replace(/[ \t]{2,}/g, ' ').replace(/\s+([.,])/g, '$1').trim()
   if (!answer) {
     answer = verdict === 'offtopic'
       ? 'I can only check whether a task or scenario is something WorkCoPilot can guide you through. Tell me what you are trying to get done.'

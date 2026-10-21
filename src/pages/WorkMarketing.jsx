@@ -393,14 +393,16 @@ function renderRich(text) {
   const out = []
   const s = String(text || '')
   const re = /(\*\*([^*]+)\*\*|`([^`]+)`)/g
+  const plain = (t) => t.replace(/[`*]/g, '')   // drop unmatched backticks/asterisks
   let last = 0, m, k = 0
   while ((m = re.exec(s))) {
-    if (m.index > last) out.push(s.slice(last, m.index))
+    if (m.index > last) out.push(plain(s.slice(last, m.index)))
     if (m[2] !== undefined) out.push(<strong key={k++} className="wm-cov-b">{m[2]}</strong>)
+    else if (m[3].length > 22 || /[,;]/.test(m[3])) out.push(m[3])   // AI mis-coded a phrase: render plain, never a giant chip
     else out.push(<code key={k++} className="wm-cov-code">{m[3]}</code>)
     last = m.index + m[0].length
   }
-  if (last < s.length) out.push(s.slice(last))
+  if (last < s.length) out.push(plain(s.slice(last)))
   return out
 }
 
@@ -1255,6 +1257,16 @@ const CSS = `
  .wm-lead{font-size:17px}
  .wm-demo{transform:none}
 }
+@media(max-width:768px){
+ /* Short and powerful on phones: hero, companies ROI, what it does, how it
+    works, pricing and the final CTA. The heavier bands are hidden so the
+    page stays tight on a small screen. */
+ .wm-security,.wm-people,.wm-pillars,.wm-ways,#cards{display:none}
+ .wm-hero-cta{flex-direction:column;align-items:stretch;gap:12px}
+ .wm-hero-cta .wm-cta{width:100%;justify-content:center;padding:15px 18px;font-size:16px}
+ .wm-hero-cta .wm-link{align-self:center;padding:8px}
+ .wm-sec{padding:46px 0}
+}
 
 /* ============================================================
    LIGHT THEME - the default. The original rules above remain the
@@ -1380,9 +1392,9 @@ const CSS = `
 .wm-cov-verdict.mid .wm-cov-vbadge{background:rgba(255,179,92,.22);color:#b5790f}.wm-cov-verdict.mid .wm-cov-vlabel{color:#b5790f}
 .wm-cov-verdict.no .wm-cov-vbadge{background:rgba(255,99,99,.18);color:#c0392b}.wm-cov-verdict.no .wm-cov-vlabel{color:#c0392b}
 .wm-cov-verdict.off .wm-cov-vbadge{background:rgba(120,130,150,.16);color:var(--mut)}.wm-cov-verdict.off .wm-cov-vlabel{color:var(--mut);font-size:21px}
-.wm-cov-text{color:var(--tx);font-size:16px;line-height:1.7;margin:0;min-height:1.2em}
+.wm-cov-text{color:var(--tx);font-size:16px;line-height:1.7;margin:0;min-height:1.2em;overflow-wrap:anywhere}
 .wm-cov-b{font-weight:800;color:var(--tx);background:linear-gradient(transparent 62%,rgba(140,245,196,.45) 0);padding:0 1px}
-.wm-cov-code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:rgba(57,211,255,.12);color:var(--em2);border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:nowrap}
+.wm-cov-code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:rgba(57,211,255,.12);color:var(--em2);border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:normal;overflow-wrap:anywhere}
 .wm-cov-caret{display:inline-block;width:2px;height:1.05em;background:var(--em2);margin-left:2px;vertical-align:-2px;animation:wm-cov-blink .8s step-end infinite}
 @keyframes wm-cov-blink{50%{opacity:0}}
 .wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
