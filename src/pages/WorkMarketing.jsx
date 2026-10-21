@@ -851,7 +851,7 @@ const CSS = `
 .wm-navcta{display:flex;gap:10px;align-items:center;margin-left:24px}
 .wm-ghost{background:transparent;border:1px solid var(--line);color:var(--tx);border-radius:11px;padding:9px 15px;font:inherit;font-size:14px;cursor:pointer}
 .wm-ghost:hover{border-color:rgba(255,255,255,.3)}
-.wm-cta{background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 12px 34px -12px rgba(255,122,89,.65);transition:transform .15s,box-shadow .15s}
+.wm-cta{background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;box-shadow:0 12px 34px -12px rgba(255,122,89,.65);transition:transform .15s,box-shadow .15s}
 .wm-cta:hover{transform:translateY(-2px);box-shadow:0 18px 44px -14px rgba(255,122,89,.75)}
 .wm-cta.sm{padding:9px 15px;font-size:14px;border-radius:11px}
 .wm-cta.big{padding:17px 30px;font-size:17px}
@@ -1249,7 +1249,9 @@ const CSS = `
 @media(max-width:560px){
  .wm-cards{grid-template-columns:1fr}
  .wm-nav-in{gap:10px}
+ .wm-navcta{margin-left:auto}
  .wm-navcta .wm-ghost{display:none}
+ .wm-navcta .wm-cta.sm{padding:9px 14px;font-size:13.5px}
  .wm-modes{flex-direction:column;align-items:flex-start;gap:13px}
  .wm-mode-div{display:none}
  .wm-sec{padding:56px 0}
