@@ -506,6 +506,10 @@ function CoverageChat({ go }) {
                 )}
                 {res.preview && res.preview.length > 0 && (
                   <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
+                    <div className="wm-cov-live">
+                      <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
+                      <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on — the steps below are only a static taste.</div>
+                    </div>
                     <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A taste of the step-by-step</div>
                     <ol className="wm-cov-steps">
                       {res.preview.map((p, i) => (
@@ -529,7 +533,6 @@ function CoverageChat({ go }) {
                         </li>
                       ))}
                     </ol>
-                    <div className="wm-cov-flow-note">The real session rewrites each step for exactly what is on your screen, checks it worked, then moves on.</div>
                   </div>
                 )}
                 {res.verdict !== 'offtopic' && (
@@ -1458,6 +1461,10 @@ const CSS = `
 .wm-cov-flow{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(57,211,255,.05);opacity:0;transform:translateY(6px);transition:opacity .4s ease .12s,transform .4s ease .12s}
 .wm-cov-flow.show{opacity:1;transform:none}
 .wm-cov-flow-h{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em2);margin-bottom:12px}
+.wm-cov-live{display:flex;gap:11px;align-items:flex-start;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(57,211,255,.14),rgba(140,245,196,.11));border:1px solid rgba(57,211,255,.32)}
+.wm-cov-live-ic{flex:0 0 32px;width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--em),var(--em2));color:#042}
+.wm-cov-live div{font-size:13.5px;line-height:1.55;color:var(--tx)}
+.wm-cov-live b{color:var(--tx);font-weight:700}
 .wm-cov-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:cv}
 .wm-cov-steps li{display:flex;gap:11px;align-items:flex-start}
 .wm-cov-steps .n{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));margin-top:1px}
