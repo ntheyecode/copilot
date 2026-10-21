@@ -4,6 +4,9 @@ import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import WorkShell from '../workShell.jsx'
+import { useTheme } from '../theme.jsx'
+import { clean } from '../scrub.js'
 
 const linkHost = (u) => { try { return new URL(u).host.replace(/^www\./, '') } catch { return 'link' } }
 import { api } from '../api.js'
@@ -306,6 +309,8 @@ const WD_CSS = `
 .wd-tabs button:hover{color:var(--tx)}
 .wd-tabs button.on{color:var(--tx);background:var(--chip)}
 .wd-top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.wd-theme{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card-a);color:var(--mut);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wd-theme:hover{color:var(--tx);border-color:var(--line-2)}
 .wd-mins{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:5px 11px;white-space:nowrap}
 .wd-mins.low{color:var(--warm);border-color:var(--warm-line);background:var(--warm-fill)}
 .wd-mins.skel{color:transparent;min-width:84px;height:28px;border-color:transparent}
@@ -384,6 +389,24 @@ const WD_CSS = `
 .wd-start textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
 .wd-start-row{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
 .wd-hint{color:var(--mut);font-size:13px;flex:1;min-width:180px}
+.wd-docs{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.wd-docs.locked{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.wd-docs-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.wd-docs-lead{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--tx-2)}
+.wd-docs-lead svg{color:var(--em-2)}
+.wd-docs-sub{color:var(--mut);font-weight:500;font-size:12px}
+.wd-docs-gate{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--warm);background:var(--warm-fill);border:1px solid var(--warm-line);border-radius:999px;padding:3px 10px}
+.wd-docs-add{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:var(--chip);color:var(--tx);border:1px solid var(--chip-line);border-radius:10px;padding:7px 12px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;transition:border-color .15s,background .15s}
+.wd-docs-add:hover:not(:disabled){border-color:var(--em-line)}
+.wd-docs-add:disabled{opacity:.6;cursor:default}
+.wd-docs-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.wd-docs-chip{display:inline-flex;align-items:center;gap:6px;max-width:260px;background:var(--em-fill);border:1px solid var(--em-line);border-radius:9px;padding:5px 7px 5px 10px;font-size:12.5px;color:var(--tx)}
+.wd-docs-chip svg{color:var(--em);flex-shrink:0}
+.wd-docs-chip .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-docs-chip button{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:5px;border:none;background:transparent;color:var(--mut);cursor:pointer;flex-shrink:0}
+.wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
+.wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
+.wd-docs-note{margin-top:9px;font-size:11.5px;color:var(--mut);line-height:1.5}
 .wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm-2));color:var(--cta-ink);border:none;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 12px 30px -14px var(--warm-2);transition:transform .15s,box-shadow .15s,filter .15s}
 .wd-cta:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04)}
 .wd-cta:active:not(:disabled){transform:translateY(0)}
@@ -538,8 +561,99 @@ const WD_CATS = [
   { id: 'general', tone: 'c', label: 'Anything else', icon: Compass, sample: 'Help me get unstuck on what is on my screen' },
 ]
 
+// Reference documents on the goal card. Two paths:
+//  - DESKTOP (window.workDesktop): the shell picks + extracts the file locally,
+//    the raw file never leaves; we govern the text on-device (clean) and hand it
+//    up so it is injected into the plan for this session only, never stored.
+//  - WEB: the file is uploaded to the server, extracted + stored there, and the
+//    plan reads it. Advanced & Premium only; Basic sees an upgrade hint.
+function DocsAttach({ tier, onDesktopDocs }) {
+  const desktop = typeof window !== 'undefined' ? window.workDesktop : null
+  const allowed = tier === 'advanced' || tier === 'premium'
+  const [docs, setDocs] = useState([])
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (desktop || !allowed) return
+    let on = true
+    api.workDocsList().then((r) => { if (on) setDocs((r && r.docs) || []) }).catch(() => {})
+    return () => { on = false }
+  }, [desktop, allowed])
+
+  const pushDesktop = (list) => { const l = list.slice(0, 8); setDocs(l); if (onDesktopDocs) onDesktopDocs(l) }
+
+  const addDesktop = async () => {
+    setErr(''); setBusy(true)
+    try {
+      const r = await desktop.pickDocs()
+      if (!r || !r.ok) { setErr((r && r.error) || 'Could not open documents'); return }
+      const good = (r.docs || []).filter((d) => d.text)
+      const bad = (r.docs || []).filter((d) => d.error)
+      if (bad.length) setErr(bad.map((b) => `${b.name}: ${b.error}`).join(' · '))
+      const next = [...docs]
+      for (const d of good) next.push({ name: d.name, chars: d.chars, text: clean(d.text) })   // govern on-device
+      pushDesktop(next)
+    } catch (e) { setErr((e && e.message) || 'Could not read the documents') } finally { setBusy(false) }
+  }
+  const addWeb = async (e) => {
+    const files = Array.from(e.target.files || []); e.target.value = ''
+    if (!files.length) return
+    setErr(''); setBusy(true)
+    try {
+      for (const f of files.slice(0, 8)) {
+        if (f.size > 10 * 1024 * 1024) { setErr(`${f.name}: too large (10 MB max)`); continue }
+        try {
+          const dataBase64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.onerror = () => rej(new Error('read failed')); rd.readAsDataURL(f) })
+          const r = await api.workDocAdd({ name: f.name, mime: f.type, dataBase64 })
+          if (r && r.doc) setDocs((d) => [...d, r.doc])
+        } catch (e2) { setErr(`${f.name}: ${(e2 && e2.message) || 'upload failed'}`) }
+      }
+    } finally { setBusy(false) }
+  }
+  const remove = async (doc, i) => {
+    if (desktop) { pushDesktop(docs.filter((_, k) => k !== i)); return }
+    try { await api.workDocDelete(doc.id) } catch { /* ignore */ }
+    setDocs((d) => d.filter((x) => x.id !== doc.id))
+  }
+
+  if (!allowed) {
+    return (
+      <div className="wd-docs locked">
+        <span className="wd-docs-lead"><FileText size={14} /> Ground the plan in your own documents</span>
+        <span className="wd-docs-gate"><Zap size={12} /> Advanced &amp; Premium</span>
+      </div>
+    )
+  }
+  return (
+    <div className="wd-docs">
+      <div className="wd-docs-row">
+        <span className="wd-docs-lead"><FileText size={14} /> Reference documents <span className="wd-docs-sub">{desktop ? 'stay on this computer' : 'ground your plan'}</span></span>
+        {desktop
+          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} Add from this computer</button>
+          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} Attach</button>}
+        <input ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple style={{ display: 'none' }} onChange={addWeb} />
+      </div>
+      {docs.length > 0 && (
+        <div className="wd-docs-list">
+          {docs.map((d, i) => (
+            <span key={d.id || i} className="wd-docs-chip" title={d.chars ? `${d.chars} characters` : ''}><FileText size={12} /> <span className="nm">{d.name}</span> <button type="button" onClick={() => remove(d, i)} aria-label={`Remove ${d.name}`}><X size={12} /></button></span>
+          ))}
+        </div>
+      )}
+      {err && <div className="wd-docs-err"><AlertTriangle size={12} /> {err}</div>}
+      <div className="wd-docs-note">{desktop
+        ? 'The file never leaves your computer. Only governed text is used to plan this session, and it is not stored on our servers.'
+        : 'Text is extracted on our server, scrubbed, and used to ground your plan.'}</div>
+    </div>
+  )
+}
+
 function Home({ user, onOpen, onSignOut }) {
+  const { theme, toggle: toggleTheme } = useTheme()
   const [tab, setTab] = useState('dashboard')
+  const [deskDocs, setDeskDocs] = useState([])   // desktop on-device governed docs (ephemeral, client-only)
   const [ready, setReady] = useState(false)
   const [scoping, setScoping] = useState(false)
   const [sessions, setSessions] = useState([])
@@ -626,8 +740,16 @@ function Home({ user, onOpen, onSignOut }) {
   const beginScope = () => { if (!ready || busy || !goal.trim()) return; setScoping(true) }
   const runWithScope = async (answers) => {
     setScoping(false); setBusy(true)
-    try { const r = await api.workCreate({ goal: goal.trim(), scope: answers || [] }); onOpen(r.session.id) }
-    catch (e) { setBusy(false); if (e && e.status === 402) setNeedsSub(true) }
+    try {
+      const r = await api.workCreate({ goal: goal.trim(), scope: answers || [] })
+      // Desktop on-device docs: stash the governed text for THIS session so the
+      // console can inject it into the plan. Client-only (sessionStorage), never
+      // uploaded or persisted on the server.
+      if (window.workDesktop && deskDocs.length) {
+        try { sessionStorage.setItem('wd_docs_' + r.session.id, deskDocs.map((d) => `# ${d.name}\n${d.text}`).join('\n\n').slice(0, 8000)) } catch { /* ignore */ }
+      }
+      onOpen(r.session.id)
+    } catch (e) { setBusy(false); if (e && e.status === 402) setNeedsSub(true) }
   }
   const cancelScope = (reason) => { setScoping(false); if (reason === 'upgrade') setNeedsSub(true) }
   // Start Stripe Checkout for a plan. On success we are redirected to Stripe; a
@@ -685,6 +807,7 @@ function Home({ user, onOpen, onSignOut }) {
             {usage == null
               ? <span className="wd-mins skel" aria-hidden />
               : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min left</span>}
+            <button className="wd-theme" onClick={toggleTheme} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
             <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy}><Zap size={14} /> <span>Add time</span></button>
             <button className="wd-signout" onClick={onSignOut}><LogOut size={15} /> <span>Sign out</span></button>
           </div>
@@ -767,6 +890,7 @@ function Home({ user, onOpen, onSignOut }) {
                 <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Set up your AI above to begin.'}</span>
                 <button className="wd-cta" disabled={!ready || busy || !goal.trim()} onClick={beginScope}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
               </div>
+              <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
             </div>
 
             <div className="wd-catwrap">
@@ -1480,7 +1604,11 @@ function Console({ sessionId, onBack }) {
       let frame = null
       if (!capturing && !photoFrameRef.current) { const okCap = await startCapture(); if (!okCap) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
       frame = grabFrame()
-      const r = await api.workPlan(sessionId, { goal: goal.trim(), frame, mode })
+      // Desktop on-device docs: governed text held client-side for this session,
+      // injected into the plan for this call only (never stored on the server).
+      let docsText = ''
+      try { if (window.workDesktop) docsText = sessionStorage.getItem('wd_docs_' + sessionId) || '' } catch { /* ignore */ }
+      const r = await api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}) })
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       if (r.refusal) { setErr(r.refusal); return }   // declined at goal entry (not supported)
       // Start the continuous guide right away - the user should never have to
@@ -1553,6 +1681,16 @@ function Console({ sessionId, onBack }) {
     if (np) pauseWatching()
     try { await api.workPause(sessionId, np) } catch {}
   }
+  // Leaving work mode for the plan/Home screen freezes the session as a PAUSED
+  // plan: the meter stops and it shows in "Pick up where you left off" with a
+  // Resume button. Same behaviour on web and in the desktop app (the desktop
+  // also snaps the window back to the large plan-mode layout). Reopening it
+  // loads paused state, so the user resumes exactly where they left off.
+  const leaveToPlan = async () => {
+    stopCapture()
+    try { if (sess && sess.status !== 'ended' && !paused) await api.workPause(sessionId, true) } catch { /* still leave */ }
+    onBack()
+  }
 
   const ask = async (qText) => {
     // Called both from onClick (passes an event) and from the Float panel
@@ -1609,6 +1747,16 @@ function Console({ sessionId, onBack }) {
   }
 
   const setStep = async (i, st) => { try { const r = await api.workStep(sessionId, i, st); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) } catch {} }
+  // Prev / Next navigation of the current step (moves the pointer, does not mark
+  // done). Shared by the main card header and the floating overlay.
+  const navStep = async (dir) => {
+    if (!steps.length) return
+    const curIdx = steps.findIndex((s) => s.status === 'current')
+    const base = curIdx >= 0 ? curIdx : Math.min(sess?.currentStep || 0, steps.length - 1)
+    const target = base + dir
+    if (target < 0 || target >= steps.length) return
+    try { const r = await api.workCurrentStep(sessionId, target); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) } catch {}
+  }
 
   // "How?" drill-down: expand one action (a plan step or the live guidance) into
   // a detailed sub-step checklist, guided the same way. State is keyed so each
@@ -1657,17 +1805,12 @@ function Console({ sessionId, onBack }) {
       <style>{CONSOLE_CSS}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, rowGap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => { stopCapture(); onBack() }}><ChevronLeft size={15} /> Back</button>
+          <button className="btn btn-ghost btn-sm" onClick={leaveToPlan} title="Back to planning. Your session pauses and waits for you under Pick up where you left off."><ChevronLeft size={15} /> Back to plan</button>
           <div style={{ flex: 1 }} />
           {usage && <span style={{ fontSize: 12, fontWeight: 600, color: usage.exhausted ? 'var(--danger)' : 'var(--text-dim)' }} title={`${usage.tier} plan, resets ${usage.resetLabel}`}>{Math.ceil((usage.remainingSeconds || 0) / 60)} min left</span>}
           {usage && usage.exhausted && <button className="btn btn-primary btn-sm" disabled title="Buying time arrives in the billing phase">Buy time</button>}
           {sess && <button className={`btn btn-sm ${paused ? 'btn-primary' : 'btn-ghost'}`} onClick={togglePause} title={paused ? 'Resume: your minutes count again once you watch' : 'Pause: freeze your minutes while you do other work'}>{paused ? 'Resume' : 'Pause'}</button>}
-          {desktop && (
-            <>
-              <button className="btn btn-ghost btn-sm" title="Cycle overlay transparency" onClick={() => { try { desktop.setOpacity(0.6) } catch {} }}>See-through</button>
-              <button className={`btn btn-sm ${clickThrough ? 'btn-primary' : 'btn-ghost'}`} title="Let clicks pass through to the app behind (Ctrl+Alt+W)" onClick={() => { const n = !clickThrough; setClickThrough(n); try { desktop.setClickThrough(n) } catch {} }}>Interact behind: {clickThrough ? 'on' : 'off'}</button>
-            </>
-          )}
+          {/* On-top, see-through and click-behind now live on the desktop title bar (WorkShell). */}
           {floatCapable && (pipWin
             ? <button className="btn btn-primary btn-sm" title="Close the floating window" onClick={closeFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Unfloat' : 'Close pop-out'}</button>
             : <button className="btn btn-outline btn-sm" title={pipSupported ? 'Float the steps on top of your work (Chrome, Edge, Brave, Opera)' : 'Pop the steps out into a separate window (Firefox, Safari)'} onClick={openFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
@@ -1754,6 +1897,17 @@ function Console({ sessionId, onBack }) {
 
         {steps.length > 0 && (
           <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {steps.length > 1 && (() => {
+              const ci = steps.findIndex((s) => s.status === 'current')
+              const no = ci >= 0 ? ci : Math.min(sess?.currentStep || 0, steps.length - 1)
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '2px 2px 2px' }}>
+                  <button className="btn btn-ghost btn-sm" disabled={no <= 0} onClick={() => navStep(-1)} title="Go to the previous step"><ChevronLeft size={14} /> Prev</button>
+                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-dim)', letterSpacing: 0.2 }}>Step {no + 1} of {steps.length}</span>
+                  <button className="btn btn-ghost btn-sm" disabled={no >= steps.length - 1} onClick={() => navStep(1)} title="Go to the next step">Next <ChevronRight size={14} /></button>
+                </div>
+              )
+            })()}
             {steps.map((s, i) => {
               const isDone = s.status === 'done', isNow = s.status === 'current'
               const isPending = !isDone && !isNow
@@ -1824,6 +1978,7 @@ function Console({ sessionId, onBack }) {
           onAsk={(q) => { ask(q); setFloatQ('') }}
           onAnalyze={analyze}
           onStep={setStep}
+          onNav={navStep}
           onWatch={watching ? pauseWatching : startWatching}
           onClose={closeFloat}
         />, pipWin.document.body)}
@@ -1836,7 +1991,7 @@ function Console({ sessionId, onBack }) {
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onStep, onWatch, onClose }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onStep, onNav, onWatch, onClose }) {
   const current = steps.find((s) => s.status === 'current')
   // Dim the panel to cut glare over your work. The browser will not let a web
   // Picture-in-Picture window be see-through to the app behind it, so this
@@ -1879,6 +2034,16 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
 
       {current ? (
         <div style={{ ...box, borderColor: c.accent, background: c.accentSoft }}>
+          {steps.length > 1 && onNav && (() => {
+            const no = steps.indexOf(current)
+            return (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 7 }}>
+                <button style={{ ...iconBtn, color: no <= 0 ? c.dim : c.accent, opacity: no <= 0 ? 0.4 : 1 }} disabled={no <= 0} onClick={() => onNav(-1)} title="Previous step"><ChevronLeft size={16} /></button>
+                <span style={{ fontSize: 11, fontWeight: 700, color: c.dim, letterSpacing: 0.3 }}>STEP {no + 1} / {steps.length}</span>
+                <button style={{ ...iconBtn, color: no >= steps.length - 1 ? c.dim : c.accent, opacity: no >= steps.length - 1 ? 0.4 : 1 }} disabled={no >= steps.length - 1} onClick={() => onNav(1)} title="Next step"><ChevronRight size={16} /></button>
+              </div>
+            )
+          })()}
           <div style={{ fontSize: 10.5, color: c.accent, marginBottom: 4, letterSpacing: 0.6, fontWeight: 700 }}>DO THIS NOW</div>
           <div style={{ fontWeight: 600, fontSize: 14.5, lineHeight: 1.45 }}>{guidance || current.text}</div>
           {guidance && <div style={{ fontSize: 11.5, color: c.dim, marginTop: 5 }}>Step: {current.text}</div>}
@@ -1996,10 +2161,25 @@ export default function WorkPage() {
   // Sign-out and the not-signed-in bounce both stay on the WorkCoPilot sign-in
   // (/workcopilot), never the shared multi-product login.
   const signOut = async () => { try { await api.logout() } catch {} ; window.location.href = '/workcopilot' }
-  if (sess === undefined) return <div style={{ ...shell, display: 'grid', placeItems: 'center' }}><Loader2 className="spin" /></div>
+  // Desktop app only: drive the window mode. Home/planning is a large windowed
+  // "plan" mode; an open guiding session is the compact floating "guide" mode.
+  const desktop = typeof window !== 'undefined' ? window.workDesktop : null
+  useEffect(() => {
+    if (!desktop || !sess || !sess.signedIn || !sess.access) return
+    try { desktop.setMode(openId ? 'guide' : 'plan') } catch { /* ignore */ }
+  }, [desktop, openId, sess])
+  // In the desktop app the window is frameless, so every branch is wrapped with
+  // the custom title bar (and offset by its height) - the window is always
+  // movable/closeable, even on the loading and no-access screens.
+  const authed = !!(sess && sess.signedIn && sess.access)
+  const frame = (content) => desktop
+    ? <><WorkShell authed={authed} /><div style={{ paddingTop: 40 }}>{content}</div></>
+    : content
+
+  if (sess === undefined) return frame(<div style={{ ...shell, display: 'grid', placeItems: 'center' }}><Loader2 className="spin" /></div>)
   if (!sess.signedIn) { window.location.href = '/workcopilot'; return null }
-  if (!sess.access) return <NoAccess onSignOut={signOut} />
+  if (!sess.access) return frame(<NoAccess onSignOut={signOut} />)
   const user = sess.user
-  if (openId) return <><AppUpdateBanner /><Console sessionId={openId} onBack={() => setOpenId(null)} /></>
-  return <><AppUpdateBanner /><Home user={user} onOpen={setOpenId} onSignOut={signOut} /></>
+  if (openId) return frame(<><AppUpdateBanner /><Console sessionId={openId} onBack={() => setOpenId(null)} /></>)
+  return frame(<><AppUpdateBanner /><Home user={user} onOpen={setOpenId} onSignOut={signOut} /></>)
 }

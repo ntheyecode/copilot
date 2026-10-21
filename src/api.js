@@ -104,6 +104,11 @@ export const api = {
   // body: { question?, frame }
   workAsk: (id, body) => req('POST', `/api/work/sessions/${id}/ask`, { ...(body || {}), ...(body && body.question != null ? { question: clean(body.question) } : {}) }),
   workStep: (id, index, status) => req('POST', `/api/work/sessions/${id}/step`, { index, status }),
+  workCurrentStep: (id, index) => req('POST', `/api/work/sessions/${id}/current`, { index }),
+  // Reference documents (Advanced & Premium): ground the plan in the user's own material.
+  workDocsList: () => req('GET', '/api/work/docs'),
+  workDocAdd: (payload) => req('POST', '/api/work/docs', payload),  // { name, mime, dataBase64 }
+  workDocDelete: (id) => req('DELETE', `/api/work/docs/${id}`),
   // Drill-down "how?" on a step. body: { action, stepIndex?, frame? } -> { steps, escalated }
   workHowTo: (id, body) => req('POST', `/api/work/sessions/${id}/howto`, { ...(body || {}), ...(body && body.action != null ? { action: clean(body.action) } : {}) }),
   workModes: () => req('GET', '/api/work/modes'),

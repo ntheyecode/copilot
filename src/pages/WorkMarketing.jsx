@@ -4,6 +4,7 @@ import {
   MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
   ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
+  Building2, BadgeCheck, Copy,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI before the scenario leaves the browser (public form: always on)
@@ -416,6 +417,8 @@ function CoverageChat({ go }) {
   const [fire, setFire] = useState(false)
   const [typed, setTyped] = useState('')         // typewriter progress of the answer
   const [typingDone, setTypingDone] = useState(false)
+  const [copiedCmd, setCopiedCmd] = useState(-1)
+  const copyCmd = (text, i) => { try { navigator.clipboard.writeText(text || ''); setCopiedCmd(i); setTimeout(() => setCopiedCmd(-1), 1400) } catch { /* clipboard blocked */ } }
   const taRef = useRef(null)
   useEffect(() => { if (open && taRef.current) taRef.current.focus() }, [open])
 
@@ -498,6 +501,40 @@ function CoverageChat({ go }) {
                   <ul className={`wm-cov-points${typingDone ? ' show' : ''}`}>
                     {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
                   </ul>
+                )}
+                {res.preview && res.preview.length > 0 && (
+                  <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
+                    <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A taste of the step-by-step</div>
+                    <ol className="wm-cov-steps">
+                      {res.preview.map((p, i) => (
+                        <li key={i}>
+                          <span className="n">{i + 1}</span>
+                          <div className="s">
+                            <div className="do">{renderRich(p.do)}</div>
+                            {p.cmd && (
+                              <div className="cmd">
+                                <code>{p.cmd}</code>
+                                <button onClick={() => copyCmd(p.cmd, i)} title="Copy" aria-label="Copy command">{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
+                              </div>
+                            )}
+                          </div>
+                        </li>
+                      ))}
+                    </ol>
+                    <div className="wm-cov-flow-note">The real session rewrites each step for exactly what is on your screen, checks it worked, then moves on.</div>
+                  </div>
+                )}
+                {res.verdict !== 'offtopic' && (
+                  <div className={`wm-cov-trust${typingDone ? ' show' : ''}`}>
+                    <div className="wm-cov-trust-row">
+                      <div className="wm-cov-pillar"><span className="ic ent"><Building2 size={16} /></span><div><b>Enterprise-grade</b><p>Central admin, SSO, team seats, one locked company policy, per-session cost and a full audit trail.</p></div></div>
+                      <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Security applied before the work: sensitive data is classified and stripped or tokenized on your device first, the least is sent, and it stays read-only so nothing runs.</p></div></div>
+                      <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence that support your compliance under the frameworks you choose - never a certification claim.</p></div></div>
+                    </div>
+                    <div className="wm-cov-chips">
+                      {['GDPR', 'HIPAA', 'PCI-DSS', 'SOC 2', 'ISO 27001', 'CCPA'].map((c) => <span key={c}>{c}</span>)}
+                    </div>
+                  </div>
                 )}
                 <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
                   {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
@@ -1368,7 +1405,7 @@ const CSS = `
 .wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
 .wm-cov-launch:hover{transform:translateY(-2px)}
 .wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(4px);animation:wm-cov-fade .18s ease}
-.wm-cov{z-index:71;width:min(600px,calc(100vw - 36px));max-height:min(760px,calc(100vh - 72px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 60px 140px -34px rgba(0,0,0,.55);animation:wm-cov-pop .22s cubic-bezier(.2,.8,.2,1)}
+.wm-cov{z-index:71;width:min(720px,calc(100vw - 36px));max-height:min(860px,calc(100vh - 56px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 60px 140px -34px rgba(0,0,0,.55);animation:wm-cov-pop .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes wm-cov-fade{from{opacity:0}to{opacity:1}}
 @keyframes wm-cov-pop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
 .wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(57,211,255,.06),transparent)}
@@ -1409,6 +1446,34 @@ const CSS = `
 .wm-cov-points.show{opacity:1;transform:none}
 .wm-cov-points li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.55;color:var(--tx)}
 .wm-cov-points li svg{color:var(--em);flex-shrink:0;margin-top:3px}
+/* preview: a taste of the real step-by-step (flow + exact commands) */
+.wm-cov-flow{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(57,211,255,.05);opacity:0;transform:translateY(6px);transition:opacity .4s ease .12s,transform .4s ease .12s}
+.wm-cov-flow.show{opacity:1;transform:none}
+.wm-cov-flow-h{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em2);margin-bottom:12px}
+.wm-cov-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:cv}
+.wm-cov-steps li{display:flex;gap:11px;align-items:flex-start}
+.wm-cov-steps .n{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));margin-top:1px}
+.wm-cov-steps .s{flex:1;min-width:0}
+.wm-cov-steps .do{font-size:14.5px;line-height:1.5;color:var(--tx)}
+.wm-cov-steps .cmd{margin-top:7px;display:flex;align-items:center;gap:8px;background:#0b1020;border:1px solid rgba(57,211,255,.22);border-radius:9px;padding:8px 10px}
+.wm-cov-steps .cmd code{flex:1;min-width:0;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;color:#8ff0c4;white-space:pre-wrap;overflow-wrap:anywhere}
+.wm-cov-steps .cmd button{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;cursor:pointer;transition:background .14s}
+.wm-cov-steps .cmd button:hover{background:rgba(255,255,255,.12)}
+.wm-cov-flow-note{margin-top:11px;font-size:12.5px;color:var(--mut);line-height:1.5}
+/* trust band: enterprise-grade / security-first / compliant + framework chips */
+.wm-cov-trust{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:15px 16px;background:linear-gradient(180deg,rgba(140,245,196,.06),transparent);opacity:0;transform:translateY(6px);transition:opacity .4s ease .16s,transform .4s ease .16s}
+.wm-cov-trust.show{opacity:1;transform:none}
+.wm-cov-trust-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wm-cov-pillar{display:flex;gap:10px;align-items:flex-start}
+.wm-cov-pillar .ic{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center}
+.wm-cov-pillar .ic.ent{background:rgba(185,140,255,.16);color:#b98cff}
+.wm-cov-pillar .ic.sec{background:rgba(57,211,255,.14);color:var(--em2)}
+.wm-cov-pillar .ic.cmp{background:rgba(10,157,102,.16);color:var(--em)}
+.wm-cov-pillar b{display:block;font-size:13.5px;color:var(--tx);margin-bottom:3px}
+.wm-cov-pillar p{margin:0;font-size:12.5px;line-height:1.5;color:var(--mut)}
+.wm-cov-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
+.wm-cov-chips span{font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--tx);background:var(--chip,rgba(255,255,255,.05));border:1px solid var(--line);border-radius:999px;padding:4px 11px}
+@media(max-width:620px){.wm-cov-trust-row{grid-template-columns:1fr;gap:12px}}
 .wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
 .wm-cov-foot.show{opacity:1;transform:none;pointer-events:auto}
 .wm-cov-plan{margin-top:14px;font-size:14px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}

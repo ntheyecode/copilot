@@ -4,6 +4,9 @@ import { ArrowRight, Loader2, Check, MonitorPlay, Building2 } from 'lucide-react
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import WorkShell from '../workShell.jsx'
+
+const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 
 // ---------------------------------------------------------------------------
 // AdmireVeda WorkCoPilot - the product's own sign-in / sign-up page
@@ -55,6 +58,11 @@ export default function WorkLogin() {
     }
   }, [])
 
+  // In the desktop app the sign-in screen is plan mode (large, windowed, not
+  // on top); it carries the custom title bar so the frameless window can be
+  // moved and closed before the user is signed in.
+  useEffect(() => { if (WD_DESK) { try { WD_DESK.setMode('plan') } catch { /* ignore */ } } }, [])
+
   // Once the account is ready: if a plan was chosen, start Checkout; otherwise
   // open the dashboard. If billing is not configured, we still open the
   // dashboard (the plan chooser there explains the next step).
@@ -89,7 +97,8 @@ export default function WorkLogin() {
   }
 
   return (
-    <div className="wl">
+    <div className="wl" style={WD_DESK ? { paddingTop: 40 } : undefined}>
+      {WD_DESK && <WorkShell authed={false} />}
       <style>{CSS}</style>
       <div className="wl-aurora" aria-hidden />
 

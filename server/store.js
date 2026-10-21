@@ -1261,6 +1261,26 @@ export function updateWorkStep(workUserId, sessionId, index, status) {
   persistSoon()
   return s
 }
+
+// Pure navigation of the "current" pointer (Prev / Next in the guide card). It
+// moves which step is active WITHOUT marking anything done: the target becomes
+// 'current', any other 'current' step reverts to 'pending', and 'done' steps
+// keep their done state (except the target, which is re-activated so you can
+// revisit it). "Mark done" stays the separate way to complete + auto-advance.
+export function setWorkCurrentStep(workUserId, sessionId, index) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) throw httpErr(404, 'Session not found')
+  if (!s.steps.length) return s
+  const i = Math.max(0, Math.min(Number(index) || 0, s.steps.length - 1))
+  for (let k = 0; k < s.steps.length; k++) {
+    if (k !== i && s.steps[k].status === 'current') s.steps[k].status = 'pending'
+  }
+  s.steps[i].status = 'current'
+  s.currentStep = i
+  s.lastActivityAt = Date.now()
+  persistSoon()
+  return s
+}
 export function appendWorkEvent(workUserId, sessionId, { kind = 'guidance', text = '' } = {}) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')

@@ -495,7 +495,11 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       workResearchNotes(safeGoal),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
     ]).catch(() => '')
-    const rawDocs = store.getWorkDocsText(req.workUser.id, { maxChars: 6000 })
+    // Desktop on-device path: the app extracts + governs the document locally and
+    // passes the text in the request. It is used for THIS plan only and never
+    // stored (store.getWorkDocsText is the web path, where docs are persisted).
+    const ephemeralDocs = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 8000) : ''
+    const rawDocs = ephemeralDocs || store.getWorkDocsText(req.workUser.id, { maxChars: 6000 })
     const docScrub = scrubText(rawDocs)
     const userDocs = docScrub.clean
     const groundedResearch = userDocs
@@ -691,7 +695,8 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
       workResearchNotes(`${act} ${safeGoal}`),
       new Promise((resolve) => setTimeout(() => resolve(''), 12000)),
     ]).catch(() => '')
-    const userDocs = scrubIf(scrubOn, store.getWorkDocsText(req.workUser.id, { maxChars: 4000 }), req.workUser.id)
+    const ephemeralDocs2 = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 5000) : ''
+    const userDocs = scrubIf(scrubOn, ephemeralDocs2 || store.getWorkDocsText(req.workUser.id, { maxChars: 4000 }), req.workUser.id)
     const grounded = userDocs
       ? (`USER REFERENCE DOCUMENTS (ground in these, but verify against best practice and flag anything wrong):\n${userDocs}\n\n` + (notes || ''))
       : notes
@@ -870,6 +875,13 @@ app.post('/api/work/sessions/:id/step', requireWorkAuth, wrap((req, res) => {
   const { index, status } = req.body || {}
   if (!['done', 'current', 'pending'].includes(status)) return res.status(400).json({ error: 'Bad status' })
   const s = store.updateWorkStep(req.workUser.id, req.params.id, Number(index), status)
+  res.json({ session: s, steps: s.steps, index: s.currentStep })
+}))
+
+// Prev / Next navigation in the guide card: move the current pointer without
+// marking anything done.
+app.post('/api/work/sessions/:id/current', requireWorkAuth, wrap((req, res) => {
+  const s = store.setWorkCurrentStep(req.workUser.id, req.params.id, Number((req.body || {}).index))
   res.json({ session: s, steps: s.steps, index: s.currentStep })
 }))
 

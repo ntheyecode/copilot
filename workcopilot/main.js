@@ -27,7 +27,7 @@
 // This shell is READ-ONLY: it never drives the machine, it only shows what to
 // do next. Signed with the COE Security cert + DigiCert timestamp (package.json).
 // ---------------------------------------------------------------------------
-const { app, BrowserWindow, session, globalShortcut, desktopCapturer, shell, ipcMain, screen } = require('electron')
+const { app, BrowserWindow, session, globalShortcut, desktopCapturer, shell, ipcMain, screen, dialog } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 
@@ -43,6 +43,80 @@ let quitting = false
 let clickThrough = false
 const OPACITIES = [1, 0.85, 0.6, 0.4]
 let opacityIdx = 0
+
+// --- window modes ----------------------------------------------------------
+// WorkCoPilot is a different animal from a plain overlay. It lives in two modes:
+//   PLAN  - home / wizard / plan review / documents: a large, movable, resizable
+//           window (expandable to full screen), NOT always-on-top, in the
+//           taskbar, fully opaque. Room to think and to read your own documents.
+//   GUIDE - once a plan starts: a compact floating overlay, always-on-top by
+//           default, with see-through (opacity) and click-behind so it rides on
+//           top of the app you are actually working in.
+// The renderer tells the shell which mode it is in (Home vs an open session) via
+// window.workDesktop.setMode(); on-top, hide-from-share, opacity and click-behind
+// are ALSO user-toggleable from the custom Fluent title bar at any time.
+let mode = 'plan'            // 'plan' | 'guide'
+let onTop = false            // user/mode-controlled always-on-top for the main window
+let contentProtected = true  // hidden from screen share by default; user-toggleable
+let planBounds = null        // remembered plan-mode geometry
+let guideBounds = null       // remembered guide-mode geometry
+const GUIDE_W = 460
+const GUIDE_H = 820
+
+function applyOnTop() {
+  if (win && !win.isDestroyed()) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+}
+// Broadcast the live overlay state to the renderer(s) so the title bar always
+// reflects reality (hotkeys, mode switches and OS maximize all flow back here).
+function sendState() {
+  const st = {
+    mode, onTop, contentProtected, clickThrough,
+    opacity: OPACITIES[opacityIdx],
+    maximized: !!(win && !win.isDestroyed() && win.isMaximized()),
+  }
+  for (const w of [win, buddy]) {
+    try { if (w && !w.isDestroyed()) w.webContents.send('work:state', st) } catch { /* ignore */ }
+  }
+}
+function cornerBounds(w, h) {
+  try {
+    const a = screen.getPrimaryDisplay().workArea
+    return { x: a.x + a.width - w - 24, y: a.y + 56, width: w, height: h }
+  } catch { return { x: 120, y: 80, width: w, height: h } }
+}
+function centeredPlanBounds() {
+  try {
+    const a = screen.getPrimaryDisplay().workArea
+    const w = Math.min(1040, a.width - 80)
+    const h = Math.min(760, a.height - 80)
+    return { x: a.x + Math.round((a.width - w) / 2), y: a.y + Math.round((a.height - h) / 2), width: w, height: h }
+  } catch { return { x: 120, y: 80, width: 1040, height: 760 } }
+}
+// Switch window mode. Remembers the geometry of the mode we leave (unless it was
+// maximized) so returning to it feels like coming back to where you were.
+function applyMode(next) {
+  if (!win || win.isDestroyed()) return mode
+  if (next !== 'plan' && next !== 'guide') return mode
+  if (next === mode) { sendState(); return mode }
+  if (!win.isMaximized()) {
+    if (mode === 'plan') planBounds = win.getBounds()
+    else guideBounds = win.getBounds()
+  }
+  mode = next
+  if (mode === 'guide') {
+    if (win.isMaximized()) win.unmaximize()
+    onTop = true; applyOnTop()
+    win.setBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H))
+    // opacity + click-behind stay as the user left them: guide mode is where they matter
+  } else {
+    onTop = false; applyOnTop()
+    setClickThrough(false)              // you cannot plan through a click-through window
+    opacityIdx = 0; win.setOpacity(1)   // planning is always fully opaque
+    win.setBounds(planBounds || centeredPlanBounds())
+  }
+  sendState()
+  return mode
+}
 
 // --- buddy position persistence -------------------------------------------
 // Remember where the user dragged the buddy, across launches. Stored in a tiny
@@ -359,12 +433,14 @@ function createWindow() {
   }, { useSystemPicker: false })
 
   win = new BrowserWindow({
-    width: 460,
-    height: 820,
-    minWidth: 360,
-    minHeight: 420,
+    width: 1040,
+    height: 760,
+    minWidth: 380,
+    minHeight: 480,
     title: 'WorkCoPilot',
-    alwaysOnTop: true,
+    frame: false,          // custom Fluent title bar lives in the web UI (WorkShell)
+    center: true,
+    alwaysOnTop: false,    // plan mode is the default; applyMode() controls on-top
     backgroundColor: '#0b0b0f',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -379,10 +455,10 @@ function createWindow() {
     },
   })
 
-  win.setAlwaysOnTop(true, 'screen-saver')
-  // Keep the overlay out of its OWN screen capture (no feedback loop) and private
-  // during screen shares.
-  win.setContentProtection(true)
+  applyOnTop()
+  // Hidden from the product's own capture and from screen shares by default
+  // (privacy). The user can toggle this from the title bar or with Ctrl+Alt+S.
+  win.setContentProtection(contentProtected)
 
   win.loadURL(`${SERVER_URL}/work`)
 
@@ -400,6 +476,9 @@ function createWindow() {
   win.on('show', hideBuddy)
   win.on('restore', hideBuddy)
   win.on('focus', hideBuddy)
+  // Reflect OS-driven maximize/restore back to the title bar's maximize button.
+  win.on('maximize', () => sendState())
+  win.on('unmaximize', () => sendState())
 
   win.on('closed', () => { win = null })
 }
@@ -477,11 +556,19 @@ function setClickThrough(on) {
   clickThrough = !!on
   if (win) win.setIgnoreMouseEvents(clickThrough, { forward: true })
   if (win) win.webContents.send('work:clickthrough', clickThrough)
+  sendState()
 }
 function cycleOpacity() {
   opacityIdx = (opacityIdx + 1) % OPACITIES.length
   if (win) win.setOpacity(OPACITIES[opacityIdx])
   if (win) win.webContents.send('work:opacity', OPACITIES[opacityIdx])
+  sendState()
+}
+function setContentProtection(on) {
+  contentProtected = !!on
+  try { if (win && !win.isDestroyed()) win.setContentProtection(contentProtected) } catch { /* ignore */ }
+  try { if (buddy && !buddy.isDestroyed()) buddy.setContentProtection(contentProtected) } catch { /* ignore */ }
+  sendState()
 }
 
 // Renderer-driven controls (the console's own buttons), so the user does not
@@ -498,6 +585,75 @@ ipcMain.handle('work:open-main', () => {                          // reopen the 
   if (!win || win.isDestroyed()) { createWindow(); return }
   if (win.isMinimized()) win.restore()
   win.show(); win.focus()                                         // fires 'show'/'focus' -> hideBuddy
+})
+
+// --- custom title bar (frameless) + window modes ---------------------------
+// The web console draws its own Fluent-style title bar (WorkShell) because the
+// window is frameless. These give that bar the window controls and the overlay
+// toggles it shows after sign-in.
+ipcMain.handle('work:win-minimize', () => { if (win && !win.isDestroyed()) win.minimize() })  // 'minimize' -> showBuddy
+ipcMain.handle('work:win-maximize', () => {
+  if (!win || win.isDestroyed()) return false
+  if (win.isMaximized()) win.unmaximize(); else win.maximize()
+  sendState()
+  return win.isMaximized()
+})
+ipcMain.handle('work:win-close', () => { if (win && !win.isDestroyed()) win.close() })
+ipcMain.handle('work:set-mode', (_e, m) => applyMode(m))
+ipcMain.handle('work:set-always-on-top', (_e, on) => { onTop = !!on; applyOnTop(); sendState(); return onTop })
+ipcMain.handle('work:set-content-protection', (_e, on) => { setContentProtection(on); return contentProtected })
+ipcMain.handle('work:get-state', () => ({
+  mode, onTop, contentProtected, clickThrough,
+  opacity: OPACITIES[opacityIdx],
+  maximized: !!(win && !win.isDestroyed() && win.isMaximized()),
+}))
+
+// --- on-device reference documents -----------------------------------------
+// The whole point of the desktop app: the raw file NEVER leaves the machine.
+// The user picks documents from disk, the shell reads + extracts the text
+// locally (here, in the main process), and returns only the text to the
+// renderer. The renderer then governs it (strip / tokenize sensitive values on
+// the device) and injects the result into the plan request for that call only -
+// nothing is uploaded and nothing is stored on the server. pdf-parse / mammoth
+// are required lazily so a build without them still handles text / markdown.
+const DOC_TEXT_EXT = /\.(txt|md|markdown|csv|tsv|json|log|ya?ml|xml|html?|js|ts|jsx|tsx|py|java|c|cpp|h|hpp|cs|go|rb|rs|php|sh|sql|ini|conf|env|toml)$/i
+async function extractDocLocally(filePath) {
+  const buf = fs.readFileSync(filePath)
+  const lower = String(filePath).toLowerCase()
+  if (DOC_TEXT_EXT.test(lower)) return buf.toString('utf8')
+  if (lower.endsWith('.pdf')) {
+    const { PDFParse } = require('pdf-parse')
+    const parser = new PDFParse({ data: buf })
+    try { const r = await parser.getText(); return ((r && r.text) || '').trim() } finally { if (parser.destroy) await parser.destroy() }
+  }
+  if (lower.endsWith('.docx')) {
+    const mammoth = require('mammoth')
+    const r = await mammoth.extractRawText({ buffer: buf })
+    return ((r && r.value) || '').trim()
+  }
+  throw new Error('Unsupported file type')
+}
+ipcMain.handle('work:pick-doc', async () => {
+  try {
+    const r = await dialog.showOpenDialog(win && !win.isDestroyed() ? win : undefined, {
+      title: 'Add reference documents - they stay on this computer',
+      properties: ['openFile', 'multiSelections'],
+      filters: [{ name: 'Documents', extensions: ['pdf', 'docx', 'txt', 'md', 'markdown'] }],
+    })
+    if (r.canceled || !r.filePaths || !r.filePaths.length) return { ok: true, docs: [] }
+    const out = []
+    for (const fp of r.filePaths.slice(0, 8)) {
+      const name = path.basename(fp)
+      try {
+        const stat = fs.statSync(fp)
+        if (stat.size > 10 * 1024 * 1024) { out.push({ name, error: 'Too large (10 MB max)' }); continue }
+        const text = ((await extractDocLocally(fp)) || '').trim()
+        if (!text) { out.push({ name, error: 'No readable text (image-only or protected?)' }); continue }
+        out.push({ name, chars: text.length, text })
+      } catch (e) { out.push({ name, error: (e && e.message) || 'Could not read this file' }) }
+    }
+    return { ok: true, docs: out }
+  } catch (e) { return { ok: false, error: (e && e.message) || 'Could not open the file picker' } }
 })
 
 // --- multi-monitor IPC -----------------------------------------------------
@@ -546,6 +702,11 @@ if (!gotLock) {
     // overlay cannot receive the click to turn itself back off otherwise).
     globalShortcut.register('CommandOrControl+Alt+W', () => setClickThrough(!clickThrough))
     globalShortcut.register('CommandOrControl+Alt+O', cycleOpacity)
+    // Toggle hidden-from-screen-share on demand (e.g. to deliberately show the
+    // overlay on a share, then hide it again).
+    globalShortcut.register('CommandOrControl+Alt+S', () => setContentProtection(!contentProtected))
+    // Toggle always-on-top on demand, independent of the current mode.
+    globalShortcut.register('CommandOrControl+Alt+T', () => { onTop = !onTop; applyOnTop(); sendState() })
     // Manual buddy toggle, independent of the main window's state.
     globalShortcut.register('CommandOrControl+Alt+B', toggleBuddy)
     // Switch monitors anytime: clear the remembered choice and re-prompt. On a
