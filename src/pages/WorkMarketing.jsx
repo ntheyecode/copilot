@@ -475,7 +475,7 @@ function CoverageChat({ go }) {
         <div className="wm-cov" role="dialog" aria-modal="true" aria-label="Coverage assistant" onClick={(e) => e.stopPropagation()}>
           {fire && (
             <div className="wm-fw" aria-hidden>
-              {Array.from({ length: 7 }).map((_, i) => <span key={i} className={`wm-fw-burst b${i}`}>{Array.from({ length: 12 }).map((__, j) => <i key={j} style={{ '--a': `${j * 30}deg` }} />)}</span>)}
+              {Array.from({ length: 7 }).map((_, i) => <span key={i} className={`wm-fw-burst b${i}`}>{Array.from({ length: 12 }).map((__, j) => <i key={j} style={{ '--a': j * 30 }} />)}</span>)}
             </div>
           )}
           <div className="wm-cov-head">
@@ -1430,5 +1430,5 @@ const CSS = `
 .wm-fw-burst.b0{left:22%;top:34%}.wm-fw-burst.b1{left:70%;top:26%}.wm-fw-burst.b2{left:46%;top:46%}.wm-fw-burst.b3{left:30%;top:62%}.wm-fw-burst.b4{left:78%;top:56%}.wm-fw-burst.b5{left:56%;top:22%}.wm-fw-burst.b6{left:16%;top:50%}
 .wm-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,56%);box-shadow:0 0 6px currentColor;animation:wm-fw-pop 1.25s cubic-bezier(.15,.7,.3,1) forwards}
 .wm-fw-burst.b1 i{animation-delay:.12s}.wm-fw-burst.b2 i{animation-delay:.22s}.wm-fw-burst.b3 i{animation-delay:.34s}.wm-fw-burst.b4 i{animation-delay:.18s}.wm-fw-burst.b5 i{animation-delay:.3s}.wm-fw-burst.b6 i{animation-delay:.4s}
-@keyframes wm-fw-pop{0%{transform:rotate(var(--a)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(var(--a)) translateX(58px) scale(.25);opacity:0}}
+@keyframes wm-fw-pop{0%{transform:rotate(calc(var(--a) * 1deg)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(calc(var(--a) * 1deg)) translateX(64px) scale(.25);opacity:0}}
 `
