@@ -186,12 +186,12 @@ export default function WorkMarketing() {
       <section className="wm-sec wm-security" id="security">
         <div className="wm-wrap">
           <div className="wm-eyebrow" data-reveal><ShieldCheck size={14} /> Enterprise-ready &middot; security-first</div>
-          <h2 className="wm-h2" data-reveal>Your data never leaves your device unprotected.</h2>
-          <p className="wm-sub" data-reveal>For security, healthcare, finance and government. Turn on redaction and sensitive data never leaves the device.</p>
+          <h2 className="wm-h2" data-reveal>Private by design. Compliant by default.</h2>
+          <p className="wm-sub" data-reveal>For security, healthcare, finance and government. Sensitive data is stripped or tokenized on your device, and every call follows a policy you arm and lock.</p>
           <div className="wm-sec-grid">
-            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span><span className="cb-chip">IP</span> <span className="cb-arrow">&rarr;</span> stripped</div><div className="wm-bhead"><span className="wm-bicon sm"><Lock size={16} /></span><h3>Stripped on-device</h3></div><p>PII, PHI, secrets, passwords and IPs removed on your machine before anything is sent.</p></div>
-            <div className="wm-sec-card" data-reveal><div className="wm-cardbox">watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ScanEye size={16} /></span><h3>Read-only by design</h3></div><p>It watches and guides. Never clicks, types or runs anything. Hidden on screen-share.</p></div>
-            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><b>session-audit.log</b> <span className="cb-dim">exactly what was sent</span></div><div className="wm-bhead"><span className="wm-bicon sm"><FileText size={16} /></span><h3>Audited and yours</h3></div><p>A per-session log of exactly what was sent. Bring your own keys or self-hosted model.</p></div>
+            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span> <span className="cb-arrow">&rarr;</span> <b>[[token]]</b> <span className="cb-arrow">&rarr;</span> rebuilt here</div><div className="wm-bhead"><span className="wm-bicon sm"><Lock size={16} /></span><h3>Tokenized on your device</h3></div><p>Turn on tokenize and sensitive values never reach the AI. They are swapped for on-device tokens, then the full answer is rebuilt on your machine. The model never sees the real data, and you lose nothing in the answer.</p></div>
+            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">GDPR</span><span className="cb-chip">HIPAA</span><span className="cb-chip">PCI</span><span className="cb-chip">SOC 2</span></div><div className="wm-bhead"><span className="wm-bicon sm"><ShieldCheck size={16} /></span><h3>Compliant by policy</h3></div><p>Arm a policy per company for the frameworks you target, add any words that must never leave, then lock it. Controls and audit evidence to support your compliance.</p></div>
+            <div className="wm-sec-card" data-reveal><div className="wm-cardbox">watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b> <span className="cb-arrow">&middot;</span> <b>audit.log</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ScanEye size={16} /></span><h3>Read-only and audited</h3></div><p>It watches and guides, never clicks or types, and hides on screen-share. A per-session log records exactly what was sent.</p></div>
           </div>
         </div>
       </section>
@@ -1264,7 +1264,7 @@ const CSS = `
  /* Short and powerful on phones: hero, companies ROI, what it does, how it
     works, pricing and the final CTA. The heavier bands are hidden so the
     page stays tight on a small screen. */
- .wm-security,.wm-people,.wm-pillars,.wm-ways,#cards{display:none}
+ .wm-people,.wm-pillars,.wm-ways,#cards{display:none}
  .wm-hero-cta{flex-direction:column;align-items:stretch;gap:12px}
  .wm-hero-cta .wm-cta{width:100%;justify-content:center;padding:15px 18px;font-size:16px}
  .wm-hero-cta .wm-link{align-self:center;padding:8px}
