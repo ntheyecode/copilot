@@ -72,9 +72,10 @@ export default function WorkMarketing() {
     { icon: ShieldCheck, viz: 'fix', t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix before it costs you.' },
     { icon: Globe2, viz: 'current', t: 'Grounded in the best, and in your world', d: 'It checks the current best practice, and on Advanced and Premium grounds your steps in your own documents, flagging anything in them that is wrong.' },
     { icon: FileText, viz: 'record', t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
+    { icon: ScanEye, viz: 'record', t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings.' },
   ]
   const steps = [
-    { n: '01', viz: 'goal', t: 'Say the goal', d: 'Type or paste what you want to get done. Anything, any field.' },
+    { n: '01', viz: 'goal', t: 'Scope it together', d: 'Say what you want, answer a couple of quick questions, and it scopes the job before it plans, so the plan fits what you really need.' },
     { n: '02', viz: 'guide', t: 'Get guided live', d: 'It reads your screen, guides the exact next move, checks it worked, and corrects you the moment something looks wrong.' },
     { n: '03', viz: 'keep', t: 'Finish & keep it', d: 'Done right, with a documented write-up you can come back to.' },
   ]
