@@ -1,6 +1,6 @@
 {
   "name": "workcopilot-desktop",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "description": "WorkCoPilot desktop - an always-on-top, read-only overlay that loads the WorkCoPilot web console (/work). Opacity + interact-behind (click-through) so it floats over the app you are working in; content-protected so it stays out of its own screen capture.",
   "main": "main.js",
