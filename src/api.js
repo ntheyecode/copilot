@@ -80,7 +80,7 @@ export const api = {
   workAiTest: () => req('POST', '/api/work/ai/test'),
   workAppStatus: () => req('GET', '/api/work/app/status'),
   // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
-  workCheckout: (plan) => req('POST', '/api/work/checkout', { plan }),
+  workCheckout: (plan, cycle) => req('POST', '/api/work/checkout', { plan, cycle: cycle || 'monthly' }),
   workSubscription: () => req('GET', '/api/work/subscription'),
   // The account's Stripe invoices, and a Customer Portal link to manage/cancel.
   workInvoices: () => req('GET', '/api/work/invoices'),

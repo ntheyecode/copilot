@@ -56,7 +56,7 @@ export default function Billing({ isSuperAdmin }) {
   const [testResult, setTestResult] = useState(null)
   const [testErr, setTestErr] = useState(null)
   // Form fields. Secrets start blank (write-only); blank on save keeps stored.
-  const [form, setForm] = useState({ secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', publishableKey: '', enabled: true })
+  const [form, setForm] = useState({ secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true })
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -67,6 +67,7 @@ export default function Billing({ isSuperAdmin }) {
       setForm({
         secretKey: '', webhookSecret: '',
         priceBasic: b.priceBasic || '', priceAdvanced: b.priceAdvanced || '', pricePremium: b.pricePremium || '',
+        priceBasicAnnual: b.priceBasicAnnual || '', priceAdvancedAnnual: b.priceAdvancedAnnual || '', pricePremiumAnnual: b.pricePremiumAnnual || '',
         publishableKey: b.publishableKey || '', enabled: b.enabled !== false,
       })
       // Collapse to the summary when something is already configured; open the
@@ -88,6 +89,7 @@ export default function Billing({ isSuperAdmin }) {
       // Only send secrets when the operator actually typed one (blank = keep).
       const patch = {
         priceBasic: form.priceBasic, priceAdvanced: form.priceAdvanced, pricePremium: form.pricePremium,
+        priceBasicAnnual: form.priceBasicAnnual, priceAdvancedAnnual: form.priceAdvancedAnnual, pricePremiumAnnual: form.pricePremiumAnnual,
         publishableKey: form.publishableKey, enabled: !!form.enabled,
       }
       if (form.secretKey.trim()) patch.secretKey = form.secretKey.trim()
@@ -151,6 +153,7 @@ export default function Billing({ isSuperAdmin }) {
               <SummaryRow label="Basic plan" value={b.priceBasic || 'Not set'} ok={!!b.priceBasic} />
               <SummaryRow label="Advanced plan" value={b.priceAdvanced || 'Not set'} ok={!!b.priceAdvanced} />
               <SummaryRow label="Premium plan" value={b.pricePremium || 'Not set'} ok={!!b.pricePremium} />
+              <SummaryRow label="Annual billing (20% off)" value={b.annualReady ? 'Live — all three annual ids set' : 'Not set up (annual picks route to sign-up)'} ok={!!b.annualReady} neutral={!b.annualReady} />
               <SummaryRow label="Publishable key" value={b.publishableKey || 'Not set (optional)'} ok={!!b.publishableKey} neutral={!b.publishableKey} />
               <SummaryRow label="Billing" value={b.enabled !== false ? 'On' : 'Off'} ok={b.enabled !== false} />
             </div>
@@ -188,6 +191,21 @@ export default function Billing({ isSuperAdmin }) {
                     </div>
                   )
                 })}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, padding: '8px 0 2px', marginTop: 6, borderTop: '1px solid var(--wka-line-2)' }}>
+                  {testResult.annualReady ? <CheckCircle2 size={15} style={{ color: 'var(--wka-emerald)' }} /> : <AlertTriangle size={15} style={{ color: 'var(--wka-amber)' }} />}
+                  <b>Annual (20% off)</b>
+                  <span style={{ color: 'var(--wka-muted)' }}>{testResult.annualReady ? 'all three yearly prices valid — annual checkout live' : 'not fully set up — annual picks route to sign-up'}</span>
+                </div>
+                {PLAN_ROWS.map(([id, name]) => {
+                  const a = (testResult.annualPlans && testResult.annualPlans[id]) || {}
+                  if (!a.set) return null
+                  return (
+                    <div key={'a' + id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12.5, padding: '3px 0 3px 22px' }}>
+                      {a.ok ? <CheckCircle2 size={14} style={{ color: 'var(--wka-emerald)', flexShrink: 0 }} /> : <XCircle size={14} style={{ color: 'var(--wka-red)', flexShrink: 0 }} />}
+                      <span style={{ color: 'var(--wka-muted)' }}>{name} annual: {a.ok ? `${money(a.amount, a.currency)} / ${a.interval}` : (a.error || 'not set')}</span>
+                    </div>
+                  )
+                })}
               </div>
             ) : null}
           </>
@@ -222,6 +240,21 @@ export default function Billing({ isSuperAdmin }) {
                 <label>Premium plan price or product id</label>
                 <input className="wka-input" placeholder="price_... or prod_..." value={form.pricePremium} onChange={set('pricePremium')} disabled={!isSuperAdmin} />
               </div>
+
+              <p className="desc" style={{ marginTop: 4 }}>Annual plan ids (optional, 20% off). Create a yearly recurring price (interval = year) for each plan in Stripe and paste its id here. Annual checkout only goes live when all three are set; until then an annual pick on the site shows the discounted price and routes to sign-up.</p>
+              <div className="wka-field">
+                <label>Basic plan — annual price or product id</label>
+                <input className="wka-input" placeholder="price_... (yearly)" value={form.priceBasicAnnual} onChange={set('priceBasicAnnual')} disabled={!isSuperAdmin} />
+              </div>
+              <div className="wka-field">
+                <label>Advanced plan — annual price or product id</label>
+                <input className="wka-input" placeholder="price_... (yearly)" value={form.priceAdvancedAnnual} onChange={set('priceAdvancedAnnual')} disabled={!isSuperAdmin} />
+              </div>
+              <div className="wka-field">
+                <label>Premium plan — annual price or product id</label>
+                <input className="wka-input" placeholder="price_... (yearly)" value={form.pricePremiumAnnual} onChange={set('pricePremiumAnnual')} disabled={!isSuperAdmin} />
+              </div>
+
               <div className="wka-field">
                 <label>Publishable key (optional)</label>
                 <input className="wka-input" placeholder="pk_live_... or pk_test_..." value={form.publishableKey} onChange={set('publishableKey')} disabled={!isSuperAdmin} />

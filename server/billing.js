@@ -39,7 +39,15 @@ function cfg(store) {
     advanced: c.priceAdvanced || process.env.STRIPE_PRICE_ADVANCED || '',
     premium: c.pricePremium || process.env.STRIPE_PRICE_PREMIUM || '',
   }
-  return { secret, webhookSecret, price }
+  // Annual (yearly) prices - separate recurring Stripe prices (interval=year),
+  // 20% off. Checkout uses these when cycle === 'annual'. Empty = annual not
+  // set up for that plan, and the client falls back to monthly / sign-up.
+  const priceAnnual = {
+    basic: c.priceBasicAnnual || process.env.STRIPE_PRICE_BASIC_ANNUAL || '',
+    advanced: c.priceAdvancedAnnual || process.env.STRIPE_PRICE_ADVANCED_ANNUAL || '',
+    premium: c.pricePremiumAnnual || process.env.STRIPE_PRICE_PREMIUM_ANNUAL || '',
+  }
+  return { secret, webhookSecret, price, priceAnnual }
 }
 // "Billing is configured" = a usable secret key exists (store OR env). The gate
 // in index.js uses this: subscriptions are enforced only once billing is set up.
@@ -254,10 +262,16 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
     try {
       const plan = String((req.body || {}).plan || '').trim().toLowerCase()
       if (!PLANS.includes(plan)) return res.status(400).json({ error: 'Pick a plan: basic, advanced or premium.' })
-      const { secret, price } = cfg(store)
+      const cycle = String((req.body || {}).cycle || 'monthly').trim().toLowerCase() === 'annual' ? 'annual' : 'monthly'
+      const { secret, price, priceAnnual } = cfg(store)
       const s = await getStripe(secret)
-      const configuredId = price[plan]
-      if (!s || !configuredId) return res.status(503).json({ error: 'Billing is not configured yet.' })
+      // Annual uses the yearly price id when configured; if annual was requested
+      // but not set up, say so clearly (the client falls back) rather than
+      // silently charging the monthly price.
+      const configuredId = cycle === 'annual' ? priceAnnual[plan] : price[plan]
+      if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' })
+      if (cycle === 'annual' && !configuredId) return res.status(409).json({ error: 'Annual billing is not set up for this plan yet.', annualUnavailable: true })
+      if (!configuredId) return res.status(503).json({ error: 'Billing is not configured yet.' })
       const priceId = await resolvePriceId(s, configuredId)
       if (!priceId) return res.status(503).json({ error: 'That plan is not set up correctly in Stripe (no price found for the configured id). Check the price or product id in the admin console.' })
 
@@ -267,8 +281,8 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
         client_reference_id: String(u.id),
-        metadata: { workUserId: String(u.id), plan },
-        subscription_data: { metadata: { workUserId: String(u.id), plan } },
+        metadata: { workUserId: String(u.id), plan, cycle },
+        subscription_data: { metadata: { workUserId: String(u.id), plan, cycle } },
         allow_promotion_codes: true,
         success_url: `${SITE}/work?checkout=success`,
         cancel_url: `${SITE}/#pricing`,
@@ -348,10 +362,10 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
     // real price. Returns per-plan amounts so the operator sees it is wired.
     // Never returns a secret.
     app.post('/api/work/admin/billing/test', requireAuth, requireSuperAdmin, async (req, res) => {
-      const { secret, webhookSecret, price } = cfg(store)
+      const { secret, webhookSecret, price, priceAnnual } = cfg(store)
       const s = await getStripe(secret)
       if (!s) return res.json({ ok: false, error: 'No Stripe secret key is set. Add it above and Save first.' })
-      const out = { ok: false, account: null, accountId: null, livemode: /^sk_live_/.test(secret), webhookSet: !!webhookSecret, plans: {} }
+      const out = { ok: false, account: null, accountId: null, livemode: /^sk_live_/.test(secret), webhookSet: !!webhookSecret, plans: {}, annualPlans: {}, annualReady: false }
       try {
         const acct = await s.accounts.retrieve()
         out.accountId = (acct && acct.id) || null
@@ -376,6 +390,29 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
           out.plans[p] = { ok: false, error: (e && e.message) || 'could not load this price' }
         }
       }
+      // Annual prices are optional. Validate any that are set and confirm they
+      // bill yearly. annualReady = all three set and valid.
+      let annualSetCount = 0
+      for (const p of PLANS) {
+        const configured = priceAnnual[p]
+        if (!configured) { out.annualPlans[p] = { set: false }; continue }
+        annualSetCount++
+        try {
+          const priceId = await resolvePriceId(s, configured)
+          if (!priceId) { out.annualPlans[p] = { set: true, ok: false, error: 'no price found for this id' }; continue }
+          const pr = await s.prices.retrieve(priceId)
+          const interval = (pr.recurring && pr.recurring.interval) || 'one-time'
+          out.annualPlans[p] = {
+            set: true, ok: interval === 'year',
+            amount: (pr.unit_amount != null ? pr.unit_amount / 100 : null),
+            currency: pr.currency || 'usd', interval,
+            error: interval === 'year' ? undefined : `this price bills ${interval}, not yearly`,
+          }
+        } catch (e) {
+          out.annualPlans[p] = { set: true, ok: false, error: (e && e.message) || 'could not load this price' }
+        }
+      }
+      out.annualReady = annualSetCount === PLANS.length && PLANS.every((p) => out.annualPlans[p] && out.annualPlans[p].ok)
       out.ok = !!out.accountId && PLANS.every((p) => out.plans[p] && out.plans[p].ok)
       res.json(out)
     })

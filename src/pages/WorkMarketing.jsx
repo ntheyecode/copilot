@@ -59,16 +59,19 @@ export default function WorkMarketing() {
   // carried to sign-up with the cycle so the correct annual price is applied
   // there - we never start a monthly checkout for an annual selection.
   const choosePlan = async (plan) => {
-    if (cycle === 'annual') { go(plan, 'annual'); return }
+    // Annual checkout is only started when it is actually wired in Stripe
+    // (price.annualReady). Otherwise an annual pick shows the 20%-off price and
+    // is carried to sign-up, never charged the monthly amount by surprise.
+    if (cycle === 'annual' && !(price && price.annualReady)) { go(plan, 'annual'); return }
     if (user) {
       try {
-        const r = await api.workCheckout(plan)
+        const r = await api.workCheckout(plan, cycle)
         if (r && r.url) { window.location = r.url; return }
       } catch { /* billing not ready: fall through to the dashboard */ }
       nav('/work')
       return
     }
-    go(plan)
+    go(plan, cycle)
   }
   const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
   // Annual = 20% off the monthly rate, shown as a per-month figure billed yearly.

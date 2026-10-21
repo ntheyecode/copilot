@@ -72,16 +72,16 @@ export default function WorkLogin() {
     if (!user || checkingOut) return
     let cancelled = false
     const run = async () => {
-      // Monthly: start Stripe Checkout right away. Annual (20% off) is NOT
-      // auto-charged here - annual billing uses annual prices set on the
-      // dashboard/billing, so we land on the dashboard to complete it rather
-      // than silently running a monthly charge for an annual selection.
-      if (plan && cycle !== 'annual') {
+      // Start Checkout for the chosen plan AND cycle. The server charges the
+      // annual price only when cycle is annual AND annual is wired in Stripe;
+      // if annual is not set up it returns 409, we catch it and land on the
+      // dashboard - an annual pick is never charged the monthly price.
+      if (plan) {
         setCheckingOut(true)
         try {
-          const r = await api.workCheckout(plan)
+          const r = await api.workCheckout(plan, cycle)
           if (!cancelled && r && r.url) { window.location = r.url; return }
-        } catch { /* billing not ready: fall through to the dashboard */ }
+        } catch { /* billing not ready or annual not set up: fall through to the dashboard */ }
       }
       if (!cancelled) nav('/work', { replace: true })
     }

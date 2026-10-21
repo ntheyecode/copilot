@@ -829,7 +829,13 @@ app.patch('/api/work/sessions/:id/pause', requireWorkAuth, wrap((req, res) => {
   res.json({ session: s, paused: s.paused })
 }))
 // Pricing is public (the marketing site reads it); superadmin can change it.
-app.get('/api/work/pricing', wrap((req, res) => { res.json(store.getWorkPricing()) }))
+app.get('/api/work/pricing', wrap((req, res) => {
+  // annualReady tells the marketing page whether annual CHECKOUT is wired (all
+  // three annual Stripe price ids set). When false, an annual pick shows the
+  // 20%-off price and routes to sign-up rather than starting a charge.
+  const annualReady = (() => { try { return !!store.getBillingPublic().annualReady } catch { return false } })()
+  res.json({ ...store.getWorkPricing(), annualReady })
+}))
 
 // Public "is my scenario covered?" assistant for the marketing site. The
 // guardrail lives in work.workCoverage's system prompt: only a described

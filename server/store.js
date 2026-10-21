@@ -66,7 +66,7 @@ const EMPTY = {
   // Stripe billing config (superadmin-set, UI or env). Secrets live here but are
   // NEVER returned to a client (getBillingPublic strips them). enabled defaults
   // on so saving a key works at once; an operator can turn store billing off.
-  billing: { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', publishableKey: '', enabled: true },
+  billing: { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true },
 }
 
 function ensureDir() {
@@ -370,7 +370,7 @@ export function findUserByStripeSubscription(subscriptionId) {
 // non-secret fields (price ids, publishable key) are cleared by a blank value.
 function billingState() {
   if (!db.billing || typeof db.billing !== 'object') {
-    db.billing = { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', publishableKey: '', enabled: true }
+    db.billing = { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true }
   }
   return db.billing
 }
@@ -382,6 +382,9 @@ export function getBillingConfig() {
     priceBasic: b.priceBasic || '',
     priceAdvanced: b.priceAdvanced || '',
     pricePremium: b.pricePremium || '',
+    priceBasicAnnual: b.priceBasicAnnual || '',
+    priceAdvancedAnnual: b.priceAdvancedAnnual || '',
+    pricePremiumAnnual: b.pricePremiumAnnual || '',
     publishableKey: b.publishableKey || '',
     enabled: b.enabled !== false,
   }
@@ -395,6 +398,11 @@ export function getBillingPublic() {
     priceBasic: b.priceBasic || '',
     priceAdvanced: b.priceAdvanced || '',
     pricePremium: b.pricePremium || '',
+    priceBasicAnnual: b.priceBasicAnnual || '',
+    priceAdvancedAnnual: b.priceAdvancedAnnual || '',
+    pricePremiumAnnual: b.pricePremiumAnnual || '',
+    // Annual checkout is "live" only when all three annual price ids are set.
+    annualReady: !!(String(b.priceBasicAnnual || '').trim() && String(b.priceAdvancedAnnual || '').trim() && String(b.pricePremiumAnnual || '').trim()),
     publishableKey: b.publishableKey || '',
   }
 }
@@ -407,6 +415,9 @@ export function setBillingConfig(patch = {}) {
   if (patch.priceBasic !== undefined) b.priceBasic = String(patch.priceBasic || '').trim()
   if (patch.priceAdvanced !== undefined) b.priceAdvanced = String(patch.priceAdvanced || '').trim()
   if (patch.pricePremium !== undefined) b.pricePremium = String(patch.pricePremium || '').trim()
+  if (patch.priceBasicAnnual !== undefined) b.priceBasicAnnual = String(patch.priceBasicAnnual || '').trim()
+  if (patch.priceAdvancedAnnual !== undefined) b.priceAdvancedAnnual = String(patch.priceAdvancedAnnual || '').trim()
+  if (patch.pricePremiumAnnual !== undefined) b.pricePremiumAnnual = String(patch.pricePremiumAnnual || '').trim()
   if (patch.publishableKey !== undefined) b.publishableKey = String(patch.publishableKey || '').trim()
   if (patch.enabled !== undefined) b.enabled = !!patch.enabled
   persist()
