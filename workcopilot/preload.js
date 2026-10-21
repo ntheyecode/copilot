@@ -42,6 +42,10 @@ contextBridge.exposeInMainWorld('workDesktop', {
   // On a single-screen PC this is a no-op; on a multi-monitor PC it clears the
   // remembered choice and opens the picker.
   pickMonitor: () => ipcRenderer.invoke('work:pick-monitor'),
+  // Wizard monitor selection: list screens (empty on a single-screen PC) and
+  // persist the chosen one before guiding starts.
+  getMonitors: () => ipcRenderer.invoke('work:list-monitors'),
+  chooseMonitorId: (id) => ipcRenderer.invoke('work:choose-monitor-id', id),
   // Used only by the shell's own monitor-picker page; harmless no-ops elsewhere.
   chooseMonitor: (id) => ipcRenderer.invoke('work:monitor-chosen', id),
   cancelMonitor: () => ipcRenderer.invoke('work:monitor-cancel'),

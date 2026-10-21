@@ -707,6 +707,39 @@ ipcMain.handle('work:monitor-chosen', (_e, sourceId) => {
 // screen for this capture and do NOT persist, so we prompt again next time.
 ipcMain.handle('work:monitor-cancel', () => { resolvePicker(primaryScreenSource(pickerSources)) })
 
+// List the monitors so the renderer (the plan wizard) can ask which to watch
+// BEFORE guiding starts, instead of prompting at capture time.
+ipcMain.handle('work:list-monitors', async () => {
+  try {
+    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
+    if (!sources || sources.length <= 1) return []   // nothing to choose on a single screen
+    const saved = loadMonitorChoice()
+    const match = matchSavedSource(sources, saved)
+    return sources.map((s, i) => {
+      const meta = displayMetaFor(s)
+      return {
+        id: s.id,
+        label: s.name || `Screen ${i + 1}`,
+        primary: meta.primary,
+        res: meta.res || '',
+        current: match ? (match.id === s.id) : meta.primary,
+      }
+    })
+  } catch { return [] }
+})
+// Persist the monitor the wizard chose and tell the renderer so any live capture
+// restarts on it.
+ipcMain.handle('work:choose-monitor-id', async (_e, sourceId) => {
+  try {
+    const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: { width: 1, height: 1 } })
+    const chosen = (sources || []).find((s) => s.id === sourceId)
+    if (!chosen) return { ok: false }
+    saveMonitorChoice(chosen)
+    notifyMonitorChanged(chosen)
+    return { ok: true }
+  } catch { return { ok: false } }
+})
+
 // Single instance - a second launch just reveals the existing window.
 const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {

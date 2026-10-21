@@ -180,14 +180,32 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
   const [answers, setAnswers] = useState([])
   const [txt, setTxt] = useState('')
   const [err, setErr] = useState('')
+  // Always ask WHERE the work happens (so the plan targets the right surface, not
+  // a browser by default) and HOW to phrase it. Both fold into the plan + live
+  // guidance. The environment answer is first because it shapes every step.
+  const ENV_Q = { id: 'environment', text: 'Where does this work happen?', kind: 'options', options: ['A website / web app', 'A desktop or installed app', 'Install & configure software', 'An on-prem product at a local address', 'Not sure / mixed'] }
+  const STYLE_Q = { id: 'phrasing', text: 'How should I phrase each step?', kind: 'options', options: ['Plain and simple', 'Short bullets only', 'Detailed, with context', 'Expert, no hand-holding'] }
   useEffect(() => {
     let alive = true
-    api.workScope(goal).then((r) => {
-      if (!alive) return
-      const qs = (r && r.questions) || []
-      if (!qs.length) { onReady([]); return }
-      setQuestions(qs); setPhase('ask')
-    }).catch((e) => { if (alive) { setErr((e && e.message) || 'Could not scope this.'); setPhase('error') } })
+    ;(async () => {
+      // Desktop app with more than one monitor: ask which screen to watch here,
+      // in the wizard, instead of prompting at capture time. Single-screen or web
+      // returns nothing, so the step is skipped.
+      let monQ = null
+      try {
+        const desk = typeof window !== 'undefined' ? window.workDesktop : null
+        if (desk && desk.getMonitors) {
+          const mons = await desk.getMonitors()
+          if (Array.isArray(mons) && mons.length > 1) monQ = { id: 'monitor', text: 'Which screen should I watch?', kind: 'monitor', monitors: mons }
+        }
+      } catch { /* ignore - fall back to the capture-time picker */ }
+      try {
+        const r = await api.workScope(goal)
+        if (!alive) return
+        const qs = (r && r.questions) || []
+        setQuestions([ENV_Q, ...(monQ ? [monQ] : []), STYLE_Q, ...qs]); setPhase('ask')
+      } catch (e) { if (alive) { setErr((e && e.message) || 'Could not scope this.'); setPhase('error') } }
+    })()
     return () => { alive = false }
   }, [])   // eslint-disable-line
   const cur = questions[idx]
@@ -234,6 +252,14 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
                   <textarea rows={2} autoFocus placeholder={cur.placeholder || 'Type your answer'} value={txt} onChange={(e) => setTxt(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); advance(txt) } }} />
                   <button className="btn btn-primary" onClick={() => advance(txt)}>{last ? 'Build my plan' : 'Next'} <ArrowRight size={15} /></button>
+                </div>
+              ) : cur.kind === 'monitor' ? (
+                <div className="wd-wiz-choices">
+                  {cur.monitors.map((m) => (
+                    <button key={m.id} className="wd-wiz-choice" onClick={() => { try { window.workDesktop && window.workDesktop.chooseMonitorId && window.workDesktop.chooseMonitorId(m.id) } catch { /* ignore */ } advance(m.label + (m.primary ? ' (primary)' : '')) }}>
+                      <Monitor size={15} style={{ verticalAlign: -3, marginRight: 7 }} />{m.label}{m.res ? ` · ${m.res}` : ''}{m.primary ? ' · primary' : ''}{m.current ? ' · current' : ''}
+                    </button>
+                  ))}
                 </div>
               ) : (
                 <div className="wd-wiz-choices">
@@ -1256,6 +1282,9 @@ const CONSOLE_CSS = `
   .wc-askrow .input{flex:1 1 100%}
   .wc-askrow .btn{flex:1 1 auto;justify-content:center}
   .wc-caprow .wc-grow{flex:1 1 100%;justify-content:center}
+  .wc .wc-tbtn,.wc .wc-chip-btn{min-height:38px}
+  .wc .wc-ib{min-width:36px;min-height:36px}
+  .wc-ask .wc-ask-row .wc-tbtn{flex:1 1 auto;justify-content:center}
 }
 /* Deliverables panel (review -> prompts + document) */
 .wc-dl{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,7,14,.6);backdrop-filter:blur(4px)}
@@ -1294,6 +1323,138 @@ const CONSOLE_CSS = `
 .wc-dl-prompt .ph{display:flex;align-items:center;justify-content:space-between;padding:9px 12px;background:var(--panel-2);border-bottom:1px solid var(--line);font-size:13px}
 .wc-dl-prompt pre{margin:0;padding:12px;white-space:pre-wrap;word-break:break-word;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;line-height:1.55;color:var(--tx-2);max-height:220px;overflow:auto}
 @media(max-width:640px){.wc-dl-card{width:calc(100vw - 20px);max-height:92vh}.wc-dl-actions .btn{flex:1 1 auto;justify-content:center}}
+
+/* ===================================================================
+   Guiding panel design system (Fluent / Wiz-grade). Green is the brand
+   token (--brand-500); here it is used ONLY as accent — chips, left
+   accent bars, soft fills, dots — never as body-text colour. Action
+   text is high-contrast --text; pending recedes; done is quietly struck.
+   --text-dim / --brand-50 are aliased to real tokens so they resolve
+   correctly in BOTH light and dark (they are otherwise undefined).
+   =================================================================== */
+.wc{--text-dim:var(--text-muted);--brand-50:var(--brand-soft)}
+
+/* Header toolbar — one tidy row that holds at 460px */
+.wc-top{display:flex;align-items:center;gap:6px;margin-bottom:14px;min-width:0}
+.wc-top-title{flex:1 1 auto;min-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;font-size:13.5px;color:var(--text);letter-spacing:-.01em;padding:0 2px}
+.wc-ib{width:32px;height:32px;flex:0 0 auto;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--text-muted);display:grid;place-items:center;cursor:pointer;transition:background .16s,color .16s,border-color .16s}
+.wc-ib:hover{background:var(--surface-2);color:var(--text);border-color:var(--border)}
+.wc-ib:disabled{opacity:.5;cursor:default}
+.wc-ib.on{background:var(--brand-soft);color:var(--brand-600);border-color:transparent}
+.wc-min{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:11.5px;font-weight:650;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.wc-min .wc-dot{width:6px;height:6px;border-radius:50%;background:var(--brand-500)}
+.wc-min.low{color:var(--danger);background:var(--danger-soft);border-color:transparent}
+.wc-min.low .wc-dot{background:var(--danger)}
+/* Compact toolbar button — the header + guide-bar control family */
+.wc-tbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:600;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer;white-space:nowrap;line-height:1;transition:background .16s,border-color .16s,color .16s,transform .1s}
+.wc-tbtn:hover:not(:disabled){border-color:var(--border-strong);background:var(--surface-3)}
+.wc-tbtn:active:not(:disabled){transform:translateY(1px)}
+.wc-tbtn:disabled{opacity:.55;cursor:default}
+.wc-tbtn svg{color:var(--text-muted)}
+.wc-tbtn.primary{background:var(--brand-500);border-color:transparent;color:#fff}
+.wc-tbtn.primary:hover:not(:disabled){background:var(--brand-600)}
+.wc-tbtn.primary svg{color:#fff}
+.wc-tbtn.ghost{background:transparent;border-color:transparent;color:var(--text-muted)}
+.wc-tbtn.ghost:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
+.wc-tbtn.live{background:var(--danger-soft);border-color:transparent;color:var(--danger)}
+.wc-tbtn.live svg{color:var(--danger)}
+.wc-strong{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:4px 9px;border-radius:999px}
+.wc-guidebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+
+/* Completed-task bar */
+.wc-donebar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:13px 15px 13px 17px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);overflow:hidden}
+.wc-donebar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--success)}
+.wc-donebar-lead{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:650;color:var(--text)}
+.wc-donebar-lead svg{color:var(--success);flex-shrink:0}
+.wc-donebar-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
+.wc-chip-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .16s,border-color .16s}
+.wc-chip-btn:hover{border-color:var(--border-strong);background:var(--surface-3)}
+.wc-chip-btn svg{color:var(--text-muted);flex-shrink:0}
+
+/* Banners */
+.wc-banner{position:relative;display:flex;align-items:center;gap:10px;border-radius:12px;padding:11px 14px;margin-bottom:12px;font-size:13.5px;line-height:1.45;overflow:hidden}
+.wc-banner svg{flex-shrink:0}
+.wc-banner .fill{flex:1}
+.wc-banner.danger{background:var(--danger);color:#fff}
+.wc-banner.warn{background:var(--warning-soft);color:var(--text);padding-left:17px}
+.wc-banner.warn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
+.wc-banner.warn svg{color:var(--warning)}
+
+/* Live-reading indicator */
+.wc-live{display:flex;align-items:center;gap:9px;margin:10px 2px;font-size:12px;color:var(--text-muted);line-height:1.4}
+.wc-live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--brand-500);box-shadow:0 0 0 0 rgba(82,163,49,.5);animation:wc-pulse 1.6s infinite}
+@keyframes wc-pulse{0%{box-shadow:0 0 0 0 rgba(82,163,49,.5)}70%{box-shadow:0 0 0 7px rgba(82,163,49,0)}100%{box-shadow:0 0 0 0 rgba(82,163,49,0)}}
+
+/* DO THIS NOW hero — the single strongest focus on the screen */
+.wc-hero{position:relative;margin-top:12px;padding:16px 18px 13px 21px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-md);overflow:hidden}
+.wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
+.wc-hero-eyebrow{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
+.wc-hero-chip{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);background:var(--brand-soft);padding:4px 9px;border-radius:999px}
+.wc-hero-hint{font-size:11px;color:var(--text-faint)}
+.wc-hero-text{font-size:17px;line-height:1.5;font-weight:650;color:var(--text);letter-spacing:-.01em}
+
+/* Step navigator with a progress track */
+.wc-nav{display:flex;align-items:center;gap:12px;padding:2px 2px 4px}
+.wc-nav-btn{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text-muted);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s}
+.wc-nav-btn:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
+.wc-nav-btn:disabled{opacity:.4;cursor:default}
+.wc-nav-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:center}
+.wc-nav-count{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--text-muted);text-transform:uppercase;white-space:nowrap}
+.wc-nav-track{width:100%;height:4px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.wc-nav-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-500),var(--brand-600));transition:width .35s var(--ease,cubic-bezier(.4,0,.2,1))}
+
+/* Step cards — current leads, pending recedes, done is struck */
+.wc-step{position:relative;display:flex;gap:11px;align-items:flex-start;padding:12px 13px 12px 15px;background:var(--surface);border:1px solid var(--border);border-radius:13px;transition:border-color .16s,background .16s,box-shadow .16s,opacity .16s}
+.wc-step.now{border-color:transparent;box-shadow:var(--shadow-md)}
+.wc-step.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:13px 0 0 13px;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
+.wc-step.pending{opacity:.55}
+.wc-step.done{background:var(--surface-2)}
+.wc-step-check{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;border:1.5px solid var(--border-strong);background:transparent;color:var(--text-faint);cursor:pointer;margin-top:1px;transition:border-color .16s,background .16s,color .16s}
+.wc-step-check:hover{border-color:var(--brand-500)}
+.wc-step.now .wc-step-check{border-color:var(--brand-500);color:var(--brand-600)}
+.wc-step.done .wc-step-check{border-color:transparent;background:var(--success-soft);color:var(--success)}
+.wc-step-body{flex:1;min-width:0}
+.wc-step-title{font-size:14px;line-height:1.45;color:var(--text-muted);font-weight:500}
+.wc-step.now .wc-step-title{color:var(--text);font-weight:650}
+.wc-step.done .wc-step-title{text-decoration:line-through;color:var(--text-faint);font-weight:500}
+.wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;border-radius:7px}
+
+/* All-done confirmation + flags */
+.wc-alldone{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;background:var(--success-soft);border-radius:11px;color:var(--success);font-weight:650;font-size:13.5px}
+.wc-flag{position:relative;display:flex;gap:9px;align-items:flex-start;padding:10px 12px 10px 15px;background:var(--warning-soft);border-radius:11px;font-size:13px;line-height:1.5;color:var(--text);overflow:hidden}
+.wc-flag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
+.wc-flag svg{color:var(--warning);flex-shrink:0;margin-top:1px}
+.wc-flags{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.wc-loading{display:flex;flex-direction:column;align-items:center;gap:20px;padding:44px 20px 40px}
+.wc-loading-orb{position:relative;width:48px;height:48px}
+.wc-loading-orb span{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid transparent;border-top-color:var(--brand-600);transform:translate(-50%,-50%);animation:wc-orb 1.1s linear infinite}
+.wc-loading-orb span:nth-child(1){width:48px;height:48px}
+.wc-loading-orb span:nth-child(2){width:34px;height:34px;opacity:.55;animation-duration:1.5s;animation-direction:reverse}
+.wc-loading-orb span:nth-child(3){width:20px;height:20px;opacity:.3;animation-duration:.85s}
+@keyframes wc-orb{to{transform:translate(-50%,-50%) rotate(360deg)}}
+.wc-loading-phases{display:flex;flex-direction:column;gap:10px;width:100%;max-width:290px}
+.wc-loading-line{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--text);animation:wc-line-in .45s cubic-bezier(.2,.8,.2,1) both}
+.wc-loading-line svg{flex-shrink:0}
+.wc-loading-line.past{color:var(--text-dim);font-weight:400}
+.wc-loading-line.past svg{color:var(--success)}
+.wc-loading-line.on svg{color:var(--brand-600)}
+@keyframes wc-line-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* Ask / analyse bar + answer */
+.wc-ask{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:10px 11px}
+.wc-ask .wc-ask-row{display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.wc-ask input.input{flex:1;min-width:170px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
+.wc-ask input.input:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
+.wc-ask-answer{margin-top:11px;padding-top:11px;border-top:1px solid var(--border);font-size:14px;line-height:1.55}
+
+/* Pre-plan starter + session summary */
+.wc-pre{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:16px}
+.wc-pre-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px}
+.wc-pre-sub{font-size:12px;color:var(--text-muted);margin-bottom:11px}
+.wc-pre textarea.input{border-radius:10px}
+.wc-sum{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:16px;margin-top:16px}
+.wc-sum-title{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px;color:var(--text)}
+.wc-sum-title svg{color:var(--brand-600)}
 `
 
 // Copy text reliably across the main page AND the floating PiP / pop-out window.
@@ -1514,6 +1675,29 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
             </div>
           </div>
         )}
+      </div>
+    </div>
+  )
+}
+
+// The planning animation: phases reveal one by one while the plan is being
+// built, then the Console swaps to the step view the moment steps arrive.
+function PlanningLoader() {
+  const PHASES = ['Understanding your goal', 'Thinking', 'Preparing the plan', 'Thinking deep', 'Working with multimodal vision', 'Writing your steps']
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setI((n) => (n < PHASES.length - 1 ? n + 1 : n)), 1600)
+    return () => clearInterval(id)
+  }, [])   // eslint-disable-line
+  return (
+    <div className="wc-loading">
+      <div className="wc-loading-orb"><span /><span /><span /></div>
+      <div className="wc-loading-phases">
+        {PHASES.slice(0, i + 1).map((p, k) => (
+          <div key={k} className={`wc-loading-line${k === i ? ' on' : ' past'}`}>
+            {k < i ? <Check size={14} /> : <Loader2 size={14} className="spin" />}<span>{p}…</span>
+          </div>
+        ))}
       </div>
     </div>
   )
@@ -1823,7 +2007,9 @@ function Console({ sessionId, onBack }) {
           if (w.guidance != null) setGuidance(w.guidance || '')
           if (w.steps) setSess((s) => s ? { ...s, steps: w.steps, currentStep: w.index } : s)
           if (w.observation) setObservation(w.observation)
-          if (w.flag) setFlags((fl) => [{ t: Date.now(), text: w.flag }, ...fl].slice(0, 6))
+          // Flags reflect the CURRENT screen only: replace each watch tick so a
+          // warning clears the moment you move past it (no stale, sticky errors).
+          setFlags(w.flag ? [{ t: Date.now(), text: w.flag }] : [])
         } catch { /* the answer already showed; a nav refresh failure is non-fatal */ }
       }
     } catch (e) { setErr(e.message || 'Could not analyze the screen') } finally { setBusy(false) }
@@ -1897,84 +2083,84 @@ function Console({ sessionId, onBack }) {
     <div className="wc" style={{ ...shell, padding: '16px 16px 60px' }}>
       <style>{CONSOLE_CSS}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, rowGap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-          <button className="btn btn-ghost btn-sm" onClick={leaveToPlan} title="Back to planning. Your session pauses and waits for you under Pick up where you left off."><ChevronLeft size={15} /> Back to plan</button>
-          <button className="btn btn-ghost btn-sm" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}</button>
-          {sess && <span style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 300, marginLeft: 4 }} title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</span>}
-          <div style={{ flex: 1 }} />
-          {usage && <span style={{ fontSize: 12, fontWeight: 600, color: usage.exhausted ? 'var(--danger)' : 'var(--text-dim)' }} title={`${usage.tier} plan, resets ${usage.resetLabel}`}>{Math.ceil((usage.remainingSeconds || 0) / 60)} min left</span>}
-          {usage && usage.exhausted && <button className="btn btn-primary btn-sm" disabled title="Buying time arrives in the billing phase">Buy time</button>}
-          {sess && <button className={`btn btn-sm ${paused ? 'btn-primary' : 'btn-ghost'}`} onClick={togglePause} title={paused ? 'Resume: your minutes count again once you watch' : 'Pause: freeze your minutes while you do other work'}>{paused ? 'Resume' : 'Pause'}</button>}
+        {/* Compact single-row toolbar — holds cleanly at 460px: icon Back +
+            theme, a truncating plan name, then the minutes pill and the
+            session controls. Nothing wraps accidentally. */}
+        <div className="wc-top">
+          <button className="wc-ib" onClick={leaveToPlan} title="Back to planning. Your session pauses and waits for you under Pick up where you left off." aria-label="Back to plan"><ChevronLeft size={17} /></button>
+          <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
+          <span className="wc-top-title" title={sess ? (sess.title || sess.goal || '') : ''}>{sess ? ((sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')) : ''}</span>
+          {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" />{Math.ceil((usage.remainingSeconds || 0) / 60)}m</span>}
+          {usage && usage.exhausted && <button className="wc-tbtn" disabled title="Buying time arrives in the billing phase">Buy time</button>}
+          {sess && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume: your minutes count again once you watch' : 'Pause: freeze your minutes while you do other work'}>{paused ? 'Resume' : 'Pause'}</button>}
           {/* Clean guiding screen: overlay toggles live on the desktop title bar; Deep pass is under Options; Report / Print / Audit / Review live on a COMPLETED task (below). */}
           {floatCapable && sess && sess.status !== 'ended' && (pipWin
-            ? <button className="btn btn-primary btn-sm" title="Close the floating window" onClick={closeFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Unfloat' : 'Close pop-out'}</button>
-            : <button className="btn btn-outline btn-sm" title={pipSupported ? 'Float the steps on top of your work' : 'Pop the steps out into a separate window'} onClick={openFloat}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
-          {sess && sess.status !== 'ended' && <button className="btn btn-outline btn-sm" onClick={finalize} disabled={busy}>End &amp; summarize</button>}
+            ? <button className="wc-ib on" title={pipSupported ? 'Close the floating window (Unfloat)' : 'Close the pop-out window'} aria-label="Close floating window" onClick={closeFloat}><PictureInPicture2 size={16} /></button>
+            : <button className="wc-ib" title={pipSupported ? 'Float the steps on top of your work' : 'Pop the steps out into a separate window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={16} /></button>)}
+          {sess && sess.status !== 'ended' && <button className="wc-tbtn" onClick={finalize} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
         {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
 
         {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
         {sess && sess.status === 'ended' && (
-          <div style={{ ...card, padding: 14, marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 13, fontWeight: 600, marginRight: 4 }}><Check size={15} style={{ verticalAlign: -2, color: 'var(--success)' }} /> Completed - download what you need:</span>
-            <button className="btn btn-outline btn-sm" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report (PDF)</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>
-            <a className="btn btn-ghost btn-sm" style={{ textDecoration: 'none' }} href={api.workAuditUrl(sessionId)} download><FileText size={14} /> Audit log</a>
+          <div className="wc-donebar">
+            <span className="wc-donebar-lead"><Check size={15} /> Completed — download what you need</span>
+            <div className="wc-donebar-actions">
+              <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
+              <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report (PDF)</button>
+              <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>
+              <a className="wc-chip-btn" href={api.workAuditUrl(sessionId)} download><FileText size={14} /> Audit log</a>
+            </div>
           </div>
         )}
 
         {usage && usage.exhausted && (
-          <div style={{ background: 'var(--danger)', color: '#fff', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertTriangle size={16} /> <span style={{ flex: 1 }}>You are out of minutes for today. Buy more time, or it resets at 11:59 PM ET.</span>
+          <div className="wc-banner danger">
+            <AlertTriangle size={16} /> <span className="fill">You are out of minutes for today. Buy more time, or it resets at 11:59 PM ET.</span>
           </div>
         )}
         {usage && !usage.exhausted && usage.remainingSeconds <= 900 && !dismissedLow && (
-          <div style={{ background: 'var(--warn-bg, #fff6e6)', color: 'var(--warn-text, #8a5a00)', borderRadius: 10, padding: '10px 14px', marginBottom: 12, fontSize: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-            <AlertTriangle size={16} /> <span style={{ flex: 1 }}>About {Math.ceil(usage.remainingSeconds / 60)} minutes left today. You can pause anytime, or top up to keep going.</span>
-            <button className="btn btn-ghost btn-sm" onClick={() => setDismissedLow(true)}>Dismiss</button>
+          <div className="wc-banner warn">
+            <AlertTriangle size={16} /> <span className="fill">About {Math.ceil(usage.remainingSeconds / 60)} minutes left today. You can pause anytime, or top up to keep going.</span>
+            <button className="wc-tbtn ghost" onClick={() => setDismissedLow(true)}>Dismiss</button>
           </div>
         )}
 
         {steps.length === 0 ? (
-          // Pre-plan: a minimal starter. Guidance auto-plans on open, so this is
-          // only seen briefly, or as a fallback if screen-share was declined.
-          <div style={{ ...card, padding: 14 }}>
-            <label className="label" style={{ fontSize: 12, color: 'var(--text-dim)' }}>Your goal (type or paste)</label>
-            <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical', marginTop: 4 }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
-            <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 10 }}>
-              {isMobile && <button className="btn btn-outline btn-sm wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}
-              <button className="btn btn-primary btn-sm" onClick={plan} disabled={busy || !goal.trim()}>{busy ? <><Loader2 size={14} className="spin" /> Planning…</> : <><Play size={14} /> Plan the steps</>}</button>
+          busy ? (
+            // Planning: the thinking animation reveals phases, then the view swaps
+            // to the step card the moment the plan is ready.
+            <PlanningLoader />
+          ) : (
+            // Not planning yet (first frame) or screen-share was declined: the
+            // goal starter + Plan button as a clean fallback.
+            <div className="wc-pre">
+              <div className="wc-pre-title">What do you want to get done?</div>
+              <div className="wc-pre-sub">Type or paste your goal — I will turn it into clear on-screen steps.</div>
+              <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical' }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
+              <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
+                {isMobile && <button className="wc-tbtn wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}
+                <button className="wc-tbtn primary" onClick={plan} disabled={busy || !goal.trim()}><Play size={14} /> Plan the steps</button>
+              </div>
+              {err && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 10 }}>{err}</div>}
+              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10, lineHeight: 1.5 }}>{isMobile ? 'Tap Photo to snap the screen, device or paper, then Plan reads it.' : <>Share your <b>whole screen</b> (not just a tab) so it can guide you through any app.</>}</div>
             </div>
-            {err && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 8 }}>{err}</div>}
-            {!isMobile && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>Share your <b>whole screen</b> (not just a tab) so it can guide you through any app. If you have more than one monitor, it asks which to watch when it starts. Guide style comes from your plan and can be changed under Options.</div>}
-            {isMobile && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}>Tap Photo to snap the screen, device or paper, then Plan reads it. Or Watch me to let the camera watch live.</div>}
-          </div>
+          )
         ) : (
           // Post-plan: the step card below is the main view. Keep only a slim bar.
-          <div className="wc-guidebar" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 6 }}>
+          <div className="wc-guidebar">
             {watching
-              ? <button className="btn btn-danger btn-sm" onClick={pauseWatching}><Square size={14} /> Pause watching</button>
-              : <button className="btn btn-primary btn-sm" onClick={startWatching} disabled={done}><Play size={14} /> {done ? 'All done' : 'Watch me'}</button>}
-            <button className="btn btn-outline btn-sm" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
-            {strongUsed && <span style={{ fontSize: 11, color: 'var(--brand-600)', display: 'inline-flex', alignItems: 'center', gap: 3 }}><Zap size={11} /> stronger model</span>}
-            {isMobile && <button className="btn btn-outline btn-sm" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
-            <details className="wc-opts" style={{ marginLeft: 'auto' }}>
-              <summary style={{ cursor: 'pointer', fontSize: 12.5, color: 'var(--text-dim)' }}>Options</summary>
-              <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 8 }}>
-                <label style={{ fontSize: 12, color: 'var(--text-dim)' }}>Guide style</label>
-                <select className="select" value={mode} onChange={(e) => changeMode(e.target.value)} style={{ width: 'auto' }} title={(modes.find((m) => m.id === mode) || {}).hint || ''}>
-                  {(modes.length ? modes : [{ id: 'stepwise', label: 'Step by step' }]).map((m) => <option key={m.id} value={m.id} title={m.hint || ''}>{m.label}</option>)}
-                </select>
-                <button className="btn btn-outline btn-sm" onClick={plan} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
-                {desktop && <button className="btn btn-outline btn-sm" onClick={() => { try { desktop.pickMonitor && desktop.pickMonitor() } catch {} }}>Choose monitor</button>}
-              </div>
-            </details>
+              ? <button className="wc-tbtn live" onClick={pauseWatching}><Square size={14} /> Pause watching</button>
+              : <button className="wc-tbtn primary" onClick={startWatching} disabled={done}><Play size={14} /> {done ? 'All done' : 'Watch me'}</button>}
+            <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
+            {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
+            {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
+            <button className="wc-tbtn ghost" style={{ marginLeft: 'auto' }} onClick={plan} disabled={busy} title="Rebuild the steps from what is on screen now">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
             {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%' }}>{err}</div>}
             {photoFrame && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
                 <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
-                <button className="btn btn-ghost btn-sm" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
+                <button className="wc-tbtn ghost" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
               </div>
             )}
           </div>
@@ -1991,12 +2177,24 @@ function Console({ sessionId, onBack }) {
             : { display: 'none' }} />
         {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>Live camera. Aim it at what you need help with.</div>}
 
-        {watching && <div style={{ fontSize: 12, color: 'var(--brand-600)', margin: '10px 2px', display: 'flex', alignItems: 'center', gap: 6 }}><span className="spin" style={{ display: 'inline-flex' }}><Loader2 size={13} /></span> Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. {observation}</div>}
+        {/* Flags/warnings sit at the TOP of the guiding content so you see them
+            immediately. They clear automatically as soon as you move past them. */}
+        {flags.length > 0 && (
+          <div className="wc-flags">
+            {flags.map((f) => (
+              <div key={f.t} className="wc-flag">
+                <AlertTriangle size={15} /> <span>{f.text}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {watching && <div className="wc-live"><span className="pulse" /> Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. {observation}</div>}
 
         {guidance && sess && sess.status !== 'ended' && !done && (
-          <div style={{ ...card, padding: 14, marginTop: 10, borderColor: 'var(--brand-500)', background: 'var(--brand-50, var(--surface))' }}>
-            <div style={{ fontSize: 11, color: 'var(--text-dim)', marginBottom: 4, letterSpacing: 0.3 }}>DO THIS NOW {watching ? '' : '(press Watch me to keep it live)'}</div>
-            <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--brand-700, var(--brand-600))' }}>{guidance}</div>
+          <div className="wc-hero">
+            <div className="wc-hero-eyebrow"><span className="wc-hero-chip">Do this now</span>{!watching && <span className="wc-hero-hint">press Watch me to keep it live</span>}</div>
+            <div className="wc-hero-text">{guidance}</div>
             <HowButton open={!!(howTo.guidance && howTo.guidance.open)} loading={!!(howTo.guidance && howTo.guidance.loading)} onClick={() => drillHow('guidance', guidance)} />
             <HowDetail entry={howTo.guidance} onRetry={() => drillHow('guidance', guidance)} />
           </div>
@@ -2008,10 +2206,13 @@ function Console({ sessionId, onBack }) {
               const ci = steps.findIndex((s) => s.status === 'current')
               const no = ci >= 0 ? ci : Math.min(sess?.currentStep || 0, steps.length - 1)
               return (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, padding: '2px 2px 2px' }}>
-                  <button className="btn btn-ghost btn-sm" disabled={no <= 0} onClick={() => navStep(-1)} title="Go to the previous step"><ChevronLeft size={14} /> Prev</button>
-                  <span style={{ fontSize: 12.5, fontWeight: 600, color: 'var(--text-dim)', letterSpacing: 0.2 }}>Step {no + 1} of {steps.length}</span>
-                  <button className="btn btn-ghost btn-sm" disabled={no >= steps.length - 1} onClick={() => navStep(1)} title="Go to the next step">Next <ChevronRight size={14} /></button>
+                <div className="wc-nav">
+                  <button className="wc-nav-btn" disabled={no <= 0} onClick={() => navStep(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
+                  <div className="wc-nav-mid">
+                    <span className="wc-nav-count">Step {no + 1} of {steps.length}</span>
+                    <div className="wc-nav-track"><div className="wc-nav-fill" style={{ width: `${((no + 1) / steps.length) * 100}%` }} /></div>
+                  </div>
+                  <button className="wc-nav-btn" disabled={no >= steps.length - 1} onClick={() => navStep(1)} title="Go to the next step">Next <ChevronRight size={15} /></button>
                 </div>
               )
             })()}
@@ -2023,51 +2224,41 @@ function Console({ sessionId, onBack }) {
               // so the focus stays on the one step to do now.
               const reveal = isNow || isDone
               return (
-                <div key={i} style={{ ...card, padding: '10px 12px', display: 'flex', gap: 10, alignItems: 'flex-start', borderColor: isNow ? 'var(--brand-500)' : 'var(--border)', background: isNow ? 'var(--brand-50, var(--surface))' : 'var(--surface)', opacity: isPending ? 0.45 : 1 }}>
-                  <button className="icon-btn" title={isDone ? 'Mark not done' : 'Mark done'} onClick={() => setStep(i, isDone ? 'current' : 'done')} style={{ color: isDone ? 'var(--success)' : 'var(--text-dim)', marginTop: 1 }}>
-                    {isDone ? <Check size={17} /> : <Square size={16} />}
+                <div key={i} className={`wc-step ${isNow ? 'now' : isDone ? 'done' : 'pending'}`}>
+                  <button className="wc-step-check" title={isDone ? 'Mark not done' : 'Mark done'} onClick={() => setStep(i, isDone ? 'current' : 'done')}>
+                    {isDone ? <Check size={16} /> : <Square size={15} />}
                   </button>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ color: isNow ? 'var(--brand-600)' : 'inherit', fontWeight: isNow ? 600 : 400, textDecoration: isDone ? 'line-through' : 'none' }}>{s.text}</div>
+                  <div className="wc-step-body">
+                    <div className="wc-step-title">{s.text}</div>
                     {reveal && s.url && <a className="btn btn-outline btn-sm" href={s.url} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, textDecoration: 'none', display: 'inline-flex', gap: 5, alignItems: 'center' }}><ExternalLink size={13} /> Open {linkHost(s.url)}</a>}
                     {reveal && s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                     {reveal && s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
-                    {isNow && s.validate && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}><Eye size={11} style={{ verticalAlign: -1 }} /> done when: {s.validate}</div>}
+                    {isNow && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: {s.validate}</div>}
                     <HowButton open={!!(howTo['step-' + i] && howTo['step-' + i].open)} loading={!!(howTo['step-' + i] && howTo['step-' + i].loading)} onClick={() => drillHow('step-' + i, s.text, i)} />
                     <HowDetail entry={howTo['step-' + i]} onRetry={() => drillHow('step-' + i, s.text, i)} />
                   </div>
                 </div>
               )
             })}
-            {done && sess && sess.status !== 'ended' && <div style={{ color: 'var(--success)', fontWeight: 600, padding: '4px 2px' }}><Check size={16} style={{ verticalAlign: -3 }} /> Every step is confirmed on screen. End and summarize when you are ready.</div>}
-          </div>
-        )}
-
-        {flags.length > 0 && (
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 6 }}>
-            {flags.map((f) => (
-              <div key={f.t} style={{ background: 'var(--warn-bg, #fff6e6)', color: 'var(--warn-text, #8a5a00)', borderRadius: 10, padding: '8px 10px', fontSize: 13, display: 'flex', gap: 8 }}>
-                <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} /> <span>{f.text}</span>
-              </div>
-            ))}
+            {done && sess && sess.status !== 'ended' && <div className="wc-alldone"><Check size={16} /> Every step is confirmed on screen. End and summarize when you are ready.</div>}
           </div>
         )}
 
         {/* In-the-moment ask: a single clean prompt. It uses the whole session
             (goal + plan + what is on screen) to answer and keep you moving. */}
-        <div style={{ ...card, padding: 12, marginTop: 14 }}>
-          <div className="wc-askrow" style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-            <input className="input" style={{ flex: 1, minWidth: 180 }} placeholder={source === 'camera' ? 'Ask about what the camera sees…' : 'Ask anything in the moment — I answer and keep the plan moving'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') ask() }} />
-            <button className="btn btn-primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
-            <button className="btn btn-ghost btn-sm" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
+        <div className="wc-ask">
+          <div className="wc-ask-row wc-askrow">
+            <input className="input" placeholder={source === 'camera' ? 'Ask about what the camera sees…' : 'Ask anything in the moment — I answer and keep the plan moving'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') ask() }} />
+            <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+            <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
+            <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
           </div>
-          {answer && <div style={{ marginTop: 10, fontSize: 14 }}><AnswerBody text={answer} /></div>}
+          {answer && <div className="wc-ask-answer"><AnswerBody text={answer} /></div>}
         </div>
 
         {sess && sess.status === 'ended' && sess.summary && (
-          <div style={{ ...card, padding: 14, marginTop: 16 }}>
-            <div style={{ fontWeight: 700, marginBottom: 8 }}>Session summary</div>
+          <div className="wc-sum">
+            <div className="wc-sum-title"><FileText size={15} /> Session summary</div>
             <AnswerBody text={sess.summary} />
           </div>
         )}

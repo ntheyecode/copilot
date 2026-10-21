@@ -223,6 +223,19 @@ export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
     '(for example "https://console.aws.amazon.com/") - only a url you are sure is the correct ' +
     'official entry point, never a guessed deep link; describe the navigation inside the site as ' +
     'its own plain steps. No step may assume prior knowledge.\n' +
+    'MATCH THE REAL ENVIRONMENT - DO NOT ASSUME A WEB BROWSER. Work happens in many places and the ' +
+    'first steps must fit the actual one: (a) a WEB app -> open the official or given URL in the ' +
+    'browser (use "url"); (b) a DESKTOP or INSTALLED app (for example Check Point SmartConsole, SQL ' +
+    'Server Management Studio, an IDE, a vendor or device console) -> open it from the Start menu / ' +
+    'Applications / its icon, NOT a URL, and leave "url" empty; (c) INSTALL-AND-CONFIGURE -> guide ' +
+    'the download, running the installer, the prompts, then the configuration; (d) an ON-PREM or ' +
+    'SELF-HOSTED product -> open its LOCAL address (for example https://<gateway-ip> or ' +
+    'http://localhost:<port>) or its management app on the LAN, using the host/IP/port the user ' +
+    'gives, and NEVER guess an internet URL for an on-prem system; (e) a CUSTOM or in-house app -> ' +
+    'open it however the user launches it and let the live screen guidance name the exact labels. ' +
+    'Use the environment the user stated (and any on-screen evidence) to decide; when unsure, make ' +
+    'the first step a plain "Open <the app or console the goal is about>" rather than defaulting to ' +
+    'a browser. The live guidance also watches the real screen, so adapt to the actual app in view.\n' +
     'Keep "text" to the short action name; put the exact commands in "commands", the exact file ' +
     'content in "code", and the page to open in "url". Leave "commands" an empty array and omit ' +
     '"code"/"url" for steps that do not need them.\n' +
@@ -437,7 +450,16 @@ export function workNavigateSystem({ base, voice = '', mode = 'stepwise' }) {
     'The goal was already accepted when it was planned; your job now is to guide it forward, not ' +
     'to re-judge whether to help. Do not refuse mid-task. ' +
     'If the screen shows something the checklist did not anticipate, guide them from what is ' +
-    'actually there, not from the list. Return ONLY JSON: ' +
+    'actually there, not from the list.\n' +
+    'THE UI MAY HAVE CHANGED SINCE THE PLAN. Products update their interfaces, so a menu, button or ' +
+    'option named in the step may be renamed, moved, or gone. If the exact control the step names ' +
+    'is NOT on the screen, do NOT tell them to click something that is not there and do NOT keep ' +
+    'repeating the stale instruction. Find the control that now does the same thing - it may have a ' +
+    'new label, sit under a different tab/menu, or have moved - and guide to THAT, overriding the ' +
+    'old wording. Note briefly in "observation" that the UI differs from the plan. Only if you ' +
+    'genuinely cannot find the equivalent on screen, say what changed and tell them to use Research ' +
+    '(for the current UI) or the Ask box - never invent a control that is not visible.\n' +
+    'Return ONLY JSON: ' +
     '{"completed":[numbers],"current":number,"guidance":"...","observation":"...","flag":"...","done":true|false}'
 }
 export function workNavigateUser({ goal, steps, currentStep }) {
