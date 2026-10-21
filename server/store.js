@@ -480,20 +480,72 @@ export function getEffectiveWorkPolicy(userId) {
 function publicCompany(c) {
   if (!c) return null
   const users = (db.users || []).filter((u) => u.companyId === c.id)
+  const t = c.trial || null
   return {
     id: c.id, name: c.name, plan: c.plan || 'basic', seats: c.seats || 0,
     scrub: !!c.scrub, createdAt: c.createdAt,
     sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
     userCount: users.length,
     adminCount: users.filter((u) => u.companyRole === 'company_admin').length,
+    aiSource: c.aiSource || null,
+    imageGen: !!c.imageGen,
+    trial: t ? { sessions: t.sessions || 0, used: t.used || 0, remaining: Math.max(0, (t.sessions || 0) - (t.used || 0)), minutesPer: t.minutesPer || 60 } : null,
+    hasCompanyAi: !!(c.companyAi && Object.keys(c.companyAi).length),
   }
+}
+export function setCompanyAiSource(companyId, source) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  c.aiSource = ['platform', 'company'].includes(source) ? source : null
+  persist(); return publicCompany(c)
+}
+export function setCompanyImageGen(companyId, on) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  c.imageGen = !!on
+  persist(); return publicCompany(c)
+}
+export function setCompanyTrial(companyId, { sessions, minutesPer } = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  if (!c.trial) c.trial = { sessions: 10, used: 0, minutesPer: 60 }
+  if (sessions != null) c.trial.sessions = Math.max(0, Number(sessions) || 0)
+  if (minutesPer != null) c.trial.minutesPer = Math.max(1, Number(minutesPer) || 60)
+  persist(); return publicCompany(c)
+}
+// Trial state for a company: how many of its pooled 1-hour sessions remain.
+export function companyTrialRemaining(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c || !c.trial) return 0
+  return Math.max(0, (c.trial.sessions || 0) - (c.trial.used || 0))
+}
+// Consume one pooled trial session. Returns the new remaining, or null if none.
+export function consumeCompanyTrialSession(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c || !c.trial) return null
+  if ((c.trial.used || 0) >= (c.trial.sessions || 0)) return 0
+  c.trial.used = (c.trial.used || 0) + 1
+  persist(); return Math.max(0, (c.trial.sessions || 0) - c.trial.used)
+}
+// Whether image generation is allowed for a user (individuals: per plan; company
+// users: ONLY when the superadmin enabled it for their company).
+export function workImageGenAllowed(userId) {
+  const u = getUser(userId); if (!u) return false
+  if (u.companyId) { const c = (db.companies || []).find((x) => x.id === u.companyId); return !!(c && c.imageGen) }
+  return true   // individuals are governed by their own plan elsewhere
 }
 export function createCompany({ name, plan = 'basic', seats = 0, scrub = false } = {}) {
   const nm = String(name || '').trim()
   if (nm.length < 2) throw httpErr(400, 'Company name is required.')
   if (!db.companies) db.companies = []
   if (db.companies.some((c) => c.name.toLowerCase() === nm.toLowerCase())) throw httpErr(409, 'A company with that name already exists.')
-  const c = { id: 'co' + id(), name: nm, plan: String(plan || 'basic'), seats: Number(seats) || 0, scrub: !!scrub, sso: null, createdAt: now() }
+  const c = {
+    id: 'co' + id(), name: nm, plan: String(plan || 'basic'), seats: Number(seats) || 0, scrub: !!scrub, sso: null, createdAt: now(),
+    aiSource: null,            // superadmin MUST select 'platform' | 'company' before use
+    imageGen: false,           // off until the superadmin enables it (cost gate)
+    trial: { sessions: 10, used: 0, minutesPer: 60 },   // 10 x 1h, pooled across users
+    companyAi: {},             // company-admin provider keys, used when aiSource === 'company'
+  }
   db.companies.push(c)
   persist()
   return publicCompany(c)
@@ -513,6 +565,14 @@ export function updateCompany(companyId, patch = {}) {
   if (patch.seats != null) c.seats = Number(patch.seats) || 0
   if (patch.scrub != null) c.scrub = !!patch.scrub
   if (patch.sso !== undefined) c.sso = patch.sso || null
+  if (patch.aiSource !== undefined) c.aiSource = ['platform', 'company'].includes(patch.aiSource) ? patch.aiSource : null
+  if (patch.imageGen != null) c.imageGen = !!patch.imageGen
+  if (patch.trial && typeof patch.trial === 'object') {
+    if (!c.trial) c.trial = { sessions: 10, used: 0, minutesPer: 60 }
+    if (patch.trial.sessions != null) c.trial.sessions = Math.max(0, Number(patch.trial.sessions) || 0)
+    if (patch.trial.minutesPer != null) c.trial.minutesPer = Math.max(1, Number(patch.trial.minutesPer) || 60)
+    if (patch.trial.resetUsed) c.trial.used = 0
+  }
   persist()
   return publicCompany(c)
 }

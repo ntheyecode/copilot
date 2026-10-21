@@ -123,6 +123,11 @@ export function registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap,
       if (store.getWorkTier(uid) !== 'premium') {
         return res.status(403).json({ error: 'Image generation is a Premium feature.' })
       }
+      // 1b) Company gate: companies get image generation only once the superadmin
+      // enables it for the company (off by default - a cost control).
+      if (store.workImageGenAllowed && !store.workImageGenAllowed(uid)) {
+        return res.status(403).json({ error: 'Image generation is turned off for your company. Ask your administrator to enable it.' })
+      }
 
       // Validate the prompt before spending anything.
       const prompt = typeof (req.body && req.body.prompt) === 'string' ? req.body.prompt.trim() : ''

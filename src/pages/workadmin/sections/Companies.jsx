@@ -137,6 +137,11 @@ export default function Companies({ isSuperAdmin }) {
     if (!isSuperAdmin) return
     try { await workAdminApi.companyScrub(c.id, !c.scrub); refreshDetail(c.id) } catch (e) { setMsg(e.message) }
   }
+  // Onboarding patches: AI source, image-gen, trial (superadmin only).
+  const patchCompany = async (id, patch) => {
+    if (!isSuperAdmin) return
+    try { await workAdminApi.updateCompany(id, patch); refreshDetail(id) } catch (e) { setMsg(e.message) }
+  }
   const addUser = async (companyId) => {
     if (busy || !uForm.username.trim() || !uForm.password) { setMsg('Username (3+) and password (6+) required.'); return }
     setBusy(true); setMsg('')
@@ -196,6 +201,20 @@ export default function Companies({ isSuperAdmin }) {
                           <div>Plan <b>{detail.company.plan}</b> &middot; Seats <b>{detail.company.seats || '-'}</b> &middot; SSO <b>{detail.company.sso && detail.company.sso.connected ? detail.company.sso.provider : 'not connected'}</b></div>
                           {isSuperAdmin && <button className="wka-btn sm" onClick={() => toggleCompanyScrub(c)}>{c.scrub ? 'Turn redaction off' : 'Turn redaction on'}</button>}
                         </div>
+                        {isSuperAdmin && (
+                          <div className="co-detail-top" style={{ gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
+                            <label style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 7 }}>AI source
+                              <select className="wka-input" style={{ width: 'auto' }} value={detail.company.aiSource || ''} onChange={(e) => patchCompany(c.id, { aiSource: e.target.value || null })}>
+                                <option value="">Select…</option>
+                                <option value="platform">Platform keys (we provide)</option>
+                                <option value="company">Company keys (they add)</option>
+                              </select>
+                            </label>
+                            <button className={`co-toggle ${detail.company.imageGen ? 'on' : ''}`} onClick={() => patchCompany(c.id, { imageGen: !detail.company.imageGen })} title="Image generation for this company (off by default)">Image gen: {detail.company.imageGen ? 'On' : 'Off'}</button>
+                            {detail.company.trial && <span style={{ fontSize: 13, color: 'var(--wka-muted)' }}>Trial: <b>{detail.company.trial.remaining}</b> of {detail.company.trial.sessions} sessions left <button className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => patchCompany(c.id, { trial: { resetUsed: true } })}>reset</button></span>}
+                            {!detail.company.aiSource && <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>Select an AI source to activate this company.</span>}
+                          </div>
+                        )}
                         <table className="wka-table co-users">
                           <thead><tr><th>User</th><th>Role</th><th>Tier</th><th>Redaction</th><th>Free access</th></tr></thead>
                           <tbody>

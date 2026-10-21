@@ -428,6 +428,15 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 // ===========================================================================
 app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
   const { title, goal, scope } = req.body || {}
+  // Company free trial: a pool of 1-hour sessions shared across the company's
+  // users. Consume one here; gate when the pool is used up.
+  const cu = store.getUser(req.workUser.id)
+  if (cu && cu.companyId) {
+    if (store.companyTrialRemaining(cu.companyId) <= 0) {
+      return res.status(402).json({ error: 'Your company free trial is used up. Your administrator can add more.', trialExhausted: true })
+    }
+    store.consumeCompanyTrialSession(cu.companyId)
+  }
   res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }) })
 }))
 app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
