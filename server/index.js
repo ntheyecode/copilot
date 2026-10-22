@@ -73,9 +73,40 @@ app.use(session({
 }))
 
 // ---- helpers --------------------------------------------------------------
+// Turn any thrown error into a user-safe response. SYSTEM errors (AI provider
+// failures, rate limits, timeouts, and unexpected 500s) are hidden behind a
+// generic "system is busy" message and recorded as an incident the superadmin
+// can read with the real cause, so a user never sees a raw provider or system
+// error. Deliberate, actionable 4xx errors we raise ourselves pass through
+// unchanged (add a goal, no seat, use company SSO, company AI keys not set).
+function isSystemError(e) {
+  if (!e) return true
+  if (e.ai) return true                       // any AI-layer failure (quota, key, 5xx)
+  if (!e.status) return true                   // unexpected throw
+  return e.status >= 500 || e.status === 429   // server error or rate limit
+}
+function sendWorkError(res, e, req) {
+  if (isSystemError(e)) {
+    try {
+      const wu = (req && req.workUser) || {}
+      store.recordWorkIncident({
+        kind: (e && e.ai) ? 'ai_error' : 'system_error',
+        status: (e && e.status) || null,
+        message: (e && e.message) || 'unknown error',
+        userId: wu.id || null, username: wu.username || '',
+        companyId: wu.companyId || null,
+        sessionId: (req && req.params && req.params.id) || null,
+        call: (req && (req.path || req.originalUrl)) || null,
+      })
+    } catch { /* never fail on logging */ }
+    const extra = (e && e.status === 429) ? ' It may be a few minutes.' : ''
+    return res.status(503).json({ error: 'The system is busy right now. Please try again in a little while.' + extra, busy: true })
+  }
+  return res.status((e && e.status) || 500).json({ error: (e && e.message) || 'Server error' })
+}
 const wrap = (fn) => (req, res) => {
   try { fn(req, res) }
-  catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  catch (e) { sendWorkError(res, e, req) }
 }
 // One place that turns a verified user into a live session, so epoch/loginAt are
 // never set on one path and forgotten on another.
@@ -433,7 +464,7 @@ app.post('/api/work/ai/test', requireWorkAuth, async (req, res) => {
       if (!store.getWorkPlatformAllowed()) store.markWorkUserAiTested(req.workUser.id, false)
       res.status(400).json({ ok: false, error: e.message || 'Key test failed', status: store.workAiStatus(req.workUser.id) })
     }
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // ---- app download (gated on AI readiness) ---------------------------------
@@ -610,7 +641,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
     const updated = store.getWorkSession(req.workUser.id, req.params.id)
     res.json({ session: updated, steps: updated.steps, appContext: updated.appContext })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // Scope: the requirement wizard that runs BEFORE planning. Text-only call on the
@@ -627,7 +658,7 @@ app.post('/api/work/scope', requireWorkAuth, requireWorkSubscription, async (req
     const tier = (store.getWorkUsage(req.workUser.id) || {}).tier || 'basic'
     const out = await work.workScope(ai, call.rt, { goal: safeGoal, tier })
     res.json(out)
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // Deliverables: for a review/design task, analyze the captured page(s) + the
@@ -656,7 +687,7 @@ app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubs
     store.setWorkDeliverables(req.workUser.id, req.params.id, d)   // so the PDF endpoint can render it
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Built the review and the generation prompts.' })
     res.json({ deliverables: d, documentMd })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // The review deliverables as a PDF (built from what the last review stored).
@@ -728,7 +759,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
       index: updated.currentStep, step: updated.steps[updated.currentStep] || null,
       done: allDone, steps: updated.steps, escalated, model: usedModel,
     })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // Ask: on-demand "what is this / what do I do here", grounded in the goal + frame.
@@ -758,7 +789,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ''}.` })
     else if (out.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this answer.' })
     res.json({ answer: out.answer, escalated, model: usedModel })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // Drill-down: expand ONE action ("how do I do this?") into a detailed sub-step
@@ -797,7 +828,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
     const escalated = out.escalated || call.forcedStrong
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'guidance', text: `How-to: ${act}` })
     res.json({ steps: saved, escalated, model: call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel) })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // The guide styles (single source of truth is work.WORK_MODES).
@@ -842,7 +873,7 @@ app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) =
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="${fname}"`)
     buildWorkReportPdf(s, res, { achieved, modeLabel })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // Research: user-triggered ONLY (a Research button). Web search now, then a
@@ -867,7 +898,7 @@ app.post('/api/work/sessions/:id/research', requireWorkAuth, async (req, res) =>
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: 'Research: ' + question })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: answer })
     res.json({ answer, hadResearch: !!notes })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // ---- Usage metering -------------------------------------------------------
@@ -1071,7 +1102,7 @@ app.post('/api/work/sessions/:id/draft', requireWorkAuth, async (req, res) => {
     const rr = await resolveWorkRuntime(req, res, {}); if (!rr) return
     const draft = await work.workDraft(ai, rr.rt, { base: store.getSystemPrompt(), goal: s.goal || '', ask: (req.body || {}).ask || '', session: s })
     res.json({ draft })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // Finalize: summarize + end. Re-finalizing regenerates.
@@ -1084,7 +1115,7 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     store.setWorkSessionSummary(req.workUser.id, req.params.id, summary)
     const ended = store.endWorkSession(req.workUser.id, req.params.id)
     res.json({ ok: true, summary, session: { id: ended.id, status: ended.status, endedAt: ended.endedAt } })
-  } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
+  } catch (e) { sendWorkError(res, e, req) }
 })
 
 // The current active session, for the desktop buddy overlay to poll (it runs in
@@ -1102,6 +1133,19 @@ registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRunt
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, wrap })
+
+// Public: the security and privacy paper. Served via an /api/work path so it
+// reaches this app (a bare /x.pdf would hit the nginx catch-all). The file ships
+// in dist (from public/), so one web deploy carries it. MUST be registered
+// before the /api catch-all below, or that 404s it.
+app.get('/api/work/security-paper.pdf', (req, res) => {
+  const f = path.join(DIST, 'WorkCoPilot-Security-and-Privacy.pdf')
+  if (!fs.existsSync(f)) return res.status(404).json({ error: 'Not found' })
+  res.setHeader('Content-Type', 'application/pdf')
+  res.setHeader('Content-Disposition', 'inline; filename="WorkCoPilot-Security-and-Privacy.pdf"')
+  res.setHeader('Cache-Control', 'public, max-age=3600')
+  res.sendFile(f)
+})
 
 // Unknown API route -> JSON 404 (never the SPA HTML).
 app.use('/api', (req, res) => res.status(404).json({ error: 'Unknown API route' }))

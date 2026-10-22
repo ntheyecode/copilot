@@ -2114,6 +2114,9 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
   })
   if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
   db.workSessions.splice(i, 1)
+  // Remove the session's transmission audit log too, so deleting a session really
+  // removes what it transmitted (the log is not kept past the session).
+  deleteWorkAudit(sessionId)
   persist()
   return { ok: true }
 }
@@ -2123,6 +2126,30 @@ export function listWorkActivity({ companyId, limit = 300 } = {}) {
   if (companyId) arr = arr.filter((a) => a.companyId === companyId)
   return arr.slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, limit)
 }
+// ---- System incidents (superadmin only) -----------------------------------
+// The REAL causes behind the generic "system is busy" message users see: AI
+// provider quota/key/5xx failures, timeouts, and unexpected errors. Users never
+// see these; the superadmin does, so the root cause (billing, keys, model) can
+// be fixed. Capped ring buffer.
+export function recordWorkIncident({ kind = 'ai_error', status = null, provider = null, model = null, message = '', userId = null, username = '', companyId = null, sessionId = null, call = null } = {}) {
+  if (!db.workIncidents) db.workIncidents = []
+  db.workIncidents.push({
+    id: 'inc' + id(), at: new Date().toISOString(),
+    kind: String(kind).slice(0, 40), status: status || null,
+    provider: provider ? String(provider).slice(0, 40) : null,
+    model: model ? String(model).slice(0, 80) : null,
+    message: String(message || '').slice(0, 1000),
+    userId: userId || null, username: String(username || '').slice(0, 80),
+    companyId: companyId || null, companyName: (companyId && (db.companies || []).find((c) => c.id === companyId) || {}).name || null,
+    sessionId: sessionId || null, call: call ? String(call).slice(0, 24) : null,
+  })
+  if (db.workIncidents.length > 2000) db.workIncidents.splice(0, db.workIncidents.length - 2000)
+  persistSoon()
+}
+export function listWorkIncidents({ limit = 300 } = {}) {
+  return (db.workIncidents || []).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, limit)
+}
+export function workIncidentCount() { return (db.workIncidents || []).length }
 // Sessions left active but quiet past idleMs (the idle sweep finalizes them).
 export function idleWorkSessionsToFinalize(idleMs) {
   const cut = Date.now() - idleMs

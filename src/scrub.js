@@ -18,6 +18,11 @@ export function isScrubEnabled() { return enabled }
 // Set from /api/work/me (the user's effective, armed governance policy or null).
 export function setGovPolicy(p) { govPolicy = (p && p.armed) ? p : null }
 export function isTokenizeMode() { return !!(govPolicy && govPolicy.mode === 'tokenize') }
+// True when ANY data-protection control is active (an armed governance policy or
+// the legacy on/off scrub). Used to decide whether to redact outbound screen
+// frames on-device, so screen protection follows the same switch as text.
+export function isDlpActive() { return !!govPolicy || enabled }
+export function activePolicy() { return govPolicy }
 export function resetTokenMap() { for (const k of Object.keys(tokenMap)) delete tokenMap[k] }
 
 // Gated clean of outbound text: tokenize (reversible) or scrub per the policy;

@@ -355,6 +355,13 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.setHeader('Content-Disposition', `attachment; filename="workcopilot-invoice-${safe}.pdf"`)
     buildCompanyInvoice(statement).pipe(res)
   }))
+  // System incidents (superadmin): the REAL causes behind the generic "system is
+  // busy" message users see. AI provider quota/key/5xx failures, timeouts, and
+  // unexpected errors, so the operator can fix billing, keys or the model.
+  app.get('/api/work/admin/incidents', requireAuth, superGate, w((req, res) => {
+    const limit = Math.min(1000, Math.max(1, parseInt(req.query.limit, 10) || 300))
+    res.json({ incidents: store.listWorkIncidents({ limit }), total: store.workIncidentCount() })
+  }))
   // Leads: the public "Validate it live" captures (superadmin). Append-only log
   // with a timestamp + which page each came from.
   app.get('/api/work/admin/leads', requireAuth, superGate, w((req, res) => {

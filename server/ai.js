@@ -71,7 +71,10 @@ export function catalog() {
   }))
 }
 
-function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
+// Mark every AI-layer error as a SYSTEM error (e.ai = true) so the request layer
+// shows the user a generic "system busy" message and logs the real cause for the
+// superadmin, instead of leaking the provider's raw error (quota, keys, 5xx).
+function httpErr(status, message) { const e = new Error(message); e.status = status; e.ai = true; return e }
 
 // Model calls occasionally hang or come back EMPTY (Groq does this under load),
 // so every call gets an abort timeout, and empty/timeout is retried once.

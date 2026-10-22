@@ -6,7 +6,8 @@ import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
 import { useTheme } from '../theme.jsx'
-import { clean } from '../scrub.js'
+import { clean, isDlpActive } from '../scrub.js'
+import { redactFrame, warmFrameScrub } from '../frame_scrub.js'
 
 const linkHost = (u) => { try { return new URL(u).host.replace(/^www\./, '') } catch { return 'link' } }
 import { api } from '../api.js'
@@ -2063,6 +2064,9 @@ function Console({ sessionId, onBack }) {
 
   const startCapture = async () => {
     setErr('')
+    // When data protection is on, warm the on-device OCR engine now so the first
+    // frame can be redacted without a cold-load delay.
+    if (isDlpActive()) warmFrameScrub()
     try {
       const stream = source === 'screen'
         ? await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false })
@@ -2094,6 +2098,10 @@ function Console({ sessionId, onBack }) {
   // running; otherwise read the live video (screen or camera). Desktop never
   // loads a photo frame, so its behavior is unchanged.
   const grabFrame = () => (photoFrameRef.current && !capturing) ? photoFrameRef.current : frameFromVideo(videoRef.current)
+  // Redact the outbound screen frame ON-DEVICE when data protection is on, so the
+  // image is scrubbed of sensitive text (via on-device OCR) BEFORE it is sent,
+  // the same switch that governs text. A no-op when protection is off.
+  const prepFrame = async (f) => (f && isDlpActive()) ? await redactFrame(f) : f
 
   // Mobile capture = "Photo": open the device camera through a file input (the
   // dependency-free path that works where getDisplayMedia does not), downscale
@@ -2118,7 +2126,7 @@ function Console({ sessionId, onBack }) {
     try {
       let frame = null
       if (!capturing && !photoFrameRef.current) { const okCap = await startCapture(); if (!okCap) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
-      frame = grabFrame()
+      frame = await prepFrame(grabFrame())
       // Desktop on-device docs: governed text held client-side for this session,
       // injected into the plan for this call only (never stored on the server).
       let docsText = ''
@@ -2149,7 +2157,8 @@ function Console({ sessionId, onBack }) {
     const heartbeat = now - lastSentRef.current > 20000
     if (!isChange && !heartbeat) return
     sigRef.current = sig
-    const frame = grabFrame(); if (!frame) return
+    let frame = grabFrame(); if (!frame) return
+    frame = await prepFrame(frame)
     busyTickRef.current = true
     try {
       const r = await api.workWatch(sessionId, { frame })
@@ -2181,7 +2190,8 @@ function Console({ sessionId, onBack }) {
   const refreshScreen = async () => {
     if (outOfMinutes()) return
     if (!capturing) { const ok = await startCapture(); if (!ok) return; await new Promise((r) => setTimeout(r, 400)) }
-    const frame = grabFrame(); if (!frame) return
+    let frame = grabFrame(); if (!frame) return
+    frame = await prepFrame(frame)
     setBusy(true); setErr('')
     try {
       const r = await api.workWatch(sessionId, { frame })
@@ -2271,7 +2281,7 @@ function Console({ sessionId, onBack }) {
       // Include the screen only if we are already capturing - so pasting a big API
       // response or a long error and hitting Ask does NOT trigger a screen-share
       // prompt. The pasted text is analysed with the goal + plan context.
-      const frame = capturing ? grabFrame() : (photoFrameRef.current || null)
+      const frame = await prepFrame(capturing ? grabFrame() : (photoFrameRef.current || null))
       const r = await api.workAsk(sessionId, { question: q, frame })
       noteStrong(r); setAnswer(r.answer || ''); if (typeof qText !== 'string') setQuestion('')
     } catch (e) { setErr(e.message || 'Could not answer') } finally { setBusy(false) }
@@ -2288,7 +2298,7 @@ function Console({ sessionId, onBack }) {
     setBusy(true); setErr(''); setAnswer('')
     try {
       if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
-      const frame = grabFrame()
+      const frame = await prepFrame(grabFrame())
       const r = await api.workAsk(sessionId, { question: f, frame, deep })
       noteStrong(r); setAnswer(r.answer || '')
       // The screenshot review should also help the plan: run one navigator pass
@@ -2349,7 +2359,7 @@ function Console({ sessionId, onBack }) {
     setHowTo((h) => ({ ...h, [key]: { open: true, loading: true } }))
     try {
       let frame = null
-      try { frame = grabFrame() } catch { frame = null }
+      try { frame = await prepFrame(grabFrame()) } catch { frame = null }
       const body = { action: act }
       if (stepIndex != null) body.stepIndex = stepIndex
       if (frame) body.frame = frame

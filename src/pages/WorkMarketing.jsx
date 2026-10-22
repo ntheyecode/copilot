@@ -216,6 +216,10 @@ export default function WorkMarketing() {
             <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">GDPR</span><span className="cb-chip">HIPAA</span><span className="cb-chip">PCI-DSS</span><span className="cb-chip">SOC 2</span><span className="cb-chip">ISO 27001</span><span className="cb-chip">FedRAMP</span><span className="cb-chip">NIST 800-53</span><span className="cb-chip">HITRUST</span><span className="cb-chip">CCPA</span></div><div className="wm-bhead"><span className="wm-bicon sm"><ShieldCheck size={16} /></span><h3>Compliant by policy</h3></div><p>Arm a policy per company for the frameworks you target, add any words that must never leave, then lock it. Controls and audit evidence to support your compliance - never a certification claim.</p></div>
             <div className="wm-sec-card" data-reveal><div className="wm-cardbox">watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b> <span className="cb-arrow">&middot;</span> <b>audit.log</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ScanEye size={16} /></span><h3>Read-only and audited</h3></div><p>It watches and guides, never clicks or types, and hides on screen-share. A per-session log records exactly what was sent.</p></div>
           </div>
+          <div className="wm-sec-paper" data-reveal>
+            <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
+            <span>What leaves your device, how documents are handled, and how a third party can verify every claim.</span>
+          </div>
         </div>
       </section>
 
@@ -1123,6 +1127,8 @@ const CSS = `
 .wm-eyebrow svg{color:var(--em)}
 /* SECURITY / ENTERPRISE BAND */
 .wm-sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px}
+.wm-sec-paper{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:28px;text-align:center}
+.wm-sec-paper span{color:var(--mut);font-size:14px;max-width:54ch}
 .wm-sec-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
 .wm-sec-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
 .wm-sec-card h3{font-family:"Bricolage Grotesque";font-size:18px;margin:0 0 8px}

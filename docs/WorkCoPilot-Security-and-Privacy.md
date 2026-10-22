@@ -2,7 +2,7 @@
 
 *How we help you do your work without taking your data*
 
-AdmireVeda  |  Rev 1.1  |  October 2026
+AdmireVeda  |  Rev 1.2  |  October 2026
 
 ## 1. In one page
 
@@ -77,9 +77,13 @@ In this mode, each sensitive value is replaced, on your device, with a stable to
 
 > **What this means for you.** A clinician can ask about "patient MRN 48213" and read an answer that names that exact MRN, while our server and the AI only ever saw [[DATA_1]]. The same value always maps to the same token within a session, so the guidance stays coherent, and the map is discarded when the session ends.
 
-### 4.4 Screenshots
+### 4.4 Screenshots, and on-device screen redaction
 
-When you ask WorkCoPilot to read the screen, it sends an image of the area you are sharing to the AI so it can see what you see and give an accurate step. These live frames are used to read the screen in the moment; they are not collected into a gallery. If you choose to capture a step as evidence (for a report you are building), that screenshot is stored with your session so the report can include it, and you can delete it.
+When you ask WorkCoPilot to read the screen, it sends an image of the area you are sharing to the AI so it can see what you see and give an accurate step. These live frames are used to read the screen in the moment; they are not collected into a gallery. If you choose to capture a step as evidence for a report, that screenshot is stored with your session for the report, and you can delete it.
+
+The text scrubbing in sections 4.1 to 4.3 cleans the text you type. A screenshot is a picture, so a sensitive value shown on the page would otherwise sit inside that picture. WorkCoPilot therefore redacts the SCREEN on your device too: when data protection is on, each outbound frame is read on your device by on-device OCR, the recognized text is run through the same DLP engine used for typed text, and any line that contains a sensitive value is blacked out in the image BEFORE the frame is sent.
+
+> **Best-effort, with you in control.** On-device screen redaction is a strong backstop, not a mathematical guarantee: OCR can miss text on a low-resolution or stylized screen, and if the OCR engine cannot run, the frame is downscaled so fine text is not left legible. So it is paired with your own control: you choose when to share the screen and, on the installed app, which display is shared, and the installed app is hidden from screen shares by default. For the most sensitive data, close or cover it before you ask WorkCoPilot to read the screen. Screen redaction follows the same switch as text: it is on whenever data protection is on, and off otherwise.
 
 On the installed desktop app, the window is hidden from screen shares and recordings by default, so WorkCoPilot does not show up when you are presenting or on a call. You can toggle this when you want to deliberately show it.
 
@@ -192,22 +196,46 @@ For every session, an append-only log records each transmission to the AI model.
 
 ### 12.3 How a third party can validate the claims
 
-An independent reviewer does not have to trust the description in this paper. The protections can be verified directly with a simple, repeatable test, and by reviewing the engine.
+An independent reviewer should not have to trust either our description or our own server log, because we are the ones who write that log. The strongest check runs on the reviewer's OWN machine, where we have no control: watch the data as it leaves.
 
-1. Run a controlled session with known markers. With data protection on, enter a goal that contains clearly identifiable test values: a test email, a fake card number that passes the checksum, a test IP address, and a labeled secret.
-2. Download the session audit log. Confirm that every one of those values appears in the sent text as a placeholder or a token, and never as the original value. That is direct proof the sensitive data was removed on the device before anything was transmitted.
+1. Watch your own outbound traffic. With your browser developer tools Network tab open, or a local proxy you control, run a session with data protection on, using a goal that contains known test values: a test email, a fake card number that passes the checksum, a test IP address, and a labeled secret. Inspect the actual request bodies leaving your machine and confirm none of those raw values are present; you see placeholders or tokens instead. This is proof on your own hardware, independent of our server.
+2. Compare against our server log. Download the session audit log and confirm it matches what you saw leave the machine. The log is then a second, corroborating copy, not the only evidence.
 3. Confirm the model. Check that the model named in the log is the one configured, with no silent substitution.
 4. Review the engine. The redaction and tokenization engine is a single, self-contained module used on both the device and the server, with a catalog of test cases covering each category it detects. A reviewer can read the rules and run the catalog.
 5. For tokenize mode, confirm the map stays local. The token-to-value map is held in memory on the device, is never part of any request, and is never written to any log; the audit shows only the tokens.
 
-> **What this gives an auditor.** A reproducible, evidence-based check: inject known data, run a session, and read the audit log to see exactly what left the device. Combined with a review of the single-source protection engine and its test catalog, a third party can confirm the claims in this paper rather than accept them.
+> **Why the server log alone is not enough, and why that is fine.** A log we write proves the AI did not receive your raw values, but on its own it cannot prove they never left your machine, because we wrote it, and it would look the same whether the values were removed on your device or on our server after they had already left. That is exactly why the primary check is watching the traffic on your own device: if a raw value is not in the bytes that leave your machine, it did not leave. The server log then corroborates what you already saw for yourself.
 
 ### 12.4 Scope and honest limits of the audit
 
 - The audit records what was transmitted to the AI (the protected text and the model). It is a record of outbound data, not a full system access log.
 - When data protection is off, the audit shows redaction as off and records the text as sent. That is itself useful, because it makes the setting and its effect visible.
-- A screen image sent for a call is noted in the audit as "screen image sent"; the image itself is not embedded in the text log.
-- The audit is per session. Retention and bulk export for a formal engagement can be arranged with AdmireVeda.
+- A screen image sent for a call is noted in the audit as "screen image sent"; the image itself is not embedded in the text log, and the log cannot tell you what the image contained (see section 4.4).
+
+### 12.5 The audit log is itself a record, handled accordingly
+
+The audit log is a new place where the text you sent is stored, so it deserves the same honesty as everything else.
+
+- What it holds depends on your setting. With data protection on, the log holds only the protected text (placeholders and tokens). With protection OFF, which is the default for an individual account, it holds the actual text you sent, secrets and all. This is one more reason to turn protection on, or for a company to make it mandatory for everyone.
+- Who can read it. The person who ran the session; a company superadmin for sessions in their own company; and AdmireVeda personnel with server access. A company superadmin being able to read an employee's sessions is a deliberate administrative control, not a side effect.
+- Retention. The log is kept with the session and is deleted when the session is deleted. A short record of the session (its goal and outcome) is kept in the company activity log for accountability even after the session is gone.
+- Protection at rest. The log files are stored with restricted, owner-only file permissions. They are not separately encrypted by the application; confidentiality at rest relies on the server's disk encryption and access controls. For a stricter requirement, use data protection so the log never contains a raw secret in the first place.
+
+## 13. Where your data goes: the AI provider
+
+WorkCoPilot does not run its own AI model. It sends the protected text, and, when you ask it to read the screen, the screen image, to a third-party AI provider over an encrypted connection, and relays the answer back. It is only honest to say who that is and what it means.
+
+- Which providers. By default the service uses a major provider's AI API (for example OpenAI, Google, or Groq, depending on configuration). The data is subject to that provider's API terms. Reputable providers' API tiers generally do not use API data to train their models, but you should confirm the current terms of the provider in use for your account.
+- Use your own keys. A company can run WorkCoPilot on its own AI provider keys. The data then goes to the company's own provider account under the company's own agreement with that provider, and WorkCoPilot is not in the middle of that relationship.
+- What the provider receives. With data protection on, the provider receives only the protected text. The provider does receive the screen image whenever you ask it to read the screen (see section 4.4), so treat a shared screen as data that leaves to the provider.
+
+## 14. Deployment model: this is a cloud service
+
+It is easy to confuse "your data stays on your device" with "the whole product runs on your premises." They are different claims, and only the first is made in this paper.
+
+- WorkCoPilot is a managed cloud service today. The web app and the guidance engine run on AdmireVeda-operated servers, and the installed desktop app loads its interface from that cloud service. In its standard form it is not an on-premises or air-gapped product.
+- The privacy model is designed for that reality. The on-device data protection, the on-device document reading on the installed app, and the tokenize-and-rehydrate flow are what keep your sensitive data on your machine even though the service itself is cloud-hosted.
+- On-premises or self-hosted deployment is not the standard product. If your requirement is to run the entire system inside your own environment, that is a separate arrangement to discuss with AdmireVeda, not something to assume from this paper.
 
 ---
 

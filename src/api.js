@@ -98,7 +98,8 @@ export const api = {
   workTeamAi: () => req('GET', '/api/work/team/ai'),
   workTeamSetAiKeys: (body) => req('POST', '/api/work/team/ai-keys', body || {}),
   workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
-  // body: { goal?, frame? } (frame = downscaled data URL, scrubbed of PII in the component)
+  // body: { goal?, frame? } (frame = downscaled data URL; when DLP is on it is
+  // redacted on-device by frame_scrub before it is passed in by the component)
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
   // Scope wizard: get the goal-specific requirement questions before planning.
   workScope: (goal) => req('POST', '/api/work/scope', { goal: clean(goal) }),

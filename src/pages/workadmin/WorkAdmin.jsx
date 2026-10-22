@@ -22,6 +22,7 @@ import AiConfig from './sections/AiConfig.jsx'
 import Billing from './sections/Billing.jsx'
 import Sessions from './sections/Sessions.jsx'
 import Leads from './sections/Leads.jsx'
+import Incidents from './sections/Incidents.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
@@ -34,6 +35,7 @@ const SECTIONS = [
   { id: 'sessions', label: 'Sessions', icon: ListChecks, title: 'Sessions', sub: 'Recent guided sessions across users.' },
   { id: 'leads', label: 'Leads', icon: UserPlus, title: 'Leads', sub: 'Everyone who ran a live validation on the demo or sign-in page - newest first.' },
   { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
+  { id: 'incidents', label: 'Incidents', icon: ShieldAlert, title: 'System incidents', sub: 'Real causes behind the "system is busy" message users see - AI quota, keys, 5xx, timeouts. Users never see these.' },
 ]
 
 export default function WorkAdmin() {
@@ -75,6 +77,7 @@ export default function WorkAdmin() {
       case 'sessions': return <Sessions />
       case 'leads': return <Leads />
       case 'tickets': return <SupportTickets mode="admin" />
+      case 'incidents': return <Incidents />
       case 'overview':
       default: return <Overview />
     }
