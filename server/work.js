@@ -18,6 +18,22 @@
 // stronger model is used only for planning and the on-demand "what is this".
 // ===========================================================================
 import { scrubAiLanguage } from './ai_language.js'
+import { methodAnchorFor } from './method_anchors.js'
+
+// Pull in the canonical methodology for the discipline the goal implies (OWASP
+// WSTG for pentest, risk-based design for QA, NIST SSDF for DevSecOps, and so
+// on) so the plan's depth is GROUNDED, not left to the model's memory. One
+// anchor is injected; the adaptive flow still blends across disciplines. This
+// is the same ground-truth pattern the Refigoldmine product uses with OWASP.
+function methodAnchorBlock(goal, appContext = '') {
+  const anchor = methodAnchorFor(`${goal || ''} ${appContext || ''}`)
+  if (!anchor) return ''
+  return '\n\n---\nGROUND YOUR METHOD IN THE PROVEN DISCIPLINE\n' + anchor +
+    '\nTreat this as the authoritative methodology for this kind of work: the ' +
+    'steps and checks must reflect its phases and rigor, not a generic recipe. ' +
+    'Adapt it to the user\'s actual tool and screen and skip phases that plainly ' +
+    'do not apply. Do not recite it back; apply it.'
+}
 
 // Pull a JSON object/array out of a model reply, tolerating ```json fences and
 // leading prose. Returns null when nothing parseable is found.
@@ -339,7 +355,7 @@ export function workPlanUser({ goal, appContext, research = '' }) {
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
 export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', strong = null }) {
-  const system = workPlanSystem({ base, voice, mode })
+  const system = workPlanSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
   const user = workPlanUser({ goal, appContext, research })
   let raw, escalated = false
   if (frame && visionModel) {
@@ -413,7 +429,7 @@ export function workHowToUser({ goal, action, appContext, research = '' }) {
     'Produce the sub-step checklist JSON for this one action now.')
 }
 export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null }) {
-  const system = workHowToSystem({ base, voice, mode })
+  const system = workHowToSystem({ base, voice, mode }) + methodAnchorBlock(`${goal} ${action}`, appContext)
   const user = workHowToUser({ goal, action, appContext, research })
   let raw, escalated = false
   if (frame && visionModel) {
@@ -671,7 +687,7 @@ export function workAskUser({ goal, question, steps = [], currentStep = 0, event
     'Answer now, grounded in what the screenshot shows, tied to the goal and the plan.')
 }
 export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null }) {
-  const system = workAskSystem({ base, voice, mode })
+  const system = workAskSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
   const user = workAskUser({ goal, question, steps, currentStep, events, appContext })
   const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
   const isWeak = (r) => String(r || '').trim().length < 8
@@ -704,7 +720,8 @@ export function workResearchUser({ goal, question, research, steps = [], current
     'Answer now.')
 }
 export async function workResearch(ai, cfg, { base, voice = '', goal, question = '', research = '', steps = [], currentStep = 0 }) {
-  const raw = await ai.generate(cfg, workResearchSystem({ base, voice }), workResearchUser({ goal, question, research, steps, currentStep }))
+  const system = workResearchSystem({ base, voice }) + methodAnchorBlock(goal, question)
+  const raw = await ai.generate(cfg, system, workResearchUser({ goal, question, research, steps, currentStep }))
   return scrubAiLanguage(String(raw || '').trim())
 }
 
