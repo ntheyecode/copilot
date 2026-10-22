@@ -115,6 +115,8 @@ function sessionRow(s, nameById) {
   }
 }
 
+import { buildCompanyInvoice } from './company_invoice.js'
+
 export function registerWorkAdminRoutes(app, deps = {}) {
   const { store, requireAuth, requireAdmin, requireSuperAdmin, wrap } = deps
   if (!app || !store || !requireAuth || !requireAdmin || !wrap) {
@@ -275,8 +277,15 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json({ companies: store.listCompanies() })
   }))
   app.post('/api/work/admin/companies', requireAuth, superGate, w((req, res) => {
-    const { name, plan, seats, adminSeats, licenseMode, ssoProvisioning, scrub } = req.body || {}
-    res.json(store.createCompany({ name, plan, seats, adminSeats, licenseMode, ssoProvisioning, scrub }))
+    const b = req.body || {}
+    const c = store.createCompany({
+      name: b.name, plan: b.plan, seats: b.seats, seatsByTier: b.seatsByTier,
+      adminSeats: b.adminSeats, licenseMode: b.licenseMode, ssoProvisioning: b.ssoProvisioning,
+      scrub: b.scrub, profile: b.profile, pricing: b.pricing,
+    })
+    // AI source is set after creation (the store has a dedicated setter + null default).
+    if (b.aiSource) store.setCompanyAiSource(c.id, b.aiSource)
+    res.json(store.getCompany(c.id))
   }))
   app.get('/api/work/admin/companies/:id', requireAuth, superGate, w((req, res) => {
     const c = store.getCompany(req.params.id)
@@ -318,6 +327,29 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   app.post('/api/work/admin/companies/:id/pool-minutes', requireAuth, superGate, w((req, res) => {
     const minutes = Number((req.body || {}).minutes) || 0
     res.json(store.grantCompanyPoolSeconds(req.params.id, Math.round(minutes * 60)))
+  }))
+  // Superadmin: set a company's per-company price overrides (merged over global).
+  app.post('/api/work/admin/companies/:id/pricing', requireAuth, superGate, w((req, res) => {
+    res.json(store.updateCompany(req.params.id, { pricing: (req.body || {}).pricing || null }))
+  }))
+  // Superadmin: a company's assembled bill (seat charges computed live + ledger).
+  app.get('/api/work/admin/companies/:id/billing', requireAuth, superGate, w((req, res) => {
+    res.json(store.companyBilling(req.params.id))
+  }))
+  // Superadmin: add / remove a billable line item (extra hours sold, adjustments).
+  app.post('/api/work/admin/companies/:id/billing/items', requireAuth, superGate, w((req, res) => {
+    res.json(store.addCompanyBillingItem(req.params.id, req.body || {}))
+  }))
+  app.delete('/api/work/admin/companies/:id/billing/items/:itemId', requireAuth, superGate, w((req, res) => {
+    res.json(store.removeCompanyBillingItem(req.params.id, req.params.itemId))
+  }))
+  // Superadmin: download the company invoice / statement as a branded PDF.
+  app.get('/api/work/admin/companies/:id/invoice.pdf', requireAuth, superGate, w((req, res) => {
+    const statement = store.companyBilling(req.params.id)
+    const safe = String(statement.name || 'company').replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase() || 'company'
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="workcopilot-invoice-${safe}.pdf"`)
+    buildCompanyInvoice(statement).pipe(res)
   }))
   // Leads: the public "Validate it live" captures (superadmin). Append-only log
   // with a timestamp + which page each came from.

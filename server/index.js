@@ -260,6 +260,13 @@ async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
   if (v) { try { v.strong = await findWorkVisionStrong(req, v) } catch { v.strong = null } return v }
   // A company on its own/corporate keys uses those; else platform, else the user's key.
   const companyRt = store.getCompanyRuntime(req.workUser.id)
+  // Honor an explicit "use our own keys" company choice: if the keys are not set,
+  // fail clearly instead of silently falling back to platform keys.
+  const aiReq = store.companyAiRequirement(req.workUser.id)
+  if (aiReq.source === 'company' && !aiReq.ready) {
+    res.status(503).json({ error: aiReq.reason, needsCompanyKey: true })
+    return null
+  }
   const platform = store.getWorkPlatformAllowed()
   const base = companyRt || (platform ? store.getActiveRuntime() : store.getWorkUserRuntime(req.workUser.id))
   if (!base || !base.apiKey) {
@@ -967,6 +974,11 @@ app.post('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((
 app.get('/api/work/team/licenses', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   res.json(store.companyLicenseSummary(req.workUser.companyId))
+}))
+// Company admin: read-only view of their own company's bill (seats + ledger).
+app.get('/api/work/team/billing', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.companyBilling(req.workUser.companyId))
 }))
 // Company admin: give one member minutes from the company's shared pool.
 app.post('/api/work/company/users/:id/minutes', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {

@@ -138,4 +138,108 @@ test('license mode and provisioning are stored and returned on the company', () 
   assert.equal(d.adminSeats, 2)
 })
 
+test('per-tier allocation is a hard cap per tier', () => {
+  const co = store.createCompany({ name: uniq('ByTier'), seatsByTier: { basic: 1, advanced: 1, premium: 0 }, licenseMode: 'flexible' })
+  assert.equal(co.seats, 2)                 // total = sum of the per-tier allocation
+  store.addCompanyMemberByEmail({ companyId: co.id, email: 'b1@bt.test', tier: 'basic' })
+  // Second basic exceeds the 1 basic license.
+  throws403or400(() => store.addCompanyMemberByEmail({ companyId: co.id, email: 'b2@bt.test', tier: 'basic' }))
+  // Premium has 0 allocated, so none can be assigned.
+  throws403or400(() => store.addCompanyMemberByEmail({ companyId: co.id, email: 'p1@bt.test', tier: 'premium' }))
+  // Advanced has room.
+  store.addCompanyMemberByEmail({ companyId: co.id, email: 'a1@bt.test', tier: 'advanced' })
+  const s = store.companyLicenseSummary(co.id)
+  assert.equal(s.tierUsage.basic.allocated, 1)
+  assert.equal(s.tierUsage.basic.used, 1)
+  assert.equal(s.tierUsage.basic.left, 0)
+  assert.equal(s.tierUsage.premium.allocated, 0)
+  assert.equal(s.tierUsage.advanced.used, 1)
+})
+
+test('changing a member tier respects the target tier cap', () => {
+  const co = store.createCompany({ name: uniq('ReTier'), seatsByTier: { basic: 1, advanced: 1, premium: 0 }, licenseMode: 'flexible' })
+  const a = store.addCompanyMemberByEmail({ companyId: co.id, email: 'a@rt.test', tier: 'basic' })
+  const b = store.addCompanyMemberByEmail({ companyId: co.id, email: 'b@rt.test', tier: 'advanced' })
+  // Move b to basic: basic is held by a (cap 1) -> refused.
+  throws403or400(() => store.updateCompanyMember(co.id, b.id, { tier: 'basic' }))
+  // Move a to premium: 0 premium licenses -> refused.
+  throws403or400(() => store.updateCompanyMember(co.id, a.id, { tier: 'premium' }))
+  // Re-saving a's own tier (basic) is fine (its own seat is excluded).
+  const same = store.updateCompanyMember(co.id, a.id, { tier: 'basic' })
+  assert.equal(same.tier, 'basic')
+})
+
+test('promoting a member to admin respects the admin seat pool', () => {
+  const co = store.createCompany({ name: uniq('Promote'), seats: 5, adminSeats: 1 })
+  store.addCompanyMemberByEmail({ companyId: co.id, email: 'admin@pr.test', companyRole: 'company_admin' })
+  const m = store.addCompanyMemberByEmail({ companyId: co.id, email: 'member@pr.test', companyRole: 'member' })
+  // Admin pool is full (1/1), so promotion is refused.
+  throws403or400(() => store.updateCompanyMember(co.id, m.id, { companyRole: 'company_admin' }))
+})
+
+test('per-company pricing overrides layer over the global prices', () => {
+  const co = store.createCompany({ name: uniq('Price'), seats: 3 })
+  store.updateCompany(co.id, { pricing: { hour: { premium: 5 }, plans: { premium: 500 } } })
+  const p = store.effectiveCompanyPricing(co.id)
+  assert.equal(p.hour.premium, 5)      // overridden
+  assert.equal(p.plans.premium, 500)   // overridden
+  assert.ok(p.plans.basic > 0)         // global basic retained
+  assert.ok(p.hour.basic > 0)
+})
+
+test('company billing: computed seat charges plus ledger items', () => {
+  const co = store.createCompany({ name: uniq('Bill'), seats: 3 })
+  store.updateCompany(co.id, { pricing: { plans: { premium: 400, basic: 100 } } })
+  store.addCompanyMemberByEmail({ companyId: co.id, email: 'p1@b.test', tier: 'premium' })
+  store.addCompanyMemberByEmail({ companyId: co.id, email: 'p2@b.test', tier: 'premium' })
+  store.addCompanyMemberByEmail({ companyId: co.id, email: 'b1@b.test', tier: 'basic' })
+  let bill = store.companyBilling(co.id)
+  // Recurring = 2 premium x 400 + 1 basic x 100 = 900.
+  assert.equal(bill.recurringTotal, 900)
+  assert.equal(bill.extrasTotal, 0)
+  assert.equal(bill.total, 900)
+  const item = store.addCompanyBillingItem(co.id, { type: 'hours', description: 'Extra 10 hours', qty: 10, unitAmount: 10 })
+  assert.equal(item.amount, 100)
+  bill = store.companyBilling(co.id)
+  assert.equal(bill.extrasTotal, 100)
+  assert.equal(bill.total, 1000)
+  store.removeCompanyBillingItem(co.id, item.id)
+  bill = store.companyBilling(co.id)
+  assert.equal(bill.extrasTotal, 0)
+  assert.equal(bill.total, 900)
+})
+
+test('company profile fields are captured and returned', () => {
+  const co = store.createCompany({ name: uniq('Profile'), seats: 1, profile: { contactPerson: 'Pat Lee', email: 'pat@x.test', phone: '+1 555 0100', address: '1 Main St', city: 'Austin', state: 'TX', country: 'USA', postalCode: '78701' } })
+  assert.equal(co.profile.contactPerson, 'Pat Lee')
+  assert.equal(co.profile.city, 'Austin')
+  assert.equal(co.profile.country, 'USA')
+  const u = store.updateCompany(co.id, { profile: { phone: '+1 555 0200' } })
+  assert.equal(u.profile.phone, '+1 555 0200')
+  assert.equal(u.profile.city, 'Austin')   // merge, not replace
+})
+
+test('company AI-key requirement: own keys must be set, no silent fallback', () => {
+  const co = store.createCompany({ name: uniq('AiReq'), seats: 1 })
+  const u = store.addCompanyMemberByEmail({ companyId: co.id, email: 'u@aireq.test' })
+  // Not selected yet.
+  assert.equal(store.getCompany(co.id).aiReady, false)
+  // Choose own keys, none set -> not ready, requirement not satisfied.
+  store.setCompanyAiSource(co.id, 'company')
+  let req = store.companyAiRequirement(u.id)
+  assert.equal(req.source, 'company')
+  assert.equal(req.ready, false)
+  assert.ok(req.reason && /own AI keys/i.test(req.reason))
+  assert.equal(store.getCompany(co.id).aiReady, false)
+  // Set the company's own keys -> ready.
+  store.setCompanyAiKeys(co.id, { providerId: 'gemini', apiKey: 'test-key-123', chatModel: 'gemini-2.0', visionModel: 'gemini-2.0' }, 'company')
+  req = store.companyAiRequirement(u.id)
+  assert.equal(req.ready, true)
+  assert.equal(store.getCompany(co.id).aiReady, true)
+  // Platform source is ready without company keys.
+  const co2 = store.createCompany({ name: uniq('AiPlat'), seats: 1 })
+  store.setCompanyAiSource(co2.id, 'platform')
+  assert.equal(store.getCompany(co2.id).aiReady, true)
+})
+
 test.after(() => { try { fs.rmSync(DIR, { recursive: true, force: true }) } catch { /* best effort */ } })
