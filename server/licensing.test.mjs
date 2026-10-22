@@ -456,20 +456,19 @@ test('ledger items reject NaN / Infinity and need a description; totals stay fin
   assert.equal(JSON.stringify(bill).includes('null'), false)
 })
 
-test('admin seats are billed at their plan tier (no free premium via self-upgrade)', () => {
+test('admin seats are NOT billed (operator decision); only user licenses appear', () => {
   const co = store.createCompany({ name: uniq('AdmBill'), seats: 5, adminSeats: 2, licenseMode: 'flexible' })
   store.updateCompany(co.id, { pricing: { plans: { basic: 100, premium: 400 } } })
   const adm = store.addCompanyMemberByEmail({ companyId: co.id, email: 'adm@admbill.test', companyRole: 'company_admin', tier: 'basic' })
   store.addCompanyMemberByEmail({ companyId: co.id, email: 'm@admbill.test', tier: 'basic' })
   let bill = store.companyBilling(co.id)
-  assert.equal(bill.recurringTotal, 200)                       // 1 basic member + 1 basic admin
-  // The admin raises their own plan: the statement reflects it.
+  assert.equal(bill.recurringTotal, 100)                       // 1 basic member only; the admin is free
+  assert.ok(!bill.seatLines.some((l) => l.type === 'admin_seats'))
+  // Even if the admin raises their own plan, nothing is charged for the admin.
   store.updateCompanyMember(co.id, adm.id, { tier: 'premium' })
   bill = store.companyBilling(co.id)
-  const admLine = bill.seatLines.find((l) => l.type === 'admin_seats')
-  assert.equal(admLine.tier, 'premium')
-  assert.equal(admLine.amount, 400)
-  assert.equal(bill.recurringTotal, 500)
+  assert.equal(bill.recurringTotal, 100)
+  assert.ok(!bill.seatLines.some((l) => l.type === 'admin_seats'))
 })
 
 test('clearing company AI keys restores the recorded prior source and never silently switches', () => {

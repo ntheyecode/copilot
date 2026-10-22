@@ -203,7 +203,7 @@ export default function WorkShell({ authed = false }) {
   // Click-behind escape hatch: while click-through is on the shell forwards
   // mouse moves, so when the cursor is over this bar we ask the shell to accept
   // clicks (and release again on leave). The bar's own Click-behind button is
-  // therefore always usable, with or without the Ctrl+Alt+W hotkey. Older
+  // therefore always usable, with or without the Ctrl+Shift+Alt+W hotkey. Older
   // shells without setHoverInteractive are unaffected (no-op). The drag region
   // of the bar is a non-client area on Windows and may not emit DOM mouse
   // events, so mousemove (de-duplicated) backs up mouseenter: the moment the
@@ -225,24 +225,24 @@ export default function WorkShell({ authed = false }) {
       {authed && (
         <div className="wshell-tools" role="toolbar" aria-label="Overlay controls">
           <button type="button" className={`wshell-tool w-top${st.onTop ? ' on' : ''}`} onClick={toggleTop} aria-pressed={st.onTop}
-            title="Keep WorkCoPilot above other windows (Ctrl+Alt+T)">
+            title="Keep WorkCoPilot above other windows (Ctrl+Shift+Alt+T)">
             <Pin size={14} /><span className="wshell-tlabel">On top</span>
           </button>
           <button type="button" className={`wshell-tool warn w-share${!st.contentProtected ? ' on' : ''}`} onClick={toggleShare} aria-pressed={!st.contentProtected}
-            title={st.contentProtected ? 'Hidden from screen shares - click to show it on a share (Ctrl+Alt+S)' : 'Visible on screen shares - click to hide it again (Ctrl+Alt+S)'}>
+            title={st.contentProtected ? 'Hidden from screen shares - click to show it on a share (Ctrl+Shift+Alt+S)' : 'Visible on screen shares - click to hide it again (Ctrl+Shift+Alt+S)'}>
             {st.contentProtected ? <EyeOff size={14} /> : <Eye size={14} />}
             <span className="wshell-tlabel">{st.contentProtected ? 'Hidden' : 'On share'}</span>
           </button>
           <button type="button" className={`wshell-tool w-see${seeThrough ? ' on' : ''}`} onClick={cycleSee} aria-pressed={seeThrough}
-            title="See-through: let the work behind show through (Ctrl+Alt+O)">
+            title="See-through: let the work behind show through (Ctrl+Shift+Alt+O)">
             <Contrast size={14} /><span className="wshell-tlabel">{seeThrough ? `${Math.round(st.opacity * 100)}%` : 'See-through'}</span>
           </button>
           <button type="button" className={`wshell-tool w-behind${st.clickThrough ? ' on' : ''}`} onClick={toggleBehind} disabled={!guiding} aria-pressed={st.clickThrough}
-            title={guiding ? (st.clickThrough ? 'Click-behind is on: your clicks pass to the app underneath. This bar still takes clicks. Click here or press Ctrl+Alt+W to turn it off.' : 'Click-behind: let your clicks pass to the app underneath. This bar stays clickable so you can turn it off again (Ctrl+Alt+W).') : 'Click-behind is available while guiding'}>
+            title={guiding ? (st.clickThrough ? 'Click-behind is on: your clicks pass to the app underneath. This bar still takes clicks. Click here or press Ctrl+Shift+Alt+W to turn it off.' : 'Click-behind: let your clicks pass to the app underneath. This bar stays clickable so you can turn it off again (Ctrl+Shift+Alt+W).') : 'Click-behind is available while guiding'}>
             <MousePointer2 size={14} /><span className="wshell-tlabel">Click-behind</span>
           </button>
           <button type="button" className="wshell-tool w-buddy" onClick={toBuddy}
-            title="Shrink to the buddy card (Ctrl+Alt+B)">
+            title="Shrink to the buddy card (Ctrl+Shift+Alt+B)">
             <PictureInPicture2 size={14} /><span className="wshell-tlabel">Buddy</span>
           </button>
           <span className="wshell-div" aria-hidden="true" />

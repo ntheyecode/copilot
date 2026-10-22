@@ -1445,8 +1445,6 @@ export function companyBilling(companyId) {
   const admins = everyone.filter((u) => u.companyRole === 'company_admin')
   const counts = { basic: 0, advanced: 0, premium: 0 }
   for (const u of members) counts[WORK_TIERS.includes(u.tier) ? u.tier : 'basic']++
-  const adminCounts = { basic: 0, advanced: 0, premium: 0 }
-  for (const u of admins) adminCounts[WORK_TIERS.includes(u.tier) ? u.tier : 'basic']++
   const cap = (t) => t[0].toUpperCase() + t.slice(1)
   const seatLines = []
   for (const t of WORK_TIERS) {
@@ -1455,16 +1453,9 @@ export function companyBilling(companyId) {
       seatLines.push({ type: 'seats', tier: t, description: `${cap(t)} plan seats`, qty: counts[t], unitAmount: unit, amount: +(counts[t] * unit).toFixed(2) })
     }
   }
-  // Admin seats are licenses too (an admin can use the service with a daily
-  // allowance at their plan tier), so they are billed at their tier like members.
-  // Before this they were free, and a company admin could set themselves to
-  // premium (6h/day) with no charge appearing anywhere on the statement.
-  for (const t of WORK_TIERS) {
-    if (adminCounts[t] > 0) {
-      const unit = Number(pricing.plans[t]) || 0
-      seatLines.push({ type: 'admin_seats', tier: t, description: `${cap(t)} plan admin seats`, qty: adminCounts[t], unitAmount: unit, amount: +(adminCounts[t] * unit).toFixed(2) })
-    }
-  }
+  // Admin seats are NOT billed (operator decision 2026-10-22): company admins get
+  // their own seat pool for free; only user licenses appear on the statement.
+  void admins
   const ledger = ((c.billing && c.billing.items) || []).map((i) => ({ ...i }))
   const recurringTotal = seatLines.reduce((s, l) => s + l.amount, 0)
   const extrasTotal = ledger.reduce((s, l) => s + (Number(l.amount) || 0), 0)

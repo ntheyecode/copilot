@@ -6,13 +6,13 @@
 //
 //   1. MAIN console window (/work) - the full guide. ALWAYS ON TOP so the
 //      guidance floats over whatever app you are using, with an OPACITY toggle
-//      (Ctrl+Alt+O) and INTERACT-BEHIND / click-through (Ctrl+Alt+W) so your
+//      (Ctrl+Shift+Alt+O) and INTERACT-BEHIND / click-through (Ctrl+Shift+Alt+W) so your
 //      clicks pass straight through to the app you are actually working in.
 //      Answers getDisplayMedia with the chosen monitor. On a single-screen PC
 //      it uses that one screen with no prompt (unchanged). On a multi-monitor
 //      PC the user picks which monitor WorkCoPilot watches; the choice is
 //      remembered across captures and restarts and re-pickable anytime via
-//      Ctrl+Alt+M or window.workDesktop.pickMonitor(). setContentProtection(true)
+//      Ctrl+Shift+Alt+M or window.workDesktop.pickMonitor(). setContentProtection(true)
 //      keeps the overlay (and the picker) OUT of that capture (no feedback loop,
 //      private on a share).
 //
@@ -321,7 +321,7 @@ function buildPickerHtml(sources) {
   </style></head><body>
     <div class="wrap">
       <h1>Choose the monitor WorkCoPilot watches</h1>
-      <p class="sub">More than one display was detected. Click the screen you want WorkCoPilot to read. You can change it anytime with Ctrl+Alt+M.</p>
+      <p class="sub">More than one display was detected. Click the screen you want WorkCoPilot to read. You can change it anytime with Ctrl+Shift+Alt+M.</p>
       <div class="grid">${tiles}</div>
       <div class="foot">
         <span class="hint">Press Esc to use the primary screen for now.</span>
@@ -429,7 +429,7 @@ async function resolveScreenSource() {
   return await promptForMonitor(sources)
 }
 
-// Clear the remembered choice and re-prompt now (Ctrl+Alt+M or pickMonitor()).
+// Clear the remembered choice and re-prompt now (Ctrl+Shift+Alt+M or pickMonitor()).
 // On a single-screen PC there is nothing to choose, so we just remember that one
 // screen. We notify the renderer afterwards so a live capture can be restarted on
 // the new monitor: the main process cannot swap an already-running MediaStream
@@ -630,7 +630,7 @@ function createWindow() {
 
   applyOnTop()
   // Hidden from the product's own capture and from screen shares by default
-  // (privacy). The user can toggle this from the title bar or with Ctrl+Alt+S.
+  // (privacy). The user can toggle this from the title bar or with Ctrl+Shift+Alt+S.
   win.setContentProtection(contentProtected)
 
   lastTargetUrl = `${SERVER_URL}/work`
@@ -793,7 +793,7 @@ function setClickThrough(on) {
 }
 // Click-behind escape hatch. With click-through on, the window ignores every
 // click, including the title-bar button that turns click-through off, so a user
-// who did not know the Ctrl+Alt+W hotkey was stuck with an overlay they could
+// who did not know the Ctrl+Shift+Alt+W hotkey was stuck with an overlay they could
 // not operate. Because mouse moves are still forwarded (forward: true), the
 // renderer can tell us when the cursor is over the title bar; while it is, the
 // window accepts clicks again, and it goes back to click-through when the
@@ -1048,26 +1048,26 @@ if (!gotLock) {
   app.whenReady().then(() => {
     createWindow()
     if (app.isPackaged) setupAutoUpdate()
-    // Hide / show is Ctrl+Alt+H only. The bare Ctrl+H used to be grabbed
+    // Hide / show is Ctrl+Shift+Alt+H only. The bare Ctrl+H used to be grabbed
     // system-wide as well, which took Find-and-Replace (Word, Excel, VS Code),
     // History (Chrome, Edge) and Hide (Photoshop and others) away from the very
     // app the user is being guided through, for as long as WorkCoPilot ran.
-    globalShortcut.register('CommandOrControl+Alt+H', toggleHideShow)
+    globalShortcut.register('CommandOrControl+Shift+Alt+H', toggleHideShow)
     // Interact-behind: toggle click-through so clicks pass to the app you are
     // working in. Global so it works even when click-through is already on (the
     // overlay cannot receive the click to turn itself back off otherwise).
-    globalShortcut.register('CommandOrControl+Alt+W', () => setClickThrough(!clickThrough))
-    globalShortcut.register('CommandOrControl+Alt+O', cycleOpacity)
+    globalShortcut.register('CommandOrControl+Shift+Alt+W', () => setClickThrough(!clickThrough))
+    globalShortcut.register('CommandOrControl+Shift+Alt+O', cycleOpacity)
     // Toggle hidden-from-screen-share on demand (e.g. to deliberately show the
     // overlay on a share, then hide it again).
-    globalShortcut.register('CommandOrControl+Alt+S', () => setContentProtection(!contentProtected))
+    globalShortcut.register('CommandOrControl+Shift+Alt+S', () => setContentProtection(!contentProtected))
     // Toggle always-on-top on demand, independent of the current mode.
-    globalShortcut.register('CommandOrControl+Alt+T', () => { onTop = !onTop; applyOnTop(); sendState() })
+    globalShortcut.register('CommandOrControl+Shift+Alt+T', () => { onTop = !onTop; applyOnTop(); sendState() })
     // Manual buddy toggle, independent of the main window's state.
-    globalShortcut.register('CommandOrControl+Alt+B', toggleBuddy)
+    globalShortcut.register('CommandOrControl+Shift+Alt+B', toggleBuddy)
     // Switch monitors anytime: clear the remembered choice and re-prompt. On a
     // single-screen PC this is a harmless no-op (nothing to choose).
-    globalShortcut.register('CommandOrControl+Alt+M', requestMonitorPick)
+    globalShortcut.register('CommandOrControl+Shift+Alt+M', requestMonitorPick)
 
     app.on('activate', () => { if (!alive(win)) createWindow() })
   })

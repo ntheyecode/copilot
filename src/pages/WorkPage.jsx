@@ -1232,13 +1232,13 @@ function HelpDocs({ onStart }) {
               <li><b>On top</b> - keep the window above everything else.</li>
               <li><b>Hidden / On share</b> - hide the window from screen shares and recordings (on by default), or reveal it when you want to show it.</li>
               <li><b>See-through</b> - cycle the window's transparency so the work behind shows through.</li>
-              <li><b>Click-behind</b> (while guiding) - let your clicks pass straight to the app underneath. The title bar itself still takes clicks, so you can always turn it off again there (or with Ctrl+Alt+W).</li>
+              <li><b>Click-behind</b> (while guiding) - let your clicks pass straight to the app underneath. The title bar itself still takes clicks, so you can always turn it off again there (or with Ctrl+Shift+Alt+W).</li>
               <li><b>Buddy</b> - shrink to the buddy card.</li>
             </ul>
             <h3 className="sub">Keyboard shortcuts</h3>
             <ul>
-              <li><b>Ctrl+Alt+H</b> hide / show &middot; <b>Ctrl+Alt+S</b> hide-from-share &middot; <b>Ctrl+Alt+T</b> on top</li>
-              <li><b>Ctrl+Alt+O</b> see-through &middot; <b>Ctrl+Alt+W</b> click-behind &middot; <b>Ctrl+Alt+B</b> buddy &middot; <b>Ctrl+Alt+M</b> choose monitor</li>
+              <li><b>Ctrl+Shift+Alt+H</b> hide / show &middot; <b>Ctrl+Shift+Alt+S</b> hide-from-share &middot; <b>Ctrl+Shift+Alt+T</b> on top</li>
+              <li><b>Ctrl+Shift+Alt+O</b> see-through &middot; <b>Ctrl+Shift+Alt+W</b> click-behind &middot; <b>Ctrl+Shift+Alt+B</b> buddy &middot; <b>Ctrl+Shift+Alt+M</b> choose monitor</li>
             </ul>
             <h3 className="sub">Your own documents &amp; diagrams</h3>
             <p>On the goal card, use <b>Add documents</b> to ground the plan in your own material - PDFs, Word, text, and <b>diagrams or screenshots</b> (read on-device by OCR). The file stays on your machine; only the extracted, governed text is used to plan.</p>
@@ -1247,7 +1247,7 @@ function HelpDocs({ onStart }) {
           <section id="help-desktopsec"><h2>Security &amp; safety (desktop)</h2>
             <ul>
               <li><b>Read-only by design.</b> It never clicks, types, runs commands or changes anything. You stay in control of every action.</li>
-              <li><b>Hidden from screen shares.</b> The overlay is content-protected by default, so it stays out of Zoom / Teams / Meet shares and recordings. Toggle it with <b>On share</b> or Ctrl+Alt+S when you want it visible.</li>
+              <li><b>Hidden from screen shares.</b> The overlay is content-protected by default, so it stays out of Zoom / Teams / Meet shares and recordings. Toggle it with <b>On share</b> or Ctrl+Shift+Alt+S when you want it visible.</li>
               <li><b>Your documents stay on your computer.</b> Files you add are read and OCR'd locally. The raw file is never uploaded, and the text is not stored on our servers - it is used only to plan that session.</li>
               <li><b>Least data leaves.</b> To guide you, downscaled screen frames and the governed text go to the AI model (ours, or your company's own keys). When governance is on, sensitive values are stripped or tokenized <b>before</b> anything is sent, and rebuilt on your device.</li>
               <li><b>Signed &amp; updated safely.</b> The app is code-signed (COE Security) and updates are delivered over HTTPS.</li>
@@ -1256,11 +1256,11 @@ function HelpDocs({ onStart }) {
           </section>
 
           <section id="help-desktopfaq"><h2>Desktop FAQ</h2>
-            <div className="wd-faq"><b>Can people on a call see the overlay?</b><p>No, not while it is hidden (the default). It is excluded from screen capture and recording. Press Ctrl+Alt+S or the On share button if you deliberately want to show it.</p></div>
+            <div className="wd-faq"><b>Can people on a call see the overlay?</b><p>No, not while it is hidden (the default). It is excluded from screen capture and recording. Press Ctrl+Shift+Alt+S or the On share button if you deliberately want to show it.</p></div>
             <div className="wd-faq"><b>Does my diagram or document get uploaded?</b><p>No. On the desktop app the file is read on your computer, OCR included. Only the governed text is sent to the model to plan, and it is not stored on our servers.</p></div>
             <div className="wd-faq"><b>Will it do things on my machine?</b><p>Never. It is read-only. It reads the screen and tells you the next step; you perform every action yourself.</p></div>
-            <div className="wd-faq"><b>How do I keep it out of the way?</b><p>Use See-through and Click-behind while guiding, minimize to the Buddy card, or Ctrl+Alt+H to hide it entirely. It keeps working while minimized.</p></div>
-            <div className="wd-faq"><b>I turned on Click-behind and now I cannot click WorkCoPilot.</b><p>That is Click-behind doing its job: your clicks go to the app underneath. Move the mouse over the WorkCoPilot title bar, which always takes clicks, and press Click-behind there, or press Ctrl+Alt+W.</p></div>
+            <div className="wd-faq"><b>How do I keep it out of the way?</b><p>Use See-through and Click-behind while guiding, minimize to the Buddy card, or Ctrl+Shift+Alt+H to hide it entirely. It keeps working while minimized.</p></div>
+            <div className="wd-faq"><b>I turned on Click-behind and now I cannot click WorkCoPilot.</b><p>That is Click-behind doing its job: your clicks go to the app underneath. Move the mouse over the WorkCoPilot title bar, which always takes clicks, and press Click-behind there, or press Ctrl+Shift+Alt+W.</p></div>
             <div className="wd-faq"><b>It says it cannot reach WorkCoPilot.</b><p>The app needs a connection to the WorkCoPilot server. Check your internet, VPN or proxy. The window retries on its own and opens the console as soon as the server answers; Retry now and Close are always there.</p></div>
             <div className="wd-faq"><b>Does it update itself?</b><p>Yes. It checks for a signed update over HTTPS on launch and installs it on the next restart.</p></div>
           </section>
@@ -2078,7 +2078,7 @@ function Console({ sessionId, onBack }) {
   }
 
   // Desktop multi-monitor: when the watched monitor is switched (the picker or
-  // Ctrl+Alt+M in the shell), restart screen capture so the new monitor is read
+  // Ctrl+Shift+Alt+M in the shell), restart screen capture so the new monitor is read
   // right away instead of only on the next capture. The ref always holds the
   // current closure, so the one-time subscription sees the latest state.
   const restartScreenRef = useRef(() => {})
