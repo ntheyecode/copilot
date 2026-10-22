@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
@@ -56,6 +56,10 @@ export default function WorkAdmin() {
   }, [])
 
   useEffect(() => { checkAccess() }, [checkAccess])
+
+  // Sign out of the console. Uses the WorkCoPilot route (NOT /api/logout, which
+  // nginx routes to the sibling app), then lands on the sign-in page.
+  const signOut = async () => { try { await workAdminApi.logout() } catch { /* ignore */ } window.location.href = '/workcopilot' }
 
   const isSuperAdmin = !!(viewer && viewer.isSuperAdmin)
   const current = SECTIONS.find((s) => s.id === active) || SECTIONS[0]
@@ -129,6 +133,7 @@ export default function WorkAdmin() {
         <div className="wka-top-right">
           {viewer ? <span className="wka-chip">{viewer.username}</span> : null}
           <span className={`wka-chip ${isSuperAdmin ? 'ok' : ''}`}>{isSuperAdmin ? 'Superadmin' : 'Admin'}</span>
+          <button type="button" className="wka-btn sm ghost" onClick={signOut} title="Sign out"><LogOut size={14} /> Sign out</button>
         </div>
       </header>
 

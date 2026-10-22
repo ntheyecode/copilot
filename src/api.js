@@ -32,7 +32,10 @@ export const api = {
   loginVerify: (code) => req('POST', '/api/login/verify', { code }),
   loginRecovery: (key) => req('POST', '/api/login/recovery', { key }),
   resetPassword: (username, code, password) => req('POST', '/api/password/reset', { username, code, password }),
-  logout: () => req('POST', '/api/logout'),
+  // WorkCoPilot's own logout. NOT the bare /api/logout: nginx routes the generic
+  // path to the sibling Refigoldmine app, so /api/logout never clears this
+  // session (logout "did nothing" / flickered back). /api/work/logout hits :4000.
+  logout: () => req('POST', '/api/work/logout'),
   me: () => req('GET', '/api/me'),
   // --- MeetAiGene (separate product, own login) ---
   meetMe: () => req('GET', '/api/meet/me'),
