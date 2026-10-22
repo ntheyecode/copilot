@@ -7,6 +7,7 @@ import {
   Building2, BadgeCheck, Copy, Download,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
@@ -457,7 +458,7 @@ function DiffBlock({ file, oldLine, newLine }) {
 function TermBlock({ cmd }) {
   return (
     <div className="wm-demo-term">
-      <div className="wm-demo-th">TERMINAL <span>Copy</span></div>
+      <div className="wm-demo-th">TERMINAL <CopyChip text={cmd} /></div>
       <code>{cmd}</code>
     </div>
   )

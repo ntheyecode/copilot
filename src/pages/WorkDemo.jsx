@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
 
 // WorkCoPilot - scripted 60-second demo (admireveda.com/demo).
@@ -261,7 +262,7 @@ function DemoPlayer() {
 
             {s.cmd && !isFix && (
               <div className="wkd-term" key={'tm' + si}>
-                <div className="wkd-term-h">TERMINAL <span>Copy</span></div>
+                <div className="wkd-term-h">TERMINAL <CopyChip text={s.cmd} /></div>
                 <code>{s.cmd}</code>
               </div>
             )}

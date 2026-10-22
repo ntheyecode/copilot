@@ -5,6 +5,7 @@ import {
   ArrowRight, Check, ChevronLeft, ScanEye, Play,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 
 // AdmireVeda WorkCoPilot - detailed use cases (/workcopilot/use-cases).
@@ -183,7 +184,7 @@ function MiniGuide({ g, tag }) {
                   <div className="uc-mini-hl">EXACTLY HOW</div>
                   <ol>{g.how.map((h, k) => <li key={k}>{h}</li>)}</ol>
                 </div>
-                {g.cmd && <div className="uc-mini-term"><div className="uc-mini-th">TERMINAL <span>Copy</span></div><code>{g.cmd}</code></div>}
+                {g.cmd && <div className="uc-mini-term"><div className="uc-mini-th">TERMINAL <CopyChip text={g.cmd} /></div><code>{g.cmd}</code></div>}
                 <div className="uc-mini-done"><Check size={13} /> done when {g.done}</div>
               </div>
             </li>
