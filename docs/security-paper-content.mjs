@@ -9,7 +9,7 @@ export const META = {
   subtitle: 'How we help you do your work without taking your data',
   org: 'AdmireVeda',
   product: 'WorkCoPilot',
-  version: 'Rev 1.0',
+  version: 'Rev 1.1',
   date: 'October 2026',
 }
 
@@ -142,6 +142,48 @@ export const BLOCKS = [
     ['Encrypted transport, protected secrets, signed app', 'Data in transit and the software itself', 'Platform and installer'],
     ['Transmission audit and redaction summary', 'Your ability to verify what left', 'Server and device'],
   ] } },
+
+  { h1: '12. Audit and independent assurance' },
+  { p: 'A claim about what leaves your device is only as good as your ability to check it. WorkCoPilot keeps a per-session audit log of exactly what was transmitted to the AI, so an operator, an internal auditor, or an independent third party can verify the protections for themselves rather than take them on trust.' },
+
+  { h2: '12.1 What the audit captures' },
+  { p: 'For every session, an append-only log records each transmission to the AI model. Each entry contains:' },
+  { ul: [
+    'A timestamp (UTC) for the transmission.',
+    'The type of call: plan, watch (continuous screen reading), ask (a question about the screen), or a drill-down.',
+    'The AI model that handled it, so you can see exactly which model was used, with no silent substitution.',
+    'Whether data protection was on, and how many sensitive items were stripped on the device before sending.',
+    'Whether a screen image was sent for that call.',
+    'The exact text that reached the AI, which is the already-protected text, with sensitive values redacted or replaced by device-only tokens.',
+  ] },
+  { callout: { title: 'The audit proves the protection, and contains none of the secrets', body: 'Because sensitive values are stripped or tokenized on your device BEFORE transmission, the log shows the protected text that actually left. An auditor sees [EMAIL], [REDACTED], or a token where a real value was: that is the proof the control worked, and the log itself never stores the raw secret.' } },
+
+  { h2: '12.2 How an auditor triggers and reads it' },
+  { ul: [
+    'In the product, the person who ran a session can download that session\'s audit log at any time. A company superadmin can pull the audit log for any session in their company.',
+    'The log is a plain, human-readable text file. It opens with a header (the session, the goal, and how many transmissions were logged) and then one block per transmission showing the timestamp, the call type, the model, whether redaction was on, how many items were stripped, and the exact text that was sent.',
+    'During a session, the person is also shown a short live summary of what was stripped on their device before sending, for example "Stripped on your device before sending: 2 emails, 1 IP address."',
+    'The logs are stored on the server with restricted file permissions and are not exposed to other users.',
+  ] },
+
+  { h2: '12.3 How a third party can validate the claims' },
+  { p: 'An independent reviewer does not have to trust the description in this paper. The protections can be verified directly with a simple, repeatable test, and by reviewing the engine.' },
+  { ol: [
+    'Run a controlled session with known markers. With data protection on, enter a goal that contains clearly identifiable test values: a test email, a fake card number that passes the checksum, a test IP address, and a labeled secret.',
+    'Download the session audit log. Confirm that every one of those values appears in the sent text as a placeholder or a token, and never as the original value. That is direct proof the sensitive data was removed on the device before anything was transmitted.',
+    'Confirm the model. Check that the model named in the log is the one configured, with no silent substitution.',
+    'Review the engine. The redaction and tokenization engine is a single, self-contained module used on both the device and the server, with a catalog of test cases covering each category it detects. A reviewer can read the rules and run the catalog.',
+    'For tokenize mode, confirm the map stays local. The token-to-value map is held in memory on the device, is never part of any request, and is never written to any log; the audit shows only the tokens.',
+  ] },
+  { callout: { title: 'What this gives an auditor', body: 'A reproducible, evidence-based check: inject known data, run a session, and read the audit log to see exactly what left the device. Combined with a review of the single-source protection engine and its test catalog, a third party can confirm the claims in this paper rather than accept them.' } },
+
+  { h2: '12.4 Scope and honest limits of the audit' },
+  { ul: [
+    'The audit records what was transmitted to the AI (the protected text and the model). It is a record of outbound data, not a full system access log.',
+    'When data protection is off, the audit shows redaction as off and records the text as sent. That is itself useful, because it makes the setting and its effect visible.',
+    'A screen image sent for a call is noted in the audit as "screen image sent"; the image itself is not embedded in the text log.',
+    'The audit is per session. Retention and bulk export for a formal engagement can be arranged with AdmireVeda.',
+  ] },
 
   { hr: true },
   { p: 'This document describes the security and privacy design of WorkCoPilot as built. Controls that are configurable (data protection, governance policy, AI key choice) are noted as such. For specific contractual or compliance commitments, contact AdmireVeda.' },
