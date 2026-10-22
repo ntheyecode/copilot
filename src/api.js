@@ -149,6 +149,15 @@ export const api = {
   // company admin: manage own-company users
   workCompanyUsers: () => req('GET', '/api/work/company/users'),
   workCompanyCreateUser: (body) => req('POST', '/api/work/company/users', body || {}),
+  workCompanyUpdateUser: (id, patch) => req('PATCH', `/api/work/company/users/${id}`, patch || {}),
+  workCompanyRemoveUser: (id) => req('DELETE', `/api/work/company/users/${id}`),
+  // company admin: this company's AI consumption so far (estimated $, per user)
+  workTeamConsumption: () => req('GET', '/api/work/team/consumption'),
+  // company admin: own-company data-governance (DLP) policy
+  workPolicy: (companyId) => req('GET', `/api/work/policy?companyId=${encodeURIComponent(companyId || '')}`),
+  workSetPolicy: (body) => req('POST', '/api/work/policy', body || {}),
+  // change your own password (verifies the current one server-side)
+  workChangePassword: (currentPassword, newPassword) => req('POST', '/api/work/profile/password', { currentPassword, newPassword }),
   // SSO (OIDC). Login page resolves a company domain, then does a full-page
   // redirect to the start URL (the server bounces the browser to the IdP).
   workSsoResolve: (domain) => req('GET', `/api/work/sso/resolve?domain=${encodeURIComponent(domain || '')}`),

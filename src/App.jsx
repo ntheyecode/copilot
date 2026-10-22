@@ -7,6 +7,7 @@ import WorkUseCases from './pages/WorkUseCases.jsx'
 import WorkPage from './pages/WorkPage.jsx'
 import WorkBuddy from './pages/WorkBuddy.jsx'
 import WorkAdmin from './pages/workadmin/WorkAdmin.jsx'
+import WorkCompanyAdmin from './pages/workadmin/WorkCompanyAdmin.jsx'
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -26,7 +27,10 @@ function RootRedirect() {
   if (!ready) return <Splash />
   if (!user) return <WorkMarketing />
   const admin = user.role === 'admin' || user.role === 'superadmin'
-  return <Navigate to={admin ? '/work/admin' : '/work'} replace />
+  // A company admin lands on their own company console; platform admins on the
+  // full admin console; everyone else on the app itself.
+  const companyAdmin = !admin && user.companyRole === 'company_admin'
+  return <Navigate to={admin ? '/work/admin' : companyAdmin ? '/work/company' : '/work'} replace />
 }
 
 export default function App() {
@@ -45,6 +49,8 @@ export default function App() {
       <Route path="/work/buddy" element={<WorkBuddy />} />
       {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
       <Route path="/work/admin" element={<WorkAdmin />} />
+      {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
+      <Route path="/work/company" element={<WorkCompanyAdmin />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

@@ -363,6 +363,12 @@ app.post('/api/work/profile', requireWorkAuth, wrap((req, res) => {
   const { displayName, onboarded } = req.body || {}
   res.json({ user: store.setWorkProfile(req.workUser.id, { displayName, onboarded }) })
 }))
+// Change your own password. Verifies the current password server-side; the new
+// one is validated + bcrypt-hashed in the store. Available to any signed-in user.
+app.post('/api/work/profile/password', requireWorkAuth, wrap((req, res) => {
+  const { currentPassword, newPassword } = req.body || {}
+  res.json(store.setWorkUserPassword(req.workUser.id, currentPassword, newPassword))
+}))
 
 // ===========================================================================
 // AI gating
@@ -480,6 +486,13 @@ app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((r
 }))
 app.get('/api/work/team/ai', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   res.json(store.getCompany(req.workUser.companyId))
+}))
+// Company admin: this company's AI consumption this far (estimated $, per user).
+// Scoped to the admin's OWN company; the superadmin equivalent lives in
+// work-admin.js at /api/work/admin/companies/:id/consumption.
+app.get('/api/work/team/consumption', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.companyConsumption(req.workUser.companyId))
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
   res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal) })
@@ -926,6 +939,29 @@ app.post('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((
   // A company admin can only create into their OWN company. Scrub stays governed
   // by the company policy (they cannot grant a weaker policy than the company's).
   res.json(store.createManagedUser({ username, password, companyId: cid, companyRole: companyRole === 'company_admin' ? 'company_admin' : 'member', tier }))
+}))
+// Company admin: change a member's role or plan within their OWN company. The
+// store guards that the target is in this company. An admin cannot change their
+// OWN role here (prevents accidentally locking themselves out of the console);
+// they may still change their own plan.
+app.patch('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const { companyRole, tier } = req.body || {}
+  if (companyRole !== undefined && String(req.params.id) === String(req.workUser.id)) {
+    return res.status(400).json({ error: 'You cannot change your own role. Ask another company admin or support.' })
+  }
+  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier }) })
+}))
+// Company admin: remove a member from their OWN company (detach, reversible).
+// Cannot remove yourself.
+app.delete('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  if (String(req.params.id) === String(req.workUser.id)) {
+    return res.status(400).json({ error: 'You cannot remove yourself from the company.' })
+  }
+  res.json(store.removeCompanyMember(cid, req.params.id))
 }))
 
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))

@@ -272,6 +272,7 @@ export function publicWorkUser(u) {
   return {
     id: u.id, username: u.username, role: u.role || 'user', root: !!u.root,
     createdAt: u.createdAt, onboarded: !!u.onboarded, displayName: u.displayName || null,
+    tier: (WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),   // plan tier, for the team roster + settings
     scrub: workUserScrubOn(u.id),   // EFFECTIVE policy (own flag OR company default)
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
@@ -1064,6 +1065,48 @@ export function setWorkProfile(workUserId, { displayName, onboarded } = {}) {
   if (onboarded !== undefined) u.onboarded = !!onboarded
   persist()
   return publicWorkUser(u)
+}
+// Change your own password: verify the current one, then store the new bcrypt
+// hash (same cost factor as sign-up). SSO-only accounts (no usable password)
+// cannot set one here. Keeps the current session alive on purpose.
+export function setWorkUserPassword(workUserId, currentPassword, newPassword) {
+  const u = getUser(workUserId)
+  if (!u) throw httpErr(404, 'Account not found')
+  if (u.ssoEmail) throw httpErr(400, 'Your account signs in through your company identity provider, so there is no password to change here.')
+  if (!verifyPassword(u, currentPassword || '')) throw httpErr(400, 'Your current password is not correct.')
+  const next = String(newPassword || '')
+  if (next.length < 6) throw httpErr(400, 'The new password must be at least 6 characters.')
+  if (verifyPassword(u, next)) throw httpErr(400, 'The new password must be different from the current one.')
+  u.passwordHash = bcrypt.hashSync(next, 10)
+  persist()
+  return { ok: true }
+}
+// Company admin: change a member's role and/or plan, strictly inside the admin's
+// OWN company. The route guards companyId; this enforces it again (defense in
+// depth) and refuses to touch an account in another company. Returns the public
+// user shape so the console can refresh the row.
+export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier } = {}) {
+  if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
+  const u = getUser(targetUserId)
+  if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
+  if (companyRole !== undefined) u.companyRole = companyRole === 'company_admin' ? 'company_admin' : 'member'
+  if (tier !== undefined) { if (!WORK_TIERS.includes(String(tier))) throw httpErr(400, 'Bad plan.'); u.tier = String(tier) }
+  persist()
+  return publicWorkUser(u)
+}
+// Company admin: remove a member from the company. We DETACH (set companyId/role
+// to null) rather than hard-delete the account, so their own history is not
+// destroyed and the action is reversible by a superadmin; their company-covered
+// access ends immediately and the session-epoch bump signs them out everywhere.
+export function removeCompanyMember(adminCompanyId, targetUserId) {
+  if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
+  const u = getUser(targetUserId)
+  if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
+  u.companyId = null
+  u.companyRole = null
+  bumpSessionEpoch(u.id)
+  persist()
+  return { ok: true, id: u.id }
 }
 
 // ---- WorkCoPilot image generation allowance (premium, 5/day) --------------

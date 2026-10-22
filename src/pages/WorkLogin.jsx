@@ -83,10 +83,13 @@ export default function WorkLogin() {
           if (!cancelled && r && r.url) { window.location = r.url; return }
         } catch { /* billing not ready or annual not set up: fall through to the dashboard */ }
       }
-      // Admins and superadmins land straight on the console, not the user
-      // dashboard - no detour through /work.
+      // Admins and superadmins land on the full console; a company admin lands
+      // on their own company console; everyone else on the user dashboard. A
+      // pending checkout (plan) always goes through /work first.
       const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
-      if (!cancelled) nav(isAdmin && !plan ? '/work/admin' : '/work', { replace: true })
+      const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && !isAdmin)
+      const dest = plan ? '/work' : isAdmin ? '/work/admin' : isCompanyAdmin ? '/work/company' : '/work'
+      if (!cancelled) nav(dest, { replace: true })
     }
     run()
     return () => { cancelled = true }
