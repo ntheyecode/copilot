@@ -184,7 +184,7 @@ export default function UsersSection({ isSuperAdmin }) {
             <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={nu.password} onChange={(e) => setNu((f) => ({ ...f, password: e.target.value }))} placeholder="at least 6 characters" autoComplete="off" /></div>
             <div className="wka-field"><label>Company (optional)</label>
               <select className="wka-select" value={nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyId: e.target.value }))}>
-                <option value="">— None (individual user) —</option>
+                <option value="">No company (individual user)</option>
                 {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
@@ -200,7 +200,7 @@ export default function UsersSection({ isSuperAdmin }) {
               </select>
             </div>
             <div className="wka-field" style={{ justifyContent: 'flex-end' }}>
-              <label className="wka-check"><input type="checkbox" checked={nu.free} onChange={(e) => setNu((f) => ({ ...f, free: e.target.checked }))} /> Free (comped) access — no Stripe needed</label>
+              <label className="wka-check"><input type="checkbox" checked={nu.free} onChange={(e) => setNu((f) => ({ ...f, free: e.target.checked }))} /> Free (comped) access, no Stripe needed</label>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
@@ -247,7 +247,7 @@ export default function UsersSection({ isSuperAdmin }) {
                       {companyFor === u.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <select className="wka-select" defaultValue={u.companyId || ''} id={`co-${u.id}`} style={{ maxWidth: 150 }}>
-                            <option value="">— None —</option>
+                            <option value="">No company</option>
                             {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
                           <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 130 }}>

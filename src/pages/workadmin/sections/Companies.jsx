@@ -224,10 +224,10 @@ export default function Companies({ isSuperAdmin }) {
                         )}
                         {isSuperAdmin && detail.company.aiSource === 'company' && (
                           <div className="co-detail-top" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 700 }}>Corporate AI keys — we manage them per company, so usage is attributed to {c.name}.</div>
+                            <div style={{ fontSize: 12.5, fontWeight: 700 }}>Corporate AI keys. We manage them per company, so usage is attributed to {c.name}.</div>
                             {detail.company.companyAi
                               ? <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Current: <b>{detail.company.companyAi.providerId || 'provider'}</b> · key {detail.company.companyAi.keyMasked} · {detail.company.companyAi.chatModel || 'default model'} · {detail.company.companyAi.owner === 'company' ? 'set by the company admin (their own keys)' : 'corporate (set by us)'}</div>
-                              : <div style={{ fontSize: 12, color: 'var(--wka-amber)' }}>No keys yet — add the corporate keys below, or the company can add their own from their dashboard.</div>}
+                              : <div style={{ fontSize: 12, color: 'var(--wka-amber)' }}>No keys yet. Add the corporate keys below, or the company can add their own from their dashboard.</div>}
                             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                               <input className="wka-input" placeholder="provider (gemini / openai / groq…)" value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 200 }} />
                               <input className="wka-input" placeholder="API key" value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 230 }} />

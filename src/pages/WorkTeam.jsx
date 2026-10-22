@@ -33,7 +33,7 @@ export default function WorkTeam() {
   const [aiForm, setAiForm] = useState({ providerId: '', apiKey: '', chatModel: '', visionModel: '' })
   const loadAi = useCallback(() => { api.workTeamAi().then((c) => setAiCompany(c || null)).catch(() => {}) }, [])
   useEffect(() => { if (view === 'ai') loadAi() }, [view, loadAi])
-  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk('Your AI keys are saved — WorkCoPilot now runs on them.'); setAiForm({ providerId: '', apiKey: '', chatModel: '', visionModel: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not save keys.') } finally { setBusy(false) } }
+  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk('Your AI keys are saved. WorkCoPilot now runs on them.'); setAiForm({ providerId: '', apiKey: '', chatModel: '', visionModel: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not save keys.') } finally { setBusy(false) } }
   const clearOwnKeys = async () => { setBusy(true); setErr(''); try { await api.workTeamSetAiKeys({ apiKey: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not clear keys.') } finally { setBusy(false) } }
 
   const load = useCallback(() => {
@@ -108,7 +108,7 @@ export default function WorkTeam() {
           <div className="wt-head">
             <div>
               <h2><FileText size={20} /> User activity</h2>
-              <p>Session deletions across your company — who deleted it, when, why, and what it was about.</p>
+              <p>Session deletions across your company: who deleted it, when, why, and what it was about.</p>
             </div>
             <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
           </div>
@@ -138,7 +138,7 @@ export default function WorkTeam() {
           <div className="wt-head">
             <div>
               <h2><KeyRound size={20} /> AI keys</h2>
-              <p>By default WorkCoPilot runs on the keys we set for your company. You can switch to your <b>own</b> provider keys here — then your usage is billed on your account, not ours.</p>
+              <p>By default WorkCoPilot runs on the keys we set for your company. You can switch to your <b>own</b> provider keys here, and then your usage is billed on your account, not ours.</p>
             </div>
             <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
           </div>
@@ -146,7 +146,7 @@ export default function WorkTeam() {
             <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--text,#141726)', border: '1px solid var(--line,#e3e6ee)' }}>
               {aiCompany.companyAi
                 ? <span>Current: <b>{aiCompany.companyAi.providerId || 'provider'}</b> · key {aiCompany.companyAi.keyMasked} · {aiCompany.companyAi.chatModel || 'default model'} · {aiCompany.companyAi.owner === 'company' ? 'your own keys' : 'company keys set by WorkCoPilot'}</span>
-                : <span>No keys set yet — your company is on the platform AI.</span>}
+                : <span>No keys set yet. Your company is on the platform AI.</span>}
             </div>
           )}
           <div className="wt-form" style={{ maxWidth: 560 }}>

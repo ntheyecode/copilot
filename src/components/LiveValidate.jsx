@@ -244,7 +244,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
                             <div className="wm-cov-live">
                               <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
-                              <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on. This is the start of the plan — the real session runs the whole thing.</div>
+                              <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on. This is just the start of the plan. The real session runs the whole thing.</div>
                             </div>
                             {res.sees && <div className="wm-cov-sees"><ScanEye size={13} /> <b>I can see</b> {res.sees}</div>}
                             <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A {total}-step plan{remaining > 0 ? <span className="wm-cov-flow-sub"> · first {shown} shown in full</span> : null}</div>

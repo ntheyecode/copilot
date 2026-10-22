@@ -234,13 +234,13 @@ export const COMPLIANCE_PRESETS = {
 
 export const COMPLIANCE_LABELS = {
   hipaa: "US health data (PHI) protection under HIPAA Safe Harbor de-identification",
-  gdpr: "EU General Data Protection Regulation — personal data of EU residents",
-  pci: "PCI-DSS — payment cardholder data and sensitive authentication data",
-  soc2: "SOC 2 Trust Services Criteria — security & confidentiality controls",
-  iso27001: "ISO/IEC 27001 — information security management system controls",
-  ccpa: "California CCPA/CPRA — consumer personal & sensitive personal information",
-  eu: "European Union regime — GDPR personal-data handling defaults",
-  us_ca: "US California regime — CCPA/CPRA consumer-privacy defaults",
-  india_dpdp: "India Digital Personal Data Protection Act 2023 — all digital personal data",
-  uk: "United Kingdom regime — UK GDPR & Data Protection Act 2018",
+  gdpr: "EU General Data Protection Regulation: personal data of EU residents",
+  pci: "PCI-DSS: payment cardholder data and sensitive authentication data",
+  soc2: "SOC 2 Trust Services Criteria: security & confidentiality controls",
+  iso27001: "ISO/IEC 27001: information security management system controls",
+  ccpa: "California CCPA/CPRA: consumer personal & sensitive personal information",
+  eu: "European Union regime: GDPR personal-data handling defaults",
+  us_ca: "US California regime: CCPA/CPRA consumer-privacy defaults",
+  india_dpdp: "India Digital Personal Data Protection Act 2023: all digital personal data",
+  uk: "United Kingdom regime: UK GDPR & Data Protection Act 2018",
 };

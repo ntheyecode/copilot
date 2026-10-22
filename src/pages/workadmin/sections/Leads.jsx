@@ -112,7 +112,7 @@ export default function Leads() {
                   <td>{sourceBadge(l.source)}</td>
                   <td style={{ maxWidth: 320 }}>
                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.scenario || ''}>
-                      {l.scenario || <span style={{ color: 'var(--wka-faint)' }}>—</span>}
+                      {l.scenario || <span style={{ color: 'var(--wka-faint)' }}>None yet</span>}
                     </div>
                   </td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(l.createdAt)}</td>

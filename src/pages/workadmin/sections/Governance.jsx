@@ -145,8 +145,8 @@ export default function Governance({ isSuperAdmin }) {
             <div className="wka-field" style={{ marginBottom: 16, maxWidth: 560 }}>
               <label>How sensitive data is handled</label>
               <select className="wka-select" value={p.mode || 'scrub'} disabled={!isSuperAdmin} onChange={(e) => patchPolicy({ mode: e.target.value })}>
-                <option value="scrub">Scrub — remove before sending (safest; answers may have gaps)</option>
-                <option value="tokenize">Tokenize — keep on device and rebuild the full answer here (premium)</option>
+                <option value="scrub">Scrub: remove before sending (safest; answers may have gaps)</option>
+                <option value="tokenize">Tokenize: keep on device and rebuild the full answer here (premium)</option>
               </select>
             </div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>

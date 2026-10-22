@@ -1062,7 +1062,7 @@ function Home({ user, onOpen, onSignOut }) {
             <div className="wd-modal-sess">{(delTarget.title && !/^Session \d/.test(delTarget.title)) ? delTarget.title : (delTarget.goal || 'Untitled session')}</div>
             <label htmlFor="wd-delreason">Why are you deleting it? <span className="req">required</span></label>
             <textarea id="wd-delreason" rows={3} value={delReason} onChange={(e) => setDelReason(e.target.value)} placeholder="e.g. duplicate, created by mistake, task no longer needed" autoFocus />
-            <div className="wd-modal-note">This is recorded in your company's user activity log — who deleted it, when, the reason, and what the session was about.</div>
+            <div className="wd-modal-note">This is recorded in your company's user activity log: who deleted it, when, the reason, and what the session was about.</div>
             <div className="wd-modal-btns">
               <button className="btn btn-ghost" onClick={() => setDelTarget(null)} disabled={delBusy}>Cancel</button>
               <button className="btn btn-danger" onClick={confirmDelete} disabled={delBusy || !delReason.trim()}>{delBusy ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />} Delete session</button>
@@ -1665,7 +1665,7 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
         {!d ? (
           <div className="wc-dl-body">
             <p className="wc-dl-lead">Put each page you want reviewed on screen and tap <b>Snap</b>. Add as many as you need, then <b>Finish</b>. I will find the issues and build you two prompts to generate the corrected design in your own tools.</p>
-            <label className="wc-dl-auto"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} /> Auto-capture — snap each page as I settle on it</label>
+            <label className="wc-dl-auto"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} /> Auto-capture: snap each page as I settle on it</label>
             {autoOn && <div className="wc-dl-watch"><span className="dot" /> Watching the shared screen. Open each page and hold still a moment; I capture it, then you move to the next.</div>}
             <div className="wc-dl-thumbs">
               {frames.map((f, i) => <div key={i} className="wc-dl-thumb"><img src={f} alt={'page ' + (i + 1)} /><span>{i + 1}</span><button onClick={() => setFrames(frames.filter((_, j) => j !== i))} aria-label="Remove">&times;</button></div>)}
@@ -1683,8 +1683,8 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
             {d.summary && <p className="wc-dl-summary">{d.summary}</p>}
             {d.architecture && d.architecture.length > 0 && <div className="wc-dl-sec"><h4>Architecture issues</h4>{d.architecture.map((a, i) => <Issue key={i} a={a} />)}</div>}
             {d.security && d.security.length > 0 && <div className="wc-dl-sec"><h4>Security issues</h4>{d.security.map((a, i) => <Issue key={i} a={a} />)}</div>}
-            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 1 — current design, problems marked</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p1', d.promptIssues)}>{copied === 'p1' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptIssues}</pre></div>
-            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2 — recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
+            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 1: current design, problems marked</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p1', d.promptIssues)}>{copied === 'p1' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptIssues}</pre></div>
+            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2: recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
             <div className="wc-dl-actions">
               <button className="btn btn-outline" onClick={() => setResult(null)}>Capture more</button>
               <button className="btn btn-outline" onClick={download}><Download size={15} /> Markdown</button>
@@ -2013,6 +2013,11 @@ function Console({ sessionId, onBack }) {
   // Guiding watches by default - no "Watch me" button. Start watching once when a
   // planned, unpaused, active session is open and nothing is watching yet. (A
   // fresh plan already started watching; a paused session waits for Resume.)
+  // Derived here (before the effects that use them) so `done` is initialised
+  // before the auto-watch effect reads it - declaring it later put it in the
+  // temporal dead zone and crashed the whole plan/Console view (blank page).
+  const steps = (sess && sess.steps) || []
+  const done = steps.length > 0 && steps.every((x) => x.status === 'done')
   const autoWatchRef = useRef(false)
   useEffect(() => {
     if (autoWatchRef.current || !sess) return
@@ -2148,9 +2153,6 @@ function Console({ sessionId, onBack }) {
     catch (e) { setErr(e.message || 'Could not finalize'); setEndState(null) }
   }
 
-  const steps = (sess && sess.steps) || []
-  const done = steps.length > 0 && steps.every((x) => x.status === 'done')
-
   return (
     <div className="wc" style={{ ...shell, padding: '16px 16px 60px' }}>
       <style>{CONSOLE_CSS}</style>
@@ -2222,7 +2224,7 @@ function Console({ sessionId, onBack }) {
         {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
         {sess && sess.status === 'ended' && (
           <div className="wc-donebar">
-            <span className="wc-donebar-lead"><Check size={15} /> Completed — download what you need</span>
+            <span className="wc-donebar-lead"><Check size={15} /> Completed. Download what you need</span>
             <div className="wc-donebar-actions">
               <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
               <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report (PDF)</button>
@@ -2254,7 +2256,7 @@ function Console({ sessionId, onBack }) {
             // goal starter + Plan button as a clean fallback.
             <div className="wc-pre">
               <div className="wc-pre-title">What do you want to get done?</div>
-              <div className="wc-pre-sub">Type or paste your goal — I will turn it into clear on-screen steps.</div>
+              <div className="wc-pre-sub">Type or paste your goal and I will turn it into clear on-screen steps.</div>
               <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical' }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
               <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
                 {isMobile && <button className="wc-tbtn wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}

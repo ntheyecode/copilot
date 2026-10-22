@@ -45,6 +45,7 @@ export const workAdminApi = {
   // Identity / gate. The console gates on the admin read endpoints returning
   // 401/403; overview also carries the viewer role for superadmin-only controls.
   me: () => request('GET', '/api/work/me'),
+  logout: () => request('POST', '/api/work/logout'),
 
   // Reads (requireAuth + requireAdmin) - server/work-admin.js
   overview: () => request('GET', '/api/work/admin/overview'),
