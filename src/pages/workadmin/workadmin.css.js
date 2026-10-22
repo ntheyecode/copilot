@@ -171,6 +171,10 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
 .wka-field { display: flex; flex-direction: column; gap: 6px; }
 .wka-field label { font-size: 12px; color: var(--wka-muted); }
 .wka-field .hint { font-size: 11px; color: var(--wka-faint); }
+.wka-formgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+@media (max-width: 760px) { .wka-formgrid { grid-template-columns: 1fr; } }
+.wka-check { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--wka-text); cursor: pointer; }
+.wka-check input { width: 15px; height: 15px; flex-shrink: 0; }
 .wka-inline-money { position: relative; display: flex; align-items: center; }
 .wka-inline-money .sym { position: absolute; left: 11px; color: var(--wka-faint); font-size: 13px; }
 .wka-inline-money .wka-input { padding-left: 24px; width: 100%; }

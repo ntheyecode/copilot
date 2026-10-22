@@ -174,6 +174,9 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   // -- Users: every WorkCoPilot user with tier + today's balance + session count.
   app.get('/api/work/admin/users', requireAuth, requireAdmin, w((req, res) => {
     const roster = workRoster(store)
+    let companyList = []
+    try { companyList = (store.listCompanies() || []).map((c) => ({ id: c.id, name: c.name })) } catch { companyList = [] }
+    const companyNameById = new Map(companyList.map((c) => [c.id, c.name]))
     const sessions = allWorkSessions(store, roster)
     const countById = new Map()
     for (const s of sessions) {
@@ -196,9 +199,14 @@ export function registerWorkAdminRoutes(app, deps = {}) {
         remainingSeconds: usage ? usage.remainingSeconds : 0,
         exhausted: usage ? !!usage.exhausted : false,
         sessionCount: countById.get(r.id) || 0,
+        // Tenancy so the console can show + change a user's company and role.
+        companyId: (wu && wu.companyId) || null,
+        companyRole: (wu && wu.companyRole) || null,
+        companyName: (wu && wu.companyName) || (wu && wu.companyId ? companyNameById.get(wu.companyId) : null) || null,
+        role: r.role || 'user',
       }
     }).sort((a, b) => a.username.localeCompare(b.username))
-    res.json({ users, tiers: store.WORK_TIERS || ['basic', 'advanced', 'premium'] })
+    res.json({ users, tiers: store.WORK_TIERS || ['basic', 'advanced', 'premium'], companies: companyList })
   }))
 
   // -- Sessions: recent sessions across all users (newest first, capped). ------

@@ -2,7 +2,7 @@
 // a grant-hours action, both superadmin-only (the server enforces it; the UI
 // disables the controls and explains why for a non-superadmin admin).
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus, RotateCcw, Ban } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
@@ -10,31 +10,74 @@ import { hmFromSeconds } from '../workadmin.css.js'
 const COLUMNS = [
   { key: 'username', label: 'User', sortable: true },
   { key: 'tier', label: 'Tier', sortable: true },
+  { key: 'companyName', label: 'Company & role', sortable: true },
   { key: 'freeLeftSeconds', label: 'Free left today', sortable: true },
   { key: 'purchasedSeconds', label: 'Purchased balance', sortable: true },
   { key: 'remainingSeconds', label: 'Total remaining', sortable: true },
   { key: 'sessionCount', label: 'Sessions', sortable: true },
   { key: 'actions', label: '', sortable: false },
 ]
+const EMPTY_NEW = { username: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
 
 export default function UsersSection({ isSuperAdmin }) {
-  const [state, setState] = useState({ loading: true, error: null, users: [], tiers: [] })
+  const [state, setState] = useState({ loading: true, error: null, users: [], tiers: [], companies: [] })
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'username', dir: 'asc' })
   const [busyId, setBusyId] = useState(null)
   const [rowMsg, setRowMsg] = useState({})      // id -> { kind: 'ok'|'err', text }
   const [grantFor, setGrantFor] = useState(null) // id being granted
   const [grantHours, setGrantHours] = useState('1')
+  const [companyFor, setCompanyFor] = useState(null) // id whose company is being edited
+  const [showCreate, setShowCreate] = useState(false)
+  const [nu, setNu] = useState(EMPTY_NEW)       // new-user form
+  const [creating, setCreating] = useState(false)
+  const [createMsg, setCreateMsg] = useState(null)
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
     try {
       const data = await workAdminApi.users()
-      setState({ loading: false, error: null, users: data.users || [], tiers: data.tiers || ['basic', 'advanced', 'premium'] })
+      setState({ loading: false, error: null, users: data.users || [], tiers: data.tiers || ['basic', 'advanced', 'premium'], companies: data.companies || [] })
     } catch (error) {
-      setState({ loading: false, error, users: [], tiers: [] })
+      setState({ loading: false, error, users: [], tiers: [], companies: [] })
     }
   }, [])
+
+  // Create a WorkCoPilot account. Optionally drop it into a company as a member
+  // or a company admin, set the tier, and grant free (comped) access.
+  const createUser = async (e) => {
+    e && e.preventDefault()
+    const username = nu.username.trim()
+    if (username.length < 2) { setCreateMsg({ kind: 'err', text: 'Enter a username (2+ characters).' }); return }
+    if ((nu.password || '').length < 6) { setCreateMsg({ kind: 'err', text: 'Set a password of at least 6 characters.' }); return }
+    setCreating(true); setCreateMsg(null)
+    try {
+      await workAdminApi.createUser({
+        username, password: nu.password,
+        companyId: nu.companyId || null,
+        companyRole: nu.companyId ? nu.companyRole : undefined,
+        tier: nu.tier, free: !!nu.free,
+      })
+      setCreateMsg({ kind: 'ok', text: `Created ${username}${nu.companyId ? ` (${nu.companyRole === 'company_admin' ? 'company admin' : 'member'})` : ''}.` })
+      setNu(EMPTY_NEW)
+      await load()
+    } catch (error) {
+      setCreateMsg({ kind: 'err', text: error.message || 'Could not create the user.' })
+    } finally { setCreating(false) }
+  }
+
+  // Associate a user with a company (or clear it), and set their company role.
+  const applyCompany = async (user, companyId, companyRole) => {
+    setBusyId(user.id)
+    try {
+      await workAdminApi.userCompany(user.id, companyId || null, companyId ? companyRole : null)
+      setMsg(user.id, 'ok', companyId ? `Moved to ${(state.companies.find((c) => c.id === companyId) || {}).name || 'company'}` : 'Removed from company')
+      setCompanyFor(null)
+      await load()
+    } catch (error) {
+      setMsg(user.id, 'err', error.message || 'Could not update the company')
+    } finally { setBusyId(null) }
+  }
 
   useEffect(() => { load() }, [load])
 
@@ -125,8 +168,48 @@ export default function UsersSection({ isSuperAdmin }) {
           <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search by username"
             value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
+        <button type="button" className="wka-btn sm primary" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Create a new WorkCoPilot user' : 'Superadmin only'}
+          onClick={() => { setShowCreate((v) => !v); setCreateMsg(null) }}>
+          <UserPlus size={14} /> New user
+        </button>
         <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{rows.length} of {state.users.length}</span>
       </div>
+
+      {showCreate && isSuperAdmin && (
+        <form className="wka-panel" onSubmit={createUser} style={{ marginBottom: 16 }}>
+          <h2 style={{ marginTop: 0 }}><UserPlus size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Create a user</h2>
+          <p className="desc">Create a WorkCoPilot account. Optionally put them in a company as a member or a <b>company admin</b>, set the tier, and grant free (comped) access so they can use the service without Stripe.</p>
+          <div className="wka-formgrid">
+            <div className="wka-field"><label>Username</label><input className="wka-input" value={nu.username} onChange={(e) => setNu((f) => ({ ...f, username: e.target.value }))} placeholder="jordan or jordan@acme.com" autoComplete="off" /></div>
+            <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={nu.password} onChange={(e) => setNu((f) => ({ ...f, password: e.target.value }))} placeholder="at least 6 characters" autoComplete="off" /></div>
+            <div className="wka-field"><label>Company (optional)</label>
+              <select className="wka-select" value={nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyId: e.target.value }))}>
+                <option value="">— None (individual user) —</option>
+                {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="wka-field"><label>Role in company</label>
+              <select className="wka-select" value={nu.companyRole} disabled={!nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyRole: e.target.value }))}>
+                <option value="member">Member</option>
+                <option value="company_admin">Company admin</option>
+              </select>
+            </div>
+            <div className="wka-field"><label>Tier</label>
+              <select className="wka-select" value={nu.tier} onChange={(e) => setNu((f) => ({ ...f, tier: e.target.value }))}>
+                {state.tiers.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+              </select>
+            </div>
+            <div className="wka-field" style={{ justifyContent: 'flex-end' }}>
+              <label className="wka-check"><input type="checkbox" checked={nu.free} onChange={(e) => setNu((f) => ({ ...f, free: e.target.checked }))} /> Free (comped) access — no Stripe needed</label>
+            </div>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+            <button type="submit" className="wka-btn primary" disabled={creating}>{creating ? <Spinning /> : <UserPlus size={14} />} Create user</button>
+            <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setNu(EMPTY_NEW); setCreateMsg(null) }}>Cancel</button>
+            {createMsg ? <span style={{ fontSize: 13, color: createMsg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{createMsg.text}</span> : null}
+          </div>
+        </form>
+      )}
 
       {rows.length === 0 ? (
         <EmptyState title="No users match" detail={query ? 'Try a different search.' : 'No WorkCoPilot users have been provisioned yet.'} />
@@ -159,6 +242,36 @@ export default function UsersSection({ isSuperAdmin }) {
                           {state.tiers.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
                         </select>
                       ) : <TierBadge tier={u.tier} />}
+                    </td>
+                    <td style={{ minWidth: 190 }}>
+                      {companyFor === u.id ? (
+                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          <select className="wka-select" defaultValue={u.companyId || ''} id={`co-${u.id}`} style={{ maxWidth: 150 }}>
+                            <option value="">— None —</option>
+                            {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                          </select>
+                          <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 130 }}>
+                            <option value="member">Member</option>
+                            <option value="company_admin">Company admin</option>
+                          </select>
+                          <button type="button" className="wka-btn sm primary" disabled={busyId === u.id}
+                            onClick={() => { const cid = document.getElementById(`co-${u.id}`).value; const cr = document.getElementById(`cr-${u.id}`).value; applyCompany(u, cid, cr) }}>
+                            {busyId === u.id ? <Spinning /> : 'Save'}
+                          </button>
+                          <button type="button" className="wka-btn sm ghost" onClick={() => setCompanyFor(null)}>Cancel</button>
+                        </span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
+                          {u.companyName ? (
+                            <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                              <Building2 size={13} style={{ color: 'var(--wka-faint)' }} />
+                              <span style={{ fontWeight: 600 }}>{u.companyName}</span>
+                              {u.companyRole === 'company_admin' ? <span className="wka-badge active">admin</span> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>member</span>}
+                            </span>
+                          ) : <span style={{ color: 'var(--wka-faint)', fontSize: 13 }}>Individual</span>}
+                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Set company & role' : 'Superadmin only'} onClick={() => setCompanyFor(u.id)}>Change</button>
+                        </span>
+                      )}
                     </td>
                     <td className="wka-mono">{hmFromSeconds(u.freeLeftSeconds)}
                       {u.exhausted ? <span className="wka-badge exhausted" style={{ marginLeft: 8 }}>exhausted</span> : null}

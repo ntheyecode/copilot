@@ -83,7 +83,10 @@ export default function WorkLogin() {
           if (!cancelled && r && r.url) { window.location = r.url; return }
         } catch { /* billing not ready or annual not set up: fall through to the dashboard */ }
       }
-      if (!cancelled) nav('/work', { replace: true })
+      // Admins and superadmins land straight on the console, not the user
+      // dashboard - no detour through /work.
+      const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
+      if (!cancelled) nav(isAdmin && !plan ? '/work/admin' : '/work', { replace: true })
     }
     run()
     return () => { cancelled = true }
