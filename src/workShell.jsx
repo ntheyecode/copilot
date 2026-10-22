@@ -34,7 +34,7 @@
 //
 // In a plain browser window.workDesktop is absent and this renders nothing, so
 // the web console is unchanged outside the desktop app.
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Pin, Eye, EyeOff, Contrast, MousePointer2, PictureInPicture2 } from 'lucide-react'
 
 const OPACITIES = [1, 0.85, 0.6, 0.4]   // mirrors the shell's own cycle
@@ -200,8 +200,21 @@ export default function WorkShell({ authed = false }) {
   const guiding = st.mode === 'guide'
   const seeThrough = st.opacity < 1
 
+  // Click-behind escape hatch: while click-through is on the shell forwards
+  // mouse moves, so when the cursor is over this bar we ask the shell to accept
+  // clicks (and release again on leave). The bar's own Click-behind button is
+  // therefore always usable, with or without the Ctrl+Alt+W hotkey. Older
+  // shells without setHoverInteractive are unaffected (no-op). The drag region
+  // of the bar is a non-client area on Windows and may not emit DOM mouse
+  // events, so mousemove (de-duplicated) backs up mouseenter: the moment the
+  // cursor reaches any button on the bar, the bar is interactive.
+  const hoverRef = useRef(false)
+  const hoverOn = () => { if (st.clickThrough && !hoverRef.current) { hoverRef.current = true; call('setHoverInteractive', true) } }
+  const hoverOff = () => { if (hoverRef.current) { hoverRef.current = false; call('setHoverInteractive', false) } }
+  useEffect(() => { if (!st.clickThrough) hoverRef.current = false }, [st.clickThrough])
+
   return (
-    <div className="wshell" role="banner">
+    <div className="wshell" role="banner" onMouseEnter={hoverOn} onMouseMove={hoverOn} onMouseLeave={hoverOff}>
       <div className="wshell-brand">
         <span className="wshell-dot" aria-hidden="true" />
         <span className="wshell-name">WorkCoPilot</span>
@@ -225,7 +238,7 @@ export default function WorkShell({ authed = false }) {
             <Contrast size={14} /><span className="wshell-tlabel">{seeThrough ? `${Math.round(st.opacity * 100)}%` : 'See-through'}</span>
           </button>
           <button type="button" className={`wshell-tool w-behind${st.clickThrough ? ' on' : ''}`} onClick={toggleBehind} disabled={!guiding} aria-pressed={st.clickThrough}
-            title={guiding ? 'Click-behind: let your clicks pass to the app underneath (Ctrl+Alt+W)' : 'Click-behind is available while guiding'}>
+            title={guiding ? (st.clickThrough ? 'Click-behind is on: your clicks pass to the app underneath. This bar still takes clicks. Click here or press Ctrl+Alt+W to turn it off.' : 'Click-behind: let your clicks pass to the app underneath. This bar stays clickable so you can turn it off again (Ctrl+Alt+W).') : 'Click-behind is available while guiding'}>
             <MousePointer2 size={14} /><span className="wshell-tlabel">Click-behind</span>
           </button>
           <button type="button" className="wshell-tool w-buddy" onClick={toBuddy}

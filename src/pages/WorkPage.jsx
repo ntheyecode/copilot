@@ -914,7 +914,10 @@ function Home({ user, onOpen, onSignOut }) {
       <style>{WD_CSS}</style>
       <div className="wd-bg" aria-hidden><span className="orb o1" /><span className="orb o2" /></div>
 
-      <header className="wd-top">
+      {/* In the desktop app the 32px title bar is position:fixed above this
+          sticky header; without this offset the header slid under it on scroll
+          and the Dashboard / How-to / Support tabs were half hidden. */}
+      <header className="wd-top" style={(typeof window !== 'undefined' && window.workDesktop) ? { top: 32 } : undefined}>
         <div className="wd-top-in">
           <span className="wd-brand"><AdmireVedaLogo size={24} idSuffix="wd" /></span>
           <nav className="wd-tabs" aria-label="Sections">
@@ -1204,12 +1207,12 @@ function HelpDocs({ onStart }) {
               <li><b>On top</b> - keep the window above everything else.</li>
               <li><b>Hidden / On share</b> - hide the window from screen shares and recordings (on by default), or reveal it when you want to show it.</li>
               <li><b>See-through</b> - cycle the window's transparency so the work behind shows through.</li>
-              <li><b>Click-behind</b> (while guiding) - let your clicks pass straight to the app underneath.</li>
+              <li><b>Click-behind</b> (while guiding) - let your clicks pass straight to the app underneath. The title bar itself still takes clicks, so you can always turn it off again there (or with Ctrl+Alt+W).</li>
               <li><b>Buddy</b> - shrink to the buddy card.</li>
             </ul>
             <h3 className="sub">Keyboard shortcuts</h3>
             <ul>
-              <li><b>Ctrl+H</b> hide / show &middot; <b>Ctrl+Alt+S</b> hide-from-share &middot; <b>Ctrl+Alt+T</b> on top</li>
+              <li><b>Ctrl+Alt+H</b> hide / show &middot; <b>Ctrl+Alt+S</b> hide-from-share &middot; <b>Ctrl+Alt+T</b> on top</li>
               <li><b>Ctrl+Alt+O</b> see-through &middot; <b>Ctrl+Alt+W</b> click-behind &middot; <b>Ctrl+Alt+B</b> buddy &middot; <b>Ctrl+Alt+M</b> choose monitor</li>
             </ul>
             <h3 className="sub">Your own documents &amp; diagrams</h3>
@@ -1231,7 +1234,9 @@ function HelpDocs({ onStart }) {
             <div className="wd-faq"><b>Can people on a call see the overlay?</b><p>No, not while it is hidden (the default). It is excluded from screen capture and recording. Press Ctrl+Alt+S or the On share button if you deliberately want to show it.</p></div>
             <div className="wd-faq"><b>Does my diagram or document get uploaded?</b><p>No. On the desktop app the file is read on your computer, OCR included. Only the governed text is sent to the model to plan, and it is not stored on our servers.</p></div>
             <div className="wd-faq"><b>Will it do things on my machine?</b><p>Never. It is read-only. It reads the screen and tells you the next step; you perform every action yourself.</p></div>
-            <div className="wd-faq"><b>How do I keep it out of the way?</b><p>Use See-through and Click-behind while guiding, minimize to the Buddy card, or Ctrl+H to hide it entirely. It keeps working while minimized.</p></div>
+            <div className="wd-faq"><b>How do I keep it out of the way?</b><p>Use See-through and Click-behind while guiding, minimize to the Buddy card, or Ctrl+Alt+H to hide it entirely. It keeps working while minimized.</p></div>
+            <div className="wd-faq"><b>I turned on Click-behind and now I cannot click WorkCoPilot.</b><p>That is Click-behind doing its job: your clicks go to the app underneath. Move the mouse over the WorkCoPilot title bar, which always takes clicks, and press Click-behind there, or press Ctrl+Alt+W.</p></div>
+            <div className="wd-faq"><b>It says it cannot reach WorkCoPilot.</b><p>The app needs a connection to the WorkCoPilot server. Check your internet, VPN or proxy. The window retries on its own and opens the console as soon as the server answers; Retry now and Close are always there.</p></div>
             <div className="wd-faq"><b>Does it update itself?</b><p>Yes. It checks for a signed update over HTTPS on launch and installs it on the next restart.</p></div>
           </section>
         </>)}
@@ -1918,6 +1923,7 @@ function Console({ sessionId, onBack }) {
   // Picture-in-Picture window floats the steps on top of whatever app the
   // user is working in, so they never tab back and forth to this console.
   const [pipWin, setPipWin] = useState(null)
+  const [pipKind, setPipKind] = useState('pip')   // 'pip' (always-on-top Document PiP) | 'popout' (separate window) for the open float
   const [floatQ, setFloatQ] = useState('')
   const prefersDark = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : true
   const [floatTheme, setFloatTheme] = useState(prefersDark ? 'dark' : 'light')
@@ -1929,26 +1935,48 @@ function Console({ sessionId, onBack }) {
   const pipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window
   const floatCapable = !desktop && !isMobile && typeof window !== 'undefined' && typeof window.open === 'function'
   const FLOAT_CSS = 'body{margin:0;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}button{font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.05)}button:not(:disabled):active{transform:translateY(1px)}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(98,171,245,.45)}70%{box-shadow:0 0 0 6px rgba(98,171,245,0)}100%{box-shadow:0 0 0 0 rgba(98,171,245,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#8884;border-radius:6px}'
+  // Open the float with a graceful fallback chain, so the core web experience
+  // never silently dies on one API:
+  //   1. Document Picture-in-Picture (true always-on-top) when the browser has it;
+  //   2. if that is refused (permissions policy, enterprise setting, no user
+  //      activation, an older Chromium build that exposes the API but rejects),
+  //      a separate pop-out window, which still keeps the steps out of the tab;
+  //   3. if the pop-up itself is blocked, an actionable message. The steps are
+  //      still fully usable in this tab in every case.
   const openFloat = async () => {
-    try {
-      let w
-      if (pipSupported) {
-        w = await window.documentPictureInPicture.requestWindow({ width: 410, height: 580 })
-      } else {
-        w = window.open('', 'workcopilot_float', 'width=410,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes')
-        if (!w) { setErr('Your browser blocked the floating window. Allow pop-ups for this site, or use Chrome, Edge, Brave or Opera for a true always-on-top overlay.'); return }
-        try { w.document.title = 'WorkCoPilot' } catch {}
-        try { if (!w.document.body) w.document.write('<!doctype html><body></body>') } catch {}
+    setErr('')
+    let w = null
+    let kind = 'pip'
+    if (pipSupported) {
+      try { w = await window.documentPictureInPicture.requestWindow({ width: 410, height: 580 }) }
+      catch { w = null }
+    }
+    if (!w) {
+      kind = 'popout'
+      try { w = window.open('', 'workcopilot_float', 'width=410,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes') } catch { w = null }
+      if (!w) {
+        setErr(pipSupported
+          ? 'The floating window was refused by your browser settings, and the pop-out was blocked too. Allow pop-ups for this site, or keep following the steps right here.'
+          : 'Your browser blocked the floating window. Allow pop-ups for this site, or use Chrome, Edge, Brave or Opera for a true always-on-top overlay. The steps keep working right here.')
+        return
       }
+      try { w.document.title = 'WorkCoPilot' } catch {}
+      try { if (!w.document.body) w.document.write('<!doctype html><title>WorkCoPilot</title><body></body>') } catch {}
+    }
+    try {
       const st = w.document.createElement('style')
       st.textContent = FLOAT_CSS
-      w.document.head.appendChild(st)
-      w.addEventListener('pagehide', () => setPipWin(null))
-      w.addEventListener('beforeunload', () => setPipWin(null))
-      setPipWin(w)
-    } catch (e) { setErr('Could not open the floating window: ' + (e.message || e)) }
+      ;(w.document.head || w.document.documentElement).appendChild(st)
+    } catch { /* the panel is inline-styled; only the keyframes are lost */ }
+    // Only the window that is still current may clear the state, so a late
+    // 'pagehide' from an older float can never orphan a newer one.
+    const drop = () => setPipWin((cur) => (cur === w ? null : cur))
+    try { w.addEventListener('pagehide', drop); w.addEventListener('beforeunload', drop) } catch {}
+    setPipKind(kind)
+    setPipWin(w)
   }
   const closeFloat = () => { try { pipWin && pipWin.close() } catch {} ; setPipWin(null) }
+  const floatIsPip = pipKind === 'pip'
   useEffect(() => () => { try { pipWin && pipWin.close() } catch {} }, [pipWin])   // close the float if the console unmounts
   // Paint the PiP window body to match the chosen theme (the panel content is
   // inline-styled; the body behind it needs setting on the separate document).
@@ -1966,10 +1994,40 @@ function Console({ sessionId, onBack }) {
   const photoInputRef = useRef(null)    // hidden camera file input for the mobile Photo path
   const photoFrameRef = useRef(null)    // mirror of photoFrame for synchronous reads in grabFrame
 
+  // Session load state. Before this, a session that could not be loaded (deleted
+  // on another device, server restarted with fresh data, a stale id remembered in
+  // sessionStorage after a reload) left the Console with sess === null forever:
+  // no Back button (it only shows when paused or ended), no Pause, and a goal
+  // form whose Plan button could not work. The only exit was closing the app.
+  // Now: a loading state while we fetch, and on failure a clear message with
+  // Try again and Back to plans.
+  const [loadErr, setLoadErr] = useState('')
   const refresh = useCallback(async () => {
-    try { const r = await api.workGet(sessionId); setSess(r.session); if (r.session && r.session.goal != null) setGoal(r.session.goal || ''); if (r.session && r.session.guidance) setGuidance(r.session.guidance); if (r.session && r.session.mode) setMode(r.session.mode); if (r.session) setPaused(!!r.session.paused) } catch {}
+    try {
+      const r = await api.workGet(sessionId)
+      setSess(r.session); setLoadErr('')
+      if (r.session && r.session.goal != null) setGoal(r.session.goal || '')
+      if (r.session && r.session.guidance) setGuidance(r.session.guidance)
+      if (r.session && r.session.mode) setMode(r.session.mode)
+      if (r.session) setPaused(!!r.session.paused)
+    } catch (e) {
+      setLoadErr(e && e.status === 404
+        ? 'This session no longer exists. It may have been deleted, or finished on another device.'
+        : ((e && e.message) || 'Could not load this session. Check your connection and try again.'))
+    }
   }, [sessionId])
   useEffect(() => { refresh() }, [refresh])
+  // A UI-side guard for the two calls that drive a full-screen "working" state
+  // (planning, finishing). The server keeps working if it is slow; the UI just
+  // stops waiting after a generous bound, says so, and re-reads the session so
+  // whatever did land is picked up. Without this a dropped connection could
+  // leave the planning animation or the "Wrapping up" dialog spinning forever.
+  const WAIT_MS = 240000
+  const waitFor = (p, message) => {
+    let t
+    const timer = new Promise((_, reject) => { t = setTimeout(() => { const e = new Error(message); e.timedOut = true; reject(e) }, WAIT_MS) })
+    return Promise.race([p, timer]).finally(() => clearTimeout(t))
+  }
 
   const stopCapture = useCallback(() => {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
@@ -2040,7 +2098,9 @@ function Console({ sessionId, onBack }) {
       // injected into the plan for this call only (never stored on the server).
       let docsText = ''
       try { if (window.workDesktop) docsText = sessionStorage.getItem('wd_docs_' + sessionId) || '' } catch { /* ignore */ }
-      const r = await api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) })
+      const r = await waitFor(
+        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) }),
+        'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       if (r.refusal) { setErr(r.refusal); return }   // declined at goal entry (not supported)
       // Start the continuous guide right away - the user should never have to
@@ -2048,7 +2108,10 @@ function Console({ sessionId, onBack }) {
       if (r.session && Array.isArray(r.session.steps) && r.session.steps.length && (!r.session.status || r.session.status !== 'ended')) {
         setTimeout(() => { startWatching() }, 150)
       }
-    } catch (e) { setErr(e.message || 'Could not build the plan') } finally { setBusy(false) }
+    } catch (e) {
+      setErr(e.message || 'Could not build the plan')
+      if (e && e.timedOut) refresh()   // pick up a plan that landed after we stopped waiting
+    } finally { setBusy(false) }
   }
 
   // The watch loop: every few seconds, grab a frame; only SEND it when the
@@ -2284,8 +2347,13 @@ function Console({ sessionId, onBack }) {
   // with a clear "Back to plan" navigation.
   const endSession = async () => {
     setEndState('finishing')
-    try { const r = await api.workFinalize(sessionId); setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture(); setEndState('done') }
-    catch (e) { setErr(e.message || 'Could not finalize'); setEndState(null) }
+    try {
+      const r = await waitFor(api.workFinalize(sessionId), 'Finishing is taking longer than expected. Your session is saved; press End again in a moment.')
+      setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture(); setEndState('done')
+    } catch (e) {
+      setErr(e.message || 'Could not finalize'); setEndState(null)
+      if (e && e.timedOut) refresh()
+    }
   }
 
   return (
@@ -2296,14 +2364,16 @@ function Console({ sessionId, onBack }) {
             theme, a truncating plan name, then the minutes pill and the
             session controls. Nothing wraps accidentally. */}
         <div className="wc-top">
-          {/* Back appears once you Pause (a deliberate, paused exit) and on a finished task. */}
-          {(paused || ended) && <button className="wc-ib" onClick={leaveToPlan} title={ended ? 'Back to your plans' : 'Back to planning. Your paused session waits under Pick up where you left off.'} aria-label="Back to plan"><ChevronLeft size={17} /></button>}
+          {/* Back appears once you Pause (a deliberate, paused exit), on a finished task,
+              and whenever there is no loaded session yet (loading or failed), so the
+              console can never trap the user. */}
+          {(paused || ended || !sess) && <button className="wc-ib" onClick={leaveToPlan} title={ended ? 'Back to your plans' : (!sess ? 'Back to your plans' : 'Back to planning. Your paused session waits under Pick up where you left off.')} aria-label="Back to plan"><ChevronLeft size={17} /></button>}
           <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
           <span style={{ flex: 1 }} />
           {sess && !ended && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume everything - watching and your minutes' : 'Pause everything - stop watching and freeze your minutes'}>{paused ? <><Play size={14} /> Resume</> : <><Square size={13} /> Pause</>}</button>}
           {/* Float on top is the core web feature: a labeled, filled button, not a bare icon. */}
           {floatCapable && sess && !ended && (pipWin
-            ? <button className="wc-tbtn on" title={pipSupported ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Unfloat' : 'Close pop-out'}</button>
+            ? <button className="wc-tbtn on" title={floatIsPip ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> {floatIsPip ? 'Unfloat' : 'Close pop-out'}</button>
             : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
           {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
@@ -2382,7 +2452,25 @@ function Console({ sessionId, onBack }) {
           </div>
         )}
 
-        {steps.length === 0 ? (
+        {!sess && loadErr ? (
+          // The session could not be loaded: say why and offer the two real exits.
+          <div className="wc-pre" role="alert">
+            <div className="wc-pre-title">Could not open this session</div>
+            <div className="wc-pre-sub">{loadErr}</div>
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
+              <button className="wc-tbtn primary" onClick={() => { setLoadErr(''); refresh() }}><RefreshCw size={14} /> Try again</button>
+              <button className="wc-tbtn" onClick={leaveToPlan}><ChevronLeft size={14} /> Back to plans</button>
+            </div>
+          </div>
+        ) : !sess ? (
+          // Loading the session: never show an editable goal form for a session we
+          // have not read yet (its Plan button could not work, and it looked like a
+          // dead end). Back is in the toolbar above the whole time.
+          <div className="wc-loading" aria-busy="true">
+            <div className="wc-loading-orb"><span /><span /><span /></div>
+            <div className="wc-loading-line on"><Loader2 size={14} className="spin" /><span>Opening your session…</span></div>
+          </div>
+        ) : steps.length === 0 ? (
           busy ? (
             // Planning: the thinking animation reveals phases, then the view swaps
             // to the step card the moment the plan is ready.

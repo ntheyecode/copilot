@@ -7,10 +7,16 @@ const { contextBridge, ipcRenderer } = require('electron')
 
 contextBridge.exposeInMainWorld('workDesktop', {
   isDesktop: true,
-  // The shell answers getDisplayMedia with the primary screen and no picker.
+  // The shell answers getDisplayMedia itself (single screen: no prompt; several
+  // screens: the remembered or picked monitor).
   canCaptureScreen: true,
   // Overlay controls the console UI can call.
   setClickThrough: (on) => ipcRenderer.invoke('work:set-clickthrough', !!on),
+  // While click-through is on, the title bar tells the shell when the cursor is
+  // over it so its buttons stay clickable (the escape hatch out of click-behind).
+  setHoverInteractive: (on) => ipcRenderer.invoke('work:hover-interactive', !!on),
+  // Used by the shell's own offline page: reload the hosted console.
+  retryLoad: () => ipcRenderer.invoke('work:retry-load'),
   setOpacity: (v) => ipcRenderer.invoke('work:set-opacity', v),
   hide: () => ipcRenderer.invoke('work:hide'),
   // Window modes: 'plan' (large, windowed, not-on-top) vs 'guide' (compact,

@@ -139,8 +139,13 @@ export default function WorkBuddy() {
       } catch { /* keep last usage */ }
 
       if (aliveRef.current) setStatus(idRef.current ? 'ok' : 'empty')
-    } catch {
-      if (aliveRef.current) setStatus((s) => (s === 'loading' ? 'error' : s))
+    } catch (e) {
+      // 401 is "not signed in", not "server down": say so, and keep the pause
+      // control out of reach until a session exists. Any other failure keeps the
+      // last good view and only reports an error if nothing was ever shown.
+      const signedOut = /HTTP 401/.test((e && e.message) || '')
+      if (signedOut) idRef.current = null
+      if (aliveRef.current) setStatus((s) => (signedOut ? 'signin' : (s === 'loading' ? 'error' : s)))
     }
   }, [])
 
@@ -208,7 +213,7 @@ export default function WorkBuddy() {
   // Mascot mood from status.
   const mascotState = status === 'loading' ? 'thinking'
     : status === 'error' ? 'error'
-    : status === 'empty' ? 'idle'
+    : status === 'empty' || status === 'signin' ? 'idle'
     : paused ? 'paused'
     : allDone ? 'done'
     : 'guiding'
@@ -216,6 +221,7 @@ export default function WorkBuddy() {
   // Calm one-liners for the non-active states, shown in the bubble.
   const calmMsg = status === 'loading' ? 'Waking up and connecting'
     : status === 'error' ? 'Cannot reach the server. Retrying.'
+    : status === 'signin' ? 'Sign in to WorkCoPilot in the main window and your steps show up here.'
     : status === 'empty' ? 'No active task yet. Open WorkCoPilot to start one.'
     : ''
 

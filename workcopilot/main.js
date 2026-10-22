@@ -27,12 +27,14 @@
 // This shell is READ-ONLY: it never drives the machine, it only shows what to
 // do next. Signed with the COE Security cert + DigiCert timestamp (package.json).
 // ---------------------------------------------------------------------------
-const { app, BrowserWindow, session, globalShortcut, desktopCapturer, shell, ipcMain, screen, dialog } = require('electron')
+const { app, BrowserWindow, session, globalShortcut, desktopCapturer, shell, ipcMain, screen, dialog, systemPreferences } = require('electron')
 const path = require('node:path')
 const fs = require('node:fs')
 
 const SERVER_URL = (process.env.WORK_SERVER || 'https://admireveda.com').replace(/\/+$/, '')
 const PARTITION = 'persist:workcopilot'   // its own cookie jar, separate from the other apps
+let SERVER_ORIGIN = ''
+try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
 
 const BUDDY_W = 340
 const BUDDY_H = 180
@@ -40,9 +42,15 @@ const BUDDY_H = 180
 let win = null          // main console window
 let buddy = null        // small movable buddy window
 let quitting = false
+let closingMain = false // main window is in its 'close' -> 'closed' transition (never summon the buddy then)
 let clickThrough = false
 const OPACITIES = [1, 0.85, 0.6, 0.4]
 let opacityIdx = 0
+
+// A BrowserWindow is only safe to call while it exists AND has not been
+// destroyed; between close() and the 'closed' event the variable is still set
+// but every method throws. Every window call below goes through this guard.
+function alive(w) { return !!(w && !w.isDestroyed()) }
 
 // --- window modes ----------------------------------------------------------
 // WorkCoPilot is a different animal from a plain overlay. It lives in two modes:
@@ -64,7 +72,25 @@ const GUIDE_W = 460
 const GUIDE_H = 820
 
 function applyOnTop() {
-  if (win && !win.isDestroyed()) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+  if (alive(win)) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
+}
+// Keep a window rectangle fully inside the work area of the display it is on
+// (or the nearest one). Two real failures this prevents: the 820px guide
+// overlay on a 768px laptop screen, whose Ask box and bottom controls were
+// pushed below the taskbar with no way to reach them; and remembered geometry
+// from a monitor that has since been unplugged, which would restore the window
+// off-screen. The minimums mirror the BrowserWindow minWidth/minHeight, but a
+// screen smaller than those wins, so the window is always reachable.
+function clampBounds(b, minW = 380, minH = 480) {
+  try {
+    const d = screen.getDisplayMatching(b) || screen.getPrimaryDisplay()
+    const a = d.workArea
+    const width = Math.min(Math.max(Math.round(b.width) || minW, minW), a.width)
+    const height = Math.min(Math.max(Math.round(b.height) || minH, minH), a.height)
+    const x = Math.min(Math.max(Math.round(b.x), a.x), a.x + a.width - width)
+    const y = Math.min(Math.max(Math.round(b.y), a.y), a.y + a.height - height)
+    return { x, y, width, height }
+  } catch { return b }
 }
 // Broadcast the live overlay state to the renderer(s) so the title bar always
 // reflects reality (hotkeys, mode switches and OS maximize all flow back here).
@@ -106,13 +132,13 @@ function applyMode(next) {
   if (mode === 'guide') {
     if (win.isMaximized()) win.unmaximize()
     onTop = true; applyOnTop()
-    win.setBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H))
+    win.setBounds(clampBounds(guideBounds || cornerBounds(GUIDE_W, GUIDE_H)))
     // opacity + click-behind stay as the user left them: guide mode is where they matter
   } else {
     onTop = false; applyOnTop()
     setClickThrough(false)              // you cannot plan through a click-through window
     opacityIdx = 0; win.setOpacity(1)   // planning is always fully opaque
-    win.setBounds(planBounds || centeredPlanBounds())
+    win.setBounds(clampBounds(planBounds || centeredPlanBounds()))
   }
   sendState()
   return mode
@@ -382,6 +408,19 @@ function resolvePicker(source) {
 // Decide which screen to capture: single screen -> use it (no prompt); multi
 // screen with a still-valid remembered choice -> use it; otherwise -> prompt.
 async function resolveScreenSource() {
+  // macOS: without the Screen Recording permission desktopCapturer still
+  // "succeeds" but every frame is black, so the guide would silently read
+  // nothing. Refuse here instead, so the renderer shows its allow-access
+  // message, and open the right System Settings pane for the user.
+  if (process.platform === 'darwin') {
+    try {
+      const st = systemPreferences.getMediaAccessStatus('screen')
+      if (st !== 'granted') {
+        try { shell.openExternal('x-apple.systempreferences:com.apple.preference.security?Privacy_ScreenCapture') } catch { /* ignore */ }
+        return null
+      }
+    } catch { /* older Electron / unknown status: fall through and try */ }
+  }
   const sources = await desktopCapturer.getSources({ types: ['screen'], thumbnailSize: PICK_THUMB })
   if (!sources.length) return null
   if (sources.length === 1) return sources[0]
@@ -411,8 +450,16 @@ function notifyMonitorChanged(source) {
   try { if (buddy && !buddy.isDestroyed()) buddy.webContents.send('work:monitor-changed', payload) } catch { /* ignore */ }
 }
 
-function createWindow() {
+// --- session (one-time) -----------------------------------------------------
+// Permission + capture handlers and the download hook are installed ONCE on the
+// partition. createWindow() can run more than once in a process (macOS
+// re-activate, a relaunch after the window was closed), and re-installing the
+// download listener each time would fire it N times per download.
+let sessionReady = false
+function setupSession() {
   const ses = session.fromPartition(PARTITION)
+  if (sessionReady) return ses
+  sessionReady = true
   // Grant camera + display-capture for the hosted origin (getUserMedia /
   // getDisplayMedia are refused silently otherwise). WorkCoPilot can read the
   // screen (desktop) or a camera.
@@ -431,6 +478,132 @@ function createWindow() {
       callback({ video: source, audio: false })
     } catch { callback({}) }
   }, { useSystemPicker: false })
+  // Downloads (report PDF, audit log, deliverables): Electron shows its save
+  // dialog by default; once saved, reveal the file so the user can find it.
+  ses.on('will-download', (_e, item) => {
+    try {
+      item.once('done', (_ev, state) => {
+        if (state === 'completed') { try { shell.showItemInFolder(item.getSavePath()) } catch { /* ignore */ } }
+      })
+    } catch { /* ignore */ }
+  })
+  return ses
+}
+
+// --- window.open routing ------------------------------------------------------
+// The console opens its PDF report, print view, deliverables PDF and audit log
+// with window.open / <a download>. Those routes need the signed-in cookie
+// session, which lives ONLY in this app's partition: handing them to the
+// system browser (the old behavior for every http(s) URL) opened a signed-out
+// browser tab that answered 401. Same-origin URLs therefore stay inside the
+// app: '?dl=1' and .log URLs become a normal download (save dialog), anything
+// else opens in a framed child window that shares the session (the built-in
+// PDF viewer handles the print view). Foreign http(s) links still go to the
+// real browser; mailto/tel go to the OS; everything else is denied.
+function isSameOrigin(url) {
+  try { return new URL(url).origin === SERVER_ORIGIN } catch { return false }
+}
+function isDownloadUrl(url) {
+  try {
+    const u = new URL(url)
+    return u.searchParams.get('dl') === '1' || /\.(log|csv|txt|md|zip)$/i.test(u.pathname)
+  } catch { return false }
+}
+function handleWindowOpen({ url }) {
+  if (/^(mailto|tel):/i.test(url)) { try { shell.openExternal(url) } catch { /* ignore */ } return { action: 'deny' } }
+  if (!/^https?:\/\//i.test(url)) return { action: 'deny' }
+  if (isSameOrigin(url)) {
+    if (isDownloadUrl(url)) {
+      try { session.fromPartition(PARTITION).downloadURL(url) } catch { try { shell.openExternal(url) } catch { /* ignore */ } }
+      return { action: 'deny' }
+    }
+    return {
+      action: 'allow',
+      overrideBrowserWindowOptions: {
+        width: 960, height: 820, frame: true, autoHideMenuBar: true, alwaysOnTop: false,
+        backgroundColor: '#ffffff', title: 'WorkCoPilot',
+      },
+    }
+  }
+  try { shell.openExternal(url) } catch { /* ignore */ }
+  return { action: 'deny' }
+}
+
+// --- offline / unreachable-server page -------------------------------------
+// The window is frameless and ALL of its chrome is drawn by the web page. When
+// the hosted console cannot load (no internet, DNS, server down, captive
+// portal) Electron left a black rectangle with no title bar, no retry and no
+// close button: the only way out was Alt+F4. This inline page (data: URL, same
+// preload bridge, no remote code) gives the user a draggable bar, what went
+// wrong, a Retry and a Close, and it retries by itself as soon as the server
+// answers again (a no-cors reachability probe every 8 seconds).
+let lastTargetUrl = `${SERVER_URL}/work`
+function buildOfflineHtml(detail, target) {
+  return `<!doctype html><html><head><meta charset="utf-8"><title>WorkCoPilot</title>
+  <style>
+    :root { color-scheme: dark; }
+    html,body { margin:0; height:100%; background:#0b0b0f; color:#e8e8ee;
+      font:14px/1.5 "Segoe UI Variable Text","Segoe UI",-apple-system,Roboto,sans-serif; -webkit-user-select:none; user-select:none; }
+    .bar { height:32px; display:flex; align-items:center; padding:0 12px; gap:8px; background:#1f1f1f; -webkit-app-region:drag; font-size:12px; color:#d6d6d6; }
+    .bar .dot { width:12px; height:12px; border-radius:3.5px; background:linear-gradient(140deg,#13b27a,#0a8fd6); }
+    .bar b { font-weight:600; }
+    .bar .sp { flex:1; }
+    .bar button { -webkit-app-region:no-drag; width:46px; height:32px; border:0; background:transparent; color:#f3f3f3; cursor:default; font-size:14px; }
+    .bar button:hover { background:#c42b1c; }
+    .wrap { height:calc(100% - 32px); display:flex; align-items:center; justify-content:center; padding:24px; box-sizing:border-box; }
+    .card { max-width:440px; width:100%; background:#14141b; border:1px solid #26262f; border-radius:14px; padding:22px 24px; }
+    h1 { font-size:17px; margin:0 0 6px; font-weight:600; }
+    p { margin:0 0 10px; color:#b8b8c4; }
+    code { color:#9a9aa6; font-size:12px; word-break:break-all; }
+    .row { display:flex; gap:10px; margin-top:16px; align-items:center; }
+    .btn { border:1px solid #33333d; background:transparent; color:#e8e8ee; border-radius:8px; padding:8px 14px; font:inherit; font-size:13px; cursor:pointer; }
+    .btn.primary { background:#0f6cbd; border-color:#0f6cbd; color:#fff; font-weight:600; }
+    .btn:hover { filter:brightness(1.1); }
+    .st { margin-left:auto; font-size:12px; color:#8a8a96; }
+  </style></head><body>
+    <div class="bar"><span class="dot"></span><b>WorkCoPilot</b><span class="sp"></span><button id="x" title="Close" aria-label="Close">&#x2715;</button></div>
+    <div class="wrap"><div class="card">
+      <h1>Cannot reach WorkCoPilot right now</h1>
+      <p>Check your internet connection, VPN or proxy. This window retries by itself and opens the console the moment the server answers.</p>
+      <p><code>${escapeHtml(detail || '')}</code></p>
+      <div class="row">
+        <button class="btn primary" id="retry">Retry now</button>
+        <button class="btn" id="close">Close WorkCoPilot</button>
+        <span class="st" id="st">Retrying automatically</span>
+      </div>
+    </div></div>
+    <script>
+      (function(){
+        var target = ${JSON.stringify(target)};
+        var st = document.getElementById('st');
+        function retry(){ try { window.workDesktop && window.workDesktop.retryLoad && window.workDesktop.retryLoad() } catch(e){} }
+        function close(){ try { window.workDesktop && window.workDesktop.winClose && window.workDesktop.winClose() } catch(e){} }
+        document.getElementById('retry').addEventListener('click', retry)
+        document.getElementById('close').addEventListener('click', close)
+        document.getElementById('x').addEventListener('click', close)
+        var n = 0
+        setInterval(function(){
+          n++; if (st) st.textContent = 'Retrying automatically (' + n + ')'
+          // A no-cors probe resolves whenever the server is reachable at all
+          // (any status), and rejects only on a network failure.
+          fetch(target, { mode: 'no-cors', cache: 'no-store' }).then(retry).catch(function(){})
+        }, 8000)
+      })()
+    </script>
+  </body></html>`
+}
+function showOfflinePage(detail, target) {
+  if (!alive(win)) return
+  try { win.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(buildOfflineHtml(detail, target))) } catch { /* ignore */ }
+}
+function retryLoad() {
+  if (!alive(win)) return
+  try { win.loadURL(lastTargetUrl) } catch { /* ignore */ }
+}
+
+function createWindow() {
+  const ses = setupSession()
+  closingMain = false
 
   win = new BrowserWindow({
     width: 1040,
@@ -460,12 +633,26 @@ function createWindow() {
   // (privacy). The user can toggle this from the title bar or with Ctrl+Alt+S.
   win.setContentProtection(contentProtected)
 
-  win.loadURL(`${SERVER_URL}/work`)
+  lastTargetUrl = `${SERVER_URL}/work`
+  win.loadURL(lastTargetUrl)
 
-  // External links open in the real browser, never in-app.
-  win.webContents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//i.test(url)) { shell.openExternal(url); return { action: 'deny' } }
-    return { action: 'allow' }
+  // Same-origin report/print/download URLs stay in the app (they need the
+  // session cookie); foreign links open in the real browser. See handleWindowOpen.
+  win.webContents.setWindowOpenHandler(handleWindowOpen)
+
+  // Main-frame load failure (offline, DNS, server down): show the inline
+  // offline page instead of a dead black rectangle. -3 (ERR_ABORTED) is a
+  // navigation the page itself replaced and is not a failure.
+  win.webContents.on('did-fail-load', (_e, code, desc, url, isMainFrame) => {
+    if (!isMainFrame || code === -3) return
+    if (url && /^https?:\/\//i.test(url) && isSameOrigin(url)) lastTargetUrl = url
+    showOfflinePage(`${desc || 'load failed'} (${code}) ${url || ''}`.trim(), lastTargetUrl)
+  })
+  // Renderer crash or OOM: reload the console rather than leaving a blank window.
+  win.webContents.on('render-process-gone', (_e, details) => {
+    if (quitting || !alive(win)) return
+    if (details && details.reason === 'clean-exit') return
+    setTimeout(() => { try { if (alive(win)) win.loadURL(lastTargetUrl) } catch { /* ignore */ } }, 500)
   })
 
   // When the main window leaves the foreground, surface the buddy so the guidance
@@ -480,7 +667,22 @@ function createWindow() {
   win.on('maximize', () => sendState())
   win.on('unmaximize', () => sendState())
 
-  win.on('closed', () => { win = null })
+  // Closing the main window closes the product. Before this, the (hidden) buddy
+  // and the monitor picker were separate BrowserWindows that outlived the main
+  // window, so 'window-all-closed' never fired: the process lingered with no
+  // visible window and no taskbar entry, global hotkeys still grabbed, and a
+  // relaunch did nothing because the single-instance lock was held by the
+  // zombie and 'second-instance' only revealed a window that no longer existed.
+  win.on('close', () => { closingMain = true })
+  win.on('closed', () => {
+    win = null
+    if (quitting) return
+    try { if (alive(buddy)) buddy.destroy() } catch { /* ignore */ }
+    buddy = null
+    try { if (alive(pickerWin)) pickerWin.destroy() } catch { /* ignore */ }
+    pickerWin = null
+    if (process.platform !== 'darwin') app.quit()   // macOS keeps the app alive; 'activate' recreates the window
+  })
 }
 
 // --- buddy window ----------------------------------------------------------
@@ -491,9 +693,17 @@ function createBuddy() {
   const saved = loadBuddyPos()
   const pos = (saved && clampToDisplays(saved.x, saved.y)) || defaultBuddyPos()
 
+  // Fixed size, non-resizable, with hard min/max equal to that size. The buddy is
+  // a frameless transparent window that is shown inactive (never focused): on
+  // Windows exactly that combination, when resizable, latched the native edge-
+  // resize while the user dragged it and the card grew/drifted while held. The
+  // size clamps plus the 'resize' re-settle below make a regression impossible
+  // even if 'resizable' is ever flipped again.
   buddy = new BrowserWindow({
     width: BUDDY_W,
     height: BUDDY_H,
+    minWidth: BUDDY_W, maxWidth: BUDDY_W,
+    minHeight: BUDDY_H, maxHeight: BUDDY_H,
     x: pos.x,
     y: pos.y,
     show: false,
@@ -529,12 +739,21 @@ function createBuddy() {
 
   // Persist the last dragged position (the buddy header is a CSS drag region).
   buddy.on('moved', saveBuddyPos)
+  // Re-settle: if anything ever changes the buddy's size (an OS quirk, a DPI
+  // change mid-drag, a future 'resizable' regression) snap it straight back.
+  buddy.on('resize', () => {
+    try {
+      if (!alive(buddy)) return
+      const [w, h] = buddy.getSize()
+      if (w !== BUDDY_W || h !== BUDDY_H) buddy.setSize(BUDDY_W, BUDDY_H, false)
+    } catch { /* ignore */ }
+  })
   buddy.on('closed', () => { buddy = null })
   return buddy
 }
 
 function showBuddy() {
-  if (quitting || !win || win.isDestroyed()) return
+  if (quitting || closingMain || !alive(win)) return
   const b = createBuddy()
   if (!b.isVisible()) b.showInactive()   // never steal focus from the app being worked in
   b.setAlwaysOnTop(true, 'screen-saver')
@@ -548,41 +767,71 @@ function toggleBuddy() {
 }
 
 function toggleHideShow() {
-  if (!win) { createWindow(); return }
+  if (!alive(win)) { createWindow(); return }
   if (win.isVisible()) win.hide()        // fires 'hide' -> showBuddy
   else { win.show(); win.focus() }       // fires 'show'/'focus' -> hideBuddy
 }
+let hoverInteractive = false   // cursor is over the title bar while click-through is on (see setHoverInteractive)
+const TITLE_BAR_H = 34         // the web title bar is 32px; a little slack for the hairline
+function cursorOverTitleBar() {
+  try {
+    if (!alive(win)) return false
+    const p = screen.getCursorScreenPoint()
+    const b = win.getBounds()
+    return p.x >= b.x && p.x <= b.x + b.width && p.y >= b.y && p.y <= b.y + TITLE_BAR_H
+  } catch { return false }
+}
 function setClickThrough(on) {
   clickThrough = !!on
-  if (win) win.setIgnoreMouseEvents(clickThrough, { forward: true })
-  if (win) win.webContents.send('work:clickthrough', clickThrough)
+  // Turning click-behind ON from the title bar leaves the cursor on that bar; it
+  // must stay clickable right away (not only after the cursor leaves and comes
+  // back), otherwise the very next click on the bar falls through to the app.
+  hoverInteractive = clickThrough && cursorOverTitleBar()
+  if (alive(win)) win.setIgnoreMouseEvents(clickThrough && !hoverInteractive, { forward: true })
+  if (alive(win)) win.webContents.send('work:clickthrough', clickThrough)
   sendState()
+}
+// Click-behind escape hatch. With click-through on, the window ignores every
+// click, including the title-bar button that turns click-through off, so a user
+// who did not know the Ctrl+Alt+W hotkey was stuck with an overlay they could
+// not operate. Because mouse moves are still forwarded (forward: true), the
+// renderer can tell us when the cursor is over the title bar; while it is, the
+// window accepts clicks again, and it goes back to click-through when the
+// cursor leaves. The user-visible mode (clickThrough) is unchanged by this.
+function setHoverInteractive(on) {
+  hoverInteractive = !!on
+  if (!alive(win)) return
+  if (!clickThrough) return               // nothing to do: the window is already interactive
+  win.setIgnoreMouseEvents(!hoverInteractive, { forward: true })
 }
 function cycleOpacity() {
   opacityIdx = (opacityIdx + 1) % OPACITIES.length
-  if (win) win.setOpacity(OPACITIES[opacityIdx])
-  if (win) win.webContents.send('work:opacity', OPACITIES[opacityIdx])
+  if (alive(win)) win.setOpacity(OPACITIES[opacityIdx])
+  if (alive(win)) win.webContents.send('work:opacity', OPACITIES[opacityIdx])
   sendState()
 }
 function setContentProtection(on) {
   contentProtected = !!on
-  try { if (win && !win.isDestroyed()) win.setContentProtection(contentProtected) } catch { /* ignore */ }
-  try { if (buddy && !buddy.isDestroyed()) buddy.setContentProtection(contentProtected) } catch { /* ignore */ }
+  try { if (alive(win)) win.setContentProtection(contentProtected) } catch { /* ignore */ }
+  try { if (alive(buddy)) buddy.setContentProtection(contentProtected) } catch { /* ignore */ }
   sendState()
 }
 
 // Renderer-driven controls (the console's own buttons), so the user does not
 // have to memorize hotkeys.
 ipcMain.handle('work:set-clickthrough', (_e, on) => { setClickThrough(on); return clickThrough })
-ipcMain.handle('work:set-opacity', (_e, v) => { const n = Math.max(0.2, Math.min(1, Number(v) || 1)); if (win) win.setOpacity(n); return n })
+ipcMain.handle('work:hover-interactive', (_e, on) => { setHoverInteractive(on); return hoverInteractive })
+ipcMain.handle('work:set-opacity', (_e, v) => { const n = Math.max(0.2, Math.min(1, Number(v) || 1)); if (alive(win)) win.setOpacity(n); return n })
+// The offline page's Retry (and its automatic reachability probe) reload the console.
+ipcMain.handle('work:retry-load', () => { retryLoad() })
 // The console's Hide button: hide the main window AND bring up the buddy so the
 // guidance keeps showing. (win.hide() also fires 'hide' -> showBuddy; calling it
 // here too keeps the behaviour correct even if the event is ever suppressed.)
-ipcMain.handle('work:hide', () => { if (win) win.hide(); showBuddy() })
+ipcMain.handle('work:hide', () => { if (alive(win)) win.hide(); showBuddy() })
 // Buddy-driven controls.
 ipcMain.handle('work:buddy-hide', () => { hideBuddy() })          // hide just the buddy
 ipcMain.handle('work:open-main', () => {                          // reopen the full console
-  if (!win || win.isDestroyed()) { createWindow(); return }
+  if (!alive(win)) { createWindow(); return }
   if (win.isMinimized()) win.restore()
   win.show(); win.focus()                                         // fires 'show'/'focus' -> hideBuddy
 })
@@ -622,23 +871,54 @@ const DOC_IMG_EXT = /\.(png|jpe?g|webp|bmp|gif|tiff?)$/i
 // On-device OCR (tesseract.js) so diagrams, screenshots and scanned pages read
 // as TEXT on this machine - no pixels leave. The language data is bundled in
 // ./ocr-lang so OCR works fully offline. One lazily-created worker is reused.
-let ocrWorker = null
-async function getOcrWorker() {
-  if (ocrWorker) return ocrWorker
-  const { createWorker } = require('tesseract.js')
-  let cachePath
-  try { cachePath = path.join(app.getPath('userData'), 'ocr-cache') } catch { cachePath = path.join(__dirname, 'ocr-lang') }
-  ocrWorker = await createWorker('eng', 1, {
-    langPath: path.join(__dirname, 'ocr-lang'),   // bundled eng.traineddata (offline)
-    cachePath,
-    gzip: false,
-  })
-  return ocrWorker
+// Robustness: the worker is created behind ONE shared promise (two images in
+// the same pick never start two engines), every OCR call has a hard timeout
+// (a wedged worker thread used to leave the pick-doc IPC pending forever, so
+// the "Add documents" button spun with no way out), and a failed or timed-out
+// worker is terminated and forgotten so the next attempt starts clean.
+let ocrWorkerPromise = null
+const OCR_TIMEOUT_MS = 120000
+function withTimeout(p, ms, message) {
+  let t
+  const timer = new Promise((_, reject) => { t = setTimeout(() => reject(new Error(message)), ms) })
+  return Promise.race([p, timer]).finally(() => clearTimeout(t))
+}
+// Optional native-ish modules are required lazily; a build without one must
+// produce a sentence the user can act on, not "Cannot find module".
+function requireOptional(name, friendly) {
+  try { return require(name) } catch { throw new Error(friendly) }
+}
+function getOcrWorker() {
+  if (ocrWorkerPromise) return ocrWorkerPromise
+  ocrWorkerPromise = (async () => {
+    const { createWorker } = requireOptional('tesseract.js', 'On-device OCR is not available in this build. Export the text and add it as a .txt, or show the page on screen.')
+    let cachePath
+    try { cachePath = path.join(app.getPath('userData'), 'ocr-cache') } catch { cachePath = path.join(__dirname, 'ocr-lang') }
+    try { fs.mkdirSync(cachePath, { recursive: true }) } catch { /* cache is an optimization only */ }
+    return createWorker('eng', 1, {
+      langPath: path.join(__dirname, 'ocr-lang'),   // bundled eng.traineddata (offline)
+      cachePath,
+      gzip: false,
+    })
+  })()
+  const p = ocrWorkerPromise
+  p.catch(() => { if (ocrWorkerPromise === p) ocrWorkerPromise = null })   // forget only our own failed start
+  return p
+}
+async function resetOcrWorker() {
+  const p = ocrWorkerPromise
+  ocrWorkerPromise = null
+  try { const w = await p; if (w && w.terminate) await w.terminate() } catch { /* ignore */ }
 }
 async function ocrImage(buf) {
-  const w = await getOcrWorker()
-  const { data } = await w.recognize(buf)
-  return { text: ((data && data.text) || '').trim(), confidence: Math.round((data && data.confidence) || 0) }
+  const w = await withTimeout(getOcrWorker(), OCR_TIMEOUT_MS, 'The OCR engine took too long to start. Try again, or add the text as a .txt file.')
+  try {
+    const { data } = await withTimeout(w.recognize(buf), OCR_TIMEOUT_MS, 'Reading this image took too long. Try a smaller or clearer image.')
+    return { text: ((data && data.text) || '').trim(), confidence: Math.round((data && data.confidence) || 0) }
+  } catch (e) {
+    resetOcrWorker()   // never reuse a worker that failed or hung
+    throw e
+  }
 }
 
 // Returns { text, method:'text'|'ocr', confidence? }. Text files read directly;
@@ -654,7 +934,7 @@ async function extractDocLocally(filePath) {
     return { text: o.text, method: 'ocr', confidence: o.confidence }
   }
   if (lower.endsWith('.pdf')) {
-    const { PDFParse } = require('pdf-parse')
+    const { PDFParse } = requireOptional('pdf-parse', 'PDF reading is not available in this build. Export the page as a PNG and add that, or show it on screen.')
     const parser = new PDFParse({ data: buf })
     let t = ''
     try { const r = await parser.getText(); t = ((r && r.text) || '').trim() } finally { if (parser.destroy) await parser.destroy() }
@@ -662,7 +942,7 @@ async function extractDocLocally(filePath) {
     return { text: t, method: 'text' }
   }
   if (lower.endsWith('.docx')) {
-    const mammoth = require('mammoth')
+    const mammoth = requireOptional('mammoth', 'Word reading is not available in this build. Save the document as .txt or PDF and add that.')
     const r = await mammoth.extractRawText({ buffer: buf })
     return { text: ((r && r.value) || '').trim(), method: 'text' }
   }
@@ -745,7 +1025,11 @@ const gotLock = app.requestSingleInstanceLock()
 if (!gotLock) {
   app.quit()
 } else {
-  app.on('second-instance', () => { if (win) { if (win.isMinimized()) win.restore(); win.show(); win.focus() } })
+  app.on('second-instance', () => {
+    if (!alive(win)) { createWindow(); return }   // never a silent no-op: a relaunch always yields a window
+    if (win.isMinimized()) win.restore()
+    win.show(); win.focus()
+  })
 
   // Auto-update from the WorkCoPilot feed (electron-updater, generic provider).
   // Packaged builds only; silent on any failure so an update problem never
@@ -764,7 +1048,10 @@ if (!gotLock) {
   app.whenReady().then(() => {
     createWindow()
     if (app.isPackaged) setupAutoUpdate()
-    globalShortcut.register('CommandOrControl+H', toggleHideShow)
+    // Hide / show is Ctrl+Alt+H only. The bare Ctrl+H used to be grabbed
+    // system-wide as well, which took Find-and-Replace (Word, Excel, VS Code),
+    // History (Chrome, Edge) and Hide (Photoshop and others) away from the very
+    // app the user is being guided through, for as long as WorkCoPilot ran.
     globalShortcut.register('CommandOrControl+Alt+H', toggleHideShow)
     // Interact-behind: toggle click-through so clicks pass to the app you are
     // working in. Global so it works even when click-through is already on (the
@@ -782,7 +1069,7 @@ if (!gotLock) {
     // single-screen PC this is a harmless no-op (nothing to choose).
     globalShortcut.register('CommandOrControl+Alt+M', requestMonitorPick)
 
-    app.on('activate', () => { if (!win) createWindow() })
+    app.on('activate', () => { if (!alive(win)) createWindow() })
   })
 
   app.on('before-quit', () => { quitting = true })
