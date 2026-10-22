@@ -32,7 +32,11 @@ import crypto from 'node:crypto'
 //   WORK_PUBLIC_ORIGIN      e.g. https://admireveda.com  (path is appended)
 export function callbackUrl(req) {
   if (process.env.WORK_SSO_REDIRECT_URI) return process.env.WORK_SSO_REDIRECT_URI
-  const origin = process.env.WORK_PUBLIC_ORIGIN
+  // WORK_PUBLIC_ORIGIN is the documented name; the hosted service actually sets
+  // WORK_PUBLIC_URL to the same value, so honor both. This pins the redirect URI
+  // deterministically in production instead of trusting forwarded headers (the
+  // URI MUST match what is registered at the IdP exactly, or sign-in is refused).
+  const origin = process.env.WORK_PUBLIC_ORIGIN || process.env.WORK_PUBLIC_URL
   if (origin) return origin.replace(/\/+$/, '') + '/api/work/sso/callback'
   const proto = String(req.headers['x-forwarded-proto'] || req.protocol || 'https').split(',')[0].trim()
   const host = req.headers['x-forwarded-host'] || req.headers.host
@@ -244,7 +248,10 @@ export function registerSsoRoutes(app, deps = {}) {
       const claims = await verifyIdToken(tokens.id_token, cfg, disco, { nonce: sess.nonce })
       const email = extractEmail(claims)
       if (!email) return loginError(res, 'The identity provider did not share an email address.')
-      const user = store.provisionSsoUser({ companyId: sess.companyId, email })
+      // Invite-only by default: the email must already be pre-provisioned on the
+      // company (resolveSsoLogin refuses an unknown email in explicit mode, or
+      // creates a member in auto mode). This is what caps the licenses.
+      const user = store.resolveSsoLogin({ companyId: sess.companyId, email })
       establishSession(req, user)
       req.session.save(() => res.redirect('/work'))
     } catch (e) {

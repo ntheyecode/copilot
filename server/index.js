@@ -329,6 +329,12 @@ async function workResearchNotes(goal) {
 app.post('/api/work/login', wrap((req, res) => {
   const { username, password } = req.body || {}
   const u = store.findUser(username)
+  // SSO-bound accounts (pre-provisioned by email, no usable password) must come
+  // in through their company identity provider, not this form. Tell them plainly
+  // instead of returning a confusing "wrong password".
+  if (u && u.ssoEmail) {
+    return res.status(409).json({ error: "This is a company single sign-on account. Use 'Sign in with your company (SSO)' and enter your company email domain.", sso: true })
+  }
   if (!store.verifyPassword(u, password || '')) {
     return res.status(401).json({ error: 'Invalid username or password' })
   }
@@ -933,12 +939,41 @@ app.get('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((r
   const cid = req.workUser.companyId
   res.json({ company: store.getCompany(cid), users: store.listCompanyUsers(cid) })
 }))
+// In LOCKED license mode the company admin cannot change who holds a license
+// (add or remove people); only the superadmin can. Role/tier edits are still
+// allowed. Returns true when the roster may be changed, else sends 403.
+function rosterChangeAllowed(req, res) {
+  const c = store.getCompany(req.workUser.companyId)
+  if (c && c.licenseMode === 'locked') {
+    res.status(403).json({ error: 'Your license roster is managed by WorkCoPilot. Open a support ticket to add or remove who holds a license.', locked: true })
+    return false
+  }
+  return true
+}
 app.post('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
-  const { username, password, companyRole, tier } = req.body || {}
-  // A company admin can only create into their OWN company. Scrub stays governed
-  // by the company policy (they cannot grant a weaker policy than the company's).
-  res.json(store.createManagedUser({ username, password, companyId: cid, companyRole: companyRole === 'company_admin' ? 'company_admin' : 'member', tier }))
+  if (!rosterChangeAllowed(req, res)) return
+  const { username, password, email, companyRole, tier, displayName } = req.body || {}
+  const role = companyRole === 'company_admin' ? 'company_admin' : 'member'
+  // SSO companies pre-provision by EMAIL (no password; they sign in through the
+  // identity provider). A non-SSO company still adds by username + password.
+  if (email && String(email).trim()) {
+    return res.json({ user: store.addCompanyMemberByEmail({ companyId: cid, email, companyRole: role, tier, displayName }) })
+  }
+  res.json(store.createManagedUser({ username, password, companyId: cid, companyRole: role, tier }))
+}))
+// Company admin: the license + usage dashboard (seats by pool, who holds a
+// license, tier breakdown, minute pool, each person's live usage).
+app.get('/api/work/team/licenses', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.companyLicenseSummary(req.workUser.companyId))
+}))
+// Company admin: give one member minutes from the company's shared pool.
+app.post('/api/work/company/users/:id/minutes', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const minutes = Number((req.body || {}).minutes) || 0
+  res.json(store.allocateCompanyPoolToUser(cid, req.params.id, Math.round(minutes * 60)))
 }))
 // Company admin: change a member's role or plan within their OWN company. The
 // store guards that the target is in this company. An admin cannot change their
@@ -958,6 +993,7 @@ app.patch('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, w
 app.delete('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
   if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  if (!rosterChangeAllowed(req, res)) return
   if (String(req.params.id) === String(req.workUser.id)) {
     return res.status(400).json({ error: 'You cannot remove yourself from the company.' })
   }

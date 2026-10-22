@@ -275,8 +275,8 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json({ companies: store.listCompanies() })
   }))
   app.post('/api/work/admin/companies', requireAuth, superGate, w((req, res) => {
-    const { name, plan, seats, scrub } = req.body || {}
-    res.json(store.createCompany({ name, plan, seats, scrub }))
+    const { name, plan, seats, adminSeats, licenseMode, ssoProvisioning, scrub } = req.body || {}
+    res.json(store.createCompany({ name, plan, seats, adminSeats, licenseMode, ssoProvisioning, scrub }))
   }))
   app.get('/api/work/admin/companies/:id', requireAuth, superGate, w((req, res) => {
     const c = store.getCompany(req.params.id)
@@ -298,6 +298,26 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   // Superadmin: per-company AI consumption (estimated $), who used what.
   app.get('/api/work/admin/companies/:id/consumption', requireAuth, superGate, w((req, res) => {
     res.json(store.companyConsumption(req.params.id))
+  }))
+  // Superadmin: the license + usage dashboard for any company.
+  app.get('/api/work/admin/companies/:id/licenses', requireAuth, superGate, w((req, res) => {
+    res.json(store.companyLicenseSummary(req.params.id))
+  }))
+  // Superadmin: pre-provision a company member or admin BY EMAIL (SSO, no
+  // password). This is how the first company admin is seeded so they can sign in
+  // through SSO before anyone has a password. Works even in locked license mode.
+  app.post('/api/work/admin/companies/:id/members', requireAuth, superGate, w((req, res) => {
+    const { email, companyRole, tier, displayName } = req.body || {}
+    res.json({ user: store.addCompanyMemberByEmail({ companyId: req.params.id, email, companyRole, tier, displayName }) })
+  }))
+  // Superadmin: remove a company member (any mode). Reversible detach.
+  app.delete('/api/work/admin/companies/:id/members/:uid', requireAuth, superGate, w((req, res) => {
+    res.json(store.removeCompanyMember(req.params.id, req.params.uid))
+  }))
+  // Superadmin: add minutes to a company's shared pool (negative removes).
+  app.post('/api/work/admin/companies/:id/pool-minutes', requireAuth, superGate, w((req, res) => {
+    const minutes = Number((req.body || {}).minutes) || 0
+    res.json(store.grantCompanyPoolSeconds(req.params.id, Math.round(minutes * 60)))
   }))
   // Leads: the public "Validate it live" captures (superadmin). Append-only log
   // with a timestamp + which page each came from.

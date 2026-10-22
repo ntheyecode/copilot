@@ -277,6 +277,8 @@ export function publicWorkUser(u) {
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
     companyName: co ? co.name : null,
+    email: u.ssoEmail || null,                   // the SSO identity email, when set
+    ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
     // Billing state the client needs to know (status + plan only, never stripe ids).
     subscription: {
       status: (u.subscription && u.subscription.status) || 'none',
@@ -330,11 +332,16 @@ export function userCanUseService(userId) {
   if (u.companyId) {
     const c = (db.companies || []).find((x) => x.id === u.companyId)
     if (c) {
-      if (!c.seats || c.seats <= 0) return true   // unseated company: all members covered
-      const members = (db.users || []).filter((x) => x.companyId === c.id)
+      // Admins and members draw from SEPARATE seat pools. Within each pool,
+      // coverage is by join order (oldest first); 0 = unlimited.
+      const isAdmin = u.companyRole === 'company_admin'
+      const cap = isAdmin ? (c.adminSeats != null ? Number(c.adminSeats) : 2) : (Number(c.seats) || 0)
+      if (!cap || cap <= 0) return true           // that pool is unlimited
+      const peers = (db.users || [])
+        .filter((x) => x.companyId === c.id && ((x.companyRole === 'company_admin') === isAdmin))
         .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
-      const idx = members.findIndex((x) => x.id === u.id)
-      return idx >= 0 && idx < c.seats            // covered up to the seat count
+      const idx = peers.findIndex((x) => x.id === u.id)
+      return idx >= 0 && idx < cap                // covered up to this pool's count
     }
   }
   const s = u.subscription
@@ -501,12 +508,19 @@ function publicCompany(c) {
   if (!c) return null
   const users = (db.users || []).filter((u) => u.companyId === c.id)
   const t = c.trial || null
+  const adminCount = users.filter((u) => u.companyRole === 'company_admin').length
+  const memberCount = users.length - adminCount
   return {
     id: c.id, name: c.name, plan: c.plan || 'basic', seats: c.seats || 0,
+    adminSeats: c.adminSeats != null ? c.adminSeats : 2,
+    licenseMode: LICENSE_MODES.includes(c.licenseMode) ? c.licenseMode : 'locked',
+    ssoProvisioning: SSO_PROVISIONING.includes(c.ssoProvisioning) ? c.ssoProvisioning : 'explicit',
+    poolSeconds: Math.max(0, Number(c.poolSeconds) || 0),
     scrub: !!c.scrub, createdAt: c.createdAt,
     sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
     userCount: users.length,
-    adminCount: users.filter((u) => u.companyRole === 'company_admin').length,
+    memberCount,
+    adminCount,
     aiSource: c.aiSource || null,
     imageGen: !!c.imageGen,
     trial: t ? { sessions: t.sessions || 0, used: t.used || 0, remaining: Math.max(0, (t.sessions || 0) - (t.used || 0)), minutesPer: t.minutesPer || 60 } : null,
@@ -618,13 +632,27 @@ export function workImageGenAllowed(userId) {
   if (u.companyId) { const c = (db.companies || []).find((x) => x.id === u.companyId); return !!(c && c.imageGen) }
   return true   // individuals are governed by their own plan elsewhere
 }
-export function createCompany({ name, plan = 'basic', seats = 0, scrub = false } = {}) {
+// licenseMode: 'locked' (default - only the superadmin changes who holds a
+//   license; the company admin cannot add/remove people) or 'flexible' (the
+//   company admin manages the roster themselves, within the seat caps).
+// ssoProvisioning: 'explicit' (default - only pre-entered emails can sign in via
+//   SSO; everyone else is refused) or 'auto' (anyone in the domain is created on
+//   first SSO sign-in). Seats are split: `seats` = USER (member) licenses,
+//   `adminSeats` = company-admin licenses, each counted separately. 0 = unlimited.
+export const LICENSE_MODES = ['locked', 'flexible']
+export const SSO_PROVISIONING = ['explicit', 'auto']
+export function createCompany({ name, plan = 'basic', seats = 0, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false } = {}) {
   const nm = String(name || '').trim()
   if (nm.length < 2) throw httpErr(400, 'Company name is required.')
   if (!db.companies) db.companies = []
   if (db.companies.some((c) => c.name.toLowerCase() === nm.toLowerCase())) throw httpErr(409, 'A company with that name already exists.')
   const c = {
-    id: 'co' + id(), name: nm, plan: String(plan || 'basic'), seats: Number(seats) || 0, scrub: !!scrub, sso: null, createdAt: now(),
+    id: 'co' + id(), name: nm, plan: String(plan || 'basic'), seats: Number(seats) || 0,
+    adminSeats: Number.isFinite(Number(adminSeats)) ? Math.max(0, Number(adminSeats)) : 2,
+    licenseMode: LICENSE_MODES.includes(licenseMode) ? licenseMode : 'locked',
+    ssoProvisioning: SSO_PROVISIONING.includes(ssoProvisioning) ? ssoProvisioning : 'explicit',
+    poolSeconds: 0,            // shared company minute pool (drawn after a user's own time)
+    scrub: !!scrub, sso: null, createdAt: now(),
     aiSource: null,            // superadmin MUST select 'platform' | 'company' before use
     imageGen: false,           // off until the superadmin enables it (cost gate)
     trial: { sessions: 10, used: 0, minutesPer: 60 },   // 10 x 1h, pooled across users
@@ -688,6 +716,9 @@ export function updateCompany(companyId, patch = {}) {
   if (patch.name != null) { const nm = String(patch.name).trim(); if (nm.length >= 2) c.name = nm }
   if (patch.plan != null) c.plan = String(patch.plan)
   if (patch.seats != null) c.seats = Number(patch.seats) || 0
+  if (patch.adminSeats != null) c.adminSeats = Math.max(0, Number(patch.adminSeats) || 0)
+  if (patch.licenseMode != null && LICENSE_MODES.includes(String(patch.licenseMode))) c.licenseMode = String(patch.licenseMode)
+  if (patch.ssoProvisioning != null && SSO_PROVISIONING.includes(String(patch.ssoProvisioning))) c.ssoProvisioning = String(patch.ssoProvisioning)
   if (patch.scrub != null) c.scrub = !!patch.scrub
   if (patch.sso !== undefined) c.sso = patch.sso || null
   if (patch.aiSource !== undefined) c.aiSource = ['platform', 'company'].includes(patch.aiSource) ? patch.aiSource : null
@@ -708,7 +739,14 @@ export function listCompanyUsers(companyId) {
 // The FULL config (including the client secret) is stored on c.sso for server
 // use. publicCompany/getCompany only ever expose provider/connected/domain, so
 // the secret never reaches a client. setCompanySso is the only writer.
-const SSO_PROVIDERS = ['google', 'microsoft', 'okta']
+// The SSO engine is generic OpenID Connect (discovery + Authorization Code +
+// PKCE), so ANY standards-compliant provider works once its issuer is entered.
+// This allowlist is just what the UI offers by name; 'oidc' is the catch-all for
+// any other OpenID Connect identity provider. No code differs per provider.
+export const SSO_PROVIDERS = [
+  'google', 'microsoft', 'okta', 'auth0', 'onelogin', 'ping', 'jumpcloud',
+  'keycloak', 'cognito', 'azuread_b2c', 'authentik', 'duo', 'centrify', 'oidc',
+]
 export function setCompanySso(companyId, cfg = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
@@ -742,24 +780,40 @@ export function findCompanyBySsoDomain(domain) {
   const c = (db.companies || []).find((x) => x.sso && x.sso.connected && x.sso.domain && x.sso.domain === d)
   return c ? publicCompany(c) : null
 }
-// Find-or-create a company member for an SSO sign-in. The email is the stable
-// key (stored as ssoEmail). Username is the email local part, deduped globally
-// because usernames are unique. Seats are enforced when the company sets them.
-// SSO users have no usable password (a random hash), so they can only sign in
-// through their identity provider.
-export function provisionSsoUser({ companyId, email } = {}) {
+// Look up an already-provisioned SSO member of a company by email (the stable
+// key). Returns the raw user record or null.
+export function findCompanyMemberByEmail(companyId, email) {
+  const mail = String(email || '').trim().toLowerCase()
+  if (!mail.includes('@')) return null
+  return (db.users || []).find((u) => u.companyId === companyId && u.ssoEmail === mail) || null
+}
+
+// How many of a company's seats (for one role pool) are already taken. Admins
+// and members draw from separate pools, matching userCanUseService.
+function seatPoolUsage(companyId, isAdmin) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) return { cap: 0, used: 0, full: false }
+  const cap = isAdmin ? (c.adminSeats != null ? Number(c.adminSeats) : 2) : (Number(c.seats) || 0)
+  const used = (db.users || []).filter((u) => u.companyId === companyId && ((u.companyRole === 'company_admin') === isAdmin)).length
+  return { cap, used, full: cap > 0 && used >= cap }
+}
+
+// Low-level: create an SSO-bound account (no usable password) in a company.
+// Enforces the correct seat pool for the role. Shared by the auto path and the
+// explicit admin add-by-email path.
+function createSsoAccount({ companyId, email, companyRole = 'member', tier = 'basic', displayName = null } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
   const mail = String(email || '').trim().toLowerCase()
-  if (!mail.includes('@')) throw httpErr(400, 'The identity provider did not share a valid email address.')
-  // Already provisioned in THIS company?
-  const existing = (db.users || []).find((u) => u.companyId === companyId && u.ssoEmail === mail)
-  if (existing) return existing
-  // Seat limit (0 = unlimited). Count current members of this company.
-  const seats = Number(c.seats) || 0
-  if (seats > 0) {
-    const used = (db.users || []).filter((u) => u.companyId === companyId).length
-    if (used >= seats) throw httpErr(403, 'Your company has used all of its seats. Ask your administrator to add more.')
+  if (!mail.includes('@')) throw httpErr(400, 'A valid work email is required.')
+  if (findCompanyMemberByEmail(companyId, mail)) throw httpErr(409, 'That email is already on this company.')
+  const role = companyRole === 'company_admin' ? 'company_admin' : 'member'
+  const isAdmin = role === 'company_admin'
+  const pool = seatPoolUsage(companyId, isAdmin)
+  if (pool.full) {
+    throw httpErr(403, isAdmin
+      ? `All ${pool.cap} admin seats are in use. Ask the WorkCoPilot team to add admin seats.`
+      : `All ${pool.cap} user licenses are in use. Remove someone first, or ask the WorkCoPilot team to add licenses.`)
   }
   const local = mail.split('@')[0].replace(/[^a-z0-9._+-]/gi, '')
   const stem = local.length >= 3 ? local : mail
@@ -774,13 +828,13 @@ export function provisionSsoUser({ companyId, email } = {}) {
     root: false,
     createdAt: now(),
     onboarded: false,
-    displayName: null,
-    tier: 'basic',
+    displayName: displayName ? String(displayName).trim().slice(0, 80) : null,
+    tier: WORK_TIERS.includes(String(tier)) ? String(tier) : 'basic',
     purchasedSeconds: 0,
     imageCredits: 0,
     ai: null,
     companyId,
-    companyRole: 'member',
+    companyRole: role,
     ssoEmail: mail,
   }
   db.users.push(u)
@@ -788,6 +842,35 @@ export function provisionSsoUser({ companyId, email } = {}) {
   persist()
   return u
 }
+
+// Company admin / superadmin: explicitly pre-provision a person by email so they
+// can sign in via SSO. This is the invite-only path. Returns the public shape.
+export function addCompanyMemberByEmail({ companyId, email, companyRole = 'member', tier = 'basic', displayName = null } = {}) {
+  return publicWorkUser(createSsoAccount({ companyId, email, companyRole, tier, displayName }))
+}
+
+// SSO sign-in resolution. In EXPLICIT mode (the default) the email must already
+// be on the company, else the sign-in is refused (the allowlist). In AUTO mode a
+// member is created on first sign-in. This is the only place the SSO callback
+// turns a verified email into an account.
+export function resolveSsoLogin({ companyId, email } = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const mail = String(email || '').trim().toLowerCase()
+  if (!mail.includes('@')) throw httpErr(400, 'The identity provider did not share a valid email address.')
+  const existing = findCompanyMemberByEmail(companyId, mail)
+  if (existing) return existing
+  const mode = SSO_PROVISIONING.includes(c.ssoProvisioning) ? c.ssoProvisioning : 'explicit'
+  if (mode !== 'auto') {
+    throw httpErr(403, 'Your email is not set up for WorkCoPilot yet. Ask your company administrator to add you.')
+  }
+  // AUTO mode: create a member on first sign-in (respects the user-seat pool).
+  return createSsoAccount({ companyId, email: mail, companyRole: 'member', tier: 'basic' })
+}
+
+// Kept for backward compatibility with any caller that expects find-or-create in
+// AUTO mode; new code uses resolveSsoLogin. Explicit companies refuse unknowns.
+export function provisionSsoUser(args = {}) { return resolveSsoLogin(args) }
 export function setUserCompany(userId, companyId, companyRole) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')
@@ -1000,11 +1083,51 @@ export function getWorkUsage(workUserId) {
   const u = getUser(workUserId)
   const purchasedSeconds = (u && u.purchasedSeconds) || 0
   const freeLeft = Math.max(0, dailySeconds - used)
+  const co = (u && u.companyId) ? (db.companies || []).find((x) => x.id === u.companyId) : null
+  const poolSeconds = co ? Math.max(0, Number(co.poolSeconds) || 0) : 0
   return {
     tier, dailySeconds, usedSeconds: used, purchasedSeconds,
-    freeLeft, remainingSeconds: freeLeft + purchasedSeconds,
-    exhausted: (freeLeft + purchasedSeconds) <= 0,
+    poolSeconds,                                   // shared company minutes also available
+    freeLeft, remainingSeconds: freeLeft + purchasedSeconds + poolSeconds,
+    exhausted: (freeLeft + purchasedSeconds + poolSeconds) <= 0,
     resetLabel: '11:59 PM ET',
+  }
+}
+// A company admin's license + usage dashboard: seat pools, who holds a license,
+// the tier breakdown, the minute pool, and each person's live usage. Everything
+// the console needs to show "consumed users and licenses" in one call.
+export function companyLicenseSummary(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const all = (db.users || []).filter((u) => u.companyId === companyId)
+    .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
+  const userSeats = Number(c.seats) || 0
+  const adminSeats = c.adminSeats != null ? Number(c.adminSeats) : 2
+  const tiers = { basic: 0, advanced: 0, premium: 0 }
+  const members = all.map((u) => {
+    const t = WORK_TIERS.includes(u.tier) ? u.tier : 'basic'
+    tiers[t] = (tiers[t] || 0) + 1
+    const usage = getWorkUsage(u.id)
+    return {
+      id: u.id, username: u.username, displayName: u.displayName || null,
+      email: u.ssoEmail || null, ssoBound: !!u.ssoEmail,
+      companyRole: u.companyRole || 'member', tier: t,
+      licensed: userCanUseService(u.id), createdAt: u.createdAt,
+      usage: { dailySeconds: usage.dailySeconds, usedSeconds: usage.usedSeconds, purchasedSeconds: usage.purchasedSeconds, remainingSeconds: usage.remainingSeconds },
+    }
+  })
+  const adminCount = members.filter((m) => m.companyRole === 'company_admin').length
+  const memberCount = members.length - adminCount
+  return {
+    companyId, name: c.name,
+    licenseMode: LICENSE_MODES.includes(c.licenseMode) ? c.licenseMode : 'locked',
+    ssoProvisioning: SSO_PROVISIONING.includes(c.ssoProvisioning) ? c.ssoProvisioning : 'explicit',
+    userSeats, adminSeats,
+    userSeatsUsed: memberCount, adminSeatsUsed: adminCount,
+    userSeatsLeft: userSeats > 0 ? Math.max(0, userSeats - memberCount) : null,   // null = unlimited
+    adminSeatsLeft: adminSeats > 0 ? Math.max(0, adminSeats - adminCount) : null,
+    poolSeconds: Math.max(0, Number(c.poolSeconds) || 0),
+    tiers, members,
   }
 }
 // Accrue active seconds: fill the free daily bucket first, then draw purchased.
@@ -1020,10 +1143,42 @@ export function addWorkUsage(workUserId, seconds) {
   const fromFree = Math.min(freeLeft, secs); rec.usedSeconds += fromFree; secs -= fromFree
   if (secs > 0) {
     const u = getUser(workUserId)
-    if (u) { const take = Math.min(u.purchasedSeconds || 0, secs); u.purchasedSeconds = (u.purchasedSeconds || 0) - take; secs -= take }
+    if (u) {
+      // Draw the person's own purchased balance first, then the shared company
+      // pool (so a member's top-ups are spent before the company's pooled time).
+      const take = Math.min(u.purchasedSeconds || 0, secs); u.purchasedSeconds = (u.purchasedSeconds || 0) - take; secs -= take
+      if (secs > 0 && u.companyId) {
+        const c = (db.companies || []).find((x) => x.id === u.companyId)
+        if (c && (c.poolSeconds || 0) > 0) { const fromPool = Math.min(c.poolSeconds, secs); c.poolSeconds -= fromPool; secs -= fromPool }
+      }
+    }
   }
   persistSoon()
   return getWorkUsage(workUserId)
+}
+// Superadmin: add (or remove, with a negative value) minutes to a company's
+// shared pool. Returns the new pool balance in seconds.
+export function grantCompanyPoolSeconds(companyId, seconds) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  c.poolSeconds = Math.max(0, (Number(c.poolSeconds) || 0) + Math.round(Number(seconds) || 0))
+  persist()
+  return { companyId, poolSeconds: c.poolSeconds }
+}
+// Company admin: move minutes FROM the company pool TO one member's own balance
+// (distributing pooled time the company already holds; it does not mint time).
+export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const u = getUser(targetUserId)
+  if (!u || String(u.companyId) !== String(companyId)) throw httpErr(404, 'That user is not in your company.')
+  const want = Math.max(0, Math.round(Number(seconds) || 0))
+  if (!want) throw httpErr(400, 'Enter how many minutes to allocate.')
+  if ((c.poolSeconds || 0) < want) throw httpErr(400, 'Your company pool does not have that many minutes left.')
+  c.poolSeconds -= want
+  u.purchasedSeconds = Math.max(0, (u.purchasedSeconds || 0) + want)
+  persist()
+  return { ok: true, poolSeconds: c.poolSeconds, user: publicWorkUser(u) }
 }
 
 // WorkCoPilot pricing (superadmin-editable; the marketing site reads it).
