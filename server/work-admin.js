@@ -283,7 +283,10 @@ export function registerWorkAdminRoutes(app, deps = {}) {
       adminSeats: b.adminSeats, licenseMode: b.licenseMode, ssoProvisioning: b.ssoProvisioning,
       scrub: b.scrub, profile: b.profile, pricing: b.pricing,
     })
-    // AI source is set after creation (the store has a dedicated setter + null default).
+    // AI source is set after creation (the store has a dedicated setter + null
+    // default). The setter rejects an unknown value with a 400, so validate it up
+    // front rather than creating the company and then failing.
+    if (b.aiSource && !['platform', 'company'].includes(String(b.aiSource))) return res.status(400).json({ error: 'AI source must be platform or company.' })
     if (b.aiSource) store.setCompanyAiSource(c.id, b.aiSource)
     res.json(store.getCompany(c.id))
   }))
@@ -325,7 +328,8 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   }))
   // Superadmin: add minutes to a company's shared pool (negative removes).
   app.post('/api/work/admin/companies/:id/pool-minutes', requireAuth, superGate, w((req, res) => {
-    const minutes = Number((req.body || {}).minutes) || 0
+    const minutes = Number((req.body || {}).minutes)
+    if (!Number.isFinite(minutes) || minutes === 0) return res.status(400).json({ error: 'Enter a number of minutes (negative removes).' })
     res.json(store.grantCompanyPoolSeconds(req.params.id, Math.round(minutes * 60)))
   }))
   // Superadmin: set a company's per-company price overrides (merged over global).

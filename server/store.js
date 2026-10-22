@@ -333,12 +333,19 @@ export function userCanUseService(userId) {
     const c = (db.companies || []).find((x) => x.id === u.companyId)
     if (c) {
       // Admins and members draw from SEPARATE seat pools. Within each pool,
-      // coverage is by join order (oldest first); 0 = unlimited.
+      // coverage is by join order (oldest first); 0 = unlimited. When the company
+      // bought PER-TIER licenses, a member is covered by join order WITHIN THEIR
+      // TIER against that tier's allocation (0 allocated = no licenses of that
+      // tier, not unlimited), matching the per-tier caps enforced on add/re-tier.
       const isAdmin = u.companyRole === 'company_admin'
-      const cap = isAdmin ? (c.adminSeats != null ? Number(c.adminSeats) : 2) : (Number(c.seats) || 0)
-      if (!cap || cap <= 0) return true           // that pool is unlimited
+      const myTier = WORK_TIERS.includes(u.tier) ? u.tier : 'basic'
+      const perTier = !isAdmin && !!c.seatsByTier
+      const cap = isAdmin ? seatCount(c.adminSeats, 2) : (perTier ? seatCount(c.seatsByTier[myTier]) : seatCount(c.seats))
+      if (perTier && cap <= 0) return false       // no licenses of this tier were bought
+      if (cap <= 0) return true                   // that pool is unlimited
       const peers = (db.users || [])
-        .filter((x) => x.companyId === c.id && ((x.companyRole === 'company_admin') === isAdmin))
+        .filter((x) => x.companyId === c.id && ((x.companyRole === 'company_admin') === isAdmin)
+          && (!perTier || (WORK_TIERS.includes(x.tier) ? x.tier : 'basic') === myTier))
         .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
       const idx = peers.findIndex((x) => x.id === u.id)
       return idx >= 0 && idx < cap                // covered up to this pool's count
@@ -511,9 +518,9 @@ function publicCompany(c) {
   const adminCount = users.filter((u) => u.companyRole === 'company_admin').length
   const memberCount = users.length - adminCount
   return {
-    id: c.id, name: c.name, plan: c.plan || 'basic', seats: c.seats || 0,
+    id: c.id, name: c.name, plan: c.plan || 'basic', seats: seatCount(c.seats),
     seatsByTier: c.seatsByTier || null,
-    adminSeats: c.adminSeats != null ? c.adminSeats : 2,
+    adminSeats: seatCount(c.adminSeats, 2),
     licenseMode: LICENSE_MODES.includes(c.licenseMode) ? c.licenseMode : 'locked',
     ssoProvisioning: SSO_PROVISIONING.includes(c.ssoProvisioning) ? c.ssoProvisioning : 'explicit',
     poolSeconds: Math.max(0, Number(c.poolSeconds) || 0),
@@ -552,7 +559,11 @@ function publicCompany(c) {
 export function setCompanyAiSource(companyId, source) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found')
+  // null / '' = "not selected"; anything else must be a known source (a typo used
+  // to silently reset the choice to "not selected").
+  if (source != null && source !== '') enumOrThrow(source, ['platform', 'company'], 'AI source')
   c.aiSource = ['platform', 'company'].includes(source) ? source : null
+  delete c.aiSourceBeforeKeys   // an explicit operator choice supersedes the pre-keys memory
   persist(); return publicCompany(c)
 }
 // Set a company's AI keys. owner='corporate' = superadmin-managed per-company keys
@@ -562,13 +573,25 @@ export function setCompanyAiKeys(companyId, { providerId, apiKey, chatModel, vis
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found')
   const key = String(apiKey || '').trim()
-  if (!key) { c.companyAi = {} }
-  else {
+  if (key.length > 1024) throw httpErr(400, 'That API key is too long to be valid.')
+  if (!key) {
+    c.companyAi = {}
+    // Clearing the keys restores the AI source the operator had chosen BEFORE keys
+    // were added (recorded below). That is honoring a recorded choice, not a
+    // silent fallback: if the operator had explicitly set 'company' (customer
+    // must bring keys), it stays 'company' and every call fails loudly with the
+    // "no keys configured" reason until keys return.
+    if (c.aiSource === 'company' && Object.prototype.hasOwnProperty.call(c, 'aiSourceBeforeKeys')) {
+      c.aiSource = c.aiSourceBeforeKeys === 'platform' ? 'platform' : (c.aiSourceBeforeKeys === 'company' ? 'company' : null)
+    }
+    delete c.aiSourceBeforeKeys
+  } else {
+    if (c.aiSource !== 'company') c.aiSourceBeforeKeys = c.aiSource || null
     c.companyAi = {
-      providerId: String(providerId || '').trim() || null,
+      providerId: String(providerId || '').trim().slice(0, 40) || null,
       apiKey: key,
-      chatModel: String(chatModel || '').trim() || null,
-      visionModel: String(visionModel || '').trim() || null,
+      chatModel: String(chatModel || '').trim().slice(0, 120) || null,
+      visionModel: String(visionModel || '').trim().slice(0, 120) || null,
       owner: owner === 'company' ? 'company' : 'corporate',
       setAt: new Date().toISOString(),
     }
@@ -671,14 +694,56 @@ export function workImageGenAllowed(userId) {
 //   `adminSeats` = company-admin licenses, each counted separately. 0 = unlimited.
 export const LICENSE_MODES = ['locked', 'flexible']
 export const SSO_PROVISIONING = ['explicit', 'auto']
+export const COMPANY_ROLES = ['member', 'company_admin']
+// Seat / license counts are whole, non-negative, finite numbers. Anything else
+// (negative, NaN, Infinity, "abc", 1.5) used to slip through as 0 = unlimited or
+// as a fractional / infinite cap; now it is clamped to a sane integer. SEAT_MAX
+// keeps a typo like 1e300 from becoming an effectively unlimited pool.
+const SEAT_MAX = 1000000
+// Lenient READ normalizer (never throws; used on stored values).
+function seatCount(v, fallback = 0) {
+  const n = Number(v)
+  if (v == null || v === '' || !Number.isFinite(n)) return fallback
+  return Math.min(SEAT_MAX, Math.max(0, Math.floor(n)))
+}
+// Strict WRITE validator: a negative or non-numeric count is a 400. Clamping it
+// to 0 would silently mean "unlimited", which is the opposite of what a typo like
+// "-5" or "abc" intended.
+function seatInput(v, label, fallback = 0) {
+  if (v == null || v === '') return fallback
+  const n = Number(v)
+  if (!Number.isFinite(n) || n < 0) throw httpErr(400, `${label} must be a whole number of 0 or more (0 = no limit).`)
+  return Math.min(SEAT_MAX, Math.floor(n))
+}
+// Strict closed-set validation. A value that is given but not in the set is a
+// 400 (never a silent default: a typo like 'flexable' used to quietly become
+// 'locked', and a role typo quietly DEMOTED an admin to member).
+function enumOrThrow(v, allowed, label) {
+  const s = String(v)
+  if (!allowed.includes(s)) throw httpErr(400, `${label} must be one of: ${allowed.join(', ')}.`)
+  return s
+}
+function normalizeCompanyRole(v, fallback = 'member') {
+  if (v === undefined || v === null || v === '') return fallback
+  return enumOrThrow(v, COMPANY_ROLES, 'Role')
+}
+// Work emails: trimmed + lowercased (the stable dedupe key), length-capped at the
+// RFC maximum, and shaped like an address (one @, a dotted domain, no spaces).
+const EMAIL_RE = /^[^\s@]{1,64}@[^\s@.]+(\.[^\s@.]+)+$/
+function normalizeEmail(v) {
+  const mail = String(v || '').trim().toLowerCase()
+  if (!mail || mail.length > 254 || !EMAIL_RE.test(mail)) return null
+  return mail
+}
 // Normalize a per-tier seat allocation. Returns {basic,advanced,premium} of
-// non-negative integers, or null when nothing meaningful was given (legacy
+// non-negative integers, or null when no tier was given at all (legacy
 // single-pool mode). When set, each tier is a HARD cap and the total user seat
-// count is their sum.
+// count is their sum. An explicit all-zero allocation is KEPT (it means "no user
+// licenses of any tier"), instead of silently reverting to the old total pool.
 function normalizeSeatsByTier(v) {
   if (!v || typeof v !== 'object') return null
-  const out = { basic: Math.max(0, Number(v.basic) || 0), advanced: Math.max(0, Number(v.advanced) || 0), premium: Math.max(0, Number(v.premium) || 0) }
-  return (out.basic + out.advanced + out.premium) > 0 ? out : null
+  if (!WORK_TIERS.some((t) => v[t] != null && v[t] !== '')) return null
+  return { basic: seatInput(v.basic, 'Basic licenses'), advanced: seatInput(v.advanced, 'Advanced licenses'), premium: seatInput(v.premium, 'Premium licenses') }
 }
 // A clean company contact/address profile. All optional, length-capped.
 function normalizeProfile(p = {}) {
@@ -689,19 +754,28 @@ function normalizeProfile(p = {}) {
     country: S(p.country, 80), postalCode: S(p.postalCode, 24),
   }
 }
-export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = null, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false, profile = null, pricing = null } = {}) {
+const COMPANY_NAME_MAX = 120
+function normalizeCompanyName(name) {
   const nm = String(name || '').trim()
   if (nm.length < 2) throw httpErr(400, 'Company name is required.')
+  if (nm.length > COMPANY_NAME_MAX) throw httpErr(400, `Company name must be ${COMPANY_NAME_MAX} characters or fewer.`)
+  return nm
+}
+function companyNameTaken(nm, exceptId = null) {
+  return (db.companies || []).some((c) => c.id !== exceptId && c.name.toLowerCase() === nm.toLowerCase())
+}
+export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = null, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false, profile = null, pricing = null } = {}) {
+  const nm = normalizeCompanyName(name)
   if (!db.companies) db.companies = []
-  if (db.companies.some((c) => c.name.toLowerCase() === nm.toLowerCase())) throw httpErr(409, 'A company with that name already exists.')
+  if (companyNameTaken(nm)) throw httpErr(409, 'A company with that name already exists.')
   const byTier = normalizeSeatsByTier(seatsByTier)
   const c = {
-    id: 'co' + id(), name: nm, plan: String(plan || 'basic'),
-    seats: byTier ? (byTier.basic + byTier.advanced + byTier.premium) : (Number(seats) || 0),
+    id: 'co' + id(), name: nm, plan: enumOrThrow(plan || 'basic', WORK_TIERS, 'Plan'),
+    seats: byTier ? (byTier.basic + byTier.advanced + byTier.premium) : seatInput(seats, 'User licenses'),
     seatsByTier: byTier,       // per-tier hard caps, or null for a single total pool
-    adminSeats: Number.isFinite(Number(adminSeats)) ? Math.max(0, Number(adminSeats)) : 2,
-    licenseMode: LICENSE_MODES.includes(licenseMode) ? licenseMode : 'locked',
-    ssoProvisioning: SSO_PROVISIONING.includes(ssoProvisioning) ? ssoProvisioning : 'explicit',
+    adminSeats: seatInput(adminSeats, 'Admin seats', 2),
+    licenseMode: enumOrThrow(licenseMode || 'locked', LICENSE_MODES, 'License mode'),
+    ssoProvisioning: enumOrThrow(ssoProvisioning || 'explicit', SSO_PROVISIONING, 'SSO provisioning'),
     poolSeconds: 0,            // shared company minute pool (drawn after a user's own time)
     profile: normalizeProfile(profile || {}),  // contact + address, all optional
     pricing: normalizeCompanyPricing(pricing),  // per-company price overrides, or null
@@ -767,22 +841,54 @@ export function getCompany(companyId) {
 export function updateCompany(companyId, patch = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
-  if (patch.name != null) { const nm = String(patch.name).trim(); if (nm.length >= 2) c.name = nm }
-  if (patch.plan != null) c.plan = String(patch.plan)
-  if (patch.seatsByTier !== undefined) {
-    const byTier = normalizeSeatsByTier(patch.seatsByTier)
+  // Validate EVERYTHING before writing anything, so a bad field never leaves a
+  // half-applied patch behind (a 400 on field 6 must not have changed fields 1-5).
+  const next = {}
+  if (patch.name != null) {
+    const nm = normalizeCompanyName(patch.name)
+    if (companyNameTaken(nm, c.id)) throw httpErr(409, 'A company with that name already exists.')
+    next.name = nm
+  }
+  if (patch.plan != null) next.plan = enumOrThrow(patch.plan, WORK_TIERS, 'Plan')
+  if (patch.licenseMode != null) next.licenseMode = enumOrThrow(patch.licenseMode, LICENSE_MODES, 'License mode')
+  if (patch.ssoProvisioning != null) next.ssoProvisioning = enumOrThrow(patch.ssoProvisioning, SSO_PROVISIONING, 'SSO provisioning')
+  if (patch.aiSource !== undefined && patch.aiSource !== null && patch.aiSource !== '') enumOrThrow(patch.aiSource, ['platform', 'company'], 'AI source')
+  // The SSO config has exactly one validating writer (setCompanySso). A raw
+  // patch may only DISCONNECT it (sso: null); anything else must go through the
+  // SSO endpoint so the issuer/secret/domain checks always run.
+  if (patch.sso !== undefined && patch.sso !== null) throw httpErr(400, 'Set single sign-on through the SSO endpoint; this field only accepts null to disconnect.')
+  const hasByTier = patch.seatsByTier !== undefined
+  let byTier = hasByTier ? normalizeSeatsByTier(patch.seatsByTier) : undefined
+  // A company on the single TOTAL pool that receives an all-zero per-tier form
+  // stays on the total pool: the superadmin "Edit licenses" form prefills zeros
+  // for such a company and sends them back on every save (even an admin-seat-only
+  // change), and keeping those zeros would mean "no licenses of any tier" and
+  // lock every member out. A company ALREADY on per-tier licenses keeps an
+  // explicit all-zero allocation (that is a deliberate "no user licenses").
+  if (hasByTier && byTier && c.seatsByTier == null && byTier.basic + byTier.advanced + byTier.premium === 0) byTier = null
+  const seatsAfter = hasByTier ? byTier : c.seatsByTier
+  if (patch.seats != null && seatsAfter != null) throw httpErr(400, 'This company uses per-tier licenses; set seatsByTier (basic / advanced / premium) instead of a single total.')
+  const nextSeats = (patch.seats != null && seatsAfter == null) ? seatInput(patch.seats, 'User licenses') : undefined  // total pool only when not per-tier
+  const nextAdminSeats = patch.adminSeats != null ? seatInput(patch.adminSeats, 'Admin seats') : undefined
+  // --- all validated; apply ---
+  if (next.name) c.name = next.name
+  if (next.plan) c.plan = next.plan
+  if (hasByTier) {
     c.seatsByTier = byTier
     if (byTier) c.seats = byTier.basic + byTier.advanced + byTier.premium
   }
-  if (patch.seats != null && c.seatsByTier == null) c.seats = Number(patch.seats) || 0  // total pool only when not per-tier
-  if (patch.adminSeats != null) c.adminSeats = Math.max(0, Number(patch.adminSeats) || 0)
-  if (patch.licenseMode != null && LICENSE_MODES.includes(String(patch.licenseMode))) c.licenseMode = String(patch.licenseMode)
-  if (patch.ssoProvisioning != null && SSO_PROVISIONING.includes(String(patch.ssoProvisioning))) c.ssoProvisioning = String(patch.ssoProvisioning)
+  if (nextSeats !== undefined) c.seats = nextSeats
+  if (nextAdminSeats !== undefined) c.adminSeats = nextAdminSeats
+  if (next.licenseMode) c.licenseMode = next.licenseMode
+  if (next.ssoProvisioning) c.ssoProvisioning = next.ssoProvisioning
   if (patch.profile !== undefined) c.profile = normalizeProfile({ ...(c.profile || {}), ...(patch.profile || {}) })
   if (patch.pricing !== undefined) c.pricing = normalizeCompanyPricing(patch.pricing)
   if (patch.scrub != null) c.scrub = !!patch.scrub
-  if (patch.sso !== undefined) c.sso = patch.sso || null
-  if (patch.aiSource !== undefined) c.aiSource = ['platform', 'company'].includes(patch.aiSource) ? patch.aiSource : null
+  if (patch.sso === null) c.sso = null
+  if (patch.aiSource !== undefined) {
+    c.aiSource = ['platform', 'company'].includes(patch.aiSource) ? patch.aiSource : null
+    delete c.aiSourceBeforeKeys   // an explicit operator choice supersedes the pre-keys memory
+  }
   if (patch.imageGen != null) c.imageGen = !!patch.imageGen
   if (patch.trial && typeof patch.trial === 'object') {
     if (!c.trial) c.trial = { sessions: 10, used: 0, minutesPer: 60 }
@@ -808,15 +914,22 @@ export const SSO_PROVIDERS = [
   'google', 'microsoft', 'okta', 'auth0', 'onelogin', 'ping', 'jumpcloud',
   'keycloak', 'cognito', 'azuread_b2c', 'authentik', 'duo', 'centrify', 'oidc',
 ]
+// An email domain as typed on the sign-in page: lowercase host name, no @, no
+// scheme, no path. Used for the SSO routing domain and the AUTO-provisioning check.
+const DOMAIN_RE = /^(?=.{1,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/
+function normalizeDomain(v) {
+  return String(v || '').trim().toLowerCase().replace(/^@/, '').replace(/\.+$/, '')
+}
 export function setCompanySso(companyId, cfg = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
   const provider = String(cfg.provider || '').trim().toLowerCase()
-  if (!SSO_PROVIDERS.includes(provider)) throw httpErr(400, 'Pick a provider: Google, Microsoft or Okta.')
+  if (!SSO_PROVIDERS.includes(provider)) throw httpErr(400, 'Pick a supported identity provider (for example Google, Microsoft, Okta, or any OpenID Connect provider).')
   const issuer = String(cfg.issuer || '').trim().replace(/\/+$/, '')
-  if (!/^https:\/\/[^\s]+$/i.test(issuer)) throw httpErr(400, 'The issuer must be a full https URL.')
+  if (issuer.length > 512 || !/^https:\/\/[^\s]+$/i.test(issuer)) throw httpErr(400, 'The issuer must be a full https URL.')
   const clientId = String(cfg.clientId || '').trim()
   if (!clientId) throw httpErr(400, 'A client id is required.')
+  if (clientId.length > 512) throw httpErr(400, 'The client id is too long.')
   // Keep the existing secret when the admin saves without re-typing it (the UI
   // never reads the secret back, so an empty field means "leave unchanged").
   const prior = c.sso || {}
@@ -824,7 +937,17 @@ export function setCompanySso(companyId, cfg = {}) {
     ? String(cfg.clientSecret).trim()
     : (prior.clientSecret || '')
   if (!clientSecret) throw httpErr(400, 'A client secret is required.')
-  const domain = String(cfg.domain || '').trim().toLowerCase().replace(/^@/, '')
+  if (clientSecret.length > 2048) throw httpErr(400, 'The client secret is too long.')
+  const domain = normalizeDomain(cfg.domain)
+  if (domain && !DOMAIN_RE.test(domain)) throw httpErr(400, 'The email domain must look like example.com (no @, no https://, no path).')
+  // A sign-in domain routes EVERY person who types it to this company's identity
+  // provider, so it must belong to exactly one company. Otherwise a second tenant
+  // could claim another tenant's domain and have their sign-ins land in the
+  // wrong company (or at the wrong IdP).
+  if (domain) {
+    const owner = (db.companies || []).find((x) => x.id !== c.id && x.sso && normalizeDomain(x.sso.domain) === domain)
+    if (owner) throw httpErr(409, 'That email domain is already connected to another company. Ask the WorkCoPilot team if you believe this is a mistake.')
+  }
   c.sso = { provider, issuer, clientId, clientSecret, domain, connected: true }
   persist()
   return publicCompany(c)
@@ -836,9 +959,9 @@ export function getCompanySsoConfig(companyId) {
 }
 // Public resolver: a connected company whose SSO domain matches, non-secret.
 export function findCompanyBySsoDomain(domain) {
-  const d = String(domain || '').trim().toLowerCase().replace(/^@/, '')
+  const d = normalizeDomain(domain)
   if (!d) return null
-  const c = (db.companies || []).find((x) => x.sso && x.sso.connected && x.sso.domain && x.sso.domain === d)
+  const c = (db.companies || []).find((x) => x.sso && x.sso.connected && x.sso.domain && normalizeDomain(x.sso.domain) === d)
   return c ? publicCompany(c) : null
 }
 // Look up an already-provisioned SSO member of a company by email (the stable
@@ -849,13 +972,35 @@ export function findCompanyMemberByEmail(companyId, email) {
   return (db.users || []).find((u) => u.companyId === companyId && u.ssoEmail === mail) || null
 }
 
+// THE seat gate. Every path that places a person in a company (SSO add-by-email,
+// auto provisioning, username+password add, superadmin move-into-company, a tier
+// change, a role change) calls this ONE function, so a cap can never be bypassed
+// by picking a different entry point. Admins and members are separate pools;
+// members are further capped per tier when the company bought per-tier licenses.
+// `exceptUserId` ignores the person being moved (a re-tier or role change).
+function assertSeatAvailable(companyId, companyRole, tier, exceptUserId = null) {
+  const role = companyRole === 'company_admin' ? 'company_admin' : 'member'
+  const wantTier = WORK_TIERS.includes(String(tier)) ? String(tier) : 'basic'
+  if (role === 'company_admin') {
+    const pool = seatPoolUsage(companyId, true, exceptUserId)
+    if (pool.full) throw httpErr(403, `All ${pool.cap} admin seats are in use. Ask the WorkCoPilot team to add admin seats.`)
+    return
+  }
+  const m = memberSeatUsage(companyId, wantTier, exceptUserId)
+  if (m.full) {
+    throw httpErr(403, m.scope === 'tier'
+      ? `All ${m.cap} ${wantTier} licenses are in use. Free one up, choose another plan, or ask the WorkCoPilot team to add ${wantTier} licenses.`
+      : `All ${m.cap} user licenses are in use. Remove someone first, or ask the WorkCoPilot team to add licenses.`)
+  }
+}
+
 // How many of a company's seats (for one role pool) are already taken. Admins
 // and members draw from separate pools, matching userCanUseService.
-function seatPoolUsage(companyId, isAdmin) {
+function seatPoolUsage(companyId, isAdmin, exceptUserId = null) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) return { cap: 0, used: 0, full: false }
-  const cap = isAdmin ? (c.adminSeats != null ? Number(c.adminSeats) : 2) : (Number(c.seats) || 0)
-  const used = (db.users || []).filter((u) => u.companyId === companyId && ((u.companyRole === 'company_admin') === isAdmin)).length
+  const cap = isAdmin ? seatCount(c.adminSeats, 2) : seatCount(c.seats)
+  const used = (db.users || []).filter((u) => u.companyId === companyId && u.id !== exceptUserId && ((u.companyRole === 'company_admin') === isAdmin)).length
   return { cap, used, full: cap > 0 && used >= cap }
 }
 // Member seat usage for a given tier. When the company set a per-tier allocation
@@ -868,11 +1013,11 @@ function memberSeatUsage(companyId, tier, exceptUserId = null) {
   const members = (db.users || []).filter((u) => u.companyId === companyId && u.companyRole !== 'company_admin' && u.id !== exceptUserId)
   if (c.seatsByTier) {
     const t = WORK_TIERS.includes(tier) ? tier : 'basic'
-    const cap = Math.max(0, Number(c.seatsByTier[t]) || 0)
+    const cap = seatCount(c.seatsByTier[t])
     const used = members.filter((u) => (WORK_TIERS.includes(u.tier) ? u.tier : 'basic') === t).length
     return { cap, used, full: used >= cap, scope: 'tier', tier: t }
   }
-  const cap = Number(c.seats) || 0
+  const cap = seatCount(c.seats)
   return { cap, used: members.length, full: cap > 0 && members.length >= cap, scope: 'total' }
 }
 
@@ -882,23 +1027,13 @@ function memberSeatUsage(companyId, tier, exceptUserId = null) {
 function createSsoAccount({ companyId, email, companyRole = 'member', tier = 'basic', displayName = null } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
-  const mail = String(email || '').trim().toLowerCase()
-  if (!mail.includes('@')) throw httpErr(400, 'A valid work email is required.')
+  const mail = normalizeEmail(email)
+  if (!mail) throw httpErr(400, 'A valid work email is required (for example alex@yourcompany.com).')
   if (findCompanyMemberByEmail(companyId, mail)) throw httpErr(409, 'That email is already on this company.')
-  const role = companyRole === 'company_admin' ? 'company_admin' : 'member'
-  const isAdmin = role === 'company_admin'
+  const role = normalizeCompanyRole(companyRole)
+  if (tier != null && tier !== '') enumOrThrow(tier, WORK_TIERS, 'Plan')
   const wantTier = WORK_TIERS.includes(String(tier)) ? String(tier) : 'basic'
-  if (isAdmin) {
-    const pool = seatPoolUsage(companyId, true)
-    if (pool.full) throw httpErr(403, `All ${pool.cap} admin seats are in use. Ask the WorkCoPilot team to add admin seats.`)
-  } else {
-    const m = memberSeatUsage(companyId, wantTier)
-    if (m.full) {
-      throw httpErr(403, m.scope === 'tier'
-        ? `All ${m.cap} ${wantTier} licenses are in use. Free one up, choose another plan, or ask the WorkCoPilot team to add ${wantTier} licenses.`
-        : `All ${m.cap} user licenses are in use. Remove someone first, or ask the WorkCoPilot team to add licenses.`)
-    }
-  }
+  assertSeatAvailable(companyId, role, wantTier)
   const local = mail.split('@')[0].replace(/[^a-z0-9._+-]/gi, '')
   const stem = local.length >= 3 ? local : mail
   let username = stem
@@ -913,7 +1048,7 @@ function createSsoAccount({ companyId, email, companyRole = 'member', tier = 'ba
     createdAt: now(),
     onboarded: false,
     displayName: displayName ? String(displayName).trim().slice(0, 80) : null,
-    tier: WORK_TIERS.includes(String(tier)) ? String(tier) : 'basic',
+    tier: wantTier,
     purchasedSeconds: 0,
     imageCredits: 0,
     ai: null,
@@ -940,15 +1075,26 @@ export function addCompanyMemberByEmail({ companyId, email, companyRole = 'membe
 export function resolveSsoLogin({ companyId, email } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
-  const mail = String(email || '').trim().toLowerCase()
-  if (!mail.includes('@')) throw httpErr(400, 'The identity provider did not share a valid email address.')
+  const mail = normalizeEmail(email)
+  if (!mail) throw httpErr(400, 'The identity provider did not share a valid email address.')
   const existing = findCompanyMemberByEmail(companyId, mail)
   if (existing) return existing
   const mode = SSO_PROVISIONING.includes(c.ssoProvisioning) ? c.ssoProvisioning : 'explicit'
   if (mode !== 'auto') {
     throw httpErr(403, 'Your email is not set up for WorkCoPilot yet. Ask your company administrator to add you.')
   }
-  // AUTO mode: create a member on first sign-in (respects the user-seat pool).
+  // AUTO mode: the IdP vouched for the email, but shared issuers (Google's
+  // accounts.google.com is the same for every tenant on earth) vouch for ANY
+  // account, not just this company's. So when the company has a sign-in domain,
+  // only emails on that domain may be created on first sign-in. Without this, any
+  // gmail.com account could join an acme.com company, take a seat, and run on the
+  // company's AI keys and trial.
+  const want = c.sso ? normalizeDomain(c.sso.domain) : ''
+  if (want) {
+    const got = mail.slice(mail.lastIndexOf('@') + 1)
+    if (got !== want) throw httpErr(403, `Only ${want} email addresses can join this company through single sign-on. Ask your company administrator to add you.`)
+  }
+  // Create a member on first sign-in (respects the user-seat pool).
   return createSsoAccount({ companyId, email: mail, companyRole: 'member', tier: 'basic' })
 }
 
@@ -959,26 +1105,39 @@ export function setUserCompany(userId, companyId, companyRole) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')
   if (companyId && !(db.companies || []).some((c) => c.id === companyId)) throw httpErr(404, 'Company not found.')
+  const role = companyId ? normalizeCompanyRole(companyRole) : null
+  // Moving into (or re-roling within) a company takes a seat like any other path.
+  if (companyId) assertSeatAvailable(companyId, role, u.tier, u.id)
   u.companyId = companyId || null
-  u.companyRole = companyId ? (companyRole === 'company_admin' ? 'company_admin' : 'member') : null
+  u.companyRole = role
   persist()
   return publicWorkUser(u)
 }
 // Create a user as a superadmin or a company admin. companyId/companyRole
 // optional; tier/scrub optional. Reuses createWorkUser then applies membership.
+// Validates membership + seat availability BEFORE the account is created, so a
+// refused add never leaves a stray account behind.
 export function createManagedUser({ username, password, companyId = null, companyRole = 'member', tier = 'basic', scrub = false, free = false } = {}) {
+  const role = normalizeCompanyRole(companyRole)
+  if (tier != null && tier !== '') enumOrThrow(tier, WORK_TIERS, 'Plan')
+  const wantTier = WORK_TIERS.includes(String(tier)) ? String(tier) : 'basic'
+  if (companyId) {
+    if (!(db.companies || []).some((c) => c.id === companyId)) throw httpErr(404, 'Company not found.')
+    // Same seat gate as the SSO add-by-email path. Before this, a company admin in
+    // flexible mode could add unlimited username+password members past every cap.
+    assertSeatAvailable(companyId, role, wantTier)
+  }
   const pub = createWorkUser({ username, password })      // validates + role 'user'
   const u = getUser(pub.id)
   if (companyId) {
-    if (!(db.companies || []).some((c) => c.id === companyId)) throw httpErr(404, 'Company not found.')
     u.companyId = companyId
-    u.companyRole = companyRole === 'company_admin' ? 'company_admin' : 'member'
+    u.companyRole = role
   }
-  if (tier && ['basic', 'advanced', 'premium'].includes(tier)) u.tier = tier
+  u.tier = wantTier
   if (scrub) u.scrub = true
   // free = superadmin-comped access (use the service without Stripe). Company
   // members are already covered by the company, so this is for standalone users.
-  if (free && !companyId) { const s = ensureSubscription(u); s.status = 'comp'; s.plan = s.plan || tier || 'premium' }
+  if (free && !companyId) { const s = ensureSubscription(u); s.status = 'comp'; s.plan = s.plan || wantTier }
   persist()
   return publicWorkUser(u)
 }
@@ -1006,7 +1165,9 @@ export function verifyWorkPassword(user, password) { return verifyPassword(user,
 export function createWorkUser({ username, password }) {
   const name = String(username || '').trim()
   if (name.length < 3) throw httpErr(400, 'Username must be at least 3 characters.')
+  if (name.length > 64) throw httpErr(400, 'Username must be 64 characters or fewer.')
   if (String(password || '').length < 6) throw httpErr(400, 'Password must be at least 6 characters.')
+  if (String(password).length > 256) throw httpErr(400, 'Password must be 256 characters or fewer.')
   if (findUser(name)) throw httpErr(409, 'That username is taken.')
   const u = {
     id: id(),
@@ -1152,6 +1313,11 @@ export function getWorkTier(workUserId) {
 export function setWorkTier(workUserId, tier) {
   if (!WORK_TIERS.includes(String(tier))) throw httpErr(400, 'Bad tier')
   const u = getUser(workUserId); if (!u) throw httpErr(404, 'Account not found')
+  // A company member's plan must fit the company's per-tier allocation (the same
+  // gate the company admin's re-tier path uses). Before this, the superadmin tier
+  // route silently over-allocated a tier the company never bought, and the
+  // license summary then under-reported it (left clamped at 0).
+  if (u.companyId && u.companyRole !== 'company_admin') assertSeatAvailable(u.companyId, 'member', String(tier), u.id)
   u.tier = String(tier); persist(); return getWorkUsage(workUserId)
 }
 export function grantWorkPurchasedSeconds(workUserId, seconds) {
@@ -1185,8 +1351,8 @@ export function companyLicenseSummary(companyId) {
   if (!c) throw httpErr(404, 'Company not found.')
   const all = (db.users || []).filter((u) => u.companyId === companyId)
     .sort((a, b) => (a.createdAt || '').localeCompare(b.createdAt || ''))
-  const userSeats = Number(c.seats) || 0
-  const adminSeats = c.adminSeats != null ? Number(c.adminSeats) : 2
+  const userSeats = seatCount(c.seats)
+  const adminSeats = seatCount(c.adminSeats, 2)
   const tiers = { basic: 0, advanced: 0, premium: 0 }   // MEMBER tier counts (licenses)
   const members = all.map((u) => {
     const t = WORK_TIERS.includes(u.tier) ? u.tier : 'basic'
@@ -1227,16 +1393,31 @@ export function companyLicenseSummary(companyId) {
 // The superadmin records billable line items (extra hours sold, adjustments,
 // credits). Seat charges are COMPUTED from the current roster at statement time,
 // so they always reflect reality; ledger items are the ad-hoc extras.
+// Money and quantities on the ledger must be finite and within a sane range; a
+// NaN / Infinity used to be stored (and rendered as null on the statement), and
+// qty x unit could overflow into an infinite "amount".
+const MONEY_MAX = 1e9
+function moneyNum(v, label, { allowNegative = true } = {}) {
+  if (v == null || v === '') return 0
+  const n = Number(v)
+  if (!Number.isFinite(n)) throw httpErr(400, `${label} must be a number.`)
+  if (Math.abs(n) > MONEY_MAX) throw httpErr(400, `${label} is out of range.`)
+  if (!allowNegative && n < 0) throw httpErr(400, `${label} cannot be negative.`)
+  return n
+}
 export function addCompanyBillingItem(companyId, { type = 'adjustment', description = '', qty = 1, unitAmount = 0, amount = null } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
   if (!c.billing) c.billing = { items: [] }
-  const q = Number(qty) || 0
-  const unit = Number(unitAmount) || 0
-  const amt = amount != null ? Number(amount) : +(q * unit).toFixed(2)
+  const q = moneyNum(qty, 'Quantity', { allowNegative: false })
+  const unit = moneyNum(unitAmount, 'Unit amount')
+  const amt = amount != null && amount !== '' ? moneyNum(amount, 'Amount') : +(q * unit).toFixed(2)
+  if (Math.abs(amt) > MONEY_MAX) throw httpErr(400, 'Amount is out of range.')
+  const desc = String(description || '').trim().slice(0, 200)
+  if (!desc) throw httpErr(400, 'A line item needs a description.')
   const item = {
-    id: 'bi' + id(), type: String(type || 'adjustment').slice(0, 24),
-    description: String(description || '').trim().slice(0, 200),
+    id: 'bi' + id(), type: String(type || 'adjustment').trim().slice(0, 24) || 'adjustment',
+    description: desc,
     qty: q, unitAmount: unit, amount: +amt.toFixed(2), createdAt: now(),
   }
   c.billing.items.push(item)
@@ -1259,14 +1440,29 @@ export function companyBilling(companyId) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
   const pricing = effectiveCompanyPricing(companyId)
-  const members = (db.users || []).filter((u) => u.companyId === companyId && u.companyRole !== 'company_admin')
+  const everyone = (db.users || []).filter((u) => u.companyId === companyId)
+  const members = everyone.filter((u) => u.companyRole !== 'company_admin')
+  const admins = everyone.filter((u) => u.companyRole === 'company_admin')
   const counts = { basic: 0, advanced: 0, premium: 0 }
   for (const u of members) counts[WORK_TIERS.includes(u.tier) ? u.tier : 'basic']++
+  const adminCounts = { basic: 0, advanced: 0, premium: 0 }
+  for (const u of admins) adminCounts[WORK_TIERS.includes(u.tier) ? u.tier : 'basic']++
+  const cap = (t) => t[0].toUpperCase() + t.slice(1)
   const seatLines = []
   for (const t of WORK_TIERS) {
     if (counts[t] > 0) {
       const unit = Number(pricing.plans[t]) || 0
-      seatLines.push({ type: 'seats', tier: t, description: `${t[0].toUpperCase() + t.slice(1)} plan seats`, qty: counts[t], unitAmount: unit, amount: +(counts[t] * unit).toFixed(2) })
+      seatLines.push({ type: 'seats', tier: t, description: `${cap(t)} plan seats`, qty: counts[t], unitAmount: unit, amount: +(counts[t] * unit).toFixed(2) })
+    }
+  }
+  // Admin seats are licenses too (an admin can use the service with a daily
+  // allowance at their plan tier), so they are billed at their tier like members.
+  // Before this they were free, and a company admin could set themselves to
+  // premium (6h/day) with no charge appearing anywhere on the statement.
+  for (const t of WORK_TIERS) {
+    if (adminCounts[t] > 0) {
+      const unit = Number(pricing.plans[t]) || 0
+      seatLines.push({ type: 'admin_seats', tier: t, description: `${cap(t)} plan admin seats`, qty: adminCounts[t], unitAmount: unit, amount: +(adminCounts[t] * unit).toFixed(2) })
     }
   }
   const ledger = ((c.billing && c.billing.items) || []).map((i) => ({ ...i }))
@@ -1313,7 +1509,10 @@ export function addWorkUsage(workUserId, seconds) {
 export function grantCompanyPoolSeconds(companyId, seconds) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
-  c.poolSeconds = Math.max(0, (Number(c.poolSeconds) || 0) + Math.round(Number(seconds) || 0))
+  const delta = Number(seconds)
+  if (!Number.isFinite(delta)) throw httpErr(400, 'Enter a number of minutes.')
+  if (Math.abs(delta) > 10 * 365 * 24 * 3600) throw httpErr(400, 'That is more than ten years of minutes; check the number.')
+  c.poolSeconds = Math.max(0, (Number(c.poolSeconds) || 0) + Math.round(delta))
   persist()
   return { companyId, poolSeconds: c.poolSeconds }
 }
@@ -1385,12 +1584,33 @@ export function effectiveCompanyPricing(companyId) {
 export function setWorkPricing(patch) {
   if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
   const cur = getWorkPricing()
+  const p = patch || {}
+  // Only the three tier keys, only finite non-negative numbers. A raw merge used to
+  // store "abc" (billed as $0), negatives, Infinity, or arbitrary extra keys.
+  const tiers = (o, label) => {
+    if (o == null) return {}
+    if (typeof o !== 'object') throw httpErr(400, `${label} prices must be an object keyed by tier.`)
+    const r = {}
+    for (const k of WORK_TIERS) if (o[k] != null && o[k] !== '') r[k] = moneyNum(o[k], `${label} ${k} price`, { allowNegative: false })
+    return r
+  }
+  let currency = cur.currency
+  if (p.currency != null && p.currency !== '') {
+    currency = String(p.currency).trim().toLowerCase()
+    if (!/^[a-z]{3}$/.test(currency)) throw httpErr(400, 'Currency must be a 3-letter code such as usd.')
+  }
+  let imageMinBulk = cur.imageMinBulk
+  if (p.imageMinBulk != null && p.imageMinBulk !== '') {
+    const n = Number(p.imageMinBulk)
+    if (!Number.isFinite(n) || n < 1 || n > 100000) throw httpErr(400, 'Minimum bulk image count must be between 1 and 100000.')
+    imageMinBulk = Math.floor(n)
+  }
   db.work.pricing = {
-    currency: (patch && patch.currency) || cur.currency,
-    plans: { ...cur.plans, ...((patch && patch.plans) || {}) },
-    hour: { ...cur.hour, ...((patch && patch.hour) || {}) },
-    image: { ...cur.image, ...((patch && patch.image) || {}) },
-    imageMinBulk: (patch && Number(patch.imageMinBulk)) || cur.imageMinBulk,
+    currency,
+    plans: { ...cur.plans, ...tiers(p.plans, 'Plan') },
+    hour: { ...cur.hour, ...tiers(p.hour, 'Hour') },
+    image: { ...cur.image, ...tiers(p.image, 'Image') },
+    imageMinBulk,
   }
   persist()
   return getWorkPricing()
@@ -1428,21 +1648,15 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
   if (tier !== undefined && !WORK_TIERS.includes(String(tier))) throw httpErr(400, 'Bad plan.')
-  const finalRole = companyRole !== undefined ? (companyRole === 'company_admin' ? 'company_admin' : 'member') : (u.companyRole || 'member')
+  // Strict role validation: a typo like 'admin' used to be read as 'member' and
+  // silently DEMOTE a company admin.
+  const finalRole = companyRole !== undefined ? normalizeCompanyRole(companyRole, u.companyRole || 'member') : (u.companyRole || 'member')
   const finalTier = tier !== undefined ? String(tier) : (WORK_TIERS.includes(u.tier) ? u.tier : 'basic')
-  // Promoting into the admin pool must fit the admin seats.
-  if (finalRole === 'company_admin' && u.companyRole !== 'company_admin') {
-    const pool = seatPoolUsage(adminCompanyId, true)
-    if (pool.full) throw httpErr(403, `All ${pool.cap} admin seats are in use. Ask the WorkCoPilot team to add admin seats.`)
-  }
-  // A member must fit the target tier's allocation (ignoring their own current seat).
-  if (finalRole === 'member') {
-    const m = memberSeatUsage(adminCompanyId, finalTier, u.id)
-    if (m.full) {
-      throw httpErr(403, m.scope === 'tier'
-        ? `All ${m.cap} ${finalTier} licenses are in use. Free one up or ask the WorkCoPilot team to add ${finalTier} licenses.`
-        : `All ${m.cap} user licenses are in use.`)
-    }
+  // Promoting into the admin pool must fit the admin seats; a member must fit the
+  // target tier's allocation (ignoring their own current seat). One shared gate.
+  const curRole = u.companyRole === 'company_admin' ? 'company_admin' : 'member'   // legacy records may lack companyRole
+  if (finalRole !== curRole || finalTier !== (WORK_TIERS.includes(u.tier) ? u.tier : 'basic')) {
+    assertSeatAvailable(adminCompanyId, finalRole, finalTier, u.id)
   }
   u.companyRole = finalRole
   if (tier !== undefined) u.tier = finalTier

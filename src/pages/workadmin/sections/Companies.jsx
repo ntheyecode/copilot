@@ -143,7 +143,12 @@ export default function Companies({ isSuperAdmin }) {
 
   const loadDetail = async (id) => {
     try {
-      const [d, l] = await Promise.all([workAdminApi.company(id), workAdminApi.companyLicenses(id).catch(() => null)])
+      // The license summary failing used to be swallowed (the whole Licenses
+      // block silently vanished). Surface it so the operator can act on it.
+      const [d, l] = await Promise.all([
+        workAdminApi.company(id),
+        workAdminApi.companyLicenses(id).catch((e) => { setMsg(`Licenses could not be loaded: ${e.message || 'request failed'}`); return null }),
+      ])
       setDetail(d); setLic(l)
     } catch (e) { setMsg(e.message) }
   }
@@ -186,7 +191,19 @@ export default function Companies({ isSuperAdmin }) {
 
   // Seat allocation + pool minutes.
   const [seatEdit, setSeatEdit] = useState({})
-  const saveSeats = async (id) => { const e = seatEdit[id] || {}; try { await workAdminApi.updateCompany(id, { seatsByTier: { basic: Number(e.basic) || 0, advanced: Number(e.advanced) || 0, premium: Number(e.premium) || 0 }, adminSeats: Number(e.adminSeats) || 0 }); setSeatEdit((s) => ({ ...s, [id]: undefined })); refreshDetail(id); setMsg('Licenses updated.') } catch (err) { setMsg(err.message) } }
+  const saveSeats = async (id) => {
+    const e = seatEdit[id] || {}
+    const byTier = { basic: Number(e.basic) || 0, advanced: Number(e.advanced) || 0, premium: Number(e.premium) || 0 }
+    const total = byTier.basic + byTier.advanced + byTier.premium
+    // A company on the single total pool whose form was left at zeros is NOT
+    // being converted to "no licenses of any tier"; send null so it stays on the
+    // total pool (the server guards this too; this keeps the intent explicit).
+    const perTierNow = !!(lic && lic.seatsByTier)
+    try {
+      await workAdminApi.updateCompany(id, { seatsByTier: (!perTierNow && total === 0) ? null : byTier, adminSeats: Number(e.adminSeats) || 0 })
+      setSeatEdit((s) => ({ ...s, [id]: undefined })); refreshDetail(id); setMsg('Licenses updated.')
+    } catch (err) { setMsg(err.message) }
+  }
   const addPool = async (id) => { const h = window.prompt('Add how many hours to the company minute pool?', '10'); if (h == null) return; try { await workAdminApi.poolMinutes(id, Math.round((Number(h) || 0) * 60)); refreshDetail(id); setMsg(`Added ${h} hours to the pool.`) } catch (e) { setMsg(e.message) } }
 
   // Pricing overrides.
@@ -244,13 +261,13 @@ export default function Companies({ isSuperAdmin }) {
             <L label="Basic licenses"><input className="wka-input" value={form.byTier.basic} onChange={(e) => T('basic', e.target.value)} /></L>
             <L label="Advanced licenses"><input className="wka-input" value={form.byTier.advanced} onChange={(e) => T('advanced', e.target.value)} /></L>
             <L label="Premium licenses"><input className="wka-input" value={form.byTier.premium} onChange={(e) => T('premium', e.target.value)} /></L>
-            <L label="Admin seats" hint="Separate pool. Admins do not consume user licenses."><input className="wka-input" value={form.adminSeats} onChange={(e) => setForm({ ...form, adminSeats: e.target.value.replace(/[^0-9]/g, '') })} /></L>
+            <L label="Admin seats" hint="Separate pool. Admins do not consume user licenses. Admin seats are billed at each admin's plan tier. 0 = no limit."><input className="wka-input" value={form.adminSeats} onChange={(e) => setForm({ ...form, adminSeats: e.target.value.replace(/[^0-9]/g, '') })} /></L>
             <L label="License mode" hint="Locked = only you change the roster. Flexible = the company admin manages it."><select className="wka-input" value={form.licenseMode} onChange={(e) => setForm({ ...form, licenseMode: e.target.value })}><option value="locked">Locked (we manage)</option><option value="flexible">Flexible (company manages)</option></select></L>
             <L label="SSO provisioning" hint="Explicit = only people you add by email can sign in. Auto = anyone in the domain is created on first sign-in."><select className="wka-input" value={form.ssoProvisioning} onChange={(e) => setForm({ ...form, ssoProvisioning: e.target.value })}><option value="explicit">Explicit (invite-only)</option><option value="auto">Auto (open to domain)</option></select></L>
           </div>
           <div className="co-foot">
             <label className="co-chk"><input type="checkbox" checked={form.scrub} onChange={(e) => setForm({ ...form, scrub: e.target.checked })} /> Data redaction on by default</label>
-            <span className="co-total">Total user licenses: <b>{seatTotal}</b></span>
+            <span className="co-total">Total user licenses: <b>{seatTotal}</b>{seatTotal === 0 ? <span className="co-dim" style={{ marginLeft: 8 }}>(none entered = no user license limit; admin seats {Number(form.adminSeats) > 0 ? form.adminSeats : 'no limit'})</span> : null}</span>
             <button className="wka-btn primary" disabled={busy} onClick={createCompany}>{busy ? <Loader2 size={14} className="spin" /> : 'Create company'}</button>
           </div>
         </div>
@@ -299,7 +316,7 @@ export default function Companies({ isSuperAdmin }) {
                             <div className="co-block-t">Corporate AI keys {detail.company.companyAi ? <span className="co-dim">· {detail.company.companyAi.providerId} · {detail.company.companyAi.keyMasked}</span> : <span className="co-amber">· none set</span>}</div>
                             <div className="co-inline-wrap">
                               <input className="wka-input" placeholder="provider (gemini/openai/groq)" value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 190 }} />
-                              <input className="wka-input" placeholder="API key" value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 210 }} />
+                              <input className="wka-input" type="password" autoComplete="new-password" placeholder="API key" value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 210 }} />
                               <input className="wka-input" placeholder="chat model" value={(aiForm[c.id]?.chatModel) || ''} onChange={(e) => setAiField(c.id, 'chatModel', e.target.value)} style={{ width: 140 }} />
                               <input className="wka-input" placeholder="vision model" value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 140 }} />
                               <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>Save keys</button>

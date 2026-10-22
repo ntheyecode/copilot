@@ -355,8 +355,12 @@ function CopyField({ value }) {
   )
 }
 
-function SsoSection() {
+function SsoSection({ company }) {
   const [state, setState] = useState({ loading: true, error: null, sso: null })
+  // The shared guide describes just-in-time provisioning, which only applies in
+  // AUTO mode. Most companies are invite-only (explicit), so say so up front or
+  // the admin will wait for accounts that never appear.
+  const inviteOnly = !company || company.ssoProvisioning !== 'auto'
   const [form, setForm] = useState({ provider: 'google', issuer: '', clientId: '', clientSecret: '', domain: '' })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -379,6 +383,7 @@ function SsoSection() {
   }
 
   if (state.loading) return <Loading label="Loading SSO" />
+  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
   const connected = state.sso && state.sso.connected
   const guide = (SSO.SSO_PROVIDERS || []).find((p) => p.id === form.provider) || null
   const issuerHint = guide ? guide.issuer : 'https://your-identity-provider/...'
@@ -386,6 +391,11 @@ function SsoSection() {
   return (
     <div>
       <div className="wka-note"><Info size={14} /> Register this exact redirect / callback URL in your identity provider: <CopyField value={callbackUrl} /></div>
+      <div className="wka-note" style={{ color: inviteOnly ? 'var(--wka-amber)' : undefined }}><Lock size={14} />
+        {inviteOnly
+          ? <>Your company uses <b>invite-only</b> sign-in: only people you add by email on the Team tab (or the WorkCoPilot team adds) can sign in through SSO. Everyone else is refused, even if your identity provider lets them in. The automatic account creation described in the guide below does not apply to your company.</>
+          : <>Your company uses <b>open-domain</b> sign-in: anyone your identity provider authenticates with an email on {state.sso && state.sso.domain ? <b>@{state.sso.domain}</b> : 'your email domain'} gets a member account on first sign-in, as long as a user license is free.</>}
+      </div>
       <div className="wka-panel">
         <h2>{connected ? 'SSO is connected' : 'Connect single sign-on'} {connected ? <span className="wka-badge active" style={{ marginLeft: 6 }}>{SSO_PROVIDER_LABELS[state.sso.provider] || state.sso.provider}</span> : null}</h2>
         <p className="desc">Your people sign in with your identity provider. WorkCoPilot works with any OpenID Connect provider; pick yours below.</p>
@@ -510,8 +520,16 @@ function AiSection() {
   }
   const clear = async () => {
     setBusy(true); setErr(null); setOk('')
-    try { await api.workTeamSetAiKeys({ apiKey: '' }); setOk('Your keys were removed. You are back on the platform AI.'); load() }
-    catch (error) { setErr(error) } finally { setBusy(false) }
+    try {
+      // Say what ACTUALLY happened: the server restores the AI source the
+      // WorkCoPilot team chose before your keys were added. If that choice was
+      // "company keys", AI is unavailable until keys are set again (never a
+      // silent switch to platform keys).
+      const c = await api.workTeamSetAiKeys({ apiKey: '' })
+      if (c && c.aiReady) setOk('Your keys were removed. Your company is back on the WorkCoPilot platform AI.')
+      else setOk('Your keys were removed. Your company is set to run on its own AI keys, so guidance is paused until you add keys again or the WorkCoPilot team switches you to the platform AI.')
+      load()
+    } catch (error) { setErr(error) } finally { setBusy(false) }
   }
 
   const cur = company && company.companyAi
@@ -757,7 +775,11 @@ function SettingsSection({ viewer, company, onProfile }) {
         <div className="wca-kv">
           <div><span>Name</span><b>{company ? company.name : '-'}</b></div>
           <div><span>Plan</span><b style={{ textTransform: 'capitalize' }}>{company ? company.plan : '-'}</b></div>
-          <div><span>Seats</span><b>{company && company.seats > 0 ? `${company.userCount} of ${company.seats}` : `${company ? company.userCount : 0} (no limit)`}</b></div>
+          {/* User seats count MEMBERS only (admins have their own pool); showing
+              userCount (members + admins) against the member seat total read as
+              "3 of 2" for a company that was within its licenses. */}
+          <div><span>User licenses</span><b>{company && company.seats > 0 ? `${company.memberCount != null ? company.memberCount : company.userCount} of ${company.seats}` : `${company ? (company.memberCount != null ? company.memberCount : company.userCount) : 0} (no limit)`}</b></div>
+          <div><span>Admin seats</span><b>{company && company.adminSeats > 0 ? `${company.adminCount || 0} of ${company.adminSeats}` : `${company ? (company.adminCount || 0) : 0} (no limit)`}</b></div>
         </div>
       </div>
     </div>
@@ -808,7 +830,7 @@ export default function WorkCompanyAdmin() {
   const renderSection = () => {
     switch (active) {
       case 'team': return <TeamSection meId={viewer && viewer.id} onCompany={setCompany} />
-      case 'sso': return <SsoSection />
+      case 'sso': return <SsoSection company={company} />
       case 'ai': return <AiSection />
       case 'billing': return <BillingSection />
       case 'governance': return <GovernanceSection companyId={viewer && viewer.companyId} />

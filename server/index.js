@@ -112,12 +112,23 @@ function requireWorkAuth(req, res, next) {
 // AFTER requireWorkAuth (needs req.workUser). Company members are covered by the
 // company; a personal account needs a live plan.
 function requireWorkSubscription(req, res, next) {
-  // Enforce subscriptions only once billing is actually configured (so existing
-  // users are never locked out before Stripe is set up), and always let admins
-  // and superadmins through for operator testing. "Configured" is a usable
-  // secret key from the store (superadmin set it in the console) OR the env var.
-  if (!billingConfigured(store)) return next()
+  // Always let admins and superadmins through for operator testing.
   if (req.user && (req.user.role === 'superadmin' || req.user.role === 'admin')) return next()
+  // Company members are covered by a company LICENSE SEAT, not by Stripe, so the
+  // seat check applies whether or not Stripe is configured. (Before this, an
+  // unconfigured Stripe skipped seat enforcement entirely, so a company could
+  // run every over-cap member for free.)
+  if (req.workUser && req.workUser.companyId) {
+    if (!store.userCanUseService(req.workUser.id)) {
+      return res.status(402).json({ error: 'Your company has no license seat for you right now. Ask your company admin to free a seat or add licenses.', needsSeat: true })
+    }
+    return next()
+  }
+  // Personal accounts: enforce subscriptions only once billing is actually
+  // configured (so existing users are never locked out before Stripe is set up).
+  // "Configured" is a usable secret key from the store (superadmin set it in the
+  // console) OR the env var.
+  if (!billingConfigured(store)) return next()
   if (!store.userCanUseService(req.workUser.id)) {
     return res.status(402).json({ error: 'A subscription is needed to start guiding.', needsSubscription: true })
   }
@@ -212,8 +223,13 @@ async function pickWorkVisionStrong(rt, avoid) {
 // A stronger backup {rt, visionModel} than the primary, or null. Prefers a
 // stronger model on the SAME provider first, then any other configured provider.
 async function findWorkVisionStrong(req, primary) {
+  // A company on its own/corporate keys stays on those keys for the backup too.
+  // Before this, the "stronger" fallback for a company-key company was picked
+  // from the PLATFORM providers, so a company that chose its own keys (and its
+  // own data-governance boundary) could have screen frames sent to our keys.
+  const companyRt = store.getCompanyRuntime(req.workUser.id)
   const platform = store.getWorkPlatformAllowed()
-  const cfgs = platform ? store.getConfiguredRuntimes() : [store.getWorkUserRuntime(req.workUser.id)].filter(Boolean)
+  const cfgs = companyRt ? [companyRt] : (platform ? store.getConfiguredRuntimes() : [store.getWorkUserRuntime(req.workUser.id)].filter(Boolean))
   const order = []
   if (primary && primary.rt) { const same = cfgs.find((c) => c.providerId === primary.rt.providerId); if (same) order.push(same) }
   for (const c of cfgs) if (!order.includes(c)) order.push(c)
@@ -256,17 +272,20 @@ async function findWorkVision(req) {
 // model (plan-with-frame, watch, ask) or we 400 with the fix. Never silently
 // no-ops: if nothing is ready, say exactly what to do.
 async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
-  const v = await findWorkVision(req)
-  if (v) { try { v.strong = await findWorkVisionStrong(req, v) } catch { v.strong = null } return v }
-  // A company on its own/corporate keys uses those; else platform, else the user's key.
-  const companyRt = store.getCompanyRuntime(req.workUser.id)
-  // Honor an explicit "use our own keys" company choice: if the keys are not set,
-  // fail clearly instead of silently falling back to platform keys.
+  // Honor an explicit "use our own keys" company choice FIRST: if the keys are not
+  // set, fail clearly instead of silently falling back to platform keys. This
+  // check used to run AFTER the vision lookup, and the vision lookup happily
+  // returned a PLATFORM runtime when the company keys were missing, so a company
+  // pinned to its own keys ran on ours without anyone being told.
   const aiReq = store.companyAiRequirement(req.workUser.id)
   if (aiReq.source === 'company' && !aiReq.ready) {
     res.status(503).json({ error: aiReq.reason, needsCompanyKey: true })
     return null
   }
+  const v = await findWorkVision(req)
+  if (v) { try { v.strong = await findWorkVisionStrong(req, v) } catch { v.strong = null } return v }
+  // A company on its own/corporate keys uses those; else platform, else the user's key.
+  const companyRt = store.getCompanyRuntime(req.workUser.id)
   const platform = store.getWorkPlatformAllowed()
   const base = companyRt || (platform ? store.getActiveRuntime() : store.getWorkUserRuntime(req.workUser.id))
   if (!base || !base.apiKey) {
@@ -280,9 +299,11 @@ async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
   }
   if (needVision) {
     res.status(400).json({
-      error: platform
-        ? 'The platform AI has no vision-capable model, so WorkCoPilot cannot read the screen. Ask the administrator to add a Gemini or OpenAI key in AI Settings.'
-        : 'Your AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Use a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout), then test it again.',
+      error: companyRt
+        ? 'Your company AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Ask your company admin to set a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout) in Company, AI keys.'
+        : platform
+          ? 'The platform AI has no vision-capable model, so WorkCoPilot cannot read the screen. Ask the administrator to add a Gemini or OpenAI key in AI Settings.'
+          : 'Your AI key has no vision-capable model, so WorkCoPilot cannot read the screen. Use a provider or model that can see images (Gemini, GPT-4o, or Llama 4 Scout), then test it again.',
       needsVision: true,
     })
     return null
@@ -489,15 +510,18 @@ app.delete('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
 }))
 // Company admin: the user activity log (session deletions etc.) for their company.
 app.get('/api/work/team/activity', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   res.json({ activity: store.listWorkActivity({ companyId: req.workUser.companyId }) })
 }))
 // Company admin: use the company's OWN AI keys (overrides our corporate keys).
 // An empty apiKey clears them and the company falls back to what the superadmin set.
 app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   const { providerId, apiKey, chatModel, visionModel } = req.body || {}
   res.json(store.setCompanyAiKeys(req.workUser.companyId, { providerId, apiKey, chatModel, visionModel }, 'company'))
 }))
 app.get('/api/work/team/ai', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   res.json(store.getCompany(req.workUser.companyId))
 }))
 // Company admin: this company's AI consumption this far (estimated $, per user).
@@ -947,6 +971,10 @@ app.post('/api/work/tickets/:id/reply', requireWorkAuth, wrap((req, res) => {
 // ---- Company admin: manage users within your own company -----------------
 app.get('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
+  // Every company-scoped route refuses when no company is in scope (a superadmin
+  // without a company must use /api/work/admin/companies/:id); without this the
+  // list fell through to "users whose companyId is null".
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   res.json({ company: store.getCompany(cid), users: store.listCompanyUsers(cid) })
 }))
 // In LOCKED license mode the company admin cannot change who holds a license
@@ -962,15 +990,17 @@ function rosterChangeAllowed(req, res) {
 }
 app.post('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   if (!rosterChangeAllowed(req, res)) return
   const { username, password, email, companyRole, tier, displayName } = req.body || {}
-  const role = companyRole === 'company_admin' ? 'company_admin' : 'member'
+  // Role and plan are validated strictly in the store (a typo is a 400, never a
+  // silent default). Both branches run the same seat gate.
   // SSO companies pre-provision by EMAIL (no password; they sign in through the
   // identity provider). A non-SSO company still adds by username + password.
   if (email && String(email).trim()) {
-    return res.json({ user: store.addCompanyMemberByEmail({ companyId: cid, email, companyRole: role, tier, displayName }) })
+    return res.json({ user: store.addCompanyMemberByEmail({ companyId: cid, email, companyRole, tier, displayName }) })
   }
-  res.json(store.createManagedUser({ username, password, companyId: cid, companyRole: role, tier }))
+  res.json(store.createManagedUser({ username, password, companyId: cid, companyRole, tier }))
 }))
 // Company admin: the license + usage dashboard (seats by pool, who holds a
 // license, tier breakdown, minute pool, each person's live usage).
@@ -987,7 +1017,8 @@ app.get('/api/work/team/billing', requireWorkAuth, requireCompanyAdmin, wrap((re
 app.post('/api/work/company/users/:id/minutes', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
   if (!cid) return res.status(403).json({ error: 'No company in scope.' })
-  const minutes = Number((req.body || {}).minutes) || 0
+  const minutes = Number((req.body || {}).minutes)
+  if (!Number.isFinite(minutes) || minutes <= 0) return res.status(400).json({ error: 'Enter how many minutes to allocate.' })
   res.json(store.allocateCompanyPoolToUser(cid, req.params.id, Math.round(minutes * 60)))
 }))
 // Company admin: change a member's role or plan within their OWN company. The

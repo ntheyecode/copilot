@@ -17,15 +17,15 @@ export const SSO_CALLBACK_URL = SSO_PUBLIC_ORIGIN + SSO_CALLBACK_PATH
 export const SSO_OVERVIEW = [
   'WorkCoPilot single sign-on lets your people sign in with the work identity they already have (Google, Microsoft or Okta) instead of a separate WorkCoPilot password.',
   'It uses OpenID Connect (the standard behind "Sign in with..."). You register WorkCoPilot once inside your identity provider, paste four values into WorkCoPilot, and you are done.',
-  'You do NOT create accounts for your people in WorkCoPilot. The first time someone signs in through your provider, their WorkCoPilot account is created automatically as a member. This is called just-in-time provisioning.',
+  'By default WorkCoPilot is invite-only (explicit provisioning): you add each person by their work email first, and only those people can sign in through your provider. Anyone whose email is not on the list is refused. This is what keeps your license count exact. (An optional automatic mode instead creates a member on first sign-in for anyone in your email domain, with no pre-list.)',
 ]
 
 // Who does what. This is the part most people get wrong, so it is explicit.
 export const SSO_ROLES = {
   title: 'Who creates users, and who assigns roles',
   points: [
-    ['You do not pre-create SSO users', 'The first successful sign-in creates the person automatically as a member. Their email is the stable key, so the same person always maps to the same account.'],
-    ['Access is controlled in your identity provider', 'Who is allowed to use WorkCoPilot at all is decided where you register the app (Google, Microsoft or Okta) by assigning users or groups to it. Remove someone there and they can no longer sign in. WorkCoPilot trusts your provider to say who is who.'],
+    ['You pre-provision people by email (invite-only, the default)', 'You add each person by their work email in WorkCoPilot first. Only those emails can sign in through your provider; anyone else is refused. The email is the stable key, so the same person always maps to the same account. (In the optional automatic mode you skip this and a member is created on first sign-in for anyone in your email domain.)'],
+    ['Access is also controlled in your identity provider', 'Who your provider lets reach WorkCoPilot at all is decided where you register the app (Google, Microsoft or Okta) by assigning users or groups to it. Remove someone there and they can no longer sign in. WorkCoPilot still only admits emails you have pre-provisioned (invite-only) or that match your domain (automatic).'],
     ['Roles inside WorkCoPilot are member or company admin', 'Everyone starts as a member. After a person has signed in once, you promote trusted people to company admin on the Team tab. Company admins can manage SSO, people, AI keys, governance and billing.'],
     ['Plan tier is set per person on the Team tab', 'After they appear in the roster you can set each person to the plan tier you want.'],
     ['Seats are enforced', 'If you set a seat limit, sign-in is blocked once every seat is used, with a message telling the person to contact their administrator. A seat limit of 0 means unlimited.'],
@@ -40,7 +40,7 @@ export const SSO_USER_SIGNIN = {
     'On the WorkCoPilot sign-in page they click "Sign in with your company (SSO)".',
     'They enter your company email domain, for example acme.com.',
     'They are sent to your identity provider and sign in there with their work account.',
-    'They land in WorkCoPilot. The first time, their member account is created automatically.',
+    'They land in WorkCoPilot, matched to the profile you pre-provisioned for their email (or, in automatic mode, created on the spot).',
   ],
 }
 
@@ -67,7 +67,7 @@ export const SSO_PROVIDERS = [
     ],
     scenario: {
       title: 'Scenario: a new hire joins acme.com',
-      body: 'Your IT team adds the new person to Google Workspace as they normally would. There is nothing to do in WorkCoPilot. The first time the new hire clicks Sign in with your company and enters acme.com, Google authenticates them and WorkCoPilot creates their member account automatically. If you want them to be a company admin, promote them on the Team tab after that first sign-in.',
+      body: 'Add the new hire in WorkCoPilot by their work email (Team tab, Add by email) and pick their plan. That reserves their license. When they click Sign in with your company, enter acme.com, and authenticate with Google, WorkCoPilot matches them to that profile and signs them in. If you want them to be a company admin, set that when you add them or promote them later. (If your company runs in automatic mode instead, you can skip the pre-add and anyone at acme.com is created on first sign-in.)',
     },
   },
   {

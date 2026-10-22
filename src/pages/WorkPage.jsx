@@ -792,6 +792,10 @@ function Home({ user, onOpen, onSignOut }) {
   // actually configured. Admins/members/subscribers never see it. A 402 from a
   // gated action also flips this on as a server-authoritative fallback.
   const [needsSub, setNeedsSub] = useState(false)
+  // A blocking message for a gated action that is NOT a personal-plan case: a
+  // company member with no license/seat, or the company's own AI keys not set.
+  // These people must never be shown the personal Stripe plan chooser.
+  const [gateMsg, setGateMsg] = useState('')
   const [pricing, setPricing] = useState(null)
   const [subBusy, setSubBusy] = useState('')     // the plan whose checkout is starting
   const [subErr, setSubErr] = useState('')
@@ -840,13 +844,27 @@ function Home({ user, onOpen, onSignOut }) {
     } finally { setPortalBusy(false) }
   }
   useEffect(() => { load() }, [load])
+  // A gated action failed. A company MEMBER must never see the personal plan
+  // chooser: a 402 for them means no license/seat (ask the admin), not "buy a
+  // personal plan". For everyone else a 402 is the plan chooser. Any other error
+  // (for example a 503 when the company's own AI keys are not set) is surfaced
+  // with its real message instead of silently failing.
+  const handleGate = (e) => {
+    const status = e && e.status
+    if (status === 402) {
+      if (isCompanyMember) setGateMsg('Your company has not assigned you a WorkCoPilot license yet, or all licenses are in use. Ask your company administrator to add you.')
+      else setNeedsSub(true)
+    } else if (e && e.message) {
+      setGateMsg(e.message)
+    }
+  }
   const create = async (g) => {
     if (!ready) return
-    setBusy(true)
+    setBusy(true); setGateMsg('')
     try { const r = await api.workCreate({ goal: (typeof g === 'string' ? g : goal).trim() || null }); onOpen(r.session.id) }
     catch (e) {
       setBusy(false)
-      if (e && e.status === 402) setNeedsSub(true)   // no plan: surface the chooser
+      handleGate(e)
     }
   }
   // The plan phase is a short scoping wizard (forced). "Start guiding me" opens
@@ -854,7 +872,7 @@ function Home({ user, onOpen, onSignOut }) {
   const tier = (usage && usage.tier) || 'basic'
   const beginScope = () => { if (!ready || busy || !goal.trim() || !planTitle.trim()) return; setScoping(true) }
   const runWithScope = async (answers) => {
-    setScoping(false); setBusy(true)
+    setScoping(false); setBusy(true); setGateMsg('')
     try {
       const r = await api.workCreate({ title: planTitle.trim() || undefined, goal: goal.trim(), scope: answers || [] })
       // Desktop on-device docs: stash the governed text for THIS session so the
@@ -864,7 +882,7 @@ function Home({ user, onOpen, onSignOut }) {
         try { sessionStorage.setItem('wd_docs_' + r.session.id, deskDocs.map((d) => `# ${d.name}\n${d.text}`).join('\n\n').slice(0, 8000)) } catch { /* ignore */ }
       }
       onOpen(r.session.id)
-    } catch (e) { setBusy(false); if (e && e.status === 402) setNeedsSub(true) }
+    } catch (e) { setBusy(false); handleGate(e) }
   }
   const cancelScope = (reason) => { setScoping(false); if (reason === 'upgrade') setNeedsSub(true) }
   // Start Stripe Checkout for a plan. On success we are redirected to Stripe; a
@@ -967,6 +985,13 @@ function Home({ user, onOpen, onSignOut }) {
               <div style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '0 0 18px', padding: '11px 14px', borderRadius: 12, background: 'rgba(10,134,207,.08)', border: '1px solid rgba(10,134,207,.28)', fontSize: 13.5 }}>
                 <LayoutDashboard size={16} style={{ color: '#0a86cf', flexShrink: 0 }} />
                 <span>You have administrator access, so live guidance is unlocked for you. <a href="/work/admin" style={{ color: '#0a86cf', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>Open the admin console</a></span>
+              </div>
+            )}
+
+            {gateMsg && (
+              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '0 0 18px', padding: '11px 14px', borderRadius: 12, background: 'rgba(224,122,33,.09)', border: '1px solid rgba(224,122,33,.30)', fontSize: 13.5 }} role="alert">
+                <AlertTriangle size={16} style={{ color: '#c2410c', flexShrink: 0, marginTop: 1 }} />
+                <span>{gateMsg}</span>
               </div>
             )}
 

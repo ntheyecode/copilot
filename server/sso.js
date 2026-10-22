@@ -248,6 +248,11 @@ export function registerSsoRoutes(app, deps = {}) {
       const claims = await verifyIdToken(tokens.id_token, cfg, disco, { nonce: sess.nonce })
       const email = extractEmail(claims)
       if (!email) return loginError(res, 'The identity provider did not share an email address.')
+      // Defense in depth: never trust an unverified email (the email -> company
+      // mapping is the whole identity, so an unverified address could be spoofed
+      // to match someone else's pre-provisioned seat). Only reject when the
+      // provider explicitly says false (many providers omit the claim).
+      if (claims.email_verified === false) return loginError(res, 'Your email is not verified with your identity provider. Verify it, then sign in again.')
       // Invite-only by default: the email must already be pre-provisioned on the
       // company (resolveSsoLogin refuses an unknown email in explicit mode, or
       // creates a member in auto mode). This is what caps the licenses.
