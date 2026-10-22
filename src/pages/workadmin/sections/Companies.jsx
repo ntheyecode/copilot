@@ -1,39 +1,52 @@
-// Companies (tenancy): superadmin creates companies, adds company admins and
-// company users, and sets the per-company / per-user PII-PHI redaction policy.
+// Companies (tenancy): the superadmin onboards a company end to end - full
+// profile, per-tier license allocation, admin seats, license mode, SSO
+// provisioning, AI source and price overrides - then manages its people (by
+// email for SSO), SSO config, corporate AI keys, extra hours, billing and the
+// data-redaction policy. Everything a company needs to go live lives here.
 import React, { useEffect, useState, useCallback } from 'react'
-import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check } from 'lucide-react'
+import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState } from './_shared.jsx'
 
-// Per-provider issuer hints shown under the issuer field, so an admin pastes the
-// right thing. The config is issuer-driven, so Microsoft's tenant lives in the
-// issuer the admin enters.
-const SSO_ISSUER_HINT = {
-  google: 'https://accounts.google.com',
-  microsoft: 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0',
-  okta: 'https://YOUR_ORG.okta.com',
+// Friendly labels for every OpenID Connect provider the backend accepts. The
+// engine is generic OIDC, so the list can grow without code changes.
+const SSO_PROVIDERS = [
+  ['google', 'Google', 'https://accounts.google.com'],
+  ['microsoft', 'Microsoft (Entra ID)', 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0'],
+  ['okta', 'Okta', 'https://YOUR_ORG.okta.com'],
+  ['auth0', 'Auth0', 'https://YOUR_TENANT.us.auth0.com'],
+  ['onelogin', 'OneLogin', 'https://YOUR_ORG.onelogin.com/oidc/2'],
+  ['ping', 'Ping Identity (PingOne)', 'https://auth.pingone.com/ENV_ID/as'],
+  ['jumpcloud', 'JumpCloud', 'https://oauth.id.jumpcloud.com/'],
+  ['keycloak', 'Keycloak', 'https://YOUR_HOST/realms/YOUR_REALM'],
+  ['cognito', 'AWS Cognito', 'https://cognito-idp.REGION.amazonaws.com/POOL_ID'],
+  ['azuread_b2c', 'Microsoft Entra B2C', 'https://YOUR_TENANT.b2clogin.com/YOUR_TENANT.onmicrosoft.com/v2.0'],
+  ['authentik', 'Authentik', 'https://YOUR_HOST/application/o/SLUG/'],
+  ['duo', 'Duo', 'https://sso.YOUR_ORG.duosecurity.com/oidc/CLIENT'],
+  ['centrify', 'Centrify', 'https://YOUR_TENANT.my.centrify.com/OIDC'],
+  ['oidc', 'Other (any OpenID Connect)', 'https://your-identity-provider/...'],
+]
+const SSO_HINT = Object.fromEntries(SSO_PROVIDERS.map(([id, , hint]) => [id, hint]))
+
+const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
+const fmtMins = (secs) => { const m = Math.round((Number(secs) || 0) / 60); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); const r = m % 60; return r ? `${h}h ${r}m` : `${h}h` }
+
+function CopyLine({ value }) {
+  const [c, setC] = useState(false)
+  return <span className="co-copy"><code>{value}</code><button className="wka-btn sm ghost" onClick={async () => { try { await navigator.clipboard.writeText(value); setC(true); setTimeout(() => setC(false), 1600) } catch { /* blocked */ } }}>{c ? <Check size={12} /> : <Copy size={12} />}</button></span>
 }
 
-// Connect SSO for one company. The client secret is write-only: the server never
-// sends it back, so an empty secret field means "keep the one already stored".
+// Connect SSO for one company. The client secret is write-only.
 function SsoPanel({ company, onSaved }) {
   const connected = !!(company.sso && company.sso.connected)
   const [open, setOpen] = useState(false)
-  const [form, setForm] = useState({
-    provider: (company.sso && company.sso.provider) || 'google',
-    issuer: '',
-    clientId: '',
-    clientSecret: '',
-    domain: (company.sso && company.sso.domain) || '',
-  })
+  const [form, setForm] = useState({ provider: (company.sso && company.sso.provider) || 'google', issuer: '', clientId: '', clientSecret: '', domain: (company.sso && company.sso.domain) || '' })
   const [hasSecret, setHasSecret] = useState(connected)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
   const [done, setDone] = useState(false)
   const redirectUri = (typeof window !== 'undefined' ? window.location.origin : 'https://admireveda.com') + '/api/work/sso/callback'
 
-  // Prefill the non-secret fields (issuer, client id, domain, provider) the
-  // first time the panel is opened. The client secret is never returned.
   useEffect(() => {
     if (!open) return
     let alive = true
@@ -51,9 +64,7 @@ function SsoPanel({ company, onSaved }) {
     setBusy(true); setMsg(''); setDone(false)
     try {
       await workAdminApi.setCompanySso(company.id, form)
-      setForm((f) => ({ ...f, clientSecret: '' }))
-      setHasSecret(true)
-      setDone(true)
+      setForm((f) => ({ ...f, clientSecret: '' })); setHasSecret(true); setDone(true)
       onSaved && onSaved()
     } catch (e) { setMsg(e.message || 'Could not save the SSO settings.') } finally { setBusy(false) }
   }
@@ -61,40 +72,24 @@ function SsoPanel({ company, onSaved }) {
   return (
     <div className="co-sso">
       <button className="co-sso-head" onClick={() => setOpen((v) => !v)}>
-        <KeyRound size={15} />
-        <span>Single sign-on</span>
+        <KeyRound size={15} /><span>Single sign-on</span>
         <span className={`co-sso-state ${connected ? 'on' : ''}`}>{connected ? <><Check size={12} /> Connected ({company.sso.provider})</> : 'Not connected'}</span>
         {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
       </button>
       {open && (
         <div className="co-sso-body">
-          <div className="co-sso-row">
-            <label>Provider</label>
+          <div className="co-sso-row"><label>Provider</label>
             <select className="wka-input" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
-              <option value="google">Google</option>
-              <option value="microsoft">Microsoft (Entra)</option>
-              <option value="okta">Okta</option>
+              {SSO_PROVIDERS.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
             </select>
           </div>
-          <div className="co-sso-row">
-            <label>Issuer URL</label>
-            <input className="wka-input" placeholder={SSO_ISSUER_HINT[form.provider]} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} />
-          </div>
-          <div className="co-sso-hint">Example for {form.provider}: {SSO_ISSUER_HINT[form.provider]}</div>
-          <div className="co-sso-row">
-            <label>Client ID</label>
-            <input className="wka-input" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} />
-          </div>
-          <div className="co-sso-row">
-            <label>Client secret</label>
-            <input className="wka-input" type="password" placeholder={hasSecret ? 'Stored. Leave blank to keep it.' : 'Paste the secret'} value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} />
-          </div>
-          <div className="co-sso-row">
-            <label>Email domain</label>
-            <input className="wka-input" placeholder="example.com" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} />
-          </div>
+          <div className="co-sso-row"><label>Issuer URL</label><input className="wka-input" placeholder={SSO_HINT[form.provider]} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
+          <div className="co-sso-hint">Example for this provider: {SSO_HINT[form.provider]}</div>
+          <div className="co-sso-row"><label>Client ID</label><input className="wka-input" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></div>
+          <div className="co-sso-row"><label>Client secret</label><input className="wka-input" type="password" placeholder={hasSecret ? 'Stored. Leave blank to keep it.' : 'Paste the secret'} value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></div>
+          <div className="co-sso-row"><label>Email domain</label><input className="wka-input" placeholder="example.com" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} /></div>
           <div className="co-sso-hint">Users who enter this domain on the sign-in page are sent to this provider.</div>
-          <div className="co-sso-redirect">Set the redirect URI in your provider to: <code>{redirectUri}</code></div>
+          <div className="co-sso-redirect">Register this redirect URI in your provider: <CopyLine value={redirectUri} /></div>
           {msg && <div className="co-msg">{msg}</div>}
           {done && <div className="co-sso-ok"><Check size={13} /> Saved.</div>}
           <button className="wka-btn primary" disabled={busy} onClick={save}>{busy ? <Loader2 size={14} className="spin" /> : (connected ? 'Update SSO' : 'Connect SSO')}</button>
@@ -104,13 +99,21 @@ function SsoPanel({ company, onSaved }) {
   )
 }
 
+const BLANK_NEW = {
+  name: '', plan: 'basic', aiSource: '', scrub: false,
+  adminSeats: 2, licenseMode: 'locked', ssoProvisioning: 'explicit',
+  byTier: { basic: '', advanced: '', premium: '' },
+  profile: { contactPerson: '', email: '', billingEmail: '', phone: '', address: '', city: '', state: '', country: '', postalCode: '' },
+}
+
 export default function Companies({ isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null, companies: [] })
   const [showNew, setShowNew] = useState(false)
-  const [form, setForm] = useState({ name: '', plan: 'basic', seats: '', scrub: false })
+  const [form, setForm] = useState(BLANK_NEW)
   const [openId, setOpenId] = useState(null)
   const [detail, setDetail] = useState(null)
-  const [uForm, setUForm] = useState({ username: '', password: '', companyRole: 'member', tier: 'basic', free: false })
+  const [lic, setLic] = useState(null)
+  const [bill, setBill] = useState(null)
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -121,68 +124,135 @@ export default function Companies({ isSuperAdmin }) {
   }, [])
   useEffect(() => { load() }, [load])
 
+  const seatTotal = (Number(form.byTier.basic) || 0) + (Number(form.byTier.advanced) || 0) + (Number(form.byTier.premium) || 0)
+
   const createCompany = async () => {
-    if (busy || !form.name.trim()) return
+    if (busy || !form.name.trim()) { setMsg('Company name is required.'); return }
     setBusy(true); setMsg('')
-    try { await workAdminApi.createCompany({ name: form.name, plan: form.plan, seats: Number(form.seats) || 0, scrub: form.scrub }); setForm({ name: '', plan: 'basic', seats: '', scrub: false }); setShowNew(false); await load() }
+    const byTier = { basic: Number(form.byTier.basic) || 0, advanced: Number(form.byTier.advanced) || 0, premium: Number(form.byTier.premium) || 0 }
+    const body = {
+      name: form.name, plan: form.plan, scrub: form.scrub,
+      adminSeats: Number(form.adminSeats) || 0, licenseMode: form.licenseMode, ssoProvisioning: form.ssoProvisioning,
+      profile: form.profile,
+      ...(seatTotal > 0 ? { seatsByTier: byTier } : {}),
+      ...(form.aiSource ? { aiSource: form.aiSource } : {}),
+    }
+    try { await workAdminApi.createCompany(body); setForm(BLANK_NEW); setShowNew(false); await load() }
     catch (e) { setMsg(e.message || 'Could not create the company.') } finally { setBusy(false) }
   }
+
+  const loadDetail = async (id) => {
+    try {
+      const [d, l] = await Promise.all([workAdminApi.company(id), workAdminApi.companyLicenses(id).catch(() => null)])
+      setDetail(d); setLic(l)
+    } catch (e) { setMsg(e.message) }
+  }
   const openCompany = async (id) => {
-    if (openId === id) { setOpenId(null); setDetail(null); return }
-    setOpenId(id); setDetail(null); setMsg('')
-    try { setDetail(await workAdminApi.company(id)) } catch (e) { setMsg(e.message) }
+    if (openId === id) { setOpenId(null); setDetail(null); setLic(null); setBill(null); return }
+    setOpenId(id); setDetail(null); setLic(null); setBill(null); setMsg('')
+    loadDetail(id)
   }
-  const refreshDetail = async (id) => { try { setDetail(await workAdminApi.company(id)) } catch {} ; load() }
-  const toggleCompanyScrub = async (c) => {
-    if (!isSuperAdmin) return
-    try { await workAdminApi.companyScrub(c.id, !c.scrub); refreshDetail(c.id) } catch (e) { setMsg(e.message) }
-  }
-  // Onboarding patches: AI source, image-gen, trial (superadmin only).
-  const patchCompany = async (id, patch) => {
-    if (!isSuperAdmin) return
-    try { await workAdminApi.updateCompany(id, patch); refreshDetail(id) } catch (e) { setMsg(e.message) }
-  }
-  // Corporate AI keys (superadmin sets per company) + per-company consumption.
+  const refreshDetail = async (id) => { await loadDetail(id); load() }
+  const patchCompany = async (id, patch) => { if (!isSuperAdmin) return; try { await workAdminApi.updateCompany(id, patch); refreshDetail(id) } catch (e) { setMsg(e.message) } }
+  const toggleCompanyScrub = async (c) => { if (!isSuperAdmin) return; try { await workAdminApi.companyScrub(c.id, !c.scrub); refreshDetail(c.id) } catch (e) { setMsg(e.message) } }
+
+  // Corporate AI keys.
   const [aiForm, setAiForm] = useState({})
   const setAiField = (id, k, v) => setAiForm((f) => ({ ...f, [id]: { ...(f[id] || {}), [k]: v } }))
   const saveAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, aiForm[id] || {}); setAiForm((f) => ({ ...f, [id]: {} })); refreshDetail(id); setMsg('Corporate AI keys saved.') } catch (e) { setMsg(e.message) } }
   const clearAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, { apiKey: '' }); refreshDetail(id); setMsg('AI keys cleared.') } catch (e) { setMsg(e.message) } }
-  const [consumption, setConsumption] = useState({})
-  const loadConsumption = async (id) => { try { const r = await workAdminApi.companyConsumption(id); setConsumption((cc) => ({ ...cc, [id]: r })) } catch (e) { setMsg(e.message) } }
-  const addUser = async (companyId) => {
-    if (busy || !uForm.username.trim() || !uForm.password) { setMsg('Username (3+) and password (6+) required.'); return }
+
+  // Members: add by email (SSO) or username+password, set tier, grant hours, remove.
+  const [mForm, setMForm] = useState({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic', mode: 'email', free: false })
+  const addMember = async (companyId) => {
     setBusy(true); setMsg('')
-    try { await workAdminApi.createUser({ ...uForm, companyId }); setUForm({ username: '', password: '', companyRole: 'member', tier: 'basic', free: false }); refreshDetail(companyId) }
-    catch (e) { setMsg(e.message || 'Could not add the user.') } finally { setBusy(false) }
+    try {
+      if (mForm.mode === 'email') {
+        if (!mForm.email.includes('@')) { setMsg('Enter a valid work email.'); setBusy(false); return }
+        await workAdminApi.addCompanyMember(companyId, { email: mForm.email.trim(), displayName: mForm.displayName.trim(), companyRole: mForm.companyRole, tier: mForm.tier })
+      } else {
+        if (!mForm.username.trim() || !mForm.password) { setMsg('Username (3+) and password (6+) required.'); setBusy(false); return }
+        await workAdminApi.createUser({ username: mForm.username, password: mForm.password, companyId, companyRole: mForm.companyRole, tier: mForm.tier, free: mForm.free })
+      }
+      setMForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic', mode: mForm.mode, free: false }); refreshDetail(companyId)
+    } catch (e) { setMsg(e.message || 'Could not add the person.') } finally { setBusy(false) }
   }
-  const toggleUserScrub = async (u, companyId) => {
-    if (!isSuperAdmin) return
-    try { await workAdminApi.userScrub(u.id, !u.scrub); refreshDetail(companyId) } catch (e) { setMsg(e.message) }
-  }
+  const setUserTier = async (u, companyId, tier) => { try { await workAdminApi.setTier(u.id, tier); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
+  const grantUserHours = async (u, companyId) => { const h = window.prompt(`Add how many hours for ${u.username}?`, '1'); if (h == null) return; try { await workAdminApi.grantHours(u.id, Number(h) || 0); refreshDetail(companyId); setMsg(`Added ${h} hours to ${u.username}.`) } catch (e) { setMsg(e.message) } }
+  const removeMember = async (u, companyId) => { if (!window.confirm(`Remove ${u.username} from the company?`)) return; try { await workAdminApi.removeCompanyMember(companyId, u.id); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
+  const toggleUserScrub = async (u, companyId) => { if (!isSuperAdmin) return; try { await workAdminApi.userScrub(u.id, !u.scrub); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const isFree = (u) => u.subscription && u.subscription.status === 'comp'
-  const toggleUserFree = async (u, companyId) => {
-    if (!isSuperAdmin) return
-    try { await workAdminApi.userFreeAccess(u.id, !isFree(u)); refreshDetail(companyId) } catch (e) { setMsg(e.message) }
+  const toggleUserFree = async (u, companyId) => { if (!isSuperAdmin) return; try { await workAdminApi.userFreeAccess(u.id, !isFree(u)); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
+
+  // Seat allocation + pool minutes.
+  const [seatEdit, setSeatEdit] = useState({})
+  const saveSeats = async (id) => { const e = seatEdit[id] || {}; try { await workAdminApi.updateCompany(id, { seatsByTier: { basic: Number(e.basic) || 0, advanced: Number(e.advanced) || 0, premium: Number(e.premium) || 0 }, adminSeats: Number(e.adminSeats) || 0 }); setSeatEdit((s) => ({ ...s, [id]: undefined })); refreshDetail(id); setMsg('Licenses updated.') } catch (err) { setMsg(err.message) } }
+  const addPool = async (id) => { const h = window.prompt('Add how many hours to the company minute pool?', '10'); if (h == null) return; try { await workAdminApi.poolMinutes(id, Math.round((Number(h) || 0) * 60)); refreshDetail(id); setMsg(`Added ${h} hours to the pool.`) } catch (e) { setMsg(e.message) } }
+
+  // Pricing overrides.
+  const [priceForm, setPriceForm] = useState({})
+  const savePricing = async (id) => {
+    const p = priceForm[id] || {}
+    const pricing = {
+      plans: { ...(p.pBasic ? { basic: Number(p.pBasic) } : {}), ...(p.pAdvanced ? { advanced: Number(p.pAdvanced) } : {}), ...(p.pPremium ? { premium: Number(p.pPremium) } : {}) },
+      hour: { ...(p.hBasic ? { basic: Number(p.hBasic) } : {}), ...(p.hAdvanced ? { advanced: Number(p.hAdvanced) } : {}), ...(p.hPremium ? { premium: Number(p.hPremium) } : {}) },
+    }
+    try { await workAdminApi.setCompanyPricing(id, pricing); refreshDetail(id); setMsg('Pricing overrides saved.') } catch (e) { setMsg(e.message) }
   }
+
+  // Billing.
+  const loadBill = async (id) => { try { setBill(await workAdminApi.companyBilling(id)) } catch (e) { setMsg(e.message) } }
+  const addBillItem = async (id) => { const desc = window.prompt('Line item description (e.g. Extra 10 hours):'); if (!desc) return; const amt = window.prompt('Amount (USD):', '0'); if (amt == null) return; try { await workAdminApi.addBillingItem(id, { type: 'adjustment', description: desc, qty: 1, unitAmount: Number(amt) || 0 }); loadBill(id) } catch (e) { setMsg(e.message) } }
+  const removeBillItem = async (id, itemId) => { try { await workAdminApi.removeBillingItem(id, itemId); loadBill(id) } catch (e) { setMsg(e.message) } }
 
   if (state.loading) return <Loading label="Loading companies" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
+
+  const P = (k, v) => setForm((f) => ({ ...f, profile: { ...f.profile, [k]: v } }))
+  const T = (k, v) => setForm((f) => ({ ...f, byTier: { ...f.byTier, [k]: v.replace(/[^0-9]/g, '') } }))
 
   return (
     <div className="wka-panel">
       <style>{CSS}</style>
       <div className="co-head">
-        <p className="desc">Create companies, add company admins and users, and set the data-redaction policy per company or per user.</p>
+        <p className="desc">Onboard a company with its full profile, licenses, SSO and AI, then manage its people, hours and billing. Everything is scoped per company.</p>
         {isSuperAdmin && <button className="wka-btn primary" onClick={() => setShowNew((v) => !v)}><Plus size={15} /> New company</button>}
       </div>
 
       {showNew && (
         <div className="co-new">
-          <input className="wka-input" placeholder="Company name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-          <select className="wka-input" value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
-          <input className="wka-input" type="number" min="0" placeholder="Seats" value={form.seats} onChange={(e) => setForm({ ...form, seats: e.target.value })} style={{ maxWidth: 90 }} />
-          <label className="co-chk"><input type="checkbox" checked={form.scrub} onChange={(e) => setForm({ ...form, scrub: e.target.checked })} /> Redaction on</label>
-          <button className="wka-btn primary" disabled={busy} onClick={createCompany}>{busy ? <Loader2 size={14} className="spin" /> : 'Create'}</button>
+          <div className="co-sec">Company</div>
+          <div className="co-grid">
+            <L label="Company name"><input className="wka-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></L>
+            <L label="Plan (default tier)"><select className="wka-input" value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select></L>
+            <L label="AI source" hint="Company = they bring their own AI keys (then required). Platform = we provide."><select className="wka-input" value={form.aiSource} onChange={(e) => setForm({ ...form, aiSource: e.target.value })}><option value="">Select…</option><option value="platform">Platform keys (we provide)</option><option value="company">Company keys (they add)</option></select></L>
+          </div>
+          <div className="co-sec">Contact and address</div>
+          <div className="co-grid">
+            <L label="Contact person"><input className="wka-input" value={form.profile.contactPerson} onChange={(e) => P('contactPerson', e.target.value)} /></L>
+            <L label="Email"><input className="wka-input" value={form.profile.email} onChange={(e) => P('email', e.target.value)} /></L>
+            <L label="Billing email"><input className="wka-input" value={form.profile.billingEmail} onChange={(e) => P('billingEmail', e.target.value)} /></L>
+            <L label="Phone"><input className="wka-input" value={form.profile.phone} onChange={(e) => P('phone', e.target.value)} /></L>
+            <L label="Address"><input className="wka-input" value={form.profile.address} onChange={(e) => P('address', e.target.value)} /></L>
+            <L label="City"><input className="wka-input" value={form.profile.city} onChange={(e) => P('city', e.target.value)} /></L>
+            <L label="State / region"><input className="wka-input" value={form.profile.state} onChange={(e) => P('state', e.target.value)} /></L>
+            <L label="Country"><input className="wka-input" value={form.profile.country} onChange={(e) => P('country', e.target.value)} /></L>
+            <L label="Postal code"><input className="wka-input" value={form.profile.postalCode} onChange={(e) => P('postalCode', e.target.value)} /></L>
+          </div>
+          <div className="co-sec">Licenses</div>
+          <div className="co-grid">
+            <L label="Basic licenses"><input className="wka-input" value={form.byTier.basic} onChange={(e) => T('basic', e.target.value)} /></L>
+            <L label="Advanced licenses"><input className="wka-input" value={form.byTier.advanced} onChange={(e) => T('advanced', e.target.value)} /></L>
+            <L label="Premium licenses"><input className="wka-input" value={form.byTier.premium} onChange={(e) => T('premium', e.target.value)} /></L>
+            <L label="Admin seats" hint="Separate pool. Admins do not consume user licenses."><input className="wka-input" value={form.adminSeats} onChange={(e) => setForm({ ...form, adminSeats: e.target.value.replace(/[^0-9]/g, '') })} /></L>
+            <L label="License mode" hint="Locked = only you change the roster. Flexible = the company admin manages it."><select className="wka-input" value={form.licenseMode} onChange={(e) => setForm({ ...form, licenseMode: e.target.value })}><option value="locked">Locked (we manage)</option><option value="flexible">Flexible (company manages)</option></select></L>
+            <L label="SSO provisioning" hint="Explicit = only people you add by email can sign in. Auto = anyone in the domain is created on first sign-in."><select className="wka-input" value={form.ssoProvisioning} onChange={(e) => setForm({ ...form, ssoProvisioning: e.target.value })}><option value="explicit">Explicit (invite-only)</option><option value="auto">Auto (open to domain)</option></select></L>
+          </div>
+          <div className="co-foot">
+            <label className="co-chk"><input type="checkbox" checked={form.scrub} onChange={(e) => setForm({ ...form, scrub: e.target.checked })} /> Data redaction on by default</label>
+            <span className="co-total">Total user licenses: <b>{seatTotal}</b></span>
+            <button className="wka-btn primary" disabled={busy} onClick={createCompany}>{busy ? <Loader2 size={14} className="spin" /> : 'Create company'}</button>
+          </div>
         </div>
       )}
       {msg && <div className="co-msg">{msg}</div>}
@@ -197,82 +267,146 @@ export default function Companies({ isSuperAdmin }) {
                   <span className="co-ic"><Building2 size={16} /></span>
                   <span className="co-name">{c.name}</span>
                   <span className={`wka-badge ${c.plan}`}>{c.plan}</span>
-                  <span className="co-meta">{c.userCount} users &middot; {c.adminCount} admin</span>
+                  <span className="co-meta">{c.memberCount != null ? c.memberCount : c.userCount} users &middot; {c.adminCount} admin{c.aiReady === false ? <span className="co-warn"><AlertTriangle size={12} /> AI not ready</span> : null}</span>
                   <span className={`co-scrub ${c.scrub ? 'on' : ''}`}>{c.scrub ? <><ShieldCheck size={13} /> Redaction on</> : <><Shield size={13} /> Redaction off</>}</span>
                 </button>
                 {openId === c.id && (
                   <div className="co-detail">
-                    {!detail ? <Loading label="Loading users" /> : (
+                    {!detail ? <Loading label="Loading company" /> : (
                       <>
                         <div className="co-detail-top">
-                          <div>Plan <b>{detail.company.plan}</b> &middot; Seats <b>{detail.company.seats || '-'}</b> &middot; SSO <b>{detail.company.sso && detail.company.sso.connected ? detail.company.sso.provider : 'not connected'}</b></div>
+                          <div>Plan <b>{detail.company.plan}</b> &middot; Mode <b>{detail.company.licenseMode}</b> &middot; SSO <b>{detail.company.ssoProvisioning === 'auto' ? 'open domain' : 'invite-only'}</b> {detail.company.sso && detail.company.sso.connected ? <>({detail.company.sso.provider})</> : ''} &middot; AI <b style={{ color: detail.company.aiReady ? 'var(--wka-emerald)' : 'var(--wka-amber)' }}>{detail.company.aiReady ? 'ready' : 'not ready'}</b></div>
                           {isSuperAdmin && <button className="wka-btn sm" onClick={() => toggleCompanyScrub(c)}>{c.scrub ? 'Turn redaction off' : 'Turn redaction on'}</button>}
                         </div>
+                        {detail.company.profile && (detail.company.profile.contactPerson || detail.company.profile.city) ? (
+                          <div className="co-profile">{[detail.company.profile.contactPerson, detail.company.profile.email, detail.company.profile.phone, [detail.company.profile.city, detail.company.profile.state, detail.company.profile.country].filter(Boolean).join(', ')].filter(Boolean).join('  ·  ')}</div>
+                        ) : null}
+
                         {isSuperAdmin && (
-                          <div className="co-detail-top" style={{ gap: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-                            <label style={{ fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 7 }}>AI source
+                          <div className="co-detail-top" style={{ gap: 14, flexWrap: 'wrap' }}>
+                            <label className="co-inline">AI source
                               <select className="wka-input" style={{ width: 'auto' }} value={detail.company.aiSource || ''} onChange={(e) => patchCompany(c.id, { aiSource: e.target.value || null })}>
-                                <option value="">Select…</option>
-                                <option value="platform">Platform keys (we provide)</option>
-                                <option value="company">Company keys (they add)</option>
+                                <option value="">Select…</option><option value="platform">Platform keys</option><option value="company">Company keys</option>
                               </select>
                             </label>
-                            <button className={`co-toggle ${detail.company.imageGen ? 'on' : ''}`} onClick={() => patchCompany(c.id, { imageGen: !detail.company.imageGen })} title="Image generation for this company (off by default)">Image gen: {detail.company.imageGen ? 'On' : 'Off'}</button>
-                            {detail.company.trial && <span style={{ fontSize: 13, color: 'var(--wka-muted)' }}>Trial: <b>{detail.company.trial.remaining}</b> of {detail.company.trial.sessions} sessions left <button className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => patchCompany(c.id, { trial: { resetUsed: true } })}>reset</button></span>}
-                            {!detail.company.aiSource && <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>Select an AI source to activate this company.</span>}
+                            {detail.company.aiReady === false && <span className="co-amber"><AlertTriangle size={13} /> {detail.company.aiReason}</span>}
+                            <button className={`co-toggle ${detail.company.imageGen ? 'on' : ''}`} onClick={() => patchCompany(c.id, { imageGen: !detail.company.imageGen })}>Image gen: {detail.company.imageGen ? 'On' : 'Off'}</button>
                           </div>
                         )}
+
                         {isSuperAdmin && detail.company.aiSource === 'company' && (
-                          <div className="co-detail-top" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}>
-                            <div style={{ fontSize: 12.5, fontWeight: 700 }}>Corporate AI keys. We manage them per company, so usage is attributed to {c.name}.</div>
-                            {detail.company.companyAi
-                              ? <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Current: <b>{detail.company.companyAi.providerId || 'provider'}</b> · key {detail.company.companyAi.keyMasked} · {detail.company.companyAi.chatModel || 'default model'} · {detail.company.companyAi.owner === 'company' ? 'set by the company admin (their own keys)' : 'corporate (set by us)'}</div>
-                              : <div style={{ fontSize: 12, color: 'var(--wka-amber)' }}>No keys yet. Add the corporate keys below, or the company can add their own from their dashboard.</div>}
-                            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                              <input className="wka-input" placeholder="provider (gemini / openai / groq…)" value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 200 }} />
-                              <input className="wka-input" placeholder="API key" value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 230 }} />
-                              <input className="wka-input" placeholder="chat model" value={(aiForm[c.id]?.chatModel) || ''} onChange={(e) => setAiField(c.id, 'chatModel', e.target.value)} style={{ width: 150 }} />
-                              <input className="wka-input" placeholder="vision model" value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 150 }} />
-                              <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>Save corporate keys</button>
+                          <div className="co-block">
+                            <div className="co-block-t">Corporate AI keys {detail.company.companyAi ? <span className="co-dim">· {detail.company.companyAi.providerId} · {detail.company.companyAi.keyMasked}</span> : <span className="co-amber">· none set</span>}</div>
+                            <div className="co-inline-wrap">
+                              <input className="wka-input" placeholder="provider (gemini/openai/groq)" value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 190 }} />
+                              <input className="wka-input" placeholder="API key" value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 210 }} />
+                              <input className="wka-input" placeholder="chat model" value={(aiForm[c.id]?.chatModel) || ''} onChange={(e) => setAiField(c.id, 'chatModel', e.target.value)} style={{ width: 140 }} />
+                              <input className="wka-input" placeholder="vision model" value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 140 }} />
+                              <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>Save keys</button>
                               {detail.company.companyAi && <button className="wka-btn sm ghost" onClick={() => clearAiKeys(c.id)}>Clear</button>}
                             </div>
-                            <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 2 }}>
-                              <button className="wka-btn sm ghost" onClick={() => loadConsumption(c.id)}>View consumption</button>
-                              {consumption[c.id] && <span style={{ fontSize: 12.5 }}>Total <b>${consumption[c.id].totalUsd.toFixed(2)}</b> · {consumption[c.id].sessionCount} sessions · {consumption[c.id].userCount} users</span>}
-                            </div>
-                            {consumption[c.id] && consumption[c.id].byUser.length > 0 && (
-                              <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>{consumption[c.id].byUser.slice(0, 8).map((u) => `${u.displayName}: $${u.usd.toFixed(2)} (${u.sessions})`).join('  ·  ')}</div>
-                            )}
                           </div>
                         )}
+
+                        {/* Licenses */}
+                        {isSuperAdmin && lic && (
+                          <div className="co-block">
+                            <div className="co-block-t">Licenses {lic.seatsByTier ? '(per tier)' : '(total pool)'}</div>
+                            {lic.tierUsage ? (
+                              <div className="co-tiers">
+                                {['basic', 'advanced', 'premium'].map((t) => {
+                                  const tu = lic.tierUsage[t]; const ed = seatEdit[c.id]
+                                  return <div key={t} className="co-tier"><span className="co-tier-n">{t}</span>{ed ? <input className="wka-input co-seat-in" value={ed[t]} onChange={(e) => setSeatEdit((s) => ({ ...s, [c.id]: { ...s[c.id], [t]: e.target.value.replace(/[^0-9]/g, '') } }))} /> : <b>{tu.used} / {tu.allocated}</b>}<span className="co-dim">{ed ? 'allocated' : `${tu.left} free`}</span></div>
+                                })}
+                                <div className="co-tier"><span className="co-tier-n">admin</span>{seatEdit[c.id] ? <input className="wka-input co-seat-in" value={seatEdit[c.id].adminSeats} onChange={(e) => setSeatEdit((s) => ({ ...s, [c.id]: { ...s[c.id], adminSeats: e.target.value.replace(/[^0-9]/g, '') } }))} /> : <b>{lic.adminSeatsUsed} / {lic.adminSeats}</b>}<span className="co-dim">seats</span></div>
+                              </div>
+                            ) : <div className="co-dim">Total user seats: {lic.userSeatsUsed} of {lic.userSeats || 'no limit'} · admin {lic.adminSeatsUsed} of {lic.adminSeats}</div>}
+                            <div className="co-inline-wrap">
+                              {seatEdit[c.id]
+                                ? <><button className="wka-btn sm primary" onClick={() => saveSeats(c.id)}>Save licenses</button><button className="wka-btn sm ghost" onClick={() => setSeatEdit((s) => ({ ...s, [c.id]: undefined }))}>Cancel</button></>
+                                : <button className="wka-btn sm ghost" onClick={() => setSeatEdit((s) => ({ ...s, [c.id]: { basic: (lic.seatsByTier?.basic) || 0, advanced: (lic.seatsByTier?.advanced) || 0, premium: (lic.seatsByTier?.premium) || 0, adminSeats: lic.adminSeats } }))}>Edit licenses</button>}
+                              <select className="wka-input" style={{ width: 'auto' }} value={detail.company.licenseMode} onChange={(e) => patchCompany(c.id, { licenseMode: e.target.value })}><option value="locked">Locked</option><option value="flexible">Flexible</option></select>
+                              <select className="wka-input" style={{ width: 'auto' }} value={detail.company.ssoProvisioning} onChange={(e) => patchCompany(c.id, { ssoProvisioning: e.target.value })}><option value="explicit">Invite-only</option><option value="auto">Open domain</option></select>
+                              <span className="co-inline"><Clock size={13} /> Pool: <b>{fmtMins(lic.poolSeconds)}</b> <button className="wka-btn sm ghost" onClick={() => addPool(c.id)}>Add hours</button></span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* People */}
+                        <div className="co-block-t">People</div>
                         <table className="wka-table co-users">
-                          <thead><tr><th>User</th><th>Role</th><th>Tier</th><th>Redaction</th><th>Free access</th></tr></thead>
+                          <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Used today</th><th>Redaction</th><th></th></tr></thead>
                           <tbody>
-                            {detail.users.length === 0 && <tr><td colSpan={5} className="co-empty">No users yet.</td></tr>}
-                            {detail.users.map((u) => (
-                              <tr key={u.id}>
-                                <td>{u.username}</td>
-                                <td>{u.companyRole === 'company_admin' ? <span className="wka-chip ok">Company admin</span> : 'Member'}</td>
-                                <td><span className={`wka-badge ${u.tier || 'basic'}`}>{u.tier || 'basic'}</span></td>
-                                <td>{isSuperAdmin
-                                  ? <button className={`co-toggle ${u.scrub ? 'on' : ''}`} onClick={() => toggleUserScrub(u, c.id)}>{u.scrub ? 'On' : 'Off'}</button>
-                                  : (u.scrub ? 'On' : 'Off')}</td>
-                                <td>{isSuperAdmin
-                                  ? <button className={`co-toggle ${isFree(u) ? 'on' : ''}`} onClick={() => toggleUserFree(u, c.id)}>{isFree(u) ? 'Free' : 'Paid'}</button>
-                                  : (isFree(u) ? 'Free' : 'Paid')}</td>
-                              </tr>
-                            ))}
+                            {detail.users.length === 0 && <tr><td colSpan={6} className="co-empty">No people yet.</td></tr>}
+                            {detail.users.map((u) => {
+                              const mu = lic && (lic.members || []).find((m) => String(m.id) === String(u.id))
+                              return (
+                                <tr key={u.id}>
+                                  <td>{u.displayName || u.username}<div className="co-dim">{u.ssoEmail || u.username}</div></td>
+                                  <td>{u.companyRole === 'company_admin' ? <span className="wka-chip ok">Admin</span> : 'Member'}</td>
+                                  <td><select className="wka-input" style={{ width: 'auto', padding: '3px 6px' }} value={u.tier || 'basic'} onChange={(e) => setUserTier(u, c.id, e.target.value)}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select></td>
+                                  <td className="co-dim">{mu ? `${fmtMins(mu.usage.usedSeconds)} / ${fmtMins(mu.usage.dailySeconds)}` : '-'}</td>
+                                  <td>{isSuperAdmin ? <button className={`co-toggle ${u.scrub ? 'on' : ''}`} onClick={() => toggleUserScrub(u, c.id)}>{u.scrub ? 'On' : 'Off'}</button> : (u.scrub ? 'On' : 'Off')}</td>
+                                  <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                                    <button className="wka-btn sm ghost" title="Add hours" onClick={() => grantUserHours(u, c.id)}><Clock size={12} /></button>
+                                    <button className="wka-btn sm ghost" title="Free access" onClick={() => toggleUserFree(u, c.id)} style={{ color: isFree(u) ? 'var(--wka-emerald)' : undefined }}>{isFree(u) ? 'Free' : '$'}</button>
+                                    <button className="wka-btn sm ghost" title="Remove" onClick={() => removeMember(u, c.id)}><Trash2 size={12} /></button>
+                                  </td>
+                                </tr>
+                              )
+                            })}
                           </tbody>
                         </table>
                         <div className="co-adduser">
-                          <UserPlus size={15} />
-                          <input className="wka-input" placeholder="Username" value={uForm.username} onChange={(e) => setUForm({ ...uForm, username: e.target.value })} />
-                          <input className="wka-input" type="password" placeholder="Password" value={uForm.password} onChange={(e) => setUForm({ ...uForm, password: e.target.value })} />
-                          <select className="wka-input" value={uForm.companyRole} onChange={(e) => setUForm({ ...uForm, companyRole: e.target.value })}><option value="member">Member</option><option value="company_admin">Company admin</option></select>
-                          <select className="wka-input" value={uForm.tier} onChange={(e) => setUForm({ ...uForm, tier: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
-                          <label className="co-chk" title="Let this user use the service without Stripe"><input type="checkbox" checked={uForm.free} onChange={(e) => setUForm({ ...uForm, free: e.target.checked })} /> Free access</label>
-                          <button className="wka-btn primary" disabled={busy} onClick={() => addUser(c.id)}>{busy ? <Loader2 size={14} className="spin" /> : 'Add user'}</button>
+                          <div style={{ display: 'flex', gap: 6, marginRight: 4 }}>
+                            <button className={`wka-btn sm${mForm.mode === 'email' ? ' primary' : ''}`} onClick={() => setMForm({ ...mForm, mode: 'email' })}><Mail size={12} /> Email</button>
+                            <button className={`wka-btn sm${mForm.mode === 'password' ? ' primary' : ''}`} onClick={() => setMForm({ ...mForm, mode: 'password' })}><KeyRound size={12} /> Password</button>
+                          </div>
+                          {mForm.mode === 'email'
+                            ? <><input className="wka-input" placeholder="work email" value={mForm.email} onChange={(e) => setMForm({ ...mForm, email: e.target.value })} /><input className="wka-input" placeholder="name (optional)" value={mForm.displayName} onChange={(e) => setMForm({ ...mForm, displayName: e.target.value })} /></>
+                            : <><input className="wka-input" placeholder="username" value={mForm.username} onChange={(e) => setMForm({ ...mForm, username: e.target.value })} /><input className="wka-input" type="password" placeholder="password" value={mForm.password} onChange={(e) => setMForm({ ...mForm, password: e.target.value })} /></>}
+                          <select className="wka-input" value={mForm.companyRole} onChange={(e) => setMForm({ ...mForm, companyRole: e.target.value })}><option value="member">Member</option><option value="company_admin">Company admin</option></select>
+                          <select className="wka-input" value={mForm.tier} onChange={(e) => setMForm({ ...mForm, tier: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
+                          <button className="wka-btn primary" disabled={busy} onClick={() => addMember(c.id)}>{busy ? <Loader2 size={14} className="spin" /> : <><UserPlus size={13} /> Add</>}</button>
                         </div>
+
+                        {/* Pricing */}
+                        {isSuperAdmin && (
+                          <div className="co-block">
+                            <div className="co-block-t">Price overrides <span className="co-dim">· blank keeps the global price</span></div>
+                            <div className="co-inline-wrap">
+                              <span className="co-dim">Plan/mo:</span>
+                              {['Basic', 'Advanced', 'Premium'].map((t) => <input key={t} className="wka-input co-price-in" placeholder={t} value={(priceForm[c.id]?.[`p${t}`]) || ''} onChange={(e) => setPriceForm((f) => ({ ...f, [c.id]: { ...f[c.id], [`p${t}`]: e.target.value.replace(/[^0-9.]/g, '') } }))} />)}
+                              <span className="co-dim">Hour:</span>
+                              {['Basic', 'Advanced', 'Premium'].map((t) => <input key={t} className="wka-input co-price-in" placeholder={t} value={(priceForm[c.id]?.[`h${t}`]) || ''} onChange={(e) => setPriceForm((f) => ({ ...f, [c.id]: { ...f[c.id], [`h${t}`]: e.target.value.replace(/[^0-9.]/g, '') } }))} />)}
+                              <button className="wka-btn sm" onClick={() => savePricing(c.id)}>Save pricing</button>
+                            </div>
+                            {detail.company.pricing && <div className="co-dim">Current: plans {money(detail.company.pricing.plans.basic)}/{money(detail.company.pricing.plans.advanced)}/{money(detail.company.pricing.plans.premium)} · hour {money(detail.company.pricing.hour.basic)}/{money(detail.company.pricing.hour.advanced)}/{money(detail.company.pricing.hour.premium)}</div>}
+                          </div>
+                        )}
+
+                        {/* Billing */}
+                        {isSuperAdmin && (
+                          <div className="co-block">
+                            <div className="co-block-t"><Receipt size={14} /> Billing
+                              <button className="wka-btn sm ghost" style={{ marginLeft: 8 }} onClick={() => loadBill(c.id)}>Load statement</button>
+                              {bill && <a className="wka-btn sm ghost" href={workAdminApi.invoiceUrl(c.id)} target="_blank" rel="noreferrer">Download invoice PDF</a>}
+                              {bill && <button className="wka-btn sm ghost" onClick={() => addBillItem(c.id)}>Add line item</button>}
+                            </div>
+                            {bill && (
+                              <table className="wka-table">
+                                <thead><tr><th>Description</th><th style={{ textAlign: 'right' }}>Qty</th><th style={{ textAlign: 'right' }}>Amount</th><th></th></tr></thead>
+                                <tbody>
+                                  {[...(bill.seatLines || []), ...(bill.ledger || [])].map((l, i) => (
+                                    <tr key={l.id || i}><td>{l.description || l.type}</td><td style={{ textAlign: 'right' }}>{l.qty}</td><td style={{ textAlign: 'right' }}>{money(l.amount)}</td><td style={{ textAlign: 'right' }}>{l.id && l.id.startsWith('bi') ? <button className="wka-btn sm ghost" onClick={() => removeBillItem(c.id, l.id)}><Trash2 size={11} /></button> : null}</td></tr>
+                                  ))}
+                                </tbody>
+                                <tfoot><tr><td colSpan={2} style={{ textAlign: 'right', fontWeight: 700 }}>Total</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{money(bill.total)}</td><td /></tr></tfoot>
+                              </table>
+                            )}
+                          </div>
+                        )}
+
                         {isSuperAdmin && <SsoPanel company={detail.company} onSaved={() => refreshDetail(c.id)} />}
                       </>
                     )}
@@ -286,9 +420,19 @@ export default function Companies({ isSuperAdmin }) {
   )
 }
 
+function L({ label, hint, children }) {
+  return <label className="co-l"><span>{label}{hint ? <span className="co-l-h" title={hint}> ?</span> : null}</span>{children}</label>
+}
+
 const CSS = `
 .co-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
-.co-new{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px;padding:14px;border:1px solid var(--wka-line);border-radius:12px;background:var(--wka-bg-2)}
+.co-new{margin-bottom:14px;padding:16px;border:1px solid var(--wka-line);border-radius:12px;background:var(--wka-bg-2)}
+.co-sec{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--wka-faint);margin:6px 0 8px}
+.co-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px 14px;margin-bottom:12px}
+.co-l{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--wka-muted)}
+.co-l-h{color:var(--wka-cyan);cursor:help;font-weight:700}
+.co-foot{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding-top:8px;border-top:1px solid var(--wka-line)}
+.co-total{font-size:13px;color:var(--wka-muted)}
 .co-chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--wka-muted)}
 .co-msg{color:var(--wka-red);font-size:13px;margin-bottom:12px}
 .co-list{display:flex;flex-direction:column;gap:10px}
@@ -297,17 +441,32 @@ const CSS = `
 .co-row-head:hover{background:var(--wka-panel-2)}
 .co-ic{display:inline-flex;color:var(--wka-cyan)}
 .co-name{font-weight:700;font-size:15px}
-.co-meta{color:var(--wka-muted);font-size:12.5px;margin-left:auto}
+.co-meta{color:var(--wka-muted);font-size:12.5px;margin-left:auto;display:inline-flex;align-items:center;gap:8px}
+.co-warn{display:inline-flex;align-items:center;gap:4px;color:var(--wka-amber);font-weight:700}
 .co-scrub{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--wka-faint);border:1px solid var(--wka-line-2);border-radius:999px;padding:3px 10px}
 .co-scrub.on{color:var(--wka-emerald);border-color:rgba(10,157,102,.4);background:rgba(10,157,102,.08)}
 .co-detail{border-top:1px solid var(--wka-line);padding:16px;background:var(--wka-bg-2)}
 .co-detail-top{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--wka-muted);margin-bottom:12px}
-.co-users{width:100%;margin-bottom:14px}
+.co-profile{font-size:12.5px;color:var(--wka-muted);margin:-4px 0 12px;padding-bottom:10px;border-bottom:1px dashed var(--wka-line)}
+.co-inline{display:inline-flex;align-items:center;gap:7px;font-size:13px}
+.co-inline-wrap{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:8px}
+.co-amber{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--wka-amber)}
+.co-dim{color:var(--wka-faint);font-size:12px}
+.co-block{margin:12px 0;padding:12px 14px;border:1px solid var(--wka-line);border-radius:10px;background:var(--wka-panel)}
+.co-block-t{font-size:12.5px;font-weight:700;color:var(--wka-text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.co-tiers{display:flex;gap:10px;flex-wrap:wrap}
+.co-tier{display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-width:84px;padding:8px 10px;border:1px solid var(--wka-line);border-radius:8px}
+.co-tier-n{font-size:11px;text-transform:capitalize;color:var(--wka-faint)}
+.co-tier b{font-size:15px}
+.co-seat-in{width:56px;padding:3px 6px}
+.co-price-in{width:66px;padding:4px 6px}
+.co-users{width:100%;margin-bottom:12px}
 .co-empty{color:var(--wka-faint);text-align:center;padding:14px}
 .co-toggle{font:inherit;font-size:12px;font-weight:700;border-radius:7px;padding:4px 12px;cursor:pointer;border:1px solid var(--wka-line-2);background:var(--wka-panel);color:var(--wka-muted)}
 .co-toggle.on{color:var(--wka-emerald);border-color:rgba(10,157,102,.4);background:rgba(10,157,102,.1)}
 .co-adduser{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:12px;border-top:1px solid var(--wka-line)}
-.co-adduser svg{color:var(--wka-cyan)}
+.co-copy{display:inline-flex;align-items:center;gap:7px}
+.co-copy code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--wka-text);word-break:break-all}
 .spin{animation:co-spin 1s linear infinite}@keyframes co-spin{to{transform:rotate(360deg)}}
 .co-sso{margin-top:14px;border-top:1px solid var(--wka-line);padding-top:12px}
 .co-sso-head{width:100%;display:flex;align-items:center;gap:9px;background:none;border:none;cursor:pointer;font:inherit;font-weight:700;font-size:13.5px;color:var(--wka-text);padding:4px 0}
@@ -320,7 +479,6 @@ const CSS = `
 .co-sso-row .wka-input{flex:1}
 .co-sso-hint{font-size:11.5px;color:var(--wka-faint);margin:-4px 0 2px 130px}
 .co-sso-redirect{font-size:12px;color:var(--wka-muted);background:var(--wka-bg-2);border:1px solid var(--wka-line);border-radius:9px;padding:9px 11px}
-.co-sso-redirect code{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--wka-text);word-break:break-all}
 .co-sso-ok{display:inline-flex;align-items:center;gap:6px;color:var(--wka-emerald);font-size:12.5px;font-weight:700}
 @media(max-width:720px){.co-meta{margin-left:0;width:100%}.co-adduser{flex-direction:column;align-items:stretch}.co-sso-row{flex-direction:column;align-items:stretch}.co-sso-row label{width:auto}.co-sso-hint{margin-left:0}}
 `

@@ -70,6 +70,21 @@ export const workAdminApi = {
   companyScrub: (id, enabled) => request('POST', `/api/work/admin/companies/${id}/scrub`, { enabled: !!enabled }),
   companyAiKeys: (id, body) => request('POST', `/api/work/admin/companies/${id}/ai-keys`, body || {}),
   companyConsumption: (id) => request('GET', `/api/work/admin/companies/${id}/consumption`),
+  // License + usage dashboard for one company (seat pools, per-tier allocation,
+  // minute pool, AI readiness, each member's usage).
+  companyLicenses: (id) => request('GET', `/api/work/admin/companies/${id}/licenses`),
+  // Pre-provision a member or admin BY EMAIL (SSO, no password), or remove one.
+  addCompanyMember: (id, body) => request('POST', `/api/work/admin/companies/${id}/members`, body || {}),
+  removeCompanyMember: (id, uid) => request('DELETE', `/api/work/admin/companies/${id}/members/${uid}`),
+  // Add minutes to the shared company pool (server takes minutes).
+  poolMinutes: (id, minutes) => request('POST', `/api/work/admin/companies/${id}/pool-minutes`, { minutes: Number(minutes) || 0 }),
+  // Per-company price overrides (merged over the global pricing).
+  setCompanyPricing: (id, pricing) => request('POST', `/api/work/admin/companies/${id}/pricing`, { pricing: pricing || null }),
+  // Billing: the assembled statement, ledger line-item add/remove, invoice PDF.
+  companyBilling: (id) => request('GET', `/api/work/admin/companies/${id}/billing`),
+  addBillingItem: (id, item) => request('POST', `/api/work/admin/companies/${id}/billing/items`, item || {}),
+  removeBillingItem: (id, itemId) => request('DELETE', `/api/work/admin/companies/${id}/billing/items/${itemId}`),
+  invoiceUrl: (id) => `/api/work/admin/companies/${id}/invoice.pdf`,
   // SSO (OIDC) per company. GET returns non-secret status; POST sets the config
   // (leave clientSecret empty to keep the stored one unchanged).
   companySso: (id) => request('GET', `/api/work/admin/companies/${id}/sso`),

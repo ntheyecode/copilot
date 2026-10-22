@@ -103,6 +103,17 @@ export default function WorkLogin() {
       else await login(u, uPass)
       // the effect above reacts to `user` and routes to checkout or /work
     } catch (e2) {
+      // A company single sign-on account cannot use the password form: the
+      // server returns 409. Send them to the SSO panel with a clear message,
+      // prefilling their email domain when they typed an email as the username.
+      if (e2 && e2.status === 409) {
+        const at = uName.indexOf('@')
+        if (at > -1) setSsoDomain(uName.slice(at + 1).trim().toLowerCase())
+        setErr(''); setSsoOpen(true)
+        setSsoErr(e2.message || "This is a company single sign-on account. Use 'Sign in with your company' below.")
+        setBusy(false)
+        return
+      }
       setErr(e2.message || (mode === 'signup' ? 'Could not create your account.' : 'Could not sign in. Check your details.'))
       setBusy(false)
     }

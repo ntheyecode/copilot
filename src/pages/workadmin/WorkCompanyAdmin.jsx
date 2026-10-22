@@ -13,18 +13,28 @@ import React, { useEffect, useState, useCallback, useMemo } from 'react'
 import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
-  Building2, UserCog, RefreshCw,
+  Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag } from './sections/_shared.jsx'
+import * as SSO from '../../shared/sso_guide.js'
 
 const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced' }, { id: 'premium', name: 'Premium' }]
 const ROLE_LABEL = { company_admin: 'Company admin', member: 'Member' }
+// Friendly labels for every OpenID Connect provider the backend accepts.
+const SSO_PROVIDER_LABELS = {
+  google: 'Google', microsoft: 'Microsoft (Entra ID)', okta: 'Okta', auth0: 'Auth0',
+  onelogin: 'OneLogin', ping: 'Ping Identity (PingOne)', jumpcloud: 'JumpCloud',
+  keycloak: 'Keycloak', cognito: 'AWS Cognito', azuread_b2c: 'Microsoft Entra B2C',
+  authentik: 'Authentik', duo: 'Duo', centrify: 'Centrify', oidc: 'Other (any OpenID Connect)',
+}
+const SSO_PROVIDER_ORDER = ['google', 'microsoft', 'okta', 'auth0', 'onelogin', 'ping', 'jumpcloud', 'keycloak', 'cognito', 'azuread_b2c', 'authentik', 'duo', 'centrify', 'oidc']
 const fmtDate = (s) => { if (!s) return '-'; const d = new Date(s); return isNaN(d) ? '-' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
 const fmtDT = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
+const fmtMins = (secs) => { const m = Math.round((Number(secs) || 0) / 60); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); const r = m % 60; return r ? `${h}h ${r}m` : `${h}h` }
 
 // Small inline help: an info icon with a native tooltip. Keeps each control
 // self-explanatory without a popover library.
@@ -37,6 +47,7 @@ const SECTIONS = [
   { id: 'team', label: 'Team', icon: Users, title: 'Team', sub: 'Add people, set their role and plan, and remove them. Changes take effect right away.' },
   { id: 'sso', label: 'Single sign-on', icon: KeyRound, title: 'Single sign-on (SSO)', sub: 'Let your people sign in with your identity provider (Google, Microsoft or Okta).' },
   { id: 'ai', label: 'AI keys', icon: Cpu, title: 'AI keys', sub: 'Run WorkCoPilot on your company AI keys so usage is billed to your own provider account.' },
+  { id: 'billing', label: 'Billing', icon: Receipt, title: 'Billing', sub: 'Your plan charges and any extras. Set by the WorkCoPilot team.' },
   { id: 'governance', label: 'Data governance', icon: ShieldCheck, title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
   { id: 'tickets', label: 'Support', icon: LifeBuoy, title: 'Support', sub: 'Open a ticket and talk to the WorkCoPilot team.' },
   { id: 'activity', label: 'Activity', icon: ListChecks, title: 'Activity', sub: 'A record of what happened across your company.' },
@@ -47,74 +58,108 @@ const SECTIONS = [
 // Overview
 // ===========================================================================
 function OverviewSection({ company }) {
-  const [state, setState] = useState({ loading: true, error: null, data: null })
+  const [state, setState] = useState({ loading: true, error: null, lic: null, cons: null })
   const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
-    api.workTeamConsumption()
-      .then((d) => setState({ loading: false, error: null, data: d }))
-      .catch((error) => setState({ loading: false, error, data: null }))
+    Promise.all([
+      api.workTeamLicenses(),
+      api.workTeamConsumption().catch(() => null),   // consumption is a nice-to-have, never blocks the view
+    ])
+      .then(([lic, cons]) => setState({ loading: false, error: null, lic, cons }))
+      .catch((error) => setState({ loading: false, error, lic: null, cons: null }))
   }, [])
   useEffect(() => { load() }, [load])
 
-  const seats = company ? (company.seats || 0) : 0
-  const used = company ? (company.userCount || 0) : 0
-  const seatLabel = seats > 0 ? `${used} of ${seats}` : `${used}`
-  const d = state.data
+  if (state.loading) return <Loading label="Loading your company" />
+  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
+  const lic = state.lic || {}
+  const d = state.cons
+  const userLabel = lic.userSeats > 0 ? `${lic.userSeatsUsed} of ${lic.userSeats}` : `${lic.userSeatsUsed || 0}`
+  const adminLabel = lic.adminSeats > 0 ? `${lic.adminSeatsUsed} of ${lic.adminSeats}` : `${lic.adminSeatsUsed || 0}`
+  const aiReady = company ? company.aiReady : undefined
 
   return (
     <div>
       <div className="wka-cards">
         <div className="wka-card">
-          <div className="k"><Users size={15} /> Seats in use</div>
-          <div className="v">{seatLabel}</div>
-          <div className="foot">{seats > 0 ? `${Math.max(0, seats - used)} seats left` : 'No seat limit set'}</div>
+          <div className="k"><Users size={15} /> User licenses</div>
+          <div className="v">{userLabel}</div>
+          <div className="foot">{lic.userSeatsLeft == null ? 'No limit set' : `${lic.userSeatsLeft} left`}</div>
         </div>
         <div className="wka-card">
-          <div className="k"><UserCog size={15} /> Company admins</div>
-          <div className="v">{company ? (company.adminCount || 0) : 0}</div>
-          <div className="foot">People who can manage this console</div>
+          <div className="k"><UserCog size={15} /> Admin seats</div>
+          <div className="v">{adminLabel}</div>
+          <div className="foot">{lic.adminSeatsLeft == null ? 'No limit set' : `${lic.adminSeatsLeft} left`}</div>
+        </div>
+        <div className="wka-card">
+          <div className="k"><Clock size={15} /> Company minute pool</div>
+          <div className="v">{fmtMins(lic.poolSeconds)}</div>
+          <div className="foot">Shared backup minutes</div>
         </div>
         <div className="wka-card accent">
           <div className="k"><Cpu size={15} /> AI consumption</div>
-          <div className="v">{state.loading ? '...' : money(d && d.totalUsd)}</div>
-          <div className="foot">{state.loading ? 'Loading' : `${(d && d.sessionCount) || 0} guided sessions so far`}</div>
-        </div>
-        <div className="wka-card">
-          <div className="k"><Building2 size={15} /> Free trial</div>
-          <div className="v">{company && company.trial ? company.trial.remaining : 0}</div>
-          <div className="foot">Pooled trial sessions left</div>
+          <div className="v">{d ? money(d.totalUsd) : '-'}</div>
+          <div className="foot">{d ? `${d.sessionCount || 0} guided sessions` : 'No data yet'}</div>
         </div>
       </div>
+
+      {company && aiReady === false && (
+        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReason || 'AI is not configured yet.'} {company.aiSource === 'company' ? 'Set your keys in the AI keys tab.' : ''}</div>
+      )}
+
+      {lic.tierUsage && (
+        <div className="wka-panel">
+          <h2>Licenses by plan <Help text="How many of each plan your company bought, and how many are assigned. Assigning beyond a plan's allocation is blocked." /></h2>
+          <div className="wka-cards" style={{ marginBottom: 0 }}>
+            {TIERS.map((t) => {
+              const tu = lic.tierUsage[t.id] || { allocated: 0, used: 0, left: 0 }
+              return (
+                <div key={t.id} className="wka-card">
+                  <div className="k">{t.name}</div>
+                  <div className="v">{tu.used} of {tu.allocated}</div>
+                  <div className="foot">{tu.left} available</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="wka-panel">
         <h2>Company</h2>
-        <p className="desc">The essentials for {company ? company.name : 'your company'}. Your plan and seats are set by the WorkCoPilot team; open a support ticket to change them.</p>
+        <p className="desc">The essentials for {company ? company.name : 'your company'}. Your plan, seats and license mode are set by the WorkCoPilot team; open a support ticket to change them.</p>
         <div className="wca-kv">
           <div><span>Name</span><b>{company ? company.name : '-'}</b></div>
-          <div><span>Plan</span><b style={{ textTransform: 'capitalize' }}>{company ? company.plan : '-'}</b></div>
+          <div><span>License mode</span><b style={{ textTransform: 'capitalize' }}>{(company && company.licenseMode) || 'locked'}</b></div>
+          <div><span>Sign-in</span><b>{company && company.ssoProvisioning === 'auto' ? 'SSO, open to your domain' : 'SSO, invite-only'}</b></div>
           <div><span>AI source</span><b>{company && company.aiSource === 'company' ? 'Your own keys' : company && company.aiSource === 'platform' ? 'WorkCoPilot platform' : 'Not set'}</b></div>
+          <div><span>AI status</span><b style={{ color: aiReady ? 'var(--wka-emerald)' : 'var(--wka-amber)' }}>{aiReady ? 'Ready' : 'Not ready'}</b></div>
           <div><span>Single sign-on</span><b>{company && company.sso && company.sso.connected ? `Connected (${company.sso.provider})` : 'Not connected'}</b></div>
-          <div><span>Image generation</span><b>{company && company.imageGen ? 'On' : 'Off'}</b></div>
-          <div><span>Created</span><b>{company ? fmtDate(company.createdAt) : '-'}</b></div>
         </div>
       </div>
 
       <div className="wka-panel">
-        <h2>Who is using AI <Help text="Estimated spend per person, from the AI cost we meter on every guided session. Useful for spotting who needs a bigger plan." /></h2>
-        {state.loading ? <Loading label="Loading consumption" /> : state.error ? <ErrorBox error={state.error} onRetry={load} />
-          : !d || !d.byUser || !d.byUser.length ? <EmptyState title="No usage yet" detail="AI consumption will appear here once your team starts guiding." />
-            : (
-              <div className="wka-table-wrap">
-                <table className="wka-table">
-                  <thead><tr><th>Person</th><th>Sessions</th><th>Estimated spend</th></tr></thead>
-                  <tbody>
-                    {d.byUser.map((u) => (
-                      <tr key={u.id}><td>{u.displayName || u.username}</td><td>{u.sessions}</td><td>{money(u.usd)}</td></tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+        <h2>People and usage <Help text="Each person, their plan, how much guiding time they used today versus their daily allowance, and any extra minutes they hold." /></h2>
+        {!lic.members || !lic.members.length ? <EmptyState title="No people yet" detail="Add your team on the Team tab." />
+          : (
+            <div className="wka-table-wrap">
+              <table className="wka-table">
+                <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Used today</th><th>Extra minutes</th><th>License</th></tr></thead>
+                <tbody>
+                  {lic.members.map((m) => (
+                    <tr key={m.id}>
+                      <td>{m.displayName || m.username}{m.email ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{m.email}</div> : null}</td>
+                      <td>{ROLE_LABEL[m.companyRole] || 'Member'}</td>
+                      <td><span className={`wka-badge ${m.tier}`}>{m.tier}</span></td>
+                      <td>{fmtMins(m.usage.usedSeconds)} <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span></td>
+                      <td>{m.usage.purchasedSeconds ? fmtMins(m.usage.purchasedSeconds) : '-'}</td>
+                      <td>{m.licensed ? <span className="wka-chip ok">Active</span> : <span className="wka-chip" style={{ color: 'var(--wka-amber)' }}>No seat</span>}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
       </div>
     </div>
   )
@@ -124,67 +169,115 @@ function OverviewSection({ company }) {
 // Team
 // ===========================================================================
 function TeamSection({ meId, onCompany }) {
-  const [users, setUsers] = useState(null)
+  const [company, setCompanyLocal] = useState(null)
+  const [members, setMembers] = useState(null)      // from the license summary (has usage)
+  const [pool, setPool] = useState(0)
   const [err, setErr] = useState(null)
   const [ok, setOk] = useState('')
   const [adding, setAdding] = useState(false)
-  const [form, setForm] = useState({ username: '', password: '', companyRole: 'member', tier: 'basic' })
+  const [mode, setMode] = useState('email')          // 'email' (SSO) | 'password' (non-SSO)
+  const [form, setForm] = useState({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' })
   const [busy, setBusy] = useState(false)
   const [rowBusy, setRowBusy] = useState('')
+  const [allocFor, setAllocFor] = useState('')       // member id whose minute box is open
+  const [allocMin, setAllocMin] = useState('')
 
   const load = useCallback(() => {
     setErr(null)
-    api.workCompanyUsers()
-      .then((r) => { setUsers(r.users || []); if (onCompany) onCompany(r.company || null) })
-      .catch((error) => { setErr(error); setUsers([]) })
+    Promise.all([api.workCompanyUsers(), api.workTeamLicenses()])
+      .then(([r, lic]) => {
+        const co = r.company || null
+        setCompanyLocal(co); if (onCompany) onCompany(co)
+        setMembers(lic.members || [])
+        setPool(lic.poolSeconds || 0)
+        // Default the add mode to email when SSO is connected, else password.
+        setMode(co && co.sso && co.sso.connected ? 'email' : 'password')
+      })
+      .catch((error) => { setErr(error); setMembers([]) })
   }, [onCompany])
   useEffect(() => { load() }, [load])
 
+  const locked = !!(company && company.licenseMode === 'locked')
+
   const create = async () => {
-    const username = form.username.trim()
-    if (!username || !form.password) { setErr(new Error('Enter a username and a temporary password.')); return }
-    setBusy(true); setErr(null); setOk('')
-    try {
-      await api.workCompanyCreateUser({ username, password: form.password, companyRole: form.companyRole, tier: form.tier })
-      setOk(`Added ${username}.`); setForm({ username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
-    } catch (error) { setErr(error) } finally { setBusy(false) }
+    setErr(null); setOk('')
+    if (mode === 'email') {
+      const email = form.email.trim().toLowerCase()
+      if (!email.includes('@')) { setErr(new Error('Enter the person\'s work email.')); return }
+      setBusy(true)
+      try {
+        await api.workCompanyCreateUser({ email, displayName: form.displayName.trim(), companyRole: form.companyRole, tier: form.tier })
+        setOk(`Added ${email}. They sign in through your company SSO.`); setForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
+      } catch (error) { setErr(error) } finally { setBusy(false) }
+    } else {
+      const username = form.username.trim()
+      if (!username || !form.password) { setErr(new Error('Enter a username and a temporary password.')); return }
+      setBusy(true)
+      try {
+        await api.workCompanyCreateUser({ username, password: form.password, companyRole: form.companyRole, tier: form.tier })
+        setOk(`Added ${username}.`); setForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
+      } catch (error) { setErr(error) } finally { setBusy(false) }
+    }
   }
-  const patchUser = async (u, patch) => {
-    setRowBusy(u.id); setErr(null); setOk('')
-    try { await api.workCompanyUpdateUser(u.id, patch); setOk(`Updated ${u.username}.`); load() }
+  const patchUser = async (m, patch) => {
+    setRowBusy(m.id); setErr(null); setOk('')
+    try { await api.workCompanyUpdateUser(m.id, patch); setOk(`Updated ${m.displayName || m.username}.`); load() }
     catch (error) { setErr(error) } finally { setRowBusy('') }
   }
-  const removeUser = async (u) => {
-    if (!window.confirm(`Remove ${u.displayName || u.username} from the company? They lose access right away. This can be undone by support.`)) return
-    setRowBusy(u.id); setErr(null); setOk('')
-    try { await api.workCompanyRemoveUser(u.id); setOk(`Removed ${u.username}.`); load() }
+  const removeUser = async (m) => {
+    if (!window.confirm(`Remove ${m.displayName || m.username} from the company? They lose access right away. This can be undone by support.`)) return
+    setRowBusy(m.id); setErr(null); setOk('')
+    try { await api.workCompanyRemoveUser(m.id); setOk(`Removed ${m.displayName || m.username}.`); load() }
+    catch (error) { setErr(error) } finally { setRowBusy('') }
+  }
+  const allocate = async (m) => {
+    const mins = Number(allocMin) || 0
+    if (mins <= 0) { setErr(new Error('Enter how many minutes to give.')); return }
+    setRowBusy(m.id); setErr(null); setOk('')
+    try { await api.workCompanyAllocateMinutes(m.id, mins); setOk(`Gave ${mins} minutes to ${m.displayName || m.username}.`); setAllocFor(''); setAllocMin(''); load() }
     catch (error) { setErr(error) } finally { setRowBusy('') }
   }
 
   return (
     <div>
+      {locked && <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><Lock size={14} /> Your license roster is managed by the WorkCoPilot team. You can change roles, plans and give pool minutes, but adding or removing people goes through support.</div>}
       <div className="wka-toolbar">
-        <button type="button" className="wka-btn primary" onClick={() => { setErr(null); setOk(''); setAdding((v) => !v) }}><Plus size={14} /> Add user</button>
+        <button type="button" className="wka-btn primary" disabled={locked} title={locked ? 'Roster is managed by WorkCoPilot' : ''} onClick={() => { setErr(null); setOk(''); setAdding((v) => !v) }}><Plus size={14} /> Add person</button>
         <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> Refresh</button>
-        <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>New people sign in with the username and temporary password you set.</span>
+        <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>Company minute pool: <b style={{ color: 'var(--wka-text)' }}>{fmtMins(pool)}</b></span>
       </div>
 
       {ok && <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {ok}</div>}
       {err && <ErrorBox error={err} />}
 
-      {adding && (
+      {adding && !locked && (
         <div className="wka-panel">
-          <h2>Add a user</h2>
-          <p className="desc">They join your company right away. Share the temporary password with them; they can change it later from their own settings.</p>
+          <h2>Add a person</h2>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+            <button type="button" className={`wka-btn sm${mode === 'email' ? ' primary' : ''}`} onClick={() => setMode('email')}><Mail size={13} /> By email (SSO)</button>
+            <button type="button" className={`wka-btn sm${mode === 'password' ? ' primary' : ''}`} onClick={() => setMode('password')}><KeyRound size={13} /> Username and password</button>
+          </div>
+          {mode === 'email'
+            ? <p className="desc">Enter their work email. They sign in through your company single sign-on; there is no password to set. If your company uses invite-only SSO, only people you add here can sign in.</p>
+            : <p className="desc">For a person without SSO. Share the temporary password; they can change it later.</p>}
           <div className="wka-formgrid">
-            <div className="wka-field"><label>Username</label><input className="wka-input" value={form.username} maxLength={60} autoComplete="off" placeholder="e.g. alex" onChange={(e) => setForm({ ...form, username: e.target.value })} /></div>
-            <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder="at least 6 characters" onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
-            <div className="wka-field"><label>Role <Help text="Company admins can manage this console. Members just use WorkCoPilot." /></label>
+            {mode === 'email' ? (
+              <>
+                <div className="wka-field"><label>Work email</label><input className="wka-input" value={form.email} maxLength={160} autoComplete="off" placeholder="alex@yourcompany.com" onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                <div className="wka-field"><label>Name <span className="hint">optional</span></label><input className="wka-input" value={form.displayName} maxLength={80} placeholder="e.g. Alex Morgan" onChange={(e) => setForm({ ...form, displayName: e.target.value })} /></div>
+              </>
+            ) : (
+              <>
+                <div className="wka-field"><label>Username</label><input className="wka-input" value={form.username} maxLength={60} autoComplete="off" placeholder="e.g. alex" onChange={(e) => setForm({ ...form, username: e.target.value })} /></div>
+                <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder="at least 6 characters" onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
+              </>
+            )}
+            <div className="wka-field"><label>Role <Help text="Company admins can manage this console. Members just use WorkCoPilot. Admins use a separate seat pool." /></label>
               <select className="wka-select" value={form.companyRole} onChange={(e) => setForm({ ...form, companyRole: e.target.value })}>
                 <option value="member">Member</option><option value="company_admin">Company admin</option>
               </select>
             </div>
-            <div className="wka-field"><label>Plan <Help text="Daily guiding time: Basic 2h, Advanced 4h, Premium 6h." /></label>
+            <div className="wka-field"><label>Plan <Help text="Daily guiding time: Basic 2h, Advanced 4h, Premium 6h. Your company's per-plan license count is enforced." /></label>
               <select className="wka-select" value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
                 {TIERS.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
@@ -192,40 +285,49 @@ function TeamSection({ meId, onCompany }) {
           </div>
           <div style={{ display: 'flex', gap: 10 }}>
             <button type="button" className="wka-btn" onClick={() => setAdding(false)}>Cancel</button>
-            <button type="button" className="wka-btn primary" disabled={busy} onClick={create}>{busy ? <Spinning /> : <Plus size={14} />} Add user</button>
+            <button type="button" className="wka-btn primary" disabled={busy} onClick={create}>{busy ? <Spinning /> : <Plus size={14} />} Add person</button>
           </div>
         </div>
       )}
 
       <div className="wka-panel">
-        <h2>People <Help text="Change a person's role or plan inline. Removing someone detaches them from the company and signs them out everywhere." /></h2>
-        {users == null ? <Loading label="Loading your team" />
-          : users.length === 0 ? <EmptyState title="No users yet" detail="Add your first teammate to get started." />
+        <h2>People <Help text="Change a person's role or plan inline (allowed even when the roster is managed). Give extra minutes from the company pool. Removing detaches them and signs them out everywhere." /></h2>
+        {members == null ? <Loading label="Loading your team" />
+          : members.length === 0 ? <EmptyState title="No people yet" detail="Add your first teammate to get started." />
             : (
               <div className="wka-table-wrap">
                 <table className="wka-table">
-                  <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Added</th><th></th></tr></thead>
+                  <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Used today</th><th>Extra</th><th></th></tr></thead>
                   <tbody>
-                    {users.map((u) => {
-                      const self = String(u.id) === String(meId)
+                    {members.map((m) => {
+                      const self = String(m.id) === String(meId)
                       return (
-                        <tr key={u.id}>
-                          <td>{u.displayName || u.username}<div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{u.username}{self ? ' (you)' : ''}</div></td>
+                        <tr key={m.id}>
+                          <td>{m.displayName || m.username}<div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{m.email || m.username}{self ? ' (you)' : ''}</div></td>
                           <td>
-                            <select className="wka-select" value={u.companyRole || 'member'} disabled={self || rowBusy === u.id}
+                            <select className="wka-select" value={m.companyRole || 'member'} disabled={self || rowBusy === m.id}
                               title={self ? 'You cannot change your own role.' : ''}
-                              onChange={(e) => patchUser(u, { companyRole: e.target.value })}>
+                              onChange={(e) => patchUser(m, { companyRole: e.target.value })}>
                               <option value="member">Member</option><option value="company_admin">Company admin</option>
                             </select>
                           </td>
                           <td>
-                            <select className="wka-select" value={u.tier || 'basic'} disabled={rowBusy === u.id} onChange={(e) => patchUser(u, { tier: e.target.value })}>
+                            <select className="wka-select" value={m.tier || 'basic'} disabled={rowBusy === m.id} onChange={(e) => patchUser(m, { tier: e.target.value })}>
                               {TIERS.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
                             </select>
                           </td>
-                          <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{fmtDate(u.createdAt)}</td>
+                          <td style={{ fontSize: 12.5 }}>{fmtMins(m.usage.usedSeconds)} <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span></td>
+                          <td style={{ fontSize: 12.5 }}>
+                            {allocFor === m.id
+                              ? <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center' }}>
+                                  <input className="wka-input" style={{ width: 64, padding: '4px 6px' }} value={allocMin} placeholder="min" onChange={(e) => setAllocMin(e.target.value.replace(/[^0-9]/g, ''))} />
+                                  <button className="wka-btn sm primary" disabled={rowBusy === m.id} onClick={() => allocate(m)}>Give</button>
+                                  <button className="wka-btn sm ghost" onClick={() => { setAllocFor(''); setAllocMin('') }}>x</button>
+                                </span>
+                              : <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>{m.usage.purchasedSeconds ? fmtMins(m.usage.purchasedSeconds) : '-'}<button className="wka-btn sm ghost" title="Give minutes from the company pool" disabled={pool <= 0} onClick={() => { setAllocFor(m.id); setAllocMin('') }}><Clock size={12} /></button></span>}
+                          </td>
                           <td style={{ textAlign: 'right' }}>
-                            {rowBusy === u.id ? <Spinning /> : <button type="button" className="wka-btn sm ghost" disabled={self} title={self ? 'You cannot remove yourself.' : 'Remove from company'} onClick={() => removeUser(u)}><Trash2 size={13} /></button>}
+                            {rowBusy === m.id ? <Spinning /> : <button type="button" className="wka-btn sm ghost" disabled={self || locked} title={locked ? 'Roster managed by WorkCoPilot' : self ? 'You cannot remove yourself.' : 'Remove from company'} onClick={() => removeUser(m)}><Trash2 size={13} /></button>}
                           </td>
                         </tr>
                       )
@@ -242,13 +344,25 @@ function TeamSection({ meId, onCompany }) {
 // ===========================================================================
 // SSO
 // ===========================================================================
+function CopyField({ value }) {
+  const [copied, setCopied] = useState(false)
+  const copy = async () => { try { await navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch { /* clipboard blocked */ } }
+  return (
+    <span className="wca-copy">
+      <code className="wka-mono">{value}</code>
+      <button type="button" className="wka-btn sm ghost" onClick={copy} title="Copy">{copied ? <Check size={12} /> : <Copy size={12} />}</button>
+    </span>
+  )
+}
+
 function SsoSection() {
   const [state, setState] = useState({ loading: true, error: null, sso: null })
   const [form, setForm] = useState({ provider: 'google', issuer: '', clientId: '', clientSecret: '', domain: '' })
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveErr, setSaveErr] = useState(null)
-  const callbackUrl = typeof window !== 'undefined' ? `${window.location.origin}/api/work/sso/callback` : '/api/work/sso/callback'
+  const [guideOpen, setGuideOpen] = useState(true)
+  const callbackUrl = typeof window !== 'undefined' ? `${window.location.origin}${SSO.SSO_CALLBACK_PATH}` : SSO.SSO_CALLBACK_URL
 
   const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -266,20 +380,23 @@ function SsoSection() {
 
   if (state.loading) return <Loading label="Loading SSO" />
   const connected = state.sso && state.sso.connected
+  const guide = (SSO.SSO_PROVIDERS || []).find((p) => p.id === form.provider) || null
+  const issuerHint = guide ? guide.issuer : 'https://your-identity-provider/...'
+
   return (
     <div>
-      <div className="wka-note"><Info size={14} /> After you save, add this callback URL in your identity provider: <code className="wka-mono" style={{ marginLeft: 6 }}>{callbackUrl}</code></div>
+      <div className="wka-note"><Info size={14} /> Register this exact redirect / callback URL in your identity provider: <CopyField value={callbackUrl} /></div>
       <div className="wka-panel">
-        <h2>{connected ? 'SSO is connected' : 'Connect single sign-on'} {connected ? <span className="wka-badge active" style={{ marginLeft: 6 }}>{state.sso.provider}</span> : null}</h2>
-        <p className="desc">Your people sign in with your identity provider. Anyone whose email ends in your domain is matched to this company automatically.</p>
+        <h2>{connected ? 'SSO is connected' : 'Connect single sign-on'} {connected ? <span className="wka-badge active" style={{ marginLeft: 6 }}>{SSO_PROVIDER_LABELS[state.sso.provider] || state.sso.provider}</span> : null}</h2>
+        <p className="desc">Your people sign in with your identity provider. WorkCoPilot works with any OpenID Connect provider; pick yours below.</p>
         <div className="wka-formgrid">
           <div className="wka-field"><label>Provider</label>
             <select className="wka-select" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
-              <option value="google">Google</option><option value="microsoft">Microsoft</option><option value="okta">Okta</option>
+              {SSO_PROVIDER_ORDER.map((id) => <option key={id} value={id}>{SSO_PROVIDER_LABELS[id]}</option>)}
             </select>
           </div>
           <div className="wka-field"><label>Email domain <Help text="The part after the @ in your users' email, for example acme.com. Used to route sign-ins to your company." /></label><input className="wka-input" value={form.domain} placeholder="acme.com" onChange={(e) => setForm({ ...form, domain: e.target.value })} /></div>
-          <div className="wka-field"><label>Issuer URL <Help text="Your provider's OpenID issuer, a full https URL. Google: https://accounts.google.com" /></label><input className="wka-input" value={form.issuer} placeholder="https://accounts.google.com" onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
+          <div className="wka-field"><label>Issuer URL <Help text={guide ? guide.issuerNote : 'Your provider OpenID issuer, a full https URL.'} /></label><input className="wka-input" value={form.issuer} placeholder={issuerHint} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
           <div className="wka-field"><label>Client ID</label><input className="wka-input" value={form.clientId} placeholder="from your provider" onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></div>
           <div className="wka-field"><label>Client secret <Help text="Write-only. Leave blank to keep the stored secret unchanged." /></label><input className="wka-input" type="password" value={form.clientSecret} placeholder={connected ? 'leave blank to keep current' : 'from your provider'} autoComplete="new-password" onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></div>
         </div>
@@ -288,6 +405,86 @@ function SsoSection() {
           <SavedTag show={saved} />
         </div>
         {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}
+      </div>
+
+      <div className="wka-panel">
+        <button type="button" className="wca-guide-head" onClick={() => setGuideOpen((v) => !v)}>
+          {guideOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+          <h2 style={{ margin: 0 }}>Set-up guide{guide ? ` for ${guide.name}` : ''}</h2>
+        </button>
+        {guideOpen && (
+          <div className="wca-guide">
+            {(SSO.SSO_OVERVIEW || []).map((t, i) => <p key={i} className="desc">{t}</p>)}
+
+            <h3>{SSO.SSO_ROLES.title}</h3>
+            <ul className="wca-guide-list">{SSO.SSO_ROLES.points.map(([t, d], i) => <li key={i}><b>{t}.</b> {d}</li>)}</ul>
+
+            <h3>Register this redirect URI</h3>
+            {(SSO.SSO_REDIRECT_NOTE || []).map((t, i) => <p key={i} className="desc">{t}</p>)}
+            <CopyField value={callbackUrl} />
+
+            {guide ? (
+              <>
+                <h3>Step by step in {guide.name}</h3>
+                <p className="desc">Console: <a href={guide.console} target="_blank" rel="noreferrer">{guide.console}</a>. Issuer to enter here: <code className="wka-mono">{guide.issuer}</code>. {guide.issuerNote}</p>
+                <ol className="wca-guide-steps">{guide.steps.map(([t, d], i) => <li key={i}><b>{t}.</b> {d}</li>)}</ol>
+                <div className="wca-scenario"><b>{guide.scenario.title}</b><p>{guide.scenario.body}</p></div>
+              </>
+            ) : (
+              <>
+                <h3>Step by step</h3>
+                <p className="desc">This is a standard OpenID Connect provider. In your provider, create an OIDC web application, set the redirect URI above, and copy its issuer URL, client ID and client secret into the form. Then set your email domain and save. If your provider lets you choose who can use the app, assign only the people who should have WorkCoPilot.</p>
+              </>
+            )}
+
+            <h3>{SSO.SSO_USER_SIGNIN.title}</h3>
+            <ol className="wca-guide-steps">{SSO.SSO_USER_SIGNIN.steps.map((t, i) => <li key={i}>{t}</li>)}</ol>
+
+            <h3>{SSO.SSO_TROUBLESHOOTING.title}</h3>
+            <ul className="wca-guide-list">{SSO.SSO_TROUBLESHOOTING.points.map(([t, d], i) => <li key={i}><b>{t}.</b> {d}</li>)}</ul>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
+// Company-admin read-only billing statement.
+function BillingSection() {
+  const [state, setState] = useState({ loading: true, error: null, bill: null })
+  const load = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    api.workTeamBilling().then((bill) => setState({ loading: false, error: null, bill })).catch((error) => setState({ loading: false, error, bill: null }))
+  }, [])
+  useEffect(() => { load() }, [load])
+  if (state.loading) return <Loading label="Loading billing" />
+  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
+  const b = state.bill || {}
+  const lines = [...(b.seatLines || []), ...(b.ledger || [])]
+  const cur = (b.currency || 'usd').toUpperCase()
+  return (
+    <div>
+      <div className="wka-note"><Info size={14} /> Your plan charges are computed from the licenses you hold. Extras are items the WorkCoPilot team recorded. To change your plan or add licenses, open a support ticket.</div>
+      <div className="wka-panel">
+        <h2>Statement for {b.name}</h2>
+        {!lines.length ? <EmptyState title="No charges yet" detail="Charges appear once licenses or extras are on your account." />
+          : (
+            <div className="wka-table-wrap">
+              <table className="wka-table">
+                <thead><tr><th>Description</th><th style={{ textAlign: 'right' }}>Qty</th><th style={{ textAlign: 'right' }}>Unit</th><th style={{ textAlign: 'right' }}>Amount</th></tr></thead>
+                <tbody>
+                  {lines.map((l, i) => (
+                    <tr key={l.id || i}><td>{l.description || l.type}</td><td style={{ textAlign: 'right' }}>{l.qty != null ? l.qty : ''}</td><td style={{ textAlign: 'right' }}>{l.unitAmount != null ? money(l.unitAmount) : ''}</td><td style={{ textAlign: 'right' }}>{money(l.amount)}</td></tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr><td colSpan={3} style={{ textAlign: 'right', color: 'var(--wka-muted)' }}>Recurring</td><td style={{ textAlign: 'right' }}>{money(b.recurringTotal)}</td></tr>
+                  <tr><td colSpan={3} style={{ textAlign: 'right', color: 'var(--wka-muted)' }}>Extras</td><td style={{ textAlign: 'right' }}>{money(b.extrasTotal)}</td></tr>
+                  <tr><td colSpan={3} style={{ textAlign: 'right', fontWeight: 700 }}>Total ({cur})</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{money(b.total)}</td></tr>
+                </tfoot>
+              </table>
+            </div>
+          )}
       </div>
     </div>
   )
@@ -613,6 +810,7 @@ export default function WorkCompanyAdmin() {
       case 'team': return <TeamSection meId={viewer && viewer.id} onCompany={setCompany} />
       case 'sso': return <SsoSection />
       case 'ai': return <AiSection />
+      case 'billing': return <BillingSection />
       case 'governance': return <GovernanceSection companyId={viewer && viewer.companyId} />
       case 'tickets': return <SupportTickets mode="user" />
       case 'activity': return <ActivitySection />
@@ -664,4 +862,16 @@ const WCA_CSS = `
 .wca-kv > div { display:flex; flex-direction:column; gap:3px; }
 .wca-kv span { font-size:11px; color:var(--wka-faint); text-transform:uppercase; letter-spacing:0.6px; }
 .wca-kv b { font-size:14px; color:var(--wka-text); font-weight:600; }
+.wca-copy { display:inline-flex; align-items:center; gap:8px; vertical-align:middle; }
+.wca-copy code { word-break:break-all; }
+.wca-guide-head { display:flex; align-items:center; gap:8px; background:none; border:none; cursor:pointer; font:inherit; color:var(--wka-text); padding:0; width:100%; text-align:left; }
+.wca-guide-head svg { color:var(--wka-accent); flex:none; }
+.wca-guide { margin-top:14px; }
+.wca-guide h3 { font-size:13.5px; font-weight:700; color:var(--wka-text); margin:18px 0 8px; }
+.wca-guide-list, .wca-guide-steps { margin:0 0 6px; padding-left:20px; display:flex; flex-direction:column; gap:7px; }
+.wca-guide-list li, .wca-guide-steps li { font-size:13px; color:var(--wka-muted); line-height:1.55; }
+.wca-guide-list li b, .wca-guide-steps li b { color:var(--wka-text); }
+.wca-scenario { margin-top:12px; padding:12px 14px; border:1px solid var(--wka-line); border-radius:10px; background:var(--wka-bg-2); }
+.wca-scenario b { font-size:13px; color:var(--wka-text); }
+.wca-scenario p { font-size:12.5px; color:var(--wka-muted); margin:5px 0 0; line-height:1.55; }
 `

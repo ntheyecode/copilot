@@ -153,6 +153,12 @@ export const api = {
   workCompanyRemoveUser: (id) => req('DELETE', `/api/work/company/users/${id}`),
   // company admin: this company's AI consumption so far (estimated $, per user)
   workTeamConsumption: () => req('GET', '/api/work/team/consumption'),
+  // company admin: license + usage dashboard (seat pools, per-tier allocation,
+  // minute pool, AI readiness, each person's usage) and the read-only bill.
+  workTeamLicenses: () => req('GET', '/api/work/team/licenses'),
+  workTeamBilling: () => req('GET', '/api/work/team/billing'),
+  // company admin: give one member minutes from the shared company pool
+  workCompanyAllocateMinutes: (id, minutes) => req('POST', `/api/work/company/users/${id}/minutes`, { minutes }),
   // company admin: own-company data-governance (DLP) policy
   workPolicy: (companyId) => req('GET', `/api/work/policy?companyId=${encodeURIComponent(companyId || '')}`),
   workSetPolicy: (body) => req('POST', '/api/work/policy', body || {}),
