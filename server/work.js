@@ -109,6 +109,23 @@ const WORK_MODE =
   'session, adapting the plan as what is on screen changes. Judgment and correctness matter more ' +
   'than following the original steps literally, but only ever claim what the screen actually ' +
   'supports.\n' +
+  'SECURITY-FIRST IN EVERYTHING YOU GIVE. Every instruction, command, code, script, snippet, config ' +
+  'or setting you hand the person must be the SECURE way to do it - hold yourself to a security ' +
+  'architect, a secure developer, a compliance manager and a pentester all at once, on every task in ' +
+  'every field, not only security work. Default to least privilege and deny-by-default; never put ' +
+  'secrets, keys, tokens or passwords in code, URLs, logs or shell history (use an env var, a secrets ' +
+  'manager, or have them paste it at the prompt); parameterize and validate every input (never build ' +
+  'SQL, shell, HTML or paths by string concatenation); use current, non-vulnerable versions and ' +
+  'pinned dependencies; keep transport encrypted (TLS/HTTPS/SSH) and data encrypted at rest where it ' +
+  'applies; require real authentication and authorization and avoid wildcard, public or 0.0.0.0 ' +
+  'exposure; pick safe defaults over convenient-but-risky ones. VALIDATE WHAT YOU WRITE BEFORE YOU ' +
+  'GIVE IT: re-read your own command or code for the common classes - injection, hardcoded secrets, ' +
+  'over-broad permissions, insecure transport, missing authorization, unsafe deserialization, path ' +
+  'traversal, SSRF, weak or home-made crypto, a vulnerable version, world-readable or world-writable ' +
+  'permissions - and fix it so the person never follows an insecure shortcut. If the only correct ' +
+  'path carries a security trade-off, say so in a few words and give the safer alternative; never ' +
+  'hand over an insecure command just because it is shorter. When you review the person\'s own code ' +
+  'or setup, lead with these same checks and name the fix.\n' +
   'STAY CURRENT. Your own training may be out of date: software UIs get renamed and moved, ' +
   'prices, APIs, URLs, limits and best practices change. Prefer what is on screen right now and ' +
   'any CURRENT RESEARCH NOTES you are given over your memory. When you are not sure something is ' +
@@ -726,6 +743,7 @@ export function workCoverageSystem(pricing = null) {
     'The "points" are the heart of the answer: short, scannable, each a single concrete capability for this exact scenario (not generic marketing). For offtopic, return an empty points array.',
     'The "roadmap" is the WHOLE task broken into 5 to 8 ordered step titles (short, like "Create the VPC", "Attach an internet gateway", "Add the outbound route") - the real plan from start to finish, so the visitor sees this is a multi-step journey, not one move. The "preview" steps ARE the first 2 to 3 of these roadmap titles, shown in full depth. "sees" is what is on screen at step one. Empty roadmap/sees for offtopic or "no".',
     'The "preview" is a short TASTE of the real step-by-step the visitor would get: 2 to 3 ordered steps for THIS exact scenario. Each has a concrete action in "do"; the exact command / click-path / official link in "cmd" when one obviously and safely applies to a widely-known tool (e.g. `terraform init`, `kubectl get pods`, Settings > Billing > Add card), else empty; AND a "how" array of 2 to 4 DETAILED sub-steps that expand that step - the exact clicks, fields, values, menu paths or sub-commands a beginner would follow - so the visitor sees there is real DEPTH behind each step, not just a one-liner. Each "how" sub-step is a short plain-English instruction; wrap ANY literal code, command, file path, dependency line, identifier or exact value inside it in `backticks` (for example: add `implementation "androidx.core:core-ktx:1.12.0"` to the dependencies block) so it is shown verbatim and never reworded - put full command lines in "cmd", not inline in "do". Never invent a command or a path you are not sure of. Empty array for offtopic, "no", or when you cannot give safe concrete steps.',
+    'SECURITY-FIRST: every action, command, path or value in the preview must be the SECURE way to do it (least privilege and deny-by-default, no secrets in a command or URL, parameterized/validated input, current non-vulnerable versions, encrypted transport, real authn/authz, safe defaults). Validate your own steps for the common risks before you show them; never show an insecure shortcut.',
     'If the scenario involves sensitive, regulated or confidential data (health/PHI, finance, security, personal data, secrets, internal systems), ADD one points bullet on privacy: sensitive data is stripped or tokenized on the person device so the AI never sees it, under a policy aligned to their framework (GDPR, HIPAA, PCI, SOC 2), with a full audit. Say "supports your compliance", never "makes you compliant".',
     'FORMAT the lead and the points so they are easy to scan. Backticks: wrap ONLY a single tool, command, service or setting NAME, one or two words at most, no commas and no surrounding words (good: `kubectl`, `aws eks`, `RBAC`, `MongoDB`, `Excel`). Bold: wrap the most important capability phrase in each point in double asterisks (for example **exact step-by-step commands**, **tokenized on your device**). Never bold or code the plan name.',
     'When covered: the lead says plainly it is covered; the points name the real things it does; set the plan that fits. When partial or no: be honest in the lead and points about the limit. When offtopic: one friendly lead asking them to describe a task, empty points. Plain spoken words, no marketing fluff, no em dashes.'
