@@ -1396,8 +1396,8 @@ const CONSOLE_CSS = `
 
 /* ===================================================================
    Guiding panel design system (Fluent / Wiz-grade). Green is the brand
-   token (--brand-500); here it is used ONLY as accent — chips, left
-   accent bars, soft fills, dots — never as body-text colour. Action
+   token (--brand-500); here it is used ONLY as accent (chips, left
+   accent bars, soft fills, dots), never as body-text colour. Action
    text is high-contrast --text; pending recedes; done is quietly struck.
    --text-dim / --brand-50 are aliased to real tokens so they resolve
    correctly in BOTH light and dark (they are otherwise undefined).
@@ -1405,45 +1405,71 @@ const CONSOLE_CSS = `
 /* Match the Fluent blue of the desktop title bar: retune the accent tokens to
    blue inside the guiding panel (green stays only for the "done" check). */
 .wc{--text-dim:var(--text-muted);
-  --brand-500:#2b88d8;--brand-600:#0f6cbd;--brand-700:#0a5aa0;--brand-soft:rgba(15,108,189,.12);--brand-50:rgba(15,108,189,.12)}
+  --brand-500:#2b88d8;--brand-600:#0f6cbd;--brand-700:#0a5aa0;--brand-soft:rgba(15,108,189,.12);--brand-50:rgba(15,108,189,.12);
+  font-feature-settings:"tnum" 1,"cv11" 1}
 [data-theme='dark'] .wc{--brand-500:#62abf5;--brand-600:#479ef5;--brand-700:#2b88d8;--brand-soft:rgba(98,171,245,.16);--brand-50:rgba(98,171,245,.16)}
+.wc .fill{flex:1 1 auto;min-width:0}
 
-/* Header toolbar — one tidy row that holds at 460px */
-.wc-top{display:flex;align-items:center;gap:6px;margin-bottom:14px;min-width:0}
+/* Header toolbar: one quiet row under a hairline. Float on top is the primary
+   action of this screen on the web, so it is the one filled button up here. */
+.wc-top{display:flex;align-items:center;gap:6px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);min-width:0}
 .wc-top-title{flex:1 1 auto;min-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;font-size:13.5px;color:var(--text);letter-spacing:-.01em;padding:0 2px}
-.wc-ib{width:32px;height:32px;flex:0 0 auto;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--text-muted);display:grid;place-items:center;cursor:pointer;transition:background .16s,color .16s,border-color .16s}
+.wc-ib{width:34px;height:34px;flex:0 0 auto;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--text-muted);display:grid;place-items:center;cursor:pointer;transition:background .16s,color .16s,border-color .16s}
 .wc-ib:hover{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .wc-ib:disabled{opacity:.5;cursor:default}
 .wc-ib.on{background:var(--brand-soft);color:var(--brand-600);border-color:transparent}
-.wc-min{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:11.5px;font-weight:650;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.wc-min{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:11.5px;font-weight:650;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:999px;padding:0 10px;height:28px;white-space:nowrap;font-variant-numeric:tabular-nums}
 .wc-min .wc-dot{width:6px;height:6px;border-radius:50%;background:var(--brand-500)}
 .wc-min.low{color:var(--danger);background:var(--danger-soft);border-color:transparent}
 .wc-min.low .wc-dot{background:var(--danger)}
-/* Compact toolbar button — the header + guide-bar control family */
-.wc-tbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;font-size:12.5px;font-weight:600;border:1px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer;white-space:nowrap;line-height:1;transition:background .16s,border-color .16s,color .16s,transform .1s}
-.wc-tbtn:hover:not(:disabled){border-color:var(--border-strong);background:var(--surface-3)}
+/* Compact toolbar button: the header + guide-bar control family */
+.wc-tbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:10px;font-size:12.5px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;white-space:nowrap;line-height:1;box-shadow:var(--shadow-sm);transition:background .16s,border-color .16s,color .16s,transform .1s,box-shadow .16s}
+.wc-tbtn:hover:not(:disabled){border-color:var(--border-strong);background:var(--surface-2)}
 .wc-tbtn:active:not(:disabled){transform:translateY(1px)}
 .wc-tbtn:disabled{opacity:.55;cursor:default}
-.wc-tbtn svg{color:var(--text-muted)}
-.wc-tbtn.primary{background:var(--brand-500);border-color:transparent;color:#fff}
-.wc-tbtn.primary:hover:not(:disabled){background:var(--brand-600)}
+.wc-tbtn svg{color:var(--text-muted);flex-shrink:0}
+.wc-tbtn.primary{background:linear-gradient(180deg,var(--brand-500),var(--brand-600));border-color:transparent;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.14)}
+.wc-tbtn.primary:hover:not(:disabled){background:var(--brand-600);filter:brightness(1.04)}
 .wc-tbtn.primary svg{color:#fff}
-.wc-tbtn.ghost{background:transparent;border-color:transparent;color:var(--text-muted)}
+.wc-tbtn.ghost{background:transparent;border-color:transparent;color:var(--text-muted);box-shadow:none}
 .wc-tbtn.ghost:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
+.wc-tbtn.on{background:var(--brand-soft);border-color:transparent;color:var(--brand-600);box-shadow:none}
+.wc-tbtn.on svg{color:var(--brand-600)}
+.wc-tbtn.on:hover:not(:disabled){background:var(--brand-soft);border-color:var(--brand-500)}
 .wc-tbtn.live{background:var(--danger-soft);border-color:transparent;color:var(--danger)}
 .wc-tbtn.live svg{color:var(--danger)}
-.wc-strong{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:4px 9px;border-radius:999px}
-.wc-guidebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wc-tbtn.quiet{color:var(--text-muted)}
+.wc-tbtn.quiet:hover:not(:disabled){color:var(--danger);border-color:var(--danger)}
+.wc-strong{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:0 9px;height:26px;border-radius:999px}
+
+/* Live status row: a single card that holds the watch state (or the action
+   that starts it), the minutes, and the three live actions. */
+.wc-guidebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
+.wc-guidebar .wc-sp{flex:1 1 auto;min-width:4px}
+.wc-guidebar .wc-tbtn:not(.primary){box-shadow:none;background:var(--surface-2)}
+.wc-guidebar .wc-tbtn:not(.primary):hover:not(:disabled){background:var(--surface-3)}
+.wc-guidebar .wc-tbtn.ghost{background:transparent}
+.wc-watch{height:34px;padding:0 15px;font-size:13px;font-weight:650}
+/* First-run hint: share your screen, then float the steps above your work. */
+.wc-tip{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px 10px 15px;margin-bottom:12px;border-radius:12px;background:var(--brand-soft);color:var(--text);font-size:13px;line-height:1.45;overflow:hidden}
+.wc-tip::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand-500)}
+.wc-tip>svg{color:var(--brand-600);flex-shrink:0}
+.wc-tip b{font-weight:650}
+.wc-tip .wc-tbtn{margin-left:auto;box-shadow:none}
+@media(max-width:640px){.wc-tip .wc-tbtn{margin-left:0;flex:1 1 100%;justify-content:center}}
 
 /* Completed-task bar */
-.wc-donebar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:13px 15px 13px 17px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);overflow:hidden}
-.wc-donebar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--success)}
-.wc-donebar-lead{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:650;color:var(--text)}
+.wc-donebar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px 14px 20px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden}
+.wc-donebar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--success)}
+.wc-donebar-lead{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:650;color:var(--text);min-width:0}
 .wc-donebar-lead svg{color:var(--success);flex-shrink:0}
+.wc-donebar-lead .wc-done-ic{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:var(--success-soft);flex-shrink:0}
+.wc-donebar-lead small{display:block;font-size:12px;font-weight:500;color:var(--text-muted);margin-top:1px}
 .wc-donebar-actions{display:flex;flex-wrap:wrap;gap:8px;margin-left:auto}
 .wc-chip-btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:9px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background .16s,border-color .16s}
 .wc-chip-btn:hover{border-color:var(--border-strong);background:var(--surface-3)}
 .wc-chip-btn svg{color:var(--text-muted);flex-shrink:0}
+@media(max-width:640px){.wc-donebar-actions{margin-left:0;width:100%}.wc-donebar-actions .wc-chip-btn{flex:1 1 calc(50% - 4px);justify-content:center}}
 
 /* Banners */
 .wc-banner{position:relative;display:flex;align-items:center;gap:10px;border-radius:12px;padding:11px 14px;margin-bottom:12px;font-size:13.5px;line-height:1.45;overflow:hidden}
@@ -1458,59 +1484,81 @@ const CONSOLE_CSS = `
 .wc-live{display:flex;align-items:center;gap:9px;margin:10px 2px;font-size:12px;color:var(--text-muted);line-height:1.4}
 .wc-live .pulse,.wc-live-pill .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--brand-500);box-shadow:0 0 0 0 rgba(43,136,216,.5);animation:wc-pulse 1.6s infinite}
 @keyframes wc-pulse{0%{box-shadow:0 0 0 0 rgba(43,136,216,.5)}70%{box-shadow:0 0 0 7px rgba(43,136,216,0)}100%{box-shadow:0 0 0 0 rgba(43,136,216,0)}}
-.wc-live-pill{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:6px 12px;border-radius:999px}
-.wc-live-pill.paused{color:var(--text-dim);background:var(--surface-2,rgba(128,128,128,.12))}
-.wc-live-pill.out{color:var(--danger);background:rgba(200,50,40,.12)}
+.wc-live-pill{display:inline-flex;align-items:center;gap:7px;height:34px;font-size:12.5px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:0 13px;border-radius:999px;white-space:nowrap}
+.wc-live-pill.paused{color:var(--text-dim);background:var(--surface-2)}
+.wc-live-pill.paused svg{color:var(--warning)}
+.wc-live-pill.out{color:var(--danger);background:var(--danger-soft)}
 .wc-live-min{opacity:.85;font-weight:600}
-.wc-plan-title{font-size:16px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.35;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wc-plan-title{font-size:17px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.35;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wc-plan-kicker{display:flex;align-items:center;gap:8px;margin:16px 2px 0;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
+.wc-plan-kicker+.wc-plan-title{margin-top:4px}
 .wd-modal-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
 .wd-modal{width:min(420px,calc(100vw - 36px));background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.5)}
 .wd-modal h3{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;margin:0 0 6px}
 .wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 
-/* DO THIS NOW hero — the single strongest focus on the screen */
-.wc-hero{position:relative;margin-top:12px;padding:16px 18px 13px 21px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-md);overflow:hidden}
-.wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
-.wc-hero-eyebrow{display:flex;align-items:center;gap:9px;margin-bottom:9px;flex-wrap:wrap}
-.wc-hero-chip{display:inline-flex;align-items:center;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--brand-600);background:var(--brand-soft);padding:4px 9px;border-radius:999px}
-.wc-hero-hint{font-size:11px;color:var(--text-faint)}
-.wc-hero-text{font-size:17px;line-height:1.5;font-weight:650;color:var(--text);letter-spacing:-.01em}
+/* DO THIS NOW hero: the single strongest focus on the screen */
+.wc-hero{position:relative;margin-top:14px;padding:20px 22px 16px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md);overflow:hidden}
+.wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
+.wc-hero::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 180px at 0% 0%,var(--brand-soft),transparent 72%)}
+.wc-hero>*{position:relative;z-index:1}
+.wc-hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.wc-hero-chip{display:inline-flex;align-items:center;gap:6px;height:24px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,var(--brand-500),var(--brand-600));padding:0 10px;border-radius:999px}
+.wc-hero-hint{font-size:12px;color:var(--text-muted)}
+.wc-hero-hint-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:650;color:var(--brand-600);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s}
+.wc-hero-hint-btn:hover{text-decoration-color:currentColor}
+.wc-hero-text{font-size:19px;line-height:1.45;font-weight:650;color:var(--text);letter-spacing:-.015em;text-wrap:pretty}
+@media(max-width:640px){.wc-hero{padding:16px 16px 13px 20px;border-radius:16px}.wc-hero-text{font-size:17px}}
 
 /* Step navigator with a progress track */
-.wc-nav{display:flex;align-items:center;gap:12px;padding:2px 2px 4px}
-.wc-nav-btn{display:inline-flex;align-items:center;gap:4px;height:30px;padding:0 10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--text-muted);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s}
-.wc-nav-btn:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
+.wc-nav{display:flex;align-items:center;gap:12px;padding:2px 2px 6px}
+.wc-nav-btn{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 11px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--text-muted);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s,border-color .16s}
+.wc-nav-btn:hover:not(:disabled){background:var(--surface);border-color:var(--border);color:var(--text)}
 .wc-nav-btn:disabled{opacity:.4;cursor:default}
-.wc-nav-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:center}
-.wc-nav-count{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--text-muted);text-transform:uppercase;white-space:nowrap}
+.wc-nav-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:center}
+.wc-nav-count{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums}
 .wc-nav-track{width:100%;height:4px;border-radius:999px;background:var(--surface-3);overflow:hidden}
 .wc-nav-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-500),var(--brand-600));transition:width .35s var(--ease,cubic-bezier(.4,0,.2,1))}
 
-/* Step cards — current leads, pending recedes, done is struck */
-.wc-step{position:relative;display:flex;gap:11px;align-items:flex-start;padding:12px 13px 12px 15px;background:var(--surface);border:1px solid var(--border);border-radius:13px;transition:border-color .16s,background .16s,box-shadow .16s,opacity .16s}
+/* Step cards: current leads, pending recedes, done is struck. When the task is
+   over (.wc-steps.ro) the same cards become a calm, read-only record. */
+.wc-steps{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+.wc-step{position:relative;display:flex;gap:12px;align-items:flex-start;padding:12px 14px 12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;transition:border-color .16s,background .16s,box-shadow .16s,opacity .16s}
 .wc-step.now{border-color:transparent;box-shadow:var(--shadow-md)}
-.wc-step.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:13px 0 0 13px;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
-.wc-step.pending{opacity:.55}
-.wc-step.done{background:var(--surface-2)}
-.wc-step-check{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;border:1.5px solid var(--border-strong);background:transparent;color:var(--text-faint);cursor:pointer;margin-top:1px;transition:border-color .16s,background .16s,color .16s}
-.wc-step-check:hover{border-color:var(--brand-500)}
-.wc-step.now .wc-step-check{border-color:var(--brand-500);color:var(--brand-600)}
+.wc-step.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
+.wc-step.pending{opacity:.6;box-shadow:none}
+.wc-step.done{background:var(--surface-2);border-color:transparent}
+.wc-step.skipped{background:transparent;border-style:dashed}
+.wc-step-check{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;border:1.5px solid var(--border-strong);background:transparent;color:var(--text-faint);cursor:pointer;margin-top:1px;padding:0;font:inherit;transition:border-color .16s,background .16s,color .16s}
+.wc-step-check:hover{border-color:var(--brand-500);color:var(--brand-600)}
+.wc-step-num{font-size:11.5px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
+.wc-step.now .wc-step-check{border-color:var(--brand-500);background:var(--brand-soft);color:var(--brand-600)}
 .wc-step.done .wc-step-check{border-color:transparent;background:var(--success-soft);color:var(--success)}
+.wc-steps.ro .wc-step-check{cursor:default}
+.wc-steps.ro .wc-step-check:hover{border-color:var(--border-strong);color:var(--text-faint)}
+.wc-steps.ro .wc-step.done .wc-step-check:hover{border-color:transparent;color:var(--success)}
 .wc-step-body{flex:1;min-width:0}
-.wc-step-title{font-size:14px;line-height:1.45;color:var(--text-muted);font-weight:500}
-.wc-step.now .wc-step-title{color:var(--text);font-weight:650}
-.wc-step.done .wc-step-title{text-decoration:line-through;color:var(--text-faint);font-weight:500}
-.wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;border-radius:7px}
+.wc-step-title{font-size:14px;line-height:1.5;color:var(--text-muted);font-weight:500}
+.wc-step.now .wc-step-title{color:var(--text);font-weight:650;font-size:14.5px}
+.wc-step.done .wc-step-title{text-decoration:line-through;text-decoration-color:var(--text-faint);color:var(--text-faint);font-weight:500}
+.wc-steps.ro .wc-step.done .wc-step-title{text-decoration:none;color:var(--text-muted)}
+.wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:0 9px;height:24px;border-radius:7px}
 .wc-step-doneat{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--success);margin-top:6px;font-weight:600}
-.wc-done-toggle{display:flex;align-items:center;gap:7px;width:100%;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:9px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:color .15s,border-color .15s}
-.wc-done-toggle:hover{color:var(--text)}
+.wc-step-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-faint);margin-top:6px;font-weight:600}
+.wc-record-head{display:flex;align-items:center;gap:7px;padding:0 2px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.wc-record-head svg{color:var(--success)}
+.wc-done-toggle{display:flex;align-items:center;gap:7px;width:100%;background:transparent;border:1px dashed var(--border-strong);border-radius:11px;padding:9px 12px;font:inherit;font-size:12.5px;font-weight:600;color:var(--text-dim);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wc-done-toggle:hover{color:var(--text);background:var(--surface);border-style:solid}
+.wc-done-toggle .wc-dt-ok{color:var(--success)}
 
 /* All-done confirmation + flags */
-.wc-alldone{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;background:var(--success-soft);border-radius:11px;color:var(--success);font-weight:650;font-size:13.5px}
-.wc-flag{position:relative;display:flex;gap:9px;align-items:flex-start;padding:10px 12px 10px 15px;background:var(--warning-soft);border-radius:11px;font-size:13px;line-height:1.5;color:var(--text);overflow:hidden}
+.wc-alldone{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--success-soft);border-radius:13px;color:var(--success);font-weight:650;font-size:13.5px;line-height:1.45}
+.wc-alldone svg{flex-shrink:0}
+.wc-flag{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 13px 10px 16px;background:var(--warning-soft);border-radius:12px;font-size:13px;line-height:1.5;color:var(--text);overflow:hidden;animation:wc-line-in .3s cubic-bezier(.2,.8,.2,1) both}
 .wc-flag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
-.wc-flag svg{color:var(--warning);flex-shrink:0;margin-top:1px}
-.wc-flags{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+.wc-flag svg{color:var(--warning);flex-shrink:0;margin-top:2px}
+.wc-flag-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warning);margin-right:6px}
+.wc-flags{display:flex;flex-direction:column;gap:8px;margin:12px 0 0}
 .wc-loading{display:flex;flex-direction:column;align-items:center;gap:20px;padding:44px 20px 40px}
 .wc-loading-orb{position:relative;width:48px;height:48px}
 .wc-loading-orb span{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid transparent;border-top-color:var(--brand-600);transform:translate(-50%,-50%);animation:wc-orb 1.1s linear infinite}
@@ -1527,19 +1575,31 @@ const CONSOLE_CSS = `
 @keyframes wc-line-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
 /* Ask / analyse bar + answer */
-.wc-ask{margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:10px 11px}
-.wc-ask .wc-ask-row{display:flex;gap:7px;align-items:flex-end;flex-wrap:wrap}
+.wc-ask{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:8px 8px 8px 10px;transition:border-color .16s,box-shadow .16s}
+.wc-ask:focus-within{border-color:var(--brand-500);box-shadow:0 0 0 3px var(--brand-soft)}
+.wc-ask .wc-ask-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap}
 .wc-ask-ta{flex:1;min-width:140px;resize:vertical;min-height:40px;max-height:220px;line-height:1.5;font-family:inherit;font-size:14px}
+.wc-ask textarea.input{background:transparent;border-color:transparent;box-shadow:none;padding:9px 6px;height:auto}
+.wc-ask textarea.input:focus{background:transparent;border-color:transparent;box-shadow:none}
 .wc-ask input.input{flex:1;min-width:170px;height:38px;border-radius:10px;background:var(--surface-2);border:1px solid var(--border)}
 .wc-ask input.input:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
-.wc-ask-answer{margin-top:11px;padding-top:11px;border-top:1px solid var(--border);font-size:14px;line-height:1.55}
+.wc-ask .wc-ib{width:36px;height:36px}
+.wc-ask .wc-tbtn{height:36px}
+.wc-ask-answer{margin:8px 2px 2px;padding:12px 4px 4px;border-top:1px solid var(--border);font-size:14px;line-height:1.6}
+.wc-ask-k{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-600)}
 
 /* Pre-plan starter + session summary */
-.wc-pre{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:16px}
-.wc-pre-title{font-size:15px;font-weight:700;color:var(--text);margin-bottom:3px}
-.wc-pre-sub{font-size:12px;color:var(--text-muted);margin-bottom:11px}
-.wc-pre textarea.input{border-radius:10px}
-.wc-sum{background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm);padding:16px;margin-top:16px}
+.wc-pre{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md);padding:22px 22px 18px;overflow:hidden}
+.wc-pre::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 200px at 100% 0%,var(--brand-soft),transparent 70%)}
+.wc-pre>*{position:relative;z-index:1}
+.wc-pre-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.015em}
+.wc-pre-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5}
+.wc-pre textarea.input{border-radius:12px;padding:12px 13px;font-size:15px;line-height:1.5;min-height:92px}
+.wc-pre-help{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--text-muted);margin-top:14px;line-height:1.5}
+.wc-pre-help svg{color:var(--brand-600);flex-shrink:0;margin-top:2px}
+.wc-pre-help b{color:var(--text);font-weight:650}
+@media(max-width:640px){.wc-pre{padding:18px 16px 16px;border-radius:16px}.wc-pre-title{font-size:18px}}
+.wc-sum{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px 20px;margin-top:16px;line-height:1.6}
 .wc-sum-title{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px;color:var(--text)}
 .wc-sum-title svg{color:var(--brand-600)}
 `
@@ -1868,7 +1928,7 @@ function Console({ sessionId, onBack }) {
   const isMobile = isMobileUA()
   const pipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window
   const floatCapable = !desktop && !isMobile && typeof window !== 'undefined' && typeof window.open === 'function'
-  const FLOAT_CSS = 'body{margin:0;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}button{font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:default}input{font:inherit}input::placeholder{opacity:.6}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#8884;border-radius:6px}'
+  const FLOAT_CSS = 'body{margin:0;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}button{font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.05)}button:not(:disabled):active{transform:translateY(1px)}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(98,171,245,.45)}70%{box-shadow:0 0 0 6px rgba(98,171,245,0)}100%{box-shadow:0 0 0 0 rgba(98,171,245,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#8884;border-radius:6px}'
   const openFloat = async () => {
     try {
       let w
@@ -2088,6 +2148,11 @@ function Console({ sessionId, onBack }) {
   // temporal dead zone and crashed the whole plan/Console view (blank page).
   const steps = (sess && sess.steps) || []
   const done = steps.length > 0 && steps.every((x) => x.status === 'done')
+  // A finished task is a record, not a live screen: every live control (watch
+  // state, Refresh / Deep pass / Re-plan, Prev / Next, checkboxes, Ask) is
+  // hidden and the steps render read-only. Deliverable actions stay.
+  const ended = !!(sess && sess.status === 'ended')
+  const doneCount = steps.filter((x) => x.status === 'done').length
   const autoWatchRef = useRef(false)
   useEffect(() => {
     if (autoWatchRef.current || !sess) return
@@ -2227,19 +2292,20 @@ function Console({ sessionId, onBack }) {
     <div className="wc" style={{ ...shell, padding: '16px 16px 60px' }}>
       <style>{CONSOLE_CSS}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        {/* Compact single-row toolbar — holds cleanly at 460px: icon Back +
+        {/* Compact single-row toolbar, holds cleanly at 460px: icon Back +
             theme, a truncating plan name, then the minutes pill and the
             session controls. Nothing wraps accidentally. */}
         <div className="wc-top">
-          {/* Back appears only once you Pause - so leaving is a deliberate, paused exit. */}
-          {paused && <button className="wc-ib" onClick={leaveToPlan} title="Back to planning. Your paused session waits under Pick up where you left off." aria-label="Back to plan"><ChevronLeft size={17} /></button>}
+          {/* Back appears once you Pause (a deliberate, paused exit) and on a finished task. */}
+          {(paused || ended) && <button className="wc-ib" onClick={leaveToPlan} title={ended ? 'Back to your plans' : 'Back to planning. Your paused session waits under Pick up where you left off.'} aria-label="Back to plan"><ChevronLeft size={17} /></button>}
           <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
           <span style={{ flex: 1 }} />
-          {sess && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume everything - watching and your minutes' : 'Pause everything - stop watching and freeze your minutes'}>{paused ? 'Resume' : 'Pause'}</button>}
-          {floatCapable && sess && sess.status !== 'ended' && (pipWin
-            ? <button className="wc-ib on" title={pipSupported ? 'Close the floating window (Unfloat)' : 'Close the pop-out window'} aria-label="Close floating window" onClick={closeFloat}><PictureInPicture2 size={16} /></button>
-            : <button className="wc-ib" title={pipSupported ? 'Float the steps on top of your work' : 'Pop the steps out into a separate window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={16} /></button>)}
-          {sess && sess.status !== 'ended' && <button className="wc-tbtn" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
+          {sess && !ended && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume everything - watching and your minutes' : 'Pause everything - stop watching and freeze your minutes'}>{paused ? <><Play size={14} /> Resume</> : <><Square size={13} /> Pause</>}</button>}
+          {/* Float on top is the core web feature: a labeled, filled button, not a bare icon. */}
+          {floatCapable && sess && !ended && (pipWin
+            ? <button className="wc-tbtn on" title={pipSupported ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Unfloat' : 'Close pop-out'}</button>
+            : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
+          {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
         {/* End flow: a finishing animation, a completion message, then back to plan. */}
         {replanOpen && (
@@ -2292,9 +2358,9 @@ function Console({ sessionId, onBack }) {
         {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
 
         {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
-        {sess && sess.status === 'ended' && (
+        {ended && (
           <div className="wc-donebar">
-            <span className="wc-donebar-lead"><Check size={15} /> Completed. Download what you need</span>
+            <span className="wc-donebar-lead"><span className="wc-done-ic"><Check size={15} strokeWidth={2.5} /></span><span>Completed<small>{steps.length ? `${doneCount} of ${steps.length} steps done. ` : ''}Download what you need.</small></span></span>
             <div className="wc-donebar-actions">
               <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
               <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report (PDF)</button>
@@ -2326,40 +2392,64 @@ function Console({ sessionId, onBack }) {
             // goal starter + Plan button as a clean fallback.
             <div className="wc-pre">
               <div className="wc-pre-title">What do you want to get done?</div>
-              <div className="wc-pre-sub">Type or paste your goal and I will turn it into clear on-screen steps.</div>
+              <div className="wc-pre-sub">Type or paste your goal. It becomes a clear checklist that follows your screen step by step.</div>
               <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical' }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
               <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
                 {isMobile && <button className="wc-tbtn wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}
-                <button className="wc-tbtn primary" onClick={plan} disabled={busy || !goal.trim()}><Play size={14} /> Plan the steps</button>
+                <button className="wc-tbtn primary wc-watch" onClick={plan} disabled={busy || !goal.trim()}><Play size={14} /> Plan the steps</button>
               </div>
               {err && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 10 }}>{err}</div>}
-              <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 10, lineHeight: 1.5 }}>{isMobile ? 'Tap Photo to snap the screen, device or paper, then Plan reads it.' : <>Share your <b>whole screen</b> (not just a tab) so it can guide you through any app.</>}</div>
+              <div className="wc-pre-help">
+                {isMobile ? <Camera size={14} /> : <Monitor size={14} />}
+                <span>{isMobile
+                  ? 'Tap Photo to snap the screen, device or paper, then Plan reads it.'
+                  : <>Share your <b>whole screen</b> (not just a tab) so it can guide you through any app.{floatCapable ? <> Then use <b>Float on top</b> to keep the steps above your work.</> : null}</>}</span>
+              </div>
             </div>
           )
-        ) : (
-          // Post-plan: the step card below is the main view. Keep only a slim bar.
-          <div className="wc-guidebar">
-            <span className={`wc-live-pill${paused ? ' paused' : ''}${usage && usage.exhausted ? ' out' : ''}`} title={usage ? `${usage.tier} plan, resets ${usage.resetLabel}` : ''}>
-              {paused ? <><Square size={12} /> Paused</> : watching ? <><span className="pulse" /> Watching live</> : <><Loader2 size={12} className="spin" /> Starting…</>}
-              {usage && <span className="wc-live-min">· {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
-            </span>
-            <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>
-            <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
-            {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
-            {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
-            <button className="wc-tbtn ghost" style={{ marginLeft: 'auto' }} onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
-            {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%' }}>{err}</div>}
-            {photoFrame && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
-                <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
-                <button className="wc-tbtn ghost" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
+        ) : !ended ? (
+          // Post-plan, live: one status card. The step hero below is the main view.
+          <>
+            <div className="wc-guidebar">
+              {/* Watch state. There is no perpetual spinner: when nothing is being
+                  watched the resting state is the action that starts it. */}
+              {paused
+                ? <span className="wc-live-pill paused" title="Paused. Resume to keep watching."><Square size={12} /> Paused</span>
+                : watching
+                  ? <span className={`wc-live-pill${usage && usage.exhausted ? ' out' : ''}`} title={source === 'screen' ? 'Reading your shared screen' : 'Reading the camera'}><span className="pulse" /> Watching live</span>
+                  : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
+              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+              {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
+              <span className="wc-sp" />
+              <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>
+              <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
+              {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
+              <button className="wc-tbtn ghost" onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
+              {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%', lineHeight: 1.45 }}>{err}</div>}
+              {photoFrame && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+                  <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+                  <button className="wc-tbtn ghost" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
+                </div>
+              )}
+            </div>
+            {/* The screen-share + float story for a first-time web user. Goes away once floating. */}
+            {floatCapable && !pipWin && (
+              <div className="wc-tip">
+                <PictureInPicture2 size={15} />
+                <span className="fill">{watching ? <>Keep these steps above your work: <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> opens them in a small window that stays {pipSupported ? 'on top' : 'open'} while you work underneath.</> : <>Share your <b>whole screen</b>, then <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> to keep the steps above your work.</>}</span>
+                <button className="wc-tbtn" onClick={openFloat} title={pipSupported ? 'Float the steps in a small always-on-top window' : 'Pop the steps out into their own window'}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>
               </div>
             )}
-          </div>
-        )}
+          </>
+        ) : null}
         {/* Plan title lives with the guiding content (not in the header menu). */}
+        {ended && err && <div style={{ color: 'var(--danger)', fontSize: 13, lineHeight: 1.45, margin: '0 2px 10px' }}>{err}</div>}
         {sess && steps.length > 0 && (sess.title || sess.goal) && (
-          <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
+          <>
+            <div className="wc-plan-kicker">{ended ? <><Check size={11} /> Finished task</> : 'Your plan'}</div>
+            <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
+          </>
         )}
         {/* hidden camera-photo picker, always mounted */}
         <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
@@ -2375,21 +2465,26 @@ function Console({ sessionId, onBack }) {
 
         {/* Flags/warnings sit at the TOP of the guiding content so you see them
             immediately. They clear automatically as soon as you move past them. */}
-        {flags.length > 0 && (
+        {flags.length > 0 && !ended && (
           <div className="wc-flags">
             {flags.map((f) => (
               <div key={f.t} className="wc-flag">
-                <AlertTriangle size={15} /> <span>{f.text}</span>
+                <AlertTriangle size={15} /> <span><span className="wc-flag-k">Careful</span>{f.text}</span>
               </div>
             ))}
           </div>
         )}
 
-        {watching && <div className="wc-live"><span className="pulse" /> Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. {observation}</div>}
+        {watching && !ended && <div className="wc-live"><span className="pulse" /> Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. {observation}</div>}
 
-        {guidance && sess && sess.status !== 'ended' && !done && (
+        {guidance && !ended && !done && (
           <div className="wc-hero">
-            <div className="wc-hero-eyebrow"><span className="wc-hero-chip">Do this now</span>{!watching && <span className="wc-hero-hint">press Watch me to keep it live</span>}</div>
+            <div className="wc-hero-eyebrow">
+              <span className="wc-hero-chip"><Eye size={11} strokeWidth={2.5} /> Do this now</span>
+              {paused
+                ? <span className="wc-hero-hint">Paused. Resume to keep this live.</span>
+                : !watching && <button type="button" className="wc-hero-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
+            </div>
             <div className="wc-hero-text">{guidance}</div>
             <HowButton open={!!(howTo.guidance && howTo.guidance.open)} loading={!!(howTo.guidance && howTo.guidance.loading)} onClick={() => drillHow('guidance', guidance)} />
             <HowDetail entry={howTo.guidance} onRetry={() => drillHow('guidance', guidance)} />
@@ -2397,8 +2492,9 @@ function Console({ sessionId, onBack }) {
         )}
 
         {steps.length > 0 && (
-          <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {steps.length > 1 && (() => {
+          <div className={`wc-steps${ended ? ' ro' : ''}`}>
+            {ended && <div className="wc-record-head"><Check size={13} strokeWidth={2.5} /> What was done. {doneCount} of {steps.length} steps</div>}
+            {steps.length > 1 && !ended && (() => {
               const ci = steps.findIndex((s) => s.status === 'current')
               const no = ci >= 0 ? ci : Math.min(sess?.currentStep || 0, steps.length - 1)
               return (
@@ -2412,56 +2508,63 @@ function Console({ sessionId, onBack }) {
                 </div>
               )
             })()}
-            {steps.filter((s) => s.status === 'done').length > 0 && (
+            {!ended && doneCount > 0 && (
               <button type="button" className="wc-done-toggle" onClick={() => setDoneOpen((v) => !v)}>
                 <ChevronRight size={14} style={{ transform: doneOpen ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
-                <Check size={13} /> {steps.filter((s) => s.status === 'done').length} completed
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-dim)' }}>{doneOpen ? 'hide' : 'show'}</span>
+                <Check size={13} className="wc-dt-ok" /> {doneCount} completed
+                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-dim)' }}>{doneOpen ? 'Hide' : 'Show'}</span>
               </button>
             )}
             {steps.map((s, i) => {
               const isDone = s.status === 'done', isNow = s.status === 'current'
               const isPending = !isDone && !isNow
-              if (isDone && !doneOpen) return null   // completed steps collapsed by default
+              if (!ended && isDone && !doneOpen) return null   // completed steps collapsed by default while live
               // Show the whole roadmap, but grey out steps not reached yet and
               // keep their exact commands/code hidden until the step is active -
-              // so the focus stays on the one step to do now.
-              const reveal = isNow || isDone
+              // so the focus stays on the one step to do now. A finished task
+              // shows everything: it is the record of the plan.
+              const reveal = isNow || isDone || ended
+              const tone = ended ? (isDone ? 'done' : 'skipped') : (isNow ? 'now' : isDone ? 'done' : 'pending')
               return (
-                <div key={i} className={`wc-step ${isNow ? 'now' : isDone ? 'done' : 'pending'}`}>
-                  <button className="wc-step-check" title={isDone ? 'Mark not done' : 'Mark done'} onClick={() => setStep(i, isDone ? 'current' : 'done')}>
-                    {isDone ? <Check size={16} /> : <Square size={15} />}
-                  </button>
+                <div key={i} className={`wc-step ${tone}`}>
+                  {ended
+                    ? <span className="wc-step-check" aria-hidden="true">{isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}</span>
+                    : <button className="wc-step-check" title={isDone ? 'Mark not done' : 'Mark done'} aria-label={isDone ? 'Mark not done' : 'Mark done'} onClick={() => setStep(i, isDone ? 'current' : 'done')}>
+                        {isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}
+                      </button>}
                   <div className="wc-step-body">
                     <div className="wc-step-title">{s.text}</div>
                     {reveal && s.url && <a className="btn btn-outline btn-sm" href={s.url} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, textDecoration: 'none', display: 'inline-flex', gap: 5, alignItems: 'center' }}><ExternalLink size={13} /> Open {linkHost(s.url)}</a>}
                     {reveal && s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                     {reveal && s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
-                    {isNow && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: {s.validate}</div>}
+                    {isNow && !ended && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: {s.validate}</div>}
                     {isDone && s.doneAt && <div className="wc-step-doneat"><Check size={11} /> Done {(() => { try { return new Date(s.doneAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } catch { return '' } })()}</div>}
-                    <HowButton open={!!(howTo['step-' + i] && howTo['step-' + i].open)} loading={!!(howTo['step-' + i] && howTo['step-' + i].loading)} onClick={() => drillHow('step-' + i, s.text, i)} />
-                    <HowDetail entry={howTo['step-' + i]} onRetry={() => drillHow('step-' + i, s.text, i)} />
+                    {ended && !isDone && <div className="wc-step-tag">Not reached</div>}
+                    {!ended && <HowButton open={!!(howTo['step-' + i] && howTo['step-' + i].open)} loading={!!(howTo['step-' + i] && howTo['step-' + i].loading)} onClick={() => drillHow('step-' + i, s.text, i)} />}
+                    {!ended && <HowDetail entry={howTo['step-' + i]} onRetry={() => drillHow('step-' + i, s.text, i)} />}
                   </div>
                 </div>
               )
             })}
-            {done && sess && sess.status !== 'ended' && <div className="wc-alldone"><Check size={16} /> Every step is confirmed on screen. End and summarize when you are ready.</div>}
+            {done && !ended && <div className="wc-alldone"><Check size={16} strokeWidth={2.5} /> Every step is confirmed on screen. End and summarize when you are ready.</div>}
           </div>
         )}
 
         {/* In-the-moment ask: a single clean prompt. It uses the whole session
             (goal + plan + what is on screen) to answer and keep you moving. */}
-        <div className="wc-ask">
-          <div className="wc-ask-row wc-askrow">
-            <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees…' : 'Ask, or paste an API response / long error and I will analyze it and tell you the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} />
-            <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
-            <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
-            <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
+        {!ended && (
+          <div className="wc-ask">
+            <div className="wc-ask-row wc-askrow">
+              <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, or paste an error or API response for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} />
+              <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+              <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
+              <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
+            </div>
+            {answer && <div className="wc-ask-answer"><div className="wc-ask-k"><Sparkles size={11} /> Answer</div><AnswerBody text={answer} /></div>}
           </div>
-          {answer && <div className="wc-ask-answer"><AnswerBody text={answer} /></div>}
-        </div>
+        )}
 
-        {sess && sess.status === 'ended' && sess.summary && (
+        {ended && sess.summary && (
           <div className="wc-sum">
             <div className="wc-sum-title"><FileText size={15} /> Session summary</div>
             <AnswerBody text={sess.summary} />
@@ -2520,7 +2623,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         inputBg: '#0f1218', track: '#2a3140', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(98,171,245,.35)' }
 
   const FONT = '"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",sans-serif'
-  const wrap = { padding: 12, display: 'flex', flexDirection: 'column', gap: 10, minHeight: '100vh', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5 }
+  const wrap = { padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: '100vh', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5, fontFeatureSettings: '"tnum" 1' }
   const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, padding: 12, boxShadow: c.shadow }
   // One small-button family: icon (header), ghost (secondary), primary (the one action).
   const iconBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .15s, color .15s' }
@@ -2535,19 +2638,20 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
     ? { label: 'Paused', color: c.warn, soft: c.warnSoft }
     : watching
       ? { label: 'Live', color: c.accent, soft: c.accentSoft }
-      : { label: 'Idle', color: c.muted, soft: c.panel2 }
+      : { label: 'Not watching', color: c.muted, soft: c.panel2 }
+  const doneN = steps.filter((s) => s.status === 'done').length
 
   return (
     <div style={wrap}>
-      {/* Header: brand, live/paused state, minutes, icon controls */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, minWidth: 0 }}>
-        <span style={{ width: 22, height: 22, borderRadius: 7, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset` }}>
+      {/* Header: brand, live/paused state, minutes, icon controls, under a hairline */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 9, borderBottom: `1px solid ${c.border}` }}>
+        <span style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset, 0 2px 6px -2px ${c.accentRing}` }}>
           <Eye size={13} color="#fff" strokeWidth={2.4} />
         </span>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 4 }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 5 }}>
           <strong style={{ fontSize: 13.5, fontWeight: 650, letterSpacing: '-.01em', whiteSpace: 'nowrap' }}>WorkCoPilot</strong>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: status.color, background: status.soft, borderRadius: 999, padding: '2px 8px', whiteSpace: 'nowrap' }}>
-            <span style={{ width: 6, height: 6, borderRadius: '50%', background: status.color, boxShadow: watching && !paused ? `0 0 0 3px ${c.accentSoft}` : 'none' }} />
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 20, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: status.color, background: status.soft, borderRadius: 999, padding: '0 8px', whiteSpace: 'nowrap' }}>
+            <span className={watching && !paused ? 'fp-pulse' : undefined} style={{ width: 6, height: 6, borderRadius: '50%', background: status.color }} />
             {status.label}
           </span>
           {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{minsLeft}m left</span>}
@@ -2555,14 +2659,17 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         <button style={{ ...iconBtn, color: paused ? c.accent : c.muted, background: paused ? c.accentSoft : 'transparent' }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={14} />}</button>
         <button style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: run this one frame on the stronger model and weave it back into the steps, then continue on the fast model."><Zap size={15} /></button>
         <button style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
-        <button style={{ ...iconBtn, width: 'auto', padding: '0 7px', fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
-        <button style={iconBtn} onClick={onClose} title="Close overlay"><X size={16} /></button>
+        <button style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
+        <button style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
       </div>
 
       {/* Watch toggle: the one control that makes the panel live */}
-      <button style={watching
-        ? { ...ghost, justifyContent: 'center', height: 36, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
-        : { ...primary, justifyContent: 'center', height: 36, fontSize: 13 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Play size={14} /> Watch me</>}</button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <button style={watching
+          ? { ...ghost, justifyContent: 'center', height: 38, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
+          : { ...primary, justifyContent: 'center', height: 38, fontSize: 13 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Eye size={15} /> Watch my screen</>}</button>
+        {!watching && !paused && <div style={{ fontSize: 11.5, color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
+      </div>
 
       {watching && (
         <div style={{ fontSize: 12, color: c.muted, display: 'flex', gap: 7, alignItems: 'flex-start', padding: '0 2px', lineHeight: 1.45 }}><Loader2 size={13} className="spin" style={{ color: c.accent, flexShrink: 0, marginTop: 2 }} /> <span>Reading your screen. {observation}</span></div>
@@ -2588,7 +2695,9 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
             <span style={accentBar} />
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7, flexWrap: 'wrap' }}>
               <span style={{ ...eyebrow, color: c.accent, background: c.accentSoft, padding: '3px 9px', borderRadius: 999 }}>Do this now</span>
-              {!watching && <span style={{ fontSize: 11, color: c.faint }}>press Watch me to keep it live</span>}
+              {paused
+                ? <span style={{ fontSize: 11, color: c.faint }}>Paused. Resume to keep this live.</span>
+                : !watching && <span style={{ fontSize: 11, color: c.faint }}>Watch my screen to keep this live</span>}
             </div>
             <div style={{ fontWeight: 650, fontSize: 15.5, lineHeight: 1.45, letterSpacing: '-.01em', color: c.text }}>{guidance || current.text}</div>
             {guidance && <div style={{ fontSize: 12, color: c.muted, marginTop: 7, lineHeight: 1.45 }}><span style={{ fontWeight: 700, color: c.faint }}>Step </span>{current.text}</div>}
@@ -2625,6 +2734,12 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
 
       {/* Roadmap: current leads, pending recedes, done is struck */}
       {steps.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 2px 0' }}>
+          <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>All steps</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: c.faint, fontVariantNumeric: 'tabular-nums' }}>{doneN} of {steps.length} done</span>
+        </div>
+      )}
+      {steps.length > 0 && (
         <div style={{ maxHeight: 190, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 1 }}>
           {steps.map((s, i) => {
             const isDone = s.status === 'done', isNow = s.status === 'current'
@@ -2635,7 +2750,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                 {isNow && <span style={{ ...accentBar, width: 3 }} />}
                 <button style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center', padding: 0, marginTop: 1, cursor: 'pointer',
                   border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
-                  onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <Square size={12} />}</button>
+                  onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
                 <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.45, color: isDone ? c.faint : isNow ? c.text : c.muted, fontWeight: isNow ? 650 : 500, textDecoration: isDone ? 'line-through' : 'none' }}>{s.text}</span>
               </div>
             )
@@ -2646,8 +2761,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
       {/* Ask row */}
       <div style={{ ...card, padding: 10, marginTop: 'auto' }}>
         <input
-          style={{ width: '100%', height: 36, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 9, padding: '0 11px', outline: 'none', fontSize: 13, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
-          placeholder="Ask, or type what to analyze" value={floatQ}
+          style={{ width: '100%', height: 38, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 10, padding: '0 12px', outline: 'none', fontSize: 13, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
+          placeholder="Ask anything, or say what to analyze" value={floatQ}
           onChange={(e) => setFloatQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && floatQ.trim()) onAsk(floatQ.trim()) }}
         />
