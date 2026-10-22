@@ -141,7 +141,7 @@ export default function WorkMarketing() {
         <div className="wm-wrap wm-nav-in">
           <a href="#top" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
           <nav className="wm-links">
-            <a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="#pricing">Pricing</a>
+            <a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="#security">Security</a><a href="#pricing">Pricing</a>
           </nav>
           <div className="wm-navcta">
             <button className="wm-ghost" onClick={() => go('')}>Sign in</button>
@@ -163,6 +163,11 @@ export default function WorkMarketing() {
               <button className="wm-cta" onClick={() => go('')}>Start guiding me <ArrowRight size={16} /></button>
               <button className="wm-cta alt" onClick={() => nav('/demo')}>See a 60-second demo <ArrowRight size={16} /></button>
               <a className="wm-link" href="#how">See how it works</a>
+            </div>
+            <div className="wm-hero-trust" data-reveal>
+              <a href="#security" className="wm-trust-pill"><ScanEye size={14} /> Read-only, never acts</a>
+              <a href="#security" className="wm-trust-pill"><Lock size={14} /> Private by design, on-device</a>
+              <a href="#security" className="wm-trust-pill"><ShieldCheck size={14} /> Security-first answers</a>
             </div>
           </div>
           <LiveDemo tilt={tilt} untilt={untilt} />
@@ -782,6 +787,11 @@ const CSS = `
 .wm-killer-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(57,211,255,.15);color:var(--em2);flex-shrink:0}
 .wm-killer svg:last-child{margin-left:auto;color:var(--mut);flex-shrink:0}
 .wm-hero-cta{display:flex;align-items:center;gap:22px}
+.wm-hero-trust{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
+.wm-trust-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(140,245,196,.06);color:var(--tx);font-size:13.5px;font-weight:600;transition:border-color .15s,background .15s}
+.wm-trust-pill svg{color:var(--em2)}
+.wm-trust-pill:hover{border-color:var(--em);background:rgba(140,245,196,.12)}
+.wm:not([data-wm="dark"]) .wm-trust-pill{background:rgba(10,157,102,.07);border-color:rgba(10,157,102,.22)}
 .wm-modes{display:flex;align-items:center;gap:18px;margin-bottom:10px;flex-wrap:wrap}
 .wm-mode{display:flex;align-items:center;gap:10px;color:var(--tx)}
 .wm-mode svg{color:var(--em);flex-shrink:0}
