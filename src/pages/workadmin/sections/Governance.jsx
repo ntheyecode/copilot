@@ -3,7 +3,7 @@
 // words (with the honest risk warning), choose scrub vs tokenize, then arm/lock.
 // The armed policy is enforced on every outbound AI call by the server.
 import React, { useEffect, useState, useCallback } from 'react'
-import { ShieldCheck, Lock, AlertTriangle } from 'lucide-react'
+import { ShieldCheck, Lock, AlertTriangle, Plus, Trash2 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag } from './_shared.jsx'
 
@@ -47,6 +47,7 @@ export default function Governance({ isSuperAdmin }) {
       const r = await workAdminApi.setPolicy({
         companyId, _unlock: true,   // superadmin may always change
         categories: p.categories || {}, blockWords: p.blockWords || [], frameworks: p.frameworks || [],
+        customFields: (p.customFields || []).filter((f) => f && String(f.label || '').trim() && String(f.pattern || '').trim()),
         mode: p.mode || 'scrub', armed: !!p.armed, locked: !!p.locked,
       })
       setState((s) => ({ ...s, policy: r.policy })); setSaved(true); setTimeout(() => setSaved(false), 2500)
@@ -111,6 +112,32 @@ export default function Governance({ isSuperAdmin }) {
                 Blocking words can make an answer incomplete or wrong where a word is actually needed. WorkCoPilot never guesses a blocked value.
               </div>
             )}
+          </div>
+
+          <div className="wka-panel">
+            <h2>Custom fields</h2>
+            <p className="desc">Your own sensitive data types, on top of the built-in categories. Give each a name, a match (a word/phrase, or a <code>/regex/</code> like <code>/EMP-\d&#123;6&#125;/</code>), and what to do. Redact replaces it with a <code>[LABEL]</code> tag; Block replaces it with <code>[BLOCKED]</code>. Applied on the device before anything is sent.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {(p.customFields || []).map((f, i) => (
+                <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr auto auto', gap: 8, alignItems: 'center' }}>
+                  <input className="wka-input" placeholder="Label (e.g. Employee ID)" disabled={!isSuperAdmin} value={f.label || ''}
+                    onChange={(e) => { const cf = [...(p.customFields || [])]; cf[i] = { ...cf[i], label: e.target.value }; patchPolicy({ customFields: cf }) }} />
+                  <input className="wka-input" placeholder="Match: a word/phrase or /regex/" disabled={!isSuperAdmin} value={f.pattern || ''}
+                    onChange={(e) => { const cf = [...(p.customFields || [])]; cf[i] = { ...cf[i], pattern: e.target.value }; patchPolicy({ customFields: cf }) }} />
+                  <select className="wka-select" disabled={!isSuperAdmin} value={f.action || 'redact'}
+                    onChange={(e) => { const cf = [...(p.customFields || [])]; cf[i] = { ...cf[i], action: e.target.value }; patchPolicy({ customFields: cf }) }}>
+                    <option value="redact">Redact</option>
+                    <option value="block">Block</option>
+                  </select>
+                  <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title="Remove"
+                    onClick={() => { const cf = (p.customFields || []).filter((_, k) => k !== i); patchPolicy({ customFields: cf }) }}><Trash2 size={13} /></button>
+                </div>
+              ))}
+            </div>
+            <button type="button" className="wka-btn sm" style={{ marginTop: 10 }} disabled={!isSuperAdmin}
+              onClick={() => patchPolicy({ customFields: [...(p.customFields || []), { label: '', pattern: '', action: 'redact' }] })}>
+              <Plus size={13} /> Add custom field
+            </button>
           </div>
 
           <div className="wka-panel">

@@ -148,6 +148,32 @@ function reEscape(s) { return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&') }
 // category whose action is NOT "send". mask/withhold/tokenize all REDACT here;
 // true on-device tokenize+rehydrate is a separate (client) control. Returns
 // { clean, counts, blocked, total }.
+// Operator-defined custom fields: each is {label, pattern, action}. `pattern` is
+// a literal word/phrase (matched whole-word, case-insensitive) OR a /regex/flags
+// value. action 'block' -> [BLOCKED]; anything else -> a [LABEL] redaction tag.
+// Bad patterns are skipped, never thrown. Returns {text, n}.
+function applyCustomFields(text, fields) {
+  let n = 0
+  for (const f of (Array.isArray(fields) ? fields : [])) {
+    const label = String((f && f.label) || '').trim()
+    const pat = String((f && f.pattern) || '').trim()
+    if (!label || !pat) continue
+    const tag = (f.action === 'block') ? '[BLOCKED]'
+      : '[' + label.toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '') + ']'
+    const m = pat.match(/^\/(.+)\/([a-z]*)$/i)
+    try {
+      if (m) {
+        let flags = (m[2] || '').replace(/[^gimsuy]/g, ''); if (!flags.includes('g')) flags += 'g'
+        text = text.replace(new RegExp(m[1], flags), () => { n++; return tag })
+      } else {
+        const re = new RegExp('(^|[^\\w])(' + reEscape(pat) + ')(?=[^\\w]|$)', 'gi')
+        text = text.replace(re, (mm, pre) => { n++; return pre + tag })
+      }
+    } catch (_) { /* skip a pattern that will not compile */ }
+  }
+  return { text, n }
+}
+
 export function scrubWithPolicy(input, policy) {
   let text = String(input == null ? '' : input)
   const counts = {}
@@ -162,6 +188,10 @@ export function scrubWithPolicy(input, policy) {
       text = text.replace(re, (m, pre) => { blocked++; return pre + '[BLOCKED]' })
     } catch (_) { /* skip a word that will not compile */ }
   }
+  // Operator custom fields run before the built-in category rules.
+  const cf = applyCustomFields(text, policy && policy.customFields)
+  text = cf.text
+  if (cf.n) counts.customFields = cf.n
   // Build the set of internal types to redact from the policy categories.
   const cats = (policy && policy.categories) || {}
   const active = new Set()
@@ -224,6 +254,8 @@ export function tokenizeSensitive(input, { policy = null, map = {} } = {}) {
     const word = String(w || '').trim(); if (word.length < 2) continue
     try { const re = new RegExp('(^|[^\\w])(' + reEscape(word) + ')(?=[^\\w]|$)', 'gi'); text = text.replace(re, (m, pre) => { bump('blocked'); return pre + '[BLOCKED]' }) } catch (_) {}
   }
+  // 1b) Operator custom fields -> redacted/blocked (irreversible tags).
+  { const cf = applyCustomFields(text, policy && policy.customFields); text = cf.text; if (cf.n) bump('customFields', cf.n) }
 
   // Helper to handle a whole-match value per its category action.
   const handle = (type, value, fixedTag) => {

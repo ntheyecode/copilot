@@ -284,7 +284,7 @@ export function publicWorkUser(u) {
     canUseService: userCanUseService(u.id),      // company-covered OR a live personal plan
     // Effective governance policy the device enforces (null when none armed).
     // blockWords travel to the device because the device needs them to block.
-    govPolicy: (() => { const e = getEffectiveWorkPolicy(u.id); return e ? { armed: true, mode: e.mode || 'scrub', categories: e.categories || {}, blockWords: e.blockWords || [] } : null })(),
+    govPolicy: (() => { const e = getEffectiveWorkPolicy(u.id); return e ? { armed: true, mode: e.mode || 'scrub', categories: e.categories || {}, blockWords: e.blockWords || [], customFields: e.customFields || [] } : null })(),
   }
 }
 
@@ -450,7 +450,7 @@ function policyKey(scope) {
   return null
 }
 function defaultWorkPolicy(scope) {
-  return { scope: scope || {}, armed: false, locked: false, frameworks: [], regions: [], categories: {}, blockWords: [], mode: 'scrub', updatedBy: null, updatedAt: null, version: 0 }
+  return { scope: scope || {}, armed: false, locked: false, frameworks: [], regions: [], categories: {}, blockWords: [], customFields: [], mode: 'scrub', updatedBy: null, updatedAt: null, version: 0 }
 }
 export function getWorkPolicy(scope) {
   const k = policyKey(scope); if (!k) return defaultWorkPolicy(scope)
@@ -468,6 +468,13 @@ export function setWorkPolicy(scope, patch = {}, by = null) {
     regions: Array.isArray(patch.regions) ? patch.regions.slice(0, 12).map(String) : cur.regions,
     categories: (patch.categories && typeof patch.categories === 'object') ? patch.categories : cur.categories,
     blockWords: Array.isArray(patch.blockWords) ? patch.blockWords.slice(0, 200).map((w) => String(w || '').trim()).filter((w) => w.length >= 2) : cur.blockWords,
+    // Custom fields: operator-defined sensitive data types. Each has a label, a
+    // match (a word/phrase, or a /regex/ the device applies) and an action.
+    customFields: Array.isArray(patch.customFields) ? patch.customFields.slice(0, 50).map((f) => ({
+      label: String((f && f.label) || '').trim().slice(0, 60),
+      pattern: String((f && f.pattern) || '').trim().slice(0, 200),
+      action: ['redact', 'tokenize', 'block'].includes(f && f.action) ? f.action : 'redact',
+    })).filter((f) => f.label && f.pattern) : cur.customFields,
     mode: ['scrub', 'tokenize'].includes(patch.mode) ? patch.mode : cur.mode,
     armed: patch.armed != null ? !!patch.armed : cur.armed,
     locked: patch.locked != null ? !!patch.locked : cur.locked,
