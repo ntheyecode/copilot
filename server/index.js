@@ -580,6 +580,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       return res.json({ session: cur, steps: cur.steps, refusal: plan.refusal })
     }
     if (frame && (plan.escalated || call.forcedStrong)) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Planned with a stronger model (${call.strongModel || 'backup'})${call.forcedStrong ? ' - deep pass you asked for' : ' to get a usable plan'}.` })
+    else if (plan.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this plan.' })
     if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
     else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
@@ -695,6 +696,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     })
     if (r.flag) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: r.flag })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ' to resolve this step'}.` })
+    else if (r.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this step.' })
     const allDone = r.done || updated.currentStep >= updated.steps.length
     res.json({
       status: r.flag ? 'wrong' : (allDone ? 'done' : 'working'),
@@ -730,6 +732,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ''}.` })
+    else if (out.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this answer.' })
     res.json({ answer: out.answer, escalated, model: usedModel })
   } catch (e) { res.status(e.status || 500).json({ error: e.message || 'Server error' }) }
 })

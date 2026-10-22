@@ -416,6 +416,55 @@ export function scrubForRender(text) {
   return formatDelivery(stripEdgePauses(stripWrapup(stripTagQuestions(fixDiscourseConnectors(fixSequenceConnectors(cleanAIFormatting(simplifyHardWords(stripFillerOpener(stripEdgePauses(deRefuse(String(text || ''))))))))))))
 }
 
+// --- WorkCoPilot GUIDANCE scrubber (NOT interview delivery) -------------------
+// scrubAiLanguage / scrubForRender above are built for spoken INTERVIEW answers
+// rendered by AnswerBody.jsx, so they do two things that are WRONG for a
+// screen-aware work guide whose output the user copies and pastes:
+//   1. formatDelivery() injects {PAUSE} markers. WorkPage renders guidance /
+//      answers / research as plain text, so a {PAUSE} shows up LITERALLY on
+//      screen as the characters "{PAUSE}" - a visible garble in every 3+
+//      sentence guidance block.
+//   2. The prose transforms (semicolon -> period, em-dash -> comma, word swaps)
+//      only skip ```fenced``` blocks, NOT inline `code` spans. WorkCoPilot is
+//      told to give exact commands / code / paths inline in guidance and in the
+//      ask answer, so an inline `git add .; git commit` would be chewed into
+//      `git add .. Git commit` - a broken copy-paste command.
+//   3. deRefuse() rewrites any short "I'm sorry, but I can't..." into the
+//      interview line "...can you please repeat the question?", which is
+//      nonsense in a work tool and would hide a real safety message.
+// scrubGuidance keeps the genuine anti-AI-language cleanups (plain words, no
+// em-dash per the owner rule, no "Sure," opener, plain connectors) but is
+// code-span aware (protects BOTH ```fences``` and inline `code`), never injects
+// delivery markers, never interview-de-refuses, and strips any stray delivery
+// token so none can ever reach the screen. It does NOT strip the "wrap-up" final
+// sentence: in work guidance a closing confirmation is often the done-condition,
+// so removing it would drop real instruction. Pure, no side effects.
+const CODE_SPAN = /(```[\s\S]*?```|`[^`]*`)/g
+// Run a prose-only transform on the non-code segments, leaving every fenced
+// block and inline `code` span exactly as written (split keeps the captured
+// code spans at the ODD indices).
+function overProse(text, fn) {
+  return String(text || '').split(CODE_SPAN).map((seg, i) => (i % 2 === 1 ? seg : fn(seg))).join('')
+}
+export function scrubGuidance(text) {
+  // Whole-text openers/edges first (these only ever touch the very start/end and
+  // never match a code span, so they are safe to run before the code split).
+  let s = stripFillerOpener(stripEdgePauses(String(text || '')))
+  // Per-occurrence prose cleanups, protecting inline code and fenced blocks. The
+  // delivery-token strip + spacing tidy run INSIDE the prose pass too, so they
+  // can never touch an inline command (e.g. the space in `git add .` is kept).
+  s = overProse(s, (g) => {
+    let x = stripTagQuestions(fixDiscourseConnectors(fixSequenceConnectors(cleanAIFormatting(simplifyHardWords(g)))))
+    // A delivery token must NEVER reach WorkPage (it renders text verbatim). Only
+    // the known delivery markers are removed - a real placeholder like
+    // {your-bucket-name} is left untouched. Then tidy the spacing left behind.
+    x = x.replace(/\s*\{(?:PAUSE|THINK|\.{2,}|…+)\}\s*/gi, ' ').replace(/[ \t]{2,}/g, ' ').replace(/ +([.,;:])/g, '$1')
+    return x
+  })
+  s = stripEdgePauses(s)
+  return s.trim()
+}
+
 // --- CATALOG: every known AI-language tell, with what the scrubber must do -----
 // ai_language.test.mjs runs each input through scrubAiLanguage and checks `mustNotMatch`
 // is gone (and `mustMatch`, if given, is present). ADD a row here whenever a new
@@ -538,6 +587,36 @@ export function runCatalog() {
     const out = scrubAiLanguage(c.input)
     if (c.mustNotMatch && c.mustNotMatch.test(out)) failures.push(`${c.name}: tell survived -> "${out}"`)
     if (c.mustMatch && !c.mustMatch.test(out)) failures.push(`${c.name}: expected replacement missing -> "${out}"`)
+  }
+  for (const f of runGuidanceCatalog().failures) failures.push(f)
+  return { pass: failures.length === 0, failures }
+}
+
+// --- CATALOG for scrubGuidance (WorkCoPilot) ----------------------------------
+// The work guide copies commands/code to the screen verbatim, so the invariants
+// are different from the interview scrubber: NEVER inject a {PAUSE}, NEVER mangle
+// an inline `code`/command span, NEVER interview-de-refuse, but DO clean the
+// genuine AI-language tells (em-dash, "Sure," opener, formal words).
+export const GUIDANCE_CATALOG = [
+  { name: 'guidance: no {PAUSE} injected into a long block', input: 'Open the EC2 console. Click Launch Instance. Pick the Amazon Linux AMI. Name the instance web-1.', mustNotMatch: /\{PAUSE\}/ },
+  { name: 'guidance: strips a stray {PAUSE} token', input: 'Type the command. {PAUSE} Then press Enter.', mustNotMatch: /\{PAUSE\}/ },
+  { name: 'guidance: strips a stray {THINK} token', input: 'Read the error first. {THINK} Then run the fix.', mustNotMatch: /\{THINK\}/ },
+  { name: 'guidance: inline command with semicolon is NOT mangled', input: 'Run `git add .; git commit -m "init"` in the project root.', mustMatch: /git add \.; git commit -m "init"/ },
+  { name: 'guidance: fenced code with semicolons survives', input: 'Paste this:\n```\na=1; b=2;\nfor i in x; do echo $i; done\n```', mustMatch: /a=1; b=2;/ },
+  { name: 'guidance: inline SQL semicolons survive', input: 'Run `SELECT * FROM users; SELECT 1;` to check.', mustMatch: /SELECT \* FROM users; SELECT 1;/ },
+  { name: 'guidance: em-dash prose still cleaned (owner rule)', input: 'Open the file — then save it.', mustNotMatch: /—/ },
+  { name: 'guidance: filler opener still stripped', input: 'Sure. Click the blue Create button at the top right.', mustNotMatch: /^Sure/ },
+  { name: 'guidance: formal word still simplified', input: 'I always utilize the search box to find the setting.', mustNotMatch: /\butilize\b/i },
+  { name: 'guidance: a safety refusal is NOT turned into the interview repeat line', input: "I'm sorry, but I can't help break into that account.", mustNotMatch: /repeat the question/i },
+  { name: 'guidance: placeholder braces are preserved', input: 'Replace {your-bucket-name} with your real bucket.', mustMatch: /\{your-bucket-name\}/ },
+  { name: 'guidance: a closing confirmation is NOT stripped', input: 'Click Save in the dialog. This gives you a working config file on disk.', mustMatch: /working config file/i },
+]
+export function runGuidanceCatalog() {
+  const failures = []
+  for (const c of GUIDANCE_CATALOG) {
+    const out = scrubGuidance(c.input)
+    if (c.mustNotMatch && c.mustNotMatch.test(out)) failures.push(`${c.name}: FAIL -> "${out}"`)
+    if (c.mustMatch && !c.mustMatch.test(out)) failures.push(`${c.name}: expected content missing -> "${out}"`)
   }
   return { pass: failures.length === 0, failures }
 }

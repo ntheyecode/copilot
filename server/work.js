@@ -17,7 +17,7 @@
 // changed. The cheap vision model is the continuous "eyes" (watch + read); the
 // stronger model is used only for planning and the on-demand "what is this".
 // ===========================================================================
-import { scrubAiLanguage } from './ai_language.js'
+import { scrubGuidance } from './ai_language.js'
 import { methodAnchorFor } from './method_anchors.js'
 
 // Pull in the canonical methodology for the discipline the goal implies (OWASP
@@ -35,24 +35,94 @@ function methodAnchorBlock(goal, appContext = '') {
     'do not apply. Do not recite it back; apply it.'
 }
 
-// Pull a JSON object/array out of a model reply, tolerating ```json fences and
-// leading prose. Returns null when nothing parseable is found.
-export function extractJson(text) {
+// Remove trailing commas before } or ] (a VERY common model JSON error that
+// makes the whole reply unparseable). String-aware so a comma inside a quoted
+// value is never touched. Only used as a repair on a failed parse, never on a
+// reply that already parses, so it can never corrupt valid JSON.
+function stripTrailingCommas(s) {
+  let out = '', inStr = false, quote = '', esc = false
+  for (let i = 0; i < s.length; i++) {
+    const ch = s[i]
+    if (inStr) {
+      out += ch
+      if (esc) esc = false
+      else if (ch === '\\') esc = true
+      else if (ch === quote) inStr = false
+      continue
+    }
+    if (ch === '"' || ch === "'") { inStr = true; quote = ch; out += ch; continue }
+    if (ch === ',') {
+      // look ahead past whitespace for a closing bracket
+      let j = i + 1
+      while (j < s.length && /\s/.test(s[j])) j++
+      if (s[j] === '}' || s[j] === ']') continue   // drop this comma
+    }
+    out += ch
+  }
+  return out
+}
+
+// Scan for every TOP-LEVEL balanced {...} or [...] span, string-aware (so a
+// brace inside a quoted value does not throw off the matching). This finds the
+// real JSON even when the model wraps it in prose, forgets a closing fence, or
+// emits more than one object. Returns the spans in document order.
+function balancedJsonSpans(s) {
+  const spans = []
+  let i = 0
+  while (i < s.length) {
+    const ch = s[i]
+    if (ch === '{' || ch === '[') {
+      const open = ch, close = ch === '{' ? '}' : ']'
+      let depth = 0, inStr = false, quote = '', esc = false, j = i
+      for (; j < s.length; j++) {
+        const c = s[j]
+        if (inStr) {
+          if (esc) esc = false
+          else if (c === '\\') esc = true
+          else if (c === quote) inStr = false
+          continue
+        }
+        if (c === '"' || c === "'") { inStr = true; quote = c; continue }
+        if (c === open) depth++
+        else if (c === close) { depth--; if (depth === 0) { j++; break } }
+      }
+      if (depth === 0) { spans.push(s.slice(i, j)); i = j; continue }
+    }
+    i++
+  }
+  return spans
+}
+
+// Pull a JSON object/array out of a model reply, tolerating ```json fences,
+// leading/trailing prose, a forgotten closing fence, trailing commas, and a
+// stray extra object. Returns null when nothing parseable is found. When
+// `preferKey` is given, prefer the first parsed OBJECT that actually carries
+// that key (so a leading "{note:...}" cannot shadow the real "{steps:...}"),
+// falling back to the first thing that parses at all - so a valid plan is never
+// silently dropped over a small formatting slip.
+export function extractJson(text, preferKey = null) {
   const s = String(text || '').trim()
   if (!s) return null
-  // Prefer a fenced block when present.
+  // Prefer a fenced block when a complete one is present.
   const fence = s.match(/```(?:json)?\s*([\s\S]*?)```/i)
-  const body = fence ? fence[1].trim() : s
-  // Try the whole body, then the first {...} / [...] span.
-  const candidates = [body]
-  const obj = body.match(/\{[\s\S]*\}/)
-  const arr = body.match(/\[[\s\S]*\]/)
-  if (obj) candidates.push(obj[0])
-  if (arr) candidates.push(arr[0])
-  for (const c of candidates) {
-    try { return JSON.parse(c) } catch { /* next */ }
+  const body = (fence ? fence[1] : s).trim()
+  // Candidates, most-correct first: every balanced span, then the whole body,
+  // then the legacy greedy spans as a last resort.
+  const candidates = [...balancedJsonSpans(body), body]
+  const gobj = body.match(/\{[\s\S]*\}/); if (gobj) candidates.push(gobj[0])
+  const garr = body.match(/\[[\s\S]*\]/); if (garr) candidates.push(garr[0])
+  const tryParse = (c) => {
+    try { return JSON.parse(c) } catch { /* try a repair */ }
+    try { return JSON.parse(stripTrailingCommas(c)) } catch { return undefined }
   }
-  return null
+  let first
+  for (const c of candidates) {
+    const v = tryParse(c)
+    if (v === undefined) continue
+    if (first === undefined) first = v
+    if (preferKey && v && typeof v === 'object' && !Array.isArray(v) && v[preferKey] != null) return v
+  }
+  return first === undefined ? null : first
 }
 
 // Intelligent model switch: run the vision call on the primary (cheap) model;
@@ -357,15 +427,17 @@ export function workPlanUser({ goal, appContext, research = '' }) {
 export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', strong = null }) {
   const system = workPlanSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
   const user = workPlanUser({ goal, appContext, research })
-  let raw, escalated = false
+  let raw, escalated = false, reason = ''
   if (frame && visionModel) {
     const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
     const isWeak = (r) => { const p = extractJson(r) || {}; return !(Array.isArray(p.steps) && p.steps.length) }
-    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated
+    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated; reason = out.reason
   } else {
     raw = await ai.generate(cfg, system, user)
   }
-  const parsed = extractJson(raw) || {}
+  // preferKey 'steps' so a stray leading object cannot shadow the real plan; a
+  // pure {"refusal":...} reply still parses (it is the only/first object).
+  const parsed = extractJson(raw, 'steps') || {}
   const steps = Array.isArray(parsed.steps) ? parsed.steps : []
   // NOTE: text/validate are prose and get the AI-language scrub. commands/code
   // are EXACT things the user types or pastes - never scrub them, it would
@@ -380,18 +452,19 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
   }
   // Only keep a real http(s) link (never scrubbed); drops anything fabricated-looking.
   const cleanUrl = (u) => { const s = String(u || '').trim(); return /^https?:\/\/\S+$/i.test(s) ? s : null }
-  const refusal = scrubAiLanguage(String(parsed.refusal || '').trim())
+  const refusal = scrubGuidance(String(parsed.refusal || '').trim())
   return {
     refusal: refusal || null,
-    appContext: scrubAiLanguage(String(parsed.appContext || appContext || '').trim()) || null,
+    appContext: scrubGuidance(String(parsed.appContext || appContext || '').trim()) || null,
     steps: refusal ? [] : steps.map((s) => ({
-      text: scrubAiLanguage(String((s && (s.text || s.step)) || '').trim()),
-      validate: scrubAiLanguage(String((s && s.validate) || '').trim()) || null,
+      text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+      validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
       url: cleanUrl(s && s.url),
       commands: cleanCmds(s && s.commands),
       code: cleanCode(s && s.code),
     })).filter((s) => s.text),
     escalated,
+    reason,
   }
 }
 
@@ -431,15 +504,15 @@ export function workHowToUser({ goal, action, appContext, research = '' }) {
 export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null }) {
   const system = workHowToSystem({ base, voice, mode }) + methodAnchorBlock(`${goal} ${action}`, appContext)
   const user = workHowToUser({ goal, action, appContext, research })
-  let raw, escalated = false
+  let raw, escalated = false, reason = ''
   if (frame && visionModel) {
     const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
     const isWeak = (r) => { const p = extractJson(r) || {}; return !(Array.isArray(p.steps) && p.steps.length) }
-    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated
+    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated; reason = out.reason
   } else {
     raw = await ai.generate(cfg, system, user)
   }
-  const parsed = extractJson(raw) || {}
+  const parsed = extractJson(raw, 'steps') || {}
   const rawSteps = Array.isArray(parsed.steps) ? parsed.steps : []
   const cleanCmds = (v) => (Array.isArray(v) ? v : (v ? [v] : [])).map((c) => String(c || '').trim()).filter(Boolean)
   const cleanCode = (c) => {
@@ -449,17 +522,18 @@ export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', 
     return { file: String(c.file || '').trim() || null, content }
   }
   const cleanUrl = (u) => { const s = String(u || '').trim(); return /^https?:\/\/\S+$/i.test(s) ? s : null }
-  const refusal = scrubAiLanguage(String(parsed.refusal || '').trim())
+  const refusal = scrubGuidance(String(parsed.refusal || '').trim())
   return {
     refusal: refusal || null,
     steps: refusal ? [] : rawSteps.map((s) => ({
-      text: scrubAiLanguage(String((s && (s.text || s.step)) || '').trim()),
-      validate: scrubAiLanguage(String((s && s.validate) || '').trim()) || null,
+      text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+      validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
       url: cleanUrl(s && s.url),
       commands: cleanCmds(s && s.commands),
       code: cleanCode(s && s.code),
     })).filter((s) => s.text),
     escalated,
+    reason,
   }
 }
 
@@ -494,8 +568,8 @@ export async function workWatch(ai, cfg, { base, voice = '', goal, step, frame, 
   const status = ['done', 'working', 'wrong'].includes(parsed.status) ? parsed.status : 'working'
   return {
     status,
-    observation: scrubAiLanguage(String(parsed.observation || '').trim()),
-    flag: scrubAiLanguage(String(parsed.flag || '').trim()),
+    observation: scrubGuidance(String(parsed.observation || '').trim()),
+    flag: scrubGuidance(String(parsed.flag || '').trim()),
   }
 }
 
@@ -582,11 +656,12 @@ export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise
   return {
     completed,
     current,
-    guidance: scrubAiLanguage(String(parsed.guidance || '').trim()),
-    observation: scrubAiLanguage(String(parsed.observation || '').trim()),
-    flag: scrubAiLanguage(String(parsed.flag || '').trim()),
+    guidance: scrubGuidance(String(parsed.guidance || '').trim()),
+    observation: scrubGuidance(String(parsed.observation || '').trim()),
+    flag: scrubGuidance(String(parsed.flag || '').trim()),
     done,
     escalated: out.escalated,
+    reason: out.reason,
   }
 }
 
@@ -641,15 +716,16 @@ export async function workAudit(ai, cfg, { base, voice = '', mode = 'stepwise', 
   const isWeak = (r) => { const p = extractJson(r) || {}; return !(typeof p.onTrack === 'boolean' || p.steer || p.note || typeof p.replan === 'boolean') }
   const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak)
   const parsed = extractJson(out.raw) || {}
-  const steer = scrubAiLanguage(String(parsed.steer || '').trim())
+  const steer = scrubGuidance(String(parsed.steer || '').trim())
   // On track unless the model explicitly says false or hands back a steer.
   const onTrack = !(parsed.onTrack === false || steer)
   return {
     onTrack,
     steer,
     replan: parsed.replan === true,
-    note: scrubAiLanguage(String(parsed.note || '').trim()),
+    note: scrubGuidance(String(parsed.note || '').trim()),
     escalated: out.escalated,
+    reason: out.reason,
   }
 }
 
@@ -692,7 +768,7 @@ export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', go
   const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
   const isWeak = (r) => String(r || '').trim().length < 8
   const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak)
-  return { answer: scrubAiLanguage(String(out.raw || '').trim()), escalated: out.escalated }
+  return { answer: scrubGuidance(String(out.raw || '').trim()), escalated: out.escalated, reason: out.reason }
 }
 
 // ---- Research: user-triggered web lookup, then answer ---------------------
@@ -722,7 +798,7 @@ export function workResearchUser({ goal, question, research, steps = [], current
 export async function workResearch(ai, cfg, { base, voice = '', goal, question = '', research = '', steps = [], currentStep = 0 }) {
   const system = workResearchSystem({ base, voice }) + methodAnchorBlock(goal, question)
   const raw = await ai.generate(cfg, system, workResearchUser({ goal, question, research, steps, currentStep }))
-  return scrubAiLanguage(String(raw || '').trim())
+  return scrubGuidance(String(raw || '').trim())
 }
 
 // ---- Draft an email / message (read-only output the user pastes) ----------
@@ -738,7 +814,7 @@ export async function workDraft(ai, cfg, { base, voice = '', goal, ask, session 
   const ctx = session && session.summary ? `\n\nWHAT HAS HAPPENED SO FAR:\n${session.summary}` : ''
   const user = `GOAL:\n${String(goal || '').trim()}\n\nWHAT TO WRITE: ${String(ask || '').trim()}${ctx}\n\nWrite the message now.`
   const raw = await ai.generate(cfg, system, user)
-  return scrubAiLanguage(String(raw || '').trim())
+  return scrubGuidance(String(raw || '').trim())
 }
 
 // ---- End-of-session summary ----------------------------------------------
@@ -770,7 +846,7 @@ export function workSummaryUser(session) {
 }
 export async function workSummarize(ai, cfg, session) {
   const raw = await ai.generate(cfg, workSummarySystem(), workSummaryUser(session))
-  return scrubAiLanguage(String(raw || '').trim())
+  return scrubGuidance(String(raw || '').trim())
 }
 
 // ===========================================================================
@@ -840,7 +916,7 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
   const plan = ['Basic', 'Advanced', 'Premium'].includes(parsed.plan) ? parsed.plan : null
   const product = ['WorkCoPilot', 'MeetAiGene', 'AI Cloud'].includes(parsed.product)
     ? parsed.product : (verdict === 'offtopic' ? null : 'WorkCoPilot')
-  let answer = scrubAiLanguage(String(parsed.answer || '').trim())
+  let answer = scrubGuidance(String(parsed.answer || '').trim())
   // Strip stray speech/SSML-style control tokens some models emit (e.g. {PAUSE},
   // {BREAK}) and tidy any doubled spaces they leave behind.
   answer = answer.replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '').replace(/[ \t]{2,}/g, ' ').replace(/\s+([.,])/g, '$1').trim()
@@ -851,7 +927,7 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
   }
   // The scannable bullets - the heart of a "covered" answer. Clean each like the lead.
   const points = (Array.isArray(parsed.points) ? parsed.points : [])
-    .map((p) => scrubAiLanguage(String(p || '').trim()).replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '').replace(/[ \t]{2,}/g, ' ').trim())
+    .map((p) => scrubGuidance(String(p || '').trim()).replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '').replace(/[ \t]{2,}/g, ' ').trim())
     .filter(Boolean).slice(0, 5)
   // A short taste of the real step-by-step: ordered actions, each with its exact
   // command / link when one safely applies. Keeps the flow + commands the lead
@@ -862,7 +938,7 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
   // once chewed into "g. 0'"). So scrub ONLY the prose and keep anything inside
   // `backticks` verbatim: split on code spans, scrub the gaps, rejoin. This kills
   // the whole class, not just the one reported sub-step.
-  const scrubProse = (s) => scrubAiLanguage(String(s || '')).replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '')
+  const scrubProse = (s) => scrubGuidance(String(s || '')).replace(/\{[A-Z][A-Z_ ]{1,14}\}/g, '')
   const cleanStep = (s) => {
     const str = String(s || '').trim()
     if (!str) return ''
@@ -986,20 +1062,20 @@ export async function workDeliverables(ai, cfg, { goal, scope = [], frames = [],
   const p = extractJson(raw) || {}
   const sev = (s) => ['Critical', 'High', 'Medium', 'Low'].includes(String(s)) ? String(s) : 'Medium'
   const list = (arr, withControl) => (Array.isArray(arr) ? arr : []).slice(0, 25).map((x) => ({
-    issue: scrubAiLanguage(String((x && x.issue) || '').trim()).slice(0, 400),
+    issue: scrubGuidance(String((x && x.issue) || '').trim()).slice(0, 400),
     severity: sev(x && x.severity),
     control: withControl ? String((x && x.control) || '').trim().slice(0, 60) : undefined,
-    fix: scrubAiLanguage(String((x && x.fix) || '').trim()).slice(0, 600),
+    fix: scrubGuidance(String((x && x.fix) || '').trim()).slice(0, 600),
   })).filter((x) => x.issue)
   return {
-    summary: scrubAiLanguage(String(p.summary || '').trim()),
+    summary: scrubGuidance(String(p.summary || '').trim()),
     architecture: list(p.architecture, false),
     security: list(p.security, true),
     // The prompts are instructions for ANOTHER model - do NOT AI-language-scrub
     // them (that would mangle intent); just trim and bound.
     promptIssues: String(p.promptIssues || '').trim().slice(0, 6000),
     promptTarget: String(p.promptTarget || '').trim().slice(0, 6000),
-    needMore: scrubAiLanguage(String(p.needMore || '').trim()).slice(0, 300),
+    needMore: scrubGuidance(String(p.needMore || '').trim()).slice(0, 300),
   }
 }
 // Assemble the full engagement document (Markdown) the person downloads.
