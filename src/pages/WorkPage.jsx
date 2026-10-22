@@ -345,30 +345,53 @@ const WD_CSS = `
 .wd-bg .o1{width:45vw;height:45vw;left:-14vw;top:-18vw;background:radial-gradient(circle,var(--orb-1),transparent 65%)}
 .wd-bg .o2{width:40vw;height:40vw;right:-12vw;top:20vh;background:radial-gradient(circle,var(--orb-2),transparent 65%)}
 
-.wd-top{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);background:var(--ink);background:color-mix(in srgb,var(--ink) 80%,transparent);border-bottom:1px solid var(--line)}
-.wd-top-in{max-width:1080px;margin:0 auto;padding:0 20px;height:62px;display:flex;align-items:center;gap:16px}
-.wd-tabs{display:flex;gap:6px;margin-left:8px}
-.wd-tabs button{display:inline-flex;align-items:center;gap:7px;background:none;border:none;color:var(--mut);font:inherit;font-size:14.5px;font-weight:600;padding:8px 13px;border-radius:10px;cursor:pointer;transition:color .15s,background .15s}
-.wd-tabs button:hover{color:var(--tx)}
-.wd-tabs button.on{color:var(--tx);background:var(--chip)}
-.wd-top-right{margin-left:auto;display:flex;align-items:center;gap:10px}
-.wd-theme{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:var(--card-a);color:var(--mut);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+/* ---- Top bar ------------------------------------------------------------
+   One row, always. Every control is flex-shrink:0 + nowrap so labels can
+   never break onto a second line; the only thing allowed to give is the tab
+   strip (min-width:0, hidden horizontal scroll) as a last-resort valve.
+   Width steps: <=1040 Add time / Sign out go icon-only, <=940 tabs go
+   icon-only, <=620 the wordmark drops to the mark alone. */
+.wd-top{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:var(--ink);background:color-mix(in srgb,var(--ink) 82%,transparent);border-bottom:1px solid var(--line)}
+.wd-top-in{max-width:1080px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:14px;min-width:0}
+.wd-brand{display:inline-flex;align-items:center;flex-shrink:0;white-space:nowrap;line-height:1}
+/* The shared logo paints its wordmark with fixed inline colors tuned for a
+   light page; this page has a real dark theme, so re-key them to the tokens. */
+.wd-brand > span > span > span:first-child{color:var(--tx)!important}
+.wd-brand > span > span > span:first-child > span{color:var(--em)!important}
+.wd-brand > span > span > span:last-child:not(:first-child){color:var(--em)!important;border-color:var(--em-line)!important;background:var(--em-fill)!important}
+.wd-tabs{display:flex;align-items:center;gap:2px;margin-left:2px;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+.wd-tabs::-webkit-scrollbar{display:none}
+.wd-tabs button{position:relative;display:inline-flex;align-items:center;gap:7px;flex-shrink:0;white-space:nowrap;background:none;border:none;color:var(--mut);font:inherit;font-size:14px;font-weight:600;line-height:1;height:36px;padding:0 12px;border-radius:10px;cursor:pointer;transition:color .15s,background .15s}
+.wd-tabs button svg{flex-shrink:0}
+.wd-tabs button:hover{color:var(--tx);background:var(--chip)}
+.wd-tabs button.on{color:var(--tx);background:var(--chip);box-shadow:inset 0 0 0 1px var(--chip-line)}
+.wd-tabs button.on svg{color:var(--em)}
+.wd-top-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap}
+.wd-top-sep{width:1px;height:22px;background:var(--line-2);flex-shrink:0;margin:0 2px}
+/* Shared chrome for the right-cluster controls: one height, one radius. */
+.wd-theme,.wd-getapp,.wd-addtime,.wd-signout{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card-a);color:var(--tx);font:inherit;font-size:13px;font-weight:600;line-height:1;text-decoration:none;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wd-theme,.wd-getapp{width:36px;padding:0;color:var(--mut)}
 .wd-theme:hover{color:var(--tx);border-color:var(--line-2)}
-.wd-mins{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:5px 11px;white-space:nowrap}
+.wd-getapp{color:var(--em-2);border-color:color-mix(in srgb,var(--em-2) 32%,transparent)}
+.wd-getapp:hover{border-color:var(--em-2);background:color-mix(in srgb,var(--em-2) 10%,transparent)}
+/* Icon-only link: the label stays in the DOM for screen readers and the
+   title tooltip carries it for everyone else. */
+.wd-getapp span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.wd-getapp{position:relative}
+.wd-mins{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:600;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:0 11px;white-space:nowrap;line-height:1}
+.wd-mins svg{flex-shrink:0}
 .wd-mins.low{color:var(--warm);border-color:var(--warm-line);background:var(--warm-fill)}
-.wd-mins.skel{color:transparent;min-width:84px;height:28px;border-color:transparent}
-.wd-addtime{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);color:var(--tx);font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;transition:border-color .15s,background .15s}
-.wd-addtime:hover{border-color:var(--em-line);background:var(--em-fill)}
-.wd-getapp{text-decoration:none;color:#0a86cf;border-color:rgba(10,134,207,.3)}
-.wd-getapp:hover{border-color:#0a86cf;background:rgba(10,134,207,.08)}
-.wd-signout{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);color:var(--tx);font:inherit;font-size:13.5px;border-radius:10px;padding:7px 12px;cursor:pointer;transition:border-color .15s}
-.wd-signout:hover{border-color:var(--line-2)}
+.wd-mins.skel{color:transparent;min-width:96px;border-color:transparent;background:var(--track)}
+.wd-addtime{padding:0 12px}
+.wd-addtime:hover{color:var(--em);border-color:var(--em-line);background:var(--em-fill)}
+.wd-signout{padding:0 12px;border-color:transparent;background:transparent;color:var(--mut);font-weight:500}
+.wd-signout:hover{color:var(--tx);background:var(--chip);border-color:var(--line)}
 
-.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:34px 20px 70px}
-.wd-hello h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(25px,3.6vw,38px);letter-spacing:-.02em}
+.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:38px 20px 72px}
+.wd-hello h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(25px,3.6vw,38px);line-height:1.15;letter-spacing:-.022em}
 .wd-hello h1 span{color:var(--mut);font-weight:600}
-.wd-plan{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:14px;margin-top:9px;text-transform:capitalize}
-.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 10px var(--em)}
+.wd-plan{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:14px;margin-top:10px;text-transform:capitalize}
+.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 3px var(--em-fill-2),0 0 10px var(--em);flex-shrink:0}
 .wd-plan-skel{height:15px;width:260px;max-width:70%;border-radius:7px;margin-top:11px;background:var(--track)}
 
 .wd-buy{margin-top:18px;display:flex;gap:13px;align-items:flex-start;border:1px solid var(--em-line);background:var(--em-fill);border-radius:16px;padding:16px 18px}
@@ -427,14 +450,16 @@ const WD_CSS = `
 .wd-setup{margin-top:20px;border:1px solid var(--warm-line);background:var(--warm-fill);border-radius:16px;padding:16px}
 .wd-setup-note{color:var(--warm);font-size:13.5px;margin-bottom:10px;font-weight:600}
 
-.wd-start{margin-top:22px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:var(--shadow)}
-.wd-start label{display:block;font-size:12.5px;color:var(--mut);font-weight:600;letter-spacing:.02em;margin-bottom:8px}
-.wd-start textarea{width:100%;resize:vertical;min-height:84px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:14px;color:var(--tx);font:inherit;font-size:16px;outline:none;transition:border-color .15s,box-shadow .15s}
+.wd-start{margin-top:24px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px 24px 20px;box-shadow:var(--shadow),0 1px 0 var(--line) inset}
+.wd-start label{display:block;font-size:12.5px;color:var(--mut-2);font-weight:600;letter-spacing:.02em;margin-bottom:7px}
+.wd-start textarea{width:100%;resize:vertical;min-height:88px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15.5px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
 .wd-start textarea::placeholder{color:var(--mut)}
-.wd-start textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
-.wd-nameinput{width:100%;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s}
+.wd-start textarea:hover{border-color:var(--line-2)}
+.wd-start textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill);background:var(--panel)}
+.wd-nameinput{width:100%;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:11px 14px;color:var(--tx);font:inherit;font-size:15px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
 .wd-nameinput::placeholder{color:var(--mut)}
-.wd-nameinput:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
+.wd-nameinput:hover{border-color:var(--line-2)}
+.wd-nameinput:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill);background:var(--panel)}
 .wd-modal-ov{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
 .wd-modal{width:min(440px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
 .wd-modal h3{display:flex;align-items:center;gap:9px;font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;margin:0 0 12px}
@@ -446,17 +471,17 @@ const WD_CSS = `
 .wd-modal textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
 .wd-modal-note{font-size:11.5px;color:var(--mut);margin-top:9px;line-height:1.5}
 .wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
-.wd-start-row{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+.wd-start-row{display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap}
 .wd-hint{color:var(--mut);font-size:13px;flex:1;min-width:180px}
-.wd-docs{margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.wd-docs{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
 .wd-docs.locked{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .wd-docs-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .wd-docs-lead{display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:var(--tx-2)}
 .wd-docs-lead svg{color:var(--em-2)}
 .wd-docs-sub{color:var(--mut);font-weight:500;font-size:12px}
 .wd-docs-gate{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;color:var(--warm);background:var(--warm-fill);border:1px solid var(--warm-line);border-radius:999px;padding:3px 10px}
-.wd-docs-add{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:var(--chip);color:var(--tx);border:1px solid var(--chip-line);border-radius:10px;padding:7px 12px;font:inherit;font-weight:600;font-size:13px;cursor:pointer;transition:border-color .15s,background .15s}
-.wd-docs-add:hover:not(:disabled){border-color:var(--em-line)}
+.wd-docs-add{margin-left:auto;display:inline-flex;align-items:center;gap:6px;background:var(--chip);color:var(--tx);border:1px solid var(--chip-line);border-radius:10px;padding:7px 12px;font:inherit;font-weight:600;font-size:13px;white-space:nowrap;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.wd-docs-add:hover:not(:disabled){border-color:var(--em-line);background:var(--em-fill);color:var(--em)}
 .wd-docs-add:disabled{opacity:.6;cursor:default}
 .wd-docs-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
 .wd-docs-chip{display:inline-flex;align-items:center;gap:6px;max-width:260px;background:var(--em-fill);border:1px solid var(--em-line);border-radius:9px;padding:5px 7px 5px 10px;font-size:12.5px;color:var(--tx)}
@@ -468,18 +493,20 @@ const WD_CSS = `
 .wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
 .wd-docs-note{margin-top:9px;font-size:11.5px;color:var(--mut);line-height:1.5}
-.wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm-2));color:var(--cta-ink);border:none;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 12px 30px -14px var(--warm-2);transition:transform .15s,box-shadow .15s,filter .15s}
-.wd-cta:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04)}
+.wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:linear-gradient(135deg,var(--warm),var(--warm-2));color:var(--cta-ink);border:none;border-radius:12px;padding:13px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 12px 30px -14px var(--warm-2);transition:transform .15s,box-shadow .15s,filter .15s}
+.wd-cta:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 16px 34px -14px var(--warm-2)}
 .wd-cta:active:not(:disabled){transform:translateY(0)}
 .wd-cta:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
 
-.wd-catwrap{margin-top:28px}
-.wd-catlabel{font-size:12.5px;color:var(--mut);font-weight:600;letter-spacing:.02em;margin-bottom:12px}
+.wd-catwrap{margin-top:30px}
+.wd-catlabel{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--mut);font-weight:600;letter-spacing:.02em;margin-bottom:12px;white-space:nowrap}
+.wd-catlabel::after{content:"";flex:1;height:1px;background:var(--line)}
 .wd-cats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.wd-cat{text-align:left;background:linear-gradient(180deg,var(--card-a),var(--card-b));border:1px solid var(--line);border-radius:15px;padding:16px;cursor:pointer;font:inherit;color:var(--tx);display:flex;flex-direction:column;gap:6px;transition:transform .15s,border-color .2s,box-shadow .2s}
-.wd-cat:hover:not(:disabled){transform:translateY(-3px);border-color:var(--em-line);box-shadow:var(--shadow-sm)}
+.wd-cat{text-align:left;background:linear-gradient(180deg,var(--card-a),var(--card-b));border:1px solid var(--line);border-radius:16px;padding:16px 16px 15px;cursor:pointer;font:inherit;color:var(--tx);display:flex;flex-direction:column;gap:5px;transition:transform .15s,border-color .2s,box-shadow .2s,background .2s}
+.wd-cat:hover:not(:disabled){transform:translateY(-2px);border-color:var(--em-line);background:var(--panel);box-shadow:var(--shadow-sm)}
+.wd-cat:hover:not(:disabled) .wd-cat-ic{transform:scale(1.05)}
 .wd-cat:disabled{opacity:.5;cursor:default}
-.wd-cat-ic{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:11px;background:var(--em-fill-2);color:var(--em);margin-bottom:4px}
+.wd-cat-ic{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:var(--em-fill-2);color:var(--em);margin-bottom:5px;transition:transform .2s}
 .wd-cat.t-c .wd-cat-ic{color:var(--warm);background:var(--warm-fill)}
 .wd-cat.t-d .wd-cat-ic{color:var(--violet);background:color-mix(in srgb,var(--violet) 15%,transparent)}
 .wd-cat.t-e .wd-cat-ic{color:var(--rose);background:color-mix(in srgb,var(--rose) 15%,transparent)}
@@ -565,18 +592,33 @@ const WD_CSS = `
  .wd-help-nav .wd-help-navlabel{width:100%}
  .wd-help-nav button.on{box-shadow:inset 0 -2px 0 var(--em)}
 }
+/* Top bar collapse, widest first. Labels never wrap; they drop to icons. */
+@media(max-width:1040px){
+ .wd-addtime,.wd-signout{width:36px;padding:0}
+ .wd-addtime span,.wd-signout span{display:none}
+ .wd-signout{border-color:var(--line);background:var(--card-a);color:var(--mut)}
+}
+@media(max-width:940px){
+ .wd-tabs button{padding:0 10px;width:36px;justify-content:center}
+ .wd-tabs button span{display:none}
+}
 @media(max-width:620px){
  .wd-main{padding:26px 16px 64px}
- .wd-top-in{padding:0 16px;gap:10px}
- .wd-tabs{margin-left:2px}
- .wd-tabs button{padding:8px 10px}
- .wd-tabs button span{display:none}
+ .wd-top-in{padding:0 16px;gap:10px;height:56px}
+ .wd-brand > span > span{display:none}
+ .wd-tabs{margin-left:0}
+ .wd-top-right{gap:6px}
+ .wd-top-sep{display:none}
+ .wd-mins{padding:0 9px;font-size:12px}
  .wd-cats{grid-template-columns:1fr}
  .wd-cta{width:100%}
 }
 @media(max-width:420px){
- .wd-addtime span,.wd-signout span{display:none}
- .wd-top-right{gap:8px}
+ .wd-top-in{padding:0 12px;gap:8px}
+ .wd-top-right{gap:5px}
+ .wd-theme,.wd-getapp,.wd-addtime,.wd-signout,.wd-tabs button{width:34px;height:34px}
+ .wd-mins{height:28px;padding:0 8px}
+ .wd-mins .wd-mins-l{display:none}
  .wd-resume span{display:none}
 }
 @media(prefers-reduced-motion:reduce){
@@ -874,7 +916,7 @@ function Home({ user, onOpen, onSignOut }) {
 
       <header className="wd-top">
         <div className="wd-top-in">
-          <AdmireVedaLogo size={24} idSuffix="wd" />
+          <span className="wd-brand"><AdmireVedaLogo size={24} idSuffix="wd" /></span>
           <nav className="wd-tabs" aria-label="Sections">
             <button className={tab === 'dashboard' ? 'on' : ''} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')}><LayoutDashboard size={16} /> <span>Dashboard</span></button>
             <button className={tab === 'help' ? 'on' : ''} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')}><BookOpen size={16} /> <span>How-to</span></button>
@@ -886,13 +928,14 @@ function Home({ user, onOpen, onSignOut }) {
           <div className="wd-top-right">
             {usage == null
               ? <span className="wd-mins skel" aria-hidden />
-              : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min left</span>}
+              : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l"> left</span></span>}
+            <span className="wd-top-sep" aria-hidden />
             <button className="wd-theme" onClick={toggleTheme} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
             {!(typeof window !== 'undefined' && window.workDesktop) && (
-              <a className="wd-addtime wd-getapp" href="/downloads/WorkCoPilot-Setup.exe" download title="Download the WorkCoPilot Windows desktop app"><Monitor size={14} /> <span>Windows app</span></a>
+              <a className="wd-getapp" href="/downloads/WorkCoPilot-Setup.exe" download title="Download the Windows app" aria-label="Download the Windows app"><Monitor size={16} /> <span>Windows app</span></a>
             )}
-            <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy}><Zap size={14} /> <span>Add time</span></button>
-            <button className="wd-signout" onClick={onSignOut}><LogOut size={15} /> <span>Sign out</span></button>
+            <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy} title="Add time"><Zap size={15} /> <span>Add time</span></button>
+            <button className="wd-signout" onClick={onSignOut} title="Sign out"><LogOut size={15} /> <span>Sign out</span></button>
           </div>
         </div>
       </header>
