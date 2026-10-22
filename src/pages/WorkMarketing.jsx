@@ -388,20 +388,20 @@ export default function WorkMarketing() {
           <p>Bring any task. WorkCoPilot takes it from the very first step to done.</p>
           <button className="wm-cta big" onClick={() => go('')}>Get started <ArrowRight size={18} /></button>
           <div className="wm-dl" data-reveal>
-            <span className="wm-dl-lbl">Two ways to run it</span>
+            <span className="wm-dl-lbl">Get the app</span>
             <div className="wm-dl-row">
-              <button className="wm-dl-btn" onClick={() => go('')} aria-label="Get the Windows desktop app">
+              <a className="wm-dl-btn" href="/downloads/WorkCoPilot-Setup.exe" download aria-label="Download the Windows desktop app">
                 <Monitor size={22} />
                 <span className="wm-dl-t"><b>Windows app</b><i>Desktop overlay</i></span>
                 <Download size={16} />
-              </button>
-              <button className="wm-dl-btn" onClick={() => go('')} aria-label="Get the Android app">
+              </a>
+              <div className="wm-dl-btn soon" aria-disabled="true">
                 <Smartphone size={22} />
                 <span className="wm-dl-t"><b>Android app</b><i>Phone &amp; camera</i></span>
-                <Download size={16} />
-              </button>
+                <span className="wm-dl-soon">Coming soon</span>
+              </div>
             </div>
-            <span className="wm-dl-note">Free account, then download for your device.</span>
+            <span className="wm-dl-note">Windows: download and run it. Sign in once to activate.</span>
           </div>
         </div>
       </section>
@@ -1154,6 +1154,9 @@ const CSS = `
 .wm-dl-t b{font-size:15px;font-weight:700}
 .wm-dl-t i{font-style:normal;font-size:12px;color:var(--mut)}
 .wm-dl-btn > svg:last-child{color:var(--mut)}
+.wm-dl-btn.soon{cursor:default;opacity:.72}
+.wm-dl-btn.soon:hover{transform:none;border-color:var(--line)}
+.wm-dl-soon{font-size:11px;font-weight:800;letter-spacing:.03em;color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
 .wm-dl-note{font-size:12.5px;color:var(--mut)}
 
 /* DISCLAIMER + FOOT */

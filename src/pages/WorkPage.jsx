@@ -342,6 +342,8 @@ const WD_CSS = `
 .wd-mins.skel{color:transparent;min-width:84px;height:28px;border-color:transparent}
 .wd-addtime{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);color:var(--tx);font:inherit;font-size:13px;font-weight:600;border-radius:10px;padding:7px 11px;cursor:pointer;transition:border-color .15s,background .15s}
 .wd-addtime:hover{border-color:var(--em-line);background:var(--em-fill)}
+.wd-getapp{text-decoration:none;color:#0a86cf;border-color:rgba(10,134,207,.3)}
+.wd-getapp:hover{border-color:#0a86cf;background:rgba(10,134,207,.08)}
 .wd-signout{display:inline-flex;align-items:center;gap:6px;background:none;border:1px solid var(--line);color:var(--tx);font:inherit;font-size:13.5px;border-radius:10px;padding:7px 12px;cursor:pointer;transition:border-color .15s}
 .wd-signout:hover{border-color:var(--line-2)}
 
@@ -864,6 +866,9 @@ function Home({ user, onOpen, onSignOut }) {
               ? <span className="wd-mins skel" aria-hidden />
               : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min left</span>}
             <button className="wd-theme" onClick={toggleTheme} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
+            {!(typeof window !== 'undefined' && window.workDesktop) && (
+              <a className="wd-addtime wd-getapp" href="/downloads/WorkCoPilot-Setup.exe" download title="Download the WorkCoPilot Windows desktop app"><Monitor size={14} /> <span>Windows app</span></a>
+            )}
             <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy}><Zap size={14} /> <span>Add time</span></button>
             <button className="wd-signout" onClick={onSignOut}><LogOut size={15} /> <span>Sign out</span></button>
           </div>
