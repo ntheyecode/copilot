@@ -183,8 +183,21 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
   // Always ask WHERE the work happens (so the plan targets the right surface, not
   // a browser by default) and HOW to phrase it. Both fold into the plan + live
   // guidance. The environment answer is first because it shapes every step.
-  const ENV_Q = { id: 'environment', text: 'Where does this work happen?', kind: 'options', options: ['A website / web app', 'A desktop or installed app', 'Install & configure software', 'An on-prem product at a local address', 'Not sure / mixed'] }
-  const STYLE_Q = { id: 'phrasing', text: 'How should I phrase each step?', kind: 'options', options: ['Plain and simple', 'Short bullets only', 'Detailed, with context', 'Expert, no hand-holding'] }
+  const ENV_Q = { id: 'environment', text: 'Where does this work happen?', help: 'Where will you actually be doing this? If you are not sure, pick "Not sure / mixed" and I will work it out from your screen.', kind: 'options', options: ['A website / web app', 'A desktop or installed app', 'Install & configure software', 'An on-prem product at a local address', 'Not sure / mixed'] }
+  const STYLE_Q = { id: 'phrasing', text: 'How should I phrase each step?', help: 'Just how the steps read. You can change this any time.', kind: 'options', options: ['Plain and simple', 'Short bullets only', 'Detailed, with context', 'Expert, no hand-holding'] }
+  // Plain-language hint under each option so a non-technical person can choose
+  // confidently. Keyed by the exact option text.
+  const OPTION_HINTS = {
+    'A website / web app': 'Something you use in a browser tab (Gmail, the AWS console, Salesforce, a bank site).',
+    'A desktop or installed app': 'A program installed on your computer (Excel, Photoshop, QuickBooks, an IDE).',
+    'Install & configure software': 'You need to download, install or set something up first.',
+    'An on-prem product at a local address': 'A tool you open at an internal address like 192.168.x.x or an intranet link, not the public internet.',
+    'Not sure / mixed': 'Not sure, or it spans a few of these. I will adapt once I can see your screen.',
+    'Plain and simple': 'Everyday words, no jargon. Best if this area is new to you.',
+    'Short bullets only': 'Quick, terse steps with little explanation.',
+    'Detailed, with context': 'Fuller steps that also say why, so you learn as you go.',
+    'Expert, no hand-holding': 'Assumes you know the tools; high-level and concise.',
+  }
   useEffect(() => {
     let alive = true
     ;(async () => {
@@ -241,6 +254,7 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
               </div>
               <div className="wd-wiz-prog">{questions.map((_, i) => <span key={i} className={i <= idx ? 'on' : ''} />)}</div>
               <div className="wd-wiz-q">{cur.text}</div>
+              {cur.help && <div className="wd-wiz-help"><HelpCircle size={13} /> {cur.help}</div>}
               {gated && (
                 <div className="wd-wiz-gate">
                   <span><Zap size={13} /> Grounding on your own documents is on Advanced & Premium. Answer anyway, I plan with what your plan allows.</span>
@@ -264,7 +278,10 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
               ) : (
                 <div className="wd-wiz-choices">
                   {(cur.kind === 'yesno' ? ['Yes', 'No'] : cur.options).map((o) => (
-                    <button key={o} className="wd-wiz-choice" onClick={() => advance(o)}>{o}</button>
+                    <button key={o} className={`wd-wiz-choice${OPTION_HINTS[o] ? ' has-hint' : ''}`} onClick={() => advance(o)}>
+                      <span className="wd-wiz-choice-l">{o}</span>
+                      {OPTION_HINTS[o] && <span className="wd-wiz-choice-h">{OPTION_HINTS[o]}</span>}
+                    </button>
                   ))}
                 </div>
               )}
@@ -578,7 +595,12 @@ const WD_CSS = `
 .wd-wiz-prog{display:flex;gap:6px;margin-bottom:20px}
 .wd-wiz-prog span{height:5px;flex:1;border-radius:999px;background:var(--track);transition:background .25s}
 .wd-wiz-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2))}
-.wd-wiz-q{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:21px;line-height:1.3;color:var(--tx);margin-bottom:18px}
+.wd-wiz-q{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:21px;line-height:1.3;color:var(--tx);margin-bottom:8px}
+.wd-wiz-help{display:flex;align-items:flex-start;gap:7px;font-size:13px;line-height:1.5;color:var(--mut);margin-bottom:16px}
+.wd-wiz-help svg{flex-shrink:0;margin-top:2px;color:var(--em-2)}
+.wd-wiz-choice.has-hint{display:flex;flex-direction:column;gap:3px}
+.wd-wiz-choice-l{font-weight:600}
+.wd-wiz-choice-h{font-size:12.5px;font-weight:400;line-height:1.45;color:var(--mut)}
 .wd-wiz-gate{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;background:var(--warm-fill);border:1px solid var(--warm-line);border-radius:12px;padding:10px 13px;margin-bottom:16px;font-size:12.5px;color:var(--warm)}
 .wd-wiz-gate span{display:inline-flex;align-items:center;gap:7px}
 .wd-wiz-choices{display:flex;flex-direction:column;gap:10px}
