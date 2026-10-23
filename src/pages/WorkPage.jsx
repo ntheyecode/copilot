@@ -1526,7 +1526,7 @@ function Home({ user, onOpen, onSignOut }) {
                 <span className="wd-ic"><PenLine size={16} /></span>
                 <div>
                   <h2>Start a plan</h2>
-                  <p>Describe what you want to get done in your own words. WorkCoPilot turns it into steps and guides you through each one on your screen.</p>
+                  <p>Describe what you want to get done in your own words. WorkCoPilot turns it into steps, guides you through each one on your screen, catches a wrong move and corrects it, and moves you on to the next correct step.</p>
                 </div>
               </div>
               <label htmlFor="wd-name">Name this plan <span className="req">*</span></label>
@@ -1723,7 +1723,7 @@ function HelpDocs({ onStart }) {
       </aside>
       <div className="wd-help-body">
         <h1>{desktop ? 'How to use the WorkCoPilot desktop app' : 'How to use WorkCoPilot'}</h1>
-        <p className="wd-help-lead">An expert that watches your screen and tells you the exact next move, one step at a time, until the job is done. Here is everything it does and how to get the most from it.</p>
+        <p className="wd-help-lead">An expert that watches your screen, tells you the exact next move one step at a time, catches a wrong move and corrects it, and keeps you on the next correct step until the job is done. Here is everything it does and how to get the most from it.</p>
 
         {desktop && (<>
           <section id="help-desktop"><h2>The desktop app</h2>
@@ -1858,7 +1858,7 @@ function HelpDocs({ onStart }) {
           <div className="wd-faq"><b>Do I need to install anything?</b><p>No. It runs in your browser. Install the desktop or mobile app only if you want the extra overlay or camera features.</p></div>
           <div className="wd-faq"><b>Will people on a call see the overlay?</b><p>If you share your whole screen in the browser, yes. The desktop app hides itself from screen shares.</p></div>
           <div className="wd-faq"><b>Does it work for non-technical work?</b><p>Yes. Finance, marketing, legal, office, product, anything that happens on a screen.</p></div>
-          <div className="wd-faq"><b>What if the steps are wrong for my screen?</b><p>It re-reads your screen and corrects as you go. You can also press Re-plan at any time to rebuild the steps.</p></div>
+          <div className="wd-faq"><b>What if the steps are wrong for my screen?</b><p>It re-reads your screen and corrects as you go. Press <b>Read my screen</b> anytime to take a fresh screenshot, verify the current step and move on, or <b>Re-plan</b> to rebuild the steps.</p></div>
           <div className="wd-faq"><b>Does it type or click for me?</b><p>No. It only reads and guides. You stay in control of every action.</p></div>
           <div className="wd-faq"><b>What does it do with my screen?</b><p>Frames are downscaled and read only to guide the task. An unchanged screen is not sent at all.</p></div>
         </section>
@@ -3593,7 +3593,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               <span className="wc-sp" />
               {/* In Plan-heavy mode the prominent Check my progress button below is the
                   on-demand read, so this duplicate Refresh is hidden to stay uncluttered. */}
-              {!watchLight && <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>}
+              {!watchLight && <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Take a screenshot of your screen right now, verify this step, and move you on"><ScanLine size={14} /> Read my screen</button>}
               <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: take a closer look at the current screen and weave it into your steps"><Zap size={14} /> Deep pass</button>
               {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
               <button className="wc-tbtn ghost" onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>

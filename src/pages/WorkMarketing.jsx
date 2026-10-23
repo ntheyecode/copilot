@@ -995,9 +995,9 @@ const HERO_DWELL_MS = 12000
 // fixed short list of frameworks.
 const HERO_PAIRS = [
   { h: [['Get '], ['anything', 1], [' done right, the first time.']],
-    s: 'It watches your screen and tells you the exact next move, step by step, until the job is done. Any task, any field.' },
+    s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong, keeping you on the next correct step until the job is done. Any task, any field.' },
   { h: [['The '], ['sharpest person', 1], [' in the room, on every screen.']],
-    s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
+    s: 'A genius pair sits beside you in any app, reads your screen, tells you the exact next move, and corrects you when a step goes wrong.' },
   { h: [['Always on.', 1], [' The expert you need, the moment you need one.']],
     s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
   // Mirrors server/store.js HERO_DEFAULT: keep the two lists identical so the

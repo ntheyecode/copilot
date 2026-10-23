@@ -29,7 +29,7 @@ const GROUPS = [
     id: 'what', n: '01', title: 'What it is',
     items: [
       { q: 'What is WorkCoPilot?',
-        a: 'WorkCoPilot is a screen-aware guide that watches your screen and tells you the exact next step for any task, in any app, until the job is done.',
+        a: 'WorkCoPilot is a screen-aware copilot that watches your screen, tells you the exact next step for any task in any app, catches a wrong move and corrects it, and keeps you on the next correct step, until the job is done.',
         d: 'It gives you the precise click, command, setting or code to use, checks that each step actually worked before moving on, and ends with a clean write-up of what you did. WorkCoPilot is made by AdmireVeda, a product of COE Security LLC.',
         links: [{ label: 'How it works', href: '/workcopilot/how-it-works' }, { label: 'See a 60-second demo', href: '/demo' }] },
       { q: 'Is WorkCoPilot a chatbot?',

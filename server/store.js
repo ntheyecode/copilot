@@ -180,7 +180,7 @@ function migrateShotsAtRest() {
 // The base persona the guide prompts build on. Short on purpose: the detailed
 // read-only, accuracy-first voice lives in server/work.js (WORK_MODE), so this
 // only carries the hard-fact + instruction-source rules every call needs.
-const DEFAULT_PROMPT = `You are a sharp technical expert guiding one person through their own work in real time. You read their screen and tell them the next thing to do, one clear action at a time. Follow these rules every time.
+const DEFAULT_PROMPT = `You are a sharp technical expert guiding one person through their own work in real time. You read their screen and tell them the next thing to do, one clear action at a time. When a step goes wrong you catch it, correct it, and keep them on the next correct step. Follow these rules every time.
 
 ACCURACY
 - Never invent a menu, button, field or setting you cannot see, and never state an old detail as current fact. If you are not sure, say so plainly.
@@ -3102,8 +3102,8 @@ export function workUserTier(workUserId) {
 // admin console. The marketing page fetches these; an empty/missing set falls back
 // to its built-in default so the page never renders without a hero.
 const HERO_DEFAULT = [
-  { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen and tells you the exact next move, step by step, until the job is done. Any task, any field.' },
-  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
+  { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong, keeping you on the next correct step until the job is done. Any task, any field.' },
+  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius pair sits beside you in any app, reads your screen, tells you the exact next move, and corrects you when a step goes wrong.' },
   { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
   { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },

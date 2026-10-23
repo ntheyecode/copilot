@@ -2002,7 +2002,7 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   if (leadId) { try { store.noteWorkLeadQuestion(leadId, question) } catch { /* non-fatal */ } }
   const generic = {
     verdict: 'covered', plan: null, product: 'WorkCoPilot', degraded: true,
-    answer: 'WorkCoPilot guides you through almost any task on your screen, in any field, one exact step at a time. Sign in and describe your task to see exactly how it is covered.',
+    answer: 'WorkCoPilot guides you through almost any task on your screen, in any field, one exact step at a time, catching a wrong move and correcting it, and keeping you on the next correct step. Sign in and describe your task to see exactly how it is covered.',
   }
   if (!store.getWorkPlatformAllowed()) return res.json(generic)
   const cfg = store.getActiveRuntime()
