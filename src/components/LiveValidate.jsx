@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, Building2,
   ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
+  Compass, Wand2, Bug, MousePointerClick,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 
@@ -248,6 +249,40 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
                         </ul>
                       )}
+                      {(res.verdict === 'covered' || res.verdict === 'partial') && (
+                        <div className={`wm-cov-loop${typingDone ? ' show' : ''}`}>
+                          <div className="wm-cov-loop-h"><span className="lv-live-dot" aria-hidden /> A live co-pilot, not a how-to page</div>
+                          <div className="wm-cov-loop-grid">
+                            <div className="wm-cov-cap watch">
+                              <span className="ic"><ScanEye size={18} /></span>
+                              <b>Watches</b>
+                              <p>Sees your screen as you work and keeps pace with you.</p>
+                            </div>
+                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={16} /></div>
+                            <div className="wm-cov-cap guide">
+                              <span className="ic"><Compass size={18} /></span>
+                              <b>Navigates</b>
+                              <p>Points you to the exact click, command or value - one step at a time.</p>
+                            </div>
+                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={16} /></div>
+                            <div className="wm-cov-cap correct">
+                              <span className="ic"><Wand2 size={18} /></span>
+                              <b>Corrects</b>
+                              <p>Catches a wrong move the moment it happens and puts you back on track.</p>
+                            </div>
+                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={16} /></div>
+                            <div className="wm-cov-cap fix">
+                              <span className="ic"><Bug size={18} /></span>
+                              <b>Fixes</b>
+                              <p>Debugs the error in front of you and gets you unstuck.</p>
+                            </div>
+                          </div>
+                          <div className="wm-cov-loop-foot">
+                            <MousePointerClick size={15} />
+                            <span>It rewrites every step for exactly what's on <b>your</b> screen and confirms each one actually worked before moving on - until the job is done.</span>
+                          </div>
+                        </div>
+                      )}
                       {res.preview && res.preview.length > 0 && (() => {
                         const preview = res.preview
                         const shown = preview.length
@@ -261,7 +296,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
                             <div className="wm-cov-live">
                               <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
-                              <div><b>It doesn't just hand you a how-to.</b> In a real session WorkCoPilot <b>rewrites every step for exactly what's on your screen</b>, confirms it actually worked, then moves on. This is just the start of the plan. The real session runs the whole thing.</div>
+                              <div>Below is a <b>preview of the plan</b>. The live session runs the whole thing on your screen - watching, correcting and fixing as you go.</div>
                             </div>
                             {res.sees && <div className="wm-cov-sees"><ScanEye size={13} /> <b>I can see</b> {res.sees}</div>}
                             <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A {total}-step plan{remaining > 0 ? <span className="wm-cov-flow-sub"> · first {shown} shown in full</span> : null}</div>
@@ -412,6 +447,30 @@ const LV_CSS = `
 .wm-cov-points.show{opacity:1;transform:none}
 .wm-cov-points li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.55;color:var(--tx)}
 .wm-cov-points li svg{color:var(--em);flex-shrink:0;margin-top:3px}
+/* LIVE LOOP showcase - what the real product does: watch -> navigate -> correct -> fix */
+.wm-cov-loop{margin-top:16px;border:1px solid rgba(57,211,255,.3);border-radius:16px;padding:16px;background:linear-gradient(145deg,rgba(57,211,255,.1),rgba(140,245,196,.07) 55%,rgba(255,179,92,.08));opacity:0;transform:translateY(8px);transition:opacity .45s ease .1s,transform .45s ease .1s}
+.wm-cov-loop.show{opacity:1;transform:none}
+.wm-cov-loop-h{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:14px;color:var(--tx);margin-bottom:14px}
+.wm-cov-loop-grid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:stretch;gap:9px}
+.wm-cov-cap{display:flex;flex-direction:column;gap:5px;padding:12px 11px;border-radius:12px;background:var(--panel);border:1px solid var(--line);min-width:0}
+.wm-cov-cap .ic{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:#042;margin-bottom:3px}
+.wm-cov-cap b{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-size:14.5px;font-weight:800;color:var(--tx);letter-spacing:-.01em}
+.wm-cov-cap p{margin:0;font-size:12px;line-height:1.45;color:var(--mut)}
+.wm-cov-cap.watch .ic{background:linear-gradient(135deg,#39d3ff,#0a86cf)}
+.wm-cov-cap.guide .ic{background:linear-gradient(135deg,#8cf5c4,#0a9d66)}
+.wm-cov-cap.correct .ic{background:linear-gradient(135deg,#b98cff,#7a4bd8);color:#fff}
+.wm-cov-cap.fix .ic{background:linear-gradient(135deg,#ffb35c,#f26a43);color:#2a1206}
+.wm-cov-cap.watch{box-shadow:0 0 0 0 rgba(57,211,255,.4);animation:wm-cov-cappulse 3.2s ease-in-out infinite}
+.wm-cov-cap.guide{animation:wm-cov-cappulse 3.2s ease-in-out .8s infinite}
+.wm-cov-cap.correct{animation:wm-cov-cappulse 3.2s ease-in-out 1.6s infinite}
+.wm-cov-cap.fix{animation:wm-cov-cappulse 3.2s ease-in-out 2.4s infinite}
+@keyframes wm-cov-cappulse{0%,100%{box-shadow:0 0 0 0 rgba(57,211,255,0)}30%{box-shadow:0 10px 26px -14px rgba(57,211,255,.6)}}
+.wm-cov-cap.arrow{flex-direction:row;align-items:center;justify-content:center;background:none;border:none;padding:0;color:var(--em2);animation:wm-cov-arrflow 2.4s ease-in-out infinite}
+@keyframes wm-cov-arrflow{0%,100%{opacity:.35;transform:translateX(-2px)}50%{opacity:1;transform:translateX(2px)}}
+.wm-cov-loop-foot{display:flex;align-items:flex-start;gap:8px;margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.55;color:var(--mut)}
+.wm-cov-loop-foot svg{flex:0 0 auto;margin-top:1px;color:var(--em2)}
+.wm-cov-loop-foot b{color:var(--tx)}
+@media(max-width:620px){.wm-cov-loop-grid{grid-template-columns:1fr 1fr;gap:9px}.wm-cov-cap.arrow{display:none}}
 .wm-cov-flow{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(57,211,255,.05);opacity:0;transform:translateY(6px);transition:opacity .4s ease .12s,transform .4s ease .12s}
 .wm-cov-flow.show{opacity:1;transform:none}
 .wm-cov-flow-h{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em2);margin-bottom:12px}
