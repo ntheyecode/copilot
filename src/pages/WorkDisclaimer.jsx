@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom'
 import { Scale, ArrowLeft, ArrowRight, Compass, Hand, AlertTriangle, ShieldCheck, Lock, Mail } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
 const LAST_UPDATED = '2026-10-22'
 const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
@@ -50,8 +51,8 @@ const SECTIONS = [
 function Sec({ id, children }) {
   const s = SECTIONS.find((x) => x.id === id)
   return (
-    <section className="wlx-sec" id={id}>
-      <h2><span className="wlx-n">{s.n}</span>{s.title}</h2>
+    <section className="wlx-sec" id={id} aria-labelledby={id + '-h'}>
+      <h2 id={id + '-h'}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</h2>
       {children}
     </section>
   )
@@ -67,19 +68,27 @@ function Items({ items }) {
   )
 }
 
+// Accessibility (WEB-08): one <main>, a single H1, a hidden H2 over the glance
+// cards (WorkCard.Head renders H3s), decorative icons hidden, visible focus rings.
 export default function WorkDisclaimer() {
   const nav = useNavigate()
+  useSeo({
+    title: 'Disclaimer - WorkCoPilot by AdmireVeda',
+    description: 'What WorkCoPilot is and is not: practical guidance rather than professional advice, read-only so you decide what to run, best-effort accuracy, security checks as a backstop, and the limits of liability.',
+    path: '/workcopilot/disclaimer',
+  })
   useEffect(() => { ensureFonts() }, [])
   return (
     <div className="wlx">
       <style>{CSS}</style>
       <header className="wlx-top">
         <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wlx-back" onClick={() => nav('/workcopilot')}><ArrowLeft size={15} /> WorkCoPilot</button>
+        <button className="wlx-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
       </header>
 
+      <main id="main">
       <section className="wlx-hero">
-        <div className="wlx-eyebrow"><Scale size={14} /> Disclaimer &middot; WorkCoPilot</div>
+        <div className="wlx-eyebrow"><Scale size={14} aria-hidden="true" /> Disclaimer &middot; WorkCoPilot</div>
         <h1>What WorkCoPilot is, and what it is not</h1>
         <p>WorkCoPilot gives you practical, step-by-step guidance on your own screen so you can get work done. It does not act for you, it is not professional advice, and it can be wrong. This page sets out those limits in plain language so you know where you stand.</p>
         <div className="wlx-meta">
@@ -91,7 +100,8 @@ export default function WorkDisclaimer() {
         <div className="wlx-owner">{OWNERSHIP}</div>
       </section>
 
-      <section className="wlx-block">
+      <section className="wlx-block" aria-labelledby="wlx-glance-h">
+        <h2 id="wlx-glance-h" className="wlx-sr">At a glance</h2>
         <div className="wlx-glance">
           {GLANCE.map((g, i) => {
             const Ic = g.icon
@@ -106,10 +116,10 @@ export default function WorkDisclaimer() {
       </section>
 
       <section className="wlx-block wlx-doc">
-        <nav className="wlx-toc" aria-label="On this page">
-          <div className="wlx-toct">On this page</div>
+        <nav className="wlx-toc" aria-labelledby="wlx-toc-h">
+          <div className="wlx-toct" id="wlx-toc-h">On this page</div>
           <ol>
-            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n">{s.n}</span>{s.title}</a></li>)}
+            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</a></li>)}
           </ol>
         </nav>
 
@@ -117,7 +127,7 @@ export default function WorkDisclaimer() {
           <Sec id="advice">
             <p>WorkCoPilot gives practical guidance to help you act: what to look at next, what to click, what a setting means, how a command is usually written. It is a working aid.</p>
             <p>It is not legal, financial, medical, tax, accounting, engineering or other professional advice, and using it does not create a professional relationship with us. Where a step touches money, health, legal duties, safety or regulated work, confirm it against your own requirements and with a qualified professional before you rely on it.</p>
-            <div className="wlx-note"><Scale size={14} /><span>This page is a plain-language statement of the product's limits. It is not a substitute for your own legal review of how WorkCoPilot fits your situation.</span></div>
+            <div className="wlx-note"><Scale size={14} aria-hidden="true" /><span>This page is a plain-language statement of the product's limits. It is not a substitute for your own legal review of how WorkCoPilot fits your situation.</span></div>
           </Sec>
 
           <Sec id="control">
@@ -155,7 +165,7 @@ export default function WorkDisclaimer() {
             <p>WorkCoPilot is provided as is and as available. To the extent the law allows, we make no warranty, express or implied, about the guidance, including that it is accurate, complete, current, fit for a particular purpose, or free of errors.</p>
             <p>To the extent the law allows, we are not liable for loss or damage arising from actions you take, or do not take, based on the guidance, including lost data, lost revenue, downtime, or costs of recovery. You act on the guidance at your own discretion, and you remain responsible for the outcome in your systems.</p>
             <p>Nothing on this page limits rights that cannot be limited under the law that applies to you.</p>
-            <div className="wlx-note"><ShieldCheck size={14} /><span><b>Why this is here.</b> It would be easy to write a page of dense legalese. We would rather be clear: WorkCoPilot is a guide that never acts for you, and the judgment and the responsibility stay with you.</span></div>
+            <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span><b>Why this is here.</b> It would be easy to write a page of dense legalese. We would rather be clear: WorkCoPilot is a guide that never acts for you, and the judgment and the responsibility stay with you.</span></div>
           </Sec>
 
           <Sec id="contact">
@@ -165,13 +175,14 @@ export default function WorkDisclaimer() {
         </article>
       </section>
 
-      <section className="wlx-cta">
-        <button className="wlx-btn" onClick={() => nav('/workcopilot/privacy')}><Lock size={16} /> Privacy Policy</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Scale size={15} /> Terms</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={15} /> Security</button>
-        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} /> Contact</a>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
+      <section className="wlx-cta" aria-label="Related pages">
+        <button className="wlx-btn" onClick={() => nav('/workcopilot/privacy')}><Lock size={16} aria-hidden="true" /> Privacy Policy</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Scale size={15} aria-hidden="true" /> Terms</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={15} aria-hidden="true" /> Security</button>
+        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> Contact</a>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
+      </main>
     </div>
   )
 }
@@ -202,11 +213,14 @@ const CSS = `
 /* document: sticky contents + article */
 .wlx-doc{display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;align-items:start;padding-top:10px}
 .wlx-toc{position:sticky;top:18px;min-width:0}
-.wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin:0 0 10px}
+.wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
 .wlx-toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .wlx-toc a{display:flex;align-items:baseline;gap:9px;padding:7px 10px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.35}
 .wlx-toc a:hover{background:#fff;border:1px solid var(--line);padding:6px 9px}
-.wlx-n{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;color:#94a3b8;flex:0 0 auto}
+.wlx-n{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;color:var(--mut);flex:0 0 auto}
+/* a11y: visually hidden but read by assistive tech; visible focus ring (never outline:none) */
+.wlx-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wlx a:focus-visible,.wlx button:focus-visible{outline:2px solid var(--em);outline-offset:2px;border-radius:6px}
 .wlx-art{min-width:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 30px 18px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wlx-sec{padding:24px 0 26px;border-top:1px solid var(--line);scroll-margin-top:18px}
 .wlx-sec:first-child{border-top:0}

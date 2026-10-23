@@ -7,12 +7,22 @@ import {
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
+import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 
 // AdmireVeda WorkCoPilot - detailed use cases (/workcopilot/use-cases).
 // Every use case explained, each with a worked mini-guide graphic.
+// Accessibility (WEB-08): one <main>, a single H1 then one H2 per use case, the
+// chip row is a labeled nav, decorative icons and mock-window dots are hidden,
+// the mock progress bar defers to its "Step X of N" text, reveals respect
+// prefers-reduced-motion, and the faint badge green was raised to AA contrast.
 export default function WorkUseCases() {
   const nav = useNavigate()
   const rootRef = useRef(null)
+  useSeo({
+    title: 'Use Cases - WorkCoPilot by AdmireVeda',
+    description: 'What WorkCoPilot guides, in detail: technical setup and config, builds and integrations, AI and automation, product work, marketing, accounting and office tasks, legal and compliance, and everyday work on any screen.',
+    path: '/workcopilot/use-cases',
+  })
   useEffect(() => {
     const id = 'wm-fonts'
     if (!document.getElementById(id)) {
@@ -88,32 +98,33 @@ export default function WorkUseCases() {
         <div className="uc-wrap uc-nav-in">
           <a href="/" aria-label="AdmireVeda"><AdmireVedaLogo size={25} /></a>
           <div className="uc-navcta">
-            <a className="uc-back" href="/"><ChevronLeft size={16} /> Home</a>
-            <button className="uc-cta sm" onClick={go}>Get started <ArrowRight size={15} /></button>
+            <a className="uc-back" href="/"><ChevronLeft size={16} aria-hidden="true" /> Home</a>
+            <button className="uc-cta sm" onClick={go}>Get started <ArrowRight size={15} aria-hidden="true" /></button>
           </div>
         </div>
       </header>
 
+      <main id="main">
       <section className="uc-hero">
         <div className="uc-wrap">
           <div className="uc-badge" data-reveal>Use cases</div>
           <h1 data-reveal>Every kind of work.<br /><em>Guided in detail.</em></h1>
           <p data-reveal>Not just a to-do list. For each task, WorkCoPilot shows the exact step, exactly how to do it, and how to know it worked. Here is what that looks like, across the work people actually do.</p>
-          <div className="uc-chips" data-reveal>
-            {cases.map((c) => <a key={c.id} href={`#${c.id}`} className="uc-chip"><c.icon size={14} /> {c.tag}</a>)}
-          </div>
+          <nav className="uc-chips" data-reveal aria-label="Jump to a use case">
+            {cases.map((c) => <a key={c.id} href={`#${c.id}`} className="uc-chip"><c.icon size={14} aria-hidden="true" /> {c.tag}</a>)}
+          </nav>
         </div>
       </section>
 
       {cases.map((c, i) => (
-        <section className={`uc-case${i % 2 ? ' alt' : ''}`} id={c.id} key={c.id}>
+        <section className={`uc-case${i % 2 ? ' alt' : ''}`} id={c.id} key={c.id} aria-labelledby={`${c.id}-h`}>
           <div className="uc-wrap uc-case-in">
             <div className="uc-case-copy" data-reveal>
-              <span className={`uc-ic t-${c.tone}`}><c.icon size={24} /></span>
-              <h2>{c.tag}</h2>
+              <span className={`uc-ic t-${c.tone}`} aria-hidden="true"><c.icon size={24} /></span>
+              <h2 id={`${c.id}-h`}>{c.tag}</h2>
               <p>{c.blurb}</p>
-              <ul className="uc-can">{c.can.map((x) => <li key={x}><Check size={15} /> {x}</li>)}</ul>
-              <button className="uc-cta" onClick={go}>Guide me on this <ArrowRight size={15} /></button>
+              <ul className="uc-can">{c.can.map((x) => <li key={x}><Check size={15} aria-hidden="true" /> {x}</li>)}</ul>
+              <button className="uc-cta" onClick={go} aria-label={`Guide me on ${c.tag}`}>Guide me on this <ArrowRight size={15} aria-hidden="true" /></button>
             </div>
             <div className="uc-case-graphic" data-reveal>
               <MiniGuide g={c.guide} tag={c.tag} />
@@ -122,14 +133,15 @@ export default function WorkUseCases() {
         </section>
       ))}
 
-      <section className="uc-final">
+      <section className="uc-final" aria-labelledby="uc-final-h">
         <div className="uc-wrap" data-reveal>
           <AVMark size={44} />
-          <h2>Your task is next.</h2>
+          <h2 id="uc-final-h">Your task is next.</h2>
           <p>Bring anything. WorkCoPilot takes it from the first step to done.</p>
-          <button className="uc-cta big" onClick={go}>Get started <ArrowRight size={18} /></button>
+          <button className="uc-cta big" onClick={go}>Get started <ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </section>
+      </main>
 
       <footer className="uc-foot">
         <div className="uc-wrap uc-foot-in">
@@ -153,30 +165,30 @@ function MiniGuide({ g, tag }) {
   const total = plan.length
   const remaining = total - active - 1
   return (
-    <div className="uc-mini">
+    <div className="uc-mini" role="group" aria-label={`Example guided session: ${g.goal}`}>
       <div className="uc-mini-head">
-        <span className="d r" /><span className="d y" /><span className="d g" />
+        <span className="d r" aria-hidden="true" /><span className="d y" aria-hidden="true" /><span className="d g" aria-hidden="true" />
         <b>WorkCoPilot</b>
-        <span className="uc-mini-live"><i /> watching</span>
+        <span className="uc-mini-live"><i aria-hidden="true" /> watching</span>
         <span className="uc-mini-tag">{tag.split(' ')[0]}</span>
       </div>
       <div className="uc-mini-goal"><span>GOAL</span> {g.goal}</div>
-      {g.sees && <div className="uc-mini-sees"><ScanEye size={12} /> <b>I can see</b> {g.sees}</div>}
+      {g.sees && <div className="uc-mini-sees"><ScanEye size={12} aria-hidden="true" /> <b>I can see</b> {g.sees}</div>}
       <div className="uc-mini-prog">
         <span className="uc-mini-pc">Step {active + 1} of {total}</span>
-        <div className="uc-mini-bar"><i style={{ width: `${Math.round(((active + 1) / total) * 100)}%` }} /></div>
+        <div className="uc-mini-bar" aria-hidden="true"><i style={{ width: `${Math.round(((active + 1) / total) * 100)}%` }} /></div>
       </div>
       <ol className="uc-plan">
         {plan.map((title, i) => {
           if (i < active) return (
-            <li className="done" key={i}><span className="pn ok"><Check size={12} /></span><span className="pt">{title}</span></li>
+            <li className="done" key={i}><span className="pn ok" aria-hidden="true"><Check size={12} aria-hidden="true" /></span><span className="uc-sr">Done: </span><span className="pt">{title}</span></li>
           )
           if (i > active) return (
-            <li className="next" key={i}><span className="pn play"><Play size={9} /></span><span className="pt">{title}</span></li>
+            <li className="next" key={i}><span className="pn play" aria-hidden="true"><Play size={9} aria-hidden="true" /></span><span className="uc-sr">Next: </span><span className="pt">{title}</span></li>
           )
           return (
-            <li className="active" key={i}>
-              <span className="pn cur">{i + 1}</span>
+            <li className="active" key={i} aria-current="step">
+              <span className="pn cur" aria-hidden="true">{i + 1}</span>
               <div className="pbody">
                 <div className="uc-mini-label">DO THIS NOW</div>
                 <div className="uc-mini-step">{title}</div>
@@ -185,13 +197,13 @@ function MiniGuide({ g, tag }) {
                   <ol>{g.how.map((h, k) => <li key={k}>{h}</li>)}</ol>
                 </div>
                 {g.cmd && <div className="uc-mini-term"><div className="uc-mini-th">TERMINAL <CopyChip text={g.cmd} /></div><code>{g.cmd}</code></div>}
-                <div className="uc-mini-done"><Check size={13} /> done when {g.done}</div>
+                <div className="uc-mini-done"><Check size={13} aria-hidden="true" /> done when {g.done}</div>
               </div>
             </li>
           )
         })}
       </ol>
-      {remaining > 0 && <div className="uc-mini-foot"><Play size={11} /> {remaining} more guided step{remaining === 1 ? '' : 's'} after this, each the same depth</div>}
+      {remaining > 0 && <div className="uc-mini-foot"><Play size={11} aria-hidden="true" /> {remaining} more guided step{remaining === 1 ? '' : 's'} after this, each the same depth</div>}
     </div>
   )
 }
@@ -199,7 +211,7 @@ function MiniGuide({ g, tag }) {
 const CSS = `
 /* Light theme - matches the rest of the site. The WorkCoPilot "screen" mockup
    (.uc-mini) re-scopes dark vars below so it stays a dark device screenshot. */
-.uc{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--ink-brand:#062a22;
+.uc{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em-txt:#077a4f;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--ink-brand:#062a22;
   position:relative;min-height:100vh;color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
   background:radial-gradient(1000px 520px at 85% -8%,rgba(10,134,207,.14),transparent 60%),radial-gradient(820px 480px at -6% 4%,rgba(10,157,102,.12),transparent 58%),var(--ink)}
 .uc *{box-sizing:border-box}.uc a{color:inherit;text-decoration:none}
@@ -212,6 +224,14 @@ const CSS = `
 .o2{width:42vw;height:42vw;right:-12vw;top:30vh;background:radial-gradient(circle,rgba(140,245,196,.42),transparent 65%)}
 .uc [data-reveal]{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
 .uc [data-reveal].in{opacity:1;transform:none}
+/* a11y: visually hidden text; visible focus ring (never outline:none); honor reduced motion */
+.uc-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.uc a:focus-visible,.uc button:focus-visible{outline:2px solid var(--em2);outline-offset:3px;border-radius:8px}
+@media(prefers-reduced-motion:reduce){
+  .uc [data-reveal]{opacity:1;transform:none;transition:none}
+  .uc .uc-mini-live i{animation:none}
+  .uc .uc-cta{transition:none}
+}
 
 .uc-nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);background:rgba(255,255,255,.72);border-bottom:1px solid var(--line)}
 .uc-nav-in{display:flex;align-items:center;gap:16px;height:68px}
@@ -221,7 +241,7 @@ const CSS = `
 .uc-cta:hover{transform:translateY(-2px)}.uc-cta.sm{padding:9px 15px;font-size:14px}.uc-cta.big{padding:16px 28px;font-size:17px}
 
 .uc-hero{padding:72px 0 30px;text-align:center}
-.uc-badge{display:inline-block;font-size:13px;color:var(--em);border:1px solid rgba(140,245,196,.3);background:rgba(140,245,196,.07);padding:6px 14px;border-radius:999px;margin-bottom:22px}
+.uc-badge{display:inline-block;font-size:13px;font-weight:600;color:var(--em-txt);border:1px solid rgba(140,245,196,.3);background:rgba(140,245,196,.07);padding:6px 14px;border-radius:999px;margin-bottom:22px}
 .uc-hero h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(38px,6vw,64px);line-height:1.02;letter-spacing:-.03em;margin:0 0 20px}
 .uc-hero p{color:var(--mut);font-size:19px;max-width:62ch;margin:0 auto 26px}
 .uc-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;max-width:760px;margin:0 auto}

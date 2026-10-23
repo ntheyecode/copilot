@@ -13,6 +13,8 @@ import WorkDPA from './pages/WorkDPA.jsx'
 import WorkRefund from './pages/WorkRefund.jsx'
 import WorkBenchmark from './pages/WorkBenchmark.jsx'
 import WorkCapabilities from './pages/WorkCapabilities.jsx'
+import WorkFields from './pages/WorkFields.jsx'
+import WorkPricing from './pages/WorkPricing.jsx'
 import WorkPage from './pages/WorkPage.jsx'
 import WorkBuddy from './pages/WorkBuddy.jsx'
 import WorkFullGuide from './pages/WorkFullGuide.jsx'
@@ -64,6 +66,9 @@ export default function App() {
       <Route path="/workcopilot/refund" element={<WorkRefund />} />
       <Route path="/workcopilot/benchmark" element={<WorkBenchmark />} />
       <Route path="/workcopilot/how-it-works" element={<WorkCapabilities />} />
+      {/* Content moved off the short main page (owner rule), linked from its footer. */}
+      <Route path="/workcopilot/fields" element={<WorkFields />} />
+      <Route path="/workcopilot/pricing" element={<WorkPricing />} />
       {/* The app itself. WorkPage self-gates on the session the server reports. */}
       <Route path="/work" element={<WorkPage />} />
       {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}

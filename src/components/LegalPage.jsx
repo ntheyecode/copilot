@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, FileText, Mail } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
 import WorkCard from './WorkCard.jsx'   // shared, site-wide premium card primitive
+import useSeo from '../useSeo.js'      // per-route title / description / canonical (audit WEB-01)
 
 // Single source of truth for identity + contacts across every legal page.
 export const LEGAL_ENTITY = 'COE Security LLC'
@@ -47,24 +48,56 @@ export function Placeholder({ children }) {
   return <span className="wlx-ph">[{children}]</span>
 }
 
+// A plain data table in the legal vocabulary (used by the DPA data-lifecycle
+// section). Semantic: caption (visually hidden unless shown), column headers
+// with scope, row header in the first cell. Scrolls sideways on phones rather
+// than crushing the columns.
+export function DataTable({ caption, columns, rows, showCaption = false }) {
+  return (
+    <div className="wlx-tscroll" role="region" aria-label={caption} tabIndex={0}>
+      <table className="wlx-table">
+        <caption className={showCaption ? undefined : 'wlx-sr'}>{caption}</caption>
+        <thead>
+          <tr>{columns.map((c) => <th key={c} scope="col">{c}</th>)}</tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r[0]}>
+              {r.map((cell, i) => i === 0 ? <th key={i} scope="row">{cell}</th> : <td key={i}>{cell}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
 // props:
 //   icon, eyebrow, title, intro, lastUpdated, tagline
+//   seo:      { title, description, path }             (per-route identity, WEB-01)
 //   glance:   [{ icon, tone, eyebrow, title, body }]  (3 cards)
 //   sections: [{ id, title, content }]                (content is JSX)
 //   links:    [{ label, to, icon, href }]             (first one renders as primary)
-export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro, lastUpdated, tagline, glance = [], sections, links = [], contact = LEGAL_CONTACT }) {
+//
+// Accessibility (WEB-08): one <main> landmark, a single H1, a visually hidden
+// H2 over the glance cards (WorkCard.Head renders H3s, so without it the order
+// would jump H1 -> H3 -> H2), decorative icons hidden from the accessibility
+// tree, visible focus rings, and no text below AA contrast.
+export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro, lastUpdated, tagline, seo, glance = [], sections, links = [], contact = LEGAL_CONTACT }) {
   const nav = useNavigate()
+  useSeo(seo || {})
   useEffect(() => { ensureFonts() }, [])
   return (
     <div className="wlx">
       <style>{CSS}</style>
       <header className="wlx-top">
         <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wlx-back" onClick={() => nav('/workcopilot')}><ArrowLeft size={15} /> WorkCoPilot</button>
+        <button className="wlx-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
       </header>
 
+      <main id="main">
       <section className="wlx-hero">
-        <div className="wlx-eyebrow"><Icon size={14} /> {eyebrow} &middot; WorkCoPilot</div>
+        <div className="wlx-eyebrow"><Icon size={14} aria-hidden="true" /> {eyebrow} &middot; WorkCoPilot</div>
         <h1>{title}</h1>
         <p>{intro}</p>
         <div className="wlx-meta">
@@ -79,7 +112,8 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
       </section>
 
       {glance.length > 0 && (
-        <section className="wlx-block">
+        <section className="wlx-block" aria-labelledby="wlx-glance-h">
+          <h2 id="wlx-glance-h" className="wlx-sr">At a glance</h2>
           <div className="wlx-glance">
             {glance.map((g, i) => {
               const Ic = g.icon
@@ -95,34 +129,35 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
       )}
 
       <section className="wlx-block wlx-doc">
-        <nav className="wlx-toc" aria-label="On this page">
-          <div className="wlx-toct">On this page</div>
+        <nav className="wlx-toc" aria-labelledby="wlx-toc-h">
+          <div className="wlx-toct" id="wlx-toc-h">On this page</div>
           <ol>
-            {sections.map((s, i) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n">{String(i + 1).padStart(2, '0')}</span>{s.title}</a></li>)}
+            {sections.map((s, i) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>{s.title}</a></li>)}
           </ol>
         </nav>
 
         <article className="wlx-art">
           {sections.map((s, i) => (
-            <section className="wlx-sec" id={s.id} key={s.id}>
-              <h2><span className="wlx-n">{String(i + 1).padStart(2, '0')}</span>{s.title}</h2>
+            <section className="wlx-sec" id={s.id} key={s.id} aria-labelledby={s.id + '-h'}>
+              <h2 id={s.id + '-h'}><span className="wlx-n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>{s.title}</h2>
               {s.content}
             </section>
           ))}
         </article>
       </section>
 
-      <section className="wlx-cta">
+      <section className="wlx-cta" aria-label="Related pages">
         {links.map((l, i) => {
           const Ic = l.icon
           const cls = 'wlx-btn' + (i === 0 ? '' : ' alt')
           return l.href
-            ? <a key={l.label} className={cls} href={l.href}>{Ic && <Ic size={15} />} {l.label}</a>
-            : <button key={l.label} className={cls} onClick={() => nav(l.to)}>{Ic && <Ic size={15} />} {l.label}</button>
+            ? <a key={l.label} className={cls} href={l.href}>{Ic && <Ic size={15} aria-hidden="true" />} {l.label}</a>
+            : <button key={l.label} className={cls} onClick={() => nav(l.to)}>{Ic && <Ic size={15} aria-hidden="true" />} {l.label}</button>
         })}
-        <a className="wlx-btn alt" href={'mailto:' + contact}><Mail size={15} /> Contact</a>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
+        <a className="wlx-btn alt" href={'mailto:' + contact}><Mail size={15} aria-hidden="true" /> Contact</a>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
+      </main>
     </div>
   )
 }
@@ -150,11 +185,22 @@ const CSS = `
 .wlx-gcard .wc-title{font-size:18px}
 .wlx-doc{display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;align-items:start;padding-top:10px}
 .wlx-toc{position:sticky;top:18px;min-width:0}
-.wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin:0 0 10px}
+.wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
 .wlx-toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .wlx-toc a{display:flex;align-items:baseline;gap:9px;padding:7px 10px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.35}
 .wlx-toc a:hover{background:#fff;border:1px solid var(--line);padding:6px 9px}
-.wlx-n{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;color:#94a3b8;flex:0 0 auto}
+.wlx-n{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;color:var(--mut);flex:0 0 auto}
+/* a11y: visually hidden but read by assistive tech; visible focus ring (never outline:none) */
+.wlx-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wlx a:focus-visible,.wlx button:focus-visible,.wlx [tabindex]:focus-visible{outline:2px solid var(--em);outline-offset:2px;border-radius:6px}
+/* data table (DPA data lifecycle) */
+.wlx-tscroll{overflow-x:auto;margin:4px 0 0;-webkit-overflow-scrolling:touch}
+.wlx-table{width:100%;min-width:640px;border-collapse:collapse;font-size:13.5px;line-height:1.5}
+.wlx-table caption{text-align:left;font-weight:700;color:var(--ink);padding:0 0 8px}
+.wlx-table th,.wlx-table td{text-align:left;vertical-align:top;padding:10px 12px;border-top:1px solid var(--line);color:#334155}
+.wlx-table thead th{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);background:var(--bg);border-top:0}
+.wlx-table tbody th{font-weight:700;color:var(--ink);white-space:nowrap}
+.wlx-table tbody th::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:8px;vertical-align:2px;background:linear-gradient(135deg,#10a271,#0a93c4)}
 .wlx-art{min-width:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 30px 18px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wlx-sec{padding:24px 0 26px;border-top:1px solid var(--line);scroll-margin-top:18px}
 .wlx-sec:first-child{border-top:0}

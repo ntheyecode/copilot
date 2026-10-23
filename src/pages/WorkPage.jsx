@@ -2716,7 +2716,9 @@ function Console({ sessionId, watchLight = false, onBack }) {
         return
       }
       try { w.document.title = 'WorkCoPilot' } catch {}
-      try { if (!w.document.body) w.document.write('<!doctype html><title>WorkCoPilot</title><body></body>') } catch {}
+      // Ensure the Picture-in-Picture window has a <body> without document.write
+      // (no injection sink; the title is set above). Build it with the DOM API.
+      try { if (!w.document.body && w.document.documentElement) w.document.documentElement.appendChild(w.document.createElement('body')) } catch {}
     }
     try {
       // The PiP window is a separate document and inherits none of the app's

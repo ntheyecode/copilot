@@ -12,6 +12,7 @@ import { useNavigate } from 'react-router-dom'
 import { Lock, ArrowLeft, ArrowRight, Monitor, Send, Database, ShieldCheck, Scale, Mail, Gavel, FileSignature } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
 const LAST_UPDATED = '2026-10-22'
 const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
@@ -54,8 +55,8 @@ const SECTIONS = [
 function Sec({ id, children }) {
   const s = SECTIONS.find((x) => x.id === id)
   return (
-    <section className="wlx-sec" id={id}>
-      <h2><span className="wlx-n">{s.n}</span>{s.title}</h2>
+    <section className="wlx-sec" id={id} aria-labelledby={id + '-h'}>
+      <h2 id={id + '-h'}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</h2>
       {children}
     </section>
   )
@@ -71,19 +72,27 @@ function Items({ items }) {
   )
 }
 
+// Accessibility (WEB-08): one <main>, a single H1, a hidden H2 over the glance
+// cards (WorkCard.Head renders H3s), decorative icons hidden, visible focus rings.
 export default function WorkPrivacy() {
   const nav = useNavigate()
+  useSeo({
+    title: 'Privacy Policy - WorkCoPilot by AdmireVeda',
+    description: 'What WorkCoPilot collects, what leaves your device after on-device redaction, what is stored and for how long, how it is protected, the third parties involved, and your rights and choices.',
+    path: '/workcopilot/privacy',
+  })
   useEffect(() => { ensureFonts() }, [])
   return (
     <div className="wlx">
       <style>{CSS}</style>
       <header className="wlx-top">
         <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wlx-back" onClick={() => nav('/workcopilot')}><ArrowLeft size={15} /> WorkCoPilot</button>
+        <button className="wlx-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
       </header>
 
+      <main id="main">
       <section className="wlx-hero">
-        <div className="wlx-eyebrow"><Lock size={14} /> Privacy Policy &middot; WorkCoPilot</div>
+        <div className="wlx-eyebrow"><Lock size={14} aria-hidden="true" /> Privacy Policy &middot; WorkCoPilot</div>
         <h1>How WorkCoPilot handles your data</h1>
         <p>WorkCoPilot guides you through work on your own screen. It is read-only by design, and sensitive data is stripped or tokenized on your own device before anything is sent. This page says, in plain language, what we collect, what leaves your device, what we store, and the choices you have.</p>
         <div className="wlx-meta">
@@ -95,7 +104,8 @@ export default function WorkPrivacy() {
         <div className="wlx-owner">{OWNERSHIP}</div>
       </section>
 
-      <section className="wlx-block">
+      <section className="wlx-block" aria-labelledby="wlx-glance-h">
+        <h2 id="wlx-glance-h" className="wlx-sr">At a glance</h2>
         <div className="wlx-glance">
           {GLANCE.map((g, i) => {
             const Ic = g.icon
@@ -110,10 +120,10 @@ export default function WorkPrivacy() {
       </section>
 
       <section className="wlx-block wlx-doc">
-        <nav className="wlx-toc" aria-label="On this page">
-          <div className="wlx-toct">On this page</div>
+        <nav className="wlx-toc" aria-labelledby="wlx-toc-h">
+          <div className="wlx-toct" id="wlx-toc-h">On this page</div>
           <ol>
-            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n">{s.n}</span>{s.title}</a></li>)}
+            {SECTIONS.map((s) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{s.n}</span>{s.title}</a></li>)}
           </ol>
         </nav>
 
@@ -122,7 +132,7 @@ export default function WorkPrivacy() {
             <p>This policy covers WorkCoPilot: the web app, the desktop app and the mobile app. It describes how the product treats your data when you sign in, run a guided session, and review your reports.</p>
             <p><b>Who is responsible.</b> WorkCoPilot is offered by AdmireVeda, a product of {ENTITY}. {ENTITY} is the legal entity and the controller of the account, sign-in and billing details described below. For the content of your guided sessions, your organization decides what is shared and {ENTITY} acts on its behalf as described in the <a href="/workcopilot/dpa">Data Processing Addendum</a>.</p>
             <p>It is written to be read, not to impress. Where a behavior is under your control, or where we have not finished something, we say so. The <a href="/workcopilot/security#data-handling">Security page</a> shows the full data flow, step by step, with before-and-after examples of the on-device protection.</p>
-            <div className="wlx-note"><Scale size={14} /><span>This page is a plain-language disclosure of how the product works. It is not legal advice and it is not a substitute for your own legal review of how WorkCoPilot fits your obligations.</span></div>
+            <div className="wlx-note"><Scale size={14} aria-hidden="true" /><span>This page is a plain-language disclosure of how the product works. It is not legal advice and it is not a substitute for your own legal review of how WorkCoPilot fits your obligations.</span></div>
           </Sec>
 
           <Sec id="collect">
@@ -226,19 +236,20 @@ export default function WorkPrivacy() {
           <Sec id="contact">
             <p>Privacy, legal and security inquiries: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
             <p>Product support and billing: <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
-            <div className="wlx-note"><ShieldCheck size={14} /><span><b>Honest framing.</b> WorkCoPilot provides controls and audit evidence that support your privacy and compliance work. It does not make an organization compliant on its own, and we do not claim a certification here. Your organization, working with its own advisers, decides how the product fits your obligations.</span></div>
+            <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span><b>Honest framing.</b> WorkCoPilot provides controls and audit evidence that support your privacy and compliance work. It does not make an organization compliant on its own, and we do not claim a certification here. Your organization, working with its own advisers, decides how the product fits your obligations.</span></div>
           </Sec>
         </article>
       </section>
 
-      <section className="wlx-cta">
-        <button className="wlx-btn" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={16} /> See the full data flow</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Gavel size={15} /> Terms</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/dpa')}><FileSignature size={15} /> DPA</button>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/disclaimer')}><Scale size={15} /> Disclaimer</button>
-        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} /> Contact</a>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
+      <section className="wlx-cta" aria-label="Related pages">
+        <button className="wlx-btn" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={16} aria-hidden="true" /> See the full data flow</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Gavel size={15} aria-hidden="true" /> Terms</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/dpa')}><FileSignature size={15} aria-hidden="true" /> DPA</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/disclaimer')}><Scale size={15} aria-hidden="true" /> Disclaimer</button>
+        <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> Contact</a>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
+      </main>
     </div>
   )
 }
@@ -268,11 +279,14 @@ const CSS = `
 /* document: sticky contents + article */
 .wlx-doc{display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;align-items:start;padding-top:10px}
 .wlx-toc{position:sticky;top:18px;min-width:0}
-.wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:#94a3b8;margin:0 0 10px}
+.wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
 .wlx-toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .wlx-toc a{display:flex;align-items:baseline;gap:9px;padding:7px 10px;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.35}
 .wlx-toc a:hover{background:#fff;border:1px solid var(--line);padding:6px 9px}
-.wlx-n{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;color:#94a3b8;flex:0 0 auto}
+.wlx-n{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.1em;color:var(--mut);flex:0 0 auto}
+/* a11y: visually hidden but read by assistive tech; visible focus ring (never outline:none) */
+.wlx-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wlx a:focus-visible,.wlx button:focus-visible{outline:2px solid var(--em);outline-offset:2px;border-radius:6px}
 .wlx-art{min-width:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 30px 18px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wlx-sec{padding:24px 0 26px;border-top:1px solid var(--line);scroll-margin-top:18px}
 .wlx-sec:first-child{border-top:0}

@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Lock, ScanEye, FileText, ArrowLeft, ArrowRight, Check, Globe, HeartPulse, Landmark, BadgeCheck, Building2, Monitor, Send, Database, EyeOff, Trash2, KeyRound, Route, Undo2 } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
 // A representative integration screen. `redacted` swaps each sensitive value for
 // an on-device mask, exactly what the frame redactor does before a frame is sent.
@@ -40,7 +41,7 @@ function ScreenMock({ redacted }) {
             <div className="wsx-row" key={f.k}>
               <span className="wsx-key">{f.k}</span>
               {f.s && redacted
-                ? <span className="wsx-mask" aria-label="protected" />
+                ? <span className="wsx-mask" />
                 : <span className={'wsx-val' + (f.ok ? ' ok' : '')}>{f.ok && <span className="wsx-okdot" />}{f.v}</span>}
             </div>
           ))}
@@ -187,7 +188,7 @@ function FlowStep({ f }) {
   const Ic = f.icon
   return (
     <li className="wsx-fstep">
-      <div className="wsx-ftop"><span className="wsx-fic"><Ic size={15} /></span><span className="wsx-fn">{f.n}</span></div>
+      <div className="wsx-ftop"><span className="wsx-fic"><Ic size={15} aria-hidden="true" /></span><span className="wsx-fn">{f.n}</span></div>
       <div className="wsx-ft">{f.t}</div>
       <div className="wsx-fs">{f.s}</div>
     </li>
@@ -214,24 +215,34 @@ function HandlingGroup({ g, index }) {
 const RAW = 'Connect our billing to Stripe. Account email ops@northwind-trading.com, API key sk-live-4eC39HqLyjWDarjtT1zdp7dc, webhook posts to 10.20.14.7, and the card on file is 4539 1488 0343 6467.'
 const SENT = 'Connect our billing to Stripe. Account email [[EMAIL_3]], API key [[SECRET_2]], webhook posts to [[IP_4]], and the card on file is [[CARD_1]].'
 
+// Accessibility (WEB-08): one <main>, a single H1 then H2 per block (cards are
+// H3), the two mock screens are labeled images, the flow arrows are
+// presentational, decorative icons are hidden, the PDF link says it opens a new
+// tab, and the faint mock-screen / step-number inks were raised to AA contrast.
 export default function WorkSecurity() {
   const nav = useNavigate()
+  useSeo({
+    title: 'Security and Privacy - WorkCoPilot by AdmireVeda',
+    description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, read-only guidance, encryption at rest, the full data flow, retention, and compliance readiness.',
+    path: '/workcopilot/security',
+  })
   return (
     <div className="wsx">
       <style>{CSS}</style>
       <header className="wsx-top">
         <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wsx-back" onClick={() => nav('/workcopilot')}><ArrowLeft size={15} /> WorkCoPilot</button>
+        <button className="wsx-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
       </header>
 
+      <main id="main">
       <section className="wsx-hero">
-        <div className="wsx-eyebrow"><Lock size={14} /> Private by design &middot; on your device</div>
+        <div className="wsx-eyebrow"><Lock size={14} aria-hidden="true" /> Private by design &middot; on your device</div>
         <h1>See exactly what is protected</h1>
         <p>Before anything is sent, sensitive data is stripped or tokenized <b>on your own device</b>, in screenshots and in text. You decide what counts as sensitive, on top of the industry-standard detectors.</p>
       </section>
 
       <section className="wsx-block">
-        <div className="wsx-bhead"><span className="wsx-bi"><ScanEye size={16} /></span><div><h2>On your screen</h2><p>Each outbound frame is checked on your device, and any line with a sensitive value is blacked out before the frame leaves.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><ScanEye size={16} aria-hidden="true" /></span><div><h2>On your screen</h2><p>Each outbound frame is checked on your device, and any line with a sensitive value is blacked out before the frame leaves.</p></div></div>
         <div className="wsx-ba">
           <WorkCard theme="light" tone="danger" delay={0} texPos="0% 0%"><div className="wsx-lab before">Before (on your device)</div><ScreenMock redacted={false} /></WorkCard>
           <WorkCard theme="light" tone="ok" delay={90} texPos="100% 0%"><div className="wsx-lab after">After (what leaves the device)</div><ScreenMock redacted /></WorkCard>
@@ -239,51 +250,52 @@ export default function WorkSecurity() {
       </section>
 
       <section className="wsx-block">
-        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} /></span><div><h2>In your text</h2><p>Typed or pasted text gets the same protection. Each sensitive value becomes a token, the real values never leave your device, and the answer is rebuilt locally.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} aria-hidden="true" /></span><div><h2>In your text</h2><p>Typed or pasted text gets the same protection. Each sensitive value becomes a token, the real values never leave your device, and the answer is rebuilt locally.</p></div></div>
         <div className="wsx-ba">
           <WorkCard theme="light" tone="danger" delay={0} texPos="0% 100%"><div className="wsx-lab before">Before (what you typed)</div><pre className="wsx-code">{RAW}</pre></WorkCard>
           <WorkCard theme="light" tone="ok" delay={90} texPos="100% 100%"><div className="wsx-lab after">After (what reaches the AI)</div><pre className="wsx-code"><TokenText text={SENT} /></pre></WorkCard>
         </div>
-        <div className="wsx-note"><Check size={14} /> <span><b>You are in control of what is protected.</b> The built-in, industry-standard detectors handle emails, keys, card numbers, SSNs, IBANs, phone numbers, IP addresses and private hosts out of the box. On top of that, you (or your company admin) add your own words and patterns, and choose to redact, tokenize, or block each one. The model sees the structure of your task, never the secrets.</span></div>
+        <div className="wsx-note"><Check size={14} aria-hidden="true" /> <span><b>You are in control of what is protected.</b> The built-in, industry-standard detectors handle emails, keys, card numbers, SSNs, IBANs, phone numbers, IP addresses and private hosts out of the box. On top of that, you (or your company admin) add your own words and patterns, and choose to redact, tokenize, or block each one. The model sees the structure of your task, never the secrets.</span></div>
       </section>
 
       <section className="wsx-block wsx-data" id="data-handling">
-        <div className="wsx-bhead"><span className="wsx-bi"><Route size={16} /></span><div><h2>How your data is handled</h2><p>This is a plain account of how your data moves and how long we keep it. It is a disclosure of what the product does today, not a compliance claim.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><Route size={16} aria-hidden="true" /></span><div><h2>How your data is handled</h2><p>This is a plain account of how your data moves and how long we keep it. It is a disclosure of what the product does today, not a compliance claim.</p></div></div>
         <ol className="wsx-flow" aria-label="Data flow, from your device to the AI and back">
           {FLOW.map((f, i) => (
             <React.Fragment key={f.n}>
               <FlowStep f={f} />
-              {i < FLOW.length - 1 && <li className="wsx-farrow" aria-hidden="true"><ArrowRight size={14} /></li>}
+              {i < FLOW.length - 1 && <li className="wsx-farrow" role="presentation" aria-hidden="true"><ArrowRight size={14} aria-hidden="true" /></li>}
             </React.Fragment>
           ))}
         </ol>
         <div className="wsx-hgrid">
           {HANDLING.map((g, i) => <HandlingGroup key={g.id} g={g} index={i} />)}
         </div>
-        <div className="wsx-note"><ShieldCheck size={14} /> <span><b>We state our data practices plainly.</b> Encryption at rest covers your stored keys, secrets and report artifacts, including milestone screenshots. By default sessions stay until you or your admin delete them, and an automatic retention window can be configured to purge older sessions on a schedule. Where something is under your control or still improving, we say so rather than let you assume it is covered.</span></div>
+        <div className="wsx-note"><ShieldCheck size={14} aria-hidden="true" /> <span><b>We state our data practices plainly.</b> Encryption at rest covers your stored keys, secrets and report artifacts, including milestone screenshots. By default sessions stay until you or your admin delete them, and an automatic retention window can be configured to purge older sessions on a schedule. Where something is under your control or still improving, we say so rather than let you assume it is covered.</span></div>
       </section>
 
       <section className="wsx-block wsx-comp" id="compliance">
-        <div className="wsx-bhead"><span className="wsx-bi"><BadgeCheck size={16} /></span><div><h2>Compliance-ready, across the frameworks you report to</h2><p>WorkCoPilot gives you the controls and the audit evidence to support compliance across the frameworks you report to. Your admin arms a policy per company and locks it, sensitive data is stripped or tokenized on the device, and every session is logged and reportable. Here is how that maps, framework by framework.</p></div></div>
-        <div className="wsx-call">
-          {COMPLIANCE.flatMap((g) => g.items.map(([n]) => n)).map((n) => <span key={n} className="wsx-cchip">{n}</span>)}
-        </div>
+        <div className="wsx-bhead"><span className="wsx-bi"><BadgeCheck size={16} aria-hidden="true" /></span><div><h2>Compliance-ready, across the frameworks you report to</h2><p>WorkCoPilot gives you the controls and the audit evidence to support compliance across the frameworks you report to. Your admin arms a policy per company and locks it, sensitive data is stripped or tokenized on the device, and every session is logged and reportable. Here is how that maps, framework by framework.</p></div></div>
+        <ul className="wsx-call" aria-label="Frameworks covered below">
+          {COMPLIANCE.flatMap((g) => g.items.map(([n]) => n)).map((n) => <li key={n} className="wsx-cchip">{n}</li>)}
+        </ul>
         <div className="wsx-cgrid">
           {COMPLIANCE.map((g, i) => <ComplianceGroup key={g.id} g={g} index={i} />)}
         </div>
-        <div className="wsx-note"><ShieldCheck size={14} /> <span><b>Honest framing.</b> WorkCoPilot does not claim a certification against any of these frameworks, and no tool can make an organization compliant on its own. We provide the controls and the evidence. Your organization, working with its auditors, achieves and holds the compliance.</span></div>
+        <div className="wsx-note"><ShieldCheck size={14} aria-hidden="true" /> <span><b>Honest framing.</b> WorkCoPilot does not claim a certification against any of these frameworks, and no tool can make an organization compliant on its own. We provide the controls and the evidence. Your organization, working with its auditors, achieves and holds the compliance.</span></div>
       </section>
 
       <section className="wsx-block" id="report">
-        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} /></span><div><h2>Report a security issue</h2><p>We welcome responsible disclosure. If you believe you have found a security or privacy issue in WorkCoPilot, tell us and we will work with you to confirm and fix it.</p></div></div>
-        <div className="wsx-note"><ShieldCheck size={14} /> <span><b>How to reach us.</b> Email <a href="mailto:support@coesecurity.com">support@coesecurity.com</a> for anything security, privacy or compliance related, including a signed DPA. For product help and billing, email <a href="mailto:support@admireveda.com">support@admireveda.com</a>. Please include enough detail to reproduce the issue, and give us a reasonable time to investigate and remediate before any public disclosure. We will not pursue good-faith security research conducted under this policy.</span></div>
-        <div className="wsx-note"><Building2 size={14} /> <span>WorkCoPilot, by AdmireVeda, is a product of COE Security LLC.</span></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} aria-hidden="true" /></span><div><h2>Report a security issue</h2><p>We welcome responsible disclosure. If you believe you have found a security or privacy issue in WorkCoPilot, tell us and we will work with you to confirm and fix it.</p></div></div>
+        <div className="wsx-note"><ShieldCheck size={14} aria-hidden="true" /> <span><b>How to reach us.</b> Email <a href="mailto:support@coesecurity.com">support@coesecurity.com</a> for anything security, privacy or compliance related, including a signed DPA. For product help and billing, email <a href="mailto:support@admireveda.com">support@admireveda.com</a>. Please include enough detail to reproduce the issue, and give us a reasonable time to investigate and remediate before any public disclosure. We will not pursue good-faith security research conducted under this policy.</span></div>
+        <div className="wsx-note"><Building2 size={14} aria-hidden="true" /> <span>WorkCoPilot, by AdmireVeda, is a product of COE Security LLC.</span></div>
       </section>
 
-      <section className="wsx-cta">
-        <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper</a>
-        <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
+      <section className="wsx-cta" aria-label="Next steps">
+        <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> Read the Security &amp; Privacy paper<span className="wsx-sr"> (PDF, opens in a new tab)</span></a>
+        <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
+      </main>
     </div>
   )
 }
@@ -305,7 +317,10 @@ const CSS = `
 .wsx-ba{display:grid;grid-template-columns:1fr 1fr;gap:18px}
 @media(max-width:760px){.wsx-ba{grid-template-columns:1fr}.wsx-hero h1{font-size:27px}}
 .wsx-lab{font-size:12.5px;font-weight:700;margin-bottom:8px}
-.wsx-lab.before{color:#dc2626}.wsx-lab.after{color:#16a34a}
+.wsx-lab.before{color:#dc2626}.wsx-lab.after{color:#15803d}
+/* a11y: visually hidden text; visible focus ring (never outline:none) */
+.wsx-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wsx a:focus-visible,.wsx button:focus-visible{outline:2px solid var(--em);outline-offset:2px;border-radius:6px}
 .wsx-screen{display:flex;height:286px;border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:0 8px 24px rgba(15,23,42,.08);background:#fff}
 .wsx-side{flex:0 0 150px;background:#0f172a;color:#94a3b8;padding:14px 0}
 .wsx-brand{display:flex;align-items:center;gap:7px;color:#e2e8f0;font-weight:700;font-size:13px;padding:0 14px 12px}
@@ -313,14 +328,14 @@ const CSS = `
 .wsx-nav{font-size:13px;padding:8px 14px}
 .wsx-nav.on{background:#1e293b;color:#38bdf8;font-weight:600}
 .wsx-main{flex:1;min-width:0;background:#f1f5f9}
-.wsx-crumb{font-size:12px;color:#94a3b8;background:#fff;border-bottom:1px solid var(--line);padding:10px 16px}
+.wsx-crumb{font-size:12px;color:var(--mut);background:#fff;border-bottom:1px solid var(--line);padding:10px 16px}
 .wsx-crumb b{color:var(--ink)}.wsx-crumb span{margin:0 4px}
 .wsx-card{background:#fff;margin:14px;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .wsx-ctitle{font-weight:700;font-size:14px;margin-bottom:10px}
 .wsx-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px}
 .wsx-key{color:#64748b;flex:0 0 auto}
 .wsx-val{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--ink);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wsx-val.ok{color:#16a34a;font-weight:700;font-family:inherit}
+.wsx-val.ok{color:#15803d;font-weight:700;font-family:inherit}
 .wsx-okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin-right:6px;vertical-align:1px}
 .wsx-mask{display:inline-block;height:13px;width:118px;border-radius:3px;background:#0b1220}
 .wsx-code{background:#0b1220;color:#e2e8f0;border-radius:12px;padding:16px 16px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin:0;min-height:148px}
@@ -331,7 +346,7 @@ const CSS = `
 /* COMPLIANCE - chip roll-call of every framework, then grouped cards (WorkCard shell
    = same reveal/glow/hairline as the rest of the site), then the honest-framing note. */
 .wsx-comp{padding-top:22px}
-.wsx-call{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 18px}
+.wsx-call{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 18px;padding:0;list-style:none}
 .wsx-cchip{display:inline-block;font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.02em;color:#334155;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 9px;white-space:nowrap;box-shadow:0 1px 0 rgba(15,23,42,.03)}
 .wsx-cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
 .wsx-cgroup{min-width:0;gap:16px}
@@ -361,7 +376,7 @@ const CSS = `
 .wsx-fstep{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px 15px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wsx-ftop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
 .wsx-fic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#10a271,#0a93c4);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 18px -8px #0a93c4}
-.wsx-fn{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;color:#94a3b8}
+.wsx-fn{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;color:var(--mut)}
 .wsx-ft{font-weight:700;font-size:14px;color:var(--ink);letter-spacing:-.005em;line-height:1.3}
 .wsx-fs{font-size:12.5px;line-height:1.5;color:var(--mut);overflow-wrap:anywhere}
 .wsx-farrow{flex:0 0 auto;display:grid;place-items:center;color:#94a3b8;padding:0 1px}

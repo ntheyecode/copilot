@@ -982,6 +982,67 @@ export function companyProductivity(companyId, { days = 30 } = {}) {
 }
 // White-label branding a company USER (any role) may see: logo + public contact.
 // No seats, pricing, AI config or cost - only what belongs on their dashboard.
+// ---- Cross-session learning / KB -------------------------------------------
+// A LEARNING is a short, generalized, REDACTED fact the engine picked up in a
+// session (a correction that worked, or fresh web info like a setting that moved)
+// so FUTURE sessions start smarter than the AI's training cutoff. Scoped to a
+// COMPANY (shared across its users, respecting the data boundary) or to a SOLO
+// USER (private to them). Never raw screens, PII or secrets; it rides the owner's
+// retention (deleting the company/user removes its KB).
+const LEARNING_CAP = 400          // per company KB
+const GLOBAL_LEARNING_CAP = 20000 // platform KB (shared across all solo users)
+// Where a user's learnings live and are read from:
+//  - company user  -> that company's PRIVATE kb (shared across its own users).
+//  - solo user     -> the PLATFORM kb (our property), so the product gets more
+//    dependable for everyone as new flows appear. Learnings are generalized +
+//    redacted (no PII/secrets/company identifiers), i.e. de-identified product-
+//    improvement data, not personal data.
+function _learnHolder(userId) {
+  const u = getUser(userId); if (!u) return null
+  if (u.companyId) { const c = (db.companies || []).find((x) => x.id === u.companyId); return c ? { kind: 'company', obj: c, field: 'kb', cap: LEARNING_CAP } : null }
+  if (!db.work) db.work = {}
+  return { kind: 'global', obj: db.work, field: 'globalKb', cap: GLOBAL_LEARNING_CAP }
+}
+const _normLearn = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim()
+export function addLearning(userId, { app = '', fact = '', kind = 'correction' } = {}) {
+  const sc = _learnHolder(userId); if (!sc) return null
+  const a = String(app || '').trim().slice(0, 80)
+  const f = redactIncidentText(String(fact || '').trim()).slice(0, 400)
+  if (f.length < 10) return null
+  if (!Array.isArray(sc.obj[sc.field])) sc.obj[sc.field] = []
+  const kb = sc.obj[sc.field]
+  const dup = kb.find((l) => _normLearn(l.app) === _normLearn(a) && _normLearn(l.fact) === _normLearn(f))
+  if (dup) { dup.hits = (dup.hits || 1) + 1; dup.at = new Date().toISOString(); persistSoon(); return dup }
+  const rec = { id: 'kb' + id(), app: a, fact: f, kind: kind === 'fresh' ? 'fresh' : 'correction', at: new Date().toISOString(), hits: 1 }
+  kb.push(rec)
+  if (kb.length > sc.cap) kb.splice(0, kb.length - sc.cap)
+  persistSoon()
+  return rec
+}
+export function getLearningsFor(userId, { goal = '', app = '', limit = 6 } = {}) {
+  const sc = _learnHolder(userId); if (!sc) return []
+  const kb = sc.obj[sc.field]
+  if (!Array.isArray(kb) || !kb.length) return []
+  const toks = (String(goal) + ' ' + String(app)).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2)
+  return kb.map((l) => {
+    const text = (l.app + ' ' + l.fact).toLowerCase()
+    let s = 0
+    if (app && l.app && String(app).toLowerCase().includes(l.app.toLowerCase())) s += 5
+    for (const t of toks) if (text.includes(t)) s += 1
+    s += Math.min(3, (l.hits || 1) - 1) * 0.5
+    return { l, s }
+  }).filter((x) => x.s > 0).sort((a, b) => b.s - a.s).slice(0, Math.max(1, Math.min(12, limit))).map((x) => x.l)
+}
+export function getLearningsScope(userId) {
+  const sc = _learnHolder(userId); if (!sc) return null
+  return { kind: sc.kind, count: Array.isArray(sc.obj[sc.field]) ? sc.obj[sc.field].length : 0 }
+}
+export function clearLearnings(userId) {
+  const sc = _learnHolder(userId); if (!sc) return 0
+  const kb = sc.obj[sc.field]; const n = Array.isArray(kb) ? kb.length : 0
+  sc.obj[sc.field] = []; persistSoon(); return n
+}
+
 export function companyBranding(companyId) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) return null
@@ -2666,6 +2727,7 @@ const HERO_DEFAULT = [
   { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
   { h: 'The strongest AI plans it. You are guided live.', em: 'strongest AI', s: 'Your plan comes from the strongest AI your key can reach. Then you are walked through it, step by step, in real time.' },
+  { h: 'Gets smarter every session, never stuck on old knowledge.', em: 'smarter every session', s: 'WorkCoPilot reads the current way your tools work and carries it forward, so your team starts each task ahead of the AI\'s training cutoff, not behind it.' },
   { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: 'Compliance-ready for the frameworks you answer to.', em: 'Compliance-ready', s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
 ]
@@ -2787,6 +2849,16 @@ export function listWorkActivity({ companyId, limit = 300 } = {}) {
 // provider quota/key/5xx failures, timeouts, and unexpected errors. Users never
 // see these; the superadmin does, so the root cause (billing, keys, model) can
 // be fixed. Capped ring buffer.
+// Redact secrets/PII from an incident message before it is stored (audit DAT-06).
+// Incidents are superadmin-only, but an upstream provider error can echo a key or
+// user text; strip the obvious shapes so the monitoring store is never a leak path.
+export function redactIncidentText(s) {
+  return String(s || '')
+    .replace(/\b(sk[-_][A-Za-z0-9_-]{10,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_\-]{20,}|eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{6,})\b/g, '[redacted-secret]')
+    .replace(/-----BEGIN[\s\S]*?-----/g, '[redacted-key]')
+    .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]{2,}\b/g, '[redacted-email]')
+    .replace(/\b(password|passwd|secret|api[_-]?key|token|authorization|bearer)\b\s*[:=]\s*\S+/gi, '$1=[redacted]')
+}
 export function recordWorkIncident({ kind = 'ai_error', status = null, provider = null, model = null, message = '', userId = null, username = '', companyId = null, sessionId = null, call = null } = {}) {
   if (!db.workIncidents) db.workIncidents = []
   db.workIncidents.push({
@@ -2794,7 +2866,7 @@ export function recordWorkIncident({ kind = 'ai_error', status = null, provider 
     kind: String(kind).slice(0, 40), status: status || null,
     provider: provider ? String(provider).slice(0, 40) : null,
     model: model ? String(model).slice(0, 80) : null,
-    message: String(message || '').slice(0, 1000),
+    message: redactIncidentText(message).slice(0, 1000),
     userId: userId || null, username: String(username || '').slice(0, 80),
     companyId: companyId || null, companyName: (companyId && (db.companies || []).find((c) => c.id === companyId) || {}).name || null,
     sessionId: sessionId || null, call: call ? String(call).slice(0, 24) : null,

@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowLeft, ArrowRight, Trophy, Check } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
 // Light viz palette - inks read cleanly on the white Frame surface.
 const EM = '#10a271', EMf = 'rgba(16,162,113,.12)', CY = '#0a93c4', CYf = 'rgba(10,147,196,.12)',
@@ -15,9 +16,11 @@ const EM = '#10a271', EMf = 'rgba(16,162,113,.12)', CY = '#0a93c4', CYf = 'rgba(
   LINE = 'rgba(10,13,18,.14)', SURF = '#ffffff', PANEL = '#f4f8f7', PANEL2 = '#eef3f1', TXT = '#3d4650'
 
 // Each visual shares one frame so the row reads as a set; the content is unique.
-function Frame({ children, h = 92 }) {
+// `label` is the image's alt text (WEB-08): each illustration is a meaningful
+// image of the capability, so it gets a short, accurate description.
+function Frame({ children, h = 92, label }) {
   return (
-    <svg viewBox={`0 0 280 ${h}`} width="100%" style={{ display: 'block', borderRadius: 12, border: `1px solid ${LINE}` }} role="img">
+    <svg viewBox={`0 0 280 ${h}`} width="100%" style={{ display: 'block', borderRadius: 12, border: `1px solid ${LINE}` }} role="img" aria-label={label}>
       <rect x="0" y="0" width="280" height={h} rx="12" fill={SURF} />
       {children}
     </svg>
@@ -26,7 +29,7 @@ function Frame({ children, h = 92 }) {
 const VIZ = {
   // 1. Guided, step by step - a stepper: done, current (glow), pending.
   steps: (
-    <Frame>
+    <Frame label="Illustration: a four-step progress line with step one done, step two in progress and the rest pending">
       <line x1="64" y1="46" x2="140" y2="46" stroke={EM} strokeWidth="2" />
       <line x1="140" y1="46" x2="216" y2="46" stroke="rgba(10,13,18,.16)" strokeWidth="2" />
       <circle cx="64" cy="46" r="11" fill={EMf} stroke={EM} strokeWidth="2" />
@@ -39,7 +42,7 @@ const VIZ = {
   ),
   // 2. The exact how - a terminal with a copy tick.
   command: (
-    <Frame>
+    <Frame label="Illustration: a terminal showing an exact command with a Copied confirmation">
       <rect x="20" y="20" width="240" height="52" rx="9" fill={PANEL2} stroke={LINE} />
       <circle cx="33" cy="33" r="3" fill="#e5574f" /><circle cx="44" cy="33" r="3" fill={AM} /><circle cx="55" cy="33" r="3" fill={EM} />
       <text x="20" y="58" fill={TXT} fontSize="13" fontFamily="ui-monospace,Consolas,monospace"><tspan x="30" fill={EM}>$</tspan><tspan dx="6" fill={TXT}>aws ec2 create-vpc</tspan></text>
@@ -50,7 +53,7 @@ const VIZ = {
   ),
   // 3. Starts from zero - open, sign in, done.
   zero: (
-    <Frame>
+    <Frame label="Illustration: three steps in a row, Open, Sign in, then Done">
       {[['Open', 24], ['Sign in', 110]].map(([t, x]) => (
         <g key={t}><rect x={x} y="34" width={t === 'Open' ? 62 : 70} height="26" rx="8" fill={PANEL} stroke={LINE} /><text x={x + (t === 'Open' ? 31 : 35)} y="51" textAnchor="middle" fill={TXT} fontSize="12" fontFamily="system-ui">{t}</text></g>
       ))}
@@ -61,7 +64,7 @@ const VIZ = {
   ),
   // 4. Catches and corrects - a risky value becomes least privilege.
   fix: (
-    <Frame>
+    <Frame label="Illustration: a risky open network range crossed out and replaced by a corrected, narrower one">
       <rect x="18" y="34" width="96" height="26" rx="7" fill={RDf} stroke="rgba(216,58,48,.4)" />
       <text x="66" y="51" textAnchor="middle" fill={RD} fontSize="12.5" fontFamily="ui-monospace,monospace" style={{ textDecoration: 'line-through' }}>0.0.0.0/0</text>
       <path d="M122 47h18" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M136 43l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -71,7 +74,7 @@ const VIZ = {
   ),
   // 5. Any app - browser, desktop window, terminal tiles.
   apps: (
-    <Frame>
+    <Frame label="Illustration: three app windows side by side, a web page, a desktop app and a terminal">
       {[[24, CY, 'web'], [108, EM, 'app'], [192, AM, 'cli']].map(([x, col, kind]) => (
         <g key={kind}>
           <rect x={x} y="24" width="64" height="44" rx="8" fill={PANEL} stroke={LINE} />
@@ -87,7 +90,7 @@ const VIZ = {
   ),
   // 6. Grounded - your document is read on-device and checked against best practice.
   grounded: (
-    <Frame>
+    <Frame label="Illustration: a document read on the device, with an arrow to a Best practice check mark">
       <rect x="28" y="20" width="60" height="56" rx="6" fill={PANEL} stroke={LINE} />
       {[30, 40, 50, 60].map((y) => <rect key={y} x="36" y={y} width={y === 60 ? 28 : 44} height="4" rx="2" fill="rgba(10,13,18,.16)" />)}
       <line x1="28" y1="48" x2="88" y2="48" stroke={CY} strokeWidth="2" opacity=".85" />
@@ -100,7 +103,7 @@ const VIZ = {
   ),
   // 7. A record you keep - a clean report PDF.
   record: (
-    <Frame>
+    <Frame label="Illustration: a finished PDF report with a completion check mark">
       <rect x="92" y="18" width="96" height="60" rx="7" fill={PANEL} stroke={LINE} />
       {[[30, 60], [40, 78], [50, 46], [60, 70]].map(([y, w]) => <rect key={y} x="104" y={y} width={w} height="5" rx="2.5" fill="rgba(10,13,18,.16)" />)}
       <rect x="150" y="26" width="30" height="16" rx="4" fill={RDf} /><text x="165" y="38" textAnchor="middle" fill={RD} fontSize="9.5" fontWeight="700" fontFamily="system-ui">PDF</text>
@@ -109,7 +112,7 @@ const VIZ = {
   ),
   // 8. Review and generate - a diagram is scanned, an issue found, a fix generated.
   review: (
-    <Frame>
+    <Frame label="Illustration: a diagram being inspected, one box flagged, with an arrow to a generated fix">
       <line x1="60" y1="36" x2="60" y2="60" stroke={LINE} strokeWidth="2" /><line x1="60" y1="36" x2="108" y2="36" stroke={LINE} strokeWidth="2" />
       <rect x="36" y="24" width="48" height="24" rx="6" fill={PANEL} stroke={LINE} />
       <rect x="92" y="24" width="48" height="24" rx="6" fill={RDf} stroke="rgba(216,58,48,.5)" />
@@ -125,7 +128,7 @@ const VIZ = {
   // The PLAN lane: your plan, from the strongest AI on your key. The GUIDE lane:
   // a run of quick, confirmed steps. A quiet "planned by" readout at the foot.
   best: (
-    <Frame h={120}>
+    <Frame h={120} label="Illustration: two lanes, Plan from the strongest AI available to you and Guide as a run of confirmed live steps, with a readout saying Planned by the strongest AI for you">
       {/* PLAN lane */}
       <text x="20" y="34" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace" letterSpacing="1.5">PLAN</text>
       <rect x="62" y="20" width="118" height="22" rx="11" fill="rgba(109,75,216,.10)" stroke="rgba(109,75,216,.55)" />
@@ -163,8 +166,17 @@ const CARDS = [
   { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings.' },
 ]
 
+// Accessibility (WEB-08): one <main>, a single H1, visually hidden H2s over the
+// card grid and the feature card (WorkCard.Head renders H3s, so without them the
+// order would jump H1 -> H3), every illustration is a labeled image, decorative
+// icons are hidden, and focus rings are visible.
 export default function WorkCapabilities() {
   const nav = useNavigate()
+  useSeo({
+    title: 'How It Works - WorkCoPilot by AdmireVeda',
+    description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, and plans from the strongest AI available to you.',
+    path: '/workcopilot/how-it-works',
+  })
   // Deep links like /workcopilot/how-it-works#best-model (from the main page's
   // band): the browser's own hash jump fires before React has rendered the
   // target, so scroll to it once the page is mounted.
@@ -179,13 +191,15 @@ export default function WorkCapabilities() {
       <style>{CSS}</style>
       <header className="wcap-top">
         <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wcap-back" onClick={() => nav('/workcopilot')}><ArrowLeft size={15} /> WorkCoPilot</button>
+        <button className="wcap-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
       </header>
+      <main id="main">
       <section className="wcap-hero">
         <h1>Like having the best person<br />in the room, every time.</h1>
         <p>Everything WorkCoPilot does for you, and the gold-standard way it does each one.</p>
       </section>
-      <section className="wcap-grid">
+      <section className="wcap-grid" aria-labelledby="wcap-grid-h">
+        <h2 id="wcap-grid-h" className="wcap-sr">What WorkCoPilot does for you</h2>
         {CARDS.map((b, i) => {
           const tones = ['', 'cyan', '', 'amber', 'cyan', '', 'cyan', 'violet']
           const pos = ['0% 0%', '100% 0%', '50% 50%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%']
@@ -205,16 +219,17 @@ export default function WorkCapabilities() {
           strongest AI your key can reach, the guidance keeps pace, and the log
           states what planned each task. Never a universal "#1" claim, never an
           endorsement claim, never a vendor or model name, never the routing. */}
-      <section className="wcap-feature" id="best-model">
+      <section className="wcap-feature" id="best-model" aria-labelledby="wcap-feat-h">
+        <h2 id="wcap-feat-h" className="wcap-sr">How your plan is made</h2>
         <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
           <div className="wcap-feat-in">
             <div className="wcap-feat-media">
               <WorkCard.Media>{VIZ.best}</WorkCard.Media>
               <WorkCard.Proof>
-                <span className="wc-chip">goal</span><span className="wc-arrow">&rarr;</span>
-                <span className="wc-chip">plan</span><b>strongest AI for you</b><span className="wc-arrow">&rarr;</span>
-                <span className="wc-chip">guide</span><b>live, step by step</b><span className="wc-arrow">&rarr;</span>
-                <b className="wc-ok"><Check size={11} /> Planned by the strongest AI for you</b>
+                <span className="wc-chip">goal</span><span className="wc-arrow" aria-hidden="true">&rarr;</span>
+                <span className="wc-chip">plan</span><b>strongest AI for you</b><span className="wc-arrow" aria-hidden="true">&rarr;</span>
+                <span className="wc-chip">guide</span><b>live, step by step</b><span className="wc-arrow" aria-hidden="true">&rarr;</span>
+                <b className="wc-ok"><Check size={11} aria-hidden="true" /> Planned by the strongest AI for you</b>
               </WorkCard.Proof>
             </div>
             <div className="wcap-feat-copy">
@@ -230,10 +245,11 @@ export default function WorkCapabilities() {
         </WorkCard>
       </section>
 
-      <section className="wcap-cta">
-        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
+      <section className="wcap-cta" aria-label="Next steps">
+        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
         <a className="wcap-btn alt" href="/demo">See a 60-second demo</a>
       </section>
+      </main>
     </div>
   )
 }
@@ -252,6 +268,9 @@ const CSS = `
   background-image:radial-gradient(rgba(10,13,18,.06) 1px,transparent 1px);background-size:22px 22px;
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.3));mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.3))}
 .wcap>*{position:relative;z-index:1}
+/* a11y: visually hidden text; visible focus ring (never outline:none) */
+.wcap-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wcap a:focus-visible,.wcap button:focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:8px}
 .wcap-top{display:flex;align-items:center;justify-content:space-between;max-width:1160px;margin:0 auto;padding:18px 24px}
 .wcap-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wcap-hero{max-width:1160px;margin:0 auto;padding:30px 24px 10px;text-align:center}

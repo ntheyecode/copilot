@@ -6,6 +6,7 @@ import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the public sign-in page too
+import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 
 const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 
@@ -15,12 +16,25 @@ const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 // Free signup gives dashboard access right away. When a plan was chosen on the
 // marketing page (?plan=basic|advanced|premium), Stripe Checkout starts the
 // moment the account is ready. Reuses the shared auth. Lands you on /work.
+//
+// Accessibility (WEB-08): the form heading is the page's single H1 (the brand
+// panel's headline is a styled paragraph, since that panel is hidden on phones
+// and the H1 must always be present); every input has a programmatic label and
+// autocomplete; errors are announced (role=alert) and tied to their field via
+// aria-describedby; the busy state is exposed with aria-busy; the sign-in /
+// create-account switch is a real button, not a hash link; focus rings stay
+// visible; the faint legal line was raised to AA contrast.
 // ---------------------------------------------------------------------------
 export default function WorkLogin() {
   const nav = useNavigate()
   const { user, login, signup } = useAuth()
   const [sp] = useSearchParams()
   const plan = (sp.get('plan') || '').toLowerCase()
+  useSeo({
+    title: 'Sign In or Create an Account - WorkCoPilot by AdmireVeda',
+    description: 'Sign in to WorkCoPilot, or create a free account, to get step-by-step guidance on your own screen. Company single sign-on is supported.',
+    path: '/workcopilot',
+  })
   const cycle = (sp.get('cycle') || 'monthly').toLowerCase()   // annual selections are not auto-charged monthly
   const planName = { basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }[plan] || ''
 
@@ -132,56 +146,56 @@ export default function WorkLogin() {
           <span className="wl-prod"><AVMark size={22} id="avlw" /> WorkCoPilot</span>
         </a>
         <div className="wl-pitch">
-          <h1>Your expert,<br />on every screen.</h1>
+          <p className="wl-pitch-h">Your expert,<br />on every screen.</p>
           <p>AdmireVeda's WorkCoPilot sits beside you and guides any task, step by step, all the way to done.</p>
           <ul>
-            <li><Check size={15} /> Exact steps, commands and links</li>
-            <li><Check size={15} /> Watches your screen, catches mistakes</li>
-            <li><Check size={15} /> Keeps a clean record of what you did</li>
+            <li><Check size={15} aria-hidden="true" /> Exact steps, commands and links</li>
+            <li><Check size={15} aria-hidden="true" /> Watches your screen, catches mistakes</li>
+            <li><Check size={15} aria-hidden="true" /> Keeps a clean record of what you did</li>
           </ul>
         </div>
-        <div className="wl-mock">
-          <div className="wl-mock-label"><MonitorPlay size={13} /> DO THIS NOW</div>
+        <div className="wl-mock" role="img" aria-label="Example of a guided step: Do this now, open the console and create the VPC, with the exact command shown">
+          <div className="wl-mock-label"><MonitorPlay size={13} aria-hidden="true" /> DO THIS NOW</div>
           <div className="wl-mock-step">Open the console and create the VPC.</div>
           <code>$ aws ec2 create-vpc --cidr-block 10.0.0.0/16</code>
         </div>
       </aside>
 
       {/* Sign in / create account */}
-      <main className="wl-main">
+      <main className="wl-main" id="main">
         <div className="wl-card">
           <div className="wl-card-brand"><AVMark size={18} id="avlc" /> WorkCoPilot <span className="wl-by">by AdmireVeda</span></div>
-          <h2>{mode === 'signup' ? (planName ? `Create your account for ${planName}` : 'Create your account') : (planName ? `Sign in to start ${planName}` : 'Sign in')}</h2>
+          <h1>{mode === 'signup' ? (planName ? `Create your account for ${planName}` : 'Create your account') : (planName ? `Sign in to start ${planName}` : 'Sign in')}</h1>
           <p className="wl-sub">{mode === 'signup' ? 'It is free to sign up. Pick a plan when you are ready to start guiding.' : 'Welcome back. Pick up right where you left off.'}</p>
-          <form onSubmit={submit}>
-            <label>Username</label>
-            <input autoFocus value={uName} onChange={(e) => setUName(e.target.value)} autoComplete="username" placeholder="your username" />
-            <label>Password</label>
-            <input type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} placeholder={mode === 'signup' ? 'choose a password (6+ characters)' : 'your password'} />
-            {err && <div className="wl-err">{err}</div>}
-            <button className="wl-cta" type="submit" disabled={busy || checkingOut}>{(busy || checkingOut) ? <Loader2 size={16} className="wl-spin" /> : null} {mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={16} /></button>
+          <form onSubmit={submit} aria-label={mode === 'signup' ? 'Create account' : 'Sign in'} aria-busy={busy || checkingOut}>
+            <label htmlFor="wl-user">Username</label>
+            <input id="wl-user" name="username" autoFocus value={uName} onChange={(e) => setUName(e.target.value)} autoComplete="username" placeholder="your username" aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
+            <label htmlFor="wl-pass">Password</label>
+            <input id="wl-pass" name="password" type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} placeholder={mode === 'signup' ? 'choose a password (6+ characters)' : 'your password'} aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
+            {err && <div className="wl-err" id="wl-err" role="alert">{err}</div>}
+            <button className="wl-cta" type="submit" disabled={busy || checkingOut} aria-busy={busy || checkingOut}>{(busy || checkingOut) ? <Loader2 size={16} className="wl-spin" aria-hidden="true" /> : null} {(busy || checkingOut) ? <span className="wl-sr">Working, please wait. </span> : null}{mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={16} aria-hidden="true" /></button>
           </form>
 
           <div className="wl-sso">
-            <div className="wl-or"><span>or</span></div>
+            <div className="wl-or" aria-hidden="true"><span>or</span></div>
             {!ssoOpen ? (
-              <button type="button" className="wl-sso-btn" onClick={() => { setSsoOpen(true); setSsoErr('') }}>
-                <Building2 size={16} /> Sign in with your company (SSO)
+              <button type="button" className="wl-sso-btn" onClick={() => { setSsoOpen(true); setSsoErr('') }} aria-expanded="false">
+                <Building2 size={16} aria-hidden="true" /> Sign in with your company (SSO)
               </button>
             ) : (
-              <form onSubmit={startSso} className="wl-sso-form">
-                <label>Company email domain</label>
-                <input autoFocus value={ssoDomain} onChange={(e) => setSsoDomain(e.target.value)} placeholder="example.com" />
-                <button type="submit" className="wl-sso-go" disabled={ssoBusy}>{ssoBusy ? <Loader2 size={15} className="wl-spin" /> : null} Continue <ArrowRight size={15} /></button>
+              <form onSubmit={startSso} className="wl-sso-form" id="wl-sso-panel" aria-label="Sign in with your company" aria-busy={ssoBusy}>
+                <label htmlFor="wl-sso-domain">Company email domain</label>
+                <input id="wl-sso-domain" name="domain" type="text" inputMode="url" autoFocus value={ssoDomain} onChange={(e) => setSsoDomain(e.target.value)} placeholder="example.com" autoComplete="organization" aria-required="true" aria-invalid={ssoErr ? 'true' : undefined} aria-describedby={ssoErr ? 'wl-sso-err' : undefined} />
+                <button type="submit" className="wl-sso-go" disabled={ssoBusy} aria-busy={ssoBusy}>{ssoBusy ? <Loader2 size={15} className="wl-spin" aria-hidden="true" /> : null} Continue <ArrowRight size={15} aria-hidden="true" /></button>
               </form>
             )}
-            {ssoErr && <div className="wl-err wl-sso-err">{ssoErr}</div>}
+            {ssoErr && <div className="wl-err wl-sso-err" id="wl-sso-err" role="alert">{ssoErr}</div>}
           </div>
 
           <div className="wl-foot">
             {mode === 'signup'
-              ? <>Already have an account? <a href="#signin" onClick={(e) => { e.preventDefault(); setErr(''); setMode('signin') }}>Sign in</a></>
-              : <>New here? <a href="#signup" onClick={(e) => { e.preventDefault(); setErr(''); setMode('signup') }}>Create an account</a></>}
+              ? <>Already have an account? <button type="button" className="wl-switch" onClick={() => { setErr(''); setMode('signin') }}>Sign in</button></>
+              : <>New here? <button type="button" className="wl-switch" onClick={() => { setErr(''); setMode('signup') }}>Create an account</button></>}
           </div>
           <div className="wl-legal">Lawful, legitimate work only. Harmful or illegal requests are declined.</div>
         </div>
@@ -210,7 +224,7 @@ const CSS = `
 .wl-prod{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:9px}
 .wl-dot{width:11px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--em2));box-shadow:0 0 14px var(--em)}
 .wl-pitch{margin-top:auto}
-.wl-pitch h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.03em}
+.wl-pitch .wl-pitch-h{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(32px,4vw,50px);line-height:1.04;letter-spacing:-.03em;color:var(--tx);margin:0;max-width:none}
 .wl-pitch p{color:var(--mut);font-size:18px;max-width:34ch;margin:18px 0 24px}
 .wl-pitch ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:11px}
 .wl-pitch li{display:flex;gap:9px;align-items:center;color:var(--tx);font-size:15px}
@@ -226,18 +240,25 @@ const CSS = `
 .wl-card{width:100%;max-width:400px}
 .wl-card-brand{display:flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque";font-weight:800;font-size:15px;margin-bottom:22px}
 .wl-by{font-family:"Figtree";font-weight:400;font-size:12px;color:var(--mut);letter-spacing:0}
-.wl-card h2{font-family:"Bricolage Grotesque";font-size:30px;letter-spacing:-.02em}
+.wl-card h1{font-family:"Bricolage Grotesque";font-size:30px;font-weight:700;letter-spacing:-.02em}
 .wl-sub{color:var(--mut);margin:7px 0 26px}
 .wl-card label{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px;letter-spacing:.02em}
-.wl-card input{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:16px;outline:none}
+.wl-card input{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:16px}
 .wl-card input:focus{border-color:var(--em)}
+.wl-card input:focus-visible{outline:2px solid var(--em);outline-offset:1px}
+.wl-card input[aria-invalid="true"]{border-color:#c0392b}
 .wl-err{color:#c0392b;font-size:13.5px;margin:-6px 0 14px}
+/* a11y: visually hidden text; visible focus ring on every control (never outline:none) */
+.wl-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.wl a:focus-visible,.wl button:focus-visible{outline:2px solid var(--em2);outline-offset:3px;border-radius:8px}
+.wl-switch{background:none;border:0;padding:0;font:inherit;font-size:inherit;color:var(--em);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+@media(prefers-reduced-motion:reduce){.wl-aurora{animation:none}.wl-cta{transition:none}}
 .wl-cta{width:100%;justify-content:center;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:12px;padding:14px;font:inherit;font-weight:600;font-size:16px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 12px 34px -12px rgba(255,122,89,.65);transition:transform .15s}
 .wl-cta:hover{transform:translateY(-2px)}
 .wl-cta:disabled{opacity:.7;cursor:default;transform:none}
 .wl-foot{color:var(--mut);font-size:13px;margin-top:20px}
 .wl-foot a{color:var(--em);text-decoration:underline;text-underline-offset:3px}
-.wl-legal{color:var(--mut);font-size:11.5px;margin-top:10px;opacity:.75}
+.wl-legal{color:var(--mut);font-size:12px;margin-top:10px}
 .wl-spin{animation:wlrot 1s linear infinite}@keyframes wlrot{to{transform:rotate(360deg)}}
 .wl-sso{margin-top:18px}
 .wl-or{display:flex;align-items:center;gap:12px;color:var(--mut);font-size:12px;margin:4px 0 14px}
@@ -246,8 +267,9 @@ const CSS = `
 .wl-sso-btn:hover{border-color:var(--em)}
 .wl-sso-btn svg{color:var(--em2)}
 .wl-sso-form label{display:block;font-size:12.5px;color:var(--mut);margin:0 0 6px;letter-spacing:.02em}
-.wl-sso-form input{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:12px;outline:none}
+.wl-sso-form input{width:100%;background:#ffffff;border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15px;margin-bottom:12px}
 .wl-sso-form input:focus{border-color:var(--em)}
+.wl-sso-form input:focus-visible{outline:2px solid var(--em);outline-offset:1px}
 .wl-sso-go{width:100%;justify-content:center;background:#ffffff;color:var(--tx);border:1px solid var(--line);border-radius:12px;padding:13px;font:inherit;font-weight:600;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;gap:8px}
 .wl-sso-go:hover{border-color:var(--em)}
 .wl-sso-go:disabled{opacity:.7;cursor:default}

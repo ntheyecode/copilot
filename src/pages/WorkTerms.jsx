@@ -154,7 +154,7 @@ const SECTIONS = [
           ['Legal, privacy and security', <a key="l" href={'mailto:' + LEGAL_CONTACT}>{LEGAL_CONTACT}</a>],
           ['Product support and billing', <a key="s" href={'mailto:' + SUPPORT_CONTACT}>{SUPPORT_CONTACT}</a>],
         ]} />
-        <div className="wlx-note"><ShieldCheck size={14} /><span><b>Honest framing.</b> This page is a template. It describes the intended terms and is not a substitute for your own legal review.</span></div>
+        <div className="wlx-note"><ShieldCheck size={14} aria-hidden="true" /><span><b>Honest framing.</b> This page is a template. It describes the intended terms and is not a substitute for your own legal review.</span></div>
       </>
     ),
   },
@@ -169,6 +169,11 @@ export default function WorkTerms() {
       intro="These terms set out how you may use WorkCoPilot, what you can expect from us, and where responsibility sits. They are written to be read, and they point to the policies that go with them."
       lastUpdated={LAST_UPDATED}
       tagline="Plain-language terms, template draft"
+      seo={{
+        title: 'Terms of Service - WorkCoPilot by AdmireVeda',
+        description: 'The plain-language terms for using WorkCoPilot: the read-only service, acceptable use, accounts, subscriptions and billing, ownership, warranties, liability and termination.',
+        path: '/workcopilot/terms',
+      }}
       glance={GLANCE}
       sections={SECTIONS}
       links={[

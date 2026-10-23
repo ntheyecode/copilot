@@ -4,6 +4,7 @@ import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles } from 'l
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
+import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 
 // WorkCoPilot - scripted 60-second demo (admireveda.com/demo).
 // Fully canned: no login, no AI, no network calls. It replays one real guided
@@ -89,8 +90,19 @@ const WRITEUP = [
   'Added a 0.0.0.0/0 route to the gateway so traffic can get out.',
 ]
 
+// Accessibility (WEB-08): one <main>, a single H1, a labeled site nav with
+// aria-current on this page, the auto-playing player is a labeled region that
+// is NOT a live region (it changes every few seconds; announcing each change
+// would drown a screen-reader user), decorative dots and icons are hidden,
+// motion honors prefers-reduced-motion, and the faint step counter / terminal
+// header inks were raised to AA contrast.
 export default function WorkDemo() {
   const nav = useNavigate()
+  useSeo({
+    title: '60-Second Demo - WorkCoPilot by AdmireVeda',
+    description: 'Watch WorkCoPilot guide one real task start to finish: it reads the screen, gives the exact next step and command, checks it worked, catches a mistake before it costs you, and hands you the write-up.',
+    path: '/demo',
+  })
 
   // Load the same fonts the marketing page uses, so the demo matches it.
   useEffect(() => {
@@ -111,19 +123,20 @@ export default function WorkDemo() {
       <header className="wkd-nav">
         <div className="wkd-wrap wkd-nav-in">
           <a href="/" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
-          <nav className="wkd-links">
+          <nav className="wkd-links" aria-label="Site">
             <a href="/#how">How it works</a>
-            <a href="/demo" className="on">Demo</a>
+            <a href="/demo" className="on" aria-current="page">Demo</a>
             <a href="/workcopilot/use-cases">Use cases</a>
             <a href="/#pricing">Pricing</a>
           </nav>
-          <button className="wkd-cta sm" onClick={start}>Start free <ArrowRight size={15} /></button>
+          <button className="wkd-cta sm" onClick={start}>Start free <ArrowRight size={15} aria-hidden="true" /></button>
         </div>
       </header>
 
+      <main id="main">
       <section className="wkd-hero">
         <div className="wkd-wrap wkd-hero-in">
-          <div className="wkd-badge"><Sparkles size={13} /> A real session, start to finish</div>
+          <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> A real session, start to finish</div>
           <h1>Watch it guide one task, step by step.</h1>
           <p className="wkd-lead">
             No sign-up, nothing to install. This plays out exactly the way the product works:
@@ -132,20 +145,21 @@ export default function WorkDemo() {
           </p>
           <DemoPlayer />
           <div className="wkd-herocta">
-            <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={17} /></button>
+            <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={17} aria-hidden="true" /></button>
             <span className="wkd-note">Takes about a minute to watch. Free to try.</span>
           </div>
         </div>
       </section>
 
-      <section className="wkd-final">
+      <section className="wkd-final" aria-labelledby="wkd-final-h">
         <div className="wkd-wrap wkd-final-in">
           <AVMark size={44} id="avd" />
-          <h2>That is every task, not just this one.</h2>
+          <h2 id="wkd-final-h">That is every task, not just this one.</h2>
           <p>Bring your own work. WorkCoPilot takes it from the first step to done, and hands you the write-up.</p>
-          <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={18} /></button>
+          <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </section>
+      </main>
 
       <footer className="wkd-foot">
         <div className="wkd-wrap wkd-foot-in">
@@ -232,22 +246,22 @@ function DemoPlayer() {
 
   return (
     <div className="wkd-stage-wrap">
-      <div className="wkd-demo">
+      <div className="wkd-demo" role="region" aria-label="Scripted demo of one guided session. It plays automatically and can be replayed at the end." aria-live="off">
         <div className="wkd-demo-head">
-          <span className="dot r" /><span className="dot y" /><span className="dot g" />
+          <span className="dot r" aria-hidden="true" /><span className="dot y" aria-hidden="true" /><span className="dot g" aria-hidden="true" />
           <b>WorkCoPilot</b>
-          {stage !== 'done' && <span className="wkd-live" title="reading your screen"><i /> watching</span>}
+          {stage !== 'done' && <span className="wkd-live" title="reading your screen"><i aria-hidden="true" /> watching</span>}
           <span className="wkd-tag">Cloud</span>
         </div>
 
         <div className="wkd-demo-goal"><span className="k">GOAL</span> {typed}{stage === 'type' && <span className="caret" />}</div>
 
-        {/* The stage area fills the card and centres its screen, so the fixed
+        {/* The stage area fills the card and centers its screen, so the fixed
             height never leaves an empty gap below short stages (the write-up). */}
         <div className="wkd-stagearea">
         {stage === 'plan' && (
           <div className="wkd-plan">
-            <div className="wkd-plan-head"><ScanEye size={13} /> Reading your screen, here is the plan</div>
+            <div className="wkd-plan-head"><ScanEye size={13} aria-hidden="true" /> Reading your screen, here is the plan</div>
             <ol>
               {STEPS.map((st, i) => (
                 <li key={i} className={i < planShown ? 'in' : ''}>{st.step || st.done}</li>
@@ -258,7 +272,7 @@ function DemoPlayer() {
 
         {stage === 'step' && (
           <div className="wkd-demo-body">
-            <div className="wkd-sees" key={'see' + si}><span className="seek"><ScanEye size={12} /> I can see</span> {s.sees}</div>
+            <div className="wkd-sees" key={'see' + si}><span className="seek"><ScanEye size={12} aria-hidden="true" /> I can see</span> {s.sees}</div>
 
             {s.cmd && !isFix && (
               <div className="wkd-term" key={'tm' + si}>
@@ -274,9 +288,9 @@ function DemoPlayer() {
             <div className="wkd-guide">
               {isFix ? (
                 <div className="wkd-fix" key={'fx' + si}>
-                  <div className="wkd-fix-h"><AlertTriangle size={13} /> HOLD ON <span className="no">Step {si + 1} of {tot}</span></div>
+                  <div className="wkd-fix-h"><AlertTriangle size={13} aria-hidden="true" /> HOLD ON <span className="no">Step {si + 1} of {tot}</span></div>
                   <div className="wkd-fix-say">{s.fix.say}</div>
-                  <div className="wkd-fix-do"><ArrowRight size={13} /> {s.fix.do}</div>
+                  <div className="wkd-fix-do"><ArrowRight size={13} aria-hidden="true" /> {s.fix.do}</div>
                 </div>
               ) : (
                 <>
@@ -302,22 +316,22 @@ function DemoPlayer() {
               )}
             </div>
 
-            <div className="wkd-done-when" key={'dw' + si}><Check size={13} /> done when {s.done}</div>
+            <div className="wkd-done-when" key={'dw' + si}><Check size={13} aria-hidden="true" /> done when {s.done}</div>
           </div>
         )}
 
         {stage === 'done' && (
           <div className="wkd-wrapup">
-            <div className="wkd-wrapup-h"><FileText size={15} /> Session write-up</div>
+            <div className="wkd-wrapup-h"><FileText size={15} aria-hidden="true" /> Session write-up</div>
             <div className="wkd-wrapup-sub">A clean record of exactly what you did, ready to keep, share or repeat.</div>
             <ul>
               {WRITEUP.map((w, i) => (
-                <li key={i} style={{ animationDelay: `${120 + i * 140}ms` }}><Check size={14} /> {w}</li>
+                <li key={i} style={{ animationDelay: `${120 + i * 140}ms` }}><Check size={14} aria-hidden="true" /> {w}</li>
               ))}
             </ul>
             <div className="wkd-wrapup-foot">
-              <span className="wkd-badge-done"><Check size={13} /> Task complete</span>
-              <button className="wkd-replay" onClick={run}>Replay</button>
+              <span className="wkd-badge-done"><Check size={13} aria-hidden="true" /> Task complete</span>
+              <button className="wkd-replay" onClick={run} aria-label="Replay the demo">Replay</button>
             </div>
           </div>
         )}
@@ -371,7 +385,7 @@ const CSS = `
    stages change (measured max 594px; 612 gives headroom). overflow:hidden keeps
    any stray pixel and the fireworks inside the rounded card. */
 .wkd-demo{background:linear-gradient(180deg,#0f1424,#0b0f1c);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:0 30px 70px rgba(5,10,30,.5);padding:16px;text-align:left;color:#e8ecf7;height:612px;position:relative;overflow:hidden;display:flex;flex-direction:column}
-/* Each screen fills the card and sits centred, so the fixed height never leaves
+/* Each screen fills the card and sits centered, so the fixed height never leaves
    a dead gap below a short stage (the write-up) - it reads as composed, not
    cut off. Reveal animations are opacity/transform only, so centring never
    jitters. */
@@ -401,7 +415,7 @@ const CSS = `
 .wkd-sees{position:relative;font-size:13.5px;color:#cdd6ec;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:10px;padding:10px 12px;animation:wkd-fade .4s ease both}
 .wkd-sees .seek{display:inline-flex;align-items:center;gap:5px;font-weight:700;color:#7dd3fc;margin-right:6px}
 .wkd-term{margin-top:12px;background:#05070f;border:1px solid rgba(255,255,255,.1);border-radius:10px;overflow:hidden;animation:wkd-fade .4s ease both}
-.wkd-term-h{display:flex;justify-content:space-between;font-size:10px;font-weight:700;letter-spacing:.1em;color:#6b7694;padding:7px 11px;border-bottom:1px solid rgba(255,255,255,.07)}
+.wkd-term-h{display:flex;justify-content:space-between;font-size:10px;font-weight:700;letter-spacing:.1em;color:#8c97b5;padding:7px 11px;border-bottom:1px solid rgba(255,255,255,.07)}
 .wkd-term-h span{color:#7dd3fc;cursor:default}
 .wkd-term code{display:block;padding:11px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12.5px;color:#9be7a0;white-space:pre-wrap;word-break:break-all}
 
@@ -413,7 +427,7 @@ const CSS = `
 .wkd-guide{margin-top:4px}
 .wkd-now-lbl,.wkd-how-lbl{font-size:10px;font-weight:800;letter-spacing:.1em;color:#7dd3fc}
 .wkd-now-step{font-size:17px;font-weight:700;color:#fff;margin-top:5px;animation:wkd-fade .4s ease both}
-.wkd-now-lbl .no,.wkd-fix-h .no{float:right;color:#6b7694;font-weight:700;letter-spacing:0}
+.wkd-now-lbl .no,.wkd-fix-h .no{float:right;color:#8c97b5;font-weight:700;letter-spacing:0}
 .wkd-how{margin-top:14px}
 .wkd-how-cnt{float:right;font-size:9.5px;font-weight:800;letter-spacing:.06em;color:#93a0c0;background:rgba(125,211,252,.12);border:1px solid rgba(125,211,252,.22);border-radius:999px;padding:2px 8px}
 .wkd-how-list{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:9px}
@@ -443,6 +457,17 @@ const CSS = `
 
 @keyframes wkd-fade{from{opacity:0}to{opacity:1}}
 @keyframes wkd-slide{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+/* a11y: visible focus ring (never outline:none); honor reduced motion (the
+   scripted timeline still advances, only the decorative motion is stilled) */
+.wkd a:focus-visible,.wkd button:focus-visible{outline:2px solid var(--em);outline-offset:3px;border-radius:8px}
+.wkd .wkd-demo a:focus-visible,.wkd .wkd-demo button:focus-visible{outline-color:#7dd3fc}
+@media(prefers-reduced-motion:reduce){
+  .wkd .wkd-live i,.wkd .caret{animation:none}
+  .wkd .wkd-plan li,.wkd .wkd-how-list li,.wkd .wkd-wrapup li{opacity:1;transform:none;transition:none;animation:none}
+  .wkd .wkd-plan,.wkd .wkd-sees,.wkd .wkd-term,.wkd .wkd-now-step,.wkd .wkd-fix,.wkd .wkd-wrapup{animation:none}
+  .wkd .wkd-fw{display:none}
+  .wkd .wkd-cta{transition:none}
+}
 
 .wkd-final{padding:40px 0 60px;text-align:center}
 .wkd-final-in{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:40px 24px;box-shadow:0 20px 50px rgba(10,30,70,.07)}

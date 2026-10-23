@@ -4,10 +4,9 @@ import {
   MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
   ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
-  Building2, BadgeCheck, Copy, Download,
+  Building2, Copy, Download,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
   Code2, Table, Palette,
-  BrainCircuit, Kanban, Cpu, Landmark, Briefcase, HeartPulse, GraduationCap,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
@@ -15,11 +14,20 @@ import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide pre
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
+import useSeo from '../useSeo.js'
+// The field roster lives ONCE, on the /fields page; the teaser below imports
+// its numbers so the headline count can never drift from the full list.
+import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
 
 // AdmireVeda WorkCoPilot - marketing landing (admireveda.com).
 // Motion-rich, benefits-first. Never names a model, never mentions limits.
 export default function WorkMarketing() {
   const nav = useNavigate()
+  useSeo({
+    title: 'WorkCoPilot by AdmireVeda - Your expert, on every screen',
+    description: 'WorkCoPilot watches your screen and guides you step by step through any task, in any app, with the exact click, command or setting. Read-only, private by design, documented when you finish.',
+    path: '/',
+  })
   const [price, setPrice] = useState(null)
   const rootRef = useRef(null)
   useEffect(() => { fetch('/api/work/pricing').then((r) => r.json()).then(setPrice).catch(() => {}) }, [])
@@ -286,10 +294,10 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* FIELDS WE COVER - the breadth showcase. 56 professional fields in 10
-          families, straight from docs/professions-and-disciplines.md (the two
-          lists must stay in sync; FIELD_FAMILIES is the only place the roster
-          lives on this page). Benefit only: WHAT is covered, never how. */}
+      {/* FIELDS WE COVER - a SHORT teaser only. The full 10-family grid lives on
+          /workcopilot/fields (owner rule: extra content on separate pages,
+          linked from the footer; keep the main page short). The numbers come
+          from the roster exported by that page, so they can never drift. */}
       <section className="wm-sec wm-fields" id="fields">
         <div className="wm-wrap">
           <div className="wm-eyebrow" data-reveal><Shapes size={14} /> Every field &middot; one tool</div>
@@ -300,20 +308,9 @@ export default function WorkMarketing() {
             <div className="wm-fld-stat"><b>{FIELD_FAMILIES.length}</b><span>families of work</span></div>
             <div className="wm-fld-stat"><b>1</b><span>tool for all of them</span></div>
           </div>
-          <div className="wm-fld-grid">
-            {FIELD_FAMILIES.map((f, i) => (
-              <WorkCard key={f.k} theme="light" tone={f.tone || undefined} delay={i * 45}
-                className={f.wide ? 'wm-fld-wide' : ''}
-                texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '25% 25%', '75% 75%'][i % 10]}>
-                <WorkCard.Head icon={f.ic} eyebrow={`${f.items.length} ${f.items.length === 1 ? 'field' : 'fields'}`} title={f.k} align="start" />
-                <WorkCard.Body>{f.d}</WorkCard.Body>
-                <ul className="wm-fld-tags" aria-label={`${f.k} fields`}>
-                  {f.items.map((t, j) => <li key={t} className="wm-fld-tag" style={{ '--i': j }}>{t}</li>)}
-                </ul>
-              </WorkCard>
-            ))}
+          <div className="wm-fld-more" data-reveal>
+            <a className="wm-cta alt" href="/workcopilot/fields">See all {FIELD_TOTAL} fields and families <ArrowRight size={15} /></a>
           </div>
-          <p className="wm-fld-cap" data-reveal>Not on the list by name? If it is on a screen, you are guided through it.</p>
         </div>
       </section>
 
@@ -512,82 +509,10 @@ export default function WorkMarketing() {
             <span><ShieldCheck size={14} /> Purchased time never expires</span>
           </div>
           {price && <p className="wm-fineprint" data-reveal>Need more? Top up extra hours anytime. Premium adds generated visuals, and image packs start from {money(price.image.premium)} each (min {price.imageMinBulk}). Purchased time never expires.</p>}
-        </div>
-      </section>
-
-      {/* COMPARE PLANS - one scannable matrix of what differs between tiers
-          (capacity + a few power features) and what every plan shares
-          (security is never the upgrade), then an honest, qualitative value
-          band. Facts mirror the pricing cards above; nothing here is invented. */}
-      <section className="wm-sec wm-compare" id="compare">
-        <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Table size={14} /> Compare plans</div>
-          <h2 className="wm-h2" data-reveal>Every plan, side by side.</h2>
-          <p className="wm-sub" data-reveal>Plans differ in daily capacity and a few power features. Security and privacy are built into every plan, never sold as an upgrade.</p>
-
-          {/* desktop + tablet: the matrix. Scrolls inside its own card if the
-              viewport is narrower than the table, so the page never scrolls sideways. */}
-          <div className="wm-cmp-card" data-reveal>
-            <div className="wm-cmp-scroll">
-              <table className="wm-cmp">
-                <thead>
-                  <tr>
-                    <th scope="col" className="wm-cmp-feat">What you get</th>
-                    {CMP_TIERS.map((t) => (
-                      <th scope="col" key={t.id} className={t.popular ? 'pop' : ''}>
-                        {t.popular && <span className="wm-cmp-pop">Most popular</span>}
-                        {t.name}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {CMP_ROWS.map((r, i) => (r.g
-                    ? <tr className="wm-cmp-group" key={`g${i}`}><td colSpan={CMP_TIERS.length + 1}>{r.g}</td></tr>
-                    : (
-                      <tr key={r.k}>
-                        <th scope="row" className="wm-cmp-feat">{r.k}</th>
-                        {r.v.map((v, j) => <td key={CMP_TIERS[j].id} className={CMP_TIERS[j].popular ? 'pop' : ''}><CmpCell v={v} /></td>)}
-                      </tr>
-                    )))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* phones: the same facts as one card per plan (no sideways table) */}
-          <div className="wm-cmp-stack">
-            {CMP_TIERS.map((t, j) => (
-              <div className={`wm-cmp-tcard${t.popular ? ' pop' : ''}`} data-reveal key={t.id}>
-                <div className="wm-cmp-tname">{t.name}{t.popular && <span className="wm-cmp-pop">Most popular</span>}</div>
-                <ul>
-                  {CMP_ROWS.map((r, i) => (r.g
-                    ? <li className="wm-cmp-tgroup" key={`g${i}`}>{r.g}</li>
-                    : <li key={r.k} className={r.v[j] === false ? 'off' : ''}><CmpCell v={r.v[j]} /><span>{r.k}</span></li>))}
-                </ul>
-              </div>
-            ))}
-          </div>
-
-          {/* VALUE / ROI - qualitative on purpose. No savings percentage is
-              presented as a measured result; the one example is labelled
-              illustrative. */}
-          <div className="wm-cmp-value" data-reveal>
-            <div className="wm-cmp-value-l">
-              <div className="wm-eyebrow"><Gauge size={14} /> Where the return comes from</div>
-              <h3>Value you can see, without a made-up number.</h3>
-              <ul>
-                <li><Check size={16} /> Take on specialist work without new hires or outsourcing.</li>
-                <li><Check size={16} /> Ship like an expert the first time, with fewer do-overs and rollbacks.</li>
-                <li><Check size={16} /> Every task ends with a write-up, so the know-how stays in-house.</li>
-                <li><Check size={16} /> One subscription covers desktop, mobile and browser.</li>
-              </ul>
-            </div>
-            <div className="wm-cmp-value-r">
-              <div className="wm-cmp-note-h"><BadgeCheck size={15} /> An honest note on ROI</div>
-              <p>We do not publish savings percentages as measured results, because your return depends on the work your team takes on. A fair way to size it: put a plan's monthly price next to what one specialist engagement, a consultant day or a delayed launch costs you today.</p>
-              <p className="wm-cmp-illus"><b>Illustrative, not a measured result:</b> a team that would otherwise book an outside specialist to stand up a new tool instead does it in-house, guided step by step, and keeps the documented write-up for the next time.</p>
-            </div>
+          {/* The full entitlement matrix (every row, every plan, the fine print)
+              lives on /workcopilot/pricing; the main page keeps only the cards. */}
+          <div className="wm-fld-more" data-reveal>
+            <a className="wm-cta alt" href="/workcopilot/pricing">See the full plan comparison <ArrowRight size={15} /></a>
           </div>
         </div>
       </section>
@@ -629,6 +554,8 @@ export default function WorkMarketing() {
           <AdmireVedaLogo size={24} idSuffix="f" />
           <span className="wm-foot-by">&copy; {new Date().getFullYear()} COE Security LLC &middot; WorkCoPilot by AdmireVeda, a product of COE Security LLC</span>
           <nav className="wm-foot-links">
+            <a className="wm-link" href="/workcopilot/fields">Fields</a>
+            <a className="wm-link" href="/workcopilot/pricing">Pricing</a>
             <a className="wm-link" href="/workcopilot/security">Security</a>
             <a className="wm-link" href="/workcopilot/benchmark">Accuracy</a>
             <a className="wm-link" href="/workcopilot/privacy">Privacy</a>
@@ -1009,46 +936,7 @@ function BViz({ k }) {
 // [text, emphasised] segments; the emphasised run takes the brand gradient.
 // Wording is approved copy: refine the gradient word here, never add claims.
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// FIELDS WE COVER - the 56 professional fields, by family. Source of truth for
-// the marketing claim is docs/professions-and-disciplines.md; keep the two in
-// step when a field is added or renamed. FIELD_TOTAL is DERIVED from the list
-// so the number on the page can never drift from what the page actually shows.
-// Benefit-only copy: names the fields, never the method behind the guidance.
-// ---------------------------------------------------------------------------
-const FIELD_FAMILIES = [
-  { k: 'Software & engineering', ic: Code2, tone: '', wide: true,
-    d: 'From the first commit to the on-call rotation.',
-    items: ['Developer', 'Frontend & accessibility', 'Mobile development', 'Game development', 'Embedded / firmware', 'Database', 'SDET', 'QA', 'DevOps', 'SRE', 'Network engineering', 'Sysadmin / IT ops', 'Blockchain development'] },
-  { k: 'Security & resilience', ic: ShieldCheck, tone: 'cyan', wide: true,
-    d: 'Find it, prove it, contain it, and answer for it.',
-    items: ['Penetration testing', 'Network pentest', 'Mobile pentest', 'API security', 'Cloud security', 'DevSecOps', 'Threat modeling', 'Incident response', 'Compliance & GRC'] },
-  { k: 'Data, AI & math', ic: BrainCircuit, tone: 'violet',
-    d: 'Pipelines, models and numbers that hold up.',
-    items: ['Data engineering', 'Data analytics', 'MLOps', 'Applied math', 'Research & science', 'Quant / FP&A'] },
-  { k: 'Product, project & design', ic: Kanban, tone: 'amber',
-    d: 'From the idea to the roadmap to the shipped thing.',
-    items: ['Product management', 'Project management', 'Agile / scrum', 'Business analysis', 'UX design'] },
-  { k: 'OT, IoT & physical systems', ic: Cpu, tone: 'cyan',
-    d: 'Where the software meets the machine.',
-    items: ['OT / ICS', 'IoT', 'Robotics', 'Aviation operations'] },
-  { k: 'Finance & legal', ic: Landmark, tone: 'ok',
-    d: 'Books, audits, filings and contracts, done right.',
-    items: ['Accounting & finance', 'Financial audit', 'Tax', 'Legal & contracts'] },
-  { k: 'Business operations', ic: Briefcase, tone: 'amber',
-    d: 'The work that keeps a company moving.',
-    items: ['Sales', 'HR & recruiting', 'Customer support', 'Procurement & vendor', 'Supply chain & operations', 'Leadership'] },
-  { k: 'Content, marketing & communication', ic: Megaphone, tone: 'pink',
-    d: 'Say it well, and reach the right people.',
-    items: ['Marketing & growth', 'Content & copywriting', 'SEO', 'Social media', 'Video & media', 'Technical writing', 'Translation & localization'] },
-  { k: 'Healthcare', ic: HeartPulse, tone: 'pink',
-    d: 'Clinical and care workflows, guided with care.',
-    items: ['Healthcare / clinical'] },
-  { k: 'Education', ic: GraduationCap, tone: 'violet',
-    d: 'Teach it so it sticks.',
-    items: ['Teaching & instructional design'] },
-]
-const FIELD_TOTAL = FIELD_FAMILIES.reduce((n, f) => n + f.items.length, 0)   // 56
+// (FIELD_FAMILIES / FIELD_TOTAL moved to ./WorkFields.jsx - imported above.)
 
 const HERO_DWELL_MS = 12000
 // Each entry pairs a headline (h) with its own supporting line (s); they change
@@ -1254,49 +1142,8 @@ function RotatingHero({ paused }) {
   )
 }
 
-// Compare-plans matrix data. Grounded in the pricing cards above and the
-// product facts marketed elsewhere on this page: capacity per tier, the few
-// tier-gated power features, the security guarantees every plan shares, and
-// the Enterprise-only controls. true = included, false = not included, a
-// string = the value shown in the cell.
-const CMP_TIERS = [
-  { id: 'basic', name: 'Basic' },
-  { id: 'advanced', name: 'Advanced', popular: true },
-  { id: 'premium', name: 'Premium' },
-  { id: 'enterprise', name: 'Enterprise' },
-]
-const CMP_ALL = [true, true, true, true]
-const CMP_ENT = [false, false, false, true]
-const CMP_ROWS = [
-  { g: 'Capacity' },
-  { k: 'Daily guiding time', v: ['2 hours', '4 hours', '6 hours', 'Custom'] },
-  { k: 'Tasks per day', v: ['Up to 4', 'Up to 8', 'Up to 12', 'Unlimited'] },
-  { k: 'Priority in the guidance queue', v: ['Standard', 'Priority', 'Highest', 'Highest'] },
-  { g: 'Guidance' },
-  { k: 'Step-by-step guidance on any task', v: CMP_ALL },
-  { k: 'Exact commands, code and links', v: CMP_ALL },
-  { k: 'Roadmaps and diagrams', v: CMP_ALL },
-  { k: 'Floating guide + session write-up', v: CMP_ALL },
-  { k: 'Upload your own reference documents', v: [false, true, true, true] },
-  { k: 'Generated visuals on demand', v: [false, false, true, true] },
-  { g: 'Security, on every plan' },
-  { k: 'Security-first checked answers', v: CMP_ALL },
-  { k: 'On-device redaction before anything is sent', v: CMP_ALL },
-  { k: 'Read-only by design (never clicks, types or runs)', v: CMP_ALL },
-  { k: 'Keys and report artifacts encrypted at rest', v: CMP_ALL },
-  { g: 'Enterprise controls' },
-  { k: 'Company-wide PII / PHI redaction policy, set by your admin', v: CMP_ENT },
-  { k: 'SSO / SAML and team provisioning', v: CMP_ENT },
-  { k: 'Per-company AI keys, or bring your own', v: CMP_ENT },
-  { k: 'Audit log, DPA and priority SLA', v: CMP_ENT },
-  { k: 'Self-hosted / on-prem option', v: CMP_ENT },
-]
-// One matrix cell: a check, a muted dash, or the value text.
-function CmpCell({ v }) {
-  if (v === true) return <span className="wm-cmp-yes" role="img" aria-label="Included"><Check size={15} /></span>
-  if (v === false) return <span className="wm-cmp-no" role="img" aria-label="Not included"><i aria-hidden /></span>
-  return <span className="wm-cmp-val">{v}</span>
-}
+// (The compare-plans entitlement matrix moved to ./WorkPricing.jsx, which is
+// now its single home; the pricing section above links there.)
 
 const CSS = `
 .wm{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--mx:0;--my:0;
@@ -1811,55 +1658,8 @@ const CSS = `
    (0,1,1) and the block actually centers, not just its text. */
 .wm .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
 
-/* COMPARE PLANS - tier matrix + honest value band */
-.wm-compare{border-top:1px solid var(--line)}
-.wm-cmp-card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));overflow:hidden}
-/* the table scrolls INSIDE its card when the viewport is narrower than it;
-   the page itself never gains a horizontal scrollbar */
-.wm-cmp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-.wm-cmp{width:100%;min-width:720px;border-collapse:separate;border-spacing:0;font-size:14.5px}
-.wm-cmp th,.wm-cmp td{padding:13px 16px;text-align:center;border-top:1px solid var(--line);vertical-align:middle}
-.wm-cmp thead th{border-top:none;padding:18px 16px 14px;font-family:"Bricolage Grotesque";font-weight:800;font-size:17px;color:var(--tx);background:rgba(140,245,196,.05)}
-.wm-cmp thead th.pop{color:var(--em)}
-/* feature column: left-aligned, sticky so it stays readable while the tiers scroll */
-.wm-cmp .wm-cmp-feat{text-align:left;font-weight:500;color:var(--tx);width:34%;min-width:230px;position:sticky;left:0;z-index:1;background:var(--panel)}
-.wm-cmp thead .wm-cmp-feat{font-family:"Figtree",system-ui,sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
-.wm-cmp td.pop{background:rgba(140,245,196,.045)}
-.wm-cmp-group td{text-align:left;padding:18px 16px 8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em)}
-.wm-cmp-pop{display:block;font-family:"Figtree",system-ui,sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));border-radius:999px;padding:3px 9px;width:fit-content;margin:0 auto 6px;white-space:nowrap}
-.wm-cmp-yes{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:var(--em);background:rgba(140,245,196,.12)}
-.wm-cmp-no{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px}
-.wm-cmp-no i{display:block;width:12px;height:2px;border-radius:2px;background:var(--line)}
-.wm-cmp-val{font-weight:700;color:var(--tx);white-space:nowrap}
-/* phones: one card per plan, same facts, no sideways table */
-.wm-cmp-stack{display:none}
-.wm-cmp-tcard{border:1px solid var(--line);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));min-width:0}
-.wm-cmp-tcard.pop{border-color:rgba(140,245,196,.5)}
-.wm-cmp-tname{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"Bricolage Grotesque";font-weight:800;font-size:20px;margin-bottom:12px}
-.wm-cmp-tname .wm-cmp-pop{margin:0}
-.wm-cmp-tcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
-.wm-cmp-tcard li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--tx);line-height:1.45}
-.wm-cmp-tcard li.off{color:var(--mut)}
-.wm-cmp-tcard li .wm-cmp-yes,.wm-cmp-tcard li .wm-cmp-no{width:22px;height:22px;flex-shrink:0}
-.wm-cmp-tcard li .wm-cmp-val{flex-shrink:0;font-size:13px;color:var(--em);padding-top:1px}
-.wm-cmp-tcard li.wm-cmp-tgroup{display:block;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
-.wm-cmp-tcard li.wm-cmp-tgroup:first-child{margin-top:0;padding-top:0;border-top:none}
-/* value band */
-.wm-cmp-value{margin-top:28px;display:grid;grid-template-columns:1.05fr .95fr;gap:22px;align-items:stretch}
-.wm-cmp-value-l,.wm-cmp-value-r{border:1px solid var(--line);border-radius:20px;padding:26px 28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));min-width:0}
-.wm-cmp-value-l .wm-eyebrow{margin-left:0;margin-right:0}
-.wm-cmp-value-l h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(20px,2.4vw,26px);letter-spacing:-.015em;line-height:1.15;margin:0 0 14px}
-.wm-cmp-value-l ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
-.wm-cmp-value-l li{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--tx)}
-.wm-cmp-value-l li svg{color:var(--em);flex-shrink:0;margin-top:3px}
-.wm-cmp-note-h{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:14px;color:var(--tx);margin-bottom:10px}
-.wm-cmp-note-h svg{color:var(--em2)}
-.wm-cmp-value-r p{color:var(--mut);font-size:14.5px;line-height:1.6}
-.wm-cmp-value-r p+p{margin-top:12px}
-.wm-cmp-illus{border-left:3px solid var(--em2);padding:2px 0 2px 12px}
-.wm-cmp-illus b{color:var(--tx)}
-@media(max-width:900px){.wm-cmp-value{grid-template-columns:1fr}}
-@media(max-width:768px){.wm-cmp-card{display:none}.wm-cmp-stack{display:grid;grid-template-columns:1fr;gap:14px}.wm-cmp-value-l,.wm-cmp-value-r{padding:20px}}
+/* "See the full ..." link row under the fields teaser and the pricing cards */
+.wm-fld-more{display:flex;justify-content:center;margin-top:26px}
 
 /* uniform dark "message box" on top of every icon card */
 .wm-cardbox{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;min-height:58px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);margin-bottom:16px;padding:10px 14px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:#aeb9cc;text-align:center;line-height:1.4}
@@ -1910,16 +1710,8 @@ const CSS = `
 .wm-fld-stat{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 12px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
 .wm-fld-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
 .wm-fld-stat span{display:block;margin-top:6px;color:var(--mut);font-size:13px;line-height:1.35}
-.wm-fld-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:dense;gap:16px}
-.wm-fld-grid .wm-fld-wide{grid-column:span 2}
-.wm-fld-tags{list-style:none;padding:0;margin:2px 0 0;display:flex;flex-wrap:wrap;gap:6px}
-.wm-fld-tag{font-size:12.5px;font-weight:500;line-height:1.3;color:var(--wc-mut);background:#fff;border:1px solid var(--wc-line);border-radius:999px;padding:5px 11px;white-space:nowrap;transition:border-color .25s var(--wc-ease),color .25s var(--wc-ease),transform .35s var(--wc-ease);transition-delay:0s,0s,calc(var(--i,0)*14ms)}
-.wc-card:hover .wm-fld-tag{transform:translateY(-1px)}
-.wm-fld-tag:hover{color:var(--wc-ink);border-color:color-mix(in srgb,var(--wc-ink) 45%,var(--wc-line));transition-delay:0s}
-.wm-fld-cap{text-align:center;color:var(--mut);font-size:14px;margin:26px auto 0;max-width:60ch}
-@media(max-width:1080px){.wm-fld-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media(max-width:560px){.wm-fld-grid{grid-template-columns:1fr}.wm-fld-grid .wm-fld-wide{grid-column:auto}.wm-fld-stats{gap:10px;margin-bottom:22px}.wm-fld-stat{padding:14px 8px;border-radius:13px}.wm-fld-stat span{font-size:12px}}
-@media(prefers-reduced-motion:reduce){.wm-fld-tag{transition:border-color .25s,color .25s}.wc-card:hover .wm-fld-tag{transform:none}}
+/* (the family card grid + tag styles moved with the grid to WorkFields.jsx) */
+@media(max-width:560px){.wm-fld-stats{gap:10px;margin-bottom:22px}.wm-fld-stat{padding:14px 8px;border-radius:13px}.wm-fld-stat span{font-size:12px}}
 @media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent{grid-template-columns:1fr;gap:20px}.wm-ent-r ul{grid-template-columns:1fr}}
 
 /* FINAL */
@@ -2072,18 +1864,6 @@ const CSS = `
 .wm:not([data-wm="dark"]) .wm-duo-card.priv .wm-duo-ic{background:linear-gradient(135deg,rgba(10,134,207,.16),rgba(10,157,102,.08));box-shadow:none}
 .wm:not([data-wm="dark"]) .wm-duo-card h3{color:var(--ink-brand)}
 .wm:not([data-wm="dark"]) .wm-tier.pop{background:linear-gradient(180deg,rgba(10,157,102,.09),#fff);border-color:rgba(10,157,102,.45);box-shadow:0 32px 66px -30px rgba(10,157,102,.42)}
-/* compare-plans matrix + value band: white, elevated, brand-green tints */
-.wm:not([data-wm="dark"]) .wm-cmp-card,
-.wm:not([data-wm="dark"]) .wm-cmp-tcard,
-.wm:not([data-wm="dark"]) .wm-cmp-value-l,
-.wm:not([data-wm="dark"]) .wm-cmp-value-r{background:#fff;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22)}
-.wm:not([data-wm="dark"]) .wm-cmp thead th{background:rgba(10,157,102,.06)}
-.wm:not([data-wm="dark"]) .wm-cmp td.pop{background:rgba(10,157,102,.04)}
-.wm:not([data-wm="dark"]) .wm-cmp-tcard.pop{border-color:rgba(10,157,102,.45);background:linear-gradient(180deg,rgba(10,157,102,.07),#fff)}
-.wm:not([data-wm="dark"]) .wm-cmp-yes{background:rgba(10,157,102,.12)}
-.wm:not([data-wm="dark"]) .wm-cmp-no i{background:#c9d1de}
-.wm:not([data-wm="dark"]) .wm-cmp-value-l h3{color:var(--ink-brand)}
-.wm:not([data-wm="dark"]) .wm-cmp-pop{color:#fff}
 
 /* spotlight stage = premium dark card (matches the demo), with real elevation */
 .wm:not([data-wm="dark"]) .wm-spot-stage{

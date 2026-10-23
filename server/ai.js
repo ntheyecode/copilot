@@ -45,6 +45,17 @@ export const PROVIDERS = {
   },
 }
 
+// Egress allowlist (audit DAT-05 / APP-03). AI calls may only reach a known
+// provider host. Bases are fixed constants above; this guard makes the boundary
+// explicit and FAILS CLOSED, so a misconfigured or future custom base can never
+// redirect a request to an internal address or an unapproved destination.
+const ALLOWED_AI_HOSTS = new Set(Object.values(PROVIDERS).map((p) => { try { return new URL(p.base).hostname } catch { return '' } }).filter(Boolean))
+function assertAllowedHost(base) {
+  let h
+  try { h = new URL(base).hostname } catch { throw Object.assign(new Error('AI endpoint is misconfigured.'), { status: 502 }) }
+  if (!ALLOWED_AI_HOSTS.has(h)) throw Object.assign(new Error('AI endpoint host is not on the allowlist.'), { status: 502 })
+}
+
 // What each provider is actually good at, so the setup UI can say it plainly
 // (vision is the gap people hit: most fast text keys cannot see images at all).
 export const CAPABILITIES = {
@@ -97,6 +108,7 @@ const CHAT_TIMEOUT_MS = 45000
 
 // ---- OpenAI-compatible (Groq / OpenAI) chat ------------------------------
 async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
+  assertAllowedHost(p.base)
   const ac = new AbortController()
   const timer = setTimeout(() => ac.abort(), CHAT_TIMEOUT_MS)
   let res, data
@@ -135,6 +147,7 @@ async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
 
 // Vision over an OpenAI-compatible chat endpoint (one or more images in one call).
 async function openaiVision(p, apiKey, model, prompt, imageDataUrls) {
+  assertAllowedHost(p.base)
   const imgs = (imageDataUrls || []).filter(Boolean)
   const content = [{ type: 'text', text: prompt }]
   for (const u of imgs) content.push({ type: 'image_url', image_url: { url: u } })
@@ -150,6 +163,7 @@ async function openaiVision(p, apiKey, model, prompt, imageDataUrls) {
 
 // ---- Google Gemini --------------------------------------------------------
 async function geminiGenerate(p, apiKey, model, parts) {
+  assertAllowedHost(p.base)
   const res = await fetch(`${p.base}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -162,6 +176,7 @@ async function geminiGenerate(p, apiKey, model, parts) {
   return text
 }
 async function geminiChat(p, apiKey, model, system, turns) {
+  assertAllowedHost(p.base)
   const contents = turns.map((t) => ({ role: t.role === 'assistant' ? 'model' : 'user', parts: [{ text: t.content }] }))
   const res = await fetch(`${p.base}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
     method: 'POST',

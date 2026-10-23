@@ -148,6 +148,38 @@ const periodEndIso = (unixSeconds) => (unixSeconds ? new Date(unixSeconds * 1000
 // company members), so past_due and canceled block guiding automatically with
 // no extra wiring. A later successful payment fires subscription.updated again
 // and flips the status back to active, reopening the gate.
+
+// ---- webhook idempotency (APP-05) -----------------------------------------
+// Stripe delivers at-least-once and an attacker who captured one signed payload
+// can replay it inside the signature tolerance window. Dedupe on event.id so a
+// replayed event is processed at most once. A bounded in-memory set is used on
+// purpose: the handlers below are state-setters (status/plan/period), so a
+// replay after a process restart is harmless, and the set avoids a write to the
+// store on every webhook. Tradeoff: the memory is lost on restart and is per
+// process (fine for the single-process deploy); the bound keeps it from growing
+// without limit, evicting the oldest ids first. Only ids from events that passed
+// signature verification are ever recorded, so unauthenticated callers cannot
+// fill it.
+export function createEventDeduper(limit = 5000) {
+  const seen = new Set()
+  return {
+    // true if this id is new (and is now claimed); false if already seen.
+    claim(id) {
+      if (!id) return true            // no id to key on: do not block processing
+      const k = String(id)
+      if (seen.has(k)) return false
+      seen.add(k)
+      if (seen.size > limit) seen.delete(seen.values().next().value)   // evict oldest (insertion order)
+      return true
+    },
+    // Give the id back, so a failed attempt can be re-delivered and reprocessed.
+    release(id) { if (id) seen.delete(String(id)) },
+    has(id) { return seen.has(String(id)) },
+    get size() { return seen.size },
+  }
+}
+const _eventDeduper = createEventDeduper()
+
 export function workStripeWebhook({ store }) {
   return async (req, res) => {
     const { secret, webhookSecret } = cfg(store)
@@ -164,9 +196,17 @@ export function workStripeWebhook({ store }) {
       console.warn('[billing] webhook signature check failed: ' + (e && e.message))
       return res.status(400).json({ error: 'Bad signature' })
     }
+    // Replay guard: a repeat of an already-processed event.id is acknowledged
+    // (so Stripe stops retrying) but not processed again.
+    if (!_eventDeduper.claim(event && event.id)) {
+      console.log(`[billing] duplicate webhook ${event.id} (${event.type}) ignored`)
+      return res.json({ received: true, duplicate: true })
+    }
     try {
       await handleEvent(s, store, event)
     } catch (e) {
+      // Release the claim so a manual resend from the Stripe dashboard can retry.
+      _eventDeduper.release(event && event.id)
       console.warn(`[billing] webhook handling error for ${event && event.type}: ` + (e && e.message))
     }
     res.json({ received: true })

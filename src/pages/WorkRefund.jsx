@@ -78,7 +78,7 @@ const SECTIONS = [
           ['Billing and refunds', <a key="b" href={'mailto:' + SUPPORT_CONTACT}>{SUPPORT_CONTACT}</a>],
           ['Legal and privacy questions', <a key="l" href={'mailto:' + LEGAL_CONTACT}>{LEGAL_CONTACT}</a>],
         ]} />
-        <div className="wlx-note"><RefreshCcw size={14} /><span><b>Honest framing.</b> This page is a template. Specific windows and amounts are marked and will be confirmed before this policy takes effect.</span></div>
+        <div className="wlx-note"><RefreshCcw size={14} aria-hidden="true" /><span><b>Honest framing.</b> This page is a template. Specific windows and amounts are marked and will be confirmed before this policy takes effect.</span></div>
       </>
     ),
   },
@@ -93,6 +93,11 @@ export default function WorkRefund() {
       intro="How subscriptions are billed, how you cancel on your own, and how refund requests are handled."
       lastUpdated={LAST_UPDATED}
       tagline="Plain-language policy, template draft"
+      seo={{
+        title: 'Refund and Cancellation Policy - WorkCoPilot by AdmireVeda',
+        description: 'How WorkCoPilot subscriptions are billed through Stripe, how you cancel yourself from the billing portal, when a plan ends, and how refund requests are handled.',
+        path: '/workcopilot/refund',
+      }}
       contact={SUPPORT_CONTACT}
       glance={GLANCE}
       sections={SECTIONS}

@@ -97,7 +97,7 @@ const SECTIONS = [
     content: (
       <>
         <p>If you think the service is being misused, or you found a security problem, write to <a href={'mailto:' + LEGAL_CONTACT}>{LEGAL_CONTACT}</a>. For product help, write to <a href={'mailto:' + SUPPORT_CONTACT}>{SUPPORT_CONTACT}</a>.</p>
-        <div className="wlx-note"><AlertTriangle size={14} /><span><b>Honest framing.</b> This page is a template. It states the rules we intend to apply and is not a substitute for your own legal review.</span></div>
+        <div className="wlx-note"><AlertTriangle size={14} aria-hidden="true" /><span><b>Honest framing.</b> This page is a template. It states the rules we intend to apply and is not a substitute for your own legal review.</span></div>
       </>
     ),
   },
@@ -112,6 +112,11 @@ export default function WorkAcceptableUse() {
       intro="WorkCoPilot guides you on your own screen. This policy says where it may be used, what you are responsible for, and what is off limits."
       lastUpdated={LAST_UPDATED}
       tagline="Plain-language policy, template draft"
+      seo={{
+        title: 'Acceptable Use Policy - WorkCoPilot by AdmireVeda',
+        description: 'Where WorkCoPilot may be used, what you are responsible for, and what is off limits: lawful, authorized use only, no unauthorized access, no harm, and how concerns are reported.',
+        path: '/workcopilot/acceptable-use',
+      }}
       glance={GLANCE}
       sections={SECTIONS}
       links={[

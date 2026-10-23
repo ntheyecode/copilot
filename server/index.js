@@ -694,7 +694,19 @@ async function fetchUrlsForLearning(text, { maxRoots = 2, maxPages = 5, perPage 
 // Auth / session
 // ===========================================================================
 // WorkCoPilot sign-in (the only login the standalone client uses).
+// Auth throttle (audit APP-02 / APP-03): count only FAILED sign-in attempts per
+// IP and block a burst, to blunt brute-force and credential-stuffing. Successful
+// sign-ins clear the counter, so normal users and shared office IPs are never
+// locked out. Fixed window, in memory.
+const _authFails = new Map()
+const AUTH_WINDOW_MS = 10 * 60 * 1000, AUTH_MAX_FAILS = 10
+const _authIp = (req) => (req.ip || (req.headers['x-forwarded-for'] || '').toString().split(',')[0] || 'local').trim()
+function authBlocked(req) { const w = _authFails.get(_authIp(req)); return !!(w && Date.now() <= w.resetAt && w.n >= AUTH_MAX_FAILS) }
+function authFail(req) { const ip = _authIp(req), now = Date.now(), w = _authFails.get(ip); if (!w || now > w.resetAt) _authFails.set(ip, { n: 1, resetAt: now + AUTH_WINDOW_MS }); else w.n++ }
+function authOk(req) { _authFails.delete(_authIp(req)) }
+
 app.post('/api/work/login', wrap((req, res) => {
+  if (authBlocked(req)) return res.status(429).json({ error: 'Too many sign-in attempts. Please wait a few minutes and try again.' })
   const { username, password } = req.body || {}
   const u = store.findUser(username)
   // SSO-bound accounts (pre-provisioned by email, no usable password) must come
@@ -704,13 +716,16 @@ app.post('/api/work/login', wrap((req, res) => {
     return res.status(409).json({ error: "This is a company single sign-on account. Use 'Sign in with your company (SSO)' and enter your company email domain.", sso: true })
   }
   if (!store.verifyPassword(u, password || '')) {
+    authFail(req)
     return res.status(401).json({ error: 'Invalid username or password' })
   }
+  authOk(req)
   establishSession(req, u)
   res.json({ user: store.publicWorkUser(u) })
 }))
 // Public signup: a new WorkCoPilot account (role user), signed in immediately.
 app.post('/api/work/signup', wrap((req, res) => {
+  if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
   const { username, password } = req.body || {}
   const u = store.createWorkUser({ username, password })
   establishSession(req, u)
@@ -1129,8 +1144,12 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       frame: frame ? 'screenshot sent' : null,
       sent: safeGoal + (userDocs ? '\n[+ your reference documents]' : '') + (research ? '\n[+ current research notes]' : ''),
     })
+    // Cross-session KB: inject what we learned before on these tools (company KB
+    // for company users, platform KB for solo users), so the plan starts smarter
+    // than the model's training cutoff. Retrieval is scoped + de-identified.
+    const kbNotes = store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')
     const plan = await work.workPlan(ai, call.rt, {
-      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, strong: call.backup,
+      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, learnings: kbNotes, strong: call.backup,
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
@@ -1157,6 +1176,9 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
     else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
+    // Capture a generalized, de-identified learning the model flagged (a current
+    // tool fact newer than its memory) into the cross-session KB for next time.
+    if (plan.learning) store.addLearning(req.workUser.id, { app: plan.appContext || s.appContext || '', fact: plan.learning, kind: 'fresh' })
     const updated = store.getWorkSession(req.workUser.id, req.params.id)
     // MANDATORY security gate over every command + code block the plan hands over.
     const planCode = (updated.steps || []).map((s) => [...(Array.isArray(s.commands) ? s.commands : []), (s.code && s.code.content) || ''].join('\n')).join('\n')
