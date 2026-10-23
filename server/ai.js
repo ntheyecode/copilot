@@ -146,11 +146,14 @@ async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
 }
 
 // Vision over an OpenAI-compatible chat endpoint (one or more images in one call).
-async function openaiVision(p, apiKey, model, prompt, imageDataUrls) {
+async function openaiVision(p, apiKey, model, prompt, imageDataUrls, mediaRes = null) {
   assertAllowedHost(p.base)
   const imgs = (imageDataUrls || []).filter(Boolean)
+  // OpenAI image detail: 'low' is the cheap fixed-token read (good for the watch
+  // loop); medium/high -> 'high' for one-off detailed reads.
+  const detail = mediaRes === 'low' || mediaRes === 'medium' ? 'low' : (mediaRes === 'high' ? 'high' : null)
   const content = [{ type: 'text', text: prompt }]
-  for (const u of imgs) content.push({ type: 'image_url', image_url: { url: u } })
+  for (const u of imgs) content.push({ type: 'image_url', image_url: detail ? { url: u, detail } : { url: u } })
   const res = await fetch(`${p.base}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
@@ -162,12 +165,15 @@ async function openaiVision(p, apiKey, model, prompt, imageDataUrls) {
 }
 
 // ---- Google Gemini --------------------------------------------------------
-async function geminiGenerate(p, apiKey, model, parts) {
+const GEMINI_MEDIA_RES = { low: 'MEDIA_RESOLUTION_LOW', medium: 'MEDIA_RESOLUTION_MEDIUM', high: 'MEDIA_RESOLUTION_HIGH' }
+async function geminiGenerate(p, apiKey, model, parts, mediaRes = null) {
   assertAllowedHost(p.base)
+  const body = { contents: [{ role: 'user', parts }] }
+  if (mediaRes && GEMINI_MEDIA_RES[mediaRes]) body.generationConfig = { mediaResolution: GEMINI_MEDIA_RES[mediaRes] }
   const res = await fetch(`${p.base}/models/${model}:generateContent?key=${encodeURIComponent(apiKey)}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ contents: [{ role: 'user', parts }] }),
+    body: JSON.stringify(body),
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `Gemini failed (${res.status})`)
@@ -303,20 +309,25 @@ export async function generate(cfg, system, userText) {
 
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
-export async function analyseImages(cfg, prompt, imageDataUrls, model) {
+export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}) {
   const p = PROVIDERS[cfg.providerId]
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.', AI_CODES.KEY)
   const notify = switchNotifier(cfg)
   const imgs = (imageDataUrls || []).filter(Boolean).slice(0, 4)
   if (!imgs.length) return ''
+  // mediaRes: 'low'|'medium'|'high' - how many tokens the model spends reading the
+  // image. The continuous watch loop runs 100s of times an hour, so it reads at a
+  // lower resolution (fewer image tokens, big cost saver) while one-off reads keep
+  // the default. Mapped per provider.
+  const mediaRes = opts && opts.mediaRes ? String(opts.mediaRes).toLowerCase() : null
   const run = (m) => {
     if (p.kind === 'gemini') {
       const parts = [{ text: prompt }]
       for (const u of imgs) parts.push({ inline_data: { mime_type: 'image/jpeg', data: String(u).replace(/^data:[^;]+;base64,/, '') } })
-      return geminiGenerate(p, cfg.apiKey, m, parts)
+      return geminiGenerate(p, cfg.apiKey, m, parts, mediaRes)
     }
-    return openaiVision(p, cfg.apiKey, m, prompt, imgs)
+    return openaiVision(p, cfg.apiKey, m, prompt, imgs, mediaRes)
   }
   try {
     return await run(model)

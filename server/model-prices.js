@@ -48,6 +48,14 @@ export const MODEL_PRICES = {
   "gemini-2.0-flash": { input: 0.10,  output: 0.40, label: "Google Gemini 2.0 Flash" },
   "gemini-2.5-flash": { input: 0.30,  output: 2.50, label: "Google Gemini 2.5 Flash" },    // $0.30 input = text/image/video; audio $1.00
   "gemini-2.5-pro":   { input: 1.25,  output: 10.00, label: "Google Gemini 2.5 Pro" },     // <=200K prompt; >200K is $2.50/$15
+  "gemini-2.5-flash-lite": { input: 0.10, output: 0.40, label: "Google Gemini 2.5 Flash-Lite" }, // cheapest; retired ~Oct 2026 for new keys
+  // Gemini 3.x (2026). "latest" aliases resolve to the current GA model; keep them
+  // priced so metering never silently reports $0 for the model the watch loop uses.
+  "gemini-flash-lite-latest": { input: 0.30, output: 2.50, label: "Google Gemini Flash-Lite (latest)" }, // currently resolves to 3.5 flash-lite
+  "gemini-flash-latest":      { input: 0.50, output: 3.00, label: "Google Gemini Flash (latest)" },
+  "gemini-3.1-flash-lite":    { input: 0.25, output: 1.50, label: "Google Gemini 3.1 Flash-Lite" },
+  "gemini-3.5-flash-lite":    { input: 0.30, output: 2.50, label: "Google Gemini 3.5 Flash-Lite" },
+  "gemini-3.5-flash":         { input: 0.50, output: 3.00, label: "Google Gemini 3.5 Flash" },
 
   // ---- Anthropic Claude (USD per 1M tokens) — current generation ----
   "claude-haiku-5-5":  { input: 0.10, output: 0.50,  label: "Anthropic Claude Haiku 5.5" },   // <=100K prompt; >100K is $0.50/$2.50
