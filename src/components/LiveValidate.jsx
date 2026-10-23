@@ -23,17 +23,19 @@ import {
   ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
-import { isDesktop } from '../isDesktop.js'
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
-// desktop app (window.refigold) or the mobile app (WorkCoPilotApp/<n> UA) the
-// person is already a user, so it must never appear. One gate here covers EVERY
-// mount (marketing / demo / use-cases / login) - SUPREME RULE II, single source,
-// instead of editing each call site. Environment-constant, so the early return is
-// stable across renders (hook count never changes).
+// desktop app or the mobile app the person is already a user, so it must never
+// appear. The WorkCoPilot DESKTOP shell exposes window.workDesktop (see
+// workcopilot/preload.js - NOT window.refigold, which is the other products'
+// shell); the MOBILE app sets a WorkCoPilotApp/<n> user agent (see WorkPage's
+// WorkCoPilotApp matcher). One gate here covers EVERY mount (marketing / demo /
+// use-cases / login) - SUPREME RULE II, single source, instead of editing each
+// call site. Environment-constant, so the early return is stable across renders
+// (hook count never changes).
 const isInApp = () => {
   try {
-    if (isDesktop) return true
+    if (typeof window !== 'undefined' && window.workDesktop) return true
     return /WorkCoPilotApp\/\d+/.test((typeof navigator !== 'undefined' && navigator.userAgent) || '')
   } catch { return false }
 }
