@@ -139,7 +139,10 @@ export function registerWorkDocsRoutes(app, deps = {}) {
 
   // DELETE /api/work/docs/:id - remove one stored doc.
   app.delete('/api/work/docs/:id', requireWorkAuth, gateAdvanced, wrap((req, res) => {
-    const result = store.deleteWorkDoc(workUid(req), req.params.id)
+    // Own content: the user may delete their own doc freely; we don't block on a
+    // reason, but we capture one if given and always log the removal.
+    const reason = String((req.body && req.body.reason) || (req.query && req.query.reason) || '').trim()
+    const result = store.deleteWorkDoc(workUid(req), req.params.id, reason)
     res.json(result || { ok: true })
   }))
 }

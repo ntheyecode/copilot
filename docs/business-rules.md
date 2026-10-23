@@ -123,6 +123,38 @@ never the tool/recipe):
 - US English spelling everywhere (outputs, UI, prompts, docs).
 - No em-dashes in user-facing copy.
 
+## 10. Destructive actions require a reason and an audit-log entry (platform-wide)
+
+Standing rule set by the owner on 2026-10-23.
+
+**Every destructive action (delete, remove, revoke, clear, purge,
+replace-on-restore) must (a) capture a human reason and (b) be written to an audit
+trail recording who, what, when, and why.**
+
+- **Admin and superadmin destructive actions REQUIRE a reason.** The server
+  rejects the request with HTTP 400 if the reason is under 3 characters. The
+  client prompt is a convenience; the server check is the enforcement.
+- **Self-service actions on a user's OWN data** (for example deleting their own
+  session or document) are not blocked on a missing reason, but they are still
+  logged, with an optional reason captured.
+- **Audit sinks (single source of truth):**
+  - Admin and superadmin actions are written with
+    `store.recordAdminAction({ userId, companyId, action, reason, detail })`. The
+    reason is redacted of secrets and PII, capped in length, and persisted.
+  - Self-service deletions are written to `db.workActivity`.
+  - The company admin's Activity tab shows ONE unified timeline: both sinks are
+    merged at read time in `listWorkActivity`.
+  - Do NOT add a third parallel log. New destructive actions use one of the two
+    existing sinks above.
+- **Covered endpoints as of 2026-10-23:** delete session, delete document, remove
+  company member (company-admin and superadmin routes), remove billing line item,
+  knowledge-base clear, knowledge-base restore-replace.
+- **Going forward:** any NEW destructive endpoint must wire the reason capture and
+  the audit logging BEFORE it ships. A destructive endpoint without both blocks the
+  ship.
+- Audit entries follow the confidentiality rules above: no model names, AI cost,
+  or secrets in the reason or detail text shown to non-superadmins.
+
 ---
 
 ## Enforcement points (single sources of truth)

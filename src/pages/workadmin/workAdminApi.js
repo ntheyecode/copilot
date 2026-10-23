@@ -101,7 +101,7 @@ export const workAdminApi = {
   companyLicenses: (id) => request('GET', `/api/work/admin/companies/${id}/licenses`),
   // Pre-provision a member or admin BY EMAIL (SSO, no password), or remove one.
   addCompanyMember: (id, body) => request('POST', `/api/work/admin/companies/${id}/members`, body || {}),
-  removeCompanyMember: (id, uid) => request('DELETE', `/api/work/admin/companies/${id}/members/${uid}`),
+  removeCompanyMember: (id, uid, reason) => request('DELETE', `/api/work/admin/companies/${id}/members/${uid}`, { reason }),
   // Add minutes to the shared company pool (server takes minutes).
   poolMinutes: (id, minutes) => request('POST', `/api/work/admin/companies/${id}/pool-minutes`, { minutes: Number(minutes) || 0 }),
   // Per-company price overrides (merged over the global pricing).
@@ -109,7 +109,7 @@ export const workAdminApi = {
   // Billing: the assembled statement, ledger line-item add/remove, invoice PDF.
   companyBilling: (id) => request('GET', `/api/work/admin/companies/${id}/billing`),
   addBillingItem: (id, item) => request('POST', `/api/work/admin/companies/${id}/billing/items`, item || {}),
-  removeBillingItem: (id, itemId) => request('DELETE', `/api/work/admin/companies/${id}/billing/items/${itemId}`),
+  removeBillingItem: (id, itemId, reason) => request('DELETE', `/api/work/admin/companies/${id}/billing/items/${itemId}`, { reason }),
   invoiceUrl: (id) => `/api/work/admin/companies/${id}/invoice.pdf`,
   // SSO (OIDC) per company. GET returns non-secret status; POST sets the config
   // (leave clientSecret empty to keep the stored one unchanged).

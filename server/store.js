@@ -1042,6 +1042,58 @@ export function clearLearnings(userId) {
   const kb = sc.obj[sc.field]; const n = Array.isArray(kb) ? kb.length : 0
   sc.obj[sc.field] = []; persistSoon(); return n
 }
+// Company-scoped KB ops for the admin console (backup / restore / clear). These
+// NEVER touch the platform KB. The destructive ones are logged with a reason by
+// the caller via recordAdminAction.
+function _company(companyId) { return (db.companies || []).find((c) => c.id === companyId) || null }
+export function getCompanyLearningsCount(companyId) { const c = _company(companyId); return c && Array.isArray(c.kb) ? c.kb.length : 0 }
+export function exportCompanyLearnings(companyId) {
+  const c = _company(companyId)
+  return (c && Array.isArray(c.kb)) ? c.kb.map((l) => ({ app: l.app, fact: l.fact, kind: l.kind, at: l.at, hits: l.hits })) : []
+}
+export function clearCompanyLearnings(companyId) {
+  const c = _company(companyId); const n = c && Array.isArray(c.kb) ? c.kb.length : 0
+  if (c) c.kb = []; persistSoon(); return n
+}
+export function importCompanyLearnings(companyId, arr, { replace = true } = {}) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  if (!Array.isArray(arr)) throw httpErr(400, 'Backup must be a list of learnings.')
+  const clean = arr.slice(0, LEARNING_CAP).map((l) => {
+    const app = String((l && l.app) || '').trim().slice(0, 80)
+    const fact = redactIncidentText(String((l && l.fact) || '').trim()).slice(0, 400)
+    if (fact.length < 10) return null
+    return { id: 'kb' + id(), app, fact, kind: (l && l.kind === 'fresh') ? 'fresh' : 'correction', at: (l && l.at) || new Date().toISOString(), hits: Math.max(1, Math.min(9999, parseInt((l && l.hits) || 1, 10) || 1)) }
+  }).filter(Boolean)
+  if (replace) c.kb = clean
+  else {
+    if (!Array.isArray(c.kb)) c.kb = []
+    const seen = new Set(c.kb.map((l) => _normLearn(l.app) + '|' + _normLearn(l.fact)))
+    for (const l of clean) { const k = _normLearn(l.app) + '|' + _normLearn(l.fact); if (!seen.has(k)) { c.kb.push(l); seen.add(k) } }
+    if (c.kb.length > LEARNING_CAP) c.kb.splice(0, c.kb.length - LEARNING_CAP)
+  }
+  persistSoon()
+  return c.kb.length
+}
+// ---- Destructive-action audit: who did what, when, and WHY (reason required) -
+// Superadmin-visible. Holds only a summary + reason, never the data itself; the
+// reason is redacted of any secret/PII that might be pasted in.
+export function recordAdminAction({ userId = null, companyId = null, action = '', reason = '', detail = '' } = {}) {
+  if (!db.work) db.work = {}
+  if (!Array.isArray(db.work.adminActions)) db.work.adminActions = []
+  const u = userId ? getUser(userId) : null
+  db.work.adminActions.push({
+    id: 'act' + id(), at: new Date().toISOString(),
+    action: String(action).slice(0, 60), reason: redactIncidentText(String(reason || '')).slice(0, 500),
+    detail: String(detail || '').slice(0, 200),
+    userId: userId || null, username: (u && u.username) || '',
+    companyId: companyId || null, companyName: (companyId && (_company(companyId) || {}).name) || null,
+  })
+  if (db.work.adminActions.length > 5000) db.work.adminActions.splice(0, db.work.adminActions.length - 5000)
+  persistSoon()
+}
+export function listAdminActions({ limit = 200 } = {}) {
+  return (db.work && Array.isArray(db.work.adminActions)) ? db.work.adminActions.slice(-Math.max(1, Math.min(2000, limit))).reverse() : []
+}
 
 export function companyBranding(companyId) {
   const c = (db.companies || []).find((x) => x.id === companyId)
@@ -1946,12 +1998,14 @@ export function addCompanyBillingItem(companyId, { type = 'adjustment', descript
   persist()
   return item
 }
-export function removeCompanyBillingItem(companyId, itemId) {
+export function removeCompanyBillingItem(companyId, itemId, { reason = '', byUserId = null } = {}) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c || !c.billing) throw httpErr(404, 'Company not found.')
   const before = c.billing.items.length
+  const victim = c.billing.items.find((x) => x.id === itemId)
   c.billing.items = c.billing.items.filter((x) => x.id !== itemId)
   if (c.billing.items.length === before) throw httpErr(404, 'Line item not found.')
+  recordAdminAction({ userId: byUserId, companyId, action: 'billing_item_removed', reason, detail: victim ? `removed line item ${victim.label || itemId} (${victim.amount ?? '?'})` : `removed line item ${itemId}` })
   persist()
   return { ok: true }
 }
@@ -2265,13 +2319,17 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
 // to null) rather than hard-delete the account, so their own history is not
 // destroyed and the action is reversible by a superadmin; their company-covered
 // access ends immediately and the session-epoch bump signs them out everywhere.
-export function removeCompanyMember(adminCompanyId, targetUserId) {
+export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '', byUserId = null } = {}) {
   if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
+  const wasRole = u.companyRole || 'member'
   u.companyId = null
   u.companyRole = null
   bumpSessionEpoch(u.id)
+  // Accountable removal: who did it, to whom, and why (platform-wide rule -
+  // every destructive action is logged with a captured reason).
+  recordAdminAction({ userId: byUserId, companyId: adminCompanyId, action: 'member_removed', reason, detail: `removed ${u.username || u.id} (${wasRole}) from company` })
   persist()
   return { ok: true, id: u.id }
 }
@@ -2350,12 +2408,30 @@ export function listWorkDocs(workUserId) {
     .map((d) => ({ id: d.id, name: d.name, mime: d.mime, size: d.size, chars: d.chars, at: d.at }))
     .sort((a, b) => (b.at || '').localeCompare(a.at || ''))
 }
-export function deleteWorkDoc(workUserId, docId) {
+export function deleteWorkDoc(workUserId, docId, reason = '') {
   if (!db.workDocs || !Array.isArray(db.workDocs[workUserId])) return { ok: true }
   const victim = db.workDocs[workUserId].find((d) => d.id === docId)
   db.workDocs[workUserId] = db.workDocs[workUserId].filter((d) => d.id !== docId)
   if (victim) {
     try { if (victim.path && fs.existsSync(victim.path)) fs.unlinkSync(victim.path) } catch { /* best effort */ }
+    // Accountable deletion of own content: logged to the user activity feed (the
+    // same feed a company admin sees), with a captured reason. The file is gone,
+    // the record of its removal is not.
+    const u = getUser(workUserId)
+    if (!db.workActivity) db.workActivity = []
+    db.workActivity.push({
+      id: 'act' + id(),
+      type: 'doc_deleted',
+      workUserId,
+      username: (u && u.username) || '',
+      displayName: (u && u.displayName) || '',
+      companyId: (u && u.companyId) || null,
+      docId,
+      name: victim.name || null,
+      reason: String(reason || '').trim().slice(0, 500),
+      at: new Date().toISOString(),
+    })
+    if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
     persist()
   }
   return { ok: true }
@@ -2840,9 +2916,19 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
 }
 // Company-scoped activity log (deletions etc.) for the company admin dashboard.
 export function listWorkActivity({ companyId, limit = 300 } = {}) {
-  let arr = db.workActivity || []
+  let arr = (db.workActivity || []).slice()
   if (companyId) arr = arr.filter((a) => a.companyId === companyId)
-  return arr.slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, limit)
+  // Merge the admin audit trail (member removals, billing-item removals, KB
+  // clear/restore) into the same timeline so the company admin sees every
+  // destructive action in one place - one pane, two sinks merged at read time
+  // (we never keep a third parallel log). Admin entries are tagged type:'admin'.
+  if (companyId) {
+    const admin = (db.work && Array.isArray(db.work.adminActions) ? db.work.adminActions : [])
+      .filter((a) => a.companyId === companyId)
+      .map((a) => ({ id: a.id, type: a.action || 'admin', at: a.at, username: a.username || '', reason: a.reason || '', detail: a.detail || '', companyId: a.companyId, admin: true }))
+    arr = arr.concat(admin)
+  }
+  return arr.sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, limit)
 }
 // ---- System incidents (superadmin only) -----------------------------------
 // The REAL causes behind the generic "system is busy" message users see: AI

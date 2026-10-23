@@ -267,7 +267,7 @@ export default function Companies({ isSuperAdmin }) {
   }
   const setUserTier = async (u, companyId, tier) => { try { await workAdminApi.setTier(u.id, tier); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const grantUserHours = async (u, companyId) => { const h = window.prompt(`Add how many hours for ${u.username}?`, '1'); if (h == null) return; try { await workAdminApi.grantHours(u.id, Number(h) || 0); refreshDetail(companyId); setMsg(`Added ${h} hours to ${u.username}.`) } catch (e) { setMsg(e.message) } }
-  const removeMember = async (u, companyId) => { if (!window.confirm(`Remove ${u.username} from the company?`)) return; try { await workAdminApi.removeCompanyMember(companyId, u.id); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
+  const removeMember = async (u, companyId) => { if (!window.confirm(`Remove ${u.username} from the company?`)) return; const reason = (window.prompt(`Reason for removing ${u.username}? (recorded in the audit trail)`) || '').trim(); if (reason.length < 3) { setMsg('A reason is required to remove a member.'); return } try { await workAdminApi.removeCompanyMember(companyId, u.id, reason); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const toggleUserScrub = async (u, companyId) => { if (!isSuperAdmin) return; try { await workAdminApi.userScrub(u.id, !u.scrub); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const isFree = (u) => u.subscription && u.subscription.status === 'comp'
   const toggleUserFree = async (u, companyId) => { if (!isSuperAdmin) return; try { await workAdminApi.userFreeAccess(u.id, !isFree(u)); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
@@ -303,7 +303,7 @@ export default function Companies({ isSuperAdmin }) {
   // Billing.
   const loadBill = async (id) => { try { setBill(await workAdminApi.companyBilling(id)) } catch (e) { setMsg(e.message) } }
   const addBillItem = async (id) => { const desc = window.prompt('Line item description (e.g. Extra 10 hours):'); if (!desc) return; const amt = window.prompt('Amount (USD):', '0'); if (amt == null) return; try { await workAdminApi.addBillingItem(id, { type: 'adjustment', description: desc, qty: 1, unitAmount: Number(amt) || 0 }); loadBill(id) } catch (e) { setMsg(e.message) } }
-  const removeBillItem = async (id, itemId) => { try { await workAdminApi.removeBillingItem(id, itemId); loadBill(id) } catch (e) { setMsg(e.message) } }
+  const removeBillItem = async (id, itemId) => { const reason = (window.prompt('Reason for removing this billing line item? (recorded in the audit trail)') || '').trim(); if (reason.length < 3) { setMsg('A reason is required to remove a billing item.'); return } try { await workAdminApi.removeBillingItem(id, itemId, reason); loadBill(id) } catch (e) { setMsg(e.message) } }
 
   if (state.loading) return <Loading label="Loading companies" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />

@@ -104,6 +104,12 @@ export const api = {
   workTeamActivity: () => req('GET', '/api/work/team/activity'),
   workTeamAi: () => req('GET', '/api/work/team/ai'),
   workTeamSetAiKeys: (body) => req('POST', '/api/work/team/ai-keys', body || {}),
+  // Company admin: view / backup / restore / clear the company knowledge base.
+  // Clear + replace are destructive, so they require a reason (logged server-side).
+  workTeamLearnings: () => req('GET', '/api/work/team/learnings'),
+  workTeamLearningsExportUrl: () => '/api/work/team/learnings/export',   // direct cookie-authed download
+  workTeamImportLearnings: (learnings, mode, reason) => req('POST', '/api/work/team/learnings/import', { learnings, mode, reason }),
+  workTeamClearLearnings: (reason) => req('POST', '/api/work/team/learnings/clear', { reason }),
   // Company admin: this company's own web-search (Tavily) key (apiKey:'' clears),
   // and the best+cheapest model recommendation for the keys the company runs on.
   workTeamSetWebSearch: (apiKey, provider) => req('POST', '/api/work/team/web-search', { apiKey, provider }),
@@ -136,7 +142,7 @@ export const api = {
   // Reference documents (Advanced & Premium): ground the plan in the user's own material.
   workDocsList: () => req('GET', '/api/work/docs'),
   workDocAdd: (payload) => req('POST', '/api/work/docs', payload),  // { name, mime, dataBase64 }
-  workDocDelete: (id) => req('DELETE', `/api/work/docs/${id}`),
+  workDocDelete: (id, reason) => req('DELETE', `/api/work/docs/${id}`, reason ? { reason } : undefined),
   // Drill-down "how?" on a step. body: { action, stepIndex?, frame? } -> { steps, escalated }
   workHowTo: (id, body) => req('POST', `/api/work/sessions/${id}/howto`, { ...(body || {}), ...(body && body.action != null ? { action: clean(body.action) } : {}) }),
   workModes: () => req('GET', '/api/work/modes'),
@@ -186,7 +192,7 @@ export const api = {
   workCompanyUsers: () => req('GET', '/api/work/company/users'),
   workCompanyCreateUser: (body) => req('POST', '/api/work/company/users', body || {}),
   workCompanyUpdateUser: (id, patch) => req('PATCH', `/api/work/company/users/${id}`, patch || {}),
-  workCompanyRemoveUser: (id) => req('DELETE', `/api/work/company/users/${id}`),
+  workCompanyRemoveUser: (id, reason) => req('DELETE', `/api/work/company/users/${id}`, { reason }),
   // company admin: this company's AI consumption so far (estimated $, per user)
   workTeamConsumption: () => req('GET', '/api/work/team/consumption'),
   // company admin: license + usage dashboard (seat pools, per-tier allocation,

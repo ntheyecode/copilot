@@ -324,7 +324,9 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   }))
   // Superadmin: remove a company member (any mode). Reversible detach.
   app.delete('/api/work/admin/companies/:id/members/:uid', requireAuth, superGate, w((req, res) => {
-    res.json(store.removeCompanyMember(req.params.id, req.params.uid))
+    const reason = String((req.body && req.body.reason) || '').trim()
+    if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to remove a member (recorded in the audit trail).' })
+    res.json(store.removeCompanyMember(req.params.id, req.params.uid, { reason, byUserId: req.user.id }))
   }))
   // Superadmin: add minutes to a company's shared pool (negative removes).
   app.post('/api/work/admin/companies/:id/pool-minutes', requireAuth, superGate, w((req, res) => {
@@ -345,7 +347,9 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json(store.addCompanyBillingItem(req.params.id, req.body || {}))
   }))
   app.delete('/api/work/admin/companies/:id/billing/items/:itemId', requireAuth, superGate, w((req, res) => {
-    res.json(store.removeCompanyBillingItem(req.params.id, req.params.itemId))
+    const reason = String((req.body && req.body.reason) || '').trim()
+    if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to remove a billing line item (recorded in the audit trail).' })
+    res.json(store.removeCompanyBillingItem(req.params.id, req.params.itemId, { reason, byUserId: req.user.id }))
   }))
   // Superadmin: download the company invoice / statement as a branded PDF.
   app.get('/api/work/admin/companies/:id/invoice.pdf', requireAuth, superGate, w((req, res) => {

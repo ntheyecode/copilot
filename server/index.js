@@ -1008,6 +1008,45 @@ app.get('/api/work/team/consumption', requireWorkAuth, requireCompanyAdmin, wrap
     byUser: (d.byUser || []).map((u) => ({ id: u.id, username: u.username, displayName: u.displayName, sessions: u.sessions })),
   })
 }))
+// Company admin: view + clear the company's cross-session KNOWLEDGE BASE (the
+// generalized, de-identified tool learnings shared across the company's users).
+// requireCompanyAdmin here always has a companyId, so clearLearnings only ever
+// touches that company's KB, never the platform KB.
+app.get('/api/work/team/learnings', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  res.json({ kind: 'company', count: store.getCompanyLearningsCount(cid) })
+}))
+// Backup: download the company's knowledge base as JSON.
+app.get('/api/work/team/learnings/export', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="workcopilot-knowledge-base-${cid}.json"`)
+  res.send(JSON.stringify({ exportedAt: new Date().toISOString(), companyId: cid, learnings: store.exportCompanyLearnings(cid) }, null, 2))
+}))
+// Restore: import a backup (replace or merge). Replacing is destructive -> logged.
+app.post('/api/work/team/learnings/import', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const body = req.body || {}
+  const arr = Array.isArray(body.learnings) ? body.learnings : (Array.isArray(body) ? body : null)
+  if (!arr) return res.status(400).json({ error: 'Provide a backup with a "learnings" list.' })
+  const replace = body.mode !== 'merge'
+  if (replace) {
+    const reason = String(body.reason || '').trim()
+    if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to replace the knowledge base.' })
+    store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'kb_restore_replace', reason, detail: `imported ${arr.length} entries (replace)` })
+  }
+  const count = store.importCompanyLearnings(cid, arr, { replace })
+  res.json({ count, mode: replace ? 'replace' : 'merge' })
+}))
+// Clear the company KB. Destructive -> a reason is REQUIRED and the action is logged.
+app.post('/api/work/team/learnings/clear', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const reason = String((req.body || {}).reason || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'Please give a reason for clearing the knowledge base.' })
+  const cleared = store.clearCompanyLearnings(cid)
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'kb_clear', reason, detail: `cleared ${cleared} entries` })
+  res.json({ cleared })
+}))
 // Any company user: their company's white-label branding (logo + public contact)
 // for the dashboard header. Carries no seats, pricing, AI config or cost.
 app.get('/api/work/my-company', requireWorkAuth, wrap((req, res) => {
@@ -1824,7 +1863,9 @@ app.delete('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, 
   if (String(req.params.id) === String(req.workUser.id)) {
     return res.status(400).json({ error: 'You cannot remove yourself from the company.' })
   }
-  res.json(store.removeCompanyMember(cid, req.params.id))
+  const reason = String((req.body && req.body.reason) || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to remove a member (it is recorded in your audit trail).' })
+  res.json(store.removeCompanyMember(cid, req.params.id, { reason, byUserId: req.workUser.id }))
 }))
 
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))

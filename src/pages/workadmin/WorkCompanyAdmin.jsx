@@ -9,12 +9,12 @@
 // Routing is local state (no react-router inside), wired at /work/company in
 // App.jsx. The console self-gates: it reads /api/work/me and only renders for a
 // company_admin; everyone else gets a clear message.
-import React, { useEffect, useState, useCallback, useMemo } from 'react'
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe,
+  FileText, Download, Activity, Globe, Upload, Brain,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
@@ -138,6 +138,133 @@ function CompanyRetentionCard() {
   )
 }
 
+// Company knowledge base: the learnings WorkCoPilot has accumulated for this
+// company (treated as current, overriding older model memory). The company
+// admin can back it up, restore it, and clear it. Every destructive action
+// (replace-on-restore, clear) captures a reason and is logged to the audit
+// trail (platform-wide rule: destructive actions need a reason + a log entry).
+function KnowledgeBaseCard() {
+  const [count, setCount] = useState(null)
+  const [loaded, setLoaded] = useState(false)
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(null)
+  // clear
+  const [clearReason, setClearReason] = useState('')
+  const [confirmClear, setConfirmClear] = useState(false)
+  // restore
+  const [file, setFile] = useState(null)
+  const [restoreMode, setRestoreMode] = useState('merge') // 'merge' | 'replace'
+  const [restoreReason, setRestoreReason] = useState('')
+  const fileRef = useRef(null)
+
+  const load = useCallback(() => {
+    api.workTeamLearnings().then((d) => { setCount(d.count ?? 0); setLoaded(true) }).catch((e) => { setErr(e); setLoaded(true) })
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const flash = (msg) => { setDone(msg); setTimeout(() => setDone(null), 3200) }
+
+  const doClear = async () => {
+    if (busy) return
+    const reason = clearReason.trim()
+    if (reason.length < 3) { setErr(new Error('A reason is required to clear the knowledge base.')); return }
+    setBusy(true); setErr(null); setDone(null)
+    try {
+      const r = await api.workTeamClearLearnings(reason)
+      setCount(0); setClearReason(''); setConfirmClear(false)
+      flash(`Cleared ${r.cleared ?? 0} entr${(r.cleared === 1) ? 'y' : 'ies'}. Logged to the audit trail.`)
+    } catch (e) { setErr(e) } finally { setBusy(false) }
+  }
+
+  const doRestore = async () => {
+    if (busy || !file) return
+    if (restoreMode === 'replace' && restoreReason.trim().length < 3) {
+      setErr(new Error('Replacing the current knowledge base is destructive - a reason is required.')); return
+    }
+    setBusy(true); setErr(null); setDone(null)
+    try {
+      const text = await file.text()
+      let parsed
+      try { parsed = JSON.parse(text) } catch { throw new Error('That file is not valid JSON. Upload a backup exported from this page.') }
+      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.learnings) ? parsed.learnings : (Array.isArray(parsed.kb) ? parsed.kb : null))
+      if (!arr) throw new Error('No learnings found in that file. Expected a JSON array (or { learnings: [...] }).')
+      const r = await api.workTeamImportLearnings(arr, restoreMode, restoreReason.trim() || undefined)
+      setCount(r.count ?? arr.length)
+      setFile(null); setRestoreReason(''); if (fileRef.current) fileRef.current.value = ''
+      flash(`Restored ${r.imported ?? arr.length} entr${(r.imported === 1) ? 'y' : 'ies'} (${restoreMode}).${restoreMode === 'replace' ? ' Logged to the audit trail.' : ''}`)
+    } catch (e) { setErr(e) } finally { setBusy(false) }
+  }
+
+  if (!loaded) return null
+  return (
+    <div className="wka-panel">
+      <h2><Brain size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Knowledge base</h2>
+      <p className="desc">
+        WorkCoPilot keeps a private, company-scoped knowledge base: the up-to-date facts it has learned while guiding your team, treated as current so guidance does not drift to stale model memory. It stays inside your company. You can back it up, restore from a backup, or clear it.
+      </p>
+      <div className="wka-field" style={{ maxWidth: 360 }}>
+        <label>Entries stored</label>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--wka-text)' }}>{count}</div>
+        <span className="hint">Private to your company. Redacted of secrets and personal data on the way in.</span>
+      </div>
+
+      {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
+      {done ? <div className="wka-note" style={{ color: 'var(--wka-cyan)' }}><Check size={14} /> {done}</div> : null}
+
+      {/* Backup */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+        <a className="wka-btn" href={api.workTeamLearningsExportUrl()} download={`workcopilot-kb-backup.json`} style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Download size={14} /> Download backup (JSON)
+        </a>
+        <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>A snapshot you can store off-platform and restore later.</span>
+      </div>
+
+      {/* Restore */}
+      <div style={{ borderTop: '1px solid var(--wka-border)', marginTop: 16, paddingTop: 14 }}>
+        <div className="wka-field" style={{ maxWidth: 420 }}>
+          <label><Upload size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Restore from a backup</label>
+          <input ref={fileRef} className="wka-input" type="file" accept="application/json,.json" onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
+          <span className="hint">Upload a backup file exported above.</span>
+        </div>
+        <div className="wka-field" style={{ maxWidth: 420 }}>
+          <label>Mode</label>
+          <select className="wka-input" value={restoreMode} onChange={(e) => setRestoreMode(e.target.value)}>
+            <option value="merge">Merge - add these entries, keep existing (safe)</option>
+            <option value="replace">Replace - wipe current, then import (destructive)</option>
+          </select>
+        </div>
+        {restoreMode === 'replace' && (
+          <div className="wka-field" style={{ maxWidth: 420 }}>
+            <label>Reason (required - this replaces the current knowledge base)</label>
+            <textarea className="wka-input" rows={2} value={restoreReason} onChange={(e) => setRestoreReason(e.target.value)} placeholder="e.g. Restoring last week's backup after an accidental clear" />
+          </div>
+        )}
+        <button type="button" className="wka-btn primary" disabled={busy || !file} onClick={doRestore}>{busy ? <Spinning /> : <Upload size={14} />} Restore backup</button>
+      </div>
+
+      {/* Clear */}
+      <div style={{ borderTop: '1px solid var(--wka-border)', marginTop: 16, paddingTop: 14 }}>
+        {!confirmClear ? (
+          <button type="button" className="wka-btn danger" disabled={busy || !count} onClick={() => { setConfirmClear(true); setErr(null) }}>
+            <Trash2 size={14} /> Clear knowledge base
+          </button>
+        ) : (
+          <div className="wka-field" style={{ maxWidth: 420 }}>
+            <label style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={13} style={{ verticalAlign: -2, marginRight: 4 }} />This permanently deletes all {count} entries. Reason required.</label>
+            <textarea className="wka-input" rows={2} value={clearReason} onChange={(e) => setClearReason(e.target.value)} placeholder="e.g. Rebuilding the knowledge base from scratch for a new engagement" />
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button type="button" className="wka-btn danger" disabled={busy} onClick={doClear}>{busy ? <Spinning /> : <Trash2 size={14} />} Confirm clear</button>
+              <button type="button" className="wka-btn" disabled={busy} onClick={() => { setConfirmClear(false); setClearReason(''); setErr(null) }}>Cancel</button>
+            </div>
+            <span className="hint">We recommend downloading a backup first. This action is logged to your audit trail.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function OverviewSection({ company }) {
   const [state, setState] = useState({ loading: true, error: null, lic: null, cons: null })
   const load = useCallback(() => {
@@ -190,6 +317,7 @@ function OverviewSection({ company }) {
 
       <AuthorizationCard />
       <CompanyRetentionCard />
+      <KnowledgeBaseCard />
 
       {lic.tierUsage && (
         <div className="wka-panel">
@@ -310,8 +438,10 @@ function TeamSection({ meId, onCompany }) {
   }
   const removeUser = async (m) => {
     if (!window.confirm(`Remove ${m.displayName || m.username} from the company? They lose access right away. This can be undone by support.`)) return
+    const reason = (window.prompt(`Reason for removing ${m.displayName || m.username}? (recorded in your audit trail)`) || '').trim()
+    if (reason.length < 3) { setErr(new Error('A reason is required to remove a member.')); return }
     setRowBusy(m.id); setErr(null); setOk('')
-    try { await api.workCompanyRemoveUser(m.id); setOk(`Removed ${m.displayName || m.username}.`); load() }
+    try { await api.workCompanyRemoveUser(m.id, reason); setOk(`Removed ${m.displayName || m.username}.`); load() }
     catch (error) { setErr(error) } finally { setRowBusy('') }
   }
   const allocate = async (m) => {
@@ -805,6 +935,17 @@ function GovernanceSection({ companyId }) {
 // ===========================================================================
 // Activity
 // ===========================================================================
+// Human labels for the unified activity + audit timeline. Session/doc events come
+// from the user activity feed; the rest are destructive admin actions merged in.
+const ACTIVITY_LABELS = {
+  session_deleted: 'Deleted a session',
+  doc_deleted: 'Deleted a document',
+  member_removed: 'Removed a member',
+  billing_item_removed: 'Removed a billing item',
+  kb_clear: 'Cleared the knowledge base',
+  kb_restore_replace: 'Restored (replaced) the knowledge base',
+}
+
 function ActivitySection() {
   const [state, setState] = useState({ loading: true, error: null, items: null })
   const load = useCallback(() => {
@@ -822,14 +963,20 @@ function ActivitySection() {
         <table className="wka-table">
           <thead><tr><th>Who</th><th>What</th><th>Details</th><th>When</th></tr></thead>
           <tbody>
-            {state.items.map((a) => (
-              <tr key={a.id}>
-                <td>{a.displayName || a.username || 'A user'}</td>
-                <td>Deleted a session</td>
-                <td style={{ color: 'var(--wka-muted)' }}>{(a.title && !/^Session \d/.test(a.title)) ? a.title : (a.goal || 'Untitled')}{a.reason ? ` - "${a.reason}"` : ''}</td>
-                <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{fmtDT(a.at)}</td>
-              </tr>
-            ))}
+            {state.items.map((a) => {
+              const what = ACTIVITY_LABELS[a.type] || (a.admin ? (a.type || 'Admin action').replace(/_/g, ' ') : 'Activity')
+              const detail = a.admin
+                ? (a.detail || '')
+                : (a.type === 'doc_deleted' ? (a.name || 'A document') : ((a.title && !/^Session \d/.test(a.title)) ? a.title : (a.goal || 'Untitled')))
+              return (
+                <tr key={a.id}>
+                  <td>{a.displayName || a.username || 'A user'}</td>
+                  <td>{what}</td>
+                  <td style={{ color: 'var(--wka-muted)' }}>{detail}{a.reason ? ` - "${a.reason}"` : ''}</td>
+                  <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{fmtDT(a.at)}</td>
+                </tr>
+              )
+            })}
           </tbody>
         </table>
       </div>
