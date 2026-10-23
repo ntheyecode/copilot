@@ -298,7 +298,13 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                               <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
                               <div>Below is a <b>preview of the plan</b>. The live session runs the whole thing on your screen - watching, correcting and fixing as you go.</div>
                             </div>
-                            {res.sees && <div className="wm-cov-sees"><ScanEye size={13} /> <b>I can see</b> {res.sees}</div>}
+                            {res.sees && (
+                              <div className="wm-cov-sees">
+                                <span className="wm-cov-scan" aria-hidden />
+                                <span className="wm-cov-seek"><ScanEye size={13} /> I can see</span>
+                                <span className="wm-cov-seetxt">{res.sees}</span>
+                              </div>
+                            )}
                             <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A {total}-step plan{remaining > 0 ? <span className="wm-cov-flow-sub"> · first {shown} shown in full</span> : null}</div>
                             <ol className="wm-cov-steps">
                               {roadmap.map((title, i) => {
@@ -476,9 +482,16 @@ const LV_CSS = `
 .wm-cov-flow.show{opacity:1;transform:none}
 .wm-cov-flow-h{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em2);margin-bottom:12px}
 .wm-cov-flow-sub{color:var(--mut);font-weight:700;letter-spacing:.02em;text-transform:none}
-.wm-cov-sees{display:flex;align-items:flex-start;gap:7px;margin-bottom:12px;font-size:13px;line-height:1.5;color:var(--mut)}
-.wm-cov-sees b{color:var(--em2);font-weight:700;margin-right:1px}
-.wm-cov-sees svg{color:var(--em2);flex-shrink:0;margin-top:2px}
+/* "I can see" - the product perceiving. Highlighted + scanning to match the
+   demo card, with a one-time glow as it appears (quality: consistent language). */
+.wm-cov-sees{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid rgba(57,211,255,.32);background:rgba(57,211,255,.07);border-radius:11px;font-size:13px;line-height:1.5;color:var(--tx);overflow:hidden;animation:wm-cov-seeglow 1.6s ease-out .05s both}
+@keyframes wm-cov-seeglow{0%{box-shadow:0 0 0 0 rgba(57,211,255,0)}26%{box-shadow:0 0 0 4px rgba(57,211,255,.2),0 12px 30px -12px rgba(57,211,255,.5)}100%{box-shadow:0 0 0 0 rgba(57,211,255,0)}}
+.wm-cov-scan{position:absolute;top:0;bottom:0;left:0;width:38%;background:linear-gradient(90deg,transparent,rgba(57,211,255,.16),transparent);animation:wm-cov-scanx 2s linear infinite;pointer-events:none}
+@keyframes wm-cov-scanx{from{transform:translateX(-120%)}to{transform:translateX(330%)}}
+.wm-cov-seek{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--em2)}
+.wm-cov-seek svg{color:var(--em2);flex-shrink:0}
+.wm-cov-seetxt{flex:1;min-width:0;color:var(--tx)}
+@media(prefers-reduced-motion:reduce){.wm-cov-sees{animation:none}.wm-cov-scan{display:none}}
 .wm-cov-steps li.next{opacity:.85}
 .wm-cov-steps .n.play{background:rgba(255,255,255,.06);color:var(--mut);border:1px solid var(--line)}
 .wm-cov-steps .do.up{color:var(--mut);font-size:14px;padding-top:2px}
