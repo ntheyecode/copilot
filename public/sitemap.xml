@@ -1,18 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://admireveda.com/</loc>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-  <url>
-    <loc>https://admireveda.com/workcopilot</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://admireveda.com/workcopilot/use-cases</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <url><loc>https://admireveda.com/</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>
+  <url><loc>https://admireveda.com/workcopilot</loc><changefreq>monthly</changefreq><priority>0.9</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/how-it-works</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/use-cases</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/fields</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/security</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/pricing</loc><changefreq>monthly</changefreq><priority>0.8</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/faq</loc><changefreq>monthly</changefreq><priority>0.7</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/privacy</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/terms</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/acceptable-use</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/dpa</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/refund</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
+  <url><loc>https://admireveda.com/workcopilot/disclaimer</loc><changefreq>yearly</changefreq><priority>0.3</priority></url>
 </urlset>

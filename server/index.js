@@ -32,6 +32,7 @@ import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 import * as llmGuard from './llm_guard.js'
+import * as extractionWatch from './extraction_watch.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -907,6 +908,17 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 //   'refused'  -> response already sent, caller must `return`
 //   {guard}    -> warn-and-proceed, caller folds `...g` into its res.json
 //   null       -> clean
+// IP-04 bulk-extraction alert: note one discrete AI-generation call for this
+// user and, on an abnormal burst, raise a superadmin incident. Alert-only -
+// never blocks (the daily task cap bounds real use). NOT called on the continuous
+// watch loop, so a normal active session cannot trip it.
+function watchExtraction(req, call) {
+  try {
+    const a = extractionWatch.noteGeneration(req.workUser && req.workUser.id)
+    if (a) store.recordWorkIncident({ kind: 'extraction_watch', status: 'alert', call, message: `High request volume: ${a.count} generation calls in ${a.windowS}s (possible scripted extraction).`, userId: req.workUser.id, username: req.workUser.username, companyId: req.workUser.companyId || null })
+  } catch { /* alerting must never break a request */ }
+}
+
 function guardUserText(req, res, text, field, sessionId = null) {
   const hit = llmGuard.inspectUserText(text, { field })
   if (!hit) return null
@@ -1134,6 +1146,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    watchExtraction(req, 'plan')
     const { goal, frame, mode } = req.body || {}
     const gPlan = guardUserText(req, res, goal, 'goal', req.params.id); if (gPlan === 'refused') return
     if (gPlan && gPlan.guard) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: gPlan.guard.warning })
@@ -1285,6 +1298,7 @@ app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubs
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    watchExtraction(req, 'deliverables')
     const frames = Array.isArray(req.body && req.body.frames)
       ? req.body.frames.filter((f) => typeof f === 'string' && f.startsWith('data:')).slice(0, 8) : []
     const goal = s.goal || ''
@@ -1407,6 +1421,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    watchExtraction(req, 'ask')
     const { question, frame } = req.body || {}
     if (!frame) return res.status(400).json({ error: 'No screen frame supplied.' })
     const gAsk = guardUserText(req, res, question, 'question', req.params.id); if (gAsk === 'refused') return
@@ -1443,6 +1458,7 @@ app.post('/api/work/sessions/:id/result', requireWorkAuth, requireWorkSubscripti
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    watchExtraction(req, 'result')
     const { question, frame, docsText, deep } = req.body || {}
     const hasFrame = typeof frame === 'string' && frame.startsWith('data:')
     const rr = await resolveWorkRuntime(req, res, { needVision: hasFrame }); if (!rr) return
@@ -1515,6 +1531,7 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    watchExtraction(req, 'context')
     const { note, docsText, image, frame } = req.body || {}
     const hasText = !!(String(note || '').trim() || String(docsText || '').trim())
     const images = [image, frame].filter((x) => typeof x === 'string' && x.startsWith('data:'))
@@ -1588,6 +1605,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    watchExtraction(req, 'howto')
     const { action, stepIndex, frame } = req.body || {}
     const scrubOn = store.workUserScrubOn(req.workUser.id)
     const act = scrubIf(scrubOn, String(action || "").trim(), req.workUser.id)

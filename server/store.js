@@ -2941,6 +2941,7 @@ export function listWorkActivity({ companyId, limit = 300 } = {}) {
 export function redactIncidentText(s) {
   return String(s || '')
     .replace(/\b(sk[-_][A-Za-z0-9_-]{10,}|AKIA[0-9A-Z]{16}|gh[pousr]_[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}|AIza[0-9A-Za-z_\-]{20,}|eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{6,})\b/g, '[redacted-secret]')
+    .replace(/-----BEGIN[ A-Z0-9]*-----[\s\S]*?-----END[ A-Z0-9]*-----/g, '[redacted-key]')
     .replace(/-----BEGIN[\s\S]*?-----/g, '[redacted-key]')
     .replace(/\b[\w.+-]+@[\w-]+\.[\w.-]{2,}\b/g, '[redacted-email]')
     .replace(/\b(password|passwd|secret|api[_-]?key|token|authorization|bearer)\b\s*[:=]\s*\S+/gi, '$1=[redacted]')

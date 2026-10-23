@@ -3,7 +3,7 @@
 // provisioning, AI source and price overrides - then manages its people (by
 // email for SSO), SSO config, corporate AI keys, extra hours, billing and the
 // data-redaction policy. Everything a company needs to go live lives here.
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState } from './_shared.jsx'
@@ -27,6 +27,83 @@ const SSO_PROVIDERS = [
   ['oidc', 'Other (any OpenID Connect)', 'https://your-identity-provider/...'],
 ]
 const SSO_HINT = Object.fromEntries(SSO_PROVIDERS.map(([id, , hint]) => [id, hint]))
+
+// ---------------------------------------------------------------------------
+// Reason prompt modal (replaces window.prompt for destructive actions).
+// Promise-based hook: `const [askReason, reasonModal] = useReasonModal()`,
+// render `{reasonModal}` once in the component, then
+// `const reason = await askReason({ title, detail, confirmLabel })` resolves to
+// the trimmed reason (>= 3 chars) or null when cancelled. The server enforces the
+// same 3-char minimum; the Confirm button is disabled until it is met.
+// ---------------------------------------------------------------------------
+function ReasonModal({ title, detail, confirmLabel, onConfirm, onCancel }) {
+  const [reason, setReason] = useState('')
+  const taRef = useRef(null)
+  const ok = reason.trim().length >= 3
+  useEffect(() => {
+    if (taRef.current) taRef.current.focus()
+    const onKey = (e) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
+  return (
+    <div
+      role="presentation"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel() }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(26,31,54,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-label={title}
+        style={{ width: '100%', maxWidth: 460, maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--wka-panel, #fff)', border: '1px solid var(--wka-line-2, #dfe3ea)', borderRadius: 14, padding: 20, boxShadow: '0 24px 60px -20px rgba(26,31,54,0.45)' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+          <AlertTriangle size={18} style={{ color: 'var(--wka-amber)', flex: '0 0 auto', marginTop: 2 }} />
+          <div style={{ fontSize: 15, fontWeight: 650, color: 'var(--wka-text)', lineHeight: 1.35 }}>{title}</div>
+        </div>
+        {detail ? <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--wka-muted)', lineHeight: 1.5 }}>{detail}</p> : null}
+        <div className="wka-field">
+          <label>Reason <span className="hint">required, recorded in your audit trail</span></label>
+          <textarea
+            ref={taRef} className="wka-input" rows={3} maxLength={500} value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Left the company"
+            style={{ resize: 'vertical', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
+          />
+          <span className="hint">{ok ? ' ' : 'Enter at least 3 characters to continue.'}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: 14 }}>
+          <button type="button" className="wka-btn" onClick={onCancel}>Cancel</button>
+          <button
+            type="button" className="wka-btn danger" disabled={!ok}
+            style={{ background: 'var(--wka-red, #c0392b)', borderColor: 'var(--wka-red, #c0392b)', color: '#fff', fontWeight: 600 }}
+            onClick={() => { if (ok) onConfirm(reason.trim()) }}
+          >
+            <Trash2 size={14} /> {confirmLabel || 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function useReasonModal() {
+  const [cfg, setCfg] = useState(null)
+  const resolver = useRef(null)
+  const finish = useCallback((val) => {
+    const r = resolver.current
+    resolver.current = null
+    setCfg(null)
+    if (r) r(val)
+  }, [])
+  const ask = useCallback((opts) => new Promise((resolve) => {
+    if (resolver.current) resolver.current(null)
+    resolver.current = resolve
+    setCfg(opts || {})
+  }), [])
+  const cancel = useCallback(() => finish(null), [finish])
+  const node = cfg ? <ReasonModal {...cfg} onConfirm={finish} onCancel={cancel} /> : null
+  return [ask, node]
+}
 
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
 const fmtMins = (secs) => { const m = Math.round((Number(secs) || 0) / 60); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); const r = m % 60; return r ? `${h}h ${r}m` : `${h}h` }
@@ -188,6 +265,7 @@ export default function Companies({ isSuperAdmin }) {
   const [detail, setDetail] = useState(null)
   const [lic, setLic] = useState(null)
   const [bill, setBill] = useState(null)
+  const [askReason, reasonModal] = useReasonModal()
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
 
@@ -267,7 +345,7 @@ export default function Companies({ isSuperAdmin }) {
   }
   const setUserTier = async (u, companyId, tier) => { try { await workAdminApi.setTier(u.id, tier); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const grantUserHours = async (u, companyId) => { const h = window.prompt(`Add how many hours for ${u.username}?`, '1'); if (h == null) return; try { await workAdminApi.grantHours(u.id, Number(h) || 0); refreshDetail(companyId); setMsg(`Added ${h} hours to ${u.username}.`) } catch (e) { setMsg(e.message) } }
-  const removeMember = async (u, companyId) => { if (!window.confirm(`Remove ${u.username} from the company?`)) return; const reason = (window.prompt(`Reason for removing ${u.username}? (recorded in the audit trail)`) || '').trim(); if (reason.length < 3) { setMsg('A reason is required to remove a member.'); return } try { await workAdminApi.removeCompanyMember(companyId, u.id, reason); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
+  const removeMember = async (u, companyId) => { const reason = await askReason({ title: `Remove ${u.username} from the company?`, detail: 'They lose access right away.', confirmLabel: 'Confirm remove' }); if (!reason || reason.length < 3) return; try { await workAdminApi.removeCompanyMember(companyId, u.id, reason); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const toggleUserScrub = async (u, companyId) => { if (!isSuperAdmin) return; try { await workAdminApi.userScrub(u.id, !u.scrub); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
   const isFree = (u) => u.subscription && u.subscription.status === 'comp'
   const toggleUserFree = async (u, companyId) => { if (!isSuperAdmin) return; try { await workAdminApi.userFreeAccess(u.id, !isFree(u)); refreshDetail(companyId) } catch (e) { setMsg(e.message) } }
@@ -303,7 +381,7 @@ export default function Companies({ isSuperAdmin }) {
   // Billing.
   const loadBill = async (id) => { try { setBill(await workAdminApi.companyBilling(id)) } catch (e) { setMsg(e.message) } }
   const addBillItem = async (id) => { const desc = window.prompt('Line item description (e.g. Extra 10 hours):'); if (!desc) return; const amt = window.prompt('Amount (USD):', '0'); if (amt == null) return; try { await workAdminApi.addBillingItem(id, { type: 'adjustment', description: desc, qty: 1, unitAmount: Number(amt) || 0 }); loadBill(id) } catch (e) { setMsg(e.message) } }
-  const removeBillItem = async (id, itemId) => { const reason = (window.prompt('Reason for removing this billing line item? (recorded in the audit trail)') || '').trim(); if (reason.length < 3) { setMsg('A reason is required to remove a billing item.'); return } try { await workAdminApi.removeBillingItem(id, itemId, reason); loadBill(id) } catch (e) { setMsg(e.message) } }
+  const removeBillItem = async (id, itemId) => { const reason = await askReason({ title: 'Remove this billing line item?', detail: 'The line is taken off the company bill.', confirmLabel: 'Confirm remove' }); if (!reason || reason.length < 3) return; try { await workAdminApi.removeBillingItem(id, itemId, reason); loadBill(id) } catch (e) { setMsg(e.message) } }
 
   if (state.loading) return <Loading label="Loading companies" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
@@ -314,6 +392,7 @@ export default function Companies({ isSuperAdmin }) {
   return (
     <div className="wka-panel">
       <style>{CSS}</style>
+      {reasonModal}
       <div className="co-head">
         <p className="desc">Onboard a company with its full profile, licenses, SSO and AI, then manage its people, hours and billing. Everything is scoped per company.</p>
         {isSuperAdmin && <button className="wka-btn primary" onClick={() => setShowNew((v) => !v)}><Plus size={15} /> New company</button>}

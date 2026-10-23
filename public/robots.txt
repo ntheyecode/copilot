@@ -1,12 +1,11 @@
 User-agent: *
 Allow: /
-Disallow: /app
-Disallow: /admin
 Disallow: /api/
-Disallow: /work
-Disallow: /meet
-Disallow: /viva
-Disallow: /solver
-Disallow: /floater
+Disallow: /work/
+Disallow: /app/
+Disallow: /meet/
+Disallow: /viva/
+Disallow: /solver/
+Disallow: /floater/
 
 Sitemap: https://admireveda.com/sitemap.xml

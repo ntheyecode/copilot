@@ -1212,7 +1212,7 @@ function Home({ user, onOpen, onSignOut }) {
   const create = async (g) => {
     if (!ready) return
     setBusy(true); setGateMsg('')
-    try { const r = await api.workCreate({ goal: (typeof g === 'string' ? g : goal).trim() || null }); onOpen(r.session.id) }
+    try { const r = await api.workCreate({ goal: (typeof g === 'string' ? g : goal).trim() || null }); onOpen(r.session.id, r.guard) }
     catch (e) {
       setBusy(false)
       handleGate(e)
@@ -1232,7 +1232,7 @@ function Home({ user, onOpen, onSignOut }) {
       if (window.workDesktop && deskDocs.length) {
         try { sessionStorage.setItem('wd_docs_' + r.session.id, deskDocs.map((d) => `# ${d.name}\n${d.text}`).join('\n\n').slice(0, 8000)) } catch { /* ignore */ }
       }
-      onOpen(r.session.id)
+      onOpen(r.session.id, r.guard)
     } catch (e) { setBusy(false); handleGate(e) }
   }
   const cancelScope = (reason) => { setScoping(false); if (reason === 'upgrade') setNeedsSub(true) }
@@ -2529,7 +2529,7 @@ function PlanningLoader() {
   )
 }
 
-function Console({ sessionId, watchLight = false, onBack }) {
+function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
   const [source, setSource] = useState(() => isMobileUA() ? 'camera' : 'screen')     // 'screen' | 'camera' (phones default to camera: no screen share on mobile)
@@ -2906,6 +2906,8 @@ function Console({ sessionId, watchLight = false, onBack }) {
         api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) }),
         'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
+      // Input guardrail: a MEDIUM attempt is allowed through with a warning. Inform, never block.
+      if (r.guard && !r.guard.blocked && r.guard.warning && onGuard) onGuard(r.guard)
       if (r.refusal) { setErr(r.refusal); return }   // declined at goal entry (not supported)
       // Start the continuous guide right away - the user should never have to
       // find and press a button to make it watch and update the instructions.
@@ -4267,8 +4269,30 @@ function NoAccess({ onSignOut }) {
     </div>
   )
 }
+// Non-blocking cautionary notice for the AI input guardrail (warn-and-proceed).
+// Lives at the WorkPage level so it survives the Home -> Console switch after a
+// session is created. Auto-dismisses after ~8s; the user can also close it.
+function GuardNotice({ note, onClose }) {
+  useEffect(() => {
+    if (!note) return undefined
+    const t = setTimeout(onClose, 8000)
+    return () => clearTimeout(t)
+  }, [note, onClose])
+  if (!note) return null
+  return (
+    <div role="status" aria-live="polite" style={{ position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, width: 'min(560px, calc(100vw - 24px))', display: 'flex', alignItems: 'flex-start', gap: 10, background: 'var(--warning-soft, #fff7e0)', color: 'var(--text, #1a1a2e)', borderLeft: '3px solid var(--warning, #d98a00)', borderRadius: 12, padding: '11px 14px', fontSize: 13.5, lineHeight: 1.45, boxShadow: '0 6px 24px rgba(0,0,0,.18)' }}>
+      <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--warning, #d98a00)' }} />
+      <span style={{ flex: 1 }}>{note.warning}</span>
+      <button type="button" aria-label="Dismiss notice" onClick={onClose} style={{ background: 'none', border: 0, padding: 2, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}><X size={15} /></button>
+    </div>
+  )
+}
 export default function WorkPage() {
   const [sess, setSess] = useState(undefined)   // undefined=loading; {signedIn, access, user}
+  const [guardNote, setGuardNote] = useState(null)   // { warning, severity, category } from a create/plan response
+  const showGuard = useCallback((g) => { if (g && !g.blocked && g.warning) setGuardNote({ warning: String(g.warning), severity: g.severity, category: g.category }) }, [])
+  const clearGuard = useCallback(() => setGuardNote(null), [])
+  const openSession = useCallback((id, g) => { setOpenId(id); showGuard(g) }, [showGuard])
   // Remember the open guiding session so a reload (Ctrl+R in the desktop app)
   // returns you to it instead of the plan screen.
   const [openId, setOpenId] = useState(() => { try { return sessionStorage.getItem('wc_open') || null } catch { return null } })
@@ -4310,6 +4334,6 @@ export default function WorkPage() {
   if (!sess.signedIn) { window.location.href = '/workcopilot'; return null }
   if (!sess.access) return frame(<NoAccess onSignOut={signOut} />)
   const user = sess.user
-  if (openId) return frame(<><AppUpdateBanner /><Console sessionId={openId} watchLight={!!((user && user.watchLight) || (sess && sess.watchLight))} onBack={() => setOpenId(null)} /></>)
-  return frame(<><AppUpdateBanner /><Home user={user} onOpen={setOpenId} onSignOut={signOut} /></>)
+  if (openId) return frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Console sessionId={openId} watchLight={!!((user && user.watchLight) || (sess && sess.watchLight))} onBack={() => { setOpenId(null); clearGuard() }} onGuard={showGuard} /></>)
+  return frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Home user={user} onOpen={openSession} onSignOut={signOut} /></>)
 }

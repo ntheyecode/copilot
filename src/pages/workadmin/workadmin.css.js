@@ -165,6 +165,12 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
 }
 .wka-btn.primary:hover:not(:disabled) { background: var(--wka-accent-dark); border-color: var(--wka-accent-dark); color: #fff; }
 .wka-btn.ghost { background: transparent; }
+.wka-btn.danger {
+  background: var(--wka-red);
+  color: #ffffff; border: 1px solid var(--wka-red); font-weight: 600;
+  box-shadow: 0 1px 2px rgba(192,57,43,0.25);
+}
+.wka-btn.danger:hover:not(:disabled) { background: #a5301f; border-color: #a5301f; color: #fff; }
 .wka-btn.sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
 
 /* Forms */

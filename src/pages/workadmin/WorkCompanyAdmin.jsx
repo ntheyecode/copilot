@@ -22,6 +22,83 @@ import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag } from './sections/_shared.jsx'
 import * as SSO from '../../shared/sso_guide.js'
 
+// ---------------------------------------------------------------------------
+// Reason prompt modal (replaces window.prompt for destructive actions).
+// Promise-based hook: `const [askReason, reasonModal] = useReasonModal()`,
+// render `{reasonModal}` once in the component, then
+// `const reason = await askReason({ title, detail, confirmLabel })` resolves to
+// the trimmed reason (>= 3 chars) or null when cancelled. The server enforces the
+// same 3-char minimum; the Confirm button is disabled until it is met.
+// ---------------------------------------------------------------------------
+function ReasonModal({ title, detail, confirmLabel, onConfirm, onCancel }) {
+  const [reason, setReason] = useState('')
+  const taRef = useRef(null)
+  const ok = reason.trim().length >= 3
+  useEffect(() => {
+    if (taRef.current) taRef.current.focus()
+    const onKey = (e) => { if (e.key === 'Escape') onCancel() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onCancel])
+  return (
+    <div
+      role="presentation"
+      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel() }}
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(26,31,54,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}
+    >
+      <div
+        role="dialog" aria-modal="true" aria-label={title}
+        style={{ width: '100%', maxWidth: 460, maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--wka-panel, #fff)', border: '1px solid var(--wka-line-2, #dfe3ea)', borderRadius: 14, padding: 20, boxShadow: '0 24px 60px -20px rgba(26,31,54,0.45)' }}
+      >
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
+          <AlertTriangle size={18} style={{ color: 'var(--wka-amber)', flex: '0 0 auto', marginTop: 2 }} />
+          <div style={{ fontSize: 15, fontWeight: 650, color: 'var(--wka-text)', lineHeight: 1.35 }}>{title}</div>
+        </div>
+        {detail ? <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--wka-muted)', lineHeight: 1.5 }}>{detail}</p> : null}
+        <div className="wka-field">
+          <label>Reason <span className="hint">required, recorded in your audit trail</span></label>
+          <textarea
+            ref={taRef} className="wka-input" rows={3} maxLength={500} value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Left the company"
+            style={{ resize: 'vertical', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
+          />
+          <span className="hint">{ok ? ' ' : 'Enter at least 3 characters to continue.'}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: 14 }}>
+          <button type="button" className="wka-btn" onClick={onCancel}>Cancel</button>
+          <button
+            type="button" className="wka-btn danger" disabled={!ok}
+            style={{ background: 'var(--wka-red, #c0392b)', borderColor: 'var(--wka-red, #c0392b)', color: '#fff', fontWeight: 600 }}
+            onClick={() => { if (ok) onConfirm(reason.trim()) }}
+          >
+            <Trash2 size={14} /> {confirmLabel || 'Confirm'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function useReasonModal() {
+  const [cfg, setCfg] = useState(null)
+  const resolver = useRef(null)
+  const finish = useCallback((val) => {
+    const r = resolver.current
+    resolver.current = null
+    setCfg(null)
+    if (r) r(val)
+  }, [])
+  const ask = useCallback((opts) => new Promise((resolve) => {
+    if (resolver.current) resolver.current(null)
+    resolver.current = resolve
+    setCfg(opts || {})
+  }), [])
+  const cancel = useCallback(() => finish(null), [finish])
+  const node = cfg ? <ReasonModal {...cfg} onConfirm={finish} onCancel={cancel} /> : null
+  return [ask, node]
+}
+
 const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced' }, { id: 'premium', name: 'Premium' }]
 const ROLE_LABEL = { company_admin: 'Company admin', member: 'Member', executive: 'Executive' }
 // Friendly labels for every OpenID Connect provider the backend accepts.
@@ -436,10 +513,14 @@ function TeamSection({ meId, onCompany }) {
     try { await api.workCompanyUpdateUser(m.id, patch); setOk(`Updated ${m.displayName || m.username}.`); load() }
     catch (error) { setErr(error) } finally { setRowBusy('') }
   }
+  const [askReason, reasonModal] = useReasonModal()
   const removeUser = async (m) => {
-    if (!window.confirm(`Remove ${m.displayName || m.username} from the company? They lose access right away. This can be undone by support.`)) return
-    const reason = (window.prompt(`Reason for removing ${m.displayName || m.username}? (recorded in your audit trail)`) || '').trim()
-    if (reason.length < 3) { setErr(new Error('A reason is required to remove a member.')); return }
+    const reason = await askReason({
+      title: `Remove ${m.displayName || m.username} from the company?`,
+      detail: 'They lose access right away. This can be undone by support.',
+      confirmLabel: 'Confirm remove',
+    })
+    if (!reason || reason.length < 3) return
     setRowBusy(m.id); setErr(null); setOk('')
     try { await api.workCompanyRemoveUser(m.id, reason); setOk(`Removed ${m.displayName || m.username}.`); load() }
     catch (error) { setErr(error) } finally { setRowBusy('') }
@@ -454,6 +535,7 @@ function TeamSection({ meId, onCompany }) {
 
   return (
     <div>
+      {reasonModal}
       {locked && <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><Lock size={14} /> Your license roster is managed by the WorkCoPilot team. You can change roles, plans and give pool minutes, but adding or removing people goes through support.</div>}
       <div className="wka-toolbar">
         <button type="button" className="wka-btn primary" disabled={locked} title={locked ? 'Roster is managed by WorkCoPilot' : ''} onClick={() => { setErr(null); setOk(''); setAdding((v) => !v) }}><Plus size={14} /> Add person</button>
