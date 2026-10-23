@@ -1338,7 +1338,7 @@ const CSS = `
    its content (width:100% + min-width:0 + overflow:hidden), and every inner
    region has a fixed height (goal, sees, stage, guide), so the box keeps one
    width and one height across every scenario and every step. */
-.wm-demo{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:15px 16px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;height:560px;display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden}
+.wm-demo{margin-top:46px;background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:15px 16px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;height:560px;display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden}
 .wm-demo>*{min-width:0}
 .wm-demo-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:2px 4px 14px}
 .wm-demo-head b{font-family:"Bricolage Grotesque";margin-left:6px}
@@ -1851,6 +1851,7 @@ const CSS = `
 @media(max-width:900px){
  /* (min-width:0 on the columns is now global, see .wm-hero-grid>* above.) */
  .wm-hero-grid{grid-template-columns:1fr;gap:38px}
+ .wm-demo{margin-top:0}
  .wm-steps,.wm-ways-grid,.wm-tiers,.wm-people-grid{grid-template-columns:1fr}
  .wm-cards{grid-template-columns:1fr 1fr}
  .wm-flow{flex-direction:column}
