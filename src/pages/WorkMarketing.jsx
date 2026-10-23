@@ -144,9 +144,9 @@ export default function WorkMarketing() {
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
   ]
   const tiers = price ? [
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours a day of live guidance', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps & diagrams', 'Floating guide + session write-up'], hour: price.hour.basic },
-    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, tasks: (price.tasks || {}).advanced, popular: true, feats: ['4 hours a day of live guidance', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
-    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, tasks: (price.tasks || {}).premium, feats: ['6 hours a day of live guidance', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
+    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours of daily minutes - use anytime, billed per minute used', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps & diagrams', 'Floating guide + session write-up'], hour: price.hour.basic },
+    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, tasks: (price.tasks || {}).advanced, popular: true, feats: ['4 hours of daily minutes - use anytime, billed per minute used', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
+    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, tasks: (price.tasks || {}).premium, feats: ['6 hours of daily minutes - use anytime, billed per minute used', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
   ] : []
 
   return (
@@ -481,7 +481,8 @@ export default function WorkMarketing() {
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(t.price)}/mo</s> billed annually &middot; {money(annualTotal(t.price))}/yr</div>
                   : <div className="wm-tier-cyc dim">billed monthly</div>}
-                <div className="wm-tier-hrs">{t.hrs} hours a day{t.tasks != null ? ` · up to ${t.tasks} tasks` : ''}</div>
+                <div className="wm-tier-hrs">{t.hrs} hours of daily minutes{t.tasks != null ? ` · up to ${t.tasks} tasks` : ''}</div>
+                <div className="wm-tier-mins">Spend them anytime across the whole day. Billed per minute you actually use, never by the hour.</div>
                 <ul>{t.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => choosePlan(t.id)}>Choose {t.name}</button>
                 <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
@@ -1681,7 +1682,8 @@ const CSS = `
 .wm-tier-name{font-family:"Bricolage Grotesque";font-weight:800;font-size:21px}
 .wm-tier-price{font-family:"Bricolage Grotesque";font-weight:800;font-size:48px;letter-spacing:-.03em;margin:4px 0 0}
 .wm-tier-price span{font-size:17px;color:var(--mut);font-weight:400}
-.wm-tier-hrs{color:var(--em);font-size:14px;margin-bottom:20px}
+.wm-tier-hrs{color:var(--em);font-size:14px;margin-bottom:8px}
+.wm-tier-mins{color:var(--mut);font-size:12px;line-height:1.5;margin-bottom:20px}
 .wm-tier ul{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:11px;flex:1 0 auto}
 .wm-tier li{display:flex;gap:9px;align-items:flex-start;color:var(--tx);font-size:14.5px}
 .wm-tier li svg{color:var(--em);flex-shrink:0;margin-top:3px}

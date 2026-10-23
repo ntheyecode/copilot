@@ -1468,7 +1468,7 @@ function Home({ user, onOpen, onSignOut }) {
                   <span className="ic"><Rocket size={18} /></span>
                   <div>
                     <h3>Choose a plan to start</h3>
-                    <p>Your account is ready. Pick a plan to unlock live guidance. You can change or cancel anytime, and your daily guided hours reset at 11:59 PM ET.</p>
+                    <p>Your account is ready. Pick a plan to unlock live guidance. Your plan's hours are daily minutes you can spend anytime across the day - billed per minute you actually use, never by the hour. Change or cancel anytime; the daily allowance resets at 11:59 PM ET.</p>
                   </div>
                 </div>
                 <div className="wd-sub-plans">
@@ -1477,7 +1477,7 @@ function Home({ user, onOpen, onSignOut }) {
                       {p.id === 'advanced' && <span className="tag">Most popular</span>}
                       <span className="nm">{p.name}</span>
                       <span className="pr">{pricing ? money(pricing.plans[p.id]) : ''}<i>/mo</i></span>
-                      <span className="hr">{p.hrs} hours a day</span>
+                      <span className="hr">{p.hrs} hours of daily minutes</span>
                       <span className="go">{subBusy === p.id ? <Loader2 size={15} className="spin" /> : <>Choose {p.name} <ArrowRight size={14} /></>}</span>
                     </button>
                   ))}

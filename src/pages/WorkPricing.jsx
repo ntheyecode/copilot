@@ -116,6 +116,9 @@ export default function WorkPricing() {
                 <><span><b>{p.hrs}h</b> a day</span><span>up to <b>{p.tasks}</b> tasks</span><span>+1h <b>{money(hourPrice(p.id))}</b></span></>
               )}
             </div>
+            {!p.custom && (
+              <p className="wpr-mins"><b>{p.hrs} hours</b> of daily minutes - spend them anytime across the whole day, in as little as a minute at a time. You pay only for the minutes you actually use, never by the hour.</p>
+            )}
             {p.custom
               ? <a className="wpr-btn alt" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={15} aria-hidden /></a>
               : <button className={`wpr-btn${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
@@ -200,8 +203,8 @@ export default function WorkPricing() {
         <h2 id="wpr-notes-h" className="wpr-h2">The fine print, in plain words.</h2>
         <div className="wpr-notes-grid">
           <div className="wpr-note">
-            <h3>Daily hours and tasks</h3>
-            <p>Your plan gives you a set number of live-guidance hours and tasks each day. Pause anytime and come back right where you left off. The day resets each evening, US Eastern time.</p>
+            <h3>Daily minutes, not hourly blocks</h3>
+            <p>Your plan's hours are a pool of <b>daily minutes</b> you can spend anytime across the whole day - a few minutes here, a few there. We count only the minutes you are actually being guided, billed per minute used, never rounded up to the hour. Pause anytime and come back right where you left off. The day resets each evening, US Eastern time.</p>
           </div>
           <div className="wpr-note">
             <h3>Extra time</h3>
@@ -286,6 +289,8 @@ const CSS = `
 .wpr-facts{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
 .wpr-facts span{font-size:12.5px;color:var(--mut);background:#f4f8f7;border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .wpr-facts b{color:var(--ink);font-weight:700}
+.wpr-mins{color:var(--mut);font-size:12.5px;line-height:1.5;margin:0 0 12px;padding:9px 11px;background:#f4f8f7;border:1px solid var(--line);border-radius:10px}
+.wpr-mins b{color:var(--em);font-weight:700}
 .wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6);margin-top:auto}
 .wpr-btn.alt{background:#fff;color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-btn.sm{padding:8px 14px;font-size:13px;border-radius:9px;margin-top:0}
