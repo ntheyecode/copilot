@@ -49,6 +49,7 @@ const SECTIONS = [
           ['Session content', 'What is on a user\'s screen and what they type or paste during a guided session, and text from attached documents. Sensitive values are stripped or tokenized on the user\'s device before anything is sent.'],
           ['Session records', 'Per-session reports and audit logs, and the user\'s session history.'],
           ['Usage data', 'Guided minutes and session counts, so a plan\'s allowance can be applied.'],
+          ['Generalized learnings', 'To keep guidance current, generalized, de-identified learnings about how a tool or task currently works (for example, that a setting has moved to a new menu) may be retained. They contain no personal data, secrets, screen images or document content. For a company, they are held in that company\'s own knowledge base and used only for that company\'s members; for individual users, they are held in the platform knowledge base to improve the service.'],
           ['Data subjects', 'The customer\'s employees, contractors and other authorized users, and any individuals whose data appears on screens the customer chooses to share, within the limits of the Acceptable Use Policy.'],
           ['Purpose', 'To provide, secure and support the guided-work service for the customer, and to apply the customer\'s plan and settings.'],
         ]} />
@@ -129,6 +130,12 @@ const SECTIONS = [
               'Removed with the session. Deleting a session removes its audit log along with the report and screenshots.',
             ],
             [
+              'Generalized learnings',
+              'Company accounts: in that company\'s own knowledge base, used only for its members. Individual accounts: in the platform knowledge base. They hold generalized, de-identified facts about how tools and tasks currently work, and no personal data, secrets, screen images or document content.',
+              'Kept while they remain useful to guidance, and replaced as tools change. They are not session content, so deleting a session does not affect them.',
+              'A company\'s knowledge base is removed with the company account. To have it cleared earlier, write to the contact below.',
+            ],
+            [
               'Account and billing details',
               'Account details are held by the service. Payment details are entered with and held by Stripe, not by us.',
               'For the life of the account, and afterwards only as long as a legal duty to keep a record requires.',
@@ -168,6 +175,7 @@ const SECTIONS = [
           ['Configurable', 'Retention is set by the platform administrator and, for company accounts, by the company. An automatic window can purge sessions older than a chosen number of days.'],
           ['On demand', 'A user or a company administrator can delete sessions at any time. Deleting a session removes the session record, its milestone screenshots and its audit log together.'],
           ['Not kept', 'Uploaded source documents and raw screen frames are not kept as stored source material.'],
+          ['Learnings', 'Generalized, de-identified learnings about how tools work are not session content and are not removed by deleting a session. A company\'s knowledge base is removed with the company account, or earlier on request.'],
           ['On termination', 'On request after the agreement ends, we delete or return customer content, subject to any legal duty to keep a record.'],
         ]} />
       </>

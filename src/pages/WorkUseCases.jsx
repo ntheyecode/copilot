@@ -316,5 +316,7 @@ const CSS = `
  .uc-case-in{grid-template-columns:1fr;gap:28px}
  .uc-case.alt .uc-case-copy{order:0}
  .uc-can{grid-template-columns:1fr}
+ /* DESIGN-06: comfortable tap targets for the jump-to-use-case chips on touch */
+ .uc-chip{padding:10px 14px}
 }
 `

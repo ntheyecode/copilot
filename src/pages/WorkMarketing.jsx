@@ -6,7 +6,7 @@ import {
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
   Building2, Copy, Download,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
-  Code2, Table, Palette,
+  Code2, Table, Palette, RefreshCw,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
@@ -106,6 +106,8 @@ export default function WorkMarketing() {
     { icon: Globe2, viz: 'current', t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams - read on your computer, the file never leaving - flagging anything in them that is wrong.' },
     { icon: FileText, viz: 'record', t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
     { icon: ScanEye, viz: 'record', t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings. Paste a long error or an API response and it analyzes it and adjusts the plan.' },
+    // Benefit only (never the mechanism): the pill advertises cross-session learning + live research.
+    { icon: RefreshCw, viz: 'current', t: 'Stays current, learns your tools', d: 'It learns the current way your tools work and carries it forward, and researches the latest live, so it is never stuck on stale AI knowledge.' },
   ]
   const steps = [
     { n: '01', viz: 'goal', t: 'Scope it together', d: 'Say what you want, answer a couple of quick questions, and it scopes the job before it plans, so the plan fits what you really need.' },
@@ -558,6 +560,7 @@ export default function WorkMarketing() {
             <a className="wm-link" href="/workcopilot/pricing">Pricing</a>
             <a className="wm-link" href="/workcopilot/security">Security</a>
             <a className="wm-link" href="/workcopilot/benchmark">Accuracy</a>
+            <a className="wm-link" href="/workcopilot/faq">FAQ</a>
             <a className="wm-link" href="/workcopilot/privacy">Privacy</a>
             <a className="wm-link" href="/workcopilot/disclaimer">Disclaimer</a>
             <a className="wm-link" href="/workcopilot/terms">Terms</a>
@@ -639,7 +642,7 @@ function TrustDuo({ nav }) {
         'Every command, snippet and script is written the secure way, then self-checked for injection, hard-coded secrets and least privilege before it reaches you.',
         'Read-only. It watches and guides, never clicks, types or runs a thing. You keep full control.',
         'Grounded in the proven methodology of your field, not improvised.',
-        'With live web learning on, steps follow the latest official docs and UIs, so advice is current, not stale.',
+        'Stays current. It learns the current way your tools work and carries that forward, and checks the latest live, so advice is never stuck on stale AI knowledge.',
       ],
       proof: <><span className="dp-chip">injection</span><span className="dp-chip">secrets</span><span className="dp-chip">least-priv</span><span className="dp-arrow">&rarr;</span><b className="dp-ok"><Check size={11} /> checked</b></>,
       link: 'See security in action',
@@ -1034,15 +1037,15 @@ function RotatingHero({ paused }) {
   const [idx, setIdx] = useState(0)
   const [prev, setPrev] = useState(null)   // outgoing pair while it dissolves
   const [live, setLive] = useState(false)  // false until the first swap: no entrance on page load
-  const [hH, setHH] = useState(null)        // measured height of the current headline line (px)
-  const [lH, setLH] = useState(null)        // measured height of the current subtext line (px)
+  const [hH, setHH] = useState(null)        // height of the TALLEST headline across all pairs (px)
+  const [lH, setLH] = useState(null)        // height of the TALLEST subtext across all pairs (px)
   const idxRef = useRef(0)
   const pausedRef = useRef(paused)
   pausedRef.current = paused
   const pairsRef = useRef(pairs)             // the live pairs the timer cycles
   pairsRef.current = pairs
-  const hMeas = useRef(null)                 // off-screen measurer: current headline only
-  const lMeas = useRef(null)                 // off-screen measurer: current subtext only
+  const hMeas = useRef(null)                 // off-screen measurer: ONE child per pair's headline
+  const lMeas = useRef(null)                 // off-screen measurer: ONE child per pair's subtext
   const cur = pairs[idx] || pairs[0]         // guard: a shorter fetched set can outrun idx
   const out = prev != null ? pairs[prev] : null
 
@@ -1068,29 +1071,41 @@ function RotatingHero({ paused }) {
     return () => { alive = false; clearTimeout(timer); try { if (ctrl) ctrl.abort() } catch { /* ignore */ } }
   }, [])
 
-  // Measure the live line before paint, and again on any width change, so each
-  // stage is exactly as tall as the line it is currently showing - no reserved
-  // slack above a short line, no clipping of a long one.
+  // LAYOUT STABILITY (CLS): reserve each stage at the height of the TALLEST line
+  // in the whole set, measured before paint, so the h1 box never changes size as
+  // the pairs rotate and the subtext, CTAs and the "any app" row stay put. (The
+  // previous version sized each stage to the CURRENT line and animated the
+  // change, which still moved everything under the headline on every rotation.)
+  // The measurers hold one hidden child per pair, so the max is exact for the
+  // real copy (built-in or fetched) at the real width. Re-measured on any width
+  // change (ResizeObserver) and once the display font has loaded.
   useLayoutEffect(() => {
+    const tallest = (el) => {
+      if (!el) return null
+      let m = 0
+      for (const c of el.children) m = Math.max(m, c.offsetHeight)
+      return m || null
+    }
     const measure = () => {
-      if (hMeas.current) setHH(hMeas.current.offsetHeight)
-      if (lMeas.current) setLH(lMeas.current.offsetHeight)
+      const h = tallest(hMeas.current); if (h != null) setHH(h)
+      const l = tallest(lMeas.current); if (l != null) setLH(l)
     }
     measure()
     let ro = null
     try {
+      // The measurer stacks its children, so its own height changes whenever a
+      // width change re-wraps any line - one observer per stage covers it.
       ro = new ResizeObserver(measure)
       if (hMeas.current) ro.observe(hMeas.current)
       if (lMeas.current) ro.observe(lMeas.current)
     } catch { ro = null }
     // The display font (Bricolage Grotesque) loads async; a first measure with
     // fallback metrics can under-measure a long line. Re-measure once fonts are
-    // ready so the floor matches the real wrapped height. (min-height already
-    // guarantees no overlap even if this never fires.)
+    // ready so the reserved height matches the real wrapped height.
     let cancelled = false
     try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!cancelled) measure() }) } catch { /* ignore */ }
     return () => { cancelled = true; if (ro) ro.disconnect() }
-  }, [idx, pairs])
+  }, [pairs])
 
   useEffect(() => {
     let reduce = false
@@ -1114,12 +1129,13 @@ function RotatingHero({ paused }) {
   const inCls = live ? 'wm-h1-in' : 'wm-h1-line'
   // className stays STATIC so the scroll-reveal's `in` class (added to the DOM by
   // the IntersectionObserver, then unobserved) is never clobbered by a re-render.
-  // Only the height is driven inline; its smooth transition lives in CSS so a
-  // line swap glides the lead + CTAs into place.
+  // Only the reserved height is driven inline, and it is the same for every pair.
   return (
     <>
       <div className="wm-h1-stage" data-reveal style={hH != null ? { minHeight: `${hH}px` } : undefined}>
-        <div className="wm-h1-meas" aria-hidden="true" ref={hMeas}><HeroWords line={cur.h} /></div>
+        <div className="wm-h1-meas" aria-hidden="true" ref={hMeas}>
+          {pairs.map((p, i) => <div key={i}><HeroWords line={p.h} /></div>)}
+        </div>
         <h1>
           {out != null && (
             <span key={`out${prev}`} className="wm-h1-out" aria-hidden="true"><HeroWords line={out.h} /></span>
@@ -1127,10 +1143,12 @@ function RotatingHero({ paused }) {
           <span key={`in${idx}`} className={inCls}><HeroWords line={cur.h} /></span>
         </h1>
       </div>
-      {/* The paired subtext: same clock, same measure-and-transition, a softer
+      {/* The paired subtext: same clock, same tallest-line reservation, a softer
           whole-line rise that lands just after the headline's words settle. */}
       <div className="wm-lead-stage" data-reveal style={lH != null ? { minHeight: `${lH}px` } : undefined}>
-        <div className="wm-lead-meas" aria-hidden="true" ref={lMeas}>{cur.s}</div>
+        <div className="wm-lead-meas" aria-hidden="true" ref={lMeas}>
+          {pairs.map((p, i) => <div key={i}>{p.s}</div>)}
+        </div>
         <p className="wm-lead">
           {out != null && (
             <span key={`out${prev}`} className="wm-h1-out" aria-hidden="true">{out.s}</span>
@@ -1182,11 +1200,13 @@ const CSS = `
 
 .wm [data-reveal]{opacity:0;transform:translateY(24px);transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
 .wm [data-reveal].in{opacity:1;transform:none}
-/* The two rotating hero stages also animate their height (set inline per line),
-   so a taller/shorter headline glides the subtext + CTAs instead of jumping.
-   Re-declares the reveal transition and appends height; keeps className static
-   so the reveal "in" class is never overwritten by a re-render. */
-.wm .wm-h1-stage[data-reveal],.wm .wm-lead-stage[data-reveal]{transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1),min-height .55s cubic-bezier(.4,0,.2,1)}
+/* The two rotating hero stages are reserved at the height of their TALLEST line
+   (set inline, same value for every pair), so a rotation never changes the box
+   and nothing under the headline moves. The reveal transition is re-declared
+   here (opacity + transform only; no height animation, there is no height change
+   to animate) and className stays static so the reveal "in" class is never
+   overwritten by a re-render. */
+.wm .wm-h1-stage[data-reveal],.wm .wm-lead-stage[data-reveal]{transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
 
 /* HERO */
 .wm-hero{padding:78px 0 0;position:relative}
@@ -1198,15 +1218,21 @@ const CSS = `
    never reacts to the text animation, and keeps it the tallest column so the row
    height - and everything below the hero - stays put. */
 .wm-hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:50px;align-items:start}
+/* min-width:0 on BOTH columns at every width (not only on phones): a grid item's
+   default min-width:auto lets a long nowrap code line inside the demo widen the
+   .92fr track, which read as the dark box "growing to the left" on one
+   scenario. With this, the tracks are fixed by the fr split and the demo's
+   content wraps or scrolls INSIDE the box. */
+.wm-hero-grid>*{min-width:0}
 .wm-badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--em);border:1px solid rgba(140,245,196,.3);background:rgba(140,245,196,.07);padding:6px 13px;border-radius:999px;margin-bottom:24px}
 /* Rotating headline. Typography lives on the stage so the h1 AND the off-screen
-   measurer wrap identically. The stage is TOP-anchored and given an explicit
-   height equal to the CURRENT line (measured in JS), so the h1 always hugs the
-   eyebrow for any copy and any pair count. That height is smoothly transitioned
-   (see the rule above), so a taller/shorter line glides the lead + CTAs into
-   place instead of leaving a dead gap above a short headline. */
+   measurer wrap identically. The stage is TOP-anchored (the h1 always hugs the
+   eyebrow) and reserved at the height of the TALLEST headline in the set
+   (measured in JS from one hidden copy per pair), so a shorter line leaves the
+   box exactly where it was and the lead + CTAs never move between rotations. */
 .wm-h1-stage{position:relative;margin:0 0 24px;font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(38px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;text-wrap:balance;overflow-wrap:anywhere}
 .wm-h1-meas{position:absolute;top:0;left:0;width:100%;visibility:hidden;pointer-events:none;user-select:none}
+.wm-h1-meas .w{display:inline-block}   /* same word boxes as the live h1, so the wrap matches */
 .wm-hero h1{font:inherit;letter-spacing:inherit;margin:0;display:grid}
 .wm-hero h1>span{grid-area:1/1;display:block}
 .wm-hero h1 .w{display:inline-block}
@@ -1221,10 +1247,9 @@ const CSS = `
  .wm-hero h1 .wm-h1-in{opacity:1;animation:none}
  .wm-hero h1 .wm-h1-out{display:none}
 }
-/* Paired subtext: same measure-and-transition as the headline. Top-anchored
-   with an explicit current-line height, so it sits directly under the headline
-   and glides the CTAs when its height changes. Width and size live on the stage
-   so the <p> and the measurer wrap identically. */
+/* Paired subtext: same tallest-line reservation as the headline. Top-anchored,
+   so it sits directly under the headline, and the CTAs below it never move.
+   Width and size live on the stage so the <p> and the measurer wrap identically. */
 .wm-lead-stage{position:relative;font-size:19px;max-width:40ch;margin:0 0 22px}
 .wm-lead-meas{position:absolute;top:0;left:0;width:100%;visibility:hidden;pointer-events:none;user-select:none}
 .wm-lead{font-size:inherit;color:var(--mut);margin:0;display:grid}
@@ -1264,13 +1289,18 @@ const CSS = `
 .wm-ways3-note svg{color:var(--em)}
 
 /* DEMO */
-.wm-demo{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:17px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;min-height:600px;display:flex;flex-direction:column}
+/* LAYOUT STABILITY: the box fills its grid track and can never be widened by
+   its content (width:100% + min-width:0 + overflow:hidden), and every inner
+   region has a fixed height (goal, sees, stage, guide), so the box keeps one
+   width and one height across every scenario and every step. */
+.wm-demo{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:17px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;min-height:600px;display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden}
+.wm-demo>*{min-width:0}
 .wm-demo-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:2px 4px 14px}
 .wm-demo-head b{font-family:"Bricolage Grotesque";margin-left:6px}
 .wm-demo-head .d{width:9px;height:9px;border-radius:50%}
 .d.r{background:#ff5f57}.d.y{background:#febc2e}.d.g{background:#28c840}
 .wm-demo-tag{margin-left:auto;font-size:11px;color:var(--em);border:1px solid rgba(140,245,196,.3);border-radius:999px;padding:2px 10px}
-.wm-demo-goal{font-size:15px;color:var(--tx);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:11px 13px;min-height:60px}
+.wm-demo-goal{font-size:15px;line-height:1.5;color:var(--tx);background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:11px;padding:11px 13px;min-height:68px;overflow-wrap:anywhere}   /* two lines reserved: no height change between short and long goals */
 .wm-demo-k{font-size:10px;letter-spacing:.14em;color:var(--mut);font-weight:700;margin-right:8px}
 .wm-caret{display:inline-block;width:2px;height:15px;background:var(--em);margin-left:3px;vertical-align:-2px;animation:wmblink 1s step-end infinite}
 @keyframes wmblink{50%{opacity:0}}
@@ -1282,7 +1312,7 @@ const CSS = `
 .wm-demo-term{margin-top:12px;border:1px solid #27324a;border-radius:11px;overflow:hidden}
 .wm-demo-th{display:flex;justify-content:space-between;background:#0c1222;color:#8ea3c0;font-size:10px;letter-spacing:.1em;padding:7px 10px}
 .wm-demo-th span{color:#cdd6e5}
-.wm-demo-term code{display:block;background:#0c1222;color:#d6e9d6;font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:10px;overflow-x:auto;white-space:nowrap}
+.wm-demo-term code{display:block;background:#0c1222;color:#d6e9d6;font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}   /* long commands wrap INSIDE the box, never widen it */
 .wm-demo-list{list-style:none;padding:12px 4px 2px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .wm-demo-list li{color:var(--mut);padding-left:24px;position:relative}
 .wm-demo-list li:before{content:"○";position:absolute;left:4px;color:var(--mut)}
@@ -1327,8 +1357,12 @@ const CSS = `
 .wm-diff{margin-top:10px;border:1px solid #27324a;border-radius:11px;overflow:hidden;background:#0a0f18;font-family:"JetBrains Mono",ui-monospace,monospace;animation:wm-demo-fade .3s ease-out both}
 .wm-diff-file{display:flex;align-items:center;gap:6px;padding:7px 11px;background:#0c1220;color:#8ea3c0;font-size:10.5px;letter-spacing:.04em;border-bottom:1px solid rgba(255,255,255,.05)}
 .wm-diff-file svg{color:#8ea3c0}
-.wm-diff-line{display:flex;gap:9px;padding:6px 11px;font-size:11.5px;line-height:1.5;white-space:nowrap;overflow-x:auto}
+/* Diff lines WRAP inside the fixed-width box (pre-wrap + anywhere + break-word on
+   the code), so a long line like a retriever call with search_kwargs can never
+   widen the demo or push it left; the +/- marker keeps its own column. */
+.wm-diff-line{display:flex;gap:9px;padding:6px 11px;font-size:11.5px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;min-width:0}
 .wm-diff-line span{flex:0 0 auto;font-weight:700;opacity:.85}
+.wm-diff-line code{flex:1 1 auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:inherit}
 .wm-diff-line.del{background:rgba(255,99,99,.09);color:#ffb3b3}.wm-diff-line.del span{color:#ff6b6b}
 .wm-diff-line.add{background:rgba(140,245,196,.09);color:#bdf5d8}.wm-diff-line.add span{color:var(--em)}
 .wm-demo-fix{margin-top:12px;border:1px solid rgba(255,140,90,.4);background:rgba(255,140,90,.08);border-radius:13px;padding:12px 13px;animation:wm-demo-fade .3s ease-out both}
@@ -1338,8 +1372,8 @@ const CSS = `
 .wm-demo-fixsay{margin-top:7px;font-size:13.5px;color:var(--tx);font-weight:600;line-height:1.4}
 .wm-demo-fixdo{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:13px;color:var(--em);font-weight:600}
 .wm-demo-fixdo svg{color:var(--em);flex:0 0 auto}
-.wm-demo-stage{margin-top:12px;height:120px;display:flex;flex-direction:column;justify-content:center}
-.wm-demo-stage > *{margin-top:0}
+.wm-demo-stage{margin-top:12px;height:120px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;min-width:0}   /* fixed: a wrapped diff or command stays inside this box */
+.wm-demo-stage > *{margin-top:0;min-width:0;max-width:100%}
 .wm-demo-guide{margin-top:12px;height:214px;overflow:hidden}
 .wm-demo-guide > :first-child{margin-top:0}
 
@@ -1746,11 +1780,8 @@ const CSS = `
 .wm-foot-links .wm-link{font-size:13px}
 
 @media(max-width:900px){
- /* min-width:0 so neither column can widen the single track past the viewport
-    (the demo mock's rotating scenario text otherwise pushed it to 430-556px and
-    the headline was clipped at the right edge on phones). */
+ /* (min-width:0 on the columns is now global, see .wm-hero-grid>* above.) */
  .wm-hero-grid{grid-template-columns:1fr;gap:38px}
- .wm-hero-grid>*{min-width:0}
  .wm-steps,.wm-ways-grid,.wm-tiers,.wm-people-grid{grid-template-columns:1fr}
  .wm-cards{grid-template-columns:1fr 1fr}
  .wm-flow{flex-direction:column}

@@ -25,6 +25,20 @@ function setCanonical(href) {
   return { el, prev, created }
 }
 
+// Inject a JSON-LD <script> safely via textContent (no HTML parsing, so no
+// injection sink). For FIRST-PARTY structured data only (e.g. a FAQPage built
+// from our own content). Removes it on unmount.
+export function useJsonLd(json) {
+  useEffect(() => {
+    if (!json) return undefined
+    const el = document.createElement('script')
+    el.type = 'application/ld+json'
+    el.textContent = typeof json === 'string' ? json : JSON.stringify(json)
+    document.head.appendChild(el)
+    return () => { try { el.remove() } catch { /* noop */ } }
+  }, [json])
+}
+
 /**
  * @param {{title?:string, description?:string, path?:string}} opts
  *   path is the route path (e.g. "/workcopilot/pricing"); canonical is ORIGIN+path.

@@ -208,11 +208,14 @@ export default function WorkLogin() {
 const CSS = `
 .wl{--ink:#f6f8fb;--panel:#ffffff;--line:rgba(17,23,38,.12);--tx:#0f1a16;--mut:#5a6472;--em:#0a9d66;--em2:#0a86cf;--warm:#ffb35c;--warm2:#ff7a59;
   position:relative;min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:var(--ink);color:var(--tx);
-  font-family:"Figtree",system-ui,sans-serif;overflow:hidden;-webkit-font-smoothing:antialiased}
+  /* DESIGN-06: clip horizontally (the aurora bleeds past both edges) but NEVER
+     vertically - a blanket overflow:hidden made a tall form unreachable on a
+     short phone viewport. The aurora is fixed below so it adds no scroll. */
+  font-family:"Figtree",system-ui,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .wl *{box-sizing:border-box}
 .wl h1,.wl h2{color:var(--tx);margin:0}
 .wl a{color:inherit;text-decoration:none}
-.wl-aurora{position:absolute;inset:-30% 40% auto -10%;height:90vh;filter:blur(90px);opacity:.5;pointer-events:none;
+.wl-aurora{position:fixed;inset:-30% 40% auto -10%;height:90vh;filter:blur(90px);opacity:.5;pointer-events:none;
   background:radial-gradient(45% 60% at 30% 20%,rgba(10,157,102,.22),transparent 70%),radial-gradient(45% 55% at 60% 60%,rgba(10,134,207,.16),transparent 70%),radial-gradient(40% 50% at 20% 80%,rgba(140,245,196,.18),transparent 70%);
   animation:wldrift 16s ease-in-out infinite alternate}
 @keyframes wldrift{to{transform:translateY(5%) scale(1.06)}}
@@ -280,4 +283,6 @@ const CSS = `
  .wl-brand{display:none}
  .wl-aurora{inset:-30% -20% auto -20%}
 }
+/* DESIGN-06: reclaim side room for the form on small phones (was a flat 40px) */
+@media(max-width:420px){.wl-main{padding:28px 18px}}
 `

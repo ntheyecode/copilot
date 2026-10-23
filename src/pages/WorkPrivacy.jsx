@@ -14,7 +14,7 @@ import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
-const LAST_UPDATED = '2026-10-22'
+const LAST_UPDATED = '2026-10-23'
 const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
 const SUPPORT = 'support@admireveda.com'           // product support, billing
 const ENTITY = 'COE Security LLC'
@@ -78,7 +78,7 @@ export default function WorkPrivacy() {
   const nav = useNavigate()
   useSeo({
     title: 'Privacy Policy - WorkCoPilot by AdmireVeda',
-    description: 'What WorkCoPilot collects, what leaves your device after on-device redaction, what is stored and for how long, how it is protected, the third parties involved, and your rights and choices.',
+    description: 'What WorkCoPilot collects, what leaves your device after on-device redaction, what is stored and for how long (including de-identified learnings that keep guidance current), how it is protected, the third parties involved, and your rights and choices.',
     path: '/workcopilot/privacy',
   })
   useEffect(() => { ensureFonts() }, [])
@@ -143,6 +143,7 @@ export default function WorkPrivacy() {
               ['Documents you attach', 'On the desktop app, attached documents are read locally on your machine. Only the governed (redacted or tokenized) text is sent, never the file itself.'],
               ['Session records', 'A report for each session, an audit log for each session, and your session history, so you can reopen and review past work.'],
               ['Usage', 'The guided minutes you use, so your plan\'s allowance can be applied.'],
+              ['What it learns about tools', 'To keep guidance current, WorkCoPilot may keep generalized, de-identified learnings about how a tool or task currently works, such as where a setting now lives. These contain no personal data, secrets, screen images or document content. For a company account they are kept in that company\'s own knowledge base and benefit only its members; for individual accounts they are kept in our platform knowledge base to improve the service for everyone.'],
               ['Billing', 'Payment details are entered with and held by Stripe, our billing provider. We receive what is needed to run your subscription, such as your plan and its status.'],
             ]} />
           </Sec>
@@ -185,6 +186,7 @@ export default function WorkPrivacy() {
               ['Audit log', 'One per session, recording what was transmitted, so you can see exactly what left your device.'],
               ['Session history', 'Your list of past sessions.'],
               ['Sign-in session', 'A session cookie is used to keep you signed in.'],
+              ['Generalized learnings', 'De-identified facts about how tools and tasks currently work, kept so future guidance stays current. They hold no personal data, secrets, screens or document content, and they are not tied to any one session, so deleting a session does not change them. A company\'s learnings stay within that company\'s knowledge base and are removed with the company account, or earlier on request.'],
             ]} />
             <h3>For how long</h3>
             <p>By default data is kept until you or your company admin delete it, with no automatic deletion. An automatic retention window can be configured so that sessions older than a set number of days are purged on a schedule. Either way, you and your admin can delete a session at any time.</p>

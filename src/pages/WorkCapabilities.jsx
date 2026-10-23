@@ -5,7 +5,7 @@
 // (via the shared WorkCard primitive), to match the rest of the site.
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowLeft, ArrowRight, Trophy, Check } from 'lucide-react'
+import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowLeft, ArrowRight, Trophy, Check, RefreshCw } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
@@ -123,7 +123,28 @@ const VIZ = {
       <path d="M222 42l-4 8h6l-4 8" stroke={CY} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="236" y="54" fill={CY} fontSize="11" fontFamily="system-ui">fix</text>
     </Frame>
   ),
-  // 9. The strongest AI available to you plans; live guidance keeps pace - two
+  // 9. Stays current - "last time" a control sat in one place, "this time" it has
+  // moved and the step already points at the new spot, with a readout that the
+  // learning was carried forward. Benefit only: never the mechanism behind it.
+  learns: (
+    <Frame h={100} label="Illustration: two app windows, Last time with a control in one place and This time with the control moved and already found, over a readout saying learned, carried forward">
+      {[[22, 'last time', false], [150, 'this time', true]].map(([x, t, now]) => (
+        <g key={t}>
+          <rect x={x} y="18" width="108" height="48" rx="8" fill={PANEL} stroke={LINE} />
+          <rect x={x} y="18" width="108" height="12" rx="8" fill="rgba(10,13,18,.05)" />
+          <rect x={x + 8} y="36" width="34" height="4" rx="2" fill="rgba(10,13,18,.14)" />
+          <rect x={x + 8} y="46" width="24" height="4" rx="2" fill="rgba(10,13,18,.1)" />
+          {now
+            ? <><rect x={x + 54} y="38" width="44" height="16" rx="6" fill={EMf} stroke={EM} strokeWidth="1.6" /><path d={`M${x + 61} 46l3 3 5-6`} stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x={x + 72} y="50" fill={EM} fontSize="9" fontFamily="system-ui">found</text></>
+            : <rect x={x + 54} y="36" width="44" height="16" rx="6" fill="none" stroke="rgba(10,13,18,.28)" strokeWidth="1.4" strokeDasharray="3 2" />}
+          <text x={x + 54} y="78" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{t}</text>
+        </g>
+      ))}
+      <path d="M132 42h14" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M142 38l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="140" y="95" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace">learned <tspan fill={EM}>·</tspan> carried forward</text>
+    </Frame>
+  ),
+  // 10. The strongest AI available to you plans; live guidance keeps pace - two
   // lanes, framed as the BENEFIT (what you get), never as the routing behind it.
   // The PLAN lane: your plan, from the strongest AI on your key. The GUIDE lane:
   // a run of quick, confirmed steps. A quiet "planned by" readout at the foot.
@@ -164,6 +185,10 @@ const CARDS = [
   { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams, read on your computer, the file never leaving, flagging anything in them that is wrong.' },
   { viz: 'record', icon: FileText, t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
   { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings.' },
+  // Cross-session learning, framed as the BENEFIT (stays current, learns your
+  // tools, beats stale AI knowledge) and as a data practice (private to your
+  // company; de-identified for solo users). Never the mechanism, model or cost.
+  { viz: 'learns', icon: RefreshCw, t: 'Stays current, learns your tools', d: 'WorkCoPilot learns the current way your tools work and reuses it next time, and it researches the latest live, so you are not limited to an AI\'s training cutoff. Your team\'s learnings stay private to your company; solo users benefit from a shared, de-identified knowledge base.' },
 ]
 
 // Accessibility (WEB-08): one <main>, a single H1, visually hidden H2s over the
@@ -174,7 +199,7 @@ export default function WorkCapabilities() {
   const nav = useNavigate()
   useSeo({
     title: 'How It Works - WorkCoPilot by AdmireVeda',
-    description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, and plans from the strongest AI available to you.',
+    description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, staying current by learning your tools, and plans from the strongest AI available to you.',
     path: '/workcopilot/how-it-works',
   })
   // Deep links like /workcopilot/how-it-works#best-model (from the main page's
@@ -196,15 +221,18 @@ export default function WorkCapabilities() {
       <main id="main">
       <section className="wcap-hero">
         <h1>Like having the best person<br />in the room, every time.</h1>
-        <p>Everything WorkCoPilot does for you, and the gold-standard way it does each one.</p>
+        {/* AEO: a direct, quotable one-sentence answer to "what does WorkCoPilot do?" */}
+        <p>WorkCoPilot watches your screen and tells you the exact next step for any task, in any app, checks that each step worked, and stays current with how your tools work today. Here is everything it does for you, and the gold-standard way it does each one.</p>
       </section>
       <section className="wcap-grid" aria-labelledby="wcap-grid-h">
         <h2 id="wcap-grid-h" className="wcap-sr">What WorkCoPilot does for you</h2>
         {CARDS.map((b, i) => {
-          const tones = ['', 'cyan', '', 'amber', 'cyan', '', 'cyan', 'violet']
-          const pos = ['0% 0%', '100% 0%', '50% 50%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%']
+          // Nine cards in a 3 x 3 grid (the ninth, "stays current", would orphan a
+          // 4-column layout). Tones and texture crops cycle so no two neighbors match.
+          const tones = ['', 'cyan', '', 'amber', 'cyan', '', 'cyan', 'violet', 'amber']
+          const pos = ['0% 0%', '100% 0%', '50% 50%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '50% 100%']
           return (
-            <WorkCard key={b.t} theme="light" tone={tones[i % 8] || undefined} delay={(i % 4) * 70} texPos={pos[i % 8]}>
+            <WorkCard key={b.t} theme="light" tone={tones[i % 9] || undefined} delay={(i % 3) * 70} texPos={pos[i % 9]}>
               <WorkCard.Media>{VIZ[b.viz]}</WorkCard.Media>
               <WorkCard.Head icon={b.icon} title={b.t} />
               <WorkCard.Body>{b.d}</WorkCard.Body>
@@ -277,7 +305,7 @@ const CSS = `
 .wcap-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
 .wcap-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:560px;line-height:1.55}
 @media(max-width:620px){.wcap-hero h1{font-size:28px}.wcap-hero br{display:none}}
-.wcap-grid{max-width:1160px;margin:0 auto;padding:26px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
+.wcap-grid{max-width:1160px;margin:0 auto;padding:26px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:1080px){.wcap-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.wcap-grid{grid-template-columns:1fr}}
 /* full-width feature card: visual + proof strip on the left, the claim and its

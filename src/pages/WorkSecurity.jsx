@@ -301,10 +301,10 @@ export default function WorkSecurity() {
 }
 
 const CSS = `
-.wsx{--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--em:#0f766e;--bg:#f8fafc;background:var(--bg);color:var(--ink);min-height:100vh;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.wsx{--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--em:#0f766e;--bg:#f8fafc;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wsx *{box-sizing:border-box}
 .wsx-top{display:flex;align-items:center;justify-content:space-between;max-width:1040px;margin:0 auto;padding:18px 20px}
-.wsx-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+.wsx-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
 .wsx-hero{max-width:760px;margin:0 auto;padding:34px 20px 6px;text-align:center}
 .wsx-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em);background:#ecfdf5;border:1px solid #a7f3d0;border-radius:999px;padding:5px 13px}
 .wsx-hero h1{font-size:34px;line-height:1.12;margin:16px 0 10px;letter-spacing:-.02em;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif}
@@ -334,7 +334,7 @@ const CSS = `
 .wsx-ctitle{font-weight:700;font-size:14px;margin-bottom:10px}
 .wsx-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px}
 .wsx-key{color:#64748b;flex:0 0 auto}
-.wsx-val{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--ink);text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wsx-val{font-family:ui-monospace,Consolas,monospace;font-size:12px;color:var(--ink);text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wsx-val.ok{color:#15803d;font-weight:700;font-family:inherit}
 .wsx-okdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#16a34a;margin-right:6px;vertical-align:1px}
 .wsx-mask{display:inline-block;height:13px;width:118px;border-radius:3px;background:#0b1220}
@@ -389,7 +389,10 @@ const CSS = `
   .wsx-farrow svg{transform:rotate(90deg)}
 }
 @media(max-width:640px){.wsx-hgrid{grid-template-columns:1fr}}
+/* DESIGN-06: on small phones the mock screen's fixed 150px nav leaves too little
+   for the detail column; trim it so values and masks read clearly at 320/375. */
+@media(max-width:480px){.wsx-side{flex-basis:116px}.wsx-screen{height:270px}}
 .wsx-cta{max-width:1040px;margin:0 auto;padding:16px 20px 56px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.wsx-btn{display:inline-flex;align-items:center;gap:8px;background:var(--em);color:#fff;border:1px solid var(--em);border-radius:11px;padding:11px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none}
+.wsx-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;background:var(--em);color:#fff;border:1px solid var(--em);border-radius:11px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none}
 .wsx-btn.alt{background:#fff;color:var(--ink);border-color:var(--line)}
 `

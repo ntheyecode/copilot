@@ -487,5 +487,11 @@ const CSS = `
 .wkd-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,58%);box-shadow:0 0 7px currentColor;animation:wkd-fw-pop 1.15s cubic-bezier(.15,.7,.3,1) forwards}
 .wkd-fw-burst.b1 i{animation-delay:.1s}.wkd-fw-burst.b2 i{animation-delay:.2s}.wkd-fw-burst.b3 i{animation-delay:.32s}.wkd-fw-burst.b4 i{animation-delay:.16s}.wkd-fw-burst.b5 i{animation-delay:.28s}.wkd-fw-burst.b6 i{animation-delay:.38s}
 @keyframes wkd-fw-pop{0%{transform:rotate(calc(var(--a) * 1deg)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(calc(var(--a) * 1deg)) translateX(70px) scale(.25);opacity:0}}
-@media (max-width:560px){.wkd-links{display:none}.wkd-demo{height:auto;min-height:0;overflow:visible}}
+@media (max-width:560px){
+  /* DESIGN-06: links hide on phones - push the CTA back to the right edge so the
+     header stays balanced, and let the demo card grow to fit instead of clipping */
+  .wkd-links{display:none}
+  .wkd-cta.sm{margin-left:auto}
+  .wkd-demo{height:auto;min-height:0;overflow:visible}
+}
 `

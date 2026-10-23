@@ -22,15 +22,19 @@ function ModelScore({ title, summary }) {
         <span className="wbm-big">{pct(o.rate)}</span>
         <span className="wbm-meta">{o.pass}/{o.n} correct &middot; 95% CI {pct(o.ci95[0])}&ndash;{pct(o.ci95[1])}{o.aiGradedCount ? ` · ${o.aiGradedCount} AI-graded` : ''}</span>
       </div>
-      <table className="wbm-table">
-        <caption className="wbm-sr">{title}: result correctness by domain</caption>
-        <thead><tr><th scope="col">Domain</th><th scope="col">Correct</th><th scope="col">Rate</th><th scope="col">95% CI</th></tr></thead>
-        <tbody>
-          {Object.entries(summary.domains || {}).map(([d, v]) => (
-            <tr key={d}><th scope="row">{DOMAIN_LABEL[d] || d}</th><td>{v.pass}/{v.n}</td><td>{pct(v.rate)}</td><td>{pct(v.ci95[0])}&ndash;{pct(v.ci95[1])}</td></tr>
-          ))}
-        </tbody>
-      </table>
+      {/* DESIGN-03: the four-column table scrolls inside its own container on a
+          narrow card, so it never widens the card or the page at 320/375. */}
+      <div className="wbm-tscroll">
+        <table className="wbm-table">
+          <caption className="wbm-sr">{title}: result correctness by domain</caption>
+          <thead><tr><th scope="col">Domain</th><th scope="col">Correct</th><th scope="col">Rate</th><th scope="col">95% CI</th></tr></thead>
+          <tbody>
+            {Object.entries(summary.domains || {}).map(([d, v]) => (
+              <tr key={d}><th scope="row">{DOMAIN_LABEL[d] || d}</th><td>{v.pass}/{v.n}</td><td>{pct(v.rate)}</td><td>{pct(v.ci95[0])}&ndash;{pct(v.ci95[1])}</td></tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   )
 }
@@ -137,7 +141,9 @@ const CSS = `
 .wbm-overall{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
 .wbm-big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--ink)}
 .wbm-meta{font-size:12.5px;color:var(--mut)}
+.wbm-tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .wbm-table{width:100%;border-collapse:collapse;font-size:13px}
+.wbm-table thead th{white-space:nowrap}
 .wbm-table th{text-align:left;color:var(--mut);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
 .wbm-table tbody th{color:var(--ink);font-weight:600}
 .wbm-table td{padding:6px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
@@ -157,5 +163,10 @@ const CSS = `
 .wbm-cta{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
 .wbm-link{display:inline-flex;align-items:center;gap:6px;color:var(--em);text-decoration:none;font-size:14px;font-weight:600}
 .wbm-link:hover{text-decoration:underline}
-@media(max-width:720px){.wbm-grid{grid-template-columns:1fr}}
+@media(max-width:720px){
+  .wbm-grid{grid-template-columns:1fr}
+  /* DESIGN-06: comfortable one-handed tap targets for the footer links */
+  .wbm-cta{gap:4px 18px}
+  .wbm-link,.wbm-back{min-height:40px}
+}
 `
