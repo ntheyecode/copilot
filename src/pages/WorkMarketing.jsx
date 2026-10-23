@@ -102,12 +102,13 @@ export default function WorkMarketing() {
     { icon: TerminalSquare, viz: 'command', t: 'The exact how, every time', d: 'Not vague advice. The precise click, command or setting to use, spelled out and copy-ready. Always the best proven way, no shortcuts.' },
     { icon: Compass, viz: 'zero', t: 'Starts from zero', d: 'Opens the right page, signs you in, and walks you to the exact spot. Nothing assumed, nothing skipped.' },
     { icon: ShieldCheck, viz: 'fix', t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix. When a tool\'s UI has changed, it finds the new control and corrects the step instead of pointing at a button that moved.' },
-    { icon: Monitor, viz: 'command', t: 'Any app, not just the browser', d: 'Guides web apps, installed desktop apps, on-prem consoles at a local address, and your own custom tools - it reads whatever is on screen and fits the real environment.' },
-    { icon: Globe2, viz: 'current', t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams - read on your computer, the file never leaving - flagging anything in them that is wrong.' },
+    { icon: Zap, viz: 'current', t: 'Always relevant to your screen', d: 'Told you to go somewhere and it is not there, or the page looks different than expected? It reads your actual screen from the live screenshot, learns what is really there, and gives you the right, relevant next move - never a stale instruction that does not match what you see.' },
+    { icon: Monitor, viz: 'command', t: 'Any app and any process, not just the browser', d: 'Web apps, installed desktop apps, on-prem consoles at a local address, and your own in-house built apps, custom apps and custom processes - it reads whatever is on screen, learns your environment, and guides you correctly through it. Not just the public tools everyone already knows.' },
+    { icon: Globe2, viz: 'current', t: 'Learns your in-house apps, across your team', d: 'Load the documentation for your own in-house, custom or on-prem apps into your company knowledge base and it learns them, then walks your whole team through those apps step by step - tools it was never trained on. It keeps learning, and the knowledge is kept across every user in your company, so the team learns once and benefits together.' },
     { icon: FileText, viz: 'record', t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
     { icon: ScanEye, viz: 'record', t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings. Paste a long error or an API response and it analyzes it and adjusts the plan.' },
     // Benefit only (never the mechanism): the pill advertises cross-session learning + live research.
-    { icon: RefreshCw, viz: 'current', t: 'Stays current, learns your tools', d: 'It learns the current way your tools work and carries it forward, and researches the latest live, so it is never stuck on stale AI knowledge.' },
+    { icon: RefreshCw, viz: 'current', t: 'Fresh and live, never stale', d: 'It researches the latest live and learns the current way your tools work, so your steps reflect how things work today, not last year - never stuck on stale AI knowledge.' },
   ]
   const steps = [
     { n: '01', viz: 'goal', t: 'Scope it together', d: 'Say what you want, answer a couple of quick questions, and it scopes the job before it plans, so the plan fits what you really need.' },
@@ -189,7 +190,7 @@ export default function WorkMarketing() {
                 glyphs, filling the space below the CTAs. Category glyphs ONLY -
                 no brand marks (honest). Tokens adapt to light + dark. */}
             <div className="wm-anyapp" data-reveal>
-              <p className="wm-anyapp-cap">Guides you right inside any app you already use.</p>
+              <p className="wm-anyapp-cap">Any app you already use - web, desktop, on-prem, and your own in-house, custom apps and processes.</p>
               <div className="wm-anyapp-row">
                 {[
                   { Ic: Globe2, t: 'Web browser' },

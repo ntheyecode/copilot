@@ -469,7 +469,7 @@ const LV_CSS = `
 .lv-field input::placeholder{color:var(--mut);opacity:.7}
 .lv-field input:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.14)}
 .lv-field.err input{border-color:#e23b3b;box-shadow:0 0 0 3px rgba(226,59,59,.12)}
-.lv-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;border-radius:13px;padding:14px 18px;font:inherit;font-weight:800;font-size:15.5px;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));cursor:pointer;transition:transform .14s,box-shadow .14s;box-shadow:0 14px 34px -14px rgba(10,134,207,.6)}
+.lv-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;border-radius:13px;padding:14px 18px;font:inherit;font-weight:800;font-size:15.5px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;transition:transform .14s,box-shadow .14s;box-shadow:0 14px 34px -14px rgba(255,122,89,.55)}
 .lv-submit:hover{transform:translateY(-1px)}
 .lv-submit:disabled{opacity:.6;cursor:default;transform:none}
 .lv-spin{animation:lv-rot 1s linear infinite}
@@ -578,7 +578,7 @@ const LV_CSS = `
 .wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
 .wm-cov-foot.show{opacity:1;transform:none;pointer-events:auto}
 .wm-cov-plan{margin-top:14px;font-size:14px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}
-.lv-cta{margin-top:14px;display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;padding:12px 18px;font:inherit;font-weight:800;font-size:14.5px;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));cursor:pointer;transition:transform .14s}
+.lv-cta{margin-top:14px;display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;padding:12px 18px;font:inherit;font-weight:800;font-size:14.5px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;transition:transform .14s}
 .lv-cta:hover{transform:translateY(-1px)}
 .wm-cov-err{margin-top:12px;color:#c0392b;font-size:14px}
 .wm-cov-input{display:flex;gap:10px;align-items:flex-end;padding:16px 20px;border-top:1px solid var(--line)}
@@ -587,9 +587,9 @@ const LV_CSS = `
 .wm-cov-ibtns{display:flex;align-items:center;gap:8px}
 .wm-cov-clear{flex:0 0 auto;height:46px;padding:0 15px;border-radius:13px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
 .wm-cov-clear:hover{color:var(--tx);border-color:var(--em2)}
-.wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .wm-cov-send:disabled{opacity:.5;cursor:default}
-.wm-cov-sdots{display:inline-flex;gap:3px}.wm-cov-sdots i{width:5px;height:5px;border-radius:50%;background:#042;animation:wm-cov-bounce 1s infinite}.wm-cov-sdots i:nth-child(2){animation-delay:.15s}.wm-cov-sdots i:nth-child(3){animation-delay:.3s}
+.wm-cov-sdots{display:inline-flex;gap:3px}.wm-cov-sdots i{width:5px;height:5px;border-radius:50%;background:#1a0e08;animation:wm-cov-bounce 1s infinite}.wm-cov-sdots i:nth-child(2){animation-delay:.15s}.wm-cov-sdots i:nth-child(3){animation-delay:.3s}
 @media(max-width:560px){.wm-cov-launch{right:12px;bottom:12px}.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
 .wm-fw{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:18px}
 .wm-fw-burst{position:absolute;width:0;height:0}
