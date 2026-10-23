@@ -14,6 +14,7 @@ import WorkBuddy from './pages/WorkBuddy.jsx'
 import WorkFullGuide from './pages/WorkFullGuide.jsx'
 import WorkAdmin from './pages/workadmin/WorkAdmin.jsx'
 import WorkCompanyAdmin from './pages/workadmin/WorkCompanyAdmin.jsx'
+import WorkExec from './pages/WorkExec.jsx'
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -65,6 +66,7 @@ export default function App() {
       <Route path="/work/admin" element={<WorkAdmin />} />
       {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
       <Route path="/work/company" element={<WorkCompanyAdmin />} />
+      <Route path="/work/exec" element={<WorkExec />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   )

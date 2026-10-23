@@ -204,6 +204,17 @@ function requireCompanyAdmin(req, res, next) {
   if (!wu || wu.companyRole !== 'company_admin' || !wu.companyId) return res.status(403).json({ error: 'Company admin access required.' })
   next()
 }
+// Executive (or company admin / superadmin) may view the company productivity
+// dashboard. Its payload carries NO AI model and NO AI cost (business rules);
+// the "savings" there are the customer's hypothetical ROI, not our cost.
+function requireExecutive(req, res, next) {
+  if (req.user && req.user.role === 'superadmin') return next()
+  const wu = req.workUser
+  if (!wu || !wu.companyId || !['executive', 'company_admin'].includes(wu.companyRole)) {
+    return res.status(403).json({ error: 'Executive or company admin access required.' })
+  }
+  next()
+}
 // Scrub a session's user-text (goal + event text) before it is sent to an AI
 // provider - but ONLY when scrubbing is enabled for this user (superadmin sets
 // it per user; off by default). This is the server-side defense-in-depth layer;
@@ -952,6 +963,55 @@ app.get('/api/work/team/consumption', requireWorkAuth, requireCompanyAdmin, wrap
     companyId: d.companyId, sessionCount: d.sessionCount, userCount: d.userCount,
     byUser: (d.byUser || []).map((u) => ({ id: u.id, username: u.username, displayName: u.displayName, sessions: u.sessions })),
   })
+}))
+// Any company user: their company's white-label branding (logo + public contact)
+// for the dashboard header. Carries no seats, pricing, AI config or cost.
+app.get('/api/work/my-company', requireWorkAuth, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.json(null)
+  res.json(store.companyBranding(req.workUser.companyId))
+}))
+// Executive dashboard: company productivity + hypothetical ROI. No AI model and
+// no AI cost in the payload (business rules).
+app.get('/api/work/exec/productivity', requireWorkAuth, requireExecutive, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30))
+  res.json(store.companyProductivity(req.workUser.companyId, { days }))
+}))
+// Executive CSV export of the productivity data (PDF + image are exported client
+// side from the live dashboard).
+app.get('/api/work/exec/productivity.csv', requireWorkAuth, requireExecutive, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const days = Math.min(365, Math.max(1, parseInt(req.query.days, 10) || 30))
+  const d = store.companyProductivity(req.workUser.companyId, { days })
+  const esc = (v) => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'
+  const rows = []
+  rows.push(['Metric', 'Value'].map(esc).join(','))
+  rows.push(['Generated', d.generatedAt].map(esc).join(','))
+  rows.push(['Window (days)', d.windowDays].map(esc).join(','))
+  rows.push(['Members', d.members].map(esc).join(','))
+  rows.push(['Tasks completed', d.tasksCompleted].map(esc).join(','))
+  rows.push(['Tasks in progress', d.tasksInProgress].map(esc).join(','))
+  rows.push(['Avg steps per task', d.avgStepsPerTask].map(esc).join(','))
+  rows.push(['Avg minutes per task', d.avgMinutesPerTask].map(esc).join(','))
+  rows.push(['Effectiveness %', d.effectivenessPct].map(esc).join(','))
+  rows.push(['Fully completed %', d.fullyCompletedPct].map(esc).join(','))
+  rows.push(['Time saved hours (estimate)', d.estimated.timeSavedHours].map(esc).join(','))
+  rows.push(['Dollars saved (estimate)', d.estimated.dollarsSaved].map(esc).join(','))
+  rows.push(['Estimate basis', `${d.estimated.assumptions.manualMinPerStep} min/step manual, $${d.estimated.assumptions.laborUsdPerHour}/hr`].map(esc).join(','))
+  rows.push('')
+  rows.push(['Task type', 'Completed'].map(esc).join(','))
+  for (const t of d.byType) rows.push([t.type, t.count].map(esc).join(','))
+  rows.push('')
+  rows.push(['Depth', 'Completed'].map(esc).join(','))
+  rows.push(['Quick (1-3 steps)', d.depth.quick].map(esc).join(','))
+  rows.push(['Standard (4-7 steps)', d.depth.standard].map(esc).join(','))
+  rows.push(['Deep (8+ steps)', d.depth.deep].map(esc).join(','))
+  rows.push('')
+  rows.push(['Member', 'Tasks completed'].map(esc).join(','))
+  for (const m of d.topMembers) rows.push([m.name, m.tasks].map(esc).join(','))
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8')
+  res.setHeader('Content-Disposition', 'attachment; filename="workcopilot-productivity.csv"')
+  res.send(rows.join('\n'))
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
   res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal) })

@@ -83,6 +83,12 @@ export const api = {
   workAiKey: (body) => req('POST', '/api/work/ai/key', body || {}),
   workAiTest: () => req('POST', '/api/work/ai/test'),
   workAppStatus: () => req('GET', '/api/work/app/status'),
+  // White-label company branding (logo + public contact) for the dashboard header.
+  workMyCompany: () => req('GET', '/api/work/my-company'),
+  // Executive productivity dashboard (company-scoped; no AI model or cost in it).
+  workExecProductivity: (days) => req('GET', `/api/work/exec/productivity?days=${days || 30}`),
+  // CSV export is a direct browser download (cookie-authed): link to this URL.
+  workExecCsvUrl: (days) => `/api/work/exec/productivity.csv?days=${days || 30}`,
   // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
   workCheckout: (plan, cycle) => req('POST', '/api/work/checkout', { plan, cycle: cycle || 'monthly' }),
   workSubscription: () => req('GET', '/api/work/subscription'),

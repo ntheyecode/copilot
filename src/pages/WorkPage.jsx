@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3 } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
@@ -611,6 +611,46 @@ const WD_CSS = `
 
 .wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:34px 20px 72px}
 
+/* ---- Company co-branding strip (white-label) ---------------------------
+   Sits above the greeting for company users only. Reads as
+   "{Company}, powered by WorkCoPilot": the company owns the left (logo tile,
+   name, contact line), a hairline rule separates it from the WorkCoPilot
+   mark on the right. One flat panel, 1px line, same card recipe as the rest
+   of the home view; no gradients, no second accent. */
+.wd-cobrand{display:flex;align-items:center;gap:16px;min-width:0;margin-bottom:22px;padding:12px 16px 12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--card-shadow);animation:wd-rise .5s cubic-bezier(.2,.8,.2,1) both}
+.wd-cobrand-logo{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;min-width:44px;max-width:168px;padding:0 6px;border-radius:11px;background:var(--card-a);border:1px solid var(--line);overflow:hidden}
+.wd-cobrand-logo img{display:block;max-height:36px;max-width:156px;width:auto;height:auto;object-fit:contain}
+.wd-cobrand-logo.mono{color:var(--em);background:var(--em-fill);border-color:var(--em-line)}
+.wd-cobrand-logo.mono b{font-family:"Bricolage Grotesque";font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1}
+.wd-cobrand-id{min-width:0;flex:1 1 220px}
+.wd-cobrand-eyebrow{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);line-height:1.2;margin-bottom:3px}
+.wd-cobrand-name{display:block;font-family:"Bricolage Grotesque";font-weight:800;font-size:18px;letter-spacing:-.018em;line-height:1.2;color:var(--tx);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-cobrand-meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 14px;margin-top:4px;font-size:12.5px;color:var(--mut);line-height:1.4;min-width:0}
+.wd-cobrand-meta > span{display:inline-flex;align-items:center;gap:5px;min-width:0;max-width:100%}
+.wd-cobrand-meta svg{flex-shrink:0;opacity:.8}
+.wd-cobrand-meta a{color:var(--mut);text-decoration:none;border-bottom:1px solid var(--line-2);transition:color .15s,border-color .15s;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-cobrand-meta a:hover{color:var(--em-2);border-color:var(--em-2)}
+.wd-cobrand-meta .txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-cobrand-sep{width:1px;align-self:stretch;background:var(--line);flex-shrink:0;margin:2px 0}
+.wd-cobrand-by{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap;line-height:1}
+.wd-cobrand-by small{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--mut)}
+.wd-cobrand-by b{font-family:"Bricolage Grotesque";font-weight:800;font-size:14px;letter-spacing:-.015em;color:var(--tx)}
+.wd-cobrand-by b i{font-style:normal;color:var(--em)}
+.wd-cobrand-exec{display:inline-flex;align-items:center;gap:7px;flex-shrink:0;white-space:nowrap;height:36px;padding:0 13px;border-radius:10px;border:1px solid var(--em-line);background:var(--em-fill);color:var(--em);font:inherit;font-size:13px;font-weight:700;line-height:1;text-decoration:none;transition:background .15s,border-color .15s,transform .15s}
+.wd-cobrand-exec:hover{background:var(--em-fill-2);border-color:var(--em);transform:translateY(-1px)}
+.wd-cobrand-exec svg{flex-shrink:0}
+@media(max-width:760px){
+ .wd-cobrand{flex-wrap:wrap;gap:12px 14px;padding:12px 14px}
+ .wd-cobrand-sep{display:none}
+ .wd-cobrand-by{order:3;flex:1 1 auto}
+ .wd-cobrand-exec{order:4;margin-left:auto}
+}
+@media(max-width:480px){
+ .wd-cobrand-id{flex:1 1 calc(100% - 60px)}
+ .wd-cobrand-name{white-space:normal}
+ .wd-cobrand-exec{flex:1 1 100%;justify-content:center;margin-left:0}
+}
+
 /* ---- Home hero: greeting on the left, the illustration on the right ---- */
 .wd-hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:center;gap:28px;margin-bottom:22px}
 .wd-hello h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(27px,3.6vw,40px);line-height:1.12;letter-spacing:-.024em}
@@ -1042,6 +1082,14 @@ function Home({ user, onOpen, onSignOut }) {
   // Team is a company-admin surface: show it only for a company admin who is
   // actually attached to a company (role alone is not enough).
   const isCompanyAdmin = user.companyRole === 'company_admin' && !!user.companyId
+  // Executive dashboard (/work/exec) is for a company executive or company
+  // admin only; mirrors the server's requireExecutive gate. Solo users and
+  // plain members never see the link.
+  const isExecutive = !!user.companyId && ['executive', 'company_admin'].includes(user.companyRole)
+  // White-label co-branding: the signed-in user's company (logo + contact
+  // info) shown beside the WorkCoPilot identity. null = solo user, nothing
+  // company-branded renders.
+  const [company, setCompany] = useState(null)
   const [tab, setTab] = useState('dashboard')
   const [planTitle, setPlanTitle] = useState('')    // name the user gives the plan/session, carried everywhere
   const [deskDocs, setDeskDocs] = useState([])   // desktop on-device governed docs (ephemeral, client-only)
@@ -1128,6 +1176,14 @@ function Home({ user, onOpen, onSignOut }) {
     } finally { setPortalBusy(false) }
   }
   useEffect(() => { load() }, [load])
+  // Company branding is fetched once per signed-in company user; a failed or
+  // empty fetch simply leaves the strip hidden (the dashboard never depends on it).
+  useEffect(() => {
+    if (!user || !user.companyId) { setCompany(null); return }
+    let alive = true
+    api.workMyCompany().then((c) => { if (alive) setCompany(c && c.name ? c : null) }).catch(() => { if (alive) setCompany(null) })
+    return () => { alive = false }
+  }, [user])
   // A gated action failed. A company MEMBER must never see the personal plan
   // chooser: a 402 for them means no license/seat (ask the admin), not "buy a
   // personal plan". For everyone else a 402 is the plan chooser. Any other error
@@ -1259,6 +1315,38 @@ function Home({ user, onOpen, onSignOut }) {
       <main className="wd-main">
         {tab === 'dashboard' ? (
           <>
+            {company && (() => {
+              // Normalize the website for the href; the user-facing label is the
+              // bare host. The logo is a data:/https: URL from our own server and
+              // is only ever rendered as an <img src>, never as markup.
+              const site = company.website ? (/^https?:\/\//i.test(company.website) ? company.website : `https://${company.website}`) : ''
+              const place = [company.city, company.state].filter(Boolean).join(', ') || company.address || ''
+              const initials = company.name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase()
+              return (
+                <section className="wd-cobrand" aria-label={`${company.name}, powered by WorkCoPilot`}>
+                  {company.logo
+                    ? <span className="wd-cobrand-logo"><img src={company.logo} alt={`${company.name} logo`} /></span>
+                    : <span className="wd-cobrand-logo mono" aria-hidden>{initials ? <b>{initials}</b> : <Building2 size={20} />}</span>}
+                  <div className="wd-cobrand-id">
+                    <span className="wd-cobrand-eyebrow">Your workspace</span>
+                    <span className="wd-cobrand-name" title={company.name}>{company.name}</span>
+                    {(site || company.phone || place) && (
+                      <div className="wd-cobrand-meta">
+                        {site && <span><Globe size={12} /> <a href={site} target="_blank" rel="noopener noreferrer">{linkHost(site)}</a></span>}
+                        {company.phone && <span><Phone size={12} /> <a href={`tel:${String(company.phone).replace(/[^+\d]/g, '')}`}>{company.phone}</a></span>}
+                        {place && <span><MapPin size={12} /> <span className="txt">{place}</span></span>}
+                      </div>
+                    )}
+                  </div>
+                  <span className="wd-cobrand-sep" aria-hidden />
+                  <span className="wd-cobrand-by"><small>powered by</small> <AVMark size={20} id="avcb" glow={false} /> <b>Work<i>CoPilot</i></b></span>
+                  {isExecutive && (
+                    <a className="wd-cobrand-exec" href="/work/exec"><BarChart3 size={15} /> Executive dashboard <ArrowRight size={14} /></a>
+                  )}
+                </section>
+              )
+            })()}
+
             <section className="wd-hero">
             <div className="wd-hello">
               <h1>Hello {user.displayName || user.username},<span>What are you accomplishing today?</span></h1>

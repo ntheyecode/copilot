@@ -58,7 +58,7 @@ export default function UsersSection({ isSuperAdmin }) {
         companyRole: nu.companyId ? nu.companyRole : undefined,
         tier: nu.tier, free: !!nu.free,
       })
-      setCreateMsg({ kind: 'ok', text: `Created ${username}${nu.companyId ? ` (${nu.companyRole === 'company_admin' ? 'company admin' : 'member'})` : ''}.` })
+      setCreateMsg({ kind: 'ok', text: `Created ${username}${nu.companyId ? ` (${nu.companyRole === 'company_admin' ? 'company admin' : nu.companyRole === 'executive' ? 'executive' : 'member'})` : ''}.` })
       setNu(EMPTY_NEW)
       await load()
     } catch (error) {
@@ -192,6 +192,7 @@ export default function UsersSection({ isSuperAdmin }) {
               <select className="wka-select" value={nu.companyRole} disabled={!nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyRole: e.target.value }))}>
                 <option value="member">Member</option>
                 <option value="company_admin">Company admin</option>
+                <option value="executive">Executive (productivity dashboard, read-only)</option>
               </select>
             </div>
             <div className="wka-field"><label>Tier</label>
@@ -250,9 +251,10 @@ export default function UsersSection({ isSuperAdmin }) {
                             <option value="">No company</option>
                             {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
-                          <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 130 }}>
+                          <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 190 }}>
                             <option value="member">Member</option>
                             <option value="company_admin">Company admin</option>
+                            <option value="executive">Executive (read-only)</option>
                           </select>
                           <button type="button" className="wka-btn sm primary" disabled={busyId === u.id}
                             onClick={() => { const cid = document.getElementById(`co-${u.id}`).value; const cr = document.getElementById(`cr-${u.id}`).value; applyCompany(u, cid, cr) }}>
@@ -266,7 +268,7 @@ export default function UsersSection({ isSuperAdmin }) {
                             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                               <Building2 size={13} style={{ color: 'var(--wka-faint)' }} />
                               <span style={{ fontWeight: 600 }}>{u.companyName}</span>
-                              {u.companyRole === 'company_admin' ? <span className="wka-badge active">admin</span> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>member</span>}
+                              {u.companyRole === 'company_admin' ? <span className="wka-badge active">admin</span> : u.companyRole === 'executive' ? <span className="wka-badge active">executive</span> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>member</span>}
                             </span>
                           ) : <span style={{ color: 'var(--wka-faint)', fontSize: 13 }}>Individual</span>}
                           <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Set company & role' : 'Superadmin only'} onClick={() => setCompanyFor(u.id)}>Change</button>

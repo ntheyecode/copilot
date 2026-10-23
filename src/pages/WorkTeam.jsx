@@ -1,8 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
-import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check, FileText, Trash2, KeyRound, Globe, Sparkles, RefreshCw } from 'lucide-react'
-
-const wtPrice = (m) => (m && m.usdPerMtok != null && isFinite(Number(m.usdPerMtok))) ? `$${Number(m.usdPerMtok).toFixed(2)} /Mtok` : ''
+import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check, FileText, Trash2, KeyRound, Globe } from 'lucide-react'
 
 // Company-admin Team page. A company admin sees the users in their own company
 // and can add a new one. Backend:
@@ -32,18 +30,14 @@ export default function WorkTeam() {
   useEffect(() => { if (view === 'activity') loadActivity() }, [view, loadActivity])
   // Company's own AI keys (overrides the corporate keys we set).
   const [aiCompany, setAiCompany] = useState(null)
-  const [aiForm, setAiForm] = useState({ providerId: '', apiKey: '', chatModel: '', visionModel: '' })
+  const [aiForm, setAiForm] = useState({ providerId: '', apiKey: '' })
   const loadAi = useCallback(() => { api.workTeamAi().then((c) => setAiCompany(c || null)).catch(() => {}) }, [])
   useEffect(() => { if (view === 'ai') loadAi() }, [view, loadAi])
-  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk('Your AI keys are saved. WorkCoPilot now runs on them.'); setAiForm({ providerId: '', apiKey: '', chatModel: '', visionModel: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not save keys.') } finally { setBusy(false) } }
+  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk('Your AI keys are saved. WorkCoPilot now runs on them.'); setAiForm({ providerId: '', apiKey: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not save keys.') } finally { setBusy(false) } }
   const clearOwnKeys = async () => { setBusy(true); setErr(''); try { await api.workTeamSetAiKeys({ apiKey: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not clear keys.') } finally { setBusy(false) } }
-  // Company's own web-search (Tavily) key + the best/cheapest model guidance.
+  // Company's own web-search (Tavily) key.
   const [wsKey, setWsKey] = useState('')
   const saveWebSearch = async (clear) => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetWebSearch(clear ? '' : wsKey.trim(), 'tavily'); setOk(clear ? 'Web-search key removed.' : 'Web-search key saved.'); setWsKey(''); loadAi() } catch (e) { setErr(e.message || 'Could not save the web-search key.') } finally { setBusy(false) } }
-  const [rec, setRec] = useState(null)
-  const [recErr, setRecErr] = useState('')
-  const loadRec = useCallback(() => { setRecErr(''); setRec(null); api.workTeamAiRecommendation().then((r) => setRec(r || {})).catch((e) => setRecErr(e.message || 'Could not load recommendations.')) }, [])
-  useEffect(() => { if (view === 'ai') loadRec() }, [view, loadRec])
 
   const load = useCallback(() => {
     api.workCompanyUsers()
@@ -154,22 +148,16 @@ export default function WorkTeam() {
           {aiCompany && (
             <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--text,#141726)', border: '1px solid var(--line,#e3e6ee)' }}>
               {aiCompany.companyAi
-                ? <span>Current: <b>{aiCompany.companyAi.providerId || 'provider'}</b> · key {aiCompany.companyAi.keyMasked} · {aiCompany.companyAi.chatModel || 'default model'} · {aiCompany.companyAi.owner === 'company' ? 'your own keys' : 'company keys set by WorkCoPilot'}</span>
+                ? <span>Current: key {aiCompany.companyAi.keyMasked} · {aiCompany.companyAi.owner === 'company' ? 'your own key' : 'set up for you by WorkCoPilot'}</span>
                 : <span>No keys set yet. Your company is on the platform AI.</span>}
             </div>
           )}
           <div className="wt-form" style={{ maxWidth: 560 }}>
             <label className="wt-label">Provider
-              <input value={aiForm.providerId} placeholder="gemini, openai, groq…" onChange={(e) => setAiForm({ ...aiForm, providerId: e.target.value })} />
+              <input value={aiForm.providerId} placeholder="Your provider" onChange={(e) => setAiForm({ ...aiForm, providerId: e.target.value })} />
             </label>
             <label className="wt-label">API key
               <input value={aiForm.apiKey} placeholder="Paste your provider API key" onChange={(e) => setAiForm({ ...aiForm, apiKey: e.target.value })} />
-            </label>
-            <label className="wt-label">Chat model <span style={{ fontWeight: 400, color: 'var(--text-dim,#667)' }}>(optional)</span>
-              <input value={aiForm.chatModel} placeholder="e.g. gpt-4o-mini" onChange={(e) => setAiForm({ ...aiForm, chatModel: e.target.value })} />
-            </label>
-            <label className="wt-label">Vision model <span style={{ fontWeight: 400, color: 'var(--text-dim,#667)' }}>(reads the screen)</span>
-              <input value={aiForm.visionModel} placeholder="e.g. gpt-4o, gemini-1.5-flash" onChange={(e) => setAiForm({ ...aiForm, visionModel: e.target.value })} />
             </label>
             {err && <div className="wt-err">{err}</div>}
             {ok && <div className="wt-ok"><Check size={14} /> {ok}</div>}
@@ -196,36 +184,6 @@ export default function WorkTeam() {
               {aiCompany && aiCompany.webSearchConfigured && <button className="wt-btn" disabled={busy} onClick={() => saveWebSearch(true)}>Remove key</button>}
               <button className="wt-btn primary" disabled={busy || !wsKey.trim()} onClick={() => saveWebSearch(false)}>{busy ? <Loader2 size={15} className="spin" /> : 'Save key'}</button>
             </div>
-          </div>
-
-          <div className="wt-form" style={{ maxWidth: 560, marginTop: 26 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <h2 style={{ fontSize: 17 }}><Sparkles size={18} /> Recommended models</h2>
-              <button className="wt-btn" onClick={loadRec}><RefreshCw size={14} /> Refresh</button>
-            </div>
-            <p className="wt-form-sub">The best and cheapest picks across the providers available to you, to choose a model to run on.</p>
-            {recErr ? <div className="wt-err">{recErr}</div>
-              : !rec ? <div className="wt-empty"><Loader2 size={18} className="spin" /> Loading recommendations...</div>
-              : (rec.providers || []).length === 0 ? <div className="wt-empty">{rec.note || 'Add your AI keys to see recommendations.'}</div>
-              : (
-                <>
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    {[['Cheapest', rec.overall && rec.overall.cheapest], ['Cheapest that can see the screen', rec.overall && rec.overall.cheapestVision], ['Best', rec.overall && rec.overall.best]].map(([title, pick]) => (
-                      <div key={title} style={{ flex: '1 1 160px', minWidth: 0, border: '1px solid var(--line,#e3e6ee)', borderRadius: 10, padding: '12px 14px', background: 'var(--panel,#fff)' }}>
-                        <div style={{ fontSize: 12, color: 'var(--text-dim,#667)', fontWeight: 700 }}>{title}</div>
-                        {pick ? (
-                          <div style={{ marginTop: 7 }}>
-                            <div style={{ fontSize: 12, color: 'var(--text-dim,#667)' }}>{pick.label || pick.provider}</div>
-                            <div style={{ fontWeight: 700, wordBreak: 'break-word' }}>{pick.model}</div>
-                            <div style={{ marginTop: 4, fontSize: 12, color: 'var(--text-dim,#667)' }}>{wtPrice(pick)}{pick.vision ? (wtPrice(pick) ? ' · vision' : 'vision') : ''}</div>
-                          </div>
-                        ) : <div style={{ marginTop: 7, fontSize: 12.5, color: 'var(--text-dim,#667)' }}>No pick available.</div>}
-                      </div>
-                    ))}
-                  </div>
-                  {rec.note ? <div style={{ marginTop: 12, fontSize: 11.5, color: 'var(--text-dim,#667)' }}>{rec.note}</div> : null}
-                </>
-              )}
           </div>
         </>
       )}

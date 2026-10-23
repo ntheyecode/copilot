@@ -721,6 +721,7 @@ function publicCompany(c) {
   return {
     id: c.id, name: c.name, plan: c.plan || 'basic', seats: seatCount(c.seats),
     seatsByTier: c.seatsByTier || null,
+    logo: c.logo || null,     // white-label logo for the company dashboard
     adminSeats: seatCount(c.adminSeats, 2),
     licenseMode: LICENSE_MODES.includes(c.licenseMode) ? c.licenseMode : 'locked',
     ssoProvisioning: SSO_PROVISIONING.includes(c.ssoProvisioning) ? c.ssoProvisioning : 'explicit',
@@ -902,6 +903,96 @@ export function companyConsumption(companyId) {
   })).sort((a, b) => b.usd - a.usd)
   return { companyId, totalUsd: Number(totalUsd.toFixed(4)), sessionCount: sessions.length, userCount: members.length, byUser }
 }
+
+// ---- Executive productivity + ROI (company-scoped) -------------------------
+// Powers the executive dashboard. Savings are ESTIMATES, clearly labeled, from
+// adjustable assumptions - they are the CUSTOMER'S productivity value (time x a
+// labor rate), never our AI cost (which is superadmin-only; see
+// docs/business-rules.md). No model or cost-of-AI figure is ever included here.
+const EXEC_ASSUMPTIONS = { manualMinPerStep: 12, laborUsdPerHour: 60 }
+function inferTaskType(text) {
+  const s = String(text || '').toLowerCase()
+  if (/\b(sql|database|query|schema|migration|postgres|mysql|etl|pipeline)\b/.test(s)) return 'Data & databases'
+  if (/\b(aws|azure|gcp|cloud|terraform|kubernetes|docker|deploy|infra|server)\b/.test(s)) return 'Cloud & infrastructure'
+  if (/\b(secur|vuln|pentest|audit|iam|encrypt|compliance|firewall|risk)\b/.test(s)) return 'Security & compliance'
+  if (/\b(api|backend|frontend|react|code|build|function|bug|script|app|develop)\b/.test(s)) return 'Software & development'
+  if (/\b(excel|spreadsheet|reconcil|invoice|account|budget|finance|tax|payroll|ledger)\b/.test(s)) return 'Finance & accounting'
+  if (/\b(report|document|write|draft|proposal|email|policy|contract|memo)\b/.test(s)) return 'Documents & writing'
+  if (/\b(market|campaign|seo|ads|social|growth|content|brand)\b/.test(s)) return 'Marketing & growth'
+  return 'Other'
+}
+export function companyProductivity(companyId, { days = 30 } = {}) {
+  const members = (db.users || []).filter((u) => u.companyId === companyId)
+  const ids = new Set(members.map((u) => u.id))
+  const sessions = (db.workSessions || []).filter((s) => ids.has(s.workUserId))
+  const completed = sessions.filter((s) => s.status === 'ended')
+  const inProgress = sessions.filter((s) => s.status === 'active' && (s.steps || []).length > 0)
+  const minutesOf = (s) => {
+    const end = s.endedAt ? Date.parse(s.endedAt) : (s.lastActivityAt || Date.now())
+    const start = s.startedAt ? Date.parse(s.startedAt) : end
+    const m = (end - start) / 60000
+    return (isFinite(m) && m > 0) ? Math.min(m, 24 * 60) : 0   // clamp runaway spans
+  }
+  const stepsOf = (s) => (s.steps || []).length
+  const doneOf = (s) => (s.steps || []).filter((x) => x.status === 'done').length
+  const byType = {}
+  const depth = { quick: 0, standard: 0, deep: 0 }   // 1-3 / 4-7 / 8+ steps
+  let totalSteps = 0, totalMin = 0, effSum = 0, fullyDone = 0, savedMin = 0
+  for (const s of completed) {
+    const st = stepsOf(s), dn = doneOf(s), mn = minutesOf(s)
+    const type = inferTaskType(s.goal || s.title)
+    byType[type] = (byType[type] || 0) + 1
+    if (st <= 3) depth.quick++; else if (st <= 7) depth.standard++; else depth.deep++
+    totalSteps += st; totalMin += mn
+    effSum += st > 0 ? (dn / st) : 0
+    if (st > 0 && dn >= st) fullyDone++
+    savedMin += Math.max(0, st * EXEC_ASSUMPTIONS.manualMinPerStep - mn)
+  }
+  const n = completed.length
+  const since = Date.now() - days * 24 * 60 * 60 * 1000
+  const trend = {}
+  for (const s of completed) {
+    const t = s.endedAt ? Date.parse(s.endedAt) : null
+    if (t && t >= since) { const k = new Date(t).toISOString().slice(0, 10); trend[k] = (trend[k] || 0) + 1 }
+  }
+  const perUser = {}
+  for (const s of completed) perUser[s.workUserId] = (perUser[s.workUserId] || 0) + 1
+  const topMembers = members.map((u) => ({ name: u.displayName || u.username, tasks: perUser[u.id] || 0 }))
+    .filter((x) => x.tasks > 0).sort((a, b) => b.tasks - a.tasks).slice(0, 8)
+  const savedHours = savedMin / 60
+  return {
+    companyId, generatedAt: new Date().toISOString(), windowDays: days,
+    members: members.length,
+    tasksCompleted: n, tasksInProgress: inProgress.length,
+    avgStepsPerTask: n ? Number((totalSteps / n).toFixed(1)) : 0,
+    avgMinutesPerTask: n ? Number((totalMin / n).toFixed(1)) : 0,
+    effectivenessPct: n ? Math.round((effSum / n) * 100) : 0,   // avg share of steps completed
+    fullyCompletedPct: n ? Math.round((fullyDone / n) * 100) : 0,
+    byType: Object.keys(byType).map((k) => ({ type: k, count: byType[k] })).sort((a, b) => b.count - a.count),
+    depth,
+    trend: Object.keys(trend).sort().map((d) => ({ date: d, count: trend[d] })),
+    topMembers,
+    estimated: {   // HYPOTHETICAL customer ROI, never AI cost - label it as an estimate in the UI
+      basis: 'hypothetical',
+      assumptions: EXEC_ASSUMPTIONS,
+      timeSavedHours: Number(savedHours.toFixed(1)),
+      dollarsSaved: Math.round(savedHours * EXEC_ASSUMPTIONS.laborUsdPerHour),
+    },
+  }
+}
+// White-label branding a company USER (any role) may see: logo + public contact.
+// No seats, pricing, AI config or cost - only what belongs on their dashboard.
+export function companyBranding(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) return null
+  const p = c.profile || {}
+  return {
+    id: c.id, name: c.name, logo: c.logo || null,
+    website: p.website || null, phone: p.phone || null, email: p.email || null,
+    address: p.address || null, city: p.city || null, state: p.state || null,
+    country: p.country || null, postalCode: p.postalCode || null,
+  }
+}
 export function setCompanyImageGen(companyId, on) {
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found')
@@ -946,7 +1037,7 @@ export function workImageGenAllowed(userId) {
 //   `adminSeats` = company-admin licenses, each counted separately. 0 = unlimited.
 export const LICENSE_MODES = ['locked', 'flexible']
 export const SSO_PROVISIONING = ['explicit', 'auto']
-export const COMPANY_ROLES = ['member', 'company_admin']
+export const COMPANY_ROLES = ['member', 'company_admin', 'executive']
 // Seat / license counts are whole, non-negative, finite numbers. Anything else
 // (negative, NaN, Infinity, "abc", 1.5) used to slip through as 0 = unlimited or
 // as a fractional / infinite cap; now it is clamped to a sane integer. SEAT_MAX
@@ -1004,7 +1095,20 @@ function normalizeProfile(p = {}) {
     contactPerson: S(p.contactPerson, 120), email: S(p.email, 160).toLowerCase(), billingEmail: S(p.billingEmail, 160).toLowerCase(),
     phone: S(p.phone, 40), address: S(p.address, 200), city: S(p.city, 80), state: S(p.state, 80),
     country: S(p.country, 80), postalCode: S(p.postalCode, 24),
+    website: S(p.website, 200),   // white-label web link shown in the company dashboard
   }
+}
+// A company logo for white-label dashboards: an uploaded image (data URL) or an
+// https image link. Capped so db.json stays lean; empty clears it.
+function normalizeLogo(v) {
+  const s = String(v == null ? '' : v).trim()
+  if (!s) return ''
+  if (/^data:image\/(png|jpe?g|gif|webp|svg\+xml);base64,[A-Za-z0-9+/=\s]+$/i.test(s)) {
+    if (s.length > 400000) throw httpErr(400, 'Logo image is too large (about 300 KB max). Please use a smaller image.')
+    return s.replace(/\s+/g, '')
+  }
+  if (/^https:\/\/\S{3,500}$/i.test(s)) return s.slice(0, 500)
+  throw httpErr(400, 'Logo must be an uploaded image or an https image link.')
 }
 const COMPANY_NAME_MAX = 120
 function normalizeCompanyName(name) {
@@ -1016,7 +1120,7 @@ function normalizeCompanyName(name) {
 function companyNameTaken(nm, exceptId = null) {
   return (db.companies || []).some((c) => c.id !== exceptId && c.name.toLowerCase() === nm.toLowerCase())
 }
-export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = null, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false, profile = null, pricing = null } = {}) {
+export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = null, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false, profile = null, pricing = null, logo = null } = {}) {
   const nm = normalizeCompanyName(name)
   if (!db.companies) db.companies = []
   if (companyNameTaken(nm)) throw httpErr(409, 'A company with that name already exists.')
@@ -1029,7 +1133,8 @@ export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = n
     licenseMode: enumOrThrow(licenseMode || 'locked', LICENSE_MODES, 'License mode'),
     ssoProvisioning: enumOrThrow(ssoProvisioning || 'explicit', SSO_PROVISIONING, 'SSO provisioning'),
     poolSeconds: 0,            // shared company minute pool (drawn after a user's own time)
-    profile: normalizeProfile(profile || {}),  // contact + address, all optional
+    profile: normalizeProfile(profile || {}),  // contact + address + website, all optional
+    logo: normalizeLogo(logo),                  // white-label logo (data URL or https), optional
     pricing: normalizeCompanyPricing(pricing),  // per-company price overrides, or null
     billing: { items: [] },    // superadmin-added billable line items (extra hours, adjustments)
     scrub: !!scrub, sso: null, createdAt: now(),
@@ -1134,6 +1239,7 @@ export function updateCompany(companyId, patch = {}) {
   if (next.licenseMode) c.licenseMode = next.licenseMode
   if (next.ssoProvisioning) c.ssoProvisioning = next.ssoProvisioning
   if (patch.profile !== undefined) c.profile = normalizeProfile({ ...(c.profile || {}), ...(patch.profile || {}) })
+  if (patch.logo !== undefined) c.logo = normalizeLogo(patch.logo)
   if (patch.pricing !== undefined) c.pricing = normalizeCompanyPricing(patch.pricing)
   if (patch.scrub != null) c.scrub = !!patch.scrub
   if (patch.sso === null) c.sso = null

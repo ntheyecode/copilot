@@ -99,11 +99,85 @@ function SsoPanel({ company, onSaved }) {
   )
 }
 
+// Company roles the console can assign. Executive = read-only productivity dashboard.
+const ROLE_OPTIONS = [['member', 'Member'], ['company_admin', 'Company admin'], ['executive', 'Executive (productivity dashboard, read-only)']]
+const ROLE_CHIP = { company_admin: 'Admin', executive: 'Executive' }
+const roleOptions = () => ROLE_OPTIONS.map(([v, l]) => <option key={v} value={v}>{l}</option>)
+
+// White-label logo: an uploaded image read as a data URL (server caps ~300 KB).
+// Rendered only ever as an <img src>, never as HTML.
+const LOGO_MAX_BYTES = 300 * 1024
+const LOGO_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/svg+xml']
+function LogoField({ value, onChange, original }) {
+  const [err, setErr] = useState('')
+  const pick = (e) => {
+    const f = e.target.files && e.target.files[0]
+    e.target.value = ''
+    if (!f) return
+    if (!LOGO_TYPES.includes(f.type)) { setErr('Please choose a PNG, JPG, GIF, WebP or SVG image.'); return }
+    if (f.size > LOGO_MAX_BYTES) { setErr(`That image is ${Math.round(f.size / 1024)} KB. The limit is about 300 KB, please use a smaller file.`); return }
+    const r = new FileReader()
+    r.onload = () => { setErr(''); onChange(String(r.result || '')) }
+    r.onerror = () => setErr('Could not read that file. Try another image.')
+    r.readAsDataURL(f)
+  }
+  return (
+    <div className="co-logo">
+      <div className="co-logo-prev">{value ? <img src={value} alt="Company logo preview" /> : <span className="co-dim">No logo</span>}</div>
+      <div className="co-logo-act">
+        <label className="wka-btn sm"><input type="file" accept={LOGO_TYPES.join(',')} onChange={pick} style={{ display: 'none' }} />{value ? 'Replace logo' : 'Upload logo'}</label>
+        {value ? <button type="button" className="wka-btn sm ghost" onClick={() => { setErr(''); onChange('') }}>Remove logo</button> : null}
+        {original && value !== original ? <button type="button" className="wka-btn sm ghost" onClick={() => { setErr(''); onChange(original) }}>Undo</button> : null}
+        <div className="co-dim">PNG, JPG, GIF, WebP or SVG, up to about 300 KB.</div>
+        {err && <div className="co-msg" style={{ marginBottom: 0 }}>{err}</div>}
+      </div>
+    </div>
+  )
+}
+
+const WEB_RE = /^https?:\/\/\S+$/i
+
+// Edit an existing company's branding (logo + website) and contact (address, phone).
+// Empty logo clears it server-side; profile is merged server-side.
+function BrandingPanel({ company, onSaved }) {
+  const cur = company.logo || ''
+  const pr = company.profile || {}
+  const [logo, setLogo] = useState(cur)
+  const [f, setF] = useState({ website: pr.website || '', address: pr.address || '', phone: pr.phone || '' })
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [ok, setOk] = useState(false)
+  const save = async () => {
+    if (busy) return
+    const w = f.website.trim()
+    if (w && !WEB_RE.test(w)) { setOk(false); setMsg('Website must start with https:// (or http://).'); return }
+    setBusy(true); setMsg(''); setOk(false)
+    try {
+      await workAdminApi.updateCompany(company.id, { logo, profile: { website: w, address: f.address.trim(), phone: f.phone.trim() } })
+      setOk(true); onSaved && onSaved()
+    } catch (e) { setMsg(e.message || 'Could not save the branding.') } finally { setBusy(false) }
+  }
+  return (
+    <div className="co-block">
+      <div className="co-block-t">Branding and contact <span className="co-dim">&middot; shown on this company&rsquo;s dashboard</span></div>
+      <LogoField value={logo} onChange={setLogo} original={cur} />
+      <div className="co-grid" style={{ marginTop: 10 }}>
+        <L label="Website"><input className="wka-input" placeholder="https://example.com" value={f.website} onChange={(e) => setF({ ...f, website: e.target.value })} /></L>
+        <L label="Address"><input className="wka-input" value={f.address} onChange={(e) => setF({ ...f, address: e.target.value })} /></L>
+        <L label="Phone"><input className="wka-input" value={f.phone} onChange={(e) => setF({ ...f, phone: e.target.value })} /></L>
+      </div>
+      {msg && <div className="co-msg">{msg}</div>}
+      {ok && <div className="co-sso-ok"><Check size={13} /> Saved.</div>}
+      <button className="wka-btn sm primary" disabled={busy} onClick={save}>{busy ? <Loader2 size={14} className="spin" /> : 'Save branding'}</button>
+    </div>
+  )
+}
+
 const BLANK_NEW = {
-  name: '', plan: 'basic', aiSource: '', scrub: false,
+  name: '', plan: 'basic', aiSource: '', scrub: false, logo: '',
   adminSeats: 2, licenseMode: 'locked', ssoProvisioning: 'explicit',
   byTier: { basic: '', advanced: '', premium: '' },
-  profile: { contactPerson: '', email: '', billingEmail: '', phone: '', address: '', city: '', state: '', country: '', postalCode: '' },
+  profile: { contactPerson: '', email: '', billingEmail: '', phone: '', address: '', city: '', state: '', country: '', postalCode: '', website: '' },
 }
 
 export default function Companies({ isSuperAdmin }) {
@@ -128,12 +202,14 @@ export default function Companies({ isSuperAdmin }) {
 
   const createCompany = async () => {
     if (busy || !form.name.trim()) { setMsg('Company name is required.'); return }
+    if ((form.profile.website || '').trim() && !WEB_RE.test(form.profile.website.trim())) { setMsg('Website must start with https:// (or http://).'); return }
     setBusy(true); setMsg('')
     const byTier = { basic: Number(form.byTier.basic) || 0, advanced: Number(form.byTier.advanced) || 0, premium: Number(form.byTier.premium) || 0 }
     const body = {
       name: form.name, plan: form.plan, scrub: form.scrub,
       adminSeats: Number(form.adminSeats) || 0, licenseMode: form.licenseMode, ssoProvisioning: form.ssoProvisioning,
       profile: form.profile,
+      ...(form.logo ? { logo: form.logo } : {}),
       ...(seatTotal > 0 ? { seatsByTier: byTier } : {}),
       ...(form.aiSource ? { aiSource: form.aiSource } : {}),
     }
@@ -251,6 +327,11 @@ export default function Companies({ isSuperAdmin }) {
             <L label="Plan (default tier)"><select className="wka-input" value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select></L>
             <L label="AI source" hint="Company = they bring their own AI keys (then required). Platform = we provide."><select className="wka-input" value={form.aiSource} onChange={(e) => setForm({ ...form, aiSource: e.target.value })}><option value="">Select…</option><option value="platform">Platform keys (we provide)</option><option value="company">Company keys (they add)</option></select></L>
           </div>
+          <div className="co-sec">Branding</div>
+          <div className="co-grid">
+            <L label="Logo"><LogoField value={form.logo} onChange={(v) => setForm((f) => ({ ...f, logo: v }))} /></L>
+            <L label="Website"><input className="wka-input" placeholder="https://example.com" value={form.profile.website} onChange={(e) => P('website', e.target.value)} /></L>
+          </div>
           <div className="co-sec">Contact and address</div>
           <div className="co-grid">
             <L label="Contact person"><input className="wka-input" value={form.profile.contactPerson} onChange={(e) => P('contactPerson', e.target.value)} /></L>
@@ -305,6 +386,8 @@ export default function Companies({ isSuperAdmin }) {
                         {detail.company.profile && (detail.company.profile.contactPerson || detail.company.profile.city) ? (
                           <div className="co-profile">{[detail.company.profile.contactPerson, detail.company.profile.email, detail.company.profile.phone, [detail.company.profile.city, detail.company.profile.state, detail.company.profile.country].filter(Boolean).join(', ')].filter(Boolean).join('  ·  ')}</div>
                         ) : null}
+
+                        {isSuperAdmin && <BrandingPanel key={`${c.id}:${(detail.company.logo || '').length}:${(detail.company.profile && detail.company.profile.website) || ''}`} company={detail.company} onSaved={() => refreshDetail(c.id)} />}
 
                         {isSuperAdmin && (
                           <div className="co-detail-top" style={{ gap: 14, flexWrap: 'wrap' }}>
@@ -379,7 +462,7 @@ export default function Companies({ isSuperAdmin }) {
                               return (
                                 <tr key={u.id}>
                                   <td>{u.displayName || u.username}<div className="co-dim">{u.ssoEmail || u.username}</div></td>
-                                  <td>{u.companyRole === 'company_admin' ? <span className="wka-chip ok">Admin</span> : 'Member'}</td>
+                                  <td>{ROLE_CHIP[u.companyRole] ? <span className="wka-chip ok">{ROLE_CHIP[u.companyRole]}</span> : 'Member'}</td>
                                   <td><select className="wka-input" style={{ width: 'auto', padding: '3px 6px' }} value={u.tier || 'basic'} onChange={(e) => setUserTier(u, c.id, e.target.value)}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select></td>
                                   <td className="co-dim">{mu ? `${fmtMins(mu.usage.usedSeconds)} / ${fmtMins(mu.usage.dailySeconds)}` : '-'}</td>
                                   <td>{isSuperAdmin ? <button className={`co-toggle ${u.scrub ? 'on' : ''}`} onClick={() => toggleUserScrub(u, c.id)}>{u.scrub ? 'On' : 'Off'}</button> : (u.scrub ? 'On' : 'Off')}</td>
@@ -401,7 +484,7 @@ export default function Companies({ isSuperAdmin }) {
                           {mForm.mode === 'email'
                             ? <><input className="wka-input" placeholder="work email" value={mForm.email} onChange={(e) => setMForm({ ...mForm, email: e.target.value })} /><input className="wka-input" placeholder="name (optional)" value={mForm.displayName} onChange={(e) => setMForm({ ...mForm, displayName: e.target.value })} /></>
                             : <><input className="wka-input" placeholder="username" value={mForm.username} onChange={(e) => setMForm({ ...mForm, username: e.target.value })} /><input className="wka-input" type="password" placeholder="password" value={mForm.password} onChange={(e) => setMForm({ ...mForm, password: e.target.value })} /></>}
-                          <select className="wka-input" value={mForm.companyRole} onChange={(e) => setMForm({ ...mForm, companyRole: e.target.value })}><option value="member">Member</option><option value="company_admin">Company admin</option></select>
+                          <select className="wka-input" value={mForm.companyRole} onChange={(e) => setMForm({ ...mForm, companyRole: e.target.value })}>{roleOptions()}</select>
                           <select className="wka-input" value={mForm.tier} onChange={(e) => setMForm({ ...mForm, tier: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
                           <button className="wka-btn primary" disabled={busy} onClick={() => addMember(c.id)}>{busy ? <Loader2 size={14} className="spin" /> : <><UserPlus size={13} /> Add</>}</button>
                         </div>
@@ -461,6 +544,11 @@ function L({ label, hint, children }) {
 }
 
 const CSS = `
+.co-logo{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.co-logo-prev{width:96px;height:64px;border:1px dashed var(--wka-line);border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--wka-panel);overflow:hidden;font-size:12px}
+.co-logo-prev img{max-width:100%;max-height:100%;object-fit:contain}
+.co-logo-act{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.co-logo-act label.wka-btn{cursor:pointer}
 .co-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
 .co-new{margin-bottom:14px;padding:16px;border:1px solid var(--wka-line);border-radius:12px;background:var(--wka-bg-2)}
 .co-sec{font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--wka-faint);margin:6px 0 8px}
