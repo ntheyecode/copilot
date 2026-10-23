@@ -2421,7 +2421,12 @@ function Console({ sessionId, watchLight = false, onBack }) {
   const isMobile = isMobileUA()
   const pipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window
   const floatCapable = !desktop && !isMobile && typeof window !== 'undefined' && typeof window.open === 'function'
-  const FLOAT_CSS = 'body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-now 2.8s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.fp-now{animation:none}.fp-pulse{animation:none}.spin{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
+  // Microsoft-Learn / Docs reading treatment, same as the console + full guide:
+  // a compact 13.5px base that scales off --fp-fs (the reader's A- / A / A+
+  // choice, shared via the wc-guide-fontscale key). --wc-fs mirrors it so the
+  // shared CmdBlock / CodeBlock dark code boxes scale inside the float too.
+  // .fp-link is the blue inline "Open ..." hyperlink (not a button).
+  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-now 2.8s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.fp-now{animation:none}.fp-pulse{animation:none}.spin{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
   // Open the float with a graceful fallback chain, so the core web experience
   // never silently dies on one API:
   //   1. Document Picture-in-Picture (true always-on-top) when the browser has it;
@@ -3072,6 +3077,19 @@ function Console({ sessionId, watchLight = false, onBack }) {
   // one localStorage key. Applied as the `--wc-fs` multiplier on the console
   // root so the guidance text, step headings and code boxes scale together.
   const { scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax } = useGuideFontScale()
+  // The same scale in the browser float. The PiP / pop-out is a SEPARATE
+  // document, so the shared value is pushed onto its root as --fp-fs; FLOAT_CSS
+  // and the FloatPanel sizes multiply by it. --wc-fs mirrors it so the shared
+  // CmdBlock / CodeBlock dark code boxes scale inside the float too. One key
+  // (wc-guide-fontscale), so the float, console and full guide always agree.
+  useEffect(() => {
+    if (!pipWin) return
+    try {
+      const root = pipWin.document.documentElement
+      root.style.setProperty('--fp-fs', String(fsScale))
+      root.style.setProperty('--wc-fs', String(fsScale))
+    } catch { /* FloatPanel also sets the vars inline on its root, so it still scales */ }
+  }, [pipWin, fsScale])
 
   return (
     <div className="wc" style={{ ...shell, padding: '16px 16px 60px', '--wc-fs': fsScale }}>
@@ -3584,7 +3602,8 @@ function Console({ sessionId, watchLight = false, onBack }) {
         <FloatPanel
           steps={steps} watching={watching} observation={observation} guidance={guidance}
           flags={flags} answer={answer} busy={busy} err={err}
-          done={done} floatQ={floatQ} setFloatQ={setFloatQ}
+          done={done} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal}
+          fontScale={{ scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax }}
           theme={floatTheme} onToggleTheme={() => setFloatTheme((t) => t === 'light' ? 'dark' : 'light')}
           usage={usage} paused={paused} onPause={togglePause}
           onDeep={() => analyze(floatQ.trim(), true)}
@@ -3606,7 +3625,7 @@ function Console({ sessionId, watchLight = false, onBack }) {
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onClose }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onClose }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
   // Dim the panel to cut glare over your work. The browser will not let a web
@@ -3633,11 +3652,13 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         accent: '#0e9f6e', accentHi: '#12b47e', onAccent: '#ffffff', accentSoft: 'rgba(14,159,110,.10)', accentRing: 'rgba(14,159,110,.30)', accentGlow: 'rgba(14,159,110,.20)',
         cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,.10)', cyanRing: 'rgba(10,132,194,.28)',
         good: '#107c41', goodSoft: 'rgba(16,124,65,.12)', warn: '#b86e00', warnSoft: 'rgba(245,200,107,.16)', warnRing: 'rgba(184,110,0,.30)', danger: '#c42b1c',
+        link: '#0067c0',
         inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)', heroShadow: '0 2px 4px rgba(14,159,110,.06), 0 14px 32px -16px rgba(14,159,110,.32)' }
     : { canvas: '#0a0d12', panel: '#141a24', panel2: '#1b2130', border: '#28303f', borderStrong: '#3b4455', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780',
         accent: '#8cf5c4', accentHi: '#8cf5c4', onAccent: '#052a1d', accentSoft: 'rgba(140,245,196,.14)', accentRing: 'rgba(140,245,196,.34)', accentGlow: 'rgba(140,245,196,.22)',
         cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,.13)', cyanRing: 'rgba(57,211,255,.32)',
         good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,.14)', warnRing: 'rgba(245,200,107,.34)', danger: '#ff7a6b',
+        link: '#6cb6ff',
         inputBg: '#0a0d12', track: '#28303f', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(140,245,196,.3)' }
 
   // Figtree for body (loaded into the PiP document head when the float opens),
@@ -3645,8 +3666,18 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   // Both degrade to a clean system stack if the webfont is blocked.
   const FONT = '"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,sans-serif'
   const DISPLAY = '"Bricolage Grotesque",' + FONT
-  const wrap = { padding: '12px 13px 13px', display: 'flex', flexDirection: 'column', gap: 11, minHeight: '100vh', overflowX: 'hidden', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5, fontFeatureSettings: '"tnum" 1, "cv11" 1', WebkitFontSmoothing: 'antialiased' }
-  const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, padding: 13, boxShadow: c.shadow }
+  // Microsoft-Learn / Docs reading scale. fs(px) multiplies a GUIDANCE text size
+  // by --fp-fs (the reader's A- / A / A+ choice, shared with the console + full
+  // guide through the one wc-guide-fontscale key). Chrome (header, buttons,
+  // eyebrows, badges) stays a stable size so the panel never blows up. The vars
+  // are set here inline AND on the PiP document root by the console, so the
+  // body default and every sized element agree.
+  const fsScale = (fontScale && Number.isFinite(fontScale.scale)) ? fontScale.scale : 1
+  const fs = (px) => `calc(${px}px * var(--fp-fs, 1))`
+  const wrap = { '--fp-fs': fsScale, '--wc-fs': fsScale, padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 9, minHeight: '100vh', overflowX: 'hidden', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: fs(13.5), lineHeight: 1.5, fontFeatureSettings: '"tnum" 1, "cv11" 1', WebkitFontSmoothing: 'antialiased' }
+  const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 12, padding: 12, boxShadow: c.shadow }
+  // Blue inline hyperlink for "Open <host>" (MS-docs style), NOT a button.
+  const link = { display: 'inline-flex', alignItems: 'center', gap: 5, color: c.link, fontSize: fs(13), fontWeight: 600, textDecoration: 'none', overflowWrap: 'anywhere' }
   // One small-button family: icon (header), ghost (secondary), primary (the one action).
   const iconBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .15s, color .15s' }
   const ghost = { background: c.panel2, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, height: 32, padding: '0 11px', fontSize: 12.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'background .15s, border-color .15s, color .15s' }
@@ -3692,19 +3723,19 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         <button className="fp-btn" style={watching
           ? { ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
           : { ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Eye size={15} /> Watch my screen</>}</button>
-        {!watching && !paused && <div style={{ fontSize: 11.5, color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
+        {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
       </div>
 
       {/* OBSERVATION: calm cyan-tinted context chip - what the watcher can see */}
       {watching && (
-        <div style={{ fontSize: 12, color: c.muted, display: 'flex', gap: 8, alignItems: 'flex-start', padding: '8px 11px', lineHeight: 1.45, background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 11 }}><Eye size={13} strokeWidth={2.4} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>Reading your screen. <RichText text={observation} accent={c.cyan} /></span></div>
+        <div style={{ fontSize: fs(12.5), color: c.muted, display: 'flex', gap: 8, alignItems: 'flex-start', padding: '7px 10px', lineHeight: 1.45, background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><Eye size={13} strokeWidth={2.4} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>Reading your screen. <RichText text={observation} accent={c.cyan} /></span></div>
       )}
 
       {/* Flags first: anything to be careful about sits above the action */}
       {flags.length > 0 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {flags.map((f, i) => (
-            <div key={i} style={{ position: 'relative', display: 'flex', gap: 9, alignItems: 'flex-start', padding: '9px 11px 9px 14px', background: c.warnSoft, borderRadius: 11, fontSize: 12.5, lineHeight: 1.5, color: c.text, overflow: 'hidden' }}>
+            <div key={i} style={{ position: 'relative', display: 'flex', gap: 9, alignItems: 'flex-start', padding: '8px 10px 8px 13px', background: c.warnSoft, borderRadius: 10, fontSize: fs(13), lineHeight: 1.5, color: c.text, overflow: 'hidden' }}>
               <span style={{ ...accentBar, width: 3, background: c.warn }} />
               <AlertTriangle size={14} style={{ color: c.warn, flexShrink: 0, marginTop: 2 }} />
               <span style={{ overflowWrap: 'anywhere' }}><RichText text={f.text} accent={c.warn} /></span>
@@ -3713,33 +3744,57 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         </div>
       )}
 
+      {/* Read bar: the goal (what all this is for) on the left, the shared
+          A- / A / A+ text-size control on the right. The control writes the one
+          wc-guide-fontscale key, so the console and full guide follow along. */}
+      {steps.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '0 2px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            {goal && goal.trim() && (
+              <>
+                <span style={{ ...eyebrow, fontSize: 9.5, color: c.cyan }}>Goal</span>
+                <div className="fp-clamp" title={goal} style={{ fontSize: fs(12.5), lineHeight: 1.45, color: c.muted, overflowWrap: 'anywhere', marginTop: 1 }}>{goal}</div>
+              </>
+            )}
+          </div>
+          {fontScale && (
+            <GuideFontControl scale={fontScale.scale} dec={fontScale.dec} inc={fontScale.inc} reset={fontScale.reset} atMin={fontScale.atMin} atMax={fontScale.atMax}
+              theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />
+          )}
+        </div>
+      )}
+
       {/* Growing region: the current step and the latest answer own this space.
           The full step list is tucked into a compact chip so nothing is cramped. */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 11 }}>
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
         {current ? (
           <>
             {/* CURRENT STEP = the brightest element: emerald accent, emerald->cyan
                 left bar, a soft pulsing glow (reduced-motion safe via FLOAT_CSS),
-                a "NOW · STEP X OF Y" eyebrow, then the action large. */}
-            <div className="fp-now" style={{ ...card, position: 'relative', overflow: 'hidden', padding: '14px 14px 13px 17px', borderColor: c.accentRing, boxShadow: c.heroShadow, '--gr': c.accentRing, '--gg': c.accentGlow }}>
+                a "NOW · STEP X OF Y" eyebrow. Then the docs hierarchy, compact:
+                step (semibold, the thing to do) -> how (the live guidance) ->
+                done-when -> Open link (blue inline) -> dark code box with Copy. */}
+            <div className="fp-now" style={{ ...card, position: 'relative', overflow: 'hidden', padding: '12px 13px 12px 16px', borderColor: c.accentRing, boxShadow: c.heroShadow, '--gr': c.accentRing, '--gg': c.accentGlow }}>
               <span style={accentBar} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9, flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7, flexWrap: 'wrap' }}>
                 <span style={{ ...eyebrow, display: 'inline-flex', alignItems: 'center', gap: 5, color: c.onAccent, background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, padding: '3px 9px', borderRadius: 999 }}><Eye size={10} strokeWidth={2.6} /> Now · step {steps.indexOf(current) + 1} of {steps.length}</span>
                 {paused
                   ? <span style={{ fontSize: 11, color: c.faint }}>Paused. Resume to keep this live.</span>
                   : !watching && <span style={{ fontSize: 11, color: c.faint }}>Watch my screen to keep this live</span>}
               </div>
-              <div style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 16.5, lineHeight: 1.42, letterSpacing: '-.015em', color: c.text, overflowWrap: 'anywhere' }}><RichText text={guidance || current.text} accent={c.accent} /></div>
-              {guidance && <div style={{ fontSize: 12, color: c.muted, marginTop: 8, lineHeight: 1.45, overflowWrap: 'anywhere' }}><span style={{ fontWeight: 700, color: c.faint }}>Step </span><RichText text={current.text} accent={c.accent} /></div>}
-              {!guidance && current.validate && <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: c.muted, marginTop: 9, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7 }}><Eye size={11} style={{ flexShrink: 0 }} /> <span>done when: <RichText text={current.validate} accent={c.accent} /></span></div>}
-              {current.url && <div><a href={current.url} target="_blank" rel="noopener noreferrer" className="fp-btn" style={{ ...ghost, marginTop: 11, textDecoration: 'none', color: c.accent, height: 30, borderColor: c.accentRing }}><ExternalLink size={13} /> Open {linkHost(current.url)}</a></div>}
+              <div style={{ fontFamily: FONT, fontWeight: 600, fontSize: fs(15), lineHeight: 1.4, color: c.text, overflowWrap: 'anywhere', textWrap: 'pretty' }}><RichText text={current.text} accent={c.accent} /></div>
+              {guidance && guidance.trim() && guidance.trim() !== String(current.text || '').trim() && (
+                <div style={{ fontSize: fs(13.5), color: c.text, marginTop: 7, lineHeight: 1.55, overflowWrap: 'anywhere' }}><RichText text={guidance} accent={c.accent} /></div>
+              )}
+              {current.validate && <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 5, fontSize: fs(12), color: c.muted, marginTop: 8, lineHeight: 1.45, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7, maxWidth: '100%' }}><Eye size={11} style={{ flexShrink: 0, marginTop: 3 }} /> <span style={{ overflowWrap: 'anywhere' }}>Done when: <RichText text={current.validate} accent={c.accent} /></span></div>}
+              {current.url && <div><a href={current.url} target="_blank" rel="noopener noreferrer" className="fp-link" style={{ ...link, marginTop: 8 }}>Open {linkHost(current.url)} <ExternalLink size={12} style={{ flexShrink: 0 }} /></a></div>}
               {((current.commands && current.commands.length > 0) || (current.code && current.code.content)) && (
                 <DestructiveGate why={current.destructive ? current.destructiveWhy : null}>
                   {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
                   {current.code && current.code.content && <CodeBlock file={current.code.file} content={current.code.content} />}
                 </DestructiveGate>
               )}
-              <button className="fp-btn" style={{ ...primary, marginTop: 13, width: '100%', justifyContent: 'center', height: 38, fontSize: 13.5 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={15} strokeWidth={2.5} /> Mark done</button>
+              <button className="fp-btn" style={{ ...primary, marginTop: 11, width: '100%', justifyContent: 'center', height: 34, fontSize: 13 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={15} strokeWidth={2.5} /> Mark done</button>
             </div>
 
             {/* Prev - Step N of M - Next, with a progress track */}
@@ -3774,7 +3829,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                     return (
                       <div key={n} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
                         <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}`, marginTop: 1 }}>{n + 1}</span>
-                        <span style={{ flex: 1, minWidth: 0, fontSize: 12, lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: fs(12.5), lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
                       </div>
                     )
                   })}
@@ -3783,9 +3838,9 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
             })()}
           </>
         ) : done ? (
-          <div style={{ display: 'flex', gap: 9, alignItems: 'center', padding: '12px 14px', background: c.goodSoft, borderRadius: 12, color: c.good, fontWeight: 650, fontSize: 13.5 }}><Check size={17} strokeWidth={2.5} /> All steps confirmed on screen.</div>
+          <div style={{ display: 'flex', gap: 9, alignItems: 'center', padding: '11px 13px', background: c.goodSoft, borderRadius: 11, color: c.good, fontWeight: 650, fontSize: fs(13.5) }}><Check size={17} strokeWidth={2.5} /> All steps confirmed on screen.</div>
         ) : steps.length === 0 ? (
-          <div style={{ ...card, color: c.muted, fontSize: 13, textAlign: 'center', padding: '20px 16px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
+          <div style={{ ...card, color: c.muted, fontSize: fs(13), textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
         ) : null}
 
         {/* Collapsible roadmap: a compact chip by default so the list never eats
@@ -3815,8 +3870,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                         border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
                         onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
                       {isNow
-                        ? <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.45, color: c.text, fontWeight: 650, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
-                        : <button onClick={() => onStep(i, 'current')} title="Jump to this step" style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, fontFamily: FONT, fontSize: 13, lineHeight: 1.45, color: isDone ? c.faint : c.muted, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></button>}
+                        ? <span style={{ flex: 1, minWidth: 0, fontSize: fs(13), lineHeight: 1.45, color: c.text, fontWeight: 650, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
+                        : <button onClick={() => onStep(i, 'current')} title="Jump to this step" style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, fontFamily: FONT, fontSize: fs(13), lineHeight: 1.45, color: isDone ? c.faint : c.muted, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></button>}
                     </div>
                   )
                 })}
@@ -3836,7 +3891,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                 <span style={{ ...eyebrow, color: c.accent, fontSize: 10.5 }}>Answer</span>
                 {busy && <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: c.muted }}><Loader2 size={12} className="spin" /> Updating</span>}
               </div>
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 15px 14px 17px', fontSize: 13.5, lineHeight: 1.6, color: c.text, overflowWrap: 'anywhere' }}><RichText text={answer} accent={c.accent} /></div>
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 13px 12px 16px', fontSize: fs(13.5), lineHeight: 1.55, color: c.text, overflowWrap: 'anywhere' }}><RichText text={answer} accent={c.accent} /></div>
             </div>
           ) : busy ? (
             <div style={{ ...card, flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: c.muted, boxShadow: 'none' }}>
@@ -3846,7 +3901,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
           ) : (
             <div style={{ ...card, flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center', color: c.faint, borderStyle: 'dashed', boxShadow: 'none', padding: '18px 20px' }}>
               <span style={{ width: 36, height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', background: c.accentSoft, color: c.accent }}><Sparkles size={18} /></span>
-              <span style={{ fontSize: 12.5, lineHeight: 1.5, maxWidth: 260, color: c.muted }}>Ask a question or analyze your screen. The answer shows up right here.</span>
+              <span style={{ fontSize: fs(12.5), lineHeight: 1.5, maxWidth: 260, color: c.muted }}>Ask a question or analyze your screen. The answer shows up right here.</span>
             </div>
           )}
         </div>
