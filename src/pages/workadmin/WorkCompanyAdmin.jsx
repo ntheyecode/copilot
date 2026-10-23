@@ -342,6 +342,48 @@ function KnowledgeBaseCard() {
   )
 }
 
+// Enterprise deployment: the signed, per-machine MSI for IT to push across the
+// network, plus the silent-install command. Company-admin only (the MSI download
+// endpoint is gated to company admins/superadmin; this card simply surfaces it).
+function EnterpriseDeployCard() {
+  const [msi, setMsi] = useState(undefined)   // undefined=loading, null=not available/not permitted
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    let alive = true
+    api.workAppStatus().then((s) => { if (alive) setMsi((s && s.msi) || null) }).catch(() => { if (alive) setMsi(null) })
+    return () => { alive = false }
+  }, [])
+  const cmd = (msi && msi.silentCommand) || 'msiexec /i WorkCoPilot-Setup.msi /qn /norestart'
+  const copy = async () => { try { await navigator.clipboard.writeText(cmd); setCopied(true); setTimeout(() => setCopied(false), 1800) } catch { /* clipboard blocked */ } }
+  return (
+    <div className="wka-panel">
+      <h2><Download size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Enterprise deployment (MSI)</h2>
+      <p className="desc">A signed, per-machine Windows Installer for pushing WorkCoPilot across your network with Group Policy, SCCM, or Intune. Only your company admins can download it.</p>
+      {msi === undefined ? <Loading label="Checking the installer" />
+        : !msi || !msi.available ? (
+          <div className="wka-note"><Info size={14} /> The MSI is not published yet. Your EXE and the signed MSI are produced together; check back shortly or contact support.</div>
+        ) : (
+          <>
+            <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
+              <a className="wka-btn primary" href="/api/work/app/msi" download><Download size={14} /> Download MSI (signed, per-machine)</a>
+              <span className="wka-badge active">v1.0.5 · COE Security LLC</span>
+            </div>
+            <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--wka-faint)' }}>Silent install (run as admin / SYSTEM)</label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', marginTop: 6, maxWidth: 560 }}>
+              <code className="wka-mono" style={{ flex: 1, padding: '10px 12px', borderRadius: 8, border: '1px solid var(--wka-line)', background: 'var(--wka-panel-2)', fontSize: 12.5, overflowX: 'auto', whiteSpace: 'nowrap' }}>{cmd}</code>
+              <button type="button" className="wka-btn sm" onClick={copy}>{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Copy'}</button>
+            </div>
+            <div style={{ marginTop: 14, fontSize: 12.5, color: 'var(--wka-muted)', lineHeight: 1.55 }}>
+              <div><b>Group Policy:</b> assign the MSI under Computer Configuration → Software Settings → Software installation; it installs per-machine at startup.</div>
+              <div><b>SCCM / Intune:</b> import as a line-of-business app using the command above. Uninstall: <code className="wka-mono">msiexec /x WorkCoPilot-Setup.msi /qn</code>.</div>
+              <div style={{ marginTop: 6, color: 'var(--wka-faint)' }}>Installs to Program Files for all users and does not auto-launch, so it is safe to deploy unattended.</div>
+            </div>
+          </>
+        )}
+    </div>
+  )
+}
+
 function OverviewSection({ company }) {
   const [state, setState] = useState({ loading: true, error: null, lic: null, cons: null })
   const load = useCallback(() => {
@@ -395,6 +437,7 @@ function OverviewSection({ company }) {
       <AuthorizationCard />
       <CompanyRetentionCard />
       <KnowledgeBaseCard />
+      <EnterpriseDeployCard />
 
       {lic.tierUsage && (
         <div className="wka-panel">

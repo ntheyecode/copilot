@@ -889,12 +889,21 @@ app.post('/api/work/ai/test', requireWorkAuth, async (req, res) => {
 // ---- app download (gated on AI readiness) ---------------------------------
 const WORK_DESKTOP_FILE = 'WorkCoPilot-Setup.exe'
 const WORK_APK_FILE = 'WorkCoPilot.apk'
+const WORK_MSI_FILE = 'WorkCoPilot-Setup.msi'
+// Silent network-deploy command surfaced to company admins (and the deploy docs).
+const WORK_MSI_SILENT_CMD = `msiexec /i ${WORK_MSI_FILE} /qn /norestart`
 app.get('/api/work/app/status', requireWorkAuth, wrap((req, res) => {
   const dir = path.join(ROOT, 'downloads')
+  // The MSI is an enterprise artifact: only company admins (and superadmin) may
+  // see it is available or download it.
+  const isCompanyAdmin = (req.user && req.user.role === 'superadmin') || (req.workUser && req.workUser.companyRole === 'company_admin')
   res.json({
     ready: store.workUserReady(req.workUser.id),
     desktop: { available: fs.existsSync(path.join(dir, WORK_DESKTOP_FILE)) },
     android: { available: fs.existsSync(path.join(dir, WORK_APK_FILE)) },
+    msi: isCompanyAdmin
+      ? { available: fs.existsSync(path.join(dir, WORK_MSI_FILE)), silentCommand: WORK_MSI_SILENT_CMD, perMachine: true }
+      : null,
   })
 }))
 function sendWorkApp(req, res, filename) {
@@ -907,6 +916,14 @@ function sendWorkApp(req, res, filename) {
 }
 app.get('/api/work/app/desktop', requireWorkAuth, (req, res) => sendWorkApp(req, res, WORK_DESKTOP_FILE))
 app.get('/api/work/app/android', requireWorkAuth, (req, res) => sendWorkApp(req, res, WORK_APK_FILE))
+// MSI is for network deployment by a COMPANY ADMIN (or superadmin) - a per-machine
+// silent installer. It is NOT gated on the admin's own AI readiness (they are
+// distributing, not running it here), only on being a company admin.
+app.get('/api/work/app/msi', requireWorkAuth, requireCompanyAdmin, (req, res) => {
+  const f = path.join(ROOT, 'downloads', WORK_MSI_FILE)
+  if (!fs.existsSync(f)) return res.status(404).json({ error: 'The MSI is not published yet.' })
+  res.download(f, WORK_MSI_FILE)
+})
 
 // ===========================================================================
 // Admin (console writes; reads are registered by work-admin.js)

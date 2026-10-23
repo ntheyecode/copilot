@@ -42,7 +42,8 @@
     "win": {
       "icon": "build/icon.ico",
       "target": [
-        "nsis"
+        "nsis",
+        "msi"
       ],
       "certificateSha1": "71D78BF55B844DCEEC51ED85DD664BD617C5C71D",
       "signingHashAlgorithms": [
@@ -58,6 +59,13 @@
       "artifactName": "WorkCoPilot-Setup.exe",
       "menuCategory": false,
       "runAfterFinish": true
+    },
+    "msi": {
+      "oneClick": true,
+      "perMachine": true,
+      "runAfterFinish": false,
+      "artifactName": "WorkCoPilot-Setup.msi",
+      "upgradeCode": "E5EBB1F4-4997-4401-931C-11D8A935FF87"
     }
   }
 }
