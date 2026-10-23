@@ -952,8 +952,6 @@ const HERO_PAIRS = [
     s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
   { h: [['Always on.', 1], [' The expert you need, the moment you need one.']],
     s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
-  { h: [['Security-first', 1], [' answers, checked before you see them.']],
-    s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
   // Mirrors server/store.js HERO_DEFAULT: keep the two lists identical so the
   // fallback paint and the API feed never disagree.
   { h: [['Code that is '], ['safe to run', 1], [', checked before you see it.']],
@@ -966,6 +964,8 @@ const HERO_PAIRS = [
     s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: [['Compliance-ready', 1], [' for the frameworks you answer to.']],
     s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
+  { h: [['The AI is '], ['on us', 1], [', always included.']],
+    s: 'You are never billed for how much AI a task takes. It is part of your plan, so bring every task, big or small, and focus on the work, not the cost.' },
 ]
 
 // Split a line into words (on plain spaces only, so the NBSP in "SOC 2" holds)

@@ -2799,13 +2799,13 @@ const HERO_DEFAULT = [
   { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen and tells you the exact next move, step by step, until the job is done. Any task, any field.' },
   { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
   { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
-  { h: 'Security-first answers, checked before you see them.', em: 'Security-first', s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
   { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
   { h: 'The strongest AI plans it. You are guided live.', em: 'strongest AI', s: 'Your plan comes from the strongest AI your key can reach. Then you are walked through it, step by step, in real time.' },
   { h: 'Gets smarter every session, never stuck on old knowledge.', em: 'smarter every session', s: 'WorkCoPilot reads the current way your tools work and carries it forward, so your team starts each task ahead of the AI\'s training cutoff, not behind it.' },
   { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: 'Compliance-ready for the frameworks you answer to.', em: 'Compliance-ready', s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
+  { h: 'The AI is on us, always included.', em: 'on us', s: 'You are never billed for how much AI a task takes. It is part of your plan, so bring every task, big or small, and focus on the work, not the cost.' },
 ]
 export function getHeroPairs() {
   const custom = db.work && Array.isArray(db.work.hero) && db.work.hero.length ? db.work.hero : null
@@ -2964,6 +2964,24 @@ export function listWorkIncidents({ limit = 300 } = {}) {
   return (db.workIncidents || []).slice().sort((a, b) => String(b.at || '').localeCompare(String(a.at || ''))).slice(0, limit)
 }
 export function workIncidentCount() { return (db.workIncidents || []).length }
+
+// Abuse / prompt-injection attempt against WorkCoPilot's own AI (LLM01/LLM07).
+// Bumps a per-user counter (for escalating the warning) and records it in the
+// superadmin incident feed as kind 'abuse_attempt' with a redacted sample, so it
+// surfaces where the operator already looks. Returns the user's running count.
+export function recordAbuseAttempt({ userId = null, username = '', companyId = null, sessionId = null, category = 'other', severity = 'medium', field = 'input', sample = '' } = {}) {
+  const u = userId ? getUser(userId) : null
+  let count = 1
+  if (u) { u.abuseCount = (u.abuseCount || 0) + 1; u.abuseLastAt = new Date().toISOString(); count = u.abuseCount }
+  recordWorkIncident({
+    kind: 'abuse_attempt', status: severity, call: category,
+    message: `[${severity} ${category}] in ${field}: ${String(sample || '').slice(0, 300)}`,
+    userId, username: username || (u && u.username) || '', companyId: companyId || (u && u.companyId) || null, sessionId,
+  })
+  // persistSoon already called by recordWorkIncident; ensure the counter is saved.
+  persistSoon()
+  return count
+}
 // Sessions left active but quiet past idleMs (the idle sweep finalizes them).
 export function idleWorkSessionsToFinalize(idleMs) {
   const cut = Date.now() - idleMs

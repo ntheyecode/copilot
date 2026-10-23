@@ -31,6 +31,7 @@ import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } 
 import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
+import * as llmGuard from './llm_guard.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.join(__dirname, '..')
@@ -896,8 +897,35 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
 // ===========================================================================
 // Sessions
 // ===========================================================================
+// Input-side guardrail (OWASP LLM01 prompt injection / LLM07 prompt leakage).
+// Inspects one piece of user-typed free text. If it looks like an attempt to
+// manipulate WorkCoPilot itself (not a legitimate task), we RECORD it + bump the
+// user's counter, and either REFUSE (high-severity extraction / cross-tenant /
+// jailbreak) by sending a 400 here, or return a warning to fold into the normal
+// response and PROCEED (the prompt already treats input as untrusted data, so a
+// medium attempt cannot actually redirect the model). Returns:
+//   'refused'  -> response already sent, caller must `return`
+//   {guard}    -> warn-and-proceed, caller folds `...g` into its res.json
+//   null       -> clean
+function guardUserText(req, res, text, field, sessionId = null) {
+  const hit = llmGuard.inspectUserText(text, { field })
+  if (!hit) return null
+  const count = store.recordAbuseAttempt({
+    userId: req.workUser.id, username: req.workUser.username, companyId: req.workUser.companyId || null,
+    sessionId, category: hit.category, severity: hit.severity, field, sample: String(text || '').slice(0, 300),
+  })
+  const warning = llmGuard.guardWarning({ severity: hit.severity, nth: count })
+  const refuse = hit.severity === 'high' && ['prompt_extraction', 'cross_tenant', 'role_play_jailbreak'].includes(hit.category)
+  if (refuse) {
+    res.status(400).json({ error: warning, guard: { warning, severity: hit.severity, category: hit.category, blocked: true } })
+    return 'refused'
+  }
+  return { guard: { warning, severity: hit.severity, category: hit.category, blocked: false } }
+}
+
 app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
   const { title, goal, scope } = req.body || {}
+  const g0 = guardUserText(req, res, goal, 'goal'); if (g0 === 'refused') return
   // Company free trial: a pool of 1-hour sessions shared across the company's
   // users. Consume one here; gate when the pool is used up.
   const cu = store.getUser(req.workUser.id)
@@ -918,7 +946,7 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
     }
     store.consumeCompanyTrialSession(cu.companyId)
   }
-  res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }), taskUsage: store.getWorkTaskUsage(req.workUser.id) })
+  res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }), taskUsage: store.getWorkTaskUsage(req.workUser.id), ...(g0 && g0.guard ? { guard: g0.guard } : {}) })
 }))
 app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
   res.json({ sessions: store.listWorkSessions(req.workUser.id) })
@@ -1097,7 +1125,8 @@ app.get('/api/work/exec/productivity.csv', requireWorkAuth, requireExecutive, wr
   res.send(rows.join('\n'))
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
-  res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal) })
+  const g = guardUserText(req, res, (req.body || {}).goal, 'goal', req.params.id); if (g === 'refused') return
+  res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal), ...(g && g.guard ? { guard: g.guard } : {}) })
 }))
 
 // Plan: turn the goal (plus an optional first frame) into the ordered checklist.
@@ -1106,6 +1135,8 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
     const { goal, frame, mode } = req.body || {}
+    const gPlan = guardUserText(req, res, goal, 'goal', req.params.id); if (gPlan === 'refused') return
+    if (gPlan && gPlan.guard) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: gPlan.guard.warning })
     if (goal != null) store.setWorkSessionGoal(req.workUser.id, req.params.id, goal)
     const useMode = work.normalizeMode(mode != null ? mode : s.mode)
     if (mode != null) store.setWorkSessionMode(req.workUser.id, req.params.id, useMode)
@@ -1226,7 +1257,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // name (owner rule: never expose the model to users). Full model identity lives
     // in the server audit + superadmin incidents.
     const plannedByPublic = { topRanked: !!plannedBy.topRanked, tier: plannedBy.tier || null, source: plannedBy.source || null, updated: plannedBy.updated || null, vision: !!plannedBy.vision, fellBack: !!plannedBy.fellBack }
-    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security })
+    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -1378,6 +1409,8 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     if (!s) return res.status(404).json({ error: 'Session not found' })
     const { question, frame } = req.body || {}
     if (!frame) return res.status(400).json({ error: 'No screen frame supplied.' })
+    const gAsk = guardUserText(req, res, question, 'question', req.params.id); if (gAsk === 'refused') return
+    if (gAsk && gAsk.guard) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: gAsk.guard.warning })
     const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
     const askScrubOn = store.workUserScrubOn(req.workUser.id)
@@ -1397,7 +1430,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
     else if (out.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this answer.' })
-    res.json({ answer: out.answer, escalated })
+    res.json({ answer: out.answer, escalated, ...(gAsk && gAsk.guard ? { guard: gAsk.guard } : {}) })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -1486,6 +1519,8 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
     const hasText = !!(String(note || '').trim() || String(docsText || '').trim())
     const images = [image, frame].filter((x) => typeof x === 'string' && x.startsWith('data:'))
     if (!hasText && !images.length) return res.status(400).json({ error: 'Add a note, a document, or an image first.' })
+    const gCtx = guardUserText(req, res, note, 'context', req.params.id); if (gCtx === 'refused') return
+    if (gCtx && gCtx.guard) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: gCtx.guard.warning })
 
     // Same scrub/governance path as planning (policy wins over legacy on/off).
     const scrubOn = store.workUserScrubOn(req.workUser.id)
@@ -1542,6 +1577,7 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
       replanned, reason: out.reason, answer: out.answer,
       index: cur.currentStep, step: (cur.steps || [])[cur.currentStep] || null,
       steps: cur.steps || [], escalated,
+      ...(gCtx && gCtx.guard ? { guard: gCtx.guard } : {}),
     })
   } catch (e) { sendWorkError(res, e, req) }
 })
