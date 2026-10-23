@@ -82,6 +82,78 @@ function ProviderRow({ p }) {
   )
 }
 
+// Curated, researched catalog of cost-effective models (researched 2026-10-23).
+// Static reference data only: it never touches the provider/key flow below it.
+const COST_MODELS = [
+  { id: 'qwen-3.7-flash', model: 'Qwen 3.7 Flash', provider: 'OpenRouter', priceIn: '$0.03', priceOut: '$0.13', priceNote: 'images free', perHour: '~$0.01-0.03', speed: '~4-5s', note: 'Cheapest. Reads screens accurately (verified). Reasoning auto-disabled.', recommended: true },
+  { id: 'deepseek-v4-flash', model: 'DeepSeek V4 Flash', provider: 'OpenRouter', priceIn: '$0.14', priceOut: '$0.28', perHour: '~$0.03-0.05', speed: '~3-5s', note: 'Cheap; can be weaker on dense documents.' },
+  { id: 'gemini-3.1-flash-lite', model: 'Gemini 3.1 Flash-Lite', provider: 'Google Gemini', priceIn: '$0.25', priceOut: '$1.50', perHour: '~$0.05-0.08', speed: '~1-2s', note: 'Fast and reliable, direct from Google. Good failover.' },
+  { id: 'gemini-3.5-flash-lite', model: 'Gemini 3.5 Flash-Lite (latest)', provider: 'Google Gemini', priceIn: '$0.30', priceOut: '$2.50', perHour: '~$0.07-0.10', speed: '~1-2s', note: 'Newest Gemini Flash-Lite.' },
+  { id: 'gpt-4o-mini', model: 'gpt-4o-mini', provider: 'OpenAI', avoid: true, note: 'Bills images at a very high token rate (~25k tokens/image) - NOT cost-effective for screen reading.' },
+]
+
+const CM_LABEL = { fontSize: 10.5, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--wka-faint)' }
+
+function CostModelCard({ m }) {
+  const rec = !!m.recommended
+  const avoid = !!m.avoid
+  return (
+    <div style={{
+      position: 'relative', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0,
+      padding: '16px 16px 14px', borderRadius: 12,
+      border: rec ? '1px solid rgba(10,157,102,0.55)' : '1px solid var(--wka-line)',
+      background: rec ? 'linear-gradient(160deg, rgba(10,157,102,0.09), var(--wka-panel-2) 60%)' : 'var(--wka-panel-2)',
+      boxShadow: rec ? '0 0 0 3px rgba(10,157,102,0.08)' : 'none',
+      opacity: avoid ? 0.62 : 1,
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{m.provider}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, wordBreak: 'break-word', textDecoration: avoid ? 'line-through' : 'none', textDecorationColor: 'var(--wka-faint)' }}>{m.model}</div>
+        </div>
+        {rec ? <span style={{ ...VIS_TAG, fontSize: 10.5, padding: '3px 9px' }}><Award size={11} /> Recommended - cheapest</span> : null}
+        {avoid ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: 'var(--wka-red)', border: '1px solid rgba(255,138,138,0.4)', borderRadius: 999, padding: '3px 9px' }}><XCircle size={11} /> Avoid for vision</span> : null}
+      </div>
+
+      {avoid ? null : (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div>
+            <div style={CM_LABEL}>Per 1M tokens</div>
+            <div className="wka-mono" style={{ marginTop: 3, fontWeight: 650, fontSize: 13.5 }}>{m.priceIn} <span style={{ color: 'var(--wka-faint)', fontWeight: 400 }}>in</span> / {m.priceOut} <span style={{ color: 'var(--wka-faint)', fontWeight: 400 }}>out</span></div>
+            {m.priceNote ? <div style={{ fontSize: 11, color: 'var(--wka-faint)', marginTop: 1 }}>({m.priceNote})</div> : null}
+          </div>
+          <div>
+            <div style={CM_LABEL}>Est. per active hour</div>
+            <div className="wka-mono" style={{ marginTop: 3, fontWeight: 700, fontSize: 15, color: rec ? 'var(--wka-emerald)' : 'inherit' }}>{m.perHour}</div>
+          </div>
+          <div>
+            <div style={CM_LABEL}>Speed</div>
+            <div className="wka-mono" style={{ marginTop: 3, fontWeight: 600, fontSize: 13.5 }}>{m.speed}</div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ fontSize: 12.5, lineHeight: 1.45, color: avoid ? 'var(--wka-muted)' : 'var(--wka-muted)', borderTop: '1px solid var(--wka-line)', paddingTop: 10, marginTop: 'auto' }}>{m.note}</div>
+    </div>
+  )
+}
+
+// Research panel: cheapest-first comparison. Sits above the provider/key form.
+function CostEffectiveModels() {
+  return (
+    <div className="wka-panel">
+      <h2><DollarSign size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-emerald)' }} />Cost-effective models (researched 2026-10-23)</h2>
+      <p className="desc">Pick a provider below and paste its key to use it. Qwen and DeepSeek are reached with a single OpenRouter key.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 270px), 1fr))', gap: 12 }}>
+        {COST_MODELS.map((m) => <CostModelCard key={m.id} m={m} />)}
+      </div>
+      <div style={{ marginTop: 14, fontSize: 11.5, color: 'var(--wka-faint)', lineHeight: 1.5 }}>
+        Estimates assume an active hour of screen-guidance. WorkCoPilot picks the cheapest capable model automatically and keeps a stronger model as failover. Research is refreshed periodically.
+      </div>
+    </div>
+  )
+}
+
 // (a) Platform web-search key (Tavily). Grounds live steps in current web
 // sources. Read is admin; write is superadmin-only (gate mirrors the toggle).
 function WebSearchCard({ isSuperAdmin }) {
@@ -272,6 +344,8 @@ export default function AiConfig({ isSuperAdmin }) {
   return (
     <div>
       {!isSuperAdmin ? <div className="wka-note"><Lock size={14} /> Only a superadmin can change the platform AI setting. The current state is shown below.</div> : null}
+
+      <CostEffectiveModels />
 
       <div className="wka-panel">
         <h2>Platform AI for WorkCoPilot</h2>
