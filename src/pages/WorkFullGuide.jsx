@@ -17,6 +17,7 @@ import { Clock, Eye, AlertTriangle, Check, Loader2, Maximize, Minimize, Pause, S
 import RichText from '../components/RichText.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
+import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
 
 const POLL_MS = 2500
 const POLL_PAUSED_MS = 6000
@@ -61,6 +62,7 @@ export default function WorkFullGuide() {
   const [usage, setUsage] = useState(null)
   const [status, setStatus] = useState('loading') // loading | ok | empty | signin | error
   const [fs, setFs] = useState(false)
+  const [planOpen, setPlanOpen] = useState(false) // read-only "full plan" overlay
   const prefersDark = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : true
   const [dark, setDark] = useState(prefersDark)
   // One clean column on a narrow window; the roomy two-column layout on a real
@@ -142,6 +144,10 @@ export default function WorkFullGuide() {
   const cur = (!allDone && steps[curIdx]) || null
   const doneN = steps.filter((s) => s.status === 'done').length
   const pct = total > 0 ? Math.round((Math.min(curIdx, total) / total) * 100) : 0
+  // Rolling 5-step window (current + next 4; done hidden) + the quiet progress
+  // line, both from the shared single source so all three surfaces agree.
+  const win = stepWindow(steps)
+  const progress = progressText(steps)
   const remaining = usage ? usage.remainingSeconds : null
   const exhausted = !!(usage && usage.exhausted)
   const guidance = (session && session.guidance) || ''
@@ -233,20 +239,26 @@ export default function WorkFullGuide() {
           <aside style={S.rail}>
             <div style={S.railHead}>
               <span style={S.railTitle}>Roadmap</span>
-              <span style={S.railCount}>{doneN} of {total} done</span>
+              <span style={S.railCount}>{progress || `${doneN} of ${total} done`}</span>
             </div>
             <div style={S.track}><span style={{ ...S.fill, width: `${pct}%` }} /></div>
+            {/* Only the rolling window of up to 5 steps (current + next 4), with
+                done steps hidden. The fully-expanded current step lives in the
+                main column (nowCard); here it is the highlighted compact row. */}
             <div style={S.stepList}>
-              {steps.map((s, i) => {
-                const isDone = s.status === 'done', isNow = s.status === 'current' || (i === curIdx && !allDone)
+              {win.map(({ step: s, index: i }, pos) => {
+                const isNow = pos === 0 // the window always leads with the current step
                 return (
-                  <div key={i} style={S.stepRow(isNow, isDone)}>
-                    <span style={S.stepBadge(isNow, isDone)}>{isDone ? <Check size={14} strokeWidth={2.5} /> : i + 1}</span>
-                    <span style={S.stepText(isNow, isDone)}><RichText text={s.text} accent={c.accent} /></span>
+                  <div key={i} style={S.stepRow(isNow, false)}>
+                    <span style={S.stepBadge(isNow, false)}>{i + 1}</span>
+                    <span style={S.stepText(isNow, false)}><RichText text={s.text} accent={c.accent} /></span>
                   </div>
                 )
               })}
             </div>
+            {total > win.length && (
+              <button className="wfg-link" style={S.planBtn} onClick={() => setPlanOpen(true)}>View full plan</button>
+            )}
           </aside>
         </div>
       ) : (
@@ -255,6 +267,35 @@ export default function WorkFullGuide() {
             {status === 'loading' && <Loader2 size={20} style={{ ...S.spin, marginBottom: 10 }} />}
             <div style={S.calmT}>{calm.t}</div>
             <div style={S.calmD}>{calm.d}</div>
+          </div>
+        </div>
+      )}
+
+      {/* Read-only FULL PLAN: every step in order with a done / current /
+          upcoming marker and the goal at the top. This is NOT the session
+          report; it just shows the whole plan the window summarizes. */}
+      {planOpen && session && (
+        <div style={S.planOv} onClick={() => setPlanOpen(false)} role="dialog" aria-modal="true" aria-label="Full plan">
+          <div style={S.planCard} onClick={(e) => e.stopPropagation()}>
+            <div style={S.planHead}>
+              <span style={S.planTitle}>Full plan</span>
+              <button style={S.iconBtn} onClick={() => setPlanOpen(false)} title="Close" aria-label="Close full plan"><Minimize size={16} /></button>
+            </div>
+            {session.goal && <div style={S.planGoal}><span style={S.goalK}>Your goal</span><div style={S.goalText}>{session.goal}</div></div>}
+            <div style={S.planCount}>{progress || `${doneN} of ${total} done`}</div>
+            <div style={S.planList}>
+              {steps.map((s, i) => {
+                const mk = planMarker(s, i, steps)
+                const isDone = mk === 'done', isNow = mk === 'current'
+                return (
+                  <div key={i} style={S.stepRow(isNow, isDone)}>
+                    <span style={S.stepBadge(isNow, isDone)}>{isDone ? <Check size={14} strokeWidth={2.5} /> : i + 1}</span>
+                    <span style={S.stepText(isNow, isDone)}><RichText text={s.text} accent={c.accent} /></span>
+                    {isNow && <span style={S.planTag(c.accent)}>Now</span>}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       )}
@@ -324,6 +365,17 @@ function styles(c, wide = true, fs = 1) {
     stepRow: (now, done) => ({ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 9, background: now ? c.accentSoft : 'transparent', border: `1px solid ${now ? c.border : 'transparent'}`, opacity: done ? 0.6 : 1 }),
     stepBadge: (now, done) => ({ flex: '0 0 auto', width: 22, height: 22, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 11.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: done ? c.accent : now ? c.bg : c.muted, background: now ? c.accent : 'transparent', border: `1.5px solid ${done ? 'transparent' : now ? c.accent : c.border}` }),
     stepText: (now, done) => ({ flex: 1, minWidth: 0, fontSize: z(13), lineHeight: 1.45, color: now ? c.text : c.muted, fontWeight: now ? 600 : 500, textDecoration: done ? 'line-through' : 'none', overflowWrap: 'anywhere' }),
+    // Quiet "View full plan" link under the windowed rail.
+    planBtn: { marginTop: 10, background: 'transparent', border: 'none', padding: '2px 0', color: c.link, fontSize: z(12.5), fontWeight: 600, cursor: 'pointer', textDecorationColor: 'transparent', textUnderlineOffset: 3 },
+    // Read-only full-plan overlay.
+    planOv: { position: 'fixed', inset: 0, zIndex: 90, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 20, background: 'rgba(5,7,14,0.55)', backdropFilter: 'blur(4px)' },
+    planCard: { width: 'min(620px, 100%)', maxHeight: '86vh', display: 'flex', flexDirection: 'column', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, boxShadow: '0 24px 60px -24px rgba(0,0,0,0.7)', overflow: 'hidden' },
+    planHead: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: '14px 16px', borderBottom: `1px solid ${c.border}` },
+    planTitle: { fontSize: 15, fontWeight: 700, fontFamily: '"Bricolage Grotesque", "Figtree", sans-serif', color: c.text },
+    planGoal: { padding: '12px 16px 0' },
+    planCount: { padding: '8px 16px 4px', fontSize: 12, fontWeight: 600, color: c.muted, fontVariantNumeric: 'tabular-nums' },
+    planList: { padding: '4px 12px 14px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 4 },
+    planTag: (col) => ({ flex: '0 0 auto', fontSize: 10, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: col, alignSelf: 'center' }),
     calmWrap: { flex: 1, display: 'grid', placeItems: 'center', padding: 40 },
     calmCard: { textAlign: 'center', maxWidth: 460 },
     calmT: { fontSize: 20, fontWeight: 700, fontFamily: '"Bricolage Grotesque", "Figtree", sans-serif', color: c.text },

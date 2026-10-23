@@ -23,6 +23,20 @@ import {
   ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
+import { isDesktop } from '../isDesktop.js'
+
+// The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
+// desktop app (window.refigold) or the mobile app (WorkCoPilotApp/<n> UA) the
+// person is already a user, so it must never appear. One gate here covers EVERY
+// mount (marketing / demo / use-cases / login) - SUPREME RULE II, single source,
+// instead of editing each call site. Environment-constant, so the early return is
+// stable across renders (hook count never changes).
+const isInApp = () => {
+  try {
+    if (isDesktop) return true
+    return /WorkCoPilotApp\/\d+/.test((typeof navigator !== 'undefined' && navigator.userAgent) || '')
+  } catch { return false }
+}
 
 const LEAD_KEY = 'wc_lv_lead_v1'   // once-per-session gate; bump suffix to re-ask
 const loadLead = () => { try { const r = sessionStorage.getItem(LEAD_KEY); return r ? JSON.parse(r) : null } catch { return null } }
@@ -53,6 +67,7 @@ function renderRich(text) {
 const defaultGo = (plan) => { try { window.location.href = `/workcopilot${plan ? `?plan=${plan}` : ''}` } catch { /* noop */ } }
 
 export default function LiveValidate({ go = defaultGo, theme = 'light', source = 'site' }) {
+  if (isInApp()) return null   // hide the lead widget inside the desktop/mobile app
   const [open, setOpen] = useState(false)
   const [lead, setLead] = useState(loadLead)          // null until captured this session
 

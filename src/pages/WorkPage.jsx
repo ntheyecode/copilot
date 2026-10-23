@@ -162,6 +162,7 @@ import AnswerBody from '../components/AnswerBody.jsx'
 import RichText from '../components/RichText.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
+import { stepWindow, progressText, stepProgress, planMarker } from '../shared/step_window.js'
 import BuddyPicker from '../components/BuddyPicker.jsx'
 import ScrubRules from '../components/ScrubRules.jsx'
 import ResultCard from '../components/ResultCard.jsx'
@@ -459,6 +460,59 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
   )
 }
 
+// ---- Home hero illustration -----------------------------------------------
+// Hand-drawn inline SVG (no network, no licensing): a guided workspace - a
+// window with steps being ticked off, the current step lit, and the buddy
+// pointing at it along a dotted path. Every color is a theme token or
+// currentColor so it reads the same in dark and light.
+function WdHeroArt() {
+  return (
+    <svg className="wd-hero-art" viewBox="0 0 340 220" fill="none" aria-hidden="true" focusable="false">
+      {/* soft ground */}
+      <ellipse cx="178" cy="124" rx="150" ry="92" fill="var(--em-fill)" />
+      <ellipse cx="226" cy="94" rx="92" ry="66" fill="color-mix(in srgb,var(--em-2) 9%,transparent)" />
+      {/* the window */}
+      <rect x="54" y="30" width="208" height="150" rx="14" fill="var(--panel)" stroke="var(--line-2)" />
+      <path d="M54 58h208" stroke="var(--line)" />
+      <circle cx="70" cy="44" r="3.2" fill="var(--line-2)" />
+      <circle cx="81" cy="44" r="3.2" fill="var(--line-2)" />
+      <circle cx="92" cy="44" r="3.2" fill="var(--line-2)" />
+      <rect x="196" y="39" width="52" height="10" rx="5" fill="var(--chip)" stroke="var(--line)" />
+      {/* step 1 - done */}
+      <circle cx="84" cy="82" r="9" fill="var(--em)" />
+      <path d="M79.5 82.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="104" y="77" width="94" height="9" rx="4.5" fill="var(--line-2)" />
+      {/* step 2 - done */}
+      <circle cx="84" cy="110" r="9" fill="var(--em)" />
+      <path d="M79.5 110.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="104" y="105" width="72" height="9" rx="4.5" fill="var(--line-2)" />
+      {/* step 3 - the one being guided now */}
+      <rect x="66" y="126" width="184" height="26" rx="9" fill="var(--em-fill)" stroke="var(--em-line)" />
+      <circle cx="84" cy="139" r="9" fill="var(--panel)" stroke="var(--em)" strokeWidth="2" />
+      <circle cx="84" cy="139" r="3.4" fill="var(--em)" />
+      <rect x="104" y="134.5" width="110" height="9" rx="4.5" fill="var(--tx)" opacity=".42" />
+      <rect x="222" y="134.5" width="18" height="9" rx="4.5" fill="var(--em)" opacity=".8" />
+      {/* step 4 - next, still quiet */}
+      <circle cx="84" cy="166" r="9" stroke="var(--line-2)" strokeDasharray="3 3" />
+      <rect x="104" y="161" width="84" height="9" rx="4.5" fill="var(--line)" />
+      {/* dotted guide path from the buddy to the current step */}
+      <path d="M276 176c-6-18-20-30-36-33" stroke="var(--em-2)" strokeWidth="1.6" strokeDasharray="3.5 4.5" strokeLinecap="round" />
+      <circle cx="240" cy="143" r="3" fill="var(--em-2)" />
+      {/* the buddy */}
+      <circle cx="286" cy="190" r="22" fill="var(--panel)" stroke="var(--em-line)" strokeWidth="1.5" />
+      <circle cx="286" cy="190" r="16" fill="var(--em-fill-2)" />
+      <circle cx="280" cy="187" r="2.4" fill="var(--em)" />
+      <circle cx="292" cy="187" r="2.4" fill="var(--em)" />
+      <path d="M280.5 195c2.8 2.6 8.2 2.6 11 0" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" />
+      {/* sparkles */}
+      <path d="M44 100l2.2 5.8 5.8 2.2-5.8 2.2L44 116l-2.2-5.8L36 108l5.8-2.2z" fill="var(--em-2)" opacity=".55" />
+      <path d="M290 36l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="var(--warm)" opacity=".55" />
+      <circle cx="310" cy="128" r="2.5" fill="var(--em)" opacity=".5" />
+      <circle cx="36" cy="162" r="2" fill="var(--em-2)" opacity=".5" />
+    </svg>
+  )
+}
+
 // ---- Home: start a session, resume saved ones, get the apps ---------------
 const WD_CSS = `
 .wd{
@@ -477,7 +531,11 @@ const WD_CSS = `
   --field:#0b0c13;--track:rgba(255,255,255,.08);
   --shadow:0 30px 70px -46px rgba(0,0,0,.85);--shadow-sm:0 2px 10px rgba(0,0,0,.35);
   --focus:#8cf5c4;--danger:#ff6b6b;
-  --orb-1:rgba(57,211,255,.40);--orb-2:rgba(140,245,196,.32);--orb-op:.3;
+  --orb-1:rgba(57,211,255,.40);--orb-2:rgba(140,245,196,.32);--orb-op:.22;
+  /* dashboard cards: flat panel, 1px line, soft lift (the admin-console calm) */
+  --card-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 26px -20px rgba(0,0,0,.8);
+  --card-shadow-hover:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -18px rgba(0,0,0,.9);
+  --info:#7cc6ff;--info-fill:rgba(56,189,248,.10);--info-line:rgba(56,189,248,.30);
   position:relative;min-height:100vh;background:var(--ink);color:var(--tx);
   font-family:"Figtree",system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
 [data-theme='light'] .wd{
@@ -495,7 +553,10 @@ const WD_CSS = `
   --field:#fbfcff;--track:rgba(20,30,70,.10);
   --shadow:0 22px 48px -30px rgba(30,40,80,.30);--shadow-sm:0 2px 12px rgba(30,40,80,.08);
   --focus:#0e9f6e;--danger:#e23b4e;
-  --orb-1:rgba(11,143,214,.16);--orb-2:rgba(14,159,110,.14);--orb-op:.5}
+  --orb-1:rgba(11,143,214,.16);--orb-2:rgba(14,159,110,.14);--orb-op:.22;
+  --card-shadow:0 1px 2px rgba(26,31,54,.05),0 8px 22px -14px rgba(26,31,54,.14);
+  --card-shadow-hover:0 1px 2px rgba(26,31,54,.06),0 12px 28px -14px rgba(26,31,54,.20);
+  --info:#0a6fb3;--info-fill:rgba(10,134,207,.07);--info-line:rgba(10,134,207,.26)}
 .wd *{box-sizing:border-box}
 .wd h1,.wd h2,.wd h3{margin:0;color:var(--tx)}
 .wd p{margin:0}
@@ -548,14 +609,54 @@ const WD_CSS = `
 .wd-signout{padding:0 12px;border-color:transparent;background:transparent;color:var(--mut);font-weight:500}
 .wd-signout:hover{color:var(--tx);background:var(--chip);border-color:var(--line)}
 
-.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:38px 20px 72px}
-.wd-hello h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(25px,3.6vw,38px);line-height:1.15;letter-spacing:-.022em}
-.wd-hello h1 span{color:var(--mut);font-weight:600}
-.wd-plan{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:14px;margin-top:10px;text-transform:capitalize}
-.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 3px var(--em-fill-2),0 0 10px var(--em);flex-shrink:0}
-.wd-plan-skel{height:15px;width:260px;max-width:70%;border-radius:7px;margin-top:11px;background:var(--track)}
+.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:34px 20px 72px}
 
-.wd-buy{margin-top:18px;display:flex;gap:13px;align-items:flex-start;border:1px solid var(--em-line);background:var(--em-fill);border-radius:16px;padding:16px 18px}
+/* ---- Home hero: greeting on the left, the illustration on the right ---- */
+.wd-hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:center;gap:28px;margin-bottom:22px}
+.wd-hello h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(27px,3.6vw,40px);line-height:1.12;letter-spacing:-.024em}
+.wd-hello h1 span{display:block;color:var(--mut);font-weight:600;font-size:.62em;letter-spacing:-.012em;margin-top:8px;line-height:1.3}
+.wd-plan{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:13.5px;font-weight:500;margin-top:14px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px 6px 10px;box-shadow:var(--card-shadow)}
+.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 3px var(--em-fill-2);flex-shrink:0}
+.wd-plan-skel{height:15px;width:260px;max-width:70%;border-radius:7px;margin-top:11px;background:var(--track)}
+.wd-hero-art{display:block;width:100%;height:auto;max-height:210px;justify-self:end;animation:wd-rise .6s cubic-bezier(.2,.8,.2,1) both}
+@keyframes wd-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+
+/* ---- Cards: one quiet recipe for every block on the home view ----------
+   White (or panel) face, 1px line, soft lift, an icon tile + title + muted
+   caption in the head. Matches the admin console so the two feel like one
+   product. */
+.wd-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--card-shadow)}
+.wd-card-head{display:flex;align-items:flex-start;gap:12px}
+.wd-card-t{display:block;font-size:14.5px;font-weight:700;color:var(--tx);line-height:1.3}
+.wd-card-c{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.45}
+.wd-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:var(--em-fill);color:var(--em);flex-shrink:0;border:1px solid var(--em-line)}
+.wd-ic.alt{color:var(--em-2);background:color-mix(in srgb,var(--em-2) 10%,transparent);border-color:color-mix(in srgb,var(--em-2) 28%,transparent)}
+.wd-ic.warm{color:var(--warm);background:var(--warm-fill);border-color:var(--warm-line)}
+.wd-link{color:var(--em-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--em-2) 40%,transparent)}
+.wd-link:hover{text-decoration-color:var(--em-2)}
+
+/* Buddy + Data protection sit as a tidy pair above the plan form */
+.wd-pair{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
+.wd-buddy{display:flex;align-items:center;gap:14px;padding:14px 16px;min-width:0;flex-wrap:wrap}
+.wd-buddy .wd-card-body{min-width:0;flex:1 1 240px}
+.wd-buddy .wd-card-end{margin-left:auto;flex-shrink:0}
+.wd-dp{overflow:hidden;align-self:start}
+.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s}
+.wd-dp-btn:hover{background:var(--panel-3)}
+.wd-dp-btn .wd-card-body{min-width:0;flex:1}
+.wd-dp-btn .wd-card-c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-dp-chev{margin-left:auto;color:var(--mut);flex-shrink:0;transition:transform .18s}
+.wd-dp-chev.open{transform:rotate(90deg)}
+.wd-dp-body{padding:0 16px 16px;border-top:1px solid var(--line);padding-top:14px;font-size:13.5px;color:var(--mut);line-height:1.55}
+
+/* Notes: info (admin access) and warning (gate message) */
+.wd-note{display:flex;gap:11px;align-items:flex-start;margin:0 0 14px;padding:12px 15px;border-radius:12px;font-size:13.5px;line-height:1.5;border:1px solid var(--info-line);background:var(--info-fill);color:var(--tx)}
+.wd-note svg{flex-shrink:0;margin-top:2px;color:var(--info)}
+.wd-note a{color:var(--info);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.wd-note.warn{border-color:var(--warm-line);background:var(--warm-fill)}
+.wd-note.warn svg{color:var(--warm)}
+
+.wd-buy{margin-top:14px;display:flex;gap:13px;align-items:flex-start;border:1px solid var(--em-line);background:var(--panel);border-radius:16px;padding:16px 18px;box-shadow:var(--card-shadow)}
 .wd-buy .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
 .wd-buy h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:16px;margin-bottom:5px}
 .wd-buy p{color:var(--mut);font-size:13.5px}
@@ -564,7 +665,7 @@ const WD_CSS = `
 .wd-buy .x:hover{color:var(--tx)}
 
 /* Plan chooser (free signup needs a plan to guide) */
-.wd-sub{margin-top:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:18px;padding:18px 18px 16px;box-shadow:var(--shadow)}
+.wd-sub{margin-top:14px;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:18px 18px 16px;box-shadow:var(--card-shadow)}
 .wd-sub-head{display:flex;gap:13px;align-items:flex-start}
 .wd-sub-head .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
 .wd-sub-head h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:17px;margin-bottom:5px}
@@ -608,11 +709,21 @@ const WD_CSS = `
 .wd-bill-empty{margin-top:14px;color:var(--mut);font-size:13px}
 .wd-bill-err{margin-top:12px;display:flex;align-items:center;gap:7px;color:var(--warm);font-size:13px}
 
-.wd-setup{margin-top:20px;border:1px solid var(--warm-line);background:var(--warm-fill);border-radius:16px;padding:16px}
-.wd-setup-note{color:var(--warm);font-size:13.5px;margin-bottom:10px;font-weight:600}
+.wd-setup{margin-top:14px;border:1px solid var(--warm-line);background:var(--panel);border-radius:16px;padding:16px;box-shadow:var(--card-shadow)}
+.wd-setup-note{display:flex;align-items:center;gap:9px;color:var(--warm);font-size:13.5px;margin-bottom:12px;font-weight:600}
 
-.wd-start{margin-top:24px;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:20px;padding:22px 24px 20px;box-shadow:var(--shadow),0 1px 0 var(--line) inset}
+/* Section head: icon tile + title + caption, shared by the plan form, the
+   spaces grid and the sessions list. */
+.wd-sec{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
+.wd-sec h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;letter-spacing:-.012em;line-height:1.25;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wd-sec p{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.45}
+.wd-sec .wd-ic{margin-top:1px}
+
+.wd-start{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px 20px;box-shadow:var(--card-shadow)}
+.wd-start .wd-sec{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
 .wd-start label{display:block;font-size:12.5px;color:var(--mut-2);font-weight:600;letter-spacing:.02em;margin-bottom:7px}
+.wd-start label .req{color:var(--warm)}
+.wd-taskcap{font-size:12px;color:var(--mut);margin-top:8px}
 .wd-start textarea{width:100%;resize:vertical;min-height:88px;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:13px 14px;color:var(--tx);font:inherit;font-size:15.5px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
 .wd-start textarea::placeholder{color:var(--mut)}
 .wd-start textarea:hover{border-color:var(--line-2)}
@@ -660,27 +771,29 @@ const WD_CSS = `
 .wd-cta:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
 
 .wd-catwrap{margin-top:30px}
-.wd-catlabel{display:flex;align-items:center;gap:12px;font-size:12.5px;color:var(--mut);font-weight:600;letter-spacing:.02em;margin-bottom:12px;white-space:nowrap}
-.wd-catlabel::after{content:"";flex:1;height:1px;background:var(--line)}
 .wd-cats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-.wd-cat{text-align:left;background:linear-gradient(180deg,var(--card-a),var(--card-b));border:1px solid var(--line);border-radius:16px;padding:16px 16px 15px;cursor:pointer;font:inherit;color:var(--tx);display:flex;flex-direction:column;gap:5px;transition:transform .15s,border-color .2s,box-shadow .2s,background .2s}
-.wd-cat:hover:not(:disabled){transform:translateY(-2px);border-color:var(--em-line);background:var(--panel);box-shadow:var(--shadow-sm)}
+/* Each space is a quiet white card with a faint tone-colored wash in the
+   top-right corner - the "light picture" the owner asked for, kept airy. */
+.wd-cat{position:relative;overflow:hidden;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 15px;cursor:pointer;font:inherit;color:var(--tx);display:flex;flex-direction:column;gap:5px;box-shadow:var(--card-shadow);--tone:var(--em);transition:transform .15s,border-color .2s,box-shadow .2s}
+.wd-cat::before{content:"";position:absolute;right:-28px;top:-28px;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--tone) 16%,transparent),transparent 70%);pointer-events:none;transition:transform .25s}
+.wd-cat:hover:not(:disabled){transform:translateY(-2px);border-color:color-mix(in srgb,var(--tone) 40%,var(--line));box-shadow:var(--card-shadow-hover)}
+.wd-cat:hover:not(:disabled)::before{transform:scale(1.25)}
 .wd-cat:hover:not(:disabled) .wd-cat-ic{transform:scale(1.05)}
 .wd-cat:disabled{opacity:.5;cursor:default}
-.wd-cat-ic{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:12px;background:var(--em-fill-2);color:var(--em);margin-bottom:5px;transition:transform .2s}
-.wd-cat.t-c .wd-cat-ic{color:var(--warm);background:var(--warm-fill)}
-.wd-cat.t-d .wd-cat-ic{color:var(--violet);background:color-mix(in srgb,var(--violet) 15%,transparent)}
-.wd-cat.t-e .wd-cat-ic{color:var(--rose);background:color-mix(in srgb,var(--rose) 15%,transparent)}
-.wd-cat-label{font-family:"Bricolage Grotesque";font-weight:700;font-size:15px}
-.wd-cat-sample{color:var(--mut);font-size:12.5px;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wd-cat-ic{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--tone) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone) 26%,transparent);color:var(--tone);margin-bottom:6px;transition:transform .2s}
+.wd-cat.t-b{--tone:var(--em-2)}
+.wd-cat.t-c{--tone:var(--warm)}
+.wd-cat.t-d{--tone:var(--violet)}
+.wd-cat.t-e{--tone:var(--rose)}
+.wd-cat-label{position:relative;font-family:"Bricolage Grotesque";font-weight:700;font-size:15px}
+.wd-cat-sample{position:relative;color:var(--mut);font-size:12.5px;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 
-.wd-sessions{margin-top:36px}
-.wd-sec-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
-.wd-sessions h2,.wd-apps h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;letter-spacing:-.01em}
-.wd-sec-count{font-size:13px;color:var(--mut);font-weight:600}
+.wd-sessions{margin-top:34px}
+.wd-apps h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;letter-spacing:-.01em}
+.wd-sec-count{font-size:12px;color:var(--mut);font-weight:600;border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:2px 9px;line-height:1.5}
 .wd-sess-list{display:flex;flex-direction:column;gap:10px}
-.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;transition:border-color .2s}
-.wd-sess:hover{border-color:var(--line-2)}
+.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--card-shadow);transition:border-color .2s,box-shadow .2s}
+.wd-sess:hover{border-color:var(--line-2);box-shadow:var(--card-shadow-hover)}
 .wd-sess-main{flex:1;min-width:0}
 .wd-sess-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wd-sess-meta{font-size:12.5px;color:var(--mut);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -691,8 +804,8 @@ const WD_CSS = `
 .wd-resume:hover{background:var(--em-fill);transform:translateX(1px)}
 .wd-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:7px;border-radius:9px;flex-shrink:0;transition:color .15s,background .15s}
 .wd-del:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
-.wd-empty{border:1px dashed var(--line-2);border-radius:14px;padding:26px 20px;display:flex;align-items:center;gap:14px;background:linear-gradient(180deg,var(--card-a),transparent)}
-.wd-empty .ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
+.wd-empty{border:1px dashed var(--line-2);border-radius:14px;padding:24px 20px;display:flex;align-items:center;gap:14px;background:var(--panel)}
+.wd-empty .ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:var(--em-fill);border:1px solid var(--em-line);color:var(--em);flex-shrink:0}
 .wd-empty b{display:block;color:var(--tx);font-size:15px;margin-bottom:3px}
 .wd-empty p{color:var(--mut);font-size:13.5px}
 .wd-skel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
@@ -747,6 +860,7 @@ const WD_CSS = `
 
 @media(max-width:900px){
  .wd-cats{grid-template-columns:1fr 1fr}
+ .wd-hero{grid-template-columns:minmax(0,1fr) 240px;gap:18px}
  .wd-apps-grid{grid-template-columns:1fr}
  .wd-help{grid-template-columns:1fr}
  .wd-help-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:10px}
@@ -773,6 +887,10 @@ const WD_CSS = `
  .wd-mins{padding:0 9px;font-size:12px}
  .wd-cats{grid-template-columns:1fr}
  .wd-cta{width:100%}
+ .wd-hero{grid-template-columns:1fr;gap:14px;margin-bottom:18px}
+ .wd-hero-art{max-width:240px;max-height:150px;justify-self:center}
+ .wd-start{padding:18px 16px}
+ .wd-buddy .wd-card-end{margin-left:0;width:100%}
 }
 @media(max-width:420px){
  .wd-top-in{padding:0 12px;gap:8px}
@@ -1141,8 +1259,9 @@ function Home({ user, onOpen, onSignOut }) {
       <main className="wd-main">
         {tab === 'dashboard' ? (
           <>
+            <section className="wd-hero">
             <div className="wd-hello">
-              <h1>Hi {user.displayName || user.username}. <span>What are we getting done?</span></h1>
+              <h1>Hello {user.displayName || user.username},<span>What are you accomplishing today?</span></h1>
               {usage
                 ? <div className="wd-plan"><span className="wd-plan-dot" /> {
                     isAdmin
@@ -1157,49 +1276,55 @@ function Home({ user, onOpen, onSignOut }) {
                   }</div>
                 : <div className="wd-plan-skel wd-skel" style={{ padding: 0, border: 'none', background: 'var(--track)' }} aria-hidden />}
             </div>
+            <WdHeroArt />
+            </section>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', margin: '16px 0 2px', padding: '12px 14px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--card-a)' }}>
-              <AliveBuddy character={buddyChar} state="answering" size={52} interactive />
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--tx)' }}>Your buddy</div>
-                <div style={{ fontSize: 12.5, color: 'var(--mut)' }}>Shows the next step on your screen and the full-screen guide.</div>
-              </div>
-              <div style={{ marginLeft: 'auto' }}>
-                <BuddyPicker pref={buddyPref} size={32} onPick={setBuddyPref} />
-              </div>
-            </div>
-
-            {/* Data protection: individual users customize their own scrub rules;
-                company members are governed by their admin; admins manage it in
-                their console. Built-in protections always apply for everyone. */}
-            <div style={{ margin: '0 0 18px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--card-a)', overflow: 'hidden' }}>
-              <button type="button" onClick={() => setScrubOpen((v) => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--tx)', textAlign: 'left' }}>
-                <ShieldCheck size={16} style={{ color: 'var(--em, #12a06a)', flexShrink: 0 }} />
-                <span style={{ fontWeight: 700, fontSize: 13.5 }}>Data protection</span>
-                <span style={{ fontSize: 12.5, color: 'var(--mut)' }}>{user.companyId ? (isCompanyAdmin ? 'Managed in your admin console' : 'Managed by your company') : 'Customize what gets scrubbed before sending'}</span>
-                <ChevronRight size={16} style={{ marginLeft: 'auto', color: 'var(--mut)', flexShrink: 0, transform: scrubOpen ? 'rotate(90deg)' : 'none', transition: 'transform .18s' }} />
-              </button>
-              {scrubOpen && (
-                <div style={{ padding: '0 14px 14px' }}>
-                  {!user.companyId
-                    ? <ScrubRules />
-                    : isCompanyAdmin
-                      ? <div style={{ fontSize: 13.5, color: 'var(--mut)' }}>Your company's data protection rules live in the <a href="/work/company" style={{ color: 'var(--em, #12a06a)', fontWeight: 600 }}>company console</a> under Data governance. The built-in protections always apply.</div>
-                      : <div style={{ fontSize: 13.5, color: 'var(--mut)' }}>Your company manages data protection rules for everyone on the team. The built-in protections - emails, keys, card numbers, SSNs, IP addresses and more - always apply on your device before anything is sent.</div>}
+            <div className="wd-pair">
+              <div className="wd-card wd-buddy">
+                <AliveBuddy character={buddyChar} state="answering" size={52} interactive />
+                <div className="wd-card-body">
+                  <div className="wd-card-t">Your buddy</div>
+                  <div className="wd-card-c">Shows the next step on your screen and the full-screen guide.</div>
                 </div>
-              )}
+                <div className="wd-card-end">
+                  <BuddyPicker pref={buddyPref} size={32} onPick={setBuddyPref} />
+                </div>
+              </div>
+
+              {/* Data protection: individual users customize their own scrub rules;
+                  company members are governed by their admin; admins manage it in
+                  their console. Built-in protections always apply for everyone. */}
+              <div className="wd-card wd-dp">
+                <button type="button" className="wd-dp-btn" onClick={() => setScrubOpen((v) => !v)} aria-expanded={scrubOpen}>
+                  <span className="wd-ic"><ShieldCheck size={16} /></span>
+                  <span className="wd-card-body">
+                    <span className="wd-card-t">Data protection</span>
+                    <span className="wd-card-c">{user.companyId ? (isCompanyAdmin ? 'Managed in your admin console' : 'Managed by your company') : 'Customize what gets scrubbed before sending'}</span>
+                  </span>
+                  <ChevronRight size={16} className={`wd-dp-chev${scrubOpen ? ' open' : ''}`} />
+                </button>
+                {scrubOpen && (
+                  <div className="wd-dp-body">
+                    {!user.companyId
+                      ? <ScrubRules />
+                      : isCompanyAdmin
+                        ? <div>Your company's data protection rules live in the <a href="/work/company" className="wd-link">company console</a> under Data governance. The built-in protections always apply.</div>
+                        : <div>Your company manages data protection rules for everyone on the team. The built-in protections - emails, keys, card numbers, SSNs, IP addresses and more - always apply on your device before anything is sent.</div>}
+                  </div>
+                )}
+              </div>
             </div>
 
             {isAdmin && (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'center', margin: '0 0 18px', padding: '11px 14px', borderRadius: 12, background: 'rgba(10,134,207,.08)', border: '1px solid rgba(10,134,207,.28)', fontSize: 13.5 }}>
-                <LayoutDashboard size={16} style={{ color: '#0a86cf', flexShrink: 0 }} />
-                <span>You have administrator access, so live guidance is unlocked for you. <a href="/work/admin" style={{ color: '#0a86cf', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>Open the admin console</a></span>
+              <div className="wd-note">
+                <LayoutDashboard size={16} />
+                <span>You have administrator access, so live guidance is unlocked for you. <a href="/work/admin">Open the admin console</a></span>
               </div>
             )}
 
             {gateMsg && (
-              <div style={{ display: 'flex', gap: 10, alignItems: 'flex-start', margin: '0 0 18px', padding: '11px 14px', borderRadius: 12, background: 'rgba(224,122,33,.09)', border: '1px solid rgba(224,122,33,.30)', fontSize: 13.5 }} role="alert">
-                <AlertTriangle size={16} style={{ color: '#c2410c', flexShrink: 0, marginTop: 1 }} />
+              <div className="wd-note warn" role="alert">
+                <AlertTriangle size={16} />
                 <span>{gateMsg}</span>
               </div>
             )}
@@ -1227,7 +1352,7 @@ function Home({ user, onOpen, onSignOut }) {
                 {subErr && <div className="wd-sub-err"><AlertTriangle size={14} /> {subErr}</div>}
                 <div className="wd-sub-note">On a team plan? If your company covers WorkCoPilot, ask your administrator to add you and guidance unlocks automatically.</div>
                 <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13.5 }}>
-                  Not ready to subscribe? <a href="/demo" style={{ color: '#0a86cf', fontWeight: 600, textDecoration: 'underline', textUnderlineOffset: 3 }}>See exactly how it works in the demo</a>
+                  Not ready to subscribe? <a href="/demo" className="wd-link">See exactly how it works in the demo</a>
                 </div>
               </div>
             )}
@@ -1244,19 +1369,26 @@ function Home({ user, onOpen, onSignOut }) {
               </div>
             )}
 
-            {!ready && <div className="wd-setup"><div className="wd-setup-note">Set up your AI once to begin. It is used to read your screen and guide you.</div><AiSetup onReady={setReady} /></div>}
+            {!ready && <div className="wd-setup"><div className="wd-setup-note"><span className="wd-ic warm"><Sparkles size={15} /></span>Set up your AI once to begin. It is used to read your screen and guide you.</div><AiSetup onReady={setReady} /></div>}
 
             <div className="wd-start">
-              <label htmlFor="wd-name">Name this plan <span style={{ color: 'var(--warm)' }}>*</span></label>
+              <div className="wd-sec">
+                <span className="wd-ic"><PenLine size={16} /></span>
+                <div>
+                  <h2>Start a plan</h2>
+                  <p>Describe what you want to get done in your own words. WorkCoPilot turns it into steps and guides you through each one on your screen.</p>
+                </div>
+              </div>
+              <label htmlFor="wd-name">Name this plan <span className="req">*</span></label>
               <input id="wd-name" className="wd-nameinput" placeholder="e.g. API pentest - transactional broker" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
-              <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span style={{ color: 'var(--warm)' }}>*</span></label>
+              <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span className="req">*</span></label>
               <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
               <div className="wd-start-row">
                 <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Set up your AI above to begin.'}</span>
                 <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
               </div>
               {usage && usage.tasks && !usage.tasks.unlimited && (
-                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8 }}>
+                <div className="wd-taskcap">
                   {usage.tasks.activeTaskId
                     ? 'Finish your current task before starting a new one.'
                     : `${usage.tasks.remaining} of ${usage.tasks.cap} task${usage.tasks.cap === 1 ? '' : 's'} left today. Resets ${usage.tasks.resetLabel || '11:59 PM ET'}.`}
@@ -1266,7 +1398,13 @@ function Home({ user, onOpen, onSignOut }) {
             </div>
 
             <div className="wd-catwrap">
-              <div className="wd-catlabel">Or start from a space</div>
+              <div className="wd-sec">
+                <span className="wd-ic alt"><AppWindow size={16} /></span>
+                <div>
+                  <h2>Or start from a space</h2>
+                  <p>Pick a starting point. It fills in a sample goal you can edit before you begin.</p>
+                </div>
+              </div>
               <div className="wd-cats">
                 {WD_CATS.map((c) => (
                   <button key={c.id} className={`wd-cat t-${c.tone}`} onClick={() => pickCat(c)} disabled={!ready} title={ready ? c.sample : 'Set up your AI above to begin'}>
@@ -1280,9 +1418,12 @@ function Home({ user, onOpen, onSignOut }) {
             </>)}
 
             <div className="wd-sessions">
-              <div className="wd-sec-head">
-                <h2>Pick up where you left off</h2>
-                {sessLoaded && sessions.length > 0 && <span className="wd-sec-count">{sessions.length} saved</span>}
+              <div className="wd-sec">
+                <span className="wd-ic"><Clock size={16} /></span>
+                <div>
+                  <h2>Pick up where you left off {sessLoaded && sessions.length > 0 && <span className="wd-sec-count">{sessions.length} saved</span>}</h2>
+                  <p>Every plan is saved. Pause anytime and come back to the exact step you were on.</p>
+                </div>
               </div>
               {!sessLoaded ? (
                 <div className="wd-sess-list">
@@ -1999,6 +2140,32 @@ const CONSOLE_CSS = `
 @media(prefers-reduced-motion:reduce){.wc-compute-drop{transition:none}}
 
 @media(prefers-reduced-motion:reduce){.wc-hero{animation:none}.wc-live .pulse,.wc-live-pill .pulse{animation:none}}
+
+/* Rolling-window progress line + quiet "View full plan" link (live guiding). */
+.wc-plan-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 2px}
+.wc-plan-prog{font-size:11.5px;font-weight:600;color:var(--text-dim);font-variant-numeric:tabular-nums;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wc-plan-link{flex:0 0 auto;background:transparent;border:none;padding:2px 0;font:inherit;font-size:12px;font-weight:600;color:var(--wc-link);cursor:pointer;text-underline-offset:3px}
+.wc-plan-link:hover{text-decoration:underline}
+/* Read-only full-plan overlay: every step with a done/current/upcoming marker. */
+.wc-plan-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,14,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
+.wc-plan-card{width:min(600px,100%);max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 60px -24px rgba(0,0,0,.7);overflow:hidden}
+.wc-plan-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+.wc-plan-title{font-size:15px;font-weight:700;font-family:var(--wc-display);color:var(--text)}
+.wc-plan-goal{padding:12px 16px 0}
+.wc-plan-goal-k{font-size:10.5px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--obs)}
+.wc-plan-goal-t{margin-top:3px;font-size:13.5px;line-height:1.5;color:var(--text)}
+.wc-plan-count{padding:8px 16px 4px;font-size:12px;font-weight:600;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.wc-plan-list{padding:4px 12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.wc-plan-row{display:flex;gap:11px;align-items:flex-start;padding:8px 10px;border-radius:10px}
+.wc-plan-row.now{background:var(--em-soft)}
+.wc-plan-row.done{opacity:.6}
+.wc-plan-badge{flex:0 0 auto;width:23px;height:23px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-muted);border:1.5px solid var(--border)}
+.wc-plan-row.now .wc-plan-badge{color:var(--on-em);background:var(--em);border-color:var(--em)}
+.wc-plan-row.done .wc-plan-badge{color:var(--success);border-color:transparent;background:var(--success-soft)}
+.wc-plan-txt{flex:1;min-width:0;font-size:13px;line-height:1.45;color:var(--text-muted);overflow-wrap:anywhere}
+.wc-plan-row.now .wc-plan-txt{color:var(--text);font-weight:600}
+.wc-plan-row.done .wc-plan-txt{text-decoration:line-through;color:var(--text-faint)}
+.wc-plan-tag{flex:0 0 auto;align-self:center;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--em)}
 `
 
 // Copy text reliably across the main page AND the floating PiP / pop-out window.
@@ -2338,7 +2505,7 @@ function Console({ sessionId, watchLight = false, onBack }) {
   const [replanOpen, setReplanOpen] = useState(false)   // Re-plan modal
   const [replanReason, setReplanReason] = useState('')
   const [replanScope, setReplanScope] = useState('here')  // 'here' (keep progress) | 'start'
-  const [doneOpen, setDoneOpen] = useState(false)       // show the collapsed completed steps
+  const [planOpen, setPlanOpen] = useState(false)       // read-only "full plan" overlay (all steps)
   // "Make" is the single consolidated surface for the three produce actions. One
   // of 'answer' | 'write' | 'compute' is open at a time (null = nothing open), so
   // only one primary action ever shows. Choosing a tab opens its panel and keeps
@@ -3361,21 +3528,30 @@ function Console({ sessionId, watchLight = false, onBack }) {
                 </div>
               )
             })()}
-            {!ended && doneCount > 0 && (
-              <button type="button" className="wc-done-toggle" onClick={() => setDoneOpen((v) => !v)}>
-                <ChevronRight size={14} style={{ transform: doneOpen ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />
-                <Check size={13} className="wc-dt-ok" /> {doneCount} completed
-                <span style={{ marginLeft: 'auto', fontSize: 12, color: 'var(--text-dim)' }}>{doneOpen ? 'Hide' : 'Show'}</span>
-              </button>
-            )}
-            {steps.map((s, i) => {
-              const isDone = s.status === 'done', isNow = s.status === 'current'
-              const isPending = !isDone && !isNow
-              if (!ended && isDone && !doneOpen) return null   // completed steps collapsed by default while live
-              // Show the whole roadmap, but grey out steps not reached yet and
-              // keep their exact commands/code hidden until the step is active -
-              // so the focus stays on the one step to do now. A finished task
-              // shows everything: it is the record of the plan.
+            {/* Rolling-window progress line + full-plan access (live only). The
+                window below shows the current step + the next few; this line
+                tells you where you are in the whole plan and opens all of it. */}
+            {!ended && (() => {
+              const prog = progressText(steps)
+              const { hasMore } = stepProgress(steps)
+              if (!prog) return null
+              return (
+                <div className="wc-plan-bar">
+                  <span className="wc-plan-prog">{prog}</span>
+                  {hasMore && <button type="button" className="wc-plan-link" onClick={() => setPlanOpen(true)}>View full plan</button>}
+                </div>
+              )
+            })()}
+            {/* While LIVE: only the rolling window (current + next 4, done hidden)
+                so focus stays on the step to do now. When ENDED: the full record
+                of the plan, every step, unchanged. */}
+            {(ended ? steps.map((s, i) => ({ step: s, index: i })) : stepWindow(steps)).map(({ step: s, index: i }, pos) => {
+              const isDone = s.status === 'done'
+              // Live: the window always leads with the current step. Ended record: status-based.
+              const isNow = ended ? s.status === 'current' : pos === 0
+              // In the live window done steps never appear; the current step is
+              // fully expanded (commands/code/link/done-when) and the next few
+              // stay compact. A finished task shows everything as the record.
               const reveal = isNow || isDone || ended
               const tone = ended ? (isDone ? 'done' : 'skipped') : (isNow ? 'now' : isDone ? 'done' : 'pending')
               return (
@@ -3404,6 +3580,34 @@ function Console({ sessionId, watchLight = false, onBack }) {
               )
             })}
             {done && !ended && <div className="wc-alldone"><Check size={16} strokeWidth={2.5} /> Every step is confirmed on screen. End and summarize when you are ready.</div>}
+          </div>
+        )}
+
+        {/* Read-only FULL PLAN: every step in order with a done / current /
+            upcoming marker and the goal at the top. This is the whole plan the
+            window summarizes; it is NOT the session report. */}
+        {planOpen && steps.length > 0 && (
+          <div className="wc-plan-ov" onClick={() => setPlanOpen(false)} role="dialog" aria-modal="true" aria-label="Full plan">
+            <div className="wc-plan-card" onClick={(e) => e.stopPropagation()}>
+              <div className="wc-plan-head">
+                <span className="wc-plan-title">Full plan</span>
+                <button className="wc-ib" onClick={() => setPlanOpen(false)} title="Close" aria-label="Close full plan"><X size={16} /></button>
+              </div>
+              {sess?.goal && <div className="wc-plan-goal"><span className="wc-plan-goal-k">Your goal</span><div className="wc-plan-goal-t">{sess.goal}</div></div>}
+              <div className="wc-plan-count">{progressText(steps) || `${doneCount} of ${steps.length} done`}</div>
+              <div className="wc-plan-list">
+                {steps.map((s, i) => {
+                  const mk = planMarker(s, i, steps)
+                  return (
+                    <div key={i} className={`wc-plan-row ${mk}`}>
+                      <span className="wc-plan-badge">{mk === 'done' ? <Check size={13} strokeWidth={2.5} /> : i + 1}</span>
+                      <span className="wc-plan-txt"><RichText text={s.text} /></span>
+                      {mk === 'current' && <span className="wc-plan-tag">Now</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
           </div>
         )}
 
@@ -3815,24 +4019,24 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
               )
             })()}
 
-            {/* NEXT UP: a quiet, muted preview of the next 2-3 upcoming steps so
-                it gives a sense of what is ahead without competing with NOW. */}
+            {/* NEXT UP: the rest of the rolling window - the next up to 4 upcoming
+                steps (done hidden). With the NOW card above, that is the window of
+                5. A quiet progress line shows where you are in the whole plan, so
+                it is clear there is more beyond what is shown. */}
             {(() => {
-              const no = steps.indexOf(current)
-              const upcoming = steps.slice(no + 1).filter((s) => s.status !== 'done').slice(0, 3)
-              if (upcoming.length === 0) return null
+              const upcoming = stepWindow(steps).slice(1) // drop the current step (shown above)
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 2px' }}>
-                  <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint }}>Next up</span>
-                  {upcoming.map((s) => {
-                    const n = steps.indexOf(s)
-                    return (
-                      <div key={n} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
-                        <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}`, marginTop: 1 }}>{n + 1}</span>
-                        <span style={{ flex: 1, minWidth: 0, fontSize: fs(12.5), lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
-                      </div>
-                    )
-                  })}
+                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint }}>{upcoming.length ? 'Next up' : 'Progress'}</span>
+                    <span style={{ fontSize: fs(10.5), color: c.faint, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{progressText(steps)}</span>
+                  </div>
+                  {upcoming.map(({ step: s, index: n }) => (
+                    <div key={n} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
+                      <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}`, marginTop: 1 }}>{n + 1}</span>
+                      <span style={{ flex: 1, minWidth: 0, fontSize: fs(12.5), lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
+                    </div>
+                  ))}
                 </div>
               )
             })()}
@@ -3843,16 +4047,18 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
           <div style={{ ...card, color: c.muted, fontSize: fs(13), textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
         ) : null}
 
-        {/* Collapsible roadmap: a compact chip by default so the list never eats
-            the panel. Tap to reveal; each step jumps or marks done. */}
+        {/* VIEW FULL PLAN: the complete plan, tucked into a compact chip so it
+            never eats the panel. Tap to reveal every step with its done /
+            current marker; each row jumps or marks done. This is the full plan
+            the window above summarizes. */}
         {steps.length > 0 && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: stepsOpen ? 7 : 0 }}>
             <button className="fp-btn" onClick={() => setStepsOpen((o) => !o)}
               style={{ ...ghost, width: '100%', justifyContent: 'space-between', height: 36, background: stepsOpen ? c.panel2 : 'transparent', borderColor: stepsOpen ? c.border : 'transparent', color: c.muted }}
-              title={stepsOpen ? 'Hide the full step list' : 'Show all steps'}>
+              title={stepsOpen ? 'Hide the full plan' : 'View the full plan'}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <MenuIcon size={14} style={{ color: c.faint, flexShrink: 0 }} />
-                <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>All steps</span>
+                <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>View full plan</span>
                 <span style={{ fontSize: 11.5, fontWeight: 700, color: c.text, fontVariantNumeric: 'tabular-nums' }}>{doneN} of {steps.length} done</span>
               </span>
               <ChevronRight size={16} style={{ color: c.faint, flexShrink: 0, transition: 'transform .18s cubic-bezier(.4,0,.2,1)', transform: stepsOpen ? 'rotate(90deg)' : 'none' }} />
