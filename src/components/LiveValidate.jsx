@@ -93,6 +93,21 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   const [copiedCmd, setCopiedCmd] = useState(-1)
   const copyCmd = (text, i) => { try { navigator.clipboard.writeText(text || ''); setCopiedCmd(i); setTimeout(() => setCopiedCmd(-1), 1400) } catch { /* clipboard blocked */ } }
   const taRef = useRef(null)
+  const [coach, setCoach] = useState(false)   // one-time nudge pointing at the launcher
+  const dismissCoach = () => { setCoach(false); try { sessionStorage.setItem('wc_lv_coach_v1', '1') } catch { /* private window */ } }
+  const openWidget = () => { setOpen(true); dismissCoach() }
+
+  // The banner demo / any page can open the validator directly (its "run YOUR
+  // task" nudge dispatches wc:open-validate). Also raise a one-time coachmark that
+  // points at the launcher, so after watching the demo a visitor knows they can
+  // run their own scenario live. Shown once per session, after a short delay.
+  useEffect(() => {
+    const openIt = () => openWidget()
+    window.addEventListener('wc:open-validate', openIt)
+    let t
+    try { if (!sessionStorage.getItem('wc_lv_coach_v1')) t = setTimeout(() => setCoach(true), 6500) } catch { /* private window */ }
+    return () => { window.removeEventListener('wc:open-validate', openIt); if (t) clearTimeout(t) }
+  }, [])
 
   // Focus the right first input when the dialog opens / stage changes.
   useEffect(() => {
@@ -188,8 +203,19 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   return (
     <div className="lv-root" data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
       <style>{LV_CSS}</style>
+      {!open && coach && (
+        <div className="lv-coach" role="note">
+          <button className="lv-coach-x" onClick={dismissCoach} aria-label="Dismiss">&times;</button>
+          <button type="button" className="lv-coach-body" onClick={openWidget}>
+            <span className="lv-coach-ic"><Sparkles size={15} /></span>
+            <span className="lv-coach-tx"><b>Just watched the demo?</b><span>Run it on <b>your</b> screen - validate your own task live.</span></span>
+            <ArrowRight size={16} className="lv-coach-go" />
+          </button>
+          <span className="lv-coach-arrow" aria-hidden />
+        </div>
+      )}
       {!open && (
-        <button className="wm-cov-launch" onClick={() => setOpen(true)} aria-label="Validate your scenario live">
+        <button className="wm-cov-launch" onClick={openWidget} aria-label="Validate your scenario live">
           <span className="lv-live-dot" aria-hidden /> <Sparkles size={16} /> Validate it live
         </button>
       )}
@@ -393,6 +419,23 @@ const LV_CSS = `
 .lv-root[data-lvtheme="dark"]{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--chip:rgba(255,255,255,.05)}
 .wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
 .wm-cov-launch:hover{transform:translateY(-2px)}
+/* One-time coachmark: after the banner demo, point the visitor at the launcher so
+   they run THEIR own task. Bobs gently; dismissible; opens the validator. */
+.lv-coach{position:fixed;right:20px;bottom:78px;z-index:61;width:min(302px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:0 26px 64px -18px rgba(0,0,0,.45);padding:4px;animation:lv-coach-in .42s cubic-bezier(.2,.8,.2,1) both,lv-coach-bob 2.6s ease-in-out .6s infinite}
+@keyframes lv-coach-in{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes lv-coach-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.lv-coach-x{position:absolute;top:-9px;right:-9px;width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--mut);font-size:15px;line-height:1;cursor:pointer;z-index:2}
+.lv-coach-x:hover{color:var(--tx)}
+.lv-coach-body{display:flex;align-items:center;gap:10px;width:100%;text-align:left;background:linear-gradient(135deg,rgba(255,154,77,.12),rgba(242,106,67,.06));border:none;border-radius:11px;padding:11px 12px;cursor:pointer;font:inherit}
+.lv-coach-ic{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08}
+.lv-coach-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.lv-coach-tx>b{font-size:13px;color:var(--tx);font-weight:800}
+.lv-coach-tx>span{font-size:11.5px;color:var(--mut);line-height:1.4}
+.lv-coach-tx span b{color:var(--warm2);font-weight:800}
+.lv-coach-go{flex:0 0 auto;color:var(--warm2)}
+.lv-coach-arrow{position:absolute;right:30px;bottom:-7px;width:14px;height:14px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+@media(prefers-reduced-motion:reduce){.lv-coach{animation:lv-coach-in .42s ease both}}
+@media(max-width:560px){.lv-coach{right:12px;bottom:66px}}
 .lv-live-dot{width:8px;height:8px;border-radius:50%;background:#e23b3b;box-shadow:0 0 0 0 rgba(226,59,59,.6);animation:lv-pulse 1.5s infinite}
 @keyframes lv-pulse{0%{box-shadow:0 0 0 0 rgba(226,59,59,.55)}70%{box-shadow:0 0 0 7px rgba(226,59,59,0)}100%{box-shadow:0 0 0 0 rgba(226,59,59,0)}}
 .wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(4px);animation:wm-cov-fade .18s ease}

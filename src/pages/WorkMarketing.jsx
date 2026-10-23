@@ -600,9 +600,9 @@ function DemoScreen({ app, target, fix }) {
 function DiffBlock({ file, oldLine, newLine }) {
   return (
     <div className="wm-diff">
-      <div className="wm-diff-file"><FileText size={12} /> {file}</div>
-      <div className="wm-diff-line del"><span>-</span><code>{oldLine}</code></div>
-      <div className="wm-diff-line add"><span>+</span><code>{newLine}</code></div>
+      <div className="wm-diff-file"><FileText size={12} /> {file}<span className="wm-diff-badge">VULNERABLE &rarr; FIXED</span></div>
+      <div className="wm-diff-line del"><span className="wm-diff-tag del">vuln</span><span className="m">-</span><code>{oldLine}</code></div>
+      <div className="wm-diff-line add"><span className="wm-diff-tag add">fixed</span><span className="m">+</span><code>{newLine}</code></div>
     </div>
   )
 }
@@ -828,6 +828,9 @@ function LiveDemo({ tilt, untilt }) {
         )}
         {reveal >= 4 && <div className="wm-demo-done wm-beat" key={'dn' + safeSi}><Check size={13} /> done when {s.done}</div>}
       </div>
+      <button type="button" className="wm-demo-try" onClick={() => { try { window.dispatchEvent(new Event('wc:open-validate')) } catch { /* noop */ } }}>
+        <Sparkles size={14} /> <span>This is a demo. Run it on <b>your</b> screen</span> <ArrowRight size={14} />
+      </button>
     </div>
   )
 }
@@ -1352,6 +1355,10 @@ const CSS = `
 .wm-demo-how li:before{content:counter(hw);position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,rgba(140,245,196,.25),rgba(57,211,255,.18));color:var(--em);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
 .wm-demo-done{display:flex;align-items:center;gap:7px;margin-top:auto;padding-top:12px;font-size:12px;color:var(--mut)}
 .wm-demo-done svg{color:var(--em)}
+.wm-demo-try{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,154,77,.4);background:linear-gradient(135deg,rgba(255,154,77,.14),rgba(242,106,67,.08));color:#ffd9bf;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:transform .15s,border-color .15s}
+.wm-demo-try:hover{transform:translateY(-1px);border-color:rgba(255,154,77,.7)}
+.wm-demo-try b{color:#ffb35c}
+.wm-demo-try svg{color:#ff9a4d;flex-shrink:0}
 .wm-demo-steps{display:flex;gap:5px;margin-bottom:11px}
 .wm-demo-steps i{height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);transition:background .3s}
 .wm-demo-steps i.done{background:var(--em)}
@@ -1401,6 +1408,10 @@ const CSS = `
 .wm-diff-line code{flex:1 1 auto;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word;font:inherit}
 .wm-diff-line.del{background:rgba(255,99,99,.09);color:#ffb3b3}.wm-diff-line.del span{color:#ff6b6b}
 .wm-diff-line.add{background:rgba(140,245,196,.09);color:#bdf5d8}.wm-diff-line.add span{color:var(--em)}
+.wm-diff-badge{margin-left:auto;font-size:8.5px;font-weight:800;letter-spacing:.07em;color:#ffb35c;border:1px solid rgba(255,179,92,.45);border-radius:999px;padding:2px 7px}
+.wm-diff-tag{font-size:7.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;border-radius:4px;padding:2px 5px;opacity:1}
+.wm-diff-line.del .wm-diff-tag{background:rgba(255,99,99,.2);color:#ff8a8a}
+.wm-diff-line.add .wm-diff-tag{background:rgba(140,245,196,.2);color:#8cf5c4}
 .wm-demo-fix{margin-top:12px;border:1px solid rgba(255,140,90,.4);background:rgba(255,140,90,.08);border-radius:13px;padding:12px 13px;animation:wm-demo-fade .3s ease-out both}
 .wm-demo-fixhead{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.12em;color:#ffb35c;font-weight:800}
 .wm-demo-fixhead svg{color:#ffb35c}
