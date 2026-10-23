@@ -1,18 +1,24 @@
 // WorkCoPilot - Privacy Policy (public, plain-language disclosure).
 // HONESTY CONTRACT (owner-enforced): every line states a real, shipped behavior.
-// No "certified", no "you are compliant", no invented entity names, addresses,
-// retention periods, officers or third-party lists. Where something is user-
-// controlled or not yet fixed (automatic retention), it is SAID, not implied.
+// No "certified", no "you are compliant", no invented addresses, retention
+// periods, officers or third-party lists. The legal entity (COE Security LLC) is
+// named as controller, per the owner's ownership hierarchy. Where something is
+// user-controlled or not yet fixed (automatic retention), it is SAID, not implied.
+// States guarantees, not mechanisms (docs/business-rules.md).
 // The fuller data-flow lives on /workcopilot/security; this page is the policy
 // a reader can cite. Same light design language as WorkSecurity (.wsx-*).
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ArrowLeft, ArrowRight, Monitor, Send, Database, ShieldCheck, Scale, Mail } from 'lucide-react'
+import { Lock, ArrowLeft, ArrowRight, Monitor, Send, Database, ShieldCheck, Scale, Mail, Gavel, FileSignature } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 
 const LAST_UPDATED = '2026-10-22'
-const CONTACT = 'sales@admireveda.com'
+const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
+const SUPPORT = 'support@admireveda.com'           // product support, billing
+const ENTITY = 'COE Security LLC'
+const OWNERSHIP = 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.'
+const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
 // Brand fonts, loaded once (same link the sign-in and marketing pages use).
 const FONT_ID = 'work-legal-fonts'
@@ -35,13 +41,14 @@ const GLANCE = [
 const SECTIONS = [
   { id: 'about', n: '01', title: 'About this policy' },
   { id: 'collect', n: '02', title: 'What we collect' },
-  { id: 'leaves', n: '03', title: 'What leaves your device' },
-  { id: 'store', n: '04', title: 'What we store and for how long' },
-  { id: 'protect', n: '05', title: 'How it is protected' },
-  { id: 'third', n: '06', title: 'Third parties' },
-  { id: 'choices', n: '07', title: 'Your choices' },
-  { id: 'changes', n: '08', title: 'Changes to this policy' },
-  { id: 'contact', n: '09', title: 'Contact' },
+  { id: 'categories', n: '03', title: 'Data categories' },
+  { id: 'leaves', n: '04', title: 'What leaves your device' },
+  { id: 'store', n: '05', title: 'What we store and for how long' },
+  { id: 'protect', n: '06', title: 'How it is protected' },
+  { id: 'third', n: '07', title: 'Third parties' },
+  { id: 'choices', n: '08', title: 'Your choices and rights' },
+  { id: 'changes', n: '09', title: 'Changes to this policy' },
+  { id: 'contact', n: '10', title: 'Contact' },
 ]
 
 function Sec({ id, children }) {
@@ -84,6 +91,8 @@ export default function WorkPrivacy() {
           <span className="wlx-sep" aria-hidden="true" />
           <span>Plain-language disclosure of what the product does today</span>
         </div>
+        <div className="wlx-template" role="note"><b>Template.</b> {TEMPLATE_NOTICE}</div>
+        <div className="wlx-owner">{OWNERSHIP}</div>
       </section>
 
       <section className="wlx-block">
@@ -111,6 +120,7 @@ export default function WorkPrivacy() {
         <article className="wlx-art">
           <Sec id="about">
             <p>This policy covers WorkCoPilot: the web app, the desktop app and the mobile app. It describes how the product treats your data when you sign in, run a guided session, and review your reports.</p>
+            <p><b>Who is responsible.</b> WorkCoPilot is offered by AdmireVeda, a product of {ENTITY}. {ENTITY} is the legal entity and the controller of the account, sign-in and billing details described below. For the content of your guided sessions, your organization decides what is shared and {ENTITY} acts on its behalf as described in the <a href="/workcopilot/dpa">Data Processing Addendum</a>.</p>
             <p>It is written to be read, not to impress. Where a behavior is under your control, or where we have not finished something, we say so. The <a href="/workcopilot/security#data-handling">Security page</a> shows the full data flow, step by step, with before-and-after examples of the on-device protection.</p>
             <div className="wlx-note"><Scale size={14} /><span>This page is a plain-language disclosure of how the product works. It is not legal advice and it is not a substitute for your own legal review of how WorkCoPilot fits your obligations.</span></div>
           </Sec>
@@ -125,6 +135,20 @@ export default function WorkPrivacy() {
               ['Usage', 'The guided minutes you use, so your plan\'s allowance can be applied.'],
               ['Billing', 'Payment details are entered with and held by Stripe, our billing provider. We receive what is needed to run your subscription, such as your plan and its status.'],
             ]} />
+          </Sec>
+
+          <Sec id="categories">
+            <p>WorkCoPilot is designed for everyday working screens and text. Use it for the kinds of data below, and keep to the limits that follow.</p>
+            <h3>What it is designed for</h3>
+            <Items items={[
+              ['Work screens and text', 'Business applications, consoles, tickets, dashboards, spreadsheets, documents, code and commands that you are working in and are authorized to use.'],
+              ['Incidental personal data', 'Names, work email addresses, identifiers and similar details that appear in the course of that work.'],
+              ['Account and billing details', 'Sign-in details, plan and usage, as described above.'],
+            ]} />
+            <h3>What not to submit</h3>
+            <p>Do not submit data you are not authorized to process, data belonging to others that you have no right to share, or data your organization or the law forbids you from sharing with a service like this. If your work involves regulated data, make sure your organization has approved that use first. The <a href="/workcopilot/acceptable-use">Acceptable Use Policy</a> sets out the rules in full.</p>
+            <h3>Sensitive data stays protected</h3>
+            <p>Sensitive data such as personal data, health data, secrets, keys and card numbers is stripped or tokenized on your own device before anything is sent, and you or your company admin can add your own words and patterns. This is a safeguard, and it does not replace your own duty to share only what you are allowed to.</p>
           </Sec>
 
           <Sec id="leaves">
@@ -175,13 +199,23 @@ export default function WorkPrivacy() {
           </Sec>
 
           <Sec id="choices">
+            <p>Wherever the law gives you them, you have these rights over your personal data. You can use the tools in the product, or write to us and we will help.</p>
+            <Items items={[
+              ['Access', 'Ask what personal data we hold about you and get a copy. Your session reports and history are available to you in the product.'],
+              ['Correction', 'Ask us to correct personal data that is wrong or incomplete. You can update your own account details, or ask us to.'],
+              ['Deletion', 'Ask us to delete your personal data. You can delete your own sessions at any time, and we will delete your account data on request, subject to any duty to keep a record that the law requires.'],
+              ['Export', 'Ask for your data in a portable format that you can take elsewhere.'],
+              ['Objection and limits', 'Ask us to limit or stop processing where the law gives you that right.'],
+              ['Company accounts', 'If your account is managed by your company, some requests go through your company admin, who controls your company\'s data and its settings.'],
+            ]} />
+            <h3>Your choices</h3>
             <Items items={[
               ['Delete sessions', 'You can delete any of your sessions at any time. Deleting a session removes it.'],
               ['Company data', 'Company admins manage their company\'s data, including deleting member sessions and reviewing member reports and audit logs.'],
               ['Milestone screenshots', 'On by default. You or your company admin can turn them off.'],
               ['Your own AI keys', 'You or your company can run WorkCoPilot on your own AI keys so the governed data stays inside your boundary.'],
               ['What counts as sensitive', 'On top of the built-in detectors, you or your company admin can add custom words and patterns to redact, tokenize or block.'],
-              ['Questions or requests', `Write to ${CONTACT} and we will help.`],
+              ['Questions or requests', `For privacy requests, write to ${CONTACT}. For product help or billing, write to ${SUPPORT}.`],
             ]} />
           </Sec>
 
@@ -190,7 +224,8 @@ export default function WorkPrivacy() {
           </Sec>
 
           <Sec id="contact">
-            <p>Questions about this policy or about your data: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
+            <p>Privacy, legal and security inquiries: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
+            <p>Product support and billing: <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
             <div className="wlx-note"><ShieldCheck size={14} /><span><b>Honest framing.</b> WorkCoPilot provides controls and audit evidence that support your privacy and compliance work. It does not make an organization compliant on its own, and we do not claim a certification here. Your organization, working with its own advisers, decides how the product fits your obligations.</span></div>
           </Sec>
         </article>
@@ -198,6 +233,8 @@ export default function WorkPrivacy() {
 
       <section className="wlx-cta">
         <button className="wlx-btn" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={16} /> See the full data flow</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Gavel size={15} /> Terms</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/dpa')}><FileSignature size={15} /> DPA</button>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot/disclaimer')}><Scale size={15} /> Disclaimer</button>
         <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} /> Contact</a>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
@@ -221,6 +258,9 @@ const CSS = `
 .wlx-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:18px auto 0;font-size:13px;color:var(--mut)}
 .wlx-meta b{color:var(--ink);font-weight:700;margin-right:4px}
 .wlx-sep{width:4px;height:4px;border-radius:50%;background:#cbd5e1}
+.wlx-template{margin:18px auto 0;max-width:640px;text-align:left;font-size:13.5px;line-height:1.55;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;overflow-wrap:anywhere}
+.wlx-template b{color:#78350f}
+.wlx-owner{margin:12px auto 0;font-size:13px;color:var(--mut)}
 .wlx-block{max-width:1040px;margin:0 auto;padding:30px 20px}
 .wlx-glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
 .wlx-gcard{min-width:0}

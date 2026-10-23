@@ -274,6 +274,12 @@ export default function WorkSecurity() {
         <div className="wsx-note"><ShieldCheck size={14} /> <span><b>Honest framing.</b> WorkCoPilot does not claim a certification against any of these frameworks, and no tool can make an organization compliant on its own. We provide the controls and the evidence. Your organization, working with its auditors, achieves and holds the compliance.</span></div>
       </section>
 
+      <section className="wsx-block" id="report">
+        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} /></span><div><h2>Report a security issue</h2><p>We welcome responsible disclosure. If you believe you have found a security or privacy issue in WorkCoPilot, tell us and we will work with you to confirm and fix it.</p></div></div>
+        <div className="wsx-note"><ShieldCheck size={14} /> <span><b>How to reach us.</b> Email <a href="mailto:support@coesecurity.com">support@coesecurity.com</a> for anything security, privacy or compliance related, including a signed DPA. For product help and billing, email <a href="mailto:support@admireveda.com">support@admireveda.com</a>. Please include enough detail to reproduce the issue, and give us a reasonable time to investigate and remediate before any public disclosure. We will not pursue good-faith security research conducted under this policy.</span></div>
+        <div className="wsx-note"><Building2 size={14} /> <span>WorkCoPilot, by AdmireVeda, is a product of COE Security LLC.</span></div>
+      </section>
+
       <section className="wsx-cta">
         <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper</a>
         <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
@@ -320,6 +326,7 @@ const CSS = `
 .wsx-code{background:#0b1220;color:#e2e8f0;border-radius:12px;padding:16px 16px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin:0;min-height:148px}
 .wsx-token{background:rgba(140,245,196,.18);color:#8cf5c4;border-radius:5px;padding:1px 5px;font-weight:600}
 .wsx-note{display:flex;align-items:flex-start;gap:8px;margin-top:16px;font-size:13.5px;color:var(--mut);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px}
+.wsx-note a{color:var(--em);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .wsx-note svg{color:var(--em);flex:0 0 auto;margin-top:2px}
 /* COMPLIANCE - chip roll-call of every framework, then grouped cards (WorkCard shell
    = same reveal/glow/hairline as the rest of the site), then the honest-framing note. */

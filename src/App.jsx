@@ -7,6 +7,10 @@ import WorkUseCases from './pages/WorkUseCases.jsx'
 import WorkSecurity from './pages/WorkSecurity.jsx'
 import WorkPrivacy from './pages/WorkPrivacy.jsx'
 import WorkDisclaimer from './pages/WorkDisclaimer.jsx'
+import WorkTerms from './pages/WorkTerms.jsx'
+import WorkAcceptableUse from './pages/WorkAcceptableUse.jsx'
+import WorkDPA from './pages/WorkDPA.jsx'
+import WorkRefund from './pages/WorkRefund.jsx'
 import WorkBenchmark from './pages/WorkBenchmark.jsx'
 import WorkCapabilities from './pages/WorkCapabilities.jsx'
 import WorkPage from './pages/WorkPage.jsx'
@@ -54,6 +58,10 @@ export default function App() {
       {/* Public legal pages (plain-language disclosures, same light design as /security). */}
       <Route path="/workcopilot/privacy" element={<WorkPrivacy />} />
       <Route path="/workcopilot/disclaimer" element={<WorkDisclaimer />} />
+      <Route path="/workcopilot/terms" element={<WorkTerms />} />
+      <Route path="/workcopilot/acceptable-use" element={<WorkAcceptableUse />} />
+      <Route path="/workcopilot/dpa" element={<WorkDPA />} />
+      <Route path="/workcopilot/refund" element={<WorkRefund />} />
       <Route path="/workcopilot/benchmark" element={<WorkBenchmark />} />
       <Route path="/workcopilot/how-it-works" element={<WorkCapabilities />} />
       {/* The app itself. WorkPage self-gates on the session the server reports. */}

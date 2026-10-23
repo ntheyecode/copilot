@@ -627,12 +627,14 @@ export default function WorkMarketing() {
       <footer className="wm-foot">
         <div className="wm-wrap wm-foot-in">
           <AdmireVedaLogo size={24} idSuffix="f" />
-          <span className="wm-foot-by">&copy; {new Date().getFullYear()} AdmireVeda &middot; WorkCoPilot is a product of AdmireVeda</span>
+          <span className="wm-foot-by">&copy; {new Date().getFullYear()} COE Security LLC &middot; WorkCoPilot by AdmireVeda, a product of COE Security LLC</span>
           <nav className="wm-foot-links">
             <a className="wm-link" href="/workcopilot/security">Security</a>
             <a className="wm-link" href="/workcopilot/benchmark">Accuracy</a>
             <a className="wm-link" href="/workcopilot/privacy">Privacy</a>
             <a className="wm-link" href="/workcopilot/disclaimer">Disclaimer</a>
+            <a className="wm-link" href="/workcopilot/terms">Terms</a>
+            <a className="wm-link" href="mailto:support@admireveda.com">Support</a>
             <button className="wm-link" onClick={() => go('')}>Sign in</button>
           </nav>
         </div>

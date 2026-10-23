@@ -3,7 +3,9 @@
 // product is read-only and the reader decides what to run; AI can be wrong; the
 // security checks are a backstop, not a promise; the product supports compliance
 // but does not confer it. Plain language, no dense legalese, no invented entity
-// names or jurisdictions. Same light design language as WorkSecurity (.wsx-*).
+// jurisdictions. The legal entity is named per the owner's ownership hierarchy
+// (COE Security LLC -> AdmireVeda -> WorkCoPilot). Same light design language as
+// WorkSecurity (.wsx-*).
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Scale, ArrowLeft, ArrowRight, Compass, Hand, AlertTriangle, ShieldCheck, Lock, Mail } from 'lucide-react'
@@ -11,7 +13,11 @@ import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 
 const LAST_UPDATED = '2026-10-22'
-const CONTACT = 'sales@admireveda.com'
+const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
+const SUPPORT = 'support@admireveda.com'           // product support, billing
+const ENTITY = 'COE Security LLC'
+const OWNERSHIP = 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.'
+const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
 // Brand fonts, loaded once (same link the sign-in and marketing pages use).
 const FONT_ID = 'work-legal-fonts'
@@ -81,6 +87,8 @@ export default function WorkDisclaimer() {
           <span className="wlx-sep" aria-hidden="true" />
           <span>Plain-language terms, written to be read</span>
         </div>
+        <div className="wlx-template" role="note"><b>Template.</b> {TEMPLATE_NOTICE}</div>
+        <div className="wlx-owner">{OWNERSHIP}</div>
       </section>
 
       <section className="wlx-block">
@@ -128,7 +136,7 @@ export default function WorkDisclaimer() {
               ['Verify before you rely on it', 'Check anything that matters against the tool\'s own documentation, your own records, or a person who knows the system.'],
               ['Screens are read, not understood perfectly', 'WorkCoPilot reads your screen on your device, after redaction. Small text, unusual layouts and redacted values can lead to a wrong read.'],
               ['Tools change', 'Menus, commands and defaults move. A step that was right last month may not be right today.'],
-              ['Tell us', `If guidance was wrong or unsafe, write to ${CONTACT} so we can look into it.`],
+              ['Tell us', `If guidance was wrong or unsafe, write to ${SUPPORT} so we can look into it.`],
             ]} />
           </Sec>
 
@@ -143,6 +151,7 @@ export default function WorkDisclaimer() {
           </Sec>
 
           <Sec id="warranty">
+            <p>WorkCoPilot is offered by AdmireVeda, a product of {ENTITY}, which is the legal entity behind the service. In this section, &ldquo;we&rdquo; means {ENTITY}, AdmireVeda and WorkCoPilot together.</p>
             <p>WorkCoPilot is provided as is and as available. To the extent the law allows, we make no warranty, express or implied, about the guidance, including that it is accurate, complete, current, fit for a particular purpose, or free of errors.</p>
             <p>To the extent the law allows, we are not liable for loss or damage arising from actions you take, or do not take, based on the guidance, including lost data, lost revenue, downtime, or costs of recovery. You act on the guidance at your own discretion, and you remain responsible for the outcome in your systems.</p>
             <p>Nothing on this page limits rights that cannot be limited under the law that applies to you.</p>
@@ -150,13 +159,15 @@ export default function WorkDisclaimer() {
           </Sec>
 
           <Sec id="contact">
-            <p>Questions about this page: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
+            <p>Legal, privacy and security questions: <a href={'mailto:' + CONTACT}>{CONTACT}</a></p>
+            <p>Product support and billing: <a href={'mailto:' + SUPPORT}>{SUPPORT}</a></p>
           </Sec>
         </article>
       </section>
 
       <section className="wlx-cta">
         <button className="wlx-btn" onClick={() => nav('/workcopilot/privacy')}><Lock size={16} /> Privacy Policy</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Scale size={15} /> Terms</button>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={15} /> Security</button>
         <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} /> Contact</a>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} /></button>
@@ -181,6 +192,9 @@ const CSS = `
 .wlx-meta{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;margin:18px auto 0;font-size:13px;color:var(--mut)}
 .wlx-meta b{color:var(--ink);font-weight:700;margin-right:4px}
 .wlx-sep{width:4px;height:4px;border-radius:50%;background:#cbd5e1}
+.wlx-template{margin:18px auto 0;max-width:640px;text-align:left;font-size:13.5px;line-height:1.55;color:#92400e;background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:10px 14px;overflow-wrap:anywhere}
+.wlx-template b{color:#78350f}
+.wlx-owner{margin:12px auto 0;font-size:13px;color:var(--mut)}
 .wlx-block{max-width:1040px;margin:0 auto;padding:30px 20px}
 .wlx-glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
 .wlx-gcard{min-width:0}

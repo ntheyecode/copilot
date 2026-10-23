@@ -64,6 +64,35 @@ class FileSessionStore extends session.Store {
 // Hosted behind nginx/TLS: trust the proxy and mark the cookie Secure. Left off
 // for local/desktop runs, where a Secure cookie would never be stored.
 if (HOSTED) app.set('trust proxy', 1)
+
+// ---- Security response headers (defense-in-depth; audit APP-06 / WEB-09) ----
+// Non-breaking headers on every response. HSTS only when hosted behind TLS.
+// Permissions-Policy ALLOWS the capture features the product genuinely needs
+// (camera, microphone, display-capture) for same-origin only, and denies the
+// rest. The CSP ships REPORT-ONLY first, tuned to the real app (inline styles,
+// the on-device OCR worker loaded from a CDN, data:/blob: images and workers,
+// Google Fonts), so a strict policy can be validated from violation reports
+// before it is switched to enforcing.
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff')
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN')
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin')
+  res.setHeader('Permissions-Policy', 'camera=(self), microphone=(self), display-capture=(self), geolocation=(), payment=(self)')
+  if (HOSTED) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  res.setHeader('Content-Security-Policy-Report-Only', [
+    "default-src 'self'",
+    "script-src 'self' https://cdn.jsdelivr.net",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com data:",
+    "img-src 'self' data: blob: https:",
+    "media-src 'self' data: blob:",
+    "connect-src 'self' https://cdn.jsdelivr.net",
+    "worker-src 'self' blob:",
+    "frame-ancestors 'self'", "base-uri 'self'", "form-action 'self'",
+  ].join('; '))
+  next()
+})
+
 app.use(session({
   name: 'workcopilot.sid',
   store: new FileSessionStore(),
