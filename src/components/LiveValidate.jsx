@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, Building2,
   ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
-  Compass, Wand2, Bug, MousePointerClick,
+  Compass, Wand2, Bug, MousePointerClick, Award,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 
@@ -279,7 +279,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           </div>
                           <div className="wm-cov-loop-foot">
                             <MousePointerClick size={15} />
-                            <span>It rewrites every step for exactly what's on <b>your</b> screen and confirms each one actually worked before moving on - until the job is done.</span>
+                            <span>It rewrites every step for exactly what's on <b>your</b> screen and confirms each one actually worked before moving on - <b>quality over quantity</b>, done right the first time.</span>
                           </div>
                         </div>
                       )}
@@ -338,6 +338,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                       {res.verdict !== 'offtopic' && (
                         <div className={`wm-cov-trust${typingDone ? ' show' : ''}`}>
                           <div className="wm-cov-trust-row">
+                            <div className="wm-cov-pillar"><span className="ic qlt"><Award size={16} /></span><div><b>Quality-first</b><p>Only what is really on your screen - no guessing, no invented steps, no filler. Every step is grounded in the current best practice for your tool and checked before you act.</p></div></div>
                             <div className="wm-cov-pillar"><span className="ic ent"><Building2 size={16} /></span><div><b>Enterprise-grade</b><p>Central admin, SSO, team seats, one locked company policy, per-session cost and a full audit trail.</p></div></div>
                             <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Security applied before the work: sensitive data is stripped or tokenized on your device first, the least is sent, and it stays read-only so nothing runs.</p></div></div>
                             <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence that support your compliance under the frameworks you choose - never a certification claim.</p></div></div>
@@ -505,9 +506,10 @@ const LV_CSS = `
 .wm-cov-how li{font-size:13px;line-height:1.55;color:var(--mut);overflow-wrap:anywhere}
 .wm-cov-trust{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:15px 16px;background:linear-gradient(180deg,rgba(140,245,196,.06),transparent);opacity:0;transform:translateY(6px);transition:opacity .4s ease .16s,transform .4s ease .16s}
 .wm-cov-trust.show{opacity:1;transform:none}
-.wm-cov-trust-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wm-cov-trust-row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .wm-cov-pillar{display:flex;gap:10px;align-items:flex-start}
 .wm-cov-pillar .ic{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center}
+.wm-cov-pillar .ic.qlt{background:rgba(255,179,92,.18);color:#e08a2a}
 .wm-cov-pillar .ic.ent{background:rgba(185,140,255,.16);color:#b98cff}
 .wm-cov-pillar .ic.sec{background:rgba(57,211,255,.14);color:var(--em2)}
 .wm-cov-pillar .ic.cmp{background:rgba(10,157,102,.16);color:var(--em)}
