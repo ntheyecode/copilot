@@ -1335,7 +1335,7 @@ const CSS = `
    its content (width:100% + min-width:0 + overflow:hidden), and every inner
    region has a fixed height (goal, sees, stage, guide), so the box keeps one
    width and one height across every scenario and every step. */
-.wm-demo{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:17px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;min-height:600px;display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden}
+.wm-demo{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:17px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;height:700px;display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden}
 .wm-demo>*{min-width:0}
 .wm-demo-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:2px 4px 14px}
 .wm-demo-head b{font-family:"Bricolage Grotesque";margin-left:6px}
@@ -1368,8 +1368,8 @@ const CSS = `
 .wm-demo-how{margin-top:12px;border:1px solid var(--line);border-radius:12px;padding:11px 13px;background:rgba(255,255,255,.02)}
 .wm-demo-howlabel{font-size:10px;letter-spacing:.14em;color:var(--em2);font-weight:700;margin-bottom:8px}
 .wm-demo-how ol{margin:0;padding:0;list-style:none;counter-reset:hw;display:flex;flex-direction:column;gap:8px}
-.wm-demo-how li{counter-increment:hw;position:relative;padding-left:26px;font-size:13.5px;color:var(--tx);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wm-demo-how li:before{content:counter(hw);position:absolute;left:0;top:0;width:18px;height:18px;border-radius:50%;background:linear-gradient(135deg,rgba(140,245,196,.25),rgba(57,211,255,.18));color:var(--em);font-size:10.5px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.wm-demo-how li{counter-increment:hw;position:relative;padding-left:30px;font-size:13.5px;color:var(--tx);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wm-demo-how li:before{content:counter(hw);position:absolute;left:0;top:1px;width:21px;height:21px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--em2));color:#04231a;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px -2px rgba(10,157,102,.6)}
 .wm-demo-done{display:flex;align-items:center;gap:7px;margin-top:auto;padding-top:12px;font-size:12px;color:var(--mut)}
 .wm-demo-done svg{color:var(--em)}
 .wm-demo-try{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:12px;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,154,77,.4);background:linear-gradient(135deg,rgba(255,154,77,.14),rgba(242,106,67,.08));color:#ffd9bf;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:transform .15s,border-color .15s}
