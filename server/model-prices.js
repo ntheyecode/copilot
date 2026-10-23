@@ -56,6 +56,13 @@ export const MODEL_PRICES = {
   "gemini-3.1-flash-lite":    { input: 0.25, output: 1.50, label: "Google Gemini 3.1 Flash-Lite" },
   "gemini-3.5-flash-lite":    { input: 0.30, output: 2.50, label: "Google Gemini 3.5 Flash-Lite" },
   "gemini-3.5-flash":         { input: 0.50, output: 3.00, label: "Google Gemini 3.5 Flash" },
+  // OpenRouter (cheapest screen-readers; images billed in input). Keyed by the
+  // provider/model slug so metering prices them directly.
+  "qwen/qwen3.7-flash":              { input: 0.03, output: 0.13, label: "Qwen 3.7 Flash (OpenRouter)" },
+  "qwen/qwen3.5-flash-02-23":        { input: 0.065, output: 0.26, label: "Qwen 3.5 Flash (OpenRouter)" },
+  "qwen/qwen3-vl-30b-a3b-instruct":  { input: 0.15, output: 0.60, label: "Qwen3-VL 30B (OpenRouter)" },
+  "qwen/qwen3-vl-235b-a22b-instruct": { input: 0.21, output: 1.90, label: "Qwen3-VL 235B (OpenRouter)" },
+  "deepseek/deepseek-chat":          { input: 0.14, output: 0.28, label: "DeepSeek Chat (OpenRouter)" },
 
   // ---- Anthropic Claude (USD per 1M tokens) — current generation ----
   "claude-haiku-5-5":  { input: 0.10, output: 0.50,  label: "Anthropic Claude Haiku 5.5" },   // <=100K prompt; >100K is $0.50/$2.50

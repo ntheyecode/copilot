@@ -43,7 +43,21 @@ export const PROVIDERS = {
     keyHint: 'AIza...',
     keysUrl: 'https://aistudio.google.com/app/apikey',
   },
+  openrouter: {
+    id: 'openrouter',
+    label: 'OpenRouter',
+    blurb: 'One key, hundreds of models. Reaches the cheapest screen-reading models (Qwen, DeepSeek) at a fraction of the big providers.',
+    base: 'https://openrouter.ai/api/v1',
+    kind: 'openai',                       // OpenAI-compatible; reasoning is disabled for our calls (see openaiVision/openaiChat)
+    chatModels: ['qwen/qwen3.7-flash', 'qwen/qwen3-vl-30b-a3b-instruct', 'deepseek/deepseek-chat'],
+    keyHint: 'sk-or-...',
+    keysUrl: 'https://openrouter.ai/keys',
+  },
 }
+// OpenRouter exposes reasoning ("thinking") models; for WorkCoPilot's structured
+// JSON tasks we never want chain-of-thought (it 10-30x's the output tokens for no
+// benefit), so we switch it off on every OpenRouter call. Detected by the base.
+function isOpenRouter(p) { try { return /(^|\.)openrouter\.ai$/i.test(new URL(p.base).hostname) } catch { return false } }
 
 // Egress allowlist (audit DAT-05 / APP-03). AI calls may only reach a known
 // provider host. Bases are fixed constants above; this guard makes the boundary
@@ -113,17 +127,19 @@ async function openaiChat(p, apiKey, model, system, turns, _retry = 0) {
   const timer = setTimeout(() => ac.abort(), CHAT_TIMEOUT_MS)
   let res, data
   try {
+    const chatPayload = {
+      model,
+      messages: [
+        { role: 'system', content: system },
+        ...turns.map((t) => ({ role: t.role, content: t.content })),
+      ],
+      temperature: 0.3,
+    }
+    if (isOpenRouter(p)) chatPayload.reasoning = { enabled: false }
     res = await fetch(`${p.base}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: system },
-          ...turns.map((t) => ({ role: t.role, content: t.content })),
-        ],
-        temperature: 0.3,
-      }),
+      body: JSON.stringify(chatPayload),
       signal: ac.signal,
     })
     data = await res.json().catch(() => null)
@@ -154,10 +170,12 @@ async function openaiVision(p, apiKey, model, prompt, imageDataUrls, mediaRes = 
   const detail = mediaRes === 'low' || mediaRes === 'medium' ? 'low' : (mediaRes === 'high' ? 'high' : null)
   const content = [{ type: 'text', text: prompt }]
   for (const u of imgs) content.push({ type: 'image_url', image_url: detail ? { url: u, detail } : { url: u } })
+  const payload = { model, messages: [{ role: 'user', content }], temperature: 0.3 }
+  if (isOpenRouter(p)) payload.reasoning = { enabled: false }   // no chain-of-thought for a screen read
   const res = await fetch(`${p.base}/chat/completions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify({ model, messages: [{ role: 'user', content }], temperature: 0.3 }),
+    body: JSON.stringify(payload),
   })
   const data = await res.json().catch(() => null)
   if (!res.ok) throw httpErr(res.status, data?.error?.message || `${p.label} vision failed (${res.status})`)

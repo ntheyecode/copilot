@@ -288,6 +288,9 @@ const WORK_VISION_PREF = {
   gemini: [/gemini-3\.1-flash-lite(?!-preview|-image)/i, /gemini-3(\.\d)?-flash-lite(?!-preview|-image)/i, /flash-lite-latest/i, /flash-latest/i, /2\.0-flash(?!-lite)/i, /gemini-3(\.\d)?-flash\b/i, /flash-image/i],
   openai: [/gpt-4o-mini(?!-transcribe|-search|-audio)/i, /4\.1-nano/i, /4\.1-mini/i, /gpt-4o(?!-mini|-transcribe|-audio)/i, /gpt-4\.1\b/i, /o4-mini/i],
   groq: [/scout/i, /maverick/i, /llama.*vl/i, /vision/i],
+  // OpenRouter: the cheapest verified screen-reader first (Qwen 3.7 Flash, reasoning
+  // off), then other cheap Qwen vision models.
+  openrouter: [/qwen3\.7-flash/i, /qwen3\.5-flash/i, /qwen3-vl-30b/i, /qwen.*vl.*instruct/i, /qwen.*flash/i],
 }
 async function pickWorkVision(rt) {
   try {
@@ -304,6 +307,7 @@ const WORK_VISION_STRONG = {
   gemini: [/gemini-3(\.\d)?-pro/i, /2\.5-pro/i, /gemini-pro.*vision/i, /flash-latest/i, /gemini-3(\.\d)?-flash\b/i, /2\.0-flash(?!-lite)/i],
   openai: [/gpt-4o(?!-mini|-transcribe|-audio|-search)/i, /gpt-4\.1(?!-nano|-mini)/i, /o4\b/i, /gpt-4-turbo/i, /gpt-4o-mini/i],
   groq: [/maverick/i, /scout/i, /llama.*vl/i, /vision/i],
+  openrouter: [/qwen3-vl-235b/i, /qwen3\.8/i, /qwen.*vl.*instruct/i, /qwen3\.7-flash/i],
 }
 async function pickWorkVisionStrong(rt, avoid) {
   try {
