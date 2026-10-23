@@ -273,9 +273,9 @@ function scrubForAi(s, on, userId) {
 function scrubIf(on, text, userId) { return govScrub(userId, text, on) }
 // Accumulate an estimated AI cost on a session (operator transparency; the AI
 // module does not surface exact token counts, so this is a chars/4 estimate).
-function meterCost(sessionId, model, inText, outText) {
+function meterCost(sessionId, model, inText, outText, images = 0) {
   try {
-    const usd = estimateCostUsd(model, String(inText || '').length, String(outText || '').length)
+    const usd = estimateCostUsd(model, String(inText || '').length, String(outText || '').length, images)
     if (usd > 0) store.addWorkSessionCost(sessionId, usd)
   } catch (_) { /* never break a request over metering */ }
 }
@@ -722,17 +722,97 @@ app.post('/api/work/login', wrap((req, res) => {
     return res.status(401).json({ error: 'Invalid username or password' })
   }
   authOk(req)
+  // Break-glass: if MFA is globally disabled (operator env flag), sign in the old
+  // way so a broken rollout can be recovered without locking everyone out.
+  if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
+  // MFA step-up: do NOT establish the authenticated session until the second
+  // factor is satisfied. Everyone with a password must have an authenticator;
+  // first login forces setup. The pending markers are the only thing the two
+  // MFA endpoints below trust (the session is not authed yet).
+  req.session.pendingMfaUid = u.id
+  req.session.pendingMfaAt = Date.now()
+  if (store.mfaSetupNeeded(u.id)) return res.json({ mfaSetup: true, username: u.username, enroll: store.startMfaEnrollment(u.id) })
+  return res.json({ mfaRequired: true, username: u.username })
+}))
+// The pending-MFA login gate: resolve the user mid-login WITHOUT trusting any
+// authenticated session (there is none yet). 15-minute window.
+const MFA_PENDING_TTL_MS = 15 * 60 * 1000
+function pendingMfaUser(req) {
+  const uid = req.session && req.session.pendingMfaUid
+  const at = req.session && req.session.pendingMfaAt
+  if (!uid || !at || (Date.now() - at) > MFA_PENDING_TTL_MS) return null
+  return store.getUser(uid)
+}
+function clearPendingMfa(req) { if (req.session) { delete req.session.pendingMfaUid; delete req.session.pendingMfaAt } }
+
+// Confirm first-login authenticator setup, then sign in. Returns the one-time
+// backup codes (shown once).
+app.post('/api/work/login/mfa/setup', wrap((req, res) => {
+  const u = pendingMfaUser(req)
+  if (!u) return res.status(440).json({ error: 'Your sign-in session expired. Please sign in again.', restart: true })
+  let backupCodes
+  try { ({ backupCodes } = store.confirmMfaEnrollment(u.id, (req.body || {}).code)) }
+  catch (e) { return res.status(e.status || 401).json({ error: e.message }) }
+  clearPendingMfa(req)
+  establishSession(req, u)
+  res.json({ user: store.publicWorkUser(u), backupCodes })
+}))
+// Verify the authenticator code (or a backup code) on an existing account, then
+// sign in.
+app.post('/api/work/login/mfa', wrap((req, res) => {
+  if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
+  const u = pendingMfaUser(req)
+  if (!u) return res.status(440).json({ error: 'Your sign-in session expired. Please sign in again.', restart: true })
+  if (!store.verifyUserMfa(u.id, (req.body || {}).code)) {
+    authFail(req)
+    return res.status(401).json({ error: 'That code did not match. Enter the current 6-digit code from your authenticator, or a backup code.' })
+  }
+  authOk(req)
+  clearPendingMfa(req)
   establishSession(req, u)
   res.json({ user: store.publicWorkUser(u) })
 }))
-// Public signup: a new WorkCoPilot account (role user), signed in immediately.
+// Public signup: a new WorkCoPilot account. The account is created, then the user
+// must set up an authenticator before the session is established (MFA on first
+// login applies to brand-new accounts too).
 app.post('/api/work/signup', wrap((req, res) => {
   if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
   const { username, password } = req.body || {}
   const u = store.createWorkUser({ username, password })
-  establishSession(req, u)
-  res.json({ user: store.publicWorkUser(u) })
+  if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
+  req.session.pendingMfaUid = u.id
+  req.session.pendingMfaAt = Date.now()
+  res.json({ mfaSetup: true, username: u.username, enroll: store.startMfaEnrollment(u.id) })
 }))
+// Signed-in: your own MFA status.
+app.get('/api/work/mfa/status', requireWorkAuth, wrap((req, res) => {
+  res.json(store.userMfaStatus(req.workUser.id))
+}))
+// Signed-in: reset your OWN authenticator (new phone). Requires your current code,
+// then signs you out everywhere so you re-enroll on next sign-in.
+app.post('/api/work/mfa/reset', requireWorkAuth, wrap((req, res) => {
+  if (!store.verifyUserMfa(req.workUser.id, (req.body || {}).code)) return res.status(401).json({ error: 'Enter your current 6-digit code to reset your authenticator.' })
+  store.resetMfa(req.workUser.id)
+  store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId || null, action: 'mfa_self_reset', reason: 'reset own authenticator', detail: 're-enroll on next sign-in' })
+  res.json({ ok: true, loggedOut: true })
+}))
+// Signed-in: regenerate backup codes (requires current code). Returned once.
+app.post('/api/work/mfa/backup/regenerate', requireWorkAuth, wrap((req, res) => {
+  if (!store.verifyUserMfa(req.workUser.id, (req.body || {}).code)) return res.status(401).json({ error: 'Enter your current 6-digit code to regenerate backup codes.' })
+  res.json({ backupCodes: store.regenerateBackupCodes(req.workUser.id) })
+}))
+// Company admin: reset a member's authenticator (lost device). Reason required +
+// logged. Scoped to their own company by canManageMfa.
+app.post('/api/work/company/users/:id/mfa/reset', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const targetId = req.params.id
+  if (!store.canManageMfa(req.workUser.id, targetId)) return res.status(403).json({ error: 'You can only reset MFA for people in your company.' })
+  const reason = String((req.body || {}).reason || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to reset a member\'s authenticator (recorded in your audit trail).' })
+  const r = store.resetMfa(targetId)
+  store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId || null, action: 'mfa_reset', reason, detail: `reset authenticator for ${r.username || targetId}` })
+  res.json({ ok: true })
+}))
+
 // Soft identity check used on boot + polling, and by the admin console.
 app.get('/api/work/me', (req, res) => {
   const u = req.session.uid && store.getUser(req.session.uid)
@@ -1238,7 +1318,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       // follow it with only light, on-demand checks instead of continuous watching.
       thorough: store.effectiveWatchMode(req.workUser.id) === 'light',
     })
-    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []))
+    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []), frame ? 1 : 0)
     if (plan.refusal) {
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Declined: ' + plan.refusal })
       const cur = store.getWorkSession(req.workUser.id, req.params.id)
@@ -1313,11 +1393,13 @@ app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubs
       frame: frames.length ? (frames.length + ' screenshot(s) sent') : null, sent: safeGoal,
     })
     const d = await work.workDeliverables(ai, call.rt, { goal: safeGoal, scope, frames, visionModel: call.visionModel })
-    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), safeGoal, JSON.stringify(d))
-    const documentMd = work.workDeliverablesDocument({ goal: safeGoal, d })
-    store.setWorkDeliverables(req.workUser.id, req.params.id, d)   // so the PDF endpoint can render it
-    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Built the review and the generation prompts.' })
-    res.json({ deliverables: d, documentMd })
+    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), safeGoal, JSON.stringify(d), frames.length)
+    // Policy: WorkCoPilot does NOT generate the finished document. We return the
+    // REVIEW and the ready-to-use GENERATION PROMPTS (to run in the user's own AI)
+    // only - never an AI-written document.
+    store.setWorkDeliverables(req.workUser.id, req.params.id, d)
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Built the review and the prompts to generate it in your own AI.' })
+    res.json({ deliverables: d })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -1387,7 +1469,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     })
     const escalated = r.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (r.escalated ? call.strongModel : rr.visionModel)
-    meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''))
+    meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''), 1)
     // Snapshot which steps were already done, so we can tell which ones become
     // confirmed on THIS frame and keep that exact frame as their evidence.
     const prevDone = new Set((s.steps || []).map((x, i) => (x.status === 'done' ? i : -1)).filter((i) => i >= 0))
@@ -1440,7 +1522,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     if (qScrub.total) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(qScrub.counts) })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)
-    meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '')
+    meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '', frame ? 1 : 0)
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
@@ -1574,7 +1656,7 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
     })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : (needVision ? rr.visionModel : (call.rt && call.rt.chatModel)))
-    meterCost(req.params.id, usedModel || call.visionModel, safeGoal + noteScrub.clean + docScrub.clean, (out.answer || '') + JSON.stringify(out.steps || []))
+    meterCost(req.params.id, usedModel || call.visionModel, safeGoal + noteScrub.clean + docScrub.clean, (out.answer || '') + JSON.stringify(out.steps || []), images.length)
 
     // Record what the user added (short), so the session history shows the hand-off.
     const addedLabel = noteScrub.clean ? noteScrub.clean.slice(0, 160) : (docScrub.clean ? 'a document' : 'an image')

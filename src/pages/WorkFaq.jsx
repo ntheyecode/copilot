@@ -12,7 +12,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, CircleHelp, Search, Link2, ScanEye, Lock, RefreshCw, Mail, LifeBuoy } from 'lucide-react'
-import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive (also loads the brand fonts)
 import useSeo, { useJsonLd } from '../useSeo.js'   // per-route title/description/canonical (WEB-01) + safe JSON-LD
 import { FIELD_TOTAL } from './WorkFields.jsx'      // the fields roster is the single source for the count (never drifts)
@@ -303,10 +303,7 @@ export default function WorkFaq() {
   return (
     <div className="wfq">
       <style>{CSS}</style>
-      <header className="wfq-top">
-        <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wfq-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
-      </header>
+      <SiteHeader current="faq" />
 
       <main id="main">
         <section className="wfq-hero">

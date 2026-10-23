@@ -5,7 +5,7 @@
 // the internal detail (exact model / per-task). Spec: docs/accuracy-benchmark-spec.md
 import React, { useEffect, useState } from 'react'
 import { BarChart3, ShieldCheck, FlaskConical, ArrowLeft, Lock } from 'lucide-react'
-import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'   // per-route title / description / canonical (WEB-01)
 
 const DOMAIN_LABEL = { dev: 'Dev / data', finance: 'Spreadsheet / finance', cross: 'Cross-profession', security: 'Security / code review' }
@@ -61,10 +61,7 @@ export default function WorkBenchmark() {
   return (
     <div className="wbm">
       <style>{CSS}</style>
-      <header className="wbm-top">
-        <a className="wbm-brand" href="/"><AdmireVedaLogo size={24} idSuffix="bm" /> <span>WorkCoPilot</span></a>
-        <a className="wbm-back" href="/"><ArrowLeft size={14} aria-hidden="true" /> Home</a>
-      </header>
+      <SiteHeader />
 
       <main className="wbm-main" id="main">
         <div className="wbm-eyebrow"><FlaskConical size={13} aria-hidden="true" /> Accuracy benchmark</div>

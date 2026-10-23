@@ -525,6 +525,17 @@ function TeamSection({ meId, onCompany }) {
     try { await api.workCompanyRemoveUser(m.id, reason); setOk(`Removed ${m.displayName || m.username}.`); load() }
     catch (error) { setErr(error) } finally { setRowBusy('') }
   }
+  const resetMfa = async (m) => {
+    const reason = await askReason({
+      title: `Reset two-factor for ${m.displayName || m.username}?`,
+      detail: 'They will be signed out and asked to set up their authenticator again on next sign-in. Use this when someone loses their phone.',
+      confirmLabel: 'Reset authenticator',
+    })
+    if (!reason || reason.length < 3) return
+    setRowBusy(m.id); setErr(null); setOk('')
+    try { await api.workCompanyResetUserMfa(m.id, reason); setOk(`Reset two-factor for ${m.displayName || m.username}.`); load() }
+    catch (error) { setErr(error) } finally { setRowBusy('') }
+  }
   const allocate = async (m) => {
     const mins = Number(allocMin) || 0
     if (mins <= 0) { setErr(new Error('Enter how many minutes to give.')); return }
@@ -593,7 +604,7 @@ function TeamSection({ meId, onCompany }) {
             : (
               <div className="wka-table-wrap">
                 <table className="wka-table">
-                  <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Used today</th><th>Extra</th><th></th></tr></thead>
+                  <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Used today</th><th>Extra</th><th>2FA</th><th></th></tr></thead>
                   <tbody>
                     {members.map((m) => {
                       const self = String(m.id) === String(meId)
@@ -621,6 +632,12 @@ function TeamSection({ meId, onCompany }) {
                                   <button className="wka-btn sm ghost" onClick={() => { setAllocFor(''); setAllocMin('') }}>x</button>
                                 </span>
                               : <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>{m.usage.purchasedSeconds ? fmtMins(m.usage.purchasedSeconds) : '-'}<button className="wka-btn sm ghost" title="Give minutes from the company pool" disabled={pool <= 0} onClick={() => { setAllocFor(m.id); setAllocMin('') }}><Clock size={12} /></button></span>}
+                          </td>
+                          <td style={{ fontSize: 12 }}>
+                            {m.mfaEnabled
+                              ? <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center', color: 'var(--wka-accent)' }}><Check size={13} /> On</span>
+                              : <span style={{ color: 'var(--wka-amber)' }}>Not set up</span>}
+                            {m.mfaEnabled ? <button type="button" className="wka-btn sm ghost" title="Reset authenticator (lost phone)" disabled={rowBusy === m.id} onClick={() => resetMfa(m)} style={{ marginLeft: 6 }}><KeyRound size={12} /></button> : null}
                           </td>
                           <td style={{ textAlign: 'right' }}>
                             {rowBusy === m.id ? <Spinning /> : <button type="button" className="wka-btn sm ghost" disabled={self || locked} title={locked ? 'Roster managed by WorkCoPilot' : self ? 'You cannot remove yourself.' : 'Remove from company'} onClick={() => removeUser(m)}><Trash2 size={13} /></button>}

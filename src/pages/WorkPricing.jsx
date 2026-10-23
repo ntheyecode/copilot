@@ -13,7 +13,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2 } from 'lucide-react'
-import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'
 
 // Published list prices (USD / month). Live values from the API override these.
@@ -90,10 +90,7 @@ export default function WorkPricing() {
   return (
     <div className="wpr">
       <style>{CSS}</style>
-      <header className="wpr-top">
-        <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wpr-back" onClick={() => nav('/')}><ArrowLeft size={15} aria-hidden /> WorkCoPilot</button>
-      </header>
+      <SiteHeader current="pricing" />
 
       <section className="wpr-hero">
         <div className="wpr-eyebrow"><Zap size={14} aria-hidden /> Pricing</div>

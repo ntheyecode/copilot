@@ -21,6 +21,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
+import * as totp from './totp.js'
 import { PROVIDERS } from './ai.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -445,6 +446,8 @@ export function publicWorkUser(u) {
     companyName: co ? co.name : null,
     email: u.ssoEmail || null,                   // the SSO identity email, when set
     ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
+    mfaEnabled: !!(u.mfa && u.mfa.enabled),       // TOTP authenticator set up
+    mfaEnrolledAt: (u.mfa && u.mfa.enrolledAt) || null,
     // Billing state the client needs to know (status + plan only, never stripe ids).
     subscription: {
       status: (u.subscription && u.subscription.status) || 'none',
@@ -455,6 +458,123 @@ export function publicWorkUser(u) {
     // blockWords travel to the device because the device needs them to block.
     govPolicy: (() => { const e = getEffectiveWorkPolicy(u.id); return e ? { armed: true, mode: e.mode || 'scrub', categories: e.categories || {}, blockWords: e.blockWords || [], customFields: e.customFields || [] } : null })(),
   }
+}
+
+// ---- MFA (TOTP authenticator, e.g. Microsoft Authenticator) ----------------
+// Every password account must set up an authenticator on first login. The secret
+// and backup-code hashes live on the user record; the whole DB is encrypted at
+// rest, so the TOTP secret is protected on disk. SSO accounts authenticate through
+// their IdP and are exempt from this TOTP step.
+const MFA_ENROLL_TTL_MS = 15 * 60 * 1000
+
+// Break-glass: MFA is ON by default. Setting WORK_MFA_DISABLED=1 lets the
+// operator turn the whole second-factor step off (restart required) to restore
+// access if enrollment/verification ever breaks. Everything else keeps working.
+export function mfaGloballyEnabled() {
+  const v = String(process.env.WORK_MFA_DISABLED || '').toLowerCase()
+  return !(v === '1' || v === 'true' || v === 'yes')
+}
+
+export function userMfaStatus(userId) {
+  const u = getUser(userId)
+  const m = u && u.mfa
+  return {
+    enabled: !!(m && m.enabled),
+    enrolledAt: (m && m.enrolledAt) || null,
+    backupRemaining: (m && Array.isArray(m.backupHashes)) ? m.backupHashes.length : 0,
+    required: !!(u && !u.ssoEmail),   // password accounts must have MFA; SSO is exempt
+  }
+}
+
+// Does an account still need to set up MFA? (password account, not yet enabled)
+export function mfaSetupNeeded(userId) {
+  const u = getUser(userId)
+  if (!u || u.ssoEmail) return false
+  return !(u.mfa && u.mfa.enabled)
+}
+
+// Begin enrollment: mint a pending secret + the otpauth URI for the QR / manual
+// entry. Does NOT enable MFA yet - the user must confirm a code first.
+export function startMfaEnrollment(userId) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'User not found.')
+  if (u.ssoEmail) throw httpErr(400, 'SSO accounts sign in through your company identity provider.')
+  const secret = totp.generateSecret()
+  u.mfa = u.mfa || {}
+  u.mfa.pendingSecret = secret
+  u.mfa.pendingAt = Date.now()
+  persist()
+  return { secret, otpauthUri: totp.otpauthUri(secret, { label: u.username, issuer: 'WorkCoPilot' }) }
+}
+
+// Confirm enrollment with a code from the authenticator. On success MFA becomes
+// active and a fresh set of one-time backup codes is returned ONCE (store hashes).
+export function confirmMfaEnrollment(userId, token) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'User not found.')
+  const m = u.mfa || {}
+  if (!m.pendingSecret || !m.pendingAt || (Date.now() - m.pendingAt) > MFA_ENROLL_TTL_MS) {
+    throw httpErr(400, 'Your setup session expired. Start the authenticator setup again.')
+  }
+  if (!totp.verifyTotp(m.pendingSecret, token)) throw httpErr(401, 'That code did not match. Check the 6-digit code in your authenticator and try again.')
+  const backupCodes = totp.generateBackupCodes(10)
+  u.mfa = {
+    enabled: true,
+    secret: m.pendingSecret,
+    enrolledAt: new Date().toISOString(),
+    backupHashes: backupCodes.map((c) => totp.hashBackupCode(c)),
+  }
+  persist()
+  return { backupCodes }
+}
+
+// Verify a login code against the active authenticator OR consume a backup code.
+// Returns true on success. Backup codes are one-time (removed on use).
+export function verifyUserMfa(userId, token) {
+  const u = getUser(userId)
+  const m = u && u.mfa
+  if (!m || !m.enabled || !m.secret) return false
+  if (totp.verifyTotp(m.secret, token)) return true
+  // Backup code fallback.
+  const h = totp.hashBackupCode(token)
+  const idx = Array.isArray(m.backupHashes) ? m.backupHashes.indexOf(h) : -1
+  if (idx >= 0) { m.backupHashes.splice(idx, 1); persist(); return true }
+  return false
+}
+
+// Reset (clear) an account's MFA so the next login forces a fresh setup. Used by
+// admins (lost device). The CALLER is responsible for the authorization check and
+// for logging the action with a reason (recordAdminAction).
+export function resetMfa(targetUserId) {
+  const u = getUser(targetUserId)
+  if (!u) throw httpErr(404, 'User not found.')
+  const wasEnabled = !!(u.mfa && u.mfa.enabled)
+  u.mfa = {}
+  bumpSessionEpoch(u.id)   // sign the user out everywhere so they re-enroll on next login
+  persist()
+  return { ok: true, wasEnabled, username: u.username }
+}
+
+// Regenerate the one-time backup codes for an enabled account. Returns the new
+// set ONCE (store hashes). Caller must have verified a current code first.
+export function regenerateBackupCodes(userId) {
+  const u = getUser(userId)
+  if (!u || !u.mfa || !u.mfa.enabled) throw httpErr(400, 'Set up your authenticator first.')
+  const backupCodes = totp.generateBackupCodes(10)
+  u.mfa.backupHashes = backupCodes.map((c) => totp.hashBackupCode(c))
+  persist()
+  return backupCodes
+}
+
+// Authorization: who may reset whose MFA. Superadmin -> anyone. Company admin ->
+// members of their own company (and themselves). A user -> only themselves.
+export function canManageMfa(actorUserId, targetUserId) {
+  const a = getUser(actorUserId), t = getUser(targetUserId)
+  if (!a || !t) return false
+  if (a.role === 'superadmin' || a.root) return true
+  if (String(a.id) === String(t.id)) return true
+  if (a.companyRole === 'company_admin' && a.companyId && String(a.companyId) === String(t.companyId)) return true
+  return false
 }
 
 // ---- Subscription (Stripe billing state) ----------------------------------
@@ -2806,6 +2926,7 @@ const HERO_DEFAULT = [
   { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: 'Compliance-ready for the frameworks you answer to.', em: 'Compliance-ready', s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
   { h: 'The AI is on us, always included.', em: 'on us', s: 'You are never billed for how much AI a task takes. It is part of your plan, so bring every task, big or small, and focus on the work, not the cost.' },
+  { h: 'Quality over quantity, on every step.', em: 'Quality over quantity', s: 'You get the one correct next move, done the proven way for your field and checked before you see it, not a pile of options to sort through. Do it once, and do it right.' },
 ]
 export function getHeroPairs() {
   const custom = db.work && Array.isArray(db.work.hero) && db.work.hero.length ? db.work.hero : null

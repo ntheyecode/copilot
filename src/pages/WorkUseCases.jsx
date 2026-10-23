@@ -5,6 +5,7 @@ import {
   ArrowRight, Check, ChevronLeft, ScanEye, Play,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
@@ -94,15 +95,7 @@ export default function WorkUseCases() {
       <style>{CSS}</style>
       <div className="uc-bg" aria-hidden><span className="orb o1" /><span className="orb o2" /></div>
 
-      <header className="uc-nav">
-        <div className="uc-wrap uc-nav-in">
-          <a href="/" aria-label="AdmireVeda"><AdmireVedaLogo size={25} /></a>
-          <div className="uc-navcta">
-            <a className="uc-back" href="/"><ChevronLeft size={16} aria-hidden="true" /> Home</a>
-            <button className="uc-cta sm" onClick={go}>Get started <ArrowRight size={15} aria-hidden="true" /></button>
-          </div>
-        </div>
-      </header>
+      <SiteHeader current="use" />
 
       <main id="main">
       <section className="uc-hero">

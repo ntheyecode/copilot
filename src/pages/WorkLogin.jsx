@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Loader2, Check, MonitorPlay, Building2 } from 'lucide-react'
 import { useAuth } from '../auth.jsx'
+import MfaGate from '../components/MfaGate.jsx'
 import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
-import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the public sign-in page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 
 const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
@@ -27,7 +27,7 @@ const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 // ---------------------------------------------------------------------------
 export default function WorkLogin() {
   const nav = useNavigate()
-  const { user, login, signup } = useAuth()
+  const { user, login, signup, loginMfa, loginMfaSetup, refresh } = useAuth()
   const [sp] = useSearchParams()
   const plan = (sp.get('plan') || '').toLowerCase()
   useSeo({
@@ -43,6 +43,11 @@ export default function WorkLogin() {
   const [mode, setMode] = useState(plan ? 'signup' : 'signin')
   const [uName, setUName] = useState(''); const [uPass, setUPass] = useState('')
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  // MFA step: when login/signup returns a second-factor requirement we swap the
+  // password form for the authenticator gate.
+  const [mfa, setMfa] = useState(null)           // { mode:'setup'|'verify', enroll?, username }
+  const [mfaBusy, setMfaBusy] = useState(false)
+  const [backupCodes, setBackupCodes] = useState(null)
   // Company single sign-on: the user enters their email domain, we resolve it to
   // the company, then hand the browser to the server which bounces to the IdP.
   const [ssoOpen, setSsoOpen] = useState(false)
@@ -113,9 +118,10 @@ export default function WorkLogin() {
     e && e.preventDefault(); setBusy(true); setErr('')
     try {
       const u = uName.trim()
-      if (mode === 'signup') await signup(u, uPass)
-      else await login(u, uPass)
-      // the effect above reacts to `user` and routes to checkout or /work
+      const r = mode === 'signup' ? await signup(u, uPass) : await login(u, uPass)
+      if (r && r.mfaSetup) { setMfa({ mode: 'setup', enroll: r.enroll, username: u }); setBusy(false); return }
+      if (r && r.mfaRequired) { setMfa({ mode: 'verify', username: u }); setBusy(false); return }
+      // otherwise the effect above reacts to `user` and routes to checkout or /work
     } catch (e2) {
       // A company single sign-on account cannot use the password form: the
       // server returns 409. Send them to the SSO panel with a clear message,
@@ -132,6 +138,29 @@ export default function WorkLogin() {
       setBusy(false)
     }
   }
+
+  // The authenticator gate calls this with the 6-digit (or backup) code. It must
+  // THROW on a bad code so MfaGate can show the message. In setup mode a success
+  // yields the one-time backup codes (shown before entering the app).
+  const handleMfaSubmit = async (code) => {
+    setMfaBusy(true)
+    try {
+      if (mfa.mode === 'setup') {
+        const r = await loginMfaSetup(code)
+        setBackupCodes(r.backupCodes || [])
+      } else {
+        await loginMfa(code)   // refreshes the user; the routing effect takes over
+      }
+    } catch (e2) {
+      if (e2 && (e2.status === 440 || (e2.data && e2.data.restart))) {
+        setMfa(null); setBackupCodes(null)
+        setErr('Your sign-in session timed out. Please sign in again.')
+      }
+      throw e2   // let MfaGate render the inline error
+    } finally { setMfaBusy(false) }
+  }
+  // Called after the user has saved their backup codes: now enter the app.
+  const handleMfaDone = async () => { try { await refresh() } catch { /* routing effect still fires on next check */ } }
 
   return (
     <div className="wl" style={WD_DESK ? { paddingTop: 40 } : undefined}>
@@ -165,6 +194,9 @@ export default function WorkLogin() {
       <main className="wl-main" id="main">
         <div className="wl-card">
           <div className="wl-card-brand"><AVMark size={18} id="avlc" /> WorkCoPilot <span className="wl-by">by AdmireVeda</span></div>
+          {mfa ? (
+            <MfaGate mode={mfa.mode} enroll={mfa.enroll} username={mfa.username} backupCodes={backupCodes} busy={mfaBusy} onSubmit={handleMfaSubmit} onDone={handleMfaDone} />
+          ) : (<>
           <h1>{mode === 'signup' ? (planName ? `Create your account for ${planName}` : 'Create your account') : (planName ? `Sign in to start ${planName}` : 'Sign in')}</h1>
           <p className="wl-sub">{mode === 'signup' ? 'It is free to sign up. Pick a plan when you are ready to start guiding.' : 'Welcome back. Pick up right where you left off.'}</p>
           <form onSubmit={submit} aria-label={mode === 'signup' ? 'Create account' : 'Sign in'} aria-busy={busy || checkingOut}>
@@ -198,9 +230,9 @@ export default function WorkLogin() {
               : <>New here? <button type="button" className="wl-switch" onClick={() => { setErr(''); setMode('signup') }}>Create an account</button></>}
           </div>
           <div className="wl-legal">Lawful, legitimate work only. Harmful or illegal requests are declined.</div>
+          </>)}
         </div>
       </main>
-      <LiveValidate theme="light" source="login" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
     </div>
   )
 }

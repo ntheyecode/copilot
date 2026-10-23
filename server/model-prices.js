@@ -63,14 +63,23 @@ export const MODEL_PRICES = {
 
 export const PRICES_UPDATED = "2026-10-21";
 
-// Estimate a call's cost in USD from character counts (~4 chars per token). This
-// is an operator-transparency ESTIMATE, not billing-grade (the AI module does
-// not surface exact token usage). Unknown model -> 0.
-export function estimateCostUsd(modelId, inChars = 0, outChars = 0) {
+// Approx input tokens charged per screen image sent to a vision model. Images are
+// the bulk of a watch-loop call's cost, so leaving them out of the estimate (as
+// before) under-reports the real spend. This is a deliberately conservative
+// average for a downscaled (~1024px) UI frame across the cheap vision models we
+// use; it is an ESTIMATE for the operator dashboard, not billing-grade, and the
+// true per-image token count varies by provider (gpt-4o-mini bills images far
+// higher than Gemini flash, for example).
+const IMAGE_TOKENS_EST = 1200
+
+// Estimate a call's cost in USD from character counts (~4 chars per token) plus
+// any images sent. Operator-transparency ESTIMATE, not billing-grade. Unknown
+// model -> 0.
+export function estimateCostUsd(modelId, inChars = 0, outChars = 0, images = 0) {
   const key = String(modelId || '')
   const p = MODEL_PRICES[key] || MODEL_PRICES[key.split('/').pop()] || null
   if (!p) return 0
-  const inTok = Math.max(0, Number(inChars) || 0) / 4
+  const inTok = Math.max(0, Number(inChars) || 0) / 4 + Math.max(0, Number(images) || 0) * IMAGE_TOKENS_EST
   const outTok = Math.max(0, Number(outChars) || 0) / 4
   return (inTok / 1e6) * (p.input || 0) + (outTok / 1e6) * (p.output || 0)
 }

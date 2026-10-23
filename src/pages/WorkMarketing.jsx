@@ -966,6 +966,8 @@ const HERO_PAIRS = [
     s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
   { h: [['The AI is '], ['on us', 1], [', always included.']],
     s: 'You are never billed for how much AI a task takes. It is part of your plan, so bring every task, big or small, and focus on the work, not the cost.' },
+  { h: [['Quality over quantity', 1], [', on every step.']],
+    s: 'You get the one correct next move, done the proven way for your field and checked before you see it, not a pile of options to sort through. Do it once, and do it right.' },
 ]
 
 // Split a line into words (on plain spaces only, so the NBSP in "SOC 2" holds)

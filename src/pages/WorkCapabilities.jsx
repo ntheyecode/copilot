@@ -6,7 +6,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowLeft, ArrowRight, Trophy, Check, RefreshCw } from 'lucide-react'
-import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
@@ -214,10 +214,7 @@ export default function WorkCapabilities() {
   return (
     <div className="wcap">
       <style>{CSS}</style>
-      <header className="wcap-top">
-        <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wcap-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
-      </header>
+      <SiteHeader current="how" />
       <main id="main">
       <section className="wcap-hero">
         <h1>Like having the best person<br />in the room, every time.</h1>

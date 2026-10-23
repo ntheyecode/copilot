@@ -17,40 +17,93 @@ import {
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'
+import SiteHeader from '../components/SiteHeader.jsx'
 
 export const FIELD_FAMILIES = [
   { k: 'Software & engineering', ic: Code2, tone: '', wide: true,
     d: 'From the first commit to the on-call rotation.',
-    items: ['Developer', 'Frontend & accessibility', 'Mobile development', 'Game development', 'Embedded / firmware', 'Database', 'SDET', 'QA', 'DevOps', 'SRE', 'Network engineering', 'Sysadmin / IT ops', 'Blockchain development'] },
+    items: [
+      'Developer', 'Frontend & accessibility', 'Mobile development', 'Game development', 'Embedded / firmware',
+      'Database', 'SDET', 'QA', 'DevOps', 'SRE', 'Network engineering', 'Sysadmin / IT ops', 'Blockchain development',
+      'Backend & API development', 'Full-stack web development', 'Software architecture', 'Cloud architecture',
+      'Platform engineering', 'Release management', 'ERP & CRM administration', 'Low-code & RPA automation',
+    ] },
   { k: 'Security & resilience', ic: ShieldCheck, tone: 'cyan', wide: true,
     d: 'Find it, prove it, contain it, and answer for it.',
-    items: ['Penetration testing', 'Network pentest', 'Mobile pentest', 'API security', 'Cloud security', 'DevSecOps', 'Threat modeling', 'Incident response', 'Compliance & GRC'] },
+    items: [
+      'Penetration testing', 'Network pentest', 'Mobile pentest', 'API security', 'Cloud security', 'DevSecOps',
+      'Threat modeling', 'Incident response', 'Compliance & GRC',
+      'Application security', 'Security operations (SOC)', 'Vulnerability management', 'Identity & access management',
+      'Digital forensics', 'Privacy & data protection', 'Security architecture', 'Business continuity & disaster recovery',
+    ] },
   { k: 'Data, AI & math', ic: BrainCircuit, tone: 'violet',
     d: 'Pipelines, models and numbers that hold up.',
-    items: ['Data engineering', 'Data analytics', 'MLOps', 'Applied math', 'Research & science', 'Quant / FP&A'] },
+    items: [
+      'Data engineering', 'Data analytics', 'MLOps', 'Applied math', 'Research & science', 'Quant / FP&A',
+      'Data science', 'Machine learning engineering', 'AI & prompt engineering', 'Analytics engineering',
+      'Business intelligence', 'Data governance', 'Statistics & biostatistics', 'Geospatial & GIS analysis',
+    ] },
   { k: 'Product, project & design', ic: Kanban, tone: 'amber',
     d: 'From the idea to the roadmap to the shipped thing.',
-    items: ['Product management', 'Project management', 'Agile / scrum', 'Business analysis', 'UX design'] },
+    items: [
+      'Product management', 'Project management', 'Agile / scrum', 'Business analysis', 'UX design',
+      'Program management', 'Technical program management', 'PMO & portfolio management', 'Change management',
+      'User research', 'UI & visual design', 'Design systems', 'Product analytics',
+    ] },
   { k: 'OT, IoT & physical systems', ic: Cpu, tone: 'cyan',
     d: 'Where the software meets the machine.',
-    items: ['OT / ICS', 'IoT', 'Robotics', 'Aviation operations'] },
+    items: [
+      'OT / ICS', 'IoT', 'Robotics', 'Aviation operations',
+      'Mechanical engineering', 'Electrical engineering', 'Civil & structural engineering', 'Construction management',
+      'CAD & BIM design', 'Manufacturing & quality engineering', 'Energy & utilities operations',
+      'Facilities & building systems', 'Environmental health & safety',
+    ] },
   { k: 'Finance & legal', ic: Landmark, tone: 'ok',
     d: 'Books, audits, filings and contracts, done right.',
-    items: ['Accounting & finance', 'Financial audit', 'Tax', 'Legal & contracts'] },
+    items: [
+      'Accounting & finance', 'Financial audit', 'Tax', 'Legal & contracts',
+      'Accounts payable & receivable', 'Payroll', 'Treasury & cash management', 'Cost & management accounting',
+      'Credit & risk analysis', 'Banking operations & AML', 'Insurance underwriting & claims',
+      'Paralegal & legal research', 'Intellectual property',
+    ] },
   { k: 'Business operations', ic: Briefcase, tone: 'amber',
     d: 'The work that keeps a company moving.',
-    items: ['Sales', 'HR & recruiting', 'Customer support', 'Procurement & vendor', 'Supply chain & operations', 'Leadership'] },
+    items: [
+      'Sales', 'HR & recruiting', 'Customer support', 'Procurement & vendor', 'Supply chain & operations', 'Leadership',
+      'Account management', 'Customer success', 'Sales operations & RevOps', 'Office & executive administration',
+      'Event planning', 'Real estate & property management', 'Retail & store operations',
+      'Hospitality & restaurant management', 'Logistics & transportation', 'Nonprofit & fundraising',
+      'Government & public administration',
+    ] },
   { k: 'Content, marketing & communication', ic: Megaphone, tone: 'pink',
     d: 'Say it well, and reach the right people.',
-    items: ['Marketing & growth', 'Content & copywriting', 'SEO', 'Social media', 'Video & media', 'Technical writing', 'Translation & localization'] },
+    items: [
+      'Marketing & growth', 'Content & copywriting', 'SEO', 'Social media', 'Video & media', 'Technical writing',
+      'Translation & localization',
+      'Graphic & brand design', 'Brand strategy', 'Public relations & communications', 'Journalism & editing',
+      'Email & lifecycle marketing', 'Paid media & advertising', 'Product marketing', 'Market research',
+      'Audio & podcast production', 'Grant & proposal writing',
+    ] },
   { k: 'Healthcare', ic: HeartPulse, tone: 'pink',
     d: 'Clinical and care workflows, guided with care.',
-    items: ['Healthcare / clinical'] },
+    items: [
+      'Healthcare / clinical',
+      'Physician practice', 'Registered nursing', 'Nurse practitioner', 'Pharmacy', 'Physical & occupational therapy',
+      'Radiology & imaging', 'Medical laboratory science', 'Medical coding & billing', 'Clinical research coordination',
+      'Health information management', 'Dental hygiene & practice', 'Paramedic & EMS', 'Dietetics & nutrition',
+      'Behavioral health & counseling', 'Public health',
+    ] },
   { k: 'Education', ic: GraduationCap, tone: 'violet',
     d: 'Teach it so it sticks.',
-    items: ['Teaching & instructional design'] },
+    items: [
+      'Teaching & instructional design',
+      'K-12 teaching', 'University teaching & lecturing', 'School administration', 'Academic advising',
+      'Registrar & student records', 'Curriculum development', 'Special education', 'Librarian & information science',
+      'Admissions & enrollment', 'E-learning development', 'Corporate training & L&D', 'Early childhood education',
+      'Language teaching (ESL)', 'School counseling',
+    ] },
 ]
-export const FIELD_TOTAL = FIELD_FAMILIES.reduce((n, f) => n + f.items.length, 0)   // 56
+export const FIELD_TOTAL = FIELD_FAMILIES.reduce((n, f) => n + f.items.length, 0)   // derived; never typed
 
 // Texture crops so the ten reused cards never read as one repeated tile.
 const TEX = ['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '25% 25%', '75% 75%']
@@ -74,10 +127,7 @@ export default function WorkFields() {
   return (
     <div className="wfl">
       <style>{CSS}</style>
-      <header className="wfl-top">
-        <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wfl-back" onClick={() => nav('/')}><ArrowLeft size={15} aria-hidden /> WorkCoPilot</button>
-      </header>
+      <SiteHeader current="fields" />
 
       <section className="wfl-hero">
         <div className="wfl-eyebrow"><Shapes size={14} aria-hidden /> Every field &middot; one tool</div>

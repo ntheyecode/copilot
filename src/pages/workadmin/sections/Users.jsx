@@ -15,6 +15,7 @@ const COLUMNS = [
   { key: 'purchasedSeconds', label: 'Purchased balance', sortable: true },
   { key: 'remainingSeconds', label: 'Total remaining', sortable: true },
   { key: 'sessionCount', label: 'Sessions', sortable: true },
+  { key: 'mfa', label: '2FA', sortable: false },
   { key: 'actions', label: '', sortable: false },
 ]
 const EMPTY_NEW = { username: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
@@ -84,6 +85,15 @@ export default function UsersSection({ isSuperAdmin }) {
   const setMsg = (id, kind, text) => {
     setRowMsg((m) => ({ ...m, [id]: { kind, text } }))
     setTimeout(() => setRowMsg((m) => { const n = { ...m }; delete n[id]; return n }), 4000)
+  }
+  // Reset a user's authenticator (lost device / offboarding). Reason required +
+  // logged; the user re-enrolls on next sign-in.
+  const resetMfa = async (u) => {
+    const reason = (window.prompt(`Reset two-factor for ${u.username}? They will be signed out and must set up their authenticator again on next sign-in.\n\nReason (recorded in the audit trail):`) || '').trim()
+    if (reason.length < 3) { if (reason) setMsg(u.id, 'err', 'A reason of at least 3 characters is required.'); return }
+    setBusyId(u.id)
+    try { await workAdminApi.resetUserMfa(u.id, reason); setMsg(u.id, 'ok', 'Two-factor reset.'); load() }
+    catch (e) { setMsg(u.id, 'err', e.message) } finally { setBusyId(null) }
   }
 
   const applyTier = async (user, tier) => {
@@ -281,6 +291,13 @@ export default function UsersSection({ isSuperAdmin }) {
                     <td className="wka-mono">{hmFromSeconds(u.purchasedSeconds)}</td>
                     <td className="wka-mono">{hmFromSeconds(u.remainingSeconds)}</td>
                     <td className="wka-mono">{u.sessionCount}</td>
+                    <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
+                      {u.mfa && u.mfa.enabled
+                        ? <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Lock size={12} /> On
+                            <button type="button" className="wka-btn sm ghost" title={isSuperAdmin ? 'Reset authenticator (lost phone / offboarding)' : 'Superadmin only'} disabled={!isSuperAdmin || busyId === u.id} onClick={() => resetMfa(u)} style={{ marginLeft: 4 }}><RotateCcw size={12} /></button>
+                          </span>
+                        : <span style={{ color: 'var(--wka-amber, #c77700)' }}>Not set up</span>}
+                    </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {grantFor === u.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>

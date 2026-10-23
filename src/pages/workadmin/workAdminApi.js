@@ -102,6 +102,7 @@ export const workAdminApi = {
   // Pre-provision a member or admin BY EMAIL (SSO, no password), or remove one.
   addCompanyMember: (id, body) => request('POST', `/api/work/admin/companies/${id}/members`, body || {}),
   removeCompanyMember: (id, uid, reason) => request('DELETE', `/api/work/admin/companies/${id}/members/${uid}`, { reason }),
+  resetUserMfa: (uid, reason) => request('POST', `/api/work/admin/users/${uid}/mfa/reset`, { reason }),
   // Add minutes to the shared company pool (server takes minutes).
   poolMinutes: (id, minutes) => request('POST', `/api/work/admin/companies/${id}/pool-minutes`, { minutes: Number(minutes) || 0 }),
   // Per-company price overrides (merged over the global pricing).

@@ -108,13 +108,15 @@ function slug(title) {
 }
 
 const FORMAT_META = {
-  email: { icon: Mail, label: 'Email', ext: 'md' },
-  document: { icon: FileText, label: 'Document', ext: 'md' },
+  prompt: { icon: PenLine, label: 'Prompt for your AI', ext: 'txt' },
+  code: { icon: Code2, label: 'Code', ext: 'txt' },
   outline: { icon: ListTree, label: 'Outline', ext: 'md' },
   bullets: { icon: List, label: 'Bullets', ext: 'md' },
   table: { icon: Table, label: 'Table', ext: 'csv' },
-  code: { icon: Code2, label: 'Code', ext: 'txt' },
   notes: { icon: StickyNote, label: 'Notes', ext: 'md' },
+  // legacy (older sessions may still carry these; the engine no longer writes them)
+  email: { icon: Mail, label: 'Draft', ext: 'md' },
+  document: { icon: FileText, label: 'Draft', ext: 'md' },
 }
 
 // A self-contained copy control, so the card owns its own clipboard feedback.

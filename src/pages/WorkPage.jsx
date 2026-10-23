@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3 } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
+import MfaGate from '../components/MfaGate.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
@@ -188,6 +189,10 @@ const PRODUCT_KEY = 'meet-login-product'   // shared with the main login + MeetA
 // is billed per image token, which scales with resolution, so a 4K screen is
 // shrunk before it ever leaves the machine.
 const MAX_W = 1280
+// The continuous watch loop runs many times an hour, and the image is the bulk of
+// each call's cost, so its frames are smaller (still readable for UI state). The
+// one-off plan / "what is this" reads keep the full 1280 for detail.
+const WATCH_MAX_W = 1024
 function frameFromVideo(video, maxW = MAX_W) {
   if (!video || !video.videoWidth) return null
   const scale = Math.min(1, maxW / video.videoWidth)
@@ -254,6 +259,10 @@ function Auth({ onAuthed }) {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [mfa, setMfa] = useState(null)            // { mode, enroll?, username }
+  const [mfaBusy, setMfaBusy] = useState(false)
+  const [backupCodes, setBackupCodes] = useState(null)
+  const pendingUser = useRef(null)                // user to onAuthed after backup codes saved
   const setProd = (p) => {
     setErr('')
     try { localStorage.setItem(PRODUCT_KEY, p) } catch {}
@@ -265,11 +274,37 @@ function Auth({ onAuthed }) {
     e.preventDefault(); setBusy(true); setErr('')
     try {
       const r = mode === 'login' ? await api.workLogin(username, password) : await api.workSignup(username, password)
+      if (r && r.mfaSetup) { setMfa({ mode: 'setup', enroll: r.enroll, username }); return }
+      if (r && r.mfaRequired) { setMfa({ mode: 'verify', username }); return }
       onAuthed(r.user)
     } catch (e2) { setErr(e2.message || 'Sign-in failed') } finally { setBusy(false) }
   }
+  // Authenticator gate: throws on a bad code so MfaGate shows it. Setup returns the
+  // one-time backup codes (shown before entering the app); verify signs in.
+  const handleMfaSubmit = async (code) => {
+    setMfaBusy(true)
+    try {
+      if (mfa.mode === 'setup') {
+        const r = await api.workLoginMfaSetup(code)
+        pendingUser.current = r.user
+        setBackupCodes(r.backupCodes || [])
+      } else {
+        const r = await api.workLoginMfa(code)
+        onAuthed(r.user)
+      }
+    } catch (e2) {
+      if (e2 && (e2.status === 440 || (e2.data && e2.data.restart))) { setMfa(null); setBackupCodes(null); setErr('Your sign-in session timed out. Please sign in again.') }
+      throw e2
+    } finally { setMfaBusy(false) }
+  }
+  const handleMfaDone = () => { if (pendingUser.current) onAuthed(pendingUser.current) }
   return (
     <div style={{ ...shell, display: 'grid', placeItems: 'center', padding: 16 }}>
+      {mfa ? (
+        <div style={{ ...card, width: 440, maxWidth: '100%', padding: 24 }}>
+          <MfaGate mode={mfa.mode} enroll={mfa.enroll} username={mfa.username} backupCodes={backupCodes} busy={mfaBusy} onSubmit={handleMfaSubmit} onDone={handleMfaDone} />
+        </div>
+      ) : (
       <form onSubmit={submit} style={{ ...card, width: 380, maxWidth: '100%', padding: 24, display: 'flex', flexDirection: 'column', gap: 12 }}>
         <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--brand-600)' }}>WorkCoPilot</div>
         <div style={{ fontSize: 13, color: 'var(--text-dim)', marginTop: -6 }}>Your read-only on-screen guide. Choose what to open and sign in.</div>
@@ -288,6 +323,7 @@ function Auth({ onAuthed }) {
           {mode === 'login' ? 'New here? Create a WorkCoPilot account' : 'Have an account? Sign in'}
         </button>
       </form>
+      )}
     </div>
   )
 }
@@ -2496,8 +2532,7 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
             <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2: recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
             <div className="wc-dl-actions">
               <button className="btn btn-outline" onClick={() => setResult(null)}>Capture more</button>
-              <button className="btn btn-outline" onClick={download}><Download size={15} /> Markdown</button>
-              <button className="btn btn-primary" onClick={() => window.open(api.workDeliverablesPdfUrl(sessionId, true), '_blank')}><Download size={15} /> Download PDF</button>
+              <button className="btn btn-primary" onClick={() => window.open(api.workDeliverablesPdfUrl(sessionId, true), '_blank')}><Download size={15} /> Download review PDF</button>
             </div>
           </div>
         )}
@@ -2869,6 +2904,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // running; otherwise read the live video (screen or camera). Desktop never
   // loads a photo frame, so its behavior is unchanged.
   const grabFrame = () => (photoFrameRef.current && !capturing) ? photoFrameRef.current : frameFromVideo(videoRef.current)
+  // Smaller frame for the high-frequency watch loop (cost lever); photo path keeps its own.
+  const grabWatchFrame = () => (photoFrameRef.current && !capturing) ? photoFrameRef.current : frameFromVideo(videoRef.current, WATCH_MAX_W)
   // Redact the outbound screen frame ON-DEVICE when data protection is on, so the
   // image is scrubbed of sensitive text (via on-device OCR) BEFORE it is sent,
   // the same switch that governs text. A no-op when protection is off.
@@ -2927,10 +2964,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     const sig = signatureFromVideo(videoRef.current)
     const now = Date.now()
     const isChange = changed(sigRef.current, sig)
-    const heartbeat = now - lastSentRef.current > 20000
+    const heartbeat = now - lastSentRef.current > 35000
     if (!isChange && !heartbeat) return
     sigRef.current = sig
-    let frame = grabFrame(); if (!frame) return
+    let frame = grabWatchFrame(); if (!frame) return
     frame = await prepFrame(frame)
     busyTickRef.current = true
     try {
@@ -3752,22 +3789,20 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 table or code), ready to copy. Nothing is auto-filled. */}
             {maker === 'write' && (
               <div className="wc-make-panel" role="tabpanel">
-                <label className="wc-compose-label" htmlFor="wc-compose-want">What should I write?</label>
+                <label className="wc-compose-label" htmlFor="wc-compose-want">What do you need? (I give you code, or a ready-to-use prompt for your own AI)</label>
                 <textarea id="wc-compose-want" className="wc-compose-want" rows={2} value={composeWant} onChange={(e) => setComposeWant(e.target.value)}
-                  placeholder="For example: a follow-up email to the vendor, a one-page status report, a SQL query for last month's refunds, or red-line notes on this clause."
+                  placeholder="For example: a SQL query for last month's refunds, or a prompt to draft a vendor follow-up email in your own AI (attach your old thread to it)."
                   onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); compose(false) } }} />
                 <div className="wc-make-ctl">
                   <label className="wc-compose-fmt">
                     <span>Format</span>
                     <select value={composeFormat} onChange={(e) => setComposeFormat(e.target.value)}>
                       <option value="">Auto</option>
-                      <option value="email">Email</option>
-                      <option value="document">Document</option>
-                      <option value="outline">Outline</option>
-                      <option value="bullets">Bullets</option>
-                      <option value="table">Table</option>
+                      <option value="prompt">Prompt for your AI</option>
                       <option value="code">Code</option>
-                      <option value="notes">Notes</option>
+                      <option value="table">Table</option>
+                      <option value="bullets">Bullets</option>
+                      <option value="outline">Outline</option>
                     </select>
                   </label>
                   <button type="button" className={`wc-ib${composeSrcOpen ? ' on' : ''}`} onClick={() => setComposeSrcOpen((v) => !v)} disabled={composeBusy} title="Paste source text to write from: an email, a table, numbers, a log, any text" aria-label="Paste source text"><ClipboardCopy size={16} /></button>

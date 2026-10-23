@@ -11,7 +11,7 @@
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, FileText, Mail } from 'lucide-react'
-import AdmireVedaLogo from './AdmireVedaLogo.jsx'
+import SiteHeader from './SiteHeader.jsx'
 import WorkCard from './WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'      // per-route title / description / canonical (audit WEB-01)
 
@@ -90,10 +90,7 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
   return (
     <div className="wlx">
       <style>{CSS}</style>
-      <header className="wlx-top">
-        <a href="/workcopilot" aria-label="AdmireVeda"><AdmireVedaLogo size={24} /></a>
-        <button className="wlx-back" onClick={() => nav('/workcopilot')} aria-label="Back to WorkCoPilot"><ArrowLeft size={15} aria-hidden="true" /> WorkCoPilot</button>
-      </header>
+      <SiteHeader />
 
       <main id="main">
       <section className="wlx-hero">

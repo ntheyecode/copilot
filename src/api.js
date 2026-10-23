@@ -76,6 +76,14 @@ export const api = {
   workMe: () => req('GET', '/api/work/me'),
   workSignup: (username, password) => req('POST', '/api/work/signup', { username, password }),
   workLogin: (username, password) => req('POST', '/api/work/login', { username, password }),
+  // MFA (TOTP authenticator). Login may return { mfaSetup } (first login) or
+  // { mfaRequired }; the client then calls one of these to finish signing in.
+  workLoginMfaSetup: (code) => req('POST', '/api/work/login/mfa/setup', { code }),
+  workLoginMfa: (code) => req('POST', '/api/work/login/mfa', { code }),
+  workMfaStatus: () => req('GET', '/api/work/mfa/status'),
+  workMfaResetSelf: (code) => req('POST', '/api/work/mfa/reset', { code }),
+  workMfaRegenBackup: (code) => req('POST', '/api/work/mfa/backup/regenerate', { code }),
+  workCompanyResetUserMfa: (id, reason) => req('POST', `/api/work/company/users/${id}/mfa/reset`, { reason }),
   workLogout: () => req('POST', '/api/work/logout'),
   workSetProfile: (body) => req('POST', '/api/work/profile', body || {}),
   // AI readiness (platform-allowed or own tested key, must have a vision model)

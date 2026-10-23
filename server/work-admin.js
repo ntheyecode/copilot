@@ -206,6 +206,7 @@ export function registerWorkAdminRoutes(app, deps = {}) {
         companyRole: (wu && wu.companyRole) || null,
         companyName: (wu && wu.companyName) || (wu && wu.companyId ? companyNameById.get(wu.companyId) : null) || null,
         role: r.role || 'user',
+        mfa: (() => { try { return store.userMfaStatus(r.id) } catch { return { enabled: false, required: true } } })(),
       }
     }).sort((a, b) => a.username.localeCompare(b.username))
     res.json({ users, tiers: store.WORK_TIERS || ['basic', 'advanced', 'premium'], companies: companyList })
@@ -327,6 +328,15 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     const reason = String((req.body && req.body.reason) || '').trim()
     if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to remove a member (recorded in the audit trail).' })
     res.json(store.removeCompanyMember(req.params.id, req.params.uid, { reason, byUserId: req.user.id }))
+  }))
+  // Superadmin: reset ANY user's authenticator (lost device / offboarding). Reason
+  // required + logged. Signs the user out so they re-enroll on next sign-in.
+  app.post('/api/work/admin/users/:id/mfa/reset', requireAuth, superGate, w((req, res) => {
+    const reason = String((req.body && req.body.reason) || '').trim()
+    if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to reset a user\'s authenticator (recorded in the audit trail).' })
+    const r = store.resetMfa(req.params.id)
+    store.recordAdminAction({ userId: req.user.id, companyId: null, action: 'mfa_reset', reason, detail: `superadmin reset authenticator for ${r.username || req.params.id}` })
+    res.json({ ok: true })
   }))
   // Superadmin: add minutes to a company's shared pool (negative removes).
   app.post('/api/work/admin/companies/:id/pool-minutes', requireAuth, superGate, w((req, res) => {

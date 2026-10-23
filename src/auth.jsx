@@ -48,15 +48,31 @@ export function AuthProvider({ children }) {
     }
   }, [refresh])
 
+  // Login may not complete immediately: with MFA on, it returns { mfaSetup } (first
+  // login - set up an authenticator) or { mfaRequired } (enter a code). Only load
+  // the signed-in user once the second factor has actually been satisfied.
   const login = async (username, password) => {
     const r = await api.workLogin(username, password)
-    await refresh()
-    return r // { user }
+    if (r && !r.mfaSetup && !r.mfaRequired) await refresh()
+    return r // { user } | { mfaSetup, enroll } | { mfaRequired }
   }
   const signup = async (username, password) => {
     const r = await api.workSignup(username, password)
+    if (r && !r.mfaSetup && !r.mfaRequired) await refresh()
+    return r // always { mfaSetup, enroll } now (MFA on first login)
+  }
+  // Finish first-login authenticator setup; returns { user, backupCodes }. Does
+  // NOT refresh the signed-in user yet - the form shows the one-time backup codes
+  // first, then calls refresh() to enter the app (otherwise the app would navigate
+  // away before the codes are shown).
+  const loginMfaSetup = async (code) => {
+    return api.workLoginMfaSetup(code)
+  }
+  // Verify an authenticator (or backup) code to finish signing in.
+  const loginMfa = async (code) => {
+    const r = await api.workLoginMfa(code)
     await refresh()
-    return r // { user }
+    return r
   }
   const logout = async () => {
     try { await api.logout() } catch { /* ignore */ }
@@ -64,7 +80,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, ready, login, signup, logout, refresh }}>
+    <AuthContext.Provider value={{ user, ready, login, signup, loginMfa, loginMfaSetup, logout, refresh }}>
       {children}
     </AuthContext.Provider>
   )
