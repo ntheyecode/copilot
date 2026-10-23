@@ -1,0 +1,2176 @@
+{
+  "name": "full",
+  "note": "Full WorkCoPilot result-correctness corpus: 50 tasks x 4 domains (dev/data, finance, cross-profession, security). ~20% held-out.",
+  "tasks": [
+    {
+      "id": "dev-1",
+      "domain": "dev",
+      "prompt": "What is 0xFF in decimal? Give only the number.",
+      "grader": "number",
+      "groundTruth": 255,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "0xFF = 15*16 + 15 = 255."
+    },
+    {
+      "id": "dev-2",
+      "domain": "dev",
+      "prompt": "What is the decimal value of the binary number 1011? Give only the number.",
+      "grader": "number",
+      "groundTruth": 11,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1011b = 8 + 0 + 2 + 1 = 11."
+    },
+    {
+      "id": "dev-3",
+      "domain": "dev",
+      "prompt": "What is 5 & 3 using bitwise AND in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "101 & 011 = 001 = 1."
+    },
+    {
+      "id": "dev-4",
+      "domain": "dev",
+      "prompt": "What is 5 | 2 using bitwise OR in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 7,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "101 | 010 = 111 = 7."
+    },
+    {
+      "id": "dev-5",
+      "domain": "dev",
+      "prompt": "What is 1 << 5 in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 32,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1 shifted left 5 bits = 2^5 = 32."
+    },
+    {
+      "id": "dev-6",
+      "domain": "dev",
+      "prompt": "What is 2 ** 10 in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1024,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2 to the 10th power = 1024."
+    },
+    {
+      "id": "dev-7",
+      "domain": "dev",
+      "prompt": "What is 17 % 5 in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 2,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "17 = 3*5 + 2, remainder 2."
+    },
+    {
+      "id": "dev-8",
+      "domain": "dev",
+      "prompt": "What is the output of Math.floor(7 / 2) in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 3,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "7/2 = 3.5, floor = 3."
+    },
+    {
+      "id": "dev-9",
+      "domain": "dev",
+      "prompt": "What is the output of Math.max(4, 9, 2, 7) in JavaScript? Give only the number.",
+      "grader": "number",
+      "groundTruth": 9,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Largest of 4,9,2,7 is 9."
+    },
+    {
+      "id": "dev-10",
+      "domain": "dev",
+      "prompt": "How many even numbers are in the list 1,2,3,4,5,6,7,8? Give only the number.",
+      "grader": "number",
+      "groundTruth": 4,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Evens are 2,4,6,8 -> 4 of them."
+    },
+    {
+      "id": "dev-11",
+      "domain": "dev",
+      "prompt": "What is the length of the string 'mississippi'? Give only the number.",
+      "grader": "number",
+      "groundTruth": 11,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "m-i-s-s-i-s-s-i-p-p-i = 11 characters."
+    },
+    {
+      "id": "dev-12",
+      "domain": "dev",
+      "prompt": "What is the default TCP port for PostgreSQL? Give only the number.",
+      "grader": "number",
+      "groundTruth": 5432,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "PostgreSQL listens on TCP 5432 by default."
+    },
+    {
+      "id": "dev-13",
+      "domain": "dev",
+      "prompt": "What is the default TCP port for MySQL? Give only the number.",
+      "grader": "number",
+      "groundTruth": 3306,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "MySQL listens on TCP 3306 by default."
+    },
+    {
+      "id": "dev-14",
+      "domain": "dev",
+      "prompt": "What is the sum of the integers from 1 to 10 inclusive? Give only the number.",
+      "grader": "number",
+      "groundTruth": 55,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "n(n+1)/2 = 10*11/2 = 55."
+    },
+    {
+      "id": "dev-15",
+      "domain": "dev",
+      "prompt": "Convert this CSV to a JSON array of objects with numeric values: 'a,b' header then rows '1,2' and '3,4'. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": [
+        {
+          "a": 1,
+          "b": 2
+        },
+        {
+          "a": 3,
+          "b": 4
+        }
+      ],
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Header a,b maps each row: {a:1,b:2} and {a:3,b:4}."
+    },
+    {
+      "id": "dev-16",
+      "domain": "dev",
+      "prompt": "Build a JSON object from name=Bob and active=true, with active as a boolean. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": {
+        "name": "Bob",
+        "active": true
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "String name, boolean active -> {\"name\":\"Bob\",\"active\":true}."
+    },
+    {
+      "id": "dev-17",
+      "domain": "dev",
+      "prompt": "Count occurrences of each word in the list apple, apple, banana and output a JSON object mapping word to count. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": {
+        "apple": 2,
+        "banana": 1
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "apple appears twice, banana once."
+    },
+    {
+      "id": "dev-18",
+      "domain": "dev",
+      "prompt": "Sort the numbers 3, 1, 2 in ascending order and output the result as a JSON array. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Ascending sort of 3,1,2 is [1,2,3]."
+    },
+    {
+      "id": "dev-19",
+      "domain": "dev",
+      "prompt": "Output the first five Fibonacci numbers starting from 0 and 1 as a JSON array. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": [
+        0,
+        1,
+        1,
+        2,
+        3
+      ],
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Sequence 0,1,1,2,3 are the first five terms."
+    },
+    {
+      "id": "dev-20",
+      "domain": "dev",
+      "prompt": "Given the object {a:1, b:2, c:3}, output a JSON array of its values in the key order a, b, c. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Values in order a,b,c are 1,2,3."
+    },
+    {
+      "id": "dev-21",
+      "domain": "dev",
+      "prompt": "Parse the query string 'x=1&y=2' into a JSON object with numeric values. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": {
+        "x": 1,
+        "y": 2
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "x=1 and y=2 as numbers."
+    },
+    {
+      "id": "dev-22",
+      "domain": "dev",
+      "prompt": "Convert the array of pairs [['a',1],['b',2]] into a JSON object (first element key, second value). Output only the JSON.",
+      "grader": "json",
+      "groundTruth": {
+        "a": 1,
+        "b": 2
+      },
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Pairs become entries: a->1, b->2."
+    },
+    {
+      "id": "dev-23",
+      "domain": "dev",
+      "prompt": "Reverse the array [1,2,3] and output the result as a JSON array. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": [
+        3,
+        2,
+        1
+      ],
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Reversed order of 1,2,3 is 3,2,1."
+    },
+    {
+      "id": "dev-24",
+      "domain": "dev",
+      "prompt": "Remove duplicates from [1,1,2,3,3,3], keeping first-occurrence order, and output a JSON array. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": [
+        1,
+        2,
+        3
+      ],
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Distinct values in first-seen order are 1,2,3."
+    },
+    {
+      "id": "dev-25",
+      "domain": "dev",
+      "prompt": "For the list 4, 8, 1, 9, 3 output a JSON object with keys 'min' and 'max'. Output only the JSON.",
+      "grader": "json",
+      "groundTruth": {
+        "min": 1,
+        "max": 9
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Minimum is 1, maximum is 9."
+    },
+    {
+      "id": "dev-26",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes a non-negative integer n and returns n factorial. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          5
+        ],
+        "expected": 120
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "5! = 120; a correct factorial returns 120 for n=5."
+    },
+    {
+      "id": "dev-27",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes a string and returns it reversed. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          "hello"
+        ],
+        "expected": "olleh"
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "'hello' reversed is 'olleh'."
+    },
+    {
+      "id": "dev-28",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes an array of numbers and returns the largest. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          [
+            3,
+            7,
+            2,
+            9,
+            4
+          ]
+        ],
+        "expected": 9
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Max of [3,7,2,9,4] is 9."
+    },
+    {
+      "id": "dev-29",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes an array of numbers and returns their sum. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          [
+            2,
+            3,
+            5,
+            10
+          ]
+        ],
+        "expected": 20
+      },
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "2+3+5+10 = 20."
+    },
+    {
+      "id": "dev-30",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes a string and returns true if it is a palindrome, else false. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          "level"
+        ],
+        "expected": true
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "'level' reversed equals itself, so true."
+    },
+    {
+      "id": "dev-31",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression for FizzBuzz of a single integer n: return 'Fizz' if divisible by 3, 'Buzz' if divisible by 5, 'FizzBuzz' if divisible by both, otherwise the number n itself. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          15
+        ],
+        "expected": "FizzBuzz"
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "15 is divisible by 3 and 5, so 'FizzBuzz'."
+    },
+    {
+      "id": "dev-32",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes an array of numbers and returns a new array containing only the even numbers, preserving order. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6
+          ]
+        ],
+        "expected": [
+          2,
+          4,
+          6
+        ]
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Evens from 1..6 in order are [2,4,6]."
+    },
+    {
+      "id": "dev-33",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes a lowercase string and returns the number of vowels (a, e, i, o, u). Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          "education"
+        ],
+        "expected": 5
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "'education' has e,u,a,i,o = 5 vowels."
+    },
+    {
+      "id": "dev-34",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that returns the nth Fibonacci number where fib(0)=0 and fib(1)=1. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          10
+        ],
+        "expected": 55
+      },
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "fib: 0,1,1,2,3,5,8,13,21,34,55 so fib(10)=55."
+    },
+    {
+      "id": "dev-35",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes two positive integers and returns their greatest common divisor. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          48,
+          36
+        ],
+        "expected": 12
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "gcd(48,36)=12."
+    },
+    {
+      "id": "dev-36",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that flattens a one-level-nested array of arrays into a single array, preserving order. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          [
+            [
+              1,
+              2
+            ],
+            [
+              3
+            ],
+            [
+              4,
+              5
+            ]
+          ]
+        ],
+        "expected": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ]
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Flattening [[1,2],[3],[4,5]] gives [1,2,3,4,5]."
+    },
+    {
+      "id": "dev-37",
+      "domain": "dev",
+      "prompt": "Write an anonymous JavaScript function expression that takes an array of integers and returns an object {even, odd} with the counts of even and odd numbers. Output only the function expression.",
+      "grader": "exec",
+      "exec": {
+        "kind": "js",
+        "args": [
+          [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7
+          ]
+        ],
+        "expected": {
+          "even": 3,
+          "odd": 4
+        }
+      },
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1..7: evens 2,4,6 (3), odds 1,3,5,7 (4)."
+    },
+    {
+      "id": "dev-38",
+      "domain": "dev",
+      "prompt": "Write a SQL query that counts all rows in a table named orders. Give only the query.",
+      "grader": "regex",
+      "groundTruth": "select\\s+count\\(\\s*\\*\\s*\\)\\s+from\\s+orders",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "SELECT COUNT(*) FROM orders matches; SELECT * FROM orders does not."
+    },
+    {
+      "id": "dev-39",
+      "domain": "dev",
+      "prompt": "Write a SQL query that selects the distinct values of the city column from a table named customers. Give only the query.",
+      "grader": "regex",
+      "groundTruth": "select\\s+distinct\\s+city\\s+from\\s+customers",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "SELECT DISTINCT city FROM customers matches."
+    },
+    {
+      "id": "dev-40",
+      "domain": "dev",
+      "prompt": "Write the SQL clause that sorts results by the total column from highest to lowest. Give only the clause.",
+      "grader": "regex",
+      "groundTruth": "order\\s+by\\s+total\\s+desc",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "ORDER BY total DESC matches; ASC would not."
+    },
+    {
+      "id": "dev-41",
+      "domain": "dev",
+      "prompt": "Write a SQL statement that sets active = 0 for the row in table users whose id is 7. Give only the statement.",
+      "grader": "regex",
+      "groundTruth": "update\\s+users\\s+set\\s+active\\s*=\\s*0\\s+where\\s+id\\s*=\\s*7",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "UPDATE users SET active = 0 WHERE id = 7 matches."
+    },
+    {
+      "id": "dev-42",
+      "domain": "dev",
+      "prompt": "What shell command creates a new directory named build in the current directory? Give only the command.",
+      "grader": "regex",
+      "groundTruth": "mkdir\\s+build",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "mkdir build matches; rmdir build does not."
+    },
+    {
+      "id": "dev-43",
+      "domain": "dev",
+      "prompt": "What shell command makes the file script.sh executable using the chmod +x form? Give only the command.",
+      "grader": "regex",
+      "groundTruth": "chmod\\s+\\+x\\s+script\\.sh",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "chmod +x script.sh matches; chmod 644 script.sh does not."
+    },
+    {
+      "id": "dev-44",
+      "domain": "dev",
+      "prompt": "What git command creates and switches to a new branch named feat? Give only the command.",
+      "grader": "regex",
+      "groundTruth": "git\\s+(checkout\\s+-b|switch\\s+-c)\\s+feat",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "git checkout -b feat or git switch -c feat matches; git branch feat alone does not."
+    },
+    {
+      "id": "dev-45",
+      "domain": "dev",
+      "prompt": "What git command shows the commit history with one line per commit? Give only the command.",
+      "grader": "regex",
+      "groundTruth": "git\\s+log\\s+--oneline",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "git log --oneline matches; git log alone does not."
+    },
+    {
+      "id": "dev-46",
+      "domain": "dev",
+      "prompt": "Write a regex character class, in square brackets, that matches any single lowercase vowel a, e, i, o, or u. Give only the character class.",
+      "grader": "regex",
+      "groundTruth": "\\[aeiou\\]",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "[aeiou] is the literal class; [bcd] would not match the pattern."
+    },
+    {
+      "id": "dev-47",
+      "domain": "dev",
+      "prompt": "Write a regex character class, using a range in square brackets, that matches any single lowercase letter from a to z. Give only the character class.",
+      "grader": "regex",
+      "groundTruth": "\\[a-z\\]",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "[a-z] is the literal range class."
+    },
+    {
+      "id": "dev-48",
+      "domain": "dev",
+      "prompt": "Write a regex that matches a string that is exactly the word cat and nothing else, using a start anchor and an end anchor. Give only the regex.",
+      "grader": "regex",
+      "groundTruth": "\\^cat\\$",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "^cat$ contains the anchored literal; plain cat (no anchors) would not match the pattern."
+    },
+    {
+      "id": "dev-49",
+      "domain": "dev",
+      "prompt": "What JavaScript keyword declares a block-scoped constant? Give only the keyword.",
+      "grader": "exact",
+      "groundTruth": "const",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "const declares a block-scoped constant binding."
+    },
+    {
+      "id": "dev-50",
+      "domain": "dev",
+      "prompt": "Which built-in JavaScript method parses a JSON string into an object? Give only the method name in the form Object.method.",
+      "grader": "exact",
+      "groundTruth": "JSON.parse",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "JSON.parse(str) turns a JSON string into a JS value."
+    },
+    {
+      "id": "fin-1",
+      "domain": "finance",
+      "prompt": "What is 18% of 350? Give only the number.",
+      "grader": "number",
+      "groundTruth": 63,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "0.18 * 350 = 63"
+    },
+    {
+      "id": "fin-2",
+      "domain": "finance",
+      "prompt": "45 is what percent of 180? Give only the number (the percent).",
+      "grader": "number",
+      "groundTruth": 25,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "45 / 180 = 0.25 = 25%"
+    },
+    {
+      "id": "fin-3",
+      "domain": "finance",
+      "prompt": "Increase 200 by 12%. Give only the resulting number.",
+      "grader": "number",
+      "groundTruth": 224,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "200 * 1.12 = 224"
+    },
+    {
+      "id": "fin-4",
+      "domain": "finance",
+      "prompt": "Decrease 500 by 8%. Give only the resulting number.",
+      "grader": "number",
+      "groundTruth": 460,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "500 * 0.92 = 460"
+    },
+    {
+      "id": "fin-5",
+      "domain": "finance",
+      "prompt": "A product costs $120 and is marked up 35%. What is the selling price in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 162,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "120 * 1.35 = 162"
+    },
+    {
+      "id": "fin-6",
+      "domain": "finance",
+      "prompt": "An item priced at $250 has a 20% discount. What is the sale price in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 200,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "250 * 0.80 = 200"
+    },
+    {
+      "id": "fin-7",
+      "domain": "finance",
+      "prompt": "An item sells for $150 and costs $90. What is the gross margin as a percent of the selling price? Give only the number (the percent).",
+      "grader": "number",
+      "groundTruth": 40,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(150-90)/150 = 60/150 = 0.40 = 40%"
+    },
+    {
+      "id": "fin-8",
+      "domain": "finance",
+      "prompt": "An item sells for $150 and costs $90. What is the markup as a percent of cost, rounded to two decimal places? Give only the number (the percent).",
+      "grader": "number",
+      "groundTruth": 66.67,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "(150-90)/90 = 60/90 = 0.6667 = 66.67%"
+    },
+    {
+      "id": "fin-9",
+      "domain": "finance",
+      "prompt": "A $100 item has two successive discounts: 10% off, then 20% off the reduced price. What is the final price in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 72,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "100 * 0.90 * 0.80 = 72"
+    },
+    {
+      "id": "fin-10",
+      "domain": "finance",
+      "prompt": "You invest $2000 at 6% annual simple interest for 4 years. What is the total interest earned, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 480,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2000 * 0.06 * 4 = 480"
+    },
+    {
+      "id": "fin-11",
+      "domain": "finance",
+      "prompt": "You deposit $5000 at 4.5% annual simple interest for 2 years. What is the total amount (principal plus interest), in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 5450,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "5000 + 5000*0.045*2 = 5000 + 450 = 5450"
+    },
+    {
+      "id": "fin-12",
+      "domain": "finance",
+      "prompt": "A principal of $1500 earns $300 in simple interest over 2 years. What is the annual interest rate as a percent? Give only the number.",
+      "grader": "number",
+      "groundTruth": 10,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "300 / (1500*2) = 0.10 = 10%"
+    },
+    {
+      "id": "fin-13",
+      "domain": "finance",
+      "prompt": "$1000 is invested at 10% interest compounded annually for 2 years. What is the final amount in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1210,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000 * 1.10^2 = 1000 * 1.21 = 1210"
+    },
+    {
+      "id": "fin-14",
+      "domain": "finance",
+      "prompt": "$1000 is invested at 10% interest compounded annually for 2 years. What is the total interest earned in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 210,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000*1.10^2 - 1000 = 1210 - 1000 = 210"
+    },
+    {
+      "id": "fin-15",
+      "domain": "finance",
+      "prompt": "$2000 is invested at 5% interest compounded annually for 3 years. What is the final amount in dollars, rounded to two decimal places? Give only the number.",
+      "grader": "number",
+      "groundTruth": 2315.25,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "2000 * 1.05^3 = 2000 * 1.157625 = 2315.25"
+    },
+    {
+      "id": "fin-16",
+      "domain": "finance",
+      "prompt": "$5000 is invested at 8% interest compounded annually for 10 years. What is the final amount in dollars, rounded to two decimal places? Give only the number.",
+      "grader": "number",
+      "groundTruth": 10794.62,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "5000 * 1.08^10, rounded to 2 dp"
+    },
+    {
+      "id": "fin-17",
+      "domain": "finance",
+      "prompt": "$1000 is invested at a 12% annual rate compounded monthly for 1 year. What is the final amount in dollars, rounded to two decimal places? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1126.83,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000 * (1 + 0.12/12)^12 = 1000 * 1.01^12, rounded to 2 dp"
+    },
+    {
+      "id": "fin-18",
+      "domain": "finance",
+      "prompt": "Convert 100 USD to EUR at a rate of 0.92 EUR per USD. Give only the number of EUR.",
+      "grader": "number",
+      "groundTruth": 92,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "100 * 0.92 = 92"
+    },
+    {
+      "id": "fin-19",
+      "domain": "finance",
+      "prompt": "Convert 50 GBP to USD at a rate of 1.27 USD per GBP. Give only the number of USD.",
+      "grader": "number",
+      "groundTruth": 63.5,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "50 * 1.27 = 63.5"
+    },
+    {
+      "id": "fin-20",
+      "domain": "finance",
+      "prompt": "Convert 10 kilometers to miles at a rate of 0.621371 miles per kilometer, rounded to two decimal places. Give only the number of miles.",
+      "grader": "number",
+      "groundTruth": 6.21,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "10 * 0.621371 = 6.21371 -> 6.21"
+    },
+    {
+      "id": "fin-21",
+      "domain": "finance",
+      "prompt": "Convert 5 kilograms to pounds at a rate of 2.20462 pounds per kilogram, rounded to two decimal places. Give only the number of pounds.",
+      "grader": "number",
+      "groundTruth": 11.02,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "5 * 2.20462 = 11.0231 -> 11.02"
+    },
+    {
+      "id": "fin-22",
+      "domain": "finance",
+      "prompt": "Convert 250 EUR to JPY at a rate of 162.5 JPY per EUR. Give only the number of JPY.",
+      "grader": "number",
+      "groundTruth": 40625,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "250 * 162.5 = 40625"
+    },
+    {
+      "id": "fin-23",
+      "domain": "finance",
+      "prompt": "Convert 1500 meters to kilometers. Give only the number of kilometers.",
+      "grader": "number",
+      "groundTruth": 1.5,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1500 / 1000 = 1.5"
+    },
+    {
+      "id": "fin-24",
+      "domain": "finance",
+      "prompt": "Two quantities are in the ratio 3:5 and their total is 160. What is the value of the larger quantity? Give only the number.",
+      "grader": "number",
+      "groundTruth": 100,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "160 * 5/(3+5) = 160 * 5/8 = 100"
+    },
+    {
+      "id": "fin-25",
+      "domain": "finance",
+      "prompt": "$240 is divided among three people in the ratio 2:3:7. What is the largest share, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 140,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "240 * 7/(2+3+7) = 240 * 7/12 = 140"
+    },
+    {
+      "id": "fin-26",
+      "domain": "finance",
+      "prompt": "A company has $400000 in debt and $800000 in equity. What is its debt-to-equity ratio? Give only the number.",
+      "grader": "number",
+      "groundTruth": 0.5,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "400000 / 800000 = 0.5"
+    },
+    {
+      "id": "fin-27",
+      "domain": "finance",
+      "prompt": "What is the mean (average) of 12, 15, 20, 25, and 28? Give only the number.",
+      "grader": "number",
+      "groundTruth": 20,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(12+15+20+25+28)/5 = 100/5 = 20"
+    },
+    {
+      "id": "fin-28",
+      "domain": "finance",
+      "prompt": "What is the median of 5, 8, 3, 9, 12, and 7? Give only the number.",
+      "grader": "number",
+      "groundTruth": 7.5,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "sorted 3,5,7,8,9,12; median = (7+8)/2 = 7.5"
+    },
+    {
+      "id": "fin-29",
+      "domain": "finance",
+      "prompt": "Compute the weighted average of scores 80, 90, and 70 with weights 2, 3, and 5 respectively. Give only the number.",
+      "grader": "number",
+      "groundTruth": 78,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(80*2 + 90*3 + 70*5)/(2+3+5) = (160+270+350)/10 = 780/10 = 78"
+    },
+    {
+      "id": "fin-30",
+      "domain": "finance",
+      "prompt": "What is the median of 10, 20, 30, 40, and 50? Give only the number.",
+      "grader": "number",
+      "groundTruth": 30,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "middle value of sorted 5-element list = 30"
+    },
+    {
+      "id": "fin-31",
+      "domain": "finance",
+      "prompt": "What is the future value of $1000 invested at 6% per year, compounded annually, after 5 years? Round to two decimal places and give only the number.",
+      "grader": "number",
+      "groundTruth": 1338.23,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000 * 1.06^5, rounded to 2 dp"
+    },
+    {
+      "id": "fin-32",
+      "domain": "finance",
+      "prompt": "Fixed costs are $10000, the selling price is $50 per unit, and the variable cost is $30 per unit. How many units must be sold to break even? Give only the number.",
+      "grader": "number",
+      "groundTruth": 500,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "10000 / (50-30) = 10000/20 = 500"
+    },
+    {
+      "id": "fin-33",
+      "domain": "finance",
+      "prompt": "A $12000 loan charges 7% annual simple interest for 3 years. What is the total interest paid, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 2520,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "12000 * 0.07 * 3 = 2520"
+    },
+    {
+      "id": "fin-34",
+      "domain": "finance",
+      "prompt": "Taxable income is $50000 taxed at a flat rate of 22%. What is the tax owed, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 11000,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "50000 * 0.22 = 11000"
+    },
+    {
+      "id": "fin-35",
+      "domain": "finance",
+      "prompt": "A business has revenue of $200000 and expenses of $140000. Profit is taxed at 25%. What is the net income after tax, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 45000,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "profit 200000-140000=60000; tax 60000*0.25=15000; net 60000-15000=45000"
+    },
+    {
+      "id": "fin-36",
+      "domain": "finance",
+      "prompt": "An item costs $80 and sales tax is 8.5%. What is the total cost including tax, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 86.8,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "80 * 1.085 = 86.80"
+    },
+    {
+      "id": "fin-37",
+      "domain": "finance",
+      "prompt": "A restaurant bill is $64 and you leave an 18% tip. What is the tip amount, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 11.52,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "64 * 0.18 = 11.52"
+    },
+    {
+      "id": "fin-38",
+      "domain": "finance",
+      "prompt": "An investment of $2500 produces a gain of $500. What is the return on investment (ROI) as a percent? Give only the number.",
+      "grader": "number",
+      "groundTruth": 20,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "500 / 2500 = 0.20 = 20%"
+    },
+    {
+      "id": "fin-39",
+      "domain": "finance",
+      "prompt": "An asset costs $10000, has a salvage value of $2000, and a useful life of 5 years. Using straight-line depreciation, what is the annual depreciation expense, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1600,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "(10000-2000)/5 = 8000/5 = 1600"
+    },
+    {
+      "id": "fin-40",
+      "domain": "finance",
+      "prompt": "A store had sales of $1000 in Q1, $1500 in Q2, and $2000 in Q3. Return a GFM markdown table with columns \"Quarter\" and \"Sales\", one row per quarter in order (Q1, Q2, Q3), with Sales as plain numbers (no dollar sign or commas).",
+      "grader": "table",
+      "groundTruth": "| Quarter | Sales |\n| --- | --- |\n| Q1 | 1000 |\n| Q2 | 1500 |\n| Q3 | 2000 |",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "header + 3 data rows; values 1000/1500/2000"
+    },
+    {
+      "id": "fin-41",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that adds up the cells A1 through A10. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*sum\\(\\s*a1\\s*:\\s*a10\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=SUM(A1:A10)"
+    },
+    {
+      "id": "fin-42",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that averages the cells B1 through B20. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*average\\(\\s*b1\\s*:\\s*b20\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=AVERAGE(B1:B20)"
+    },
+    {
+      "id": "fin-43",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that multiplies the value in cell A1 by the value in cell B1. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*(a1\\s*\\*\\s*b1|b1\\s*\\*\\s*a1)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=A1*B1 (or =B1*A1)"
+    },
+    {
+      "id": "fin-44",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that divides the value in cell A1 by the value in cell B1. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*a1\\s*/\\s*b1",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=A1/B1"
+    },
+    {
+      "id": "fin-45",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that returns the text High if A1 is greater than 100, otherwise the text Low. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*if\\(\\s*a1\\s*>\\s*100\\s*,\\s*\"high\"\\s*,\\s*\"low\"\\s*\\)",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "=IF(A1>100,\"High\",\"Low\")"
+    },
+    {
+      "id": "fin-46",
+      "domain": "finance",
+      "prompt": "Write the Excel formula that looks up the value in A2 within the range D:E and returns the value from the 2nd column, using an exact match. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*vlookup\\(\\s*a2\\s*,\\s*d:e\\s*,\\s*2\\s*,\\s*(false|0)\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=VLOOKUP(A2,D:E,2,FALSE)"
+    },
+    {
+      "id": "fin-47",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that counts how many cells in A1 through A100 are greater than 50. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*countif\\(\\s*a1\\s*:\\s*a100\\s*,\\s*\">50\"\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=COUNTIF(A1:A100,\">50\")"
+    },
+    {
+      "id": "fin-48",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that rounds the value in A1 to 2 decimal places. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*round\\(\\s*a1\\s*,\\s*2\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=ROUND(A1,2)"
+    },
+    {
+      "id": "fin-49",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that sums B2 through B50 for the rows where A2 through A50 equals the text Sales. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*sumif\\(\\s*a2\\s*:\\s*a50\\s*,\\s*\"sales\"\\s*,\\s*b2\\s*:\\s*b50\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=SUMIF(A2:A50,\"Sales\",B2:B50)"
+    },
+    {
+      "id": "fin-50",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that returns the maximum value in C1 through C30. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*max\\(\\s*c1\\s*:\\s*c30\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=MAX(C1:C30)"
+    },
+    {
+      "id": "xpro-1",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for sodium? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "Na",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: sodium = Na (from Latin natrium)."
+    },
+    {
+      "id": "xpro-2",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for iron? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "Fe",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: iron = Fe (from Latin ferrum)."
+    },
+    {
+      "id": "xpro-3",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for potassium? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "K",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: potassium = K (from Latin kalium)."
+    },
+    {
+      "id": "xpro-4",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for silver? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "Ag",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: silver = Ag (from Latin argentum)."
+    },
+    {
+      "id": "xpro-5",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for lead? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "Pb",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: lead = Pb (from Latin plumbum)."
+    },
+    {
+      "id": "xpro-6",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for oxygen? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "O",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: oxygen = O (atomic number 8)."
+    },
+    {
+      "id": "xpro-7",
+      "domain": "cross",
+      "prompt": "What is the chemical symbol for helium? Give only the symbol.",
+      "grader": "exact",
+      "groundTruth": "He",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "IUPAC periodic table: helium = He (atomic number 2)."
+    },
+    {
+      "id": "xpro-8",
+      "domain": "cross",
+      "prompt": "Convert 5 kilometers to meters (1 km = 1000 m). Give only the number.",
+      "grader": "number",
+      "groundTruth": 5000,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "5 x 1000 = 5000 m (SI prefix kilo = 1000)."
+    },
+    {
+      "id": "xpro-9",
+      "domain": "cross",
+      "prompt": "Convert 10 miles to kilometers using 1 mile = 1.609344 km. Give only the number of kilometers.",
+      "grader": "number",
+      "groundTruth": 16.09344,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "10 x 1.609344 = 16.09344 km (international mile is exactly 1.609344 km)."
+    },
+    {
+      "id": "xpro-10",
+      "domain": "cross",
+      "prompt": "Convert 12 inches to centimeters using 1 inch = 2.54 cm. Give only the number of centimeters.",
+      "grader": "number",
+      "groundTruth": 30.48,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "12 x 2.54 = 30.48 cm (inch defined as exactly 2.54 cm)."
+    },
+    {
+      "id": "xpro-11",
+      "domain": "cross",
+      "prompt": "Convert 10 pounds to kilograms using 1 pound = 0.45359237 kg. Give only the number of kilograms.",
+      "grader": "number",
+      "groundTruth": 4.5359237,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "10 x 0.45359237 = 4.5359237 kg (international avoirdupois pound)."
+    },
+    {
+      "id": "xpro-12",
+      "domain": "cross",
+      "prompt": "Convert 100 feet to meters using 1 foot = 0.3048 m. Give only the number of meters.",
+      "grader": "number",
+      "groundTruth": 30.48,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "100 x 0.3048 = 30.48 m (international foot defined as exactly 0.3048 m)."
+    },
+    {
+      "id": "xpro-13",
+      "domain": "cross",
+      "prompt": "Convert 25 degrees Celsius to Fahrenheit using F = C x 9/5 + 32. Give only the number.",
+      "grader": "number",
+      "groundTruth": 77,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "25 x 9/5 + 32 = 45 + 32 = 77 F."
+    },
+    {
+      "id": "xpro-14",
+      "domain": "cross",
+      "prompt": "Convert 212 degrees Fahrenheit to Celsius using C = (F - 32) x 5/9. Give only the number.",
+      "grader": "number",
+      "groundTruth": 100,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(212 - 32) x 5/9 = 180 x 5/9 = 100 C (boiling point of water)."
+    },
+    {
+      "id": "xpro-15",
+      "domain": "cross",
+      "prompt": "Convert 0 degrees Celsius to Kelvin using K = C + 273.15. Give only the number.",
+      "grader": "number",
+      "groundTruth": 273.15,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "0 + 273.15 = 273.15 K (0 C is the ice point)."
+    },
+    {
+      "id": "xpro-16",
+      "domain": "cross",
+      "prompt": "Convert 3 liters to milliliters (1 liter = 1000 mL). Give only the number.",
+      "grader": "number",
+      "groundTruth": 3000,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "3 x 1000 = 3000 mL (SI prefix milli = 1/1000)."
+    },
+    {
+      "id": "xpro-17",
+      "domain": "cross",
+      "prompt": "Convert 2.5 kilograms to grams (1 kg = 1000 g). Give only the number.",
+      "grader": "number",
+      "groundTruth": 2500,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2.5 x 1000 = 2500 g."
+    },
+    {
+      "id": "xpro-18",
+      "domain": "cross",
+      "prompt": "How many seconds are in 2 hours? Give only the number.",
+      "grader": "number",
+      "groundTruth": 7200,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2 x 60 x 60 = 7200 s."
+    },
+    {
+      "id": "xpro-19",
+      "domain": "cross",
+      "prompt": "How many hours are in 3 days? Give only the number.",
+      "grader": "number",
+      "groundTruth": 72,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "3 x 24 = 72 hours."
+    },
+    {
+      "id": "xpro-20",
+      "domain": "cross",
+      "prompt": "How many minutes are in one week? Give only the number.",
+      "grader": "number",
+      "groundTruth": 10080,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "7 x 24 x 60 = 10080 minutes."
+    },
+    {
+      "id": "xpro-21",
+      "domain": "cross",
+      "prompt": "How many seconds are in one day? Give only the number.",
+      "grader": "number",
+      "groundTruth": 86400,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "24 x 60 x 60 = 86400 s."
+    },
+    {
+      "id": "xpro-22",
+      "domain": "cross",
+      "prompt": "How many bits are in one byte? Give only the number.",
+      "grader": "number",
+      "groundTruth": 8,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1 byte = 8 bits by definition."
+    },
+    {
+      "id": "xpro-23",
+      "domain": "cross",
+      "prompt": "How many bits are in 4 bytes? Give only the number.",
+      "grader": "number",
+      "groundTruth": 32,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "4 x 8 = 32 bits."
+    },
+    {
+      "id": "xpro-24",
+      "domain": "cross",
+      "prompt": "How many bytes are in 2 kibibytes, where 1 KiB = 1024 bytes? Give only the number.",
+      "grader": "number",
+      "groundTruth": 2048,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2 x 1024 = 2048 bytes (IEC binary prefix kibi = 1024)."
+    },
+    {
+      "id": "xpro-25",
+      "domain": "cross",
+      "prompt": "How many bytes are in 1 mebibyte, where 1 MiB = 1048576 bytes? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1048576,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "1 MiB = 1024^2 = 1048576 bytes (IEC binary prefix mebi)."
+    },
+    {
+      "id": "xpro-26",
+      "domain": "cross",
+      "prompt": "What is the median of the numbers 3, 7, 8, 9, 20? Give only the number.",
+      "grader": "number",
+      "groundTruth": 8,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Sorted: 3,7,8,9,20; middle of 5 values is the 3rd = 8."
+    },
+    {
+      "id": "xpro-27",
+      "domain": "cross",
+      "prompt": "What is the mean (arithmetic average) of 10, 20, 30, 40? Give only the number.",
+      "grader": "number",
+      "groundTruth": 25,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(10+20+30+40)/4 = 100/4 = 25."
+    },
+    {
+      "id": "xpro-28",
+      "domain": "cross",
+      "prompt": "What is the mean (arithmetic average) of 4, 8, 15, 16, 23, 42? Give only the number.",
+      "grader": "number",
+      "groundTruth": 18,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "(4+8+15+16+23+42)/6 = 108/6 = 18."
+    },
+    {
+      "id": "xpro-29",
+      "domain": "cross",
+      "prompt": "What is 20% of 150? Give only the number.",
+      "grader": "number",
+      "groundTruth": 30,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "0.20 x 150 = 30."
+    },
+    {
+      "id": "xpro-30",
+      "domain": "cross",
+      "prompt": "What is 35% of 200? Give only the number.",
+      "grader": "number",
+      "groundTruth": 70,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "0.35 x 200 = 70."
+    },
+    {
+      "id": "xpro-31",
+      "domain": "cross",
+      "prompt": "What is the area of a rectangle with width 6 and height 9? Give only the number.",
+      "grader": "number",
+      "groundTruth": 54,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Area = w x h = 6 x 9 = 54."
+    },
+    {
+      "id": "xpro-32",
+      "domain": "cross",
+      "prompt": "What is the area of a triangle with base 10 and height 4, using area = 1/2 x base x height? Give only the number.",
+      "grader": "number",
+      "groundTruth": 20,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "0.5 x 10 x 4 = 20."
+    },
+    {
+      "id": "xpro-33",
+      "domain": "cross",
+      "prompt": "What is the area of a circle with radius 10, using pi = 3.14159 and area = pi x r^2? Give only the number.",
+      "grader": "number",
+      "groundTruth": 314.159,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "3.14159 x 10^2 = 3.14159 x 100 = 314.159."
+    },
+    {
+      "id": "xpro-34",
+      "domain": "cross",
+      "prompt": "On a fair six-sided die, what is the probability of rolling an even number? Give the answer as a decimal.",
+      "grader": "number",
+      "groundTruth": 0.5,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Even faces {2,4,6} = 3 of 6 = 3/6 = 0.5."
+    },
+    {
+      "id": "xpro-35",
+      "domain": "cross",
+      "prompt": "When flipping two fair coins, what is the probability that both land heads? Give the answer as a decimal.",
+      "grader": "number",
+      "groundTruth": 0.25,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1/2 x 1/2 = 1/4 = 0.25 (independent events)."
+    },
+    {
+      "id": "xpro-36",
+      "domain": "cross",
+      "prompt": "What is the sum of all integers from 1 to 10 inclusive? Give only the number.",
+      "grader": "number",
+      "groundTruth": 55,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "n(n+1)/2 = 10x11/2 = 55."
+    },
+    {
+      "id": "xpro-37",
+      "domain": "cross",
+      "prompt": "What is the range (maximum minus minimum) of the numbers 4, 9, 15, 2? Give only the number.",
+      "grader": "number",
+      "groundTruth": 13,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "max 15 - min 2 = 13."
+    },
+    {
+      "id": "xpro-38",
+      "domain": "cross",
+      "prompt": "What is the capital city of Japan? Give only the city name.",
+      "grader": "exact",
+      "groundTruth": "Tokyo",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Tokyo is the capital of Japan."
+    },
+    {
+      "id": "xpro-39",
+      "domain": "cross",
+      "prompt": "What is the capital city of Canada? Give only the city name.",
+      "grader": "exact",
+      "groundTruth": "Ottawa",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Ottawa (Ontario) is the capital of Canada - not Toronto."
+    },
+    {
+      "id": "xpro-40",
+      "domain": "cross",
+      "prompt": "What is the capital city of Australia? Give only the city name.",
+      "grader": "exact",
+      "groundTruth": "Canberra",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Canberra is the capital of Australia - not Sydney."
+    },
+    {
+      "id": "xpro-41",
+      "domain": "cross",
+      "prompt": "How many days are in the month of September? Give only the number.",
+      "grader": "number",
+      "groundTruth": 30,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "September always has 30 days (fixed calendar fact)."
+    },
+    {
+      "id": "xpro-42",
+      "domain": "cross",
+      "prompt": "In the Gregorian calendar, how many months have exactly 31 days? Give only the number.",
+      "grader": "number",
+      "groundTruth": 7,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Jan, Mar, May, Jul, Aug, Oct, Dec = 7 months of 31 days."
+    },
+    {
+      "id": "xpro-43",
+      "domain": "cross",
+      "prompt": "Is the year 2000 a leap year? Answer only yes or no.",
+      "grader": "exact",
+      "groundTruth": "yes",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2000 divisible by 400, so it IS a leap year (Gregorian rule)."
+    },
+    {
+      "id": "xpro-44",
+      "domain": "cross",
+      "prompt": "Is the year 1900 a leap year? Answer only yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1900 divisible by 100 but not 400, so NOT a leap year (Gregorian rule)."
+    },
+    {
+      "id": "xpro-45",
+      "domain": "cross",
+      "prompt": "What TCP port does SSH use by default? Give only the number.",
+      "grader": "number",
+      "groundTruth": 22,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "IANA well-known port: SSH = 22."
+    },
+    {
+      "id": "xpro-46",
+      "domain": "cross",
+      "prompt": "What port number does DNS use by default? Give only the number.",
+      "grader": "number",
+      "groundTruth": 53,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IANA well-known port: DNS = 53 (TCP and UDP)."
+    },
+    {
+      "id": "xpro-47",
+      "domain": "cross",
+      "prompt": "What is the HTTP status code for 'Not Found'? Give only the number.",
+      "grader": "number",
+      "groundTruth": 404,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "RFC 9110: 404 Not Found."
+    },
+    {
+      "id": "xpro-48",
+      "domain": "cross",
+      "prompt": "What is the HTTP status code for a successful request, 'OK'? Give only the number.",
+      "grader": "number",
+      "groundTruth": 200,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "RFC 9110: 200 OK."
+    },
+    {
+      "id": "xpro-49",
+      "domain": "cross",
+      "prompt": "What is the ASCII decimal code of the uppercase letter A? Give only the number.",
+      "grader": "number",
+      "groundTruth": 65,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "ASCII: 'A' = 65 (0x41)."
+    },
+    {
+      "id": "xpro-50",
+      "domain": "cross",
+      "prompt": "What is the hexadecimal value 0xFF in decimal? Give only the number.",
+      "grader": "number",
+      "groundTruth": 255,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "0xFF = 15x16 + 15 = 255."
+    },
+    {
+      "id": "sec-1",
+      "domain": "security",
+      "prompt": "Code review. This builds a query as: query = \"SELECT * FROM users WHERE name = '\" + username + \"'\". Name the vulnerability class in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "sql\\s*injection|sqli",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "String-concatenated user input into SQL = SQL injection (CWE-89, OWASP A03). Pattern rejects XSS/other names."
+    },
+    {
+      "id": "sec-2",
+      "domain": "security",
+      "prompt": "Code review. A web app runs: document.getElementById('out').innerHTML = location.hash. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "cross[\\s-]*site[\\s-]*script|\\bxss\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Untrusted location.hash written to innerHTML = (DOM-based) cross-site scripting, CWE-79."
+    },
+    {
+      "id": "sec-3",
+      "domain": "security",
+      "prompt": "Code review. A Python handler runs: os.system(\"ping -c 1 \" + user_host). Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "command\\s*injection|os\\s*command|shell\\s*injection",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "User input concatenated into an OS shell command = OS command injection, CWE-78."
+    },
+    {
+      "id": "sec-4",
+      "domain": "security",
+      "prompt": "Code review. A handler runs: open('/var/data/' + request.args['file']).read() with no validation. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "path\\s*traversal|directory\\s*traversal|\\blfi\\b",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Unvalidated filename lets ../ escape the base dir = path/directory traversal, CWE-22."
+    },
+    {
+      "id": "sec-5",
+      "domain": "security",
+      "prompt": "Code review. A server endpoint does: requests.get(request.args['url']) and returns the body to the caller. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "ssrf|server[\\s-]*side\\s*request\\s*forgery",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Server fetches a user-supplied URL = server-side request forgery, CWE-918, OWASP A10."
+    },
+    {
+      "id": "sec-6",
+      "domain": "security",
+      "prompt": "Code review. @app.get('/invoice/<id>') returns db.get_invoice(id) with no check that the invoice belongs to the logged-in user. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "idor|insecure\\s*direct\\s*object|broken\\s*(object[\\s-]*level\\s*)?authoriz|\\bbola\\b|broken\\s*access\\s*control",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Object fetched by user-controlled id with no ownership check = IDOR / broken object-level authorization, CWE-639, OWASP A01."
+    },
+    {
+      "id": "sec-7",
+      "domain": "security",
+      "prompt": "Code review. Source contains: AWS_SECRET_ACCESS_KEY = \"wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY\". Name the vulnerability class in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "hard[\\s-]?coded|embedded.*(secret|credential|key)|secret.*in\\s*(source|code|repo)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Secret embedded in source = use of hard-coded credentials, CWE-798."
+    },
+    {
+      "id": "sec-8",
+      "domain": "security",
+      "prompt": "Code review. On signup the app runs: db.save(username, password) storing the password string exactly as received. Name the security problem in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "plain.?text|clear.?text|unhashed|not\\s*hashed|unsalted|not\\s*encrypted|without\\s*hashing",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Passwords stored verbatim = plaintext / unhashed password storage, CWE-256/CWE-312."
+    },
+    {
+      "id": "sec-9",
+      "domain": "security",
+      "prompt": "Code review. @app.get('/admin/all-users') def all_users(): return dump_users() has no authentication or authorization check. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "missing\\s*auth|no\\s*authentication|broken\\s*auth|unauthenticated|lack.*authentication|missing\\s*(access\\s*control|authoriz)|broken\\s*access\\s*control",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Sensitive endpoint with no auth gate = missing authentication / broken access control, CWE-306."
+    },
+    {
+      "id": "sec-10",
+      "domain": "security",
+      "prompt": "Code review. A handler runs: obj = pickle.loads(request.body) on data from the client. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "insecure\\s*deserial|unsafe\\s*deserial|deserial|pickle",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Deserializing untrusted data with pickle = insecure deserialization, CWE-502, OWASP A08."
+    },
+    {
+      "id": "sec-11",
+      "domain": "security",
+      "prompt": "Code review. A login handler ends with: return redirect(request.args.get('next')) using the raw value. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "open\\s*redirect|unvalidated\\s*redirect",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Redirect target taken unvalidated from user input = open redirect, CWE-601."
+    },
+    {
+      "id": "sec-12",
+      "domain": "security",
+      "prompt": "Code review. A bank app changes state with GET /transfer?to=X&amount=Y and uses no per-request token, so a hostile page can trigger it while the victim is logged in. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "csrf|cross[\\s-]*site\\s*request\\s*forgery",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "State-changing request with no anti-forgery token = cross-site request forgery, CWE-352."
+    },
+    {
+      "id": "sec-13",
+      "domain": "security",
+      "prompt": "Code review. Passwords are hashed with hashlib.md5(password.encode()).hexdigest() and no salt. Name the weakness in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "weak\\s*hash|broken\\s*(hash|crypto)|insecure\\s*hash|fast\\s*hash|too\\s*fast|unsalted|unsuitable|not\\s*suitable",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "MD5 unsalted for passwords = use of a weak/fast/broken hash unsuitable for passwords, CWE-327/CWE-916."
+    },
+    {
+      "id": "sec-14",
+      "domain": "security",
+      "prompt": "Code review. An XML parser is configured to resolve external entities (DTDs enabled) on documents uploaded by users. Name the vulnerability class (its common acronym is fine).",
+      "grader": "regex",
+      "groundTruth": "\\bxxe\\b|xml\\s*external\\s*entit",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "External-entity resolution on untrusted XML = XML external entity injection (XXE), CWE-611."
+    },
+    {
+      "id": "sec-15",
+      "domain": "security",
+      "prompt": "Code review. A session token is generated with: token = str(random.random()). Name the security problem in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "insecure\\s*random|weak\\s*random|predictable|not\\s*cryptographic|non[\\s-]*cryptographic|insufficient\\s*entropy",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "random.random() is a non-cryptographic PRNG = insecure/predictable randomness, CWE-330/CWE-338."
+    },
+    {
+      "id": "sec-16",
+      "domain": "security",
+      "prompt": "Code review. A calculator endpoint runs: result = eval(request.args['expr']) on the raw user string. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "code\\s*injection|arbitrary\\s*code|\\brce\\b|remote\\s*code\\s*execut|command\\s*injection",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "eval() on untrusted input = code injection / arbitrary code execution, CWE-94/CWE-95."
+    },
+    {
+      "id": "sec-17",
+      "domain": "security",
+      "prompt": "Code review. On login failure the app writes: log.info('login failed for ' + username + ' pw=' + password). Name the security problem in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "sensitive\\s*(data|information)|password.*log|log.*password|information\\s*(exposure|disclosure|leak)|logging\\s*(secret|credential|password)|clear.?text",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Logging the plaintext password = sensitive data exposure via logs, CWE-532/CWE-200."
+    },
+    {
+      "id": "sec-18",
+      "domain": "security",
+      "prompt": "Code review. The app never sets X-Frame-Options or a frame-ancestors CSP, so any site can embed its pages in a hidden iframe over a decoy. Name the attack this enables.",
+      "grader": "regex",
+      "groundTruth": "clickjack|ui\\s*redress",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Framing with no frame-busting header = clickjacking (UI redressing), CWE-1021."
+    },
+    {
+      "id": "sec-19",
+      "domain": "security",
+      "prompt": "Code review. A user-update handler runs: user.update(**request.json) binding every JSON field directly to the model, including is_admin. Name the vulnerability class.",
+      "grader": "regex",
+      "groundTruth": "mass\\s*assignment|over[\\s-]*post|auto[\\s-]*bind|excessive\\s*data\\s*binding",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Binding all client fields to the model = mass assignment / over-posting, CWE-915."
+    },
+    {
+      "id": "sec-20",
+      "domain": "security",
+      "prompt": "Code review. An HTTPS client call is made as: requests.get(url, verify=False). Name the security problem in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "(disabl|skip|skipp|no|without|turn.*off|bypass).*(certificate|cert|tls|ssl)\\s*(valid|verif)|mitm|man[\\s-]*in[\\s-]*the[\\s-]*middle|improper\\s*certificate",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "verify=False disables TLS certificate validation, enabling MITM, CWE-295."
+    },
+    {
+      "id": "sec-21",
+      "domain": "security",
+      "prompt": "A SQL query is built by concatenating a user-supplied name into the WHERE clause. State the correct fix in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "parameter|prepared\\s*statement|placeholder|bind\\s*(variable|param)|\\?\\s|\\$1",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Canonical SQLi fix = parameterized queries / prepared statements with bound parameters. Rejects 'escaping only'."
+    },
+    {
+      "id": "sec-22",
+      "domain": "security",
+      "prompt": "User-controlled text is inserted into an HTML page and executes as script. State the correct fix for this XSS in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "output\\s*encod|html\\s*encod|encode|escap|sanitiz|textcontent|context.*encod|\\bcsp\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "XSS fix = contextual output encoding / escaping (or sanitization / textContent / CSP), OWASP XSS Prevention."
+    },
+    {
+      "id": "sec-23",
+      "domain": "security",
+      "prompt": "An API key is hard-coded in source. State where the secret should live instead, in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "env(ironment)?\\s*var|secrets?\\s*manager|\\bvault\\b|secret\\s*store|key\\s*management|\\bkms\\b|parameter\\s*store",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Fix for hard-coded secret = environment variable / secrets manager / vault, not source."
+    },
+    {
+      "id": "sec-24",
+      "domain": "security",
+      "prompt": "Name an appropriate algorithm (or family) for securely hashing user passwords.",
+      "grader": "regex",
+      "groundTruth": "bcrypt|argon2|scrypt|pbkdf2",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "OWASP Password Storage: bcrypt, argon2, scrypt, or PBKDF2. Rejects md5/sha."
+    },
+    {
+      "id": "sec-25",
+      "domain": "security",
+      "prompt": "A server fetches a user-supplied URL (SSRF risk). State the correct mitigation in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "allow[\\s-]*list|white[\\s-]*list|validate.*(url|host|domain)|block.*(internal|metadata|private|localhost)|deny[\\s-]*list|restrict.*(host|destination)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "SSRF fix = allowlist destinations + block internal/metadata ranges, OWASP SSRF Prevention."
+    },
+    {
+      "id": "sec-26",
+      "domain": "security",
+      "prompt": "An endpoint returns a record by id without checking it belongs to the caller (IDOR). State the correct fix in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "authoriz|access\\s*control|ownership\\s*check|verify.*(owner|user|belongs)|check.*(permission|owner)|object[\\s-]*level",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "IDOR fix = enforce authorization / ownership (object-level access control) on every access."
+    },
+    {
+      "id": "sec-27",
+      "domain": "security",
+      "prompt": "A state-changing form has no protection against cross-site request forgery. State the correct defense in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "csrf\\s*token|anti[\\s-]*csrf|synchroniz(er)?\\s*token|samesite|double[\\s-]*submit",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "CSRF fix = anti-CSRF (synchronizer) token and/or SameSite cookies, OWASP CSRF Prevention."
+    },
+    {
+      "id": "sec-28",
+      "domain": "security",
+      "prompt": "A program runs a shell command built from user input. State the correct fix to prevent command injection, in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "(avoid|no|without|don'?t\\s*use)\\s*(a\\s*)?shell|shell\\s*=\\s*false|argument\\s*(array|list|vector)|list\\s*of\\s*arg|pass.*arg.*(array|list)|execve|allow[\\s-]*list|parameteriz",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Command-injection fix = avoid the shell; pass an argument array (shell=False / execve) or allowlist, OWASP."
+    },
+    {
+      "id": "sec-29",
+      "domain": "security",
+      "prompt": "A file is opened from a path that includes a user-supplied name (path traversal risk). State the correct mitigation in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "canonical|realpath|normaliz.*path|resolve.*path|validate.*path|allow[\\s-]*list|basename|restrict.*(director|path)|within.*(base|root)|reject.*\\.\\.",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Path-traversal fix = canonicalize/resolve the path and confirm it stays within the allowed base dir, CWE-22 remediation."
+    },
+    {
+      "id": "sec-30",
+      "domain": "security",
+      "prompt": "Login credentials are sent over plain HTTP. State the correct fix in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "\\btls\\b|https|\\bssl\\b|encrypt.*transit|transport\\s*(layer\\s*)?(security|encryption)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Plaintext transport fix = use TLS / HTTPS to encrypt in transit, CWE-319 remediation."
+    },
+    {
+      "id": "sec-31",
+      "domain": "security",
+      "prompt": "An app deserializes untrusted data with a native binary deserializer (e.g. pickle). State the correct fix in one short phrase.",
+      "grader": "regex",
+      "groundTruth": "\\bjson\\b|avoid.*(pickle|native)|do\\s*not.*(deserial|pickle)|don'?t.*(deserial|pickle)|safe\\s*(format|deserial)|signed|allow[\\s-]*list.*(class|type)|schema\\s*valid",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Insecure-deserialization fix = don't deserialize untrusted data with native formats; use JSON/data-only formats, or signed+allowlisted types, CWE-502 remediation."
+    },
+    {
+      "id": "sec-32",
+      "domain": "security",
+      "prompt": "Is storing user passwords in plaintext a safe practice? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Plaintext password storage is never safe (CWE-256). Answer: no."
+    },
+    {
+      "id": "sec-33",
+      "domain": "security",
+      "prompt": "Is MD5 an appropriate algorithm for hashing user passwords? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "MD5 is fast and broken; unsuitable for password hashing (OWASP). Answer: no."
+    },
+    {
+      "id": "sec-34",
+      "domain": "security",
+      "prompt": "Is it safe to pass untrusted user input directly to eval()? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "eval() on untrusted input = code injection (CWE-95). Answer: no."
+    },
+    {
+      "id": "sec-35",
+      "domain": "security",
+      "prompt": "Is bcrypt an appropriate choice for hashing user passwords? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "yes",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "bcrypt is an OWASP-recommended adaptive password hash. Answer: yes."
+    },
+    {
+      "id": "sec-36",
+      "domain": "security",
+      "prompt": "Are parameterized queries (prepared statements) an effective defense against SQL injection? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "yes",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Parameterized queries are the primary, effective SQLi defense (OWASP). Answer: yes."
+    },
+    {
+      "id": "sec-37",
+      "domain": "security",
+      "prompt": "In production, is it safe to disable TLS certificate validation (e.g. verify=False)? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Disabling cert validation enables MITM (CWE-295). Answer: no."
+    },
+    {
+      "id": "sec-38",
+      "domain": "security",
+      "prompt": "Is TLS 1.0 considered secure by modern standards? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "TLS 1.0 is deprecated (RFC 8996); not secure. Answer: no."
+    },
+    {
+      "id": "sec-39",
+      "domain": "security",
+      "prompt": "Should secrets such as API keys and passwords be committed into a git repository? Answer with only one word, yes or no.",
+      "grader": "exact",
+      "groundTruth": "no",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Committing secrets to VCS = hard-coded/exposed credentials (CWE-798). Answer: no."
+    },
+    {
+      "id": "sec-40",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for SQL injection (format: CWE-NN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*89\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "SQL injection = CWE-89. Boundary rejects CWE-79/CWE-890."
+    },
+    {
+      "id": "sec-41",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for cross-site scripting (format: CWE-NN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*79\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "XSS = CWE-79. Boundary rejects CWE-89/CWE-798."
+    },
+    {
+      "id": "sec-42",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for path traversal (format: CWE-NN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*22\\b",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Path traversal = CWE-22. Boundary rejects CWE-222."
+    },
+    {
+      "id": "sec-43",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for OS command injection (format: CWE-NN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*78\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "OS command injection = CWE-78. Boundary rejects CWE-789/CWE-787."
+    },
+    {
+      "id": "sec-44",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for cross-site request forgery (format: CWE-NNN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*352\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "CSRF = CWE-352."
+    },
+    {
+      "id": "sec-45",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for server-side request forgery (format: CWE-NNN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*918\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "SSRF = CWE-918."
+    },
+    {
+      "id": "sec-46",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for use of hard-coded credentials (format: CWE-NNN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*798\\b",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "Hard-coded credentials = CWE-798."
+    },
+    {
+      "id": "sec-47",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for deserialization of untrusted data (format: CWE-NNN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*502\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Insecure deserialization = CWE-502."
+    },
+    {
+      "id": "sec-48",
+      "domain": "security",
+      "prompt": "Give the CWE identifier for open redirect / URL redirection to untrusted site (format: CWE-NNN).",
+      "grader": "regex",
+      "groundTruth": "cwe[\\s-]*0*601\\b",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "Open redirect = CWE-601."
+    },
+    {
+      "id": "sec-49",
+      "domain": "security",
+      "prompt": "Name the lowest version of TLS that is still considered secure (not deprecated) today. Give the version number.",
+      "grader": "regex",
+      "groundTruth": "(tls\\s*)?v?1\\.2",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "TLS 1.0/1.1 deprecated (RFC 8996); lowest still-secure version is TLS 1.2. Rejects 1.0/1.1/3.0."
+    },
+    {
+      "id": "sec-50",
+      "domain": "security",
+      "prompt": "Name a widely deployed hash algorithm that is now considered cryptographically broken for collision resistance and should not be used for new security work. (One example is enough.)",
+      "grader": "regex",
+      "groundTruth": "md5|sha[\\s-]*1\\b|sha-1",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "MD5 and SHA-1 are broken for collision resistance (NIST). Rejects sha-256/sha-512."
+    }
+  ]
+}

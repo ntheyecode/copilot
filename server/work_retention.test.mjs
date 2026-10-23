@@ -55,6 +55,31 @@ test('an ACTIVE session used recently is NOT purged even if it started long ago 
   store.setWorkRetentionDays(0)
 })
 
+test('company users are governed by COMPANY retention, not platform', () => {
+  const co = store.createCompany ? store.createCompany({ name: 'RetCo', plan: 'premium' }) : null
+  if (!co) return
+  const m = store.createManagedUser({ username: 'retmember', password: 'Passw0rd!x', companyId: co.id, tier: 'basic' })
+  // Platform retention OFF, company retention 10 days.
+  store.setWorkRetentionDays(0)
+  store.setCompanyRetentionDays(co.id, 10)
+  assert.equal(store.effectiveRetentionDays(m.id), 10, 'company user uses company window')
+  const old = new Date(Date.now() - 20 * 24 * 60 * 60 * 1000).toISOString()
+  const s = store.createWorkSession(m.id, { goal: 'old' })
+  s.startedAt = old; s.endedAt = old; s.lastActivityAt = Date.parse(old)
+  const fresh = store.createWorkSession(m.id, { goal: 'fresh' })
+  store.purgeOldWorkSessions()
+  assert.equal(store.getWorkSession(m.id, s.id), null, 'old company session purged by company window')
+  assert.ok(store.getWorkSession(m.id, fresh.id), 'fresh company session kept')
+  // Company sets 0 => keep forever; platform setting does NOT affect company users.
+  store.setCompanyRetentionDays(co.id, 0)
+  store.setWorkRetentionDays(5)  // platform window - should not touch company users
+  const s2 = store.createWorkSession(m.id, { goal: 'old2' })
+  s2.startedAt = old; s2.endedAt = old; s2.lastActivityAt = Date.parse(old)
+  store.purgeOldWorkSessions()
+  assert.ok(store.getWorkSession(m.id, s2.id), 'company user not purged by platform window when company retention is 0')
+  store.setWorkRetentionDays(0)
+})
+
 test('setting back to 0 stops purging', () => {
   store.setWorkRetentionDays(0)
   assert.equal(store.getWorkRetentionDays(), 0)

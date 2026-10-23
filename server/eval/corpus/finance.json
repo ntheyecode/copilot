@@ -1,0 +1,506 @@
+{
+  "name": "finance",
+  "note": "Spreadsheet/finance accuracy benchmark (50 hand-authored, ground-truth-verifiable tasks): percentages, markup/margin/discount, simple & compound interest, unit/currency conversions (rate stated in-prompt), ratios, mean/median/weighted average, future value, break-even, tax/ROI/depreciation, and spreadsheet formulas. Numeric answers graded by number; formulas by regex on a canonical form. ~20% held out.",
+  "tasks": [
+    {
+      "id": "fin-1",
+      "domain": "finance",
+      "prompt": "What is 18% of 350? Give only the number.",
+      "grader": "number",
+      "groundTruth": 63,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "0.18 * 350 = 63"
+    },
+    {
+      "id": "fin-2",
+      "domain": "finance",
+      "prompt": "45 is what percent of 180? Give only the number (the percent).",
+      "grader": "number",
+      "groundTruth": 25,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "45 / 180 = 0.25 = 25%"
+    },
+    {
+      "id": "fin-3",
+      "domain": "finance",
+      "prompt": "Increase 200 by 12%. Give only the resulting number.",
+      "grader": "number",
+      "groundTruth": 224,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "200 * 1.12 = 224"
+    },
+    {
+      "id": "fin-4",
+      "domain": "finance",
+      "prompt": "Decrease 500 by 8%. Give only the resulting number.",
+      "grader": "number",
+      "groundTruth": 460,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "500 * 0.92 = 460"
+    },
+    {
+      "id": "fin-5",
+      "domain": "finance",
+      "prompt": "A product costs $120 and is marked up 35%. What is the selling price in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 162,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "120 * 1.35 = 162"
+    },
+    {
+      "id": "fin-6",
+      "domain": "finance",
+      "prompt": "An item priced at $250 has a 20% discount. What is the sale price in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 200,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "250 * 0.80 = 200"
+    },
+    {
+      "id": "fin-7",
+      "domain": "finance",
+      "prompt": "An item sells for $150 and costs $90. What is the gross margin as a percent of the selling price? Give only the number (the percent).",
+      "grader": "number",
+      "groundTruth": 40,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(150-90)/150 = 60/150 = 0.40 = 40%"
+    },
+    {
+      "id": "fin-8",
+      "domain": "finance",
+      "prompt": "An item sells for $150 and costs $90. What is the markup as a percent of cost, rounded to two decimal places? Give only the number (the percent).",
+      "grader": "number",
+      "groundTruth": 66.67,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "(150-90)/90 = 60/90 = 0.6667 = 66.67%"
+    },
+    {
+      "id": "fin-9",
+      "domain": "finance",
+      "prompt": "A $100 item has two successive discounts: 10% off, then 20% off the reduced price. What is the final price in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 72,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "100 * 0.90 * 0.80 = 72"
+    },
+    {
+      "id": "fin-10",
+      "domain": "finance",
+      "prompt": "You invest $2000 at 6% annual simple interest for 4 years. What is the total interest earned, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 480,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "2000 * 0.06 * 4 = 480"
+    },
+    {
+      "id": "fin-11",
+      "domain": "finance",
+      "prompt": "You deposit $5000 at 4.5% annual simple interest for 2 years. What is the total amount (principal plus interest), in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 5450,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "5000 + 5000*0.045*2 = 5000 + 450 = 5450"
+    },
+    {
+      "id": "fin-12",
+      "domain": "finance",
+      "prompt": "A principal of $1500 earns $300 in simple interest over 2 years. What is the annual interest rate as a percent? Give only the number.",
+      "grader": "number",
+      "groundTruth": 10,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "300 / (1500*2) = 0.10 = 10%"
+    },
+    {
+      "id": "fin-13",
+      "domain": "finance",
+      "prompt": "$1000 is invested at 10% interest compounded annually for 2 years. What is the final amount in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1210,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000 * 1.10^2 = 1000 * 1.21 = 1210"
+    },
+    {
+      "id": "fin-14",
+      "domain": "finance",
+      "prompt": "$1000 is invested at 10% interest compounded annually for 2 years. What is the total interest earned in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 210,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000*1.10^2 - 1000 = 1210 - 1000 = 210"
+    },
+    {
+      "id": "fin-15",
+      "domain": "finance",
+      "prompt": "$2000 is invested at 5% interest compounded annually for 3 years. What is the final amount in dollars, rounded to two decimal places? Give only the number.",
+      "grader": "number",
+      "groundTruth": 2315.25,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "2000 * 1.05^3 = 2000 * 1.157625 = 2315.25"
+    },
+    {
+      "id": "fin-16",
+      "domain": "finance",
+      "prompt": "$5000 is invested at 8% interest compounded annually for 10 years. What is the final amount in dollars, rounded to two decimal places? Give only the number.",
+      "grader": "number",
+      "groundTruth": 10794.62,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "5000 * 1.08^10, rounded to 2 dp"
+    },
+    {
+      "id": "fin-17",
+      "domain": "finance",
+      "prompt": "$1000 is invested at a 12% annual rate compounded monthly for 1 year. What is the final amount in dollars, rounded to two decimal places? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1126.83,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000 * (1 + 0.12/12)^12 = 1000 * 1.01^12, rounded to 2 dp"
+    },
+    {
+      "id": "fin-18",
+      "domain": "finance",
+      "prompt": "Convert 100 USD to EUR at a rate of 0.92 EUR per USD. Give only the number of EUR.",
+      "grader": "number",
+      "groundTruth": 92,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "100 * 0.92 = 92"
+    },
+    {
+      "id": "fin-19",
+      "domain": "finance",
+      "prompt": "Convert 50 GBP to USD at a rate of 1.27 USD per GBP. Give only the number of USD.",
+      "grader": "number",
+      "groundTruth": 63.5,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "50 * 1.27 = 63.5"
+    },
+    {
+      "id": "fin-20",
+      "domain": "finance",
+      "prompt": "Convert 10 kilometers to miles at a rate of 0.621371 miles per kilometer, rounded to two decimal places. Give only the number of miles.",
+      "grader": "number",
+      "groundTruth": 6.21,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "10 * 0.621371 = 6.21371 -> 6.21"
+    },
+    {
+      "id": "fin-21",
+      "domain": "finance",
+      "prompt": "Convert 5 kilograms to pounds at a rate of 2.20462 pounds per kilogram, rounded to two decimal places. Give only the number of pounds.",
+      "grader": "number",
+      "groundTruth": 11.02,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "5 * 2.20462 = 11.0231 -> 11.02"
+    },
+    {
+      "id": "fin-22",
+      "domain": "finance",
+      "prompt": "Convert 250 EUR to JPY at a rate of 162.5 JPY per EUR. Give only the number of JPY.",
+      "grader": "number",
+      "groundTruth": 40625,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "250 * 162.5 = 40625"
+    },
+    {
+      "id": "fin-23",
+      "domain": "finance",
+      "prompt": "Convert 1500 meters to kilometers. Give only the number of kilometers.",
+      "grader": "number",
+      "groundTruth": 1.5,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1500 / 1000 = 1.5"
+    },
+    {
+      "id": "fin-24",
+      "domain": "finance",
+      "prompt": "Two quantities are in the ratio 3:5 and their total is 160. What is the value of the larger quantity? Give only the number.",
+      "grader": "number",
+      "groundTruth": 100,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "160 * 5/(3+5) = 160 * 5/8 = 100"
+    },
+    {
+      "id": "fin-25",
+      "domain": "finance",
+      "prompt": "$240 is divided among three people in the ratio 2:3:7. What is the largest share, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 140,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "240 * 7/(2+3+7) = 240 * 7/12 = 140"
+    },
+    {
+      "id": "fin-26",
+      "domain": "finance",
+      "prompt": "A company has $400000 in debt and $800000 in equity. What is its debt-to-equity ratio? Give only the number.",
+      "grader": "number",
+      "groundTruth": 0.5,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "400000 / 800000 = 0.5"
+    },
+    {
+      "id": "fin-27",
+      "domain": "finance",
+      "prompt": "What is the mean (average) of 12, 15, 20, 25, and 28? Give only the number.",
+      "grader": "number",
+      "groundTruth": 20,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(12+15+20+25+28)/5 = 100/5 = 20"
+    },
+    {
+      "id": "fin-28",
+      "domain": "finance",
+      "prompt": "What is the median of 5, 8, 3, 9, 12, and 7? Give only the number.",
+      "grader": "number",
+      "groundTruth": 7.5,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "sorted 3,5,7,8,9,12; median = (7+8)/2 = 7.5"
+    },
+    {
+      "id": "fin-29",
+      "domain": "finance",
+      "prompt": "Compute the weighted average of scores 80, 90, and 70 with weights 2, 3, and 5 respectively. Give only the number.",
+      "grader": "number",
+      "groundTruth": 78,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "(80*2 + 90*3 + 70*5)/(2+3+5) = (160+270+350)/10 = 780/10 = 78"
+    },
+    {
+      "id": "fin-30",
+      "domain": "finance",
+      "prompt": "What is the median of 10, 20, 30, 40, and 50? Give only the number.",
+      "grader": "number",
+      "groundTruth": 30,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "middle value of sorted 5-element list = 30"
+    },
+    {
+      "id": "fin-31",
+      "domain": "finance",
+      "prompt": "What is the future value of $1000 invested at 6% per year, compounded annually, after 5 years? Round to two decimal places and give only the number.",
+      "grader": "number",
+      "groundTruth": 1338.23,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "1000 * 1.06^5, rounded to 2 dp"
+    },
+    {
+      "id": "fin-32",
+      "domain": "finance",
+      "prompt": "Fixed costs are $10000, the selling price is $50 per unit, and the variable cost is $30 per unit. How many units must be sold to break even? Give only the number.",
+      "grader": "number",
+      "groundTruth": 500,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "10000 / (50-30) = 10000/20 = 500"
+    },
+    {
+      "id": "fin-33",
+      "domain": "finance",
+      "prompt": "A $12000 loan charges 7% annual simple interest for 3 years. What is the total interest paid, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 2520,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "12000 * 0.07 * 3 = 2520"
+    },
+    {
+      "id": "fin-34",
+      "domain": "finance",
+      "prompt": "Taxable income is $50000 taxed at a flat rate of 22%. What is the tax owed, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 11000,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "50000 * 0.22 = 11000"
+    },
+    {
+      "id": "fin-35",
+      "domain": "finance",
+      "prompt": "A business has revenue of $200000 and expenses of $140000. Profit is taxed at 25%. What is the net income after tax, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 45000,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "profit 200000-140000=60000; tax 60000*0.25=15000; net 60000-15000=45000"
+    },
+    {
+      "id": "fin-36",
+      "domain": "finance",
+      "prompt": "An item costs $80 and sales tax is 8.5%. What is the total cost including tax, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 86.8,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "80 * 1.085 = 86.80"
+    },
+    {
+      "id": "fin-37",
+      "domain": "finance",
+      "prompt": "A restaurant bill is $64 and you leave an 18% tip. What is the tip amount, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 11.52,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "64 * 0.18 = 11.52"
+    },
+    {
+      "id": "fin-38",
+      "domain": "finance",
+      "prompt": "An investment of $2500 produces a gain of $500. What is the return on investment (ROI) as a percent? Give only the number.",
+      "grader": "number",
+      "groundTruth": 20,
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "500 / 2500 = 0.20 = 20%"
+    },
+    {
+      "id": "fin-39",
+      "domain": "finance",
+      "prompt": "An asset costs $10000, has a salvage value of $2000, and a useful life of 5 years. Using straight-line depreciation, what is the annual depreciation expense, in dollars? Give only the number.",
+      "grader": "number",
+      "groundTruth": 1600,
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "(10000-2000)/5 = 8000/5 = 1600"
+    },
+    {
+      "id": "fin-40",
+      "domain": "finance",
+      "prompt": "A store had sales of $1000 in Q1, $1500 in Q2, and $2000 in Q3. Return a GFM markdown table with columns \"Quarter\" and \"Sales\", one row per quarter in order (Q1, Q2, Q3), with Sales as plain numbers (no dollar sign or commas).",
+      "grader": "table",
+      "groundTruth": "| Quarter | Sales |\n| --- | --- |\n| Q1 | 1000 |\n| Q2 | 1500 |\n| Q3 | 2000 |",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "header + 3 data rows; values 1000/1500/2000"
+    },
+    {
+      "id": "fin-41",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that adds up the cells A1 through A10. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*sum\\(\\s*a1\\s*:\\s*a10\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=SUM(A1:A10)"
+    },
+    {
+      "id": "fin-42",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that averages the cells B1 through B20. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*average\\(\\s*b1\\s*:\\s*b20\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=AVERAGE(B1:B20)"
+    },
+    {
+      "id": "fin-43",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that multiplies the value in cell A1 by the value in cell B1. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*(a1\\s*\\*\\s*b1|b1\\s*\\*\\s*a1)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=A1*B1 (or =B1*A1)"
+    },
+    {
+      "id": "fin-44",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that divides the value in cell A1 by the value in cell B1. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*a1\\s*/\\s*b1",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=A1/B1"
+    },
+    {
+      "id": "fin-45",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that returns the text High if A1 is greater than 100, otherwise the text Low. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*if\\(\\s*a1\\s*>\\s*100\\s*,\\s*\"high\"\\s*,\\s*\"low\"\\s*\\)",
+      "visibility": "heldout",
+      "source": "hand",
+      "_solution": "=IF(A1>100,\"High\",\"Low\")"
+    },
+    {
+      "id": "fin-46",
+      "domain": "finance",
+      "prompt": "Write the Excel formula that looks up the value in A2 within the range D:E and returns the value from the 2nd column, using an exact match. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*vlookup\\(\\s*a2\\s*,\\s*d:e\\s*,\\s*2\\s*,\\s*(false|0)\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=VLOOKUP(A2,D:E,2,FALSE)"
+    },
+    {
+      "id": "fin-47",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that counts how many cells in A1 through A100 are greater than 50. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*countif\\(\\s*a1\\s*:\\s*a100\\s*,\\s*\">50\"\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=COUNTIF(A1:A100,\">50\")"
+    },
+    {
+      "id": "fin-48",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that rounds the value in A1 to 2 decimal places. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*round\\(\\s*a1\\s*,\\s*2\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=ROUND(A1,2)"
+    },
+    {
+      "id": "fin-49",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that sums B2 through B50 for the rows where A2 through A50 equals the text Sales. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*sumif\\(\\s*a2\\s*:\\s*a50\\s*,\\s*\"sales\"\\s*,\\s*b2\\s*:\\s*b50\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=SUMIF(A2:A50,\"Sales\",B2:B50)"
+    },
+    {
+      "id": "fin-50",
+      "domain": "finance",
+      "prompt": "Write the Excel/Google Sheets formula that returns the maximum value in C1 through C30. Give only the formula.",
+      "grader": "regex",
+      "groundTruth": "=\\s*max\\(\\s*c1\\s*:\\s*c30\\s*\\)",
+      "visibility": "public",
+      "source": "hand",
+      "_solution": "=MAX(C1:C30)"
+    }
+  ]
+}

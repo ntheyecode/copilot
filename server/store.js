@@ -736,6 +736,9 @@ function publicCompany(c) {
     authorization: c.authorization
       ? { attested: !!c.authorization.attested, byName: c.authorization.byName || null, at: c.authorization.at || null }
       : { attested: false, byName: null, at: null },
+    // Company-set data-retention window (days; 0 = keep forever). The company
+    // admin owns this; the platform does not override it.
+    retentionDays: (Number.isInteger(Number(c.retentionDays)) && Number(c.retentionDays) > 0) ? Number(c.retentionDays) : 0,
     sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
     userCount: users.length,
     memberCount,
@@ -1975,42 +1978,73 @@ export function setWorkPricing(patch) {
   return getWorkPricing()
 }
 
-// ---- Data retention (superadmin) ------------------------------------------
-// Platform-wide automatic retention: sessions (and their shots + audit) older
-// than N days are auto-purged. 0 = keep forever (the default), so this changes
-// nothing until a superadmin sets a window. Deletion stays logged + accountable.
+// ---- Data retention (two-tier) --------------------------------------------
+// TWO owners, by design:
+//   - COMPANY users: retention is set by THEIR company admin (data sovereignty);
+//     the platform does not control it.
+//   - INDIVIDUAL (non-company) users: retention is set by the SUPERADMIN at the
+//     org/platform level (best-practice default for our own users).
+// In both cases 0 = keep forever. Sessions older than the effective window are
+// auto-purged; deletion stays logged + removes shots + audit.
+const RET_MAX = 3650
+function validRetention(days, label) {
+  const n = Number(days)
+  if (!Number.isInteger(n) || n < 0 || n > RET_MAX) throw httpErr(400, `${label} must be a whole number of days between 0 (keep forever) and ${RET_MAX}.`)
+  return n
+}
+// Platform retention - applies to INDIVIDUAL accounts only (superadmin).
 export function getWorkRetentionDays() {
   const n = Number(db.work && db.work.retentionDays)
   return Number.isInteger(n) && n > 0 ? n : 0
 }
 export function setWorkRetentionDays(days) {
   if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
-  const n = Number(days)
-  if (!Number.isInteger(n) || n < 0 || n > 3650) throw httpErr(400, 'Retention must be a whole number of days between 0 (keep forever) and 3650.')
-  db.work.retentionDays = n
+  db.work.retentionDays = validRetention(days, 'Retention')
   persist()
   return { retentionDays: getWorkRetentionDays() }
 }
-// Purge sessions whose last activity is older than the retention window. Reuses
-// deleteWorkSession so each purge is logged and its shot files are removed. No-op
-// when retention is off. Best-effort; returns how many were purged.
+// Company retention - set by the company admin for their OWN company.
+export function getCompanyRetentionDays(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  const n = Number(c && c.retentionDays)
+  return Number.isInteger(n) && n > 0 ? n : 0
+}
+export function setCompanyRetentionDays(companyId, days) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  c.retentionDays = validRetention(days, 'Retention')
+  persist()
+  return { retentionDays: getCompanyRetentionDays(companyId) }
+}
+// The window that actually applies to a user's sessions: their company's (if in a
+// company) else the platform/individual window.
+export function effectiveRetentionDays(workUserId) {
+  const u = getUser(workUserId)
+  if (u && u.companyId) return getCompanyRetentionDays(u.companyId)
+  return getWorkRetentionDays()
+}
+// Purge each session past ITS OWNER'S effective retention window. Reuses
+// deleteWorkSession (logged + removes shots + audit). Best-effort.
 export function purgeOldWorkSessions() {
-  const days = getWorkRetentionDays()
-  if (days <= 0) return { purged: 0, retentionDays: 0 }
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
-  // Age by LAST ACTIVITY, not start: an ended session uses endedAt; a session
-  // still active (endedAt null) uses lastActivityAt so a long-lived-but-recently-
-  // used session is never purged mid-use. startedAt is only a last resort.
+  const now = Date.now()
+  // Age by LAST ACTIVITY, not start: ended -> endedAt; still-active -> lastActivity
+  // so a long-lived but recently-used session is never purged mid-use.
   const when = (s) => {
     const t = Date.parse(s.endedAt || '') || (Number(s.lastActivityAt) || 0) || Date.parse(s.startedAt || '') || 0
     return Number.isFinite(t) ? t : 0
   }
-  const victims = (db.workSessions || []).filter((s) => when(s) && when(s) < cutoff)
+  const retCache = new Map()
+  const retFor = (userId) => { if (!retCache.has(userId)) retCache.set(userId, effectiveRetentionDays(userId)); return retCache.get(userId) }
+  const victims = []
+  for (const s of (db.workSessions || [])) {
+    const days = retFor(s.workUserId)
+    if (days > 0 && when(s) && when(s) < now - days * 24 * 60 * 60 * 1000) victims.push({ s, days })
+  }
   let purged = 0
-  for (const s of victims) {
+  for (const { s, days } of victims) {
     try { deleteWorkSession(s.workUserId, s.id, `retention: auto-purged after ${days} days`); purged++ } catch { /* skip */ }
   }
-  return { purged, retentionDays: days }
+  return { purged, platformRetentionDays: getWorkRetentionDays() }
 }
 
 export function setWorkProfile(workUserId, { displayName, onboarded } = {}) {

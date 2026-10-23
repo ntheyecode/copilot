@@ -41,8 +41,8 @@ function RetentionCard({ isSuperAdmin }) {
   const n = Number(days)
   return (
     <div className="wka-panel">
-      <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention</h2>
-      <p className="desc">Automatically delete sessions (and their milestone screenshots and audit log) older than this many days. <b>0 means keep forever</b> - users and company admins can still delete their own sessions anytime. Applies platform-wide on an hourly sweep.</p>
+      <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention (individual accounts)</h2>
+      <p className="desc">Automatically delete sessions (and their milestone screenshots and audit log) older than this many days, for <b>individual (non-company) accounts</b>. Company accounts are governed by their own company admin, not here. <b>0 means keep forever</b>; users can still delete their own sessions anytime. Applied on an hourly sweep.</p>
       {!loaded ? <Loading label="Loading retention" />
         : (
           <>

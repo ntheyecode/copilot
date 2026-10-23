@@ -97,6 +97,47 @@ function AuthorizationCard() {
   )
 }
 
+// Company-set data retention: the company admin owns their window (the platform
+// does not control it). 0 = keep forever (default). Self-contained.
+function CompanyRetentionCard() {
+  const [days, setDays] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState(null)
+  const [purged, setPurged] = useState(null)
+  const load = useCallback(() => {
+    api.workTeamRetention().then((d) => { setDays(String(d.retentionDays ?? 0)); setLoaded(true) }).catch((e) => { setErr(e); setLoaded(true) })
+  }, [])
+  useEffect(() => { load() }, [load])
+  const save = async () => {
+    if (saving) return
+    const n = Number(days)
+    setSaving(true); setErr(null); setSaved(false); setPurged(null)
+    try { const r = await api.workTeamSetRetention(n); setDays(String(r.retentionDays)); setPurged(r.purged || 0); setSaved(true); setTimeout(() => setSaved(false), 2400) }
+    catch (e) { setErr(e) } finally { setSaving(false) }
+  }
+  if (!loaded) return null
+  const n = Number(days)
+  return (
+    <div className="wka-panel">
+      <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention</h2>
+      <p className="desc">Automatically delete your company's sessions (and their milestone screenshots and audit log) older than this many days. <b>0 keeps them forever.</b> You control this for your company; people can still delete their own sessions anytime. Applied on an hourly sweep.</p>
+      <div className="wka-field" style={{ maxWidth: 260 }}>
+        <label>Retention window (days)</label>
+        <input className="wka-input" type="number" min="0" max="3650" step="1" value={days} onChange={(e) => setDays(e.target.value)} />
+        <span className="hint">{n > 0 ? `Sessions older than ${n} day${n === 1 ? '' : 's'} are purged.` : 'Keep forever (no automatic deletion).'}</span>
+      </div>
+      {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+        <button type="button" className="wka-btn primary" disabled={saving || !Number.isInteger(n) || n < 0 || n > 3650} onClick={save}>{saving ? <Spinning /> : null} Save retention</button>
+        <SavedTag show={saved} />
+        {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Purged {purged} session{purged === 1 ? '' : 's'} now.</span> : null}
+      </div>
+    </div>
+  )
+}
+
 function OverviewSection({ company }) {
   const [state, setState] = useState({ loading: true, error: null, lic: null, cons: null })
   const load = useCallback(() => {
@@ -148,6 +189,7 @@ function OverviewSection({ company }) {
       )}
 
       <AuthorizationCard />
+      <CompanyRetentionCard />
 
       {lic.tierUsage && (
         <div className="wka-panel">

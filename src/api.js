@@ -153,6 +153,9 @@ export const api = {
   // company-admin: organization authorization attestation
   workTeamAuthorization: () => req('GET', '/api/work/team/authorization'),
   workTeamAttest: (byName) => req('POST', '/api/work/team/authorization', { attested: true, byName: clean(byName || '') }),
+  // company-admin: the company's own data-retention window (days; 0 = keep forever)
+  workTeamRetention: () => req('GET', '/api/work/team/retention'),
+  workTeamSetRetention: (retentionDays) => req('POST', '/api/work/team/retention', { retentionDays }),
   // support tickets (user)
   workTicketCategories: () => req('GET', '/api/work/ticket-categories'),
   workTickets: () => req('GET', '/api/work/tickets'),

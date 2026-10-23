@@ -894,6 +894,18 @@ app.post('/api/work/team/authorization', requireWorkAuth, requireCompanyAdmin, w
   const co = store.setCompanyAuthorization(req.workUser.companyId, { attested: attested !== false, byName: byName || req.workUser.username })
   res.json({ authorization: co.authorization })
 }))
+// Company-set data retention: the company admin owns their own window (the
+// platform does not control it). 0 = keep forever. Applied on the next sweep.
+app.get('/api/work/team/retention', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json({ retentionDays: store.getCompanyRetentionDays(req.workUser.companyId) })
+}))
+app.post('/api/work/team/retention', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const out = store.setCompanyRetentionDays(req.workUser.companyId, (req.body || {}).retentionDays)
+  try { out.purged = store.purgeOldWorkSessions().purged } catch { out.purged = 0 }
+  res.json(out)
+}))
 // Company admin: use the company's OWN AI keys (overrides our corporate keys).
 // An empty apiKey clears them and the company falls back to what the superadmin set.
 app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
