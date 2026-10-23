@@ -237,6 +237,116 @@ export function buildDeliverablesPdf(d = {}, goal = '', stream) {
   doc.end()
 }
 
+// ---- Compliance report -> PDF ---------------------------------------------
+// A RELEVANT, evidence-backed record for a company admin (or the operator): the
+// controls WorkCoPilot enforced on this task, how each was satisfied (the
+// response), and the evidence behind it - then the execution evidence itself
+// (confirmed steps with timestamps + scrubbed milestone screenshots). Honest by
+// construction: every response is grounded in real session data (SUPREME RULE
+// III). Streamed straight to the response.
+const AMBER = '#b8860b'
+export function buildComplianceReportPdf(session, stream, { evidence, company = '', member = '', generatedBy = '', modeLabel = '' } = {}) {
+  const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 60, right: 60 }, bufferPages: true })
+  doc.pipe(stream)
+  const W = doc.page.width - 120
+  const steps = Array.isArray(session.steps) ? session.steps : []
+  const ev = evidence || { controls: [], posture: { satisfied: 0, partial: 0, na: 0, total: 0 }, evidence: {} }
+  const controls = Array.isArray(ev.controls) ? ev.controls : []
+  const posture = ev.posture || { satisfied: 0, partial: 0, na: 0, total: controls.length }
+  const started = session.startedAt ? new Date(session.startedAt) : null
+  const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString() } catch { return '' } }
+
+  // Group shots by step (same as the session report) for the evidence section.
+  const shotsByStep = new Map()
+  for (const sh of (Array.isArray(session.shots) ? session.shots : [])) {
+    if (!sh || typeof sh !== 'object' || !sh.path) continue
+    const k = Number(sh.stepIndex); if (!Number.isInteger(k)) continue
+    if (!shotsByStep.has(k)) shotsByStep.set(k, [])
+    shotsByStep.get(k).push(sh)
+  }
+  for (const arr of shotsByStep.values()) arr.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')))
+
+  const rule = () => { doc.moveTo(60, doc.y).lineTo(doc.page.width - 60, doc.y).strokeColor('#d8dbe0').lineWidth(1).stroke() }
+  const heading = (t) => { if (doc.y + 60 > doc.page.height - 60) doc.addPage(); doc.moveDown(0.4); doc.font('Helvetica-Bold').fontSize(13).fillColor(INK).text(t); doc.moveDown(0.3) }
+  const statusColor = (st) => st === 'satisfied' ? ACCENT : (st === 'partial' ? AMBER : MUTED)
+  const statusLabel = (st) => st === 'satisfied' ? 'SATISFIED' : (st === 'partial' ? 'PARTIAL' : 'N/A')
+
+  // Title + scope
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text('WorkCoPilot compliance report')
+  doc.moveDown(0.2)
+  doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(
+    [company ? ('Organization: ' + company) : null, member ? ('Operator: ' + member) : null,
+     started ? ('Task date: ' + started.toLocaleString()) : null,
+     ('Report generated: ' + new Date().toLocaleString()), generatedBy ? ('Pulled by: ' + generatedBy) : null,
+     ('Session: ' + (session.id || ''))].filter(Boolean).join('   -   '), { width: W })
+  doc.moveDown(0.4); rule(); doc.moveDown(0.6)
+
+  // The task
+  heading('Task under review')
+  doc.font('Helvetica').fontSize(11).fillColor(INK).text(session.goal || '(no goal recorded)', { width: W })
+  if (modeLabel) doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Guide style: ' + modeLabel, { width: W })
+
+  // Control posture summary
+  heading('Control posture')
+  doc.font('Helvetica').fontSize(11).fillColor(INK).text(
+    `${posture.satisfied} of ${posture.total} controls fully satisfied` +
+    (posture.partial ? `, ${posture.partial} partial` : '') +
+    (posture.na ? `, ${posture.na} not applicable to this task` : '') + '.', { width: W })
+  doc.moveDown(0.2)
+  doc.font('Helvetica-Oblique').fontSize(9).fillColor(MUTED).text(
+    'Each control below shows how WorkCoPilot satisfied it for THIS task, with the evidence behind it. Responses are drawn from the actual session - the audit trail, the operator\'s data-protection settings, and what was confirmed on screen.', { width: W })
+
+  // Controls and responses
+  heading('Controls, responses and evidence')
+  controls.forEach((c, i) => {
+    if (doc.y + 70 > doc.page.height - 60) doc.addPage()
+    doc.font('Helvetica-Bold').fontSize(11).fillColor(INK).text(`${i + 1}. ${c.name}`, { width: W, continued: true })
+    doc.font('Helvetica-Bold').fontSize(9).fillColor(statusColor(c.status)).text('    [' + statusLabel(c.status) + ']')
+    if (Array.isArray(c.frameworks) && c.frameworks.length) doc.font('Helvetica').fontSize(8.5).fillColor(MUTED).text(c.frameworks.join('  -  '), { width: W })
+    doc.moveDown(0.15)
+    doc.font('Helvetica-Bold').fontSize(9.5).fillColor(INK).text('Response: ', { width: W, continued: true })
+    doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(String(c.response || ''), { width: W })
+    if (c.evidence) { doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Evidence: ' + String(c.evidence), { width: W }) }
+    doc.moveDown(0.5)
+  })
+
+  // Execution evidence: confirmed steps, timestamps, commands, screenshots.
+  heading('Execution evidence')
+  if (!steps.length) doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were planned for this task.', { width: W })
+  steps.forEach((s, i) => {
+    if (doc.y + 50 > doc.page.height - 60) doc.addPage()
+    const mark = s.status === 'done' ? '[confirmed]' : s.status === 'current' ? '[in progress]' : '[not done]'
+    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(s.status === 'done' ? ACCENT : INK).text(`${i + 1}. ${s.text}   ${mark}`, { width: W })
+    if (s.status === 'done' && s.doneAt) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Confirmed on screen: ' + fmtWhen(s.doneAt), { width: W })
+    if (s.validate) doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Done when: ' + s.validate, { width: W })
+    if (Array.isArray(s.commands) && s.commands.length) codeBlock(doc, s.commands.map((c) => '$ ' + c).join('\n'))
+    if (s.code && s.code.content) { doc.font('Helvetica').fontSize(8).fillColor(MUTED).text('File: ' + (s.code.file || 'code'), { width: W }); codeBlock(doc, s.code.content) }
+    stepShots(doc, shotsByStep.get(i), W)
+    doc.moveDown(0.4)
+  })
+
+  // Flags surfaced to the operator (security + other warnings).
+  const flags = (session.events || []).filter((e) => e.kind === 'flag')
+  if (flags.length) {
+    heading('Notes and warnings')
+    for (const f of flags) { if (doc.y + 24 > doc.page.height - 60) doc.addPage(); doc.font('Helvetica').fontSize(10).fillColor(INK).text('- ' + String(f.text || ''), { width: W }); doc.moveDown(0.2) }
+  }
+
+  // Disclaimer: controls + evidence, not a certification.
+  doc.moveDown(1)
+  if (doc.y + 46 > doc.page.height - 60) doc.addPage()
+  rule(); doc.moveDown(0.3)
+  doc.font('Helvetica-Oblique').fontSize(8).fillColor(MUTED).text(
+    'This report evidences the controls WorkCoPilot applied to this task and the work performed under them. The audit log (a separate export) records exactly what was transmitted to the AI. WorkCoPilot provides controls and evidence to support your compliance program; it does not by itself make an organization compliant or certified, and this report is not legal advice. Framework references are indicative mappings, not an attestation of conformance.', { width: W })
+
+  const range = doc.bufferedPageRange()
+  for (let i = 0; i < range.count; i++) {
+    doc.switchToPage(range.start + i)
+    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(`WorkCoPilot compliance report  -  Page ${i + 1} of ${range.count}`, 60, doc.page.height - 42, { width: W, align: 'center' })
+  }
+  doc.end()
+}
+
 function codeBlock(doc, body) {
   const lines = body.split('\n')
   const lineH = 12

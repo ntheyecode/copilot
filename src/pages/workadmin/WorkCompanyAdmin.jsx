@@ -1158,7 +1158,7 @@ function SessionsSection() {
           <button className="wka-btn sm ghost" onClick={load} title="Refresh"><RefreshCw size={13} /> Refresh</button>
         </div>
       </div>
-      <p style={{ color: 'var(--wka-muted)', fontSize: 13, marginTop: 6 }}>Pull any session's report or its audit log (exactly what was sent to the AI) at any time. Scoped to your company only.</p>
+      <p style={{ color: 'var(--wka-muted)', fontSize: 13, marginTop: 6 }}>For any task, pull a <b>compliance report</b> (the controls applied, how each was satisfied, and the evidence), the full session report, or the audit log (exactly what was sent to the AI). Scoped to your company only. Email delivery arrives once mail servers are configured; download is available now.</p>
       <div className="wka-table-wrap" style={{ marginTop: 8 }}>
         <table className="wka-table">
           <thead><tr><th>Who</th><th>Task</th><th>Status</th><th>Progress</th><th>Updated</th><th>Pull</th></tr></thead>
@@ -1171,7 +1171,8 @@ function SessionsSection() {
                 <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{s.steps ? `${s.done}/${s.steps} steps` : '-'}</td>
                 <td style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDT(s.lastActivityAt || s.startedAt)}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>
-                  <a className="wka-btn sm" href={api.workReportUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download the session report (PDF)"><Download size={13} /> Report</a>
+                  <a className="wka-btn sm" href={api.workComplianceUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download a compliance report: controls, responses and evidence for this task (PDF)"><ShieldCheck size={13} /> Compliance</a>
+                  <a className="wka-btn sm ghost" href={api.workReportUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download the session report (PDF)" style={{ marginLeft: 6 }}><Download size={13} /> Report</a>
                   <a className="wka-btn sm ghost" href={api.workAuditUrl(s.id)} target="_blank" rel="noopener noreferrer" title="Download the audit log (exactly what was sent to the AI)" style={{ marginLeft: 6 }}><FileText size={13} /> Log</a>
                 </td>
               </tr>

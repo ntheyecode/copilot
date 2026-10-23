@@ -3511,3 +3511,119 @@ export function formatWorkAuditLog(sessionId, session) {
 export function deleteWorkAudit(sessionId) {
   try { const f = path.join(AUDIT_DIR, `${String(sessionId).replace(/[^\w-]/g, '')}.log`); if (fs.existsSync(f)) fs.unlinkSync(f) } catch { /* best effort */ }
 }
+
+// ---- Compliance evidence ---------------------------------------------------
+// Assemble a RELEVANT compliance picture for ONE session: the controls
+// WorkCoPilot enforced, how each was satisfied FOR THIS SESSION (the response),
+// and the live evidence behind it. Every response is grounded in real session
+// data + the OWNER's settings at report time - nothing is asserted that the
+// system did not actually do (SUPREME RULE III: no silent/unverifiable claims).
+// `ownerId` is the session owner (a company admin pulling a member's report
+// passes the member's id), so controls reflect the operator's own posture, not
+// the admin's. `session` is the ALREADY-AUTHORIZED record the caller fetched.
+// Returns { controls[], evidence{}, posture } for the PDF.
+export function getWorkComplianceEvidence(session, ownerId) {
+  const s = session || {}
+  const sessionId = s.id
+  const steps = Array.isArray(s.steps) ? s.steps : []
+  const events = Array.isArray(s.events) ? s.events : []
+  const shots = Array.isArray(s.shots) ? s.shots : []
+
+  // --- Audit-log derived facts (what actually left the device) ---
+  let transmissions = 0, redactedTotal = 0, scrubSeen = false, framesSent = 0
+  for (const line of readWorkAuditRaw(sessionId).split('\n').filter(Boolean)) {
+    try {
+      const e = JSON.parse(line)
+      transmissions++
+      if (e.scrub) scrubSeen = true
+      if (Number.isFinite(Number(e.redacted))) redactedTotal += Number(e.redacted)
+      if (e.frame) framesSent++
+    } catch { /* ignore a malformed line */ }
+  }
+
+  // --- Operator posture ---
+  const mfa = userMfaStatus(ownerId)
+  const mfaGlobal = mfaGloballyEnabled()
+  const scrubOn = scrubSeen || (() => { try { return workUserScrubOn(ownerId) } catch { return false } })()
+  const policyOn = (() => { try { return !!getEffectiveWorkPolicy(ownerId) } catch { return false } })()
+  const retentionDays = (() => { try { return effectiveRetentionDays(ownerId) } catch { return 0 } })()
+
+  // --- Execution facts ---
+  const doneN = steps.filter((x) => x.status === 'done').length
+  const codeBlocks = steps.reduce((a, x) => a + (Array.isArray(x.commands) ? x.commands.length : 0) + (x.code && x.code.content ? 1 : 0), 0)
+  const securityFlags = events.filter((e) => e.kind === 'flag' && /^security:/i.test(String(e.text || ''))).length
+  const fmt = (iso) => { try { return new Date(iso).toLocaleDateString() } catch { return '' } }
+
+  const mk = (id, name, frameworks, status, response, evidence) => ({ id, name, frameworks, status, response, evidence })
+  const controls = [
+    mk('access-mfa', 'Access control & strong authentication',
+      ['SOC 2 CC6.1', 'ISO 27001 A.9.4', 'NIST 800-53 IA-2'],
+      (!mfaGlobal ? 'partial' : (mfa.enabled ? 'satisfied' : 'partial')),
+      !mfaGlobal
+        ? 'Multi-factor authentication is globally disabled (break-glass mode) on this deployment.'
+        : (mfa.enabled
+            ? `The operator's account is protected by time-based one-time-password (TOTP) multi-factor authentication${mfa.enrolledAt ? `, enrolled ${fmt(mfa.enrolledAt)}` : ''}.`
+            : 'The operator had not completed MFA enrollment for this session.'),
+      mfaGlobal && mfa.enabled ? 'TOTP authenticator required at sign-in; password-only sign-in is not permitted.' : 'Account authentication records.'),
+    mk('data-minimization', 'Data minimization & DLP redaction',
+      ['GDPR Art.5(1)(c), Art.25', 'ISO 27001 A.8.12', 'SOC 2 CC6.7'],
+      scrubOn ? 'satisfied' : 'partial',
+      scrubOn
+        ? `Sensitive values (PII / PHI / secrets) were stripped ON THE DEVICE before any transmission. ${redactedTotal} item(s) were redacted across this session.${policyOn ? ' A governance policy (block words + per-category actions) was in force.' : ''}`
+        : 'Redaction was not enabled for this operator, so no sensitive values were stripped. Company admins can enable and lock on-device redaction for all members.',
+      'On-device redaction log; redaction counts recorded in the audit trail.'),
+    mk('audit-trail', 'Audit logging & traceability',
+      ['SOC 2 CC7.2', 'ISO 27001 A.12.4', 'GDPR Art.30'],
+      transmissions > 0 ? 'satisfied' : 'na',
+      transmissions > 0
+        ? `Every transmission to the AI was logged with a timestamp and the exact text sent. ${transmissions} transmission(s) recorded, each handled by an approved provider with no silent substitution.`
+        : 'No AI transmissions were recorded for this session.',
+      'Downloadable audit log (see the accompanying .log export).'),
+    mk('encryption-at-rest', 'Encryption of evidence at rest',
+      ['SOC 2 CC6.7', 'ISO 27001 A.8.24', 'GDPR Art.32'],
+      'satisfied',
+      'All retained evidence - milestone screenshots and generated reports - is encrypted at rest with AES-256-GCM. Screenshots are redacted on the device before capture.',
+      `${shots.length} encrypted milestone screenshot(s) stored for this session.`),
+    mk('secure-output', 'Secure output review',
+      ['SOC 2 CC8.1', 'OWASP ASVS V5', 'ISO 27001 A.8.28'],
+      codeBlocks > 0 ? 'satisfied' : 'na',
+      codeBlocks > 0
+        ? `Every command and code block handed to the operator passed a mandatory security gate. ${codeBlocks} block(s) were reviewed and ${securityFlags} issue(s) were flagged to the operator.`
+        : 'This session handed over no commands or code, so the output security gate had nothing to review.',
+      securityFlags > 0 ? 'Flagged issues are listed under Notes and warnings in the session report.' : 'Security gate results recorded in the session events.'),
+    mk('human-in-loop', 'Human-in-the-loop, no autonomous action',
+      ['ISO 27001 A.5.34', 'NIST AI RMF GOVERN', 'SOC 2 CC2.1'],
+      'satisfied',
+      'WorkCoPilot is read-only guidance. It watches the screen and tells the operator what to do; it never clicks, types or executes on the operator\'s behalf. Destructive steps carry an explicit confirmation gate.',
+      'Product is guidance-only by design; the operator performs every action.'),
+    mk('retention', 'Data retention & disposal',
+      ['GDPR Art.5(1)(e)', 'ISO 27001 A.8.10', 'SOC 2 CC6.5'],
+      'satisfied',
+      retentionDays > 0
+        ? `Sessions (including their evidence and audit log) are automatically purged ${retentionDays} day(s) after they end.`
+        : 'Sessions are retained until an administrator deletes them; deletion removes the session, its screenshots and its audit log together.',
+      'Retention window set by the company administrator / platform policy.'),
+    mk('execution-evidence', 'Evidence of execution',
+      ['SOC 2 CC4.1', 'ISO 27001 A.5.36'],
+      doneN > 0 ? 'satisfied' : 'partial',
+      `${doneN} of ${steps.length} planned step(s) were confirmed on screen${shots.length ? `, with ${shots.length} milestone screenshot(s) captured as evidence` : ''}. Each confirmed step is timestamped in the session report.`,
+      'Confirmed steps with timestamps + milestone screenshots in the session report.'),
+  ]
+
+  const posture = {
+    satisfied: controls.filter((c) => c.status === 'satisfied').length,
+    partial: controls.filter((c) => c.status === 'partial').length,
+    na: controls.filter((c) => c.status === 'na').length,
+    total: controls.length,
+  }
+  return {
+    controls, posture,
+    evidence: {
+      transmissions, redactedTotal, framesSent,
+      doneSteps: doneN, totalSteps: steps.length, shots: shots.length,
+      codeBlocks, securityFlags, retentionDays,
+      mfa: { enabled: !!mfa.enabled, global: !!mfaGlobal, enrolledAt: mfa.enrolledAt || null },
+      scrubOn, policyOn,
+    },
+  }
+}

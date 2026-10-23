@@ -20,7 +20,7 @@ import * as store from './store.js'
 import * as ai from './ai.js'
 import * as docs from './docs.js'
 import * as work from './work.js'
-import { buildWorkReportPdf, buildDeliverablesPdf } from './pdf.js'
+import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } from './pdf.js'
 import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
@@ -1912,6 +1912,31 @@ app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) =
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="${fname}"`)
     buildWorkReportPdf(s, res, { achieved, modeLabel })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// Compliance report: a RELEVANT, evidence-backed record for ONE task - the
+// controls WorkCoPilot enforced, the response for each (grounded in this
+// session's real data), and the execution evidence. Same scope as report.pdf:
+// the owner, a company admin of the owner's company, or a superadmin. (Email
+// delivery lands once mail servers are configured; download is available now.)
+app.get('/api/work/sessions/:id/compliance.pdf', requireWorkAuth, async (req, res) => {
+  try {
+    let s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) s = store.getWorkSessionForCompanyAdmin(req.workUser.id, req.params.id)
+    if (!s && req.user && req.user.role === 'superadmin') s = (store.listAllWorkSessions ? store.listAllWorkSessions() : []).find((x) => x.id === req.params.id) || null
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const ownerId = s.workUserId
+    const owner = store.getUser(ownerId) || {}
+    const company = owner.companyId ? (store.getCompany(owner.companyId) || null) : null
+    const member = owner.displayName || owner.username || 'Operator'
+    const generatedBy = (req.workUser && (req.workUser.displayName || req.workUser.username)) || ''
+    const modeLabel = (work.WORK_MODES.find((m) => m.id === work.normalizeMode(s.mode)) || {}).label || ''
+    const evidence = store.getWorkComplianceEvidence(s, ownerId)
+    const fname = `workcopilot-compliance-${String(s.startedAt || '').slice(0, 10) || 'session'}.pdf`
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="${fname}"`)
+    buildComplianceReportPdf(s, res, { evidence, company: company ? (company.name || '') : '', member, generatedBy, modeLabel })
   } catch (e) { sendWorkError(res, e, req) }
 })
 

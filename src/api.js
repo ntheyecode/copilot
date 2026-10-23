@@ -156,6 +156,7 @@ export const api = {
   workModes: () => req('GET', '/api/work/modes'),
   workSetMode: (id, mode) => req('POST', `/api/work/sessions/${id}/mode`, { mode }),
   workReportUrl: (id, dl) => `/api/work/sessions/${id}/report.pdf${dl ? '?dl=1' : ''}`,
+  workComplianceUrl: (id, dl) => `/api/work/sessions/${id}/compliance.pdf${dl ? '?dl=1' : ''}`,
   workResearch: (id, question) => req('POST', `/api/work/sessions/${id}/research`, { question: clean(question) }),
   workUsage: () => req('GET', '/api/work/usage'),
   workHeartbeat: (id, seconds) => req('POST', '/api/work/usage/heartbeat', { sessionId: id, seconds }),
