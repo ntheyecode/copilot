@@ -185,6 +185,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     partial: { label: 'Partly covered', cls: 'mid', Icon: AlertTriangle },
     no: { label: 'Not a fit', cls: 'no', Icon: AlertTriangle },
     offtopic: { label: 'Describe a task', cls: 'off', Icon: Sparkles },
+    about: { label: 'How WorkCoPilot helps', cls: 'ok', Icon: Sparkles },
   }
   const vm = res ? verdictMeta[res.verdict] : null
   const VIcon = vm ? vm.Icon : null
@@ -259,7 +260,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
             {lead && (
               <>
                 <div className="wm-cov-body">
-                  {!res && !busy && <p className="wm-cov-intro">Put in your real task or scenario. We check it <b>live</b> and tell you whether WorkCoPilot can guide you through it, how, and which plan fits.</p>}
+                  {!res && !busy && <p className="wm-cov-intro">Put in your real task or scenario, or ask <b>how WorkCoPilot supports your apps</b>. We answer it <b>live</b> and tell you whether it can guide you through it, how, and which plan fits.</p>}
                   {busy && <div className="wm-cov-think"><span /><span /><span /> Validating it live…</div>}
                   {res && (
                     <div className="wm-cov-ans" key={res.answer}>
@@ -275,7 +276,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
                         </ul>
                       )}
-                      {(res.verdict === 'covered' || res.verdict === 'partial') && (
+                      {(res.verdict === 'covered' || res.verdict === 'partial' || res.verdict === 'about') && (
                         <div className={`wm-cov-loop${typingDone ? ' show' : ''}`}>
                           <div className="wm-cov-loop-h"><span className="lv-live-dot" aria-hidden /> A live co-pilot, not a how-to page</div>
                           <div className="wm-cov-loop-grid">
@@ -391,7 +392,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                   {err && <p className="wm-cov-err">{err}</p>}
                 </div>
                 <div className="wm-cov-input">
-                  <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder="e.g. Set up a VPC on AWS and lock it down, or reconcile last month's books in Excel"
+                  <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder="e.g. Set up a VPC on AWS and lock it down, reconcile last month's books in Excel, or: can it guide my in-house apps?"
                     onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} />
                   <div className="wm-cov-ibtns">
                     {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title="Clear and ask a new question" aria-label="Clear"><RotateCcw size={15} /> Clear</button>}
