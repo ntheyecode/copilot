@@ -737,7 +737,18 @@ function LiveDemo({ tilt, untilt }) {
   const [si, setSi] = useState(0)
   const [typed, setTyped] = useState('')
   const [show, setShow] = useState(false)
+  const [reveal, setReveal] = useState(0)   // staged reveal: 1=see, 2=stage, 3=act, 4=details
   const d = demos[di]
+  // Reveal the card in beats, not all at once: after the goal, "I can see" glows
+  // in, then the screen/terminal, then the action (Do this / Hold on), then the
+  // detail. Re-runs on every step so each move reads like a live hand-hold.
+  useEffect(() => {
+    if (!show) { setReveal(0); return }
+    setReveal(0)
+    const GAP = 720
+    const timers = [1, 2, 3, 4].map((n) => setTimeout(() => setReveal(n), GAP * n))
+    return () => timers.forEach(clearTimeout)
+  }, [show, si, di])
   // Type the goal when the scenario changes, then reveal the walkthrough.
   useEffect(() => {
     let t1, t2, cancelled = false
@@ -758,7 +769,7 @@ function LiveDemo({ tilt, untilt }) {
     if (!show) return
     const cur = d.steps[si] || d.steps[0]
     const last = si >= d.steps.length - 1
-    const dwell = (cur.fix || cur.diff) ? 6500 : 5000
+    const dwell = (cur.fix || cur.diff) ? 7600 : 6600   // staged reveal (~3s) + read time
     const t = setTimeout(() => {
       if (last) setDi((x) => (x + 1) % demos.length)
       else setSi((x) => x + 1)
@@ -774,38 +785,48 @@ function LiveDemo({ tilt, untilt }) {
       <div className="wm-demo-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>WorkCoPilot</b><span className="wm-demo-live" title="reading your screen"><i />watching</span><span className="wm-demo-tag">{d.tag}</span></div>
       <div className="wm-demo-goal"><span className="wm-demo-k">GOAL</span> {typed}<span className="wm-caret" /></div>
       <div className={`wm-demo-body${show ? ' in' : ''}`}>
-        <div className="wm-demo-sees" key={'see' + safeSi}><span className="wm-demo-scan" aria-hidden /><span className="wm-demo-seek"><ScanEye size={12} /> I can see</span> {s.sees}</div>
-        <div className="wm-demo-stage" key={'st' + safeSi}>
-          {s.diff
-            ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} />
-            : s.cmd
-              ? <TermBlock cmd={s.cmd} />
-              : <DemoScreen app={d.app} target={s.click} fix={isFix} />}
-        </div>
-        <div className="wm-demo-steps" aria-hidden>
-          {d.steps.map((_, k) => <i key={k} className={k < safeSi ? 'done' : k === safeSi ? 'now' : ''} />)}
-        </div>
-        <div className="wm-demo-guide">
-          {isFix ? (
-            <div className="wm-demo-fix" key={'fx' + safeSi}>
-              <div className="wm-demo-fixhead"><AlertTriangle size={13} /> HOLD ON <span className="wm-demo-stepno">Step {safeSi + 1} of {tot}</span></div>
-              <div className="wm-demo-fixsay">{s.fix.say}</div>
-              <div className="wm-demo-fixdo"><ArrowRight size={13} /> {s.fix.do}</div>
-            </div>
-          ) : (
-            <>
-              <div className="wm-demo-now">
-                <div className="wm-demo-label">DO THIS NOW <span className="wm-demo-stepno">Step {safeSi + 1} of {tot}</span></div>
-                <div key={safeSi} className="wm-demo-step wm-demo-fade">{s.step}</div>
+        {reveal >= 1 && (
+          <div className="wm-demo-sees wm-beat glow" key={'see' + safeSi}><span className="wm-demo-scan" aria-hidden /><span className="wm-demo-seek"><ScanEye size={12} /> I can see</span> {s.sees}</div>
+        )}
+        {reveal >= 2 && (
+          <div className="wm-demo-stage wm-beat" key={'st' + safeSi}>
+            {s.diff
+              ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} />
+              : s.cmd
+                ? <TermBlock cmd={s.cmd} />
+                : <DemoScreen app={d.app} target={s.click} fix={isFix} />}
+          </div>
+        )}
+        {reveal >= 2 && (
+          <div className="wm-demo-steps wm-beat" aria-hidden>
+            {d.steps.map((_, k) => <i key={k} className={k < safeSi ? 'done' : k === safeSi ? 'now' : ''} />)}
+          </div>
+        )}
+        {reveal >= 3 && (
+          <div className="wm-demo-guide">
+            {isFix ? (
+              <div className={`wm-demo-fix wm-beat${reveal >= 3 ? ' pop' : ''}`} key={'fx' + safeSi}>
+                <div className="wm-demo-fixhead"><AlertTriangle size={13} /> HOLD ON <span className="wm-demo-stepno">Step {safeSi + 1} of {tot}</span></div>
+                <div className="wm-demo-fixsay">{s.fix.say}</div>
+                {reveal >= 4 && <div className="wm-demo-fixdo wm-beat"><ArrowRight size={13} /> {s.fix.do}</div>}
               </div>
-              <div className="wm-demo-how" key={'h' + safeSi}>
-                <div className="wm-demo-howlabel">EXACTLY HOW</div>
-                <ol>{s.how.map((h, k) => <li key={k} className="wm-demo-fade" style={{ animationDelay: `${80 + k * 90}ms` }}>{h}</li>)}</ol>
-              </div>
-            </>
-          )}
-        </div>
-        <div className="wm-demo-done" key={'dn' + safeSi}><Check size={13} /> done when {s.done}</div>
+            ) : (
+              <>
+                <div className="wm-demo-now wm-beat">
+                  <div className="wm-demo-label">DO THIS NOW <span className="wm-demo-stepno">Step {safeSi + 1} of {tot}</span></div>
+                  <div key={safeSi} className="wm-demo-step">{s.step}</div>
+                </div>
+                {reveal >= 4 && (
+                  <div className="wm-demo-how wm-beat" key={'h' + safeSi}>
+                    <div className="wm-demo-howlabel">EXACTLY HOW</div>
+                    <ol>{s.how.map((h, k) => <li key={k} className="wm-demo-fade" style={{ animationDelay: `${60 + k * 90}ms` }}>{h}</li>)}</ol>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
+        {reveal >= 4 && <div className="wm-demo-done wm-beat" key={'dn' + safeSi}><Check size={13} /> done when {s.done}</div>}
       </div>
     </div>
   )
@@ -1337,6 +1358,16 @@ const CSS = `
 .wm-demo-steps i.now{background:linear-gradient(90deg,var(--em),var(--em2))}
 .wm-demo-fade{animation:wm-demo-fade .32s ease-out both}
 @keyframes wm-demo-fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+/* Staged reveal: each beat rises in on its own, so the card is read like a live
+   hand-hold, not dumped at once. "I can see" glows as it perceives; "Hold on"
+   flashes amber as it catches the risk - then both settle. */
+.wm-beat{animation:wm-beat-in .42s cubic-bezier(.2,.8,.2,1) both}
+@keyframes wm-beat-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+.wm-beat.glow{animation:wm-beat-in .42s cubic-bezier(.2,.8,.2,1) both,wm-beat-glow 1.5s ease-out .18s both}
+@keyframes wm-beat-glow{0%{box-shadow:0 0 0 0 rgba(57,211,255,0)}26%{box-shadow:0 0 0 4px rgba(57,211,255,.22),0 12px 30px -12px rgba(57,211,255,.55)}100%{box-shadow:0 0 0 0 rgba(57,211,255,0)}}
+.wm-beat.pop{animation:wm-beat-in .42s cubic-bezier(.2,.8,.2,1) both,wm-beat-pop 1.6s ease-out .18s both}
+@keyframes wm-beat-pop{0%{box-shadow:0 0 0 0 rgba(255,154,77,0)}26%{box-shadow:0 0 0 4px rgba(255,154,77,.24),0 12px 30px -12px rgba(255,154,77,.55)}100%{box-shadow:0 0 0 0 rgba(255,154,77,0)}}
+@media(prefers-reduced-motion:reduce){.wm-beat,.wm-beat.glow,.wm-beat.pop{animation:none}}
 .wm-demo-live{display:inline-flex;align-items:center;gap:5px;margin-left:10px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--em)}
 .wm-demo-live i{width:7px;height:7px;border-radius:50%;background:var(--em);box-shadow:0 0 8px var(--em);animation:wm-demo-pulse 1.4s ease-in-out infinite}
 @keyframes wm-demo-pulse{0%,100%{opacity:1}50%{opacity:.35}}

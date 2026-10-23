@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles } from 'lucide-react'
+import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles, Compass, Wand2, Bug, Award } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
@@ -147,6 +147,45 @@ export default function WorkDemo() {
           <div className="wkd-herocta">
             <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={17} aria-hidden="true" /></button>
             <span className="wkd-note">Takes about a minute to watch. Free to try.</span>
+          </div>
+        </div>
+      </section>
+
+      <section className="wkd-loop" aria-labelledby="wkd-loop-h">
+        <div className="wkd-wrap wkd-loop-in">
+          <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> A live co-pilot, not a how-to page</div>
+          <h2 id="wkd-loop-h">It does not just tell you. It walks every step with you.</h2>
+          <p className="wkd-loop-lead">What you just watched is the real loop. On your own screen, in your own app, WorkCoPilot stays with you from the first step to done.</p>
+
+          <div className="wkd-loop-grid">
+            <div className="wkd-cap watch">
+              <span className="ic" aria-hidden="true"><ScanEye size={20} /></span>
+              <b>Watches</b>
+              <p>Sees exactly what is on your screen and keeps pace with you, not a generic script.</p>
+            </div>
+            <div className="wkd-cap guide">
+              <span className="ic" aria-hidden="true"><Compass size={20} /></span>
+              <b>Navigates</b>
+              <p>Points you to the precise click, command or value, one step at a time, in your real app.</p>
+            </div>
+            <div className="wkd-cap correct">
+              <span className="ic" aria-hidden="true"><Wand2 size={20} /></span>
+              <b>Corrects</b>
+              <p>Catches a wrong move the moment it happens and puts you back on track before it costs you.</p>
+            </div>
+            <div className="wkd-cap fix">
+              <span className="ic" aria-hidden="true"><Bug size={20} /></span>
+              <b>Fixes</b>
+              <p>Debugs the error in front of you and gets you unstuck, then carries on to done.</p>
+            </div>
+          </div>
+
+          <div className="wkd-quality">
+            <span className="ic" aria-hidden="true"><Award size={20} /></span>
+            <div>
+              <b>Quality over quantity, done right the first time.</b>
+              <p>Only what is really on your screen - no guessing, no invented steps, no filler. Every step is grounded in the current best practice for your tool and checked before you act.</p>
+            </div>
           </div>
         </div>
       </section>
@@ -468,6 +507,27 @@ const CSS = `
   .wkd .wkd-fw{display:none}
   .wkd .wkd-cta{transition:none}
 }
+
+/* live co-pilot loop: watch -> navigate -> correct -> fix, plus the quality promise */
+.wkd-loop{padding:24px 0 8px;text-align:center}
+.wkd-loop-in{display:flex;flex-direction:column;align-items:center}
+.wkd-loop h2{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-weight:800;font-size:clamp(23px,3.6vw,32px);letter-spacing:-.02em;margin:16px 0 0}
+.wkd-loop-lead{color:var(--mut);font-size:clamp(15px,2vw,17px);line-height:1.55;max-width:56ch;margin:12px auto 26px}
+.wkd-loop-grid{width:100%;display:grid;grid-template-columns:repeat(4,1fr);gap:14px;text-align:left}
+.wkd-cap{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 16px;box-shadow:0 14px 40px rgba(10,30,70,.06);display:flex;flex-direction:column;gap:6px}
+.wkd-cap .ic{width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:#fff;margin-bottom:4px}
+.wkd-cap b{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.01em}
+.wkd-cap p{margin:0;color:var(--mut);font-size:13.5px;line-height:1.5}
+.wkd-cap.watch .ic{background:linear-gradient(135deg,#39d3ff,#0a86cf)}
+.wkd-cap.guide .ic{background:linear-gradient(135deg,#34e0a1,#0a9d66)}
+.wkd-cap.correct .ic{background:linear-gradient(135deg,#b98cff,#7a4bd8)}
+.wkd-cap.fix .ic{background:linear-gradient(135deg,#ffb35c,#f26a43)}
+.wkd-quality{width:100%;margin-top:16px;display:flex;align-items:flex-start;gap:14px;text-align:left;background:color-mix(in srgb,var(--g) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--g) 30%,var(--line));border-radius:16px;padding:18px 20px}
+.wkd-quality .ic{flex:0 0 40px;width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:#2a1a04;background:linear-gradient(135deg,#ffcf5c,#e08a2a)}
+.wkd-quality b{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-size:17px;font-weight:800;display:block}
+.wkd-quality p{margin:6px 0 0;color:var(--mut);font-size:14px;line-height:1.55}
+@media (max-width:760px){.wkd-loop-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:440px){.wkd-loop-grid{grid-template-columns:1fr}}
 
 .wkd-final{padding:40px 0 60px;text-align:center}
 .wkd-final-in{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:40px 24px;box-shadow:0 20px 50px rgba(10,30,70,.07)}
