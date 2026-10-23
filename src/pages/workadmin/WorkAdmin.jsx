@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
@@ -23,6 +23,7 @@ import Billing from './sections/Billing.jsx'
 import Sessions from './sections/Sessions.jsx'
 import Leads from './sections/Leads.jsx'
 import Incidents from './sections/Incidents.jsx'
+import Hero from './sections/Hero.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
@@ -34,6 +35,7 @@ const SECTIONS = [
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
   { id: 'sessions', label: 'Sessions', icon: ListChecks, title: 'Sessions', sub: 'Recent guided sessions across users.' },
   { id: 'leads', label: 'Leads', icon: UserPlus, title: 'Leads', sub: 'Everyone who ran a live validation on the demo or sign-in page - newest first.' },
+  { id: 'hero', label: 'Hero', icon: Megaphone, title: 'Homepage hero', sub: 'The rotating headline and subtext on the public homepage. Superadmin edits; other admins view.' },
   { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
   { id: 'incidents', label: 'Incidents', icon: ShieldAlert, title: 'System incidents', sub: 'Real causes behind the "system is busy" message users see - AI quota, keys, 5xx, timeouts. Users never see these.' },
 ]
@@ -44,6 +46,10 @@ export default function WorkAdmin() {
   const [gate, setGate] = useState('loading')
   const [viewer, setViewer] = useState(null)
   const [gateError, setGateError] = useState(null)
+  // At-a-glance alert on the Incidents nav item: last-24h count, red if anything
+  // actually FAILED (exhausted / provider error / system), amber if the window
+  // holds only auto-recoveries (failovers) that are worth watching pile up.
+  const [incidentAlert, setIncidentAlert] = useState({ count: 0, severe: false })
 
   const checkAccess = useCallback(async () => {
     setGate('loading'); setGateError(null)
@@ -58,6 +64,25 @@ export default function WorkAdmin() {
   }, [])
 
   useEffect(() => { checkAccess() }, [checkAccess])
+
+  // Poll a light incident summary while the console is open (also refreshes when
+  // the operator opens the Incidents tab). Failures never break the console.
+  const loadIncidentAlert = useCallback(async () => {
+    try {
+      const data = await workAdminApi.incidents(300)
+      const since = Date.now() - 24 * 60 * 60 * 1000
+      const recent = (data.incidents || []).filter((i) => new Date(i.at).getTime() >= since)
+      const severe = recent.some((i) => i.kind !== 'ai_failover')
+      setIncidentAlert({ count: recent.length, severe })
+    } catch { /* leave the last known count */ }
+  }, [])
+
+  useEffect(() => {
+    if (gate !== 'ready' || !(viewer && viewer.isSuperAdmin)) return
+    loadIncidentAlert()
+    const t = setInterval(loadIncidentAlert, 60000)
+    return () => clearInterval(t)
+  }, [gate, viewer, loadIncidentAlert, active])
 
   // Sign out of the console. Uses the WorkCoPilot route (NOT /api/logout, which
   // nginx routes to the sibling app), then lands on the sign-in page.
@@ -76,6 +101,7 @@ export default function WorkAdmin() {
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions />
       case 'leads': return <Leads />
+      case 'hero': return <Hero isSuperAdmin={isSuperAdmin} />
       case 'tickets': return <SupportTickets mode="admin" />
       case 'incidents': return <Incidents />
       case 'overview':
@@ -150,6 +176,14 @@ export default function WorkAdmin() {
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(s.id) } }}>
                 <Icon size={17} />
                 <span className="label">{s.label}</span>
+                {s.id === 'incidents' && incidentAlert.count > 0 ? (
+                  <span title={`${incidentAlert.count} incident${incidentAlert.count === 1 ? '' : 's'} in the last 24h`}
+                    style={{ marginLeft: 'auto', minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9,
+                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700,
+                      color: '#0a0d12', background: incidentAlert.severe ? 'var(--wka-red, #ff6b6b)' : 'var(--wka-amber, #f5c86b)' }}>
+                    {incidentAlert.count > 99 ? '99+' : incidentAlert.count}
+                  </span>
+                ) : null}
               </div>
             )
           })}

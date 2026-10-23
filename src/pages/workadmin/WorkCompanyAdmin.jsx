@@ -14,6 +14,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
+  FileText, Download, Activity, Globe, Sparkles, Eye, DollarSign, Award,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
@@ -49,6 +50,7 @@ const SECTIONS = [
   { id: 'ai', label: 'AI keys', icon: Cpu, title: 'AI keys', sub: 'Run WorkCoPilot on your company AI keys so usage is billed to your own provider account.' },
   { id: 'billing', label: 'Billing', icon: Receipt, title: 'Billing', sub: 'Your plan charges and any extras. Set by the WorkCoPilot team.' },
   { id: 'governance', label: 'Data governance', icon: ShieldCheck, title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
+  { id: 'sessions', label: 'Sessions', icon: Activity, title: 'Member sessions', sub: 'Every session your people run - completed or in progress. Pull the report or audit log for any of them.' },
   { id: 'tickets', label: 'Support', icon: LifeBuoy, title: 'Support', sub: 'Open a ticket and talk to the WorkCoPilot team.' },
   { id: 'activity', label: 'Activity', icon: ListChecks, title: 'Activity', sub: 'A record of what happened across your company.' },
   { id: 'settings', label: 'Settings', icon: SettingsIcon, title: 'Settings and profile', sub: 'Your profile, your password, and your company details.' },
@@ -57,6 +59,44 @@ const SECTIONS = [
 // ===========================================================================
 // Overview
 // ===========================================================================
+// Authorization attestation: the company admin affirms their organization
+// authorizes WorkCoPilot use on its systems (addresses "browser access does not
+// establish corporate authorization"). Self-contained: fetches + posts its own
+// state. Prompted when missing; shows who + when once affirmed. Not a hard gate.
+function AuthorizationCard() {
+  const [st, setSt] = useState({ loading: true, error: null, auth: null })
+  const [saving, setSaving] = useState(false)
+  const load = useCallback(() => {
+    setSt((s) => ({ ...s, loading: true, error: null }))
+    api.workTeamAuthorization().then((a) => setSt({ loading: false, error: null, auth: a })).catch((error) => setSt({ loading: false, error, auth: null }))
+  }, [])
+  useEffect(() => { load() }, [load])
+  const affirm = async () => {
+    if (saving) return
+    setSaving(true)
+    try { const a = await api.workTeamAttest(); setSt((s) => ({ ...s, auth: a.authorization || a })) }
+    catch (error) { setSt((s) => ({ ...s, error })) } finally { setSaving(false) }
+  }
+  if (st.loading) return null
+  const a = st.auth || {}
+  if (a.attested) {
+    return (
+      <div className="wka-panel" style={{ borderColor: 'rgba(140,245,196,0.4)' }}>
+        <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-emerald)' }} />Authorization on file</h2>
+        <p className="desc">Your organization's authorization to use WorkCoPilot on its systems is recorded{a.byName ? <> by <b>{a.byName}</b></> : ''}{a.at ? <> on {fmtDate(a.at)}</> : ''}. This is kept as evidence that use was approved by your organization.</p>
+      </div>
+    )
+  }
+  return (
+    <div className="wka-panel" style={{ borderColor: 'rgba(255,179,92,0.5)' }}>
+      <h2><ShieldAlert size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-amber)' }} />Confirm organization authorization</h2>
+      <p className="desc">WorkCoPilot guides your people on their own screens and systems. As a company admin, confirm that your organization authorizes this use on its systems. We record who affirmed it and when, as evidence - it does not change how the product works.</p>
+      {st.error ? <div style={{ marginBottom: 12 }}><ErrorBox error={st.error} /></div> : null}
+      <button type="button" className="wka-btn primary" disabled={saving} onClick={affirm}>{saving ? <Spinning /> : <Check size={14} />} My organization authorizes WorkCoPilot</button>
+    </div>
+  )
+}
+
 function OverviewSection({ company }) {
   const [state, setState] = useState({ loading: true, error: null, lic: null, cons: null })
   const load = useCallback(() => {
@@ -106,6 +146,8 @@ function OverviewSection({ company }) {
       {company && aiReady === false && (
         <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReason || 'AI is not configured yet.'} {company.aiSource === 'company' ? 'Set your keys in the AI keys tab.' : ''}</div>
       )}
+
+      <AuthorizationCard />
 
       {lic.tierUsage && (
         <div className="wka-panel">
@@ -503,14 +545,123 @@ function BillingSection() {
 // ===========================================================================
 // AI keys
 // ===========================================================================
+
+// Relative time ("3 min ago") for the recommendation's computed-at stamp.
+function relTimeAgo(at) {
+  if (!at) return ''
+  const t = new Date(at).getTime()
+  if (isNaN(t)) return ''
+  const s = Math.round(Math.max(0, Date.now() - t) / 1000)
+  if (s < 45) return 'just now'
+  const m = Math.round(s / 60); if (m < 60) return `${m} min ago`
+  const h = Math.round(m / 60); if (h < 24) return `${h}h ago`
+  const d = Math.round(h / 24); return `${d}d ago`
+}
+function recPrice(m) {
+  if (!m || m.usdPerMtok == null || !isFinite(Number(m.usdPerMtok))) return ''
+  return `$${Number(m.usdPerMtok).toFixed(2)} /Mtok`
+}
+const REC_VIS_TAG = {
+  display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700,
+  color: 'var(--wka-emerald)', border: '1px solid rgba(10,157,102,0.4)', background: 'rgba(10,157,102,0.08)',
+  borderRadius: 999, padding: '2px 7px',
+}
+
+function RecPick({ title, icon, pick }) {
+  return (
+    <div style={{ flex: '1 1 200px', minWidth: 0, border: '1px solid var(--wka-line)', borderRadius: 10, padding: '14px 16px', background: 'var(--wka-panel-2)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--wka-muted)', fontWeight: 600 }}>{icon}{title}</div>
+      {pick ? (
+        <div style={{ marginTop: 9 }}>
+          <div style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{pick.label || pick.provider}</div>
+          <div style={{ fontWeight: 650, fontSize: 14, wordBreak: 'break-word' }}>{pick.model}</div>
+          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            {recPrice(pick) ? <span className="wka-mono" style={{ fontSize: 12, color: 'var(--wka-muted)' }}>{recPrice(pick)}</span> : null}
+            {pick.vision ? <span style={REC_VIS_TAG}><Eye size={11} /> vision</span> : null}
+          </div>
+        </div>
+      ) : <div style={{ marginTop: 9, fontSize: 12.5, color: 'var(--wka-faint)' }}>No pick available.</div>}
+    </div>
+  )
+}
+
+function RecProviderRow({ p }) {
+  return (
+    <div style={{ display: 'flex', gap: 12, padding: '9px 0', borderBottom: '1px solid var(--wka-line)', flexWrap: 'wrap', alignItems: 'baseline' }}>
+      <div style={{ fontWeight: 600, minWidth: 130 }}>{p.label || p.provider} <span style={{ color: 'var(--wka-faint)', fontWeight: 400, fontSize: 12 }}>· {p.count} model{p.count === 1 ? '' : 's'}</span></div>
+      <div style={{ fontSize: 12, color: 'var(--wka-muted)', flex: 1, minWidth: 180 }}>
+        {p.cheapest ? <span>Cheapest: <b>{p.cheapest.model}</b> {recPrice(p.cheapest)}{p.cheapest.vision ? ' (vision)' : ''}</span> : <span style={{ color: 'var(--wka-faint)' }}>No priced model</span>}
+        {p.best ? <span style={{ display: 'block' }}>Best: <b>{p.best.model}</b>{p.best.quality ? ` (quality ${p.best.quality}/5)` : ''}{p.best.vision ? ' (vision)' : ''}</span> : null}
+      </div>
+    </div>
+  )
+}
+
+// Best + cheapest model guidance for the company's available providers.
+function CompanyAiRecommendation() {
+  const [state, setState] = useState({ loading: true, error: null, data: null })
+  const load = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    api.workTeamAiRecommendation()
+      .then((data) => setState({ loading: false, error: null, data }))
+      .catch((error) => setState((s) => ({ ...s, loading: false, error })))
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const d = state.data || {}
+  const providers = d.providers || []
+  const overall = d.overall || {}
+  return (
+    <div className="wka-panel">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+        <h2 style={{ margin: 0 }}><Sparkles size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-accent)' }} />Recommended models</h2>
+        <button type="button" className="wka-btn sm ghost" disabled={state.loading} onClick={load}>{state.loading ? <Spinning /> : <RefreshCw size={13} />} Refresh</button>
+      </div>
+      <p className="desc">The best and cheapest picks across the providers available to your company, to choose a model to run on.</p>
+      {state.loading ? <Loading label="Loading recommendation" />
+        : state.error ? <ErrorBox error={state.error} onRetry={load} />
+        : providers.length === 0 ? <EmptyState title="No models to compare yet" detail={d.note || 'Add your company AI keys to see recommendations.'} />
+        : (
+          <>
+            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+              <RecPick title="Cheapest" icon={<DollarSign size={14} style={{ color: 'var(--wka-emerald)' }} />} pick={overall.cheapest} />
+              <RecPick title="Cheapest that can see the screen" icon={<Eye size={14} style={{ color: 'var(--wka-cyan)' }} />} pick={overall.cheapestVision} />
+              <RecPick title="Best" icon={<Award size={14} style={{ color: 'var(--wka-amber)' }} />} pick={overall.best} />
+            </div>
+            <div style={{ marginTop: 16 }}>
+              {providers.map((p) => <RecProviderRow key={p.provider} p={p} />)}
+            </div>
+            <div style={{ marginTop: 14, fontSize: 11.5, color: 'var(--wka-faint)' }}>
+              {d.note ? <div>{d.note}</div> : null}
+              {d.at ? <div style={{ marginTop: 4 }}>Updated {relTimeAgo(d.at)}</div> : null}
+            </div>
+          </>
+        )}
+    </div>
+  )
+}
+
 function AiSection() {
   const [company, setCompany] = useState(null)
   const [form, setForm] = useState({ providerId: '', apiKey: '', chatModel: '', visionModel: '' })
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
   const [err, setErr] = useState(null)
+  // Company's own web-search (Tavily) key - its own form + status.
+  const [wsKey, setWsKey] = useState('')
+  const [wsBusy, setWsBusy] = useState(false)
+  const [wsOk, setWsOk] = useState('')
+  const [wsErr, setWsErr] = useState(null)
   const load = useCallback(() => { api.workTeamAi().then((c) => setCompany(c || null)).catch((e) => setErr(e)) }, [])
   useEffect(() => { load() }, [load])
+
+  const saveWs = async (clear) => {
+    const key = clear ? '' : wsKey.trim()
+    if (!clear && !key) return
+    setWsBusy(true); setWsErr(null); setWsOk('')
+    try { await api.workTeamSetWebSearch(key, 'tavily'); setWsKey(''); setWsOk(clear ? 'Web-search key removed.' : 'Web-search key saved.'); load() }
+    catch (error) { setWsErr(error) } finally { setWsBusy(false) }
+  }
 
   const save = async () => {
     if (!form.apiKey.trim()) return
@@ -556,6 +707,26 @@ function AiSection() {
           <button type="button" className="wka-btn primary" disabled={busy || !form.apiKey.trim()} onClick={save}>{busy ? <Spinning /> : <KeyRound size={14} />} Use my keys</button>
         </div>
       </div>
+
+      <div className="wka-panel">
+        <h2><Globe size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Live web learning <Help text="A Tavily key for live web learning. When set, this company's live web learning runs on your own key - your data boundary and billing." /></h2>
+        <p className="desc">When set, this company&rsquo;s live web learning runs on your own key (your data boundary and billing). Guidance is then grounded in the latest web sources.</p>
+        {company && company.webSearchConfigured
+          ? <p className="desc">Configured on <b>{(company.webSearch && company.webSearch.provider) || 'tavily'}</b>, key <code className="wka-mono">{company.webSearch && company.webSearch.keyMasked}</code>{company.webSearch && company.webSearch.setAt ? `, set ${fmtDate(company.webSearch.setAt)}` : ''}.</p>
+          : <p className="desc">No web-search key set for your company.</p>}
+        <div className="wka-field" style={{ maxWidth: 420, margin: '4px 0 12px' }}>
+          <label>Tavily API key</label>
+          <input className="wka-input" type="password" autoComplete="new-password" value={wsKey} placeholder="paste your Tavily key" onChange={(e) => setWsKey(e.target.value)} />
+        </div>
+        {wsOk && <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {wsOk}</div>}
+        {wsErr && <ErrorBox error={wsErr} />}
+        <div style={{ display: 'flex', gap: 10 }}>
+          {company && company.webSearchConfigured && <button type="button" className="wka-btn" disabled={wsBusy} onClick={() => saveWs(true)}>Remove key</button>}
+          <button type="button" className="wka-btn primary" disabled={wsBusy || !wsKey.trim()} onClick={() => saveWs(false)}>{wsBusy ? <Spinning /> : <KeyRound size={14} />} Save key</button>
+        </div>
+      </div>
+
+      <CompanyAiRecommendation />
     </div>
   )
 }
@@ -723,6 +894,63 @@ function ActivitySection() {
 }
 
 // ===========================================================================
+// Member sessions (oversight): a company admin can pull the report + audit log
+// of any of their people's sessions, completed or in progress.
+// ===========================================================================
+function SessionsSection() {
+  const [state, setState] = useState({ loading: true, error: null, items: null })
+  const [filter, setFilter] = useState('all')   // all | active | ended
+  const load = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    api.workCompanySessions().then((r) => setState({ loading: false, error: null, items: r.sessions || [] })).catch((error) => setState({ loading: false, error, items: [] }))
+  }, [])
+  useEffect(() => { load() }, [load])
+  if (state.loading) return <Loading label="Loading sessions" />
+  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
+  if (!state.items || !state.items.length) return <EmptyState title="No sessions yet" detail="When your people run guided sessions they appear here - completed or in progress - and you can pull each report and audit log." />
+  const items = state.items.filter((s) => filter === 'all' || (filter === 'active' ? s.status !== 'ended' : s.status === 'ended'))
+  const chip = (s) => s.status === 'ended'
+    ? <span style={{ fontSize: 12, fontWeight: 600, color: '#16a34a' }}><Check size={12} style={{ verticalAlign: '-1px' }} /> Completed</span>
+    : <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wka-accent, #2563eb)' }}><Clock size={12} style={{ verticalAlign: '-1px' }} /> In progress</span>
+  return (
+    <div className="wka-panel">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
+        <h2 style={{ margin: 0 }}>Member sessions</h2>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          <select className="wka-select" value={filter} onChange={(e) => setFilter(e.target.value)} style={{ height: 32 }}>
+            <option value="all">All</option>
+            <option value="active">In progress</option>
+            <option value="ended">Completed</option>
+          </select>
+          <button className="wka-btn sm ghost" onClick={load} title="Refresh"><RefreshCw size={13} /> Refresh</button>
+        </div>
+      </div>
+      <p style={{ color: 'var(--wka-muted)', fontSize: 13, marginTop: 6 }}>Pull any session's report or its audit log (exactly what was sent to the AI) at any time. Scoped to your company only.</p>
+      <div className="wka-table-wrap" style={{ marginTop: 8 }}>
+        <table className="wka-table">
+          <thead><tr><th>Who</th><th>Task</th><th>Status</th><th>Progress</th><th>Updated</th><th>Pull</th></tr></thead>
+          <tbody>
+            {items.map((s) => (
+              <tr key={s.id}>
+                <td>{s.user || 'A user'}</td>
+                <td style={{ color: 'var(--wka-muted)' }}>{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || 'Untitled')}</td>
+                <td>{chip(s)}</td>
+                <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{s.steps ? `${s.done}/${s.steps} steps` : '-'}</td>
+                <td style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDT(s.lastActivityAt || s.startedAt)}</td>
+                <td style={{ whiteSpace: 'nowrap' }}>
+                  <a className="wka-btn sm" href={api.workReportUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download the session report (PDF)"><Download size={13} /> Report</a>
+                  <a className="wka-btn sm ghost" href={api.workAuditUrl(s.id)} target="_blank" rel="noopener noreferrer" title="Download the audit log (exactly what was sent to the AI)" style={{ marginLeft: 6 }}><FileText size={13} /> Log</a>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+// ===========================================================================
 // Settings and profile
 // ===========================================================================
 function SettingsSection({ viewer, company, onProfile }) {
@@ -834,6 +1062,7 @@ export default function WorkCompanyAdmin() {
       case 'ai': return <AiSection />
       case 'billing': return <BillingSection />
       case 'governance': return <GovernanceSection companyId={viewer && viewer.companyId} />
+      case 'sessions': return <SessionsSection />
       case 'tickets': return <SupportTickets mode="user" />
       case 'activity': return <ActivitySection />
       case 'settings': return <SettingsSection viewer={viewer} company={company} onProfile={(u) => setViewer(u)} />

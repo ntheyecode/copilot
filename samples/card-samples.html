@@ -1,0 +1,821 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WorkCoPilot - card design options</title>
+<meta name="description" content="Four light-theme card directions for the WorkCoPilot site, same content in each, so only the design differs.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ------------------------------------------------------------------
+     Tokens
+     ------------------------------------------------------------------ */
+  :root {
+    --ink: #0a0d12;
+    --ink-2: #3d4650;
+    --ink-3: #6b7680;
+    --surface: #ffffff;
+    --surface-2: #f6f9f8;
+    --page: #edf1ef;
+    --line: #e1e7e4;
+    --line-strong: #c9d2cd;
+
+    --emerald: #8cf5c4;
+    --emerald-ink: #0f7f58;
+    --emerald-soft: #e3fbf0;
+    --cyan: #39d3ff;
+    --cyan-ink: #0a7fa8;
+    --cyan-soft: #e1f6fd;
+    --amber: #f5c86b;
+    --amber-ink: #8f5a07;
+    --amber-soft: #fdf3dd;
+
+    --display: "Bricolage Grotesque", "Instrument Sans", Georgia, serif;
+    --body: "Instrument Sans", "Helvetica Neue", sans-serif;
+    --mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+
+    --ease: cubic-bezier(.2, .7, .2, 1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.55;
+    color: var(--ink);
+    background:
+      radial-gradient(1200px 600px at 10% -10%, rgba(140, 245, 196, .22), transparent 60%),
+      radial-gradient(900px 500px at 100% 0%, rgba(57, 211, 255, .14), transparent 60%),
+      var(--page);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* faint dot grid so the white cards read against the page */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image: radial-gradient(rgba(10, 13, 18, .07) 1px, transparent 1px);
+    background-size: 22px 22px;
+    mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.35));
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,.9), rgba(0,0,0,.35));
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 1040px;
+    margin: 0 auto;
+    padding: 56px 16px 96px;
+  }
+
+  /* ------------------------------------------------------------------
+     Page header
+     ------------------------------------------------------------------ */
+  .head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 32px;
+    margin-bottom: 44px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line-strong);
+  }
+  .head h1 {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: clamp(26px, 3.4vw, 36px);
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin: 0;
+  }
+  .head h1 .dash { color: var(--ink-3); font-weight: 400; }
+  .head p {
+    margin: 0;
+    max-width: 48ch;
+    color: var(--ink-2);
+    font-size: 15px;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--ink-3);
+    letter-spacing: .02em;
+  }
+  .brand i {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--emerald), var(--cyan));
+    box-shadow: 0 0 0 3px rgba(140, 245, 196, .25);
+  }
+
+  /* ------------------------------------------------------------------
+     Grid of options
+     ------------------------------------------------------------------ */
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 44px 40px;
+  }
+  @media (min-width: 880px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  .option {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: rise .7s var(--ease) both;
+  }
+  .option:nth-child(1) { animation-delay: .05s; }
+  .option:nth-child(2) { animation-delay: .14s; }
+  .option:nth-child(3) { animation-delay: .23s; }
+  .option:nth-child(4) { animation-delay: .32s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .label {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 2px;
+  }
+  .label .name {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+  }
+  .label .name .key {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: .06em;
+    color: var(--ink);
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: 2px 7px;
+    transform: translateY(-2px);
+  }
+  .label .desc {
+    color: var(--ink-2);
+    font-size: 14px;
+    max-width: 52ch;
+  }
+
+  /* a stage so every card sits at the same realistic width */
+  .stage {
+    display: flex;
+    justify-content: flex-start;
+  }
+  .card {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: transform .45s var(--ease), box-shadow .45s var(--ease), border-color .45s var(--ease);
+  }
+  .card:focus-visible { outline: 2px solid var(--cyan-ink); outline-offset: 4px; }
+
+  /* ------------------------------------------------------------------
+     Shared card anatomy (content is identical in every option)
+     ------------------------------------------------------------------ */
+  .top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+  }
+  .tile {
+    width: 44px; height: 44px;
+    display: grid; place-items: center;
+    border-radius: 12px;
+    flex: none;
+  }
+  .tile svg { width: 22px; height: 22px; }
+
+  .title {
+    font-family: var(--display);
+    font-weight: 600;
+    font-size: 23px;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin: 0;
+  }
+  .body {
+    margin: 0;
+    color: var(--ink-2);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+
+  /* proof / mechanism strip */
+  .proof {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0;
+  }
+  /* arrow and result wrap together, never leaving the arrow stranded */
+  .result {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .chip {
+    padding: 4px 7px;
+    border-radius: 7px;
+    background: var(--surface-2);
+    border: 1px solid var(--line);
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+  .arrow {
+    display: inline-flex;
+    color: var(--ink-3);
+  }
+  .arrow svg { width: 16px; height: 16px; }
+  .ok {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 9px 4px 7px;
+    border-radius: 7px;
+    background: var(--emerald-soft);
+    border: 1px solid rgba(15, 127, 88, .22);
+    color: var(--emerald-ink);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+  .ok svg { width: 12px; height: 12px; }
+
+  .list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+  .list li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--ink-2);
+  }
+  .tick {
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: grid; place-items: center;
+    flex: none;
+  }
+  .tick svg { width: 10px; height: 10px; }
+
+  .link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    align-self: flex-start;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--ink);
+    text-decoration: none;
+    position: relative;
+  }
+  .link svg { width: 14px; height: 14px; transition: transform .35s var(--ease); }
+  .card:hover .link svg { transform: translateX(3px); }
+
+  /* ==================================================================
+     OPTION A - Soft elevated / glass
+     ================================================================== */
+  .card-a {
+    padding: 28px 28px 26px;
+    border-radius: 22px;
+    background: linear-gradient(180deg, #ffffff 0%, #fbfdfc 100%);
+    box-shadow:
+      0 0 0 1px rgba(10, 13, 18, .04),
+      0 1px 2px rgba(10, 13, 18, .04),
+      0 6px 14px -4px rgba(10, 13, 18, .06),
+      0 22px 44px -16px rgba(10, 13, 18, .12);
+  }
+  /* gradient hairline that only lives on the top edge */
+  .card-a::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(180deg, rgba(255,255,255,1), rgba(255,255,255,0) 40%),
+                linear-gradient(90deg, rgba(140,245,196,0), rgba(140,245,196,.9) 35%, rgba(57,211,255,.9) 65%, rgba(57,211,255,0));
+    background-size: 100% 100%, 100% 1px;
+    background-repeat: no-repeat;
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask-composite: exclude;
+    pointer-events: none;
+    opacity: .9;
+  }
+  .card-a .tile {
+    background: #ffffff;
+    color: var(--emerald-ink);
+    box-shadow:
+      0 0 0 1px rgba(10, 13, 18, .06),
+      0 2px 6px rgba(10, 13, 18, .06),
+      inset 0 1px 0 rgba(255,255,255,1);
+  }
+  .card-a .tick { background: var(--emerald-soft); color: var(--emerald-ink); }
+  .card-a .link { color: var(--ink); }
+  .card-a .link::after {
+    content: ""; position: absolute; left: 0; right: 22px; bottom: -3px; height: 1px;
+    background: var(--line-strong);
+    transition: background .35s var(--ease);
+  }
+  .card-a:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 0 0 1px rgba(10, 13, 18, .05),
+      0 1px 2px rgba(10, 13, 18, .04),
+      0 10px 20px -6px rgba(10, 13, 18, .08),
+      0 34px 64px -20px rgba(10, 13, 18, .18);
+  }
+  .card-a:hover .link::after { background: var(--emerald-ink); }
+
+  /* ==================================================================
+     OPTION B - Editorial / bordered
+     ================================================================== */
+  .card-b {
+    padding: 0 26px 26px;
+    border-radius: 14px;
+    background: var(--surface);
+    border: 1px solid var(--line-strong);
+    gap: 16px;
+  }
+  .card-b .rule {
+    height: 3px;
+    margin: 0 -27px 10px;
+    border-radius: 14px 14px 0 0;
+    background: var(--ink);
+    position: relative;
+    overflow: hidden;
+  }
+  .card-b .rule::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(90deg, var(--emerald) 0 28%, transparent 28%);
+  }
+  .card-b .top { padding-top: 14px; }
+  .card-b .eyebrow {
+    display: inline-flex; align-items: baseline; gap: 10px;
+    color: var(--ink);
+  }
+  .card-b .eyebrow .num {
+    font-weight: 500;
+    color: var(--ink-3);
+    border-right: 1px solid var(--line-strong);
+    padding-right: 10px;
+  }
+  .card-b .tile {
+    width: 40px; height: 40px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--ink);
+    color: var(--ink);
+  }
+  .card-b .title {
+    font-size: 27px;
+    font-weight: 600;
+    letter-spacing: -0.028em;
+    line-height: 1.08;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--line);
+  }
+  .card-b .body { font-size: 15px; }
+  .card-b .chip {
+    background: transparent;
+    border-color: var(--line-strong);
+    color: var(--ink);
+    border-radius: 4px;
+  }
+  .card-b .ok {
+    border-radius: 4px;
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--emerald);
+  }
+  .card-b .list { gap: 0; border-top: 1px solid var(--line); }
+  .card-b .list li {
+    padding: 9px 0;
+    border-bottom: 1px solid var(--line);
+    color: var(--ink);
+    font-weight: 500;
+    font-size: 14px;
+  }
+  .card-b .tick { width: 16px; height: 16px; border-radius: 3px; background: var(--ink); color: var(--emerald); }
+  .card-b .link {
+    font-family: var(--display);
+    font-weight: 600;
+    letter-spacing: -0.005em;
+    text-decoration: underline;
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 4px;
+    text-decoration-color: var(--line-strong);
+    transition: text-decoration-color .35s var(--ease);
+  }
+  .card-b:hover { border-color: var(--ink); transform: translateY(-2px); }
+  .card-b:hover .link { text-decoration-color: var(--ink); }
+
+  /* ==================================================================
+     OPTION C - Depth + brand glow
+     ================================================================== */
+  .card-c {
+    padding: 26px 26px 24px;
+    border-radius: 20px;
+    background: var(--surface);
+    border: 1px solid rgba(10, 13, 18, .08);
+    box-shadow:
+      0 1px 2px rgba(10, 13, 18, .04),
+      0 18px 40px -22px rgba(10, 13, 18, .18);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  /* corner glow, layered: emerald first, cyan behind */
+  .card-c::before, .card-c::after {
+    content: "";
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: -1;
+    filter: blur(28px);
+    transition: transform .6s var(--ease), opacity .6s var(--ease);
+  }
+  .card-c::before {
+    width: 220px; height: 220px;
+    right: -100px; top: -110px;
+    background: radial-gradient(circle, rgba(140, 245, 196, .62), rgba(140, 245, 196, 0) 68%);
+  }
+  .card-c::after {
+    width: 240px; height: 240px;
+    right: -40px; top: -170px;
+    background: radial-gradient(circle, rgba(57, 211, 255, .42), rgba(57, 211, 255, 0) 68%);
+    opacity: .75;
+  }
+  .card-c .tile {
+    width: 46px; height: 46px;
+    border-radius: 13px;
+    color: #ffffff;
+    background: linear-gradient(135deg, #10a271 0%, #0a93c4 100%);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.45),
+      0 8px 18px -8px rgba(10, 147, 196, .6);
+    position: relative;
+  }
+  .card-c .tile::after {
+    content: "";
+    position: absolute; inset: 0; border-radius: inherit;
+    background: linear-gradient(160deg, rgba(255,255,255,.28), rgba(255,255,255,0) 55%);
+  }
+  .card-c .tile svg { position: relative; }
+  .card-c .eyebrow { color: var(--cyan-ink); }
+
+  /* mono proof strip rendered like a quiet check log */
+  .card-c .strip {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, #f4f8f7, #f8fbfa);
+    border: 1px solid var(--line);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.9);
+    font-family: var(--mono);
+    font-size: 11.5px;
+  }
+  .card-c .strip .row {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--ink-3);
+  }
+  .card-c .strip .row .k { color: var(--ink-3); width: 56px; flex: none; }
+  .card-c .strip .proof { gap: 5px; }
+  .card-c .chip { background: #ffffff; border-color: var(--line); color: var(--ink-2); }
+  .card-c .ok { background: var(--emerald-soft); }
+  .card-c .tick {
+    color: #ffffff;
+    background: linear-gradient(135deg, #10a271, #0a93c4);
+  }
+  .card-c .link { color: var(--cyan-ink); }
+  .card-c:hover { transform: translateY(-4px); border-color: rgba(10, 13, 18, .12); }
+  .card-c:hover::before { transform: translate(-12px, 12px) scale(1.08); }
+  .card-c:hover::after { transform: translate(-20px, 24px) scale(1.06); opacity: 1; }
+
+  /* ==================================================================
+     OPTION D - Textured premium
+     ================================================================== */
+  .card-d {
+    padding: 28px 28px 26px;
+    border-radius: 18px;
+    background: #fdfcf9;
+    border: 1px solid rgba(10, 13, 18, .09);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,1),
+      0 1px 1px rgba(10, 13, 18, .03),
+      0 12px 28px -18px rgba(90, 70, 30, .25);
+    overflow: hidden;
+    isolation: isolate;
+  }
+  /* warm wash under the surface */
+  .card-d::before {
+    content: "";
+    position: absolute; inset: 0;
+    z-index: -2;
+    background:
+      radial-gradient(420px 260px at 100% 100%, rgba(245, 200, 107, .32), transparent 65%),
+      radial-gradient(360px 220px at 0% 0%, rgba(140, 245, 196, .18), transparent 65%);
+    transition: opacity .6s var(--ease);
+  }
+  /* grain, generated inline so the file stands alone */
+  .card-d .grain {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    z-index: -1;
+    opacity: .5;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+  .card-d .eyebrow { color: var(--amber-ink); }
+  .card-d .tile {
+    border-radius: 12px;
+    color: var(--amber-ink);
+    background: linear-gradient(180deg, #fff7e6, #fbecc9);
+    box-shadow:
+      inset 0 1px 0 rgba(255,255,255,.9),
+      inset 0 -1px 0 rgba(143, 90, 7, .12),
+      0 1px 2px rgba(143, 90, 7, .12);
+  }
+  .card-d .title { font-weight: 500; letter-spacing: -0.018em; }
+  .card-d .chip {
+    background: rgba(255,255,255,.7);
+    border-color: rgba(143, 90, 7, .18);
+    color: var(--ink-2);
+  }
+  .card-d .ok {
+    background: rgba(227, 251, 240, .9);
+  }
+  .card-d .list li { color: var(--ink-2); }
+  .card-d .tick {
+    background: #ffffff;
+    color: var(--emerald-ink);
+    box-shadow: inset 0 0 0 1px rgba(15, 127, 88, .35);
+  }
+  .card-d .link { color: var(--ink); }
+  .card-d .link::after {
+    content: ""; position: absolute; left: 0; right: 22px; bottom: -3px; height: 1px;
+    background: rgba(143, 90, 7, .35);
+    transition: background .35s var(--ease);
+  }
+  .card-d:hover { transform: translateY(-3px); border-color: rgba(143, 90, 7, .28); }
+  .card-d:hover::before { opacity: 1.35; }
+  .card-d:hover .link::after { background: var(--amber-ink); }
+
+  /* ------------------------------------------------------------------
+     Footer note
+     ------------------------------------------------------------------ */
+  .foot {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line-strong);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    font-size: 13px;
+    color: var(--ink-3);
+  }
+  .foot b { color: var(--ink-2); font-weight: 600; }
+
+  /* ------------------------------------------------------------------
+     Motion preferences
+     ------------------------------------------------------------------ */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+    .card:hover { transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="head">
+    <div>
+      <h1>WorkCoPilot <span class="dash">-</span> card design options</h1>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-start">
+      <p>Same content in all four. Only the card design differs. Pick the one that should become the site-wide card system.</p>
+      <span class="brand"><i></i> light theme, admireveda.com</span>
+    </div>
+  </header>
+
+  <main class="grid">
+
+    <!-- ============================ OPTION A ============================ -->
+    <section class="option">
+      <div class="label">
+        <div class="name"><span class="key">A</span> Option A - Soft elevated</div>
+        <div class="desc">Airy white surface lifted by a soft multi-stop shadow, a gradient hairline along the top edge, generous whitespace.</div>
+      </div>
+      <div class="stage">
+        <a class="card card-a" href="#security">
+          <div class="top">
+            <span class="eyebrow">Security</span>
+            <span class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            </span>
+          </div>
+          <h3 class="title">Written the secure way</h3>
+          <p class="body">Every command, snippet and script is checked for injection, hard-coded secrets and least privilege before it reaches you.</p>
+          <div class="proof" aria-label="Checks run before anything reaches you">
+            <span class="chip">injection</span>
+            <span class="chip">secrets</span>
+            <span class="chip">least-priv</span>
+            <span class="result">
+              <span class="arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+              <span class="ok"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>checked</span>
+            </span>
+          </div>
+          <ul class="list">
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Read-only, never acts</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>On-device redaction first</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Grounded in proven methodology</li>
+          </ul>
+          <span class="link">See security <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============================ OPTION B ============================ -->
+    <section class="option">
+      <div class="label">
+        <div class="name"><span class="key">B</span> Option B - Editorial</div>
+        <div class="desc">Crisp hairline border, a confident ink top-rule with an emerald tab, numbered eyebrow, strong type hierarchy and ruled rows. Restrained and precise.</div>
+      </div>
+      <div class="stage">
+        <a class="card card-b" href="#security">
+          <div class="rule" aria-hidden="true"></div>
+          <div class="top">
+            <span class="eyebrow"><span class="num">01</span>Security</span>
+            <span class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            </span>
+          </div>
+          <h3 class="title">Written the secure way</h3>
+          <p class="body">Every command, snippet and script is checked for injection, hard-coded secrets and least privilege before it reaches you.</p>
+          <div class="proof" aria-label="Checks run before anything reaches you">
+            <span class="chip">injection</span>
+            <span class="chip">secrets</span>
+            <span class="chip">least-priv</span>
+            <span class="result">
+              <span class="arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+              <span class="ok"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>checked</span>
+            </span>
+          </div>
+          <ul class="list">
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Read-only, never acts</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>On-device redaction first</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Grounded in proven methodology</li>
+          </ul>
+          <span class="link">See security <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============================ OPTION C ============================ -->
+    <section class="option">
+      <div class="label">
+        <div class="name"><span class="key">C</span> Option C - Depth and brand glow</div>
+        <div class="desc">Layered surface with a soft emerald-to-cyan corner glow, a gradient duotone icon tile, and the proof rendered as a quiet mono check log.</div>
+      </div>
+      <div class="stage">
+        <a class="card card-c" href="#security">
+          <div class="top">
+            <span class="eyebrow">Security</span>
+            <span class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            </span>
+          </div>
+          <h3 class="title">Written the secure way</h3>
+          <p class="body">Every command, snippet and script is checked for injection, hard-coded secrets and least privilege before it reaches you.</p>
+          <div class="strip" aria-label="Checks run before anything reaches you">
+            <div class="row"><span class="k">checks</span>
+              <div class="proof">
+                <span class="chip">injection</span>
+                <span class="chip">secrets</span>
+                <span class="chip">least-priv</span>
+              </div>
+            </div>
+            <div class="row"><span class="k">result</span>
+              <div class="proof">
+                <span class="arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+                <span class="ok"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>checked</span>
+              </div>
+            </div>
+          </div>
+          <ul class="list">
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Read-only, never acts</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>On-device redaction first</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Grounded in proven methodology</li>
+          </ul>
+          <span class="link">See security <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+    <!-- ============================ OPTION D ============================ -->
+    <section class="option">
+      <div class="label">
+        <div class="name"><span class="key">D</span> Option D - Textured premium</div>
+        <div class="desc">A barely-there grain and warm amber wash under a paper-white surface, embossed icon tile, soft inset edges. Tactile and refined.</div>
+      </div>
+      <div class="stage">
+        <a class="card card-d" href="#security">
+          <svg class="grain" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+            <filter id="grain-d" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" result="n"/>
+              <feColorMatrix type="saturate" values="0"/>
+              <feComponentTransfer><feFuncA type="table" tableValues="0 0 0.08 0.12"/></feComponentTransfer>
+            </filter>
+            <rect width="100%" height="100%" filter="url(#grain-d)"/>
+          </svg>
+          <div class="top">
+            <span class="eyebrow">Security</span>
+            <span class="tile">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7 3v5c0 4.6-3 8.3-7 10-4-1.7-7-5.4-7-10V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+            </span>
+          </div>
+          <h3 class="title">Written the secure way</h3>
+          <p class="body">Every command, snippet and script is checked for injection, hard-coded secrets and least privilege before it reaches you.</p>
+          <div class="proof" aria-label="Checks run before anything reaches you">
+            <span class="chip">injection</span>
+            <span class="chip">secrets</span>
+            <span class="chip">least-priv</span>
+            <span class="result">
+              <span class="arrow"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+              <span class="ok"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg>checked</span>
+            </span>
+          </div>
+          <ul class="list">
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Read-only, never acts</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>On-device redaction first</li>
+            <li><span class="tick"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 8.5l3 3 6-7"/></svg></span>Grounded in proven methodology</li>
+          </ul>
+          <span class="link">See security <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 8h9M9 4.5L12.5 8 9 11.5"/></svg></span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="foot">
+    <span><b>Type</b> Bricolage Grotesque (display), Instrument Sans (body), JetBrains Mono (proof chips)</span>
+    <span><b>Accents</b> emerald #8cf5c4, cyan #39d3ff, amber #f5c86b, one dominant per card</span>
+    <span><b>Hover</b> each card lifts or sharpens; motion is off when the system asks for reduced motion</span>
+  </footer>
+
+</div>
+</body>
+</html>

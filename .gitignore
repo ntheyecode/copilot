@@ -12,3 +12,8 @@ out/
 workcopilot/node_modules/
 workcopilot/dist/
 workcopilot/release*/
+# benchmark run outputs (internal detail: exact model + per-task) - never publish
+server/eval/results/
+# encryption key + at-rest secrets (should only ever live under the data dir)
+*.enc.key
+.enc.key

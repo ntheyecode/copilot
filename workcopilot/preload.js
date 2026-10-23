@@ -43,6 +43,12 @@ contextBridge.exposeInMainWorld('workDesktop', {
   // channel from anywhere else).
   hideBuddy: () => ipcRenderer.invoke('work:buddy-hide'),
   openMain: () => ipcRenderer.invoke('work:open-main'),
+  // The buddy page measures its instruction text and asks the window to grow to
+  // fit, so a long step is shown in full instead of being clipped. Fire-and-forget.
+  setBuddyHeight: (h) => ipcRenderer.send('work:buddy-height', Math.round(Number(h) || 0)),
+  // Open clean, full-screen guidance (/work/guide) on the monitor the user is NOT
+  // working on. No-op friendly: returns a flag the console can use to fall back.
+  openFullGuide: () => ipcRenderer.invoke('work:open-guide'),
   // Multi-monitor: ask the shell to (re-)choose which monitor to watch. A future
   // "Choose monitor" button in the console calls window.workDesktop.pickMonitor().
   // On a single-screen PC this is a no-op; on a multi-monitor PC it clears the

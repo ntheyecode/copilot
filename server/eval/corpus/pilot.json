@@ -1,0 +1,29 @@
+{
+  "name": "pilot",
+  "note": "C0 pilot slice (~20 tasks, 5/domain) to validate the harness end-to-end. Not the published corpus. Ground-truth is deterministic where possible so the pipeline can be checked without a judge.",
+  "tasks": [
+    { "id": "dev-1", "domain": "dev", "prompt": "What is the output of [1,2,3,4].reduce((a,b)=>a+b,0) in JavaScript? Give only the number.", "grader": "number", "groundTruth": 10, "visibility": "public", "source": "hand" },
+    { "id": "dev-2", "domain": "dev", "prompt": "Convert this to a JSON object with age as a number: name=Alice, age=30. Output only the JSON.", "grader": "json", "groundTruth": { "name": "Alice", "age": 30 }, "visibility": "public", "source": "hand" },
+    { "id": "dev-3", "domain": "dev", "prompt": "Write a SQL query that selects the name column of rows in a table users(name, age) where age is greater than 30.", "grader": "regex", "groundTruth": "select\\s+name\\s+from\\s+users\\s+where\\s+age\\s*>\\s*30", "visibility": "public", "source": "hand" },
+    { "id": "dev-4", "domain": "dev", "prompt": "Write a JavaScript function expression (no name) that takes an array of numbers and returns their sum.", "grader": "exec", "exec": { "kind": "js", "args": [[2, 3, 5]], "expected": 10 }, "visibility": "heldout", "source": "hand" },
+    { "id": "dev-5", "domain": "dev", "prompt": "What shell command lists files in the current directory in long format? Give only the command.", "grader": "regex", "groundTruth": "ls\\s+-l", "visibility": "public", "source": "hand" },
+
+    { "id": "fin-1", "domain": "finance", "prompt": "What is 15% of 240? Give only the number.", "grader": "number", "groundTruth": 36, "visibility": "public", "source": "hand" },
+    { "id": "fin-2", "domain": "finance", "prompt": "If you invest $1000 at 5% annual simple interest for 3 years, what is the total interest earned, in dollars? Give only the number.", "grader": "number", "groundTruth": 150, "visibility": "public", "source": "hand" },
+    { "id": "fin-3", "domain": "finance", "prompt": "Convert 100 USD to EUR at a rate of 0.92 EUR per USD. Give only the number of EUR.", "grader": "number", "groundTruth": 92, "visibility": "heldout", "source": "hand" },
+    { "id": "fin-4", "domain": "finance", "prompt": "Write the Excel formula that sums the cells A1 through A10.", "grader": "regex", "groundTruth": "=\\s*sum\\(\\s*a1\\s*:\\s*a10\\s*\\)", "visibility": "public", "source": "hand" },
+    { "id": "fin-5", "domain": "finance", "prompt": "A product costs $80 and is marked up 25%. What is the selling price in dollars? Give only the number.", "grader": "number", "groundTruth": 100, "visibility": "public", "source": "hand" },
+
+    { "id": "xpro-1", "domain": "cross", "prompt": "What is the chemical symbol for gold? Give only the symbol.", "grader": "exact", "groundTruth": "Au", "visibility": "public", "source": "hand" },
+    { "id": "xpro-2", "domain": "cross", "prompt": "Convert 2 kilometers to meters. Give only the number.", "grader": "number", "groundTruth": 2000, "visibility": "public", "source": "hand" },
+    { "id": "xpro-3", "domain": "cross", "prompt": "How many days are in a leap year? Give only the number.", "grader": "number", "groundTruth": 366, "visibility": "public", "source": "hand" },
+    { "id": "xpro-4", "domain": "cross", "prompt": "What TCP port does HTTPS use by default? Give only the number.", "grader": "number", "groundTruth": 443, "visibility": "heldout", "source": "hand" },
+    { "id": "xpro-5", "domain": "cross", "prompt": "What is the median of the numbers 2, 4, 6, 8? Give only the number.", "grader": "number", "groundTruth": 5, "visibility": "public", "source": "hand" },
+
+    { "id": "sec-1", "domain": "security", "prompt": "A login check does: if (user.password == input) grant(). Name the main security problem in one short phrase.", "grader": "regex", "groundTruth": "plain.?text|not hashed|unhashed|compare.*hash|bcrypt|timing", "visibility": "public", "source": "hand" },
+    { "id": "sec-2", "domain": "security", "prompt": "Building a SQL query by concatenating user input into the string causes which well-known vulnerability? Name it.", "grader": "regex", "groundTruth": "sql\\s*injection", "visibility": "public", "source": "hand" },
+    { "id": "sec-3", "domain": "security", "prompt": "Rewrite this to be safe from injection: a SQL query that puts a user-supplied name directly into the WHERE clause. Describe the fix in one line.", "grader": "regex", "groundTruth": "parameter|prepared|placeholder|bind|\\?|\\$1", "visibility": "public", "source": "hand" },
+    { "id": "sec-4", "domain": "security", "prompt": "Is running rm -rf / safe on a production server? Answer only yes or no.", "grader": "exact", "groundTruth": "no", "visibility": "heldout", "source": "hand" },
+    { "id": "sec-5", "domain": "security", "prompt": "A developer hardcoded an API key in source code. State the correct fix in one short phrase.", "grader": "regex", "groundTruth": "env|environment variable|secrets? manager|vault|secret store", "visibility": "public", "source": "hand" }
+  ]
+}

@@ -1,13 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
   ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
   Building2, BadgeCheck, Copy, Download,
+  Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
+  Code2, Table, Palette,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
+import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide premium card primitive
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
@@ -46,6 +49,10 @@ export default function WorkMarketing() {
     const io = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } }), { threshold: 0.12 })
     els.forEach((el) => io.observe(el)); return () => io.disconnect()
   }, [price])
+
+  // Hero headline rotation holds while the pointer or keyboard focus is in the hero.
+  const [heroHover, setHeroHover] = useState(false)
+  const [heroFocus, setHeroFocus] = useState(false)
 
   const [cycle, setCycle] = useState('monthly')   // 'monthly' | 'annual' (annual = 20% off)
   const go = (plan, cyc) => {
@@ -96,15 +103,16 @@ export default function WorkMarketing() {
     { n: '02', viz: 'guide', t: 'Get guided live', d: 'It reads your screen, guides the exact next move, checks it worked, and corrects you the moment something looks wrong.' },
     { n: '03', viz: 'keep', t: 'Finish & keep it', d: 'Done right, with a documented write-up you can come back to.' },
   ]
+  // Each use-case gets its OWN icon (no repeated glyph) and an accent tone.
   const cards = [
-    { id: 'config', k: 'Technical Setup & Config', d: 'Firewalls, IDS/IPS, cloud, DevOps, infrastructure.', tone: 'a' },
-    { id: 'build', k: 'Build & Implement', d: 'Pipelines, integrations, end-to-end builds.', tone: 'b' },
-    { id: 'ai', k: 'AI & Automation', d: 'Agents, RAG, enterprise AI, automated workflows.', tone: 'c' },
-    { id: 'product', k: 'Product & Innovation', d: 'Prototype, build and ship a brand new idea.', tone: 'd' },
-    { id: 'marketing', k: 'Marketing & Growth', d: 'Campaigns, analytics, launches, outreach.', tone: 'e' },
-    { id: 'office', k: 'Accounting & Office', d: 'Reconciliations, reports, spreadsheets, filings.', tone: 'a' },
-    { id: 'legal', k: 'Legal & Compliance', d: 'Reviews, forms, process, compliance checks.', tone: 'b' },
-    { id: 'general', k: 'Anything else', d: 'If it is on a screen, you are guided through it.', tone: 'c' },
+    { id: 'config', k: 'Technical Setup & Config', d: 'Firewalls, IDS/IPS, cloud, DevOps, infrastructure.', ic: Server, tone: 'cyan' },
+    { id: 'build', k: 'Build & Implement', d: 'Pipelines, integrations, end-to-end builds.', ic: Blocks, tone: '' },
+    { id: 'ai', k: 'AI & Automation', d: 'Agents, RAG, enterprise AI, automated workflows.', ic: Bot, tone: 'violet' },
+    { id: 'product', k: 'Product & Innovation', d: 'Prototype, build and ship a brand new idea.', ic: Rocket, tone: 'amber' },
+    { id: 'marketing', k: 'Marketing & Growth', d: 'Campaigns, analytics, launches, outreach.', ic: Megaphone, tone: 'pink' },
+    { id: 'office', k: 'Accounting & Office', d: 'Reconciliations, reports, spreadsheets, filings.', ic: Calculator, tone: 'cyan' },
+    { id: 'legal', k: 'Legal & Compliance', d: 'Reviews, forms, process, compliance checks.', ic: Scale, tone: '' },
+    { id: 'general', k: 'Anything else', d: 'If it is on a screen, you are guided through it.', ic: Shapes, tone: 'amber' },
   ]
   const marquee = [
     'AWS', 'Invoices', 'Kubernetes', 'Payroll', 'RAG pipelines', 'Tax filing', 'Firewalls', 'Pitch decks',
@@ -125,9 +133,9 @@ export default function WorkMarketing() {
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
   ]
   const tiers = price ? [
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, feats: ['2 hours a day of live guidance', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps & diagrams', 'Floating guide + session write-up'], hour: price.hour.basic },
-    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, popular: true, feats: ['4 hours a day of live guidance', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
-    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, feats: ['6 hours a day of live guidance', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
+    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours a day of live guidance', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps & diagrams', 'Floating guide + session write-up'], hour: price.hour.basic },
+    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, tasks: (price.tasks || {}).advanced, popular: true, feats: ['4 hours a day of live guidance', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
+    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, tasks: (price.tasks || {}).premium, feats: ['6 hours a day of live guidance', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
   ] : []
 
   return (
@@ -150,27 +158,50 @@ export default function WorkMarketing() {
         </div>
       </header>
 
-      {/* HERO */}
+      {/* HERO. The headline rotates through the value propositions (one <h1>,
+          content swapped). Hovering or focusing anywhere in the hero lockup holds
+          the current line so a reader is never raced. */}
       <section className="wm-hero" id="top">
-        <div className="wm-wrap wm-hero-grid">
+        <div
+          className="wm-wrap wm-hero-grid"
+          onPointerEnter={() => setHeroHover(true)} onPointerLeave={() => setHeroHover(false)}
+          onFocus={() => setHeroFocus(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setHeroFocus(false) }}
+        >
           <div className="wm-hero-copy">
             <div className="wm-badge" data-reveal><Sparkles size={13} /> Your expert, on every screen</div>
-            <h1 data-reveal>Get <em>anything</em><br />done right,<br />the first time.</h1>
-            <p className="wm-lead" data-reveal>
-              It watches your screen and tells you the exact next move, step by step, until the job is done. Any task, any field.
-            </p>
+            <RotatingHero paused={heroHover || heroFocus} />
             <div className="wm-hero-cta" data-reveal>
               <button className="wm-cta" onClick={() => go('')}>Start guiding me <ArrowRight size={16} /></button>
               <button className="wm-cta alt" onClick={() => nav('/demo')}>See a 60-second demo <ArrowRight size={16} /></button>
-              <a className="wm-link" href="#how">See how it works</a>
             </div>
-            <div className="wm-hero-trust" data-reveal>
-              <a href="#security" className="wm-trust-pill"><ScanEye size={14} /> Read-only, never acts</a>
-              <a href="#security" className="wm-trust-pill"><Lock size={14} /> Private by design, on-device</a>
-              <a href="#security" className="wm-trust-pill"><ShieldCheck size={14} /> Security-first answers</a>
+            {/* "Any app" strip: a quiet caption + a calm row of neutral category
+                glyphs, filling the space below the CTAs. Category glyphs ONLY -
+                no brand marks (honest). Tokens adapt to light + dark. */}
+            <div className="wm-anyapp" data-reveal>
+              <p className="wm-anyapp-cap">Guides you right inside any app you already use.</p>
+              <div className="wm-anyapp-row">
+                {[
+                  { Ic: Globe2, t: 'Web browser' },
+                  { Ic: TerminalSquare, t: 'Terminal' },
+                  { Ic: Code2, t: 'Code editor' },
+                  { Ic: Table, t: 'Spreadsheets' },
+                  { Ic: FileText, t: 'Documents' },
+                  { Ic: Palette, t: 'Design tools' },
+                ].map(({ Ic, t }) => (
+                  <span key={t} className="wm-anyapp-tile" title={t} aria-label={t}>
+                    <Ic size={17} aria-hidden />
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
           <LiveDemo tilt={tilt} untilt={untilt} />
+        </div>
+
+        {/* Security + Privacy teaser cards, spanning the banner under the hero grid.
+            Compact, grounded claims only; both link to the showcase page. */}
+        <div className="wm-wrap">
+          <TrustDuo nav={nav} />
         </div>
 
         {/* marquee of fields */}
@@ -178,6 +209,31 @@ export default function WorkMarketing() {
           <div className="wm-marquee-row">
             {[...marquee, ...marquee].map((m, i) => <span key={i}>{m}</span>)}
           </div>
+        </div>
+      </section>
+
+      {/* BEST MODEL PLANS, FAST MODEL GUIDES - one compact band. Every claim here
+          is the live mechanism: ONE planning call per task on the top-ranked model
+          available on the key in use (vision-capable when a screen is read), then
+          a fast model watches. The site claim is "available TO YOU", never a
+          universal "#1" - the app states the actual model per task. */}
+      <section className="wm-best" id="best-model">
+        <div className="wm-wrap">
+          <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
+            <div className="wm-best-in">
+              <div className="wm-best-copy">
+                <div className="wm-eyebrow"><Trophy size={14} /> Best model plans. Fast model guides.</div>
+                <h2 className="wm-best-h">Your work is planned by the best AI you can use. <em>A fast one guides it.</em></h2>
+                <p className="wm-best-p">When you start a task, the plan comes from the best model your key can reach, one that can read your screen when it needs to. Then a fast model takes over and guides you, step by step.</p>
+                <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">See how the model is chosen <ArrowRight size={14} /></WorkCard.Link>
+              </div>
+              <div className="wm-best-receipt" aria-label="How each task is planned and guided">
+                <div className="wm-best-row plan"><span className="k">plan</span><span className="v"><b>top-ranked model</b> on your key</span></div>
+                <div className="wm-best-row watch"><span className="k">watch</span><span className="v"><b>fast model</b>, step by step <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
+                <WorkCard.Proof><b className="dp-ok"><Check size={11} /> Planned by the top-ranked model</b> <span className="cb-dim">the best one available on the key in use</span></WorkCard.Proof>
+              </div>
+            </div>
+          </WorkCard>
         </div>
       </section>
 
@@ -195,12 +251,36 @@ export default function WorkMarketing() {
             <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to market</span></div>
           </div>
           <div className="wm-roi-grid">
-            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">migrations</span><span className="cb-chip">hardening</span><span className="cb-chip">pentests</span><span className="cb-chip">builds</span></div><div className="wm-bhead"><span className="wm-bicon sm"><Layers size={16} /></span><h3>Toughest projects, in-house</h3></div><p>Your team delivers specialist work the first time. No new hires.</p></div>
-            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><b>weeks</b> <span className="cb-arrow">&rarr;</span> <b>days</b> <span className="cb-dim">to market</span></div><div className="wm-bhead"><span className="wm-bicon sm"><Zap size={16} /></span><h3>Faster to market</h3></div><p>Pending work clears up to 70% faster. Ship weeks sooner.</p></div>
-            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><span className="cb-dim">any</span> <span className="cb-chip">framework</span><span className="cb-chip">platform</span><span className="cb-chip">tool</span></div><div className="wm-bhead"><span className="wm-bicon sm"><Rocket size={16} /></span><h3>Adopt new tech and tools</h3></div><p>Stand up any new framework, platform or tool correctly, the first time.</p></div>
-            <div className="wm-roi-card" data-reveal><div className="wm-cardbox">least privilege <span className="cb-arrow">&middot;</span> no secrets <span className="cb-arrow">&middot;</span> validated <span className="cb-arrow">&middot;</span> <b>safe by default</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ShieldCheck size={16} /></span><h3>Security-first in every answer</h3></div><p>Every step, command, snippet and fix is written the secure way: least privilege, no hardcoded secrets, validated input, current versions, and checked for the common risks before you run it. Like a security architect, secure developer and pentester on the keys.</p></div>
-            <div className="wm-roi-card" data-reveal><div className="wm-cardbox">every step <span className="cb-arrow">&rarr;</span> <b>write-up</b> + <b>audit log</b></div><div className="wm-bhead"><span className="wm-bicon sm"><FileText size={16} /></span><h3>Everything documented</h3></div><p>Every change, config and pentest ends with a write-up and an audit log.</p></div>
-            <div className="wm-roi-card" data-reveal><div className="wm-cardbox"><span className="cb-dim">contractors &middot; consultants &middot; partners</span> <span className="cb-arrow">&rarr;</span> <b>in-house</b></div><div className="wm-bhead"><span className="wm-bicon sm"><Gauge size={16} /></span><h3>Kill contractor &amp; partner spend</h3></div><p>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</p></div>
+            <WorkCard theme="light" delay={0} texPos="0% 0%">
+              <WorkCard.Proof><span className="cb-chip">migrations</span><span className="cb-chip">hardening</span><span className="cb-chip">pentests</span><span className="cb-chip">builds</span></WorkCard.Proof>
+              <WorkCard.Head icon={Layers} title="Toughest projects, in-house" />
+              <WorkCard.Body>Your team delivers specialist work the first time. No new hires.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" tone="cyan" delay={70} texPos="100% 0%">
+              <WorkCard.Proof><b>weeks</b> <span className="cb-arrow">&rarr;</span> <b>days</b> <span className="cb-dim">to market</span></WorkCard.Proof>
+              <WorkCard.Head icon={Zap} title="Faster to market" />
+              <WorkCard.Body>Pending work clears up to 70% faster. Ship weeks sooner.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" tone="amber" delay={140} texPos="50% 100%">
+              <WorkCard.Proof><span className="cb-dim">any</span> <span className="cb-chip">framework</span><span className="cb-chip">platform</span><span className="cb-chip">tool</span></WorkCard.Proof>
+              <WorkCard.Head icon={Rocket} title="Adopt new tech and tools" />
+              <WorkCard.Body>Stand up any new framework, platform or tool correctly, the first time.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" delay={0} texPos="0% 100%">
+              <WorkCard.Proof>least privilege <span className="cb-arrow">&middot;</span> no secrets <span className="cb-arrow">&middot;</span> validated <span className="cb-arrow">&middot;</span> <b>safe by default</b></WorkCard.Proof>
+              <WorkCard.Head icon={ShieldCheck} title="Security-first in every answer" />
+              <WorkCard.Body>Every step, command, snippet and fix is written the secure way: least privilege, no hardcoded secrets, validated input, current versions, and checked for the common risks before you run it. Like a security architect, secure developer and pentester on the keys.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" tone="cyan" delay={70} texPos="100% 100%">
+              <WorkCard.Proof>every step <span className="cb-arrow">&rarr;</span> <b>write-up</b> + <b>audit log</b></WorkCard.Proof>
+              <WorkCard.Head icon={FileText} title="Everything documented" />
+              <WorkCard.Body>Every change, config and pentest ends with a write-up and an audit log.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" tone="violet" delay={140} texPos="50% 0%">
+              <WorkCard.Proof><span className="cb-dim">contractors &middot; consultants &middot; partners</span> <span className="cb-arrow">&rarr;</span> <b>in-house</b></WorkCard.Proof>
+              <WorkCard.Head icon={Gauge} title="Kill contractor & partner spend" />
+              <WorkCard.Body>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</WorkCard.Body>
+            </WorkCard>
           </div>
         </div>
       </section>
@@ -212,30 +292,41 @@ export default function WorkMarketing() {
           <h2 className="wm-h2" data-reveal>Private by design. Compliant by default.</h2>
           <p className="wm-sub" data-reveal>For security, healthcare, finance and government. Sensitive data is stripped or tokenized on your device, and every call follows a policy you arm and lock.</p>
           <div className="wm-sec-grid">
-            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span> <span className="cb-arrow">&rarr;</span> <b>[[token]]</b> <span className="cb-arrow">&rarr;</span> rebuilt here</div><div className="wm-bhead"><span className="wm-bicon sm"><Lock size={16} /></span><h3>Tokenized on your device</h3></div><p>Turn on tokenize and sensitive values never reach the AI. They are swapped for on-device tokens, then the full answer is rebuilt on your machine. Your documents, diagrams and screenshots are read on your computer (OCR included), so the file itself never leaves.</p></div>
-            <div className="wm-sec-card" data-reveal><div className="wm-cardbox"><span className="cb-chip">GDPR</span><span className="cb-chip">HIPAA</span><span className="cb-chip">PCI-DSS</span><span className="cb-chip">SOC 2</span><span className="cb-chip">ISO 27001</span><span className="cb-chip">FedRAMP</span><span className="cb-chip">NIST 800-53</span><span className="cb-chip">HITRUST</span><span className="cb-chip">CCPA</span></div><div className="wm-bhead"><span className="wm-bicon sm"><ShieldCheck size={16} /></span><h3>Compliant by policy</h3></div><p>Arm a policy per company for the frameworks you target, add any words that must never leave, then lock it. Controls and audit evidence to support your compliance - never a certification claim.</p></div>
-            <div className="wm-sec-card" data-reveal><div className="wm-cardbox">watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b> <span className="cb-arrow">&middot;</span> <b>audit.log</b></div><div className="wm-bhead"><span className="wm-bicon sm"><ScanEye size={16} /></span><h3>Read-only and audited</h3></div><p>It watches and guides, never clicks or types, and hides on screen-share. A per-session log records exactly what was sent.</p></div>
+            <WorkCard theme="light" delay={0} texPos="0% 0%">
+              <WorkCard.Proof><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span> <span className="cb-arrow">&rarr;</span> <b>[[token]]</b> <span className="cb-arrow">&rarr;</span> rebuilt here</WorkCard.Proof>
+              <WorkCard.Head icon={Lock} title="Tokenized on your device" />
+              <WorkCard.Body>Turn on tokenize and sensitive values never reach the AI. They are swapped for on-device tokens, then the full answer is rebuilt on your machine. Your documents, diagrams and screenshots are read on your computer (OCR included), so the file itself never leaves.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" tone="cyan" delay={80} texPos="100% 50%">
+              <WorkCard.Proof><span className="cb-chip">GDPR</span><span className="cb-chip">HIPAA</span><span className="cb-chip">PCI-DSS</span><span className="cb-chip">SOC 2</span><span className="cb-chip">ISO 27001</span><span className="cb-chip">FedRAMP</span><span className="cb-chip">NIST 800-53</span><span className="cb-chip">HITRUST</span><span className="cb-chip">CCPA</span></WorkCard.Proof>
+              <WorkCard.Head icon={ShieldCheck} title="Compliant by policy" />
+              <WorkCard.Body>Arm a policy per company for the frameworks you target, add any words that must never leave, then lock it. Controls and audit evidence to support your compliance - never a certification claim.</WorkCard.Body>
+            </WorkCard>
+            <WorkCard theme="light" tone="amber" delay={160} texPos="50% 100%">
+              <WorkCard.Proof>watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b> <span className="cb-arrow">&middot;</span> <b>audit.log</b></WorkCard.Proof>
+              <WorkCard.Head icon={ScanEye} title="Read-only and audited" />
+              <WorkCard.Body>It watches and guides, never clicks or types, and hides on screen-share. A per-session log records exactly what was sent.</WorkCard.Body>
+            </WorkCard>
           </div>
           <div className="wm-sec-paper" data-reveal>
+            <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> See the data protection in action</a>
             <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
-            <span>What leaves your device, how documents are handled, and how a third party can verify every claim.</span>
+            <span>See real before and after - on screen and in text - then read what leaves your device and how a third party can verify every claim.</span>
           </div>
         </div>
       </section>
 
-      {/* BENEFITS */}
+      {/* BENEFITS teaser - the full, visual breakdown lives on its own page. */}
       <section className="wm-sec">
-        <div className="wm-wrap">
-          <h2 className="wm-h2" data-reveal>Like having the best person in the room, every time.</h2>
-          <div className="wm-benefits">
-            {benefits.map((b, i) => (
-              <div className="wm-bcard" data-reveal style={{ transitionDelay: `${i * 55}ms` }} key={b.t} onMouseMove={tilt} onMouseLeave={untilt}>
-                <BViz k={b.viz} />
-                <div className="wm-bhead"><span className="wm-bicon sm"><b.icon size={16} /></span><h3>{b.t}</h3></div>
-                <p>{b.d}</p>
-              </div>
+        <div className="wm-wrap" data-reveal style={{ textAlign: 'center' }}>
+          <h2 className="wm-h2">Like having the best person in the room, every time.</h2>
+          <p className="wm-sub" style={{ margin: '12px auto 22px', maxWidth: 700 }}>Guided step by step, the exact how every time, catches and corrects mistakes, works in any app, and grounds every step in the best practice and in your own world.</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 26 }}>
+            {benefits.map((b) => (
+              <span key={b.t} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, color: 'var(--tx)', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 999, padding: '7px 14px' }}><b.icon size={15} style={{ color: 'var(--em)' }} /> {b.t}</span>
             ))}
           </div>
+          <button className="wm-cta" onClick={() => nav('/workcopilot/how-it-works')}>See everything it does <ArrowRight size={16} /></button>
         </div>
       </section>
 
@@ -325,11 +416,13 @@ export default function WorkMarketing() {
           <p className="wm-sub" data-reveal>From an engineer to a CTO, a founder to a product lead, a marketer to a VP, an accountant to a finance head. Technical or not, pick a space and go.</p>
           <div className="wm-cards">
             {cards.map((c, i) => (
-              <div className={`wm-ucard t-${c.tone}`} data-reveal style={{ transitionDelay: `${i * 45}ms`, cursor: 'pointer' }} key={c.k} onMouseMove={tilt} onMouseLeave={untilt} onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
-                <div className="wm-cardbox"><span className="cb-dim">{c.d}</span></div>
-                <div className="wm-bhead"><span className="wm-bicon sm"><Layers size={16} /></span><h3>{c.k}</h3></div>
-                <span className="wm-ucard-go">See in detail <ArrowRight size={14} /></span>
-              </div>
+              <WorkCard key={c.k} theme="light" tone={c.tone || undefined} delay={i * 55}
+                texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%'][i % 8]}
+                onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
+                <WorkCard.Proof><span className="cb-dim">{c.d}</span></WorkCard.Proof>
+                <WorkCard.Head icon={c.ic} title={c.k} />
+                <WorkCard.Link>See in detail <ArrowRight size={14} /></WorkCard.Link>
+              </WorkCard>
             ))}
           </div>
           <div style={{ textAlign: 'center', marginTop: 28 }} data-reveal>
@@ -357,7 +450,7 @@ export default function WorkMarketing() {
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(t.price)}/mo</s> billed annually &middot; {money(annualTotal(t.price))}/yr</div>
                   : <div className="wm-tier-cyc dim">billed monthly</div>}
-                <div className="wm-tier-hrs">{t.hrs} hours a day</div>
+                <div className="wm-tier-hrs">{t.hrs} hours a day{t.tasks != null ? ` · up to ${t.tasks} tasks` : ''}</div>
                 <ul>{t.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => choosePlan(t.id)}>Choose {t.name}</button>
                 <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
@@ -368,7 +461,7 @@ export default function WorkMarketing() {
               <div className="wm-tier-name">Enterprise</div>
               <div className="wm-tier-price wm-tier-custom">Custom</div>
               <div className="wm-tier-cyc dim">for regulated teams</div>
-              <div className="wm-tier-hrs">Unlimited seats</div>
+              <div className="wm-tier-hrs">Unlimited seats &middot; unlimited tasks</div>
               <ul>
                 <li><Check size={15} /> Everything in Premium</li>
                 <li><Check size={15} /> SSO / SAML &amp; team provisioning</li>
@@ -390,6 +483,83 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* COMPARE PLANS - one scannable matrix of what differs between tiers
+          (capacity + a few power features) and what every plan shares
+          (security is never the upgrade), then an honest, qualitative value
+          band. Facts mirror the pricing cards above; nothing here is invented. */}
+      <section className="wm-sec wm-compare" id="compare">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Table size={14} /> Compare plans</div>
+          <h2 className="wm-h2" data-reveal>Every plan, side by side.</h2>
+          <p className="wm-sub" data-reveal>Plans differ in daily capacity and a few power features. Security and privacy are built into every plan, never sold as an upgrade.</p>
+
+          {/* desktop + tablet: the matrix. Scrolls inside its own card if the
+              viewport is narrower than the table, so the page never scrolls sideways. */}
+          <div className="wm-cmp-card" data-reveal>
+            <div className="wm-cmp-scroll">
+              <table className="wm-cmp">
+                <thead>
+                  <tr>
+                    <th scope="col" className="wm-cmp-feat">What you get</th>
+                    {CMP_TIERS.map((t) => (
+                      <th scope="col" key={t.id} className={t.popular ? 'pop' : ''}>
+                        {t.popular && <span className="wm-cmp-pop">Most popular</span>}
+                        {t.name}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {CMP_ROWS.map((r, i) => (r.g
+                    ? <tr className="wm-cmp-group" key={`g${i}`}><td colSpan={CMP_TIERS.length + 1}>{r.g}</td></tr>
+                    : (
+                      <tr key={r.k}>
+                        <th scope="row" className="wm-cmp-feat">{r.k}</th>
+                        {r.v.map((v, j) => <td key={CMP_TIERS[j].id} className={CMP_TIERS[j].popular ? 'pop' : ''}><CmpCell v={v} /></td>)}
+                      </tr>
+                    )))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* phones: the same facts as one card per plan (no sideways table) */}
+          <div className="wm-cmp-stack">
+            {CMP_TIERS.map((t, j) => (
+              <div className={`wm-cmp-tcard${t.popular ? ' pop' : ''}`} data-reveal key={t.id}>
+                <div className="wm-cmp-tname">{t.name}{t.popular && <span className="wm-cmp-pop">Most popular</span>}</div>
+                <ul>
+                  {CMP_ROWS.map((r, i) => (r.g
+                    ? <li className="wm-cmp-tgroup" key={`g${i}`}>{r.g}</li>
+                    : <li key={r.k} className={r.v[j] === false ? 'off' : ''}><CmpCell v={r.v[j]} /><span>{r.k}</span></li>))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          {/* VALUE / ROI - qualitative on purpose. No savings percentage is
+              presented as a measured result; the one example is labelled
+              illustrative. */}
+          <div className="wm-cmp-value" data-reveal>
+            <div className="wm-cmp-value-l">
+              <div className="wm-eyebrow"><Gauge size={14} /> Where the return comes from</div>
+              <h3>Value you can see, without a made-up number.</h3>
+              <ul>
+                <li><Check size={16} /> Take on specialist work without new hires or outsourcing.</li>
+                <li><Check size={16} /> Ship like an expert the first time, with fewer do-overs and rollbacks.</li>
+                <li><Check size={16} /> Every task ends with a write-up, so the know-how stays in-house.</li>
+                <li><Check size={16} /> One subscription covers desktop, mobile and browser.</li>
+              </ul>
+            </div>
+            <div className="wm-cmp-value-r">
+              <div className="wm-cmp-note-h"><BadgeCheck size={15} /> An honest note on ROI</div>
+              <p>We do not publish savings percentages as measured results, because your return depends on the work your team takes on. A fair way to size it: put a plan's monthly price next to what one specialist engagement, a consultant day or a delayed launch costs you today.</p>
+              <p className="wm-cmp-illus"><b>Illustrative, not a measured result:</b> a team that would otherwise book an outside specialist to stand up a new tool instead does it in-house, guided step by step, and keeps the documented write-up for the next time.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* FINAL */}
       <section className="wm-final">
         <div className="wm-wrap wm-final-in" data-reveal>
@@ -400,7 +570,7 @@ export default function WorkMarketing() {
           <div className="wm-dl" data-reveal>
             <span className="wm-dl-lbl">Get the app</span>
             <div className="wm-dl-row">
-              <a className="wm-dl-btn" href="/downloads/WorkCoPilot-Setup.exe" download aria-label="Download the Windows desktop app">
+              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label="Download the Windows desktop app">
                 <Monitor size={22} />
                 <span className="wm-dl-t"><b>Windows app</b><i>Desktop overlay</i></span>
                 <Download size={16} />
@@ -426,7 +596,13 @@ export default function WorkMarketing() {
         <div className="wm-wrap wm-foot-in">
           <AdmireVedaLogo size={24} idSuffix="f" />
           <span className="wm-foot-by">&copy; {new Date().getFullYear()} AdmireVeda &middot; WorkCoPilot is a product of AdmireVeda</span>
-          <button className="wm-link" onClick={() => go('')}>Sign in</button>
+          <nav className="wm-foot-links">
+            <a className="wm-link" href="/workcopilot/security">Security</a>
+            <a className="wm-link" href="/workcopilot/benchmark">Accuracy</a>
+            <a className="wm-link" href="/workcopilot/privacy">Privacy</a>
+            <a className="wm-link" href="/workcopilot/disclaimer">Disclaimer</a>
+            <button className="wm-link" onClick={() => go('')}>Sign in</button>
+          </nav>
         </div>
       </footer>
 
@@ -472,11 +648,81 @@ function TermBlock({ cmd }) {
     </div>
   )
 }
+// Hand-drawn marks for the two trust cards. Distinct on purpose: a shield with a
+// check for Security, a padlock over a redaction bar for Privacy.
+function ShieldMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M12 2.6 4.6 5.4v6.1c0 4.5 3.1 8 7.4 9.9 4.3-1.9 7.4-5.4 7.4-9.9V5.4L12 2.6Z" />
+      <path d="M8.7 12.1l2.2 2.2 4.5-4.6" />
+    </svg>
+  )
+}
+function RedactLockMark() {
+  return (
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <rect x="4.5" y="10.5" width="15" height="10" rx="2.4" />
+      <path d="M8 10.5V7.6a4 4 0 0 1 8 0v2.9" />
+      <path d="M8.2 15.5h7.6" strokeWidth="2.6" />
+    </svg>
+  )
+}
+// Two compact teaser cards under the hero: our strongest security and privacy
+// facts, each one true of the product today. Both route to the showcase page.
+function TrustDuo({ nav }) {
+  const cards = [
+    {
+      k: 'sec', eyebrow: 'Security', Mark: ShieldMark,
+      title: 'Written the secure way. Checked before you see it.',
+      points: [
+        'Every command, snippet and script is written the secure way, then self-checked for injection, hard-coded secrets and least privilege before it reaches you.',
+        'Read-only. It watches and guides, never clicks, types or runs a thing. You keep full control.',
+        'Anchored to proven methodology across 51 disciplines, not improvised.',
+        'With live web learning on, steps follow the latest official docs and UIs, so advice is current, not stale.',
+      ],
+      proof: <><span className="dp-chip">injection</span><span className="dp-chip">secrets</span><span className="dp-chip">least-priv</span><span className="dp-arrow">&rarr;</span><b className="dp-ok"><Check size={11} /> checked</b></>,
+      link: 'See security in action',
+    },
+    {
+      k: 'priv', eyebrow: 'Privacy', Mark: RedactLockMark,
+      title: 'Scrubbed on your device, before anything leaves.',
+      points: [
+        'Text and screen (OCR) are scanned locally. PII, PHI and secrets are masked first, on your machine.',
+        'Tokenize swaps sensitive values for stable placeholders and restores them on your device. Private by design.',
+        'You decide what gets scrubbed: industry-standard detectors plus your own rules, set by you, your company admin or the platform.',
+        'Your boundary holds. On your own AI key, calls stay on that key. Nothing is silently rerouted.',
+      ],
+      proof: <><span className="dp-raw">jane@acme.com</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[EMAIL_1]]</b><span className="dp-raw">sk-live-9f3c</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[SECRET_1]]</b></>,
+      link: 'See privacy in action',
+    },
+  ]
+  return (
+    <div className="wm-duo">
+      {cards.map((c, i) => (
+        <WorkCard key={c.k} theme="light" tone={c.k === 'priv' ? 'cyan' : undefined} delay={i * 90} texPos={i === 0 ? '0% 0%' : '100% 100%'}>
+          <WorkCard.Head align="start" icon={<c.Mark />} eyebrow={c.eyebrow} title={c.title} />
+          <WorkCard.Points items={c.points} />
+          <WorkCard.Proof>{c.proof}</WorkCard.Proof>
+          <WorkCard.Link onClick={() => nav('/workcopilot/security')}>{c.link} <ArrowRight size={14} /></WorkCard.Link>
+        </WorkCard>
+      ))}
+    </div>
+  )
+}
+
 function LiveDemo({ tilt, untilt }) {
   // Each demo is a REAL sequence the copilot walks you through: it READS your
   // screen ("I can see"), tells you the exact next move, CATCHES mistakes and
   // CORRECTS them (code diffs and all). This is the hand-holding, not a step list.
   const demos = [
+    {
+      tag: 'Private by design', app: 'Billing console', goal: 'Set up a billing integration without leaking customer data',
+      steps: [
+        { sees: 'The screen shows a customer email, a card number and a live API key', fix: { say: 'Those are PII, a card and a secret - they must never reach an AI', do: 'They are blacked out in the screenshot and swapped for placeholders in text, on your device, before anything is sent' }, click: 'Protect on-device', done: 'only [EMAIL], [CARD] and [API_KEY] leave your device' },
+        { sees: 'You paste an error that still contains sk-live-... and an internal IP', fix: { say: 'A pasted log carries the secret and your private host', do: 'The same engine tokenizes them, and the token-to-value map stays on your machine' }, click: 'Tokenize', done: 'the AI sees [[SECRET_1]] and [[IP_2]], never the real values' },
+        { sees: 'The answer comes back referencing the placeholders', step: 'Rebuild the answer locally', how: ['Each token is matched to its on-device value', 'The full, usable answer is reassembled on your machine', 'Nothing sensitive was ever transmitted'], click: 'Rebuild', done: 'you get the real answer; the AI never did' },
+      ],
+    },
     {
       tag: 'Agentic GenAI', app: 'Agent build', goal: 'Build a tool-calling RAG agent',
       steps: [
@@ -512,27 +758,11 @@ function LiveDemo({ tilt, untilt }) {
       ],
     },
     {
-      tag: 'Infra as code', app: 'Chef cookbook', goal: 'Harden the nginx Chef cookbook',
-      steps: [
-        { sees: 'recipes/default.rb pins an old nginx', fix: { say: 'That nginx version has a known CVE', do: 'Bump the package version in the recipe' }, diff: { file: 'recipes/default.rb', old: "package 'nginx' do version '1.18.0'", new: "package 'nginx' do version '1.26.2'" }, click: 'Edit recipe', done: 'the version is current' },
-        { sees: 'The service is declared but never enabled', step: 'Enable nginx on boot', how: ['Open the service resource', 'Add :enable to the action list'], diff: { file: 'recipes/default.rb', old: "service 'nginx' do action :start", new: "service 'nginx' do action [:enable, :start]" }, click: 'Add :enable', done: 'nginx starts on boot' },
-        { sees: 'A template ships world-readable', fix: { say: 'mode 0644 lets any user read the DB password', do: 'Tighten the file mode and set the owner' }, diff: { file: 'templates/db.conf.erb', old: "mode '0644'", new: "mode '0640', owner 'root', group 'app'" }, click: 'Fix mode', done: 'the file is locked down' },
-      ],
-    },
-    {
       tag: 'Cloud security', app: 'AWS IAM', goal: 'Replace a wildcard IAM policy with least privilege',
       steps: [
         { sees: 'The role grants Action "*" on Resource "*"', fix: { say: 'That is full admin - one leaked key owns the whole account', do: 'Scope it to exactly the actions this app makes, on its own resources' }, diff: { file: 'role-policy.json', old: '"Action": "*",  "Resource": "*"', new: '"Action": ["s3:GetObject","s3:PutObject"], "Resource": "arn:aws:s3:::app-data/*"' }, click: 'Edit policy', done: 'the policy is scoped to one bucket' },
         { sees: 'CloudTrail shows the role also calls SQS', step: 'Add only what it really uses', how: ['Open CloudTrail, filter events by this role', 'List the distinct API calls it actually makes', 'Grant exactly those - nothing speculative'], click: 'Add sqs:SendMessage', done: 'every real call is allowed, nothing more' },
         { sees: 'Access Analyzer flags the bucket as public', fix: { say: 'The bucket policy still allows a wildcard principal, so anyone can read it', do: 'Remove Principal "*" so only this role can reach the data' }, click: 'Fix bucket policy', done: 'Access Analyzer goes green' },
-      ],
-    },
-    {
-      tag: 'DevOps', app: 'Terminal', goal: 'Ship my app to Kubernetes',
-      steps: [
-        { sees: 'Your kubectl context is pointed at prod', fix: { say: 'That is PRODUCTION, a wrong apply here is costly', do: 'Switch to the staging context first' }, click: 'use staging', cmd: '$ kubectl config use-context staging', done: 'the context shows staging' },
-        { sees: 'deploy.yaml is ready', step: 'Apply the deployment', how: ['Apply the manifest', 'Watch the pods start'], click: 'apply', cmd: '$ kubectl apply -f deploy.yaml', done: 'pods are being created' },
-        { sees: 'A pod is stuck in ImagePullBackOff', fix: { say: 'That image tag does not exist in the registry', do: 'Fix the tag to :1.4.2 and re-apply' }, click: 'fix tag', done: 'the pod is Running' },
       ],
     },
   ]
@@ -739,6 +969,256 @@ function BViz({ k }) {
   return null
 }
 
+// ---------------------------------------------------------------------------
+// Rotating hero headline. ONE <h1> whose content is swapped (never several
+// h1s), cycling the vetted value propositions every 5s. Each line is a list of
+// [text, emphasised] segments; the emphasised run takes the brand gradient.
+// Wording is approved copy: refine the gradient word here, never add claims.
+// ---------------------------------------------------------------------------
+const HERO_DWELL_MS = 12000
+// Each entry pairs a headline (h) with its own supporting line (s); they change
+// together. The compliance line is deliberately general: the hero never names a
+// fixed short list of frameworks.
+const HERO_PAIRS = [
+  { h: [['Get '], ['anything', 1], [' done right, the first time.']],
+    s: 'It watches your screen and tells you the exact next move, step by step, until the job is done. Any task, any field.' },
+  { h: [['The '], ['sharpest person', 1], [' in the room, on every screen.']],
+    s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
+  { h: [['Always on.', 1], [' The expert you need, the moment you need one.']],
+    s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
+  { h: [['Security-first', 1], [' answers, checked before you see them.']],
+    s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
+  { h: [['Private by design', 1], [', redacted on your device.']],
+    s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
+  { h: [['The '], ['best AI', 1], [' plans it. A fast one guides you.']],
+    s: 'Your plan comes from the strongest model your key can reach. Then a fast one walks you through it, step by step.' },
+  { h: [['Do more with the '], ['team you already have', 1], ['.']],
+    s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
+  { h: [['Compliance-ready', 1], [' for the frameworks you answer to.']],
+    s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
+]
+
+// Split a line into words (on plain spaces only, so the NBSP in "SOC 2" holds)
+// where each word is a list of {t, em} parts. A word that straddles a segment
+// boundary, like "design," (gradient word + plain comma), stays ONE word so the
+// comma can never wrap onto its own line.
+function heroWords(line) {
+  const words = []; let word = []
+  const endWord = () => { if (word.length) { words.push(word); word = [] } }
+  for (const [text, em] of line) {
+    let buf = ''
+    const endPart = () => { if (buf) { word.push({ t: buf, em: !!em }); buf = '' } }
+    for (const ch of text) { if (ch === ' ') { endPart(); endWord() } else buf += ch }
+    endPart()
+  }
+  endWord()
+  return words
+}
+
+// Convert a superadmin-editable pair { h, s, em } (from GET /api/work/hero) into
+// the internal render format { h: [[text, emFlag?], ...], s }. `em` is a plain
+// substring of `h` to paint with the brand gradient: the first case-insensitive
+// match is split out as the gradient run; if em is empty/null or not found, the
+// whole headline renders plain. Nothing about motion or layout changes - this
+// only decides WHICH words carry the gradient.
+function heroPairFromApi({ h, s, em }) {
+  const text = String(h)
+  const needle = em == null ? '' : String(em)
+  if (!needle) return { h: [[text]], s: String(s) }
+  const at = text.toLowerCase().indexOf(needle.toLowerCase())
+  if (at < 0) return { h: [[text]], s: String(s) }
+  const segs = []
+  const before = text.slice(0, at)
+  const mid = text.slice(at, at + needle.length)
+  const after = text.slice(at + needle.length)
+  if (before) segs.push([before])
+  segs.push([mid, 1])
+  if (after) segs.push([after])
+  return { h: segs, s: String(s) }
+}
+
+function HeroWords({ line }) {
+  return heroWords(line).map((parts, i) => (
+    <span key={i}>
+      {i > 0 ? ' ' : null}
+      <span className="w" style={{ '--i': i }}>
+        {parts.map((p, j) => (p.em ? <em key={j}>{p.t}</em> : p.t))}
+      </span>
+    </span>
+  ))
+}
+
+// The headline is TOP-anchored so it always hugs the eyebrow, for ANY copy and
+// any number of pairs (the pairs may become superadmin-editable, so nothing here
+// may assume a fixed line count or that the lines wrap to equal heights). Each
+// block (the h1 AND the lead) is given an explicit height equal to the CURRENT
+// line's natural height, measured off-screen before paint and re-measured by a
+// ResizeObserver whenever the width changes. That height is TRANSITIONED only
+// during a swap, so when a taller or shorter line appears the subtext and CTAs
+// glide into place (a small, smooth settle) instead of a dead gap or a jump;
+// resizes snap instantly. The live element holds only the current line (plus,
+// for ~0.6s, the outgoing one marked aria-hidden while it fades). One clock
+// drives both, so headline and subtext always match.
+function RotatingHero({ paused }) {
+  // The rotating copy. Built-in HERO_PAIRS is the fallback and the first paint;
+  // if the superadmin-editable feed returns a usable set, it swaps in. Only the
+  // SOURCE of the pairs is dynamic - the motion, timing and layout are unchanged.
+  const [pairs, setPairs] = useState(HERO_PAIRS)
+  const [idx, setIdx] = useState(0)
+  const [prev, setPrev] = useState(null)   // outgoing pair while it dissolves
+  const [live, setLive] = useState(false)  // false until the first swap: no entrance on page load
+  const [hH, setHH] = useState(null)        // measured height of the current headline line (px)
+  const [lH, setLH] = useState(null)        // measured height of the current subtext line (px)
+  const idxRef = useRef(0)
+  const pausedRef = useRef(paused)
+  pausedRef.current = paused
+  const pairsRef = useRef(pairs)             // the live pairs the timer cycles
+  pairsRef.current = pairs
+  const hMeas = useRef(null)                 // off-screen measurer: current headline only
+  const lMeas = useRef(null)                 // off-screen measurer: current subtext only
+  const cur = pairs[idx] || pairs[0]         // guard: a shorter fetched set can outrun idx
+  const out = prev != null ? pairs[prev] : null
+
+  // Fetch the superadmin-editable hero copy once. On any failure, timeout, bad
+  // shape, or empty set, keep the built-in HERO_PAIRS - the hero NEVER blanks.
+  useEffect(() => {
+    let alive = true
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null
+    const timer = setTimeout(() => { try { if (ctrl) ctrl.abort() } catch { /* ignore */ } }, 4000)
+    fetch('/api/work/hero', ctrl ? { signal: ctrl.signal } : undefined)
+      .then((r) => (r && r.ok ? r.json() : null))
+      .then((data) => {
+        if (!alive || !data || !Array.isArray(data.pairs) || data.pairs.length === 0) return
+        const mapped = data.pairs
+          .filter((p) => p && typeof p.h === 'string' && p.h.trim() && typeof p.s === 'string' && p.s.trim())
+          .map(heroPairFromApi)
+        if (!mapped.length) return   // nothing usable: stay on the built-ins
+        idxRef.current = 0
+        setPrev(null); setLive(false); setIdx(0); setPairs(mapped)
+      })
+      .catch(() => { /* network/abort/parse: keep built-ins */ })
+      .finally(() => clearTimeout(timer))
+    return () => { alive = false; clearTimeout(timer); try { if (ctrl) ctrl.abort() } catch { /* ignore */ } }
+  }, [])
+
+  // Measure the live line before paint, and again on any width change, so each
+  // stage is exactly as tall as the line it is currently showing - no reserved
+  // slack above a short line, no clipping of a long one.
+  useLayoutEffect(() => {
+    const measure = () => {
+      if (hMeas.current) setHH(hMeas.current.offsetHeight)
+      if (lMeas.current) setLH(lMeas.current.offsetHeight)
+    }
+    measure()
+    let ro = null
+    try {
+      ro = new ResizeObserver(measure)
+      if (hMeas.current) ro.observe(hMeas.current)
+      if (lMeas.current) ro.observe(lMeas.current)
+    } catch { ro = null }
+    // The display font (Bricolage Grotesque) loads async; a first measure with
+    // fallback metrics can under-measure a long line. Re-measure once fonts are
+    // ready so the floor matches the real wrapped height. (min-height already
+    // guarantees no overlap even if this never fires.)
+    let cancelled = false
+    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (!cancelled) measure() }) } catch { /* ignore */ }
+    return () => { cancelled = true; if (ro) ro.disconnect() }
+  }, [idx, pairs])
+
+  useEffect(() => {
+    let reduce = false
+    try { reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) } catch { reduce = false }
+    if (reduce) return undefined   // reduced motion: pair 1, static, no timer at all
+    let fade = null
+    const tick = () => {
+      // Hold while hovered/focused or while the tab is in the background, so a
+      // reader is never raced and a returning visitor never sees a mid-swap jump.
+      if (pausedRef.current || document.hidden) return
+      const from = idxRef.current, to = (from + 1) % pairsRef.current.length
+      idxRef.current = to
+      setPrev(from); setIdx(to); setLive(true)
+      if (fade) clearTimeout(fade)
+      fade = setTimeout(() => setPrev(null), 700)
+    }
+    const iv = setInterval(tick, HERO_DWELL_MS)
+    return () => { clearInterval(iv); if (fade) clearTimeout(fade) }
+  }, [])
+
+  const inCls = live ? 'wm-h1-in' : 'wm-h1-line'
+  // className stays STATIC so the scroll-reveal's `in` class (added to the DOM by
+  // the IntersectionObserver, then unobserved) is never clobbered by a re-render.
+  // Only the height is driven inline; its smooth transition lives in CSS so a
+  // line swap glides the lead + CTAs into place.
+  return (
+    <>
+      <div className="wm-h1-stage" data-reveal style={hH != null ? { minHeight: `${hH}px` } : undefined}>
+        <div className="wm-h1-meas" aria-hidden="true" ref={hMeas}><HeroWords line={cur.h} /></div>
+        <h1>
+          {out != null && (
+            <span key={`out${prev}`} className="wm-h1-out" aria-hidden="true"><HeroWords line={out.h} /></span>
+          )}
+          <span key={`in${idx}`} className={inCls}><HeroWords line={cur.h} /></span>
+        </h1>
+      </div>
+      {/* The paired subtext: same clock, same measure-and-transition, a softer
+          whole-line rise that lands just after the headline's words settle. */}
+      <div className="wm-lead-stage" data-reveal style={lH != null ? { minHeight: `${lH}px` } : undefined}>
+        <div className="wm-lead-meas" aria-hidden="true" ref={lMeas}>{cur.s}</div>
+        <p className="wm-lead">
+          {out != null && (
+            <span key={`out${prev}`} className="wm-h1-out" aria-hidden="true">{out.s}</span>
+          )}
+          <span key={`in${idx}`} className={inCls}>{cur.s}</span>
+        </p>
+      </div>
+    </>
+  )
+}
+
+// Compare-plans matrix data. Grounded in the pricing cards above and the
+// product facts marketed elsewhere on this page: capacity per tier, the few
+// tier-gated power features, the security guarantees every plan shares, and
+// the Enterprise-only controls. true = included, false = not included, a
+// string = the value shown in the cell.
+const CMP_TIERS = [
+  { id: 'basic', name: 'Basic' },
+  { id: 'advanced', name: 'Advanced', popular: true },
+  { id: 'premium', name: 'Premium' },
+  { id: 'enterprise', name: 'Enterprise' },
+]
+const CMP_ALL = [true, true, true, true]
+const CMP_ENT = [false, false, false, true]
+const CMP_ROWS = [
+  { g: 'Capacity' },
+  { k: 'Daily guiding time', v: ['2 hours', '4 hours', '6 hours', 'Custom'] },
+  { k: 'Tasks per day', v: ['Up to 4', 'Up to 8', 'Up to 12', 'Unlimited'] },
+  { k: 'Priority in the guidance queue', v: ['Standard', 'Priority', 'Highest', 'Highest'] },
+  { g: 'Guidance' },
+  { k: 'Step-by-step guidance on any task', v: CMP_ALL },
+  { k: 'Exact commands, code and links', v: CMP_ALL },
+  { k: 'Roadmaps and diagrams', v: CMP_ALL },
+  { k: 'Floating guide + session write-up', v: CMP_ALL },
+  { k: 'Upload your own reference documents', v: [false, true, true, true] },
+  { k: 'Generated visuals on demand', v: [false, false, true, true] },
+  { g: 'Security, on every plan' },
+  { k: 'Security-first checked answers', v: CMP_ALL },
+  { k: 'On-device redaction before anything is sent', v: CMP_ALL },
+  { k: 'Read-only by design (never clicks, types or runs)', v: CMP_ALL },
+  { k: 'Keys and report artifacts encrypted at rest', v: CMP_ALL },
+  { g: 'Enterprise controls' },
+  { k: 'Company-wide PII / PHI redaction policy, set by your admin', v: CMP_ENT },
+  { k: 'SSO / SAML and team provisioning', v: CMP_ENT },
+  { k: 'Per-company AI keys, or bring your own', v: CMP_ENT },
+  { k: 'Audit log, DPA and priority SLA', v: CMP_ENT },
+  { k: 'Self-hosted / on-prem option', v: CMP_ENT },
+]
+// One matrix cell: a check, a muted dash, or the value text.
+function CmpCell({ v }) {
+  if (v === true) return <span className="wm-cmp-yes" role="img" aria-label="Included"><Check size={15} /></span>
+  if (v === false) return <span className="wm-cmp-no" role="img" aria-label="Not included"><i aria-hidden /></span>
+  return <span className="wm-cmp-val">{v}</span>
+}
+
 const CSS = `
 .wm{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--mx:0;--my:0;
   position:relative;min-height:100vh;background:var(--ink);color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
@@ -776,26 +1256,77 @@ const CSS = `
 
 .wm [data-reveal]{opacity:0;transform:translateY(24px);transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
 .wm [data-reveal].in{opacity:1;transform:none}
+/* The two rotating hero stages also animate their height (set inline per line),
+   so a taller/shorter headline glides the subtext + CTAs instead of jumping.
+   Re-declares the reveal transition and appends height; keeps className static
+   so the reveal "in" class is never overwritten by a re-render. */
+.wm .wm-h1-stage[data-reveal],.wm .wm-lead-stage[data-reveal]{transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1),min-height .55s cubic-bezier(.4,0,.2,1)}
 
 /* HERO */
 .wm-hero{padding:78px 0 0;position:relative}
 .wm-hero-vid{position:absolute;inset:-70px 0 auto 0;width:100%;height:640px;object-fit:cover;opacity:.5;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 42%,transparent);mask-image:linear-gradient(180deg,#000 42%,transparent)}
 @media(prefers-reduced-motion:reduce){.wm-hero-vid{display:none}}
-.wm-hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:50px;align-items:center}
+/* align-items:start (not center): the left copy column animates its own height
+   as the hero rotates; a shared centered row would make the demo box re-center
+   (grow/shrink) every cycle. Top-anchoring pins the fixed-height demo box so it
+   never reacts to the text animation, and keeps it the tallest column so the row
+   height - and everything below the hero - stays put. */
+.wm-hero-grid{display:grid;grid-template-columns:1.08fr .92fr;gap:50px;align-items:start}
 .wm-badge{display:inline-flex;align-items:center;gap:7px;font-size:13px;color:var(--em);border:1px solid rgba(140,245,196,.3);background:rgba(140,245,196,.07);padding:6px 13px;border-radius:999px;margin-bottom:24px}
-.wm-hero h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(42px,6.2vw,74px);line-height:.98;letter-spacing:-.035em;margin:0 0 24px}
-.wm-lead{font-size:19px;color:var(--mut);max-width:40ch;margin:0 0 22px}
+/* Rotating headline. Typography lives on the stage so the h1 AND the off-screen
+   measurer wrap identically. The stage is TOP-anchored and given an explicit
+   height equal to the CURRENT line (measured in JS), so the h1 always hugs the
+   eyebrow for any copy and any pair count. That height is smoothly transitioned
+   (see the rule above), so a taller/shorter line glides the lead + CTAs into
+   place instead of leaving a dead gap above a short headline. */
+.wm-h1-stage{position:relative;margin:0 0 24px;font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(38px,5.6vw,66px);line-height:1.02;letter-spacing:-.035em;text-wrap:balance;overflow-wrap:anywhere}
+.wm-h1-meas{position:absolute;top:0;left:0;width:100%;visibility:hidden;pointer-events:none;user-select:none}
+.wm-hero h1{font:inherit;letter-spacing:inherit;margin:0;display:grid}
+.wm-hero h1>span{grid-area:1/1;display:block}
+.wm-hero h1 .w{display:inline-block}
+/* Incoming line: each word rises out of a soft blur, staggered left to right.
+   Outgoing line: lifts, blurs and dissolves underneath it. */
+.wm-hero h1 .wm-h1-in{opacity:0;animation:wmHeroIn .72s cubic-bezier(.22,.7,.25,1) forwards}
+.wm-hero h1 .wm-h1-out{pointer-events:none;animation:wmLineOut .6s cubic-bezier(.4,0,.6,1) forwards}
+.wm-hero h1 .wm-h1-out .w,.wm-hero h1 .wm-h1-in .w{opacity:1}
+@keyframes wmHeroIn{from{opacity:0;transform:translateY(.26em);filter:blur(5px)}60%{filter:blur(0)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes wmLineOut{to{opacity:0;transform:translateY(-.2em);filter:blur(6px)}}
+@media(prefers-reduced-motion:reduce){
+ .wm-hero h1 .wm-h1-in{opacity:1;animation:none}
+ .wm-hero h1 .wm-h1-out{display:none}
+}
+/* Paired subtext: same measure-and-transition as the headline. Top-anchored
+   with an explicit current-line height, so it sits directly under the headline
+   and glides the CTAs when its height changes. Width and size live on the stage
+   so the <p> and the measurer wrap identically. */
+.wm-lead-stage{position:relative;font-size:19px;max-width:40ch;margin:0 0 22px}
+.wm-lead-meas{position:absolute;top:0;left:0;width:100%;visibility:hidden;pointer-events:none;user-select:none}
+.wm-lead{font-size:inherit;color:var(--mut);margin:0;display:grid}
+.wm-lead>span{grid-area:1/1;display:block}
+.wm-lead .wm-h1-in{opacity:0;animation:wmLeadIn .62s cubic-bezier(.22,.7,.25,1) .08s forwards}
+.wm-lead .wm-h1-out{pointer-events:none;animation:wmLineOut .42s cubic-bezier(.5,0,.75,.4) forwards}
+@keyframes wmLeadIn{from{opacity:0;transform:translateY(.5em);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+@media(prefers-reduced-motion:reduce){
+ .wm-lead .wm-h1-in{opacity:1;animation:none}
+ .wm-lead .wm-h1-out{display:none}
+}
 .wm-killer{display:flex;align-items:center;gap:12px;background:linear-gradient(100deg,rgba(57,211,255,.1),rgba(140,245,196,.06));border:1px solid rgba(57,211,255,.32);border-radius:14px;padding:13px 15px;margin-bottom:26px;max-width:470px;font-size:14.5px;color:var(--tx);transition:transform .15s,border-color .2s}
 .wm-killer:hover{transform:translateY(-2px);border-color:var(--em2)}
 .wm-killer b{color:var(--em2)}
 .wm-killer-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(57,211,255,.15);color:var(--em2);flex-shrink:0}
 .wm-killer svg:last-child{margin-left:auto;color:var(--mut);flex-shrink:0}
-.wm-hero-cta{display:flex;align-items:center;gap:22px}
-.wm-hero-trust{display:flex;flex-wrap:wrap;gap:10px;margin-top:24px}
-.wm-trust-pill{display:inline-flex;align-items:center;gap:7px;padding:8px 13px;border-radius:999px;border:1px solid var(--line);background:rgba(140,245,196,.06);color:var(--tx);font-size:13.5px;font-weight:600;transition:border-color .15s,background .15s}
-.wm-trust-pill svg{color:var(--em2)}
-.wm-trust-pill:hover{border-color:var(--em);background:rgba(140,245,196,.12)}
-.wm:not([data-wm="dark"]) .wm-trust-pill{background:rgba(10,157,102,.07);border-color:rgba(10,157,102,.22)}
+/* Hero controls: the two CTAs in one aligned row. */
+.wm-hero-cta{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
+/* "Any app" strip - fills the space under the CTAs. Quiet caption + a calm row
+   of neutral category-glyph tiles (no brand marks). Reuses the shared tokens so
+   it reads right in both light and dark. */
+.wm-anyapp{margin-top:30px;max-width:470px}
+.wm-anyapp-cap{font-size:13px;color:var(--mut);margin:0 0 12px}
+.wm-anyapp-row{display:flex;flex-wrap:wrap;gap:10px}
+.wm-anyapp-tile{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;color:var(--mut);background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .15s ease,border-color .2s ease,color .2s ease}
+.wm-anyapp-tile:hover{transform:translateY(-2px);border-color:var(--em);color:var(--em)}
+@media(prefers-reduced-motion:reduce){.wm-anyapp-tile{transition:border-color .2s ease,color .2s ease}.wm-anyapp-tile:hover{transform:none}}
+@media(max-width:560px){.wm-anyapp{margin-top:24px}.wm-anyapp-row{gap:8px}.wm-anyapp-tile{width:40px;height:40px;border-radius:11px}}
 .wm-modes{display:flex;align-items:center;gap:18px;margin-bottom:10px;flex-wrap:wrap}
 .wm-mode{display:flex;align-items:center;gap:10px;color:var(--tx)}
 .wm-mode svg{color:var(--em);flex-shrink:0}
@@ -886,6 +1417,44 @@ const CSS = `
 .wm-demo-guide{margin-top:12px;height:214px;overflow:hidden}
 .wm-demo-guide > :first-child{margin-top:0}
 
+/* SECURITY + PRIVACY DUO (under the hero grid) */
+.wm-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
+.wm-duo-card{position:relative;display:flex;flex-direction:column;gap:14px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:20px;padding:22px 24px 20px;overflow:hidden;transition:transform .18s ease-out,border-color .2s,box-shadow .2s}
+.wm-duo-card:before{content:"";position:absolute;inset:0 0 auto 0;height:3px}
+.wm-duo-card.sec:before{background:linear-gradient(90deg,var(--em),transparent 80%)}
+.wm-duo-card.priv:before{background:linear-gradient(90deg,var(--em2),transparent 80%)}
+.wm-duo-card:after{content:"";position:absolute;width:260px;height:260px;right:-120px;top:-140px;border-radius:50%;pointer-events:none;opacity:.55}
+.wm-duo-card.sec:after{background:radial-gradient(circle,rgba(140,245,196,.16),transparent 68%)}
+.wm-duo-card.priv:after{background:radial-gradient(circle,rgba(57,211,255,.16),transparent 68%)}
+.wm-duo-card:hover{transform:translateY(-3px)}
+.wm-duo-card.sec:hover{border-color:rgba(140,245,196,.45)}
+.wm-duo-card.priv:hover{border-color:rgba(57,211,255,.45)}
+.wm-duo-top{display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1}
+.wm-duo-ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:46px;height:46px;border-radius:14px;color:var(--em);background:linear-gradient(135deg,rgba(140,245,196,.22),rgba(57,211,255,.12));box-shadow:0 0 26px -8px rgba(140,245,196,.55)}
+.wm-duo-card.priv .wm-duo-ic{color:var(--em2);background:linear-gradient(135deg,rgba(57,211,255,.22),rgba(140,245,196,.1));box-shadow:0 0 26px -8px rgba(57,211,255,.55)}
+.wm-duo-head{display:flex;flex-direction:column;gap:3px;min-width:0}
+.wm-duo-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--em)}
+.wm-duo-card.priv .wm-duo-eyebrow{color:var(--em2)}
+.wm-duo-card h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(18px,1.7vw,21px);letter-spacing:-.015em;line-height:1.18;margin:0}
+.wm-duo-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;position:relative;z-index:1}
+.wm-duo-points li{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--tx)}
+.wm-duo-points li svg{flex:0 0 auto;margin-top:4px;color:var(--em)}
+.wm-duo-card.priv .wm-duo-points li svg{color:var(--em2)}
+/* mono "proof strip": a tiny live look at the mechanism, stays dark like every product screen */
+.wm-duo-proof{display:flex;align-items:center;flex-wrap:wrap;gap:7px;min-height:44px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);padding:9px 13px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11.5px;color:#aeb9cc;line-height:1.3;position:relative;z-index:1}
+.wm-duo-proof .dp-chip,.wm-duo-proof .dp-tok,.wm-duo-proof .dp-raw,.wm-duo-proof .dp-ok{animation:wm-demo-fade .45s ease-out both}
+.wm-duo-proof > :nth-child(2){animation-delay:.08s}.wm-duo-proof > :nth-child(3){animation-delay:.16s}.wm-duo-proof > :nth-child(4){animation-delay:.24s}.wm-duo-proof > :nth-child(5){animation-delay:.32s}.wm-duo-proof > :nth-child(6){animation-delay:.4s}
+.wm-duo-proof .dp-chip{font-weight:700;color:#8cf5c4;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.1);border-radius:6px;padding:2px 8px;font-size:10.5px}
+.wm-duo-proof .dp-arrow{color:#5bd0ff;font-weight:700}
+.wm-duo-proof .dp-ok{display:inline-flex;align-items:center;gap:4px;color:#06201a;background:linear-gradient(135deg,#8cf5c4,#5bd0ff);border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:800}
+.wm-duo-proof .dp-raw{color:#ff9a9a;text-decoration:line-through;text-decoration-color:rgba(255,120,120,.7)}
+.wm-duo-proof .dp-tok{color:#5bd0ff;font-weight:700}
+.wm-duo-link{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:0;font:inherit;font-size:13.5px;font-weight:700;color:var(--em);cursor:pointer;position:relative;z-index:1;transition:gap .15s}
+.wm-duo-card.priv .wm-duo-link{color:var(--em2)}
+.wm-duo-link:hover{gap:10px;text-decoration:underline;text-underline-offset:4px}
+@media(max-width:900px){.wm-duo{grid-template-columns:1fr;gap:14px;margin-top:34px}}
+@media(max-width:560px){.wm-duo-card{padding:18px 18px 16px}.wm-duo-card h3{font-size:18px}.wm-duo-points li{font-size:13.5px}}
+
 /* MARQUEE */
 .wm-marquee{margin-top:60px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
 .wm-marquee-row{display:flex;gap:40px;width:max-content;animation:wmscroll 40s linear infinite;color:var(--mut);font-size:14px;font-weight:500;white-space:nowrap}
@@ -901,10 +1470,50 @@ const CSS = `
 .wm-band-copy h2 span{color:var(--em2)}
 .wm-band-copy p{color:var(--mut);font-size:15.5px;margin-top:8px;max-width:72ch}
 
+/* BEST MODEL PLANS band - an Option C card (violet tone = intelligence) holding a
+   two-column "mechanism" layout: the claim on the left, a quiet mono plan/watch
+   receipt on the right. Light only, like every WorkCard. */
+.wm-best{padding:38px 0 0}
+.wm-best-in{display:grid;grid-template-columns:1.12fr .88fr;gap:32px;align-items:center}
+.wm-best-copy{display:flex;flex-direction:column;gap:12px;min-width:0}
+.wm-best-copy .wm-eyebrow{margin-bottom:0;color:var(--wc-ink)}
+.wm-best-copy .wm-eyebrow svg{color:var(--wc-ink)}
+.wm-best-copy .wm-best-h{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(24px,3vw,34px);letter-spacing:-.025em;line-height:1.08;margin:0;max-width:22ch;color:var(--ink-brand,#062a22)}   /* two classes: outranks .wm h2 */
+.wm-best-p{color:var(--wc-mut);font-size:15.5px;line-height:1.6;max-width:62ch;margin:0}
+.wm-best-copy .wc-link{margin-top:6px;color:var(--wc-ink)}   /* beats .wm a{color:inherit} */
+.wm-best-receipt{display:flex;flex-direction:column;gap:8px;min-width:0}
+.wm-best-row{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:12px;background:#fff;border:1px solid var(--wc-line);border-radius:12px;padding:12px 14px;
+  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:var(--wc-mut);line-height:1.4;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
+.wm-best-row .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--wc-ink)}
+.wm-best-row.watch .k{color:#0a7fa8}
+.wm-best-row .v b{color:var(--wc-tx);font-weight:600}
+.wm-best-row.plan{border-color:rgba(109,75,216,.28)}
+.wm-best-row.watch{border-color:rgba(10,147,196,.28)}
+/* the "watch" lane breathes: three dots pulse in sequence (CSS only) */
+.wm-best-dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
+.wm-best-dots i{width:5px;height:5px;border-radius:50%;background:#0a93c4;opacity:.3;animation:wm-best-pulse 1.4s ease-in-out infinite}
+.wm-best-dots i:nth-child(2){animation-delay:.2s}.wm-best-dots i:nth-child(3){animation-delay:.4s}
+@keyframes wm-best-pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
+@media(max-width:900px){.wm-best{padding-top:30px}.wm-best-in{grid-template-columns:1fr;gap:20px}}
+@media(prefers-reduced-motion:reduce){.wm-best-dots i{animation:none;opacity:.7}}
+
 /* SECTIONS */
-.wm-sec{padding:84px 0}
-.wm-h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.025em;line-height:1.06;max-width:20ch;margin:0 0 14px}
-.wm-sub{color:var(--mut);font-size:18px;max-width:58ch;margin:0 0 42px}
+.wm-sec{padding:58px 0}
+/* Alignment rule: everything from the top of the page through the best-model
+   band stays LEFT (hero h1/.wm-lead, .wm-best-h/.wm-best-p). Every section
+   below the band centers its header stack - eyebrow, h2, sub - the way the
+   final CTA already does. .wm-h2/.wm-sub only appear below the band, so the
+   centering lives here at class level; card interiors are untouched (they do
+   not inherit from these rules). The scoped .wm-sec .wm-eyebrow rule leaves
+   the band's own eyebrow left-aligned. */
+.wm-h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.025em;line-height:1.06;max-width:20ch;margin:0 auto 14px;text-align:center}
+.wm-sub{color:var(--mut);font-size:18px;max-width:58ch;margin:0 auto 42px;text-align:center}
+/* The page resets .wm h2 / .wm p to margin:0 at specificity (0,1,1), which
+   outranks the single-class rules above, so the auto side margins that center
+   the capped-width block need the .wm scope to win. Only the horizontal
+   margins are set here; the vertical rhythm stays exactly as it renders. */
+.wm .wm-h2,.wm .wm-sub{margin-left:auto;margin-right:auto}
+.wm-sec .wm-eyebrow{display:flex;width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;text-align:center}
 
 /* PILLARS - spotlight */
 .wm-pillars{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(140,245,196,.025),transparent)}
@@ -1086,7 +1695,7 @@ const CSS = `
 /* PRICING */
 .wm-pricing{border-top:1px solid var(--line)}
 /* Monthly / Annual toggle */
-.wm-cyc{display:inline-flex;gap:4px;margin:4px auto 26px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
+.wm-cyc{display:flex;width:fit-content;max-width:100%;gap:4px;margin:4px auto 26px;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--panel)}
 .wm-cyc-b{display:inline-flex;align-items:center;gap:8px;border:none;background:none;color:var(--mut);font:inherit;font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;transition:color .15s,background .15s}
 .wm-cyc-b.on{color:var(--tx);background:linear-gradient(135deg,rgba(140,245,196,.16),rgba(57,211,255,.14))}
 .wm-cyc-save{font-size:11px;font-weight:800;letter-spacing:.02em;color:#06603f;background:rgba(10,157,102,.16);border-radius:999px;padding:2px 8px}
@@ -1114,7 +1723,59 @@ const CSS = `
 .wm-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:14px 28px;margin-top:26px}
 .wm-trust span{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:13.5px;font-weight:500}
 .wm-trust span svg{color:var(--em);flex-shrink:0}
-.wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
+/* .wm .wm-fineprint (0,2,0) so the auto side-margins win over .wm p{margin:0}
+   (0,1,1) and the block actually centers, not just its text. */
+.wm .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
+
+/* COMPARE PLANS - tier matrix + honest value band */
+.wm-compare{border-top:1px solid var(--line)}
+.wm-cmp-card{border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));overflow:hidden}
+/* the table scrolls INSIDE its card when the viewport is narrower than it;
+   the page itself never gains a horizontal scrollbar */
+.wm-cmp-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
+.wm-cmp{width:100%;min-width:720px;border-collapse:separate;border-spacing:0;font-size:14.5px}
+.wm-cmp th,.wm-cmp td{padding:13px 16px;text-align:center;border-top:1px solid var(--line);vertical-align:middle}
+.wm-cmp thead th{border-top:none;padding:18px 16px 14px;font-family:"Bricolage Grotesque";font-weight:800;font-size:17px;color:var(--tx);background:rgba(140,245,196,.05)}
+.wm-cmp thead th.pop{color:var(--em)}
+/* feature column: left-aligned, sticky so it stays readable while the tiers scroll */
+.wm-cmp .wm-cmp-feat{text-align:left;font-weight:500;color:var(--tx);width:34%;min-width:230px;position:sticky;left:0;z-index:1;background:var(--panel)}
+.wm-cmp thead .wm-cmp-feat{font-family:"Figtree",system-ui,sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut)}
+.wm-cmp td.pop{background:rgba(140,245,196,.045)}
+.wm-cmp-group td{text-align:left;padding:18px 16px 8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em)}
+.wm-cmp-pop{display:block;font-family:"Figtree",system-ui,sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));border-radius:999px;padding:3px 9px;width:fit-content;margin:0 auto 6px;white-space:nowrap}
+.wm-cmp-yes{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;color:var(--em);background:rgba(140,245,196,.12)}
+.wm-cmp-no{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px}
+.wm-cmp-no i{display:block;width:12px;height:2px;border-radius:2px;background:var(--line)}
+.wm-cmp-val{font-weight:700;color:var(--tx);white-space:nowrap}
+/* phones: one card per plan, same facts, no sideways table */
+.wm-cmp-stack{display:none}
+.wm-cmp-tcard{border:1px solid var(--line);border-radius:18px;padding:20px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));min-width:0}
+.wm-cmp-tcard.pop{border-color:rgba(140,245,196,.5)}
+.wm-cmp-tname{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"Bricolage Grotesque";font-weight:800;font-size:20px;margin-bottom:12px}
+.wm-cmp-tname .wm-cmp-pop{margin:0}
+.wm-cmp-tcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wm-cmp-tcard li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--tx);line-height:1.45}
+.wm-cmp-tcard li.off{color:var(--mut)}
+.wm-cmp-tcard li .wm-cmp-yes,.wm-cmp-tcard li .wm-cmp-no{width:22px;height:22px;flex-shrink:0}
+.wm-cmp-tcard li .wm-cmp-val{flex-shrink:0;font-size:13px;color:var(--em);padding-top:1px}
+.wm-cmp-tcard li.wm-cmp-tgroup{display:block;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+.wm-cmp-tcard li.wm-cmp-tgroup:first-child{margin-top:0;padding-top:0;border-top:none}
+/* value band */
+.wm-cmp-value{margin-top:28px;display:grid;grid-template-columns:1.05fr .95fr;gap:22px;align-items:stretch}
+.wm-cmp-value-l,.wm-cmp-value-r{border:1px solid var(--line);border-radius:20px;padding:26px 28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));min-width:0}
+.wm-cmp-value-l .wm-eyebrow{margin-left:0;margin-right:0}
+.wm-cmp-value-l h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(20px,2.4vw,26px);letter-spacing:-.015em;line-height:1.15;margin:0 0 14px}
+.wm-cmp-value-l ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.wm-cmp-value-l li{display:flex;gap:10px;align-items:flex-start;font-size:15px;color:var(--tx)}
+.wm-cmp-value-l li svg{color:var(--em);flex-shrink:0;margin-top:3px}
+.wm-cmp-note-h{display:inline-flex;align-items:center;gap:7px;font-weight:700;font-size:14px;color:var(--tx);margin-bottom:10px}
+.wm-cmp-note-h svg{color:var(--em2)}
+.wm-cmp-value-r p{color:var(--mut);font-size:14.5px;line-height:1.6}
+.wm-cmp-value-r p+p{margin-top:12px}
+.wm-cmp-illus{border-left:3px solid var(--em2);padding:2px 0 2px 12px}
+.wm-cmp-illus b{color:var(--tx)}
+@media(max-width:900px){.wm-cmp-value{grid-template-columns:1fr}}
+@media(max-width:768px){.wm-cmp-card{display:none}.wm-cmp-stack{display:grid;grid-template-columns:1fr;gap:14px}.wm-cmp-value-l,.wm-cmp-value-r{padding:20px}}
 
 /* uniform dark "message box" on top of every icon card */
 .wm-cardbox{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;min-height:58px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);margin-bottom:16px;padding:10px 14px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:#aeb9cc;text-align:center;line-height:1.4}
@@ -1156,7 +1817,7 @@ const CSS = `
 @media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent{grid-template-columns:1fr;gap:20px}.wm-ent-r ul{grid-template-columns:1fr}}
 
 /* FINAL */
-.wm-final{padding:96px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}
+.wm-final{padding:70px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}
 .wm-final-in h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(32px,5vw,52px);letter-spacing:-.025em;margin:16px 0 14px}
 .wm-final-in p{color:var(--mut);font-size:19px;margin:0 0 28px}
 /* two-app download strip: shows visitors there is a Windows desktop app and an
@@ -1183,9 +1844,15 @@ const CSS = `
 .wm-foot{border-top:1px solid var(--line);padding:26px 0}
 .wm-foot-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .wm-foot-by{color:var(--mut);flex:1;font-size:13px}
+.wm-foot-links{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.wm-foot-links .wm-link{font-size:13px}
 
 @media(max-width:900px){
+ /* min-width:0 so neither column can widen the single track past the viewport
+    (the demo mock's rotating scenario text otherwise pushed it to 430-556px and
+    the headline was clipped at the right edge on phones). */
  .wm-hero-grid{grid-template-columns:1fr;gap:38px}
+ .wm-hero-grid>*{min-width:0}
  .wm-steps,.wm-ways-grid,.wm-tiers,.wm-people-grid{grid-template-columns:1fr}
  .wm-cards{grid-template-columns:1fr 1fr}
  .wm-flow{flex-direction:column}
@@ -1207,9 +1874,9 @@ const CSS = `
  .wm-navcta .wm-cta.sm{padding:9px 14px;font-size:13.5px}
  .wm-modes{flex-direction:column;align-items:flex-start;gap:13px}
  .wm-mode-div{display:none}
- .wm-sec{padding:56px 0}
+ .wm-sec{padding:42px 0}
  .wm-hero{padding:48px 0 0}
- .wm-lead{font-size:17px}
+ .wm-lead-stage{font-size:17px}
  .wm-demo{transform:none}
 }
 @media(max-width:768px){
@@ -1219,8 +1886,7 @@ const CSS = `
  .wm-people,.wm-pillars,.wm-ways,#cards{display:none}
  .wm-hero-cta{flex-direction:column;align-items:stretch;gap:12px}
  .wm-hero-cta .wm-cta{width:100%;justify-content:center;padding:15px 18px;font-size:16px}
- .wm-hero-cta .wm-link{align-self:center;padding:8px}
- .wm-sec{padding:46px 0}
+ .wm-sec{padding:36px 0}
 }
 
 /* ============================================================
@@ -1289,7 +1955,29 @@ const CSS = `
 .wm:not([data-wm="dark"]) .wm-way:hover,
 .wm:not([data-wm="dark"]) .wm-ucard:hover{box-shadow:0 1px 2px rgba(17,23,38,.05), 0 28px 56px -26px rgba(17,23,38,.3)}
 .wm:not([data-wm="dark"]) .wm-way.feat{background:linear-gradient(180deg,rgba(10,134,207,.07),#fff);border-color:rgba(10,134,207,.38)}
+/* security + privacy duo: white, elevated, brand-tinted glow */
+.wm:not([data-wm="dark"]) .wm-duo-card{background:#fff;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22)}
+.wm:not([data-wm="dark"]) .wm-duo-card:hover{box-shadow:0 1px 2px rgba(17,23,38,.05),0 28px 56px -26px rgba(17,23,38,.3)}
+.wm:not([data-wm="dark"]) .wm-duo-card.sec:hover{border-color:rgba(10,157,102,.45)}
+.wm:not([data-wm="dark"]) .wm-duo-card.priv:hover{border-color:rgba(10,134,207,.45)}
+.wm:not([data-wm="dark"]) .wm-duo-card.sec:after{background:radial-gradient(circle,rgba(10,157,102,.12),transparent 68%)}
+.wm:not([data-wm="dark"]) .wm-duo-card.priv:after{background:radial-gradient(circle,rgba(10,134,207,.12),transparent 68%)}
+.wm:not([data-wm="dark"]) .wm-duo-ic{background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.1));box-shadow:none}
+.wm:not([data-wm="dark"]) .wm-duo-card.priv .wm-duo-ic{background:linear-gradient(135deg,rgba(10,134,207,.16),rgba(10,157,102,.08));box-shadow:none}
+.wm:not([data-wm="dark"]) .wm-duo-card h3{color:var(--ink-brand)}
 .wm:not([data-wm="dark"]) .wm-tier.pop{background:linear-gradient(180deg,rgba(10,157,102,.09),#fff);border-color:rgba(10,157,102,.45);box-shadow:0 32px 66px -30px rgba(10,157,102,.42)}
+/* compare-plans matrix + value band: white, elevated, brand-green tints */
+.wm:not([data-wm="dark"]) .wm-cmp-card,
+.wm:not([data-wm="dark"]) .wm-cmp-tcard,
+.wm:not([data-wm="dark"]) .wm-cmp-value-l,
+.wm:not([data-wm="dark"]) .wm-cmp-value-r{background:#fff;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22)}
+.wm:not([data-wm="dark"]) .wm-cmp thead th{background:rgba(10,157,102,.06)}
+.wm:not([data-wm="dark"]) .wm-cmp td.pop{background:rgba(10,157,102,.04)}
+.wm:not([data-wm="dark"]) .wm-cmp-tcard.pop{border-color:rgba(10,157,102,.45);background:linear-gradient(180deg,rgba(10,157,102,.07),#fff)}
+.wm:not([data-wm="dark"]) .wm-cmp-yes{background:rgba(10,157,102,.12)}
+.wm:not([data-wm="dark"]) .wm-cmp-no i{background:#c9d1de}
+.wm:not([data-wm="dark"]) .wm-cmp-value-l h3{color:var(--ink-brand)}
+.wm:not([data-wm="dark"]) .wm-cmp-pop{color:#fff}
 
 /* spotlight stage = premium dark card (matches the demo), with real elevation */
 .wm:not([data-wm="dark"]) .wm-spot-stage{

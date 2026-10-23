@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
@@ -10,8 +10,168 @@ import { clean, isDlpActive } from '../scrub.js'
 import { redactFrame, warmFrameScrub } from '../frame_scrub.js'
 
 const linkHost = (u) => { try { return new URL(u).host.replace(/^www\./, '') } catch { return 'link' } }
+
+// Read a file the user attaches MID-TASK into a context payload for the engine.
+// An image (screenshot or phone photo) is returned as a data URL, on-device
+// redacted first when DLP is on (so sensitive pixels never leave). A text-readable
+// file is returned as plain text. A binary doc (PDF/Word) the browser cannot read
+// is flagged unsupported with a clear message - the desktop app extracts those,
+// and on the web the user can paste the text instead. Never throws.
+const CONTEXT_TEXT_RE = /\.(txt|md|markdown|csv|tsv|json|log|ya?ml|ini|conf|cfg|xml|html?|rtf)$/i
+async function readContextFile(file) {
+  if (!file) return {}
+  const name = String(file.name || '')
+  const isImg = String(file.type || '').startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp|heic)$/i.test(name)
+  if (isImg) {
+    try {
+      const dataUrl = await new Promise((res, rej) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.onerror = () => rej(new Error('read failed')); fr.readAsDataURL(file) })
+      const image = isDlpActive() ? await redactFrame(dataUrl).catch(() => dataUrl) : dataUrl
+      return { image }
+    } catch { return { error: 'That image could not be read. Try another.' } }
+  }
+  if (CONTEXT_TEXT_RE.test(name) || String(file.type || '').startsWith('text/')) {
+    try { const text = await file.text(); return { docsText: String(text || '').slice(0, 8000) } }
+    catch { return { error: 'That file could not be read.' } }
+  }
+  return { error: 'On the web you can attach an image or a text file, or paste the text. The desktop app also reads PDFs and Word files.' }
+}
+
+// ===========================================================================
+// On-device data parsing for "Compute from a file". The WHOLE point is privacy:
+// the attached CSV / Excel file is read ENTIRELY here in the browser. The raw
+// rows never leave the machine - only a derived schema (column names + types)
+// and the row count are ever sent, to plan a safe computation that is then run
+// locally. Nothing here touches the network.
+// ===========================================================================
+
+// A small, robust CSV parser. Handles quoted fields, embedded commas, escaped
+// quotes (""), and CRLF / LF line endings. Returns an array of string rows.
+// Newlines inside a quoted field are preserved. No dependency.
+function parseCsv(text) {
+  const s = String(text == null ? '' : text)
+  const rows = []
+  let row = []
+  let field = ''
+  let inQuotes = false
+  let i = 0
+  while (i < s.length) {
+    const ch = s[i]
+    if (inQuotes) {
+      if (ch === '"') {
+        if (s[i + 1] === '"') { field += '"'; i += 2; continue }
+        inQuotes = false; i++; continue
+      }
+      field += ch; i++; continue
+    }
+    if (ch === '"') { inQuotes = true; i++; continue }
+    if (ch === ',') { row.push(field); field = ''; i++; continue }
+    if (ch === '\r') { i++; continue }         // CR is dropped; LF ends the row
+    if (ch === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue }
+    field += ch; i++
+  }
+  if (field !== '' || row.length) { row.push(field); rows.push(row) }
+  return rows
+}
+
+// Infer a column's type from its (non-empty) values. 'number' when every value
+// is numeric once $ , % and spaces are stripped; 'date' when the values parse as
+// dates and look date-shaped (so plain integers are not mistaken for dates);
+// otherwise 'string'.
+function looksNumeric(v) {
+  const n = String(v).replace(/[$,%\s]/g, '')
+  return n !== '' && /^[-+]?\d*\.?\d+(e[-+]?\d+)?$/i.test(n)
+}
+function looksDate(v) {
+  const s = String(v).trim()
+  if (!s || looksNumeric(s)) return false
+  if (!/[-/:]|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/i.test(s)) return false
+  return !Number.isNaN(Date.parse(s))
+}
+function inferType(values) {
+  const vals = values.map((v) => String(v == null ? '' : v).trim()).filter((v) => v !== '')
+  if (!vals.length) return 'string'
+  if (vals.every(looksNumeric)) return 'number'
+  if (vals.every(looksDate)) return 'date'
+  return 'string'
+}
+
+// Turn a matrix (array of string rows) into a table: unique column names, row
+// objects keyed by column name, an inferred schema, and the row count. Blank rows
+// are dropped. The first non-empty row is the header. Returns { name, rows,
+// schema, rowCount } or { error }.
+function matrixToTable(matrix, name) {
+  const grid = (matrix || []).map((r) => (Array.isArray(r) ? r : [r]))
+    .filter((r) => r.some((c) => String(c == null ? '' : c).trim() !== ''))
+  if (!grid.length) return { error: 'That file has no data in it. Check it has a header row and at least one row of values.' }
+  const rawHead = grid[0]
+  const names = []
+  const seen = Object.create(null)
+  rawHead.forEach((h, i) => {
+    let nm = String(h == null ? '' : h).trim() || `Column ${i + 1}`
+    if (seen[nm] != null) { seen[nm] += 1; nm = `${nm} (${seen[nm]})` } else { seen[nm] = 0 }
+    names.push(nm)
+  })
+  const dataRows = grid.slice(1)
+  const rows = dataRows.map((r) => {
+    const o = {}
+    names.forEach((nm, i) => { o[nm] = r[i] == null ? '' : r[i] })
+    return o
+  })
+  const schema = names.map((nm) => ({ name: nm, type: inferType(rows.map((r) => r[nm])) }))
+  return { name: String(name || 'file'), rows, schema, rowCount: rows.length }
+}
+
+const XLSX_RE = /\.(xlsx|xlsm|xls)$/i
+// Parse an attached file on the device. CSV / text is read directly; a spreadsheet
+// lazily loads SheetJS from a pinned CDN (the same pattern the app already uses
+// for tesseract.js) ONLY when a spreadsheet is picked, and reads its first sheet.
+// Never throws; a failure comes back as { error } with a clear, actionable message.
+async function parseDataFile(file) {
+  if (!file) return { error: 'No file was selected.' }
+  const name = String(file.name || '')
+  const isXlsx = XLSX_RE.test(name) || /spreadsheetml|ms-excel/i.test(String(file.type || ''))
+  if (isXlsx) {
+    let XLSX
+    try {
+      XLSX = await import(/* @vite-ignore */ 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm')
+    } catch {
+      return { error: 'The spreadsheet reader could not load (you may be offline). Save the sheet as CSV and attach that instead.' }
+    }
+    try {
+      const buf = await file.arrayBuffer()
+      const wb = XLSX.read(buf, { type: 'array' })
+      const first = (wb.SheetNames || [])[0]
+      const ws = first ? wb.Sheets[first] : null
+      if (!ws) return { error: 'That workbook has no readable sheet. Save the first sheet as CSV and attach that.' }
+      const aoa = XLSX.utils.sheet_to_json(ws, { header: 1, blankrows: false, defval: '', raw: false })
+      return matrixToTable(aoa, name)
+    } catch {
+      return { error: 'That spreadsheet could not be read. Save the first sheet as CSV and attach that instead.' }
+    }
+  }
+  try {
+    const text = await file.text()
+    return matrixToTable(parseCsv(text), name)
+  } catch {
+    return { error: 'That file could not be read. Attach a .csv, .xlsx or .xls file.' }
+  }
+}
+
 import { api } from '../api.js'
 import AnswerBody from '../components/AnswerBody.jsx'
+import RichText from '../components/RichText.jsx'
+import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
+import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
+import BuddyPicker from '../components/BuddyPicker.jsx'
+import ScrubRules from '../components/ScrubRules.jsx'
+import ResultCard from '../components/ResultCard.jsx'
+import ComposeCard from '../components/ComposeCard.jsx'
+import ComputeCard from '../components/ComputeCard.jsx'
+// The deterministic compute engine (pure, dependency-free) is the SINGLE source
+// of truth, shared with the server. We import it; we never reimplement it. The
+// spec is re-validated locally (defense in depth) and then run on the FULL local
+// rows here on the device - the raw rows never go to the server.
+import { runSpec, validateSpec } from '../../server/compute_spec.js'
 
 // WorkCoPilot - a read-only, screen-aware guide. You give it a goal (type or
 // paste), it reads your screen (or a phone camera) in DOWNSCALED frames, gives
@@ -779,6 +939,11 @@ function Home({ user, onOpen, onSignOut }) {
   const [goal, setGoal] = useState('')
   const [busy, setBusy] = useState(false)
   const [showBuy, setShowBuy] = useState(false)
+  const [scrubOpen, setScrubOpen] = useState(false)   // "Data protection" card open state
+  // The on-screen buddy the user picks here is the same one the floater and the
+  // full-screen guide show (shared localStorage key, read by all three).
+  const [buddyPref, setBuddyPref] = useState(() => readBuddyPref())
+  const buddyChar = useMemo(() => resolveCharacter(buddyPref), [buddyPref])
   // Billing: a free-signup account can see the dashboard but needs a plan to
   // guide. Show the chooser up front when the account is not covered, and also
   // when a gated action comes back 402 needsSubscription.
@@ -811,7 +976,7 @@ function Home({ user, onOpen, onSignOut }) {
     const id = 'wd-fonts'
     if (!document.getElementById(id)) {
       const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap'
+      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
       document.head.appendChild(l)
     }
   }, [])
@@ -852,6 +1017,17 @@ function Home({ user, onOpen, onSignOut }) {
   // with its real message instead of silently failing.
   const handleGate = (e) => {
     const status = e && e.status
+    const d = (e && e.data) || {}
+    // Daily task gate (not a subscription issue): show the real reason, don't
+    // push the plan chooser. "Finish current task" and "daily task limit" differ.
+    if (d.mustCompleteCurrent) {
+      setGateMsg('Finish your current task before starting a new one. Open it from your tasks, wrap it up, then start the next.')
+      return
+    }
+    if (d.taskLimit) {
+      setGateMsg(e.message || `You have used all your tasks for today. They reset at ${d.resetLabel || '11:59 PM ET'}.`)
+      return
+    }
     if (status === 402) {
       if (isCompanyMember) setGateMsg('Your company has not assigned you a WorkCoPilot license yet, or all licenses are in use. Ask your company administrator to add you.')
       else setNeedsSub(true)
@@ -954,7 +1130,7 @@ function Home({ user, onOpen, onSignOut }) {
             <span className="wd-top-sep" aria-hidden />
             <button className="wd-theme" onClick={toggleTheme} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
             {!(typeof window !== 'undefined' && window.workDesktop) && (
-              <a className="wd-getapp" href="/downloads/WorkCoPilot-Setup.exe" download title="Download the Windows app" aria-label="Download the Windows app"><Monitor size={16} /> <span>Windows app</span></a>
+              <a className="wd-getapp" href="/api/work/desktop-setup.exe" title="Download the Windows app" aria-label="Download the Windows app"><Monitor size={16} /> <span>Windows app</span></a>
             )}
             <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy} title="Add time"><Zap size={15} /> <span>Add time</span></button>
             <button className="wd-signout" onClick={onSignOut} title="Sign out"><LogOut size={15} /> <span>Sign out</span></button>
@@ -980,6 +1156,38 @@ function Home({ user, onOpen, onSignOut }) {
                             : `Free access · ${minsLeft} min of guidance left today`
                   }</div>
                 : <div className="wd-plan-skel wd-skel" style={{ padding: 0, border: 'none', background: 'var(--track)' }} aria-hidden />}
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexWrap: 'wrap', margin: '16px 0 2px', padding: '12px 14px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--card-a)' }}>
+              <AliveBuddy character={buddyChar} state="answering" size={52} interactive />
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontSize: 13.5, fontWeight: 700, color: 'var(--tx)' }}>Your buddy</div>
+                <div style={{ fontSize: 12.5, color: 'var(--mut)' }}>Shows the next step on your screen and the full-screen guide.</div>
+              </div>
+              <div style={{ marginLeft: 'auto' }}>
+                <BuddyPicker pref={buddyPref} size={32} onPick={setBuddyPref} />
+              </div>
+            </div>
+
+            {/* Data protection: individual users customize their own scrub rules;
+                company members are governed by their admin; admins manage it in
+                their console. Built-in protections always apply for everyone. */}
+            <div style={{ margin: '0 0 18px', borderRadius: 14, border: '1px solid var(--line)', background: 'var(--card-a)', overflow: 'hidden' }}>
+              <button type="button" onClick={() => setScrubOpen((v) => !v)} style={{ width: '100%', display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--tx)', textAlign: 'left' }}>
+                <ShieldCheck size={16} style={{ color: 'var(--em, #12a06a)', flexShrink: 0 }} />
+                <span style={{ fontWeight: 700, fontSize: 13.5 }}>Data protection</span>
+                <span style={{ fontSize: 12.5, color: 'var(--mut)' }}>{user.companyId ? (isCompanyAdmin ? 'Managed in your admin console' : 'Managed by your company') : 'Customize what gets scrubbed before sending'}</span>
+                <ChevronRight size={16} style={{ marginLeft: 'auto', color: 'var(--mut)', flexShrink: 0, transform: scrubOpen ? 'rotate(90deg)' : 'none', transition: 'transform .18s' }} />
+              </button>
+              {scrubOpen && (
+                <div style={{ padding: '0 14px 14px' }}>
+                  {!user.companyId
+                    ? <ScrubRules />
+                    : isCompanyAdmin
+                      ? <div style={{ fontSize: 13.5, color: 'var(--mut)' }}>Your company's data protection rules live in the <a href="/work/company" style={{ color: 'var(--em, #12a06a)', fontWeight: 600 }}>company console</a> under Data governance. The built-in protections always apply.</div>
+                      : <div style={{ fontSize: 13.5, color: 'var(--mut)' }}>Your company manages data protection rules for everyone on the team. The built-in protections - emails, keys, card numbers, SSNs, IP addresses and more - always apply on your device before anything is sent.</div>}
+                </div>
+              )}
             </div>
 
             {isAdmin && (
@@ -1047,6 +1255,13 @@ function Home({ user, onOpen, onSignOut }) {
                 <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Set up your AI above to begin.'}</span>
                 <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
               </div>
+              {usage && usage.tasks && !usage.tasks.unlimited && (
+                <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 8 }}>
+                  {usage.tasks.activeTaskId
+                    ? 'Finish your current task before starting a new one.'
+                    : `${usage.tasks.remaining} of ${usage.tasks.cap} task${usage.tasks.cap === 1 ? '' : 's'} left today. Resets ${usage.tasks.resetLabel || '11:59 PM ET'}.`}
+                </div>
+              )}
               <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
             </div>
 
@@ -1364,7 +1579,7 @@ function HelpDocs({ onStart }) {
 }
 
 // ---- Console: the live step-then-watch copilot ----------------------------
-const MONO = 'ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace'
+const MONO = '"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
 // .wc wrapper so it never touches the rest of the app. On a phone it enlarges
@@ -1433,12 +1648,34 @@ const CONSOLE_CSS = `
    --text-dim / --brand-50 are aliased to real tokens so they resolve
    correctly in BOTH light and dark (they are otherwise undefined).
    =================================================================== */
-/* Match the Fluent blue of the desktop title bar: retune the accent tokens to
-   blue inside the guiding panel (green stays only for the "done" check). */
+/* ONE accent for the whole console: emerald, the same family the rest of the
+   site uses (hero, live, done). The old blue retune competed with the green and
+   read as a second app; a single accent keeps every primary action coherent.
+   Typography matches the site too: Bricolage Grotesque display, Figtree body,
+   JetBrains Mono code, so the console stops inheriting the desktop Segoe UI. */
 .wc{--text-dim:var(--text-muted);
-  --brand-500:#2b88d8;--brand-600:#0f6cbd;--brand-700:#0a5aa0;--brand-soft:rgba(15,108,189,.12);--brand-50:rgba(15,108,189,.12);
+  --wc-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
+  --wc-body:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+  --wc-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  font-family:var(--wc-body);
+  --brand-500:#0e9f6e;--brand-600:#0b8259;--brand-700:#086647;--brand-soft:rgba(14,159,110,.12);--brand-50:rgba(14,159,110,.12);
+  /* Semantic guiding palette (color-coded by meaning): EMERALD = the current
+     step / live action (the brightest thing), CYAN = calm context the watcher
+     can see (observation), amber = warnings (--warning, already defined). Light
+     values here; the dark overrides follow. Derived from the brand set
+     emerald #8cf5c4 / cyan #39d3ff for dark; darkened for contrast on white. */
+  --em:#0e9f6e;--em-2:#0a84c2;--on-em:#ffffff;
+  --em-soft:rgba(14,159,110,.10);--em-ring:rgba(14,159,110,.32);--em-glow:rgba(14,159,110,.16);
+  --obs:#0a84c2;--obs-soft:rgba(10,132,194,.09);--obs-ring:rgba(10,132,194,.30);
+  /* MS-docs blue, for the inline "Open ..." hyperlinks (distinct from the green
+     accent so a link reads as a link). --wc-fs is the reader text-size multiplier
+     (set inline on .wc); guidance font-sizes below are calc(px * var(--wc-fs)). */
+  --wc-link:#0067c0;--wc-fs:1;
   font-feature-settings:"tnum" 1,"cv11" 1}
-[data-theme='dark'] .wc{--brand-500:#62abf5;--brand-600:#479ef5;--brand-700:#2b88d8;--brand-soft:rgba(98,171,245,.16);--brand-50:rgba(98,171,245,.16)}
+[data-theme='dark'] .wc{--brand-500:#34d8a0;--brand-600:#12b981;--brand-700:#0e9f6e;--brand-soft:rgba(52,216,160,.16);--brand-50:rgba(52,216,160,.16);
+  --em:#8cf5c4;--em-2:#39d3ff;--on-em:#052a1d;
+  --em-soft:rgba(140,245,196,.14);--em-ring:rgba(140,245,196,.34);--em-glow:rgba(140,245,196,.20);
+  --obs:#39d3ff;--obs-soft:rgba(57,211,255,.12);--obs-ring:rgba(57,211,255,.34);--wc-link:#6cb6ff}
 .wc .fill{flex:1 1 auto;min-width:0}
 
 /* Header toolbar: one quiet row under a hairline. Float on top is the primary
@@ -1489,6 +1726,18 @@ const CONSOLE_CSS = `
 .wc-tip .wc-tbtn{margin-left:auto;box-shadow:none}
 @media(max-width:640px){.wc-tip .wc-tbtn{margin-left:0;flex:1 1 100%;justify-content:center}}
 
+/* PLAN-HEAVY MODE (watch-light, forced by us for Premium): a calm informational
+   strip + an on-demand "Check my progress" action. There is no toggle. One
+   emerald accent, same tokens, works light + dark. */
+.wc-live-pill.lite{color:var(--brand-600);background:var(--brand-soft)}
+.wc-live-pill.lite svg{color:var(--brand-600);flex-shrink:0}
+.wc-wl{display:flex;align-items:center;gap:10px 12px;flex-wrap:wrap;margin:10px 0 0;padding:11px 14px;background:var(--em-soft);border:1px solid var(--em-ring);border-radius:14px}
+.wc-wl .wc-sp{flex:1 1 auto;min-width:4px}
+.wc-wl-ic{color:var(--brand-600);flex-shrink:0}
+.wc-wl-sub{flex:1 1 220px;min-width:0;font-size:12.5px;color:var(--text-muted);line-height:1.45}
+.wc-wl-check{flex:0 0 auto;box-shadow:none}
+@media(max-width:640px){.wc-wl-check{flex:1 1 100%;justify-content:center}}
+
 /* Completed-task bar */
 .wc-donebar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px 14px 20px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden}
 .wc-donebar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--success)}
@@ -1511,16 +1760,19 @@ const CONSOLE_CSS = `
 .wc-banner.warn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
 .wc-banner.warn svg{color:var(--warning)}
 
-/* Live-reading indicator */
-.wc-live{display:flex;align-items:center;gap:9px;margin:10px 2px;font-size:12px;color:var(--text-muted);line-height:1.4}
-.wc-live .pulse,.wc-live-pill .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--brand-500);box-shadow:0 0 0 0 rgba(43,136,216,.5);animation:wc-pulse 1.6s infinite}
-@keyframes wc-pulse{0%{box-shadow:0 0 0 0 rgba(43,136,216,.5)}70%{box-shadow:0 0 0 7px rgba(43,136,216,0)}100%{box-shadow:0 0 0 0 rgba(43,136,216,0)}}
-.wc-live-pill{display:inline-flex;align-items:center;gap:7px;height:34px;font-size:12.5px;font-weight:650;color:var(--brand-600);background:var(--brand-soft);padding:0 13px;border-radius:999px;white-space:nowrap}
+/* OBSERVATION = calm context the watcher can see: a cyan-tinted chip. */
+.wc-live{display:flex;align-items:flex-start;gap:9px;margin:10px 0;padding:9px 13px;font-size:calc(12.5px*var(--wc-fs,1));color:var(--text-muted);line-height:1.5;background:var(--obs-soft);border:1px solid var(--obs-ring);border-radius:11px}
+.wc-live>svg{color:var(--obs);flex-shrink:0;margin-top:1px}
+.wc-live .pulse,.wc-live-pill .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--em);--pr:var(--em-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
+.wc-live-pill .pulse{margin-top:0}
+.wc-live .pulse{background:var(--obs);--pr:var(--obs-ring)}
+@keyframes wc-pulse{0%{box-shadow:0 0 0 0 var(--pr)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.wc-live-pill{display:inline-flex;align-items:center;gap:7px;height:34px;font-size:12.5px;font-weight:650;color:var(--em);background:var(--em-soft);padding:0 13px;border-radius:999px;white-space:nowrap}
 .wc-live-pill.paused{color:var(--text-dim);background:var(--surface-2)}
 .wc-live-pill.paused svg{color:var(--warning)}
 .wc-live-pill.out{color:var(--danger);background:var(--danger-soft)}
 .wc-live-min{opacity:.85;font-weight:600}
-.wc-plan-title{font-size:17px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.35;letter-spacing:-.01em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wc-plan-title{font-family:var(--wc-display);font-size:18px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.3;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .wc-plan-kicker{display:flex;align-items:center;gap:8px;margin:16px 2px 0;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
 .wc-plan-kicker+.wc-plan-title{margin-top:4px}
 .wd-modal-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
@@ -1529,17 +1781,20 @@ const CONSOLE_CSS = `
 .wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 
 /* DO THIS NOW hero: the single strongest focus on the screen */
-.wc-hero{position:relative;margin-top:14px;padding:20px 22px 16px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md);overflow:hidden}
-.wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
-.wc-hero::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 180px at 0% 0%,var(--brand-soft),transparent 72%)}
+/* CURRENT STEP = the brightest element: emerald accent, an emerald->cyan left
+   bar, and a gentle pulsing glow (disabled under prefers-reduced-motion). */
+.wc-hero{position:relative;margin-top:14px;padding:20px 22px 16px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset;overflow:hidden;animation:wc-now-glow 2.8s ease-in-out infinite}
+.wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;background:linear-gradient(180deg,var(--em),var(--em-2))}
+.wc-hero::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 180px at 0% 0%,var(--em-glow),transparent 72%)}
 .wc-hero>*{position:relative;z-index:1}
+@keyframes wc-now-glow{0%,100%{box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset,0 14px 38px -20px var(--em-glow)}50%{box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset,0 16px 52px -14px var(--em-glow)}}
 .wc-hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.wc-hero-chip{display:inline-flex;align-items:center;gap:6px;height:24px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:#fff;background:linear-gradient(180deg,var(--brand-500),var(--brand-600));padding:0 10px;border-radius:999px}
+.wc-hero-chip{display:inline-flex;align-items:center;gap:6px;height:24px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--on-em);background:linear-gradient(135deg,var(--em),var(--em-2));padding:0 10px;border-radius:999px}
 .wc-hero-hint{font-size:12px;color:var(--text-muted)}
 .wc-hero-hint-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:650;color:var(--brand-600);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s}
 .wc-hero-hint-btn:hover{text-decoration-color:currentColor}
-.wc-hero-text{font-size:19px;line-height:1.45;font-weight:650;color:var(--text);letter-spacing:-.015em;text-wrap:pretty}
-@media(max-width:640px){.wc-hero{padding:16px 16px 13px 20px;border-radius:16px}.wc-hero-text{font-size:17px}}
+.wc-hero-text{font-family:var(--wc-body);font-size:calc(15px*var(--wc-fs,1));line-height:1.45;font-weight:650;color:var(--text);letter-spacing:-.005em;text-wrap:pretty}
+@media(max-width:640px){.wc-hero{padding:16px 16px 13px 20px;border-radius:16px}.wc-hero-text{font-size:calc(14.5px*var(--wc-fs,1))}}
 
 /* Step navigator with a progress track */
 .wc-nav{display:flex;align-items:center;gap:12px;padding:2px 2px 6px}
@@ -1549,31 +1804,31 @@ const CONSOLE_CSS = `
 .wc-nav-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:center}
 .wc-nav-count{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums}
 .wc-nav-track{width:100%;height:4px;border-radius:999px;background:var(--surface-3);overflow:hidden}
-.wc-nav-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--brand-500),var(--brand-600));transition:width .35s var(--ease,cubic-bezier(.4,0,.2,1))}
+.wc-nav-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--em),var(--em-2));transition:width .35s var(--ease,cubic-bezier(.4,0,.2,1))}
 
 /* Step cards: current leads, pending recedes, done is struck. When the task is
    over (.wc-steps.ro) the same cards become a calm, read-only record. */
 .wc-steps{margin-top:14px;display:flex;flex-direction:column;gap:8px}
 .wc-step{position:relative;display:flex;gap:12px;align-items:flex-start;padding:12px 14px 12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;transition:border-color .16s,background .16s,box-shadow .16s,opacity .16s}
 .wc-step.now{border-color:transparent;box-shadow:var(--shadow-md)}
-.wc-step.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;background:linear-gradient(180deg,var(--brand-500),var(--brand-600))}
+.wc-step.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;background:linear-gradient(180deg,var(--em),var(--em-2))}
 .wc-step.pending{opacity:.6;box-shadow:none}
 .wc-step.done{background:var(--surface-2);border-color:transparent}
 .wc-step.skipped{background:transparent;border-style:dashed}
 .wc-step-check{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;border:1.5px solid var(--border-strong);background:transparent;color:var(--text-faint);cursor:pointer;margin-top:1px;padding:0;font:inherit;transition:border-color .16s,background .16s,color .16s}
-.wc-step-check:hover{border-color:var(--brand-500);color:var(--brand-600)}
+.wc-step-check:hover{border-color:var(--em);color:var(--em)}
 .wc-step-num{font-size:11.5px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-.wc-step.now .wc-step-check{border-color:var(--brand-500);background:var(--brand-soft);color:var(--brand-600)}
+.wc-step.now .wc-step-check{border-color:var(--em);background:var(--em-soft);color:var(--em)}
 .wc-step.done .wc-step-check{border-color:transparent;background:var(--success-soft);color:var(--success)}
 .wc-steps.ro .wc-step-check{cursor:default}
 .wc-steps.ro .wc-step-check:hover{border-color:var(--border-strong);color:var(--text-faint)}
 .wc-steps.ro .wc-step.done .wc-step-check:hover{border-color:transparent;color:var(--success)}
 .wc-step-body{flex:1;min-width:0}
-.wc-step-title{font-size:14px;line-height:1.5;color:var(--text-muted);font-weight:500}
-.wc-step.now .wc-step-title{color:var(--text);font-weight:650;font-size:14.5px}
+.wc-step-title{font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;color:var(--text-muted);font-weight:500}
+.wc-step.now .wc-step-title{color:var(--text);font-weight:650;font-size:calc(14px*var(--wc-fs,1))}
 .wc-step.done .wc-step-title{text-decoration:line-through;text-decoration-color:var(--text-faint);color:var(--text-faint);font-weight:500}
 .wc-steps.ro .wc-step.done .wc-step-title{text-decoration:none;color:var(--text-muted)}
-.wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:0 9px;height:24px;border-radius:7px}
+.wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:calc(11px*var(--wc-fs,1));color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;min-height:24px;border-radius:7px}
 .wc-step-doneat{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--success);margin-top:6px;font-weight:600}
 .wc-step-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-faint);margin-top:6px;font-weight:600}
 .wc-record-head{display:flex;align-items:center;gap:7px;padding:0 2px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-variant-numeric:tabular-nums}
@@ -1585,11 +1840,20 @@ const CONSOLE_CSS = `
 /* All-done confirmation + flags */
 .wc-alldone{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--success-soft);border-radius:13px;color:var(--success);font-weight:650;font-size:13.5px;line-height:1.45}
 .wc-alldone svg{flex-shrink:0}
-.wc-flag{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 13px 10px 16px;background:var(--warning-soft);border-radius:12px;font-size:13px;line-height:1.5;color:var(--text);overflow:hidden;animation:wc-line-in .3s cubic-bezier(.2,.8,.2,1) both}
+.wc-flag{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 13px 10px 16px;background:var(--warning-soft);border-radius:12px;font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--text);overflow:hidden;animation:wc-line-in .3s cubic-bezier(.2,.8,.2,1) both}
 .wc-flag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
 .wc-flag svg{color:var(--warning);flex-shrink:0;margin-top:2px}
 .wc-flag-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warning);margin-right:6px}
 .wc-flags{display:flex;flex-direction:column;gap:8px;margin:12px 0 0}
+/* Blue MS-docs inline hyperlink for "Open ..." actions (a link, not a button).
+   Underlines on hover/focus; scales with the reader text size. */
+.wc-open{display:inline-flex;align-items:center;gap:5px;margin-top:8px;color:var(--wc-link);font-size:calc(13px*var(--wc-fs,1));font-weight:600;text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;overflow-wrap:anywhere;transition:text-decoration-color .15s}
+.wc-open:hover,.wc-open:focus-visible{text-decoration:underline;text-decoration-color:currentColor}
+.wc-open svg{flex-shrink:0}
+/* Reader text-size bar: a quiet right-aligned A- / A / A+ control that sits atop
+   the guidance so the reader can set a comfortable size (MS-Learn style). */
+.wc-readbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:14px 0 2px}
+.wc-readbar .wc-readbar-k{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--text-dim)}
 .wc-loading{display:flex;flex-direction:column;align-items:center;gap:20px;padding:44px 20px 40px}
 .wc-loading-orb{position:relative;width:48px;height:48px}
 .wc-loading-orb span{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid transparent;border-top-color:var(--brand-600);transform:translate(-50%,-50%);animation:wc-orb 1.1s linear infinite}
@@ -1623,7 +1887,7 @@ const CONSOLE_CSS = `
 .wc-pre{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md);padding:22px 22px 18px;overflow:hidden}
 .wc-pre::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 200px at 100% 0%,var(--brand-soft),transparent 70%)}
 .wc-pre>*{position:relative;z-index:1}
-.wc-pre-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.015em}
+.wc-pre-title{font-family:var(--wc-display);font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.02em}
 .wc-pre-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5}
 .wc-pre textarea.input{border-radius:12px;padding:12px 13px;font-size:15px;line-height:1.5;min-height:92px}
 .wc-pre-help{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;color:var(--text-muted);margin-top:14px;line-height:1.5}
@@ -1631,8 +1895,110 @@ const CONSOLE_CSS = `
 .wc-pre-help b{color:var(--text);font-weight:650}
 @media(max-width:640px){.wc-pre{padding:18px 16px 16px;border-radius:16px}.wc-pre-title{font-size:18px}}
 .wc-sum{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px 20px;margin-top:16px;line-height:1.6}
-.wc-sum-title{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px;margin-bottom:10px;color:var(--text)}
+.wc-sum-title{display:inline-flex;align-items:center;gap:8px;font-family:var(--wc-display);font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:10px;color:var(--text)}
 .wc-sum-title svg{color:var(--brand-600)}
+
+/* MAKE: ONE calm surface that consolidates the three "produce something" actions
+   (Answer / Write / Compute) behind a quiet tab row. Only the chosen panel opens,
+   so a single primary action shows at a time instead of three stacked bars with
+   three subtitles. No outer box: a top hairline and spacing group it, keeping the
+   focus on the goal + current step above. Produced artifacts (ResultCard /
+   ComposeCard / ComputeCard) stack below and stay visible after the panel closes. */
+.wc .wc-sp{flex:1 1 auto;min-width:4px}
+.wc-make{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.wc-make-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.wc-make-kicker{font-family:var(--wc-display);font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--text-muted);white-space:nowrap}
+.wc-make-tabs{display:inline-flex;gap:3px;background:var(--surface-2);border-radius:12px;padding:3px}
+.wc-make-tab{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;color:var(--text-muted);font:inherit;font-size:13px;font-weight:600;border-radius:9px;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s,box-shadow .16s}
+.wc-make-tab svg{color:currentColor;opacity:.85;flex-shrink:0}
+.wc-make-tab:hover{color:var(--text)}
+.wc-make-tab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.09),inset 0 0 0 1px var(--border)}
+.wc-make-tab.on svg{opacity:1;color:var(--brand-600)}
+.wc-make-lead{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--text-muted);line-height:1.4}
+.wc-make-panel{margin-top:14px;display:flex;flex-direction:column;gap:12px;animation:wc-make-in .2s ease both}
+@keyframes wc-make-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.wc-make-ctl{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.wc-made{margin-top:12px;display:flex;flex-direction:column;gap:10px}
+@media(max-width:640px){
+  .wc-make-tabs{flex:1 1 100%}
+  .wc-make-tab{flex:1 1 auto;justify-content:center}
+  .wc-make-lead{flex:1 1 100%;order:3}
+  .wc-make-ctl .wc-tbtn{flex:1 1 auto;justify-content:center}
+  .wc-make-ctl .wc-compose-fmt{flex:1 1 100%}
+  .wc-make-ctl .wc-compose-fmt select{flex:1 1 auto}
+}
+@media(prefers-reduced-motion:reduce){.wc-make-panel{animation:none}}
+
+/* ANSWER panel field styles (inside the Make surface): the Steps/Result/Both
+   scope segmented control, its lead line, and the optional paste-data field.
+   The returned ResultCard is a light Option-C card (see ResultCard.jsx). */
+.wc-result-lead{font-size:12.5px;color:var(--text-muted);line-height:1.4;min-width:0}
+.wc-seg{display:inline-flex;flex:0 0 auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:2px;gap:2px}
+.wc-seg button{border:none;background:transparent;color:var(--text-muted);font:inherit;font-size:12.5px;font-weight:600;height:28px;padding:0 11px;border-radius:8px;cursor:pointer;line-height:1;transition:background .15s,color .15s,box-shadow .15s}
+.wc-seg button:hover{color:var(--text)}
+.wc-seg button.on{color:var(--text);background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.1),inset 0 0 0 1px var(--border)}
+.wc-result-paste{width:100%;resize:vertical;min-height:62px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text);font:inherit;font-size:13.5px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.wc-result-paste::placeholder{color:var(--text-faint)}
+.wc-result-paste:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
+.wc-result-err{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--danger);line-height:1.45}
+.wc-result-err svg{flex-shrink:0}
+.wc-result-load{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-muted)}
+@media(max-width:640px){.wc-result-lead{flex:1 1 100%;order:3}}
+
+/* WRITE panel field styles (inside the Make surface): the "what to write" field,
+   the format selector, and the optional paste-source field. The returned
+   ComposeCard is a light Option-C card (see ComposeCard.jsx). */
+.wc-compose-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:.01em}
+.wc-compose-want,.wc-compose-src{width:100%;resize:vertical;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text);font:inherit;font-size:14px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.wc-compose-want{min-height:58px}
+.wc-compose-src{min-height:62px}
+.wc-compose-want::placeholder,.wc-compose-src::placeholder{color:var(--text-faint)}
+.wc-compose-want:focus,.wc-compose-src:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
+.wc-compose-fmt{display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;font-size:12px;font-weight:600;color:var(--text-muted)}
+.wc-compose-fmt select{height:34px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:12.5px;font-weight:600;padding:0 30px 0 11px;cursor:pointer;outline:none;appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23889' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .15s,box-shadow .15s,background-color .15s}
+.wc-compose-fmt select:focus{border-color:var(--brand-500);box-shadow:0 0 0 3px var(--brand-soft)}
+.wc-compose-err{display:flex;align-items:center;gap:7px;font-size:13px;color:var(--danger);line-height:1.45}
+.wc-compose-err svg{flex-shrink:0}
+.wc-compose-load{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-muted)}
+
+/* COMPUTE panel field styles (inside the Make surface): the privacy line, the
+   file drop / parsed preview (name, row count, typed-column chips), the "what to
+   compute" field and status lines. The returned ComputeCard is a light Option-C
+   card. Palette emerald #8cf5c4 / cyan #39d3ff / amber #f5c86b / ink #0a0d12. */
+.wc-compute-privacy{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.5;font-weight:600;color:var(--brand-600);background:var(--em-soft);border:1px solid var(--em-ring);border-radius:12px;padding:10px 12px}
+.wc-compute-privacy svg{flex-shrink:0;margin-top:1px;color:var(--brand-600)}
+.wc-compute-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-height:104px;padding:16px;border-radius:13px;border:1.5px dashed var(--border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;font:inherit;text-align:center;transition:border-color .16s,background .16s,color .16s}
+.wc-compute-drop svg{color:var(--brand-600);margin-bottom:2px}
+.wc-compute-drop:hover{border-color:var(--brand-500);background:var(--em-soft);color:var(--text)}
+.wc-compute-drop-t{font-size:13.5px;font-weight:600;color:var(--text)}
+.wc-compute-drop-s{font-size:12px;color:var(--text-faint)}
+.wc-compute-file{border:1px solid var(--border);border-radius:13px;background:var(--surface-2);padding:11px 12px;display:flex;flex-direction:column;gap:10px}
+.wc-compute-file-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.wc-compute-file-name{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wc-compute-file-name svg{flex-shrink:0;color:var(--brand-600)}
+.wc-compute-file-meta{font-size:12px;color:var(--text-muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.wc-compute-change{margin-left:auto;flex:0 0 auto;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--brand-600);font:inherit;font-size:12px;font-weight:600;padding:5px 10px;cursor:pointer;transition:border-color .15s,background .15s}
+.wc-compute-change:hover{border-color:var(--brand-500);background:var(--em-soft)}
+.wc-compute-chips{display:flex;flex-wrap:wrap;gap:7px}
+.wc-compute-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;line-height:1.3}
+.wc-compute-chip b{font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wc-compute-chip i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:999px}
+.wc-compute-chip.t-number i{color:#0a7fa8;background:rgba(57,211,255,.16)}
+.wc-compute-chip.t-date i{color:#8f5a07;background:rgba(245,200,107,.22)}
+.wc-compute-chip.t-string i{color:#3d4650;background:rgba(10,13,18,.07)}
+.wc-compute-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:.01em}
+.wc-compute-want{width:100%;resize:vertical;min-height:58px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text);font:inherit;font-size:14px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.wc-compute-want::placeholder{color:var(--text-faint)}
+.wc-compute-want:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
+.wc-compute-err{display:flex;align-items:flex-start;gap:7px;font-size:13px;color:var(--danger);line-height:1.45}
+.wc-compute-err svg{flex-shrink:0;margin-top:1px}
+.wc-compute-need{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.5;color:var(--text);background:rgba(245,200,107,.14);border:1px solid rgba(245,200,107,.42);border-radius:11px;padding:10px 12px}
+.wc-compute-need svg{flex-shrink:0;margin-top:1px;color:#8f5a07}
+.wc-compute-need b{color:#8f5a07}
+.wc-compute-load{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-muted)}
+@media(prefers-reduced-motion:reduce){.wc-compute-drop{transition:none}}
+
+@media(prefers-reduced-motion:reduce){.wc-hero{animation:none}.wc-live .pulse,.wc-live-pill .pulse{animation:none}}
 `
 
 // Copy text reliably across the main page AND the floating PiP / pop-out window.
@@ -1685,7 +2051,7 @@ function CmdBlock({ lines }) {
         <span style={{ fontSize: 10.5, color: '#8ea3c0', flex: 1, letterSpacing: 0.6, fontWeight: 600 }}>TERMINAL</span>
         <CopyButton text={text} />
       </div>
-      <pre style={{ margin: 0, padding: '10px 11px', background: '#0c1222', color: '#d6e9d6', fontSize: 12.5, lineHeight: 1.6, fontFamily: MONO, overflowX: 'auto', whiteSpace: 'pre' }}>
+      <pre style={{ margin: 0, padding: '10px 11px', background: '#0c1222', color: '#d6e9d6', fontSize: 'calc(12.5px * var(--wc-fs, 1))', lineHeight: 1.6, fontFamily: MONO, overflowX: 'auto', whiteSpace: 'pre' }}>
         {(lines || []).map((l, i) => <div key={i}><span style={{ color: '#58c974' }}>$ </span>{l}</div>)}
       </pre>
     </div>
@@ -1702,7 +2068,30 @@ function CodeBlock({ file, content }) {
         {ext && <span style={{ fontSize: 9.5, color: '#9a9ab0', background: 'rgba(255,255,255,0.09)', borderRadius: 5, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>{ext}</span>}
         <CopyButton text={content} />
       </div>
-      <pre style={{ margin: 0, padding: '10px 11px', background: '#15151f', color: '#e6e6f2', fontSize: 12.5, lineHeight: 1.55, fontFamily: MONO, overflowX: 'auto', whiteSpace: 'pre' }}>{content}</pre>
+      <pre style={{ margin: 0, padding: '10px 11px', background: '#15151f', color: '#e6e6f2', fontSize: 'calc(12.5px * var(--wc-fs, 1))', lineHeight: 1.55, fontFamily: MONO, overflowX: 'auto', whiteSpace: 'pre' }}>{content}</pre>
+    </div>
+  )
+}
+// Gate a destructive step's command/code behind a deliberate acknowledge, so the
+// person reads the impact before they can copy or run it (risk: acting without
+// understanding impact). A no-op wrapper when `why` is falsy.
+function DestructiveGate({ why, children }) {
+  const [shown, setShown] = useState(false)
+  if (!why) return <>{children}</>
+  return (
+    <div style={{ marginTop: 9, border: '1px solid rgba(255,159,67,0.5)', borderRadius: 10, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: 'rgba(255,159,67,0.12)', padding: '9px 11px', fontSize: 12.5, color: '#ffb35c', lineHeight: 1.5 }}>
+        <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+        <span><b>Destructive step.</b> This {why}. Read it carefully before you run it.</span>
+      </div>
+      {shown
+        ? <div style={{ padding: '0 9px 9px' }}>{children}</div>
+        : <div style={{ padding: '10px 11px' }}>
+            <button className="btn btn-sm" onClick={() => setShown(true)}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#ffb35c', background: 'rgba(255,159,67,0.14)', border: '1px solid rgba(255,159,67,0.5)' }}>
+              <AlertTriangle size={13} /> I understand, show the command
+            </button>
+          </div>}
     </div>
   )
 }
@@ -1728,7 +2117,7 @@ function HowButton({ open, loading, onClick }) {
 // could-not-load states so a How? expansion never silently fails or crashes.
 function HowDetail({ entry, onRetry }) {
   if (!entry || !entry.open) return null
-  const wrap = { marginTop: 10, marginLeft: 2, paddingLeft: 12, borderLeft: '2px solid var(--brand-500)', display: 'flex', flexDirection: 'column', gap: 8 }
+  const wrap = { marginTop: 10, marginLeft: 2, paddingLeft: 12, borderLeft: '2px solid var(--brand-500)', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 'calc(13.5px * var(--wc-fs, 1))', lineHeight: 1.5 }
   if (entry.loading) {
     return <div style={{ ...wrap, flexDirection: 'row', alignItems: 'center', gap: 7, color: 'var(--text-dim)', fontSize: 13 }}><Loader2 size={14} className="spin" /> Working out the detailed steps...</div>
   }
@@ -1749,9 +2138,13 @@ function HowDetail({ entry, onRetry }) {
             <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--brand-50, var(--surface))', border: '1px solid var(--brand-500)', color: 'var(--brand-600)', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>{j + 1}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div>{ss.text}</div>
-              {ss.url && <a className="btn btn-outline btn-sm" href={ss.url} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, textDecoration: 'none', display: 'inline-flex', gap: 5, alignItems: 'center' }}><ExternalLink size={13} /> Open {linkHost(ss.url)}</a>}
-              {ss.commands && ss.commands.length > 0 && <CmdBlock lines={ss.commands} />}
-              {ss.code && ss.code.content && <CodeBlock file={ss.code.file} content={ss.code.content} />}
+              {ss.url && <div><a className="wc-open" href={ss.url} target="_blank" rel="noopener noreferrer">Open {linkHost(ss.url)}<ExternalLink size={13} /></a></div>}
+              {((ss.commands && ss.commands.length > 0) || (ss.code && ss.code.content)) && (
+                <DestructiveGate why={ss.destructive ? ss.destructiveWhy : null}>
+                  {ss.commands && ss.commands.length > 0 && <CmdBlock lines={ss.commands} />}
+                  {ss.code && ss.code.content && <CodeBlock file={ss.code.file} content={ss.code.content} />}
+                </DestructiveGate>
+              )}
               {ss.validate && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}><Eye size={11} style={{ verticalAlign: -1 }} /> done when: {ss.validate}</div>}
             </div>
           </div>
@@ -1881,7 +2274,7 @@ function PlanningLoader() {
   )
 }
 
-function Console({ sessionId, onBack }) {
+function Console({ sessionId, watchLight = false, onBack }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
   const [source, setSource] = useState(() => isMobileUA() ? 'camera' : 'screen')     // 'screen' | 'camera' (phones default to camera: no screen share on mobile)
@@ -1904,11 +2297,60 @@ function Console({ sessionId, onBack }) {
   // its own when the fast model fails or returns a weak result.
   const [strongUsed, setStrongUsed] = useState(false)   // a recent call used the stronger model (auto or a Deep pass)
   const [deliverOpen, setDeliverOpen] = useState(false) // the review -> prompts panel
+  // "Result" feature: WorkCoPilot can RETURN the actual answer (a number, table,
+  // draft, query or analysis), not only guide the next step. Scope only changes
+  // whether the Result affordance is emphasized - the guiding flow always stays.
+  const [scope, setScope] = useState('both')            // 'steps' | 'result' | 'both'
+  const [pasteOpen, setPasteOpen] = useState(false)     // the small "paste data" field
+  const [pasteData, setPasteData] = useState('')        // wired to docsText
+  const [resultOut, setResultOut] = useState(null)      // the returned result object
+  const [resultSec, setResultSec] = useState(null)      // security check (code results only)
+  const [resultBusy, setResultBusy] = useState(false)
+  const [resultErr, setResultErr] = useState('')
+  // "Compose" feature: WorkCoPilot can WRITE a full document (a letter, report,
+  // resume section, clause, red-line notes, outline, table or code) ready to copy
+  // or download. It sits beside the Result control and never acts for the user.
+  const [composeOpen, setComposeOpen] = useState(false) // the small "write it for me" panel
+  const [composeWant, setComposeWant] = useState('')    // what to write -> want
+  const [composeFormat, setComposeFormat] = useState('') // '' = Auto (let it choose) | email|document|outline|bullets|table|code|notes
+  const [composeSrcOpen, setComposeSrcOpen] = useState(false) // the optional "paste source" field
+  const [composeSrc, setComposeSrc] = useState('')      // wired to docsText
+  const [composeOut, setComposeOut] = useState(null)    // the returned compose object
+  const [composeSec, setComposeSec] = useState(null)    // security check (code compositions only)
+  const [composeBusy, setComposeBusy] = useState(false)
+  const [composeErr, setComposeErr] = useState('')
+  // "Compute from a file" feature: privacy-first, on-device data compute. The
+  // attached CSV / Excel file is parsed ENTIRELY in the browser; only a schema
+  // (column names + types) + the row count are sent to plan a safe computation,
+  // which is re-validated and then run LOCALLY on the full rows. The raw rows
+  // live only in computeRowsRef and NEVER enter any network call.
+  const [computeOpen, setComputeOpen] = useState(false)   // the "compute from a file" panel
+  const [computeFile, setComputeFile] = useState(null)    // parsed preview: { name, rowCount, schema }
+  const [computeWant, setComputeWant] = useState('')      // what to compute -> want
+  const [computeParsing, setComputeParsing] = useState(false) // reading the file on device
+  const [computeBusy, setComputeBusy] = useState(false)   // planning call in flight
+  const [computeErr, setComputeErr] = useState('')
+  const [computeNeed, setComputeNeed] = useState('')      // engine said what is missing
+  const [computeOut, setComputeOut] = useState(null)      // { result, explanation, caveat, spec }
+  const computeRowsRef = useRef(null)                     // the FULL parsed rows, on device only
+  const computeFileRef = useRef(null)                     // hidden file input
   const [endState, setEndState] = useState(null)        // null | 'finishing' | 'done' (End flow)
   const [replanOpen, setReplanOpen] = useState(false)   // Re-plan modal
   const [replanReason, setReplanReason] = useState('')
   const [replanScope, setReplanScope] = useState('here')  // 'here' (keep progress) | 'start'
   const [doneOpen, setDoneOpen] = useState(false)       // show the collapsed completed steps
+  // "Make" is the single consolidated surface for the three produce actions. One
+  // of 'answer' | 'write' | 'compute' is open at a time (null = nothing open), so
+  // only one primary action ever shows. Choosing a tab opens its panel and keeps
+  // the older per-panel disclosure booleans (composeOpen / computeOpen) truthful.
+  const [maker, setMaker] = useState(null)
+  const pickMaker = (m) => {
+    setMaker((cur) => {
+      const next = cur === m ? null : m
+      setComposeOpen(next === 'write'); setComputeOpen(next === 'compute')
+      return next
+    })
+  }
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
   // Usage metering (Phase 1): remaining minutes, daily cap, pause.
@@ -1920,11 +2362,29 @@ function Console({ sessionId, onBack }) {
   useEffect(() => { refreshUsage() }, [refreshUsage])
   const outOfMinutes = () => { if (usage && usage.exhausted) { setErr('Out of minutes for today. Buy more time, or it resets at 11:59 PM ET.'); return true } return false }
 
+  // Plan-heavy, watch-light: FORCED by us for Premium users (both company and
+  // regular), never chosen here. The flag rides on the user profile loaded from
+  // /api/work/me and arrives as the `watchLight` prop. When true, the session
+  // does NOT run the continuous watch loop - the user follows a richer,
+  // self-contained plan (made plan-heavy server-side) and taps Check my progress
+  // for an on-demand read. There is no toggle and no upsell.
+
   // Guide style (mode): stepwise | beginner | architect | debug. The list comes
   // from the server so there is one source of truth.
   const [mode, setMode] = useState('stepwise')
   const [modes, setModes] = useState([])
   useEffect(() => { api.workModes().then((r) => setModes(r.modes || [])).catch(() => {}) }, [])
+  // Bring the console into the site's type system even when it is opened directly
+  // (no dashboard mount first): Bricolage Grotesque display, Figtree body,
+  // JetBrains Mono code, matching the marketing + float surfaces.
+  useEffect(() => {
+    const id = 'wc-fonts'
+    if (!document.getElementById(id)) {
+      const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
+      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
+      document.head.appendChild(l)
+    }
+  }, [])
   const changeMode = async (m) => { setMode(m); try { await api.workSetMode(sessionId, m) } catch {} }
 
   // Light/dark for the guiding panel (same global theme as the dashboard).
@@ -1944,6 +2404,7 @@ function Console({ sessionId, onBack }) {
 
   const [clickThrough, setClickThrough] = useState(false)
   const desktop = typeof window !== 'undefined' ? window.workDesktop : null
+  const contextFileRef = useRef(null)   // hidden file input for mid-task attachments
 
   // Float overlay for WEB users (no install): the browser-native Document
   // Picture-in-Picture window floats the steps on top of whatever app the
@@ -1960,7 +2421,7 @@ function Console({ sessionId, onBack }) {
   const isMobile = isMobileUA()
   const pipSupported = typeof window !== 'undefined' && 'documentPictureInPicture' in window
   const floatCapable = !desktop && !isMobile && typeof window !== 'undefined' && typeof window.open === 'function'
-  const FLOAT_CSS = 'body{margin:0;font-family:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}button{font:inherit;cursor:pointer}button:disabled{opacity:.55;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.05)}button:not(:disabled):active{transform:translateY(1px)}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(98,171,245,.45)}70%{box-shadow:0 0 0 6px rgba(98,171,245,0)}100%{box-shadow:0 0 0 0 rgba(98,171,245,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}::-webkit-scrollbar{width:9px;height:9px}::-webkit-scrollbar-thumb{background:#8884;border-radius:6px}'
+  const FLOAT_CSS = 'body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-now 2.8s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.fp-now{animation:none}.fp-pulse{animation:none}.spin{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
   // Open the float with a graceful fallback chain, so the core web experience
   // never silently dies on one API:
   //   1. Document Picture-in-Picture (true always-on-top) when the browser has it;
@@ -1973,13 +2434,21 @@ function Console({ sessionId, onBack }) {
     setErr('')
     let w = null
     let kind = 'pip'
+    // Open as a tall, narrow side strip: ~18% of the screen width (clamped to a
+    // readable 320-460px) and nearly full height, so it guides alongside the
+    // real work instead of covering it. The user can resize it afterward.
+    const scr = (typeof window !== 'undefined' && window.screen) || {}
+    const availW = scr.availWidth || window.innerWidth || 1280
+    const availH = scr.availHeight || window.innerHeight || 800
+    const floatW = Math.min(460, Math.max(320, Math.round(availW * 0.18)))
+    const floatH = Math.round(availH * 0.92)
     if (pipSupported) {
-      try { w = await window.documentPictureInPicture.requestWindow({ width: 410, height: 580 }) }
+      try { w = await window.documentPictureInPicture.requestWindow({ width: floatW, height: floatH }) }
       catch { w = null }
     }
     if (!w) {
       kind = 'popout'
-      try { w = window.open('', 'workcopilot_float', 'width=410,height=600,menubar=no,toolbar=no,location=no,status=no,resizable=yes') } catch { w = null }
+      try { w = window.open('', 'workcopilot_float', `width=${floatW},height=${floatH},left=${Math.max(0, availW - floatW - 24)},top=8,menubar=no,toolbar=no,location=no,status=no,resizable=yes`) } catch { w = null }
       if (!w) {
         setErr(pipSupported
           ? 'The floating window was refused by your browser settings, and the pop-out was blocked too. Allow pop-ups for this site, or keep following the steps right here.'
@@ -1989,6 +2458,18 @@ function Console({ sessionId, onBack }) {
       try { w.document.title = 'WorkCoPilot' } catch {}
       try { if (!w.document.body) w.document.write('<!doctype html><title>WorkCoPilot</title><body></body>') } catch {}
     }
+    try {
+      // The PiP window is a separate document and inherits none of the app's
+      // web fonts, so pull Figtree (body) + Bricolage Grotesque (display) into
+      // its head. If the network blocks it, the inline stack falls back to a
+      // clean system font, so text is always legible.
+      const head = w.document.head || w.document.documentElement
+      const pc1 = w.document.createElement('link'); pc1.rel = 'preconnect'; pc1.href = 'https://fonts.googleapis.com'
+      const pc2 = w.document.createElement('link'); pc2.rel = 'preconnect'; pc2.href = 'https://fonts.gstatic.com'; pc2.crossOrigin = 'anonymous'
+      const fl = w.document.createElement('link'); fl.rel = 'stylesheet'
+      fl.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap'
+      head.appendChild(pc1); head.appendChild(pc2); head.appendChild(fl)
+    } catch { /* fonts are optional; the inline stack still reads well */ }
     try {
       const st = w.document.createElement('style')
       st.textContent = FLOAT_CSS
@@ -2002,6 +2483,34 @@ function Console({ sessionId, onBack }) {
     setPipWin(w)
   }
   const closeFloat = () => { try { pipWin && pipWin.close() } catch {} ; setPipWin(null) }
+
+  // Full-screen guidance on a SECOND monitor: a clean, detailed, read-only view at
+  // /work/guide. On the desktop app the shell opens it full-screen on the monitor
+  // you are NOT working on. On the web it opens a large window - placed on another
+  // screen automatically when the browser's Window Management API allows, otherwise
+  // a big window you drag over and set full screen from inside it.
+  const [guideWin, setGuideWin] = useState(null)
+  const openFullGuide = async () => {
+    setErr('')
+    if (desktop && typeof desktop.openFullGuide === 'function') { try { await desktop.openFullGuide(); return } catch { /* fall back to a web window */ } }
+    // Focus an already-open guide window instead of stacking another.
+    if (guideWin && !guideWin.closed) { try { guideWin.focus(); return } catch { /* reopen */ } }
+    let target = null
+    try {
+      if (window.getScreenDetails) { const sd = await window.getScreenDetails(); const screens = sd.screens || []; target = screens.find((s) => !s.isPrimary) || null }
+    } catch { /* permission denied or unsupported - fall back to a draggable window */ }
+    const sc = (typeof window !== 'undefined' && window.screen) || {}
+    const feats = target
+      ? `left=${target.availLeft},top=${target.availTop},width=${target.availWidth},height=${target.availHeight},menubar=no,toolbar=no,location=no,status=no,resizable=yes`
+      : `width=${Math.round(sc.availWidth || 1280)},height=${Math.round(sc.availHeight || 800)},left=0,top=0,menubar=no,toolbar=no,location=no,status=no,resizable=yes`
+    let w = null
+    try { w = window.open('/work/guide', 'workcopilot_fullguide', feats) } catch { w = null }
+    if (!w) { setErr('Your browser blocked the guidance window. Allow pop-ups for this site, then open it again.'); return }
+    try { w.focus() } catch {}
+    if (target) { try { w.addEventListener('load', () => { try { w.document.documentElement.requestFullscreen({ screen: target }) } catch { /* the page has its own Full screen button */ } }) } catch {} }
+    setGuideWin(w)
+  }
+  useEffect(() => () => { try { guideWin && !guideWin.closed && guideWin.close() } catch {} }, [guideWin])   // close the guide if the console unmounts
   const floatIsPip = pipKind === 'pip'
   useEffect(() => () => { try { pipWin && pipWin.close() } catch {} }, [pipWin])   // close the float if the console unmounts
   // Paint the PiP window body to match the chosen theme (the panel content is
@@ -2178,6 +2687,11 @@ function Console({ sessionId, onBack }) {
 
   const startWatching = async () => {
     if (outOfMinutes()) return
+    // Plan-heavy, watch-light (forced for Premium): never run the continuous 4s
+    // loop. Clear any loop that was running, leave watching off, and let the user
+    // drive on-demand reads with Check my progress (refreshScreen). Screen capture
+    // is started on demand by refreshScreen itself, so nothing is forced here.
+    if (watchLight) { if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null } setWatching(false); return }
     if (!capturing) { const ok = await startCapture(); if (!ok) return; await new Promise((r) => setTimeout(r, 400)) }
     setWatching(true); sigRef.current = null; lastSentRef.current = 0
     if (timerRef.current) clearInterval(timerRef.current)
@@ -2255,10 +2769,11 @@ function Console({ sessionId, onBack }) {
   useEffect(() => {
     if (autoWatchRef.current || !sess) return
     if (((sess.steps || []).length) === 0) return
-    if (paused || watching || done || busy || sess.status === 'ended') return
+    // watchLight is forced-off from the continuous loop: never auto-start watching.
+    if (paused || watching || done || busy || sess.status === 'ended' || watchLight) return
     autoWatchRef.current = true
     startWatching()
-  }, [sess, paused, watching, done, busy])   // eslint-disable-line
+  }, [sess, paused, watching, done, busy, watchLight])   // eslint-disable-line
   // Leaving work mode for the plan/Home screen freezes the session as a PAUSED
   // plan: the meter stops and it shows in "Pick up where you left off" with a
   // Resume button. Same behaviour on web and in the desktop app (the desktop
@@ -2285,6 +2800,36 @@ function Console({ sessionId, onBack }) {
       const r = await api.workAsk(sessionId, { question: q, frame })
       noteStrong(r); setAnswer(r.answer || ''); if (typeof qText !== 'string') setQuestion('')
     } catch (e) { setErr(e.message || 'Could not answer') } finally { setBusy(false) }
+  }
+
+  // Add context MID-TASK: a typed note, a text document, and/or an uploaded image
+  // (screenshot or phone photo). The engine reads it and AUTO-REPLANS the remaining
+  // steps only if the new context changes the path - finished steps are preserved
+  // and the user resumes at the next step. The uploaded image is already on-device
+  // redacted (readContextFile) when DLP is on; the live screen is added too if we
+  // are already capturing, so a "this is where I'm stuck" photo lands with context.
+  const addContext = async ({ note = '', image = null, docsText = '' } = {}) => {
+    const hasText = !!(String(note).trim() || String(docsText).trim())
+    if (!hasText && !image) return
+    if (outOfMinutes()) return
+    setBusy(true); setErr(''); setAnswer('')
+    try {
+      const frame = await prepFrame(capturing ? grabFrame() : (photoFrameRef.current || null))
+      const r = await api.workAddContext(sessionId, { note, docsText, image, frame })
+      noteStrong(r)
+      setAnswer(r.answer || '')
+      if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
+      setQuestion('')
+    } catch (e) { setErr(e.message || 'Could not add that') } finally { setBusy(false) }
+  }
+  // Attach handler shared by the console + float: read the file, then send it with
+  // whatever note is typed. Surfaces an inline error for an unreadable/unsupported
+  // file instead of failing silently.
+  const attachContext = async (file, note = '') => {
+    if (!file) return
+    const out = await readContextFile(file)
+    if (out.error) { setErr(out.error); return }
+    await addContext({ note, image: out.image || null, docsText: out.docsText || '' })
   }
 
   // On-demand screenshot analysis: grab this exact frame and analyze it. A focus
@@ -2326,6 +2871,138 @@ function Console({ sessionId, onBack }) {
     setBusy(true); setErr(''); setAnswer('')
     try { const r = await api.workResearch(sessionId, q); setAnswer(r.answer || '') }
     catch (e) { setErr(e.message || 'Could not research') } finally { setBusy(false) }
+  }
+
+  // Get the RESULT: hand back the actual answer for the goal, not the next step.
+  // It computes from the goal plus any text pasted into the "paste data" field
+  // (docsText). forceScreen attaches the current screen frame (starting capture
+  // if needed); otherwise a frame is included only when we are already sharing,
+  // so pasting data and pressing Get the result never triggers a share prompt.
+  // The honesty contract (confidence / basis / verifyBy / caveat / need) rides
+  // on the returned result and is surfaced by ResultCard.
+  const getResult = async (forceScreen) => {
+    if (outOfMinutes()) return
+    setResultBusy(true); setResultErr(''); setResultOut(null); setResultSec(null)
+    try {
+      let frame = null
+      if (forceScreen) {
+        if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) { setResultBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
+        frame = await prepFrame(grabFrame())
+      } else if (capturing || photoFrameRef.current) {
+        frame = await prepFrame(grabFrame())
+      }
+      const body = {}
+      if (frame) body.frame = frame
+      if (pasteData.trim()) body.docsText = pasteData
+      const r = await waitFor(api.workResult(sessionId, body), 'Getting the result is taking longer than expected. Try again.')
+      noteStrong(r)
+      if (r && r.result) { setResultOut(r.result); setResultSec(r.security || null) }
+      else setResultErr('No result came back. Try again.')
+    } catch (e) {
+      setResultErr((e && e.message) || 'Could not get the result')
+      if (e && e.timedOut) refresh()
+    } finally { setResultBusy(false) }
+  }
+
+  // COMPOSE: write the actual document for the goal. It writes from `want` (what
+  // to write) plus any pasted source (docsText) and, optionally, the screen. Same
+  // frame / redaction / timeout guards as getResult: forceScreen attaches the
+  // current screen (starting capture if needed); otherwise a frame rides along
+  // only when we are already sharing, so pasting text and pressing Compose never
+  // triggers a share prompt. The result (title / body / basis / caveat) is
+  // surfaced by ComposeCard. Nothing is auto-filled; it is read-only.
+  const compose = async (forceScreen) => {
+    const want = composeWant.trim()
+    if (!want) { setComposeErr('Tell me what to write first.'); return }
+    if (outOfMinutes()) return
+    setComposeBusy(true); setComposeErr(''); setComposeOut(null); setComposeSec(null)
+    try {
+      let frame = null
+      if (forceScreen) {
+        if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) { setComposeBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
+        frame = await prepFrame(grabFrame())
+      } else if (capturing || photoFrameRef.current) {
+        frame = await prepFrame(grabFrame())
+      }
+      const body = { want }
+      if (composeFormat) body.format = composeFormat
+      if (composeSrc.trim()) body.docsText = composeSrc
+      if (frame) body.frame = frame
+      const r = await waitFor(api.workCompose(sessionId, body), 'Writing this is taking longer than expected. Try again.')
+      noteStrong(r)
+      if (r && r.compose) { setComposeOut(r.compose); setComposeSec(r.security || null) }
+      else setComposeErr('Nothing came back. Try again.')
+    } catch (e) {
+      setComposeErr((e && e.message) || 'Could not write this')
+      if (e && e.timedOut) refresh()
+    } finally { setComposeBusy(false) }
+  }
+
+  // COMPUTE FROM A FILE - on-device parse. The file is read ENTIRELY in the
+  // browser; the full rows are kept in computeRowsRef (never state that could
+  // serialize out, never a network call). Only the derived preview (name, row
+  // count, column schema) goes into React state for display.
+  const onComputeFile = async (file) => {
+    if (!file) return
+    setComputeErr(''); setComputeNeed(''); setComputeOut(null); setComputeFile(null)
+    computeRowsRef.current = null
+    setComputeParsing(true)
+    try {
+      const res = await parseDataFile(file)
+      if (res.error) { setComputeErr(res.error); return }
+      if (!res.rowCount || !res.schema.length) {
+        setComputeErr('That file has no rows to compute on. Check it has a header row and at least one row of values.')
+        return
+      }
+      computeRowsRef.current = res.rows
+      setComputeFile({ name: res.name, rowCount: res.rowCount, schema: res.schema })
+    } catch {
+      setComputeErr('That file could not be read. Attach a .csv, .xlsx or .xls file.')
+    } finally { setComputeParsing(false) }
+  }
+
+  // COMPUTE - the privacy boundary lives here. We send ONLY { want, schema,
+  // rowCount } to plan a bounded, safe computation spec (never the rows, never
+  // any cell value). We re-validate that spec locally (defense in depth) and
+  // then run it on the FULL local rows with runSpec, on the device. Same minutes
+  // / timeout guard as getResult for the one network call; the parse + run are
+  // local and need no gate.
+  const compute = async () => {
+    const rows = computeRowsRef.current
+    const file = computeFile
+    if (!file || !rows) { setComputeErr('Attach a CSV or Excel file first.'); return }
+    const want = computeWant.trim()
+    if (!want) { setComputeErr('Tell me what to compute first.'); return }
+    if (outOfMinutes()) return
+    setComputeBusy(true); setComputeErr(''); setComputeNeed(''); setComputeOut(null)
+    try {
+      // ONLY the schema + row count leave the device. The rows stay here.
+      const r = await waitFor(
+        api.workCompute(sessionId, { want, schema: file.schema, rowCount: file.rowCount }),
+        'Planning the computation is taking longer than expected. Try again.',
+      )
+      noteStrong(r)
+      if (!r || r.ok === false || (r && r.need && String(r.need).trim())) {
+        setComputeNeed((r && (String(r.need || '').trim() || String(r.caveat || '').trim())) || 'The file does not have the columns this needs. Pick a file that has them, or ask for something the columns cover.')
+        return
+      }
+      const spec = r.spec
+      const v = validateSpec(spec, file.schema)   // re-check locally before running
+      if (!v.ok) {
+        setComputeErr('The returned plan did not pass the local safety check (' + (v.errors[0] || 'invalid plan') + '). Try rewording what to compute.')
+        return
+      }
+      const out = runSpec(spec, rows)   // LOCAL, full rows, on device
+      setComputeOut({ result: out, explanation: r.explanation || '', caveat: r.caveat || '', spec })
+    } catch (e) {
+      setComputeErr((e && e.message) || 'Could not compute this')
+      if (e && e.timedOut) refresh()
+    } finally { setComputeBusy(false) }
+  }
+
+  const clearCompute = () => {
+    computeRowsRef.current = null
+    setComputeFile(null); setComputeOut(null); setComputeErr(''); setComputeNeed('')
   }
 
   const setStep = async (i, st) => { try { const r = await api.workStep(sessionId, i, st); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) } catch {} }
@@ -2391,8 +3068,13 @@ function Console({ sessionId, onBack }) {
     }
   }
 
+  // Reader-controlled guidance text size, shared with the full-screen guide via
+  // one localStorage key. Applied as the `--wc-fs` multiplier on the console
+  // root so the guidance text, step headings and code boxes scale together.
+  const { scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax } = useGuideFontScale()
+
   return (
-    <div className="wc" style={{ ...shell, padding: '16px 16px 60px' }}>
+    <div className="wc" style={{ ...shell, padding: '16px 16px 60px', '--wc-fs': fsScale }}>
       <style>{CONSOLE_CSS}</style>
       <div style={{ maxWidth: 820, margin: '0 auto' }}>
         {/* Compact single-row toolbar, holds cleanly at 460px: icon Back +
@@ -2410,6 +3092,9 @@ function Console({ sessionId, onBack }) {
           {floatCapable && sess && !ended && (pipWin
             ? <button className="wc-tbtn on" title={floatIsPip ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> {floatIsPip ? 'Unfloat' : 'Close pop-out'}</button>
             : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
+          {/* Full guiding window: clean, detailed, full-screen guidance for a second
+              monitor. On the desktop app it opens on the monitor you are not using. */}
+          {sess && !ended && !isMobile && <button className="wc-tbtn" onClick={openFullGuide} title="Open clean, full-screen guidance on your other monitor - work on one screen, follow along on the other" aria-label="Open the full guiding window"><Monitor size={15} /> Full guide</button>}
           {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
         {/* End flow: a finishing animation, a completion message, then back to plan. */}
@@ -2538,13 +3223,17 @@ function Console({ sessionId, onBack }) {
                   watched the resting state is the action that starts it. */}
               {paused
                 ? <span className="wc-live-pill paused" title="Paused. Resume to keep watching."><Square size={12} /> Paused</span>
-                : watching
-                  ? <span className={`wc-live-pill${usage && usage.exhausted ? ' out' : ''}`} title={source === 'screen' ? 'Reading your shared screen' : 'Reading the camera'}><span className="pulse" /> Watching live</span>
-                  : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
+                : watchLight
+                  ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
+                  : watching
+                    ? <span className={`wc-live-pill${usage && usage.exhausted ? ' out' : ''}`} title={source === 'screen' ? 'Reading your shared screen' : 'Reading the camera'}><span className="pulse" /> Watching live</span>
+                    : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
               {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
               {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
               <span className="wc-sp" />
-              <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>
+              {/* In Plan-heavy mode the prominent Check my progress button below is the
+                  on-demand read, so this duplicate Refresh is hidden to stay uncluttered. */}
+              {!watchLight && <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>}
               <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
               {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
               <button className="wc-tbtn ghost" onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
@@ -2556,8 +3245,20 @@ function Console({ sessionId, onBack }) {
                 </div>
               )}
             </div>
+            {/* PLAN-HEAVY MODE (watch-light, set by us for Premium): a calm,
+                informational strip - no toggle. It explains that the plan is
+                richer and not watched continuously, and carries the prominent
+                on-demand check wired to the existing refreshScreen. */}
+            {watchLight && (
+              <div className="wc-wl">
+                <Compass size={16} className="wc-wl-ic" />
+                <span className="wc-wl-sub">Your plan is richer and self-contained, and WorkCoPilot is not watching the whole time. Check your progress whenever you want a fresh read.</span>
+                <span className="wc-sp" />
+                <button type="button" className="wc-tbtn primary wc-wl-check" onClick={refreshScreen} disabled={busy || paused} title="Read the screen once, right now, and update your steps"><ScanLine size={15} /> Check my progress</button>
+              </div>
+            )}
             {/* The screen-share + float story for a first-time web user. Goes away once floating. */}
-            {floatCapable && !pipWin && (
+            {!watchLight && floatCapable && !pipWin && (
               <div className="wc-tip">
                 <PictureInPicture2 size={15} />
                 <span className="fill">{watching ? <>Keep these steps above your work: <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> opens them in a small window that stays {pipSupported ? 'on top' : 'open'} while you work underneath.</> : <>Share your <b>whole screen</b>, then <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> to keep the steps above your work.</>}</span>
@@ -2573,6 +3274,15 @@ function Console({ sessionId, onBack }) {
             <div className="wc-plan-kicker">{ended ? <><Check size={11} /> Finished task</> : 'Your plan'}</div>
             <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
           </>
+        )}
+        {/* Reader text-size control, sitting atop the guidance it scales. Shown
+            once there is a guiding surface (a loaded session with steps). */}
+        {sess && steps.length > 0 && (
+          <div className="wc-readbar">
+            <span className="wc-readbar-k">Text size</span>
+            <GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax}
+              theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} />
+          </div>
         )}
         {/* hidden camera-photo picker, always mounted */}
         <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
@@ -2598,17 +3308,19 @@ function Console({ sessionId, onBack }) {
           </div>
         )}
 
-        {watching && !ended && <div className="wc-live"><span className="pulse" /> Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. {observation}</div>}
+        {watching && !ended && <div className="wc-live"><Eye size={13} strokeWidth={2.4} /><span><span className="pulse" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. <RichText text={observation} /></span></div>}
 
         {guidance && !ended && !done && (
           <div className="wc-hero">
             <div className="wc-hero-eyebrow">
-              <span className="wc-hero-chip"><Eye size={11} strokeWidth={2.5} /> Do this now</span>
+              <span className="wc-hero-chip"><Eye size={11} strokeWidth={2.5} /> Now, do this</span>
               {paused
                 ? <span className="wc-hero-hint">Paused. Resume to keep this live.</span>
-                : !watching && <button type="button" className="wc-hero-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
+                : watchLight
+                  ? <span className="wc-hero-hint">Plan-heavy mode. Tap Check my progress when you want a fresh read.</span>
+                  : !watching && <button type="button" className="wc-hero-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
             </div>
-            <div className="wc-hero-text">{guidance}</div>
+            <div className="wc-hero-text"><RichText text={guidance} /></div>
             <HowButton open={!!(howTo.guidance && howTo.guidance.open)} loading={!!(howTo.guidance && howTo.guidance.loading)} onClick={() => drillHow('guidance', guidance)} />
             <HowDetail entry={howTo.guidance} onRetry={() => drillHow('guidance', guidance)} />
           </div>
@@ -2656,11 +3368,15 @@ function Console({ sessionId, onBack }) {
                         {isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}
                       </button>}
                   <div className="wc-step-body">
-                    <div className="wc-step-title">{s.text}</div>
-                    {reveal && s.url && <a className="btn btn-outline btn-sm" href={s.url} target="_blank" rel="noopener noreferrer" style={{ marginTop: 8, textDecoration: 'none', display: 'inline-flex', gap: 5, alignItems: 'center' }}><ExternalLink size={13} /> Open {linkHost(s.url)}</a>}
-                    {reveal && s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
-                    {reveal && s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
-                    {isNow && !ended && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: {s.validate}</div>}
+                    <div className="wc-step-title"><RichText text={s.text} /></div>
+                    {reveal && s.url && <div><a className="wc-open" href={s.url} target="_blank" rel="noopener noreferrer">Open {linkHost(s.url)}<ExternalLink size={13} /></a></div>}
+                    {reveal && ((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
+                      <DestructiveGate why={s.destructive ? s.destructiveWhy : null}>
+                        {s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
+                        {s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
+                      </DestructiveGate>
+                    )}
+                    {isNow && !ended && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: <RichText text={s.validate} /></div>}
                     {isDone && s.doneAt && <div className="wc-step-doneat"><Check size={11} /> Done {(() => { try { return new Date(s.doneAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } catch { return '' } })()}</div>}
                     {ended && !isDone && <div className="wc-step-tag">Not reached</div>}
                     {!ended && <HowButton open={!!(howTo['step-' + i] && howTo['step-' + i].open)} loading={!!(howTo['step-' + i] && howTo['step-' + i].loading)} onClick={() => drillHow('step-' + i, s.text, i)} />}
@@ -2673,12 +3389,181 @@ function Console({ sessionId, onBack }) {
           </div>
         )}
 
+        {/* MAKE: one calm surface for the three "produce something" actions.
+            A quiet tab row (Answer / Write / Compute) opens exactly one panel on
+            demand, so there is a single primary action instead of three stacked
+            bars. Every handler is unchanged: Answer -> getResult + ResultCard
+            (with the Steps/Result/Both scope), Write -> compose + ComposeCard,
+            Compute -> on-device parse + compute + ComputeCard. Produced artifacts
+            stack below and stay visible after the panel is closed. */}
+        {!ended && (
+          <section className="wc-make" aria-label="Make something from this task">
+            <div className="wc-make-head">
+              <span className="wc-make-kicker">Make something</span>
+              <div className="wc-make-tabs" role="tablist" aria-label="What to make">
+                <button type="button" role="tab" aria-selected={maker === 'answer'} className={`wc-make-tab${maker === 'answer' ? ' on' : ''}`} onClick={() => pickMaker('answer')}><Sparkles size={15} /> Answer</button>
+                <button type="button" role="tab" aria-selected={maker === 'write'} className={`wc-make-tab${maker === 'write' ? ' on' : ''}`} onClick={() => pickMaker('write')}><PenLine size={15} /> Write</button>
+                <button type="button" role="tab" aria-selected={maker === 'compute'} className={`wc-make-tab${maker === 'compute' ? ' on' : ''}`} onClick={() => pickMaker('compute')}><Calculator size={15} /> Compute</button>
+              </div>
+              {!maker && <span className="wc-make-lead">Get the actual answer, draft a document, or crunch a file. Your plan stays in view.</span>}
+            </div>
+
+            {/* ANSWER: hand back the real answer, not just the next step. The
+                Steps/Result/Both scope only changes emphasis; the guiding flow stays. */}
+            {maker === 'answer' && (
+              <div className="wc-make-panel" role="tabpanel">
+                <div className="wc-make-ctl">
+                  <div className="wc-seg" role="tablist" aria-label="What do you want">
+                    {[['steps', 'Steps'], ['result', 'Result'], ['both', 'Both']].map(([v, label]) => (
+                      <button key={v} type="button" role="tab" aria-selected={scope === v} className={scope === v ? 'on' : ''} onClick={() => setScope(v)}>{label}</button>
+                    ))}
+                  </div>
+                  <span className="wc-result-lead">{scope === 'steps' ? 'Guide me step by step' : 'Get the actual answer, with how I got it'}</span>
+                  <span className="wc-sp" />
+                  <button className={`wc-ib${pasteOpen ? ' on' : ''}`} onClick={() => setPasteOpen((v) => !v)} disabled={resultBusy} title="Paste data to compute from: a table, numbers, a log, any text" aria-label="Paste data"><ClipboardCopy size={16} /></button>
+                  <button className="wc-ib" onClick={() => getResult(true)} disabled={resultBusy} title={source === 'camera' ? 'Snap a photo and compute the result from it' : 'Read the screen and compute the result from it'} aria-label="Compute from the screen">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+                  <button className="wc-tbtn primary" onClick={() => getResult(false)} disabled={resultBusy} title="Compute the result for your goal, using any pasted data and the screen if you are sharing it">{resultBusy ? <Loader2 size={14} className="spin" /> : <Sparkles size={15} />} Get the result</button>
+                </div>
+                {pasteOpen && (
+                  <textarea className="wc-result-paste" rows={3} value={pasteData} onChange={(e) => setPasteData(e.target.value)} placeholder="Paste the data to work from here: a table, numbers, a log, a config, or any text. Leave empty to compute from your goal and screen." />
+                )}
+                {resultErr && <div className="wc-result-err"><AlertTriangle size={14} /> {resultErr}</div>}
+                {resultBusy && !resultOut && (
+                  <div className="wc-result-load"><Loader2 size={15} className="spin" /> Working out the result{pasteData.trim() ? ' from your data' : ''}…</div>
+                )}
+              </div>
+            )}
+
+            {/* WRITE: draft the full document (letter, report, clause, outline,
+                table or code), ready to copy. Nothing is auto-filled. */}
+            {maker === 'write' && (
+              <div className="wc-make-panel" role="tabpanel">
+                <label className="wc-compose-label" htmlFor="wc-compose-want">What should I write?</label>
+                <textarea id="wc-compose-want" className="wc-compose-want" rows={2} value={composeWant} onChange={(e) => setComposeWant(e.target.value)}
+                  placeholder="For example: a follow-up email to the vendor, a one-page status report, a SQL query for last month's refunds, or red-line notes on this clause."
+                  onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); compose(false) } }} />
+                <div className="wc-make-ctl">
+                  <label className="wc-compose-fmt">
+                    <span>Format</span>
+                    <select value={composeFormat} onChange={(e) => setComposeFormat(e.target.value)}>
+                      <option value="">Auto</option>
+                      <option value="email">Email</option>
+                      <option value="document">Document</option>
+                      <option value="outline">Outline</option>
+                      <option value="bullets">Bullets</option>
+                      <option value="table">Table</option>
+                      <option value="code">Code</option>
+                      <option value="notes">Notes</option>
+                    </select>
+                  </label>
+                  <button type="button" className={`wc-ib${composeSrcOpen ? ' on' : ''}`} onClick={() => setComposeSrcOpen((v) => !v)} disabled={composeBusy} title="Paste source text to write from: an email, a table, numbers, a log, any text" aria-label="Paste source text"><ClipboardCopy size={16} /></button>
+                  <button type="button" className="wc-ib" onClick={() => compose(true)} disabled={composeBusy} title={source === 'camera' ? 'Snap a photo and write from what it shows' : 'Read the screen and write from what it shows'} aria-label="Write from the screen">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+                  <span className="wc-sp" />
+                  <button type="button" className="wc-tbtn primary" onClick={() => compose(false)} disabled={composeBusy} title="Write the document for your goal, using any pasted source and the screen if you are sharing it">{composeBusy ? <Loader2 size={14} className="spin" /> : <PenLine size={15} />} Compose</button>
+                </div>
+                {composeSrcOpen && (
+                  <textarea className="wc-compose-src" rows={3} value={composeSrc} onChange={(e) => setComposeSrc(e.target.value)} placeholder="Paste the source to write from here: an email thread, a table, notes, a clause, or any text. Leave empty to write from your goal and screen." />
+                )}
+                {composeErr && <div className="wc-compose-err"><AlertTriangle size={14} /> {composeErr}</div>}
+                {composeBusy && !composeOut && (
+                  <div className="wc-compose-load"><Loader2 size={15} className="spin" /> Writing{composeSrc.trim() ? ' from your source' : ''}…</div>
+                )}
+              </div>
+            )}
+
+            {/* COMPUTE FROM A FILE: privacy-first, on-device data compute. The CSV /
+                Excel file is parsed ENTIRELY in the browser; only the column names +
+                types + row count are sent to plan a safe computation, re-checked and
+                run locally on the full rows. The raw rows never leave the machine. */}
+            {maker === 'compute' && (
+              <div className="wc-make-panel" role="tabpanel">
+                {/* The privacy promise, stated plainly and kept literally true in
+                    the code: only { want, schema, rowCount } is ever sent. */}
+                <div className="wc-compute-privacy">
+                  <ShieldCheck size={15} />
+                  <span>Your file is read on your device. Only the column names and types are sent, your data never leaves your machine.</span>
+                </div>
+
+                <input ref={computeFileRef} type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onComputeFile(f); e.target.value = '' }} />
+
+                {!computeFile && !computeParsing && (
+                  <button type="button" className="wc-compute-drop" onClick={() => computeFileRef.current && computeFileRef.current.click()}>
+                    <Upload size={20} />
+                    <span className="wc-compute-drop-t">Choose a CSV or Excel file</span>
+                    <span className="wc-compute-drop-s">.csv, .xlsx or .xls, read right here on your device</span>
+                  </button>
+                )}
+
+                {computeParsing && (
+                  <div className="wc-compute-load"><Loader2 size={15} className="spin" /> Reading your file on this device…</div>
+                )}
+
+                {computeFile && (
+                  <>
+                    <div className="wc-compute-file">
+                      <div className="wc-compute-file-head">
+                        <span className="wc-compute-file-name"><FileSpreadsheet size={15} /> {computeFile.name}</span>
+                        <span className="wc-compute-file-meta">{computeFile.rowCount.toLocaleString()} {computeFile.rowCount === 1 ? 'row' : 'rows'} · {computeFile.schema.length} {computeFile.schema.length === 1 ? 'column' : 'columns'}</span>
+                        <button type="button" className="wc-compute-change" onClick={() => computeFileRef.current && computeFileRef.current.click()} title="Choose a different file">Change</button>
+                      </div>
+                      <div className="wc-compute-chips">
+                        {computeFile.schema.map((col, i) => (
+                          <span key={i} className={`wc-compute-chip t-${col.type}`}><b>{col.name}</b><i>{col.type}</i></span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <label className="wc-compute-label" htmlFor="wc-compute-want">What should I compute?</label>
+                    <textarea id="wc-compute-want" className="wc-compute-want" rows={2} value={computeWant} onChange={(e) => setComputeWant(e.target.value)}
+                      placeholder="For example: total revenue by region, the average order value, how many orders over $500, or the top 10 customers by spend."
+                      onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); compute() } }} />
+                    <div className="wc-make-ctl">
+                      <span className="wc-sp" />
+                      <button type="button" className="wc-tbtn primary" onClick={compute} disabled={computeBusy}>{computeBusy ? <Loader2 size={14} className="spin" /> : <Calculator size={15} />} Compute</button>
+                    </div>
+                  </>
+                )}
+
+                {computeErr && <div className="wc-compute-err"><AlertTriangle size={14} /> {computeErr}</div>}
+                {computeNeed && (
+                  <div className="wc-compute-need"><AlertTriangle size={15} /><span><b>I need:</b> {computeNeed}</span></div>
+                )}
+                {computeBusy && !computeOut && (
+                  <div className="wc-compute-load"><Loader2 size={15} className="spin" /> Planning the computation. Only the column names and types are sent…</div>
+                )}
+              </div>
+            )}
+
+            {/* Produced artifacts stay visible once made, even after the panel closes. */}
+            {resultOut && (
+              <div className="wc-made">
+                <ResultCard result={resultOut} security={resultSec} />
+                <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null) }} title="Clear this result"><X size={14} /> Clear result</button>
+              </div>
+            )}
+            {composeOut && (
+              <div className="wc-made">
+                <ComposeCard compose={composeOut} security={composeSec} />
+                <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null) }} title="Clear this document"><X size={14} /> Clear document</button>
+              </div>
+            )}
+            {computeOut && (
+              <div className="wc-made">
+                <ComputeCard result={computeOut.result} explanation={computeOut.explanation} caveat={computeOut.caveat} spec={computeOut.spec} fileName={computeFile && computeFile.name} />
+                <button type="button" className="wc-tbtn ghost" onClick={clearCompute} title="Clear this result and file"><X size={14} /> Clear result</button>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* In-the-moment ask: a single clean prompt. It uses the whole session
             (goal + plan + what is on screen) to answer and keep you moving. */}
         {!ended && (
           <div className="wc-ask">
             <div className="wc-ask-row wc-askrow">
-              <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, or paste an error or API response for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} />
+              <input ref={contextFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) attachContext(f, question); e.target.value = '' }} />
+              <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, paste an error, or attach a screenshot or document for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
+              <button className="wc-ib" onClick={() => contextFileRef.current && contextFileRef.current.click()} disabled={busy} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={16} /></button>
               <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
               <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
               <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
@@ -2706,6 +3591,7 @@ function Console({ sessionId, onBack }) {
           onResearch={() => doResearch(floatQ.trim())}
           onAsk={(q) => { ask(q); setFloatQ('') }}
           onAnalyze={analyze}
+          onAddContext={async (file) => { await attachContext(file, floatQ.trim()); setFloatQ('') }}
           onStep={setStep}
           onNav={navStep}
           onWatch={watching ? pauseWatching : startWatching}
@@ -2720,7 +3606,8 @@ function Console({ sessionId, onBack }) {
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onStep, onNav, onWatch, onClose }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onClose }) {
+  const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
   // Dim the panel to cut glare over your work. The browser will not let a web
   // Picture-in-Picture window be see-through to the app behind it, so this
@@ -2728,33 +3615,47 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   const DIM_LEVELS = [1, 0.85, 0.65, 0.45]
   const [dim, setDim] = useState(1)
   const cycleDim = () => setDim((d) => DIM_LEVELS[(DIM_LEVELS.indexOf(d) + 1) % DIM_LEVELS.length] || 1)
+  // The full roadmap is tucked away by default so the current step and the
+  // latest answer own the panel. A compact chip expands it on demand.
+  const [stepsOpen, setStepsOpen] = useState(false)
 
   const light = theme === 'light'
-  // Fluent / Wiz language, same as the main guiding panel: a single blue
-  // accent (used for bars, chips, fills and the primary button - never as
-  // body-text colour), high-contrast text in both themes, green only for the
-  // done check. Everything here is inline because the PiP document carries
-  // none of the app's CSS.
+  // Color-coded by meaning (one source of truth with the console + full guide):
+  //   accent (EMERALD) = the current step / the one live action - the brightest
+  //   thing on the panel and the primary button; cyan = calm context the watcher
+  //   can see (observation); warn (AMBER) = a warning that must interrupt; good =
+  //   the done check. Brand emerald #8cf5c4 / cyan #39d3ff / amber #f5c86b for
+  //   dark; darkened equivalents for contrast on the white light panel.
+  //   Everything here is inline because the PiP document carries none of the
+  //   app's CSS.
   const c = light
     ? { canvas: '#f3f5f9', panel: '#ffffff', panel2: '#f5f7fb', border: '#e2e6ed', borderStrong: '#c6cdd8', text: '#171a21', muted: '#58606e', faint: '#8b93a1',
-        accent: '#0f6cbd', accentHi: '#2b88d8', accentSoft: 'rgba(15,108,189,.10)', accentRing: 'rgba(15,108,189,.28)',
-        good: '#107c41', goodSoft: 'rgba(16,124,65,.12)', warn: '#b86e00', warnSoft: 'rgba(245,158,11,.14)', danger: '#c42b1c',
-        inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)', heroShadow: '0 2px 4px rgba(15,108,189,.06), 0 14px 32px -16px rgba(15,108,189,.35)' }
-    : { canvas: '#0f1218', panel: '#181c25', panel2: '#1f2430', border: '#2a3140', borderStrong: '#3b4455', text: '#eef1f6', muted: '#aab2c0', faint: '#7b8493',
-        accent: '#62abf5', accentHi: '#479ef5', accentSoft: 'rgba(98,171,245,.16)', accentRing: 'rgba(98,171,245,.35)',
-        good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5b041', warnSoft: 'rgba(245,176,65,.14)', danger: '#ff7a6b',
-        inputBg: '#0f1218', track: '#2a3140', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(98,171,245,.35)' }
+        accent: '#0e9f6e', accentHi: '#12b47e', onAccent: '#ffffff', accentSoft: 'rgba(14,159,110,.10)', accentRing: 'rgba(14,159,110,.30)', accentGlow: 'rgba(14,159,110,.20)',
+        cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,.10)', cyanRing: 'rgba(10,132,194,.28)',
+        good: '#107c41', goodSoft: 'rgba(16,124,65,.12)', warn: '#b86e00', warnSoft: 'rgba(245,200,107,.16)', warnRing: 'rgba(184,110,0,.30)', danger: '#c42b1c',
+        inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)', heroShadow: '0 2px 4px rgba(14,159,110,.06), 0 14px 32px -16px rgba(14,159,110,.32)' }
+    : { canvas: '#0a0d12', panel: '#141a24', panel2: '#1b2130', border: '#28303f', borderStrong: '#3b4455', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780',
+        accent: '#8cf5c4', accentHi: '#8cf5c4', onAccent: '#052a1d', accentSoft: 'rgba(140,245,196,.14)', accentRing: 'rgba(140,245,196,.34)', accentGlow: 'rgba(140,245,196,.22)',
+        cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,.13)', cyanRing: 'rgba(57,211,255,.32)',
+        good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,.14)', warnRing: 'rgba(245,200,107,.34)', danger: '#ff7a6b',
+        inputBg: '#0a0d12', track: '#28303f', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(140,245,196,.3)' }
 
-  const FONT = '"Segoe UI Variable Text","Segoe UI",system-ui,-apple-system,"Helvetica Neue",sans-serif'
-  const wrap = { padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 10, minHeight: '100vh', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5, fontFeatureSettings: '"tnum" 1' }
-  const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, padding: 12, boxShadow: c.shadow }
+  // Figtree for body (loaded into the PiP document head when the float opens),
+  // Bricolage Grotesque for display headings - the same pairing as the app.
+  // Both degrade to a clean system stack if the webfont is blocked.
+  const FONT = '"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,sans-serif'
+  const DISPLAY = '"Bricolage Grotesque",' + FONT
+  const wrap = { padding: '12px 13px 13px', display: 'flex', flexDirection: 'column', gap: 11, minHeight: '100vh', overflowX: 'hidden', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: 13.5, lineHeight: 1.5, fontFeatureSettings: '"tnum" 1, "cv11" 1', WebkitFontSmoothing: 'antialiased' }
+  const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, padding: 13, boxShadow: c.shadow }
   // One small-button family: icon (header), ghost (secondary), primary (the one action).
   const iconBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .15s, color .15s' }
   const ghost = { background: c.panel2, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, height: 32, padding: '0 11px', fontSize: 12.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'background .15s, border-color .15s, color .15s' }
-  const primary = { background: `linear-gradient(180deg, ${c.accentHi}, ${c.accent})`, color: '#fff', border: '1px solid transparent', borderRadius: 9, height: 32, padding: '0 13px', fontSize: 12.5, fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', boxShadow: `0 1px 2px rgba(0,0,0,.12), 0 0 0 1px ${c.accentRing} inset` }
+  const primary = { background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, color: c.onAccent, border: '1px solid transparent', borderRadius: 9, height: 32, padding: '0 13px', fontSize: 12.5, fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', boxShadow: `0 1px 2px rgba(0,0,0,.12), 0 0 0 1px ${c.accentRing} inset` }
   const navBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }
   const eyebrow = { fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }
-  const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accentHi}, ${c.accent})` }
+  // The current-step / answer left bar reads emerald -> cyan (the color-coded
+  // "now" accent). Flags override this to amber below.
+  const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accent}, ${c.cyan})` }
 
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : 0
   const status = paused
@@ -2767,35 +3668,36 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   return (
     <div style={wrap}>
       {/* Header: brand, live/paused state, minutes, icon controls, under a hairline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 9, borderBottom: `1px solid ${c.border}` }}>
-        <span style={{ width: 24, height: 24, borderRadius: 8, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset, 0 2px 6px -2px ${c.accentRing}` }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 10, borderBottom: `1px solid ${c.border}` }}>
+        <span style={{ width: 25, height: 25, borderRadius: 9, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset, 0 2px 6px -2px ${c.accentRing}` }}>
           <Eye size={13} color="#fff" strokeWidth={2.4} />
         </span>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 5 }}>
-          <strong style={{ fontSize: 13.5, fontWeight: 650, letterSpacing: '-.01em', whiteSpace: 'nowrap' }}>WorkCoPilot</strong>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 20, fontSize: 10.5, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: status.color, background: status.soft, borderRadius: 999, padding: '0 8px', whiteSpace: 'nowrap' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 6 }}>
+          <strong style={{ fontFamily: DISPLAY, fontSize: 14.5, fontWeight: 700, letterSpacing: '-.015em', whiteSpace: 'nowrap' }}>WorkCoPilot</strong>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 20, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: status.color, background: status.soft, borderRadius: 999, padding: '0 8px', whiteSpace: 'nowrap' }}>
             <span className={watching && !paused ? 'fp-pulse' : undefined} style={{ width: 6, height: 6, borderRadius: '50%', background: status.color }} />
             {status.label}
           </span>
-          {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{minsLeft}m left</span>}
+          {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{minsLeft}m left</span>}
         </div>
-        <button style={{ ...iconBtn, color: paused ? c.accent : c.muted, background: paused ? c.accentSoft : 'transparent' }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={14} />}</button>
-        <button style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: run this one frame on the stronger model and weave it back into the steps, then continue on the fast model."><Zap size={15} /></button>
-        <button style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
-        <button style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
-        <button style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
+        <button className="fp-btn" style={{ ...iconBtn, color: paused ? c.accent : c.muted, background: paused ? c.accentSoft : 'transparent' }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={14} />}</button>
+        <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: run this one frame on the stronger model and weave it back into the steps, then continue on the fast model."><Zap size={15} /></button>
+        <button className="fp-btn" style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
+        <button className="fp-btn" style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
+        <button className="fp-btn" style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
       </div>
 
       {/* Watch toggle: the one control that makes the panel live */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <button style={watching
-          ? { ...ghost, justifyContent: 'center', height: 38, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
-          : { ...primary, justifyContent: 'center', height: 38, fontSize: 13 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Eye size={15} /> Watch my screen</>}</button>
+        <button className="fp-btn" style={watching
+          ? { ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
+          : { ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Eye size={15} /> Watch my screen</>}</button>
         {!watching && !paused && <div style={{ fontSize: 11.5, color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
       </div>
 
+      {/* OBSERVATION: calm cyan-tinted context chip - what the watcher can see */}
       {watching && (
-        <div style={{ fontSize: 12, color: c.muted, display: 'flex', gap: 7, alignItems: 'flex-start', padding: '0 2px', lineHeight: 1.45 }}><Loader2 size={13} className="spin" style={{ color: c.accent, flexShrink: 0, marginTop: 2 }} /> <span>Reading your screen. {observation}</span></div>
+        <div style={{ fontSize: 12, color: c.muted, display: 'flex', gap: 8, alignItems: 'flex-start', padding: '8px 11px', lineHeight: 1.45, background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 11 }}><Eye size={13} strokeWidth={2.4} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>Reading your screen. <RichText text={observation} accent={c.cyan} /></span></div>
       )}
 
       {/* Flags first: anything to be careful about sits above the action */}
@@ -2805,97 +3707,168 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
             <div key={i} style={{ position: 'relative', display: 'flex', gap: 9, alignItems: 'flex-start', padding: '9px 11px 9px 14px', background: c.warnSoft, borderRadius: 11, fontSize: 12.5, lineHeight: 1.5, color: c.text, overflow: 'hidden' }}>
               <span style={{ ...accentBar, width: 3, background: c.warn }} />
               <AlertTriangle size={14} style={{ color: c.warn, flexShrink: 0, marginTop: 2 }} />
-              <span>{f.text}</span>
+              <span style={{ overflowWrap: 'anywhere' }}><RichText text={f.text} accent={c.warn} /></span>
             </div>
           ))}
         </div>
       )}
 
-      {current ? (
-        <>
-          {/* DO THIS NOW hero: the action dominates */}
-          <div style={{ ...card, position: 'relative', overflow: 'hidden', padding: '13px 13px 12px 16px', borderColor: light ? c.border : 'transparent', boxShadow: c.heroShadow }}>
-            <span style={accentBar} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7, flexWrap: 'wrap' }}>
-              <span style={{ ...eyebrow, color: c.accent, background: c.accentSoft, padding: '3px 9px', borderRadius: 999 }}>Do this now</span>
-              {paused
-                ? <span style={{ fontSize: 11, color: c.faint }}>Paused. Resume to keep this live.</span>
-                : !watching && <span style={{ fontSize: 11, color: c.faint }}>Watch my screen to keep this live</span>}
+      {/* Growing region: the current step and the latest answer own this space.
+          The full step list is tucked into a compact chip so nothing is cramped. */}
+      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 11 }}>
+        {current ? (
+          <>
+            {/* CURRENT STEP = the brightest element: emerald accent, emerald->cyan
+                left bar, a soft pulsing glow (reduced-motion safe via FLOAT_CSS),
+                a "NOW · STEP X OF Y" eyebrow, then the action large. */}
+            <div className="fp-now" style={{ ...card, position: 'relative', overflow: 'hidden', padding: '14px 14px 13px 17px', borderColor: c.accentRing, boxShadow: c.heroShadow, '--gr': c.accentRing, '--gg': c.accentGlow }}>
+              <span style={accentBar} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 9, flexWrap: 'wrap' }}>
+                <span style={{ ...eyebrow, display: 'inline-flex', alignItems: 'center', gap: 5, color: c.onAccent, background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, padding: '3px 9px', borderRadius: 999 }}><Eye size={10} strokeWidth={2.6} /> Now · step {steps.indexOf(current) + 1} of {steps.length}</span>
+                {paused
+                  ? <span style={{ fontSize: 11, color: c.faint }}>Paused. Resume to keep this live.</span>
+                  : !watching && <span style={{ fontSize: 11, color: c.faint }}>Watch my screen to keep this live</span>}
+              </div>
+              <div style={{ fontFamily: DISPLAY, fontWeight: 600, fontSize: 16.5, lineHeight: 1.42, letterSpacing: '-.015em', color: c.text, overflowWrap: 'anywhere' }}><RichText text={guidance || current.text} accent={c.accent} /></div>
+              {guidance && <div style={{ fontSize: 12, color: c.muted, marginTop: 8, lineHeight: 1.45, overflowWrap: 'anywhere' }}><span style={{ fontWeight: 700, color: c.faint }}>Step </span><RichText text={current.text} accent={c.accent} /></div>}
+              {!guidance && current.validate && <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: c.muted, marginTop: 9, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7 }}><Eye size={11} style={{ flexShrink: 0 }} /> <span>done when: <RichText text={current.validate} accent={c.accent} /></span></div>}
+              {current.url && <div><a href={current.url} target="_blank" rel="noopener noreferrer" className="fp-btn" style={{ ...ghost, marginTop: 11, textDecoration: 'none', color: c.accent, height: 30, borderColor: c.accentRing }}><ExternalLink size={13} /> Open {linkHost(current.url)}</a></div>}
+              {((current.commands && current.commands.length > 0) || (current.code && current.code.content)) && (
+                <DestructiveGate why={current.destructive ? current.destructiveWhy : null}>
+                  {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
+                  {current.code && current.code.content && <CodeBlock file={current.code.file} content={current.code.content} />}
+                </DestructiveGate>
+              )}
+              <button className="fp-btn" style={{ ...primary, marginTop: 13, width: '100%', justifyContent: 'center', height: 38, fontSize: 13.5 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={15} strokeWidth={2.5} /> Mark done</button>
             </div>
-            <div style={{ fontWeight: 650, fontSize: 15.5, lineHeight: 1.45, letterSpacing: '-.01em', color: c.text }}>{guidance || current.text}</div>
-            {guidance && <div style={{ fontSize: 12, color: c.muted, marginTop: 7, lineHeight: 1.45 }}><span style={{ fontWeight: 700, color: c.faint }}>Step </span>{current.text}</div>}
-            {!guidance && current.validate && <div style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: c.muted, marginTop: 8, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7 }}><Eye size={11} /> done when: {current.validate}</div>}
-            {current.url && <div><a href={current.url} target="_blank" rel="noopener noreferrer" style={{ ...ghost, marginTop: 10, textDecoration: 'none', color: c.accent, height: 30, borderColor: c.accentRing }}><ExternalLink size={13} /> Open {linkHost(current.url)}</a></div>}
-            {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
-            {current.code && current.code.content && <CodeBlock file={current.code.file} content={current.code.content} />}
-            <button style={{ ...primary, marginTop: 12, width: '100%', justifyContent: 'center', height: 36, fontSize: 13 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={15} strokeWidth={2.5} /> Mark done</button>
-          </div>
 
-          {/* Prev · Step N of M · Next, with a progress track */}
-          {steps.length > 1 && onNav && (() => {
-            const no = steps.indexOf(current)
-            const locked = steps[no] && steps[no].status !== 'done'
-            return (
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px' }}>
-                <button style={navBtn} disabled={no <= 0} onClick={() => onNav(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
-                <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center' }}>
-                  <span style={{ ...eyebrow, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: c.muted, whiteSpace: 'nowrap' }}>Step {no + 1} of {steps.length}</span>
-                  <div style={{ width: '100%', height: 4, borderRadius: 999, background: c.track, overflow: 'hidden' }}>
-                    <div style={{ height: '100%', width: `${((no + 1) / steps.length) * 100}%`, borderRadius: 999, background: `linear-gradient(90deg, ${c.accentHi}, ${c.accent})`, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
+            {/* Prev - Step N of M - Next, with a progress track */}
+            {steps.length > 1 && onNav && (() => {
+              const no = steps.indexOf(current)
+              const locked = steps[no] && steps[no].status !== 'done'
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px' }}>
+                  <button className="fp-btn" style={navBtn} disabled={no <= 0} onClick={() => onNav(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
+                  <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center' }}>
+                    <span style={{ ...eyebrow, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: c.muted, whiteSpace: 'nowrap' }}>Step {no + 1} of {steps.length}</span>
+                    <div style={{ width: '100%', height: 4, borderRadius: 999, background: c.track, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${((no + 1) / steps.length) * 100}%`, borderRadius: 999, background: `linear-gradient(90deg, ${c.accent}, ${c.cyan})`, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
+                    </div>
                   </div>
+                  <button className="fp-btn" style={navBtn} disabled={no >= steps.length - 1 || locked} onClick={() => onNav(1)} title={locked ? 'Finish this step first. It advances on its own when done.' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
                 </div>
-                <button style={navBtn} disabled={no >= steps.length - 1 || locked} onClick={() => onNav(1)} title={locked ? 'Finish this step first - it advances on its own when done' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
-              </div>
-            )
-          })()}
-        </>
-      ) : done ? (
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center', padding: '10px 13px', background: c.goodSoft, borderRadius: 11, color: c.good, fontWeight: 650, fontSize: 13 }}><Check size={16} strokeWidth={2.5} /> All steps confirmed on screen.</div>
-      ) : steps.length === 0 ? (
-        <div style={{ ...card, color: c.muted, fontSize: 13, textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none' }}>Plan your steps in the main window, then they appear here.</div>
-      ) : null}
+              )
+            })()}
 
-      {/* Roadmap: current leads, pending recedes, done is struck */}
-      {steps.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '2px 2px 0' }}>
-          <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>All steps</span>
-          <span style={{ fontSize: 11, fontWeight: 600, color: c.faint, fontVariantNumeric: 'tabular-nums' }}>{doneN} of {steps.length} done</span>
-        </div>
-      )}
-      {steps.length > 0 && (
-        <div style={{ maxHeight: 190, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 1 }}>
-          {steps.map((s, i) => {
-            const isDone = s.status === 'done', isNow = s.status === 'current'
-            const isPending = !isDone && !isNow
-            return (
-              <div key={i} style={{ position: 'relative', display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 11px 9px 13px', borderRadius: 11, overflow: 'hidden',
-                background: isDone ? c.panel2 : c.panel, border: `1px solid ${isNow ? 'transparent' : c.border}`, boxShadow: isNow ? c.shadow : 'none', opacity: isPending ? 0.55 : 1, transition: 'opacity .16s, box-shadow .16s' }}>
-                {isNow && <span style={{ ...accentBar, width: 3 }} />}
-                <button style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center', padding: 0, marginTop: 1, cursor: 'pointer',
-                  border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
-                  onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
-                <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.45, color: isDone ? c.faint : isNow ? c.text : c.muted, fontWeight: isNow ? 650 : 500, textDecoration: isDone ? 'line-through' : 'none' }}>{s.text}</span>
-              </div>
-            )
-          })}
-        </div>
-      )}
+            {/* NEXT UP: a quiet, muted preview of the next 2-3 upcoming steps so
+                it gives a sense of what is ahead without competing with NOW. */}
+            {(() => {
+              const no = steps.indexOf(current)
+              const upcoming = steps.slice(no + 1).filter((s) => s.status !== 'done').slice(0, 3)
+              if (upcoming.length === 0) return null
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 2px' }}>
+                  <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint }}>Next up</span>
+                  {upcoming.map((s) => {
+                    const n = steps.indexOf(s)
+                    return (
+                      <div key={n} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
+                        <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}`, marginTop: 1 }}>{n + 1}</span>
+                        <span style={{ flex: 1, minWidth: 0, fontSize: 12, lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
+                      </div>
+                    )
+                  })}
+                </div>
+              )
+            })()}
+          </>
+        ) : done ? (
+          <div style={{ display: 'flex', gap: 9, alignItems: 'center', padding: '12px 14px', background: c.goodSoft, borderRadius: 12, color: c.good, fontWeight: 650, fontSize: 13.5 }}><Check size={17} strokeWidth={2.5} /> All steps confirmed on screen.</div>
+        ) : steps.length === 0 ? (
+          <div style={{ ...card, color: c.muted, fontSize: 13, textAlign: 'center', padding: '20px 16px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
+        ) : null}
 
-      {/* Ask row */}
-      <div style={{ ...card, padding: 10, marginTop: 'auto' }}>
+        {/* Collapsible roadmap: a compact chip by default so the list never eats
+            the panel. Tap to reveal; each step jumps or marks done. */}
+        {steps.length > 0 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: stepsOpen ? 7 : 0 }}>
+            <button className="fp-btn" onClick={() => setStepsOpen((o) => !o)}
+              style={{ ...ghost, width: '100%', justifyContent: 'space-between', height: 36, background: stepsOpen ? c.panel2 : 'transparent', borderColor: stepsOpen ? c.border : 'transparent', color: c.muted }}
+              title={stepsOpen ? 'Hide the full step list' : 'Show all steps'}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+                <MenuIcon size={14} style={{ color: c.faint, flexShrink: 0 }} />
+                <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>All steps</span>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: c.text, fontVariantNumeric: 'tabular-nums' }}>{doneN} of {steps.length} done</span>
+              </span>
+              <ChevronRight size={16} style={{ color: c.faint, flexShrink: 0, transition: 'transform .18s cubic-bezier(.4,0,.2,1)', transform: stepsOpen ? 'rotate(90deg)' : 'none' }} />
+            </button>
+            {stepsOpen && (
+              <div className="fp-rise" style={{ maxHeight: 248, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 2 }}>
+                {steps.map((s, i) => {
+                  const isDone = s.status === 'done', isNow = s.status === 'current'
+                  const isPending = !isDone && !isNow
+                  return (
+                    <div key={i} style={{ position: 'relative', display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 11px 9px 13px', borderRadius: 11, overflow: 'hidden',
+                      background: isDone ? c.panel2 : c.panel, border: `1px solid ${isNow ? 'transparent' : c.border}`, boxShadow: isNow ? c.shadow : 'none', opacity: isPending ? 0.62 : 1, transition: 'opacity .16s, box-shadow .16s' }}>
+                      {isNow && <span style={{ ...accentBar, width: 3 }} />}
+                      <button className="fp-btn" style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center', padding: 0, marginTop: 1,
+                        border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
+                        onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
+                      {isNow
+                        ? <span style={{ flex: 1, minWidth: 0, fontSize: 13, lineHeight: 1.45, color: c.text, fontWeight: 650, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
+                        : <button onClick={() => onStep(i, 'current')} title="Jump to this step" style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, fontFamily: FONT, fontSize: 13, lineHeight: 1.45, color: isDone ? c.faint : c.muted, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></button>}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* The latest answer is the highlighted focus. It fills the free space,
+            updates in place, and scrolls when long. Empty = a calm hint. */}
+        <div style={{ flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column' }}>
+          {answer ? (
+            <div key={answer} className="fp-rise" style={{ ...card, position: 'relative', overflow: 'hidden', padding: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', borderColor: c.accentRing, boxShadow: c.heroShadow }}>
+              <span style={accentBar} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px 9px 17px', borderBottom: `1px solid ${c.border}`, background: c.accentSoft }}>
+                <Sparkles size={13} style={{ color: c.accent, flexShrink: 0 }} />
+                <span style={{ ...eyebrow, color: c.accent, fontSize: 10.5 }}>Answer</span>
+                {busy && <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: c.muted }}><Loader2 size={12} className="spin" /> Updating</span>}
+              </div>
+              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '12px 15px 14px 17px', fontSize: 13.5, lineHeight: 1.6, color: c.text, overflowWrap: 'anywhere' }}><RichText text={answer} accent={c.accent} /></div>
+            </div>
+          ) : busy ? (
+            <div style={{ ...card, flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: c.muted, boxShadow: 'none' }}>
+              <Loader2 size={18} className="spin" style={{ color: c.accent }} />
+              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Working on it...</span>
+            </div>
+          ) : (
+            <div style={{ ...card, flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center', color: c.faint, borderStyle: 'dashed', boxShadow: 'none', padding: '18px 20px' }}>
+              <span style={{ width: 36, height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', background: c.accentSoft, color: c.accent }}><Sparkles size={18} /></span>
+              <span style={{ fontSize: 12.5, lineHeight: 1.5, maxWidth: 260, color: c.muted }}>Ask a question or analyze your screen. The answer shows up right here.</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Ask row, anchored at the bottom */}
+      <div style={{ ...card, padding: 11 }}>
+        {onAddContext && <input ref={floatFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onAddContext(f); e.target.value = '' }} />}
         <input
-          style={{ width: '100%', height: 38, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 10, padding: '0 12px', outline: 'none', fontSize: 13, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
-          placeholder="Ask anything, or say what to analyze" value={floatQ}
+          style={{ width: '100%', height: 40, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 11, padding: '0 13px', outline: 'none', fontSize: 13.5, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
+          placeholder="Ask, say what to analyze, or attach a screenshot or document" value={floatQ}
           onChange={(e) => setFloatQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && floatQ.trim()) onAsk(floatQ.trim()) }}
+          onPaste={(e) => { if (!onAddContext) return; const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); onAddContext(f); return } } } }}
         />
-        <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
-          <button style={{ ...primary, flex: 1.2, justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : <><ArrowRight size={14} /> Ask</>}</button>
-          <button style={{ ...ghost, flex: 1, justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title="Screenshot now and analyze. Type a focus above, or leave blank for a full read."><ScanLine size={14} /> Analyze</button>
-          <button style={{ ...ghost, flex: 1, justifyContent: 'center' }} disabled={busy} onClick={onResearch} title="Look up the latest on the web, then answer (only when you tap it)."><Globe size={14} /> Research</button>
+        <div style={{ display: 'flex', gap: 6, marginTop: 9 }}>
+          <button className="fp-btn" style={{ ...primary, flex: 1.25, minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : <><ArrowRight size={14} style={{ flexShrink: 0 }} /> Ask</>}</button>
+          {onAddContext && <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy} onClick={() => floatFileRef.current && floatFileRef.current.click()} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={14} style={{ flexShrink: 0 }} /></button>}
+          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title="Screenshot now and analyze. Type a focus above, or leave blank for a full read."><ScanLine size={14} style={{ flexShrink: 0 }} /> Analyze</button>
+          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={onResearch} title="Look up the latest on the web, then answer (only when you tap it)."><Globe size={14} style={{ flexShrink: 0 }} /> Research</button>
         </div>
-        {answer && <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${c.border}`, fontSize: 13, whiteSpace: 'pre-wrap', lineHeight: 1.55, color: c.text }}>{answer}</div>}
-        {err && <div style={{ marginTop: 8, display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12, color: c.danger, lineHeight: 1.45 }}><AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} /> <span>{err}</span></div>}
+        {err && <div style={{ marginTop: 9, display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12, color: c.danger, lineHeight: 1.45 }}><AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>{err}</span></div>}
       </div>
     </div>
   )
@@ -2986,6 +3959,6 @@ export default function WorkPage() {
   if (!sess.signedIn) { window.location.href = '/workcopilot'; return null }
   if (!sess.access) return frame(<NoAccess onSignOut={signOut} />)
   const user = sess.user
-  if (openId) return frame(<><AppUpdateBanner /><Console sessionId={openId} onBack={() => setOpenId(null)} /></>)
+  if (openId) return frame(<><AppUpdateBanner /><Console sessionId={openId} watchLight={!!((user && user.watchLight) || (sess && sess.watchLight))} onBack={() => setOpenId(null)} /></>)
   return frame(<><AppUpdateBanner /><Home user={user} onOpen={setOpenId} onSignOut={signOut} /></>)
 }

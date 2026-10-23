@@ -167,6 +167,13 @@ export default function Companies({ isSuperAdmin }) {
   const saveAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, aiForm[id] || {}); setAiForm((f) => ({ ...f, [id]: {} })); refreshDetail(id); setMsg('Corporate AI keys saved.') } catch (e) { setMsg(e.message) } }
   const clearAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, { apiKey: '' }); refreshDetail(id); setMsg('AI keys cleared.') } catch (e) { setMsg(e.message) } }
 
+  // Per-company web-search (Tavily) key. Independent of the AI source: when set,
+  // the company's live web learning runs on their own key (their data + billing).
+  const [wsForm, setWsForm] = useState({})
+  const setWsField = (id, k, v) => setWsForm((f) => ({ ...f, [id]: { ...(f[id] || {}), [k]: v } }))
+  const saveWebSearch = async (id) => { const key = (wsForm[id]?.apiKey || '').trim(); if (!key) return; try { await workAdminApi.companyWebSearch(id, key, 'tavily'); setWsForm((f) => ({ ...f, [id]: {} })); refreshDetail(id); setMsg('Company web-search key saved.') } catch (e) { setMsg(e.message) } }
+  const clearWebSearch = async (id) => { try { await workAdminApi.companyWebSearch(id, '', 'tavily'); refreshDetail(id); setMsg('Company web-search key cleared.') } catch (e) { setMsg(e.message) } }
+
   // Members: add by email (SSO) or username+password, set tier, grant hours, remove.
   const [mForm, setMForm] = useState({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic', mode: 'email', free: false })
   const addMember = async (companyId) => {
@@ -321,6 +328,18 @@ export default function Companies({ isSuperAdmin }) {
                               <input className="wka-input" placeholder="vision model" value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 140 }} />
                               <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>Save keys</button>
                               {detail.company.companyAi && <button className="wka-btn sm ghost" onClick={() => clearAiKeys(c.id)}>Clear</button>}
+                            </div>
+                          </div>
+                        )}
+
+                        {isSuperAdmin && (
+                          <div className="co-block">
+                            <div className="co-block-t">Web search key {detail.company.webSearchConfigured ? <span className="co-dim">· {(detail.company.webSearch && detail.company.webSearch.provider) || 'tavily'} · {detail.company.webSearch && detail.company.webSearch.keyMasked}</span> : <span className="co-amber">· none set</span>}</div>
+                            <div className="co-dim" style={{ marginBottom: 2 }}>When set, this company&rsquo;s live web learning runs on their own key (their data boundary and billing).</div>
+                            <div className="co-inline-wrap">
+                              <input className="wka-input" type="password" autoComplete="new-password" placeholder="Tavily API key" value={(wsForm[c.id]?.apiKey) || ''} onChange={(e) => setWsField(c.id, 'apiKey', e.target.value)} style={{ width: 240 }} />
+                              <button className="wka-btn sm" onClick={() => saveWebSearch(c.id)}>Save key</button>
+                              {detail.company.webSearchConfigured && <button className="wka-btn sm ghost" onClick={() => clearWebSearch(c.id)}>Clear</button>}
                             </div>
                           </div>
                         )}

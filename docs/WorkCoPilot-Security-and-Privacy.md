@@ -2,7 +2,7 @@
 
 *How we help you do your work without taking your data*
 
-AdmireVeda  |  Rev 1.2  |  October 2026
+AdmireVeda  |  Rev 1.3  |  October 2026
 
 ## 1. In one page
 
@@ -38,6 +38,8 @@ To give you a step, the product sends a short description of your goal and, when
 ### 4.1 The data-protection engine (DLP)
 
 A single redaction engine runs on both your device and our server (one engine, used twice, so the rules can never drift apart). On your device it cleans outbound text before it is transmitted, so raw sensitive data never leaves the browser or app. On the server it runs again as a second line of defense. Nothing is ever silently dropped: you are shown a short summary of what was removed.
+
+The same engine runs everywhere you use WorkCoPilot. The web app, the floating on-screen overlay, the Android app, and the installed desktop app all load this one shared engine, so the protection, the tokenization, and the on-device screen redaction described below are identical on every surface. There is no weaker path.
 
 What it finds and removes from text:
 
@@ -98,15 +100,25 @@ You can give WorkCoPilot your own reference material (a runbook, a spec, a contr
 
 If you are handling the most sensitive documents, the installed app is the stronger choice because the document is processed entirely on your device.
 
-## 6. Enterprise data governance
+## 6. Data governance and custom rules
 
-For companies, an administrator can arm a data-governance policy that applies to everyone, so protection is not left to each person. The policy is enforced on the device and again on the server.
+Protection is not left to chance, and it can be customized to exactly what you consider sensitive. Who sets the rules depends on the account:
 
-- Per-category actions. For each category (secrets, PHI, PII, IP, host, email, phone, card, SSN, IBAN) the administrator chooses what happens: send it, redact it, withhold it, or tokenize it (keep it on the device, as in section 4.3).
+- A company administrator arms a data-governance policy for the whole company. It applies to every member and is enforced on the device and again on the server; a company member cannot weaken it or opt out, so protection is consistent across the team.
+- An individual user who is not part of a company sets their own rules, so the scrubber is tailored to their work. Company members do not get this self-service control, because their administrator governs it for them.
+- A platform superadmin can set rules and can lock a company policy so a company administrator cannot weaken it.
+
+The building blocks are the same at every level, and they add to the built-in protections (emails, keys, card numbers, SSNs, IBANs, phone numbers, IP addresses and private hosts), which always apply:
+
+- Per-category actions. For each category (secrets, PHI, PII, IP, host, email, phone, card, SSN, IBAN) choose what happens: send it, redact it, withhold it, or tokenize it (keep it on the device, as in section 4.3).
 - Block words. Specific words or phrases (a project code name, a client name) are always removed before anything is sent, never guessed at.
-- Custom fields. The administrator can add their own patterns (a word, a phrase, or a regular expression) and choose to redact or block each one, for data shapes unique to their business.
-- Company-locked. A superadmin can lock the policy so a company administrator cannot weaken it.
+- Custom rules. Add your own patterns (a word, a phrase, or a regular expression) and choose to redact, tokenize, or block each one, for data shapes unique to your business.
+- Arm and lock. A company policy can be armed so it applies to everyone, and locked so it cannot be weakened without an explicit unlock.
 - Transparency. Every scan records what was transmitted to the AI, and the person is shown a short summary of what was stripped on their device before sending.
+
+Your custom rules run on your device, before anything is sent, exactly like the built-in detectors. The block words and custom patterns you (or your administrator) define are applied on-device to the text you type and, through the same on-device OCR path, to the screen frames too, so a term unique to your business is masked in a screenshot the same way it is stripped from text. The server applies the identical policy again as a second line of defense. Nothing about a custom rule requires sending your data to configure it.
+
+> **Administrator oversight.** A company administrator can, at any time, pull the session report and the audit log for any of their people's sessions, whether the session is still in progress or already finished. The report is a reusable reference document of what was accomplished; the audit log is the exact record of what reached the AI (section 12). Both are scoped strictly to the administrator's own company and never cross to another company.
 
 ## 7. Secure-by-default guidance
 
@@ -189,7 +201,7 @@ For every session, an append-only log records each transmission to the AI model.
 
 ### 12.2 How an auditor triggers and reads it
 
-- In the product, the person who ran a session can download that session's audit log at any time. A company superadmin can pull the audit log for any session in their company.
+- In the product, the person who ran a session can download that session's audit log at any time. A company administrator can pull the audit log, and the full session report, for any of their people's sessions, in progress or finished; a platform superadmin can pull any session's. The report reads as a reusable reference document of what was accomplished, with each confirmed step and any on-device-scrubbed milestone screenshots captured as evidence.
 - The log is a plain, human-readable text file. It opens with a header (the session, the goal, and how many transmissions were logged) and then one block per transmission showing the timestamp, the call type, the model, whether redaction was on, how many items were stripped, and the exact text that was sent.
 - During a session, the person is also shown a short live summary of what was stripped on their device before sending, for example "Stripped on your device before sending: 2 emails, 1 IP address."
 - The logs are stored on the server with restricted file permissions and are not exposed to other users.

@@ -10,8 +10,15 @@ import { fmtDateTime } from '../workadmin.css.js'
 
 function kindBadge(k) {
   const key = String(k || 'system_error')
-  const label = key === 'ai_error' ? 'AI provider' : key === 'system_error' ? 'System' : key
-  return <span className={`wka-badge ${key === 'ai_error' ? 'paused' : ''}`}>{label}</span>
+  const label = key === 'ai_error' ? 'AI provider'
+    : key === 'system_error' ? 'System'
+    : key === 'ai_failover' ? 'AI switched'
+    : key === 'ai_exhausted' ? 'AI exhausted'
+    : key
+  // Failover is a RECOVERY (we kept the user working) so it reads neutral;
+  // provider error and full exhaustion read as attention-needed.
+  const attn = key === 'ai_error' || key === 'ai_exhausted'
+  return <span className={`wka-badge ${attn ? 'paused' : ''}`}>{label}</span>
 }
 
 export default function Incidents() {
@@ -47,7 +54,7 @@ export default function Incidents() {
 
   return (
     <div>
-      <div className="wka-note"><AlertTriangle size={14} /> These are the real causes behind the generic "system is busy" message users see. Users never see this detail. Use it to fix billing, keys or the model.</div>
+      <div className="wka-note"><AlertTriangle size={14} /> The real causes behind the generic "system is busy" message users see. Users never see this detail. "AI switched" rows are automatic recoveries (a retired or rate-limited model was swapped for a working one, so the user kept going) - watch for them piling up on one provider. "AI exhausted" and "AI provider" rows mean a request failed; the reference code points at the fix (billing, keys or model).</div>
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 360 }}>
           <span className="sym"><Search size={14} /></span>
@@ -89,7 +96,7 @@ export default function Incidents() {
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap', maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis' }} title={i.call || ''}>{i.call || '-'}</td>
                   <td style={{ maxWidth: 420 }}>
                     <div style={{ fontSize: 12.5, lineHeight: 1.4 }} title={i.message || ''}>{i.message || '-'}</div>
-                    {i.model ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>model: {i.model}</div> : null}
+                    {(i.provider || i.model) ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{[i.provider ? `provider: ${i.provider}` : null, i.model ? `model: ${i.model}` : null].filter(Boolean).join('  |  ')}</div> : null}
                   </td>
                 </tr>
               ))}

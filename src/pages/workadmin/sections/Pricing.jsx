@@ -31,6 +31,7 @@ export default function Pricing({ isSuperAdmin }) {
         hour: { ...p.hour },
         image: { ...p.image },
         imageMinBulk: p.imageMinBulk,
+        tasks: { ...(p.tasks || {}) },
       })
       setState({ loading: false, error: null })
     } catch (error) { setState({ loading: false, error }) }
@@ -49,6 +50,7 @@ export default function Pricing({ isSuperAdmin }) {
     const groups = ['plans', 'hour', 'image']
     for (const g of groups) for (const t of TIERS) { const n = num(form[g][t]); if (isNaN(n) || n < 0) return true }
     const mb = num(form.imageMinBulk); if (isNaN(mb) || mb < 1) return true
+    for (const t of TIERS) { const n = num(form.tasks[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     return false
   })()
 
@@ -61,9 +63,10 @@ export default function Pricing({ isSuperAdmin }) {
         hour: Object.fromEntries(TIERS.map((t) => [t, num(form.hour[t])])),
         image: Object.fromEntries(TIERS.map((t) => [t, num(form.image[t])])),
         imageMinBulk: num(form.imageMinBulk),
+        tasks: Object.fromEntries(TIERS.map((t) => [t, num(form.tasks[t])])),
       }
       const p = await workAdminApi.setPricing(patch)
-      setForm({ currency: p.currency, plans: { ...p.plans }, hour: { ...p.hour }, image: { ...p.image }, imageMinBulk: p.imageMinBulk })
+      setForm({ currency: p.currency, plans: { ...p.plans }, hour: { ...p.hour }, image: { ...p.image }, imageMinBulk: p.imageMinBulk, tasks: { ...(p.tasks || {}) } })
       setSaved(true)
     } catch (error) { setSaveError(error) }
     finally { setSaving(false) }
@@ -93,6 +96,25 @@ export default function Pricing({ isSuperAdmin }) {
         <h2>Monthly plan price</h2>
         <p className="desc">What each tier costs per month. Basic 2h/day, Advanced 4h/day, Premium 6h/day of real guiding time.</p>
         <div className="wka-grid">{TIERS.map((t) => <Money key={t} group="plans" tier={t} />)}</div>
+      </div>
+
+      <div className="wka-panel">
+        <h2>Daily task limit, per tier</h2>
+        <p className="desc">Maximum guided tasks (sessions) a user can start per day. Users must finish the current task before starting a new one, and spend their minutes inside each task. Resets 11:59 PM ET. Corporate (company) accounts are unlimited.</p>
+        <div className="wka-grid">{TIERS.map((t) => (
+          <div className="wka-field" key={t}>
+            <label>{t.charAt(0).toUpperCase() + t.slice(1)}</label>
+            <input className="wka-input" type="number" min="0" step="1" disabled={disabled}
+              value={form.tasks[t] == null ? '' : form.tasks[t]} onChange={(e) => setField('tasks', t, e.target.value)} />
+            <span className="hint">tasks per day</span>
+          </div>
+        ))}
+          <div className="wka-field">
+            <label>Corporate</label>
+            <input className="wka-input" value="Unlimited" readOnly disabled />
+            <span className="hint">Company accounts have no daily task cap.</span>
+          </div>
+        </div>
       </div>
 
       <div className="wka-panel">

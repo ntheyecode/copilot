@@ -61,9 +61,16 @@ const RULES = [
   { type: 'secret', re: /\b(?:ghp|gho|ghu|ghs|ghr|github_pat)_[A-Za-z0-9_]{20,}\b/g, tag: '[TOKEN]' },  // GitHub tokens/PATs
   { type: 'secret', re: /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/g, tag: '[TOKEN]' },                          // Slack
   { type: 'secret', re: /\bAIza[0-9A-Za-z_-]{30,}\b/g, tag: '[API_KEY]' },                              // Google API key
+  { type: 'secret', re: /\bsk-(?:ant-|proj-|live-|test-)?[A-Za-z0-9_-]{20,}\b/g, tag: '[SECRET]' },     // OpenAI / Anthropic-style keys (hyphenated sk-...)
+  { type: 'secret', re: /\bxai-[A-Za-z0-9]{20,}\b/g, tag: '[SECRET]' },                                 // xAI
   { type: 'secret', re: /\beyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\b/g, tag: '[JWT]' }, // JWT
-  // Labelled secrets/passwords: keep the label, redact the value.
-  { type: 'secret', re: /\b(pass(?:word|wd|phrase)?|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|private[_-]?key|bearer|auth[_-]?token)\b([\s:=]+["']?)([^\s"',;]{4,})(["']?)/gi, tag: (m, p1, p2, _v, p4) => `${p1}${p2}[REDACTED]${p4}` },
+  // Labelled secrets/passwords: keep the label, redact the VALUE only. This is a
+  // LABELLED rule (the value is a capture group, not the whole match), so it is
+  // its own type and is never whole-match tokenized. The value lookahead `(?!\[)`
+  // stops it re-matching a value that an earlier token-format rule already
+  // tokenized/tagged (e.g. "api_key=[[SECRET_1]]"), which previously produced a
+  // nested token that could not rehydrate.
+  { type: 'labelled_secret', re: /\b(pass(?:word|wd|phrase)?|secret|api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|private[_-]?key|bearer|auth[_-]?token|token)\b([\s:=]+["']?)((?!\[)[^\s"',;]{4,})(["']?)/gi, tag: (m, p1, p2, _v, p4) => `${p1}${p2}[REDACTED]${p4}` },
 
   // --- labelled PII / PHI. Two shapes to catch real data without eating prose:
   //   (a) label + a real delimiter (: = # -) + value   e.g. "DOB: 01/02/1990"
@@ -79,7 +86,9 @@ const RULES = [
   { type: 'ssn', re: /\b\d{3}-\d{2}-\d{4}\b/g, tag: '[SSN]' },
   { type: 'iban', re: /\b[A-Z]{2}\d{2}(?:[ ]?[A-Z0-9]{4}){3,7}(?:[ ]?[A-Z0-9]{1,3})?\b/g, tag: '[IBAN]' },
   { type: 'email', re: /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/g, tag: '[EMAIL]' },
-  { type: 'phone', re: /(?<![\w.])(?:\+?\d{1,3}[\s.-])?(?:\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}(?![\w.])/g, tag: '[PHONE]' },
+  // Phone: allow a trailing sentence period/punctuation after the number (only a
+  // following DIGIT means it is part of a longer number and should not match).
+  { type: 'phone', re: /(?<![\w.])(?:\+?\d{1,3}[\s.-])?(?:\(\d{3}\)\s?|\d{3}[\s.-])\d{3}[\s.-]\d{4}(?!\d)/g, tag: '[PHONE]' },
 
   // --- network identifiers ---------------------------------------------------
   // Private / internal domain names and hosts (public product domains are kept).
@@ -132,7 +141,7 @@ export function scrubSensitive(input) {
 
 // Coarse policy categories -> the internal rule types each one controls.
 const CATEGORY_TYPES = {
-  secrets: ['private_key', 'secret'], credentials: ['secret'],
+  secrets: ['private_key', 'secret', 'labelled_secret'], credentials: ['secret', 'labelled_secret'],
   phi: ['phi'], dob: ['phi'], pii: ['pii'], account: ['pii'],
   ssn: ['ssn'], iban: ['iban'], card: ['card'],
   email: ['email'], phone: ['phone'], ip: ['ip'], host: ['private_host'],
@@ -303,7 +312,7 @@ export function rehydrate(text, map) {
 
 // A short, human one-liner describing what was redacted, for the operator.
 export function redactionSummary(counts) {
-  const label = { private_key: 'private key', secret: 'secret', ssn: 'SSN', card: 'card number', iban: 'IBAN', email: 'email', phone: 'phone number', ip: 'IP address', private_host: 'private host', phi: 'PHI field', pii: 'personal detail' }
+  const label = { private_key: 'private key', secret: 'secret', labelled_secret: 'secret', ssn: 'SSN', card: 'card number', iban: 'IBAN', email: 'email', phone: 'phone number', ip: 'IP address', private_host: 'private host', phi: 'PHI field', pii: 'personal detail' }
   const parts = Object.entries(counts || {})
     .filter(([, n]) => n > 0)
     .map(([t, n]) => `${n} ${label[t] || t.replace(/_/g, ' ')}${n > 1 ? 's' : ''}`)

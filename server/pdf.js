@@ -9,6 +9,7 @@
 // readable and copy-pasteable out of the PDF.
 // ---------------------------------------------------------------------------
 import PDFDocument from 'pdfkit'
+import { readShotBuffer } from './store.js'   // decrypts the at-rest encrypted shot bytes
 
 const INK = '#1a1a1a'
 const MUTED = '#6b7280'
@@ -68,6 +69,7 @@ export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel =
       else { doc.font('Helvetica').fontSize(size).fillColor(color).text(seg.body.trim(), { width: W }); doc.moveDown(0.4) }
     }
   }
+  const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString() } catch { return '' } }
 
   // Title
   doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text('WorkCoPilot session report')
@@ -89,6 +91,26 @@ export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel =
   else if (doneN > 0) prose(steps.filter((s) => s.status === 'done').map((s) => '- ' + s.text).join('\n'), { size: 10 })
   else doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were confirmed done yet.', { width: W })
 
+  // Outcome: a reference document states plainly whether the task finished, or
+  // where it stopped and why (a strong failure), with no padding.
+  {
+    const ended = session.status === 'ended'
+    const allDone = steps.length > 0 && doneN === steps.length
+    let reached = -1
+    steps.forEach((s, i) => { if (s.status === 'done') reached = i })
+    if (reached < 0) reached = steps.findIndex((s) => s.status === 'current')
+    const lastFlag = [...(session.events || [])].reverse().find((e) => e.kind === 'flag')
+    doc.moveDown(0.2)
+    if (allDone) {
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(ACCENT).text('Outcome: every planned step was confirmed on screen.', { width: W })
+    } else if (ended) {
+      const where = reached >= 0 ? `Reached step ${reached + 1} of ${steps.length}: ${steps[reached].text}` : 'No step was confirmed.'
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(INK).text('Outcome: this session ended before finishing.', { width: W })
+      doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(where, { width: W })
+      if (lastFlag && lastFlag.text) doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('Last issue flagged: ' + String(lastFlag.text), { width: W })
+    }
+  }
+
   // Steps in detail
   heading('Steps, in detail')
   if (!steps.length) doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were planned.', { width: W })
@@ -98,6 +120,7 @@ export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel =
     doc.font('Helvetica-Bold').fontSize(11).fillColor(s.status === 'done' ? ACCENT : INK).text(`${i + 1}. ${s.text}   ${mark}`, { width: W })
     if (s.url) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Open: ' + s.url, { width: W, link: s.url, underline: true })
     if (s.validate) doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Done when: ' + s.validate, { width: W })
+    if (s.status === 'done' && s.doneAt) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Confirmed on screen: ' + fmtWhen(s.doneAt), { width: W })
     if (Array.isArray(s.commands) && s.commands.length) codeBlock(doc, s.commands.map((c) => '$ ' + c).join('\n'))
     if (s.code && s.code.content) {
       doc.font('Helvetica').fontSize(8).fillColor(MUTED).text('File: ' + (s.code.file || 'code'), { width: W })
@@ -125,6 +148,14 @@ export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel =
     }
   }
 
+  // Closing disclaimer: a practical work record, not professional advice.
+  doc.moveDown(1)
+  if (doc.y + 46 > doc.page.height - 60) doc.addPage()
+  rule(); doc.moveDown(0.3)
+  doc.font('Helvetica-Oblique').fontSize(8).fillColor(MUTED).text(
+    'This report is a record of guided work to help you act. It is not legal, financial, medical or other professional advice. Verify anything you rely on against your own requirements and a qualified professional. WorkCoPilot provides controls and evidence; it does not make you compliant or certified.',
+    { width: W })
+
   // Page numbers
   const range = doc.bufferedPageRange()
   for (let i = 0; i < range.count; i++) {
@@ -147,12 +178,14 @@ function stepShots(doc, shots, W) {
   const bottom = doc.page.height - doc.page.margins.bottom
   for (const shot of shots) {
     try {
-      const img = doc.openImage(shot.path)
+      const bytes = readShotBuffer(shot.path)   // decrypted Buffer (handles legacy plaintext too)
+      if (!bytes) continue
+      const img = doc.openImage(bytes)
       const scale = Math.min(W / img.width, MAX_H / img.height, 1)
       const drawH = img.height * scale
       // Page-break BEFORE drawing so the image never runs off the page edge.
       if (doc.y + drawH + 16 > bottom) doc.addPage()
-      doc.image(shot.path, { fit: [W, MAX_H], align: 'center' })
+      doc.image(bytes, { fit: [W, MAX_H], align: 'center' })
       doc.moveDown(0.2)
       const cap = shot.caption != null ? String(shot.caption).trim() : ''
       if (cap) {

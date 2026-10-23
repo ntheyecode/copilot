@@ -10,7 +10,8 @@
 // screen and (on the installed app) which display is shared. The engine is
 // loaded lazily from a CDN only when protection is on, so it costs nothing for
 // users who do not use it.
-import { scrubSensitive } from '../server/work-scrub.js'
+import { scrubSensitive, scrubWithPolicy } from '../server/work-scrub.js'
+import { activePolicy } from './scrub.js'
 
 const V = '5.1.1'
 const DIST = `https://cdn.jsdelivr.net/npm/tesseract.js@${V}/dist`
@@ -66,12 +67,17 @@ export async function redactFrame(dataUrl, { strict = true } = {}) {
     const lines = (data && data.lines) || []
     ctx.fillStyle = '#000'
     let masked = 0
+    // Use the user's EFFECTIVE governance policy when one is armed, so the SAME
+    // custom rules and block words that scrub typed text also mask a sensitive
+    // line in the screenshot. Falls back to the built-in detectors otherwise.
+    const pol = (() => { try { return activePolicy() } catch { return null } })()
+    const hit = (t) => { try { return (pol ? scrubWithPolicy(t, pol) : scrubSensitive(t)).total > 0 } catch { return scrubSensitive(t).total > 0 } }
     for (const ln of lines) {
       const text = String(ln.text || '')
       if (!text.trim()) continue
       // Mask the whole line when it carries ANY sensitive value: safer than
       // trying to pinpoint the word, and robust to values split across words.
-      if (scrubSensitive(text).total > 0) {
+      if (hit(text)) {
         const b = ln.bbox || ln
         if (b && Number.isFinite(b.x0)) {
           ctx.fillRect(b.x0 - 3, b.y0 - 3, (b.x1 - b.x0) + 6, (b.y1 - b.y0) + 6)

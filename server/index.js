@@ -28,6 +28,7 @@ import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
+import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 
@@ -92,7 +93,7 @@ function sendWorkError(res, e, req) {
       store.recordWorkIncident({
         kind: (e && e.ai) ? 'ai_error' : 'system_error',
         status: (e && e.status) || null,
-        message: (e && e.message) || 'unknown error',
+        message: ((e && e.code) ? `[${e.code}] ` : '') + ((e && e.message) || 'unknown error'),
         userId: wu.id || null, username: wu.username || '',
         companyId: wu.companyId || null,
         sessionId: (req && req.params && req.params.id) || null,
@@ -100,7 +101,8 @@ function sendWorkError(res, e, req) {
       })
     } catch { /* never fail on logging */ }
     const extra = (e && e.status === 429) ? ' It may be a few minutes.' : ''
-    return res.status(503).json({ error: 'The system is busy right now. Please try again in a little while.' + extra, busy: true })
+    const ref = (e && e.code) ? ` (ref ${e.code})` : ''
+    return res.status(503).json({ error: `The system is busy right now${ref}. Please try again in a little while.${extra}`, busy: true, code: (e && e.code) || null })
   }
   return res.status((e && e.status) || 500).json({ error: (e && e.message) || 'Server error' })
 }
@@ -153,16 +155,36 @@ function requireWorkSubscription(req, res, next) {
     if (!store.userCanUseService(req.workUser.id)) {
       return res.status(402).json({ error: 'Your company has no license seat for you right now. Ask your company admin to free a seat or add licenses.', needsSeat: true })
     }
-    return next()
+    return requireWorkTime(req, res, next)
   }
   // Personal accounts: enforce subscriptions only once billing is actually
   // configured (so existing users are never locked out before Stripe is set up).
   // "Configured" is a usable secret key from the store (superadmin set it in the
   // console) OR the env var.
-  if (!billingConfigured(store)) return next()
+  if (!billingConfigured(store)) return requireWorkTime(req, res, next)
   if (!store.userCanUseService(req.workUser.id)) {
     return res.status(402).json({ error: 'A subscription is needed to start guiding.', needsSubscription: true })
   }
+  requireWorkTime(req, res, next)
+}
+// Out-of-time gate: a seat / subscription lets you IN, but you still need time
+// left today (free daily minutes + purchased balance + company pool). When it is
+// all used up we stop the chargeable actions server-side with an ACTIONABLE
+// message, instead of relying on the client to notice the heartbeat. Enterprise
+// behaviour: never silently keep consuming AI past the limit.
+function requireWorkTime(req, res, next) {
+  try {
+    const usage = store.getWorkUsage(req.workUser.id)
+    if (usage && usage.exhausted) {
+      const how = req.workUser.companyId
+        ? 'Your company admin can allocate more minutes from the company pool.'
+        : 'Add hours from your dashboard to keep going now.'
+      return res.status(402).json({
+        error: `You have used all your WorkCoPilot time for today. It resets at ${usage.resetLabel || '11:59 PM ET'}. ${how}`,
+        needsTime: true, resetLabel: usage.resetLabel || '11:59 PM ET',
+      })
+    }
+  } catch { /* never block on a usage-read error - let the action proceed */ }
   next()
 }
 const ADMIN_ROLES = new Set(['admin', 'superadmin'])
@@ -299,6 +321,113 @@ async function findWorkVision(req) {
   const vm = await pickWorkVision(rt)
   return vm ? { rt: { ...rt, chatModel: vm, visionModel: vm }, visionModel: vm } : null
 }
+// ---- AI reliability failover (enterprise scale) ---------------------------
+// The alternate provider keys a text call may fail over to, best-first, when the
+// primary key has no current model left. ONLY when the data boundary allows it:
+// a company or user on their OWN key stays on that key (empty list), so a key
+// outage never silently reroutes their screen/text to platform keys. Platform
+// mode may move across the admin's configured providers.
+function aiAlternates(req, primaryProviderId) {
+  const companyRt = store.getCompanyRuntime(req.workUser.id)
+  if (companyRt && companyRt.apiKey) return []
+  if (!store.getWorkPlatformAllowed()) return []
+  return store.getConfiguredRuntimes().filter((r) => r && r.apiKey && r.providerId !== primaryProviderId)
+}
+// The web-search (Tavily) key for THIS request's web learning, resolved in the
+// same precedence as AI keys: the user's company key first (their data boundary
+// and billing), then the platform key the superadmin set, then the env var. ''
+// when none - web learning then simply no-ops (planning still works).
+function resolveWebSearchKey(req) {
+  try {
+    const companyKey = req.workUser ? store.getCompanyWebSearchKey(req.workUser.id) : null
+    if (companyKey) return companyKey
+  } catch { /* fall through */ }
+  try { const k = store.getPlatformWebSearchKey(); if (k) return k } catch { /* fall through */ }
+  return WORK_TAVILY_KEY
+}
+// Compute the "best + cheapest right now" recommendation across a set of runtimes
+// (configured provider keys). Each provider is scored from its LIVE catalog, then
+// we pick the overall cheapest, cheapest vision-capable, and best across them, so
+// an admin always sees a current, grounded recommendation. Returns null-ish when
+// no provider could be reached (bad keys / all down) - the caller surfaces that.
+async function computeAiRecommendation(runtimes) {
+  const providers = []
+  for (const rt of (runtimes || [])) {
+    try { const r = await ai.recommendModels(rt); if (r) providers.push(r) } catch { /* skip a provider that cannot list */ }
+  }
+  const pickMin = (key) => providers
+    .map((p) => p[key] ? { ...p[key], provider: p.provider, label: p.label } : null)
+    .filter((x) => x && x.usdPerMtok != null)
+    .sort((a, b) => a.usdPerMtok - b.usdPerMtok)[0] || null
+  const pickBest = () => providers
+    .map((p) => p.best ? { ...p.best, provider: p.provider, label: p.label } : null)
+    .filter(Boolean)
+    .sort((a, b) => (b.quality - a.quality) || ((a.usdPerMtok ?? 99) - (b.usdPerMtok ?? 99)))[0] || null
+  return {
+    providers,
+    overall: { cheapest: pickMin('cheapest'), cheapestVision: pickMin('cheapestVision'), best: pickBest() },
+    note: 'Approximate published list prices, for guidance only - providers change them. The recommendation is drawn from each key\'s live model catalog and refreshes daily.',
+  }
+}
+// Record every model/provider switch as a superadmin incident, and surface a
+// quiet, plain-English note in the user's session feed (a switch is resilience,
+// not an error - the user never sees the raw cause). Fatal exhaustion is logged
+// with its reference code so support can act. Never throws into the AI path.
+function makeOnSwitch(req, sessionId) {
+  const wu = (req && req.workUser) || {}
+  return (evt) => {
+    try {
+      const label = (id) => (id && ai.PROVIDERS[id] && ai.PROVIDERS[id].label) || id || 'another provider'
+      const why = evt.reason === 'rate_limit' ? 'busy (rate limit)' : (evt.reason === 'retired' ? 'retired' : 'unavailable')
+      store.recordWorkIncident({
+        kind: evt.fatal ? 'ai_exhausted' : 'ai_failover',
+        status: evt.fatal ? 503 : null,
+        provider: evt.toProvider || evt.fromProvider || null,
+        model: evt.toModel || evt.fromModel || null,
+        message: evt.fatal
+          ? `[${evt.code}] ${evt.scope}: ${label(evt.fromProvider)}/${evt.fromModel || '?'} ${why} and no working model or provider remained`
+          : `${evt.scope}: ${label(evt.fromProvider)}/${evt.fromModel || '?'} ${why} - routed to ${label(evt.toProvider)}/${evt.toModel}${evt.crossProvider ? ' (switched provider)' : ' (same provider)'}`,
+        userId: wu.id || null, username: wu.username || '',
+        companyId: wu.companyId || null, sessionId: sessionId || null, call: evt.scope || null,
+      })
+      if (sessionId && !evt.fatal) {
+        // Agnostic to the user: they learn a switch happened (never silently fail,
+        // SUPREME RULE III) but not the provider/model name. Full detail is in the
+        // superadmin incident recorded just above.
+        store.appendWorkEvent(wu.id, sessionId, { kind: 'ai', text: `Switched to another AI model to keep going - the previous one was ${evt.reason === 'rate_limit' ? 'busy' : 'retired'}.` })
+      }
+    } catch { /* logging must never break the request */ }
+  }
+}
+// Attach the failover ladder to a runtime before it reaches the AI layer: the
+// alternate provider keys and the switch recorder. One place, so text and vision
+// runtimes both get it.
+function withFailover(req, rt) {
+  if (!rt) return rt
+  const sessionId = (req && req.params && req.params.id) || null
+  return { ...rt, alternates: aiAlternates(req, rt.providerId), onSwitch: makeOnSwitch(req, sessionId) }
+}
+// MANDATORY security gate, in ONE place (SUPREME RULE II). Deterministically
+// verifies the code + dependencies we are about to hand the user BEFORE they act:
+// dangerous commands and known-vulnerable library versions are flagged with the
+// safe fix, as the real backstop to the secure-coding prompt. Best-effort +
+// bounded; a lookup error NEVER blocks the guidance. Returns the `security`
+// object (null when there is no code to check), and appends user-facing flags.
+async function runSecurityGate(userId, sessionId, codeText) {
+  try {
+    if (!codeText || !codeText.trim()) return null
+    const rev = await Promise.race([securityReview(codeText), new Promise((r) => setTimeout(() => r(null), 12000))])
+    if (!rev) return null
+    const security = { codeIssues: rev.codeIssues, vulnerable: rev.vulnerable, outdated: rev.outdated, checkedDeps: rev.checkedDeps }
+    for (const c of rev.codeIssues.slice(0, 4)) store.appendWorkEvent(userId, sessionId, { kind: 'flag', text: `Security: ${c.title}. ${c.fix}` })
+    for (const v of rev.vulnerable.slice(0, 4)) {
+      const ids = (v.vulns || []).slice(0, 3).map((x) => x.id).join(', ')
+      const safe = v.latest || (v.vulns || []).map((x) => x.fixedIn).filter(Boolean).sort().pop() || 'a patched version'
+      store.appendWorkEvent(userId, sessionId, { kind: 'flag', text: `Security: ${v.name} ${v.version} has ${v.vulns.length} known ${v.vulns.length === 1 ? 'vulnerability' : 'vulnerabilities'} (${ids}${v.vulns.length > 3 ? ', and more' : ''}). Upgrade to ${safe}${v.latest ? ' (latest)' : ' or later'}.` })
+    }
+    return security
+  } catch { return null }
+}
 // Resolve the runtime a request should use. needVision=true requires a vision
 // model (plan-with-frame, watch, ask) or we 400 with the fix. Never silently
 // no-ops: if nothing is ready, say exactly what to do.
@@ -314,7 +443,11 @@ async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
     return null
   }
   const v = await findWorkVision(req)
-  if (v) { try { v.strong = await findWorkVisionStrong(req, v) } catch { v.strong = null } return v }
+  if (v) {
+    v.rt = withFailover(req, v.rt)
+    try { v.strong = await findWorkVisionStrong(req, v); if (v.strong) v.strong.rt = withFailover(req, v.strong.rt) } catch { v.strong = null }
+    return v
+  }
   // A company on its own/corporate keys uses those; else platform, else the user's key.
   const companyRt = store.getCompanyRuntime(req.workUser.id)
   const platform = store.getWorkPlatformAllowed()
@@ -339,7 +472,7 @@ async function resolveWorkRuntime(req, res, { needVision = false } = {}) {
     })
     return null
   }
-  return { rt: base, visionModel: null, strong: null }
+  return { rt: withFailover(req, base), visionModel: null, strong: null }
 }
 // Pick the runtime for a single vision call. `deep` (the user's manual escalate)
 // uses the stronger model as primary; otherwise the cheap model is primary and
@@ -349,20 +482,63 @@ function workCallRuntime(rr, deep) {
   const backup = rr.strong ? { cfg: rr.strong.rt, visionModel: rr.strong.visionModel } : null
   return { rt: rr.rt, visionModel: rr.visionModel, backup, forcedStrong: false, strongModel: rr.strong ? rr.strong.visionModel : null }
 }
+// PLAN WITH THE BEST MODEL. Planning is one call per session (the watch loop stays
+// on the cheap model), so we spend it on the strongest model available on the
+// permitted key(s) - respecting the data boundary (own/company key stays on that
+// key; platform may pick across configured providers). With a frame we use the
+// strongest VISION model (already resolved into rr.strong); without one we pick
+// the best CHAT model. Bounded by a timeout, with a safe fallback to the resolved
+// runtime so planning never stalls. Returns a `call`-shaped object + `plannedBy`.
+async function bestPlanningCall(req, rr, hasFrame) {
+  const raced = (p, ms, fb) => Promise.race([p, new Promise((r) => setTimeout(() => r(fb), ms))]).catch(() => fb)
+  const wrap = (rt, visionModel, backup, model) => {
+    const providerId = (rt && rt.providerId) || null
+    const plannedBy = { model: model || null, provider: providerId, label: (ai.PROVIDERS[providerId] || {}).label || providerId, ...ai.modelRank(providerId, model) }
+    // Keep the failover ladder on the planning runtime (own/company/configured
+    // keys resolved here are raw), so a rate-limited top model still degrades.
+    return { call: { rt: withFailover(req, rt), visionModel, backup, forcedStrong: true, strongModel: model }, plannedBy }
+  }
+  if (hasFrame) {
+    // strongest vision model (findWorkVisionStrong already honored the boundary)
+    const v = rr.strong || { rt: rr.rt, visionModel: rr.visionModel }
+    const backup = rr.strong ? { cfg: rr.rt, visionModel: rr.visionModel } : null
+    return wrap(v.rt, v.visionModel, backup, v.visionModel)
+  }
+  // text: best chat model. Own/company key -> best on that key; platform -> the
+  // cached daily recommendation across configured providers.
+  const companyRt = store.getCompanyRuntime(req.workUser.id)
+  const ownKey = (companyRt && companyRt.apiKey) ? companyRt : (!store.getWorkPlatformAllowed() ? store.getWorkUserRuntime(req.workUser.id) : null)
+  try {
+    if (ownKey && ownKey.apiKey) {
+      const rec = await raced(ai.recommendModels(ownKey), 6000, null)
+      const model = (rec && rec.best && rec.best.model) || ownKey.chatModel
+      return wrap({ ...ownKey, chatModel: model }, null, null, model)
+    }
+    let reco = store.getWorkAiRecommendation()
+    if (!reco) { const data = await raced(computeAiRecommendation(store.getConfiguredRuntimes()), 8000, null); if (data) reco = store.setWorkAiRecommendation(data) }
+    const best = reco && reco.overall && reco.overall.best
+    if (best && best.provider) {
+      const rt = store.getConfiguredRuntimes().find((x) => x.providerId === best.provider) || rr.rt
+      return wrap({ ...rt, chatModel: best.model }, null, null, best.model)
+    }
+  } catch { /* fall through to the resolved runtime */ }
+  return wrap(rr.rt, null, null, rr.rt && rr.rt.chatModel)
+}
 // Best-effort web research so the plan reflects the LATEST UI/URLs/best practice
 // over the model's possibly-stale memory. Uses Tavily when WORK_TAVILY_KEY is
 // set; otherwise returns '' (planning still works from model knowledge). Never
 // blocks or throws into a request.
-async function workResearchNotes(goal) {
+async function workResearchNotes(goal, apiKey) {
   const g = String(goal || '').trim()
-  if (!g || !WORK_TAVILY_KEY) return ''
+  const key = apiKey || WORK_TAVILY_KEY
+  if (!g || !key) return ''
   try {
     const year = new Date().getFullYear()
     const res = await fetch('https://api.tavily.com/search', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        api_key: WORK_TAVILY_KEY,
+        api_key: key,
         query: `${g} - exact current step by step, latest UI, official sign-in or console URL, ${year}`,
         search_depth: 'basic',
         max_results: 5,
@@ -379,6 +555,99 @@ async function workResearchNotes(goal) {
       return `- ${t}${u ? ` [${u}]` : ''}${c ? `: ${c}` : ''}`
     }).join('\n')
   } catch { return '' }
+}
+
+// ---- Web learning: fetch a link the user gave and read it ------------------
+// When a goal says "visit X, read the guides, then help me", the model's own
+// memory is not enough - we fetch that page (and a few same-site sub-pages) on
+// the SERVER, extract the readable text, and ground the plan in it. Safe by
+// construction: only public http(s), never private/internal hosts (no SSRF),
+// bounded pages/bytes/time, text only, and it never throws into a request.
+function isPublicHttpUrl(u) {
+  let url; try { url = new URL(u) } catch { return false }
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return false
+  const h = url.hostname.toLowerCase()
+  if (!h.includes('.')) return false
+  if (/(^|\.)(localhost|local|internal|intranet|corp|lan|home|test|localdomain|priv|private)$/.test(h)) return false
+  if (h.includes(':')) return false // raw IPv6 literal
+  const m = h.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+  if (m) {
+    const a = +m[1], b = +m[2]
+    if (a === 0 || a === 10 || a === 127 || a >= 224 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254) || (a === 100 && b >= 64 && b <= 127)) return false
+  }
+  return true
+}
+function htmlToText(html) {
+  let s = String(html || '')
+  s = s.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<!--[\s\S]*?-->/g, ' ')
+  s = s.replace(/<(nav|header|footer|svg|form|noscript)[\s\S]*?<\/\1>/gi, ' ')
+  s = s.replace(/<\/(p|div|li|h[1-6]|br|tr|section)>/gi, '\n').replace(/<[^>]+>/g, ' ')
+  s = s.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#0?39;|&apos;/g, "'").replace(/&quot;/g, '"')
+  return s.replace(/[ \t]+/g, ' ').replace(/\n\s*\n\s*/g, '\n').trim()
+}
+function extractUrls(text) {
+  const out = [], seen = new Set()
+  for (const m of String(text || '').matchAll(/https?:\/\/[^\s<>"')\]]+/gi)) {
+    let u = m[0].replace(/[.,;:)]+$/, '')
+    if (!seen.has(u) && isPublicHttpUrl(u)) { seen.add(u); out.push(u) }
+  }
+  return out
+}
+async function fetchPageText(url, timeoutMs = 9000, maxBytes = 1_200_000) {
+  const ctrl = new AbortController(); const t = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { signal: ctrl.signal, redirect: 'follow', headers: { 'User-Agent': 'WorkCoPilotBot/1.0 (+https://admireveda.com)', Accept: 'text/html,application/xhtml+xml,text/plain' } })
+    clearTimeout(t)
+    if (!res.ok) return { error: `HTTP ${res.status}` }
+    if (!isPublicHttpUrl(res.url)) return { error: 'redirected off a public host' }
+    const ct = res.headers.get('content-type') || ''
+    if (!/text\/html|text\/plain|application\/(xhtml|xml)/i.test(ct)) return { error: 'not a readable page' }
+    const cl = Number(res.headers.get('content-length') || 0)
+    if (cl && cl > maxBytes * 3) return { error: 'page too large' }
+    const html = (await res.text()).slice(0, maxBytes)
+    return { text: htmlToText(html), finalUrl: res.url, html }
+  } catch (e) { clearTimeout(t); return { error: /abort/i.test((e && e.message) || '') ? 'timed out' : 'could not connect' } }
+}
+// Crawl the links the user gave: fetch each root, then a few same-site sub-pages
+// (guides/docs/labs). Returns grounding text + which pages were read + errors.
+async function fetchUrlsForLearning(text, { maxRoots = 2, maxPages = 5, perPage = 3500, totalCap = 12000 } = {}) {
+  const roots = extractUrls(text).slice(0, maxRoots)
+  if (!roots.length) return { grounding: '', pages: [], errors: [] }
+  const pages = [], errors = [], fetched = new Set()
+  const take = async (u) => {
+    if (fetched.has(u) || pages.length >= maxPages) return
+    fetched.add(u)
+    const r = await fetchPageText(u)
+    if (r.error) { errors.push({ url: u, error: r.error }); return r }
+    if (r.text && r.text.length > 40) pages.push({ url: r.finalUrl || u, text: r.text })
+    return r
+  }
+  for (const root of roots) {
+    const r = await take(root)
+    // Follow a few relevant same-site links from the first good page.
+    if (r && r.html && pages.length < maxPages) {
+      try {
+        const origin = new URL(root).origin
+        const links = []
+        for (const m of r.html.matchAll(/href=["']([^"'#?]+)["']/gi)) {
+          let href = m[1]
+          try { href = new URL(href, root).href } catch { continue }
+          if (!href.startsWith(origin)) continue
+          if (!/\/(lab|labs|guide|guides|docs|help|support|how|tutorial|product|products|recover|recovery|setup|start|manual)\b/i.test(href)) continue
+          if (!links.includes(href) && href !== root) links.push(href)
+          if (links.length >= 6) break
+        }
+        for (const l of links) { if (pages.length >= maxPages) break; await take(l) }
+      } catch { /* link discovery is best-effort */ }
+    }
+  }
+  let grounding = ''
+  if (pages.length) {
+    grounding = 'CONTENT READ FROM THE WEBSITE THE USER ASKED YOU TO LEARN FROM (ground the steps in this real, current content, not just memory):\n'
+      + pages.map((p) => `--- ${p.url} ---\n${p.text.slice(0, perPage)}`).join('\n\n')
+    if (grounding.length > totalCap) grounding = grounding.slice(0, totalCap) + '\n[...trimmed]'
+  }
+  return { grounding, pages, errors }
 }
 
 // ===========================================================================
@@ -500,6 +769,64 @@ app.post('/api/work/admin/platform-ai', requireAuth, requireAdmin, wrap((req, re
   if (req.user.role !== 'superadmin') return res.status(403).json({ error: 'Superadmin only.' })
   res.json(store.setWorkPlatformAllowed(!!(req.body || {}).allowed))
 }))
+// Plan-heavy / watch-light is OUR model: the SUPERADMIN forces it on for premium
+// users (companies' premium members + regular premium). Users have no control.
+// GET is readable by any admin; only the superadmin flips it.
+app.get('/api/work/admin/watch-light', requireAuth, requireAdmin, wrap((req, res) => {
+  res.json({ forceWatchLightPremium: store.getWorkForceWatchLight() })
+}))
+app.post('/api/work/admin/watch-light', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.setWorkForceWatchLight(!!(req.body || {}).on))
+}))
+// Homepage hero copy. Readable by any admin; only the superadmin edits it.
+// POST with an empty/missing pairs array restores the built-in default.
+app.get('/api/work/admin/hero', requireAuth, requireAdmin, wrap((req, res) => {
+  res.json({ pairs: store.getHeroPairs(), custom: store.isHeroCustom() })
+}))
+app.post('/api/work/admin/hero', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.setHeroPairs((req.body || {}).pairs))
+}))
+// Platform data-retention window (days; 0 = keep forever). Readable by any admin;
+// only the superadmin sets it. A new window is applied on the next hourly sweep.
+app.get('/api/work/admin/retention', requireAuth, requireAdmin, wrap((req, res) => {
+  res.json({ retentionDays: store.getWorkRetentionDays() })
+}))
+app.post('/api/work/admin/retention', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const out = store.setWorkRetentionDays((req.body || {}).retentionDays)
+  // Apply immediately so the operator sees the effect, not only on the next sweep.
+  try { out.purged = store.purgeOldWorkSessions().purged } catch { out.purged = 0 }
+  res.json(out)
+}))
+// Platform web-search (Tavily) key for live web learning. State is readable by
+// any admin; only the superadmin sets it. The raw key is never returned.
+app.get('/api/work/admin/web-search', requireAuth, requireAdmin, wrap((req, res) => {
+  res.json({ ...store.getPlatformWebSearchState(), envFallback: !!WORK_TAVILY_KEY })
+}))
+app.post('/api/work/admin/web-search', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const { apiKey, provider } = req.body || {}
+  res.json({ ...store.setPlatformWebSearch({ apiKey, provider }), envFallback: !!WORK_TAVILY_KEY })
+}))
+// Superadmin: a company's own web-search key (their data boundary + billing).
+app.post('/api/work/admin/companies/:id/web-search', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const { apiKey, provider } = req.body || {}
+  res.json(store.setCompanyWebSearch(req.params.id, { apiKey, provider }))
+}))
+// Best + cheapest recommendation across configured platform providers. Cached;
+// refreshes at most once a day unless ?refresh=1. Reachability errors surface as
+// a note, never a silent empty (SUPREME RULE III).
+app.get('/api/work/admin/ai-recommendation', requireAuth, requireAdmin, async (req, res) => {
+  try {
+    const force = String((req.query || {}).refresh || '') === '1'
+    let reco = force ? null : store.getWorkAiRecommendation()
+    if (!reco) {
+      const runtimes = store.getConfiguredRuntimes()
+      if (!runtimes.length) return res.json({ at: null, providers: [], overall: null, note: 'No platform AI provider is configured yet. Add a key to see a recommendation.' })
+      const data = await computeAiRecommendation(runtimes)
+      reco = store.setWorkAiRecommendation(data)
+    }
+    res.json(reco)
+  } catch (e) { sendWorkError(res, e, req) }
+})
 // Set a user's tier, and grant non-expiring minutes (overage). userId is the
 // account id.
 app.post('/api/work/admin/tier', requireAuth, requireSuperAdmin, wrap((req, res) => {
@@ -519,13 +846,24 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
   // Company free trial: a pool of 1-hour sessions shared across the company's
   // users. Consume one here; gate when the pool is used up.
   const cu = store.getUser(req.workUser.id)
+  // Daily task gate FIRST (before consuming a company trial): corporate/company
+  // accounts are unlimited; capped tiers must finish the current task and stay
+  // under their daily task cap (superadmin-set in pricing).
+  try {
+    store.startWorkTask(req.workUser.id)
+  } catch (e) {
+    const body = { error: e.message }
+    if (e.mustCompleteCurrent) { body.mustCompleteCurrent = true; body.activeTaskId = e.activeTaskId }
+    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel }
+    return res.status(e.status || 402).json(body)
+  }
   if (cu && cu.companyId) {
     if (store.companyTrialRemaining(cu.companyId) <= 0) {
       return res.status(402).json({ error: 'Your company free trial is used up. Your administrator can add more.', trialExhausted: true })
     }
     store.consumeCompanyTrialSession(cu.companyId)
   }
-  res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }) })
+  res.json({ session: store.createWorkSession(req.workUser.id, { title, goal, scope }), taskUsage: store.getWorkTaskUsage(req.workUser.id) })
 }))
 app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
   res.json({ sessions: store.listWorkSessions(req.workUser.id) })
@@ -544,6 +882,18 @@ app.get('/api/work/team/activity', requireWorkAuth, requireCompanyAdmin, wrap((r
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   res.json({ activity: store.listWorkActivity({ companyId: req.workUser.companyId }) })
 }))
+// Company admin: affirm (or clear) that the organization authorizes WorkCoPilot
+// use on its systems. Recorded with the admin's name + time as the evidence.
+app.get('/api/work/team/authorization', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.getCompanyAuthorization(req.workUser.companyId))
+}))
+app.post('/api/work/team/authorization', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const { attested, byName } = req.body || {}
+  const co = store.setCompanyAuthorization(req.workUser.companyId, { attested: attested !== false, byName: byName || req.workUser.username })
+  res.json({ authorization: co.authorization })
+}))
 // Company admin: use the company's OWN AI keys (overrides our corporate keys).
 // An empty apiKey clears them and the company falls back to what the superadmin set.
 app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
@@ -555,6 +905,23 @@ app.get('/api/work/team/ai', requireWorkAuth, requireCompanyAdmin, wrap((req, re
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   res.json(store.getCompany(req.workUser.companyId))
 }))
+// Company admin: this company's own web-search (Tavily) key for live web learning.
+app.post('/api/work/team/web-search', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const { apiKey, provider } = req.body || {}
+  res.json(store.setCompanyWebSearch(req.workUser.companyId, { apiKey, provider }))
+}))
+// Company admin: best + cheapest recommendation for the keys THIS company runs on
+// (its own key if set, otherwise the platform providers). Not cached per-company
+// (small, on-demand); reachability errors surface, never a silent empty.
+app.get('/api/work/team/ai-recommendation', requireWorkAuth, requireCompanyAdmin, async (req, res) => {
+  try {
+    const companyRt = store.getCompanyRuntime(req.workUser.id)
+    const runtimes = (companyRt && companyRt.apiKey) ? [companyRt] : store.getConfiguredRuntimes()
+    if (!runtimes.length) return res.json({ at: null, providers: [], overall: null, note: 'No AI key is configured for your company yet.' })
+    res.json({ at: new Date().toISOString(), ...(await computeAiRecommendation(runtimes)) })
+  } catch (e) { sendWorkError(res, e, req) }
+})
 // Company admin: this company's AI consumption this far (estimated $, per user).
 // Scoped to the admin's OWN company; the superadmin equivalent lives in
 // work-admin.js at /api/work/admin/companies/:id/consumption.
@@ -578,7 +945,11 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const useGoal = (goal != null ? goal : s.goal) || ''
     if (!String(useGoal).trim()) return res.status(400).json({ error: 'Add a goal first.' })
     const r = await resolveWorkRuntime(req, res, { needVision: !!frame }); if (!r) return
-    const call = workCallRuntime(r, !!(req.body && req.body.deep))
+    // Plan with the BEST model available (one call per session; the watch loop
+    // stays cheap). Surfaced to the user as "Planned by <model>".
+    const bp = await bestPlanningCall(req, r, !!frame)
+    const call = bp.call
+    const plannedBy = bp.plannedBy
     // Scrub PII / PHI / secrets out of the goal and the user's own documents
     // before anything (web search, prompt) leaves to an AI provider - but only
     // when scrubbing is enabled for this user (superadmin policy; off by default).
@@ -602,9 +973,29 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       + (reasonText ? `\n\nWHY RE-PLANNING (updated instructions from the user - honour these): ${reasonText}` : '')
       + (doneSteps.length ? `\n\nALREADY DONE (do NOT repeat these; plan ONLY the remaining work, continuing from where the user is now):\n${doneSteps.map((d, i) => `${i + 1}. ${d.text}`).join('\n')}` : '')
     const research = await Promise.race([
-      workResearchNotes(safeGoal),
+      workResearchNotes(safeGoal, resolveWebSearchKey(req)),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
     ]).catch(() => '')
+    // Web learning: if the goal or scope names a link, READ it on the server and
+    // ground the plan in the real page content (and a few same-site guide pages),
+    // instead of planning from memory. Bounded + SSRF-safe. It ALERTS the user
+    // when it reads a link and when a site cannot be reached, so a "learn from
+    // this site" task never silently falls flat.
+    const linkSource = `${useGoal}\n${scopeAnswers ? scopeAnswers.map((a) => (a && (a.a || a.answer)) || a).join(' ') : ''}`
+    const web = await Promise.race([
+      fetchUrlsForLearning(linkSource),
+      new Promise((resolve) => setTimeout(() => resolve({ grounding: '', pages: [], errors: [] }), 22000)),
+    ]).catch(() => ({ grounding: '', pages: [], errors: [] }))
+    const webGround = web.grounding ? scrubText(web.grounding).clean : ''
+    if (web.pages && web.pages.length) {
+      const hosts = [...new Set(web.pages.map((p) => { try { return new URL(p.url).host.replace(/^www\./, '') } catch { return 'the link' } }))].join(', ')
+      store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Read your link: ${hosts} (${web.pages.length} page${web.pages.length === 1 ? '' : 's'}) and grounded the steps in it.` })
+    }
+    for (const e of (web.errors || []).slice(0, 2)) {
+      const host = (() => { try { return new URL(e.url).host.replace(/^www\./, '') } catch { return String(e.url) } })()
+      store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: `Could not reach ${host} (${e.error}). I planned from what I know. Check the link or your connection, and I can read it live.` })
+    }
+    const combinedResearch = [webGround, research].filter(Boolean).join('\n\n')
     // Desktop on-device path: the app extracts + governs the document locally and
     // passes the text in the request. It is used for THIS plan only and never
     // stored (store.getWorkDocsText is the web path, where docs are persisted).
@@ -613,8 +1004,8 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const docScrub = scrubText(rawDocs)
     const userDocs = docScrub.clean
     const groundedResearch = userDocs
-      ? (`USER-PROVIDED REFERENCE DOCUMENTS (ground the steps in these and fit the user's environment, but verify against best practice: if a document is wrong, outdated, risky or suboptimal, flag it, give the best proven alternative, and note why - do not follow it blindly):\n${userDocs}\n\n` + (research || ''))
-      : research
+      ? (`USER-PROVIDED REFERENCE DOCUMENTS (ground the steps in these and fit the user's environment, but verify against best practice: if a document is wrong, outdated, risky or suboptimal, flag it, give the best proven alternative, and note why - do not follow it blindly):\n${userDocs}\n\n` + (combinedResearch || ''))
+      : combinedResearch
     const scrubCounts = {}
     for (const c of [goalScrub.counts, docScrub.counts]) for (const [k, v] of Object.entries(c)) scrubCounts[k] = (scrubCounts[k] || 0) + v
     const redacted = Object.values(scrubCounts).reduce((a, b) => a + b, 0)
@@ -627,6 +1018,10 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     })
     const plan = await work.workPlan(ai, call.rt, {
       base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, strong: call.backup,
+      // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
+      // each step must be fully self-contained and self-verifiable, since they
+      // follow it with only light, on-demand checks instead of continuous watching.
+      thorough: store.effectiveWatchMode(req.workUser.id) === 'light',
     })
     meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []))
     if (plan.refusal) {
@@ -634,13 +1029,30 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       const cur = store.getWorkSession(req.workUser.id, req.params.id)
       return res.json({ session: cur, steps: cur.steps, refusal: plan.refusal })
     }
-    if (frame && (plan.escalated || call.forcedStrong)) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Planned with a stronger model (${call.strongModel || 'backup'})${call.forcedStrong ? ' - deep pass you asked for' : ' to get a usable plan'}.` })
-    else if (plan.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this plan.' })
+    // Honest "Planned by <model>" surface. If the top model had to hand off to a
+    // backup (weak result or unavailable), say so and do NOT claim the top model
+    // (SUPREME RULE III) - the bold "top-ranked" line only stands when it held.
+    const fellBack = !!(plan.escalated || plan.reason === 'strong_failed')
+    plannedBy.fellBack = fellBack
+    if (fellBack) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'The top model needed a hand, so a backup model finished the plan to keep you moving.' })
+    // Model-agnostic to the user: we surface the QUALITY (top-ranked / best on your
+    // key), never the model name. The actual model stays in the server audit +
+    // superadmin incidents only (owner rule: never expose the model to users).
+    else store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: plannedBy.topRanked
+      ? `Planned by a top-ranked model (per ${plannedBy.source}).`
+      : 'Planned by the best model available on your key.' })
     if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
     else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
     const updated = store.getWorkSession(req.workUser.id, req.params.id)
-    res.json({ session: updated, steps: updated.steps, appContext: updated.appContext })
+    // MANDATORY security gate over every command + code block the plan hands over.
+    const planCode = (updated.steps || []).map((s) => [...(Array.isArray(s.commands) ? s.commands : []), (s.code && s.code.content) || ''].join('\n')).join('\n')
+    const security = await runSecurityGate(req.workUser.id, req.params.id, planCode)
+    // User-facing plannedBy carries QUALITY signals only, never the model/provider
+    // name (owner rule: never expose the model to users). Full model identity lives
+    // in the server audit + superadmin incidents.
+    const plannedByPublic = { topRanked: !!plannedBy.topRanked, tier: plannedBy.tier || null, source: plannedBy.source || null, updated: plannedBy.updated || null, vision: !!plannedBy.vision, fellBack: !!plannedBy.fellBack }
+    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -706,8 +1118,11 @@ app.get('/api/work/sessions/:id/deliverables.pdf', requireWorkAuth, (req, res) =
 function canManagePolicy(req, scope) {
   const role = req.user && req.user.role
   if (role === 'superadmin' || role === 'admin') return true
+  // A company ADMIN manages their own company's policy (applies to all members).
   if (scope && scope.companyId && req.workUser && req.workUser.companyRole === 'company_admin' && String(req.workUser.companyId) === String(scope.companyId)) return true
-  if (scope && scope.userId && req.workUser && String(req.workUser.id) === String(scope.userId)) return true
+  // An INDIVIDUAL user (not in any company) manages their own policy. A company
+  // MEMBER cannot - their company admin governs them, so this is denied for them.
+  if (scope && scope.userId && req.workUser && String(req.workUser.id) === String(scope.userId) && !req.workUser.companyId) return true
   return false
 }
 app.get('/api/work/policy', requireWorkAuth, wrap((req, res) => {
@@ -720,6 +1135,14 @@ app.post('/api/work/policy', requireWorkAuth, wrap((req, res) => {
   const scope = b.companyId ? { companyId: b.companyId } : (b.userId ? { userId: b.userId } : { userId: req.workUser.id })
   if (!canManagePolicy(req, scope)) return res.status(403).json({ error: 'You cannot manage this policy.' })
   res.json({ policy: store.setWorkPolicy(scope, b, (req.workUser && req.workUser.username) || null) })
+}))
+
+// Company admin oversight: list every session of the admin's company members
+// (completed AND in progress), so they can pull the report + audit log for any.
+app.get('/api/work/company/sessions', requireWorkAuth, wrap((req, res) => {
+  const u = req.workUser
+  if (!u || u.companyRole !== 'company_admin' || !u.companyId) return res.status(403).json({ error: 'Company admins only.' })
+  res.json({ sessions: store.listWorkSessionsForCompany(u.companyId) })
 }))
 
 // Watch: the continuous navigator. Reads the WHOLE screen against the WHOLE
@@ -746,9 +1169,21 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const escalated = r.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (r.escalated ? call.strongModel : rr.visionModel)
     meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''))
+    // Snapshot which steps were already done, so we can tell which ones become
+    // confirmed on THIS frame and keep that exact frame as their evidence.
+    const prevDone = new Set((s.steps || []).map((x, i) => (x.status === 'done' ? i : -1)).filter((i) => i >= 0))
     const updated = store.applyWorkNav(req.workUser.id, req.params.id, {
       completed: r.completed, curIdx: (r.current != null ? r.current : null), guidance: r.guidance,
     })
+    // Reference-document evidence: when a step is newly confirmed on screen, keep
+    // the current (already on-device-scrubbed) frame as that step's screenshot.
+    // One per step, best-effort, never blocks guidance.
+    try {
+      if (frame) {
+        const newly = (updated.steps || []).map((x, i) => (x.status === 'done' && !prevDone.has(i) ? i : -1)).filter((i) => i >= 0)
+        if (newly.length) store.captureMilestoneShot(req.workUser.id, req.params.id, Math.max.apply(null, newly), frame)
+      }
+    } catch { /* evidence capture is best-effort */ }
     if (r.flag) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: r.flag })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ' to resolve this step'}.` })
     else if (r.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this step.' })
@@ -786,9 +1221,154 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '')
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
-    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ''}.` })
+    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
     else if (out.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this answer.' })
-    res.json({ answer: out.answer, escalated, model: usedModel })
+    res.json({ answer: out.answer, escalated })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// Result: RETURN the actual answer/output (a number, table, draft, query or
+// analysis), not just the steps. frame is OPTIONAL - with a screenshot it reads
+// the screen, without one it computes from the goal + any pasted data. Read-only:
+// the result is handed back for the user to use. The engine enforces honesty (a
+// result must carry its basis + a way to verify, or it returns what it needs).
+app.post('/api/work/sessions/:id/result', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+  try {
+    const s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const { question, frame, docsText, deep } = req.body || {}
+    const hasFrame = typeof frame === 'string' && frame.startsWith('data:')
+    const rr = await resolveWorkRuntime(req, res, { needVision: hasFrame }); if (!rr) return
+    const call = workCallRuntime(rr, !!deep)
+    // Same policy-aware scrub as planning/context: an armed policy wins, else the
+    // legacy on/off. Goal + the specific ask + any pasted data are all scrubbed.
+    const scrubOn = store.workUserScrubOn(req.workUser.id)
+    const pol = store.getEffectiveWorkPolicy(req.workUser.id)
+    const scrubText = (t) => pol ? scrubWithPolicy(String(t || ''), pol) : (scrubOn ? scrubSensitive(String(t || '')) : { clean: String(t || ''), counts: {}, total: 0 })
+    const sa = scrubForAi(s, scrubOn, req.workUser.id)
+    const qScrub = scrubText(String(question || '').slice(0, 2000))
+    const docScrub = scrubText(String(docsText || '').slice(0, 8000))
+    const redacted = qScrub.total + docScrub.total
+    store.appendWorkAudit(req.params.id, { call: 'result', model: (hasFrame ? call.visionModel : (call.rt && call.rt.chatModel)) || null, scrub: scrubOn || !!pol, redacted, frame: hasFrame ? 'screenshot sent' : 'no frame', sent: qScrub.clean || '[produce the result for the goal]' })
+    const out = await work.workResult(ai, call.rt, {
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
+      question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0, events: sa.events,
+      appContext: s.appContext || '', docsText: docScrub.clean,
+      frame: hasFrame ? frame : null, visionModel: hasFrame ? call.visionModel : null, strong: hasFrame ? call.backup : null,
+    })
+    if (redacted) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary({ ...qScrub.counts, ...docScrub.counts }) })
+    const escalated = out.escalated || call.forcedStrong
+    const usedModel = (hasFrame ? (call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)) : (call.rt && call.rt.chatModel))
+    meterCost(req.params.id, usedModel, qScrub.clean + docScrub.clean + (sa.goal || ''), (out.body || '') + (out.basis || ''))
+    if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
+    // A concise, user-facing record for the session feed + report (full result in the response).
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'result', text: `${out.kind}: ${String(out.need || out.body || '').replace(/\s+/g, ' ').trim().slice(0, 200)}` })
+    // Security gate on CODE-related results only (a command/query/script we hand back).
+    const security = out.kind === 'code' ? await runSecurityGate(req.workUser.id, req.params.id, out.body || '') : null
+    res.json({ result: out, escalated, security })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// Compute over the user's DATA, privacy-first: the client parses the CSV/XLSX on
+// device and sends ONLY the schema (column names + types + row count) - never the
+// rows. This returns a validated, safe computation SPEC (compute_spec.js DSL) that
+// the client runs locally against the full data. The raw data never reaches us.
+app.post('/api/work/sessions/:id/compute', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+  try {
+    const s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const { want, schema, rowCount } = req.body || {}
+    if (!Array.isArray(schema) || !schema.length) return res.status(400).json({ error: 'No table schema was provided. Attach a CSV or spreadsheet first.' })
+    const rr = await resolveWorkRuntime(req, res, {}); if (!rr) return     // text-only; no frame
+    const call = workCallRuntime(rr, false)
+    const scrubOn = store.workUserScrubOn(req.workUser.id)
+    const pol = store.getEffectiveWorkPolicy(req.workUser.id)
+    const scrubText = (t) => pol ? scrubWithPolicy(String(t || ''), pol) : (scrubOn ? scrubSensitive(String(t || '')) : { clean: String(t || ''), counts: {}, total: 0 })
+    const sa = scrubForAi(s, scrubOn, req.workUser.id)
+    const wantScrub = scrubText(String(want || '').slice(0, 2000))
+    // Column names + types only (never a value), capped, so nothing but the shape leaves the device.
+    const cleanSchema = schema.slice(0, 60).map((c) => ({ name: String((c && c.name) || '').slice(0, 80), type: String((c && c.type) || '').slice(0, 24) })).filter((c) => c.name)
+    store.appendWorkAudit(req.params.id, { call: 'compute', model: (call.rt && call.rt.chatModel) || null, scrub: scrubOn || !!pol, redacted: wantScrub.total, frame: 'schema only (no rows)', sent: `[compute over ${cleanSchema.length} cols] ${wantScrub.clean}`.slice(0, 200) })
+    const out = await work.workCompute(ai, call.rt, { base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal, want: wantScrub.clean, schema: cleanSchema, rowCount: Number(rowCount) || 0 })
+    if (wantScrub.total) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(wantScrub.counts) })
+    meterCost(req.params.id, (call.rt && call.rt.chatModel), wantScrub.clean + JSON.stringify(cleanSchema), JSON.stringify(out.spec || {}))
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'compute', text: (out.ok ? `Computation plan ready (${(out.spec.steps || []).length} steps), run on your device.` : `Could not plan: ${out.need || ''}`).slice(0, 160) })
+    res.json({ ...out })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// Add context mid-task: the user hands over a note, a document's text, and/or an
+// uploaded image (screenshot or photo) partway through a guided session. The
+// engine reads it, and AUTO-REPLANS only if the remaining work needs to change -
+// preserving the already-done steps and resuming at the next step (operator chose
+// auto). If no replan is needed it just answers and points at the next action.
+// Images are already on-device-redacted by the client (frame_scrub) when DLP is
+// on; text here is scrubbed server-side with the same policy as planning.
+app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscription, async (req, res) => {
+  try {
+    const s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const { note, docsText, image, frame } = req.body || {}
+    const hasText = !!(String(note || '').trim() || String(docsText || '').trim())
+    const images = [image, frame].filter((x) => typeof x === 'string' && x.startsWith('data:'))
+    if (!hasText && !images.length) return res.status(400).json({ error: 'Add a note, a document, or an image first.' })
+
+    // Same scrub/governance path as planning (policy wins over legacy on/off).
+    const scrubOn = store.workUserScrubOn(req.workUser.id)
+    const pol = store.getEffectiveWorkPolicy(req.workUser.id)
+    const scrubText = (t) => pol ? scrubWithPolicy(String(t || ''), pol) : (scrubOn ? scrubSensitive(String(t || '')) : { clean: String(t || ''), counts: {}, total: 0 })
+    const noteScrub = scrubText(String(note || '').slice(0, 4000))
+    const docScrub = scrubText(String(docsText || '').slice(0, 8000))
+
+    const needVision = images.length > 0
+    const rr = await resolveWorkRuntime(req, res, { needVision }); if (!rr) return
+    const call = workCallRuntime(rr, !!(req.body && req.body.deep))
+    const safeGoal = scrubText(s.goal || '').clean
+    const scrubbedEvents = scrubForAi(s, scrubOn, req.workUser.id).events
+
+    // Best-effort fresh web notes (no-op unless WORK_TAVILY_KEY is set); bounded.
+    const research = await Promise.race([
+      workResearchNotes(`${noteScrub.clean} ${safeGoal}`, resolveWebSearchKey(req)),
+      new Promise((resolve) => setTimeout(() => resolve(''), 12000)),
+    ]).catch(() => '')
+
+    const redacted = noteScrub.total + docScrub.total
+    store.appendWorkAudit(req.params.id, {
+      call: 'context', model: call.visionModel || (call.rt && call.rt.chatModel) || null, scrub: scrubOn, redacted,
+      frame: images.length ? `${images.length} image(s) sent` : null,
+      sent: `[added context] ${noteScrub.clean ? 'note: ' + noteScrub.clean.slice(0, 200) : ''}${docScrub.clean ? ' [+ document text]' : ''}`.trim(),
+    })
+    if (redacted > 0) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary({ ...noteScrub.counts, ...docScrub.counts }) })
+
+    const out = await work.workAddContext(ai, call.rt, {
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: safeGoal,
+      steps: s.steps || [], currentStep: s.currentStep || 0, events: scrubbedEvents, appContext: s.appContext || '',
+      note: noteScrub.clean, docsText: docScrub.clean, research, images,
+      visionModel: call.visionModel, strong: call.backup,
+    })
+    const escalated = out.escalated || call.forcedStrong
+    const usedModel = call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : (needVision ? rr.visionModel : (call.rt && call.rt.chatModel)))
+    meterCost(req.params.id, usedModel || call.visionModel, safeGoal + noteScrub.clean + docScrub.clean, (out.answer || '') + JSON.stringify(out.steps || []))
+
+    // Record what the user added (short), so the session history shows the hand-off.
+    const addedLabel = noteScrub.clean ? noteScrub.clean.slice(0, 160) : (docScrub.clean ? 'a document' : 'an image')
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: `Added context: ${addedLabel}${images.length ? (noteScrub.clean || docScrub.clean ? ' (+ image)' : '') : ''}` })
+
+    let replanned = false
+    if (out.replan && Array.isArray(out.steps) && out.steps.length) {
+      store.replanKeepingProgress(req.workUser.id, req.params.id, out.steps)
+      replanned = true
+      store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Updated the remaining steps from what you added, and kept everything you had already finished.' })
+    }
+    if (out.answer) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
+    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ''}.` })
+
+    const cur = store.getWorkSession(req.workUser.id, req.params.id)
+    res.json({
+      replanned, reason: out.reason, answer: out.answer,
+      index: cur.currentStep, step: (cur.steps || [])[cur.currentStep] || null,
+      steps: cur.steps || [], escalated, model: usedModel,
+    })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -806,7 +1386,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
     const safeGoal = scrubIf(scrubOn, s.goal || "", req.workUser.id)
     const notes = await Promise.race([
-      workResearchNotes(`${act} ${safeGoal}`),
+      workResearchNotes(`${act} ${safeGoal}`, resolveWebSearchKey(req)),
       new Promise((resolve) => setTimeout(() => resolve(''), 12000)),
     ]).catch(() => '')
     const ephemeralDocs2 = typeof (req.body && req.body.docsText) === 'string' ? req.body.docsText.slice(0, 5000) : ''
@@ -827,7 +1407,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
     if (idx != null) { try { saved = store.setWorkStepHowTo(req.workUser.id, req.params.id, idx, out.steps) } catch { /* step may be gone; still return the steps */ } }
     const escalated = out.escalated || call.forcedStrong
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'guidance', text: `How-to: ${act}` })
-    res.json({ steps: saved, escalated, model: call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel) })
+    res.json({ steps: saved, escalated })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -846,6 +1426,8 @@ app.post('/api/work/sessions/:id/mode', requireWorkAuth, wrap((req, res) => {
 // with timestamps, for compliance/auditing. Owner (or superadmin) only.
 app.get('/api/work/sessions/:id/audit.log', requireWorkAuth, wrap((req, res) => {
   let s = store.getWorkSession(req.workUser.id, req.params.id)
+  // A company admin may pull the audit log of any of their company's members.
+  if (!s) s = store.getWorkSessionForCompanyAdmin(req.workUser.id, req.params.id)
   if (!s && req.user && req.user.role === 'superadmin') {
     // superadmin can pull any session's audit log
     s = (store.listAllWorkSessions ? store.listAllWorkSessions() : []).find((x) => x.id === req.params.id) || { id: req.params.id, goal: '' }
@@ -859,13 +1441,19 @@ app.get('/api/work/sessions/:id/audit.log', requireWorkAuth, wrap((req, res) => 
 
 app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) => {
   try {
-    const s = store.getWorkSession(req.workUser.id, req.params.id)
+    let s = store.getWorkSession(req.workUser.id, req.params.id)
+    // A company admin may pull the report of any of their company's members.
+    if (!s) s = store.getWorkSessionForCompanyAdmin(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
+    // Summary generation always uses the session OWNER's runtime/scrub (so a
+    // company admin downloading a member's report never runs it through the
+    // admin's own AI keys or scrub settings).
+    const ownerId = s.workUserId
     let achieved = s.summary || ''
     if (!achieved) {
       try {
-        const rt = store.getWorkUserRuntime(req.workUser.id)
-        if (rt) { achieved = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(req.workUser.id), req.workUser.id) }); if (achieved) store.setWorkSessionSummary(req.workUser.id, req.params.id, achieved) }
+        const rt = store.getWorkUserRuntime(ownerId)
+        if (rt) { achieved = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(ownerId), ownerId) }); if (achieved) store.setWorkSessionSummary(ownerId, req.params.id, achieved) }
       } catch { /* leave empty; the PDF falls back to the list of done steps */ }
     }
     const modeLabel = (work.WORK_MODES.find((m) => m.id === work.normalizeMode(s.mode)) || {}).label || ''
@@ -888,7 +1476,7 @@ app.post('/api/work/sessions/:id/research', requireWorkAuth, async (req, res) =>
     const safeQuestion = scrubIf(scrubOn, question, req.workUser.id)
     const safeGoal = scrubIf(scrubOn, s.goal || "", req.workUser.id)
     const notes = await Promise.race([
-      workResearchNotes(safeQuestion || safeGoal),
+      workResearchNotes(safeQuestion || safeGoal, resolveWebSearchKey(req)),
       new Promise((resolve) => setTimeout(() => resolve(''), 15000)),
     ]).catch(() => '')
     const answer = await work.workResearch(ai, rr.rt, {
@@ -912,6 +1500,10 @@ app.patch('/api/work/sessions/:id/pause', requireWorkAuth, wrap((req, res) => {
   const s = store.setWorkSessionPaused(req.workUser.id, req.params.id, !!(req.body || {}).paused)
   res.json({ session: s, paused: s.paused })
 }))
+// Keep (or stop keeping) scrubbed milestone screenshots in the session report.
+app.post('/api/work/report-shots', requireWorkAuth, wrap((req, res) => {
+  res.json({ user: store.setWorkUserReportShots(req.workUser.id, !!(req.body || {}).enabled) })
+}))
 // Pricing is public (the marketing site reads it); superadmin can change it.
 app.get('/api/work/pricing', wrap((req, res) => {
   // annualReady tells the marketing page whether annual CHECKOUT is wired (all
@@ -919,6 +1511,29 @@ app.get('/api/work/pricing', wrap((req, res) => {
   // 20%-off price and routes to sign-up rather than starting a charge.
   const annualReady = (() => { try { return !!store.getBillingPublic().annualReady } catch { return false } })()
   res.json({ ...store.getWorkPricing(), annualReady })
+}))
+
+// Public: the homepage hero rotation (headline + subtext pairs). Superadmin-
+// editable; the marketing page keeps a built-in fallback so it renders even if
+// this call fails.
+app.get('/api/work/hero', wrap((req, res) => {
+  res.json({ pairs: store.getHeroPairs(), custom: store.isHeroCustom() })
+}))
+
+// Public: the accuracy-benchmark scoreboard. Reads the latest PUBLIC summary the
+// eval runner wrote (generic model labels, aggregates only, held-out excluded);
+// returns { pending: true } until a run exists. Never exposes the internal
+// detail file (exact model + per-task). See docs/accuracy-benchmark-spec.md.
+app.get('/api/work/benchmark', wrap((req, res) => {
+  try {
+    const dir = path.join(__dirname, 'eval', 'results')
+    const files = fs.existsSync(dir) ? fs.readdirSync(dir).filter((f) => f.endsWith('-public.json')) : []
+    if (!files.length) return res.json({ pending: true, method: 'Result-correctness benchmark; see the methodology. No public run has been recorded yet.' })
+    // Newest by mtime.
+    const newest = files.map((f) => ({ f, t: fs.statSync(path.join(dir, f)).mtimeMs })).sort((a, b) => b.t - a.t)[0].f
+    const data = JSON.parse(fs.readFileSync(path.join(dir, newest), 'utf8'))
+    res.json({ pending: false, ...data })
+  } catch (e) { res.json({ pending: true, method: 'Benchmark results are not available right now.' }) }
 }))
 
 // Public "is my scenario covered?" assistant for the marketing site. The
@@ -1095,13 +1710,40 @@ app.post('/api/work/sessions/:id/current', requireWorkAuth, wrap((req, res) => {
 }))
 
 // Draft an email / message about the task (read-only output to paste).
-app.post('/api/work/sessions/:id/draft', requireWorkAuth, async (req, res) => {
+// Compose: WRITE the actual document (letter, report, resume section, contract
+// clause, red-line notes, outline, table, code), in a chosen format, grounded in
+// the goal + any pasted data + optional screen. Read-only output the user copies
+// or downloads. Replaces the old dead "draft a message" endpoint.
+app.post('/api/work/sessions/:id/compose', requireWorkAuth, requireWorkSubscription, async (req, res) => {
   try {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
-    const rr = await resolveWorkRuntime(req, res, {}); if (!rr) return
-    const draft = await work.workDraft(ai, rr.rt, { base: store.getSystemPrompt(), goal: s.goal || '', ask: (req.body || {}).ask || '', session: s })
-    res.json({ draft })
+    const { want, format, docsText, frame, deep } = req.body || {}
+    const hasFrame = typeof frame === 'string' && frame.startsWith('data:')
+    const rr = await resolveWorkRuntime(req, res, { needVision: hasFrame }); if (!rr) return
+    const call = workCallRuntime(rr, !!deep)
+    const scrubOn = store.workUserScrubOn(req.workUser.id)
+    const pol = store.getEffectiveWorkPolicy(req.workUser.id)
+    const scrubText = (t) => pol ? scrubWithPolicy(String(t || ''), pol) : (scrubOn ? scrubSensitive(String(t || '')) : { clean: String(t || ''), counts: {}, total: 0 })
+    const sa = scrubForAi(s, scrubOn, req.workUser.id)
+    const wantScrub = scrubText(String(want || '').slice(0, 2000))
+    const docScrub = scrubText(String(docsText || '').slice(0, 8000))
+    const redacted = wantScrub.total + docScrub.total
+    store.appendWorkAudit(req.params.id, { call: 'compose', model: (hasFrame ? call.visionModel : (call.rt && call.rt.chatModel)) || null, scrub: scrubOn || !!pol, redacted, frame: hasFrame ? 'screenshot sent' : 'no frame', sent: wantScrub.clean || '[write the document for the goal]' })
+    const out = await work.workCompose(ai, call.rt, {
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
+      want: wantScrub.clean, format: String(format || '').slice(0, 24), steps: s.steps || [], currentStep: s.currentStep || 0,
+      events: sa.events, appContext: s.appContext || '', docsText: docScrub.clean,
+      frame: hasFrame ? frame : null, visionModel: hasFrame ? call.visionModel : null, strong: hasFrame ? call.backup : null,
+    })
+    if (redacted) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary({ ...wantScrub.counts, ...docScrub.counts }) })
+    const escalated = out.escalated || call.forcedStrong
+    const usedModel = (hasFrame ? (call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)) : (call.rt && call.rt.chatModel))
+    meterCost(req.params.id, usedModel, wantScrub.clean + docScrub.clean + (sa.goal || ''), (out.body || '') + (out.basis || ''))
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'compose', text: `${out.format}: ${String(out.title || '').slice(0, 120)}` })
+    // Security gate on CODE-related compositions only (an authored script/query/config).
+    const security = out.format === 'code' ? await runSecurityGate(req.workUser.id, req.params.id, out.body || '') : null
+    res.json({ compose: out, escalated, security })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -1133,6 +1775,17 @@ registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRunt
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, wrap })
+
+// Public: the Windows desktop installer. A bare /downloads/... path hits the
+// nginx catch-all and returns the SPA HTML (a ~6 KB file renamed .exe), so it
+// MUST be served via an /api/work path that reaches this app, before the catch-all.
+app.get('/api/work/desktop-setup.exe', (req, res) => {
+  const f = path.join(ROOT, 'downloads', 'WorkCoPilot-Setup.exe')
+  if (!fs.existsSync(f)) return res.status(404).json({ error: 'The installer is not published yet.' })
+  res.setHeader('Content-Type', 'application/octet-stream')
+  res.setHeader('Content-Disposition', 'attachment; filename="WorkCoPilot-Setup.exe"')
+  res.sendFile(f)
+})
 
 // Public: the security and privacy paper. Served via an /api/work path so it
 // reaches this app (a bare /x.pdf would hit the nginx catch-all). The file ships
@@ -1206,6 +1859,12 @@ export function start({ port } = {}) {
       console.log('')
       const workIdleTimer = setInterval(sweepIdleWorkSessions, WORK_SWEEP_MS)
       if (workIdleTimer.unref) workIdleTimer.unref() // never keep the process alive just for a sweep
+      // Data-retention sweep: auto-purge sessions past the superadmin window. Runs
+      // once at startup and hourly; a no-op while retention is off (the default).
+      const runRetention = () => { try { const r = store.purgeOldWorkSessions(); if (r.purged) console.log(`[work] retention: purged ${r.purged} session(s) older than ${r.retentionDays}d`) } catch (e) { console.warn(`[work] retention sweep error: ${e.message}`) } }
+      runRetention()
+      const workRetentionTimer = setInterval(runRetention, 60 * 60 * 1000)
+      if (workRetentionTimer.unref) workRetentionTimer.unref()
       resolve(srv)
     })
   })

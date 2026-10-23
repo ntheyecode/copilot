@@ -88,7 +88,7 @@ export const WORKADMIN_CSS = `
   background: var(--wka-panel);
   border: 1px solid var(--wka-line); border-radius: var(--wka-radius);
   padding: 18px 18px 16px;
-  box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 1px 1px rgba(31,41,55,0.03);
+  box-shadow: 0 1px 2px rgba(26,31,54,0.05), 0 8px 22px -14px rgba(26,31,54,0.16);
 }
 .wka-card .k { font-size: 12px; color: var(--wka-muted); display: flex; align-items: center; gap: 8px; }
 .wka-card .k svg { color: var(--wka-accent); }
@@ -99,11 +99,12 @@ export const WORKADMIN_CSS = `
 
 /* Panels */
 .wka-panel {
-  background: var(--wka-panel); border: 1px solid var(--wka-line);
-  border-radius: var(--wka-radius); padding: 20px; margin-bottom: 20px;
-  box-shadow: 0 1px 2px rgba(31,41,55,0.04), 0 1px 1px rgba(31,41,55,0.03);
+  background: linear-gradient(180deg, var(--wka-accent-soft), var(--wka-panel) 76px);
+  border: 1px solid var(--wka-line);
+  border-radius: var(--wka-radius); padding: 22px; margin-bottom: 20px;
+  box-shadow: 0 1px 2px rgba(26,31,54,0.04), 0 12px 30px -18px rgba(26,31,54,0.17);
 }
-.wka-panel h2 { font-size: 15px; margin: 0 0 4px; font-weight: 620; }
+.wka-panel h2 { font-size: 15px; margin: 0 0 5px; font-weight: 620; letter-spacing: -0.1px; }
 .wka-panel .desc { color: var(--wka-muted); font-size: 12px; margin: 0 0 16px; }
 
 /* Table */
@@ -115,7 +116,7 @@ export const WORKADMIN_CSS = `
 .wka-input:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-search { flex: 1; min-width: 180px; max-width: 360px; }
 
-.wka-table-wrap { overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; background: var(--wka-panel); box-shadow: 0 1px 2px rgba(31,41,55,0.04); }
+.wka-table-wrap { overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; background: var(--wka-panel); box-shadow: 0 1px 2px rgba(26,31,54,0.04), 0 10px 26px -16px rgba(26,31,54,0.15); }
 table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
 .wka-table th {
   text-align: left; padding: 10px 14px; color: var(--wka-faint); font-weight: 600;

@@ -19,6 +19,7 @@
 // ===========================================================================
 import { scrubGuidance } from './ai_language.js'
 import { methodAnchorFor } from './method_anchors.js'
+import { validateSpec, describeSpecForAI } from './compute_spec.js'
 
 // Pull in the canonical methodology for the discipline the goal implies (OWASP
 // WSTG for pentest, risk-based design for QA, NIST SSDF for DevSecOps, and so
@@ -158,6 +159,14 @@ const WORK_MODE =
   'action themselves. Be concrete and specific to what is actually on the screen (exact button ' +
   'names, menu paths, field values). Plain spoken English, no AI phrasing, no preamble, no em ' +
   'dashes, no meta-talk about being an assistant.\n' +
+  'SHOW WHAT TO DO AT A GLANCE. In every step, guidance and answer, make the one thing to act on ' +
+  'impossible to miss: wrap the EXACT control the person must click, open, select or find - a ' +
+  'button, tab, menu item, link, checkbox, field, app or page name, using its real on-screen label ' +
+  '- in **double asterisks** (bold). Wrap anything they must TYPE or run verbatim - a command, code, ' +
+  'file path, URL, or exact value - in `backticks`. Use these on the real target only, a word or a ' +
+  'few, never on a whole sentence, so the next action jumps out. One bolded target and, where ' +
+  'relevant, one backticked value per instruction is the norm. Example: "Click **Create a new ' +
+  'scenario**, then type `Facebook Lead Ads` in the search box." Do not bold ordinary words.\n' +
   'ACCURACY ABOVE CONFIDENCE. Only name a button, menu, tab, field, option or setting that you ' +
   'can ACTUALLY SEE in the screenshot, using its exact on-screen label. NEVER invent a menu ' +
   'path, option name or setting that is not visible, and never assume a tool works a certain way ' +
@@ -229,6 +238,12 @@ const WORK_MODE =
   'path carries a security trade-off, say so in a few words and give the safer alternative; never ' +
   'hand over an insecure command just because it is shorter. When you review the person\'s own code ' +
   'or setup, lead with these same checks and name the fix.\n' +
+  'PRACTICAL GUIDANCE, NOT PROFESSIONAL ADVICE. For legal, regulatory, compliance, tax, financial, ' +
+  'medical or other safety-critical matters, make clear in your answer that this is practical guidance ' +
+  'to help the person act, not legal, financial, medical or professional advice, and that they should ' +
+  'confirm it against their own requirements and a qualified professional before relying on it. Never ' +
+  'imply a certification, an audit result, a regulatory approval or a guarantee the person does not ' +
+  'have. State this briefly and in plain words, only when the topic actually calls for it.\n' +
   'NEVER LEAVE A VALUE OR PLACEHOLDER UNEXPLAINED. When a step, command, config or snippet contains ' +
   'anything the person must supply themselves - a placeholder, an API id or key, a token or secret, ' +
   'a credential id, a file path, a URL, an account/project/app name, a port - you MUST tell them, ' +
@@ -383,6 +398,20 @@ export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
     '(for example "https://console.aws.amazon.com/") - only a url you are sure is the correct ' +
     'official entry point, never a guessed deep link; describe the navigation inside the site as ' +
     'its own plain steps. No step may assume prior knowledge.\n' +
+    'BE COMPLETE - INCLUDE EVERY PREREQUISITE, NOTHING SKIPPED. The plan must take the person from ' +
+    'where they are NOW all the way to done with no gap a beginner would fall into. The single most ' +
+    'common failure is jumping to the interesting action while skipping the setup it depends on: ' +
+    'before you add, configure or use a thing, you must FIRST create or open the container that holds ' +
+    'it, as its own earlier step. Examples: before "add a module / app / node", create the scenario, ' +
+    'flow, canvas or project and open it first (in Make.com: create a new scenario and open the blank ' +
+    'canvas, then click the big circle or the plus to add the first module); before "add a column / ' +
+    'formula", open or create the sheet; before "add a webhook / route", create the app or endpoint; ' +
+    'before "write to a table", create the table. Walk the exact sequence a first-timer must follow ' +
+    'and put each prerequisite as its own ordered step in the right place. Never rely on the person ' +
+    'already being in the right place or having already created the thing. If you are unsure whether a ' +
+    'prerequisite already exists, add a short CHECK step ("Confirm you are on the blank scenario ' +
+    'canvas; if not, create a new scenario first") rather than skip it. A plan that only works if the ' +
+    'person already did the hidden setup is a failure.\n' +
     'MATCH THE REAL ENVIRONMENT - DO NOT ASSUME A WEB BROWSER. Work happens in many places and the ' +
     'first steps must fit the actual one: (a) a WEB app -> open the official or given URL in the ' +
     'browser (use "url"); (b) a DESKTOP or INSTALLED app (for example Check Point SmartConsole, SQL ' +
@@ -424,8 +453,16 @@ export function workPlanUser({ goal, appContext, research = '' }) {
 }
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
-export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', strong = null }) {
-  const system = workPlanSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
+export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', strong = null, thorough = false }) {
+  const heavy = thorough ? (
+    '\n\n---\nPLAN-HEAVY MODE\n' +
+    'The user will follow this plan with only LIGHT, on-demand checks, not continuous watching. ' +
+    'So make the plan fully self-sufficient: every step must be self-contained and independently ' +
+    'verifiable on its own. Spell out the exact control, value, path or command for each step, ' +
+    'anticipate the common branch and the common error inline, and end each step with a clear ' +
+    'self-check the user can confirm without you watching. Err toward more detail per step.'
+  ) : ''
+  const system = workPlanSystem({ base, voice, mode }) + heavy + methodAnchorBlock(goal, appContext)
   const user = workPlanUser({ goal, appContext, research })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -456,16 +493,47 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
   return {
     refusal: refusal || null,
     appContext: scrubGuidance(String(parsed.appContext || appContext || '').trim()) || null,
-    steps: refusal ? [] : steps.map((s) => ({
-      text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
-      validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
-      url: cleanUrl(s && s.url),
-      commands: cleanCmds(s && s.commands),
-      code: cleanCode(s && s.code),
-    })).filter((s) => s.text),
+    steps: refusal ? [] : steps.map((s) => {
+      const commands = cleanCmds(s && s.commands)
+      const code = cleanCode(s && s.code)
+      const dc = destructiveCheck(commands, code)
+      return {
+        text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+        validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
+        url: cleanUrl(s && s.url),
+        commands,
+        code,
+        // Irreversible/disruptive action? The app gates it behind an explicit
+        // acknowledge so the person understands the impact before running it.
+        destructive: dc.destructive,
+        destructiveWhy: dc.why,
+      }
+    }).filter((s) => s.text),
     escalated,
     reason,
   }
+}
+// Flag a step whose command/code would irreversibly DELETE, OVERWRITE or DISRUPT,
+// so the UI can require a deliberate acknowledge (risk: users acting without
+// understanding impact). Conservative patterns; false positives just add a confirm.
+const DESTRUCTIVE_PATTERNS = [
+  { re: /\brm\s+-[a-z]*f|\brm\s+-[a-z]*r[a-z]*\b/i, why: 'permanently deletes files and cannot be undone' },
+  { re: /\brmdir\s+\/s|\bdel\s+\/[fsqa]/i, why: 'force-deletes files' },
+  { re: /\bdrop\s+(table|database|schema|collection|index)\b/i, why: 'drops a database object' },
+  { re: /\btruncate\s+table\b/i, why: 'empties a table' },
+  { re: /\bdelete\s+from\b(?![\s\S]*\bwhere\b)/i, why: 'deletes every row (no WHERE clause)' },
+  { re: /\b(mkfs|fdisk)\b|\bformat\s+[a-z]:|\bdd\s+if=\S+\s+of=\/dev/i, why: 'formats or overwrites a disk' },
+  { re: /\bgit\s+(reset\s+--hard|clean\s+-[a-z]*f|push\s+(--force\b|-f\b))/i, why: 'discards or force-overwrites git history' },
+  { re: /\b(shutdown|reboot|halt|poweroff)\b/i, why: 'shuts down or reboots the machine' },
+  { re: /\b(kill\s+-9|pkill|killall)\b/i, why: 'force-kills running processes' },
+  { re: /terraform\s+destroy|kubectl\s+delete\b|docker\s+(system\s+prune\s+-a|rm\s+-f)|aws\s+s3\s+rb\b[\s\S]*--force/i, why: 'tears down infrastructure or resources' },
+  { re: /\bchmod\s+-R\b|\bchown\s+-R\b/i, why: 'recursively changes permissions or ownership' },
+]
+export function destructiveCheck(commands, code) {
+  const text = [...(Array.isArray(commands) ? commands : []), (code && code.content) || ''].join('\n')
+  if (!text.trim()) return { destructive: false, why: null }
+  for (const d of DESTRUCTIVE_PATTERNS) if (d.re.test(text)) return { destructive: true, why: d.why }
+  return { destructive: false, why: null }
 }
 
 // ---- Drill-down: expand ONE action into detailed sub-steps ----------------
@@ -525,13 +593,20 @@ export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', 
   const refusal = scrubGuidance(String(parsed.refusal || '').trim())
   return {
     refusal: refusal || null,
-    steps: refusal ? [] : rawSteps.map((s) => ({
-      text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
-      validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
-      url: cleanUrl(s && s.url),
-      commands: cleanCmds(s && s.commands),
-      code: cleanCode(s && s.code),
-    })).filter((s) => s.text),
+    steps: refusal ? [] : rawSteps.map((s) => {
+      const commands = cleanCmds(s && s.commands)
+      const code = cleanCode(s && s.code)
+      const dc = destructiveCheck(commands, code)
+      return {
+        text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+        validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
+        url: cleanUrl(s && s.url),
+        commands,
+        code,
+        destructive: dc.destructive,
+        destructiveWhy: dc.why,
+      }
+    }).filter((s) => s.text),
     escalated,
     reason,
   }
@@ -611,6 +686,17 @@ export function workNavigateSystem({ base, voice = '', mode = 'stepwise' }) {
     '"Scroll down so I can see the command output", "Copy the error text and paste it into the ' +
     'Ask box below", or "Point the camera at the error message". Keep "guidance" to that one next ' +
     'thing only.\n' +
+    'FIX A MISSING PREREQUISITE THE MOMENT YOU SEE IT - DO NOT WAIT TO BE ASKED. If the current step ' +
+    'cannot be done yet because something earlier is missing on screen (the scenario, canvas, flow, ' +
+    'project, sheet or table it needs does not exist yet, or the button is absent or greyed out ' +
+    'because setup is incomplete), do NOT repeat the blocked instruction and do NOT wait for the ' +
+    'person to get stuck and ask. Immediately make "guidance" the missing prerequisite as the next ' +
+    'micro-action, set "current" to it, and say in "observation" what was missing. For example, if ' +
+    'the step is "add the Facebook module" but the screen is the dashboard with no scenario open: ' +
+    'guidance = "You are on the dashboard, not a scenario yet. Click **Create a new scenario**, then ' +
+    'on the blank canvas click the big circle to add your first module." Proactively inserting the ' +
+    'step they would have tripped on is exactly the job; making them discover the gap themselves is a ' +
+    'failure.\n' +
     'The goal was already accepted when it was planned; your job now is to guide it forward, not ' +
     'to re-judge whether to help. Do not refuse mid-task. ' +
     'If the screen shows something the checklist did not anticipate, guide them from what is ' +
@@ -771,6 +857,90 @@ export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', go
   return { answer: scrubGuidance(String(out.raw || '').trim()), escalated: out.escalated, reason: out.reason }
 }
 
+// ---- Mid-task: the user hands over new context (text / document / image) ---
+// Partway through a guided task the user adds something - a note, a document, or
+// a screenshot/photo they uploaded - and wants it taken into account. This reads
+// it against the goal and the remaining plan and decides ONE thing: does the
+// remaining work need to change? If yes, it re-plans ONLY the remaining steps
+// (the finished ones are preserved by the caller via replanKeepingProgress) so
+// the user resumes exactly where they were, with the next step updated. If no, it
+// just answers and points to the next action. Auto-replan: the model decides,
+// the user is never asked (per the operator's choice). Never degrades depth:
+// completeness + security rules from the base prompt still apply.
+export function workAddContextSystem({ base, voice = '', mode = 'stepwise' }) {
+  return baseWith(base, voice, mode) +
+    '\n\n---\nTHE USER JUST ADDED CONTEXT MID-TASK - CONSIDER IT, THEN RE-PLAN ONLY IF NEEDED\n' +
+    'The user is partway through a task you are guiding. They have just handed you NEW CONTEXT: it ' +
+    'may be a note or instruction they typed, the text of a reference document, and/or an image they ' +
+    'uploaded (a screenshot or a photo). A live screenshot of their screen right now may also be ' +
+    'attached. Read ALL of it against the ORIGINAL GOAL and the plan so far.\n' +
+    'Decide ONE thing: does the REMAINING plan need to change to account for this new context?\n' +
+    '- It NEEDS to change if the context adds a requirement or constraint, shows a different ' +
+    'environment, tool or version than the plan assumed, reveals an error or a state the current ' +
+    'steps do not handle, or gives a document or file the remaining steps must be built around.\n' +
+    '- It does NOT need to change if the context just confirms where they are, asks a question, or ' +
+    'adds detail the existing steps already cover.\n' +
+    'If it NEEDS to change, RE-PLAN THE REMAINING WORK ONLY: return the full ordered list of steps ' +
+    'FROM WHERE THEY ARE NOW to the goal. Do NOT include or repeat any step already marked done. Keep ' +
+    'every step crystal clear and include EVERY prerequisite - never assume a set-up step (create the ' +
+    'account, project, canvas, file) is already done unless the context shows it is. Ground the steps ' +
+    'in the new context and fit their real environment; if the context is wrong, risky or outdated, ' +
+    'flag it in the answer and give the better proven path. Write every command, value or code EXACTLY, ' +
+    'ready to copy. Everything you tell them to run or paste must be the secure way.\n' +
+    'If it does NOT need to change, set "replan" false and "steps" to [].\n' +
+    'ALWAYS write "answer": one short, plainly-spoken message to the user - what you took in from the ' +
+    'context, and the next concrete thing to do from where they are. Never say you performed an action; ' +
+    'you only guide.\n' +
+    'Return ONLY JSON: {"replan":true|false,"reason":"one short sentence why","answer":"...",' +
+    '"steps":[{"text":"...","validate":"...","url":null,"commands":[],"code":null}]}'
+}
+export function workAddContextUser({ goal, steps = [], currentStep = 0, events = [], appContext = '', note = '', docsText = '', research = '' }) {
+  const plan = (steps || []).map((s, i) => `${i + 1}. [${s.status}]${i === currentStep ? ' <- current' : ''} ${s.text}`).join('\n') || '(no plan yet)'
+  const recent = (events || []).filter((e) => e.kind === 'flag' || e.kind === 'answer' || e.kind === 'ask' || e.kind === 'guidance')
+    .slice(-6).map((e) => `- (${e.kind}) ${e.text}`).join('\n')
+  const ctx = []
+  if (String(note || '').trim()) ctx.push(`WHAT THEY TYPED:\n${String(note).trim()}`)
+  if (String(docsText || '').trim()) ctx.push(`DOCUMENT THEY ADDED (text extracted on their device):\n${String(docsText).trim()}`)
+  return (
+    `ORIGINAL GOAL (keep this central):\n${String(goal || '').trim() || '(none given)'}\n\n` +
+    (appContext ? `APP / SCREEN: ${appContext}\n\n` : '') +
+    `PLAN SO FAR (do not repeat any step marked done):\n${plan}\n\n` +
+    (recent ? `RECENT NOTES:\n${recent}\n\n` : '') +
+    `NEW CONTEXT THE USER JUST ADDED:\n${ctx.length ? ctx.join('\n\n') : '(the new context is the attached image - read it)'}\n\n` +
+    (research ? `CURRENT WEB NOTES (if useful):\n${research}\n\n` : '') +
+    'Consider the new context (and any attached images), then return the decision JSON now.')
+}
+export async function workAddContext(ai, cfg, { base, voice = '', mode = 'stepwise', goal, steps = [], currentStep = 0, events = [], appContext = '', note = '', docsText = '', research = '', images = [], visionModel = null, strong = null }) {
+  const system = workAddContextSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
+  const user = workAddContextUser({ goal, steps, currentStep, events, appContext, note, docsText, research })
+  const imgs = (images || []).filter(Boolean)
+  const isWeak = (r) => { const p = extractJson(r) || {}; return !(p.answer || (Array.isArray(p.steps) && p.steps.length) || typeof p.replan === 'boolean') }
+  let raw, escalated = false, reason = ''
+  if (imgs.length && visionModel) {
+    const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, imgs, vm)
+    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated; reason = out.reason
+  } else {
+    raw = await ai.generate(cfg, system, user)
+  }
+  const parsed = extractJson(raw, 'answer') || {}
+  const outSteps = (Array.isArray(parsed.steps) ? parsed.steps : []).map((s) => ({
+    // text/validate are prose (AI-language scrub); commands/code/url are EXACT -
+    // pass through, the store re-validates url + filters. Mirrors workPlan's split.
+    text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+    validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
+    url: (s && typeof s.url === 'string') ? s.url : null,
+    commands: Array.isArray(s && s.commands) ? s.commands : [],
+    code: (s && s.code) || null,
+  })).filter((s) => s.text)
+  return {
+    replan: parsed.replan === true && outSteps.length > 0,
+    reason: scrubGuidance(String(parsed.reason || '').trim()),
+    answer: scrubGuidance(String(parsed.answer || '').trim()),
+    steps: outSteps,
+    escalated, escalateReason: reason,
+  }
+}
+
 // ---- Research: user-triggered web lookup, then answer ---------------------
 // Text-only (no frame). Runs only when the user taps Research, so there is no
 // continuous web use. Answers the question from fresh web notes + the goal.
@@ -801,20 +971,211 @@ export async function workResearch(ai, cfg, { base, voice = '', goal, question =
   return scrubGuidance(String(raw || '').trim())
 }
 
-// ---- Draft an email / message (read-only output the user pastes) ----------
-export function workDraftSystem({ base, voice = '' }) {
-  return baseWith(base, voice) +
-    '\n\n---\nDRAFT A MESSAGE\n' +
-    'The user wants a message drafted (an email, a chat or a status update) about the task. Write ' +
-    'it ready to paste. Plain, professional, human. You do NOT send it - you only draft it for ' +
-    'them to copy. No subject line unless they ask for an email. No AI phrasing, no em dashes.'
+// ---- Compose: WRITE the actual document (read-only output the user uses) ---
+// Generalizes the old "draft a message" (which only did email/chat and had no UI
+// caller) into real authoring: any document the goal calls for - a letter, a
+// report, a resume section, a contract clause or red-line notes, an outline, a
+// table, code or a config - in the format the user asks for, grounded in the goal
+// + context + any pasted data + optional screen. READ-ONLY: it is handed back to
+// copy or download, never sent or submitted. Honest: it never invents specific
+// facts/figures/names (it leaves clearly marked placeholders) and says what it
+// assumed. The honesty + shaping live in shapeCompose so they are unit-testable.
+const COMPOSE_FORMATS = ['email', 'document', 'outline', 'bullets', 'table', 'code', 'notes']
+export function workComposeSystem({ base, voice = '', mode = 'stepwise' }) {
+  return baseWith(base, voice, mode) +
+    '\n\n---\nWRITE IT FOR ME\n' +
+    'The user wants you to WRITE the actual document or content, finished and ready to use - not ' +
+    'instructions to write it. Produce the whole piece from the GOAL, any context, and any data ' +
+    'they pasted. You are READ-ONLY: you hand it back for them to copy or download, you never send ' +
+    'or submit it.\n' +
+    'Match the FORMAT requested: an email, a document or letter, an outline, bullet points, a table ' +
+    '(GitHub-flavored markdown), code or a config, or review notes / red-line comments. Write in ' +
+    'plain, human, professional language - no AI phrasing, no em dashes, no preamble, no meta-talk ' +
+    'about being an assistant.\n' +
+    'BE HONEST: if you assumed anything, or used figures you could not verify, say so briefly in ' +
+    '"basis". Never invent specific facts, names, numbers, citations, or legal or financial ' +
+    'specifics - leave a clearly marked placeholder like [AMOUNT] or [CLIENT NAME] instead of ' +
+    'guessing. Ground the method in the discipline when one applies.\n' +
+    'Return ONLY JSON: {"title":"short label","format":"email|document|outline|bullets|table|code|notes",' +
+    '"body":"the finished content","basis":"what you based it on and any assumptions","caveat":"one line if they should check something, else empty"}'
 }
-export async function workDraft(ai, cfg, { base, voice = '', goal, ask, session = null }) {
-  const system = workDraftSystem({ base, voice })
-  const ctx = session && session.summary ? `\n\nWHAT HAS HAPPENED SO FAR:\n${session.summary}` : ''
-  const user = `GOAL:\n${String(goal || '').trim()}\n\nWHAT TO WRITE: ${String(ask || '').trim()}${ctx}\n\nWrite the message now.`
-  const raw = await ai.generate(cfg, system, user)
-  return scrubGuidance(String(raw || '').trim())
+export function workComposeUser({ goal, want = '', format = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '' }) {
+  const plan = (steps || []).map((s, i) => `${i + 1}. [${s.status}] ${s.text}`).join('\n') || '(no plan yet)'
+  const recent = (events || []).filter((e) => e.kind === 'answer' || e.kind === 'result' || e.kind === 'flag')
+    .slice(-4).map((e) => `- (${e.kind}) ${e.text}`).join('\n')
+  return (
+    `ORIGINAL GOAL (keep this central):\n${String(goal || '').trim() || '(none given)'}\n\n` +
+    (appContext ? `APP / SCREEN: ${appContext}\n\n` : '') +
+    `PLAN SO FAR:\n${plan}\n\n` +
+    (recent ? `RECENT NOTES:\n${recent}\n\n` : '') +
+    `WHAT TO WRITE: ${String(want || '').trim() || '(the document the goal calls for)'}\n\n` +
+    (String(format || '').trim() ? `FORMAT THEY WANT: ${String(format).trim()}\n\n` : 'Pick the format that best fits what they asked for.\n\n') +
+    (String(docsText || '').trim() ? `DATA / SOURCE THE USER PASTED (use it, cite it in basis):\n${String(docsText).trim()}\n\n` : '') +
+    (String(research || '').trim() ? `CURRENT WEB NOTES (if useful):\n${String(research).trim()}\n\n` : '') +
+    'Write the finished piece now and return the JSON.')
+}
+export async function workCompose(ai, cfg, { base, voice = '', mode = 'stepwise', goal, want = '', format = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '', frame = null, visionModel = null, strong = null }) {
+  const system = workComposeSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
+  const user = workComposeUser({ goal, want, format, steps, currentStep, events, appContext, docsText, research })
+  const isWeak = (r) => { const p = extractJson(r) || {}; return !String(p.body || '').trim() }
+  let raw, escalated = false, reason = ''
+  if (frame && visionModel) {
+    const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
+    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated; reason = out.reason
+  } else {
+    raw = await ai.generate(cfg, system, user)
+  }
+  return { ...shapeCompose(raw), escalated, escalateReason: reason }
+}
+// Shape a composed document. A table or code body is kept EXACT; prose bodies are
+// AI-language-scrubbed. Exported so it is unit-testable.
+export function shapeCompose(raw) {
+  const p = extractJson(raw, 'body') || {}
+  const format = COMPOSE_FORMATS.includes(String(p.format)) ? String(p.format) : 'document'
+  let body = String(p.body == null ? '' : p.body).replace(/\r\n/g, '\n').trim().slice(0, 12000)
+  if (format !== 'table' && format !== 'code') body = scrubGuidance(body)
+  const title = scrubGuidance(String(p.title || '').trim()).slice(0, 120)
+  const basis = scrubGuidance(String(p.basis || '').trim()).slice(0, 700)
+  let caveat = scrubGuidance(String(p.caveat || '').trim()).slice(0, 300)
+  if (!body) caveat = caveat || 'I could not produce the document. Add more detail or paste the source material.'
+  return { title: title || 'Draft', format, body, basis, caveat }
+}
+
+// ---- Return the RESULT, not just the steps --------------------------------
+// The guidance loop tells the user the next action. This returns the ACTUAL
+// result the user is after - a calculated number, a filled-in table, a drafted
+// document, a query or script, or a reasoned analysis - grounded in the goal, the
+// attached screen (optional), and any data the user pasted. Still READ-ONLY: it
+// hands the result back for the user to use and never enters it into their app.
+// Honesty is enforced in code below (SUPREME RULE III/IV): a result only counts
+// as grounded when it carries a traceable BASIS and a way to VERIFY it; anything
+// it cannot actually compute returns a "need" (what is missing) instead of a
+// guess - that missing-data path is what Phase B (on-device data compute) fills.
+export function workResultSystem({ base, voice = '', mode = 'stepwise' }) {
+  return baseWith(base, voice, mode) +
+    '\n\n---\nRETURN THE RESULT, NOT JUST THE STEPS\n' +
+    'The user wants the ANSWER or finished output itself - the calculated number, the filled-in ' +
+    'table, the drafted text, the code or query, or the analysis - not only instructions to make ' +
+    'it. Produce the actual result from the GOAL, the attached screen (if any), and any data the ' +
+    'user pasted. You are still READ-ONLY: you return the result for the user to use, you never ' +
+    'enter it into their app.\n' +
+    'BE HONEST AND SHOW YOUR WORK (non-negotiable):\n' +
+    '- "basis": state EXACTLY how you got it - the formula or method, the specific input values AND ' +
+    'where each came from (which screen field, which pasted figure, which source).\n' +
+    '- "verifyBy": one plain step the user can take to check it themselves.\n' +
+    '- Never invent a number or a fact. If you cannot get an input you need (the data is in a file ' +
+    'or spreadsheet you cannot read, or it is not on the attached screen), DO NOT guess: set "need" ' +
+    'to exactly what is missing, put a short plain explanation in "body", and use a low confidence.\n' +
+    '- If you read a figure off the screenshot, say so in "basis" and set "verifyBy" to confirm it ' +
+    'against the real source, and lower confidence because a screen read can be wrong.\n' +
+    '- "confidence" is 0 to 1: how sure you are the result is correct and complete.\n' +
+    'Choose "kind": "number" (a value or a few), "table" (rows as GitHub-flavored markdown), "text" ' +
+    '(a drafted message or document), "code" (a command, query or script, exact and ready to run), ' +
+    'or "analysis" (a reasoned read). Put the real result in "body" and keep code and tables exact, ' +
+    'with no commentary inside "body". Ground the method in the discipline when one applies. No AI ' +
+    'phrasing, no em dashes.\n' +
+    'Return ONLY JSON: {"kind":"...","body":"...","basis":"...","verifyBy":"...","confidence":0.0,"need":""}'
+}
+export function workResultUser({ goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '' }) {
+  const plan = (steps || []).map((s, i) => `${i + 1}. [${s.status}] ${s.text}`).join('\n') || '(no plan yet)'
+  const recent = (events || []).filter((e) => e.kind === 'flag' || e.kind === 'answer' || e.kind === 'ask' || e.kind === 'result')
+    .slice(-5).map((e) => `- (${e.kind}) ${e.text}`).join('\n')
+  return (
+    `ORIGINAL GOAL (keep this central):\n${String(goal || '').trim() || '(none given)'}\n\n` +
+    (appContext ? `APP / SCREEN: ${appContext}\n\n` : '') +
+    `PLAN SO FAR:\n${plan}\n\n` +
+    (recent ? `RECENT NOTES:\n${recent}\n\n` : '') +
+    (String(question || '').trim()
+      ? `WHAT RESULT THEY WANT: ${String(question).trim()}\n\n`
+      : 'No specific result was named. Produce the single most useful result the goal calls for.\n\n') +
+    (String(docsText || '').trim() ? `DATA / TEXT THE USER PASTED (compute from this, cite it in basis):\n${String(docsText).trim()}\n\n` : '') +
+    (String(research || '').trim() ? `CURRENT WEB NOTES (if useful):\n${String(research).trim()}\n\n` : '') +
+    'Produce the result now and return the JSON.')
+}
+// frame is OPTIONAL: with a frame we read the screen (vision), otherwise we work
+// from the goal + pasted data (text). Returns the shaped, honesty-guarded result.
+export async function workResult(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '', frame = null, visionModel = null, strong = null }) {
+  const system = workResultSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
+  const user = workResultUser({ goal, question, steps, currentStep, events, appContext, docsText, research })
+  const isWeak = (r) => { const p = extractJson(r) || {}; return !(String(p.body || '').trim() || String(p.need || '').trim()) }
+  let raw, escalated = false, reason = ''
+  if (frame && visionModel) {
+    const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
+    const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated; reason = out.reason
+  } else {
+    raw = await ai.generate(cfg, system, user)
+  }
+  return { ...shapeResult(raw, { fromScreen: !!frame }), escalated, escalateReason: reason }
+}
+// Shape + ENFORCE honesty on a raw result reply. Exported so it is unit-testable.
+// Prose fields are AI-language-scrubbed; a number/table/code body is left EXACT
+// (scrubbing could corrupt a value or code). A result with no traceable basis or
+// no verify step, or one that reported a missing input, is never presented as a
+// confident answer: confidence is capped and a plain caveat is attached.
+export function shapeResult(raw, { fromScreen = false } = {}) {
+  const p = extractJson(raw, 'body') || {}
+  const kind = ['number', 'table', 'text', 'code', 'analysis'].includes(String(p.kind)) ? String(p.kind) : 'analysis'
+  let body = String(p.body == null ? '' : p.body).trim().slice(0, 6000)
+  if (kind === 'text' || kind === 'analysis') body = scrubGuidance(body)
+  const need = scrubGuidance(String(p.need || '').trim()).slice(0, 400)
+  const basis = scrubGuidance(String(p.basis || '').trim()).slice(0, 900)
+  const verifyBy = scrubGuidance(String(p.verifyBy || '').trim()).slice(0, 500)
+  let confidence = Number(p.confidence)
+  if (!Number.isFinite(confidence)) confidence = need ? 0.2 : 0.5
+  confidence = Math.max(0, Math.min(1, confidence))
+  const grounded = !need && !!body && basis.length >= 8 && verifyBy.length >= 4
+  if (!grounded) confidence = Math.min(confidence, 0.35)
+  let caveat = ''
+  if (need) caveat = 'This needs an input I do not have. ' + (body || 'Share the missing data or attach the file and I will produce it.')
+  else if (!grounded) caveat = 'Unverified - treat this as a draft and check it before you rely on it.'
+  else if (fromScreen) caveat = 'Read from your screen - confirm it against the source.'
+  return { kind, body, basis, verifyBy, confidence, need: need || null, grounded, caveat }
+}
+
+// ---- On-device data compute: the AI writes a SPEC, never sees the rows -----
+// The user attaches a CSV/XLSX; the client parses it ON DEVICE and sends ONLY
+// the schema (column names + types + row count). This returns a validated, safe
+// computation spec (compute_spec.js DSL) that the CLIENT then runs against the
+// full local rows. The raw data never leaves the device. Invalid specs get ONE
+// repair attempt, then fall back to a "need" so nothing bad is ever returned.
+export function workComputeSystem({ base, voice = '', mode = 'stepwise' }) {
+  return baseWith(base, voice, mode) +
+    '\n\n---\nCOMPUTE OVER THE USER\'S DATA (WRITE A SPEC, NOT A RESULT)\n' +
+    'The user has a table (a spreadsheet or CSV) on their device. You CANNOT see the rows - only the ' +
+    'column schema and the row count - and that is deliberate: their data stays on their machine. ' +
+    'Decide the computation that answers their goal and express it as a spec. Do not state a numeric ' +
+    'answer (you do not have the data); the spec is run on their device to get the answer.\n' +
+    describeSpecForAI() +
+    '\nAlso include "explanation": one plain sentence saying what the spec computes, and "caveat": ' +
+    'one line if they should double check an assumption (for example which column means what), else "".'
+}
+export function workComputeUser({ goal, want = '', schema = [], rowCount = 0 }) {
+  const cols = (schema || []).map((c) => `- ${c && c.name}${c && c.type ? ` (${c.type})` : ''}`).join('\n') || '(no columns)'
+  return (
+    `GOAL:\n${String(goal || '').trim() || '(none given)'}\n\n` +
+    `WHAT THEY WANT COMPUTED: ${String(want || '').trim() || 'the figure the goal calls for'}\n\n` +
+    `TABLE SCHEMA (names and types ONLY - the rows are NOT shared):\n${cols}\nROW COUNT: ${Number(rowCount) || 0}\n\n` +
+    'Return ONLY the spec JSON now.')
+}
+export async function workCompute(ai, cfg, { base, voice = '', mode = 'stepwise', goal, want = '', schema = [], rowCount = 0 }) {
+  const system = workComputeSystem({ base, voice, mode }) + methodAnchorBlock(goal)
+  const ask = (extra = '') => ai.generate(cfg, system, workComputeUser({ goal, want, schema, rowCount }) + extra)
+  const shape = (raw) => {
+    const p = extractJson(raw, 'steps') || {}
+    const spec = { steps: Array.isArray(p.steps) ? p.steps : [], output: p.output === 'number' ? 'number' : 'table' }
+    if (spec.output === 'number' && p.value) spec.value = p.value
+    return { spec, need: scrubGuidance(String(p.need || '').trim()), explanation: scrubGuidance(String(p.explanation || '').trim()), caveat: scrubGuidance(String(p.caveat || '').trim()) }
+  }
+  let out = shape(await ask())
+  if (out.need && !out.spec.steps.length) return { ...out, ok: false }
+  let v = validateSpec(out.spec, schema)
+  if (!v.ok) {
+    // One repair pass: tell it exactly what was wrong, ask for a corrected spec.
+    out = shape(await ask(`\n\nThe previous spec was invalid: ${v.errors.slice(0, 6).join('; ')}. Return a corrected spec JSON using ONLY columns from the schema and the allowed operations.`))
+    v = validateSpec(out.spec, schema)
+  }
+  if (!v.ok) return { spec: { steps: [], output: 'table' }, need: out.need || 'I could not turn this into a safe computation over the columns you have. Tell me which columns to use, or what to compute.', explanation: out.explanation, caveat: out.caveat, ok: false, errors: v.errors.slice(0, 6) }
+  return { spec: out.spec, explanation: out.explanation, caveat: out.caveat, need: out.need || null, ok: true }
 }
 
 // ---- End-of-session summary ----------------------------------------------
@@ -1051,7 +1412,9 @@ export function workDeliverablesUser({ goal, scope = [], research = '' }) {
   )
 }
 export async function workDeliverables(ai, cfg, { goal, scope = [], frames = [], visionModel = null, research = '' }) {
-  const system = workDeliverablesSystem()
+  // Ground the deliverables in the goal's discipline so they fit the profession,
+  // not only the architecture/security default (keeps the same output schema).
+  const system = workDeliverablesSystem() + methodAnchorBlock(goal)
   const user = workDeliverablesUser({ goal, scope, research })
   let raw
   if (Array.isArray(frames) && frames.length && visionModel) {

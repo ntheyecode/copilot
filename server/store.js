@@ -32,6 +32,150 @@ const DB_FILE = path.join(DATA_DIR, 'db.json')
 // platform-allowed flag + model pins). Never contains a hardcoded key in source.
 const AI_SEED_FILE = path.join(DATA_DIR, 'ai-seed.json')
 
+// ---- Encryption at rest for stored secrets --------------------------------
+// External credentials (AI + web-search keys, Stripe secret + webhook secret,
+// SSO client secret, and the session-signing secret) are encrypted ON DISK with
+// AES-256-GCM. The in-memory db keeps them in PLAINTEXT, so every getter/setter
+// is unchanged (SUPREME RULE VI: no functional change) - only the bytes on disk
+// are protected, in ONE place: the load/persist boundary (SUPREME RULE II).
+// Master key: WORK_ENC_KEY (64 hex chars or base64, 32 bytes), else a random key
+// persisted once to <DATA_DIR>/.enc.key (0600). Legacy plaintext values decrypt
+// to themselves and are encrypted on the next write (seamless migration). A value
+// MARKED encrypted that cannot be decrypted THROWS - never a silently blanked key
+// (SUPREME RULE III).
+// IMPORTANT: back up .enc.key (or set WORK_ENC_KEY). Lose the key and the
+// encrypted secrets are unrecoverable and the server will refuse to start.
+const ENC_PREFIX = 'enc:v1:'
+const ENC_KEY_FILE = path.join(DATA_DIR, '.enc.key')
+let _encKey = null
+function encKey() {
+  if (_encKey) return _encKey
+  const fromEnv = process.env.WORK_ENC_KEY
+  if (fromEnv && String(fromEnv).trim()) {
+    const s = String(fromEnv).trim()
+    let buf = null
+    if (/^[0-9a-fA-F]{64}$/.test(s)) buf = Buffer.from(s, 'hex')
+    else { try { const b = Buffer.from(s, 'base64'); if (b.length === 32) buf = b } catch { /* fall through to error */ } }
+    if (!buf || buf.length !== 32) throw new Error('[store] WORK_ENC_KEY must be 32 bytes (64 hex chars or base64). Refusing to start so secrets are not written under a weak key.')
+    _encKey = buf
+    return _encKey
+  }
+  ensureDir()
+  try {
+    if (fs.existsSync(ENC_KEY_FILE)) {
+      const raw = fs.readFileSync(ENC_KEY_FILE)
+      const buf = raw.length === 32 ? raw : Buffer.from(String(raw).trim(), 'hex')
+      if (buf.length !== 32) throw new Error('key file is not 32 bytes')
+      _encKey = buf
+      return _encKey
+    }
+  } catch (e) {
+    throw new Error(`[store] ${ENC_KEY_FILE} exists but is unreadable/invalid (${e.message}). Refusing to start so stored secrets are not lost. Restore it or set WORK_ENC_KEY.`)
+  }
+  // Exclusive create ('wx'): if two processes first-boot at once, the loser must
+  // adopt the winner's key, never overwrite it (overwriting would make secrets
+  // written under the first key undecryptable).
+  const buf = crypto.randomBytes(32)
+  try {
+    const fd = fs.openSync(ENC_KEY_FILE, 'wx', 0o600)
+    try { fs.writeSync(fd, buf); fs.fsyncSync(fd) } finally { fs.closeSync(fd) }
+    _encKey = buf
+  } catch (e) {
+    if (e.code !== 'EEXIST') throw e
+    const raw = fs.readFileSync(ENC_KEY_FILE)
+    const b = raw.length === 32 ? raw : Buffer.from(String(raw).trim(), 'hex')
+    if (b.length !== 32) throw new Error(`[store] ${ENC_KEY_FILE} was created concurrently but is invalid. Restore it or set WORK_ENC_KEY.`)
+    _encKey = b
+  }
+  return _encKey
+}
+function encSecret(plain) {
+  const s = plain == null ? '' : String(plain)
+  if (!s || s.startsWith(ENC_PREFIX)) return s          // empty or already encrypted
+  const iv = crypto.randomBytes(12)
+  const cipher = crypto.createCipheriv('aes-256-gcm', encKey(), iv)
+  const ct = Buffer.concat([cipher.update(s, 'utf8'), cipher.final()])
+  return ENC_PREFIX + Buffer.concat([iv, cipher.getAuthTag(), ct]).toString('base64')
+}
+function decSecret(val) {
+  const s = val == null ? '' : String(val)
+  if (!s || !s.startsWith(ENC_PREFIX)) return s          // legacy plaintext or empty
+  const raw = Buffer.from(s.slice(ENC_PREFIX.length), 'base64')
+  const decipher = crypto.createDecipheriv('aes-256-gcm', encKey(), raw.subarray(0, 12))
+  decipher.setAuthTag(raw.subarray(12, 28))
+  // A decrypt error THROWS here; the caller must not swallow it into an empty key.
+  return Buffer.concat([decipher.update(raw.subarray(28)), decipher.final()]).toString('utf8')
+}
+// Apply fn (encSecret for disk, decSecret for memory) to every stored-secret
+// field. The single source of truth for WHICH fields are secret.
+function mapSecrets(d, fn) {
+  if (!d || typeof d !== 'object') return
+  if (d.ai) {
+    if (d.ai.providers && typeof d.ai.providers === 'object') for (const k of Object.keys(d.ai.providers)) { const p = d.ai.providers[k]; if (p && p.apiKey) p.apiKey = fn(p.apiKey) }
+    if (d.ai.webSearch && d.ai.webSearch.apiKey) d.ai.webSearch.apiKey = fn(d.ai.webSearch.apiKey)
+  }
+  if (d.billing) {
+    if (d.billing.secretKey) d.billing.secretKey = fn(d.billing.secretKey)
+    if (d.billing.webhookSecret) d.billing.webhookSecret = fn(d.billing.webhookSecret)
+  }
+  if (Array.isArray(d.companies)) for (const c of d.companies) {
+    if (c && c.companyAi && c.companyAi.apiKey) c.companyAi.apiKey = fn(c.companyAi.apiKey)
+    if (c && c.webSearch && c.webSearch.apiKey) c.webSearch.apiKey = fn(c.webSearch.apiKey)
+    if (c && c.sso && c.sso.clientSecret) c.sso.clientSecret = fn(c.sso.clientSecret)
+  }
+  if (d.sessionSecret) d.sessionSecret = fn(d.sessionSecret)
+}
+
+// ---- Encryption at rest for report artifacts (milestone screenshots) -------
+// The scrubbed milestone screenshots in a session report are IMAGE FILES on
+// disk. Encrypt the bytes with the same master key (AES-256-GCM), behind a magic
+// header so a legacy plaintext image still reads (then gets migrated once). The
+// report PDF reads them back through readShotBuffer, which returns a decrypted
+// Buffer. Honors the Security page's promise to encrypt stored report artifacts.
+const SHOTS_DIR = path.join(DATA_DIR, 'work-shots')
+const ENC_IMG_MAGIC = Buffer.from('ENCIMG1\n')   // 8 bytes
+function encryptBuffer(buf) {
+  const iv = crypto.randomBytes(12)
+  const cipher = crypto.createCipheriv('aes-256-gcm', encKey(), iv)
+  const ct = Buffer.concat([cipher.update(buf), cipher.final()])
+  return Buffer.concat([ENC_IMG_MAGIC, iv, cipher.getAuthTag(), ct])
+}
+function decryptBuffer(buf) {
+  if (!Buffer.isBuffer(buf) || buf.length < ENC_IMG_MAGIC.length || !buf.subarray(0, ENC_IMG_MAGIC.length).equals(ENC_IMG_MAGIC)) return buf   // legacy plaintext
+  const body = buf.subarray(ENC_IMG_MAGIC.length)
+  const decipher = crypto.createDecipheriv('aes-256-gcm', encKey(), body.subarray(0, 12))
+  decipher.setAuthTag(body.subarray(12, 28))
+  return Buffer.concat([decipher.update(body.subarray(28)), decipher.final()])
+}
+// Read a stored shot file and return its decrypted image bytes (or null).
+export function readShotBuffer(p) {
+  try { return decryptBuffer(fs.readFileSync(p)) } catch { return null }
+}
+// One-time migration: encrypt any plaintext shot already on disk, guarded by a
+// sentinel so it does not re-walk every boot. Best-effort; never blocks startup.
+function migrateShotsAtRest() {
+  const sentinel = path.join(DATA_DIR, '.shots-encrypted')
+  try {
+    if (fs.existsSync(sentinel) || !fs.existsSync(SHOTS_DIR)) { if (!fs.existsSync(sentinel)) { try { fs.writeFileSync(sentinel, '1') } catch { /* ignore */ } } return }
+    for (const sess of fs.readdirSync(SHOTS_DIR)) {
+      const dir = path.join(SHOTS_DIR, sess)
+      let files = []
+      try { files = fs.statSync(dir).isDirectory() ? fs.readdirSync(dir) : [] } catch { continue }
+      for (const f of files) {
+        const fp = path.join(dir, f)
+        try {
+          const raw = fs.readFileSync(fp)
+          if (raw.length >= ENC_IMG_MAGIC.length && raw.subarray(0, ENC_IMG_MAGIC.length).equals(ENC_IMG_MAGIC)) continue   // already encrypted
+          const tmp = fp + '.tmp'
+          fs.writeFileSync(tmp, encryptBuffer(raw))
+          fs.renameSync(tmp, fp)
+        } catch { /* skip this file */ }
+      }
+    }
+    try { fs.writeFileSync(sentinel, '1') } catch { /* ignore */ }
+  } catch { /* migration is best-effort */ }
+}
+
 // The base persona the guide prompts build on. Short on purpose: the detailed
 // read-only, accuracy-first voice lives in server/work.js (WORK_MODE), so this
 // only carries the hard-fact + instruction-source rules every call needs.
@@ -58,6 +202,7 @@ const EMPTY = {
   work: { platformAiAllowed: false, pricing: null }, // superadmin platform-AI toggle + pricing
   workSessions: [],     // saved copilot sessions (crash-safe): goal, steps, events, summary
   workUsage: {},        // metering: `${userId}:${easternDay}` -> { usedSeconds } (FREE daily, resets 11:59 ET)
+  workTasks: {},        // daily task metering: `${userId}:${easternDay}` -> count of tasks STARTED (monotonic; resets 11:59 ET)
   workImageUsage: {},   // premium image metering: `${userId}:${easternDay}` -> { count }
   workDocs: {},         // uploaded reference doc metadata, keyed by userId (text on disk)
   workTickets: [],      // support tickets (id 'tk'+n): category, subject, thread, status
@@ -102,9 +247,23 @@ function load() {
       try { fs.copyFileSync(DB_FILE, bak) } catch { /* best effort */ }
       throw new Error(`[store] db.json is CORRUPT (${e.message}). Saved a copy to ${bak} and refusing to start.`)
     }
+    // Decrypt stored secrets into memory. A key that is marked encrypted but
+    // cannot be decrypted (wrong/lost master key) must fail loud, NOT blank the
+    // key (SUPREME RULE III) - refuse to start so the operator fixes the key.
+    // Also note any LEGACY plaintext so we can encrypt it on disk immediately
+    // (eager migration) rather than waiting for the next mutation.
+    let sawLegacy = false
+    const decTrack = (v) => { const s = v == null ? '' : String(v); if (s && !s.startsWith(ENC_PREFIX)) sawLegacy = true; return decSecret(v) }
+    try { mapSecrets(db, decTrack) } catch (e) {
+      throw new Error(`[store] cannot decrypt stored secrets (${e.message}). The master key (WORK_ENC_KEY or ${ENC_KEY_FILE}) is missing or wrong. Refusing to start so no key is silently lost. Restore the key and restart.`)
+    }
+    // Migrate any plaintext-at-rest secret to ciphertext right now.
+    if (sawLegacy) { try { persist() } catch { /* the next write will migrate */ } }
   } else {
     db = { ...EMPTY }
   }
+  // One-time: encrypt any report screenshots already on disk (best-effort).
+  migrateShotsAtRest()
   indexUsers()
 }
 
@@ -114,9 +273,12 @@ function load() {
 function persist() {
   ensureDir()
   const tmp = DB_FILE + '.tmp'
+  // Encrypt secrets on a disk-only CLONE so the in-memory db stays plaintext.
+  const disk = JSON.parse(JSON.stringify(db))
+  mapSecrets(disk, encSecret)
   const fd = fs.openSync(tmp, 'w', 0o600)
   try {
-    fs.writeSync(fd, JSON.stringify(db, null, 2))
+    fs.writeSync(fd, JSON.stringify(disk, null, 2))
     fs.fsyncSync(fd)
   } finally { fs.closeSync(fd) }
   try {
@@ -274,6 +436,10 @@ export function publicWorkUser(u) {
     createdAt: u.createdAt, onboarded: !!u.onboarded, displayName: u.displayName || null,
     tier: (WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),   // plan tier, for the team roster + settings
     scrub: workUserScrubOn(u.id),   // EFFECTIVE policy (own flag OR company default)
+    reportShots: u.reportShots !== false,   // keep scrubbed milestone screenshots in the report (default on)
+    // Plan-heavy / watch-light is FORCED by the superadmin for premium users; the
+    // console reads this to plan richly and check on demand (no user control).
+    watchLight: effectiveWatchMode(u.id) === 'light',
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
     companyName: co ? co.name : null,
@@ -456,6 +622,39 @@ export function workUserScrubOn(userId) {
   return false
 }
 
+// Report evidence: whether to keep a SCRUBBED milestone screenshot at the moment
+// each step is confirmed done, so the session report reads as a reusable
+// reference document. Default ON; the operator can turn it off (the frame stored
+// is the SAME on-device-scrubbed frame already used to read the screen - nothing
+// extra leaves the device, and only one frame per confirmed step is kept).
+export function setWorkUserReportShots(userId, enabled) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  u.reportShots = !!enabled
+  persist()
+  return publicWorkUser(u)
+}
+export function workUserReportShotsOn(userId) {
+  const u = getUser(userId)
+  if (!u) return false
+  return u.reportShots !== false   // default on
+}
+// Keep ONE scrubbed screenshot as the evidence for a step the user JUST confirmed.
+// Idempotent per step (never piles up duplicates - no junk), gated by the setting,
+// and never throws into the live guidance loop.
+export function captureMilestoneShot(workUserId, sessionId, stepIndex, dataUrl) {
+  try {
+    if (!workUserReportShotsOn(workUserId)) return false
+    if (!/^data:image\/(png|jpe?g|webp);base64,/i.test(String(dataUrl || ''))) return false
+    const s = findWorkSession(workUserId, sessionId)
+    if (!s) return false
+    const idx = Math.max(0, Math.round(Number(stepIndex) || 0))
+    if (Array.isArray(s.shots) && s.shots.some((sh) => Number(sh.stepIndex) === idx)) return false
+    addWorkStepShot(workUserId, sessionId, { stepIndex: idx, dataUrl, caption: 'Confirmed on screen' })
+    return true
+  } catch { return false }
+}
+
 // ---- Governance policy (DLP) ----------------------------------------------
 // A policy per company or per user governs what leaves the device. Armed makes
 // it the enforced criteria; locked needs an explicit unlock to change.
@@ -501,9 +700,11 @@ export function setWorkPolicy(scope, patch = {}, by = null) {
 // armed policy if they are in a company, else their own armed policy, else null.
 export function getEffectiveWorkPolicy(userId) {
   const u = getUser(userId); if (!u) return null
-  if (u.companyId) { const p = getWorkPolicy({ companyId: u.companyId }); if (p && p.armed) return p }
-  const pu = getWorkPolicy({ userId }); if (pu && pu.armed) return pu
-  return null
+  // Company users are governed ONLY by their company's policy - a company MEMBER
+  // cannot add their own rules (their company admin owns the policy). An
+  // INDIVIDUAL user (no company) governs themselves.
+  if (u.companyId) { const p = getWorkPolicy({ companyId: u.companyId }); return (p && p.armed) ? p : null }
+  const pu = getWorkPolicy({ userId }); return (pu && pu.armed) ? pu : null
 }
 
 // ===========================================================================
@@ -529,6 +730,12 @@ function publicCompany(c) {
     pricingOverride: c.pricing || null,               // just this company's overrides, for the edit form
     billingItemCount: ((c.billing && c.billing.items) || []).length,
     scrub: !!c.scrub, createdAt: c.createdAt,
+    // Authorization attestation: the company admin affirms their organization
+    // authorizes WorkCoPilot use on its systems (addresses "browser access does
+    // not establish corporate authorization"). Recorded, shown, prompted if missing.
+    authorization: c.authorization
+      ? { attested: !!c.authorization.attested, byName: c.authorization.byName || null, at: c.authorization.at || null }
+      : { attested: false, byName: null, at: null },
     sso: c.sso ? { provider: c.sso.provider || null, connected: !!c.sso.connected, domain: c.sso.domain || null } : null,
     userCount: users.length,
     memberCount,
@@ -554,7 +761,31 @@ function publicCompany(c) {
       keyMasked: '••••' + String(c.companyAi.apiKey).slice(-4),
       setAt: c.companyAi.setAt || null,
     } : null,
+    // Web-search (Tavily) grounding key for this company - configured state only,
+    // never the raw key. When set, the company's live web-learning runs on THEIR
+    // key (their data boundary + billing); else it falls back to platform/env.
+    webSearchConfigured: !!(c.webSearch && c.webSearch.apiKey),
+    webSearch: (c.webSearch && c.webSearch.apiKey)
+      ? { provider: c.webSearch.provider || 'tavily', keyMasked: '••••' + String(c.webSearch.apiKey).slice(-4), setAt: c.webSearch.setAt || null }
+      : null,
   }
+}
+// Web-search (Tavily) key for a company. Empty clears it. Never returned raw.
+export function setCompanyWebSearch(companyId, { apiKey, provider = 'tavily' } = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  const key = String(apiKey || '').trim()
+  if (key.length > 1024) throw httpErr(400, 'That key is too long to be valid.')
+  if (!key) delete c.webSearch
+  else c.webSearch = { provider: String(provider || 'tavily').slice(0, 24) || 'tavily', apiKey: key, setAt: new Date().toISOString() }
+  persist(); return publicCompany(c)
+}
+// Server-only: the raw web-search key for a user's company, or null.
+export function getCompanyWebSearchKey(workUserId) {
+  const u = getUser(workUserId)
+  if (!u || !u.companyId) return null
+  const c = (db.companies || []).find((x) => x.id === u.companyId)
+  return (c && c.webSearch && c.webSearch.apiKey) ? c.webSearch.apiKey : null
 }
 export function setCompanyAiSource(companyId, source) {
   const c = (db.companies || []).find((x) => x.id === companyId)
@@ -565,6 +796,24 @@ export function setCompanyAiSource(companyId, source) {
   c.aiSource = ['platform', 'company'].includes(source) ? source : null
   delete c.aiSourceBeforeKeys   // an explicit operator choice supersedes the pre-keys memory
   persist(); return publicCompany(c)
+}
+// Authorization attestation: a company admin affirms their organization authorizes
+// WorkCoPilot use on its systems. Recorded with who + when. attested=false clears
+// it (re-affirmation needed). Never a hard block on existing members (SUPREME RULE
+// VI) - the console prompts for it, the record is the evidence.
+export function setCompanyAuthorization(companyId, { attested = true, byName = '' } = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found')
+  if (!attested) { delete c.authorization }
+  else c.authorization = { attested: true, byName: String(byName || '').trim().slice(0, 120) || null, at: now() }
+  persist()
+  return publicCompany(c)
+}
+export function getCompanyAuthorization(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  return (c && c.authorization && c.authorization.attested)
+    ? { attested: true, byName: c.authorization.byName || null, at: c.authorization.at || null }
+    : { attested: false, byName: null, at: null }
 }
 // Set a company's AI keys. owner='corporate' = superadmin-managed per-company keys
 // (so we attribute usage per company); owner='company' = the company's own keys set
@@ -1243,6 +1492,44 @@ function aiState() {
   if (!db.ai) db.ai = { activeProvider: null, systemPrompt: DEFAULT_PROMPT, providers: {} }
   return db.ai
 }
+// ---- Platform web-search (Tavily) key (superadmin) ------------------------
+// Separate from the chat/vision provider keys: it only grounds the live
+// web-learning. Configured-state is public; the raw key is server-only.
+export function setPlatformWebSearch({ apiKey, provider = 'tavily' } = {}) {
+  const ai = aiState()
+  const key = String(apiKey || '').trim()
+  if (key.length > 1024) throw httpErr(400, 'That key is too long to be valid.')
+  if (!key) delete ai.webSearch
+  else ai.webSearch = { provider: String(provider || 'tavily').slice(0, 24) || 'tavily', apiKey: key, setAt: new Date().toISOString() }
+  persist(); return getPlatformWebSearchState()
+}
+export function getPlatformWebSearchState() {
+  const ws = aiState().webSearch
+  return {
+    configured: !!(ws && ws.apiKey),
+    provider: (ws && ws.provider) || 'tavily',
+    keyMasked: (ws && ws.apiKey) ? '••••' + String(ws.apiKey).slice(-4) : null,
+    setAt: (ws && ws.setAt) || null,
+  }
+}
+export function getPlatformWebSearchKey() { const ws = aiState().webSearch; return (ws && ws.apiKey) || null }
+
+// ---- Daily best/cheapest model recommendation (cached) --------------------
+// The recommendation is derived from the LIVE model catalog + a curated rate
+// card (ai.js). We cache it so the console is instant and it refreshes at most
+// once a day - "current, never fall apart" without hammering the providers.
+const AI_RECO_TTL_MS = 24 * 60 * 60 * 1000
+export function getWorkAiRecommendation({ maxAgeMs = AI_RECO_TTL_MS } = {}) {
+  const r = aiState().recommendation
+  if (!r || !r.at) return null
+  if (Date.now() - new Date(r.at).getTime() > maxAgeMs) return null
+  return r
+}
+export function setWorkAiRecommendation(data) {
+  aiState().recommendation = { at: new Date().toISOString(), ...data }
+  persist()
+  return aiState().recommendation
+}
 export function getProviderRuntime(id) {
   const cfg = aiState().providers[id]
   if (!cfg || !cfg.apiKey) return null
@@ -1341,7 +1628,72 @@ export function getWorkUsage(workUserId) {
     freeLeft, remainingSeconds: freeLeft + purchasedSeconds + poolSeconds,
     exhausted: (freeLeft + purchasedSeconds + poolSeconds) <= 0,
     resetLabel: '11:59 PM ET',
+    tasks: getWorkTaskUsage(workUserId),           // daily task cap state (for the app + New Task gate)
   }
+}
+
+// ---- Daily TASK cap (sessions started per day) ----------------------------
+// A "task" is one guided session. Each tier allows a MAX number of tasks per
+// day (superadmin-set in pricing); corporate / company accounts are UNLIMITED
+// (their minute pool is the real limiter). Minutes are spent WITHIN a task as
+// usual - the task count is a separate daily hard gate. Counts are monotonic per
+// Eastern day (an abandoned/deleted task still counts), resetting at 11:59 ET.
+const WORK_TASKS_UNLIMITED = Infinity
+// null => unlimited (corporate/company). Otherwise the tier's daily cap.
+export function workDailyTaskLimit(workUserId) {
+  const u = getUser(workUserId)
+  if (u && u.companyId) return WORK_TASKS_UNLIMITED       // corporate: unlimited
+  const tasks = getWorkPricing().tasks || {}
+  const tier = workUserTier(workUserId)
+  const cap = tasks[tier]
+  return Number.isInteger(cap) ? cap : (WORK_PRICING_DEFAULT.tasks[tier] || 0)
+}
+export function workTasksToday(workUserId) {
+  const key = `${workUserId}:${easternDayKey()}`
+  return (db.workTasks && db.workTasks[key]) || 0
+}
+function bumpWorkTasksToday(workUserId) {
+  if (!db.workTasks) db.workTasks = {}
+  const key = `${workUserId}:${easternDayKey()}`
+  db.workTasks[key] = (db.workTasks[key] || 0) + 1
+  return db.workTasks[key]
+}
+// The user's current INCOMPLETE task (status 'active'), or null. Enforces the
+// "finish your current task before starting a new one" rule. Idle sessions are
+// auto-finalized elsewhere, so this never strands a user permanently.
+export function activeWorkTask(workUserId) {
+  return (db.workSessions || []).find((x) => x.workUserId === workUserId && x.status === 'active') || null
+}
+// Task usage for the client (the New Task surface + /me).
+export function getWorkTaskUsage(workUserId) {
+  const cap = workDailyTaskLimit(workUserId)
+  const unlimited = !Number.isFinite(cap)
+  const usedToday = workTasksToday(workUserId)
+  const active = activeWorkTask(workUserId)
+  return {
+    unlimited,
+    cap: unlimited ? null : cap,
+    usedToday,
+    remaining: unlimited ? null : Math.max(0, cap - usedToday),
+    activeTaskId: active ? active.id : null,
+    resetLabel: '11:59 PM ET',
+  }
+}
+// Gate + record a new task start. Throws a coded httpErr the caller surfaces, or
+// returns the new usage on success. Corporate/company accounts skip the caps.
+export function startWorkTask(workUserId) {
+  const cap = workDailyTaskLimit(workUserId)
+  if (Number.isFinite(cap)) {
+    // Rule 1: one active task at a time - complete the current before a new one.
+    const active = activeWorkTask(workUserId)
+    if (active) { const e = httpErr(409, 'Finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
+    // Rule 2: daily task cap.
+    const used = workTasksToday(workUserId)
+    if (used >= cap) { const e = httpErr(402, `You have used all ${cap} task${cap === 1 ? '' : 's'} for today on the ${workUserTier(workUserId)} plan. They reset at 11:59 PM ET.`); e.taskLimit = true; e.cap = cap; e.resetLabel = '11:59 PM ET'; throw e }
+  }
+  const usedToday = bumpWorkTasksToday(workUserId)
+  persist()
+  return { usedToday, cap: Number.isFinite(cap) ? cap : null, unlimited: !Number.isFinite(cap) }
 }
 // A company admin's license + usage dashboard: seat pools, who holds a license,
 // the tier breakdown, the minute pool, and each person's live usage. Everything
@@ -1530,6 +1882,7 @@ const WORK_PRICING_DEFAULT = {
   hour: { basic: 20, advanced: 15, premium: 10 },      // extra hour, per tier
   image: { basic: 2, advanced: 1, premium: 0.5 },      // per generated image, per tier
   imageMinBulk: 10,                                    // images bought in bulk, min 10
+  tasks: { basic: 4, advanced: 8, premium: 12 },       // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}
@@ -1539,6 +1892,7 @@ export function getWorkPricing() {
     hour: { ...WORK_PRICING_DEFAULT.hour, ...(p.hour || {}) },
     image: { ...WORK_PRICING_DEFAULT.image, ...(p.image || {}) },
     imageMinBulk: p.imageMinBulk || WORK_PRICING_DEFAULT.imageMinBulk,
+    tasks: { ...WORK_PRICING_DEFAULT.tasks, ...(p.tasks || {}) },
   }
 }
 // Keep only the numeric override keys a company may set (partial is fine); null
@@ -1596,15 +1950,67 @@ export function setWorkPricing(patch) {
     if (!Number.isFinite(n) || n < 1 || n > 100000) throw httpErr(400, 'Minimum bulk image count must be between 1 and 100000.')
     imageMinBulk = Math.floor(n)
   }
+  // Daily task caps are whole non-negative integers per tier (0 = none). Separate
+  // from the money validator because these are counts, not prices.
+  const taskCounts = (o) => {
+    if (o == null) return {}
+    if (typeof o !== 'object') throw httpErr(400, 'Task limits must be an object keyed by tier.')
+    const r = {}
+    for (const k of WORK_TIERS) if (o[k] != null && o[k] !== '') {
+      const n = Number(o[k])
+      if (!Number.isInteger(n) || n < 0 || n > 1000) throw httpErr(400, `${k} task limit must be a whole number between 0 and 1000.`)
+      r[k] = n
+    }
+    return r
+  }
   db.work.pricing = {
     currency,
     plans: { ...cur.plans, ...tiers(p.plans, 'Plan') },
     hour: { ...cur.hour, ...tiers(p.hour, 'Hour') },
     image: { ...cur.image, ...tiers(p.image, 'Image') },
     imageMinBulk,
+    tasks: { ...cur.tasks, ...taskCounts(p.tasks) },
   }
   persist()
   return getWorkPricing()
+}
+
+// ---- Data retention (superadmin) ------------------------------------------
+// Platform-wide automatic retention: sessions (and their shots + audit) older
+// than N days are auto-purged. 0 = keep forever (the default), so this changes
+// nothing until a superadmin sets a window. Deletion stays logged + accountable.
+export function getWorkRetentionDays() {
+  const n = Number(db.work && db.work.retentionDays)
+  return Number.isInteger(n) && n > 0 ? n : 0
+}
+export function setWorkRetentionDays(days) {
+  if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
+  const n = Number(days)
+  if (!Number.isInteger(n) || n < 0 || n > 3650) throw httpErr(400, 'Retention must be a whole number of days between 0 (keep forever) and 3650.')
+  db.work.retentionDays = n
+  persist()
+  return { retentionDays: getWorkRetentionDays() }
+}
+// Purge sessions whose last activity is older than the retention window. Reuses
+// deleteWorkSession so each purge is logged and its shot files are removed. No-op
+// when retention is off. Best-effort; returns how many were purged.
+export function purgeOldWorkSessions() {
+  const days = getWorkRetentionDays()
+  if (days <= 0) return { purged: 0, retentionDays: 0 }
+  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000
+  // Age by LAST ACTIVITY, not start: an ended session uses endedAt; a session
+  // still active (endedAt null) uses lastActivityAt so a long-lived-but-recently-
+  // used session is never purged mid-use. startedAt is only a last resort.
+  const when = (s) => {
+    const t = Date.parse(s.endedAt || '') || (Number(s.lastActivityAt) || 0) || Date.parse(s.startedAt || '') || 0
+    return Number.isFinite(t) ? t : 0
+  }
+  const victims = (db.workSessions || []).filter((s) => when(s) && when(s) < cutoff)
+  let purged = 0
+  for (const s of victims) {
+    try { deleteWorkSession(s.workUserId, s.id, `retention: auto-purged after ${days} days`); purged++ } catch { /* skip */ }
+  }
+  return { purged, retentionDays: days }
 }
 
 export function setWorkProfile(workUserId, { displayName, onboarded } = {}) {
@@ -1768,7 +2174,7 @@ export function getWorkDocsText(workUserId, { maxChars = 6000 } = {}) {
 }
 
 // ---- WorkCoPilot per-step screenshots -------------------------------------
-const WORK_SHOTS_DIR = path.join(DATA_DIR, 'work-shots')
+const WORK_SHOTS_DIR = SHOTS_DIR   // defined up top (needed before load() migrates)
 const WORK_SHOTS_MAX = 60
 export function addWorkStepShot(workUserId, sessionId, { stepIndex, dataUrl, caption } = {}) {
   const s = findWorkSession(workUserId, sessionId)
@@ -1783,7 +2189,7 @@ export function addWorkStepShot(workUserId, sessionId, { stepIndex, dataUrl, cap
   if (!Array.isArray(s.shots)) s.shots = []
   const idx = Math.max(0, Math.round(Number(stepIndex) || 0))
   const file = path.join(dir, `${idx}-${Date.now()}.${ext}`)
-  fs.writeFileSync(file, buf)
+  fs.writeFileSync(file, encryptBuffer(buf))   // encrypted at rest; readShotBuffer decrypts
   s.shots.push({ stepIndex: idx, path: file, caption: String(caption || '').slice(0, 300) || null, at: now() })
   while (s.shots.length > WORK_SHOTS_MAX) {
     const old = s.shots.shift()
@@ -1927,6 +2333,40 @@ export function listWorkSessions(workUserId) {
     .filter((x) => x.workUserId === workUserId)
     .sort((a, b) => (b.startedAt || '').localeCompare(a.startedAt || ''))
 }
+
+// --- Company admin oversight ------------------------------------------------
+// A company admin may read their MEMBERS' sessions - completed or in progress -
+// plus each session's report and audit log. Strictly scoped to users in the same
+// company; a member cannot see anyone else, and this never crosses companies.
+export function listWorkSessionsForCompany(companyId) {
+  const byId = new Map((db.users || []).filter((u) => String(u.companyId) === String(companyId)).map((u) => [u.id, u]))
+  return (db.workSessions || [])
+    .filter((s) => byId.has(s.workUserId))
+    .sort((a, b) => (b.lastActivityAt || 0) - (a.lastActivityAt || 0) || (b.startedAt || '').localeCompare(a.startedAt || ''))
+    .map((s) => {
+      const u = byId.get(s.workUserId)
+      const steps = Array.isArray(s.steps) ? s.steps : []
+      return {
+        id: s.id, title: s.title || null, goal: s.goal || null,
+        status: s.status || 'active',
+        user: u ? (u.displayName || u.username) : null, userId: s.workUserId,
+        steps: steps.length, done: steps.filter((x) => x.status === 'done').length,
+        startedAt: s.startedAt || null, lastActivityAt: s.lastActivityAt || null, endedAt: s.endedAt || null,
+      }
+    })
+}
+// The underlying session, IF the caller is a company admin and it belongs to one
+// of their company's users. Returns null otherwise (out of scope). Used to gate
+// the report + audit-log downloads for company admins.
+export function getWorkSessionForCompanyAdmin(adminUserId, sessionId) {
+  const admin = getUser(adminUserId)
+  if (!admin || admin.companyRole !== 'company_admin' || !admin.companyId) return null
+  const s = (db.workSessions || []).find((x) => x.id === sessionId)
+  if (!s) return null
+  const owner = getUser(s.workUserId)
+  if (!owner || String(owner.companyId) !== String(admin.companyId)) return null
+  return s
+}
 export function setWorkSessionGoal(workUserId, sessionId, goal) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
@@ -2056,6 +2496,71 @@ export function setWorkSessionMode(workUserId, sessionId, mode) {
   persistSoon()
   return s
 }
+// The effective plan tier for a user (premium gating for watch-light). A company
+// member inherits the company plan; otherwise the user's own tier.
+export function workUserTier(workUserId) {
+  const u = getUser(workUserId)
+  if (!u) return 'basic'
+  if (u.companyId) {
+    const c = (db.companies || []).find((x) => x.id === u.companyId)
+    const pick = (WORK_TIERS.includes(u.tier) ? u.tier : null) || (c && WORK_TIERS.includes(c.plan) ? c.plan : null)
+    return pick || 'basic'
+  }
+  return WORK_TIERS.includes(u.tier) ? u.tier : 'basic'
+}
+// Plan-heavy / watch-light is OUR model, FORCED by the superadmin for PREMIUM
+// users (company premium members and regular premium users). Users and companies
+// do NOT control it. One platform switch; the per-user effect is derived from it
+// plus the user's tier. 'light' = rich one-shot plan + on-demand checks (no
+// continuous watch loop); 'full' = normal continuous watching.
+// ---- Homepage hero: superadmin-editable rotating headline + subtext pairs ----
+// Each pair: { h: headline text, s: subtext, em: substring of h to brand-gradient
+// (optional) }. Default = the shipped 8; the superadmin can replace them from the
+// admin console. The marketing page fetches these; an empty/missing set falls back
+// to its built-in default so the page never renders without a hero.
+const HERO_DEFAULT = [
+  { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen and tells you the exact next move, step by step, until the job is done. Any task, any field.' },
+  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
+  { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
+  { h: 'Security-first answers, checked before you see them.', em: 'Security-first', s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
+  { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
+  { h: 'The best AI plans it. A fast one guides you.', em: 'best AI', s: 'Your plan comes from the strongest model your key can reach. Then a fast one walks you through it, step by step.' },
+  { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
+  { h: 'Compliance-ready for the frameworks you answer to.', em: 'Compliance-ready', s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
+]
+export function getHeroPairs() {
+  const custom = db.work && Array.isArray(db.work.hero) && db.work.hero.length ? db.work.hero : null
+  return custom || HERO_DEFAULT
+}
+export function isHeroCustom() { return !!(db.work && Array.isArray(db.work.hero) && db.work.hero.length) }
+// Superadmin: replace the hero pairs. An empty array restores the built-in default.
+export function setHeroPairs(pairs) {
+  if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
+  const clean = (Array.isArray(pairs) ? pairs : [])
+    .map((p) => ({
+      h: String((p && p.h) || '').trim().slice(0, 140),
+      s: String((p && p.s) || '').trim().slice(0, 320),
+      em: String((p && p.em) || '').trim().slice(0, 80) || null,
+    }))
+    .filter((p) => p.h && p.s)
+    .slice(0, 12)
+  if (!clean.length) { delete db.work.hero }           // empty => restore default
+  else db.work.hero = clean
+  persist()
+  return { pairs: getHeroPairs(), custom: isHeroCustom() }
+}
+export function getWorkForceWatchLight() { return !!(db.work && db.work.forceWatchLightPremium) }
+export function setWorkForceWatchLight(on) {
+  if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
+  db.work.forceWatchLightPremium = !!on
+  persist()
+  return { forceWatchLightPremium: db.work.forceWatchLightPremium }
+}
+// The forced watch mode for a user: 'light' only when the superadmin turned it on
+// AND the user is premium; otherwise 'full'. This is not user-settable.
+export function effectiveWatchMode(workUserId) {
+  return (getWorkForceWatchLight() && workUserTier(workUserId) === 'premium') ? 'light' : 'full'
+}
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
@@ -2113,6 +2618,16 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
     at: new Date().toISOString(),
   })
   if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
+  // Remove this session's stored milestone screenshots from disk. They are only
+  // referenced by this record, so they MUST go with it - otherwise deletion (and
+  // the retention sweep) leaves orphaned encrypted images on disk forever, which
+  // breaks the deletion guarantee on the Security page and grows disk unbounded.
+  try {
+    for (const sh of (Array.isArray(s.shots) ? s.shots : [])) { try { if (sh && sh.path && fs.existsSync(sh.path)) fs.unlinkSync(sh.path) } catch { /* best effort */ } }
+    const safe = String(sessionId).replace(/[^\w-]/g, '')
+    const sdir = safe && path.join(SHOTS_DIR, safe)
+    if (sdir && fs.existsSync(sdir)) fs.rmSync(sdir, { recursive: true, force: true })
+  } catch { /* best effort */ }
   db.workSessions.splice(i, 1)
   // Remove the session's transmission audit log too, so deleting a session really
   // removes what it transmitted (the log is not kept past the session).

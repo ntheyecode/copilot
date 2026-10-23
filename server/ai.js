@@ -71,10 +71,25 @@ export function catalog() {
   }))
 }
 
+// Crisp reference codes surfaced to the user (never the raw provider text) and
+// stamped on every incident, so support can map "ref AI-NO-MODEL" to a cause in
+// one step. Short, stable, human-readable.
+export const AI_CODES = {
+  PROVIDER: 'AI-NO-PROVIDER',   // provider id not recognised / not configured
+  KEY: 'AI-KEY',                // key missing / invalid / unauthorised
+  RETIRED: 'AI-MODEL-RETIRED',  // pinned model decommissioned, no current model found
+  RATE: 'AI-RATE-LIMIT',        // every candidate model/provider rate-limited or capped
+  EXHAUSTED: 'AI-NO-MODEL',     // no working model on this key and no alternate provider left
+}
+
 // Mark every AI-layer error as a SYSTEM error (e.ai = true) so the request layer
 // shows the user a generic "system busy" message and logs the real cause for the
-// superadmin, instead of leaking the provider's raw error (quota, keys, 5xx).
-function httpErr(status, message) { const e = new Error(message); e.status = status; e.ai = true; return e }
+// superadmin, instead of leaking the provider's raw error (quota, keys, 5xx). A
+// crisp `code` (AI_CODES) rides along for the user-facing reference + the incident.
+function httpErr(status, message, code = null) {
+  const e = new Error(message); e.status = status; e.ai = true; if (code) e.code = code
+  return e
+}
 
 // Model calls occasionally hang or come back EMPTY (Groq does this under load),
 // so every call gets an abort timeout, and empty/timeout is retried once.
@@ -165,15 +180,29 @@ function looksLikeModelError(e) {
   const status = e?.status
   const msg = (e?.message || '').toLowerCase()
   return (status === 400 || status === 404) && /model/.test(msg) &&
-    /(does not exist|not found|decommission|invalid model|unknown model|no longer supported)/.test(msg)
+    /(does not exist|not found|decommission|invalid model|unknown model|no longer (?:supported|available)|not available|unavailable|update your code|deprecated|retired)/.test(msg)
 }
-function pickPreferredModel(models) {
+// Rate limit / quota / overload: at enterprise scale this is the common failure.
+// We recover by routing to a model that has headroom, not by giving up.
+function isRateLimited(e) {
+  const status = e?.status
+  const msg = (e?.message || '').toLowerCase()
+  return status === 429 || status === 503 || /rate.?limit|quota|resource exhausted|overloaded|too many requests|try again later/.test(msg)
+}
+// Pick a dependable current model from the live catalog. Prefers the provider's
+// STABLE "-latest" alias (which never goes stale as models are retired), then a
+// current flash/mini, and avoids previews, dated snapshots, and non-chat models.
+function pickPreferredModel(models, { avoid = null } = {}) {
   if (!models || !models.length) return null
-  return models.find((x) => /gpt-oss-20b/i.test(x))
-    || models.find((x) => /gpt-oss/i.test(x))
-    || models.find((x) => /llama/i.test(x))
-    || models.find((x) => /instant|8b|flash|mini/i.test(x))
-    || models[0]
+  const bad = /embedding|tts|speech|audio|image|guard|moderation|rerank|aqa|thinking|exp(?:erimental)?|preview|\d{4}-\d{2}-\d{2}|-\d{3,}$/i
+  let pool = models.filter((x) => !bad.test(String(x)) && String(x) !== avoid)
+  if (!pool.length) pool = models.filter((x) => String(x) !== avoid)
+  if (!pool.length) pool = models
+  const by = (re) => pool.find((x) => re.test(String(x)))
+  return by(/flash-latest/i) || by(/pro-latest/i) || by(/-latest$/i)
+    || by(/gpt-oss-20b/i) || by(/gpt-oss/i)
+    || by(/flash-lite/i) || by(/flash/i) || by(/mini|instant|8b|small/i)
+    || by(/llama/i) || pool[0]
 }
 
 function runChat(p, apiKey, model, system, turns) {
@@ -181,24 +210,74 @@ function runChat(p, apiKey, model, system, turns) {
     ? geminiChat(p, apiKey, model, system, turns)
     : openaiChat(p, apiKey, model, system, turns)
 }
+// A no-op if the caller passes nothing, so onSwitch is always safe to call.
+function switchNotifier(cfg) {
+  return typeof cfg.onSwitch === 'function' ? cfg.onSwitch : () => {}
+}
+const reasonOf = (e) => (isRateLimited(e) ? 'rate_limit' : 'retired')
+
+// Cross-provider text failover: when the primary key has no current model left,
+// walk the ordered alternate runtimes (OTHER providers the admin configured) and
+// run the chat on the first one that answers. Each alternate also self-heals its
+// own model once. Returns the text, or null when every alternate is exhausted.
+// Alternates are supplied ONLY where the data boundary allows it (platform keys);
+// a company/user on their own key gets an empty list and never leaves their key.
+async function failoverChat(alternates, fromP, fromModel, system, turns, notify) {
+  for (const a of (alternates || [])) {
+    const ap = PROVIDERS[a?.providerId]
+    if (!ap || !a.apiKey || a.providerId === fromP.id) continue
+    let m = a.chatModel || ap.chatModels[0]
+    try {
+      notify({ scope: 'chat', reason: 'failover', crossProvider: true, fromProvider: fromP.id, fromModel, toProvider: ap.id, toModel: m })
+      return await runChat(ap, a.apiKey, m, system, turns)
+    } catch (e) {
+      if (!looksLikeModelError(e) && !isRateLimited(e)) continue   // key/5xx on this alt: try the next
+      const live = await listModels(a).catch(() => [])
+      const alt = pickPreferredModel(live, { avoid: m })
+      if (alt && alt !== m) {
+        try {
+          notify({ scope: 'chat', reason: reasonOf(e), crossProvider: true, fromProvider: fromP.id, fromModel, toProvider: ap.id, toModel: alt })
+          return await runChat(ap, a.apiKey, alt, system, turns)
+        } catch { /* next alt */ }
+      }
+    }
+  }
+  return null
+}
 
 // ---- public API -----------------------------------------------------------
-// turns: [{ role: 'user' | 'assistant', content }]. Self-heals a retired model
-// id once against the live catalog (logged), never a key error.
+// turns: [{ role: 'user' | 'assistant', content }]. Reliability ladder, in order
+// and never masking a key error: (1) pinned model, (2) another CURRENT model on
+// the SAME key (retired/quota heal), (3) the next configured PROVIDER's key, and
+// only when all are exhausted a crisp coded error. Every switch is reported via
+// cfg.onSwitch so the superadmin sees exactly what happened.
 export async function chat(cfg, system, turns) {
   const p = PROVIDERS[cfg.providerId]
-  if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`)
-  if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`)
+  if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
+  if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`, AI_CODES.KEY)
+  const notify = switchNotifier(cfg)
   const model = cfg.chatModel || p.chatModels[0]
   try {
     return await runChat(p, cfg.apiKey, model, system, turns)
   } catch (e) {
-    if (!looksLikeModelError(e)) throw e
+    if (!looksLikeModelError(e) && !isRateLimited(e)) throw e   // key/other: surface, never mask
+    const reason = reasonOf(e)
+    // (2) another current model on the same key
     const live = await listModels(cfg).catch(() => [])
-    const fallback = pickPreferredModel(live)
-    if (!fallback || fallback === model) throw e
-    console.warn(`[ai] chat model "${model}" unavailable for ${p.label} (${e.message}) - retrying with "${fallback}"`)
-    return runChat(p, cfg.apiKey, fallback, system, turns)
+    const same = pickPreferredModel(live, { avoid: model })
+    if (same && same !== model) {
+      try {
+        notify({ scope: 'chat', reason, crossProvider: false, fromProvider: p.id, fromModel: model, toProvider: p.id, toModel: same })
+        return await runChat(p, cfg.apiKey, same, system, turns)
+      } catch (e2) { if (!looksLikeModelError(e2) && !isRateLimited(e2)) throw e2 /* fall to cross-provider */ }
+    }
+    // (3) the next configured provider's key
+    const viaAlt = await failoverChat(cfg.alternates, p, model, system, turns, notify)
+    if (viaAlt != null) return viaAlt
+    // exhausted
+    const code = reason === 'rate_limit' ? AI_CODES.RATE : AI_CODES.EXHAUSTED
+    notify({ scope: 'chat', reason, fatal: true, code, fromProvider: p.id, fromModel: model, toProvider: null, toModel: null })
+    throw httpErr(e.status || 503, e.message, code)
   }
 }
 
@@ -211,16 +290,40 @@ export async function generate(cfg, system, userText) {
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
 export async function analyseImages(cfg, prompt, imageDataUrls, model) {
   const p = PROVIDERS[cfg.providerId]
-  if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`)
-  if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.')
+  if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
+  if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.', AI_CODES.KEY)
+  const notify = switchNotifier(cfg)
   const imgs = (imageDataUrls || []).filter(Boolean).slice(0, 4)
   if (!imgs.length) return ''
-  if (p.kind === 'gemini') {
-    const parts = [{ text: prompt }]
-    for (const u of imgs) parts.push({ inline_data: { mime_type: 'image/jpeg', data: String(u).replace(/^data:[^;]+;base64,/, '') } })
-    return geminiGenerate(p, cfg.apiKey, model, parts)
+  const run = (m) => {
+    if (p.kind === 'gemini') {
+      const parts = [{ text: prompt }]
+      for (const u of imgs) parts.push({ inline_data: { mime_type: 'image/jpeg', data: String(u).replace(/^data:[^;]+;base64,/, '') } })
+      return geminiGenerate(p, cfg.apiKey, m, parts)
+    }
+    return openaiVision(p, cfg.apiKey, m, prompt, imgs)
   }
-  return openaiVision(p, cfg.apiKey, model, prompt, imgs)
+  try {
+    return await run(model)
+  } catch (e) {
+    // Screen reading must stay up too: a retired or rate-limited vision model
+    // routes to a current vision model on the SAME key. Cross-provider vision
+    // failover is handled one layer up (escalateVision's strong backup), which is
+    // why this does not walk cfg.alternates - it keeps frames on the chosen key.
+    if (!looksLikeModelError(e) && !isRateLimited(e)) throw e
+    const reason = reasonOf(e)
+    const live = await listModels(cfg).catch(() => [])
+    const vis = live.filter((x) => VISION_HINT.test(x))
+    const alt = pickPreferredModel(vis, { avoid: model }) || vis.find((x) => x !== model) || null
+    if (!alt || alt === model) {
+      const code = reason === 'rate_limit' ? AI_CODES.RATE : AI_CODES.EXHAUSTED
+      notify({ scope: 'vision', reason, fatal: true, code, fromProvider: p.id, fromModel: model, toProvider: null, toModel: null })
+      throw httpErr(e.status || 503, e.message, code)
+    }
+    notify({ scope: 'vision', reason, crossProvider: false, fromProvider: p.id, fromModel: model, toProvider: p.id, toModel: alt })
+    try { visionCache.delete(`${cfg.providerId}:${String(cfg.apiKey).slice(-6)}`) } catch { /* ignore */ }
+    return run(alt)
+  }
 }
 
 // Not every chat model can see images. If the pinned model is not vision-capable
@@ -285,4 +388,73 @@ export async function testKey(cfg) {
   } catch { /* live discovery failed - let chat() report the real error */ }
   const answer = await chat({ ...cfg, chatModel: model }, 'You are a connectivity check. Reply with exactly: OK', [{ role: 'user', content: 'ping' }])
   return { ok: true, provider: p.label, model, requestedModel, sample: answer.slice(0, 40) }
+}
+
+// ---- Daily best/cheapest recommendation -----------------------------------
+// A curated rate card: approximate published INPUT list price ($/million tokens)
+// plus a coarse quality tier (1-5) and whether the model can see screens. Matched
+// against the LIVE catalog (most-specific pattern first), so the recommendation
+// is always a model that is CURRENTLY available on the key - it never names a
+// retired model. Prices are approximate and for guidance only (providers change
+// them); refreshed daily by the caller. Keep patterns specific-first.
+const RATECARD = {
+  gemini: [
+    { re: /flash-lite/i, usd: 0.10, q: 3, vision: true },
+    { re: /2\.0-flash(?!-lite)/i, usd: 0.10, q: 3, vision: true },
+    { re: /3(\.\d)?-flash(?!-lite)/i, usd: 0.30, q: 4, vision: true },
+    { re: /flash-latest/i, usd: 0.30, q: 4, vision: true },
+    { re: /1\.5-flash/i, usd: 0.08, q: 3, vision: true },
+    { re: /3(\.\d)?-pro|2\.5-pro|pro-latest/i, usd: 2.50, q: 5, vision: true },
+  ],
+  openai: [
+    { re: /gpt-4o-mini/i, usd: 0.15, q: 3, vision: true },
+    { re: /4\.1-nano/i, usd: 0.10, q: 3, vision: true },
+    { re: /4\.1-mini/i, usd: 0.40, q: 4, vision: true },
+    { re: /o4-mini/i, usd: 1.10, q: 4, vision: true },
+    { re: /gpt-4o(?!-mini)/i, usd: 2.50, q: 5, vision: true },
+    { re: /gpt-4\.1(?!-nano|-mini)/i, usd: 2.00, q: 5, vision: true },
+  ],
+  groq: [
+    { re: /gpt-oss-20b/i, usd: 0.10, q: 3, vision: false },
+    { re: /gpt-oss-120b/i, usd: 0.25, q: 4, vision: false },
+    { re: /scout/i, usd: 0.11, q: 3, vision: true },
+    { re: /maverick/i, usd: 0.20, q: 4, vision: true },
+    { re: /llama.*vl|vision/i, usd: 0.20, q: 3, vision: true },
+  ],
+}
+function rateFor(providerId, model) {
+  for (const row of (RATECARD[providerId] || [])) if (row.re.test(String(model))) return row
+  return { usd: null, q: 2, vision: VISION_HINT.test(String(model)) } // unknown model: conservative
+}
+
+// Where our model ranking comes from, so the "best model plans your work" claim
+// is sourced and dated, not asserted. The quality tiers above are curated to
+// reflect the public community leaderboards; keep RANK_UPDATED current when they
+// are revised (a superadmin confirmation / periodic auto-fetch can supersede it).
+export const RANK_META = { source: 'community AI leaderboards (LMArena, Artificial Analysis)', updated: '2026-10-22' }
+// A model's standing: tier + whether it is in our TOP tier (the "top-ranked"
+// badge is shown only for 'top'). Honest: this is our tracked ranking, dated.
+export function modelRank(providerId, model) {
+  const r = rateFor(providerId, model)
+  const tier = r.q >= 5 ? 'top' : r.q >= 4 ? 'strong' : 'standard'
+  return { quality: r.q, tier, topRanked: r.q >= 5, vision: !!r.vision, source: RANK_META.source, updated: RANK_META.updated }
+}
+// Per-provider recommendation from the live catalog, or null when the key cannot
+// list models (bad key / provider down - the caller surfaces that separately).
+export async function recommendModels(cfg) {
+  const p = PROVIDERS[cfg.providerId]
+  if (!p) return null
+  const live = await listModels(cfg).catch(() => null)
+  if (!live || !live.length) return null
+  const bad = /preview|exp(?:erimental)?|\d{4}-\d{2}-\d{2}|-\d{3,}$/i
+  const scored = live.filter((m) => !bad.test(m)).map((m) => ({ model: m, ...rateFor(cfg.providerId, m) }))
+  if (!scored.length) return null
+  const priced = scored.filter((x) => x.usd != null)
+  const byCheap = (a, b) => (a.usd - b.usd) || (b.q - a.q)
+  const byBest = (a, b) => (b.q - a.q) || ((a.usd ?? 99) - (b.usd ?? 99))
+  const cheapest = (priced.length ? priced : scored).slice().sort(byCheap)[0] || null
+  const cheapestVision = (priced.filter((x) => x.vision).length ? priced.filter((x) => x.vision) : scored.filter((x) => x.vision)).slice().sort(byCheap)[0] || null
+  const best = scored.slice().sort(byBest)[0] || null
+  const strip = (x) => x ? { model: x.model, usdPerMtok: x.usd, quality: x.q, vision: x.vision } : null
+  return { provider: p.id, label: p.label, count: scored.length, cheapest: strip(cheapest), cheapestVision: strip(cheapestVision), best: strip(best) }
 }

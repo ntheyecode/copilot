@@ -37,10 +37,14 @@ let SERVER_ORIGIN = ''
 try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
 
 const BUDDY_W = 340
-const BUDDY_H = 180
+const BUDDY_H = 180          // compact starting height
+const BUDDY_H_MIN = 180      // never shorter than the compact card
+const BUDDY_H_MAX = 460      // grows this tall to show a long instruction, then scrolls
+let buddyH = BUDDY_H         // current allowed height (the page asks us to grow to fit)
 
 let win = null          // main console window
 let buddy = null        // small movable buddy window
+let guideWindow = null   // full-screen guidance on the OTHER monitor (/work/guide)
 let quitting = false
 let closingMain = false // main window is in its 'close' -> 'closed' transition (never summon the buddy then)
 let clickThrough = false
@@ -179,6 +183,28 @@ function clampToDisplays(x, y) {
     if (fits) return { x, y }
   } catch { /* fall through to default corner */ }
   return null
+}
+// Grow/shrink the buddy card to fit its content. Called by the /work/buddy page
+// after it measures its own instruction text. The card is anchored to its
+// BOTTOM-LEFT, so it grows UPWARD (the controls stay put under the user's cursor)
+// and we keep the top edge on-screen. This is the only sanctioned height change;
+// the user can never drag-resize (resizable:false), so the drift bug cannot recur.
+function setBuddyHeight(h) {
+  try {
+    if (!alive(buddy)) return
+    const nh = Math.max(BUDDY_H_MIN, Math.min(BUDDY_H_MAX, Math.round(Number(h) || BUDDY_H)))
+    if (nh === buddyH) return
+    const b = buddy.getBounds()
+    const bottom = b.y + b.height
+    let ny = bottom - nh
+    try {
+      const area = screen.getDisplayMatching(b).workArea
+      if (ny < area.y + 4) ny = area.y + 4                 // never push the top off-screen
+    } catch { /* keep computed ny */ }
+    buddyH = nh
+    buddy.setBounds({ x: b.x, y: ny, width: BUDDY_W, height: nh })
+    saveBuddyPos()
+  } catch { /* ignore */ }
 }
 function defaultBuddyPos() {
   try {
@@ -685,6 +711,50 @@ function createWindow() {
   })
 }
 
+// --- full-screen guidance window (second monitor) --------------------------
+// Pick the display the user is NOT working on: the one the main window is not on.
+// With a single monitor, fall back to that one (still useful - the user alt-tabs).
+function guideDisplay() {
+  try {
+    const all = screen.getAllDisplays()
+    if (all.length < 2) return screen.getPrimaryDisplay()
+    const here = alive(win) ? screen.getDisplayMatching(win.getBounds()) : screen.getPrimaryDisplay()
+    return all.find((d) => String(d.id) !== String(here.id)) || all[0]
+  } catch { return screen.getPrimaryDisplay() }
+}
+// Open (or focus) a clean, full-screen guidance window on the other monitor. It
+// loads the same /work/guide page the web uses, in the same cookie session, and is
+// content-protected like the rest of WorkCoPilot. Read-only: the user still drives
+// from the main console. Returns true so the renderer knows the desktop took it.
+function openGuideWindow() {
+  if (alive(guideWindow)) { try { guideWindow.show(); guideWindow.focus() } catch { /* ignore */ } ; return true }
+  const disp = guideDisplay()
+  const b = disp.bounds
+  guideWindow = new BrowserWindow({
+    x: b.x, y: b.y, width: b.width, height: b.height,
+    fullscreen: true,
+    backgroundColor: '#0a0d12',
+    title: 'WorkCoPilot guidance',
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      backgroundThrottling: false,
+      session: session.fromPartition(PARTITION),
+    },
+  })
+  // Keep WorkCoPilot out of its own screen capture, like the other windows.
+  try { guideWindow.setContentProtection(true) } catch { /* best effort */ }
+  guideWindow.loadURL(`${SERVER_URL}/work/guide`)
+  guideWindow.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https?:\/\//i.test(url)) { shell.openExternal(url); return { action: 'deny' } }
+    return { action: 'allow' }
+  })
+  guideWindow.on('closed', () => { guideWindow = null })
+  return true
+}
+
 // --- buddy window ----------------------------------------------------------
 function createBuddy() {
   if (buddy && !buddy.isDestroyed()) return buddy
@@ -699,11 +769,17 @@ function createBuddy() {
   // resize while the user dragged it and the card grew/drifted while held. The
   // size clamps plus the 'resize' re-settle below make a regression impossible
   // even if 'resizable' is ever flipped again.
+  buddyH = BUDDY_H   // every fresh buddy starts compact
   buddy = new BrowserWindow({
     width: BUDDY_W,
     height: BUDDY_H,
+    // Width stays hard-locked. Height has a range so the page can grow the card
+    // (programmatically, never by user edge-drag) to show a long instruction in
+    // full instead of clipping it. resizable:false still blocks the drag-latch
+    // that caused the old drift bug; the 'resize' re-settle below pins height to
+    // whatever the page last asked for.
     minWidth: BUDDY_W, maxWidth: BUDDY_W,
-    minHeight: BUDDY_H, maxHeight: BUDDY_H,
+    minHeight: BUDDY_H_MIN, maxHeight: BUDDY_H_MAX,
     x: pos.x,
     y: pos.y,
     show: false,
@@ -745,7 +821,7 @@ function createBuddy() {
     try {
       if (!alive(buddy)) return
       const [w, h] = buddy.getSize()
-      if (w !== BUDDY_W || h !== BUDDY_H) buddy.setSize(BUDDY_W, BUDDY_H, false)
+      if (w !== BUDDY_W || h !== buddyH) buddy.setSize(BUDDY_W, buddyH, false)
     } catch { /* ignore */ }
   })
   buddy.on('closed', () => { buddy = null })
@@ -830,6 +906,8 @@ ipcMain.handle('work:retry-load', () => { retryLoad() })
 ipcMain.handle('work:hide', () => { if (alive(win)) win.hide(); showBuddy() })
 // Buddy-driven controls.
 ipcMain.handle('work:buddy-hide', () => { hideBuddy() })          // hide just the buddy
+ipcMain.on('work:buddy-height', (_e, h) => { setBuddyHeight(h) }) // page asks the card to fit its text
+ipcMain.handle('work:open-guide', () => openGuideWindow())        // full-screen guidance on the other monitor
 ipcMain.handle('work:open-main', () => {                          // reopen the full console
   if (!alive(win)) { createWindow(); return }
   if (win.isMinimized()) win.restore()

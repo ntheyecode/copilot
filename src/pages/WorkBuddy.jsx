@@ -20,8 +20,10 @@
 // surface so it floats. The header is a CSS drag region (-webkit-app-region) so
 // the user can move the window; buttons and the mascot opt out so they stay
 // clickable and never start a drag.
-import React, { useEffect, useRef, useState, useCallback } from 'react'
-import { Clock, Pause, Play, X, Maximize2, Loader2 } from 'lucide-react'
+import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
+import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile } from 'lucide-react'
+import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
+import BuddyPicker from '../components/BuddyPicker.jsx'
 
 const ACCENT = '#8cf5c4'   // emerald
 const CYAN = '#39d3ff'     // cyan
@@ -46,62 +48,6 @@ async function getJSON(url, opts) {
   return r.json()
 }
 
-// The mascot: a small friendly robot head whose expression tracks `state`.
-// state: thinking | idle | error | paused | guiding | done
-function Mascot({ state }) {
-  const closed = state === 'paused'
-  const happy = state === 'guiding' || state === 'done'
-  const eye = closed ? AMBER : state === 'error' ? '#f59b9b' : ACCENT
-  const antenna = happy ? ACCENT : closed ? AMBER : CYAN
-  const bob = closed ? 'wb-bob 5s ease-in-out infinite' : 'wb-bob 3.2s ease-in-out infinite'
-  const dotAnim = state === 'thinking' ? 'wb-pulse 0.9s ease-in-out infinite' : 'wb-pulse 2.2s ease-in-out infinite'
-  return (
-    <div style={{ WebkitAppRegion: 'no-drag', flex: '0 0 auto', alignSelf: 'center' }}>
-      <svg width="54" height="54" viewBox="0 0 64 64" style={{ display: 'block', animation: bob, filter: 'drop-shadow(0 5px 10px rgba(0,0,0,0.5))' }}>
-        <defs>
-          <linearGradient id="wb-rim" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor={ACCENT} /><stop offset="1" stopColor={CYAN} />
-          </linearGradient>
-        </defs>
-        {/* antenna */}
-        <line x1="32" y1="12" x2="32" y2="6" stroke={antenna} strokeWidth="2" strokeLinecap="round" />
-        <circle cx="32" cy="4.3" r="3" fill={antenna} style={{ animation: dotAnim, transformBox: 'fill-box', transformOrigin: 'center' }} />
-        {/* ears */}
-        <rect x="12.5" y="24" width="3.5" height="10" rx="1.75" fill={CYAN} opacity="0.75" />
-        <rect x="48" y="24" width="3.5" height="10" rx="1.75" fill={CYAN} opacity="0.75" />
-        {/* head */}
-        <rect x="16" y="13" width="32" height="30" rx="11" fill="#0f141a" stroke="url(#wb-rim)" strokeWidth="2" />
-        {/* face screen */}
-        <rect x="20" y="18" width="24" height="20" rx="8" fill="#0a0e12" />
-        {/* eyes (blink unless paused) */}
-        <g style={closed ? undefined : { animation: 'wb-blink 4.4s infinite', transformBox: 'fill-box', transformOrigin: 'center' }}>
-          {closed ? (
-            <>
-              <line x1="24.5" y1="27" x2="29.5" y2="27" stroke={eye} strokeWidth="2" strokeLinecap="round" />
-              <line x1="34.5" y1="27" x2="39.5" y2="27" stroke={eye} strokeWidth="2" strokeLinecap="round" />
-            </>
-          ) : (
-            <>
-              <circle cx="27" cy="27" r="3" fill={eye} style={{ filter: `drop-shadow(0 0 4px ${eye})` }} />
-              <circle cx="37" cy="27" r="3" fill={eye} style={{ filter: `drop-shadow(0 0 4px ${eye})` }} />
-            </>
-          )}
-        </g>
-        {/* mouth */}
-        {happy
-          ? <path d="M27 33 Q32 37 37 33" stroke={eye} strokeWidth="2" fill="none" strokeLinecap="round" />
-          : closed
-            ? <path d="M28 34 Q32 35.4 36 34" stroke="#5f6b72" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-            : <line x1="28" y1="34" x2="36" y2="34" stroke="#5f6b72" strokeWidth="1.6" strokeLinecap="round" />}
-        {/* shoulders hint */}
-        <path d="M22 43 Q32 48 42 43 L42 46 Q32 51 22 46 Z" fill="url(#wb-rim)" opacity="0.22" />
-        {/* sleepy z when paused */}
-        {closed && <text x="43" y="16" fontSize="8" fontWeight="700" fill={AMBER} fontFamily="Inter, sans-serif" style={{ animation: 'wb-float 2.6s ease-in-out infinite' }}>z</text>}
-      </svg>
-    </div>
-  )
-}
-
 export default function WorkBuddy() {
   const [session, setSession] = useState(null)   // active session or null
   const [usage, setUsage] = useState(null)        // usage snapshot or null
@@ -112,6 +58,23 @@ export default function WorkBuddy() {
   const aliveRef = useRef(true)
 
   const paused = !!(session && session.paused)
+
+  // --- buddy preferences (persisted, each read/write guarded) ---------------
+  // character: which avatar ('bot'..'man' or 'surprise'); the preference is
+  // saved, the rendered character is resolved from it (surprise -> a pet).
+  // motionOff: freeze all buddy animation. textOnly: hide the avatar and show a
+  // slim instruction-only card. showPicker: reveal the "change buddy" row.
+  const readBool = (k) => { try { return localStorage.getItem(k) === '1' } catch { return false } }
+  const writeBool = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0') } catch { /* ignore */ } }
+  const [charPref, setCharPref] = useState(() => readBuddyPref())
+  const [motionOff, setMotionOff] = useState(() => readBool('wc.buddy.motion'))
+  const [textOnly, setTextOnly] = useState(() => readBool('wc.buddy.textOnly'))
+  const [showPicker, setShowPicker] = useState(false)
+  // Resolve 'surprise' once per mount so the pet does not reshuffle every render.
+  const character = React.useMemo(() => resolveCharacter(charPref), [charPref])
+
+  const toggleMotion = useCallback(() => setMotionOff((v) => { const n = !v; writeBool('wc.buddy.motion', n); return n }), [])
+  const toggleTextOnly = useCallback(() => setTextOnly((v) => { const n = !v; writeBool('wc.buddy.textOnly', n); return n }), [])
 
   // One poll cycle: discover the active session if unknown, then refresh it and
   // the usage meter. Degrades to the empty / error state without throwing.
@@ -209,14 +172,39 @@ export default function WorkBuddy() {
   const progressPct = total > 0 ? Math.round((Math.min(curIdx, total) / total) * 100) : 0
   const remaining = usage ? usage.remainingSeconds : null
   const exhausted = !!(usage && usage.exhausted)
+  const flag = (session && session.flag) || ''
+  const hasGuidance = !!((session && session.guidance) || (steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)))
 
-  // Mascot mood from status.
-  const mascotState = status === 'loading' ? 'thinking'
-    : status === 'error' ? 'error'
-    : status === 'empty' || status === 'signin' ? 'idle'
-    : paused ? 'paused'
+  // A brief "new step" pop when the current step advances (not on first load).
+  const [pulse, setPulse] = useState(false)
+  const lastStepRef = useRef(curIdx)
+  useEffect(() => {
+    const prev = lastStepRef.current
+    lastStepRef.current = curIdx
+    if (status === 'ok' && !allDone && Number.isFinite(curIdx) && curIdx > prev) {
+      setPulse(true)
+      const t = setTimeout(() => { if (aliveRef.current) setPulse(false) }, 900)
+      return () => clearTimeout(t)
+    }
+    return undefined
+  }, [curIdx, status, allDone])
+
+  // Buddy mood from the live session, in AliveBuddy's vocabulary:
+  //  thinking  = ok but still reading (no guidance yet) / loading
+  //  answering = ok with current guidance or a step to do
+  //  done      = every step confirmed
+  //  newstep   = a step just advanced (brief)
+  //  alert     = something flagged, or the server is unreachable
+  //  idle      = nothing active, signed out, or session paused
+  const aliveState = status === 'loading' ? 'thinking'
+    : status === 'error' ? 'alert'
+    : (status === 'empty' || status === 'signin') ? 'idle'
+    : paused ? 'idle'
     : allDone ? 'done'
-    : 'guiding'
+    : flag ? 'alert'
+    : pulse ? 'newstep'
+    : hasGuidance ? 'answering'
+    : 'thinking'
 
   // Calm one-liners for the non-active states, shown in the bubble.
   const calmMsg = status === 'loading' ? 'Waking up and connecting'
@@ -227,9 +215,34 @@ export default function WorkBuddy() {
 
   const S = styles
 
+  // Grow the OS window to fit the instruction so nothing is clipped. The card
+  // lays out at its natural height (min 180, the compact size); we measure it and
+  // ask the shell to make the window that tall (capped + anchored to the corner in
+  // main.js). In the browser (no desktop bridge) this is a harmless no-op and the
+  // card just sizes to the viewport. Re-report on every content change and on any
+  // async reflow (font load, text wrap) via a ResizeObserver.
+  const cardRef = useRef(null)
+  const lastHRef = useRef(0)
+  const reportHeight = useCallback(() => {
+    try {
+      const el = cardRef.current
+      if (!el || !(window.workDesktop && window.workDesktop.setBuddyHeight)) return
+      const h = Math.ceil(el.getBoundingClientRect().height)
+      if (h && Math.abs(h - lastHRef.current) >= 2) { lastHRef.current = h; window.workDesktop.setBuddyHeight(h) }
+    } catch { /* ignore */ }
+  }, [])
+  useLayoutEffect(() => { reportHeight() }, [reportHeight, status, stepTitle, nextMove, progressLabel, paused, calmMsg, allDone, textOnly, showPicker])
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(() => reportHeight())
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [reportHeight])
+
   return (
     <div style={S.root}>
-      <div style={S.card}>
+      <div style={S.card} ref={cardRef}>
         {/* Draggable header */}
         <div style={S.header}>
           <div style={S.brand}>
@@ -238,6 +251,31 @@ export default function WorkBuddy() {
             {paused && <span style={S.pausedTag}>Paused</span>}
           </div>
           <div style={S.headerBtns}>
+            <button
+              title={showPicker ? 'Close buddy picker' : 'Change buddy'}
+              aria-label="Change buddy" aria-pressed={showPicker}
+              style={{ ...S.iconBtn, ...(showPicker ? S.iconBtnOn : null) }}
+              onClick={() => setShowPicker((v) => !v)}
+            >
+              <Smile size={14} />
+            </button>
+            <button
+              title={textOnly ? 'Show the buddy' : 'Text only'}
+              aria-label="Text only" aria-pressed={textOnly}
+              style={{ ...S.iconBtn, ...(textOnly ? S.iconBtnOn : null) }}
+              onClick={toggleTextOnly}
+            >
+              <Type size={13} />
+            </button>
+            <button
+              title={motionOff ? 'Resume buddy motion' : 'Freeze buddy motion'}
+              aria-label="Freeze buddy motion" aria-pressed={motionOff}
+              style={{ ...S.iconBtn, opacity: motionOff ? 0.5 : 1 }}
+              onClick={toggleMotion}
+            >
+              <Sparkles size={13} />
+            </button>
+            <span style={S.btnSep} />
             <button title="Open full window" aria-label="Open full window" style={S.iconBtn} onClick={openMain}>
               <Maximize2 size={14} />
             </button>
@@ -247,18 +285,30 @@ export default function WorkBuddy() {
           </div>
         </div>
 
-        {/* Body: mascot + speech bubble */}
+        {/* Change-buddy picker (revealed by the smile toggle) */}
+        {showPicker && (
+          <div style={S.pickerWrap}>
+            <span style={S.pickerLabel}>Pick your buddy</span>
+            <BuddyPicker pref={charPref} size={30} onPick={(p) => { setCharPref(p); }} />
+          </div>
+        )}
+
+        {/* Body: alive buddy + speech bubble (avatar hidden in text-only mode) */}
         <div style={S.body}>
-          <Mascot state={mascotState} />
+          {!textOnly && (
+            <div style={{ WebkitAppRegion: 'no-drag', flex: '0 0 auto', alignSelf: 'flex-start', marginTop: 1 }}>
+              <AliveBuddy character={character} state={aliveState} size={58} motion={!motionOff} interactive />
+            </div>
+          )}
           <div style={S.bubble}>
-            <span style={S.tail} />
+            {!textOnly && <span style={S.tail} />}
             {status === 'ok' && session ? (
               <>
                 <div style={S.stepLabel} title={stepTitle}>
                   {status === 'ok' && !allDone && <Loader2 size={11} style={{ ...S.spin, opacity: paused ? 0.3 : 0.8, marginRight: 5 }} />}
                   {stepTitle}
                 </div>
-                <div key={nextMove} style={S.moveText} title={nextMove}>{nextMove}</div>
+                <div style={S.moveText}>{nextMove}</div>
                 <div style={S.metaRow}>
                   {progressLabel && (
                     <span style={S.progWrap}>
@@ -305,18 +355,25 @@ export default function WorkBuddy() {
 const styles = {
   root: {
     width: '100%',
-    height: '100vh',
+    minHeight: '100vh',
     margin: 0,
     background: 'transparent',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
     fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
     WebkitUserSelect: 'none',
     userSelect: 'none',
     overflow: 'hidden',
   },
+  // The card lays out at its NATURAL height (min 180 = the compact size). The
+  // window is grown to match (main.js), so a long instruction is shown in full
+  // instead of being clipped. It never stretches to a stale, taller window.
   card: {
     boxSizing: 'border-box',
     width: '100%',
-    height: '100%',
+    minHeight: 180,
     display: 'flex',
     flexDirection: 'column',
     background: 'radial-gradient(120% 90% at 0% 0%, #121820 0%, ' + BG + ' 60%)',
@@ -348,14 +405,22 @@ const styles = {
     background: 'rgba(255,255,255,0.04)', color: '#aeb8bf',
     border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, cursor: 'pointer',
   },
-  body: { flex: 1, padding: '9px 11px 9px 9px', display: 'flex', alignItems: 'stretch', gap: 9, minHeight: 0 },
+  iconBtnOn: { color: ACCENT, background: 'rgba(140,245,196,0.14)', borderColor: 'rgba(140,245,196,0.4)' },
+  btnSep: { width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flex: '0 0 auto' },
+  pickerWrap: {
+    WebkitAppRegion: 'no-drag',
+    display: 'flex', flexDirection: 'column', gap: 7,
+    padding: '9px 11px', borderBottom: '1px solid rgba(255,255,255,0.05)',
+    background: 'rgba(57,211,255,0.04)',
+  },
+  pickerLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: '#9aa6ad' },
+  body: { flex: 1, padding: '9px 11px 9px 9px', display: 'flex', alignItems: 'flex-start', gap: 8, minHeight: 0 },
   bubble: {
     position: 'relative', flex: 1, minWidth: 0,
-    display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'center',
+    display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'flex-start',
     background: 'rgba(255,255,255,0.045)',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: 12, padding: '9px 11px',
-    animation: 'wb-msg 0.28s ease-out',
   },
   tail: {
     position: 'absolute', left: -5, top: 24, width: 10, height: 10,
@@ -366,15 +431,17 @@ const styles = {
   },
   spin: { animation: 'wb-spin 1s linear infinite' },
   stepLabel: {
-    display: 'flex', alignItems: 'center',
+    display: 'flex', alignItems: 'flex-start',
     fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase',
-    color: CYAN, opacity: 0.9,
-    whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+    color: CYAN, opacity: 0.9, lineHeight: 1.3,
   },
+  // The exact next move, shown IN FULL and refreshed in place (no clamp, no
+  // remount animation) so it stays in one fixed spot. Very long guidance scrolls
+  // inside the bubble once the window hits its height cap.
   moveText: {
-    fontSize: 13, fontWeight: 600, color: '#f1f6f3', lineHeight: 1.32,
-    display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden',
-    animation: 'wb-msg 0.28s ease-out',
+    fontSize: 13, fontWeight: 600, color: '#f1f6f3', lineHeight: 1.35,
+    whiteSpace: 'normal', overflowWrap: 'anywhere',
+    maxHeight: 230, overflowY: 'auto',
   },
   metaRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 1 },
   progWrap: { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 },
@@ -406,10 +473,6 @@ if (typeof document !== 'undefined' && !document.getElementById('wb-kf')) {
   el.id = 'wb-kf'
   el.textContent = [
     '@keyframes wb-spin{to{transform:rotate(360deg)}}',
-    '@keyframes wb-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}',
-    '@keyframes wb-blink{0%,92%,100%{transform:scaleY(1)}95%,97%{transform:scaleY(0.12)}}',
-    '@keyframes wb-pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.45;transform:scale(0.82)}}',
-    '@keyframes wb-float{0%,100%{opacity:0.25;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}',
     '@keyframes wb-msg{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}',
   ].join('')
   document.head.appendChild(el)

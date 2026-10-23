@@ -19,6 +19,7 @@ async function req(method, url, body) {
   if (!res.ok) {
     const err = new Error((data && data.error) || `Request failed (${res.status})`)
     err.status = res.status
+    err.data = data || null          // full response body (e.g. taskLimit, mustCompleteCurrent, activeTaskId)
     throw err
   }
   // On-device rehydrate: substitute tokenized values back into the response so
@@ -97,6 +98,10 @@ export const api = {
   workTeamActivity: () => req('GET', '/api/work/team/activity'),
   workTeamAi: () => req('GET', '/api/work/team/ai'),
   workTeamSetAiKeys: (body) => req('POST', '/api/work/team/ai-keys', body || {}),
+  // Company admin: this company's own web-search (Tavily) key (apiKey:'' clears),
+  // and the best+cheapest model recommendation for the keys the company runs on.
+  workTeamSetWebSearch: (apiKey, provider) => req('POST', '/api/work/team/web-search', { apiKey, provider }),
+  workTeamAiRecommendation: () => req('GET', '/api/work/team/ai-recommendation'),
   workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
   // body: { goal?, frame? } (frame = downscaled data URL; when DLP is on it is
   // redacted on-device by frame_scrub before it is passed in by the component)
@@ -110,6 +115,16 @@ export const api = {
   workWatch: (id, body) => req('POST', `/api/work/sessions/${id}/watch`, body || {}),
   // body: { question?, frame }
   workAsk: (id, body) => req('POST', `/api/work/sessions/${id}/ask`, { ...(body || {}), ...(body && body.question != null ? { question: clean(body.question) } : {}) }),
+  // Return the actual RESULT (not just steps). body: { question?, frame?, docsText?, deep? };
+  // frame is optional (with it, reads the screen; without, computes from goal + pasted data).
+  // Text is DLP-tokenized here before it leaves. -> { result: { kind, body, basis, verifyBy,
+  // confidence, need, grounded, caveat }, escalated, model }
+  workResult: (id, body) => req('POST', `/api/work/sessions/${id}/result`, { ...(body || {}), ...(body && body.question != null ? { question: clean(body.question) } : {}), ...(body && body.docsText != null ? { docsText: clean(body.docsText) } : {}) }),
+  // Add context mid-task. body: { note?, docsText?, image?, frame? } where image =
+  // an uploaded screenshot/photo (on-device redacted first when DLP is on), frame =
+  // optional live screen. Text is DLP-tokenized here before it leaves. ->
+  // { replanned, answer, reason, index, step, steps }
+  workAddContext: (id, body) => req('POST', `/api/work/sessions/${id}/context`, { ...(body || {}), ...(body && body.note != null ? { note: clean(body.note) } : {}), ...(body && body.docsText != null ? { docsText: clean(body.docsText) } : {}) }),
   workStep: (id, index, status) => req('POST', `/api/work/sessions/${id}/step`, { index, status }),
   workCurrentStep: (id, index) => req('POST', `/api/work/sessions/${id}/current`, { index }),
   // Reference documents (Advanced & Premium): ground the plan in the user's own material.
@@ -125,8 +140,19 @@ export const api = {
   workUsage: () => req('GET', '/api/work/usage'),
   workHeartbeat: (id, seconds) => req('POST', '/api/work/usage/heartbeat', { sessionId: id, seconds }),
   workPause: (id, paused) => req('PATCH', `/api/work/sessions/${id}/pause`, { paused }),
-  workDraft: (id, ask) => req('POST', `/api/work/sessions/${id}/draft`, { ask: clean(ask) }),
+  // Compose: WRITE the actual document. body: { want (what to write), format?
+  // (email|document|outline|bullets|table|code|notes), docsText?, frame?, deep? }.
+  // Text is DLP-tokenized before it leaves. -> { compose: { title, format, body,
+  // basis, caveat }, escalated, model }
+  workCompose: (id, body) => req('POST', `/api/work/sessions/${id}/compose`, { ...(body || {}), ...(body && body.want != null ? { want: clean(body.want) } : {}), ...(body && body.docsText != null ? { docsText: clean(body.docsText) } : {}) }),
+  // On-device data compute (privacy-first): send ONLY { want, schema:[{name,type}],
+  // rowCount } - NEVER the rows. Returns { spec, explanation, caveat, need, ok }.
+  // The caller then runs the spec locally with runSpec() from server/compute_spec.js.
+  workCompute: (id, body) => req('POST', `/api/work/sessions/${id}/compute`, { want: clean((body || {}).want || ''), schema: (body || {}).schema || [], rowCount: (body || {}).rowCount || 0 }),
   workFinalize: (id) => req('POST', `/api/work/sessions/${id}/finalize`),
+  // company-admin: organization authorization attestation
+  workTeamAuthorization: () => req('GET', '/api/work/team/authorization'),
+  workTeamAttest: (byName) => req('POST', '/api/work/team/authorization', { attested: true, byName: clean(byName || '') }),
   // support tickets (user)
   workTicketCategories: () => req('GET', '/api/work/ticket-categories'),
   workTickets: () => req('GET', '/api/work/tickets'),
@@ -163,6 +189,14 @@ export const api = {
   // company admin: own-company data-governance (DLP) policy
   workPolicy: (companyId) => req('GET', `/api/work/policy?companyId=${encodeURIComponent(companyId || '')}`),
   workSetPolicy: (body) => req('POST', '/api/work/policy', body || {}),
+  // individual user (no company): manage your OWN scrub rules. No scope param ->
+  // the server defaults to your own user policy; company members are denied.
+  workMyPolicy: () => req('GET', '/api/work/policy'),
+  workSaveMyPolicy: (body) => req('POST', '/api/work/policy', { ...(body || {}), companyId: undefined, userId: undefined }),
+  // company admin: list every member session (completed + in progress)
+  workCompanySessions: () => req('GET', '/api/work/company/sessions'),
+  // per-session audit log (what was sent to the AI). Owner, their company admin, or superadmin.
+  workAuditUrl: (id) => `/api/work/sessions/${id}/audit.log`,
   // change your own password (verifies the current one server-side)
   workChangePassword: (currentPassword, newPassword) => req('POST', '/api/work/profile/password', { currentPassword, newPassword }),
   // SSO (OIDC). Login page resolves a company domain, then does a full-page

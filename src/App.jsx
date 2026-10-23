@@ -4,8 +4,14 @@ import WorkMarketing from './pages/WorkMarketing.jsx'
 import WorkDemo from './pages/WorkDemo.jsx'
 import WorkLogin from './pages/WorkLogin.jsx'
 import WorkUseCases from './pages/WorkUseCases.jsx'
+import WorkSecurity from './pages/WorkSecurity.jsx'
+import WorkPrivacy from './pages/WorkPrivacy.jsx'
+import WorkDisclaimer from './pages/WorkDisclaimer.jsx'
+import WorkBenchmark from './pages/WorkBenchmark.jsx'
+import WorkCapabilities from './pages/WorkCapabilities.jsx'
 import WorkPage from './pages/WorkPage.jsx'
 import WorkBuddy from './pages/WorkBuddy.jsx'
+import WorkFullGuide from './pages/WorkFullGuide.jsx'
 import WorkAdmin from './pages/workadmin/WorkAdmin.jsx'
 import WorkCompanyAdmin from './pages/workadmin/WorkCompanyAdmin.jsx'
 import { useAuth } from './auth.jsx'
@@ -43,10 +49,18 @@ export default function App() {
       <Route path="/workcopilot" element={<WorkLogin />} />
       <Route path="/workcopilot/login" element={<WorkLogin />} />
       <Route path="/workcopilot/use-cases" element={<WorkUseCases />} />
+      <Route path="/workcopilot/security" element={<WorkSecurity />} />
+      {/* Public legal pages (plain-language disclosures, same light design as /security). */}
+      <Route path="/workcopilot/privacy" element={<WorkPrivacy />} />
+      <Route path="/workcopilot/disclaimer" element={<WorkDisclaimer />} />
+      <Route path="/workcopilot/benchmark" element={<WorkBenchmark />} />
+      <Route path="/workcopilot/how-it-works" element={<WorkCapabilities />} />
       {/* The app itself. WorkPage self-gates on the session the server reports. */}
       <Route path="/work" element={<WorkPage />} />
       {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
       <Route path="/work/buddy" element={<WorkBuddy />} />
+      {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
+      <Route path="/work/guide" element={<WorkFullGuide />} />
       {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
       <Route path="/work/admin" element={<WorkAdmin />} />
       {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}

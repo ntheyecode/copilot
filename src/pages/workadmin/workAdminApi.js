@@ -59,6 +59,31 @@ export const workAdminApi = {
   getPlatformAi: () => request('GET', '/api/work/admin/platform-ai'),
   setPlatformAi: (allowed) => request('POST', '/api/work/admin/platform-ai', { allowed: !!allowed }),
 
+  // Plan-heavy / watch-light: superadmin forces it ON for premium users (our model;
+  // users have no control). GET readable by any admin; POST superadmin-only.
+  getWatchLight: () => request('GET', '/api/work/admin/watch-light'),
+  setWatchLight: (on) => request('POST', '/api/work/admin/watch-light', { on: !!on }),
+  // Homepage hero copy (GET admin; POST superadmin). pairs = [{h,s,em}]; an empty
+  // array restores the built-in default.
+  getHero: () => request('GET', '/api/work/admin/hero'),
+  setHero: (pairs) => request('POST', '/api/work/admin/hero', { pairs: pairs || [] }),
+  // Platform data-retention window in days (0 = keep forever). GET admin; POST superadmin.
+  getRetention: () => request('GET', '/api/work/admin/retention'),
+  setRetention: (retentionDays) => request('POST', '/api/work/admin/retention', { retentionDays }),
+
+  // Platform web-search (Tavily) key for live web learning (GET admin; POST
+  // superadmin). Returns { configured, provider, keyMasked, setAt, envFallback };
+  // send apiKey:'' to clear. Never returns the raw key.
+  getWebSearch: () => request('GET', '/api/work/admin/web-search'),
+  setWebSearch: (apiKey, provider) => request('POST', '/api/work/admin/web-search', { apiKey, provider }),
+  // A company's own web-search key (superadmin). apiKey:'' clears.
+  companyWebSearch: (id, apiKey, provider) => request('POST', `/api/work/admin/companies/${id}/web-search`, { apiKey, provider }),
+
+  // Best + cheapest model recommendation across configured providers (cached,
+  // daily). refresh:true forces a live recompute. Shape: { at, providers:[...],
+  // overall:{cheapest,cheapestVision,best}, note }.
+  aiRecommendation: (refresh) => request('GET', `/api/work/admin/ai-recommendation${refresh ? '?refresh=1' : ''}`),
+
   // Pricing (existing: GET public, POST superadmin-only)
   getPricing: () => request('GET', '/api/work/pricing'),
   setPricing: (patch) => request('POST', '/api/work/admin/pricing', patch || {}),

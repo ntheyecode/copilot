@@ -10,6 +10,63 @@ import { Loading, ErrorBox, Spinning, SavedTag } from './_shared.jsx'
 const ACTIONS = ['send', 'mask', 'withhold', 'tokenize']
 const ACTION_LABEL = { send: 'Send as-is', mask: 'Mask', withhold: 'Withhold', tokenize: 'Tokenize (on-device)' }
 
+// Platform-wide automatic data retention. 0 = keep forever (default). When set,
+// sessions (and their screenshots + audit) older than N days are auto-purged on
+// an hourly sweep, and immediately when saved. Superadmin-only.
+function RetentionCard({ isSuperAdmin }) {
+  const [days, setDays] = useState('')
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState(null)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [purged, setPurged] = useState(null)
+
+  const load = useCallback(async () => {
+    try { const d = await workAdminApi.getRetention(); setDays(String(d.retentionDays ?? 0)); setLoaded(true) }
+    catch (e) { setError(e); setLoaded(true) }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const save = async () => {
+    if (!isSuperAdmin || saving) return
+    const n = Number(days)
+    setSaving(true); setError(null); setSaved(false); setPurged(null)
+    try {
+      const r = await workAdminApi.setRetention(n)
+      setDays(String(r.retentionDays)); setPurged(r.purged || 0)
+      setSaved(true); setTimeout(() => setSaved(false), 2400)
+    } catch (e) { setError(e) } finally { setSaving(false) }
+  }
+
+  const n = Number(days)
+  return (
+    <div className="wka-panel">
+      <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention</h2>
+      <p className="desc">Automatically delete sessions (and their milestone screenshots and audit log) older than this many days. <b>0 means keep forever</b> - users and company admins can still delete their own sessions anytime. Applies platform-wide on an hourly sweep.</p>
+      {!loaded ? <Loading label="Loading retention" />
+        : (
+          <>
+            <div className="wka-field" style={{ maxWidth: 260 }}>
+              <label>Retention window (days)</label>
+              <input className="wka-input" type="number" min="0" max="3650" step="1" disabled={!isSuperAdmin}
+                value={days} onChange={(e) => setDays(e.target.value)} />
+              <span className="hint">{n > 0 ? `Sessions older than ${n} day${n === 1 ? '' : 's'} are purged.` : 'Keep forever (no automatic deletion).'}</span>
+            </div>
+            {error ? <div style={{ margin: '10px 0' }}><ErrorBox error={error} /></div> : null}
+            {isSuperAdmin ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+                <button type="button" className="wka-btn primary" disabled={saving || !Number.isInteger(n) || n < 0 || n > 3650} onClick={save}>{saving ? <Spinning /> : null} Save retention</button>
+                <SavedTag show={saved} />
+                {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Purged {purged} session{purged === 1 ? '' : 's'} now.</span> : null}
+                {purged === 0 && saved ? <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>Nothing to purge.</span> : null}
+              </div>
+            ) : <div className="wka-note" style={{ marginTop: 8 }}><Lock size={14} /> Only a superadmin can change data retention.</div>}
+          </>
+        )}
+    </div>
+  )
+}
+
 export default function Governance({ isSuperAdmin }) {
   const [companies, setCompanies] = useState(null)
   const [companyId, setCompanyId] = useState('')
@@ -55,10 +112,16 @@ export default function Governance({ isSuperAdmin }) {
   }
 
   if (companies == null) return <Loading label="Loading companies" />
-  if (!companies.length) return <div className="wka-note">Create a company first in the Companies tab, then set its data governance policy here.</div>
+  if (!companies.length) return (
+    <div>
+      <RetentionCard isSuperAdmin={isSuperAdmin} />
+      <div className="wka-note">Create a company first in the Companies tab, then set its data governance policy here.</div>
+    </div>
+  )
 
   return (
     <div>
+      <RetentionCard isSuperAdmin={isSuperAdmin} />
       {!isSuperAdmin && <div className="wka-note"><Lock size={14} /> Only a superadmin can change a company policy.</div>}
       <div className="wka-toolbar">
         <label style={{ fontSize: 13, color: 'var(--wka-muted)' }}>Company</label>
