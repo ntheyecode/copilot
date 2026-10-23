@@ -798,7 +798,6 @@ function LiveDemo({ tilt, untilt }) {
   const s = d.steps[safeSi]
   const isFix = !!s.fix
   return (
-    <div className="wm-demo-col">
     <div className="wm-demo" data-reveal onMouseMove={tilt} onMouseLeave={untilt}>
       <div className="wm-demo-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>WorkCoPilot</b><span className="wm-demo-live" title="reading your screen"><i />watching</span><span className="wm-demo-tag">{d.tag}</span></div>
       <div className="wm-demo-goal"><span className="wm-demo-k">GOAL</span> {typed}<span className="wm-caret" /></div>
@@ -848,10 +847,6 @@ function LiveDemo({ tilt, untilt }) {
         )}
         {reveal >= 4 && <div className="wm-demo-done wm-beat" key={'dn' + safeSi}><Check size={13} /> done when {s.done}</div>}
       </div>
-      </div>
-      <button type="button" className="wm-demo-try" onClick={() => { try { window.dispatchEvent(new Event('wc:open-validate')) } catch { /* noop */ } }}>
-        <Sparkles size={14} /> <span>Is it right for <b>your</b> work? Test your scenario live</span> <ArrowRight size={14} />
-      </button>
     </div>
   )
 }
@@ -1343,7 +1338,6 @@ const CSS = `
    its content (width:100% + min-width:0 + overflow:hidden), and every inner
    region has a fixed height (goal, sees, stage, guide), so the box keeps one
    width and one height across every scenario and every step. */
-.wm-demo-col{min-width:0;max-width:100%;display:flex;flex-direction:column;gap:12px}
 .wm-demo{background:linear-gradient(180deg,rgba(18,20,29,.96),rgba(10,11,18,.98));border:1px solid var(--line);border-radius:22px;padding:15px 16px;box-shadow:0 50px 100px -40px rgba(0,0,0,.85),inset 0 1px 0 rgba(255,255,255,.05);transition:transform .2s ease-out;height:560px;display:flex;flex-direction:column;width:100%;min-width:0;max-width:100%;overflow:hidden}
 .wm-demo>*{min-width:0}
 .wm-demo-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:2px 4px 14px}
@@ -1381,10 +1375,6 @@ const CSS = `
 .wm-demo-how li:before{content:counter(hw);position:absolute;left:0;top:1px;width:21px;height:21px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--em2));color:#04231a;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px -2px rgba(10,157,102,.6)}
 .wm-demo-done{display:flex;align-items:center;gap:7px;margin-top:auto;padding-top:12px;font-size:12px;color:var(--mut)}
 .wm-demo-done svg{color:var(--em)}
-.wm-demo-try{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:0;padding:11px 12px;border-radius:12px;border:1px solid rgba(255,154,77,.4);background:linear-gradient(135deg,rgba(255,154,77,.14),rgba(242,106,67,.08));color:#ffd9bf;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer;transition:transform .15s,border-color .15s}
-.wm-demo-try:hover{transform:translateY(-1px);border-color:rgba(255,154,77,.7)}
-.wm-demo-try b{color:#ffb35c}
-.wm-demo-try svg{color:#ff9a4d;flex-shrink:0}
 .wm-demo-steps{display:flex;gap:5px;margin-bottom:8px}
 .wm-demo-steps i{height:3px;flex:1;border-radius:2px;background:rgba(255,255,255,.1);transition:background .3s}
 .wm-demo-steps i.done{background:var(--em)}
