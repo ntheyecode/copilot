@@ -77,6 +77,12 @@ export const workAdminApi = {
   activateAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/activate`),
   // Remove a provider's key (active hands off to another configured one).
   clearAiProvider: (id) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}`),
+  // Key POOL: add another key (load spreads round-robin) or remove one by index.
+  addAiProviderKey: (id, apiKey) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/keys`, { apiKey }),
+  removeAiProviderKey: (id, index) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/keys/${encodeURIComponent(index)}`),
+  // CUSTOM provider: add any OpenAI-compatible endpoint, or remove one.
+  addCustomProvider: (body) => request('POST', '/api/work/admin/ai/custom', body || {}),
+  removeCustomProvider: (id) => request('DELETE', `/api/work/admin/ai/custom/${encodeURIComponent(id)}`),
 
   // Plan-heavy / watch-light: superadmin forces it ON for premium users (our model;
   // users have no control). GET readable by any admin; POST superadmin-only.

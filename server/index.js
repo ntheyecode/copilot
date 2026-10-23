@@ -996,9 +996,44 @@ app.post('/api/work/admin/ai/providers/:id/test', requireAuth, requireSuperAdmin
 app.post('/api/work/admin/ai/providers/:id/activate', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
   res.json({ providers: store.setActivePlatformProvider(req.params.id), activeProvider: store.getActiveProviderId() })
 }))
-// Remove a provider's key; if it was active, active hands off to another one.
+// Remove ALL of a provider's keys; if it was active, active hands off to another.
 app.delete('/api/work/admin/ai/providers/:id', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
   res.json({ providers: store.clearAiProvider(req.params.id), activeProvider: store.getActiveProviderId() })
+}))
+// ---- Key POOL: add/remove extra keys so load spreads round-robin (throttling).
+app.post('/api/work/admin/ai/providers/:id/keys', requireAuth, requireSuperAdmin, requireAiStepUp, async (req, res) => {
+  try {
+    const key = (req.body || {}).apiKey
+    store.addProviderKey(req.params.id, key)
+    // Test the just-added key on its own runtime so the operator sees it works.
+    const rt = { ...store.getProviderRuntime(req.params.id), apiKey: String(key).trim() }
+    let ok = true, error = null, visionModel = null
+    try { await ai.testKey(rt); try { visionModel = await pickWorkVision(rt) } catch { /* best-effort */ } }
+    catch (e) { ok = false; error = e.message || 'Key test failed' }
+    res.json({ ok, error, visionModel, hasVision: !!visionModel, providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId() })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+app.delete('/api/work/admin/ai/providers/:id/keys/:index', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.json({ providers: store.removeProviderKey(req.params.id, req.params.index), activeProvider: store.getActiveProviderId() })
+}))
+// ---- CUSTOM provider: add any OpenAI-compatible endpoint (base URL + key). The
+// base is validated as a public https FQDN and added to the egress allowlist.
+app.post('/api/work/admin/ai/custom', requireAuth, requireSuperAdmin, requireAiStepUp, async (req, res) => {
+  try {
+    const { id, label, base, chatModels, apiKey } = req.body || {}
+    store.setCustomProvider({ id, label, base, chatModels, apiKey })
+    // Test it if a key was supplied, so the operator gets immediate confirmation.
+    let ok = true, error = null, visionModel = null
+    const rt = store.getProviderRuntime(String(id || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, ''))
+    if (rt && rt.apiKey) {
+      try { await ai.testKey(rt); try { visionModel = await pickWorkVision(rt) } catch { /* best-effort */ } }
+      catch (e) { ok = false; error = e.message || 'Key test failed' }
+    }
+    res.json({ ok, error, visionModel, hasVision: !!visionModel, providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId() })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+app.delete('/api/work/admin/ai/custom/:id', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.json({ providers: store.removeCustomProvider(req.params.id), activeProvider: store.getActiveProviderId() })
 }))
 // Plan-heavy / watch-light is OUR model: the SUPERADMIN forces it on for premium
 // users (companies' premium members + regular premium). Users have no control.
@@ -2271,6 +2306,23 @@ export function start({ port } = {}) {
       runRetention()
       const workRetentionTimer = setInterval(runRetention, 60 * 60 * 1000)
       if (workRetentionTimer.unref) workRetentionTimer.unref()
+      // Periodic AI-model research (owner directive): on a daily cadence, recompute
+      // the best/cheapest recommendation across the configured providers against
+      // their LIVE catalogs, so the superadmin's "AI Research" view stays current
+      // without anyone clicking refresh. Skipped quietly when no provider is set.
+      const refreshAiResearch = async () => {
+        try {
+          const runtimes = store.getConfiguredRuntimes()
+          if (!runtimes.length) return
+          if (store.getWorkAiRecommendation()) return   // still fresh (24h cache)
+          const data = await computeAiRecommendation(runtimes)
+          store.setWorkAiRecommendation(data)
+          console.log('[work] ai-research: recommendation refreshed')
+        } catch (e) { console.warn(`[work] ai-research refresh error: ${e.message}`) }
+      }
+      setTimeout(refreshAiResearch, 20000)   // once shortly after boot
+      const aiResearchTimer = setInterval(refreshAiResearch, 24 * 60 * 60 * 1000)
+      if (aiResearchTimer.unref) aiResearchTimer.unref()
       resolve(srv)
     })
   })

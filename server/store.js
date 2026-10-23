@@ -22,7 +22,7 @@ import { fileURLToPath } from 'node:url'
 import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
-import { PROVIDERS } from './ai.js'
+import { PROVIDERS, allowAiHost } from './ai.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -397,6 +397,7 @@ function seed() {
 
 load()
 seed()
+reregisterCustomHosts()   // restore any custom-provider hosts onto the egress allowlist
 console.log(`[store] data dir ${DATA_DIR} (hosted=${HOSTED ? '1' : '0'}, users=${(db.users || []).length})`)
 
 // ---- accounts (the account IS the WorkCoPilot user) ----------------------
@@ -1872,15 +1873,42 @@ export function setWorkAiRecommendation(data) {
   persist()
   return aiState().recommendation
 }
+// ---- Provider pool + custom providers -------------------------------------
+// A provider can hold MULTIPLE keys (a pool): runtimes are handed out round-robin
+// so concurrent users spread across keys and no single key takes all the rate
+// pressure (owner: "we must not be pushed back"). A superadmin can also add a
+// CUSTOM OpenAI-compatible provider (base URL + key); its host is validated as a
+// public https FQDN and added to the egress allowlist in ai.js.
+const _rrIdx = {}
+function poolKeys(cur) {
+  if (!cur) return []
+  if (Array.isArray(cur.apiKeys)) return cur.apiKeys.filter(Boolean)
+  return cur.apiKey ? [cur.apiKey] : []
+}
+function rrPick(id, keys) {
+  if (keys.length <= 1) return keys[0] || null
+  const n = (_rrIdx[id] = (_rrIdx[id] || 0) + 1)
+  return keys[n % keys.length]
+}
+// A provider's definition - a built-in (ai.PROVIDERS) or a stored custom one.
+export function providerDefinition(id) {
+  if (PROVIDERS[id]) return PROVIDERS[id]
+  return (aiState().customProviders || {})[id] || null
+}
 export function getProviderRuntime(id) {
-  const cfg = aiState().providers[id]
-  if (!cfg || !cfg.apiKey) return null
-  const p = PROVIDERS[id]
-  return {
-    providerId: id, apiKey: cfg.apiKey,
-    chatModel: cfg.chatModel || (p && p.chatModels[0]) || null,
-    visionModel: cfg.visionModel || null,
+  const cur = aiState().providers[id]
+  const keys = poolKeys(cur)
+  if (!keys.length) return null
+  const def = providerDefinition(id)
+  if (!def) return null
+  const rt = {
+    providerId: id, apiKey: rrPick(id, keys),
+    chatModel: (cur && cur.chatModel) || (def.chatModels && def.chatModels[0]) || null,
+    visionModel: (cur && cur.visionModel) || null,
   }
+  // Custom providers carry their own definition so ai.js can resolve base/kind.
+  if (!PROVIDERS[id]) rt.provider = { id, label: def.label, base: def.base, kind: def.kind || 'openai', chatModels: def.chatModels || [] }
+  return rt
 }
 // The id of the active/primary platform provider, or null when none is set.
 export function getActiveProviderId() { return aiState().activeProvider || null }
@@ -1895,8 +1923,8 @@ export function getConfiguredRuntimes() {
   const ai = aiState()
   const provs = ai.providers || {}
   const ids = []
-  if (ai.activeProvider && provs[ai.activeProvider] && provs[ai.activeProvider].apiKey) ids.push(ai.activeProvider)
-  for (const pid of Object.keys(provs)) if (!ids.includes(pid) && provs[pid] && provs[pid].apiKey) ids.push(pid)
+  if (ai.activeProvider && poolKeys(provs[ai.activeProvider]).length) ids.push(ai.activeProvider)
+  for (const pid of Object.keys(provs)) if (!ids.includes(pid) && poolKeys(provs[pid]).length) ids.push(pid)
   return ids.map((pid) => getProviderRuntime(pid)).filter(Boolean)
 }
 export function getSystemPrompt() { return aiState().systemPrompt || DEFAULT_PROMPT }
@@ -1907,11 +1935,17 @@ export function setSystemPrompt(text) {
 }
 // Server-only: set/replace a platform provider key (superadmin). Kept so the AI
 // island can be managed at runtime, not only via the deploy seed.
-export function setAiProviderKey(providerId, { apiKey, chatModel, visionModel } = {}) {
-  if (!PROVIDERS[providerId]) throw httpErr(400, `Unknown provider: ${providerId}`)
+export function setAiProviderKey(providerId, { apiKey, apiKeys, chatModel, visionModel } = {}) {
+  if (!providerDefinition(providerId)) throw httpErr(400, `Unknown provider: ${providerId}`)
   const ai = aiState()
   const cur = ai.providers[providerId] || {}
-  if (apiKey != null) cur.apiKey = String(apiKey).trim()
+  if (Array.isArray(apiKeys)) {
+    cur.apiKeys = Array.from(new Set(apiKeys.map((k) => String(k || '').trim()).filter(Boolean)))
+  } else if (apiKey != null) {
+    const k = String(apiKey).trim()
+    cur.apiKeys = k ? [k] : []            // a single-key set REPLACES the pool
+  }
+  cur.apiKey = (cur.apiKeys && cur.apiKeys[0]) || null   // back-compat alias = first key
   if (chatModel != null) cur.chatModel = String(chatModel).trim() || null
   if (visionModel != null) cur.visionModel = String(visionModel).trim() || null
   ai.providers[providerId] = cur
@@ -1919,18 +1953,88 @@ export function setAiProviderKey(providerId, { apiKey, chatModel, visionModel } 
   persist()
   return getActiveRuntime()
 }
-// Superadmin console: every provider with its configured state. NEVER the raw key.
+// Add ANOTHER key to a provider's pool (round-robin load spreading).
+export function addProviderKey(providerId, key) {
+  if (!providerDefinition(providerId)) throw httpErr(400, `Unknown provider: ${providerId}`)
+  const k = String(key || '').trim()
+  if (!k) throw httpErr(400, 'Enter an API key to add.')
+  const ai = aiState()
+  const cur = ai.providers[providerId] || {}
+  const keys = poolKeys(cur)
+  if (!keys.includes(k)) keys.push(k)
+  cur.apiKeys = keys; cur.apiKey = keys[0]
+  ai.providers[providerId] = cur
+  if (!ai.activeProvider) ai.activeProvider = providerId
+  persist()
+  return adminAiProviders()
+}
+// Remove ONE key from a provider's pool by index. If it was the last key, the
+// provider is cleared and active hands off.
+export function removeProviderKey(providerId, index) {
+  const ai = aiState()
+  const cur = ai.providers[providerId]
+  if (!cur) return adminAiProviders()
+  const keys = poolKeys(cur)
+  const i = Number(index)
+  if (i >= 0 && i < keys.length) keys.splice(i, 1)
+  cur.apiKeys = keys; cur.apiKey = keys[0] || null
+  if (!keys.length) {
+    delete ai.providers[providerId]
+    if (ai.activeProvider === providerId) ai.activeProvider = Object.keys(ai.providers).find((k) => poolKeys(ai.providers[k]).length) || null
+  }
+  persist()
+  return adminAiProviders()
+}
+// Register/replace a CUSTOM OpenAI-compatible provider (superadmin). base must be
+// a public https FQDN (ai.allowAiHost validates + adds it to the egress allowlist,
+// throwing on anything private/ip/non-https).
+export function setCustomProvider({ id, label, base, chatModels, apiKey } = {}) {
+  const slug = String(id || '').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '')
+  if (!slug || slug.length < 2) throw httpErr(400, 'Give the provider a short id (letters, numbers, dashes).')
+  if (PROVIDERS[slug]) throw httpErr(400, 'That id is a built-in provider. Pick another.')
+  const host = allowAiHost(base)   // throws httpErr(400) on a bad / private / non-https base
+  const models = (Array.isArray(chatModels) ? chatModels : String(chatModels || '').split(',')).map((m) => String(m).trim()).filter(Boolean)
+  if (!models.length) throw httpErr(400, 'List at least one model id this endpoint serves (comma-separated).')
+  const ai = aiState()
+  ai.customProviders = ai.customProviders || {}
+  ai.customProviders[slug] = { id: slug, label: String(label || slug).trim(), base: String(base).trim(), kind: 'openai', chatModels: models, keyHint: 'provider key', custom: true, host }
+  persist()
+  if (apiKey && String(apiKey).trim()) setAiProviderKey(slug, { apiKey })
+  return adminAiProviders()
+}
+export function removeCustomProvider(id) {
+  const ai = aiState()
+  if (ai.customProviders) delete ai.customProviders[id]
+  if (ai.providers) delete ai.providers[id]
+  if (ai.activeProvider === id) ai.activeProvider = Object.keys(ai.providers || {}).find((k) => poolKeys(ai.providers[k]).length) || null
+  persist()
+  return adminAiProviders()
+}
+// Re-add every saved custom provider's host to the egress allowlist on boot, so
+// a restart does not lock out a configured custom provider. Called from load().
+export function reregisterCustomHosts() {
+  const cps = (db.ai && db.ai.customProviders) || {}
+  for (const id of Object.keys(cps)) { try { allowAiHost(cps[id].base) } catch { /* skip an invalid saved base */ } }
+}
+// Superadmin console: every provider (built-in + custom) with its configured
+// state. NEVER a raw key - only masked tails and a count.
 export function adminAiProviders() {
   const ai = aiState()
   const provs = ai.providers || {}
-  return Object.keys(PROVIDERS).map((id) => {
-    const p = PROVIDERS[id]; const cur = provs[id] || {}
+  const custom = ai.customProviders || {}
+  const ids = [...Object.keys(PROVIDERS), ...Object.keys(custom)]
+  return ids.map((id) => {
+    const def = providerDefinition(id); const cur = provs[id] || {}
+    const keys = poolKeys(cur)
     return {
-      id, label: p.label, blurb: p.blurb, keyHint: p.keyHint, keysUrl: p.keysUrl,
-      chatModels: p.chatModels || [],
-      configured: !!cur.apiKey,
-      keyMasked: cur.apiKey ? '••••' + String(cur.apiKey).slice(-4) : null,
-      active: ai.activeProvider === id && !!cur.apiKey,
+      id, label: def.label, blurb: def.blurb || (def.custom ? `Custom endpoint: ${def.base}` : ''),
+      keyHint: def.keyHint, keysUrl: def.keysUrl || null,
+      chatModels: def.chatModels || [],
+      custom: !!def.custom, base: def.custom ? def.base : null,
+      configured: keys.length > 0, keyCount: keys.length,
+      keysMasked: keys.map((k) => '••••' + String(k).slice(-4)),
+      keyMasked: keys.length ? '••••' + String(keys[0]).slice(-4) : null,
+      active: ai.activeProvider === id && keys.length > 0,
       chatModel: cur.chatModel || null,
       visionModel: cur.visionModel || null,
     }
@@ -1938,20 +2042,19 @@ export function adminAiProviders() {
 }
 // Make a (configured) provider the active/primary platform runtime.
 export function setActivePlatformProvider(providerId) {
-  if (!PROVIDERS[providerId]) throw httpErr(400, `Unknown provider: ${providerId}`)
+  if (!providerDefinition(providerId)) throw httpErr(400, `Unknown provider: ${providerId}`)
   const ai = aiState()
-  const cur = ai.providers[providerId]
-  if (!cur || !cur.apiKey) throw httpErr(400, 'Add and save a key for this provider before making it primary.')
+  if (!poolKeys(ai.providers[providerId]).length) throw httpErr(400, 'Add and save a key for this provider before making it primary.')
   ai.activeProvider = providerId
   persist()
   return adminAiProviders()
 }
-// Remove a provider's key; if it was active, hand active to another configured one.
+// Remove ALL of a provider's keys; if it was active, hand active to another one.
 export function clearAiProvider(providerId) {
   const ai = aiState()
   if (ai.providers && ai.providers[providerId]) delete ai.providers[providerId]
   if (ai.activeProvider === providerId) {
-    ai.activeProvider = Object.keys(ai.providers || {}).find((k) => ai.providers[k] && ai.providers[k].apiKey) || null
+    ai.activeProvider = Object.keys(ai.providers || {}).find((k) => poolKeys(ai.providers[k]).length) || null
   }
   persist()
   return adminAiProviders()

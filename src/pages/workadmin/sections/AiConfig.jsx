@@ -4,7 +4,7 @@
 //   2. Is a platform provider actually configured and ready to answer?
 // No API key value and no provider/model name is ever shown.
 import React, { useEffect, useState, useCallback } from 'react'
-import { Lock, CheckCircle2, XCircle, AlertTriangle, Shield, Globe, Sparkles, RefreshCw, Eye, KeyRound, DollarSign, Award } from 'lucide-react'
+import { Lock, CheckCircle2, XCircle, AlertTriangle, Shield, Globe, Sparkles, RefreshCw, Eye, KeyRound, DollarSign, Award, Plus } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { fmtDateTime } from '../workadmin.css.js'
 import { Loading, ErrorBox, Spinning, SavedTag, EmptyState } from './_shared.jsx'
@@ -159,10 +159,11 @@ function CostEffectiveModels() {
 // never shown (only a masked tail). Superadmin writes; others see state read-only.
 // Nothing here is silent (SUPREME RULE III): a test shows ok + the vision model it
 // found, or the exact error; the active provider is always marked.
-function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, onClear, result }) {
+function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, onClear, onAddKey, onRemoveKey, onRemoveCustom, result }) {
   const [key, setKey] = useState('')
   const [model, setModel] = useState(p.chatModel || '')
   const working = !!busy
+  const keys = p.keysMasked && p.keysMasked.length ? p.keysMasked : (p.keyMasked ? [p.keyMasked] : [])
   const stateLabel = p.active ? 'Primary - live' : (p.configured ? 'Configured' : 'Not set')
   const stateColor = p.active ? 'var(--wka-emerald)' : (p.configured ? 'var(--wka-cyan)' : 'var(--wka-faint)')
   return (
@@ -175,7 +176,7 @@ function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, o
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
-          <div style={{ fontWeight: 700, fontSize: 15 }}>{p.label}</div>
+          <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 7 }}>{p.label}{p.custom ? <span style={{ fontSize: 9.5, fontWeight: 800, letterSpacing: '0.05em', color: 'var(--wka-accent)', border: '1px solid var(--wka-accent)', borderRadius: 999, padding: '1px 6px' }}>CUSTOM</span> : null}</div>
           <div style={{ fontSize: 12, color: 'var(--wka-muted)', lineHeight: 1.4, marginTop: 2 }}>{p.blurb}</div>
         </div>
         <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: stateColor, border: `1px solid ${stateColor}`, borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap' }}>
@@ -185,8 +186,16 @@ function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, o
 
       {p.configured ? (
         <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>
-          Key <code className="wka-mono">{p.keyMasked}</code>
-          {p.chatModel ? <> · model <code className="wka-mono">{p.chatModel}</code></> : null}
+          <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', color: 'var(--wka-faint)', marginBottom: 4 }}>
+            Key{keys.length > 1 ? `s · ${keys.length} in pool (load spreads round-robin)` : ''}
+          </div>
+          {keys.map((km, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 3 }}>
+              <code className="wka-mono">{km}</code>
+              {isSuperAdmin && onRemoveKey ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onRemoveKey(p.id, i)} title="Remove this key" style={{ color: 'var(--wka-red)', padding: '0 7px', lineHeight: 1.6 }}>×</button> : null}
+            </div>
+          ))}
+          {p.chatModel ? <div style={{ marginTop: 2 }}>model <code className="wka-mono">{p.chatModel}</code></div> : null}
         </div>
       ) : null}
 
@@ -199,7 +208,7 @@ function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, o
       {isSuperAdmin ? (
         <>
           <div className="wka-field" style={{ margin: 0 }}>
-            <label style={{ fontSize: 11 }}>{p.configured ? 'Replace key' : 'API key'}</label>
+            <label style={{ fontSize: 11 }}>{p.configured ? 'Add or replace a key' : 'API key'}</label>
             <input className="wka-input" type="password" autoComplete="new-password" value={key} placeholder={p.keyHint || 'paste the key'} onChange={(e) => setKey(e.target.value)} disabled={working} />
           </div>
           {p.chatModels && p.chatModels.length ? (
@@ -212,12 +221,14 @@ function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, o
             </div>
           ) : null}
           <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 2 }}>
-            <button type="button" className="wka-btn primary sm" disabled={working || !key.trim()} onClick={() => { onSaveTest(p.id, { apiKey: key.trim(), chatModel: model || undefined }); setKey('') }}>
+            <button type="button" className="wka-btn primary sm" disabled={working || !key.trim()} onClick={() => { onSaveTest(p.id, { apiKey: key.trim(), chatModel: model || undefined }); setKey('') }} title={p.configured ? 'Replace the pool with this one key, then test' : 'Save and test this key'}>
               {working ? <Spinning /> : <KeyRound size={13} />} Save &amp; test
             </button>
+            {p.configured && onAddKey ? <button type="button" className="wka-btn sm" disabled={working || !key.trim()} onClick={() => { onAddKey(p.id, key.trim()); setKey('') }} title="Add this key to the pool (load spreads across keys)">+ Add to pool</button> : null}
             {p.configured && !p.active ? <button type="button" className="wka-btn sm" disabled={working} onClick={() => onActivate(p.id)}>Make primary</button> : null}
             {p.configured ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onTest(p.id)}>Re-test</button> : null}
-            {p.configured ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onClear(p.id)} style={{ color: 'var(--wka-red)' }}>Clear</button> : null}
+            {p.configured && !p.custom ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onClear(p.id)} style={{ color: 'var(--wka-red)' }}>Clear all</button> : null}
+            {p.custom && onRemoveCustom ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onRemoveCustom(p.id)} style={{ color: 'var(--wka-red)' }}>Remove provider</button> : null}
           </div>
           {p.keysUrl ? <a href={p.keysUrl} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--wka-faint)' }}>Where to get a {p.label} key ↗</a> : null}
         </>
@@ -277,6 +288,38 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
     catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
     finally { setProvBusy(id, false) }
   }
+  const onAddKey = async (id, key) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true); setResults((r) => ({ ...r, [id]: null }))
+    try {
+      const d = await workAdminApi.addAiProviderKey(id, key)
+      absorb(id, d)
+      setResults((r) => ({ ...r, [id]: { ok: !!d.ok, error: d.error, visionModel: d.visionModel, hasVision: d.hasVision } }))
+    } catch (error) { if (isLockError(error) && onLocked) return onLocked(); if (error.data && error.data.providers) absorb(id, error.data); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
+    finally { setProvBusy(id, false) }
+  }
+  const onRemoveKey = async (id, index) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true)
+    try { const d = await workAdminApi.removeAiProviderKey(id, index); absorb(id, d) }
+    catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
+    finally { setProvBusy(id, false) }
+  }
+  const onRemoveCustom = async (id) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true)
+    try { const d = await workAdminApi.removeCustomProvider(id); absorb(id, d) }
+    catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
+    finally { setProvBusy(id, false) }
+  }
+  const onAddCustom = async (body) => {
+    if (!isSuperAdmin) return { ok: false, error: 'Superadmin only.' }
+    try {
+      const d = await workAdminApi.addCustomProvider(body)
+      absorb('custom', d)
+      return { ok: d.ok !== false, error: d.error }
+    } catch (error) { if (isLockError(error) && onLocked) { onLocked(); return { ok: false } } return { ok: false, error: error.message } }
+  }
 
   return (
     <div className="wka-panel">
@@ -284,7 +327,7 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
         <h2 style={{ margin: 0 }}><KeyRound size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-accent)' }} />AI providers &amp; keys</h2>
         <button type="button" className="wka-btn sm ghost" disabled={state.loading} onClick={load}><RefreshCw size={13} /> Refresh</button>
       </div>
-      <p className="desc">Every AI WorkCoPilot can run on. Paste a key, test it, and make one primary. One OpenRouter key reaches Qwen and DeepSeek. Keys are stored securely and never shown again.</p>
+      <p className="desc">Every AI WorkCoPilot can run on. Paste a key, test it, make one primary. Add <b>several keys to a provider</b> and load spreads across them round-robin, so bursts from many users are not rate-limited. One OpenRouter key reaches Qwen and DeepSeek. Keys are stored securely and never shown again.</p>
       {state.loading ? <Loading label="Loading providers" />
         : state.error ? <ErrorBox error={state.error} onRetry={load} />
         : (
@@ -293,11 +336,57 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 12 }}>
               {state.providers.map((p) => (
                 <ProviderCard key={p.id} p={p} isSuperAdmin={isSuperAdmin} busy={busy[p.id]} result={results[p.id]}
-                  onSaveTest={onSaveTest} onTest={onTest} onActivate={onActivate} onClear={onClear} />
+                  onSaveTest={onSaveTest} onTest={onTest} onActivate={onActivate} onClear={onClear}
+                  onAddKey={onAddKey} onRemoveKey={onRemoveKey} onRemoveCustom={onRemoveCustom} />
               ))}
             </div>
+            {isSuperAdmin ? <CustomProviderForm onAdd={onAddCustom} /> : null}
           </>
         )}
+    </div>
+  )
+}
+
+// Add any OpenAI-compatible endpoint (base URL + key). The server validates the
+// base as a public https host and adds it to the egress allowlist. For when a new
+// cost-effective provider appears that is not built in yet.
+function CustomProviderForm({ onAdd }) {
+  const [open, setOpen] = useState(false)
+  const [f, setF] = useState({ id: '', label: '', base: '', chatModels: '', apiKey: '' })
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const [ok, setOk] = useState(false)
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }))
+  const submit = async () => {
+    if (busy) return
+    setBusy(true); setErr(null); setOk(false)
+    const r = await onAdd({ id: f.id, label: f.label, base: f.base, chatModels: f.chatModels, apiKey: f.apiKey })
+    if (r.ok) { setOk(true); setF({ id: '', label: '', base: '', chatModels: '', apiKey: '' }); setTimeout(() => { setOk(false); setOpen(false) }, 1600) }
+    else setErr(r.error || 'Could not add that provider.')
+    setBusy(false)
+  }
+  if (!open) return (
+    <div style={{ marginTop: 14 }}>
+      <button type="button" className="wka-btn sm" onClick={() => setOpen(true)}><Plus size={13} /> Add a custom provider</button>
+    </div>
+  )
+  return (
+    <div style={{ marginTop: 14, padding: 16, borderRadius: 12, border: '1px dashed var(--wka-line)', background: 'var(--wka-panel-2)' }}>
+      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 4 }}>Add a custom provider</div>
+      <p className="desc" style={{ marginTop: 0 }}>Any OpenAI-compatible endpoint. The base must be a public https URL - it is added to the egress allowlist after validation.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div className="wka-field" style={{ margin: 0 }}><label style={{ fontSize: 11 }}>Id (slug)</label><input className="wka-input" value={f.id} placeholder="e.g. together" onChange={set('id')} disabled={busy} /></div>
+        <div className="wka-field" style={{ margin: 0 }}><label style={{ fontSize: 11 }}>Label</label><input className="wka-input" value={f.label} placeholder="e.g. Together AI" onChange={set('label')} disabled={busy} /></div>
+        <div className="wka-field" style={{ margin: 0, gridColumn: '1 / -1' }}><label style={{ fontSize: 11 }}>Base URL (https)</label><input className="wka-input wka-mono" value={f.base} placeholder="https://api.together.xyz/v1" onChange={set('base')} disabled={busy} /></div>
+        <div className="wka-field" style={{ margin: 0, gridColumn: '1 / -1' }}><label style={{ fontSize: 11 }}>Model ids (comma-separated)</label><input className="wka-input wka-mono" value={f.chatModels} placeholder="meta-llama/Llama-3.3-70B-Instruct-Turbo" onChange={set('chatModels')} disabled={busy} /></div>
+        <div className="wka-field" style={{ margin: 0, gridColumn: '1 / -1' }}><label style={{ fontSize: 11 }}>API key</label><input className="wka-input" type="password" autoComplete="new-password" value={f.apiKey} placeholder="paste the key" onChange={set('apiKey')} disabled={busy} /></div>
+      </div>
+      {err ? <div style={{ marginTop: 10, fontSize: 12, color: 'var(--wka-red)', display: 'flex', gap: 6 }}><XCircle size={14} /> {err}</div> : null}
+      {ok ? <div style={{ marginTop: 10, fontSize: 12, color: 'var(--wka-emerald)', display: 'flex', gap: 6 }}><CheckCircle2 size={14} /> Added and tested.</div> : null}
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button type="button" className="wka-btn primary sm" disabled={busy || !f.id.trim() || !f.base.trim() || !f.chatModels.trim()} onClick={submit}>{busy ? <Spinning /> : <Plus size={13} />} Add &amp; test</button>
+        <button type="button" className="wka-btn sm ghost" disabled={busy} onClick={() => { setOpen(false); setErr(null) }}>Cancel</button>
+      </div>
     </div>
   )
 }
@@ -430,7 +519,7 @@ function RecommendedModels() {
         <h2 style={{ margin: 0 }}><Sparkles size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-accent)' }} />Recommended models today</h2>
         <button type="button" className="wka-btn sm ghost" disabled={refreshing || state.loading} onClick={() => load(true)}>{refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh</button>
       </div>
-      <p className="desc">The best and cheapest picks across your configured providers, to choose a model to run on.</p>
+      <p className="desc">The best and cheapest picks across your configured providers, to choose a model to run on. Researched automatically against each provider's live catalog - refreshed daily, or on demand with Refresh.</p>
       {state.loading ? <Loading label="Loading recommendation" />
         : state.error ? <ErrorBox error={state.error} onRetry={() => load(false)} />
         : providers.length === 0 ? <EmptyState title="No models to compare yet" detail={d.note || 'Configure a provider in AI Settings to see recommendations.'} />

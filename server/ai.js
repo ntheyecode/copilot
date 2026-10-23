@@ -70,6 +70,32 @@ function assertAllowedHost(base) {
   if (!ALLOWED_AI_HOSTS.has(h)) throw Object.assign(new Error('AI endpoint host is not on the allowlist.'), { status: 502 })
 }
 
+// A superadmin may add a CUSTOM OpenAI-compatible provider (base URL + key). To
+// keep the egress boundary from becoming an SSRF hole, a custom base must be a
+// PUBLIC https FQDN - never http, never an IP literal, never localhost / a
+// private / metadata host. validateCustomBase returns the hostname or throws;
+// allowAiHost validates then adds it to the live allowlist. The store re-adds
+// every saved custom host on boot, so the allowlist survives a restart.
+const PRIVATE_HOST_RE = /^(localhost|.*\.local|.*\.internal|metadata\.google\.internal)$/i
+export function validateCustomBase(base) {
+  let u
+  try { u = new URL(String(base || '').trim()) } catch { throw httpErr(400, 'Enter a full https URL, for example https://api.example.com/v1') }
+  if (u.protocol !== 'https:') throw httpErr(400, 'The base URL must use https.')
+  const h = u.hostname
+  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(h) || h.includes(':')) throw httpErr(400, 'Use a domain name, not an IP address.')
+  if (!h.includes('.') || PRIVATE_HOST_RE.test(h)) throw httpErr(400, 'That host is not allowed. Use a public provider domain.')
+  return h
+}
+export function allowAiHost(base) {
+  const h = validateCustomBase(base)
+  ALLOWED_AI_HOSTS.add(h)
+  return h
+}
+// Resolve a runtime's provider definition. Built-ins come from PROVIDERS; a custom
+// provider carries its own definition on cfg.provider ({id,label,base,kind,chatModels}),
+// supplied by the store when it builds the runtime.
+function providerOf(cfg) { return (cfg && cfg.provider) || PROVIDERS[cfg && cfg.providerId] || null }
+
 // What each provider is actually good at, so the setup UI can say it plainly
 // (vision is the gap people hit: most fast text keys cannot see images at all).
 export const CAPABILITIES = {
@@ -263,7 +289,7 @@ const reasonOf = (e) => (isRateLimited(e) ? 'rate_limit' : 'retired')
 // a company/user on their own key gets an empty list and never leaves their key.
 async function failoverChat(alternates, fromP, fromModel, system, turns, notify) {
   for (const a of (alternates || [])) {
-    const ap = PROVIDERS[a?.providerId]
+    const ap = providerOf(a)
     if (!ap || !a.apiKey || a.providerId === fromP.id) continue
     let m = a.chatModel || ap.chatModels[0]
     try {
@@ -291,7 +317,7 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
 // only when all are exhausted a crisp coded error. Every switch is reported via
 // cfg.onSwitch so the superadmin sees exactly what happened.
 export async function chat(cfg, system, turns) {
-  const p = PROVIDERS[cfg.providerId]
+  const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`, AI_CODES.KEY)
   const notify = switchNotifier(cfg)
@@ -328,7 +354,7 @@ export async function generate(cfg, system, userText) {
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
 export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}) {
-  const p = PROVIDERS[cfg.providerId]
+  const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.', AI_CODES.KEY)
   const notify = switchNotifier(cfg)
@@ -377,7 +403,7 @@ const VISION_HINT = /vision|scout|maverick|gpt-4o|gpt-4\.1|o4|gemini|llava|pixtr
 const visionCache = new Map()
 const VISION_TTL_MS = 10 * 60 * 1000
 export async function findVisionModel(cfg) {
-  const p = PROVIDERS[cfg.providerId]
+  const p = providerOf(cfg)
   if (!p || !cfg.apiKey) return null
   // An explicit operator-pinned vision model wins.
   if (cfg.visionModel && VISION_HINT.test(cfg.visionModel)) return cfg.visionModel
@@ -395,7 +421,7 @@ export async function findVisionModel(cfg) {
 // Live model discovery - the provider's CURRENT catalog, using the saved key.
 const NON_CHAT = /whisper|distil-whisper|tts|text-to-speech|speech|embed|embedding|dall|image|moderation|guard|playai|rerank|vision-only|orpheus/i
 export async function listModels(cfg) {
-  const p = PROVIDERS[cfg.providerId]
+  const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`)
   if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`)
   if (p.kind === 'gemini') {
@@ -418,7 +444,7 @@ export async function listModels(cfg) {
 // against the LIVE catalog first, so Test reports the model that will ACTUALLY
 // be used rather than a stale pinned one that would fail.
 export async function testKey(cfg) {
-  const p = PROVIDERS[cfg.providerId]
+  const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`)
   const requested = cfg.chatModel || p.chatModels[0]
   let model = requested
@@ -486,7 +512,7 @@ export function modelRank(providerId, model) {
 // Per-provider recommendation from the live catalog, or null when the key cannot
 // list models (bad key / provider down - the caller surfaces that separately).
 export async function recommendModels(cfg) {
-  const p = PROVIDERS[cfg.providerId]
+  const p = providerOf(cfg)
   if (!p) return null
   const live = await listModels(cfg).catch(() => null)
   if (!live || !live.length) return null
