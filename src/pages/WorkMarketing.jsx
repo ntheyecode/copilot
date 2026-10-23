@@ -25,7 +25,7 @@ export default function WorkMarketing() {
   const nav = useNavigate()
   useSeo({
     title: 'WorkCoPilot by AdmireVeda - Your expert, on every screen',
-    description: 'WorkCoPilot watches your screen and guides you step by step through any task, in any app, with the exact click, command or setting. Read-only, private by design, documented when you finish.',
+    description: 'WorkCoPilot plans your task with the strongest AI, then guides you step by step, watches your screen, and catches and corrects a wrong move as it happens - in any app, with the exact click, command or setting. Read-only, private by design, documented when you finish.',
     path: '/',
   })
   const [price, setPrice] = useState(null)
@@ -234,13 +234,15 @@ export default function WorkMarketing() {
             <div className="wm-best-in">
               <div className="wm-best-copy">
                 <div className="wm-eyebrow"><Trophy size={14} /> The strongest AI available to you</div>
-                <h2 className="wm-best-h">Your work is planned by the strongest AI you can use. <em>Guided live, at the pace of your screen.</em></h2>
-                <p className="wm-best-p">When you start a task, the plan comes from the strongest AI your key can reach. Then the live guidance keeps pace with your screen and walks you through it, step by step.</p>
+                <h2 className="wm-best-h">Planned by the <span className="wm-best-ai">strongest AI</span> you can use. <em>Then guided, watched, and corrected - live on your screen.</em></h2>
+                <p className="wm-best-p">When you start a task, the plan comes from the strongest AI your key can reach. Then it does what instructions can't: guides you step by step, <b>watches your screen as you go</b>, and <b>catches and corrects a wrong move</b> the moment it happens. A live loop, not a page of steps.</p>
                 <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">See what that means for you <ArrowRight size={14} /></WorkCard.Link>
               </div>
-              <div className="wm-best-receipt" aria-label="How each task is planned and guided">
+              <div className="wm-best-receipt" aria-label="How each task is planned, guided, watched and corrected">
                 <div className="wm-best-row plan"><span className="k">plan</span><span className="v"><b>strongest AI</b> on your key</span></div>
-                <div className="wm-best-row watch"><span className="k">guide</span><span className="v"><b>live</b>, step by step <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
+                <div className="wm-best-row guide"><span className="k">guide</span><span className="v"><b>live</b>, step by step</span></div>
+                <div className="wm-best-row watch"><span className="k">watch</span><span className="v">your <b>screen</b>, as you go <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
+                <div className="wm-best-row correct"><span className="k">correct</span><span className="v">a wrong step, <b>caught and fixed</b></span></div>
                 <WorkCard.Proof><b className="dp-ok"><Check size={11} /> Planned by the strongest AI for you</b> <span className="cb-dim">the best one available on the key in use</span></WorkCard.Proof>
               </div>
             </div>
@@ -959,8 +961,8 @@ const HERO_PAIRS = [
     s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: [['Private by design', 1], [', redacted on your device.']],
     s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-  { h: [['The '], ['strongest AI', 1], [' plans it. You are guided live.']],
-    s: 'Your plan comes from the strongest AI your key can reach. Then you are walked through it, step by step, in real time.' },
+  { h: [['The '], ['strongest AI', 1], [' plans it. Guided and corrected, live.']],
+    s: 'Your plan comes from the strongest AI your key can reach. Then it guides you step by step, watches your screen, and catches and corrects a wrong move in real time.' },
   { h: [['Do more with the '], ['team you already have', 1], ['.']],
     s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: [['Compliance-ready', 1], [' for the frameworks you answer to.']],
@@ -1443,6 +1445,7 @@ const CSS = `
 .wm-best-copy .wm-eyebrow svg{color:var(--wc-ink)}
 .wm-best-copy .wm-best-h{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(24px,3vw,34px);letter-spacing:-.025em;line-height:1.08;margin:0;max-width:22ch;color:var(--ink-brand,#062a22)}   /* two classes: outranks .wm h2 */
 .wm-best-p{color:var(--wc-mut);font-size:15.5px;line-height:1.6;max-width:62ch;margin:0}
+.wm-best-h .wm-best-ai{color:#6d4bd8;background:linear-gradient(transparent 60%, rgba(109,75,216,.18) 0);padding:0 .06em;border-radius:2px}
 .wm-best-copy .wc-link{margin-top:6px;color:var(--wc-ink)}   /* beats .wm a{color:inherit} */
 .wm-best-receipt{display:flex;flex-direction:column;gap:8px;min-width:0}
 .wm-best-row{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:12px;background:#fff;border:1px solid var(--wc-line);border-radius:12px;padding:12px 14px;
