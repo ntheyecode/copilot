@@ -530,9 +530,15 @@ export default function WorkMarketing() {
           <p>Bring any task. WorkCoPilot takes it from the very first step to done.</p>
           <button className="wm-cta big" onClick={() => go('')}>Get started <ArrowRight size={18} /></button>
           <div className="wm-dl" data-reveal>
-            <span className="wm-dl-lbl">Get the app</span>
+            <span className="wm-dl-lbl">Use it your way</span>
             <div className="wm-dl-row">
-              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label="Download the Windows desktop app">
+              <a className="wm-dl-btn primary" href="/workcopilot" title="WorkCoPilot runs right in your browser - nothing to download, no installation needed. Just sign in and go.">
+                <span className="wm-dl-rec">No install</span>
+                <Globe2 size={22} />
+                <span className="wm-dl-t"><b>Use in your browser</b><i>Nothing to install</i></span>
+                <ArrowRight size={16} />
+              </a>
+              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label="Download the Windows desktop app" title="A floating overlay that sits on top of whatever app you are working in">
                 <Monitor size={22} />
                 <span className="wm-dl-t"><b>Windows app</b><i>Desktop overlay</i></span>
                 <Download size={16} />
@@ -543,7 +549,7 @@ export default function WorkMarketing() {
                 <span className="wm-dl-soon">Coming soon</span>
               </div>
             </div>
-            <span className="wm-dl-note">Windows: download and run it. Sign in once to activate.</span>
+            <span className="wm-dl-note"><b>No download needed</b> - WorkCoPilot runs right in your browser. Prefer a floating overlay? Get the Windows app.</span>
           </div>
         </div>
       </section>
@@ -1832,6 +1838,10 @@ const CSS = `
 .wm-dl-btn > svg:last-child{color:var(--mut)}
 .wm-dl-btn.soon{cursor:default;opacity:.72}
 .wm-dl-btn.soon:hover{transform:none;border-color:var(--line)}
+.wm-dl-btn.primary{position:relative;border-color:rgba(10,157,102,.5);background:linear-gradient(160deg,rgba(10,157,102,.1),var(--panel) 62%)}
+.wm-dl-btn.primary:hover{border-color:var(--em)}
+.wm-dl-btn.primary svg{color:var(--em)}
+.wm-dl-rec{position:absolute;top:-9px;left:16px;font-size:9px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#04231a;background:linear-gradient(135deg,var(--em),var(--em2));border-radius:999px;padding:2px 8px}
 .wm-dl-soon{font-size:11px;font-weight:800;letter-spacing:.03em;color:var(--mut);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:3px 9px;white-space:nowrap}
 .wm-dl-note{font-size:12.5px;color:var(--mut)}
 
