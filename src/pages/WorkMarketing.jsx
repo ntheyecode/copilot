@@ -7,6 +7,7 @@ import {
   Building2, BadgeCheck, Copy, Download,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
   Code2, Table, Palette,
+  BrainCircuit, Kanban, Cpu, Landmark, Briefcase, HeartPulse, GraduationCap,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import CopyChip from '../components/CopyChip.jsx'
@@ -282,6 +283,37 @@ export default function WorkMarketing() {
               <WorkCard.Body>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</WorkCard.Body>
             </WorkCard>
           </div>
+        </div>
+      </section>
+
+      {/* FIELDS WE COVER - the breadth showcase. 56 professional fields in 10
+          families, straight from docs/professions-and-disciplines.md (the two
+          lists must stay in sync; FIELD_FAMILIES is the only place the roster
+          lives on this page). Benefit only: WHAT is covered, never how. */}
+      <section className="wm-sec wm-fields" id="fields">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Shapes size={14} /> Every field &middot; one tool</div>
+          <h2 className="wm-h2" data-reveal>Expert in your field, <em>whatever your field is.</em></h2>
+          <p className="wm-sub" data-reveal>One tool your whole company can use. WorkCoPilot guides work across {FIELD_TOTAL} professional fields, and the steps read like an expert in that field wrote them.</p>
+          <div className="wm-fld-stats" data-reveal aria-label="Coverage at a glance">
+            <div className="wm-fld-stat"><b>{FIELD_TOTAL}</b><span>professional fields</span></div>
+            <div className="wm-fld-stat"><b>{FIELD_FAMILIES.length}</b><span>families of work</span></div>
+            <div className="wm-fld-stat"><b>1</b><span>tool for all of them</span></div>
+          </div>
+          <div className="wm-fld-grid">
+            {FIELD_FAMILIES.map((f, i) => (
+              <WorkCard key={f.k} theme="light" tone={f.tone || undefined} delay={i * 45}
+                className={f.wide ? 'wm-fld-wide' : ''}
+                texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '25% 25%', '75% 75%'][i % 10]}>
+                <WorkCard.Head icon={f.ic} eyebrow={`${f.items.length} ${f.items.length === 1 ? 'field' : 'fields'}`} title={f.k} align="start" />
+                <WorkCard.Body>{f.d}</WorkCard.Body>
+                <ul className="wm-fld-tags" aria-label={`${f.k} fields`}>
+                  {f.items.map((t, j) => <li key={t} className="wm-fld-tag" style={{ '--i': j }}>{t}</li>)}
+                </ul>
+              </WorkCard>
+            ))}
+          </div>
+          <p className="wm-fld-cap" data-reveal>Not on the list by name? If it is on a screen, you are guided through it.</p>
         </div>
       </section>
 
@@ -975,6 +1007,47 @@ function BViz({ k }) {
 // [text, emphasised] segments; the emphasised run takes the brand gradient.
 // Wording is approved copy: refine the gradient word here, never add claims.
 // ---------------------------------------------------------------------------
+// ---------------------------------------------------------------------------
+// FIELDS WE COVER - the 56 professional fields, by family. Source of truth for
+// the marketing claim is docs/professions-and-disciplines.md; keep the two in
+// step when a field is added or renamed. FIELD_TOTAL is DERIVED from the list
+// so the number on the page can never drift from what the page actually shows.
+// Benefit-only copy: names the fields, never the method behind the guidance.
+// ---------------------------------------------------------------------------
+const FIELD_FAMILIES = [
+  { k: 'Software & engineering', ic: Code2, tone: '', wide: true,
+    d: 'From the first commit to the on-call rotation.',
+    items: ['Developer', 'Frontend & accessibility', 'Mobile development', 'Game development', 'Embedded / firmware', 'Database', 'SDET', 'QA', 'DevOps', 'SRE', 'Network engineering', 'Sysadmin / IT ops', 'Blockchain development'] },
+  { k: 'Security & resilience', ic: ShieldCheck, tone: 'cyan', wide: true,
+    d: 'Find it, prove it, contain it, and answer for it.',
+    items: ['Penetration testing', 'Network pentest', 'Mobile pentest', 'API security', 'Cloud security', 'DevSecOps', 'Threat modeling', 'Incident response', 'Compliance & GRC'] },
+  { k: 'Data, AI & math', ic: BrainCircuit, tone: 'violet',
+    d: 'Pipelines, models and numbers that hold up.',
+    items: ['Data engineering', 'Data analytics', 'MLOps', 'Applied math', 'Research & science', 'Quant / FP&A'] },
+  { k: 'Product, project & design', ic: Kanban, tone: 'amber',
+    d: 'From the idea to the roadmap to the shipped thing.',
+    items: ['Product management', 'Project management', 'Agile / scrum', 'Business analysis', 'UX design'] },
+  { k: 'OT, IoT & physical systems', ic: Cpu, tone: 'cyan',
+    d: 'Where the software meets the machine.',
+    items: ['OT / ICS', 'IoT', 'Robotics', 'Aviation operations'] },
+  { k: 'Finance & legal', ic: Landmark, tone: 'ok',
+    d: 'Books, audits, filings and contracts, done right.',
+    items: ['Accounting & finance', 'Financial audit', 'Tax', 'Legal & contracts'] },
+  { k: 'Business operations', ic: Briefcase, tone: 'amber',
+    d: 'The work that keeps a company moving.',
+    items: ['Sales', 'HR & recruiting', 'Customer support', 'Procurement & vendor', 'Supply chain & operations', 'Leadership'] },
+  { k: 'Content, marketing & communication', ic: Megaphone, tone: 'pink',
+    d: 'Say it well, and reach the right people.',
+    items: ['Marketing & growth', 'Content & copywriting', 'SEO', 'Social media', 'Video & media', 'Technical writing', 'Translation & localization'] },
+  { k: 'Healthcare', ic: HeartPulse, tone: 'pink',
+    d: 'Clinical and care workflows, guided with care.',
+    items: ['Healthcare / clinical'] },
+  { k: 'Education', ic: GraduationCap, tone: 'violet',
+    d: 'Teach it so it sticks.',
+    items: ['Teaching & instructional design'] },
+]
+const FIELD_TOTAL = FIELD_FAMILIES.reduce((n, f) => n + f.items.length, 0)   // 56
+
 const HERO_DWELL_MS = 12000
 // Each entry pairs a headline (h) with its own supporting line (s); they change
 // together. The compliance line is deliberately general: the hero never names a
@@ -988,6 +1061,10 @@ const HERO_PAIRS = [
     s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
   { h: [['Security-first', 1], [' answers, checked before you see them.']],
     s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
+  // Mirrors server/store.js HERO_DEFAULT: keep the two lists identical so the
+  // fallback paint and the API feed never disagree.
+  { h: [['Code that is '], ['safe to run', 1], [', checked before you see it.']],
+    s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: [['Private by design', 1], [', redacted on your device.']],
     s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
   { h: [['The '], ['strongest AI', 1], [' plans it. You are guided live.']],
@@ -1513,6 +1590,11 @@ const CSS = `
    the capped-width block need the .wm scope to win. Only the horizontal
    margins are set here; the vertical rhythm stays exactly as it renders. */
 .wm .wm-h2,.wm .wm-sub{margin-left:auto;margin-right:auto}
+/* Same specificity clash for the shared WorkCard title: the .wm h3 reset
+   (0,1,1) outranks .wc-title (0,1,0), so in the opt-in dark theme every card
+   title went light-on-white. Cards are always a white surface, so the title
+   must always take the card's own ink, whatever the page theme. */
+.wm .wc-title{color:var(--wc-title)}
 .wm-sec .wm-eyebrow{display:flex;width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;text-align:center}
 
 /* PILLARS - spotlight */
@@ -1814,6 +1896,28 @@ const CSS = `
 .wm-roi-card h3{font-family:"Bricolage Grotesque",sans-serif;font-size:18px;margin:0 0 8px}
 .wm-roi-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
 @media(max-width:900px){.wm-roi-stats{grid-template-columns:1fr 1fr}.wm-roi-grid{grid-template-columns:1fr}}
+/* FIELDS WE COVER - 56 fields in 10 family cards. A compact 3-up stat row,
+   then a dense 4-column grid where the two biggest families span two columns
+   so the roster reads as one considered composition, not ten equal boxes.
+   Cards are the shared WorkCard shell; the field pills use its --wc-* ink so
+   they sit correctly on the white surface in both page themes. */
+.wm-fields{border-top:1px solid var(--line)}
+/* .wm-sub carries NO bottom margin (the page's .wm p reset wins), so the stat
+   row owns the gap below the subhead, like .wm-roi-stats does in the ROI band. */
+.wm-fld-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:640px;margin:26px auto 30px}
+.wm-fld-stat{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 12px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
+.wm-fld-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
+.wm-fld-stat span{display:block;margin-top:6px;color:var(--mut);font-size:13px;line-height:1.35}
+.wm-fld-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:dense;gap:16px}
+.wm-fld-grid .wm-fld-wide{grid-column:span 2}
+.wm-fld-tags{list-style:none;padding:0;margin:2px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+.wm-fld-tag{font-size:12.5px;font-weight:500;line-height:1.3;color:var(--wc-mut);background:#fff;border:1px solid var(--wc-line);border-radius:999px;padding:5px 11px;white-space:nowrap;transition:border-color .25s var(--wc-ease),color .25s var(--wc-ease),transform .35s var(--wc-ease);transition-delay:0s,0s,calc(var(--i,0)*14ms)}
+.wc-card:hover .wm-fld-tag{transform:translateY(-1px)}
+.wm-fld-tag:hover{color:var(--wc-ink);border-color:color-mix(in srgb,var(--wc-ink) 45%,var(--wc-line));transition-delay:0s}
+.wm-fld-cap{text-align:center;color:var(--mut);font-size:14px;margin:26px auto 0;max-width:60ch}
+@media(max-width:1080px){.wm-fld-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.wm-fld-grid{grid-template-columns:1fr}.wm-fld-grid .wm-fld-wide{grid-column:auto}.wm-fld-stats{gap:10px;margin-bottom:22px}.wm-fld-stat{padding:14px 8px;border-radius:13px}.wm-fld-stat span{font-size:12px}}
+@media(prefers-reduced-motion:reduce){.wm-fld-tag{transition:border-color .25s,color .25s}.wc-card:hover .wm-fld-tag{transform:none}}
 @media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent{grid-template-columns:1fr;gap:20px}.wm-ent-r ul{grid-template-columns:1fr}}
 
 /* FINAL */
@@ -1993,6 +2097,7 @@ const CSS = `
 /* subtle section atmosphere so bands read on the light page */
 .wm:not([data-wm="dark"]) .wm-pillars{background:linear-gradient(180deg,rgba(10,157,102,.045),transparent)}
 .wm:not([data-wm="dark"]) .wm-how{background:linear-gradient(180deg,rgba(10,134,207,.05),transparent)}
+.wm:not([data-wm="dark"]) .wm-fields{background:linear-gradient(180deg,rgba(10,157,102,.045),transparent 55%)}
 .wm:not([data-wm="dark"]) .wm-final{background:radial-gradient(60% 130% at 50% 0%,rgba(10,157,102,.1),transparent)}
 .wm:not([data-wm="dark"]) .wm-band-in{background:linear-gradient(110deg,rgba(10,134,207,.08),rgba(10,157,102,.05));border-color:rgba(10,134,207,.22)}
 

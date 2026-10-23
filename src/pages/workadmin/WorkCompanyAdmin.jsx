@@ -23,7 +23,7 @@ import { Loading, ErrorBox, EmptyState, Spinning, SavedTag } from './sections/_s
 import * as SSO from '../../shared/sso_guide.js'
 
 const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced' }, { id: 'premium', name: 'Premium' }]
-const ROLE_LABEL = { company_admin: 'Company admin', member: 'Member' }
+const ROLE_LABEL = { company_admin: 'Company admin', member: 'Member', executive: 'Executive' }
 // Friendly labels for every OpenID Connect provider the backend accepts.
 const SSO_PROVIDER_LABELS = {
   google: 'Google', microsoft: 'Microsoft (Entra ID)', okta: 'Okta', auth0: 'Auth0',
@@ -356,9 +356,9 @@ function TeamSection({ meId, onCompany }) {
                 <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder="at least 6 characters" onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
               </>
             )}
-            <div className="wka-field"><label>Role <Help text="Company admins can manage this console. Members just use WorkCoPilot. Admins use a separate seat pool." /></label>
+            <div className="wka-field"><label>Role <Help text="Members just use WorkCoPilot. Executives get the read-only productivity dashboard. Company admins can manage this console (a separate seat pool)." /></label>
               <select className="wka-select" value={form.companyRole} onChange={(e) => setForm({ ...form, companyRole: e.target.value })}>
-                <option value="member">Member</option><option value="company_admin">Company admin</option>
+                <option value="member">Member</option><option value="executive">Executive (productivity dashboard, read-only)</option><option value="company_admin">Company admin</option>
               </select>
             </div>
             <div className="wka-field"><label>Plan <Help text="Daily guiding time: Basic 2h, Advanced 4h, Premium 6h. Your company's per-plan license count is enforced." /></label>
@@ -392,7 +392,7 @@ function TeamSection({ meId, onCompany }) {
                             <select className="wka-select" value={m.companyRole || 'member'} disabled={self || rowBusy === m.id}
                               title={self ? 'You cannot change your own role.' : ''}
                               onChange={(e) => patchUser(m, { companyRole: e.target.value })}>
-                              <option value="member">Member</option><option value="company_admin">Company admin</option>
+                              <option value="member">Member</option><option value="executive">Executive (read-only)</option><option value="company_admin">Company admin</option>
                             </select>
                           </td>
                           <td>

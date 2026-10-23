@@ -2663,6 +2663,7 @@ const HERO_DEFAULT = [
   { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius pair sits beside you in any app, reads what is on your screen, and tells you the exact next move.' },
   { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
   { h: 'Security-first answers, checked before you see them.', em: 'Security-first', s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
+  { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
   { h: 'The strongest AI plans it. You are guided live.', em: 'strongest AI', s: 'Your plan comes from the strongest AI your key can reach. Then you are walked through it, step by step, in real time.' },
   { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
