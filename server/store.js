@@ -1882,6 +1882,8 @@ export function getProviderRuntime(id) {
     visionModel: cfg.visionModel || null,
   }
 }
+// The id of the active/primary platform provider, or null when none is set.
+export function getActiveProviderId() { return aiState().activeProvider || null }
 // The active platform provider, or null when none is configured.
 export function getActiveRuntime() {
   const ai = aiState()
@@ -1916,6 +1918,87 @@ export function setAiProviderKey(providerId, { apiKey, chatModel, visionModel } 
   if (!ai.activeProvider && cur.apiKey) ai.activeProvider = providerId
   persist()
   return getActiveRuntime()
+}
+// Superadmin console: every provider with its configured state. NEVER the raw key.
+export function adminAiProviders() {
+  const ai = aiState()
+  const provs = ai.providers || {}
+  return Object.keys(PROVIDERS).map((id) => {
+    const p = PROVIDERS[id]; const cur = provs[id] || {}
+    return {
+      id, label: p.label, blurb: p.blurb, keyHint: p.keyHint, keysUrl: p.keysUrl,
+      chatModels: p.chatModels || [],
+      configured: !!cur.apiKey,
+      keyMasked: cur.apiKey ? '••••' + String(cur.apiKey).slice(-4) : null,
+      active: ai.activeProvider === id && !!cur.apiKey,
+      chatModel: cur.chatModel || null,
+      visionModel: cur.visionModel || null,
+    }
+  })
+}
+// Make a (configured) provider the active/primary platform runtime.
+export function setActivePlatformProvider(providerId) {
+  if (!PROVIDERS[providerId]) throw httpErr(400, `Unknown provider: ${providerId}`)
+  const ai = aiState()
+  const cur = ai.providers[providerId]
+  if (!cur || !cur.apiKey) throw httpErr(400, 'Add and save a key for this provider before making it primary.')
+  ai.activeProvider = providerId
+  persist()
+  return adminAiProviders()
+}
+// Remove a provider's key; if it was active, hand active to another configured one.
+export function clearAiProvider(providerId) {
+  const ai = aiState()
+  if (ai.providers && ai.providers[providerId]) delete ai.providers[providerId]
+  if (ai.activeProvider === providerId) {
+    ai.activeProvider = Object.keys(ai.providers || {}).find((k) => ai.providers[k] && ai.providers[k].apiKey) || null
+  }
+  persist()
+  return adminAiProviders()
+}
+
+// ---- AI-settings OTP step-up (owner 2026-10-23) ---------------------------
+// The AI configuration page is critical: nothing is shown and nothing is changed
+// without a fresh authenticator (TOTP) confirmation. Verifying opens a SHORT
+// step-up window; viewing the sensitive provider list and EVERY mutation require
+// that window to be active, so each change is OTP-backed. The window is
+// deliberately short and re-locks on its own.
+const AI_STEPUP_MS = 5 * 60 * 1000
+// Current step-up state for a user. breakGlass = MFA globally disabled
+// (WORK_MFA_DISABLED) - the OTP system is off platform-wide, so the gate opens
+// rather than locking the operator out (SUPREME RULE VIII, graceful degradation).
+export function aiStepUpStatus(userId) {
+  const u = getUser(userId)
+  const breakGlass = !mfaGloballyEnabled()
+  const mfaEnrolled = !!(u && u.mfa && u.mfa.enabled)
+  const until = (u && u.aiStepUpUntil) || 0
+  const active = breakGlass || (mfaEnrolled && until > Date.now())
+  return { active, until: (active && !breakGlass) ? until : 0, breakGlass, mfaEnrolled, windowMs: AI_STEPUP_MS }
+}
+// Verify a TOTP (or backup) code and open the step-up window. Never silent: a bad
+// code throws 401, an un-enrolled account throws 403 telling them to set up MFA.
+export function verifyAiStepUp(userId, code) {
+  if (!mfaGloballyEnabled()) return aiStepUpStatus(userId)   // break-glass: OTP is off
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'User not found.')
+  if (!(u.mfa && u.mfa.enabled)) throw httpErr(403, 'Set up multi-factor authentication first, then verify to open AI settings.')
+  if (!verifyUserMfa(userId, String(code || '').trim())) throw httpErr(401, 'That code did not match. Enter the current 6-digit code from your authenticator.')
+  u.aiStepUpUntil = Date.now() + AI_STEPUP_MS
+  persist()
+  return aiStepUpStatus(userId)
+}
+// Lock the page immediately (operator "Lock now", or after a sensitive change).
+export function clearAiStepUp(userId) {
+  const u = getUser(userId)
+  if (u && u.aiStepUpUntil) { delete u.aiStepUpUntil; persist() }
+  return aiStepUpStatus(userId)
+}
+// Guard used by the AI-config endpoints. Throws 403 (locked) when the window is
+// not active, so the client re-prompts for the code.
+export function requireAiStepUpActive(userId) {
+  const st = aiStepUpStatus(userId)
+  if (!st.active) { const e = httpErr(403, 'AI settings are locked. Verify with your authenticator code to continue.'); e.locked = true; e.stepUp = st; throw e }
+  return st
 }
 
 // ---- WorkCoPilot metering + tiers -----------------------------------------

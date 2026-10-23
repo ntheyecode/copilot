@@ -135,7 +135,9 @@ function sendWorkError(res, e, req) {
     const ref = (e && e.code) ? ` (ref ${e.code})` : ''
     return res.status(503).json({ error: `The system is busy right now${ref}. Please try again in a little while.${extra}`, busy: true, code: (e && e.code) || null })
   }
-  return res.status((e && e.status) || 500).json({ error: (e && e.message) || 'Server error' })
+  const body = { error: (e && e.message) || 'Server error' }
+  if (e && e.locked) { body.locked = true; body.stepUp = e.stepUp || null }   // AI-config OTP step-up lapsed
+  return res.status((e && e.status) || 500).json(body)
 }
 const wrap = (fn) => (req, res) => {
   try { fn(req, res) }
@@ -226,6 +228,13 @@ function requireAdmin(req, res, next) {
 function requireSuperAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'superadmin') return res.status(403).json({ error: 'Superadmin only.' })
   next()
+}
+// AI configuration is a critical page: it is OTP step-up gated (owner 2026-10-23).
+// Run AFTER requireAuth/requireSuperAdmin. Throws 403 {locked:true} when the
+// authenticator window is not active, so the client re-prompts for the code.
+function requireAiStepUp(req, res, next) {
+  try { store.requireAiStepUpActive(req.user.id); next() }
+  catch (e) { sendWorkError(res, e, req) }
 }
 // A company admin manages users within their OWN company. Superadmin passes too.
 // Must run AFTER requireWorkAuth (needs req.user + req.workUser).
@@ -906,9 +915,73 @@ app.get('/api/work/app/android', requireWorkAuth, (req, res) => sendWorkApp(req,
 app.get('/api/work/admin/platform-ai', requireAuth, requireAdmin, wrap((req, res) => {
   res.json({ platformAiAllowed: store.getWorkPlatformAllowed() })
 }))
-app.post('/api/work/admin/platform-ai', requireAuth, requireAdmin, wrap((req, res) => {
-  if (req.user.role !== 'superadmin') return res.status(403).json({ error: 'Superadmin only.' })
+app.post('/api/work/admin/platform-ai', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
   res.json(store.setWorkPlatformAllowed(!!(req.body || {}).allowed))
+}))
+// ---- AI-config OTP step-up (superadmin). GET is the only AI-config endpoint
+// NOT gated - it tells the client whether the page is unlocked. POST verifies an
+// authenticator code to open the short step-up window; DELETE locks immediately.
+app.get('/api/work/admin/ai/stepup', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.aiStepUpStatus(req.user.id))
+}))
+app.post('/api/work/admin/ai/stepup', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.verifyAiStepUp(req.user.id, (req.body || {}).code))
+}))
+app.delete('/api/work/admin/ai/stepup', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.clearAiStepUp(req.user.id))
+}))
+// ---- Platform AI PROVIDERS (superadmin): see every AI we can use, enter a key,
+// test it, make it primary. Keys are set at runtime (not just the deploy seed),
+// so the operator can pin Qwen/OpenRouter/etc. from the dashboard. A raw key is
+// NEVER returned - the list only carries a masked tail. OTP step-up gated: the
+// list carries masked keys + model config, so it is not shown until verified.
+app.get('/api/work/admin/ai/providers', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.json({ providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId() })
+}))
+// Save a provider's key (optionally pin chat/vision model) AND test it in one
+// step, so the operator sees right away whether it works and can read a screen.
+app.post('/api/work/admin/ai/providers/:id', requireAuth, requireSuperAdmin, requireAiStepUp, async (req, res) => {
+  try {
+    const id = req.params.id
+    const { apiKey, chatModel, visionModel } = req.body || {}
+    if (!apiKey || !String(apiKey).trim()) return res.status(400).json({ error: 'Enter an API key for this provider.' })
+    store.setAiProviderKey(id, { apiKey: String(apiKey).trim(), chatModel: chatModel || undefined, visionModel: visionModel || undefined })
+    const rt = store.getProviderRuntime(id)
+    try {
+      const result = await ai.testKey(rt)
+      let visionModelName = null
+      try { visionModelName = await pickWorkVision(rt) } catch { /* vision probe is best-effort */ }
+      res.json({ ok: true, result, visionModel: visionModelName, hasVision: !!visionModelName, providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId() })
+    } catch (e) {
+      // The key was saved but failed its test - tell the operator plainly; the
+      // provider stays in the list (not active unless it was the first key) so
+      // they can correct the key without re-typing everything.
+      res.status(400).json({ ok: false, error: e.message || 'Key test failed', providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId() })
+    }
+  } catch (e) { sendWorkError(res, e, req) }
+})
+// Re-test a provider already configured, without changing its key.
+app.post('/api/work/admin/ai/providers/:id/test', requireAuth, requireSuperAdmin, requireAiStepUp, async (req, res) => {
+  try {
+    const rt = store.getProviderRuntime(req.params.id)
+    if (!rt || !rt.apiKey) return res.status(400).json({ error: 'No key saved for this provider yet.' })
+    try {
+      const result = await ai.testKey(rt)
+      let visionModelName = null
+      try { visionModelName = await pickWorkVision(rt) } catch { /* best-effort */ }
+      res.json({ ok: true, result, visionModel: visionModelName, hasVision: !!visionModelName })
+    } catch (e) {
+      res.status(400).json({ ok: false, error: e.message || 'Key test failed' })
+    }
+  } catch (e) { sendWorkError(res, e, req) }
+})
+// Make a (configured) provider the active/primary platform runtime.
+app.post('/api/work/admin/ai/providers/:id/activate', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.json({ providers: store.setActivePlatformProvider(req.params.id), activeProvider: store.getActiveProviderId() })
+}))
+// Remove a provider's key; if it was active, active hands off to another one.
+app.delete('/api/work/admin/ai/providers/:id', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.json({ providers: store.clearAiProvider(req.params.id), activeProvider: store.getActiveProviderId() })
 }))
 // Plan-heavy / watch-light is OUR model: the SUPERADMIN forces it on for premium
 // users (companies' premium members + regular premium). Users have no control.
@@ -916,7 +989,7 @@ app.post('/api/work/admin/platform-ai', requireAuth, requireAdmin, wrap((req, re
 app.get('/api/work/admin/watch-light', requireAuth, requireAdmin, wrap((req, res) => {
   res.json({ forceWatchLightPremium: store.getWorkForceWatchLight() })
 }))
-app.post('/api/work/admin/watch-light', requireAuth, requireSuperAdmin, wrap((req, res) => {
+app.post('/api/work/admin/watch-light', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
   res.json(store.setWorkForceWatchLight(!!(req.body || {}).on))
 }))
 // Homepage hero copy. Readable by any admin; only the superadmin edits it.
@@ -943,7 +1016,7 @@ app.post('/api/work/admin/retention', requireAuth, requireSuperAdmin, wrap((req,
 app.get('/api/work/admin/web-search', requireAuth, requireAdmin, wrap((req, res) => {
   res.json({ ...store.getPlatformWebSearchState(), envFallback: !!WORK_TAVILY_KEY })
 }))
-app.post('/api/work/admin/web-search', requireAuth, requireSuperAdmin, wrap((req, res) => {
+app.post('/api/work/admin/web-search', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
   const { apiKey, provider } = req.body || {}
   res.json({ ...store.setPlatformWebSearch({ apiKey, provider }), envFallback: !!WORK_TAVILY_KEY })
 }))

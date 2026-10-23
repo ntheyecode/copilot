@@ -154,9 +154,157 @@ function CostEffectiveModels() {
   )
 }
 
+// Platform AI PROVIDERS: every AI WorkCoPilot can run on, each with its configured
+// state, a key field, a one-click Save & Test, and Make-primary. The raw key is
+// never shown (only a masked tail). Superadmin writes; others see state read-only.
+// Nothing here is silent (SUPREME RULE III): a test shows ok + the vision model it
+// found, or the exact error; the active provider is always marked.
+function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, onClear, result }) {
+  const [key, setKey] = useState('')
+  const [model, setModel] = useState(p.chatModel || '')
+  const working = !!busy
+  const stateLabel = p.active ? 'Primary - live' : (p.configured ? 'Configured' : 'Not set')
+  const stateColor = p.active ? 'var(--wka-emerald)' : (p.configured ? 'var(--wka-cyan)' : 'var(--wka-faint)')
+  return (
+    <div style={{
+      position: 'relative', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0,
+      padding: '16px 16px 14px', borderRadius: 12,
+      border: p.active ? '1px solid rgba(10,157,102,0.55)' : '1px solid var(--wka-line)',
+      background: p.active ? 'linear-gradient(160deg, rgba(10,157,102,0.09), var(--wka-panel-2) 60%)' : 'var(--wka-panel-2)',
+      boxShadow: p.active ? '0 0 0 3px rgba(10,157,102,0.08)' : 'none',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 700, fontSize: 15 }}>{p.label}</div>
+          <div style={{ fontSize: 12, color: 'var(--wka-muted)', lineHeight: 1.4, marginTop: 2 }}>{p.blurb}</div>
+        </div>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: stateColor, border: `1px solid ${stateColor}`, borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap' }}>
+          {p.active ? <CheckCircle2 size={11} /> : (p.configured ? <KeyRound size={11} /> : null)}{stateLabel}
+        </span>
+      </div>
+
+      {p.configured ? (
+        <div style={{ fontSize: 12, color: 'var(--wka-muted)' }}>
+          Key <code className="wka-mono">{p.keyMasked}</code>
+          {p.chatModel ? <> · model <code className="wka-mono">{p.chatModel}</code></> : null}
+        </div>
+      ) : null}
+
+      {result ? (
+        result.ok
+          ? <div style={{ fontSize: 12, color: 'var(--wka-emerald)', display: 'flex', alignItems: 'center', gap: 6 }}><CheckCircle2 size={14} /> Tested OK{result.hasVision ? ` · reads screens (${result.visionModel})` : ' · no vision model found'}</div>
+          : <div style={{ fontSize: 12, color: 'var(--wka-red)', display: 'flex', alignItems: 'flex-start', gap: 6 }}><XCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> {result.error}</div>
+      ) : null}
+
+      {isSuperAdmin ? (
+        <>
+          <div className="wka-field" style={{ margin: 0 }}>
+            <label style={{ fontSize: 11 }}>{p.configured ? 'Replace key' : 'API key'}</label>
+            <input className="wka-input" type="password" autoComplete="new-password" value={key} placeholder={p.keyHint || 'paste the key'} onChange={(e) => setKey(e.target.value)} disabled={working} />
+          </div>
+          {p.chatModels && p.chatModels.length ? (
+            <div className="wka-field" style={{ margin: 0 }}>
+              <label style={{ fontSize: 11 }}>Chat model (optional)</label>
+              <select className="wka-input" value={model} onChange={(e) => setModel(e.target.value)} disabled={working}>
+                <option value="">Auto (provider default)</option>
+                {p.chatModels.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+          ) : null}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap', marginTop: 2 }}>
+            <button type="button" className="wka-btn primary sm" disabled={working || !key.trim()} onClick={() => { onSaveTest(p.id, { apiKey: key.trim(), chatModel: model || undefined }); setKey('') }}>
+              {working ? <Spinning /> : <KeyRound size={13} />} Save &amp; test
+            </button>
+            {p.configured && !p.active ? <button type="button" className="wka-btn sm" disabled={working} onClick={() => onActivate(p.id)}>Make primary</button> : null}
+            {p.configured ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onTest(p.id)}>Re-test</button> : null}
+            {p.configured ? <button type="button" className="wka-btn sm ghost" disabled={working} onClick={() => onClear(p.id)} style={{ color: 'var(--wka-red)' }}>Clear</button> : null}
+          </div>
+          {p.keysUrl ? <a href={p.keysUrl} target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--wka-faint)' }}>Where to get a {p.label} key ↗</a> : null}
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+function PlatformProviders({ isSuperAdmin, onLocked }) {
+  const [state, setState] = useState({ loading: true, error: null, providers: [], activeProvider: null })
+  const [busy, setBusy] = useState({})        // providerId -> true while a call is in flight
+  const [results, setResults] = useState({})  // providerId -> { ok, visionModel, hasVision } | { ok:false, error }
+
+  const load = useCallback(async () => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    try { const d = await workAdminApi.aiProviders(); setState({ loading: false, error: null, providers: d.providers || [], activeProvider: d.activeProvider || null }) }
+    catch (error) { if (isLockError(error) && onLocked) return onLocked(); setState((s) => ({ ...s, loading: false, error })) }
+  }, [onLocked])
+  useEffect(() => { load() }, [load])
+
+  const setProvBusy = (id, v) => setBusy((b) => ({ ...b, [id]: v }))
+  const absorb = (id, d) => {
+    if (d.providers) setState((s) => ({ ...s, providers: d.providers, activeProvider: d.activeProvider || s.activeProvider }))
+  }
+
+  const onSaveTest = async (id, body) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true); setResults((r) => ({ ...r, [id]: null }))
+    try {
+      const d = await workAdminApi.setAiProvider(id, body)
+      absorb(id, d)
+      setResults((r) => ({ ...r, [id]: { ok: true, visionModel: d.visionModel, hasVision: d.hasVision } }))
+    } catch (error) {
+      if (isLockError(error) && onLocked) return onLocked()
+      if (error.data && error.data.providers) absorb(id, error.data)
+      setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } }))
+    } finally { setProvBusy(id, false) }
+  }
+  const onTest = async (id) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true); setResults((r) => ({ ...r, [id]: null }))
+    try { const d = await workAdminApi.testAiProvider(id); setResults((r) => ({ ...r, [id]: { ok: true, visionModel: d.visionModel, hasVision: d.hasVision } })) }
+    catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
+    finally { setProvBusy(id, false) }
+  }
+  const onActivate = async (id) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true)
+    try { const d = await workAdminApi.activateAiProvider(id); absorb(id, d) }
+    catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
+    finally { setProvBusy(id, false) }
+  }
+  const onClear = async (id) => {
+    if (!isSuperAdmin) return
+    setProvBusy(id, true); setResults((r) => ({ ...r, [id]: null }))
+    try { const d = await workAdminApi.clearAiProvider(id); absorb(id, d) }
+    catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
+    finally { setProvBusy(id, false) }
+  }
+
+  return (
+    <div className="wka-panel">
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
+        <h2 style={{ margin: 0 }}><KeyRound size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-accent)' }} />AI providers &amp; keys</h2>
+        <button type="button" className="wka-btn sm ghost" disabled={state.loading} onClick={load}><RefreshCw size={13} /> Refresh</button>
+      </div>
+      <p className="desc">Every AI WorkCoPilot can run on. Paste a key, test it, and make one primary. One OpenRouter key reaches Qwen and DeepSeek. Keys are stored securely and never shown again.</p>
+      {state.loading ? <Loading label="Loading providers" />
+        : state.error ? <ErrorBox error={state.error} onRetry={load} />
+        : (
+          <>
+            {!isSuperAdmin ? <div className="wka-note" style={{ marginBottom: 14 }}><Lock size={14} /> Only a superadmin can set provider keys. Current state is shown below.</div> : null}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 300px), 1fr))', gap: 12 }}>
+              {state.providers.map((p) => (
+                <ProviderCard key={p.id} p={p} isSuperAdmin={isSuperAdmin} busy={busy[p.id]} result={results[p.id]}
+                  onSaveTest={onSaveTest} onTest={onTest} onActivate={onActivate} onClear={onClear} />
+              ))}
+            </div>
+          </>
+        )}
+    </div>
+  )
+}
+
 // (a) Platform web-search key (Tavily). Grounds live steps in current web
 // sources. Read is admin; write is superadmin-only (gate mirrors the toggle).
-function WebSearchCard({ isSuperAdmin }) {
+function WebSearchCard({ isSuperAdmin, onLocked }) {
   const [state, setState] = useState({ loading: true, error: null, data: null })
   const [apiKey, setApiKey] = useState('')
   const [saving, setSaving] = useState(false)
@@ -179,7 +327,7 @@ function WebSearchCard({ isSuperAdmin }) {
       const data = await workAdminApi.setWebSearch(key, 'tavily')
       setState({ loading: false, error: null, data }); setApiKey('')
       setSaved(true); setTimeout(() => setSaved(false), 2200)
-    } catch (error) { setSaveError(error) } finally { setSaving(false) }
+    } catch (error) { if (isLockError(error) && onLocked) return onLocked(); setSaveError(error) } finally { setSaving(false) }
   }
 
   const d = state.data || {}
@@ -216,7 +364,7 @@ function WebSearchCard({ isSuperAdmin }) {
 
 // Plan-heavy / watch-light is OUR model: the superadmin forces it on for premium
 // users (company premium members + regular premium). Users have no control.
-function WatchLightCard({ isSuperAdmin }) {
+function WatchLightCard({ isSuperAdmin, onLocked }) {
   const [on, setOn] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -235,7 +383,7 @@ function WatchLightCard({ isSuperAdmin }) {
     const next = !on
     setSaving(true); setSaveError(null)
     try { const d = await workAdminApi.setWatchLight(next); setOn(!!d.forceWatchLightPremium) }
-    catch (e) { setSaveError(e) } finally { setSaving(false) }
+    catch (e) { if (isLockError(e) && onLocked) return onLocked(); setSaveError(e) } finally { setSaving(false) }
   }
 
   return (
@@ -306,7 +454,75 @@ function RecommendedModels() {
   )
 }
 
-export default function AiConfig({ isSuperAdmin }) {
+// A mutation hit while the authenticator window had lapsed server-side.
+function isLockError(e) { return !!(e && e.status === 403 && e.data && e.data.locked) }
+
+// The OTP lock that stands in front of the whole page until a code is verified.
+function OtpGate({ status, onUnlock }) {
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const needsEnroll = status && !status.mfaEnrolled && !status.breakGlass
+  const submit = async (e) => {
+    if (e) e.preventDefault()
+    if (busy || !code.trim()) return
+    setBusy(true); setError(null)
+    try { const st = await workAdminApi.verifyAiStepUp(code.trim()); setCode(''); onUnlock(st) }
+    catch (err) { setError(err) } finally { setBusy(false) }
+  }
+  return (
+    <div className="wka-panel" style={{ maxWidth: 460, margin: '8px auto', textAlign: 'center' }}>
+      <div style={{ width: 52, height: 52, borderRadius: 14, margin: '4px auto 14px', display: 'grid', placeItems: 'center', background: 'rgba(10,157,102,0.1)', border: '1px solid rgba(10,157,102,0.3)' }}>
+        <Lock size={22} style={{ color: 'var(--wka-emerald)' }} />
+      </div>
+      <h2 style={{ justifyContent: 'center' }}>AI settings are locked</h2>
+      <p className="desc" style={{ textAlign: 'center' }}>This is a critical page. Enter the 6-digit code from your authenticator to view and change AI configuration. It re-locks automatically after a few minutes of inactivity.</p>
+      {needsEnroll ? (
+        <div className="wka-note" style={{ marginTop: 10, justifyContent: 'center' }}><AlertTriangle size={14} /> Set up multi-factor authentication on your account first, then return here.</div>
+      ) : (
+        <form onSubmit={submit} style={{ marginTop: 8 }}>
+          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder="123456" value={code}
+            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))} autoFocus
+            style={{ maxWidth: 200, margin: '0 auto', textAlign: 'center', letterSpacing: '0.4em', fontSize: 20 }} />
+          {error ? <div style={{ margin: '12px 0' }}><ErrorBox error={error} /></div> : null}
+          <div style={{ marginTop: 14 }}>
+            <button type="submit" className="wka-btn primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} Verify &amp; open</button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
+// Thin banner above the unlocked page: live countdown to auto-lock + lock-now.
+function StepUpBanner({ status, onLocked }) {
+  const [left, setLeft] = useState(() => Math.max(0, (status.until || 0) - Date.now()))
+  useEffect(() => {
+    if (status.breakGlass) return
+    const t = setInterval(() => {
+      const ms = Math.max(0, (status.until || 0) - Date.now())
+      setLeft(ms)
+      if (ms <= 0) { clearInterval(t); onLocked() }
+    }, 1000)
+    return () => clearInterval(t)
+  }, [status.until, status.breakGlass, onLocked])
+  const lockNow = async () => { try { await workAdminApi.lockAiConfig() } catch { /* lock locally regardless */ } onLocked() }
+  const mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000)
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
+      padding: '9px 14px', marginBottom: 14, borderRadius: 10, border: '1px solid rgba(10,157,102,0.35)', background: 'rgba(10,157,102,0.07)' }}>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: 'var(--wka-emerald)' }}>
+        <CheckCircle2 size={15} />
+        {status.breakGlass
+          ? 'MFA is disabled platform-wide - AI settings are open.'
+          : `Verified with your authenticator - locks in ${mm}:${String(ss).padStart(2, '0')}.`}
+      </span>
+      {!status.breakGlass ? <button type="button" className="wka-btn sm ghost" onClick={lockNow}><Lock size={13} /> Lock now</button> : null}
+    </div>
+  )
+}
+
+function AiConfigBody({ isSuperAdmin, stepUp, onLocked }) {
   const [state, setState] = useState({ loading: true, error: null, allowed: false, configured: false, ready: false })
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
@@ -334,7 +550,7 @@ export default function AiConfig({ isSuperAdmin }) {
       await workAdminApi.setPlatformAi(next)
       const ai = await workAdminApi.aiState()
       setState((s) => ({ ...s, allowed: next, configured: !!ai.platformConfigured, ready: !!ai.platformReady }))
-    } catch (error) { setSaveError(error) }
+    } catch (error) { if (isLockError(error)) return onLocked(); setSaveError(error) }
     finally { setSaving(false) }
   }
 
@@ -343,7 +559,9 @@ export default function AiConfig({ isSuperAdmin }) {
 
   return (
     <div>
-      {!isSuperAdmin ? <div className="wka-note"><Lock size={14} /> Only a superadmin can change the platform AI setting. The current state is shown below.</div> : null}
+      <StepUpBanner status={stepUp} onLocked={onLocked} />
+
+      <PlatformProviders isSuperAdmin={isSuperAdmin} onLocked={onLocked} />
 
       <CostEffectiveModels />
 
@@ -374,9 +592,30 @@ export default function AiConfig({ isSuperAdmin }) {
             : (state.allowed ? 'Platform AI is on but no provider is set, so shared users cannot be served.' : 'Platform AI is off; readiness depends on each user\'s own key.')} />
       </div>
 
-      <WebSearchCard isSuperAdmin={isSuperAdmin} />
-      <WatchLightCard isSuperAdmin={isSuperAdmin} />
+      <WebSearchCard isSuperAdmin={isSuperAdmin} onLocked={onLocked} />
+      <WatchLightCard isSuperAdmin={isSuperAdmin} onLocked={onLocked} />
       <RecommendedModels />
     </div>
   )
+}
+
+// The page gate: nothing renders until an authenticator code opens the step-up
+// window; every change is OTP-backed because mutations require that window too.
+export default function AiConfig({ isSuperAdmin }) {
+  const [gate, setGate] = useState({ loading: true, error: null, status: null })
+
+  const loadGate = useCallback(async () => {
+    setGate((g) => ({ ...g, loading: true, error: null }))
+    try { const status = await workAdminApi.aiStepUp(); setGate({ loading: false, error: null, status }) }
+    catch (error) { setGate({ loading: false, error, status: null }) }
+  }, [])
+  useEffect(() => { if (isSuperAdmin) loadGate() }, [isSuperAdmin, loadGate])
+
+  // AI settings are a critical, superadmin-only page (owner 2026-10-23).
+  if (!isSuperAdmin) return <div className="wka-note"><Lock size={14} /> AI settings are superadmin-only and protected by an authenticator code.</div>
+  if (gate.loading) return <Loading label="Checking AI settings lock" />
+  if (gate.error) return <ErrorBox error={gate.error} onRetry={loadGate} />
+  if (!gate.status || !gate.status.active) return <OtpGate status={gate.status || {}} onUnlock={(status) => setGate({ loading: false, error: null, status })} />
+
+  return <AiConfigBody isSuperAdmin={isSuperAdmin} stepUp={gate.status} onLocked={loadGate} />
 }

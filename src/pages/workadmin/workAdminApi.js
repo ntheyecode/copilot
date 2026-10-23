@@ -59,6 +59,25 @@ export const workAdminApi = {
   getPlatformAi: () => request('GET', '/api/work/admin/platform-ai'),
   setPlatformAi: (allowed) => request('POST', '/api/work/admin/platform-ai', { allowed: !!allowed }),
 
+  // AI-config OTP step-up (superadmin). The page shows/changes nothing until a
+  // fresh authenticator code opens a short window. GET is ungated (tells the UI
+  // lock state); POST verifies a code; DELETE locks immediately.
+  aiStepUp: () => request('GET', '/api/work/admin/ai/stepup'),
+  verifyAiStepUp: (code) => request('POST', '/api/work/admin/ai/stepup', { code }),
+  lockAiConfig: () => request('DELETE', '/api/work/admin/ai/stepup'),
+
+  // Platform AI PROVIDERS (superadmin): see every AI, enter a key, test, pin.
+  // The list never carries a raw key - only a masked tail + configured/active.
+  aiProviders: () => request('GET', '/api/work/admin/ai/providers'),
+  // Save a key (optionally pin chat/vision model) AND test it in one call.
+  setAiProvider: (id, body) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}`, body || {}),
+  // Re-test a provider already configured, without re-typing the key.
+  testAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/test`),
+  // Make a configured provider the active/primary platform runtime.
+  activateAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/activate`),
+  // Remove a provider's key (active hands off to another configured one).
+  clearAiProvider: (id) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}`),
+
   // Plan-heavy / watch-light: superadmin forces it ON for premium users (our model;
   // users have no control). GET readable by any admin; POST superadmin-only.
   getWatchLight: () => request('GET', '/api/work/admin/watch-light'),
