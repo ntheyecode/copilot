@@ -2849,6 +2849,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const timerRef = useRef(null)
   const lastSentRef = useRef(0)
   const busyTickRef = useRef(false)
+  const pendingRef = useRef(false)     // a change is waiting for the screen to settle before we read it
+  const lastChangeRef = useRef(0)      // when the screen last changed (for the settle delay)
   const photoInputRef = useRef(null)    // hidden camera file input for the mobile Photo path
   const photoFrameRef = useRef(null)    // mirror of photoFrame for synchronous reads in grabFrame
 
@@ -2983,19 +2985,37 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     } finally { setBusy(false) }
   }
 
-  // The watch loop: every few seconds, grab a frame; only SEND it when the
-  // screen changed (or a 20s heartbeat), so an idle screen costs nothing.
+  // The watch loop: SMART sending to keep cost (and quality) right. We do NOT read
+  // the screen mid-action. A change ARMS a pending read; we send ONE frame only
+  // once the screen has SETTLED (a tick with no further change), so a burst of
+  // changes while someone is working collapses into a single read at the landed
+  // state - fewer calls AND a cleaner read. A long run of continuous change
+  // force-sends so we never go blind, and a slow heartbeat catches the rare subtle
+  // change the coarse signature missed. An idle screen costs nothing.
   const tick = useCallback(async () => {
     if (busyTickRef.current || !videoRef.current) return
     const sig = signatureFromVideo(videoRef.current)
     const now = Date.now()
     const isChange = changed(sigRef.current, sig)
-    const heartbeat = now - lastSentRef.current > 35000
-    if (!isChange && !heartbeat) return
     sigRef.current = sig
+    if (isChange) {
+      pendingRef.current = true
+      lastChangeRef.current = now
+      // still moving and not overdue -> wait for it to settle before reading
+      if (now - lastSentRef.current < 15000) return
+      // overdue (>15s of continuous change) -> fall through and read now
+    } else {
+      const settled = pendingRef.current && (now - lastChangeRef.current >= 1500)
+      const heartbeat = now - lastSentRef.current > 60000
+      if (!settled && !heartbeat) return
+    }
+    pendingRef.current = false
     let frame = grabWatchFrame(); if (!frame) return
     frame = await prepFrame(frame)
     busyTickRef.current = true
+    // Jitter: smear concurrent users' sends across a ~600ms window so many
+    // sessions do not hit the AI provider at the same instant (throttle smoothing).
+    try { await new Promise((r) => setTimeout(r, Math.floor(Math.random() * 600))) } catch { /* ignore */ }
     try {
       const r = await api.workWatch(sessionId, { frame })
       noteStrong(r)

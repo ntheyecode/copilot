@@ -285,7 +285,7 @@ function meterCost(sessionId, model, inText, outText, images = 0) {
 // capable model per provider so the continuous watch stays cheap (the client
 // already downscales frames and only sends on change).
 const WORK_VISION_PREF = {
-  gemini: [/flash-lite-latest/i, /gemini-3(\.\d)?-flash-lite/i, /flash-latest/i, /2\.0-flash(?!-lite)/i, /gemini-3(\.\d)?-flash\b/i, /flash-image/i],
+  gemini: [/gemini-3\.1-flash-lite(?!-preview|-image)/i, /gemini-3(\.\d)?-flash-lite(?!-preview|-image)/i, /flash-lite-latest/i, /flash-latest/i, /2\.0-flash(?!-lite)/i, /gemini-3(\.\d)?-flash\b/i, /flash-image/i],
   openai: [/gpt-4o-mini(?!-transcribe|-search|-audio)/i, /4\.1-nano/i, /4\.1-mini/i, /gpt-4o(?!-mini|-transcribe|-audio)/i, /gpt-4\.1\b/i, /o4-mini/i],
   groq: [/scout/i, /maverick/i, /llama.*vl/i, /vision/i],
 }
