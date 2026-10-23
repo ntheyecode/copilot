@@ -32,6 +32,7 @@ export default function Pricing({ isSuperAdmin }) {
         image: { ...p.image },
         imageMinBulk: p.imageMinBulk,
         tasks: { ...(p.tasks || {}) },
+        replans: { ...(p.replans || {}) },
       })
       setState({ loading: false, error: null })
     } catch (error) { setState({ loading: false, error }) }
@@ -51,6 +52,7 @@ export default function Pricing({ isSuperAdmin }) {
     for (const g of groups) for (const t of TIERS) { const n = num(form[g][t]); if (isNaN(n) || n < 0) return true }
     const mb = num(form.imageMinBulk); if (isNaN(mb) || mb < 1) return true
     for (const t of TIERS) { const n = num(form.tasks[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
+    for (const t of TIERS) { const n = num((form.replans || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     return false
   })()
 
@@ -64,9 +66,10 @@ export default function Pricing({ isSuperAdmin }) {
         image: Object.fromEntries(TIERS.map((t) => [t, num(form.image[t])])),
         imageMinBulk: num(form.imageMinBulk),
         tasks: Object.fromEntries(TIERS.map((t) => [t, num(form.tasks[t])])),
+        replans: Object.fromEntries(TIERS.map((t) => [t, num((form.replans || {})[t])])),
       }
       const p = await workAdminApi.setPricing(patch)
-      setForm({ currency: p.currency, plans: { ...p.plans }, hour: { ...p.hour }, image: { ...p.image }, imageMinBulk: p.imageMinBulk, tasks: { ...(p.tasks || {}) } })
+      setForm({ currency: p.currency, plans: { ...p.plans }, hour: { ...p.hour }, image: { ...p.image }, imageMinBulk: p.imageMinBulk, tasks: { ...(p.tasks || {}) }, replans: { ...(p.replans || {}) } })
       setSaved(true)
     } catch (error) { setSaveError(error) }
     finally { setSaving(false) }
@@ -113,6 +116,25 @@ export default function Pricing({ isSuperAdmin }) {
             <label>Corporate</label>
             <input className="wka-input" value="Unlimited" readOnly disabled />
             <span className="hint">Company accounts have no daily task cap.</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="wka-panel">
+        <h2>Re-plans per task, per tier</h2>
+        <p className="desc">How many times a user can re-plan a single task. A re-plan only re-adapts the steps to new information &mdash; it never changes the original request, so it is not a backdoor to a new task. Counts per task (not per day). Corporate (company) accounts are unlimited.</p>
+        <div className="wka-grid">{TIERS.map((t) => (
+          <div className="wka-field" key={t}>
+            <label>{t.charAt(0).toUpperCase() + t.slice(1)}</label>
+            <input className="wka-input" type="number" min="0" step="1" disabled={disabled}
+              value={(form.replans || {})[t] == null ? '' : form.replans[t]} onChange={(e) => setField('replans', t, e.target.value)} />
+            <span className="hint">re-plans per task</span>
+          </div>
+        ))}
+          <div className="wka-field">
+            <label>Corporate</label>
+            <input className="wka-input" value="Unlimited" readOnly disabled />
+            <span className="hint">Company accounts have no re-plan cap.</span>
           </div>
         </div>
       </div>

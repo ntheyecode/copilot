@@ -1175,7 +1175,7 @@ app.get('/api/work/sessions', requireWorkAuth, wrap((req, res) => {
 app.get('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
   const s = store.getWorkSession(req.workUser.id, req.params.id)
   if (!s) return res.status(404).json({ error: 'Session not found' })
-  res.json({ session: s })
+  res.json({ session: s, replan: store.getWorkReplanUsage(req.workUser.id, req.params.id) })
 }))
 app.delete('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
   const reason = (req.query && req.query.reason) || (req.body && req.body.reason) || ''
@@ -1359,10 +1359,19 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const { goal, frame, mode } = req.body || {}
     const gPlan = guardUserText(req, res, goal, 'goal', req.params.id); if (gPlan === 'refused') return
     if (gPlan && gPlan.guard) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: gPlan.guard.warning })
-    if (goal != null) store.setWorkSessionGoal(req.workUser.id, req.params.id, goal)
+    // A re-plan = planning a task that already has a goal AND steps. The FIRST
+    // plan sets the goal; a re-plan NEVER changes the original request (owner
+    // rule) - it only re-adapts the plan with new information (the reason). It
+    // also draws on a per-task re-plan budget, gated here BEFORE any tokens are
+    // spent so a spent budget fails fast and cheap.
+    const isReplan = Array.isArray(s.steps) && s.steps.length > 0 && !!s.goal
+    if (isReplan) store.gateWorkReplan(req.workUser.id, req.params.id)
+    if (!isReplan && goal != null) store.setWorkSessionGoal(req.workUser.id, req.params.id, goal)
     const useMode = work.normalizeMode(mode != null ? mode : s.mode)
     if (mode != null) store.setWorkSessionMode(req.workUser.id, req.params.id, useMode)
-    const useGoal = (goal != null ? goal : s.goal) || ''
+    // On a re-plan we plan from the FROZEN original goal, never the (possibly
+    // edited) goal the client sent - the request is locked.
+    const useGoal = (isReplan ? s.goal : (goal != null ? goal : s.goal)) || ''
     if (!String(useGoal).trim()) return res.status(400).json({ error: 'Add a goal first.' })
     const r = await resolveWorkRuntime(req, res, { needVision: !!frame }); if (!r) return
     // Plan with the BEST model available (one call per session; the watch loop
@@ -1467,6 +1476,9 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       : 'Planned by the best model available on your key.' })
     if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
     else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+    // Count the re-plan against this task's budget (only after it actually
+    // produced a plan, so a refusal/failure never burns a re-plan).
+    if (isReplan) store.bumpWorkReplan(req.workUser.id, req.params.id)
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
     // Capture a generalized, de-identified learning the model flagged (a current
     // tool fact newer than its memory) into the cross-session KB for next time.
@@ -1479,7 +1491,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // name (owner rule: never expose the model to users). Full model identity lives
     // in the server audit + superadmin incidents.
     const plannedByPublic = { topRanked: !!plannedBy.topRanked, tier: plannedBy.tier || null, source: plannedBy.source || null, updated: plannedBy.updated || null, vision: !!plannedBy.vision, fellBack: !!plannedBy.fellBack }
-    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
+    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, replan: store.getWorkReplanUsage(req.workUser.id, req.params.id), ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
   } catch (e) { sendWorkError(res, e, req) }
 })
 

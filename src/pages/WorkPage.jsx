@@ -2654,6 +2654,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [replanOpen, setReplanOpen] = useState(false)   // Re-plan modal
   const [replanReason, setReplanReason] = useState('')
   const [replanScope, setReplanScope] = useState('here')  // 'here' (keep progress) | 'start'
+  const [replanInfo, setReplanInfo] = useState(null)      // { unlimited, cap, used, remaining } per-task re-plan budget
   const [planOpen, setPlanOpen] = useState(false)       // read-only "full plan" overlay (all steps)
   // "Make" is the single consolidated surface for the three produce actions. One
   // of 'answer' | 'write' | 'compute' is open at a time (null = nothing open), so
@@ -2866,6 +2867,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     try {
       const r = await api.workGet(sessionId)
       setSess(r.session); setLoadErr('')
+      if (r.replan) setReplanInfo(r.replan)   // per-task re-plan budget left
       if (r.session && r.session.goal != null) setGoal(r.session.goal || '')
       if (r.session && r.session.guidance) setGuidance(r.session.guidance)
       if (r.session && r.session.mode) setMode(r.session.mode)
@@ -2971,6 +2973,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) }),
         'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
+      if (r.replan) setReplanInfo(r.replan)   // per-task re-plan budget left
       // Input guardrail: a MEDIUM attempt is allowed through with a warning. Inform, never block.
       if (r.guard && !r.guard.blocked && r.guard.warning && onGuard) onGuard(r.guard)
       if (r.refusal) { setErr(r.refusal); return }   // declined at goal entry (not supported)
@@ -3462,7 +3465,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <div className="wd-modal-ov" onClick={() => setReplanOpen(false)}>
             <div className="wd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(460px,calc(100vw - 36px))' }}>
               <h3 style={{ color: 'var(--text)' }}><RefreshCw size={17} /> Re-plan</h3>
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', margin: '2px 0 7px' }}>Why re-plan? <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>(what changed, what to add or fix)</span></label>
+              <p style={{ fontSize: 12.5, color: 'var(--text-dim)', margin: '0 0 10px', lineHeight: 1.5 }}>Re-plan adapts the steps to new information. Your <b style={{ color: 'var(--text)' }}>original request stays exactly as you asked it</b> &mdash; if the goal itself has changed, start a new task.</p>
+              {replanInfo && !replanInfo.unlimited && (
+                <div style={{ fontSize: 12.5, fontWeight: 600, color: replanInfo.remaining <= 0 ? 'var(--danger, #c0392b)' : (replanInfo.remaining <= 2 ? 'var(--warn, #b8860b)' : 'var(--text-dim)'), margin: '0 0 10px' }}>
+                  {replanInfo.remaining <= 0
+                    ? `No re-plans left for this task (used all ${replanInfo.cap}). Start a new task to plan afresh.`
+                    : `${replanInfo.remaining} of ${replanInfo.cap} re-plans left for this task.`}
+                </div>
+              )}
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', margin: '2px 0 7px' }}>What's new? <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>(what changed, what to add or fix &mdash; not a new goal)</span></label>
               <textarea rows={3} autoFocus value={replanReason} onChange={(e) => setReplanReason(e.target.value)} placeholder="e.g. the UI changed, add a firewall rule step, skip the VPN part" style={{ width: '100%', resize: 'vertical', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 11, color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }} />
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                 <button type="button" onClick={() => setReplanScope('here')} style={{ flex: 1, textAlign: 'left', padding: '11px 13px', borderRadius: 11, cursor: 'pointer', background: replanScope === 'here' ? 'var(--brand-soft)' : 'var(--surface-2)', border: `1px solid ${replanScope === 'here' ? 'var(--brand-600)' : 'var(--border)'}`, color: 'var(--text)' }}>
@@ -3476,7 +3487,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               </div>
               <div className="wd-modal-btns">
                 <button className="btn btn-ghost" onClick={() => setReplanOpen(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={confirmReplan} disabled={busy}><RefreshCw size={15} /> Re-plan</button>
+                <button className="btn btn-primary" onClick={confirmReplan} disabled={busy || !!(replanInfo && !replanInfo.unlimited && replanInfo.remaining <= 0)}><RefreshCw size={15} /> Re-plan</button>
               </div>
             </div>
           </div>

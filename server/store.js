@@ -1120,7 +1120,14 @@ const GLOBAL_LEARNING_CAP = 20000 // platform KB (shared across all solo users)
 //    improvement data, not personal data.
 function _learnHolder(userId) {
   const u = getUser(userId); if (!u) return null
-  if (u.companyId) { const c = (db.companies || []).find((x) => x.id === u.companyId); return c ? { kind: 'company', obj: c, field: 'kb', cap: LEARNING_CAP } : null }
+  if (u.companyId) {
+    const c = (db.companies || []).find((x) => x.id === u.companyId)
+    if (!c) return null
+    // Company-KB switch (admin-controlled): when OFF, nothing is learned to or
+    // recalled from our servers - each session stays fresh. Default ON.
+    if (c.kbEnabled === false) return null
+    return { kind: 'company', obj: c, field: 'kb', cap: LEARNING_CAP }
+  }
   if (!db.work) db.work = {}
   return { kind: 'global', obj: db.work, field: 'globalKb', cap: GLOBAL_LEARNING_CAP }
 }
@@ -1167,6 +1174,14 @@ export function clearLearnings(userId) {
 // NEVER touch the platform KB. The destructive ones are logged with a reason by
 // the caller via recordAdminAction.
 function _company(companyId) { return (db.companies || []).find((c) => c.id === companyId) || null }
+// Company-KB switch (admin): ON (default) stores learned app knowledge on our
+// servers, shared across the team; OFF learns/recalls nothing on our servers.
+export function getCompanyKbEnabled(companyId) { const c = _company(companyId); return c ? (c.kbEnabled !== false) : true }
+export function setCompanyKbEnabled(companyId, enabled) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  c.kbEnabled = !!enabled; persist()
+  return { kbEnabled: c.kbEnabled }
+}
 export function getCompanyLearningsCount(companyId) { const c = _company(companyId); return c && Array.isArray(c.kb) ? c.kb.length : 0 }
 export function exportCompanyLearnings(companyId) {
   const c = _company(companyId)
@@ -2176,6 +2191,52 @@ export function workDailyTaskLimit(workUserId) {
   const cap = tasks[tier]
   return Number.isInteger(cap) ? cap : (WORK_PRICING_DEFAULT.tasks[tier] || 0)
 }
+// Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
+// information; it never changes the original request (that is frozen by
+// setWorkSessionGoal once a task is planned). Corporate/company = unlimited.
+export function workReplanLimit(workUserId) {
+  const u = getUser(workUserId)
+  if (u && u.companyId) return WORK_TASKS_UNLIMITED       // corporate: unlimited
+  const replans = getWorkPricing().replans || {}
+  const tier = workUserTier(workUserId)
+  const cap = replans[tier]
+  return Number.isInteger(cap) ? cap : (WORK_PRICING_DEFAULT.replans[tier] || 0)
+}
+// Re-plan usage for the client (the Re-plan modal shows "N re-plans left").
+export function getWorkReplanUsage(workUserId, sessionId) {
+  const cap = workReplanLimit(workUserId)
+  const unlimited = !Number.isFinite(cap)
+  const s = findWorkSession(workUserId, sessionId)
+  const used = (s && Number.isInteger(s.replans)) ? s.replans : 0
+  return {
+    unlimited,
+    cap: unlimited ? null : cap,
+    used,
+    remaining: unlimited ? null : Math.max(0, cap - used),
+  }
+}
+// Gate a re-plan BEFORE the (expensive) AI call. Throws a coded httpErr the
+// caller surfaces when the per-task budget is spent. Corporate skips the cap.
+export function gateWorkReplan(workUserId, sessionId) {
+  const cap = workReplanLimit(workUserId)
+  if (!Number.isFinite(cap)) return
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) throw httpErr(404, 'Session not found')
+  const used = Number.isInteger(s.replans) ? s.replans : 0
+  if (used >= cap) {
+    const e = httpErr(402, `You have used all ${cap} re-plan${cap === 1 ? '' : 's'} for this task on the ${workUserTier(workUserId)} plan. The original request stays put; start a new task if the goal itself has changed.`)
+    e.replanLimit = true; e.cap = cap
+    throw e
+  }
+}
+// Record a successful re-plan against the task's budget.
+export function bumpWorkReplan(workUserId, sessionId) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) return 0
+  s.replans = (Number.isInteger(s.replans) ? s.replans : 0) + 1
+  persist()
+  return s.replans
+}
 export function workTasksToday(workUserId) {
   const key = `${workUserId}:${easternDayKey()}`
   return (db.workTasks && db.workTasks[key]) || 0
@@ -2413,6 +2474,7 @@ const WORK_PRICING_DEFAULT = {
   image: { basic: 2, advanced: 1, premium: 0.5 },      // per generated image, per tier
   imageMinBulk: 10,                                    // images bought in bulk, min 10
   tasks: { basic: 4, advanced: 8, premium: 12 },       // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
+  replans: { basic: 10, advanced: 10, premium: 10 },   // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}
@@ -2423,6 +2485,7 @@ export function getWorkPricing() {
     image: { ...WORK_PRICING_DEFAULT.image, ...(p.image || {}) },
     imageMinBulk: p.imageMinBulk || WORK_PRICING_DEFAULT.imageMinBulk,
     tasks: { ...WORK_PRICING_DEFAULT.tasks, ...(p.tasks || {}) },
+    replans: { ...WORK_PRICING_DEFAULT.replans, ...(p.replans || {}) },
   }
 }
 // Keep only the numeric override keys a company may set (partial is fine); null
@@ -2482,13 +2545,13 @@ export function setWorkPricing(patch) {
   }
   // Daily task caps are whole non-negative integers per tier (0 = none). Separate
   // from the money validator because these are counts, not prices.
-  const taskCounts = (o) => {
+  const taskCounts = (o, label = 'task') => {
     if (o == null) return {}
-    if (typeof o !== 'object') throw httpErr(400, 'Task limits must be an object keyed by tier.')
+    if (typeof o !== 'object') throw httpErr(400, `${label[0].toUpperCase() + label.slice(1)} limits must be an object keyed by tier.`)
     const r = {}
     for (const k of WORK_TIERS) if (o[k] != null && o[k] !== '') {
       const n = Number(o[k])
-      if (!Number.isInteger(n) || n < 0 || n > 1000) throw httpErr(400, `${k} task limit must be a whole number between 0 and 1000.`)
+      if (!Number.isInteger(n) || n < 0 || n > 1000) throw httpErr(400, `${k} ${label} limit must be a whole number between 0 and 1000.`)
       r[k] = n
     }
     return r
@@ -2500,6 +2563,7 @@ export function setWorkPricing(patch) {
     image: { ...cur.image, ...tiers(p.image, 'Image') },
     imageMinBulk,
     tasks: { ...cur.tasks, ...taskCounts(p.tasks) },
+    replans: { ...cur.replans, ...taskCounts(p.replans, 're-plan') },
   }
   persist()
   return getWorkPricing()
@@ -2878,6 +2942,7 @@ export function createWorkSession(workUserId, { title, goal, scope } = {}) {
     status: 'active',
     steps: [],
     currentStep: 0,
+    replans: 0,          // re-plans used on THIS task (per-task budget; see workReplanLimit)
     mode: 'stepwise',
     guidance: null,
     events: [],
@@ -2953,6 +3018,13 @@ export function getWorkSessionForCompanyAdmin(adminUserId, sessionId) {
 export function setWorkSessionGoal(workUserId, sessionId, goal) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
+  // THE ORIGINAL REQUEST IS IMMUTABLE ONCE A TASK IS PLANNED (owner rule
+  // 2026-10-23). The goal is editable only during composition - before the
+  // first plan produces steps. After that, a re-plan may re-adapt the plan with
+  // new information but can NEVER rewrite what the user originally asked for.
+  // This is the single class-level guard, so every caller (the goal endpoint,
+  // the plan endpoint's goal override, any future path) is covered at the root.
+  if (s.goal && Array.isArray(s.steps) && s.steps.length > 0) return s
   s.goal = String(goal || '').trim() || null
   s.lastActivityAt = Date.now()
   persist()
