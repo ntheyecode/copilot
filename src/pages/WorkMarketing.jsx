@@ -615,6 +615,16 @@ function TermBlock({ cmd }) {
     </div>
   )
 }
+// A ready-to-run PROMPT handed off for the user's own AI (WorkCoPilot guides, it
+// does not generate for you). Copyable - the "prompt download" action.
+function PromptBlock({ text }) {
+  return (
+    <div className="wm-demo-term wm-demo-prompt">
+      <div className="wm-demo-th"><span className="wm-demo-promptlbl"><Sparkles size={11} /> PROMPT FOR YOUR AI</span> <CopyChip text={text} /></div>
+      <code>{text}</code>
+    </div>
+  )
+}
 // Hand-drawn marks for the two trust cards. Distinct on purpose: a shield with a
 // check for Security, a padlock over a redaction bar for Privacy.
 function ShieldMark() {
@@ -697,6 +707,7 @@ function LiveDemo({ tilt, untilt }) {
         { sees: 'Retrieval returns whole documents', fix: { say: 'Returning full docs blows the context window and buries the answer', do: 'Return the top matching chunks with a score threshold, not whole files' }, diff: { file: 'retriever.py:21', old: 'retriever = store.as_retriever()', new: 'retriever = store.as_retriever(search_kwargs={"k":4,"score_threshold":0.75})' }, click: 'Set top-k', done: 'retrieval returns focused chunks' },
         { sees: 'Tools are defined but the agent free-forms answers', step: 'Wire the tool-calling loop', how: ['Bind the tools to the model', 'Add the reason, call-tool, observe loop', 'Stop when the model returns a final answer'], click: 'Bind tools', done: 'the agent actually calls your tools' },
         { sees: 'User text is concatenated into the system prompt', fix: { say: 'That is a prompt-injection hole: a user can override your instructions', do: 'Keep user input in a user turn, never in the system prompt, and allowlist tool arguments' }, diff: { file: 'agent.py:40', old: 'system = BASE + user_input', new: 'messages = [system(BASE), user(user_input)]' }, click: 'Separate roles', done: 'user text cannot hijack the system prompt' },
+        { sees: 'You want a starter you can paste into your own AI', step: 'Copy a ready-to-run prompt, tuned to your stack', how: ['Scoped to your vector store and model', 'Security and privacy baked in - placeholders, never real secrets', 'Paste it into your AI and attach your docs'], prompt: 'Scaffold a tool-calling RAG agent (LangGraph + Chroma). Retrieve top-4 chunks (score >= 0.75), keep user text in a USER turn, allowlist tool args, and use <API_KEY> placeholders - never real secrets.', click: 'Copy prompt', done: 'you have a prompt ready to paste into your AI' },
       ],
     },
     {
@@ -792,9 +803,11 @@ function LiveDemo({ tilt, untilt }) {
           <div className="wm-demo-stage wm-beat" key={'st' + safeSi}>
             {s.diff
               ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} />
-              : s.cmd
-                ? <TermBlock cmd={s.cmd} />
-                : <DemoScreen app={d.app} target={s.click} fix={isFix} />}
+              : s.prompt
+                ? <PromptBlock text={s.prompt} />
+                : s.cmd
+                  ? <TermBlock cmd={s.cmd} />
+                  : <DemoScreen app={d.app} target={s.click} fix={isFix} />}
           </div>
         )}
         {reveal >= 2 && (
@@ -1341,6 +1354,10 @@ const CSS = `
 .wm-demo-term{margin-top:12px;border:1px solid #27324a;border-radius:11px;overflow:hidden}
 .wm-demo-th{display:flex;justify-content:space-between;background:#0c1222;color:#8ea3c0;font-size:10px;letter-spacing:.1em;padding:7px 10px}
 .wm-demo-th span{color:#cdd6e5}
+.wm-demo-prompt{border:1px solid rgba(255,154,77,.4)}
+.wm-demo-prompt .wm-demo-th{background:linear-gradient(90deg,rgba(255,154,77,.16),rgba(242,106,67,.06))}
+.wm-demo-promptlbl{display:inline-flex;align-items:center;gap:5px;color:#ffb35c !important;font-weight:800}
+.wm-demo-promptlbl svg{color:#ff9a4d}
 .wm-demo-term code{display:block;background:#0c1222;color:#d6e9d6;font-family:"JetBrains Mono",monospace;font-size:12.5px;padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}   /* long commands wrap INSIDE the box, never widen it */
 .wm-demo-list{list-style:none;padding:12px 4px 2px;margin:0;display:flex;flex-direction:column;gap:8px;font-size:14px}
 .wm-demo-list li{color:var(--mut);padding-left:24px;position:relative}

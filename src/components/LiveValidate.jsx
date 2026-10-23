@@ -435,7 +435,8 @@ const LV_CSS = `
 .lv-coach-go{flex:0 0 auto;color:var(--warm2)}
 .lv-coach-arrow{position:absolute;right:30px;bottom:-7px;width:14px;height:14px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
 @media(prefers-reduced-motion:reduce){.lv-coach{animation:lv-coach-in .42s ease both}}
-@media(max-width:560px){.lv-coach{right:12px;bottom:66px}}
+/* No floater nudge on mobile - it crowds the small screen (the launcher stays). */
+@media(max-width:768px){.lv-coach{display:none}}
 .lv-live-dot{width:8px;height:8px;border-radius:50%;background:#e23b3b;box-shadow:0 0 0 0 rgba(226,59,59,.6);animation:lv-pulse 1.5s infinite}
 @keyframes lv-pulse{0%{box-shadow:0 0 0 0 rgba(226,59,59,.55)}70%{box-shadow:0 0 0 7px rgba(226,59,59,0)}100%{box-shadow:0 0 0 0 rgba(226,59,59,0)}}
 .wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(4px);animation:wm-cov-fade .18s ease}
