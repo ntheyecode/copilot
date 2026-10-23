@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe, Sparkles, Eye, DollarSign, Award,
+  FileText, Download, Activity, Globe,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
@@ -178,9 +178,9 @@ function OverviewSection({ company }) {
           <div className="foot">Shared backup minutes</div>
         </div>
         <div className="wka-card accent">
-          <div className="k"><Cpu size={15} /> AI consumption</div>
-          <div className="v">{d ? money(d.totalUsd) : '-'}</div>
-          <div className="foot">{d ? `${d.sessionCount || 0} guided sessions` : 'No data yet'}</div>
+          <div className="k"><Cpu size={15} /> Guided sessions</div>
+          <div className="v">{d ? (d.sessionCount || 0) : '-'}</div>
+          <div className="foot">{d ? 'Total for your company' : 'No data yet'}</div>
         </div>
       </div>
 
@@ -589,103 +589,9 @@ function BillingSection() {
 // ===========================================================================
 
 // Relative time ("3 min ago") for the recommendation's computed-at stamp.
-function relTimeAgo(at) {
-  if (!at) return ''
-  const t = new Date(at).getTime()
-  if (isNaN(t)) return ''
-  const s = Math.round(Math.max(0, Date.now() - t) / 1000)
-  if (s < 45) return 'just now'
-  const m = Math.round(s / 60); if (m < 60) return `${m} min ago`
-  const h = Math.round(m / 60); if (h < 24) return `${h}h ago`
-  const d = Math.round(h / 24); return `${d}d ago`
-}
-function recPrice(m) {
-  if (!m || m.usdPerMtok == null || !isFinite(Number(m.usdPerMtok))) return ''
-  return `$${Number(m.usdPerMtok).toFixed(2)} /Mtok`
-}
-const REC_VIS_TAG = {
-  display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700,
-  color: 'var(--wka-emerald)', border: '1px solid rgba(10,157,102,0.4)', background: 'rgba(10,157,102,0.08)',
-  borderRadius: 999, padding: '2px 7px',
-}
-
-function RecPick({ title, icon, pick }) {
-  return (
-    <div style={{ flex: '1 1 200px', minWidth: 0, border: '1px solid var(--wka-line)', borderRadius: 10, padding: '14px 16px', background: 'var(--wka-panel-2)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 12, color: 'var(--wka-muted)', fontWeight: 600 }}>{icon}{title}</div>
-      {pick ? (
-        <div style={{ marginTop: 9 }}>
-          <div style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{pick.label || pick.provider}</div>
-          <div style={{ fontWeight: 650, fontSize: 14, wordBreak: 'break-word' }}>{pick.model}</div>
-          <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-            {recPrice(pick) ? <span className="wka-mono" style={{ fontSize: 12, color: 'var(--wka-muted)' }}>{recPrice(pick)}</span> : null}
-            {pick.vision ? <span style={REC_VIS_TAG}><Eye size={11} /> vision</span> : null}
-          </div>
-        </div>
-      ) : <div style={{ marginTop: 9, fontSize: 12.5, color: 'var(--wka-faint)' }}>No pick available.</div>}
-    </div>
-  )
-}
-
-function RecProviderRow({ p }) {
-  return (
-    <div style={{ display: 'flex', gap: 12, padding: '9px 0', borderBottom: '1px solid var(--wka-line)', flexWrap: 'wrap', alignItems: 'baseline' }}>
-      <div style={{ fontWeight: 600, minWidth: 130 }}>{p.label || p.provider} <span style={{ color: 'var(--wka-faint)', fontWeight: 400, fontSize: 12 }}>· {p.count} model{p.count === 1 ? '' : 's'}</span></div>
-      <div style={{ fontSize: 12, color: 'var(--wka-muted)', flex: 1, minWidth: 180 }}>
-        {p.cheapest ? <span>Cheapest: <b>{p.cheapest.model}</b> {recPrice(p.cheapest)}{p.cheapest.vision ? ' (vision)' : ''}</span> : <span style={{ color: 'var(--wka-faint)' }}>No priced model</span>}
-        {p.best ? <span style={{ display: 'block' }}>Best: <b>{p.best.model}</b>{p.best.quality ? ` (quality ${p.best.quality}/5)` : ''}{p.best.vision ? ' (vision)' : ''}</span> : null}
-      </div>
-    </div>
-  )
-}
-
-// Best + cheapest model guidance for the company's available providers.
-function CompanyAiRecommendation() {
-  const [state, setState] = useState({ loading: true, error: null, data: null })
-  const load = useCallback(() => {
-    setState((s) => ({ ...s, loading: true, error: null }))
-    api.workTeamAiRecommendation()
-      .then((data) => setState({ loading: false, error: null, data }))
-      .catch((error) => setState((s) => ({ ...s, loading: false, error })))
-  }, [])
-  useEffect(() => { load() }, [load])
-
-  const d = state.data || {}
-  const providers = d.providers || []
-  const overall = d.overall || {}
-  return (
-    <div className="wka-panel">
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
-        <h2 style={{ margin: 0 }}><Sparkles size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-accent)' }} />Recommended models</h2>
-        <button type="button" className="wka-btn sm ghost" disabled={state.loading} onClick={load}>{state.loading ? <Spinning /> : <RefreshCw size={13} />} Refresh</button>
-      </div>
-      <p className="desc">The best and cheapest picks across the providers available to your company, to choose a model to run on.</p>
-      {state.loading ? <Loading label="Loading recommendation" />
-        : state.error ? <ErrorBox error={state.error} onRetry={load} />
-        : providers.length === 0 ? <EmptyState title="No models to compare yet" detail={d.note || 'Add your company AI keys to see recommendations.'} />
-        : (
-          <>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <RecPick title="Cheapest" icon={<DollarSign size={14} style={{ color: 'var(--wka-emerald)' }} />} pick={overall.cheapest} />
-              <RecPick title="Cheapest that can see the screen" icon={<Eye size={14} style={{ color: 'var(--wka-cyan)' }} />} pick={overall.cheapestVision} />
-              <RecPick title="Best" icon={<Award size={14} style={{ color: 'var(--wka-amber)' }} />} pick={overall.best} />
-            </div>
-            <div style={{ marginTop: 16 }}>
-              {providers.map((p) => <RecProviderRow key={p.provider} p={p} />)}
-            </div>
-            <div style={{ marginTop: 14, fontSize: 11.5, color: 'var(--wka-faint)' }}>
-              {d.note ? <div>{d.note}</div> : null}
-              {d.at ? <div style={{ marginTop: 4 }}>Updated {relTimeAgo(d.at)}</div> : null}
-            </div>
-          </>
-        )}
-    </div>
-  )
-}
-
 function AiSection() {
   const [company, setCompany] = useState(null)
-  const [form, setForm] = useState({ providerId: '', apiKey: '', chatModel: '', visionModel: '' })
+  const [form, setForm] = useState({ providerId: '', apiKey: '' })
   const [busy, setBusy] = useState(false)
   const [ok, setOk] = useState('')
   const [err, setErr] = useState(null)
@@ -708,7 +614,7 @@ function AiSection() {
   const save = async () => {
     if (!form.apiKey.trim()) return
     setBusy(true); setErr(null); setOk('')
-    try { await api.workTeamSetAiKeys(form); setOk('Saved. WorkCoPilot now runs on your keys.'); setForm({ providerId: '', apiKey: '', chatModel: '', visionModel: '' }); load() }
+    try { await api.workTeamSetAiKeys(form); setOk('Saved. WorkCoPilot now runs on your keys.'); setForm({ providerId: '', apiKey: '' }); load() }
     catch (error) { setErr(error) } finally { setBusy(false) }
   }
   const clear = async () => {
@@ -731,16 +637,14 @@ function AiSection() {
       <div className="wka-panel">
         <h2>Current AI</h2>
         {cur
-          ? <p className="desc">Running on <b>{cur.providerId || 'your provider'}</b>, key <code className="wka-mono">{cur.keyMasked}</code>, model {cur.chatModel || 'default'}. {cur.owner === 'company' ? 'These are your own keys, so usage bills to your provider account.' : 'These keys were set for you by the WorkCoPilot team.'}</p>
+          ? <p className="desc">Key <code className="wka-mono">{cur.keyMasked}</code> is set. {cur.owner === 'company' ? 'These are your own keys, so usage bills to your provider account.' : 'These keys were set for you by the WorkCoPilot team.'}</p>
           : <p className="desc">No company keys set. Your company runs on the WorkCoPilot platform AI.</p>}
       </div>
       <div className="wka-panel">
         <h2>Use your own keys <Help text="Switch WorkCoPilot to your provider. Usage is then billed to your account, not ours. The key is stored securely and never shown back in full." /></h2>
         <div className="wka-formgrid">
-          <div className="wka-field"><label>Provider</label><input className="wka-input" value={form.providerId} placeholder="gemini, openai, groq..." onChange={(e) => setForm({ ...form, providerId: e.target.value })} /></div>
+          <div className="wka-field"><label>Provider</label><input className="wka-input" value={form.providerId} placeholder="your provider" onChange={(e) => setForm({ ...form, providerId: e.target.value })} /></div>
           <div className="wka-field"><label>API key</label><input className="wka-input" type="password" value={form.apiKey} placeholder="paste your provider API key" autoComplete="new-password" onChange={(e) => setForm({ ...form, apiKey: e.target.value })} /></div>
-          <div className="wka-field"><label>Chat model <span className="hint">optional</span></label><input className="wka-input" value={form.chatModel} placeholder="e.g. gpt-4o-mini" onChange={(e) => setForm({ ...form, chatModel: e.target.value })} /></div>
-          <div className="wka-field"><label>Vision model <span className="hint">reads the screen</span></label><input className="wka-input" value={form.visionModel} placeholder="e.g. gpt-4o, gemini-1.5-flash" onChange={(e) => setForm({ ...form, visionModel: e.target.value })} /></div>
         </div>
         {ok && <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {ok}</div>}
         {err && <ErrorBox error={err} />}
@@ -767,8 +671,6 @@ function AiSection() {
           <button type="button" className="wka-btn primary" disabled={wsBusy || !wsKey.trim()} onClick={() => saveWs(false)}>{wsBusy ? <Spinning /> : <KeyRound size={14} />} Save key</button>
         </div>
       </div>
-
-      <CompanyAiRecommendation />
     </div>
   )
 }

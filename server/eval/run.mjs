@@ -147,9 +147,9 @@ async function main() {
   // Public summary (generic labels, aggregates only, NO per-task for held-out).
   const publicSummary = {
     corpus: corpus.name, at,
-    models: { strong: { label: 'a top-ranked model', summary: runs.strong && runs.strong.summary }, fast: { label: 'a fast model', summary: runs.fast && runs.fast.summary } },
+    models: { strong: { label: 'Higher-capability tier', summary: runs.strong && runs.strong.summary }, fast: { label: 'Speed-optimized tier', summary: runs.fast && runs.fast.summary } },
     sampleTasks: corpus.tasks.filter((t) => t.visibility !== 'heldout').slice(0, 8).map((t) => ({ domain: t.domain, prompt: t.prompt })),
-    method: 'See docs/accuracy-benchmark-spec.md. Deterministic + execution grading where possible; AI-judge flagged; held-out tasks scored but not published.',
+    method: 'Answers are verified mechanically wherever possible; held-out tasks are scored but not published. Results are reported per tier, with no model or provider named.',
   }
   fs.writeFileSync(path.join(outDir, `${corpus.name}-public.json`), JSON.stringify(publicSummary, null, 2))
   console.log(`\n[eval] wrote results to ${outDir}`)

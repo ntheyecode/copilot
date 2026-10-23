@@ -94,7 +94,7 @@ export default function WorkMarketing() {
     { icon: Compass, viz: 'zero', t: 'Starts from zero', d: 'Opens the right page, signs you in, and walks you to the exact spot. Nothing assumed, nothing skipped.' },
     { icon: ShieldCheck, viz: 'fix', t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix. When a tool\'s UI has changed, it finds the new control and corrects the step instead of pointing at a button that moved.' },
     { icon: Monitor, viz: 'command', t: 'Any app, not just the browser', d: 'Guides web apps, installed desktop apps, on-prem consoles at a local address, and your own custom tools - it reads whatever is on screen and fits the real environment.' },
-    { icon: Globe2, viz: 'current', t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams - read on your computer, OCR included, the file never leaving - flagging anything in them that is wrong.' },
+    { icon: Globe2, viz: 'current', t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams - read on your computer, the file never leaving - flagging anything in them that is wrong.' },
     { icon: FileText, viz: 'record', t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
     { icon: ScanEye, viz: 'record', t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings. Paste a long error or an API response and it analyzes it and adjusts the plan.' },
   ]
@@ -122,7 +122,7 @@ export default function WorkMarketing() {
     'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
   ]
   const pillars = [
-    { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction for regulated teams.', points: ['PII, PHI, secrets and IPs stripped or tokenized on-device before anything is sent', 'Your documents and diagrams are read on your computer (OCR) - the file never leaves', 'Never clicks, types or runs anything, and hidden on screen-share', 'A per-session audit log of exactly what was sent'] },
+    { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction for regulated teams.', points: ['PII, PHI, secrets and IPs stripped or tokenized on-device before anything is sent', 'Your documents and diagrams are read on your computer - the file never leaves', 'Never clicks, types or runs anything, and hidden on screen-share', 'A per-session audit log of exactly what was sent'] },
     { icon: Rocket, t: 'Powerful', claim: 'From a one-liner to a full enterprise build.', d: 'Whatever the task, it carries it end to end.', points: ['Simplest task to the most advanced', 'Any tool, any stack, any field', 'Nothing left half-done'] },
     { icon: Target, t: 'Accurate', claim: 'It only tells you what is really on your screen.', d: 'No guessing, no invented menus.', points: ['Never invents a button or setting', 'Catches a wrong value before you save', 'Says "I cannot see that" instead of guessing'] },
     { icon: Gauge, t: 'Fast', claim: 'The next step before you finish reading this.', d: 'It keeps pace with you, not the other way round.', points: ['Guidance in a blink', 'No waiting, no spinning', 'Moves the plan as you move'] },
@@ -212,25 +212,25 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* BEST MODEL PLANS, FAST MODEL GUIDES - one compact band. Every claim here
-          is the live mechanism: ONE planning call per task on the top-ranked model
-          available on the key in use (vision-capable when a screen is read), then
-          a fast model watches. The site claim is "available TO YOU", never a
-          universal "#1" - the app states the actual model per task. */}
+      {/* THE STRONGEST AI AVAILABLE TO YOU PLANS IT - one compact band. Benefit
+          + honesty guarantee only: the plan comes from the strongest AI on the
+          key in use, the guidance keeps pace, and the app states what planned
+          each task. The site claim is "available TO YOU", never a universal
+          "#1", never a vendor/model name, never the routing behind it. */}
       <section className="wm-best" id="best-model">
         <div className="wm-wrap">
           <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
             <div className="wm-best-in">
               <div className="wm-best-copy">
-                <div className="wm-eyebrow"><Trophy size={14} /> Best model plans. Fast model guides.</div>
-                <h2 className="wm-best-h">Your work is planned by the best AI you can use. <em>A fast one guides it.</em></h2>
-                <p className="wm-best-p">When you start a task, the plan comes from the best model your key can reach, one that can read your screen when it needs to. Then a fast model takes over and guides you, step by step.</p>
-                <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">See how the model is chosen <ArrowRight size={14} /></WorkCard.Link>
+                <div className="wm-eyebrow"><Trophy size={14} /> The strongest AI available to you</div>
+                <h2 className="wm-best-h">Your work is planned by the strongest AI you can use. <em>Guided live, at the pace of your screen.</em></h2>
+                <p className="wm-best-p">When you start a task, the plan comes from the strongest AI your key can reach. Then the live guidance keeps pace with your screen and walks you through it, step by step.</p>
+                <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">See what that means for you <ArrowRight size={14} /></WorkCard.Link>
               </div>
               <div className="wm-best-receipt" aria-label="How each task is planned and guided">
-                <div className="wm-best-row plan"><span className="k">plan</span><span className="v"><b>top-ranked model</b> on your key</span></div>
-                <div className="wm-best-row watch"><span className="k">watch</span><span className="v"><b>fast model</b>, step by step <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
-                <WorkCard.Proof><b className="dp-ok"><Check size={11} /> Planned by the top-ranked model</b> <span className="cb-dim">the best one available on the key in use</span></WorkCard.Proof>
+                <div className="wm-best-row plan"><span className="k">plan</span><span className="v"><b>strongest AI</b> on your key</span></div>
+                <div className="wm-best-row watch"><span className="k">guide</span><span className="v"><b>live</b>, step by step <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
+                <WorkCard.Proof><b className="dp-ok"><Check size={11} /> Planned by the strongest AI for you</b> <span className="cb-dim">the best one available on the key in use</span></WorkCard.Proof>
               </div>
             </div>
           </WorkCard>
@@ -295,7 +295,7 @@ export default function WorkMarketing() {
             <WorkCard theme="light" delay={0} texPos="0% 0%">
               <WorkCard.Proof><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span> <span className="cb-arrow">&rarr;</span> <b>[[token]]</b> <span className="cb-arrow">&rarr;</span> rebuilt here</WorkCard.Proof>
               <WorkCard.Head icon={Lock} title="Tokenized on your device" />
-              <WorkCard.Body>Turn on tokenize and sensitive values never reach the AI. They are swapped for on-device tokens, then the full answer is rebuilt on your machine. Your documents, diagrams and screenshots are read on your computer (OCR included), so the file itself never leaves.</WorkCard.Body>
+              <WorkCard.Body>Turn on tokenize and sensitive values never reach the AI. They are swapped for on-device tokens, then the full answer is rebuilt on your machine. Your documents, diagrams and screenshots are read on your computer, so the file itself never leaves.</WorkCard.Body>
             </WorkCard>
             <WorkCard theme="light" tone="cyan" delay={80} texPos="100% 50%">
               <WorkCard.Proof><span className="cb-chip">GDPR</span><span className="cb-chip">HIPAA</span><span className="cb-chip">PCI-DSS</span><span className="cb-chip">SOC 2</span><span className="cb-chip">ISO 27001</span><span className="cb-chip">FedRAMP</span><span className="cb-chip">NIST 800-53</span><span className="cb-chip">HITRUST</span><span className="cb-chip">CCPA</span></WorkCard.Proof>
@@ -677,7 +677,7 @@ function TrustDuo({ nav }) {
       points: [
         'Every command, snippet and script is written the secure way, then self-checked for injection, hard-coded secrets and least privilege before it reaches you.',
         'Read-only. It watches and guides, never clicks, types or runs a thing. You keep full control.',
-        'Anchored to proven methodology across 51 disciplines, not improvised.',
+        'Grounded in the proven methodology of your field, not improvised.',
         'With live web learning on, steps follow the latest official docs and UIs, so advice is current, not stale.',
       ],
       proof: <><span className="dp-chip">injection</span><span className="dp-chip">secrets</span><span className="dp-chip">least-priv</span><span className="dp-arrow">&rarr;</span><b className="dp-ok"><Check size={11} /> checked</b></>,
@@ -687,8 +687,8 @@ function TrustDuo({ nav }) {
       k: 'priv', eyebrow: 'Privacy', Mark: RedactLockMark,
       title: 'Scrubbed on your device, before anything leaves.',
       points: [
-        'Text and screen (OCR) are scanned locally. PII, PHI and secrets are masked first, on your machine.',
-        'Tokenize swaps sensitive values for stable placeholders and restores them on your device. Private by design.',
+        'Text and screen are checked locally. PII, PHI and secrets are masked first, on your machine.',
+        'Tokenize swaps sensitive values for placeholders and restores them on your device. Private by design.',
         'You decide what gets scrubbed: industry-standard detectors plus your own rules, set by you, your company admin or the platform.',
         'Your boundary holds. On your own AI key, calls stay on that key. Nothing is silently rerouted.',
       ],
@@ -719,8 +719,8 @@ function LiveDemo({ tilt, untilt }) {
       tag: 'Private by design', app: 'Billing console', goal: 'Set up a billing integration without leaking customer data',
       steps: [
         { sees: 'The screen shows a customer email, a card number and a live API key', fix: { say: 'Those are PII, a card and a secret - they must never reach an AI', do: 'They are blacked out in the screenshot and swapped for placeholders in text, on your device, before anything is sent' }, click: 'Protect on-device', done: 'only [EMAIL], [CARD] and [API_KEY] leave your device' },
-        { sees: 'You paste an error that still contains sk-live-... and an internal IP', fix: { say: 'A pasted log carries the secret and your private host', do: 'The same engine tokenizes them, and the token-to-value map stays on your machine' }, click: 'Tokenize', done: 'the AI sees [[SECRET_1]] and [[IP_2]], never the real values' },
-        { sees: 'The answer comes back referencing the placeholders', step: 'Rebuild the answer locally', how: ['Each token is matched to its on-device value', 'The full, usable answer is reassembled on your machine', 'Nothing sensitive was ever transmitted'], click: 'Rebuild', done: 'you get the real answer; the AI never did' },
+        { sees: 'You paste an error that still contains sk-live-... and an internal IP', fix: { say: 'A pasted log carries the secret and your private host', do: 'They are tokenized too, and the real values stay on your machine' }, click: 'Tokenize', done: 'the AI sees [[SECRET_1]] and [[IP_2]], never the real values' },
+        { sees: 'The answer comes back referencing the placeholders', step: 'Rebuild the answer locally', how: ['The real values are restored on your device', 'You get the full, usable answer', 'Nothing sensitive was ever transmitted'], click: 'Rebuild', done: 'you get the real answer; the AI never did' },
       ],
     },
     {
@@ -990,8 +990,8 @@ const HERO_PAIRS = [
     s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
   { h: [['Private by design', 1], [', redacted on your device.']],
     s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-  { h: [['The '], ['best AI', 1], [' plans it. A fast one guides you.']],
-    s: 'Your plan comes from the strongest model your key can reach. Then a fast one walks you through it, step by step.' },
+  { h: [['The '], ['strongest AI', 1], [' plans it. You are guided live.']],
+    s: 'Your plan comes from the strongest AI your key can reach. Then you are walked through it, step by step, in real time.' },
   { h: [['Do more with the '], ['team you already have', 1], ['.']],
     s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: [['Compliance-ready', 1], [' for the frameworks you answer to.']],

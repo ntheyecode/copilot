@@ -2,8 +2,9 @@
 // main page). Shows the REAL on-device protection: sensitive values blacked out
 // in a screen before a frame is sent, and sensitive values replaced by reversible
 // tokens in the text that reaches the AI (the map stays on the device, so the
-// answer is rebuilt locally). The text sample is the exact output of the shipped
-// scrubber (server/work-scrub.js); the screen is a representative app view.
+// answer is rebuilt locally). The text sample is real output of the shipped
+// on-device protection; the screen is a representative app view. PUBLIC PAGE:
+// state the guarantee (what is protected, what leaves), never the mechanism.
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Lock, ScanEye, FileText, ArrowLeft, ArrowRight, Check, Globe, HeartPulse, Landmark, BadgeCheck, Building2, Monitor, Send, Database, EyeOff, Trash2, KeyRound, Route, Undo2 } from 'lucide-react'
@@ -58,10 +59,10 @@ function TokenText({ text }) {
 // Compliance readiness. HONESTY CONTRACT (owner-enforced): the product provides
 // controls and audit evidence; the CUSTOMER achieves compliance. Never "you are
 // compliant", "certified", or "guarantees". Every "how" line below ties to a real,
-// shipped capability: on-device redaction/tokenization (frame_scrub + work-scrub),
-// read-only operation (watches and guides, never acts), per-company DLP policy
-// with arm-and-lock (server/compliance-presets.js seeds the presets named here),
-// per-member session audit logs + reports, and secure-by-default guidance.
+// shipped capability: on-device redaction/tokenization, read-only operation
+// (watches and guides, never acts), per-company policy with arm-and-lock (the
+// presets named here ship with the product), per-member session audit logs +
+// reports, and secure-by-default guidance.
 const COMPLIANCE = [
   {
     id: 'privacy', icon: Globe, tone: '', eyebrow: 'Privacy and data protection', title: 'Personal data stays on the device',
@@ -136,9 +137,9 @@ function ComplianceGroup({ g, index }) {
 // artifacts, a fixed automatic retention window) it is SAID, not implied. This is
 // a disclosure of what the product does, never a compliance or deletion guarantee.
 const FLOW = [
-  { icon: Monitor, n: '01', t: 'Your screen and text', s: 'Read on your own device. Frames are OCR\'d locally; documents on the desktop app are read locally too.' },
+  { icon: Monitor, n: '01', t: 'Your screen and text', s: 'Read on your own device. Screen frames, and on the desktop app your documents, are read locally.' },
   { icon: ShieldCheck, n: '02', t: 'On-device redaction', s: 'Sensitive values are blacked out in frames and replaced by tokens in text before anything leaves.' },
-  { icon: Send, n: '03', t: 'Sent to guide', s: 'Downscaled frames (about 1280px at most) plus the governed text. Nothing else.' },
+  { icon: Send, n: '03', t: 'Sent to guide', s: 'Reduced-size frames plus the governed text. Nothing else.' },
   { icon: KeyRound, n: '04', t: 'The AI', s: 'Runs on platform keys, or on your company\'s or your own keys so the data stays inside your boundary.' },
   { icon: Undo2, n: '05', t: 'Answer rebuilt on device', s: 'Tokens are swapped back for the real values locally. The AI never saw them.' },
 ]
@@ -147,9 +148,9 @@ const HANDLING = [
   {
     id: 'leaves', icon: Send, tone: 'cyan', eyebrow: 'What leaves your device', title: 'Only what is needed to guide the step',
     items: [
-      ['Screen frames', 'Downscaled to about 1280px at most. Any line holding a sensitive value is blacked out on your device before the frame is sent.'],
-      ['Governed text', 'What you typed or pasted, with sensitive values already replaced by tokens on your device. The token-to-value map stays with you.'],
-      ['Attached documents (desktop app)', 'Read and OCR\'d on your machine. Only the governed text is sent, never the file itself.'],
+      ['Screen frames', 'Reduced in size before sending. Any line holding a sensitive value is blacked out on your device before the frame is sent.'],
+      ['Governed text', 'What you typed or pasted, with sensitive values already replaced by tokens on your device. The real values stay with you.'],
+      ['Attached documents (desktop app)', 'Read on your machine. Only the governed text is sent, never the file itself.'],
       ['Which AI keys', 'Platform keys, or your company\'s or your own AI keys, which keeps the data inside your boundary. The model name is never shown to end users.'],
     ],
   },
@@ -230,7 +231,7 @@ export default function WorkSecurity() {
       </section>
 
       <section className="wsx-block">
-        <div className="wsx-bhead"><span className="wsx-bi"><ScanEye size={16} /></span><div><h2>On your screen</h2><p>Each outbound frame is read on-device (OCR), and any line with a sensitive value is blacked out before the frame leaves.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><ScanEye size={16} /></span><div><h2>On your screen</h2><p>Each outbound frame is checked on your device, and any line with a sensitive value is blacked out before the frame leaves.</p></div></div>
         <div className="wsx-ba">
           <WorkCard theme="light" tone="danger" delay={0} texPos="0% 0%"><div className="wsx-lab before">Before (on your device)</div><ScreenMock redacted={false} /></WorkCard>
           <WorkCard theme="light" tone="ok" delay={90} texPos="100% 0%"><div className="wsx-lab after">After (what leaves the device)</div><ScreenMock redacted /></WorkCard>
@@ -238,7 +239,7 @@ export default function WorkSecurity() {
       </section>
 
       <section className="wsx-block">
-        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} /></span><div><h2>In your text</h2><p>Typed or pasted text is scanned by the same engine. Each sensitive value becomes a reversible token. The token-to-value map never leaves your device, so the answer is rebuilt locally.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><ShieldCheck size={16} /></span><div><h2>In your text</h2><p>Typed or pasted text gets the same protection. Each sensitive value becomes a token, the real values never leave your device, and the answer is rebuilt locally.</p></div></div>
         <div className="wsx-ba">
           <WorkCard theme="light" tone="danger" delay={0} texPos="0% 100%"><div className="wsx-lab before">Before (what you typed)</div><pre className="wsx-code">{RAW}</pre></WorkCard>
           <WorkCard theme="light" tone="ok" delay={90} texPos="100% 100%"><div className="wsx-lab after">After (what reaches the AI)</div><pre className="wsx-code"><TokenText text={SENT} /></pre></WorkCard>

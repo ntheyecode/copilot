@@ -54,21 +54,21 @@ export default function WorkBenchmark() {
       <main className="wbm-main">
         <div className="wbm-eyebrow"><FlaskConical size={13} /> Accuracy benchmark</div>
         <h1>How accurate is WorkCoPilot?</h1>
-        <p className="wbm-lead">We measure <b>result correctness</b>: given a task with a known-correct answer, does WorkCoPilot return the right one. We report the real number with its sample size and confidence interval, per domain, for a top-ranked model and a fast model separately. We do not publish rounded-up figures, and a held-out portion of the tasks is kept private so the numbers cannot be gamed.</p>
+        <p className="wbm-lead">We measure <b>result correctness</b>: given a task with a known-correct answer, does WorkCoPilot return the right one. We report the real number with its sample size and confidence interval, per domain, for each AI tier the product uses, separately. We do not publish rounded-up figures, and a held-out portion of the tasks is kept private so the numbers cannot be gamed.</p>
 
         {pending ? (
           <div className="wbm-pending">
             <BarChart3 size={18} />
             <div>
               <b>First public run pending.</b>
-              <p>The benchmark harness, graders and task corpus are built and tested. Numbers appear here once a run has been recorded. Until then, the methodology below is the honest statement of how we will measure.</p>
+              <p>The benchmark is built and tested. Numbers appear here once a public run has been recorded. Until then, the methodology below is the honest statement of how we will measure.</p>
             </div>
           </div>
         ) : (
           <>
             <div className="wbm-grid">
-              <ModelScore title="A top-ranked model" summary={data.models && data.models.strong && data.models.strong.summary} />
-              <ModelScore title="A fast model" summary={data.models && data.models.fast && data.models.fast.summary} />
+              <ModelScore title="Higher-capability tier" summary={data.models && data.models.strong && data.models.strong.summary} />
+              <ModelScore title="Speed-optimized tier" summary={data.models && data.models.fast && data.models.fast.summary} />
             </div>
             <p className="wbm-when">Last run {fmtDate(data.at)}.</p>
             {Array.isArray(data.sampleTasks) && data.sampleTasks.length ? (
@@ -84,11 +84,11 @@ export default function WorkBenchmark() {
         <section className="wbm-method">
           <h2>How we measure</h2>
           <ul>
-            <li><b>Result correctness.</b> The task is run through the same result pipeline the product uses; the returned answer is graded against a known-correct reference.</li>
-            <li><b>Grading, most to least rigorous.</b> We run code, SQL and formulas against fixtures and compare the real output; use exact / numeric / structured matching where the answer is deterministic; and only where neither applies, a strong model judges against a reference. AI-judged results are labelled, and a random sample is re-checked by a person each run.</li>
+            <li><b>Result correctness.</b> Each task is run through the product the same way a user's would be, and the returned answer is graded against a known-correct reference.</li>
+            <li><b>Grading, most to least rigorous.</b> Wherever an answer can be verified mechanically, it is. Only where it cannot does an AI judge compare it against the reference. AI-judged results are labeled as such, and a random sample is re-checked by a person each run.</li>
             <li><b>Four domains.</b> Dev and data, spreadsheet and finance, a cross-profession mix, and security and code review.</li>
             <li><b>Honest reporting.</b> Per-domain and overall pass rates with sample sizes and 95% confidence intervals, refreshed each release. Public task set plus a private held-out portion, so the numbers resist overfitting.</li>
-            <li><b>Model labels.</b> Results are reported for a top-ranked model and a fast model separately. We do not name the specific model here.</li>
+            <li><b>Tier labels.</b> Results are reported separately for each AI tier the product uses. We never name the specific model or provider.</li>
           </ul>
           <div className="wbm-note"><ShieldCheck size={14} /> <span>We would rather publish a true, smaller number with its confidence interval than a round figure without one. Where a domain has few tasks, we say so.</span></div>
         </section>

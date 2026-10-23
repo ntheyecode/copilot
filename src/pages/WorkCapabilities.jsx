@@ -120,20 +120,21 @@ const VIZ = {
       <path d="M222 42l-4 8h6l-4 8" stroke={CY} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="236" y="54" fill={CY} fontSize="11" fontFamily="system-ui">fix</text>
     </Frame>
   ),
-  // 9. Best model plans, fast model watches - two lanes. The PLAN lane: one call
-  // to the top-ranked model (a single, heavier node). The WATCH lane: a run of
-  // small, quick ticks from a fast model. A quiet "planned by" readout at the foot.
+  // 9. The strongest AI available to you plans; live guidance keeps pace - two
+  // lanes, framed as the BENEFIT (what you get), never as the routing behind it.
+  // The PLAN lane: your plan, from the strongest AI on your key. The GUIDE lane:
+  // a run of quick, confirmed steps. A quiet "planned by" readout at the foot.
   best: (
     <Frame h={120}>
       {/* PLAN lane */}
       <text x="20" y="34" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace" letterSpacing="1.5">PLAN</text>
       <rect x="62" y="20" width="118" height="22" rx="11" fill="rgba(109,75,216,.10)" stroke="rgba(109,75,216,.55)" />
       <path d="M75 24.5h8v4.5a4 4 0 0 1-8 0zM79 33v3M76 36.5h6" stroke="#6d4bd8" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="87" y="35" fill="#6d4bd8" fontSize="10.5" fontWeight="600" fontFamily="system-ui">top-ranked model</text>
+      <text x="87" y="35" fill="#6d4bd8" fontSize="10.5" fontWeight="600" fontFamily="system-ui">strongest AI for you</text>
       <rect x="190" y="22" width="48" height="18" rx="9" fill={PANEL} stroke={LINE} />
       <text x="214" y="34.5" textAnchor="middle" fill={TXT} fontSize="9.5" fontFamily="ui-monospace,monospace">best</text>
-      {/* WATCH lane */}
-      <text x="20" y="72" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace" letterSpacing="1.5">WATCH</text>
+      {/* GUIDE lane */}
+      <text x="20" y="72" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace" letterSpacing="1.5">GUIDE</text>
       <line x1="62" y1="68" x2="238" y2="68" stroke="rgba(10,147,196,.28)" strokeWidth="2" />
       {[72, 98, 124, 150, 176, 202].map((x, i) => (
         <g key={x}>
@@ -142,11 +143,11 @@ const VIZ = {
         </g>
       ))}
       <rect x="216" y="59" width="46" height="18" rx="9" fill={PANEL} stroke={LINE} />
-      <text x="239" y="71.5" textAnchor="middle" fill={CY} fontSize="9.5" fontFamily="ui-monospace,monospace">fast</text>
+      <text x="239" y="71.5" textAnchor="middle" fill={CY} fontSize="9.5" fontFamily="ui-monospace,monospace">live</text>
       {/* readout */}
       <line x1="20" y1="90" x2="260" y2="90" stroke={LINE} />
       <circle cx="28" cy="104" r="6" fill={EMf} stroke={EM} strokeWidth="1.6" /><path d="M25.3 104l1.8 1.8 3.2-3.6" stroke={EM} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="40" y="107.5" fill={TXT} fontSize="10.5" fontFamily="ui-monospace,monospace">Planned by <tspan fill={EM} fontWeight="600">the top-ranked model</tspan></text>
+      <text x="40" y="107.5" fill={TXT} fontSize="10.5" fontFamily="ui-monospace,monospace">Planned by <tspan fill={EM} fontWeight="600">the strongest AI for you</tspan></text>
     </Frame>
   ),
 }
@@ -157,7 +158,7 @@ const CARDS = [
   { viz: 'zero', icon: Compass, t: 'Starts from zero', d: 'Opens the right page, signs you in, and walks you to the exact spot. Nothing assumed, nothing skipped.' },
   { viz: 'fix', icon: ShieldCheck, t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix. When a tool\'s UI has changed, it finds the new control and corrects the step instead of pointing at a button that moved.' },
   { viz: 'apps', icon: AppWindow, t: 'Any app, not just the browser', d: 'Guides web apps, installed desktop apps, on-prem consoles at a local address, and your own custom tools. It reads whatever is on screen and fits the real environment.' },
-  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams, read on your computer with OCR, the file never leaving, flagging anything in them that is wrong.' },
+  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams, read on your computer, the file never leaving, flagging anything in them that is wrong.' },
   { viz: 'record', icon: FileText, t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
   { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings.' },
 ]
@@ -198,13 +199,12 @@ export default function WorkCapabilities() {
         })}
       </section>
 
-      {/* BEST MODEL PLANS, FAST MODEL WATCHES - the fuller explanation, as one
-          full-width Option C card (linked from the main page's band). Every line
-          mirrors the live mechanism: one planning call per task on the top-ranked
-          model available on the key in use, ranking informed by public community
-          leaderboards, a fast model for the continuous watch, and an honest
-          "Planned by" line per task. Never a universal "#1" claim, never an
-          endorsement claim. */}
+      {/* THE STRONGEST AI AVAILABLE TO YOU PLANS IT - the fuller explanation, as
+          one full-width Option C card (linked from the main page's band). Framed
+          as the benefit and the honesty guarantee only: the plan comes from the
+          strongest AI your key can reach, the guidance keeps pace, and the log
+          states what planned each task. Never a universal "#1" claim, never an
+          endorsement claim, never a vendor or model name, never the routing. */}
       <section className="wcap-feature" id="best-model">
         <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
           <div className="wcap-feat-in">
@@ -212,18 +212,18 @@ export default function WorkCapabilities() {
               <WorkCard.Media>{VIZ.best}</WorkCard.Media>
               <WorkCard.Proof>
                 <span className="wc-chip">goal</span><span className="wc-arrow">&rarr;</span>
-                <span className="wc-chip">plan</span><b>top-ranked model</b><span className="wc-arrow">&rarr;</span>
-                <span className="wc-chip">watch</span><b>fast model</b><span className="wc-arrow">&rarr;</span>
-                <b className="wc-ok"><Check size={11} /> Planned by the top-ranked model</b>
+                <span className="wc-chip">plan</span><b>strongest AI for you</b><span className="wc-arrow">&rarr;</span>
+                <span className="wc-chip">guide</span><b>live, step by step</b><span className="wc-arrow">&rarr;</span>
+                <b className="wc-ok"><Check size={11} /> Planned by the strongest AI for you</b>
               </WorkCard.Proof>
             </div>
             <div className="wcap-feat-copy">
-              <WorkCard.Head align="start" icon={Trophy} eyebrow="Best model plans. Fast model watches." title="Your plan comes from the top-ranked AI model available to you." />
-              <WorkCard.Body>When you set a goal, WorkCoPilot plans it with the top-ranked model your key can reach, a vision-capable one when it has to read your screen. Then a fast model takes over the continuous watching and the step-by-step guidance, so the plan is sharp and the guidance keeps up with your screen.</WorkCard.Body>
+              <WorkCard.Head align="start" icon={Trophy} eyebrow="The strongest AI available to you" title="Your plan comes from the strongest AI available to you." />
+              <WorkCard.Body>When you set a goal, WorkCoPilot plans it with the strongest AI your key can reach. Then the live guidance keeps pace with your screen, step by step, so the plan is sharp and the guidance never lags behind what you are doing.</WorkCard.Body>
               <WorkCard.Points items={[
-                'Ranked, not guessed. Our model ranking is informed by the public community leaderboards (LMArena and Artificial Analysis) and matched against the models actually live on your key, so it never picks a retired model.',
-                'Chosen live, refreshed daily. On your own or your company\'s key, the pick stays on that key. Your data boundary holds.',
-                'Every task is planned by the top-ranked model available, and the log tells you so. If the top model stumbles and a backup finishes the plan, the log says that too, instead of claiming the top model.',
+                'Chosen, not guessed. The plan always comes from the strongest option actually available to you at that moment, never from one that has been retired.',
+                'Your data boundary holds. On your own or your company\'s key, every call stays on that key. Nothing is silently rerouted.',
+                'Honest by design. The log for every task states what planned it. If anything had to change mid-task to keep you going, the log says so instead of claiming otherwise.',
               ]} />
             </div>
           </div>

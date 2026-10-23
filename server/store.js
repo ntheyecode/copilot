@@ -2558,7 +2558,7 @@ const HERO_DEFAULT = [
   { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
   { h: 'Security-first answers, checked before you see them.', em: 'Security-first', s: 'Every command, snippet and fix is written the secure way and checked for known risks and vulnerable libraries before it reaches you.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-  { h: 'The best AI plans it. A fast one guides you.', em: 'best AI', s: 'Your plan comes from the strongest model your key can reach. Then a fast one walks you through it, step by step.' },
+  { h: 'The strongest AI plans it. You are guided live.', em: 'strongest AI', s: 'Your plan comes from the strongest AI your key can reach. Then you are walked through it, step by step, in real time.' },
   { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
   { h: 'Compliance-ready for the frameworks you answer to.', em: 'Compliance-ready', s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
 ]
@@ -2825,13 +2825,16 @@ export function formatWorkAuditLog(sessionId, session) {
     `Transmissions logged: ${lines.length}`,
     'This log records the text transmitted to the AI for this session, with timestamps.',
     'When a redaction policy is on, sensitive values were stripped on the device before transmission.',
+    'Each transmission was handled by an approved AI provider, with no silent substitution.',
     '='.repeat(74), '',
   ].filter((x) => x != null).join('\n')
   const body = lines.map((l) => {
     try {
       const e = JSON.parse(l)
       const meta = [`[${e.at}]`, String(e.call || 'ai').toUpperCase()]
-      if (e.model) meta.push(`model=${e.model}`)
+      // The specific model name is never surfaced to users or company admins (IP
+      // risk). The raw on-disk entry keeps e.model for internal/superadmin
+      // forensics; the readable download omits it.
       if (e.scrub != null) meta.push(`redaction=${e.scrub ? 'on' : 'off'}`)
       if (e.redacted) meta.push(`redacted=${e.redacted}`)
       if (e.frame) meta.push(`frame=${e.frame}`)

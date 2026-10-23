@@ -126,7 +126,7 @@ export default function WorkDisclaimer() {
             <p>Guidance is produced with the help of AI and is best-effort. AI can misread a screen, miss context, be out of date about a tool that has changed, or simply be wrong. It can sound confident while being wrong.</p>
             <Items items={[
               ['Verify before you rely on it', 'Check anything that matters against the tool\'s own documentation, your own records, or a person who knows the system.'],
-              ['Screens are read, not understood perfectly', 'WorkCoPilot reads your screen with on-device OCR after redaction. Small text, unusual layouts and redacted values can lead to a wrong read.'],
+              ['Screens are read, not understood perfectly', 'WorkCoPilot reads your screen on your device, after redaction. Small text, unusual layouts and redacted values can lead to a wrong read.'],
               ['Tools change', 'Menus, commands and defaults move. A step that was right last month may not be right today.'],
               ['Tell us', `If guidance was wrong or unsafe, write to ${CONTACT} so we can look into it.`],
             ]} />

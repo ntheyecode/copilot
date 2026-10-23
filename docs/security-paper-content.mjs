@@ -9,7 +9,7 @@ export const META = {
   subtitle: 'How we help you do your work without taking your data',
   org: 'AdmireVeda',
   product: 'WorkCoPilot',
-  version: 'Rev 1.3',
+  version: 'Rev 1.4',
   date: 'October 2026',
 }
 
@@ -23,7 +23,7 @@ export const BLOCKS = [
   { ul: [
     'Read-only by design. The product observes and guides. It cannot act, so it cannot make a change you did not make yourself.',
     'Data minimization. We send the least that is needed to give you the next step, and we give you controls to send even less.',
-    'On-device first. Where we can keep sensitive data on your machine and still help you, we do. The redaction and tokenization engine runs on your device before anything is transmitted.',
+    'On-device first. Where we can keep sensitive data on your machine and still help you, we do. Redaction and tokenization run on your device before anything is transmitted.',
     'Defense in depth. The same protection runs again on the server, so a control is enforced even if the first layer is bypassed.',
     'Secure by default in the guidance. Every command, script, config, and piece of code we suggest is the secure way to do it, and it is checked for common vulnerabilities before you see it.',
     'Honest about what we keep. This paper states plainly where data is kept, for how long, and the few cases where a convenience (for example uploading a document on the web) means text is stored on the server.',
@@ -38,15 +38,15 @@ export const BLOCKS = [
   { p: 'Because the product is read-only, an attacker who somehow influenced its output still could not make a change on your systems. Only you can, by choosing to follow a step.' },
 
   { h1: '4. What actually leaves your device' },
-  { p: 'To give you a step, the product sends a short description of your goal and, when you ask it to read the screen, an image of the screen, to an AI model. Before any of that leaves your device, it can be cleaned by our data-protection engine.' },
+  { p: 'To give you a step, the product sends a short description of your goal and, when you ask it to read the screen, an image of the screen, to an AI model. Before any of that leaves your device, it can be cleaned by our data protection.' },
 
-  { h2: '4.1 The data-protection engine (DLP)' },
-  { p: 'A single redaction engine runs on both your device and our server (one engine, used twice, so the rules can never drift apart). On your device it cleans outbound text before it is transmitted, so raw sensitive data never leaves the browser or app. On the server it runs again as a second line of defense. Nothing is ever silently dropped: you are shown a short summary of what was removed.' },
-  { p: 'The same engine runs everywhere you use WorkCoPilot. The web app, the floating on-screen overlay, the Android app, and the installed desktop app all load this one shared engine, so the protection, the tokenization, and the on-device screen redaction described below are identical on every surface. There is no weaker path.' },
+  { h2: '4.1 Data protection (DLP)' },
+  { p: 'The same protection runs on your device before anything is sent, and our server applies the identical policy again as a second line of defense. On your device it cleans outbound text before it is transmitted, so raw sensitive data never leaves the browser or app. Nothing is ever silently dropped: you are shown a short summary of what was removed.' },
+  { p: 'The same protection applies everywhere you use WorkCoPilot. The web app, the floating on-screen overlay, the Android app, and the installed desktop app all enforce the same policy, so the protection, the tokenization, and the on-device screen redaction described below are identical on every surface. There is no weaker path.' },
   { p: 'What it finds and removes from text:' },
   { table: { head: ['Category', 'Examples it detects'], rows: [
     ['Secrets and credentials', 'Private keys (PEM blocks), API keys and tokens (Stripe, AWS, GitHub, Slack, Google, JWTs), URLs that embed a username and password, and any value next to a label like password, secret, api key, access token, client secret'],
-    ['Government and financial IDs', 'Social Security / SIN numbers, credit card numbers (validated by the Luhn check so real cards are caught but version strings are not), IBANs, bank account and routing numbers'],
+    ['Government and financial IDs', 'Social Security / SIN numbers, credit card numbers (checksum-validated so real cards are caught but version strings are not), IBANs, bank account and routing numbers'],
     ['Contact details', 'Email addresses and phone numbers'],
     ['Network identifiers', 'IPv4 and IPv6 addresses, and private or internal host and domain names (.local, .internal, .corp, and similar)'],
     ['Health and personal records', 'Date of birth, medical record number, patient / member / policy / account numbers, driver license, passport, tax id, street address, and postal code, when they appear with a label or as real identifier values'],
@@ -62,20 +62,20 @@ export const BLOCKS = [
 
   { h2: '4.3 Keeping the data on your computer: on-device tokenize and rehydrate' },
   { p: 'Redaction removes a value entirely. For teams who need the answer to come back with the real value filled in, there is a stronger mode that keeps the data on your computer and still gives you a complete answer.' },
-  { p: 'In this mode, each sensitive value is replaced, on your device, with a stable token (for example [[IP_1]] or [[EMAIL_1]]). The token-to-value map is held in memory on your device only and is never transmitted. The server and the AI see only the tokens. When the answer comes back, your device substitutes the real values back into it, so you read a complete, usable answer while the sensitive data never left your machine.' },
-  { callout: { title: 'What this means for you', body: 'A clinician can ask about "patient MRN 48213" and read an answer that names that exact MRN, while our server and the AI only ever saw [[DATA_1]]. The same value always maps to the same token within a session, so the guidance stays coherent, and the map is discarded when the session ends.' } },
+  { p: 'In this mode, each sensitive value is replaced, on your device, with a placeholder. The real values stay on your device, are held only in memory, and are never transmitted. The server and the AI see only the placeholders. When the answer comes back, your device restores the real values into it, so you read a complete, usable answer while the sensitive data never left your machine.' },
+  { callout: { title: 'What this means for you', body: 'A clinician can ask about "patient MRN 48213" and read an answer that names that exact MRN, while our server and the AI only ever saw a placeholder. The same value is represented consistently within a session, so the guidance stays coherent, and the locally held values are discarded when the session ends.' } },
 
   { h2: '4.4 Screenshots, and on-device screen redaction' },
   { p: 'When you ask WorkCoPilot to read the screen, it sends an image of the area you are sharing to the AI so it can see what you see and give an accurate step. These live frames are used to read the screen in the moment; they are not collected into a gallery. If you choose to capture a step as evidence for a report, that screenshot is stored with your session for the report, and you can delete it.' },
-  { p: 'The text scrubbing in sections 4.1 to 4.3 cleans the text you type. A screenshot is a picture, so a sensitive value shown on the page would otherwise sit inside that picture. WorkCoPilot therefore redacts the SCREEN on your device too: when data protection is on, each outbound frame is read on your device by on-device OCR, the recognized text is run through the same DLP engine used for typed text, and any line that contains a sensitive value is blacked out in the image BEFORE the frame is sent.' },
-  { callout: { title: 'Best-effort, with you in control', body: 'On-device screen redaction is a strong backstop, not a mathematical guarantee: OCR can miss text on a low-resolution or stylized screen, and if the OCR engine cannot run, the frame is downscaled so fine text is not left legible. So it is paired with your own control: you choose when to share the screen and, on the installed app, which display is shared, and the installed app is hidden from screen shares by default. For the most sensitive data, close or cover it before you ask WorkCoPilot to read the screen. Screen redaction follows the same switch as text: it is on whenever data protection is on, and off otherwise.' } },
+  { p: 'The text protection in sections 4.1 to 4.3 cleans the text you type. A screenshot is a picture, so a sensitive value shown on the page would otherwise sit inside that picture. WorkCoPilot therefore protects the SCREEN on your device too: when data protection is on, each outbound frame is checked on your device against the same policy that protects typed text, and sensitive values are masked in the image BEFORE the frame is sent.' },
+  { callout: { title: 'Best-effort, with you in control', body: 'On-device screen redaction is a strong backstop, not a mathematical guarantee, so it is paired with your own control: you choose when to share the screen and, on the installed app, which display is shared, and the installed app is hidden from screen shares by default. For the most sensitive data, close or cover it before you ask WorkCoPilot to read the screen. Screen redaction follows the same switch as text: it is on whenever data protection is on, and off otherwise.' } },
   { p: 'On the installed desktop app, the window is hidden from screen shares and recordings by default, so WorkCoPilot does not show up when you are presenting or on a call. You can toggle this when you want to deliberately show it.' },
 
   { h1: '5. Documents you add' },
   { p: 'You can give WorkCoPilot your own reference material (a runbook, a spec, a contract, a diagram) so the steps fit your environment. How that material is handled depends on where you are using the product.' },
   { table: { head: ['Where', 'How your document is handled'], rows: [
-    ['Installed desktop app', 'The document is read and its text extracted ON YOUR DEVICE, including on-device OCR for images, diagrams, and scanned pages (the text recognition runs locally and works offline). The governed text is used only for that one task and is not stored on our server. The original file never leaves your machine.'],
-    ['Web app', 'The extracted text is stored on our server so it can be reused across your sessions. If data protection is on, it is cleaned by the DLP engine before any of it is sent to the AI. You can delete a document at any time, which removes its stored text.'],
+    ['Installed desktop app', 'The document is read and its text extracted ON YOUR DEVICE, including images, diagrams, and scanned pages (that reading happens locally and works offline). The governed text is used only for that one task and is not stored on our server. The original file never leaves your machine.'],
+    ['Web app', 'The extracted text is stored on our server so it can be reused across your sessions. If data protection is on, it is cleaned by data protection before any of it is sent to the AI. You can delete a document at any time, which removes its stored text.'],
   ] } },
   { p: 'If you are handling the most sensitive documents, the installed app is the stronger choice because the document is processed entirely on your device.' },
 
@@ -83,18 +83,18 @@ export const BLOCKS = [
   { p: 'Protection is not left to chance, and it can be customized to exactly what you consider sensitive. Who sets the rules depends on the account:' },
   { ul: [
     'A company administrator arms a data-governance policy for the whole company. It applies to every member and is enforced on the device and again on the server; a company member cannot weaken it or opt out, so protection is consistent across the team.',
-    'An individual user who is not part of a company sets their own rules, so the scrubber is tailored to their work. Company members do not get this self-service control, because their administrator governs it for them.',
+    'An individual user who is not part of a company sets their own rules, so the protection is tailored to their work. Company members do not get this self-service control, because their administrator governs it for them.',
     'A platform superadmin can set rules and can lock a company policy so a company administrator cannot weaken it.',
   ] },
   { p: 'The building blocks are the same at every level, and they add to the built-in protections (emails, keys, card numbers, SSNs, IBANs, phone numbers, IP addresses and private hosts), which always apply:' },
   { ul: [
     'Per-category actions. For each category (secrets, PHI, PII, IP, host, email, phone, card, SSN, IBAN) choose what happens: send it, redact it, withhold it, or tokenize it (keep it on the device, as in section 4.3).',
     'Block words. Specific words or phrases (a project code name, a client name) are always removed before anything is sent, never guessed at.',
-    'Custom rules. Add your own patterns (a word, a phrase, or a regular expression) and choose to redact, tokenize, or block each one, for data shapes unique to your business.',
+    'Custom rules. Add your own patterns (a word or a pattern) and choose to redact, tokenize, or block each one, for data shapes unique to your business.',
     'Arm and lock. A company policy can be armed so it applies to everyone, and locked so it cannot be weakened without an explicit unlock.',
     'Transparency. Every scan records what was transmitted to the AI, and the person is shown a short summary of what was stripped on their device before sending.',
   ] },
-  { p: 'Your custom rules run on your device, before anything is sent, exactly like the built-in detectors. The block words and custom patterns you (or your administrator) define are applied on-device to the text you type and, through the same on-device OCR path, to the screen frames too, so a term unique to your business is masked in a screenshot the same way it is stripped from text. The server applies the identical policy again as a second line of defense. Nothing about a custom rule requires sending your data to configure it.' },
+  { p: 'Your custom rules run on your device, before anything is sent, exactly like the built-in detectors. The block words and custom patterns you (or your administrator) define are applied on-device to the text you type and to the screen frames too, so a term unique to your business is masked in a screenshot the same way it is stripped from text. The server applies the identical policy again as a second line of defense. Nothing about a custom rule requires sending your data to configure it.' },
   { callout: { title: 'Administrator oversight', body: 'A company administrator can, at any time, pull the session report and the audit log for any of their people\'s sessions, whether the session is still in progress or already finished. The report is a reusable reference document of what was accomplished; the audit log is the exact record of what reached the AI (section 12). Both are scoped strictly to the administrator\'s own company and never cross to another company.' } },
 
   { h1: '7. Secure-by-default guidance' },
@@ -124,7 +124,7 @@ export const BLOCKS = [
   { ul: [
     'We do not act on your behalf. No clicking, typing, running, sending, or changing anything.',
     'We do not sell or share your data.',
-    'With protection on, we do not transmit your raw secrets, IDs, or private identifiers; in tokenize mode the real values and the token map never leave your device.',
+    'With protection on, we do not transmit your raw secrets, IDs, or private identifiers; in tokenize mode the real values never leave your device.',
     'On the installed app, we do not upload your reference documents; they are read on your device.',
     'We do not hide what left your machine: you are shown what was stripped, and administrators have an audit record of what was transmitted.',
   ] },
@@ -145,7 +145,7 @@ export const BLOCKS = [
     ['On-device redaction', 'Raw sensitive data in your text', 'Your device, before sending'],
     ['On-device tokenize and rehydrate', 'The real values (they stay on your machine)', 'Your device'],
     ['Server-side redaction', 'Defense in depth', 'Our server'],
-    ['On-device document reading and OCR', 'Your documents (installed app)', 'Your device'],
+    ['On-device document reading', 'Your documents (installed app)', 'Your device'],
     ['Governance policy, block words, custom fields', 'Company-defined sensitive data', 'Device and server'],
     ['Secure-by-default guidance and self-check', 'You, from insecure advice', 'Guidance engine'],
     ['Content protection', 'Your screen on shares and recordings', 'Installed app'],
@@ -161,8 +161,8 @@ export const BLOCKS = [
   { p: 'For every session, an append-only log records each transmission to the AI model. Each entry contains:' },
   { ul: [
     'A timestamp (UTC) for the transmission.',
-    'The type of call: plan, watch (continuous screen reading), ask (a question about the screen), or a drill-down.',
-    'The AI model that handled it, so you can see exactly which model was used, with no silent substitution.',
+    'The purpose of each AI call and its outcome.',
+    'That an approved AI handled it, with no silent substitution.',
     'Whether data protection was on, and how many sensitive items were stripped on the device before sending.',
     'Whether a screen image was sent for that call.',
     'The exact text that reached the AI, which is the already-protected text, with sensitive values redacted or replaced by device-only tokens.',
@@ -172,7 +172,7 @@ export const BLOCKS = [
   { h2: '12.2 How an auditor triggers and reads it' },
   { ul: [
     'In the product, the person who ran a session can download that session\'s audit log at any time. A company administrator can pull the audit log, and the full session report, for any of their people\'s sessions, in progress or finished; a platform superadmin can pull any session\'s. The report reads as a reusable reference document of what was accomplished, with each confirmed step and any on-device-scrubbed milestone screenshots captured as evidence.',
-    'The log is a plain, human-readable text file. It opens with a header (the session, the goal, and how many transmissions were logged) and then one block per transmission showing the timestamp, the call type, the model, whether redaction was on, how many items were stripped, and the exact text that was sent.',
+    'The log is a plain, human-readable text file. It opens with a header (the session, the goal, and how many transmissions were logged) and then one block per transmission showing the timestamp, the purpose of the call, that an approved AI handled it, whether redaction was on, how many items were stripped, and the exact text that was sent.',
     'During a session, the person is also shown a short live summary of what was stripped on their device before sending, for example "Stripped on your device before sending: 2 emails, 1 IP address."',
     'The logs are stored on the server with restricted file permissions and are not exposed to other users.',
   ] },
@@ -182,15 +182,15 @@ export const BLOCKS = [
   { ol: [
     'Watch your own outbound traffic. With your browser developer tools Network tab open, or a local proxy you control, run a session with data protection on, using a goal that contains known test values: a test email, a fake card number that passes the checksum, a test IP address, and a labeled secret. Inspect the actual request bodies leaving your machine and confirm none of those raw values are present; you see placeholders or tokens instead. This is proof on your own hardware, independent of our server.',
     'Compare against our server log. Download the session audit log and confirm it matches what you saw leave the machine. The log is then a second, corroborating copy, not the only evidence.',
-    'Confirm the model. Check that the model named in the log is the one configured, with no silent substitution.',
-    'Review the engine. The redaction and tokenization engine is a single, self-contained module used on both the device and the server, with a catalog of test cases covering each category it detects. A reviewer can read the rules and run the catalog.',
-    'For tokenize mode, confirm the map stays local. The token-to-value map is held in memory on the device, is never part of any request, and is never written to any log; the audit shows only the tokens.',
+    'Confirm what handled each transmission. Every entry records that an approved AI handled it, so a reviewer can confirm no transmission was silently routed elsewhere.',
+    'Exercise every category. Section 4.1 lists each category of sensitive data that is protected. Run test values of your own for each one through a session and confirm, in the bytes leaving your machine, that each is masked.',
+    'For tokenize mode, confirm the real values stay local. They are held only in memory on the device, are never part of any request, and are never written to any log; the audit shows only the placeholders.',
   ] },
   { callout: { title: 'Why the server log alone is not enough, and why that is fine', body: 'A log we write proves the AI did not receive your raw values, but on its own it cannot prove they never left your machine, because we wrote it, and it would look the same whether the values were removed on your device or on our server after they had already left. That is exactly why the primary check is watching the traffic on your own device: if a raw value is not in the bytes that leave your machine, it did not leave. The server log then corroborates what you already saw for yourself.' } },
 
   { h2: '12.4 Scope and honest limits of the audit' },
   { ul: [
-    'The audit records what was transmitted to the AI (the protected text and the model). It is a record of outbound data, not a full system access log.',
+    'The audit records what was transmitted to the AI (the protected text and the fact that an approved AI handled it). It is a record of outbound data, not a full system access log.',
     'When data protection is off, the audit shows redaction as off and records the text as sent. That is itself useful, because it makes the setting and its effect visible.',
     'A screen image sent for a call is noted in the audit as "screen image sent"; the image itself is not embedded in the text log, and the log cannot tell you what the image contained (see section 4.4).',
   ] },
@@ -207,7 +207,7 @@ export const BLOCKS = [
   { h1: '13. Where your data goes: the AI provider' },
   { p: 'WorkCoPilot does not run its own AI model. It sends the protected text, and, when you ask it to read the screen, the screen image, to a third-party AI provider over an encrypted connection, and relays the answer back. It is only honest to say who that is and what it means.' },
   { ul: [
-    'Which providers. By default the service uses a major provider\'s AI API (for example OpenAI, Google, or Groq, depending on configuration). The data is subject to that provider\'s API terms. Reputable providers\' API tiers generally do not use API data to train their models, but you should confirm the current terms of the provider in use for your account.',
+    'Which providers. By default the service uses a major provider\'s AI API (configurable for your account). The data is subject to that provider\'s API terms. Reputable providers\' API tiers generally do not use API data to train their models, but you should confirm the current terms of the provider in use for your account.',
     'Use your own keys. A company can run WorkCoPilot on its own AI provider keys. The data then goes to the company\'s own provider account under the company\'s own agreement with that provider, and WorkCoPilot is not in the middle of that relationship.',
     'What the provider receives. With data protection on, the provider receives only the protected text. The provider does receive the screen image whenever you ask it to read the screen (see section 4.4), so treat a shared screen as data that leaves to the provider.',
   ] },

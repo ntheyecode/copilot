@@ -308,17 +308,17 @@ function AiSetup({ onReady, bare }) {
       await api.workAiKey({ providerId, apiKey }); setApiKey('')
       const r = await api.workAiTest(); setSt(r.status); onReady && onReady(r.status.ready)
       if (r.ok && r.hasVision) setMsg('Ready. This key can read a screen.')
-      else if (r.ok && !r.hasVision) setErr('The key works, but it has no vision model, so WorkCoPilot cannot read a screen. Use a provider or model that can see images (Gemini, GPT-4o, Llama 4 Scout).')
+      else if (r.ok && !r.hasVision) setErr('The key works, but it cannot read images, so WorkCoPilot cannot read a screen. Use a key that supports reading images.')
       else setErr(r.error || 'Key test failed')
     } catch (e) { setErr(e.message || 'Failed') } finally { setBusy(false) }
   }
   if (!st) return null
-  if (st.ready) return bare ? null : <div style={{ ...card, padding: 14, color: 'var(--brand-600)', fontWeight: 600 }}><Check size={15} style={{ verticalAlign: -2 }} /> AI is ready{st.platformAllowed ? '' : ` (${st.ownProvider})`}</div>
+  if (st.ready) return bare ? null : <div style={{ ...card, padding: 14, color: 'var(--brand-600)', fontWeight: 600 }}><Check size={15} style={{ verticalAlign: -2 }} /> AI is ready</div>
   if (st.platformAllowed) return <div style={{ ...card, padding: 14, color: 'var(--danger)' }}>The platform AI is not configured yet. Ask the administrator.</div>
   return (
     <div style={{ ...(bare ? {} : card), padding: bare ? 0 : 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
       <b>Add your AI key to start</b>
-      <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>WorkCoPilot reads your screen, so the key needs a vision model (Gemini, GPT-4o, or Llama 4 Scout all work).</div>
+      <div style={{ fontSize: 12, color: 'var(--text-dim)' }}>WorkCoPilot reads your screen, so the key needs to support reading images. We check that automatically when you save it.</div>
       <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
         <select className="select" value={providerId} onChange={(e) => setProviderId(e.target.value)}><option value="">Provider…</option>{providers.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}</select>
         <input className="input" style={{ flex: 1, minWidth: 160 }} type="password" placeholder="API key" value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
@@ -1031,7 +1031,7 @@ function DocsAttach({ tier, onDesktopDocs }) {
       )}
       {err && <div className="wd-docs-err"><AlertTriangle size={12} /> {err}</div>}
       <div className="wd-docs-note">{desktop
-        ? 'Text, PDFs, Word, and diagrams/screenshots (read on-device by OCR) all stay on your computer. Only governed text is used to plan this session, and it is not stored on our servers.'
+        ? 'Text, PDFs, Word, and diagrams/screenshots (read on your device) all stay on your computer. Only governed text is used to plan this session, and it is not stored on our servers.'
         : 'Text is extracted on our server, scrubbed, and used to ground your plan.'}</div>
     </div>
   )
@@ -1598,15 +1598,15 @@ function HelpDocs({ onStart }) {
               <li><b>Ctrl+Shift+Alt+O</b> see-through &middot; <b>Ctrl+Shift+Alt+W</b> click-behind &middot; <b>Ctrl+Shift+Alt+B</b> buddy &middot; <b>Ctrl+Shift+Alt+M</b> choose monitor</li>
             </ul>
             <h3 className="sub">Your own documents &amp; diagrams</h3>
-            <p>On the goal card, use <b>Add documents</b> to ground the plan in your own material - PDFs, Word, text, and <b>diagrams or screenshots</b> (read on-device by OCR). The file stays on your machine; only the extracted, governed text is used to plan.</p>
+            <p>On the goal card, use <b>Add documents</b> to ground the plan in your own material - PDFs, Word, text, and <b>diagrams or screenshots</b> (read on your device). The file stays on your machine; only the extracted, governed text is used to plan.</p>
           </section>
 
           <section id="help-desktopsec"><h2>Security &amp; safety (desktop)</h2>
             <ul>
               <li><b>Read-only by design.</b> It never clicks, types, runs commands or changes anything. You stay in control of every action.</li>
               <li><b>Hidden from screen shares.</b> The overlay is content-protected by default, so it stays out of Zoom / Teams / Meet shares and recordings. Toggle it with <b>On share</b> or Ctrl+Shift+Alt+S when you want it visible.</li>
-              <li><b>Your documents stay on your computer.</b> Files you add are read and OCR'd locally. The raw file is never uploaded, and the text is not stored on our servers - it is used only to plan that session.</li>
-              <li><b>Least data leaves.</b> To guide you, downscaled screen frames and the governed text go to the AI model (ours, or your company's own keys). When governance is on, sensitive values are stripped or tokenized <b>before</b> anything is sent, and rebuilt on your device.</li>
+              <li><b>Your documents stay on your computer.</b> Files you add are read on your device. The raw file is never uploaded, and the text is not stored on our servers - it is used only to plan that session.</li>
+              <li><b>Least data leaves.</b> To guide you, downscaled screen frames and the governed text go to the AI service (ours, or your company's own key). When governance is on, sensitive values are stripped or tokenized <b>before</b> anything is sent, and rebuilt on your device.</li>
               <li><b>Signed &amp; updated safely.</b> The app is code-signed (COE Security) and updates are delivered over HTTPS.</li>
             </ul>
             <p className="wd-tip"><ShieldCheck size={14} /> These are controls and audit evidence that support your compliance (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA). They do not, by themselves, make you certified.</p>
@@ -1614,7 +1614,7 @@ function HelpDocs({ onStart }) {
 
           <section id="help-desktopfaq"><h2>Desktop FAQ</h2>
             <div className="wd-faq"><b>Can people on a call see the overlay?</b><p>No, not while it is hidden (the default). It is excluded from screen capture and recording. Press Ctrl+Shift+Alt+S or the On share button if you deliberately want to show it.</p></div>
-            <div className="wd-faq"><b>Does my diagram or document get uploaded?</b><p>No. On the desktop app the file is read on your computer, OCR included. Only the governed text is sent to the model to plan, and it is not stored on our servers.</p></div>
+            <div className="wd-faq"><b>Does my diagram or document get uploaded?</b><p>No. On the desktop app the file is read on your computer. Only the governed text is sent to plan, and it is not stored on our servers.</p></div>
             <div className="wd-faq"><b>Will it do things on my machine?</b><p>Never. It is read-only. It reads the screen and tells you the next step; you perform every action yourself.</p></div>
             <div className="wd-faq"><b>How do I keep it out of the way?</b><p>Use See-through and Click-behind while guiding, minimize to the Buddy card, or Ctrl+Shift+Alt+H to hide it entirely. It keeps working while minimized.</p></div>
             <div className="wd-faq"><b>I turned on Click-behind and now I cannot click WorkCoPilot.</b><p>That is Click-behind doing its job: your clicks go to the app underneath. Move the mouse over the WorkCoPilot title bar, which always takes clicks, and press Click-behind there, or press Ctrl+Shift+Alt+W.</p></div>
@@ -1642,7 +1642,7 @@ function HelpDocs({ onStart }) {
             <li>The <b>checklist</b> shows the whole plan. Finished steps tick off by themselves as it sees them done.</li>
           </ul>
           <h3 className="sub">How it keeps up</h3>
-          <p>It watches in low-cost downscaled frames and only looks closely when the screen actually changes, so an idle screen costs you nothing. When it sees you take a wrong turn, it says so and corrects the step. You can press <b>Re-plan</b> at any time to rebuild the steps from what is on screen now.</p>
+          <p>It watches in downscaled frames and only looks closely when the screen actually changes, so an idle screen uses almost nothing. When it sees you take a wrong turn, it says so and corrects the step. You can press <b>Re-plan</b> at any time to rebuild the steps from what is on screen now.</p>
         </section>
 
         <section id="help-styles"><h2>Guide styles</h2>
@@ -3414,12 +3414,12 @@ function Console({ sessionId, watchLight = false, onBack }) {
                     ? <span className={`wc-live-pill${usage && usage.exhausted ? ' out' : ''}`} title={source === 'screen' ? 'Reading your shared screen' : 'Reading the camera'}><span className="pulse" /> Watching live</span>
                     : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
               {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
-              {strongUsed && <span className="wc-strong"><Zap size={11} /> stronger model</span>}
+              {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
               <span className="wc-sp" />
               {/* In Plan-heavy mode the prominent Check my progress button below is the
                   on-demand read, so this duplicate Refresh is hidden to stay uncluttered. */}
               {!watchLight && <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Refresh: re-read the screen right now"><RefreshCw size={14} /> Refresh</button>}
-              <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: read the current screen with the stronger model and weave it into your steps"><Zap size={14} /> Deep pass</button>
+              <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: take a closer look at the current screen and weave it into your steps"><Zap size={14} /> Deep pass</button>
               {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
               <button className="wc-tbtn ghost" onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
               {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%', lineHeight: 1.45 }}>{err}</div>}
@@ -3916,7 +3916,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
           {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{minsLeft}m left</span>}
         </div>
         <button className="fp-btn" style={{ ...iconBtn, color: paused ? c.accent : c.muted, background: paused ? c.accentSoft : 'transparent' }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={14} />}</button>
-        <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: run this one frame on the stronger model and weave it back into the steps, then continue on the fast model."><Zap size={15} /></button>
+        <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: take a closer look at this one frame and weave it back into the steps, then carry on at normal speed."><Zap size={15} /></button>
         <button className="fp-btn" style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
         <button className="fp-btn" style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
         <button className="fp-btn" style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>

@@ -27,7 +27,7 @@ function ensureFonts() {
 // The three facts a reader should leave with, before the detail.
 const GLANCE = [
   { icon: Monitor, tone: 'ok', eyebrow: 'On your device', title: 'Sensitive values never leave in clear', body: 'PII, PHI and secrets are stripped or tokenized on your own device, in screen text and typed text, before any request is sent. The answer is rebuilt on your device.' },
-  { icon: Send, tone: 'cyan', eyebrow: 'What leaves', title: 'Only what is needed to guide the step', body: 'Downscaled screen frames (about 1280px at most) and the governed text. On the desktop app, documents are read locally and only the governed text is sent.' },
+  { icon: Send, tone: 'cyan', eyebrow: 'What leaves', title: 'Only what is needed to guide the step', body: 'Reduced-size screen frames and the governed text. On the desktop app, documents are read locally and only the governed text is sent.' },
   { icon: Database, tone: 'amber', eyebrow: 'What we keep', title: 'A record of the session, until you delete it', body: 'A per-session report, audit log and your session history. Stored keys, secrets and report artifacts are encrypted at rest. There is no automatic retention timer yet, so deletion is in your hands.' },
 ]
 
@@ -119,8 +119,8 @@ export default function WorkPrivacy() {
             <p>WorkCoPilot works with a small set of data, most of which stays on your device.</p>
             <Items items={[
               ['Account details', 'The sign-in details for your account, such as your email address. They are supplied by you, by your company admin, or by your identity provider when your company uses enterprise single sign-on.'],
-              ['Your screen and text during a session', 'What is on your screen and what you type or paste while WorkCoPilot guides you. Screen frames are read on your device (OCR), and sensitive values are redacted or tokenized there before anything is sent.'],
-              ['Documents you attach', 'On the desktop app, attached documents are read and OCR\'d locally on your machine. Only the governed (redacted or tokenized) text is sent, never the file itself.'],
+              ['Your screen and text during a session', 'What is on your screen and what you type or paste while WorkCoPilot guides you. Screen frames are read on your device, and sensitive values are redacted or tokenized there before anything is sent.'],
+              ['Documents you attach', 'On the desktop app, attached documents are read locally on your machine. Only the governed (redacted or tokenized) text is sent, never the file itself.'],
               ['Session records', 'A report for each session, an audit log for each session, and your session history, so you can reopen and review past work.'],
               ['Usage', 'The guided minutes you use, so your plan\'s allowance can be applied.'],
               ['Billing', 'Payment details are entered with and held by Stripe, our billing provider. We receive what is needed to run your subscription, such as your plan and its status.'],
@@ -128,9 +128,9 @@ export default function WorkPrivacy() {
           </Sec>
 
           <Sec id="leaves">
-            <p>Before anything is sent, PII, PHI and secrets are stripped or tokenized on your own device, in both the text read from your screen and the text you type. The token-to-value map stays on your device, and the full answer is rebuilt there. The AI never sees the real sensitive values.</p>
+            <p>Before anything is sent, PII, PHI and secrets are stripped or tokenized on your own device, in both the text read from your screen and the text you type. The real values stay on your device, and the full answer is rebuilt there. The AI never sees the real sensitive values.</p>
             <Items items={[
-              ['Downscaled screen frames', 'About 1280px at most. Any line holding a sensitive value is blacked out on your device before the frame is sent.'],
+              ['Reduced-size screen frames', 'Reduced in size before sending. Any line holding a sensitive value is blacked out on your device before the frame is sent.'],
               ['Governed text', 'What you typed or pasted, with sensitive values already replaced by tokens on your device.'],
               ['Governed text from documents', 'On the desktop app, the text extracted locally from an attached document, after redaction and tokenization. The file itself is not sent.'],
               ['Nothing is done for you', 'WorkCoPilot is read-only. It never clicks, types, or changes a system of record on your behalf, so nothing it sends can act in your systems.'],

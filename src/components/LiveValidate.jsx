@@ -304,7 +304,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                         <div className={`wm-cov-trust${typingDone ? ' show' : ''}`}>
                           <div className="wm-cov-trust-row">
                             <div className="wm-cov-pillar"><span className="ic ent"><Building2 size={16} /></span><div><b>Enterprise-grade</b><p>Central admin, SSO, team seats, one locked company policy, per-session cost and a full audit trail.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Security applied before the work: sensitive data is classified and stripped or tokenized on your device first, the least is sent, and it stays read-only so nothing runs.</p></div></div>
+                            <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Security applied before the work: sensitive data is stripped or tokenized on your device first, the least is sent, and it stays read-only so nothing runs.</p></div></div>
                             <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence that support your compliance under the frameworks you choose - never a certification claim.</p></div></div>
                           </div>
                           <div className="wm-cov-chips">

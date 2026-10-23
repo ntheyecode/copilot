@@ -915,7 +915,13 @@ app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((r
 }))
 app.get('/api/work/team/ai', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
-  res.json(store.getCompany(req.workUser.companyId))
+  // Company admins never see the model, provider, or owner of the AI config
+  // (platform IP) - only whether a key is set and its masked tail. publicCompany
+  // returns a fresh object, and the superadmin console reads it through the admin
+  // routes, so this narrowing is scoped to the company-admin surface only.
+  const c = store.getCompany(req.workUser.companyId)
+  if (c && c.companyAi) c.companyAi = { keyMasked: c.companyAi.keyMasked, setAt: c.companyAi.setAt }
+  res.json(c)
 }))
 // Company admin: this company's own web-search (Tavily) key for live web learning.
 app.post('/api/work/team/web-search', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
@@ -926,20 +932,26 @@ app.post('/api/work/team/web-search', requireWorkAuth, requireCompanyAdmin, wrap
 // Company admin: best + cheapest recommendation for the keys THIS company runs on
 // (its own key if set, otherwise the platform providers). Not cached per-company
 // (small, on-demand); reachability errors surface, never a silent empty.
-app.get('/api/work/team/ai-recommendation', requireWorkAuth, requireCompanyAdmin, async (req, res) => {
-  try {
-    const companyRt = store.getCompanyRuntime(req.workUser.id)
-    const runtimes = (companyRt && companyRt.apiKey) ? [companyRt] : store.getConfiguredRuntimes()
-    if (!runtimes.length) return res.json({ at: null, providers: [], overall: null, note: 'No AI key is configured for your company yet.' })
-    res.json({ at: new Date().toISOString(), ...(await computeAiRecommendation(runtimes)) })
-  } catch (e) { sendWorkError(res, e, req) }
+app.get('/api/work/team/ai-recommendation', requireWorkAuth, requireCompanyAdmin, (req, res) => {
+  // Model + cost recommendations are platform IP: only the superadmin console
+  // sees models and pricing. Company admins get a neutral, managed response -
+  // never model names or per-token cost. (The superadmin equivalent lives under
+  // the admin routes.)
+  res.json({ at: null, providers: [], overall: null, note: 'Your AI is managed by WorkCoPilot.' })
 })
 // Company admin: this company's AI consumption this far (estimated $, per user).
 // Scoped to the admin's OWN company; the superadmin equivalent lives in
 // work-admin.js at /api/work/admin/companies/:id/consumption.
 app.get('/api/work/team/consumption', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
-  res.json(store.companyConsumption(req.workUser.companyId))
+  // Company admins see usage COUNTS (sessions per member), never AI dollar cost
+  // (platform IP). The superadmin console keeps the dollar view via the admin
+  // consumption route.
+  const d = store.companyConsumption(req.workUser.companyId)
+  res.json({
+    companyId: d.companyId, sessionCount: d.sessionCount, userCount: d.userCount,
+    byUser: (d.byUser || []).map((u) => ({ id: u.id, username: u.username, displayName: u.displayName, sessions: u.sessions })),
+  })
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
   res.json({ session: store.setWorkSessionGoal(req.workUser.id, req.params.id, (req.body || {}).goal) })
@@ -1197,14 +1209,14 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
       }
     } catch { /* evidence capture is best-effort */ }
     if (r.flag) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: r.flag })
-    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ' to resolve this step'}.` })
+    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model${call.forcedStrong ? ' - deep pass' : ' to resolve this step'}.` })
     else if (r.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this step.' })
     const allDone = r.done || updated.currentStep >= updated.steps.length
     res.json({
       status: r.flag ? 'wrong' : (allDone ? 'done' : 'working'),
       observation: r.observation, flag: r.flag, guidance: r.guidance,
       index: updated.currentStep, step: updated.steps[updated.currentStep] || null,
-      done: allDone, steps: updated.steps, escalated, model: usedModel,
+      done: allDone, steps: updated.steps, escalated,
     })
   } catch (e) { sendWorkError(res, e, req) }
 })
@@ -1373,13 +1385,13 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Updated the remaining steps from what you added, and kept everything you had already finished.' })
     }
     if (out.answer) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
-    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model (${usedModel || 'backup'})${call.forcedStrong ? ' - deep pass' : ''}.` })
+    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
 
     const cur = store.getWorkSession(req.workUser.id, req.params.id)
     res.json({
       replanned, reason: out.reason, answer: out.answer,
       index: cur.currentStep, step: (cur.steps || [])[cur.currentStep] || null,
-      steps: cur.steps || [], escalated, model: usedModel,
+      steps: cur.steps || [], escalated,
     })
   } catch (e) { sendWorkError(res, e, req) }
 })
