@@ -307,14 +307,26 @@ export default function WorkMarketing() {
         <div className="wm-wrap">
           <div className="wm-eyebrow" data-reveal><Shapes size={14} /> Every field &middot; one tool</div>
           <h2 className="wm-h2" data-reveal>Expert in your field, <em>whatever your field is.</em></h2>
-          <p className="wm-sub" data-reveal>One tool your whole company can use. WorkCoPilot guides work across {FIELD_TOTAL} professional fields, and the steps read like an expert in that field wrote them.</p>
+          <p className="wm-sub" data-reveal>One copilot your whole company can use, technical or not. It guides work across {FIELD_TOTAL} professional fields in {FIELD_FAMILIES.length} families, and the steps read like an expert in that field wrote them. Pick a space and go.</p>
           <div className="wm-fld-stats" data-reveal aria-label="Coverage at a glance">
             <div className="wm-fld-stat"><b>{FIELD_TOTAL}</b><span>professional fields</span></div>
             <div className="wm-fld-stat"><b>{FIELD_FAMILIES.length}</b><span>families of work</span></div>
             <div className="wm-fld-stat"><b>1</b><span>tool for all of them</span></div>
           </div>
+          <div className="wm-cards" data-reveal>
+            {cards.map((c, i) => (
+              <WorkCard key={c.k} theme="light" tone={c.tone || undefined} delay={i * 55}
+                texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%'][i % 8]}
+                onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
+                <WorkCard.Proof><span className="cb-dim">{c.d}</span></WorkCard.Proof>
+                <WorkCard.Head icon={c.ic} title={c.k} />
+                <WorkCard.Link>See in detail <ArrowRight size={14} /></WorkCard.Link>
+              </WorkCard>
+            ))}
+          </div>
           <div className="wm-fld-more" data-reveal>
-            <a className="wm-cta alt" href="/workcopilot/fields">See all {FIELD_TOTAL} fields and families <ArrowRight size={15} /></a>
+            <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>Explore every use case in detail <ArrowRight size={15} /></button>
+            <a className="wm-fld-browse" href="/workcopilot/fields">or browse all {FIELD_TOTAL} fields <ArrowRight size={13} /></a>
           </div>
         </div>
       </section>
@@ -442,28 +454,6 @@ export default function WorkMarketing() {
         </div>
       </section>
       </>)}
-
-      {/* USE CASES */}
-      <section className="wm-sec" id="cards">
-        <div className="wm-wrap">
-          <h2 className="wm-h2" data-reveal>One copilot for every kind of work.</h2>
-          <p className="wm-sub" data-reveal>From an engineer to a CTO, a founder to a product lead, a marketer to a VP, an accountant to a finance head. Technical or not, pick a space and go.</p>
-          <div className="wm-cards">
-            {cards.map((c, i) => (
-              <WorkCard key={c.k} theme="light" tone={c.tone || undefined} delay={i * 55}
-                texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%'][i % 8]}
-                onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
-                <WorkCard.Proof><span className="cb-dim">{c.d}</span></WorkCard.Proof>
-                <WorkCard.Head icon={c.ic} title={c.k} />
-                <WorkCard.Link>See in detail <ArrowRight size={14} /></WorkCard.Link>
-              </WorkCard>
-            ))}
-          </div>
-          <div style={{ textAlign: 'center', marginTop: 28 }} data-reveal>
-            <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>Explore every use case in detail <ArrowRight size={15} /></button>
-          </div>
-        </div>
-      </section>
 
       {/* PRICING */}
       <section className="wm-sec wm-pricing" id="pricing">
@@ -659,10 +649,8 @@ function TrustDuo({ nav }) {
       k: 'sec', eyebrow: 'Security', Mark: ShieldMark,
       title: 'Written the secure way. Checked before you see it.',
       points: [
-        'Every command, snippet and script is written the secure way, then self-checked for injection, hard-coded secrets and least privilege before it reaches you.',
-        'Read-only. It watches and guides, never clicks, types or runs a thing. You keep full control.',
-        'Grounded in the proven methodology of your field, not improvised.',
-        'Stays current. It learns the current way your tools work and carries that forward, and checks the latest live, so advice is never stuck on stale AI knowledge.',
+        'Every command, snippet and script is self-checked for injection, hard-coded secrets and least privilege before it reaches you.',
+        'Read-only, grounded in your field\'s proven methodology, and kept current - never stale AI knowledge.',
       ],
       proof: <><span className="dp-chip">injection</span><span className="dp-chip">secrets</span><span className="dp-chip">least-priv</span><span className="dp-arrow">&rarr;</span><b className="dp-ok"><Check size={11} /> checked</b></>,
       link: 'See security in action',
@@ -671,10 +659,8 @@ function TrustDuo({ nav }) {
       k: 'priv', eyebrow: 'Privacy', Mark: RedactLockMark,
       title: 'Scrubbed on your device, before anything leaves.',
       points: [
-        'Text and screen are checked locally. PII, PHI and secrets are masked first, on your machine.',
-        'Tokenize swaps sensitive values for placeholders and restores them on your device. Private by design.',
-        'You decide what gets scrubbed: industry-standard detectors plus your own rules, set by you, your company admin or the platform.',
-        'Your boundary holds. On your own AI key, calls stay on that key. Nothing is silently rerouted.',
+        'PII, PHI and secrets are masked or tokenized on your machine first - the real values never leave, and the answer is rebuilt locally.',
+        'You decide what gets scrubbed, and on your own AI key calls stay on that key. Nothing is silently rerouted.',
       ],
       proof: <><span className="dp-raw">jane@acme.com</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[EMAIL_1]]</b><span className="dp-raw">sk-live-9f3c</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[SECRET_1]]</b></>,
       link: 'See privacy in action',
@@ -1759,7 +1745,9 @@ const CSS = `
 .wm .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
 
 /* "See the full ..." link row under the fields teaser and the pricing cards */
-.wm-fld-more{display:flex;justify-content:center;margin-top:26px}
+.wm-fld-more{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:28px}
+.wm-fld-browse{display:inline-flex;align-items:center;gap:5px;font-size:13.5px;font-weight:600;color:var(--wm-mut,#5b6676);text-decoration:none}
+.wm-fld-browse:hover{color:var(--wm-ink,#0c1222)}
 
 /* uniform dark "message box" on top of every icon card */
 .wm-cardbox{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;min-height:58px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);margin-bottom:16px;padding:10px 14px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:#aeb9cc;text-align:center;line-height:1.4}

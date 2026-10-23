@@ -21,7 +21,7 @@ import { useEffect, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, Building2,
   ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
-  Compass, Wand2, Bug, MousePointerClick, Award,
+  Compass, Wand2, Bug, Award,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 
@@ -271,45 +271,6 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                         </div>
                       )}
                       <p className="wm-cov-text">{typingDone ? renderRich(res.answer) : <>{typed}<span className="wm-cov-caret" /></>}</p>
-                      {res.points && res.points.length > 0 && (
-                        <ul className={`wm-cov-points${typingDone ? ' show' : ''}`}>
-                          {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
-                        </ul>
-                      )}
-                      {(res.verdict === 'covered' || res.verdict === 'partial' || res.verdict === 'about') && (
-                        <div className={`wm-cov-loop${typingDone ? ' show' : ''}`}>
-                          <div className="wm-cov-loop-h"><span className="lv-live-dot" aria-hidden /> A live co-pilot, not a how-to page</div>
-                          <div className="wm-cov-loop-grid">
-                            <div className="wm-cov-cap watch">
-                              <span className="ic"><ScanEye size={18} /></span>
-                              <b>Watches</b>
-                              <p>Sees your screen as you work and keeps pace with you.</p>
-                            </div>
-                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={16} /></div>
-                            <div className="wm-cov-cap guide">
-                              <span className="ic"><Compass size={18} /></span>
-                              <b>Navigates</b>
-                              <p>Points you to the exact click, command or value - one step at a time.</p>
-                            </div>
-                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={16} /></div>
-                            <div className="wm-cov-cap correct">
-                              <span className="ic"><Wand2 size={18} /></span>
-                              <b>Corrects</b>
-                              <p>Catches a wrong move the moment it happens and puts you back on track.</p>
-                            </div>
-                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={16} /></div>
-                            <div className="wm-cov-cap fix">
-                              <span className="ic"><Bug size={18} /></span>
-                              <b>Fixes</b>
-                              <p>Debugs the error in front of you and gets you unstuck.</p>
-                            </div>
-                          </div>
-                          <div className="wm-cov-loop-foot">
-                            <MousePointerClick size={15} />
-                            <span>It rewrites every step for exactly what's on <b>your</b> screen and confirms each one actually worked before moving on - <b>quality over quantity</b>, done right the first time.</span>
-                          </div>
-                        </div>
-                      )}
                       {res.preview && res.preview.length > 0 && (() => {
                         const preview = res.preview
                         const shown = preview.length
@@ -321,10 +282,6 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                         const remaining = total - shown
                         return (
                           <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
-                            <div className="wm-cov-live">
-                              <span className="wm-cov-live-ic"><ScanEye size={18} /></span>
-                              <div>Below is a <b>preview of the plan</b>. The live session runs the whole thing on your screen - watching, correcting and fixing as you go.</div>
-                            </div>
                             {res.sees && (
                               <div className="wm-cov-sees">
                                 <span className="wm-cov-scan" aria-hidden />
@@ -332,7 +289,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                                 <span className="wm-cov-seetxt">{res.sees}</span>
                               </div>
                             )}
-                            <div className="wm-cov-flow-h"><TerminalSquare size={14} /> A {total}-step plan{remaining > 0 ? <span className="wm-cov-flow-sub"> · first {shown} shown in full</span> : null}</div>
+                            <div className="wm-cov-flow-h"><TerminalSquare size={14} /> Your step-by-step plan{total ? <span className="wm-cov-flow-sub"> · {total} steps{remaining > 0 ? `, first ${shown} in full` : ''}</span> : null}</div>
                             <ol className="wm-cov-steps">
                               {roadmap.map((title, i) => {
                                 if (i >= shown) return (
@@ -368,13 +325,32 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           </div>
                         )
                       })()}
+                      {res.points && res.points.length > 0 && (
+                        <ul className={`wm-cov-points${typingDone ? ' show' : ''}`}>
+                          {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
+                        </ul>
+                      )}
+                      {(res.verdict === 'covered' || res.verdict === 'partial' || res.verdict === 'about') && (
+                        <div className={`wm-cov-loop slim${typingDone ? ' show' : ''}`}>
+                          <div className="wm-cov-loop-h"><span className="lv-live-dot" aria-hidden /> In a live session it does all of this, on your screen</div>
+                          <div className="wm-cov-loop-grid">
+                            <div className="wm-cov-cap watch"><span className="ic"><ScanEye size={16} /></span><b>Watches</b></div>
+                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={14} /></div>
+                            <div className="wm-cov-cap guide"><span className="ic"><Compass size={16} /></span><b>Navigates</b></div>
+                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={14} /></div>
+                            <div className="wm-cov-cap correct"><span className="ic"><Wand2 size={16} /></span><b>Corrects</b></div>
+                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={14} /></div>
+                            <div className="wm-cov-cap fix"><span className="ic"><Bug size={16} /></span><b>Fixes</b></div>
+                          </div>
+                        </div>
+                      )}
                       {res.verdict !== 'offtopic' && (
                         <div className={`wm-cov-trust${typingDone ? ' show' : ''}`}>
                           <div className="wm-cov-trust-row">
-                            <div className="wm-cov-pillar"><span className="ic qlt"><Award size={16} /></span><div><b>Quality-first</b><p>Only what is really on your screen - no guessing, no invented steps, no filler. Every step is grounded in the current best practice for your tool and checked before you act.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic ent"><Building2 size={16} /></span><div><b>Enterprise-grade</b><p>Central admin, SSO, team seats, one locked company policy, per-session cost and a full audit trail.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Security applied before the work: sensitive data is stripped or tokenized on your device first, the least is sent, and it stays read-only so nothing runs.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence that support your compliance under the frameworks you choose - never a certification claim.</p></div></div>
+                            <div className="wm-cov-pillar"><span className="ic qlt"><Award size={16} /></span><div><b>Quality-first</b><p>Grounded in your real screen and current best practice - no filler.</p></div></div>
+                            <div className="wm-cov-pillar"><span className="ic ent"><Building2 size={16} /></span><div><b>Enterprise-grade</b><p>Admin, SSO, team seats, locked policy, audit trail.</p></div></div>
+                            <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Secrets stripped on your device, least sent, read-only.</p></div></div>
+                            <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence for your frameworks - never a certification claim.</p></div></div>
                           </div>
                           <div className="wm-cov-chips">
                             {['GDPR', 'HIPAA', 'PCI-DSS', 'SOC 2', 'ISO 27001', 'CCPA', 'FedRAMP', 'NIST 800-53', 'HITRUST'].map((c) => <span key={c}>{c}</span>)}
