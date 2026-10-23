@@ -1133,6 +1133,7 @@ function Home({ user, onOpen, onSignOut }) {
   const [delReason, setDelReason] = useState('')
   const [delBusy, setDelBusy] = useState(false)
   const [ready, setReady] = useState(false)
+  const [aiStatus, setAiStatus] = useState(null)   // {ready, platformAllowed, platformReady, ...} for the provisioning message
   const [scoping, setScoping] = useState(false)
   const [sessions, setSessions] = useState([])
   const [sessLoaded, setSessLoaded] = useState(false)
@@ -1212,6 +1213,14 @@ function Home({ user, onOpen, onSignOut }) {
     } finally { setPortalBusy(false) }
   }
   useEffect(() => { load() }, [load])
+  // AI readiness is PROVISIONED (platform key by the superadmin, or a company key
+  // by the admin), not self-served by regular users. We just read the status to
+  // know whether this account can work, and to show the right provisioning note.
+  useEffect(() => {
+    let alive = true
+    api.workAi().then((r) => { if (!alive) return; setAiStatus(r.status || null); setReady(!!(r.status && r.status.ready)) }).catch(() => {})
+    return () => { alive = false }
+  }, [])
   // Company branding is fetched once per signed-in company user; a failed or
   // empty fetch simply leaves the strip hidden (the dashboard never depends on it).
   useEffect(() => {
@@ -1405,13 +1414,13 @@ function Home({ user, onOpen, onSignOut }) {
 
             <div className="wd-pair">
               <div className="wd-card wd-buddy">
-                <AliveBuddy character={buddyChar} state="answering" size={52} interactive />
+                <AliveBuddy character={buddyChar} state="answering" size={36} interactive />
                 <div className="wd-card-body">
                   <div className="wd-card-t">Your buddy</div>
-                  <div className="wd-card-c">Shows the next step on your screen and the full-screen guide.</div>
+                  <div className="wd-card-c">Shows the next step on your screen.</div>
                 </div>
                 <div className="wd-card-end">
-                  <BuddyPicker pref={buddyPref} size={32} onPick={setBuddyPref} />
+                  <BuddyPicker pref={buddyPref} size={26} onPick={setBuddyPref} />
                 </div>
               </div>
 
@@ -1493,7 +1502,24 @@ function Home({ user, onOpen, onSignOut }) {
               </div>
             )}
 
-            {!ready && <div className="wd-setup"><div className="wd-setup-note"><span className="wd-ic warm"><Sparkles size={15} /></span>Set up your AI once to begin. It is used to read your screen and guide you.</div><AiSetup onReady={setReady} /></div>}
+            {/* AI is PROVISIONED by admins, never self-served on the user dashboard:
+                the superadmin sets the platform key; a company admin sets the
+                company key when AdmireVeda requires it. A regular user whose AI is
+                not ready sees a provisioning note, not a key form. */}
+            {!ready && aiStatus && (
+              <div className="wd-setup">
+                <div className="wd-setup-note">
+                  <span className="wd-ic warm"><Sparkles size={15} /></span>
+                  {isAdmin
+                    ? <>Set the platform AI key in the <a href="/work/admin" className="wd-link">admin console</a> to turn WorkCoPilot on for everyone.</>
+                    : isCompanyAdmin
+                      ? <>Finish AI setup for your company in the <a href="/work/company" className="wd-link">company console</a> under AI keys. Until then, your team is on hold.</>
+                      : user.companyId
+                        ? <>Your workspace is being set up. Your administrator needs to finish AI setup before you can start - please check back shortly.</>
+                        : <>WorkCoPilot is being provisioned for your account. Please check back shortly, or contact support if this persists.</>}
+                </div>
+              </div>
+            )}
 
             <div className="wd-start">
               <div className="wd-sec">
@@ -1508,7 +1534,7 @@ function Home({ user, onOpen, onSignOut }) {
               <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span className="req">*</span></label>
               <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
               <div className="wd-start-row">
-                <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Set up your AI above to begin.'}</span>
+                <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Available once your administrator has finished AI setup.'}</span>
                 <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
               </div>
               {usage && usage.tasks && !usage.tasks.unlimited && (
