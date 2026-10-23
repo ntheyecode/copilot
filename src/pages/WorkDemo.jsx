@@ -262,7 +262,7 @@ function DemoPlayer() {
   useEffect(() => {
     if (stage !== 'step') return
     const cur = STEPS[si]
-    const dwell = cur && cur.fix ? 6200 : 5200
+    const dwell = cur && cur.fix ? 7200 : 6200   // +1s per step before advancing
     later(() => {
       if (si >= STEPS.length - 1) setStage('done')
       else setSi((x) => x + 1)

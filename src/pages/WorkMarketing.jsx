@@ -769,7 +769,7 @@ function LiveDemo({ tilt, untilt }) {
     if (!show) return
     const cur = d.steps[si] || d.steps[0]
     const last = si >= d.steps.length - 1
-    const dwell = (cur.fix || cur.diff) ? 7600 : 6600   // staged reveal (~3s) + read time
+    const dwell = (cur.fix || cur.diff) ? 8600 : 7600   // staged reveal (~3s) + read time (+1s per step)
     const t = setTimeout(() => {
       if (last) setDi((x) => (x + 1) % demos.length)
       else setSi((x) => x + 1)
