@@ -208,7 +208,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
           <button className="lv-coach-x" onClick={dismissCoach} aria-label="Dismiss">&times;</button>
           <button type="button" className="lv-coach-body" onClick={openWidget}>
             <span className="lv-coach-ic"><Sparkles size={15} /></span>
-            <span className="lv-coach-tx"><b>Just watched the demo?</b><span>Run it on <b>your</b> screen - validate your own task live.</span></span>
+            <span className="lv-coach-tx"><b>Is WorkCoPilot right for you?</b><span>Test your own scenario <b>live</b> and see exactly how it would guide you.</span></span>
             <ArrowRight size={16} className="lv-coach-go" />
           </button>
           <span className="lv-coach-arrow" aria-hidden />

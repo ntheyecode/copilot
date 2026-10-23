@@ -842,7 +842,7 @@ function LiveDemo({ tilt, untilt }) {
         {reveal >= 4 && <div className="wm-demo-done wm-beat" key={'dn' + safeSi}><Check size={13} /> done when {s.done}</div>}
       </div>
       <button type="button" className="wm-demo-try" onClick={() => { try { window.dispatchEvent(new Event('wc:open-validate')) } catch { /* noop */ } }}>
-        <Sparkles size={14} /> <span>This is a demo. Run it on <b>your</b> screen</span> <ArrowRight size={14} />
+        <Sparkles size={14} /> <span>Is it right for <b>your</b> work? Test your scenario live</span> <ArrowRight size={14} />
       </button>
     </div>
   )
