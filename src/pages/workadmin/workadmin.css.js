@@ -63,7 +63,11 @@ export const WORKADMIN_CSS = `
   border-right: 1px solid var(--wka-line);
   background: var(--wka-bg-2);
   padding: 16px 12px; display: flex; flex-direction: column; gap: 4px;
+  overflow-y: auto;            /* scroll when there are more sections than fit */
+  overscroll-behavior: contain;
 }
+.wka-nav::-webkit-scrollbar { width: 8px; }
+.wka-nav::-webkit-scrollbar-thumb { background: var(--wka-line-2); border-radius: 8px; }
 .wka-nav-item {
   display: flex; align-items: center; gap: 11px;
   padding: 11px 13px; border-radius: 11px;
