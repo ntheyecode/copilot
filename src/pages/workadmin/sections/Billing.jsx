@@ -105,6 +105,15 @@ export default function Billing({ isSuperAdmin }) {
     finally { setSaving(false) }
   }
 
+  // Switch the ACTIVE mode (live <-> test). Each mode has its own keys + price
+  // ids, entered separately. Switching reloads so the form shows that mode's values.
+  const switchMode = async (m) => {
+    if (!isSuperAdmin) return
+    setSaveError(null); setTestResult(null); setTestErr(null)
+    try { await workAdminApi.setBilling({ mode: m }); await load() }
+    catch (error) { setSaveError(error) }
+  }
+
   const test = async () => {
     if (testing) return
     setTesting(true); setTestErr(null); setTestResult(null)
@@ -143,6 +152,24 @@ export default function Billing({ isSuperAdmin }) {
 
       <div className="wka-panel">
         <h2><CreditCard size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Stripe configuration</h2>
+
+        {(() => {
+          const mode = (b && b.mode) || 'live'
+          const isTest = mode === 'test'
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '10px 14px', marginBottom: 14, borderRadius: 10, border: `1px solid ${isTest ? 'var(--wka-amber, #b45309)' : 'var(--wka-emerald, #16a34a)'}`, background: isTest ? 'rgba(180,83,9,.07)' : 'rgba(22,163,74,.06)' }}>
+              <span style={{ fontSize: 13, fontWeight: 600, color: isTest ? 'var(--wka-amber, #b45309)' : 'var(--wka-emerald, #16a34a)' }}>
+                Mode: <b>{isTest ? 'TEST' : 'LIVE'}</b> {isTest ? '- using your test keys, no real charges.' : '- using your live keys, real charges.'} Each mode has its own keys + price ids, entered separately below.
+              </span>
+              {isSuperAdmin && (
+                <span style={{ display: 'inline-flex', gap: 6 }}>
+                  <button type="button" className={`wka-btn sm${!isTest ? ' primary' : ' ghost'}`} onClick={() => switchMode('live')}>Live</button>
+                  <button type="button" className={`wka-btn sm${isTest ? ' primary' : ' ghost'}`} onClick={() => switchMode('test')}>Test</button>
+                </span>
+              )}
+            </div>
+          )
+        })()}
 
         {!editing ? (
           <>

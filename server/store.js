@@ -677,63 +677,65 @@ export function findUserByStripeSubscription(subscriptionId) {
 // reports only whether each secret is set, never its value. setBillingConfig
 // treats the two secrets as write-only (a blank value keeps the stored one); the
 // non-secret fields (price ids, publishable key) are cleared by a blank value.
+// Billing supports BOTH a live and a test key set, with a mode toggle. Each
+// bundle holds the secret, the webhook secret, the publishable key and all plan
+// price ids. The active bundle (db.billing[mode]) is what checkout + webhooks use.
+const BILLING_FIELDS = ['secretKey', 'webhookSecret', 'publishableKey', 'priceLite', 'priceBasic', 'priceAdvanced', 'pricePremium', 'priceLiteAnnual', 'priceBasicAnnual', 'priceAdvancedAnnual', 'pricePremiumAnnual']
+function emptyBillingBundle() { const o = {}; for (const f of BILLING_FIELDS) o[f] = ''; return o }
 function billingState() {
-  if (!db.billing || typeof db.billing !== 'object') {
-    db.billing = { secretKey: '', webhookSecret: '', priceLite: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceLiteAnnual: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true }
+  if (!db.billing || typeof db.billing !== 'object') db.billing = {}
+  const b = db.billing
+  // One-time migration of the legacy flat config into the LIVE bundle.
+  if (!b.live && (b.secretKey !== undefined || b.priceBasic !== undefined || b.priceLite !== undefined)) {
+    const live = emptyBillingBundle()
+    for (const f of BILLING_FIELDS) live[f] = b[f] || ''
+    b.live = live
+    for (const f of BILLING_FIELDS) delete b[f]
   }
-  return db.billing
+  if (!b.live) b.live = emptyBillingBundle()
+  if (!b.test) b.test = emptyBillingBundle()
+  for (const f of BILLING_FIELDS) { if (b.live[f] === undefined) b.live[f] = ''; if (b.test[f] === undefined) b.test[f] = '' }
+  if (b.mode !== 'test' && b.mode !== 'live') b.mode = 'live'
+  if (b.enabled === undefined) b.enabled = true
+  return b
 }
+function activeBillingBundle() { const b = billingState(); return b[b.mode] || b.live }
+// The ACTIVE bundle flattened - for billing.js (checkout + webhook). Carries the
+// mode so the UI/logs can show which keys are in use.
 export function getBillingConfig() {
-  const b = billingState()
-  return {
-    secretKey: b.secretKey || '',
-    webhookSecret: b.webhookSecret || '',
-    priceLite: b.priceLite || '',
-    priceBasic: b.priceBasic || '',
-    priceAdvanced: b.priceAdvanced || '',
-    pricePremium: b.pricePremium || '',
-    priceLiteAnnual: b.priceLiteAnnual || '',
-    priceBasicAnnual: b.priceBasicAnnual || '',
-    priceAdvancedAnnual: b.priceAdvancedAnnual || '',
-    pricePremiumAnnual: b.pricePremiumAnnual || '',
-    publishableKey: b.publishableKey || '',
-    enabled: b.enabled !== false,
-  }
+  const b = billingState(); const a = activeBillingBundle()
+  const out = { mode: b.mode, enabled: b.enabled !== false }
+  for (const f of BILLING_FIELDS) out[f] = a[f] || ''
+  return out
+}
+// Safe view of BOTH bundles + the active mode, for the superadmin UI. Secrets are
+// reported only as set/not-set, never returned.
+function bundleView(bundle) {
+  const v = { hasSecretKey: !!(bundle.secretKey && String(bundle.secretKey).trim()), hasWebhookSecret: !!(bundle.webhookSecret && String(bundle.webhookSecret).trim()), publishableKey: bundle.publishableKey || '' }
+  for (const f of ['priceLite', 'priceBasic', 'priceAdvanced', 'pricePremium', 'priceLiteAnnual', 'priceBasicAnnual', 'priceAdvancedAnnual', 'pricePremiumAnnual']) v[f] = bundle[f] || ''
+  v.annualReady = !!(String(bundle.priceBasicAnnual || '').trim() && String(bundle.priceAdvancedAnnual || '').trim() && String(bundle.pricePremiumAnnual || '').trim())
+  return v
 }
 export function getBillingPublic() {
   const b = billingState()
-  return {
-    enabled: b.enabled !== false,
-    hasSecretKey: !!(b.secretKey && String(b.secretKey).trim()),
-    hasWebhookSecret: !!(b.webhookSecret && String(b.webhookSecret).trim()),
-    priceLite: b.priceLite || '',
-    priceBasic: b.priceBasic || '',
-    priceAdvanced: b.priceAdvanced || '',
-    pricePremium: b.pricePremium || '',
-    priceLiteAnnual: b.priceLiteAnnual || '',
-    priceBasicAnnual: b.priceBasicAnnual || '',
-    priceAdvancedAnnual: b.priceAdvancedAnnual || '',
-    pricePremiumAnnual: b.pricePremiumAnnual || '',
-    // Annual checkout is "live" only when all three annual price ids are set.
-    annualReady: !!(String(b.priceBasicAnnual || '').trim() && String(b.priceAdvancedAnnual || '').trim() && String(b.pricePremiumAnnual || '').trim()),
-    publishableKey: b.publishableKey || '',
-  }
+  const a = activeBillingBundle()
+  // Flatten the ACTIVE bundle at the top level too, so older callers that read
+  // b.priceBasic / b.hasSecretKey keep working against the active mode.
+  const flat = bundleView(a)
+  return { mode: b.mode, enabled: b.enabled !== false, live: bundleView(b.live), test: bundleView(b.test), ...flat }
 }
+// patch.mode switches the ACTIVE mode. patch.target ('live'|'test') says which
+// bundle to WRITE (defaults to the active mode). Secrets are write-only.
 export function setBillingConfig(patch = {}) {
   const b = billingState()
-  // Secrets are write-only: only overwrite when a non-blank value is supplied.
-  if (patch.secretKey != null && String(patch.secretKey).trim() !== '') b.secretKey = String(patch.secretKey).trim()
-  if (patch.webhookSecret != null && String(patch.webhookSecret).trim() !== '') b.webhookSecret = String(patch.webhookSecret).trim()
-  // Price ids + publishable key are not secret: a blank value clears them.
-  if (patch.priceLite !== undefined) b.priceLite = String(patch.priceLite || '').trim()
-  if (patch.priceLiteAnnual !== undefined) b.priceLiteAnnual = String(patch.priceLiteAnnual || '').trim()
-  if (patch.priceBasic !== undefined) b.priceBasic = String(patch.priceBasic || '').trim()
-  if (patch.priceAdvanced !== undefined) b.priceAdvanced = String(patch.priceAdvanced || '').trim()
-  if (patch.pricePremium !== undefined) b.pricePremium = String(patch.pricePremium || '').trim()
-  if (patch.priceBasicAnnual !== undefined) b.priceBasicAnnual = String(patch.priceBasicAnnual || '').trim()
-  if (patch.priceAdvancedAnnual !== undefined) b.priceAdvancedAnnual = String(patch.priceAdvancedAnnual || '').trim()
-  if (patch.pricePremiumAnnual !== undefined) b.pricePremiumAnnual = String(patch.pricePremiumAnnual || '').trim()
-  if (patch.publishableKey !== undefined) b.publishableKey = String(patch.publishableKey || '').trim()
+  if (patch.mode === 'live' || patch.mode === 'test') b.mode = patch.mode
+  const target = (patch.target === 'live' || patch.target === 'test') ? patch.target : b.mode
+  const t = b[target]
+  if (patch.secretKey != null && String(patch.secretKey).trim() !== '') t.secretKey = String(patch.secretKey).trim()
+  if (patch.webhookSecret != null && String(patch.webhookSecret).trim() !== '') t.webhookSecret = String(patch.webhookSecret).trim()
+  for (const f of ['publishableKey', 'priceLite', 'priceBasic', 'priceAdvanced', 'pricePremium', 'priceLiteAnnual', 'priceBasicAnnual', 'priceAdvancedAnnual', 'pricePremiumAnnual']) {
+    if (patch[f] !== undefined) t[f] = String(patch[f] || '').trim()
+  }
   if (patch.enabled !== undefined) b.enabled = !!patch.enabled
   persist()
   return getBillingPublic()
