@@ -2229,15 +2229,20 @@ app.delete('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, 
 
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))
 
-// ---- SMTP / email (SES) - superadmin only ---------------------------------
-// The outbound-email config the product uses to deliver reports and (later)
-// other notifications. The password is write-only: it is stored encrypted and
-// never returned (the view only says whether one is set).
-app.get('/api/work/admin/smtp', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ smtp: store.getSmtpConfig() }) }))
-app.post('/api/work/admin/smtp', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ smtp: store.setSmtpConfig(req.body || {}) }) }))
+// ---- SMTP / email (SES) - superadmin + MFA step-up -------------------------
+// The outbound-email config the product uses to deliver reports. SMTP
+// credentials are sensitive, so this page is gated behind an MFA step-up (the
+// SAME shared window as AI config). The password is write-only: stored
+// encrypted and never returned (the view only says whether one is set).
+function requireSmtpStepUp(req, res, next) {
+  try { store.requireStepUpActive(req.user.id, 'SMTP settings'); next() }
+  catch (e) { sendWorkError(res, e, req) }
+}
+app.get('/api/work/admin/smtp', requireAuth, requireSuperAdmin, requireSmtpStepUp, wrap((req, res) => { res.json({ smtp: store.getSmtpConfig() }) }))
+app.post('/api/work/admin/smtp', requireAuth, requireSuperAdmin, requireSmtpStepUp, wrap((req, res) => { res.json({ smtp: store.setSmtpConfig(req.body || {}) }) }))
 // Send a test email with the CURRENT (saved) config, so the operator confirms
 // the SES credentials end to end before relying on them.
-app.post('/api/work/admin/smtp/test', requireAuth, requireSuperAdmin, async (req, res) => {
+app.post('/api/work/admin/smtp/test', requireAuth, requireSuperAdmin, requireSmtpStepUp, async (req, res) => {
   try {
     const cfg = store.getSmtpSendConfig()
     if (!cfg) return res.status(400).json({ error: 'Save the SMTP host and From address first.' })

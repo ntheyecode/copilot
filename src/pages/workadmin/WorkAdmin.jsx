@@ -33,7 +33,7 @@ const SECTIONS = [
   { id: 'users', label: 'Users', icon: Users, title: 'Users', sub: 'Tiers, balances and granted hours.' },
   { id: 'pricing', label: 'Pricing', icon: Tags, title: 'Pricing', sub: 'Plan prices, extra-hour and image rates.' },
   { id: 'billing', label: 'Billing', icon: CreditCard, title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
-  { id: 'email', label: 'Email', icon: Mail, title: 'Email (SMTP / SES)', sub: 'Outbound email for delivering reports. Enter your SES SMTP credentials and send a test.' },
+  { id: 'email', label: 'SMTP Settings', icon: Mail, title: 'SMTP Settings (Email / SES)', sub: 'Outbound email for delivering reports. MFA-gated. Enter your SES SMTP credentials and send a test.' },
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
   { id: 'sessions', label: 'Sessions', icon: ListChecks, title: 'Sessions', sub: 'Recent guided sessions across users.' },
   { id: 'leads', label: 'Leads', icon: UserPlus, title: 'Leads', sub: 'Everyone who ran a live validation on the demo or sign-in page - newest first.' },

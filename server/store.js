@@ -2119,6 +2119,14 @@ export function requireAiStepUpActive(userId) {
   if (!st.active) { const e = httpErr(403, 'AI settings are locked. Verify with your authenticator code to continue.'); e.locked = true; e.stepUp = st; throw e }
   return st
 }
+// Generic step-up guard sharing the SAME window as AI config, for other
+// sensitive superadmin pages (e.g. SMTP credentials). One MFA unlock covers them
+// all for the window's lifetime.
+export function requireStepUpActive(userId, label = 'This page') {
+  const st = aiStepUpStatus(userId)
+  if (!st.active) { const e = httpErr(403, `${label} are locked. Verify with your authenticator code to continue.`); e.locked = true; e.stepUp = st; throw e }
+  return st
+}
 
 // ---- WorkCoPilot metering + tiers -----------------------------------------
 // Daily cap is REAL USED MINUTES (active guiding only). The FREE daily bucket
