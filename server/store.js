@@ -2192,7 +2192,17 @@ export function tierAllows(tier, feature) {
 export function nextTierUp(tier) {
   const i = TIER_ORDER.indexOf(tier); return (i >= 0 && i < TIER_ORDER.length - 1) ? TIER_ORDER[i + 1] : null
 }
-export function workDailyLimit(tier) { return WORK_TIER_SECONDS[String(tier || 'basic')] || WORK_TIER_SECONDS.basic }
+// Daily included SECONDS for a tier. Reads the LIVE superadmin pricing
+// (dailyHours), so changing a plan's daily hours in Admin > Pricing reflects
+// immediately for every user (getWorkUsage -> dailySeconds -> remaining/exhausted
+// and the client usage display). Falls back to the built-in default.
+export function workDailyLimit(tier) {
+  const t = String(tier || 'basic')
+  let h
+  try { h = (getWorkPricing().dailyHours || {})[t] } catch { h = undefined }
+  if (Number.isFinite(Number(h)) && Number(h) >= 0) return Math.round(Number(h) * 3600)
+  return WORK_TIER_SECONDS[t] || WORK_TIER_SECONDS.basic
+}
 
 // The "usage day" in Eastern time, boundary at 23:59 (reset time).
 function easternDayKey(ts = Date.now()) {
@@ -2542,6 +2552,7 @@ const WORK_PRICING_DEFAULT = {
   imageMinBulk: 10,                                    // images bought in bulk, min 10
   tasks: { lite: 1, basic: 4, advanced: 8, premium: 12 },        // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
   replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
+  dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },    // DAILY INCLUDED hours per tier (the "bucket" each plan includes per day). Superadmin-editable; workDailyLimit reads this so a change reflects for every user immediately. Fractional allowed (e.g. 1.5).
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}
@@ -2553,6 +2564,7 @@ export function getWorkPricing() {
     imageMinBulk: p.imageMinBulk || WORK_PRICING_DEFAULT.imageMinBulk,
     tasks: { ...WORK_PRICING_DEFAULT.tasks, ...(p.tasks || {}) },
     replans: { ...WORK_PRICING_DEFAULT.replans, ...(p.replans || {}) },
+    dailyHours: { ...WORK_PRICING_DEFAULT.dailyHours, ...(p.dailyHours || {}) },
   }
 }
 // Keep only the numeric override keys a company may set (partial is fine); null
@@ -2623,6 +2635,18 @@ export function setWorkPricing(patch) {
     }
     return r
   }
+  // Daily included hours per tier: finite, 0..24, fractional allowed (e.g. 1.5h).
+  const hourVals = (o) => {
+    if (o == null) return {}
+    if (typeof o !== 'object') throw httpErr(400, 'Daily hours must be an object keyed by tier.')
+    const r = {}
+    for (const k of WORK_TIERS) if (o[k] != null && o[k] !== '') {
+      const n = Number(o[k])
+      if (!Number.isFinite(n) || n < 0 || n > 24) throw httpErr(400, `${k} daily hours must be a number between 0 and 24.`)
+      r[k] = Math.round(n * 100) / 100
+    }
+    return r
+  }
   db.work.pricing = {
     currency,
     plans: { ...cur.plans, ...tiers(p.plans, 'Plan') },
@@ -2631,6 +2655,7 @@ export function setWorkPricing(patch) {
     imageMinBulk,
     tasks: { ...cur.tasks, ...taskCounts(p.tasks) },
     replans: { ...cur.replans, ...taskCounts(p.replans, 're-plan') },
+    dailyHours: { ...cur.dailyHours, ...hourVals(p.dailyHours) },
   }
   persist()
   return getWorkPricing()
@@ -3125,17 +3150,259 @@ function round2(n) { return Math.round((Number(n) || 0) * 100) / 100 }
 // ---- Platform role: accounting --------------------------------------------
 // A read-only finance role: sees all transactions + the finance dashboard +
 // can issue refunds, but none of the other admin powers. Superadmin-managed.
-const PLATFORM_ROLES = ['user', 'accounting']
+const PLATFORM_ROLES = ['user', 'accounting', 'affiliate_admin']
 export function setUserRole(userId, role) {
   const u = getUser(userId); if (!u) throw httpErr(404, 'User not found.')
   if (u.role === 'superadmin') throw httpErr(400, 'Cannot change a superadmin role here.')
   const r = String(role || '').trim()
-  if (!PLATFORM_ROLES.includes(r)) throw httpErr(400, 'Role must be user or accounting.')
+  if (!PLATFORM_ROLES.includes(r)) throw httpErr(400, 'Role must be user, accounting or affiliate_admin.')
   u.role = r; persist(); return publicWorkUser(u)
 }
 export function isFinanceUser(userId) {
   const u = getUser(userId)
   return !!(u && (u.role === 'superadmin' || u.role === 'accounting'))
+}
+// The affiliate admin is a SEPARATE admin account (own role) that manages the
+// affiliate program only - approve/reject affiliates, set rates, run payouts.
+// Superadmin also qualifies. Mirrors isFinanceUser for the accounting role.
+export function isAffiliateAdmin(userId) {
+  const u = getUser(userId)
+  return !!(u && (u.role === 'superadmin' || u.role === 'affiliate_admin'))
+}
+
+// ===========================================================================
+// AFFILIATE PROGRAM. Superadmin-approved affiliates earn a % of each referral's
+// FIRST payment, paid out via Stripe Connect (automated transfers). The affiliate
+// ADMIN is a separate admin account (role 'affiliate_admin'; superadmin also
+// qualifies). State: db.affiliate.config, db.affiliates[], db.affiliateRefs[]
+// (one commission row per referred user's first payment).
+// ===========================================================================
+const AFFILIATE_DEFAULT = { enabled: true, defaultRatePct: 30, minPayoutUsd: 50, cookieDays: 30, freeMonthOnAnnual: true, freeMonthDays: 30 }
+// round2 is the hoisted helper declared above (financial summary); reuse it.
+const clampPct = (n, d) => { const x = Number(n); return (Number.isFinite(x) && x >= 0 && x <= 90) ? Math.round(x * 100) / 100 : d }
+const affEmailOk = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim())
+const affCap = (s, n) => String(s == null ? '' : s).trim().slice(0, n)
+
+export function getAffiliateConfig() {
+  const c = (db.affiliate && db.affiliate.config) || {}
+  return {
+    enabled: c.enabled !== false,
+    defaultRatePct: clampPct(c.defaultRatePct, AFFILIATE_DEFAULT.defaultRatePct),
+    minPayoutUsd: (Number.isFinite(Number(c.minPayoutUsd)) && Number(c.minPayoutUsd) >= 0) ? Number(c.minPayoutUsd) : AFFILIATE_DEFAULT.minPayoutUsd,
+    cookieDays: (Number.isInteger(Number(c.cookieDays)) && Number(c.cookieDays) > 0) ? Number(c.cookieDays) : AFFILIATE_DEFAULT.cookieDays,
+    // Referred-user perk: a free month on ANNUAL enrollment (a 30-day trial on
+    // checkout -> 1 free month of access, then the 12-month annual charge = 13
+    // months total). Entitlement flows automatically (trialing counts as active).
+    freeMonthOnAnnual: c.freeMonthOnAnnual !== false,
+    freeMonthDays: (Number.isInteger(Number(c.freeMonthDays)) && Number(c.freeMonthDays) > 0) ? Number(c.freeMonthDays) : AFFILIATE_DEFAULT.freeMonthDays,
+  }
+}
+export function setAffiliateConfig(patch = {}) {
+  if (!db.affiliate) db.affiliate = {}
+  const c = db.affiliate.config || {}
+  if (patch.enabled != null) c.enabled = !!patch.enabled
+  if (patch.defaultRatePct != null) c.defaultRatePct = clampPct(patch.defaultRatePct, AFFILIATE_DEFAULT.defaultRatePct)
+  if (patch.minPayoutUsd != null) { const n = Number(patch.minPayoutUsd); if (Number.isFinite(n) && n >= 0) c.minPayoutUsd = n }
+  if (patch.cookieDays != null) { const n = Number(patch.cookieDays); if (Number.isInteger(n) && n > 0) c.cookieDays = n }
+  if (patch.freeMonthOnAnnual != null) c.freeMonthOnAnnual = !!patch.freeMonthOnAnnual
+  if (patch.freeMonthDays != null) { const n = Number(patch.freeMonthDays); if (Number.isInteger(n) && n > 0) c.freeMonthDays = n }
+  db.affiliate.config = c; persist(); return getAffiliateConfig()
+}
+// Is this user eligible for the referred-annual free month? They were referred by
+// an approved affiliate, the perk is on, and they have not used it before (once
+// per account, to prevent re-subscribe abuse). Returns the trial days, or 0.
+export function affiliateAnnualBenefitDays(userId) {
+  const cfg = getAffiliateConfig()
+  if (!cfg.freeMonthOnAnnual) return 0
+  const u = getUser(userId)
+  if (!u || !u.referredBy || u.annualBenefitUsed) return 0
+  const a = getAffiliate(u.referredBy.affiliateId)
+  if (!a || a.status !== 'approved') return 0
+  return cfg.freeMonthDays || 30
+}
+// Mark the free month as used (called when the benefited checkout completes).
+export function markAnnualBenefitUsed(userId) {
+  const u = getUser(userId); if (!u) return
+  u.annualBenefitUsed = true
+  if (u.referredBy) u.referredBy.benefitAt = now()
+  persist()
+}
+function genAffiliateCode() {
+  const abc = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'   // no 0/O/1/I/L ambiguity
+  for (let t = 0; t < 50; t++) {
+    let s = ''; for (let i = 0; i < 7; i++) s += abc[Math.floor(Math.random() * abc.length)]
+    if (!(db.affiliates || []).some((a) => a.code === s)) return s
+  }
+  return 'A' + id()
+}
+function affiliateEarnings(affId) {
+  const rows = (db.affiliateRefs || []).filter((r) => r.affiliateId === affId && r.status !== 'void')
+  let earnedUsd = 0, paidUsd = 0
+  for (const r of rows) { earnedUsd += r.commissionUsd || 0; if (r.status === 'paid') paidUsd += r.commissionUsd || 0 }
+  return { count: rows.length, earnedUsd: round2(earnedUsd), paidUsd: round2(paidUsd), pendingUsd: round2(earnedUsd - paidUsd) }
+}
+function publicAffiliate(a) {
+  if (!a) return null
+  const e = affiliateEarnings(a.id)
+  return {
+    id: a.id, status: a.status, name: a.name, email: a.email, phone: a.phone || null,
+    website: a.website || null, audience: a.audience || null, notes: a.notes || null,
+    socials: a.socials || {},
+    code: a.code || null, userId: a.userId || null,
+    ratePct: a.ratePct != null ? a.ratePct : getAffiliateConfig().defaultRatePct,
+    stripeOnboarded: !!a.stripeOnboarded, stripeConnected: !!a.stripeAccountId,
+    clicks: a.clicks || 0,
+    appliedAt: a.appliedAt || null, approvedAt: a.approvedAt || null, approvedBy: a.approvedBy || null,
+    rejectedReason: a.rejectedReason || null,
+    conversions: e.count, earnedUsd: e.earnedUsd, paidUsd: e.paidUsd, pendingUsd: e.pendingUsd,
+  }
+}
+const AFF_SOCIAL_KEYS = ['tiktok', 'instagram', 'youtube', 'twitter', 'facebook', 'linkedin', 'other']
+function normalizeSocials(socials) {
+  const out = {}
+  if (socials && typeof socials === 'object') {
+    for (const k of AFF_SOCIAL_KEYS) { const v = affCap(socials[k], 200); if (v) out[k] = v }
+  }
+  return out
+}
+export function applyAffiliate({ name, email, phone, website, audience, notes, socials } = {}, meta = {}) {
+  if (!getAffiliateConfig().enabled) throw httpErr(403, 'The affiliate program is not open right now.')
+  const em = affCap(email, 160).toLowerCase()
+  if (!affEmailOk(em)) throw httpErr(400, 'A valid email is required.')
+  if (!affCap(name, 120)) throw httpErr(400, 'Your name is required.')
+  if (!db.affiliates) db.affiliates = []
+  if (db.affiliates.some((a) => a.email === em && a.status !== 'rejected')) throw httpErr(409, 'There is already an application for that email.')
+  const rec = {
+    id: 'aff' + id(), status: 'pending',
+    name: affCap(name, 120), email: em, phone: affCap(phone, 40),
+    website: affCap(website, 200), audience: affCap(audience, 200), notes: affCap(notes, 1000),
+    socials: normalizeSocials(socials),
+    code: null, userId: null, ratePct: null,
+    stripeAccountId: null, stripeOnboarded: false,
+    clicks: 0, clicksByDay: {},
+    appliedAt: now(), approvedAt: null, approvedBy: null, ip: affCap(meta.ip, 60),
+  }
+  db.affiliates.push(rec); persist()
+  return { id: rec.id }
+}
+export function listAffiliates({ status = null } = {}) {
+  let arr = (db.affiliates || []).slice()
+  if (status) arr = arr.filter((a) => a.status === status)
+  return arr.sort((a, b) => String(b.appliedAt || '').localeCompare(String(a.appliedAt || ''))).map(publicAffiliate)
+}
+export function getAffiliate(affId) { return (db.affiliates || []).find((x) => x.id === affId) || null }
+export function getAffiliateByCode(code) { const c = affCap(code, 16).toUpperCase(); return c ? ((db.affiliates || []).find((x) => x.code === c) || null) : null }
+export function getAffiliateByUserId(userId) { return (db.affiliates || []).find((x) => x.userId === userId) || null }
+export function publicAffiliateById(affId) { return publicAffiliate(getAffiliate(affId)) }
+
+// Approve: create (or link) a sign-in account for the affiliate, assign a code +
+// rate. Returns the userId so the route can email a set-password link.
+export function approveAffiliate(affId, { byUsername = '', ratePct = null } = {}) {
+  const a = getAffiliate(affId); if (!a) throw httpErr(404, 'Affiliate application not found.')
+  if (a.status === 'approved') return { affiliate: publicAffiliate(a), userId: a.userId, created: false }
+  let user = (db.users || []).find((u) => String(u.email || u.ssoEmail || '').toLowerCase() === a.email) || null
+  let created = false
+  if (!user) {
+    let base = a.email.split('@')[0].replace(/[^a-z0-9._-]/gi, '').slice(0, 40) || 'aff'
+    if (base.length < 3) base = 'aff' + base
+    let uname = base, n = 1
+    while (findUser(uname)) uname = `${base}${++n}`
+    const pw = crypto.randomBytes(18).toString('base64url')
+    user = createWorkUser({ username: uname, password: pw, email: a.email, displayName: a.name || null })
+    created = true
+  }
+  a.userId = user.id; user.affiliateId = a.id
+  a.code = a.code || genAffiliateCode()
+  a.ratePct = (ratePct != null) ? clampPct(ratePct, getAffiliateConfig().defaultRatePct) : (a.ratePct != null ? a.ratePct : getAffiliateConfig().defaultRatePct)
+  a.status = 'approved'; a.approvedAt = now(); a.approvedBy = byUsername || null
+  recordAdminAction({ userId: user.id, action: 'affiliate_approved', reason: `rate ${a.ratePct}%`, detail: `${a.email} by ${byUsername}` })
+  persist()
+  return { affiliate: publicAffiliate(a), userId: user.id, created }
+}
+export function rejectAffiliate(affId, { reason = '', byUsername = '' } = {}) {
+  const r = requireReason(reason)
+  const a = getAffiliate(affId); if (!a) throw httpErr(404, 'Affiliate application not found.')
+  a.status = 'rejected'; a.rejectedReason = r; a.rejectedAt = now()
+  recordAdminAction({ userId: a.userId || null, action: 'affiliate_rejected', reason: r, detail: `${a.email} by ${byUsername}` })
+  persist(); return publicAffiliate(a)
+}
+// Suspend (reason required) or reinstate an approved affiliate. A suspended
+// affiliate earns no new commissions and cannot be paid out.
+export function setAffiliateSuspended(affId, suspended, { reason = '', byUsername = '' } = {}) {
+  const a = getAffiliate(affId); if (!a) throw httpErr(404, 'Affiliate not found.')
+  const r = suspended ? requireReason(reason) : affCap(reason, 500)
+  a.status = suspended ? 'suspended' : 'approved'
+  recordAdminAction({ userId: a.userId || null, action: suspended ? 'affiliate_suspended' : 'affiliate_reinstated', reason: r, detail: `${a.email} by ${byUsername}` })
+  persist(); return publicAffiliate(a)
+}
+export function setAffiliateRate(affId, pct, { byUsername = '' } = {}) {
+  const a = getAffiliate(affId); if (!a) throw httpErr(404, 'Affiliate not found.')
+  a.ratePct = clampPct(pct, getAffiliateConfig().defaultRatePct)
+  recordAdminAction({ userId: a.userId || null, action: 'affiliate_rate_set', reason: `${a.ratePct}%`, detail: `${a.email} by ${byUsername}` })
+  persist(); return publicAffiliate(a)
+}
+export function setAffiliateStripe(affId, { accountId, onboarded } = {}) {
+  const a = getAffiliate(affId); if (!a) throw httpErr(404, 'Affiliate not found.')
+  if (accountId !== undefined) a.stripeAccountId = accountId || null
+  if (onboarded !== undefined) a.stripeOnboarded = !!onboarded
+  persist(); return publicAffiliate(a)
+}
+// Attribution: a click on a referral link (bump counters) and first-touch bind on
+// signup. Self-referral and non-approved affiliates are ignored.
+export function recordAffiliateClick(code) {
+  const a = getAffiliateByCode(code); if (!a || a.status !== 'approved') return false
+  a.clicks = (a.clicks || 0) + 1
+  const day = new Date().toISOString().slice(0, 10); if (!a.clicksByDay) a.clicksByDay = {}; a.clicksByDay[day] = (a.clicksByDay[day] || 0) + 1
+  persistSoon(); return true
+}
+export function bindReferral(userId, code) {
+  const u = getUser(userId); if (!u || u.referredBy) return false   // keep first-touch
+  const a = getAffiliateByCode(code); if (!a || a.status !== 'approved' || a.userId === userId) return false
+  u.referredBy = { affiliateId: a.id, code: a.code, at: now() }
+  persist(); return true
+}
+// First successful payment of a referred user -> ONE commission (first payment
+// only; deduped by refUserId). Commission = amount * ratePct%.
+export function recordAffiliateConversion({ refUserId, amountUsd, currency = 'usd', stripeId = null } = {}) {
+  const u = getUser(refUserId); if (!u || !u.referredBy) return null
+  if (!db.affiliateRefs) db.affiliateRefs = []
+  if (db.affiliateRefs.some((r) => r.refUserId === refUserId)) return null   // first payment only
+  const a = getAffiliate(u.referredBy.affiliateId); if (!a) return null
+  const rate = a.ratePct != null ? a.ratePct : getAffiliateConfig().defaultRatePct
+  const amt = Math.max(0, Number(amountUsd) || 0)
+  const commission = round2(amt * rate / 100)
+  const rec = {
+    id: 'afr' + id(), affiliateId: a.id, refUserId, refUsername: u.username,
+    amountUsd: round2(amt), rate, commissionUsd: commission, currency: currency || 'usd',
+    status: a.status === 'approved' ? 'earned' : 'void',   // a suspended affiliate earns nothing
+    stripeId: stripeId || null, createdAt: now(), paidAt: null, transferId: null,
+  }
+  db.affiliateRefs.push(rec); persist()
+  return rec
+}
+export function listAffiliateReferrals(affId) {
+  return (db.affiliateRefs || []).filter((r) => r.affiliateId === affId)
+    .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+    .map((r) => ({ id: r.id, refUsername: r.refUsername, amountUsd: r.amountUsd, rate: r.rate, commissionUsd: r.commissionUsd, status: r.status, createdAt: r.createdAt, paidAt: r.paidAt }))
+}
+export function affiliatePayableRefs(affId) { return (db.affiliateRefs || []).filter((r) => r.affiliateId === affId && r.status === 'earned') }
+export function markAffiliateRefsPaid(affId, refIds, { transferId = null } = {}) {
+  const set = new Set(refIds || [])
+  let n = 0, total = 0
+  for (const r of (db.affiliateRefs || [])) {
+    if (r.affiliateId === affId && r.status === 'earned' && (set.size === 0 || set.has(r.id))) {
+      r.status = 'paid'; r.paidAt = now(); r.transferId = transferId || null; n++; total += r.commissionUsd || 0
+    }
+  }
+  persist(); return { paid: n, totalUsd: round2(total) }
+}
+export function affiliateDashboard(userId) {
+  const a = getAffiliateByUserId(userId); if (!a) return null
+  const cfg = getAffiliateConfig()
+  return { ...publicAffiliate(a), minPayoutUsd: cfg.minPayoutUsd, referralRows: listAffiliateReferrals(a.id) }
+}
+export function listAffiliateStaff() {
+  return (db.users || []).filter((u) => u.role === 'affiliate_admin' || u.role === 'superadmin').map((u) => ({ id: u.id, username: u.username, displayName: u.displayName || null, role: u.role, email: u.email || u.ssoEmail || null }))
 }
 export function listFinanceStaff() {
   return (db.users || []).filter((u) => u.role === 'accounting' || u.role === 'superadmin').map((u) => ({ id: u.id, username: u.username, displayName: u.displayName || null, role: u.role, email: u.email || u.ssoEmail || null }))

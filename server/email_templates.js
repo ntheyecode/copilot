@@ -998,6 +998,70 @@ Questions about your plan? Just reply to this email.`,
     },
     showRows: false,
   },
+
+  affiliate_application_received: {
+    label: 'Affiliate - application received',
+    category: 'account',
+    description: 'Sent to someone right after they apply to the affiliate program.',
+    eyebrow: 'Affiliate program',
+    defaultSubject: 'We received your affiliate application',
+    defaultHeading: 'Thanks for applying',
+    defaultBody:
+`Hi <First_Name>,
+
+Thank you for applying to the WorkCoPilot affiliate program. We have received your application and our team is reviewing it.
+
+We review every application personally to keep the program high quality, so this takes a little time. You will get another email from us the moment a decision is made. If you are approved, that email will include a link to set your password and open your affiliate dashboard.
+
+Thanks for wanting to partner with us,
+The WorkCoPilot team`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [],
+    sampleData: { name: 'Jordan Lee' },
+    showRows: false,
+  },
+
+  affiliate_approved: {
+    label: 'Affiliate - approved',
+    category: 'account',
+    description: 'Sent when an affiliate is approved; invites them to set a password and open their dashboard.',
+    eyebrow: 'Affiliate program',
+    defaultSubject: 'You are approved - welcome to the WorkCoPilot affiliate program',
+    defaultHeading: 'You are in. Set your password to start.',
+    defaultBody:
+`Hi <First_Name>,
+
+Great news - your application to the WorkCoPilot affiliate program has been approved.
+
+Set your password below to open your affiliate dashboard, where you will find your unique referral link, your live stats, and your payout setup. You earn <Rate>% of each person's first payment when they sign up through your link, and the people you refer get a free month when they choose annual billing.
+
+Sign-in name: **<Username>**
+Link valid for: <Expires_Label>
+
+If the button does not work, copy and paste this link into your browser:
+<Set_Link>
+
+Welcome aboard,
+The WorkCoPilot team`,
+    defaultCtaLabel: 'Set my password',
+    ctaUrlToken: 'setLink',
+    placeholders: [
+      P('<Username>', 'Sign-in name for the affiliate account', 'jordan.lee'),
+      P('<Set_Link>', 'One-time link to set the password', 'https://admireveda.com/work/set-password?token=SAMPLE'),
+      P('<Expires_Label>', 'How long the link is valid', '24 hours'),
+      P('<Rate>', 'The affiliate commission rate (percent)', '30'),
+    ],
+    defaults: { expiresLabel: '24 hours' },
+    sampleData: {
+      name: 'Jordan Lee',
+      username: 'jordan.lee',
+      setLink: 'https://admireveda.com/work/set-password?token=SAMPLE',
+      expiresLabel: '24 hours',
+      rate: '30',
+    },
+    showRows: false,
+  },
 }
 
 // Finish the defs: attach global placeholders, freeze.

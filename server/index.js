@@ -33,6 +33,7 @@ import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
+import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
 import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
@@ -186,6 +187,15 @@ function requireWorkAuth(req, res, next) {
 function requireWorkSubscription(req, res, next) {
   // Always let admins and superadmins through for operator testing.
   if (req.user && (req.user.role === 'superadmin' || req.user.role === 'admin')) return next()
+  // A superadmin-disabled account - or a disabled company - is blocked from ALL
+  // service immediately, regardless of billing/seat/subscription state, so a block
+  // reflects downstream the moment it is set (the session epoch bump also signs
+  // them out everywhere). Checked before any billing-config branch below.
+  if (req.workUser) {
+    const wu = store.getUser(req.workUser.id)
+    if (wu && wu.disabled) return res.status(403).json({ error: 'This account has been disabled. Please contact your administrator.', disabled: true })
+    if (wu && wu.companyId) { const c = store.getCompany(wu.companyId); if (c && c.disabled) return res.status(403).json({ error: 'Your company account has been disabled. Please contact your administrator.', disabled: true }) }
+  }
   // Company members are covered by a company LICENSE SEAT, not by Stripe, so the
   // seat check applies whether or not Stripe is configured. (Before this, an
   // unconfigured Stripe skipped seat enforcement entirely, so a company could
@@ -229,13 +239,19 @@ function requireWorkTime(req, res, next) {
 // 'accounting' may OPEN the admin console (to reach Finance) but every other
 // admin endpoint stays requireSuperAdmin, and the console UI shows only Finance
 // to an accounting viewer. Finance endpoints gate on store.isFinanceUser.
-const ADMIN_ROLES = new Set(['admin', 'superadmin', 'accounting'])
+const ADMIN_ROLES = new Set(['admin', 'superadmin', 'accounting', 'affiliate_admin'])
 function requireAdmin(req, res, next) {
   if (!req.user || !ADMIN_ROLES.has(req.user.role)) return res.status(403).json({ error: 'Admin access required' })
   next()
 }
 function requireSuperAdmin(req, res, next) {
   if (!req.user || req.user.role !== 'superadmin') return res.status(403).json({ error: 'Superadmin only.' })
+  next()
+}
+// The affiliate admin is a separate admin account (role 'affiliate_admin');
+// superadmin also qualifies. Gates the affiliate-program management endpoints.
+function requireAffiliateAdmin(req, res, next) {
+  if (!req.user || !store.isAffiliateAdmin(req.user.id)) return res.status(403).json({ error: 'Affiliate admin access required.' })
   next()
 }
 // AI configuration is a critical page: it is OTP step-up gated (owner 2026-10-23).
@@ -826,6 +842,9 @@ app.post('/api/work/signup', wrap((req, res) => {
   if (!displayName) return res.status(400).json({ error: 'Enter your full name.' })
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
   const u = store.createWorkUser({ username, password, email, displayName, phone: b.phone, company: b.company })
+  // Affiliate attribution (first-touch): bind the referring affiliate from the
+  // ?ref= the SPA captured, or the affref cookie. Best-effort, never blocks signup.
+  bindReferralOnSignup(store, req, u.id)
   // The email gives the account a contact address (reset + receipts) + a welcome.
   sendTemplateAsync('welcome', email, { name: u.displayName || u.username })
   if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
@@ -2508,6 +2527,7 @@ registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRunt
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, wrap })
+registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, wrap })
 
 // Public: the Windows desktop installer. A bare /downloads/... path hits the
 // nginx catch-all and returns the SPA HTML (a ~6 KB file renamed .exe), so it

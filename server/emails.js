@@ -76,6 +76,30 @@ export function sendAccountWelcomeAsync(userId) {
   Promise.resolve().then(() => sendAccountWelcome(userId)).catch(() => { /* logged in sendTemplate */ })
 }
 
+// Affiliate: thank-you right after they apply (no account yet - send to the email
+// they entered on the form).
+export function sendAffiliateApplicationReceivedAsync(toEmail, name) {
+  const to = String(toEmail || '').trim()
+  if (!to) return
+  Promise.resolve().then(() => sendTemplate('affiliate_application_received', to, { name: name || '' })).catch(() => { /* logged */ })
+}
+// Affiliate: approved - set-password link + dashboard invite. Mirrors the welcome
+// set-password flow but with the affiliate-specific template + the rate.
+export async function sendAffiliateApproved(userId, ratePct) {
+  const u = store.getUser(userId)
+  if (!u) return { ok: false, skipped: 'no-user' }
+  const to = store.effectiveUserEmail(u.id)
+  if (!to) return { ok: false, skipped: 'no-email' }
+  const name = u.displayName || u.username || ''
+  // SSO accounts have no password to set; send a no-link approval still.
+  if (u.ssoEmail) return sendTemplate('affiliate_approved', to, { name, username: u.username, setLink: `${APP_BASE}/affliate`, expiresLabel: SET_PASSWORD_TTL_LABEL, rate: String(ratePct != null ? ratePct : '') })
+  const raw = store.createEmailToken(u.id, 'set_password')
+  return sendTemplate('affiliate_approved', to, { name, username: u.username, setLink: setPasswordLink(raw), expiresLabel: SET_PASSWORD_TTL_LABEL, rate: String(ratePct != null ? ratePct : '') })
+}
+export function sendAffiliateApprovedAsync(userId, ratePct) {
+  Promise.resolve().then(() => sendAffiliateApproved(userId, ratePct)).catch(() => { /* logged in sendTemplate */ })
+}
+
 // Send a password-reset link (forgot password). SSO accounts reset via their IdP.
 export async function sendPasswordReset(userId) {
   const u = store.getUser(userId)

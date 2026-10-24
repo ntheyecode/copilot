@@ -29,6 +29,7 @@ function formFrom(p) {
     imageMinBulk: p.imageMinBulk,
     tasks: { ...(p.tasks || {}) },
     replans: { ...(p.replans || {}) },
+    dailyHours: { ...(p.dailyHours || {}) },
   }
 }
 
@@ -66,6 +67,7 @@ export default function Pricing({ isSuperAdmin }) {
     const mb = num(form.imageMinBulk); if (isNaN(mb) || mb < 1) return true
     for (const t of TIERS) { const n = num(form.tasks[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     for (const t of TIERS) { const n = num((form.replans || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
+    for (const t of TIERS) { const n = num((form.dailyHours || {})[t]); if (isNaN(n) || n < 0 || n > 24) return true }
     return false
   })()
 
@@ -80,6 +82,7 @@ export default function Pricing({ isSuperAdmin }) {
         imageMinBulk: num(form.imageMinBulk),
         tasks: Object.fromEntries(TIERS.map((t) => [t, num(form.tasks[t])])),
         replans: Object.fromEntries(TIERS.map((t) => [t, num((form.replans || {})[t])])),
+        dailyHours: Object.fromEntries(TIERS.map((t) => [t, num((form.dailyHours || {})[t])])),
       }
       const p = await workAdminApi.setPricing(patch)
       const f = formFrom(p)
@@ -125,7 +128,7 @@ export default function Pricing({ isSuperAdmin }) {
           <div className="wka-record">
             <RecRow label="Currency" value={cur} />
             {TIERS.map((t) => (
-              <RecRow key={t} label={cap(t)} value={`${money(form.plans[t])}/mo  ·  ${form.tasks[t] == null ? '-' : form.tasks[t]} tasks/day  ·  ${(form.replans || {})[t] == null ? '-' : form.replans[t]} re-plans  ·  ${money(form.hour[t])}/extra hr  ·  ${money(form.image[t])}/image`} />
+              <RecRow key={t} label={cap(t)} value={`${money(form.plans[t])}/mo  ·  ${(form.dailyHours || {})[t] == null ? '-' : form.dailyHours[t]} hrs/day  ·  ${form.tasks[t] == null ? '-' : form.tasks[t]} tasks/day  ·  ${(form.replans || {})[t] == null ? '-' : form.replans[t]} re-plans  ·  ${money(form.hour[t])}/extra hr  ·  ${money(form.image[t])}/image`} />
             ))}
             <RecRow label="Corporate" value="Unlimited tasks and re-plans" />
             <RecRow label="Bulk minimum" value={`${form.imageMinBulk} images`} />
@@ -144,8 +147,21 @@ export default function Pricing({ isSuperAdmin }) {
 
       <div className="wka-panel">
         <h2>Monthly plan price</h2>
-        <p className="desc">What each tier costs per month. Basic 2h/day, Advanced 4h/day, Premium 6h/day of real guiding time.</p>
+        <p className="desc">What each tier costs per month. The daily guiding hours each tier includes are set below.</p>
         <div className="wka-grid">{TIERS.map((t) => <Money key={t} group="plans" tier={t} />)}</div>
+      </div>
+
+      <div className="wka-panel">
+        <h2>Daily included hours, per tier</h2>
+        <p className="desc">How many hours of real guiding time each tier includes per day (the "bucket"). This is the daily allowance; extra hours beyond it are billed at the per-tier rate below. A change here applies to every user immediately. Fractional hours are allowed (e.g. 1.5). Resets 11:59 PM ET.</p>
+        <div className="wka-grid">{TIERS.map((t) => (
+          <div className="wka-field" key={t}>
+            <label>{cap(t)}</label>
+            <input className="wka-input" type="number" min="0" max="24" step="0.25" disabled={disabled}
+              value={(form.dailyHours || {})[t] == null ? '' : form.dailyHours[t]} onChange={(e) => setField('dailyHours', t, e.target.value)} />
+            <span className="hint">hours per day</span>
+          </div>
+        ))}</div>
       </div>
 
       <div className="wka-panel">

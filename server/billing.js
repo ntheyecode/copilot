@@ -75,6 +75,13 @@ function cfg(store) {
 // in index.js uses this: subscriptions are enforced only once billing is set up.
 export function billingConfigured(store) { return !!cfg(store).secret }
 
+// Shared Stripe client for other modules (e.g. affiliate payouts via Connect).
+// Returns the configured client, or null when no secret key is set / the package
+// is not installed - callers surface a clear 503 rather than crashing. SITE is the
+// public base URL used for Stripe return/refresh links.
+export async function stripeClient(store) { return getStripe(cfg(store).secret) }
+export const PUBLIC_SITE = SITE
+
 // Lazy, guarded Stripe client, cached per secret key so a runtime key change
 // (operator updates it in the admin console) re-initialises cleanly. Returns
 // null (never throws) when the key is missing or the package is not installed,
@@ -272,7 +279,11 @@ async function handleEvent(s, store, event) {
     }
     if (userId) {
       store.setSubscription(userId, { status, plan: plan || null, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd })
-      console.log(`[billing] checkout completed -> user ${userId} plan ${plan || '(unknown)'} status ${status}`)
+      // The referred-annual free month was applied: mark it used (once per account).
+      if (md.affiliateBenefit && /^annual_free/.test(md.affiliateBenefit) && typeof store.markAnnualBenefitUsed === 'function') {
+        try { store.markAnnualBenefitUsed(userId) } catch { /* best-effort */ }
+      }
+      console.log(`[billing] checkout completed -> user ${userId} plan ${plan || '(unknown)'} status ${status}${md.affiliateBenefit ? ` (+${md.affiliateBenefit})` : ''}`)
     } else {
       console.warn('[billing] checkout.session.completed with no user reference; ignored')
     }
@@ -305,6 +316,17 @@ async function handleEvent(s, store, event) {
     if (!user && obj.metadata && obj.metadata.workUserId) user = store.getUser(obj.metadata.workUserId)
     const plan = (user && user.subscription && user.subscription.plan) || null
     ledgerAndEmail(store, { kind: 'subscription', user, amountMinor: obj.amount_paid != null ? obj.amount_paid : obj.total, currency: obj.currency, stripeId: obj.id, plan, emailType: 'payment_success', invoiceUrl: obj.hosted_invoice_url || '', description: plan ? `${plan} plan` : 'Subscription' })
+    // Affiliate commission: on the referred user's FIRST real (non-zero) payment.
+    // Deduped per referred user in the store, so renewals never pay again. Using
+    // amount_paid > 0 (not billing_reason) correctly handles the free-month trial,
+    // where the first money event is the post-trial invoice, not subscription_create.
+    try {
+      const paidUsd = (obj.amount_paid != null ? obj.amount_paid : (obj.total || 0)) / 100
+      if (user && paidUsd > 0 && typeof store.recordAffiliateConversion === 'function') {
+        const r = store.recordAffiliateConversion({ refUserId: user.id, amountUsd: paidUsd, currency: obj.currency || 'usd', stripeId: obj.id })
+        if (r) console.log(`[affiliate] conversion -> affiliate ${r.affiliateId} commission $${r.commissionUsd} from user ${user.id}`)
+      }
+    } catch (e) { console.warn('[affiliate] conversion failed: ' + (e && e.message)) }
     return
   }
 
@@ -382,12 +404,22 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
 
       const u = req.workUser
       const existingCustomer = (u.subscription && u.subscription.stripeCustomerId) || null
+      // Referred-user perk: an affiliate referral enrolling ANNUALLY gets a free
+      // month, delivered as a trial on the subscription (1 free month of access,
+      // then the 12-month annual charge = 13 months total). Entitlement flows
+      // automatically because trialing counts as active. Once per account.
+      let benefitDays = 0
+      try {
+        if (cycle === 'annual' && typeof store.affiliateAnnualBenefitDays === 'function') benefitDays = store.affiliateAnnualBenefitDays(u.id) || 0
+      } catch { benefitDays = 0 }
+      const subData = { metadata: { workUserId: String(u.id), plan, cycle } }
+      if (benefitDays > 0) subData.trial_period_days = benefitDays
       const params = {
         mode: 'subscription',
         line_items: [{ price: priceId, quantity: 1 }],
         client_reference_id: String(u.id),
-        metadata: { workUserId: String(u.id), plan, cycle },
-        subscription_data: { metadata: { workUserId: String(u.id), plan, cycle } },
+        metadata: { workUserId: String(u.id), plan, cycle, affiliateBenefit: benefitDays > 0 ? `annual_free_${benefitDays}d` : '' },
+        subscription_data: subData,
         allow_promotion_codes: true,
         success_url: `${SITE}/work?checkout=success`,
         cancel_url: `${SITE}/#pricing`,

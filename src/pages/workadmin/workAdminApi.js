@@ -213,6 +213,19 @@ export const workAdminApi = {
   // Companies: disable (reversible) + delete (detaches members unless deleteMembers).
   disableCompany: (id, disabled, reason) => request('POST', `/api/work/admin/companies/${encodeURIComponent(id)}/disable`, { disabled: !!disabled, reason }),
   deleteCompany: (id, reason, deleteMembers) => request('DELETE', `/api/work/admin/companies/${encodeURIComponent(id)}`, { reason, deleteMembers: !!deleteMembers }),
+
+  // ---- Affiliate program (superadmin or affiliate_admin) ----------------------
+  affiliates: (status) => request('GET', `/api/work/admin/affiliates${status ? `?status=${encodeURIComponent(status)}` : ''}`),
+  affiliate: (id) => request('GET', `/api/work/admin/affiliates/${encodeURIComponent(id)}`),
+  approveAffiliate: (id, ratePct) => request('POST', `/api/work/admin/affiliates/${encodeURIComponent(id)}/approve`, ratePct != null ? { ratePct } : {}),
+  rejectAffiliate: (id, reason) => request('POST', `/api/work/admin/affiliates/${encodeURIComponent(id)}/reject`, { reason }),
+  suspendAffiliate: (id, suspended, reason) => request('POST', `/api/work/admin/affiliates/${encodeURIComponent(id)}/suspend`, { suspended: !!suspended, reason }),
+  setAffiliateRate: (id, ratePct) => request('POST', `/api/work/admin/affiliates/${encodeURIComponent(id)}/rate`, { ratePct }),
+  payoutAffiliate: (id) => request('POST', `/api/work/admin/affiliates/${encodeURIComponent(id)}/payout`, {}),
+  affiliateConfig: () => request('GET', '/api/work/admin/affiliate-config'),
+  setAffiliateConfig: (patch) => request('POST', '/api/work/admin/affiliate-config', patch || {}),
+  affiliateStaff: () => request('GET', '/api/work/admin/affiliate-staff'),
+  setAffiliateRole: (userId, role) => request('POST', '/api/work/admin/affiliate/role', { userId, role }),
 }
 
 export default workAdminApi

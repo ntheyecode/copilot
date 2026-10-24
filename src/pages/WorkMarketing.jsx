@@ -145,7 +145,7 @@ export default function WorkMarketing() {
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
   ]
   const tiers = price ? [
-    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: 1, tasks: (price.tasks || {}).lite, feats: ['1 hour of daily minutes - use anytime, billed per minute used', '1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'No roadmaps or diagrams - upgrade for those'], hour: price.hour.lite },
+    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: 1, tasks: (price.tasks || {}).lite, feats: ['1 hour of daily minutes - use anytime, billed per minute used', '1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'], hour: price.hour.lite },
     { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours of daily minutes - use anytime, billed per minute used', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'], hour: price.hour.basic },
     { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, tasks: (price.tasks || {}).advanced, popular: true, feats: ['4 hours of daily minutes - use anytime, billed per minute used', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
     { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, tasks: (price.tasks || {}).premium, feats: ['6 hours of daily minutes - use anytime, billed per minute used', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
@@ -504,7 +504,6 @@ export default function WorkMarketing() {
                 <a className="wm-cta" href="/workcopilot/contact">Contact sales <ArrowRight size={16} /></a>
                 <a className="wm-cta ghost" href="/workcopilot/security">See the controls in action <ArrowRight size={15} /></a>
               </div>
-              <span className="wm-ent-note">We reply within one business day.</span>
             </div>
             <div className="wm-ent-strip" aria-label="Enterprise assurances">
               {['SSO', 'SAML', 'DPA', 'On-prem', 'Audit logs'].map((c) => (
@@ -596,12 +595,19 @@ function DemoScreen({ app, target, fix }) {
   )
 }
 // A red old-line / green new-line diff, the way the copilot shows a fix in code.
-function DiffBlock({ file, oldLine, newLine }) {
+function DiffBlock({ file, oldLine, newLine, kind }) {
+  // Security fixes read "VULNERABLE -> FIXED"; reliability / quality fixes (e.g. a
+  // governor-limit bulkify or a scoped rule) read "BEFORE -> AFTER" so the label is
+  // always accurate to the change.
+  const quality = kind === 'quality'
+  const badge = quality ? 'BEFORE → AFTER' : 'VULNERABLE → FIXED'
+  const delTag = quality ? 'before' : 'vuln'
+  const addTag = quality ? 'after' : 'fixed'
   return (
     <div className="wm-diff">
-      <div className="wm-diff-file"><FileText size={12} /> {file}<span className="wm-diff-badge">VULNERABLE &rarr; FIXED</span></div>
-      <div className="wm-diff-line del"><span className="wm-diff-tag del">vuln</span><span className="m">-</span><code>{oldLine}</code></div>
-      <div className="wm-diff-line add"><span className="wm-diff-tag add">fixed</span><span className="m">+</span><code>{newLine}</code></div>
+      <div className="wm-diff-file"><FileText size={12} /> {file}<span className="wm-diff-badge">{badge}</span> <CopyChip text={newLine} /></div>
+      <div className="wm-diff-line del"><span className="wm-diff-tag del">{delTag}</span><span className="m">-</span><code>{oldLine}</code></div>
+      <div className="wm-diff-line add"><span className="wm-diff-tag add">{addTag}</span><span className="m">+</span><code>{newLine}</code></div>
     </div>
   )
 }
@@ -715,19 +721,19 @@ function LiveDemo({ tilt, untilt }) {
       ],
     },
     {
-      tag: 'Incident response', app: 'Grafana + kubectl', goal: 'Find why p99 latency spiked and stop the bleeding',
+      tag: 'ServiceNow admin', app: 'ServiceNow', goal: 'Ship a ServiceNow catalog item and lock down who can see it',
       steps: [
-        { sees: 'p99 jumped from 120ms to 2.4s at 14:03', fix: { say: 'A latency cliff at a sharp timestamp is a deploy or a dependency, not organic load', do: 'Overlay the deploy markers and the DB dashboard on 14:03' }, click: 'Overlay deploys', done: 'the spike lines up with a rollout' },
-        { sees: 'The new pod runs an N+1 query per request', fix: { say: 'Each request now fans out to hundreds of DB calls - that is your latency', do: 'Roll the deploy back now, then fix the query - stop the bleeding first' }, click: 'Roll back', cmd: '$ kubectl rollout undo deploy/orders', done: 'p99 falls back under 200ms' },
-        { sees: 'The root cause is a missing eager-load', step: 'Fix the N+1 at the source, not the symptom', how: ['Eager-load the association so it is one query, not N', 'Add the missing index on the foreign key', 'Add a p99 alert so this pages before customers feel it'], click: 'Open PR', done: 'the fix is in review with an alert attached' },
+        { sees: 'A new Business Rule is set to run on every table, on every operation', fix: { say: 'An unconditioned global Business Rule fires on all records and can slow the whole instance', do: 'Scope it to the one table and add a condition so it runs only when it should' }, diff: { file: 'Business Rule: Order sync', kind: 'quality', old: 'When: before | Table: Global | Condition: (none)', new: 'When: before | Table: sc_request | Condition: priority = 1' }, click: 'Scope the rule', done: 'the rule runs only where it is needed' },
+        { sees: 'The table ACL grants read with an empty role, so everyone can read it', fix: { say: 'An empty role on an ACL means every logged-in user can read these records', do: 'Require a specific role so only the right group can see them' }, diff: { file: 'ACL: sc_request.read', old: 'Requires role: (empty)', new: 'Requires role: catalog_viewer' }, click: 'Restrict ACL', done: 'only catalog_viewer can read the records' },
+        { sees: 'A catalog variable collects an employee SSN in a plain text field', fix: { say: 'That is PII sitting in a readable variable, and it must never reach an AI', do: 'It is masked on your device and swapped for a placeholder before anything is sent' }, click: 'Protect on-device', done: 'only [SSN] leaves your device, never the real value' },
       ],
     },
     {
-      tag: 'Code review', app: 'Pull request', goal: 'Review this pull request before it ships',
+      tag: 'Salesforce dev', app: 'Salesforce Apex', goal: 'Ship an Apex trigger without a security or governor-limit bug',
       steps: [
-        { sees: 'A new query builds SQL with string concatenation', fix: { say: 'User input goes straight into SQL. That is an injection hole', do: 'Switch to a parameterized query' }, diff: { file: 'users.js:88', old: 'db.query("SELECT * FROM u WHERE id=" + req.params.id)', new: 'db.query("SELECT * FROM u WHERE id=$1", [req.params.id])' }, click: 'Request changes', done: 'the query is parameterized' },
-        { sees: 'The login compares the password with ==', fix: { say: 'That is a plain-text compare, and == is loose equality', do: 'Hash and compare with bcrypt' }, diff: { file: 'auth.js:42', old: 'if (user.password == input) grant()', new: 'if (bcrypt.compareSync(input, user.hash)) grant()' }, click: 'Comment', done: 'the check uses bcrypt' },
-        { sees: 'A live API key is hard-coded in config', fix: { say: 'A secret in source leaks to every clone and the git history', do: 'Move it to an environment variable' }, diff: { file: 'config.js:7', old: 'const KEY = "sk_live_9f3c2a..."', new: 'const KEY = process.env.STRIPE_KEY' }, click: 'Flag secret', done: 'no secret left in the code' },
+        { sees: 'A SOQL query sits inside a for loop over the trigger records', fix: { say: 'Querying inside a loop hits the SOQL governor limit and fails on a bulk load', do: 'Pull the query out of the loop and work from a map - bulkify it' }, diff: { file: 'AccountTrigger.apxt:12', kind: 'quality', old: 'for (Account a : Trigger.new) { Contact c = [SELECT Id FROM Contact WHERE AccountId = :a.Id]; }', new: 'Map<Id,Contact> byAcct = mapContacts(Trigger.new); for (Account a : Trigger.new) { Contact c = byAcct.get(a.Id); }' }, click: 'Bulkify', done: 'one query serves the whole batch' },
+        { sees: 'The query reads fields without enforcing the user access', fix: { say: 'Without field-level security the trigger can expose fields the user cannot see', do: 'Add WITH SECURITY_ENFORCED so FLS and sharing are respected' }, diff: { file: 'AccountTrigger.apxt:20', old: '[SELECT Id, SSN__c FROM Contact WHERE AccountId IN :ids]', new: '[SELECT Id, SSN__c FROM Contact WHERE AccountId IN :ids WITH SECURITY_ENFORCED]' }, click: 'Enforce FLS', done: 'the query respects the user access' },
+        { sees: 'An API key is hard-coded in the Apex class', fix: { say: 'A secret in Apex source leaks to every deploy and the metadata history', do: 'Move it to a Named Credential so the key never lives in code' }, diff: { file: 'PaymentService.cls:5', old: 'String key = "sk_live_9f3c2a...";', new: 'req.setEndpoint("callout:Payments/charge"); // Named Credential' }, click: 'Use Named Credential', done: 'no secret left in the code' },
       ],
     },
     {
@@ -797,7 +803,7 @@ function LiveDemo({ tilt, untilt }) {
         {reveal >= 2 && (
           <div className="wm-demo-stage wm-beat" key={'st' + safeSi}>
             {s.diff
-              ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} />
+              ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} kind={s.diff.kind} />
               : s.prompt
                 ? <PromptBlock text={s.prompt} />
                 : s.cmd
@@ -1727,36 +1733,35 @@ const CSS = `
 .wm-tier-ent{border-color:rgba(57,211,255,.35);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.008))}
 /* ENTERPRISE - the flagship tier. A premium dark panel on the light page, with a
    warm orange glow, a hairline orange accent on the top edge, an elegant
-   two-column benefit grid and a trust strip. Self-contained dark ink so it reads
-   light-on-dark in both page themes. Orange = the brand accent (--warm / --warm2). */
+   two-column benefit grid and a trust strip. LIGHT panel (dark ink on a warm
+   off-white) to match the light page. Orange = the brand accent (--warm / --warm2). */
 .wm-ent-sec{padding-top:0}
 .wm-ent{position:relative;overflow:hidden;margin-top:20px;border-radius:26px;padding:clamp(30px,4vw,48px) clamp(24px,4vw,52px);
   background:
-    radial-gradient(130% 150% at 0% 0%,rgba(242,106,67,.16),transparent 46%),
-    radial-gradient(90% 130% at 100% 4%,rgba(57,211,255,.08),transparent 54%),
-    linear-gradient(152deg,#141c2d 0%,#0f1723 46%,#0b1410 100%);
-  border:1px solid rgba(255,255,255,.1);
-  box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 54px 104px -46px rgba(8,12,22,.78),0 0 0 1px rgba(242,106,67,.08)}
-.wm-ent::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,transparent,rgba(242,106,67,.9),rgba(255,154,77,.65),transparent)}
-.wm-ent-glow{position:absolute;top:-34%;left:-12%;width:54%;height:130%;pointer-events:none;background:radial-gradient(closest-side,rgba(242,106,67,.22),transparent 72%);filter:blur(12px)}
+    radial-gradient(130% 150% at 0% 0%,rgba(242,106,67,.10),transparent 48%),
+    radial-gradient(90% 130% at 100% 0%,rgba(57,211,255,.05),transparent 56%),
+    linear-gradient(158deg,#ffffff 0%,#fff7f3 52%,#fffdfb 100%);
+  border:1px solid rgba(242,106,67,.16);
+  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 40px 90px -52px rgba(242,106,67,.42),0 18px 50px -30px rgba(15,23,42,.16)}
+.wm-ent::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,transparent,var(--warm),var(--warm2),transparent)}
+.wm-ent-glow{position:absolute;top:-40%;right:-10%;left:auto;width:52%;height:135%;pointer-events:none;background:radial-gradient(closest-side,rgba(242,106,67,.13),transparent 72%);filter:blur(10px)}
 .wm-ent-top{position:relative;max-width:62ch}
-.wm-ent-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#ffb98c;margin-bottom:13px}
+.wm-ent-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#d1562f;margin-bottom:13px}
 .wm-ent-eyebrow svg{color:#f26a43}
-.wm-ent-h{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.4vw,38px);line-height:1.08;letter-spacing:-.025em;color:#fff;margin:0 0 12px}
-.wm-ent-lead{color:#b4bfd2;font-size:16px;line-height:1.62;margin:0;max-width:60ch}
+.wm-ent-h{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.4vw,38px);line-height:1.08;letter-spacing:-.025em;color:#121826;margin:0 0 12px}
+.wm-ent-lead{color:#51607a;font-size:16px;line-height:1.62;margin:0;max-width:60ch}
 .wm-ent-feats{position:relative;list-style:none;padding:0;margin:30px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:16px 34px}
 .wm-ent-feats li{display:flex;gap:13px;align-items:flex-start}
-.wm-ent-tick{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;margin-top:1px;color:#fff;background:linear-gradient(135deg,var(--warm),var(--warm2));box-shadow:0 6px 16px -8px rgba(242,106,67,.9)}
-.wm-ent-feats li b{display:block;color:#eef2f9;font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
-.wm-ent-feats li i{display:block;font-style:normal;color:#93a0b8;font-size:13.5px;line-height:1.45;margin-top:3px}
-.wm-ent-foot{position:relative;margin-top:34px;padding-top:26px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap}
+.wm-ent-tick{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;margin-top:1px;color:#fff;background:linear-gradient(135deg,var(--warm),var(--warm2));box-shadow:0 6px 16px -8px rgba(242,106,67,.7)}
+.wm-ent-feats li b{display:block;color:#1b2333;font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
+.wm-ent-feats li i{display:block;font-style:normal;color:#64718a;font-size:13.5px;line-height:1.45;margin-top:3px}
+.wm-ent-foot{position:relative;margin-top:34px;padding-top:26px;border-top:1px solid rgba(15,23,42,.1);display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap}
 .wm-ent-cta{display:flex;gap:12px;flex-wrap:wrap}
-.wm-ent .wm-cta.ghost{background:rgba(255,255,255,.05);color:#eef2f9;border:1px solid rgba(255,255,255,.2);box-shadow:none}
-.wm-ent .wm-cta.ghost:hover{border-color:#f26a43;color:#ffd9c8;transform:translateY(-2px)}
-.wm-ent-note{color:#93a0b8;font-size:13.5px}
+.wm-ent .wm-cta.ghost{background:#fff;color:#2a3344;border:1px solid rgba(15,23,42,.16);box-shadow:0 1px 2px rgba(15,23,42,.05)}
+.wm-ent .wm-cta.ghost:hover{border-color:#f26a43;color:#d1562f;transform:translateY(-2px)}
 .wm-ent-strip{position:relative;margin-top:24px;display:flex;flex-wrap:wrap;gap:9px}
-.wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#cdd6e6;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 13px;transition:border-color .2s,color .2s}
-.wm-ent-chip:hover{border-color:rgba(242,106,67,.5);color:#ffd9c8}
+.wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#5a6882;background:rgba(242,106,67,.06);border:1px solid rgba(242,106,67,.2);border-radius:999px;padding:6px 13px;transition:border-color .2s,color .2s,background .2s}
+.wm-ent-chip:hover{border-color:rgba(242,106,67,.55);color:#d1562f;background:rgba(242,106,67,.1)}
 @media(max-width:620px){.wm-ent-feats{grid-template-columns:1fr;gap:15px}.wm-ent-cta{width:100%}.wm-ent-cta .wm-cta{flex:1;min-width:0}}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
