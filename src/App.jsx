@@ -17,6 +17,7 @@ import WorkFields from './pages/WorkFields.jsx'
 import WorkPricing from './pages/WorkPricing.jsx'
 import WorkFaq from './pages/WorkFaq.jsx'
 import WorkContact from './pages/WorkContact.jsx'
+import WorkSetPassword from './pages/WorkSetPassword.jsx'
 import WorkPage from './pages/WorkPage.jsx'
 import WorkBuddy from './pages/WorkBuddy.jsx'
 import WorkFullGuide from './pages/WorkFullGuide.jsx'
@@ -74,6 +75,7 @@ export default function App() {
       {/* Public FAQ (AEO-optimized, with FAQPage structured data), linked from the footer. */}
       <Route path="/workcopilot/faq" element={<WorkFaq />} />
       <Route path="/workcopilot/contact" element={<WorkContact />} />
+      <Route path="/work/set-password" element={<WorkSetPassword />} />
       {/* The app itself. WorkPage self-gates on the session the server reports. */}
       <Route path="/work" element={<WorkPage />} />
       {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}

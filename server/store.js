@@ -446,7 +446,7 @@ export function publicWorkUser(u) {
     companyId: u.companyId || null,
     companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
     companyName: co ? co.name : null,
-    email: u.ssoEmail || null,                   // the SSO identity email, when set
+    email: u.email || u.ssoEmail || null,         // contact email (SSO identity or the one set at creation)
     ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
     mfaEnabled: !!(u.mfa && u.mfa.enabled),       // TOTP authenticator set up
     mfaEnrolledAt: (u.mfa && u.mfa.enrolledAt) || null,
@@ -1725,7 +1725,7 @@ export function setUserCompany(userId, companyId, companyRole) {
 // optional; tier/scrub optional. Reuses createWorkUser then applies membership.
 // Validates membership + seat availability BEFORE the account is created, so a
 // refused add never leaves a stray account behind.
-export function createManagedUser({ username, password, companyId = null, companyRole = 'member', tier = 'basic', scrub = false, free = false } = {}) {
+export function createManagedUser({ username, password, email = null, companyId = null, companyRole = 'member', tier = 'basic', scrub = false, free = false } = {}) {
   const role = normalizeCompanyRole(companyRole)
   if (tier != null && tier !== '') enumOrThrow(tier, WORK_TIERS, 'Plan')
   const wantTier = WORK_TIERS.includes(String(tier)) ? String(tier) : 'basic'
@@ -1735,7 +1735,7 @@ export function createManagedUser({ username, password, companyId = null, compan
     // flexible mode could add unlimited username+password members past every cap.
     assertSeatAvailable(companyId, role, wantTier)
   }
-  const pub = createWorkUser({ username, password })      // validates + role 'user'
+  const pub = createWorkUser({ username, password, email })      // validates + role 'user'
   const u = getUser(pub.id)
   if (companyId) {
     u.companyId = companyId
@@ -1770,16 +1770,19 @@ export function getWorkUser(id) { return getUser(id) }
 export function verifyWorkPassword(user, password) { return verifyPassword(user, password) }
 
 // Create a WorkCoPilot account (public signup). Role 'user'.
-export function createWorkUser({ username, password }) {
+export function createWorkUser({ username, password, email = null }) {
   const name = String(username || '').trim()
   if (name.length < 3) throw httpErr(400, 'Username must be at least 3 characters.')
   if (name.length > 64) throw httpErr(400, 'Username must be 64 characters or fewer.')
   if (String(password || '').length < 6) throw httpErr(400, 'Password must be at least 6 characters.')
   if (String(password).length > 256) throw httpErr(400, 'Password must be 256 characters or fewer.')
   if (findUser(name)) throw httpErr(409, 'That username is taken.')
+  const mail = String(email || '').trim()
+  if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) throw httpErr(400, 'Enter a valid email address.')
   const u = {
     id: id(),
     username: name,
+    email: mail || null,          // contact email (for password accounts); SSO uses ssoEmail
     passwordHash: bcrypt.hashSync(String(password), 10),
     role: 'user',
     root: false,
@@ -2754,6 +2757,75 @@ export function resetEmailTemplate(type) {
   const t = String(type || '').trim()
   if (db.work && db.work.emailTemplates && db.work.emailTemplates[t]) { delete db.work.emailTemplates[t]; persist() }
   return {}
+}
+
+// ---- Account email + password-set/reset tokens ----------------------------
+// The contact email we send account mail to: the one set at creation, else the
+// SSO identity. Null when we have nowhere to write.
+export function effectiveUserEmail(userId) {
+  const u = typeof userId === 'object' ? userId : getUser(userId)
+  return (u && (u.email || u.ssoEmail)) || null
+}
+export function setUserEmail(userId, email) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'User not found.')
+  const mail = String(email || '').trim()
+  if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) throw httpErr(400, 'Enter a valid email address.')
+  u.email = mail || null; persist(); return u.email
+}
+// One-time, single-use, expiring token for setting or resetting a password. We
+// store only the SHA-256 of the token (never the token itself), so a DB read
+// cannot mint a working link. Default life 48h for a welcome link.
+const EMAIL_TOKEN_PURPOSES = ['set_password']
+function hashToken(raw) { return crypto.createHash('sha256').update(String(raw)).digest('hex') }
+export function createEmailToken(userId, purpose = 'set_password', ttlMs = 48 * 3600 * 1000) {
+  if (!EMAIL_TOKEN_PURPOSES.includes(purpose)) throw httpErr(400, 'Unknown token purpose.')
+  const u = getUser(userId); if (!u) throw httpErr(404, 'User not found.')
+  if (!db.emailTokens) db.emailTokens = {}
+  // Invalidate any prior unused token of the same purpose for this user.
+  for (const [h, t] of Object.entries(db.emailTokens)) { if (t.userId === userId && t.purpose === purpose && !t.used) delete db.emailTokens[h] }
+  const raw = crypto.randomBytes(32).toString('base64url')
+  db.emailTokens[hashToken(raw)] = { userId, purpose, createdAt: Date.now(), expires: Date.now() + ttlMs, used: false }
+  // Opportunistic cleanup of long-expired tokens.
+  for (const [h, t] of Object.entries(db.emailTokens)) { if (t.expires < Date.now() - 7 * 86400000) delete db.emailTokens[h] }
+  persist()
+  return raw
+}
+// Validate without consuming (for the set-password page to greet the user).
+export function peekEmailToken(raw, purpose = 'set_password') {
+  const t = db.emailTokens && db.emailTokens[hashToken(raw)]
+  if (!t || t.used || t.purpose !== purpose || t.expires < Date.now()) return null
+  const u = getUser(t.userId)
+  return u ? { userId: u.id, username: u.username } : null
+}
+// Consume: mark used + return the userId, or null if invalid/expired/used.
+export function consumeEmailToken(raw, purpose = 'set_password') {
+  const h = hashToken(raw)
+  const t = db.emailTokens && db.emailTokens[h]
+  if (!t || t.used || t.purpose !== purpose || t.expires < Date.now()) return null
+  t.used = true; t.usedAt = Date.now(); persist()
+  return t.userId
+}
+export function setUserPasswordById(userId, newPassword) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'User not found.')
+  const pw = String(newPassword || '')
+  if (pw.length < 6) throw httpErr(400, 'Password must be at least 6 characters.')
+  if (pw.length > 256) throw httpErr(400, 'Password must be 256 characters or fewer.')
+  u.passwordHash = bcrypt.hashSync(pw, 10)
+  persist()
+  return true
+}
+// Find an account by username OR contact/SSO email (for "forgot password").
+export function findUserByLogin(login) {
+  const s = String(login || '').trim().toLowerCase()
+  if (!s) return null
+  return (db.users || []).find((u) => String(u.username || '').toLowerCase() === s || String(u.email || '').toLowerCase() === s || String(u.ssoEmail || '').toLowerCase() === s) || null
+}
+// Every company admin across ALL companies - for the superadmin operational view.
+export function listAllCompanyAdmins() {
+  return (db.users || []).filter((u) => u.companyRole === 'company_admin').map((u) => {
+    const c = (db.companies || []).find((x) => x.id === u.companyId)
+    return { id: u.id, username: u.username, displayName: u.displayName || null, email: u.email || u.ssoEmail || null, companyId: u.companyId || null, companyName: c ? c.name : null, createdAt: u.createdAt || null, mfaEnabled: !!(u.mfa && u.mfa.enabled) }
+  }).sort((a, b) => String(a.companyName || '').localeCompare(String(b.companyName || '')))
 }
 // Purge each session past ITS OWNER'S effective retention window. Reuses
 // deleteWorkSession (logged + removes shots + audit). Best-effort.

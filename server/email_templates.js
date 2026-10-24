@@ -599,6 +599,39 @@ The WorkCoPilot team`,
     showRows: false,
   },
 
+  welcome_sso: {
+    label: 'Welcome - single sign-on',
+    category: 'account',
+    description: 'Sent when an admin adds an account at a company that uses single sign-on (no password to set).',
+    eyebrow: 'Welcome',
+    defaultSubject: 'Your WorkCoPilot account is ready',
+    defaultHeading: 'You are all set',
+    defaultBody:
+`Hi <First_Name>,
+
+An account has been created for you on WorkCoPilot. Your company uses single sign-on, so there is no password to set. Just sign in with your <Company> account and WorkCoPilot is ready to guide you through your work, one clear step at a time. It never takes control.
+
+Sign-in email: **<Email>**
+Workspace: <Company>
+
+> If you did not expect this, you can safely ignore this email.
+
+Welcome aboard,
+The WorkCoPilot team`,
+    defaultCtaLabel: 'Open WorkCoPilot',
+    ctaUrlToken: 'appUrl',
+    placeholders: [
+      P('<Email>', 'The single sign-on email for the account', 'alex.morgan@northwind.com'),
+      P('<Company>', 'Company or workspace the account belongs to', 'Northwind Logistics'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      email: 'alex.morgan@northwind.com',
+      company: 'Northwind Logistics',
+    },
+    showRows: false,
+  },
+
   reset_password: {
     label: 'Password reset',
     category: 'security',

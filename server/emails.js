@@ -53,3 +53,45 @@ export async function sendTemplate(type, to, data = {}, { critical = false, atta
 export function sendTemplateAsync(type, to, data = {}, opts = {}) {
   Promise.resolve().then(() => sendTemplate(type, to, data, opts)).catch(() => { /* already logged */ })
 }
+
+// ---- Account lifecycle emails ---------------------------------------------
+const APP_BASE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
+const SET_PASSWORD_TTL_LABEL = '48 hours'
+export const setPasswordLink = (raw) => `${APP_BASE}/work/set-password?token=${encodeURIComponent(raw)}`
+
+// Welcome a newly-created account. SSO accounts get a no-password welcome; a
+// password account gets a one-time set-password link. Returns the send result.
+export async function sendAccountWelcome(userId) {
+  const u = store.getUser(userId)
+  if (!u) return { ok: false, skipped: 'no-user' }
+  const to = store.effectiveUserEmail(u.id)
+  if (!to) return { ok: false, skipped: 'no-email' }   // nothing to send to (no email on file)
+  const company = u.companyId ? ((store.getCompany(u.companyId) || {}).name || '') : ''
+  const name = u.displayName || u.username || ''
+  if (u.ssoEmail) return sendTemplate('welcome_sso', to, { name, email: to, company })
+  const raw = store.createEmailToken(u.id, 'set_password')
+  return sendTemplate('welcome_set_password', to, { name, username: u.username, setLink: setPasswordLink(raw), expiresLabel: SET_PASSWORD_TTL_LABEL, company })
+}
+export function sendAccountWelcomeAsync(userId) {
+  Promise.resolve().then(() => sendAccountWelcome(userId)).catch(() => { /* logged in sendTemplate */ })
+}
+
+// Send a password-reset link (forgot password). SSO accounts reset via their IdP.
+export async function sendPasswordReset(userId) {
+  const u = store.getUser(userId)
+  if (!u) return { ok: false, skipped: 'no-user' }
+  if (u.ssoEmail) return { ok: false, skipped: 'sso-account' }
+  const to = store.effectiveUserEmail(u.id)
+  if (!to) return { ok: false, skipped: 'no-email' }
+  const raw = store.createEmailToken(u.id, 'set_password')
+  return sendTemplate('reset_password', to, { name: u.displayName || u.username, resetLink: setPasswordLink(raw), expiresLabel: SET_PASSWORD_TTL_LABEL })
+}
+
+// Confirm a password was just changed (reuses the set link flow).
+export function sendPasswordChangedAsync(userId) {
+  Promise.resolve().then(async () => {
+    const u = store.getUser(userId); if (!u || u.ssoEmail) return
+    const to = store.effectiveUserEmail(u.id); if (!to) return
+    return sendTemplate('password_changed', to, { name: u.displayName || u.username })
+  }).catch(() => {})
+}

@@ -24,7 +24,7 @@ import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } fr
 import { sendMail } from './mailer.js'
 import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './report_sign.js'
 import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
-import { sendTemplate, sendTemplateAsync } from './emails.js'
+import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordReset, sendPasswordChangedAsync } from './emails.js'
 import { EMAIL_DEFS, renderEmail } from './email_templates.js'
 import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
@@ -2154,6 +2154,37 @@ app.post('/api/work/contact', wrap((req, res) => {
   if (notify.thankYou) sendTemplateAsync('contact_thank_you', email, { name })
   res.json({ ok: true })
 }))
+
+// ---- Password: set (via emailed token), forgot, validate token ------------
+// A strong throwaway password for accounts created without one (the person sets
+// their own via the emailed link).
+function genTempPassword() { return (globalThis.crypto.randomUUID() + globalThis.crypto.randomUUID()).replace(/-/g, '').slice(0, 24) }
+// Validate a set/reset token (so the page can greet the user). Public.
+app.get('/api/work/password/token/:token', wrap((req, res) => {
+  const t = store.peekEmailToken(req.params.token, 'set_password')
+  if (!t) return res.status(400).json({ valid: false, error: 'This link is invalid or has expired.' })
+  res.json({ valid: true, username: t.username })
+}))
+// Set a password using a one-time token. Public (the token is the credential).
+app.post('/api/work/password/set', wrap((req, res) => {
+  const { token, password } = req.body || {}
+  if (String(password || '').length < 6) return res.status(400).json({ error: 'Choose a password of at least 6 characters.' })
+  const userId = store.consumeEmailToken(String(token || ''), 'set_password')
+  if (!userId) return res.status(400).json({ error: 'This link is invalid or has expired. Ask for a new one.' })
+  store.setUserPasswordById(userId, password)
+  sendPasswordChangedAsync(userId)
+  res.json({ ok: true })
+}))
+// Forgot password: send a reset link. ALWAYS 200 (no account enumeration).
+app.post('/api/work/password/forgot', wrap((req, res) => {
+  const login = String((req.body || {}).login || '').trim()
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
+  if (login && coverageRateOk(ip)) {
+    const u = store.findUserByLogin(login)
+    if (u) { Promise.resolve().then(() => sendPasswordReset(u.id)).catch(() => {}) }
+  }
+  res.json({ ok: true })   // same response whether or not the account exists
+}))
 // ---- Support tickets (user side: open + thread with the superadmin) -------
 app.get('/api/work/ticket-categories', (req, res) => res.json({ categories: store.workTicketCategories() }))
 app.get('/api/work/tickets', requireWorkAuth, wrap((req, res) => res.json({ tickets: store.listWorkTicketsForUser(req.workUser.id) })))
@@ -2201,13 +2232,23 @@ app.post('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((
   if (!rosterChangeAllowed(req, res)) return
   const { username, password, email, companyRole, tier, displayName } = req.body || {}
   // Role and plan are validated strictly in the store (a typo is a 400, never a
-  // silent default). Both branches run the same seat gate.
-  // SSO companies pre-provision by EMAIL (no password; they sign in through the
-  // identity provider). A non-SSO company still adds by username + password.
-  if (email && String(email).trim()) {
-    return res.json({ user: store.addCompanyMemberByEmail({ companyId: cid, email, companyRole, tier, displayName }) })
+  // silent default). Both branches run the same seat gate. Every new account is
+  // emailed: a non-SSO user gets a set-password link; an SSO user gets a
+  // no-password welcome (they sign in through the identity provider).
+  if (username && String(username).trim()) {
+    // Non-SSO: username (+ optional password) + a contact email for the set link.
+    // If no password is given, we set a strong random one - the person sets their
+    // own via the emailed link, so the admin never has to hand out a password.
+    const user = store.createManagedUser({ username, password: (password && String(password)) || genTempPassword(), email: (email && String(email).trim()) || null, companyId: cid, companyRole, tier })
+    sendAccountWelcomeAsync(user.id)
+    return res.json(user)
   }
-  res.json(store.createManagedUser({ username, password, companyId: cid, companyRole, tier }))
+  if (email && String(email).trim()) {
+    const user = store.addCompanyMemberByEmail({ companyId: cid, email, companyRole, tier, displayName })
+    sendAccountWelcomeAsync(user.id)
+    return res.json({ user })
+  }
+  return res.status(400).json({ error: 'Add a username (for a password account) or an email (for single sign-on).' })
 }))
 // Company admin: the license + usage dashboard (seats by pool, who holds a
 // license, tier breakdown, minute pool, each person's live usage).
@@ -2297,6 +2338,8 @@ app.post('/api/work/reports/verify', wrap((req, res) => {
 app.get('/api/work/admin/notify', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ notify: store.getNotifySettings() }) }))
 app.post('/api/work/admin/notify', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ notify: store.setNotifySettings(req.body || {}) }) }))
 app.get('/api/work/admin/contacts', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ contacts: store.listContactSubmissions({ limit: Number(req.query.limit) || 300 }) }) }))
+// Every company admin across all companies (operational oversight).
+app.get('/api/work/admin/company-admins', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ admins: store.listAllCompanyAdmins() }) }))
 
 // ---- Editable email templates (superadmin) --------------------------------
 // Every email the product sends is editable here - subject, heading, body and

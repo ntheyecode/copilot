@@ -18,7 +18,7 @@ const COLUMNS = [
   { key: 'mfa', label: '2FA', sortable: false },
   { key: 'actions', label: '', sortable: false },
 ]
-const EMPTY_NEW = { username: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
+const EMPTY_NEW = { username: '', email: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
 
 export default function UsersSection({ isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null, users: [], tiers: [], companies: [] })
@@ -49,17 +49,22 @@ export default function UsersSection({ isSuperAdmin }) {
   const createUser = async (e) => {
     e && e.preventDefault()
     const username = nu.username.trim()
+    const email = (nu.email || '').trim()
     if (username.length < 2) { setCreateMsg({ kind: 'err', text: 'Enter a username (2+ characters).' }); return }
-    if ((nu.password || '').length < 6) { setCreateMsg({ kind: 'err', text: 'Set a password of at least 6 characters.' }); return }
+    if (nu.password && nu.password.length < 6) { setCreateMsg({ kind: 'err', text: 'A password must be at least 6 characters.' }); return }
+    if (!nu.password && !email) { setCreateMsg({ kind: 'err', text: 'Add an email to send a set-password link, or set a password.' }); return }
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setCreateMsg({ kind: 'err', text: 'Enter a valid email address.' }); return }
     setCreating(true); setCreateMsg(null)
     try {
+      // When an email is given, the person is emailed a set-password link (even
+      // if a password was also set here), so they choose their own credential.
       await workAdminApi.createUser({
-        username, password: nu.password,
+        username, ...(nu.password ? { password: nu.password } : {}), ...(email ? { email } : {}),
         companyId: nu.companyId || null,
         companyRole: nu.companyId ? nu.companyRole : undefined,
         tier: nu.tier, free: !!nu.free,
       })
-      setCreateMsg({ kind: 'ok', text: `Created ${username}${nu.companyId ? ` (${nu.companyRole === 'company_admin' ? 'company admin' : nu.companyRole === 'executive' ? 'executive' : 'member'})` : ''}.` })
+      setCreateMsg({ kind: 'ok', text: `Created ${username}${nu.companyId ? ` (${nu.companyRole === 'company_admin' ? 'company admin' : nu.companyRole === 'executive' ? 'executive' : 'member'})` : ''}.${email ? ` A set-password link was emailed to ${email}.` : ''}` })
       setNu(EMPTY_NEW)
       await load()
     } catch (error) {
@@ -190,8 +195,9 @@ export default function UsersSection({ isSuperAdmin }) {
           <h2 style={{ marginTop: 0 }}><UserPlus size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Create a user</h2>
           <p className="desc">Create a WorkCoPilot account. Optionally put them in a company as a member or a <b>company admin</b>, set the tier, and grant free (comped) access so they can use the service without Stripe.</p>
           <div className="wka-formgrid">
-            <div className="wka-field"><label>Username</label><input className="wka-input" value={nu.username} onChange={(e) => setNu((f) => ({ ...f, username: e.target.value }))} placeholder="jordan or jordan@acme.com" autoComplete="off" /></div>
-            <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={nu.password} onChange={(e) => setNu((f) => ({ ...f, password: e.target.value }))} placeholder="at least 6 characters" autoComplete="off" /></div>
+            <div className="wka-field"><label>Username</label><input className="wka-input" value={nu.username} onChange={(e) => setNu((f) => ({ ...f, username: e.target.value }))} placeholder="jordan" autoComplete="off" /></div>
+            <div className="wka-field"><label>Email <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>(sends a set-password link)</span></label><input className="wka-input" type="email" value={nu.email} onChange={(e) => setNu((f) => ({ ...f, email: e.target.value }))} placeholder="jordan@acme.com" autoComplete="off" /></div>
+            <div className="wka-field"><label>Temporary password <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>(optional)</span></label><input className="wka-input" type="text" value={nu.password} onChange={(e) => setNu((f) => ({ ...f, password: e.target.value }))} placeholder="leave blank - they set it from the email" autoComplete="off" /></div>
             <div className="wka-field"><label>Company (optional)</label>
               <select className="wka-select" value={nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyId: e.target.value }))}>
                 <option value="">No company (individual user)</option>

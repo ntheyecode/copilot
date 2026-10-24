@@ -43,6 +43,14 @@ export default function WorkLogin() {
   const [mode, setMode] = useState(plan ? 'signup' : 'signin')
   const [uName, setUName] = useState(''); const [uPass, setUPass] = useState('')
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  const [forgotBusy, setForgotBusy] = useState(false); const [forgotSent, setForgotSent] = useState(false)
+  const doForgot = async () => {
+    const login = (uName.trim() || (typeof window !== 'undefined' ? window.prompt('Enter your username or email and we will send a reset link:') : '') || '').trim()
+    if (!login) return
+    setForgotBusy(true)
+    try { await api.workPasswordForgot(login) } catch { /* same response regardless */ }
+    setForgotBusy(false); setForgotSent(true)
+  }
   // MFA step: when login/signup returns a second-factor requirement we swap the
   // password form for the authenticator gate.
   const [mfa, setMfa] = useState(null)           // { mode:'setup'|'verify', enroll?, username }
@@ -206,6 +214,9 @@ export default function WorkLogin() {
             <input id="wl-pass" name="password" type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} placeholder={mode === 'signup' ? 'choose a password (6+ characters)' : 'your password'} aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
             {err && <div className="wl-err" id="wl-err" role="alert">{err}</div>}
             <button className="wl-cta" type="submit" disabled={busy || checkingOut} aria-busy={busy || checkingOut}>{(busy || checkingOut) ? <Loader2 size={16} className="wl-spin" aria-hidden="true" /> : null} {(busy || checkingOut) ? <span className="wl-sr">Working, please wait. </span> : null}{mode === 'signup' ? 'Create account' : 'Sign in'} <ArrowRight size={16} aria-hidden="true" /></button>
+            {mode === 'signin' && (forgotSent
+              ? <p style={{ textAlign: 'center', fontSize: 13, color: '#0a8f5e', margin: '12px 0 0' }}>If an account exists for that username or email, a reset link is on its way.</p>
+              : <button type="button" onClick={doForgot} disabled={forgotBusy} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 'none', color: '#5b6676', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</button>)}
           </form>
 
           <div className="wl-sso">

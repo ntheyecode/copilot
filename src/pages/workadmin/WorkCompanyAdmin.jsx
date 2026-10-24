@@ -561,11 +561,16 @@ function TeamSection({ meId, onCompany }) {
       } catch (error) { setErr(error) } finally { setBusy(false) }
     } else {
       const username = form.username.trim()
-      if (!username || !form.password) { setErr(new Error('Enter a username and a temporary password.')); return }
+      const email = form.email.trim().toLowerCase()
+      if (!username) { setErr(new Error('Enter a username.')); return }
+      if (!email.includes('@')) { setErr(new Error('Enter the person\'s email so they can set their own password.')); return }
       setBusy(true)
       try {
-        await api.workCompanyCreateUser({ username, password: form.password, companyRole: form.companyRole, tier: form.tier })
-        setOk(`Added ${username}.`); setForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
+        // Password is optional: leave it blank and the person sets their own via
+        // the emailed set-password link (recommended). A password typed here is
+        // honored, but the link is still emailed.
+        await api.workCompanyCreateUser({ username, email, ...(form.password ? { password: form.password } : {}), companyRole: form.companyRole, tier: form.tier })
+        setOk(`Added ${username}. A set-password link was emailed to ${email}.`); setForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
       } catch (error) { setErr(error) } finally { setBusy(false) }
     }
   }
@@ -637,7 +642,8 @@ function TeamSection({ meId, onCompany }) {
             ) : (
               <>
                 <div className="wka-field"><label>Username</label><input className="wka-input" value={form.username} maxLength={60} autoComplete="off" placeholder="e.g. alex" onChange={(e) => setForm({ ...form, username: e.target.value })} /></div>
-                <div className="wka-field"><label>Temporary password</label><input className="wka-input" type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder="at least 6 characters" onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
+                <div className="wka-field"><label>Email <Help text="The person gets a set-password link at this address, so they choose their own password. Required." /></label><input className="wka-input" type="email" value={form.email} maxLength={160} autoComplete="off" placeholder="alex@yourcompany.com" onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
+                <div className="wka-field"><label>Temporary password <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>(optional)</span></label><input className="wka-input" type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder="leave blank - they set it from the email" onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>
               </>
             )}
             <div className="wka-field"><label>Role <Help text="Members just use WorkCoPilot. Executives get the read-only productivity dashboard. Company admins can manage this console (a separate seat pool)." /></label>

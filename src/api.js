@@ -160,6 +160,10 @@ export const api = {
   workComplianceFrameworks: () => req('GET', '/api/work/compliance/frameworks'),
   workComplianceEmail: (id, body) => req('POST', `/api/work/sessions/${id}/compliance/email`, body || {}),
   workContact: (body) => req('POST', '/api/work/contact', body || {}),
+  // Password: validate a set/reset token, set a new password, request a reset link.
+  workPasswordToken: (token) => req('GET', `/api/work/password/token/${encodeURIComponent(token)}`),
+  workPasswordSet: (token, password) => req('POST', '/api/work/password/set', { token, password }),
+  workPasswordForgot: (login) => req('POST', '/api/work/password/forgot', { login }),
   workResearch: (id, question) => req('POST', `/api/work/sessions/${id}/research`, { question: clean(question) }),
   workUsage: () => req('GET', '/api/work/usage'),
   workHeartbeat: (id, seconds) => req('POST', '/api/work/usage/heartbeat', { sessionId: id, seconds }),

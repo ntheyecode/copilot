@@ -116,6 +116,11 @@ function sessionRow(s, nameById) {
 }
 
 import { buildCompanyInvoice } from './company_invoice.js'
+import { sendAccountWelcomeAsync } from './emails.js'
+
+// A strong throwaway password for accounts created without one (the person sets
+// their own via the emailed set-password link).
+function genTempPassword() { return (globalThis.crypto.randomUUID() + globalThis.crypto.randomUUID()).replace(/-/g, '').slice(0, 24) }
 
 export function registerWorkAdminRoutes(app, deps = {}) {
   const { store, requireAuth, requireAdmin, requireSuperAdmin, wrap } = deps
@@ -387,8 +392,14 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   // Create a user (optionally into a company, as member or company_admin).
   // `free: true` grants comped access (use the service without Stripe).
   app.post('/api/work/admin/users', requireAuth, superGate, w((req, res) => {
-    const { username, password, companyId, companyRole, tier, scrub, free } = req.body || {}
-    res.json(store.createManagedUser({ username, password, companyId: companyId || null, companyRole, tier, scrub: !!scrub, free: !!free }))
+    const { username, password, email, companyId, companyRole, tier, scrub, free } = req.body || {}
+    // Every account created by a superadmin is emailed a set-password link (even
+    // when a password was set here), so the person sets their own credential and
+    // the admin never has to hand one out. No password given -> a strong random
+    // one is set and the link is the way in.
+    const user = store.createManagedUser({ username, password: (password && String(password)) || genTempPassword(), email: (email && String(email).trim()) || null, companyId: companyId || null, companyRole, tier, scrub: !!scrub, free: !!free })
+    sendAccountWelcomeAsync(user.id)
+    res.json(user)
   }))
   app.post('/api/work/admin/users/:id/scrub', requireAuth, superGate, w((req, res) => {
     res.json(store.setWorkUserScrub(req.params.id, !!(req.body && req.body.enabled)))
