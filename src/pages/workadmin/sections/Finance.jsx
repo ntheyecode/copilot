@@ -4,7 +4,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { TrendingUp, TrendingDown, RefreshCw, RotateCcw, DollarSign, Activity, CreditCard, Loader2 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, Spinning } from './_shared.jsx'
+import { Loading, ErrorBox, Spinning, ReasonModal } from './_shared.jsx'
 
 const money = (n, cur = 'usd') => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format(Number(n) || 0) } catch { return `$${(Number(n) || 0).toFixed(2)}` } }
 const pct = (cur, prev) => { if (!prev) return cur > 0 ? 100 : 0; return Math.round(((cur - prev) / Math.abs(prev)) * 100) }
@@ -16,6 +16,8 @@ export default function Finance({ isSuperAdmin }) {
   const [txns, setTxns] = useState([])
   const [refunding, setRefunding] = useState('')
   const [msg, setMsg] = useState(null)
+  const [refundTx, setRefundTx] = useState(null)   // transaction pending refund (reason modal)
+  const [refundErr, setRefundErr] = useState(null)
 
   const load = useCallback(async () => {
     setState({ loading: true, error: null })
@@ -26,11 +28,16 @@ export default function Finance({ isSuperAdmin }) {
   }, [])
   useEffect(() => { load() }, [load])
 
-  const refund = async (tx) => {
-    if (!window.confirm(`Refund ${money(tx.amount, tx.currency)} to ${tx.username || 'this account'}? This cannot be undone.`)) return
-    setRefunding(tx.id); setMsg(null)
-    try { const r = await workAdminApi.financeRefund(tx.id); setMsg({ ok: true, text: `Refunded ${money(r.refund.amount, r.refund.currency)}.` }); await load() }
-    catch (e) { setMsg({ ok: false, text: (e && e.message) || 'Could not process the refund.' }) }
+  // Refunds move real money, so they go through the shared ReasonModal (owner
+  // standing rule: capture a reason + log it). The reason is passed to the API.
+  const confirmRefund = async (reason) => {
+    const tx = refundTx
+    setRefunding(tx.id); setMsg(null); setRefundErr(null)
+    try {
+      const r = await workAdminApi.financeRefund(tx.id, undefined, reason)
+      setRefundTx(null)
+      setMsg({ ok: true, text: `Refunded ${money(r.refund.amount, r.refund.currency)}.` }); await load()
+    } catch (e) { setRefundErr(e) }
     finally { setRefunding('') }
   }
 
@@ -105,7 +112,7 @@ export default function Finance({ isSuperAdmin }) {
                     <td style={{ fontWeight: 600, color: t.kind === 'refund' ? '#b45309' : 'var(--wka-ink, #111)' }}>{t.kind === 'refund' ? '-' : ''}{money(t.amount, t.currency)}</td>
                     <td style={{ fontSize: 12.5, color: 'var(--wka-faint)' }}>{t.status}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>{t.kind !== 'refund' && t.stripeId ? (
-                      <button className="wka-btn sm ghost" disabled={refunding === t.id} onClick={() => refund(t)}>{refunding === t.id ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />} Refund</button>
+                      <button className="wka-btn sm ghost" disabled={refunding === t.id} onClick={() => { setRefundErr(null); setRefundTx(t) }}>{refunding === t.id ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />} Refund</button>
                     ) : null}</td>
                   </tr>
                 ))}
@@ -114,6 +121,16 @@ export default function Finance({ isSuperAdmin }) {
           </div>
         )}
       </div>
+      {refundTx ? (
+        <ReasonModal
+          title={`Refund ${money(refundTx.amount, refundTx.currency)}`}
+          message={`Refund ${money(refundTx.amount, refundTx.currency)} to ${refundTx.username || 'this account'}. This moves real money and cannot be undone.`}
+          confirmLabel="Refund"
+          busy={refunding === refundTx.id} error={refundErr}
+          onConfirm={confirmRefund}
+          onCancel={() => { if (refunding !== refundTx.id) setRefundTx(null) }}
+        />
+      ) : null}
       <style>{CSS}</style>
     </div>
   )

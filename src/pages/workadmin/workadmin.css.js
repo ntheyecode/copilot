@@ -244,6 +244,14 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
   .wka-nav-foot { display: none; }
   .wka-main { padding: 20px 16px 40px; }
 }
+
+/* Phone width: let the top bar and its chips wrap instead of overflowing the
+   viewport (the brand + username + role + sign-out used to push off-screen). */
+@media (max-width: 560px) {
+  .wka-top { flex-wrap: wrap; row-gap: 8px; padding: 12px 16px; }
+  .wka-top-right { margin-left: auto; flex-wrap: wrap; justify-content: flex-end; row-gap: 6px; }
+  .wka-h1 { font-size: 19px; }
+}
 `
 
 // ---- formatters -----------------------------------------------------------

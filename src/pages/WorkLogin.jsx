@@ -317,6 +317,9 @@ export default function WorkLogin() {
               {checkingOut ? 'Opening secure checkout' : mode === 'signup' ? (planName ? 'Create account and continue' : 'Create account') : (planName ? 'Log in and continue' : 'Log in')}
               {' '}<ArrowRight size={16} aria-hidden="true" />
             </button>
+            {mode === 'signup' && (
+              <p className="wl-consent">By creating an account you agree to the <a href="/workcopilot/terms">Terms</a> and <a href="/workcopilot/privacy">Privacy Policy</a>.</p>
+            )}
             {planName && !checkingOut && (
               <p className="wl-next"><Lock size={12} aria-hidden="true" /> Next: secure checkout for {planName}. Nothing is charged until you complete it.</p>
             )}
@@ -431,6 +434,8 @@ const CSS = `
 .wl-cta:disabled{opacity:.72;cursor:default;transform:none}
 .wl-next{display:flex;align-items:center;justify-content:center;gap:6px;color:var(--mut);font-size:12.5px;margin:12px 0 0;text-align:center}
 .wl-next svg{color:var(--acc-ink);flex:none}
+.wl-consent{color:var(--mut);font-size:12px;line-height:1.5;margin:12px 0 0;text-align:center}
+.wl-consent a{color:var(--acc-ink);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .wl-forgot{display:block;margin:12px auto 0;background:none;border:none;color:var(--mut);font:inherit;font-size:13px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .wl-forgot:hover{color:var(--acc-ink)}
 .wl-forgot-sent{display:flex;align-items:center;justify-content:center;gap:6px;text-align:center;font-size:13px;color:var(--tx);margin:12px 0 0}

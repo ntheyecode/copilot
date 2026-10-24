@@ -182,7 +182,7 @@ const CARDS = [
   { viz: 'zero', icon: Compass, t: 'Starts from zero', d: 'Opens the right page, signs you in, and walks you to the exact spot. Nothing assumed, nothing skipped.' },
   { viz: 'fix', icon: ShieldCheck, t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix. When a tool\'s UI has changed, it finds the new control and corrects the step instead of pointing at a button that moved.' },
   { viz: 'apps', icon: AppWindow, t: 'Any app, not just the browser', d: 'Guides web apps, installed desktop apps, on-prem consoles at a local address, and your own custom tools. It reads whatever is on screen and fits the real environment.' },
-  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams, read on your computer, the file never leaving, flagging anything in them that is wrong.' },
+  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams, read on your computer - on the desktop app the file never leaves it - flagging anything in them that is wrong.' },
   { viz: 'record', icon: FileText, t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
   { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings.' },
   // Cross-session learning, framed as the BENEFIT (stays current, learns your
@@ -282,7 +282,7 @@ export default function WorkCapabilities() {
 const CSS = `
 .wcap{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
-  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
@@ -299,7 +299,7 @@ const CSS = `
 .wcap-top{display:flex;align-items:center;justify-content:space-between;max-width:1160px;margin:0 auto;padding:18px 24px}
 .wcap-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wcap-hero{max-width:1160px;margin:0 auto;padding:30px 24px 10px;text-align:center}
-.wcap-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
+.wcap-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wcap-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:560px;line-height:1.55}
 @media(max-width:620px){.wcap-hero h1{font-size:28px}.wcap-hero br{display:none}}
 .wcap-grid{max-width:1160px;margin:0 auto;padding:26px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}

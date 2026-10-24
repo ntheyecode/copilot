@@ -35,6 +35,11 @@ const AMBER = '#f5c86b'    // alert
 // identical rendering, plus friendly pets. Keys map to /buddies/<key>.jpg.
 const CHARACTERS = ['bot', 'woman', 'man', 'maya', 'mateo', 'sami', 'ria', 'dog', 'cat', 'fox']
 const PETS = ['dog', 'cat', 'fox']
+// Friendly display names for each character key. Single source (SUPREME RULE II):
+// BuddyPicker imports this instead of keeping its own copy, and AliveBuddy uses it
+// for the accessible label + the missing-asset fallback so neither ever shows the
+// internal key (e.g. "woman" / "man" instead of "Nova" / "Leo").
+const CHARACTER_LABELS = { bot: 'Bot', woman: 'Nova', man: 'Leo', maya: 'Maya', mateo: 'Mateo', sami: 'Sami', ria: 'Ria', dog: 'Dog', cat: 'Cat', fox: 'Fox' }
 
 // Per-state look: the glow color, its strength, and which state-motion class to
 // apply on the motion layer. One-shot motions (jump/pop/shake) carry a flag so
@@ -61,6 +66,7 @@ export default function AliveBuddy({
   title,
 }) {
   const char = CHARACTERS.includes(character) ? character : 'bot'
+  const charName = CHARACTER_LABELS[char] || char
   const st = STATES[state] || STATES.idle
 
   const wrapRef = useRef(null)   // perspective + pointer surface
@@ -167,7 +173,7 @@ export default function AliveBuddy({
     <div
       ref={wrapRef}
       role="img"
-      aria-label={title || `WorkCoPilot buddy (${char})`}
+      aria-label={title || `WorkCoPilot buddy (${charName})`}
       title={title}
       style={{
         position: 'relative',
@@ -211,7 +217,7 @@ export default function AliveBuddy({
                 display: 'grid', placeItems: 'center', width: '100%', height: '100%',
                 color: st.glow, fontWeight: 800, fontSize: px * 0.4,
                 fontFamily: '"Bricolage Grotesque", system-ui, sans-serif',
-              }}>{char.charAt(0).toUpperCase()}</span>
+              }}>{charName.charAt(0).toUpperCase()}</span>
             )}
           </div>
         </div>
@@ -262,7 +268,7 @@ export function surprisePet() {
   } catch { return PETS[Math.floor(Math.random() * PETS.length)] }
 }
 
-export { CHARACTERS, PETS }
+export { CHARACTERS, PETS, CHARACTER_LABELS }
 
 const CHAR_KEY = 'wc.buddy.character'
 

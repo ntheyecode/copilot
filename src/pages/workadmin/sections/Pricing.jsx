@@ -16,7 +16,6 @@ import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
 
 const TIERS = ['lite', 'basic', 'advanced', 'premium']
-const PREMIUM_DAILY_IMAGE_CAP = 5
 
 function num(v) { const n = Number(v); return isFinite(n) ? n : NaN }
 // Normalize a pricing payload from the server into the editable form shape.
@@ -30,6 +29,7 @@ function formFrom(p) {
     tasks: { ...(p.tasks || {}) },
     replans: { ...(p.replans || {}) },
     dailyHours: { ...(p.dailyHours || {}) },
+    imagesPerDay: { ...(p.imagesPerDay || {}) },
   }
 }
 
@@ -68,6 +68,7 @@ export default function Pricing({ isSuperAdmin }) {
     for (const t of TIERS) { const n = num(form.tasks[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     for (const t of TIERS) { const n = num((form.replans || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     for (const t of TIERS) { const n = num((form.dailyHours || {})[t]); if (isNaN(n) || n < 0 || n > 24) return true }
+    for (const t of TIERS) { const n = num((form.imagesPerDay || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     return false
   })()
 
@@ -83,6 +84,7 @@ export default function Pricing({ isSuperAdmin }) {
         tasks: Object.fromEntries(TIERS.map((t) => [t, num(form.tasks[t])])),
         replans: Object.fromEntries(TIERS.map((t) => [t, num((form.replans || {})[t])])),
         dailyHours: Object.fromEntries(TIERS.map((t) => [t, num((form.dailyHours || {})[t])])),
+        imagesPerDay: Object.fromEntries(TIERS.map((t) => [t, num((form.imagesPerDay || {})[t])])),
       }
       const p = await workAdminApi.setPricing(patch)
       const f = formFrom(p)
@@ -132,7 +134,7 @@ export default function Pricing({ isSuperAdmin }) {
             ))}
             <RecRow label="Corporate" value="Unlimited tasks and re-plans" />
             <RecRow label="Bulk minimum" value={`${form.imageMinBulk} images`} />
-            <RecRow label="Premium daily image cap" value={`${PREMIUM_DAILY_IMAGE_CAP} per day (fixed)`} />
+            <RecRow label="Free images per day" value={TIERS.map((t) => `${cap(t)} ${(form.imagesPerDay || {})[t] == null ? '-' : form.imagesPerDay[t]}`).join('  ·  ')} />
           </div>
           <SavedTag show={saved} />
         </div>
@@ -220,16 +222,24 @@ export default function Pricing({ isSuperAdmin }) {
             <span className="hint">Smallest image bundle a user can buy.</span>
           </div>
           <div className="wka-field">
-            <label>Premium daily image cap</label>
-            <input className="wka-input" value={`${PREMIUM_DAILY_IMAGE_CAP} per day`} readOnly disabled />
-            <span className="hint">Fixed product rule, not part of editable pricing.</span>
-          </div>
-          <div className="wka-field">
             <label>Currency</label>
             <input className="wka-input" value={cur} disabled={disabled}
               onChange={(e) => setTop('currency', e.target.value.toLowerCase())} />
           </div>
         </div>
+      </div>
+
+      <div className="wka-panel">
+        <h2>Free images per day, per tier</h2>
+        <p className="desc">How many images each tier may generate for free per day (0 = none). Beyond this daily allowance, images are billed at the per-tier price above. A change here applies to every user immediately. Resets 11:59 PM ET.</p>
+        <div className="wka-grid">{TIERS.map((t) => (
+          <div className="wka-field" key={t}>
+            <label>{cap(t)}</label>
+            <input className="wka-input" type="number" min="0" max="1000" step="1" disabled={disabled}
+              value={(form.imagesPerDay || {})[t] == null ? '' : form.imagesPerDay[t]} onChange={(e) => setField('imagesPerDay', t, e.target.value)} />
+            <span className="hint">free images per day</span>
+          </div>
+        ))}</div>
       </div>
 
       {saveError ? <div style={{ marginBottom: 14 }}><ErrorBox error={saveError} /></div> : null}

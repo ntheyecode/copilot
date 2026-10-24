@@ -4069,7 +4069,7 @@ export function workUserTier(workUserId) {
 // to its built-in default so the page never renders without a hero.
 const HERO_DEFAULT = [
   { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong, keeping you on the next correct step until the job is done. Any task, any field.' },
-  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius pair sits beside you in any app, reads your screen, tells you the exact next move, and corrects you when a step goes wrong.' },
+  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius peer sits beside you in any app, reads your screen, tells you the exact next move, and corrects you when a step goes wrong.' },
   { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
   { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },

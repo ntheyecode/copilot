@@ -153,7 +153,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
         body: JSON.stringify({ ...v, source }),
       })
       const data = await r.json().catch(() => ({}))
-      if (!r.ok) { setFtop(data.error || 'Could not save that - please try again.'); return }
+      if (!r.ok) { setFtop(r.status >= 500 ? 'WorkCoPilot is busy, please try again in a moment.' : (data.error || 'Could not save that - please try again.')); return }
       const stored = { ...v, id: data.id || null, at: Date.now() }
       saveLead(stored); setLead(stored)   // gate cleared for this session -> straight to the live check
     } catch { setFtop('Could not reach us. Check your connection and try again.') }
@@ -170,7 +170,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
         body: JSON.stringify({ question: cleanAlways(question), leadId: lead && lead.id ? lead.id : undefined }),
       })
       const data = await r.json()
-      if (!r.ok) { setErr(data.error || 'Please try again.') }
+      if (!r.ok) { setErr(r.status >= 500 ? 'WorkCoPilot is busy, please try again in a moment.' : (data.error || 'Please try again.')) }
       else {
         setRes(data); setQ('')
         if (data.verdict === 'covered') { setFire(true); setTimeout(() => setFire(false), 1800) }

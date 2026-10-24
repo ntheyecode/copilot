@@ -158,7 +158,7 @@ async function parseDataFile(file) {
   }
 }
 
-import { api } from '../api.js'
+import { api, friendlyError } from '../api.js'
 import AnswerBody from '../components/AnswerBody.jsx'
 import RichText from '../components/RichText.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
@@ -1136,6 +1136,7 @@ function Home({ user, onOpen, onSignOut }) {
   const [delTarget, setDelTarget] = useState(null)  // session pending delete (reason modal)
   const [delReason, setDelReason] = useState('')
   const [delBusy, setDelBusy] = useState(false)
+  const [delErr, setDelErr] = useState('')
   const [ready, setReady] = useState(false)
   const [aiStatus, setAiStatus] = useState(null)   // {ready, platformAllowed, platformReady, ...} for the provisioning message
   const [scoping, setScoping] = useState(false)
@@ -1177,6 +1178,19 @@ function Home({ user, onOpen, onSignOut }) {
   const [invoices, setInvoices] = useState(null) // null = not loaded; [] = none
   const [portalBusy, setPortalBusy] = useState(false)
   const [billErr, setBillErr] = useState('')
+  // Buy credits (extra hours / image credits): a small quantity+price modal
+  // replaces window.prompt, with its own error state (the Home scope had no
+  // setErr, so a checkout failure used to throw a ReferenceError and the button
+  // just went dead).
+  const [buyErr, setBuyErr] = useState('')
+  const [buyModal, setBuyModal] = useState(null)   // { kind: 'hours' | 'images' } | null
+  const [buyQty, setBuyQty] = useState('')
+  // Distinguish "could not load, retry" from a genuine empty / not-provisioned
+  // state so a transient network error never reads as "No sessions yet", a
+  // permanent skeleton, or "AI not provisioned".
+  const [sessErr, setSessErr] = useState(false)
+  const [usageErr, setUsageErr] = useState(false)
+  const [aiErr, setAiErr] = useState(false)
   const goalRef = useRef(null)
 
   useEffect(() => {
@@ -1191,9 +1205,10 @@ function Home({ user, onOpen, onSignOut }) {
   // members are covered by their company, so they have no personal billing here.
   const hasPlan = !!(user && !user.companyId && user.subscription && ['active', 'trialing', 'past_due', 'canceled'].includes(user.subscription.status))
   const load = useCallback(() => {
-    api.workList().then((r) => setSessions(r.sessions || [])).catch(() => {}).finally(() => setSessLoaded(true))
+    setSessErr(false); setUsageErr(false)
+    api.workList().then((r) => { setSessions(r.sessions || []); setSessErr(false) }).catch(() => setSessErr(true)).finally(() => setSessLoaded(true))
     api.workAppStatus().then(setAppStatus).catch(() => {})
-    api.workUsage().then(setUsage).catch(() => {})
+    api.workUsage().then((u) => { setUsage(u); setUsageErr(false) }).catch(() => setUsageErr(true))
     fetch('/api/work/pricing').then((r) => r.json()).then(setPricing).catch(() => {})
     // Is billing actually live? Only then does a free user see the plan chooser.
     api.workSubscription().then((r) => {
@@ -1220,11 +1235,11 @@ function Home({ user, onOpen, onSignOut }) {
   // AI readiness is PROVISIONED (platform key by the superadmin, or a company key
   // by the admin), not self-served by regular users. We just read the status to
   // know whether this account can work, and to show the right provisioning note.
-  useEffect(() => {
-    let alive = true
-    api.workAi().then((r) => { if (!alive) return; setAiStatus(r.status || null); setReady(!!(r.status && r.status.ready)) }).catch(() => {})
-    return () => { alive = false }
+  const loadAi = useCallback(() => {
+    setAiErr(false)
+    return api.workAi().then((r) => { setAiStatus(r.status || null); setReady(!!(r.status && r.status.ready)); setAiErr(false) }).catch(() => setAiErr(true))
   }, [])
+  useEffect(() => { loadAi() }, [loadAi])
   // Company branding is fetched once per signed-in company user; a failed or
   // empty fetch simply leaves the strip hidden (the dashboard never depends on it).
   useEffect(() => {
@@ -1308,33 +1323,60 @@ function Home({ user, onOpen, onSignOut }) {
   const showBilling = hasPlan || (Array.isArray(invoices) && invoices.length > 0)
   const subStatus = (user && user.subscription && user.subscription.status) || 'none'
   const statusCls = subStatus === 'active' || subStatus === 'trialing' ? 'good' : (subStatus === 'past_due' ? 'warn' : '')
-  const PLAN_META = [
-    { id: 'basic', name: 'Basic', hrs: 2 },
-    { id: 'advanced', name: 'Advanced', hrs: 4 },
-    { id: 'premium', name: 'Premium', hrs: 6 },
-  ]
+  // Plans + their daily hours come from the live pricing object (single source)
+  // so the dashboard never drifts from Admin > Pricing. Includes every tier the
+  // server actually prices (Lite included); falls back to the historic set while
+  // pricing is still loading.
+  const PLAN_TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
+  const PLAN_FALLBACK_HRS = { lite: 1, basic: 2, advanced: 4, premium: 6 }
+  const titleCase = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
+  const PLAN_META = (pricing && pricing.plans
+    ? PLAN_TIER_ORDER.filter((t) => pricing.plans[t] != null)
+    : ['basic', 'advanced', 'premium']
+  ).map((id) => ({
+    id,
+    name: titleCase(id),
+    hrs: (pricing && pricing.dailyHours && pricing.dailyHours[id] != null) ? pricing.dailyHours[id] : PLAN_FALLBACK_HRS[id],
+  }))
   // Deletion is accountable: capture a reason before removing. The server logs
   // who / what / when / why to the company admin's user activity log.
   const confirmDelete = async () => {
     if (!delTarget || !delReason.trim()) return
-    setDelBusy(true)
+    setDelBusy(true); setDelErr('')
     try { await api.workDelete(delTarget.id, delReason.trim()); setDelTarget(null); setDelReason(''); load() }
-    catch { /* keep modal open on error */ } finally { setDelBusy(false) }
+    catch (e) { setDelErr(friendlyError(e, 'Could not delete the session. Please try again.')) } finally { setDelBusy(false) }
   }
   const pickCat = (c) => { setGoal(c.sample); setTab('dashboard'); setTimeout(() => goalRef.current && goalRef.current.focus(), 60) }
   // Buy extra hours (or image credits) - priced per your plan in Admin > Pricing,
   // one-time via Stripe. Redirects to secure checkout.
   const [buying, setBuying] = useState(false)
-  const buyCredits = async (kind) => {
-    if (buying) return
-    const label = kind === 'hours' ? 'extra hours' : 'image credits'
-    const q = window.prompt(`How many ${label} would you like to buy?`, kind === 'hours' ? '1' : '10')
-    if (!q) return
-    setBuying(true)
-    try { const r = await api.workBuyCredits(kind, Number(q) || 0); if (r && r.url) window.location.assign(r.url); else setErr('Could not start checkout.') }
-    catch (e) { setErr((e && e.message) || 'Could not start checkout.') } finally { setBuying(false) }
+  // Unit price + any bulk minimum for the buy modal, taken from live pricing for
+  // the user's tier. image credits honor the bulk minimum.
+  const buyTier = (usage && usage.tier) || 'basic'
+  const imageMin = Math.max(1, Number(pricing && pricing.imageMinBulk) || 1)
+  const buyUnit = (kind) => {
+    if (!pricing) return null
+    const v = kind === 'hours' ? (pricing.hour && pricing.hour[buyTier]) : (pricing.image && pricing.image[buyTier])
+    const n = Number(v)
+    return isFinite(n) ? n : null
+  }
+  const buyCredits = (kind) => { setBuyErr(''); setBuyQty(kind === 'hours' ? '1' : String(imageMin)); setBuyModal({ kind }) }
+  const confirmBuy = async () => {
+    if (buying || !buyModal) return
+    const kind = buyModal.kind
+    const qty = Number(buyQty)
+    if (!isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) { setBuyErr('Enter a whole number greater than zero.'); return }
+    if (kind === 'images' && qty < imageMin) { setBuyErr(`The smallest image bundle is ${imageMin}.`); return }
+    setBuying(true); setBuyErr('')
+    try {
+      const r = await api.workBuyCredits(kind, qty)
+      if (r && r.url) { window.location.assign(r.url); return }
+      setBuyErr('Could not start checkout. Please try again.')
+    } catch (e) { setBuyErr(friendlyError(e, 'Could not start checkout. Please try again.')) } finally { setBuying(false) }
   }
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
+  // Server-authoritative daily reset label (do not hardcode the time/zone).
+  const resetLabel = (usage && usage.resetLabel) || '11:59 PM ET'
   const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
   const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || 'Active'
   const low = !!usage && (usage.exhausted || (usage.remainingSeconds != null && usage.remainingSeconds <= 900))
@@ -1360,9 +1402,11 @@ function Home({ user, onOpen, onSignOut }) {
           </nav>
           <div className="wd-top-right">
             {usage == null
-              ? <span className="wd-mins skel" aria-hidden />
+              ? (usageErr
+                  ? <button className="wd-buyhrs" onClick={load} title="Could not load your remaining time. Click to retry."><AlertTriangle size={13} /> Retry</button>
+                  : <span className="wd-mins skel" aria-hidden />)
               : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l"> left</span></span>}
-            {user && !user.companyId && usage != null && (
+            {user && !user.companyId && !isAdmin && usage != null && (
               <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title="Buy extra hours (one-time)"><Plus size={13} /> <span className="wd-mins-l">Buy </span>hours</button>
             )}
             {user && user.canUpgrade && (
@@ -1490,7 +1534,7 @@ function Home({ user, onOpen, onSignOut }) {
                   <span className="ic"><Rocket size={18} /></span>
                   <div>
                     <h3>Choose a plan to start</h3>
-                    <p>Your account is ready. Pick a plan to unlock live guidance. Your plan's hours are daily minutes you can spend anytime across the day - billed per minute you actually use, never by the hour. Change or cancel anytime; the daily allowance resets at 11:59 PM ET.</p>
+                    <p>Your account is ready. Pick a plan to unlock live guidance. Your plan's hours are daily minutes you can spend anytime across the day - billed per minute you actually use, never by the hour. Change or cancel anytime; the daily allowance resets at {resetLabel}.</p>
                   </div>
                 </div>
                 <div className="wd-sub-plans">
@@ -1499,7 +1543,7 @@ function Home({ user, onOpen, onSignOut }) {
                       {p.id === 'advanced' && <span className="tag">Most popular</span>}
                       <span className="nm">{p.name}</span>
                       <span className="pr">{pricing ? money(pricing.plans[p.id]) : ''}<i>/mo</i></span>
-                      <span className="hr">{p.hrs} hours of daily minutes</span>
+                      <span className="hr">{p.hrs} hour{p.hrs === 1 ? '' : 's'} of daily minutes</span>
                       <span className="go">{subBusy === p.id ? <Loader2 size={15} className="spin" /> : <>Choose {p.name} <ArrowRight size={14} /></>}</span>
                     </button>
                   ))}
@@ -1518,7 +1562,7 @@ function Home({ user, onOpen, onSignOut }) {
                 <span className="ic"><Zap size={18} /></span>
                 <div>
                   <h3>{usage && usage.exhausted ? 'You are out of time for today' : 'Add more guidance time'}</h3>
-                  <p>Your daily minutes reset at <b>11:59 PM ET</b>. Purchased top-up time never expires and stacks on top of your plan. To add time to your account now, ask your administrator. We count time only while WorkCoPilot is actively guiding you, so pausing keeps it in reserve.</p>
+                  <p>Your daily minutes reset at <b>{resetLabel}</b>. Purchased top-up time never expires and stacks on top of your plan. To add time to your account now, ask your administrator. We count time only while WorkCoPilot is actively guiding you, so pausing keeps it in reserve.</p>
                 </div>
                 <button className="x" title="Dismiss" aria-label="Dismiss" onClick={() => setShowBuy(false)}><X size={16} /></button>
               </div>
@@ -1528,6 +1572,14 @@ function Home({ user, onOpen, onSignOut }) {
                 the superadmin sets the platform key; a company admin sets the
                 company key when AdmireVeda requires it. A regular user whose AI is
                 not ready sees a provisioning note, not a key form. */}
+            {!ready && aiErr && !aiStatus && (
+              <div className="wd-setup">
+                <div className="wd-setup-note">
+                  <span className="wd-ic warm"><AlertTriangle size={15} /></span>
+                  We could not check your AI status just now. <button type="button" className="wd-link" onClick={() => loadAi()} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}>Retry</button>
+                </div>
+              </div>
+            )}
             {!ready && aiStatus && (
               <div className="wd-setup">
                 <div className="wd-setup-note">
@@ -1602,6 +1654,14 @@ function Home({ user, onOpen, onSignOut }) {
                   {[0, 1].map((i) => (
                     <div key={i} className="wd-skel"><i className="w1" /><i className="w2" /><i className="w3" /></div>
                   ))}
+                </div>
+              ) : sessErr ? (
+                <div className="wd-empty">
+                  <span className="ic"><AlertTriangle size={20} /></span>
+                  <div>
+                    <b>Could not load your sessions</b>
+                    <p>This looks like a connection hiccup, not an empty list. <button type="button" className="wd-link" onClick={load} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}>Try again</button></p>
+                  </div>
                 </div>
               ) : sessions.length === 0 ? (
                 <div className="wd-empty">
@@ -1690,13 +1750,46 @@ function Home({ user, onOpen, onSignOut }) {
             <label htmlFor="wd-delreason">Why are you deleting it? <span className="req">required</span></label>
             <textarea id="wd-delreason" rows={3} value={delReason} onChange={(e) => setDelReason(e.target.value)} placeholder="e.g. duplicate, created by mistake, task no longer needed" autoFocus />
             <div className="wd-modal-note">This is recorded in your company's user activity log: who deleted it, when, the reason, and what the session was about.</div>
+            {delErr && <div className="wd-note warn" role="alert" style={{ marginTop: 12 }}><AlertTriangle size={15} /> <span>{delErr}</span></div>}
             <div className="wd-modal-btns">
-              <button className="btn btn-ghost" onClick={() => setDelTarget(null)} disabled={delBusy}>Cancel</button>
+              <button className="btn btn-ghost" onClick={() => { setDelTarget(null); setDelErr('') }} disabled={delBusy}>Cancel</button>
               <button className="btn btn-danger" onClick={confirmDelete} disabled={delBusy || !delReason.trim()}>{delBusy ? <Loader2 size={14} className="spin" /> : <Trash2 size={14} />} Delete session</button>
             </div>
           </div>
         </div>
       )}
+      {buyModal && (() => {
+        const kind = buyModal.kind
+        const unit = buyUnit(kind)
+        const qtyN = Number(buyQty)
+        const validQty = isFinite(qtyN) && qtyN > 0 && Number.isInteger(qtyN)
+        const total = (unit != null && validQty) ? unit * qtyN : null
+        const noun = kind === 'hours' ? 'extra hour' : 'image credit'
+        return (
+          <div className="wd-modal-ov" onClick={() => !buying && setBuyModal(null)}>
+            <div className="wd-modal" onClick={(e) => e.stopPropagation()}>
+              <h3 style={{ color: 'inherit' }}><Zap size={17} style={{ color: 'var(--em)' }} /> Buy {kind === 'hours' ? 'extra hours' : 'image credits'}</h3>
+              <p style={{ fontSize: 13.5, color: 'var(--mut)', margin: '0 0 14px', lineHeight: 1.5 }}>
+                One-time purchase, priced for your {titleCase(buyTier)} plan. {kind === 'hours' ? 'Purchased hours never expire and stack on top of your daily allowance.' : `Purchased image credits never expire. Smallest bundle: ${imageMin}.`}
+              </p>
+              <label htmlFor="wd-buyqty">How many {noun}{qtyN === 1 ? '' : 's'}? <span className="req">required</span></label>
+              <input id="wd-buyqty" type="number" min={kind === 'images' ? imageMin : 1} step="1" value={buyQty}
+                onChange={(e) => { setBuyErr(''); setBuyQty(e.target.value.replace(/[^0-9]/g, '')) }}
+                autoFocus
+                style={{ width: '100%', background: 'var(--field)', border: '1px solid var(--line)', borderRadius: 11, padding: '11px', color: 'var(--tx)', font: 'inherit', fontSize: 14, outline: 'none' }} />
+              <div className="wd-modal-note" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
+                <span>Unit price: <b>{unit != null ? money(unit) : '—'}</b>{kind === 'hours' ? ' / hour' : ' / image'}</span>
+                <span>Total: <b>{total != null ? money(total) : '—'}</b></span>
+              </div>
+              {buyErr && <div className="wd-note warn" role="alert" style={{ marginTop: 12 }}><AlertTriangle size={15} /> <span>{buyErr}</span></div>}
+              <div className="wd-modal-btns">
+                <button className="btn btn-ghost" onClick={() => setBuyModal(null)} disabled={buying}>Cancel</button>
+                <button className="btn btn-primary" onClick={confirmBuy} disabled={buying || !validQty}>{buying ? <Loader2 size={14} className="spin" /> : <ArrowRight size={14} />} Continue to checkout</button>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -2535,7 +2628,7 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
   const build = async () => {
     setBusy(true); setErr('')
     try { const r = await api.workDeliverables(sessionId, frames); if (r && r.deliverables) setResult(r); else setErr('No result came back. Try again.') }
-    catch (e) { setErr((e && e.message) || 'Could not build this. Try again.') }
+    catch (e) { setErr(friendlyError(e, 'Could not build this. Try again.')) }
     finally { setBusy(false) }
   }
   const copy = async (which, text) => { try { await navigator.clipboard.writeText(text || ''); setCopied(which); setTimeout(() => setCopied(''), 1500) } catch { /* clipboard blocked */ } }
@@ -2699,7 +2792,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const applyUsage = (u) => { setUsage(u); if (u && u.remainingSeconds > 900) setDismissedLow(false) }   // re-arm the warning after buying more
   const refreshUsage = useCallback(async () => { try { applyUsage(await api.workUsage()) } catch {} }, [])
   useEffect(() => { refreshUsage() }, [refreshUsage])
-  const outOfMinutes = () => { if (usage && usage.exhausted) { setErr('Out of minutes for today. Buy more time, or it resets at 11:59 PM ET.'); return true } return false }
+  const outOfMinutes = () => { if (usage && usage.exhausted) { setErr(`Out of minutes for today. Buy more time, or it resets at ${(usage && usage.resetLabel) || '11:59 PM ET'}.`); return true } return false }
 
   // Plan-heavy, watch-light: FORCED by us for Premium users (both company and
   // regular), never chosen here. The flag rides on the user profile loaded from
@@ -2936,7 +3029,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       photoFrameRef.current = null; setPhotoFrame(null)   // a live stream supersedes a one-shot photo
       setCapturing(true)
       return true
-    } catch (e) { setErr(e.message || 'Could not start capture. Allow screen or camera access.'); return false }
+    } catch (e) { setErr(friendlyError(e, 'Could not start capture. Allow screen or camera access.')); return false }
   }
 
   // Desktop multi-monitor: when the watched monitor is switched (the picker or
@@ -3005,7 +3098,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         setTimeout(() => { startWatching() }, 150)
       }
     } catch (e) {
-      setErr(e.message || 'Could not build the plan')
+      setErr(friendlyError(e, 'Could not build the plan'))
       if (e && e.timedOut) refresh()   // pick up a plan that landed after we stopped waiting
     } finally { setBusy(false) }
   }
@@ -3052,7 +3145,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.done) { setWatching(false); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null } }
     } catch (e) {
       // A vision/runtime error should stop the loop and say why, not spin silently.
-      setErr(e.message || 'Watch failed'); setWatching(false)
+      setErr(friendlyError(e, 'Watch failed')); setWatching(false)
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     } finally { busyTickRef.current = false }
   }, [sessionId])
@@ -3085,7 +3178,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
       if (r.observation) setObservation(r.observation)
       setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
-    } catch (e) { setErr(e.message || 'Could not refresh the screen') } finally { setBusy(false) }
+    } catch (e) { setErr(friendlyError(e, 'Could not refresh the screen')) } finally { setBusy(false) }
   }
   // Re-plan with a reason, keeping progress (continue from here) or from scratch.
   const confirmReplan = async () => {
@@ -3119,10 +3212,17 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // separate "Watch me" - guiding watches by default.
   const togglePause = async () => {
     const np = !paused
-    setPaused(np)
-    try { await api.workPause(sessionId, np) } catch { /* ignore */ }
-    if (np) pauseWatching()
-    else startWatching()
+    setPaused(np); setErr('')
+    try {
+      await api.workPause(sessionId, np)
+      // Only change the watch loop once the server actually recorded the state,
+      // so the UI can never show "Paused" while the server thinks it is running.
+      if (np) pauseWatching()
+      else startWatching()
+    } catch (e) {
+      setPaused(!np)   // revert the optimistic toggle
+      setErr(friendlyError(e, np ? 'Could not pause. Please try again.' : 'Could not resume. Please try again.'))
+    }
   }
   // Guiding watches by default - no "Watch me" button. Start watching once when a
   // planned, unpaused, active session is open and nothing is watching yet. (A
@@ -3171,7 +3271,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const frame = await prepFrame(capturing ? grabFrame() : (photoFrameRef.current || null))
       const r = await api.workAsk(sessionId, { question: q, frame })
       noteStrong(r); setAnswer(r.answer || ''); if (typeof qText !== 'string') setQuestion('')
-    } catch (e) { setErr(e.message || 'Could not answer') } finally { setBusy(false) }
+    } catch (e) { setErr(friendlyError(e, 'Could not answer')) } finally { setBusy(false) }
   }
 
   // Add context MID-TASK: a typed note, a text document, and/or an uploaded image
@@ -3192,7 +3292,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setAnswer(r.answer || '')
       if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
       setQuestion('')
-    } catch (e) { setErr(e.message || 'Could not add that') } finally { setBusy(false) }
+    } catch (e) { setErr(friendlyError(e, 'Could not add that')) } finally { setBusy(false) }
   }
   // Attach handler shared by the console + float: read the file, then send it with
   // whatever note is typed. Surfaces an inline error for an unreadable/unsupported
@@ -3232,7 +3332,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           setFlags(w.flag ? [{ t: Date.now(), text: w.flag }] : [])
         } catch { /* the answer already showed; a nav refresh failure is non-fatal */ }
       }
-    } catch (e) { setErr(e.message || 'Could not analyze the screen') } finally { setBusy(false) }
+    } catch (e) { setErr(friendlyError(e, 'Could not analyze the screen')) } finally { setBusy(false) }
   }
 
   // Research = user-triggered web lookup, then a current answer. Only runs when
@@ -3242,7 +3342,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     if (outOfMinutes()) return
     setBusy(true); setErr(''); setAnswer('')
     try { const r = await api.workResearch(sessionId, q); setAnswer(r.answer || '') }
-    catch (e) { setErr(e.message || 'Could not research') } finally { setBusy(false) }
+    catch (e) { setErr(friendlyError(e, 'Could not research')) } finally { setBusy(false) }
   }
 
   // Get the RESULT: hand back the actual answer for the goal, not the next step.
@@ -3377,7 +3477,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     setComputeFile(null); setComputeOut(null); setComputeErr(''); setComputeNeed('')
   }
 
-  const setStep = async (i, st) => { try { const r = await api.workStep(sessionId, i, st); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) } catch {} }
+  const setStep = async (i, st) => {
+    setErr('')
+    try { const r = await api.workStep(sessionId, i, st); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
+    catch (e) { setErr(friendlyError(e, 'Could not update that step. Please try again.')) }
+  }
   // Prev / Next navigation of the current step (moves the pointer, does not mark
   // done). Shared by the main card header and the floating overlay.
   const navStep = async (dir) => {
@@ -3386,7 +3490,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     const base = curIdx >= 0 ? curIdx : Math.min(sess?.currentStep || 0, steps.length - 1)
     const target = base + dir
     if (target < 0 || target >= steps.length) return
-    try { const r = await api.workCurrentStep(sessionId, target); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) } catch {}
+    setErr('')
+    try { const r = await api.workCurrentStep(sessionId, target); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
+    catch (e) { setErr(friendlyError(e, 'Could not move to that step. Please try again.')) }
   }
 
   // "How?" drill-down: expand one action (a plan step or the live guidance) into
@@ -3425,7 +3531,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const finalize = async () => {
     setBusy(true)
     try { const r = await api.workFinalize(sessionId); setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture() }
-    catch (e) { setErr(e.message || 'Could not finalize') } finally { setBusy(false) }
+    catch (e) { setErr(friendlyError(e, 'Could not finalize')) } finally { setBusy(false) }
   }
   // End flow: show a finishing animation, run finalize, then a completion message
   // with a clear "Back to plan" navigation.
@@ -3435,7 +3541,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const r = await waitFor(api.workFinalize(sessionId), 'Finishing is taking longer than expected. Your session is saved; press End again in a moment.')
       setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture(); setEndState('done')
     } catch (e) {
-      setErr(e.message || 'Could not finalize'); setEndState(null)
+      setErr(friendlyError(e, 'Could not finalize')); setEndState(null)
       if (e && e.timedOut) refresh()
     }
   }
@@ -3555,7 +3661,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
         {usage && usage.exhausted && (
           <div className="wc-banner danger">
-            <AlertTriangle size={16} /> <span className="fill">You are out of minutes for today. Buy more time, or it resets at 11:59 PM ET.</span>
+            <AlertTriangle size={16} /> <span className="fill">You are out of minutes for today. Buy more time, or it resets at {(usage && usage.resetLabel) || '11:59 PM ET'}.</span>
           </div>
         )}
         {usage && !usage.exhausted && usage.remainingSeconds <= 900 && !dismissedLow && (

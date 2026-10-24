@@ -325,7 +325,7 @@ function styles(c, wide = true, fs = 1) {
   const z = (n) => Math.round(n * fs * 10) / 10
   return {
     root: { minHeight: '100vh', background: c.bg, color: c.text, fontFamily: '"Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column' },
-    topbar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, padding: wide ? '12px 24px' : '10px 14px', borderBottom: `1px solid ${c.border}`, background: c.panel2, flexWrap: 'nowrap' },
+    topbar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, rowGap: 8, padding: wide ? '12px 24px' : '10px 14px', borderBottom: `1px solid ${c.border}`, background: c.panel2, flexWrap: wide ? 'nowrap' : 'wrap' },
     dot: (col) => ({ width: 9, height: 9, borderRadius: '50%', background: col, boxShadow: `0 0 10px ${col}`, flex: '0 0 auto' }),
     brand: { fontFamily: '"Bricolage Grotesque", "Figtree", sans-serif', fontWeight: 700, fontSize: 16, letterSpacing: '-0.01em' },
     subtle: { fontSize: 12.5, color: c.faint, marginLeft: 4 },

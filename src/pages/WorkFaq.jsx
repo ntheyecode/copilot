@@ -55,7 +55,7 @@ const GROUPS = [
         d: 'If a value looks risky, such as an open network range, an over-broad permission or a hard-coded secret, it flags it before you save. If a tool has changed and a button has moved, it finds the new control and corrects the step.' },
       { q: 'Can I attach documents, screenshots or error messages in the middle of a task?',
         a: 'Yes. You can attach a screenshot, a photo, a document or pasted text mid-task, and WorkCoPilot reads it and adjusts the plan if the path has changed.',
-        d: 'On the Advanced and Premium plans you can also upload your own reference documents and diagrams. They are read on your computer and used to ground your steps, and the file itself never leaves your device.',
+        d: 'On the Advanced and Premium plans you can also upload your own reference documents and diagrams. They are read on your computer and used to ground your steps; on the desktop app the file itself never leaves your device.',
         links: [{ label: 'Compare plans', href: '/workcopilot/pricing' }] },
       { q: 'Do I get a record of what I did?',
         a: 'Yes. Every session ends with a clean write-up of exactly what you did, with redacted milestone screenshots, plus an audit log of what was sent.',
@@ -89,7 +89,7 @@ const GROUPS = [
     id: 'security', n: '04', title: 'Security and privacy',
     items: [
       { q: 'Is my data safe? What actually leaves my device?',
-        a: 'Sensitive data such as personal data, health data, secrets, keys and card numbers is stripped or tokenized on your own device before anything is sent, and only what is needed to guide the current step leaves.',
+        a: 'When data protection is on, sensitive data such as personal data, health data, secrets, keys and card numbers is stripped or tokenized on your own device before anything is sent, and only what is needed to guide the current step leaves.',
         d: 'What leaves is a reduced-size screen frame with sensitive lines blacked out, and the governed text with sensitive values replaced by tokens. The real values stay on your device and the answer is rebuilt there. The Security page shows real before-and-after examples.',
         links: [{ label: 'See the data protection in action', href: '/workcopilot/security' }, { label: 'Privacy Policy', href: '/workcopilot/privacy' }] },
       { q: 'Can WorkCoPilot change anything in my systems?',
@@ -118,16 +118,17 @@ const GROUPS = [
     id: 'pricing', n: '05', title: 'Pricing and billing',
     items: [
       { q: 'How much does WorkCoPilot cost?',
-        a: 'WorkCoPilot plans are Basic at $99, Advanced at $299 and Premium at $399 per month, each with a set number of hours of live guidance every day, and Enterprise is custom-priced.',
-        d: 'The pricing page compares every plan side by side. Final prices and entitlements are confirmed at checkout, and taxes may apply by location.',
+        a: 'WorkCoPilot has four self-service plans - Lite, Basic, Advanced and Premium - each with a set number of hours of live guidance every day, plus a custom-priced Enterprise plan.',
+        d: 'The pricing page shows the current price for each plan side by side. Final prices and entitlements are confirmed at checkout, and taxes may apply by location.',
         links: [{ label: 'See the full plan comparison', href: '/workcopilot/pricing' }] },
       { q: 'What is included in every plan?',
-        a: 'Every plan includes step-by-step guidance on any task, exact commands and code, roadmaps and diagrams, the floating guide and session write-up, security on every plan, and browser, desktop and mobile on one subscription.',
-        d: 'Higher plans add more daily hours and tasks, priority in the guidance queue, uploading your own documents, and generated visuals.',
+        a: 'Every plan includes step-by-step guidance on any task, the exact commands, code and links, security on every plan, and browser, desktop and mobile on one subscription.',
+        d: 'Lite is the entry plan for a single simple task at a time. Basic adds roadmaps, the floating guide and a session write-up; Advanced adds uploading your own documents and more daily hours and tasks; Premium adds generated visuals and diagrams, and priority in the guidance queue.',
         links: [{ label: 'Compare plans', href: '/workcopilot/pricing' }] },
       { q: 'What happens if I run out of hours for the day?',
-        a: 'You can top up extra guided hours at $10 per hour on any plan, and purchased time never expires.',
-        d: 'Your daily allowance resets each evening, US Eastern time. Pause anytime and come back right where you left off.' },
+        a: 'You can top up extra guided hours whenever you need, and purchased time never expires.',
+        d: 'The per-hour top-up rate depends on your plan and is shown on the pricing page and confirmed at checkout. Your daily allowance resets each evening, US Eastern time. Pause anytime and come back right where you left off.',
+        links: [{ label: 'See pricing', href: '/workcopilot/pricing' }] },
       { q: 'Can I cancel anytime? Is there a contract?',
         a: 'Yes. You cancel yourself from the billing portal at any time, with no contract and no call needed, and your plan stays active until the end of the period you have already paid for.',
         d: 'Cancelling does not delete your sessions on its own; you can delete them whenever you like.',
@@ -136,7 +137,7 @@ const GROUPS = [
         a: 'Plans are billed monthly, and annual billing at a discount may be available at checkout.',
         d: 'Enterprise billing is set per agreement.' },
       { q: 'Is there a plan for teams and companies?',
-        a: 'Basic, Advanced and Premium are single-user plans; for seat pools, SSO, a company-wide redaction policy, a DPA and a priority SLA, Enterprise is the plan.',
+        a: 'Lite, Basic, Advanced and Premium are single-user plans; for seat pools, SSO, a company-wide redaction policy, a DPA and a priority SLA, Enterprise is the plan.',
         d: `Write to ${SALES} and we reply within one business day.`,
         links: [{ label: 'Contact sales', href: `mailto:${SALES}?subject=WorkCoPilot%20Enterprise` }] },
       { q: 'How do I pay?',
@@ -267,7 +268,7 @@ const FAQ_LD = JSON.stringify({
 
 const GLANCE = [
   { icon: ScanEye, tone: 'ok', eyebrow: 'Read-only', title: 'It guides. You stay in control.', body: 'WorkCoPilot watches your screen and tells you the exact next step. It never clicks, types or runs anything in your systems.' },
-  { icon: Lock, tone: 'cyan', eyebrow: 'Private by design', title: 'Sensitive data never leaves in clear', body: 'Personal data, health data, secrets and keys are stripped or tokenized on your own device before anything is sent.' },
+  { icon: Lock, tone: 'cyan', eyebrow: 'Private by design', title: 'Sensitive data never leaves in clear', body: 'When data protection is on, personal data, health data, secrets and keys are stripped or tokenized on your own device before anything is sent.' },
   { icon: RefreshCw, tone: 'violet', eyebrow: 'Stays current', title: 'Learns your tools, beats stale AI knowledge', body: 'It learns the current way your tools work and carries it forward, and researches the latest live, so it is not stuck on an AI\'s training cutoff.' },
 ]
 
@@ -415,7 +416,7 @@ export default function WorkFaq() {
 const CSS = `
 .wfq{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;--vi:#6d4bd8;
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
-  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
@@ -433,7 +434,7 @@ const CSS = `
 /* hero */
 .wfq-hero{max-width:1160px;margin:0 auto;padding:30px 24px 8px;text-align:center}
 .wfq-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#0f7f58;background:#e3fbf0;border:1px solid rgba(15,127,88,.22);border-radius:999px;padding:5px 13px}
-.wfq-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:16px 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
+.wfq-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:16px 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wfq-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:620px;line-height:1.55}
 /* search: a single quiet field with a mono "shown / total" readout */
 .wfq-search{display:flex;align-items:center;gap:10px;max-width:620px;margin:22px auto 0;background:#fff;border:1px solid var(--line-strong);border-radius:14px;padding:6px 8px 6px 14px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.18);text-align:left}
@@ -462,7 +463,7 @@ const CSS = `
 .wfq-art{min-width:0;background:#fff;border:1px solid var(--line);border-radius:18px;padding:6px 30px 18px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wfq-grp{padding:26px 0 10px;border-top:1px solid var(--line);scroll-margin-top:18px}
 .wfq-grp:first-child{border-top:0}
-.wfq-grp h2{display:flex;align-items:baseline;gap:12px;font-size:22px;margin:0 0 6px;letter-spacing:-.01em;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
+.wfq-grp h2{display:flex;align-items:baseline;gap:12px;font-size:22px;margin:0 0 6px;letter-spacing:-.01em;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wfq-grp h2 .wfq-n{font-size:12px;color:#0f7f58}
 /* one Q&A row: mono number in the gutter, question + direct answer + detail */
 .wfq-qa{display:grid;grid-template-columns:52px minmax(0,1fr);gap:4px 14px;padding:18px 0 20px;border-top:1px dashed rgba(10,13,18,.12);scroll-margin-top:18px}
@@ -471,7 +472,7 @@ const CSS = `
 .wfq-qa:hover .wfq-qnum,.wfq-qa:target .wfq-qnum{color:#0f7f58}
 .wfq-qa:target{background:linear-gradient(90deg,rgba(140,245,196,.18),transparent 60%);margin:0 -14px;padding-left:14px;padding-right:14px;border-radius:12px}
 .wfq-qbody{min-width:0}
-.wfq-qa h3{display:flex;align-items:flex-start;gap:8px;font-size:17px;line-height:1.35;margin:0 0 10px;letter-spacing:-.01em;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600;overflow-wrap:anywhere}
+.wfq-qa h3{display:flex;align-items:flex-start;gap:8px;font-size:17px;line-height:1.35;margin:0 0 10px;letter-spacing:-.01em;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;overflow-wrap:anywhere}
 .wfq-anchor{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;margin-top:1px;border-radius:6px;color:var(--dim);opacity:0;transition:opacity .2s,color .2s}
 .wfq-qa:hover .wfq-anchor,.wfq-anchor:focus-visible{opacity:1}
 .wfq-anchor:hover{color:var(--cy)}
@@ -491,7 +492,7 @@ const CSS = `
 .wfq-cta{max-width:1160px;margin:0 auto;padding:14px 24px 56px}
 .wfq-cta-in{display:flex;align-items:center;justify-content:space-between;gap:24px;flex-wrap:wrap;background:#fff;border:1px solid var(--line);border-radius:18px;padding:24px 28px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wfq-cta-copy{min-width:0;flex:1 1 320px}
-.wfq-cta-copy h2{font-size:24px;margin:12px 0 6px;letter-spacing:-.015em;font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
+.wfq-cta-copy h2{font-size:24px;margin:12px 0 6px;letter-spacing:-.015em;font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wfq-cta-copy p{margin:0;color:var(--mut);font-size:14.5px;line-height:1.55;overflow-wrap:anywhere}
 .wfq-cta-btns{display:flex;gap:10px;flex-wrap:wrap}
 .wfq-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6)}

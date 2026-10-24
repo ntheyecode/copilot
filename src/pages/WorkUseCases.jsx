@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
+import { OWNERSHIP_LINE } from '../components/LegalPage.jsx'   // single source of truth for the ownership line (correct legal entity)
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
@@ -139,7 +140,16 @@ export default function WorkUseCases() {
       <footer className="uc-foot">
         <div className="uc-wrap uc-foot-in">
           <AdmireVedaLogo size={22} idSuffix="ucf" />
-          <span>&copy; {new Date().getFullYear()} AdmireVeda &middot; WorkCoPilot is a product of AdmireVeda</span>
+          <span>&copy; {new Date().getFullYear()} COE Security LLC &middot; {OWNERSHIP_LINE}</span>
+          <nav className="uc-foot-links" aria-label="Footer">
+            <a href="/workcopilot/pricing">Pricing</a>
+            <a href="/workcopilot/security">Security</a>
+            <a href="/workcopilot/privacy">Privacy</a>
+            <a href="/workcopilot/terms">Terms</a>
+            <a href="/workcopilot/refund">Refunds</a>
+            <a href="/workcopilot/dpa">DPA</a>
+            <a href="/workcopilot/contact">Contact</a>
+          </nav>
         </div>
       </footer>
       <LiveValidate theme="light" source="use-cases" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
@@ -304,6 +314,9 @@ const CSS = `
 .uc-foot{border-top:1px solid var(--line);padding:26px 0}
 .uc-foot-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .uc-foot-in span{color:var(--mut);flex:1;font-size:13px}
+.uc-foot-links{display:flex;flex-wrap:wrap;gap:8px 16px}
+.uc-foot-links a{color:var(--mut);font-size:13px;font-weight:600;text-decoration:none}
+.uc-foot-links a:hover{color:var(--tx)}
 
 @media(max-width:860px){
  .uc-case-in{grid-template-columns:1fr;gap:28px}

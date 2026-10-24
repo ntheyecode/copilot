@@ -74,9 +74,9 @@ export const workAdminApi = {
   // refunds, and accounting-role management.
   financeSummary: () => request('GET', '/api/work/admin/finance/summary'),
   financeTransactions: (q) => request('GET', `/api/work/admin/finance/transactions${q ? `?${q}` : ''}`),
-  financeRefund: (txId, amount) => request('POST', `/api/work/admin/finance/transactions/${encodeURIComponent(txId)}/refund`, amount != null ? { amount } : {}),
+  financeRefund: (txId, amount, reason) => request('POST', `/api/work/admin/finance/transactions/${encodeURIComponent(txId)}/refund`, { ...(amount != null ? { amount } : {}), ...(reason ? { reason } : {}) }),
   financeStaff: () => request('GET', '/api/work/admin/finance/staff'),
-  financeSetRole: (userId, role) => request('POST', '/api/work/admin/finance/role', { userId, role }),
+  financeSetRole: (userId, role, reason) => request('POST', '/api/work/admin/finance/role', { userId, role, ...(reason ? { reason } : {}) }),
 
   // Notification recipients (Contact Us + leads) + thank-you toggle.
   getNotify: () => request('GET', '/api/work/admin/notify'),
@@ -110,14 +110,16 @@ export const workAdminApi = {
   testAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/test`),
   // Make a configured provider the active/primary platform runtime.
   activateAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/activate`),
-  // Remove a provider's key (active hands off to another configured one).
-  clearAiProvider: (id) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}`),
+  // Remove a provider's key (active hands off to another configured one). A
+  // reason is captured by the UI confirm and sent when present (logged); the
+  // no-reason call stays byte-identical for backward compatibility.
+  clearAiProvider: (id, reason) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}`, reason ? { reason } : undefined),
   // Key POOL: add another key (load spreads round-robin) or remove one by index.
   addAiProviderKey: (id, apiKey) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/keys`, { apiKey }),
-  removeAiProviderKey: (id, index) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/keys/${encodeURIComponent(index)}`),
+  removeAiProviderKey: (id, index, reason) => request('DELETE', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/keys/${encodeURIComponent(index)}`, reason ? { reason } : undefined),
   // CUSTOM provider: add any OpenAI-compatible endpoint, or remove one.
   addCustomProvider: (body) => request('POST', '/api/work/admin/ai/custom', body || {}),
-  removeCustomProvider: (id) => request('DELETE', `/api/work/admin/ai/custom/${encodeURIComponent(id)}`),
+  removeCustomProvider: (id, reason) => request('DELETE', `/api/work/admin/ai/custom/${encodeURIComponent(id)}`, reason ? { reason } : undefined),
 
   // Plan-heavy / watch-light: superadmin forces it ON for premium users (our model;
   // users have no control). GET readable by any admin; POST superadmin-only.
@@ -135,9 +137,9 @@ export const workAdminApi = {
   // superadmin). Returns { configured, provider, keyMasked, setAt, envFallback };
   // send apiKey:'' to clear. Never returns the raw key.
   getWebSearch: () => request('GET', '/api/work/admin/web-search'),
-  setWebSearch: (apiKey, provider) => request('POST', '/api/work/admin/web-search', { apiKey, provider }),
+  setWebSearch: (apiKey, provider, reason) => request('POST', '/api/work/admin/web-search', { apiKey, provider, ...(reason ? { reason } : {}) }),
   // A company's own web-search key (superadmin). apiKey:'' clears.
-  companyWebSearch: (id, apiKey, provider) => request('POST', `/api/work/admin/companies/${id}/web-search`, { apiKey, provider }),
+  companyWebSearch: (id, apiKey, provider, reason) => request('POST', `/api/work/admin/companies/${id}/web-search`, { apiKey, provider, ...(reason ? { reason } : {}) }),
 
   // Best + cheapest model recommendation across configured providers (cached,
   // daily). refresh:true forces a live recompute. Shape: { at, providers:[...],
@@ -154,7 +156,7 @@ export const workAdminApi = {
   company: (id) => request('GET', `/api/work/admin/companies/${id}`),
   updateCompany: (id, patch) => request('PATCH', `/api/work/admin/companies/${id}`, patch),
   companyScrub: (id, enabled) => request('POST', `/api/work/admin/companies/${id}/scrub`, { enabled: !!enabled }),
-  companyAiKeys: (id, body) => request('POST', `/api/work/admin/companies/${id}/ai-keys`, body || {}),
+  companyAiKeys: (id, body) => request('POST', `/api/work/admin/companies/${id}/ai-keys`, body || {}),  // clearing passes { apiKey:'', reason }
   companyConsumption: (id) => request('GET', `/api/work/admin/companies/${id}/consumption`),
   // License + usage dashboard for one company (seat pools, per-tier allocation,
   // minute pool, AI readiness, each member's usage).
@@ -201,7 +203,7 @@ export const workAdminApi = {
   // charge; cancel ends the subscription (atPeriodEnd keeps it to period end).
   userInvoices: (id) => request('GET', `/api/work/admin/users/${id}/invoices`),
   refundUser: (id, body) => request('POST', `/api/work/admin/users/${id}/refund`, body || {}),
-  cancelUserSubscription: (id, atPeriodEnd) => request('POST', `/api/work/admin/users/${id}/cancel-subscription`, { atPeriodEnd: !!atPeriodEnd }),
+  cancelUserSubscription: (id, atPeriodEnd, reason) => request('POST', `/api/work/admin/users/${id}/cancel-subscription`, { atPeriodEnd: !!atPeriodEnd, ...(reason ? { reason } : {}) }),
 
   // ---- Destructive CRUD (superadmin). Every call sends a REASON (logged). -----
   // Leads / incidents / contacts: delete one or clear all.

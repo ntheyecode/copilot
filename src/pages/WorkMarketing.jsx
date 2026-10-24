@@ -9,6 +9,7 @@ import {
   Code2, Table, Palette, RefreshCw,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
 import CopyChip from '../components/CopyChip.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide premium card primitive
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
@@ -162,19 +163,10 @@ export default function WorkMarketing() {
       <div className="wm-grain" aria-hidden />
       <div className="wm-bg" aria-hidden><span className="orb o1" /><span className="orb o2" /><span className="orb o3" /></div>
 
-      {/* NAV */}
-      <header className="wm-nav">
-        <div className="wm-wrap wm-nav-in">
-          <a href="#top" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
-          <nav className="wm-links">
-            <a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="/workcopilot/security">Security</a><a href="#pricing">Pricing</a>
-          </nav>
-          <div className="wm-navcta">
-            <button className="wm-ghost" onClick={() => go('')}>Sign in</button>
-            <button className="wm-cta sm" onClick={() => go('')}>Get started <ArrowRight size={15} /></button>
-          </div>
-        </div>
-      </header>
+      {/* NAV - the shared SiteHeader, so the homepage and every inner page use
+          ONE link list and the same mobile disclosure menu (fixes the missing
+          burger below 900px). */}
+      <SiteHeader />
 
       {/* HERO. The headline rotates through the value propositions (one <h1>,
           content swapped). Hovering or focusing anywhere in the hero lockup holds
@@ -257,12 +249,14 @@ export default function WorkMarketing() {
           <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies & teams</div>
           <h2 className="wm-h2" data-reveal>Do more, with the team you already have.</h2>
           <p className="wm-sub" data-reveal>Lean teams take on the toughest projects and ship like specialists. Faster, secure, documented, in-house.</p>
+          {/* Qualitative outcomes only - no invented metrics (owner rule). The
+              properties below are true of the product: read-only, documented,
+              in-house, and a relative "weeks to days" shape. */}
           <div className="wm-roi-stats" data-reveal>
-            <CountStat value={70} prefix="+" suffix="%" label="faster to done" />
-            <CountStat value={50} prefix="-" suffix="%" label="outsourcing spend" />
-            <CountStat value={100} suffix="%" label="read-only, never acts" />
-            <CountStat value={100} suffix="%" label="documented" />
-            <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to market</span></div>
+            <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to done</span></div>
+            <div className="wm-roi-stat"><b>In-house</b><span>not outsourced</span></div>
+            <div className="wm-roi-stat"><b>Read-only</b><span>never clicks or runs</span></div>
+            <div className="wm-roi-stat"><b>Documented</b><span>every step</span></div>
           </div>
           <div className="wm-roi-grid">
             <WorkCard theme="light" delay={0} texPos="0% 0%">
@@ -273,7 +267,7 @@ export default function WorkMarketing() {
             <WorkCard theme="light" tone="cyan" delay={70} texPos="100% 0%">
               <WorkCard.Proof><b>weeks</b> <span className="cb-arrow">&rarr;</span> <b>days</b> <span className="cb-dim">to market</span></WorkCard.Proof>
               <WorkCard.Head icon={Zap} title="Faster to market" />
-              <WorkCard.Body>Pending work clears up to 70% faster. Ship weeks sooner.</WorkCard.Body>
+              <WorkCard.Body>Pending work clears faster, and you ship weeks sooner.</WorkCard.Body>
             </WorkCard>
             <WorkCard theme="light" tone="amber" delay={140} texPos="50% 100%">
               <WorkCard.Proof><span className="cb-dim">any</span> <span className="cb-chip">framework</span><span className="cb-chip">platform</span><span className="cb-chip">tool</span></WorkCard.Proof>
@@ -293,7 +287,7 @@ export default function WorkMarketing() {
             <WorkCard theme="light" tone="violet" delay={140} texPos="50% 0%">
               <WorkCard.Proof><span className="cb-dim">contractors &middot; consultants &middot; partners</span> <span className="cb-arrow">&rarr;</span> <b>in-house</b></WorkCard.Proof>
               <WorkCard.Head icon={Gauge} title="Kill contractor & partner spend" />
-              <WorkCard.Body>Contractors, consultants and implementation partners, brought in-house. Up to 50% less, quality kept.</WorkCard.Body>
+              <WorkCard.Body>Contractors, consultants and implementation partners, brought in-house, with the quality kept.</WorkCard.Body>
             </WorkCard>
           </div>
         </div>
@@ -562,12 +556,12 @@ export default function WorkMarketing() {
             <a className="wm-link" href="/workcopilot/fields">Fields</a>
             <a className="wm-link" href="/workcopilot/pricing">Pricing</a>
             <a className="wm-link" href="/workcopilot/security">Security</a>
-            <a className="wm-link" href="/workcopilot/benchmark">Accuracy</a>
+            <a className="wm-link" href="/workcopilot/benchmark">Benchmark methodology</a>
             <a className="wm-link" href="/workcopilot/faq">FAQ</a>
             <a className="wm-link" href="/workcopilot/privacy">Privacy</a>
             <a className="wm-link" href="/workcopilot/disclaimer">Disclaimer</a>
             <a className="wm-link" href="/workcopilot/terms">Terms</a>
-            <a className="wm-link" href="mailto:support@admireveda.com">Support</a>
+            <a className="wm-link" href="/workcopilot/contact">Contact</a>
             <button className="wm-link" onClick={() => go('')}>Sign in</button>
           </nav>
         </div>
@@ -669,7 +663,7 @@ function TrustDuo({ nav }) {
       k: 'priv', eyebrow: 'Privacy', Mark: RedactLockMark,
       title: 'Scrubbed on your device, before anything leaves.',
       points: [
-        'PII, PHI and secrets are masked or tokenized on your machine first - the real values never leave, and the answer is rebuilt locally.',
+        'When data protection is on, PII, PHI and secrets are masked or tokenized on your machine first - the real values never leave, and the answer is rebuilt locally.',
         'You decide what gets scrubbed, and on your own AI key calls stay on that key. Nothing is silently rerouted.',
       ],
       proof: <><span className="dp-raw">jane@acme.com</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[EMAIL_1]]</b><span className="dp-raw">sk-live-9f3c</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[SECRET_1]]</b></>,
@@ -930,32 +924,6 @@ function PViz({ t }) {
 
 // Animated count-up stat: ticks from 0 to the target the first time it scrolls
 // into view (eased), for a dynamic "numbers that move" feel.
-function CountStat({ value, prefix = '', suffix = '', label, dur = 1300 }) {
-  const ref = useRef(null)
-  const [n, setN] = useState(0)
-  useEffect(() => {
-    const el = ref.current; if (!el) return
-    let done = false
-    const io = new IntersectionObserver((ents) => {
-      ents.forEach((e) => {
-        if (e.isIntersecting && !done) {
-          done = true; io.disconnect()
-          const t0 = performance.now()
-          const tick = (t) => {
-            const p = Math.min(1, (t - t0) / dur)
-            const eased = 1 - Math.pow(1 - p, 3)
-            setN(Math.round(eased * value))
-            if (p < 1) requestAnimationFrame(tick)
-          }
-          requestAnimationFrame(tick)
-        }
-      })
-    }, { threshold: 0.45 })
-    io.observe(el); return () => io.disconnect()
-  }, [value, dur])
-  return <div className="wm-roi-stat" ref={ref}><b>{prefix}{n}{suffix}</b><span>{label}</span></div>
-}
-
 // Small purpose-built graphics for the benefit cards - show, do not tell.
 function BViz({ k }) {
   if (k === 'steps') return (
@@ -1206,7 +1174,7 @@ function RotatingHero({ paused }) {
 // now its single home; the pricing section above links there.)
 
 const CSS = `
-.wm{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--mx:0;--my:0;
+.wm{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--chip:rgba(255,255,255,.06);--mx:0;--my:0;
   position:relative;min-height:100vh;background:var(--ink);color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .wm *{box-sizing:border-box}
 .wm a{color:inherit;text-decoration:none}
@@ -1350,7 +1318,7 @@ const CSS = `
 .wm-demo-body.in{opacity:1;transform:none}
 .wm-demo-now{border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.06);border-radius:13px;padding:11px 13px}
 .wm-demo-label{font-size:10px;letter-spacing:.14em;color:var(--em);font-weight:700;margin-bottom:5px}
-.wm-demo-step{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wm-demo-step{font-weight:600;overflow-wrap:anywhere}
 .wm-demo-term{margin-top:9px;border:1px solid #27324a;border-radius:11px;overflow:hidden}
 .wm-demo-th{display:flex;justify-content:space-between;background:#0c1222;color:#8ea3c0;font-size:10px;letter-spacing:.1em;padding:7px 10px}
 .wm-demo-th span{color:#cdd6e5}
@@ -1368,7 +1336,7 @@ const CSS = `
 .wm-demo-how{margin-top:9px;border:1px solid var(--line);border-radius:12px;padding:9px 11px;background:rgba(255,255,255,.02)}
 .wm-demo-howlabel{font-size:10px;letter-spacing:.14em;color:var(--em2);font-weight:700;margin-bottom:6px}
 .wm-demo-how ol{margin:0;padding:0;list-style:none;counter-reset:hw;display:flex;flex-direction:column;gap:6px}
-.wm-demo-how li{counter-increment:hw;position:relative;padding-left:30px;font-size:13.5px;color:var(--tx);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wm-demo-how li{counter-increment:hw;position:relative;padding-left:30px;font-size:13.5px;color:var(--tx);line-height:1.5;overflow-wrap:anywhere}
 .wm-demo-how li:before{content:counter(hw);position:absolute;left:0;top:1px;width:21px;height:21px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--em2));color:#04231a;font-size:11.5px;font-weight:800;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px -2px rgba(10,157,102,.6)}
 .wm-demo-done{display:flex;align-items:center;gap:7px;margin-top:auto;padding-top:12px;font-size:12px;color:var(--mut)}
 .wm-demo-done svg{color:var(--em)}
@@ -1432,7 +1400,7 @@ const CSS = `
 .wm-demo-fixsay{margin-top:7px;font-size:13.5px;color:var(--tx);font-weight:600;line-height:1.4}
 .wm-demo-fixdo{display:flex;align-items:center;gap:7px;margin-top:9px;font-size:13px;color:var(--em);font-weight:600}
 .wm-demo-fixdo svg{color:var(--em);flex:0 0 auto}
-.wm-demo-stage{margin-top:12px;height:120px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;min-width:0}   /* fixed: a wrapped diff or command stays inside this box */
+.wm-demo-stage{margin-top:12px;min-height:120px;display:flex;flex-direction:column;justify-content:center;overflow:hidden;min-width:0}   /* min-height so long how-steps can wrap and grow instead of being clipped */
 .wm-demo-stage > *{margin-top:0;min-width:0;max-width:100%}
 .wm-demo-guide{margin-top:12px;height:214px;overflow:hidden}
 .wm-demo-guide > :first-child{margin-top:0}

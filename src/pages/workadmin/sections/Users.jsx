@@ -94,34 +94,44 @@ export default function UsersSection({ isSuperAdmin }) {
     setRowMsg((m) => ({ ...m, [id]: { kind, text } }))
     setTimeout(() => setRowMsg((m) => { const n = { ...m }; delete n[id]; return n }), 4000)
   }
-  // Reset a user's authenticator (lost device / offboarding). Reason required +
-  // logged; the user re-enrolls on next sign-in.
-  const resetMfa = async (u) => {
-    const reason = (window.prompt(`Reset two-factor for ${u.username}? They will be signed out and must set up their authenticator again on next sign-in.\n\nReason (recorded in the audit trail):`) || '').trim()
-    if (reason.length < 3) { if (reason) setMsg(u.id, 'err', 'A reason of at least 3 characters is required.'); return }
-    setBusyId(u.id)
-    try { await workAdminApi.resetUserMfa(u.id, reason); setMsg(u.id, 'ok', 'Two-factor reset.'); load() }
-    catch (e) { setMsg(u.id, 'err', e.message) } finally { setBusyId(null) }
-  }
-  // Grant / remove the accounting role (sees all transactions + refunds; nothing else).
-  const toggleAccounting = async (u) => {
-    const makeAcct = u.role !== 'accounting'
-    if (!window.confirm(makeAcct ? `Give ${u.username} the accounting role? They will see all transactions and can issue refunds, but nothing else in the admin console.` : `Remove the accounting role from ${u.username}?`)) return
-    setBusyId(u.id)
-    try { await workAdminApi.financeSetRole(u.id, makeAcct ? 'accounting' : 'user'); setMsg(u.id, 'ok', makeAcct ? 'Accounting role granted.' : 'Accounting role removed.'); load() }
-    catch (e) { setMsg(u.id, 'err', e.message) } finally { setBusyId(null) }
-  }
-
-  // Disable/enable (reversible) or delete (hard) a user. Reason required + logged.
+  // Every destructive / money / security action goes through the ONE shared
+  // ReasonModal (owner standing rule: capture a reason + log who/what/when/why).
+  // disable/enable/delete, plus refund, cancel-subscription, MFA reset and the
+  // accounting-role grant/remove all open the same modal and pass the reason to
+  // the API. `confirmAction = { user, mode }`.
   const runConfirmAction = async (reason) => {
     const { user, mode } = confirmAction
     setCaBusy(true); setCaErr(null)
     try {
-      if (mode === 'delete') await workAdminApi.deleteUser(user.id, reason)
-      else await workAdminApi.disableUser(user.id, mode === 'disable', reason)
-      setConfirmAction(null)
-      await load()
+      if (mode === 'delete') { await workAdminApi.deleteUser(user.id, reason); setConfirmAction(null); await load() }
+      else if (mode === 'disable' || mode === 'enable') { await workAdminApi.disableUser(user.id, mode === 'disable', reason); setConfirmAction(null); await load() }
+      else if (mode === 'refund') {
+        const r = await workAdminApi.refundUser(user.id, { last: true, reason })
+        const amt = r && r.refund ? (r.refund.amount / 100).toFixed(2) : null
+        setConfirmAction(null)
+        setMsg(user.id, 'ok', amt != null ? `Refunded ${amt} ${(r.refund.currency || 'usd').toUpperCase()}` : 'Refund processed')
+      }
+      else if (mode === 'cancel') { await workAdminApi.cancelUserSubscription(user.id, false, reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Subscription canceled') }
+      else if (mode === 'mfa') { await workAdminApi.resetUserMfa(user.id, reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Two-factor reset.'); await load() }
+      else if (mode === 'accounting-grant') { await workAdminApi.financeSetRole(user.id, 'accounting', reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Accounting role granted.'); await load() }
+      else if (mode === 'accounting-remove') { await workAdminApi.financeSetRole(user.id, 'user', reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Accounting role removed.'); await load() }
     } catch (e) { setCaErr(e) } finally { setCaBusy(false) }
+  }
+
+  // Copy for each confirm mode (title / message / confirm button / danger tint).
+  const CONFIRM_COPY = (mode, u) => {
+    const name = (u && u.username) || 'this account'
+    switch (mode) {
+      case 'delete': return { title: `Delete ${name}`, message: 'Permanently delete this account and all of its sessions and evidence. This cannot be undone.', confirmLabel: 'Delete account', danger: true }
+      case 'enable': return { title: `Re-enable ${name}`, message: 'The account can sign in and use the service again.', confirmLabel: 'Enable', danger: false }
+      case 'disable': return { title: `Disable ${name}`, message: 'The account is signed out everywhere and cannot sign in until re-enabled.', confirmLabel: 'Disable', danger: true }
+      case 'refund': return { title: `Refund ${name}`, message: 'Refund the most recent payment for this account. This moves real money and cannot be undone.', confirmLabel: 'Refund last payment', danger: true }
+      case 'cancel': return { title: `Cancel subscription for ${name}`, message: 'End the subscription now. Their guiding access stops immediately.', confirmLabel: 'Cancel subscription', danger: true }
+      case 'mfa': return { title: `Reset two-factor for ${name}`, message: 'They are signed out and must set up their authenticator again on next sign-in. Use this when someone loses their phone.', confirmLabel: 'Reset authenticator', danger: true }
+      case 'accounting-grant': return { title: `Grant accounting role to ${name}`, message: 'They will see all transactions and can issue refunds, but nothing else in the admin console.', confirmLabel: 'Grant accounting', danger: false }
+      case 'accounting-remove': return { title: `Remove accounting role from ${name}`, message: 'They lose access to transactions and refunds.', confirmLabel: 'Remove accounting', danger: false }
+      default: return { title: 'Confirm', message: '', confirmLabel: 'Confirm', danger: true }
+    }
   }
 
   const applyTier = async (user, tier) => {
@@ -147,33 +157,6 @@ export default function UsersSection({ isSuperAdmin }) {
       setGrantFor(null); setGrantHours('1')
     } catch (error) {
       setMsg(user.id, 'err', error.message || 'Could not grant hours')
-    } finally { setBusyId(null) }
-  }
-
-  // Refund the user's most recent Stripe charge. Confirmed first because it moves
-  // real money. A missing Stripe key comes back as a clear message, not a crash.
-  const applyRefund = async (user) => {
-    if (!window.confirm(`Refund the most recent payment for ${user.username}? This cannot be undone.`)) return
-    setBusyId(user.id)
-    try {
-      const r = await workAdminApi.refundUser(user.id, { last: true })
-      const amt = r && r.refund ? (r.refund.amount / 100).toFixed(2) : null
-      setMsg(user.id, 'ok', amt != null ? `Refunded ${amt} ${(r.refund.currency || 'usd').toUpperCase()}` : 'Refund processed')
-    } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not process the refund')
-    } finally { setBusyId(null) }
-  }
-
-  // Cancel the user's subscription immediately. The webhook also syncs, but the
-  // store is updated now so the change shows without waiting.
-  const applyCancel = async (user) => {
-    if (!window.confirm(`Cancel the subscription for ${user.username} now? Their guiding access will stop.`)) return
-    setBusyId(user.id)
-    try {
-      await workAdminApi.cancelUserSubscription(user.id, false)
-      setMsg(user.id, 'ok', 'Subscription canceled')
-    } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not cancel the subscription')
     } finally { setBusyId(null) }
   }
 
@@ -326,7 +309,7 @@ export default function UsersSection({ isSuperAdmin }) {
                     <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
                       {u.mfa && u.mfa.enabled
                         ? <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Lock size={12} /> On
-                            <button type="button" className="wka-btn sm ghost" title={isSuperAdmin ? 'Reset authenticator (lost phone / offboarding)' : 'Superadmin only'} disabled={!isSuperAdmin || busyId === u.id} onClick={() => resetMfa(u)} style={{ marginLeft: 4 }}><RotateCcw size={12} /></button>
+                            <button type="button" className="wka-btn sm ghost" title={isSuperAdmin ? 'Reset authenticator (lost phone / offboarding)' : 'Superadmin only'} disabled={!isSuperAdmin || busyId === u.id} onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'mfa' }) }} style={{ marginLeft: 4 }}><RotateCcw size={12} /></button>
                           </span>
                         : <span style={{ color: 'var(--wka-amber, #c77700)' }}>Not set up</span>}
                     </td>
@@ -347,16 +330,16 @@ export default function UsersSection({ isSuperAdmin }) {
                             <Plus size={13} /> <Clock size={13} /> Grant hours
                           </button>
                           <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? 'Refund the most recent payment' : 'Superadmin only'}
-                            onClick={() => applyRefund(u)}>
+                            onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'refund' }) }}>
                             <RotateCcw size={13} /> Refund last
                           </button>
                           <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? 'Cancel the subscription now' : 'Superadmin only'}
-                            onClick={() => applyCancel(u)}>
+                            onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'cancel' }) }}>
                             <Ban size={13} /> Cancel sub
                           </button>
                           {u.role !== 'superadmin' && (
                             <button type="button" className={`wka-btn sm${u.role === 'accounting' ? '' : ' ghost'}`} disabled={!isSuperAdmin || busyId === u.id} title={u.role === 'accounting' ? 'Remove the accounting role' : 'Make accounting (sees all transactions + refunds)'}
-                              onClick={() => toggleAccounting(u)}>
+                              onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.role === 'accounting' ? 'accounting-remove' : 'accounting-grant' }) }}>
                               <DollarSign size={13} /> {u.role === 'accounting' ? 'Accounting ✓' : 'Accounting'}
                             </button>
                           )}
@@ -387,23 +370,20 @@ export default function UsersSection({ isSuperAdmin }) {
         </div>
       )}
 
-      {confirmAction ? (
-        <ReasonModal
-          danger={confirmAction.mode !== 'enable'}
-          title={confirmAction.mode === 'delete' ? `Delete ${confirmAction.user.username}`
-            : confirmAction.mode === 'enable' ? `Re-enable ${confirmAction.user.username}`
-            : `Disable ${confirmAction.user.username}`}
-          message={confirmAction.mode === 'delete'
-            ? 'Permanently delete this account and all of its sessions and evidence. This cannot be undone.'
-            : confirmAction.mode === 'enable'
-              ? 'The account can sign in and use the service again.'
-              : 'The account is signed out everywhere and cannot sign in until re-enabled.'}
-          confirmLabel={confirmAction.mode === 'delete' ? 'Delete account' : confirmAction.mode === 'enable' ? 'Enable' : 'Disable'}
-          busy={caBusy} error={caErr}
-          onConfirm={runConfirmAction}
-          onCancel={() => { if (!caBusy) setConfirmAction(null) }}
-        />
-      ) : null}
+      {confirmAction ? (() => {
+        const copy = CONFIRM_COPY(confirmAction.mode, confirmAction.user)
+        return (
+          <ReasonModal
+            danger={copy.danger}
+            title={copy.title}
+            message={copy.message}
+            confirmLabel={copy.confirmLabel}
+            busy={caBusy} error={caErr}
+            onConfirm={runConfirmAction}
+            onCancel={() => { if (!caBusy) setConfirmAction(null) }}
+          />
+        )
+      })() : null}
     </div>
   )
 }

@@ -3,10 +3,10 @@
 // provisioning, AI source and price overrides - then manages its people (by
 // email for SSO), SSO config, corporate AI keys, extra hours, billing and the
 // data-redaction policy. Everything a company needs to go live lives here.
-import React, { useEffect, useState, useCallback, useRef } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle, ShieldOff } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, ReasonModal as SharedReasonModal } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, useReasonModal, ReasonModal as SharedReasonModal } from './_shared.jsx'
 
 // Friendly labels for every OpenID Connect provider the backend accepts. The
 // engine is generic OIDC, so the list can grow without code changes.
@@ -28,82 +28,8 @@ const SSO_PROVIDERS = [
 ]
 const SSO_HINT = Object.fromEntries(SSO_PROVIDERS.map(([id, , hint]) => [id, hint]))
 
-// ---------------------------------------------------------------------------
-// Reason prompt modal (replaces window.prompt for destructive actions).
-// Promise-based hook: `const [askReason, reasonModal] = useReasonModal()`,
-// render `{reasonModal}` once in the component, then
-// `const reason = await askReason({ title, detail, confirmLabel })` resolves to
-// the trimmed reason (>= 3 chars) or null when cancelled. The server enforces the
-// same 3-char minimum; the Confirm button is disabled until it is met.
-// ---------------------------------------------------------------------------
-function ReasonModal({ title, detail, confirmLabel, onConfirm, onCancel }) {
-  const [reason, setReason] = useState('')
-  const taRef = useRef(null)
-  const ok = reason.trim().length >= 3
-  useEffect(() => {
-    if (taRef.current) taRef.current.focus()
-    const onKey = (e) => { if (e.key === 'Escape') onCancel() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onCancel])
-  return (
-    <div
-      role="presentation"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(26,31,54,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}
-    >
-      <div
-        role="dialog" aria-modal="true" aria-label={title}
-        style={{ width: '100%', maxWidth: 460, maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--wka-panel, #fff)', border: '1px solid var(--wka-line-2, #dfe3ea)', borderRadius: 14, padding: 20, boxShadow: '0 24px 60px -20px rgba(26,31,54,0.45)' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-          <AlertTriangle size={18} style={{ color: 'var(--wka-amber)', flex: '0 0 auto', marginTop: 2 }} />
-          <div style={{ fontSize: 15, fontWeight: 650, color: 'var(--wka-text)', lineHeight: 1.35 }}>{title}</div>
-        </div>
-        {detail ? <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--wka-muted)', lineHeight: 1.5 }}>{detail}</p> : null}
-        <div className="wka-field">
-          <label>Reason <span className="hint">required, recorded in your audit trail</span></label>
-          <textarea
-            ref={taRef} className="wka-input" rows={3} maxLength={500} value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. Left the company"
-            style={{ resize: 'vertical', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
-          />
-          <span className="hint">{ok ? ' ' : 'Enter at least 3 characters to continue.'}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: 14 }}>
-          <button type="button" className="wka-btn" onClick={onCancel}>Cancel</button>
-          <button
-            type="button" className="wka-btn danger" disabled={!ok}
-            style={{ background: 'var(--wka-red, #c0392b)', borderColor: 'var(--wka-red, #c0392b)', color: '#fff', fontWeight: 600 }}
-            onClick={() => { if (ok) onConfirm(reason.trim()) }}
-          >
-            <Trash2 size={14} /> {confirmLabel || 'Confirm'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function useReasonModal() {
-  const [cfg, setCfg] = useState(null)
-  const resolver = useRef(null)
-  const finish = useCallback((val) => {
-    const r = resolver.current
-    resolver.current = null
-    setCfg(null)
-    if (r) r(val)
-  }, [])
-  const ask = useCallback((opts) => new Promise((resolve) => {
-    if (resolver.current) resolver.current(null)
-    resolver.current = resolve
-    setCfg(opts || {})
-  }), [])
-  const cancel = useCallback(() => finish(null), [finish])
-  const node = cfg ? <ReasonModal {...cfg} onConfirm={finish} onCancel={cancel} /> : null
-  return [ask, node]
-}
+// Destructive confirms use the shared promise-style useReasonModal from
+// _shared.jsx (single source - SUPREME RULE II; the local copy was deleted).
 
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
 const fmtMins = (secs) => { const m = Math.round((Number(secs) || 0) / 60); if (m < 60) return `${m}m`; const h = Math.floor(m / 60); const r = m % 60; return r ? `${h}h ${r}m` : `${h}h` }
@@ -323,7 +249,12 @@ export default function Companies({ isSuperAdmin }) {
   const [aiForm, setAiForm] = useState({})
   const setAiField = (id, k, v) => setAiForm((f) => ({ ...f, [id]: { ...(f[id] || {}), [k]: v } }))
   const saveAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, aiForm[id] || {}); setAiForm((f) => ({ ...f, [id]: {} })); refreshDetail(id); setMsg('Corporate AI keys saved.') } catch (e) { setMsg(e.message) } }
-  const clearAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, { apiKey: '' }); refreshDetail(id); setMsg('AI keys cleared.') } catch (e) { setMsg(e.message) } }
+  const clearAiKeys = async (id) => {
+    // Clearing a company's AI keys takes their AI down, so capture a reason (logged).
+    const reason = await askReason({ title: 'Clear this company\'s AI keys?', detail: 'WorkCoPilot stops running on their keys. If their AI source is "company keys", guidance is paused for them until keys are set again.', confirmLabel: 'Clear AI keys' })
+    if (!reason || reason.length < 3) return
+    try { await workAdminApi.companyAiKeys(id, { apiKey: '', reason }); refreshDetail(id); setMsg('AI keys cleared.') } catch (e) { setMsg(e.message) }
+  }
 
   // Per-company web-search (Tavily) key. Independent of the AI source: when set,
   // the company's live web learning runs on their own key (their data + billing).

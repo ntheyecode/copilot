@@ -33,8 +33,10 @@ function Progress({ done, total, current }) {
   )
 }
 
-// Rich click-through: the full telemetry for ONE session.
-function DetailModal({ id, onClose }) {
+// Rich click-through: the full telemetry for ONE session. Cost and model-mix
+// stats (premium calls, round-robins, estimated cost) are superadmin-only -
+// model names and AI cost are a superadmin-only business rule (owner 2026-10-23).
+function DetailModal({ id, onClose, isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null, d: null })
   useEffect(() => {
     let alive = true
@@ -66,11 +68,11 @@ function DetailModal({ id, onClose }) {
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '12px 0' }}>
               <Stat label="Calls" value={d.calls} hint="total AI calls" />
-              <Stat label="Premium" value={d.premiumCalls} hint="top-tier model" />
-              <Stat label="Round-robins" value={d.roundRobins} hint="model switches" />
+              {isSuperAdmin ? <Stat label="Premium" value={d.premiumCalls} hint="top-tier model" /> : null}
+              {isSuperAdmin ? <Stat label="Round-robins" value={d.roundRobins} hint="model switches" /> : null}
               <Stat label="Refinements" value={d.refinements} hint="re-plans" />
               <Stat label="Mins left" value={d.remainingMinutes == null ? '-' : d.remainingMinutes} hint="today" />
-              <Stat label="Est. cost" value={money(d.costUsd)} />
+              {isSuperAdmin ? <Stat label="Est. cost" value={money(d.costUsd)} /> : null}
             </div>
 
             <div style={{ margin: '8px 0 14px' }}>
@@ -110,7 +112,7 @@ function DetailModal({ id, onClose }) {
   )
 }
 
-export default function Sessions() {
+export default function Sessions({ isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null, sessions: [], total: 0, liveCount: 0, windowDays: 7 })
   const [page, setPage] = useState(1)
   const [pageSize] = useState(25)   // keep only a small page in the browser at a time
@@ -181,7 +183,7 @@ export default function Sessions() {
                 <th className="no-sort">Progress</th>
                 <th className="no-sort">Started</th>
                 <th className="no-sort">Status</th>
-                <th className="no-sort" title="Estimated AI cost (list prices, chars/4 estimate)">Est. cost</th>
+                {isSuperAdmin ? <th className="no-sort" title="Estimated AI cost (list prices, chars/4 estimate)">Est. cost</th> : null}
                 <th className="no-sort"></th>
               </tr>
             </thead>
@@ -197,7 +199,7 @@ export default function Sessions() {
                   <td><Progress done={s.stepDone} total={s.stepTotal} current={s.currentStep} /></td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(s.startedAt)}</td>
                   <td>{statusBadge(s)}</td>
-                  <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{money(s.costUsd)}</td>
+                  {isSuperAdmin ? <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{money(s.costUsd)}</td> : null}
                   <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
                     <button type="button" className="wka-btn sm ghost" onClick={() => setViewId(s.id)} title="View detail"><Eye size={13} /> View</button>
                     <button type="button" className="wka-btn sm ghost" onClick={() => { setDelErr(null); setDel(s) }} title="Delete record" style={{ marginLeft: 6, color: '#d6433b' }}><Trash2 size={13} /></button>
@@ -217,7 +219,7 @@ export default function Sessions() {
         </div>
       ) : null}
 
-      {viewId ? <DetailModal id={viewId} onClose={() => setViewId(null)} /> : null}
+      {viewId ? <DetailModal id={viewId} onClose={() => setViewId(null)} isSuperAdmin={isSuperAdmin} /> : null}
       {del ? (
         <ReasonModal
           title="Delete session record"

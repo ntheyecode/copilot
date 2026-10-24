@@ -103,14 +103,23 @@ export default function WorkAdmin() {
   const isAffiliateAdmin = !!(viewer && viewer.role === 'affiliate_admin' && !viewer.isSuperAdmin)
   // Accounting sees only Finance; an affiliate admin sees only Affiliates; a
   // superadmin sees everything.
-  // Claims is superadmin-only (it maps internal file paths + honesty status).
-  const SUPERADMIN_ONLY = new Set(['claims'])
+  // Business rule (owner 2026-10-23): AI model names and AI cost are superadmin
+  // ONLY. So a plain `admin` does NOT see AI config, Finance, Incidents (which
+  // surface provider/model + estimated cost) or Claims (internal file paths +
+  // honesty status). The server enforces these too; this hides them in the UI.
+  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'incidents', 'claims'])
   const visibleSections = isSuperAdmin ? SECTIONS
     : isAccounting ? SECTIONS.filter((s) => s.id === 'finance')
       : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates')
         : SECTIONS.filter((s) => !SUPERADMIN_ONLY.has(s.id))
   useEffect(() => { if (isAccounting && active !== 'finance') setActive('finance') }, [isAccounting, active])
   useEffect(() => { if (isAffiliateAdmin && active !== 'affiliates') setActive('affiliates') }, [isAffiliateAdmin, active])
+  // Never leave the view pointed at a section this viewer cannot see (e.g. a
+  // plain admin whose stored tab is now gated) - fall back to the first visible.
+  useEffect(() => {
+    if (gate !== 'ready') return
+    if (!visibleSections.some((s) => s.id === active)) setActive((visibleSections[0] || SECTIONS[0]).id)
+  }, [gate, visibleSections, active])
   const current = visibleSections.find((s) => s.id === active) || visibleSections[0] || SECTIONS[0]
 
   const renderSection = () => {
@@ -124,7 +133,7 @@ export default function WorkAdmin() {
       case 'email-templates': return <EmailTemplates isSuperAdmin={isSuperAdmin} />
       case 'finance': return <Finance isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
-      case 'sessions': return <Sessions />
+      case 'sessions': return <Sessions isSuperAdmin={isSuperAdmin} />
       case 'leads': return <Leads />
       case 'hero': return <Hero isSuperAdmin={isSuperAdmin} />
       case 'tickets': return <SupportTickets mode="admin" />

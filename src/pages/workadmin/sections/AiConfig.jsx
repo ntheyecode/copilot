@@ -7,7 +7,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Lock, CheckCircle2, XCircle, AlertTriangle, Shield, Globe, Sparkles, RefreshCw, Eye, KeyRound, DollarSign, Award, Plus } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { fmtDateTime } from '../workadmin.css.js'
-import { Loading, ErrorBox, Spinning, SavedTag, EmptyState } from './_shared.jsx'
+import { Loading, ErrorBox, Spinning, SavedTag, EmptyState, useReasonModal } from './_shared.jsx'
 
 function StateRow({ ok, warn, label, detail }) {
   const Icon = ok ? CheckCircle2 : (warn ? AlertTriangle : XCircle)
@@ -241,6 +241,9 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
   const [state, setState] = useState({ loading: true, error: null, providers: [], activeProvider: null })
   const [busy, setBusy] = useState({})        // providerId -> true while a call is in flight
   const [results, setResults] = useState({})  // providerId -> { ok, visionModel, hasVision } | { ok:false, error }
+  // Removing a key / provider takes platform AI (partly) down, so each goes
+  // through the shared reason-gated danger confirm (captured + logged).
+  const [askReason, reasonModal] = useReasonModal()
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -283,8 +286,10 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
   }
   const onClear = async (id) => {
     if (!isSuperAdmin) return
+    const reason = await askReason({ title: 'Clear all keys for this provider?', detail: 'This removes every key in the pool. If it is the active provider, the platform hands off to another configured one - otherwise shared users cannot be served until a key is set again.', confirmLabel: 'Clear all keys' })
+    if (!reason || reason.length < 3) return
     setProvBusy(id, true); setResults((r) => ({ ...r, [id]: null }))
-    try { const d = await workAdminApi.clearAiProvider(id); absorb(id, d) }
+    try { const d = await workAdminApi.clearAiProvider(id, reason); absorb(id, d) }
     catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
     finally { setProvBusy(id, false) }
   }
@@ -300,15 +305,19 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
   }
   const onRemoveKey = async (id, index) => {
     if (!isSuperAdmin) return
+    const reason = await askReason({ title: 'Remove this key from the pool?', detail: 'Load stops spreading to this key. If it is the only key, the provider is no longer configured.', confirmLabel: 'Remove key' })
+    if (!reason || reason.length < 3) return
     setProvBusy(id, true)
-    try { const d = await workAdminApi.removeAiProviderKey(id, index); absorb(id, d) }
+    try { const d = await workAdminApi.removeAiProviderKey(id, index, reason); absorb(id, d) }
     catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
     finally { setProvBusy(id, false) }
   }
   const onRemoveCustom = async (id) => {
     if (!isSuperAdmin) return
+    const reason = await askReason({ title: 'Remove this custom provider?', detail: 'The provider and its key are removed, and its base URL leaves the egress allowlist.', confirmLabel: 'Remove provider' })
+    if (!reason || reason.length < 3) return
     setProvBusy(id, true)
-    try { const d = await workAdminApi.removeCustomProvider(id); absorb(id, d) }
+    try { const d = await workAdminApi.removeCustomProvider(id, reason); absorb(id, d) }
     catch (error) { if (isLockError(error) && onLocked) return onLocked(); setResults((r) => ({ ...r, [id]: { ok: false, error: error.message } })) }
     finally { setProvBusy(id, false) }
   }
@@ -323,6 +332,7 @@ function PlatformProviders({ isSuperAdmin, onLocked }) {
 
   return (
     <div className="wka-panel">
+      {reasonModal}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, marginBottom: 4 }}>
         <h2 style={{ margin: 0 }}><KeyRound size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-accent)' }} />AI providers &amp; keys</h2>
         <button type="button" className="wka-btn sm ghost" disabled={state.loading} onClick={load}><RefreshCw size={13} /> Refresh</button>
@@ -399,6 +409,7 @@ function WebSearchCard({ isSuperAdmin, onLocked }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [askReason, reasonModal] = useReasonModal()
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -411,9 +422,16 @@ function WebSearchCard({ isSuperAdmin, onLocked }) {
     if (!isSuperAdmin || saving) return
     const key = clear ? '' : apiKey.trim()
     if (!clear && !key) return
+    // Clearing the web-search key takes live web learning down, so capture a
+    // reason (logged) first.
+    let reason
+    if (clear) {
+      reason = await askReason({ title: 'Clear the platform web-search key?', detail: 'Live web learning turns off (unless a server env key is set as a fallback) until a key is set again.', confirmLabel: 'Clear key' })
+      if (!reason || reason.length < 3) return
+    }
     setSaving(true); setSaveError(null); setSaved(false)
     try {
-      const data = await workAdminApi.setWebSearch(key, 'tavily')
+      const data = await workAdminApi.setWebSearch(key, 'tavily', reason)
       setState({ loading: false, error: null, data }); setApiKey('')
       setSaved(true); setTimeout(() => setSaved(false), 2200)
     } catch (error) { if (isLockError(error) && onLocked) return onLocked(); setSaveError(error) } finally { setSaving(false) }
@@ -422,6 +440,7 @@ function WebSearchCard({ isSuperAdmin, onLocked }) {
   const d = state.data || {}
   return (
     <div className="wka-panel">
+      {reasonModal}
       <h2><Globe size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Web search (live web learning)</h2>
       <p className="desc">This key grounds live steps in the latest web sources, so guidance reflects what changed on the web recently.</p>
       {state.loading ? <Loading label="Loading web search" />

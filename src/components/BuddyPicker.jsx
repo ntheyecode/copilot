@@ -5,9 +5,8 @@
 // fully keyboard + screen-reader reachable.
 import React from 'react'
 import { Shuffle } from 'lucide-react'
-import { CHARACTERS, writeBuddyPref } from './AliveBuddy.jsx'
+import { CHARACTERS, writeBuddyPref, CHARACTER_LABELS as LABELS } from './AliveBuddy.jsx'
 
-const LABELS = { bot: 'Bot', woman: 'Nova', man: 'Leo', maya: 'Maya', mateo: 'Mateo', sami: 'Sami', ria: 'Ria', dog: 'Dog', cat: 'Cat', fox: 'Fox' }
 const ACCENT = '#8cf5c4'
 
 // `pref` is the saved preference ('bot'..'man' or 'surprise'); `onPick(pref)`

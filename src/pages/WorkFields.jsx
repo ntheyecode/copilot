@@ -169,7 +169,9 @@ export default function WorkFields() {
           <a href="/workcopilot/security">Security</a>
           <a href="/workcopilot/privacy">Privacy</a>
           <a href="/workcopilot/terms">Terms</a>
-          <a href="mailto:support@admireveda.com">Support</a>
+          <a href="/workcopilot/refund">Refunds</a>
+          <a href="/workcopilot/dpa">DPA</a>
+          <a href="/workcopilot/contact">Contact</a>
         </nav>
       </footer>
     </div>
@@ -177,11 +179,11 @@ export default function WorkFields() {
 }
 
 // Same light inner-page shell as /how-it-works and /security (tokens, dot grid,
-// Bricolage display + Instrument Sans body) so the page reads as native.
+// Bricolage display + Figtree body) so the page reads as native.
 const CSS = `
 .wfl{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
-  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
@@ -197,7 +199,7 @@ const CSS = `
 .wfl-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wfl-hero{max-width:1160px;margin:0 auto;padding:30px 24px 6px;text-align:center}
 .wfl-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
-.wfl-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
+.wfl-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wfl-hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
 .wfl-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:600px;line-height:1.55}
 /* stat triptych: big Bricolage numerals in the brand gradient, quiet labels */

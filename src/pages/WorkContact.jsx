@@ -2,10 +2,17 @@
 // POSTs to /api/work/contact (which emails the business + a thank-you to the
 // submitter). Clean, branded, honest - no claims, just a way to reach us.
 import React, { useState } from 'react'
-import { Mail, Send, Check, ArrowLeft, Loader2, Building2 } from 'lucide-react'
+import { Mail, Send, Check, Loader2, Building2 } from 'lucide-react'
 import { api } from '../api.js'
+import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu)
+import useSeo from '../useSeo.js'                        // per-route title / description / canonical (WEB-01)
 
 export default function WorkContact() {
+  useSeo({
+    title: 'Contact us - WorkCoPilot by AdmireVeda',
+    description: 'Get in touch with the WorkCoPilot team about the product, a demo for your team, security or compliance, or anything else. Send a note and we will get back to you.',
+    path: '/workcopilot/contact',
+  })
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })
   const [busy, setBusy] = useState(false)
   const [done, setDone] = useState(false)
@@ -25,12 +32,9 @@ export default function WorkContact() {
   return (
     <div className="wct-root">
       <style>{CSS}</style>
-      <header className="wct-top">
-        <a className="wct-brand" href="/"><span className="wct-mark" aria-hidden /> WorkCoPilot</a>
-        <a className="wct-back" href="/"><ArrowLeft size={15} /> Back to home</a>
-      </header>
+      <SiteHeader />
 
-      <main className="wct-main">
+      <main className="wct-main" id="main">
         <div className="wct-head">
           <div className="wct-eyebrow"><Mail size={14} /> Contact us</div>
           <h1>Talk to us.</h1>
@@ -47,11 +51,11 @@ export default function WorkContact() {
         ) : (
           <form className="wct-card" onSubmit={submit}>
             <div className="wct-grid">
-              <div className="wct-field"><label>Your name</label><input value={form.name} maxLength={120} onChange={(e) => set('name', e.target.value)} placeholder="Alex Morgan" /></div>
-              <div className="wct-field"><label>Email</label><input type="email" value={form.email} maxLength={160} onChange={(e) => set('email', e.target.value)} placeholder="you@company.com" /></div>
+              <div className="wct-field"><label htmlFor="wct-name">Your name</label><input id="wct-name" name="name" autoComplete="name" value={form.name} maxLength={120} onChange={(e) => set('name', e.target.value)} placeholder="Alex Morgan" /></div>
+              <div className="wct-field"><label htmlFor="wct-email">Email</label><input id="wct-email" name="email" type="email" autoComplete="email" value={form.email} maxLength={160} onChange={(e) => set('email', e.target.value)} placeholder="you@company.com" /></div>
             </div>
-            <div className="wct-field"><label>Subject <span className="opt">(optional)</span></label><input value={form.subject} maxLength={200} onChange={(e) => set('subject', e.target.value)} placeholder="How can we help?" /></div>
-            <div className="wct-field"><label>Message</label><textarea rows={6} value={form.message} maxLength={4000} onChange={(e) => set('message', e.target.value)} placeholder="Tell us a bit about what you are looking for." /></div>
+            <div className="wct-field"><label htmlFor="wct-subject">Subject <span className="opt">(optional)</span></label><input id="wct-subject" name="subject" value={form.subject} maxLength={200} onChange={(e) => set('subject', e.target.value)} placeholder="How can we help?" /></div>
+            <div className="wct-field"><label htmlFor="wct-message">Message</label><textarea id="wct-message" name="message" rows={6} value={form.message} maxLength={4000} onChange={(e) => set('message', e.target.value)} placeholder="Tell us a bit about what you are looking for." /></div>
             {err && <div className="wct-err">{err}</div>}
             <button className="wct-btn" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wct-spin" /> : <Send size={16} />} Send message</button>
             <p className="wct-note"><Building2 size={13} /> For enterprise, security or compliance questions, mention it above and the right team will reply.</p>
@@ -67,7 +71,7 @@ export default function WorkContact() {
 const CSS = `
 .wct-root{--g:#0a9d66;--g2:#2f6f3e;--ink:#0c1222;--mut:#5b6676;--line:#e6ebf1;--bg:#f6f9f7;min-height:100vh;background:
   radial-gradient(1200px 500px at 80% -10%, #eafaf1 0%, transparent 60%), var(--bg);color:var(--ink);
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;display:flex;flex-direction:column}
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;display:flex;flex-direction:column}
 .wct-top{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;max-width:980px;margin:0 auto;width:100%;box-sizing:border-box}
 .wct-brand{display:inline-flex;align-items:center;gap:9px;font-weight:800;font-size:18px;color:var(--ink);text-decoration:none}
 .wct-mark{width:22px;height:22px;border-radius:7px;background:linear-gradient(135deg,var(--g),var(--g2));box-shadow:0 2px 8px rgba(10,157,102,.35)}

@@ -16,53 +16,31 @@ import { ArrowLeft, ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Build
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'
 
-// Published list prices (USD / month). Live values from the API override these.
-const LIST = { basic: 199, advanced: 399, premium: 499 }
-const HOUR_FALLBACK = 10   // extra guided hour, every plan
+// Offline fallbacks (USD / month and per-tier values). These MATCH
+// server/store.js WORK_PRICING_DEFAULT so the page is never blank and never
+// shows a stale number; the live /api/work/pricing values override them.
+const FALLBACK = {
+  plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },
+  hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },
+  tasks: { lite: 1, basic: 4, advanced: 8, premium: 12 },
+  dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },
+}
 
-const PLANS = [
-  { id: 'basic', name: 'Basic', hrs: 2, tasks: 4, blurb: 'For one person who wants an expert at their side a couple of hours a day.' },
-  { id: 'advanced', name: 'Advanced', hrs: 4, tasks: 8, popular: true, blurb: 'Half a working day of guidance, grounded in your own documents.' },
-  { id: 'premium', name: 'Premium', hrs: 6, tasks: 12, blurb: 'The deepest plan: most hours, generated visuals, first in line.' },
+// Static plan metadata; the numbers (price, daily hours, tasks, overage) are
+// derived from the live API in the component so the page can never drift from
+// what checkout charges. Column order is Lite, Basic, Advanced, Premium,
+// Enterprise - the same order as every matrix row's 5 values.
+const PLAN_META = [
+  { id: 'lite', name: 'Lite', blurb: 'The entry plan: one simple task at a time, walked through step by step.' },
+  { id: 'basic', name: 'Basic', blurb: 'For one person who wants an expert at their side a couple of hours a day.' },
+  { id: 'advanced', name: 'Advanced', popular: true, blurb: 'Half a working day of guidance, grounded in your own documents.' },
+  { id: 'premium', name: 'Premium', blurb: 'The deepest plan: most hours, generated visuals, first in line.' },
   { id: 'enterprise', name: 'Enterprise', custom: true, blurb: 'Regulated teams, SSO, company policy, seat pools and a DPA.' },
 ]
 // Matrix cells: true = included, false = not included, a string = the value shown.
-const ALL = [true, true, true, true]
-const ENT = [false, false, false, true]
-const PRICE_ROWS = [
-  { g: 'Capacity' },
-  { k: 'Daily live guidance', v: ['2 hours', '4 hours', '6 hours', 'Custom'] },
-  { k: 'Tasks per day', v: ['Up to 4', 'Up to 8', 'Up to 12', 'Unlimited'] },
-  { k: 'Seats', v: ['1 user', '1 user', '1 user', 'Seat pools, your size'] },
-  { k: 'Priority in the guidance queue', v: ['Standard', 'Priority', 'Highest', 'Highest'] },
-  { g: 'Guidance' },
-  { k: 'Step-by-step guidance on any task', v: ALL },
-  { k: 'Exact commands, code and links', v: ALL },
-  { k: 'Roadmaps and diagrams', v: ALL },
-  { k: 'Floating guide + session write-up', v: ALL },
-  { k: 'Task history you can return to', v: ['Included', 'Included', 'Included', 'Included'] },
-  { k: 'Desktop, browser and mobile on one subscription', v: ALL },
-  { k: 'Upload your own reference documents', v: [false, true, true, true] },
-  { k: 'Visual examples where they help', v: [false, true, true, true] },
-  { k: 'Generated visuals on demand', v: [false, false, true, true] },
-  { g: 'Security, on every plan' },
-  { k: 'Security-first checked answers', v: ALL },
-  { k: 'On-device redaction before anything is sent', v: ALL },
-  { k: 'Read-only by design (never clicks, types or runs)', v: ALL },
-  { k: 'Keys and report artifacts encrypted at rest', v: ALL },
-  { g: 'Billing' },
-  { k: 'Billing cadence', v: ['Monthly', 'Monthly', 'Monthly', 'Custom'] },
-  { k: 'Extra guided time', v: ['$10 / hour, never expires', '$10 / hour, never expires', '$10 / hour, never expires', 'Custom'] },
-  { k: 'Annual billing', v: ['Where available', 'Where available', 'Where available', 'Custom'] },
-  { k: 'Cancellation', v: ['Self-service, anytime', 'Self-service, anytime', 'Self-service, anytime', 'Per agreement'] },
-  { k: 'Support', v: ['Email support', 'Email support', 'Email support', 'Priority SLA'] },
-  { g: 'Enterprise controls' },
-  { k: 'Company-wide PII / PHI redaction policy, set by your admin', v: ENT },
-  { k: 'SSO / SAML and team provisioning', v: ENT },
-  { k: 'Per-company AI keys, or bring your own', v: ENT },
-  { k: 'Audit log, DPA and priority SLA', v: ENT },
-  { k: 'Self-hosted / on-prem option', v: ENT },
-]
+// Five values per row, aligned to PLAN_META: [Lite, Basic, Advanced, Premium, Enterprise].
+const ALL = [true, true, true, true, true]
+const ENT = [false, false, false, false, true]
 
 function Cell({ v }) {
   if (v === true) return <span className="wpr-yes" role="img" aria-label="Included"><Check size={15} aria-hidden /></span>
@@ -74,18 +52,64 @@ export default function WorkPricing() {
   const nav = useNavigate()
   useSeo({
     title: 'Pricing - WorkCoPilot by AdmireVeda',
-    description: 'WorkCoPilot plans compared side by side: Basic, Advanced and Premium with daily live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+    description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with daily live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
     path: '/workcopilot/pricing',
   })
   const [price, setPrice] = useState(null)
   useEffect(() => { fetch('/api/work/pricing').then((r) => r.json()).then(setPrice).catch(() => {}) }, [])
 
   const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
-  const planPrice = (id) => (price && price.plans && price.plans[id] != null ? price.plans[id] : LIST[id])
-  const hourPrice = (id) => (price && price.hour && price.hour[id] != null ? price.hour[id] : HOUR_FALLBACK)
+  // Every per-tier number reads the live API first, then the server-matching
+  // fallback. Final prices and entitlements are confirmed at checkout.
+  const live = (group, id) => (price && price[group] && price[group][id] != null ? price[group][id] : FALLBACK[group][id])
+  const planPrice = (id) => live('plans', id)
+  const hourPrice = (id) => live('hour', id)
+  const dailyHrs = (id) => live('dailyHours', id)
+  const tasksDay = (id) => live('tasks', id)
+  const hrLabel = (id) => { const h = dailyHrs(id); return `${h} hour${h === 1 ? '' : 's'}` }
   // Start = the product's sign-in page with the plan carried along (the same
   // query the main page's plan cards use), so the pick survives sign-up.
   const start = (id) => nav(`/workcopilot?plan=${id}`)
+
+  const PLANS = PLAN_META
+  // The entitlement matrix, built with the derived numbers so the capacity and
+  // overage rows always agree with the plan cards above (no "$10/hour" drift).
+  // Roadmaps are Basic and up; diagrams/generated visuals are Premium; document
+  // upload is Advanced and up; Lite is the single-task entry plan.
+  const PRICE_ROWS = [
+    { g: 'Capacity' },
+    { k: 'Daily live guidance', v: [hrLabel('lite'), hrLabel('basic'), hrLabel('advanced'), hrLabel('premium'), 'Custom'] },
+    { k: 'Tasks per day', v: [`Up to ${tasksDay('lite')}`, `Up to ${tasksDay('basic')}`, `Up to ${tasksDay('advanced')}`, `Up to ${tasksDay('premium')}`, 'Unlimited'] },
+    { k: 'Seats', v: ['1 user', '1 user', '1 user', '1 user', 'Seat pools, your size'] },
+    { k: 'Priority in the guidance queue', v: ['Standard', 'Standard', 'Priority', 'Highest', 'Highest'] },
+    { g: 'Guidance' },
+    { k: 'Step-by-step guidance on any task', v: ALL },
+    { k: 'Exact commands, code and links', v: ALL },
+    { k: 'Roadmaps', v: [false, true, true, true, true] },
+    { k: 'Floating guide + session write-up', v: [false, true, true, true, true] },
+    { k: 'Task history you can return to', v: ['Included', 'Included', 'Included', 'Included', 'Included'] },
+    { k: 'Desktop, browser and mobile on one subscription', v: ALL },
+    { k: 'Upload your own reference documents', v: [false, false, true, true, true] },
+    { k: 'Visual examples where they help', v: [false, false, true, true, true] },
+    { k: 'Generated visuals and diagrams on demand', v: [false, false, false, true, true] },
+    { g: 'Security, on every plan' },
+    { k: 'Security-first checked answers', v: ALL },
+    { k: 'On-device redaction before anything is sent, when data protection is on', v: ALL },
+    { k: 'Read-only by design (never clicks, types or runs)', v: ALL },
+    { k: 'Keys and report artifacts encrypted at rest', v: ALL },
+    { g: 'Billing' },
+    { k: 'Billing cadence', v: ['Monthly', 'Monthly', 'Monthly', 'Monthly', 'Custom'] },
+    { k: 'Extra guided time', v: [`${money(hourPrice('lite'))} / hour, never expires`, `${money(hourPrice('basic'))} / hour, never expires`, `${money(hourPrice('advanced'))} / hour, never expires`, `${money(hourPrice('premium'))} / hour, never expires`, 'Custom'] },
+    { k: 'Annual billing', v: ['Where available', 'Where available', 'Where available', 'Where available', 'Custom'] },
+    { k: 'Cancellation', v: ['Self-service, anytime', 'Self-service, anytime', 'Self-service, anytime', 'Self-service, anytime', 'Per agreement'] },
+    { k: 'Support', v: ['Email support', 'Email support', 'Email support', 'Email support', 'Priority SLA'] },
+    { g: 'Enterprise controls' },
+    { k: 'Company-wide PII / PHI redaction policy, set by your admin', v: ENT },
+    { k: 'SSO (OIDC) and team provisioning', v: ENT },
+    { k: 'Per-company AI keys, or bring your own', v: ENT },
+    { k: 'Audit log, DPA and priority SLA', v: ENT },
+    { k: 'On-prem deployment, on request', v: ENT },
+  ]
 
   return (
     <div className="wpr">
@@ -113,11 +137,11 @@ export default function WorkPricing() {
               {p.custom ? (
                 <><span>Unlimited seats</span><span>Unlimited tasks</span><span>Priority SLA</span></>
               ) : (
-                <><span><b>{p.hrs}h</b> a day</span><span>up to <b>{p.tasks}</b> tasks</span><span>+1h <b>{money(hourPrice(p.id))}</b></span></>
+                <><span><b>{dailyHrs(p.id)}h</b> a day</span><span>up to <b>{tasksDay(p.id)}</b> task{tasksDay(p.id) === 1 ? '' : 's'}</span><span>+1h <b>{money(hourPrice(p.id))}</b></span></>
               )}
             </div>
             {!p.custom && (
-              <p className="wpr-mins"><b>{p.hrs} hours</b> of daily minutes - spend them anytime across the whole day, in as little as a minute at a time. You pay only for the minutes you actually use, never by the hour.</p>
+              <p className="wpr-mins"><b>{dailyHrs(p.id)} hour{dailyHrs(p.id) === 1 ? '' : 's'}</b> of daily minutes - spend them anytime across the whole day, in as little as a minute at a time. You pay only for the minutes you actually use, never by the hour.</p>
             )}
             {p.custom
               ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
@@ -208,7 +232,7 @@ export default function WorkPricing() {
           </div>
           <div className="wpr-note">
             <h3>Extra time</h3>
-            <p>Need more on a busy day? Top up extra guided hours at {money(hourPrice('basic'))} per hour on any plan. Purchased time never expires.{price && price.image && price.image.premium != null ? ` Premium adds generated visuals, and image packs start from ${money(price.image.premium)} each${price.imageMinBulk ? ` (min ${price.imageMinBulk})` : ''}.` : ''}</p>
+            <p>Need more on a busy day? Top up extra guided hours anytime - the per-hour rate depends on your plan (shown in the table above and confirmed at checkout). Purchased time never expires.{price && price.image && price.image.premium != null ? ` Premium adds generated visuals, and image packs start from ${money(price.image.premium)} each${price.imageMinBulk ? ` (min ${price.imageMinBulk})` : ''}.` : ''}</p>
           </div>
           <div className="wpr-note">
             <h3>Billing and cancellation</h3>
@@ -216,7 +240,7 @@ export default function WorkPricing() {
           </div>
           <div className="wpr-note">
             <h3>Teams and companies</h3>
-            <p>Basic, Advanced and Premium are single-user plans. For seat pools, SSO, a company-wide redaction policy, a DPA and a priority SLA, talk to us about Enterprise.</p>
+            <p>Lite, Basic, Advanced and Premium are single-user plans. For seat pools, SSO, a company-wide redaction policy, a DPA and a priority SLA, talk to us about Enterprise.</p>
           </div>
         </div>
         <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> Final entitlements and prices are confirmed at checkout. Taxes may apply by location.</p>
@@ -237,7 +261,8 @@ export default function WorkPricing() {
           <a href="/workcopilot/privacy">Privacy</a>
           <a href="/workcopilot/terms">Terms</a>
           <a href="/workcopilot/refund">Refunds</a>
-          <a href="mailto:support@admireveda.com">Support</a>
+          <a href="/workcopilot/dpa">DPA</a>
+          <a href="/workcopilot/contact">Contact</a>
         </nav>
       </footer>
     </div>
@@ -248,7 +273,7 @@ export default function WorkPricing() {
 const CSS = `
 .wpr{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;--emf:rgba(16,162,113,.08);
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
-  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
@@ -265,13 +290,13 @@ const CSS = `
 .wpr-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-hero{max-width:1160px;margin:0 auto;padding:30px 24px 10px;text-align:center}
 .wpr-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
-.wpr-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600}
+.wpr-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wpr-hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
 .wpr-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:640px;line-height:1.55}
-.wpr-h2{font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-align:center;color:var(--ink)}
+.wpr-h2{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-align:center;color:var(--ink)}
 
 /* plan tickets */
-.wpr-plans{max-width:1160px;margin:0 auto;padding:26px 24px 10px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;align-items:stretch}
+.wpr-plans{max-width:1160px;margin:0 auto;padding:26px 24px 10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:stretch}
 .wpr-plan{position:relative;display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px 22px 22px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25);min-width:0}
 .wpr-plan::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,var(--em),var(--cy));opacity:.55}
 .wpr-plan.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),#fff 38%)}
@@ -282,7 +307,7 @@ const CSS = `
 .wpr-plan-name{display:inline-flex;align-items:center;gap:6px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px;margin:0;color:var(--ink)}
 .wpr-plan-name svg{color:var(--cy)}
 .wpr-price{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(34px,3.4vw,46px);letter-spacing:-.03em;line-height:1;color:var(--ink)}
-.wpr-price span{font-family:"Instrument Sans",sans-serif;font-weight:500;font-size:15px;letter-spacing:0;color:var(--dim);margin-left:3px}
+.wpr-price span{font-family:"Figtree",sans-serif;font-weight:500;font-size:15px;letter-spacing:0;color:var(--dim);margin-left:3px}
 .wpr-custom{font-size:clamp(28px,2.8vw,36px);background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
 .wpr-cyc{color:var(--dim);font-size:13px;margin-top:-2px}
 .wpr-blurb{color:var(--mut);font-size:14px;line-height:1.5;min-height:3em}
@@ -300,13 +325,13 @@ const CSS = `
 .wpr-matrix{max-width:1160px;margin:0 auto;padding:40px 24px 10px}
 .wpr-card{border:1px solid var(--line);border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25)}
 .wpr-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-.wpr-tbl{width:100%;min-width:760px;border-collapse:separate;border-spacing:0;font-size:14.5px}
+.wpr-tbl{width:100%;min-width:900px;border-collapse:separate;border-spacing:0;font-size:14.5px}
 .wpr-tbl th,.wpr-tbl td{padding:13px 16px;text-align:center;border-top:1px solid var(--line);vertical-align:middle}
 .wpr-tbl thead th{border-top:none;padding:18px 16px 14px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:17px;color:var(--ink);background:var(--emf)}
 .wpr-tbl thead th.pop{color:var(--em)}
-.wpr-th-price{display:block;font-family:"Instrument Sans",sans-serif;font-weight:600;font-size:12.5px;color:var(--dim);margin-top:2px}
+.wpr-th-price{display:block;font-family:"Figtree",sans-serif;font-weight:600;font-size:12.5px;color:var(--dim);margin-top:2px}
 .wpr-tbl .wpr-feat{text-align:left;font-weight:500;color:var(--ink);width:32%;min-width:230px;position:sticky;left:0;z-index:1;background:#fff}
-.wpr-tbl thead .wpr-feat{font-family:"Instrument Sans",sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:#fff}
+.wpr-tbl thead .wpr-feat{font-family:"Figtree",sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:#fff}
 .wpr-tbl td.pop{background:rgba(16,162,113,.04)}
 .wpr-group td{text-align:left;padding:18px 16px 8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em)}
 .wpr-tbl tfoot td{padding:16px}
@@ -318,7 +343,7 @@ const CSS = `
 .wpr-tcard{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:18px;padding:20px;background:#fff;min-width:0}
 .wpr-tcard.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),#fff 30%)}
 .wpr-tname{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px}
-.wpr-tname small{font-family:"Instrument Sans",sans-serif;font-weight:600;font-size:13px;color:var(--dim);margin-left:6px}
+.wpr-tname small{font-family:"Figtree",sans-serif;font-weight:600;font-size:13px;color:var(--dim);margin-left:6px}
 .wpr-tcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .wpr-tcard li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink);line-height:1.45}
 .wpr-tcard li.off{color:var(--dim)}

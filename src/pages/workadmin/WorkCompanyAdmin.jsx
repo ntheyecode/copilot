@@ -19,85 +19,11 @@ import {
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
-import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle } from './sections/_shared.jsx'
+import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import * as SSO from '../../shared/sso_guide.js'
 
-// ---------------------------------------------------------------------------
-// Reason prompt modal (replaces window.prompt for destructive actions).
-// Promise-based hook: `const [askReason, reasonModal] = useReasonModal()`,
-// render `{reasonModal}` once in the component, then
-// `const reason = await askReason({ title, detail, confirmLabel })` resolves to
-// the trimmed reason (>= 3 chars) or null when cancelled. The server enforces the
-// same 3-char minimum; the Confirm button is disabled until it is met.
-// ---------------------------------------------------------------------------
-function ReasonModal({ title, detail, confirmLabel, onConfirm, onCancel }) {
-  const [reason, setReason] = useState('')
-  const taRef = useRef(null)
-  const ok = reason.trim().length >= 3
-  useEffect(() => {
-    if (taRef.current) taRef.current.focus()
-    const onKey = (e) => { if (e.key === 'Escape') onCancel() }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onCancel])
-  return (
-    <div
-      role="presentation"
-      onMouseDown={(e) => { if (e.target === e.currentTarget) onCancel() }}
-      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(26,31,54,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16, overflowY: 'auto' }}
-    >
-      <div
-        role="dialog" aria-modal="true" aria-label={title}
-        style={{ width: '100%', maxWidth: 460, maxHeight: '100%', overflowY: 'auto', boxSizing: 'border-box', background: 'var(--wka-panel, #fff)', border: '1px solid var(--wka-line-2, #dfe3ea)', borderRadius: 14, padding: 20, boxShadow: '0 24px 60px -20px rgba(26,31,54,0.45)' }}
-      >
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
-          <AlertTriangle size={18} style={{ color: 'var(--wka-amber)', flex: '0 0 auto', marginTop: 2 }} />
-          <div style={{ fontSize: 15, fontWeight: 650, color: 'var(--wka-text)', lineHeight: 1.35 }}>{title}</div>
-        </div>
-        {detail ? <p style={{ margin: '0 0 14px', fontSize: 12.5, color: 'var(--wka-muted)', lineHeight: 1.5 }}>{detail}</p> : null}
-        <div className="wka-field">
-          <label>Reason <span className="hint">required, recorded in your audit trail</span></label>
-          <textarea
-            ref={taRef} className="wka-input" rows={3} maxLength={500} value={reason}
-            onChange={(e) => setReason(e.target.value)}
-            placeholder="e.g. Left the company"
-            style={{ resize: 'vertical', fontFamily: 'inherit', width: '100%', boxSizing: 'border-box' }}
-          />
-          <span className="hint">{ok ? ' ' : 'Enter at least 3 characters to continue.'}</span>
-        </div>
-        <div style={{ display: 'flex', gap: 10, justifyContent: 'flex-end', flexWrap: 'wrap', marginTop: 14 }}>
-          <button type="button" className="wka-btn" onClick={onCancel}>Cancel</button>
-          <button
-            type="button" className="wka-btn danger" disabled={!ok}
-            style={{ background: 'var(--wka-red, #c0392b)', borderColor: 'var(--wka-red, #c0392b)', color: '#fff', fontWeight: 600 }}
-            onClick={() => { if (ok) onConfirm(reason.trim()) }}
-          >
-            <Trash2 size={14} /> {confirmLabel || 'Confirm'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function useReasonModal() {
-  const [cfg, setCfg] = useState(null)
-  const resolver = useRef(null)
-  const finish = useCallback((val) => {
-    const r = resolver.current
-    resolver.current = null
-    setCfg(null)
-    if (r) r(val)
-  }, [])
-  const ask = useCallback((opts) => new Promise((resolve) => {
-    if (resolver.current) resolver.current(null)
-    resolver.current = resolve
-    setCfg(opts || {})
-  }), [])
-  const cancel = useCallback(() => finish(null), [finish])
-  const node = cfg ? <ReasonModal {...cfg} onConfirm={finish} onCancel={cancel} /> : null
-  return [ask, node]
-}
+// Destructive confirms use the shared promise-style useReasonModal from
+// sections/_shared.jsx (single source - SUPREME RULE II; the local copy was deleted).
 
 const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced' }, { id: 'premium', name: 'Premium' }]
 const ROLE_LABEL = { company_admin: 'Company admin', member: 'Member', executive: 'Executive' }
@@ -316,7 +242,7 @@ function KnowledgeBaseCard() {
       </div>
 
       {/* Restore */}
-      <div style={{ borderTop: '1px solid var(--wka-border)', marginTop: 16, paddingTop: 14 }}>
+      <div style={{ borderTop: '1px solid var(--wka-line)', marginTop: 16, paddingTop: 14 }}>
         <div className="wka-field" style={{ maxWidth: 420 }}>
           <label><Upload size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Restore from a backup</label>
           <input ref={fileRef} className="wka-input" type="file" accept="application/json,.json" onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
@@ -339,7 +265,7 @@ function KnowledgeBaseCard() {
       </div>
 
       {/* Clear */}
-      <div style={{ borderTop: '1px solid var(--wka-border)', marginTop: 16, paddingTop: 14 }}>
+      <div style={{ borderTop: '1px solid var(--wka-line)', marginTop: 16, paddingTop: 14 }}>
         {!confirmClear ? (
           <button type="button" className="wka-btn danger" disabled={busy || !count} onClick={() => { setConfirmClear(true); setErr(null) }}>
             <Trash2 size={14} /> Clear knowledge base
@@ -384,7 +310,7 @@ function EnterpriseDeployCard() {
           <>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
               <a className="wka-btn primary" href="/api/work/app/msi" download><Download size={14} /> Download MSI (signed, per-machine)</a>
-              <span className="wka-badge active">v1.0.5 · COE Security LLC</span>
+              <span className="wka-badge active">{msi.version ? `v${msi.version} · ` : ''}COE Security LLC</span>
             </div>
             <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--wka-faint)' }}>Silent install (run as admin / SYSTEM)</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', marginTop: 6, maxWidth: 560 }}>
@@ -632,7 +558,7 @@ function TeamSection({ meId, onCompany }) {
           </div>
           {mode === 'email'
             ? <p className="desc">Enter their work email. They sign in through your company single sign-on; there is no password to set. If your company uses invite-only SSO, only people you add here can sign in.</p>
-            : <p className="desc">For a person without SSO. Share the temporary password; they can change it later.</p>}
+            : <p className="desc">For a person without SSO. They get a set-password link by email and choose their own password. A temporary password here is optional.</p>}
           <div className="wka-formgrid">
             {mode === 'email' ? (
               <>
@@ -651,7 +577,7 @@ function TeamSection({ meId, onCompany }) {
                 <option value="member">Member</option><option value="executive">Executive (productivity dashboard, read-only)</option><option value="company_admin">Company admin</option>
               </select>
             </div>
-            <div className="wka-field"><label>Plan <Help text="Daily guiding time: Basic 2h, Advanced 4h, Premium 6h. Your company's per-plan license count is enforced." /></label>
+            <div className="wka-field"><label>Plan <Help text="Each plan includes a daily guiding-time allowance set by the WorkCoPilot team. Your company's per-plan license count is enforced." /></label>
               <select className="wka-select" value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
                 {TIERS.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
@@ -920,14 +846,22 @@ function AiSection() {
   const [wsBusy, setWsBusy] = useState(false)
   const [wsOk, setWsOk] = useState('')
   const [wsErr, setWsErr] = useState(null)
+  // Removing company AI / web-search keys takes the company's AI (partly) down,
+  // so each goes through the shared reason-gated danger confirm (logged).
+  const [askReason, reasonModal] = useReasonModal()
   const load = useCallback(() => { api.workTeamAi().then((c) => setCompany(c || null)).catch((e) => setErr(e)) }, [])
   useEffect(() => { load() }, [load])
 
   const saveWs = async (clear) => {
     const key = clear ? '' : wsKey.trim()
     if (!clear && !key) return
+    let reason
+    if (clear) {
+      reason = await askReason({ title: 'Remove your web-search key?', detail: 'Live web learning stops running on your key. Guidance is no longer grounded in the latest web sources until a key is set again.', confirmLabel: 'Remove key' })
+      if (!reason || reason.length < 3) return
+    }
     setWsBusy(true); setWsErr(null); setWsOk('')
-    try { await api.workTeamSetWebSearch(key, 'tavily'); setWsKey(''); setWsOk(clear ? 'Web-search key removed.' : 'Web-search key saved.'); load() }
+    try { await api.workTeamSetWebSearch(key, 'tavily', reason); setWsKey(''); setWsOk(clear ? 'Web-search key removed.' : 'Web-search key saved.'); load() }
     catch (error) { setWsErr(error) } finally { setWsBusy(false) }
   }
 
@@ -938,13 +872,15 @@ function AiSection() {
     catch (error) { setErr(error) } finally { setBusy(false) }
   }
   const clear = async () => {
+    const reason = await askReason({ title: 'Remove your company AI keys?', detail: 'WorkCoPilot stops running on your keys. If your AI source is "company keys", guidance is paused for your whole team until keys are set again.', confirmLabel: 'Remove my keys' })
+    if (!reason || reason.length < 3) return
     setBusy(true); setErr(null); setOk('')
     try {
       // Say what ACTUALLY happened: the server restores the AI source the
       // WorkCoPilot team chose before your keys were added. If that choice was
       // "company keys", AI is unavailable until keys are set again (never a
       // silent switch to platform keys).
-      const c = await api.workTeamSetAiKeys({ apiKey: '' })
+      const c = await api.workTeamSetAiKeys({ apiKey: '', reason })
       if (c && c.aiReady) setOk('Your keys were removed. Your company is back on the WorkCoPilot platform AI.')
       else setOk('Your keys were removed. Your company is set to run on its own AI keys, so guidance is paused until you add keys again or the WorkCoPilot team switches you to the platform AI.')
       load()
@@ -954,6 +890,7 @@ function AiSection() {
   const cur = company && company.companyAi
   return (
     <div>
+      {reasonModal}
       <div className="wka-panel">
         <h2>Current AI</h2>
         {cur
@@ -1031,7 +968,17 @@ function GovernanceSection({ companyId }) {
   const ro = locked // read-only for a company admin when a superadmin locked it
   const patchPolicy = (patch) => setState((s) => ({ ...s, policy: { ...s.policy, ...patch } }))
   const setCat = (cat, action) => setState((s) => ({ ...s, policy: { ...s.policy, categories: { ...(s.policy.categories || {}), [cat]: action } } }))
-  const applyPreset = (key) => { const preset = state.presets[key] || {}; setState((s) => ({ ...s, policy: { ...s.policy, categories: { ...(s.policy.categories || {}), ...preset }, frameworks: Array.from(new Set([...(s.policy.frameworks || []), key])) } })) }
+  // Click a framework to toggle it: ON seeds its sensible category defaults and
+  // selects it; clicking an already-selected framework deselects it (mirrors the
+  // superadmin Governance toggle). Category actions it seeded are left as-is.
+  const applyPreset = (key) => {
+    setState((s) => {
+      const cur = s.policy.frameworks || []
+      if (cur.includes(key)) return { ...s, policy: { ...s.policy, frameworks: cur.filter((k) => k !== key) } }
+      const preset = s.presets[key] || {}
+      return { ...s, policy: { ...s.policy, categories: { ...(s.policy.categories || {}), ...preset }, frameworks: [...cur, key] } }
+    })
+  }
   const save = async () => {
     if (ro || saving || !p) return
     setSaving(true); setSaveErr(null); setSaved(false)
@@ -1230,17 +1177,20 @@ function SessionsSection() {
   const [frameworks, setFrameworks] = useState([])
   const [emailing, setEmailing] = useState(null) // session id currently sending
   const [emailMsg, setEmailMsg] = useState(null) // { id, ok, text }
+  const [emailFor, setEmailFor] = useState(null) // session id whose inline email box is open
+  const [emailTo, setEmailTo] = useState('')
   const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
     api.workCompanySessions().then((r) => setState({ loading: false, error: null, items: r.sessions || [] })).catch((error) => setState({ loading: false, error, items: [] }))
   }, [])
   useEffect(() => { load() }, [load])
   useEffect(() => { api.workComplianceFrameworks().then((r) => setFrameworks(r.frameworks || [])).catch(() => setFrameworks([])) }, [])
-  const emailOne = async (id) => {
-    const to = window.prompt('Email the compliance report to which address?')
-    if (!to) return
+  const openEmail = (id) => { setEmailFor((cur) => cur === id ? null : id); setEmailTo(''); setEmailMsg(null) }
+  const sendEmail = async (id) => {
+    const to = emailTo.trim()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) { setEmailMsg({ id, ok: false, text: 'Enter a valid email address.' }); return }
     setEmailing(id); setEmailMsg(null)
-    try { const r = await api.workComplianceEmail(id, { to: to.trim(), ...(fw ? { framework: fw } : {}) }); setEmailMsg({ id, ok: true, text: `Sent to ${r.to}.` }) }
+    try { const r = await api.workComplianceEmail(id, { to, ...(fw ? { framework: fw } : {}) }); setEmailMsg({ id, ok: true, text: `Sent to ${r.to}.` }); setEmailFor(null); setEmailTo('') }
     catch (e) { setEmailMsg({ id, ok: false, text: (e && e.message) || 'Could not send.' }) }
     finally { setEmailing(null) }
   }
@@ -1268,7 +1218,7 @@ function SessionsSection() {
           <button className="wka-btn sm ghost" onClick={load} title="Refresh"><RefreshCw size={13} /> Refresh</button>
         </div>
       </div>
-      <p style={{ color: 'var(--wka-muted)', fontSize: 13, marginTop: 6 }}>For any task, pull a <b>compliance report</b> (the controls applied, how each was satisfied, and the evidence), the full session report, or the audit log (exactly what was sent to the AI). Scoped to your company only. Email delivery arrives once mail servers are configured; download is available now.</p>
+      <p style={{ color: 'var(--wka-muted)', fontSize: 13, marginTop: 6 }}>For any task, pull a <b>compliance report</b> (the controls applied, how each was satisfied, and the evidence), the full session report, or the audit log (exactly what was sent to the AI). Scoped to your company only. Download any of them now, or email the compliance report to any address.</p>
       <div className="wka-table-wrap" style={{ marginTop: 8 }}>
         <table className="wka-table">
           <thead><tr><th>Who</th><th>Task</th><th>Status</th><th>Progress</th><th>Updated</th><th>Pull</th></tr></thead>
@@ -1282,9 +1232,17 @@ function SessionsSection() {
                 <td style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDT(s.lastActivityAt || s.startedAt)}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   <a className="wka-btn sm" href={api.workComplianceUrl(s.id, true, fw)} target="_blank" rel="noopener noreferrer" title={`Download the compliance report (${fw ? frameworks.find((f) => f.id === fw)?.name || 'framework' : 'all frameworks'}): controls, responses and evidence for this task (PDF)`}><ShieldCheck size={13} /> Compliance</a>
-                  <button className="wka-btn sm ghost" onClick={() => emailOne(s.id)} disabled={emailing === s.id} title="Email the compliance report (PDF attached)" style={{ marginLeft: 6 }}>{emailing === s.id ? <Loader2 size={13} className="spin" /> : <Mail size={13} />} Email</button>
+                  <button className="wka-btn sm ghost" onClick={() => openEmail(s.id)} disabled={emailing === s.id} aria-expanded={emailFor === s.id} title="Email the compliance report (PDF attached)" style={{ marginLeft: 6 }}>{emailing === s.id ? <Loader2 size={13} className="spin" /> : <Mail size={13} />} Email</button>
                   <a className="wka-btn sm ghost" href={api.workReportUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download the session report (PDF)" style={{ marginLeft: 6 }}><Download size={13} /> Report</a>
                   <a className="wka-btn sm ghost" href={api.workAuditUrl(s.id)} target="_blank" rel="noopener noreferrer" title="Download the audit log (exactly what was sent to the AI)" style={{ marginLeft: 6 }}><FileText size={13} /> Log</a>
+                  {emailFor === s.id && (
+                    <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', marginLeft: 8, verticalAlign: 'middle' }}>
+                      <input className="wka-input" type="email" style={{ width: 200, padding: '5px 8px' }} placeholder="name@company.com" value={emailTo} autoFocus
+                        onChange={(e) => setEmailTo(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') sendEmail(s.id) }} />
+                      <button className="wka-btn sm primary" onClick={() => sendEmail(s.id)} disabled={emailing === s.id}>{emailing === s.id ? <Loader2 size={13} className="spin" /> : 'Send'}</button>
+                      <button className="wka-btn sm ghost" onClick={() => { setEmailFor(null); setEmailTo('') }}>Cancel</button>
+                    </span>
+                  )}
                   {emailMsg && emailMsg.id === s.id && <span style={{ marginLeft: 8, fontSize: 12, color: emailMsg.ok ? '#16a34a' : '#b45309' }}>{emailMsg.text}</span>}
                 </td>
               </tr>
@@ -1468,6 +1426,7 @@ export default function WorkCompanyAdmin() {
 
 // Company-specific additions on top of the shared console CSS.
 const WCA_CSS = `
+.wka .spin { animation: wka-spin 0.8s linear infinite; }
 .wca-help { display:inline-flex; vertical-align:middle; margin-left:6px; color:var(--wka-faint); cursor:help; }
 .wca-help:hover, .wca-help:focus { color:var(--wka-accent); outline:none; }
 .wca-kv { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px 26px; }

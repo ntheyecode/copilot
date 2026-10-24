@@ -1,6 +1,6 @@
 // Shared presentational primitives for the WorkCoPilot admin sections.
 // Pure UI, no data fetching. Only react + lucide-react are imported.
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, Pencil, X } from 'lucide-react'
 
 export function Loading({ label = 'Loading' }) {
@@ -116,6 +116,43 @@ export function ReasonModal({
       </div>
     </div>
   )
+}
+
+// Promise-style wrapper over the canonical ReasonModal (single source - SUPREME
+// RULE II; replaces the per-screen copies that used to live in Companies.jsx and
+// WorkCompanyAdmin.jsx). Usage:
+//   const [askReason, reasonModal] = useReasonModal()
+//   render {reasonModal} once, then
+//   const reason = await askReason({ title, detail, confirmLabel })
+// resolves to the trimmed reason (>= 3 chars) or null when cancelled. `detail`
+// is accepted as an alias for `message` so existing call sites are unchanged.
+export function useReasonModal() {
+  const [cfg, setCfg] = useState(null)
+  const resolver = useRef(null)
+  const finish = useCallback((val) => {
+    const r = resolver.current
+    resolver.current = null
+    setCfg(null)
+    if (r) r(val)
+  }, [])
+  const ask = useCallback((opts) => new Promise((resolve) => {
+    if (resolver.current) resolver.current(null)
+    resolver.current = resolve
+    setCfg(opts || {})
+  }), [])
+  const cancel = useCallback(() => finish(null), [finish])
+  const node = cfg ? (
+    <ReasonModal
+      title={cfg.title}
+      message={cfg.detail != null ? cfg.detail : cfg.message}
+      confirmLabel={cfg.confirmLabel}
+      danger={cfg.danger !== false}
+      placeholder={cfg.placeholder}
+      onConfirm={finish}
+      onCancel={cancel}
+    />
+  ) : null
+  return [ask, node]
 }
 
 // Generic MFA step-up gate: stands in front of a critical page until a fresh

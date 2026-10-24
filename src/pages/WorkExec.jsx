@@ -23,7 +23,7 @@ import {
   CheckCircle2, Clock3, DollarSign, Gauge, Layers3, Timer, Users, Loader2,
   FileDown, ImageDown, FileSpreadsheet, Info, TrendingUp, Activity,
 } from 'lucide-react'
-import { api } from '../api.js'
+import { api, friendlyError } from '../api.js'
 
 const RANGES = [7, 30, 90]
 const POLL_MS = 45000
@@ -196,7 +196,7 @@ function RankBars({ rows, color, pal, unit = 'tasks', emptyLabel }) {
           <div
             key={i}
             className="wx-bar-row"
-            onMouseMove={(e) => { const b = e.currentTarget.getBoundingClientRect(); setTip({ x: e.clientX - b.left + 12, y: e.clientY - b.top - 6, label: r.label, value: `${fmtInt(r.value)} ${unit}` }) }}
+            onMouseMove={(e) => { const host = e.currentTarget.closest('.wx-bars'); if (!host) return; const b = host.getBoundingClientRect(); setTip({ x: e.clientX - b.left + 12, y: e.clientY - b.top - 6, label: r.label, value: `${fmtInt(r.value)} ${unit}` }) }}
           >
             <div className="wx-bar-label" title={r.label}>{r.label}</div>
             <div className="wx-bar-track" style={{ background: pal.track }}>
@@ -313,18 +313,22 @@ export default function WorkExec() {
     } catch (e) {
       // Keep the last good data on a transient poll failure; only hard-error
       // when we have nothing to show.
-      setData((prev) => { if (!prev) setErr(e?.message || 'Could not load productivity.'); else setStale(true); return prev })
+      setData((prev) => { if (!prev) setErr(friendlyError(e, 'Could not load productivity.')); else setStale(true); return prev })
     } finally {
       inFlight.current = false
       setRefreshing(false)
     }
   }, [days])
 
-  // Live: fetch on range change, then poll in place every 45s.
+  // Live: fetch on range change, then poll in place every 45s. The poll is
+  // paused while the tab is hidden (no point spending a request + a re-render on
+  // a background tab); on return to the foreground we refresh once immediately.
   useEffect(() => {
     load(true)
-    const id = setInterval(() => load(false), POLL_MS)
-    return () => clearInterval(id)
+    const id = setInterval(() => { if (typeof document === 'undefined' || document.visibilityState === 'visible') load(false) }, POLL_MS)
+    const onVis = () => { if (document.visibilityState === 'visible') load(false) }
+    document.addEventListener('visibilitychange', onVis)
+    return () => { clearInterval(id); document.removeEventListener('visibilitychange', onVis) }
   }, [load])
 
   const companyName = (company && company.name) || 'WorkCoPilot'
@@ -478,7 +482,7 @@ export default function WorkExec() {
             <Kpi big icon={CheckCircle2} tone="brand" label="Tasks completed" value={fmtInt(data.tasksCompleted)} sub={`${fmtInt(data.tasksInProgress)} in progress now`} />
             <Kpi big icon={Clock3} tone="brand" est label="Time saved" value={fmtHours(est.timeSavedHours)} sub="vs. doing it by hand" />
             <Kpi big icon={DollarSign} tone="teal" est label="Value delivered" value={fmtMoney(est.dollarsSaved)} sub="productivity value, not a cost" />
-            <Kpi big icon={Gauge} tone="brand" label="Effectiveness" value={`${data.effectivenessPct}%`} sub={`${data.fullyCompletedPct}% fully completed`} />
+            <Kpi big icon={Gauge} tone="brand" label="Effectiveness" value={`${fmtInt(data.effectivenessPct)}%`} sub={`${fmtInt(data.fullyCompletedPct)}% fully completed`} />
 
             <Kpi icon={Layers3} label="Avg steps / task" value={fmtInt(data.avgStepsPerTask)} sub="task depth" />
             <Kpi icon={Timer} label="Avg time / task" value={fmtMin(data.avgMinutesPerTask)} sub="active minutes" />
@@ -531,8 +535,8 @@ export default function WorkExec() {
                   <tr><th>Tasks in progress</th><td>{fmtInt(data.tasksInProgress)}</td></tr>
                   <tr><th>Avg steps / task</th><td>{fmtInt(data.avgStepsPerTask)}</td></tr>
                   <tr><th>Avg time / task</th><td>{fmtMin(data.avgMinutesPerTask)}</td></tr>
-                  <tr><th>Effectiveness</th><td>{data.effectivenessPct}%</td></tr>
-                  <tr><th>Fully completed</th><td>{data.fullyCompletedPct}%</td></tr>
+                  <tr><th>Effectiveness</th><td>{fmtInt(data.effectivenessPct)}%</td></tr>
+                  <tr><th>Fully completed</th><td>{fmtInt(data.fullyCompletedPct)}%</td></tr>
                   <tr><th>Time saved (est.)</th><td>{fmtHours(est.timeSavedHours)}</td></tr>
                   <tr><th>Value delivered (est.)</th><td>{fmtMoney(est.dollarsSaved)}</td></tr>
                 </tbody>

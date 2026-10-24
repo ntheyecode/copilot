@@ -162,7 +162,7 @@ const WORKCARD_CSS = `
   --wc-sh-h:0 1px 2px rgba(10,13,18,.05),0 30px 60px -24px rgba(10,13,18,.26);
 
   position:relative;display:flex;flex-direction:column;gap:14px;
-  font-family:"Instrument Sans","Helvetica Neue",system-ui,sans-serif;
+  font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;
   border:1px solid var(--wc-line);border-radius:20px;padding:24px;
   color:var(--wc-tx);overflow:hidden;isolation:isolate;
   background-color:var(--wc-s1);
@@ -242,7 +242,7 @@ const WORKCARD_CSS = `
 .wc-htext{display:flex;flex-direction:column;gap:4px;min-width:0}
 .wc-eyebrow{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:500;
   letter-spacing:.12em;text-transform:uppercase;color:var(--wc-ink)}
-.wc-title{font-family:"Bricolage Grotesque","Instrument Sans",sans-serif;font-weight:600;
+.wc-title{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;
   font-size:clamp(19px,1.8vw,23px);letter-spacing:-.02em;line-height:1.16;margin:0;color:var(--wc-title)}
 
 /* BODY */

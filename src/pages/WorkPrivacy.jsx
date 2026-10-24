@@ -3,7 +3,7 @@
 // No "certified", no "you are compliant", no invented addresses, retention
 // periods, officers or third-party lists. The legal entity (COE Security LLC) is
 // named as controller, per the owner's ownership hierarchy. Where something is
-// user-controlled or not yet fixed (automatic retention), it is SAID, not implied.
+// user-controlled (deletion, or a configurable retention window), it is SAID, not implied.
 // States guarantees, not mechanisms (docs/business-rules.md).
 // The fuller data-flow lives on /workcopilot/security; this page is the policy
 // a reader can cite. Same light design language as WorkSecurity (.wsx-*).
@@ -35,7 +35,7 @@ function ensureFonts() {
 const GLANCE = [
   { icon: Monitor, tone: 'ok', eyebrow: 'On your device', title: 'Sensitive values never leave in clear', body: 'PII, PHI and secrets are stripped or tokenized on your own device, in screen text and typed text, before any request is sent. The answer is rebuilt on your device.' },
   { icon: Send, tone: 'cyan', eyebrow: 'What leaves', title: 'Only what is needed to guide the step', body: 'Reduced-size screen frames and the governed text. On the desktop app, documents are read locally and only the governed text is sent.' },
-  { icon: Database, tone: 'amber', eyebrow: 'What we keep', title: 'A record of the session, until you delete it', body: 'A per-session report, audit log and your session history. Stored keys, secrets and report artifacts are encrypted at rest. There is no automatic retention timer yet, so deletion is in your hands.' },
+  { icon: Database, tone: 'amber', eyebrow: 'What we keep', title: 'A record of the session, until you delete it', body: 'A per-session report, audit log and your session history. Stored keys, secrets and report artifacts are encrypted at rest. Data is kept until you or your admin delete it, or a configured retention window purges older sessions on a schedule.' },
 ]
 
 // Section list drives both the sticky table of contents and the article.

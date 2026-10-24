@@ -27,6 +27,22 @@ async function req(method, url, body) {
   return rehydrateDeep(data)
 }
 
+// Map a caught error to user-safe copy for NON-superadmin surfaces. Known,
+// actionable statuses (402 payment required, 403 forbidden, 409 conflict - e.g.
+// finish-the-current-task, 429 rate limited) keep their server message, which is
+// already written for end users. Everything else (500s, network drops, parse
+// failures, raw internals) collapses to one calm, non-technical line so stack
+// text, server detail, or any model/provider name can never reach an end user.
+// Superadmin-only surfaces may still show err.message directly.
+export function friendlyError(err, fallback) {
+  const generic = fallback || 'WorkCoPilot is busy, please try again in a moment.'
+  if (!err) return generic
+  const status = err.status
+  const msg = typeof err.message === 'string' ? err.message.trim() : ''
+  if (msg && (status === 402 || status === 403 || status === 409 || status === 429)) return msg
+  return generic
+}
+
 export const api = {
   // auth
   login: (username, password) => req('POST', '/api/login', { username, password }),
@@ -121,7 +137,7 @@ export const api = {
   workTeamClearLearnings: (reason) => req('POST', '/api/work/team/learnings/clear', { reason }),
   // Company admin: this company's own web-search (Tavily) key (apiKey:'' clears),
   // and the best+cheapest model recommendation for the keys the company runs on.
-  workTeamSetWebSearch: (apiKey, provider) => req('POST', '/api/work/team/web-search', { apiKey, provider }),
+  workTeamSetWebSearch: (apiKey, provider, reason) => req('POST', '/api/work/team/web-search', { apiKey, provider, ...(reason ? { reason } : {}) }),
   workTeamAiRecommendation: () => req('GET', '/api/work/team/ai-recommendation'),
   workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
   // body: { goal?, frame? } (frame = downscaled data URL; when DLP is on it is

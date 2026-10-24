@@ -235,7 +235,7 @@ export default function WorkSecurity() {
       <section className="wsx-hero">
         <div className="wsx-eyebrow"><Lock size={14} aria-hidden="true" /> Private by design &middot; on your device</div>
         <h1>See exactly what is protected</h1>
-        <p>Before anything is sent, sensitive data is stripped or tokenized <b>on your own device</b>, in screenshots and in text. You decide what counts as sensitive, on top of the industry-standard detectors.</p>
+        <p>When data protection is on, sensitive data is stripped or tokenized <b>on your own device</b> before anything is sent, in screenshots and in text. You decide what counts as sensitive, on top of the industry-standard detectors.</p>
       </section>
 
       <section className="wsx-block">
