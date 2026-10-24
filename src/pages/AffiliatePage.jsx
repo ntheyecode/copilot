@@ -5,15 +5,19 @@
 //               Stripe payout setup, and the referral ledger.
 // The server decides which face applies: api.affiliateDashboard() succeeds for
 // an affiliate and 404s for everyone else. Copy stays honest: the only promise
-// is the stated percentage of each referral's FIRST payment, paid through Stripe.
-// Light theme, orange accent (#f26a43). US spelling, no em-dashes.
+// is the stated percentage of each referral's FIRST payment, paid through Stripe,
+// plus the referred person's free month on annual billing.
+// Visual system = the WorkCoPilot site (WorkMarketing.jsx, light theme): page
+// #f4f7fb, white hairline cards, deep-green display headings, green #0a9d66 and
+// blue #0a86cf as the emphasis accents, orange #f26a43 for the primary CTA only.
+// US spelling, no em-dashes.
 import React, { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   ArrowLeft, ArrowRight, Check, Copy, Loader2, Link2, MousePointerClick, UserCheck,
   Wallet, Clock, BadgeCheck, CreditCard, ShieldCheck, Send, Megaphone, Share2,
   AlertTriangle, PauseCircle, FileText, Sparkles, Search, KeyRound, Gift, Phone, AtSign, Mail,
-  Rocket, Coins, Zap, TrendingUp, Star,
+  Coins, Zap, Users,
 } from 'lucide-react'
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import { api } from '../api.js'
@@ -157,6 +161,17 @@ export default function AffiliatePage() {
 }
 
 /* ------------------------------------------------------------------ LANDING */
+// Section header in the site's pattern: centered eyebrow, big h2, sub.
+function SecHead({ icon: Ic, kicker, title, sub }) {
+  return (
+    <div className="af-sechead">
+      <div className="af-eyebrow"><Ic size={14} /> {kicker}</div>
+      <h2 className="af-h2">{title}</h2>
+      {sub ? <p className="af-sub">{sub}</p> : null}
+    </div>
+  )
+}
+
 function Landing({ pub, pubErr, rate, me, dashErr }) {
   const user = me && me.user
   const rateWord = `${rate}%`
@@ -169,50 +184,62 @@ function Landing({ pub, pubErr, rate, me, dashErr }) {
   }
   return (
     <div className="af-land">
-      <div className="af-aurora" aria-hidden><span className="b1" /><span className="b2" /><span className="b3" /><span className="b4" /></div>
+      <div className="af-backdrop" aria-hidden />
 
+      {/* HERO: copy left, the real illustration right. Balanced, no voids. */}
       <section className="af-hero">
-        <Sparks />
         <div className="af-hero-copy">
           <div className="af-eyebrow"><Megaphone size={14} /> Affiliate program</div>
-          <h1 className="af-h1">Partner with WorkCoPilot. <span className="af-h1-b">Earn on every referral.</span></h1>
+          <h1 className="af-h1">Recommend WorkCoPilot. <em>Earn {rateWord} on every referral.</em></h1>
           <p className="af-lead">
-            Help the people you already reach do their best work, and earn real money doing it: <b>{rateWord} of every referral&rsquo;s first payment</b>, paid automatically through Stripe.
-            Your audience gets <b>a free month on annual billing</b>. Approved affiliates only: every application is reviewed by a person.
+            You already point people to tools that help them work better. Make it pay: earn <b>{rateWord} of every referred person&rsquo;s first payment</b>, sent automatically through Stripe. The people you refer get <b>a free month</b> when they choose annual billing.
           </p>
           <div className="af-hero-cta">
-            <button type="button" className="af-cta af-cta-hero" onClick={goApply}><Rocket size={17} /> Apply to become an affiliate <ArrowRight size={16} /></button>
-            <a className="af-cta alt" href="/">See what you&rsquo;d be recommending <ArrowRight size={15} /></a>
+            <button type="button" className="af-cta" onClick={goApply}>Apply to become an affiliate <ArrowRight size={16} /></button>
+            <a className="af-textlink" href="/">See what you&rsquo;d be recommending <ArrowRight size={14} /></a>
           </div>
-          <div className="af-hero-facts" aria-label="Program at a glance">
-            <div className="af-fact" style={{ '--c1': '#ffb02e', '--c2': '#f26a43' }}><b>{rate}%</b><span>of each referral&rsquo;s first payment</span></div>
-            <div className="af-fact" style={{ '--c1': '#ff3d8d', '--c2': '#d63aff' }}><b>Stripe</b><span>automatic payouts to your account</span></div>
-            <div className="af-fact" style={{ '--c1': '#d63aff', '--c2': '#7c3aed' }}><b>Free month</b><span>for everyone you refer, on annual billing</span></div>
-          </div>
+          <ul className="af-trust" aria-label="Program assurances">
+            <li><Check size={14} /> About 2 minutes to apply</li>
+            <li><Check size={14} /> Reviewed by a person</li>
+            <li><Check size={14} /> Automatic Stripe payouts</li>
+          </ul>
         </div>
-        <HeroVisual rate={rate} />
+        <figure className="af-hero-fig">
+          <img src="/affiliate-hero.webp" alt="Diverse creators sharing WorkCoPilot, with a rising growth arrow and coins" width="1600" height="1066" fetchpriority="high" decoding="async" />
+          <figcaption className="af-fig-chip earn"><Coins size={15} /> <b>Earn {rateWord}</b> of each first payment</figcaption>
+          <figcaption className="af-fig-chip gift"><Gift size={15} /> <b>Free month</b> for your audience</figcaption>
+        </figure>
       </section>
 
-      <Boosters />
+      {/* at-a-glance stats, in the site's stat-tile language */}
+      <div className="af-stats3" aria-label="Program at a glance">
+        <div className="af-stat3"><b>{rateWord}</b><span>of each referral&rsquo;s first payment</span></div>
+        <div className="af-stat3"><b>Stripe</b><span>automatic payouts to your account</span></div>
+        <div className="af-stat3"><b>1 month</b><span>free for everyone you refer, on annual billing</span></div>
+        <div className="af-stat3"><b>2 min</b><span>to apply; name and email is all we need</span></div>
+      </div>
 
+      <Boosters rateWord={rateWord} />
       <Flow rateWord={rateWord} />
+      <Audience />
 
+      {/* APPLY */}
       <section className="af-apply" id="apply">
+        <SecHead icon={Send} kicker="Apply" title="Two minutes now. A referral link for as long as you want it." sub="Name and email are all we need. The rest helps us say yes faster. You get a confirmation email right away, and we email you the moment we decide." />
         <div className="af-apply-grid">
-          <div>
-            <div className="af-eyebrow"><Send size={14} /> Apply</div>
-            <h2 className="af-h2">This could be the easiest yes you say this year.</h2>
-            <p className="af-sub">A two-minute form. You get a confirmation email right away, and we email you the moment we decide. Your social handles help us say yes faster.</p>
+          <div className="af-apply-side">
             <PerkCard rateWord={rateWord} />
             {pubErr ? <div className="af-note warn"><AlertTriangle size={14} /> {pubErr}</div> : null}
             {dashErr ? <div className="af-note warn"><AlertTriangle size={14} /> {dashErr}</div> : null}
-            <ul className="af-rules">
-              <li><ShieldCheck size={15} /> <span>Commission is <b>{rateWord} of the referred person&rsquo;s first payment</b>. Renewals and later purchases do not earn commission.</span></li>
-              <li><CreditCard size={15} /> <span>Payouts are sent through <b>Stripe</b> once your pending balance reaches the program minimum, shown in your dashboard.</span></li>
-              <li><Gift size={15} /> <span>The people you refer get <b>a free month</b> when they sign up through your link and choose annual billing.</span></li>
-              <li><UserCheck size={15} /> <span>Referrals are tracked by your link. A referral counts when the person signs up through it and then pays.</span></li>
-              <li><FileText size={15} /> <span>Honest promotion only: no spam, no misleading claims, no bidding on the WorkCoPilot or AdmireVeda names in paid search.</span></li>
-            </ul>
+            <div className="af-card af-rulescard">
+              <div className="af-card-k"><ShieldCheck size={14} /> The fine print, in plain words</div>
+              <ul className="af-rules">
+                <li><Check size={15} /> <span>Commission is <b>{rateWord} of the referred person&rsquo;s first payment</b>. Renewals and later purchases do not earn commission.</span></li>
+                <li><Check size={15} /> <span>Payouts are sent through <b>Stripe</b> once your pending balance reaches the program minimum, shown in your dashboard.</span></li>
+                <li><Check size={15} /> <span>A referral counts when the person signs up through your link and then pays.</span></li>
+                <li><Check size={15} /> <span>Honest promotion only: no spam, no misleading claims, no bidding on the WorkCoPilot or AdmireVeda names in paid search.</span></li>
+              </ul>
+            </div>
           </div>
           {pub && pub.enabled === false ? (
             <div className="af-card af-closed">
@@ -229,108 +256,84 @@ function Landing({ pub, pubErr, rate, me, dashErr }) {
   )
 }
 
-/* ------------------------------------------------ landing-only decorations */
-// Confetti-style sparks scattered around the hero band (pure inline SVG, CSS
-// float animation; hidden on phones where the band is tight).
-const STAR = 'M12 1.5l2.7 7.1 7.8 2.4-7.8 2.4L12 20.5l-2.7-7.1L1.5 11l7.8-2.4z'
-const SPARKS = [
-  { s: 's1', c: '#ffb02e', k: 'star' }, { s: 's2', c: '#ff3d8d', k: 'dot' }, { s: 's3', c: '#7c3aed', k: 'rect' },
-  { s: 's4', c: '#f26a43', k: 'ring' }, { s: 's5', c: '#d63aff', k: 'star' }, { s: 's6', c: '#38bdf8', k: 'rect' },
-  { s: 's7', c: '#ffb02e', k: 'dot' }, { s: 's8', c: '#ff3d8d', k: 'star' }, { s: 's9', c: '#7c3aed', k: 'ring' },
+// Why people join: four white cards with the site's green->blue icon tiles.
+const BOOSTERS = (rateWord) => [
+  { ic: Coins, t: 'Real money for referrals you already make', d: `${rateWord} of each referred person's first payment, credited to you the moment it clears.` },
+  { ic: Gift, t: 'A gift for your audience, not a pitch', d: 'Everyone who signs up through your link gets a free month on annual billing. You are handing them a deal.' },
+  { ic: CreditCard, t: 'Automatic Stripe payouts', d: 'Connect your Stripe account once. Earnings are paid out to you; we never see your bank details.' },
+  { ic: Zap, t: 'Low friction, human review', d: 'About two minutes to apply. A person reads every application and emails you the decision.' },
 ]
-function Sparks() {
+function Boosters({ rateWord }) {
   return (
-    <>
-      {SPARKS.map((p) => (
-        <span key={p.s} className={`af-spark ${p.s}`} aria-hidden>
-          <svg viewBox="0 0 24 24" width="22" height="22">
-            {p.k === 'star' ? <path d={STAR} fill={p.c} /> : null}
-            {p.k === 'dot' ? <circle cx="12" cy="12" r="6" fill={p.c} /> : null}
-            {p.k === 'rect' ? <rect x="6" y="9" width="12" height="6" rx="2" fill={p.c} transform="rotate(-22 12 12)" /> : null}
-            {p.k === 'ring' ? <circle cx="12" cy="12" r="6.5" fill="none" stroke={p.c} strokeWidth="3.5" /> : null}
-          </svg>
-        </span>
-      ))}
-    </>
-  )
-}
-
-// Hero visual: a breathing "You earn N%" badge inside a spinning conic halo
-// with floating coin motifs, plus a rising referrals line that draws itself in.
-// The chart is labeled as an illustration (not a forecast) to stay honest.
-const CHART_PTS = [[0, 104], [46, 90], [92, 96], [138, 74], [184, 66], [230, 44], [276, 34], [320, 16]]
-function HeroVisual({ rate }) {
-  const line = CHART_PTS.map((p, i) => `${i ? 'L' : 'M'}${p[0]} ${p[1]}`).join(' ')
-  const area = `${line} L320 120 L0 120 Z`
-  return (
-    <div className="af-vis" aria-hidden>
-      <div className="af-badge-wrap">
-        <span className="af-badge-halo" />
-        <span className="af-badge-ring" />
-        <div className="af-badge">
-          <span className="af-badge-k">You earn</span>
-          <b className="af-badge-v">{rate}%</b>
-          <span className="af-badge-s">of every referral&rsquo;s first payment</span>
-        </div>
-        <span className="af-coin c1"><Coins size={16} /></span>
-        <span className="af-coin c2">$</span>
-        <span className="af-coin c3"><Star size={13} /></span>
-        <span className="af-coin c4">$</span>
+    <section className="af-sec">
+      <SecHead icon={Sparkles} kicker="Why affiliates join" title="You earn. Your audience saves. Everyone wins." sub="A program built so the recommendation is good for the people you send, not just for you." />
+      <div className="af-boost">
+        {BOOSTERS(rateWord).map((b) => (
+          <div className="af-card af-boost-card" key={b.t}>
+            <span className="af-tile"><b.ic size={20} /></span>
+            <b>{b.t}</b>
+            <p>{b.d}</p>
+          </div>
+        ))}
       </div>
-      <div className="af-chart">
-        <div className="af-chart-head"><span><TrendingUp size={14} /> Referrals over time</span><b>Illustration</b></div>
-        <svg viewBox="0 0 320 120">
-          <defs>
-            <linearGradient id="afLine" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stopColor="#ffb02e" /><stop offset=".5" stopColor="#f26a43" /><stop offset="1" stopColor="#d63aff" /></linearGradient>
-            <linearGradient id="afArea" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#ff3d8d" stopOpacity=".32" /><stop offset="1" stopColor="#7c3aed" stopOpacity="0" /></linearGradient>
-          </defs>
-          {[24, 48, 72, 96].map((y) => <line key={y} x1="0" x2="320" y1={y} y2={y} className="af-gridline" />)}
-          <path d={area} fill="url(#afArea)" className="af-area" />
-          <path d={line} fill="none" stroke="url(#afLine)" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round" className="af-line" />
-          {CHART_PTS.map((p, i) => (
-            <circle key={i} cx={p[0]} cy={p[1]} r={i === CHART_PTS.length - 1 ? 5 : 3} className={`af-dot${i === CHART_PTS.length - 1 ? ' last' : ''}`} style={{ '--d': `${0.35 + i * 0.14}s` }} />
-          ))}
-        </svg>
-        <div className="af-chart-foot">An illustration, not a forecast. Your results depend on your audience.</div>
-      </div>
-    </div>
-  )
-}
-
-// Vivid benefit strip under the hero: each card owns a slice of the gradient.
-const BOOSTERS = [
-  { ic: Coins, t: 'Earn on every referral', d: 'A share of each first payment, credited to you.', c1: '#ffb02e', c2: '#f26a43' },
-  { ic: Zap, t: 'Quick, human review', d: 'A person reads every application and emails you the decision.', c1: '#f26a43', c2: '#ff3d8d' },
-  { ic: CreditCard, t: 'Automatic Stripe payouts', d: 'Connect once. Earnings land in your Stripe account.', c1: '#ff3d8d', c2: '#d63aff' },
-  { ic: Gift, t: 'A free month for your audience', d: 'Your referrals get a month free on annual billing.', c1: '#d63aff', c2: '#7c3aed' },
-]
-function Boosters() {
-  return (
-    <section className="af-boost" aria-label="Why affiliates love it">
-      {BOOSTERS.map((b, i) => (
-        <div className="af-boost-card" key={b.t} style={{ '--i': i, '--c1': b.c1, '--c2': b.c2 }}>
-          <span className="af-boost-ic"><b.ic size={19} /></span>
-          <b>{b.t}</b>
-          <p>{b.d}</p>
-        </div>
-      ))}
     </section>
   )
 }
 
-// The hero's right-hand card: both sides of the deal in one glance. The exact
-// percentage comes from the server; the free month is the referred person's perk.
+// How it works: five connected steps on a green->blue track. Horizontal on
+// desktop, a vertical timeline on phones (CSS handles the swap).
+const FLOW = (rateWord) => [
+  { ic: Send, t: 'Apply', d: 'Fill in the short form below. A confirmation lands in your inbox right away.' },
+  { ic: Search, t: 'We review', d: 'A person reads every application, including your audience and social channels.' },
+  { ic: KeyRound, t: 'Approved', d: 'Your approval email has a link to set your password and open your dashboard.' },
+  { ic: Share2, t: 'Share your link', d: 'Your personal referral link and code are ready. Share them wherever your audience listens.' },
+  { ic: Wallet, t: 'Earn', d: `You get ${rateWord} of each referral's first payment. They get a free month on annual billing.` },
+]
+function Flow({ rateWord }) {
+  return (
+    <section className="af-sec af-flow-sec">
+      <SecHead icon={Sparkles} kicker="How it works" title="Five steps, from application to payout." />
+      <ol className="af-flow">
+        {FLOW(rateWord).map((s, i) => (
+          <li key={s.t} className="af-flow-step" style={{ '--i': i }}>
+            <div className="af-flow-node">
+              <span className="af-flow-ic"><s.ic size={22} /></span>
+              <span className="af-flow-n">{i + 1}</span>
+            </div>
+            <b>{s.t}</b>
+            <p>{s.d}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
+  )
+}
+
+// Who you would be recommending it to: the site's own photos, honest captions.
+function Audience() {
+  return (
+    <section className="af-sec af-aud">
+      <SecHead icon={Users} kicker="Who it is for" title="Anyone with work on a screen." sub="WorkCoPilot guides people step by step through any tool, any process. If your audience ever gets stuck at a keyboard, you have something real to recommend." />
+      <div className="af-aud-grid">
+        <figure className="af-photo">
+          <img src="/people-done.jpg" alt="Two colleagues solving a hard problem together at a laptop" loading="lazy" width="1200" height="900" />
+          <figcaption><b>Teams and small companies</b><span>Specialist work shipped in-house, guided to the exact next step.</span></figcaption>
+        </figure>
+        <figure className="af-photo">
+          <img src="/people-focus.jpg" alt="A professional finishing a complex task at a laptop" loading="lazy" width="1200" height="900" />
+          <figcaption><b>Individuals and learners</b><span>Unstuck in seconds, with the precise click, command or setting.</span></figcaption>
+        </figure>
+      </div>
+    </section>
+  )
+}
+
+// The deal in one card: what you earn, what they get.
 function PerkCard({ rateWord }) {
   return (
     <div className="af-card af-perk" aria-label="What you earn and what your referrals get">
-      <svg className="af-perk-burst" viewBox="0 0 80 80" aria-hidden>
-        <path d="M40 6l4.6 12.4L57 23l-12.4 4.6L40 40l-4.6-12.4L23 23l12.4-4.6z" fill="#ffb02e" className="tw t1" />
-        <path d="M62 38l2.6 7 7 2.6-7 2.6-2.6 7-2.6-7-7-2.6 7-2.6z" fill="#ff3d8d" className="tw t2" />
-        <circle cx="22" cy="54" r="4" fill="#7c3aed" className="tw t3" />
-        <circle cx="60" cy="66" r="3" fill="#d63aff" className="tw t1" />
-      </svg>
-      <div className="af-perk-row you">
-        <span className="af-perk-ic"><Wallet size={20} /></span>
+      <div className="af-perk-row">
+        <span className="af-tile"><Wallet size={20} /></span>
         <div>
           <span className="af-perk-k">You earn</span>
           <b className="af-perk-v">{rateWord}</b>
@@ -338,50 +341,15 @@ function PerkCard({ rateWord }) {
         </div>
       </div>
       <div className="af-perk-plus" aria-hidden><span>+</span></div>
-      <div className="af-perk-row them">
-        <span className="af-perk-ic"><Gift size={20} /></span>
+      <div className="af-perk-row">
+        <span className="af-tile"><Gift size={20} /></span>
         <div>
           <span className="af-perk-k">They get</span>
           <b className="af-perk-v">A free month</b>
           <p>when they sign up through your link and choose annual billing.</p>
         </div>
       </div>
-      <div className="af-perk-foot"><ShieldCheck size={13} /> Approved affiliates only. Every application is reviewed by a person.</div>
     </div>
-  )
-}
-
-// The "how it works" centerpiece: five connected steps on an orange track.
-// Horizontal on desktop, a vertical timeline on phones (CSS handles the swap).
-const FLOW = (rateWord) => [
-  { ic: Send, t: 'Apply', d: 'Fill in the short form below. A confirmation lands in your inbox right away.', c1: '#ffb02e', c2: '#f26a43' },
-  { ic: Search, t: 'We review', d: 'A person reads every application, including your audience and social channels.', c1: '#f26a43', c2: '#ff6b6b' },
-  { ic: KeyRound, t: 'Approved', d: 'Your approval email has a link to set your password and open your dashboard.', c1: '#ff6b6b', c2: '#ff3d8d' },
-  { ic: Share2, t: 'Share your link', d: 'Your personal referral link and code are ready. Share them wherever your audience listens.', c1: '#ff3d8d', c2: '#d63aff' },
-  { ic: Coins, t: 'Earn', d: `You get ${rateWord} of each referral's first payment. They get a free month on annual billing.`, c1: '#d63aff', c2: '#7c3aed' },
-]
-function Flow({ rateWord }) {
-  const steps = FLOW(rateWord)
-  return (
-    <section className="af-flow-sec" aria-label="How the affiliate program works">
-      <div className="af-flow-head">
-        <div className="af-eyebrow"><Sparkles size={14} /> How it works</div>
-        <h2 className="af-h2">Five steps, from application to payout.</h2>
-      </div>
-      <ol className="af-flow">
-        {steps.map((s, i) => (
-          <li key={s.t} className="af-flow-step" style={{ '--i': i, '--c1': s.c1, '--c2': s.c2 }}>
-            <div className="af-flow-node">
-              <span className="af-flow-ic"><s.ic size={22} /></span>
-              <span className="af-flow-n">{i + 1}</span>
-            </div>
-            {i < steps.length - 1 ? <span className="af-flow-arrow" aria-hidden><ArrowRight size={14} /></span> : null}
-            <b>{s.t}</b>
-            <p>{s.d}</p>
-          </li>
-        ))}
-      </ol>
-    </section>
   )
 }
 
@@ -448,12 +416,12 @@ function ApplyForm({ user }) {
   }
 
   return (
-    <div className="af-formwrap">
+    <div className="af-card af-formcard">
       <div className="af-formhead">
-        <span className="af-formhead-ic"><Rocket size={17} /></span>
-        <div><b>Your partner application</b><span>About two minutes. Name and email are all we need; everything else helps us say yes faster.</span></div>
+        <span className="af-tile sm"><Send size={16} /></span>
+        <div><b>Your affiliate application</b><span>About two minutes. Name and email are all we need; everything else helps us say yes faster.</span></div>
       </div>
-    <form className="af-form" onSubmit={submit} noValidate>
+      <form className="af-form" onSubmit={submit} noValidate>
       {user && user.email ? (
         <div className="af-note"><UserCheck size={14} /> You are signed in as <b>{user.email}</b>. You can apply with this account, and your affiliate dashboard will live under it once approved.</div>
       ) : null}
@@ -485,9 +453,9 @@ function ApplyForm({ user }) {
       <div className="af-field"><label htmlFor="af-aud">Who is your audience? <span className="opt">(optional)</span></label><input id="af-aud" value={form.audience} maxLength={300} onChange={(e) => set('audience', e.target.value)} placeholder="For example: IT admins at small companies, bootcamp students, finance teams" /></div>
       <div className="af-field"><label htmlFor="af-notes">Anything else <span className="opt">(optional)</span></label><textarea id="af-notes" rows={4} value={form.notes} maxLength={2000} onChange={(e) => set('notes', e.target.value)} placeholder="How you plan to share WorkCoPilot, or anything we should know." /></div>
       {err ? <div className="af-err" role="alert"><AlertTriangle size={14} /> {err}</div> : null}
-      <button className="af-cta" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="af-spin" /> : <Send size={16} />} Send application</button>
+      <button className="af-cta" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="af-spin" /> : <Send size={16} />} Send my application</button>
       <p className="af-fine">By applying you agree to promote WorkCoPilot honestly. We only use these details to review your application and run the program. You get a confirmation email right away, and a decision email when we have reviewed it.</p>
-    </form>
+      </form>
     </div>
   )
 }
@@ -761,95 +729,146 @@ const CSS = `
 .af-chip.muted{color:var(--faint)}
 .af-chip.mono{font-family:ui-monospace,"JetBrains Mono",Menlo,monospace;letter-spacing:.04em}
 
-/* ---------- landing */
-.af-hero{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
-.af-hero>*{min-width:0}
-.af-hero-cta{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:26px}
-.af-hero-facts{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:30px;max-width:560px}
-.af-fact{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px 12px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 14px 30px -24px rgba(17,23,38,.2)}
-.af-fact b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:24px;letter-spacing:-.02em;background:linear-gradient(120deg,var(--acc),var(--acc2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.05}
-.af-fact span{display:block;margin-top:5px;color:var(--mut);font-size:12.5px;line-height:1.4}
-/* perk card (hero right): you earn + they get */
-.af-perk{position:relative;padding:24px 26px 18px;margin:22px 0 24px;border:2px solid transparent;border-radius:22px;overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,176,46,.10),rgba(255,61,141,.06) 50%,#fff 95%) padding-box,linear-gradient(120deg,#ffb02e,#f26a43 30%,#ff3d8d 62%,#7c3aed) border-box;
-  box-shadow:0 24px 56px -28px rgba(124,58,237,.45),0 18px 40px -26px rgba(242,106,67,.45)}
-.af-perk:after{content:"";position:absolute;width:260px;height:260px;right:-120px;top:-130px;border-radius:50%;background:radial-gradient(circle,rgba(255,61,141,.18),transparent 68%);pointer-events:none}
-.af-perk-burst{position:absolute;right:14px;top:10px;width:76px;height:76px;pointer-events:none;z-index:1}
-.af-perk-burst .tw{animation:af-twinkle 2.4s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
-.af-perk-burst .t2{animation-delay:-.8s}.af-perk-burst .t3{animation-delay:-1.6s}
-@keyframes af-twinkle{0%,100%{opacity:.35;transform:scale(.7) rotate(0)}50%{opacity:1;transform:scale(1.1) rotate(18deg)}}
-.af-perk-row{display:flex;gap:14px;align-items:flex-start;position:relative;z-index:1}
-.af-perk-ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:50px;height:50px;border-radius:16px;color:#fff;background:linear-gradient(135deg,#ffb02e,#f26a43 60%,#ff3d8d);box-shadow:0 12px 26px -12px rgba(255,61,141,.8)}
-.af-perk-row.them .af-perk-ic{background:linear-gradient(135deg,#ff3d8d,#d63aff 55%,#7c3aed);box-shadow:0 12px 26px -12px rgba(124,58,237,.8)}
-.af-perk-k{display:block;font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#c9472a}
-.af-perk-row.them .af-perk-k{color:#7c3aed}
-.af-perk-v{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(30px,3.4vw,40px);letter-spacing:-.03em;line-height:1.02;margin-top:2px;background:linear-gradient(120deg,#ffb02e,#f26a43 45%,#ff3d8d);-webkit-background-clip:text;background-clip:text;color:transparent}
-.af-perk-row.them .af-perk-v{background:linear-gradient(120deg,#ff3d8d,#d63aff 50%,#7c3aed);-webkit-background-clip:text;background-clip:text}
-.af-perk-row p{color:var(--mut);font-size:14px;line-height:1.5;margin-top:4px}
-.af-perk-plus{display:flex;align-items:center;gap:12px;margin:14px 0;color:var(--faint)}
-.af-perk-plus:before,.af-perk-plus:after{content:"";flex:1;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(242,106,67,.35),rgba(124,58,237,.35))}
-.af-perk-plus span{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:50%;color:#fff;background:linear-gradient(135deg,#f26a43,#d63aff);font-weight:800;font-size:16px;line-height:1;box-shadow:0 8px 18px -8px rgba(214,58,255,.8)}
-.af-perk-foot{display:flex;align-items:center;gap:7px;margin-top:18px;padding-top:14px;border-top:1px solid var(--line);color:var(--mut);font-size:12.5px;position:relative;z-index:1}
-.af-perk-foot svg{color:#d63aff;flex-shrink:0}
+/* ============================================================
+   LANDING - the WorkCoPilot site system (see WorkMarketing.jsx):
+   page #f4f7fb, white hairline cards, deep-green display ink,
+   green #0a9d66 / blue #0a86cf emphasis, orange CTA only.
+   Scoped under .af-land so the signed-in dashboard is untouched.
+   ============================================================ */
+.af-land{--em:#0a9d66;--em2:#0a86cf;--ink-brand:#062a22;--em-soft:rgba(10,157,102,.10);--em2-soft:rgba(10,134,207,.10);--em-line:rgba(10,157,102,.28);
+  --grad:linear-gradient(120deg,var(--em),var(--em2));--tile:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));
+  position:relative}
+.af-land>*:not(.af-backdrop){position:relative;z-index:1}
+/* the site's light backdrop (green + blue radials on #f4f7fb) over the page root */
+.af-backdrop{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(1000px 520px at 85% -8%,rgba(10,134,207,.16),transparent 60%),radial-gradient(820px 480px at -6% 4%,rgba(10,157,102,.14),transparent 58%),#f4f7fb}
+.af-land .af-eyebrow{color:var(--em)}
+.af-land .af-eyebrow svg{color:var(--em)}
+.af-land .af-h1{color:var(--ink-brand);font-size:clamp(36px,4.6vw,56px)}
+.af-land .af-h1 em{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.af-land .af-h2{color:var(--ink-brand);font-size:clamp(28px,4.2vw,44px);letter-spacing:-.025em;line-height:1.06}
+.af-land .af-lead{color:var(--mut)}
+.af-land .af-lead b{color:var(--tx)}
+.af-land .af-cta{background:linear-gradient(135deg,#ff9a4d,#f26a43);color:#1a0e08;box-shadow:0 12px 34px -12px rgba(255,122,89,.65)}
+.af-land .af-cta:hover:not(:disabled){box-shadow:0 18px 44px -14px rgba(255,122,89,.75)}
+.af-land .af-cta.alt{background:#fff;color:var(--tx);border:1px solid var(--line);box-shadow:none}
+.af-land .af-cta.alt:hover:not(:disabled){border-color:var(--em);color:var(--em)}
+.af-textlink{display:inline-flex;align-items:center;gap:6px;color:var(--mut);font-weight:600;font-size:14.5px;text-decoration:underline;text-underline-offset:4px}
+.af-textlink:hover{color:var(--em)}
+.af-land .af-card-k{color:var(--em)}
+.af-land .af-note{background:var(--em-soft);border-color:var(--em-line)}
+.af-land .af-note svg{color:var(--em)}
+.af-land .af-note.warn{background:#fff7ed;border-color:#fdd9b5;color:#5a3a12}
+.af-land .af-note.warn svg{color:var(--amber)}
+/* the shared icon tile: green->blue, like the site's cards */
+.af-tile{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:46px;height:46px;border-radius:13px;background:var(--tile);color:var(--em)}
+.af-tile.sm{width:38px;height:38px;border-radius:11px}
+/* section header: centered eyebrow + h2 + sub */
+.af-sec{padding:58px 0 0}
+.af-sechead{text-align:center;max-width:720px;margin:0 auto 34px}
+.af-sechead .af-eyebrow{justify-content:center}
+.af-sechead .af-h2{max-width:22ch;margin:0 auto 14px}
+.af-sechead .af-sub{font-size:18px;max-width:58ch;margin:0 auto}
 
-/* how-it-works flow: five nodes on an orange track */
-.af-flow-sec{margin-top:72px;padding:46px 0 10px;border-top:1px solid var(--line)}
-.af-flow-head{text-align:center;max-width:60ch;margin:0 auto 36px}
-.af-flow-head .af-eyebrow{display:inline-flex}
-.af-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:18px;position:relative;counter-reset:fl}
-/* the track: a flowing sunset-to-violet ribbon behind the nodes */
-.af-flow:before{content:"";position:absolute;left:10%;right:10%;top:33px;height:5px;border-radius:5px;background:linear-gradient(90deg,#ffb02e,#f26a43,#ff3d8d,#d63aff,#7c3aed,#ffb02e);background-size:200% 100%;animation:af-track 7s linear infinite;opacity:.8;box-shadow:0 6px 18px -8px rgba(214,58,255,.5)}
-@keyframes af-track{to{background-position:200% 0}}
-@keyframes af-track-v{to{background-position:0 200%}}
-.af-flow-step{--c1:#f26a43;--c2:#ff9a4d;position:relative;text-align:center;padding:0 6px;animation:af-rise .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 90ms)}
+/* HERO: copy left, framed illustration right */
+.af-hero{display:grid;grid-template-columns:1fr 1fr;gap:44px;align-items:center}
+.af-hero>*{min-width:0}
+.af-hero-cta{display:flex;align-items:center;flex-wrap:wrap;gap:16px;margin-top:26px}
+.af-trust{list-style:none;margin:22px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:8px 22px}
+.af-trust li{display:inline-flex;align-items:center;gap:7px;color:var(--mut);font-size:13.5px;font-weight:500}
+.af-trust li svg{color:var(--em);flex-shrink:0}
+.af-hero-fig{position:relative;margin:0;border-radius:22px;overflow:hidden;background:#fff;border:1px solid var(--line);box-shadow:0 1px 2px rgba(17,23,38,.04),0 30px 64px -40px rgba(17,23,38,.5)}
+.af-hero-fig img{display:block;width:100%;height:auto;aspect-ratio:1600/1066;object-fit:cover}
+/* opaque white chips over the clean (left) side of the picture: dark text, legible */
+.af-fig-chip{position:absolute;left:16px;display:inline-flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);border-radius:999px;padding:8px 13px 8px 11px;font-size:13px;color:var(--mut);box-shadow:0 10px 26px -14px rgba(17,23,38,.4);animation:af-rise .6s cubic-bezier(.2,.7,.2,1) both}
+.af-fig-chip b{color:var(--tx);font-weight:700}
+.af-fig-chip svg{flex-shrink:0;color:var(--em)}
+.af-fig-chip.earn{top:16px;animation-delay:.25s}
+.af-fig-chip.gift{bottom:16px;animation-delay:.45s}
+.af-fig-chip.gift svg{color:var(--em2)}
 @keyframes af-rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* at-a-glance stat tiles (site's wm-fld-stat language) */
+.af-stats3{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:40px}
+.af-stat3{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px 18px 18px;text-align:center;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
+.af-stat3 b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;line-height:1.02;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.af-stat3 span{display:block;margin-top:8px;color:var(--mut);font-size:13px;line-height:1.4}
+
+/* boosters: four white cards, green->blue tiles */
+.af-boost{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.af-boost-card{padding:22px 22px 20px;transition:transform .18s,box-shadow .2s}
+.af-boost-card:hover{transform:translateY(-3px);box-shadow:0 1px 2px rgba(17,23,38,.05),0 28px 56px -26px rgba(17,23,38,.3)}
+.af-boost-card .af-tile{margin-bottom:14px}
+.af-boost-card b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;line-height:1.25;color:var(--ink-brand)}
+.af-boost-card p{color:var(--mut);font-size:14.5px;line-height:1.55;margin-top:8px}
+
+/* flow: five nodes on a green->blue track */
+.af-flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(5,1fr);gap:18px;position:relative}
+.af-flow:before{content:"";position:absolute;left:10%;right:10%;top:34px;height:3px;border-radius:3px;background:var(--grad);opacity:.35}
+.af-flow-step{position:relative;text-align:center;padding:0 6px;animation:af-rise .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 90ms)}
 .af-flow-node{position:relative;display:inline-flex;margin-bottom:16px}
-.af-flow-ic{display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;border-radius:22px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 0 0 5px #fff,0 0 0 6.5px var(--c1),0 18px 36px -14px var(--c2);transition:transform .25s cubic-bezier(.2,.8,.2,1)}
-.af-flow-step:hover .af-flow-ic{transform:translateY(-5px) rotate(-5deg) scale(1.05)}
-.af-flow-n{position:absolute;right:-7px;top:-7px;width:25px;height:25px;border-radius:50%;background:#fff;border:1.5px solid var(--c1);color:var(--c2);font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:12px;display:grid;place-items:center;box-shadow:0 4px 10px -4px rgba(17,23,38,.3)}
-.af-flow-arrow{position:absolute;top:23px;right:-19px;width:24px;height:24px;border-radius:50%;background:#fff;border:1.5px solid var(--c2);color:var(--c2);display:grid;place-items:center;z-index:1;animation:af-nudge 1.6s ease-in-out infinite;animation-delay:calc(var(--i) * 200ms)}
-@keyframes af-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
-.af-flow-step b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;background:linear-gradient(120deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.af-flow-ic{display:inline-flex;align-items:center;justify-content:center;width:70px;height:70px;border-radius:22px;color:#fff;background:linear-gradient(135deg,var(--em),var(--em2));box-shadow:0 0 0 6px #fff,0 0 0 7px var(--line),0 18px 36px -16px rgba(10,134,207,.6);transition:transform .2s}
+.af-flow-step:hover .af-flow-ic{transform:translateY(-3px)}
+.af-flow-n{position:absolute;right:-6px;top:-6px;width:24px;height:24px;border-radius:50%;background:#fff;border:1px solid var(--line);color:var(--em);font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:12px;display:grid;place-items:center;box-shadow:0 4px 10px -4px rgba(17,23,38,.3)}
+.af-flow-step b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17px;letter-spacing:-.01em;color:var(--ink-brand)}
 .af-flow-step p{color:var(--mut);font-size:13.5px;line-height:1.5;margin-top:5px}
-.af-apply{margin-top:56px;padding-top:50px;border-top:1px solid var(--line)}
-.af-apply-grid{display:grid;grid-template-columns:.85fr 1.15fr;gap:40px;align-items:start}
+
+/* audience photos (the site's own images), honest captions */
+.af-aud-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.af-photo{position:relative;margin:0;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:#fff;box-shadow:0 1px 2px rgba(17,23,38,.04),0 30px 64px -40px rgba(17,23,38,.5)}
+.af-photo img{display:block;width:100%;height:auto;aspect-ratio:4/3;object-fit:cover}
+.af-photo figcaption{display:flex;flex-direction:column;gap:3px;padding:14px 18px 16px;background:#fff;border-top:1px solid var(--line)}
+.af-photo figcaption b{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:16px;color:var(--ink-brand)}
+.af-photo figcaption span{color:var(--mut);font-size:13.5px;line-height:1.45}
+
+/* APPLY */
+.af-apply{padding:58px 0 0}
+.af-apply-grid{display:grid;grid-template-columns:.9fr 1.1fr;gap:22px;align-items:start}
 .af-apply-grid>*{min-width:0}
-.af-rules{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px}
-.af-rules li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.5;color:var(--mut)}
-.af-rules li svg{flex-shrink:0;margin-top:4px;color:var(--acc)}
+.af-apply-side{display:flex;flex-direction:column;gap:16px}
+.af-rulescard{padding:22px 24px}
+.af-rules{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:11px}
+.af-rules li{display:flex;gap:10px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--mut)}
+.af-rules li svg{flex-shrink:0;margin-top:4px;color:var(--em)}
 .af-rules li b{color:var(--tx)}
 .af-rules.compact{gap:9px;margin-top:14px}
 .af-rules.compact li{font-size:13.5px}
-/* the application: gradient shell + a colorful header strip over a clean white form */
-.af-formwrap{border-radius:24px;padding:2px;background:linear-gradient(120deg,#ffb02e,#f26a43 30%,#ff3d8d 62%,#7c3aed);background-size:200% 100%;animation:af-shift 9s ease-in-out infinite alternate;box-shadow:0 30px 70px -34px rgba(124,58,237,.5),0 20px 50px -30px rgba(242,106,67,.45)}
-.af-formhead{display:flex;align-items:center;gap:12px;padding:16px 22px 14px;color:#fff}
-.af-formhead-ic{display:grid;place-items:center;flex-shrink:0;width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.22);box-shadow:inset 0 0 0 1px rgba(255,255,255,.35)}
-.af-formhead b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17.5px;letter-spacing:-.01em;text-shadow:0 1px 2px rgba(0,0,0,.12)}
-.af-formhead span{display:block;font-size:13px;line-height:1.4;opacity:.95}
-.af-form{padding:24px 26px;background:#fff;border-radius:0 0 22px 22px}
+/* the deal card */
+.af-perk{padding:24px 26px 22px;background:linear-gradient(180deg,rgba(10,157,102,.06),#fff 90px)}
+.af-perk-row{display:flex;gap:14px;align-items:flex-start}
+.af-perk-k{display:block;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em)}
+.af-perk-v{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,3.2vw,36px);letter-spacing:-.025em;line-height:1.05;margin-top:2px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.af-perk-row p{color:var(--mut);font-size:14px;line-height:1.5;margin-top:4px}
+.af-perk-plus{display:flex;align-items:center;gap:12px;margin:14px 0}
+.af-perk-plus:before,.af-perk-plus:after{content:"";flex:1;height:1px;background:var(--line)}
+.af-perk-plus span{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;border:1px solid var(--em-line);background:#fff;color:var(--em);font-weight:800;font-size:15px;line-height:1}
+/* the form: white card, soft green/blue header */
+.af-formcard{padding:0;overflow:hidden}
+.af-formhead{display:flex;align-items:center;gap:12px;padding:18px 24px;background:linear-gradient(100deg,rgba(10,157,102,.10),rgba(10,134,207,.08));border-bottom:1px solid var(--line)}
+.af-formhead b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:17.5px;letter-spacing:-.01em;color:var(--ink-brand)}
+.af-formhead span{display:block;font-size:13px;line-height:1.4;color:var(--mut)}
+.af-form{padding:22px 24px 24px}
 .af-grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .af-field{display:flex;flex-direction:column;margin-bottom:14px}
 .af-field label{font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px}
 .af-field .opt{color:var(--faint);font-weight:400}
 .af-field input,.af-field textarea{border:1px solid var(--line);border-radius:11px;padding:11px 13px;font:inherit;font-size:14.5px;color:var(--tx);background:#fcfdfe;outline:none;resize:vertical;width:100%}
-.af-field input:focus,.af-field textarea:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
-.af-form-sec{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--acc-deep);margin:4px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
+.af-field input:focus,.af-field textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px rgba(10,157,102,.14)}
+.af-form-sec{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--em);margin:4px 0 12px;padding-top:14px;border-top:1px solid var(--line)}
 .af-form-sec:first-child,.af-note+.af-form-sec{border-top:none;padding-top:0}
 .af-form-sec .opt{text-transform:none;letter-spacing:0;font-weight:500;color:var(--faint);font-size:12.5px}
-.af-form-sec-ic{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:var(--acc-soft);color:var(--acc-deep)}
+.af-form-sec-ic{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;background:var(--tile);color:var(--em)}
 /* an input with a leading glyph (phone icon or an @) */
 .af-prefix{position:relative;display:flex;align-items:center}
 .af-prefix>svg{position:absolute;left:12px;color:var(--faint);pointer-events:none}
 .af-prefix>input{padding-left:36px}
 .af-prefix.at>input{padding-left:30px}
 .af-at{position:absolute;left:12px;color:var(--faint);font-weight:600;font-size:14px;pointer-events:none}
-.af-prefix:focus-within>svg,.af-prefix:focus-within .af-at{color:var(--acc)}
+.af-prefix:focus-within>svg,.af-prefix:focus-within .af-at{color:var(--em)}
 /* social handles grid with text monograms (no brand marks in lucide) */
 .af-socials{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;margin-bottom:6px}
 .af-social{display:flex;flex-direction:column}
 .af-social label{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px}
 .af-social input{border:1px solid var(--line);border-radius:11px;padding:10px 12px;font:inherit;font-size:14px;color:var(--tx);background:#fcfdfe;outline:none;width:100%}
-.af-social input:focus{border-color:var(--acc);box-shadow:0 0 0 3px var(--acc-soft)}
+.af-social input:focus{border-color:var(--em);box-shadow:0 0 0 3px rgba(10,157,102,.14)}
 .af-social-mark{display:inline-grid;place-items:center;width:24px;height:24px;border-radius:7px;font-size:10.5px;font-weight:800;letter-spacing:.02em;color:#fff;background:#3f4a5c;line-height:1}
 .af-social-mark.m-tiktok{background:#111318}
 .af-social-mark.m-instagram{background:linear-gradient(135deg,#f58529,#dd2a7b 55%,#8134af)}
@@ -857,19 +876,20 @@ const CSS = `
 .af-social-mark.m-twitter{background:#0c1222}
 .af-social-mark.m-facebook{background:#1877f2}
 .af-social-mark.m-linkedin{background:#0a66c2;font-weight:700;font-size:12px}
-.af-social-mark.m-other{background:var(--acc);font-size:14px}
-.af-social:focus-within label{color:var(--acc-deep)}
-/* thank-you: what happens next */
+.af-social-mark.m-other{background:var(--em2);font-size:14px}
+.af-social:focus-within label{color:var(--em)}
+/* thank-you + closed */
+.af-ok,.af-closed{text-align:center;padding:36px 28px}
+.af-ok-ic,.af-closed-ic{width:58px;height:58px;border-radius:50%;background:var(--em-soft);border:1px solid var(--em-line);color:var(--em);display:grid;place-items:center;margin:0 auto 14px}
+.af-closed-ic{background:#f1f4f8;border-color:var(--line);color:var(--mut)}
+.af-ok h3,.af-closed h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;margin:0 0 8px;color:var(--ink-brand)}
+.af-ok p,.af-closed p{color:var(--mut);font-size:15px;line-height:1.55;max-width:44ch;margin:0 auto 18px}
+.af-closed a{color:var(--em);text-decoration:underline;text-underline-offset:3px}
 .af-ok-steps{list-style:none;margin:0 auto 20px;padding:0;display:flex;flex-direction:column;gap:9px;max-width:420px;text-align:left}
 .af-ok-steps li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:var(--mut);line-height:1.45}
 .af-ok-steps li b{color:var(--tx)}
-.af-ok-dot{display:inline-grid;place-items:center;flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc-deep)}
-.af-ok,.af-closed{text-align:center;padding:36px 28px}
-.af-ok-ic,.af-closed-ic{width:58px;height:58px;border-radius:50%;background:var(--acc-soft);border:1px solid var(--acc-line);color:var(--acc-deep);display:grid;place-items:center;margin:0 auto 14px}
-.af-closed-ic{background:#f1f4f8;border-color:var(--line);color:var(--mut)}
-.af-ok h3,.af-closed h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:22px;margin:0 0 8px}
-.af-ok p,.af-closed p{color:var(--mut);font-size:15px;line-height:1.55;max-width:44ch;margin:0 auto 18px}
-.af-closed a{color:var(--acc-deep);text-decoration:underline;text-underline-offset:3px}
+.af-ok-dot{display:inline-grid;place-items:center;flex:0 0 auto;width:26px;height:26px;border-radius:50%;background:var(--em-soft);border:1px solid var(--em-line);color:var(--em)}
+@media(prefers-reduced-motion:reduce){.af-land *,.af-land *:before,.af-land *:after{animation:none !important}}
 
 /* ---------- dashboard */
 .af-dash-head{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:26px}
@@ -909,131 +929,21 @@ const CSS = `
 .af-faint{color:var(--mut)}
 .af-paidon{color:var(--faint);font-size:12.5px}
 
-/* ============================================================
-   LANDING ONLY - the vibrant layer. Scoped under .af-land so the
-   signed-in dashboard keeps its calm, orange-only treatment.
-   Light page; the energy comes from gradients, glow and motion.
-   ============================================================ */
-.af-land{--sun:#ffb02e;--or:#f26a43;--coral:#ff6b6b;--pink:#ff3d8d;--mag:#d63aff;--vio:#7c3aed;--sky:#38bdf8;
-  --grad:linear-gradient(120deg,var(--sun),var(--or) 28%,var(--pink) 60%,var(--vio));
-  --grad-soft:linear-gradient(120deg,rgba(255,176,46,.16),rgba(242,106,67,.14) 30%,rgba(255,61,141,.12) 62%,rgba(124,58,237,.16));
-  position:relative}
-.af-land>*:not(.af-aurora){position:relative;z-index:1}
-@keyframes af-shift{from{background-position:0% 50%}to{background-position:100% 50%}}
-/* drifting aurora blobs behind everything on the landing */
-.af-aurora{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.af-aurora span{position:absolute;border-radius:50%;filter:blur(72px);opacity:.5;animation:af-drift 18s ease-in-out infinite alternate}
-.af-aurora .b1{width:46vw;height:46vw;left:-14vw;top:-14vw;background:radial-gradient(circle,rgba(255,176,46,.55),transparent 65%)}
-.af-aurora .b2{width:40vw;height:40vw;right:-12vw;top:-6vw;background:radial-gradient(circle,rgba(255,61,141,.42),transparent 65%);animation-delay:-6s}
-.af-aurora .b3{width:38vw;height:38vw;left:28vw;top:46vh;background:radial-gradient(circle,rgba(124,58,237,.30),transparent 65%);animation-delay:-11s}
-.af-aurora .b4{width:30vw;height:30vw;right:6vw;top:62vh;background:radial-gradient(circle,rgba(56,189,248,.26),transparent 65%);animation-delay:-3s}
-@keyframes af-drift{from{transform:translate(0,0) scale(1)}to{transform:translate(4vw,3vw) scale(1.08)}}
-
-/* hero band: gradient border, tinted interior, sparks */
-.af-land .af-hero{position:relative;isolation:isolate;padding:38px 36px 34px;border-radius:30px;border:2px solid transparent;
-  background:linear-gradient(#fff,#fff) padding-box,var(--grad) border-box;
-  box-shadow:0 34px 80px -44px rgba(124,58,237,.42),0 24px 56px -34px rgba(242,106,67,.5)}
-.af-land .af-hero:before{content:"";position:absolute;inset:0;border-radius:28px;z-index:0;pointer-events:none;
-  background:var(--grad-soft),radial-gradient(520px 260px at 0% 0%,rgba(255,176,46,.26),transparent 60%),radial-gradient(620px 320px at 100% 110%,rgba(124,58,237,.22),transparent 60%)}
-.af-land .af-hero>*{position:relative;z-index:1}
-.af-land .af-eyebrow{padding:6px 12px 6px 9px;border-radius:999px;background:#fff;border:1px solid rgba(242,106,67,.3);box-shadow:0 8px 22px -12px rgba(255,61,141,.7);color:#c9472a}
-.af-land .af-eyebrow svg{color:var(--pink)}
-.af-land .af-h1{font-size:clamp(38px,5.4vw,66px);background:var(--grad);background-size:200% 100%;-webkit-background-clip:text;background-clip:text;color:transparent;animation:af-shift 7s ease-in-out infinite alternate}
-.af-land .af-h1-b{display:block;background:none;-webkit-text-fill-color:var(--ink-brand);color:var(--ink-brand);font-size:.74em;letter-spacing:-.025em;margin-top:6px}
-.af-land .af-lead{color:var(--mut)}
-.af-land .af-lead b{color:var(--tx)}
-.af-land .af-h2{color:var(--ink-brand)}
-.af-land .af-cta{background:var(--grad);background-size:200% 100%;color:#fff;box-shadow:0 14px 34px -12px rgba(255,61,141,.6);transition:transform .15s,box-shadow .15s,background-position .5s}
-.af-land .af-cta:hover:not(:disabled){background-position:100% 50%}
-.af-land .af-cta.alt{background:#fff;color:var(--tx);border:1px solid var(--line);box-shadow:none}
-.af-land .af-cta.alt:hover:not(:disabled){border-color:var(--pink);color:#b8266b}
-.af-land .af-cta.done{background:#fff;color:#c9472a;border:1px solid rgba(242,106,67,.35)}
-.af-cta-hero{position:relative;overflow:hidden;padding:16px 24px;font-size:16.5px;border-radius:14px;animation:af-glow 2.6s ease-in-out infinite}
-.af-cta-hero:after{content:"";position:absolute;top:0;left:-70%;width:40%;height:100%;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);transform:skewX(-20deg);animation:af-shine 3.4s ease-in-out infinite}
-@keyframes af-glow{0%,100%{box-shadow:0 14px 34px -12px rgba(255,61,141,.55),0 0 0 0 rgba(242,106,67,0)}50%{box-shadow:0 18px 44px -12px rgba(124,58,237,.6),0 0 0 9px rgba(242,106,67,.12)}}
-@keyframes af-shine{0%{left:-70%}60%,100%{left:140%}}
-.af-land .af-fact{position:relative;overflow:hidden;--c1:#f26a43;--c2:#ff9a4d}
-.af-land .af-fact:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--c1),var(--c2))}
-.af-land .af-fact b{background:linear-gradient(120deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
-/* sparks */
-.af-spark{position:absolute;z-index:2;pointer-events:none;animation:af-float 5s ease-in-out infinite}
-.af-spark svg{display:block;filter:drop-shadow(0 4px 10px rgba(17,23,38,.14))}
-.af-spark.s1{left:3%;top:9%;animation-delay:-1s}.af-spark.s2{left:44%;top:5%;animation-delay:-2.3s}.af-spark.s3{left:58%;top:12%;animation-delay:-3.4s;transform:scale(.8)}
-.af-spark.s4{right:4%;top:7%;animation-delay:-.6s}.af-spark.s5{right:3%;top:48%;animation-delay:-4.1s}.af-spark.s6{right:9%;bottom:8%;animation-delay:-1.7s}
-.af-spark.s7{left:47%;bottom:10%;animation-delay:-2.9s}.af-spark.s8{left:2%;bottom:14%;animation-delay:-3.9s}.af-spark.s9{left:36%;top:46%;animation-delay:-.3s;transform:scale(.7)}
-@keyframes af-float{0%,100%{translate:0 0;rotate:0deg}50%{translate:0 -12px;rotate:16deg}}
-/* hero visual: badge + chart */
-.af-vis{display:flex;flex-direction:column;gap:14px;align-self:center}
-.af-badge-wrap{position:relative;display:flex;justify-content:center;align-items:center;height:250px}
-.af-badge-halo{position:absolute;width:240px;height:240px;border-radius:50%;background:conic-gradient(from 0deg,var(--sun),var(--or),var(--pink),var(--mag),var(--vio),var(--sky),var(--sun));filter:blur(26px);opacity:.5;animation:af-spin 14s linear infinite}
-.af-badge-ring{position:absolute;width:212px;height:212px;border-radius:50%;background:conic-gradient(from 0deg,var(--sun),var(--or),var(--pink),var(--mag),var(--vio),var(--sun));animation:af-spin 9s linear infinite;box-shadow:0 20px 50px -22px rgba(124,58,237,.6)}
-@keyframes af-spin{to{transform:rotate(360deg)}}
-.af-badge{position:relative;width:200px;height:200px;border-radius:50%;background:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;box-shadow:inset 0 0 0 1px rgba(242,106,67,.18),0 12px 30px -18px rgba(17,23,38,.35);animation:af-breathe 4s ease-in-out infinite}
-@keyframes af-breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
-.af-badge-k{font-size:11px;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#c9472a}
-.af-badge-v{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:66px;letter-spacing:-.045em;line-height:1;margin:4px 0 6px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
-.af-badge-s{font-size:12px;color:var(--mut);line-height:1.3;max-width:150px}
-.af-coin{position:absolute;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;color:#fff;font-weight:800;font-size:15px;box-shadow:0 12px 24px -10px rgba(17,23,38,.5),inset 0 0 0 2px rgba(255,255,255,.35);animation:af-float 4.5s ease-in-out infinite}
-.af-coin.c1{left:10%;top:12%;background:linear-gradient(135deg,var(--sun),var(--or))}
-.af-coin.c2{right:11%;top:20%;width:30px;height:30px;background:linear-gradient(135deg,var(--pink),var(--mag));animation-delay:-1.5s}
-.af-coin.c3{left:16%;bottom:12%;width:28px;height:28px;background:linear-gradient(135deg,var(--mag),var(--vio));animation-delay:-3s}
-.af-coin.c4{right:14%;bottom:7%;background:linear-gradient(135deg,var(--or),var(--pink));animation-delay:-.7s}
-.af-chart{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 16px 12px;box-shadow:0 18px 42px -26px rgba(124,58,237,.4)}
-.af-chart-head{display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:var(--mut);font-weight:600;margin-bottom:6px}
-.af-chart-head span{display:inline-flex;gap:6px;align-items:center}
-.af-chart-head span svg{color:var(--pink)}
-.af-chart-head b{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
-.af-chart svg{display:block;width:100%;height:auto;overflow:visible}
-.af-gridline{stroke:#eef1f6;stroke-width:1}
-.af-area{animation:af-fade 1.2s ease-out .7s both}
-.af-line{stroke-dasharray:540;stroke-dashoffset:540;animation:af-draw 1.9s cubic-bezier(.2,.7,.2,1) .3s forwards}
-@keyframes af-draw{to{stroke-dashoffset:0}}
-@keyframes af-fade{from{opacity:0}to{opacity:1}}
-.af-dot{fill:#fff;stroke:var(--or);stroke-width:2.5;opacity:0;transform-box:fill-box;transform-origin:center;animation:af-pop .4s ease-out var(--d) forwards}
-.af-dot.last{stroke:var(--mag);animation:af-pop .4s ease-out var(--d) forwards,af-pulse 2s ease-in-out calc(var(--d) + .4s) infinite}
-@keyframes af-pop{from{opacity:0;transform:scale(.3)}to{opacity:1;transform:none}}
-@keyframes af-pulse{0%,100%{stroke-width:2.5}50%{stroke-width:6}}
-.af-chart-foot{font-size:11px;color:var(--faint);margin-top:6px}
-/* booster strip */
-.af-boost{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px}
-.af-boost-card{position:relative;overflow:hidden;background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 18px 16px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.25);transition:transform .2s,box-shadow .2s;animation:af-rise .6s cubic-bezier(.2,.7,.2,1) both;animation-delay:calc(var(--i) * 80ms + .25s)}
-.af-boost-card:before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:linear-gradient(90deg,var(--c1),var(--c2))}
-.af-boost-card:after{content:"";position:absolute;width:160px;height:160px;right:-70px;bottom:-90px;border-radius:50%;background:radial-gradient(circle,var(--c2),transparent 70%);opacity:.16;pointer-events:none}
-.af-boost-card:hover{transform:translateY(-4px);box-shadow:0 1px 2px rgba(17,23,38,.05),0 26px 50px -26px rgba(17,23,38,.35)}
-.af-boost-ic{display:inline-grid;place-items:center;width:42px;height:42px;border-radius:13px;color:#fff;background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:0 10px 22px -10px var(--c2);margin-bottom:12px}
-.af-boost-card b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:16px;letter-spacing:-.01em;color:var(--ink-brand)}
-.af-boost-card p{color:var(--mut);font-size:13.5px;line-height:1.5;margin-top:4px}
-/* thank-you / closed cards get the same gradient shell */
-.af-land .af-ok,.af-land .af-closed{border:2px solid transparent;background:linear-gradient(#fff,#fff) padding-box,var(--grad) border-box;box-shadow:0 30px 70px -34px rgba(124,58,237,.45)}
-.af-land .af-ok-ic{background:var(--grad);border:none;color:#fff;box-shadow:0 14px 30px -12px rgba(255,61,141,.7)}
-.af-land .af-ok-dot{background:#fff;border-color:rgba(255,61,141,.35);color:#b8266b}
-.af-land .af-rules li svg{color:var(--pink)}
-.af-land .af-form-sec-ic{background:linear-gradient(135deg,var(--or),var(--pink));color:#fff}
-.af-land .af-social:focus-within label{color:#b8266b}
-/* motion off: everything lands in its final state */
-@media(prefers-reduced-motion:reduce){
-  .af-land *,.af-land *:before,.af-land *:after{animation:none !important}
-  .af-dot{opacity:1}.af-line{stroke-dashoffset:0}.af-area{opacity:1}
-}
-
 /* ---------- responsive */
 @media(max-width:900px){
   .af-hero{grid-template-columns:1fr;gap:28px}
-  .af-land .af-hero{padding:28px 24px 26px}
-  .af-vis{max-width:420px;width:100%;margin:0 auto}
+  .af-stats3{grid-template-columns:1fr 1fr;margin-top:28px}
   .af-boost{grid-template-columns:1fr 1fr}
-  .af-flow:before{background:linear-gradient(180deg,#ffb02e,#f26a43,#ff3d8d,#d63aff,#7c3aed,#ffb02e);background-size:100% 200%;animation:af-track-v 7s linear infinite}
-  .af-apply-grid{grid-template-columns:1fr;gap:26px}
+  .af-aud-grid{grid-template-columns:1fr}
+  .af-apply-grid{grid-template-columns:1fr}
+  .af-sec,.af-apply{padding-top:46px}
   /* flow becomes a vertical timeline: track on the left, nodes down the side */
-  .af-flow-sec{margin-top:52px;padding-top:36px}
-  .af-flow-head{text-align:left;margin-bottom:24px}
   .af-flow{grid-template-columns:1fr;gap:0}
-  .af-flow:before{left:34px;right:auto;top:20px;bottom:20px;width:3px;height:auto;background:linear-gradient(180deg,var(--acc-line),var(--acc) 50%,var(--acc-line))}
+  .af-flow:before{left:34px;right:auto;top:20px;bottom:20px;width:3px;height:auto;background:linear-gradient(180deg,var(--em),var(--em2))}
   .af-flow-step{display:grid;grid-template-columns:70px 1fr;column-gap:18px;text-align:left;padding:0 0 26px}
   .af-flow-step:last-child{padding-bottom:0}
   .af-flow-node{margin-bottom:0;grid-row:1/3}
   .af-flow-ic{width:60px;height:60px;border-radius:18px;margin-left:4px}
-  .af-flow-arrow{display:none}
   .af-flow-step b{margin-top:6px}
   .af-stats{grid-template-columns:repeat(3,1fr)}
   .af-two{grid-template-columns:1fr}
@@ -1044,36 +954,31 @@ const CSS = `
   .af-main{padding:36px 0 54px}
   .af-wrap{padding:0 16px}
   .af-card{padding:20px;border-radius:16px}
+  .af-land .af-h1{font-size:clamp(30px,8.6vw,38px)}
+  .af-land .af-h2{font-size:clamp(24px,7vw,30px)}
+  .af-sechead{margin-bottom:22px}
+  .af-sechead .af-sub{font-size:16px}
   .af-hero-cta{flex-direction:column;align-items:stretch}
   .af-hero-cta .af-cta{width:100%}
-  .af-hero-facts{grid-template-columns:1fr 1fr 1fr;gap:8px}
-  .af-fact{padding:12px 10px 10px}
-  .af-fact b{font-size:19px}
-  .af-fact span{font-size:11.5px}
-  .af-grid2{grid-template-columns:1fr}
-  .af-stats{grid-template-columns:1fr 1fr;gap:10px}
-  .af-stat-v{font-size:24px}
-  .af-linkrow{flex-direction:column}
-  .af-linkrow .af-cta{width:100%}
-  .af-apply{margin-top:48px;padding-top:36px}
-  .af-form .af-cta{width:100%}
-  .af-socials{grid-template-columns:1fr}
-  .af-perk{padding:20px 18px 14px}
-  .af-land .af-hero{padding:22px 16px 20px;border-radius:22px}
-  .af-land .af-h1{font-size:clamp(32px,9vw,40px)}
-  .af-spark{display:none}
-  .af-badge-wrap{height:220px}
-  .af-badge-halo{width:200px;height:200px}
-  .af-badge-ring{width:184px;height:184px}
-  .af-badge{width:172px;height:172px}
-  .af-badge-v{font-size:54px}
+  .af-hero-cta .af-textlink{justify-content:center}
+  .af-fig-chip{font-size:12px;padding:7px 11px 7px 9px}
+  .af-stats3{grid-template-columns:1fr 1fr;gap:10px}
+  .af-stat3{padding:14px 10px 12px}
+  .af-stat3 span{font-size:12px}
   .af-boost{grid-template-columns:1fr;gap:10px}
-  .af-cta-hero{padding:15px 18px;font-size:15.5px}
-  .af-formhead{padding:14px 16px 12px}
-  .af-form{padding:18px 16px}
   .af-flow-step{grid-template-columns:60px 1fr;column-gap:14px}
   .af-flow:before{left:30px}
   .af-flow-ic{width:52px;height:52px;border-radius:16px}
   .af-flow-n{width:22px;height:22px;font-size:11px}
+  .af-grid2{grid-template-columns:1fr}
+  .af-socials{grid-template-columns:1fr}
+  .af-formhead{padding:14px 16px}
+  .af-form{padding:18px 16px 20px}
+  .af-form .af-cta{width:100%}
+  .af-perk{padding:20px 18px 18px}
+  .af-stats{grid-template-columns:1fr 1fr;gap:10px}
+  .af-stat-v{font-size:24px}
+  .af-linkrow{flex-direction:column}
+  .af-linkrow .af-cta{width:100%}
 }
 `

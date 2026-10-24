@@ -34,6 +34,7 @@ import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
 import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
+import { claimsReport, claimsMarkdown } from './claims.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
 import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
@@ -2395,6 +2396,17 @@ app.delete('/api/work/admin/contacts/:id', requireAuth, requireSuperAdmin, wrap(
 }))
 app.post('/api/work/admin/contacts/clear', requireAuth, requireSuperAdmin, wrap((req, res) => {
   res.json(store.clearContactSubmissions({ reason: String((req.body && req.body.reason) || '').trim(), by: req.user.username }))
+}))
+// Business-claims traceability (superadmin only, behind the authenticator step-up):
+// every public claim mapped to the file + code block that backs it, with a status
+// and an authenticity seal. A signed Markdown export is available for download.
+app.get('/api/work/admin/claims', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.json(claimsReport())
+}))
+app.get('/api/work/admin/claims.md', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  res.setHeader('Content-Type', 'text/markdown; charset=utf-8')
+  res.setHeader('Content-Disposition', 'attachment; filename="workcopilot-business-claims.md"')
+  res.send(claimsMarkdown())
 }))
 // Every company admin across all companies (operational oversight).
 app.get('/api/work/admin/company-admins', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ admins: store.listAllCompanyAdmins() }) }))

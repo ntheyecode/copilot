@@ -3380,6 +3380,18 @@ export function recordAffiliateConversion({ refUserId, amountUsd, currency = 'us
   db.affiliateRefs.push(rec); persist()
   return rec
 }
+// Void a referred user's commission when their payment is refunded/charged back.
+// Only EARNED (not-yet-paid) commissions are voided here - once a payout transfer
+// has gone out it cannot be silently un-paid (that needs a Stripe reversal). This
+// backs the "commission is voided if the payment is refunded" claim and closes
+// the revenue leak where a refunded referral could still be paid out.
+export function voidAffiliateCommissionForUser(refUserId, { reason = 'payment refunded' } = {}) {
+  const rows = (db.affiliateRefs || []).filter((r) => r.refUserId === refUserId && r.status === 'earned')
+  let n = 0
+  for (const r of rows) { r.status = 'void'; r.voidReason = String(reason || '').slice(0, 200); r.voidedAt = now(); n++ }
+  if (n) { recordWorkIncident({ kind: 'affiliate_void', message: `Voided ${n} earned affiliate commission(s) for user ${refUserId}: ${reason}`, userId: refUserId }); persist() }
+  return { voided: n }
+}
 export function listAffiliateReferrals(affId) {
   return (db.affiliateRefs || []).filter((r) => r.affiliateId === affId)
     .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))

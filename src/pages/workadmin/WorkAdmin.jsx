@@ -24,6 +24,7 @@ import Sessions from './sections/Sessions.jsx'
 import Leads from './sections/Leads.jsx'
 import Incidents from './sections/Incidents.jsx'
 import Affiliates from './sections/Affiliates.jsx'
+import Claims from './sections/Claims.jsx'
 import Hero from './sections/Hero.jsx'
 import Email from './sections/Email.jsx'
 import EmailTemplates from './sections/EmailTemplates.jsx'
@@ -46,6 +47,7 @@ const SECTIONS = [
   { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
   { id: 'incidents', label: 'Incidents', icon: ShieldAlert, title: 'System incidents', sub: 'Real causes behind the "system is busy" message users see - AI quota, keys, 5xx, timeouts. Users never see these.' },
   { id: 'affiliates', label: 'Affiliates', icon: Share2, title: 'Affiliate program', sub: 'Approve affiliates, set commission rates, track referrals and run Stripe Connect payouts.' },
+  { id: 'claims', label: 'Claims', icon: ShieldCheck, title: 'Business claims', sub: 'Every public claim mapped to the file and code that backs it, with an honesty status. MFA-gated; download a signed report.' },
 ]
 
 export default function WorkAdmin() {
@@ -101,10 +103,12 @@ export default function WorkAdmin() {
   const isAffiliateAdmin = !!(viewer && viewer.role === 'affiliate_admin' && !viewer.isSuperAdmin)
   // Accounting sees only Finance; an affiliate admin sees only Affiliates; a
   // superadmin sees everything.
+  // Claims is superadmin-only (it maps internal file paths + honesty status).
+  const SUPERADMIN_ONLY = new Set(['claims'])
   const visibleSections = isSuperAdmin ? SECTIONS
     : isAccounting ? SECTIONS.filter((s) => s.id === 'finance')
       : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates')
-        : SECTIONS
+        : SECTIONS.filter((s) => !SUPERADMIN_ONLY.has(s.id))
   useEffect(() => { if (isAccounting && active !== 'finance') setActive('finance') }, [isAccounting, active])
   useEffect(() => { if (isAffiliateAdmin && active !== 'affiliates') setActive('affiliates') }, [isAffiliateAdmin, active])
   const current = visibleSections.find((s) => s.id === active) || visibleSections[0] || SECTIONS[0]
@@ -126,6 +130,7 @@ export default function WorkAdmin() {
       case 'tickets': return <SupportTickets mode="admin" />
       case 'incidents': return <Incidents />
       case 'affiliates': return <Affiliates isSuperAdmin={isSuperAdmin} />
+      case 'claims': return <Claims />
       case 'overview':
       default: return <Overview />
     }

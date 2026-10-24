@@ -340,6 +340,9 @@ async function handleEvent(s, store, event) {
     const amt = charge ? charge.amount_refunded : (refundObj ? refundObj.amount : 0)
     const rid = refundObj ? refundObj.id : (charge ? charge.id : null)
     store.recordTransaction({ kind: 'refund', userId: user ? user.id : null, amount: (Number(amt) || 0) / 100, currency: (charge && charge.currency) || (refundObj && refundObj.currency) || 'usd', stripeId: rid, status: 'refunded', description: 'Refund' })
+    // A refunded payment voids any not-yet-paid affiliate commission earned on it
+    // (backs the "voided on refund" claim; prevents paying out on reversed revenue).
+    try { if (user && typeof store.voidAffiliateCommissionForUser === 'function') store.voidAffiliateCommissionForUser(user.id, { reason: 'payment refunded' }) } catch (e) { console.warn('[affiliate] void-on-refund failed: ' + (e && e.message)) }
     return
   }
 

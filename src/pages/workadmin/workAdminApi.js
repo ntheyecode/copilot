@@ -83,6 +83,11 @@ export const workAdminApi = {
   setNotify: (body) => request('POST', '/api/work/admin/notify', body || {}),
   contacts: (limit) => request('GET', `/api/work/admin/contacts${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
 
+  // Business-claims traceability (superadmin, behind the shared authenticator
+  // step-up - same lock as AI config). Returns { claims, summary, attestation }.
+  claims: () => request('GET', '/api/work/admin/claims'),
+  claimsMdUrl: '/api/work/admin/claims.md',
+
   // Editable email templates: list all, save one, reset one, live-preview one.
   emailTemplates: () => request('GET', '/api/work/admin/email-templates'),
   saveEmailTemplate: (type, body) => request('POST', `/api/work/admin/email-templates/${encodeURIComponent(type)}`, body || {}),

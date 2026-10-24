@@ -144,11 +144,16 @@ export default function WorkMarketing() {
     { icon: Compass, t: 'All around your goal', claim: 'Every step points at what you want.', d: 'It never loses the thread.', points: ['The goal is always in view', 'No busywork, no detours', 'Knows the moment you are done'] },
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
   ]
+  // Daily hours read from the live server pricing (price.dailyHours), so a
+  // superadmin change in Admin > Pricing flows straight to the cards. Fallback to
+  // the historical 1/2/4/6 only until the fetch resolves.
+  const dh = (price && price.dailyHours) || {}
+  const hLine = (h) => `${h} hour${h === 1 ? '' : 's'} of daily minutes - use anytime, billed per minute used`
   const tiers = price ? [
-    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: 1, tasks: (price.tasks || {}).lite, feats: ['1 hour of daily minutes - use anytime, billed per minute used', '1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'], hour: price.hour.lite },
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours of daily minutes - use anytime, billed per minute used', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'], hour: price.hour.basic },
-    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, tasks: (price.tasks || {}).advanced, popular: true, feats: ['4 hours of daily minutes - use anytime, billed per minute used', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
-    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, tasks: (price.tasks || {}).premium, feats: ['6 hours of daily minutes - use anytime, billed per minute used', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
+    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: dh.lite ?? 1, tasks: (price.tasks || {}).lite, feats: [hLine(dh.lite ?? 1), '1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'], hour: price.hour.lite },
+    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: dh.basic ?? 2, tasks: (price.tasks || {}).basic, feats: [hLine(dh.basic ?? 2), 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'], hour: price.hour.basic },
+    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: dh.advanced ?? 4, tasks: (price.tasks || {}).advanced, popular: true, feats: [hLine(dh.advanced ?? 4), 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
+    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: dh.premium ?? 6, tasks: (price.tasks || {}).premium, feats: [hLine(dh.premium ?? 6), 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
   ] : []
 
   return (
@@ -450,7 +455,7 @@ export default function WorkMarketing() {
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(t.price)}/mo</s> billed annually &middot; {money(annualTotal(t.price))}/yr</div>
                   : <div className="wm-tier-cyc dim">billed monthly</div>}
-                <div className="wm-tier-hrs">{t.hrs} hours of daily minutes{t.tasks != null ? ` · up to ${t.tasks} tasks` : ''}</div>
+                <div className="wm-tier-hrs">{t.hrs} hour{t.hrs === 1 ? '' : 's'} of daily minutes{t.tasks != null ? ` · up to ${t.tasks} task${t.tasks === 1 ? '' : 's'}` : ''}</div>
                 <div className="wm-tier-mins">Spend them anytime across the whole day. Billed per minute you actually use, never by the hour.</div>
                 <ul>{t.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => choosePlan(t.id)}>Choose {t.name}</button>
@@ -484,13 +489,13 @@ export default function WorkMarketing() {
           <div className="wm-ent-grid" data-reveal>
             {[
               [Building2, 'Unlimited seats and tasks', 'One central admin console for the whole company.'],
-              [Lock, 'SSO, SAML and invite-only provisioning', 'Add your people the way your IT team expects.'],
+              [Lock, 'SSO and invite-only provisioning', 'Sign in through your identity provider (OIDC).'],
               [ShieldCheck, 'One locked company data policy', 'Set it once, and every member inherits it.'],
               [Server, 'Per-company AI keys, or bring your own', 'Your keys, your control. Nothing is shared.'],
               [ScanEye, 'On-device PII and PHI redaction', 'Armed and locked, enforced for everyone.'],
               [FileText, 'Full audit log and compliance reports', 'Per-session evidence, ready for review.'],
-              [Scale, 'DPA, priority SLA and a dedicated contact', 'A named owner for your rollout.'],
-              [Blocks, 'Self-hosted or on-prem option', 'Run it entirely inside your own walls.'],
+              [Scale, 'A DPA and a dedicated contact', 'A named owner for your rollout.'],
+              [Blocks, 'On-prem deployment, on request', 'Options to run it inside your own walls.'],
             ].map(([Ic, t, d]) => (
               <div className="wm-ent-card" key={t}>
                 <span className="wm-ent-ic"><Ic size={18} /></span>
@@ -504,7 +509,7 @@ export default function WorkMarketing() {
             <a className="wm-cta ghost" href="/workcopilot/security">See the controls in action <ArrowRight size={15} /></a>
           </div>
           <div className="wm-ent-strip" aria-label="Enterprise assurances">
-            {['SSO', 'SAML', 'DPA', 'On-prem', 'Audit logs'].map((c) => (
+            {['SSO (OIDC)', 'DPA', 'On-prem on request', 'Audit logs'].map((c) => (
               <span key={c} className="wm-ent-chip">{c}</span>
             ))}
           </div>

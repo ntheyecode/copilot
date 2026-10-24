@@ -1,0 +1,410 @@
+[
+  {
+    "id": "ondevice-text-redaction",
+    "claim": "Sensitive data such as personal data, health data, secrets, keys and card numbers is stripped or tokenized on your own device before anything is sent; the real values stay on your device and the answer is rebuilt there.",
+    "page": "WorkSecurity / WorkFaq / WorkPrivacy / WorkMarketing",
+    "category": "privacy",
+    "evidence": [
+      { "file": "src/scrub.js", "symbol": "clean()", "line": 30, "note": "Client-side DLP: tokenize/scrub runs in the browser before fetch; token->value map is in-memory, device-only (line 9)." },
+      { "file": "src/scrub.js", "symbol": "rehydrateDeep()", "line": 44, "note": "Response is rehydrated on-device, so the model never receives the real values when in tokenize mode." },
+      { "file": "server/work-scrub.js", "symbol": "scrubSensitive/scrubWithPolicy/tokenizeSensitive", "line": 1, "note": "Single DLP engine imported by the CLIENT (src/scrub.js line 10), so the same detectors run in the browser." }
+    ],
+    "status": "partial",
+    "risk": "Redaction only runs when DLP is active (src/scrub.js isDlpActive, line 24 = an armed governance policy OR the legacy on/off scrub). For a solo user with no armed policy and scrub off, outbound text is NOT scrubbed, yet the marketing states this unconditionally. Honest claim would be 'when data protection is on'."
+  },
+  {
+    "id": "ondevice-frame-redaction",
+    "claim": "Each outbound screen frame is checked on your device and any line with a sensitive value is blacked out before the frame leaves; the AI never sees the real sensitive values.",
+    "page": "WorkSecurity / WorkMarketing / WorkFaq",
+    "category": "privacy",
+    "evidence": [
+      { "file": "src/frame_scrub.js", "symbol": "redactFrame", "line": 1, "note": "In-browser OCR (tesseract.js from CDN) recognizes frame text and blacks out lines with sensitive values before send. Honest limits noted in the file header (OCR imperfect)." },
+      { "file": "src/pages/WorkPage.jsx", "symbol": "prepFrame / capture", "line": 29, "note": "Frame is redacted only when isDlpActive() is true; otherwise the raw dataUrl is sent unmodified (line 29, 2964)." }
+    ],
+    "status": "partial",
+    "risk": "Two caveats vs the unconditional claim: (1) redaction is gated by isDlpActive() - with DLP off, the raw screenshot (sensitive pixels included) is sent; (2) OCR-based blackout is a best-effort backstop, not a guarantee, on downscaled frames (acknowledged in frame_scrub.js but not on the marketing pages)."
+  },
+  {
+    "id": "encryption-at-rest-aes256gcm",
+    "claim": "Stored keys, secrets and report artifacts, including milestone screenshots, are encrypted at rest with AES-256-GCM.",
+    "page": "WorkSecurity / WorkPrivacy / WorkDPA / WorkPricing",
+    "category": "security",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "enc()/encStr (crypto.createCipheriv aes-256-gcm)", "line": 96, "note": "Secrets encrypted on disk with AES-256-GCM; master key from WORK_ENC_KEY or generated .enc.key (0600)." },
+      { "file": "server/store.js", "symbol": "encryptBuffer()", "line": 139, "note": "Report screenshot bytes encrypted with the same AES-256-GCM key; writeShot encrypts (line 3640); migration encrypts pre-existing shots (line 159)." },
+      { "file": "server/store.js", "symbol": "report-artifact encStr", "line": 2723, "note": "Stored report artifacts encrypted at rest with the same key." }
+    ],
+    "status": "substantiated",
+    "risk": "Fully backed. Note: the in-memory DB keeps plaintext; at-rest only. A marked-encrypted value that cannot be decrypted throws rather than blanking (no silent failure)."
+  },
+  {
+    "id": "encryption-in-transit-tls",
+    "claim": "Traffic between devices and the service is protected with TLS (encryption in transit).",
+    "page": "WorkDPA",
+    "category": "security",
+    "evidence": [
+      { "file": "n/a", "symbol": "deployment/reverse-proxy", "line": 0, "note": "No TLS enforcement found in application code (no HTTPS redirect / HSTS in index.js). TLS termination is assumed at the hosting/proxy layer." }
+    ],
+    "status": "partial",
+    "risk": "TLS is an infrastructure/deployment property, not enforced in the app. Correct in practice behind a TLS proxy, but the app does not itself redirect HTTP->HTTPS or set HSTS, so the claim is deployment-dependent."
+  },
+  {
+    "id": "read-only-never-acts",
+    "claim": "WorkCoPilot is read-only by design: it never clicks, types, submits, or changes a system of record on your behalf.",
+    "page": "WorkSecurity / WorkFaq / WorkTerms / WorkPrivacy / WorkDPA / WorkDisclaimer / WorkMarketing",
+    "category": "security",
+    "evidence": [
+      { "file": "server/work.js", "symbol": "guidance endpoints return steps/roadmap/answer only", "line": 1437, "note": "The server returns guidance text/steps; there is no action-execution endpoint that clicks/types/submits in the user's systems." },
+      { "file": "server/index.js", "symbol": "work routes", "line": 185, "note": "Work routes are read/guide/report/metering only; no automation/dispatch route exists." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed by architecture (absence of any action-execution path). Cannot be mechanically 'proven' from a single symbol, but no code was found that performs actions in a user system."
+  },
+  {
+    "id": "security-first-checked-answers",
+    "claim": "Every command, snippet, script and fix is written the secure way and checked for common risks such as injection, hard-coded secrets, over-broad access and known-vulnerable libraries before it reaches you.",
+    "page": "WorkMarketing / WorkFaq / WorkPricing / WorkDisclaimer",
+    "category": "security",
+    "evidence": [
+      { "file": "server/security_gate.js", "symbol": "securityReview()", "line": 130, "note": "Deterministic scanner for dangerous commands + vulnerable dependency versions; HONEST when the vuln lookup cannot run (checkedDeps=false)." },
+      { "file": "server/index.js", "symbol": "runSecurityGate()", "line": 511, "note": "Wired into plan (1548), answer-when-code (1772) and another code path (2497); appends user-facing security flags to the session." },
+      { "file": "server/work.js", "symbol": "secure-coding prompt instruction", "line": 267, "note": "Model is instructed to self-review for injection/hardcoded secrets as the primary layer." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed, with honest framing on WorkDisclaimer ('a backstop, not a promise'). Nuance: the deterministic gate fires only when the output is classified as code (out.kind/format === 'code'); secure commands embedded in prose answers rely on the prompt layer only."
+  },
+  {
+    "id": "mfa-totp",
+    "claim": "Multi-factor authentication / step-up protection on sensitive settings (implied by enterprise/security posture).",
+    "page": "(product, not a specific marketing line)",
+    "category": "security",
+    "evidence": [
+      { "file": "server/totp.js", "symbol": "RFC 6238 TOTP", "line": 1, "note": "Dependency-free TOTP; mandatory enrollment on first login per product design." },
+      { "file": "server/index.js", "symbol": "requireAiStepUp (AI config)", "line": 261, "note": "OTP step-up gate on AI-config endpoints." },
+      { "file": "server/index.js", "symbol": "requireStepUpActive (SMTP)", "line": 2358, "note": "Step-up also guards SMTP settings." }
+    ],
+    "status": "partial",
+    "risk": "Step-up MFA guards only AI-config and SMTP. Other sensitive superadmin mutations (billing secret keys, SSO client secrets, pricing, retention, affiliate payouts, user disable, report-signing key) are NOT step-up gated - inconsistent coverage for an enterprise security posture."
+  },
+  {
+    "id": "sso-saml",
+    "claim": "SSO, SAML and invite-only provisioning / SSO / SAML and team provisioning (Enterprise).",
+    "page": "WorkMarketing / WorkPricing",
+    "category": "security",
+    "evidence": [
+      { "file": "server/sso.js", "symbol": "OIDC Authorization Code + PKCE", "line": 2, "note": "Only OIDC single sign-on is implemented (Authorization Code + PKCE). No SAML/assertion handling exists in the module." }
+    ],
+    "status": "partial",
+    "risk": "The 'SAML' claim is UNBACKED: only OIDC is implemented. Enterprises treat SAML as a distinct protocol requirement; advertising SAML without an implementation is an honesty/sales risk. Invite-only provisioning and OIDC SSO are backed."
+  },
+  {
+    "id": "no-card-stored",
+    "claim": "Checkout is handled by Stripe, and we never see or store your card number.",
+    "page": "WorkFaq / WorkPricing / WorkRefund / WorkPrivacy / WorkDPA / AffiliatePage",
+    "category": "security",
+    "evidence": [
+      { "file": "server/billing.js", "symbol": "checkout.sessions.create", "line": 419, "note": "Payment is via Stripe Checkout/Connect; the app never receives raw PANs. Stored billing config holds Stripe keys only, never card data." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed - Stripe-hosted checkout; no card handling in app code."
+  },
+  {
+    "id": "kb-learnings-deidentified",
+    "claim": "Learnings are generalized and de-identified: no personal data, secrets, screen images or document content is kept in them.",
+    "page": "WorkFaq / WorkCapabilities / WorkPrivacy / WorkDPA",
+    "category": "privacy",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "addLearning()", "line": 1169, "note": "Stored fact is a short (<=400 char) model-generated generalized string; no screen images or document blobs are stored in the KB." },
+      { "file": "server/store.js", "symbol": "redactIncidentText()", "line": 4190, "note": "Backstop strips API-key/token formats, PEM keys, emails, and key=value secret pairs before storing." }
+    ],
+    "status": "partial",
+    "risk": "Code backstop only strips secrets and emails. It does NOT strip names, phone numbers, SSNs, card numbers, IPs, or account IDs; the 'no personal data' guarantee relies on the model generalizing the fact. Strong claim is only partially code-enforced."
+  },
+  {
+    "id": "model-name-not-shown",
+    "claim": "The specific model / vendor in use is never shown to end users; we do not publish vendor or model names.",
+    "page": "WorkSecurity / WorkFaq / WorkPrivacy",
+    "category": "privacy",
+    "evidence": [
+      { "file": "server/ai.js", "symbol": "error codes AI-NO-MODEL etc. (model logged only)", "line": 131, "note": "User-facing AI errors use opaque refs; model/provider are logged, not surfaced." },
+      { "file": "server/work-images.js", "symbol": "provider/model never in user message", "line": 14, "note": "Comment + code keep provider/model out of user-facing messages." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed by design. Residual: provider catalog (ai.js chatModels lists) is internal; verify no /me or provider-status endpoint leaks the active model string to non-admin users."
+  },
+  {
+    "id": "prompt-injection-resistance",
+    "claim": "Whatever is on your screen or typed into a task is treated as information about the work, never as new instructions; attempts to make it break its own rules are declined and recorded for your administrator.",
+    "page": "WorkFaq",
+    "category": "security",
+    "evidence": [
+      { "file": "server/llm_guard.js", "symbol": "prompt-injection/jailbreak detector", "line": 1, "note": "Detector for prompt-injection/jailbreak/extraction/cross-tenant in user free text; high->refuse, records to abuseCount + superadmin incidents." },
+      { "file": "server/store.js", "symbol": "recordWorkAbuse/incident", "line": 4218, "note": "Abuse attempts recorded for the administrator." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed. The 'treated as information, never instructions' separation is a prompt-architecture property plus the guard; enforcement strength depends on prompt discipline."
+  },
+  {
+    "id": "field-count-156-10",
+    "claim": "Guides work across 156 professional fields in 10 families.",
+    "page": "WorkMarketing / WorkFields / WorkFaq / WorkCapabilities",
+    "category": "capability",
+    "evidence": [
+      { "file": "src/pages/WorkFields.jsx", "symbol": "FIELD_FAMILIES / FIELD_TOTAL", "line": 22, "note": "FIELD_TOTAL is derived (sum of items across 10 families); 156 is computed from the roster, not a hardcoded marketing number." },
+      { "file": "server/method_anchors.js", "symbol": "ANCHORS (per-discipline methodology)", "line": 1, "note": "Guidance is grounded per-discipline; memory notes 51 discipline anchors (method coverage is narrower than the 156 advertised fields)." }
+    ],
+    "status": "partial",
+    "risk": "The '156 fields' count is an accurate sum of the roster, but methodology anchors cover ~51 disciplines; fields beyond an anchor fall back to generic guidance. The count claim is honest; the implied depth ('reads like an expert in that field wrote them') is uneven across all 156."
+  },
+  {
+    "id": "pricing-plan-prices",
+    "claim": "WorkCoPilot plans are Basic $99, Advanced $299 and Premium $399 per month (Lite $69).",
+    "page": "WorkFaq / WorkMarketing (live from /api/work/pricing)",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "WORK_PRICING_DEFAULT.plans / getWorkPricing()", "line": 2549, "note": "Superadmin-editable; marketing fetches /api/work/pricing so the displayed number propagates." },
+      { "file": "server/billing.js", "symbol": "checkout line_items price: priceId", "line": 419, "note": "The ACTUAL subscription charge is the Stripe Price ID (priceBasic etc., store.js line 216), a separate config from the displayed pricing.plans." }
+    ],
+    "status": "partial",
+    "risk": "Display vs charge split: the price SHOWN (pricing.plans, editable) and the price CHARGED (Stripe Price ID) are two independent sources of truth. Changing the displayed price does not change what Stripe charges, so a superadmin can set a displayed price that does not match checkout. Cross-page fallback mismatch also exists: WorkPricing.jsx offline fallback is 199/399/499 vs WorkFaq 99/299/399."
+  },
+  {
+    "id": "daily-hours-per-tier",
+    "claim": "Daily live guidance: 1h Lite / 2h Basic / 4h Advanced / 6h Premium, spent anytime, billed per minute used.",
+    "page": "WorkPricing / WorkMarketing / WorkFaq",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "workDailyLimit()", "line": 2199, "note": "Reads pricing.dailyHours live (superadmin-editable); getWorkUsage derives remaining/exhausted from it (line 2237)." },
+      { "file": "server/store.js", "symbol": "getWorkPricing().dailyHours", "line": 2555, "note": "Default 1/2/4/6; change in Admin>Pricing reflects immediately for every user." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed and propagating (the recently-fixed path). Fallback constant WORK_TIER_SECONDS (line 2174) still exists but is only used when pricing is unset."
+  },
+  {
+    "id": "task-caps-per-tier",
+    "claim": "Tasks per day: up to 4 Basic / 8 Advanced / 12 Premium / Unlimited Enterprise.",
+    "page": "WorkPricing / WorkMarketing",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "workDailyTaskLimit()", "line": 2263, "note": "Reads pricing.tasks live; company/corporate = unlimited. Enforced server-side as a daily hard gate." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed and superadmin-editable (pricing.tasks)."
+  },
+  {
+    "id": "replan-caps-per-tier",
+    "claim": "Per-task re-plan budget (a re-plan re-adapts the plan with new info and never changes the original request).",
+    "page": "(product; memory-documented)",
+    "category": "capability",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "getWorkPricing().replans", "line": 2554, "note": "Default 5/10/10/10, superadmin-editable; corporate unlimited." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed and editable."
+  },
+  {
+    "id": "extra-hour-overage",
+    "claim": "Top up extra guided hours at $10 per hour on any plan; purchased time never expires.",
+    "page": "WorkPricing / WorkFaq / WorkMarketing",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/billing.js", "symbol": "credits checkout price_data from pricing.hour", "line": 456, "note": "Overage priced dynamically from pricing.hour[tier] (superadmin-editable) via Stripe price_data - propagates correctly." },
+      { "file": "server/store.js", "symbol": "grantWorkPurchasedSeconds", "line": 2230, "note": "Purchased seconds are a persistent balance (no expiry)." }
+    ],
+    "status": "partial",
+    "risk": "The $10/hr is from pricing.hour (default lite 25/basic 20/advanced 15/premium 10). WorkPricing/WorkFaq state a flat '$10/hour, every plan', but the per-tier default hour rate is NOT flat ($25/$20/$15/$10). The flat $10 copy matches only the premium tier's default."
+  },
+  {
+    "id": "image-packs-premium",
+    "claim": "Premium adds generated visuals on demand; image packs start from <price> each (min <N>). Premium free allowance is 5/day.",
+    "page": "WorkPricing / WorkMarketing (price + min from API)",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "getWorkPricing().image / imageMinBulk", "line": 2551, "note": "Per-image price and bulk minimum are superadmin-editable and shown live." },
+      { "file": "server/store.js", "symbol": "WORK_IMAGE_DAILY", "line": 3509, "note": "The daily FREE generation allowance { lite:0, basic:0, advanced:0, premium:5 } is HARDCODED - not superadmin-editable." },
+      { "file": "server/work-images.js", "symbol": "premium-only gate", "line": 123, "note": "Server enforces premium-only image generation (hardcoded string compare, not via a tier-feature registry)." }
+    ],
+    "status": "partial",
+    "risk": "Image PRICE/min propagate, but the '5/day' free allowance and the premium-only gate are hardcoded constants - an operator cannot change them without a code change (same class as the recently-fixed daily-hours bug)."
+  },
+  {
+    "id": "tier-features-roadmaps-diagrams-documents",
+    "claim": "Roadmaps (Basic+), own-document grounding (Advanced+), generated visuals/diagrams (Premium).",
+    "page": "WorkPricing / WorkMarketing / WorkCapabilities",
+    "category": "capability",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "TIER_FEATURES", "line": 2182, "note": "Feature gates { roadmaps, diagrams, documents } are HARDCODED per tier; exposed to the client as caps (line 453)." },
+      { "file": "server/work-docs.js", "symbol": "ALLOWED_TIERS", "line": 44, "note": "Document upload gate is a SECOND hardcoded set ['advanced','premium'] rather than reading store.tierAllows - a parallel source of truth." },
+      { "file": "server/work.js", "symbol": "roadmap derivation (no tier gate)", "line": 1437, "note": "The guidance endpoint returns the roadmap array to ALL tiers; no server-side tierAllows('roadmaps') check. Lite/Basic gating is client-side only (via caps)." }
+    ],
+    "status": "partial",
+    "risk": "(1) TIER_FEATURES is hardcoded and not superadmin-editable. (2) Document gate duplicates the truth in work-docs.js. (3) Roadmap/diagram tier gate is NOT enforced server-side (only advertised in caps), so a direct API call from a Lite/Basic account can receive roadmap data it did not pay for. Documents and images ARE server-enforced; roadmaps/diagrams are not - inconsistent enforcement."
+  },
+  {
+    "id": "retention-configurable-purge",
+    "claim": "By default sessions are kept until you or your admin delete them; an automatic retention window can be configured so sessions older than N days are purged on a schedule.",
+    "page": "WorkSecurity / WorkPrivacy / WorkFaq / WorkDPA",
+    "category": "privacy",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "getWorkRetentionDays/getCompanyRetentionDays/effectiveRetentionDays", "line": 2679, "note": "Two-tier retention (platform for solo, company admin for members); 0 = keep forever." },
+      { "file": "server/store.js", "symbol": "purgeOldWorkSessions()", "line": 3420, "note": "Purges sessions past the effective window; removes shots + audit." },
+      { "file": "server/index.js", "symbol": "retention sweep (setInterval) + run-on-set", "line": 2617, "note": "Sweep wired; also runs immediately when retention is set (lines 1118, 1265). Propagates." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed and propagating. Note WorkPrivacy glance text ('There is no automatic retention timer yet') contradicts the configurable-window copy elsewhere on the same site - stale sentence."
+  },
+  {
+    "id": "subscription-blocks-service",
+    "claim": "If a payment fails, we may limit access to paid features until it is resolved.",
+    "page": "WorkTerms / WorkRefund",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "userCanUseService()", "line": 638, "note": "Returns true only for trialing/active/comp (and covered company members); past_due/canceled are excluded." },
+      { "file": "server/index.js", "symbol": "requireWorkSubscription", "line": 187, "note": "Enforced on the guidance path (lines 204, 214). past_due/canceled -> 402." },
+      { "file": "server/billing.js", "symbol": "invoice.payment_failed -> past_due", "line": 354, "note": "Failed renewal flips status so guiding blocks automatically." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed. Note: admin/superadmin bypass both subscription and time gates (index.js line 189) for operator testing."
+  },
+  {
+    "id": "disabled-account-blocked",
+    "claim": "Company admins can end a member's access; a disabled account is blocked from all service.",
+    "page": "WorkAcceptableUse / WorkSecurity",
+    "category": "capability",
+    "evidence": [
+      { "file": "server/index.js", "symbol": "requireWorkSubscription disabled check", "line": 196, "note": "Disabled user or disabled company -> 403 immediately, before billing branch; session epoch bump signs them out everywhere." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed and propagates immediately."
+  },
+  {
+    "id": "affiliate-commission-rate",
+    "claim": "You earn 30% of each referral's first payment, paid automatically through Stripe; renewals and later purchases do not earn commission.",
+    "page": "AffiliatePage",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "recordAffiliateConversion()", "line": 3366, "note": "Commission = amount*ratePct% on the FIRST payment only (deduped by refUserId, line 3369)." },
+      { "file": "server/affiliate.js", "symbol": "payout via Stripe transfers.create", "line": 181, "note": "Payout transfers the earned balance to the affiliate's connected Stripe account, respecting minPayoutUsd." },
+      { "file": "src/pages/AffiliatePage.jsx", "symbol": "DEFAULT_RATE_PCT = 30", "line": 0, "note": "30% is the fallback; the live rate is store.getAffiliateConfig().defaultRatePct (superadmin-editable)." }
+    ],
+    "status": "substantiated",
+    "risk": "First-payment-only and Stripe payout are backed and the rate is editable."
+  },
+  {
+    "id": "affiliate-void-on-refund",
+    "claim": "Commission is voided if the payment is refunded or reversed.",
+    "page": "AffiliatePage",
+    "category": "pricing",
+    "evidence": [
+      { "file": "server/billing.js", "symbol": "charge.refunded webhook", "line": 335, "note": "Refund webhook records a 'refund' transaction in the ledger but does NOT touch the affiliate referral." },
+      { "file": "server/store.js", "symbol": "recordAffiliateConversion status", "line": 3377, "note": "A referral is only set to 'void' when the AFFILIATE was suspended at conversion time - never on a refund/chargeback of the referred payment." }
+    ],
+    "status": "unbacked",
+    "risk": "UNBACKED: no code voids or reverses an affiliate commission when the referred user's first payment is refunded or charged back. A refunded referral can still be paid out. This is both a claims honesty risk and a revenue-leak business bug."
+  },
+  {
+    "id": "compliance-presets-arm-lock",
+    "claim": "Per-company presets for frameworks such as GDPR, HIPAA, PCI DSS, SOC 2 and ISO 27001 are one click to arm and lock.",
+    "page": "WorkFaq / WorkSecurity / WorkMarketing",
+    "category": "compliance",
+    "evidence": [
+      { "file": "server/compliance-presets.js", "symbol": "presets: hipaa,gdpr,pci,ccpa,eu,us_ca,india_dpdp,uk", "line": 63, "note": "8 armable DLP presets exist (GDPR, HIPAA, PCI, CCPA, EU, US-CA, India DPDP, UK)." },
+      { "file": "server/compliance_frameworks.js", "symbol": "18 reporting frameworks", "line": 1, "note": "18 frameworks for report/evidence mapping (SOC2, ISO 27001, NIST, etc.) - these are evidence mappings, not arm-able redaction presets." }
+    ],
+    "status": "partial",
+    "risk": "SOC 2 and ISO 27001 are named as 'one click to arm' presets but have NO arm-able redaction preset in compliance-presets.js (they are evidence/control frameworks only). 'such as' softens it, but naming them specifically as presets overstates what arms. GDPR/HIPAA/PCI presets are fully backed."
+  },
+  {
+    "id": "compliance-ready-not-certified",
+    "claim": "WorkCoPilot is compliance-ready across the frameworks you report to; it gives controls and audit evidence, and we do not claim a certification.",
+    "page": "WorkSecurity / WorkFaq / WorkTerms / WorkPrivacy / WorkDPA / WorkDisclaimer",
+    "category": "compliance",
+    "evidence": [
+      { "file": "server/compliance_frameworks.js", "symbol": "per-framework control/evidence registry", "line": 1, "note": "18 frameworks mapped to on-device redaction + audit log + read-only + role-based policy as supporting evidence." },
+      { "file": "src/pages/WorkSecurity.jsx", "symbol": "honest disclaimers", "line": 259, "note": "'a disclosure of what the product does today, not a compliance claim'; 'we do not claim a certification'." }
+    ],
+    "status": "substantiated",
+    "risk": "Honestly framed (explicit non-certification language). The underlying controls (redaction, audit log, read-only, role policy) exist."
+  },
+  {
+    "id": "audit-log-per-session",
+    "claim": "A per-session audit log records what was transmitted, so you can see exactly what left your device; company admins can review their members' sessions.",
+    "page": "WorkSecurity / WorkFaq / WorkPrivacy / WorkDPA",
+    "category": "compliance",
+    "evidence": [
+      { "file": "server/store.js", "symbol": "appendWorkEvent / session audit", "line": 517, "note": "Session events (flags, sends) recorded per session; retained with the report and encrypted at rest." },
+      { "file": "server/index.js", "symbol": "company-admin session review routes", "line": 1260, "note": "Company admins can review their own members' sessions/reports." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed."
+  },
+  {
+    "id": "documents-read-locally-desktop",
+    "claim": "Upload your own documents; they are read on your computer and the file never leaves your device.",
+    "page": "WorkCapabilities / WorkFaq / WorkPrivacy / WorkSecurity",
+    "category": "privacy",
+    "evidence": [
+      { "file": "server/work-docs.js", "symbol": "stores EXTRACTED TEXT only", "line": 2, "note": "Only governed/extracted text is stored on disk; the raw file is not kept as source material." },
+      { "file": "src/pages/WorkPage.jsx", "symbol": "'Text is extracted on our server, scrubbed'", "line": 1115, "note": "For the BROWSER upload path, document text is extracted ON THE SERVER, not on-device." }
+    ],
+    "status": "partial",
+    "risk": "'Read on your computer, the file never leaves' is true for the DESKTOP app only. On the browser path the file is uploaded and text is extracted server-side. WorkFaq/WorkPrivacy correctly qualify '(desktop app)', but WorkCapabilities states 'read on your computer, the file never leaving' without the desktop qualifier - overbroad for browser users."
+  },
+  {
+    "id": "no-generation-hand-off-prompt",
+    "claim": "Show it a diagram/architecture/design: it finds the issues and hands you a ready-to-use prompt to generate the corrected version in your own tools.",
+    "page": "WorkCapabilities / WorkFaq / WorkUseCases",
+    "category": "capability",
+    "evidence": [
+      { "file": "server/work.js", "symbol": "promptIssues deliverable (paste into your own LLM/diagram tool)", "line": 1506, "note": "Produces a self-contained prompt for the user's own tool rather than generating the artifact - matches the stated no-generation design." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed (consistent with the product's no-document-generation policy)."
+  },
+  {
+    "id": "roi-stats-marketing",
+    "claim": "+70% faster to done, -50% outsourcing spend, 100% read-only, weeks -> days to market.",
+    "page": "WorkMarketing",
+    "category": "performance",
+    "evidence": [
+      { "file": "n/a", "symbol": "no measurement source", "line": 0, "note": "No benchmark/telemetry source backs the +70% / -50% / weeks->days figures. '100% read-only' maps to the read-only architecture." }
+    ],
+    "status": "partial",
+    "risk": "The percentage ROI figures are marketing illustrations with no measured source in code or data; '100% read-only' is backed. If presented as measured outcomes they are an unsubstantiated-performance-claim risk (the Exec dashboard labels similar numbers 'hypothetical', which these are not)."
+  },
+  {
+    "id": "annual-discount-20",
+    "claim": "Annual billing saves 20% (a free month for referred users on annual).",
+    "page": "WorkMarketing / AffiliatePage / WorkPricing / WorkFaq",
+    "category": "pricing",
+    "evidence": [
+      { "file": "src/pages/WorkMarketing.jsx", "symbol": "monthlyRate = rate*0.8; annualTotal = round(rate*0.8)*12", "line": 0, "note": "The 20% annual math is a client-side literal in the marketing page." },
+      { "file": "server/billing.js", "symbol": "annual Stripe Price IDs (priceBasicAnnual etc.)", "line": 68, "note": "Actual annual charge is a separate Stripe annual Price ID; the 20% is display math only." }
+    ],
+    "status": "partial",
+    "risk": "The displayed 20% discount is computed client-side and is independent of the actual annual Stripe Price. If the annual Stripe Price is not set to exactly 80% x 12, the shown saving will not match the charge (same display-vs-charge split as monthly)."
+  },
+  {
+    "id": "ai-never-silently-fails",
+    "claim": "The plan always comes from the strongest option actually available; if anything changed mid-task the log says so (honest by design, nothing silently rerouted).",
+    "page": "WorkCapabilities / WorkFaq",
+    "category": "capability",
+    "evidence": [
+      { "file": "server/ai.js", "symbol": "model self-heal + failover ladder (logged)", "line": 243, "note": "Retired-model self-heal against live catalog; failover records every switch as an incident (per ai_failover test)." },
+      { "file": "server/ai.js", "symbol": "error codes (no silent default substitution)", "line": 131, "note": "Opaque error refs; a missing model surfaces a reason rather than silently swapping provider." }
+    ],
+    "status": "substantiated",
+    "risk": "Backed by the failover/incident design (SUPREME RULE III). 'Strongest AI' is a subjective label; the code picks a dependable current model, not a measured 'strongest'."
+  },
+  {
+    "id": "support-sla-one-business-day",
+    "claim": "For Enterprise/sales we reply within one business day; Enterprise gets a priority SLA.",
+    "page": "WorkFaq / WorkPricing / WorkMarketing",
+    "category": "support",
+    "evidence": [
+      { "file": "n/a", "symbol": "no SLA tracking", "line": 0, "note": "No code enforces or measures a one-business-day response or a priority SLA; support is email-based." }
+    ],
+    "status": "partial",
+    "risk": "Response-time/SLA promises are operational commitments with no system backing (no ticket-SLA timer). Acceptable as a human commitment, but there is no mechanism ensuring it."
+  }
+]
