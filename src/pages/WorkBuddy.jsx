@@ -21,7 +21,7 @@
 // the user can move the window; buttons and the mascot opt out so they stay
 // clickable and never start a drag.
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
-import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile } from 'lucide-react'
+import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile, Eye, Check, Minus } from 'lucide-react'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import BuddyPicker from '../components/BuddyPicker.jsx'
 
@@ -155,7 +155,20 @@ export default function WorkBuddy() {
   }, [paused, busy])
 
   const openMain = useCallback(() => { try { window.workDesktop?.openMain?.() } catch { /* ignore */ } }, [])
-  const hideBuddy = useCallback(() => { try { window.workDesktop?.hideBuddy?.() } catch { /* ignore */ } }, [])
+  // HIDDEN = truly gone: the page renders NOTHING (zero desktop footprint). The
+  // shell hides the window and pauses + saves guidance in the main window (its
+  // IPC); when it shows the window again, focus/visibility restores the view.
+  const [hidden, setHidden] = useState(false)
+  const hideBuddy = useCallback(() => { setHidden(true); try { window.workDesktop?.hideBuddy?.() } catch { /* ignore */ } }, [])
+  // KILL = fully quit the buddy (shell IPC; names pending confirmation, so every
+  // candidate is tried and all are guarded).
+  const killBuddy = useCallback(() => { setHidden(true); try { const d = window.workDesktop; (d?.killBuddy || d?.closeBuddy || d?.quitBuddy || d?.hideBuddy)?.() } catch { /* ignore */ } }, [])
+  useEffect(() => {
+    const show = () => { if (document.visibilityState === 'visible') setHidden(false) }
+    window.addEventListener('focus', show); document.addEventListener('visibilitychange', show)
+    try { window.workDesktop?.onBuddyShown?.(() => setHidden(false)) } catch { /* ignore */ }
+    return () => { window.removeEventListener('focus', show); document.removeEventListener('visibilitychange', show) }
+  }, [])
 
   // --- derived display values ----------------------------------------------
   const steps = (session && Array.isArray(session.steps)) ? session.steps : []
@@ -240,48 +253,29 @@ export default function WorkBuddy() {
     return () => ro.disconnect()
   }, [reportHeight])
 
+  // Hidden: render nothing at all - no card, no instructions, no footprint.
+  if (hidden) return null
+
   return (
     <div style={S.root}>
       <div style={S.card} ref={cardRef}>
-        {/* Draggable header */}
+        {/* ONE slim draggable row: status chip + tiny controls. No separate footer. */}
         <div style={S.header}>
           <div style={S.brand}>
-            <span style={S.dot(paused ? AMBER : ACCENT)} />
-            <span style={S.brandText}>WorkCoPilot</span>
-            {paused && <span style={S.pausedTag}>Paused</span>}
+            <span style={S.brandMark}><Eye size={11} color="#052a1d" strokeWidth={2.6} /></span>
+            {status === 'ok' && session
+              ? <span style={S.statusChip(paused)}><span style={S.chipDot(paused)} />{paused ? 'Paused' : 'Guiding'}</span>
+              : <span style={S.brandText}>WorkCoPilot</span>}
           </div>
           <div style={S.headerBtns}>
-            <button
-              title={showPicker ? 'Close buddy picker' : 'Change buddy'}
-              aria-label="Change buddy" aria-pressed={showPicker}
-              style={{ ...S.iconBtn, ...(showPicker ? S.iconBtnOn : null) }}
-              onClick={() => setShowPicker((v) => !v)}
-            >
-              <Smile size={14} />
-            </button>
-            <button
-              title={textOnly ? 'Show the buddy' : 'Text only'}
-              aria-label="Text only" aria-pressed={textOnly}
-              style={{ ...S.iconBtn, ...(textOnly ? S.iconBtnOn : null) }}
-              onClick={toggleTextOnly}
-            >
-              <Type size={13} />
-            </button>
-            <button
-              title={motionOff ? 'Resume buddy motion' : 'Freeze buddy motion'}
-              aria-label="Freeze buddy motion" aria-pressed={motionOff}
-              style={{ ...S.iconBtn, opacity: motionOff ? 0.5 : 1 }}
-              onClick={toggleMotion}
-            >
-              <Sparkles size={13} />
-            </button>
+            <button title={showPicker ? 'Close buddy picker' : 'Change buddy'} aria-label="Change buddy" aria-pressed={showPicker} style={{ ...S.iconBtn, ...(showPicker ? S.iconBtnOn : null) }} onClick={() => setShowPicker((v) => !v)}><Smile size={13} /></button>
+            <button title={textOnly ? 'Show the buddy' : 'Text only'} aria-label="Text only" aria-pressed={textOnly} style={{ ...S.iconBtn, ...(textOnly ? S.iconBtnOn : null) }} onClick={toggleTextOnly}><Type size={12} /></button>
+            <button title={motionOff ? 'Resume buddy motion' : 'Freeze buddy motion'} aria-label="Freeze buddy motion" aria-pressed={motionOff} style={{ ...S.iconBtn, opacity: motionOff ? 0.5 : 1 }} onClick={toggleMotion}><Sparkles size={12} /></button>
             <span style={S.btnSep} />
-            <button title="Open full window" aria-label="Open full window" style={S.iconBtn} onClick={openMain}>
-              <Maximize2 size={14} />
-            </button>
-            <button title="Hide buddy" aria-label="Hide buddy" style={S.iconBtn} onClick={hideBuddy}>
-              <X size={15} />
-            </button>
+            <button title={paused ? 'Resume guidance' : 'Pause guidance'} aria-label={paused ? 'Resume guidance' : 'Pause guidance'} style={{ ...S.iconBtn, ...(paused ? S.iconBtnOn : null), opacity: (idRef.current && !busy) ? 1 : 0.5 }} onClick={togglePause} disabled={!idRef.current || busy}>{paused ? <Play size={12} /> : <Pause size={12} />}</button>
+            <button title="Open full window" aria-label="Open full window" style={S.iconBtn} onClick={openMain}><Maximize2 size={12} /></button>
+            <button title="Hide buddy (pauses and saves your progress)" aria-label="Hide buddy" style={S.iconBtn} onClick={hideBuddy}><Minus size={13} /></button>
+            <button title="Close buddy" aria-label="Close buddy" style={{ ...S.iconBtn, ...S.iconBtnKill }} onClick={killBuddy}><X size={13} /></button>
           </div>
         </div>
 
@@ -301,14 +295,18 @@ export default function WorkBuddy() {
             </div>
           )}
           <div style={S.bubble}>
-            {!textOnly && <span style={S.tail} />}
+            {/* comic tail: sits INSIDE the gap between avatar and bubble (never over the avatar) */}
+            {!textOnly && <svg style={S.tail} width="13" height="20" viewBox="0 0 13 20" aria-hidden="true"><path d="M13 2 L1.5 10 L13 18 Z" fill="#ffffff" stroke="rgba(10,13,18,.12)" strokeWidth="1" strokeLinejoin="round" /></svg>}
             {status === 'ok' && session ? (
               <>
                 <div style={S.stepLabel} title={stepTitle}>
                   {status === 'ok' && !allDone && <Loader2 size={11} style={{ ...S.spin, opacity: paused ? 0.3 : 0.8, marginRight: 5 }} />}
                   {stepTitle}
                 </div>
-                <div style={S.moveText}>{nextMove}</div>
+                {/* The next move is THE thing to read: it flashes emerald for a beat
+                    when a step advances, and a confirm check pops beside the label. */}
+                <div style={S.moveText} className={pulse ? 'wb-flash' : undefined}>{nextMove}</div>
+                {pulse && <span className="wb-confirm" role="status"><Check size={11} strokeWidth={3} /> Step confirmed</span>}
                 <div style={S.metaRow}>
                   {progressLabel && (
                     <span style={S.progWrap}>
@@ -331,22 +329,6 @@ export default function WorkBuddy() {
           </div>
         </div>
 
-        {/* Controls */}
-        <div style={S.controls}>
-          <button style={{ ...S.ctrlBtn, ...S.ctrlPrimary }} onClick={openMain}>
-            <Maximize2 size={13} /> Open full
-          </button>
-          <button style={S.ctrlBtn} onClick={hideBuddy}>
-            <X size={13} /> Hide
-          </button>
-          <button
-            style={{ ...S.ctrlBtn, opacity: (idRef.current && !busy) ? 1 : 0.5 }}
-            onClick={togglePause}
-            disabled={!idRef.current || busy}
-          >
-            {paused ? <Play size={13} /> : <Pause size={13} />} {paused ? 'Resume' : 'Pause'}
-          </button>
-        </div>
       </div>
     </div>
   )
@@ -393,10 +375,13 @@ const styles = {
     background: 'linear-gradient(180deg, rgba(57,211,255,0.09), rgba(57,211,255,0))',
     borderBottom: '1px solid rgba(255,255,255,0.05)',
   },
-  brand: { display: 'flex', alignItems: 'center', gap: 7, minWidth: 0 },
-  dot: (c) => ({ width: 8, height: 8, borderRadius: '50%', background: c, boxShadow: `0 0 8px ${c}`, flex: '0 0 auto' }),
-  brandText: { fontSize: 12, fontWeight: 600, letterSpacing: 0.2, color: '#cfe9df' },
-  pausedTag: { fontSize: 10, color: AMBER, border: `1px solid rgba(245,200,107,0.4)`, borderRadius: 6, padding: '0 5px', marginLeft: 2 },
+  brand: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
+  // Emerald brand mark, matching the console + float header.
+  brandMark: { width: 20, height: 20, borderRadius: 6, flex: '0 0 auto', display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${ACCENT}, ${CYAN})`, boxShadow: `0 0 0 1px rgba(140,245,196,0.4) inset` },
+  brandText: { fontFamily: '"Bricolage Grotesque", Inter, system-ui, sans-serif', fontSize: 12.5, fontWeight: 700, letterSpacing: '-0.01em', color: '#eef3f6' },
+  // ONE calm status chip (Guiding / Paused), same vocabulary as the other surfaces.
+  statusChip: (p) => ({ display: 'inline-flex', alignItems: 'center', gap: 5, height: 19, padding: '0 8px', borderRadius: 999, fontSize: 9.5, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', color: p ? AMBER : ACCENT, background: p ? 'rgba(245,200,107,0.14)' : 'rgba(140,245,196,0.14)', border: `1px solid ${p ? 'rgba(245,200,107,0.34)' : 'rgba(140,245,196,0.34)'}` }),
+  chipDot: (p) => ({ width: 5, height: 5, borderRadius: '50%', background: p ? AMBER : ACCENT, boxShadow: p ? 'none' : `0 0 6px ${ACCENT}` }),
   headerBtns: { WebkitAppRegion: 'no-drag', display: 'flex', gap: 4 },
   iconBtn: {
     WebkitAppRegion: 'no-drag',
@@ -406,6 +391,7 @@ const styles = {
     border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, cursor: 'pointer',
   },
   iconBtnOn: { color: ACCENT, background: 'rgba(140,245,196,0.14)', borderColor: 'rgba(140,245,196,0.4)' },
+  iconBtnKill: { color: '#ff8b81' },
   btnSep: { width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flex: '0 0 auto' },
   pickerWrap: {
     WebkitAppRegion: 'no-drag',
@@ -414,57 +400,41 @@ const styles = {
     background: 'rgba(57,211,255,0.04)',
   },
   pickerLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: '#9aa6ad' },
-  body: { flex: 1, padding: '9px 11px 9px 9px', display: 'flex', alignItems: 'flex-start', gap: 8, minHeight: 0 },
+  // Avatar and the comic speech bubble sit side by side with a 14px gap; the
+  // bubble's tail (12px wide) lives inside that gap, pointing at the buddy and
+  // never overlapping it. A clean white comic bubble with dark ink, like the
+  // approved sample, reads crisply on the dark buddy card.
+  body: { flex: 1, padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 14, minHeight: 0 },
   bubble: {
     position: 'relative', flex: 1, minWidth: 0,
     display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'flex-start',
-    background: 'rgba(255,255,255,0.045)',
-    border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 12, padding: '9px 11px',
+    background: '#ffffff', color: '#161a2b',
+    border: '1px solid rgba(10,13,18,0.12)',
+    borderRadius: 14, padding: '10px 12px',
+    boxShadow: '0 10px 24px -14px rgba(0,0,0,0.7)',
   },
-  tail: {
-    position: 'absolute', left: -5, top: 24, width: 10, height: 10,
-    background: 'rgba(255,255,255,0.045)',
-    borderLeft: '1px solid rgba(255,255,255,0.08)',
-    borderBottom: '1px solid rgba(255,255,255,0.08)',
-    transform: 'rotate(45deg)',
-  },
+  tail: { position: 'absolute', left: -12, top: 20, width: 13, height: 20, display: 'block', pointerEvents: 'none' },
   spin: { animation: 'wb-spin 1s linear infinite' },
   stepLabel: {
     display: 'flex', alignItems: 'flex-start',
     fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase',
-    color: CYAN, opacity: 0.9, lineHeight: 1.3,
+    color: '#0a84c2', lineHeight: 1.3,
   },
   // The exact next move, shown IN FULL and refreshed in place (no clamp, no
   // remount animation) so it stays in one fixed spot. Very long guidance scrolls
   // inside the bubble once the window hits its height cap.
   moveText: {
-    fontSize: 13, fontWeight: 600, color: '#f1f6f3', lineHeight: 1.35,
+    fontSize: 13, fontWeight: 600, color: '#161a2b', lineHeight: 1.35,
     whiteSpace: 'normal', overflowWrap: 'anywhere',
     maxHeight: 230, overflowY: 'auto',
   },
   metaRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 1 },
   progWrap: { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 },
-  progTrack: { width: 48, height: 4, borderRadius: 3, background: 'rgba(255,255,255,0.12)', overflow: 'hidden', flex: '0 0 auto' },
-  progFill: { display: 'block', height: '100%', borderRadius: 3, background: `linear-gradient(90deg, ${ACCENT}, ${CYAN})`, transition: 'width 0.4s ease' },
-  progLabel: { fontSize: 10.5, fontWeight: 600, color: '#9aa6ad', whiteSpace: 'nowrap' },
-  metaTime: { display: 'inline-flex', alignItems: 'center', fontSize: 11, color: '#9aa6ad', fontVariantNumeric: 'tabular-nums', flex: '0 0 auto' },
-  calm: { display: 'flex', alignItems: 'center', fontSize: 12.5, color: '#aab4bb', lineHeight: 1.35, animation: 'wb-msg 0.28s ease-out' },
-  controls: {
-    display: 'flex', gap: 6, padding: '8px 10px',
-    borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.015)',
-  },
-  ctrlBtn: {
-    WebkitAppRegion: 'no-drag',
-    flex: 1,
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: 5,
-    fontSize: 11.5, fontWeight: 600, color: '#d6dee3',
-    background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-    borderRadius: 8, padding: '6px 4px', cursor: 'pointer', whiteSpace: 'nowrap',
-  },
-  ctrlPrimary: {
-    color: BG, background: ACCENT, border: '1px solid ' + ACCENT, fontWeight: 700,
-  },
+  progTrack: { width: 48, height: 4, borderRadius: 3, background: 'rgba(20,30,70,0.12)', overflow: 'hidden', flex: '0 0 auto' },
+  progFill: { display: 'block', height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #0e9f6e, #0a84c2)', transition: 'width 0.4s ease' },
+  progLabel: { fontSize: 10.5, fontWeight: 600, color: '#5c6484', whiteSpace: 'nowrap' },
+  metaTime: { display: 'inline-flex', alignItems: 'center', fontSize: 11, color: '#5c6484', fontVariantNumeric: 'tabular-nums', flex: '0 0 auto' },
+  calm: { display: 'flex', alignItems: 'center', fontSize: 12.5, color: '#2b3250', lineHeight: 1.35, animation: 'wb-msg 0.28s ease-out' },
 }
 
 // Keyframes (scoped, injected once).
@@ -474,6 +444,12 @@ if (typeof document !== 'undefined' && !document.getElementById('wb-kf')) {
   el.textContent = [
     '@keyframes wb-spin{to{transform:rotate(360deg)}}',
     '@keyframes wb-msg{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}',
+    // the magic: a brief emerald flash on the new move + a confirm check that pops
+    '.wb-flash{animation:wb-flash .9s ease-out both;border-radius:8px}',
+    '@keyframes wb-flash{0%{background:rgba(140,245,196,.28);box-shadow:0 0 0 6px rgba(140,245,196,.28)}100%{background:transparent;box-shadow:0 0 0 0 rgba(140,245,196,0)}}',
+    '.wb-confirm{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8cf5c4;background:rgba(140,245,196,.14);box-shadow:0 0 0 1px rgba(140,245,196,.45) inset;animation:wb-pop .5s cubic-bezier(.3,1.4,.5,1) both}',
+    '@keyframes wb-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}',
+    '@media(prefers-reduced-motion:reduce){.wb-flash{animation:none;box-shadow:0 0 0 2px rgba(140,245,196,.45)}.wb-confirm{animation:none}}',
   ].join('')
   document.head.appendChild(el)
 }

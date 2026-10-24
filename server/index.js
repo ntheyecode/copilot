@@ -520,6 +520,24 @@ async function runSecurityGate(userId, sessionId, codeText) {
     const rev = await Promise.race([securityReview(codeText), new Promise((r) => setTimeout(() => r(null), 12000))])
     if (!rev) return null
     const security = { codeIssues: rev.codeIssues, vulnerable: rev.vulnerable, outdated: rev.outdated, checkedDeps: rev.checkedDeps }
+    // Audit the security processing so the log PROVES it ran: SAST (static code
+    // review) + SCA (live dependency CVE check against OSV), with any findings as
+    // flags. Logged for every code-related relay (plan / result / compose).
+    try {
+      store.appendWorkAudit(sessionId, {
+        call: 'security', scrub: null,
+        sast: rev.codeIssues.length
+          ? `${rev.codeIssues.length} issue${rev.codeIssues.length === 1 ? '' : 's'} found in the commands/code (injection, hard-coded secrets, least privilege).`
+          : 'Commands and code scanned; no issues found.',
+        sca: rev.checkedDeps
+          ? `${rev.checkedDeps} dependenc${rev.checkedDeps === 1 ? 'y' : 'ies'} verified live against the OSV vulnerability database; ${rev.vulnerable.length} with known CVEs${rev.outdated.length ? `, ${rev.outdated.length} outdated` : ''}.`
+          : 'No third-party dependencies in this relay to check.',
+        flags: [
+          ...rev.codeIssues.slice(0, 6).map((c) => `${c.title}. ${c.fix}`),
+          ...rev.vulnerable.slice(0, 6).map((v) => `${v.name} ${v.version}: ${(v.vulns || []).length} known ${(v.vulns || []).length === 1 ? 'vulnerability' : 'vulnerabilities'}${(v.vulns || []).length ? ' (' + (v.vulns || []).slice(0, 3).map((x) => x.id).join(', ') + ')' : ''}`),
+        ],
+      })
+    } catch { /* audit is best-effort, never blocks the gate */ }
     for (const c of rev.codeIssues.slice(0, 4)) store.appendWorkEvent(userId, sessionId, { kind: 'flag', text: `Security: ${c.title}. ${c.fix}` })
     for (const v of rev.vulnerable.slice(0, 4)) {
       const ids = (v.vulns || []).slice(0, 3).map((x) => x.id).join(', ')
@@ -1513,6 +1531,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       frame: frame ? 'screenshot sent' : null,
       sent: safeGoal + (userDocs ? '\n[+ your reference documents]' : '') + (research ? '\n[+ current research notes]' : ''),
     })
+    if (redacted > 0) store.recordPiiAlert(req.workUser.id, { sessionId: req.params.id, call: 'plan', counts: scrubCounts, total: redacted })
     // Cross-session KB: inject what we learned before on these tools (company KB
     // for company users, platform KB for solo users), so the plan starts smarter
     // than the model's training cutoff. Retrieval is scoped + de-identified.
@@ -1577,7 +1596,9 @@ app.post('/api/work/scope', requireWorkAuth, requireWorkSubscription, async (req
     const scrubOn = store.workUserScrubOn(req.workUser.id)
     const safeGoal = scrubOn ? scrubSensitive(goal).clean : goal
     const tier = (store.getWorkUsage(req.workUser.id) || {}).tier || 'basic'
-    const out = await work.workScope(ai, call.rt, { goal: safeGoal, tier })
+    // The person can pick a short (quick) or thorough (detailed) interview up front.
+    const depth = ['quick', 'detailed'].includes((req.body || {}).depth) ? req.body.depth : 'standard'
+    const out = await work.workScope(ai, call.rt, { goal: safeGoal, tier, depth })
     res.json(out)
   } catch (e) { sendWorkError(res, e, req) }
 })
@@ -1673,7 +1694,6 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
     const watchScrubOn = store.workUserScrubOn(req.workUser.id)
     const watchGoal = scrubForAi(s, watchScrubOn, req.workUser.id).goal
-    store.appendWorkAudit(req.params.id, { call: 'watch', model: call.visionModel || rr.visionModel || null, scrub: watchScrubOn, frame: 'screenshot sent', sent: `[continuous screen navigation against the plan] goal: ${watchGoal}` })
     const r = await work.workNavigate(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
       frame, visionModel: call.visionModel, strong: call.backup,
@@ -1681,6 +1701,19 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const escalated = r.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (r.escalated ? call.strongModel : rr.visionModel)
     meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''), 1, { kind: 'guide', tele: { roundRobin: !!escalated, model: usedModel } })
+    // Audit (logged AFTER the response so it carries the real substance): what
+    // actually left the device (the frame + the goal/plan, which is shown once in
+    // the header, NOT repeated on every line), plus - for genuine transparency -
+    // what the assistant READ from this screen and the guidance it related back.
+    store.appendWorkAudit(req.params.id, {
+      call: 'watch', model: usedModel || call.visionModel || rr.visionModel || null, scrub: watchScrubOn,
+      frame: 'screenshot sent',
+      sent: watchScrubOn
+        ? 'Screen frame (sensitive on-screen text redacted on the device before sending) + the goal and current plan (goal in the header, not repeated here).'
+        : 'Screen frame + the goal and current plan (goal in the header, not repeated here).',
+      observed: r.observation || '',
+      flag: r.flag || '',
+    })
     // Snapshot which steps were already done, so we can tell which ones become
     // confirmed on THIS frame and keep that exact frame as their evidence.
     const prevDone = new Set((s.steps || []).map((x, i) => (x.status === 'done' ? i : -1)).filter((i) => i >= 0))
@@ -1725,6 +1758,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     const sa = scrubForAi(s, askScrubOn, req.workUser.id)
     const qScrub = askScrubOn ? scrubSensitive(question || '') : { clean: question || '', counts: {}, total: 0 }
     store.appendWorkAudit(req.params.id, { call: 'ask', model: call.visionModel || rr.visionModel || null, scrub: askScrubOn, redacted: qScrub.total, frame: 'screenshot sent', sent: qScrub.clean || '[question about the current screen]' })
+    if (qScrub.total) store.recordPiiAlert(req.workUser.id, { sessionId: req.params.id, call: 'ask', counts: qScrub.counts, total: qScrub.total })
     const out = await work.workAsk(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
       question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0,
@@ -1766,6 +1800,11 @@ app.post('/api/work/sessions/:id/result', requireWorkAuth, requireWorkSubscripti
     const docScrub = scrubText(String(docsText || '').slice(0, 8000))
     const redacted = qScrub.total + docScrub.total
     store.appendWorkAudit(req.params.id, { call: 'result', model: (hasFrame ? call.visionModel : (call.rt && call.rt.chatModel)) || null, scrub: scrubOn || !!pol, redacted, frame: hasFrame ? 'screenshot sent' : 'no frame', sent: qScrub.clean || '[produce the result for the goal]' })
+    if (redacted) {
+      const _c = {}
+      for (const c of [qScrub.counts, docScrub.counts]) for (const [k, n] of Object.entries(c || {})) _c[k] = (_c[k] || 0) + Number(n || 0)
+      store.recordPiiAlert(req.workUser.id, { sessionId: req.params.id, call: 'result', counts: _c, total: redacted })
+    }
     const out = await work.workResult(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
       question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0, events: sa.events,
@@ -2503,7 +2542,12 @@ app.post('/api/work/sessions/:id/compose', requireWorkAuth, requireWorkSubscript
     const wantScrub = scrubText(String(want || '').slice(0, 2000))
     const docScrub = scrubText(String(docsText || '').slice(0, 8000))
     const redacted = wantScrub.total + docScrub.total
-    store.appendWorkAudit(req.params.id, { call: 'compose', model: (hasFrame ? call.visionModel : (call.rt && call.rt.chatModel)) || null, scrub: scrubOn || !!pol, redacted, frame: hasFrame ? 'screenshot sent' : 'no frame', sent: wantScrub.clean || '[write the document for the goal]' })
+    store.appendWorkAudit(req.params.id, { call: 'compose', model: (hasFrame ? call.visionModel : (call.rt && call.rt.chatModel)) || null, scrub: scrubOn || !!pol, redacted, frame: hasFrame ? 'screenshot sent' : 'no frame', sent: (wantScrub.clean || '[write the document for the goal]') + (docScrub.clean ? `\n\n--- pasted source (redacted on the device before sending) ---\n${docScrub.clean}` : '') })
+    if (redacted) {
+      const _counts = {}
+      for (const c of [wantScrub.counts, docScrub.counts]) for (const [k, n] of Object.entries(c || {})) _counts[k] = (_counts[k] || 0) + Number(n || 0)
+      store.recordPiiAlert(req.workUser.id, { sessionId: req.params.id, call: 'compose', counts: _counts, total: redacted })
+    }
     const out = await work.workCompose(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
       want: wantScrub.clean, format: String(format || '').slice(0, 24), steps: s.steps || [], currentStep: s.currentStep || 0,

@@ -768,11 +768,13 @@ export function setWorkUserScrub(userId, enabled) {
   return publicWorkUser(u)
 }
 export function workUserScrubOn(userId) {
+  // Redaction is ON by DEFAULT (owner 2026-10-24): sensitive values are stripped
+  // on the device before anything is sent, unless the user EXPLICITLY turned it
+  // off. A company default of ON always forces it on (cannot be overridden off).
   const u = getUser(userId)
-  if (!u) return false
-  if (u.scrub) return true
+  if (!u) return true
   if (u.companyId) { const c = (db.companies || []).find((x) => x.id === u.companyId); if (c && c.scrub) return true }
-  return false
+  return u.scrub !== false
 }
 
 // Report evidence: whether to keep a SCRUBBED milestone screenshot at the moment
@@ -4187,6 +4189,34 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
   persist()
   return { ok: true }
 }
+// Company alert: a member entered PII/PHI that was redacted on the device before
+// anything was sent. Recorded ONLY for company members (so their company admin is
+// notified on the dashboard Alerts page), and records the CATEGORIES and COUNTS
+// only - NEVER the actual sensitive values (that would defeat the redaction).
+export function recordPiiAlert(userId, { sessionId = null, call = '', counts = {}, total = 0 } = {}) {
+  const u = getUser(userId)
+  if (!u || !u.companyId || !(Number(total) > 0)) return
+  if (!db.workActivity) db.workActivity = []
+  const cats = Object.entries(counts || {}).filter(([, n]) => Number(n) > 0).map(([k, n]) => `${k} x${n}`).join(', ')
+  db.workActivity.push({
+    id: 'act' + id(),
+    type: 'pii_redacted',
+    workUserId: userId,
+    username: (u && u.username) || '',
+    displayName: (u && u.displayName) || '',
+    email: (u && u.email) || null,          // WHO entered it, so the admin can act
+    companyRole: (u && u.companyRole) || null,
+    companyId: u.companyId,
+    sessionId,
+    sessionTitle: (() => { try { const s = (db.workSessions || []).find((x) => x.id === sessionId); return s ? (s.title || null) : null } catch { return null } })(),
+    call: String(call || '').slice(0, 24),
+    redactedTotal: Number(total) || 0,
+    categories: cats,   // types + counts only, e.g. "email x1, card x1" - never the values
+    at: new Date().toISOString(),
+  })
+  if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
+  persistSoon()
+}
 // Company-scoped activity log (deletions etc.) for the company admin dashboard.
 export function listWorkActivity({ companyId, limit = 300 } = {}) {
   let arr = (db.workActivity || []).slice()
@@ -4380,15 +4410,19 @@ export function formatWorkAuditLog(sessionId, session) {
     session ? `Goal: ${session.goal || '(none)'}` : null,
     `Generated: ${new Date().toISOString()}`,
     `Transmissions logged: ${lines.length}`,
-    'This log records the text transmitted to the AI for this session, with timestamps.',
-    'When a redaction policy is on, sensitive values were stripped on the device before transmission.',
+    'This log records, per interaction: what was sent to the AI, what the assistant read from your screen, the security checks run on any code (SAST + a live dependency CVE check), what sensitive content was filtered, and any flags raised. The goal is shown once above and is not repeated on every line.',
+    'Times are shown in UTC (24-hour).',
+    'Redaction is ON by default: sensitive values are stripped on the device before transmission and appear as [REDACTED].',
     'Each transmission was handled by an approved AI provider, with no silent substitution.',
     '='.repeat(74), '',
   ].filter((x) => x != null).join('\n')
   const body = lines.map((l) => {
     try {
       const e = JSON.parse(l)
-      const meta = [`[${e.at}]`, String(e.call || 'ai').toUpperCase()]
+      // Timestamps in UTC, 24-hour, with the zone spelled out (owner: tz was missing).
+      let when = e.at
+      try { when = new Date(e.at).toISOString().replace('T', ' ').replace(/\.\d+Z$/, '') + ' UTC' } catch { /* keep raw */ }
+      const meta = [`[${when}]`, String(e.call || 'ai').toUpperCase()]
       // The specific model name is never surfaced to users or company admins (IP
       // risk). The raw on-disk entry keeps e.model for internal/superadmin
       // forensics; the readable download omits it.
@@ -4397,6 +4431,14 @@ export function formatWorkAuditLog(sessionId, session) {
       if (e.frame) meta.push(`frame=${e.frame}`)
       let out = meta.join('  ')
       if (e.sent) out += '\n    SENT: ' + String(e.sent).replace(/\n/g, '\n          ')
+      if (e.observed) out += '\n    READ FROM SCREEN: ' + String(e.observed).replace(/\n/g, '\n          ')
+      if (e.sast) out += '\n    SAST (static code review): ' + String(e.sast).replace(/\n/g, '\n          ')
+      if (e.sca) out += '\n    SCA (live dependency check): ' + String(e.sca).replace(/\n/g, '\n          ')
+      const USER_INPUT = ['plan', 'ask', 'result', 'compose'].includes(String(e.call || '').toLowerCase())
+      if (e.redacted && USER_INPUT) out += '\n    NOTICE: You entered content with sensitive data (PII/PHI). It was redacted on your device BEFORE it was submitted - the updated (redacted) query that was actually sent is shown above (SENT).'
+      if (e.redacted) out += `\n    FILTERED: ${e.redacted} sensitive item${e.redacted === 1 ? '' : 's'} redacted on the device ([REDACTED] marks them in the text above).`
+      const flagList = Array.isArray(e.flags) ? e.flags.filter(Boolean) : (e.flag ? [e.flag] : [])
+      if (flagList.length) out += '\n    FLAGS RAISED:' + flagList.map((f) => '\n          - ' + String(f).replace(/\n/g, ' ')).join('')
       return out
     } catch { return l }
   }).join('\n\n')

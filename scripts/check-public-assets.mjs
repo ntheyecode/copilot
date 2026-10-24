@@ -18,7 +18,7 @@ const MEDIA_EXT = new Set(['.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.i
 const MEDIA_DIRS = new Set(['buddies', 'media', 'img', 'images'])
 const ASSET_EXT = new Set(['.js', '.css', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.json', '.mp4', '.webm'])
 const ROOT_EXT = new Set(['.png', '.svg', '.ico', '.webmanifest', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm', '.pdf'])
-const ROOT_NAMES = new Set(['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico'])
+const ROOT_NAMES = new Set(['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'llms.txt'])
 const SAFE_DOTFILES = new Set(['.well-known', '.htaccess-none-placeholder'])
 
 // ---- block rules (checked first, anywhere in dist/) -----------------------

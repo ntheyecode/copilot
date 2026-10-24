@@ -144,7 +144,9 @@ export const api = {
   // redacted on-device by frame_scrub before it is passed in by the component)
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
   // Scope wizard: get the goal-specific requirement questions before planning.
-  workScope: (goal) => req('POST', '/api/work/scope', { goal: clean(goal) }),
+  // `depth` ('quick' | 'detailed') is the interview length chosen on the wizard's
+  // first step; omitted = the same body as before (backward compatible).
+  workScope: (goal, depth) => req('POST', '/api/work/scope', { goal: clean(goal), ...(depth ? { depth } : {}) }),
   // Deliverables: analyze captured page(s) -> findings + two generation prompts + a document.
   workDeliverables: (id, frames) => req('POST', `/api/work/sessions/${id}/deliverables`, { frames: frames || [] }),
   workDeliverablesPdfUrl: (id, dl) => `/api/work/sessions/${id}/deliverables.pdf${dl ? '?dl=1' : ''}`,
@@ -258,6 +260,13 @@ export const api = {
   // redirect to the start URL (the server bounces the browser to the IdP).
   workSsoResolve: (domain) => req('GET', `/api/work/sso/resolve?domain=${encodeURIComponent(domain || '')}`),
   workSsoStartUrl: (companyId) => `/api/work/sso/${companyId}/start`,
+  // Social sign-in (Google / Microsoft / Apple). Shapes assumed, pending the
+  // backend: providers -> { providers: { google: true|false, microsoft: ..., apple: ... } }
+  // (the UI treats a failed/404 probe as "unknown, let the button try");
+  // start -> a redirect URL; complete -> { ok, mfaSetup?, enroll? } like signup.
+  workSocialProviders: () => req('GET', '/api/work/social/providers'),
+  workSocialStartUrl: (provider) => `/api/work/social/${encodeURIComponent(provider)}/start`,
+  workSocialComplete: (body) => req('POST', '/api/work/social/complete', body || {}),
   // Company admin: read / set SSO for their own company (secret is write-only).
   workCompanyGetSso: () => req('GET', '/api/work/company/sso'),
   workCompanySetSso: (cfg) => req('POST', '/api/work/company/sso', cfg || {}),

@@ -37,140 +37,213 @@ function segments(text) {
 // the exact commands/code), what was achieved, any warnings, and the on-demand
 // questions/analysis. Streamed straight to the response.
 export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel = '' } = {}) {
-  const doc = new PDFDocument({ size: 'LETTER', margins: { top: 60, bottom: 60, left: 60, right: 60 }, bufferPages: true })
-  doc.pipe(stream)
-  const W = doc.page.width - 120
   const steps = Array.isArray(session.steps) ? session.steps : []
   const doneN = steps.filter((s) => s.status === 'done').length
-  const started = session.startedAt ? new Date(session.startedAt) : null
+  const flags = (session.events || []).filter((e) => e.kind === 'flag')
+  const qa = (session.events || []).filter((e) => e.kind === 'ask' || e.kind === 'answer')
+  const issued = new Date()
+  const title = String(session.title || '').trim() || 'Session Report'
+  const goal = String(session.goal || '').trim() || '(no goal recorded)'
 
-  // Phase 3: per-step screenshots. Group session.shots by stepIndex so each
-  // step can show its own captures beneath it, ordered by capture time ('at').
-  // A session with no shots renders exactly as before.
+  const doc = new PDFDocument({
+    size: 'LETTER', margins: { top: 78, bottom: 72, left: 60, right: 60 }, bufferPages: true,
+    info: { Title: `${title} - WorkCoPilot Session Report`, Author: REPORT_ISSUER_LINE, Subject: `WorkCoPilot session report ${session.id || ''}`, Creator: 'WorkCoPilot' },
+  })
+  doc.pipe(stream)
+  const L = doc.page.margins.left
+  const W = doc.page.width - doc.page.margins.left - doc.page.margins.right
+  const ctx = { doc, L, R: L + W, W, top: doc.page.margins.top, bottom: doc.page.height - doc.page.margins.bottom, toc: [], pageOf: () => doc.bufferedPageRange().count - 1 }
+
+  // Per-step screenshots, grouped by stepIndex and ordered by capture time, so
+  // each step shows its own captures as exhibits beneath it (as compliance does).
   const shotsByStep = new Map()
   for (const sh of (Array.isArray(session.shots) ? session.shots : [])) {
     if (!sh || typeof sh !== 'object' || !sh.path) continue
-    const k = Number(sh.stepIndex)
-    if (!Number.isInteger(k)) continue
+    const k = Number(sh.stepIndex); if (!Number.isInteger(k)) continue
     if (!shotsByStep.has(k)) shotsByStep.set(k, [])
     shotsByStep.get(k).push(sh)
   }
-  for (const arr of shotsByStep.values()) {
-    arr.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')))
-  }
+  for (const arr of shotsByStep.values()) arr.sort((a, b) => String(a.at || '').localeCompare(String(b.at || '')))
+  const asksN = qa.filter((e) => e.kind === 'ask').length
 
-  const rule = () => { doc.moveTo(60, doc.y).lineTo(doc.page.width - 60, doc.y).strokeColor('#d8dbe0').lineWidth(1).stroke() }
-  const heading = (t) => {
-    if (doc.y + 60 > doc.page.height - 60) doc.addPage()
-    doc.moveDown(0.4); doc.font('Helvetica-Bold').fontSize(13).fillColor(INK).text(t); doc.moveDown(0.3)
+  // Evidence selection: include at most 5 scrubbed milestone screenshots - one
+  // representative capture per CONFIRMED step (the frame kept at confirmation) -
+  // shown inline beneath its step. If more than 5 confirmed steps have a shot,
+  // evenly sample 5 across them so the spread still covers the whole task. (The
+  // capture target is >= 3; a very short task may yield fewer, and we never
+  // invent evidence.) Only confirmed steps carry exhibits (privacy gate below).
+  const MAX_EVIDENCE = 5
+  let picks = steps
+    .map((s, i) => ({ i, arr: (s.status === 'done' && shotsByStep.get(i)) || [] }))
+    .filter((x) => x.arr.length)
+    .map((x) => ({ i: x.i, shot: x.arr[x.arr.length - 1] }))
+  if (picks.length > MAX_EVIDENCE) {
+    const sampled = []
+    for (let k = 0; k < MAX_EVIDENCE; k++) sampled.push(picks[Math.round(k * (picks.length - 1) / (MAX_EVIDENCE - 1))])
+    picks = sampled
   }
-  const prose = (text, { size = 11, color = INK } = {}) => {
+  const evidenceByStep = new Map()
+  for (const p of picks) evidenceByStep.set(p.i, [p.shot])
+  const evidenceCount = picks.length
+
+  // Outcome facts.
+  const ended = session.status === 'ended'
+  const allDone = steps.length > 0 && doneN === steps.length
+  let reached = -1
+  steps.forEach((s, i) => { if (s.status === 'done') reached = i })
+  if (reached < 0) reached = steps.findIndex((s) => s.status === 'current')
+  const lastFlag = [...(session.events || [])].reverse().find((e) => e.kind === 'flag')
+
+  // Section numbers. Optional sections are only counted when they exist, so
+  // cross-references and the contents page stay correct.
+  let nn = 3
+  const secNotes = flags.length ? ++nn : null
+  const secQA = qa.length ? ++nn : null
+  const secAuth = ++nn
+
+  // Prose that preserves fenced code blocks, rendered on the shared code panel.
+  const prose = (text, { size = 10, color = INK } = {}) => {
     for (const seg of segments(String(text || ''))) {
-      if (seg.type === 'code') codeBlock(doc, seg.body)
-      else { doc.font('Helvetica').fontSize(size).fillColor(color).text(seg.body.trim(), { width: W }); doc.moveDown(0.4) }
-    }
-  }
-  const fmtWhen = (iso) => { try { return new Date(iso).toLocaleString() } catch { return '' } }
-
-  // Title
-  doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text('WorkCoPilot session report')
-  doc.moveDown(0.2)
-  doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(
-    [session.title, started ? started.toLocaleString() : null, session.appContext ? ('App: ' + session.appContext) : null, modeLabel ? ('Guide style: ' + modeLabel) : null]
-      .filter(Boolean).join('   -   '), { width: W })
-  doc.moveDown(0.4); rule(); doc.moveDown(0.6)
-
-  // The task
-  heading('The task')
-  doc.font('Helvetica').fontSize(11).fillColor(INK).text(session.goal || '(no goal recorded)', { width: W })
-
-  // What was achieved
-  heading('What was achieved')
-  doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(`${doneN} of ${steps.length} step${steps.length === 1 ? '' : 's'} completed.`, { width: W })
-  doc.moveDown(0.2)
-  if (String(achieved || '').trim()) prose(achieved)
-  else if (doneN > 0) prose(steps.filter((s) => s.status === 'done').map((s) => '- ' + s.text).join('\n'), { size: 10 })
-  else doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were confirmed done yet.', { width: W })
-
-  // Outcome: a reference document states plainly whether the task finished, or
-  // where it stopped and why (a strong failure), with no padding.
-  {
-    const ended = session.status === 'ended'
-    const allDone = steps.length > 0 && doneN === steps.length
-    let reached = -1
-    steps.forEach((s, i) => { if (s.status === 'done') reached = i })
-    if (reached < 0) reached = steps.findIndex((s) => s.status === 'current')
-    const lastFlag = [...(session.events || [])].reverse().find((e) => e.kind === 'flag')
-    doc.moveDown(0.2)
-    if (allDone) {
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(ACCENT).text('Outcome: every planned step was confirmed on screen.', { width: W })
-    } else if (ended) {
-      const where = reached >= 0 ? `Reached step ${reached + 1} of ${steps.length}: ${steps[reached].text}` : 'No step was confirmed.'
-      doc.font('Helvetica-Bold').fontSize(10).fillColor(INK).text('Outcome: this session ended before finishing.', { width: W })
-      doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(where, { width: W })
-      if (lastFlag && lastFlag.text) doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('Last issue flagged: ' + String(lastFlag.text), { width: W })
+      if (seg.type === 'code') codeBlockAt(doc, seg.body, L, W, { fit: true })
+      else para(ctx, seg.body.trim(), { size, color })
     }
   }
 
-  // Steps in detail
-  heading('Steps, in detail')
-  if (!steps.length) doc.font('Helvetica').fontSize(10).fillColor(MUTED).text('No steps were planned.', { width: W })
-  steps.forEach((s, i) => {
-    if (doc.y + 50 > doc.page.height - 60) doc.addPage()
-    const mark = s.status === 'done' ? '[done]' : s.status === 'current' ? '[in progress]' : '[not done]'
-    doc.font('Helvetica-Bold').fontSize(11).fillColor(s.status === 'done' ? ACCENT : INK).text(`${i + 1}. ${s.text}   ${mark}`, { width: W })
-    if (s.url) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Open: ' + s.url, { width: W, link: s.url, underline: true })
-    if (s.validate) doc.font('Helvetica').fontSize(9).fillColor(MUTED).text('Done when: ' + s.validate, { width: W })
-    if (s.status === 'done' && s.doneAt) doc.font('Helvetica').fontSize(9).fillColor(ACCENT).text('Confirmed on screen: ' + fmtWhen(s.doneAt), { width: W })
-    if (Array.isArray(s.commands) && s.commands.length) codeBlock(doc, s.commands.map((c) => '$ ' + c).join('\n'))
-    if (s.code && s.code.content) {
-      doc.font('Helvetica').fontSize(8).fillColor(MUTED).text('File: ' + (s.code.file || 'code'), { width: W })
-      codeBlock(doc, s.code.content)
-    }
-    stepShots(doc, shotsByStep.get(i), W)
-    doc.moveDown(0.5)
+  // Outcome banner: a tinted callout with a status stripe (green done / amber
+  // stopped / grey in-progress) so the result reads at a glance.
+  const banner = (tone, head, body) => {
+    const fill = tone === 'good' ? TINT : tone === 'warn' ? AMBER_TINT : ZEBRA
+    const stripe = tone === 'good' ? ACCENT : tone === 'warn' ? AMBER : MUTED
+    doc.font('Helvetica').fontSize(9.5)
+    const bodyH = body ? doc.heightOfString(body, { width: W - 32, lineGap: 1.4 }) : 0
+    const h = 12 + 14 + (body ? 4 + bodyH : 0) + 12
+    ensure(ctx, h + 8)
+    const y = doc.y
+    doc.rect(L, y, W, h).fill(fill)
+    doc.rect(L, y, 4, h).fill(stripe)
+    doc.font('Helvetica-Bold').fontSize(10.5).fillColor(stripe).text(head, L + 16, y + 12, { width: W - 32, lineBreak: false, height: 14 })
+    if (body) doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(body, L + 16, y + 30, { width: W - 32, lineGap: 1.4 })
+    doc.x = L
+    doc.y = y + h + 10
+  }
+
+  // ---- Cover (page 1) -------------------------------------------------------
+  const coverPosture = { total: steps.length, satisfied: doneN, partial: steps.filter((s) => s.status === 'current').length, na: 0 }
+  drawCover(ctx, {
+    title, goal, company: '', member: '', generatedBy: '', modeLabel, session, issued, posture: coverPosture, focus: null,
+    kicker: 'SESSION REPORT',
+    scope: 'Scope: a complete record of this guided task - the goal, every planned step with the exact commands and code handed over, what was confirmed on screen, and any questions answered along the way. A practical work record to help you act; not legal, financial, medical or other professional advice.',
+    metaRows: [
+      ['Report ID', session.id || '-', 'Issue date', fmtDate(issued.toISOString())],
+      ['Task performed', fmtDate(session.startedAt) || '-', 'Guide style', modeLabel || '-'],
+      ['Steps confirmed', `${doneN} of ${steps.length}`, 'Session status', session.status ? capitalize(session.status) : '-'],
+    ],
   })
 
-  // Notes and warnings
-  const flags = (session.events || []).filter((e) => e.kind === 'flag')
-  if (flags.length) {
-    heading('Notes and warnings')
-    for (const f of flags) { if (doc.y + 24 > doc.page.height - 60) doc.addPage(); doc.font('Helvetica').fontSize(10).fillColor(INK).text('- ' + String(f.text || ''), { width: W }); doc.moveDown(0.2) }
-  }
+  // ---- Contents (page 2) ----------------------------------------------------
+  doc.addPage()
+  const tocPage = ctx.pageOf()
+  drawTocFrame(ctx, { kind: 'session' })
 
-  // Questions and analysis (on-demand asks/answers, in order)
-  const qa = (session.events || []).filter((e) => e.kind === 'ask' || e.kind === 'answer')
-  if (qa.length) {
-    heading('Questions and analysis')
-    for (const e of qa) {
-      if (doc.y + 30 > doc.page.height - 60) doc.addPage()
-      if (e.kind === 'ask') { doc.font('Helvetica-Bold').fontSize(10).fillColor(ACCENT).text('Q: ' + String(e.text || ''), { width: W }); doc.moveDown(0.15) }
-      else prose(e.text, { size: 10 })
+  // ---- 1. Overview ----------------------------------------------------------
+  doc.addPage()
+  sectionHeading(ctx, 1, 'Overview')
+  {
+    const when = fmtDate(session.startedAt)
+    const shortGoal = goal.length > 150 ? goal.slice(0, 147).trimEnd() + '…' : goal
+    const s1 = `This report records the guided task “${shortGoal}”${when ? `, performed on ${when}` : ''} under WorkCoPilot's read-only guidance.`
+    const s2 = allDone
+      ? `All ${steps.length} planned step${steps.length === 1 ? '' : 's'} ${steps.length === 1 ? 'was' : 'were'} confirmed on screen.`
+      : `${doneN} of ${steps.length} planned step${steps.length === 1 ? '' : 's'} ${doneN === 1 ? 'was' : 'were'} confirmed on screen.`
+    para(ctx, [s1, s2].join(' '), { size: 10.5, color: INK, gap: 0.8 })
+    statStrip(ctx, [
+      { value: `${doneN}/${steps.length}`, label: 'Steps confirmed' },
+      { value: String(evidenceCount), label: 'Scrubbed shots' },
+      { value: String(asksN), label: 'Questions asked' },
+      { value: String(flags.length), label: 'Notes & warnings' },
+    ])
+    if (allDone) banner('good', 'Outcome: every planned step was confirmed on screen.', '')
+    else if (ended) {
+      const where = reached >= 0 ? `Reached step ${reached + 1} of ${steps.length}: ${steps[reached].text}` : 'No step was confirmed on screen.'
+      banner('warn', 'Outcome: this session ended before finishing.', where + (lastFlag && lastFlag.text ? `  Last issue flagged: ${String(lastFlag.text)}` : ''))
+    } else {
+      banner('neutral', `Outcome: in progress - ${doneN} of ${steps.length} step${steps.length === 1 ? '' : 's'} confirmed.`, '')
     }
   }
 
-  // Closing disclaimer: a practical work record, not professional advice.
-  doc.moveDown(1)
-  if (doc.y + 46 > doc.page.height - 60) doc.addPage()
-  rule(); doc.moveDown(0.3)
-  doc.font('Helvetica-Oblique').fontSize(8).fillColor(MUTED).text(
-    'This report is a record of guided work to help you act. It is not legal, financial, medical or other professional advice. Verify anything you rely on against your own requirements and a qualified professional. WorkCoPilot provides controls and evidence; it does not make you compliant or certified.',
-    { width: W })
+  // ---- 2. Work summary ------------------------------------------------------
+  sectionHeading(ctx, 2, 'Work summary')
+  eyebrow(ctx, 'The task')
+  quoteBlock(ctx, goal)
+  eyebrow(ctx, 'What was achieved')
+  if (String(achieved || '').trim()) prose(achieved, { size: 9.5 })
+  else if (doneN > 0) para(ctx, `${doneN} of ${steps.length} step${steps.length === 1 ? '' : 's'} confirmed on screen - each is detailed in Section 3.`, { size: 9.5, color: MUTED })
+  else para(ctx, 'No steps were confirmed on screen yet.', { size: 9.5, color: MUTED })
+  eyebrow(ctx, 'Session details')
+  kvTable(ctx, [
+    ['Task', session.title], ['Session reference', session.id],
+    ['Task started', fmtWhen(session.startedAt)], ['Task ended', fmtWhen(session.endedAt)],
+    ['Session status', session.status ? capitalize(session.status) : ''],
+    ['Application context', session.appContext], ['Guide style', modeLabel],
+    ['Report issued', fmtWhen(issued.toISOString())],
+  ].filter(([, v]) => v != null && String(v).trim()))
 
-  // Authenticity seal over the canonical content of this session report.
+  // ---- 3. Steps, in detail --------------------------------------------------
+  sectionHeading(ctx, 3, 'Steps, in detail', { newPage: true })
+  if (!steps.length) para(ctx, 'No steps were planned for this task.', { size: 10, color: MUTED })
+  else {
+    para(ctx, 'Every planned step, in order, with its status and the time it was confirmed on screen. Full detail - the exact commands, code, sub-steps and milestone screenshots - is shown only for steps confirmed on screen; steps not yet performed are listed by name and status alone.', { size: 9.5, color: MUTED })
+    // Scrubbed-screenshot evidence + the transmission assurance. When captures
+    // exist they appear inline beneath their confirmed step; when none do, the
+    // note explains why rather than leaving the reader to wonder.
+    if (evidenceCount > 0) {
+      noticeBox(ctx, `Evidence - scrubbed screenshots: ${evidenceCount} milestone screenshot${evidenceCount === 1 ? '' : 's'} captured when a step was confirmed ${evidenceCount === 1 ? 'is' : 'are'} included below, beneath the relevant step${evidenceCount === 1 ? '' : 's'}. Every screenshot is redacted on your device before it is captured - only the scrubbed image is ever stored (encrypted at rest) or transmitted. The original screen is never sent.`)
+    } else {
+      noticeBox(ctx, 'No milestone screenshots were captured for this task - screen watching may have been off while steps were confirmed. When WorkCoPilot is watching, it keeps 3 to 5 scrubbed milestone screenshots as evidence; each is redacted on your device before capture, and only the scrubbed image is ever stored (encrypted at rest) or transmitted - the original screen is never sent.')
+    }
+  }
+  let exhibitN = 0
+  const nextExhibit = () => ++exhibitN
+  // completedOnly: never reveal the how-to of steps that were not performed.
+  // showSub: include the detailed sub-steps the operator followed, for confirmed steps.
+  // evidenceByStep: at most 5 scrubbed shots, one per confirmed step, capped + spread.
+  steps.forEach((s, i) => stepEntry(ctx, s, i, evidenceByStep.get(i), nextExhibit, { completedOnly: true, showSub: true }))
+
+  // ---- 4. Notes & warnings (only if any) ------------------------------------
+  if (secNotes) {
+    sectionHeading(ctx, secNotes, 'Notes & warnings', { newPage: true })
+    para(ctx, 'Issues WorkCoPilot raised to the operator during this task.', { size: 9.5, color: MUTED })
+    for (const f of flags) flagEntry(ctx, String(f.text || ''))
+  }
+
+  // ---- 5. Questions & analysis (only if any) --------------------------------
+  if (secQA) {
+    sectionHeading(ctx, secQA, 'Questions & analysis', { newPage: true })
+    para(ctx, 'Questions asked during the task and the answers given, in order.', { size: 9.5, color: MUTED })
+    for (const e of qa) {
+      if (e.kind === 'ask') {
+        ensure(ctx, 28)
+        doc.font('Helvetica-Bold').fontSize(9.5).fillColor(ACCENT).text('Q.  ' + String(e.text || ''), L, doc.y, { width: W, lineGap: 1.2 })
+        doc.x = L; doc.moveDown(0.25)
+      } else prose(String(e.text || ''), { size: 9.5 })
+    }
+  }
+
+  // ---- 6. Report authenticity -----------------------------------------------
+  ensure(ctx, 240)
+  sectionHeading(ctx, secAuth, 'Report authenticity')
+  para(ctx, `This document was generated by WorkCoPilot and sealed by ${REPORT_ISSUER_LINE}. The seal records a SHA-256 hash of the report's canonical content (the task, every step and its status, and what was confirmed) and an HMAC-SHA256 signature over that hash, the issue time and the issuer. Any party may verify the seal at the address shown.`, { size: 9.5, color: INK })
+  para(ctx, 'This report is a record of guided work to help you act. It is not legal, financial, medical or other professional advice. Verify anything you rely on against your own requirements and a qualified professional. WorkCoPilot provides guidance and evidence; it does not make you compliant or certified.', { size: 9, color: MUTED, oblique: true })
+  // Authenticity seal over the canonical content of this session report. The
+  // payload shape is unchanged, so previously issued reports still verify.
   attestationBlock(doc, { kind: 'session', reportId: session.id || '', payload: {
     id: session.id || '', goal: session.goal || '', achieved: String(achieved || ''),
     steps: steps.map((s) => ({ t: s.text, st: s.status, at: s.doneAt || null })),
   } })
 
-  // Page numbers
-  const range = doc.bufferedPageRange()
-  for (let i = 0; i < range.count; i++) {
-    doc.switchToPage(range.start + i)
-    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(
-      `WorkCoPilot  -  Page ${i + 1} of ${range.count}`, 60, doc.page.height - 42,
-      { width: W, align: 'center' })
-  }
+  // ---- Second pass: contents page numbers, running header + footer -----------
+  fillToc(ctx, tocPage)
+  runningHeaderFooter(ctx, { title, company: '', tocPage })
   doc.end()
 }
 
@@ -435,11 +508,13 @@ export function buildComplianceReportPdf(session, stream, { evidence, company = 
   // ---- 5. Execution evidence ------------------------------------------------
   sectionHeading(ctx, 5, 'Execution evidence', { newPage: true })
   para(ctx, steps.length
-    ? `${doneN} of ${steps.length} planned step${steps.length === 1 ? '' : 's'} ${doneN === 1 ? 'was' : 'were'} confirmed on screen. Confirmed steps carry the timestamp at which the operator’s screen showed the expected result; commands and code are reproduced exactly as handed over, and milestone screenshots (redacted on the device, encrypted at rest) are presented as exhibits.`
+    ? `${doneN} of ${steps.length} planned step${steps.length === 1 ? '' : 's'} ${doneN === 1 ? 'was' : 'were'} confirmed on screen. Confirmed steps carry the timestamp at which the operator’s screen showed the expected result; commands and code are reproduced exactly as handed over, and milestone screenshots (redacted on the device, encrypted at rest) are presented as exhibits. Steps that were not confirmed are listed by name and status only.`
     : 'No steps were planned for this task.', { size: 9.5, color: MUTED })
   let exhibitN = 0
   const nextExhibit = () => ++exhibitN
-  steps.forEach((s, i) => stepEntry(ctx, s, i, shotsByStep.get(i), nextExhibit))
+  // Same privacy gate as the task report: the detailed how-to of a step that was
+  // not confirmed is never rendered - only its name and status.
+  steps.forEach((s, i) => stepEntry(ctx, s, i, shotsByStep.get(i), nextExhibit, { completedOnly: true }))
 
   // ---- 6. Framework coverage ------------------------------------------------
   sectionHeading(ctx, 6, 'Framework coverage', { newPage: true })
@@ -849,10 +924,16 @@ function stepMarker(doc, cx, cy, r, status) {
 
 // One step of the execution timeline: marker, title, status + timestamp,
 // "done when", commands / code, exhibits.
-function stepEntry(ctx, s, i, shots, nextExhibit) {
+function stepEntry(ctx, s, i, shots, nextExhibit, { completedOnly = false, showSub = false } = {}) {
   const { doc, L, W } = ctx
   const ix = L + 24, iw = W - 24
   const done = s.status === 'done'
+  // Privacy gate: in `completedOnly` mode, the detailed how-to (the exact
+  // commands, code, target URL, success check, sub-steps and exhibits) is shown
+  // ONLY for steps the operator confirmed on screen. Steps that were not
+  // performed are listed by name and status alone - never with their detail -
+  // so a report can't leak the how-to of work that was never done.
+  const showDetail = done || !completedOnly
   const mark = done ? 'Confirmed on screen' : s.status === 'current' ? 'In progress' : 'Not done'
   doc.font('Helvetica-Bold').fontSize(10.5)
   const titleH = doc.heightOfString(`Step ${i + 1}  ${s.text}`, { width: iw })
@@ -869,6 +950,7 @@ function stepEntry(ctx, s, i, shots, nextExhibit) {
   }
   yy += 13
   doc.x = L; doc.y = yy
+  if (!showDetail) { doc.x = L; doc.moveDown(0.5); return }
   if (s.validate) para(ctx, 'Done when: ' + s.validate, { size: 8.5, color: MUTED, x: ix, width: iw, gap: 0.3 })
   if (s.url) {
     doc.font('Helvetica').fontSize(8.5).fillColor(ACCENT).text(fitText(doc, s.url, iw), ix, doc.y, { width: iw, link: s.url, underline: true })
@@ -880,6 +962,34 @@ function stepEntry(ctx, s, i, shots, nextExhibit) {
     doc.font('Helvetica-Bold').fontSize(7).fillColor(MUTED).text(('FILE  ' + (s.code.file || 'code')).toUpperCase(), ix, doc.y, { characterSpacing: 0.8, lineBreak: false, height: 10 })
     doc.y += 12
     codeBlockAt(doc, s.code.content, ix, iw, { fit: true })
+  }
+  // The detailed sub-steps the operator followed for this step ("their detailed
+  // steps if any"). Only rendered when asked, and - under the gate above - only
+  // for confirmed steps, so an unperformed step never reveals its sub-steps.
+  if (showSub && Array.isArray(s.sub) && s.sub.length) {
+    const jx = ix + 14, jw = iw - 14
+    ensure(ctx, 16)
+    doc.font('Helvetica-Bold').fontSize(7).fillColor(MUTED).text('DETAILED STEPS', ix, doc.y, { characterSpacing: 0.8, lineBreak: false, height: 10 })
+    doc.y += 12
+    s.sub.forEach((ss, j) => {
+      const t = String((ss && ss.text) || '').trim()
+      if (!t) return
+      doc.font('Helvetica').fontSize(9)
+      const sh = doc.heightOfString(`${j + 1}. ${t}`, { width: jw })
+      ensure(ctx, sh + 4)
+      const sy = doc.y
+      doc.circle(ix + 4, sy + 5, 1.8).fill(ACCENT)
+      doc.font('Helvetica').fontSize(9).fillColor(INK).text(`${j + 1}. ${t}`, jx, sy, { width: jw, lineGap: 1.1 })
+      doc.x = L
+      if (ss.validate) para(ctx, 'Done when: ' + ss.validate, { size: 8, color: MUTED, x: jx, width: jw, gap: 0.2 })
+      if (ss.url) {
+        doc.font('Helvetica').fontSize(8).fillColor(ACCENT).text(fitText(doc, ss.url, jw), jx, doc.y, { width: jw, link: ss.url, underline: true })
+        doc.x = L; doc.moveDown(0.15)
+      }
+      if (Array.isArray(ss.commands) && ss.commands.length) codeBlockAt(doc, ss.commands.map((c) => '$ ' + c).join('\n'), jx, jw, { fit: true })
+      if (ss.code && ss.code.content) codeBlockAt(doc, ss.code.content, jx, jw, { fit: true })
+      doc.moveDown(0.2)
+    })
   }
   if (Array.isArray(shots) && shots.length) {
     doc.x = ix
@@ -1041,7 +1151,7 @@ function flagEntry(ctx, text) {
 }
 
 // ---- Cover, contents, running header / footer ------------------------------
-function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, session, issued, posture, focus }) {
+function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, session, issued, posture, focus, kicker = 'COMPLIANCE EVIDENCE', scope = null, metaRows = null }) {
   const { doc, L, W } = ctx
   const PW = doc.page.width, PH = doc.page.height
   // Brand spine.
@@ -1060,7 +1170,7 @@ function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, 
   }
   // Eyebrow + wordmark.
   doc.font('Helvetica-Bold').fontSize(8).fillColor(ACCENT).text('WORKCOPILOT', L, 72, { characterSpacing: 2.2, lineBreak: false, height: 12 })
-  doc.font('Helvetica').fontSize(8).fillColor(MUTED).text('COMPLIANCE EVIDENCE', L + 92, 72, { characterSpacing: 2.2, lineBreak: false, height: 12 })
+  doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(kicker, L + 92, 72, { characterSpacing: 2.2, lineBreak: false, height: 12 })
   // Title.
   doc.font('Helvetica-Bold').fontSize(focus ? 28 : 34).fillColor(INK_HEAD).text(title, L, 236, { width: 360, lineGap: 2 })
   const afterTitle = doc.y + 10
@@ -1070,12 +1180,15 @@ function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, 
   doc.font('Helvetica').fontSize(11.5).fillColor(MUTED).text(shortGoal, L, afterTitle + 18, { width: 380, lineGap: 2 })
   // Meta grid.
   let gy = Math.max(doc.y + 34, 440)
-  const rows = [
-    ['Organization', company || '—', 'Operator', member || '—'],
-    ['Report ID', session.id || '—', 'Issue date', fmtDate(issued.toISOString())],
-    ['Task performed', fmtDate(session.startedAt) || '—', focus ? 'Framework' : 'Guide style', focus ? focus.name : (modeLabel || '—')],
-  ]
-  if (generatedBy) rows.push(['Requested by', generatedBy, '', ''])
+  const rows = metaRows || (() => {
+    const r = [
+      ['Organization', company || '—', 'Operator', member || '—'],
+      ['Report ID', session.id || '—', 'Issue date', fmtDate(issued.toISOString())],
+      ['Task performed', fmtDate(session.startedAt) || '—', focus ? 'Framework' : 'Guide style', focus ? focus.name : (modeLabel || '—')],
+    ]
+    if (generatedBy) r.push(['Requested by', generatedBy, '', ''])
+    return r
+  })()
   const colW = W / 2
   for (const [k1, v1, k2, v2] of rows) {
     for (const [k, v, cxx] of [[k1, v1, L], [k2, v2, L + colW]]) {
@@ -1087,12 +1200,12 @@ function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, 
   }
   // Scope statement.
   const sy = Math.max(gy + 6, 612)
-  const scope = `Scope: the controls WorkCoPilot applied to this single guided task, how each was satisfied, and the execution evidence behind it${focus ? `, viewed through the lens of ${focus.name}` : ''}. Controls and evidence that support a compliance program; not a certification.`
+  const scopeText = scope || `Scope: the controls WorkCoPilot applied to this single guided task, how each was satisfied, and the execution evidence behind it${focus ? `, viewed through the lens of ${focus.name}` : ''}. Controls and evidence that support a compliance program; not a certification.`
   doc.font('Helvetica').fontSize(9)
-  const sh = doc.heightOfString(scope, { width: W - 32, lineGap: 1.5 }) + 22
+  const sh = doc.heightOfString(scopeText, { width: W - 32, lineGap: 1.5 }) + 22
   doc.rect(L, sy, W, sh).fill(TINT)
   doc.rect(L, sy, 3, sh).fill(ACCENT)
-  doc.fillColor(INK).text(scope, L + 16, sy + 11, { width: W - 32, lineGap: 1.5 })
+  doc.fillColor(INK).text(scopeText, L + 16, sy + 11, { width: W - 32, lineGap: 1.5 })
   // Footer: confidential tag + issuer.
   const fy = PH - 64
   doc.roundedRect(L, fy, 92, 18, 2).lineWidth(0.8).strokeColor(INK_HEAD).stroke()
@@ -1103,13 +1216,37 @@ function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, 
 
 // The contents page frame: title + "how to read" legend. Entries are written
 // in the second pass once every section's page is known (fillToc).
-function drawTocFrame(ctx) {
+function drawTocFrame(ctx, { kind = 'compliance' } = {}) {
   const { doc, L, W } = ctx
   const y = ctx.top
   doc.font('Helvetica-Bold').fontSize(16).fillColor(INK_HEAD).text('Contents', L, y, { lineBreak: false, height: 22 })
   doc.rect(L, y + 27, 36, 2.2).fill(ACCENT)
   doc.moveTo(L + 36, y + 28.1).lineTo(L + W, y + 28.1).lineWidth(0.6).strokeColor(BORDER).stroke()
   ctx.tocEntriesY = y + 50
+  // Session report: a step-status legend (there are no controls or frameworks).
+  if (kind === 'session') {
+    let sy = 360
+    doc.font('Helvetica-Bold').fontSize(7.5).fillColor(ACCENT).text('HOW TO READ THIS REPORT', L, sy, { characterSpacing: 1.1, lineBreak: false, height: 11 })
+    sy += 20
+    doc.font('Helvetica').fontSize(9).fillColor(INK).text('Step statuses', L, sy, { lineBreak: false, height: 12 })
+    sy += 16
+    const srows = [
+      ['done', 'Confirmed on screen', 'the operator’s screen showed the expected result; the time is recorded.'],
+      ['current', 'In progress', 'reached during the session but not yet confirmed.'],
+      ['pending', 'Not done', 'not reached in this session.'],
+    ]
+    for (const [st, label, desc] of srows) {
+      stepMarker(doc, L + 6, sy + 6, 6, st)
+      doc.font('Helvetica-Bold').fontSize(8.8).fillColor(INK_HEAD).text(label, L + 20, sy + 1.5, { lineBreak: false, height: 12 })
+      const lw = doc.widthOfString(label)
+      doc.font('Helvetica').fontSize(8.8).fillColor(INK).text('— ' + desc, L + 20 + lw + 6, sy + 1.5, { width: W - 20 - lw - 6, lineBreak: false, height: 12 })
+      sy += 20
+    }
+    sy += 10
+    doc.font('Helvetica-Oblique').fontSize(8.5).fillColor(MUTED).text('Exhibits are milestone screenshots captured when a step was confirmed; they were redacted on the device before capture and are stored encrypted. The authenticity seal at the end lets any party verify this report was issued unchanged.', L, sy, { width: W, lineGap: 1.5 })
+    doc.x = L
+    return
+  }
   // Legend block sits in a fixed region below the entries.
   let ly = 420
   doc.font('Helvetica-Bold').fontSize(7.5).fillColor(ACCENT).text('HOW TO READ THIS REPORT', L, ly, { characterSpacing: 1.1, lineBreak: false, height: 11 })

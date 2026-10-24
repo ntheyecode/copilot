@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3 } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import MfaGate from '../components/MfaGate.jsx'
 import WorkTeam from './WorkTeam.jsx'
@@ -164,6 +164,8 @@ import RichText from '../components/RichText.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
 import { stepWindow, progressText, stepProgress, planMarker } from '../shared/step_window.js'
+// Pre-task readiness coach content (single source, client-only, zero AI cost).
+import { TASK_KINDS, READINESS, TASK_TIPS, readinessWarnings, sampleTask } from '../shared/task_starters.js'
 import BuddyPicker from '../components/BuddyPicker.jsx'
 import ScrubRules from '../components/ScrubRules.jsx'
 import ResultCard from '../components/ResultCard.jsx'
@@ -371,13 +373,54 @@ function AiSetup({ onReady, bare }) {
 // scoping a job), then the answers are stored on the session and folded into
 // the plan. Tier-gated steps show an upgrade nudge but never block.
 function tierRank(t) { const m = { lite: 0, basic: 1, advanced: 2, premium: 3 }; return m[t] != null ? m[t] : 1 }
+// Terminal-style scoping progress ("csv/js box"): stages reveal line by line
+// with check marks while the scope call runs; the running stage shows a live
+// caret and the fill bar advances. Purely presentational (reduced-motion safe
+// via CSS); the actual call drives when the wizard moves on.
+function ScopeLoader({ depth }) {
+  const STAGES = ['reading your goal', 'researching the task', depth === 'detailed' ? 'drafting a detailed interview' : 'drafting a quick interview', 'checking what to ask first']
+  const [i, setI] = useState(0)
+  useEffect(() => {
+    const id = setInterval(() => setI((n) => (n < STAGES.length - 1 ? n + 1 : n)), 1500)
+    return () => clearInterval(id)
+  }, [])   // eslint-disable-line
+  const pct = Math.round(((i + 1) / (STAGES.length + 1)) * 100)
+  return (
+    <div className="wd-wiz-body">
+      <div className="wd-term" role="status" aria-live="polite">
+        <div className="wd-term-bar">
+          <span className="wd-term-dots"><i style={{ background: '#ff5f57' }} /><i style={{ background: '#febc2e' }} /><i style={{ background: '#28c840' }} /></span>
+          <span className="wd-term-title">scoping · workcopilot</span>
+          <span className="wd-term-pct">{pct}%</span>
+        </div>
+        <div className="wd-term-body">
+          {STAGES.slice(0, i + 1).map((s, k) => (
+            <div key={k} className={`wd-term-line ${k < i ? 'past' : 'on'}`} style={{ '--d': `${k * 40}ms` }}>
+              <span className="p">$</span>
+              <span>{s}</span>
+              {k < i ? <Check size={13} className="ok" /> : <span className="wd-term-caret" />}
+            </div>
+          ))}
+        </div>
+        <div className="wd-term-track"><div className="wd-term-fill" style={{ width: `${pct}%` }} /></div>
+      </div>
+      <div className="wd-term-foot"><Loader2 size={13} className="spin" /> Writing the few questions that make your plan precise. A moment.</div>
+    </div>
+  )
+}
+
 function ScopeWizard({ goal, tier, onCancel, onReady }) {
-  const [phase, setPhase] = useState('loading')   // loading | ask | error
+  // depth (first step) -> loading (scope call) -> ask | error
+  const [phase, setPhase] = useState('depth')
+  const [depth, setDepth] = useState('')          // 'quick' | 'detailed', sent with the scope request
   const [questions, setQuestions] = useState([])
   const [idx, setIdx] = useState(0)
   const [answers, setAnswers] = useState([])
   const [txt, setTxt] = useState('')
+  const [other, setOther] = useState(false)       // "Other..." revealed on a choice question
   const [err, setErr] = useState('')
+  const aliveRef = useRef(true)
+  useEffect(() => () => { aliveRef.current = false }, [])
   // Always ask WHERE the work happens (so the plan targets the right surface, not
   // a browser by default) and HOW to phrase it. Both fold into the plan + live
   // guidance. The environment answer is first because it shapes every step.
@@ -396,93 +439,141 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
     'Detailed, with context': 'Fuller steps that also say why, so you learn as you go.',
     'Expert, no hand-holding': 'Assumes you know the tools; high-level and concise.',
   }
-  useEffect(() => {
-    let alive = true
-    ;(async () => {
-      // Desktop app with more than one monitor: ask which screen to watch here,
-      // in the wizard, instead of prompting at capture time. Single-screen or web
-      // returns nothing, so the step is skipped.
-      let monQ = null
-      try {
-        const desk = typeof window !== 'undefined' ? window.workDesktop : null
-        if (desk && desk.getMonitors) {
-          const mons = await desk.getMonitors()
-          if (Array.isArray(mons) && mons.length > 1) monQ = { id: 'monitor', text: 'Which screen should I watch?', kind: 'monitor', monitors: mons }
-        }
-      } catch { /* ignore - fall back to the capture-time picker */ }
-      try {
-        const r = await api.workScope(goal)
-        if (!alive) return
-        const qs = (r && r.questions) || []
-        setQuestions([ENV_Q, ...(monQ ? [monQ] : []), STYLE_Q, ...qs]); setPhase('ask')
-      } catch (e) { if (alive) { setErr((e && e.message) || 'Could not scope this.'); setPhase('error') } }
-    })()
-    return () => { alive = false }
-  }, [])   // eslint-disable-line
+  // Step 1 (Quick vs Detailed) chosen -> run the scope call with that depth.
+  // The desktop monitor question is detected here too (unchanged behaviour):
+  // with more than one monitor the wizard asks which screen to watch; single
+  // screen or web returns nothing and the step is skipped.
+  const startScoping = async (d) => {
+    setDepth(d); setPhase('loading'); setErr('')
+    let monQ = null
+    try {
+      const desk = typeof window !== 'undefined' ? window.workDesktop : null
+      if (desk && desk.getMonitors) {
+        const mons = await desk.getMonitors()
+        if (Array.isArray(mons) && mons.length > 1) monQ = { id: 'monitor', text: 'Which screen should I watch?', kind: 'monitor', monitors: mons }
+      }
+    } catch { /* ignore - fall back to the capture-time picker */ }
+    try {
+      const r = await api.workScope(goal, d)
+      if (!aliveRef.current) return
+      const qs = (r && r.questions) || []
+      setQuestions([ENV_Q, ...(monQ ? [monQ] : []), STYLE_Q, ...qs]); setIdx(0); setPhase('ask')
+    } catch (e) { if (aliveRef.current) { setErr((e && e.message) || 'Could not scope this.'); setPhase('error') } }
+  }
   const cur = questions[idx]
   const advance = (a) => {
     const rec = (a != null && String(a).trim()) ? [...answers, { id: cur.id, q: cur.text, a: String(a).trim() }] : answers
-    setAnswers(rec); setTxt('')
+    setAnswers(rec); setTxt(''); setOther(false)
     if (idx + 1 >= questions.length) onReady(rec)
     else setIdx(idx + 1)
   }
-  const back = () => { if (idx > 0) { setIdx(idx - 1); setTxt('') } }
+  const back = () => { if (idx > 0) { setIdx(idx - 1); setTxt(''); setOther(false) } }
+  // The documents question is OPTIONAL and, when answered, the plan is grounded
+  // in the documents. Said plainly so it never reads as a dead end.
+  const isDocQ = (q) => !!q && /document|diagram|upload|attach|file/i.test(`${q.id || ''} ${q.text || ''}`)
 
   return (
     <div className="wd-wiz" onClick={() => onCancel()}>
-      <div className="wd-wiz-card" onClick={(e) => e.stopPropagation()}>
-        {phase === 'loading' && <div className="wd-wiz-load"><Loader2 size={18} className="spin" /> Understanding what you need…</div>}
-        {phase === 'error' && (
-          <div>
-            <div style={{ color: 'var(--danger)', marginBottom: 14 }}>{err}</div>
-            <div style={{ display: 'flex', gap: 10 }}>
-              <button className="btn btn-outline" onClick={() => onCancel()}>Back</button>
-              <button className="btn btn-primary" onClick={() => onReady([])}>Plan anyway</button>
+      <div className="wd-wiz-card" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label="Scoping your plan">
+        <div className="wd-wiz-top">
+          <span className="wd-wiz-eyebrow"><Sparkles size={13} /> {phase === 'depth' ? 'Before we plan' : 'Scoping your plan'}</span>
+          <button className="wd-wiz-x" onClick={() => onCancel()} aria-label="Cancel">&times;</button>
+        </div>
+
+        {/* STEP 1: how long an interview. Sets `depth` for the scope request. */}
+        {phase === 'depth' && (
+          <div className="wd-wiz-body" key="depth">
+            <div className="wd-wiz-q wd-wiz-reveal">How much should I ask before planning?</div>
+            <div className="wd-wiz-help wd-wiz-reveal" style={{ '--d': '40ms' }}><HelpCircle size={13} /> Either way you can add detail later. A few sharp questions now make every step more precise.</div>
+            <div className="wd-wiz-depth">
+              <button type="button" className="wd-wiz-depth-card wd-wiz-reveal" style={{ '--d': '90ms' }} onClick={() => startScoping('quick')}>
+                <span className="wd-wiz-depth-ic"><Zap size={17} /></span>
+                <span className="wd-wiz-depth-t">Quick</span>
+                <span className="wd-wiz-depth-d">A few essentials, then straight to your plan. Best when you know the ground.</span>
+                <span className="wd-wiz-depth-m">Fewer questions <ArrowRight size={12} /></span>
+              </button>
+              <button type="button" className="wd-wiz-depth-card wd-wiz-reveal" style={{ '--d': '150ms' }} onClick={() => startScoping('detailed')}>
+                <span className="wd-wiz-depth-ic"><Compass size={17} /></span>
+                <span className="wd-wiz-depth-t">Detailed</span>
+                <span className="wd-wiz-depth-d">A fuller interview about your environment, constraints and goal. Sharper, more tailored steps.</span>
+                <span className="wd-wiz-depth-m">More questions <ArrowRight size={12} /></span>
+              </button>
             </div>
           </div>
         )}
+
+        {/* The "analyzing / researching" state: a terminal-style progress box. */}
+        {phase === 'loading' && <ScopeLoader depth={depth} />}
+
+        {phase === 'error' && (
+          <div className="wd-wiz-body">
+            <div className="wd-wiz-q">Could not scope this</div>
+            <div style={{ color: 'var(--danger)', marginBottom: 14, lineHeight: 1.5 }}>{err}</div>
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+              <button className="btn btn-outline" onClick={() => setPhase('depth')}><ChevronLeft size={14} /> Try again</button>
+              <button className="btn btn-primary" onClick={() => onReady([])}>Plan anyway <ArrowRight size={15} /></button>
+            </div>
+          </div>
+        )}
+
         {phase === 'ask' && cur && (() => {
           const gated = cur.tierGate && tierRank(tier) < tierRank(cur.tierGate)
           const last = idx + 1 >= questions.length
+          const docQ = isDocQ(cur)
+          const choiceOpts = cur.kind === 'yesno' ? ['Yes', 'No'] : (cur.options || [])
           return (
             <>
-              <div className="wd-wiz-top">
-                <span className="wd-wiz-eyebrow"><Sparkles size={13} /> Scoping your plan</span>
-                <button className="wd-wiz-x" onClick={() => onCancel()} aria-label="Cancel">&times;</button>
+              <div className="wd-wiz-prog" aria-label={`Question ${idx + 1} of ${questions.length}`}>{questions.map((_, i) => <span key={i} className={i <= idx ? 'on' : ''} />)}</div>
+              {/* keyed on the question so the staggered reveal replays per question;
+                  the body has a floor height so the panel never jumps between
+                  a 2-option and a 5-option question */}
+              <div className="wd-wiz-body" key={cur.id + ':' + idx}>
+                <div className="wd-wiz-q wd-wiz-reveal">{cur.text}{(docQ || gated) && <span className="wd-wiz-tag">Optional</span>}</div>
+                {(cur.help || docQ) && (
+                  <div className="wd-wiz-help wd-wiz-reveal" style={{ '--d': '40ms' }}><HelpCircle size={13} /> {cur.help || 'Optional. If you add documents or a diagram, your plan is grounded in them; skip and I plan from your goal and screen.'}</div>
+                )}
+                {gated && (
+                  <div className="wd-wiz-gate wd-wiz-reveal" style={{ '--d': '70ms' }}>
+                    <span><Zap size={13} /> Grounding on your own documents is on Advanced & Premium. Answer anyway, I plan with what your plan allows.</span>
+                    <button className="btn btn-sm btn-primary" onClick={() => onCancel('upgrade')}>Upgrade</button>
+                  </div>
+                )}
+                {cur.kind === 'text' ? (
+                  <div className="wd-wiz-text wd-wiz-reveal" style={{ '--d': '90ms' }}>
+                    <textarea rows={2} autoFocus placeholder={cur.placeholder || 'Type your answer'} value={txt} onChange={(e) => setTxt(e.target.value)}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); advance(txt) } }} />
+                    <button className="btn btn-primary" onClick={() => advance(txt)}>{last ? 'Build my plan' : 'Next'} <ArrowRight size={15} /></button>
+                  </div>
+                ) : cur.kind === 'monitor' ? (
+                  <div className="wd-wiz-choices">
+                    {cur.monitors.map((m, k) => (
+                      <button key={m.id} className="wd-wiz-choice wd-wiz-reveal" style={{ '--d': `${90 + k * 45}ms` }} onClick={() => { try { window.workDesktop && window.workDesktop.chooseMonitorId && window.workDesktop.chooseMonitorId(m.id) } catch { /* ignore */ } advance(m.label + (m.primary ? ' (primary)' : '')) }}>
+                        <Monitor size={15} style={{ verticalAlign: -3, marginRight: 7 }} />{m.label}{m.res ? ` · ${m.res}` : ''}{m.primary ? ' · primary' : ''}{m.current ? ' · current' : ''}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="wd-wiz-choices">
+                    {choiceOpts.map((o, k) => (
+                      <button key={o} className={`wd-wiz-choice wd-wiz-reveal${OPTION_HINTS[o] ? ' has-hint' : ''}`} style={{ '--d': `${90 + k * 45}ms` }} onClick={() => advance(o)}>
+                        <span className="wd-wiz-choice-l">{o}</span>
+                        {OPTION_HINTS[o] && <span className="wd-wiz-choice-h">{OPTION_HINTS[o]}</span>}
+                      </button>
+                    ))}
+                    {/* "Other..." lets the operator type their own answer on any choice question. */}
+                    {!other
+                      ? <button type="button" className="wd-wiz-choice other wd-wiz-reveal" style={{ '--d': `${90 + choiceOpts.length * 45}ms` }} onClick={() => setOther(true)}><PenLine size={14} /> Other… type my own answer</button>
+                      : <div className="wd-wiz-other wd-wiz-reveal">
+                          <textarea rows={2} autoFocus placeholder="Type your answer" value={txt} onChange={(e) => setTxt(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); if (txt.trim()) advance(txt) } }} />
+                          <div className="wd-wiz-other-row">
+                            <button className="btn btn-outline btn-sm" onClick={() => { setOther(false); setTxt('') }}>Cancel</button>
+                            <button className="btn btn-primary btn-sm" onClick={() => advance(txt)} disabled={!txt.trim()}>{last ? 'Build my plan' : 'Next'} <ArrowRight size={14} /></button>
+                          </div>
+                        </div>}
+                  </div>
+                )}
               </div>
-              <div className="wd-wiz-prog">{questions.map((_, i) => <span key={i} className={i <= idx ? 'on' : ''} />)}</div>
-              <div className="wd-wiz-q">{cur.text}</div>
-              {cur.help && <div className="wd-wiz-help"><HelpCircle size={13} /> {cur.help}</div>}
-              {gated && (
-                <div className="wd-wiz-gate">
-                  <span><Zap size={13} /> Grounding on your own documents is on Advanced & Premium. Answer anyway, I plan with what your plan allows.</span>
-                  <button className="btn btn-sm btn-primary" onClick={() => onCancel('upgrade')}>Upgrade</button>
-                </div>
-              )}
-              {cur.kind === 'text' ? (
-                <div className="wd-wiz-text">
-                  <textarea rows={2} autoFocus placeholder={cur.placeholder || 'Type your answer'} value={txt} onChange={(e) => setTxt(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); advance(txt) } }} />
-                  <button className="btn btn-primary" onClick={() => advance(txt)}>{last ? 'Build my plan' : 'Next'} <ArrowRight size={15} /></button>
-                </div>
-              ) : cur.kind === 'monitor' ? (
-                <div className="wd-wiz-choices">
-                  {cur.monitors.map((m) => (
-                    <button key={m.id} className="wd-wiz-choice" onClick={() => { try { window.workDesktop && window.workDesktop.chooseMonitorId && window.workDesktop.chooseMonitorId(m.id) } catch { /* ignore */ } advance(m.label + (m.primary ? ' (primary)' : '')) }}>
-                      <Monitor size={15} style={{ verticalAlign: -3, marginRight: 7 }} />{m.label}{m.res ? ` · ${m.res}` : ''}{m.primary ? ' · primary' : ''}{m.current ? ' · current' : ''}
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                <div className="wd-wiz-choices">
-                  {(cur.kind === 'yesno' ? ['Yes', 'No'] : cur.options).map((o) => (
-                    <button key={o} className={`wd-wiz-choice${OPTION_HINTS[o] ? ' has-hint' : ''}`} onClick={() => advance(o)}>
-                      <span className="wd-wiz-choice-l">{o}</span>
-                      {OPTION_HINTS[o] && <span className="wd-wiz-choice-h">{OPTION_HINTS[o]}</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
               <div className="wd-wiz-foot">
                 {idx > 0 && <button className="wd-wiz-link" onClick={back}><ChevronLeft size={14} /> Back</button>}
                 <button className="wd-wiz-link" onClick={() => advance(null)}>Skip</button>
@@ -496,55 +587,200 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
   )
 }
 
+// ---- Pre-task readiness coach ----------------------------------------------
+// Tasks are capped per day, so a badly-framed task is a WASTED task. Before the
+// person types their goal we coach them, 100% client-side (no AI, no server, no
+// task consumed): (1) what KIND of task, (2) four readiness taps, (3) a coach
+// panel - the wasted-task guard, how to write a great task, and a concrete
+// sample they can use as a starting point - then (4) the goal box (children).
+// Skippable with a quiet link; the choice is remembered (localStorage) so repeat
+// users go straight to the box, while the first task always sees the coach.
+// All copy comes from src/shared/task_starters.js (SUPREME RULE II).
+const COACH_SKIP_KEY = 'wc.coach.skip'
+const KIND_ICONS = { settings: Settings, blocks: Blocks, shield: ShieldCheck, wrench: Wrench, table: Table, compass: Compass }
+function TaskCoach({ tier, onUseSample, children }) {
+  const remembered = (() => { try { return localStorage.getItem(COACH_SKIP_KEY) === '1' } catch { return false } })()
+  const [done, setDone] = useState(remembered)
+  const [stage, setStage] = useState('kind')     // kind | ready | coach
+  const [kind, setKind] = useState('')
+  const [answers, setAnswers] = useState({})
+  const remember = () => { try { localStorage.setItem(COACH_SKIP_KEY, '1') } catch { /* ignore */ } }
+  const finish = () => { remember(); setDone(true) }
+  const reopen = () => { setStage('kind'); setDone(false) }
+  const allAnswered = READINESS.every((q) => answers[q.id])
+  const gatedDocs = tierRank(tier) < tierRank('advanced')
+  const warnings = readinessWarnings(answers)
+  const sample = sampleTask(kind, answers)
+
+  if (done) {
+    return (
+      <div className="wd-coach-done wd-wiz-reveal">
+        {children}
+        <button type="button" className="wd-coach-reopen" onClick={reopen}><Sparkles size={12} /> Not sure how to frame it? Open the task coach</button>
+      </div>
+    )
+  }
+  return (
+    <div className="wd-coach" aria-label="Task readiness coach">
+      <div className="wd-coach-top">
+        <span className="wd-coach-eyebrow"><Sparkles size={13} /> {stage === 'kind' ? 'Before you type: a 30-second check' : stage === 'ready' ? 'Are you ready to start?' : 'Write a task that gets a great plan'}</span>
+        <button type="button" className="wd-coach-skip" onClick={finish}>Skip, I know my task <ArrowRight size={12} /></button>
+      </div>
+      <div className="wd-coach-prog" aria-hidden="true">{['kind', 'ready', 'coach'].map((s, i) => <span key={s} className={['kind', 'ready', 'coach'].indexOf(stage) >= i ? 'on' : ''} />)}</div>
+
+      {stage === 'kind' && (
+        <div className="wd-coach-body" key="kind">
+          <div className="wd-coach-q wd-wiz-reveal">What kind of task is this?</div>
+          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>Each task you start counts toward today's limit, so a clear, well-framed one matters. Pick the closest fit.</div>
+          <div className="wd-coach-kinds">
+            {TASK_KINDS.map((k, i) => { const Ic = KIND_ICONS[k.icon] || Compass; return (
+              <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${kind === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => { setKind(k.id); setStage('ready') }}>
+                <span className="wd-coach-kind-ic"><Ic size={17} /></span>
+                <span className="wd-coach-kind-l">{k.label}</span>
+                <span className="wd-coach-kind-b">{k.blurb}</span>
+              </button>
+            ) })}
+          </div>
+        </div>
+      )}
+
+      {stage === 'ready' && (
+        <div className="wd-coach-body" key="ready">
+          <div className="wd-coach-q wd-wiz-reveal">Four quick taps, no typing.</div>
+          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>This is how we make sure your task is not wasted before you spend it.</div>
+          <div className="wd-coach-qs">
+            {READINESS.map((q, i) => (
+              <div key={q.id} className="wd-coach-row wd-wiz-reveal" style={{ '--d': `${80 + i * 60}ms` }}>
+                <div className="wd-coach-row-q">{q.q}</div>
+                <div className="wd-coach-opts" role="radiogroup" aria-label={q.q}>
+                  {q.options.map((o) => (
+                    <button key={o.v} type="button" role="radio" aria-checked={answers[q.id] === o.v}
+                      className={`wd-coach-opt${answers[q.id] === o.v ? ' on' : ''}${o.flag ? ' flag' : ''}`}
+                      onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.v }))}>
+                      {o.label}{o.gate === 'advanced' && gatedDocs && <span className="wd-coach-gate" title="Attaching documents is on Advanced and Premium"><Zap size={10} /> Advanced</span>}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="wd-coach-foot">
+            <button type="button" className="wd-wiz-link" onClick={() => setStage('kind')}><ChevronLeft size={14} /> Back</button>
+            <button type="button" className="wd-cta" disabled={!allAnswered} onClick={() => setStage('coach')} title={allAnswered ? '' : 'Answer the four questions first'}>Show me how to write it <ArrowRight size={15} /></button>
+          </div>
+        </div>
+      )}
+
+      {stage === 'coach' && (
+        <div className="wd-coach-body" key="coach">
+          <div className="wd-coach-warns">
+            {warnings.map((w, i) => (
+              <div key={i} className={`wd-coach-warn ${w.level} wd-wiz-reveal`} style={{ '--d': `${i * 50}ms` }}>
+                {w.level === 'warn' ? <AlertTriangle size={15} /> : w.level === 'ready' ? <Check size={15} strokeWidth={2.5} /> : <HelpCircle size={15} />}
+                <span>{w.text}</span>
+              </div>
+            ))}
+          </div>
+          <div className="wd-coach-grid">
+            <div className="wd-coach-tips wd-wiz-reveal" style={{ '--d': '120ms' }}>
+              <div className="wd-coach-k">A great task says</div>
+              <ul>{TASK_TIPS.map((t, i) => <li key={i}><Check size={13} strokeWidth={2.5} /><span>{t}</span></li>)}</ul>
+            </div>
+            <div className="wd-coach-sample wd-wiz-reveal" style={{ '--d': '180ms' }}>
+              <div className="wd-coach-k"><Sparkles size={12} /> A sample, tailored to your pick</div>
+              <p className="wd-coach-sample-t">{sample}</p>
+              <div className="wd-coach-sample-row">
+                <button type="button" className="wd-cta" onClick={() => { onUseSample && onUseSample(sample); finish() }}><PenLine size={15} /> Use this as a starting point</button>
+                <button type="button" className="wd-wiz-link strong" onClick={finish}>Write my own <ArrowRight size={13} /></button>
+              </div>
+            </div>
+          </div>
+          <div className="wd-coach-foot">
+            <button type="button" className="wd-wiz-link" onClick={() => setStage('ready')}><ChevronLeft size={14} /> Back</button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ---- Home hero illustration -----------------------------------------------
 // Hand-drawn inline SVG (no network, no licensing): a guided workspace - a
 // window with steps being ticked off, the current step lit, and the buddy
 // pointing at it along a dotted path. Every color is a theme token or
 // currentColor so it reads the same in dark and light.
+// Hero spot graphic (inline SVG, tokens only, no external assets): a guided
+// window with steps ticked off, a floating "Now, do this" micro-card, and the
+// buddy pointing along a cyan guide path - over a Fluent dot-grid patch, two
+// concentric arcs and a soft emerald->cyan glow. Everything reads in both
+// themes because every color is a theme token or currentColor.
 function WdHeroArt() {
   return (
-    <svg className="wd-hero-art" viewBox="0 0 340 220" fill="none" aria-hidden="true" focusable="false">
-      {/* soft ground */}
-      <ellipse cx="178" cy="124" rx="150" ry="92" fill="var(--em-fill)" />
-      <ellipse cx="226" cy="94" rx="92" ry="66" fill="color-mix(in srgb,var(--em-2) 9%,transparent)" />
+    <svg className="wd-hero-art" viewBox="0 0 360 250" fill="none" aria-hidden="true" focusable="false">
+      <defs>
+        <pattern id="wdHeroDots" width="12" height="12" patternUnits="userSpaceOnUse">
+          <circle cx="1.2" cy="1.2" r="1.2" fill="var(--em-2)" opacity=".28" />
+        </pattern>
+        <linearGradient id="wdHeroGlow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--em)" stopOpacity=".22" />
+          <stop offset="1" stopColor="var(--em-2)" stopOpacity=".10" />
+        </linearGradient>
+        <linearGradient id="wdHeroBar" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="var(--em)" />
+          <stop offset="1" stopColor="var(--em-2)" />
+        </linearGradient>
+      </defs>
+      {/* atmosphere: glow, dot grid patch, concentric arcs */}
+      <ellipse cx="190" cy="138" rx="160" ry="100" fill="url(#wdHeroGlow)" />
+      <rect x="18" y="26" width="118" height="96" rx="12" fill="url(#wdHeroDots)" />
+      <circle cx="292" cy="78" r="58" stroke="var(--em-2)" strokeOpacity=".22" strokeWidth="1.2" />
+      <circle cx="292" cy="78" r="38" stroke="var(--em-2)" strokeOpacity=".16" strokeWidth="1.2" strokeDasharray="4 6" />
       {/* the window */}
-      <rect x="54" y="30" width="208" height="150" rx="14" fill="var(--panel)" stroke="var(--line-2)" />
-      <path d="M54 58h208" stroke="var(--line)" />
-      <circle cx="70" cy="44" r="3.2" fill="var(--line-2)" />
-      <circle cx="81" cy="44" r="3.2" fill="var(--line-2)" />
-      <circle cx="92" cy="44" r="3.2" fill="var(--line-2)" />
-      <rect x="196" y="39" width="52" height="10" rx="5" fill="var(--chip)" stroke="var(--line)" />
-      {/* step 1 - done */}
-      <circle cx="84" cy="82" r="9" fill="var(--em)" />
-      <path d="M79.5 82.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="104" y="77" width="94" height="9" rx="4.5" fill="var(--line-2)" />
-      {/* step 2 - done */}
-      <circle cx="84" cy="110" r="9" fill="var(--em)" />
-      <path d="M79.5 110.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="104" y="105" width="72" height="9" rx="4.5" fill="var(--line-2)" />
-      {/* step 3 - the one being guided now */}
-      <rect x="66" y="126" width="184" height="26" rx="9" fill="var(--em-fill)" stroke="var(--em-line)" />
-      <circle cx="84" cy="139" r="9" fill="var(--panel)" stroke="var(--em)" strokeWidth="2" />
-      <circle cx="84" cy="139" r="3.4" fill="var(--em)" />
-      <rect x="104" y="134.5" width="110" height="9" rx="4.5" fill="var(--tx)" opacity=".42" />
-      <rect x="222" y="134.5" width="18" height="9" rx="4.5" fill="var(--em)" opacity=".8" />
-      {/* step 4 - next, still quiet */}
-      <circle cx="84" cy="166" r="9" stroke="var(--line-2)" strokeDasharray="3 3" />
-      <rect x="104" y="161" width="84" height="9" rx="4.5" fill="var(--line)" />
-      {/* dotted guide path from the buddy to the current step */}
-      <path d="M276 176c-6-18-20-30-36-33" stroke="var(--em-2)" strokeWidth="1.6" strokeDasharray="3.5 4.5" strokeLinecap="round" />
-      <circle cx="240" cy="143" r="3" fill="var(--em-2)" />
+      <rect x="58" y="38" width="214" height="160" rx="16" fill="var(--panel)" stroke="var(--line-2)" />
+      <rect x="58" y="38" width="214" height="3" rx="1.5" fill="url(#wdHeroBar)" />
+      <path d="M58 66h214" stroke="var(--line)" />
+      <circle cx="75" cy="52.5" r="3.2" fill="var(--line-2)" />
+      <circle cx="86" cy="52.5" r="3.2" fill="var(--line-2)" />
+      <circle cx="97" cy="52.5" r="3.2" fill="var(--line-2)" />
+      <rect x="206" y="47.5" width="52" height="10" rx="5" fill="var(--chip)" stroke="var(--line)" />
+      {/* step 1 + 2 - done */}
+      <circle cx="88" cy="90" r="9" fill="var(--em)" />
+      <path d="M83.5 90.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="108" y="85" width="98" height="9" rx="4.5" fill="var(--line-2)" />
+      <circle cx="88" cy="118" r="9" fill="var(--em)" />
+      <path d="M83.5 118.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="108" y="113" width="74" height="9" rx="4.5" fill="var(--line-2)" />
+      {/* step 3 - guided now */}
+      <rect x="70" y="134" width="190" height="27" rx="9" fill="var(--em-fill)" stroke="var(--em-line)" />
+      <rect x="70" y="134" width="3" height="27" rx="1.5" fill="url(#wdHeroBar)" />
+      <circle cx="88" cy="147.5" r="9" fill="var(--panel)" stroke="var(--em)" strokeWidth="2" />
+      <circle cx="88" cy="147.5" r="3.4" fill="var(--em)" />
+      <rect x="108" y="143" width="112" height="9" rx="4.5" fill="var(--tx)" opacity=".42" />
+      <rect x="228" y="143" width="18" height="9" rx="4.5" fill="var(--em)" opacity=".8" />
+      {/* step 4 - next, quiet */}
+      <circle cx="88" cy="176" r="9" stroke="var(--line-2)" strokeDasharray="3 3" />
+      <rect x="108" y="171" width="86" height="9" rx="4.5" fill="var(--line)" />
+      {/* floating "Now, do this" micro-card for depth */}
+      <g transform="translate(228 22)">
+        <rect x="0" y="0" width="112" height="46" rx="11" fill="var(--panel)" stroke="var(--em-line)" />
+        <rect x="10" y="10" width="54" height="9" rx="4.5" fill="var(--em)" opacity=".92" />
+        <rect x="10" y="27" width="86" height="7" rx="3.5" fill="var(--line-2)" />
+        <circle cx="98" cy="14.5" r="7" fill="var(--em-fill-2)" />
+        <path d="M94.6 14.6l2.3 2.3 4.5-4.9" stroke="var(--em)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+      {/* cyan guide path from the buddy to the current step */}
+      <path d="M296 198c-8-22-24-37-46-43" stroke="var(--em-2)" strokeWidth="1.6" strokeDasharray="3.5 4.5" strokeLinecap="round" />
+      <circle cx="248" cy="154" r="3" fill="var(--em-2)" />
       {/* the buddy */}
-      <circle cx="286" cy="190" r="22" fill="var(--panel)" stroke="var(--em-line)" strokeWidth="1.5" />
-      <circle cx="286" cy="190" r="16" fill="var(--em-fill-2)" />
-      <circle cx="280" cy="187" r="2.4" fill="var(--em)" />
-      <circle cx="292" cy="187" r="2.4" fill="var(--em)" />
-      <path d="M280.5 195c2.8 2.6 8.2 2.6 11 0" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" />
-      {/* sparkles */}
-      <path d="M44 100l2.2 5.8 5.8 2.2-5.8 2.2L44 116l-2.2-5.8L36 108l5.8-2.2z" fill="var(--em-2)" opacity=".55" />
-      <path d="M290 36l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="var(--warm)" opacity=".55" />
-      <circle cx="310" cy="128" r="2.5" fill="var(--em)" opacity=".5" />
-      <circle cx="36" cy="162" r="2" fill="var(--em-2)" opacity=".5" />
+      <circle cx="306" cy="212" r="23" fill="var(--panel)" stroke="var(--em-line)" strokeWidth="1.5" />
+      <circle cx="306" cy="212" r="16.5" fill="var(--em-fill-2)" />
+      <circle cx="300" cy="209" r="2.4" fill="var(--em)" />
+      <circle cx="312" cy="209" r="2.4" fill="var(--em)" />
+      <path d="M300.5 217c2.8 2.6 8.2 2.6 11 0" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" />
+      {/* accents */}
+      <path d="M40 150l2.2 5.8 5.8 2.2-5.8 2.2L40 166l-2.2-5.8L32 158l5.8-2.2z" fill="var(--em-2)" opacity=".55" />
+      <path d="M332 128l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="var(--warm)" opacity=".6" />
+      <circle cx="30" cy="206" r="2.2" fill="var(--em)" opacity=".5" />
     </svg>
   )
 }
@@ -557,10 +793,13 @@ const WD_CSS = `
   --panel:#13141f;--panel-2:#181b27;--panel-3:#1e2131;
   --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.15);
   --tx:#eef0f6;--tx-2:#d3d8e6;--mut:#9aa0b4;--mut-2:#b6bccf;
-  --em:#6ee7b7;--em-2:#38bdf8;--on-em:#052a1d;
+  /* Accent aligned to the console + float + full-guide (single source,
+     SUPREME RULE II): emerald #8cf5c4 + cyan #39d3ff in dark. The orange CTA
+     (--warm) is the brand CTA and is deliberately kept. */
+  --em:#8cf5c4;--em-2:#39d3ff;--on-em:#052a1d;
   --warm:#ffb561;--warm-2:#ff7a59;--cta-ink:#241206;
   --violet:#b98cff;--rose:#ff7a9c;
-  --em-fill:rgba(110,231,183,.10);--em-fill-2:rgba(110,231,183,.17);--em-line:rgba(110,231,183,.34);
+  --em-fill:rgba(140,245,196,.10);--em-fill-2:rgba(140,245,196,.17);--em-line:rgba(140,245,196,.34);
   --warm-fill:rgba(255,160,80,.08);--warm-line:rgba(255,160,80,.32);
   --card-a:rgba(255,255,255,.045);--card-b:rgba(255,255,255,.012);
   --chip:rgba(255,255,255,.05);--chip-line:rgba(255,255,255,.12);
@@ -573,13 +812,14 @@ const WD_CSS = `
   --card-shadow-hover:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -18px rgba(0,0,0,.9);
   --info:#7cc6ff;--info-fill:rgba(56,189,248,.10);--info-line:rgba(56,189,248,.30);
   position:relative;min-height:100vh;background:var(--ink);color:var(--tx);
+  --wd-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
   font-family:"Figtree",system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
 [data-theme='light'] .wd{
   --ink:#f3f5fb;--ink-soft:#ffffff;
   --panel:#ffffff;--panel-2:#ffffff;--panel-3:#f6f8fd;
   --line:#e6e8f1;--line-2:#d3d7e5;
   --tx:#161a2b;--tx-2:#2b3250;--mut:#5c6484;--mut-2:#434a68;
-  --em:#0e9f6e;--em-2:#0b8fd6;--on-em:#ffffff;
+  --em:#0e9f6e;--em-2:#0a84c2;--on-em:#ffffff;
   --warm:#c85a16;--warm-2:#e4612f;--cta-ink:#ffffff;
   --violet:#7a4ddb;--rose:#d23e6b;
   --em-fill:rgba(14,159,110,.08);--em-fill-2:rgba(14,159,110,.14);--em-line:rgba(14,159,110,.30);
@@ -594,7 +834,7 @@ const WD_CSS = `
   --card-shadow-hover:0 1px 2px rgba(26,31,54,.06),0 12px 28px -14px rgba(26,31,54,.20);
   --info:#0a6fb3;--info-fill:rgba(10,134,207,.07);--info-line:rgba(10,134,207,.26)}
 .wd *{box-sizing:border-box}
-.wd h1,.wd h2,.wd h3{margin:0;color:var(--tx)}
+.wd h1,.wd h2,.wd h3{margin:0;color:var(--tx);font-family:var(--wd-display);letter-spacing:-.015em}
 .wd p{margin:0}
 .wd :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:10px}
 .wd button{cursor:pointer}
@@ -630,12 +870,11 @@ const WD_CSS = `
 .wd-theme,.wd-getapp,.wd-addtime,.wd-signout{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card-a);color:var(--tx);font:inherit;font-size:13px;font-weight:600;line-height:1;text-decoration:none;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
 .wd-theme,.wd-getapp{width:36px;padding:0;color:var(--mut)}
 .wd-theme:hover{color:var(--tx);border-color:var(--line-2)}
-.wd-getapp{color:var(--em-2);border-color:color-mix(in srgb,var(--em-2) 32%,transparent)}
+.wd-getapp{position:relative;color:var(--em-2);border-color:color-mix(in srgb,var(--em-2) 32%,transparent)}
 .wd-getapp:hover{border-color:var(--em-2);background:color-mix(in srgb,var(--em-2) 10%,transparent)}
 /* Icon-only link: the label stays in the DOM for screen readers and the
    title tooltip carries it for everyone else. */
 .wd-getapp span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.wd-getapp{position:relative}
 .wd-mins{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:600;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:0 11px;white-space:nowrap;line-height:1}
 .wd-upgrade{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:700;color:#1a0e08;background:linear-gradient(135deg,#ff9a4d,#f26a43);border:none;border-radius:999px;padding:0 13px;white-space:nowrap;line-height:1;text-decoration:none;box-shadow:0 6px 16px -8px rgba(242,106,67,.6)}
 .wd-upgrade:hover{filter:brightness(1.04)}
@@ -649,7 +888,7 @@ const WD_CSS = `
 .wd-signout{padding:0 12px;border-color:transparent;background:transparent;color:var(--mut);font-weight:500}
 .wd-signout:hover{color:var(--tx);background:var(--chip);border-color:var(--line)}
 
-.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:34px 20px 72px}
+.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:30px 20px 80px}
 
 /* ---- Company co-branding strip (white-label) ---------------------------
    Sits above the greeting for company users only. Reads as
@@ -691,21 +930,31 @@ const WD_CSS = `
  .wd-cobrand-exec{flex:1 1 100%;justify-content:center;margin-left:0}
 }
 
-/* ---- Home hero: greeting on the left, the illustration on the right ---- */
-.wd-hero{display:grid;grid-template-columns:minmax(0,1fr) 300px;align-items:center;gap:28px;margin-bottom:22px}
-.wd-hello h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(27px,3.6vw,40px);line-height:1.12;letter-spacing:-.024em}
-.wd-hello h1 span{display:block;color:var(--mut);font-weight:600;font-size:.62em;letter-spacing:-.012em;margin-top:8px;line-height:1.3}
-.wd-plan{display:inline-flex;align-items:center;gap:8px;color:var(--mut);font-size:13.5px;font-weight:500;margin-top:14px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:6px 12px 6px 10px;box-shadow:var(--card-shadow)}
-.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 3px var(--em-fill-2);flex-shrink:0}
+/* ---- Home hero: an acrylic panel. Greeting + status on the left, the spot
+   graphic on the right, one hairline, a soft top accent, generous padding.
+   Dark is the default palette (deeper inner highlight + emerald art glow);
+   the light overrides follow. ---- */
+.wd-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:center;margin:0 0 20px;padding:34px 36px 32px 38px;border-radius:24px;border:1px solid var(--line);background:linear-gradient(135deg,color-mix(in srgb,var(--panel) 92%,transparent),color-mix(in srgb,var(--panel) 78%,transparent));backdrop-filter:blur(18px) saturate(1.15);-webkit-backdrop-filter:blur(18px) saturate(1.15);box-shadow:var(--card-shadow),inset 0 1px 0 rgba(255,255,255,.045);overflow:hidden}
+.wd-hero::before{content:'';position:absolute;left:38px;right:38px;top:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--em),var(--em-2),transparent);opacity:.9}
+.wd-hero::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(520px 220px at 100% 0%,var(--em-fill),transparent 70%)}
+.wd-hero>*{position:relative;z-index:1}
+[data-theme='light'] .wd-hero{box-shadow:var(--card-shadow)}
+.wd-hello h1{font-family:var(--wd-display);font-weight:800;font-size:clamp(30px,3.9vw,46px);line-height:1.06;letter-spacing:-.028em;text-wrap:balance}
+.wd-hello h1 span{display:block;color:var(--mut);font-weight:500;font-size:.5em;letter-spacing:-.008em;margin-top:12px;line-height:1.35;text-wrap:pretty}
+.wd-plan{display:inline-flex;align-items:center;gap:9px;color:var(--tx-2);font-size:13.5px;font-weight:600;margin-top:20px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 70%,transparent);border-radius:999px;padding:7px 14px 7px 11px}
+.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 3px var(--em-fill-2),0 0 14px var(--em);flex-shrink:0}
 .wd-plan-skel{height:15px;width:260px;max-width:70%;border-radius:7px;margin-top:11px;background:var(--track)}
-.wd-hero-art{display:block;width:100%;height:auto;max-height:210px;justify-self:end;animation:wd-rise .6s cubic-bezier(.2,.8,.2,1) both}
+.wd-hero-art{display:block;width:100%;height:auto;max-height:250px;justify-self:end;animation:wd-rise .6s cubic-bezier(.2,.8,.2,1) both;filter:drop-shadow(0 0 28px rgba(140,245,196,.16)) drop-shadow(0 18px 30px rgba(0,0,0,.55))}
+[data-theme='light'] .wd-hero-art{filter:drop-shadow(0 18px 30px rgba(26,31,54,.16))}
 @keyframes wd-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ---- Cards: one quiet recipe for every block on the home view ----------
    White (or panel) face, 1px line, soft lift, an icon tile + title + muted
    caption in the head. Matches the admin console so the two feel like one
    product. */
-.wd-card{background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--card-shadow)}
+.wd-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);transition:border-color .18s,box-shadow .18s,transform .15s}
+.wd-card:hover{border-color:var(--line-2);box-shadow:var(--card-shadow-hover)}
+[data-theme='light'] .wd-card{box-shadow:var(--card-shadow)}
 .wd-card-head{display:flex;align-items:flex-start;gap:12px}
 .wd-card-t{display:block;font-size:14.5px;font-weight:700;color:var(--tx);line-height:1.3}
 .wd-card-c{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.45}
@@ -715,13 +964,14 @@ const WD_CSS = `
 .wd-link{color:var(--em-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--em-2) 40%,transparent)}
 .wd-link:hover{text-decoration-color:var(--em-2)}
 
-/* Buddy + Data protection sit as a tidy pair above the plan form */
-.wd-pair{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px}
-.wd-buddy{display:flex;align-items:center;gap:14px;padding:14px 16px;min-width:0;flex-wrap:wrap}
+/* UTILITY STRIP: Buddy + Data protection as a tidy 2-up of Fluent cards */
+.wd-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+.wd-buddy{display:flex;align-items:center;gap:16px;padding:16px 18px;min-width:0;flex-wrap:wrap}
+.wd-buddy .wd-card-t,.wd-dp .wd-card-t{font-size:15px;letter-spacing:-.01em}
 .wd-buddy .wd-card-body{min-width:0;flex:1 1 240px}
 .wd-buddy .wd-card-end{margin-left:auto;flex-shrink:0}
 .wd-dp{overflow:hidden;align-self:start}
-.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:14px 16px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s}
+.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:16px 18px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s}
 .wd-dp-btn:hover{background:var(--panel-3)}
 .wd-dp-btn .wd-card-body{min-width:0;flex:1}
 .wd-dp-btn .wd-card-c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -799,8 +1049,16 @@ const WD_CSS = `
 .wd-sec p{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.45}
 .wd-sec .wd-ic{margin-top:1px}
 
-.wd-start{margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px 20px;box-shadow:var(--card-shadow)}
-.wd-start .wd-sec{margin-bottom:18px;padding-bottom:16px;border-bottom:1px solid var(--line)}
+/* START A PLAN: the one action card - premium frame, top accent, the readiness
+   coach lives inside it beneath the section head. */
+.wd-start{position:relative;margin-top:0;padding:26px 28px 26px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 96%,transparent),var(--panel));box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);overflow:hidden}
+.wd-start::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--em),var(--em-2))}
+.wd-start::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(560px 200px at 0% 0%,var(--em-fill),transparent 72%)}
+.wd-start>*{position:relative;z-index:1}
+.wd-start .wd-sec{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
+.wd-start .wd-sec h2{font-family:var(--wd-display);font-size:22px;letter-spacing:-.02em}
+.wd-start .wd-sec p{font-size:13.5px;line-height:1.5;max-width:64ch}
+.wd-start .wd-coach{margin-top:2px}
 .wd-start label{display:block;font-size:12.5px;color:var(--mut-2);font-weight:600;letter-spacing:.02em;margin-bottom:7px}
 .wd-start label .req{color:var(--warm)}
 .wd-taskcap{font-size:12px;color:var(--mut);margin-top:8px}
@@ -984,16 +1242,31 @@ const WD_CSS = `
  .wd *{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
 /* Scope wizard */
+/* Fluent dot-grid motif over the orbs: barely-there texture, never noise.
+   Dark (the default) runs a touch stronger so it reads on ink. */
+.wd-bg::after{content:'';position:absolute;inset:0;background-image:radial-gradient(color-mix(in srgb,var(--em-2) 22%,transparent) 1px,transparent 1.2px);background-size:22px 22px;opacity:.45;mask-image:radial-gradient(70% 55% at 60% 18%,#000 30%,transparent 100%);-webkit-mask-image:radial-gradient(70% 55% at 60% 18%,#000 30%,transparent 100%)}
+[data-theme='light'] .wd-bg::after{opacity:.35}
+/* Light keeps the flat card shadow on the coach + wizard cards (dark depth is in each rule). */
+[data-theme='light'] .wd-coach-kind,[data-theme='light'] .wd-wiz-depth-card,[data-theme='light'] .wd-coach-sample{box-shadow:var(--card-shadow)}
+[data-theme='light'] .wd-coach-opt.on{box-shadow:none}
+@media(max-width:900px){.wd-hero{grid-template-columns:minmax(0,1fr) 280px;padding:28px 28px 26px 30px}}
+@media(max-width:760px){.wd-hero{grid-template-columns:1fr;gap:18px;padding:24px 22px 22px}.wd-hero-art{max-height:200px;justify-self:center}.wd-pair{grid-template-columns:1fr}.wd-start{padding:20px 18px 20px}}
+@media(max-width:520px){.wd-hero-art{display:none}.wd-hello h1{font-size:clamp(26px,8vw,32px)}}
+@media(prefers-reduced-motion:reduce){.wd-hero-art{animation:none}.wd-card{transition:none}}
+
 .wd-wiz{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,14,.55);backdrop-filter:blur(4px);animation:wd-wiz-fade .18s ease}
 @keyframes wd-wiz-fade{from{opacity:0}to{opacity:1}}
-.wd-wiz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,680px);overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 28px;box-shadow:var(--shadow);animation:wd-wiz-pop .22s cubic-bezier(.2,.8,.2,1)}
+/* STABLE wizard card (no CLS): a flex column with a pinned top and a pinned
+   footer; only .wd-wiz-body scrolls. Dark (default) carries an inner highlight
+   + emerald hairline for depth; light keeps the flat shadow. */
+.wd-wiz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,680px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px var(--em-line);animation:wd-wiz-pop .22s cubic-bezier(.2,.8,.2,1)}
+[data-theme='light'] .wd-wiz-card{box-shadow:var(--shadow)}
 @keyframes wd-wiz-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
-.wd-wiz-load{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:15px;font-weight:500;padding:14px 0}
-.wd-wiz-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.wd-wiz-top{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 0;margin-bottom:12px}
 .wd-wiz-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
 .wd-wiz-x{background:none;border:none;color:var(--mut);font-size:24px;line-height:1;cursor:pointer;padding:0 4px}
 .wd-wiz-x:hover{color:var(--tx)}
-.wd-wiz-prog{display:flex;gap:6px;margin-bottom:20px}
+.wd-wiz-prog{display:flex;gap:6px;margin:0 26px 18px}
 .wd-wiz-prog span{height:5px;flex:1;border-radius:999px;background:var(--track);transition:background .25s}
 .wd-wiz-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2))}
 .wd-wiz-q{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:21px;line-height:1.3;color:var(--tx);margin-bottom:8px}
@@ -1011,10 +1284,122 @@ const WD_CSS = `
 .wd-wiz-text textarea{resize:none;background:var(--field);border:1px solid var(--line-2);border-radius:13px;padding:13px 15px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none}
 .wd-wiz-text textarea:focus{border-color:var(--em-2)}
 .wd-wiz-text .btn{align-self:flex-end}
-.wd-wiz-foot{display:flex;align-items:center;gap:18px;margin-top:22px;padding-top:16px;border-top:1px solid var(--line)}
+.wd-wiz-foot{display:flex;align-items:center;gap:18px;margin:0;padding:14px 26px 18px;border-top:1px solid var(--line);background:var(--panel)}
 .wd-wiz-link{background:none;border:none;color:var(--mut);font:inherit;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0}
 .wd-wiz-link:hover{color:var(--tx)}
 .wd-wiz-link.strong{margin-left:auto;color:var(--em-2);font-weight:600}
+
+/* ---- Scoping wizard body + reveal: the body has a floor height so a 2-option
+   and a 5-option question do not resize the panel; questions and options enter
+   with a quiet staggered reveal (reduced-motion safe). */
+.wd-wiz-body{flex:1 1 auto;overflow:auto;padding:0 26px 8px;min-height:min(320px,44vh)}
+.wd-wiz-reveal{animation:wd-wiz-reveal .34s cubic-bezier(.2,.8,.2,1) both;animation-delay:var(--d,0ms)}
+@keyframes wd-wiz-reveal{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+/* First step: Quick vs Detailed interview. Two equal cards, one accent. */
+.wd-wiz-depth{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:520px){.wd-wiz-depth{grid-template-columns:1fr}}
+.wd-wiz-depth-card{position:relative;text-align:left;display:flex;flex-direction:column;gap:8px;background:var(--card-a);border:1px solid var(--line-2);border-radius:16px;padding:18px 18px 16px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);transition:border-color .16s,background .16s,transform .12s,box-shadow .16s}
+.wd-wiz-depth-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--em),var(--em-2));opacity:0;transition:opacity .16s}
+.wd-wiz-depth-card:hover{border-color:var(--em-2);background:var(--em-fill);transform:translateY(-1px);box-shadow:var(--card-shadow-hover)}
+.wd-wiz-depth-card:hover::before{opacity:1}
+.wd-wiz-depth-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--em-fill-2);color:var(--em)}
+.wd-wiz-depth-t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:17px;letter-spacing:-.01em}
+.wd-wiz-depth-d{font-size:13px;line-height:1.5;color:var(--mut)}
+.wd-wiz-depth-m{display:inline-flex;align-items:center;gap:6px;margin-top:2px;font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-2)}
+/* Option tags ("Optional") + the Other... affordance that reveals a text field. */
+.wd-wiz-tag{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:var(--em-2);background:var(--info-fill);border:1px solid var(--info-line);margin-left:10px;vertical-align:middle}
+.wd-wiz-choice.other{border-style:dashed;color:var(--mut);display:flex;align-items:center;gap:8px}
+.wd-wiz-choice.other:hover{color:var(--tx)}
+.wd-wiz-other{display:flex;flex-direction:column;gap:10px;margin-top:4px}
+.wd-wiz-other textarea{resize:none;background:var(--field);border:1px solid var(--em-2);border-radius:13px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none;box-shadow:0 0 0 3px var(--em-fill)}
+.wd-wiz-other-row{display:flex;gap:8px;justify-content:flex-end}
+.wd-wiz-text .btn,.wd-wiz-other-row .btn{display:inline-flex;align-items:center;gap:6px}
+/* Terminal-style scoping progress (the "csv/js box"): a dark code card with
+   window dots, a monospaced stage log that reveals line by line with check
+   marks, a live caret on the running stage, and a thin progress fill. Dark in
+   both themes, matching the console's code boxes. */
+.wd-term{border-radius:14px;overflow:hidden;border:1px solid #27324a;background:#0c1222;box-shadow:0 1px 3px rgba(0,0,0,.3),0 18px 40px -24px rgba(0,0,0,.7);margin:6px 0 4px}
+.wd-term-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0a0f1c;border-bottom:1px solid #1c2538}
+.wd-term-dots{display:inline-flex;gap:5px}
+.wd-term-dots i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.wd-term-title{flex:1;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.08em;font-weight:700;color:#8ea3c0;text-transform:uppercase}
+.wd-term-pct{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#8cf5c4;font-variant-numeric:tabular-nums}
+.wd-term-body{padding:14px 14px 12px;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;color:#d6e9d6;min-height:138px}
+.wd-term-line{display:flex;align-items:center;gap:9px;animation:wd-wiz-reveal .3s ease both;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-term-line .p{color:#58c974;flex:0 0 auto}
+.wd-term-line.past{color:#8ea3c0}
+.wd-term-line.past .ok{color:#8cf5c4;flex:0 0 auto}
+.wd-term-line.on{color:#eef3f6}
+.wd-term-caret{display:inline-block;width:8px;height:14px;background:#8cf5c4;margin-left:2px;vertical-align:-2px;animation:wd-term-blink 1s steps(1) infinite}
+@keyframes wd-term-blink{50%{opacity:0}}
+.wd-term-track{height:3px;background:#1c2538}
+.wd-term-fill{height:100%;background:linear-gradient(90deg,#8cf5c4,#39d3ff);transition:width .6s cubic-bezier(.4,0,.2,1)}
+.wd-term-foot{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--mut)}
+/* ---- Pre-task readiness coach (inside .wd-start, before the goal box) ----
+   Same system as the wizard: a pinned eyebrow + quiet Skip, a 3-dot progress,
+   a body with a floor height (no CLS between stages), staggered .wd-wiz-reveal
+   entry. Kind cards -> readiness pill rows -> coach panel (warnings by level,
+   the tips checklist, the sample card with its orange CTA). */
+.wd-coach{display:flex;flex-direction:column;gap:12px}
+.wd-coach-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wd-coach-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
+.wd-coach-skip{background:none;border:none;color:var(--mut);font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 2px;border-radius:8px;transition:color .15s}
+.wd-coach-skip:hover{color:var(--tx)}
+.wd-coach-prog{display:flex;gap:6px}
+.wd-coach-prog span{height:4px;flex:1;max-width:72px;border-radius:999px;background:var(--track);transition:background .25s}
+.wd-coach-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2))}
+.wd-coach-body{display:flex;flex-direction:column;gap:12px;min-height:280px}
+.wd-coach-q{font-family:var(--wd-display);font-weight:700;font-size:20px;line-height:1.3;color:var(--tx)}
+.wd-coach-sub{font-size:13.5px;line-height:1.5;color:var(--mut);margin-top:-6px}
+.wd-coach-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:4px}
+@media(max-width:760px){.wd-coach-kinds{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.wd-coach-kinds{grid-template-columns:1fr}}
+.wd-coach-kind{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--card-a);border:1px solid var(--line-2);border-radius:14px;padding:14px 14px 13px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);transition:border-color .16s,background .16s,transform .12s,box-shadow .16s}
+.wd-coach-kind::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--em),var(--em-2));opacity:0;transition:opacity .16s}
+.wd-coach-kind:hover,.wd-coach-kind.on{border-color:var(--em-2);background:var(--em-fill);transform:translateY(-1px);box-shadow:var(--card-shadow-hover)}
+.wd-coach-kind:hover::before,.wd-coach-kind.on::before{opacity:1}
+.wd-coach-kind-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--em-fill-2);color:var(--em)}
+.wd-coach-kind-l{font-weight:650;font-size:14.5px;line-height:1.3}
+.wd-coach-kind-b{font-size:12.5px;line-height:1.45;color:var(--mut)}
+.wd-coach-qs{display:flex;flex-direction:column;gap:12px}
+.wd-coach-row{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:13px;background:var(--card-a);border:1px solid var(--line)}
+.wd-coach-row-q{font-size:14px;font-weight:600;line-height:1.4;color:var(--tx)}
+.wd-coach-opts{display:flex;flex-wrap:wrap;gap:7px}
+.wd-coach-opt{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--chip);color:var(--tx);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.wd-coach-opt:hover{border-color:var(--em-2)}
+.wd-coach-opt.on{border-color:var(--em);background:var(--em-fill-2);color:var(--tx);box-shadow:0 0 14px -6px var(--em)}
+.wd-coach-opt.flag.on{border-color:var(--warm-line);background:var(--warm-fill);color:var(--warm)}
+.wd-coach-gate{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);background:var(--warm-fill);border:1px solid var(--warm-line);border-radius:999px;padding:1px 6px}
+.wd-coach-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
+.wd-coach-foot .wd-cta{display:inline-flex;align-items:center;gap:7px}
+.wd-coach-warns{display:flex;flex-direction:column;gap:8px}
+.wd-coach-warn{display:flex;gap:10px;align-items:flex-start;padding:11px 13px 11px 15px;border-radius:12px;font-size:13.5px;line-height:1.5;color:var(--tx);border:1px solid var(--line);background:var(--card-a);position:relative;overflow:hidden}
+.wd-coach-warn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--line-2)}
+.wd-coach-warn svg{flex-shrink:0;margin-top:2px;color:var(--mut)}
+.wd-coach-warn.warn{background:var(--warm-fill);border-color:var(--warm-line)}
+.wd-coach-warn.warn::before{background:var(--warm)}
+.wd-coach-warn.warn svg{color:var(--warm)}
+.wd-coach-warn.ready{background:var(--em-fill);border-color:var(--em-line)}
+.wd-coach-warn.ready::before{background:var(--em)}
+.wd-coach-warn.ready svg{color:var(--em)}
+.wd-coach-warn.info::before{background:var(--em-2)}
+.wd-coach-warn.info svg{color:var(--em-2)}
+.wd-coach-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px}
+@media(max-width:760px){.wd-coach-grid{grid-template-columns:1fr}}
+.wd-coach-k{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2);margin-bottom:8px}
+.wd-coach-tips{padding:14px 15px;border-radius:14px;background:var(--card-a);border:1px solid var(--line)}
+.wd-coach-tips ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.wd-coach-tips li{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.45;color:var(--tx)}
+.wd-coach-tips li svg{flex-shrink:0;margin-top:3px;color:var(--em)}
+.wd-coach-sample{position:relative;padding:14px 15px 13px 18px;border-radius:14px;background:var(--panel-3);border:1px solid var(--em-line);overflow:hidden;display:flex;flex-direction:column;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow)}
+.wd-coach-sample::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--em),var(--em-2))}
+.wd-coach-sample-t{margin:0 0 12px;font-size:14px;line-height:1.55;color:var(--tx);font-style:italic}
+.wd-coach-sample-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
+.wd-coach-sample-row .wd-cta{display:inline-flex;align-items:center;gap:7px}
+.wd-coach-done{display:flex;flex-direction:column}
+.wd-coach-reopen{align-self:flex-start;margin-top:12px;background:none;border:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0;transition:color .15s}
+.wd-coach-reopen:hover{color:var(--em-2)}
+@media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}}
 `
 
 const WD_CATS = [
@@ -1603,22 +1988,30 @@ function Home({ user, onOpen, onSignOut }) {
                   <p>Describe what you want to get done in your own words. WorkCoPilot turns it into steps, guides you through each one on your screen, catches a wrong move and corrects it, and moves you on to the next correct step.</p>
                 </div>
               </div>
-              <label htmlFor="wd-name">Name this plan <span className="req">*</span></label>
-              <input id="wd-name" className="wd-nameinput" placeholder="e.g. API pentest - transactional broker" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
-              <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span className="req">*</span></label>
-              <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
-              <div className="wd-start-row">
-                <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Available once your administrator has finished AI setup.'}</span>
-                <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
-              </div>
-              {usage && usage.tasks && !usage.tasks.unlimited && (
-                <div className="wd-taskcap">
-                  {usage.tasks.activeTaskId
-                    ? 'Finish your current task before starting a new one.'
-                    : `${usage.tasks.remaining} of ${usage.tasks.cap} task${usage.tasks.cap === 1 ? '' : 's'} left today. Resets ${usage.tasks.resetLabel || '11:59 PM ET'}.`}
+              {/* PRE-SUBMIT COACH: the type boxes only appear after the person
+                  picks the task kind, answers four readiness taps and sees how a
+                  great task reads (with a sample they can use). Skippable, and
+                  remembered, so repeat users land straight on the box. The
+                  post-submit Quick/Detailed scoping (ScopeWizard) is a separate,
+                  later stage and is unchanged. */}
+              <TaskCoach tier={tier} onUseSample={(t) => { setGoal(t); try { setTimeout(() => goalRef.current && goalRef.current.focus(), 50) } catch { /* ignore */ } }}>
+                <label htmlFor="wd-name">Name this plan <span className="req">*</span></label>
+                <input id="wd-name" className="wd-nameinput" placeholder="e.g. API pentest - transactional broker" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
+                <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span className="req">*</span></label>
+                <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
+                <div className="wd-start-row">
+                  <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Available once your administrator has finished AI setup.'}</span>
+                  <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
                 </div>
-              )}
-              <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
+                {usage && usage.tasks && !usage.tasks.unlimited && (
+                  <div className="wd-taskcap">
+                    {usage.tasks.activeTaskId
+                      ? 'Finish your current task before starting a new one.'
+                      : `${usage.tasks.remaining} of ${usage.tasks.cap} task${usage.tasks.cap === 1 ? '' : 's'} left today. Resets ${usage.tasks.resetLabel || '11:59 PM ET'}.`}
+                  </div>
+                )}
+                <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
+              </TaskCoach>
             </div>
 
             <div className="wd-catwrap">
@@ -2087,7 +2480,6 @@ const CONSOLE_CSS = `
 /* Header toolbar: one quiet row under a hairline. Float on top is the primary
    action of this screen on the web, so it is the one filled button up here. */
 .wc-top{display:flex;align-items:center;gap:6px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border);min-width:0}
-.wc-top-title{flex:1 1 auto;min-width:40px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:650;font-size:13.5px;color:var(--text);letter-spacing:-.01em;padding:0 2px}
 .wc-ib{width:34px;height:34px;flex:0 0 auto;border-radius:10px;border:1px solid transparent;background:transparent;color:var(--text-muted);display:grid;place-items:center;cursor:pointer;transition:background .16s,color .16s,border-color .16s}
 .wc-ib:hover{background:var(--surface-2);color:var(--text);border-color:var(--border)}
 .wc-ib:disabled{opacity:.5;cursor:default}
@@ -2169,15 +2561,10 @@ const CONSOLE_CSS = `
 /* OBSERVATION = calm context the watcher can see: a cyan-tinted chip. */
 .wc-live{display:flex;align-items:flex-start;gap:9px;margin:10px 0;padding:9px 13px;font-size:calc(12.5px*var(--wc-fs,1));color:var(--text-muted);line-height:1.5;background:var(--obs-soft);border:1px solid var(--obs-ring);border-radius:11px}
 .wc-live>svg{color:var(--obs);flex-shrink:0;margin-top:1px}
-.wc-live .pulse,.wc-live-pill .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--em);--pr:var(--em-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
-.wc-live-pill .pulse{margin-top:0}
-.wc-live .pulse{background:var(--obs);--pr:var(--obs-ring)}
+.wc-live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--obs);--pr:var(--obs-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
 @keyframes wc-pulse{0%{box-shadow:0 0 0 0 var(--pr)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+/* The only live pill left is Plan-heavy mode (.lite); watch state lives in the header chip. */
 .wc-live-pill{display:inline-flex;align-items:center;gap:7px;height:34px;font-size:12.5px;font-weight:650;color:var(--em);background:var(--em-soft);padding:0 13px;border-radius:999px;white-space:nowrap}
-.wc-live-pill.paused{color:var(--text-dim);background:var(--surface-2)}
-.wc-live-pill.paused svg{color:var(--warning)}
-.wc-live-pill.out{color:var(--danger);background:var(--danger-soft)}
-.wc-live-min{opacity:.85;font-weight:600}
 .wc-plan-title{font-family:var(--wc-display);font-size:18px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.3;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .wc-plan-kicker{display:flex;align-items:center;gap:8px;margin:16px 2px 0;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
 .wc-plan-kicker+.wc-plan-title{margin-top:4px}
@@ -2189,7 +2576,7 @@ const CONSOLE_CSS = `
 /* DO THIS NOW hero: the single strongest focus on the screen */
 /* CURRENT STEP = the brightest element: emerald accent, an emerald->cyan left
    bar, and a gentle pulsing glow (disabled under prefers-reduced-motion). */
-.wc-hero{position:relative;margin-top:14px;padding:20px 22px 16px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset;overflow:hidden;animation:wc-now-glow 2.8s ease-in-out infinite}
+.wc-hero{position:relative;margin-top:14px;padding:20px 22px 16px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset;overflow:hidden;animation:wc-hero-in .42s cubic-bezier(.2,.8,.2,1) both,wc-now-glow 2.8s ease-in-out .42s infinite}
 .wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;background:linear-gradient(180deg,var(--em),var(--em-2))}
 .wc-hero::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 180px at 0% 0%,var(--em-glow),transparent 72%)}
 .wc-hero>*{position:relative;z-index:1}
@@ -2216,22 +2603,17 @@ const CONSOLE_CSS = `
    over (.wc-steps.ro) the same cards become a calm, read-only record. */
 .wc-steps{margin-top:14px;display:flex;flex-direction:column;gap:8px}
 .wc-step{position:relative;display:flex;gap:12px;align-items:flex-start;padding:12px 14px 12px 16px;background:var(--surface);border:1px solid var(--border);border-radius:14px;transition:border-color .16s,background .16s,box-shadow .16s,opacity .16s}
-.wc-step.now{border-color:transparent;box-shadow:var(--shadow-md)}
-.wc-step.now::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:14px 0 0 14px;background:linear-gradient(180deg,var(--em),var(--em-2))}
-.wc-step.pending{opacity:.6;box-shadow:none}
 .wc-step.done{background:var(--surface-2);border-color:transparent}
 .wc-step.skipped{background:transparent;border-style:dashed}
 .wc-step-check{flex-shrink:0;width:26px;height:26px;border-radius:8px;display:grid;place-items:center;border:1.5px solid var(--border-strong);background:transparent;color:var(--text-faint);cursor:pointer;margin-top:1px;padding:0;font:inherit;transition:border-color .16s,background .16s,color .16s}
 .wc-step-check:hover{border-color:var(--em);color:var(--em)}
 .wc-step-num{font-size:11.5px;font-weight:700;line-height:1;font-variant-numeric:tabular-nums}
-.wc-step.now .wc-step-check{border-color:var(--em);background:var(--em-soft);color:var(--em)}
 .wc-step.done .wc-step-check{border-color:transparent;background:var(--success-soft);color:var(--success)}
 .wc-steps.ro .wc-step-check{cursor:default}
 .wc-steps.ro .wc-step-check:hover{border-color:var(--border-strong);color:var(--text-faint)}
 .wc-steps.ro .wc-step.done .wc-step-check:hover{border-color:transparent;color:var(--success)}
 .wc-step-body{flex:1;min-width:0}
 .wc-step-title{font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;color:var(--text-muted);font-weight:500}
-.wc-step.now .wc-step-title{color:var(--text);font-weight:650;font-size:calc(14px*var(--wc-fs,1))}
 .wc-step.done .wc-step-title{text-decoration:line-through;text-decoration-color:var(--text-faint);color:var(--text-faint);font-weight:500}
 .wc-steps.ro .wc-step.done .wc-step-title{text-decoration:none;color:var(--text-muted)}
 .wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:calc(11px*var(--wc-fs,1));color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;min-height:24px;border-radius:7px}
@@ -2276,7 +2658,7 @@ const CONSOLE_CSS = `
 @keyframes wc-line-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 
 /* Ask / analyse bar + answer */
-.wc-ask{margin-top:16px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:8px 8px 8px 10px;transition:border-color .16s,box-shadow .16s}
+.wc-ask{margin-top:0;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:8px 8px 8px 10px;transition:border-color .16s,box-shadow .16s}
 .wc-ask:focus-within{border-color:var(--brand-500);box-shadow:0 0 0 3px var(--brand-soft)}
 .wc-ask .wc-ask-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap}
 .wc-ask-ta{flex:1;min-width:140px;resize:vertical;min-height:40px;max-height:220px;line-height:1.5;font-family:inherit;font-size:14px}
@@ -2312,7 +2694,6 @@ const CONSOLE_CSS = `
    ComposeCard / ComputeCard) stack below and stay visible after the panel closes. */
 .wc .wc-sp{flex:1 1 auto;min-width:4px}
 .wc-make{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
-.wc-make-head{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .wc-make-kicker{font-family:var(--wc-display);font-size:11px;font-weight:700;letter-spacing:.02em;color:var(--text-muted);white-space:nowrap}
 .wc-make-tabs{display:inline-flex;gap:3px;background:var(--surface-2);border-radius:12px;padding:3px}
 .wc-make-tab{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;color:var(--text-muted);font:inherit;font-size:13px;font-weight:600;border-radius:9px;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s,box-shadow .16s}
@@ -2320,7 +2701,6 @@ const CONSOLE_CSS = `
 .wc-make-tab:hover{color:var(--text)}
 .wc-make-tab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.09),inset 0 0 0 1px var(--border)}
 .wc-make-tab.on svg{opacity:1;color:var(--brand-600)}
-.wc-make-lead{flex:1 1 auto;min-width:0;font-size:12.5px;color:var(--text-muted);line-height:1.4}
 .wc-make-panel{margin-top:14px;display:flex;flex-direction:column;gap:12px;animation:wc-make-in .2s ease both}
 @keyframes wc-make-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .wc-make-ctl{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
@@ -2328,7 +2708,6 @@ const CONSOLE_CSS = `
 @media(max-width:640px){
   .wc-make-tabs{flex:1 1 100%}
   .wc-make-tab{flex:1 1 auto;justify-content:center}
-  .wc-make-lead{flex:1 1 100%;order:3}
   .wc-make-ctl .wc-tbtn{flex:1 1 auto;justify-content:center}
   .wc-make-ctl .wc-compose-fmt{flex:1 1 100%}
   .wc-make-ctl .wc-compose-fmt select{flex:1 1 auto}
@@ -2431,6 +2810,203 @@ const CONSOLE_CSS = `
 .wc-plan-row.now .wc-plan-txt{color:var(--text);font-weight:600}
 .wc-plan-row.done .wc-plan-txt{text-decoration:line-through;color:var(--text-faint)}
 .wc-plan-tag{flex:0 0 auto;align-self:center;font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--em)}
+
+/* ===================================================================
+   Polished guidance additions (owner feedback round). Layout-only; the
+   watch / step / meter / PiP engine is untouched.
+   =================================================================== */
+/* FIXED HEADER + FOOTER: the console is a full-height flex column. The
+   toolbar is a pinned header, the Ask bar is a pinned footer, and only
+   the step content between them scrolls, so the menu and the ask
+   affordance are always reachable without scrolling. */
+.wc-fixedhead{flex:0 0 auto;background:var(--bg);z-index:5}
+.wc-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}
+.wc-fixedfoot{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--border);box-shadow:0 -6px 18px -14px rgba(0,0,0,.4)}
+.wc-shellw{max-width:820px;margin:0 auto;width:100%}
+.wc-fixedhead .wc-shellw{padding:14px 16px 0}
+.wc-scroll .wc-shellw{padding:2px 16px 26px}
+.wc-fixedfoot .wc-shellw{padding:10px 16px 12px}
+/* MAXIMIZED stage: at wide widths the scroll area becomes rails + a centered,
+   boxed reading stage with a soft shadow; the header/footer shells widen to
+   match. Below 1240px the rails hide (the Tools menu carries every control)
+   and the stage is the plain column it always was. */
+.wc-rail{display:none}
+@media(min-width:1240px){
+  .wc-fixedhead .wc-shellw,.wc-fixedfoot .wc-shellw{max-width:1380px}
+  .wc-fixedfoot .wc-ask{max-width:880px;margin:0 auto}
+  .wc-scroll .wc-shellw.wc-stagegrid{max-width:1380px;display:grid;grid-template-columns:236px minmax(0,1fr) 256px;gap:22px;align-items:start;padding-top:14px}
+  .wc-stage{max-width:880px;width:100%;margin:0 auto;padding:4px 22px 22px;border-radius:22px;background:color-mix(in srgb,var(--surface) 72%,transparent);border:1px solid var(--border);box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.04)}
+  [data-theme='light'] .wc-stage{box-shadow:var(--shadow-md)}
+  .wc-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:10px}
+}
+.wc-rail-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:12px;display:flex;flex-direction:column;gap:8px}
+.wc-rail-k{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);padding:2px 2px 4px}
+.wc-rail-k svg{color:var(--em)}
+.wc-rail-n{margin-left:auto;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text-muted);font-variant-numeric:tabular-nums}
+.wc-rail-row{display:flex;justify-content:space-between;gap:6px}
+.wc-rail-row .wc-nav-btn{flex:1;justify-content:center}
+.wc-rail-btn{display:flex;align-items:center;gap:9px;width:100%;text-align:left;padding:9px 11px;border-radius:10px;border:1px solid var(--border);background:var(--surface-2);color:var(--text);font:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:background .14s,border-color .14s}
+.wc-rail-btn svg{color:var(--em);flex:0 0 auto}
+.wc-rail-btn:hover:not(:disabled){background:var(--surface-3);border-color:var(--border-strong)}
+.wc-rail-btn:disabled{opacity:.45;cursor:default}
+.wc-rail-btn.quiet{color:var(--text-muted);background:transparent}
+.wc-rail-btn.quiet:hover:not(:disabled){color:var(--danger);border-color:var(--danger)}
+.wc-rail-status{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:0 0 2px}
+.wc-rail-wide{width:100%;justify-content:center}
+/* plan mini-map */
+.wc-mm{display:flex;flex-direction:column;gap:2px;max-height:min(44vh,420px);overflow-y:auto;padding-right:2px}
+.wc-mm-row{display:flex;align-items:flex-start;gap:9px;width:100%;text-align:left;padding:7px 8px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--text-muted);font:inherit;font-size:12.5px;line-height:1.4;cursor:pointer;transition:background .14s,border-color .14s}
+.wc-mm-row:hover{background:var(--surface-2)}
+.wc-mm-row.current{background:var(--em-soft);border-color:var(--em-ring);color:var(--text);font-weight:650}
+.wc-mm-row.done{color:var(--text-faint)}
+.wc-mm-row.done .wc-mm-t{text-decoration:line-through}
+.wc-mm-badge{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-muted);border:1.5px solid var(--border)}
+.wc-mm-row.current .wc-mm-badge{color:var(--on-em);background:var(--em);border-color:var(--em)}
+.wc-mm-row.done .wc-mm-badge{color:var(--success);border-color:transparent;background:var(--success-soft)}
+.wc-mm-t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* #1 Header: product name + ONE calm status chip (Guiding / Paused). The
+   watching state is implied by the chip, not by a separate toggle. */
+.wc-brand{display:inline-flex;align-items:center;gap:8px;min-width:0;flex:0 0 auto}
+.wc-brand-mark{width:25px;height:25px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;background:linear-gradient(135deg,var(--em),var(--em-2));color:var(--on-em);box-shadow:0 0 0 1px var(--em-ring) inset}
+.wc-brand-name{font-family:var(--wc-display);font-weight:700;font-size:14.5px;letter-spacing:-.015em;color:var(--text);white-space:nowrap}
+@media(max-width:520px){.wc-brand-name{display:none}}
+.wc-statuschip{display:inline-flex;align-items:center;gap:6px;height:25px;padding:0 11px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:var(--em);background:var(--em-soft);border:1px solid var(--em-ring)}
+.wc-statuschip .wc-sdot{width:6px;height:6px;border-radius:50%;background:var(--em);--pr:var(--em-ring)}
+.wc-statuschip.live .wc-sdot{box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite}
+.wc-statuschip.paused{color:var(--warning);background:var(--warning-soft);border-color:transparent}
+.wc-statuschip.paused .wc-sdot{background:var(--warning);animation:none}
+
+/* #2 Ongoing controls: a distinct Pause, and a highlighted, gently pulsing
+   Resume. Replaces the big "Watch my screen / NOT WATCHING" toggle once a
+   session is live (the first web screen-share grant keeps its own button). */
+.wc-tbtn.pause{background:var(--surface-2);border-color:var(--border);color:var(--text)}
+.wc-tbtn.pause svg{color:var(--warning)}
+.wc-tbtn.pause:hover:not(:disabled){border-color:var(--warning);background:var(--warning-soft)}
+.wc-tbtn.resume{background:linear-gradient(180deg,var(--brand-500),var(--brand-600));border-color:transparent;color:#fff;box-shadow:0 0 0 0 var(--em-ring);animation:wc-resume 1.8s ease-in-out infinite}
+.wc-tbtn.resume svg{color:#fff}
+.wc-tbtn.resume:hover:not(:disabled){filter:brightness(1.05)}
+@keyframes wc-resume{0%,100%{box-shadow:0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 6px transparent}}
+
+/* #2 + #7 Wrong-place ALERT: shown ONLY on a real mismatch (status==='wrong').
+   Amber, bold, with a restrained entry slide + a soft sustained glow so a
+   critical "you are in the wrong place" moment reads as urgent, not flat. */
+.wc-alert{position:relative;display:flex;gap:11px;align-items:flex-start;margin:12px 0 2px;padding:12px 14px 12px 17px;border-radius:13px;background:var(--warning-soft);border:1px solid var(--warning);color:var(--text);font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;overflow:hidden;animation:wc-alert-in .32s cubic-bezier(.2,.8,.2,1) both,wc-alert-glow 2.4s ease-in-out infinite}
+.wc-alert::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--warning)}
+.wc-alert>svg{color:var(--warning);flex-shrink:0;margin-top:1px}
+.wc-alert-k{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warning);margin-bottom:3px}
+.wc-alert-t{font-weight:600}
+@keyframes wc-alert-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@keyframes wc-alert-glow{0%,100%{box-shadow:0 0 0 1px var(--warning) inset,0 8px 26px -16px var(--warning)}50%{box-shadow:0 0 0 1px var(--warning) inset,0 11px 34px -12px var(--warning)}}
+
+/* #5 Copy affordance for a command/target that is not a clickable link. */
+.wc-copyrow{display:flex;align-items:center;gap:8px;margin-top:8px;padding:5px 7px 5px 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;max-width:100%}
+.wc-copyrow-t{flex:1;min-width:0;font-family:var(--wc-mono);font-size:calc(12.5px*var(--wc-fs,1));color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wc-copybtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--brand-600);font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s}
+.wc-copybtn:hover{border-color:var(--brand-500);background:var(--brand-soft)}
+.wc-copybtn.done{color:var(--success);border-color:transparent;background:var(--success-soft)}
+
+/* The hero is the ONE current-step card: the quieter plan-step line (shown only
+   when the live guidance differs from it), and the Mark done action row. */
+.wc-hero-step{display:flex;align-items:flex-start;gap:8px;margin-top:9px;font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--text-muted)}
+.wc-hero-step-k{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em);margin-top:3px}
+.wc-hero .wc-step-when{margin-top:10px}
+.wc-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px}
+/* Brief "Next" line under the progress bar: the one step after the current, as
+   a single clamped title line. Never expanded, never the current step again. */
+.wc-next{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);opacity:.78;min-width:0}
+.wc-next-k{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
+.wc-next-n{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-faint);border:1px solid var(--border)}
+.wc-next-t{flex:1;min-width:0;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.4;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* "Make something" opened as a SEPARATE deliverable sheet (on the shared fixed
+   .wc-plan-ov backdrop), so it never reads as a second input stacked above the
+   Ask footer. Elevated card, top accent, its own header + tag + close; the body
+   scrolls. The inline .wc-make-panel inside it loses its outer top margin. */
+.wc-make-sheet{width:min(680px,100%);max-height:88vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:0 28px 70px -28px rgba(0,0,0,.7),0 0 0 1px var(--em-ring) inset;overflow:hidden;position:relative;animation:wc-make-in .22s cubic-bezier(.2,.8,.2,1) both}
+.wc-make-sheet::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--em),var(--em-2));z-index:1}
+.wc-make-sheet-head{display:flex;align-items:center;gap:12px;padding:16px 16px 14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.wc-make-sheet-ic{width:34px;height:34px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;background:var(--em-soft);color:var(--em)}
+.wc-make-sheet-tt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 auto}
+.wc-make-sheet-title{font-family:var(--wc-display);font-weight:700;font-size:16px;letter-spacing:-.015em;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wc-make-sheet-tag{display:inline-flex;align-items:center;gap:5px;align-self:flex-start;height:20px;padding:0 8px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--obs);background:var(--obs-soft);border:1px solid var(--obs-ring)}
+.wc-make-sheet-tabs{flex:0 0 auto}
+.wc-make-sheet-tabs .wc-make-tab{height:30px;padding:0 11px;font-size:12.5px}
+.wc-make-sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:4px 18px 18px}
+.wc-make-sheet-body .wc-make-panel{margin-top:12px;animation:none}
+@media(max-width:640px){.wc-make-sheet{max-height:92vh;border-radius:16px}.wc-make-sheet-head{padding:14px 12px 12px 14px}.wc-make-sheet-tabs{flex:1 1 100%;order:5}.wc-make-sheet-body{padding:2px 14px 14px}}
+@media(prefers-reduced-motion:reduce){.wc-make-sheet{animation:none}}
+
+/* Header TOOLS dropdown: one menu for every secondary control (Make something,
+   screen reads, plan actions, view). Sectioned, two-line items, closes on Esc,
+   outside click, or pick. Keeps the resting guide view down to essentials. */
+.wc-menu{position:relative;flex:0 0 auto}
+.wc-menu-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:min(320px,calc(100vw - 32px));padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 22px 56px -22px rgba(0,0,0,.6),0 0 0 1px var(--em-ring) inset;animation:wc-make-in .16s ease both}
+.wc-menu-sec{padding:9px 10px 5px;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint)}
+.wc-menu-sec:not(:first-child){margin-top:2px;border-top:1px solid var(--border);padding-top:10px}
+.wc-menu-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:8px 10px;border-radius:10px;border:none;background:transparent;color:var(--text);font:inherit;cursor:pointer;transition:background .14s}
+.wc-menu-item:hover:not(:disabled){background:var(--surface-2)}
+.wc-menu-item:disabled{opacity:.45;cursor:default}
+.wc-menu-item>svg{flex:0 0 auto;color:var(--em)}
+.wc-menu-item>span{display:flex;flex-direction:column;gap:1px;min-width:0}
+.wc-menu-item b{font-size:13px;font-weight:650;line-height:1.3}
+.wc-menu-item small{font-size:11.5px;color:var(--text-muted);line-height:1.35}
+.wc-menu-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 10px 8px}
+.wc-menu-row-k{font-size:12.5px;font-weight:600;color:var(--text-muted)}
+/* "Ready" chips at rest: a deliverable exists; tap to reopen it in the modal. */
+.wc-made-chips{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.wc-made-chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 11px;border-radius:999px;border:1px solid var(--em-ring);background:var(--em-soft);color:var(--brand-600);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.wc-made-chip:hover{background:var(--brand-soft);border-color:var(--brand-500)}
+.wc-made-chip svg{color:var(--brand-600)}
+@media(prefers-reduced-motion:reduce){.wc-menu-pop{animation:none}}
+
+/* ===== THE MAGIC: direct the eye to the exact next move ==================
+   The current step is unmistakable: the hero remounts with a short entrance
+   sweep when the step advances; the KEY ACTION inside it (the link to click,
+   the command to run, the value to copy) carries an emerald highlight ring and
+   a soft glow; emphasized words in the instruction get a real highlight; a
+   "Step confirmed" check pops in the moment a step is confirmed on screen; the
+   wrong-place icon pulses on entry. Reduced motion keeps every emphasis as a
+   static strong ring and only removes the movement. */
+@keyframes wc-hero-in{0%{opacity:0;transform:translateY(10px) scale(.985)}60%{opacity:1}100%{opacity:1;transform:none}}
+.wc-hero::before{animation:wc-hero-beam 2.8s ease-in-out infinite}
+@keyframes wc-hero-beam{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
+.wc-hero-chip{box-shadow:0 0 0 0 var(--em-ring);animation:wc-chip-ring 2.8s ease-in-out infinite}
+@keyframes wc-chip-ring{0%,100%{box-shadow:0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 5px transparent}}
+/* key action emphasis inside the hero */
+.wc-hero .wc-open{display:inline-flex;padding:4px 10px 4px 8px;margin-top:10px;border-radius:9px;background:var(--obs-soft);box-shadow:0 0 0 1px var(--obs-ring) inset;font-weight:700;text-decoration:none;animation:wc-key-glow 2.2s ease-in-out infinite}
+.wc-hero .wc-open:hover,.wc-hero .wc-open:focus-visible{background:var(--obs-ring);text-decoration:none}
+.wc-hero .wc-copyrow{box-shadow:0 0 0 1px var(--em-ring) inset;animation:wc-key-glow 2.2s ease-in-out infinite}
+.wc-hero pre{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 22px -8px var(--em)}
+@keyframes wc-key-glow{0%,100%{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 0 4px transparent}}
+/* emphasized words / values in the instruction */
+.wc-hero-text strong,.wc-hero-text b{font-weight:800;color:var(--text);background:linear-gradient(transparent 58%,var(--em-soft) 58%);border-radius:3px;padding:0 2px}
+.wc-hero-text mark{color:var(--text);background:var(--em-soft);box-shadow:0 0 0 1px var(--em-ring) inset;border-radius:5px;padding:1px 5px;font-weight:700}
+.wc-hero-text code{font-family:var(--wc-mono);font-size:.92em;background:var(--surface-2);border:1px solid var(--em-ring);border-radius:6px;padding:1px 6px;color:var(--text)}
+/* step confirmed: a check that pops in, then fades */
+.wc-confirm{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--success);background:var(--success-soft);box-shadow:0 0 0 1px var(--success) inset;animation:wc-pop .5s cubic-bezier(.3,1.4,.5,1) both,wc-fade-out .5s ease 1.3s both}
+.wc-confirm svg{animation:wc-check-draw .45s ease .1s both}
+@keyframes wc-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}
+@keyframes wc-check-draw{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
+@keyframes wc-fade-out{to{opacity:0;transform:translateY(-4px)}}
+/* wrong-place: the icon pulses three times on entry so it cannot be missed */
+.wc-alert>svg{animation:wc-alert-icon 1.1s ease-in-out 3}
+@keyframes wc-alert-icon{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+/* DARK = first-class: deeper, more luminous hero and key-action glow on dark */
+[data-theme='dark'] .wc-hero{box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset,0 18px 48px -18px var(--em-glow),inset 0 1px 0 rgba(255,255,255,.04)}
+[data-theme='dark'] .wc-hero pre{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 30px -8px var(--em)}
+[data-theme='dark'] .wc-make-sheet,[data-theme='dark'] .wc-menu-pop{box-shadow:0 28px 70px -28px rgba(0,0,0,.85),0 0 0 1px var(--em-ring) inset,inset 0 1px 0 rgba(255,255,255,.04)}
+@media(prefers-reduced-motion:reduce){
+  .wc-hero{animation:none;box-shadow:var(--shadow-md),0 0 0 2px var(--em-ring) inset}
+  .wc-hero::before,.wc-hero-chip,.wc-hero .wc-open,.wc-hero .wc-copyrow,.wc-alert>svg{animation:none}
+  .wc-confirm,.wc-confirm svg{animation:none}
+}
+
+/* Ask bar in the fixed footer: the (optional) answer sits above the row with a
+   capped, scrollable height so the footer never grows to swallow the screen. */
+.wc-ask-answer-foot{margin:0 2px 8px;padding:0;border-top:none;max-height:32vh;overflow-y:auto}
+
+@media(prefers-reduced-motion:reduce){.wc-tbtn.resume{animation:none}.wc-alert{animation:wc-alert-in .32s ease both}.wc-statuschip.live .wc-sdot{animation:none}}
 `
 
 // Copy text reliably across the main page AND the floating PiP / pop-out window.
@@ -2473,6 +3049,39 @@ function CopyButton({ text }) {
   )
 }
 const dot = (bg) => ({ width: 9, height: 9, borderRadius: '50%', background: bg, display: 'inline-block' })
+// Normalize a step's target into a clickable href, or '' when it is not a URL.
+// A full http(s) URL passes through; a bare host like "www.google.com" gets a
+// https:// prefix so the link-out works (linkHost threw on the bare form, which
+// rendered a broken relative <a href> - the #5 "plain text, no link" bug). A
+// value that is not a URL (a command, a menu path) returns '' -> a copy button.
+function hrefForUrl(u) {
+  const s = String(u || '').trim()
+  if (!s) return ''
+  if (/^https?:\/\//i.test(s)) return s
+  if (/\s/.test(s)) return ''
+  if (/^(localhost|[a-z0-9-]+(\.[a-z0-9-]+)+)(:\d+)?(\/[^\s]*)?$/i.test(s)) return 'https://' + s
+  return ''
+}
+// One consistent treatment for every command/code/link a step carries: a real
+// clickable link-out when it is a full/clickable URL, or a Copy button for the
+// command/target when it is not. Shared by the console steps + the How detail.
+function StepLink({ url }) {
+  const [done, setDone] = useState(false)
+  const s = String(url || '').trim()
+  if (!s) return null
+  const href = hrefForUrl(s)
+  if (href) {
+    return <div><a className="wc-open" href={href} target="_blank" rel="noopener noreferrer">Open {linkHost(href)}<ExternalLink size={13} /></a></div>
+  }
+  return (
+    <div className="wc-copyrow">
+      <span className="wc-copyrow-t" title={s}>{s}</span>
+      <button type="button" className={`wc-copybtn${done ? ' done' : ''}`} title="Copy this" onClick={(e) => { if (copyFromEvent(s, e)) { setDone(true); setTimeout(() => setDone(false), 1400) } }}>
+        {done ? <Check size={13} /> : <ClipboardCopy size={13} />} {done ? 'Copied' : 'Copy'}
+      </button>
+    </div>
+  )
+}
 // The EXACT terminal commands for a step, copy-paste ready - styled as a terminal.
 function CmdBlock({ lines }) {
   const text = (lines || []).join('\n')
@@ -2570,7 +3179,7 @@ function HowDetail({ entry, onRetry }) {
             <span style={{ flexShrink: 0, width: 20, height: 20, borderRadius: '50%', background: 'var(--brand-50, var(--surface))', border: '1px solid var(--brand-500)', color: 'var(--brand-600)', fontSize: 11, fontWeight: 700, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', marginTop: 1 }}>{j + 1}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div>{ss.text}</div>
-              {ss.url && <div><a className="wc-open" href={ss.url} target="_blank" rel="noopener noreferrer">Open {linkHost(ss.url)}<ExternalLink size={13} /></a></div>}
+              {ss.url && <StepLink url={ss.url} />}
               {((ss.commands && ss.commands.length > 0) || (ss.code && ss.code.content)) && (
                 <DestructiveGate why={ss.destructive ? ss.destructiveWhy : null}>
                   {ss.commands && ss.commands.length > 0 && <CmdBlock lines={ss.commands} />}
@@ -2783,6 +3392,19 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       return next
     })
   }
+  // The header "Tools" dropdown hosts every secondary control so the resting
+  // guide view stays calm (current step + the one Ask bar + essentials). Esc
+  // closes the menu and the open Make modal; a click outside closes the menu.
+  const [menuOpen, setMenuOpen] = useState(false)
+  const menuRef = useRef(null)
+  useEffect(() => {
+    if (!menuOpen && !maker) return
+    const onKey = (e) => { if (e.key === 'Escape') { setMenuOpen(false); if (maker) pickMaker(maker) } }
+    const onDown = (e) => { if (menuOpen && menuRef.current && !menuRef.current.contains(e.target)) setMenuOpen(false) }
+    document.addEventListener('keydown', onKey); document.addEventListener('mousedown', onDown)
+    return () => { document.removeEventListener('keydown', onKey); document.removeEventListener('mousedown', onDown) }
+  }, [menuOpen, maker])   // eslint-disable-line
+  const fromMenu = (fn) => () => { setMenuOpen(false); fn() }
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
   // Usage metering (Phase 1): remaining minutes, daily cap, pause.
@@ -2858,7 +3480,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // choice, shared via the wc-guide-fontscale key). --wc-fs mirrors it so the
   // shared CmdBlock / CodeBlock dark code boxes scale inside the float too.
   // .fp-link is the blue inline "Open ..." hyperlink (not a button).
-  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-now 2.8s ease-in-out infinite}@media(prefers-reduced-motion:reduce){.fp-now{animation:none}.fp-pulse{animation:none}.spin{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
+  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-in .4s cubic-bezier(.2,.8,.2,1) both,fp-now 2.8s ease-in-out .4s infinite}@keyframes fp-in{0%{opacity:0;transform:translateY(8px) scale(.985)}100%{opacity:1;transform:none}}.fp-now pre{box-shadow:0 0 0 1px var(--gr) inset,0 0 22px -8px #8cf5c4}.fp-now .fp-link{display:inline-flex;padding:4px 10px 4px 8px;border-radius:9px;background:rgba(57,211,255,.12);box-shadow:0 0 0 1px rgba(57,211,255,.32) inset;font-weight:700;animation:fp-key .2s}.fp-now strong,.fp-now b{font-weight:800}.fp-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;animation:fp-pop .5s cubic-bezier(.3,1.4,.5,1) both,fp-out .5s ease 1.3s both}@keyframes fp-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}@keyframes fp-out{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){.fp-now{animation:none;box-shadow:0 0 0 2px var(--gr) inset}.fp-pulse{animation:none}.spin{animation:none}.fp-confirm{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
   // Open the float with a graceful fallback chain, so the core web experience
   // never silently dies on one API:
   //   1. Document Picture-in-Picture (true always-on-top) when the browser has it;
@@ -3015,6 +3637,22 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
   const startCapture = async () => {
     setErr('')
+    // ONE screen share, reused. If a live stream already exists (the plan-time
+    // grab acquired it), reuse it for guiding instead of prompting again. The
+    // old double prompt came from startWatching() reading a STALE `capturing`
+    // closure right after plan() and calling startCapture() a second time; the
+    // ref-based check here is closure-proof. When the user ends the share from
+    // the browser chrome, track.onended -> stopCapture() clears streamRef, so
+    // only then does the next start re-prompt.
+    try {
+      const live = streamRef.current
+      const track = live && live.getVideoTracks ? live.getVideoTracks()[0] : null
+      if (track && track.readyState === 'live') {
+        if (videoRef.current && videoRef.current.srcObject !== live) { videoRef.current.srcObject = live; await videoRef.current.play().catch(() => {}) }
+        setCapturing(true)
+        return true
+      }
+    } catch { /* fall through and acquire a fresh stream */ }
     // When data protection is on, warm the on-device OCR engine now so the first
     // frame can be redacted without a cold-load delay.
     if (isDlpActive()) warmFrameScrub()
@@ -3174,6 +3812,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     setBusy(true); setErr('')
     try {
       const r = await api.workWatch(sessionId, { frame })
+      if (r.status != null) setStatus(r.status)   // keep the wrong-place signal current on an on-demand read
       if (r.guidance != null) setGuidance(r.guidance || '')
       if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
       if (r.observation) setObservation(r.observation)
@@ -3237,6 +3876,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // hidden and the steps render read-only. Deliverable actions stay.
   const ended = !!(sess && sess.status === 'ended')
   const doneCount = steps.filter((x) => x.status === 'done').length
+  // "Step confirmed" micro-celebration: when the done count rises, show a check
+  // that pops in on the hero for ~1.8s. Purely presentational.
+  const [confirmN, setConfirmN] = useState(0)
+  const prevDoneRef = useRef(doneCount)
+  useEffect(() => {
+    if (doneCount > prevDoneRef.current) { setConfirmN(doneCount); const t = setTimeout(() => setConfirmN(0), 1800); prevDoneRef.current = doneCount; return () => clearTimeout(t) }
+    prevDoneRef.current = doneCount
+    return undefined
+  }, [doneCount])
   const autoWatchRef = useRef(false)
   useEffect(() => {
     if (autoWatchRef.current || !sess) return
@@ -3324,6 +3972,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (sess && Array.isArray(sess.steps) && sess.steps.length) {
         try {
           const w = await api.workWatch(sessionId, { frame, deep })
+          if (w.status != null) setStatus(w.status)   // keep the wrong-place signal current after a deep/analyze pass
           if (w.guidance != null) setGuidance(w.guidance || '')
           if (w.steps) setSess((s) => s ? { ...s, steps: w.steps, currentStep: w.index } : s)
           if (w.observation) setObservation(w.observation)
@@ -3494,6 +4143,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     try { const r = await api.workCurrentStep(sessionId, target); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
     catch (e) { setErr(friendlyError(e, 'Could not move to that step. Please try again.')) }
   }
+  // Jump straight to a step from the maximized view's plan mini-map (the same
+  // current-step call navStep makes; moves the pointer, never marks done).
+  const jumpStep = async (i) => {
+    if (i < 0 || i >= steps.length) return
+    setErr('')
+    try { const r = await api.workCurrentStep(sessionId, i); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
+    catch (e) { setErr(friendlyError(e, 'Could not move to that step. Please try again.')) }
+  }
 
   // "How?" drill-down: expand one action (a plan step or the live guidance) into
   // a detailed sub-step checklist, guided the same way. State is keyed so each
@@ -3527,6 +4184,22 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setHowTo((h) => ({ ...h, [key]: { open: true, loading: false, error: true } }))
     }
   }
+
+  // #3 AUTO-OPEN sub-tasks for the ACTIVE step: the person should see the
+  // detailed sub-steps without clicking "How?". When the current step changes,
+  // fetch + expand its drill-down once (drillHow dedupes, so a re-expand never
+  // refetches, and the "no extra detail needed" case renders calmly). One extra
+  // call per step advance at most; it is skipped for a finished/all-done task.
+  const autoHowRef = useRef(null)
+  useEffect(() => {
+    if (ended || done || !sess || !steps.length) return
+    const ci = steps.findIndex((s) => s.status === 'current')
+    if (ci < 0) return
+    const key = 'step-' + ci
+    if (autoHowRef.current === key) return
+    autoHowRef.current = key
+    if (!howTo[key]) drillHow(key, steps[ci].text, ci)
+  }, [sess, ended, done])   // eslint-disable-line
 
   const finalize = async () => {
     setBusy(true)
@@ -3564,30 +4237,104 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     } catch { /* FloatPanel also sets the vars inline on its root, so it still scales */ }
   }, [pipWin, fsScale])
 
+  const live = watching && !paused
+  // #2 Wrong-place gate: the mismatch signal the watch response carries (the
+  // server sets status='wrong' when it raises a flag, index.js). The prominent
+  // alert shows ONLY on a real mismatch and hides when the screen is correct.
+  const offTrack = !ended && status === 'wrong' && !!String(observation || '').trim()
+
   return (
-    <div className="wc" style={{ ...shell, padding: '16px 16px 60px', '--wc-fs': fsScale }}>
+    <div className="wc" style={{ ...shell, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', '--wc-fs': fsScale }}>
       <style>{CONSOLE_CSS}</style>
-      <div style={{ maxWidth: 820, margin: '0 auto' }}>
-        {/* Compact single-row toolbar, holds cleanly at 460px: icon Back +
-            theme, a truncating plan name, then the minutes pill and the
-            session controls. Nothing wraps accidentally. */}
+      {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
+          between it and the fixed Ask footer scrolls. */}
+      <div className="wc-fixedhead"><div className="wc-shellw">
+        {/* Compact single-row toolbar: Back + theme, the product name and ONE
+            calm status chip (Guiding / Paused), then the session controls. */}
         <div className="wc-top">
           {/* Back appears once you Pause (a deliberate, paused exit), on a finished task,
               and whenever there is no loaded session yet (loading or failed), so the
               console can never trap the user. */}
           {(paused || ended || !sess) && <button className="wc-ib" onClick={leaveToPlan} title={ended ? 'Back to your plans' : (!sess ? 'Back to your plans' : 'Back to planning. Your paused session waits under Pick up where you left off.')} aria-label="Back to plan"><ChevronLeft size={17} /></button>}
-          <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
+          {/* Theme toggle lives in the Tools menu while guiding; it stays here on
+              the loading / error / goal / finished screens where there is no menu. */}
+          {!(sess && !ended) && <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>}
+          {/* #1 Product name + ONE calm status chip (Guiding when live, Paused
+              when paused). The watching state is implied here, not in a toggle. */}
+          <span className="wc-brand">
+            <span className="wc-brand-mark"><Eye size={14} strokeWidth={2.4} /></span>
+            <span className="wc-brand-name">WorkCoPilot</span>
+          </span>
+          {sess && !ended && (
+            <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={paused ? 'Paused. Resume to keep guiding.' : (live ? 'Guiding live from your screen' : 'Ready. Start watching to go live.')}>
+              <span className="wc-sdot" />{paused ? 'Paused' : (live ? 'Guiding' : 'Ready')}
+            </span>
+          )}
           <span style={{ flex: 1 }} />
-          {sess && !ended && <button className="wc-tbtn" onClick={togglePause} title={paused ? 'Resume everything - watching and your minutes' : 'Pause everything - stop watching and freeze your minutes'}>{paused ? <><Play size={14} /> Resume</> : <><Square size={13} /> Pause</>}</button>}
           {/* Float on top is the core web feature: a labeled, filled button, not a bare icon. */}
           {floatCapable && sess && !ended && (pipWin
             ? <button className="wc-tbtn on" title={floatIsPip ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> {floatIsPip ? 'Unfloat' : 'Close pop-out'}</button>
             : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
-          {/* Full guiding window: clean, detailed, full-screen guidance for a second
-              monitor. On the desktop app it opens on the monitor you are not using. */}
-          {sess && !ended && !isMobile && <button className="wc-tbtn" onClick={openFullGuide} title="Open clean, full-screen guidance on your other monitor - work on one screen, follow along on the other" aria-label="Open the full guiding window"><Monitor size={15} /> Full guide</button>}
+          {/* TOOLS: one dropdown for everything that need not sit on screen.
+              Make something opens a focused modal; the rest run their existing
+              handlers. Pause/Resume, Float and End stay as the visible essentials. */}
+          {sess && !ended && (
+            <div className="wc-menu" ref={menuRef}>
+              <button className={`wc-tbtn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen} title="Tools: make a deliverable, read the screen, re-plan, full guide, text size, theme"><MenuIcon size={15} /> Tools</button>
+              {menuOpen && (
+                <div className="wc-menu-pop" role="menu" aria-label="Tools">
+                  <div className="wc-menu-sec">Make something</div>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('answer'))}><Sparkles size={15} /><span><b>Answer</b><small>Get the actual answer, with how I got it</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('write'))}><PenLine size={15} /><span><b>Write</b><small>Code, or a ready prompt for your own AI</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('compute'))}><Calculator size={15} /><span><b>Compute</b><small>Crunch a CSV or Excel file, on your device</small></span></button>
+                  <div className="wc-menu-sec">Screen</div>
+                  {!watchLight && <button role="menuitem" className="wc-menu-item" disabled={busy || paused} onClick={fromMenu(refreshScreen)}><ScanLine size={15} /><span><b>Read my screen</b><small>Verify this step now and move on</small></span></button>}
+                  <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => analyze(question, true))}><Zap size={15} /><span><b>Deep pass</b><small>A closer look at this screen, woven into your steps</small></span></button>
+                  {isMobile && <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(takePhoto)}><Camera size={15} /><span><b>{photoFrame ? 'Retake photo' : 'Photo'}</b><small>Snap a screen, device or paper</small></span></button>}
+                  <div className="wc-menu-sec">Plan</div>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => setPlanOpen(true))}><FileText size={15} /><span><b>View full plan</b><small>Every step, done and upcoming</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) })}><RefreshCw size={15} /><span><b>Re-plan</b><small>Give a reason, keep or reset progress</small></span></button>
+                  {!isMobile && <button role="menuitem" className="wc-menu-item" onClick={fromMenu(openFullGuide)}><Monitor size={15} /><span><b>Full guide</b><small>Clean, full-screen guidance on your other monitor</small></span></button>}
+                  <div className="wc-menu-sec">View</div>
+                  <div className="wc-menu-row"><span className="wc-menu-row-k">Text size</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? 'Dark mode' : 'Light mode'}</b><small>Switch the guiding panel theme</small></span></button>
+                </div>
+              )}
+            </div>
+          )}
           {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
+      </div></div>
+      {/* SCROLL AREA: everything between the fixed header and the fixed Ask footer.
+          MAXIMIZED (wide) layout: a centered, boxed stage at reading width with
+          soft shadow, flanked by a LEFT rail (plan mini-map, prev/next, full plan,
+          re-plan) and a RIGHT rail (status, minutes, pause/resume, make, screen
+          reads, full guide, end). The rails collapse on narrower widths, where
+          the header Tools menu already carries every control. */}
+      {(() => { const rails = !!(sess && steps.length > 0 && !ended); const ci = rails ? steps.findIndex((s) => s.status === 'current') : -1; return (
+      <div className="wc-scroll"><div className={`wc-shellw${rails ? ' wc-stagegrid' : ''}`}>
+        {rails && (
+          <aside className="wc-rail wc-rail-l" aria-label="Plan">
+            <div className="wc-rail-card">
+              <div className="wc-rail-k"><FileText size={12} /> Plan <span className="wc-rail-n">{progressText(steps)}</span></div>
+              <div className="wc-mm">
+                {steps.map((s, i) => { const mk = planMarker(s, i, steps); return (
+                  <button key={i} type="button" className={`wc-mm-row ${mk}`} onClick={() => jumpStep(i)} title={String(s.text || '')} aria-current={mk === 'current' ? 'step' : undefined}>
+                    <span className="wc-mm-badge">{mk === 'done' ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
+                    <span className="wc-mm-t">{s.text}</span>
+                  </button>
+                ) })}
+              </div>
+              <div className="wc-rail-row">
+                <button className="wc-nav-btn" disabled={ci <= 0} onClick={() => navStep(-1)} title="Previous step"><ChevronLeft size={14} /> Prev</button>
+                <button className="wc-nav-btn" disabled={ci < 0 || ci >= steps.length - 1 || (steps[ci] && steps[ci].status !== 'done')} onClick={() => navStep(1)} title="Next step">Next <ChevronRight size={14} /></button>
+              </div>
+              <button type="button" className="wc-rail-btn" onClick={() => setPlanOpen(true)}><FileText size={14} /> View full plan</button>
+              <button type="button" className="wc-rail-btn" disabled={busy} onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }}><RefreshCw size={14} /> Re-plan</button>
+            </div>
+          </aside>
+        )}
+        <div className={rails ? 'wc-stage' : undefined}>
         {/* End flow: a finishing animation, a completion message, then back to plan. */}
         {replanOpen && (
           <div className="wd-modal-ov" onClick={() => setReplanOpen(false)}>
@@ -3718,24 +4465,22 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           // Post-plan, live: one status card. The step hero below is the main view.
           <>
             <div className="wc-guidebar">
-              {/* Watch state. There is no perpetual spinner: when nothing is being
-                  watched the resting state is the action that starts it. */}
-              {paused
-                ? <span className="wc-live-pill paused" title="Paused. Resume to keep watching."><Square size={12} /> Paused</span>
-                : watchLight
-                  ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
+              {/* #2 ONGOING control: once live, a distinct Pause; when paused, a
+                  highlighted, gently pulsing Resume. The watching state itself is
+                  shown by the header status chip, not by a toggle. The first web
+                  screen-share grant keeps its own Watch button (startWatching). */}
+              {watchLight
+                ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
+                : paused
+                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title="Resume guiding - watching and your minutes"><Play size={15} /> Resume</button>
                   : watching
-                    ? <span className={`wc-live-pill${usage && usage.exhausted ? ' out' : ''}`} title={source === 'screen' ? 'Reading your shared screen' : 'Reading the camera'}><span className="pulse" /> Watching live</span>
+                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title="Pause guiding - stop watching and freeze your minutes"><Square size={13} /> Pause</button>
                     : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
               {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
               {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
               <span className="wc-sp" />
-              {/* In Plan-heavy mode the prominent Check my progress button below is the
-                  on-demand read, so this duplicate Refresh is hidden to stay uncluttered. */}
-              {!watchLight && <button className="wc-tbtn" onClick={refreshScreen} disabled={busy || paused} title="Take a screenshot of your screen right now, verify this step, and move you on"><ScanLine size={14} /> Read my screen</button>}
-              <button className="wc-tbtn" onClick={() => analyze(question, true)} disabled={busy} title="Deep pass: take a closer look at the current screen and weave it into your steps"><Zap size={14} /> Deep pass</button>
-              {isMobile && <button className="wc-tbtn" onClick={takePhoto} disabled={busy}><Camera size={14} /> {photoFrame ? 'Retake' : 'Photo'}</button>}
-              <button className="wc-tbtn ghost" onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }} disabled={busy} title="Re-plan: give a reason and keep or reset your progress">{busy ? <Loader2 size={14} className="spin" /> : null} Re-plan</button>
+              {/* Read my screen / Deep pass / Photo / Re-plan now live in the header
+                  Tools menu, so this row holds only Pause-Resume and the minutes. */}
               {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%', lineHeight: 1.45 }}>{err}</div>}
               {photoFrame && (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
@@ -3756,8 +4501,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 <button type="button" className="wc-tbtn primary wc-wl-check" onClick={refreshScreen} disabled={busy || paused} title="Read the screen once, right now, and update your steps"><ScanLine size={15} /> Check my progress</button>
               </div>
             )}
-            {/* The screen-share + float story for a first-time web user. Goes away once floating. */}
-            {!watchLight && floatCapable && !pipWin && (
+            {/* The screen-share + float story for a first-time web user. Shows only
+                before the share is live (and never once floating), so the resting
+                guide view stays uncluttered. */}
+            {!watchLight && floatCapable && !pipWin && !watching && (
               <div className="wc-tip">
                 <PictureInPicture2 size={15} />
                 <span className="fill">{watching ? <>Keep these steps above your work: <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> opens them in a small window that stays {pipSupported ? 'on top' : 'open'} while you work underneath.</> : <>Share your <b>whole screen</b>, then <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> to keep the steps above your work.</>}</span>
@@ -3774,9 +4521,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
           </>
         )}
-        {/* Reader text-size control, sitting atop the guidance it scales. Shown
-            once there is a guiding surface (a loaded session with steps). */}
-        {sess && steps.length > 0 && (
+        {/* Reader text-size control. While guiding it lives in the Tools menu; on
+            the finished record (no menu) it stays here atop the steps. */}
+        {sess && steps.length > 0 && ended && (
           <div className="wc-readbar">
             <span className="wc-readbar-k">Text size</span>
             <GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax}
@@ -3795,6 +4542,17 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             : { display: 'none' }} />
         {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>Live camera. Aim it at what you need help with.</div>}
 
+        {/* #2 + #7 WRONG-PLACE ALERT: a prominent, bold amber alert shown ONLY on
+            a real mismatch (status==='wrong'). It carries the observation (e.g.
+            "on the Gmail landing page instead of the AWS console") and hides the
+            moment the screen is correct again. */}
+        {offTrack && (
+          <div className="wc-alert" role="alert">
+            <AlertTriangle size={17} />
+            <span><span className="wc-alert-k">You are in the wrong place</span><span className="wc-alert-t"><RichText text={observation} /></span></span>
+          </div>
+        )}
+
         {/* Flags/warnings sit at the TOP of the guiding content so you see them
             immediately. They clear automatically as soon as you move past them. */}
         {flags.length > 0 && !ended && (
@@ -3807,23 +4565,56 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         )}
 
-        {watching && !ended && <div className="wc-live"><Eye size={13} strokeWidth={2.4} /><span><span className="pulse" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. <RichText text={observation} /></span></div>}
+        {/* Calm context: shown only when ON track (the prominent alert above owns
+            the wrong-place case), so the observation never reads as flat text. */}
+        {watching && !ended && !offTrack && <div className="wc-live"><Eye size={13} strokeWidth={2.4} /><span><span className="pulse" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. <RichText text={observation} /></span></div>}
 
-        {guidance && !ended && !done && (
-          <div className="wc-hero">
-            <div className="wc-hero-eyebrow">
-              <span className="wc-hero-chip"><Eye size={11} strokeWidth={2.5} /> Now, do this</span>
-              {paused
-                ? <span className="wc-hero-hint">Paused. Resume to keep this live.</span>
-                : watchLight
-                  ? <span className="wc-hero-hint">Plan-heavy mode. Tap Check my progress when you want a fresh read.</span>
-                  : !watching && <button type="button" className="wc-hero-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
+        {/* THE ONE current-step card (live). The hero carries everything for the
+            step so it is never rendered a second time below: the live guidance
+            headline (falling back to the step's own text before the first watch
+            or while paused, so it is never empty), the plan step line when it
+            differs, link-or-copy, exact commands/code, "done when", the How?
+            sub-steps drill-down (auto-opened, #3) and Mark done. */}
+        {!ended && !done && steps.length > 0 && (() => {
+          const win = stepWindow(steps)
+          if (!win.length) return null
+          const { step: cur, index: ci } = win[0]
+          const g = String(guidance || '').trim()
+          const t = String(cur.text || '').trim()
+          const headline = g || t
+          const showStepLine = !!(g && t && g !== t)
+          const key = 'step-' + ci
+          return (
+            /* keyed on the step so advancing replays the entrance sweep */
+            <div className="wc-hero" key={'hero-' + ci}>
+              <div className="wc-hero-eyebrow">
+                <span className="wc-hero-chip"><Eye size={11} strokeWidth={2.5} /> Now, do this</span>
+                {confirmN > 0 && <span className="wc-confirm" role="status"><Check size={12} strokeWidth={3} /> Step {confirmN === 1 ? '1' : confirmN} confirmed</span>}
+                <span className="wc-hero-hint" style={{ fontVariantNumeric: 'tabular-nums' }}>Step {ci + 1} of {steps.length}</span>
+                {paused
+                  ? <span className="wc-hero-hint">Paused. Resume to keep this live.</span>
+                  : watchLight
+                    ? <span className="wc-hero-hint">Plan-heavy mode. Tap Check my progress when you want a fresh read.</span>
+                    : !watching && <button type="button" className="wc-hero-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
+              </div>
+              <div className="wc-hero-text"><RichText text={headline} accent="var(--em)" /></div>
+              {showStepLine && <div className="wc-hero-step"><span className="wc-hero-step-k">Step {ci + 1}</span><RichText text={t} /></div>}
+              {cur.url && <StepLink url={cur.url} />}
+              {((cur.commands && cur.commands.length > 0) || (cur.code && cur.code.content)) && (
+                <DestructiveGate why={cur.destructive ? cur.destructiveWhy : null}>
+                  {cur.commands && cur.commands.length > 0 && <CmdBlock lines={cur.commands} />}
+                  {cur.code && cur.code.content && <CodeBlock file={cur.code.file} content={cur.code.content} />}
+                </DestructiveGate>
+              )}
+              {cur.validate && <div className="wc-step-when"><Eye size={11} /> done when: <RichText text={cur.validate} /></div>}
+              <HowButton open={!!(howTo[key] && howTo[key].open)} loading={!!(howTo[key] && howTo[key].loading)} onClick={() => drillHow(key, cur.text, ci)} />
+              <HowDetail entry={howTo[key]} onRetry={() => drillHow(key, cur.text, ci)} />
+              <div className="wc-hero-actions">
+                <button className="wc-tbtn primary" onClick={() => setStep(ci, 'done')} title="Mark this step done and move to the next"><Check size={15} strokeWidth={2.5} /> Mark done</button>
+              </div>
             </div>
-            <div className="wc-hero-text"><RichText text={guidance} /></div>
-            <HowButton open={!!(howTo.guidance && howTo.guidance.open)} loading={!!(howTo.guidance && howTo.guidance.loading)} onClick={() => drillHow('guidance', guidance)} />
-            <HowDetail entry={howTo.guidance} onRetry={() => drillHow('guidance', guidance)} />
-          </div>
-        )}
+          )
+        })()}
 
         {steps.length > 0 && (
           <div className={`wc-steps${ended ? ' ro' : ''}`}>
@@ -3842,13 +4633,12 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 </div>
               )
             })()}
-            {/* Rolling-window progress line + full-plan access (live only). The
-                window below shows the current step + the next few; this line
-                tells you where you are in the whole plan and opens all of it. */}
+            {/* Progress line + full-plan access (live only). This line tells you
+                where you are in the whole plan; "View full plan" opens all of it. */}
             {!ended && (() => {
               const prog = progressText(steps)
-              const { hasMore } = stepProgress(steps)
               if (!prog) return null
+              const hasMore = steps.some((s) => s.status !== 'done' && s.status !== 'current') || steps.length > 1
               return (
                 <div className="wc-plan-bar">
                   <span className="wc-plan-prog">{prog}</span>
@@ -3856,39 +4646,37 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 </div>
               )
             })()}
-            {/* While LIVE: only the rolling window (current + next 4, done hidden)
-                so focus stays on the step to do now. When ENDED: the full record
-                of the plan, every step, unchanged. */}
-            {(ended ? steps.map((s, i) => ({ step: s, index: i })) : stepWindow(steps)).map(({ step: s, index: i }, pos) => {
+            {/* #4 ONE STEP AT A TIME, ONCE: during a LIVE session the current step
+                lives ONLY in the hero above (never repeated here). The one step
+                after it shows as a single brief title line - not expanded. The
+                full step list renders only when the task has ENDED (the record). */}
+            {!ended && (() => {
+              const next = stepWindow(steps).slice(1, 2)
+              return next.map(({ step: s, index: n }) => (
+                <div key={n} className="wc-next" title={String(s.text || '')}>
+                  <span className="wc-next-k">Next</span>
+                  <span className="wc-next-n">{n + 1}</span>
+                  <span className="wc-next-t"><RichText text={s.text} /></span>
+                </div>
+              ))
+            })()}
+            {ended && steps.map((s, i) => {
               const isDone = s.status === 'done'
-              // Live: the window always leads with the current step. Ended record: status-based.
-              const isNow = ended ? s.status === 'current' : pos === 0
-              // In the live window done steps never appear; the current step is
-              // fully expanded (commands/code/link/done-when) and the next few
-              // stay compact. A finished task shows everything as the record.
-              const reveal = isNow || isDone || ended
-              const tone = ended ? (isDone ? 'done' : 'skipped') : (isNow ? 'now' : isDone ? 'done' : 'pending')
+              const tone = isDone ? 'done' : 'skipped'
               return (
                 <div key={i} className={`wc-step ${tone}`}>
-                  {ended
-                    ? <span className="wc-step-check" aria-hidden="true">{isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}</span>
-                    : <button className="wc-step-check" title={isDone ? 'Mark not done' : 'Mark done'} aria-label={isDone ? 'Mark not done' : 'Mark done'} onClick={() => setStep(i, isDone ? 'current' : 'done')}>
-                        {isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}
-                      </button>}
+                  <span className="wc-step-check" aria-hidden="true">{isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}</span>
                   <div className="wc-step-body">
                     <div className="wc-step-title"><RichText text={s.text} /></div>
-                    {reveal && s.url && <div><a className="wc-open" href={s.url} target="_blank" rel="noopener noreferrer">Open {linkHost(s.url)}<ExternalLink size={13} /></a></div>}
-                    {reveal && ((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
+                    {s.url && <StepLink url={s.url} />}
+                    {((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
                       <DestructiveGate why={s.destructive ? s.destructiveWhy : null}>
                         {s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                         {s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
                       </DestructiveGate>
                     )}
-                    {isNow && !ended && s.validate && <div className="wc-step-when"><Eye size={11} /> done when: <RichText text={s.validate} /></div>}
                     {isDone && s.doneAt && <div className="wc-step-doneat"><Check size={11} /> Done {(() => { try { return new Date(s.doneAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } catch { return '' } })()}</div>}
-                    {ended && !isDone && <div className="wc-step-tag">Not reached</div>}
-                    {!ended && <HowButton open={!!(howTo['step-' + i] && howTo['step-' + i].open)} loading={!!(howTo['step-' + i] && howTo['step-' + i].loading)} onClick={() => drillHow('step-' + i, s.text, i)} />}
-                    {!ended && <HowDetail entry={howTo['step-' + i]} onRetry={() => drillHow('step-' + i, s.text, i)} />}
+                    {!isDone && <div className="wc-step-tag">Not reached</div>}
                   </div>
                 </div>
               )
@@ -3932,17 +4720,43 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             (with the Steps/Result/Both scope), Write -> compose + ComposeCard,
             Compute -> on-device parse + compute + ComputeCard. Produced artifacts
             stack below and stay visible after the panel is closed. */}
-        {!ended && (
+        {/* MAKE SOMETHING is invoked from the header Tools dropdown and opens as a
+            modal. At rest this section renders nothing unless a deliverable is
+            ready, in which case small chips reopen it. Engine/handlers unchanged. */}
+        {!ended && (maker || resultOut || composeOut || computeOut) && (
           <section className="wc-make" aria-label="Make something from this task">
-            <div className="wc-make-head">
-              <span className="wc-make-kicker">Make something</span>
-              <div className="wc-make-tabs" role="tablist" aria-label="What to make">
-                <button type="button" role="tab" aria-selected={maker === 'answer'} className={`wc-make-tab${maker === 'answer' ? ' on' : ''}`} onClick={() => pickMaker('answer')}><Sparkles size={15} /> Answer</button>
-                <button type="button" role="tab" aria-selected={maker === 'write'} className={`wc-make-tab${maker === 'write' ? ' on' : ''}`} onClick={() => pickMaker('write')}><PenLine size={15} /> Write</button>
-                <button type="button" role="tab" aria-selected={maker === 'compute'} className={`wc-make-tab${maker === 'compute' ? ' on' : ''}`} onClick={() => pickMaker('compute')}><Calculator size={15} /> Compute</button>
+            {(resultOut || composeOut || computeOut) && !maker && (
+              <div className="wc-made-chips">
+                <span className="wc-make-kicker">Ready</span>
+                {resultOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('answer')}><Sparkles size={13} /> Answer <ChevronRight size={13} /></button>}
+                {composeOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('write')}><PenLine size={13} /> Document <ChevronRight size={13} /></button>}
+                {computeOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('compute')}><Calculator size={13} /> Computed result <ChevronRight size={13} /></button>}
               </div>
-              {!maker && <span className="wc-make-lead">Get the actual answer, draft a document, or crunch a file. Your plan stays in view.</span>}
-            </div>
+            )}
+
+            {/* PLACEMENT: the chosen tool opens as a focused, clearly-separated
+                sheet (its own header, "Deliverable tool" tag, close), never as a
+                second input stacked above the fixed "Ask anything" footer. The
+                Ask bar stays the single always-visible input. Clicking outside or
+                the X closes it via pickMaker (which keeps composeOpen/computeOpen
+                truthful). The three panels inside are unchanged. */}
+            {maker && (
+              <div className="wc-plan-ov" onClick={() => pickMaker(maker)} role="dialog" aria-modal="true" aria-label={maker === 'answer' ? 'Get the answer' : maker === 'write' ? 'Write a deliverable' : 'Compute from a file'}>
+                <div className="wc-make-sheet" onClick={(e) => e.stopPropagation()}>
+                  <div className="wc-make-sheet-head">
+                    <span className="wc-make-sheet-ic">{maker === 'answer' ? <Sparkles size={16} /> : maker === 'write' ? <PenLine size={16} /> : <Calculator size={16} />}</span>
+                    <div className="wc-make-sheet-tt">
+                      <span className="wc-make-sheet-title">{maker === 'answer' ? 'Get the answer' : maker === 'write' ? 'Write a deliverable' : 'Compute from a file'}</span>
+                      <span className="wc-make-sheet-tag">Deliverable tool</span>
+                    </div>
+                    <div className="wc-make-tabs wc-make-sheet-tabs" role="tablist" aria-label="What to make">
+                      <button type="button" role="tab" aria-selected={maker === 'answer'} className={`wc-make-tab${maker === 'answer' ? ' on' : ''}`} onClick={() => maker !== 'answer' && pickMaker('answer')}><Sparkles size={14} /> Answer</button>
+                      <button type="button" role="tab" aria-selected={maker === 'write'} className={`wc-make-tab${maker === 'write' ? ' on' : ''}`} onClick={() => maker !== 'write' && pickMaker('write')}><PenLine size={14} /> Write</button>
+                      <button type="button" role="tab" aria-selected={maker === 'compute'} className={`wc-make-tab${maker === 'compute' ? ' on' : ''}`} onClick={() => maker !== 'compute' && pickMaker('compute')}><Calculator size={14} /> Compute</button>
+                    </div>
+                    <button className="wc-ib" onClick={() => pickMaker(maker)} title="Close" aria-label="Close deliverable tool"><X size={16} /></button>
+                  </div>
+                  <div className="wc-make-sheet-body">
 
             {/* ANSWER: hand back the real answer, not just the next step. The
                 Steps/Result/Both scope only changes emphasis; the guiding flow stays. */}
@@ -4068,42 +4882,32 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               </div>
             )}
 
-            {/* Produced artifacts stay visible once made, even after the panel closes. */}
-            {resultOut && (
-              <div className="wc-made">
-                <ResultCard result={resultOut} security={resultSec} />
-                <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null) }} title="Clear this result"><X size={14} /> Clear result</button>
-              </div>
-            )}
-            {composeOut && (
-              <div className="wc-made">
-                <ComposeCard compose={composeOut} security={composeSec} />
-                <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null) }} title="Clear this document"><X size={14} /> Clear document</button>
-              </div>
-            )}
-            {computeOut && (
-              <div className="wc-made">
-                <ComputeCard result={computeOut.result} explanation={computeOut.explanation} caveat={computeOut.caveat} spec={computeOut.spec} fileName={computeFile && computeFile.name} />
-                <button type="button" className="wc-tbtn ghost" onClick={clearCompute} title="Clear this result and file"><X size={14} /> Clear result</button>
+                    {/* Results live INSIDE the modal (with their copy/clear buttons),
+                        under the tool's panel; they persist after closing and the
+                        "Ready" chips reopen them. */}
+                    {maker === 'answer' && resultOut && (
+                      <div className="wc-made">
+                        <ResultCard result={resultOut} security={resultSec} />
+                        <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null) }} title="Clear this result"><X size={14} /> Clear result</button>
+                      </div>
+                    )}
+                    {maker === 'write' && composeOut && (
+                      <div className="wc-made">
+                        <ComposeCard compose={composeOut} security={composeSec} />
+                        <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null) }} title="Clear this document"><X size={14} /> Clear document</button>
+                      </div>
+                    )}
+                    {maker === 'compute' && computeOut && (
+                      <div className="wc-made">
+                        <ComputeCard result={computeOut.result} explanation={computeOut.explanation} caveat={computeOut.caveat} spec={computeOut.spec} fileName={computeFile && computeFile.name} />
+                        <button type="button" className="wc-tbtn ghost" onClick={clearCompute} title="Clear this result and file"><X size={14} /> Clear result</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </section>
-        )}
-
-        {/* In-the-moment ask: a single clean prompt. It uses the whole session
-            (goal + plan + what is on screen) to answer and keep you moving. */}
-        {!ended && (
-          <div className="wc-ask">
-            <div className="wc-ask-row wc-askrow">
-              <input ref={contextFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) attachContext(f, question); e.target.value = '' }} />
-              <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, paste an error, or attach a screenshot or document for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
-              <button className="wc-ib" onClick={() => contextFileRef.current && contextFileRef.current.click()} disabled={busy} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={16} /></button>
-              <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
-              <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
-              <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
-            </div>
-            {answer && <div className="wc-ask-answer"><div className="wc-ask-k"><Sparkles size={11} /> Answer</div><AnswerBody text={answer} /></div>}
-          </div>
         )}
 
         {ended && sess.summary && (
@@ -4112,7 +4916,60 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <AnswerBody text={sess.summary} />
           </div>
         )}
-      </div>
+        </div>
+        {rails && (
+          <aside className="wc-rail wc-rail-r" aria-label="Controls">
+            <div className="wc-rail-card">
+              <div className="wc-rail-status">
+                <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`}><span className="wc-sdot" />{paused ? 'Paused' : (live ? 'Guiding' : 'Ready')}</span>
+                {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+              </div>
+              {watchLight
+                ? <button type="button" className="wc-tbtn primary wc-rail-wide" onClick={refreshScreen} disabled={busy || paused}><ScanLine size={15} /> Check my progress</button>
+                : paused
+                  ? <button className="wc-tbtn resume wc-rail-wide" onClick={togglePause}><Play size={15} /> Resume</button>
+                  : watching
+                    ? <button className="wc-tbtn pause wc-rail-wide" onClick={togglePause}><Square size={13} /> Pause</button>
+                    : <button className="wc-tbtn primary wc-rail-wide" onClick={startWatching} disabled={busy}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
+            </div>
+            <div className="wc-rail-card">
+              <div className="wc-rail-k"><Sparkles size={12} /> Make something</div>
+              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('answer')}><Sparkles size={14} /> Answer</button>
+              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('write')}><PenLine size={14} /> Write</button>
+              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('compute')}><Calculator size={14} /> Compute</button>
+            </div>
+            <div className="wc-rail-card">
+              <div className="wc-rail-k"><ScanLine size={12} /> Screen</div>
+              {!watchLight && <button type="button" className="wc-rail-btn" disabled={busy || paused} onClick={refreshScreen}><ScanLine size={14} /> Read my screen</button>}
+              <button type="button" className="wc-rail-btn" disabled={busy} onClick={() => analyze(question, true)}><Zap size={14} /> Deep pass</button>
+              {!isMobile && <button type="button" className="wc-rail-btn" onClick={openFullGuide}><Monitor size={14} /> Full guide</button>}
+              <button type="button" className="wc-rail-btn quiet" disabled={busy} onClick={endSession}>End session</button>
+            </div>
+          </aside>
+        )}
+      </div></div>
+      ) })()}
+
+      {/* FIXED FOOTER: the "Ask a question" bar is pinned to the bottom, always
+          reachable without scrolling. It uses the whole session (goal + plan +
+          what is on screen) to answer and keep you moving. The answer appears
+          above the row inside the footer. The re-plan-keeps-progress behaviour is
+          the server's (addContext merges steps, preserving done ones) - untouched. */}
+      {sess && !ended && (
+        <div className="wc-fixedfoot"><div className="wc-shellw">
+          <div className="wc-ask">
+            {answer && <div className="wc-ask-answer wc-ask-answer-foot"><div className="wc-ask-k"><Sparkles size={11} /> Answer</div><AnswerBody text={answer} /></div>}
+            <div className="wc-ask-row wc-askrow">
+              <input ref={contextFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) attachContext(f, question); e.target.value = '' }} />
+              <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, paste an error, or attach a screenshot or document for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
+              <button className="wc-ib" onClick={() => contextFileRef.current && contextFileRef.current.click()} disabled={busy} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={16} /></button>
+              <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+              <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
+              <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
+            </div>
+          </div>
+        </div></div>
+      )}
 
       {pipWin && createPortal(
         <FloatPanel
@@ -4190,7 +5047,10 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   // body default and every sized element agree.
   const fsScale = (fontScale && Number.isFinite(fontScale.scale)) ? fontScale.scale : 1
   const fs = (px) => `calc(${px}px * var(--fp-fs, 1))`
-  const wrap = { '--fp-fs': fsScale, '--wc-fs': fsScale, padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 9, minHeight: '100vh', overflowX: 'hidden', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: fs(13.5), lineHeight: 1.5, fontFeatureSettings: '"tnum" 1, "cv11" 1', WebkitFontSmoothing: 'antialiased' }
+  // FIXED header + footer: the panel is a full-height flex column that does not
+  // itself scroll (overflow hidden); the header and the Ask footer are pinned
+  // (flexShrink 0) and only the middle region scrolls.
+  const wrap = { '--fp-fs': fsScale, '--wc-fs': fsScale, padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 9, height: '100vh', overflow: 'hidden', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: fs(13.5), lineHeight: 1.5, fontFeatureSettings: '"tnum" 1, "cv11" 1', WebkitFontSmoothing: 'antialiased' }
   const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 12, padding: 12, boxShadow: c.shadow }
   // Blue inline hyperlink for "Open <host>" (MS-docs style), NOT a button.
   const link = { display: 'inline-flex', alignItems: 'center', gap: 5, color: c.link, fontSize: fs(13), fontWeight: 600, textDecoration: 'none', overflowWrap: 'anywhere' }
@@ -4205,17 +5065,39 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accent}, ${c.cyan})` }
 
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : 0
-  const status = paused
-    ? { label: 'Paused', color: c.warn, soft: c.warnSoft }
-    : watching
-      ? { label: 'Live', color: c.accent, soft: c.accentSoft }
-      : { label: 'Not watching', color: c.muted, soft: c.panel2 }
+  // #1 ONE calm status chip: Guiding when live, Paused otherwise. The watching
+  // state is implied by this chip, not by a separate "Live / Not watching" label.
+  const liveFP = watching && !paused
+  const status = liveFP
+    ? { label: 'Guiding', color: c.accent, soft: c.accentSoft }
+    : { label: 'Paused', color: c.warn, soft: c.warnSoft }
   const doneN = steps.filter((s) => s.status === 'done').length
+  // MAXIMIZED float: when the PiP / pop-out window is wide, use the space - a
+  // left plan mini-map rail beside a centered reading column instead of one
+  // stretched strip. Measured on the panel root (its own window), so it works
+  // in the separate PiP document. Narrow = the single column as before.
+  const rootRef = useRef(null)
+  const [wide, setWide] = useState(false)
+  useEffect(() => {
+    const el = rootRef.current
+    if (!el || typeof ResizeObserver === 'undefined') return undefined
+    const ro = new ResizeObserver((es) => { const w = es[0] && es[0].contentRect ? es[0].contentRect.width : 0; setWide(w >= 900) })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+  // "Step confirmed" pop on the now-card when the done count rises (presentational).
+  const [fpConfirm, setFpConfirm] = useState(0)
+  const prevDoneN = useRef(doneN)
+  useEffect(() => {
+    if (doneN > prevDoneN.current) { setFpConfirm(doneN); const t = setTimeout(() => setFpConfirm(0), 1800); prevDoneN.current = doneN; return () => clearTimeout(t) }
+    prevDoneN.current = doneN
+    return undefined
+  }, [doneN])
 
   return (
-    <div style={wrap}>
-      {/* Header: brand, live/paused state, minutes, icon controls, under a hairline */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 10, borderBottom: `1px solid ${c.border}` }}>
+    <div style={wrap} ref={rootRef}>
+      {/* FIXED HEADER: brand, ONE status chip, minutes, icon controls, under a hairline */}
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 10, borderBottom: `1px solid ${c.border}` }}>
         <span style={{ width: 25, height: 25, borderRadius: 9, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset, 0 2px 6px -2px ${c.accentRing}` }}>
           <Eye size={13} color="#fff" strokeWidth={2.4} />
         </span>
@@ -4227,18 +5109,42 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
           </span>
           {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{minsLeft}m left</span>}
         </div>
-        <button className="fp-btn" style={{ ...iconBtn, color: paused ? c.accent : c.muted, background: paused ? c.accentSoft : 'transparent' }} onClick={onPause} title={paused ? 'Resume' : 'Pause (freeze minutes)'}>{paused ? <Play size={15} /> : <Square size={14} />}</button>
+        {/* Pause/Resume now lives in the prominent control below (#2); the header
+            stays a clean row of secondary icons so the status cluster is calm. */}
         <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: take a closer look at this one frame and weave it back into the steps, then carry on at normal speed."><Zap size={15} /></button>
         <button className="fp-btn" style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
         <button className="fp-btn" style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
         <button className="fp-btn" style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
       </div>
 
-      {/* Watch toggle: the one control that makes the panel live */}
+      {/* SCROLL REGION: everything between the fixed header and the fixed Ask
+          footer scrolls here; the header and footer stay pinned. When WIDE, a
+          plan mini-map rail sits on the left and the column is centered/boxed. */}
+      <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: wide ? 'grid' : 'flex', gridTemplateColumns: wide ? '220px minmax(0,1fr)' : undefined, flexDirection: 'column', gap: wide ? 16 : 9, alignItems: wide ? 'start' : undefined }}>
+      {wide && steps.length > 0 && (
+        <aside style={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 8, ...card, padding: 10 }} aria-label="Plan">
+          <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>Plan <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps)}</span></span>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '48vh', overflowY: 'auto' }}>
+            {steps.map((s, i) => { const isDone = s.status === 'done', isNow = s.status === 'current'; return (
+              <button key={i} className="fp-btn" onClick={() => onStep(i, 'current')} title={String(s.text || '')} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: '6px 7px', borderRadius: 8, border: `1px solid ${isNow ? c.accentRing : 'transparent'}`, background: isNow ? c.accentSoft : 'transparent', color: isNow ? c.text : isDone ? c.faint : c.muted, fontFamily: FONT, fontSize: fs(12), lineHeight: 1.4, fontWeight: isNow ? 650 : 500 }}>
+                <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: isDone ? c.good : isNow ? c.onAccent : c.faint, background: isNow ? c.accent : isDone ? c.goodSoft : 'transparent', border: `1.5px solid ${isNow ? c.accent : isDone ? 'transparent' : c.border}` }}>{isDone ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
+                <span className="fp-clamp" style={{ flex: 1, minWidth: 0, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}>{s.text}</span>
+              </button>
+            ) })}
+          </div>
+          <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 32 }} onClick={() => setStepsOpen(true)} title="View the full plan"><MenuIcon size={14} /> Full plan</button>
+        </aside>
+      )}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: wide ? 680 : undefined, margin: wide ? '0 auto' : undefined, ...(wide ? { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, padding: 14, boxShadow: c.shadow } : {}) }}>
+      {/* #2 ONGOING control: a distinct Pause while live; a highlighted, gently
+          pulsing Resume when paused; the first-time "Watch my screen" grant
+          otherwise. onPause (togglePause) keeps the server pause state in sync. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        <button className="fp-btn" style={watching
-          ? { ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }
-          : { ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}>{watching ? <><Square size={13} /> Pause watching</> : <><Eye size={15} /> Watch my screen</>}</button>
+        {paused
+          ? <button className="fp-btn fp-pulse" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
+          : watching
+            ? <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
+            : <button className="fp-btn" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
         {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
       </div>
 
@@ -4280,9 +5186,9 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         </div>
       )}
 
-      {/* Growing region: the current step and the latest answer own this space.
-          The full step list is tucked into a compact chip so nothing is cramped. */}
-      <div style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', gap: 9 }}>
+      {/* The current step and the latest answer. Natural height; the fixed-footer
+          layout lets the scroll region above handle any overflow. */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
         {current ? (
           <>
             {/* CURRENT STEP = the brightest element: emerald accent, emerald->cyan
@@ -4290,10 +5196,11 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                 a "NOW · STEP X OF Y" eyebrow. Then the docs hierarchy, compact:
                 step (semibold, the thing to do) -> how (the live guidance) ->
                 done-when -> Open link (blue inline) -> dark code box with Copy. */}
-            <div className="fp-now" style={{ ...card, position: 'relative', overflow: 'hidden', padding: '12px 13px 12px 16px', borderColor: c.accentRing, boxShadow: c.heroShadow, '--gr': c.accentRing, '--gg': c.accentGlow }}>
+            <div className="fp-now" key={'now-' + steps.indexOf(current)} style={{ ...card, position: 'relative', overflow: 'hidden', padding: '12px 13px 12px 16px', borderColor: c.accentRing, boxShadow: c.heroShadow, '--gr': c.accentRing, '--gg': c.accentGlow }}>
               <span style={accentBar} />
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7, flexWrap: 'wrap' }}>
                 <span style={{ ...eyebrow, display: 'inline-flex', alignItems: 'center', gap: 5, color: c.onAccent, background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, padding: '3px 9px', borderRadius: 999 }}><Eye size={10} strokeWidth={2.6} /> Now · step {steps.indexOf(current) + 1} of {steps.length}</span>
+                {fpConfirm > 0 && <span className="fp-confirm" role="status" style={{ color: c.good, background: c.goodSoft, boxShadow: `0 0 0 1px ${c.good} inset` }}><Check size={11} strokeWidth={3} /> Step {fpConfirm} confirmed</span>}
                 {paused
                   ? <span style={{ fontSize: 11, color: c.faint }}>Paused. Resume to keep this live.</span>
                   : !watching && <span style={{ fontSize: 11, color: c.faint }}>Watch my screen to keep this live</span>}
@@ -4303,7 +5210,14 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                 <div style={{ fontSize: fs(13.5), color: c.text, marginTop: 7, lineHeight: 1.55, overflowWrap: 'anywhere' }}><RichText text={guidance} accent={c.accent} /></div>
               )}
               {current.validate && <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 5, fontSize: fs(12), color: c.muted, marginTop: 8, lineHeight: 1.45, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7, maxWidth: '100%' }}><Eye size={11} style={{ flexShrink: 0, marginTop: 3 }} /> <span style={{ overflowWrap: 'anywhere' }}>Done when: <RichText text={current.validate} accent={c.accent} /></span></div>}
-              {current.url && <div><a href={current.url} target="_blank" rel="noopener noreferrer" className="fp-link" style={{ ...link, marginTop: 8 }}>Open {linkHost(current.url)} <ExternalLink size={12} style={{ flexShrink: 0 }} /></a></div>}
+              {/* #5 A real link-out for a full/clickable URL, or a Copy button for
+                  a command/target that is not a URL (never a dead plain string). */}
+              {current.url && (hrefForUrl(current.url)
+                ? <div><a href={hrefForUrl(current.url)} target="_blank" rel="noopener noreferrer" className="fp-link" style={{ ...link, marginTop: 8 }}>Open {linkHost(hrefForUrl(current.url))} <ExternalLink size={12} style={{ flexShrink: 0 }} /></a></div>
+                : <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, padding: '5px 7px 5px 11px', background: c.panel2, border: `1px solid ${c.border}`, borderRadius: 9, maxWidth: '100%' }}>
+                    <span style={{ flex: 1, minWidth: 0, fontFamily: '"JetBrains Mono",ui-monospace,monospace', fontSize: fs(12.5), color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={current.url}>{current.url}</span>
+                    <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', height: 28, padding: '0 10px', fontSize: 11.5, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }} title="Copy this" onClick={(e) => copyFromEvent(String(current.url), e)}><ClipboardCopy size={13} /> Copy</button>
+                  </div>)}
               {((current.commands && current.commands.length > 0) || (current.code && current.code.content)) && (
                 <DestructiveGate why={current.destructive ? current.destructiveWhy : null}>
                   {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
@@ -4331,22 +5245,22 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
               )
             })()}
 
-            {/* NEXT UP: the rest of the rolling window - the next up to 4 upcoming
-                steps (done hidden). With the NOW card above, that is the window of
-                5. A quiet progress line shows where you are in the whole plan, so
-                it is clear there is more beyond what is shown. */}
+            {/* NEXT (brief): the ONE step after the current one, as a single
+                title-only line - not expanded (no sub-tasks / commands / code),
+                and not a multi-item list. The current step above is the only
+                thing shown in full. A quiet progress line shows where you are. */}
             {(() => {
-              const upcoming = stepWindow(steps).slice(1) // drop the current step (shown above)
+              const next = stepWindow(steps).slice(1, 2) // exactly one: the step after the current
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 2px' }}>
                   <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint }}>{upcoming.length ? 'Next up' : 'Progress'}</span>
+                    <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint }}>{next.length ? 'Next' : 'Progress'}</span>
                     <span style={{ fontSize: fs(10.5), color: c.faint, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{progressText(steps)}</span>
                   </div>
-                  {upcoming.map(({ step: s, index: n }) => (
-                    <div key={n} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
-                      <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}`, marginTop: 1 }}>{n + 1}</span>
-                      <span style={{ flex: 1, minWidth: 0, fontSize: fs(12.5), lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
+                  {next.map(({ step: s, index: n }) => (
+                    <div key={n} title={String(s.text || '')} style={{ display: 'flex', gap: 9, alignItems: 'center', padding: '6px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
+                      <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}` }}>{n + 1}</span>
+                      <span className="fp-clamp" style={{ flex: 1, minWidth: 0, fontSize: fs(12.5), lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere', WebkitLineClamp: 1 }}><RichText text={s.text} accent={c.accent} /></span>
                     </div>
                   ))}
                 </div>
@@ -4424,9 +5338,12 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
           )}
         </div>
       </div>
+      </div>
+      </div>
 
-      {/* Ask row, anchored at the bottom */}
-      <div style={{ ...card, padding: 11 }}>
+      {/* FIXED FOOTER: the Ask row is pinned to the bottom, always reachable
+          without scrolling (the step content above scrolls independently). */}
+      <div style={{ ...card, padding: 11, flexShrink: 0, marginTop: 0 }}>
         {onAddContext && <input ref={floatFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onAddContext(f); e.target.value = '' }} />}
         <input
           style={{ width: '100%', height: 40, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 11, padding: '0 13px', outline: 'none', fontSize: 13.5, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}

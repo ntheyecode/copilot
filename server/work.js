@@ -1443,12 +1443,19 @@ export async function workCoverage(ai, cfg, { question, pricing = null }) {
 // senior consultant scoping a job). The answers are folded into the plan so the
 // checklist is grounded in the real requirement. Runs on the platform model.
 // ===========================================================================
-export function workScopeSystem(tier = 'basic') {
+export function workScopeSystem(tier = 'basic', depth = 'standard') {
+  // The person can choose a QUICK (short) or DETAILED interview up front; that
+  // choice sets how many questions we ask. Default keeps the historical range.
+  const countRule = depth === 'quick'
+    ? '- QUICK interview (the person chose a short scope): return BETWEEN 1 AND 3 questions, most-important first - ONLY what MATERIALLY changes the plan. Prefer the single most important question; never pad. Respect their time.'
+    : depth === 'detailed'
+      ? '- DETAILED interview (the person chose a thorough scope): return BETWEEN 4 AND 7 questions, most-important first. Be comprehensive - cover what "done" looks like, the environment / stack / constraints, their own documents or a diagram, the depth they want, edge cases, and any must-haves or deadlines. Still drop any question whose answer would not change the plan.'
+      : '- Return BETWEEN 2 AND 6 questions, most-important first. Fewer is better; never pad.'
   return [
     'You are the scoping step of WorkCoPilot, a read-only, screen-aware copilot that walks a person through ANY task step by step, catches a wrong move and corrects it, keeps them on the next correct step, and never does the task for them.',
     'A person has given a short goal. BEFORE planning, produce a SHORT, high-value set of questions to understand the requirement well enough to generate an excellent, tailored plan. Think like a senior consultant scoping a job: ask only what MATERIALLY changes the plan.',
     'Rules:',
-    '- Return BETWEEN 2 AND 6 questions, most-important first. Fewer is better; never pad.',
+    countRule,
     '- Every question must be specific to THIS goal, not generic. Drop any question whose answer would not change the plan.',
     '- Cover, when they matter for this goal: what "done" looks like, the environment / stack / constraints, whether they have their own documents or a diagram to work from, the depth they want (exact step-by-step vs a high-level plan), and any must-haves or deadlines.',
     '- If the goal is to review or design something (an architecture, a diagram, a config, a document), include a question asking whether they want the issues identified and a ready-to-use prompt to generate a corrected version in their own tools.',
@@ -1461,12 +1468,13 @@ export function workScopeSystem(tier = 'basic') {
 export function workScopeUser(goal) {
   return `GOAL:\n"""${String(goal || '').trim().slice(0, 1500)}"""\n\nReturn the scoping questions JSON now.`
 }
-export async function workScope(ai, cfg, { goal, tier = 'basic' }) {
-  const raw = await ai.generate(cfg, workScopeSystem(tier), workScopeUser(goal))
+export async function workScope(ai, cfg, { goal, tier = 'basic', depth = 'standard' }) {
+  const raw = await ai.generate(cfg, workScopeSystem(tier, depth), workScopeUser(goal))
   let parsed = {}
   try { const a = String(raw).indexOf('{'), z = String(raw).lastIndexOf('}'); if (a >= 0 && z > a) parsed = JSON.parse(String(raw).slice(a, z + 1)) } catch (_) {}
   let qs = Array.isArray(parsed.questions) ? parsed.questions : []
-  qs = qs.slice(0, 6).map((q, i) => ({
+  const cap = depth === 'quick' ? 3 : depth === 'detailed' ? 7 : 6
+  qs = qs.slice(0, cap).map((q, i) => ({
     id: String((q && q.id) || ('q' + i)).slice(0, 40),
     text: String((q && q.text) || '').slice(0, 240),
     kind: ['choice', 'yesno', 'text'].includes(q && q.kind) ? q.kind : 'text',

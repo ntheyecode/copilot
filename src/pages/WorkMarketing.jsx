@@ -1767,17 +1767,24 @@ const CSS = `
 .wm-sec-card h3{font-family:"Bricolage Grotesque";font-size:18px;margin:0 0 8px}
 .wm-sec-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
 /* HOW COMPANIES BENEFIT (ROI) */
-.wm-roi-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:6px 0 30px}
-.wm-roi-stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 20px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
-.wm-roi-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.2vw,36px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
-.wm-roi-stat span{display:block;margin-top:8px;color:var(--mut);font-size:13px;line-height:1.4}
+/* Outcome chips: FOUR word-chips (not numerals), so the grid is 4-up (a 5-up
+   grid left one empty column) and the heading is a chip scale, not a 36px
+   stat numeral. Words never break mid-word ("In-\nhouse"): keep-all + no
+   hyphens; they wrap only at a space. Cards share one balanced height and the
+   same radius/shadow family as the feature cards below them. */
+.wm-roi-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:6px 0 30px}
+.wm-roi-stat{display:flex;flex-direction:column;justify-content:center;gap:5px;min-height:92px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22);transition:border-color .2s,transform .15s}
+.wm-roi-stat:hover{border-color:rgba(10,157,102,.4);transform:translateY(-2px)}
+.wm-roi-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(17px,1.55vw,21px);letter-spacing:-.015em;line-height:1.15;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;word-break:keep-all;overflow-wrap:normal;hyphens:none;text-wrap:balance}
+.wm-roi-stat span{display:block;color:var(--mut);font-size:13px;line-height:1.4}
 .wm-roi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 .wm-roi-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22);transition:border-color .2s,transform .15s}
 .wm-roi-card:hover{border-color:rgba(10,157,102,.4);transform:translateY(-2px)}
 .wm-roi-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
 .wm-roi-card h3{font-family:"Bricolage Grotesque",sans-serif;font-size:18px;margin:0 0 8px}
 .wm-roi-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
-@media(max-width:900px){.wm-roi-stats{grid-template-columns:1fr 1fr}.wm-roi-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.wm-roi-stats{grid-template-columns:1fr 1fr}.wm-roi-stat b{font-size:19px}.wm-roi-grid{grid-template-columns:1fr}}
+@media(max-width:480px){.wm-roi-stats{grid-template-columns:1fr;gap:10px}.wm-roi-stat{min-height:0;padding:14px 16px}}
 /* FIELDS WE COVER - 56 fields in 10 family cards. A compact 3-up stat row,
    then a dense 4-column grid where the two biggest families span two columns
    so the roster reads as one considered composition, not ten equal boxes.
@@ -1788,7 +1795,7 @@ const CSS = `
    row owns the gap below the subhead, like .wm-roi-stats does in the ROI band. */
 .wm-fld-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:640px;margin:26px auto 30px}
 .wm-fld-stat{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 12px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
-.wm-fld-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
+.wm-fld-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02;word-break:keep-all;overflow-wrap:normal;hyphens:none}
 .wm-fld-stat span{display:block;margin-top:6px;color:var(--mut);font-size:13px;line-height:1.35}
 /* (the family card grid + tag styles moved with the grid to WorkFields.jsx) */
 @media(max-width:560px){.wm-fld-stats{gap:10px;margin-bottom:22px}.wm-fld-stat{padding:14px 8px;border-radius:13px}.wm-fld-stat span{font-size:12px}}

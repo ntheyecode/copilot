@@ -1,15 +1,18 @@
-// BuddyPicker - a compact row of the six buddy avatars plus a "Surprise" option
-// that rotates among the pets. Tapping one saves the choice (localStorage, via
-// AliveBuddy's helpers) and tells the parent, so the live buddy swaps at once.
-// On-brand, theme-neutral (works on the dark buddy card and the console), and
-// fully keyboard + screen-reader reachable.
+// BuddyPicker - a compact row of the buddy cast (the bot, the dino mascot, the
+// illustrated people and the pets) plus a "Surprise" option that rotates among
+// the pets. Each swatch is the live AliveBuddy face rendered small and still
+// (no per-thumb animation loop), so what you pick is exactly what you get.
+// Tapping one saves the choice (localStorage, via AliveBuddy's helpers) and tells
+// the parent, so the live buddy swaps at once. No image assets. On-brand,
+// theme-neutral (works on the dark buddy card and the console), and fully
+// keyboard + screen-reader reachable.
 import React from 'react'
 import { Shuffle } from 'lucide-react'
-import { CHARACTERS, writeBuddyPref, CHARACTER_LABELS as LABELS } from './AliveBuddy.jsx'
+import AliveBuddy, { CHARACTERS, writeBuddyPref, CHARACTER_LABELS as LABELS } from './AliveBuddy.jsx'
 
 const ACCENT = '#8cf5c4'
 
-// `pref` is the saved preference ('bot'..'man' or 'surprise'); `onPick(pref)`
+// `pref` is the saved preference (a character key or 'surprise'); `onPick(pref)`
 // receives the new preference. `size` sizes each swatch.
 export default function BuddyPicker({ pref = 'bot', onPick, size = 34 }) {
   const pick = (p) => { writeBuddyPref(p); try { onPick && onPick(p) } catch { /* ignore */ } }
@@ -44,8 +47,7 @@ export default function BuddyPicker({ pref = 'bot', onPick, size = 34 }) {
             {isSurprise ? (
               <Shuffle size={Math.round(s * 0.46)} color={on ? ACCENT : '#aeb8bf'} />
             ) : (
-              <img src={`/buddies/${p}.jpg`} alt="" draggable={false}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+              <AliveBuddy character={p} state={on ? 'answering' : 'idle'} size={s - 4} motion={false} interactive={false} title={label} />
             )}
           </button>
         )

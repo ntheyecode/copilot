@@ -53,6 +53,7 @@ const SECTIONS = [
   { id: 'ai', label: 'AI keys', icon: Cpu, title: 'AI keys', sub: 'Run WorkCoPilot on your company AI keys so usage is billed to your own provider account.' },
   { id: 'billing', label: 'Billing', icon: Receipt, title: 'Billing', sub: 'Your plan charges and any extras. Set by the WorkCoPilot team.' },
   { id: 'governance', label: 'Data governance', icon: ShieldCheck, title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
+  { id: 'alerts', label: 'Alerts', icon: ShieldAlert, title: 'Security alerts', sub: 'When one of your people enters sensitive data (PII / PHI), it is redacted on their device before anything is sent, and you are told who, where and what kind - never the values themselves.' },
   { id: 'sessions', label: 'Sessions', icon: Activity, title: 'Member sessions', sub: 'Every session your people run - completed or in progress. Pull the report or audit log for any of them.' },
   { id: 'tickets', label: 'Support', icon: LifeBuoy, title: 'Support', sub: 'Open a ticket and talk to the WorkCoPilot team.' },
   { id: 'activity', label: 'Activity', icon: ListChecks, title: 'Activity', sub: 'A record of what happened across your company.' },
@@ -1126,6 +1127,71 @@ const ACTIVITY_LABELS = {
   billing_item_removed: 'Removed a billing item',
   kb_clear: 'Cleared the knowledge base',
   kb_restore_replace: 'Restored (replaced) the knowledge base',
+  pii_redacted: 'Entered sensitive data (redacted on device)',
+}
+
+// ===========================================================================
+// Security alerts: the pii_redacted entries of the company activity feed, as a
+// focused view. Each alert carries WHO (name, email, role), WHERE (session,
+// call), WHAT (PII categories + counts only - the backend never sends values)
+// and WHEN. Newest first. The Activity view keeps every event, unchanged.
+// ===========================================================================
+const ALERTS_SEEN_KEY = 'wca.alerts.seen'
+const isAlert = (a) => a && a.type === 'pii_redacted'
+const alertTime = (a) => { const t = new Date(a && a.at).getTime(); return Number.isFinite(t) ? t : 0 }
+const readAlertsSeen = () => { try { return Number(localStorage.getItem(ALERTS_SEEN_KEY)) || 0 } catch { return 0 } }
+const writeAlertsSeen = (t) => { try { localStorage.setItem(ALERTS_SEEN_KEY, String(t)) } catch { /* ignore */ } }
+const CALL_LABEL = { plan: 'planning a task', ask: 'asking a question', result: 'getting a result', compose: 'writing a document' }
+
+function AlertsSection({ onSeen }) {
+  const [state, setState] = useState({ loading: true, error: null, items: null })
+  const load = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    api.workTeamActivity()
+      .then((r) => {
+        const items = ((r && r.activity) || []).filter(isAlert).sort((a, b) => alertTime(b) - alertTime(a))
+        setState({ loading: false, error: null, items })
+        const newest = items.length ? alertTime(items[0]) : Date.now()
+        writeAlertsSeen(Math.max(newest, readAlertsSeen()))
+        if (onSeen) onSeen()
+      })
+      .catch((error) => setState({ loading: false, error, items: [] }))
+  }, [onSeen])
+  useEffect(() => { load() }, [load])
+  if (state.loading) return <Loading label="Loading alerts" />
+  if (state.error) return <ErrorBox error={state.error} onRetry={load} />
+  if (!state.items || !state.items.length) return <EmptyState title="No alerts" detail="When a member enters sensitive data, it is redacted on their device and an alert appears here with who, where and what kind." />
+  return (
+    <div className="wka-panel">
+      <div className="wca-alerts-head">
+        <h2><ShieldAlert size={16} /> {state.items.length} {state.items.length === 1 ? 'alert' : 'alerts'}</h2>
+        <span className="wca-alerts-note"><ShieldCheck size={13} /> Values were redacted on the device before submission. Only the kind and count are shown here.</span>
+      </div>
+      <div className="wca-alerts">
+        {state.items.map((a, i) => {
+          const who = a.displayName || a.username || 'A member'
+          const title = (a.sessionTitle && !/^Session \d/.test(a.sessionTitle)) ? a.sessionTitle : (a.sessionTitle || 'Untitled session')
+          return (
+            <article key={a.id || `${a.sessionId || 's'}-${a.at || i}`} className="wca-alert" aria-label={`Sensitive data alert for ${who}`}>
+              <span className="wca-alert-ic"><AlertTriangle size={16} /></span>
+              <div className="wca-alert-body">
+                <div className="wca-alert-line">
+                  <b>{who}</b>{a.email ? <span className="wca-alert-mail">({a.email})</span> : null}
+                  {a.companyRole ? <span className="wka-chip wca-alert-role">{ROLE_LABEL[a.companyRole] || a.companyRole}</span> : null}
+                  {' '}entered sensitive data{a.categories ? <> (<b className="wca-alert-cat">{a.categories}</b>)</> : null} in <q>{title}</q> via {CALL_LABEL[a.call] || a.call || 'a request'}. Redacted on their device before submission.
+                </div>
+                <div className="wca-alert-meta">
+                  <span><Clock size={12} /> {fmtDT(a.at)}</span>
+                  {Number.isFinite(Number(a.redactedTotal)) && Number(a.redactedTotal) > 0 ? <span>{a.redactedTotal} {Number(a.redactedTotal) === 1 ? 'item' : 'items'} redacted</span> : null}
+                  {a.sessionId ? <a className="wca-alert-link" href={api.workAuditUrl(a.sessionId)} download>Audit log</a> : null}
+                </div>
+              </div>
+            </article>
+          )
+        })}
+      </div>
+    </div>
+  )
 }
 
 function ActivitySection() {
@@ -1363,6 +1429,18 @@ export default function WorkCompanyAdmin() {
   const signOut = async () => { try { await api.workLogout() } catch { /* ignore */ } window.location.href = '/workcopilot' }
   const current = useMemo(() => SECTIONS.find((s) => s.id === active) || SECTIONS[0], [active])
 
+  // Unread security-alert badge for the nav: alerts newer than the last time the
+  // Alerts section was opened (localStorage stamp). Loaded once the gate is ready.
+  const [alertBadge, setAlertBadge] = useState(0)
+  const refreshAlertBadge = useCallback(() => {
+    api.workTeamActivity().then((r) => {
+      const seen = readAlertsSeen()
+      setAlertBadge(((r && r.activity) || []).filter((a) => isAlert(a) && alertTime(a) > seen).length)
+    }).catch(() => { /* badge is best-effort */ })
+  }, [])
+  useEffect(() => { if (gate === 'ready') refreshAlertBadge() }, [gate, refreshAlertBadge])
+  const alertsSeen = useCallback(() => setAlertBadge(0), [])
+
   const Gate = ({ icon, title, body, action }) => (
     <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}</style>
       <div className="wka-gate"><div className="box">{icon}<h2>{title}</h2><p>{body}</p>{action}</div></div>
@@ -1384,6 +1462,7 @@ export default function WorkCompanyAdmin() {
       case 'sessions': return <SessionsSection />
       case 'tickets': return <SupportTickets mode="user" />
       case 'activity': return <ActivitySection />
+      case 'alerts': return <AlertsSection onSeen={alertsSeen} />
       case 'settings': return <SettingsSection viewer={viewer} company={company} onProfile={(u) => setViewer(u)} />
       case 'overview':
       default: return <OverviewSection company={company} />
@@ -1409,6 +1488,7 @@ export default function WorkCompanyAdmin() {
               <div key={s.id} className={`wka-nav-item${active === s.id ? ' active' : ''}`} role="button" tabIndex={0}
                 onClick={() => setActive(s.id)} onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(s.id) } }}>
                 <Icon size={17} /><span className="label">{s.label}</span>
+                {s.id === 'alerts' && alertBadge > 0 && <span className="wca-badge" aria-label={`${alertBadge} new ${alertBadge === 1 ? 'alert' : 'alerts'}`}>{alertBadge > 99 ? '99+' : alertBadge}</span>}
               </div>
             )
           })}
@@ -1445,4 +1525,30 @@ const WCA_CSS = `
 .wca-scenario { margin-top:12px; padding:12px 14px; border:1px solid var(--wka-line); border-radius:10px; background:var(--wka-bg-2); }
 .wca-scenario b { font-size:13px; color:var(--wka-text); }
 .wca-scenario p { font-size:12.5px; color:var(--wka-muted); margin:5px 0 0; line-height:1.55; }
+/* Security alerts: amber, scannable, newest first. Uses the console's own
+   --wka-amber token (single source); only the tints are derived here. */
+.wka { --wca-amber-soft:color-mix(in srgb, var(--wka-amber) 12%, transparent); --wca-amber-line:color-mix(in srgb, var(--wka-amber) 36%, transparent); }
+.wca-badge { margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-grid; place-items:center; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; color:#1a1200; background:var(--wka-amber); box-shadow:0 0 0 2px var(--wca-amber-soft); animation:wca-badge-in .3s cubic-bezier(.3,1.3,.5,1) both; }
+@keyframes wca-badge-in { from { transform:scale(.6); opacity:0; } to { transform:none; opacity:1; } }
+.wca-alerts-head { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px; }
+.wca-alerts-head h2 { display:inline-flex; align-items:center; gap:8px; margin:0; }
+.wca-alerts-head h2 svg { color:var(--wka-amber); }
+.wca-alerts-note { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; color:var(--wka-muted); }
+.wca-alerts-note svg { color:var(--wka-emerald); flex:none; }
+.wca-alerts { display:flex; flex-direction:column; gap:10px; }
+.wca-alert { position:relative; display:flex; gap:12px; align-items:flex-start; padding:12px 14px 12px 16px; border-radius:13px; background:var(--wca-amber-soft); border:1px solid var(--wca-amber-line); overflow:hidden; animation:wca-alert-in .3s cubic-bezier(.2,.8,.2,1) both; }
+.wca-alert::before { content:''; position:absolute; left:0; top:0; bottom:0; width:4px; background:var(--wka-amber); }
+.wca-alert-ic { width:32px; height:32px; border-radius:10px; flex:none; display:grid; place-items:center; background:var(--wka-bg-2); color:var(--wka-amber); border:1px solid var(--wca-amber-line); }
+.wca-alert-body { flex:1; min-width:0; display:flex; flex-direction:column; gap:6px; }
+.wca-alert-line { font-size:13.5px; line-height:1.55; color:var(--wka-text); overflow-wrap:anywhere; }
+.wca-alert-line b { font-weight:700; }
+.wca-alert-mail { margin-left:5px; color:var(--wka-muted); }
+.wca-alert-role { margin:0 6px 0 8px; vertical-align:middle; }
+.wca-alert-cat { color:var(--wka-amber); }
+.wca-alert-line q { quotes:'\\201C' '\\201D'; font-style:italic; }
+.wca-alert-meta { display:flex; align-items:center; gap:14px; flex-wrap:wrap; font-size:12px; color:var(--wka-faint); }
+.wca-alert-meta span { display:inline-flex; align-items:center; gap:5px; }
+.wca-alert-link { color:var(--wka-accent); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
+@keyframes wca-alert-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+@media (prefers-reduced-motion: reduce) { .wca-alert, .wca-badge { animation:none; } }
 `
