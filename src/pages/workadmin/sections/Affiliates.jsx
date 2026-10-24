@@ -81,7 +81,7 @@ function ProgramSettings({ config, isSuperAdmin, onSaved }) {
   const num = (v, lo, hi) => { const n = Number(v); return v !== '' && isFinite(n) && n >= lo && n <= hi ? n : null }
 
   const save = async () => {
-    if (saving || !isSuperAdmin) return
+    if (saving) return   // editable by whoever can see this section (superadmin or affiliate admin)
     const rate = num(form.defaultRatePct, 0, 100), min = num(form.minPayoutUsd, 0, 1e6), days = num(form.cookieDays, 1, 365)
     if (rate == null) { setErr(new Error('Default commission must be a number from 0 to 100.')); return }
     if (min == null) { setErr(new Error('Minimum payout must be a dollar amount of 0 or more.')); return }
@@ -94,7 +94,7 @@ function ProgramSettings({ config, isSuperAdmin, onSaved }) {
     } catch (e) { setErr(e) } finally { setSaving(false) }
   }
 
-  const ro = !isSuperAdmin || saving
+  const ro = saving
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
@@ -102,7 +102,6 @@ function ProgramSettings({ config, isSuperAdmin, onSaved }) {
         <SavedTag show={saved} />
       </div>
       <p className="desc" style={{ marginTop: 6 }}>Applies to new approvals and new referrals. An affiliate&rsquo;s own rate (set at approval or edited in the table) overrides the default.</p>
-      {!isSuperAdmin ? <div className="wka-note"><Info size={14} /> Only a superadmin can change program settings. You can view them here.</div> : null}
 
       <div className={`wka-toggle${form.enabled ? ' on' : ''}${ro ? ' disabled' : ''}`} role="switch" aria-checked={form.enabled}
         onClick={() => !ro && set('enabled', !form.enabled)} style={{ marginBottom: 16 }}>
@@ -129,12 +128,87 @@ function ProgramSettings({ config, isSuperAdmin, onSaved }) {
       </div>
 
       {err ? <div style={{ marginTop: 14 }}><ErrorBox error={err} /></div> : null}
-      {isSuperAdmin ? (
-        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-          <button type="button" className="wka-btn sm ghost" disabled={!dirty || saving} onClick={() => { setForm(toForm(config)); setErr(null) }}>Discard</button>
-          <button type="button" className="wka-btn sm primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinning /> : <Check size={13} />} Save settings</button>
-        </div>
-      ) : null}
+      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
+        <button type="button" className="wka-btn sm ghost" disabled={!dirty || saving} onClick={() => { setForm(toForm(config)); setErr(null) }}>Discard</button>
+        <button type="button" className="wka-btn sm primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinning /> : <Check size={13} />} Save settings</button>
+      </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------ Affiliate admins (superadmin) */
+// Create / grant / revoke the affiliate_admin role. Only a superadmin manages who
+// the affiliate admins are; an affiliate admin then runs the whole program.
+function AffiliateAdmins() {
+  const [state, setState] = useState({ loading: true, error: null, staff: [] })
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState(null)
+  const [notice, setNotice] = useState('')
+  const [revoking, setRevoking] = useState(null)
+
+  const load = useCallback(async () => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    try { const d = await workAdminApi.affiliateStaff(); setState({ loading: false, error: null, staff: d.staff || [] }) }
+    catch (error) { setState({ loading: false, error, staff: [] }) }
+  }, [])
+  useEffect(() => { load() }, [load])
+
+  const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email.trim())
+  const create = async () => {
+    if (busy || !emailOk) return
+    setBusy(true); setErr(null); setNotice('')
+    try {
+      const em = email.trim().toLowerCase()
+      const base = (em.split('@')[0] || 'affadmin').replace(/[^a-z0-9._-]/gi, '').slice(0, 40) || 'affadmin'
+      const user = await workAdminApi.createUser({ username: base, email: em, displayName: name.trim() || null })
+      await workAdminApi.setAffiliateRole(user.id, 'affiliate_admin')
+      setName(''); setEmail(''); setNotice(`${em} is now an affiliate admin. A set-password email is on the way.`)
+      load()
+    } catch (e) { setErr(e) } finally { setBusy(false) }
+  }
+  const revoke = async (u) => {
+    if (revoking) return
+    setRevoking(u.id); setErr(null); setNotice('')
+    try { await workAdminApi.setAffiliateRole(u.id, 'user'); setNotice(`${u.username} is no longer an affiliate admin.`); load() }
+    catch (e) { setErr(e) } finally { setRevoking(null) }
+  }
+
+  return (
+    <div className="wka-panel">
+      <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}><UserCheck size={16} style={{ color: 'var(--wka-accent)' }} /> Affiliate admins</h2>
+      <p className="desc" style={{ marginTop: 6 }}>A separate admin account that runs the whole affiliate program - approve affiliates, set rates, manage program settings and run payouts. They sign in and see only this Affiliates console. Add one by email; they get a set-password link.</p>
+
+      <div className="wka-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', alignItems: 'end' }}>
+        <div className="wka-field"><label htmlFor="afa-name">Name (optional)</label><input id="afa-name" className="wka-input" value={name} onChange={(e) => setName(e.target.value)} placeholder="Jordan Lee" disabled={busy} /></div>
+        <div className="wka-field"><label htmlFor="afa-email">Email</label><input id="afa-email" className="wka-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="jordan@example.com" disabled={busy} /></div>
+        <div className="wka-field"><button type="button" className="wka-btn sm primary" disabled={busy || !emailOk} onClick={create}>{busy ? <Spinning /> : <Check size={13} />} Add affiliate admin</button></div>
+      </div>
+      {notice ? <div className="wka-note" style={{ marginTop: 10 }}><Check size={14} /> {notice}</div> : null}
+      {err ? <div style={{ marginTop: 10 }}><ErrorBox error={err} /></div> : null}
+
+      <div style={{ marginTop: 16 }}>
+        {state.loading ? <Loading label="Loading admins" /> : state.error ? <ErrorBox error={state.error} onRetry={load} /> : (
+          <div className="wka-table-wrap">
+            <table className="wka-table">
+              <thead><tr><th className="no-sort">Admin</th><th className="no-sort">Email</th><th className="no-sort">Role</th><th className="no-sort"></th></tr></thead>
+              <tbody>
+                {state.staff.map((u) => (
+                  <tr key={u.id}>
+                    <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{u.displayName || u.username}</td>
+                    <td style={{ fontSize: 12.5 }}>{u.email || '-'}</td>
+                    <td><span className={`wka-badge ${u.role === 'superadmin' ? 'active' : 'paused'}`}>{u.role === 'superadmin' ? 'Superadmin' : 'Affiliate admin'}</span></td>
+                    <td style={{ textAlign: 'right' }}>
+                      {u.role === 'affiliate_admin' ? <button type="button" className="wka-btn sm ghost" disabled={revoking === u.id} onClick={() => revoke(u)} style={{ color: '#d6433b' }}>{revoking === u.id ? <Spinning /> : <Ban size={13} />} Revoke</button> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>-</span>}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -432,6 +506,7 @@ export default function Affiliates({ isSuperAdmin }) {
   return (
     <div>
       <ProgramSettings config={state.config} isSuperAdmin={!!isSuperAdmin} onSaved={() => load('refresh')} />
+      {isSuperAdmin ? <AffiliateAdmins /> : null}
 
       <div className="wka-toolbar">
         <div role="tablist" aria-label="Filter by status" style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>

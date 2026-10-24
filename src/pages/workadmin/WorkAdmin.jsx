@@ -107,7 +107,10 @@ export default function WorkAdmin() {
   // ONLY. So a plain `admin` does NOT see AI config, Finance, Incidents (which
   // surface provider/model + estimated cost) or Claims (internal file paths +
   // honesty status). The server enforces these too; this hides them in the UI.
-  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'incidents', 'claims'])
+  // Hidden from a plain `admin` (the explicit superadmin / accounting / affiliate-
+  // admin branches below are unaffected). Affiliates is managed by superadmin or a
+  // dedicated affiliate_admin only - a plain admin would just hit a 403.
+  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'incidents', 'claims', 'affiliates'])
   const visibleSections = isSuperAdmin ? SECTIONS
     : isAccounting ? SECTIONS.filter((s) => s.id === 'finance')
       : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates')

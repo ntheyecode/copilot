@@ -145,7 +145,7 @@ export default function WorkLogin() {
       // Admins and superadmins land on the full console; a company admin lands
       // on their own company console; everyone else on the user dashboard. A
       // pending checkout (plan) always goes through /work first.
-      const isAdmin = !!(user && (user.role === 'superadmin' || user.role === 'admin'))
+      const isAdmin = !!(user && ['superadmin', 'admin', 'accounting', 'affiliate_admin'].includes(user.role))
       const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && !isAdmin)
       const dest = plan ? '/work' : isAdmin ? '/work/admin' : isCompanyAdmin ? '/work/company' : '/work'
       if (!cancelled) nav(dest, { replace: true })
