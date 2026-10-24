@@ -1133,11 +1133,24 @@ function ActivitySection() {
 function SessionsSection() {
   const [state, setState] = useState({ loading: true, error: null, items: null })
   const [filter, setFilter] = useState('all')   // all | active | ended
+  const [fw, setFw] = useState('')               // selected framework focus ('' = all)
+  const [frameworks, setFrameworks] = useState([])
+  const [emailing, setEmailing] = useState(null) // session id currently sending
+  const [emailMsg, setEmailMsg] = useState(null) // { id, ok, text }
   const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
     api.workCompanySessions().then((r) => setState({ loading: false, error: null, items: r.sessions || [] })).catch((error) => setState({ loading: false, error, items: [] }))
   }, [])
   useEffect(() => { load() }, [load])
+  useEffect(() => { api.workComplianceFrameworks().then((r) => setFrameworks(r.frameworks || [])).catch(() => setFrameworks([])) }, [])
+  const emailOne = async (id) => {
+    const to = window.prompt('Email the compliance report to which address?')
+    if (!to) return
+    setEmailing(id); setEmailMsg(null)
+    try { const r = await api.workComplianceEmail(id, { to: to.trim(), ...(fw ? { framework: fw } : {}) }); setEmailMsg({ id, ok: true, text: `Sent to ${r.to}.` }) }
+    catch (e) { setEmailMsg({ id, ok: false, text: (e && e.message) || 'Could not send.' }) }
+    finally { setEmailing(null) }
+  }
   if (state.loading) return <Loading label="Loading sessions" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
   if (!state.items || !state.items.length) return <EmptyState title="No sessions yet" detail="When your people run guided sessions they appear here - completed or in progress - and you can pull each report and audit log." />
@@ -1155,6 +1168,10 @@ function SessionsSection() {
             <option value="active">In progress</option>
             <option value="ended">Completed</option>
           </select>
+          <select className="wka-select" value={fw} onChange={(e) => setFw(e.target.value)} style={{ height: 32 }} title="Focus the compliance report on one framework (default covers all)">
+            <option value="">Compliance: all frameworks</option>
+            {frameworks.map((f) => <option key={f.id} value={f.id}>{f.name}</option>)}
+          </select>
           <button className="wka-btn sm ghost" onClick={load} title="Refresh"><RefreshCw size={13} /> Refresh</button>
         </div>
       </div>
@@ -1171,9 +1188,11 @@ function SessionsSection() {
                 <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{s.steps ? `${s.done}/${s.steps} steps` : '-'}</td>
                 <td style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDT(s.lastActivityAt || s.startedAt)}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>
-                  <a className="wka-btn sm" href={api.workComplianceUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download a compliance report: controls, responses and evidence for this task (PDF)"><ShieldCheck size={13} /> Compliance</a>
+                  <a className="wka-btn sm" href={api.workComplianceUrl(s.id, true, fw)} target="_blank" rel="noopener noreferrer" title={`Download the compliance report (${fw ? frameworks.find((f) => f.id === fw)?.name || 'framework' : 'all frameworks'}): controls, responses and evidence for this task (PDF)`}><ShieldCheck size={13} /> Compliance</a>
+                  <button className="wka-btn sm ghost" onClick={() => emailOne(s.id)} disabled={emailing === s.id} title="Email the compliance report (PDF attached)" style={{ marginLeft: 6 }}>{emailing === s.id ? <Loader2 size={13} className="spin" /> : <Mail size={13} />} Email</button>
                   <a className="wka-btn sm ghost" href={api.workReportUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download the session report (PDF)" style={{ marginLeft: 6 }}><Download size={13} /> Report</a>
                   <a className="wka-btn sm ghost" href={api.workAuditUrl(s.id)} target="_blank" rel="noopener noreferrer" title="Download the audit log (exactly what was sent to the AI)" style={{ marginLeft: 6 }}><FileText size={13} /> Log</a>
+                  {emailMsg && emailMsg.id === s.id && <span style={{ marginLeft: 8, fontSize: 12, color: emailMsg.ok ? '#16a34a' : '#b45309' }}>{emailMsg.text}</span>}
                 </td>
               </tr>
             ))}

@@ -59,6 +59,12 @@ export const workAdminApi = {
   getPlatformAi: () => request('GET', '/api/work/admin/platform-ai'),
   setPlatformAi: (allowed) => request('POST', '/api/work/admin/platform-ai', { allowed: !!allowed }),
 
+  // SMTP / email (SES) - superadmin only. The password is write-only (the view
+  // only reports whether one is set). Test sends a real email with the saved config.
+  getSmtp: () => request('GET', '/api/work/admin/smtp'),
+  setSmtp: (body) => request('POST', '/api/work/admin/smtp', body || {}),
+  testSmtp: (to) => request('POST', '/api/work/admin/smtp/test', { to }),
+
   // AI-config OTP step-up (superadmin). The page shows/changes nothing until a
   // fresh authenticator code opens a short window. GET is ungated (tells the UI
   // lock state); POST verifies a code; DELETE locks immediately.

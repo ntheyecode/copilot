@@ -10,6 +10,7 @@
 // ---------------------------------------------------------------------------
 import PDFDocument from 'pdfkit'
 import { readShotBuffer } from './store.js'   // decrypts the at-rest encrypted shot bytes
+import { attestReport, REPORT_CONTACTS } from './report_sign.js'   // hash + authenticity signature on every report
 
 const INK = '#1a1a1a'
 const MUTED = '#6b7280'
@@ -156,6 +157,12 @@ export function buildWorkReportPdf(session, stream, { achieved = '', modeLabel =
     'This report is a record of guided work to help you act. It is not legal, financial, medical or other professional advice. Verify anything you rely on against your own requirements and a qualified professional. WorkCoPilot provides controls and evidence; it does not make you compliant or certified.',
     { width: W })
 
+  // Authenticity seal over the canonical content of this session report.
+  attestationBlock(doc, { kind: 'session', reportId: session.id || '', payload: {
+    id: session.id || '', goal: session.goal || '', achieved: String(achieved || ''),
+    steps: steps.map((s) => ({ t: s.text, st: s.status, at: s.doneAt || null })),
+  } })
+
   // Page numbers
   const range = doc.bufferedPageRange()
   for (let i = 0; i < range.count; i++) {
@@ -229,6 +236,13 @@ export function buildDeliverablesPdf(d = {}, goal = '', stream) {
   issues('Security issues', d.security, true)
   heading('Prompt 1 - current design, with the problems marked'); codeBlock(doc, String(d.promptIssues || '(none)'))
   heading('Prompt 2 - recommended corrected design'); codeBlock(doc, String(d.promptTarget || '(none)'))
+  // Authenticity seal over the canonical content of this deliverables report.
+  attestationBlock(doc, { kind: 'deliverables', reportId: '', payload: {
+    goal: String(goal || ''), summary: String(d.summary || ''),
+    architecture: (Array.isArray(d.architecture) ? d.architecture : []).map((a) => a.issue || ''),
+    security: (Array.isArray(d.security) ? d.security : []).map((a) => a.issue || ''),
+    promptIssues: String(d.promptIssues || ''), promptTarget: String(d.promptTarget || ''),
+  } })
   const range = doc.bufferedPageRange()
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(range.start + i)
@@ -271,8 +285,10 @@ export function buildComplianceReportPdf(session, stream, { evidence, company = 
   const statusColor = (st) => st === 'satisfied' ? ACCENT : (st === 'partial' ? AMBER : MUTED)
   const statusLabel = (st) => st === 'satisfied' ? 'SATISFIED' : (st === 'partial' ? 'PARTIAL' : 'N/A')
 
-  // Title + scope
-  doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text('WorkCoPilot compliance report')
+  // Title + scope. When a specific framework was requested, this is that
+  // framework's focused report.
+  const focus = ev.focus || null
+  doc.font('Helvetica-Bold').fontSize(20).fillColor(INK).text(focus ? `${focus.name} compliance report` : 'WorkCoPilot compliance report')
   doc.moveDown(0.2)
   doc.font('Helvetica').fontSize(10).fillColor(MUTED).text(
     [company ? ('Organization: ' + company) : null, member ? ('Operator: ' + member) : null,
@@ -280,6 +296,17 @@ export function buildComplianceReportPdf(session, stream, { evidence, company = 
      ('Report generated: ' + new Date().toLocaleString()), generatedBy ? ('Pulled by: ' + generatedBy) : null,
      ('Session: ' + (session.id || ''))].filter(Boolean).join('   -   '), { width: W })
   doc.moveDown(0.4); rule(); doc.moveDown(0.6)
+
+  // Framework focus callout (per-framework "relevant" report).
+  if (focus) {
+    const fc = focus.status === 'supported' ? ACCENT : (focus.status === 'partial' ? AMBER : MUTED)
+    heading(`${focus.name} focus`)
+    doc.font('Helvetica-Bold').fontSize(10).fillColor(fc).text(
+      (focus.status === 'supported' ? 'Supported for this task' : focus.status === 'partial' ? 'Partially supported for this task' : focus.status === 'gap' ? 'Gap on this task' : 'Not applicable to this task') +
+      (focus.applicable ? `  (${focus.satisfied} of ${focus.applicable} applicable controls satisfied)` : ''), { width: W })
+    doc.font('Helvetica').fontSize(9.5).fillColor(INK).text(String(focus.support || ''), { width: W })
+    if (Array.isArray(focus.controls) && focus.controls.length) doc.font('Helvetica').fontSize(8.5).fillColor(MUTED).text('Supporting controls: ' + focus.controls.map((c) => c.name).join('; '), { width: W })
+  }
 
   // The task
   heading('Task under review')
@@ -332,12 +359,43 @@ export function buildComplianceReportPdf(session, stream, { evidence, company = 
     for (const f of flags) { if (doc.y + 24 > doc.page.height - 60) doc.addPage(); doc.font('Helvetica').fontSize(10).fillColor(INK).text('- ' + String(f.text || ''), { width: W }); doc.moveDown(0.2) }
   }
 
+  // Framework coverage appendix: EVERY framework the product advertises, mapped
+  // to the controls that support it and this session's status for each - so the
+  // report is relevant for all of them, not only the few named inline.
+  const frameworks = Array.isArray(ev.frameworks) ? ev.frameworks : []
+  if (frameworks.length) {
+    const fwStatusLabel = (st) => st === 'supported' ? 'Supported' : (st === 'partial' ? 'Partial' : (st === 'gap' ? 'Gap' : 'N/A'))
+    const fwStatusColor = (st) => st === 'supported' ? ACCENT : (st === 'partial' ? AMBER : MUTED)
+    heading('Framework coverage')
+    doc.font('Helvetica-Oblique').fontSize(9).fillColor(MUTED).text('How this task maps to the frameworks WorkCoPilot supports. "Supported" means every applicable control was satisfied for this task; "Partial" means some were. Controls and evidence that support your program - not a certification.', { width: W })
+    doc.moveDown(0.4)
+    for (const f of frameworks) {
+      if (doc.y + 42 > doc.page.height - 60) doc.addPage()
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(INK).text(f.name + (f.readiness ? ' (readiness)' : ''), { width: W, continued: true })
+      doc.font('Helvetica-Bold').fontSize(9).fillColor(fwStatusColor(f.status)).text('    ' + fwStatusLabel(f.status) + (f.applicable ? `  (${f.satisfied}/${f.applicable})` : ''))
+      doc.font('Helvetica').fontSize(8.5).fillColor(MUTED).text(`${f.region}  -  ${f.category}`, { width: W })
+      doc.font('Helvetica').fontSize(9).fillColor(INK).text(String(f.support || ''), { width: W })
+      doc.moveDown(0.45)
+    }
+  }
+
   // Disclaimer: controls + evidence, not a certification.
-  doc.moveDown(1)
+  doc.moveDown(0.6)
   if (doc.y + 46 > doc.page.height - 60) doc.addPage()
   rule(); doc.moveDown(0.3)
   doc.font('Helvetica-Oblique').fontSize(8).fillColor(MUTED).text(
     'This report evidences the controls WorkCoPilot applied to this task and the work performed under them. The audit log (a separate export) records exactly what was transmitted to the AI. WorkCoPilot provides controls and evidence to support your compliance program; it does not by itself make an organization compliant or certified, and this report is not legal advice. Framework references are indicative mappings, not an attestation of conformance.', { width: W })
+
+  // Authenticity seal (hash + signature + issuer + contacts) over the canonical
+  // content of THIS report.
+  attestationBlock(doc, { kind: 'compliance', reportId: session.id || '', payload: {
+    id: session.id || '', goal: session.goal || '', company, member,
+    posture: ev.posture,
+    controls: (ev.controls || []).map((c) => ({ id: c.id, status: c.status })),
+    frameworks: frameworks.map((f) => ({ id: f.id, status: f.status })),
+    steps: steps.map((s) => ({ t: s.text, st: s.status, at: s.doneAt || null })),
+    evidence: ev.evidence,
+  } })
 
   const range = doc.bufferedPageRange()
   for (let i = 0; i < range.count; i++) {
@@ -345,6 +403,43 @@ export function buildComplianceReportPdf(session, stream, { evidence, company = 
     doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(`WorkCoPilot compliance report  -  Page ${i + 1} of ${range.count}`, 60, doc.page.height - 42, { width: W, align: 'center' })
   }
   doc.end()
+}
+
+// Shared authenticity seal, rendered near the end of EVERY report PDF: the
+// content hash, the signature, the issue date + timestamp, the issuer and the
+// contact addresses. `payload` is the report's canonical content (hashed);
+// `kind`/`reportId` scope the signature. Returns nothing - it draws the block.
+function attestationBlock(doc, { payload, kind, reportId }) {
+  const att = attestReport(payload, { kind, reportId })
+  const W = doc.page.width - 120
+  const lineH = 13
+  // Reserve enough room; move to a fresh page if the seal would be split.
+  if (doc.y + 150 > doc.page.height - 60) doc.addPage()
+  doc.moveDown(0.8)
+  const top = doc.y
+  doc.font('Helvetica-Bold').fontSize(10).fillColor(INK).text('Report authenticity', 60, top + 10, { width: W })
+  let y = doc.y + 3
+  const row = (label, value, mono) => {
+    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(label, 70, y, { width: 118, continued: false })
+    doc.font(mono ? 'Courier' : 'Helvetica').fontSize(8).fillColor(INK).text(value, 190, y, { width: W - 140 })
+    y = doc.y + 2
+  }
+  let human = ''
+  try { human = new Date(att.issuedAt).toLocaleString() } catch { human = att.issuedAt }
+  row('Issued by', att.issuer)
+  row('Issued', `${human}  (${att.issuedAt} UTC)`)
+  row('Content SHA-256', att.hash, true)
+  row(`Signature`, att.signature, true)
+  row('Algorithm / key', `${att.alg} - key ${att.keyId}`)
+  row('Verify', 'https://admireveda.com/api/work/reports/verify')
+  row('Contact', REPORT_CONTACTS.join('   |   '))
+  const bottom = y + 6
+  // Border around the seal.
+  doc.rect(60, top + 2, doc.page.width - 120, bottom - top).strokeColor(ACCENT).lineWidth(1).stroke()
+  doc.y = bottom + 8
+  doc.font('Helvetica-Oblique').fontSize(7.5).fillColor(MUTED).text(
+    'This seal attests that ' + att.issuer + ' issued this exact content at the time shown. Any change to the content changes the SHA-256 hash and invalidates the signature. It is an integrity and origin seal, not a legal e-signature or a compliance certification.',
+    { width: W })
 }
 
 function codeBlock(doc, body) {

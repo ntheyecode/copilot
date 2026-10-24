@@ -23,6 +23,7 @@ import crypto from 'node:crypto'
 import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
+import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -2614,6 +2615,54 @@ export function effectiveRetentionDays(workUserId) {
   if (u && u.companyId) return getCompanyRetentionDays(u.companyId)
   return getWorkRetentionDays()
 }
+
+// ---- SMTP / email (SES) ----------------------------------------------------
+// Superadmin-set outbound email config. The password is a secret, so it is
+// stored ENCRYPTED at rest (AES-256-GCM, same key as the rest of the store) and
+// NEVER returned to any client - the public view only says whether one is set.
+const encStr = (s) => encryptBuffer(Buffer.from(String(s), 'utf8')).toString('base64')
+const decStr = (b64) => { try { return decryptBuffer(Buffer.from(String(b64), 'base64')).toString('utf8') } catch { return '' } }
+const SMTP_SECURITY = ['starttls', 'tls', 'none']
+// Public view - safe to send to the superadmin UI (no password).
+export function getSmtpConfig() {
+  const c = (db.work && db.work.smtp) || {}
+  return {
+    host: c.host || '', port: Number(c.port) || 587, security: SMTP_SECURITY.includes(c.security) ? c.security : 'starttls',
+    username: c.username || '', fromEmail: c.fromEmail || '', fromName: c.fromName || 'WorkCoPilot',
+    hasPassword: !!c.passwordEnc, updatedAt: c.updatedAt || null,
+  }
+}
+export function setSmtpConfig(patch = {}) {
+  if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
+  const cur = db.work.smtp || {}
+  const out = { ...cur }
+  if (patch.host != null) out.host = String(patch.host).trim().slice(0, 255)
+  if (patch.port != null && patch.port !== '') { const n = Number(patch.port); if (!Number.isInteger(n) || n < 1 || n > 65535) throw httpErr(400, 'Port must be between 1 and 65535.'); out.port = n }
+  if (patch.security != null) { const s = String(patch.security).toLowerCase(); if (!SMTP_SECURITY.includes(s)) throw httpErr(400, 'Security must be starttls, tls or none.'); out.security = s }
+  if (patch.username != null) out.username = String(patch.username).trim().slice(0, 255)
+  if (patch.fromEmail != null) { const e = String(patch.fromEmail).trim(); if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw httpErr(400, 'From address must be a valid email.'); out.fromEmail = e }
+  if (patch.fromName != null) out.fromName = String(patch.fromName).trim().slice(0, 120)
+  // Password: update only when a non-empty value is sent (so saving other
+  // fields never wipes it); an explicit clearPassword:true removes it.
+  if (patch.clearPassword === true) out.passwordEnc = null
+  else if (typeof patch.password === 'string' && patch.password.length) out.passwordEnc = encStr(patch.password)
+  out.updatedAt = now()
+  db.work.smtp = out
+  persist()
+  return getSmtpConfig()
+}
+// Internal - the full config (decrypted password) for the mailer. Never exposed.
+export function getSmtpSendConfig() {
+  const c = (db.work && db.work.smtp) || {}
+  if (!c.host || !c.fromEmail) return null
+  return {
+    host: c.host, port: Number(c.port) || 587,
+    secure: c.security === 'tls',   // implicit TLS (465); starttls upgrades after EHLO
+    username: c.username || '', password: c.passwordEnc ? decStr(c.passwordEnc) : '',
+    fromEmail: c.fromEmail, fromName: c.fromName || 'WorkCoPilot',
+  }
+}
+export function smtpConfigured() { const c = getSmtpSendConfig(); return !!(c && c.host && c.fromEmail) }
 // Purge each session past ITS OWNER'S effective retention window. Reuses
 // deleteWorkSession (logged + removes shots + audit). Best-effort.
 export function purgeOldWorkSessions() {
@@ -3522,7 +3571,7 @@ export function deleteWorkAudit(sessionId) {
 // passes the member's id), so controls reflect the operator's own posture, not
 // the admin's. `session` is the ALREADY-AUTHORIZED record the caller fetched.
 // Returns { controls[], evidence{}, posture } for the PDF.
-export function getWorkComplianceEvidence(session, ownerId) {
+export function getWorkComplianceEvidence(session, ownerId, { framework = null } = {}) {
   const s = session || {}
   const sessionId = s.id
   const steps = Array.isArray(s.steps) ? s.steps : []
@@ -3616,8 +3665,25 @@ export function getWorkComplianceEvidence(session, ownerId) {
     na: controls.filter((c) => c.status === 'na').length,
     total: controls.length,
   }
+  // Framework coverage: map EVERY advertised framework (the canonical registry,
+  // the single source of truth) to the controls that support it and this
+  // session's status for each, so the report is relevant for all of them - not
+  // just the handful named inline on the controls.
+  const controlById = Object.fromEntries(controls.map((c) => [c.id, c]))
+  const frameworks = COMPLIANCE_FRAMEWORKS.map((f) => {
+    const mapped = f.controls.map((id) => controlById[id]).filter(Boolean)
+    const applicable = mapped.filter((c) => c.status !== 'na')
+    const sat = applicable.filter((c) => c.status === 'satisfied').length
+    const status = applicable.length === 0 ? 'na' : (sat === applicable.length ? 'supported' : (sat > 0 ? 'partial' : 'gap'))
+    return {
+      id: f.id, name: f.name, region: f.region, category: f.category, readiness: !!f.readiness, support: f.support,
+      status, satisfied: sat, applicable: applicable.length,
+      controls: mapped.map((c) => ({ id: c.id, name: c.name, status: c.status })),
+    }
+  })
+  const focus = framework ? (getFramework(framework) ? frameworks.find((f) => f.id === getFramework(framework).id) : null) : null
   return {
-    controls, posture,
+    controls, posture, frameworks, focus,
     evidence: {
       transmissions, redactedTotal, framesSent,
       doneSteps: doneN, totalSteps: steps.length, shots: shots.length,

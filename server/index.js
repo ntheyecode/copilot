@@ -21,6 +21,10 @@ import * as ai from './ai.js'
 import * as docs from './docs.js'
 import * as work from './work.js'
 import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } from './pdf.js'
+import { sendMail } from './mailer.js'
+import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './report_sign.js'
+import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
+import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
@@ -1341,9 +1345,11 @@ app.get('/api/work/exec/productivity.csv', requireWorkAuth, requireExecutive, wr
   rows.push('')
   rows.push(['Member', 'Tasks completed'].map(esc).join(','))
   for (const m of d.topMembers) rows.push([m.name, m.tasks].map(esc).join(','))
+  const csv = rows.join('\n')
+  const signedCsv = csv + '\n' + attestationText(attestReport(csv, { kind: 'productivity-csv', reportId: '' })).split('\n').map((l) => l ? '# ' + l : l).join('\n')
   res.setHeader('Content-Type', 'text/csv; charset=utf-8')
   res.setHeader('Content-Disposition', 'attachment; filename="workcopilot-productivity.csv"')
-  res.send(rows.join('\n'))
+  res.send(signedCsv)
 }))
 app.post('/api/work/sessions/:id/goal', requireWorkAuth, wrap((req, res) => {
   const g = guardUserText(req, res, (req.body || {}).goal, 'goal', req.params.id); if (g === 'refused') return
@@ -1885,9 +1891,10 @@ app.get('/api/work/sessions/:id/audit.log', requireWorkAuth, wrap((req, res) => 
   }
   if (!s) return res.status(404).json({ error: 'Session not found' })
   const text = store.formatWorkAuditLog(req.params.id, s)
+  const signed = text + attestationText(attestReport(text, { kind: 'audit', reportId: req.params.id }))
   res.setHeader('Content-Type', 'text/plain; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="workcopilot-${req.params.id}-audit.log"`)
-  res.send(text)
+  res.send(signed)
 }))
 
 app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) => {
@@ -1932,11 +1939,61 @@ app.get('/api/work/sessions/:id/compliance.pdf', requireWorkAuth, async (req, re
     const member = owner.displayName || owner.username || 'Operator'
     const generatedBy = (req.workUser && (req.workUser.displayName || req.workUser.username)) || ''
     const modeLabel = (work.WORK_MODES.find((m) => m.id === work.normalizeMode(s.mode)) || {}).label || ''
-    const evidence = store.getWorkComplianceEvidence(s, ownerId)
-    const fname = `workcopilot-compliance-${String(s.startedAt || '').slice(0, 10) || 'session'}.pdf`
+    const framework = (req.query && req.query.framework) ? String(req.query.framework) : null
+    const evidence = store.getWorkComplianceEvidence(s, ownerId, { framework })
+    const fw = framework && evidence.focus ? '-' + evidence.focus.id : ''
+    const fname = `workcopilot-compliance${fw}-${String(s.startedAt || '').slice(0, 10) || 'session'}.pdf`
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="${fname}"`)
     buildComplianceReportPdf(s, res, { evidence, company: company ? (company.name || '') : '', member, generatedBy, modeLabel })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// The catalog of frameworks the compliance report can focus on (for the admin
+// picker). Public: it is just the list of names we support.
+app.get('/api/work/compliance/frameworks', wrap((req, res) => {
+  res.json({ frameworks: COMPLIANCE_FRAMEWORKS.map((f) => ({ id: f.id, name: f.name, region: f.region, category: f.category })) })
+}))
+
+// Render any streamed PDF builder to a Buffer (for emailing as an attachment).
+function pdfToBuffer(builder) {
+  return new Promise((resolve, reject) => {
+    const chunks = []
+    const sink = new Writable({ write(c, _e, cb) { chunks.push(c); cb() } })
+    sink.on('finish', () => resolve(Buffer.concat(chunks)))
+    sink.on('error', reject)
+    try { builder(sink) } catch (e) { reject(e) }
+  })
+}
+
+// Email the compliance report (PDF attached) - company admin of the owner's
+// company, or superadmin. Needs SMTP configured (superadmin > Email).
+app.post('/api/work/sessions/:id/compliance/email', requireWorkAuth, async (req, res) => {
+  try {
+    if (!store.smtpConfigured()) return res.status(400).json({ error: 'Email is not configured yet. A superadmin sets it up under Admin > Email.' })
+    let s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) s = store.getWorkSessionForCompanyAdmin(req.workUser.id, req.params.id)
+    if (!s && req.user && req.user.role === 'superadmin') s = (store.listAllWorkSessions ? store.listAllWorkSessions() : []).find((x) => x.id === req.params.id) || null
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const to = String((req.body || {}).to || '').trim()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'Enter a valid recipient address.' })
+    const ownerId = s.workUserId
+    const owner = store.getUser(ownerId) || {}
+    const company = owner.companyId ? (store.getCompany(owner.companyId) || null) : null
+    const member = owner.displayName || owner.username || 'Operator'
+    const generatedBy = (req.workUser && (req.workUser.displayName || req.workUser.username)) || ''
+    const modeLabel = (work.WORK_MODES.find((m) => m.id === work.normalizeMode(s.mode)) || {}).label || ''
+    const framework = (req.body && req.body.framework) ? String(req.body.framework) : null
+    const evidence = store.getWorkComplianceEvidence(s, ownerId, { framework })
+    const pdf = await pdfToBuffer((sink) => buildComplianceReportPdf(s, sink, { evidence, company: company ? (company.name || '') : '', member, generatedBy, modeLabel }))
+    const label = evidence.focus ? `${evidence.focus.name} compliance report` : 'Compliance report'
+    const fw = framework && evidence.focus ? '-' + evidence.focus.id : ''
+    await sendMail(store.getSmtpSendConfig(), {
+      to, subject: `${label}: ${s.goal ? String(s.goal).slice(0, 80) : 'WorkCoPilot task'}`,
+      text: `Attached is the ${label.toLowerCase()} for the task "${s.goal || ''}" run by ${member}.\n\nThe report carries an authenticity seal (SHA-256 hash + signature) from ${REPORT_CONTACTS ? 'AdmireVeda / COE Security LLC' : ''}. Questions: ${REPORT_CONTACTS.join(' or ')}.\n\nSent ${new Date().toISOString()}.`,
+      attachment: { filename: `workcopilot-compliance${fw}-${String(s.startedAt || '').slice(0, 10) || 'session'}.pdf`, content: pdf, contentType: 'application/pdf' },
+    })
+    res.json({ ok: true, to })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -2171,6 +2228,36 @@ app.delete('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, 
 }))
 
 app.post('/api/work/admin/pricing', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json(store.setWorkPricing(req.body || {})) }))
+
+// ---- SMTP / email (SES) - superadmin only ---------------------------------
+// The outbound-email config the product uses to deliver reports and (later)
+// other notifications. The password is write-only: it is stored encrypted and
+// never returned (the view only says whether one is set).
+app.get('/api/work/admin/smtp', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ smtp: store.getSmtpConfig() }) }))
+app.post('/api/work/admin/smtp', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ smtp: store.setSmtpConfig(req.body || {}) }) }))
+// Send a test email with the CURRENT (saved) config, so the operator confirms
+// the SES credentials end to end before relying on them.
+app.post('/api/work/admin/smtp/test', requireAuth, requireSuperAdmin, async (req, res) => {
+  try {
+    const cfg = store.getSmtpSendConfig()
+    if (!cfg) return res.status(400).json({ error: 'Save the SMTP host and From address first.' })
+    const to = String((req.body || {}).to || '').trim() || cfg.fromEmail
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(to)) return res.status(400).json({ error: 'Enter a valid recipient address.' })
+    const r = await sendMail(cfg, {
+      to, subject: 'WorkCoPilot SMTP test',
+      text: `This is a test email from WorkCoPilot.\n\nIf you received this, outbound email over ${cfg.host}:${cfg.port} is working and reports can be delivered.\n\nSent ${new Date().toISOString()}.`,
+    })
+    res.json({ ok: true, to, messageId: r.messageId || null })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// ---- Report authenticity verification (public) ----------------------------
+// A third party pastes a report's authenticity stamp here to confirm the report
+// was issued by us and has not been altered. Reveals nothing sensitive.
+app.post('/api/work/reports/verify', wrap((req, res) => {
+  const b = req.body || {}
+  res.json(verifyReport({ kind: b.kind, reportId: b.reportId, hash: b.hash, issuedAt: b.issuedAt, signature: b.signature }))
+}))
 
 // Manual step control (the user ticks/unticks or skips).
 app.post('/api/work/sessions/:id/step', requireWorkAuth, wrap((req, res) => {

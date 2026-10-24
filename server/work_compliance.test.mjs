@@ -64,3 +64,30 @@ test('encryption-at-rest and human-in-the-loop are always satisfied', () => {
   assert.equal(ev.controls.find((c) => c.id === 'encryption-at-rest').status, 'satisfied')
   assert.equal(ev.controls.find((c) => c.id === 'human-in-loop').status, 'satisfied')
 })
+
+test('EVERY advertised framework is covered (maps to >=1 control, has a support line)', () => {
+  const s = store.createWorkSession(u.id, { goal: 'z' })
+  store.setWorkSessionSteps(u.id, s.id, [{ text: 'a', commands: ['echo hi'] }])
+  const ev = store.getWorkComplianceEvidence(store.getWorkSession(u.id, s.id), u.id)
+  // The frameworks advertised on the public chips must ALL be present.
+  const names = ev.frameworks.map((f) => f.name).join(' | ')
+  for (const fw of ['GDPR', 'HIPAA', 'PCI DSS', 'SOC 2', 'ISO/IEC 27001', 'CCPA', 'FedRAMP', 'NIST SP 800-53', 'HITRUST CSF']) {
+    assert.ok(names.includes(fw), `${fw} present in the report framework coverage`)
+  }
+  for (const f of ev.frameworks) {
+    assert.ok(f.controls.length >= 1, `${f.name} maps to >=1 control`)
+    assert.ok(f.support && f.support.length > 10, `${f.name} has a support statement`)
+    assert.ok(['supported', 'partial', 'gap', 'na'].includes(f.status))
+  }
+})
+
+test('a framework focus foregrounds that framework', () => {
+  const s = store.createWorkSession(u.id, { goal: 'focus test' })
+  store.setWorkSessionSteps(u.id, s.id, [{ text: 'a' }])
+  const ev = store.getWorkComplianceEvidence(store.getWorkSession(u.id, s.id), u.id, { framework: 'hipaa' })
+  assert.ok(ev.focus && ev.focus.id === 'hipaa')
+  assert.ok(ev.focus.controls.length >= 1)
+  // An unknown framework id yields no focus (not a crash).
+  const ev2 = store.getWorkComplianceEvidence(store.getWorkSession(u.id, s.id), u.id, { framework: 'not-a-framework' })
+  assert.equal(ev2.focus, null)
+})

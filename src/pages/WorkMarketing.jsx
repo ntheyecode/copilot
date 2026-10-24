@@ -161,7 +161,7 @@ export default function WorkMarketing() {
         <div className="wm-wrap wm-nav-in">
           <a href="#top" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
           <nav className="wm-links">
-            <a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="#security">Security</a><a href="#pricing">Pricing</a>
+            <a href="/demo">Demo</a><a href="/workcopilot/use-cases">Use cases</a><a href="/workcopilot/security">Security</a><a href="#pricing">Pricing</a>
           </nav>
           <div className="wm-navcta">
             <button className="wm-ghost" onClick={() => go('')}>Sign in</button>
@@ -214,6 +214,10 @@ export default function WorkMarketing() {
             Compact, grounded claims only; both link to the showcase page. */}
         <div className="wm-wrap">
           <TrustDuo nav={nav} />
+          <div className="wm-sec-paper" data-reveal>
+            <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> See the data protection in action</a>
+            <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
+          </div>
         </div>
 
         {/* marquee of fields */}
@@ -331,36 +335,6 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* SECURITY / ENTERPRISE BAND */}
-      <section className="wm-sec wm-security" id="security">
-        <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><ShieldCheck size={14} /> Enterprise-ready &middot; security-first</div>
-          <h2 className="wm-h2" data-reveal>Private by design. Compliant by default.</h2>
-          <p className="wm-sub" data-reveal>For security, healthcare, finance and government. Sensitive data is stripped or tokenized on your device, and every call follows a policy you arm and lock.</p>
-          <div className="wm-sec-grid">
-            <WorkCard theme="light" delay={0} texPos="0% 0%">
-              <WorkCard.Proof><span className="cb-chip">PII</span><span className="cb-chip">PHI</span><span className="cb-chip">SECRET</span> <span className="cb-arrow">&rarr;</span> <b>[[token]]</b> <span className="cb-arrow">&rarr;</span> rebuilt here</WorkCard.Proof>
-              <WorkCard.Head icon={Lock} title="Tokenized on your device" />
-              <WorkCard.Body>Turn on tokenize and sensitive values never reach the AI. They are swapped for on-device tokens, then the full answer is rebuilt on your machine. Your documents, diagrams and screenshots are read on your computer, so the file itself never leaves.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" tone="cyan" delay={80} texPos="100% 50%">
-              <WorkCard.Proof><span className="cb-chip">GDPR</span><span className="cb-chip">HIPAA</span><span className="cb-chip">PCI-DSS</span><span className="cb-chip">SOC 2</span><span className="cb-chip">ISO 27001</span><span className="cb-chip">FedRAMP</span><span className="cb-chip">NIST 800-53</span><span className="cb-chip">HITRUST</span><span className="cb-chip">CCPA</span></WorkCard.Proof>
-              <WorkCard.Head icon={ShieldCheck} title="Compliant by policy" />
-              <WorkCard.Body>Arm a policy per company for the frameworks you target, add any words that must never leave, then lock it. Controls and audit evidence to support your compliance - never a certification claim.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" tone="amber" delay={160} texPos="50% 100%">
-              <WorkCard.Proof>watch <span className="cb-arrow">&middot;</span> guide <span className="cb-arrow">&middot;</span> <b>never act</b> <span className="cb-arrow">&middot;</span> <b>audit.log</b></WorkCard.Proof>
-              <WorkCard.Head icon={ScanEye} title="Read-only and audited" />
-              <WorkCard.Body>It watches and guides, never clicks or types, and hides on screen-share. A per-session log records exactly what was sent.</WorkCard.Body>
-            </WorkCard>
-          </div>
-          <div className="wm-sec-paper" data-reveal>
-            <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> See the data protection in action</a>
-            <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
-            <span>See real before and after - on screen and in text - then read what leaves your device and how a third party can verify every claim.</span>
-          </div>
-        </div>
-      </section>
 
       {/* BENEFITS teaser - the full, visual breakdown lives on its own page. */}
       <section className="wm-sec">
