@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
-import { Plus, ChevronLeft, Send, Loader2, CheckCircle2, RotateCcw } from 'lucide-react'
+import { workAdminApi } from '../pages/workadmin/workAdminApi.js'
+import { ReasonModal } from '../pages/workadmin/sections/_shared.jsx'
+import { Plus, ChevronLeft, Send, Loader2, CheckCircle2, RotateCcw, Trash2 } from 'lucide-react'
 
 // One ticket surface for BOTH sides (single source of truth):
 //   mode="user"  -> my tickets, open a new one, reply in the thread
@@ -23,6 +25,9 @@ export default function SupportTickets({ mode = 'user' }) {
   const [reply, setReply] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [delOpen, setDelOpen] = useState(false)
+  const [delBusy, setDelBusy] = useState(false)
+  const [delErr, setDelErr] = useState(null)
 
   const load = useCallback(() => {
     if (admin) {
@@ -59,6 +64,13 @@ export default function SupportTickets({ mode = 'user' }) {
     setBusy(true); setErr('')
     try { const t = await api.workAdminTicketStatus(sel.id, status); setSel(t); load() }
     catch (e) { setErr(e.message || 'Could not update.') } finally { setBusy(false) }
+  }
+  // Admin: permanently delete a ticket. Reason required + logged server-side.
+  const deleteTicket = async (reason) => {
+    if (!sel) return
+    setDelBusy(true); setDelErr(null)
+    try { await workAdminApi.deleteTicket(sel.id, reason); setDelOpen(false); setSel(null); setView('list'); load() }
+    catch (e) { setDelErr(e) } finally { setDelBusy(false) }
   }
 
   return (
@@ -162,9 +174,20 @@ export default function SupportTickets({ mode = 'user' }) {
               {sel.status !== 'closed'
                 ? <button className="st-btn" onClick={() => setStatus('closed')}><CheckCircle2 size={14} /> Mark resolved & close</button>
                 : <button className="st-btn" onClick={() => setStatus('open')}><RotateCcw size={14} /> Reopen</button>}
+              <button className="st-btn" style={{ color: '#c0392b' }} onClick={() => { setDelErr(null); setDelOpen(true) }}><Trash2 size={14} /> Delete ticket</button>
             </div>
           )}
           {err && <div className="st-err">{err}</div>}
+          {delOpen && (
+            <ReasonModal
+              title="Delete ticket"
+              message="Permanently delete this support ticket and its thread. This cannot be undone."
+              confirmLabel="Delete ticket"
+              busy={delBusy} error={delErr}
+              onConfirm={deleteTicket}
+              onCancel={() => { if (!delBusy) setDelOpen(false) }}
+            />
+          )}
         </div>
       )}
     </div>

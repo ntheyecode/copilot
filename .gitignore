@@ -17,3 +17,4 @@ server/eval/results/
 # encryption key + at-rest secrets (should only ever live under the data dir)
 *.enc.key
 .enc.key
+.db-backups/

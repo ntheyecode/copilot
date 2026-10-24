@@ -2,9 +2,9 @@
 // a grant-hours action, both superadmin-only (the server enforces it; the UI
 // disables the controls and explains why for a non-superadmin admin).
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, TierBadge, Spinning } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
 
 const COLUMNS = [
@@ -33,6 +33,9 @@ export default function UsersSection({ isSuperAdmin }) {
   const [nu, setNu] = useState(EMPTY_NEW)       // new-user form
   const [creating, setCreating] = useState(false)
   const [createMsg, setCreateMsg] = useState(null)
+  const [confirmAction, setConfirmAction] = useState(null) // { user, mode: 'disable'|'enable'|'delete' }
+  const [caBusy, setCaBusy] = useState(false)
+  const [caErr, setCaErr] = useState(null)
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -107,6 +110,18 @@ export default function UsersSection({ isSuperAdmin }) {
     setBusyId(u.id)
     try { await workAdminApi.financeSetRole(u.id, makeAcct ? 'accounting' : 'user'); setMsg(u.id, 'ok', makeAcct ? 'Accounting role granted.' : 'Accounting role removed.'); load() }
     catch (e) { setMsg(u.id, 'err', e.message) } finally { setBusyId(null) }
+  }
+
+  // Disable/enable (reversible) or delete (hard) a user. Reason required + logged.
+  const runConfirmAction = async (reason) => {
+    const { user, mode } = confirmAction
+    setCaBusy(true); setCaErr(null)
+    try {
+      if (mode === 'delete') await workAdminApi.deleteUser(user.id, reason)
+      else await workAdminApi.disableUser(user.id, mode === 'disable', reason)
+      setConfirmAction(null)
+      await load()
+    } catch (e) { setCaErr(e) } finally { setCaBusy(false) }
   }
 
   const applyTier = async (user, tier) => {
@@ -256,7 +271,10 @@ export default function UsersSection({ isSuperAdmin }) {
                 return (
                   <tr key={u.id}>
                     <td>
-                      <div style={{ fontWeight: 600 }}>{u.username}</div>
+                      <div style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                        {u.username}
+                        {u.disabled ? <span className="wka-badge" style={{ background: '#f6dcd9', color: '#c0392b' }}>Disabled</span> : null}
+                      </div>
                       {u.displayName ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{u.displayName}</div> : null}
                       {msg ? <div style={{ fontSize: 11, marginTop: 3, color: msg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{msg.text}</div> : null}
                     </td>
@@ -342,6 +360,22 @@ export default function UsersSection({ isSuperAdmin }) {
                               <DollarSign size={13} /> {u.role === 'accounting' ? 'Accounting ✓' : 'Accounting'}
                             </button>
                           )}
+                          {u.role !== 'superadmin' && (
+                            <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
+                              title={u.disabled ? 'Re-enable this account' : 'Disable this account (signs them out, blocks sign-in)'}
+                              onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.disabled ? 'enable' : 'disable' }) }}
+                              style={u.disabled ? { color: 'var(--wka-emerald)' } : undefined}>
+                              {u.disabled ? <ShieldCheck size={13} /> : <ShieldOff size={13} />} {u.disabled ? 'Enable' : 'Disable'}
+                            </button>
+                          )}
+                          {u.role !== 'superadmin' && (
+                            <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
+                              title="Delete this account and its sessions permanently"
+                              onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'delete' }) }}
+                              style={{ color: '#d6433b' }}>
+                              <Trash2 size={13} /> Delete
+                            </button>
+                          )}
                         </span>
                       )}
                     </td>
@@ -352,6 +386,24 @@ export default function UsersSection({ isSuperAdmin }) {
           </table>
         </div>
       )}
+
+      {confirmAction ? (
+        <ReasonModal
+          danger={confirmAction.mode !== 'enable'}
+          title={confirmAction.mode === 'delete' ? `Delete ${confirmAction.user.username}`
+            : confirmAction.mode === 'enable' ? `Re-enable ${confirmAction.user.username}`
+            : `Disable ${confirmAction.user.username}`}
+          message={confirmAction.mode === 'delete'
+            ? 'Permanently delete this account and all of its sessions and evidence. This cannot be undone.'
+            : confirmAction.mode === 'enable'
+              ? 'The account can sign in and use the service again.'
+              : 'The account is signed out everywhere and cannot sign in until re-enabled.'}
+          confirmLabel={confirmAction.mode === 'delete' ? 'Delete account' : confirmAction.mode === 'enable' ? 'Enable' : 'Disable'}
+          busy={caBusy} error={caErr}
+          onConfirm={runConfirmAction}
+          onCancel={() => { if (!caBusy) setConfirmAction(null) }}
+        />
+      ) : null}
     </div>
   )
 }

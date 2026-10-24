@@ -496,7 +496,7 @@ export function workPlanUser({ goal, appContext, research = '', learnings = '' }
 }
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
-export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', strong = null, thorough = false }) {
+export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', strong = null, thorough = false, tele = null }) {
   const heavy = thorough ? (
     '\n\n---\nPLAN-HEAVY MODE\n' +
     'The user will follow this plan with only LIGHT, on-demand checks, not continuous watching. ' +
@@ -513,7 +513,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
     const isWeak = (r) => { const p = extractJson(r) || {}; return !(Array.isArray(p.steps) && p.steps.length) }
     const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak); raw = out.raw; escalated = out.escalated; reason = out.reason
   } else {
-    raw = await ai.generate(cfg, system, user)
+    raw = await ai.generate(cfg, system, user, tele)
   }
   // preferKey 'steps' so a stray leading object cannot shadow the real plan; a
   // pure {"refusal":...} reply still parses (it is the only/first object).

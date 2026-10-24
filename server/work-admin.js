@@ -211,24 +211,53 @@ export function registerWorkAdminRoutes(app, deps = {}) {
         companyRole: (wu && wu.companyRole) || null,
         companyName: (wu && wu.companyName) || (wu && wu.companyId ? companyNameById.get(wu.companyId) : null) || null,
         role: r.role || 'user',
+        disabled: !!(wu && wu.disabled),   // superadmin-disabled: console shows a badge + Enable label
         mfa: (() => { try { return store.userMfaStatus(r.id) } catch { return { enabled: false, required: true } } })(),
       }
     }).sort((a, b) => a.username.localeCompare(b.username))
     res.json({ users, tiers: store.WORK_TIERS || ['basic', 'advanced', 'premium'], companies: companyList })
   }))
 
-  // -- Sessions: recent sessions across all users (newest first, capped). ------
+  // -- Sessions: LIVE first, then most-recent activity. Paginated. Only the last
+  //    7 days are shown (older ones auto-expire from the DB on the retention
+  //    sweep); the client caps what it keeps in memory. ------------------------
+  const SESSION_LOG_WINDOW_DAYS = 7
+  const sessionWhen = (s) => Date.parse(s.endedAt || '') || Number(s.lastActivityAt) || Date.parse(s.startedAt || '') || 0
+  const isLive = (s) => (s.status === 'active') && sessionWhen(s) > (Date.now() - 2 * 60 * 1000)
   app.get('/api/work/admin/sessions', requireAuth, requireAdmin, w((req, res) => {
     const roster = workRoster(store)
     const nameById = new Map(roster.map((r) => [r.id, r.username]))
-    const raw = allWorkSessions(store, roster)
-    const limit = Math.max(1, Math.min(500, Number(req.query.limit) || 200))
-    const sessions = raw
-      .slice()
-      .sort((a, b) => String(b.startedAt || '').localeCompare(String(a.startedAt || '')))
-      .slice(0, limit)
-      .map((s) => sessionRow(s, nameById))
-    res.json({ sessions, total: raw.length })
+    const windowStart = Date.now() - SESSION_LOG_WINDOW_DAYS * 24 * 60 * 60 * 1000
+    const raw = allWorkSessions(store, roster).filter((s) => sessionWhen(s) >= windowStart)
+    // Live (actively running) float to the top; then by most recent activity.
+    const ordered = raw.slice().sort((a, b) => {
+      const la = isLive(a) ? 1 : 0, lb = isLive(b) ? 1 : 0
+      if (la !== lb) return lb - la
+      return sessionWhen(b) - sessionWhen(a)
+    })
+    const page = Math.max(1, Number(req.query.page) || 1)
+    const pageSize = Math.max(1, Math.min(100, Number(req.query.pageSize) || 25))
+    const start = (page - 1) * pageSize
+    const sessions = ordered.slice(start, start + pageSize).map((s) => ({ ...sessionRow(s, nameById), live: isLive(s) }))
+    res.json({
+      sessions, page, pageSize,
+      total: ordered.length, liveCount: ordered.filter(isLive).length,
+      windowDays: SESSION_LOG_WINDOW_DAYS,
+    })
+  }))
+
+  // -- Session detail (click-through "View"): progress, call telemetry, cost,
+  //    remaining minutes. Rich record, not a bare row.
+  app.get('/api/work/admin/sessions/:id', requireAuth, requireAdmin, w((req, res) => {
+    const d = (typeof store.adminSessionDetail === 'function') ? store.adminSessionDetail(req.params.id) : null
+    if (!d) return res.status(404).json({ error: 'Session not found' })
+    res.json(d)
+  }))
+
+  // -- Delete a session record (superadmin). Reason required + logged.
+  app.delete('/api/work/admin/sessions/:id', requireAuth, (requireSuperAdmin || requireAdmin), w((req, res) => {
+    const reason = String((req.body && req.body.reason) || '').trim()
+    res.json(store.deleteWorkSessionAny(req.params.id, { reason, by: req.user.username }))
   }))
 
   // -- AI state: booleans only (SUPREME RULE III - surface state, never leak a
@@ -389,6 +418,42 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     const limit = Math.min(5000, Math.max(1, parseInt(req.query.limit, 10) || 1000))
     const leads = typeof store.listWorkLeads === 'function' ? store.listWorkLeads({ limit }) : []
     res.json({ leads, total: typeof store.workLeadCount === 'function' ? store.workLeadCount() : leads.length })
+  }))
+
+  // -- Destructive CRUD (superadmin): delete / disable. Reason required + logged
+  //    (store validates the reason and writes the audit entry; single source). --
+  const reasonBody = (req) => String((req.body && req.body.reason) || '').trim()
+  app.delete('/api/work/admin/incidents/:id', requireAuth, superGate, w((req, res) => {
+    res.json(store.deleteWorkIncident(req.params.id, { reason: reasonBody(req), by: req.user.username }))
+  }))
+  app.post('/api/work/admin/incidents/clear', requireAuth, superGate, w((req, res) => {
+    res.json(store.clearWorkIncidents({ reason: reasonBody(req), by: req.user.username }))
+  }))
+  app.delete('/api/work/admin/leads/:id', requireAuth, superGate, w((req, res) => {
+    res.json(store.deleteWorkLead(req.params.id, { reason: reasonBody(req), by: req.user.username }))
+  }))
+  app.post('/api/work/admin/leads/clear', requireAuth, superGate, w((req, res) => {
+    res.json(store.clearWorkLeads({ reason: reasonBody(req), by: req.user.username }))
+  }))
+  app.delete('/api/work/admin/tickets/:id', requireAuth, superGate, w((req, res) => {
+    res.json(store.deleteWorkTicket(req.params.id, { reason: reasonBody(req), by: req.user.username }))
+  }))
+  // Companies: disable (reversible) + delete (detaches members unless ?members=delete).
+  app.post('/api/work/admin/companies/:id/disable', requireAuth, superGate, w((req, res) => {
+    const disabled = !!(req.body && req.body.disabled)
+    res.json(store.setCompanyDisabled(req.params.id, disabled, { reason: reasonBody(req), by: req.user.username }))
+  }))
+  app.delete('/api/work/admin/companies/:id', requireAuth, superGate, w((req, res) => {
+    const deleteMembers = !!(req.body && req.body.deleteMembers)
+    res.json(store.deleteCompany(req.params.id, { reason: reasonBody(req), by: req.user.username, deleteMembers }))
+  }))
+  // Users: disable (reversible) + delete (hard; removes their sessions + tickets).
+  app.post('/api/work/admin/users/:id/disable', requireAuth, superGate, w((req, res) => {
+    const disabled = !!(req.body && req.body.disabled)
+    res.json(store.setUserDisabled(req.params.id, disabled, { reason: reasonBody(req), by: req.user.username }))
+  }))
+  app.delete('/api/work/admin/users/:id', requireAuth, superGate, w((req, res) => {
+    res.json(store.deleteWorkUser(req.params.id, { reason: reasonBody(req), by: req.user.username }))
   }))
 
   // Create a user (optionally into a company, as member or company_admin).

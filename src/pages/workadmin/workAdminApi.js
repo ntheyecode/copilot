@@ -50,7 +50,12 @@ export const workAdminApi = {
   // Reads (requireAuth + requireAdmin) - server/work-admin.js
   overview: () => request('GET', '/api/work/admin/overview'),
   users: () => request('GET', '/api/work/admin/users'),
-  sessions: (limit) => request('GET', `/api/work/admin/sessions${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
+  // Sessions: live-first, paginated, last 7 days. page/pageSize (pageSize <= 100).
+  sessions: (page = 1, pageSize = 25) => request('GET', `/api/work/admin/sessions?page=${encodeURIComponent(page)}&pageSize=${encodeURIComponent(pageSize)}`),
+  // Rich "View" detail: progress, premium calls, round-robins, refinements, cost,
+  // remaining minutes, live/active.
+  sessionDetail: (id) => request('GET', `/api/work/admin/sessions/${encodeURIComponent(id)}`),
+  deleteSession: (id, reason) => request('DELETE', `/api/work/admin/sessions/${encodeURIComponent(id)}`, { reason }),
   leads: (limit) => request('GET', `/api/work/admin/leads${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   incidents: (limit) => request('GET', `/api/work/admin/incidents${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   aiState: () => request('GET', '/api/work/admin/ai-state'),
@@ -192,6 +197,22 @@ export const workAdminApi = {
   userInvoices: (id) => request('GET', `/api/work/admin/users/${id}/invoices`),
   refundUser: (id, body) => request('POST', `/api/work/admin/users/${id}/refund`, body || {}),
   cancelUserSubscription: (id, atPeriodEnd) => request('POST', `/api/work/admin/users/${id}/cancel-subscription`, { atPeriodEnd: !!atPeriodEnd }),
+
+  // ---- Destructive CRUD (superadmin). Every call sends a REASON (logged). -----
+  // Leads / incidents / contacts: delete one or clear all.
+  deleteLead: (id, reason) => request('DELETE', `/api/work/admin/leads/${encodeURIComponent(id)}`, { reason }),
+  clearLeads: (reason) => request('POST', '/api/work/admin/leads/clear', { reason }),
+  deleteIncident: (id, reason) => request('DELETE', `/api/work/admin/incidents/${encodeURIComponent(id)}`, { reason }),
+  clearIncidents: (reason) => request('POST', '/api/work/admin/incidents/clear', { reason }),
+  deleteContact: (id, reason) => request('DELETE', `/api/work/admin/contacts/${encodeURIComponent(id)}`, { reason }),
+  clearContacts: (reason) => request('POST', '/api/work/admin/contacts/clear', { reason }),
+  deleteTicket: (id, reason) => request('DELETE', `/api/work/admin/tickets/${encodeURIComponent(id)}`, { reason }),
+  // Users: disable (reversible) + delete (hard).
+  disableUser: (id, disabled, reason) => request('POST', `/api/work/admin/users/${encodeURIComponent(id)}/disable`, { disabled: !!disabled, reason }),
+  deleteUser: (id, reason) => request('DELETE', `/api/work/admin/users/${encodeURIComponent(id)}`, { reason }),
+  // Companies: disable (reversible) + delete (detaches members unless deleteMembers).
+  disableCompany: (id, disabled, reason) => request('POST', `/api/work/admin/companies/${encodeURIComponent(id)}/disable`, { disabled: !!disabled, reason }),
+  deleteCompany: (id, reason, deleteMembers) => request('DELETE', `/api/work/admin/companies/${encodeURIComponent(id)}`, { reason, deleteMembers: !!deleteMembers }),
 }
 
 export default workAdminApi

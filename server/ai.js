@@ -316,14 +316,23 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
 // the SAME key (retired/quota heal), (3) the next configured PROVIDER's key, and
 // only when all are exhausted a crisp coded error. Every switch is reported via
 // cfg.onSwitch so the superadmin sees exactly what happened.
-export async function chat(cfg, system, turns) {
+export async function chat(cfg, system, turns, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey) throw httpErr(400, `No API key configured for ${p.label}`, AI_CODES.KEY)
   const notify = switchNotifier(cfg)
   const model = cfg.chatModel || p.chatModels[0]
+  // Per-call telemetry (out-param; additive, never changes the string return).
+  // `tele` lets a session-bound caller record which model actually served the
+  // call and whether a failover/round-robin happened, without the provider layer
+  // importing the store. Single writer: store.recordSessionCall consumes this.
+  const mark = (usedProvider, usedModel, roundRobin) => {
+    if (tele && typeof tele === 'object') { tele.provider = usedProvider; tele.model = usedModel; tele.roundRobin = !!roundRobin }
+  }
   try {
-    return await runChat(p, cfg.apiKey, model, system, turns)
+    const out = await runChat(p, cfg.apiKey, model, system, turns)
+    mark(p.id, model, false)
+    return out
   } catch (e) {
     if (!looksLikeModelError(e) && !isRateLimited(e)) throw e   // key/other: surface, never mask
     const reason = reasonOf(e)
@@ -333,12 +342,14 @@ export async function chat(cfg, system, turns) {
     if (same && same !== model) {
       try {
         notify({ scope: 'chat', reason, crossProvider: false, fromProvider: p.id, fromModel: model, toProvider: p.id, toModel: same })
-        return await runChat(p, cfg.apiKey, same, system, turns)
+        const out = await runChat(p, cfg.apiKey, same, system, turns)
+        mark(p.id, same, true)
+        return out
       } catch (e2) { if (!looksLikeModelError(e2) && !isRateLimited(e2)) throw e2 /* fall to cross-provider */ }
     }
     // (3) the next configured provider's key
     const viaAlt = await failoverChat(cfg.alternates, p, model, system, turns, notify)
-    if (viaAlt != null) return viaAlt
+    if (viaAlt != null) { mark(p.id, model, true); return viaAlt }
     // exhausted
     const code = reason === 'rate_limit' ? AI_CODES.RATE : AI_CODES.EXHAUSTED
     notify({ scope: 'chat', reason, fatal: true, code, fromProvider: p.id, fromModel: model, toProvider: null, toModel: null })
@@ -347,17 +358,21 @@ export async function chat(cfg, system, turns) {
 }
 
 // One-shot generation: given a system prompt and one user message, return text.
-export async function generate(cfg, system, userText) {
-  return chat(cfg, String(system || ''), [{ role: 'user', content: String(userText || '') }])
+// `tele` is an optional out-param populated with { provider, model, roundRobin }.
+export async function generate(cfg, system, userText, tele = null) {
+  return chat(cfg, String(system || ''), [{ role: 'user', content: String(userText || '') }], tele)
 }
 
 // Several images in ONE vision call (WorkCoPilot's screen read). model is the
 // vision-capable model resolved by findVisionModel; a missing one is a clear 400.
-export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}) {
+export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}, tele = null) {
   const p = providerOf(cfg)
   if (!p) throw httpErr(400, `Unknown provider: ${cfg.providerId}`, AI_CODES.PROVIDER)
   if (!cfg.apiKey || !model) throw httpErr(400, 'No vision-capable key.', AI_CODES.KEY)
   const notify = switchNotifier(cfg)
+  const mark = (usedModel, roundRobin) => {
+    if (tele && typeof tele === 'object') { tele.provider = p.id; tele.model = usedModel; tele.roundRobin = !!roundRobin; tele.vision = true }
+  }
   const imgs = (imageDataUrls || []).filter(Boolean).slice(0, 4)
   if (!imgs.length) return ''
   // mediaRes: 'low'|'medium'|'high' - how many tokens the model spends reading the
@@ -374,7 +389,9 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
     return openaiVision(p, cfg.apiKey, m, prompt, imgs, mediaRes)
   }
   try {
-    return await run(model)
+    const out = await run(model)
+    mark(model, false)
+    return out
   } catch (e) {
     // Screen reading must stay up too: a retired or rate-limited vision model
     // routes to a current vision model on the SAME key. Cross-provider vision
@@ -392,7 +409,9 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
     }
     notify({ scope: 'vision', reason, crossProvider: false, fromProvider: p.id, fromModel: model, toProvider: p.id, toModel: alt })
     try { visionCache.delete(`${cfg.providerId}:${String(cfg.apiKey).slice(-6)}`) } catch { /* ignore */ }
-    return run(alt)
+    const out = await run(alt)
+    mark(alt, true)
+    return out
   }
 }
 
@@ -508,6 +527,18 @@ export function modelRank(providerId, model) {
   const r = rateFor(providerId, model)
   const tier = r.q >= 5 ? 'top' : r.q >= 4 ? 'strong' : 'standard'
   return { quality: r.q, tier, topRanked: r.q >= 5, vision: !!r.vision, source: RANK_META.source, updated: RANK_META.updated }
+}
+// Is this model a TOP-tier ("premium") model? Model-only check across every
+// provider's ratecard (the per-session telemetry knows the model used but not
+// always the provider). A match with quality >= 5 is premium. Used to count a
+// session's "premium calls" for the superadmin view.
+export function isPremiumModel(model) {
+  const m = String(model || '')
+  if (!m) return false
+  for (const rows of Object.values(RATECARD)) {
+    for (const row of rows) if (row.re.test(m)) return row.q >= 5
+  }
+  return false
 }
 // Per-provider recommendation from the live catalog, or null when the key cannot
 // list models (bad key / provider down - the caller surfaces that separately).

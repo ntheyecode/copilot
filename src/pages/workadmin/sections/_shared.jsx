@@ -1,7 +1,7 @@
 // Shared presentational primitives for the WorkCoPilot admin sections.
 // Pure UI, no data fetching. Only react + lucide-react are imported.
 import React, { useState, useEffect } from 'react'
-import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, Pencil } from 'lucide-react'
+import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, Pencil, X } from 'lucide-react'
 
 export function Loading({ label = 'Loading' }) {
   return (
@@ -72,6 +72,51 @@ export function EditToggle({ editing, onEdit, disabled }) {
 
 // A 403 {locked:true} from a step-up-gated endpoint (re-prompt for the code).
 export function isLockError(e) { return !!(e && e.status === 403 && e.data && e.data.locked) }
+
+// Shared destructive-action confirm: collects a REQUIRED reason (owner standing
+// rule - every destructive action is logged with who/what/when/why) and calls
+// onConfirm(reason). Single source so the reason gate can never drift per screen.
+// `extra` renders additional controls (e.g. a "also delete members" checkbox)
+// between the message and the reason box.
+export function ReasonModal({
+  title = 'Confirm', message = '', confirmLabel = 'Delete', onConfirm, onCancel,
+  busy = false, error = null, extra = null, danger = true,
+  placeholder = 'Reason (recorded in the audit trail)',
+}) {
+  const [reason, setReason] = useState('')
+  const can = reason.trim().length >= 3 && !busy
+  const confirm = () => { if (can) onConfirm(reason.trim()) }
+  return (
+    <div role="dialog" aria-modal="true"
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(12,18,28,0.55)', backdropFilter: 'blur(2px)', padding: 16 }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel && onCancel() }}>
+      <div className="wka-panel" style={{ maxWidth: 460, width: '100%', position: 'relative' }}>
+        <button type="button" aria-label="Close" onClick={() => !busy && onCancel && onCancel()}
+          style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wka-faint)' }}>
+          <X size={18} />
+        </button>
+        <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <AlertTriangle size={18} style={{ color: danger ? '#d6433b' : 'var(--wka-emerald)' }} /> {title}
+        </h2>
+        {message ? <p className="desc">{message}</p> : null}
+        {extra}
+        <textarea className="wka-input" rows={3} value={reason} autoFocus placeholder={placeholder}
+          onChange={(e) => setReason(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) confirm() }}
+          style={{ width: '100%', resize: 'vertical', marginTop: 4 }} />
+        <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 4 }}>A reason of at least 3 characters is required. It is kept in the audit trail.</div>
+        {error ? <div style={{ margin: '10px 0' }}><ErrorBox error={error} /></div> : null}
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
+          <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>Cancel</button>
+          <button type="button" className="wka-btn sm" onClick={confirm} disabled={!can}
+            style={danger ? { background: '#d6433b', borderColor: '#d6433b', color: '#fff' } : undefined}>
+            {busy ? <Spinning /> : null} {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // Generic MFA step-up gate: stands in front of a critical page until a fresh
 // authenticator code is verified. Presentational - the caller passes `verify`

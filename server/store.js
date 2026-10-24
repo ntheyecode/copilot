@@ -456,6 +456,8 @@ export function publicWorkUser(u) {
     nextTier: u.companyId ? null : nextTierUp(WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),
     mfaEnabled: !!(u.mfa && u.mfa.enabled),       // TOTP authenticator set up
     mfaEnrolledAt: (u.mfa && u.mfa.enrolledAt) || null,
+    disabled: !!u.disabled,                       // superadmin-disabled (blocked from sign-in + service)
+    disabledReason: u.disabled ? (u.disabledReason || null) : null,
     // Billing state the client needs to know (status + plan only, never stripe ids).
     subscription: {
       status: (u.subscription && u.subscription.status) || 'none',
@@ -611,8 +613,21 @@ export function setSubscription(userId, patch = {}) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')
   const s = ensureSubscription(u)
+  const priorPlan = s.plan || null
   for (const k of ['status', 'plan', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
     if (patch[k] !== undefined) s[k] = patch[k]
+  }
+  // ENTITLEMENTS FOLLOW THE SUBSCRIPTION (individual accounts only; company tiers
+  // come from the company's licenses). When the plan is active/trialing/comped,
+  // the account's tier = the plan, so daily hours, task caps and feature gates
+  // all match what was paid for. A plan change (upgrade/downgrade) is logged so
+  // the superadmin sees the action.
+  if (!u.companyId && WORK_TIERS.includes(s.plan) && (s.status === 'active' || s.status === 'trialing' || s.status === 'comp')) {
+    if (u.tier !== s.plan) {
+      const from = u.tier
+      u.tier = s.plan
+      try { recordWorkIncident({ kind: 'plan_change', userId: u.id, username: u.username, message: `Plan ${priorPlan && priorPlan !== s.plan ? `changed ${priorPlan} -> ${s.plan}` : `set to ${s.plan}`} (tier ${from} -> ${s.plan}), status ${s.status}` }) } catch { /* never block */ }
+    }
   }
   persist()
   return getSubscription(userId)
@@ -623,8 +638,10 @@ export function setSubscription(userId, patch = {}) {
 export function userCanUseService(userId) {
   const u = getUser(userId)
   if (!u) return false
+  if (u.disabled) return false                         // superadmin-disabled account
   if (u.companyId) {
     const c = (db.companies || []).find((x) => x.id === u.companyId)
+    if (c && c.disabled) return false                  // whole company disabled
     if (c) {
       // Admins and members draw from SEPARATE seat pools. Within each pool,
       // coverage is by join order (oldest first); 0 = unlimited. When the company
@@ -867,6 +884,8 @@ function publicCompany(c) {
     pricingOverride: c.pricing || null,               // just this company's overrides, for the edit form
     billingItemCount: ((c.billing && c.billing.items) || []).length,
     scrub: !!c.scrub, createdAt: c.createdAt,
+    disabled: !!c.disabled,                            // superadmin-disabled (all members blocked)
+    disabledReason: c.disabled ? (c.disabledReason || null) : null,
     // Authorization attestation: the company admin affirms their organization
     // authorizes WorkCoPilot use on its systems (addresses "browser access does
     // not establish corporate authorization"). Recorded, shown, prompted if missing.
@@ -2655,12 +2674,21 @@ export function setCompanyRetentionDays(companyId, days) {
   persist()
   return { retentionDays: getCompanyRetentionDays(companyId) }
 }
-// The window that actually applies to a user's sessions: their company's (if in a
-// company) else the platform/individual window.
+// Default session-log lifetime when no explicit retention is configured: session
+// logs (and their evidence/audit) auto-delete from the DB after 7 days. A
+// superadmin (individuals) or company admin (their company) can set a DIFFERENT
+// window to extend it; this is only the floor so nothing accumulates forever.
+export const WORK_SESSION_LOG_DEFAULT_DAYS = 7
+// The window that actually applies to a user's sessions. COMPANY users are
+// governed solely by their company's window (0 = the company keeps its own data;
+// the platform never deletes a tenant's sessions). INDIVIDUAL/platform accounts
+// use the superadmin platform window, falling back to the 7-day default so solo
+// session logs auto-expire instead of piling up forever.
 export function effectiveRetentionDays(workUserId) {
   const u = getUser(workUserId)
   if (u && u.companyId) return getCompanyRetentionDays(u.companyId)
-  return getWorkRetentionDays()
+  const platform = getWorkRetentionDays()
+  return platform > 0 ? platform : WORK_SESSION_LOG_DEFAULT_DAYS
 }
 
 // ---- SMTP / email (SES) ----------------------------------------------------
@@ -2755,6 +2783,142 @@ export function addContactSubmission({ name, email, subject, message } = {}, met
 }
 export function listContactSubmissions({ limit = 300 } = {}) { return (db.contacts || []).slice(0, limit) }
 export function contactSubmissionCount() { return (db.contacts || []).length }
+
+// ===========================================================================
+// Superadmin destructive CRUD: delete + disable across entities. Every call
+// takes a REASON and logs who/what/when/why via recordAdminAction (the audit
+// sink surfaced in the superadmin + company dashboards). Owner standing rule:
+// no destructive action without an accountable reason trail. Single place for
+// all of them so the reason/audit discipline can never drift per entity.
+// ===========================================================================
+function requireReason(reason) {
+  const r = String(reason || '').trim()
+  if (r.length < 3) throw httpErr(400, 'A reason (at least 3 characters) is required for this action.')
+  return r.slice(0, 500)
+}
+// -- Leads --
+export function deleteWorkLead(leadId, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const i = (db.leads || []).findIndex((x) => x.id === leadId)
+  if (i < 0) throw httpErr(404, 'Lead not found.')
+  const l = db.leads[i]; db.leads.splice(i, 1)
+  recordAdminAction({ action: 'lead_deleted', reason: r, detail: `${l.email || ''} by ${by}`.slice(0, 200) })
+  persist(); return { ok: true }
+}
+export function clearWorkLeads({ reason = '', by = '' } = {}) {
+  const r = requireReason(reason); const n = (db.leads || []).length; db.leads = []
+  recordAdminAction({ action: 'leads_cleared', reason: r, detail: `${n} leads by ${by}` })
+  persist(); return { ok: true, removed: n }
+}
+// -- Incidents --
+export function deleteWorkIncident(incId, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const i = (db.workIncidents || []).findIndex((x) => x.id === incId)
+  if (i < 0) throw httpErr(404, 'Incident not found.')
+  db.workIncidents.splice(i, 1)
+  recordAdminAction({ action: 'incident_deleted', reason: r, detail: `${incId} by ${by}` })
+  persist(); return { ok: true }
+}
+export function clearWorkIncidents({ reason = '', by = '' } = {}) {
+  const r = requireReason(reason); const n = (db.workIncidents || []).length; db.workIncidents = []
+  recordAdminAction({ action: 'incidents_cleared', reason: r, detail: `${n} by ${by}` })
+  persist(); return { ok: true, removed: n }
+}
+// -- Tickets --
+export function deleteWorkTicket(ticketId, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const i = (db.workTickets || []).findIndex((x) => x.id === ticketId)
+  if (i < 0) throw httpErr(404, 'Ticket not found.')
+  const t = db.workTickets[i]; db.workTickets.splice(i, 1)
+  recordAdminAction({ userId: t.workUserId || null, action: 'ticket_deleted', reason: r, detail: `${ticketId} by ${by}` })
+  persist(); return { ok: true }
+}
+// -- Contact messages --
+export function deleteContactSubmission(cid, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const i = (db.contacts || []).findIndex((x) => x.id === cid)
+  if (i < 0) throw httpErr(404, 'Contact message not found.')
+  db.contacts.splice(i, 1)
+  recordAdminAction({ action: 'contact_deleted', reason: r, detail: `${cid} by ${by}` })
+  persist(); return { ok: true }
+}
+export function clearContactSubmissions({ reason = '', by = '' } = {}) {
+  const r = requireReason(reason); const n = (db.contacts || []).length; db.contacts = []
+  recordAdminAction({ action: 'contacts_cleared', reason: r, detail: `${n} by ${by}` })
+  persist(); return { ok: true, removed: n }
+}
+// -- Sessions (superadmin, any owner) --
+export function deleteWorkSessionAny(sessionId, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const s = (db.workSessions || []).find((x) => x.id === sessionId)
+  if (!s) throw httpErr(404, 'Session not found.')
+  // Reuse the owner-scoped deleter (logs workActivity, unlinks shots + audit).
+  deleteWorkSession(s.workUserId, sessionId, `superadmin: ${r} (by ${by})`)
+  recordAdminAction({ userId: s.workUserId || null, action: 'session_deleted', reason: r, detail: `${sessionId} by ${by}` })
+  return { ok: true }
+}
+// -- Users: disable (reversible) + delete (hard) --
+export function setUserDisabled(userId, disabled, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found.')
+  if (u.role === 'superadmin') throw httpErr(400, 'A superadmin account cannot be disabled.')
+  u.disabled = !!disabled
+  u.disabledAt = disabled ? new Date().toISOString() : null
+  u.disabledReason = disabled ? r : null
+  bumpSessionEpoch(userId)   // sign the account out everywhere immediately
+  recordAdminAction({ userId, companyId: u.companyId || null, action: disabled ? 'user_disabled' : 'user_enabled', reason: r, detail: `${u.username} by ${by}` })
+  persist()
+  return publicWorkUser(u)
+}
+export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found.')
+  if (u.role === 'superadmin') throw httpErr(400, 'A superadmin account cannot be deleted.')
+  // Remove the account's sessions (with their evidence + audit) first.
+  for (const s of (db.workSessions || []).filter((x) => x.workUserId === userId).slice()) {
+    try { deleteWorkSession(userId, s.id, `account deleted: ${r}`) } catch { /* continue */ }
+  }
+  db.workTickets = (db.workTickets || []).filter((t) => t.workUserId !== userId)
+  bumpSessionEpoch(userId)
+  const i = (db.users || []).findIndex((x) => x.id === userId)
+  if (i >= 0) db.users.splice(i, 1)
+  indexUsers()   // getUser reads a cached id->user Map; rebuild it after removal
+  recordAdminAction({ companyId: u.companyId || null, action: 'user_deleted', reason: r, detail: `${u.username} <${u.email || u.ssoEmail || ''}> by ${by}` })
+  persist()
+  return { ok: true }
+}
+// -- Companies: disable (reversible) + delete (hard; detaches or deletes members) --
+export function setCompanyDisabled(companyId, disabled, { reason = '', by = '' } = {}) {
+  const r = requireReason(reason)
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  c.disabled = !!disabled
+  c.disabledAt = disabled ? new Date().toISOString() : null
+  c.disabledReason = disabled ? r : null
+  for (const m of (db.users || []).filter((x) => x.companyId === companyId)) { try { bumpSessionEpoch(m.id) } catch { /* ignore */ } }
+  recordAdminAction({ companyId, action: disabled ? 'company_disabled' : 'company_enabled', reason: r, detail: `${c.name} by ${by}` })
+  persist()
+  return publicCompany(c)
+}
+export function deleteCompany(companyId, { reason = '', by = '', deleteMembers = false } = {}) {
+  const r = requireReason(reason)
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const members = (db.users || []).filter((x) => x.companyId === companyId)
+  if (deleteMembers) {
+    for (const m of members.slice()) { try { deleteWorkUser(m.id, { reason: `company deleted: ${r}`, by }) } catch { /* continue */ } }
+  } else {
+    // Detach members to standalone (no company access until they get their own plan).
+    for (const m of members) { m.companyId = null; m.companyRole = null; try { bumpSessionEpoch(m.id) } catch { /* ignore */ } }
+  }
+  const i = (db.companies || []).findIndex((x) => x.id === companyId)
+  if (i >= 0) db.companies.splice(i, 1)
+  recordAdminAction({ action: 'company_deleted', reason: r, detail: `${c.name} (${members.length} members ${deleteMembers ? 'deleted' : 'detached'}) by ${by}` })
+  persist()
+  return { ok: true, members: members.length }
+}
 
 // ---- Editable email templates (superadmin) --------------------------------
 // The product's emails are NOT static: a superadmin edits each one's subject,
@@ -3344,6 +3508,75 @@ export function addWorkSessionCost(sessionId, usd) {
   if (!s) return
   s.costUsd = Number(((s.costUsd || 0) + n).toFixed(6))
   persist()
+}
+// --- Per-session telemetry (SINGLE writer) ---------------------------------
+// Every AI call a task makes - GUIDE (screen watch), planning, re-plan, ask,
+// compute, summary - is recorded here so the superadmin sees exactly what a
+// session consumed. One writer (this function); callers pass the per-call
+// telemetry from ai.generate/ai.analyseImages (model actually used + whether a
+// round-robin/failover happened). Refinements are the per-task re-plans already
+// counted on s.replans - surfaced in the detail view, not double-counted here.
+// `premium` means the call was served by a top-tier model (ai.modelRank topRanked).
+export function recordSessionCall(workUserId, sessionId, { kind = 'guide', premium = false, roundRobin = false, usd = 0 } = {}) {
+  const s = findWorkSession(workUserId, sessionId) || (db.workSessions || []).find((x) => x.id === sessionId)
+  if (!s) return
+  if (!s.metrics || typeof s.metrics !== 'object') s.metrics = { calls: 0, premiumCalls: 0, roundRobins: 0, byKind: {} }
+  if (!s.metrics.byKind || typeof s.metrics.byKind !== 'object') s.metrics.byKind = {}
+  s.metrics.calls += 1
+  if (premium) s.metrics.premiumCalls += 1
+  if (roundRobin) s.metrics.roundRobins += 1
+  const k = String(kind || 'guide').slice(0, 24)
+  s.metrics.byKind[k] = (s.metrics.byKind[k] || 0) + 1
+  s.metrics.lastCallAt = new Date().toISOString()
+  s.lastActivityAt = Date.now()
+  const n = Number(usd) || 0
+  if (n > 0) s.costUsd = Number(((s.costUsd || 0) + n).toFixed(6))
+  persistSoon()
+}
+// Rich superadmin "View" for ONE session: progress, live/active, the call
+// telemetry above, re-plans (refinements), remaining daily minutes for the
+// owner, and cost. Everything the operator asked to see on click-through.
+export function adminSessionDetail(sessionId) {
+  const s = (db.workSessions || []).find((x) => x.id === sessionId)
+  if (!s) return null
+  const u = getUser(s.workUserId)
+  const steps = Array.isArray(s.steps) ? s.steps : []
+  const done = steps.filter((x) => x && x.status === 'done').length
+  const idx = Number.isInteger(s.currentStep) ? s.currentStep : 0
+  const current = steps[idx] || null
+  const m = (s.metrics && typeof s.metrics === 'object') ? s.metrics : { calls: 0, premiumCalls: 0, roundRobins: 0, byKind: {} }
+  const idleMs = s.lastActivityAt ? (Date.now() - Number(s.lastActivityAt)) : null
+  const live = s.status === 'active' && idleMs != null && idleMs < 2 * 60 * 1000 // activity within 2 min = live
+  let usage = null
+  try { usage = getWorkUsage(s.workUserId) } catch { usage = null }
+  return {
+    id: s.id,
+    userId: s.workUserId,
+    username: (u && u.username) || s.username || 'unknown',
+    displayName: (u && u.displayName) || null,
+    companyId: (u && u.companyId) || null,
+    tier: (() => { try { return workUserTier(s.workUserId) } catch { return null } })(),
+    title: s.title || null,
+    goal: s.goal || null,
+    status: s.status || 'active',
+    paused: !!s.paused,
+    live,
+    idleSeconds: idleMs != null ? Math.round(idleMs / 1000) : null,
+    progress: { done, total: steps.length, currentIndex: idx, currentStep: current ? (current.text || current.title || null) : null },
+    calls: m.calls || 0,
+    premiumCalls: m.premiumCalls || 0,
+    roundRobins: m.roundRobins || 0,
+    refinements: Number.isInteger(s.replans) ? s.replans : 0,
+    byKind: m.byKind || {},
+    lastCallAt: m.lastCallAt || null,
+    costUsd: Number(s.costUsd || 0),
+    remainingSeconds: usage ? usage.remainingSeconds : null,
+    remainingMinutes: usage ? Math.round((usage.remainingSeconds || 0) / 60) : null,
+    usedSecondsToday: usage ? usage.usedSeconds : null,
+    startedAt: s.startedAt || null,
+    lastActivityAt: s.lastActivityAt || null,
+    endedAt: s.endedAt || null,
+  }
 }
 export function getWorkSession(workUserId, sessionId) { return findWorkSession(workUserId, sessionId) }
 export function listWorkSessions(workUserId) {

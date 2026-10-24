@@ -3,9 +3,9 @@
 // newest first, so the operator can fix billing, keys or the model. Superadmin
 // only (gated server-side). Users never see any of this.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, RefreshCw, AlertTriangle } from 'lucide-react'
+import { Search, RefreshCw, AlertTriangle, Trash2 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, Spinning } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
 
 function kindBadge(k) {
@@ -25,6 +25,9 @@ export default function Incidents() {
   const [state, setState] = useState({ loading: true, error: null, incidents: [], total: 0 })
   const [query, setQuery] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [modal, setModal] = useState(null)   // { type: 'one'|'all', row }
+  const [mBusy, setMBusy] = useState(false)
+  const [mErr, setMErr] = useState(null)
 
   const load = useCallback(async (isRefresh) => {
     if (isRefresh) setRefreshing(true); else setState((s) => ({ ...s, loading: true, error: null }))
@@ -37,6 +40,16 @@ export default function Incidents() {
   }, [])
 
   useEffect(() => { load(false) }, [load])
+
+  const confirmModal = async (reason) => {
+    setMBusy(true); setMErr(null)
+    try {
+      if (modal.type === 'all') await workAdminApi.clearIncidents(reason)
+      else await workAdminApi.deleteIncident(modal.row.id, reason)
+      setModal(null)
+      load(true)
+    } catch (e) { setMErr(e) } finally { setMBusy(false) }
+  }
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -64,6 +77,9 @@ export default function Incidents() {
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
           {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
         </button>
+        <button type="button" className="wka-btn sm" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.incidents.length === 0} style={{ color: '#d6433b' }}>
+          <Trash2 size={13} /> Clear all
+        </button>
         <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>
           Showing {rows.length} of {state.total}{state.total > state.incidents.length ? ` (latest ${state.incidents.length})` : ''}
         </span>
@@ -83,6 +99,7 @@ export default function Incidents() {
                 <th className="no-sort">Company</th>
                 <th className="no-sort">Where</th>
                 <th className="no-sort">Real cause</th>
+                <th className="no-sort"></th>
               </tr>
             </thead>
             <tbody>
@@ -98,12 +115,28 @@ export default function Incidents() {
                     <div style={{ fontSize: 12.5, lineHeight: 1.4 }} title={i.message || ''}>{i.message || '-'}</div>
                     {(i.provider || i.model) ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{[i.provider ? `provider: ${i.provider}` : null, i.model ? `model: ${i.model}` : null].filter(Boolean).join('  |  ')}</div> : null}
                   </td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button type="button" className="wka-btn sm ghost" title="Delete incident" style={{ color: '#d6433b' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: i }) }}><Trash2 size={13} /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {modal ? (
+        <ReasonModal
+          title={modal.type === 'all' ? 'Clear all incidents' : 'Delete incident'}
+          message={modal.type === 'all'
+            ? `Permanently delete all ${state.incidents.length} incident records. This cannot be undone.`
+            : 'Permanently delete this incident record. This cannot be undone.'}
+          confirmLabel={modal.type === 'all' ? 'Clear all' : 'Delete incident'}
+          busy={mBusy} error={mErr}
+          onConfirm={confirmModal}
+          onCancel={() => { if (!mBusy) setModal(null) }}
+        />
+      ) : null}
     </div>
   )
 }

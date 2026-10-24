@@ -124,8 +124,18 @@ export default function Governance({ isSuperAdmin }) {
   const patchPolicy = (patch) => setState((s) => ({ ...s, policy: { ...s.policy, ...patch } }))
   const setCat = (cat, action) => setState((s) => ({ ...s, policy: { ...s.policy, categories: { ...(s.policy.categories || {}), [cat]: action } } }))
   const applyPreset = (key) => {
-    const preset = state.presets[key] || {}
-    setState((s) => ({ ...s, policy: { ...s.policy, categories: { ...(s.policy.categories || {}), ...preset }, frameworks: Array.from(new Set([...(s.policy.frameworks || []), key])) } }))
+    setState((s) => {
+      const cur = s.policy.frameworks || []
+      const isOn = cur.includes(key)
+      if (isOn) {
+        // Toggle OFF: deselect the framework. Category actions it seeded are left
+        // as-is (the operator tuned them); clearing all frameworks resets nothing.
+        return { ...s, policy: { ...s.policy, frameworks: cur.filter((k) => k !== key) } }
+      }
+      // Toggle ON: select it and seed its sensible category defaults.
+      const preset = s.presets[key] || {}
+      return { ...s, policy: { ...s.policy, categories: { ...(s.policy.categories || {}), ...preset }, frameworks: [...cur, key] } }
+    })
   }
   const save = async () => {
     if (!isSuperAdmin || saving || !p) return

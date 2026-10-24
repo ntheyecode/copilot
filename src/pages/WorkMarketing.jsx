@@ -211,16 +211,6 @@ export default function WorkMarketing() {
           <LiveDemo tilt={tilt} untilt={untilt} />
         </div>
 
-        {/* Security + Privacy teaser cards, spanning the banner under the hero grid.
-            Compact, grounded claims only; both link to the showcase page. */}
-        <div className="wm-wrap">
-          <TrustDuo nav={nav} />
-          <div className="wm-sec-paper" data-reveal>
-            <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> See the data protection in action</a>
-            <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
-          </div>
-        </div>
-
         {/* marquee of fields */}
         <div className="wm-marquee" data-reveal>
           <div className="wm-marquee-row">
@@ -335,6 +325,17 @@ export default function WorkMarketing() {
           </div>
         </div>
       </section>
+
+      {/* Security + Privacy teaser cards + the two showcase buttons. Placed right
+          after the fields it protects: the work is written and handled the safe
+          way across every one of those fields. Both cards link to the showcase. */}
+      <div className="wm-wrap">
+        <TrustDuo nav={nav} />
+        <div className="wm-sec-paper" data-reveal>
+          <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> See the data protection in action</a>
+          <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
+        </div>
+      </div>
 
 
       {/* BENEFITS teaser - the full, visual breakdown lives on its own page. */}
@@ -471,29 +472,45 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* ENTERPRISE - its own section with the full benefits, routes to the contact form. */}
-      <section className="wm-sec wm-ent" id="enterprise">
+      {/* ENTERPRISE - the flagship, most premium tier. A refined dark panel on the
+          light page with a warm orange glow and accent edge, an elegant two-column
+          benefit grid, a primary Contact sales CTA plus a secondary action, and a
+          trust strip of assurances. Routes to the contact form. */}
+      <section className="wm-sec wm-ent-sec" id="enterprise">
         <div className="wm-wrap">
-          <div className="wm-ent-card" data-reveal>
-            <div className="wm-ent-l">
-              <div className="wm-eyebrow"><Building2 size={14} /> Enterprise</div>
-              <h2 className="wm-h2">Built for regulated teams.</h2>
-              <p className="wm-sub">Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people - with your data staying on your terms.</p>
+          <div className="wm-ent" data-reveal>
+            <div className="wm-ent-glow" aria-hidden />
+            <header className="wm-ent-top">
+              <div className="wm-ent-eyebrow"><ShieldCheck size={14} /> Most trusted &middot; Enterprise</div>
+              <h2 className="wm-ent-h">The flagship tier, for the teams we treat the best.</h2>
+              <p className="wm-ent-lead">Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people, with your data staying on your terms.</p>
+            </header>
+            <ul className="wm-ent-feats">
+              {[
+                ['Unlimited seats and tasks', 'One central admin console for the whole company.'],
+                ['SSO, SAML and invite-only provisioning', 'Add your people the way your IT team expects.'],
+                ['One locked company data policy', 'Set it once, and every member inherits it.'],
+                ['Per-company AI keys, or bring your own', 'Your keys, your control. Nothing is shared.'],
+                ['On-device PII and PHI redaction', 'Armed and locked, enforced for everyone.'],
+                ['Full audit log and compliance reports', 'Per-session evidence, ready for review.'],
+                ['DPA, priority SLA and a dedicated contact', 'A named owner for your rollout.'],
+                ['Self-hosted or on-prem option', 'Run it entirely inside your own walls.'],
+              ].map(([t, d]) => (
+                <li key={t}><span className="wm-ent-tick"><Check size={13} /></span><div><b>{t}</b><i>{d}</i></div></li>
+              ))}
+            </ul>
+            <div className="wm-ent-foot">
               <div className="wm-ent-cta">
                 <a className="wm-cta" href="/workcopilot/contact">Contact sales <ArrowRight size={16} /></a>
-                <span className="wm-ent-note">We reply within one business day.</span>
+                <a className="wm-cta ghost" href="/workcopilot/security">See the controls in action <ArrowRight size={15} /></a>
               </div>
+              <span className="wm-ent-note">We reply within one business day.</span>
             </div>
-            <ul className="wm-ent-feats">
-              <li><Check size={16} /> Unlimited seats and tasks, central admin console</li>
-              <li><Check size={16} /> SSO / SAML and invite-only team provisioning</li>
-              <li><Check size={16} /> One locked company data policy for every member</li>
-              <li><Check size={16} /> Per-company AI keys, or bring your own</li>
-              <li><Check size={16} /> On-device PII / PHI redaction, armed and locked</li>
-              <li><Check size={16} /> Full audit log, per-session evidence and compliance reports</li>
-              <li><Check size={16} /> DPA, priority SLA and a dedicated contact</li>
-              <li><Check size={16} /> Self-hosted / on-prem option</li>
-            </ul>
+            <div className="wm-ent-strip" aria-label="Enterprise assurances">
+              {['SSO', 'SAML', 'DPA', 'On-prem', 'Audit logs'].map((c) => (
+                <span key={c} className="wm-ent-chip">{c}</span>
+              ))}
+            </div>
           </div>
         </div>
       </section>
@@ -1708,17 +1725,39 @@ const CSS = `
 .wm-tier-cyc s{color:var(--mut);opacity:.8;margin-right:5px}
 .wm-tier-custom{font-size:34px}
 .wm-tier-ent{border-color:rgba(57,211,255,.35);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.008))}
-.wm-ent{padding-top:0}
-.wm-ent-card{display:grid;grid-template-columns:1.1fr 1fr;gap:34px;align-items:center;background:linear-gradient(135deg,#0c2a22,#0a2033);border-radius:24px;padding:40px 40px;color:#eaf4ef;box-shadow:0 30px 80px -40px rgba(10,40,30,.6)}
-.wm-ent-l .wm-eyebrow{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#8cf5c4}
-.wm-ent-l .wm-h2{color:#fff;margin:14px 0 10px}
-.wm-ent-l .wm-sub{color:#b9ccca;margin:0 0 20px;max-width:46ch}
-.wm-ent-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.wm-ent-note{color:#8fa6a2;font-size:13px}
-.wm-ent-feats{list-style:none;margin:0;padding:0;display:grid;gap:11px}
-.wm-ent-feats li{display:flex;align-items:flex-start;gap:9px;font-size:14.5px;line-height:1.45;color:#dcebe7}
-.wm-ent-feats li svg{color:#39d3ff;flex-shrink:0;margin-top:2px}
-@media(max-width:820px){.wm-ent-card{grid-template-columns:1fr;gap:24px;padding:30px 24px}}
+/* ENTERPRISE - the flagship tier. A premium dark panel on the light page, with a
+   warm orange glow, a hairline orange accent on the top edge, an elegant
+   two-column benefit grid and a trust strip. Self-contained dark ink so it reads
+   light-on-dark in both page themes. Orange = the brand accent (--warm / --warm2). */
+.wm-ent-sec{padding-top:0}
+.wm-ent{position:relative;overflow:hidden;margin-top:20px;border-radius:26px;padding:clamp(30px,4vw,48px) clamp(24px,4vw,52px);
+  background:
+    radial-gradient(130% 150% at 0% 0%,rgba(242,106,67,.16),transparent 46%),
+    radial-gradient(90% 130% at 100% 4%,rgba(57,211,255,.08),transparent 54%),
+    linear-gradient(152deg,#141c2d 0%,#0f1723 46%,#0b1410 100%);
+  border:1px solid rgba(255,255,255,.1);
+  box-shadow:0 1px 0 rgba(255,255,255,.05) inset,0 54px 104px -46px rgba(8,12,22,.78),0 0 0 1px rgba(242,106,67,.08)}
+.wm-ent::before{content:"";position:absolute;inset:0 0 auto 0;height:2px;background:linear-gradient(90deg,transparent,rgba(242,106,67,.9),rgba(255,154,77,.65),transparent)}
+.wm-ent-glow{position:absolute;top:-34%;left:-12%;width:54%;height:130%;pointer-events:none;background:radial-gradient(closest-side,rgba(242,106,67,.22),transparent 72%);filter:blur(12px)}
+.wm-ent-top{position:relative;max-width:62ch}
+.wm-ent-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#ffb98c;margin-bottom:13px}
+.wm-ent-eyebrow svg{color:#f26a43}
+.wm-ent-h{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.4vw,38px);line-height:1.08;letter-spacing:-.025em;color:#fff;margin:0 0 12px}
+.wm-ent-lead{color:#b4bfd2;font-size:16px;line-height:1.62;margin:0;max-width:60ch}
+.wm-ent-feats{position:relative;list-style:none;padding:0;margin:30px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:16px 34px}
+.wm-ent-feats li{display:flex;gap:13px;align-items:flex-start}
+.wm-ent-tick{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;margin-top:1px;color:#fff;background:linear-gradient(135deg,var(--warm),var(--warm2));box-shadow:0 6px 16px -8px rgba(242,106,67,.9)}
+.wm-ent-feats li b{display:block;color:#eef2f9;font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
+.wm-ent-feats li i{display:block;font-style:normal;color:#93a0b8;font-size:13.5px;line-height:1.45;margin-top:3px}
+.wm-ent-foot{position:relative;margin-top:34px;padding-top:26px;border-top:1px solid rgba(255,255,255,.1);display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap}
+.wm-ent-cta{display:flex;gap:12px;flex-wrap:wrap}
+.wm-ent .wm-cta.ghost{background:rgba(255,255,255,.05);color:#eef2f9;border:1px solid rgba(255,255,255,.2);box-shadow:none}
+.wm-ent .wm-cta.ghost:hover{border-color:#f26a43;color:#ffd9c8;transform:translateY(-2px)}
+.wm-ent-note{color:#93a0b8;font-size:13.5px}
+.wm-ent-strip{position:relative;margin-top:24px;display:flex;flex-wrap:wrap;gap:9px}
+.wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#cdd6e6;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:6px 13px;transition:border-color .2s,color .2s}
+.wm-ent-chip:hover{border-color:rgba(242,106,67,.5);color:#ffd9c8}
+@media(max-width:620px){.wm-ent-feats{grid-template-columns:1fr;gap:15px}.wm-ent-cta{width:100%}.wm-ent-cta .wm-cta{flex:1;min-width:0}}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}
@@ -1762,14 +1801,6 @@ const CSS = `
 .wm-sec-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
 .wm-sec-card h3{font-family:"Bricolage Grotesque";font-size:18px;margin:0 0 8px}
 .wm-sec-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
-/* ENTERPRISE pricing anchor (premium dark block) */
-.wm-ent{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:30px;align-items:center;background:linear-gradient(135deg,#0f1626,#0b1f1a);border:1px solid rgba(255,255,255,.08);border-radius:22px;padding:34px 38px;box-shadow:0 44px 86px -42px rgba(17,23,38,.5)}
-.wm-ent-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:#8cf5c4;margin-bottom:10px}
-.wm-ent h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(24px,3vw,32px);color:#fff;margin:0 0 10px;letter-spacing:-.02em}
-.wm-ent-l p{color:#aeb9cc;font-size:15.5px;margin:0;max-width:46ch;line-height:1.6}
-.wm-ent-r ul{list-style:none;padding:0;margin:0 0 18px;display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.wm-ent-r li{display:flex;gap:8px;align-items:flex-start;color:#e7ecf5;font-size:14px}
-.wm-ent-r li svg{color:#8cf5c4;flex-shrink:0;margin-top:2px}
 /* HOW COMPANIES BENEFIT (ROI) */
 .wm-roi-stats{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin:6px 0 30px}
 .wm-roi-stat{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px 20px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
@@ -1796,7 +1827,7 @@ const CSS = `
 .wm-fld-stat span{display:block;margin-top:6px;color:var(--mut);font-size:13px;line-height:1.35}
 /* (the family card grid + tag styles moved with the grid to WorkFields.jsx) */
 @media(max-width:560px){.wm-fld-stats{gap:10px;margin-bottom:22px}.wm-fld-stat{padding:14px 8px;border-radius:13px}.wm-fld-stat span{font-size:12px}}
-@media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent{grid-template-columns:1fr;gap:20px}.wm-ent-r ul{grid-template-columns:1fr}}
+@media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent-feats{gap:14px 24px}}
 
 /* FINAL */
 .wm-final{padding:70px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}

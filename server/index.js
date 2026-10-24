@@ -289,12 +289,27 @@ function scrubForAi(s, on, userId) {
 }
 // Scrub one string, policy-aware. Pass the request's userId for policy enforcement.
 function scrubIf(on, text, userId) { return govScrub(userId, text, on) }
-// Accumulate an estimated AI cost on a session (operator transparency; the AI
-// module does not surface exact token counts, so this is a chars/4 estimate).
-function meterCost(sessionId, model, inText, outText, images = 0) {
+// Accumulate an estimated AI cost on a session AND record per-call telemetry
+// (operator transparency; the AI module does not surface exact token counts, so
+// cost is a chars/4 estimate). This is the SINGLE choke point for session call
+// metrics - every GUIDE/planning AI call lands here with its session, the model
+// actually used, and (where threaded) the per-call `tele` from ai.js telling us
+// if a round-robin/failover happened. `kind` labels the call (plan/guide/ask/
+// compute/result/compose/howto). Premium = the model served was top-tier.
+function meterCost(sessionId, model, inText, outText, images = 0, opts = {}) {
   try {
     const usd = estimateCostUsd(model, String(inText || '').length, String(outText || '').length, images)
     if (usd > 0) store.addWorkSessionCost(sessionId, usd)
+    if (sessionId && typeof store.recordSessionCall === 'function') {
+      const tele = opts && opts.tele
+      const owner = (opts && opts.workUserId) || null
+      store.recordSessionCall(owner, sessionId, {
+        kind: (opts && opts.kind) || 'guide',
+        premium: (tele && tele.model) ? ai.isPremiumModel(tele.model) : ai.isPremiumModel(model),
+        roundRobin: !!(tele && tele.roundRobin),
+        // cost already added above; don't double-count here
+      })
+    }
   } catch (_) { /* never break a request over metering */ }
 }
 
@@ -744,6 +759,9 @@ app.post('/api/work/login', wrap((req, res) => {
     return res.status(401).json({ error: 'Invalid username or password' })
   }
   authOk(req)
+  // A superadmin-disabled account cannot sign in (its sessions were already
+  // invalidated when it was disabled). Clear message, not a confusing password error.
+  if (u.disabled) return res.status(403).json({ error: 'This account has been disabled. Please contact your administrator.' })
   // Break-glass: if MFA is globally disabled (operator env flag), sign in the old
   // way so a broken rollout can be recovered without locking everyone out.
   if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
@@ -1469,14 +1487,16 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // for company users, platform KB for solo users), so the plan starts smarter
     // than the model's training cutoff. Retrieval is scoped + de-identified.
     const kbNotes = store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')
+    const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
+      tele: planTele,
       base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, learnings: kbNotes, strong: call.backup,
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
       thorough: store.effectiveWatchMode(req.workUser.id) === 'light',
     })
-    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []), frame ? 1 : 0)
+    meterCost(req.params.id, planTele.model || call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []), frame ? 1 : 0, { kind: 'plan', tele: planTele })
     if (plan.refusal) {
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Declined: ' + plan.refusal })
       const cur = store.getWorkSession(req.workUser.id, req.params.id)
@@ -1554,7 +1574,7 @@ app.post('/api/work/sessions/:id/deliverables', requireWorkAuth, requireWorkSubs
       frame: frames.length ? (frames.length + ' screenshot(s) sent') : null, sent: safeGoal,
     })
     const d = await work.workDeliverables(ai, call.rt, { goal: safeGoal, scope, frames, visionModel: call.visionModel })
-    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), safeGoal, JSON.stringify(d), frames.length)
+    meterCost(req.params.id, call.visionModel || (call.rt && call.rt.chatModel), safeGoal, JSON.stringify(d), frames.length, { kind: 'deliverables' })
     // Policy: WorkCoPilot does NOT generate the finished document. We return the
     // REVIEW and the ready-to-use GENERATION PROMPTS (to run in the user's own AI)
     // only - never an AI-written document.
@@ -1630,7 +1650,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     })
     const escalated = r.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (r.escalated ? call.strongModel : rr.visionModel)
-    meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''), 1)
+    meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''), 1, { kind: 'guide', tele: { roundRobin: !!escalated, model: usedModel } })
     // Snapshot which steps were already done, so we can tell which ones become
     // confirmed on THIS frame and keep that exact frame as their evidence.
     const prevDone = new Set((s.steps || []).map((x, i) => (x.status === 'done' ? i : -1)).filter((i) => i >= 0))
@@ -1683,7 +1703,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     if (qScrub.total) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(qScrub.counts) })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)
-    meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '', frame ? 1 : 0)
+    meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '', frame ? 1 : 0, { kind: 'ask' })
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
@@ -1725,7 +1745,7 @@ app.post('/api/work/sessions/:id/result', requireWorkAuth, requireWorkSubscripti
     if (redacted) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary({ ...qScrub.counts, ...docScrub.counts }) })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = (hasFrame ? (call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)) : (call.rt && call.rt.chatModel))
-    meterCost(req.params.id, usedModel, qScrub.clean + docScrub.clean + (sa.goal || ''), (out.body || '') + (out.basis || ''))
+    meterCost(req.params.id, usedModel, qScrub.clean + docScrub.clean + (sa.goal || ''), (out.body || '') + (out.basis || ''), 0, { kind: 'result' })
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     // A concise, user-facing record for the session feed + report (full result in the response).
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'result', text: `${out.kind}: ${String(out.need || out.body || '').replace(/\s+/g, ' ').trim().slice(0, 200)}` })
@@ -1757,7 +1777,7 @@ app.post('/api/work/sessions/:id/compute', requireWorkAuth, requireWorkSubscript
     store.appendWorkAudit(req.params.id, { call: 'compute', model: (call.rt && call.rt.chatModel) || null, scrub: scrubOn || !!pol, redacted: wantScrub.total, frame: 'schema only (no rows)', sent: `[compute over ${cleanSchema.length} cols] ${wantScrub.clean}`.slice(0, 200) })
     const out = await work.workCompute(ai, call.rt, { base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal, want: wantScrub.clean, schema: cleanSchema, rowCount: Number(rowCount) || 0 })
     if (wantScrub.total) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(wantScrub.counts) })
-    meterCost(req.params.id, (call.rt && call.rt.chatModel), wantScrub.clean + JSON.stringify(cleanSchema), JSON.stringify(out.spec || {}))
+    meterCost(req.params.id, (call.rt && call.rt.chatModel), wantScrub.clean + JSON.stringify(cleanSchema), JSON.stringify(out.spec || {}), 0, { kind: 'compute' })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'compute', text: (out.ok ? `Computation plan ready (${(out.spec.steps || []).length} steps), run on your device.` : `Could not plan: ${out.need || ''}`).slice(0, 160) })
     res.json({ ...out })
   } catch (e) { sendWorkError(res, e, req) }
@@ -1817,7 +1837,7 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
     })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : (needVision ? rr.visionModel : (call.rt && call.rt.chatModel)))
-    meterCost(req.params.id, usedModel || call.visionModel, safeGoal + noteScrub.clean + docScrub.clean, (out.answer || '') + JSON.stringify(out.steps || []), images.length)
+    meterCost(req.params.id, usedModel || call.visionModel, safeGoal + noteScrub.clean + docScrub.clean, (out.answer || '') + JSON.stringify(out.steps || []), images.length, { kind: 'context' })
 
     // Record what the user added (short), so the session history shows the hand-off.
     const addedLabel = noteScrub.clean ? noteScrub.clean.slice(0, 160) : (docScrub.clean ? 'a document' : 'an image')
@@ -2350,6 +2370,13 @@ app.post('/api/work/reports/verify', wrap((req, res) => {
 app.get('/api/work/admin/notify', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ notify: store.getNotifySettings() }) }))
 app.post('/api/work/admin/notify', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ notify: store.setNotifySettings(req.body || {}) }) }))
 app.get('/api/work/admin/contacts', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ contacts: store.listContactSubmissions({ limit: Number(req.query.limit) || 300 }) }) }))
+// Delete one / clear all contact messages (reason required + logged in the store).
+app.delete('/api/work/admin/contacts/:id', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.deleteContactSubmission(req.params.id, { reason: String((req.body && req.body.reason) || '').trim(), by: req.user.username }))
+}))
+app.post('/api/work/admin/contacts/clear', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.clearContactSubmissions({ reason: String((req.body && req.body.reason) || '').trim(), by: req.user.username }))
+}))
 // Every company admin across all companies (operational oversight).
 app.get('/api/work/admin/company-admins', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ admins: store.listAllCompanyAdmins() }) }))
 
@@ -2445,7 +2472,7 @@ app.post('/api/work/sessions/:id/compose', requireWorkAuth, requireWorkSubscript
     if (redacted) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary({ ...wantScrub.counts, ...docScrub.counts }) })
     const escalated = out.escalated || call.forcedStrong
     const usedModel = (hasFrame ? (call.forcedStrong ? call.visionModel : (out.escalated ? call.strongModel : rr.visionModel)) : (call.rt && call.rt.chatModel))
-    meterCost(req.params.id, usedModel, wantScrub.clean + docScrub.clean + (sa.goal || ''), (out.body || '') + (out.basis || ''))
+    meterCost(req.params.id, usedModel, wantScrub.clean + docScrub.clean + (sa.goal || ''), (out.body || '') + (out.basis || ''), 0, { kind: 'compose' })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'compose', text: `${out.format}: ${String(out.title || '').slice(0, 120)}` })
     // Security gate on CODE-related compositions only (an authored script/query/config).
     const security = out.format === 'code' ? await runSecurityGate(req.workUser.id, req.params.id, out.body || '') : null

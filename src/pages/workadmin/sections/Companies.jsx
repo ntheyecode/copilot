@@ -4,9 +4,9 @@
 // email for SSO), SSO config, corporate AI keys, extra hours, billing and the
 // data-redaction policy. Everything a company needs to go live lives here.
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle } from 'lucide-react'
+import { Plus, Building2, ShieldCheck, Shield, Loader2, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle, ShieldOff } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, ReasonModal as SharedReasonModal } from './_shared.jsx'
 
 // Friendly labels for every OpenID Connect provider the backend accepts. The
 // engine is generic OIDC, so the list can grow without code changes.
@@ -268,6 +268,10 @@ export default function Companies({ isSuperAdmin }) {
   const [askReason, reasonModal] = useReasonModal()
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState('')
+  const [delCompany, setDelCompany] = useState(null) // company pending hard-delete
+  const [delMembers, setDelMembers] = useState(false)
+  const [delBusy, setDelBusy] = useState(false)
+  const [delErr, setDelErr] = useState(null)
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -385,6 +389,31 @@ export default function Companies({ isSuperAdmin }) {
   const addBillItem = async (id) => { const desc = window.prompt('Line item description (e.g. Extra 10 hours):'); if (!desc) return; const amt = window.prompt('Amount (USD):', '0'); if (amt == null) return; try { await workAdminApi.addBillingItem(id, { type: 'adjustment', description: desc, qty: 1, unitAmount: Number(amt) || 0 }); loadBill(id) } catch (e) { setMsg(e.message) } }
   const removeBillItem = async (id, itemId) => { const reason = await askReason({ title: 'Remove this billing line item?', detail: 'The line is taken off the company bill.', confirmLabel: 'Confirm remove' }); if (!reason || reason.length < 3) return; try { await workAdminApi.removeBillingItem(id, itemId, reason); loadBill(id) } catch (e) { setMsg(e.message) } }
 
+  // Disable (reversible) or delete (hard) a whole company. Disable uses the local
+  // reason prompt; delete uses the shared modal because it needs the extra
+  // "also delete members" choice. Both are reason-gated + logged server-side.
+  const toggleCompanyDisabled = async (co) => {
+    const disabling = !co.disabled
+    const reason = await askReason({
+      title: disabling ? `Disable ${co.name}?` : `Re-enable ${co.name}?`,
+      detail: disabling ? 'Every member is signed out and blocked from the service until you re-enable the company.' : 'Members can sign in and use the service again.',
+      confirmLabel: disabling ? 'Disable company' : 'Enable company',
+    })
+    if (!reason || reason.length < 3) return
+    try { await workAdminApi.disableCompany(co.id, disabling, reason); await load(); if (openId === co.id) refreshDetail(co.id) }
+    catch (e) { setMsg(e.message) }
+  }
+  const confirmDeleteCompany = async (reason) => {
+    setDelBusy(true); setDelErr(null)
+    try {
+      await workAdminApi.deleteCompany(delCompany.id, reason, delMembers)
+      const wasOpen = openId === delCompany.id
+      setDelCompany(null); setDelMembers(false)
+      if (wasOpen) { setOpenId(null); setDetail(null); setLic(null); setBill(null) }
+      await load()
+    } catch (e) { setDelErr(e) } finally { setDelBusy(false) }
+  }
+
   if (state.loading) return <Loading label="Loading companies" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
 
@@ -395,6 +424,22 @@ export default function Companies({ isSuperAdmin }) {
     <div className="wka-panel">
       <style>{CSS}</style>
       {reasonModal}
+      {delCompany ? (
+        <SharedReasonModal
+          title={`Delete ${delCompany.name}`}
+          message="Permanently delete this company. This cannot be undone."
+          confirmLabel="Delete company"
+          busy={delBusy} error={delErr}
+          extra={(
+            <label className="wka-check" style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, marginBottom: 10 }}>
+              <input type="checkbox" checked={delMembers} onChange={(e) => setDelMembers(e.target.checked)} />
+              Also delete all member accounts (otherwise they are detached to standalone)
+            </label>
+          )}
+          onConfirm={confirmDeleteCompany}
+          onCancel={() => { if (!delBusy) { setDelCompany(null); setDelMembers(false) } }}
+        />
+      ) : null}
       <div className="co-head">
         <p className="desc">Onboard a company with its full profile, licenses, SSO and AI, then manage its people, hours and billing. Everything is scoped per company.</p>
         {isSuperAdmin && <button className="wka-btn primary" onClick={() => setShowNew((v) => !v)}><Plus size={15} /> New company</button>}
@@ -453,6 +498,7 @@ export default function Companies({ isSuperAdmin }) {
                   <span className="co-ic"><Building2 size={16} /></span>
                   <span className="co-name">{c.name}</span>
                   <span className={`wka-badge ${c.plan}`}>{c.plan}</span>
+                  {c.disabled ? <span className="wka-badge" style={{ background: '#f6dcd9', color: '#c0392b' }}>Disabled</span> : null}
                   <span className="co-meta">{c.memberCount != null ? c.memberCount : c.userCount} users &middot; {c.adminCount} admin{c.aiReady === false ? <span className="co-warn"><AlertTriangle size={12} /> AI not ready</span> : null}</span>
                   <span className={`co-scrub ${c.scrub ? 'on' : ''}`}>{c.scrub ? <><ShieldCheck size={13} /> Redaction on</> : <><Shield size={13} /> Redaction off</>}</span>
                 </button>
@@ -462,7 +508,17 @@ export default function Companies({ isSuperAdmin }) {
                       <>
                         <div className="co-detail-top">
                           <div>Plan <b>{detail.company.plan}</b> &middot; Mode <b>{detail.company.licenseMode}</b> &middot; SSO <b>{detail.company.ssoProvisioning === 'auto' ? 'open domain' : 'invite-only'}</b> {detail.company.sso && detail.company.sso.connected ? <>({detail.company.sso.provider})</> : ''} &middot; AI <b style={{ color: detail.company.aiReady ? 'var(--wka-emerald)' : 'var(--wka-amber)' }}>{detail.company.aiReady ? 'ready' : 'not ready'}</b></div>
-                          {isSuperAdmin && <button className="wka-btn sm" onClick={() => toggleCompanyScrub(c)}>{c.scrub ? 'Turn redaction off' : 'Turn redaction on'}</button>}
+                          {isSuperAdmin && (
+                            <div style={{ display: 'inline-flex', gap: 8, flexWrap: 'wrap' }}>
+                              <button className="wka-btn sm" onClick={() => toggleCompanyScrub(c)}>{c.scrub ? 'Turn redaction off' : 'Turn redaction on'}</button>
+                              <button className="wka-btn sm" onClick={() => toggleCompanyDisabled(detail.company)} style={detail.company.disabled ? { color: 'var(--wka-emerald)' } : undefined}>
+                                {detail.company.disabled ? <><ShieldCheck size={13} /> Enable company</> : <><ShieldOff size={13} /> Disable company</>}
+                              </button>
+                              <button className="wka-btn sm" style={{ color: '#c0392b' }} onClick={() => { setDelErr(null); setDelMembers(false); setDelCompany(detail.company) }}>
+                                <Trash2 size={13} /> Delete company
+                              </button>
+                            </div>
+                          )}
                         </div>
                         {detail.company.profile && (detail.company.profile.contactPerson || detail.company.profile.city) ? (
                           <div className="co-profile">{[detail.company.profile.contactPerson, detail.company.profile.email, detail.company.profile.phone, [detail.company.profile.city, detail.company.profile.state, detail.company.profile.country].filter(Boolean).join(', ')].filter(Boolean).join('  ·  ')}</div>

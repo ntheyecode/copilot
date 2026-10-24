@@ -3,9 +3,9 @@
 // from, the first scenario the visitor validated, and the date/time. Superadmin
 // only (gated server-side). Searchable + CSV export.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, RefreshCw, Download } from 'lucide-react'
+import { Search, RefreshCw, Download, Trash2 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, Spinning } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
 
 function sourceBadge(s) {
@@ -28,6 +28,9 @@ export default function Leads() {
   const [state, setState] = useState({ loading: true, error: null, leads: [], total: 0 })
   const [query, setQuery] = useState('')
   const [refreshing, setRefreshing] = useState(false)
+  const [modal, setModal] = useState(null)   // { type: 'one'|'all', row }
+  const [mBusy, setMBusy] = useState(false)
+  const [mErr, setMErr] = useState(null)
 
   const load = useCallback(async (isRefresh) => {
     if (isRefresh) setRefreshing(true); else setState((s) => ({ ...s, loading: true, error: null }))
@@ -40,6 +43,16 @@ export default function Leads() {
   }, [])
 
   useEffect(() => { load(false) }, [load])
+
+  const confirmModal = async (reason) => {
+    setMBusy(true); setMErr(null)
+    try {
+      if (modal.type === 'all') await workAdminApi.clearLeads(reason)
+      else await workAdminApi.deleteLead(modal.row.id, reason)
+      setModal(null)
+      load(true)
+    } catch (e) { setMErr(e) } finally { setMBusy(false) }
+  }
 
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -81,6 +94,9 @@ export default function Leads() {
         <button type="button" className="wka-btn sm" onClick={exportCsv} disabled={rows.length === 0}>
           <Download size={13} /> Export CSV
         </button>
+        <button type="button" className="wka-btn sm" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.leads.length === 0} style={{ color: '#d6433b' }}>
+          <Trash2 size={13} /> Clear all
+        </button>
         <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>
           Showing {rows.length} of {state.total}{state.total > state.leads.length ? ` (latest ${state.leads.length})` : ''}
         </span>
@@ -100,6 +116,7 @@ export default function Leads() {
                 <th className="no-sort">From</th>
                 <th className="no-sort">Scenario validated</th>
                 <th className="no-sort">Captured</th>
+                <th className="no-sort"></th>
               </tr>
             </thead>
             <tbody>
@@ -116,12 +133,28 @@ export default function Leads() {
                     </div>
                   </td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(l.createdAt)}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <button type="button" className="wka-btn sm ghost" title="Delete lead" style={{ color: '#d6433b' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
+                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       )}
+
+      {modal ? (
+        <ReasonModal
+          title={modal.type === 'all' ? 'Clear all leads' : 'Delete lead'}
+          message={modal.type === 'all'
+            ? `Permanently delete all ${state.leads.length} lead records. This cannot be undone.`
+            : `Permanently delete the lead for ${modal.row.email || 'this visitor'}. This cannot be undone.`}
+          confirmLabel={modal.type === 'all' ? 'Clear all' : 'Delete lead'}
+          busy={mBusy} error={mErr}
+          onConfirm={confirmModal}
+          onCancel={() => { if (!mBusy) setModal(null) }}
+        />
+      ) : null}
     </div>
   )
 }
