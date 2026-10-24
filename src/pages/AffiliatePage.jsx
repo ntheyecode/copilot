@@ -39,6 +39,10 @@ const SOCIALS = [
   { k: 'other', label: 'Other', mark: '+', ph: 'Newsletter, podcast, Discord, blog...', at: false },
 ]
 const EMPTY_SOCIALS = Object.fromEntries(SOCIALS.map((s) => [s.k, '']))
+// Fallback commission shown ONLY while /api/affiliate/public has not delivered a
+// number (fetch pending or failed). The server's defaultRatePct always wins when
+// present, so the page never renders a bare "%".
+const DEFAULT_RATE_PCT = 30
 
 export default function AffiliatePage() {
   useSeo({
@@ -112,7 +116,9 @@ export default function AffiliatePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const rate = pub && pub.defaultRatePct != null ? Number(pub.defaultRatePct) : null
+  // Always a number: the server's defaultRatePct when it arrived, else the fallback.
+  const serverRate = pub && pub.defaultRatePct != null ? Number(pub.defaultRatePct) : NaN
+  const rate = Number.isFinite(serverRate) ? serverRate : DEFAULT_RATE_PCT
 
   return (
     <div className="af">
@@ -153,7 +159,7 @@ export default function AffiliatePage() {
 /* ------------------------------------------------------------------ LANDING */
 function Landing({ pub, pubErr, rate, me, dashErr }) {
   const user = me && me.user
-  const rateWord = rate != null ? `${rate}%` : 'a commission'
+  const rateWord = `${rate}%`
   // Primary CTA: glide to the form and put the cursor in the first field.
   const goApply = () => {
     const reduce = typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -179,7 +185,7 @@ function Landing({ pub, pubErr, rate, me, dashErr }) {
             <a className="af-cta alt" href="/">See what you&rsquo;d be recommending <ArrowRight size={15} /></a>
           </div>
           <div className="af-hero-facts" aria-label="Program at a glance">
-            <div className="af-fact" style={{ '--c1': '#ffb02e', '--c2': '#f26a43' }}><b>{rate != null ? `${rate}%` : 'Set %'}</b><span>of each referral&rsquo;s first payment</span></div>
+            <div className="af-fact" style={{ '--c1': '#ffb02e', '--c2': '#f26a43' }}><b>{rate}%</b><span>of each referral&rsquo;s first payment</span></div>
             <div className="af-fact" style={{ '--c1': '#ff3d8d', '--c2': '#d63aff' }}><b>Stripe</b><span>automatic payouts to your account</span></div>
             <div className="af-fact" style={{ '--c1': '#d63aff', '--c2': '#7c3aed' }}><b>Free month</b><span>for everyone you refer, on annual billing</span></div>
           </div>
@@ -263,7 +269,7 @@ function HeroVisual({ rate }) {
         <span className="af-badge-ring" />
         <div className="af-badge">
           <span className="af-badge-k">You earn</span>
-          <b className="af-badge-v">{rate != null ? `${rate}%` : '%'}</b>
+          <b className="af-badge-v">{rate}%</b>
           <span className="af-badge-s">of every referral&rsquo;s first payment</span>
         </div>
         <span className="af-coin c1"><Coins size={16} /></span>

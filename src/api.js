@@ -163,11 +163,11 @@ export const api = {
   workContact: (body) => req('POST', '/api/work/contact', body || {}),
   // Affiliate program: public apply + program status; affiliate dashboard +
   // Stripe Connect onboarding (signed in as the affiliate's own account).
-  affiliatePublic: () => req('GET', '/api/affiliate/public'),
-  affiliateApply: (body) => req('POST', '/api/affiliate/apply', body || {}),
-  affiliateDashboard: () => req('GET', '/api/affiliate/dashboard'),
-  affiliateConnectOnboard: () => req('POST', '/api/affiliate/connect/onboard', {}),
-  affiliateConnectRefresh: () => req('GET', '/api/affiliate/connect/refresh'),
+  affiliatePublic: () => req('GET', '/api/work/affiliate/public'),
+  affiliateApply: (body) => req('POST', '/api/work/affiliate/apply', body || {}),
+  affiliateDashboard: () => req('GET', '/api/work/affiliate/dashboard'),
+  affiliateConnectOnboard: () => req('POST', '/api/work/affiliate/connect/onboard', {}),
+  affiliateConnectRefresh: () => req('GET', '/api/work/affiliate/connect/refresh'),
   // Password: validate a set/reset token, set a new password, request a reset link.
   workPasswordToken: (token) => req('GET', `/api/work/password/token/${encodeURIComponent(token)}`),
   workPasswordSet: (token, password) => req('POST', '/api/work/password/set', { token, password }),

@@ -8,10 +8,10 @@
 // 'affiliate_admin'); superadmin also qualifies.
 //
 // Routes:
-//   Public:      POST /api/affiliate/apply, GET /api/affiliate/go/:code,
-//                GET /api/affiliate/public
-//   Affiliate:   GET /api/affiliate/dashboard, POST /api/affiliate/connect/onboard,
-//                GET /api/affiliate/connect/refresh   (requireWorkAuth)
+//   Public:      POST /api/work/affiliate/apply, GET /api/work/affiliate/go/:code,
+//                GET /api/work/affiliate/public
+//   Affiliate:   GET /api/work/affiliate/dashboard, POST /api/work/affiliate/connect/onboard,
+//                GET /api/work/affiliate/connect/refresh   (requireWorkAuth)
 //   Admin:       /api/work/admin/affiliates*          (requireAffiliateAdmin)
 //                /api/work/admin/affiliate/role        (requireSuperAdmin)
 //
@@ -42,13 +42,13 @@ export function registerAffiliateRoutes(app, deps = {}) {
 
   // ---- Public ----------------------------------------------------------------
   // The landing page reads this to show whether the program is open + the headline rate.
-  app.get('/api/affiliate/public', w((req, res) => {
+  app.get('/api/work/affiliate/public', w((req, res) => {
     const c = store.getAffiliateConfig()
     res.json({ enabled: c.enabled, defaultRatePct: c.defaultRatePct })
   }))
 
   // Apply to become an affiliate (creates a pending application).
-  app.post('/api/affiliate/apply', w((req, res) => {
+  app.post('/api/work/affiliate/apply', w((req, res) => {
     const b = req.body || {}
     const ip = (req.headers['x-forwarded-for'] || req.ip || '').toString().split(',')[0].trim()
     const out = store.applyAffiliate({
@@ -62,7 +62,7 @@ export function registerAffiliateRoutes(app, deps = {}) {
 
   // Tracked referral link: bump the click, set a 30-day attribution cookie, and
   // redirect to the public site carrying ?ref=CODE (the SPA stores it for signup).
-  app.get('/api/affiliate/go/:code', w((req, res) => {
+  app.get('/api/work/affiliate/go/:code', w((req, res) => {
     const code = String(req.params.code || '').toUpperCase().slice(0, 16)
     const ok = store.recordAffiliateClick(code)
     const days = store.getAffiliateConfig().cookieDays || 30
@@ -76,16 +76,16 @@ export function registerAffiliateRoutes(app, deps = {}) {
 
   // ---- Affiliate (signed in as their own account) ----------------------------
   if (requireWorkAuth) {
-    app.get('/api/affiliate/dashboard', requireWorkAuth, w((req, res) => {
+    app.get('/api/work/affiliate/dashboard', requireWorkAuth, w((req, res) => {
       const d = store.affiliateDashboard(req.workUser.id)
       if (!d) return res.status(404).json({ error: 'This account is not an affiliate.' })
       // The ready-to-share referral link (tracked redirect).
-      d.referralLink = d.code ? `${SITE}/api/affiliate/go/${d.code}` : null
+      d.referralLink = d.code ? `${SITE}/api/work/affiliate/go/${d.code}` : null
       res.json(d)
     }))
 
     // Start / continue Stripe Connect onboarding; returns a hosted onboarding URL.
-    app.post('/api/affiliate/connect/onboard', requireWorkAuth, async (req, res) => {
+    app.post('/api/work/affiliate/connect/onboard', requireWorkAuth, async (req, res) => {
       try {
         const a = store.getAffiliateByUserId(req.workUser.id)
         if (!a || a.status !== 'approved') return res.status(403).json({ error: 'Your affiliate account is not active.' })
@@ -114,7 +114,7 @@ export function registerAffiliateRoutes(app, deps = {}) {
     })
 
     // Re-check onboarding status after the affiliate returns from Stripe.
-    app.get('/api/affiliate/connect/refresh', requireWorkAuth, async (req, res) => {
+    app.get('/api/work/affiliate/connect/refresh', requireWorkAuth, async (req, res) => {
       try {
         const a = store.getAffiliateByUserId(req.workUser.id)
         if (!a) return res.status(404).json({ error: 'Not an affiliate.' })
