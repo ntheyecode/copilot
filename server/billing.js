@@ -567,8 +567,13 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
           out.annualPlans[p] = { set: true, ok: false, error: (e && e.message) || 'could not load this price' }
         }
       }
-      out.annualReady = annualSetCount === PLANS.length && PLANS.every((p) => out.annualPlans[p] && out.annualPlans[p].ok)
-      out.ok = !!out.accountId && PLANS.every((p) => out.plans[p] && out.plans[p].ok)
+      // Lite is validated + shown when set, but not REQUIRED (an operator may run
+      // basic/advanced/premium without a Lite tier). Checkout is "ready" when the
+      // account is valid, the three core plans resolve, and any set Lite id also
+      // resolves. Annual is "live" when the three core annual ids are valid.
+      const CORE = ['basic', 'advanced', 'premium']
+      out.annualReady = CORE.every((p) => out.annualPlans[p] && out.annualPlans[p].set && out.annualPlans[p].ok)
+      out.ok = !!out.accountId && CORE.every((p) => out.plans[p] && out.plans[p].ok) && PLANS.every((p) => !price[p] || (out.plans[p] && out.plans[p].ok))
       res.json(out)
     })
 
