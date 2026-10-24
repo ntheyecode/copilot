@@ -13,7 +13,7 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { Lock, CheckCircle2, XCircle, CreditCard, Link2, Copy, Check, Pencil, Zap, AlertTriangle } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, Spinning, SavedTag } from './_shared.jsx'
+import { Loading, ErrorBox, Spinning, SavedTag, StepUpPrompt, isLockError } from './_shared.jsx'
 
 function StateRow({ ok, label, detail }) {
   const Icon = ok ? CheckCircle2 : XCircle
@@ -50,6 +50,7 @@ export default function Billing({ isSuperAdmin }) {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState(null)
   const [saved, setSaved] = useState(false)
+  const [stepUp, setStepUp] = useState(false)   // authenticator re-auth before saving secret keys
   const [copied, setCopied] = useState(false)
   // Test connection
   const [testing, setTesting] = useState(false)
@@ -101,7 +102,7 @@ export default function Billing({ isSuperAdmin }) {
       setTestResult(null); setTestErr(null)
       setSaved(true); setTimeout(() => setSaved(false), 3000)
       setEditing(false)   // collapse back to the summary after a save
-    } catch (error) { setSaveError(error) }
+    } catch (error) { if (isLockError(error)) { setStepUp(true) } else { setSaveError(error) } }
     finally { setSaving(false) }
   }
 
@@ -148,6 +149,7 @@ export default function Billing({ isSuperAdmin }) {
 
   return (
     <div>
+      {stepUp ? <StepUpPrompt verify={workAdminApi.verifyAiStepUp} label="Saving billing keys" onUnlocked={() => { setStepUp(false); save() }} onCancel={() => setStepUp(false)} /> : null}
       {!isSuperAdmin ? <div className="wka-note"><Lock size={14} /> Only a superadmin can change the billing configuration. The current state is shown below.</div> : null}
 
       <div className="wka-panel">

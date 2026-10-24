@@ -11,7 +11,7 @@ import {
   Settings2, ExternalLink, AlertTriangle, Info,
 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal, SavedTag } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal, SavedTag, StepUpPrompt, isLockError } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
 
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
@@ -272,6 +272,7 @@ function PayoutModal({ row, minPayoutUsd, onClose, onDone }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
   const [result, setResult] = useState(null)
+  const [stepUp, setStepUp] = useState(false)
   const pending = Number(row.pendingUsd) || 0
   const belowMin = minPayoutUsd != null && pending < Number(minPayoutUsd)
   const notOnboarded = !row.stripeOnboarded
@@ -283,10 +284,12 @@ function PayoutModal({ row, minPayoutUsd, onClose, onDone }) {
       const r = await workAdminApi.payoutAffiliate(row.id)
       setResult(r || {})
       onDone(r)
-    } catch (e) { setErr(e) } finally { setBusy(false) }
+    } catch (e) { if (isLockError(e)) { setStepUp(true) } else { setErr(e) } } finally { setBusy(false) }
   }
 
   return (
+    <>
+    {stepUp ? <StepUpPrompt verify={workAdminApi.verifyAiStepUp} label="Running a payout" onUnlocked={() => { setStepUp(false); confirm() }} onCancel={() => setStepUp(false)} /> : null}
     <Modal title="Pay out commission" icon={<Banknote size={18} style={{ color: 'var(--wka-emerald)' }} />} onClose={onClose} busy={busy}>
       {result ? (
         <>
@@ -311,6 +314,7 @@ function PayoutModal({ row, minPayoutUsd, onClose, onDone }) {
         </>
       )}
     </Modal>
+    </>
   )
 }
 

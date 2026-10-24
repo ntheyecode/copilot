@@ -999,13 +999,18 @@ app.post('/api/work/admin/platform-ai', requireAuth, requireSuperAdmin, requireA
 // ---- AI-config OTP step-up (superadmin). GET is the only AI-config endpoint
 // NOT gated - it tells the client whether the page is unlocked. POST verifies an
 // authenticator code to open the short step-up window; DELETE locks immediately.
-app.get('/api/work/admin/ai/stepup', requireAuth, requireSuperAdmin, wrap((req, res) => {
+// requireAdmin (not requireSuperAdmin): the step-up only re-verifies the caller's
+// OWN authenticator and opens a per-user window. Any console role (superadmin,
+// accounting, affiliate_admin) may open their own window; what it unlocks is still
+// gated per-endpoint (AI config stays superadmin-only; affiliate payout is
+// superadmin/affiliate_admin). This lets an affiliate admin step up before a payout.
+app.get('/api/work/admin/ai/stepup', requireAuth, requireAdmin, wrap((req, res) => {
   res.json(store.aiStepUpStatus(req.user.id))
 }))
-app.post('/api/work/admin/ai/stepup', requireAuth, requireSuperAdmin, wrap((req, res) => {
+app.post('/api/work/admin/ai/stepup', requireAuth, requireAdmin, wrap((req, res) => {
   res.json(store.verifyAiStepUp(req.user.id, (req.body || {}).code))
 }))
-app.delete('/api/work/admin/ai/stepup', requireAuth, requireSuperAdmin, wrap((req, res) => {
+app.delete('/api/work/admin/ai/stepup', requireAuth, requireAdmin, wrap((req, res) => {
   res.json(store.clearAiStepUp(req.user.id))
 }))
 // ---- Platform AI PROVIDERS (superadmin): see every AI we can use, enter a key,
@@ -2543,8 +2548,8 @@ registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
-registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, wrap })
-registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, wrap })
+registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, requireAiStepUp, wrap })
+registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, requireAiStepUp, wrap })
 
 // Public: the Windows desktop installer. A bare /downloads/... path hits the
 // nginx catch-all and returns the SPA HTML (a ~6 KB file renamed .exe), so it

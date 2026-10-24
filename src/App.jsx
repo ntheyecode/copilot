@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import WorkMarketing from './pages/WorkMarketing.jsx'
@@ -19,12 +20,14 @@ import WorkFaq from './pages/WorkFaq.jsx'
 import WorkContact from './pages/WorkContact.jsx'
 import AffiliatePage from './pages/AffiliatePage.jsx'
 import WorkSetPassword from './pages/WorkSetPassword.jsx'
-import WorkPage from './pages/WorkPage.jsx'
-import WorkBuddy from './pages/WorkBuddy.jsx'
-import WorkFullGuide from './pages/WorkFullGuide.jsx'
-import WorkAdmin from './pages/workadmin/WorkAdmin.jsx'
-import WorkCompanyAdmin from './pages/workadmin/WorkCompanyAdmin.jsx'
-import WorkExec from './pages/WorkExec.jsx'
+// Signed-in app + admin consoles are code-split: public marketing/SEO visitors
+// never download them, which keeps the initial bundle (and LCP) small.
+const WorkPage = lazy(() => import('./pages/WorkPage.jsx'))
+const WorkBuddy = lazy(() => import('./pages/WorkBuddy.jsx'))
+const WorkFullGuide = lazy(() => import('./pages/WorkFullGuide.jsx'))
+const WorkAdmin = lazy(() => import('./pages/workadmin/WorkAdmin.jsx'))
+const WorkCompanyAdmin = lazy(() => import('./pages/workadmin/WorkCompanyAdmin.jsx'))
+const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -43,15 +46,16 @@ function RootRedirect() {
   const { user, ready } = useAuth()
   if (!ready) return <Splash />
   if (!user) return <WorkMarketing />
-  const admin = user.role === 'admin' || user.role === 'superadmin'
-  // A company admin lands on their own company console; platform admins on the
-  // full admin console; everyone else on the app itself.
+  const admin = ['admin', 'superadmin', 'accounting', 'affiliate_admin'].includes(user.role)
+  // A company admin lands on their own company console; platform/console admins on
+  // the admin console (which shows only their allowed sections); everyone else the app.
   const companyAdmin = !admin && user.companyRole === 'company_admin'
   return <Navigate to={admin ? '/work/admin' : companyAdmin ? '/work/company' : '/work'} replace />
 }
 
 export default function App() {
   return (
+    <Suspense fallback={<Splash />}>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
       {/* Public scripted demo (no login, no AI, all canned). */}
@@ -92,5 +96,6 @@ export default function App() {
       <Route path="/work/exec" element={<WorkExec />} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </Suspense>
   )
 }

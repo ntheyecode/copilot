@@ -386,7 +386,11 @@ function userStripe(store, userId) {
 }
 
 // ---- JSON routes (checkout + read + invoices + portal + admin) ------------
-export function registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, wrap }) {
+export function registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, requireAiStepUp, wrap }) {
+  // Step-up on the most sensitive writes (Stripe secret/webhook keys). A no-op
+  // pass-through if the host did not provide the middleware, so the module stays
+  // usable standalone.
+  const stepUp = requireAiStepUp || ((req, res, next) => next())
   // Start a subscription Checkout Session for the chosen plan. Returns { url }.
   app.post('/api/work/checkout', requireWorkAuth, async (req, res) => {
     try {
@@ -543,7 +547,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
         webhookSecret: !!process.env.STRIPE_WEBHOOK_SECRET,
       } })
     }))
-    app.post('/api/work/admin/billing', requireAuth, requireSuperAdmin, wrap((req, res) => {
+    app.post('/api/work/admin/billing', requireAuth, requireSuperAdmin, stepUp, wrap((req, res) => {
       res.json({ billing: store.setBillingConfig(req.body || {}) })
     }))
 

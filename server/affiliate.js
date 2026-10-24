@@ -36,9 +36,11 @@ function cookieRef(req) {
 }
 
 export function registerAffiliateRoutes(app, deps = {}) {
-  const { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, wrap } = deps
+  const { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, requireAiStepUp, wrap } = deps
   if (!app || !store || !wrap) return
   const w = wrap
+  // Step-up re-auth on a payout (it moves money). No-op if not provided.
+  const stepUp = requireAiStepUp || ((req, res, next) => next())
 
   // ---- Public ----------------------------------------------------------------
   // The landing page reads this to show whether the program is open + the headline rate.
@@ -165,7 +167,7 @@ export function registerAffiliateRoutes(app, deps = {}) {
     }))
     // Run a payout: transfer the affiliate's EARNED (unpaid) balance to their
     // connected Stripe account, then mark those commissions paid.
-    app.post('/api/work/admin/affiliates/:id/payout', requireAuth, adminGate, async (req, res) => {
+    app.post('/api/work/admin/affiliates/:id/payout', requireAuth, adminGate, stepUp, async (req, res) => {
       try {
         const a = store.getAffiliate(req.params.id)
         if (!a) return res.status(404).json({ error: 'Affiliate not found.' })

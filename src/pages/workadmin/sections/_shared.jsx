@@ -13,7 +13,15 @@ export function Loading({ label = 'Loading' }) {
 }
 
 export function ErrorBox({ error, onRetry }) {
-  const msg = (error && error.message) || 'Something went wrong.'
+  // 4xx errors are actionable and shown verbatim (validation, "not allowed",
+  // "already exists"); 5xx / network / unknown errors are generalized so a raw
+  // server message (which could carry internal detail) never reaches a company
+  // admin or user. Superadmin sees the real cause in the Incidents feed.
+  const status = error && error.status
+  const actionable = typeof status === 'number' && status >= 400 && status < 500
+  const msg = actionable
+    ? (error.message || 'Something went wrong.')
+    : 'WorkCoPilot had a problem. Please try again in a moment.'
   return (
     <div className="wka-error">
       <span className="msg"><AlertTriangle size={16} /> {msg}</span>
@@ -219,6 +227,47 @@ export function StepUpBanner({ status, onLocked, lock, label = 'Settings' }) {
         {status.breakGlass ? `MFA is disabled platform-wide - ${label.toLowerCase()} are open.` : `Verified with your authenticator - locks in ${mm}:${String(ss).padStart(2, '0')}.`}
       </span>
       {!status.breakGlass ? <button type="button" className="wka-btn sm ghost" onClick={lockNow}><Lock size={13} /> Lock now</button> : null}
+    </div>
+  )
+}
+
+// A modal step-up re-auth for a single sensitive ACTION (a payout, saving secret
+// keys). Shown when an endpoint returns 403 {locked:true} (isLockError). `verify`
+// is the async code -> status fn (workAdminApi.verifyAiStepUp); on success it calls
+// onUnlocked(status) so the caller can retry the action. Decoupled: takes verify
+// as a prop, imports nothing beyond react + lucide.
+export function StepUpPrompt({ verify, onUnlocked, onCancel, label = 'This action' }) {
+  const [code, setCode] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState(null)
+  const submit = async (e) => {
+    if (e) e.preventDefault()
+    if (busy || !code.trim()) return
+    setBusy(true); setError(null)
+    try { const st = await verify(code.trim()); setCode(''); onUnlocked(st) }
+    catch (err) { setError(err) } finally { setBusy(false) }
+  }
+  return (
+    <div role="dialog" aria-modal="true"
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(12,18,28,0.55)', backdropFilter: 'blur(2px)', padding: 16 }}
+      onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel && onCancel() }}>
+      <div className="wka-panel" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
+        <div style={{ width: 48, height: 48, borderRadius: 13, margin: '2px auto 12px', display: 'grid', placeItems: 'center', background: 'rgba(10,157,102,0.1)', border: '1px solid rgba(10,157,102,0.3)' }}>
+          <Lock size={20} style={{ color: 'var(--wka-emerald)' }} />
+        </div>
+        <h2 style={{ justifyContent: 'center' }}>Confirm it&rsquo;s you</h2>
+        <p className="desc" style={{ textAlign: 'center' }}>{label} needs a fresh authenticator code. Enter the 6-digit code from your app to continue.</p>
+        <form onSubmit={submit}>
+          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder="123456" value={code} autoFocus
+            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
+            style={{ maxWidth: 200, margin: '0 auto', textAlign: 'center', letterSpacing: '0.4em', fontSize: 20 }} />
+          {error ? <div style={{ margin: '12px 0' }}><ErrorBox error={error} /></div> : null}
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 14 }}>
+            <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>Cancel</button>
+            <button type="submit" className="wka-btn sm primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} Verify &amp; continue</button>
+          </div>
+        </form>
+      </div>
     </div>
   )
 }
