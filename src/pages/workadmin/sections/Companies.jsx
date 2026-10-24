@@ -337,8 +337,10 @@ export default function Companies({ isSuperAdmin }) {
         if (!mForm.email.includes('@')) { setMsg('Enter a valid work email.'); setBusy(false); return }
         await workAdminApi.addCompanyMember(companyId, { email: mForm.email.trim(), displayName: mForm.displayName.trim(), companyRole: mForm.companyRole, tier: mForm.tier })
       } else {
-        if (!mForm.username.trim() || !mForm.password) { setMsg('Username (3+) and password (6+) required.'); setBusy(false); return }
-        await workAdminApi.createUser({ username: mForm.username, password: mForm.password, companyId, companyRole: mForm.companyRole, tier: mForm.tier, free: mForm.free })
+        if (!mForm.username.trim()) { setMsg('Enter a username.'); setBusy(false); return }
+        if (!mForm.email.includes('@')) { setMsg('Enter an email so the person gets a set-password link.'); setBusy(false); return }
+        // Password optional - the person sets their own via the emailed link.
+        await workAdminApi.createUser({ username: mForm.username.trim(), email: mForm.email.trim(), ...(mForm.password ? { password: mForm.password } : {}), companyId, companyRole: mForm.companyRole, tier: mForm.tier, free: mForm.free })
       }
       setMForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic', mode: mForm.mode, free: false }); refreshDetail(companyId)
     } catch (e) { setMsg(e.message || 'Could not add the person.') } finally { setBusy(false) }
@@ -562,7 +564,7 @@ export default function Companies({ isSuperAdmin }) {
                           </div>
                           {mForm.mode === 'email'
                             ? <><input className="wka-input" placeholder="work email" value={mForm.email} onChange={(e) => setMForm({ ...mForm, email: e.target.value })} /><input className="wka-input" placeholder="name (optional)" value={mForm.displayName} onChange={(e) => setMForm({ ...mForm, displayName: e.target.value })} /></>
-                            : <><input className="wka-input" placeholder="username" value={mForm.username} onChange={(e) => setMForm({ ...mForm, username: e.target.value })} /><input className="wka-input" type="password" placeholder="password" value={mForm.password} onChange={(e) => setMForm({ ...mForm, password: e.target.value })} /></>}
+                            : <><input className="wka-input" placeholder="username" value={mForm.username} onChange={(e) => setMForm({ ...mForm, username: e.target.value })} /><input className="wka-input" type="email" placeholder="email (sends set-password link)" value={mForm.email} onChange={(e) => setMForm({ ...mForm, email: e.target.value })} /><input className="wka-input" type="password" placeholder="password (optional)" value={mForm.password} onChange={(e) => setMForm({ ...mForm, password: e.target.value })} /></>}
                           <select className="wka-input" value={mForm.companyRole} onChange={(e) => setMForm({ ...mForm, companyRole: e.target.value })}>{roleOptions()}</select>
                           <select className="wka-input" value={mForm.tier} onChange={(e) => setMForm({ ...mForm, tier: e.target.value })}><option value="basic">Basic</option><option value="advanced">Advanced</option><option value="premium">Premium</option></select>
                           <button className="wka-btn primary" disabled={busy} onClick={() => addMember(c.id)}>{busy ? <Loader2 size={14} className="spin" /> : <><UserPlus size={13} /> Add</>}</button>

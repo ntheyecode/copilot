@@ -19,10 +19,30 @@
 // still works unchanged. Secrets are never read back to the client.
 // ---------------------------------------------------------------------------
 
+import { sendTemplateAsync } from './emails.js'
+
 const PLANS = ['basic', 'advanced', 'premium']
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
+
+// Record a money event to the ledger + (optionally) email the account. The
+// amount is Stripe's minor unit (cents); stored as major units. Best-effort -
+// never breaks webhook handling.
+function ledgerAndEmail(store, { kind, user, amountMinor, currency, stripeId, plan, status, emailType, invoiceUrl, description }) {
+  try {
+    const amount = (Number(amountMinor) || 0) / 100
+    store.recordTransaction({ kind, userId: user ? user.id : null, amount, currency: currency || 'usd', stripeId, plan: plan || null, status: status || 'succeeded', description: description || '' })
+    if (emailType && user) {
+      const to = store.effectiveUserEmail(user.id)
+      if (to) {
+        const name = user.displayName || user.username || ''
+        const label = description || (plan ? `${plan} plan` : 'WorkCoPilot')
+        sendTemplateAsync(emailType, to, { name, description: label, item: label, amount, currency: currency || 'usd', date: new Date().toISOString(), reference: stripeId || '', invoiceUrl: invoiceUrl || '' })
+      }
+    }
+  } catch (e) { console.warn('[billing] ledger/email failed: ' + (e && e.message)) }
+}
 
 const looksLikeEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim())
 
@@ -258,6 +278,33 @@ async function handleEvent(s, store, event) {
     return
   }
 
+  // A paid invoice (initial subscription payment + every renewal) is the
+  // authoritative money event for subscriptions. Record it to the ledger and
+  // email a receipt. (checkout.session.completed only activates the sub, so we
+  // do not double-count there.)
+  if (type === 'invoice.paid' || type === 'invoice.payment_succeeded') {
+    const customerId = (typeof obj.customer === 'string' ? obj.customer : (obj.customer && obj.customer.id)) || null
+    const subId = (typeof obj.subscription === 'string' ? obj.subscription : (obj.subscription && obj.subscription.id)) || null
+    let user = store.findUserByStripeSubscription(subId) || store.findUserByStripeCustomer(customerId)
+    if (!user && obj.metadata && obj.metadata.workUserId) user = store.getUser(obj.metadata.workUserId)
+    const plan = (user && user.subscription && user.subscription.plan) || null
+    ledgerAndEmail(store, { kind: 'subscription', user, amountMinor: obj.amount_paid != null ? obj.amount_paid : obj.total, currency: obj.currency, stripeId: obj.id, plan, emailType: 'payment_success', invoiceUrl: obj.hosted_invoice_url || '', description: plan ? `${plan} plan` : 'Subscription' })
+    return
+  }
+
+  // A refund issued in the Stripe dashboard (or by our admin action - deduped by
+  // id). Record it as a negative-direction entry on the ledger + notify.
+  if (type === 'charge.refunded' || type === 'charge.refund.updated' || type === 'refund.created' || type === 'refund.updated') {
+    const charge = type.startsWith('charge') ? obj : null
+    const refundObj = type.startsWith('refund') ? obj : (charge && charge.refunds && charge.refunds.data && charge.refunds.data[0]) || null
+    const customerId = charge ? ((typeof charge.customer === 'string' ? charge.customer : (charge.customer && charge.customer.id)) || null) : null
+    let user = customerId ? store.findUserByStripeCustomer(customerId) : null
+    const amt = charge ? charge.amount_refunded : (refundObj ? refundObj.amount : 0)
+    const rid = refundObj ? refundObj.id : (charge ? charge.id : null)
+    store.recordTransaction({ kind: 'refund', userId: user ? user.id : null, amount: (Number(amt) || 0) / 100, currency: (charge && charge.currency) || (refundObj && refundObj.currency) || 'usd', stripeId: rid, status: 'refunded', description: 'Refund' })
+    return
+  }
+
   // A failed renewal payment moves the account to past_due. userCanUseService
   // excludes past_due, so guiding blocks until the payment succeeds (which
   // fires customer.subscription.updated and flips the status back to active).
@@ -267,6 +314,8 @@ async function handleEvent(s, store, event) {
     let user = store.findUserByStripeSubscription(subId) || store.findUserByStripeCustomer(customerId)
     if (!user) { console.warn(`[billing] invoice.payment_failed for unknown customer ${customerId}; ignored`); return }
     store.setSubscription(user.id, { status: 'past_due' })
+    const to = store.effectiveUserEmail(user.id)
+    if (to) sendTemplateAsync('payment_failed', to, { name: user.displayName || user.username, description: (user.subscription && user.subscription.plan) ? `${user.subscription.plan} plan` : 'Subscription', reason: 'The card was declined or could not be charged.', amount: (obj.amount_due || 0) / 100, currency: obj.currency || 'usd', retryUrl: `${SITE}/work/billing` })
     console.log(`[billing] invoice.payment_failed -> user ${user.id} status past_due`)
     return
   }
@@ -527,5 +576,50 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
         res.status(502).json({ error: (e && e.message) || 'Could not cancel the subscription.' })
       }
     })
+  }
+
+  // ---- Finance: all-transactions, period summary, refunds (superadmin +
+  // accounting role). "Admin should see all transactions; accounting role sees
+  // all transactions; dashboard speaks weekly/monthly/quarterly/annual; refunds."
+  if (requireAuth) {
+    const financeGate = (req, res, next) => {
+      if (!req.user || !store.isFinanceUser(req.user.id)) return res.status(403).json({ error: 'Finance access only.' })
+      next()
+    }
+    app.get('/api/work/admin/finance/summary', requireAuth, financeGate, wrap((req, res) => res.json(store.financialSummary())))
+    app.get('/api/work/admin/finance/transactions', requireAuth, financeGate, wrap((req, res) => res.json({
+      transactions: store.listTransactions({ limit: Math.min(5000, Number(req.query.limit) || 500), kind: req.query.kind || null, since: req.query.since || null, until: req.query.until || null }),
+      total: store.transactionCount(),
+    })))
+    // Refund a specific ledger transaction (by its Stripe reference). Records the
+    // refund to the ledger. Optional partial amount (major units).
+    app.post('/api/work/admin/finance/transactions/:id/refund', requireAuth, financeGate, async (req, res) => {
+      try {
+        const tx = store.getTransaction(req.params.id)
+        if (!tx) return res.status(404).json({ error: 'Transaction not found.' })
+        if (tx.kind === 'refund') return res.status(400).json({ error: 'That entry is already a refund.' })
+        if (!tx.stripeId) return res.status(400).json({ error: 'That transaction has no Stripe reference to refund.' })
+        const { secret } = cfg(store); const s = await getStripe(secret)
+        if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' })
+        const sid = String(tx.stripeId); const params = {}
+        if (sid.startsWith('pi_')) params.payment_intent = sid
+        else if (sid.startsWith('ch_')) params.charge = sid
+        else if (sid.startsWith('in_')) {
+          const inv = await s.invoices.retrieve(sid)
+          if (inv && inv.payment_intent) params.payment_intent = (typeof inv.payment_intent === 'string' ? inv.payment_intent : inv.payment_intent.id)
+          else if (inv && inv.charge) params.charge = (typeof inv.charge === 'string' ? inv.charge : inv.charge.id)
+        }
+        if (!params.payment_intent && !params.charge) return res.status(400).json({ error: 'Could not resolve a charge to refund for this transaction.' })
+        if (req.body && req.body.amount != null && req.body.amount !== '') params.amount = Math.round(Number(req.body.amount) * 100)
+        const refund = await s.refunds.create(params)
+        const rec = store.recordTransaction({ kind: 'refund', userId: tx.userId, amount: (refund.amount || 0) / 100, currency: refund.currency || tx.currency, stripeId: refund.id, status: refund.status || 'succeeded', description: `Refund of ${tx.description || tx.kind}` })
+        res.json({ ok: true, refund: { id: refund.id, amount: (refund.amount || 0) / 100, currency: refund.currency }, transaction: rec })
+      } catch (e) { console.warn('[billing] finance refund failed: ' + (e && e.message)); res.status(502).json({ error: (e && e.message) || 'Could not process the refund.' }) }
+    })
+  }
+  // Accounting-role management (superadmin only).
+  if (requireAuth && requireSuperAdmin) {
+    app.get('/api/work/admin/finance/staff', requireAuth, requireSuperAdmin, wrap((req, res) => res.json({ staff: store.listFinanceStaff() })))
+    app.post('/api/work/admin/finance/role', requireAuth, requireSuperAdmin, wrap((req, res) => res.json({ user: store.setUserRole((req.body || {}).userId, (req.body || {}).role) })))
   }
 }

@@ -2820,6 +2820,127 @@ export function findUserByLogin(login) {
   if (!s) return null
   return (db.users || []).find((u) => String(u.username || '').toLowerCase() === s || String(u.email || '').toLowerCase() === s || String(u.ssoEmail || '').toLowerCase() === s) || null
 }
+// ---- Transactions ledger + finance (accounting) --------------------------
+// A durable local ledger of every money event, fed by the Stripe webhook, so
+// admins and the accounting role can see all transactions and the finance
+// dashboard can report by period without hitting Stripe on every view. Amounts
+// are stored in MAJOR units (dollars), refunds as POSITIVE numbers with
+// kind 'refund'. Deduped by kind+stripeId so a replayed webhook is idempotent.
+export function recordTransaction({ kind = 'payment', userId = null, username = null, amount = 0, currency = 'usd', stripeId = null, plan = null, quantity = null, status = 'succeeded', description = '' } = {}) {
+  if (!db.transactions) db.transactions = []
+  const key = `${kind}:${stripeId || ''}`
+  if (stripeId && db.transactions.some((t) => `${t.kind}:${t.stripeId || ''}` === key)) return null   // idempotent
+  const u = userId ? getUser(userId) : null
+  const rec = {
+    id: 'tx' + id(), kind, userId: userId || null,
+    username: username || (u ? (u.displayName || u.username) : null),
+    amount: Number(amount) || 0, currency: String(currency || 'usd').toLowerCase(),
+    stripeId: stripeId || null, plan: plan || null, quantity: quantity != null ? Number(quantity) : null,
+    status: status || 'succeeded', description: String(description || '').slice(0, 300),
+    at: new Date().toISOString(),
+  }
+  db.transactions.unshift(rec)
+  if (db.transactions.length > 20000) db.transactions.length = 20000
+  persist()
+  return rec
+}
+export function getTransaction(txId) { return (db.transactions || []).find((t) => t.id === txId) || null }
+export function listTransactions({ limit = 500, kind = null, since = null, until = null } = {}) {
+  let rows = db.transactions || []
+  if (kind) rows = rows.filter((t) => t.kind === kind)
+  if (since) rows = rows.filter((t) => t.at >= since)
+  if (until) rows = rows.filter((t) => t.at <= until)
+  return rows.slice(0, limit)
+}
+export function transactionCount() { return (db.transactions || []).length }
+
+// A "speaking" financial summary: gross / refunds / net and counts for this
+// week, month, quarter and year (each with the prior period for a delta), a
+// 12-month revenue series for the chart, a by-plan breakdown, and an estimated
+// MRR from active subscriptions. Pure read over the ledger + active subs.
+export function financialSummary(now = new Date()) {
+  const txns = db.transactions || []
+  const iso = (d) => d.toISOString()
+  const startOfDay = (d) => { const x = new Date(d); x.setUTCHours(0, 0, 0, 0); return x }
+  const startOfWeek = (d) => { const x = startOfDay(d); const day = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - day); return x }   // Monday
+  const startOfMonth = (d) => new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1))
+  const startOfQuarter = (d) => new Date(Date.UTC(d.getUTCFullYear(), Math.floor(d.getUTCMonth() / 3) * 3, 1))
+  const startOfYear = (d) => new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  const sumBetween = (startIso, endIso) => {
+    let gross = 0, refunds = 0, count = 0
+    for (const t of txns) {
+      if (t.at < startIso || (endIso && t.at >= endIso)) continue
+      if (t.kind === 'refund') refunds += t.amount
+      else { gross += t.amount; count++ }
+    }
+    return { gross: round2(gross), refunds: round2(refunds), net: round2(gross - refunds), count }
+  }
+  const period = (startFn) => {
+    const start = startFn(now)
+    // Previous period of the same length ending at `start`.
+    const prevStart = (() => {
+      const s = new Date(start)
+      if (startFn === startOfWeek) s.setUTCDate(s.getUTCDate() - 7)
+      else if (startFn === startOfMonth) s.setUTCMonth(s.getUTCMonth() - 1)
+      else if (startFn === startOfQuarter) s.setUTCMonth(s.getUTCMonth() - 3)
+      else s.setUTCFullYear(s.getUTCFullYear() - 1)
+      return s
+    })()
+    const cur = sumBetween(iso(start), null)
+    const prev = sumBetween(iso(prevStart), iso(start))
+    return { start: iso(start), current: cur, previous: prev }
+  }
+  // 12-month revenue series (net), oldest -> newest, for the chart.
+  const series = []
+  for (let i = 11; i >= 0; i--) {
+    const s = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1))
+    const e = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i + 1, 1))
+    const b = sumBetween(iso(s), iso(e))
+    series.push({ month: s.toISOString().slice(0, 7), gross: b.gross, refunds: b.refunds, net: b.net })
+  }
+  // Lifetime by-plan (gross) + by-kind.
+  const byPlan = {}, byKind = {}
+  for (const t of txns) {
+    if (t.kind === 'refund') continue
+    if (t.plan) byPlan[t.plan] = round2((byPlan[t.plan] || 0) + t.amount)
+    byKind[t.kind] = round2((byKind[t.kind] || 0) + t.amount)
+  }
+  // Estimated MRR from active subscriptions and the configured monthly plan price.
+  const pricing = getWorkPricing()
+  let mrr = 0, activeSubs = 0
+  for (const u of (db.users || [])) {
+    const st = u.subscription && u.subscription.status
+    if ((st === 'active' || st === 'trialing') && u.subscription.plan && pricing.plans[u.subscription.plan]) { mrr += pricing.plans[u.subscription.plan]; activeSubs++ }
+  }
+  const lifetime = sumBetween('0000', null)
+  return {
+    currency: pricing.currency || 'usd',
+    week: period(startOfWeek), month: period(startOfMonth), quarter: period(startOfQuarter), year: period(startOfYear),
+    series, byPlan, byKind, lifetime,
+    mrr: round2(mrr), activeSubs, generatedAt: iso(now),
+  }
+}
+function round2(n) { return Math.round((Number(n) || 0) * 100) / 100 }
+
+// ---- Platform role: accounting --------------------------------------------
+// A read-only finance role: sees all transactions + the finance dashboard +
+// can issue refunds, but none of the other admin powers. Superadmin-managed.
+const PLATFORM_ROLES = ['user', 'accounting']
+export function setUserRole(userId, role) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'User not found.')
+  if (u.role === 'superadmin') throw httpErr(400, 'Cannot change a superadmin role here.')
+  const r = String(role || '').trim()
+  if (!PLATFORM_ROLES.includes(r)) throw httpErr(400, 'Role must be user or accounting.')
+  u.role = r; persist(); return publicWorkUser(u)
+}
+export function isFinanceUser(userId) {
+  const u = getUser(userId)
+  return !!(u && (u.role === 'superadmin' || u.role === 'accounting'))
+}
+export function listFinanceStaff() {
+  return (db.users || []).filter((u) => u.role === 'accounting' || u.role === 'superadmin').map((u) => ({ id: u.id, username: u.username, displayName: u.displayName || null, role: u.role, email: u.email || u.ssoEmail || null }))
+}
+
 // Every company admin across ALL companies - for the superadmin operational view.
 export function listAllCompanyAdmins() {
   return (db.users || []).filter((u) => u.companyRole === 'company_admin').map((u) => {

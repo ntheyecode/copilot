@@ -65,6 +65,14 @@ export const workAdminApi = {
   setSmtp: (body) => request('POST', '/api/work/admin/smtp', body || {}),
   testSmtp: (to) => request('POST', '/api/work/admin/smtp/test', { to }),
 
+  // Finance (superadmin + accounting role): all transactions, period summary,
+  // refunds, and accounting-role management.
+  financeSummary: () => request('GET', '/api/work/admin/finance/summary'),
+  financeTransactions: (q) => request('GET', `/api/work/admin/finance/transactions${q ? `?${q}` : ''}`),
+  financeRefund: (txId, amount) => request('POST', `/api/work/admin/finance/transactions/${encodeURIComponent(txId)}/refund`, amount != null ? { amount } : {}),
+  financeStaff: () => request('GET', '/api/work/admin/finance/staff'),
+  financeSetRole: (userId, role) => request('POST', '/api/work/admin/finance/role', { userId, role }),
+
   // Notification recipients (Contact Us + leads) + thank-you toggle.
   getNotify: () => request('GET', '/api/work/admin/notify'),
   setNotify: (body) => request('POST', '/api/work/admin/notify', body || {}),

@@ -226,7 +226,10 @@ function requireWorkTime(req, res, next) {
   } catch { /* never block on a usage-read error - let the action proceed */ }
   next()
 }
-const ADMIN_ROLES = new Set(['admin', 'superadmin'])
+// 'accounting' may OPEN the admin console (to reach Finance) but every other
+// admin endpoint stays requireSuperAdmin, and the console UI shows only Finance
+// to an accounting viewer. Finance endpoints gate on store.isFinanceUser.
+const ADMIN_ROLES = new Set(['admin', 'superadmin', 'accounting'])
 function requireAdmin(req, res, next) {
   if (!req.user || !ADMIN_ROLES.has(req.user.role)) return res.status(403).json({ error: 'Admin access required' })
   next()

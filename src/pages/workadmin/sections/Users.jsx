@@ -2,7 +2,7 @@
 // a grant-hours action, both superadmin-only (the server enforces it; the UI
 // disables the controls and explains why for a non-superadmin admin).
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2 } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
@@ -98,6 +98,14 @@ export default function UsersSection({ isSuperAdmin }) {
     if (reason.length < 3) { if (reason) setMsg(u.id, 'err', 'A reason of at least 3 characters is required.'); return }
     setBusyId(u.id)
     try { await workAdminApi.resetUserMfa(u.id, reason); setMsg(u.id, 'ok', 'Two-factor reset.'); load() }
+    catch (e) { setMsg(u.id, 'err', e.message) } finally { setBusyId(null) }
+  }
+  // Grant / remove the accounting role (sees all transactions + refunds; nothing else).
+  const toggleAccounting = async (u) => {
+    const makeAcct = u.role !== 'accounting'
+    if (!window.confirm(makeAcct ? `Give ${u.username} the accounting role? They will see all transactions and can issue refunds, but nothing else in the admin console.` : `Remove the accounting role from ${u.username}?`)) return
+    setBusyId(u.id)
+    try { await workAdminApi.financeSetRole(u.id, makeAcct ? 'accounting' : 'user'); setMsg(u.id, 'ok', makeAcct ? 'Accounting role granted.' : 'Accounting role removed.'); load() }
     catch (e) { setMsg(u.id, 'err', e.message) } finally { setBusyId(null) }
   }
 
@@ -328,6 +336,12 @@ export default function UsersSection({ isSuperAdmin }) {
                             onClick={() => applyCancel(u)}>
                             <Ban size={13} /> Cancel sub
                           </button>
+                          {u.role !== 'superadmin' && (
+                            <button type="button" className={`wka-btn sm${u.role === 'accounting' ? '' : ' ghost'}`} disabled={!isSuperAdmin || busyId === u.id} title={u.role === 'accounting' ? 'Remove the accounting role' : 'Make accounting (sees all transactions + refunds)'}
+                              onClick={() => toggleAccounting(u)}>
+                              <DollarSign size={13} /> {u.role === 'accounting' ? 'Accounting ✓' : 'Accounting'}
+                            </button>
+                          )}
                         </span>
                       )}
                     </td>
