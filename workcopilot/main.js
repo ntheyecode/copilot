@@ -828,11 +828,15 @@ function createBuddy() {
   return buddy
 }
 
+// The user can KILL the buddy (fully close it for this session); it then does not
+// re-appear until the console is reopened or the app is relaunched (resets below).
+let buddyKilled = false
 function showBuddy() {
-  if (quitting || closingMain || !alive(win)) return
+  if (quitting || closingMain || !alive(win) || buddyKilled) return
   const b = createBuddy()
   if (!b.isVisible()) b.showInactive()   // never steal focus from the app being worked in
   b.setAlwaysOnTop(true, 'screen-saver')
+  try { b.webContents.send('work:buddy-shown') } catch { /* ignore */ }   // page restores from hidden
 }
 function hideBuddy() {
   if (buddy && !buddy.isDestroyed() && buddy.isVisible()) buddy.hide()
@@ -905,10 +909,17 @@ ipcMain.handle('work:retry-load', () => { retryLoad() })
 // here too keeps the behaviour correct even if the event is ever suppressed.)
 ipcMain.handle('work:hide', () => { if (alive(win)) win.hide(); showBuddy() })
 // Buddy-driven controls.
-ipcMain.handle('work:buddy-hide', () => { hideBuddy() })          // hide just the buddy
+// Hide the buddy AND pause guidance + save progress (owner: hidden = nothing is
+// shown, and we stop watching + persist). The MAIN renderer does the pause/save
+// when it receives work:pause-save, since the watch loop lives there.
+ipcMain.handle('work:buddy-hide', () => { hideBuddy(); try { if (alive(win)) win.webContents.send('work:pause-save') } catch { /* ignore */ } })
+// Fully close the buddy for this session (it will not re-appear until the console
+// is reopened or the app is relaunched); also pause + save, like Hide.
+ipcMain.handle('work:buddy-kill', () => { buddyKilled = true; try { if (alive(buddy) && !buddy.isDestroyed()) buddy.close() } catch { /* ignore */ } try { if (alive(win)) win.webContents.send('work:pause-save') } catch { /* ignore */ } })
 ipcMain.on('work:buddy-height', (_e, h) => { setBuddyHeight(h) }) // page asks the card to fit its text
 ipcMain.handle('work:open-guide', () => openGuideWindow())        // full-screen guidance on the other monitor
 ipcMain.handle('work:open-main', () => {                          // reopen the full console
+  buddyKilled = false                                             // reopening the console un-kills the buddy
   if (!alive(win)) { createWindow(); return }
   if (win.isMinimized()) win.restore()
   win.show(); win.focus()                                         // fires 'show'/'focus' -> hideBuddy

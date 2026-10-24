@@ -1246,6 +1246,79 @@ export function importCompanyLearnings(companyId, arr, { replace = true } = {}) 
   persistSoon()
   return c.kb.length
 }
+// ---- Skills (uploaded playbooks / methodologies that ground guidance) -------
+// Same scope model as learnings: a COMPANY's skills are PRIVATE (company.skills,
+// never used to train the platform); a SOLO user's skills join the shared PLATFORM
+// skills (db.work.globalSkills) and improve guidance for everyone - consented at
+// signup. A skill is richer than a learning (a title + longer content). Content is
+// de-identified before storage, so an upload can help without carrying PII, and a
+// playbook never stores a secret.
+const SKILL_CAP = 200          // per company
+const GLOBAL_SKILL_CAP = 5000  // shared platform
+function _skillHolder(userId) {
+  const u = getUser(userId); if (!u) return null
+  if (u.companyId) {
+    const c = (db.companies || []).find((x) => x.id === u.companyId); if (!c) return null
+    if (c.kbEnabled === false) return null
+    return { kind: 'company', obj: c, field: 'skills', cap: SKILL_CAP }
+  }
+  if (!db.work) db.work = {}
+  return { kind: 'global', obj: db.work, field: 'globalSkills', cap: GLOBAL_SKILL_CAP }
+}
+export function addSkill(userId, { title = '', content = '', tags = '' } = {}) {
+  const sc = _skillHolder(userId); if (!sc) return null
+  const body = redactIncidentText(String(content || '').trim()).slice(0, 6000)
+  if (body.length < 10) return null
+  const t = String(title || '').trim().slice(0, 120) || body.slice(0, 48)
+  if (!Array.isArray(sc.obj[sc.field])) sc.obj[sc.field] = []
+  const arr = sc.obj[sc.field]
+  const rec = { id: 'sk' + id(), title: t, content: body, tags: String(tags || '').trim().slice(0, 200), by: (getUser(userId) || {}).username || '', at: new Date().toISOString() }
+  arr.push(rec)
+  if (arr.length > sc.cap) arr.splice(0, arr.length - sc.cap)
+  persist()
+  return { id: rec.id, title: rec.title, tags: rec.tags, at: rec.at, scope: sc.kind }
+}
+export function listSkills(userId) {
+  const sc = _skillHolder(userId); if (!sc) return []
+  return (Array.isArray(sc.obj[sc.field]) ? sc.obj[sc.field] : []).map((s) => ({ id: s.id, title: s.title, tags: s.tags, at: s.at, chars: (s.content || '').length }))
+}
+export function getSkillsFor(userId, { goal = '', app = '', limit = 3 } = {}) {
+  const sc = _skillHolder(userId); if (!sc) return []
+  const arr = sc.obj[sc.field]; if (!Array.isArray(arr) || !arr.length) return []
+  const toks = (String(goal) + ' ' + String(app)).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2)
+  return arr.map((s) => {
+    const text = (s.title + ' ' + s.tags + ' ' + s.content).toLowerCase()
+    let sv = 0; for (const t of toks) if (text.includes(t)) sv += 1
+    return { s, sv }
+  }).filter((x) => x.sv > 0).sort((a, b) => b.sv - a.sv).slice(0, Math.max(1, Math.min(5, limit))).map((x) => x.s)
+}
+export function deleteSkill(userId, skillId) {
+  const sc = _skillHolder(userId); if (!sc) return { ok: true }
+  if (Array.isArray(sc.obj[sc.field])) sc.obj[sc.field] = sc.obj[sc.field].filter((s) => s.id !== skillId)
+  persistSoon(); return { ok: true }
+}
+// Company skills download / re-upload (admin), parallel to the KB ops. NEVER the
+// platform skills.
+export function exportCompanySkills(companyId) {
+  const c = _company(companyId)
+  return (c && Array.isArray(c.skills)) ? c.skills.map((s) => ({ title: s.title, content: s.content, tags: s.tags, at: s.at })) : []
+}
+export function importCompanySkills(companyId, arr, { replace = true } = {}) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  if (!Array.isArray(arr)) throw httpErr(400, 'Backup must be a list of skills.')
+  const clean = arr.slice(0, SKILL_CAP).map((s) => {
+    const content = redactIncidentText(String((s && s.content) || '').trim()).slice(0, 6000)
+    if (content.length < 10) return null
+    return { id: 'sk' + id(), title: String((s && s.title) || '').trim().slice(0, 120) || content.slice(0, 48), content, tags: String((s && s.tags) || '').slice(0, 200), at: (s && s.at) || new Date().toISOString() }
+  }).filter(Boolean)
+  c.skills = replace ? clean : ([...(c.skills || []), ...clean]).slice(-SKILL_CAP)
+  persist()
+  return { count: c.skills.length }
+}
+export function clearCompanySkills(companyId) {
+  const c = _company(companyId); const n = c && Array.isArray(c.skills) ? c.skills.length : 0
+  if (c) c.skills = []; persistSoon(); return n
+}
 // ---- Destructive-action audit: who did what, when, and WHY (reason required) -
 // Superadmin-visible. Holds only a summary + reason, never the data itself; the
 // reason is redacted of any secret/PII that might be pasted in.
@@ -3050,6 +3123,34 @@ export function findUserByLogin(login) {
   if (!s) return null
   return (db.users || []).find((u) => String(u.username || '').toLowerCase() === s || String(u.email || '').toLowerCase() === s || String(u.ssoEmail || '').toLowerCase() === s) || null
 }
+// Social sign-in: find-or-create an INDIVIDUAL account (no company) by verified
+// email. New accounts get a random password (sign-in is via the provider) and
+// needsProfile=true so the UI collects the name/phone the provider did not give.
+export function createSocialUser({ email, displayName = '', provider = '' } = {}) {
+  const mail = normalizeEmail(email)
+  if (!mail) throw httpErr(400, 'The provider did not share a valid email address.')
+  const existing = findUserByLogin(mail)
+  if (existing) return existing
+  const uname = mail.length <= 64 ? mail : ('social_' + crypto.randomBytes(6).toString('hex'))
+  const u = createWorkUser({ username: uname, password: crypto.randomBytes(24).toString('hex'), email: mail, displayName: String(displayName || '').trim() || null })
+  u.social = { provider: String(provider || '').slice(0, 24), at: Date.now() }
+  u.needsProfile = true
+  persist()
+  return u
+}
+export function completeSocialProfile(userId, { displayName = '', phone = '', email = '' } = {}) {
+  const u = getUser(userId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const nm = String(displayName || '').trim()
+  if (nm) u.displayName = nm.slice(0, 120)
+  const ph = String(phone || '').trim()
+  if (ph) u.phone = ph.slice(0, 40)
+  const em = normalizeEmail(email)
+  if (em && !u.email) u.email = em
+  u.needsProfile = false
+  persist()
+  return publicWorkUser(u)
+}
 // ---- Transactions ledger + finance (accounting) --------------------------
 // A durable local ledger of every money event, fed by the Stripe webhook, so
 // admins and the accounting role can see all transactions and the finance
@@ -4189,6 +4290,55 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
   persist()
   return { ok: true }
 }
+// A relay hook (set by index.js from server/integrations.js) that forwards a
+// company alert to that company's configured SOC/SIEM destinations. Kept as an
+// injected callback so store.js never imports the network/integration module.
+let _alertRelay = null
+export function setAlertRelay(fn) { _alertRelay = typeof fn === 'function' ? fn : null }
+
+// ---- Company SOC/SIEM integrations (outbound alert relay) ------------------
+// Stored on the company record. Secret field values are kept server-side and are
+// never echoed to the client (the index endpoint blanks them before sending).
+export function listCompanyIntegrations(companyId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  return (c && Array.isArray(c.integrations)) ? c.integrations.map((i) => ({ ...i })) : []
+}
+export function setCompanyIntegration(companyId, { id: integrationId = null, type = '', config = {}, enabled = true } = {}) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  if (!Array.isArray(c.integrations)) c.integrations = []
+  let integ
+  if (integrationId) {
+    integ = c.integrations.find((i) => i.id === integrationId)
+    if (!integ) throw httpErr(404, 'Integration not found.')
+  } else {
+    if (c.integrations.length >= 50) throw httpErr(400, 'Too many integrations.')
+    integ = { id: 'int' + id(), createdAt: now() }
+    c.integrations.push(integ)
+  }
+  if (type) integ.type = String(type).slice(0, 40)
+  // Merge config; a blank/absent value KEEPS the existing one (write-only secrets).
+  const merged = { ...(integ.config || {}) }
+  for (const [k, v] of Object.entries(config || {})) { if (v !== '' && v != null) merged[String(k).slice(0, 40)] = String(v).slice(0, 2000) }
+  integ.config = merged
+  integ.enabled = !!enabled
+  persist()
+  return integ
+}
+export function deleteCompanyIntegration(companyId, integrationId) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (c && Array.isArray(c.integrations)) { c.integrations = c.integrations.filter((i) => i.id !== integrationId); persist() }
+  return { ok: true }
+}
+export function markIntegrationRelay(companyId, integrationId, ok, error = '') {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c || !Array.isArray(c.integrations)) return
+  const i = c.integrations.find((x) => x.id === integrationId)
+  if (!i) return
+  i.lastRelayAt = new Date().toISOString(); i.lastRelayOk = !!ok; i.lastRelayError = ok ? '' : String(error || '').slice(0, 200)
+  persistSoon()
+}
+
 // Company alert: a member entered PII/PHI that was redacted on the device before
 // anything was sent. Recorded ONLY for company members (so their company admin is
 // notified on the dashboard Alerts page), and records the CATEGORIES and COUNTS
@@ -4198,7 +4348,7 @@ export function recordPiiAlert(userId, { sessionId = null, call = '', counts = {
   if (!u || !u.companyId || !(Number(total) > 0)) return
   if (!db.workActivity) db.workActivity = []
   const cats = Object.entries(counts || {}).filter(([, n]) => Number(n) > 0).map(([k, n]) => `${k} x${n}`).join(', ')
-  db.workActivity.push({
+  const entry = {
     id: 'act' + id(),
     type: 'pii_redacted',
     workUserId: userId,
@@ -4213,9 +4363,12 @@ export function recordPiiAlert(userId, { sessionId = null, call = '', counts = {
     redactedTotal: Number(total) || 0,
     categories: cats,   // types + counts only, e.g. "email x1, card x1" - never the values
     at: new Date().toISOString(),
-  })
+  }
+  db.workActivity.push(entry)
   if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
   persistSoon()
+  // Auto-relay to the company's configured SOC/SIEM destinations (outbound, best-effort).
+  if (_alertRelay) { try { _alertRelay(u.companyId, entry) } catch { /* best-effort */ } }
 }
 // Company-scoped activity log (deletions etc.) for the company admin dashboard.
 export function listWorkActivity({ companyId, limit = 300 } = {}) {

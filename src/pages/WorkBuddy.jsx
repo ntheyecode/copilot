@@ -160,9 +160,9 @@ export default function WorkBuddy() {
   // IPC); when it shows the window again, focus/visibility restores the view.
   const [hidden, setHidden] = useState(false)
   const hideBuddy = useCallback(() => { setHidden(true); try { window.workDesktop?.hideBuddy?.() } catch { /* ignore */ } }, [])
-  // KILL = fully quit the buddy (shell IPC; names pending confirmation, so every
-  // candidate is tried and all are guarded).
-  const killBuddy = useCallback(() => { setHidden(true); try { const d = window.workDesktop; (d?.killBuddy || d?.closeBuddy || d?.quitBuddy || d?.hideBuddy)?.() } catch { /* ignore */ } }, [])
+  // KILL = fully close the buddy for the session (shell IPC `killBuddy`; reopens
+  // from the console or on relaunch). Older shells without it fall back to hide.
+  const killBuddy = useCallback(() => { setHidden(true); try { const d = window.workDesktop; (d?.killBuddy || d?.hideBuddy)?.() } catch { /* ignore */ } }, [])
   useEffect(() => {
     const show = () => { if (document.visibilityState === 'visible') setHidden(false) }
     window.addEventListener('focus', show); document.addEventListener('visibilitychange', show)

@@ -135,12 +135,13 @@ export default function WorkMarketing() {
     'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
   ]
   const pillars = [
-    { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction for regulated teams.', points: ['PII, PHI, secrets and IPs stripped or tokenized on-device before anything is sent', 'Your documents and diagrams are read on your computer - the file never leaves', 'Never clicks, types or runs anything, and hidden on screen-share', 'A per-session audit log of exactly what was sent'] },
+    { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction on by default, for everyone.', points: ['PII, PHI, secrets and IPs redacted on your device before anything is sent, shown as [REDACTED]. On by default.', 'Built-in SAST and a live dependency CVE check on any code before you run it', 'Never clicks, types or runs anything; never generates content - it hands you a prompt for your own AI', 'Hidden on screen-share, and every account protected by an authenticator (MFA)', 'A per-session audit log: what was sent, what was read from your screen, the code checks, what was filtered, every flag raised'] },
     { icon: Rocket, t: 'Powerful', claim: 'From a one-liner to a full enterprise build.', d: 'Whatever the task, it carries it end to end.', points: ['Simplest task to the most advanced', 'Any tool, any stack, any field', 'Nothing left half-done'] },
     { icon: Target, t: 'Accurate', claim: 'It only tells you what is really on your screen.', d: 'No guessing, no invented menus.', points: ['Never invents a button or setting', 'Catches a wrong value before you save', 'Says "I cannot see that" instead of guessing'] },
     { icon: Gauge, t: 'Fast', claim: 'The next step before you finish reading this.', d: 'It keeps pace with you, not the other way round.', points: ['Guidance in a blink', 'No waiting, no spinning', 'Moves the plan as you move'] },
     { icon: ScanEye, t: 'Multimodal', claim: 'Reads screens, cameras and documents.', d: 'It sees what you see, from any source.', points: ['Your screen, live', 'Your phone camera', 'Your own files for context'] },
     { icon: Sparkles, t: 'Intelligent', claim: 'Understands the goal, not just the words.', d: 'It reasons about what you are really doing.', points: ['Fits the real app - web, desktop, on-prem or custom', 'Corrects the step when a tool\'s UI has changed', 'Thinks deeper on hard steps, fixes the plan when reality differs'] },
+    { icon: Layers, t: 'Learns how you work', claim: 'Teach it your skills. It gets more powerful for you.', d: 'Add your own playbooks and skills, from any AI, and guidance aligns with your tools, standards and terminology.', points: ['Paste a playbook, an SOP or a skill exported from any AI', 'It learns how YOU work and keeps getting better for you over time', 'Companies keep their skills private, with download and re-upload'] },
     { icon: Globe2, t: 'Deep research', claim: 'Always up to date, never stale.', d: 'It checks the latest before it guides.', points: ['The current way, not last year\'s', 'Real official links and steps', 'Matches how tools work today'] },
     { icon: Compass, t: 'All around your goal', claim: 'Every step points at what you want.', d: 'It never loses the thread.', points: ['The goal is always in view', 'No busywork, no detours', 'Knows the moment you are done'] },
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
@@ -282,7 +283,7 @@ export default function WorkMarketing() {
             <WorkCard theme="light" tone="cyan" delay={70} texPos="100% 100%">
               <WorkCard.Proof>every step <span className="cb-arrow">&rarr;</span> <b>write-up</b> + <b>audit log</b></WorkCard.Proof>
               <WorkCard.Head icon={FileText} title="Everything documented" />
-              <WorkCard.Body>Every change, config and pentest ends with a write-up and an audit log.</WorkCard.Body>
+              <WorkCard.Body>Every change, config and pentest ends with a write-up and a per-session audit log: what was sent, what was read from your screen, the SAST and live dependency checks run on any code, what was filtered, and every flag raised.</WorkCard.Body>
             </WorkCard>
             <WorkCard theme="light" tone="violet" delay={140} texPos="50% 0%">
               <WorkCard.Proof><span className="cb-dim">contractors &middot; consultants &middot; partners</span> <span className="cb-arrow">&rarr;</span> <b>in-house</b></WorkCard.Proof>
@@ -483,10 +484,14 @@ export default function WorkMarketing() {
           <div className="wm-ent-grid" data-reveal>
             {[
               [Building2, 'Unlimited seats and tasks', 'One central admin console for the whole company.'],
-              [Lock, 'SSO and invite-only provisioning', 'Sign in through your identity provider (OIDC).'],
+              [Lock, 'SSO and invite-only provisioning', 'Sign in through your identity provider (OIDC, 14 providers). Type a company email and it routes you to your single sign-on automatically.'],
               [ShieldCheck, 'One locked company data policy', 'Set it once, and every member inherits it.'],
               [Server, 'Per-company AI keys, or bring your own', 'Your keys, your control. Nothing is shared.'],
               [ScanEye, 'On-device PII and PHI redaction', 'Armed and locked, enforced for everyone.'],
+              [AlertTriangle, 'Security alerts, relayed to your SOC', 'Who, where and what kind when a member enters sensitive data; into Splunk, Sentinel, Slack and more. Never the values.'],
+              [Layers, 'Company knowledge and skills', 'Your playbooks and SOPs guide your people. Private to you, never used to train the platform.'],
+              [ListChecks, 'Compliance evidence, 18 frameworks', 'Sealed per-task evidence reports and Big-4-grade session reports with scrubbed-screenshot evidence.'],
+              [Gauge, 'Executive ROI dashboard and white-label', 'A productivity view for leaders, with your brand on the product.'],
               [FileText, 'Full audit log and compliance reports', 'Per-session evidence, ready for review.'],
               [Scale, 'A DPA and a dedicated contact', 'A named owner for your rollout.'],
               [Blocks, 'On-prem deployment, on request', 'Options to run it inside your own walls.'],
@@ -499,11 +504,11 @@ export default function WorkMarketing() {
             ))}
           </div>
           <div className="wm-ent-cta" data-reveal>
-            <a className="wm-cta" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={16} /></a>
-            <a className="wm-cta ghost" href="/workcopilot/security">See the controls in action <ArrowRight size={15} /></a>
+            <a className="wm-cta" href="/workcopilot/enterprise">Explore every enterprise feature <ArrowRight size={16} /></a>
+            <a className="wm-cta ghost" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={15} /></a>
           </div>
           <div className="wm-ent-strip" aria-label="Enterprise assurances">
-            {['SSO (OIDC)', 'DPA', 'On-prem on request', 'Audit logs'].map((c) => (
+            {['SSO (OIDC)', 'Mandatory MFA', 'SOC / SIEM relay', 'DPA', 'On-prem on request', 'Audit logs'].map((c) => (
               <span key={c} className="wm-ent-chip">{c}</span>
             ))}
           </div>
@@ -538,6 +543,7 @@ export default function WorkMarketing() {
               </div>
             </div>
             <span className="wm-dl-note"><b>No download needed</b> - WorkCoPilot runs right in your browser. Prefer a floating overlay? Get the Windows app.</span>
+            <span className="wm-dl-note"><b>Sign in your way.</b> Continue with Google, Microsoft or Facebook, or create an account. On a company team? Type your work email and you are routed to your company's single sign-on. Every account is protected by an authenticator. <a href="/workcopilot/enterprise">See enterprise sign-in</a>.</span>
           </div>
         </div>
       </section>

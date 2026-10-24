@@ -94,6 +94,21 @@ const SECTIONS = [
     ),
   },
   {
+    id: 'improvement',
+    title: 'Improving the service with skills and content you add',
+    content: (
+      <>
+        <p>You can add skills - playbooks, SOPs and instructions, including ones exported from other AI tools - so that WorkCoPilot&rsquo;s guidance aligns with how you work. This section explains how that content may be used, and it is shown to you when you create an individual account.</p>
+        <Items items={[
+          ['Individual accounts', 'To improve WorkCoPilot, skills and content you add may be used in de-identified form to enhance the service for everyone. Personal data is stripped on your device before anything is sent, and de-identified content is never attributed to you.'],
+          ['Company accounts are exempt', 'Skills and knowledge added under a company account stay private to that company. They guide only that company\'s members and are never used to train or improve the platform for anyone else. Company administrators can download, re-upload or clear them at any time.'],
+          ['Your control', 'You can remove a skill you added at any time from your dashboard. Removal stops its use from that point; de-identified improvements already derived from it cannot be traced back to you or reversed.'],
+          ['Not training on your work', 'This covers only the skills and content you deliberately add. Your screens, typed tasks, questions and session reports are used only to provide the service to you, as described in the Privacy Policy.'],
+        ]} />
+      </>
+    ),
+  },
+  {
     id: 'warranty',
     title: 'Guidance, warranties and disclaimers',
     content: (

@@ -964,8 +964,35 @@ const WD_CSS = `
 .wd-link{color:var(--em-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--em-2) 40%,transparent)}
 .wd-link:hover{text-decoration-color:var(--em-2)}
 
-/* UTILITY STRIP: Buddy + Data protection as a tidy 2-up of Fluent cards */
-.wd-pair{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
+/* UTILITY STRIP: Buddy + Data protection + Skills as a tidy 3-up of Fluent cards */
+.wd-pair{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px;align-items:start}
+@media(max-width:1000px){.wd-pair{grid-template-columns:1fr 1fr}}
+/* Skills card body */
+.wd-sk{display:flex;flex-direction:column;gap:12px}
+.wd-sk-lead{font-size:13px;line-height:1.5;color:var(--mut);margin:0}
+.wd-sk-note{display:flex;gap:9px;align-items:flex-start;padding:10px 12px;border-radius:11px;background:var(--info-fill);border:1px solid var(--info-line);font-size:12.5px;line-height:1.5;color:var(--tx)}
+.wd-sk-note svg{flex:none;margin-top:2px;color:var(--info)}
+.wd-sk-note.private{background:var(--em-fill);border-color:var(--em-line)}
+.wd-sk-note.private svg{color:var(--em)}
+.wd-sk-form{display:flex;flex-direction:column;gap:8px}
+.wd-sk-input,.wd-sk-ta{width:100%;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:10px 12px;color:var(--tx);font:inherit;font-size:13.5px;line-height:1.45;outline:none;transition:border-color .15s,box-shadow .15s}
+.wd-sk-ta{resize:vertical;min-height:112px}
+.wd-sk-input::placeholder,.wd-sk-ta::placeholder{color:var(--mut)}
+.wd-sk-input:focus,.wd-sk-ta:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
+.wd-sk-row{display:flex;gap:8px;align-items:center}
+.wd-sk-row .wd-sk-input{flex:1 1 auto;min-width:0}
+.wd-sk-add{padding:10px 14px;font-size:13.5px;border-radius:11px;flex:0 0 auto}
+.wd-sk-err{display:flex;align-items:center;gap:7px;font-size:12.5px;color:var(--danger)}
+.wd-sk-empty{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mut);padding:4px 2px}
+.wd-sk-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.wd-sk-item{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border-radius:11px;background:var(--card-a);border:1px solid var(--line)}
+.wd-sk-ic{width:26px;height:26px;border-radius:8px;display:grid;place-items:center;background:var(--em-fill);color:var(--em);flex:none}
+.wd-sk-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.wd-sk-body b{font-size:13.5px;font-weight:650;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-sk-meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:11.5px;color:var(--mut)}
+.wd-sk-tag{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-2);background:var(--info-fill);border:1px solid var(--info-line);border-radius:999px;padding:1px 7px}
+.wd-sk-del{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:transparent;border:1px solid transparent;color:var(--mut);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wd-sk-del:hover{color:var(--danger);border-color:var(--line-2);background:var(--panel)}
 .wd-buddy{display:flex;align-items:center;gap:16px;padding:16px 18px;min-width:0;flex-wrap:wrap}
 .wd-buddy .wd-card-t,.wd-dp .wd-card-t{font-size:15px;letter-spacing:-.01em}
 .wd-buddy .wd-card-body{min-width:0;flex:1 1 240px}
@@ -1502,6 +1529,92 @@ function DocsAttach({ tier, onDesktopDocs }) {
   )
 }
 
+// ---- Skills: teach WorkCoPilot how you (or your org) want work done ---------
+// A collapsible dashboard card: an add form (title, a big paste area for a
+// playbook / SOP / skill from any AI, optional tags) and the list with delete.
+// Scope comes from the server: 'company' skills are shared and PRIVATE to the
+// company (never used to train the platform); an individual's 'global' skills
+// may be used de-identified to improve the service, as agreed at sign-up.
+function SkillsCard({ user }) {
+  const company = !!(user && user.companyId)
+  const [open, setOpen] = useState(false)
+  const [skills, setSkills] = useState(null)      // null = not loaded yet
+  const [scope, setScope] = useState(company ? 'company' : 'global')
+  const [title, setTitle] = useState(''); const [content, setContent] = useState(''); const [tags, setTags] = useState('')
+  const [busy, setBusy] = useState(false); const [err, setErr] = useState('')
+  const load = useCallback(async () => {
+    try { const r = await api.workSkills(); setSkills((r && r.skills) || []); if (r && r.scope) setScope(r.scope) }
+    catch (e) { setErr(friendlyError(e, 'Could not load your skills.')); setSkills([]) }
+  }, [])
+  useEffect(() => { if (open && skills === null) load() }, [open, skills, load])
+  const add = async (e) => {
+    e && e.preventDefault()
+    if (!title.trim()) { setErr('Give the skill a title.'); return }
+    if (content.trim().length < 20) { setErr('Paste the playbook, SOP or skill itself (a few sentences at least).'); return }
+    setBusy(true); setErr('')
+    try {
+      const r = await api.workSkillAdd({ title: title.trim(), content: content.trim(), tags: tags.split(',').map((t) => t.trim()).filter(Boolean) })
+      if (r && r.skill) { setSkills((s) => [r.skill, ...(s || [])]); if (r.skill.scope) setScope(r.skill.scope) }
+      setTitle(''); setContent(''); setTags('')
+    } catch (e2) { setErr(friendlyError(e2, 'Could not add that skill.')) } finally { setBusy(false) }
+  }
+  const del = async (id) => {
+    setErr('')
+    try { await api.workSkillDelete(id); setSkills((s) => (s || []).filter((x) => x.id !== id)) }
+    catch (e2) { setErr(friendlyError(e2, 'Could not remove that skill.')) }
+  }
+  const n = skills ? skills.length : null
+  return (
+    <div className="wd-card wd-dp wd-skills">
+      <button type="button" className="wd-dp-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <span className="wd-ic alt"><Blocks size={16} /></span>
+        <span className="wd-card-body">
+          <span className="wd-card-t">Skills</span>
+          <span className="wd-card-c">{n == null ? 'Teach it how you want work done' : n === 0 ? 'Add a playbook, SOP or skill from any AI' : `${n} ${n === 1 ? 'skill' : 'skills'} guiding your plans`}</span>
+        </span>
+        <ChevronRight size={16} className={`wd-dp-chev${open ? ' open' : ''}`} />
+      </button>
+      {open && (
+        <div className="wd-dp-body wd-sk">
+          <p className="wd-sk-lead">Skills teach WorkCoPilot how you (or your org) want work done, so guidance aligns with your tools, standards and terminology. Paste a playbook, an SOP, or a skill exported from any AI.</p>
+          {scope === 'company'
+            ? <div className="wd-sk-note private"><ShieldCheck size={14} /><span><b>Private to your company.</b> These skills guide only your company's people. They are never used to train the platform, and your admin can download or re-upload them at any time.</span></div>
+            : <div className="wd-sk-note"><Sparkles size={14} /><span><b>Helps everyone.</b> Skills you add may be used in de-identified form to improve WorkCoPilot for all users; personal data is stripped on your device first. You agreed to this at sign-up. Company accounts are exempt.</span></div>}
+          <form className="wd-sk-form" onSubmit={add} aria-busy={busy}>
+            <input className="wd-sk-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title, for example: How we review pull requests" maxLength={120} aria-label="Skill title" />
+            <textarea className="wd-sk-ta" rows={5} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste a playbook, SOP, or a skill from any AI. Steps, rules, tools, naming, do's and don'ts. The more specific, the better the guidance." aria-label="Skill content" />
+            <div className="wd-sk-row">
+              <input className="wd-sk-input" value={tags} onChange={(e) => setTags(e.target.value)} placeholder="Tags, comma separated (optional)" aria-label="Tags" />
+              <button type="submit" className="wd-cta wd-sk-add" disabled={busy}>{busy ? <Loader2 size={15} className="spin" /> : <Plus size={15} />} Add skill</button>
+            </div>
+            {err && <div className="wd-sk-err" role="alert"><AlertTriangle size={14} /> {err}</div>}
+          </form>
+          {skills === null ? <div className="wd-sk-empty"><Loader2 size={14} className="spin" /> Loading your skills…</div>
+            : skills.length === 0 ? <div className="wd-sk-empty">No skills yet. The first one you add starts shaping your plans right away.</div>
+            : (
+              <ul className="wd-sk-list">
+                {skills.map((s) => (
+                  <li key={s.id} className="wd-sk-item">
+                    <span className="wd-sk-ic"><Blocks size={14} /></span>
+                    <span className="wd-sk-body">
+                      <b>{s.title}</b>
+                      <span className="wd-sk-meta">
+                        {(s.tags || []).map((t) => <i key={t} className="wd-sk-tag">{t}</i>)}
+                        {s.chars ? <span>{Number(s.chars).toLocaleString()} chars</span> : null}
+                        {s.at ? <span>{(() => { try { return new Date(s.at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) } catch { return '' } })()}</span> : null}
+                      </span>
+                    </span>
+                    <button type="button" className="wd-sk-del" onClick={() => del(s.id)} title="Remove this skill" aria-label={`Remove ${s.title}`}><Trash2 size={14} /></button>
+                  </li>
+                ))}
+              </ul>
+            )}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function Home({ user, onOpen, onSignOut }) {
   const { theme, toggle: toggleTheme } = useTheme()
   // Team is a company-admin surface: show it only for a company admin who is
@@ -1897,6 +2010,9 @@ function Home({ user, onOpen, onSignOut }) {
                   </div>
                 )}
               </div>
+
+              {/* Skills: playbooks / SOPs / skills that align guidance with how you work. */}
+              <SkillsCard user={user} />
             </div>
 
             {isAdmin && (
@@ -3863,6 +3979,21 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setErr(friendlyError(e, np ? 'Could not pause. Please try again.' : 'Could not resume. Please try again.'))
     }
   }
+  // Desktop: hiding or killing the buddy means "pause and save my progress". The
+  // shell signals the MAIN window (onPauseSave); we pause the watch loop and
+  // persist the paused state with the SAME calls Pause uses (progress is already
+  // saved per step). The ref always holds the current closure, so the one-time
+  // subscription never acts on stale state. A guarded no-op on the web.
+  const pauseSaveRef = useRef(() => {})
+  pauseSaveRef.current = async () => {
+    if (paused || !sess || sess.status === 'ended') return
+    setPaused(true)
+    try { await api.workPause(sessionId, true); pauseWatching() } catch { setPaused(false) }
+  }
+  useEffect(() => {
+    if (!desktop || typeof desktop.onPauseSave !== 'function') return
+    try { desktop.onPauseSave(() => { try { pauseSaveRef.current() } catch {} }) } catch {}
+  }, [desktop])
   // Guiding watches by default - no "Watch me" button. Start watching once when a
   // planned, unpaused, active session is open and nothing is watching yet. (A
   // fresh plan already started watching; a paused session waits for Resume.)

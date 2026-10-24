@@ -28,11 +28,14 @@ const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
 // SOCIAL SIGN-IN (Google / Microsoft / Apple): outlined "Continue with X"
 // buttons that hand the browser to GET /api/work/social/:provider/start. A
 // provider the server reports as unconfigured renders disabled ("Coming soon").
-// PROFILE COMPLETION: a brand-new social user is asked only for what the
-// provider did not give (name / email / phone), then the normal MFA setup.
-// Entry is detected from ?social=complete (with optional prefill params) or a
-// `profileIncomplete` flag on the user; submit -> POST /api/work/social/complete.
-// Shapes are assumed pending the backend and noted at each call site.
+// RETURN FROM A PROVIDER (server/social.js contract): the browser lands back
+// here with ?social_error=<msg> (shown), ?social=complete (brand-new user) or
+// ?social=1 (existing account). For the latter two the SPA asks GET
+// /api/work/social/pending which step is next - 'profile' (completion form:
+// full name required, phone optional, verified email shown) -> POST
+// /api/work/social/complete { name, phone } -> { mfaSetup, username, enroll } or
+// { user }; 'mfa_setup' / 'mfa_verify' -> the SAME MFA gate password + SSO use;
+// HTTP 440 { restart } -> start over. TOTP is required on every path.
 //
 // AUTH BEHAVIOR IS UNCHANGED: same useAuth hooks (login / signup / loginMfa /
 // loginMfaSetup / refresh), same signup fields, same submit and 409 handling,
@@ -205,56 +208,69 @@ export default function WorkLogin() {
   const ssoActive = !!(ssoHit && ssoHit.domain === candidateDomain && ssoDismissed !== ssoHit.domain)
   const goSso = () => { if (ssoHit) window.location.assign(api.workSsoStartUrl(ssoHit.companyId)) }
 
-  // SOCIAL sign-in availability. Probe once; a failed/404 probe leaves every
-  // provider "unknown" (enabled, let the start route decide). A provider the
-  // server reports as false renders disabled with "Coming soon".
-  // Assumed shape: { providers: { google: boolean, microsoft: boolean, apple: boolean } }
+  // SOCIAL sign-in (server/social.js). Providers: enable a button ONLY when the
+  // server reports it configured (true); false -> disabled "Coming soon"; while
+  // the probe is in flight the buttons are disabled without a tag.
   const [providers, setProviders] = useState(null)
   const [socialErr, setSocialErr] = useState(sp.get('social_error') || '')
   useEffect(() => {
     let dead = false
-    api.workSocialProviders().then((r) => { if (!dead && r && r.providers) setProviders(r.providers) }).catch(() => {})
+    api.workSocialProviders().then((r) => { if (!dead) setProviders((r && r.providers) || {}) }).catch(() => { if (!dead) setProviders({}) })
     return () => { dead = true }
   }, [])
-  const socialEnabled = (id) => !(providers && providers[id] === false)
+  const socialEnabled = (id) => !!(providers && providers[id] === true)
+  // The start route is a FULL-PAGE navigation (the server redirects to the
+  // provider), never an XHR. The checkout intent rides along, harmless if ignored.
   const startSocial = (id) => {
     setSocialErr('')
-    // Carry the checkout intent through the provider round-trip (harmless if ignored).
     const q = plan ? `?plan=${encodeURIComponent(plan)}&cycle=${encodeURIComponent(cycle)}` : ''
     window.location.assign(api.workSocialStartUrl(id) + q)
   }
 
-  // PROFILE COMPLETION for a brand-new social user. Entered from
-  // ?social=complete (optional prefill: provider, name, email, phone) or from a
-  // `profileIncomplete` flag on the signed-in user. Only the missing fields are
-  // asked. Submit -> POST /api/work/social/complete { name, email, phone };
-  // assumed response like signup: { mfaSetup?, enroll? } then the MFA gate, else
-  // refresh() and the routing effect takes over.
-  const socialComplete = sp.get('social') === 'complete'
-  const needsProfile = socialComplete || !!(user && (user.profileIncomplete || user.needsProfile))
-  const [pName, setPName] = useState(sp.get('name') || '')
-  const [pEmail, setPEmail] = useState(sp.get('email') || '')
-  const [pPhone, setPPhone] = useState(sp.get('phone') || '')
+  // RETURN FROM THE PROVIDER. ?social=complete (brand-new user) or ?social=1
+  // (existing account): ask GET /pending which step comes next and branch -
+  //   profile    -> the completion form (name required, phone optional; email shown)
+  //   mfa_setup  -> the existing MFA-setup gate with the given enroll
+  //   mfa_verify -> the existing MFA-verify gate
+  //   HTTP 440 { restart } -> the sign-in session expired; start over.
+  // socialStep: null | 'loading' | 'profile'. While set, the routing effect waits.
+  const socialParam = sp.get('social')
+  const [socialStep, setSocialStep] = useState(socialParam === 'complete' || socialParam === '1' ? 'loading' : null)
+  const [pName, setPName] = useState('')
+  const [pEmail, setPEmail] = useState('')
+  const [pPhone, setPPhone] = useState('')
   const [pBusy, setPBusy] = useState(false); const [pErr, setPErr] = useState('')
-  const [profileDone, setProfileDone] = useState(false)
-  const pProvider = (sp.get('provider') || '').toLowerCase()
   useEffect(() => {
-    // Prefill from the user record when the provider gave us values server-side.
-    if (user) { if (!pName && user.name) setPName(user.name); if (!pEmail && user.email) setPEmail(user.email); if (!pPhone && user.phone) setPPhone(user.phone) }
-  }, [user])   // eslint-disable-line
+    if (socialStep !== 'loading') return undefined
+    let dead = false
+    api.workSocialPending().then((r) => {
+      if (dead) return
+      const step = r && r.step
+      if (step === 'profile') { setPName(r.name || ''); setPEmail(r.email || ''); setSocialStep('profile'); return }
+      if (step === 'mfa_setup') { setMfa({ mode: 'setup', enroll: r.enroll, username: r.username || '' }); setSocialStep(null); return }
+      if (step === 'mfa_verify') { setMfa({ mode: 'verify', username: r.username || '' }); setSocialStep(null); return }
+      setSocialStep(null)   // nothing pending (e.g. already signed in): the routing effect takes over
+    }).catch((e2) => {
+      if (dead) return
+      setSocialStep(null)
+      setErr(e2 && (e2.status === 440 || (e2.data && e2.data.restart)) ? 'Your sign-in session timed out. Please start again.' : (e2.message || 'Could not finish signing you in. Please try again.'))
+    })
+    return () => { dead = true }
+  }, [socialStep])   // eslint-disable-line
   const submitProfile = async (e) => {
     e && e.preventDefault()
     if (!pName.trim()) { setPErr('Enter your full name.'); return }
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(pEmail.trim())) { setPErr('Enter a valid email address.'); return }
     setPBusy(true); setPErr('')
     try {
-      const r = await api.workSocialComplete({ name: pName.trim(), email: pEmail.trim(), phone: pPhone.trim() })
-      setProfileDone(true)
-      if (r && r.mfaSetup) { setMfa({ mode: 'setup', enroll: r.enroll, username: (user && user.username) || pEmail.trim() }); setPBusy(false); return }
-      if (r && r.mfaRequired) { setMfa({ mode: 'verify', username: (user && user.username) || pEmail.trim() }); setPBusy(false); return }
-      try { await refresh() } catch { /* routing effect still fires on next check */ }
+      const r = await api.workSocialComplete({ name: pName.trim(), phone: pPhone.trim() })
+      if (r && r.mfaSetup) { setMfa({ mode: 'setup', enroll: r.enroll, username: r.username || pEmail }); setSocialStep(null); setPBusy(false); return }
+      setSocialStep(null)
+      try { await refresh() } catch { /* routing effect still fires on next check */ }   // { user }: MFA globally disabled
       setPBusy(false)
-    } catch (e2) { setPErr(e2.message || 'Could not save your profile. Please try again.'); setPBusy(false) }
+    } catch (e2) {
+      if (e2 && (e2.status === 440 || (e2.data && e2.data.restart))) { setSocialStep(null); setErr('Your sign-in session timed out. Please start again.'); setPBusy(false); return }
+      setPErr(e2.message || 'Could not save your profile. Please try again.'); setPBusy(false)
+    }
   }
 
   // Plan summary for the checkout-intent card. Public pricing, same endpoint
@@ -307,9 +323,9 @@ export default function WorkLogin() {
   // Once the account is ready: if a plan was chosen, start Checkout; otherwise
   // open the dashboard. If billing is not configured, we still open the
   // dashboard (the plan chooser there explains the next step). A brand-new
-  // social user completes their profile first (needsProfile) before routing.
+  // social return finishes its pending step first (socialStep) before routing.
   useEffect(() => {
-    if (!user || checkingOut || (needsProfile && !profileDone)) return
+    if (!user || checkingOut || socialStep) return
     let cancelled = false
     const run = async () => {
       // Start Checkout for the chosen plan AND cycle. The server charges the
@@ -333,7 +349,7 @@ export default function WorkLogin() {
     }
     run()
     return () => { cancelled = true }
-  }, [user, plan, cycle, checkingOut, nav, needsProfile, profileDone])
+  }, [user, plan, cycle, checkingOut, nav, socialStep])
 
   const submit = async (e) => {
     e && e.preventDefault()
@@ -404,8 +420,8 @@ export default function WorkLogin() {
     : (planName
       ? 'After you log in we take you straight to secure checkout.'
       : 'Log in to pick up right where you left off.')
-  const showProfile = needsProfile && !profileDone && !mfa
-  const providerName = { google: 'Google', microsoft: 'Microsoft', facebook: 'Facebook' }[pProvider] || 'your provider'
+  const showProfile = socialStep === 'profile' && !mfa
+  const socialLoading = socialStep === 'loading' && !mfa
 
   return (
     <div className="wl" style={WD_DESK ? { paddingTop: 40 } : undefined}>
@@ -438,7 +454,7 @@ export default function WorkLogin() {
           <div className="wl-card-brand"><AVMark size={18} id="avlc" /> Work<i>CoPilot</i> <span className="wl-by">by AdmireVeda</span></div>
 
           {/* Checkout intent: which plan, what it costs, what happens next. */}
-          {planName && !showProfile && (
+          {planName && !showProfile && !socialLoading && (
             <section className="wl-plan" aria-label={`You are starting the ${planName} plan`}>
               <div className="wl-plan-row">
                 <div>
@@ -456,24 +472,23 @@ export default function WorkLogin() {
 
           {mfa ? (
             <MfaGate mode={mfa.mode} enroll={mfa.enroll} username={mfa.username} backupCodes={backupCodes} busy={mfaBusy} onSubmit={handleMfaSubmit} onDone={handleMfaDone} />
+          ) : socialLoading ? (
+            /* Back from the provider: asking the server which step comes next. */
+            <div className="wl-social-wait" role="status" aria-live="polite">
+              <Loader2 size={22} className="wl-spin" aria-hidden="true" />
+              <h1>Finishing your sign-in</h1>
+              <p className="wl-sub">One moment while we confirm your account.</p>
+            </div>
           ) : showProfile ? (
-            /* PROFILE COMPLETION: only what the provider did not give. */
+            /* PROFILE COMPLETION (brand-new social user): full name required, phone
+               optional; the email the provider verified is shown, not edited. */
             <>
               <h1>Complete your profile</h1>
-              <p className="wl-sub">You signed in with {providerName}. A couple of details finish your account, then you set up your authenticator.</p>
+              <p className="wl-sub">You are almost in. Your name finishes your account, then you set up your authenticator.</p>
               <form onSubmit={submitProfile} aria-label="Complete your profile" aria-busy={pBusy}>
-                {!(sp.get('name') || (user && user.name)) || pErr ? (
-                  <>
-                    <label htmlFor="wl-pname">Full name</label>
-                    <input id="wl-pname" name="name" autoFocus value={pName} onChange={(e) => setPName(e.target.value)} autoComplete="name" placeholder="Alex Morgan" aria-required="true" />
-                  </>
-                ) : <div className="wl-have"><Check size={14} aria-hidden="true" /> {pName}</div>}
-                {!(sp.get('email') || (user && user.email)) || pErr ? (
-                  <>
-                    <label htmlFor="wl-pemail">Email</label>
-                    <input id="wl-pemail" name="email" type="email" value={pEmail} onChange={(e) => setPEmail(e.target.value)} autoComplete="email" placeholder="you@example.com" aria-required="true" />
-                  </>
-                ) : <div className="wl-have"><Check size={14} aria-hidden="true" /> {pEmail}</div>}
+                {pEmail && <div className="wl-have"><Check size={14} aria-hidden="true" /> {pEmail}</div>}
+                <label htmlFor="wl-pname">Full name</label>
+                <input id="wl-pname" name="name" autoFocus value={pName} onChange={(e) => setPName(e.target.value)} autoComplete="name" placeholder="Alex Morgan" aria-required="true" aria-invalid={pErr ? 'true' : undefined} aria-describedby={pErr ? 'wl-perr' : undefined} />
                 <label htmlFor="wl-pphone">Phone <span className="wl-opt">(optional)</span></label>
                 <input id="wl-pphone" name="phone" type="tel" value={pPhone} onChange={(e) => setPPhone(e.target.value)} autoComplete="tel" placeholder="+1 555 000 1234" />
                 {pErr && <div className="wl-err" id="wl-perr" role="alert">{pErr}</div>}
@@ -497,9 +512,10 @@ export default function WorkLogin() {
           <div className="wl-social" aria-label="Other ways to continue">
             {SOCIAL.map((s) => {
               const on = socialEnabled(s.id)
+              const soon = !!(providers && providers[s.id] !== true)   // probed and not configured
               return (
-                <button key={s.id} type="button" className="wl-prov" disabled={!on || working} onClick={() => on && startSocial(s.id)} title={on ? s.label : `${s.label} is coming soon`}>
-                  <SocialMark id={s.id} /><span>{s.label}</span>{!on && <em className="wl-soon">Coming soon</em>}
+                <button key={s.id} type="button" className="wl-prov" disabled={!on || working} onClick={() => on && startSocial(s.id)} title={on ? s.label : (soon ? `${s.label} is coming soon` : 'Checking availability')}>
+                  <SocialMark id={s.id} /><span>{s.label}</span>{soon && <em className="wl-soon">Coming soon</em>}
                 </button>
               )
             })}
@@ -571,6 +587,15 @@ export default function WorkLogin() {
             <label htmlFor="wl-pass">Password</label>
             <input id="wl-pass" name="password" type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} placeholder={mode === 'signup' ? 'choose a password (6+ characters)' : 'your password'} aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
             {err && <div className="wl-err" id="wl-err" role="alert">{err}</div>}
+            {/* Individual sign-up consent (owner requirement), visible above the
+                action. Company members never use this form: they are provisioned
+                invite-only, and company knowledge stays private. */}
+            {mode === 'signup' && (
+              <div className="wl-improve" role="note">
+                <Sparkles size={14} aria-hidden="true" />
+                <span>To improve WorkCoPilot, skills and content you add may be used in de-identified form to enhance the service. Your personal data is stripped on your device first. Company accounts are exempt: company knowledge stays private. <a href="/workcopilot/terms#improvement">Learn more</a>.</span>
+              </div>
+            )}
             <button className="wl-cta" type="submit" disabled={working} aria-busy={working}>
               {working ? <Loader2 size={16} className="wl-spin" aria-hidden="true" /> : null}
               {working ? <span className="wl-sr">Working, please wait. </span> : null}
@@ -703,6 +728,13 @@ const CSS = `
 .wl-err{color:var(--err);font-size:13.5px;margin:-4px 0 14px}
 .wl-have{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--tx);background:var(--em-fill);border:1px solid var(--em-line);border-radius:12px;padding:10px 13px;margin-bottom:14px}
 .wl-have svg{color:var(--em)}
+/* Individual sign-up consent: a visible note, not fine print. */
+.wl-improve{display:flex;gap:9px;align-items:flex-start;margin:2px 0 12px;padding:10px 12px;border-radius:11px;background:var(--cyan-fill);border:1px solid var(--cyan-line);font-size:12.5px;line-height:1.5;color:var(--tx)}
+.wl-improve svg{flex:none;margin-top:2px;color:var(--cyan)}
+.wl-improve a{color:var(--cyan);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.wl-social-wait{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:26px 8px 18px}
+.wl-social-wait svg{color:var(--em)}
+.wl-social-wait .wl-sub{margin:0}
 /* a11y: visually hidden text; visible focus ring on every control (never outline:none) */
 .wl-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .wl a:focus-visible,.wl button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:8px}

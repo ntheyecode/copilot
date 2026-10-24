@@ -6,6 +6,7 @@ import WorkDemo from './pages/WorkDemo.jsx'
 import WorkLogin from './pages/WorkLogin.jsx'
 import WorkUseCases from './pages/WorkUseCases.jsx'
 import WorkSecurity from './pages/WorkSecurity.jsx'
+import WorkEnterprise from './pages/WorkEnterprise.jsx'
 import WorkPrivacy from './pages/WorkPrivacy.jsx'
 import WorkDisclaimer from './pages/WorkDisclaimer.jsx'
 import WorkTerms from './pages/WorkTerms.jsx'
@@ -65,6 +66,9 @@ export default function App() {
       <Route path="/workcopilot/login" element={<WorkLogin />} />
       <Route path="/workcopilot/use-cases" element={<WorkUseCases />} />
       <Route path="/workcopilot/security" element={<WorkSecurity />} />
+      {/* Enterprise features: the full list, linked from the main page + nav. */}
+      <Route path="/workcopilot/enterprise" element={<WorkEnterprise />} />
+      <Route path="/enterprise" element={<WorkEnterprise />} />
       {/* Public legal pages (plain-language disclosures, same light design as /security). */}
       <Route path="/workcopilot/privacy" element={<WorkPrivacy />} />
       <Route path="/workcopilot/disclaimer" element={<WorkDisclaimer />} />

@@ -32,6 +32,8 @@ import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
+import { registerSocialRoutes } from './social.js'
+import * as integrations from './integrations.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
 import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
 import { claimsReport, claimsMarkdown } from './claims.js'
@@ -1380,6 +1382,38 @@ app.post('/api/work/team/learnings/clear', requireWorkAuth, requireCompanyAdmin,
   store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'kb_clear', reason, detail: `cleared ${cleared} entries` })
   res.json({ cleared })
 }))
+
+// ---- Skills: add your own playbooks/skills (from any AI) so guidance aligns ---
+// with how you/your org work. A company's skills are PRIVATE; a solo user's skills
+// join the shared platform skills (consented at signup). Content is de-identified.
+app.post('/api/work/skills', requireWorkAuth, wrap((req, res) => {
+  const b = req.body || {}
+  const rec = store.addSkill(req.workUser.id, { title: b.title, content: b.content || b.text, tags: b.tags })
+  if (!rec) return res.status(400).json({ error: 'Add a skill with at least a short description of how to do it.' })
+  res.json({ ok: true, skill: rec })
+}))
+app.get('/api/work/skills', requireWorkAuth, wrap((req, res) => res.json({ skills: store.listSkills(req.workUser.id), scope: (store.getLearningsScope(req.workUser.id) || {}).kind || 'global' })))
+app.delete('/api/work/skills/:id', requireWorkAuth, wrap((req, res) => res.json(store.deleteSkill(req.workUser.id, req.params.id))))
+// Company skills download / re-upload (admin) - parallel to the KB backup/restore.
+app.get('/api/work/team/skills/export', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  res.setHeader('content-type', 'application/json')
+  res.send(JSON.stringify({ exportedAt: new Date().toISOString(), companyId: cid, skills: store.exportCompanySkills(cid) }, null, 2))
+}))
+app.post('/api/work/team/skills/import', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const body = req.body || {}
+  const arr = Array.isArray(body.skills) ? body.skills : (Array.isArray(body) ? body : null)
+  if (!arr) return res.status(400).json({ error: 'Provide a backup with a "skills" list.' })
+  res.json(store.importCompanySkills(req.workUser.companyId, arr, { replace: body.replace !== false }))
+}))
+app.post('/api/work/team/skills/clear', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const reason = String((req.body || {}).reason || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'Please give a reason for clearing the skills.' })
+  const cleared = store.clearCompanySkills(cid)
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'skills_clear', reason, detail: `cleared ${cleared} skills` })
+  res.json({ cleared })
+}))
 // Any company user: their company's white-label branding (logo + public contact)
 // for the dashboard header. Carries no seats, pricing, AI config or cost.
 app.get('/api/work/my-company', requireWorkAuth, wrap((req, res) => {
@@ -1536,10 +1570,11 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // for company users, platform KB for solo users), so the plan starts smarter
     // than the model's training cutoff. Retrieval is scoped + de-identified.
     const kbNotes = store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')
+    const skillNotes = store.getSkillsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((sk) => `- ${sk.title}${sk.tags ? ' [' + sk.tags + ']' : ''}: ${sk.content}`).join('\n\n')
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
       tele: planTele,
-      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, learnings: kbNotes, strong: call.backup,
+      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup,
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
@@ -2592,6 +2627,49 @@ registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
+// Social sign-in for individual users (Google + Microsoft OIDC, Facebook OAuth2).
+// Reuses the OIDC machinery and the same MFA gate as password + SSO login.
+registerSocialRoutes(app, { store, establishSession, wrap })
+
+// SOC/SIEM: auto-relay company alerts (e.g. PII/PHI entered) to the company's
+// configured destinations. The relay forwards ONLY alert metadata (categories/
+// counts + actor/context) - never the actual sensitive values.
+store.setAlertRelay(integrations.makeRelay(store))
+app.get('/api/work/company/integrations/catalog', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => res.json({ catalog: integrations.connectorCatalog() })))
+app.get('/api/work/company/integrations', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const list = store.listCompanyIntegrations(req.workUser.companyId).map((i) => {
+    const def = integrations.connectorById(i.type)
+    const cfg = { ...(i.config || {}) }
+    const hasSecret = {}
+    // Blank secret VALUES before sending to the client (write-only); report presence.
+    for (const f of (def ? def.fields : [])) { if (f.secret) { hasSecret[f.key] = !!cfg[f.key]; cfg[f.key] = '' } }
+    return { id: i.id, type: i.type, enabled: !!i.enabled, config: cfg, hasSecret, lastRelayAt: i.lastRelayAt || null, lastRelayOk: (i.lastRelayOk == null ? null : !!i.lastRelayOk), lastRelayError: i.lastRelayError || '' }
+  })
+  res.json({ integrations: list })
+}))
+app.post('/api/work/company/integrations', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const b = req.body || {}
+  if (!b.id && !integrations.connectorById(b.type)) return res.status(400).json({ error: 'Unknown integration type.' })
+  const saved = store.setCompanyIntegration(req.workUser.companyId, { id: b.id, type: b.type, config: b.config || {}, enabled: b.enabled !== false })
+  res.json({ ok: true, id: saved.id })
+}))
+app.delete('/api/work/company/integrations/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => res.json(store.deleteCompanyIntegration(req.workUser.companyId, req.params.id))))
+app.post('/api/work/company/integrations/:id/test', requireWorkAuth, requireCompanyAdmin, async (req, res) => {
+  try {
+    const integ = store.listCompanyIntegrations(req.workUser.companyId).find((i) => i.id === req.params.id)
+    if (!integ) return res.status(404).json({ error: 'Integration not found.' })
+    const company = store.getCompany(req.workUser.companyId)
+    const payload = integrations.normalizeAlert({ type: 'test', displayName: req.workUser.displayName || req.workUser.username, email: req.workUser.email, companyRole: 'company_admin', companyId: req.workUser.companyId, call: 'test', sessionTitle: 'Integration test', categories: 'test x1', redactedTotal: 1, at: new Date().toISOString() }, (company && company.name) || '')
+    payload.title = 'WorkCoPilot: test alert'
+    payload.summary = 'This is a test alert from WorkCoPilot, confirming the integration is connected.'
+    await integrations.sendTo(integ, payload)
+    store.markIntegrationRelay(req.workUser.companyId, integ.id, true)
+    res.json({ ok: true })
+  } catch (e) {
+    try { store.markIntegrationRelay(req.workUser.companyId, req.params.id, false, e && e.message) } catch { /* ignore */ }
+    res.status(502).json({ error: (e && e.message) || 'Test failed.' })
+  }
+})
 registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, requireAiStepUp, wrap })
 registerAffiliateRoutes(app, { store, requireWorkAuth, requireAuth, requireAffiliateAdmin, requireSuperAdmin, requireAiStepUp, wrap })
 

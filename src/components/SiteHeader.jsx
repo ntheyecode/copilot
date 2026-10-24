@@ -24,6 +24,7 @@ export const SITE_LINKS = [
   { key: 'use', label: 'Use cases', href: '/workcopilot/use-cases' },
   { key: 'fields', label: 'Fields', href: '/workcopilot/fields' },
   { key: 'security', label: 'Security', href: '/workcopilot/security' },
+  { key: 'enterprise', label: 'Enterprise', href: '/workcopilot/enterprise' },
   { key: 'pricing', label: 'Pricing', href: '/workcopilot/pricing' },
   { key: 'faq', label: 'FAQ', href: '/workcopilot/faq' },
 ]

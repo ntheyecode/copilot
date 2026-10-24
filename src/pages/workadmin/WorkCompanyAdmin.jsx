@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe, Upload, Brain, X,
+  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
@@ -54,6 +54,7 @@ const SECTIONS = [
   { id: 'billing', label: 'Billing', icon: Receipt, title: 'Billing', sub: 'Your plan charges and any extras. Set by the WorkCoPilot team.' },
   { id: 'governance', label: 'Data governance', icon: ShieldCheck, title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
   { id: 'alerts', label: 'Alerts', icon: ShieldAlert, title: 'Security alerts', sub: 'When one of your people enters sensitive data (PII / PHI), it is redacted on their device before anything is sent, and you are told who, where and what kind - never the values themselves.' },
+  { id: 'integrations', label: 'SOC / SIEM', icon: Globe, title: 'SOC / SIEM integrations', sub: 'Relay security alerts automatically into your SIEM, SOAR, chat and observability tools. Only alert metadata is ever sent - the kind and count of what was redacted plus who and where - never the values.' },
   { id: 'sessions', label: 'Sessions', icon: Activity, title: 'Member sessions', sub: 'Every session your people run - completed or in progress. Pull the report or audit log for any of them.' },
   { id: 'tickets', label: 'Support', icon: LifeBuoy, title: 'Support', sub: 'Open a ticket and talk to the WorkCoPilot team.' },
   { id: 'activity', label: 'Activity', icon: ListChecks, title: 'Activity', sub: 'A record of what happened across your company.' },
@@ -287,6 +288,117 @@ function KnowledgeBaseCard() {
   )
 }
 
+// Company skills: the playbooks / SOPs / skills members add to align guidance
+// with how the company works. Parallel to the knowledge-base card: download a
+// JSON backup, re-upload (merge or replace), or clear - with replace and clear
+// reason-gated and logged (platform-wide destructive-action rule). Private to
+// the company; never used to train the platform.
+function SkillsBackupCard() {
+  const [count, setCount] = useState(null)
+  const [loaded, setLoaded] = useState(false)
+  const [err, setErr] = useState(null)
+  const [busy, setBusy] = useState(false)
+  const [done, setDone] = useState(null)
+  const [clearReason, setClearReason] = useState('')
+  const [confirmClear, setConfirmClear] = useState(false)
+  const [file, setFile] = useState(null)
+  const [restoreMode, setRestoreMode] = useState('merge') // 'merge' | 'replace'
+  const fileRef = useRef(null)
+
+  const load = useCallback(() => {
+    api.workSkills().then((d) => { setCount(((d && d.skills) || []).length); setLoaded(true) }).catch((e) => { setErr(e); setLoaded(true) })
+  }, [])
+  useEffect(() => { load() }, [load])
+  const flash = (msg) => { setDone(msg); setTimeout(() => setDone(null), 3200) }
+
+  const doClear = async () => {
+    if (busy) return
+    const reason = clearReason.trim()
+    if (reason.length < 3) { setErr(new Error('A reason is required to clear the company skills.')); return }
+    setBusy(true); setErr(null); setDone(null)
+    try {
+      const r = await api.workTeamSkillsClear(reason)
+      setCount(0); setClearReason(''); setConfirmClear(false)
+      flash(`Cleared ${r && r.cleared != null ? r.cleared : 'all'} skill${r && r.cleared === 1 ? '' : 's'}. Logged to the audit trail.`)
+    } catch (e) { setErr(e) } finally { setBusy(false) }
+  }
+
+  const doRestore = async () => {
+    if (busy || !file) return
+    setBusy(true); setErr(null); setDone(null)
+    try {
+      const text = await file.text()
+      let parsed
+      try { parsed = JSON.parse(text) } catch { throw new Error('That file is not valid JSON. Upload a backup exported from this page.') }
+      const arr = Array.isArray(parsed) ? parsed : (Array.isArray(parsed.skills) ? parsed.skills : null)
+      if (!arr) throw new Error('No skills found in that file. Expected a JSON array (or { skills: [...] }).')
+      const r = await api.workTeamSkillsImport(arr, restoreMode === 'replace')
+      setCount(r && r.count != null ? r.count : arr.length)
+      setFile(null); if (fileRef.current) fileRef.current.value = ''
+      flash(`Re-uploaded ${r && r.imported != null ? r.imported : arr.length} skill${(r && r.imported === 1) ? '' : 's'} (${restoreMode}).${restoreMode === 'replace' ? ' Logged to the audit trail.' : ''}`)
+    } catch (e) { setErr(e) } finally { setBusy(false) }
+  }
+
+  if (!loaded) return null
+  return (
+    <div className="wka-panel">
+      <h2><Blocks size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-emerald)' }} />Company skills</h2>
+      <p className="desc">
+        Skills are the playbooks, SOPs and skills your people add (from any AI) so guidance aligns with your tools, standards and terminology. They are private to your company and are never used to train the platform. Download a backup, re-upload it, or clear them.
+      </p>
+      <div className="wka-field" style={{ maxWidth: 360 }}>
+        <label>Skills stored</label>
+        <div style={{ fontSize: 22, fontWeight: 700, color: 'var(--wka-text)' }}>{count}</div>
+        <span className="hint">Shared across your company. Members add and remove their own from the dashboard.</span>
+      </div>
+
+      {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
+      {done ? <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {done}</div> : null}
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 10, flexWrap: 'wrap' }}>
+        <a className="wka-btn" href={api.workTeamSkillsExportUrl()} download="workcopilot-skills-backup.json" style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <Download size={14} /> Download skills (JSON)
+        </a>
+        <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Your copy, to keep off-platform or move elsewhere.</span>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--wka-line)', marginTop: 16, paddingTop: 14 }}>
+        <div className="wka-field" style={{ maxWidth: 420 }}>
+          <label><Upload size={13} style={{ verticalAlign: -2, marginRight: 4 }} />Re-upload skills</label>
+          <input ref={fileRef} className="wka-input" type="file" accept="application/json,.json" onChange={(e) => setFile(e.target.files && e.target.files[0] ? e.target.files[0] : null)} />
+          <span className="hint">Upload a skills file exported above.</span>
+        </div>
+        <div className="wka-field" style={{ maxWidth: 420 }}>
+          <label>Mode</label>
+          <select className="wka-input" value={restoreMode} onChange={(e) => setRestoreMode(e.target.value)}>
+            <option value="merge">Merge - add these skills, keep existing (safe)</option>
+            <option value="replace">Replace - wipe current, then import (destructive)</option>
+          </select>
+        </div>
+        <button type="button" className="wka-btn primary" disabled={busy || !file} onClick={doRestore}>{busy ? <Spinning /> : <Upload size={14} />} Re-upload</button>
+      </div>
+
+      <div style={{ borderTop: '1px solid var(--wka-line)', marginTop: 16, paddingTop: 14 }}>
+        {!confirmClear ? (
+          <button type="button" className="wka-btn danger" disabled={busy || !count} onClick={() => { setConfirmClear(true); setErr(null) }}>
+            <Trash2 size={14} /> Clear company skills
+          </button>
+        ) : (
+          <div className="wka-field" style={{ maxWidth: 420 }}>
+            <label style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={13} style={{ verticalAlign: -2, marginRight: 4 }} />This permanently deletes all {count} skills. Reason required.</label>
+            <textarea className="wka-input" rows={2} value={clearReason} onChange={(e) => setClearReason(e.target.value)} placeholder="e.g. Replacing the playbooks after the process overhaul" />
+            <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
+              <button type="button" className="wka-btn danger" disabled={busy} onClick={doClear}>{busy ? <Spinning /> : <Trash2 size={14} />} Confirm clear</button>
+              <button type="button" className="wka-btn" disabled={busy} onClick={() => { setConfirmClear(false); setClearReason(''); setErr(null) }}>Cancel</button>
+            </div>
+            <span className="hint">We recommend downloading a backup first. This action is logged to your audit trail.</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // Enterprise deployment: the signed, per-machine MSI for IT to push across the
 // network, plus the silent-install command. Company-admin only (the MSI download
 // endpoint is gated to company admins/superadmin; this card simply surfaces it).
@@ -382,6 +494,7 @@ function OverviewSection({ company }) {
       <AuthorizationCard />
       <CompanyRetentionCard />
       <KnowledgeBaseCard />
+      <SkillsBackupCard />
       <EnterpriseDeployCard />
 
       {lic.tierUsage && (
@@ -1233,6 +1346,159 @@ function ActivitySection() {
 }
 
 // ===========================================================================
+// SOC / SIEM integrations: connectors that relay security alerts (metadata
+// only) into the company's own tools. The catalog comes from the server and
+// drives the add/edit form; secret fields are WRITE-ONLY (the server blanks
+// them on read; sending '' keeps the stored value). Test sends a sample alert.
+// Delete is reason-logged (owner standing rule) via the shared ReasonModal.
+// ===========================================================================
+const INT_GROUP_ORDER = ['SIEM', 'SOAR', 'Chat', 'Observability', 'Generic']
+const groupOf = (g) => (g && INT_GROUP_ORDER.find((x) => x.toLowerCase() === String(g).toLowerCase())) || g || 'Other'
+const fmtRelay = (it) => {
+  if (!it || !it.lastRelayAt) return { tone: 'none', text: 'Not tested yet' }
+  const when = fmtDT(it.lastRelayAt)
+  return it.lastRelayOk
+    ? { tone: 'ok', text: `Delivered ${when}` }
+    : { tone: 'bad', text: `Failed ${when}${it.lastRelayError ? `: ${it.lastRelayError}` : ''}` }
+}
+
+function IntegrationForm({ connector, initial, onSave, onCancel, busy, error }) {
+  const [config, setConfig] = useState(() => {
+    const c = {}
+    for (const f of connector.fields || []) c[f.key] = (initial && initial.config && !f.secret && initial.config[f.key] != null) ? String(initial.config[f.key]) : ''
+    return c
+  })
+  const [enabled, setEnabled] = useState(initial ? initial.enabled !== false : true)
+  const editing = !!(initial && initial.id)
+  const submit = (e) => { e && e.preventDefault(); onSave({ id: initial && initial.id, type: connector.id, config, enabled }) }
+  return (
+    <form className="wca-int-form" onSubmit={submit} aria-label={`${editing ? 'Edit' : 'Add'} ${connector.label}`} aria-busy={busy}>
+      <div className="wca-int-form-head"><b>{editing ? 'Edit' : 'Add'} {connector.label}</b><span className="wka-chip">{groupOf(connector.group)}</span></div>
+      <div className="wca-int-fields">
+        {(connector.fields || []).map((f) => (
+          <label key={f.key} className="wca-int-field">
+            <span>{f.label}{f.secret ? <em className="wca-int-secret">write-only</em> : null}</span>
+            <input className="wka-input" type={f.secret ? 'password' : 'text'} value={config[f.key] || ''} autoComplete={f.secret ? 'new-password' : 'off'}
+              placeholder={f.secret && editing ? 'Stored. Leave blank to keep the current value' : (f.placeholder || '')}
+              onChange={(e) => setConfig((c) => ({ ...c, [f.key]: e.target.value }))} />
+          </label>
+        ))}
+      </div>
+      <label className="wca-int-toggle"><input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} /> <span>Enabled: relay new alerts to this connector</span></label>
+      {error ? <ErrorBox error={error} /> : null}
+      <div className="wca-int-actions">
+        <button type="button" className="wka-btn sm ghost" onClick={onCancel} disabled={busy}>Cancel</button>
+        <button type="submit" className="wka-btn sm primary" disabled={busy}>{busy ? <Spinning /> : <Check size={14} />} {editing ? 'Save changes' : 'Add connector'}</button>
+      </div>
+    </form>
+  )
+}
+
+function IntegrationsSection() {
+  const [state, setState] = useState({ loading: true, error: null, catalog: [], items: [] })
+  const [adding, setAdding] = useState(null)      // connector (catalog entry) being added
+  const [editing, setEditing] = useState(null)    // existing item being edited
+  const [saveBusy, setSaveBusy] = useState(false); const [saveErr, setSaveErr] = useState(null)
+  const [testing, setTesting] = useState({})      // id -> { busy, result }
+  const [askReason, reasonModal] = useReasonModal()
+  const load = useCallback(() => {
+    setState((s) => ({ ...s, loading: true, error: null }))
+    Promise.all([api.workCompanyIntegrationsCatalog(), api.workCompanyIntegrations()])
+      .then(([cat, list]) => setState({ loading: false, error: null, catalog: Array.isArray(cat) ? cat : (cat && cat.catalog) || [], items: Array.isArray(list) ? list : (list && list.integrations) || [] }))
+      .catch((error) => setState({ loading: false, error, catalog: [], items: [] }))
+  }, [])
+  useEffect(() => { load() }, [load])
+  const byId = useMemo(() => Object.fromEntries((state.catalog || []).map((c) => [c.id, c])), [state.catalog])
+  const groups = useMemo(() => {
+    const m = {}
+    for (const c of state.catalog || []) { const g = groupOf(c.group); (m[g] = m[g] || []).push(c) }
+    const order = [...INT_GROUP_ORDER, ...Object.keys(m).filter((g) => !INT_GROUP_ORDER.includes(g))]
+    return order.filter((g) => m[g] && m[g].length).map((g) => ({ group: g, connectors: m[g] }))
+  }, [state.catalog])
+
+  const save = async (body) => {
+    setSaveBusy(true); setSaveErr(null)
+    try { await api.workCompanyIntegrationSave(body); setAdding(null); setEditing(null); load() }
+    catch (error) { setSaveErr(error) } finally { setSaveBusy(false) }
+  }
+  const toggle = async (it) => {
+    // Secrets are sent as '' so the server keeps the stored values.
+    const c = byId[it.type]; const config = {}
+    for (const f of (c && c.fields) || []) config[f.key] = f.secret ? '' : ((it.config && it.config[f.key]) || '')
+    try { await api.workCompanyIntegrationSave({ id: it.id, type: it.type, config, enabled: !it.enabled }); load() } catch (error) { setState((s) => ({ ...s, error })) }
+  }
+  const test = async (it) => {
+    setTesting((t) => ({ ...t, [it.id]: { busy: true } }))
+    try { const r = await api.workCompanyIntegrationTest(it.id); setTesting((t) => ({ ...t, [it.id]: { busy: false, result: r && r.ok ? { ok: true } : { ok: false, error: (r && r.error) || 'The connector did not accept the test alert.' } } })) }
+    catch (error) { setTesting((t) => ({ ...t, [it.id]: { busy: false, result: { ok: false, error: error.message || 'Test failed' } } })) }
+    load()
+  }
+  const remove = async (it) => {
+    const label = (byId[it.type] && byId[it.type].label) || it.type
+    const reason = await askReason({ title: `Remove ${label}?`, detail: 'Alerts will no longer be relayed to this connector. This is recorded in the audit trail.', confirmLabel: 'Remove connector' })
+    if (!reason) return
+    try { await api.workCompanyIntegrationDelete(it.id, reason); load() } catch (error) { setState((s) => ({ ...s, error })) }
+  }
+
+  if (state.loading) return <Loading label="Loading integrations" />
+  if (state.error && !state.catalog.length) return <ErrorBox error={state.error} onRetry={load} />
+  return (
+    <>
+      {reasonModal}
+      <div className="wca-int-note"><ShieldCheck size={15} /><span><b>Only alert metadata leaves WorkCoPilot.</b> A relayed alert carries the kind and count of what was redacted (for example "email x1, card x1"), who (name, email, role), the task and the time. The actual values were redacted on the member's device and are never stored or sent.</span></div>
+      {state.error ? <ErrorBox error={state.error} onRetry={load} /> : null}
+
+      <div className="wka-panel">
+        <h2>Connected</h2>
+        {!state.items.length ? <p className="desc">No connectors yet. Add one below to start relaying alerts.</p> : (
+          <div className="wca-int-list">
+            {state.items.map((it) => {
+              const c = byId[it.type] || { label: it.type, group: 'Other', fields: [] }
+              const relay = fmtRelay(it); const t = testing[it.id] || {}
+              return (
+                <div key={it.id} className={`wca-int-item${it.enabled ? '' : ' off'}`}>
+                  <div className="wca-int-item-head">
+                    <span className={`wca-int-dot ${it.enabled ? 'on' : ''}`} aria-hidden="true" />
+                    <b>{c.label}</b><span className="wka-chip">{groupOf(c.group)}</span>
+                    <span className={`wca-int-relay ${relay.tone}`} title={relay.text}>{relay.text}</span>
+                    <div className="wca-int-item-actions">
+                      <label className="wca-int-toggle sm"><input type="checkbox" checked={!!it.enabled} onChange={() => toggle(it)} /> <span>{it.enabled ? 'Enabled' : 'Disabled'}</span></label>
+                      <button type="button" className="wka-btn sm" onClick={() => test(it)} disabled={t.busy}>{t.busy ? <Spinning /> : <RefreshCw size={13} />} Test</button>
+                      <button type="button" className="wka-btn sm ghost" onClick={() => { setAdding(null); setEditing(editing && editing.id === it.id ? null : it) }}>{editing && editing.id === it.id ? 'Close' : 'Edit'}</button>
+                      <button type="button" className="wka-btn sm ghost danger" onClick={() => remove(it)} title="Remove this connector"><Trash2 size={13} /></button>
+                    </div>
+                  </div>
+                  {t.result ? <div className={`wca-int-test ${t.result.ok ? 'ok' : 'bad'}`}>{t.result.ok ? <><Check size={13} /> Sample alert delivered. Check your tool for it.</> : <><AlertTriangle size={13} /> {t.result.error}</>}</div> : null}
+                  {editing && editing.id === it.id && c.fields ? <IntegrationForm connector={c} initial={it} onSave={save} onCancel={() => setEditing(null)} busy={saveBusy} error={saveErr} /> : null}
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <div className="wka-panel">
+        <h2>Add a connector</h2>
+        <p className="desc">Pick where alerts should go. You can connect more than one.</p>
+        {groups.map(({ group, connectors }) => (
+          <div key={group} className="wca-int-group">
+            <div className="wca-int-group-k">{group}</div>
+            <div className="wca-int-grid">
+              {connectors.map((c) => (
+                <button key={c.id} type="button" className={`wca-int-card${adding && adding.id === c.id ? ' on' : ''}`} onClick={() => { setEditing(null); setSaveErr(null); setAdding(adding && adding.id === c.id ? null : c) }} aria-pressed={adding && adding.id === c.id}>
+                  <span className="wca-int-card-ic"><Globe size={15} /></span><span>{c.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        {adding ? <IntegrationForm key={adding.id} connector={adding} initial={null} onSave={save} onCancel={() => setAdding(null)} busy={saveBusy} error={saveErr} /> : null}
+      </div>
+    </>
+  )
+}
+
+// ===========================================================================
 // Member sessions (oversight): a company admin can pull the report + audit log
 // of any of their people's sessions, completed or in progress.
 // ===========================================================================
@@ -1463,6 +1729,7 @@ export default function WorkCompanyAdmin() {
       case 'tickets': return <SupportTickets mode="user" />
       case 'activity': return <ActivitySection />
       case 'alerts': return <AlertsSection onSeen={alertsSeen} />
+      case 'integrations': return <IntegrationsSection />
       case 'settings': return <SettingsSection viewer={viewer} company={company} onProfile={(u) => setViewer(u)} />
       case 'overview':
       default: return <OverviewSection company={company} />
@@ -1551,4 +1818,39 @@ const WCA_CSS = `
 .wca-alert-link { color:var(--wka-accent); font-weight:600; text-decoration:underline; text-underline-offset:3px; }
 @keyframes wca-alert-in { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
 @media (prefers-reduced-motion: reduce) { .wca-alert, .wca-badge { animation:none; } }
+/* SOC / SIEM integrations */
+.wca-int-note { display:flex; gap:10px; align-items:flex-start; padding:12px 14px; border-radius:12px; background:color-mix(in srgb, var(--wka-emerald) 10%, transparent); border:1px solid color-mix(in srgb, var(--wka-emerald) 32%, transparent); font-size:13px; line-height:1.55; color:var(--wka-text); margin-bottom:14px; }
+.wca-int-note svg { color:var(--wka-emerald); flex:none; margin-top:2px; }
+.wca-int-list { display:flex; flex-direction:column; gap:10px; }
+.wca-int-item { border:1px solid var(--wka-line); border-radius:12px; background:var(--wka-bg-2); padding:10px 12px; display:flex; flex-direction:column; gap:8px; }
+.wca-int-item.off { opacity:.72; }
+.wca-int-item-head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+.wca-int-item-head b { font-size:14px; }
+.wca-int-dot { width:9px; height:9px; border-radius:50%; background:var(--wka-faint); flex:none; }
+.wca-int-dot.on { background:var(--wka-emerald); box-shadow:0 0 0 3px color-mix(in srgb, var(--wka-emerald) 25%, transparent); }
+.wca-int-relay { font-size:12px; color:var(--wka-faint); max-width:46ch; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wca-int-relay.ok { color:var(--wka-emerald); }
+.wca-int-relay.bad { color:var(--wka-red); }
+.wca-int-item-actions { margin-left:auto; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.wca-int-toggle { display:inline-flex; align-items:center; gap:8px; font-size:13px; color:var(--wka-text); cursor:pointer; }
+.wca-int-toggle.sm { font-size:12px; color:var(--wka-muted); }
+.wca-int-toggle input { accent-color:var(--wka-emerald); width:16px; height:16px; }
+.wca-int-test { display:flex; align-items:center; gap:7px; font-size:12.5px; padding:8px 10px; border-radius:9px; }
+.wca-int-test.ok { color:var(--wka-emerald); background:color-mix(in srgb, var(--wka-emerald) 10%, transparent); }
+.wca-int-test.bad { color:var(--wka-red); background:color-mix(in srgb, var(--wka-red) 10%, transparent); }
+.wca-int-group { margin-top:14px; }
+.wca-int-group-k { font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; color:var(--wka-faint); margin-bottom:8px; }
+.wca-int-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(170px, 1fr)); gap:8px; }
+.wca-int-card { display:flex; align-items:center; gap:9px; padding:10px 12px; border-radius:11px; border:1px solid var(--wka-line); background:var(--wka-bg-2); color:var(--wka-text); font:inherit; font-size:13px; font-weight:600; cursor:pointer; text-align:left; transition:border-color .15s, background .15s, box-shadow .15s; }
+.wca-int-card:hover { border-color:var(--wka-accent); }
+.wca-int-card.on { border-color:var(--wka-emerald); background:color-mix(in srgb, var(--wka-emerald) 10%, transparent); box-shadow:0 0 0 1px color-mix(in srgb, var(--wka-emerald) 35%, transparent) inset; }
+.wca-int-card-ic { width:28px; height:28px; border-radius:8px; display:grid; place-items:center; background:var(--wka-panel); color:var(--wka-accent); border:1px solid var(--wka-line); flex:none; }
+.wca-int-form { margin-top:14px; padding:14px; border-radius:12px; border:1px solid var(--wka-line); background:var(--wka-panel); display:flex; flex-direction:column; gap:12px; }
+.wca-int-form-head { display:flex; align-items:center; gap:10px; font-size:14px; }
+.wca-int-fields { display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:10px 14px; }
+.wca-int-field { display:flex; flex-direction:column; gap:5px; font-size:12.5px; color:var(--wka-muted); }
+.wca-int-field input { width:100%; }
+.wca-int-secret { font-style:normal; margin-left:6px; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--wka-amber); }
+.wca-int-actions { display:flex; justify-content:flex-end; gap:8px; }
+.wka-btn.danger { color:var(--wka-red); }
 `

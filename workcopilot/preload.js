@@ -42,6 +42,9 @@ contextBridge.exposeInMainWorld('workDesktop', {
   // Buddy overlay controls (used by the /work/buddy page; harmless no-ops of the
   // channel from anywhere else).
   hideBuddy: () => ipcRenderer.invoke('work:buddy-hide'),
+  killBuddy: () => ipcRenderer.invoke('work:buddy-kill'),
+  onBuddyShown: (cb) => { try { ipcRenderer.on('work:buddy-shown', () => { try { cb() } catch { /* ignore */ } }) } catch { /* ignore */ } },
+  onPauseSave: (cb) => { try { ipcRenderer.on('work:pause-save', () => { try { cb() } catch { /* ignore */ } }) } catch { /* ignore */ } },
   openMain: () => ipcRenderer.invoke('work:open-main'),
   // The buddy page measures its instruction text and asks the window to grow to
   // fit, so a long step is shown in full instead of being clipped. Fire-and-forget.

@@ -260,12 +260,32 @@ export const api = {
   // redirect to the start URL (the server bounces the browser to the IdP).
   workSsoResolve: (domain) => req('GET', `/api/work/sso/resolve?domain=${encodeURIComponent(domain || '')}`),
   workSsoStartUrl: (companyId) => `/api/work/sso/${companyId}/start`,
-  // Social sign-in (Google / Microsoft / Apple). Shapes assumed, pending the
-  // backend: providers -> { providers: { google: true|false, microsoft: ..., apple: ... } }
-  // (the UI treats a failed/404 probe as "unknown, let the button try");
-  // start -> a redirect URL; complete -> { ok, mfaSetup?, enroll? } like signup.
+  // Social sign-in (Google / Microsoft / Facebook), server/social.js contract:
+  //   providers -> { providers: { google, microsoft, facebook } } (bool; enable only when true)
+  //   start     -> full-page navigation (not XHR); the server redirects to the provider
+  //   pending   -> { step:'profile', name, email } | { step:'mfa_setup', username, enroll }
+  //                | { step:'mfa_verify', username } | HTTP 440 { restart:true }
+  //   complete  -> POST { name, phone } -> { mfaSetup:true, username, enroll } | { user }
   workSocialProviders: () => req('GET', '/api/work/social/providers'),
   workSocialStartUrl: (provider) => `/api/work/social/${encodeURIComponent(provider)}/start`,
+  workSocialPending: () => req('GET', '/api/work/social/pending'),
+  // Skills: playbooks / SOPs / skills (pasted from any AI) that teach WorkCoPilot
+  // how you or your org want work done. scope 'company' = shared, private to the
+  // company; 'global' = an individual's own (may be used de-identified, per the
+  // sign-up consent). Company admins can export / import / clear (reason-gated).
+  workSkills: () => req('GET', '/api/work/skills'),
+  workSkillAdd: (body) => req('POST', '/api/work/skills', body || {}),
+  workSkillDelete: (id) => req('DELETE', `/api/work/skills/${encodeURIComponent(id)}`),
+  workTeamSkillsExportUrl: () => '/api/work/team/skills/export',   // direct cookie-authed download
+  workTeamSkillsImport: (skills, replace) => req('POST', '/api/work/team/skills/import', { skills, ...(replace ? { replace: true } : {}) }),
+  workTeamSkillsClear: (reason) => req('POST', '/api/work/team/skills/clear', { reason }),
+  // Company SOC / SIEM integrations (company-admin gated). Secret field values
+  // are write-only: the server blanks them on read; send '' to keep a stored one.
+  workCompanyIntegrationsCatalog: () => req('GET', '/api/work/company/integrations/catalog'),
+  workCompanyIntegrations: () => req('GET', '/api/work/company/integrations'),
+  workCompanyIntegrationSave: (body) => req('POST', '/api/work/company/integrations', body || {}),
+  workCompanyIntegrationDelete: (id, reason) => req('DELETE', `/api/work/company/integrations/${encodeURIComponent(id)}`, reason ? { reason } : undefined),
+  workCompanyIntegrationTest: (id) => req('POST', `/api/work/company/integrations/${encodeURIComponent(id)}/test`, {}),
   workSocialComplete: (body) => req('POST', '/api/work/social/complete', body || {}),
   // Company admin: read / set SSO for their own company (secret is write-only).
   workCompanyGetSso: () => req('GET', '/api/work/company/sso'),

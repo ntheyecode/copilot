@@ -482,12 +482,15 @@ export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
     'Return ONLY JSON in this exact shape, nothing else:\n' +
     '{"refusal":"<set ONLY when declining, else omit>","appContext":"<the tool/screen this targets, one short phrase>","learning":"<OPTIONAL generalized tool fact, see above; omit if nothing new>","steps":[{"text":"<the action>","validate":"<what is visible when done>","url":"<official page to open, or empty>","commands":["<exact command>"],"code":{"file":"<path>","content":"<exact text>"}}]}'
 }
-export function workPlanUser({ goal, appContext, research = '', learnings = '' }) {
+export function workPlanUser({ goal, appContext, research = '', learnings = '', skills = '' }) {
   return (
     `GOAL:\n${String(goal || '').trim() || '(none given)'}\n\n` +
     (appContext ? `CURRENT SCREEN / APP (observed): ${appContext}\n\n` : '') +
     (String(learnings || '').trim()
       ? `WHAT WE LEARNED BEFORE (from earlier sessions on these tools - treat as current, verified facts that override older memory, but still confirm them against what is on screen):\n${String(learnings).trim()}\n\n`
+      : '') +
+    (String(skills || '').trim()
+      ? `YOUR / YOUR ORGANIZATION'S SKILLS AND PLAYBOOKS (how this organization wants the work done - apply these methods, standards, tools and terminology; follow them unless they conflict with safety or with what is on screen):\n${String(skills).trim()}\n\n`
       : '') +
     (String(research || '').trim()
       ? `CURRENT RESEARCH NOTES (from the web, treat as MORE up to date than your own memory - use the latest UI names, paths, official URLs and best practices from here):\n${String(research).trim()}\n\n`
@@ -496,7 +499,7 @@ export function workPlanUser({ goal, appContext, research = '', learnings = '' }
 }
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
-export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', strong = null, thorough = false, tele = null }) {
+export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null }) {
   const heavy = thorough ? (
     '\n\n---\nPLAN-HEAVY MODE\n' +
     'The user will follow this plan with only LIGHT, on-demand checks, not continuous watching. ' +
@@ -506,7 +509,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
     'self-check the user can confirm without you watching. Err toward more detail per step.'
   ) : ''
   const system = workPlanSystem({ base, voice, mode }) + heavy + methodAnchorBlock(goal, appContext)
-  const user = workPlanUser({ goal, appContext, research, learnings })
+  const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
     const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
