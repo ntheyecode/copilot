@@ -472,44 +472,41 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* ENTERPRISE - the flagship, most premium tier. A refined dark panel on the
-          light page with a warm orange glow and accent edge, an elegant two-column
-          benefit grid, a primary Contact sales CTA plus a secondary action, and a
-          trust strip of assurances. Routes to the contact form. */}
+      {/* ENTERPRISE - matches the site's section pattern: centered eyebrow + h2 +
+          sub, then a card grid of the enterprise controls, a centered CTA (custom
+          pricing is by quote), and a trust strip. Site light palette (green/blue
+          emphasis, orange CTA). Routes to the contact form. */}
       <section className="wm-sec wm-ent-sec" id="enterprise">
         <div className="wm-wrap">
-          <div className="wm-ent" data-reveal>
-            <div className="wm-ent-glow" aria-hidden />
-            <header className="wm-ent-top">
-              <div className="wm-ent-eyebrow"><ShieldCheck size={14} /> Most trusted &middot; Enterprise</div>
-              <h2 className="wm-ent-h">The flagship tier, for the teams we treat the best.</h2>
-              <p className="wm-ent-lead">Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people, with your data staying on your terms.</p>
-            </header>
-            <ul className="wm-ent-feats">
-              {[
-                ['Unlimited seats and tasks', 'One central admin console for the whole company.'],
-                ['SSO, SAML and invite-only provisioning', 'Add your people the way your IT team expects.'],
-                ['One locked company data policy', 'Set it once, and every member inherits it.'],
-                ['Per-company AI keys, or bring your own', 'Your keys, your control. Nothing is shared.'],
-                ['On-device PII and PHI redaction', 'Armed and locked, enforced for everyone.'],
-                ['Full audit log and compliance reports', 'Per-session evidence, ready for review.'],
-                ['DPA, priority SLA and a dedicated contact', 'A named owner for your rollout.'],
-                ['Self-hosted or on-prem option', 'Run it entirely inside your own walls.'],
-              ].map(([t, d]) => (
-                <li key={t}><span className="wm-ent-tick"><Check size={13} /></span><div><b>{t}</b><i>{d}</i></div></li>
-              ))}
-            </ul>
-            <div className="wm-ent-foot">
-              <div className="wm-ent-cta">
-                <a className="wm-cta" href="/workcopilot/contact">Contact sales <ArrowRight size={16} /></a>
-                <a className="wm-cta ghost" href="/workcopilot/security">See the controls in action <ArrowRight size={15} /></a>
+          <div className="wm-eyebrow" data-reveal><Building2 size={14} /> For companies &amp; teams</div>
+          <h2 className="wm-h2" data-reveal>Enterprise-grade, from day one.</h2>
+          <p className="wm-sub" data-reveal>Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people, with your data staying on your terms.</p>
+          <div className="wm-ent-grid" data-reveal>
+            {[
+              [Building2, 'Unlimited seats and tasks', 'One central admin console for the whole company.'],
+              [Lock, 'SSO, SAML and invite-only provisioning', 'Add your people the way your IT team expects.'],
+              [ShieldCheck, 'One locked company data policy', 'Set it once, and every member inherits it.'],
+              [Server, 'Per-company AI keys, or bring your own', 'Your keys, your control. Nothing is shared.'],
+              [ScanEye, 'On-device PII and PHI redaction', 'Armed and locked, enforced for everyone.'],
+              [FileText, 'Full audit log and compliance reports', 'Per-session evidence, ready for review.'],
+              [Scale, 'DPA, priority SLA and a dedicated contact', 'A named owner for your rollout.'],
+              [Blocks, 'Self-hosted or on-prem option', 'Run it entirely inside your own walls.'],
+            ].map(([Ic, t, d]) => (
+              <div className="wm-ent-card" key={t}>
+                <span className="wm-ent-ic"><Ic size={18} /></span>
+                <b>{t}</b>
+                <i>{d}</i>
               </div>
-            </div>
-            <div className="wm-ent-strip" aria-label="Enterprise assurances">
-              {['SSO', 'SAML', 'DPA', 'On-prem', 'Audit logs'].map((c) => (
-                <span key={c} className="wm-ent-chip">{c}</span>
-              ))}
-            </div>
+            ))}
+          </div>
+          <div className="wm-ent-cta" data-reveal>
+            <a className="wm-cta" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={16} /></a>
+            <a className="wm-cta ghost" href="/workcopilot/security">See the controls in action <ArrowRight size={15} /></a>
+          </div>
+          <div className="wm-ent-strip" aria-label="Enterprise assurances">
+            {['SSO', 'SAML', 'DPA', 'On-prem', 'Audit logs'].map((c) => (
+              <span key={c} className="wm-ent-chip">{c}</span>
+            ))}
           </div>
         </div>
       </section>
@@ -1736,33 +1733,23 @@ const CSS = `
    two-column benefit grid and a trust strip. LIGHT panel (dark ink on a warm
    off-white) to match the light page. Orange = the brand accent (--warm / --warm2). */
 .wm-ent-sec{padding-top:0}
-.wm-ent{position:relative;overflow:hidden;margin-top:20px;border-radius:26px;padding:clamp(30px,4vw,48px) clamp(24px,4vw,52px);
-  background:
-    radial-gradient(130% 150% at 0% 0%,rgba(242,106,67,.10),transparent 48%),
-    radial-gradient(90% 130% at 100% 0%,rgba(57,211,255,.05),transparent 56%),
-    linear-gradient(158deg,#ffffff 0%,#fff7f3 52%,#fffdfb 100%);
-  border:1px solid rgba(242,106,67,.16);
-  box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 40px 90px -52px rgba(242,106,67,.42),0 18px 50px -30px rgba(15,23,42,.16)}
-.wm-ent::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:linear-gradient(90deg,transparent,var(--warm),var(--warm2),transparent)}
-.wm-ent-glow{position:absolute;top:-40%;right:-10%;left:auto;width:52%;height:135%;pointer-events:none;background:radial-gradient(closest-side,rgba(242,106,67,.13),transparent 72%);filter:blur(10px)}
-.wm-ent-top{position:relative;max-width:62ch}
-.wm-ent-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:#d1562f;margin-bottom:13px}
-.wm-ent-eyebrow svg{color:#f26a43}
-.wm-ent-h{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(26px,3.4vw,38px);line-height:1.08;letter-spacing:-.025em;color:#121826;margin:0 0 12px}
-.wm-ent-lead{color:#51607a;font-size:16px;line-height:1.62;margin:0;max-width:60ch}
-.wm-ent-feats{position:relative;list-style:none;padding:0;margin:30px 0 0;display:grid;grid-template-columns:1fr 1fr;gap:16px 34px}
-.wm-ent-feats li{display:flex;gap:13px;align-items:flex-start}
-.wm-ent-tick{flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:8px;margin-top:1px;color:#fff;background:linear-gradient(135deg,var(--warm),var(--warm2));box-shadow:0 6px 16px -8px rgba(242,106,67,.7)}
-.wm-ent-feats li b{display:block;color:#1b2333;font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
-.wm-ent-feats li i{display:block;font-style:normal;color:#64718a;font-size:13.5px;line-height:1.45;margin-top:3px}
-.wm-ent-foot{position:relative;margin-top:34px;padding-top:26px;border-top:1px solid rgba(15,23,42,.1);display:flex;align-items:center;gap:14px 22px;flex-wrap:wrap}
-.wm-ent-cta{display:flex;gap:12px;flex-wrap:wrap}
-.wm-ent .wm-cta.ghost{background:#fff;color:#2a3344;border:1px solid rgba(15,23,42,.16);box-shadow:0 1px 2px rgba(15,23,42,.05)}
-.wm-ent .wm-cta.ghost:hover{border-color:#f26a43;color:#d1562f;transform:translateY(-2px)}
-.wm-ent-strip{position:relative;margin-top:24px;display:flex;flex-wrap:wrap;gap:9px}
-.wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#5a6882;background:rgba(242,106,67,.06);border:1px solid rgba(242,106,67,.2);border-radius:999px;padding:6px 13px;transition:border-color .2s,color .2s,background .2s}
-.wm-ent-chip:hover{border-color:rgba(242,106,67,.55);color:#d1562f;background:rgba(242,106,67,.1)}
-@media(max-width:620px){.wm-ent-feats{grid-template-columns:1fr;gap:15px}.wm-ent-cta{width:100%}.wm-ent-cta .wm-cta{flex:1;min-width:0}}
+/* Card grid of enterprise controls - matches the site's card sections (white
+   panel, light hairline, soft shadow, green/blue accent tile). The centered
+   header uses the shared .wm-eyebrow/.wm-h2/.wm-sub like every other section. */
+.wm-ent-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:4px 0 0}
+.wm-ent-card{background:var(--panel,#fff);border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:left;
+  box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -28px rgba(17,23,38,.22);transition:transform .18s ease,border-color .2s ease,box-shadow .2s ease}
+.wm-ent-card:hover{transform:translateY(-3px);border-color:rgba(10,134,207,.35);box-shadow:0 1px 2px rgba(17,23,38,.05),0 26px 52px -30px rgba(10,134,207,.34)}
+.wm-ent-ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;color:#fff;background:linear-gradient(135deg,var(--em),var(--em2));box-shadow:0 8px 18px -10px rgba(10,134,207,.7);margin-bottom:13px}
+.wm-ent-card b{display:block;color:var(--ink-brand,#062a22);font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
+.wm-ent-card i{display:block;font-style:normal;color:var(--mut);font-size:13.5px;line-height:1.5;margin-top:5px}
+.wm-ent-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:34px}
+.wm-ent-cta .wm-cta.ghost{background:#fff;color:var(--ink-brand,#062a22);border:1px solid var(--line);box-shadow:0 1px 2px rgba(6,42,34,.05)}
+.wm-ent-cta .wm-cta.ghost:hover{border-color:var(--em2);color:var(--em2);transform:translateY(-2px)}
+.wm-ent-strip{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:20px}
+.wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#07784f;background:rgba(10,157,102,.08);border:1px solid rgba(10,157,102,.22);border-radius:999px;padding:6px 13px}
+@media(max-width:980px){.wm-ent-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:560px){.wm-ent-grid{grid-template-columns:1fr}.wm-ent-cta{width:100%}.wm-ent-cta .wm-cta{flex:1;min-width:0}}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}
