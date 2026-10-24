@@ -102,12 +102,12 @@ export default function WorkPricing() {
     { k: 'Extra guided time', v: [`${money(hourPrice('lite'))} / hour, never expires`, `${money(hourPrice('basic'))} / hour, never expires`, `${money(hourPrice('advanced'))} / hour, never expires`, `${money(hourPrice('premium'))} / hour, never expires`, 'Custom'] },
     { k: 'Annual billing', v: ['Where available', 'Where available', 'Where available', 'Where available', 'Custom'] },
     { k: 'Cancellation', v: ['Self-service, anytime', 'Self-service, anytime', 'Self-service, anytime', 'Self-service, anytime', 'Per agreement'] },
-    { k: 'Support', v: ['Email support', 'Email support', 'Email support', 'Email support', 'Priority SLA'] },
+    { k: 'Support', v: ['Email support', 'Email support', 'Email support', 'Email support', 'Dedicated contact'] },
     { g: 'Enterprise controls' },
     { k: 'Company-wide PII / PHI redaction policy, set by your admin', v: ENT },
     { k: 'SSO (OIDC) and team provisioning', v: ENT },
     { k: 'Per-company AI keys, or bring your own', v: ENT },
-    { k: 'Audit log, DPA and priority SLA', v: ENT },
+    { k: 'Audit log, DPA and a dedicated contact', v: ENT },
     { k: 'On-prem deployment, on request', v: ENT },
   ]
 
@@ -135,7 +135,7 @@ export default function WorkPricing() {
             <p className="wpr-blurb">{p.blurb}</p>
             <div className="wpr-facts">
               {p.custom ? (
-                <><span>Unlimited seats</span><span>Unlimited tasks</span><span>Priority SLA</span></>
+                <><span>Unlimited seats</span><span>Unlimited tasks</span><span>Dedicated contact</span></>
               ) : (
                 <><span><b>{dailyHrs(p.id)}h</b> a day</span><span>up to <b>{tasksDay(p.id)}</b> task{tasksDay(p.id) === 1 ? '' : 's'}</span><span>+1h <b>{money(hourPrice(p.id))}</b></span></>
               )}
@@ -240,7 +240,7 @@ export default function WorkPricing() {
           </div>
           <div className="wpr-note">
             <h3>Teams and companies</h3>
-            <p>Lite, Basic, Advanced and Premium are single-user plans. For seat pools, SSO, a company-wide redaction policy, a DPA and a priority SLA, talk to us about Enterprise.</p>
+            <p>Lite, Basic, Advanced and Premium are single-user plans. For seat pools, SSO, a company-wide redaction policy, a DPA and a dedicated contact, talk to us about Enterprise.</p>
           </div>
         </div>
         <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> Final entitlements and prices are confirmed at checkout. Taxes may apply by location.</p>
