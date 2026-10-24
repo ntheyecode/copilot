@@ -213,7 +213,7 @@ const EMPTY = {
   // Stripe billing config (superadmin-set, UI or env). Secrets live here but are
   // NEVER returned to a client (getBillingPublic strips them). enabled defaults
   // on so saving a key works at once; an operator can turn store billing off.
-  billing: { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true },
+  billing: { secretKey: '', webhookSecret: '', priceLite: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceLiteAnnual: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true },
 }
 
 function ensureDir() {
@@ -448,6 +448,12 @@ export function publicWorkUser(u) {
     companyName: co ? co.name : null,
     email: u.email || u.ssoEmail || null,         // contact email (SSO identity or the one set at creation)
     ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
+    // Per-tier feature gates (Lite has no roadmaps / diagrams) so the client can
+    // hide what the plan does not include and keep the marketing claim honest.
+    caps: TIER_FEATURES[(WORK_TIERS.includes(u.tier) ? u.tier : 'basic')] || TIER_FEATURES.basic,
+    // Show an Upgrade button to anyone below premium who is NOT a company user.
+    canUpgrade: !u.companyId && (WORK_TIERS.includes(u.tier) ? u.tier : 'basic') !== 'premium',
+    nextTier: u.companyId ? null : nextTierUp(WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),
     mfaEnabled: !!(u.mfa && u.mfa.enabled),       // TOTP authenticator set up
     mfaEnrolledAt: (u.mfa && u.mfa.enrolledAt) || null,
     // Billing state the client needs to know (status + plan only, never stripe ids).
@@ -673,7 +679,7 @@ export function findUserByStripeSubscription(subscriptionId) {
 // non-secret fields (price ids, publishable key) are cleared by a blank value.
 function billingState() {
   if (!db.billing || typeof db.billing !== 'object') {
-    db.billing = { secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true }
+    db.billing = { secretKey: '', webhookSecret: '', priceLite: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceLiteAnnual: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true }
   }
   return db.billing
 }
@@ -682,9 +688,11 @@ export function getBillingConfig() {
   return {
     secretKey: b.secretKey || '',
     webhookSecret: b.webhookSecret || '',
+    priceLite: b.priceLite || '',
     priceBasic: b.priceBasic || '',
     priceAdvanced: b.priceAdvanced || '',
     pricePremium: b.pricePremium || '',
+    priceLiteAnnual: b.priceLiteAnnual || '',
     priceBasicAnnual: b.priceBasicAnnual || '',
     priceAdvancedAnnual: b.priceAdvancedAnnual || '',
     pricePremiumAnnual: b.pricePremiumAnnual || '',
@@ -698,9 +706,11 @@ export function getBillingPublic() {
     enabled: b.enabled !== false,
     hasSecretKey: !!(b.secretKey && String(b.secretKey).trim()),
     hasWebhookSecret: !!(b.webhookSecret && String(b.webhookSecret).trim()),
+    priceLite: b.priceLite || '',
     priceBasic: b.priceBasic || '',
     priceAdvanced: b.priceAdvanced || '',
     pricePremium: b.pricePremium || '',
+    priceLiteAnnual: b.priceLiteAnnual || '',
     priceBasicAnnual: b.priceBasicAnnual || '',
     priceAdvancedAnnual: b.priceAdvancedAnnual || '',
     pricePremiumAnnual: b.pricePremiumAnnual || '',
@@ -715,6 +725,8 @@ export function setBillingConfig(patch = {}) {
   if (patch.secretKey != null && String(patch.secretKey).trim() !== '') b.secretKey = String(patch.secretKey).trim()
   if (patch.webhookSecret != null && String(patch.webhookSecret).trim() !== '') b.webhookSecret = String(patch.webhookSecret).trim()
   // Price ids + publishable key are not secret: a blank value clears them.
+  if (patch.priceLite !== undefined) b.priceLite = String(patch.priceLite || '').trim()
+  if (patch.priceLiteAnnual !== undefined) b.priceLiteAnnual = String(patch.priceLiteAnnual || '').trim()
   if (patch.priceBasic !== undefined) b.priceBasic = String(patch.priceBasic || '').trim()
   if (patch.priceAdvanced !== undefined) b.priceAdvanced = String(patch.priceAdvanced || '').trim()
   if (patch.pricePremium !== undefined) b.pricePremium = String(patch.pricePremium || '').trim()
@@ -2135,8 +2147,28 @@ export function requireStepUpActive(userId, label = 'This page') {
 // Daily cap is REAL USED MINUTES (active guiding only). The FREE daily bucket
 // resets at 11:59 PM Eastern; PURCHASED time is a persistent balance drawn only
 // after the free allowance is used up.
-export const WORK_TIERS = ['basic', 'advanced', 'premium']
-const WORK_TIER_SECONDS = { basic: 2 * 3600, advanced: 4 * 3600, premium: 6 * 3600 }
+export const WORK_TIERS = ['lite', 'basic', 'advanced', 'premium']
+const WORK_TIER_SECONDS = { lite: 1 * 3600, basic: 2 * 3600, advanced: 4 * 3600, premium: 6 * 3600 }
+// Upgrade ladder (low -> high). Used to show the right "Upgrade" target and to
+// decide who sees the Upgrade button (everyone below premium, except company
+// users). Keep in sync with WORK_TIERS order.
+export const TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
+// Per-tier feature gates. Lite is the entry plan: guided one step at a time,
+// NO roadmaps and NO diagrams. Diagrams stay premium-only; own-document grounding
+// stays advanced/premium.
+export const TIER_FEATURES = {
+  lite: { roadmaps: false, diagrams: false, documents: false },
+  basic: { roadmaps: true, diagrams: false, documents: false },
+  advanced: { roadmaps: true, diagrams: false, documents: true },
+  premium: { roadmaps: true, diagrams: true, documents: true },
+}
+export function tierAllows(tier, feature) {
+  const f = TIER_FEATURES[WORK_TIERS.includes(tier) ? tier : 'basic']
+  return !!(f && f[feature])
+}
+export function nextTierUp(tier) {
+  const i = TIER_ORDER.indexOf(tier); return (i >= 0 && i < TIER_ORDER.length - 1) ? TIER_ORDER[i + 1] : null
+}
 export function workDailyLimit(tier) { return WORK_TIER_SECONDS[String(tier || 'basic')] || WORK_TIER_SECONDS.basic }
 
 // The "usage day" in Eastern time, boundary at 23:59 (reset time).
@@ -2481,12 +2513,12 @@ export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
 // WorkCoPilot pricing (superadmin-editable; the marketing site reads it).
 const WORK_PRICING_DEFAULT = {
   currency: 'usd',
-  plans: { basic: 99, advanced: 299, premium: 399 },   // monthly plan price
-  hour: { basic: 20, advanced: 15, premium: 10 },      // extra hour, per tier
-  image: { basic: 2, advanced: 1, premium: 0.5 },      // per generated image, per tier
+  plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },   // monthly plan price
+  hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },      // extra hour, per tier
+  image: { lite: 3, basic: 2, advanced: 1, premium: 0.5 },       // per generated image, per tier
   imageMinBulk: 10,                                    // images bought in bulk, min 10
-  tasks: { basic: 4, advanced: 8, premium: 12 },       // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
-  replans: { basic: 10, advanced: 10, premium: 10 },   // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
+  tasks: { lite: 1, basic: 4, advanced: 8, premium: 12 },        // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
+  replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}

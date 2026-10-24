@@ -56,7 +56,7 @@ export default function Billing({ isSuperAdmin }) {
   const [testResult, setTestResult] = useState(null)
   const [testErr, setTestErr] = useState(null)
   // Form fields. Secrets start blank (write-only); blank on save keeps stored.
-  const [form, setForm] = useState({ secretKey: '', webhookSecret: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true })
+  const [form, setForm] = useState({ secretKey: '', webhookSecret: '', priceLite: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceLiteAnnual: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true })
 
   const load = useCallback(async () => {
     setState((s) => ({ ...s, loading: true, error: null }))
@@ -66,8 +66,8 @@ export default function Billing({ isSuperAdmin }) {
       setState({ loading: false, error: null, billing: b, webhookUrl: data.webhookUrl || '', envFallback: data.envFallback || null })
       setForm({
         secretKey: '', webhookSecret: '',
-        priceBasic: b.priceBasic || '', priceAdvanced: b.priceAdvanced || '', pricePremium: b.pricePremium || '',
-        priceBasicAnnual: b.priceBasicAnnual || '', priceAdvancedAnnual: b.priceAdvancedAnnual || '', pricePremiumAnnual: b.pricePremiumAnnual || '',
+        priceLite: b.priceLite || '', priceBasic: b.priceBasic || '', priceAdvanced: b.priceAdvanced || '', pricePremium: b.pricePremium || '',
+        priceLiteAnnual: b.priceLiteAnnual || '', priceBasicAnnual: b.priceBasicAnnual || '', priceAdvancedAnnual: b.priceAdvancedAnnual || '', pricePremiumAnnual: b.pricePremiumAnnual || '',
         publishableKey: b.publishableKey || '', enabled: b.enabled !== false,
       })
       // Collapse to the summary when something is already configured; open the
@@ -88,8 +88,8 @@ export default function Billing({ isSuperAdmin }) {
     try {
       // Only send secrets when the operator actually typed one (blank = keep).
       const patch = {
-        priceBasic: form.priceBasic, priceAdvanced: form.priceAdvanced, pricePremium: form.pricePremium,
-        priceBasicAnnual: form.priceBasicAnnual, priceAdvancedAnnual: form.priceAdvancedAnnual, pricePremiumAnnual: form.pricePremiumAnnual,
+        priceLite: form.priceLite, priceBasic: form.priceBasic, priceAdvanced: form.priceAdvanced, pricePremium: form.pricePremium,
+        priceLiteAnnual: form.priceLiteAnnual, priceBasicAnnual: form.priceBasicAnnual, priceAdvancedAnnual: form.priceAdvancedAnnual, pricePremiumAnnual: form.pricePremiumAnnual,
         publishableKey: form.publishableKey, enabled: !!form.enabled,
       }
       if (form.secretKey.trim()) patch.secretKey = form.secretKey.trim()
@@ -150,6 +150,7 @@ export default function Billing({ isSuperAdmin }) {
             <div style={{ maxWidth: 640 }}>
               <SummaryRow label="Secret key" value={secretSet ? 'Set, hidden' : 'Not set'} ok={secretSet} />
               <SummaryRow label="Webhook signing secret" value={webhookSet ? 'Set, hidden' : 'Not set'} ok={webhookSet} />
+              <SummaryRow label="Lite plan" value={b.priceLite || 'Not set'} ok={!!b.priceLite} />
               <SummaryRow label="Basic plan" value={b.priceBasic || 'Not set'} ok={!!b.priceBasic} />
               <SummaryRow label="Advanced plan" value={b.priceAdvanced || 'Not set'} ok={!!b.priceAdvanced} />
               <SummaryRow label="Premium plan" value={b.pricePremium || 'Not set'} ok={!!b.pricePremium} />
@@ -229,6 +230,10 @@ export default function Billing({ isSuperAdmin }) {
               </div>
 
               <div className="wka-field">
+                <label>Lite plan price or product id</label>
+                <input className="wka-input" placeholder="price_... or prod_..." value={form.priceLite} onChange={set('priceLite')} disabled={!isSuperAdmin} />
+              </div>
+              <div className="wka-field">
                 <label>Basic plan price or product id</label>
                 <input className="wka-input" placeholder="price_... or prod_..." value={form.priceBasic} onChange={set('priceBasic')} disabled={!isSuperAdmin} />
               </div>
@@ -242,6 +247,10 @@ export default function Billing({ isSuperAdmin }) {
               </div>
 
               <p className="desc" style={{ marginTop: 4 }}>Annual plan ids (optional, 20% off). Create a yearly recurring price (interval = year) for each plan in Stripe and paste its id here. Annual checkout only goes live when all three are set; until then an annual pick on the site shows the discounted price and routes to sign-up.</p>
+              <div className="wka-field">
+                <label>Lite plan, annual price or product id</label>
+                <input className="wka-input" placeholder="price_... (yearly)" value={form.priceLiteAnnual} onChange={set('priceLiteAnnual')} disabled={!isSuperAdmin} />
+              </div>
               <div className="wka-field">
                 <label>Basic plan, annual price or product id</label>
                 <input className="wka-input" placeholder="price_... (yearly)" value={form.priceBasicAnnual} onChange={set('priceBasicAnnual')} disabled={!isSuperAdmin} />

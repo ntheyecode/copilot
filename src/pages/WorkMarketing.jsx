@@ -145,7 +145,8 @@ export default function WorkMarketing() {
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
   ]
   const tiers = price ? [
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours of daily minutes - use anytime, billed per minute used', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps & diagrams', 'Floating guide + session write-up'], hour: price.hour.basic },
+    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: 1, tasks: (price.tasks || {}).lite, feats: ['1 hour of daily minutes - use anytime, billed per minute used', '1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'No roadmaps or diagrams - upgrade for those'], hour: price.hour.lite },
+    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: 2, tasks: (price.tasks || {}).basic, feats: ['2 hours of daily minutes - use anytime, billed per minute used', 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'], hour: price.hour.basic },
     { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: 4, tasks: (price.tasks || {}).advanced, popular: true, feats: ['4 hours of daily minutes - use anytime, billed per minute used', 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
     { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: 6, tasks: (price.tasks || {}).premium, feats: ['6 hours of daily minutes - use anytime, billed per minute used', 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
   ] : []
@@ -455,23 +456,6 @@ export default function WorkMarketing() {
                 <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
               </div>
             ))}
-            {/* Enterprise - a full pricing card, custom-priced, routes to sales. */}
-            <div className="wm-tier wm-tier-ent" data-reveal key="enterprise">
-              <div className="wm-tier-name">Enterprise</div>
-              <div className="wm-tier-price wm-tier-custom">Custom</div>
-              <div className="wm-tier-cyc dim">for regulated teams</div>
-              <div className="wm-tier-hrs">Unlimited seats &middot; unlimited tasks</div>
-              <ul>
-                <li><Check size={15} /> Everything in Premium</li>
-                <li><Check size={15} /> SSO / SAML &amp; team provisioning</li>
-                <li><Check size={15} /> Per-company AI keys, or bring your own</li>
-                <li><Check size={15} /> On-device PII / PHI redaction policy</li>
-                <li><Check size={15} /> Audit log, DPA &amp; priority SLA</li>
-                <li><Check size={15} /> Self-hosted / on-prem option</li>
-              </ul>
-              <a className="wm-cta alt" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={15} /></a>
-              <div className="wm-tier-topup">We reply within one business day</div>
-            </div>
           </div>
           <div className="wm-trust" data-reveal>
             <span><Lock size={14} /> Secure checkout, powered by Stripe</span>
@@ -483,6 +467,33 @@ export default function WorkMarketing() {
               lives on /workcopilot/pricing; the main page keeps only the cards. */}
           <div className="wm-fld-more" data-reveal>
             <a className="wm-cta alt" href="/workcopilot/pricing">See the full plan comparison <ArrowRight size={15} /></a>
+          </div>
+        </div>
+      </section>
+
+      {/* ENTERPRISE - its own section with the full benefits, routes to the contact form. */}
+      <section className="wm-sec wm-ent" id="enterprise">
+        <div className="wm-wrap">
+          <div className="wm-ent-card" data-reveal>
+            <div className="wm-ent-l">
+              <div className="wm-eyebrow"><Building2 size={14} /> Enterprise</div>
+              <h2 className="wm-h2">Built for regulated teams.</h2>
+              <p className="wm-sub">Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people - with your data staying on your terms.</p>
+              <div className="wm-ent-cta">
+                <a className="wm-cta" href="/workcopilot/contact">Contact sales <ArrowRight size={16} /></a>
+                <span className="wm-ent-note">We reply within one business day.</span>
+              </div>
+            </div>
+            <ul className="wm-ent-feats">
+              <li><Check size={16} /> Unlimited seats and tasks, central admin console</li>
+              <li><Check size={16} /> SSO / SAML and invite-only team provisioning</li>
+              <li><Check size={16} /> One locked company data policy for every member</li>
+              <li><Check size={16} /> Per-company AI keys, or bring your own</li>
+              <li><Check size={16} /> On-device PII / PHI redaction, armed and locked</li>
+              <li><Check size={16} /> Full audit log, per-session evidence and compliance reports</li>
+              <li><Check size={16} /> DPA, priority SLA and a dedicated contact</li>
+              <li><Check size={16} /> Self-hosted / on-prem option</li>
+            </ul>
           </div>
         </div>
       </section>
@@ -1697,6 +1708,17 @@ const CSS = `
 .wm-tier-cyc s{color:var(--mut);opacity:.8;margin-right:5px}
 .wm-tier-custom{font-size:34px}
 .wm-tier-ent{border-color:rgba(57,211,255,.35);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.008))}
+.wm-ent{padding-top:0}
+.wm-ent-card{display:grid;grid-template-columns:1.1fr 1fr;gap:34px;align-items:center;background:linear-gradient(135deg,#0c2a22,#0a2033);border-radius:24px;padding:40px 40px;color:#eaf4ef;box-shadow:0 30px 80px -40px rgba(10,40,30,.6)}
+.wm-ent-l .wm-eyebrow{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#8cf5c4}
+.wm-ent-l .wm-h2{color:#fff;margin:14px 0 10px}
+.wm-ent-l .wm-sub{color:#b9ccca;margin:0 0 20px;max-width:46ch}
+.wm-ent-cta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.wm-ent-note{color:#8fa6a2;font-size:13px}
+.wm-ent-feats{list-style:none;margin:0;padding:0;display:grid;gap:11px}
+.wm-ent-feats li{display:flex;align-items:flex-start;gap:9px;font-size:14.5px;line-height:1.45;color:#dcebe7}
+.wm-ent-feats li svg{color:#39d3ff;flex-shrink:0;margin-top:2px}
+@media(max-width:820px){.wm-ent-card{grid-template-columns:1fr;gap:24px;padding:30px 24px}}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}

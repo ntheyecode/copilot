@@ -21,7 +21,7 @@
 
 import { sendTemplateAsync } from './emails.js'
 
-const PLANS = ['basic', 'advanced', 'premium']
+const PLANS = ['lite', 'basic', 'advanced', 'premium']
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -55,6 +55,7 @@ function cfg(store) {
   const secret = (c.secretKey && storeOn) ? c.secretKey : (process.env.STRIPE_SECRET_KEY || '')
   const webhookSecret = (c.webhookSecret && storeOn) ? c.webhookSecret : (process.env.STRIPE_WEBHOOK_SECRET || '')
   const price = {
+    lite: c.priceLite || process.env.STRIPE_PRICE_LITE || '',
     basic: c.priceBasic || process.env.STRIPE_PRICE_BASIC || '',
     advanced: c.priceAdvanced || process.env.STRIPE_PRICE_ADVANCED || '',
     premium: c.pricePremium || process.env.STRIPE_PRICE_PREMIUM || '',
@@ -63,6 +64,7 @@ function cfg(store) {
   // 20% off. Checkout uses these when cycle === 'annual'. Empty = annual not
   // set up for that plan, and the client falls back to monthly / sign-up.
   const priceAnnual = {
+    lite: c.priceLiteAnnual || process.env.STRIPE_PRICE_LITE_ANNUAL || '',
     basic: c.priceBasicAnnual || process.env.STRIPE_PRICE_BASIC_ANNUAL || '',
     advanced: c.priceAdvancedAnnual || process.env.STRIPE_PRICE_ADVANCED_ANNUAL || '',
     premium: c.pricePremiumAnnual || process.env.STRIPE_PRICE_PREMIUM_ANNUAL || '',
@@ -241,6 +243,20 @@ async function handleEvent(s, store, event) {
 
   if (type === 'checkout.session.completed') {
     const userId = obj.client_reference_id || (obj.metadata && obj.metadata.workUserId) || null
+    // One-time credit purchase (extra hours or image credits). Not a
+    // subscription - credit the account, record the sale, email a receipt.
+    const md = obj.metadata || {}
+    if (obj.mode === 'payment' && (md.kind === 'hours' || md.kind === 'images') && userId) {
+      const qty = Math.max(0, Math.round(Number(md.quantity) || 0))
+      const user = store.getUser(userId)
+      if (qty > 0 && user) {
+        if (md.kind === 'hours') store.grantWorkPurchasedSeconds(userId, qty * 3600)
+        else store.grantWorkImageCredits(userId, qty)
+        ledgerAndEmail(store, { kind: md.kind, user, amountMinor: obj.amount_total, currency: obj.currency, stripeId: (typeof obj.payment_intent === 'string' ? obj.payment_intent : obj.id), emailType: 'purchase_receipt', description: md.kind === 'hours' ? `${qty} extra hour${qty === 1 ? '' : 's'}` : `${qty} image credit${qty === 1 ? '' : 's'}` })
+        console.log(`[billing] credit purchase -> user ${userId} ${qty} ${md.kind}`)
+      }
+      return
+    }
     const customerId = (typeof obj.customer === 'string' ? obj.customer : (obj.customer && obj.customer.id)) || null
     const subId = (typeof obj.subscription === 'string' ? obj.subscription : (obj.subscription && obj.subscription.id)) || null
     let plan = (obj.metadata && obj.metadata.plan) || null
@@ -385,6 +401,56 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json({ url: checkout.url })
     } catch (e) {
       console.warn('[billing] checkout create failed: ' + (e && e.message))
+      res.status(502).json({ error: 'Could not start checkout. Please try again.' })
+    }
+  })
+
+  // One-time purchase of extra hours or image credits. Priced DYNAMICALLY from
+  // Admin > Pricing (the per-hour / per-image rate for the buyer's tier) - no
+  // Stripe products to manage. The webhook credits the account + emails a
+  // receipt on completion.
+  app.post('/api/work/checkout/credits', requireWorkAuth, async (req, res) => {
+    try {
+      const kind = String((req.body || {}).kind || '').trim().toLowerCase()
+      if (kind !== 'hours' && kind !== 'images') return res.status(400).json({ error: 'Choose hours or images.' })
+      const u = req.workUser
+      const pricing = store.getWorkPricing()
+      const tier = (store.getWorkUsage ? (store.getWorkUsage(u.id) || {}).tier : u.tier) || u.tier || 'basic'
+      const minBulk = kind === 'images' ? Math.max(1, Number(pricing.imageMinBulk) || 10) : 1
+      let qty = Math.round(Number((req.body || {}).quantity) || 0)
+      if (kind === 'images' && qty < minBulk) qty = minBulk
+      if (qty < 1) return res.status(400).json({ error: `Enter how many ${kind} to buy.` })
+      if (qty > 1000) return res.status(400).json({ error: 'That is a very large quantity; buy a smaller amount.' })
+      const unit = kind === 'hours' ? Number((pricing.hour || {})[tier]) : Number((pricing.image || {})[tier])
+      if (!(unit > 0)) return res.status(503).json({ error: `Extra ${kind} are not priced for your plan.` })
+      const { secret } = cfg(store)
+      const s = await getStripe(secret)
+      if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' })
+      const existingCustomer = (u.subscription && u.subscription.stripeCustomerId) || null
+      const to = store.effectiveUserEmail ? store.effectiveUserEmail(u.id) : null
+      const params = {
+        mode: 'payment',
+        line_items: [{
+          price_data: {
+            currency: pricing.currency || 'usd',
+            unit_amount: Math.round(unit * 100),
+            product_data: { name: kind === 'hours' ? 'WorkCoPilot extra hour' : 'WorkCoPilot image credit' },
+          },
+          quantity: qty,
+        }],
+        client_reference_id: String(u.id),
+        metadata: { workUserId: String(u.id), kind, quantity: String(qty) },
+        payment_intent_data: { metadata: { workUserId: String(u.id), kind, quantity: String(qty) } },
+        success_url: `${SITE}/work?purchase=success`,
+        cancel_url: `${SITE}/work`,
+      }
+      if (existingCustomer) params.customer = existingCustomer
+      else if (to) params.customer_email = to
+      const checkout = await s.checkout.sessions.create(params)
+      if (!checkout || !checkout.url) return res.status(502).json({ error: 'Could not start checkout. Please try again.' })
+      res.json({ url: checkout.url, quantity: qty, unit, total: Math.round(unit * qty * 100) / 100, currency: pricing.currency || 'usd' })
+    } catch (e) {
+      console.warn('[billing] credits checkout failed: ' + (e && e.message))
       res.status(502).json({ error: 'Could not start checkout. Please try again.' })
     }
   })

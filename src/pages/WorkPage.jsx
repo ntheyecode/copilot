@@ -370,7 +370,7 @@ function AiSetup({ onReady, bare }) {
 // Our platform model asks a few goal-specific questions (like a consultant
 // scoping a job), then the answers are stored on the session and folded into
 // the plan. Tier-gated steps show an upgrade nudge but never block.
-function tierRank(t) { return ({ basic: 0, advanced: 1, premium: 2 })[t] != null ? ({ basic: 0, advanced: 1, premium: 2 })[t] : 0 }
+function tierRank(t) { const m = { lite: 0, basic: 1, advanced: 2, premium: 3 }; return m[t] != null ? m[t] : 1 }
 function ScopeWizard({ goal, tier, onCancel, onReady }) {
   const [phase, setPhase] = useState('loading')   // loading | ask | error
   const [questions, setQuestions] = useState([])
@@ -637,6 +637,10 @@ const WD_CSS = `
 .wd-getapp span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .wd-getapp{position:relative}
 .wd-mins{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:600;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:0 11px;white-space:nowrap;line-height:1}
+.wd-upgrade{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:700;color:#1a0e08;background:linear-gradient(135deg,#ff9a4d,#f26a43);border:none;border-radius:999px;padding:0 13px;white-space:nowrap;line-height:1;text-decoration:none;box-shadow:0 6px 16px -8px rgba(242,106,67,.6)}
+.wd-upgrade:hover{filter:brightness(1.04)}
+.wd-buyhrs{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:600;color:var(--mut);background:transparent;border:1px solid var(--line-2);border-radius:999px;padding:0 11px;white-space:nowrap;line-height:1;cursor:pointer}
+.wd-buyhrs:hover{color:var(--tx);border-color:var(--em-line)}
 .wd-mins svg{flex-shrink:0}
 .wd-mins.low{color:var(--warm);border-color:var(--warm-line);background:var(--warm-fill)}
 .wd-mins.skel{color:transparent;min-width:96px;border-color:transparent;background:var(--track)}
@@ -1318,6 +1322,18 @@ function Home({ user, onOpen, onSignOut }) {
     catch { /* keep modal open on error */ } finally { setDelBusy(false) }
   }
   const pickCat = (c) => { setGoal(c.sample); setTab('dashboard'); setTimeout(() => goalRef.current && goalRef.current.focus(), 60) }
+  // Buy extra hours (or image credits) - priced per your plan in Admin > Pricing,
+  // one-time via Stripe. Redirects to secure checkout.
+  const [buying, setBuying] = useState(false)
+  const buyCredits = async (kind) => {
+    if (buying) return
+    const label = kind === 'hours' ? 'extra hours' : 'image credits'
+    const q = window.prompt(`How many ${label} would you like to buy?`, kind === 'hours' ? '1' : '10')
+    if (!q) return
+    setBuying(true)
+    try { const r = await api.workBuyCredits(kind, Number(q) || 0); if (r && r.url) window.location.assign(r.url); else setErr('Could not start checkout.') }
+    catch (e) { setErr((e && e.message) || 'Could not start checkout.') } finally { setBuying(false) }
+  }
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
   const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
   const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || 'Active'
@@ -1346,6 +1362,12 @@ function Home({ user, onOpen, onSignOut }) {
             {usage == null
               ? <span className="wd-mins skel" aria-hidden />
               : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l"> left</span></span>}
+            {user && !user.companyId && usage != null && (
+              <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title="Buy extra hours (one-time)"><Plus size={13} /> <span className="wd-mins-l">Buy </span>hours</button>
+            )}
+            {user && user.canUpgrade && (
+              <a className="wd-upgrade" href="/workcopilot/pricing" title={`Upgrade${user.nextTier ? ' to ' + user.nextTier.charAt(0).toUpperCase() + user.nextTier.slice(1) : ''} for more hours, tasks${user.caps && !user.caps.roadmaps ? ', roadmaps' : ''} and more`}><Sparkles size={14} /> <span>Upgrade</span></a>
+            )}
             <span className="wd-top-sep" aria-hidden />
             <button className="wd-theme" onClick={toggleTheme} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
             {!(typeof window !== 'undefined' && window.workDesktop) && (

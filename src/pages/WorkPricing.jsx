@@ -120,7 +120,7 @@ export default function WorkPricing() {
               <p className="wpr-mins"><b>{p.hrs} hours</b> of daily minutes - spend them anytime across the whole day, in as little as a minute at a time. You pay only for the minutes you actually use, never by the hour.</p>
             )}
             {p.custom
-              ? <a className="wpr-btn alt" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={15} aria-hidden /></a>
+              ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
               : <button className={`wpr-btn${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
           </article>
         ))}
@@ -162,7 +162,7 @@ export default function WorkPricing() {
                   {PLANS.map((p) => (
                     <td key={p.id} className={p.popular ? 'pop' : ''}>
                       {p.custom
-                        ? <a className="wpr-btn sm alt" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales</a>
+                        ? <a className="wpr-btn sm alt" href="/workcopilot/contact">Contact sales</a>
                         : <button className={`wpr-btn sm${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start</button>}
                     </td>
                   ))}
@@ -185,7 +185,7 @@ export default function WorkPricing() {
                   : <li key={r.k} className={r.v[j] === false ? 'off' : ''}><Cell v={r.v[j]} /><span>{r.k}</span></li>))}
               </ul>
               {p.custom
-                ? <a className="wpr-btn alt" href="mailto:sales@admireveda.com?subject=WorkCoPilot%20Enterprise">Contact sales <ArrowRight size={15} aria-hidden /></a>
+                ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
                 : <button className={`wpr-btn${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
             </article>
           ))}

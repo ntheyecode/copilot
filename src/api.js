@@ -99,6 +99,7 @@ export const api = {
   workExecCsvUrl: (days) => `/api/work/exec/productivity.csv?days=${days || 30}`,
   // Billing (Stripe Checkout). workCheckout returns { url } to redirect to.
   workCheckout: (plan, cycle) => req('POST', '/api/work/checkout', { plan, cycle: cycle || 'monthly' }),
+  workBuyCredits: (kind, quantity) => req('POST', '/api/work/checkout/credits', { kind, quantity }),
   workSubscription: () => req('GET', '/api/work/subscription'),
   // The account's Stripe invoices, and a Customer Portal link to manage/cancel.
   workInvoices: () => req('GET', '/api/work/invoices'),

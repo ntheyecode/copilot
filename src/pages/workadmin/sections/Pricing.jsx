@@ -15,7 +15,7 @@ import { Save, Lock, Info, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
 
-const TIERS = ['basic', 'advanced', 'premium']
+const TIERS = ['lite', 'basic', 'advanced', 'premium']
 const PREMIUM_DAILY_IMAGE_CAP = 5
 
 function num(v) { const n = Number(v); return isFinite(n) ? n : NaN }
