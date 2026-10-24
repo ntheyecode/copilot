@@ -14,12 +14,12 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe, Upload, Brain,
+  FileText, Download, Activity, Globe, Upload, Brain, X,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
-import { Loading, ErrorBox, EmptyState, Spinning, SavedTag } from './sections/_shared.jsx'
+import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle } from './sections/_shared.jsx'
 import * as SSO from '../../shared/sso_guide.js'
 
 // ---------------------------------------------------------------------------
@@ -178,39 +178,57 @@ function AuthorizationCard() {
 // does not control it). 0 = keep forever (default). Self-contained.
 function CompanyRetentionCard() {
   const [days, setDays] = useState('')
+  const [baseline, setBaseline] = useState('0')   // last-saved value, for Cancel
+  const [editing, setEditing] = useState(false)
   const [loaded, setLoaded] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [err, setErr] = useState(null)
   const [purged, setPurged] = useState(null)
   const load = useCallback(() => {
-    api.workTeamRetention().then((d) => { setDays(String(d.retentionDays ?? 0)); setLoaded(true) }).catch((e) => { setErr(e); setLoaded(true) })
+    api.workTeamRetention().then((d) => { const v = String(d.retentionDays ?? 0); setDays(v); setBaseline(v); setEditing(false); setLoaded(true) }).catch((e) => { setErr(e); setLoaded(true) })
   }, [])
   useEffect(() => { load() }, [load])
   const save = async () => {
     if (saving) return
     const n = Number(days)
     setSaving(true); setErr(null); setSaved(false); setPurged(null)
-    try { const r = await api.workTeamSetRetention(n); setDays(String(r.retentionDays)); setPurged(r.purged || 0); setSaved(true); setTimeout(() => setSaved(false), 2400) }
+    try { const r = await api.workTeamSetRetention(n); const v = String(r.retentionDays); setDays(v); setBaseline(v); setPurged(r.purged || 0); setEditing(false); setSaved(true); setTimeout(() => setSaved(false), 2400) }
     catch (e) { setErr(e) } finally { setSaving(false) }
   }
+  const cancel = () => { setDays(baseline); setErr(null); setSaved(false); setEditing(false) }
   if (!loaded) return null
   const n = Number(days)
+  const recLabel = Number(baseline) > 0 ? `${baseline} day${Number(baseline) === 1 ? '' : 's'}` : 'Keep forever (no automatic deletion)'
   return (
     <div className="wka-panel">
-      <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention</h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+        <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention</h2>
+        {!editing ? <EditToggle editing={editing} onEdit={() => { setDays(baseline); setEditing(true); setErr(null) }} /> : null}
+      </div>
       <p className="desc">Automatically delete your company's sessions (and their milestone screenshots and audit log) older than this many days. <b>0 keeps them forever.</b> You control this for your company; people can still delete their own sessions anytime. Applied on an hourly sweep.</p>
-      <div className="wka-field" style={{ maxWidth: 260 }}>
-        <label>Retention window (days)</label>
-        <input className="wka-input" type="number" min="0" max="3650" step="1" value={days} onChange={(e) => setDays(e.target.value)} />
-        <span className="hint">{n > 0 ? `Sessions older than ${n} day${n === 1 ? '' : 's'} are purged.` : 'Keep forever (no automatic deletion).'}</span>
-      </div>
-      {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
-        <button type="button" className="wka-btn primary" disabled={saving || !Number.isInteger(n) || n < 0 || n > 3650} onClick={save}>{saving ? <Spinning /> : null} Save retention</button>
-        <SavedTag show={saved} />
-        {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Purged {purged} session{purged === 1 ? '' : 's'} now.</span> : null}
-      </div>
+      {!editing ? (
+        <>
+          <div className="wka-record"><RecRow label="Retention window" value={recLabel} /></div>
+          {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
+          <SavedTag show={saved} />
+        </>
+      ) : (
+        <>
+          <div className="wka-field" style={{ maxWidth: 260 }}>
+            <label>Retention window (days)</label>
+            <input className="wka-input" type="number" min="0" max="3650" step="1" value={days} onChange={(e) => setDays(e.target.value)} />
+            <span className="hint">{n > 0 ? `Sessions older than ${n} day${n === 1 ? '' : 's'} are purged.` : 'Keep forever (no automatic deletion).'}</span>
+          </div>
+          {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+            <button type="button" className="wka-btn primary" disabled={saving || !Number.isInteger(n) || n < 0 || n > 3650} onClick={save}>{saving ? <Spinning /> : null} Save retention</button>
+            <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
+            <SavedTag show={saved} />
+            {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Purged {purged} session{purged === 1 ? '' : 's'} now.</span> : null}
+          </div>
+        </>
+      )}
     </div>
   )
 }
@@ -718,25 +736,29 @@ function SsoSection({ company }) {
   // the admin will wait for accounts that never appear.
   const inviteOnly = !company || company.ssoProvisioning !== 'auto'
   const [form, setForm] = useState({ provider: 'google', issuer: '', clientId: '', clientSecret: '', domain: '' })
+  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveErr, setSaveErr] = useState(null)
   const [guideOpen, setGuideOpen] = useState(true)
   const callbackUrl = typeof window !== 'undefined' ? `${window.location.origin}${SSO.SSO_CALLBACK_PATH}` : SSO.SSO_CALLBACK_URL
 
+  const formFromSso = (s) => ({ provider: (s && s.provider) || 'google', issuer: (s && s.issuer) || '', clientId: (s && s.clientId) || '', clientSecret: '', domain: (s && s.domain) || '' })
+
   const load = useCallback(() => {
     setState((s) => ({ ...s, loading: true, error: null }))
     api.workCompanyGetSso()
-      .then((r) => { const s = r.sso || null; setState({ loading: false, error: null, sso: s }); if (s) setForm((f) => ({ ...f, provider: s.provider || 'google', issuer: s.issuer || '', clientId: s.clientId || '', domain: s.domain || '' })) })
+      .then((r) => { const s = r.sso || null; setState({ loading: false, error: null, sso: s }); setForm((f) => ({ ...f, ...formFromSso(s) })); setEditing(!(s && s.connected)) })   // connected -> start on the record; not connected -> open the form
       .catch((error) => setState({ loading: false, error, sso: null }))
   }, [])
   useEffect(() => { load() }, [load])
 
   const save = async () => {
     setSaving(true); setSaveErr(null); setSaved(false)
-    try { await api.workCompanySetSso(form); setSaved(true); setForm((f) => ({ ...f, clientSecret: '' })); setTimeout(() => setSaved(false), 2500); load() }
+    try { await api.workCompanySetSso(form); setSaved(true); setForm((f) => ({ ...f, clientSecret: '' })); setEditing(false); setTimeout(() => setSaved(false), 2500); load() }
     catch (error) { setSaveErr(error) } finally { setSaving(false) }
   }
+  const cancel = () => { setForm(formFromSso(state.sso)); setSaveErr(null); setSaved(false); setEditing(false) }
 
   if (state.loading) return <Loading label="Loading SSO" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
@@ -753,24 +775,44 @@ function SsoSection({ company }) {
           : <>Your company uses <b>open-domain</b> sign-in: anyone your identity provider authenticates with an email on {state.sso && state.sso.domain ? <b>@{state.sso.domain}</b> : 'your email domain'} gets a member account on first sign-in, as long as a user license is free.</>}
       </div>
       <div className="wka-panel">
-        <h2>{connected ? 'SSO is connected' : 'Connect single sign-on'} {connected ? <span className="wka-badge active" style={{ marginLeft: 6 }}>{SSO_PROVIDER_LABELS[state.sso.provider] || state.sso.provider}</span> : null}</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <h2 style={{ margin: 0 }}>{connected ? 'SSO is connected' : 'Connect single sign-on'} {connected ? <span className="wka-badge active" style={{ marginLeft: 6 }}>{SSO_PROVIDER_LABELS[state.sso.provider] || state.sso.provider}</span> : null}</h2>
+          {!editing ? <EditToggle editing={editing} onEdit={() => { setForm(formFromSso(state.sso)); setEditing(true); setSaveErr(null) }} /> : null}
+        </div>
         <p className="desc">Your people sign in with your identity provider. WorkCoPilot works with any OpenID Connect provider; pick yours below.</p>
-        <div className="wka-formgrid">
-          <div className="wka-field"><label>Provider</label>
-            <select className="wka-select" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
-              {SSO_PROVIDER_ORDER.map((id) => <option key={id} value={id}>{SSO_PROVIDER_LABELS[id]}</option>)}
-            </select>
-          </div>
-          <div className="wka-field"><label>Email domain <Help text="The part after the @ in your users' email, for example acme.com. Used to route sign-ins to your company." /></label><input className="wka-input" value={form.domain} placeholder="acme.com" onChange={(e) => setForm({ ...form, domain: e.target.value })} /></div>
-          <div className="wka-field"><label>Issuer URL <Help text={guide ? guide.issuerNote : 'Your provider OpenID issuer, a full https URL.'} /></label><input className="wka-input" value={form.issuer} placeholder={issuerHint} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
-          <div className="wka-field"><label>Client ID</label><input className="wka-input" value={form.clientId} placeholder="from your provider" onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></div>
-          <div className="wka-field"><label>Client secret <Help text="Write-only. Leave blank to keep the stored secret unchanged." /></label><input className="wka-input" type="password" value={form.clientSecret} placeholder={connected ? 'leave blank to keep current' : 'from your provider'} autoComplete="new-password" onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></div>
-        </div>
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
-          <button type="button" className="wka-btn primary" disabled={saving} onClick={save}>{saving ? <Spinning /> : <ShieldCheck size={14} />} Save SSO</button>
-          <SavedTag show={saved} />
-        </div>
-        {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}
+        {!editing ? (
+          <>
+            <div className="wka-record">
+              <RecRow label="Provider" value={SSO_PROVIDER_LABELS[state.sso && state.sso.provider] || (state.sso && state.sso.provider) || '-'} />
+              <RecRow label="Email domain" value={(state.sso && state.sso.domain) || '-'} />
+              <RecRow label="Issuer URL" value={(state.sso && state.sso.issuer) || '-'} />
+              <RecRow label="Client ID" value={(state.sso && state.sso.clientId) || '-'} />
+              <RecRow label="Client secret" value={state.sso && state.sso.connected ? '•••••••• (set)' : 'not set'} />
+            </div>
+            {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}
+            <SavedTag show={saved} />
+          </>
+        ) : (
+          <>
+            <div className="wka-formgrid">
+              <div className="wka-field"><label>Provider</label>
+                <select className="wka-select" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
+                  {SSO_PROVIDER_ORDER.map((id) => <option key={id} value={id}>{SSO_PROVIDER_LABELS[id]}</option>)}
+                </select>
+              </div>
+              <div className="wka-field"><label>Email domain <Help text="The part after the @ in your users' email, for example acme.com. Used to route sign-ins to your company." /></label><input className="wka-input" value={form.domain} placeholder="acme.com" onChange={(e) => setForm({ ...form, domain: e.target.value })} /></div>
+              <div className="wka-field"><label>Issuer URL <Help text={guide ? guide.issuerNote : 'Your provider OpenID issuer, a full https URL.'} /></label><input className="wka-input" value={form.issuer} placeholder={issuerHint} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
+              <div className="wka-field"><label>Client ID</label><input className="wka-input" value={form.clientId} placeholder="from your provider" onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></div>
+              <div className="wka-field"><label>Client secret <Help text="Write-only. Leave blank to keep the stored secret unchanged." /></label><input className="wka-input" type="password" value={form.clientSecret} placeholder={connected ? 'leave blank to keep current' : 'from your provider'} autoComplete="new-password" onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></div>
+            </div>
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+              <button type="button" className="wka-btn primary" disabled={saving} onClick={save}>{saving ? <Spinning /> : <ShieldCheck size={14} />} Save SSO</button>
+              {connected ? <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button> : null}
+              <SavedTag show={saved} />
+            </div>
+            {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}
+          </>
+        )}
       </div>
 
       <div className="wka-panel">
@@ -954,15 +996,26 @@ const GOV_ACTIONS = ['send', 'mask', 'withhold', 'tokenize']
 const GOV_ACTION_LABEL = { send: 'Send as-is', mask: 'Mask', withhold: 'Withhold', tokenize: 'Tokenize (on-device)' }
 function GovernanceSection({ companyId }) {
   const [state, setState] = useState({ loading: true, error: null, policy: null, presets: {}, labels: {}, categories: [] })
+  const [baseline, setBaseline] = useState(null)   // last-saved policy, for Cancel
+  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [saveErr, setSaveErr] = useState(null)
+
+  // A policy is "configured" (start collapsed) once armed, saved, or given any
+  // frameworks/words/fields. A brand-new blank policy opens in the form.
+  const isConfigured = (pol) => !!(pol && (pol.version > 0 || pol.armed || (pol.frameworks || []).length || (pol.blockWords || []).length || (pol.customFields || []).length))
 
   const load = useCallback(() => {
     if (!companyId) return
     setState((s) => ({ ...s, loading: true, error: null }))
     api.workPolicy(companyId)
-      .then((r) => setState({ loading: false, error: null, policy: r.policy || {}, presets: r.presets || {}, labels: r.labels || {}, categories: r.categories || [] }))
+      .then((r) => {
+        const pol = r.policy || {}
+        setState({ loading: false, error: null, policy: pol, presets: r.presets || {}, labels: r.labels || {}, categories: r.categories || [] })
+        setBaseline(pol)
+        setEditing(!pol.locked && !isConfigured(pol))   // locked or already-configured -> start on the record
+      })
       .catch((error) => setState((s) => ({ ...s, loading: false, error })))
   }, [companyId])
   useEffect(() => { load() }, [load])
@@ -982,13 +1035,46 @@ function GovernanceSection({ companyId }) {
         customFields: (p.customFields || []).filter((f) => f && String(f.label || '').trim() && String(f.pattern || '').trim()),
         mode: p.mode || 'scrub', armed: !!p.armed,
       })
-      setState((s) => ({ ...s, policy: r.policy })); setSaved(true); setTimeout(() => setSaved(false), 2500)
+      setState((s) => ({ ...s, policy: r.policy })); setBaseline(r.policy); setEditing(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
     } catch (error) { setSaveErr(error) } finally { setSaving(false) }
   }
+  const cancel = () => { setState((s) => ({ ...s, policy: baseline })); setSaveErr(null); setSaved(false); setEditing(false) }
 
   if (state.loading) return <Loading label="Loading policy" />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
   if (!p) return <EmptyState title="No policy" />
+
+  if (!editing) {
+    // ---- Collapsed policy record (armed/locked status stays visible) ----
+    return (
+      <div>
+        {locked && <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><Lock size={14} /> This policy is locked by the WorkCoPilot team. Open a support ticket to change it.</div>}
+        <div className="wka-panel">
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+            <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data governance policy</h2>
+            <EditToggle editing={editing} disabled={ro} onEdit={() => { setState((s) => ({ ...s, policy: baseline })); setEditing(true); setSaveErr(null) }} />
+          </div>
+          <p className="desc">The saved DLP policy for your company. {ro ? 'It is locked by the WorkCoPilot team.' : 'Click Edit to change what leaves the device.'}</p>
+          <div className="wka-record">
+            <RecRow label="Status" value={
+              <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
+                <span style={{ color: p.armed ? 'var(--wka-emerald)' : 'var(--wka-amber)', fontWeight: 600 }}>{p.armed ? 'Armed (enforced on every call)' : 'Not armed'}</span>
+                <span style={{ color: 'var(--wka-faint)' }}>·</span>
+                <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>{p.locked ? <><Lock size={12} /> Locked</> : 'Unlocked'}</span>
+              </span>
+            } />
+            <RecRow label="Mode" value={p.mode === 'tokenize' ? 'Tokenize (rebuilt on-device)' : 'Scrub (removed before sending)'} />
+            <RecRow label="Frameworks" value={(p.frameworks || []).length ? (p.frameworks || []).map((k) => k.toUpperCase().replace(/_/g, ' ')).join(', ') : 'None'} />
+            <RecRow label="Category rules" value={`${Object.keys(p.categories || {}).length} set`} />
+            <RecRow label="Block words" value={`${(p.blockWords || []).length}`} />
+            <RecRow label="Custom fields" value={`${(p.customFields || []).length}`} />
+            <RecRow label="Version" value={`${p.version || 0}`} />
+          </div>
+          <SavedTag show={saved} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div>
@@ -1065,6 +1151,7 @@ function GovernanceSection({ companyId }) {
         <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 14 }}><input type="checkbox" checked={!!p.armed} disabled={ro} onChange={(e) => patchPolicy({ armed: e.target.checked })} /> Armed (enforced on every call)</label>
         <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
           <button type="button" className="wka-btn primary" disabled={ro || saving} onClick={save}>{saving ? <Spinning /> : <ShieldCheck size={14} />} Save policy</button>
+          <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
           <SavedTag show={saved} />
           <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>version {p.version || 0}</span>
         </div>
@@ -1208,15 +1295,17 @@ function SessionsSection() {
 // ===========================================================================
 function SettingsSection({ viewer, company, onProfile }) {
   const [displayName, setDisplayName] = useState((viewer && viewer.displayName) || '')
+  const [editingProfile, setEditingProfile] = useState(!(viewer && viewer.displayName))   // name already set -> start on the record
   const [pBusy, setPBusy] = useState(false); const [pOk, setPOk] = useState(false); const [pErr, setPErr] = useState(null)
   const [pw, setPw] = useState({ current: '', next: '', confirm: '' })
   const [pwBusy, setPwBusy] = useState(false); const [pwOk, setPwOk] = useState(false); const [pwErr, setPwErr] = useState(null)
 
   const saveProfile = async () => {
     setPBusy(true); setPErr(null); setPOk(false)
-    try { const r = await api.workSetProfile({ displayName }); if (onProfile) onProfile(r.user); setPOk(true); setTimeout(() => setPOk(false), 2500) }
+    try { const r = await api.workSetProfile({ displayName }); if (onProfile) onProfile(r.user); setEditingProfile(false); setPOk(true); setTimeout(() => setPOk(false), 2500) }
     catch (error) { setPErr(error) } finally { setPBusy(false) }
   }
+  const cancelProfile = () => { setDisplayName((viewer && viewer.displayName) || ''); setPErr(null); setPOk(false); setEditingProfile(false) }
   const changePassword = async () => {
     setPwErr(null); setPwOk(false)
     if (!pw.current || !pw.next) { setPwErr(new Error('Enter your current and new password.')); return }
@@ -1230,11 +1319,24 @@ function SettingsSection({ viewer, company, onProfile }) {
   return (
     <div>
       <div className="wka-panel">
-        <h2>Your profile</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <h2 style={{ margin: 0 }}>Your profile</h2>
+          {!editingProfile ? <EditToggle editing={editingProfile} onEdit={() => { setDisplayName((viewer && viewer.displayName) || ''); setEditingProfile(true); setPErr(null) }} /> : null}
+        </div>
         <p className="desc">The name shown to your team. Your username is <b>{viewer ? viewer.username : ''}</b>.</p>
-        <div className="wka-field" style={{ maxWidth: 420, marginBottom: 14 }}><label>Display name</label><input className="wka-input" value={displayName} maxLength={80} placeholder="e.g. Alex Morgan" onChange={(e) => setDisplayName(e.target.value)} /></div>
-        {pErr && <ErrorBox error={pErr} />}
-        <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}><button type="button" className="wka-btn primary" disabled={pBusy} onClick={saveProfile}>{pBusy ? <Spinning /> : <Check size={14} />} Save</button><SavedTag show={pOk} /></div>
+        {!editingProfile ? (
+          <>
+            <div className="wka-record"><RecRow label="Display name" value={(viewer && viewer.displayName) || '(not set)'} /></div>
+            {pErr && <ErrorBox error={pErr} />}
+            <SavedTag show={pOk} />
+          </>
+        ) : (
+          <>
+            <div className="wka-field" style={{ maxWidth: 420, marginBottom: 14 }}><label>Display name</label><input className="wka-input" value={displayName} maxLength={80} placeholder="e.g. Alex Morgan" onChange={(e) => setDisplayName(e.target.value)} /></div>
+            {pErr && <ErrorBox error={pErr} />}
+            <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}><button type="button" className="wka-btn primary" disabled={pBusy} onClick={saveProfile}>{pBusy ? <Spinning /> : <Check size={14} />} Save</button><button type="button" className="wka-btn ghost" disabled={pBusy} onClick={cancelProfile}><X size={14} /> Cancel</button><SavedTag show={pOk} /></div>
+          </>
+        )}
       </div>
 
       <div className="wka-panel">

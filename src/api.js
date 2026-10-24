@@ -159,6 +159,7 @@ export const api = {
   workComplianceUrl: (id, dl, framework) => `/api/work/sessions/${id}/compliance.pdf?${[dl ? 'dl=1' : '', framework ? `framework=${encodeURIComponent(framework)}` : ''].filter(Boolean).join('&')}`,
   workComplianceFrameworks: () => req('GET', '/api/work/compliance/frameworks'),
   workComplianceEmail: (id, body) => req('POST', `/api/work/sessions/${id}/compliance/email`, body || {}),
+  workContact: (body) => req('POST', '/api/work/contact', body || {}),
   workResearch: (id, question) => req('POST', `/api/work/sessions/${id}/research`, { question: clean(question) }),
   workUsage: () => req('GET', '/api/work/usage'),
   workHeartbeat: (id, seconds) => req('POST', '/api/work/usage/heartbeat', { sessionId: id, seconds }),

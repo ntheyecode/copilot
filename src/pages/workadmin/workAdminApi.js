@@ -65,6 +65,17 @@ export const workAdminApi = {
   setSmtp: (body) => request('POST', '/api/work/admin/smtp', body || {}),
   testSmtp: (to) => request('POST', '/api/work/admin/smtp/test', { to }),
 
+  // Notification recipients (Contact Us + leads) + thank-you toggle.
+  getNotify: () => request('GET', '/api/work/admin/notify'),
+  setNotify: (body) => request('POST', '/api/work/admin/notify', body || {}),
+  contacts: (limit) => request('GET', `/api/work/admin/contacts${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
+
+  // Editable email templates: list all, save one, reset one, live-preview one.
+  emailTemplates: () => request('GET', '/api/work/admin/email-templates'),
+  saveEmailTemplate: (type, body) => request('POST', `/api/work/admin/email-templates/${encodeURIComponent(type)}`, body || {}),
+  resetEmailTemplate: (type) => request('POST', `/api/work/admin/email-templates/${encodeURIComponent(type)}/reset`, {}),
+  previewEmailTemplate: (type, body) => request('POST', `/api/work/admin/email-templates/${encodeURIComponent(type)}/preview`, body || {}),
+
   // AI-config OTP step-up (superadmin). The page shows/changes nothing until a
   // fresh authenticator code opens a short window. GET is ungated (tells the UI
   // lock state); POST verifies a code; DELETE locks immediately.

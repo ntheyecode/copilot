@@ -24,6 +24,8 @@ import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } fr
 import { sendMail } from './mailer.js'
 import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './report_sign.js'
 import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
+import { sendTemplate, sendTemplateAsync } from './emails.js'
+import { EMAIL_DEFS, renderEmail } from './email_templates.js'
 import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
@@ -2122,9 +2124,35 @@ app.post('/api/work/leads', wrap((req, res) => {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
   const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
   if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
-  res.json(store.addWorkLead({
+  const lead = store.addWorkLead({
     firstName: b.firstName, lastName: b.lastName, email, phone: b.phone, company: b.company, source: b.source,
-  }, { ip }))
+  }, { ip })
+  // Enterprise mailing: notify the business of the new lead, and thank the
+  // person who submitted. Fire-and-forget - never block or fail the submission.
+  const notify = store.getNotifySettings()
+  const name = `${b.firstName} ${b.lastName}`.trim()
+  sendTemplateAsync('lead_notify', notify.leadTo, { name, email, company: b.company, question: b.question || b.source || '', verdict: b.verdict || '', plan: b.plan || '', submittedAt: new Date().toISOString() })
+  if (notify.thankYou) sendTemplateAsync('lead_thank_you', email, { name })
+  res.json(lead)
+}))
+// ---- Contact Us (public) --------------------------------------------------
+// Capture the form, email the business (recipient is superadmin-set), and send
+// the submitter a thank-you. Rate-limited like the lead form.
+app.post('/api/work/contact', wrap((req, res) => {
+  const b = req.body || {}
+  const name = String(b.name || '').trim()
+  const email = String(b.email || '').trim()
+  const message = String(b.message || '').trim()
+  if (!name || !email || !message) return res.status(400).json({ error: 'Name, email and a message are required.' })
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
+  if (message.length < 5) return res.status(400).json({ error: 'Please add a little more detail to your message.' })
+  const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
+  if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
+  const rec = store.addContactSubmission({ name, email, subject: b.subject, message }, { ip })
+  const notify = store.getNotifySettings()
+  sendTemplateAsync('contact_notify', notify.contactTo, { name, email, subject: b.subject || '(no subject)', message, submittedAt: rec.at, ip })
+  if (notify.thankYou) sendTemplateAsync('contact_thank_you', email, { name })
+  res.json({ ok: true })
 }))
 // ---- Support tickets (user side: open + thread with the superadmin) -------
 app.get('/api/work/ticket-categories', (req, res) => res.json({ categories: store.workTicketCategories() }))
@@ -2262,6 +2290,59 @@ app.post('/api/work/admin/smtp/test', requireAuth, requireSuperAdmin, requireSmt
 app.post('/api/work/reports/verify', wrap((req, res) => {
   const b = req.body || {}
   res.json(verifyReport({ kind: b.kind, reportId: b.reportId, hash: b.hash, issuedAt: b.issuedAt, signature: b.signature }))
+}))
+
+// ---- Notification recipients + Contact inbox (superadmin) ------------------
+// Where Contact Us and new-lead notifications go, and the thank-you toggle.
+app.get('/api/work/admin/notify', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ notify: store.getNotifySettings() }) }))
+app.post('/api/work/admin/notify', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ notify: store.setNotifySettings(req.body || {}) }) }))
+app.get('/api/work/admin/contacts', requireAuth, requireSuperAdmin, wrap((req, res) => { res.json({ contacts: store.listContactSubmissions({ limit: Number(req.query.limit) || 300 }) }) }))
+
+// ---- Editable email templates (superadmin) --------------------------------
+// Every email the product sends is editable here - subject, heading, body and
+// CTA label, with <Placeholder> tokens. Nothing is static. The branded layout
+// and the placeholder catalog come from email_templates.js; the overrides live
+// in the store.
+app.get('/api/work/admin/email-templates', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const overrides = store.getAllEmailTemplateOverrides()
+  const templates = Object.keys(EMAIL_DEFS).map((type) => {
+    const d = EMAIL_DEFS[type]
+    const ov = overrides[type] || {}
+    return {
+      type, label: d.label, category: d.category, description: d.description,
+      placeholders: d.placeholders || [],
+      defaults: { subject: d.defaultSubject, heading: d.defaultHeading, body: d.defaultBody, ctaLabel: d.defaultCtaLabel || '' },
+      override: { subject: ov.subject, heading: ov.heading, body: ov.body, ctaLabel: ov.ctaLabel, updatedAt: ov.updatedAt || null },
+      hasCta: !!d.ctaUrlToken || !!d.defaultCtaLabel,
+    }
+  })
+  res.json({ templates })
+}))
+app.post('/api/work/admin/email-templates/:type', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  if (!EMAIL_DEFS[req.params.type]) return res.status(404).json({ error: 'Unknown email type.' })
+  res.json({ override: store.setEmailTemplate(req.params.type, req.body || {}) })
+}))
+app.post('/api/work/admin/email-templates/:type/reset', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  if (!EMAIL_DEFS[req.params.type]) return res.status(404).json({ error: 'Unknown email type.' })
+  res.json({ override: store.resetEmailTemplate(req.params.type) })
+}))
+// Live preview: render the chosen type with its sample data, applying either the
+// DRAFT overrides sent in the body (so the admin previews before saving) or the
+// saved ones. Returns the subject + full HTML to show in an iframe.
+app.post('/api/work/admin/email-templates/:type/preview', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const d = EMAIL_DEFS[req.params.type]
+  if (!d) return res.status(404).json({ error: 'Unknown email type.' })
+  const draft = (req.body && typeof req.body === 'object') ? req.body : {}
+  const saved = store.getEmailTemplate(req.params.type)
+  const overrides = {
+    subject: draft.subject != null ? draft.subject : saved.subject,
+    heading: draft.heading != null ? draft.heading : saved.heading,
+    body: draft.body != null ? draft.body : saved.body,
+    ctaLabel: draft.ctaLabel != null ? draft.ctaLabel : saved.ctaLabel,
+  }
+  let out
+  try { out = renderEmail(req.params.type, d.sampleData || {}, overrides) } catch (e) { return res.status(500).json({ error: 'Could not render the preview.' }) }
+  res.json({ subject: out.subject, html: out.html })
 }))
 
 // Manual step control (the user ticks/unticks or skips).

@@ -101,22 +101,37 @@ function upgradeTls(socket, host) {
 // strings), and the body is base64 so a long line or a stray CRLF cannot
 // corrupt the message.
 const b64wrap = (buf) => Buffer.from(buf).toString('base64').replace(/(.{76})/g, '$1\r\n')
+const newBoundary = () => 'wcp_' + Math.random().toString(36).slice(2) + Date.now().toString(36)
+const textPart = (text) => ['Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64wrap(Buffer.from(String(text || ''), 'utf8'))]
+const htmlPart = (html) => ['Content-Type: text/html; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64wrap(Buffer.from(String(html || ''), 'utf8'))]
 
-function buildMessage({ from, fromName, to, subject, text, attachment }) {
+// The message BODY (no top headers): plain text, or multipart/alternative when
+// an html part is present. Returned as { headerLines, bodyLines } so an
+// attachment wrapper can nest it.
+function bodyBlock({ text, html }) {
+  if (!html) return { headerLines: ['Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64'], bodyLines: ['', b64wrap(Buffer.from(String(text || ''), 'utf8'))] }
+  const b = newBoundary()
+  return {
+    headerLines: [`Content-Type: multipart/alternative; boundary="${b}"`],
+    bodyLines: ['', `--${b}`, ...textPart(text), '', `--${b}`, ...htmlPart(html), '', `--${b}--`],
+  }
+}
+
+function buildMessage({ from, fromName, to, subject, text, html, attachment }) {
   const fromHeader = fromName ? `${fromName} <${from}>` : from
   const head = [`From: ${fromHeader}`, `To: ${to}`, `Subject: ${subject}`, 'MIME-Version: 1.0', `Date: ${new Date().toUTCString()}`]
+  const body = bodyBlock({ text, html })
   if (!attachment) {
-    return [...head, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64wrap(Buffer.from(String(text), 'utf8'))].join('\r\n')
+    return [...head, ...body.headerLines, ...body.bodyLines].join('\r\n')
   }
-  // multipart/mixed: a plain-text body part + one attachment (e.g. the PDF).
-  const boundary = 'wcp_' + Math.random().toString(36).slice(2) + Date.now().toString(36)
+  // multipart/mixed: the (text-or-alternative) body part + one attachment.
+  const mix = newBoundary()
   const fname = String(attachment.filename || 'report.pdf').replace(/[^\w.\- ]/g, '_')
   return [
-    ...head,
-    `Content-Type: multipart/mixed; boundary="${boundary}"`, '',
-    `--${boundary}`, 'Content-Type: text/plain; charset=UTF-8', 'Content-Transfer-Encoding: base64', '', b64wrap(Buffer.from(String(text), 'utf8')), '',
-    `--${boundary}`, `Content-Type: ${attachment.contentType || 'application/octet-stream'}; name="${fname}"`, 'Content-Transfer-Encoding: base64', `Content-Disposition: attachment; filename="${fname}"`, '', b64wrap(attachment.content), '',
-    `--${boundary}--`, '',
+    ...head, `Content-Type: multipart/mixed; boundary="${mix}"`, '',
+    `--${mix}`, ...body.headerLines, ...body.bodyLines, '',
+    `--${mix}`, `Content-Type: ${attachment.contentType || 'application/octet-stream'}; name="${fname}"`, 'Content-Transfer-Encoding: base64', `Content-Disposition: attachment; filename="${fname}"`, '', b64wrap(attachment.content), '',
+    `--${mix}--`, '',
   ].join('\r\n')
 }
 
@@ -124,7 +139,7 @@ function buildMessage({ from, fromName, to, subject, text, attachment }) {
  * Send one message.
  * @param {object} cfg  { host, port, username, password, fromEmail, fromName }
  */
-export async function sendMail(cfg, { to, subject, text, attachment }) {
+export async function sendMail(cfg, { to, subject, text, html, attachment }) {
   const host = String(cfg.host || '').trim()
   const port = Number(cfg.port || 587)
   if (!host) throw httpErr(400, 'No SMTP endpoint is configured.')
@@ -182,7 +197,7 @@ export async function sendMail(cfg, { to, subject, text, attachment }) {
     await smtp.cmd('DATA', [354], 'DATA')
 
     socket.write(buildMessage({
-      from: cfg.fromEmail, fromName: cfg.fromName, to, subject, text, attachment,
+      from: cfg.fromEmail, fromName: cfg.fromName, to, subject, text, html, attachment,
     }) + '\r\n.\r\n')
     const sent = await smtp.read()
     if (sent.code !== 250) throw httpErr(502, `Message rejected (${sent.code}): ${sent.text.split('\n')[0]}`)

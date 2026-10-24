@@ -2671,6 +2671,90 @@ export function getSmtpSendConfig() {
   }
 }
 export function smtpConfigured() { const c = getSmtpSendConfig(); return !!(c && c.host && c.fromEmail) }
+
+// ---- Notification recipients (superadmin-set) -----------------------------
+// Where internal notifications go (Contact Us, new leads) and whether the
+// product sends a thank-you to the person who submitted. Defaults to the
+// business inbox so nothing is silently dropped before it is configured.
+const NOTIFY_DEFAULT = { contactTo: 'ravi.yerra@coesecurity.com', leadTo: 'ravi.yerra@coesecurity.com', thankYou: true }
+export function getNotifySettings() {
+  const n = (db.work && db.work.notify) || {}
+  return {
+    contactTo: n.contactTo || NOTIFY_DEFAULT.contactTo,
+    leadTo: n.leadTo || NOTIFY_DEFAULT.leadTo,
+    thankYou: n.thankYou !== false,
+  }
+}
+export function setNotifySettings(patch = {}) {
+  if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
+  const cur = db.work.notify || {}
+  const out = { ...cur }
+  const email = (v) => { const e = String(v || '').trim(); if (e && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) throw httpErr(400, 'Enter a valid email address.'); return e }
+  if (patch.contactTo != null) out.contactTo = email(patch.contactTo) || NOTIFY_DEFAULT.contactTo
+  if (patch.leadTo != null) out.leadTo = email(patch.leadTo) || NOTIFY_DEFAULT.leadTo
+  if (patch.thankYou != null) out.thankYou = !!patch.thankYou
+  db.work.notify = out
+  persist()
+  return getNotifySettings()
+}
+
+// ---- Contact Us submissions -----------------------------------------------
+export function addContactSubmission({ name, email, subject, message } = {}, meta = {}) {
+  if (!db.contacts) db.contacts = []
+  const rec = {
+    id: 'ct' + id(),
+    name: String(name || '').trim().slice(0, 120),
+    email: String(email || '').trim().slice(0, 160),
+    subject: String(subject || '').trim().slice(0, 200),
+    message: String(message || '').trim().slice(0, 4000),
+    at: now(), ip: String(meta.ip || '').slice(0, 64),
+  }
+  db.contacts.unshift(rec)
+  if (db.contacts.length > 2000) db.contacts.length = 2000
+  persist()
+  return rec
+}
+export function listContactSubmissions({ limit = 300 } = {}) { return (db.contacts || []).slice(0, limit) }
+export function contactSubmissionCount() { return (db.contacts || []).length }
+
+// ---- Editable email templates (superadmin) --------------------------------
+// The product's emails are NOT static: a superadmin edits each one's subject,
+// heading, body and CTA label (with <Placeholder> tokens) from the dashboard.
+// This store holds ONLY the operator's overrides per type; the branded layout,
+// the defaults and the placeholder catalog live in email_templates.js. The
+// renderer merges override ?? default. Kept decoupled from email_templates.js
+// so the store has no knowledge of the template catalog.
+const EMAIL_TEMPLATE_FIELDS = ['subject', 'heading', 'body', 'ctaLabel']
+export function getEmailTemplate(type) {
+  const t = String(type || '').trim()
+  return (db.work && db.work.emailTemplates && db.work.emailTemplates[t]) || {}
+}
+export function getAllEmailTemplateOverrides() { return (db.work && db.work.emailTemplates) || {} }
+export function setEmailTemplate(type, patch = {}) {
+  const t = String(type || '').trim()
+  if (!t) throw httpErr(400, 'Email type is required.')
+  if (!db.work) db.work = { platformAiAllowed: false, pricing: null }
+  if (!db.work.emailTemplates) db.work.emailTemplates = {}
+  const cur = db.work.emailTemplates[t] || {}
+  const out = { ...cur }
+  for (const f of EMAIL_TEMPLATE_FIELDS) {
+    if (patch[f] != null) {
+      const v = String(patch[f])
+      if (v.length > 8000) throw httpErr(400, `${f} is too long.`)
+      out[f] = v
+    }
+  }
+  out.updatedAt = now()
+  db.work.emailTemplates[t] = out
+  persist()
+  return db.work.emailTemplates[t]
+}
+// Reset one type back to its built-in default (removes the override).
+export function resetEmailTemplate(type) {
+  const t = String(type || '').trim()
+  if (db.work && db.work.emailTemplates && db.work.emailTemplates[t]) { delete db.work.emailTemplates[t]; persist() }
+  return {}
+}
 // Purge each session past ITS OWNER'S effective retention window. Reuses
 // deleteWorkSession (logged + removes shots + audit). Best-effort.
 export function purgeOldWorkSessions() {
