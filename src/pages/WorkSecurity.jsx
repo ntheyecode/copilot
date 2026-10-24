@@ -8,6 +8,7 @@
 import React, { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Lock, ScanEye, FileText, ArrowLeft, ArrowRight, Check, Globe, HeartPulse, Landmark, BadgeCheck, Building2, Monitor, Send, Database, EyeOff, Trash2, KeyRound, Route, Undo2 } from 'lucide-react'
+import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
@@ -293,17 +294,17 @@ export default function WorkSecurity() {
         <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
       </main>
+      <SiteFooter />
     </div>
   )
 }
 
 const CSS = `
-.wsx{--ink:#0f172a;--mut:#64748b;--line:#e2e8f0;--em:#0f766e;--bg:#f8fafc;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+[data-theme='dark'] .wsx{--ink:#eef0f6;--tx2:#d3d8e6;--mut:#9aa0b4;--line:rgba(255,255,255,.09);--panel:#13141f;--bg:#0a0b12;--em:#8cf5c4;--cy:#39d3ff;--em-fill:rgba(140,245,196,.10);--em-line:rgba(140,245,196,.34);--amber:#f5c86b;--amber-fill:rgba(245,200,107,.12);--amber-line:rgba(245,200,107,.36)}
+.wsx{--ink:#161a2b;--tx2:#2b3250;--mut:#5c6484;--line:#e6e8f1;--panel:#ffffff;--bg:#f3f5fb;--em:#0e9f6e;--cy:#0a84c2;--em-fill:rgba(14,159,110,.08);--em-line:rgba(14,159,110,.30);--amber:#8a5a12;--amber-fill:rgba(183,121,31,.10);--amber-line:rgba(183,121,31,.36);background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 .wsx *{box-sizing:border-box}
-.wsx-top{display:flex;align-items:center;justify-content:space-between;max-width:1040px;margin:0 auto;padding:18px 20px}
-.wsx-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
 .wsx-hero{max-width:760px;margin:0 auto;padding:34px 20px 6px;text-align:center}
-.wsx-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em);background:#ecfdf5;border:1px solid #a7f3d0;border-radius:999px;padding:5px 13px}
+.wsx-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em);background:var(--em-fill);border:1px solid var(--em-line);border-radius:999px;padding:5px 13px}
 .wsx-hero h1{font-size:34px;line-height:1.12;margin:16px 0 10px;letter-spacing:-.02em;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif}
 .wsx-hero p{font-size:16.5px;line-height:1.6;color:var(--mut);margin:0 auto;max-width:620px}
 .wsx-block{max-width:1040px;margin:0 auto;padding:30px 20px}
@@ -318,16 +319,16 @@ const CSS = `
 /* a11y: visually hidden text; visible focus ring (never outline:none) */
 .wsx-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .wsx a:focus-visible,.wsx button:focus-visible{outline:2px solid var(--em);outline-offset:2px;border-radius:6px}
-.wsx-screen{display:flex;height:286px;border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:0 8px 24px rgba(15,23,42,.08);background:#fff}
+.wsx-screen{display:flex;height:286px;border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:0 8px 24px rgba(15,23,42,.08);background:var(--panel)}
 .wsx-side{flex:0 0 150px;background:#0f172a;color:#94a3b8;padding:14px 0}
 .wsx-brand{display:flex;align-items:center;gap:7px;color:#e2e8f0;font-weight:700;font-size:13px;padding:0 14px 12px}
 .wsx-dot{width:9px;height:9px;border-radius:50%;background:#38bdf8}
 .wsx-nav{font-size:13px;padding:8px 14px}
 .wsx-nav.on{background:#1e293b;color:#38bdf8;font-weight:600}
 .wsx-main{flex:1;min-width:0;background:#f1f5f9}
-.wsx-crumb{font-size:12px;color:var(--mut);background:#fff;border-bottom:1px solid var(--line);padding:10px 16px}
+.wsx-crumb{font-size:12px;color:var(--mut);background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px}
 .wsx-crumb b{color:var(--ink)}.wsx-crumb span{margin:0 4px}
-.wsx-card{background:#fff;margin:14px;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.wsx-card{background:var(--panel);margin:14px;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
 .wsx-ctitle{font-weight:700;font-size:14px;margin-bottom:10px}
 .wsx-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:4px 0;font-size:12.5px}
 .wsx-key{color:#64748b;flex:0 0 auto}
@@ -337,14 +338,14 @@ const CSS = `
 .wsx-mask{display:inline-block;height:13px;width:118px;border-radius:3px;background:#0b1220}
 .wsx-code{background:#0b1220;color:#e2e8f0;border-radius:12px;padding:16px 16px;font-family:ui-monospace,Consolas,monospace;font-size:13px;line-height:1.6;white-space:pre-wrap;word-break:break-word;margin:0;min-height:148px}
 .wsx-token{background:rgba(140,245,196,.18);color:#8cf5c4;border-radius:5px;padding:1px 5px;font-weight:600}
-.wsx-note{display:flex;align-items:flex-start;gap:8px;margin-top:16px;font-size:13.5px;color:var(--mut);background:#fff;border:1px solid var(--line);border-radius:10px;padding:11px 14px}
+.wsx-note{display:flex;align-items:flex-start;gap:8px;margin-top:16px;font-size:13.5px;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 14px}
 .wsx-note a{color:var(--em);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .wsx-note svg{color:var(--em);flex:0 0 auto;margin-top:2px}
 /* COMPLIANCE - chip roll-call of every framework, then grouped cards (WorkCard shell
    = same reveal/glow/hairline as the rest of the site), then the honest-framing note. */
 .wsx-comp{padding-top:22px}
 .wsx-call{display:flex;flex-wrap:wrap;gap:7px;margin:0 0 18px;padding:0;list-style:none}
-.wsx-cchip{display:inline-block;font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.02em;color:#334155;background:#fff;border:1px solid var(--line);border-radius:8px;padding:5px 9px;white-space:nowrap;box-shadow:0 1px 0 rgba(15,23,42,.03)}
+.wsx-cchip{display:inline-block;font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.02em;color:var(--tx2);background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 9px;white-space:nowrap;box-shadow:0 1px 0 rgba(15,23,42,.03)}
 .wsx-cgrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
 .wsx-cgroup{min-width:0;gap:16px}
 .wsx-cgroup.wide{grid-column:span 2}
@@ -370,9 +371,9 @@ const CSS = `
    (wsx-clist / wsx-cname / wsx-chow), then the honest-limits note. */
 .wsx-data{padding-top:22px}
 .wsx-flow{list-style:none;margin:0 0 18px;padding:0;display:flex;align-items:stretch;gap:8px}
-.wsx-fstep{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px 14px 15px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
+.wsx-fstep{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 14px 15px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -22px rgba(10,13,18,.16)}
 .wsx-ftop{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
-.wsx-fic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#10a271,#0a93c4);box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 18px -8px #0a93c4}
+.wsx-fic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy));box-shadow:inset 0 1px 0 rgba(255,255,255,.45),0 8px 18px -8px #0a84c2}
 .wsx-fn{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;color:var(--mut)}
 .wsx-ft{font-weight:700;font-size:14px;color:var(--ink);letter-spacing:-.005em;line-height:1.3}
 .wsx-fs{font-size:12.5px;line-height:1.5;color:var(--mut);overflow-wrap:anywhere}
@@ -391,5 +392,5 @@ const CSS = `
 @media(max-width:480px){.wsx-side{flex-basis:116px}.wsx-screen{height:270px}}
 .wsx-cta{max-width:1040px;margin:0 auto;padding:16px 20px 56px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wsx-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;background:var(--em);color:#fff;border:1px solid var(--em);border-radius:11px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none}
-.wsx-btn.alt{background:#fff;color:var(--ink);border-color:var(--line)}
+.wsx-btn.alt{background:var(--panel);color:var(--ink);border-color:var(--line)}
 `

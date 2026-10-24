@@ -5,15 +5,17 @@
 // (via the shared WorkCard primitive), to match the rest of the site.
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowLeft, ArrowRight, Trophy, Check, RefreshCw } from 'lucide-react'
+import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, Check, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
+import SiteFooter from '../components/SiteFooter.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
-// Light viz palette - inks read cleanly on the white Frame surface.
-const EM = '#10a271', EMf = 'rgba(16,162,113,.12)', CY = '#0a93c4', CYf = 'rgba(10,147,196,.12)',
-  AM = '#c9821a', RD = '#d83a30', RDf = 'rgba(216,58,48,.09)', MUT = '#6b7680',
-  LINE = 'rgba(10,13,18,.14)', SURF = '#ffffff', PANEL = '#f4f8f7', PANEL2 = '#eef3f1', TXT = '#3d4650'
+// Viz palette on brand tokens: the frame surface and inks follow the page theme
+// (light or dark), the accents are the brand emerald / cyan.
+const EM = '#0e9f6e', EMf = 'rgba(14,159,110,.12)', CY = '#0a84c2', CYf = 'rgba(10,132,194,.12)',
+  AM = '#c9821a', RD = '#d83a30', RDf = 'rgba(216,58,48,.09)', MUT = 'var(--mut)',
+  LINE = 'var(--line-strong)', SURF = 'var(--panel)', PANEL = 'var(--panel2)', PANEL2 = 'var(--panel2)', TXT = 'var(--mut)'
 
 // Each visual shares one frame so the row reads as a set; the content is unique.
 // `label` is the image's alt text (WEB-08): each illustration is a meaningful
@@ -144,6 +146,55 @@ const VIZ = {
       <text x="140" y="95" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace">learned <tspan fill={EM}>·</tspan> carried forward</text>
     </Frame>
   ),
+  // 11. Pre-task coach: a quick readiness check, then Quick or Detailed.
+  coach: (
+    <Frame label="Illustration: a short readiness check with three ticks, then a choice between a quick and a detailed interview">
+      {[['Kind', 24], ['Ready?', 100], ['Sample', 180]].map(([t, x], i) => (
+        <g key={t}><rect x={x} y="22" width={i === 1 ? 64 : 62} height="22" rx="7" fill={EMf} stroke={EM} /><path d={`M${x + 9} 33l3 3 5-6`} stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x={x + 22} y="37" fill={EM} fontSize="10.5" fontFamily="system-ui">{t}</text></g>
+      ))}
+      <rect x="40" y="58" width="92" height="22" rx="11" fill={PANEL} stroke={LINE} /><text x="86" y="73" textAnchor="middle" fill={TXT} fontSize="11" fontFamily="system-ui">Quick</text>
+      <rect x="148" y="58" width="92" height="22" rx="11" fill={CYf} stroke={CY} /><text x="194" y="73" textAnchor="middle" fill={CY} fontSize="11" fontWeight="600" fontFamily="system-ui">Detailed</text>
+    </Frame>
+  ),
+  // 12. Security: a redacted field, a code check, an authenticator.
+  shield: (
+    <Frame label="Illustration: a form field shown as REDACTED, a code check with a tick, and an authenticator lock">
+      <rect x="20" y="24" width="112" height="20" rx="6" fill="#0a0d12" /><text x="76" y="38" textAnchor="middle" fill="#8cf5c4" fontSize="10" fontWeight="700" fontFamily="ui-monospace,monospace" letterSpacing="1">[REDACTED]</text>
+      <rect x="20" y="52" width="112" height="22" rx="7" fill={EMf} stroke={EM} /><text x="30" y="67" fill={EM} fontSize="10.5" fontFamily="ui-monospace,monospace">SAST + CVE check</text><path d="M114 63l3 3 5-6" stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="150" y="26" width="110" height="48" rx="9" fill={PANEL} stroke={LINE} />
+      <rect x="194" y="44" width="22" height="18" rx="4" fill={CYf} stroke={CY} strokeWidth="1.6" /><path d="M198 44v-5a7 7 0 0 1 14 0v5" stroke={CY} strokeWidth="1.6" fill="none" /><text x="205" y="80" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">authenticator on every account</text>
+    </Frame>
+  ),
+  // 13. Skills: a playbook feeding the plan.
+  skills: (
+    <Frame label="Illustration: a playbook document with an arrow into a plan that now follows it">
+      <rect x="30" y="20" width="64" height="56" rx="6" fill={PANEL} stroke={LINE} />
+      {[30, 40, 50, 60].map((y) => <rect key={y} x="38" y={y} width={y === 60 ? 26 : 48} height="4" rx="2" fill={LINE} />)}
+      <text x="62" y="88" textAnchor="middle" fill={MUT} fontSize="10" fontFamily="system-ui">your playbook</text>
+      <path d="M118 48h22" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M136 44l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="156" y="22" width="104" height="52" rx="9" fill={EMf} stroke={EM} />
+      {[34, 46, 58].map((y, i) => <g key={y}><circle cx="170" cy={y} r="4.5" fill={i < 2 ? EM : 'none'} stroke={EM} strokeWidth="1.6" /><rect x="180" y={y - 2.5} width={i === 1 ? 64 : 48} height="5" rx="2.5" fill={EM} opacity={i === 2 ? '.35' : '.7'} /></g>)}
+    </Frame>
+  ),
+  // 14. Enterprise: alerts relayed to a SOC, SSO, a sealed report.
+  enterprise: (
+    <Frame label="Illustration: a security alert relayed to a SOC console, a single sign-on badge and a sealed report">
+      <rect x="18" y="26" width="92" height="46" rx="9" fill={PANEL} stroke="rgba(201,130,26,.5)" /><rect x="18" y="26" width="4" height="46" rx="2" fill={AM} /><rect x="30" y="36" width="56" height="6" rx="3" fill={AM} opacity=".8" /><rect x="30" y="48" width="70" height="5" rx="2.5" fill={LINE} /><rect x="30" y="58" width="44" height="5" rx="2.5" fill={LINE} />
+      <path d="M114 49h22" stroke={CY} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" /><path d="M132 45l5 4-5 4" stroke={CY} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="142" y="26" width="60" height="46" rx="9" fill={PANEL} stroke={LINE} />{[36, 48, 60].map((y, i) => <rect key={y} x="150" y={y} width="44" height="5" rx="2.5" fill={i === 1 ? CY : LINE} opacity={i === 1 ? '.8' : '1'} />)}
+      <text x="172" y="86" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">your SOC</text>
+      <rect x="214" y="26" width="48" height="20" rx="10" fill={EMf} stroke={EM} /><text x="238" y="40" textAnchor="middle" fill={EM} fontSize="9.5" fontWeight="700" fontFamily="system-ui">SSO</text>
+      <rect x="214" y="52" width="48" height="20" rx="6" fill={PANEL} stroke={LINE} /><circle cx="226" cy="62" r="5" fill={EMf} stroke={EM} strokeWidth="1.5" /><path d="M223.5 62l1.8 1.8 3.2-3.6" stroke={EM} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="246" y="65.5" textAnchor="middle" fill={TXT} fontSize="8.5" fontFamily="system-ui">sealed</text>
+    </Frame>
+  ),
+  // 15. Desktop, web, mobile.
+  anywhere: (
+    <Frame label="Illustration: a desktop overlay, a browser window and a phone side by side">
+      <rect x="22" y="22" width="90" height="56" rx="8" fill={PANEL} stroke={LINE} /><rect x="60" y="30" width="44" height="30" rx="6" fill={EMf} stroke={EM} /><text x="67" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">desktop overlay</text>
+      <rect x="124" y="22" width="90" height="56" rx="8" fill={PANEL} stroke={LINE} /><rect x="124" y="22" width="90" height="12" rx="8" fill={LINE} opacity=".6" /><rect x="162" y="40" width="44" height="30" rx="6" fill={CYf} stroke={CY} /><text x="169" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">browser</text>
+      <rect x="232" y="18" width="30" height="60" rx="7" fill={PANEL} stroke={LINE} /><rect x="238" y="26" width="18" height="40" rx="3" fill={EMf} /><text x="247" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">phone</text>
+    </Frame>
+  ),
   // 10. The strongest AI available to you plans; live guidance keeps pace - two
   // lanes, framed as the BENEFIT (what you get), never as the routing behind it.
   // The PLAN lane: your plan, from the strongest AI on your key. The GUIDE lane:
@@ -189,6 +240,11 @@ const CARDS = [
   // tools, beats stale AI knowledge) and as a data practice (private to your
   // company; de-identified for solo users). Never the mechanism, model or cost.
   { viz: 'learns', icon: RefreshCw, t: 'Stays current, learns your tools', d: 'WorkCoPilot learns the current way your tools work and reuses it next time, and it researches the latest live, so you are not limited to an AI\'s training cutoff. Your team\'s learnings stay private to your company; solo users benefit from a shared, de-identified knowledge base.' },
+  { viz: 'coach', icon: ListChecks, t: 'A better task before you spend one', d: 'Before you type, a 30-second coach asks what kind of task it is and whether you are ready, then shows a tailored sample of a great task. Then you choose a Quick or a Detailed interview, so the plan fits what you know.' },
+  { viz: 'skills', icon: Layers, t: 'Teach it your skills', d: 'Paste a playbook, an SOP or a skill exported from any AI. Guidance aligns with your tools, standards and terminology, and it keeps getting better for you. Companies keep their skills private, with download and re-upload.' },
+  { viz: 'shield', icon: Lock, t: 'Protected by default', d: 'Sensitive data is redacted on your device before anything is sent, on by default and shown as [REDACTED]. Any code is checked with built-in SAST and a live dependency CVE check before you run it. Every account is protected by an authenticator, and each session keeps an audit log of what was sent, what was read from your screen, the code checks, what was filtered and every flag raised.' },
+  { viz: 'enterprise', icon: Building2, t: 'Built for companies', d: 'Company admins get security alerts when a member enters sensitive data (who, where, what kind, never the values), relayed to your SIEM, SOAR and chat tools; company SSO with email-domain auto-detect; compliance evidence reports mapped to 18 frameworks and sealed, Big-4-grade session reports; an executive ROI dashboard; white-label branding; and encryption at rest.' },
+  { viz: 'anywhere', icon: Monitor, t: 'Desktop, web and mobile. Guidance, not generation', d: 'A floating desktop overlay hidden from screen shares, the browser with nothing to install, or your phone camera on the go. WorkCoPilot never acts for you and never generates content: when you need a document, it hands you a ready prompt for your own AI.' },
 ]
 
 // Accessibility (WEB-08): one <main>, a single H1, visually hidden H2s over the
@@ -199,7 +255,7 @@ export default function WorkCapabilities() {
   const nav = useNavigate()
   useSeo({
     title: 'How It Works - WorkCoPilot by AdmireVeda',
-    description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, staying current by learning your tools, and plans from the strongest AI available to you.',
+    description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, staying current by learning your tools, a pre-task coach, your own skills, on-device redaction with SAST and live dependency checks, company controls, and plans from the strongest AI available to you.',
     path: '/workcopilot/how-it-works',
   })
   // Deep links like /workcopilot/how-it-works#best-model (from the main page's
@@ -271,22 +327,27 @@ export default function WorkCapabilities() {
       </section>
 
       <section className="wcap-cta" aria-label="Next steps">
-        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
+        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden="true" /></button>
+        <a className="wcap-btn alt" href="/workcopilot/enterprise">Enterprise features</a>
         <a className="wcap-btn alt" href="/demo">See a 60-second demo</a>
       </section>
       </main>
+      <SiteFooter />
     </div>
   )
 }
 
 const CSS = `
-.wcap{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;
+.wcap{--ink:#161a2b;--mut:#5c6484;--dim:#8b93a1;--line:#e6e8f1;--line-strong:#d3d7e5;--panel:#ffffff;--panel2:#f6f8fd;--bg:#f3f5fb;--em:#0e9f6e;--cy:#0a84c2;--cta:#f26a43;--cta2:#e35a31;--cta-ink:#ffffff;
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
-    radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
-    radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
-    #edf1ef}
+    radial-gradient(1200px 600px at 10% -10%, rgba(14,159,110,.14), transparent 60%),
+    radial-gradient(900px 500px at 100% 0%, rgba(10,132,194,.10), transparent 60%),
+    var(--bg)}
+[data-theme='dark'] .wcap{--ink:#eef0f6;--mut:#9aa0b4;--dim:#6c7780;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.15);--panel:#13141f;--panel2:#181b27;--bg:#0a0b12;--em:#8cf5c4;--cy:#39d3ff;--cta:#ffb561;--cta2:#ff7a59;--cta-ink:#241206;
+  background:radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.12), transparent 60%),radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.10), transparent 60%),var(--bg)}
+[data-theme='dark'] .wcap::before{background-image:radial-gradient(rgba(255,255,255,.07) 1px,transparent 1px)}
 .wcap *{box-sizing:border-box}
 /* faint dot grid so the white cards read against the page */
 .wcap::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -296,8 +357,6 @@ const CSS = `
 /* a11y: visually hidden text; visible focus ring (never outline:none) */
 .wcap-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .wcap a:focus-visible,.wcap button:focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:8px}
-.wcap-top{display:flex;align-items:center;justify-content:space-between;max-width:1160px;margin:0 auto;padding:18px 24px}
-.wcap-back{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wcap-hero{max-width:1160px;margin:0 auto;padding:30px 24px 10px;text-align:center}
 .wcap-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wcap-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:560px;line-height:1.55}
@@ -314,6 +373,6 @@ const CSS = `
 .wcap-feat-copy .wc-title{font-size:clamp(22px,2.4vw,30px)}
 @media(max-width:900px){.wcap-feat-in{grid-template-columns:1fr;gap:18px}.wcap-feat-media{order:2}}
 .wcap-cta{max-width:1160px;margin:0 auto;padding:10px 24px 56px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
-.wcap-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6)}
-.wcap-btn.alt{background:#fff;color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
+.wcap-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--cta),var(--cta2));color:var(--cta-ink);border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px var(--cta2)}
+.wcap-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 `

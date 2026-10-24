@@ -161,19 +161,7 @@ export default function WorkFields() {
         <a className="wfl-btn alt" href="/workcopilot/pricing">See pricing</a>
       </section>
 
-      <footer className="wfl-foot">
-        <span>&copy; {new Date().getFullYear()} COE Security LLC &middot; WorkCoPilot by AdmireVeda</span>
-        <nav className="wfl-foot-links" aria-label="Footer">
-          <a href="/">Home</a>
-          <a href="/workcopilot/pricing">Pricing</a>
-          <a href="/workcopilot/security">Security</a>
-          <a href="/workcopilot/privacy">Privacy</a>
-          <a href="/workcopilot/terms">Terms</a>
-          <a href="/workcopilot/refund">Refunds</a>
-          <a href="/workcopilot/dpa">DPA</a>
-          <a href="/workcopilot/contact">Contact</a>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
@@ -181,13 +169,14 @@ export default function WorkFields() {
 // Same light inner-page shell as /how-it-works and /security (tokens, dot grid,
 // Bricolage display + Figtree body) so the page reads as native.
 const CSS = `
-.wfl{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;
+[data-theme='dark'] .wfl{--ink:#eef0f6;--mut:#9aa0b4;--dim:#6c7780;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.15);--panel:#13141f;--panel2:#181b27;--bg:#0a0b12;--em:#8cf5c4;--cy:#39d3ff}
+.wfl{--ink:#161a2b;--mut:#5c6484;--dim:#8b93a1;--line:#e6e8f1;--line-strong:#d3d7e5;--panel:#ffffff;--panel2:#f6f8fd;--bg:#f3f5fb;--em:#0e9f6e;--cy:#0a84c2;
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
-    #edf1ef}
+    var(--bg)}
 .wfl *{box-sizing:border-box}
 .wfl a{color:inherit;text-decoration:none}
 .wfl::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -195,8 +184,6 @@ const CSS = `
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.3));mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.3))}
 .wfl>*{position:relative;z-index:1}
 .wfl :focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:8px}
-.wfl-top{display:flex;align-items:center;justify-content:space-between;max-width:1160px;margin:0 auto;padding:18px 24px}
-.wfl-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wfl-hero{max-width:1160px;margin:0 auto;padding:30px 24px 6px;text-align:center}
 .wfl-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
 .wfl-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
@@ -204,24 +191,20 @@ const CSS = `
 .wfl-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:600px;line-height:1.55}
 /* stat triptych: big Bricolage numerals in the brand gradient, quiet labels */
 .wfl-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:640px;margin:28px auto 0}
-.wfl-stat{display:flex;flex-direction:column-reverse;text-align:center;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 12px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 16px 36px -26px rgba(10,13,18,.2)}
+.wfl-stat{display:flex;flex-direction:column-reverse;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 12px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 16px 36px -26px rgba(10,13,18,.2)}
 .wfl-stat dd{margin:0;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02}
 .wfl-stat dt{margin-top:6px;color:var(--dim);font-size:13px;line-height:1.35}
 /* dense-flow family grid: the two biggest families span two columns */
 .wfl-grid{max-width:1160px;margin:0 auto;padding:30px 24px 6px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:dense;gap:16px}
 .wfl-grid .wfl-wide{grid-column:span 2}
 .wfl-tags{list-style:none;padding:0;margin:2px 0 0;display:flex;flex-wrap:wrap;gap:6px}
-.wfl-tag{font-size:12.5px;font-weight:500;line-height:1.3;color:var(--wc-mut,var(--mut));background:#fff;border:1px solid var(--wc-line,var(--line));border-radius:999px;padding:5px 11px;white-space:nowrap;transition:border-color .25s var(--wc-ease,ease),color .25s var(--wc-ease,ease),transform .35s var(--wc-ease,ease);transition-delay:0s,0s,calc(var(--i,0)*14ms)}
+.wfl-tag{font-size:12.5px;font-weight:500;line-height:1.3;color:var(--wc-mut,var(--mut));background:var(--panel);border:1px solid var(--wc-line,var(--line));border-radius:999px;padding:5px 11px;white-space:nowrap;transition:border-color .25s var(--wc-ease,ease),color .25s var(--wc-ease,ease),transform .35s var(--wc-ease,ease);transition-delay:0s,0s,calc(var(--i,0)*14ms)}
 .wc-card:hover .wfl-tag{transform:translateY(-1px)}
 .wfl-tag:hover{color:var(--wc-ink,var(--ink));border-color:color-mix(in srgb,var(--wc-ink,var(--ink)) 45%,var(--wc-line,var(--line)));transition-delay:0s}
 .wfl-cap{text-align:center;color:var(--dim);font-size:14px;margin:22px auto 0;max-width:60ch;padding:0 24px}
 .wfl-cta{max-width:1160px;margin:0 auto;padding:26px 24px 40px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wfl-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6)}
-.wfl-btn.alt{background:#fff;color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
-.wfl-foot{max-width:1160px;margin:0 auto;padding:18px 24px 34px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;color:var(--dim);font-size:13px}
-.wfl-foot-links{display:flex;gap:16px;flex-wrap:wrap}
-.wfl-foot-links a{color:var(--mut);font-weight:600}
-.wfl-foot-links a:hover{color:var(--ink)}
+.wfl-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 @media(max-width:1080px){.wfl-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.wfl-grid{grid-template-columns:1fr}.wfl-grid .wfl-wide{grid-column:auto}.wfl-stats{gap:10px}.wfl-stat{padding:14px 8px;border-radius:13px}.wfl-stat dt{font-size:12px}}
 @media(prefers-reduced-motion:reduce){.wfl-tag{transition:border-color .25s,color .25s}.wc-card:hover .wfl-tag{transform:none}}

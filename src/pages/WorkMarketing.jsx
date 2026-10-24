@@ -554,24 +554,7 @@ export default function WorkMarketing() {
         </div>
       </div>
 
-      <footer className="wm-foot">
-        <div className="wm-wrap wm-foot-in">
-          <AdmireVedaLogo size={24} idSuffix="f" />
-          <span className="wm-foot-by">&copy; {new Date().getFullYear()} COE Security LLC &middot; WorkCoPilot by AdmireVeda, a product of COE Security LLC</span>
-          <nav className="wm-foot-links">
-            <a className="wm-link" href="/workcopilot/fields">Fields</a>
-            <a className="wm-link" href="/workcopilot/pricing">Pricing</a>
-            <a className="wm-link" href="/workcopilot/security">Security</a>
-            <a className="wm-link" href="/workcopilot/benchmark">Benchmark methodology</a>
-            <a className="wm-link" href="/workcopilot/faq">FAQ</a>
-            <a className="wm-link" href="/workcopilot/privacy">Privacy</a>
-            <a className="wm-link" href="/workcopilot/disclaimer">Disclaimer</a>
-            <a className="wm-link" href="/workcopilot/terms">Terms</a>
-            <a className="wm-link" href="/workcopilot/contact">Contact</a>
-            <button className="wm-link" onClick={() => go('')}>Sign in</button>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter dark />
 
       <LiveValidate go={go} theme="light" source="marketing" />
     </div>
@@ -1486,7 +1469,7 @@ const CSS = `
 .wm-best-row.watch{border-color:rgba(10,147,196,.28)}
 /* the "watch" lane breathes: three dots pulse in sequence (CSS only) */
 .wm-best-dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
-.wm-best-dots i{width:5px;height:5px;border-radius:50%;background:#0a93c4;opacity:.3;animation:wm-best-pulse 1.4s ease-in-out infinite}
+.wm-best-dots i{width:5px;height:5px;border-radius:50%;background:#0a84c2;opacity:.3;animation:wm-best-pulse 1.4s ease-in-out infinite}
 .wm-best-dots i:nth-child(2){animation-delay:.2s}.wm-best-dots i:nth-child(3){animation-delay:.4s}
 @keyframes wm-best-pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
 @media(max-width:900px){.wm-best{padding-top:30px}.wm-best-in{grid-template-columns:1fr;gap:20px}}
@@ -1836,11 +1819,6 @@ const CSS = `
 .wm-disclaimer-wrap{border-top:1px solid var(--line);background:rgba(255,255,255,.015);padding:20px 0}
 .wm-disclaimer{display:flex;gap:9px;align-items:flex-start;color:var(--mut);font-size:13px;line-height:1.6;max-width:92ch;margin:0 auto}
 .wm-disclaimer svg{color:var(--em);flex-shrink:0;margin-top:3px}.wm-disclaimer b{color:var(--tx)}
-.wm-foot{border-top:1px solid var(--line);padding:26px 0}
-.wm-foot-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.wm-foot-by{color:var(--mut);flex:1;font-size:13px}
-.wm-foot-links{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.wm-foot-links .wm-link{font-size:13px}
 
 @media(max-width:900px){
  /* (min-width:0 on the columns is now global, see .wm-hero-grid>* above.) */
@@ -1891,7 +1869,7 @@ const CSS = `
 .wm:not([data-wm="dark"]){
   --ink:#f4f7fb; --panel:#ffffff; --line:#e2e7f0;
   --tx:#0c1222; --mut:#3f4a5c; --ink-brand:#062a22;
-  --em:#0a9d66; --em2:#0a86cf;
+  --em:#0e9f6e; --em2:#0a84c2;
   --warm:#ff9a4d; --warm2:#f26a43;
   background:
     radial-gradient(1000px 520px at 85% -8%, rgba(10,134,207,.16), transparent 60%),

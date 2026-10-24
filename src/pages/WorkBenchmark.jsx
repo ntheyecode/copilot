@@ -5,6 +5,7 @@
 // the internal detail (exact model / per-task). Spec: docs/accuracy-benchmark-spec.md
 import React, { useEffect, useState } from 'react'
 import { BarChart3, ShieldCheck, FlaskConical, ArrowLeft, Lock } from 'lucide-react'
+import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'   // per-route title / description / canonical (WEB-01)
 
@@ -112,28 +113,28 @@ export default function WorkBenchmark() {
           <a className="wbm-link" href="/">Back to home</a>
         </nav>
       </main>
+      <SiteFooter />
     </div>
   )
 }
 
 const CSS = `
-.wbm{--ink:#0e1320;--mut:#5b6472;--line:#e6e9ef;--em:#086e92;--bg:#f7f9fc;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+[data-theme='dark'] .wbm{--ink:#eef0f6;--mut:#9aa0b4;--line:rgba(255,255,255,.09);--panel:#13141f;--em:#39d3ff;--bg:#0a0b12}
+.wbm{--ink:#161a2b;--mut:#5c6484;--line:#e6e8f1;--panel:#ffffff;--em:#0a84c2;--bg:#f3f5fb;min-height:100vh;background:var(--bg);color:var(--ink);font-family:"Figtree",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 /* a11y: visually hidden text; visible focus ring (never outline:none) */
 .wbm-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .wbm a:focus-visible,.wbm button:focus-visible{outline:2px solid var(--em);outline-offset:3px;border-radius:6px}
-.wbm-top{display:flex;align-items:center;justify-content:space-between;max-width:1000px;margin:0 auto;padding:18px 20px}
 .wbm-brand{display:inline-flex;align-items:center;gap:9px;font-weight:700;color:var(--ink);text-decoration:none}
-.wbm-back{display:inline-flex;align-items:center;gap:5px;color:var(--mut);text-decoration:none;font-size:14px}
 .wbm-back:hover{color:var(--ink)}
 .wbm-main{max-width:860px;margin:0 auto;padding:20px 20px 72px}
 .wbm-eyebrow{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--em);border:1px solid rgba(10,127,168,.25);background:rgba(10,127,168,.06);padding:4px 10px;border-radius:999px}
 .wbm h1{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:clamp(26px,4vw,38px);letter-spacing:-.02em;line-height:1.1;margin:14px 0 0}
 .wbm-lead{color:var(--mut);font-size:16px;line-height:1.6;max-width:70ch;margin:14px 0 24px}
-.wbm-pending{display:flex;gap:12px;align-items:flex-start;background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15)}
+.wbm-pending{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15)}
 .wbm-pending svg{color:var(--em);flex-shrink:0;margin-top:2px}
 .wbm-pending p{color:var(--mut);font-size:14px;line-height:1.55;margin:4px 0 0}
 .wbm-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px}
-.wbm-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15)}
+.wbm-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15)}
 .wbm-card-h{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:0;font-family:inherit}
 .wbm-overall{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
 .wbm-big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--ink)}
@@ -155,7 +156,7 @@ const CSS = `
 .wbm-method{margin-top:14px}
 .wbm-method ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
 .wbm-method li{font-size:14.5px;line-height:1.6;color:var(--ink)}
-.wbm-note{display:flex;gap:9px;align-items:flex-start;margin-top:16px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--mut)}
+.wbm-note{display:flex;gap:9px;align-items:flex-start;margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--mut)}
 .wbm-note svg{color:var(--em);flex-shrink:0;margin-top:1px}
 .wbm-cta{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
 .wbm-link{display:inline-flex;align-items:center;gap:6px;color:var(--em);text-decoration:none;font-size:14px;font-weight:600}

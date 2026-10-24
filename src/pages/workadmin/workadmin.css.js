@@ -17,7 +17,7 @@ export const WORKADMIN_CSS = `
   --wka-accent: #635bff;
   --wka-accent-dark: #4b45d6;
   --wka-accent-soft: rgba(99,91,255,0.09);
-  --wka-emerald: #0a9d66;
+  --wka-emerald: #0e9f6e;
   --wka-cyan: #635bff;   /* re-pointed to the indigo accent: all interactive refs adopt it */
   --wka-amber: #b5790f;
   --wka-red: #c0392b;

@@ -5,6 +5,7 @@
 import React, { useEffect, useState } from 'react'
 import { KeyRound, Check, Loader2, ArrowRight, AlertTriangle, Eye, EyeOff } from 'lucide-react'
 import { api } from '../api.js'
+import { AVMark } from '../components/AdmireVedaLogo.jsx'
 
 function getToken() {
   try { return new URLSearchParams(window.location.search).get('token') || '' } catch { return '' }
@@ -42,7 +43,7 @@ export default function WorkSetPassword() {
     <div className="wsp-root">
       <style>{CSS}</style>
       <div className="wsp-card">
-        <a className="wsp-brand" href="/"><span className="wsp-mark" aria-hidden /> WorkCoPilot</a>
+        <a className="wsp-brand" href="/"><AVMark size={20} id="avsp" /> Work<i>CoPilot</i> <span className="wsp-by">by AdmireVeda</span></a>
         {state.loading ? (
           <div className="wsp-center"><Loader2 size={26} className="wsp-spin" /><p>Checking your link...</p></div>
         ) : done ? (
@@ -85,29 +86,33 @@ export default function WorkSetPassword() {
 }
 
 const CSS = `
-.wsp-root{min-height:100vh;display:grid;place-items:center;padding:24px;background:
-  radial-gradient(900px 420px at 80% -10%, #eafaf1 0%, transparent 60%), #f6f9f7;
-  font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#0c1222}
-.wsp-card{width:100%;max-width:420px;background:#fff;border:1px solid #e6ebf1;border-radius:18px;padding:30px 28px;box-shadow:0 18px 50px -28px rgba(12,18,34,.3);text-align:center}
-.wsp-brand{display:inline-flex;align-items:center;gap:8px;font-weight:800;font-size:17px;color:#0c1222;text-decoration:none;margin-bottom:18px}
-.wsp-mark{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,#0a9d66,#2f6f3e)}
+/* Brand tokens (emerald / cyan, orange CTA, Bricolage + Figtree), light by
+   default with a dark override, matching the sign-in page it hands off to. */
+.wsp-root{--bg:#f3f5fb;--panel:#ffffff;--field:#fbfcff;--line:#e6e8f1;--line2:#d3d7e5;--tx:#161a2b;--mut:#5c6484;--em:#0e9f6e;--cy:#0a84c2;--em-fill:rgba(14,159,110,.10);--em-line:rgba(14,159,110,.30);--cta:#f26a43;--cta2:#e35a31;--cta-ink:#ffffff;--err:#b42318;--err-fill:rgba(180,35,24,.08);--err-line:rgba(180,35,24,.28);
+  min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(900px 420px at 80% -10%, var(--em-fill) 0%, transparent 60%), var(--bg);
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased}
+[data-theme='dark'] .wsp-root{--bg:#0a0b12;--panel:#13141f;--field:#0b0c13;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--cy:#39d3ff;--em-fill:rgba(140,245,196,.10);--em-line:rgba(140,245,196,.34);--cta:#ffb561;--cta2:#ff7a59;--cta-ink:#241206;--err:#ff8b81;--err-fill:rgba(255,139,129,.10);--err-line:rgba(255,139,129,.30)}
+.wsp-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px 28px;box-shadow:0 18px 50px -28px rgba(12,18,34,.3);text-align:center;position:relative;overflow:hidden}
+.wsp-card::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--em),var(--cy))}
+.wsp-brand{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em;color:var(--tx);text-decoration:none;margin-bottom:18px}
+.wsp-brand i{font-style:normal;color:var(--em)}
+.wsp-by{font-family:"Figtree",sans-serif;font-weight:400;font-size:12px;color:var(--mut);letter-spacing:0}
 .wsp-ic,.wsp-ok,.wsp-bad{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;margin:4px auto 14px}
-.wsp-ic{background:#eafaf1;border:1px solid #bfe9d2;color:#0a9d66}
-.wsp-ok{background:#eafaf1;border:1px solid #bfe9d2;color:#0a9d66}
-.wsp-bad{background:#fef2f2;border:1px solid #fecaca;color:#dc2626}
-.wsp-card h1{font-size:22px;margin:0 0 6px}
-.wsp-card p{color:#5b6676;font-size:14.5px;line-height:1.5;margin:0 0 18px}
+.wsp-ic,.wsp-ok{background:var(--em-fill);border:1px solid var(--em-line);color:var(--em)}
+.wsp-bad{background:var(--err-fill);border:1px solid var(--err-line);color:var(--err)}
+.wsp-card h1{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-size:23px;letter-spacing:-.02em;margin:0 0 6px}
+.wsp-card p{color:var(--mut);font-size:14.5px;line-height:1.5;margin:0 0 18px}
 .wsp-field{text-align:left;margin-bottom:14px}
-.wsp-field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px}
-.wsp-field input{width:100%;box-sizing:border-box;border:1px solid #e6ebf1;border-radius:11px;padding:11px 13px;font:inherit;font-size:14.5px;background:#fcfdfe;outline:none}
-.wsp-field input:focus{border-color:#0a9d66;box-shadow:0 0 0 3px rgba(10,157,102,.14)}
+.wsp-field label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:var(--mut)}
+.wsp-field input{width:100%;box-sizing:border-box;border:1px solid var(--line2);border-radius:11px;padding:11px 13px;font:inherit;font-size:14.5px;background:var(--field);color:var(--tx);outline:none;transition:border-color .15s,box-shadow .15s}
+.wsp-field input:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
 .wsp-pw{position:relative;display:flex}
 .wsp-pw input{padding-right:42px}
-.wsp-pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:#5b6676;cursor:pointer;padding:6px}
-.wsp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;background:linear-gradient(135deg,#ff9a4d,#f26a43);color:#1a0e08;border:none;border-radius:12px;padding:13px 20px;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 26px -12px rgba(242,106,67,.6)}
+.wsp-pw button{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--mut);cursor:pointer;padding:6px}
+.wsp-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;width:100%;background:linear-gradient(135deg,var(--cta),var(--cta2));color:var(--cta-ink);border:none;border-radius:12px;padding:13px 20px;font:inherit;font-size:15px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 26px -12px var(--cta2)}
 .wsp-btn:disabled{opacity:.7}
-.wsp-btn.ghost{background:#fff;color:#2f6f3e;border:1px solid #e6ebf1;box-shadow:none}
-.wsp-err{background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:14px;text-align:left}
+.wsp-btn.ghost{background:var(--panel);color:var(--tx);border:1px solid var(--line2);box-shadow:none}
+.wsp-err{background:var(--err-fill);border:1px solid var(--err-line);color:var(--err);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:14px;text-align:left}
 .wsp-center p{margin-bottom:16px}
 .wsp-spin{animation:wsp-sp .8s linear infinite}@keyframes wsp-sp{to{transform:rotate(360deg)}}
 `

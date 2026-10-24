@@ -93,10 +93,13 @@ export default function SiteHeader({ current }) {
 }
 
 const CSS = `
-.wsh{--sh-tx:#0c1222;--sh-mut:#3f4a5c;--sh-line:#e2e7f0;--sh-em:#0a9d66;--sh-em-txt:#077a4f;--sh-warm:#ff9a4d;--sh-warm2:#f26a43;
-  position:sticky;top:0;z-index:50;width:100%;background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
+.wsh{--sh-tx:#161a2b;--sh-mut:#5c6484;--sh-line:#e6e8f1;--sh-em:#0e9f6e;--sh-em-txt:#0b8259;--sh-warm:#ff9a4d;--sh-warm2:#f26a43;--sh-bg:rgba(255,255,255,.86);--sh-panel:#ffffff;
+  position:sticky;top:0;z-index:50;width:100%;background:var(--sh-bg);-webkit-backdrop-filter:blur(16px);backdrop-filter:blur(16px);
   border-bottom:1px solid var(--sh-line);box-shadow:0 1px 0 rgba(17,23,38,.05),0 12px 34px -26px rgba(17,23,38,.35);
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;text-align:left}
+/* DARK = first-class: the header follows the page theme (data-theme) and the
+   dark marketing page (.wm) so one header serves every public page. */
+[data-theme='dark'] .wsh,.wm .wsh{--sh-tx:#eef0f6;--sh-mut:#9aa0b4;--sh-line:rgba(255,255,255,.09);--sh-em:#8cf5c4;--sh-em-txt:#8cf5c4;--sh-bg:rgba(10,11,18,.82);--sh-panel:#13141f;box-shadow:0 1px 0 rgba(255,255,255,.03),0 12px 34px -26px rgba(0,0,0,.8)}
 .wsh *{box-sizing:border-box}
 .wsh a{color:inherit;text-decoration:none}
 .wsh-in{display:flex;align-items:center;gap:22px;height:70px;max-width:1160px;margin:0 auto;padding:0 24px}

@@ -200,13 +200,7 @@ export default function WorkDemo() {
       </section>
       </main>
 
-      <footer className="wkd-foot">
-        <div className="wkd-wrap wkd-foot-in">
-          <AdmireVedaLogo size={22} idSuffix="df" />
-          <span>&copy; {new Date().getFullYear()} AdmireVeda &middot; WorkCoPilot is a product of AdmireVeda</span>
-          <a href="/workcopilot">Sign in</a>
-        </div>
-      </footer>
+      <SiteFooter />
       <LiveValidate theme="light" source="demo" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
     </div>
   )
@@ -391,7 +385,7 @@ function DemoPlayer() {
 }
 
 const CSS = `
-.wkd{--bg:#0b1020;--panel:#fff;--tx:#141726;--mut:#5b6478;--line:#e4e7f0;--em:#0a86cf;--g:#0a9d66;
+.wkd{--bg:#0b1020;--panel:#fff;--tx:#141726;--mut:#5b6478;--line:#e4e7f0;--em:#0a84c2;--g:#0e9f6e;
   min-height:100vh;background:#f7f9fd;color:var(--tx);font-family:Figtree,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;position:relative;overflow-x:hidden}
 @media (prefers-color-scheme:dark){.wkd{--panel:#121725;--tx:#eef1f8;--mut:#9aa4bd;--line:#242b3d;background:#0b1020}}
 .wkd-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
@@ -518,8 +512,8 @@ const CSS = `
 .wkd-cap .ic{width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:#fff;margin-bottom:4px}
 .wkd-cap b{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-size:18px;font-weight:800;letter-spacing:-.01em}
 .wkd-cap p{margin:0;color:var(--mut);font-size:13.5px;line-height:1.5}
-.wkd-cap.watch .ic{background:linear-gradient(135deg,#39d3ff,#0a86cf)}
-.wkd-cap.guide .ic{background:linear-gradient(135deg,#34e0a1,#0a9d66)}
+.wkd-cap.watch .ic{background:linear-gradient(135deg,#39d3ff,#0a84c2)}
+.wkd-cap.guide .ic{background:linear-gradient(135deg,#34e0a1,#0e9f6e)}
 .wkd-cap.correct .ic{background:linear-gradient(135deg,#b98cff,#7a4bd8)}
 .wkd-cap.fix .ic{background:linear-gradient(135deg,#ffb35c,#f26a43)}
 .wkd-quality{width:100%;margin-top:16px;display:flex;align-items:flex-start;gap:14px;text-align:left;background:color-mix(in srgb,var(--g) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--g) 30%,var(--line));border-radius:16px;padding:18px 20px}
@@ -534,11 +528,6 @@ const CSS = `
 .wkd-final h2{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-weight:800;font-size:clamp(24px,4vw,34px);margin:10px 0 0;letter-spacing:-.02em}
 .wkd-final p{color:var(--mut);font-size:16px;margin:0 0 8px;max-width:52ch}
 
-.wkd-foot{border-top:1px solid var(--line);padding:22px 0}
-.wkd-foot-in{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.wkd-foot-in span{color:var(--mut);font-size:13px;flex:1;min-width:200px}
-.wkd-foot-in a{color:var(--mut);text-decoration:none;font-weight:600;font-size:14px}
-.wkd-foot-in a:hover{color:var(--tx)}
 
 /* fireworks on completion (3 bursts) - matches the marketing celebration */
 .wkd-fw{position:absolute;inset:0;pointer-events:none;z-index:6;overflow:hidden;border-radius:18px}

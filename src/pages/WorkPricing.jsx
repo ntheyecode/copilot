@@ -252,32 +252,21 @@ export default function WorkPricing() {
         <a className="wpr-btn alt" href="/demo">See a 60-second demo</a>
       </section>
 
-      <footer className="wpr-foot">
-        <span>&copy; {new Date().getFullYear()} COE Security LLC &middot; WorkCoPilot by AdmireVeda</span>
-        <nav className="wpr-foot-links" aria-label="Footer">
-          <a href="/">Home</a>
-          <a href="/workcopilot/fields">Fields</a>
-          <a href="/workcopilot/security">Security</a>
-          <a href="/workcopilot/privacy">Privacy</a>
-          <a href="/workcopilot/terms">Terms</a>
-          <a href="/workcopilot/refund">Refunds</a>
-          <a href="/workcopilot/dpa">DPA</a>
-          <a href="/workcopilot/contact">Contact</a>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   )
 }
 
 // Same light inner-page shell as /how-it-works, /fields and /security.
 const CSS = `
-.wpr{--ink:#0a0d12;--mut:#3d4650;--dim:#6b7680;--line:rgba(10,13,18,.1);--line-strong:rgba(10,13,18,.14);--em:#10a271;--cy:#0a93c4;--emf:rgba(16,162,113,.08);
+[data-theme='dark'] .wpr{--ink:#eef0f6;--mut:#9aa0b4;--dim:#6c7780;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.15);--panel:#13141f;--panel2:#181b27;--bg:#0a0b12;--em:#8cf5c4;--cy:#39d3ff}
+.wpr{--ink:#161a2b;--mut:#5c6484;--dim:#8b93a1;--line:#e6e8f1;--line-strong:#d3d7e5;--panel:#ffffff;--panel2:#f6f8fd;--bg:#f3f5fb;--em:#0e9f6e;--cy:#0a84c2;--emf:rgba(16,162,113,.08);
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(1200px 600px at 10% -10%, rgba(140,245,196,.22), transparent 60%),
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
-    #edf1ef}
+    var(--bg)}
 .wpr *{box-sizing:border-box}
 .wpr a{color:inherit;text-decoration:none}
 .wpr p{margin:0}
@@ -286,8 +275,6 @@ const CSS = `
   -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.3));mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.3))}
 .wpr>*{position:relative;z-index:1}
 .wpr :focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:8px}
-.wpr-top{display:flex;align-items:center;justify-content:space-between;max-width:1160px;margin:0 auto;padding:18px 24px}
-.wpr-back{display:inline-flex;align-items:center;gap:6px;min-height:40px;background:#fff;border:1px solid var(--line-strong);border-radius:10px;padding:8px 13px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer;box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-hero{max-width:1160px;margin:0 auto;padding:30px 24px 10px;text-align:center}
 .wpr-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
 .wpr-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
@@ -297,7 +284,7 @@ const CSS = `
 
 /* plan tickets */
 .wpr-plans{max-width:1160px;margin:0 auto;padding:26px 24px 10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:stretch}
-.wpr-plan{position:relative;display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px 22px 22px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25);min-width:0}
+.wpr-plan{position:relative;display:flex;flex-direction:column;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px 22px 22px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25);min-width:0}
 .wpr-plan::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,var(--em),var(--cy));opacity:.55}
 .wpr-plan.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),#fff 38%)}
 .wpr-plan.pop::before{opacity:1}
@@ -317,21 +304,21 @@ const CSS = `
 .wpr-mins{color:var(--mut);font-size:12.5px;line-height:1.5;margin:0 0 12px;padding:9px 11px;background:#f4f8f7;border:1px solid var(--line);border-radius:10px}
 .wpr-mins b{color:var(--em);font-weight:700}
 .wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6);margin-top:auto}
-.wpr-btn.alt{background:#fff;color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
+.wpr-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-btn.sm{padding:8px 14px;font-size:13px;border-radius:9px;margin-top:0}
 .wpr-btn:hover{filter:brightness(1.03)}
 
 /* matrix */
 .wpr-matrix{max-width:1160px;margin:0 auto;padding:40px 24px 10px}
-.wpr-card{border:1px solid var(--line);border-radius:22px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25)}
+.wpr-card{border:1px solid var(--line);border-radius:22px;background:var(--panel);overflow:hidden;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25)}
 .wpr-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
 .wpr-tbl{width:100%;min-width:900px;border-collapse:separate;border-spacing:0;font-size:14.5px}
 .wpr-tbl th,.wpr-tbl td{padding:13px 16px;text-align:center;border-top:1px solid var(--line);vertical-align:middle}
 .wpr-tbl thead th{border-top:none;padding:18px 16px 14px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:17px;color:var(--ink);background:var(--emf)}
 .wpr-tbl thead th.pop{color:var(--em)}
 .wpr-th-price{display:block;font-family:"Figtree",sans-serif;font-weight:600;font-size:12.5px;color:var(--dim);margin-top:2px}
-.wpr-tbl .wpr-feat{text-align:left;font-weight:500;color:var(--ink);width:32%;min-width:230px;position:sticky;left:0;z-index:1;background:#fff}
-.wpr-tbl thead .wpr-feat{font-family:"Figtree",sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:#fff}
+.wpr-tbl .wpr-feat{text-align:left;font-weight:500;color:var(--ink);width:32%;min-width:230px;position:sticky;left:0;z-index:1;background:var(--panel)}
+.wpr-tbl thead .wpr-feat{font-family:"Figtree",sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:var(--panel)}
 .wpr-tbl td.pop{background:rgba(16,162,113,.04)}
 .wpr-group td{text-align:left;padding:18px 16px 8px;font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em)}
 .wpr-tbl tfoot td{padding:16px}
@@ -340,7 +327,7 @@ const CSS = `
 .wpr-no i{display:block;width:12px;height:2px;border-radius:2px;background:var(--line-strong)}
 .wpr-val{font-weight:700;color:var(--ink);white-space:nowrap;font-size:13.5px}
 .wpr-stack{display:none}
-.wpr-tcard{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:18px;padding:20px;background:#fff;min-width:0}
+.wpr-tcard{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--panel);min-width:0}
 .wpr-tcard.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),#fff 30%)}
 .wpr-tname{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px}
 .wpr-tname small{font-family:"Figtree",sans-serif;font-weight:600;font-size:13px;color:var(--dim);margin-left:6px}
@@ -358,17 +345,13 @@ const CSS = `
 /* notes */
 .wpr-notes{max-width:1160px;margin:0 auto;padding:40px 24px 10px}
 .wpr-notes-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px}
-.wpr-note{background:#fff;border:1px solid var(--line);border-radius:18px;padding:20px 20px 22px;box-shadow:0 1px 2px rgba(10,13,18,.04)}
+.wpr-note{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px 20px 22px;box-shadow:0 1px 2px rgba(10,13,18,.04)}
 .wpr-note h3{font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:17px;margin:0 0 8px;color:var(--ink)}
 .wpr-note p{color:var(--mut);font-size:14px;line-height:1.55}
 .wpr-fine{display:flex;align-items:center;justify-content:center;gap:7px;text-align:center;color:var(--dim);font-size:13.5px;margin-top:20px}
 .wpr-fine svg{color:var(--cy);flex-shrink:0}
 .wpr-cta{max-width:1160px;margin:0 auto;padding:26px 24px 40px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wpr-cta .wpr-btn{margin-top:0}
-.wpr-foot{max-width:1160px;margin:0 auto;padding:18px 24px 34px;border-top:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px 20px;flex-wrap:wrap;color:var(--dim);font-size:13px}
-.wpr-foot-links{display:flex;gap:16px;flex-wrap:wrap}
-.wpr-foot-links a{color:var(--mut);font-weight:600}
-.wpr-foot-links a:hover{color:var(--ink)}
 
 @media(max-width:1080px){.wpr-plans{grid-template-columns:repeat(2,minmax(0,1fr))}.wpr-notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:768px){.wpr-card{display:none}.wpr-stack{display:grid;grid-template-columns:1fr;gap:14px}}

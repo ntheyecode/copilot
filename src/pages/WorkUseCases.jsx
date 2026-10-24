@@ -137,21 +137,7 @@ export default function WorkUseCases() {
       </section>
       </main>
 
-      <footer className="uc-foot">
-        <div className="uc-wrap uc-foot-in">
-          <AdmireVedaLogo size={22} idSuffix="ucf" />
-          <span>&copy; {new Date().getFullYear()} COE Security LLC &middot; {OWNERSHIP_LINE}</span>
-          <nav className="uc-foot-links" aria-label="Footer">
-            <a href="/workcopilot/pricing">Pricing</a>
-            <a href="/workcopilot/security">Security</a>
-            <a href="/workcopilot/privacy">Privacy</a>
-            <a href="/workcopilot/terms">Terms</a>
-            <a href="/workcopilot/refund">Refunds</a>
-            <a href="/workcopilot/dpa">DPA</a>
-            <a href="/workcopilot/contact">Contact</a>
-          </nav>
-        </div>
-      </footer>
+      <SiteFooter />
       <LiveValidate theme="light" source="use-cases" go={(plan) => nav(`/workcopilot${plan ? `?plan=${plan}` : ''}`)} />
     </div>
   )
@@ -214,7 +200,8 @@ function MiniGuide({ g, tag }) {
 const CSS = `
 /* Light theme - matches the rest of the site. The WorkCoPilot "screen" mockup
    (.uc-mini) re-scopes dark vars below so it stays a dark device screenshot. */
-.uc{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em-txt:#077a4f;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--ink-brand:#062a22;
+[data-theme='dark'] .uc{--ink:#0a0b12;--panel:#13141f;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em-txt:#8cf5c4;--em2:#39d3ff;--warm:#ffb561;--warm2:#ff7a59;--ink-brand:#eef0f6}
+.uc{--ink:#f3f5fb;--panel:#ffffff;--line:#e6e8f1;--tx:#161a2b;--mut:#5c6484;--em:#0e9f6e;--em-txt:#0b8259;--em2:#0a84c2;--warm:#ff9a4d;--warm2:#f26a43;--ink-brand:#062a22;
   position:relative;min-height:100vh;color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased;
   background:radial-gradient(1000px 520px at 85% -8%,rgba(10,134,207,.14),transparent 60%),radial-gradient(820px 480px at -6% 4%,rgba(10,157,102,.12),transparent 58%),var(--ink)}
 .uc *{box-sizing:border-box}.uc a{color:inherit;text-decoration:none}
@@ -311,12 +298,6 @@ const CSS = `
 .uc-final{padding:90px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.08),transparent)}
 .uc-final h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(30px,5vw,48px);letter-spacing:-.02em;margin:16px 0 12px}
 .uc-final p{color:var(--mut);font-size:18px;margin:0 0 26px}
-.uc-foot{border-top:1px solid var(--line);padding:26px 0}
-.uc-foot-in{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.uc-foot-in span{color:var(--mut);flex:1;font-size:13px}
-.uc-foot-links{display:flex;flex-wrap:wrap;gap:8px 16px}
-.uc-foot-links a{color:var(--mut);font-size:13px;font-weight:600;text-decoration:none}
-.uc-foot-links a:hover{color:var(--tx)}
 
 @media(max-width:860px){
  .uc-case-in{grid-template-columns:1fr;gap:28px}

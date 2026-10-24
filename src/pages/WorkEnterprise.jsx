@@ -9,6 +9,7 @@ import {
   ShieldCheck, ScanEye, FileText, Lock, KeyRound, Bell, Radio, BookOpen, Scale, BarChart3, Palette,
   Monitor, Globe, Smartphone, Check, ArrowRight, Building2, Users, Receipt, EyeOff, Database, ListChecks, Bot, Sparkles,
 } from 'lucide-react'
+import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'
 
@@ -205,6 +206,7 @@ export default function WorkEnterprise() {
           </div>
         </section>
       </main>
+      <SiteFooter />
     </div>
   )
 }

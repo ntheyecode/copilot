@@ -8,8 +8,8 @@
 // is the stated percentage of each referral's FIRST payment, paid through Stripe,
 // plus the referred person's free month on annual billing.
 // Visual system = the WorkCoPilot site (WorkMarketing.jsx, light theme): page
-// #f4f7fb, white hairline cards, deep-green display headings, green #0a9d66 and
-// blue #0a86cf as the emphasis accents, orange #f26a43 for the primary CTA only.
+// #f4f7fb, white hairline cards, deep-green display headings, green #0e9f6e and
+// blue #0a84c2 as the emphasis accents, orange #f26a43 for the primary CTA only.
 // US spelling, no em-dashes.
 import React, { useEffect, useState, useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
@@ -732,10 +732,10 @@ const CSS = `
 /* ============================================================
    LANDING - the WorkCoPilot site system (see WorkMarketing.jsx):
    page #f4f7fb, white hairline cards, deep-green display ink,
-   green #0a9d66 / blue #0a86cf emphasis, orange CTA only.
+   green #0e9f6e / blue #0a84c2 emphasis, orange CTA only.
    Scoped under .af-land so the signed-in dashboard is untouched.
    ============================================================ */
-.af-land{--em:#0a9d66;--em2:#0a86cf;--ink-brand:#062a22;--em-soft:rgba(10,157,102,.10);--em2-soft:rgba(10,134,207,.10);--em-line:rgba(10,157,102,.28);
+.af-land{--em:#0e9f6e;--em2:#0a84c2;--ink-brand:#062a22;--em-soft:rgba(10,157,102,.10);--em2-soft:rgba(10,134,207,.10);--em-line:rgba(10,157,102,.28);
   --grad:linear-gradient(120deg,var(--em),var(--em2));--tile:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));
   position:relative}
 .af-land>*:not(.af-backdrop){position:relative;z-index:1}
