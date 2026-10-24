@@ -1,0 +1,43 @@
+# WorkCoPilot by AdmireVeda
+
+> WorkCoPilot is a screen-aware AI work copilot. It watches your screen and
+> guides you through any task step by step, with the exact command, code, setting
+> or click. It catches a wrong move, corrects it, confirms each step worked, and
+> keeps you on the next correct step until the job is done. It is read-only by
+> design: it never clicks, types or runs anything for you. It works in the
+> browser (no install, even on locked-down machines), on desktop, and on mobile.
+
+## What it is
+- A step-by-step guide for real work, across every field: technical setup and
+  configuration, building and implementation, AI and automation, product,
+  marketing, accounting and office work, legal and compliance, and everyday tasks.
+- Security-first: every command, snippet and fix is written the secure way
+  (least privilege, no hardcoded secrets, validated input) and checked before you
+  run it. Sensitive data (personal data, health data, secrets, keys, card numbers)
+  is stripped or tokenized on your own device before anything is sent, when data
+  protection is on; the real values stay on your device.
+- Each session is documented: a picture-rich write-up and an audit log.
+
+## Plans
+- Lite, Basic, Advanced, Premium (self-service, by daily guided hours) plus a
+  custom-priced Enterprise plan (SSO via OIDC, company data policy, seat pools,
+  a DPA). Current prices: https://admireveda.com/workcopilot/pricing
+
+## Key pages
+- Home: https://admireveda.com/
+- How it works: https://admireveda.com/workcopilot/how-it-works
+- Fields it covers: https://admireveda.com/workcopilot/fields
+- Use cases: https://admireveda.com/workcopilot/use-cases
+- Security and privacy: https://admireveda.com/workcopilot/security
+- Pricing: https://admireveda.com/workcopilot/pricing
+- FAQ: https://admireveda.com/workcopilot/faq
+- Affiliate program: https://admireveda.com/affiliate
+
+## Honesty
+Claims on this site are kept to what the product actually does. WorkCoPilot
+guides and corrects; it does not act on your behalf. It is not a certification or
+legal advice. Compliance frameworks are supported as policy presets, not
+certifications.
+
+Contact: https://admireveda.com/workcopilot/contact
+Maker: AdmireVeda, a product of COE Security LLC.
