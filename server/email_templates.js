@@ -632,6 +632,29 @@ The WorkCoPilot team`,
     showRows: false,
   },
 
+  welcome: {
+    label: 'Welcome - new sign-up',
+    category: 'account',
+    description: 'Sent when someone signs up for an account themselves (they already chose a password).',
+    eyebrow: 'Welcome',
+    defaultSubject: 'Welcome to WorkCoPilot',
+    defaultHeading: 'Welcome aboard, <First_Name>',
+    defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot account is ready. From here, WorkCoPilot can watch your screen as you work and guide you one clear step at a time, with the exact commands, code and links for whatever you are doing. It never takes control.
+
+Open WorkCoPilot whenever you are ready and tell it what you want to get done.
+
+Glad to have you,
+The WorkCoPilot team`,
+    defaultCtaLabel: 'Open WorkCoPilot',
+    ctaUrlToken: 'appUrl',
+    placeholders: [],
+    sampleData: { name: 'Alex Morgan' },
+    showRows: false,
+  },
+
   reset_password: {
     label: 'Password reset',
     category: 'security',

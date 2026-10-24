@@ -1784,7 +1784,7 @@ export function getWorkUser(id) { return getUser(id) }
 export function verifyWorkPassword(user, password) { return verifyPassword(user, password) }
 
 // Create a WorkCoPilot account (public signup). Role 'user'.
-export function createWorkUser({ username, password, email = null }) {
+export function createWorkUser({ username, password, email = null, displayName = null, phone = null, company = null }) {
   const name = String(username || '').trim()
   if (name.length < 3) throw httpErr(400, 'Username must be at least 3 characters.')
   if (name.length > 64) throw httpErr(400, 'Username must be 64 characters or fewer.')
@@ -1797,12 +1797,14 @@ export function createWorkUser({ username, password, email = null }) {
     id: id(),
     username: name,
     email: mail || null,          // contact email (for password accounts); SSO uses ssoEmail
+    phone: String(phone || '').trim().slice(0, 40) || null,     // signup record (compliance)
+    company: String(company || '').trim().slice(0, 160) || null, // self-reported org name (not tenancy)
     passwordHash: bcrypt.hashSync(String(password), 10),
     role: 'user',
     root: false,
     createdAt: now(),
     onboarded: false,
-    displayName: null,
+    displayName: String(displayName || '').trim().slice(0, 80) || null,
     tier: 'basic',
     purchasedSeconds: 0,
     imageCredits: 0,
@@ -3073,7 +3075,7 @@ export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '',
 }
 
 // ---- WorkCoPilot image generation allowance (premium, 5/day) --------------
-const WORK_IMAGE_DAILY = { basic: 0, advanced: 0, premium: 5 }
+const WORK_IMAGE_DAILY = { lite: 0, basic: 0, advanced: 0, premium: 5 }
 export function getWorkImageUsage(workUserId) {
   const tier = getWorkTier(workUserId)
   const dailyCap = WORK_IMAGE_DAILY[tier] || 0

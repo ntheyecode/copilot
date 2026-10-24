@@ -74,7 +74,7 @@ export const api = {
   meetAdminSetDeepgram: (apiKey, model) => req('POST', '/api/meet/admin/deepgram', { apiKey, model }),
   // --- WorkCoPilot (separate product, own login) ---
   workMe: () => req('GET', '/api/work/me'),
-  workSignup: (username, password) => req('POST', '/api/work/signup', { username, password }),
+  workSignup: (body) => req('POST', '/api/work/signup', body || {}),
   workLogin: (username, password) => req('POST', '/api/work/login', { username, password }),
   // MFA (TOTP authenticator). Login may return { mfaSetup } (first login) or
   // { mfaRequired }; the client then calls one of these to finish signing in.

@@ -56,8 +56,8 @@ export function AuthProvider({ children }) {
     if (r && !r.mfaSetup && !r.mfaRequired) await refresh()
     return r // { user } | { mfaSetup, enroll } | { mfaRequired }
   }
-  const signup = async (username, password) => {
-    const r = await api.workSignup(username, password)
+  const signup = async (body) => {
+    const r = await api.workSignup(body)
     if (r && !r.mfaSetup && !r.mfaRequired) await refresh()
     return r // always { mfaSetup, enroll } now (MFA on first login)
   }

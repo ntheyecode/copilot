@@ -42,6 +42,8 @@ export default function WorkLogin() {
   // default to sign-in. The visitor can switch either way.
   const [mode, setMode] = useState(plan ? 'signup' : 'signin')
   const [uName, setUName] = useState(''); const [uPass, setUPass] = useState('')
+  // Compliance sign-up fields (signup mode only).
+  const [sName, setSName] = useState(''); const [sEmail, setSEmail] = useState(''); const [sPhone, setSPhone] = useState(''); const [sCompany, setSCompany] = useState('')
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
   const [forgotBusy, setForgotBusy] = useState(false); const [forgotSent, setForgotSent] = useState(false)
   const doForgot = async () => {
@@ -123,10 +125,17 @@ export default function WorkLogin() {
   }, [user, plan, cycle, checkingOut, nav])
 
   const submit = async (e) => {
-    e && e.preventDefault(); setBusy(true); setErr('')
+    e && e.preventDefault()
+    const u = uName.trim()
+    if (mode === 'signup') {
+      if (!sName.trim()) { setErr('Enter your full name.'); return }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(sEmail.trim())) { setErr('Enter a valid email address.'); return }
+    }
+    setBusy(true); setErr('')
     try {
-      const u = uName.trim()
-      const r = mode === 'signup' ? await signup(u, uPass) : await login(u, uPass)
+      const r = mode === 'signup'
+        ? await signup({ username: u, password: uPass, name: sName.trim(), email: sEmail.trim(), phone: sPhone.trim(), company: sCompany.trim() })
+        : await login(u, uPass)
       if (r && r.mfaSetup) { setMfa({ mode: 'setup', enroll: r.enroll, username: u }); setBusy(false); return }
       if (r && r.mfaRequired) { setMfa({ mode: 'verify', username: u }); setBusy(false); return }
       // otherwise the effect above reacts to `user` and routes to checkout or /work
@@ -208,8 +217,18 @@ export default function WorkLogin() {
           <h1>{mode === 'signup' ? (planName ? `Create your account for ${planName}` : 'Create your account') : (planName ? `Sign in to start ${planName}` : 'Sign in')}</h1>
           <p className="wl-sub">{mode === 'signup' ? 'It is free to sign up. Pick a plan when you are ready to start guiding.' : 'Welcome back. Pick up right where you left off.'}</p>
           <form onSubmit={submit} aria-label={mode === 'signup' ? 'Create account' : 'Sign in'} aria-busy={busy || checkingOut}>
+            {mode === 'signup' && (<>
+              <label htmlFor="wl-name">Full name</label>
+              <input id="wl-name" name="name" autoFocus value={sName} onChange={(e) => setSName(e.target.value)} autoComplete="name" placeholder="Alex Morgan" aria-required="true" />
+              <label htmlFor="wl-email">Work email</label>
+              <input id="wl-email" name="email" type="email" value={sEmail} onChange={(e) => setSEmail(e.target.value)} autoComplete="email" placeholder="you@company.com" aria-required="true" />
+              <label htmlFor="wl-phone">Phone <span style={{fontWeight:400,opacity:.6}}>(optional)</span></label>
+              <input id="wl-phone" name="phone" type="tel" value={sPhone} onChange={(e) => setSPhone(e.target.value)} autoComplete="tel" placeholder="+1 555 000 1234" />
+              <label htmlFor="wl-company">Company <span style={{fontWeight:400,opacity:.6}}>(optional)</span></label>
+              <input id="wl-company" name="company" value={sCompany} onChange={(e) => setSCompany(e.target.value)} autoComplete="organization" placeholder="Your company" />
+            </>)}
             <label htmlFor="wl-user">Username</label>
-            <input id="wl-user" name="username" autoFocus value={uName} onChange={(e) => setUName(e.target.value)} autoComplete="username" placeholder="your username" aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
+            <input id="wl-user" name="username" {...(mode!=="signup"?{autoFocus:true}:{})} value={uName} onChange={(e) => setUName(e.target.value)} autoComplete="username" placeholder="your username" aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
             <label htmlFor="wl-pass">Password</label>
             <input id="wl-pass" name="password" type="password" value={uPass} onChange={(e) => setUPass(e.target.value)} autoComplete={mode === 'signup' ? 'new-password' : 'current-password'} placeholder={mode === 'signup' ? 'choose a password (6+ characters)' : 'your password'} aria-required="true" aria-invalid={err ? 'true' : undefined} aria-describedby={err ? 'wl-err' : undefined} />
             {err && <div className="wl-err" id="wl-err" role="alert">{err}</div>}

@@ -156,17 +156,22 @@ export default function Billing({ isSuperAdmin }) {
         {(() => {
           const mode = (b && b.mode) || 'live'
           const isTest = mode === 'test'
+          const C = isTest ? '#b45309' : '#16a34a'
+          const seg = (active) => ({ flex: 1, textAlign: 'center', padding: '8px 0', fontSize: 13.5, fontWeight: 700, cursor: isSuperAdmin ? 'pointer' : 'default', borderRadius: 8, border: 'none', background: active ? C : 'transparent', color: active ? '#fff' : 'var(--wka-muted, #6b7280)', transition: 'all .12s' })
           return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap', padding: '10px 14px', marginBottom: 14, borderRadius: 10, border: `1px solid ${isTest ? 'var(--wka-amber, #b45309)' : 'var(--wka-emerald, #16a34a)'}`, background: isTest ? 'rgba(180,83,9,.07)' : 'rgba(22,163,74,.06)' }}>
-              <span style={{ fontSize: 13, fontWeight: 600, color: isTest ? 'var(--wka-amber, #b45309)' : 'var(--wka-emerald, #16a34a)' }}>
-                Mode: <b>{isTest ? 'TEST' : 'LIVE'}</b> {isTest ? '- using your test keys, no real charges.' : '- using your live keys, real charges.'} Each mode has its own keys + price ids, entered separately below.
-              </span>
-              {isSuperAdmin && (
-                <span style={{ display: 'inline-flex', gap: 6 }}>
-                  <button type="button" className={`wka-btn sm${!isTest ? ' primary' : ' ghost'}`} onClick={() => switchMode('live')}>Live</button>
-                  <button type="button" className={`wka-btn sm${isTest ? ' primary' : ' ghost'}`} onClick={() => switchMode('test')}>Test</button>
-                </span>
-              )}
+            <div style={{ padding: '12px 14px', marginBottom: 16, borderRadius: 12, border: `2px solid ${C}`, background: isTest ? 'rgba(180,83,9,.06)' : 'rgba(22,163,74,.05)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C }}>Payment mode &mdash; {isTest ? 'TEST (no real charges)' : 'LIVE (real charges)'}</span>
+                {isSuperAdmin && (
+                  <div style={{ display: 'flex', gap: 3, background: 'var(--wka-bg-2, #eef0f6)', borderRadius: 10, padding: 3, minWidth: 180 }}>
+                    <button type="button" style={seg(!isTest)} onClick={() => !isTest || switchMode('live')}>LIVE</button>
+                    <button type="button" style={seg(isTest)} onClick={() => isTest || switchMode('test')}>TEST</button>
+                  </div>
+                )}
+              </div>
+              <div style={{ fontSize: 12.5, color: 'var(--wka-muted, #6b7280)', marginTop: 7 }}>
+                Switching applies immediately &mdash; checkout, the webhook and Test connection all use the <b>{isTest ? 'test' : 'live'}</b> keys. Each mode keeps its own keys + price ids; fill them in separately under Edit.
+              </div>
             </div>
           )
         })()}

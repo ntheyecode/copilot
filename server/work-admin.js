@@ -326,7 +326,9 @@ export function registerWorkAdminRoutes(app, deps = {}) {
   // through SSO before anyone has a password. Works even in locked license mode.
   app.post('/api/work/admin/companies/:id/members', requireAuth, superGate, w((req, res) => {
     const { email, companyRole, tier, displayName } = req.body || {}
-    res.json({ user: store.addCompanyMemberByEmail({ companyId: req.params.id, email, companyRole, tier, displayName }) })
+    const user = store.addCompanyMemberByEmail({ companyId: req.params.id, email, companyRole, tier, displayName })
+    sendAccountWelcomeAsync(user.id)   // SSO welcome email (no password to set)
+    res.json({ user })
   }))
   // Superadmin: remove a company member (any mode). Reversible detach.
   app.delete('/api/work/admin/companies/:id/members/:uid', requireAuth, superGate, w((req, res) => {

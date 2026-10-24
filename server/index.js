@@ -799,8 +799,17 @@ app.post('/api/work/login/mfa', wrap((req, res) => {
 // login applies to brand-new accounts too).
 app.post('/api/work/signup', wrap((req, res) => {
   if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
-  const { username, password } = req.body || {}
-  const u = store.createWorkUser({ username, password })
+  const b = req.body || {}
+  const { username, password } = b
+  const email = String(b.email || '').trim()
+  const displayName = String(b.name || b.displayName || '').trim()
+  // Compliance-grade sign-up: name + email are required; phone + company are
+  // captured on the account record.
+  if (!displayName) return res.status(400).json({ error: 'Enter your full name.' })
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
+  const u = store.createWorkUser({ username, password, email, displayName, phone: b.phone, company: b.company })
+  // The email gives the account a contact address (reset + receipts) + a welcome.
+  sendTemplateAsync('welcome', email, { name: u.displayName || u.username })
   if (!store.mfaGloballyEnabled()) { establishSession(req, u); return res.json({ user: store.publicWorkUser(u) }) }
   req.session.pendingMfaUid = u.id
   req.session.pendingMfaAt = Date.now()
