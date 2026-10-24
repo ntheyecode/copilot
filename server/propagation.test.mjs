@@ -45,6 +45,19 @@ test('disabling an account removes service access (userCanUseService)', () => {
   assert.equal(store.publicWorkUser(store.getUser(u.id)).disabled, true)
 })
 
+test('free images-per-day reads live pricing; tier feature gates are single-source', () => {
+  const u = store.createWorkUser({ username: uniq('img'), password: 'Passw0rd!x' })
+  store.setWorkTier(u.id, 'premium')
+  assert.equal(store.getWorkImageUsage(u.id).dailyCap, 5)      // default
+  store.setWorkPricing({ imagesPerDay: { premium: 9 } })
+  assert.equal(store.getWorkImageUsage(u.id).dailyCap, 9)      // reflects live
+  // Feature registry is the one source for gates (documents + images).
+  assert.equal(store.tierAllows('premium', 'images'), true)
+  assert.equal(store.tierAllows('basic', 'images'), false)
+  assert.equal(store.tierAllows('basic', 'documents'), false)
+  assert.equal(store.tierAllows('advanced', 'documents'), true)
+})
+
 test('disabling a company removes service access for its members', () => {
   const co = store.createCompany({ name: uniq('PropCo'), plan: 'premium', seats: 0 })
   const m = store.createManagedUser({ username: uniq('cm'), password: 'Passw0rd!x', companyId: co.id, tier: 'basic' })

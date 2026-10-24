@@ -119,8 +119,9 @@ export function registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap,
     try {
       const uid = req.workUser.id
 
-      // 1) Tier gate: image generation is a premium-only feature.
-      if (store.getWorkTier(uid) !== 'premium') {
+      // 1) Tier gate via the SINGLE feature registry (store.tierAllows), not a
+      // hardcoded tier string - one source of truth for entitlements.
+      if (!store.tierAllows(store.getWorkTier(uid), 'images')) {
         return res.status(403).json({ error: 'Image generation is a Premium feature.' })
       }
       // 1b) Company gate: companies get image generation only once the superadmin

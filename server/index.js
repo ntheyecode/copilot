@@ -234,7 +234,12 @@ function requireWorkTime(req, res, next) {
         needsTime: true, resetLabel: usage.resetLabel || '11:59 PM ET',
       })
     }
-  } catch { /* never block on a usage-read error - let the action proceed */ }
+  } catch (e) {
+    // Never block a paying user on a usage-read error - but do NOT fail silently:
+    // record an incident so the operator sees that metering degraded (the action
+    // is allowed through, which could let usage past the cap go unmetered).
+    try { store.recordWorkIncident({ kind: 'metering_degraded', message: 'usage read failed; action allowed without metering: ' + (e && e.message ? e.message : 'unknown'), userId: req.workUser && req.workUser.id, call: 'requireWorkTime' }) } catch { /* best effort */ }
+  }
   next()
 }
 // 'accounting' may OPEN the admin console (to reach Finance) but every other

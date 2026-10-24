@@ -2180,10 +2180,10 @@ export const TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
 // NO roadmaps and NO diagrams. Diagrams stay premium-only; own-document grounding
 // stays advanced/premium.
 export const TIER_FEATURES = {
-  lite: { roadmaps: false, diagrams: false, documents: false },
-  basic: { roadmaps: true, diagrams: false, documents: false },
-  advanced: { roadmaps: true, diagrams: false, documents: true },
-  premium: { roadmaps: true, diagrams: true, documents: true },
+  lite: { roadmaps: false, diagrams: false, documents: false, images: false },
+  basic: { roadmaps: true, diagrams: false, documents: false, images: false },
+  advanced: { roadmaps: true, diagrams: false, documents: true, images: false },
+  premium: { roadmaps: true, diagrams: true, documents: true, images: true },
 }
 export function tierAllows(tier, feature) {
   const f = TIER_FEATURES[WORK_TIERS.includes(tier) ? tier : 'basic']
@@ -2553,6 +2553,7 @@ const WORK_PRICING_DEFAULT = {
   tasks: { lite: 1, basic: 4, advanced: 8, premium: 12 },        // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
   replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
   dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },    // DAILY INCLUDED hours per tier (the "bucket" each plan includes per day). Superadmin-editable; workDailyLimit reads this so a change reflects for every user immediately. Fractional allowed (e.g. 1.5).
+  imagesPerDay: { lite: 0, basic: 0, advanced: 0, premium: 5 },  // FREE generated images per day per tier. Superadmin-editable; getWorkImageUsage reads this (0 = none).
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}
@@ -2565,6 +2566,7 @@ export function getWorkPricing() {
     tasks: { ...WORK_PRICING_DEFAULT.tasks, ...(p.tasks || {}) },
     replans: { ...WORK_PRICING_DEFAULT.replans, ...(p.replans || {}) },
     dailyHours: { ...WORK_PRICING_DEFAULT.dailyHours, ...(p.dailyHours || {}) },
+    imagesPerDay: { ...WORK_PRICING_DEFAULT.imagesPerDay, ...(p.imagesPerDay || {}) },
   }
 }
 // Keep only the numeric override keys a company may set (partial is fine); null
@@ -2656,6 +2658,7 @@ export function setWorkPricing(patch) {
     tasks: { ...cur.tasks, ...taskCounts(p.tasks) },
     replans: { ...cur.replans, ...taskCounts(p.replans, 're-plan') },
     dailyHours: { ...cur.dailyHours, ...hourVals(p.dailyHours) },
+    imagesPerDay: { ...cur.imagesPerDay, ...taskCounts(p.imagesPerDay, 'images-per-day') },
   }
   persist()
   return getWorkPricing()
@@ -3517,11 +3520,20 @@ export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '',
   return { ok: true, id: u.id }
 }
 
-// ---- WorkCoPilot image generation allowance (premium, 5/day) --------------
+// ---- WorkCoPilot image generation allowance --------------------------------
+// The free-per-day cap reads the LIVE superadmin pricing (imagesPerDay), so a
+// change in Admin > Pricing reflects for every user immediately. Built-in default
+// is the fallback until the config loads.
 const WORK_IMAGE_DAILY = { lite: 0, basic: 0, advanced: 0, premium: 5 }
+function imageDailyCap(tier) {
+  let c
+  try { c = (getWorkPricing().imagesPerDay || {})[tier] } catch { c = undefined }
+  if (Number.isInteger(Number(c)) && Number(c) >= 0) return Number(c)
+  return WORK_IMAGE_DAILY[tier] || 0
+}
 export function getWorkImageUsage(workUserId) {
   const tier = getWorkTier(workUserId)
-  const dailyCap = WORK_IMAGE_DAILY[tier] || 0
+  const dailyCap = imageDailyCap(tier)
   const key = `${workUserId}:${easternDayKey()}`
   const usedToday = (db.workImageUsage && db.workImageUsage[key] && db.workImageUsage[key].count) || 0
   const u = getUser(workUserId)
@@ -3533,7 +3545,7 @@ export function addWorkImageUsage(workUserId, n = 1) {
   let count = Math.max(1, Math.round(Number(n) || 1))
   if (!db.workImageUsage) db.workImageUsage = {}
   const tier = getWorkTier(workUserId)
-  const dailyCap = WORK_IMAGE_DAILY[tier] || 0
+  const dailyCap = imageDailyCap(tier)
   const key = `${workUserId}:${easternDayKey()}`
   const rec = db.workImageUsage[key] || (db.workImageUsage[key] = { count: 0 })
   const freeLeft = Math.max(0, dailyCap - rec.count)

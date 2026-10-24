@@ -563,6 +563,11 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       } catch (e) {
         return res.json({ ok: false, livemode: out.livemode, error: 'Stripe rejected the secret key: ' + ((e && e.message) || 'invalid key') })
       }
+      // The DISPLAYED monthly price (superadmin pricing) vs what Stripe will
+      // actually CHARGE (the Price id). These are separate sources of truth, so we
+      // flag any mismatch here - otherwise a superadmin can change the shown price
+      // and Stripe keeps charging the old amount.
+      const displayed = (store.getWorkPricing && store.getWorkPricing().plans) || {}
       for (const p of PLANS) {
         const configured = price[p]
         if (!configured) { out.plans[p] = { ok: false, error: 'not set' }; continue }
@@ -570,11 +575,16 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
           const priceId = await resolvePriceId(s, configured)
           if (!priceId) { out.plans[p] = { ok: false, error: 'no price found for this id' }; continue }
           const pr = await s.prices.retrieve(priceId)
+          const amount = (pr.unit_amount != null ? pr.unit_amount / 100 : null)
+          const shown = displayed[p]
+          const matchesDisplayed = (amount != null && shown != null) ? (Math.round(amount * 100) === Math.round(shown * 100)) : null
           out.plans[p] = {
             ok: true,
-            amount: (pr.unit_amount != null ? pr.unit_amount / 100 : null),
-            currency: pr.currency || 'usd',
+            amount, currency: pr.currency || 'usd',
             interval: (pr.recurring && pr.recurring.interval) || 'one-time',
+            displayed: shown ?? null,
+            matchesDisplayed,
+            ...(matchesDisplayed === false ? { warning: `Stripe charges $${amount} but the site shows $${shown}` } : {}),
           }
         } catch (e) {
           out.plans[p] = { ok: false, error: (e && e.message) || 'could not load this price' }

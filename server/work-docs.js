@@ -39,10 +39,8 @@ export function registerWorkDocsRoutes(app, deps = {}) {
 
   // Raw byte ceiling for an uploaded file (before base64 inflation).
   const MAX_RAW_BYTES = 10 * 1024 * 1024
-  // Only Advanced and Premium may upload. Basic gets a clear upgrade message.
-  // These ids come from store.js WORK_TIERS = ['basic','advanced','premium'].
-  const ALLOWED_TIERS = new Set(['advanced', 'premium'])
-
+  // Document upload is gated by the SINGLE feature registry (store.tierAllows),
+  // not a parallel tier list, so the entitlement has one source of truth.
   const workUid = (req) => req.workUser && req.workUser.id
 
   // Classify by mime first, then by filename extension. Returns a short type id
@@ -61,7 +59,7 @@ export function registerWorkDocsRoutes(app, deps = {}) {
   // Advanced-tier gate, runs after requireWorkAuth so req.workUser is set.
   function gateAdvanced(req, res, next) {
     const tier = store.getWorkTier(workUid(req))
-    if (!ALLOWED_TIERS.has(tier)) {
+    if (!store.tierAllows(tier, 'documents')) {
       return res.status(403).json({ error: 'Upgrade to Advanced to upload documents.', upgrade: true, tier })
     }
     next()
