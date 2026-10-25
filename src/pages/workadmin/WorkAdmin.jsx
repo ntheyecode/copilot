@@ -13,7 +13,7 @@ import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
-import { WORKADMIN_CSS } from './workadmin.css.js'
+import { WORKADMIN_CSS, ensureWorkAdminFonts } from './workadmin.css.js'
 import { workAdminApi } from './workAdminApi.js'
 import Overview from './sections/Overview.jsx'
 import UsersSection from './sections/Users.jsx'
@@ -74,6 +74,9 @@ export default function WorkAdmin() {
   }, [])
 
   useEffect(() => { checkAccess() }, [checkAccess])
+  // Brand faces (Bricolage Grotesque / Figtree) - the console is self-contained,
+  // so it loads them itself rather than depending on global app CSS.
+  useEffect(() => { ensureWorkAdminFonts() }, [])
 
   // Poll a light incident summary while the console is open (also refreshes when
   // the operator opens the Incidents tab). Failures never break the console.
@@ -150,10 +153,10 @@ export default function WorkAdmin() {
 
   if (gate === 'loading') {
     return (
-      <div className="wka">
+      <div className="wka wka-super">
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
-          <Loader2 size={26} style={{ animation: 'wka-spin 0.8s linear infinite', color: 'var(--wka-cyan)', marginBottom: 12 }} />
+          <Loader2 size={26} style={{ animation: 'wka-spin 0.8s linear infinite', color: 'var(--wka-accent)', marginBottom: 12 }} />
           <h2>Checking access</h2>
           <p>One moment.</p>
         </div></div>
@@ -163,7 +166,7 @@ export default function WorkAdmin() {
 
   if (gate === 'denied') {
     return (
-      <div className="wka">
+      <div className="wka wka-super">
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <ShieldAlert size={30} />
@@ -176,7 +179,7 @@ export default function WorkAdmin() {
 
   if (gate === 'error') {
     return (
-      <div className="wka">
+      <div className="wka wka-super">
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <ShieldAlert size={30} style={{ color: 'var(--wka-red)' }} />
@@ -189,7 +192,7 @@ export default function WorkAdmin() {
   }
 
   return (
-    <div className="wka">
+    <div className="wka wka-super">
       <style>{WORKADMIN_CSS}</style>
 
       <header className="wka-top">
