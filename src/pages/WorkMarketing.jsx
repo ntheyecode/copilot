@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
@@ -17,17 +17,21 @@ import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it 
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import useSeo from '../useSeo.js'
+import { useLocale, renderRich } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
 // The field roster lives ONCE, on the /fields page; the teaser below imports
 // its numbers so the headline count can never drift from the full list.
 import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
 
 // AdmireVeda WorkCoPilot - marketing landing (admireveda.com).
 // Motion-rich, benefits-first. Never names a model, never mentions limits.
+// LOCALIZED: all copy is read through t() from src/i18n/locales/<code>.js;
+// icons, routes, prices, commands and code stay here (never translated).
 export default function WorkMarketing() {
   const nav = useNavigate()
+  const { t, locale } = useLocale()
   useSeo({
-    title: 'WorkCoPilot by AdmireVeda - Your expert, on every screen',
-    description: 'WorkCoPilot plans your task with the strongest AI, then guides you step by step, watches your screen, and catches and corrects a wrong move as it happens - in any app, with the exact click, command or setting. Read-only, private by design, documented when you finish.',
+    title: t('home.meta.title'),
+    description: t('home.meta.description'),
     path: '/',
   })
   const [price, setPrice] = useState(null)
@@ -99,42 +103,29 @@ export default function WorkMarketing() {
   const tilt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; e.currentTarget.style.transform = `perspective(700px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg) translateY(-4px)` }
   const untilt = (e) => { e.currentTarget.style.transform = '' }
 
-  const benefits = [
-    { icon: MonitorPlay, viz: 'steps', t: 'Guided, step by step', d: 'It watches your screen and tells you the exact next move, one step at a time, and checks each one really worked before moving on.' },
-    { icon: TerminalSquare, viz: 'command', t: 'The exact how, every time', d: 'Not vague advice. The precise click, command or setting to use, spelled out and copy-ready. Always the best proven way, no shortcuts.' },
-    { icon: Compass, viz: 'zero', t: 'Starts from zero', d: 'Opens the right page, signs you in, and walks you to the exact spot. Nothing assumed, nothing skipped.' },
-    { icon: ShieldCheck, viz: 'fix', t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix. When a tool\'s UI has changed, it finds the new control and corrects the step instead of pointing at a button that moved.' },
-    { icon: Zap, viz: 'current', t: 'Always relevant to your screen', d: 'Told you to go somewhere and it is not there, or the page looks different than expected? It reads your actual screen from the live screenshot, learns what is really there, and gives you the right, relevant next move - never a stale instruction that does not match what you see.' },
-    { icon: Monitor, viz: 'command', t: 'Any app and any process, not just the browser', d: 'Web apps, installed desktop apps, on-prem consoles at a local address, and your own in-house built apps, custom apps and custom processes - it reads whatever is on screen, learns your environment, and guides you correctly through it. Not just the public tools everyone already knows.' },
-    { icon: Globe2, viz: 'current', t: 'Becomes your own internal expert', d: 'Load your in-house, custom and on-prem app docs into your company knowledge base and it learns them, then walks your whole team through those apps step by step - tools it was never trained on. One person adds it, everyone gets it. The more your team adds - apps, docs, processes - the more it compounds into your own internal expert that understands your whole environment, like a colleague who has been there for years.' },
-    { icon: FileText, viz: 'record', t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
-    { icon: ScanEye, viz: 'record', t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings. Paste a long error or an API response and it analyzes it and adjusts the plan.' },
-    // Benefit only (never the mechanism): the pill advertises cross-session learning + live research.
-    { icon: RefreshCw, viz: 'current', t: 'Fresh and live, never stale', d: 'It researches the latest live and learns the current way your tools work, so your steps reflect how things work today, not last year - never stuck on stale AI knowledge.' },
-  ]
+  // Benefit pills: the icon order here pairs 1:1 with home.benefits.items in the
+  // catalog (titles only are rendered; the long descriptions live on /how-it-works).
+  const benefitIcons = [MonitorPlay, TerminalSquare, Compass, ShieldCheck, Zap, Monitor, Globe2, FileText, ScanEye, RefreshCw]
+  const benefits = t('home.benefits.items').map((title, i) => ({ icon: benefitIcons[i] || Sparkles, t: title }))
   const steps = [
     { n: '01', viz: 'goal', t: 'Scope it together', d: 'Say what you want, answer a couple of quick questions, and it scopes the job before it plans, so the plan fits what you really need.' },
     { n: '02', viz: 'guide', t: 'Get guided live', d: 'It reads your screen, guides the exact next move, checks it worked, and corrects you the moment something looks wrong.' },
     { n: '03', viz: 'keep', t: 'Finish & keep it', d: 'Done right, with a documented write-up you can come back to.' },
   ]
-  // Each use-case gets its OWN icon (no repeated glyph) and an accent tone.
-  const cards = [
-    { id: 'config', k: 'Technical Setup & Config', d: 'Firewalls, IDS/IPS, cloud, DevOps, infrastructure.', ic: Server, tone: 'cyan' },
-    { id: 'build', k: 'Build & Implement', d: 'Pipelines, integrations, end-to-end builds.', ic: Blocks, tone: '' },
-    { id: 'ai', k: 'AI & Automation', d: 'Agents, RAG, enterprise AI, automated workflows.', ic: Bot, tone: 'violet' },
-    { id: 'product', k: 'Product & Innovation', d: 'Prototype, build and ship a brand new idea.', ic: Rocket, tone: 'amber' },
-    { id: 'marketing', k: 'Marketing & Growth', d: 'Campaigns, analytics, launches, outreach.', ic: Megaphone, tone: 'pink' },
-    { id: 'office', k: 'Accounting & Office', d: 'Reconciliations, reports, spreadsheets, filings.', ic: Calculator, tone: 'cyan' },
-    { id: 'legal', k: 'Legal & Compliance', d: 'Reviews, forms, process, compliance checks.', ic: Scale, tone: '' },
-    { id: 'general', k: 'Anything else', d: 'If it is on a screen, you are guided through it.', ic: Shapes, tone: 'amber' },
+  // Each use-case gets its OWN icon (no repeated glyph) and an accent tone. The
+  // id/icon/tone rows pair 1:1 with home.fields.cards (title + blurb) in the catalog.
+  const cardMeta = [
+    { id: 'config', ic: Server, tone: 'cyan' },
+    { id: 'build', ic: Blocks, tone: '' },
+    { id: 'ai', ic: Bot, tone: 'violet' },
+    { id: 'product', ic: Rocket, tone: 'amber' },
+    { id: 'marketing', ic: Megaphone, tone: 'pink' },
+    { id: 'office', ic: Calculator, tone: 'cyan' },
+    { id: 'legal', ic: Scale, tone: '' },
+    { id: 'general', ic: Shapes, tone: 'amber' },
   ]
-  const marquee = [
-    'AWS', 'Invoices', 'Kubernetes', 'Payroll', 'RAG pipelines', 'Tax filing', 'Firewalls', 'Pitch decks',
-    'Terraform', 'Grant applications', 'CI/CD', 'Budgets', 'Stripe', 'Procurement', 'Ansible', 'Onboarding',
-    'Postgres', 'Insurance claims', 'n8n', 'Contracts', 'Grafana', 'Resumes', 'Docker', 'Expense reports',
-    'SIEM', 'Fundraising', 'Salesforce', 'Email campaigns', 'Shopify', 'Board decks', 'Python & APIs', 'Inventory',
-    'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
-  ]
+  const cards = t('home.fields.cards').map((c, i) => ({ ...cardMeta[i], ...c }))
+  const marquee = t('home.marquee')
   const pillars = [
     { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction on by default, for everyone.', points: ['PII, PHI, secrets and IPs redacted on your device before anything is sent, shown as [REDACTED]. On by default.', 'Built-in SAST and a live dependency CVE check on any code before you run it', 'Never clicks, types or runs anything; never generates content - it hands you a prompt for your own AI', 'Hidden on screen-share, and every account protected by an authenticator (MFA)', 'A per-session audit log: what was sent, what was read from your screen, the code checks, what was filtered, every flag raised'] },
     { icon: Rocket, t: 'Powerful', claim: 'From a one-liner to a full enterprise build.', d: 'Whatever the task, it carries it end to end.', points: ['Simplest task to the most advanced', 'Any tool, any stack, any field', 'Nothing left half-done'] },
@@ -151,12 +142,15 @@ export default function WorkMarketing() {
   // superadmin change in Admin > Pricing flows straight to the cards. Fallback to
   // the historical 1/2/4/6 only until the fetch resolves.
   const dh = (price && price.dailyHours) || {}
-  const hLine = (h) => `${h} hour${h === 1 ? '' : 's'} of daily minutes - use anytime, billed per minute used`
+  // "{n} hours" is a plural form in the catalog (common.hour_one/_two/_other),
+  // so languages with a different plural shape (Arabic, Russian) read right.
+  const hLine = (h) => t('home.pricing.hoursLine', { hours: t.n('common.hour', h) })
+  // Plan names (Lite/Basic/Advanced/Premium) are product names: never translated.
   const tiers = price ? [
-    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: dh.lite ?? 1, tasks: (price.tasks || {}).lite, feats: [hLine(dh.lite ?? 1), '1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'], hour: price.hour.lite },
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: dh.basic ?? 2, tasks: (price.tasks || {}).basic, feats: [hLine(dh.basic ?? 2), 'Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'], hour: price.hour.basic },
-    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: dh.advanced ?? 4, tasks: (price.tasks || {}).advanced, popular: true, feats: [hLine(dh.advanced ?? 4), 'Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'], hour: price.hour.advanced },
-    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: dh.premium ?? 6, tasks: (price.tasks || {}).premium, feats: [hLine(dh.premium ?? 6), 'Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'], hour: price.hour.premium },
+    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: dh.lite ?? 1, tasks: (price.tasks || {}).lite, feats: [hLine(dh.lite ?? 1), ...t('home.pricing.feats.lite')], hour: price.hour.lite },
+    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: dh.basic ?? 2, tasks: (price.tasks || {}).basic, feats: [hLine(dh.basic ?? 2), ...t('home.pricing.feats.basic')], hour: price.hour.basic },
+    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: dh.advanced ?? 4, tasks: (price.tasks || {}).advanced, popular: true, feats: [hLine(dh.advanced ?? 4), ...t('home.pricing.feats.advanced')], hour: price.hour.advanced },
+    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: dh.premium ?? 6, tasks: (price.tasks || {}).premium, feats: [hLine(dh.premium ?? 6), ...t('home.pricing.feats.premium')], hour: price.hour.premium },
   ] : []
 
   return (
@@ -180,34 +174,30 @@ export default function WorkMarketing() {
           onFocus={() => setHeroFocus(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setHeroFocus(false) }}
         >
           <div className="wm-hero-copy">
-            <div className="wm-badge" data-reveal><Sparkles size={13} /> Your expert, on every screen</div>
-            <RotatingHero paused={heroHover || heroFocus} />
+            <div className="wm-badge" data-reveal><Sparkles size={13} /> {t('home.badge')}</div>
+            <RotatingHero paused={heroHover || heroFocus} t={t} locale={locale} />
             <div className="wm-hero-cta" data-reveal>
-              <button className="wm-cta" onClick={() => go('')}>Start guiding me <ArrowRight size={16} /></button>
-              <button className="wm-cta alt" onClick={() => nav('/demo')}>See a 60-second demo <ArrowRight size={16} /></button>
+              <button className="wm-cta" onClick={() => go('')}>{t('home.cta.start')} <ArrowRight size={16} className="wm-arrow" /></button>
+              <button className="wm-cta alt" onClick={() => nav('/demo')}>{t('home.cta.demo')} <ArrowRight size={16} className="wm-arrow" /></button>
             </div>
             {/* "Any app" strip: a quiet caption + a calm row of neutral category
                 glyphs, filling the space below the CTAs. Category glyphs ONLY -
                 no brand marks (honest). Tokens adapt to light + dark. */}
             <div className="wm-anyapp" data-reveal>
-              <p className="wm-anyapp-cap">Any app you already use - web, desktop, on-prem, and your own in-house, custom apps and processes.</p>
+              <p className="wm-anyapp-cap">{t('home.anyapp.cap')}</p>
               <div className="wm-anyapp-row">
-                {[
-                  { Ic: Globe2, t: 'Web browser' },
-                  { Ic: TerminalSquare, t: 'Terminal' },
-                  { Ic: Code2, t: 'Code editor' },
-                  { Ic: Table, t: 'Spreadsheets' },
-                  { Ic: FileText, t: 'Documents' },
-                  { Ic: Palette, t: 'Design tools' },
-                ].map(({ Ic, t }) => (
-                  <span key={t} className="wm-anyapp-tile" title={t} aria-label={t}>
-                    <Ic size={17} aria-hidden />
-                  </span>
-                ))}
+                {[Globe2, TerminalSquare, Code2, Table, FileText, Palette].map((Ic, i) => {
+                  const label = t('home.anyapp.tiles')[i]
+                  return (
+                    <span key={i} className="wm-anyapp-tile" title={label} aria-label={label}>
+                      <Ic size={17} aria-hidden />
+                    </span>
+                  )
+                })}
               </div>
             </div>
           </div>
-          <LiveDemo tilt={tilt} untilt={untilt} />
+          <LiveDemo tilt={tilt} untilt={untilt} t={t} />
         </div>
 
         {/* marquee of fields */}
@@ -228,17 +218,17 @@ export default function WorkMarketing() {
           <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
             <div className="wm-best-in">
               <div className="wm-best-copy">
-                <div className="wm-eyebrow"><Trophy size={14} /> The strongest AI available to you</div>
-                <h2 className="wm-best-h">Planned by the <span className="wm-best-ai">strongest AI</span> you can use. <em>Then guided, watched, and corrected - live on your screen.</em></h2>
-                <p className="wm-best-p">When you start a task, the plan comes from the strongest AI your key can reach. Then it does what instructions can't: guides you step by step, <b>watches your screen as you go</b>, and <b>catches and corrects a wrong move</b> the moment it happens. A live loop, not a page of steps.</p>
-                <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">See what that means for you <ArrowRight size={14} /></WorkCard.Link>
+                <div className="wm-eyebrow"><Trophy size={14} /> {t('home.best.eyebrow')}</div>
+                <h2 className="wm-best-h">{t.rich('home.best.h', null, { ai: (c) => <span className="wm-best-ai">{c}</span> })}</h2>
+                <p className="wm-best-p">{t.rich('home.best.p')}</p>
+                <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">{t('home.best.link')} <ArrowRight size={14} className="wm-arrow" /></WorkCard.Link>
               </div>
-              <div className="wm-best-receipt" aria-label="How each task is planned, guided, watched and corrected">
-                <div className="wm-best-row plan"><span className="k">plan</span><span className="v"><b>strongest AI</b> on your key</span></div>
-                <div className="wm-best-row guide"><span className="k">guide</span><span className="v"><b>live</b>, step by step</span></div>
-                <div className="wm-best-row watch"><span className="k">watch</span><span className="v">your <b>screen</b>, as you go <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
-                <div className="wm-best-row correct"><span className="k">correct</span><span className="v">a wrong step, <b>caught and fixed</b></span></div>
-                <WorkCard.Proof><b className="dp-ok"><Check size={11} /> Planned by the strongest AI for you</b> <span className="cb-dim">the best one available on the key in use</span></WorkCard.Proof>
+              <div className="wm-best-receipt" aria-label={t('home.best.receiptAria')}>
+                <div className="wm-best-row plan"><span className="k">{t('home.best.planK')}</span><span className="v">{t.rich('home.best.planV')}</span></div>
+                <div className="wm-best-row guide"><span className="k">{t('home.best.guideK')}</span><span className="v">{t.rich('home.best.guideV')}</span></div>
+                <div className="wm-best-row watch"><span className="k">{t('home.best.watchK')}</span><span className="v">{t.rich('home.best.watchV')} <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
+                <div className="wm-best-row correct"><span className="k">{t('home.best.correctK')}</span><span className="v">{t.rich('home.best.correctV')}</span></div>
+                <WorkCard.Proof><b className="dp-ok"><Check size={11} /> {t('home.best.proofOk')}</b> <span className="cb-dim">{t('home.best.proofDim')}</span></WorkCard.Proof>
               </div>
             </div>
           </WorkCard>
@@ -257,42 +247,35 @@ export default function WorkMarketing() {
         <div className="wm-wrap">
           <div className="wm-roi-head">
             <div>
-              <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies &amp; teams</div>
-              <h2 className="wm-h2" data-reveal>Do more, with the team you already have.</h2>
+              <div className="wm-eyebrow" data-reveal><Rocket size={14} /> {t('home.roi.eyebrow')}</div>
+              <h2 className="wm-h2" data-reveal>{t('home.roi.h2')}</h2>
             </div>
-            <p className="wm-roi-lead" data-reveal><b>Same payroll, more output.</b> WorkCoPilot turns the people you already have into the specialists you were about to hire or outsource: guided through the hard work step by step, in the apps they already use, with every step documented as it happens. No new headcount. No rip-and-replace.</p>
+            <p className="wm-roi-lead" data-reveal>{t.rich('home.roi.lead')}</p>
           </div>
 
           {/* The comparison: the same six budget lines, Before (muted, left) and
               With WorkCoPilot (bright, right), in the site's own before/after
               language (see the enterprise page's .wen-ba). Site fonts only. */}
           {(() => {
-            const ROWS = [
-              ['Specialist projects', 'Migrations, hardening, pentests, builds: sent to contractors or an implementation partner.', <>Delivered by <em>your own people</em>, step by step, the first time.</>],
-              ['Time to ship', 'Work queues behind the one person who knows how.', <>Anyone on the team can take the next step. <em>Weeks become days.</em></>],
-              ['Consultants and partners', 'A statement of work for every new platform, framework or tool.', <>Your team stands it up correctly, and the know-how <em>stays in-house</em>.</>],
-              ['Onboarding', 'Months of shadowing before a new hire is trusted on real work.', <>Guided through real tasks from their <em>first task</em>, in your apps and your way of working.</>],
-              ['Mistakes', 'Found in review, in production, or by the auditor.', <>A wrong turn is <em>caught on screen</em> and corrected as it happens.</>],
-              ['Documentation', 'Written up later, if at all.', <>Every step written up and logged as it happens. <em>Audit-ready</em> when you finish.</>],
-            ]
+            const ROWS = t('home.roi.rows')   // [{ t, before, now(<em> rich) }]
             return (
-              <div className="wm-roi-split" data-reveal aria-label="Before and after, for the same team">
+              <div className="wm-roi-split" data-reveal aria-label={t('home.roi.splitAria')}>
                 <div className="wm-roi-col before">
-                  <div className="wm-roi-tag"><X size={13} strokeWidth={2.6} /> Before</div>
-                  <h3>Where the budget goes today.</h3>
+                  <div className="wm-roi-tag"><X size={13} strokeWidth={2.6} /> {t('home.roi.beforeTag')}</div>
+                  <h3>{t('home.roi.beforeH')}</h3>
                   <ul>
-                    {ROWS.map(([t, before]) => (
-                      <li key={t}><span className="wm-roi-dot" aria-hidden="true" /><div><b>{t}</b><p>{before}</p></div></li>
+                    {ROWS.map((r) => (
+                      <li key={r.t}><span className="wm-roi-dot" aria-hidden="true" /><div><b>{r.t}</b><p>{r.before}</p></div></li>
                     ))}
                   </ul>
                 </div>
-                <div className="wm-roi-arrow" aria-hidden="true"><ArrowRight size={18} /></div>
+                <div className="wm-roi-arrow" aria-hidden="true"><ArrowRight size={18} className="wm-arrow" /></div>
                 <div className="wm-roi-col after">
-                  <div className="wm-roi-tag ok"><Check size={13} strokeWidth={3} /> With WorkCoPilot</div>
-                  <h3>What the same team does now.</h3>
+                  <div className="wm-roi-tag ok"><Check size={13} strokeWidth={3} /> {t('home.roi.afterTag')}</div>
+                  <h3>{t('home.roi.afterH')}</h3>
                   <ul>
-                    {ROWS.map(([t, , now]) => (
-                      <li key={t}><span className="wm-roi-tick" aria-hidden="true"><Check size={13} strokeWidth={3} /></span><div><b>{t}</b><p>{now}</p></div></li>
+                    {ROWS.map((r) => (
+                      <li key={r.t}><span className="wm-roi-tick" aria-hidden="true"><Check size={13} strokeWidth={3} /></span><div><b>{r.t}</b><p>{renderRich(r.now)}</p></div></li>
                     ))}
                   </ul>
                 </div>
@@ -301,10 +284,10 @@ export default function WorkMarketing() {
           })()}
 
           <div className="wm-roi-foot" data-reveal>
-            <p className="wm-roi-note"><Lock size={14} /> Read-only by design: it guides your people and never clicks, types or runs anything for them.</p>
+            <p className="wm-roi-note"><Lock size={14} /> {t('home.roi.note')}</p>
             <div className="wm-roi-ctas">
-              <a className="wm-cta" href="/workcopilot/contact">Talk about your team <ArrowRight size={16} /></a>
-              <a className="wm-cta ghost" href="#enterprise">See the enterprise controls <ArrowRight size={15} /></a>
+              <a className="wm-cta" href="/workcopilot/contact">{t('home.roi.ctaTeam')} <ArrowRight size={16} className="wm-arrow" /></a>
+              <a className="wm-cta ghost" href="#enterprise">{t('home.roi.ctaEnt')} <ArrowRight size={15} className="wm-arrow" /></a>
             </div>
           </div>
         </div>
@@ -316,28 +299,28 @@ export default function WorkMarketing() {
           from the roster exported by that page, so they can never drift. */}
       <section className="wm-sec wm-fields" id="fields">
         <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Shapes size={14} /> Every field &middot; one tool</div>
-          <h2 className="wm-h2" data-reveal>Expert in your field, <em>whatever your field is.</em></h2>
-          <p className="wm-sub" data-reveal>One copilot your whole company can use, technical or not. It guides work across {FIELD_TOTAL} professional fields in {FIELD_FAMILIES.length} families, and the steps read like an expert in that field wrote them. Pick a space and go.</p>
-          <div className="wm-fld-stats" data-reveal aria-label="Coverage at a glance">
-            <div className="wm-fld-stat"><b>{FIELD_TOTAL}</b><span>professional fields</span></div>
-            <div className="wm-fld-stat"><b>{FIELD_FAMILIES.length}</b><span>families of work</span></div>
-            <div className="wm-fld-stat"><b>1</b><span>tool for all of them</span></div>
+          <div className="wm-eyebrow" data-reveal><Shapes size={14} /> {t('home.fields.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('home.fields.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.fields.sub', { total: FIELD_TOTAL, families: FIELD_FAMILIES.length })}</p>
+          <div className="wm-fld-stats" data-reveal aria-label={t('home.fields.statsAria')}>
+            <div className="wm-fld-stat"><b>{FIELD_TOTAL}</b><span>{t('home.fields.statFields')}</span></div>
+            <div className="wm-fld-stat"><b>{FIELD_FAMILIES.length}</b><span>{t('home.fields.statFamilies')}</span></div>
+            <div className="wm-fld-stat"><b>1</b><span>{t('home.fields.statOne')}</span></div>
           </div>
           <div className="wm-cards" data-reveal>
             {cards.map((c, i) => (
-              <WorkCard key={c.k} theme="light" tone={c.tone || undefined} delay={i * 55}
+              <WorkCard key={c.id} theme="light" tone={c.tone || undefined} delay={i * 55}
                 texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%'][i % 8]}
                 onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
                 <WorkCard.Proof><span className="cb-dim">{c.d}</span></WorkCard.Proof>
                 <WorkCard.Head icon={c.ic} title={c.k} />
-                <WorkCard.Link>See in detail <ArrowRight size={14} /></WorkCard.Link>
+                <WorkCard.Link>{t('common.seeInDetail')} <ArrowRight size={14} className="wm-arrow" /></WorkCard.Link>
               </WorkCard>
             ))}
           </div>
           <div className="wm-fld-more" data-reveal>
-            <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>Explore every use case in detail <ArrowRight size={15} /></button>
-            <a className="wm-fld-browse" href="/workcopilot/fields">or browse all {FIELD_TOTAL} fields <ArrowRight size={13} /></a>
+            <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>{t('home.fields.exploreAll')} <ArrowRight size={15} className="wm-arrow" /></button>
+            <a className="wm-fld-browse" href="/workcopilot/fields">{t('home.fields.browseAll', { total: FIELD_TOTAL })} <ArrowRight size={13} className="wm-arrow" /></a>
           </div>
         </div>
       </section>
@@ -346,10 +329,10 @@ export default function WorkMarketing() {
           after the fields it protects: the work is written and handled the safe
           way across every one of those fields. Both cards link to the showcase. */}
       <div className="wm-wrap">
-        <TrustDuo nav={nav} />
+        <TrustDuo nav={nav} t={t} />
         <div className="wm-sec-paper" data-reveal>
-          <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> See the data protection in action</a>
-          <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> Read the Security &amp; Privacy paper (PDF)</a>
+          <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> {t('home.trust.ctaShow')}</a>
+          <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> {t('home.trust.ctaPaper')}</a>
         </div>
       </div>
 
@@ -357,14 +340,14 @@ export default function WorkMarketing() {
       {/* BENEFITS teaser - the full, visual breakdown lives on its own page. */}
       <section className="wm-sec">
         <div className="wm-wrap" data-reveal style={{ textAlign: 'center' }}>
-          <h2 className="wm-h2">Like having the best person in the room, every time.</h2>
-          <p className="wm-sub" style={{ margin: '12px auto 22px', maxWidth: 700 }}>Guided step by step, the exact how every time, catches and corrects mistakes, works in any app, and grounds every step in the best practice and in your own world.</p>
+          <h2 className="wm-h2">{t('home.benefits.h2')}</h2>
+          <p className="wm-sub" style={{ margin: '12px auto 22px', maxWidth: 700 }}>{t('home.benefits.sub')}</p>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 26 }}>
             {benefits.map((b) => (
               <span key={b.t} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, color: 'var(--tx)', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 999, padding: '7px 14px' }}><b.icon size={15} style={{ color: 'var(--em)' }} /> {b.t}</span>
             ))}
           </div>
-          <button className="wm-cta" onClick={() => nav('/workcopilot/how-it-works')}>See everything it does <ArrowRight size={16} /></button>
+          <button className="wm-cta" onClick={() => nav('/workcopilot/how-it-works')}>{t('home.benefits.cta')} <ArrowRight size={16} className="wm-arrow" /></button>
         </div>
       </section>
 
@@ -450,40 +433,40 @@ export default function WorkMarketing() {
       {/* PRICING */}
       <section className="wm-sec wm-pricing" id="pricing">
         <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Zap size={14} /> Pricing</div>
-          <h2 className="wm-h2" data-reveal>Simple plans. Real guided time.</h2>
-          <p className="wm-sub" data-reveal>Hours of live guidance every day. Pause anytime, and come back right where you left off.</p>
-          <div className="wm-cyc" data-reveal role="tablist" aria-label="Billing period">
-            <button role="tab" aria-selected={cycle === 'monthly'} className={`wm-cyc-b${cycle === 'monthly' ? ' on' : ''}`} onClick={() => setCycle('monthly')}>Monthly</button>
-            <button role="tab" aria-selected={cycle === 'annual'} className={`wm-cyc-b${cycle === 'annual' ? ' on' : ''}`} onClick={() => setCycle('annual')}>Annual <span className="wm-cyc-save">Save 20%</span></button>
+          <div className="wm-eyebrow" data-reveal><Zap size={14} /> {t('home.pricing.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t('home.pricing.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.pricing.sub')}</p>
+          <div className="wm-cyc" data-reveal role="tablist" aria-label={t('home.pricing.billingAria')}>
+            <button role="tab" aria-selected={cycle === 'monthly'} className={`wm-cyc-b${cycle === 'monthly' ? ' on' : ''}`} onClick={() => setCycle('monthly')}>{t('home.pricing.monthly')}</button>
+            <button role="tab" aria-selected={cycle === 'annual'} className={`wm-cyc-b${cycle === 'annual' ? ' on' : ''}`} onClick={() => setCycle('annual')}>{t('home.pricing.annual')} <span className="wm-cyc-save">{t('home.pricing.save')}</span></button>
           </div>
           <div className="wm-tiers">
-            {tiers.map((t) => (
-              <div className={`wm-tier${t.popular ? ' pop' : ''}`} data-reveal key={t.id}>
-                {t.popular && <div className="wm-tier-tag">Most popular</div>}
-                <div className="wm-tier-name">{t.name}</div>
-                <div className="wm-tier-price">{money(monthlyRate(t.price))}<span>/mo</span></div>
+            {tiers.map((tier) => (
+              <div className={`wm-tier${tier.popular ? ' pop' : ''}`} data-reveal key={tier.id}>
+                {tier.popular && <div className="wm-tier-tag">{t('home.pricing.mostPopular')}</div>}
+                <div className="wm-tier-name">{tier.name}</div>
+                <div className="wm-tier-price">{money(monthlyRate(tier.price))}<span>{t('common.perMonth')}</span></div>
                 {cycle === 'annual'
-                  ? <div className="wm-tier-cyc"><s>{money(t.price)}/mo</s> billed annually &middot; {money(annualTotal(t.price))}/yr</div>
-                  : <div className="wm-tier-cyc dim">billed monthly</div>}
-                <div className="wm-tier-hrs">{t.hrs} hour{t.hrs === 1 ? '' : 's'} of daily minutes{t.tasks != null ? ` · up to ${t.tasks} task${t.tasks === 1 ? '' : 's'}` : ''}</div>
-                <div className="wm-tier-mins">Spend them anytime across the whole day. Billed per minute you actually use, never by the hour.</div>
-                <ul>{t.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
-                <button className={`wm-cta ${t.popular ? '' : 'alt'}`} onClick={() => choosePlan(t.id)}>Choose {t.name}</button>
-                <div className="wm-tier-topup">Extra hour {money(t.hour)}</div>
+                  ? <div className="wm-tier-cyc"><s>{money(tier.price)}{t('common.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(tier.price))}{t('common.perYear')}</div>
+                  : <div className="wm-tier-cyc dim">{t('home.pricing.billedMonthly')}</div>}
+                <div className="wm-tier-hrs">{t('home.pricing.dailyMinutes', { hours: t.n('common.hour', tier.hrs) })}{tier.tasks != null ? ` · ${t('home.pricing.upTo', { tasks: t.n('common.task', tier.tasks) })}` : ''}</div>
+                <div className="wm-tier-mins">{t('home.pricing.mins')}</div>
+                <ul>{tier.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
+                <button className={`wm-cta ${tier.popular ? '' : 'alt'}`} onClick={() => choosePlan(tier.id)}>{t('home.pricing.choose', { plan: tier.name })}</button>
+                <div className="wm-tier-topup">{t('home.pricing.extraHour', { price: money(tier.hour) })}</div>
               </div>
             ))}
           </div>
           <div className="wm-trust" data-reveal>
-            <span><Lock size={14} /> Secure checkout, powered by Stripe</span>
-            <span><Check size={14} /> Cancel anytime, no contract</span>
-            <span><ShieldCheck size={14} /> Purchased time never expires</span>
+            <span><Lock size={14} /> {t('home.pricing.trustStripe')}</span>
+            <span><Check size={14} /> {t('home.pricing.trustCancel')}</span>
+            <span><ShieldCheck size={14} /> {t('home.pricing.trustExpire')}</span>
           </div>
-          {price && <p className="wm-fineprint" data-reveal>Need more? Top up extra hours anytime. Premium adds generated visuals, and image packs start from {money(price.image.premium)} each (min {price.imageMinBulk}). Purchased time never expires.</p>}
+          {price && <p className="wm-fineprint" data-reveal>{t('home.pricing.fineprint', { price: money(price.image.premium), min: price.imageMinBulk })}</p>}
           {/* The full entitlement matrix (every row, every plan, the fine print)
               lives on /workcopilot/pricing; the main page keeps only the cards. */}
           <div className="wm-fld-more" data-reveal>
-            <a className="wm-cta alt" href="/workcopilot/pricing">See the full plan comparison <ArrowRight size={15} /></a>
+            <a className="wm-cta alt" href="/workcopilot/pricing">{t('home.pricing.fullCompare')} <ArrowRight size={15} className="wm-arrow" /></a>
           </div>
         </div>
       </section>
@@ -494,31 +477,28 @@ export default function WorkMarketing() {
           emphasis, orange CTA). Routes to the contact form. */}
       <section className="wm-sec wm-ent-sec" id="enterprise">
         <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Building2 size={14} /> For companies &amp; teams</div>
-          <h2 className="wm-h2" data-reveal>Enterprise-grade, from day one.</h2>
-          <p className="wm-sub" data-reveal>Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people, with your data staying on your terms.</p>
+          <div className="wm-eyebrow" data-reveal><Building2 size={14} /> {t('home.enterprise.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t('home.enterprise.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.enterprise.sub')}</p>
           <div className="wm-ent-grid" data-reveal>
-            {[
-              [Layers, 'Your people, working the way your company works', 'Your SOPs, playbooks and app guides shape every on-screen step, so new hires ramp faster and veterans stop guessing. Private to your company, never used to train the platform.'],
-              [Gauge, 'ROI your leaders can see', 'A productivity view for leadership: tasks completed, time spent, and an illustrative view of time and cost saved, with your brand on the product your people use.'],
-              [ShieldCheck, 'Fewer mistakes, nothing sensitive leaks', 'A wrong turn is caught as it happens, and PII and PHI are redacted on the device under one company policy you set once. Your SOC hears who and what kind, never the values.'],
-              [ListChecks, 'Audit-ready, without the scramble', 'Sealed per-task evidence mapped to 18 frameworks, a full per-session audit log, and a DPA your legal team can sign. Evidence that supports your program.'],
-              [Lock, 'Live across your company, no project plan', 'Unlimited seats, one central admin console, and sign-in through your own identity provider (OIDC, 14 providers) with invite-only provisioning. Your people start in the apps they already know.'],
-              [Server, 'Runs on your terms', 'Per-company AI keys or bring your own, and on-prem deployment on request. Your keys, your control, nothing shared.'],
-            ].map(([Ic, t, d]) => (
-              <div className="wm-ent-card" key={t}>
-                <span className="wm-ent-ic"><Ic size={18} /></span>
-                <b>{t}</b>
-                <i>{d}</i>
-              </div>
-            ))}
+            {/* Icon order pairs 1:1 with home.enterprise.cards in the catalog. */}
+            {t('home.enterprise.cards').map((c, i) => {
+              const Ic = [Layers, Gauge, ShieldCheck, ListChecks, Lock, Server][i] || Layers
+              return (
+                <div className="wm-ent-card" key={i}>
+                  <span className="wm-ent-ic"><Ic size={18} /></span>
+                  <b>{c.t}</b>
+                  <i>{c.d}</i>
+                </div>
+              )
+            })}
           </div>
           <div className="wm-ent-cta" data-reveal>
-            <a className="wm-cta" href="/workcopilot/enterprise">Explore every enterprise feature <ArrowRight size={16} /></a>
-            <a className="wm-cta ghost" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={15} /></a>
+            <a className="wm-cta" href="/workcopilot/enterprise">{t('home.enterprise.ctaExplore')} <ArrowRight size={16} className="wm-arrow" /></a>
+            <a className="wm-cta ghost" href="/workcopilot/contact">{t('home.enterprise.ctaQuote')} <ArrowRight size={15} className="wm-arrow" /></a>
           </div>
-          <div className="wm-ent-strip" aria-label="Enterprise assurances">
-            {['SSO (OIDC)', 'Mandatory MFA', 'SOC / SIEM relay', 'DPA', 'On-prem on request', 'Audit logs'].map((c) => (
+          <div className="wm-ent-strip" aria-label={t('home.enterprise.stripAria')}>
+            {t('home.enterprise.chips').map((c) => (
               <span key={c} className="wm-ent-chip">{c}</span>
             ))}
           </div>
@@ -529,38 +509,38 @@ export default function WorkMarketing() {
       <section className="wm-final">
         <div className="wm-wrap wm-final-in" data-reveal>
           <AVMark size={46} />
-          <h2>Stop guessing. Start being guided.</h2>
-          <p>Bring any task. WorkCoPilot takes it from the very first step to done.</p>
-          <button className="wm-cta big" onClick={() => go('')}>Get started <ArrowRight size={18} /></button>
+          <h2>{t('home.final.h2')}</h2>
+          <p>{t('home.final.p')}</p>
+          <button className="wm-cta big" onClick={() => go('')}>{t('common.getStarted')} <ArrowRight size={18} className="wm-arrow" /></button>
           <div className="wm-dl" data-reveal>
-            <span className="wm-dl-lbl">Use it your way</span>
+            <span className="wm-dl-lbl">{t('home.final.useYourWay')}</span>
             <div className="wm-dl-row">
-              <a className="wm-dl-btn primary" href="/workcopilot" title="WorkCoPilot runs right in your browser - nothing to download, no installation needed. Just sign in and go.">
-                <span className="wm-dl-rec">No install</span>
+              <a className="wm-dl-btn primary" href="/workcopilot" title={t('home.final.browser.title')}>
+                <span className="wm-dl-rec">{t('home.final.browser.rec')}</span>
                 <Globe2 size={22} />
-                <span className="wm-dl-t"><b>Use in your browser</b><i>Nothing to install</i></span>
-                <ArrowRight size={16} />
+                <span className="wm-dl-t"><b>{t('home.final.browser.b')}</b><i>{t('home.final.browser.i')}</i></span>
+                <ArrowRight size={16} className="wm-arrow" />
               </a>
-              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label="Download the Windows desktop app" title="A floating overlay that sits on top of whatever app you are working in">
+              <a className="wm-dl-btn" href="/api/work/desktop-setup.exe" aria-label={t('home.final.windows.aria')} title={t('home.final.windows.title')}>
                 <Monitor size={22} />
-                <span className="wm-dl-t"><b>Windows app</b><i>Desktop overlay</i></span>
+                <span className="wm-dl-t"><b>{t('home.final.windows.b')}</b><i>{t('home.final.windows.i')}</i></span>
                 <Download size={16} />
               </a>
               <div className="wm-dl-btn soon" aria-disabled="true">
                 <Smartphone size={22} />
-                <span className="wm-dl-t"><b>Android app</b><i>Phone &amp; camera</i></span>
-                <span className="wm-dl-soon">Coming soon</span>
+                <span className="wm-dl-t"><b>{t('home.final.android.b')}</b><i>{t('home.final.android.i')}</i></span>
+                <span className="wm-dl-soon">{t('common.comingSoon')}</span>
               </div>
             </div>
-            <span className="wm-dl-note"><b>No download needed</b> - WorkCoPilot runs right in your browser. Prefer a floating overlay? Get the Windows app.</span>
-            <span className="wm-dl-note"><b>Sign in your way.</b> Continue with Google, Microsoft or Facebook, or create an account. On a company team? Type your work email and you are routed to your company's single sign-on. Every account is protected by an authenticator. <a href="/workcopilot/enterprise">See enterprise sign-in</a>.</span>
+            <span className="wm-dl-note">{t.rich('home.final.note1')}</span>
+            <span className="wm-dl-note">{t.rich('home.final.note2', null, { a: (c) => <a href="/workcopilot/enterprise">{c}</a> })}</span>
           </div>
         </div>
       </section>
 
       <div className="wm-disclaimer-wrap">
         <div className="wm-wrap">
-          <p className="wm-disclaimer"><ShieldCheck size={14} /> <b>Responsible use.</b> WorkCoPilot supports lawful, legitimate work only. It will not help build weapons or means of mass harm, create malware or exploits, break into systems or accounts you do not own, or do anything illegal or harmful. Requests like these are declined.</p>
+          <p className="wm-disclaimer"><ShieldCheck size={14} /> {t.rich('home.disclaimer')}</p>
         </div>
       </div>
 
@@ -590,16 +570,18 @@ function DemoScreen({ app, target, fix }) {
   )
 }
 // A red old-line / green new-line diff, the way the copilot shows a fix in code.
-function DiffBlock({ file, oldLine, newLine, kind }) {
+// Code / commands / diffs are always LTR (dir="ltr" on the blocks), even when the
+// page is Arabic: the labels translate, the code never does.
+function DiffBlock({ file, oldLine, newLine, kind, t }) {
   // Security fixes read "VULNERABLE -> FIXED"; reliability / quality fixes (e.g. a
   // governor-limit bulkify or a scoped rule) read "BEFORE -> AFTER" so the label is
   // always accurate to the change.
   const quality = kind === 'quality'
-  const badge = quality ? 'BEFORE → AFTER' : 'VULNERABLE → FIXED'
-  const delTag = quality ? 'before' : 'vuln'
-  const addTag = quality ? 'after' : 'fixed'
+  const badge = quality ? t('home.demo.beforeAfter') : t('home.demo.vulnFixed')
+  const delTag = quality ? t('home.demo.tagBefore') : t('home.demo.tagVuln')
+  const addTag = quality ? t('home.demo.tagAfter') : t('home.demo.tagFixed')
   return (
-    <div className="wm-diff">
+    <div className="wm-diff" dir="ltr">
       <div className="wm-diff-file"><FileText size={12} /> {file}<span className="wm-diff-badge">{badge}</span> <CopyChip text={newLine} /></div>
       <div className="wm-diff-line del"><span className="wm-diff-tag del">{delTag}</span><span className="m">-</span><code>{oldLine}</code></div>
       <div className="wm-diff-line add"><span className="wm-diff-tag add">{addTag}</span><span className="m">+</span><code>{newLine}</code></div>
@@ -607,20 +589,20 @@ function DiffBlock({ file, oldLine, newLine, kind }) {
   )
 }
 // The terminal command, shown as the step's single stage visual (for cmd steps).
-function TermBlock({ cmd }) {
+function TermBlock({ cmd, t }) {
   return (
-    <div className="wm-demo-term">
-      <div className="wm-demo-th">TERMINAL <CopyChip text={cmd} /></div>
+    <div className="wm-demo-term" dir="ltr">
+      <div className="wm-demo-th">{t('home.demo.terminal')} <CopyChip text={cmd} /></div>
       <code>{cmd}</code>
     </div>
   )
 }
 // A ready-to-run PROMPT handed off for the user's own AI (WorkCoPilot guides, it
 // does not generate for you). Copyable - the "prompt download" action.
-function PromptBlock({ text }) {
+function PromptBlock({ text, t }) {
   return (
-    <div className="wm-demo-term wm-demo-prompt">
-      <div className="wm-demo-th"><span className="wm-demo-promptlbl"><Sparkles size={11} /> PROMPT FOR YOUR AI</span> <CopyChip text={text} /></div>
+    <div className="wm-demo-term wm-demo-prompt" dir="ltr">
+      <div className="wm-demo-th"><span className="wm-demo-promptlbl"><Sparkles size={11} /> {t('home.demo.promptLbl')}</span> <CopyChip text={text} /></div>
       <code>{text}</code>
     </div>
   )
@@ -646,27 +628,23 @@ function RedactLockMark() {
 }
 // Two compact teaser cards under the hero: our strongest security and privacy
 // facts, each one true of the product today. Both route to the showcase page.
-function TrustDuo({ nav }) {
+function TrustDuo({ nav, t }) {
+  const sec = t('home.trust.sec'), priv = t('home.trust.priv')
   const cards = [
     {
-      k: 'sec', eyebrow: 'Security', Mark: ShieldMark,
-      title: 'Written the secure way. Checked before you see it.',
-      points: [
-        'Every command, snippet and script is self-checked for injection, hard-coded secrets and least privilege before it reaches you.',
-        'Read-only, grounded in your field\'s proven methodology, and kept current - never stale AI knowledge.',
-      ],
-      proof: <><span className="dp-chip">injection</span><span className="dp-chip">secrets</span><span className="dp-chip">least-priv</span><span className="dp-arrow">&rarr;</span><b className="dp-ok"><Check size={11} /> checked</b></>,
-      link: 'See security in action',
+      k: 'sec', eyebrow: sec.eyebrow, Mark: ShieldMark,
+      title: sec.title,
+      points: sec.points,
+      proof: <>{sec.chips.map((c) => <span key={c} className="dp-chip">{c}</span>)}<span className="dp-arrow">&rarr;</span><b className="dp-ok"><Check size={11} /> {sec.checked}</b></>,
+      link: sec.link,
     },
     {
-      k: 'priv', eyebrow: 'Privacy', Mark: RedactLockMark,
-      title: 'Scrubbed on your device, before anything leaves.',
-      points: [
-        'When data protection is on, PII, PHI and secrets are masked or tokenized on your machine first - the real values never leave, and the answer is rebuilt locally.',
-        'You decide what gets scrubbed, and on your own AI key calls stay on that key. Nothing is silently rerouted.',
-      ],
-      proof: <><span className="dp-raw">jane@acme.com</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[EMAIL_1]]</b><span className="dp-raw">sk-live-9f3c</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[SECRET_1]]</b></>,
-      link: 'See privacy in action',
+      k: 'priv', eyebrow: priv.eyebrow, Mark: RedactLockMark,
+      title: priv.title,
+      points: priv.points,
+      // Sample values + tokens are illustrative data, kept LTR and verbatim.
+      proof: <span dir="ltr"><span className="dp-raw">jane@acme.com</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[EMAIL_1]]</b><span className="dp-raw">sk-live-9f3c</span><span className="dp-arrow">&rarr;</span><b className="dp-tok">[[SECRET_1]]</b></span>,
+      link: priv.link,
     },
   ]
   return (
@@ -676,70 +654,59 @@ function TrustDuo({ nav }) {
           <WorkCard.Head align="start" icon={<c.Mark />} eyebrow={c.eyebrow} title={c.title} />
           <WorkCard.Points items={c.points} />
           <WorkCard.Proof>{c.proof}</WorkCard.Proof>
-          <WorkCard.Link onClick={() => nav('/workcopilot/security')}>{c.link} <ArrowRight size={14} /></WorkCard.Link>
+          <WorkCard.Link onClick={() => nav('/workcopilot/security')}>{c.link} <ArrowRight size={14} className="wm-arrow" /></WorkCard.Link>
         </WorkCard>
       ))}
     </div>
   )
 }
 
-function LiveDemo({ tilt, untilt }) {
+// The CODE side of each demo scenario - commands, diffs and the ready-to-paste
+// prompt. NEVER translated. Indexed [scenario][step] and merged with the prose
+// side (home.demo.scenarios in the locale catalog: tag, app, goal, sees, say/do
+// or step/how, click, done). Keep both lists the same shape.
+/* Note for scripts/check-jsx-imports: the literal <API_KEY> below is a placeholder
+   token inside prompt TEXT, not a JSX component (API_KEY is referenced here). */
+const DEMO_CODE = [
+  [{}, {}, {}],
+  [
+    { cmd: '$ pip install langchain langgraph chromadb' },
+    { diff: { file: 'retriever.py:21', old: 'retriever = store.as_retriever()', new: 'retriever = store.as_retriever(search_kwargs={"k":4,"score_threshold":0.75})' } },
+    {},
+    { diff: { file: 'agent.py:40', old: 'system = BASE + user_input', new: 'messages = [system(BASE), user(user_input)]' } },
+    { prompt: 'Scaffold a tool-calling RAG agent (LangGraph + Chroma). Retrieve top-4 chunks (score >= 0.75), keep user text in a USER turn, allowlist tool args, and use <API_KEY> placeholders - never real secrets.' },
+  ],
+  [{}, {}, {}, {}],
+  [
+    { diff: { file: 'Business Rule: Order sync', kind: 'quality', old: 'When: before | Table: Global | Condition: (none)', new: 'When: before | Table: sc_request | Condition: priority = 1' } },
+    { diff: { file: 'ACL: sc_request.read', old: 'Requires role: (empty)', new: 'Requires role: catalog_viewer' } },
+    {},
+  ],
+  [
+    { diff: { file: 'AccountTrigger.apxt:12', kind: 'quality', old: 'for (Account a : Trigger.new) { Contact c = [SELECT Id FROM Contact WHERE AccountId = :a.Id]; }', new: 'Map<Id,Contact> byAcct = mapContacts(Trigger.new); for (Account a : Trigger.new) { Contact c = byAcct.get(a.Id); }' } },
+    { diff: { file: 'AccountTrigger.apxt:20', old: '[SELECT Id, SSN__c FROM Contact WHERE AccountId IN :ids]', new: '[SELECT Id, SSN__c FROM Contact WHERE AccountId IN :ids WITH SECURITY_ENFORCED]' } },
+    { diff: { file: 'PaymentService.cls:5', old: 'String key = "sk_live_9f3c2a...";', new: 'req.setEndpoint("callout:Payments/charge"); // Named Credential' } },
+  ],
+  [
+    { diff: { file: 'role-policy.json', old: '"Action": "*",  "Resource": "*"', new: '"Action": ["s3:GetObject","s3:PutObject"], "Resource": "arn:aws:s3:::app-data/*"' } },
+    {},
+    {},
+  ],
+]
+
+function LiveDemo({ tilt, untilt, t }) {
   // Each demo is a REAL sequence the copilot walks you through: it READS your
   // screen ("I can see"), tells you the exact next move, CATCHES mistakes and
   // CORRECTS them (code diffs and all). This is the hand-holding, not a step list.
-  const demos = [
-    {
-      tag: 'Private by design', app: 'Billing console', goal: 'Set up a billing integration without leaking customer data',
-      steps: [
-        { sees: 'The screen shows a customer email, a card number and a live API key', fix: { say: 'Those are PII, a card and a secret - they must never reach an AI', do: 'They are blacked out in the screenshot and swapped for placeholders in text, on your device, before anything is sent' }, click: 'Protect on-device', done: 'only [EMAIL], [CARD] and [API_KEY] leave your device' },
-        { sees: 'You paste an error that still contains sk-live-... and an internal IP', fix: { say: 'A pasted log carries the secret and your private host', do: 'They are tokenized too, and the real values stay on your machine' }, click: 'Tokenize', done: 'the AI sees [[SECRET_1]] and [[IP_2]], never the real values' },
-        { sees: 'The answer comes back referencing the placeholders', step: 'Rebuild the answer locally', how: ['The real values are restored on your device', 'You get the full, usable answer', 'Nothing sensitive was ever transmitted'], click: 'Rebuild', done: 'you get the real answer; the AI never did' },
-      ],
-    },
-    {
-      tag: 'Agentic GenAI', app: 'Agent build', goal: 'Build a tool-calling RAG agent',
-      steps: [
-        { sees: 'An empty agent project is open', step: 'Create the vector store and embed your docs', how: ['Pick a vector store (pgvector or Chroma)', 'Chunk your docs to ~800 tokens with overlap', 'Embed the chunks and upsert them'], cmd: '$ pip install langchain langgraph chromadb', click: 'Create collection', done: 'the collection holds your vectors' },
-        { sees: 'Retrieval returns whole documents', fix: { say: 'Returning full docs blows the context window and buries the answer', do: 'Return the top matching chunks with a score threshold, not whole files' }, diff: { file: 'retriever.py:21', old: 'retriever = store.as_retriever()', new: 'retriever = store.as_retriever(search_kwargs={"k":4,"score_threshold":0.75})' }, click: 'Set top-k', done: 'retrieval returns focused chunks' },
-        { sees: 'Tools are defined but the agent free-forms answers', step: 'Wire the tool-calling loop', how: ['Bind the tools to the model', 'Add the reason, call-tool, observe loop', 'Stop when the model returns a final answer'], click: 'Bind tools', done: 'the agent actually calls your tools' },
-        { sees: 'User text is concatenated into the system prompt', fix: { say: 'That is a prompt-injection hole: a user can override your instructions', do: 'Keep user input in a user turn, never in the system prompt, and allowlist tool arguments' }, diff: { file: 'agent.py:40', old: 'system = BASE + user_input', new: 'messages = [system(BASE), user(user_input)]' }, click: 'Separate roles', done: 'user text cannot hijack the system prompt' },
-        { sees: 'You want a starter you can paste into your own AI', step: 'Copy a ready-to-run prompt, tuned to your stack', how: ['Scoped to your vector store and model', 'Security and privacy baked in - placeholders, never real secrets', 'Paste it into your AI and attach your docs'], prompt: 'Scaffold a tool-calling RAG agent (LangGraph + Chroma). Retrieve top-4 chunks (score >= 0.75), keep user text in a USER turn, allowlist tool args, and use <API_KEY> placeholders - never real secrets.', click: 'Copy prompt', done: 'you have a prompt ready to paste into your AI' },
-      ],
-    },
-    {
-      tag: 'API pentest', app: 'Burp Suite', goal: 'Pentest your orders API with Burp Suite',
-      steps: [
-        { sees: 'Burp is open on the Proxy tab', step: 'Route your app through Burp', how: ['Open Proxy, then Proxy settings', 'Point your browser proxy at 127.0.0.1:8080', "Install Burp's CA cert so HTTPS is trusted"], click: 'Proxy settings', done: 'requests show up in HTTP history' },
-        { sees: 'A GET /api/orders/1024 is captured', step: 'Send it to Repeater', how: ['Right-click the request in HTTP history', 'Choose "Send to Repeater"', 'Open the Repeater tab'], click: 'Send to Repeater', done: 'the request is loaded in Repeater' },
-        { sees: 'The order id is in the path and you own 1024', fix: { say: "Swapping the id to another user's order tests for IDOR, broken object-level auth", do: 'In Repeater change 1024 to 1025 and Send; a 200 with someone else\'s order is a real finding' }, click: 'Send', done: 'you get a 403 (safe) or a logged finding' },
-        { sees: 'An error response leaks a full stack trace', fix: { say: 'The stack trace hands an attacker your framework, versions and file paths', do: 'Record it as an info-leak finding and recommend generic error responses' }, click: 'Log finding', done: 'the finding is documented' },
-      ],
-    },
-    {
-      tag: 'ServiceNow admin', app: 'ServiceNow', goal: 'Ship a ServiceNow catalog item and lock down who can see it',
-      steps: [
-        { sees: 'A new Business Rule is set to run on every table, on every operation', fix: { say: 'An unconditioned global Business Rule fires on all records and can slow the whole instance', do: 'Scope it to the one table and add a condition so it runs only when it should' }, diff: { file: 'Business Rule: Order sync', kind: 'quality', old: 'When: before | Table: Global | Condition: (none)', new: 'When: before | Table: sc_request | Condition: priority = 1' }, click: 'Scope the rule', done: 'the rule runs only where it is needed' },
-        { sees: 'The table ACL grants read with an empty role, so everyone can read it', fix: { say: 'An empty role on an ACL means every logged-in user can read these records', do: 'Require a specific role so only the right group can see them' }, diff: { file: 'ACL: sc_request.read', old: 'Requires role: (empty)', new: 'Requires role: catalog_viewer' }, click: 'Restrict ACL', done: 'only catalog_viewer can read the records' },
-        { sees: 'A catalog variable collects an employee SSN in a plain text field', fix: { say: 'That is PII sitting in a readable variable, and it must never reach an AI', do: 'It is masked on your device and swapped for a placeholder before anything is sent' }, click: 'Protect on-device', done: 'only [SSN] leaves your device, never the real value' },
-      ],
-    },
-    {
-      tag: 'Salesforce dev', app: 'Salesforce Apex', goal: 'Ship an Apex trigger without a security or governor-limit bug',
-      steps: [
-        { sees: 'A SOQL query sits inside a for loop over the trigger records', fix: { say: 'Querying inside a loop hits the SOQL governor limit and fails on a bulk load', do: 'Pull the query out of the loop and work from a map - bulkify it' }, diff: { file: 'AccountTrigger.apxt:12', kind: 'quality', old: 'for (Account a : Trigger.new) { Contact c = [SELECT Id FROM Contact WHERE AccountId = :a.Id]; }', new: 'Map<Id,Contact> byAcct = mapContacts(Trigger.new); for (Account a : Trigger.new) { Contact c = byAcct.get(a.Id); }' }, click: 'Bulkify', done: 'one query serves the whole batch' },
-        { sees: 'The query reads fields without enforcing the user access', fix: { say: 'Without field-level security the trigger can expose fields the user cannot see', do: 'Add WITH SECURITY_ENFORCED so FLS and sharing are respected' }, diff: { file: 'AccountTrigger.apxt:20', old: '[SELECT Id, SSN__c FROM Contact WHERE AccountId IN :ids]', new: '[SELECT Id, SSN__c FROM Contact WHERE AccountId IN :ids WITH SECURITY_ENFORCED]' }, click: 'Enforce FLS', done: 'the query respects the user access' },
-        { sees: 'An API key is hard-coded in the Apex class', fix: { say: 'A secret in Apex source leaks to every deploy and the metadata history', do: 'Move it to a Named Credential so the key never lives in code' }, diff: { file: 'PaymentService.cls:5', old: 'String key = "sk_live_9f3c2a...";', new: 'req.setEndpoint("callout:Payments/charge"); // Named Credential' }, click: 'Use Named Credential', done: 'no secret left in the code' },
-      ],
-    },
-    {
-      tag: 'Cloud security', app: 'AWS IAM', goal: 'Replace a wildcard IAM policy with least privilege',
-      steps: [
-        { sees: 'The role grants Action "*" on Resource "*"', fix: { say: 'That is full admin - one leaked key owns the whole account', do: 'Scope it to exactly the actions this app makes, on its own resources' }, diff: { file: 'role-policy.json', old: '"Action": "*",  "Resource": "*"', new: '"Action": ["s3:GetObject","s3:PutObject"], "Resource": "arn:aws:s3:::app-data/*"' }, click: 'Edit policy', done: 'the policy is scoped to one bucket' },
-        { sees: 'CloudTrail shows the role also calls SQS', step: 'Add only what it really uses', how: ['Open CloudTrail, filter events by this role', 'List the distinct API calls it actually makes', 'Grant exactly those - nothing speculative'], click: 'Add sqs:SendMessage', done: 'every real call is allowed, nothing more' },
-        { sees: 'Access Analyzer flags the bucket as public', fix: { say: 'The bucket policy still allows a wildcard principal, so anyone can read it', do: 'Remove Principal "*" so only this role can reach the data' }, click: 'Fix bucket policy', done: 'Access Analyzer goes green' },
-      ],
-    },
-  ]
+  // Prose comes from the catalog (translated); code from DEMO_CODE (verbatim).
+  const demos = t('home.demo.scenarios').map((sc, i) => ({
+    ...sc,
+    steps: sc.steps.map((st, j) => {
+      const code = (DEMO_CODE[i] || [])[j] || {}
+      const fix = st.say != null ? { say: st.say, do: st.do } : undefined
+      return { ...st, ...code, fix }
+    }),
+  }))
   const [di, setDi] = useState(() => Math.floor(Math.random() * demos.length))  // a different scenario each load
   const [si, setSi] = useState(0)
   const [typed, setTyped] = useState('')
@@ -769,7 +736,10 @@ function LiveDemo({ tilt, untilt }) {
     }
     t1 = setTimeout(type, 280)
     return () => { cancelled = true; clearTimeout(t1); clearTimeout(t2) }
-  }, [di])
+    // d.goal is a dep on purpose: when the language switches (or a lazily loaded
+    // dictionary arrives after first paint) the goal text changes, and the
+    // typewriter must restart with the translated goal, not keep the old one.
+  }, [di, d.goal])
   // Walk the steps; after the last, move on. A correction or a diff lingers a
   // touch longer so it reads.
   useEffect(() => {
@@ -789,20 +759,20 @@ function LiveDemo({ tilt, untilt }) {
   const isFix = !!s.fix
   return (
     <div className="wm-demo" data-reveal onMouseMove={tilt} onMouseLeave={untilt}>
-      <div className="wm-demo-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>WorkCoPilot</b><span className="wm-demo-live" title="reading your screen"><i />watching</span><span className="wm-demo-tag">{d.tag}</span></div>
-      <div className="wm-demo-goal"><span className="wm-demo-k">GOAL</span> {typed}<span className="wm-caret" /></div>
+      <div className="wm-demo-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>WorkCoPilot</b><span className="wm-demo-live" title={t('home.demo.watchingTitle')}><i />{t('home.demo.watching')}</span><span className="wm-demo-tag">{d.tag}</span></div>
+      <div className="wm-demo-goal"><span className="wm-demo-k">{t('home.demo.goal')}</span> {typed}<span className="wm-caret" /></div>
       <div className={`wm-demo-body${show ? ' in' : ''}`}>
         {reveal >= 1 && (
-          <div className="wm-demo-sees wm-beat glow" key={'see' + safeSi}><span className="wm-demo-scan" aria-hidden /><span className="wm-demo-seek"><ScanEye size={12} /> I can see</span> {s.sees}</div>
+          <div className="wm-demo-sees wm-beat glow" key={'see' + safeSi}><span className="wm-demo-scan" aria-hidden /><span className="wm-demo-seek"><ScanEye size={12} /> {t('home.demo.iCanSee')}</span> {s.sees}</div>
         )}
         {reveal >= 2 && (
           <div className="wm-demo-stage wm-beat" key={'st' + safeSi}>
             {s.diff
-              ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} kind={s.diff.kind} />
+              ? <DiffBlock file={s.diff.file} oldLine={s.diff.old} newLine={s.diff.new} kind={s.diff.kind} t={t} />
               : s.prompt
-                ? <PromptBlock text={s.prompt} />
+                ? <PromptBlock text={s.prompt} t={t} />
                 : s.cmd
-                  ? <TermBlock cmd={s.cmd} />
+                  ? <TermBlock cmd={s.cmd} t={t} />
                   : <DemoScreen app={d.app} target={s.click} fix={isFix} />}
           </div>
         )}
@@ -815,27 +785,27 @@ function LiveDemo({ tilt, untilt }) {
           <div className="wm-demo-guide">
             {isFix ? (
               <div className={`wm-demo-fix wm-beat${reveal >= 3 ? ' pop' : ''}`} key={'fx' + safeSi}>
-                <div className="wm-demo-fixhead"><AlertTriangle size={13} /> HOLD ON <span className="wm-demo-stepno">Step {safeSi + 1} of {tot}</span></div>
+                <div className="wm-demo-fixhead"><AlertTriangle size={13} /> {t('home.demo.holdOn')} <span className="wm-demo-stepno">{t('home.demo.stepOf', { n: safeSi + 1, total: tot })}</span></div>
                 <div className="wm-demo-fixsay">{s.fix.say}</div>
-                {reveal >= 4 && <div className="wm-demo-fixdo wm-beat"><ArrowRight size={13} /> {s.fix.do}</div>}
+                {reveal >= 4 && <div className="wm-demo-fixdo wm-beat"><ArrowRight size={13} className="wm-arrow" /> {s.fix.do}</div>}
               </div>
             ) : (
               <>
                 <div className="wm-demo-now wm-beat">
-                  <div className="wm-demo-label">DO THIS NOW <span className="wm-demo-stepno">Step {safeSi + 1} of {tot}</span></div>
+                  <div className="wm-demo-label">{t('home.demo.doThisNow')} <span className="wm-demo-stepno">{t('home.demo.stepOf', { n: safeSi + 1, total: tot })}</span></div>
                   <div key={safeSi} className="wm-demo-step">{s.step}</div>
                 </div>
                 {reveal >= 4 && (
                   <div className="wm-demo-how wm-beat" key={'h' + safeSi}>
-                    <div className="wm-demo-howlabel">EXACTLY HOW</div>
-                    <ol>{s.how.map((h, k) => <li key={k} className="wm-demo-fade" style={{ animationDelay: `${60 + k * 90}ms` }}>{h}</li>)}</ol>
+                    <div className="wm-demo-howlabel">{t('home.demo.exactlyHow')}</div>
+                    <ol>{(s.how || []).map((h, k) => <li key={k} className="wm-demo-fade" style={{ animationDelay: `${60 + k * 90}ms` }}>{h}</li>)}</ol>
                   </div>
                 )}
               </>
             )}
           </div>
         )}
-        {reveal >= 4 && <div className="wm-demo-done wm-beat" key={'dn' + safeSi}><Check size={13} /> done when {s.done}</div>}
+        {reveal >= 4 && <div className="wm-demo-done wm-beat" key={'dn' + safeSi}><Check size={13} /> {t('home.demo.doneWhen', { what: s.done })}</div>}
       </div>
     </div>
   )
@@ -949,33 +919,24 @@ function BViz({ k }) {
 // (FIELD_FAMILIES / FIELD_TOTAL moved to ./WorkFields.jsx - imported above.)
 
 const HERO_DWELL_MS = 12000
-// Each entry pairs a headline (h) with its own supporting line (s); they change
-// together. The compliance line is deliberately general: the hero never names a
-// fixed short list of frameworks.
-const HERO_PAIRS = [
-  { h: [['Get '], ['anything', 1], [' done right, the first time.']],
-    s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong, keeping you on the next correct step until the job is done. Any task, any field.' },
-  { h: [['The '], ['sharpest person', 1], [' in the room, on every screen.']],
-    s: 'A genius pair sits beside you in any app, reads your screen, tells you the exact next move, and corrects you when a step goes wrong.' },
-  { h: [['Always on.', 1], [' The expert you need, the moment you need one.']],
-    s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
-  // Mirrors server/store.js HERO_DEFAULT: keep the two lists identical so the
-  // fallback paint and the API feed never disagree.
-  { h: [['Code that is '], ['safe to run', 1], [', checked before you see it.']],
-    s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
-  { h: [['Private by design', 1], [', redacted on your device.']],
-    s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-  { h: [['The '], ['strongest AI', 1], [' plans it. Guided and corrected, live.']],
-    s: 'Your plan comes from the strongest AI your key can reach. Then it guides you step by step, watches your screen, and catches and corrects a wrong move in real time.' },
-  { h: [['Do more with the '], ['team you already have', 1], ['.']],
-    s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
-  { h: [['Compliance-ready', 1], [' for the frameworks you answer to.']],
-    s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
-  { h: [['The AI is '], ['on us', 1], [', always included.']],
-    s: 'You are never billed for how much AI a task takes. It is part of your plan, so bring every task, big or small, and focus on the work, not the cost.' },
-  { h: [['Quality over quantity', 1], [', on every step.']],
-    s: 'You get the one correct next move, done the proven way for your field and checked before you see it, not a pile of options to sort through. Do it once, and do it right.' },
-]
+// The hero pairs (headline h + supporting line s) live in the locale catalog as
+// home.hero: [{ h: 'Get <em>anything</em> done right...', s: '...' }]. The
+// English set mirrors server/store.js HERO_DEFAULT: keep the two identical so
+// the fallback paint and the API feed never disagree. heroPairFromText turns the
+// <em>..</em> markup into the internal [[text, emFlag?], ...] segments.
+function heroPairFromText({ h, s }) {
+  const text = String(h || '')
+  const segs = []
+  const re = /<em>([\s\S]*?)<\/em>/g
+  let last = 0, m
+  while ((m = re.exec(text))) {
+    if (m.index > last) segs.push([text.slice(last, m.index)])
+    segs.push([m[1], 1])
+    last = m.index + m[0].length
+  }
+  if (last < text.length) segs.push([text.slice(last)])
+  return { h: segs.length ? segs : [[text]], s: String(s || '') }
+}
 
 // Split a line into words (on plain spaces only, so the NBSP in "SOC 2" holds)
 // where each word is a list of {t, em} parts. A word that straddles a segment
@@ -1038,11 +999,15 @@ function HeroWords({ line }) {
 // resizes snap instantly. The live element holds only the current line (plus,
 // for ~0.6s, the outgoing one marked aria-hidden while it fades). One clock
 // drives both, so headline and subtext always match.
-function RotatingHero({ paused }) {
-  // The rotating copy. Built-in HERO_PAIRS is the fallback and the first paint;
-  // if the superadmin-editable feed returns a usable set, it swaps in. Only the
-  // SOURCE of the pairs is dynamic - the motion, timing and layout are unchanged.
-  const [pairs, setPairs] = useState(HERO_PAIRS)
+function RotatingHero({ paused, t, locale }) {
+  // The rotating copy. The catalog's home.hero (in the visitor's language) is the
+  // fallback and the first paint; if the superadmin-editable feed returns a
+  // usable set, it swaps in. Only the SOURCE of the pairs is dynamic - the
+  // motion, timing and layout are unchanged.
+  const BUILT_IN = useMemo(() => (t('home.hero') || []).map(heroPairFromText), [t])
+  const [pairs, setPairs] = useState(BUILT_IN)
+  // Language switch: swap to that language's built-ins and restart the cycle.
+  useEffect(() => { idxRef.current = 0; setPrev(null); setLive(false); setIdx(0); setPairs(BUILT_IN) }, [BUILT_IN])   // eslint-disable-line
   const [idx, setIdx] = useState(0)
   const [prev, setPrev] = useState(null)   // outgoing pair while it dissolves
   const [live, setLive] = useState(false)  // false until the first swap: no entrance on page load
@@ -1059,8 +1024,13 @@ function RotatingHero({ paused }) {
   const out = prev != null ? pairs[prev] : null
 
   // Fetch the superadmin-editable hero copy once. On any failure, timeout, bad
-  // shape, or empty set, keep the built-in HERO_PAIRS - the hero NEVER blanks.
+  // shape, or empty set, keep the built-in pairs - the hero NEVER blanks.
+  // ENGLISH ONLY for now: the feed is written in English, so applying it over a
+  // translated set would flip the hero back to English. Server hook (documented
+  // in the i18n report): GET /api/work/hero?locale=<code> returning pairs in
+  // that language; until then, other locales keep their catalog built-ins.
   useEffect(() => {
+    if (locale !== 'en') return undefined
     let alive = true
     const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null
     const timer = setTimeout(() => { try { if (ctrl) ctrl.abort() } catch { /* ignore */ } }, 4000)
@@ -1078,7 +1048,7 @@ function RotatingHero({ paused }) {
       .catch(() => { /* network/abort/parse: keep built-ins */ })
       .finally(() => clearTimeout(timer))
     return () => { alive = false; clearTimeout(timer); try { if (ctrl) ctrl.abort() } catch { /* ignore */ } }
-  }, [])
+  }, [locale])
 
   // LAYOUT STABILITY (CLS): reserve each stage at the height of the TALLEST line
   // in the whole set, measured before paint, so the h1 box never changes size as
@@ -1173,6 +1143,22 @@ function RotatingHero({ paused }) {
 // now its single home; the pricing section above links there.)
 
 const CSS = `
+/* RTL (Arabic). Flex/grid rows mirror on their own under <html dir="rtl">; the
+   few physical-direction rules below are re-declared, arrow glyphs flip, and
+   code / commands / diffs stay LTR (dir="ltr" on those blocks). */
+[dir="rtl"] .wm-arrow{transform:scaleX(-1)}
+[dir="rtl"] .wm-demo-stepno{float:left}
+[dir="rtl"] .wm-demo-tag,[dir="rtl"] .wm-diff-badge{margin-left:0;margin-right:auto}
+[dir="rtl"] .wm-demo-head b{margin-left:0;margin-right:6px}
+[dir="rtl"] .wm-demo-live{margin-left:0;margin-right:10px}
+[dir="rtl"] .wm-demo-k{margin-right:0;margin-left:8px}
+[dir="rtl"] .wm-caret{margin-left:0;margin-right:3px}
+[dir="rtl"] .wm-demo-how li{padding-left:0;padding-right:30px}
+[dir="rtl"] .wm-demo-how li:before{left:auto;right:0}
+[dir="rtl"] .wm-scr-bar span{margin-left:0;margin-right:8px}
+[dir="rtl"] .wm-demo-term code,[dir="rtl"] .wm-diff,[dir="rtl"] .wm-demo-term{direction:ltr;text-align:left}
+[dir="rtl"] .wm-roi-arrow svg{transform:scaleX(-1)}
+[dir="rtl"] .wm-demo-sees{text-align:right}
 /* NOTE: the tokens on this .wm root are the DARK base and are NOT what renders.
    The page is LIGHT by default: the ".wm:not([data-wm=dark])" block at the end
    of this sheet outranks this rule and re-declares every token light (owner,

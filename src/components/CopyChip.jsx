@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Copy, Check } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'
 
 // A small, self-contained "Copy" button for the code and terminal commands shown
 // in the marketing demos (home banner, use cases, demo). It was previously a dead
@@ -7,8 +8,10 @@ import { Copy, Check } from 'lucide-react'
 // shell prompt so the user copies the real command, shows a brief "Copied"
 // confirmation, and falls back to execCommand when the async clipboard API is
 // unavailable (older browsers, insecure context). Inherits the header's font so
-// it sits where the old label did.
-export default function CopyChip({ text, label = 'Copy' }) {
+// it sits where the old label did. Labels come from the catalog (widgets.copy.*);
+// pass `label` only to override the default "Copy" wording.
+export default function CopyChip({ text, label }) {
+  const t = useT()
   const [done, setDone] = useState(false)
   const copy = async (e) => {
     if (e) { e.preventDefault(); e.stopPropagation() }
@@ -39,8 +42,8 @@ export default function CopyChip({ text, label = 'Copy' }) {
     <button
       type="button"
       onClick={copy}
-      title={done ? 'Copied' : 'Copy the command'}
-      aria-label={done ? 'Copied to clipboard' : 'Copy to clipboard'}
+      title={done ? t('widgets.copy.copied') : t('widgets.copy.copyCommand')}
+      aria-label={done ? t('widgets.copy.copiedAria') : t('widgets.copy.copyAria')}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 5,
         background: 'transparent', border: 0, padding: '1px 3px', margin: 0,
@@ -51,7 +54,7 @@ export default function CopyChip({ text, label = 'Copy' }) {
       onMouseLeave={(e) => { if (!done) e.currentTarget.style.opacity = '0.85' }}
     >
       {done ? <Check size={12} /> : <Copy size={12} />}
-      {done ? 'Copied' : label}
+      {done ? t('widgets.copy.copied') : (label || t('widgets.copy.copy'))}
     </button>
   )
 }

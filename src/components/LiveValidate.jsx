@@ -23,6 +23,7 @@ import {
   ShieldCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
+import { useT, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
 // desktop app or the mobile app the person is already a user, so it must never
@@ -80,6 +81,7 @@ const defaultGo = (plan) => { try { window.location.href = `/workcopilot${plan ?
 
 export default function LiveValidate({ go = defaultGo, theme = 'light', source = 'site' }) {
   if (isInApp()) return null   // hide the lead widget inside the desktop/mobile app
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [lead, setLead] = useState(loadLead)          // null until captured this session
 
@@ -149,23 +151,23 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
       email: f.email.trim(), phone: f.phone.trim(), company: f.company.trim(),
     }
     const errs = {}
-    if (!v.firstName) errs.firstName = 'Required'
-    if (!v.lastName) errs.lastName = 'Required'
-    if (!EMAIL_RE.test(v.email)) errs.email = 'Enter a valid email'
-    if (v.phone.replace(/\D/g, '').length < 7) errs.phone = 'Enter a valid phone'
-    if (!v.company) errs.company = 'Required'
+    if (!v.firstName) errs.firstName = t('widgets.validate.required')
+    if (!v.lastName) errs.lastName = t('widgets.validate.required')
+    if (!EMAIL_RE.test(v.email)) errs.email = t('widgets.validate.validEmail')
+    if (v.phone.replace(/\D/g, '').length < 7) errs.phone = t('widgets.validate.validPhone')
+    if (!v.company) errs.company = t('widgets.validate.required')
     if (Object.keys(errs).length) { setFerr(errs); setFtop(''); return }
     setFbusy(true); setFtop('')
     try {
       const r = await fetch('/api/work/leads', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...v, source, anonId }),
+        body: JSON.stringify({ ...v, source, anonId, locale: getLocale() }),
       })
       const data = await r.json().catch(() => ({}))
-      if (!r.ok) { setFtop(r.status >= 500 ? 'WorkCoPilot is busy, please try again in a moment.' : (data.error || 'Could not save that - please try again.')); return }
+      if (!r.ok) { setFtop(r.status >= 500 ? t('widgets.validate.busy') : (data.error || t('widgets.validate.saveFail'))); return }
       const stored = { ...v, id: data.id || null, at: Date.now() }
       saveLead(stored); setLead(stored)   // gate cleared for this session -> straight to the live check
-    } catch { setFtop('Could not reach us. Check your connection and try again.') }
+    } catch { setFtop(t('widgets.validate.offline')) }
     finally { setFbusy(false) }
   }
 
@@ -176,25 +178,27 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     try {
       const r = await fetch('/api/work/coverage', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: cleanAlways(question), leadId: lead && lead.id ? lead.id : undefined, anonId }),
+        // `locale` = the visitor's global language choice, so the server can answer
+        // in it (server hook: see the i18n report). Harmless until the server reads it.
+        body: JSON.stringify({ question: cleanAlways(question), leadId: lead && lead.id ? lead.id : undefined, anonId, locale: getLocale() }),
       })
       const data = await r.json()
-      if (!r.ok) { setErr(r.status >= 500 ? 'WorkCoPilot is busy, please try again in a moment.' : (data.error || 'Please try again.')) }
+      if (!r.ok) { setErr(r.status >= 500 ? t('widgets.validate.busy') : (data.error || t('widgets.validate.tryAgain'))) }
       else {
         setRes(data); setQ('')
         if (data.verdict === 'covered') { setFire(true); setTimeout(() => setFire(false), 1800) }
       }
-    } catch { setErr('Could not reach the validator. Please try again.') }
+    } catch { setErr(t('widgets.validate.unreachable')) }
     finally { setBusy(false) }
   }
   const onKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ask() } }
 
   const verdictMeta = {
-    covered: { label: 'Covered', cls: 'ok', Icon: Check },
-    partial: { label: 'Partly covered', cls: 'mid', Icon: AlertTriangle },
-    no: { label: 'Not a fit', cls: 'no', Icon: AlertTriangle },
-    offtopic: { label: 'Describe a task', cls: 'off', Icon: Sparkles },
-    about: { label: 'How WorkCoPilot helps', cls: 'ok', Icon: Sparkles },
+    covered: { label: t('widgets.validate.verdict.covered'), cls: 'ok', Icon: Check },
+    partial: { label: t('widgets.validate.verdict.partial'), cls: 'mid', Icon: AlertTriangle },
+    no: { label: t('widgets.validate.verdict.no'), cls: 'no', Icon: AlertTriangle },
+    offtopic: { label: t('widgets.validate.verdict.offtopic'), cls: 'off', Icon: Sparkles },
+    about: { label: t('widgets.validate.verdict.about'), cls: 'ok', Icon: Sparkles },
   }
   const vm = res ? verdictMeta[res.verdict] : null
   const VIcon = vm ? vm.Icon : null
@@ -215,23 +219,23 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
       <style>{LV_CSS}</style>
       {!open && coach && (
         <div className="lv-coach" role="note">
-          <button className="lv-coach-x" onClick={dismissCoach} aria-label="Dismiss">&times;</button>
+          <button className="lv-coach-x" onClick={dismissCoach} aria-label={t('widgets.validate.dismiss')}>&times;</button>
           <button type="button" className="lv-coach-body" onClick={openWidget}>
             <span className="lv-coach-ic"><Sparkles size={15} /></span>
-            <span className="lv-coach-tx"><b>Is WorkCoPilot right for you?</b><span>Test your own scenario <b>live</b> and see exactly how it would guide you.</span></span>
-            <ArrowRight size={16} className="lv-coach-go" />
+            <span className="lv-coach-tx"><b>{t('widgets.validate.coachB')}</b><span>{t.rich('widgets.validate.coachS')}</span></span>
+            <ArrowRight size={16} className="lv-coach-go lv-arrow" />
           </button>
           <span className="lv-coach-arrow" aria-hidden />
         </div>
       )}
       {!open && (
-        <button className="wm-cov-launch" onClick={openWidget} aria-label="Validate your scenario live">
-          <span className="lv-live-dot" aria-hidden /> <Sparkles size={16} /> Validate it live
+        <button className="wm-cov-launch" onClick={openWidget} aria-label={t('widgets.validate.launchAria')}>
+          <span className="lv-live-dot" aria-hidden /> <Sparkles size={16} /> {t('widgets.validate.launch')}
         </button>
       )}
       {open && (
         <div className="wm-cov-overlay" onClick={() => setOpen(false)}>
-          <div className="wm-cov" role="dialog" aria-modal="true" aria-label="Validate it live" onClick={(e) => e.stopPropagation()}>
+          <div className="wm-cov" role="dialog" aria-modal="true" aria-label={t('widgets.validate.title')} onClick={(e) => e.stopPropagation()}>
             {fire && (
               <div className="wm-fw" aria-hidden>
                 {Array.from({ length: 7 }).map((_, i) => <span key={i} className={`wm-fw-burst b${i}`}>{Array.from({ length: 12 }).map((__, j) => <i key={j} style={{ '--a': j * 30 }} />)}</span>)}
@@ -240,28 +244,28 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
             <div className="wm-cov-head">
               <div className="wm-cov-head-t">
                 <ScanEye size={18} />
-                <span>Validate it live</span>
-                <span className="lv-live-pill"><span className="lv-live-dot" /> LIVE</span>
+                <span>{t('widgets.validate.title')}</span>
+                <span className="lv-live-pill"><span className="lv-live-dot" /> {t('widgets.validate.live')}</span>
               </div>
-              <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label="Close">&times;</button>
+              <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label={t('widgets.validate.close')}>&times;</button>
             </div>
 
             {/* STAGE 1 - lead gate (once per session) */}
             {!lead && (
               <form className="wm-cov-body lv-form" onSubmit={submitLead}>
                 {ftop && <p className="wm-cov-err lv-top-err">{ftop}</p>}
-                <p className="wm-cov-intro">Tell us who you are, then put in your real task. We check it <b>live</b> and tell you whether WorkCoPilot can guide you through it, step by step.</p>
+                <p className="wm-cov-intro">{t.rich('widgets.validate.introLead')}</p>
                 <div className="lv-grid">
-                  {field('firstName', 'First name', { placeholder: 'Jordan', half: true, inputRef: firstRef, autoComplete: 'given-name' })}
-                  {field('lastName', 'Last name', { placeholder: 'Rivera', half: true, autoComplete: 'family-name' })}
-                  {field('email', 'Work email', { type: 'email', placeholder: 'jordan@company.com', autoComplete: 'email' })}
-                  {field('phone', 'Phone', { type: 'tel', placeholder: '+1 555 010 0100', half: true, autoComplete: 'tel' })}
-                  {field('company', 'Company', { placeholder: 'Company name', half: true, autoComplete: 'organization' })}
+                  {field('firstName', t('widgets.validate.firstName'), { placeholder: t('widgets.validate.firstNamePh'), half: true, inputRef: firstRef, autoComplete: 'given-name' })}
+                  {field('lastName', t('widgets.validate.lastName'), { placeholder: t('widgets.validate.lastNamePh'), half: true, autoComplete: 'family-name' })}
+                  {field('email', t('widgets.validate.workEmail'), { type: 'email', placeholder: t('widgets.validate.workEmailPh'), autoComplete: 'email' })}
+                  {field('phone', t('widgets.validate.phone'), { type: 'tel', placeholder: t('widgets.validate.phonePh'), half: true, autoComplete: 'tel' })}
+                  {field('company', t('widgets.validate.company'), { placeholder: t('widgets.validate.companyPh'), half: true, autoComplete: 'organization' })}
                 </div>
                 <button type="submit" className="lv-submit" disabled={fbusy}>
-                  {fbusy ? <><Loader2 size={16} className="lv-spin" /> Saving…</> : <>Start the live check <ArrowRight size={16} /></>}
+                  {fbusy ? <><Loader2 size={16} className="lv-spin" /> {t('widgets.validate.saving')}</> : <>{t('widgets.validate.startCheck')} <ArrowRight size={16} className="lv-arrow" /></>}
                 </button>
-                <p className="lv-privacy"><ShieldCheck size={13} /> We use this only to follow up about WorkCoPilot. Your task text is scrubbed of sensitive data on your device before anything is sent.</p>
+                <p className="lv-privacy"><ShieldCheck size={13} /> {t('widgets.validate.privacy')}</p>
               </form>
             )}
 
@@ -269,8 +273,8 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
             {lead && (
               <>
                 <div className="wm-cov-body">
-                  {!res && !busy && <p className="wm-cov-intro">Put in your real task or scenario, or ask <b>how WorkCoPilot supports your apps</b>. We answer it <b>live</b> and tell you whether it can guide you through it, how, and which plan fits.</p>}
-                  {busy && <div className="wm-cov-think"><span /><span /><span /> Validating it live…</div>}
+                  {!res && !busy && <p className="wm-cov-intro">{t.rich('widgets.validate.introAsk')}</p>}
+                  {busy && <div className="wm-cov-think"><span /><span /><span /> {t('widgets.validate.validating')}</div>}
                   {res && (
                     <div className="wm-cov-ans" key={res.answer}>
                       {vm && (
@@ -294,11 +298,11 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                             {res.sees && (
                               <div className="wm-cov-sees">
                                 <span className="wm-cov-scan" aria-hidden />
-                                <span className="wm-cov-seek"><ScanEye size={13} /> I can see</span>
+                                <span className="wm-cov-seek"><ScanEye size={13} /> {t('widgets.validate.iCanSee')}</span>
                                 <span className="wm-cov-seetxt">{res.sees}</span>
                               </div>
                             )}
-                            <div className="wm-cov-flow-h"><TerminalSquare size={14} /> Your step-by-step plan{total ? <span className="wm-cov-flow-sub"> · {total} steps{remaining > 0 ? `, first ${shown} in full` : ''}</span> : null}</div>
+                            <div className="wm-cov-flow-h"><TerminalSquare size={14} /> {t('widgets.validate.planH')}{total ? <span className="wm-cov-flow-sub"> · {t.n('widgets.validate.step', total)}{remaining > 0 ? `, ${t('widgets.validate.firstInFull', { n: shown })}` : ''}</span> : null}</div>
                             <ol className="wm-cov-steps">
                               {roadmap.map((title, i) => {
                                 if (i >= shown) return (
@@ -316,12 +320,12 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                                       {p.cmd && (
                                         <div className="cmd">
                                           <code>{p.cmd}</code>
-                                          <button onClick={() => copyCmd(p.cmd, i)} title="Copy" aria-label="Copy command">{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
+                                          <button onClick={() => copyCmd(p.cmd, i)} title={t('widgets.copy.copy')} aria-label={t('widgets.copy.copyCommand')}>{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
                                         </div>
                                       )}
                                       {p.how && p.how.length > 0 && (
                                         <details className="wm-cov-how">
-                                          <summary>Show how</summary>
+                                          <summary>{t('widgets.validate.showHow')}</summary>
                                           <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
                                         </details>
                                       )}
@@ -330,13 +334,13 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                                 )
                               })}
                             </ol>
-                            {remaining > 0 && <div className="wm-cov-more"><Play size={12} /> {remaining} more guided step{remaining === 1 ? '' : 's'} in a real session, each the same depth</div>}
+                            {remaining > 0 && <div className="wm-cov-more"><Play size={12} /> {t('widgets.validate.more', { steps: t.n('widgets.validate.step', remaining) })}</div>}
                           </div>
                         )
                       })()}
                       <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
                         {res.verdict !== 'offtopic' && (
-                          <button className="lv-cta" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>Get started <ArrowRight size={14} /></button>
+                          <button className="lv-cta" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>{t('common.getStarted')} <ArrowRight size={14} className="lv-arrow" /></button>
                         )}
                       </div>
                     </div>
@@ -344,12 +348,12 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                   {err && <p className="wm-cov-err">{err}</p>}
                 </div>
                 <div className="wm-cov-input">
-                  <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder="e.g. Set up a VPC on AWS and lock it down, reconcile last month's books in Excel, or: can it guide my in-house apps?"
+                  <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder={t('widgets.validate.askPh')}
                     onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} />
                   <div className="wm-cov-ibtns">
-                    {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title="Clear and ask a new question" aria-label="Clear"><RotateCcw size={15} /> Clear</button>}
-                    <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()} aria-label="Validate">
-                      {busy ? <span className="wm-cov-sdots"><i /><i /><i /></span> : <ArrowRight size={18} />}
+                    {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title={t('widgets.validate.clearTitle')} aria-label={t('widgets.validate.clear')}><RotateCcw size={15} /> {t('widgets.validate.clear')}</button>}
+                    <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()} aria-label={t('widgets.validate.send')}>
+                      {busy ? <span className="wm-cov-sdots"><i /><i /><i /></span> : <ArrowRight size={18} className="lv-arrow" />}
                     </button>
                   </div>
                 </div>
@@ -370,11 +374,16 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
 const LV_CSS = `
 .lv-root{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--chip:rgba(10,20,40,.04)}
 .lv-root[data-lvtheme="dark"]{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--chip:rgba(255,255,255,.05)}
-.wm-cov-launch{position:fixed;right:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
+/* RTL: the launcher + coachmark hug the inline-end corner; arrows flip; commands stay LTR. */
+.lv-root{text-align:start}
+[dir="rtl"] .lv-arrow{transform:scaleX(-1)}
+[dir="rtl"] .wm-cov-steps .cmd{direction:ltr}
+[dir="rtl"] .lv-coach-body{text-align:right}
+.wm-cov-launch{position:fixed;inset-inline-end:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
 .wm-cov-launch:hover{transform:translateY(-2px)}
 /* One-time coachmark: after the banner demo, point the visitor at the launcher so
    they run THEIR own task. Bobs gently; dismissible; opens the validator. */
-.lv-coach{position:fixed;right:20px;bottom:78px;z-index:61;width:min(302px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:0 26px 64px -18px rgba(0,0,0,.45);padding:4px;animation:lv-coach-in .42s cubic-bezier(.2,.8,.2,1) both,lv-coach-bob 2.6s ease-in-out .6s infinite}
+.lv-coach{position:fixed;inset-inline-end:20px;bottom:78px;z-index:61;width:min(302px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:0 26px 64px -18px rgba(0,0,0,.45);padding:4px;animation:lv-coach-in .42s cubic-bezier(.2,.8,.2,1) both,lv-coach-bob 2.6s ease-in-out .6s infinite}
 @keyframes lv-coach-in{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes lv-coach-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .lv-coach-x{position:absolute;top:-9px;right:-9px;width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--mut);font-size:15px;line-height:1;cursor:pointer;z-index:2}
@@ -386,7 +395,7 @@ const LV_CSS = `
 .lv-coach-tx>span{font-size:11.5px;color:var(--mut);line-height:1.4}
 .lv-coach-tx span b{color:var(--warm2);font-weight:800}
 .lv-coach-go{flex:0 0 auto;color:var(--warm2)}
-.lv-coach-arrow{position:absolute;right:30px;bottom:-7px;width:14px;height:14px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
+.lv-coach-arrow{position:absolute;inset-inline-end:30px;bottom:-7px;width:14px;height:14px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg)}
 @media(prefers-reduced-motion:reduce){.lv-coach{animation:lv-coach-in .42s ease both}}
 /* No floater nudge on mobile - it crowds the small screen (the launcher stays). */
 @media(max-width:768px){.lv-coach{display:none}}
@@ -543,7 +552,7 @@ const LV_CSS = `
 .wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .wm-cov-send:disabled{opacity:.5;cursor:default}
 .wm-cov-sdots{display:inline-flex;gap:3px}.wm-cov-sdots i{width:5px;height:5px;border-radius:50%;background:#1a0e08;animation:wm-cov-bounce 1s infinite}.wm-cov-sdots i:nth-child(2){animation-delay:.15s}.wm-cov-sdots i:nth-child(3){animation-delay:.3s}
-@media(max-width:560px){.wm-cov-launch{right:12px;bottom:12px}.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
+@media(max-width:560px){.wm-cov-launch{inset-inline-end:12px;bottom:12px}.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
 .wm-fw{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:18px}
 .wm-fw-burst{position:absolute;width:0;height:0}
 .wm-fw-burst.b0{left:22%;top:34%}.wm-fw-burst.b1{left:70%;top:26%}.wm-fw-burst.b2{left:46%;top:46%}.wm-fw-burst.b3{left:30%;top:62%}.wm-fw-burst.b4{left:78%;top:56%}.wm-fw-burst.b5{left:56%;top:22%}.wm-fw-burst.b6{left:16%;top:50%}

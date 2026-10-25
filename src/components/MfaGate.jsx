@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import qrcode from 'qrcode-generator'
 import { ShieldCheck, Smartphone, ScanLine, KeyRound, Copy, Check, Download, Loader2, ArrowRight, AlertCircle, ChevronDown } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'   // every visible string comes from the catalog (login.mfa.*)
 
 // ---------------------------------------------------------------------------
 // MfaGate - the two-factor step of WorkCoPilot sign-in.
@@ -63,6 +64,7 @@ async function copyText(text) {
 
 export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, busy = false, username, backupCodes }) {
   const isSetup = mode === 'setup'
+  const t = useT()
   const [code, setCode] = useState('')
   const [useBackup, setUseBackup] = useState(false)
   const [err, setErr] = useState('')
@@ -106,7 +108,7 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
     const v = String(value == null ? code : value).trim()
     const ok = useBackup ? v.replace(/-/g, '').length >= 8 : /^\d{6}$/.test(v)
     if (!ok) {
-      setErr(useBackup ? 'Enter your full backup code.' : 'Enter the 6-digit code from your authenticator app.')
+      setErr(useBackup ? t('login.mfa.errBackup') : t('login.mfa.errCode'))
       setErrTick((n) => n + 1)
       return
     }
@@ -117,7 +119,7 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
       if (alive.current) setVerified(true)
     } catch (e) {
       if (alive.current) {
-        setErr((e && e.message) || 'That code did not work. Please try again.')
+        setErr((e && e.message) || t('login.mfa.errWrong'))
         setErrTick((n) => n + 1)
         setCode('')
         setTimeout(() => { if (inputRef.current) inputRef.current.focus() }, 0)   // after the input is re-enabled
@@ -144,11 +146,11 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
   const copyAll = async () => { if (await copyText((backupCodes || []).join('\n'))) flash('codes') }
   const download = () => {
     const body = [
-      'WorkCoPilot backup codes' + (username ? ' for ' + username : ''),
-      'Generated ' + new Date().toISOString().slice(0, 10),
+      t('login.mfa.fileTitle') + (username ? ' - ' + username : ''),
+      t('login.mfa.fileGenerated', { date: new Date().toISOString().slice(0, 10) }),
       '',
-      'Each code works once. Use one if you cannot reach your authenticator app.',
-      'Keep this file somewhere safe and private.',
+      t('login.mfa.fileNote1'),
+      t('login.mfa.fileNote2'),
       '',
       ...(backupCodes || []),
       '',
@@ -167,7 +169,7 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
     return (
       <>
         <label className="mg-lbl" htmlFor={'mg-code-' + idSuffix}>
-          {useBackup ? 'Backup code' : '6-digit code'}
+          {useBackup ? t('login.mfa.backupCode') : t('login.mfa.sixDigit')}
         </label>
         <input
           key={useBackup ? 'backup' : 'totp'}
@@ -212,35 +214,33 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
         <div className="mg-head">
           <span className="mg-badge mg-badge-ok"><Check size={20} aria-hidden="true" /></span>
           <div>
-            <div className="mg-eyebrow">Two-factor is on</div>
-            <h2 className="mg-h" tabIndex={-1} ref={headRef}>Save your backup codes</h2>
+            <div className="mg-eyebrow">{t('login.mfa.onEyebrow')}</div>
+            <h2 className="mg-h" tabIndex={-1} ref={headRef}>{t('login.mfa.saveCodes')}</h2>
           </div>
         </div>
-        <p className="mg-p">
-          If you lose your phone, each of these one-time codes lets you sign in once. They are shown only now, so keep them somewhere safe, such as a password manager.
-        </p>
+        <p className="mg-p">{t('login.mfa.saveCodesP')}</p>
 
-        <ul className="mg-codes" aria-label="Backup codes">
+        <ul className="mg-codes" aria-label={t('login.mfa.backupCodes')} dir="ltr">
           {backupCodes.map((c, i) => <li key={c + i}><span className="mg-n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>{c}</li>)}
         </ul>
 
         <div className="mg-row">
           <button type="button" className="mg-ghost" onClick={copyAll}>
-            {copied === 'codes' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />} {copied === 'codes' ? 'Copied' : 'Copy all'}
+            {copied === 'codes' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />} {copied === 'codes' ? t('widgets.copy.copied') : t('login.mfa.copyAll')}
           </button>
           <button type="button" className="mg-ghost" onClick={download}>
-            <Download size={15} aria-hidden="true" /> Download .txt
+            <Download size={15} aria-hidden="true" /> {t('login.mfa.download')}
           </button>
         </div>
-        <span className="mg-sr" role="status" aria-live="polite">{copied === 'codes' ? 'Backup codes copied to the clipboard.' : ''}</span>
+        <span className="mg-sr" role="status" aria-live="polite">{copied === 'codes' ? t('login.mfa.codesCopied') : ''}</span>
 
         <label className="mg-check">
           <input className="mg-checkbox" type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} />
-          <span>I have saved these codes</span>
+          <span>{t('login.mfa.savedCheck')}</span>
         </label>
 
         <button type="button" className="mg-cta" disabled={!saved} onClick={() => onDone && onDone()}>
-          Continue <ArrowRight size={16} aria-hidden="true" />
+          {t('common.continue')} <ArrowRight size={16} aria-hidden="true" className="mg-arrow" />
         </button>
       </div>
     )
@@ -254,28 +254,26 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
         <div className="mg-head">
           <span className="mg-badge"><ShieldCheck size={20} aria-hidden="true" /></span>
           <div>
-            <div className="mg-eyebrow">Two-step check</div>
-            <h2 className="mg-h">Enter your authenticator code</h2>
+            <div className="mg-eyebrow">{t('login.mfa.verifyEyebrow')}</div>
+            <h2 className="mg-h">{t('login.mfa.verifyH')}</h2>
           </div>
         </div>
-        {username && <div className="mg-who">Signing in as <strong>{username}</strong></div>}
+        {username && <div className="mg-who">{t.rich('login.mfa.signingAs', { user: username })}</div>}
         <p className="mg-p">
-          {useBackup
-            ? 'Enter one of the backup codes you saved when you set up two-factor. Each one works only once.'
-            : 'Open your authenticator app and type the 6-digit code shown for WorkCoPilot.'}
+          {useBackup ? t('login.mfa.verifyBackupP') : t('login.mfa.verifyP')}
         </p>
 
         <form onSubmit={onFormSubmit} aria-busy={working} noValidate>
           {codeInput('v')}
           <button className="mg-cta" type="submit" disabled={working || verified || !code}>
             {working ? <Loader2 size={16} className="mg-spin" aria-hidden="true" /> : verified ? <Check size={16} aria-hidden="true" /> : null}
-            {working ? <span className="mg-sr">Working, please wait. </span> : null}
-            {verified ? 'Verified' : 'Verify'} {!working && !verified ? <ArrowRight size={16} aria-hidden="true" /> : null}
+            {working ? <span className="mg-sr">{t('login.form.working')} </span> : null}
+            {verified ? t('login.mfa.verified') : t('login.mfa.verify')} {!working && !verified ? <ArrowRight size={16} aria-hidden="true" className="mg-arrow" /> : null}
           </button>
         </form>
 
         <button type="button" className="mg-link" onClick={switchEntry} disabled={working || verified}>
-          {useBackup ? 'Use my authenticator app instead' : 'Use a backup code instead'}
+          {useBackup ? t('login.mfa.useApp') : t('login.mfa.useBackup')}
         </button>
       </div>
     )
@@ -283,63 +281,61 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
 
   // ------------------------------------------------------------------ setup mode
   const secret = enroll && enroll.secret
-  const acct = 'WorkCoPilot: ' + (username || 'your account')
+  const acct = 'WorkCoPilot: ' + (username || t('login.mfa.yourAccount'))
   return (
     <div className="mg">
       <style>{CSS}</style>
       <div className="mg-head">
         <span className="mg-badge"><ShieldCheck size={20} aria-hidden="true" /></span>
         <div>
-          <div className="mg-eyebrow">Required security step</div>
-          <h2 className="mg-h">Set up two-factor authentication</h2>
+          <div className="mg-eyebrow">{t('login.mfa.setupEyebrow')}</div>
+          <h2 className="mg-h">{t('login.mfa.setupH')}</h2>
         </div>
       </div>
-      {username && <div className="mg-who">Signing in as <strong>{username}</strong></div>}
-      <p className="mg-p">
-        Two-factor protects your account even if your password is ever stolen. It takes about a minute and is required to continue.
-      </p>
+      {username && <div className="mg-who">{t.rich('login.mfa.signingAs', { user: username })}</div>}
+      <p className="mg-p">{t('login.mfa.setupP')}</p>
 
       <ol className="mg-steps">
         <li className="mg-step">
           <span className="mg-num" aria-hidden="true"><Smartphone size={14} /></span>
           <div className="mg-body">
-            <h3>1. Install Microsoft Authenticator</h3>
-            <p>It is free on the App Store and Google Play. Any standard authenticator app works too.</p>
+            <h3>{t('login.mfa.s1H')}</h3>
+            <p>{t('login.mfa.s1P')}</p>
           </div>
         </li>
 
         <li className="mg-step">
           <span className="mg-num" aria-hidden="true"><ScanLine size={14} /></span>
           <div className="mg-body">
-            <h3>2. Scan this QR code in the app</h3>
-            <p>In the app, add an account, choose a work or other account, and point the camera here.</p>
+            <h3>{t('login.mfa.s2H')}</h3>
+            <p>{t('login.mfa.s2P')}</p>
             {qrSvg ? (
               <div className="mg-qrwrap">
-                <div className="mg-qr" role="img" aria-label={'QR code for ' + acct}>
-                  <img className="mg-qrimg" src={qrSvg} alt={'QR code for ' + acct} width="216" height="216" />
+                <div className="mg-qr" role="img" aria-label={t('login.mfa.qrAlt', { acct })}>
+                  <img className="mg-qrimg" src={qrSvg} alt={t('login.mfa.qrAlt', { acct })} width="216" height="216" />
                   <i className="mg-c tl" /><i className="mg-c tr" /><i className="mg-c bl" /><i className="mg-c br" />
                   <i className="mg-scan" />
                 </div>
               </div>
             ) : (
-              <div className="mg-qrfail" role="status">The QR code could not be drawn. Use the manual key below instead.</div>
+              <div className="mg-qrfail" role="status">{t('login.mfa.qrFail')}</div>
             )}
 
             <button type="button" className="mg-link mg-link-left" aria-expanded={manualOpen} aria-controls="mg-manual" onClick={() => setManualOpen((v) => !v)}>
-              Can't scan? Enter the key manually <ChevronDown size={14} className={manualOpen ? 'mg-flip' : ''} aria-hidden="true" />
+              {t('login.mfa.cantScan')} <ChevronDown size={14} className={manualOpen ? 'mg-flip' : ''} aria-hidden="true" />
             </button>
             {manualOpen && (
               <div className="mg-manual" id="mg-manual">
-                <div className="mg-kv"><span>Account</span><b>{acct}</b></div>
+                <div className="mg-kv"><span>{t('login.mfa.account')}</span><b dir="ltr">{acct}</b></div>
                 <div className="mg-kv">
-                  <span>Key</span>
-                  <b className="mg-key">{groupSecret(secret) || 'Not available'}</b>
+                  <span>{t('login.mfa.key')}</span>
+                  <b className="mg-key" dir="ltr">{groupSecret(secret) || t('login.mfa.notAvailable')}</b>
                 </div>
-                <div className="mg-kv"><span>Type</span><b>Time-based (6 digits)</b></div>
+                <div className="mg-kv"><span>{t('login.mfa.type')}</span><b>{t('login.mfa.typeValue')}</b></div>
                 <button type="button" className="mg-ghost mg-ghost-sm" onClick={copyKey} disabled={!secret}>
-                  {copied === 'key' ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />} {copied === 'key' ? 'Copied' : 'Copy key'}
+                  {copied === 'key' ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />} {copied === 'key' ? t('widgets.copy.copied') : t('login.mfa.copyKey')}
                 </button>
-                <span className="mg-sr" role="status" aria-live="polite">{copied === 'key' ? 'Key copied to the clipboard.' : ''}</span>
+                <span className="mg-sr" role="status" aria-live="polite">{copied === 'key' ? t('login.mfa.keyCopied') : ''}</span>
               </div>
             )}
           </div>
@@ -348,14 +344,14 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
         <li className="mg-step">
           <span className="mg-num" aria-hidden="true"><KeyRound size={14} /></span>
           <div className="mg-body">
-            <h3>3. Enter the 6-digit code</h3>
-            <p>Type the code the app shows for WorkCoPilot to confirm it is working.</p>
+            <h3>{t('login.mfa.s3H')}</h3>
+            <p>{t('login.mfa.s3P')}</p>
             <form onSubmit={onFormSubmit} aria-busy={working} noValidate>
               {codeInput('s')}
               <button className="mg-cta" type="submit" disabled={working || verified || code.length < CODE_LEN}>
                 {working ? <Loader2 size={16} className="mg-spin" aria-hidden="true" /> : verified ? <Check size={16} aria-hidden="true" /> : null}
-                {working ? <span className="mg-sr">Working, please wait. </span> : null}
-                {verified ? 'Verified, preparing your backup codes' : 'Verify and continue'} {!working && !verified ? <ArrowRight size={16} aria-hidden="true" /> : null}
+                {working ? <span className="mg-sr">{t('login.form.working')} </span> : null}
+                {verified ? t('login.mfa.verifiedPreparing') : t('login.mfa.verifyContinue')} {!working && !verified ? <ArrowRight size={16} aria-hidden="true" className="mg-arrow" /> : null}
               </button>
             </form>
           </div>
@@ -368,6 +364,8 @@ export default function MfaGate({ mode = 'verify', enroll, onSubmit, onDone, bus
 // Variables fall back to the sign-in screen's palette so the component also
 // looks right if it is ever rendered outside the .wl wrapper.
 const CSS = `
+[dir="rtl"] .mg-arrow{transform:scaleX(-1)}
+.mg-input,.mg-codes{direction:ltr}
 .mg{--mg-tx:var(--tx,#0f1a16);--mg-mut:var(--mut,#5a6472);--mg-line:var(--line,rgba(17,23,38,.12));--mg-em:var(--em,#0a9d66);--mg-em2:var(--em2,#0a86cf);--mg-warm:var(--warm,#ffb35c);--mg-warm2:var(--warm2,#ff7a59);
   --mg-bad:#c0392b;--mg-soft:rgba(10,157,102,.08);
   width:100%;max-width:420px;color:var(--mg-tx);font-family:"Figtree",system-ui,sans-serif;animation:mgrise .5s cubic-bezier(.2,.7,.2,1) both}

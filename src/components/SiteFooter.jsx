@@ -12,54 +12,58 @@
 import React from 'react'
 import { Mail, ArrowUpRight } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
-import { OWNERSHIP_LINE, SUPPORT_CONTACT, LEGAL_CONTACT } from './LegalPage.jsx'
+import { SUPPORT_CONTACT, LEGAL_CONTACT } from './LegalPage.jsx'
+import { useT } from '../i18n/index.jsx'
 
+// Link groups: the catalog key for each label (footer.<key> / nav.<key>) and the
+// href. Labels are translated at render; hrefs never are.
 const GROUPS = [
-  { title: 'Product', links: [
-    ['How it works', '/workcopilot/how-it-works'], ['Use cases', '/workcopilot/use-cases'], ['Fields', '/workcopilot/fields'],
-    ['Pricing', '/workcopilot/pricing'], ['FAQ', '/workcopilot/faq'], ['60-second demo', '/demo'],
+  { key: 'product', links: [
+    ['nav.how', '/workcopilot/how-it-works'], ['nav.use', '/workcopilot/use-cases'], ['nav.fields', '/workcopilot/fields'],
+    ['nav.pricing', '/workcopilot/pricing'], ['nav.faq', '/workcopilot/faq'], ['footer.demo', '/demo'],
   ] },
-  { title: 'Trust', links: [
-    ['Security & data protection', '/workcopilot/security'], ['Enterprise features', '/workcopilot/enterprise'], ['Accuracy benchmark', '/workcopilot/benchmark'],
+  { key: 'trust', links: [
+    ['footer.securityData', '/workcopilot/security'], ['footer.enterpriseFeatures', '/workcopilot/enterprise'], ['footer.benchmark', '/workcopilot/benchmark'],
   ] },
-  { title: 'Legal', links: [
-    ['Privacy Policy', '/workcopilot/privacy'], ['Terms of Service', '/workcopilot/terms'], ['Acceptable Use', '/workcopilot/acceptable-use'],
-    ['Data Processing Addendum', '/workcopilot/dpa'], ['Refund & Cancellation', '/workcopilot/refund'], ['Disclaimer', '/workcopilot/disclaimer'],
+  { key: 'legal', links: [
+    ['footer.privacy', '/workcopilot/privacy'], ['footer.terms', '/workcopilot/terms'], ['footer.aup', '/workcopilot/acceptable-use'],
+    ['footer.dpa', '/workcopilot/dpa'], ['footer.refund', '/workcopilot/refund'], ['footer.disclaimer', '/workcopilot/disclaimer'],
   ] },
 ]
 
 // `dark` (default true) forces the dark palette regardless of data-theme.
 export default function SiteFooter({ dark = true }) {
+  const t = useT()
   return (
-    <footer className={`sf${dark ? ' sf-dark' : ''}`} aria-label="Site footer">
+    <footer className={`sf${dark ? ' sf-dark' : ''}`} aria-label={t('footer.aria')}>
       <style>{CSS}</style>
       <div className="sf-in">
         <div className="sf-brand">
-          <a href="/" aria-label="AdmireVeda WorkCoPilot, home"><AdmireVedaLogo size={26} idSuffix="sf" onDark={dark} /></a>
-          <p className="sf-tag">Your expert, on every screen. Read-only guidance that watches your screen and tells you the exact next move, in any app, with your data protected on your device.</p>
+          <a href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sf" onDark={dark} /></a>
+          <p className="sf-tag">{t('footer.tag')}</p>
           <div className="sf-ctas">
-            <a className="sf-btn" href="/workcopilot">Get started <ArrowUpRight size={14} aria-hidden="true" /></a>
-            <a className="sf-btn alt" href="/workcopilot/contact">Contact us</a>
+            <a className="sf-btn" href="/workcopilot">{t('common.getStarted')} <ArrowUpRight size={14} aria-hidden="true" className="sf-arrow" /></a>
+            <a className="sf-btn alt" href="/workcopilot/contact">{t('common.contactUs')}</a>
           </div>
         </div>
         {GROUPS.map((g) => (
-          <nav key={g.title} className="sf-group" aria-label={g.title}>
-            <div className="sf-k">{g.title}</div>
-            <ul>{g.links.map(([label, href]) => <li key={href}><a href={href}>{label}</a></li>)}</ul>
+          <nav key={g.key} className="sf-group" aria-label={t('footer.' + g.key)}>
+            <div className="sf-k">{t('footer.' + g.key)}</div>
+            <ul>{g.links.map(([k, href]) => <li key={href}><a href={href}>{t(k)}</a></li>)}</ul>
           </nav>
         ))}
-        <div className="sf-group" aria-label="Contact">
-          <div className="sf-k">Contact</div>
+        <div className="sf-group" aria-label={t('footer.contact')}>
+          <div className="sf-k">{t('footer.contact')}</div>
           <ul>
-            <li><a href="/workcopilot/contact">Sales and enterprise</a></li>
-            <li><a href={'mailto:' + SUPPORT_CONTACT}><Mail size={12} aria-hidden="true" /> {SUPPORT_CONTACT}</a></li>
-            <li><a href={'mailto:' + LEGAL_CONTACT}><Mail size={12} aria-hidden="true" /> {LEGAL_CONTACT}</a></li>
+            <li><a href="/workcopilot/contact">{t('footer.sales')}</a></li>
+            <li><a href={'mailto:' + SUPPORT_CONTACT} dir="ltr"><Mail size={12} aria-hidden="true" /> {SUPPORT_CONTACT}</a></li>
+            <li><a href={'mailto:' + LEGAL_CONTACT} dir="ltr"><Mail size={12} aria-hidden="true" /> {LEGAL_CONTACT}</a></li>
           </ul>
         </div>
       </div>
       <div className="sf-bottom">
-        <span>&copy; {new Date().getFullYear()} COE Security LLC. {OWNERSHIP_LINE}</span>
-        <span className="sf-note">Lawful, legitimate work only. Guidance, not professional advice.</span>
+        <span>&copy; {new Date().getFullYear()} COE Security LLC. {t('footer.ownership')}</span>
+        <span className="sf-note">{t('footer.note')}</span>
       </div>
     </footer>
   )
@@ -72,6 +76,9 @@ const CSS = `
   border-top-color:transparent;background:radial-gradient(900px 260px at 50% -40px,rgba(14,159,110,.16),transparent 70%),var(--sf-bg)}
 /* Intentional light-to-dark seam: a 3px brand gradient hairline (emerald to cyan to orange) along the top edge. */
 .sf.sf-dark::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#0e9f6e 0%,#0a84c2 55%,#f26a43 100%)}
+/* RTL: the grid and flex rows mirror on their own under dir=rtl; only the arrow glyph needs flipping. */
+[dir="rtl"] .sf-arrow{transform:scaleX(-1)}
+.sf{text-align:start}
 .sf.sf-dark .sf-btn.alt{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.14)}
 .sf.sf-dark .sf-btn.alt:hover{background:rgba(255,255,255,.07)}
 .sf *{box-sizing:border-box}
