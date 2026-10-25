@@ -9,6 +9,16 @@ import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 
 const WD_DESK = typeof window !== 'undefined' ? window.workDesktop : null
+// IN-APP MODE (owner, 2026-10-24): "Admireveda app is to work, not marketing; so
+// it should have just login/password & SSO, and lighter version, not dark (not
+// even create the account); all should happen on the web. Social logins + email
+// and password, SSO also, keep it visible. Simple and sleek design."
+// The desktop shell loads this LIVE page, so when WD_DESK is truthy we render a
+// single light centered sign-in card: social + company SSO + username/password
+// + forgot, and one line pointing new users to admireveda.com to create an
+// account. No brand panel, no create-account switch, no plan/checkout UI. The
+// WEB experience (WD_DESK falsy) is unchanged. Auth logic is shared, untouched.
+const IN_APP = !!WD_DESK
 
 // ---------------------------------------------------------------------------
 // AdmireVeda WorkCoPilot - the product's own create-account / log-in page
@@ -136,7 +146,9 @@ export default function WorkLogin() {
   const nav = useNavigate()
   const { user, login, signup, loginMfa, loginMfaSetup, refresh } = useAuth()
   const [sp] = useSearchParams()
-  const plan = (sp.get('plan') || '').toLowerCase()
+  // In the app there is no checkout path: ignore any ?plan so no plan card,
+  // no checkout step and no "Log in to start X" copy can appear.
+  const plan = IN_APP ? '' : (sp.get('plan') || '').toLowerCase()
   useSeo({
     title: 'Create an Account or Log In - WorkCoPilot by AdmireVeda',
     description: 'Create a free WorkCoPilot account or log in to get step-by-step guidance on your own screen. Company single sign-on is available for company members.',
@@ -147,7 +159,8 @@ export default function WorkLogin() {
 
   // A chosen plan means a new customer, so default to create-account; otherwise
   // default to log-in. The visitor can switch either way.
-  const [mode, setMode] = useState(plan ? 'signup' : 'signin')
+  const [modeState, setMode] = useState(plan ? 'signup' : 'signin')
+  const mode = IN_APP ? 'signin' : modeState   // the app is sign-in only; accounts are created on the web
   const [uName, setUName] = useState(''); const [uPass, setUPass] = useState('')
   // Compliance sign-up fields (signup mode only).
   const [sName, setSName] = useState(''); const [sEmail, setSEmail] = useState(''); const [sPhone, setSPhone] = useState(''); const [sCompany, setSCompany] = useState('')
@@ -424,13 +437,13 @@ export default function WorkLogin() {
   const socialLoading = socialStep === 'loading' && !mfa
 
   return (
-    <div className="wl" style={WD_DESK ? { paddingTop: 40 } : undefined}>
+    <div className={`wl${IN_APP ? ' wl-app' : ''}`} style={WD_DESK ? { paddingTop: 40 } : undefined}>
       {WD_DESK && <WorkShell authed={false} />}
       <style>{CSS}</style>
       <div className="wl-bg" aria-hidden><span className="wl-orb o1" /><span className="wl-orb o2" /></div>
 
-      {/* BRAND PANEL (hidden on phones): wordmark, value line, the graphic, a calm proof element */}
-      <aside className="wl-brand">
+      {/* BRAND PANEL (hidden on phones; never rendered in the app): wordmark, value line, the graphic, a calm proof element */}
+      {!IN_APP && <aside className="wl-brand">
         <a className="wl-wordmark" href="/">
           <span className="wl-prod"><AVMark size={22} id="avlw" /> Work<i>CoPilot</i></span>
           <span className="wl-ad">by AdmireVeda</span>
@@ -446,7 +459,7 @@ export default function WorkLogin() {
           <li><span className="wl-proof-ic alt"><FileText size={15} aria-hidden="true" /></span><span><b>Exact steps, commands, links</b><small>Copy-ready, never a vague hint.</small></span></li>
           <li><span className="wl-proof-ic warm"><ShieldCheck size={15} aria-hidden="true" /></span><span><b>Read-only by design</b><small>It never clicks, types or runs anything for you.</small></span></li>
         </ul>
-      </aside>
+      </aside>}
 
       {/* FORM PANEL: create account / log in (primary), social + company SSO, MFA, profile completion */}
       <main className="wl-main" id="main">
@@ -502,11 +515,13 @@ export default function WorkLogin() {
           <h1>{heading}</h1>
           <p className="wl-sub">{subline}</p>
 
-          {/* The one clear switch between the two individual paths. */}
-          <div className="wl-seg" aria-label="Create an account or log in">
-            <button type="button" className={`wl-seg-b${mode === 'signup' ? ' on' : ''}`} aria-pressed={mode === 'signup'} onClick={() => { setErr(''); setMode('signup') }}>Create account</button>
-            <button type="button" className={`wl-seg-b${mode === 'signin' ? ' on' : ''}`} aria-pressed={mode === 'signin'} onClick={() => { setErr(''); setMode('signin') }}>Log in</button>
-          </div>
+          {/* The one clear switch between the two individual paths (web only; the app is sign-in only). */}
+          {!IN_APP && (
+            <div className="wl-seg" aria-label="Create an account or log in">
+              <button type="button" className={`wl-seg-b${mode === 'signup' ? ' on' : ''}`} aria-pressed={mode === 'signup'} onClick={() => { setErr(''); setMode('signup') }}>Create account</button>
+              <button type="button" className={`wl-seg-b${mode === 'signin' ? ' on' : ''}`} aria-pressed={mode === 'signin'} onClick={() => { setErr(''); setMode('signin') }}>Log in</button>
+            </div>
+          )}
 
           {/* SOCIAL + COMPANY SSO: outlined provider buttons, then the SSO button. */}
           <div className="wl-social" aria-label="Other ways to continue">
@@ -614,6 +629,10 @@ export default function WorkLogin() {
               : <button type="button" className="wl-forgot" onClick={doForgot} disabled={forgotBusy}>Forgot password?</button>)}
           </form>
 
+          {/* App only: the one required "create on the web" mention. Opens the public site. */}
+          {IN_APP && (
+            <p className="wl-newweb">New to WorkCoPilot? <a href="https://admireveda.com/workcopilot" target="_blank" rel="noopener noreferrer">Create your account at admireveda.com</a></p>
+          )}
           <div className="wl-legal">Lawful, legitimate work only. Harmful or illegal requests are declined.</div>
           </>)}
         </div>
@@ -793,6 +812,42 @@ const CSS = `
 [data-theme='dark'] .wl-proof li{background:color-mix(in srgb,var(--panel) 70%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow)}
 [data-theme='dark'] .wl-brand{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 60%)}
 @media(prefers-reduced-motion:reduce){.wl-orb{animation:none}.wl-art{animation:none}.wl-cta,.wl-prov{transition:none}}
+/* ===== IN-APP MODE (.wl-app): one light centered sign-in card. =====
+   FORCED LIGHT: the desktop shell sets data-theme="dark" on <html>; the owner
+   wants the app sign-in light, so the light defaults are re-declared under the
+   dark selector (same values as the .wl root above) and the dark-only depth
+   rules are neutralized. Plain, calm background; no brand aside; no toggle. */
+.wl.wl-app{grid-template-columns:1fr;background:#f3f5fb;min-height:100vh}
+[data-theme='dark'] .wl.wl-app{--bg:#f3f5fb;--panel:#ffffff;--panel-2:#f7f9fd;--line:#e6e8f1;--line-2:#d3d7e5;--tx:#161a2b;--tx-2:#2b3250;--mut:#5c6484;
+  --em:#0e9f6e;--cyan:#0a84c2;--on-em:#ffffff;--em-fill:rgba(14,159,110,.08);--em-fill-2:rgba(14,159,110,.14);--em-line:rgba(14,159,110,.30);
+  --cyan-fill:rgba(10,132,194,.08);--cyan-line:rgba(10,132,194,.26);
+  --cta:#f26a43;--cta-2:#e35a31;--cta-ink:#ffffff;--cta-soft:rgba(242,106,67,.10);--cta-line:rgba(242,106,67,.32);--cta-text:#b63f1c;
+  --chip:#f1f3fa;--field:#fbfcff;--err:#b42318;
+  --shadow:0 30px 70px -40px rgba(26,31,54,.35);--card-shadow:0 1px 2px rgba(26,31,54,.05),0 8px 22px -14px rgba(26,31,54,.14);
+  background:#f3f5fb;color:var(--tx)}
+.wl.wl-app .wl-bg{background:
+  radial-gradient(640px 320px at 18% -6%,rgba(14,159,110,.10),transparent 62%),
+  radial-gradient(640px 320px at 86% 108%,rgba(10,132,194,.10),transparent 62%)}
+.wl.wl-app .wl-bg::after{opacity:.22;mask-image:radial-gradient(70% 60% at 50% 40%,#000 10%,transparent 100%);-webkit-mask-image:radial-gradient(70% 60% at 50% 40%,#000 10%,transparent 100%)}
+.wl.wl-app .wl-orb{display:none}
+.wl.wl-app .wl-main{padding:34px 24px 44px;align-content:center}
+.wl.wl-app .wl-card{max-width:420px;padding:28px 30px 24px;border-radius:20px;box-shadow:0 1px 2px rgba(26,31,54,.06),0 24px 60px -34px rgba(26,31,54,.35);background:#fff;border-color:#e6e8f1}
+.wl.wl-app .wl-card-brand{justify-content:center;margin-bottom:22px}
+.wl.wl-app .wl-card h1{text-align:center;font-size:26px}
+.wl.wl-app .wl-sub{text-align:center;margin:6px 0 20px}
+.wl.wl-app .wl-prov{height:42px;border-color:#d3d7e5;background:#fff;color:#161a2b}
+.wl.wl-app .wl-prov:hover:not(:disabled){background:#f7f9fd;border-color:#0a84c2;box-shadow:0 8px 22px -14px rgba(26,31,54,.14)}
+.wl.wl-app .wl-card input{background:#fbfcff;color:#161a2b;border-color:#d3d7e5}
+.wl.wl-app .wl-newweb{margin:14px 0 0;text-align:center;font-size:13px;line-height:1.5;color:var(--mut)}
+.wl.wl-app .wl-newweb a{color:var(--cyan);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+.wl.wl-app .wl-newweb a:hover{color:#0e9f6e}
+.wl.wl-app .wl-legal{margin-top:12px;font-size:11.5px}
+/* dark-only depth rules must not bleed into the forced-light app card */
+[data-theme='dark'] .wl.wl-app .wl-card{box-shadow:0 1px 2px rgba(26,31,54,.06),0 24px 60px -34px rgba(26,31,54,.35)}
+[data-theme='dark'] .wl.wl-app .wl-prov{background:#fff}
+[data-theme='dark'] .wl.wl-app .wl-prov:hover:not(:disabled){background:#f7f9fd;box-shadow:0 8px 22px -14px rgba(26,31,54,.14)}
+[data-theme='dark'] .wl.wl-app .wl-ssodetect{box-shadow:none}
+[data-theme='dark'] .wl.wl-app .wl-bg::after{opacity:.22}
 @media(max-width:1040px){.wl-proof{grid-template-columns:1fr}.wl-proof li{flex-direction:row;align-items:flex-start}.wl-brand{padding:36px 36px 32px}}
 @media(max-width:820px){
  .wl{grid-template-columns:1fr}

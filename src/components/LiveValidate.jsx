@@ -19,9 +19,8 @@
 //      share), never scrubbed.
 import { useEffect, useRef, useState } from 'react'
 import {
-  Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, Building2,
-  ShieldCheck, BadgeCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
-  Compass, Wand2, Bug, Award,
+  Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare,
+  ShieldCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 
@@ -325,40 +324,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                           </div>
                         )
                       })()}
-                      {res.points && res.points.length > 0 && (
-                        <ul className={`wm-cov-points${typingDone ? ' show' : ''}`}>
-                          {res.points.map((pt, i) => <li key={i}><Check size={15} /><span>{renderRich(pt)}</span></li>)}
-                        </ul>
-                      )}
-                      {(res.verdict === 'covered' || res.verdict === 'partial' || res.verdict === 'about') && (
-                        <div className={`wm-cov-loop slim${typingDone ? ' show' : ''}`}>
-                          <div className="wm-cov-loop-h"><span className="lv-live-dot" aria-hidden /> In a live session it does all of this, on your screen</div>
-                          <div className="wm-cov-loop-grid">
-                            <div className="wm-cov-cap watch"><span className="ic"><ScanEye size={16} /></span><b>Watches</b></div>
-                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={14} /></div>
-                            <div className="wm-cov-cap guide"><span className="ic"><Compass size={16} /></span><b>Navigates</b></div>
-                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={14} /></div>
-                            <div className="wm-cov-cap correct"><span className="ic"><Wand2 size={16} /></span><b>Corrects</b></div>
-                            <div className="wm-cov-cap arrow" aria-hidden><ArrowRight size={14} /></div>
-                            <div className="wm-cov-cap fix"><span className="ic"><Bug size={16} /></span><b>Fixes</b></div>
-                          </div>
-                        </div>
-                      )}
-                      {res.verdict !== 'offtopic' && (
-                        <div className={`wm-cov-trust${typingDone ? ' show' : ''}`}>
-                          <div className="wm-cov-trust-row">
-                            <div className="wm-cov-pillar"><span className="ic qlt"><Award size={16} /></span><div><b>Quality-first</b><p>Grounded in your real screen and current best practice - no filler.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic ent"><Building2 size={16} /></span><div><b>Enterprise-grade</b><p>Admin, SSO, team seats, locked policy, audit trail.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic sec"><ShieldCheck size={16} /></span><div><b>Security-first</b><p>Secrets stripped on your device, least sent, read-only.</p></div></div>
-                            <div className="wm-cov-pillar"><span className="ic cmp"><BadgeCheck size={16} /></span><div><b>Compliant</b><p>Controls and audit evidence for your frameworks - never a certification claim.</p></div></div>
-                          </div>
-                          <div className="wm-cov-chips">
-                            {['GDPR', 'HIPAA', 'PCI-DSS', 'SOC 2', 'ISO 27001', 'CCPA', 'FedRAMP', 'NIST 800-53', 'HITRUST'].map((c) => <span key={c}>{c}</span>)}
-                          </div>
-                        </div>
-                      )}
                       <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
-                        {res.plan && <div className="wm-cov-plan">Best fit: <b>{res.plan}</b>{res.product && res.product !== 'WorkCoPilot' ? ` (see ${res.product})` : ''}</div>}
                         {res.verdict !== 'offtopic' && (
                           <button className="lv-cta" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>Get started <ArrowRight size={14} /></button>
                         )}

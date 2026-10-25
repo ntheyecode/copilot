@@ -555,7 +555,7 @@ export default function WorkMarketing() {
         </div>
       </div>
 
-      <SiteFooter dark />
+      <SiteFooter />
 
       <LiveValidate go={go} theme="light" source="marketing" />
     </div>
@@ -1164,6 +1164,11 @@ function RotatingHero({ paused }) {
 // now its single home; the pricing section above links there.)
 
 const CSS = `
+/* NOTE: the tokens on this .wm root are the DARK base and are NOT what renders.
+   The page is LIGHT by default: the ".wm:not([data-wm=dark])" block at the end
+   of this sheet outranks this rule and re-declares every token light (owner,
+   2026-10-24: "our site doesn't use darker versions by default"). The shared
+   SiteHeader is always light; the shared SiteFooter is the only dark band. */
 .wm{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--chip:rgba(255,255,255,.06);--mx:0;--my:0;
   position:relative;min-height:100vh;background:var(--ink);color:var(--tx);font-family:"Figtree",system-ui,sans-serif;font-size:17px;line-height:1.6;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 .wm *{box-sizing:border-box}

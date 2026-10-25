@@ -1,8 +1,14 @@
 // SiteFooter - the ONE footer every public page shares (single source), to match
 // the shared SiteHeader. Brand lockup, four link groups (Product, Trust, Legal,
 // Contact), the ownership line and the copyright. Brand tokens (emerald / cyan,
-// Bricolage + Figtree), light by default with a dark override on data-theme, so
-// it sits correctly on both the light inner pages and the dark marketing page.
+// Bricolage + Figtree).
+//
+// DARK BY DEFAULT (owner, 2026-10-24: "just make footer section only as dark").
+// The public site is light everywhere; the footer is the single dark band that
+// closes every page, so `dark` defaults to true and every `<SiteFooter />` call
+// site renders dark with no per-page prop. A brand gradient hairline on its top
+// edge makes the light-to-dark transition read as intentional. Pass
+// `dark={false}` only if a page ever needs the light variant.
 import React from 'react'
 import { Mail, ArrowUpRight } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
@@ -22,8 +28,8 @@ const GROUPS = [
   ] },
 ]
 
-// `dark` forces the dark palette regardless of data-theme (for the dark marketing page).
-export default function SiteFooter({ dark = false }) {
+// `dark` (default true) forces the dark palette regardless of data-theme.
+export default function SiteFooter({ dark = true }) {
   return (
     <footer className={`sf${dark ? ' sf-dark' : ''}`} aria-label="Site footer">
       <style>{CSS}</style>
@@ -62,7 +68,12 @@ export default function SiteFooter({ dark = false }) {
 const CSS = `
 .sf{--sf-bg:#f3f5fb;--sf-panel:#ffffff;--sf-line:#e6e8f1;--sf-tx:#161a2b;--sf-mut:#5c6484;--sf-em:#0e9f6e;--sf-cyan:#0a84c2;--sf-cta:#f26a43;--sf-cta2:#e35a31;--sf-cta-ink:#ffffff;
   position:relative;z-index:2;border-top:1px solid var(--sf-line);background:var(--sf-bg);color:var(--sf-tx);font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
-[data-theme='dark'] .sf,.sf.sf-dark{--sf-bg:#0a0b12;--sf-panel:#13141f;--sf-line:rgba(255,255,255,.08);--sf-tx:#eef0f6;--sf-mut:#9aa0b4;--sf-em:#8cf5c4;--sf-cyan:#39d3ff;--sf-cta:#ffb561;--sf-cta2:#ff7a59;--sf-cta-ink:#241206}
+[data-theme='dark'] .sf,.sf.sf-dark{--sf-bg:#0b0d16;--sf-panel:#151826;--sf-line:rgba(255,255,255,.09);--sf-tx:#eef0f6;--sf-mut:#a3a9bd;--sf-em:#8cf5c4;--sf-cyan:#39d3ff;--sf-cta:#ffb561;--sf-cta2:#ff7a59;--sf-cta-ink:#241206;
+  border-top-color:transparent;background:radial-gradient(900px 260px at 50% -40px,rgba(14,159,110,.16),transparent 70%),var(--sf-bg)}
+/* Intentional light-to-dark seam: a 3px brand gradient hairline (emerald to cyan to orange) along the top edge. */
+.sf.sf-dark::before{content:"";position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,#0e9f6e 0%,#0a84c2 55%,#f26a43 100%)}
+.sf.sf-dark .sf-btn.alt{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.14)}
+.sf.sf-dark .sf-btn.alt:hover{background:rgba(255,255,255,.07)}
 .sf *{box-sizing:border-box}
 .sf a{color:inherit;text-decoration:none}
 .sf-in{max-width:1160px;margin:0 auto;padding:44px 24px 26px;display:grid;grid-template-columns:minmax(0,1.5fr) repeat(4,minmax(0,1fr));gap:28px}
