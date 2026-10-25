@@ -1,36 +1,43 @@
-// WorkBuddy - the small, movable, always-on-top "buddy" overlay.
+// WorkBuddy - a modern, free-floating desktop MASCOT (the "latest BonziBuddy"
+// feel): a living animated character floating on the desktop with NO box/panel,
+// and the guidance shown in a soft CLOUD / speech bubble ON TOP of the mascot.
 //
-// It is loaded in its own frameless Electron window (workcopilot/main.js) at
-// /work/buddy when the main WorkCoPilot console is minimized or hidden. The
-// guidance engine runs in the MAIN console renderer and posts results to the
-// server; this buddy is a thin, read-only view that polls the server and shows
-// the current step, the exact next move, progress, and remaining time, with
-// three controls: Open full, Hide, Pause/Resume.
+// It is loaded in its own frameless, transparent, always-on-top Electron window
+// (workcopilot/main.js) at /work/buddy when the main WorkCoPilot console is
+// minimized or hidden. The guidance engine runs in the MAIN console renderer and
+// posts results to the server; this buddy is a thin, read-only view that polls the
+// server and shows the current step, the exact next move, progress and remaining
+// time inside the cloud.
 //
-// A friendly robot mascot reacts to state (thinking while it reads the screen,
-// bright and smiling while guiding, eyes closed with a "z" when paused), so the
-// buddy feels like a companion, not a status box. Open full expands back to the
-// main window.
+// There is NO surrounding card: the page background is transparent, and only the
+// mascot + the cloud + a controls row that fades in on hover are painted. Every
+// other pixel is empty and - via per-region click-through wired in main.js /
+// preload.js (work:buddy-interactive) - passes mouse events straight through to
+// the app the user is working in. The window ignores the mouse by default; the
+// page turns that off on mouseenter of any interactive element and back on when
+// the cursor returns to the transparent area.
 //
-// Auth is cookie-session and this page is served from the same origin + the
-// same Electron partition as the console, so relative /api/work/* fetches are
-// already authenticated (no token handling here).
+// The cloud is a CSS drag region (-webkit-app-region: drag) so the user can grab
+// it to move the whole buddy; buttons, the picker and the mascot opt out so they
+// stay clickable and never start a drag. The window anchors to its bottom-left and
+// grows UPWARD (setBuddyHeight), so the mascot stays pinned to the bottom while the
+// cloud expands up to fit a long instruction.
 //
-// The window background is transparent; the card gives itself a rounded dark
-// surface so it floats. The header is a CSS drag region (-webkit-app-region) so
-// the user can move the window; buttons and the mascot opt out so they stay
-// clickable and never start a drag.
+// Auth is cookie-session and this page is served from the same origin + the same
+// Electron partition as the console, so relative /api/work/* fetches are already
+// authenticated (no token handling here).
 import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from 'react'
-import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile, Eye, Check, Minus } from 'lucide-react'
+import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile, Check, Minus, BookOpen } from 'lucide-react'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import BuddyPicker from '../components/BuddyPicker.jsx'
 
-const ACCENT = '#8cf5c4'   // emerald
-const CYAN = '#39d3ff'     // cyan
-const AMBER = '#f5c86b'    // paused / warn
-const BG = '#0b0b0f'       // near-black
+const ACCENT = '#1f9d6b'   // emerald ink (on white cloud)
+const AMBER = '#b7791f'    // paused / warn ink (on white cloud)
 const POLL_MS = 2500       // live cadence
 const POLL_PAUSED_MS = 6000 // back off when guidance is frozen
+
+const FONT_BODY = '"Figtree", "Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif'
+const FONT_HEAD = '"Bricolage Grotesque", "Figtree", "Segoe UI", system-ui, sans-serif'
 
 // mm:ss (or h:mm:ss past an hour). Calm "0:00" at/under zero.
 function fmtTime(secs) {
@@ -60,10 +67,10 @@ export default function WorkBuddy() {
   const paused = !!(session && session.paused)
 
   // --- buddy preferences (persisted, each read/write guarded) ---------------
-  // character: which avatar ('bot'..'man' or 'surprise'); the preference is
-  // saved, the rendered character is resolved from it (surprise -> a pet).
-  // motionOff: freeze all buddy animation. textOnly: hide the avatar and show a
-  // slim instruction-only card. showPicker: reveal the "change buddy" row.
+  // character: which avatar; the preference is saved, the rendered character is
+  // resolved from it (surprise -> a pet). motionOff: freeze all buddy animation.
+  // textOnly: hide the mascot and show just the cloud. showPicker: reveal the
+  // "change buddy" row.
   const readBool = (k) => { try { return localStorage.getItem(k) === '1' } catch { return false } }
   const writeBool = (k, v) => { try { localStorage.setItem(k, v ? '1' : '0') } catch { /* ignore */ } }
   const [charPref, setCharPref] = useState(() => readBuddyPref())
@@ -155,6 +162,7 @@ export default function WorkBuddy() {
   }, [paused, busy])
 
   const openMain = useCallback(() => { try { window.workDesktop?.openMain?.() } catch { /* ignore */ } }, [])
+  const openGuide = useCallback(() => { try { window.workDesktop?.openFullGuide?.() } catch { /* ignore */ } }, [])
   // HIDDEN = truly gone: the page renders NOTHING (zero desktop footprint). The
   // shell hides the window and pauses + saves guidance in the main window (its
   // IPC); when it shows the window again, focus/visibility restores the view.
@@ -169,6 +177,22 @@ export default function WorkBuddy() {
     try { window.workDesktop?.onBuddyShown?.(() => setHidden(false)) } catch { /* ignore */ }
     return () => { window.removeEventListener('focus', show); document.removeEventListener('visibilitychange', show) }
   }, [])
+
+  // --- per-region click-through (desktop-pet) -------------------------------
+  // The buddy window ignores the mouse by default (main.js) so the empty area
+  // passes clicks to the app behind. When the cursor enters the visible content
+  // (mascot + cloud + controls - all inside one wrapper), we tell the shell to
+  // capture clicks; when it leaves back to the transparent area, we release it.
+  // In a plain browser window.workDesktop is absent, so these are harmless no-ops.
+  const [hovered, setHovered] = useState(false)
+  const setInteractive = useCallback((on) => {
+    try { window.workDesktop?.buddyInteractive?.(on) } catch { /* ignore */ }
+  }, [])
+  const onEnter = useCallback(() => { setHovered(true); setInteractive(true) }, [setInteractive])
+  const onLeave = useCallback(() => { setHovered(false); setInteractive(false) }, [setInteractive])
+  // Release the hold on unmount so a closing buddy never leaves the window stuck
+  // capturing the mouse.
+  useEffect(() => () => setInteractive(false), [setInteractive])
 
   // --- derived display values ----------------------------------------------
   const steps = (session && Array.isArray(session.steps)) ? session.steps : []
@@ -202,13 +226,7 @@ export default function WorkBuddy() {
     return undefined
   }, [curIdx, status, allDone])
 
-  // Buddy mood from the live session, in AliveBuddy's vocabulary:
-  //  thinking  = ok but still reading (no guidance yet) / loading
-  //  answering = ok with current guidance or a step to do
-  //  done      = every step confirmed
-  //  newstep   = a step just advanced (brief)
-  //  alert     = something flagged, or the server is unreachable
-  //  idle      = nothing active, signed out, or session paused
+  // Buddy mood from the live session, in AliveBuddy's vocabulary.
   const aliveState = status === 'loading' ? 'thinking'
     : status === 'error' ? 'alert'
     : (status === 'empty' || status === 'signin') ? 'idle'
@@ -219,7 +237,7 @@ export default function WorkBuddy() {
     : hasGuidance ? 'answering'
     : 'thinking'
 
-  // Calm one-liners for the non-active states, shown in the bubble.
+  // Calm one-liners for the non-active states, shown in the cloud.
   const calmMsg = status === 'loading' ? 'Waking up and connecting'
     : status === 'error' ? 'Cannot reach the server. Retrying.'
     : status === 'signin' ? 'Sign in to WorkCoPilot in the main window and your steps show up here.'
@@ -227,81 +245,83 @@ export default function WorkBuddy() {
     : ''
 
   const S = styles
+  const controlsVisible = hovered || showPicker
 
-  // Grow the OS window to fit the instruction so nothing is clipped. The card
-  // lays out at its natural height (min 180, the compact size); we measure it and
-  // ask the shell to make the window that tall (capped + anchored to the corner in
-  // main.js). In the browser (no desktop bridge) this is a harmless no-op and the
-  // card just sizes to the viewport. Re-report on every content change and on any
-  // async reflow (font load, text wrap) via a ResizeObserver.
-  const cardRef = useRef(null)
+  // Grow the OS window to fit the content so nothing is clipped. We measure the
+  // visible wrapper (cloud + mascot + the control strip) and ask the shell to make
+  // the window that tall; it anchors the bottom-left and grows upward (main.js) so
+  // the mascot stays pinned to the bottom. In the browser (no desktop bridge) this
+  // is a harmless no-op and the content just sizes to the viewport. Re-report on
+  // every content change and on any async reflow (font load, text wrap).
+  const wrapRef = useRef(null)
   const lastHRef = useRef(0)
   const reportHeight = useCallback(() => {
     try {
-      const el = cardRef.current
+      const el = wrapRef.current
       if (!el || !(window.workDesktop && window.workDesktop.setBuddyHeight)) return
-      const h = Math.ceil(el.getBoundingClientRect().height)
+      // + a little slack for the soft cloud shadow so it is never clipped.
+      const h = Math.ceil(el.getBoundingClientRect().height) + 14
       if (h && Math.abs(h - lastHRef.current) >= 2) { lastHRef.current = h; window.workDesktop.setBuddyHeight(h) }
     } catch { /* ignore */ }
   }, [])
   useLayoutEffect(() => { reportHeight() }, [reportHeight, status, stepTitle, nextMove, progressLabel, paused, calmMsg, allDone, textOnly, showPicker])
   useEffect(() => {
-    const el = cardRef.current
+    const el = wrapRef.current
     if (!el || typeof ResizeObserver === 'undefined') return
     const ro = new ResizeObserver(() => reportHeight())
     ro.observe(el)
     return () => ro.disconnect()
   }, [reportHeight])
 
-  // Hidden: render nothing at all - no card, no instructions, no footprint.
+  // Hidden: render nothing at all - no mascot, no cloud, no footprint.
   if (hidden) return null
+
+  const iconBtn = (extra) => ({ ...S.iconBtn, ...(extra || null) })
 
   return (
     <div style={S.root}>
-      <div style={S.card} ref={cardRef}>
-        {/* ONE slim draggable row: status chip + tiny controls. No separate footer. */}
-        <div style={S.header}>
-          <div style={S.brand}>
-            <span style={S.brandMark}><Eye size={11} color="#052a1d" strokeWidth={2.6} /></span>
-            {status === 'ok' && session
-              ? <span style={S.statusChip(paused)}><span style={S.chipDot(paused)} />{paused ? 'Paused' : 'Guiding'}</span>
-              : <span style={S.brandText}>WorkCoPilot</span>}
-          </div>
-          <div style={S.headerBtns}>
-            <button title={showPicker ? 'Close buddy picker' : 'Change buddy'} aria-label="Change buddy" aria-pressed={showPicker} style={{ ...S.iconBtn, ...(showPicker ? S.iconBtnOn : null) }} onClick={() => setShowPicker((v) => !v)}><Smile size={13} /></button>
-            <button title={textOnly ? 'Show the buddy' : 'Text only'} aria-label="Text only" aria-pressed={textOnly} style={{ ...S.iconBtn, ...(textOnly ? S.iconBtnOn : null) }} onClick={toggleTextOnly}><Type size={12} /></button>
-            <button title={motionOff ? 'Resume buddy motion' : 'Freeze buddy motion'} aria-label="Freeze buddy motion" aria-pressed={motionOff} style={{ ...S.iconBtn, opacity: motionOff ? 0.5 : 1 }} onClick={toggleMotion}><Sparkles size={12} /></button>
-            <span style={S.btnSep} />
-            <button title={paused ? 'Resume guidance' : 'Pause guidance'} aria-label={paused ? 'Resume guidance' : 'Pause guidance'} style={{ ...S.iconBtn, ...(paused ? S.iconBtnOn : null), opacity: (idRef.current && !busy) ? 1 : 0.5 }} onClick={togglePause} disabled={!idRef.current || busy}>{paused ? <Play size={12} /> : <Pause size={12} />}</button>
-            <button title="Open full window" aria-label="Open full window" style={S.iconBtn} onClick={openMain}><Maximize2 size={12} /></button>
-            <button title="Hide buddy (pauses and saves your progress)" aria-label="Hide buddy" style={S.iconBtn} onClick={hideBuddy}><Minus size={13} /></button>
-            <button title="Close buddy" aria-label="Close buddy" style={{ ...S.iconBtn, ...S.iconBtnKill }} onClick={killBuddy}><X size={13} /></button>
+      {/* The ONLY painted thing: the mascot + cloud + hover controls. Entering it
+          captures the mouse (click-through off); leaving it releases to the app. */}
+      <div style={S.wrap} ref={wrapRef} onMouseEnter={onEnter} onMouseLeave={onLeave}>
+
+        {/* Hover control strip (always in layout so it never clips; fades on hover).
+            Icon-only, light, nowrap + flex-shrink:0 so it never wraps. */}
+        <div style={{ ...S.controls, opacity: controlsVisible ? 1 : 0, transform: controlsVisible ? 'translateY(0)' : 'translateY(4px)', pointerEvents: controlsVisible ? 'auto' : 'none' }}>
+          {showPicker && (
+            <div style={S.pickerPanel}>
+              <span style={S.pickerLabel}>Pick your buddy</span>
+              <BuddyPicker pref={charPref} size={30} onPick={(p) => { setCharPref(p) }} />
+            </div>
+          )}
+          <div style={S.controlsRow}>
+            <button title={showPicker ? 'Close buddy picker' : 'Change buddy'} aria-label="Change buddy" aria-pressed={showPicker} style={iconBtn(showPicker ? S.iconBtnOn : null)} onClick={() => setShowPicker((v) => !v)}><Smile size={14} /></button>
+            <button title={textOnly ? 'Show the buddy' : 'Text only'} aria-label="Text only" aria-pressed={textOnly} style={iconBtn(textOnly ? S.iconBtnOn : null)} onClick={toggleTextOnly}><Type size={13} /></button>
+            <button title={motionOff ? 'Resume buddy motion' : 'Freeze buddy motion'} aria-label="Freeze buddy motion" aria-pressed={motionOff} style={iconBtn(motionOff ? null : S.iconBtnOn)} onClick={toggleMotion}><Sparkles size={13} /></button>
+            <span style={S.sep} />
+            <button title={paused ? 'Resume guidance' : 'Pause guidance'} aria-label={paused ? 'Resume guidance' : 'Pause guidance'} style={{ ...iconBtn(paused ? S.iconBtnOn : null), opacity: (idRef.current && !busy) ? 1 : 0.45 }} onClick={togglePause} disabled={!idRef.current || busy}>{paused ? <Play size={13} /> : <Pause size={13} />}</button>
+            <button title="Open full guide" aria-label="Open full guide" style={iconBtn()} onClick={openGuide}><BookOpen size={13} /></button>
+            <button title="Open full window" aria-label="Open full window" style={iconBtn()} onClick={openMain}><Maximize2 size={13} /></button>
+            <button title="Hide buddy (pauses and saves your progress)" aria-label="Hide buddy" style={iconBtn()} onClick={hideBuddy}><Minus size={14} /></button>
+            <button title="Close buddy" aria-label="Close buddy" style={iconBtn(S.iconBtnKill)} onClick={killBuddy}><X size={14} /></button>
           </div>
         </div>
 
-        {/* Change-buddy picker (revealed by the smile toggle) */}
-        {showPicker && (
-          <div style={S.pickerWrap}>
-            <span style={S.pickerLabel}>Pick your buddy</span>
-            <BuddyPicker pref={charPref} size={30} onPick={(p) => { setCharPref(p); }} />
-          </div>
-        )}
+        {/* The CLOUD: a soft white, rounded, lobed speech bubble with a gentle
+            shadow and a tail pointing DOWN to the mascot. It is the drag handle. */}
+        <div style={S.cloudWrap}>
+          {/* lobes: white puffs peeking over the top + sides form the cloud silhouette */}
+          <span aria-hidden style={{ ...S.lobe, width: 52, height: 52, top: -16, left: '14%' }} />
+          <span aria-hidden style={{ ...S.lobe, width: 72, height: 72, top: -30, left: '38%' }} />
+          <span aria-hidden style={{ ...S.lobe, width: 48, height: 48, top: -14, right: '16%' }} />
+          <span aria-hidden style={{ ...S.lobe, width: 30, height: 30, top: 18, left: -12 }} />
+          <span aria-hidden style={{ ...S.lobe, width: 30, height: 30, top: 18, right: -12 }} />
 
-        {/* Body: alive buddy + speech bubble (avatar hidden in text-only mode) */}
-        <div style={S.body}>
-          {!textOnly && (
-            <div style={{ WebkitAppRegion: 'no-drag', flex: '0 0 auto', alignSelf: 'flex-start', marginTop: 1 }}>
-              <AliveBuddy character={character} state={aliveState} size={58} motion={!motionOff} interactive />
-            </div>
-          )}
-          <div style={S.bubble}>
-            {/* comic tail: sits INSIDE the gap between avatar and bubble (never over the avatar) */}
-            {!textOnly && <svg style={S.tail} width="13" height="20" viewBox="0 0 13 20" aria-hidden="true"><path d="M13 2 L1.5 10 L13 18 Z" fill="#ffffff" stroke="rgba(10,13,18,.12)" strokeWidth="1" strokeLinejoin="round" /></svg>}
+          <div style={S.cloudBody}>
             {status === 'ok' && session ? (
               <>
                 <div style={S.stepLabel} title={stepTitle}>
-                  {status === 'ok' && !allDone && <Loader2 size={11} style={{ ...S.spin, opacity: paused ? 0.3 : 0.8, marginRight: 5 }} />}
-                  {stepTitle}
+                  {!allDone && <Loader2 size={11} style={{ ...S.spin, opacity: paused ? 0.3 : 0.8, marginRight: 5, flex: '0 0 auto' }} />}
+                  <span style={S.stepLabelText}>{stepTitle}</span>
                 </div>
                 {/* The next move is THE thing to read: it flashes emerald for a beat
                     when a step advances, and a confirm check pops beside the label. */}
@@ -322,19 +342,35 @@ export default function WorkBuddy() {
               </>
             ) : (
               <div key={calmMsg} style={S.calm}>
-                {status === 'loading' && <Loader2 size={13} style={{ ...S.spin, marginRight: 6 }} />}
+                {status === 'loading' && <Loader2 size={13} style={{ ...S.spin, marginRight: 6, flex: '0 0 auto' }} />}
                 <span>{calmMsg}</span>
               </div>
             )}
           </div>
+
+          {/* a soft cloud tail: two shrinking white puffs descending toward the mascot */}
+          {!textOnly && (
+            <div style={S.tailWrap} aria-hidden>
+              <span style={{ ...S.tailPuff, width: 16, height: 16 }} />
+              <span style={{ ...S.tailPuff, width: 9, height: 9, marginTop: 2 }} />
+            </div>
+          )}
         </div>
 
+        {/* The MASCOT: floating free at the bottom, no plate behind it. */}
+        {!textOnly && (
+          <div style={S.mascot}>
+            <AliveBuddy character={character} state={aliveState} size={90} motion={!motionOff} interactive />
+          </div>
+        )}
       </div>
     </div>
   )
 }
 
 const styles = {
+  // Full transparent canvas. Content is pinned to the BOTTOM and centered so the
+  // mascot sits at the bottom of the window and the cloud grows upward above it.
   root: {
     width: '100%',
     minHeight: '100vh',
@@ -342,91 +378,123 @@ const styles = {
     background: 'transparent',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'flex-start',
-    fontFamily: 'Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    fontFamily: FONT_BODY,
     WebkitUserSelect: 'none',
     userSelect: 'none',
     overflow: 'hidden',
   },
-  // The card lays out at its NATURAL height (min 180 = the compact size). The
-  // window is grown to match (main.js), so a long instruction is shown in full
-  // instead of being clipped. It never stretches to a stale, taller window.
-  card: {
-    boxSizing: 'border-box',
+  // The visible content column. No background, no border, no card. This single
+  // wrapper is the click-through hot-zone (mouseenter/leave toggles capture).
+  wrap: {
+    position: 'relative',
     width: '100%',
-    minHeight: 180,
+    boxSizing: 'border-box',
+    padding: '8px 14px 2px',
     display: 'flex',
     flexDirection: 'column',
-    background: 'radial-gradient(120% 90% at 0% 0%, #121820 0%, ' + BG + ' 60%)',
-    border: '1px solid rgba(140,245,196,0.2)',
-    borderRadius: 16,
-    boxShadow: '0 12px 34px rgba(0,0,0,0.6)',
-    color: '#e9eef2',
-    overflow: 'hidden',
-  },
-  header: {
-    WebkitAppRegion: 'drag',
-    display: 'flex',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '7px 10px',
-    cursor: 'move',
-    background: 'linear-gradient(180deg, rgba(57,211,255,0.09), rgba(57,211,255,0))',
-    borderBottom: '1px solid rgba(255,255,255,0.05)',
+    gap: 2,
   },
-  brand: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 },
-  // Emerald brand mark, matching the console + float header.
-  brandMark: { width: 20, height: 20, borderRadius: 6, flex: '0 0 auto', display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${ACCENT}, ${CYAN})`, boxShadow: `0 0 0 1px rgba(140,245,196,0.4) inset` },
-  brandText: { fontFamily: '"Bricolage Grotesque", Inter, system-ui, sans-serif', fontSize: 12.5, fontWeight: 700, letterSpacing: '-0.01em', color: '#eef3f6' },
-  // ONE calm status chip (Guiding / Paused), same vocabulary as the other surfaces.
-  statusChip: (p) => ({ display: 'inline-flex', alignItems: 'center', gap: 5, height: 19, padding: '0 8px', borderRadius: 999, fontSize: 9.5, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase', whiteSpace: 'nowrap', color: p ? AMBER : ACCENT, background: p ? 'rgba(245,200,107,0.14)' : 'rgba(140,245,196,0.14)', border: `1px solid ${p ? 'rgba(245,200,107,0.34)' : 'rgba(140,245,196,0.34)'}` }),
-  chipDot: (p) => ({ width: 5, height: 5, borderRadius: '50%', background: p ? AMBER : ACCENT, boxShadow: p ? 'none' : `0 0 6px ${ACCENT}` }),
-  headerBtns: { WebkitAppRegion: 'no-drag', display: 'flex', gap: 4 },
+  // Hover controls: a subtle floating row above the cloud. Fades in; never wraps.
+  controls: {
+    WebkitAppRegion: 'no-drag',
+    position: 'relative',
+    zIndex: 5,                 // sit above the cloud's top lobes so nothing clips it
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 16,          // clear the cloud's tallest top lobe
+    transition: 'opacity .18s ease, transform .18s ease',
+  },
+  controlsRow: {
+    display: 'flex',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
+    gap: 4,
+    padding: '4px 6px',
+    borderRadius: 999,
+    background: 'rgba(255,255,255,0.92)',
+    boxShadow: '0 6px 18px -8px rgba(20,28,45,0.45), 0 0 0 1px rgba(20,28,45,0.06)',
+    backdropFilter: 'blur(6px)',
+    WebkitBackdropFilter: 'blur(6px)',
+    maxWidth: '100%',
+  },
   iconBtn: {
     WebkitAppRegion: 'no-drag',
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 24, height: 22, padding: 0,
-    background: 'rgba(255,255,255,0.04)', color: '#aeb8bf',
-    border: '1px solid rgba(255,255,255,0.06)', borderRadius: 7, cursor: 'pointer',
+    width: 26, height: 24, padding: 0, flex: '0 0 auto',
+    background: 'transparent', color: '#4a5568',
+    border: '1px solid transparent', borderRadius: 8, cursor: 'pointer',
+    transition: 'background .12s, color .12s, border-color .12s',
   },
-  iconBtnOn: { color: ACCENT, background: 'rgba(140,245,196,0.14)', borderColor: 'rgba(140,245,196,0.4)' },
-  iconBtnKill: { color: '#ff8b81' },
-  btnSep: { width: 1, height: 16, background: 'rgba(255,255,255,0.1)', margin: '0 2px', flex: '0 0 auto' },
-  pickerWrap: {
+  iconBtnOn: { color: ACCENT, background: 'rgba(31,157,107,0.12)', borderColor: 'rgba(31,157,107,0.3)' },
+  iconBtnKill: { color: '#e05a52' },
+  sep: { width: 1, height: 15, background: 'rgba(20,28,45,0.12)', margin: '0 2px', flex: '0 0 auto' },
+  pickerPanel: {
     WebkitAppRegion: 'no-drag',
-    display: 'flex', flexDirection: 'column', gap: 7,
-    padding: '9px 11px', borderBottom: '1px solid rgba(255,255,255,0.05)',
-    background: 'rgba(57,211,255,0.04)',
+    display: 'flex', flexDirection: 'column', gap: 7, alignItems: 'center',
+    padding: '9px 12px', borderRadius: 14,
+    background: 'rgba(255,255,255,0.95)',
+    boxShadow: '0 10px 26px -12px rgba(20,28,45,0.5), 0 0 0 1px rgba(20,28,45,0.06)',
   },
-  pickerLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: '#9aa6ad' },
-  // Avatar and the comic speech bubble sit side by side with a 14px gap; the
-  // bubble's tail (12px wide) lives inside that gap, pointing at the buddy and
-  // never overlapping it. A clean white comic bubble with dark ink, like the
-  // approved sample, reads crisply on the dark buddy card.
-  body: { flex: 1, padding: '10px 12px', display: 'flex', alignItems: 'flex-start', gap: 14, minHeight: 0 },
-  bubble: {
-    position: 'relative', flex: 1, minWidth: 0,
-    display: 'flex', flexDirection: 'column', gap: 5, justifyContent: 'flex-start',
-    background: '#ffffff', color: '#161a2b',
-    border: '1px solid rgba(10,13,18,0.12)',
-    borderRadius: 14, padding: '10px 12px',
-    boxShadow: '0 10px 24px -14px rgba(0,0,0,0.7)',
+  pickerLabel: { fontSize: 10, fontWeight: 700, letterSpacing: 0.4, textTransform: 'uppercase', color: '#6b7280' },
+
+  // The cloud: all-white silhouette (body + lobe puffs + tail) under ONE soft
+  // drop-shadow so it reads as a single fluffy cloud. It is the drag handle.
+  cloudWrap: {
+    WebkitAppRegion: 'drag',
+    position: 'relative',
+    width: '100%',
+    maxWidth: 300,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    filter: 'drop-shadow(0 10px 20px rgba(20,28,45,0.18)) drop-shadow(0 2px 5px rgba(20,28,45,0.12))',
   },
-  tail: { position: 'absolute', left: -12, top: 20, width: 13, height: 20, display: 'block', pointerEvents: 'none' },
+  lobe: {
+    position: 'absolute',
+    borderRadius: '50%',
+    background: '#ffffff',
+    zIndex: 0,
+  },
+  cloudBody: {
+    position: 'relative',
+    zIndex: 1,
+    width: '100%',
+    boxSizing: 'border-box',
+    background: '#ffffff',
+    color: '#161a2b',
+    borderRadius: 22,
+    padding: '13px 16px',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 5,
+  },
+  tailWrap: {
+    position: 'relative', zIndex: 1,
+    display: 'flex', flexDirection: 'column', alignItems: 'center',
+    marginTop: -2,
+  },
+  tailPuff: { borderRadius: '50%', background: '#ffffff', display: 'block' },
+
   spin: { animation: 'wb-spin 1s linear infinite' },
   stepLabel: {
-    display: 'flex', alignItems: 'flex-start',
+    display: 'flex', alignItems: 'center',
+    fontFamily: FONT_HEAD,
     fontSize: 10.5, fontWeight: 700, letterSpacing: 0.3, textTransform: 'uppercase',
-    color: '#0a84c2', lineHeight: 1.3,
+    color: '#0a84c2', lineHeight: 1.3, minWidth: 0,
   },
-  // The exact next move, shown IN FULL and refreshed in place (no clamp, no
-  // remount animation) so it stays in one fixed spot. Very long guidance scrolls
-  // inside the bubble once the window hits its height cap.
+  stepLabelText: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 },
+  // The exact next move, shown IN FULL and refreshed in place. Long guidance
+  // scrolls inside the cloud once the window hits its height cap.
   moveText: {
-    fontSize: 13, fontWeight: 600, color: '#161a2b', lineHeight: 1.35,
+    fontSize: 13, fontWeight: 600, color: '#161a2b', lineHeight: 1.38,
     whiteSpace: 'normal', overflowWrap: 'anywhere',
-    maxHeight: 230, overflowY: 'auto',
+    maxHeight: 260, overflowY: 'auto',
   },
   metaRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 1 },
   progWrap: { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 },
@@ -434,7 +502,11 @@ const styles = {
   progFill: { display: 'block', height: '100%', borderRadius: 3, background: 'linear-gradient(90deg, #0e9f6e, #0a84c2)', transition: 'width 0.4s ease' },
   progLabel: { fontSize: 10.5, fontWeight: 600, color: '#5c6484', whiteSpace: 'nowrap' },
   metaTime: { display: 'inline-flex', alignItems: 'center', fontSize: 11, color: '#5c6484', fontVariantNumeric: 'tabular-nums', flex: '0 0 auto' },
-  calm: { display: 'flex', alignItems: 'center', fontSize: 12.5, color: '#2b3250', lineHeight: 1.35, animation: 'wb-msg 0.28s ease-out' },
+  calm: { display: 'flex', alignItems: 'center', fontSize: 12.5, color: '#2b3250', lineHeight: 1.38, animation: 'wb-msg 0.28s ease-out' },
+
+  // The mascot floats free - no plate, no ring box. Slight negative margin tucks
+  // it just under the cloud tail.
+  mascot: { WebkitAppRegion: 'no-drag', flex: '0 0 auto', marginTop: 2, display: 'grid', placeItems: 'center' },
 }
 
 // Keyframes (scoped, injected once).
@@ -446,10 +518,10 @@ if (typeof document !== 'undefined' && !document.getElementById('wb-kf')) {
     '@keyframes wb-msg{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}',
     // the magic: a brief emerald flash on the new move + a confirm check that pops
     '.wb-flash{animation:wb-flash .9s ease-out both;border-radius:8px}',
-    '@keyframes wb-flash{0%{background:rgba(140,245,196,.28);box-shadow:0 0 0 6px rgba(140,245,196,.28)}100%{background:transparent;box-shadow:0 0 0 0 rgba(140,245,196,0)}}',
-    '.wb-confirm{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#8cf5c4;background:rgba(140,245,196,.14);box-shadow:0 0 0 1px rgba(140,245,196,.45) inset;animation:wb-pop .5s cubic-bezier(.3,1.4,.5,1) both}',
+    '@keyframes wb-flash{0%{background:rgba(31,157,107,.22);box-shadow:0 0 0 6px rgba(31,157,107,.18)}100%{background:transparent;box-shadow:0 0 0 0 rgba(31,157,107,0)}}',
+    '.wb-confirm{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:999px;font-size:9.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#1f9d6b;background:rgba(31,157,107,.12);box-shadow:0 0 0 1px rgba(31,157,107,.35) inset;animation:wb-pop .5s cubic-bezier(.3,1.4,.5,1) both}',
     '@keyframes wb-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}',
-    '@media(prefers-reduced-motion:reduce){.wb-flash{animation:none;box-shadow:0 0 0 2px rgba(140,245,196,.45)}.wb-confirm{animation:none}}',
+    '@media(prefers-reduced-motion:reduce){.wb-flash{animation:none;box-shadow:0 0 0 2px rgba(31,157,107,.35)}.wb-confirm{animation:none}}',
   ].join('')
   document.head.appendChild(el)
 }

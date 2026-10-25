@@ -49,6 +49,12 @@ contextBridge.exposeInMainWorld('workDesktop', {
   // The buddy page measures its instruction text and asks the window to grow to
   // fit, so a long step is shown in full instead of being clipped. Fire-and-forget.
   setBuddyHeight: (h) => ipcRenderer.send('work:buddy-height', Math.round(Number(h) || 0)),
+  // Desktop-pet click-through. The buddy window ignores the mouse by default so
+  // the empty transparent area passes clicks to the app behind; the page calls
+  // this with `true` on mouseenter of the mascot / cloud / controls so they
+  // capture clicks (and the drag region works), and `false` on mouseleave back to
+  // the empty area. Harmless no-op of the channel from anywhere else.
+  buddyInteractive: (on) => ipcRenderer.invoke('work:buddy-interactive', !!on),
   // Open clean, full-screen guidance (/work/guide) on the monitor the user is NOT
   // working on. No-op friendly: returns a flag the console can use to fall back.
   openFullGuide: () => ipcRenderer.invoke('work:open-guide'),

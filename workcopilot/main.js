@@ -37,9 +37,14 @@ let SERVER_ORIGIN = ''
 try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
 
 const BUDDY_W = 340
-const BUDDY_H = 180          // compact starting height
-const BUDDY_H_MIN = 180      // never shorter than the compact card
-const BUDDY_H_MAX = 460      // grows this tall to show a long instruction, then scrolls
+// The buddy is a free-floating desktop mascot (no box): a cloud/speech bubble
+// stacked ABOVE the animated character. The window anchors to its BOTTOM-LEFT and
+// grows UPWARD (setBuddyHeight), so the mascot stays pinned to the bottom while the
+// cloud expands up to fit a long instruction. The starting height holds the mascot
+// + a compact cloud + the hover control strip; it grows taller for longer guidance.
+const BUDDY_H = 236          // compact starting height (mascot + small cloud + control strip)
+const BUDDY_H_MIN = 210      // never shorter than the compact mascot + cloud
+const BUDDY_H_MAX = 560      // grows this tall to show a long instruction above the mascot, then scrolls
 let buddyH = BUDDY_H         // current allowed height (the page asks us to grow to fit)
 
 let win = null          // main console window
@@ -806,6 +811,20 @@ function createBuddy() {
   // window.
   buddy.setContentProtection(true)
 
+  // Desktop-pet click-through: the buddy window is a transparent canvas that
+  // holds only a floating mascot + a cloud bubble + a hover control strip. By
+  // DEFAULT the whole window ignores the mouse and FORWARDS it to the app behind,
+  // so clicks in the empty transparent area land on the user's real work. The
+  // /work/buddy page flips this off (via work:buddy-interactive) on mouseenter of
+  // any interactive element (mascot / cloud / controls) so those capture clicks +
+  // the drag-to-move region works, and back on when the cursor returns to the
+  // empty area. forward:true keeps mouse-MOVE events flowing to the renderer even
+  // while ignoring clicks, which is what lets the page detect those enter/leaves.
+  try { buddy.setIgnoreMouseEvents(true, { forward: true }) } catch { /* ignore */ }
+  // setBounds (grow-to-fit) and show do not reset ignore state, so re-assert it
+  // once the page has loaded as a belt-and-braces default.
+  try { buddy.webContents.once('did-finish-load', () => { try { if (alive(buddy)) buddy.setIgnoreMouseEvents(true, { forward: true }) } catch { /* ignore */ } }) } catch { /* ignore */ }
+
   buddy.loadURL(`${SERVER_URL}/work/buddy`)
 
   buddy.webContents.setWindowOpenHandler(({ url }) => {
@@ -917,6 +936,16 @@ ipcMain.handle('work:buddy-hide', () => { hideBuddy(); try { if (alive(win)) win
 // is reopened or the app is relaunched); also pause + save, like Hide.
 ipcMain.handle('work:buddy-kill', () => { buddyKilled = true; try { if (alive(buddy) && !buddy.isDestroyed()) buddy.close() } catch { /* ignore */ } try { if (alive(win)) win.webContents.send('work:pause-save') } catch { /* ignore */ } })
 ipcMain.on('work:buddy-height', (_e, h) => { setBuddyHeight(h) }) // page asks the card to fit its text
+// Per-region click-through for the desktop-pet buddy. The page calls this with
+// `on=true` when the cursor enters the mascot / cloud / controls (the window must
+// capture clicks + allow the drag region), and `on=false` when the cursor returns
+// to the empty transparent area (clicks pass THROUGH to the app behind). forward
+// stays true so the renderer keeps receiving the mouse-move enter/leave events
+// that drive this toggle.
+ipcMain.handle('work:buddy-interactive', (_e, on) => {
+  try { if (alive(buddy) && !buddy.isDestroyed()) buddy.setIgnoreMouseEvents(!on, { forward: true }) } catch { /* ignore */ }
+  return !!on
+})
 ipcMain.handle('work:open-guide', () => openGuideWindow())        // full-screen guidance on the other monitor
 ipcMain.handle('work:open-main', () => {                          // reopen the full console
   buddyKilled = false                                             // reopening the console un-kills the buddy
