@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Loader2, Check, Building2, Lock, ChevronDown, ShieldCheck, Eye, FileText, Sparkles } from 'lucide-react'
+import { ArrowRight, Loader2, Check, Building2, Lock, ChevronDown, ShieldCheck, Eye, FileText, Sparkles, AlertTriangle, BookOpen, ScanEye } from 'lucide-react'
 import { useAuth } from '../auth.jsx'
 import MfaGate from '../components/MfaGate.jsx'
 import { api } from '../api.js'
@@ -63,10 +63,11 @@ const IN_APP = !!WD_DESK
 // ---------------------------------------------------------------------------
 
 // The social set. Easy to add or drop a provider: one entry here, one brand mark.
+// `label` is the accessible / in-app text; `short` is the compact web tile text.
 const SOCIAL = [
-  { id: 'google', label: 'Continue with Google' },
-  { id: 'microsoft', label: 'Continue with Microsoft' },
-  { id: 'facebook', label: 'Continue with Facebook' },
+  { id: 'google', label: 'Continue with Google', short: 'Google' },
+  { id: 'microsoft', label: 'Continue with Microsoft', short: 'Microsoft' },
+  { id: 'facebook', label: 'Continue with Facebook', short: 'Facebook' },
 ]
 // Brand marks as small inline SVGs (no external assets), in official brand colors.
 function SocialMark({ id }) {
@@ -96,49 +97,42 @@ function SocialMark({ id }) {
   )
 }
 
-// Brand-panel graphic: the same inline-SVG language as the dashboard hero - a
-// guided window with steps ticked off, a floating "Now, do this" micro-card and
-// the buddy on a cyan guide path, over a dot-grid patch and concentric arcs.
-// Every color is a .wl token, so it reads in light and dark.
-function WlArt() {
+// WEB brand aside (owner, 2026-10-24: "ask fable to design all new login or
+// create accounts", fresh + light, keep the split panel). The aside shows the
+// PRODUCT, not an illustration: a dark "watching" window (the same device-screen
+// language the homepage uses on its light page) with a goal, what it can see,
+// steps ticked, the current step called out, and two floating cards: a wrong
+// turn caught, and company knowledge grounding a step. Pure HTML/CSS, every
+// color a .wl token or a deliberate dark-screen constant. Decorative only
+// (aria-hidden); the real copy is in the headline and the three trust rows.
+function WlStage() {
   return (
-    <svg className="wl-art" viewBox="0 0 400 300" fill="none" aria-hidden="true" focusable="false">
-      <defs>
-        <pattern id="wlDots" width="12" height="12" patternUnits="userSpaceOnUse"><circle cx="1.2" cy="1.2" r="1.2" fill="var(--cyan)" opacity=".3" /></pattern>
-        <linearGradient id="wlGlow" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="var(--em)" stopOpacity=".22" /><stop offset="1" stopColor="var(--cyan)" stopOpacity=".1" /></linearGradient>
-        <linearGradient id="wlBar" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="var(--em)" /><stop offset="1" stopColor="var(--cyan)" /></linearGradient>
-      </defs>
-      <ellipse cx="206" cy="166" rx="182" ry="112" fill="url(#wlGlow)" />
-      <rect x="14" y="34" width="132" height="110" rx="14" fill="url(#wlDots)" />
-      <circle cx="326" cy="86" r="66" stroke="var(--cyan)" strokeOpacity=".22" strokeWidth="1.2" />
-      <circle cx="326" cy="86" r="44" stroke="var(--cyan)" strokeOpacity=".16" strokeWidth="1.2" strokeDasharray="4 6" />
-      <rect x="60" y="48" width="240" height="186" rx="18" fill="var(--panel)" stroke="var(--line-2)" />
-      <rect x="60" y="48" width="240" height="3" rx="1.5" fill="url(#wlBar)" />
-      <path d="M60 78h240" stroke="var(--line)" />
-      <circle cx="78" cy="63" r="3.4" fill="var(--line-2)" /><circle cx="90" cy="63" r="3.4" fill="var(--line-2)" /><circle cx="102" cy="63" r="3.4" fill="var(--line-2)" />
-      <rect x="228" y="57.5" width="56" height="11" rx="5.5" fill="var(--chip)" stroke="var(--line)" />
-      <circle cx="92" cy="104" r="10" fill="var(--em)" /><path d="M87 104.2l3.3 3.3 6.6-7" stroke="var(--on-em)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="114" y="98.5" width="112" height="10" rx="5" fill="var(--line-2)" />
-      <circle cx="92" cy="136" r="10" fill="var(--em)" /><path d="M87 136.2l3.3 3.3 6.6-7" stroke="var(--on-em)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="114" y="130.5" width="84" height="10" rx="5" fill="var(--line-2)" />
-      <rect x="72" y="154" width="216" height="30" rx="10" fill="var(--em-fill)" stroke="var(--em-line)" />
-      <rect x="72" y="154" width="3" height="30" rx="1.5" fill="url(#wlBar)" />
-      <circle cx="92" cy="169" r="10" fill="var(--panel)" stroke="var(--em)" strokeWidth="2" /><circle cx="92" cy="169" r="3.8" fill="var(--em)" />
-      <rect x="114" y="164" width="128" height="10" rx="5" fill="var(--tx)" opacity=".42" /><rect x="250" y="164" width="22" height="10" rx="5" fill="var(--em)" opacity=".8" />
-      <circle cx="92" cy="202" r="10" stroke="var(--line-2)" strokeDasharray="3 3" /><rect x="114" y="196.5" width="98" height="10" rx="5" fill="var(--line)" />
-      <g transform="translate(252 24)">
-        <rect x="0" y="0" width="128" height="52" rx="12" fill="var(--panel)" stroke="var(--em-line)" />
-        <rect x="12" y="12" width="60" height="10" rx="5" fill="var(--em)" opacity=".92" /><rect x="12" y="30" width="96" height="8" rx="4" fill="var(--line-2)" />
-        <circle cx="111" cy="17" r="8" fill="var(--em-fill-2)" /><path d="M107.2 17l2.6 2.6 5-5.4" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </g>
-      <path d="M330 238c-9-25-27-42-52-49" stroke="var(--cyan)" strokeWidth="1.7" strokeDasharray="3.5 4.5" strokeLinecap="round" />
-      <circle cx="276" cy="188" r="3.2" fill="var(--cyan)" />
-      <circle cx="342" cy="254" r="26" fill="var(--panel)" stroke="var(--em-line)" strokeWidth="1.5" /><circle cx="342" cy="254" r="18.5" fill="var(--em-fill-2)" />
-      <circle cx="335.5" cy="250.5" r="2.6" fill="var(--em)" /><circle cx="348.5" cy="250.5" r="2.6" fill="var(--em)" />
-      <path d="M336 259.5c3 2.9 9 2.9 12 0" stroke="var(--em)" strokeWidth="2" strokeLinecap="round" />
-      <path d="M40 182l2.4 6.4 6.4 2.4-6.4 2.4L40 199.6l-2.4-6.4-6.4-2.4 6.4-2.4z" fill="var(--cyan)" opacity=".55" />
-      <path d="M372 150l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z" fill="var(--cta)" opacity=".65" />
-    </svg>
+    <div className="wl-stage" aria-hidden="true">
+      <div className="wl-win">
+        <div className="wl-win-bar">
+          <span className="wl-win-dots"><i /><i /><i /></span>
+          <span className="wl-win-t"><AVMark size={12} id="avst" /> WorkCoPilot <em><ScanEye size={11} /> watching</em></span>
+          <span className="wl-win-tag">Step 3 of 7</span>
+        </div>
+        <div className="wl-win-row goal"><span>Goal</span><b>Set up the new vendor in the payments portal</b></div>
+        <div className="wl-win-row see"><span>I can see</span><b>The Vendors tab is open and the form is empty</b></div>
+        <ol className="wl-win-steps">
+          <li className="done"><i /> Open Finance, then Vendors</li>
+          <li className="done"><i /> Click New vendor</li>
+          <li className="now"><i /><div><small>Do this now</small>Set payment terms to <b>Net 30</b>, then enter the Tax ID</div></li>
+          <li><i /> Attach the signed W-9</li>
+          <li><i /> Submit for approval</li>
+        </ol>
+      </div>
+      <div className="wl-float warn">
+        <span className="ic"><AlertTriangle size={15} /></span>
+        <div><b>Wrong tab. Caught it.</b><span>You opened Customers. Go back to Vendors.</span></div>
+      </div>
+      <div className="wl-float learn">
+        <span className="ic"><BookOpen size={15} /></span>
+        <div><b>Knows your playbook</b><span>Net 30 comes from your Finance SOP, private to your company.</span></div>
+      </div>
+    </div>
   )
 }
 
@@ -437,12 +431,13 @@ export default function WorkLogin() {
   const socialLoading = socialStep === 'loading' && !mfa
 
   return (
-    <div className={`wl${IN_APP ? ' wl-app' : ''}`} style={WD_DESK ? { paddingTop: 40 } : undefined}>
+    <div className={`wl ${IN_APP ? 'wl-app' : 'wl-web'}`} style={WD_DESK ? { paddingTop: 40 } : undefined}>
       {WD_DESK && <WorkShell authed={false} />}
       <style>{CSS}</style>
       <div className="wl-bg" aria-hidden><span className="wl-orb o1" /><span className="wl-orb o2" /></div>
 
-      {/* BRAND PANEL (hidden on phones; never rendered in the app): wordmark, value line, the graphic, a calm proof element */}
+      {/* BRAND ASIDE (web only, hidden on phones, never rendered in the app):
+          wordmark, the positioning, the live-step stage, three trust rows. */}
       {!IN_APP && <aside className="wl-brand">
         <a className="wl-wordmark" href="/">
           <span className="wl-prod"><AVMark size={22} id="avlw" /> Work<i>CoPilot</i></span>
@@ -450,14 +445,14 @@ export default function WorkLogin() {
         </a>
         <div className="wl-pitch">
           <p className="wl-pitch-k"><Sparkles size={13} aria-hidden="true" /> Your expert, on every screen</p>
-          <p className="wl-pitch-h">Get the hard thing done.<br />One correct step at a time.</p>
-          <p className="wl-pitch-p">WorkCoPilot reads your screen, tells you the exact next move, catches a wrong turn, and keeps a clean record of what you did.</p>
+          <p className="wl-pitch-h">It hand-holds you through <span className="wl-hl">every step.</span></p>
+          <p className="wl-pitch-p">WorkCoPilot watches your screen, tells you the exact next move, and catches a wrong turn before it costs you. For companies, it learns your own apps and playbooks, privately.</p>
         </div>
-        <WlArt />
+        <WlStage />
         <ul className="wl-proof" aria-label="What you get">
-          <li><span className="wl-proof-ic"><Eye size={15} aria-hidden="true" /></span><span><b>Watches your screen</b><small>Steps update as you work, and a wrong move is caught.</small></span></li>
-          <li><span className="wl-proof-ic alt"><FileText size={15} aria-hidden="true" /></span><span><b>Exact steps, commands, links</b><small>Copy-ready, never a vague hint.</small></span></li>
-          <li><span className="wl-proof-ic warm"><ShieldCheck size={15} aria-hidden="true" /></span><span><b>Read-only by design</b><small>It never clicks, types or runs anything for you.</small></span></li>
+          <li><span className="wl-proof-ic"><Eye size={15} aria-hidden="true" /></span><span><b>Read-only by design</b><small>It never clicks, types or runs anything for you.</small></span></li>
+          <li><span className="wl-proof-ic alt"><ShieldCheck size={15} aria-hidden="true" /></span><span><b>Private on your device</b><small>Sensitive values are scrubbed before anything leaves.</small></span></li>
+          <li><span className="wl-proof-ic warm"><FileText size={15} aria-hidden="true" /></span><span><b>Documented when you finish</b><small>A clean record of every confirmed step.</small></span></li>
         </ul>
       </aside>}
 
@@ -529,8 +524,8 @@ export default function WorkLogin() {
               const on = socialEnabled(s.id)
               const soon = !!(providers && providers[s.id] !== true)   // probed and not configured
               return (
-                <button key={s.id} type="button" className="wl-prov" disabled={!on || working} onClick={() => on && startSocial(s.id)} title={on ? s.label : (soon ? `${s.label} is coming soon` : 'Checking availability')}>
-                  <SocialMark id={s.id} /><span>{s.label}</span>{soon && <em className="wl-soon">Coming soon</em>}
+                <button key={s.id} type="button" className="wl-prov" disabled={!on || working} onClick={() => on && startSocial(s.id)} aria-label={s.label} title={on ? s.label : (soon ? `${s.label} is coming soon` : 'Checking availability')}>
+                  <SocialMark id={s.id} /><span>{IN_APP ? s.label : s.short}</span>{soon && <em className="wl-soon">Coming soon</em>}
                 </button>
               )
             })}
@@ -673,24 +668,109 @@ const CSS = `
 .wl-orb.o2{width:40vw;height:40vw;left:18vw;bottom:-18vw;background:radial-gradient(circle,color-mix(in srgb,var(--em) 55%,transparent),transparent 65%);animation-delay:-6s}
 @keyframes wldrift{to{transform:translateY(4%) scale(1.05)}}
 
-/* BRAND PANEL */
-.wl-brand{position:relative;z-index:2;padding:44px 52px 40px;display:flex;flex-direction:column;gap:26px;border-right:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 55%,transparent),transparent 60%)}
-.wl-wordmark{display:flex;flex-direction:column;gap:3px}
-.wl-prod{font-family:var(--wl-display);font-weight:800;font-size:22px;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:9px}
-.wl-ad{font-size:12px;color:var(--mut);letter-spacing:.02em;padding-left:31px}
-.wl-pitch{margin-top:10px}
-.wl-pitch-k{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--cyan);margin:0 0 12px}
-.wl-pitch-h{font-family:var(--wl-display);font-weight:800;font-size:clamp(30px,3.6vw,46px);line-height:1.06;letter-spacing:-.03em;color:var(--tx);margin:0;text-wrap:balance}
-.wl-pitch-p{color:var(--mut);font-size:16.5px;line-height:1.55;max-width:40ch;margin:14px 0 0}
-.wl-art{display:block;width:min(100%,520px);height:auto;margin:4px 0 0 -8px;animation:wlrise .6s cubic-bezier(.2,.8,.2,1) both;filter:drop-shadow(0 18px 30px rgba(0,0,0,.14))}
 @keyframes wlrise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.wl-proof{list-style:none;margin:auto 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.wl-proof li{display:flex;flex-direction:column;gap:9px;padding:13px 14px;border-radius:14px;background:color-mix(in srgb,var(--panel) 80%,transparent);border:1px solid var(--line);box-shadow:var(--card-shadow)}
-.wl-proof b{display:block;font-size:13.5px;font-weight:700;line-height:1.3;color:var(--tx)}
-.wl-proof small{display:block;font-size:12px;line-height:1.45;color:var(--mut);margin-top:3px}
-.wl-proof-ic{width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--em-fill);color:var(--em);border:1px solid var(--em-line)}
-.wl-proof-ic.alt{background:var(--cyan-fill);color:var(--cyan);border-color:var(--cyan-line)}
-.wl-proof-ic.warm{background:var(--cta-soft);color:var(--cta-text);border-color:var(--cta-line)}
+
+/* ===================== WEB (.wl-web): the split-panel redesign =====================
+   Owner 2026-10-24: "I don't like our design at all for login pages and create
+   accounts"; chose FRESH, modern, LIGHT, keep the split panel. Everything below
+   is scoped to .wl-web so the approved in-app card (.wl-app) is untouched.
+   LEFT: a brand-tinted aside with the positioning and a live product stage.
+   RIGHT: a flat white form column (no card-in-a-card), underline tabs, a 3-up
+   provider row, taller fields, the orange CTA. */
+.wl.wl-web{grid-template-columns:minmax(0,1.08fr) minmax(0,.92fr);background:var(--panel)}
+.wl-web .wl-bg{display:none}
+
+/* aside */
+.wl-web .wl-brand{position:relative;z-index:2;display:flex;flex-direction:column;gap:0;padding:36px 56px 32px;min-height:100vh;overflow:hidden;border-right:1px solid var(--line);
+  background:
+    radial-gradient(820px 520px at 8% -4%,color-mix(in srgb,var(--em) 16%,transparent),transparent 62%),
+    radial-gradient(760px 520px at 100% 104%,color-mix(in srgb,var(--cyan) 16%,transparent),transparent 62%),
+    linear-gradient(180deg,color-mix(in srgb,var(--panel) 70%,var(--bg)),var(--bg))}
+.wl-web .wl-brand::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(color-mix(in srgb,var(--cyan) 26%,transparent) 1px,transparent 1.2px);background-size:22px 22px;opacity:.35;mask-image:radial-gradient(70% 60% at 60% 50%,#000 10%,transparent 100%);-webkit-mask-image:radial-gradient(70% 60% at 60% 50%,#000 10%,transparent 100%)}
+.wl-web .wl-brand>*{position:relative;z-index:1}
+.wl-web .wl-wordmark{display:flex;flex-direction:column;gap:3px;align-self:flex-start}
+.wl-web .wl-prod{font-family:var(--wl-display);font-weight:800;font-size:22px;letter-spacing:-.02em;display:inline-flex;align-items:center;gap:9px}
+.wl-web .wl-ad{font-size:12px;color:var(--mut);letter-spacing:.02em;padding-left:31px}
+.wl-web .wl-pitch{margin:auto 0 26px;padding-top:34px;max-width:560px}
+.wl-web .wl-pitch-k{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--cyan);margin:0 0 14px}
+.wl-web .wl-pitch-h{font-family:var(--wl-display);font-weight:800;font-size:clamp(34px,3.9vw,52px);line-height:1.02;letter-spacing:-.035em;color:var(--tx);margin:0;text-wrap:balance}
+.wl-web .wl-hl{background:linear-gradient(92deg,var(--em),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+.wl-web .wl-pitch-p{color:var(--mut);font-size:16.5px;line-height:1.55;max-width:46ch;margin:16px 0 0;text-wrap:pretty}
+
+/* the live-step stage: a dark product window with two floating cards */
+.wl-web .wl-stage{position:relative;width:min(100%,520px);margin:0 0 auto 0;padding:0 0 26px 0;animation:wlrise .6s cubic-bezier(.2,.8,.2,1) both}
+.wl-web .wl-win{--s-bg:#0f1420;--s-bg2:#0b0f18;--s-line:rgba(255,255,255,.09);--s-tx:#eef1f8;--s-mut:#9aa6ba;--s-em:#8cf5c4;--s-cy:#5bd0ff;
+  position:relative;z-index:1;width:min(100%,440px);border-radius:18px;background:linear-gradient(180deg,var(--s-bg),var(--s-bg2));border:1px solid var(--s-line);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 40px 80px -36px rgba(17,23,38,.6);color:var(--s-tx);font-size:13px;overflow:hidden}
+.wl-web .wl-win::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--s-em),var(--s-cy))}
+.wl-web .wl-win-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--s-line);font-size:12px}
+.wl-web .wl-win-dots{display:inline-flex;gap:5px}
+.wl-web .wl-win-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.14)}
+.wl-web .wl-win-t{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--s-tx)}
+.wl-web .wl-win-t em{display:inline-flex;align-items:center;gap:4px;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--s-em);background:rgba(140,245,196,.1);border:1px solid rgba(140,245,196,.25);border-radius:999px;padding:2px 7px;margin-left:4px}
+.wl-web .wl-win-tag{margin-left:auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:var(--s-mut)}
+.wl-web .wl-win-row{display:grid;grid-template-columns:62px 1fr;gap:10px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--s-line)}
+.wl-web .wl-win-row span{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--s-mut)}
+.wl-web .wl-win-row.see span{color:var(--s-cy)}
+.wl-web .wl-win-row b{font-weight:600;color:var(--s-tx);line-height:1.4}
+.wl-web .wl-win-row.see b{color:#cfe6f6}
+.wl-web .wl-win-steps{list-style:none;margin:0;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
+.wl-web .wl-win-steps li{display:flex;align-items:flex-start;gap:9px;padding:6px 8px;border-radius:9px;color:var(--s-mut);line-height:1.4}
+.wl-web .wl-win-steps li i{flex:none;width:16px;height:16px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.22);margin-top:1px}
+.wl-web .wl-win-steps li.done{color:#c4ccdc}
+.wl-web .wl-win-steps li.done i{border:0;background:var(--s-em);position:relative}
+.wl-web .wl-win-steps li.done i::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:7px;border:solid #06201a;border-width:0 2px 2px 0;transform:rotate(45deg)}
+.wl-web .wl-win-steps li.now{color:var(--s-tx);background:rgba(140,245,196,.09);border:1px solid rgba(140,245,196,.28);padding:9px 10px;box-shadow:inset 3px 0 0 var(--s-em)}
+.wl-web .wl-win-steps li.now i{border:2px solid var(--s-em);background:radial-gradient(circle,var(--s-em) 38%,transparent 42%);margin-top:3px}
+.wl-web .wl-win-steps li.now small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--s-em);margin-bottom:2px}
+.wl-web .wl-win-steps li.now b{color:var(--s-tx);background:rgba(255,255,255,.08);border-radius:4px;padding:0 4px}
+.wl-web .wl-float{position:absolute;z-index:2;display:flex;gap:10px;align-items:flex-start;width:238px;padding:11px 12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 2px rgba(26,31,54,.06),0 22px 44px -22px rgba(26,31,54,.4);animation:wlfloat 6s ease-in-out infinite}
+.wl-web .wl-float .ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
+.wl-web .wl-float b{display:block;font-size:13px;font-weight:700;line-height:1.25;color:var(--tx)}
+.wl-web .wl-float span:not(.ic){display:block;font-size:11.5px;line-height:1.4;color:var(--mut);margin-top:2px}
+.wl-web .wl-float.warn{right:-14px;top:146px;border-color:rgba(183,121,31,.36)}
+.wl-web .wl-float.warn .ic{background:rgba(183,121,31,.12);color:#b7791f}
+.wl-web .wl-float.learn{right:6px;bottom:-4px;border-color:var(--em-line);animation-delay:-3s}
+.wl-web .wl-float.learn .ic{background:var(--em-fill-2);color:var(--em)}
+@keyframes wlfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+
+/* trust rows */
+.wl-web .wl-proof{list-style:none;margin:26px 0 0;padding:22px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.wl-web .wl-proof li{display:flex;gap:10px;align-items:flex-start}
+.wl-web .wl-proof b{display:block;font-size:13px;font-weight:700;line-height:1.3;color:var(--tx)}
+.wl-web .wl-proof small{display:block;font-size:12px;line-height:1.4;color:var(--mut);margin-top:2px}
+.wl-web .wl-proof-ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center;background:var(--em-fill);color:var(--em);border:1px solid var(--em-line)}
+.wl-web .wl-proof-ic.alt{background:var(--cyan-fill);color:var(--cyan);border-color:var(--cyan-line)}
+.wl-web .wl-proof-ic.warm{background:var(--cta-soft);color:var(--cta-text);border-color:var(--cta-line)}
+
+/* form column: flat, generous, white */
+.wl-web .wl-main{padding:48px 60px;background:var(--panel);align-content:center}
+.wl-web .wl-card{max-width:440px;background:transparent;border:0;border-radius:0;padding:0;box-shadow:none;overflow:visible}
+.wl-web .wl-card::before{display:none}
+.wl-web .wl-card-brand{display:none}
+.wl-web .wl-card h1{font-size:clamp(28px,2.6vw,34px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
+.wl-web .wl-sub{font-size:15px;margin:10px 0 22px}
+/* underline tabs instead of a pill segment */
+.wl-web .wl-seg{display:flex;gap:24px;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0;margin-bottom:22px}
+.wl-web .wl-seg-b{position:relative;background:none;border-radius:0;padding:2px 2px 12px;font-size:15px;font-weight:600;color:var(--mut);box-shadow:none}
+.wl-web .wl-seg-b.on{color:var(--tx);background:none;box-shadow:none}
+.wl-web .wl-seg-b.on::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:2.5px;border-radius:2px;background:linear-gradient(90deg,var(--em),var(--cyan))}
+/* providers: a 3-up tile row, company SSO full width beneath */
+.wl-web .wl-social{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.wl-web .wl-prov{flex-direction:column;justify-content:center;gap:7px;height:auto;min-height:72px;padding:12px 8px 11px;border-radius:14px;text-align:center;background:var(--panel);border-color:var(--line-2)}
+.wl-web .wl-prov>span{flex:none;font-size:13px;white-space:normal}
+.wl-web .wl-prov:hover:not(:disabled){border-color:var(--em);background:var(--panel-2);transform:translateY(-2px);box-shadow:var(--card-shadow)}
+.wl-web .wl-prov:disabled{opacity:.6}
+.wl-web .wl-soon{position:absolute;top:-8px;left:50%;transform:translateX(-50%);font-size:9px;padding:2px 7px;background:var(--panel);white-space:nowrap}
+.wl-web .wl-prov-sso{grid-column:1 / -1;flex-direction:row;justify-content:flex-start;min-height:0;height:46px;padding:0 14px;gap:11px;text-align:left}
+.wl-web .wl-prov-sso>span{flex:1 1 auto;font-size:14px}
+.wl-web .wl-social .wl-err{grid-column:1 / -1;margin:0}
+.wl-web .wl-or{margin:18px 0 16px}
+/* fields + action */
+.wl-web .wl-card label{font-size:13px;color:var(--tx-2);margin-bottom:7px}
+.wl-web .wl-card input{padding:13px 15px;border-radius:13px;font-size:15px;margin-bottom:15px}
+.wl-web .wl-cta{border-radius:13px;padding:15px;font-size:16px;margin-top:6px}
+.wl-web .wl-sso-form{border-radius:14px}
+.wl-web .wl-legal{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
 
 /* FORM PANEL */
 .wl-main{position:relative;z-index:2;display:grid;place-items:center;padding:40px}
@@ -805,13 +885,12 @@ const CSS = `
    buttons on an elevated surface), art tuned with an emerald glow so it never
    washes out, a slightly stronger dot grid, vivid-not-harsh accents. */
 [data-theme='dark'] .wl-card{box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05)}
-[data-theme='dark'] .wl-art{filter:drop-shadow(0 0 28px rgba(140,245,196,.16)) drop-shadow(0 18px 30px rgba(0,0,0,.55))}
 [data-theme='dark'] .wl-bg::after{opacity:.42}
 [data-theme='dark'] .wl-prov{background:var(--panel-2)}
 [data-theme='dark'] .wl-prov:hover:not(:disabled){background:#1e2131;box-shadow:0 0 0 1px var(--cyan-line),0 10px 24px -16px rgba(57,211,255,.5)}
-[data-theme='dark'] .wl-proof li{background:color-mix(in srgb,var(--panel) 70%,transparent);box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow)}
-[data-theme='dark'] .wl-brand{background:linear-gradient(180deg,rgba(255,255,255,.025),transparent 60%)}
-@media(prefers-reduced-motion:reduce){.wl-orb{animation:none}.wl-art{animation:none}.wl-cta,.wl-prov{transition:none}}
+[data-theme='dark'] .wl-web .wl-card{box-shadow:none}
+[data-theme='dark'] .wl-web .wl-win{box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 40px 80px -36px rgba(0,0,0,.8)}
+@media(prefers-reduced-motion:reduce){.wl-orb{animation:none}.wl-stage,.wl-float{animation:none}.wl-cta,.wl-prov{transition:none}}
 /* ===== IN-APP MODE (.wl-app): one light centered sign-in card. =====
    FORCED LIGHT: the desktop shell sets data-theme="dark" on <html>; the owner
    wants the app sign-in light, so the light defaults are re-declared under the
@@ -848,16 +927,23 @@ const CSS = `
 [data-theme='dark'] .wl.wl-app .wl-prov:hover:not(:disabled){background:#f7f9fd;box-shadow:0 8px 22px -14px rgba(26,31,54,.14)}
 [data-theme='dark'] .wl.wl-app .wl-ssodetect{box-shadow:none}
 [data-theme='dark'] .wl.wl-app .wl-bg::after{opacity:.22}
-@media(max-width:1040px){.wl-proof{grid-template-columns:1fr}.wl-proof li{flex-direction:row;align-items:flex-start}.wl-brand{padding:36px 36px 32px}}
-@media(max-width:820px){
- .wl{grid-template-columns:1fr}
- .wl-brand{display:none}
+@media(max-width:1180px){.wl-web .wl-brand{padding:32px 36px 28px}.wl-web .wl-main{padding:40px 36px}.wl-web .wl-float.warn{right:0}}
+@media(max-width:1040px){.wl-web .wl-proof{grid-template-columns:1fr;gap:12px}.wl-web .wl-stage{width:min(100%,460px)}}
+@media(max-width:880px){
+ .wl.wl-web{grid-template-columns:1fr}
+ .wl-web .wl-brand{display:none}
+ .wl-web .wl-card-brand{display:flex;justify-content:center}
+ .wl-web .wl-main{padding:32px 20px 40px;background:var(--bg)}
+ .wl-web .wl-card{max-width:460px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:26px 24px 22px;box-shadow:var(--card-shadow)}
 }
 /* reclaim side room for the card on small phones */
 @media(max-width:520px){
- .wl-main{padding:20px 14px}
- .wl-card{padding:22px 18px 20px;border-radius:18px}
+ .wl-main,.wl-web .wl-main{padding:20px 14px}
+ .wl-card,.wl-web .wl-card{padding:22px 18px 20px;border-radius:18px}
  .wl-card h1{font-size:24px}
+ .wl-web .wl-social{grid-template-columns:1fr}
+ .wl-web .wl-prov{flex-direction:row;justify-content:flex-start;min-height:0;height:44px;padding:0 14px;text-align:left}
+ .wl-web .wl-soon{position:static;transform:none;margin-left:auto}
  .wl-grid2{grid-template-columns:1fr}
  .wl-plan-row{align-items:flex-start;flex-direction:column;gap:4px}
  .wl-plan-price{text-align:left}
