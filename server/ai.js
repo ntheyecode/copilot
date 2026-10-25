@@ -53,6 +53,22 @@ export const PROVIDERS = {
     keyHint: 'sk-or-...',
     keysUrl: 'https://openrouter.ai/keys',
   },
+  moonshot: {
+    id: 'moonshot',
+    label: 'Moonshot AI (Kimi)',
+    blurb: 'Kimi models over an OpenAI-compatible API. Strong reasoning and long context. Add an OpenAI or Gemini key alongside it if you need the most reliable screen reading.',
+    // International region (default). The China region serves the SAME
+    // OpenAI-compatible API on a different host - https://api.moonshot.cn/v1 -
+    // which is allowlisted via altHosts below so a superadmin can point a
+    // Moonshot runtime at .cn (through a custom-provider entry) without the
+    // egress guard blocking it. The built-in default stays on .ai.
+    base: 'https://api.moonshot.ai/v1',
+    kind: 'openai',                       // OpenAI-compatible chat (reuses openaiChat/openaiVision)
+    chatModels: ['kimi-k2-0905-preview', 'kimi-latest', 'moonshot-v1-128k', 'moonshot-v1-8k'],
+    keyHint: 'sk-...',
+    keysUrl: 'https://platform.moonshot.ai/console/api-keys',
+    altHosts: ['api.moonshot.cn'],        // China-region host, allowlisted alongside .ai
+  },
 }
 // OpenRouter exposes reasoning ("thinking") models; for WorkCoPilot's structured
 // JSON tasks we never want chain-of-thought (it 10-30x's the output tokens for no
@@ -63,7 +79,15 @@ function isOpenRouter(p) { try { return /(^|\.)openrouter\.ai$/i.test(new URL(p.
 // provider host. Bases are fixed constants above; this guard makes the boundary
 // explicit and FAILS CLOSED, so a misconfigured or future custom base can never
 // redirect a request to an internal address or an unapproved destination.
-const ALLOWED_AI_HOSTS = new Set(Object.values(PROVIDERS).map((p) => { try { return new URL(p.base).hostname } catch { return '' } }).filter(Boolean))
+// Derived from PROVIDERS (single source of truth): every provider's base host,
+// plus any altHosts a provider declares (e.g. Moonshot's China-region host), so
+// adding a provider to PROVIDERS is the ONLY place a built-in host is registered.
+const ALLOWED_AI_HOSTS = new Set(Object.values(PROVIDERS).flatMap((p) => {
+  const hosts = []
+  try { hosts.push(new URL(p.base).hostname) } catch { /* skip a malformed base */ }
+  for (const h of (p.altHosts || [])) if (h) hosts.push(String(h).trim().toLowerCase())
+  return hosts
+}).filter(Boolean))
 function assertAllowedHost(base) {
   let h
   try { h = new URL(base).hostname } catch { throw Object.assign(new Error('AI endpoint is misconfigured.'), { status: 502 }) }

@@ -64,6 +64,16 @@ export const MODEL_PRICES = {
   "qwen/qwen3-vl-235b-a22b-instruct": { input: 0.21, output: 1.90, label: "Qwen3-VL 235B (OpenRouter)" },
   "deepseek/deepseek-chat":          { input: 0.14, output: 0.28, label: "DeepSeek Chat (OpenRouter)" },
 
+  // ---- Moonshot AI / Kimi (USD per 1M tokens) ----
+  // Approximate published international (api.moonshot.ai) list prices; metering
+  // is an operator-transparency ESTIMATE only (unknown model -> 0, never a
+  // crash). RE-VERIFY against the current Moonshot pricing page, and note the
+  // China region (api.moonshot.cn) is priced separately.
+  "kimi-k2-0905-preview": { input: 0.60, output: 2.50, label: "Moonshot Kimi K2" },
+  "kimi-latest":          { input: 0.60, output: 2.50, label: "Moonshot Kimi (latest)" },
+  "moonshot-v1-128k":     { input: 2.00, output: 2.00, label: "Moonshot v1 128k" },
+  "moonshot-v1-8k":       { input: 0.20, output: 2.00, label: "Moonshot v1 8k" },
+
   // ---- Anthropic Claude (USD per 1M tokens) — current generation ----
   "claude-haiku-5-5":  { input: 0.10, output: 0.50,  label: "Anthropic Claude Haiku 5.5" },   // <=100K prompt; >100K is $0.50/$2.50
   "claude-sonnet-5-5": { input: 2.00, output: 10.00, label: "Anthropic Claude Sonnet 5.5" },
