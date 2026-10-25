@@ -21,6 +21,55 @@ import { scrubGuidance } from './ai_language.js'
 import { methodAnchorFor } from './method_anchors.js'
 import { validateSpec, describeSpecForAI } from './compute_spec.js'
 
+// ---- Respond in the user's language --------------------------------------
+// The client picks a UI language and sends its locale with each guidance call.
+// We turn that locale into ONE prepended instruction telling the model to write
+// its prose in that language, while leaving everything exact (commands, code,
+// paths, URLs, brand/UI names, placeholders) untouched. Everything here is a
+// no-op for English / unknown locales, so it stays safe until the client sends
+// a locale. Minimal, single source of truth: the map below is the only place
+// locale codes are listed, and localeInstruction is the only prompt text.
+const LOCALE_LANGUAGE = {
+  en: 'English', es: 'Spanish', fr: 'French', de: 'German', ar: 'Arabic',
+  'pt-BR': 'Portuguese', it: 'Italian', ru: 'Russian', tr: 'Turkish',
+  hi: 'Hindi', id: 'Indonesian', vi: 'Vietnamese', zh: 'Chinese',
+  ja: 'Japanese', ko: 'Korean',
+}
+// Resolve a locale code to a language name, or null when unknown. Tries an exact
+// match first, then a case-insensitive match, then the base subtag (so an
+// Accept-Language tag like "pt-br", "zh-CN" or "fr-FR" still resolves). Unknown
+// locales return null and are treated as English (no instruction is added).
+export function languageForLocale(locale) {
+  const code = String(locale || '').trim()
+  if (!code) return null
+  if (LOCALE_LANGUAGE[code]) return LOCALE_LANGUAGE[code]
+  const lower = code.toLowerCase()
+  for (const k of Object.keys(LOCALE_LANGUAGE)) {
+    if (k.toLowerCase() === lower) return LOCALE_LANGUAGE[k]
+  }
+  const base = lower.split('-')[0]
+  for (const k of Object.keys(LOCALE_LANGUAGE)) {
+    if (k.toLowerCase().split('-')[0] === base) return LOCALE_LANGUAGE[k]
+  }
+  return null
+}
+// The one shared prompt instruction. Empty string for English / unknown locales,
+// so prepending it is a safe no-op. Keeps commands, code, paths, URLs, product
+// and brand names, English UI labels, and placeholders exactly as-is.
+export function localeInstruction(locale) {
+  const name = languageForLocale(locale)
+  if (!name || name === 'English') return ''
+  return 'Respond in ' + name + ' using simple, professional, everyday wording a real ' +
+    'person would use. Never translate or alter commands, code, file paths, URLs, product ' +
+    'or brand names, on-screen UI labels that appear in English, or placeholders like ' +
+    '[[SECRET_1]] - keep all of those exactly as-is.'
+}
+// Prepend the language instruction to a system prompt (no-op for English/unknown).
+function withLocale(system, locale) {
+  const ins = localeInstruction(locale)
+  return ins ? ins + '\n\n' + String(system || '') : String(system || '')
+}
+
 // Pull in the canonical methodology for the discipline the goal implies (OWASP
 // WSTG for pentest, risk-based design for QA, NIST SSDF for DevSecOps, and so
 // on) so the plan's depth is GROUNDED, not left to the model's memory. One
@@ -499,7 +548,7 @@ export function workPlanUser({ goal, appContext, research = '', learnings = '', 
 }
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
-export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null }) {
+export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null, locale = 'en' }) {
   const heavy = thorough ? (
     '\n\n---\nPLAN-HEAVY MODE\n' +
     'The user will follow this plan with only LIGHT, on-demand checks, not continuous watching. ' +
@@ -508,7 +557,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
     'anticipate the common branch and the common error inline, and end each step with a clear ' +
     'self-check the user can confirm without you watching. Err toward more detail per step.'
   ) : ''
-  const system = workPlanSystem({ base, voice, mode }) + heavy + methodAnchorBlock(goal, appContext)
+  const system = withLocale(workPlanSystem({ base, voice, mode }) + heavy + methodAnchorBlock(goal, appContext), locale)
   const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -619,8 +668,8 @@ export function workHowToUser({ goal, action, appContext, research = '' }) {
       : '') +
     'Produce the sub-step checklist JSON for this one action now.')
 }
-export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null }) {
-  const system = workHowToSystem({ base, voice, mode }) + methodAnchorBlock(`${goal} ${action}`, appContext)
+export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null, locale = 'en' }) {
+  const system = withLocale(workHowToSystem({ base, voice, mode }) + methodAnchorBlock(`${goal} ${action}`, appContext), locale)
   const user = workHowToUser({ goal, action, appContext, research })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -933,8 +982,8 @@ export function workAskUser({ goal, question, steps = [], currentStep = 0, event
     (q ? `WHAT TO ANALYZE (the user's focus): ${q}\n\n` : 'No specific focus was given. Review the whole screen against the goal and the plan.\n\n') +
     'Answer now, grounded in what the screenshot shows, tied to the goal and the plan.')
 }
-export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null }) {
-  const system = workAskSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
+export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null, locale = 'en' }) {
+  const system = withLocale(workAskSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext), locale)
   const user = workAskUser({ goal, question, steps, currentStep, events, appContext })
   const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
   const isWeak = (r) => String(r || '').trim().length < 8
@@ -1188,8 +1237,8 @@ export function workResultUser({ goal, question = '', steps = [], currentStep = 
 }
 // frame is OPTIONAL: with a frame we read the screen (vision), otherwise we work
 // from the goal + pasted data (text). Returns the shaped, honesty-guarded result.
-export async function workResult(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '', frame = null, visionModel = null, strong = null }) {
-  const system = workResultSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext)
+export async function workResult(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '', frame = null, visionModel = null, strong = null, locale = 'en' }) {
+  const system = withLocale(workResultSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext), locale)
   const user = workResultUser({ goal, question, steps, currentStep, events, appContext, docsText, research })
   const isWeak = (r) => { const p = extractJson(r) || {}; return !(String(p.body || '').trim() || String(p.need || '').trim()) }
   let raw, escalated = false, reason = ''
@@ -1367,8 +1416,8 @@ function coverageParse(raw) {
   if (a >= 0 && z > a) { try { return JSON.parse(s.slice(a, z + 1)) } catch (_) {} }
   return {}
 }
-export async function workCoverage(ai, cfg, { question, pricing = null }) {
-  const raw = await ai.generate(cfg, workCoverageSystem(pricing), workCoverageUser(question))
+export async function workCoverage(ai, cfg, { question, pricing = null, locale = 'en' }) {
+  const raw = await ai.generate(cfg, withLocale(workCoverageSystem(pricing), locale), workCoverageUser(question))
   const parsed = coverageParse(raw)
   const verdict = ['covered', 'partial', 'no', 'offtopic', 'about'].includes(parsed.verdict) ? parsed.verdict : 'offtopic'
   const plan = ['Lite', 'Basic', 'Advanced', 'Premium'].includes(parsed.plan) ? parsed.plan : null
@@ -1471,8 +1520,8 @@ export function workScopeSystem(tier = 'basic', depth = 'standard') {
 export function workScopeUser(goal) {
   return `GOAL:\n"""${String(goal || '').trim().slice(0, 1500)}"""\n\nReturn the scoping questions JSON now.`
 }
-export async function workScope(ai, cfg, { goal, tier = 'basic', depth = 'standard' }) {
-  const raw = await ai.generate(cfg, workScopeSystem(tier, depth), workScopeUser(goal))
+export async function workScope(ai, cfg, { goal, tier = 'basic', depth = 'standard', locale = 'en' }) {
+  const raw = await ai.generate(cfg, withLocale(workScopeSystem(tier, depth), locale), workScopeUser(goal))
   let parsed = {}
   try { const a = String(raw).indexOf('{'), z = String(raw).lastIndexOf('}'); if (a >= 0 && z > a) parsed = JSON.parse(String(raw).slice(a, z + 1)) } catch (_) {}
   let qs = Array.isArray(parsed.questions) ? parsed.questions : []

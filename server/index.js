@@ -160,6 +160,17 @@ function sendWorkError(res, e, req) {
   if (e && e.locked) { body.locked = true; body.stepUp = e.stepUp || null }   // AI-config OTP step-up lapsed
   return res.status((e && e.status) || 500).json(body)
 }
+// The language the AI should write its guidance in. The client sends an explicit
+// `locale` in the request body; when absent we fall back to the first tag of the
+// Accept-Language header, then to 'en'. work.* treats 'en'/unknown as a no-op, so
+// this is safe until the client starts sending `locale`.
+function readLocale(req) {
+  const body = (req && req.body && typeof req.body.locale === 'string') ? req.body.locale.trim() : ''
+  if (body) return body
+  const al = String((req && req.headers && req.headers['accept-language']) || '').trim()
+  const first = al ? al.split(',')[0].split(';')[0].trim() : ''
+  return first || 'en'
+}
 const wrap = (fn) => (req, res) => {
   try { fn(req, res) }
   catch (e) { sendWorkError(res, e, req) }
@@ -1823,7 +1834,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
       tele: planTele,
-      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup,
+      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup, locale: readLocale(req),
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
@@ -1882,7 +1893,7 @@ app.post('/api/work/scope', requireWorkAuth, requireWorkSubscription, async (req
     const tier = (store.getWorkUsage(req.workUser.id) || {}).tier || 'basic'
     // The person can pick a short (quick) or thorough (detailed) interview up front.
     const depth = ['quick', 'detailed'].includes((req.body || {}).depth) ? req.body.depth : 'standard'
-    const out = await work.workScope(ai, call.rt, { goal: safeGoal, tier, depth })
+    const out = await work.workScope(ai, call.rt, { goal: safeGoal, tier, depth, locale: readLocale(req) })
     res.json(out)
   } catch (e) { sendWorkError(res, e, req) }
 })
@@ -2046,7 +2057,7 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     const out = await work.workAsk(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
       question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0,
-      events: sa.events, appContext: s.appContext || '', frame, visionModel: call.visionModel, strong: call.backup,
+      events: sa.events, appContext: s.appContext || '', frame, visionModel: call.visionModel, strong: call.backup, locale: readLocale(req),
     })
     if (qScrub.total) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary(qScrub.counts) })
     const escalated = out.escalated || call.forcedStrong
@@ -2093,7 +2104,7 @@ app.post('/api/work/sessions/:id/result', requireWorkAuth, requireWorkSubscripti
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
       question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0, events: sa.events,
       appContext: s.appContext || '', docsText: docScrub.clean,
-      frame: hasFrame ? frame : null, visionModel: hasFrame ? call.visionModel : null, strong: hasFrame ? call.backup : null,
+      frame: hasFrame ? frame : null, visionModel: hasFrame ? call.visionModel : null, strong: hasFrame ? call.backup : null, locale: readLocale(req),
     })
     if (redacted) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: redactionSummary({ ...qScrub.counts, ...docScrub.counts }) })
     const escalated = out.escalated || call.forcedStrong
@@ -2240,7 +2251,7 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
       : notes
     const out = await work.workHowTo(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: safeGoal, action: act,
-      frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: grounded, strong: call.backup,
+      frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: grounded, strong: call.backup, locale: readLocale(req),
     })
     if (out.refusal) {
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Declined: ' + out.refusal })
@@ -2493,7 +2504,7 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   const cfg = store.getActiveRuntime()
   if (!cfg) { logSearch(generic); return res.json(generic) }
   try {
-    const out = await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing() })
+    const out = await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing(), locale: readLocale(req) })
     logSearch(out)
     res.json(out)
   } catch (e) {
