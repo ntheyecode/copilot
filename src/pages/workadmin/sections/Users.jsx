@@ -21,7 +21,7 @@ const COLUMNS = [
 ]
 const EMPTY_NEW = { username: '', email: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
 
-export default function UsersSection({ isSuperAdmin }) {
+export default function UsersSection({ isSuperAdmin, viewer }) {
   const [state, setState] = useState({ loading: true, error: null, users: [], tiers: [], companies: [] })
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'username', dir: 'asc' })
@@ -269,6 +269,14 @@ export default function UsersSection({ isSuperAdmin }) {
             <tbody>
               {rows.map((u) => {
                 const msg = rowMsg[u.id]
+                // The admin users payload reports role:'user' for every account
+                // (the server roster drops the platform role), so `u.role !==
+                // 'superadmin'` alone never hides a superadmin's own row. Fall
+                // back to a viewer self-check so the signed-in admin is never
+                // offered Open-as-user / Disable / Delete / Accounting on their
+                // OWN account (the server rejects these regardless; this keeps
+                // the UI honest rather than showing an action that will 400).
+                const isSelf = !!viewer && String(u.username) === String(viewer.username)
                 return (
                   <tr key={u.id}>
                     <td>
@@ -344,7 +352,7 @@ export default function UsersSection({ isSuperAdmin }) {
                       ) : (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           {/* Individual = no company (u.companyId is null in the list payload). Company members never get this control. */}
-                          {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && (
+                          {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
                               title="Open the dashboard as this user (support view; recorded in the audit trail)"
                               onClick={() => openAsUser(u)}
@@ -364,13 +372,13 @@ export default function UsersSection({ isSuperAdmin }) {
                             onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'cancel' }) }}>
                             <Ban size={13} /> Cancel sub
                           </button>
-                          {u.role !== 'superadmin' && (
+                          {u.role !== 'superadmin' && !isSelf && (
                             <button type="button" className={`wka-btn sm${u.role === 'accounting' ? '' : ' ghost'}`} disabled={!isSuperAdmin || busyId === u.id} title={u.role === 'accounting' ? 'Remove the accounting role' : 'Make accounting (sees all transactions + refunds)'}
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.role === 'accounting' ? 'accounting-remove' : 'accounting-grant' }) }}>
                               <DollarSign size={13} /> {u.role === 'accounting' ? 'Accounting ✓' : 'Accounting'}
                             </button>
                           )}
-                          {u.role !== 'superadmin' && (
+                          {u.role !== 'superadmin' && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
                               title={u.disabled ? 'Re-enable this account' : 'Disable this account (signs them out, blocks sign-in)'}
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.disabled ? 'enable' : 'disable' }) }}
@@ -378,7 +386,7 @@ export default function UsersSection({ isSuperAdmin }) {
                               {u.disabled ? <ShieldCheck size={13} /> : <ShieldOff size={13} />} {u.disabled ? 'Enable' : 'Disable'}
                             </button>
                           )}
-                          {u.role !== 'superadmin' && (
+                          {u.role !== 'superadmin' && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
                               title="Delete this account and its sessions permanently"
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'delete' }) }}

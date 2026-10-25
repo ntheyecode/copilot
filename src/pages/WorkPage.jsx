@@ -1425,8 +1425,13 @@ const WD_CSS = `
 @media(max-width:640px){.wd-planbox-grid{grid-template-columns:1fr}}
 
 /* Impersonation banner: a slim, persistent, warm/neutral strip at the very top
-   of /work when a superadmin is viewing as this user. nowrap, never overflows. */
-.wd-imp{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0;padding:8px 16px;background:var(--warm-fill);border-bottom:1px solid var(--warm-line);color:var(--warm);font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;font-size:13px;line-height:1.35;box-sizing:border-box}
+   of /work when a superadmin is viewing as this user. nowrap, never overflows.
+   It renders OUTSIDE .wd (a sibling ABOVE it in the DOM), so the white-palette
+   custom properties scoped to .wd do NOT cascade down to it - carry the few
+   tokens it needs on the banner itself so it is always styled wherever it
+   mounts (the bug it fixes: with the vars missing, background/border collapse
+   and the text/Stop button fall back to unstyled black on transparent). */
+.wd-imp{--warm:#c85a16;--warm-fill:rgba(200,90,22,.07);--warm-line:rgba(200,90,22,.28);--panel:#ffffff;display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0;padding:8px 16px;background:var(--warm-fill);border-bottom:1px solid var(--warm-line);color:var(--warm);font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;font-size:13px;line-height:1.35;box-sizing:border-box}
 .wd-imp svg{flex-shrink:0;color:var(--warm)}
 .wd-imp-t{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wd-imp-t b{font-weight:700}

@@ -132,7 +132,7 @@ export default function WorkAdmin() {
     switch (active) {
       case 'companies': return <Companies isSuperAdmin={isSuperAdmin} />
       case 'governance': return <Governance isSuperAdmin={isSuperAdmin} />
-      case 'users': return <UsersSection isSuperAdmin={isSuperAdmin} />
+      case 'users': return <UsersSection isSuperAdmin={isSuperAdmin} viewer={viewer} />
       case 'pricing': return <Pricing isSuperAdmin={isSuperAdmin} />
       case 'billing': return <Billing isSuperAdmin={isSuperAdmin} />
       case 'email': return <Email isSuperAdmin={isSuperAdmin} />

@@ -23,7 +23,7 @@ import useSeo from '../useSeo.js'
 const FALLBACK = {
   plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },
   hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },
-  tasks: { lite: 1, basic: 4, advanced: 8, premium: 12 },
+  tasks: { lite: 1, basic: 2, advanced: 4, premium: 6 },
   dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },
 }
 
