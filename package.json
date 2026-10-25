@@ -10,6 +10,8 @@
     "check:jsx-imports": "node scripts/check-jsx-imports.mjs",
     "prebuild": "node scripts/check-jsx-imports.mjs",
     "build": "vite build",
+    "build:harden": "vite build --mode harden",
+    "build:harden:max": "vite build --mode hardenmax",
     "check:public-assets": "node scripts/check-public-assets.mjs",
     "server": "node server/index.js",
     "start": "npm run build && node server/index.js"
@@ -33,6 +35,7 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.1",
+    "javascript-obfuscator": "5.2.1",
     "vite": "^5.4.0"
   }
 }
