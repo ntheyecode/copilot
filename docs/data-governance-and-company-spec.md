@@ -114,6 +114,24 @@ data; the user gets a complete answer.
 - **Single enforcement chokepoint:** tokenize/scrub applies at ONE outbound layer
   that every send path (plan, watch, ask, research, deliverables, coverage) goes
   through. No per-endpoint duplication (single source of truth).
+- **Stored text is governed too (skills/playbooks + KB learnings).** Text that is
+  PERSISTED and later re-injected into a prompt runs through the same engine, not
+  a weaker secrets-only filter:
+  - **On the device, before upload:** skill content and title are scrubbed with
+    the user's effective policy (`cleanForStore` in `src/scrub.js`), redacting
+    rather than tokenizing since a stored skill is shared and never rehydrated.
+  - **On the server, on write:** `addSkill`, `importCompanySkills` (the admin
+    re-upload path) and `addLearning` apply the policy-aware scrub (`scrubWithPolicy`
+    with the company's armed policy, else a full `scrubSensitive` floor) via one
+    helper (`scrubStoredText` in `server/store.js`). Never a pass-through.
+  - **On inject:** skills and KB learnings pass through the same `govScrub`
+    chokepoint as the goal and documents before they enter the prompt
+    (`server/index.js` plan handler).
+  - **Audit:** what was stripped on write is recorded as counts only (never the
+    values) — per-user PII alert for a skill add, a reason-logged admin action for
+    an import.
+  - **Migration:** a one-time, guarded pass (`migrateScrubStoredText`) re-scrubs
+    skills and learnings stored before this control existed.
 
 ## 7. Per-session cost
 

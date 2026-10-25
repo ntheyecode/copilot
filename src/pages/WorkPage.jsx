@@ -7,7 +7,7 @@ import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
 import { useTheme } from '../theme.jsx'
-import { clean, isDlpActive } from '../scrub.js'
+import { clean, cleanForStore, isDlpActive } from '../scrub.js'
 import { redactFrame, warmFrameScrub } from '../frame_scrub.js'
 
 const linkHost = (u) => { try { return new URL(u).host.replace(/^www\./, '') } catch { return 'link' } }
@@ -1553,7 +1553,10 @@ function SkillsCard({ user }) {
     if (content.trim().length < 20) { setErr('Paste the playbook, SOP or skill itself (a few sentences at least).'); return }
     setBusy(true); setErr('')
     try {
-      const r = await api.workSkillAdd({ title: title.trim(), content: content.trim(), tags: tags.split(',').map((t) => t.trim()).filter(Boolean) })
+      // Scrub on-device before upload (same engine as session text), so raw PII/
+      // secrets never leave the device. cleanForStore redacts (no dead tokens) since
+      // a stored skill is never rehydrated; the server scrubs again on write.
+      const r = await api.workSkillAdd({ title: cleanForStore(title.trim()), content: cleanForStore(content.trim()), tags: tags.split(',').map((t) => t.trim()).filter(Boolean) })
       if (r && r.skill) { setSkills((s) => [r.skill, ...(s || [])]); if (r.skill.scope) setScope(r.skill.scope) }
       setTitle(''); setContent(''); setTags('')
     } catch (e2) { setErr(friendlyError(e2, 'Could not add that skill.')) } finally { setBusy(false) }
@@ -1579,7 +1582,7 @@ function SkillsCard({ user }) {
           <p className="wd-sk-lead">Skills teach WorkCoPilot how you (or your org) want work done, so guidance aligns with your tools, standards and terminology. Paste a playbook, an SOP, or a skill exported from any AI.</p>
           {scope === 'company'
             ? <div className="wd-sk-note private"><ShieldCheck size={14} /><span><b>Private to your company.</b> These skills guide only your company's people. They are never used to train the platform, and your admin can download or re-upload them at any time.</span></div>
-            : <div className="wd-sk-note"><Sparkles size={14} /><span><b>Helps everyone.</b> Skills you add may be used in de-identified form to improve WorkCoPilot for all users; personal data is stripped on your device first. You agreed to this at sign-up. Company accounts are exempt.</span></div>}
+            : <div className="wd-sk-note"><Sparkles size={14} /><span><b>Helps everyone.</b> Skills you add may be used in de-identified form to improve WorkCoPilot for all users; personal data is removed before it is stored. You agreed to this at sign-up. Company accounts are exempt.</span></div>}
           <form className="wd-sk-form" onSubmit={add} aria-busy={busy}>
             <input className="wd-sk-input" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title, for example: How we review pull requests" maxLength={120} aria-label="Skill title" />
             <textarea className="wd-sk-ta" rows={5} value={content} onChange={(e) => setContent(e.target.value)} placeholder="Paste a playbook, SOP, or a skill from any AI. Steps, rules, tools, naming, do's and don'ts. The more specific, the better the guidance." aria-label="Skill content" />

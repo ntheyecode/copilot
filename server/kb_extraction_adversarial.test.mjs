@@ -123,14 +123,18 @@ test('redaction on store: secrets and emails are stripped before persisting', ()
   const stored = exported.find((l) => l.app === 'RedactApp')
   assert.ok(stored, 'learning present in export')
   for (const text of [rec.fact, stored.fact]) {
-    assert.match(text, /\[redacted/, 'redaction marker present')
+    // Learnings now pass through the policy-aware chokepoint (same engine as goal/
+    // docs), which emits typed placeholders ([SECRET]/[AWS_KEY]/[EMAIL]) rather
+    // than the old redactIncidentText markers. The guarantee is the same: the raw
+    // value is gone.
+    assert.match(text, /\[(SECRET|AWS_KEY|EMAIL)\]/, 'typed redaction placeholder present')
     assert.ok(!/sk-test-ABCDEF0123456789/.test(text), 'sk- secret removed')
     assert.ok(!/AKIA0000EXAMPLE00000/.test(text), 'AKIA key removed')
     assert.ok(!/fake\.person@example\.com/.test(text), 'email removed')
     assert.ok(!/@example\.com/.test(text), 'email domain removed')
   }
-  assert.match(stored.fact, /\[redacted-secret\]/)
-  assert.match(stored.fact, /\[redacted-email\]/)
+  assert.match(stored.fact, /\[SECRET\]|\[AWS_KEY\]/)
+  assert.match(stored.fact, /\[EMAIL\]/)
   // The retrieval path returns the redacted form as well.
   const got = store.getLearningsFor(A.u.id, { app: 'RedactApp', limit: 12 })
   assert.ok(got.length > 0)

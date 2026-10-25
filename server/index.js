@@ -1385,12 +1385,18 @@ app.post('/api/work/team/learnings/clear', requireWorkAuth, requireCompanyAdmin,
 
 // ---- Skills: add your own playbooks/skills (from any AI) so guidance aligns ---
 // with how you/your org work. A company's skills are PRIVATE; a solo user's skills
-// join the shared platform skills (consented at signup). Content is de-identified.
+// join the shared platform skills (consented at signup). Content is scrubbed on the
+// device before upload and again here (store.addSkill runs the policy-aware scrub),
+// so a raw name/phone/SSN/PHI/IP/secret/block-listed word is never stored or
+// injected into a prompt.
 app.post('/api/work/skills', requireWorkAuth, wrap((req, res) => {
   const b = req.body || {}
   const rec = store.addSkill(req.workUser.id, { title: b.title, content: b.content || b.text, tags: b.tags })
   if (!rec) return res.status(400).json({ error: 'Add a skill with at least a short description of how to do it.' })
-  res.json({ ok: true, skill: rec })
+  // Audit what the server stripped on write (types + counts only, never values),
+  // so the company admin sees it in the activity log - same surface as plan-time PII.
+  if (rec.redacted > 0) store.recordPiiAlert(req.workUser.id, { call: 'skill', counts: rec.counts, total: rec.redacted })
+  res.json({ ok: true, skill: rec, redacted: rec.redacted || 0 })
 }))
 app.get('/api/work/skills', requireWorkAuth, wrap((req, res) => res.json({ skills: store.listSkills(req.workUser.id), scope: (store.getLearningsScope(req.workUser.id) || {}).kind || 'global' })))
 app.delete('/api/work/skills/:id', requireWorkAuth, wrap((req, res) => res.json(store.deleteSkill(req.workUser.id, req.params.id))))
@@ -1404,7 +1410,10 @@ app.post('/api/work/team/skills/import', requireWorkAuth, requireCompanyAdmin, w
   const body = req.body || {}
   const arr = Array.isArray(body.skills) ? body.skills : (Array.isArray(body) ? body : null)
   if (!arr) return res.status(400).json({ error: 'Provide a backup with a "skills" list.' })
-  res.json(store.importCompanySkills(req.workUser.companyId, arr, { replace: body.replace !== false }))
+  const r = store.importCompanySkills(req.workUser.companyId, arr, { replace: body.replace !== false })
+  // Audit the re-upload scrub (this path previously bypassed even the secrets filter).
+  if (r.redacted > 0) store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId, action: 'skills_import_scrub', reason: 'skill re-upload', detail: `stripped ${r.redacted} sensitive value(s) across ${r.count} skill(s)` })
+  res.json(r)
 }))
 app.post('/api/work/team/skills/clear', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
@@ -1569,8 +1578,12 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // Cross-session KB: inject what we learned before on these tools (company KB
     // for company users, platform KB for solo users), so the plan starts smarter
     // than the model's training cutoff. Retrieval is scoped + de-identified.
-    const kbNotes = store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')
-    const skillNotes = store.getSkillsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((sk) => `- ${sk.title}${sk.tags ? ' [' + sk.tags + ']' : ''}: ${sk.content}`).join('\n\n')
+    // Route KB learnings and skills through the SAME scrub chokepoint as the goal
+    // and docs before they enter the prompt. They are scrubbed on write too, so
+    // this is defense in depth (and honors an armed policy's block words that may
+    // post-date the stored record).
+    const kbNotes = scrubText(store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')).clean
+    const skillNotes = scrubText(store.getSkillsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((sk) => `- ${sk.title}${sk.tags ? ' [' + sk.tags + ']' : ''}: ${sk.content}`).join('\n\n')).clean
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
       tele: planTele,
@@ -2756,6 +2769,10 @@ export function start({ port } = {}) {
       console.log('')
       const workIdleTimer = setInterval(sweepIdleWorkSessions, WORK_SWEEP_MS)
       if (workIdleTimer.unref) workIdleTimer.unref() // never keep the process alive just for a sweep
+      // One-time migration: re-scrub stored skills + KB learnings through the
+      // policy-aware chokepoint (closes the historical raw-storage gap). Idempotent
+      // and guarded, so it is a no-op on every boot after the first.
+      try { const m = store.migrateScrubStoredText(); if (m && !m.skipped) console.log(`[work] stored-text scrub migration: ${m.redacted} value(s) stripped across ${m.records} record(s)`) } catch (e) { console.warn(`[work] stored-text scrub migration error: ${e.message}`) }
       // Data-retention sweep: auto-purge sessions past the superadmin window. Runs
       // once at startup and hourly; a no-op while retention is off (the default).
       const runRetention = () => { try { const r = store.purgeOldWorkSessions(); if (r.purged) console.log(`[work] retention: purged ${r.purged} session(s) older than ${r.retentionDays}d`) } catch (e) { console.warn(`[work] retention sweep error: ${e.message}`) } }

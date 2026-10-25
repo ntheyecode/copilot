@@ -24,6 +24,7 @@ import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
+import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -1171,7 +1172,9 @@ const _normLearn = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').tri
 export function addLearning(userId, { app = '', fact = '', kind = 'correction' } = {}) {
   const sc = _learnHolder(userId); if (!sc) return null
   const a = String(app || '').trim().slice(0, 80)
-  const f = redactIncidentText(String(fact || '').trim()).slice(0, 400)
+  // Same stored-text chokepoint as skills: a distilled learning is persisted and
+  // re-injected into future plans, so scrub it policy-aware (not just secrets).
+  const f = scrubStoredText(String(fact || '').trim(), getEffectiveWorkPolicy(userId)).clean.slice(0, 400)
   if (f.length < 10) return null
   if (!Array.isArray(sc.obj[sc.field])) sc.obj[sc.field] = []
   const kb = sc.obj[sc.field]
@@ -1255,6 +1258,21 @@ export function importCompanyLearnings(companyId, arr, { replace = true } = {}) 
 // playbook never stores a secret.
 const SKILL_CAP = 200          // per company
 const GLOBAL_SKILL_CAP = 5000  // shared platform
+
+// Mandatory server-side scrub for any text we STORE persistently and later inject
+// into an AI prompt (company/global skills, distilled KB learnings). This is the
+// defense-in-depth backstop to the on-device scrub: these records are long-lived
+// and (for companies) shared across everyone, so a raw name/phone/SSN/PHI/IP/
+// secret/block-listed word must never be stored or re-injected. The caller's
+// armed governance policy (the company's, else the user's) is honored when
+// present; with NO policy we fall back to a FULL scrub (scrubSensitive), never a
+// pass-through. ONE chokepoint for all stored-text scrubbing. Returns
+// { clean, counts, total }. (Replaces the old redactIncidentText pass, which only
+// caught secrets/PEM/emails and let names/phones/SSNs/PHI/IPs through.)
+function scrubStoredText(text, policy) {
+  return policy ? scrubWithPolicy(String(text || ''), policy) : scrubSensitive(String(text || ''))
+}
+
 function _skillHolder(userId) {
   const u = getUser(userId); if (!u) return null
   if (u.companyId) {
@@ -1267,16 +1285,21 @@ function _skillHolder(userId) {
 }
 export function addSkill(userId, { title = '', content = '', tags = '' } = {}) {
   const sc = _skillHolder(userId); if (!sc) return null
-  const body = redactIncidentText(String(content || '').trim()).slice(0, 6000)
+  // Policy-aware scrub on write (single chokepoint): never store raw PII/PHI/
+  // secrets/block-listed words in a persistent, injected skill. The title is
+  // scrubbed too (it is shown to admins AND injected into the prompt).
+  const pol = getEffectiveWorkPolicy(userId)
+  const scrubbed = scrubStoredText(String(content || '').trim(), pol)
+  const body = scrubbed.clean.slice(0, 6000)
   if (body.length < 10) return null
-  const t = String(title || '').trim().slice(0, 120) || body.slice(0, 48)
+  const t = scrubStoredText(String(title || '').trim(), pol).clean.slice(0, 120) || body.slice(0, 48)
   if (!Array.isArray(sc.obj[sc.field])) sc.obj[sc.field] = []
   const arr = sc.obj[sc.field]
   const rec = { id: 'sk' + id(), title: t, content: body, tags: String(tags || '').trim().slice(0, 200), by: (getUser(userId) || {}).username || '', at: new Date().toISOString() }
   arr.push(rec)
   if (arr.length > sc.cap) arr.splice(0, arr.length - sc.cap)
   persist()
-  return { id: rec.id, title: rec.title, tags: rec.tags, at: rec.at, scope: sc.kind }
+  return { id: rec.id, title: rec.title, tags: rec.tags, at: rec.at, scope: sc.kind, redacted: scrubbed.total, counts: scrubbed.counts }
 }
 export function listSkills(userId) {
   const sc = _skillHolder(userId); if (!sc) return []
@@ -1306,18 +1329,61 @@ export function exportCompanySkills(companyId) {
 export function importCompanySkills(companyId, arr, { replace = true } = {}) {
   const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
   if (!Array.isArray(arr)) throw httpErr(400, 'Backup must be a list of skills.')
+  // Admin re-upload path previously bypassed even the secrets filter. Run the same
+  // policy-aware scrub as addSkill over every imported skill (content + title).
+  const p = getWorkPolicy({ companyId }); const pol = (p && p.armed) ? p : null
+  let redacted = 0; const counts = {}
   const clean = arr.slice(0, SKILL_CAP).map((s) => {
-    const content = redactIncidentText(String((s && s.content) || '').trim()).slice(0, 6000)
+    const sb = scrubStoredText(String((s && s.content) || '').trim(), pol)
+    const content = sb.clean.slice(0, 6000)
     if (content.length < 10) return null
-    return { id: 'sk' + id(), title: String((s && s.title) || '').trim().slice(0, 120) || content.slice(0, 48), content, tags: String((s && s.tags) || '').slice(0, 200), at: (s && s.at) || new Date().toISOString() }
+    redacted += sb.total; for (const [k, v] of Object.entries(sb.counts)) counts[k] = (counts[k] || 0) + v
+    const title = scrubStoredText(String((s && s.title) || '').trim(), pol).clean.slice(0, 120) || content.slice(0, 48)
+    return { id: 'sk' + id(), title, content, tags: String((s && s.tags) || '').slice(0, 200), at: (s && s.at) || new Date().toISOString() }
   }).filter(Boolean)
   c.skills = replace ? clean : ([...(c.skills || []), ...clean]).slice(-SKILL_CAP)
   persist()
-  return { count: c.skills.length }
+  return { count: c.skills.length, redacted, counts }
 }
 export function clearCompanySkills(companyId) {
   const c = _company(companyId); const n = c && Array.isArray(c.skills) ? c.skills.length : 0
   if (c) c.skills = []; persistSoon(); return n
+}
+
+// One-time migration: re-scrub every stored skill and KB learning through the
+// policy-aware chokepoint, closing the historical gap where this text was only
+// passed through redactIncidentText (secrets/emails) and could still hold names,
+// phones, SSNs, PHI, IPs or block-listed words. Idempotent: already-scrubbed
+// placeholders ([EMAIL], [REDACTED], ...) do not re-match. Guarded so it runs
+// once (db.work.storedTextScrubMigratedAt). Returns a summary for the boot log.
+export function migrateScrubStoredText() {
+  if (!db.work) db.work = {}
+  if (db.work.storedTextScrubMigratedAt) return { skipped: true }
+  let records = 0, redacted = 0
+  const scrubRec = (rec, field, pol, max) => {
+    if (!rec || typeof rec[field] !== 'string') return
+    const sb = scrubStoredText(rec[field], pol)
+    records++
+    if (sb.total) { rec[field] = sb.clean.slice(0, max); redacted += sb.total }
+  }
+  for (const c of (db.companies || [])) {
+    const p = getWorkPolicy({ companyId: c.id }); const pol = (p && p.armed) ? p : null
+    if (Array.isArray(c.skills)) for (const rec of c.skills) {
+      scrubRec(rec, 'content', pol, 6000)
+      if (typeof rec.title === 'string') { const tb = scrubStoredText(rec.title, pol); if (tb.total) { rec.title = tb.clean.slice(0, 120); redacted += tb.total } }
+    }
+    if (Array.isArray(c.kb)) for (const rec of c.kb) scrubRec(rec, 'fact', pol, 400)
+  }
+  // Global shared pools (individual users) scrub at the full floor (no policy).
+  if (Array.isArray(db.work.globalSkills)) for (const rec of db.work.globalSkills) {
+    scrubRec(rec, 'content', null, 6000)
+    if (typeof rec.title === 'string') { const tb = scrubStoredText(rec.title, null); if (tb.total) { rec.title = tb.clean.slice(0, 120); redacted += tb.total } }
+  }
+  if (Array.isArray(db.work.globalKb)) for (const rec of db.work.globalKb) scrubRec(rec, 'fact', null, 400)
+  db.work.storedTextScrubMigratedAt = new Date().toISOString()
+  db.work.storedTextScrubMigratedCount = redacted
+  persist()
+  return { records, redacted }
 }
 // ---- Destructive-action audit: who did what, when, and WHY (reason required) -
 // Superadmin-visible. Holds only a summary + reason, never the data itself; the

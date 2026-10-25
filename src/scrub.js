@@ -38,6 +38,18 @@ export function clean(s) {
 // Ungated scrub (always redact) - for the public coverage widget.
 export function cleanAlways(s) { return scrubSensitive(String(s == null ? '' : s)).clean }
 
+// Clean for PERSISTENT storage (skills / playbooks). Same engine and policy as
+// clean(), but it ALWAYS REDACTS - never reversible device-only tokens - because
+// a stored skill is shared and never rehydrated, so a [[TOKEN]] would be a dead
+// placeholder. With an armed policy it honors the per-category actions + block
+// words; with the legacy scrub on it full-scrubs; with neither it passes through
+// (the server then applies the mandatory full-scrub floor on write).
+export function cleanForStore(s) {
+  const str = s == null ? '' : String(s)
+  if (govPolicy) return scrubWithPolicy(str, govPolicy).clean
+  return enabled ? scrubSensitive(str).clean : str
+}
+
 // Rehydrate a response on-device: substitute the token map back so the user sees
 // the full answer. Deep-walks objects/arrays; only our tokens are replaced, so
 // it is a no-op when not in tokenize mode or nothing was tokenized.

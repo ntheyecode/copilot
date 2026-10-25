@@ -67,13 +67,17 @@ test('1b. cross-company role/plan changes are refused', () => {
 })
 
 test('2. company knowledge bases are private: A never sees B and vice versa', () => {
-  store.addLearning(memberA1.id, { app: 'AlphaPortal', fact: 'ALPHA secret flow: approvals live under Admin > Workflow' })
-  store.addLearning(memberB1.id, { app: 'BravoPortal', fact: 'BRAVO secret flow: exports live under Reports > Archive' })
+  // Facts avoid the word "secret" as a label: learnings now run through the shared
+  // scrub chokepoint, whose labelled-secret rule would redact "secret <word>" (the
+  // same way it does for goal/doc text). This test is about cross-company privacy,
+  // not redaction, so use neutral wording.
+  store.addLearning(memberA1.id, { app: 'AlphaPortal', fact: 'ALPHA flow: approvals live under Admin and Workflow' })
+  store.addLearning(memberB1.id, { app: 'BravoPortal', fact: 'BRAVO flow: exports live under Reports and Archive' })
   const expA = store.exportCompanyLearnings(coA.id)
   const expB = store.exportCompanyLearnings(coB.id)
-  assert.ok(expA.some((l) => /ALPHA secret flow/.test(l.fact)), 'A has its own entry')
+  assert.ok(expA.some((l) => /ALPHA flow/.test(l.fact)), 'A has its own entry')
   assert.ok(!expA.some((l) => /BRAVO/.test(l.fact + l.app)), 'A export carries no B entry')
-  assert.ok(expB.some((l) => /BRAVO secret flow/.test(l.fact)), 'B has its own entry')
+  assert.ok(expB.some((l) => /BRAVO flow/.test(l.fact)), 'B has its own entry')
   assert.ok(!expB.some((l) => /ALPHA/.test(l.fact + l.app)), 'B export carries no A entry')
   // Retrieval for a user is scoped the same way.
   assert.equal(store.getLearningsFor(memberB2.id, { app: 'AlphaPortal', goal: 'approvals workflow' }).length, 0)
