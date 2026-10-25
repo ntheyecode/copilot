@@ -597,106 +597,159 @@ function ScopeWizard({ goal, tier, onCancel, onReady }) {
 // users go straight to the box, while the first task always sees the coach.
 // All copy comes from src/shared/task_starters.js (SUPREME RULE II).
 const COACH_SKIP_KEY = 'wc.coach.skip'
-const KIND_ICONS = { settings: Settings, blocks: Blocks, shield: ShieldCheck, wrench: Wrench, table: Table, compass: Compass }
-function TaskCoach({ tier, onUseSample, children }) {
+// Where the person is working - the first step of the pre-task context interview.
+// Owner-approved shape: Website/SaaS, Desktop, own files/data, Other.
+const WORKPLACES = [
+  { id: 'saas', label: 'Website or SaaS app', blurb: 'A site or web app in your browser.', icon: Globe },
+  { id: 'desktop', label: 'Desktop app', blurb: 'A program installed on this computer.', icon: Monitor },
+  { id: 'files', label: 'My own files or data', blurb: 'Documents, spreadsheets or exports.', icon: FileText },
+  { id: 'other', label: 'Something else', blurb: "We'll tailor the steps to it.", icon: Compass },
+]
+// Pre-task CONTEXT interview (redesigned). A short, fully SKIPPABLE flow that
+// runs before the goal box: (1) where are you working, (2) any documents/data,
+// (3) the task itself (the EXISTING name + goal box, restyled as the hero). The
+// gathered context is folded into the goal text sent to the planner via
+// onContext (prepended by the parent) - NO server change. Skip + remembered
+// behaviour is preserved (repeat users land straight on the box).
+function TaskCoach({ tier, onContext, docs, children }) {
   const remembered = (() => { try { return localStorage.getItem(COACH_SKIP_KEY) === '1' } catch { return false } })()
   const [done, setDone] = useState(remembered)
-  const [stage, setStage] = useState('kind')     // kind | ready | coach
-  const [kind, setKind] = useState('')
-  const [answers, setAnswers] = useState({})
+  const [stage, setStage] = useState('place')     // place | docs | task
+  const [place, setPlace] = useState('')           // saas | desktop | files | other
+  const [appName, setAppName] = useState('')
+  const [appUrl, setAppUrl] = useState('')
+  const [appPath, setAppPath] = useState('')
+  const [otherText, setOtherText] = useState('')
+  const [docsChoice, setDocsChoice] = useState('')   // use | skip
   const remember = () => { try { localStorage.setItem(COACH_SKIP_KEY, '1') } catch { /* ignore */ } }
-  const finish = () => { remember(); setDone(true) }
-  const reopen = () => { setStage('kind'); setDone(false) }
-  const allAnswered = READINESS.every((q) => answers[q.id])
-  const gatedDocs = tierRank(tier) < tierRank('advanced')
-  const warnings = readinessWarnings(answers)
-  const sample = sampleTask(kind, answers)
+
+  // Build the concise context line the planner's AI sees (prepended to the goal
+  // by the parent). Entirely client-side; no lookup, no server call.
+  const buildContext = useCallback(() => {
+    const parts = []
+    if (place === 'saas') parts.push(appName ? `Working in: ${appName}${appUrl ? ` (${appUrl})` : ''} - a website or SaaS app.` : 'Working in a website or SaaS app.')
+    else if (place === 'desktop') parts.push(appName ? `Working in: ${appName} - a desktop app${appPath ? `, at ${appPath}` : ''}.` : 'Working in a desktop app.')
+    else if (place === 'files') parts.push('Working with my own files or data.')
+    else if (place === 'other' && otherText.trim()) parts.push(`Working on: ${otherText.trim()}.`)
+    if (docsChoice === 'use') parts.push('Reference documents are attached to ground this.')
+    return parts.join(' ')
+  }, [place, appName, appUrl, appPath, otherText, docsChoice])
+  // Keep the parent's folded context in sync as the choices change.
+  useEffect(() => { if (onContext) onContext(buildContext()) }, [buildContext, onContext])
+
+  const finish = () => { remember(); setDone(true) }        // skip: jump to the box
+  const reopen = () => { setStage('place'); setDone(false) }
+  const toTask = () => { remember(); setStage('task') }
+
+  // The task box (the hero), reused by both the live step 3 and the skip path.
+  const hero = (
+    <div className="wd-coach-hero">
+      <div className="wd-coach-hero-k"><PenLine size={12} /> Your task</div>
+      {children}
+    </div>
+  )
 
   if (done) {
     return (
       <div className="wd-coach-done wd-wiz-reveal">
-        {children}
-        <button type="button" className="wd-coach-reopen" onClick={reopen}><Sparkles size={12} /> Not sure how to frame it? Open the task coach</button>
+        {hero}
+        <div className="wd-coach-docswrap">{docs}</div>
+        <button type="button" className="wd-coach-reopen" onClick={reopen}><Sparkles size={12} /> Add context first? Reopen the quick setup</button>
       </div>
     )
   }
+  const STAGES = ['place', 'docs', 'task']
+  const eyebrow = stage === 'place' ? 'Step 1 of 3 · Where are you working?' : stage === 'docs' ? 'Step 2 of 3 · Documents or data' : 'Step 3 of 3 · Your task'
   return (
-    <div className="wd-coach" aria-label="Task readiness coach">
+    <div className="wd-coach" aria-label="Pre-task context">
       <div className="wd-coach-top">
-        <span className="wd-coach-eyebrow"><Sparkles size={13} /> {stage === 'kind' ? 'Before you type: a 30-second check' : stage === 'ready' ? 'Are you ready to start?' : 'Write a task that gets a great plan'}</span>
-        <button type="button" className="wd-coach-skip" onClick={finish}>Skip, I know my task <ArrowRight size={12} /></button>
+        <span className="wd-coach-eyebrow"><Sparkles size={13} /> {eyebrow}</span>
+        <button type="button" className="wd-coach-skip" onClick={finish}>I know my task <ArrowRight size={12} /></button>
       </div>
-      <div className="wd-coach-prog" aria-hidden="true">{['kind', 'ready', 'coach'].map((s, i) => <span key={s} className={['kind', 'ready', 'coach'].indexOf(stage) >= i ? 'on' : ''} />)}</div>
+      <div className="wd-coach-prog" aria-hidden="true">{STAGES.map((s, i) => <span key={s} className={STAGES.indexOf(stage) >= i ? 'on' : ''} />)}</div>
 
-      {stage === 'kind' && (
-        <div className="wd-coach-body" key="kind">
-          <div className="wd-coach-q wd-wiz-reveal">What kind of task is this?</div>
-          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>Each task you start counts toward today's limit, so a clear, well-framed one matters. Pick the closest fit.</div>
+      {stage === 'place' && (
+        <div className="wd-coach-body" key="place">
+          <div className="wd-coach-q wd-wiz-reveal">Where are you working?</div>
+          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>A quick pointer so WorkCoPilot tailors the steps to the right place. Optional - you can skip straight to your task.</div>
           <div className="wd-coach-kinds">
-            {TASK_KINDS.map((k, i) => { const Ic = KIND_ICONS[k.icon] || Compass; return (
-              <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${kind === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => { setKind(k.id); setStage('ready') }}>
+            {WORKPLACES.map((k, i) => { const Ic = k.icon; return (
+              <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${place === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => setPlace(k.id)}>
                 <span className="wd-coach-kind-ic"><Ic size={17} /></span>
                 <span className="wd-coach-kind-l">{k.label}</span>
                 <span className="wd-coach-kind-b">{k.blurb}</span>
               </button>
             ) })}
           </div>
-        </div>
-      )}
-
-      {stage === 'ready' && (
-        <div className="wd-coach-body" key="ready">
-          <div className="wd-coach-q wd-wiz-reveal">Four quick taps, no typing.</div>
-          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>This is how we make sure your task is not wasted before you spend it.</div>
-          <div className="wd-coach-qs">
-            {READINESS.map((q, i) => (
-              <div key={q.id} className="wd-coach-row wd-wiz-reveal" style={{ '--d': `${80 + i * 60}ms` }}>
-                <div className="wd-coach-row-q">{q.q}</div>
-                <div className="wd-coach-opts" role="radiogroup" aria-label={q.q}>
-                  {q.options.map((o) => (
-                    <button key={o.v} type="button" role="radio" aria-checked={answers[q.id] === o.v}
-                      className={`wd-coach-opt${answers[q.id] === o.v ? ' on' : ''}${o.flag ? ' flag' : ''}`}
-                      onClick={() => setAnswers((a) => ({ ...a, [q.id]: o.v }))}>
-                      {o.label}{o.gate === 'advanced' && gatedDocs && <span className="wd-coach-gate" title="Attaching documents is on Advanced and Premium"><Zap size={10} /> Advanced</span>}
-                    </button>
-                  ))}
+          {place === 'saas' && (
+            <div className="wd-coach-fields wd-wiz-reveal">
+              <div className="wd-coach-two">
+                <div className="wd-coach-field">
+                  <label htmlFor="wd-ctx-app">App name</label>
+                  <input id="wd-ctx-app" className="wd-coach-input" placeholder="e.g. Salesforce, Shopify admin" value={appName} onChange={(e) => setAppName(e.target.value)} maxLength={80} />
+                </div>
+                <div className="wd-coach-field">
+                  <label htmlFor="wd-ctx-url">URL <span style={{ fontWeight: 400, color: 'var(--mut)' }}>(optional)</span></label>
+                  <input id="wd-ctx-url" className="wd-coach-input" placeholder="e.g. app.example.com" value={appUrl} onChange={(e) => setAppUrl(e.target.value)} maxLength={200} />
                 </div>
               </div>
-            ))}
-          </div>
+              <div className="wd-coach-note"><Sparkles size={13} /> We'll use this to sharpen the steps - no live lookup, nothing leaves until you start.</div>
+            </div>
+          )}
+          {place === 'desktop' && (
+            <div className="wd-coach-fields wd-wiz-reveal">
+              <div className="wd-coach-two">
+                <div className="wd-coach-field">
+                  <label htmlFor="wd-ctx-dapp">App name</label>
+                  <input id="wd-ctx-dapp" className="wd-coach-input" placeholder="e.g. Excel, Photoshop, QuickBooks" value={appName} onChange={(e) => setAppName(e.target.value)} maxLength={80} />
+                </div>
+                <div className="wd-coach-field">
+                  <label htmlFor="wd-ctx-path">Link or path <span style={{ fontWeight: 400, color: 'var(--mut)' }}>(optional)</span></label>
+                  <input id="wd-ctx-path" className="wd-coach-input" placeholder="e.g. C:\\Reports\\Q3.xlsx" value={appPath} onChange={(e) => setAppPath(e.target.value)} maxLength={200} />
+                </div>
+              </div>
+              <div className="wd-coach-note"><Sparkles size={13} /> We'll use this to sharpen the steps.</div>
+            </div>
+          )}
+          {place === 'other' && (
+            <div className="wd-coach-fields wd-wiz-reveal">
+              <div className="wd-coach-field">
+                <label htmlFor="wd-ctx-other">Tell us in a few words</label>
+                <input id="wd-ctx-other" className="wd-coach-input" placeholder="e.g. a hardware device, a phone app, a physical workflow" value={otherText} onChange={(e) => setOtherText(e.target.value)} maxLength={160} />
+              </div>
+            </div>
+          )}
           <div className="wd-coach-foot">
-            <button type="button" className="wd-wiz-link" onClick={() => setStage('kind')}><ChevronLeft size={14} /> Back</button>
-            <button type="button" className="wd-cta" disabled={!allAnswered} onClick={() => setStage('coach')} title={allAnswered ? '' : 'Answer the four questions first'}>Show me how to write it <ArrowRight size={15} /></button>
+            <span />
+            <button type="button" className="wd-cta" onClick={() => setStage('docs')}>Continue <ArrowRight size={15} /></button>
           </div>
         </div>
       )}
 
-      {stage === 'coach' && (
-        <div className="wd-coach-body" key="coach">
-          <div className="wd-coach-warns">
-            {warnings.map((w, i) => (
-              <div key={i} className={`wd-coach-warn ${w.level} wd-wiz-reveal`} style={{ '--d': `${i * 50}ms` }}>
-                {w.level === 'warn' ? <AlertTriangle size={15} /> : w.level === 'ready' ? <Check size={15} strokeWidth={2.5} /> : <HelpCircle size={15} />}
-                <span>{w.text}</span>
-              </div>
-            ))}
-          </div>
-          <div className="wd-coach-grid">
-            <div className="wd-coach-tips wd-wiz-reveal" style={{ '--d': '120ms' }}>
-              <div className="wd-coach-k">A great task says</div>
-              <ul>{TASK_TIPS.map((t, i) => <li key={i}><Check size={13} strokeWidth={2.5} /><span>{t}</span></li>)}</ul>
-            </div>
-            <div className="wd-coach-sample wd-wiz-reveal" style={{ '--d': '180ms' }}>
-              <div className="wd-coach-k"><Sparkles size={12} /> A sample, tailored to your pick</div>
-              <p className="wd-coach-sample-t">{sample}</p>
-              <div className="wd-coach-sample-row">
-                <button type="button" className="wd-cta" onClick={() => { onUseSample && onUseSample(sample); finish() }}><PenLine size={15} /> Use this as a starting point</button>
-                <button type="button" className="wd-wiz-link strong" onClick={finish}>Write my own <ArrowRight size={13} /></button>
-              </div>
-            </div>
+      {stage === 'docs' && (
+        <div className="wd-coach-body" key="docs">
+          <div className="wd-coach-q wd-wiz-reveal">Any documents or data?</div>
+          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>Attach a spec, export or diagram to ground the plan in your own material - or skip if you don't need one.</div>
+          <div className="wd-coach-docswrap wd-wiz-reveal" style={{ '--d': '80ms' }}>{docs}</div>
+          <div className="wd-coach-choices wd-wiz-reveal" style={{ '--d': '120ms' }}>
+            <button type="button" className={`wd-coach-choice primary${docsChoice === 'use' ? ' on' : ''}`} onClick={() => { setDocsChoice('use'); toTask() }}><FileText size={15} /> Use these to ground the plan</button>
+            <button type="button" className="wd-coach-choice" onClick={() => { setDocsChoice('skip'); toTask() }}>Skip - no documents</button>
           </div>
           <div className="wd-coach-foot">
-            <button type="button" className="wd-wiz-link" onClick={() => setStage('ready')}><ChevronLeft size={14} /> Back</button>
+            <button type="button" className="wd-wiz-link" onClick={() => setStage('place')}><ChevronLeft size={14} /> Back</button>
+            <span />
+          </div>
+        </div>
+      )}
+
+      {stage === 'task' && (
+        <div className="wd-coach-body" key="task">
+          <div className="wd-coach-q wd-wiz-reveal">Write your task</div>
+          <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>Name it, then describe what "done" looks like. The clearer it is, the better the plan.</div>
+          <div className="wd-wiz-reveal" style={{ '--d': '80ms' }}>{hero}</div>
+          <div className="wd-coach-foot">
+            <button type="button" className="wd-wiz-link" onClick={() => setStage('docs')}><ChevronLeft size={14} /> Back</button>
+            <span />
           </div>
         </div>
       )}
@@ -1322,6 +1375,64 @@ const WD_CSS = `
 .wd-coach-done{display:flex;flex-direction:column}
 .wd-coach-reopen{align-self:flex-start;margin-top:12px;background:none;border:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0;transition:color .15s}
 .wd-coach-reopen:hover{color:var(--em-2)}
+/* Context interview: reveal fields (step 1), the hero task box (step 3), the
+   docs choice row (step 2). White-only, same hairline + green accent system. */
+.wd-coach-fields{display:flex;flex-direction:column;gap:12px;margin-top:4px}
+.wd-coach-two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.wd-coach-two{grid-template-columns:1fr}}
+.wd-coach-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.wd-coach-field label{font-size:12.5px;font-weight:600;color:var(--mut-2);letter-spacing:.01em}
+.wd-coach-input{width:100%;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:10px 13px;color:var(--tx);font:inherit;font-size:14.5px;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
+.wd-coach-input::placeholder{color:var(--mut)}
+.wd-coach-input:hover{border-color:var(--line-2)}
+.wd-coach-input:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill);background:var(--panel)}
+.wd-coach-note{display:flex;align-items:flex-start;gap:7px;font-size:12px;line-height:1.5;color:var(--mut)}
+.wd-coach-note svg{flex-shrink:0;margin-top:2px;color:var(--em-2)}
+.wd-coach-hero{position:relative;padding:18px 18px 16px;border-radius:16px;border:1px solid var(--em-line);background:linear-gradient(180deg,var(--em-fill),var(--panel));box-shadow:var(--card-shadow)}
+.wd-coach-hero-k{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2);margin-bottom:12px}
+.wd-coach-docswrap{margin-top:2px}
+.wd-coach-done .wd-coach-docswrap{margin-top:14px}
+.wd-coach-choices{display:flex;gap:10px;flex-wrap:wrap}
+.wd-coach-choice{display:inline-flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap;padding:11px 15px;border-radius:12px;border:1px solid var(--line-2);background:var(--card-a);color:var(--tx);font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
+.wd-coach-choice:hover{border-color:var(--em-2);background:var(--em-fill)}
+.wd-coach-choice.primary{border-color:var(--em);background:var(--em-fill-2);color:var(--em-deep)}
+.wd-coach-choice.primary:hover{background:var(--em-fill)}
+.wd-coach-choice svg{flex-shrink:0}
+
+/* Plan box: replaces the 3 stat tiles. Plan name + what's left today +
+   banked credits, with an optional "trade 2 tasks for an hour" action. */
+.wd-planbox{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);padding:16px 18px}
+.wd-planbox-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;min-width:0}
+.wd-planbox-ic{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:var(--em-fill);color:var(--em);border:1px solid var(--em-line);flex-shrink:0}
+.wd-planbox-name{font-family:var(--wd-display);font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-planbox-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:1px solid var(--em-line);border-radius:999px;padding:3px 10px}
+.wd-planbox-tag .wd-plan-dot{width:6px;height:6px}
+.wd-planbox-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.wd-planstat{min-width:0}
+.wd-planstat .l{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-planstat .l svg{flex-shrink:0}
+.wd-planstat .v{margin-top:5px;font-size:22px;font-weight:700;font-family:var(--wd-display);line-height:1.1;white-space:nowrap;color:var(--tx)}
+.wd-planstat .v small{font-size:12.5px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
+.wd-planstat .v.skel{height:24px;width:60%;border-radius:7px;background:var(--track)}
+.wd-planstat .h{font-size:11px;color:var(--faint);margin-top:3px;line-height:1.4}
+.wd-planbox-trade{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.wd-planbox-trade .t{font-size:12.5px;color:var(--mut);line-height:1.5;min-width:0;flex:1 1 220px}
+.wd-planbox-trade .t b{color:var(--tx)}
+.wd-trade-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;height:36px;padding:0 15px;border-radius:999px;border:1px solid var(--em);background:var(--em);color:#fff;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .15s,opacity .15s}
+.wd-trade-btn:hover{filter:brightness(1.05)}
+.wd-trade-btn:disabled{opacity:.6;cursor:default}
+.wd-trade-btn svg{flex-shrink:0}
+@media(max-width:640px){.wd-planbox-grid{grid-template-columns:1fr}}
+
+/* Impersonation banner: a slim, persistent, warm/neutral strip at the very top
+   of /work when a superadmin is viewing as this user. nowrap, never overflows. */
+.wd-imp{display:flex;align-items:center;gap:10px;flex-wrap:nowrap;min-width:0;padding:8px 16px;background:var(--warm-fill);border-bottom:1px solid var(--warm-line);color:var(--warm);font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;font-size:13px;line-height:1.35;box-sizing:border-box}
+.wd-imp svg{flex-shrink:0;color:var(--warm)}
+.wd-imp-t{min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-imp-t b{font-weight:700}
+.wd-imp-stop{flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 13px;border-radius:999px;border:1px solid var(--warm-line);background:var(--panel);color:var(--warm);font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;transition:background .15s,border-color .15s}
+.wd-imp-stop:hover{background:var(--warm-fill)}
+.wd-imp-stop:disabled{opacity:.6;cursor:default}
 /* White-dashboard gate: every pill, stepper segment, nav link, eyebrow and CTA
    in the interview flows stays on one line and is never shrunk/clipped. Whole
    items may wrap to the next row (their flex containers wrap), but an item's
@@ -1601,6 +1712,15 @@ function Home({ user, onOpen, onSignOut }) {
   const [usageErr, setUsageErr] = useState(false)
   const [aiErr, setAiErr] = useState(false)
   const goalRef = useRef(null)
+  // Pre-task context: the TaskCoach gathers "where are you working / documents"
+  // and reports a concise line here, which we PREPEND to the goal text sent to
+  // the planner (no server change). Empty when the person skips the interview.
+  const [taskContext, setTaskContext] = useState('')
+  // Trade banked task credits for an hour of guidance (credits >= 2, non-corporate).
+  const [trading, setTrading] = useState(false)
+  // Impersonation: a superadmin viewing as this user (from GET /api/work/me).
+  const [impersonating, setImpersonating] = useState(null)
+  const [impStopping, setImpStopping] = useState(false)
 
   useEffect(() => {
     const id = 'wd-fonts'
@@ -1618,6 +1738,9 @@ function Home({ user, onOpen, onSignOut }) {
     api.workList().then((r) => { setSessions(r.sessions || []); setSessErr(false) }).catch(() => setSessErr(true)).finally(() => setSessLoaded(true))
     api.workAppStatus().then(setAppStatus).catch(() => {})
     api.workUsage().then((u) => { setUsage(u); setUsageErr(false) }).catch(() => setUsageErr(true))
+    // /api/work/me may report { impersonating: { by, since } } when a superadmin
+    // is viewing as this user; drives the slim support banner at the top of /work.
+    api.workMe().then((r) => setImpersonating((r && r.impersonating) || null)).catch(() => {})
     fetch('/api/work/pricing').then((r) => r.json()).then(setPricing).catch(() => {})
     // Is billing actually live? Only then does a free user see the plan chooser.
     api.workSubscription().then((r) => {
@@ -1682,10 +1805,17 @@ function Home({ user, onOpen, onSignOut }) {
       setGateMsg(e.message)
     }
   }
+  // Fold the TaskCoach context (where you're working / documents) into the goal
+  // text the planner sees - prepended, so the AI reads it with no server change.
+  const goalForPlan = (g) => {
+    const base = (typeof g === 'string' ? g : goal).trim()
+    const ctx = (taskContext || '').trim()
+    return ctx && base ? `${ctx}\n\n${base}` : (base || ctx)
+  }
   const create = async (g) => {
     if (!ready) return
     setBusy(true); setGateMsg('')
-    try { const r = await api.workCreate({ goal: (typeof g === 'string' ? g : goal).trim() || null }); onOpen(r.session.id, r.guard) }
+    try { const r = await api.workCreate({ goal: goalForPlan(g) || null }); onOpen(r.session.id, r.guard) }
     catch (e) {
       setBusy(false)
       handleGate(e)
@@ -1698,7 +1828,7 @@ function Home({ user, onOpen, onSignOut }) {
   const runWithScope = async (answers) => {
     setScoping(false); setBusy(true); setGateMsg('')
     try {
-      const r = await api.workCreate({ title: planTitle.trim() || undefined, goal: goal.trim(), scope: answers || [] })
+      const r = await api.workCreate({ title: planTitle.trim() || undefined, goal: goalForPlan(), scope: answers || [] })
       // Desktop on-device docs: stash the governed text for THIS session so the
       // console can inject it into the plan. Client-only (sessionStorage), never
       // uploaded or persisted on the server.
@@ -1784,6 +1914,30 @@ function Home({ user, onOpen, onSignOut }) {
     } catch (e) { setBuyErr(friendlyError(e, 'Could not start checkout. Please try again.')) } finally { setBuying(false) }
   }
   const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
+  // Banked task credits (unused tasks that roll over) - from GET /api/work/usage.
+  // Daily hours expire at midnight; these credits bank. Trading 2 -> 1 hour is
+  // offered only to a non-corporate account that actually has >= 2 to spend.
+  const taskCredits = (usage && usage.tasks && Number(usage.tasks.taskCredits)) || 0
+  const canTrade = taskCredits >= 2 && !isCompanyMember
+  const tradeCredits = async () => {
+    if (trading || !canTrade) return
+    setTrading(true)
+    // Optimistic: reflect the trade immediately, then refetch to stay authoritative.
+    setUsage((u) => (u && u.tasks) ? { ...u, tasks: { ...u.tasks, taskCredits: Math.max(0, (Number(u.tasks.taskCredits) || 0) - 2) } } : u)
+    try {
+      await fetch('/api/work/credits/trade', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' && window.refigold ? { 'X-Refigold-App': '1' } : {}) }, body: JSON.stringify({ hours: 1 }) })
+    } catch { /* the refetch below corrects the optimistic change */ }
+    try { const u = await api.workUsage(); setUsage(u) } catch { /* ignore */ }
+    setTrading(false)
+  }
+  const stopImpersonate = async () => {
+    if (impStopping) return
+    setImpStopping(true)
+    try {
+      await fetch('/api/work/admin/impersonate/stop', { method: 'POST', credentials: 'include', headers: (typeof window !== 'undefined' && window.refigold ? { 'X-Refigold-App': '1' } : undefined) })
+    } catch { /* ignore */ }
+    try { window.location.reload() } catch { setImpStopping(false) }
+  }
   // Server-authoritative daily reset label (do not hardcode the time/zone).
   const resetLabel = (usage && usage.resetLabel) || '11:59 PM ET'
   const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
@@ -1816,6 +1970,14 @@ function Home({ user, onOpen, onSignOut }) {
   const railStyle = desk ? { top: 40, height: 'calc(100vh - 40px)' } : undefined
 
   return (
+    <>
+      {impersonating && (
+        <div className="wd-imp" role="status">
+          <Eye size={15} />
+          <span className="wd-imp-t">You're viewing as <b>{user.displayName || user.username}</b> (admin support)</span>
+          <button type="button" className="wd-imp-stop" onClick={stopImpersonate} disabled={impStopping}>{impStopping ? <Loader2 size={13} className="spin" /> : null} Stop</button>
+        </div>
+      )}
     <div className="wd">
       <style>{WD_CSS}</style>
 
@@ -2019,7 +2181,7 @@ function Home({ user, onOpen, onSignOut }) {
                   remembered, so repeat users land straight on the box. The
                   post-submit Quick/Detailed scoping (ScopeWizard) is a separate,
                   later stage and is unchanged. */}
-              <TaskCoach tier={tier} onUseSample={(t) => { setGoal(t); try { setTimeout(() => goalRef.current && goalRef.current.focus(), 50) } catch { /* ignore */ } }}>
+              <TaskCoach tier={tier} onContext={setTaskContext} docs={<DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />}>
                 <label htmlFor="wd-name">Name this plan <span className="req">*</span></label>
                 <input id="wd-name" className="wd-nameinput" placeholder="e.g. API pentest - transactional broker" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
                 <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span className="req">*</span></label>
@@ -2035,28 +2197,46 @@ function Home({ user, onOpen, onSignOut }) {
                       : `${usage.tasks.remaining} of ${usage.tasks.cap} task${usage.tasks.cap === 1 ? '' : 's'} left today. Resets ${usage.tasks.resetLabel || '11:59 PM ET'}.`}
                   </div>
                 )}
-                <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
               </TaskCoach>
             </section>
 
-            {/* Slim stat row: all from the existing usage + sessions data. */}
-            <section className="wd-stats" aria-label="Today at a glance">
-              <div className="wd-stat">
-                <div className="l"><Clock size={15} /> Guidance left today</div>
-                {usage ? <div className="v">{minsLeft} <small>min</small></div> : <div className="v skel" aria-hidden />}
+            {/* Plan box: plan name, what's left today, and banked credits. Daily
+                hours expire at midnight; banked task credits roll over. An
+                optional "trade 2 tasks -> 1 hour" action shows only when the
+                account has >= 2 credits and is not a corporate (company) member. */}
+            <section className="wd-planbox" aria-label="Your plan">
+              <div className="wd-planbox-head">
+                <span className="wd-planbox-ic"><LayoutDashboard size={17} /></span>
+                <span className="wd-planbox-name" title={`${planName} plan`}>{planName} plan</span>
+                <span className="wd-planbox-tag"><span className="wd-plan-dot" aria-hidden /> Active</span>
               </div>
-              <div className="wd-stat">
-                <div className="l"><Check size={15} /> Tasks today</div>
-                {usage
-                  ? (usage.tasks && !usage.tasks.unlimited
-                      ? <div className="v">{usage.tasks.remaining} <small>/ {usage.tasks.cap}</small></div>
-                      : <div className="v">Unlimited</div>)
-                  : <div className="v skel" aria-hidden />}
+              <div className="wd-planbox-grid">
+                <div className="wd-planstat">
+                  <div className="l"><Clock size={14} /> Minutes left today</div>
+                  {usage ? <div className="v">{minsLeft} <small>min</small></div> : <div className="v skel" aria-hidden />}
+                  <div className="h">Daily &middot; resets at {resetLabel}</div>
+                </div>
+                <div className="wd-planstat">
+                  <div className="l"><Check size={14} /> Tasks left today</div>
+                  {usage
+                    ? (usage.tasks && !usage.tasks.unlimited
+                        ? <div className="v">{usage.tasks.remaining} <small>/ {usage.tasks.cap}</small></div>
+                        : <div className="v">Unlimited</div>)
+                    : <div className="v skel" aria-hidden />}
+                  <div className="h">Daily &middot; resets at {resetLabel}</div>
+                </div>
+                <div className="wd-planstat">
+                  <div className="l"><CreditCard size={14} /> Banked credits</div>
+                  {usage ? <div className="v">{taskCredits}</div> : <div className="v skel" aria-hidden />}
+                  <div className="h">Unused tasks you kept &middot; these never expire</div>
+                </div>
               </div>
-              <div className="wd-stat">
-                <div className="l"><FileText size={15} /> Saved tasks</div>
-                {sessLoaded ? <div className="v">{sessions.length}</div> : <div className="v skel" aria-hidden />}
-              </div>
+              {canTrade && (
+                <div className="wd-planbox-trade">
+                  <span className="t">You have <b>{taskCredits} banked credit{taskCredits === 1 ? '' : 's'}</b>. Trade 2 for an extra hour of guidance today.</span>
+                  <button type="button" className="wd-trade-btn" onClick={tradeCredits} disabled={trading}>{trading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />} Trade 2 tasks &rarr; 1 hour</button>
+                </div>
+              )}
             </section>
             </>)}
 
@@ -2288,6 +2468,7 @@ function Home({ user, onOpen, onSignOut }) {
         )
       })()}
     </div>
+    </>
   )
 }
 

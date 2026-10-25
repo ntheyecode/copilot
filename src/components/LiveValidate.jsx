@@ -9,7 +9,7 @@
 //
 // Two stages behind one floating launcher:
 //   1. LEAD GATE - before the first question we capture First/Last/Email/Phone/
-//      Company, ONCE per browser session (kept in sessionStorage so it is asked
+//      Country/Company (all mandatory), ONCE per browser session (kept in sessionStorage so it is asked
 //      only once). The lead is POSTed to /api/work/leads and lands in the
 //      superadmin Leads grid with a timestamp + which page it came from.
 //   2. LIVE VALIDATION - the visitor describes a real task and our AI validates,
@@ -17,13 +17,14 @@
 //      scenario is scrubbed (cleanAlways) before it leaves the browser; the
 //      lead's own contact details are sent as typed (that is what they chose to
 //      share), never scrubbed.
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare,
-  ShieldCheck, ArrowRight, RotateCcw, Copy, Loader2, Play,
+  ShieldCheck, ArrowRight, RotateCcw, Copy, Loader2, Play, ChevronDown,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
-import { useT, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
+import { useLocale, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
+import { countryOptions, countryNameEn } from '../shared/countries.js'   // the ONE country list (ISO alpha-2 + localised names)
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
 // desktop app or the mobile app the person is already a user, so it must never
@@ -81,17 +82,21 @@ const defaultGo = (plan) => { try { window.location.href = `/workcopilot${plan ?
 
 export default function LiveValidate({ go = defaultGo, theme = 'light', source = 'site' }) {
   if (isInApp()) return null   // hide the lead widget inside the desktop/mobile app
-  const t = useT()
+  const { t, locale } = useLocale()   // `locale` is reactive: the country names re-sort when the visitor switches language
   const [open, setOpen] = useState(false)
   const [lead, setLead] = useState(loadLead)          // null until captured this session
 
   // ---- lead-capture form state -------------------------------------------
-  const [f, setF] = useState({ firstName: '', lastName: '', email: '', phone: '', company: '' })
+  // `country` holds the ISO alpha-2 code the visitor picked ('' until chosen).
+  const [f, setF] = useState({ firstName: '', lastName: '', email: '', phone: '', country: '', company: '' })
   const [ferr, setFerr] = useState({})
   const [fbusy, setFbusy] = useState(false)
   const [ftop, setFtop] = useState('')               // server/connection error, shown at top
   const setField = (k) => (e) => { setF((p) => ({ ...p, [k]: e.target.value })); if (ferr[k]) setFerr((p) => ({ ...p, [k]: '' })) }
   const firstRef = useRef(null)
+  // Country dropdown options, named in the visitor's language and sorted in it;
+  // recomputed only when the language changes (~250 Intl lookups otherwise per keystroke).
+  const countries = useMemo(() => countryOptions(locale), [locale])
 
   // ---- validator (live check) state --------------------------------------
   const [q, setQ] = useState('')
@@ -146,15 +151,22 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   const submitLead = async (e) => {
     e && e.preventDefault()
     if (fbusy) return
+    // The lead stores the country as its stable English name (readable in the
+    // superadmin Leads grid + lead email whatever language the visitor used) and
+    // the ISO code beside it. An unknown/empty code resolves to '' -> required error.
+    const countryCode = f.country.trim().toUpperCase()
     const v = {
       firstName: f.firstName.trim(), lastName: f.lastName.trim(),
-      email: f.email.trim(), phone: f.phone.trim(), company: f.company.trim(),
+      email: f.email.trim(), phone: f.phone.trim(),
+      country: countryNameEn(countryCode), countryCode,
+      company: f.company.trim(),
     }
     const errs = {}
     if (!v.firstName) errs.firstName = t('widgets.validate.required')
     if (!v.lastName) errs.lastName = t('widgets.validate.required')
     if (!EMAIL_RE.test(v.email)) errs.email = t('widgets.validate.validEmail')
     if (v.phone.replace(/\D/g, '').length < 7) errs.phone = t('widgets.validate.validPhone')
+    if (!v.country) errs.country = t('widgets.validate.validCountry')
     if (!v.company) errs.company = t('widgets.validate.required')
     if (Object.keys(errs).length) { setFerr(errs); setFtop(''); return }
     setFbusy(true); setFtop('')
@@ -213,6 +225,20 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
         autoComplete={autoComplete} spellCheck={false} />
     </div>
   )
+  // Same wrapper/label/error pattern as `field`, with a native <select> (styled to
+  // match the inputs) so leads carry a clean ISO country, never free text.
+  const selectField = (k, label, options, { placeholder, half, autoComplete } = {}) => (
+    <div className={`lv-field${half ? ' half' : ''}${ferr[k] ? ' err' : ''}`} key={k}>
+      <label>{label}{ferr[k] && <span className="lv-fe">{ferr[k]}</span>}</label>
+      <span className="lv-sel">
+        <select value={f[k]} onChange={setField(k)} autoComplete={autoComplete} className={f[k] ? '' : 'lv-ph'} aria-required="true">
+          <option value="">{placeholder}</option>
+          {options.map((o) => <option key={o.code} value={o.code}>{o.name}</option>)}
+        </select>
+        <ChevronDown size={16} className="lv-sel-ic" aria-hidden />
+      </span>
+    </div>
+  )
 
   return (
     <div className="lv-root" data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
@@ -260,7 +286,8 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                   {field('lastName', t('widgets.validate.lastName'), { placeholder: t('widgets.validate.lastNamePh'), half: true, autoComplete: 'family-name' })}
                   {field('email', t('widgets.validate.workEmail'), { type: 'email', placeholder: t('widgets.validate.workEmailPh'), autoComplete: 'email' })}
                   {field('phone', t('widgets.validate.phone'), { type: 'tel', placeholder: t('widgets.validate.phonePh'), half: true, autoComplete: 'tel' })}
-                  {field('company', t('widgets.validate.company'), { placeholder: t('widgets.validate.companyPh'), half: true, autoComplete: 'organization' })}
+                  {selectField('country', t('widgets.validate.country'), countries, { placeholder: t('widgets.validate.countryPh'), half: true, autoComplete: 'country' })}
+                  {field('company', t('widgets.validate.company'), { placeholder: t('widgets.validate.companyPh'), autoComplete: 'organization' })}
                 </div>
                 <button type="submit" className="lv-submit" disabled={fbusy}>
                   {fbusy ? <><Loader2 size={16} className="lv-spin" /> {t('widgets.validate.saving')}</> : <>{t('widgets.validate.startCheck')} <ArrowRight size={16} className="lv-arrow" /></>}
@@ -422,7 +449,7 @@ const LV_CSS = `
 .lv-form{display:flex;flex-direction:column;gap:16px}
 .lv-top-err{margin:0}
 .lv-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
-.lv-field{display:flex;flex-direction:column;gap:6px}
+.lv-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .lv-field.half{grid-column:span 1}
 .lv-field:not(.half){grid-column:1 / -1}
 .lv-field label{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:700;color:var(--tx);letter-spacing:.01em}
@@ -431,6 +458,17 @@ const LV_CSS = `
 .lv-field input::placeholder{color:var(--mut);opacity:.7}
 .lv-field input:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.14)}
 .lv-field.err input{border-color:#e23b3b;box-shadow:0 0 0 3px rgba(226,59,59,.12)}
+/* Country <select>: same box as the inputs; native arrow hidden, ours overlaid.
+   width:100% + min-width:0 so the longest country name can never widen a half
+   column past the grid (a bare <select> sizes to its longest option). */
+.lv-sel{position:relative;display:block;min-width:0}
+.lv-sel select{appearance:none;-webkit-appearance:none;width:100%;min-width:0;background:var(--ink);border:1px solid var(--line);border-radius:11px;padding:11px 38px 11px 13px;color:var(--tx);font:inherit;font-size:15px;line-height:normal;outline:none;cursor:pointer;text-overflow:ellipsis;white-space:nowrap;overflow:hidden;transition:border-color .14s,box-shadow .14s}
+[dir="rtl"] .lv-sel select{padding:11px 13px 11px 38px}
+.lv-sel select.lv-ph{color:var(--mut);opacity:.85}
+.lv-sel select option{color:#0c1222;background:#fff}
+.lv-sel select:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.14)}
+.lv-field.err .lv-sel select{border-color:#e23b3b;box-shadow:0 0 0 3px rgba(226,59,59,.12)}
+.lv-sel-ic{position:absolute;top:50%;inset-inline-end:12px;transform:translateY(-50%);color:var(--mut);pointer-events:none}
 .lv-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;border-radius:13px;padding:14px 18px;font:inherit;font-weight:800;font-size:15.5px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;transition:transform .14s,box-shadow .14s;box-shadow:0 14px 34px -14px rgba(255,122,89,.55)}
 .lv-submit:hover{transform:translateY(-1px)}
 .lv-submit:disabled{opacity:.6;cursor:default;transform:none}

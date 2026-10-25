@@ -3,14 +3,21 @@
 // the pets. Each swatch is the live AliveBuddy face rendered small and still
 // (no per-thumb animation loop), so what you pick is exactly what you get.
 // Tapping one saves the choice (localStorage, via AliveBuddy's helpers) and tells
-// the parent, so the live buddy swaps at once. No image assets. On-brand,
-// theme-neutral (works on the dark buddy card and the console), and fully
-// keyboard + screen-reader reachable.
+// the parent, so the live buddy swaps at once. No image assets. On-brand for a
+// LIGHT context - reads cleanly on the white dashboard card AND on the (now
+// white/boxless) floating buddy - and fully keyboard + screen-reader reachable.
 import React from 'react'
 import { Shuffle } from 'lucide-react'
 import AliveBuddy, { CHARACTERS, writeBuddyPref, CHARACTER_LABELS as LABELS } from './AliveBuddy.jsx'
 
-const ACCENT = '#8cf5c4'
+// Product green (the #0e9f6e family used across the light surfaces), NOT the old
+// neon emerald of the dark buddy. SWATCH = white chip with a soft hairline; the
+// SELECTED state is a clear green ring so it reads on white.
+const GREEN = '#0e9f6e'
+const GREEN_RING = 'rgba(14,159,110,0.30)'
+const SWATCH_BG = '#ffffff'
+const HAIRLINE = 'rgba(16,24,40,0.14)'
+const ICON_OFF = '#6b7280'
 
 // `pref` is the saved preference (a character key or 'surprise'); `onPick(pref)`
 // receives the new preference. `size` sizes each swatch.
@@ -36,16 +43,16 @@ export default function BuddyPicker({ pref = 'bot', onPick, size = 34 }) {
             style={{
               position: 'relative', width: s, height: s, padding: 0, flex: '0 0 auto',
               borderRadius: '50%', cursor: 'pointer', overflow: 'hidden',
-              background: '#0a0d12',
-              border: `2px solid ${on ? ACCENT : 'rgba(255,255,255,0.14)'}`,
-              boxShadow: on ? `0 0 0 2px rgba(140,245,196,0.25), 0 0 10px rgba(140,245,196,0.4)` : 'none',
+              background: SWATCH_BG,
+              border: `${on ? 2 : 1.5}px solid ${on ? GREEN : HAIRLINE}`,
+              boxShadow: on ? `0 0 0 3px ${GREEN_RING}` : '0 1px 2px rgba(16,24,40,0.06)',
               transition: 'border-color 0.15s, box-shadow 0.15s, transform 0.12s',
               display: 'grid', placeItems: 'center',
             }}
             onMouseDown={(e) => e.preventDefault()}
           >
             {isSurprise ? (
-              <Shuffle size={Math.round(s * 0.46)} color={on ? ACCENT : '#aeb8bf'} />
+              <Shuffle size={Math.round(s * 0.46)} color={on ? GREEN : ICON_OFF} />
             ) : (
               <AliveBuddy character={p} state={on ? 'answering' : 'idle'} size={s - 4} motion={false} interactive={false} title={label} />
             )}

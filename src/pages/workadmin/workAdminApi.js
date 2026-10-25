@@ -182,6 +182,11 @@ export const workAdminApi = {
   userScrub: (id, enabled) => request('POST', `/api/work/admin/users/${id}/scrub`, { enabled: !!enabled }),
   userFreeAccess: (id, free) => request('POST', `/api/work/admin/users/${id}/access`, { free: !!free }),
   userCompany: (id, companyId, companyRole) => request('POST', `/api/work/admin/users/${id}/company`, { companyId, companyRole }),
+  // Support tool (superadmin): open the dashboard AS an individual user. The
+  // server switches this browser session to that user, audits who/when, and
+  // 400s for company members (owner rule: company impersonation is excluded).
+  // Returns { ok, user }; the caller then navigates to /work.
+  impersonate: (id) => request('POST', `/api/work/admin/impersonate/${encodeURIComponent(id)}`, {}),
 
   // Per-user writes (existing: superadmin-only). userId is the account id.
   setTier: (userId, tier) => request('POST', '/api/work/admin/tier', { userId, tier }),

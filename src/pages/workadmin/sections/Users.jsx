@@ -1,8 +1,9 @@
 // Users: searchable, sortable table of WorkCoPilot users. Inline tier edit and
 // a grant-hours action, both superadmin-only (the server enforces it; the UI
-// disables the controls and explains why for a non-superadmin admin).
+// disables the controls and explains why for a non-superadmin admin). Also the
+// support-only "Open as user" (impersonation) control for INDIVIDUAL users.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2 } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2, Eye } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
@@ -89,6 +90,23 @@ export default function UsersSection({ isSuperAdmin }) {
   }
 
   useEffect(() => { load() }, [load])
+
+  // Support tool: open the dashboard AS this user (superadmin). Individual
+  // users only - a company member is never impersonated (owner rule); the UI
+  // hides the control for them and the server 400s regardless. One click is
+  // enough: the server audits who viewed whom and when. On success the whole
+  // browser moves to /work, where the app shows its "viewing as" banner.
+  const openAsUser = async (user) => {
+    setBusyId(user.id)
+    try {
+      await workAdminApi.impersonate(user.id)
+      window.location.assign('/work')
+      // Keep the row busy while the browser navigates away.
+    } catch (error) {
+      setMsg(user.id, 'err', error.message || 'Could not open the dashboard as this user')
+      setBusyId(null)
+    }
+  }
 
   const setMsg = (id, kind, text) => {
     setRowMsg((m) => ({ ...m, [id]: { kind, text } }))
@@ -325,6 +343,15 @@ export default function UsersSection({ isSuperAdmin }) {
                         </span>
                       ) : (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                          {/* Individual = no company (u.companyId is null in the list payload). Company members never get this control. */}
+                          {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && (
+                            <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
+                              title="Open the dashboard as this user (support view; recorded in the audit trail)"
+                              onClick={() => openAsUser(u)}
+                              style={{ color: 'var(--wka-accent-dark)', borderColor: 'var(--wka-accent-line)', whiteSpace: 'nowrap' }}>
+                              {busyId === u.id ? <Spinning /> : <Eye size={13} />} Open as user
+                            </button>
+                          )}
                           <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Grant purchased hours' : 'Superadmin only'}
                             onClick={() => { setGrantFor(u.id); setGrantHours('1') }}>
                             <Plus size={13} /> <Clock size={13} /> Grant hours
