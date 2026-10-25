@@ -17,6 +17,13 @@ async function req(method, url, body) {
   let data = null
   try { data = await res.json() } catch { /* no body */ }
   if (!res.ok) {
+    // Forced logout (session epoch bumped - e.g. this account signed in from
+    // another location, since WorkCoPilot allows ONE active session at a time).
+    // Announce it so the app can show a clear "signed out elsewhere" screen
+    // instead of a generic error wherever the failing call happened to be.
+    if (res.status === 401 && data && data.loggedOut) {
+      try { if (typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('wc:signed-out')) } catch { /* ignore */ }
+    }
     const err = new Error((data && data.error) || `Request failed (${res.status})`)
     err.status = res.status
     err.data = data || null          // full response body (e.g. taskLimit, mustCompleteCurrent, activeTaskId)

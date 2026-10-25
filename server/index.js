@@ -177,10 +177,20 @@ const wrap = (fn) => (req, res) => {
 }
 // One place that turns a verified user into a live session, so epoch/loginAt are
 // never set on one path and forgotten on another.
+//
+// SINGLE ACTIVE SESSION (one location at a time, no multi-logins): every
+// successful login BUMPS the account's session epoch, which invalidates every
+// other live session for this user - their next request fails the epoch check in
+// requireAuth / resolveWorkIdentity and is signed out with { loggedOut:true }.
+// The new session is then stamped with the fresh epoch, so only this location
+// stays signed in. establishSession is the one chokepoint every login path flows
+// through (password, MFA, SSO, social), so every path enforces this (SUPREME
+// RULE II: single source - no login path can forget it).
 function establishSession(req, u) {
+  const epoch = store.bumpSessionEpoch(u.id)
   req.session.uid = u.id
   req.session.loginAt = Date.now()
-  req.session.epoch = store.getSessionEpoch(u.id)
+  req.session.epoch = epoch
 }
 // Signed-in account (any role). Logout-everywhere via the session epoch.
 function requireAuth(req, res, next) {

@@ -5830,6 +5830,7 @@ function GuardNotice({ note, onClose }) {
 }
 export default function WorkPage() {
   const [sess, setSess] = useState(undefined)   // undefined=loading; {signedIn, access, user}
+  const [evicted, setEvicted] = useState(false)   // forced logout: this account signed in from another location (single active session)
   const [guardNote, setGuardNote] = useState(null)   // { warning, severity, category } from a create/plan response
   const showGuard = useCallback((g) => { if (g && !g.blocked && g.warning) setGuardNote({ warning: String(g.warning), severity: g.severity, category: g.category }) }, [])
   const clearGuard = useCallback(() => setGuardNote(null), [])
@@ -5840,6 +5841,15 @@ export default function WorkPage() {
   useEffect(() => { try { if (openId) sessionStorage.setItem('wc_open', openId); else sessionStorage.removeItem('wc_open') } catch { /* ignore */ } }, [openId])
   const loadMe = useCallback(() => api.workMe().then(setSess).catch(() => setSess({ signedIn: false, access: false, user: null })), [])
   useEffect(() => { loadMe() }, [loadMe])
+  // Single active session: api.js fires 'wc:signed-out' when any call returns a
+  // forced-logout 401 (the account signed in from another location). Show the
+  // clear "signed out elsewhere" screen instead of a generic error, and stop
+  // trying to reopen the (now invalid) guiding session.
+  useEffect(() => {
+    const onSignedOut = () => { setEvicted(true); setOpenId(null); try { sessionStorage.removeItem('wc_open') } catch { /* ignore */ } }
+    window.addEventListener('wc:signed-out', onSignedOut)
+    return () => window.removeEventListener('wc:signed-out', onSignedOut)
+  }, [])
   // Coming back from Stripe Checkout (success_url = /work?checkout=success):
   // re-hydrate so the new plan shows, then drop the query so a refresh is clean.
   useEffect(() => {
@@ -5871,6 +5881,15 @@ export default function WorkPage() {
     ? <><WorkShell authed={authed} /><div style={{ paddingTop: 40 }}>{content}</div></>
     : content
 
+  if (evicted) return frame(
+    <div style={{ ...shell, display: 'grid', placeItems: 'center', padding: 20 }}>
+      <div style={{ maxWidth: 400, width: '100%', textAlign: 'center', background: 'var(--surface, #fff)', border: '1px solid var(--border, #e5e7eb)', borderRadius: 16, padding: '26px 24px', boxShadow: '0 10px 40px -18px rgba(0,0,0,.25)' }}>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand-600, #0b8259)', marginBottom: 8 }}>Signed out</div>
+        <p style={{ color: 'var(--text-dim, #5c6484)', fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>Your account was just signed in from another location. For your security, WorkCoPilot keeps <b>one active session at a time</b>, so this session was signed out.</p>
+        <button className="btn btn-primary" onClick={() => { window.location.href = '/workcopilot' }}><LogOut size={15} /> Sign in again</button>
+      </div>
+    </div>
+  )
   if (sess === undefined) return frame(<div style={{ ...shell, display: 'grid', placeItems: 'center' }}><Loader2 className="spin" /></div>)
   if (!sess.signedIn) { window.location.href = '/workcopilot'; return null }
   if (!sess.access) return frame(<NoAccess onSignOut={signOut} />)
