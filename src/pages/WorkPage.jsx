@@ -704,191 +704,96 @@ function TaskCoach({ tier, onUseSample, children }) {
   )
 }
 
-// ---- Home hero illustration -----------------------------------------------
-// Hand-drawn inline SVG (no network, no licensing): a guided workspace - a
-// window with steps being ticked off, the current step lit, and the buddy
-// pointing at it along a dotted path. Every color is a theme token or
-// currentColor so it reads the same in dark and light.
-// Hero spot graphic (inline SVG, tokens only, no external assets): a guided
-// window with steps ticked off, a floating "Now, do this" micro-card, and the
-// buddy pointing along a cyan guide path - over a Fluent dot-grid patch, two
-// concentric arcs and a soft emerald->cyan glow. Everything reads in both
-// themes because every color is a theme token or currentColor.
-function WdHeroArt() {
-  return (
-    <svg className="wd-hero-art" viewBox="0 0 360 250" fill="none" aria-hidden="true" focusable="false">
-      <defs>
-        <pattern id="wdHeroDots" width="12" height="12" patternUnits="userSpaceOnUse">
-          <circle cx="1.2" cy="1.2" r="1.2" fill="var(--em-2)" opacity=".28" />
-        </pattern>
-        <linearGradient id="wdHeroGlow" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="var(--em)" stopOpacity=".22" />
-          <stop offset="1" stopColor="var(--em-2)" stopOpacity=".10" />
-        </linearGradient>
-        <linearGradient id="wdHeroBar" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0" stopColor="var(--em)" />
-          <stop offset="1" stopColor="var(--em-2)" />
-        </linearGradient>
-      </defs>
-      {/* atmosphere: glow, dot grid patch, concentric arcs */}
-      <ellipse cx="190" cy="138" rx="160" ry="100" fill="url(#wdHeroGlow)" />
-      <rect x="18" y="26" width="118" height="96" rx="12" fill="url(#wdHeroDots)" />
-      <circle cx="292" cy="78" r="58" stroke="var(--em-2)" strokeOpacity=".22" strokeWidth="1.2" />
-      <circle cx="292" cy="78" r="38" stroke="var(--em-2)" strokeOpacity=".16" strokeWidth="1.2" strokeDasharray="4 6" />
-      {/* the window */}
-      <rect x="58" y="38" width="214" height="160" rx="16" fill="var(--panel)" stroke="var(--line-2)" />
-      <rect x="58" y="38" width="214" height="3" rx="1.5" fill="url(#wdHeroBar)" />
-      <path d="M58 66h214" stroke="var(--line)" />
-      <circle cx="75" cy="52.5" r="3.2" fill="var(--line-2)" />
-      <circle cx="86" cy="52.5" r="3.2" fill="var(--line-2)" />
-      <circle cx="97" cy="52.5" r="3.2" fill="var(--line-2)" />
-      <rect x="206" y="47.5" width="52" height="10" rx="5" fill="var(--chip)" stroke="var(--line)" />
-      {/* step 1 + 2 - done */}
-      <circle cx="88" cy="90" r="9" fill="var(--em)" />
-      <path d="M83.5 90.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="108" y="85" width="98" height="9" rx="4.5" fill="var(--line-2)" />
-      <circle cx="88" cy="118" r="9" fill="var(--em)" />
-      <path d="M83.5 118.2l3 3 6-6.4" stroke="var(--on-em)" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />
-      <rect x="108" y="113" width="74" height="9" rx="4.5" fill="var(--line-2)" />
-      {/* step 3 - guided now */}
-      <rect x="70" y="134" width="190" height="27" rx="9" fill="var(--em-fill)" stroke="var(--em-line)" />
-      <rect x="70" y="134" width="3" height="27" rx="1.5" fill="url(#wdHeroBar)" />
-      <circle cx="88" cy="147.5" r="9" fill="var(--panel)" stroke="var(--em)" strokeWidth="2" />
-      <circle cx="88" cy="147.5" r="3.4" fill="var(--em)" />
-      <rect x="108" y="143" width="112" height="9" rx="4.5" fill="var(--tx)" opacity=".42" />
-      <rect x="228" y="143" width="18" height="9" rx="4.5" fill="var(--em)" opacity=".8" />
-      {/* step 4 - next, quiet */}
-      <circle cx="88" cy="176" r="9" stroke="var(--line-2)" strokeDasharray="3 3" />
-      <rect x="108" y="171" width="86" height="9" rx="4.5" fill="var(--line)" />
-      {/* floating "Now, do this" micro-card for depth */}
-      <g transform="translate(228 22)">
-        <rect x="0" y="0" width="112" height="46" rx="11" fill="var(--panel)" stroke="var(--em-line)" />
-        <rect x="10" y="10" width="54" height="9" rx="4.5" fill="var(--em)" opacity=".92" />
-        <rect x="10" y="27" width="86" height="7" rx="3.5" fill="var(--line-2)" />
-        <circle cx="98" cy="14.5" r="7" fill="var(--em-fill-2)" />
-        <path d="M94.6 14.6l2.3 2.3 4.5-4.9" stroke="var(--em)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-      </g>
-      {/* cyan guide path from the buddy to the current step */}
-      <path d="M296 198c-8-22-24-37-46-43" stroke="var(--em-2)" strokeWidth="1.6" strokeDasharray="3.5 4.5" strokeLinecap="round" />
-      <circle cx="248" cy="154" r="3" fill="var(--em-2)" />
-      {/* the buddy */}
-      <circle cx="306" cy="212" r="23" fill="var(--panel)" stroke="var(--em-line)" strokeWidth="1.5" />
-      <circle cx="306" cy="212" r="16.5" fill="var(--em-fill-2)" />
-      <circle cx="300" cy="209" r="2.4" fill="var(--em)" />
-      <circle cx="312" cy="209" r="2.4" fill="var(--em)" />
-      <path d="M300.5 217c2.8 2.6 8.2 2.6 11 0" stroke="var(--em)" strokeWidth="1.8" strokeLinecap="round" />
-      {/* accents */}
-      <path d="M40 150l2.2 5.8 5.8 2.2-5.8 2.2L40 166l-2.2-5.8L32 158l5.8-2.2z" fill="var(--em-2)" opacity=".55" />
-      <path d="M332 128l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="var(--warm)" opacity=".6" />
-      <circle cx="30" cy="206" r="2.2" fill="var(--em)" opacity=".5" />
-    </svg>
-  )
-}
 
 // ---- Home: start a session, resume saved ones, get the apps ---------------
 const WD_CSS = `
 .wd{
-  /* dark is the default palette; light overrides below follow the app theme */
-  --ink:#0a0b12;--ink-soft:#0d0e18;
-  --panel:#13141f;--panel-2:#181b27;--panel-3:#1e2131;
-  --line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.15);
-  --tx:#eef0f6;--tx-2:#d3d8e6;--mut:#9aa0b4;--mut-2:#b6bccf;
-  /* Accent aligned to the console + float + full-guide (single source,
-     SUPREME RULE II): emerald #8cf5c4 + cyan #39d3ff in dark. The orange CTA
-     (--warm) is the brand CTA and is deliberately kept. */
-  --em:#8cf5c4;--em-2:#39d3ff;--on-em:#052a1d;
-  --warm:#ffb561;--warm-2:#ff7a59;--cta-ink:#241206;
-  --violet:#b98cff;--rose:#ff7a9c;
-  --em-fill:rgba(140,245,196,.10);--em-fill-2:rgba(140,245,196,.17);--em-line:rgba(140,245,196,.34);
-  --warm-fill:rgba(255,160,80,.08);--warm-line:rgba(255,160,80,.32);
-  --card-a:rgba(255,255,255,.045);--card-b:rgba(255,255,255,.012);
-  --chip:rgba(255,255,255,.05);--chip-line:rgba(255,255,255,.12);
-  --field:#0b0c13;--track:rgba(255,255,255,.08);
-  --shadow:0 30px 70px -46px rgba(0,0,0,.85);--shadow-sm:0 2px 10px rgba(0,0,0,.35);
-  --focus:#8cf5c4;--danger:#ff6b6b;
-  --orb-1:rgba(57,211,255,.40);--orb-2:rgba(140,245,196,.32);--orb-op:.22;
-  /* dashboard cards: flat panel, 1px line, soft lift (the admin-console calm) */
-  --card-shadow:0 1px 0 rgba(255,255,255,.03) inset,0 10px 26px -20px rgba(0,0,0,.8);
-  --card-shadow-hover:0 1px 0 rgba(255,255,255,.04) inset,0 14px 30px -18px rgba(0,0,0,.9);
-  --info:#7cc6ff;--info-fill:rgba(56,189,248,.10);--info-line:rgba(56,189,248,.30);
-  position:relative;min-height:100vh;background:var(--ink);color:var(--tx);
-  --wd-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
-  font-family:"Figtree",system-ui,sans-serif;font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
-[data-theme='light'] .wd{
-  --ink:#f3f5fb;--ink-soft:#ffffff;
+  /* White-only palette (the approved dashboard spec): page #f5f7fb, cards
+     #fff, hairlines #e7eaf2, ink #1b2033, muted #5c6484, green #0e9f6e,
+     blue #0a84c2. The product dashboard is white regardless of the app's
+     theme toggle, so there is deliberately no [data-theme] override here. */
+  --ink:#f5f7fb;--ink-soft:#ffffff;
   --panel:#ffffff;--panel-2:#ffffff;--panel-3:#f6f8fd;
-  --line:#e6e8f1;--line-2:#d3d7e5;
-  --tx:#161a2b;--tx-2:#2b3250;--mut:#5c6484;--mut-2:#434a68;
-  --em:#0e9f6e;--em-2:#0a84c2;--on-em:#ffffff;
+  --line:#e7eaf2;--line-2:#d5d9e6;--line-soft:#eef1f7;
+  --tx:#1b2033;--tx-2:#2b3250;--mut:#5c6484;--mut-2:#434a68;--faint:#8a90a6;
+  --em:#0e9f6e;--em-2:#0a84c2;--on-em:#ffffff;--em-deep:#0b7a53;
   --warm:#c85a16;--warm-2:#e4612f;--cta-ink:#ffffff;
   --violet:#7a4ddb;--rose:#d23e6b;
-  --em-fill:rgba(14,159,110,.08);--em-fill-2:rgba(14,159,110,.14);--em-line:rgba(14,159,110,.30);
+  --em-fill:#eafaf3;--em-fill-2:#d9f3e7;--em-line:#bde9d5;
   --warm-fill:rgba(200,90,22,.07);--warm-line:rgba(200,90,22,.28);
   --card-a:#ffffff;--card-b:#fbfcff;
   --chip:#f1f3fa;--chip-line:#e2e6f1;
-  --field:#fbfcff;--track:rgba(20,30,70,.10);
+  --field:#fcfdff;--track:#e7eaf2;
   --shadow:0 22px 48px -30px rgba(30,40,80,.30);--shadow-sm:0 2px 12px rgba(30,40,80,.08);
   --focus:#0e9f6e;--danger:#e23b4e;
-  --orb-1:rgba(11,143,214,.16);--orb-2:rgba(14,159,110,.14);--orb-op:.22;
-  --card-shadow:0 1px 2px rgba(26,31,54,.05),0 8px 22px -14px rgba(26,31,54,.14);
-  --card-shadow-hover:0 1px 2px rgba(26,31,54,.06),0 12px 28px -14px rgba(26,31,54,.20);
-  --info:#0a6fb3;--info-fill:rgba(10,134,207,.07);--info-line:rgba(10,134,207,.26)}
+  --card-shadow:0 1px 2px rgba(20,24,44,.03);
+  --card-shadow-hover:0 1px 2px rgba(20,24,44,.04),0 8px 22px -16px rgba(26,31,54,.18);
+  --info:#0a6fb3;--info-fill:#e9f5fc;--info-line:rgba(10,134,194,.26);
+  --r:12px;--r-sm:9px;
+  position:relative;display:flex;min-height:100vh;background:var(--ink);color:var(--tx);overflow-x:clip;
+  --wd-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
+  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 .wd *{box-sizing:border-box}
-.wd h1,.wd h2,.wd h3{margin:0;color:var(--tx);font-family:var(--wd-display);letter-spacing:-.015em}
+.wd h1,.wd h2,.wd h3{margin:0;color:var(--tx);font-family:var(--wd-display);letter-spacing:-.01em}
 .wd p{margin:0}
 .wd :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:10px}
 .wd button{cursor:pointer}
-.wd-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.wd-bg .orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:var(--orb-op)}
-.wd-bg .o1{width:45vw;height:45vw;left:-14vw;top:-18vw;background:radial-gradient(circle,var(--orb-1),transparent 65%)}
-.wd-bg .o2{width:40vw;height:40vw;right:-12vw;top:20vh;background:radial-gradient(circle,var(--orb-2),transparent 65%)}
 
-/* ---- Top bar ------------------------------------------------------------
-   One row, always. Every control is flex-shrink:0 + nowrap so labels can
-   never break onto a second line; the only thing allowed to give is the tab
-   strip (min-width:0, hidden horizontal scroll) as a last-resort valve.
-   Width steps: <=1040 Add time / Sign out go icon-only, <=940 tabs go
-   icon-only, <=620 the wordmark drops to the mark alone. */
-.wd-top{position:sticky;top:0;z-index:30;backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);background:var(--ink);background:color-mix(in srgb,var(--ink) 82%,transparent);border-bottom:1px solid var(--line)}
-.wd-top-in{max-width:1080px;margin:0 auto;padding:0 20px;height:60px;display:flex;align-items:center;gap:14px;min-width:0}
-.wd-brand{display:inline-flex;align-items:center;flex-shrink:0;white-space:nowrap;line-height:1}
-/* The shared logo paints its wordmark with fixed inline colors tuned for a
-   light page; this page has a real dark theme, so re-key them to the tokens. */
-.wd-brand > span > span > span:first-child{color:var(--tx)!important}
-.wd-brand > span > span > span:first-child > span{color:var(--em)!important}
-.wd-brand > span > span > span:last-child:not(:first-child){color:var(--em)!important;border-color:var(--em-line)!important;background:var(--em-fill)!important}
-.wd-tabs{display:flex;align-items:center;gap:2px;margin-left:2px;min-width:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
-.wd-tabs::-webkit-scrollbar{display:none}
-.wd-tabs button{position:relative;display:inline-flex;align-items:center;gap:7px;flex-shrink:0;white-space:nowrap;background:none;border:none;color:var(--mut);font:inherit;font-size:14px;font-weight:600;line-height:1;height:36px;padding:0 12px;border-radius:10px;cursor:pointer;transition:color .15s,background .15s}
-.wd-tabs button svg{flex-shrink:0}
-.wd-tabs button:hover{color:var(--tx);background:var(--chip)}
-.wd-tabs button.on{color:var(--tx);background:var(--chip);box-shadow:inset 0 0 0 1px var(--chip-line)}
-.wd-tabs button.on svg{color:var(--em)}
-.wd-top-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap}
-.wd-top-sep{width:1px;height:22px;background:var(--line-2);flex-shrink:0;margin:0 2px}
-/* Shared chrome for the right-cluster controls: one height, one radius. */
-.wd-theme,.wd-getapp,.wd-addtime,.wd-signout{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--card-a);color:var(--tx);font:inherit;font-size:13px;font-weight:600;line-height:1;text-decoration:none;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
-.wd-theme,.wd-getapp{width:36px;padding:0;color:var(--mut)}
-.wd-theme:hover{color:var(--tx);border-color:var(--line-2)}
-.wd-getapp{position:relative;color:var(--em-2);border-color:color-mix(in srgb,var(--em-2) 32%,transparent)}
-.wd-getapp:hover{border-color:var(--em-2);background:color-mix(in srgb,var(--em-2) 10%,transparent)}
+/* ---- Shell: left rail + slim top bar ------------------------------------
+   The rail is a white column: brand mark + stacked wordmark, then the section
+   nav. It collapses to a 64px icon strip (toggle in the top bar; automatic
+   under 900px). Every control in the top bar is nowrap + flex-shrink:0 so
+   nothing can wrap or clip; the only flexible element is the spacer. */
+.wd-rail{width:230px;flex:0 0 230px;position:sticky;top:0;height:100vh;align-self:flex-start;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 12px;gap:2px;transition:width .18s ease,flex-basis .18s ease;z-index:31;overflow:hidden}
+.wd-rail.collapsed{width:64px;flex-basis:64px;padding:14px 10px}
+.wd-brand{display:flex;align-items:center;gap:9px;padding:6px 8px 14px;min-width:0;width:100%;background:none;border:none;font:inherit;text-align:left;color:inherit;cursor:pointer}
+.wd-brand .mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;line-height:0}
+.wd-brand .bt{display:flex;flex-direction:column;line-height:1.12;min-width:0;overflow:hidden}
+.wd-brand .bt small{font-size:11px;font-weight:600;color:var(--mut);letter-spacing:.01em;white-space:nowrap}
+.wd-brand .bt b{font-family:var(--wd-display);font-weight:700;font-size:15px;color:var(--tx);white-space:nowrap}
+.wd-rail.collapsed .wd-brand{padding:6px 0 14px;justify-content:center}
+.wd-rail.collapsed .wd-brand .bt,.wd-rail.collapsed .wd-nav-t,.wd-rail.collapsed .wd-sect{display:none}
+.wd-navs{display:flex;flex-direction:column;gap:2px}
+.wd-sect{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 10px 6px;white-space:nowrap}
+.wd-sect-rule{display:none;height:1px;background:var(--line-soft);margin:10px 6px}
+.wd-rail.collapsed .wd-sect-rule{display:block}
+.wd-nav{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border-radius:var(--r-sm);border:none;background:none;color:var(--tx-2);font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;white-space:nowrap;text-decoration:none;text-align:left;transition:background .15s,color .15s}
+.wd-nav:hover{background:var(--line-soft);color:var(--tx)}
+.wd-nav.on{background:var(--em-fill);color:var(--em-deep)}
+.wd-nav svg{flex:0 0 18px}
+.wd-nav .wd-nav-t{overflow:hidden;text-overflow:ellipsis}
+.wd-rail.collapsed .wd-nav{justify-content:center;padding:9px 0}
+.wd-rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:2px}
+.wd-nav.foot{color:var(--mut)}
+
+.wd-main-col{flex:1;min-width:0;display:flex;flex-direction:column}
+.wd-top{position:sticky;top:0;z-index:30;height:58px;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
+.wd-collapse{width:30px;height:30px;border:1px solid var(--line);background:var(--panel);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--mut);cursor:pointer;flex-shrink:0;padding:0}
+.wd-collapse:hover{background:var(--line-soft);color:var(--tx)}
+.wd-top h2{font-size:16px;font-weight:600;white-space:nowrap;flex-shrink:0;letter-spacing:-.005em}
+.wd-top-sp{flex:1 1 8px;min-width:8px}
+.wd-top-right{display:flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap}
+/* Shared chrome for the right-cluster controls: one 32px height, pill radius,
+   nowrap + flex-shrink:0 on every one of them. */
+.wd-getapp,.wd-addtime,.wd-signout,.wd-buyhrs,.wd-upgrade,.wd-mins{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13.5px;font-weight:500;line-height:1;text-decoration:none;cursor:pointer;padding:0 13px;transition:color .15s,border-color .15s,background .15s,filter .15s}
+.wd-getapp:hover,.wd-addtime:hover,.wd-signout:hover,.wd-buyhrs:hover{border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
+.wd-getapp{position:relative;width:32px;padding:0;color:var(--mut)}
 /* Icon-only link: the label stays in the DOM for screen readers and the
    title tooltip carries it for everyone else. */
 .wd-getapp span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.wd-mins{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:600;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:0 11px;white-space:nowrap;line-height:1}
-.wd-upgrade{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:700;color:#1a0e08;background:linear-gradient(135deg,#ff9a4d,#f26a43);border:none;border-radius:999px;padding:0 13px;white-space:nowrap;line-height:1;text-decoration:none;box-shadow:0 6px 16px -8px rgba(242,106,67,.6)}
-.wd-upgrade:hover{filter:brightness(1.04)}
-.wd-buyhrs{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;height:30px;font-size:12.5px;font-weight:600;color:var(--mut);background:transparent;border:1px solid var(--line-2);border-radius:999px;padding:0 11px;white-space:nowrap;line-height:1;cursor:pointer}
-.wd-buyhrs:hover{color:var(--tx);border-color:var(--em-line)}
+.wd-mins{color:var(--em-deep);border-color:var(--em-line);background:var(--em-fill);font-weight:600;cursor:default}
 .wd-mins svg{flex-shrink:0}
 .wd-mins.low{color:var(--warm);border-color:var(--warm-line);background:var(--warm-fill)}
-.wd-mins.skel{color:transparent;min-width:96px;border-color:transparent;background:var(--track)}
-.wd-addtime{padding:0 12px}
-.wd-addtime:hover{color:var(--em);border-color:var(--em-line);background:var(--em-fill)}
-.wd-signout{padding:0 12px;border-color:transparent;background:transparent;color:var(--mut);font-weight:500}
-.wd-signout:hover{color:var(--tx);background:var(--chip);border-color:var(--line)}
+.wd-mins.skel{color:transparent;min-width:104px;border-color:transparent;background:var(--track)}
+.wd-upgrade{color:#fff;background:var(--em);border-color:var(--em);font-weight:600}
+.wd-upgrade:hover{filter:brightness(1.05)}
+.wd-addtime{font-weight:600}
+.wd-signout{color:var(--mut)}
+.wd-avatar{width:32px;height:32px;border-radius:50%;background:var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--tx-2);flex-shrink:0;text-transform:uppercase}
 
-.wd-main{position:relative;z-index:2;max-width:1080px;margin:0 auto;padding:30px 20px 80px}
+.wd-main{position:relative;z-index:2;width:100%;max-width:960px;margin:0 auto;padding:30px 26px 48px;min-width:0}
+.wd-main.wide{max-width:1120px}
+#wd-start-card,#wd-sessions,#wd-skills{scroll-margin-top:74px}
 
 /* ---- Company co-branding strip (white-label) ---------------------------
    Sits above the greeting for company users only. Reads as
@@ -896,7 +801,7 @@ const WD_CSS = `
    name, contact line), a hairline rule separates it from the WorkCoPilot
    mark on the right. One flat panel, 1px line, same card recipe as the rest
    of the home view; no gradients, no second accent. */
-.wd-cobrand{display:flex;align-items:center;gap:16px;min-width:0;margin-bottom:22px;padding:12px 16px 12px 14px;background:var(--panel);border:1px solid var(--line);border-radius:16px;box-shadow:var(--card-shadow);animation:wd-rise .5s cubic-bezier(.2,.8,.2,1) both}
+.wd-cobrand{display:flex;align-items:center;gap:16px;min-width:0;margin-bottom:22px;padding:10px 14px 10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow)}
 .wd-cobrand-logo{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;min-width:44px;max-width:168px;padding:0 6px;border-radius:11px;background:var(--card-a);border:1px solid var(--line);overflow:hidden}
 .wd-cobrand-logo img{display:block;max-height:36px;max-width:156px;width:auto;height:auto;object-fit:contain}
 .wd-cobrand-logo.mono{color:var(--em);background:var(--em-fill);border-color:var(--em-line)}
@@ -930,31 +835,19 @@ const WD_CSS = `
  .wd-cobrand-exec{flex:1 1 100%;justify-content:center;margin-left:0}
 }
 
-/* ---- Home hero: an acrylic panel. Greeting + status on the left, the spot
-   graphic on the right, one hairline, a soft top accent, generous padding.
-   Dark is the default palette (deeper inner highlight + emerald art glow);
-   the light overrides follow. ---- */
-.wd-hero{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:32px;align-items:center;margin:0 0 20px;padding:34px 36px 32px 38px;border-radius:24px;border:1px solid var(--line);background:linear-gradient(135deg,color-mix(in srgb,var(--panel) 92%,transparent),color-mix(in srgb,var(--panel) 78%,transparent));backdrop-filter:blur(18px) saturate(1.15);-webkit-backdrop-filter:blur(18px) saturate(1.15);box-shadow:var(--card-shadow),inset 0 1px 0 rgba(255,255,255,.045);overflow:hidden}
-.wd-hero::before{content:'';position:absolute;left:38px;right:38px;top:0;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--em),var(--em-2),transparent);opacity:.9}
-.wd-hero::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(520px 220px at 100% 0%,var(--em-fill),transparent 70%)}
-.wd-hero>*{position:relative;z-index:1}
-[data-theme='light'] .wd-hero{box-shadow:var(--card-shadow)}
-.wd-hello h1{font-family:var(--wd-display);font-weight:800;font-size:clamp(30px,3.9vw,46px);line-height:1.06;letter-spacing:-.028em;text-wrap:balance}
-.wd-hello h1 span{display:block;color:var(--mut);font-weight:500;font-size:.5em;letter-spacing:-.008em;margin-top:12px;line-height:1.35;text-wrap:pretty}
-.wd-plan{display:inline-flex;align-items:center;gap:9px;color:var(--tx-2);font-size:13.5px;font-weight:600;margin-top:20px;border:1px solid var(--line);background:color-mix(in srgb,var(--panel) 70%,transparent);border-radius:999px;padding:7px 14px 7px 11px}
-.wd-plan-dot{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 3px var(--em-fill-2),0 0 14px var(--em);flex-shrink:0}
-.wd-plan-skel{height:15px;width:260px;max-width:70%;border-radius:7px;margin-top:11px;background:var(--track)}
-.wd-hero-art{display:block;width:100%;height:auto;max-height:250px;justify-self:end;animation:wd-rise .6s cubic-bezier(.2,.8,.2,1) both;filter:drop-shadow(0 0 28px rgba(140,245,196,.16)) drop-shadow(0 18px 30px rgba(0,0,0,.55))}
-[data-theme='light'] .wd-hero-art{filter:drop-shadow(0 18px 30px rgba(26,31,54,.16))}
+/* ---- Greeting: compact. One heading, one muted status line, no hero. ---- */
+.wd-hello h1{font-family:var(--wd-display);font-weight:700;font-size:22px;line-height:1.25;letter-spacing:-.01em}
+.wd-plan{display:flex;align-items:center;gap:8px;margin-top:3px;color:var(--mut);font-size:14px}
+.wd-plan-dot{width:7px;height:7px;border-radius:50%;background:var(--em);flex-shrink:0}
+.wd-plan-skel{height:14px;width:260px;max-width:70%;border-radius:7px;margin-top:8px;background:var(--track)}
 @keyframes wd-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ---- Cards: one quiet recipe for every block on the home view ----------
    White (or panel) face, 1px line, soft lift, an icon tile + title + muted
    caption in the head. Matches the admin console so the two feel like one
    product. */
-.wd-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);transition:border-color .18s,box-shadow .18s,transform .15s}
-.wd-card:hover{border-color:var(--line-2);box-shadow:var(--card-shadow-hover)}
-[data-theme='light'] .wd-card{box-shadow:var(--card-shadow)}
+.wd-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);transition:border-color .18s,box-shadow .18s}
+.wd-card:hover{border-color:var(--line-2)}
 .wd-card-head{display:flex;align-items:flex-start;gap:12px}
 .wd-card-t{display:block;font-size:14.5px;font-weight:700;color:var(--tx);line-height:1.3}
 .wd-card-c{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.45}
@@ -964,9 +857,14 @@ const WD_CSS = `
 .wd-link{color:var(--em-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--em-2) 40%,transparent)}
 .wd-link:hover{text-decoration-color:var(--em-2)}
 
-/* UTILITY STRIP: Buddy + Data protection + Skills as a tidy 3-up of Fluent cards */
-.wd-pair{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:16px;align-items:start}
-@media(max-width:1000px){.wd-pair{grid-template-columns:1fr 1fr}}
+/* Quiet secondary rows: Buddy + Data protection + Skills share ONE white card
+   separated by hairlines. Each is a compact row; the expandable ones open in
+   place (Data protection -> ScrubRules, Skills -> SkillsCard body). */
+.wd-more{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);overflow:hidden}
+.wd-more > * + *{border-top:1px solid var(--line-soft)}
+.wd-more .wd-card{border:none;border-radius:0;box-shadow:none;background:transparent}
+.wd-more .wd-card:hover{border-color:transparent}
+.wd-more .wd-ic{width:30px;height:30px;border-radius:8px}
 /* Skills card body */
 .wd-sk{display:flex;flex-direction:column;gap:12px}
 .wd-sk-lead{font-size:13px;line-height:1.5;color:var(--mut);margin:0}
@@ -993,18 +891,18 @@ const WD_CSS = `
 .wd-sk-tag{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-2);background:var(--info-fill);border:1px solid var(--info-line);border-radius:999px;padding:1px 7px}
 .wd-sk-del{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:transparent;border:1px solid transparent;color:var(--mut);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
 .wd-sk-del:hover{color:var(--danger);border-color:var(--line-2);background:var(--panel)}
-.wd-buddy{display:flex;align-items:center;gap:16px;padding:16px 18px;min-width:0;flex-wrap:wrap}
-.wd-buddy .wd-card-t,.wd-dp .wd-card-t{font-size:15px;letter-spacing:-.01em}
-.wd-buddy .wd-card-body{min-width:0;flex:1 1 240px}
+.wd-buddy{display:flex;align-items:center;gap:12px;padding:10px 14px;min-width:0;flex-wrap:wrap}
+.wd-buddy .wd-card-t,.wd-dp .wd-card-t{font-size:14px}
+.wd-buddy .wd-card-body{min-width:0;flex:1 1 200px}
 .wd-buddy .wd-card-end{margin-left:auto;flex-shrink:0}
 .wd-dp{overflow:hidden;align-self:start}
-.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:16px 18px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s}
-.wd-dp-btn:hover{background:var(--panel-3)}
+.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s;border-radius:0}
+.wd-dp-btn:hover{background:var(--line-soft)}
 .wd-dp-btn .wd-card-body{min-width:0;flex:1}
 .wd-dp-btn .wd-card-c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wd-dp-chev{margin-left:auto;color:var(--mut);flex-shrink:0;transition:transform .18s}
 .wd-dp-chev.open{transform:rotate(90deg)}
-.wd-dp-body{padding:0 16px 16px;border-top:1px solid var(--line);padding-top:14px;font-size:13.5px;color:var(--mut);line-height:1.55}
+.wd-dp-body{padding:0 14px 14px;border-top:1px solid var(--line-soft);padding-top:12px;font-size:13.5px;color:var(--mut);line-height:1.55}
 
 /* Notes: info (admin access) and warning (gate message) */
 .wd-note{display:flex;gap:11px;align-items:flex-start;margin:0 0 14px;padding:12px 15px;border-radius:12px;font-size:13.5px;line-height:1.5;border:1px solid var(--info-line);background:var(--info-fill);color:var(--tx)}
@@ -1043,7 +941,7 @@ const WD_CSS = `
 @media(max-width:720px){.wd-sub-plans{grid-template-columns:1fr}}
 
 /* Billing panel (manage subscription + invoices) */
-.wd-bill{margin-top:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:18px;padding:18px;box-shadow:var(--shadow)}
+.wd-bill{margin-top:16px;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:18px;box-shadow:var(--card-shadow)}
 .wd-bill-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap}
 .wd-bill-head .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
 .wd-bill-head h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:16px;margin-bottom:4px}
@@ -1071,20 +969,16 @@ const WD_CSS = `
 
 /* Section head: icon tile + title + caption, shared by the plan form, the
    spaces grid and the sessions list. */
-.wd-sec{display:flex;align-items:flex-start;gap:12px;margin-bottom:16px}
-.wd-sec h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;letter-spacing:-.012em;line-height:1.25;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.wd-sec p{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.45}
+.wd-sec{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
+.wd-sec h2{font-family:var(--wd-display);font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.3;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wd-sec p{color:var(--mut);font-size:13.5px;margin-top:2px;line-height:1.45}
 .wd-sec .wd-ic{margin-top:1px}
 
-/* START A PLAN: the one action card - premium frame, top accent, the readiness
-   coach lives inside it beneath the section head. */
-.wd-start{position:relative;margin-top:0;padding:26px 28px 26px;border-radius:22px;border:1px solid var(--line);background:linear-gradient(180deg,color-mix(in srgb,var(--panel) 96%,transparent),var(--panel));box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);overflow:hidden}
-.wd-start::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--em),var(--em-2))}
-.wd-start::after{content:'';position:absolute;inset:0;pointer-events:none;background:radial-gradient(560px 200px at 0% 0%,var(--em-fill),transparent 72%)}
-.wd-start>*{position:relative;z-index:1}
-.wd-start .wd-sec{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line)}
-.wd-start .wd-sec h2{font-family:var(--wd-display);font-size:22px;letter-spacing:-.02em}
-.wd-start .wd-sec p{font-size:13.5px;line-height:1.5;max-width:64ch}
+/* START A TASK: the primary action card. White face, 1px line, soft lift;
+   the readiness coach lives inside it beneath the head. */
+.wd-start{position:relative;margin-top:22px;padding:22px 22px 18px;border-radius:16px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--card-shadow)}
+.wd-start .wd-sec{margin-bottom:14px}
+.wd-start .wd-sec p{max-width:70ch}
 .wd-start .wd-coach{margin-top:2px}
 .wd-start label{display:block;font-size:12.5px;color:var(--mut-2);font-weight:600;letter-spacing:.02em;margin-bottom:7px}
 .wd-start label .req{color:var(--warm)}
@@ -1130,53 +1024,63 @@ const WD_CSS = `
 .wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
 .wd-docs-note{margin-top:9px;font-size:11.5px;color:var(--mut);line-height:1.5}
-.wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:linear-gradient(135deg,var(--warm),var(--warm-2));color:var(--cta-ink);border:none;border-radius:12px;padding:13px 22px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 12px 30px -14px var(--warm-2);transition:transform .15s,box-shadow .15s,filter .15s}
-.wd-cta:hover:not(:disabled){transform:translateY(-2px);filter:brightness(1.04);box-shadow:0 16px 34px -14px var(--warm-2)}
+.wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:var(--em);color:#fff;border:none;border-radius:10px;height:40px;padding:0 20px;font:inherit;font-weight:600;font-size:14.5px;cursor:pointer;transition:filter .15s,transform .15s}
+.wd-cta:hover:not(:disabled){filter:brightness(1.05)}
 .wd-cta:active:not(:disabled){transform:translateY(0)}
-.wd-cta:disabled{opacity:.5;cursor:default;transform:none;box-shadow:none}
+.wd-cta:disabled{opacity:.5;cursor:default;transform:none}
 
-.wd-catwrap{margin-top:30px}
-.wd-cats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-/* Each space is a quiet white card with a faint tone-colored wash in the
-   top-right corner - the "light picture" the owner asked for, kept airy. */
-.wd-cat{position:relative;overflow:hidden;text-align:left;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 15px;cursor:pointer;font:inherit;color:var(--tx);display:flex;flex-direction:column;gap:5px;box-shadow:var(--card-shadow);--tone:var(--em);transition:transform .15s,border-color .2s,box-shadow .2s}
-.wd-cat::before{content:"";position:absolute;right:-28px;top:-28px;width:96px;height:96px;border-radius:50%;background:radial-gradient(circle,color-mix(in srgb,var(--tone) 16%,transparent),transparent 70%);pointer-events:none;transition:transform .25s}
-.wd-cat:hover:not(:disabled){transform:translateY(-2px);border-color:color-mix(in srgb,var(--tone) 40%,var(--line));box-shadow:var(--card-shadow-hover)}
-.wd-cat:hover:not(:disabled)::before{transform:scale(1.25)}
-.wd-cat:hover:not(:disabled) .wd-cat-ic{transform:scale(1.05)}
+/* "Or start from a space": a quiet examples row of small chips under the
+   sessions list. Each chip fills in its sample goal (title tooltip). */
+.wd-catwrap{margin-top:22px;padding-top:16px;border-top:1px solid var(--line-soft)}
+.wd-catwrap .wd-sec{margin-bottom:10px;align-items:center}
+.wd-catwrap .wd-sec h2{font-size:14.5px}
+.wd-catwrap .wd-sec p{font-size:12.5px;margin-top:1px}
+.wd-catwrap .wd-ic{width:28px;height:28px;border-radius:8px}
+.wd-cats{display:flex;flex-wrap:wrap;gap:8px}
+.wd-cat{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;--tone:var(--em);transition:border-color .15s,background .15s,color .15s}
+.wd-cat:hover:not(:disabled){border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
 .wd-cat:disabled{opacity:.5;cursor:default}
-.wd-cat-ic{position:relative;display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:color-mix(in srgb,var(--tone) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone) 26%,transparent);color:var(--tone);margin-bottom:6px;transition:transform .2s}
+.wd-cat-ic{display:inline-flex;align-items:center;justify-content:center;color:var(--tone);line-height:0}
 .wd-cat.t-b{--tone:var(--em-2)}
 .wd-cat.t-c{--tone:var(--warm)}
 .wd-cat.t-d{--tone:var(--violet)}
 .wd-cat.t-e{--tone:var(--rose)}
-.wd-cat-label{position:relative;font-family:"Bricolage Grotesque";font-weight:700;font-size:15px}
-.wd-cat-sample{position:relative;color:var(--mut);font-size:12.5px;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.wd-cat-label{font-weight:500}
+.wd-cat-sample{display:none}
 
-.wd-sessions{margin-top:34px}
-.wd-apps h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;letter-spacing:-.01em}
+.wd-sessions{margin-top:16px}
 .wd-sec-count{font-size:12px;color:var(--mut);font-weight:600;border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:2px 9px;line-height:1.5}
-.wd-sess-list{display:flex;flex-direction:column;gap:10px}
-.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 16px;box-shadow:var(--card-shadow);transition:border-color .2s,box-shadow .2s}
-.wd-sess:hover{border-color:var(--line-2);box-shadow:var(--card-shadow-hover)}
+.wd-sess-list{display:flex;flex-direction:column;gap:8px}
+.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;box-shadow:var(--card-shadow);transition:border-color .2s}
+.wd-sess:hover{border-color:var(--line-2)}
+.wd-sess-ic{width:30px;height:30px;border-radius:8px;background:var(--info-fill);color:var(--em-2);display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px}
+.wd-sess-ic.done{background:var(--em-fill);color:var(--em)}
 .wd-sess-main{flex:1;min-width:0}
-.wd-sess-title{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-sess-meta{font-size:12.5px;color:var(--mut);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-sess-title{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-sess-meta{font-size:13px;color:var(--mut);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wd-sess-done{color:var(--em);font-weight:600}
-.wd-sess-bar{height:5px;background:var(--track);border-radius:3px;margin-top:9px;overflow:hidden;max-width:380px}
-.wd-sess-bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--em),var(--em-2));transition:width .4s var(--ease,ease)}
-.wd-resume{display:inline-flex;align-items:center;gap:6px;background:var(--em-fill-2);color:var(--em);border:1px solid var(--em-line);border-radius:10px;padding:9px 14px;font:inherit;font-weight:600;font-size:13.5px;cursor:pointer;flex-shrink:0;transition:background .15s,transform .15s}
-.wd-resume:hover{background:var(--em-fill);transform:translateX(1px)}
+.wd-sess-bar{height:4px;background:var(--track);border-radius:3px;margin-top:8px;overflow:hidden;max-width:380px}
+.wd-sess-bar i{display:block;height:100%;border-radius:3px;background:var(--em);transition:width .4s ease}
+.wd-resume{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-weight:500;font-size:13.5px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s,border-color .15s}
+.wd-resume:hover{border-color:#d5d9e6;background:var(--line-soft)}
 .wd-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:7px;border-radius:9px;flex-shrink:0;transition:color .15s,background .15s}
 .wd-del:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
-.wd-empty{border:1px dashed var(--line-2);border-radius:14px;padding:24px 20px;display:flex;align-items:center;gap:14px;background:var(--panel)}
-.wd-empty .ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;background:var(--em-fill);border:1px solid var(--em-line);color:var(--em);flex-shrink:0}
-.wd-empty b{display:block;color:var(--tx);font-size:15px;margin-bottom:3px}
+.wd-empty{border:1px dashed var(--line-2);border-radius:var(--r);padding:18px 16px;display:flex;align-items:center;gap:14px;background:var(--panel)}
+.wd-empty .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--em-fill);border:1px solid var(--em-line);color:var(--em);flex-shrink:0}
+.wd-empty b{display:block;color:var(--tx);font-size:14.5px;margin-bottom:2px}
 .wd-empty p{color:var(--mut);font-size:13.5px}
-.wd-skel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:10px}
+.wd-skel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
 .wd-skel i{display:block;height:12px;border-radius:6px;background:var(--track);background-size:200% 100%;animation:wd-sh 1.3s linear infinite}
 .wd-skel i.w1{width:52%}.wd-skel i.w2{width:34%}.wd-skel i.w3{width:80%;height:5px}
 @keyframes wd-sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
+/* Stat tiles: a slim 3-up (minutes left / tasks today / saved tasks). */
+.wd-stats{margin-top:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wd-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
+.wd-stat .l{font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-stat .l svg{flex-shrink:0}
+.wd-stat .v{margin-top:6px;font-size:23px;font-weight:700;font-family:var(--wd-display);line-height:1.1;white-space:nowrap}
+.wd-stat .v small{font-size:13px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
+.wd-stat .v.skel{height:26px;width:60%;border-radius:7px;background:var(--track)}
 
 .wd-apps{margin-top:40px}
 .wd-apps-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -1224,8 +1128,11 @@ const WD_CSS = `
 .wd-help-cta{padding:30px 0 0}
 
 @media(max-width:900px){
- .wd-cats{grid-template-columns:1fr 1fr}
- .wd-hero{grid-template-columns:minmax(0,1fr) 240px;gap:18px}
+ .wd-rail{width:64px;flex-basis:64px;padding:14px 10px}
+ .wd-rail .wd-brand{padding:6px 0 14px;justify-content:center}
+ .wd-rail .wd-brand .bt,.wd-rail .wd-nav-t,.wd-rail .wd-sect{display:none}
+ .wd-rail .wd-sect-rule{display:block}
+ .wd-rail .wd-nav{justify-content:center;padding:9px 0}
  .wd-apps-grid{grid-template-columns:1fr}
  .wd-help{grid-template-columns:1fr}
  .wd-help-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:10px}
@@ -1233,53 +1140,43 @@ const WD_CSS = `
  .wd-help-nav button.on{box-shadow:inset 0 -2px 0 var(--em)}
 }
 /* Top bar collapse, widest first. Labels never wrap; they drop to icons. */
-@media(max-width:1040px){
- .wd-addtime,.wd-signout{width:36px;padding:0}
+@media(max-width:1100px){
+ .wd-addtime,.wd-signout{width:32px;padding:0}
  .wd-addtime span,.wd-signout span{display:none}
- .wd-signout{border-color:var(--line);background:var(--card-a);color:var(--mut)}
 }
-@media(max-width:940px){
- .wd-tabs button{padding:0 10px;width:36px;justify-content:center}
- .wd-tabs button span{display:none}
+@media(max-width:860px){
+ .wd-upgrade{width:32px;padding:0}
+ .wd-upgrade span{display:none}
+ .wd-buyhrs .wd-mins-l{display:none}
 }
-@media(max-width:620px){
- .wd-main{padding:26px 16px 64px}
- .wd-top-in{padding:0 16px;gap:10px;height:56px}
- .wd-brand > span > span{display:none}
- .wd-tabs{margin-left:0}
+@media(max-width:760px){.wd-start{padding:18px 16px 16px}}
+@media(max-width:640px){
+ .wd-main{padding:22px 16px 40px}
+ .wd-top{padding:0 14px;gap:8px}
  .wd-top-right{gap:6px}
- .wd-top-sep{display:none}
- .wd-mins{padding:0 9px;font-size:12px}
- .wd-cats{grid-template-columns:1fr}
- .wd-cta{width:100%}
- .wd-hero{grid-template-columns:1fr;gap:14px;margin-bottom:18px}
- .wd-hero-art{max-width:240px;max-height:150px;justify-self:center}
- .wd-start{padding:18px 16px}
+ .wd-mins{padding:0 10px;font-size:12.5px}
+ .wd-mins .wd-mins-l{display:none}
+ .wd-stats{grid-template-columns:1fr}
  .wd-buddy .wd-card-end{margin-left:0;width:100%}
 }
-@media(max-width:420px){
- .wd-top-in{padding:0 12px;gap:8px}
- .wd-top-right{gap:5px}
- .wd-theme,.wd-getapp,.wd-addtime,.wd-signout,.wd-tabs button{width:34px;height:34px}
- .wd-mins{height:28px;padding:0 8px}
- .wd-mins .wd-mins-l{display:none}
+@media(max-width:480px){
+ .wd-top h2{display:none}
+ .wd-mins{padding:0 9px}
+ .wd-mins.skel{min-width:64px}
+ .wd-avatar{display:none}
+ .wd-buyhrs:not(.wd-retry){width:32px;padding:0}
+ .wd-buyhrs:not(.wd-retry) span{display:none}
  .wd-resume span{display:none}
 }
 @media(prefers-reduced-motion:reduce){
  .wd *{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
 /* Scope wizard */
-/* Fluent dot-grid motif over the orbs: barely-there texture, never noise.
-   Dark (the default) runs a touch stronger so it reads on ink. */
-.wd-bg::after{content:'';position:absolute;inset:0;background-image:radial-gradient(color-mix(in srgb,var(--em-2) 22%,transparent) 1px,transparent 1.2px);background-size:22px 22px;opacity:.45;mask-image:radial-gradient(70% 55% at 60% 18%,#000 30%,transparent 100%);-webkit-mask-image:radial-gradient(70% 55% at 60% 18%,#000 30%,transparent 100%)}
-[data-theme='light'] .wd-bg::after{opacity:.35}
-/* Light keeps the flat card shadow on the coach + wizard cards (dark depth is in each rule). */
-[data-theme='light'] .wd-coach-kind,[data-theme='light'] .wd-wiz-depth-card,[data-theme='light'] .wd-coach-sample{box-shadow:var(--card-shadow)}
-[data-theme='light'] .wd-coach-opt.on{box-shadow:none}
-@media(max-width:900px){.wd-hero{grid-template-columns:minmax(0,1fr) 280px;padding:28px 28px 26px 30px}}
-@media(max-width:760px){.wd-hero{grid-template-columns:1fr;gap:18px;padding:24px 22px 22px}.wd-hero-art{max-height:200px;justify-self:center}.wd-pair{grid-template-columns:1fr}.wd-start{padding:20px 18px 20px}}
-@media(max-width:520px){.wd-hero-art{display:none}.wd-hello h1{font-size:clamp(26px,8vw,32px)}}
-@media(prefers-reduced-motion:reduce){.wd-hero-art{animation:none}.wd-card{transition:none}}
+/* Flat card shadow on the coach + wizard cards (white-only palette). */
+.wd-coach-kind,.wd-wiz-depth-card,.wd-coach-sample{box-shadow:var(--card-shadow)}
+.wd-coach-opt.on{box-shadow:none}
+@media(max-width:760px){.wd-start{padding:20px 18px 20px}}
+@media(prefers-reduced-motion:reduce){.wd-card{transition:none}}
 
 .wd-wiz{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,14,.55);backdrop-filter:blur(4px);animation:wd-wiz-fade .18s ease}
 @keyframes wd-wiz-fade{from{opacity:0}to{opacity:1}}
@@ -1287,7 +1184,7 @@ const WD_CSS = `
    footer; only .wd-wiz-body scrolls. Dark (default) carries an inner highlight
    + emerald hairline for depth; light keeps the flat shadow. */
 .wd-wiz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,680px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px var(--em-line);animation:wd-wiz-pop .22s cubic-bezier(.2,.8,.2,1)}
-[data-theme='light'] .wd-wiz-card{box-shadow:var(--shadow)}
+.wd-wiz-card{box-shadow:var(--shadow)}
 @keyframes wd-wiz-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 .wd-wiz-top{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 0;margin-bottom:12px}
 .wd-wiz-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
@@ -1619,7 +1516,6 @@ function SkillsCard({ user }) {
 }
 
 function Home({ user, onOpen, onSignOut }) {
-  const { theme, toggle: toggleTheme } = useTheme()
   // Team is a company-admin surface: show it only for a company admin who is
   // actually attached to a company (role alone is not enough).
   const isCompanyAdmin = user.companyRole === 'company_admin' && !!user.companyId
@@ -1882,49 +1778,88 @@ function Home({ user, onOpen, onSignOut }) {
   const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || 'Active'
   const low = !!usage && (usage.exhausted || (usage.remainingSeconds != null && usage.remainingSeconds <= 900))
 
+  // Shell: the left rail collapses to icons (toggle in the top bar; automatic
+  // under 900px via CSS). Rail items that point INTO the dashboard (Start a
+  // task, My tasks, Skills) switch to the dashboard tab, then scroll to the
+  // existing section - no new routes or features, just the sections below.
+  const [railOpen, setRailOpen] = useState(true)
+  const desk = typeof window !== 'undefined' && !!window.workDesktop
+  const jumpTo = (sel, after) => {
+    const wasHere = tab === 'dashboard'
+    setTab('dashboard')
+    setTimeout(() => {
+      const el = document.querySelector(sel)
+      try { if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) } catch { /* ignore */ }
+      if (after) after(el)
+    }, wasHere ? 0 : 80)
+  }
+  const goStart = () => jumpTo('#wd-start-card', () => { try { goalRef.current && goalRef.current.focus({ preventScroll: true }) } catch { /* ignore */ } })
+  const goTasks = () => jumpTo('#wd-sessions')
+  const goSkills = () => jumpTo('#wd-skills', (el) => { const b = el && el.querySelector('.wd-dp-btn[aria-expanded="false"]'); if (b) b.click() })
+  const TITLES = { dashboard: 'Dashboard', help: 'How-to', support: 'Support', team: 'Team' }
+  const initial = String(user.displayName || user.username || '').trim().charAt(0) || '?'
+  // In the desktop app the 32px title bar is position:fixed above this layout
+  // (the frame pads 40px); the sticky rail + top bar are offset so they never
+  // slide under it.
+  const stickyTop = desk ? { top: 40 } : undefined
+  const railStyle = desk ? { top: 40, height: 'calc(100vh - 40px)' } : undefined
+
   return (
     <div className="wd">
       <style>{WD_CSS}</style>
-      <div className="wd-bg" aria-hidden><span className="orb o1" /><span className="orb o2" /></div>
 
-      {/* In the desktop app the 32px title bar is position:fixed above this
-          sticky header; without this offset the header slid under it on scroll
-          and the Dashboard / How-to / Support tabs were half hidden. */}
-      <header className="wd-top" style={(typeof window !== 'undefined' && window.workDesktop) ? { top: 32 } : undefined}>
-        <div className="wd-top-in">
-          <span className="wd-brand"><AdmireVedaLogo size={24} idSuffix="wd" /></span>
-          <nav className="wd-tabs" aria-label="Sections">
-            <button className={tab === 'dashboard' ? 'on' : ''} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')}><LayoutDashboard size={16} /> <span>Dashboard</span></button>
-            <button className={tab === 'help' ? 'on' : ''} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')}><BookOpen size={16} /> <span>How-to</span></button>
-            <button className={tab === 'support' ? 'on' : ''} aria-current={tab === 'support' ? 'page' : undefined} onClick={() => setTab('support')}><LifeBuoy size={16} /> <span>Support</span></button>
-            {isCompanyAdmin && (
-              <button className={tab === 'team' ? 'on' : ''} aria-current={tab === 'team' ? 'page' : undefined} onClick={() => setTab('team')}><Users size={16} /> <span>Team</span></button>
-            )}
-          </nav>
+      <aside className={`wd-rail${railOpen ? '' : ' collapsed'}`} style={railStyle}>
+        <button type="button" className="wd-brand" onClick={() => setTab('dashboard')} title="WorkCoPilot by AdmireVeda">
+          <span className="mark"><AVMark size={26} id="avrail" glow={false} /></span>
+          <span className="bt"><small>AdmireVeda</small><b>WorkCoPilot</b></span>
+        </button>
+        <nav className="wd-navs" aria-label="Sections">
+          <button type="button" className={`wd-nav${tab === 'dashboard' ? ' on' : ''}`} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')} title="Dashboard"><LayoutDashboard size={18} /> <span className="wd-nav-t">Dashboard</span></button>
+          <button type="button" className="wd-nav" onClick={goStart} title="Start a task"><Play size={18} /> <span className="wd-nav-t">Start a task</span></button>
+          <button type="button" className="wd-nav" onClick={goTasks} title="My tasks"><Clock size={18} /> <span className="wd-nav-t">My tasks</span></button>
+          <button type="button" className="wd-nav" onClick={goSkills} title="Skills"><Blocks size={18} /> <span className="wd-nav-t">Skills</span></button>
+          <div className="wd-sect">Help</div><span className="wd-sect-rule" aria-hidden />
+          <button type="button" className={`wd-nav${tab === 'help' ? ' on' : ''}`} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')} title="How-to"><BookOpen size={18} /> <span className="wd-nav-t">How-to</span></button>
+          <button type="button" className={`wd-nav${tab === 'support' ? ' on' : ''}`} aria-current={tab === 'support' ? 'page' : undefined} onClick={() => setTab('support')} title="Support"><LifeBuoy size={18} /> <span className="wd-nav-t">Support</span></button>
+          {isCompanyAdmin && (
+            <button type="button" className={`wd-nav${tab === 'team' ? ' on' : ''}`} aria-current={tab === 'team' ? 'page' : undefined} onClick={() => setTab('team')} title="Team"><Users size={18} /> <span className="wd-nav-t">Team</span></button>
+          )}
+        </nav>
+        {(isExecutive || isAdmin) && (
+          <div className="wd-rail-foot">
+            {isExecutive && <a className="wd-nav foot" href="/work/exec" title="Executive dashboard"><BarChart3 size={18} /> <span className="wd-nav-t">Executive dashboard</span></a>}
+            {isAdmin && <a className="wd-nav foot" href="/work/admin" title="Admin console"><Settings size={18} /> <span className="wd-nav-t">Admin console</span></a>}
+          </div>
+        )}
+      </aside>
+
+      <div className="wd-main-col">
+        <header className="wd-top" style={stickyTop}>
+          <button type="button" className="wd-collapse" onClick={() => setRailOpen((v) => !v)} aria-expanded={railOpen} aria-label={railOpen ? 'Collapse menu' : 'Expand menu'} title={railOpen ? 'Collapse menu' : 'Expand menu'}><MenuIcon size={18} /></button>
+          <h2>{TITLES[tab] || 'Dashboard'}</h2>
+          <span className="wd-top-sp" />
           <div className="wd-top-right">
             {usage == null
               ? (usageErr
-                  ? <button className="wd-buyhrs" onClick={load} title="Could not load your remaining time. Click to retry."><AlertTriangle size={13} /> Retry</button>
+                  ? <button className="wd-buyhrs wd-retry" onClick={load} title="Could not load your remaining time. Click to retry."><AlertTriangle size={13} /> <span>Retry</span></button>
                   : <span className="wd-mins skel" aria-hidden />)
-              : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l"> left</span></span>}
+              : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l">left</span></span>}
             {user && !user.companyId && !isAdmin && usage != null && (
-              <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title="Buy extra hours (one-time)"><Plus size={13} /> <span className="wd-mins-l">Buy </span>hours</button>
+              <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title="Buy extra hours (one-time)"><Plus size={13} /> <span><span className="wd-mins-l">Buy </span>hours</span></button>
             )}
+            <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy} title="Add time"><Zap size={15} /> <span>Add time</span></button>
             {user && user.canUpgrade && (
               <a className="wd-upgrade" href="/workcopilot/pricing" title={`Upgrade${user.nextTier ? ' to ' + user.nextTier.charAt(0).toUpperCase() + user.nextTier.slice(1) : ''} for more hours, tasks${user.caps && !user.caps.roadmaps ? ', roadmaps' : ''} and more`}><Sparkles size={14} /> <span>Upgrade</span></a>
             )}
-            <span className="wd-top-sep" aria-hidden />
-            <button className="wd-theme" onClick={toggleTheme} title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{theme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>
-            {!(typeof window !== 'undefined' && window.workDesktop) && (
+            {!desk && (
               <a className="wd-getapp" href="/api/work/desktop-setup.exe" title="Download the Windows app" aria-label="Download the Windows app"><Monitor size={16} /> <span>Windows app</span></a>
             )}
-            <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy} title="Add time"><Zap size={15} /> <span>Add time</span></button>
             <button className="wd-signout" onClick={onSignOut} title="Sign out"><LogOut size={15} /> <span>Sign out</span></button>
+            <span className="wd-avatar" title={user.displayName || user.username} aria-hidden>{initial}</span>
           </div>
-        </div>
-      </header>
+        </header>
 
-      <main className="wd-main">
+        <main className={`wd-main${tab === 'dashboard' ? '' : ' wide'}`}>
         {tab === 'dashboard' ? (
           <>
             {company && (() => {
@@ -1959,9 +1894,8 @@ function Home({ user, onOpen, onSignOut }) {
               )
             })()}
 
-            <section className="wd-hero">
-            <div className="wd-hello">
-              <h1>Hello {user.displayName || user.username},<span>What are you accomplishing today?</span></h1>
+            <section className="wd-hello">
+              <h1>Hello {user.displayName || user.username}</h1>
               {usage
                 ? <div className="wd-plan"><span className="wd-plan-dot" /> {
                     isAdmin
@@ -1974,59 +1908,18 @@ function Home({ user, onOpen, onSignOut }) {
                             ? 'Free account · choose a plan to start guiding'
                             : `Free access · ${minsLeft} min of guidance left today`
                   }</div>
-                : <div className="wd-plan-skel wd-skel" style={{ padding: 0, border: 'none', background: 'var(--track)' }} aria-hidden />}
-            </div>
-            <WdHeroArt />
+                : <div className="wd-plan-skel" aria-hidden />}
             </section>
 
-            <div className="wd-pair">
-              <div className="wd-card wd-buddy">
-                <AliveBuddy character={buddyChar} state="answering" size={36} interactive />
-                <div className="wd-card-body">
-                  <div className="wd-card-t">Your buddy</div>
-                  <div className="wd-card-c">Shows the next step on your screen.</div>
-                </div>
-                <div className="wd-card-end">
-                  <BuddyPicker pref={buddyPref} size={26} onPick={setBuddyPref} />
-                </div>
-              </div>
-
-              {/* Data protection: individual users customize their own scrub rules;
-                  company members are governed by their admin; admins manage it in
-                  their console. Built-in protections always apply for everyone. */}
-              <div className="wd-card wd-dp">
-                <button type="button" className="wd-dp-btn" onClick={() => setScrubOpen((v) => !v)} aria-expanded={scrubOpen}>
-                  <span className="wd-ic"><ShieldCheck size={16} /></span>
-                  <span className="wd-card-body">
-                    <span className="wd-card-t">Data protection</span>
-                    <span className="wd-card-c">{user.companyId ? (isCompanyAdmin ? 'Managed in your admin console' : 'Managed by your company') : 'Customize what gets scrubbed before sending'}</span>
-                  </span>
-                  <ChevronRight size={16} className={`wd-dp-chev${scrubOpen ? ' open' : ''}`} />
-                </button>
-                {scrubOpen && (
-                  <div className="wd-dp-body">
-                    {!user.companyId
-                      ? <ScrubRules />
-                      : isCompanyAdmin
-                        ? <div>Your company's data protection rules live in the <a href="/work/company" className="wd-link">company console</a> under Data governance. The built-in protections always apply.</div>
-                        : <div>Your company manages data protection rules for everyone on the team. The built-in protections - emails, keys, card numbers, SSNs, IP addresses and more - always apply on your device before anything is sent.</div>}
-                  </div>
-                )}
-              </div>
-
-              {/* Skills: playbooks / SOPs / skills that align guidance with how you work. */}
-              <SkillsCard user={user} />
-            </div>
-
             {isAdmin && (
-              <div className="wd-note">
+              <div className="wd-note" style={{ marginTop: 18 }}>
                 <LayoutDashboard size={16} />
                 <span>You have administrator access, so live guidance is unlocked for you. <a href="/work/admin">Open the admin console</a></span>
               </div>
             )}
 
             {gateMsg && (
-              <div className="wd-note warn" role="alert">
+              <div className="wd-note warn" role="alert" style={{ marginTop: 18 }}>
                 <AlertTriangle size={16} />
                 <span>{gateMsg}</span>
               </div>
@@ -2099,11 +1992,12 @@ function Home({ user, onOpen, onSignOut }) {
               </div>
             )}
 
-            <div className="wd-start">
+            {/* PRIMARY ACTION: Start a task. */}
+            <section className="wd-start" id="wd-start-card" aria-label="Start a task">
               <div className="wd-sec">
                 <span className="wd-ic"><PenLine size={16} /></span>
                 <div>
-                  <h2>Start a plan</h2>
+                  <h2>Start a task</h2>
                   <p>Describe what you want to get done in your own words. WorkCoPilot turns it into steps, guides you through each one on your screen, catches a wrong move and corrects it, and moves you on to the next correct step.</p>
                 </div>
               </div>
@@ -2131,33 +2025,34 @@ function Home({ user, onOpen, onSignOut }) {
                 )}
                 <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} />
               </TaskCoach>
-            </div>
+            </section>
 
-            <div className="wd-catwrap">
-              <div className="wd-sec">
-                <span className="wd-ic alt"><AppWindow size={16} /></span>
-                <div>
-                  <h2>Or start from a space</h2>
-                  <p>Pick a starting point. It fills in a sample goal you can edit before you begin.</p>
-                </div>
+            {/* Slim stat row: all from the existing usage + sessions data. */}
+            <section className="wd-stats" aria-label="Today at a glance">
+              <div className="wd-stat">
+                <div className="l"><Clock size={15} /> Guidance left today</div>
+                {usage ? <div className="v">{minsLeft} <small>min</small></div> : <div className="v skel" aria-hidden />}
               </div>
-              <div className="wd-cats">
-                {WD_CATS.map((c) => (
-                  <button key={c.id} className={`wd-cat t-${c.tone}`} onClick={() => pickCat(c)} disabled={!ready} title={ready ? c.sample : 'Set up your AI above to begin'}>
-                    <span className="wd-cat-ic"><c.icon size={19} /></span>
-                    <span className="wd-cat-label">{c.label}</span>
-                    <span className="wd-cat-sample">{c.sample}</span>
-                  </button>
-                ))}
+              <div className="wd-stat">
+                <div className="l"><Check size={15} /> Tasks today</div>
+                {usage
+                  ? (usage.tasks && !usage.tasks.unlimited
+                      ? <div className="v">{usage.tasks.remaining} <small>/ {usage.tasks.cap}</small></div>
+                      : <div className="v">Unlimited</div>)
+                  : <div className="v skel" aria-hidden />}
               </div>
-            </div>
+              <div className="wd-stat">
+                <div className="l"><FileText size={15} /> Saved tasks</div>
+                {sessLoaded ? <div className="v">{sessions.length}</div> : <div className="v skel" aria-hidden />}
+              </div>
+            </section>
             </>)}
 
-            <div className="wd-sessions">
+            <section className="wd-sessions" id="wd-sessions" aria-label="Resume where you left off">
               <div className="wd-sec">
-                <span className="wd-ic"><Clock size={16} /></span>
+                <span className="wd-ic alt"><RefreshCw size={16} /></span>
                 <div>
-                  <h2>Pick up where you left off {sessLoaded && sessions.length > 0 && <span className="wd-sec-count">{sessions.length} saved</span>}</h2>
+                  <h2>Resume where you left off {sessLoaded && sessions.length > 0 && <span className="wd-sec-count">{sessions.length} saved</span>}</h2>
                   <p>Every plan is saved. Pause anytime and come back to the exact step you were on.</p>
                 </div>
               </div>
@@ -2190,21 +2085,84 @@ function Home({ user, onOpen, onSignOut }) {
                     const tot = (s.steps || []).length
                     const cur = (s.steps || [])[s.currentStep]
                     const pct = tot > 0 ? Math.round(done / tot * 100) : 0
+                    const ended = s.status === 'ended'
                     return (
                       <div key={s.id} className="wd-sess">
+                        <span className={`wd-sess-ic${ended ? ' done' : ''}`} aria-hidden>{ended ? <Check size={15} /> : <Play size={14} />}</span>
                         <div className="wd-sess-main">
                           <div className="wd-sess-title">{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}</div>
-                          <div className="wd-sess-meta">{s.status === 'ended' ? 'Completed' : (cur ? `You were at: ${cur.text}` : 'Not started yet')} &middot; <span className="wd-sess-done">{done}/{tot}</span> steps{tot > 0 ? <> &middot; {pct}%</> : null}</div>
+                          <div className="wd-sess-meta">{ended ? 'Completed' : (cur ? `You were at: ${cur.text}` : 'Not started yet')} &middot; <span className="wd-sess-done">{done}/{tot}</span> steps{tot > 0 ? <> &middot; {pct}%</> : null}</div>
                           {tot > 0 && <div className="wd-sess-bar"><i style={{ width: `${pct}%` }} /></div>}
                         </div>
-                        <button className="wd-resume" onClick={() => onOpen(s.id)}><span>{s.status === 'ended' ? 'Open' : 'Resume'}</span> <ArrowRight size={14} /></button>
+                        <button className="wd-resume" onClick={() => onOpen(s.id)}><span>{ended ? 'Open' : 'Resume'}</span> <ArrowRight size={14} /></button>
                         <button className="wd-del" title="Delete session" aria-label="Delete session" onClick={() => { setDelTarget(s); setDelReason('') }}><Trash2 size={15} /></button>
                       </div>
                     )
                   })}
                 </div>
               )}
-            </div>
+            </section>
+
+            {!needsSub && (
+              <div className="wd-catwrap">
+                <div className="wd-sec">
+                  <span className="wd-ic alt"><AppWindow size={14} /></span>
+                  <div>
+                    <h2>Or start from a space</h2>
+                    <p>Pick a starting point. It fills in a sample goal you can edit before you begin.</p>
+                  </div>
+                </div>
+                <div className="wd-cats">
+                  {WD_CATS.map((c) => (
+                    <button key={c.id} className={`wd-cat t-${c.tone}`} onClick={() => pickCat(c)} disabled={!ready} title={ready ? c.sample : 'Set up your AI above to begin'}>
+                      <span className="wd-cat-ic"><c.icon size={15} /></span>
+                      <span className="wd-cat-label">{c.label}</span>
+                      <span className="wd-cat-sample">{c.sample}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Quiet secondary rows: Buddy, Data protection, Skills. */}
+            <section className="wd-more" aria-label="Buddy, data protection and skills">
+              <div className="wd-card wd-buddy">
+                <AliveBuddy character={buddyChar} state="answering" size={30} interactive />
+                <div className="wd-card-body">
+                  <div className="wd-card-t">Your buddy</div>
+                  <div className="wd-card-c">Shows the next step on your screen.</div>
+                </div>
+                <div className="wd-card-end">
+                  <BuddyPicker pref={buddyPref} size={24} onPick={setBuddyPref} />
+                </div>
+              </div>
+
+              {/* Data protection: individual users customize their own scrub rules;
+                  company members are governed by their admin; admins manage it in
+                  their console. Built-in protections always apply for everyone. */}
+              <div className="wd-card wd-dp">
+                <button type="button" className="wd-dp-btn" onClick={() => setScrubOpen((v) => !v)} aria-expanded={scrubOpen}>
+                  <span className="wd-ic"><ShieldCheck size={15} /></span>
+                  <span className="wd-card-body">
+                    <span className="wd-card-t">Data protection</span>
+                    <span className="wd-card-c">{user.companyId ? (isCompanyAdmin ? 'Managed in your admin console' : 'Managed by your company') : 'Customize what gets scrubbed before sending'}</span>
+                  </span>
+                  <ChevronRight size={16} className={`wd-dp-chev${scrubOpen ? ' open' : ''}`} />
+                </button>
+                {scrubOpen && (
+                  <div className="wd-dp-body">
+                    {!user.companyId
+                      ? <ScrubRules />
+                      : isCompanyAdmin
+                        ? <div>Your company's data protection rules live in the <a href="/work/company" className="wd-link">company console</a> under Data governance. The built-in protections always apply.</div>
+                        : <div>Your company manages data protection rules for everyone on the team. The built-in protections - emails, keys, card numbers, SSNs, IP addresses and more - always apply on your device before anything is sent.</div>}
+                  </div>
+                )}
+              </div>
+
+              {/* Skills: playbooks / SOPs / skills that align guidance with how you work. */}
+              <div id="wd-skills"><SkillsCard user={user} /></div>
+            </section>
 
             {showBilling && (
               <div className="wd-bill" role="region" aria-label="Billing">
@@ -2246,13 +2204,14 @@ function Home({ user, onOpen, onSignOut }) {
 
           </>
         ) : tab === 'support' ? (
-          <div style={{ padding: '26px 20px', maxWidth: 1080, margin: '0 auto' }}><SupportTickets mode="user" /></div>
+          <SupportTickets mode="user" />
         ) : tab === 'team' && isCompanyAdmin ? (
-          <div style={{ padding: '26px 20px', maxWidth: 1080, margin: '0 auto' }}><WorkTeam /></div>
+          <WorkTeam />
         ) : (
           <HelpDocs onStart={() => setTab('dashboard')} />
         )}
-      </main>
+        </main>
+      </div>
       {scoping && <ScopeWizard goal={goal} tier={tier} onCancel={cancelScope} onReady={runWithScope} />}
       {delTarget && (
         <div className="wd-modal-ov" onClick={() => !delBusy && setDelTarget(null)}>
