@@ -29,6 +29,9 @@ const WorkFullGuide = lazy(() => import('./pages/WorkFullGuide.jsx'))
 const WorkAdmin = lazy(() => import('./pages/workadmin/WorkAdmin.jsx'))
 const WorkCompanyAdmin = lazy(() => import('./pages/workadmin/WorkCompanyAdmin.jsx'))
 const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
+// Standalone white sub-pages of the dashboard (same tokens, own routes).
+const WorkTasks = lazy(() => import('./pages/WorkTasks.jsx'))
+const WorkLogs = lazy(() => import('./pages/WorkLogs.jsx'))
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -89,6 +92,9 @@ export default function App() {
       <Route path="/work/set-password" element={<WorkSetPassword />} />
       {/* The app itself. WorkPage self-gates on the session the server reports. */}
       <Route path="/work" element={<WorkPage />} />
+      {/* Completed tasks + session logs: standalone pages in the dashboard's white style. */}
+      <Route path="/work/tasks" element={<WorkTasks />} />
+      <Route path="/work/logs" element={<WorkLogs />} />
       {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
       <Route path="/work/buddy" element={<WorkBuddy />} />
       {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
