@@ -5,6 +5,7 @@ import React, { useState } from 'react'
 import { Mail, Send, Check, Loader2, Building2 } from 'lucide-react'
 import { api } from '../api.js'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu)
+import SiteFooter from '../components/SiteFooter.jsx'
 import useSeo from '../useSeo.js'                        // per-route title / description / canonical (WEB-01)
 
 export default function WorkContact() {

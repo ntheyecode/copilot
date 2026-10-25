@@ -18,6 +18,7 @@ import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'
 import SiteHeader from '../components/SiteHeader.jsx'
+import SiteFooter from '../components/SiteFooter.jsx'
 
 export const FIELD_FAMILIES = [
   { k: 'Software & engineering', ic: Code2, tone: '', wide: true,

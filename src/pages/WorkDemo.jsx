@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles, Compass, Wand2, Bug, Award } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import SiteFooter from '../components/SiteFooter.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)

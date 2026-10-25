@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
+import SiteFooter from '../components/SiteFooter.jsx'   // shared footer across the whole site
 import CopyChip from '../components/CopyChip.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide premium card primitive
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
