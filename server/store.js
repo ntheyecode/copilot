@@ -2753,8 +2753,13 @@ function bumpWorkTasksToday(workUserId) {
 // The user's current INCOMPLETE task (status 'active'), or null. Enforces the
 // "finish your current task before starting a new one" rule. Idle sessions are
 // auto-finalized elsewhere, so this never strands a user permanently.
-export function activeWorkTask(workUserId) {
-  return (db.workSessions || []).find((x) => x.workUserId === workUserId && x.status === 'active') || null
+// A task that BLOCKS starting a new one: actively RUNNING (status 'active' and
+// NOT paused). A paused task waits under "Resume where you left off" and never
+// blocks a new start (owner: with task credits you can always start another).
+// Only the two credit gates below use this, so the name carries that meaning and
+// is the single source of truth for "is there a task in the way".
+export function blockingWorkTask(workUserId) {
+  return (db.workSessions || []).find((x) => x.workUserId === workUserId && x.status === 'active' && !x.paused) || null
 }
 // Task usage for the client (the New Task surface + /me). For INDIVIDUAL users
 // this reports the banked task-credit balance (after lazy accrual) and the
@@ -2764,7 +2769,10 @@ export function activeWorkTask(workUserId) {
 // keep exactly their old shape (no credit fields, cap null).
 export function getWorkTaskUsage(workUserId) {
   const u = getUser(workUserId)
-  const active = activeWorkTask(workUserId)
+  // Only a RUNNING task blocks a new start; a paused one waits under "Resume
+  // where you left off". activeTaskId is the "finish this first" signal the
+  // client reads, so it reports a running task only (never a paused one).
+  const active = blockingWorkTask(workUserId)
   const activeTaskId = active ? active.id : null
   if (u && u.companyId) {
     return {
@@ -2801,9 +2809,12 @@ export function startWorkTask(workUserId) {
     persist()
     return { usedToday, cap: null, unlimited: true }
   }
-  // Rule 1 (preserved): one active task at a time - finish the current first.
-  const active = activeWorkTask(workUserId)
-  if (active) { const e = httpErr(409, 'Finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
+  // Rule 1 (revised): only a task that is actively RUNNING blocks a new start.
+  // A PAUSED task waits under "Resume where you left off" and must NOT block
+  // (owner: as long as you have task credits you can start another). Pausing the
+  // current task is therefore the way to start a second one.
+  const active = blockingWorkTask(workUserId)
+  if (active) { const e = httpErr(409, 'Pause or finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
   // Rule 2 (new): spend one banked task credit. Lazy accrual runs inside
   // getWorkTaskCredits, so the balance is current before we gate.
   const c = getWorkTaskCredits(workUserId)
