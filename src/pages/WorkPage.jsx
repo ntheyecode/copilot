@@ -621,7 +621,31 @@ function TaskCoach({ tier, onContext, docs, children }) {
   const [appPath, setAppPath] = useState('')
   const [otherText, setOtherText] = useState('')
   const [docsChoice, setDocsChoice] = useState('')   // use | skip
+  const [advancing, setAdvancing] = useState(false)  // brief auto-advance beat (no-detail choice)
+  const firstFieldRef = useRef(null)                 // focus the first detail input on select
+  const advTimer = useRef(null)
   const remember = () => { try { localStorage.setItem(COACH_SKIP_KEY, '1') } catch { /* ignore */ } }
+  // Clear any pending auto-advance timer if the component unmounts mid-beat.
+  useEffect(() => () => { if (advTimer.current) clearTimeout(advTimer.current) }, [])
+
+  // A workplace that needs a detail (name/url/path/text) shows fields + a
+  // manual Continue; one that needs nothing ('files') auto-advances after a
+  // short confirmation beat. This is the "auto-move for some, Next for some"
+  // the owner asked for - typing steps wait for you, choice-only steps flow.
+  const needsDetail = (id) => id === 'saas' || id === 'desktop' || id === 'other'
+  const pickPlace = (id) => {
+    if (advTimer.current) { clearTimeout(advTimer.current); advTimer.current = null }
+    setPlace(id)
+    if (needsDetail(id)) {
+      setAdvancing(false)
+      setTimeout(() => { try { firstFieldRef.current && firstFieldRef.current.focus() } catch { /* ignore */ } }, 90)
+    } else {
+      setAdvancing(true)
+      advTimer.current = setTimeout(() => { setAdvancing(false); setStage('docs') }, 640)
+    }
+  }
+  // Enter in any detail field moves to the next step (snappy keyboard flow).
+  const onFieldKey = (e) => { if (e.key === 'Enter') { e.preventDefault(); setStage('docs') } }
 
   // Build the concise context line the planner's AI sees (prepended to the goal
   // by the parent). Entirely client-side; no lookup, no server call.
@@ -674,10 +698,11 @@ function TaskCoach({ tier, onContext, docs, children }) {
           <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>A quick pointer so WorkCoPilot tailors the steps to the right place. Optional - you can skip straight to your task.</div>
           <div className="wd-coach-kinds">
             {WORKPLACES.map((k, i) => { const Ic = k.icon; return (
-              <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${place === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => setPlace(k.id)}>
+              <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${place === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => pickPlace(k.id)} aria-pressed={place === k.id}>
                 <span className="wd-coach-kind-ic"><Ic size={17} /></span>
                 <span className="wd-coach-kind-l">{k.label}</span>
                 <span className="wd-coach-kind-b">{k.blurb}</span>
+                {place === k.id && <span className="wd-coach-kind-check"><Check size={13} /></span>}
               </button>
             ) })}
           </div>
@@ -686,11 +711,11 @@ function TaskCoach({ tier, onContext, docs, children }) {
               <div className="wd-coach-two">
                 <div className="wd-coach-field">
                   <label htmlFor="wd-ctx-app">App name</label>
-                  <input id="wd-ctx-app" className="wd-coach-input" placeholder="e.g. Salesforce, Shopify admin" value={appName} onChange={(e) => setAppName(e.target.value)} maxLength={80} />
+                  <input ref={firstFieldRef} id="wd-ctx-app" className="wd-coach-input" placeholder="e.g. Salesforce, Shopify admin" value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
                 </div>
                 <div className="wd-coach-field">
                   <label htmlFor="wd-ctx-url">URL <span style={{ fontWeight: 400, color: 'var(--mut)' }}>(optional)</span></label>
-                  <input id="wd-ctx-url" className="wd-coach-input" placeholder="e.g. app.example.com" value={appUrl} onChange={(e) => setAppUrl(e.target.value)} maxLength={200} />
+                  <input id="wd-ctx-url" className="wd-coach-input" placeholder="e.g. app.example.com" value={appUrl} onChange={(e) => setAppUrl(e.target.value)} onKeyDown={onFieldKey} maxLength={200} />
                 </div>
               </div>
               <div className="wd-coach-note"><Sparkles size={13} /> We'll use this to sharpen the steps - no live lookup, nothing leaves until you start.</div>
@@ -701,11 +726,11 @@ function TaskCoach({ tier, onContext, docs, children }) {
               <div className="wd-coach-two">
                 <div className="wd-coach-field">
                   <label htmlFor="wd-ctx-dapp">App name</label>
-                  <input id="wd-ctx-dapp" className="wd-coach-input" placeholder="e.g. Excel, Photoshop, QuickBooks" value={appName} onChange={(e) => setAppName(e.target.value)} maxLength={80} />
+                  <input ref={firstFieldRef} id="wd-ctx-dapp" className="wd-coach-input" placeholder="e.g. Excel, Photoshop, QuickBooks" value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
                 </div>
                 <div className="wd-coach-field">
                   <label htmlFor="wd-ctx-path">Link or path <span style={{ fontWeight: 400, color: 'var(--mut)' }}>(optional)</span></label>
-                  <input id="wd-ctx-path" className="wd-coach-input" placeholder="e.g. C:\\Reports\\Q3.xlsx" value={appPath} onChange={(e) => setAppPath(e.target.value)} maxLength={200} />
+                  <input id="wd-ctx-path" className="wd-coach-input" placeholder="e.g. C:\\Reports\\Q3.xlsx" value={appPath} onChange={(e) => setAppPath(e.target.value)} onKeyDown={onFieldKey} maxLength={200} />
                 </div>
               </div>
               <div className="wd-coach-note"><Sparkles size={13} /> We'll use this to sharpen the steps.</div>
@@ -715,13 +740,17 @@ function TaskCoach({ tier, onContext, docs, children }) {
             <div className="wd-coach-fields wd-wiz-reveal">
               <div className="wd-coach-field">
                 <label htmlFor="wd-ctx-other">Tell us in a few words</label>
-                <input id="wd-ctx-other" className="wd-coach-input" placeholder="e.g. a hardware device, a phone app, a physical workflow" value={otherText} onChange={(e) => setOtherText(e.target.value)} maxLength={160} />
+                <input ref={firstFieldRef} id="wd-ctx-other" className="wd-coach-input" placeholder="e.g. a hardware device, a phone app, a physical workflow" value={otherText} onChange={(e) => setOtherText(e.target.value)} onKeyDown={onFieldKey} maxLength={160} />
               </div>
             </div>
           )}
           <div className="wd-coach-foot">
-            <span />
-            <button type="button" className="wd-cta" onClick={() => setStage('docs')}>Continue <ArrowRight size={15} /></button>
+            {!place
+              ? <span className="wd-coach-foothint">Pick where you're working — or skip with “I know my task”.</span>
+              : <span />}
+            {advancing
+              ? <span className="wd-coach-adv"><Check size={14} /> Got it — opening next step<span className="bar"><i /></span></span>
+              : <button type="button" className="wd-cta" disabled={!place} onClick={() => setStage('docs')}>Continue <ArrowRight size={15} /></button>}
           </div>
         </div>
       )}
@@ -1316,14 +1345,31 @@ const WD_CSS = `
    a body with a floor height (no CLS between stages), staggered .wd-wiz-reveal
    entry. Kind cards -> readiness pill rows -> coach panel (warnings by level,
    the tips checklist, the sample card with its orange CTA). */
-.wd-coach{display:flex;flex-direction:column;gap:12px}
+/* The LIVE pre-task interview is an elevated, softly glowing panel so the
+   step the user is on clearly stands out and feels interactive (owner:
+   "show the pretask box highlighted, glow, shadowed ... INTERACTIVE"). Only
+   the live coach gets this; the finished state (.wd-coach-done) stays plain. */
+.wd-coach{position:relative;display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:16px;
+  border:1px solid var(--em-line);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--em-fill) 62%,#fff) 0%,var(--panel) 46%);
+  box-shadow:0 1px 2px rgba(20,24,44,.05),0 22px 46px -28px rgba(14,159,110,.42);
+  animation:wd-coach-in .42s cubic-bezier(.2,.8,.2,1) both}
+.wd-coach::after{content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:0;
+  animation:wd-coach-halo 3.8s ease-in-out infinite}
+.wd-coach > *{position:relative;z-index:1}
+@keyframes wd-coach-in{from{opacity:0;transform:translateY(8px) scale(.992)}to{opacity:1;transform:none}}
+@keyframes wd-coach-halo{
+  0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--em) 13%,transparent),0 0 0 0 transparent}
+  50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--em) 26%,transparent),0 0 26px 2px color-mix(in srgb,var(--em) 13%,transparent)}}
 .wd-coach-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .wd-coach-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
 .wd-coach-skip{background:none;border:none;color:var(--mut);font:inherit;font-size:13px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 2px;border-radius:8px;transition:color .15s}
 .wd-coach-skip:hover{color:var(--tx)}
 .wd-coach-prog{display:flex;gap:6px}
 .wd-coach-prog span{height:4px;flex:1;max-width:72px;border-radius:999px;background:var(--track);transition:background .25s}
-.wd-coach-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2))}
+.wd-coach-prog span{overflow:hidden}
+.wd-coach-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2) 60%,var(--em));background-size:200% 100%;animation:wd-coach-prog 2.4s linear infinite}
+@keyframes wd-coach-prog{0%{background-position:160% 0}100%{background-position:-60% 0}}
 .wd-coach-body{display:flex;flex-direction:column;gap:12px;min-height:280px}
 .wd-coach-q{font-family:var(--wd-display);font-weight:700;font-size:20px;line-height:1.3;color:var(--tx)}
 .wd-coach-sub{font-size:13.5px;line-height:1.5;color:var(--mut);margin-top:-6px}
@@ -1337,6 +1383,15 @@ const WD_CSS = `
 .wd-coach-kind-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--em-fill-2);color:var(--em)}
 .wd-coach-kind-l{font-weight:650;font-size:14.5px;line-height:1.3}
 .wd-coach-kind-b{font-size:12.5px;line-height:1.45;color:var(--mut)}
+.wd-coach-kind-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--em);color:#fff;display:grid;place-items:center;box-shadow:0 2px 8px -2px var(--em);animation:wd-coach-pop .24s cubic-bezier(.2,.9,.3,1.5) both}
+@keyframes wd-coach-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
+/* Auto-advance confirmation on a choice-only step (the "flow forward" beat). */
+.wd-coach-adv{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--em-deep);white-space:nowrap}
+.wd-coach-adv svg{color:var(--em)}
+.wd-coach-adv .bar{position:relative;width:48px;height:4px;border-radius:999px;background:var(--em-fill-2);overflow:hidden}
+.wd-coach-adv .bar i{position:absolute;inset:0;transform-origin:left;background:linear-gradient(90deg,var(--em),var(--em-2));animation:wd-coach-fill .64s linear forwards}
+@keyframes wd-coach-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+.wd-coach-foothint{font-size:12.5px;color:var(--mut);line-height:1.4}
 .wd-coach-qs{display:flex;flex-direction:column;gap:12px}
 .wd-coach-row{display:flex;flex-direction:column;gap:8px;padding:12px 14px;border-radius:13px;background:var(--card-a);border:1px solid var(--line)}
 .wd-coach-row-q{font-size:14px;font-weight:600;line-height:1.4;color:var(--tx)}
@@ -1451,7 +1506,7 @@ const WD_CSS = `
 .wd-sess-all svg{flex-shrink:0}
 .wd-sess-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-2);font-size:13px;font-weight:600;text-decoration:none;padding:6px 2px}
 .wd-sess-more:hover{color:var(--em-deep)}
-@media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}}
+@media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}.wd-coach,.wd-coach::after,.wd-coach-kind-check,.wd-coach-prog span.on,.wd-coach-adv .bar i{animation:none}}
 `
 
 const WD_CATS = [
