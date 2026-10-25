@@ -209,3 +209,15 @@ export async function embedQuery(text) {
 export function embedderReady() {
   return _ready === true
 }
+
+// embedderStatus: the same readiness as a small status object for callers that
+// want to surface the mode honestly (never silently degrade). `mode` is
+// 'model' when the real embedder is serving, 'fallback' when dense vectors are
+// the deterministic hash placeholder (keyword-only retrieval). Deliberately
+// carries NO model id / provider name - callers that surface this to product
+// UIs must expose only the boolean + a generic note (business rule), so the
+// identity of EMBED.id never leaks through this accessor.
+export function embedderStatus() {
+  const ready = _ready === true
+  return { ready, mode: ready ? 'model' : 'fallback' }
+}

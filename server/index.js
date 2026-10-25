@@ -48,6 +48,7 @@ import { buildCompanyArchive } from './customer_export.js'
 import { retrieveForGoal } from './brain_retrieve.js'
 import { buildManifest } from './brain_ingest.js'
 import { EMBED, policyVersionOf } from './brain_model.js'
+import { embedderReady } from './brain_embed.js'
 import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
@@ -1582,7 +1583,14 @@ app.get('/api/work/brain/security', requireWorkAuth, requireCompanyAdmin, wrap((
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   const c = store.getCompanyBrainCrypto(cid)
   const custody = (c && c.custody) || 'platform'
-  res.json({ custody, enabled: custody === 'customer', locked: custody === 'customer' ? !brainUnlocked(cid) : false, dekId: (c && c.dekId) || null, unlockWindowMinutes: Math.round(BRAIN_UNLOCK_WINDOW_MS / 60000) })
+  // Honest, non-silent status for dense retrieval: when the on-device embedder
+  // is not serving, dense vectors are a deterministic placeholder and only the
+  // keyword (BM25) arm carries real signal. Surface the boolean + a generic
+  // note so the admin UI can warn; never expose the model/provider name.
+  const semanticSearchReady = embedderReady()
+  const payload = { custody, enabled: custody === 'customer', locked: custody === 'customer' ? !brainUnlocked(cid) : false, dekId: (c && c.dekId) || null, unlockWindowMinutes: Math.round(BRAIN_UNLOCK_WINDOW_MS / 60000), semanticSearchReady }
+  if (!semanticSearchReady) payload.note = 'Semantic search is running in keyword-only mode until the on-device model is available.'
+  res.json(payload)
 }))
 app.post('/api/work/brain/enable-private', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
