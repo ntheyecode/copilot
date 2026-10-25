@@ -287,6 +287,49 @@ export const api = {
   workBrainInventory: () => req('GET', '/api/work/brain/inventory'),
   workBrainSourceDelete: (id, reason) => req('DELETE', `/api/work/brain/sources/${encodeURIComponent(id)}`, { reason }),
   workBrainClear: (reason) => req('POST', '/api/work/brain/clear', { reason }),
+  // Company Brain custody (company admin): customer-held key. With private
+  // encryption on, the brain's data key is wrapped under a passphrase only the
+  // company holds (plus a 24-word recovery phrase shown ONCE at enable time and
+  // never stored). The server unlocks it for an idle window, then re-locks.
+  //   security -> { custody:'platform'|'customer', enabled, locked, dekId, unlockWindowMinutes, semanticSearchReady, note? }
+  //   enable-private -> { ok, recoveryPhrase, dekId }   (recoveryPhrase is returned once)
+  workBrainSecurity: () => req('GET', '/api/work/brain/security'),
+  workBrainEnablePrivate: (passphrase) => req('POST', '/api/work/brain/enable-private', { passphrase, acknowledge: true }),
+  workBrainUnlock: (body) => req('POST', '/api/work/brain/unlock', body || {}),           // { passphrase } | { recoveryPhrase }
+  workBrainLock: () => req('POST', '/api/work/brain/lock', {}),
+  workBrainRotatePassphrase: (body) => req('POST', '/api/work/brain/rotate-passphrase', body || {}),   // { currentPassphrase | recoveryPhrase, newPassphrase }
+  // Encrypted data export (company admin). Privacy contacts are the named people
+  // who may receive the export password and/or retrieve sensitive data (edits are
+  // reason-gated + audited). The export password is stored as a verifier only;
+  // setting it emails the password to the contacts who may receive it, or - when
+  // email is off - returns { delivery:'onscreen', password } once for the UI.
+  //   privacy-contacts -> { tier, recipients:[{ id, name, email, phone, title, canReceivePassword, canRetrieveSensitive, ... }], updatedAt }
+  workTeamPrivacyContacts: () => req('GET', '/api/work/team/privacy-contacts'),
+  workTeamSetPrivacyContacts: (recipients, reason) => req('POST', '/api/work/team/privacy-contacts', { recipients, reason }),
+  workTeamSetExportPassword: (password) => req('POST', '/api/work/team/export-password', { password }),
+  // Downloads the password-encrypted .wcpx archive (AES-256-GCM, key derived from
+  // the export password). Binary response, so it bypasses req(): resolves to
+  // { blob, filename, brain:'included'|'skipped', note } where `note` is the
+  // server's decoded X-WCPX-Note (set when the Company Brain was skipped because it
+  // is locked under the customer-held key). Errors carry .status/.data like req().
+  workTeamDataExport: async (password) => {
+    const headers = { 'Content-Type': 'application/json' }
+    if (IS_APP) headers['X-Refigold-App'] = '1'
+    const res = await fetch('/api/work/team/data-export', { method: 'POST', credentials: 'include', headers, body: JSON.stringify({ password }) })
+    if (!res.ok) {
+      let data = null
+      try { data = await res.json() } catch { /* no body */ }
+      const err = new Error((data && data.error) || `Request failed (${res.status})`)
+      err.status = res.status; err.data = data || null
+      throw err
+    }
+    const blob = await res.blob()
+    const cd = res.headers.get('Content-Disposition') || ''
+    const m = /filename="?([^";]+)"?/i.exec(cd)
+    let note = res.headers.get('X-WCPX-Note') || ''
+    try { note = note ? decodeURIComponent(note) : '' } catch { /* keep raw */ }
+    return { blob, filename: (m && m[1]) || 'workcopilot-export.wcpx', brain: res.headers.get('X-WCPX-Brain') || 'included', note }
+  },
   // Company SOC / SIEM integrations (company-admin gated). Secret field values
   // are write-only: the server blanks them on read; send '' to keep a stored one.
   workCompanyIntegrationsCatalog: () => req('GET', '/api/work/company/integrations/catalog'),

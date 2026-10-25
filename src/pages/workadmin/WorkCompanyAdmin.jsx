@@ -19,6 +19,7 @@ import {
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
+import BrainSecurity from './sections/BrainSecurity.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import * as SSO from '../../shared/sso_guide.js'
@@ -55,6 +56,7 @@ const SECTIONS = [
   { id: 'billing', label: 'Billing', icon: Receipt, title: 'Billing', sub: 'Your plan charges and any extras. Set by the WorkCoPilot team.' },
   { id: 'governance', label: 'Data governance', icon: ShieldCheck, title: 'Data governance (DLP)', sub: 'Decide what sensitive data may leave the device. Controls and evidence that support your compliance.' },
   { id: 'brain', label: 'Company Brain', icon: Brain, title: 'Company Brain', sub: 'What is in your company\'s private knowledge store. Documents are added from the desktop app, scrubbed on the device first; here you can see them and remove any.' },
+  { id: 'brainsecurity', label: 'Encryption & export', icon: Lock, title: 'Private encryption and data export', sub: 'Hold the key to your Company Brain yourself (a passphrase plus a one-time recovery phrase - no backdoor), and take a complete, password-encrypted copy of your company\'s data whenever you want.' },
   { id: 'alerts', label: 'Alerts', icon: ShieldAlert, title: 'Security alerts', sub: 'When one of your people enters sensitive data (PII / PHI), it is redacted on their device before anything is sent, and you are told who, where and what kind - never the values themselves.' },
   { id: 'integrations', label: 'SOC / SIEM', icon: Globe, title: 'SOC / SIEM integrations', sub: 'Relay security alerts automatically into your SIEM, SOAR, chat and observability tools. Only alert metadata is ever sent - the kind and count of what was redacted plus who and where - never the values.' },
   { id: 'sessions', label: 'Sessions', icon: Activity, title: 'Member sessions', sub: 'Every session your people run - completed or in progress. Pull the report or audit log for any of them.' },
@@ -1728,6 +1730,7 @@ export default function WorkCompanyAdmin() {
       case 'billing': return <BillingSection />
       case 'governance': return <GovernanceSection companyId={viewer && viewer.companyId} />
       case 'brain': return <CompanyBrain />
+      case 'brainsecurity': return <BrainSecurity />
       case 'sessions': return <SessionsSection />
       case 'tickets': return <SupportTickets mode="user" />
       case 'activity': return <ActivitySection />
