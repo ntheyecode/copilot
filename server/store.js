@@ -1780,7 +1780,7 @@ const LEAD_SEARCH_CAP = 50
 // in-memory (not persisted) and bounded so it can never grow without limit.
 const anonSearchBuffer = new Map()   // anonId -> [{ at, query, response }] (newest first)
 const pushCapped = (arr, entry, cap) => { arr.unshift(entry); if (arr.length > cap) arr.length = cap; return arr }
-export function addWorkLead({ firstName, lastName, email, phone, company, source } = {}, meta = {}) {
+export function addWorkLead({ firstName, lastName, email, phone, company, country, source } = {}, meta = {}) {
   const rec = {
     id: 'ld' + id(),
     firstName: LEAD_CAP(firstName, 80),
@@ -1788,6 +1788,7 @@ export function addWorkLead({ firstName, lastName, email, phone, company, source
     email: LEAD_CAP(email, 160).toLowerCase(),
     phone: LEAD_CAP(phone, 40),
     company: LEAD_CAP(company, 140),
+    country: LEAD_CAP(country, 80),
     source: LEAD_CAP(source || 'site', 24),
     scenario: '',                 // legacy summary column; new captures use searches[] (single source of truth)
     searches: [],                 // [{ at, query, response }] newest-first, via recordWorkLeadSearch

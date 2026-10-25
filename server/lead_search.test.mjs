@@ -52,6 +52,12 @@ test('searches submitted before capture attach to the lead when they convert', (
     'the pre-capture search is attached to the lead on conversion and visible to the superadmin')
 })
 
+test('a lead stores the country it was captured with', () => {
+  const { id } = store.addWorkLead({ firstName: 'Nia', lastName: 'Okafor', email: 'nia@acme.test', phone: '+15550100104', company: 'Acme', country: 'Nigeria' })
+  const lead = findLead(id)
+  assert.equal(lead.country, 'Nigeria', 'country is persisted on the lead record')
+})
+
 test('per-lead search log is capped so it cannot grow without limit', () => {
   const { id } = store.addWorkLead({ firstName: 'Cap', lastName: 'Test', email: 'cap@acme.test', phone: '+15550100103', company: 'Acme' })
   for (let i = 0; i < 60; i++) store.recordWorkLeadSearch({ leadId: id, query: `task ${i}`, response: `answer ${i}` })

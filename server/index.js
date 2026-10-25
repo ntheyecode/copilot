@@ -192,16 +192,52 @@ function requireAuth(req, res, next) {
   req.user = u
   next()
 }
-// WorkCoPilot auth: a signed-in account always has WorkCoPilot access (it IS the
-// account). Sets req.user + req.workUser (the same record).
-function requireWorkAuth(req, res, next) {
-  const u = req.session.uid && store.getUser(req.session.uid)
-  if (!u) return res.status(401).json({ error: 'Not signed in' })
-  if ((req.session.epoch || 0) !== store.getSessionEpoch(u.id)) {
-    return req.session.destroy(() => res.status(401).json({ error: 'Signed out.', loggedOut: true }))
+// Resolve the WorkCoPilot identity a session is ACTING AS, honoring a superadmin's
+// support-impersonation overlay. SINGLE source of truth (SUPREME RULE II) so
+// requireWorkAuth and GET /api/work/me can never disagree about who the session
+// is. The authenticated identity (session.uid) is ALWAYS the real signed-in
+// account - admin authority (requireAuth/requireSuperAdmin) reads it unchanged.
+// session.workUserId only overlays the acting WORK user, and that overlay is
+// honored ONLY on a real superadmin session, only onto a different, EXISTING
+// user. A stray/forged workUserId on a non-superadmin session (or pointing at a
+// deleted account) never silently flips identity (SUPREME RULE III: fail
+// visibly, fall back to the real account - never act as someone unverified).
+// Returns:
+//   { ok:true, user, workUser, impersonating }  resolved (impersonating:null when not)
+//   { stale:true }                               epoch no longer matches -> sign out
+//   null                                         not signed in
+function resolveWorkIdentity(req) {
+  const realId = req.session && req.session.uid
+  const real = realId && store.getUser(realId)
+  if (!real) return null
+  if ((req.session.epoch || 0) !== store.getSessionEpoch(real.id)) return { stale: true }
+  const impId = req.session.workUserId
+  if (impId && impId !== real.id && real.role === 'superadmin') {
+    const target = store.getUser(impId)
+    if (target) {
+      return {
+        ok: true,
+        user: target,
+        workUser: store.ensureWorkUser(target.id, target.username),
+        impersonating: { by: real.displayName || real.username || real.id, since: req.session.impersonatorAt || null },
+      }
+    }
+    // Overlay points at a vanished account: do NOT keep acting as a ghost. Fall
+    // through to the admin's own identity (overlay inert) - visible, never silent.
   }
-  req.user = u
-  req.workUser = store.ensureWorkUser(u.id, u.username)
+  return { ok: true, user: real, workUser: store.ensureWorkUser(real.id, real.username), impersonating: null }
+}
+// WorkCoPilot auth: a signed-in account always has WorkCoPilot access (it IS the
+// account). Sets req.user + req.workUser (the acting user - the impersonated
+// target on a superadmin support session, else the signed-in account) and
+// req.impersonating (the banner payload, or null).
+function requireWorkAuth(req, res, next) {
+  const id = resolveWorkIdentity(req)
+  if (!id) return res.status(401).json({ error: 'Not signed in' })
+  if (id.stale) return req.session.destroy(() => res.status(401).json({ error: 'Signed out.', loggedOut: true }))
+  req.user = id.user
+  req.workUser = id.workUser
+  req.impersonating = id.impersonating
   next()
 }
 // Billing gate for the "use the service" actions (start a session + the
@@ -931,12 +967,14 @@ app.post('/api/work/company/users/:id/mfa/reset', requireWorkAuth, requireCompan
 
 // Soft identity check used on boot + polling, and by the admin console.
 app.get('/api/work/me', (req, res) => {
-  const u = req.session.uid && store.getUser(req.session.uid)
-  if (!u) return res.json({ user: null, signedIn: false, access: false })
-  if ((req.session.epoch || 0) !== store.getSessionEpoch(u.id)) {
-    return req.session.destroy(() => res.json({ user: null, signedIn: false, access: false, loggedOut: true }))
-  }
-  res.json({ user: store.publicWorkUser(store.ensureWorkUser(u.id, u.username)), signedIn: true, access: true })
+  const id = resolveWorkIdentity(req)
+  if (!id) return res.json({ user: null, signedIn: false, access: false })
+  if (id.stale) return req.session.destroy(() => res.json({ user: null, signedIn: false, access: false, loggedOut: true }))
+  const body = { user: store.publicWorkUser(id.workUser), signedIn: true, access: true }
+  // Support impersonation: surface the banner payload so the client can show that
+  // a superadmin is viewing AS this user (by whom, since when).
+  if (id.impersonating) body.impersonating = id.impersonating
+  res.json(body)
 })
 // Logout clears the session and (via the epoch bump) every other window too.
 function doLogout(req, res) {
@@ -1210,6 +1248,63 @@ app.post('/api/work/admin/tier', requireAuth, requireSuperAdmin, wrap((req, res)
 app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((req, res) => {
   const { userId, minutes } = req.body || {}
   res.json(store.grantWorkPurchasedSeconds(userId, (Number(minutes) || 0) * 60))
+}))
+
+// ---- Superadmin impersonation (support VIEW of an INDIVIDUAL user) ---------
+// A superadmin can VIEW the app as an individual user to reproduce an issue they
+// reported. This is a fully-audited support VIEW, NOT a privilege grant: the
+// session's authenticated identity (session.uid) stays the superadmin, so admin
+// authority is unchanged; only the acting WORK user is overlaid via
+// session.workUserId, which requireWorkAuth + /api/work/me honor through
+// resolveWorkIdentity (single source of truth). The client shows a persistent
+// banner (GET /me -> `impersonating`).
+// SECURITY (preserved, not bypassed):
+//   * Companies are EXCLUDED by owner rule - individual users only.
+//   * No self-impersonation, and only ordinary users (never another admin /
+//     superadmin) may be viewed - impersonation never reaches up a privilege tier.
+//   * It does NOT bypass the customer-held-key custody model: a custody-locked
+//     brain stays BRAIN_LOCKED because the DEK is gated on the COMPANY passphrase
+//     the admin does not hold - and an individual target has no company brain at
+//     all. Company-admin routes (brain unlock/export) 403 for the overlaid user.
+//   * There is NO data-export path here - it is a read-only view only.
+// Stop impersonating and restore the superadmin's own view. Works whether called
+// by the impersonated (overlaid) session or the admin's own: the authenticated
+// identity (session.uid) is always the admin, so requireSuperAdmin still passes.
+// NOTE: declared BEFORE the `/:userId` route below so the literal `/stop` is not
+// captured as a userId param.
+app.post('/api/work/admin/impersonate/stop', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const adminId = req.user.id
+  const wasViewing = req.session.workUserId && req.session.workUserId !== req.session.uid ? req.session.workUserId : null
+  // Restore the admin: with the overlay cleared, resolveWorkIdentity acts as the
+  // real signed-in account again (workUserId === uid -> overlay inert).
+  req.session.workUserId = req.session.impersonatorId || req.session.uid
+  delete req.session.impersonatorId
+  delete req.session.impersonatorAt
+  store.recordAdminAction({ userId: wasViewing, action: 'impersonate_stop', detail: wasViewing ? `support view ended by superadmin ${req.user.username || adminId}` : 'no active impersonation' })
+  res.json({ ok: true })
+}))
+// Start impersonating an individual user. Declared AFTER `/stop` so `:userId`
+// never swallows that literal path.
+app.post('/api/work/admin/impersonate/:userId', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const adminId = req.user.id
+  const targetId = String(req.params.userId || '').trim()
+  const target = targetId && store.getUser(targetId)
+  if (!target) return res.status(404).json({ error: 'User not found.' })
+  // No self-impersonation - viewing as yourself is a no-op that would only muddy
+  // the audit trail and the banner.
+  if (target.id === adminId) return res.status(400).json({ error: 'You cannot impersonate yourself.' })
+  // Only ordinary individual users. Impersonation must never reach up a privilege
+  // tier (admin / superadmin are refused), and companies are excluded by owner rule.
+  if (target.role === 'superadmin' || target.role === 'admin') return res.status(403).json({ error: 'Impersonation is for ordinary individual users only, not administrators.' })
+  if (target.companyId) return res.status(400).json({ error: 'Impersonation is for individual users only' })
+  req.session.workUserId = target.id
+  req.session.impersonatorId = adminId
+  req.session.impersonatorAt = new Date().toISOString()
+  // Audit via the existing superadmin sink. userId = the AFFECTED user (so the
+  // log is searchable by who was viewed, matching session_delete's convention);
+  // the acting admin is captured in `detail` so the actor is never lost.
+  store.recordAdminAction({ userId: target.id, action: 'impersonate_start', detail: `support view started by superadmin ${req.user.username || adminId}` })
+  res.json({ ok: true, user: { id: target.id, name: target.displayName || target.username || target.id } })
 }))
 
 // ===========================================================================
@@ -2540,20 +2635,21 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
 app.post('/api/work/leads', wrap((req, res) => {
   const b = req.body || {}
   const email = String(b.email || '').trim()
-  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || !String(b.company || '').trim()) {
-    return res.status(400).json({ error: 'First name, last name, email and company are required.' })
+  const country = String(b.country || '').trim()
+  if (!String(b.firstName || '').trim() || !String(b.lastName || '').trim() || !email || !String(b.company || '').trim() || !country) {
+    return res.status(400).json({ error: 'First name, last name, email, company and country are required.' })
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
   const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
   if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
   const lead = store.addWorkLead({
-    firstName: b.firstName, lastName: b.lastName, email, phone: b.phone, company: b.company, source: b.source,
+    firstName: b.firstName, lastName: b.lastName, email, phone: b.phone, company: b.company, country, source: b.source,
   }, { ip, anonId: String(b.anonId || '').trim() })
   // Enterprise mailing: notify the business of the new lead, and thank the
   // person who submitted. Fire-and-forget - never block or fail the submission.
   const notify = store.getNotifySettings()
   const name = `${b.firstName} ${b.lastName}`.trim()
-  sendTemplateAsync('lead_notify', notify.leadTo, { name, email, phone: String(b.phone || '').trim(), company: b.company, question: b.question || b.source || '', verdict: b.verdict || '', plan: b.plan || '', submittedAt: new Date().toISOString() })
+  sendTemplateAsync('lead_notify', notify.leadTo, { name, email, phone: String(b.phone || '').trim(), company: b.company, country, question: b.question || b.source || '', verdict: b.verdict || '', plan: b.plan || '', submittedAt: new Date().toISOString() })
   if (notify.thankYou) sendTemplateAsync('lead_thank_you', email, { name })
   res.json(lead)
 }))

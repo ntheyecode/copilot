@@ -788,6 +788,7 @@ The WorkCoPilot team`,
 `A visitor ran a live validation on the website and left their details. Fresh leads convert best within the hour.
 
 **Phone:** <Phone>
+**Country:** <Country>
 
 > **Their question**
 > <Question>`,
@@ -796,6 +797,7 @@ The WorkCoPilot team`,
     placeholders: [
       P('<Email>', 'Lead email address', 'alex.morgan@northwind.example'),
       P('<Phone>', 'Phone number they entered', '+1 (415) 555-0172'),
+      P('<Country>', 'Country they entered', 'United States'),
       P('<Company>', 'Company they entered', 'Northwind Logistics'),
       P('<Question>', 'The question they validated live', 'How do I bulk-reassign open tickets in Zendesk?'),
       P('<Verdict>', 'Verdict the widget showed them', 'Covered - 6 steps'),
@@ -806,6 +808,7 @@ The WorkCoPilot team`,
       R('Name', 'name', { strong: true }),
       R('Email', 'email'),
       R('Company', 'company'),
+      R('Country', 'country'),
       R('Plan interest', 'plan'),
       R('Verdict shown', 'verdict'),
       R('Submitted', 'submittedAt', { fmt: 'datetime' }),
@@ -814,6 +817,7 @@ The WorkCoPilot team`,
       name: 'Alex Morgan',
       email: 'alex.morgan@northwind.example',
       company: 'Northwind Logistics',
+      country: 'United States',
       question: 'How do I bulk-reassign open tickets in Zendesk without losing the SLA timers?',
       verdict: 'Covered - 6 steps',
       plan: 'Advanced',
