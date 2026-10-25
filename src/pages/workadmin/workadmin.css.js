@@ -51,8 +51,11 @@ export const WORKADMIN_CSS = `
   --wka-accent-soft: rgba(14,159,110,0.10);
   --wka-accent-line: rgba(14,159,110,0.35);
   --wka-accent-shadow: rgba(14,159,110,0.25);
-  --wka-nav-bg: #f6f9fc;
-  --wka-nav-hover: #eef2f5;
+  /* White, minimal left rail (owner design law: white everywhere in-product).
+     The nav is pure white with a hairline divider; hover is a quiet neutral
+     wash, active is the quiet accent (green here, blue under .wka-super). */
+  --wka-nav-bg: #ffffff;
+  --wka-nav-hover: #f2f4f7;
   --wka-top-rule: linear-gradient(90deg, #0e9f6e, #0a84c2);
   --wka-cyan: var(--wka-accent);   /* legacy alias: every interactive ref adopts the dashboard accent */
 
@@ -77,9 +80,12 @@ export const WORKADMIN_CSS = `
   --wka-accent-soft: rgba(10,132,194,0.10);
   --wka-accent-line: rgba(10,132,194,0.35);
   --wka-accent-shadow: rgba(10,132,194,0.25);
-  --wka-bg: #f4f7fa;
-  --wka-nav-bg: #eef3f8;
-  --wka-nav-hover: #e3ebf3;
+  /* Superadmin stays on a WHITE surface too - only the accent differs (brand
+     blue vs the company console's green), so the two dashboards read as the
+     same minimal white product with distinct accents, never a dark shell. */
+  --wka-bg: #f6f8fb;
+  --wka-nav-bg: #ffffff;
+  --wka-nav-hover: #f2f4f7;
   --wka-top-rule: linear-gradient(90deg, #0a84c2, #0e9f6e);
 }
 .wka.wka-super .wka-brand span { color: var(--wka-accent-dark); }
