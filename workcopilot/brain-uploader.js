@@ -172,7 +172,10 @@ function chunkText(text) {
 const STATE_VERSION = 1
 
 function emptyState() {
-  return { version: STATE_VERSION, cursor: 0, sources: {} }
+  // `repos` holds the per-repo resumable head: { "<resolved repoPath>": { headCommit, updatedAt } }.
+  // headCommit is the git HEAD returned by the last clean listRepoSources pass and is
+  // handed back as the next `sinceCommit`, so incremental repo ingests diff forward.
+  return { version: STATE_VERSION, cursor: 0, sources: {}, repos: {} }
 }
 
 function loadState(file) {
@@ -184,6 +187,7 @@ function loadState(file) {
       version: STATE_VERSION,
       cursor: parsed.cursor || 0,
       sources: parsed.sources && typeof parsed.sources === 'object' ? parsed.sources : {},
+      repos: parsed.repos && typeof parsed.repos === 'object' ? parsed.repos : {},
     }
   } catch {
     // Missing or corrupt file -> fresh state (a corrupt resume file must never
@@ -195,7 +199,7 @@ function loadState(file) {
 
 function saveState(file, state) {
   const tmp = file + '.tmp'
-  const data = JSON.stringify({ version: STATE_VERSION, cursor: state.cursor || 0, sources: state.sources || {} })
+  const data = JSON.stringify({ version: STATE_VERSION, cursor: state.cursor || 0, sources: state.sources || {}, repos: state.repos || {} })
   const fd = fs.openSync(tmp, 'w')
   try {
     fs.writeSync(fd, data)
@@ -256,6 +260,48 @@ function createBrainUploader(opts = {}) {
   // session cookie, so the lead injects headers/credentials here (see the report).
   const getRequestInit = opts.getRequestInit || (async () => ({}))
 
+  // ---------------------------------------------------------------------------
+  // Local code-repo ingest (git / folder). The operator registers a repo path;
+  // on each pass we import the LOCAL git/disk connector (workcopilot/git_source.js)
+  // and let it enumerate + diff. git_source only ENUMERATES + reads file text; the
+  // mapping below hands each entry to the SAME source contract the rest of the
+  // pipeline consumes, so chunk -> scrub -> embed -> POST is unchanged. kind:'code'
+  // is preserved end to end so the server chunks the text code-aware.
+  //
+  // listRepoSourcesImpl is injectable for tests, but defaults to the exact dynamic
+  // import() the contract calls for, resolved relative to this module.
+  const listRepoSourcesImpl = opts.listRepoSources || (async (repoPath, options) => {
+    const gs = await import('./git_source.js')
+    return gs.listRepoSources(repoPath, options)
+  })
+
+  // A repo target: { key, repoPath (resolved), options } where options are the
+  // listRepoSources knobs (ignoreGlobs / maxFiles / maxBytesPerFile). sinceCommit
+  // is NOT stored here - it is read fresh from the resumable state on every pass.
+  function normalizeTarget(t) {
+    if (!t) return null
+    const spec = typeof t === 'string' ? { repoPath: t } : t
+    const raw = String(spec.repoPath || spec.path || '')
+    if (!raw) return null
+    const resolved = path.resolve(raw)
+    const options = {}
+    if (Array.isArray(spec.ignoreGlobs)) options.ignoreGlobs = spec.ignoreGlobs
+    if (Number.isFinite(spec.maxFiles)) options.maxFiles = spec.maxFiles
+    if (Number.isFinite(spec.maxBytesPerFile)) options.maxBytesPerFile = spec.maxBytesPerFile
+    return { key: resolved, repoPath: resolved, options }
+  }
+
+  const repoTargets = []
+  function addRepoTarget(t) {
+    const n = normalizeTarget(t)
+    if (!n) return null
+    const existing = repoTargets.find((x) => x.key === n.key)
+    if (existing) { existing.options = n.options; return existing } // re-register just refreshes knobs
+    repoTargets.push(n)
+    return n
+  }
+  for (const t of (Array.isArray(opts.repoTargets) ? opts.repoTargets : [])) addRepoTarget(t)
+
   let state = loadState(stateFile)
   let guiding = false   // a guided session is active -> suspend
   let busy = false      // a pass is in flight -> never overlap
@@ -293,6 +339,21 @@ function createBrainUploader(opts = {}) {
     if (!res || !res.ok) throw new Error(`chunks ${res ? res.status : 'no-response'}`)
     try { return await res.json() } catch { return {} }
   }
+
+  // Removal / tombstone path for a source that no longer exists at the origin
+  // (a tracked repo file that was deleted or renamed away). Hits the server's
+  // per-source removal endpoint, which tombstones the source's chunks. Injectable
+  // for tests; the reason satisfies the server's require-a-reason gate.
+  const removeSource = opts.removeSource || (async (sourceId) => {
+    const url = `${serverUrl}/api/work/brain/sources/${encodeURIComponent(String(sourceId))}`
+    const res = await doFetch(url, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: 'source removed from a tracked code repository' }),
+    })
+    if (!res || !res.ok) throw new Error(`remove ${res ? res.status : 'no-response'}`)
+    try { return await res.json() } catch { return {} }
+  })
 
   function unchanged(local, manifestRow) {
     // Cheap pre-check, BEFORE any extraction: a source is unchanged when the
@@ -404,13 +465,115 @@ function createBrainUploader(opts = {}) {
     return 'uploaded'
   }
 
+  // Process a list of sources one at a time, with the polite throttle gap, bailing
+  // out the moment a guided session starts. Updates the tally + persists resume
+  // state after every doc. Returns true when it bailed (suspended), else false.
+  // Shared by the admin-enumerated sources and the local code-repo sources so the
+  // chunk -> scrub -> embed -> POST contract has exactly one driver.
+  async function processSourceList(sources, deps, manifestById, activeByContentHash, tally) {
+    const list = Array.isArray(sources) ? sources : []
+    for (let i = 0; i < list.length; i++) {
+      if (guiding || stopped) { tally.suspended = true; return true }
+      const source = list[i]
+      let reason
+      try {
+        reason = await processSource(source, deps, manifestById, activeByContentHash)
+      } catch (e) {
+        tally.errors++
+        logger.warn(`[brain] uploader: source ${source && (source.sourceId || source.id)} failed (${(e && e.message) || e})`)
+        continue
+      }
+      if (reason === 'skipped:unchanged') tally.skippedUnchanged++
+      else if (reason === 'aliased') tally.aliased++
+      else if (reason === 'uploaded') tally.uploaded++
+      else if (reason === 'held:embedder-degraded') tally.held++
+      else if (reason === 'skipped:empty') tally.empty++
+
+      // Persist after every doc so a restart resumes exactly here.
+      saveState(stateFile, state)
+
+      // Throttle between docs (low priority), and recheck guiding mid-gap.
+      if (i < list.length - 1) {
+        await sleep(throttleMs)
+        if (guiding || stopped) { tally.suspended = true; return true }
+      }
+    }
+    return false
+  }
+
+  // Each registered local repo/folder target: enumerate + diff via git_source,
+  // map `added` to the source contract (kind:'code'), run them through the shared
+  // pipeline, feed `removed` sourceIds to the tombstone/removal path, then persist
+  // this repo's headCommit as the next sinceCommit. Head is persisted only on a
+  // fully-processed, non-suspended pass, so a suspended pass re-diffs from the same
+  // base next time rather than skipping the unprocessed changes.
+  async function processRepoTargets(deps, manifestById, activeByContentHash, tally) {
+    for (const target of repoTargets) {
+      if (guiding || stopped) { tally.suspended = true; return }
+      const prev = state.repos[target.key]
+      const sinceCommit = prev && prev.headCommit ? prev.headCommit : null
+
+      let result
+      try {
+        result = await listRepoSourcesImpl(target.repoPath, Object.assign({ sinceCommit }, target.options))
+      } catch (e) {
+        // A bad repo (missing path, unsafe sinceCommit) is reported, not fatal to
+        // the whole pass - the next target / next tick still runs.
+        tally.errors++
+        logger.warn(`[brain] uploader: repo ${target.key} enumeration failed (${(e && e.message) || e})`)
+        continue
+      }
+
+      const headCommit = result && result.headCommit
+      const added = Array.isArray(result && result.added) ? result.added : []
+      const removed = Array.isArray(result && result.removed) ? result.removed : []
+      if (result && result.truncated) tally.repoTruncated = true
+
+      // Map each enumerated file to the uploader's source contract. kind:'code'
+      // so the server chunks it code-aware; title is the repo-relative path; the
+      // text is read straight from git_source (no second disk read).
+      const repoSources = added.map((a) => ({
+        sourceId: a.sourceId,
+        title: a.path,
+        kind: 'code',
+        revision: a.revision,
+        read: async () => ({ text: a.text }),
+      }))
+      tally.pulled += repoSources.length
+
+      const suspended = await processSourceList(repoSources, deps, manifestById, activeByContentHash, tally)
+      if (suspended) return
+
+      // Tombstone the sources git_source reports as gone (deleted / renamed away).
+      for (const sid of removed) {
+        if (guiding || stopped) { tally.suspended = true; return }
+        try {
+          await removeSource(sid)
+          delete state.sources[String(sid)]
+          tally.removed++
+          saveState(stateFile, state)
+        } catch (e) {
+          tally.errors++
+          logger.warn(`[brain] uploader: repo ${target.key} removal of ${sid} failed (${(e && e.message) || e})`)
+        }
+      }
+
+      // Persist the head as the next incremental base. null (folder / non-git, or
+      // git unavailable) means no incremental anchor, so next pass does a full scan.
+      if (headCommit) {
+        state.repos[target.key] = { headCommit, updatedAt: now() }
+        saveState(stateFile, state)
+      }
+    }
+  }
+
   // One full pass. Directly callable in tests (no idle/guiding gate here; tick()
   // applies those). Processes one doc at a time, with a throttle gap, and bails
   // out cleanly the moment a guided session starts.
   async function runOnce() {
     if (busy) return { skipped: 'busy' }
     busy = true
-    const tally = { pulled: 0, skippedUnchanged: 0, aliased: 0, uploaded: 0, held: 0, empty: 0, errors: 0, suspended: false }
+    const tally = { pulled: 0, skippedUnchanged: 0, aliased: 0, uploaded: 0, held: 0, empty: 0, removed: 0, errors: 0, suspended: false }
     try {
       const deps = await loadDeps()
       let manifest
@@ -430,34 +593,15 @@ function createBrainUploader(opts = {}) {
         if (row.status === 'active' && row.contentHash) activeByContentHash.set(row.contentHash, row)
       }
 
+      // 1) The admin-allow-listed, company-wide enumerated sources (unchanged).
       const sources = await enumerateSources()
       tally.pulled = Array.isArray(sources) ? sources.length : 0
+      const suspended = await processSourceList(sources, deps, manifestById, activeByContentHash, tally)
 
-      for (let i = 0; i < (sources || []).length; i++) {
-        if (guiding || stopped) { tally.suspended = true; break }
-        const source = sources[i]
-        let reason
-        try {
-          reason = await processSource(source, deps, manifestById, activeByContentHash)
-        } catch (e) {
-          tally.errors++
-          logger.warn(`[brain] uploader: source ${source && (source.sourceId || source.id)} failed (${(e && e.message) || e})`)
-          continue
-        }
-        if (reason === 'skipped:unchanged') tally.skippedUnchanged++
-        else if (reason === 'aliased') tally.aliased++
-        else if (reason === 'uploaded') tally.uploaded++
-        else if (reason === 'held:embedder-degraded') tally.held++
-        else if (reason === 'skipped:empty') tally.empty++
-
-        // Persist after every doc so a restart resumes exactly here.
-        saveState(stateFile, state)
-
-        // Throttle between docs (low priority), and recheck guiding mid-gap.
-        if (i < sources.length - 1) {
-          await sleep(throttleMs)
-          if (guiding || stopped) { tally.suspended = true; break }
-        }
+      // 2) The registered local code-repo targets (git / folder), incremental via
+      //    the persisted per-repo head. Skipped if the enumerated pass suspended.
+      if (!suspended) {
+        await processRepoTargets(deps, manifestById, activeByContentHash, tally)
       }
 
       // Advance the cursor only after a clean pass (not when suspended), so a
@@ -502,12 +646,17 @@ function createBrainUploader(opts = {}) {
     // The existing work:pause-save signal means a session just paused/saved, so
     // nothing is guiding now - safe to let the uploader resume on the next tick.
     notePauseSave() { guiding = false },
+    // Register a local git repo / folder as a code-ingest target. Accepts a path
+    // string or { repoPath, ignoreGlobs?, maxFiles?, maxBytesPerFile? }. Re-adding
+    // the same resolved path refreshes its knobs. Takes effect on the next pass.
+    addRepoTarget,
+    repoTargets() { return repoTargets.map((t) => ({ repoPath: t.repoPath, options: Object.assign({}, t.options) })) },
     // Direct drivers (interval uses tick(); tests use runOnce()).
     tick,
     runOnce,
     isSuspended() { return guiding },
     isBusy() { return busy },
-    state() { return { cursor: state.cursor, sources: Object.assign({}, state.sources) } },
+    state() { return { cursor: state.cursor, sources: Object.assign({}, state.sources), repos: Object.assign({}, state.repos) } },
     stateFile,
   }
 }
