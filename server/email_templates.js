@@ -787,12 +787,15 @@ The WorkCoPilot team`,
     defaultBody:
 `A visitor ran a live validation on the website and left their details. Fresh leads convert best within the hour.
 
+**Phone:** <Phone>
+
 > **Their question**
 > <Question>`,
     defaultCtaLabel: 'Follow up with <First_Name>',
     ctaUrlToken: 'replyUrl',
     placeholders: [
       P('<Email>', 'Lead email address', 'alex.morgan@northwind.example'),
+      P('<Phone>', 'Phone number they entered', '+1 (415) 555-0172'),
       P('<Company>', 'Company they entered', 'Northwind Logistics'),
       P('<Question>', 'The question they validated live', 'How do I bulk-reassign open tickets in Zendesk?'),
       P('<Verdict>', 'Verdict the widget showed them', 'Covered - 6 steps'),

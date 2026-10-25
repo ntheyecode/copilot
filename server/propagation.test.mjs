@@ -31,7 +31,7 @@ test('changing a tier daily hours in pricing reflects in workDailyLimit + usage'
 test('changing a tier daily task cap in pricing reflects in workDailyTaskLimit', () => {
   const u = store.createWorkUser({ username: uniq('tsk'), password: 'Passw0rd!x' })
   store.setWorkTier(u.id, 'basic')
-  assert.equal(store.workDailyTaskLimit(u.id), 4)       // default
+  assert.equal(store.workDailyTaskLimit(u.id), 2)       // default earn rate (1/2/4/6)
   store.setWorkPricing({ tasks: { basic: 7 } })
   assert.equal(store.workDailyTaskLimit(u.id), 7)       // reflects live
 })

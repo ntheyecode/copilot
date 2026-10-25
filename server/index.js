@@ -1266,7 +1266,7 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
   } catch (e) {
     const body = { error: e.message }
     if (e.mustCompleteCurrent) { body.mustCompleteCurrent = true; body.activeTaskId = e.activeTaskId }
-    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel }
+    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel; if (e.taskCredits != null) body.taskCredits = e.taskCredits }
     return res.status(e.status || 402).json(body)
   }
   if (cu && cu.companyId) {
@@ -1293,6 +1293,17 @@ app.delete('/api/work/sessions/:id', requireWorkAuth, wrap((req, res) => {
 app.get('/api/work/team/activity', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
   res.json({ activity: store.listWorkActivity({ companyId: req.workUser.companyId }) })
+}))
+// Superadmin: the platform-wide destructive-action audit - who deleted what, when
+// and WHY. This is where an INDIVIDUAL (no-company) user's guided-session deletion
+// surfaces: they have no company admin, so deleteWorkSession mirrors their delete
+// into this one audit sink (listAdminActions) with the same accountable discipline
+// company members get in their company activity log above. Reads the single audit
+// store - never a parallel log. Company members' own deletions stay in the company
+// pane (/api/work/team/activity), not duplicated here.
+app.get('/api/work/admin/activity', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const limit = Math.max(1, Math.min(2000, Number(req.query && req.query.limit) || 300))
+  res.json({ activity: store.listAdminActions({ limit }) })
 }))
 // Company admin: affirm (or clear) that the organization authorizes WorkCoPilot
 // use on its systems. Recorded with the admin's name + time as the evidence.
@@ -2422,6 +2433,14 @@ app.post('/api/work/sessions/:id/research', requireWorkAuth, async (req, res) =>
 
 // ---- Usage metering -------------------------------------------------------
 app.get('/api/work/usage', requireWorkAuth, wrap((req, res) => { res.json(store.getWorkUsage(req.workUser.id)) }))
+// Task-credit economy (individual users): read the banked balance + earn rate,
+// and trade credits for extra guidance hours (today only). The plan box reads
+// the balance here; the usage response also carries it under `tasks`.
+app.get('/api/work/credits', requireWorkAuth, wrap((req, res) => { res.json(store.getWorkCreditsSummary(req.workUser.id)) }))
+app.post('/api/work/credits/trade', requireWorkAuth, wrap((req, res) => {
+  const { hours } = req.body || {}
+  res.json(store.tradeWorkTaskCreditsForHours(req.workUser.id, hours))
+}))
 app.post('/api/work/usage/heartbeat', requireWorkAuth, wrap((req, res) => {
   const seconds = Math.max(0, Math.min(20, Number((req.body || {}).seconds) || 0)) // cap one beat
   const usage = store.addWorkUsage(req.workUser.id, seconds)
@@ -2534,7 +2553,7 @@ app.post('/api/work/leads', wrap((req, res) => {
   // person who submitted. Fire-and-forget - never block or fail the submission.
   const notify = store.getNotifySettings()
   const name = `${b.firstName} ${b.lastName}`.trim()
-  sendTemplateAsync('lead_notify', notify.leadTo, { name, email, company: b.company, question: b.question || b.source || '', verdict: b.verdict || '', plan: b.plan || '', submittedAt: new Date().toISOString() })
+  sendTemplateAsync('lead_notify', notify.leadTo, { name, email, phone: String(b.phone || '').trim(), company: b.company, question: b.question || b.source || '', verdict: b.verdict || '', plan: b.plan || '', submittedAt: new Date().toISOString() })
   if (notify.thankYou) sendTemplateAsync('lead_thank_you', email, { name })
   res.json(lead)
 }))

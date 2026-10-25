@@ -2578,6 +2578,21 @@ function easternDayKey(ts = Date.now()) {
   if (hh === 23 && mm >= 59) { const dt = new Date(Date.UTC(y, m - 1, d)); dt.setUTCDate(dt.getUTCDate() + 1); y = dt.getUTCFullYear(); m = dt.getUTCMonth() + 1; d = dt.getUTCDate() }
   return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`
 }
+// A YYYY-MM-DD day key as a UTC midnight timestamp (for counting whole days
+// between two Eastern-day keys). The keys are calendar dates, so differencing
+// them as UTC midnights gives an exact, DST-safe day count.
+function dayKeyToUTC(key) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key || ''))
+  if (!m) return NaN
+  return Date.UTC(+m[1], +m[2] - 1, +m[3])
+}
+// Whole Eastern days elapsed from `fromKey` up to `toKey` (never negative). Used
+// by the lazy task-credit accrual to catch up on every day since the last read.
+function easternDaysBetween(fromKey, toKey) {
+  const a = dayKeyToUTC(fromKey), b = dayKeyToUTC(toKey)
+  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0
+  return Math.max(0, Math.round((b - a) / 86400000))
+}
 
 export function getWorkTier(workUserId) {
   const u = getUser(workUserId)
@@ -2602,30 +2617,45 @@ export function getWorkUsage(workUserId) {
   const tier = getWorkTier(workUserId)
   const dailySeconds = workDailyLimit(tier)
   const key = `${workUserId}:${easternDayKey()}`
-  const used = (db.workUsage && db.workUsage[key] && db.workUsage[key].usedSeconds) || 0
+  const rec = (db.workUsage && db.workUsage[key]) || null
+  const used = (rec && rec.usedSeconds) || 0
+  // Bonus seconds granted TODAY by trading task credits for extra hours. They are
+  // keyed by the Eastern day, so they expire automatically at ET midnight (a new
+  // day gets a fresh record with no bonus) and never join the persistent
+  // purchased-hours pool. They extend the free daily bucket (spent first).
+  const bonusSeconds = (rec && rec.bonusSeconds) || 0
   const u = getUser(workUserId)
   const purchasedSeconds = (u && u.purchasedSeconds) || 0
-  const freeLeft = Math.max(0, dailySeconds - used)
+  const freeLeft = Math.max(0, (dailySeconds + bonusSeconds) - used)
   const co = (u && u.companyId) ? (db.companies || []).find((x) => x.id === u.companyId) : null
   const poolSeconds = co ? Math.max(0, Number(co.poolSeconds) || 0) : 0
   return {
     tier, dailySeconds, usedSeconds: used, purchasedSeconds,
+    bonusSeconds,                                  // today-only bonus minutes (from a credit trade); expire at ET midnight
     poolSeconds,                                   // shared company minutes also available
     freeLeft, remainingSeconds: freeLeft + purchasedSeconds + poolSeconds,
     exhausted: (freeLeft + purchasedSeconds + poolSeconds) <= 0,
     resetLabel: '11:59 PM ET',
-    tasks: getWorkTaskUsage(workUserId),           // daily task cap state (for the app + New Task gate)
+    tasks: getWorkTaskUsage(workUserId),           // task-credit state (banked balance + earn rate) for the app + New Task gate
   }
 }
 
-// ---- Daily TASK cap (sessions started per day) ----------------------------
-// A "task" is one guided session. Each tier allows a MAX number of tasks per
-// day (superadmin-set in pricing); corporate / company accounts are UNLIMITED
-// (their minute pool is the real limiter). Minutes are spent WITHIN a task as
-// usual - the task count is a separate daily hard gate. Counts are monotonic per
-// Eastern day (an abandoned/deleted task still counts), resetting at 11:59 ET.
+// ---- TASK-CREDIT economy (banked, owner-confirmed) ------------------------
+// A "task" is one guided session. INDIVIDUAL users no longer have a use-it-or-
+// lose-it daily cap: each Eastern day they EARN their tier's daily task count
+// (tasks[tier], superadmin-set in pricing) into a persisted, BANKED credit
+// balance. Unused credits ACCUMULATE with NO cap. Starting a guided task
+// CONSUMES 1 credit (an abandoned/deleted task is NOT refunded - consume on
+// start, matching the old no-refund rule). Credits can also be traded for extra
+// guidance hours (see tradeWorkTaskCreditsForHours).
+// Accrual is LAZY (no cron): on any balance read or task start we catch up -
+// add `dailyRate` for each ET day elapsed since lastAccrualDay, up to today.
+// CORPORATE / company accounts are UNLIMITED exactly as before (their minute
+// pool is the real limiter) - they have NO credit accounting.
 const WORK_TASKS_UNLIMITED = Infinity
-// null => unlimited (corporate/company). Otherwise the tier's daily cap.
+// The tier's DAILY task-credit EARN RATE. Infinity => unlimited (corporate).
+// Reads the LIVE pricing (getWorkPricing().tasks) so a superadmin change takes
+// effect immediately; falls back to the built-in default per tier.
 export function workDailyTaskLimit(workUserId) {
   const u = getUser(workUserId)
   if (u && u.companyId) return WORK_TASKS_UNLIMITED       // corporate: unlimited
@@ -2633,6 +2663,35 @@ export function workDailyTaskLimit(workUserId) {
   const tier = workUserTier(workUserId)
   const cap = tasks[tier]
   return Number.isInteger(cap) ? cap : (WORK_PRICING_DEFAULT.tasks[tier] || 0)
+}
+// SINGLE SOURCE OF TRUTH for an individual's task-credit balance. Lazily accrues
+// the tier's daily rate for every Eastern day elapsed since the last accrual,
+// banks unused credits (no cap), persists, and returns the current balance.
+// Everything that reads or spends credits goes through here - there is no
+// parallel counter. Corporate/company users are unlimited and have no balance,
+// so this returns null for them (callers treat null as "unlimited").
+export function getWorkTaskCredits(workUserId) {
+  const u = getUser(workUserId)
+  if (!u) throw httpErr(404, 'Account not found')
+  if (u.companyId) return null                            // corporate: unlimited, no credit accounting
+  const rate = workDailyTaskLimit(workUserId)             // tasks[tier] from live pricing
+  const today = easternDayKey()
+  // First ever read: seed one day's worth so a new user can start today, and
+  // anchor the accrual clock to today.
+  if (!Number.isFinite(u.taskCredits) || !u.lastAccrualDay) {
+    u.taskCredits = Math.max(0, Math.round(rate))
+    u.lastAccrualDay = today
+    persist()
+    return { balance: u.taskCredits, dailyRate: rate, lastAccrualDay: today }
+  }
+  // Catch up: one earn for each whole ET day since lastAccrualDay, up to today.
+  const elapsed = easternDaysBetween(u.lastAccrualDay, today)
+  if (elapsed > 0) {
+    u.taskCredits = Math.max(0, Math.round((Number(u.taskCredits) || 0) + rate * elapsed))
+    u.lastAccrualDay = today
+    persist()
+  }
+  return { balance: Math.max(0, Math.round(Number(u.taskCredits) || 0)), dailyRate: rate, lastAccrualDay: u.lastAccrualDay }
 }
 // Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
 // information; it never changes the original request (that is frozen by
@@ -2696,36 +2755,121 @@ function bumpWorkTasksToday(workUserId) {
 export function activeWorkTask(workUserId) {
   return (db.workSessions || []).find((x) => x.workUserId === workUserId && x.status === 'active') || null
 }
-// Task usage for the client (the New Task surface + /me).
+// Task usage for the client (the New Task surface + /me). For INDIVIDUAL users
+// this reports the banked task-credit balance (after lazy accrual) and the
+// per-day earn rate; the client derives the monthly figure (dailyRate x 30).
+// `remaining` is the banked balance (how many tasks can be started right now) so
+// the existing New Task surface stays honest. CORPORATE users are unlimited and
+// keep exactly their old shape (no credit fields, cap null).
 export function getWorkTaskUsage(workUserId) {
-  const cap = workDailyTaskLimit(workUserId)
-  const unlimited = !Number.isFinite(cap)
-  const usedToday = workTasksToday(workUserId)
+  const u = getUser(workUserId)
   const active = activeWorkTask(workUserId)
+  const activeTaskId = active ? active.id : null
+  if (u && u.companyId) {
+    return {
+      unlimited: true,
+      cap: null,
+      usedToday: workTasksToday(workUserId),
+      remaining: null,
+      activeTaskId,
+      resetLabel: '11:59 PM ET',
+    }
+  }
+  const c = getWorkTaskCredits(workUserId)              // single source (lazy accrual)
   return {
-    unlimited,
-    cap: unlimited ? null : cap,
-    usedToday,
-    remaining: unlimited ? null : Math.max(0, cap - usedToday),
-    activeTaskId: active ? active.id : null,
+    unlimited: false,
+    taskCredits: c.balance,                             // current BANKED balance
+    dailyRate: c.dailyRate,                             // credits earned per ET day
+    monthlyRate: c.dailyRate * 30,                      // convenience (client can also derive)
+    cap: c.dailyRate,                                   // per-day earn rate (kept for back-compat)
+    remaining: c.balance,                               // startable-now count = banked balance
+    usedToday: workTasksToday(workUserId),              // tasks started today (informational)
+    activeTaskId,
     resetLabel: '11:59 PM ET',
   }
 }
 // Gate + record a new task start. Throws a coded httpErr the caller surfaces, or
-// returns the new usage on success. Corporate/company accounts skip the caps.
+// returns the new usage on success. Corporate/company accounts are unlimited
+// (no credit accounting); individuals must finish the current task first, then
+// CONSUME 1 banked credit (no refund on abandon).
 export function startWorkTask(workUserId) {
-  const cap = workDailyTaskLimit(workUserId)
-  if (Number.isFinite(cap)) {
-    // Rule 1: one active task at a time - complete the current before a new one.
-    const active = activeWorkTask(workUserId)
-    if (active) { const e = httpErr(409, 'Finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
-    // Rule 2: daily task cap.
-    const used = workTasksToday(workUserId)
-    if (used >= cap) { const e = httpErr(402, `You have used all ${cap} task${cap === 1 ? '' : 's'} for today on the ${workUserTier(workUserId)} plan. They reset at 11:59 PM ET.`); e.taskLimit = true; e.cap = cap; e.resetLabel = '11:59 PM ET'; throw e }
+  const u = getUser(workUserId)
+  // CORPORATE: unlimited - only the informational daily counter is bumped.
+  if (u && u.companyId) {
+    const usedToday = bumpWorkTasksToday(workUserId)
+    persist()
+    return { usedToday, cap: null, unlimited: true }
   }
+  // Rule 1 (preserved): one active task at a time - finish the current first.
+  const active = activeWorkTask(workUserId)
+  if (active) { const e = httpErr(409, 'Finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
+  // Rule 2 (new): spend one banked task credit. Lazy accrual runs inside
+  // getWorkTaskCredits, so the balance is current before we gate.
+  const c = getWorkTaskCredits(workUserId)
+  const rate = c.dailyRate
+  if (c.balance < 1) {
+    const e = httpErr(402, `You're out of task credits. You earn ${rate} more ${rate === 1 ? 'credit' : 'credits'} tomorrow at 11:59 PM ET, or trade 2 credits for 1 bonus hour of guidance.`)
+    e.taskLimit = true; e.cap = rate; e.taskCredits = c.balance; e.resetLabel = '11:59 PM ET'
+    throw e
+  }
+  u.taskCredits = Math.max(0, c.balance - 1)            // consume on start (no refund)
   const usedToday = bumpWorkTasksToday(workUserId)
   persist()
-  return { usedToday, cap: Number.isFinite(cap) ? cap : null, unlimited: !Number.isFinite(cap) }
+  return { usedToday, taskCredits: u.taskCredits, dailyRate: rate, cap: rate, unlimited: false }
+}
+// Trade banked task credits for EXTRA guidance hours, TODAY ONLY. Owner ratio:
+// 2 task credits -> 1 extra hour, in multiples of 2 (4 credits = 2 hours, ...).
+// The granted hour(s) are added as "bonus minutes" on today's Eastern-day usage
+// record, so they extend the free daily bucket and EXPIRE at ET midnight - they
+// never join the persistent purchased-hours pool. Individuals only; corporate is
+// already unlimited. Rejects (400, honest message) when the balance is < 2.
+const WORK_CREDITS_PER_HOUR = 2
+export function tradeWorkTaskCreditsForHours(workUserId, hours) {
+  const u = getUser(workUserId)
+  if (!u) throw httpErr(404, 'Account not found')
+  if (u.companyId) throw httpErr(400, 'Task credits apply to individual accounts only. Corporate accounts already have unlimited tasks.')
+  const h = Number(hours)
+  if (!Number.isInteger(h) || h < 1 || h > 100) throw httpErr(400, 'Enter a whole number of hours (1 to 100) to trade for.')
+  const cost = WORK_CREDITS_PER_HOUR * h                // 2 credits per hour
+  const c = getWorkTaskCredits(workUserId)              // lazy accrual first (current balance)
+  if (c.balance < cost) {
+    throw httpErr(400, `You need ${cost} task credit${cost === 1 ? '' : 's'} to trade for ${h} hour${h === 1 ? '' : 's'} (${WORK_CREDITS_PER_HOUR} per hour). You have ${c.balance}.`)
+  }
+  u.taskCredits = Math.max(0, c.balance - cost)
+  // Grant today-only bonus seconds on the ET-day usage record (auto-expire at ET midnight).
+  if (!db.workUsage) db.workUsage = {}
+  const key = `${workUserId}:${easternDayKey()}`
+  const rec = db.workUsage[key] || (db.workUsage[key] = { usedSeconds: 0 })
+  rec.bonusSeconds = Math.max(0, (rec.bonusSeconds || 0) + h * 3600)
+  // Record the trade in the single audit sink (who/what/when).
+  try { recordAdminAction({ userId: workUserId, action: 'credit_trade', detail: `${cost} task credits -> ${h}h bonus guidance (today only)` }) } catch { /* audit is best-effort */ }
+  persist()
+  return {
+    taskCredits: u.taskCredits,
+    dailyRate: c.dailyRate,
+    creditsSpent: cost,
+    hoursGranted: h,
+    creditsPerHour: WORK_CREDITS_PER_HOUR,
+    usage: getWorkUsage(workUserId),                    // fresh usage incl. the new bonusSeconds
+  }
+}
+// Credit summary for the plan box: banked balance (after lazy accrual), the
+// per-day earn rate, the monthly figure, and the trade ratio. Corporate users
+// are unlimited (no balance).
+export function getWorkCreditsSummary(workUserId) {
+  const u = getUser(workUserId)
+  if (u && u.companyId) {
+    return { unlimited: true, taskCredits: null, dailyRate: null, monthlyRate: null, creditsPerHour: WORK_CREDITS_PER_HOUR, resetLabel: '11:59 PM ET' }
+  }
+  const c = getWorkTaskCredits(workUserId)
+  return {
+    unlimited: false,
+    taskCredits: c.balance,
+    dailyRate: c.dailyRate,
+    monthlyRate: c.dailyRate * 30,
+    creditsPerHour: WORK_CREDITS_PER_HOUR,
+    resetLabel: '11:59 PM ET',
+  }
 }
 // A company admin's license + usage dashboard: seat pools, who holds a license,
 // the tier breakdown, the minute pool, and each person's live usage. Everything
@@ -2864,7 +3008,11 @@ export function addWorkUsage(workUserId, seconds) {
   const dailySeconds = workDailyLimit(tier)
   const key = `${workUserId}:${easternDayKey()}`
   const rec = db.workUsage[key] || (db.workUsage[key] = { usedSeconds: 0 })
-  const freeLeft = Math.max(0, dailySeconds - rec.usedSeconds)
+  // Today's free bucket = the tier's daily seconds PLUS any bonus seconds granted
+  // today by a task-credit trade (both expire at ET midnight; spent before the
+  // persistent purchased balance so a top-up is never burned while free time is left).
+  const bonusSeconds = rec.bonusSeconds || 0
+  const freeLeft = Math.max(0, (dailySeconds + bonusSeconds) - rec.usedSeconds)
   const fromFree = Math.min(freeLeft, secs); rec.usedSeconds += fromFree; secs -= fromFree
   if (secs > 0) {
     const u = getUser(workUserId)
@@ -2916,7 +3064,7 @@ const WORK_PRICING_DEFAULT = {
   hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },      // extra hour, per tier
   image: { lite: 3, basic: 2, advanced: 1, premium: 0.5 },       // per generated image, per tier
   imageMinBulk: 10,                                    // images bought in bulk, min 10
-  tasks: { lite: 1, basic: 4, advanced: 8, premium: 12 },        // MAX guided tasks (sessions) started per day, per tier (corporate = unlimited). Superadmin-editable.
+  tasks: { lite: 1, basic: 2, advanced: 4, premium: 6 },        // DAILY task-credit EARN RATE per tier (corporate = unlimited). Each ET day an individual earns this many task credits into a banked balance (unused credits accumulate, no cap). Starting a guided task consumes 1 credit. Superadmin-editable; getWorkTaskCredits reads this so a change reflects immediately.
   replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
   dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },    // DAILY INCLUDED hours per tier (the "bucket" each plan includes per day). Superadmin-editable; workDailyLimit reads this so a change reflects for every user immediately. Fractional allowed (e.g. 1.5).
   imagesPerDay: { lite: 0, basic: 0, advanced: 0, premium: 5 },  // FREE generated images per day per tier. Superadmin-editable; getWorkImageUsage reads this (0 = none).
@@ -4539,6 +4687,12 @@ export function setWorkSessionPaused(workUserId, sessionId, paused) {
   return s
 }
 export function deleteWorkSession(workUserId, sessionId, reason = '') {
+  // Deleting a guided session is a destructive, accountable action, so it takes a
+  // REASON (>=3 chars) just like every other destructive op (requireReason). The
+  // user-facing DELETE route surfaces an empty reason as a 400. Every internal
+  // caller (superadmin delete, account-deletion cascade, retention sweep) already
+  // passes a descriptive reason, so this gate only tightens the human path.
+  const r = requireReason(reason)
   const i = (db.workSessions || []).findIndex((x) => x.id === sessionId && x.workUserId === workUserId)
   if (i < 0) throw httpErr(404, 'Session not found')
   const s = db.workSessions[i]
@@ -4560,10 +4714,27 @@ export function deleteWorkSession(workUserId, sessionId, reason = '') {
     status: s.status || null,
     stepsDone: steps.filter((x) => x.status === 'done').length,
     stepsTotal: steps.length,
-    reason: String(reason || '').trim().slice(0, 500),
+    reason: r,
     at: new Date().toISOString(),
   })
   if (db.workActivity.length > 5000) db.workActivity.splice(0, db.workActivity.length - 5000)
+  // A company member's deletion is overseen by their company admin (the activity
+  // log above, filtered by companyId, is that pane). An INDIVIDUAL user (no
+  // companyId) has no company admin, so without this their deletion would be
+  // recorded only in a company-scoped log no human ever reads. Mirror the same
+  // accountable who/what/when/why trail to the superadmin-visible audit sink
+  // (recordAdminAction -> listAdminActions) - the ONE destructive-action audit
+  // store the other entity deletions use, never a parallel log. Company members
+  // are intentionally NOT duplicated here: they already have oversight, and
+  // adding them would double-log in the company dashboard's merged timeline.
+  if (!(u && u.companyId)) {
+    recordAdminAction({
+      userId: workUserId,
+      action: 'session_delete',
+      reason: r,
+      detail: String(s.title || s.goal || sessionId || '').slice(0, 200),
+    })
+  }
   // Remove this session's stored milestone screenshots from disk. They are only
   // referenced by this record, so they MUST go with it - otherwise deletion (and
   // the retention sweep) leaves orphaned encrypted images on disk forever, which
