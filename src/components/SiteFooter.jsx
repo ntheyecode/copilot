@@ -35,7 +35,7 @@ export default function SiteFooter({ dark = true }) {
       <style>{CSS}</style>
       <div className="sf-in">
         <div className="sf-brand">
-          <a href="/" aria-label="AdmireVeda WorkCoPilot, home"><AdmireVedaLogo size={26} idSuffix="sf" /></a>
+          <a href="/" aria-label="AdmireVeda WorkCoPilot, home"><AdmireVedaLogo size={26} idSuffix="sf" onDark={dark} /></a>
           <p className="sf-tag">Your expert, on every screen. Read-only guidance that watches your screen and tells you the exact next move, in any app, with your data protected on your device.</p>
           <div className="sf-ctas">
             <a className="sf-btn" href="/workcopilot">Get started <ArrowUpRight size={14} aria-hidden="true" /></a>
