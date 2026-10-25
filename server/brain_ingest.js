@@ -16,6 +16,7 @@ import { brainStore } from './brain_store.js'
 import { EMBED, contentHashOf, chunkHashOf, policyVersionOf } from './brain_model.js'
 import { embedPassages } from './brain_embed.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
+import { chunkCode, detectLanguage } from './brain_code_chunk.js'
 
 // Chunking targets. ~1800 chars per chunk with ~300 chars of overlap so a step
 // that straddles a boundary still has context on both sides.
@@ -166,7 +167,14 @@ export async function ingestSource(companyId, { source, version, extractedText, 
   const contentHash = contentHashOf(text) // whole-document identity
 
   // 1) Chunk, then SCRUB each chunk BEFORE anything else touches it.
-  const chunks = chunkText(text)
+  //    CODE sources chunk by symbol (brain_code_chunk.js) so a retrieval hit
+  //    points at one whole function/class, not a mid-body prose window. The
+  //    chunk shape is byte-identical { ord,charStart,charEnd,text }, so every
+  //    downstream step (scrub -> chunkHashOf -> embed -> BrainRecords ->
+  //    supersede/upsert) is unchanged.
+  const lang = detectLanguage(source.path || source.title || source.id || '')
+  const isCode = source.kind === 'code' || lang !== 'text'
+  const chunks = isCode ? chunkCode(text, { language: lang }) : chunkText(text)
   const scrubbed = chunks.map((c) => {
     const r = policy ? scrubWithPolicy(c.text, policy) : scrubSensitive(c.text)
     result.redacted += (r.total || 0)
