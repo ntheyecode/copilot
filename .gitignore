@@ -18,3 +18,4 @@ server/eval/results/
 *.enc.key
 .enc.key
 .db-backups/
+server/models/
