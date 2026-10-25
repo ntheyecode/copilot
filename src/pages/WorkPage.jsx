@@ -1178,13 +1178,12 @@ const WD_CSS = `
 @media(max-width:760px){.wd-start{padding:20px 18px 20px}}
 @media(prefers-reduced-motion:reduce){.wd-card{transition:none}}
 
-.wd-wiz{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,14,.55);backdrop-filter:blur(4px);animation:wd-wiz-fade .18s ease}
+.wd-wiz{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(27,32,51,.30);backdrop-filter:blur(4px);animation:wd-wiz-fade .18s ease}
 @keyframes wd-wiz-fade{from{opacity:0}to{opacity:1}}
 /* STABLE wizard card (no CLS): a flex column with a pinned top and a pinned
-   footer; only .wd-wiz-body scrolls. Dark (default) carries an inner highlight
-   + emerald hairline for depth; light keeps the flat shadow. */
-.wd-wiz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,680px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05),0 0 0 1px var(--em-line);animation:wd-wiz-pop .22s cubic-bezier(.2,.8,.2,1)}
-.wd-wiz-card{box-shadow:var(--shadow)}
+   footer; only .wd-wiz-body scrolls. White dashboard spec: flat soft shadow on
+   a #fff face, 1px hairline border, no inner highlight. */
+.wd-wiz-card{width:min(560px,calc(100vw - 32px));max-height:min(80vh,680px);display:flex;flex-direction:column;overflow:hidden;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:0;box-shadow:var(--shadow);animation:wd-wiz-pop .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes wd-wiz-pop{from{opacity:0;transform:translateY(14px) scale(.97)}to{opacity:1;transform:none}}
 .wd-wiz-top{display:flex;align-items:center;justify-content:space-between;padding:22px 26px 0;margin-bottom:12px}
 .wd-wiz-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
@@ -1208,7 +1207,7 @@ const WD_CSS = `
 .wd-wiz-text textarea{resize:none;background:var(--field);border:1px solid var(--line-2);border-radius:13px;padding:13px 15px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none}
 .wd-wiz-text textarea:focus{border-color:var(--em-2)}
 .wd-wiz-text .btn{align-self:flex-end}
-.wd-wiz-foot{display:flex;align-items:center;gap:18px;margin:0;padding:14px 26px 18px;border-top:1px solid var(--line);background:var(--panel)}
+.wd-wiz-foot{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;margin:0;padding:14px 26px 18px;border-top:1px solid var(--line);background:var(--panel)}
 .wd-wiz-link{background:none;border:none;color:var(--mut);font:inherit;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0}
 .wd-wiz-link:hover{color:var(--tx)}
 .wd-wiz-link.strong{margin-left:auto;color:var(--em-2);font-weight:600}
@@ -1238,26 +1237,26 @@ const WD_CSS = `
 .wd-wiz-other textarea{resize:none;background:var(--field);border:1px solid var(--em-2);border-radius:13px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none;box-shadow:0 0 0 3px var(--em-fill)}
 .wd-wiz-other-row{display:flex;gap:8px;justify-content:flex-end}
 .wd-wiz-text .btn,.wd-wiz-other-row .btn{display:inline-flex;align-items:center;gap:6px}
-/* Terminal-style scoping progress (the "csv/js box"): a dark code card with
-   window dots, a monospaced stage log that reveals line by line with check
-   marks, a live caret on the running stage, and a thin progress fill. Dark in
-   both themes, matching the console's code boxes. */
-.wd-term{border-radius:14px;overflow:hidden;border:1px solid #27324a;background:#0c1222;box-shadow:0 1px 3px rgba(0,0,0,.3),0 18px 40px -24px rgba(0,0,0,.7);margin:6px 0 4px}
-.wd-term-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:#0a0f1c;border-bottom:1px solid #1c2538}
-.wd-term-dots{display:inline-flex;gap:5px}
+/* Scoping progress (the "csv/js box"): a clean WHITE code card with window
+   dots, a monospaced stage log that reveals line by line with check marks, a
+   live caret on the running stage, and a thin progress fill. White dashboard
+   spec - #f6f8fd face, hairline border, green accents (no dark panel). */
+.wd-term{border-radius:14px;overflow:hidden;border:1px solid var(--line);background:var(--panel-3);box-shadow:var(--card-shadow);margin:6px 0 4px}
+.wd-term-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--card-a);border-bottom:1px solid var(--line)}
+.wd-term-dots{display:inline-flex;gap:5px;flex-shrink:0}
 .wd-term-dots i{width:9px;height:9px;border-radius:50%;display:inline-block}
-.wd-term-title{flex:1;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.08em;font-weight:700;color:#8ea3c0;text-transform:uppercase}
-.wd-term-pct{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;color:#8cf5c4;font-variant-numeric:tabular-nums}
-.wd-term-body{padding:14px 14px 12px;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;color:#d6e9d6;min-height:138px}
+.wd-term-title{flex:1;min-width:0;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:10.5px;letter-spacing:.08em;font-weight:700;color:var(--mut);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-term-pct{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:700;color:var(--em-deep);font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap}
+.wd-term-body{padding:14px 14px 12px;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;line-height:1.7;color:var(--tx-2);min-height:138px}
 .wd-term-line{display:flex;align-items:center;gap:9px;animation:wd-wiz-reveal .3s ease both;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wd-term-line .p{color:#58c974;flex:0 0 auto}
-.wd-term-line.past{color:#8ea3c0}
-.wd-term-line.past .ok{color:#8cf5c4;flex:0 0 auto}
-.wd-term-line.on{color:#eef3f6}
-.wd-term-caret{display:inline-block;width:8px;height:14px;background:#8cf5c4;margin-left:2px;vertical-align:-2px;animation:wd-term-blink 1s steps(1) infinite}
+.wd-term-line .p{color:var(--em);flex:0 0 auto}
+.wd-term-line.past{color:var(--mut)}
+.wd-term-line.past .ok{color:var(--em);flex:0 0 auto}
+.wd-term-line.on{color:var(--tx)}
+.wd-term-caret{display:inline-block;width:8px;height:14px;background:var(--em);margin-left:2px;vertical-align:-2px;animation:wd-term-blink 1s steps(1) infinite}
 @keyframes wd-term-blink{50%{opacity:0}}
-.wd-term-track{height:3px;background:#1c2538}
-.wd-term-fill{height:100%;background:linear-gradient(90deg,#8cf5c4,#39d3ff);transition:width .6s cubic-bezier(.4,0,.2,1)}
+.wd-term-track{height:3px;background:var(--track)}
+.wd-term-fill{height:100%;background:linear-gradient(90deg,var(--em),var(--em-2));transition:width .6s cubic-bezier(.4,0,.2,1)}
 .wd-term-foot{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:12.5px;color:var(--mut)}
 /* ---- Pre-task readiness coach (inside .wd-start, before the goal box) ----
    Same system as the wizard: a pinned eyebrow + quiet Skip, a 3-dot progress,
@@ -1323,6 +1322,19 @@ const WD_CSS = `
 .wd-coach-done{display:flex;flex-direction:column}
 .wd-coach-reopen{align-self:flex-start;margin-top:12px;background:none;border:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:0;transition:color .15s}
 .wd-coach-reopen:hover{color:var(--em-2)}
+/* White-dashboard gate: every pill, stepper segment, nav link, eyebrow and CTA
+   in the interview flows stays on one line and is never shrunk/clipped. Whole
+   items may wrap to the next row (their flex containers wrap), but an item's
+   own text never wraps or truncates. Multi-line CARDS (choices/kinds/depth) are
+   deliberately excluded so their captions keep flowing. */
+.wd-wiz-eyebrow,.wd-wiz-link,.wd-wiz-tag,.wd-wiz-depth-m,.wd-coach-eyebrow,.wd-coach-skip,.wd-coach-opt,.wd-coach-gate,.wd-coach-k,.wd-coach-reopen,.wd-cta{white-space:nowrap;flex-shrink:0}
+.wd-wiz-prog span,.wd-coach-prog span{flex-shrink:0}
+/* Quiet "View all / Session logs" link in the Resume section header + footer. */
+.wd-sess-all{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;color:var(--em-2);font-size:13px;font-weight:600;text-decoration:none;padding:2px 2px}
+.wd-sess-all:hover{color:var(--em-deep)}
+.wd-sess-all svg{flex-shrink:0}
+.wd-sess-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-2);font-size:13px;font-weight:600;text-decoration:none;padding:6px 2px}
+.wd-sess-more:hover{color:var(--em-deep)}
 @media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}}
 `
 
@@ -1794,7 +1806,6 @@ function Home({ user, onOpen, onSignOut }) {
     }, wasHere ? 0 : 80)
   }
   const goStart = () => jumpTo('#wd-start-card', () => { try { goalRef.current && goalRef.current.focus({ preventScroll: true }) } catch { /* ignore */ } })
-  const goTasks = () => jumpTo('#wd-sessions')
   const goSkills = () => jumpTo('#wd-skills', (el) => { const b = el && el.querySelector('.wd-dp-btn[aria-expanded="false"]'); if (b) b.click() })
   const TITLES = { dashboard: 'Dashboard', help: 'How-to', support: 'Support', team: 'Team' }
   const initial = String(user.displayName || user.username || '').trim().charAt(0) || '?'
@@ -1816,7 +1827,8 @@ function Home({ user, onOpen, onSignOut }) {
         <nav className="wd-navs" aria-label="Sections">
           <button type="button" className={`wd-nav${tab === 'dashboard' ? ' on' : ''}`} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')} title="Dashboard"><LayoutDashboard size={18} /> <span className="wd-nav-t">Dashboard</span></button>
           <button type="button" className="wd-nav" onClick={goStart} title="Start a task"><Play size={18} /> <span className="wd-nav-t">Start a task</span></button>
-          <button type="button" className="wd-nav" onClick={goTasks} title="My tasks"><Clock size={18} /> <span className="wd-nav-t">My tasks</span></button>
+          <a className="wd-nav" href="/work/tasks" title="My tasks (completed)"><Clock size={18} /> <span className="wd-nav-t">My tasks</span></a>
+          <a className="wd-nav" href="/work/logs" title="Session logs"><FileText size={18} /> <span className="wd-nav-t">Session logs</span></a>
           <button type="button" className="wd-nav" onClick={goSkills} title="Skills"><Blocks size={18} /> <span className="wd-nav-t">Skills</span></button>
           <div className="wd-sect">Help</div><span className="wd-sect-rule" aria-hidden />
           <button type="button" className={`wd-nav${tab === 'help' ? ' on' : ''}`} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')} title="How-to"><BookOpen size={18} /> <span className="wd-nav-t">How-to</span></button>
@@ -2052,9 +2064,10 @@ function Home({ user, onOpen, onSignOut }) {
               <div className="wd-sec">
                 <span className="wd-ic alt"><RefreshCw size={16} /></span>
                 <div>
-                  <h2>Resume where you left off {sessLoaded && sessions.length > 0 && <span className="wd-sec-count">{sessions.length} saved</span>}</h2>
-                  <p>Every plan is saved. Pause anytime and come back to the exact step you were on.</p>
+                  <h2>Resume where you left off</h2>
+                  <p>Pick up an in-progress plan at the exact step you were on. Completed tasks and your full history live on their own pages.</p>
                 </div>
+                <a className="wd-sess-all" href="/work/logs" title="Session logs">View all <ArrowRight size={13} /></a>
               </div>
               {!sessLoaded ? (
                 <div className="wd-sess-list">
@@ -2070,37 +2083,50 @@ function Home({ user, onOpen, onSignOut }) {
                     <p>This looks like a connection hiccup, not an empty list. <button type="button" className="wd-link" onClick={load} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}>Try again</button></p>
                   </div>
                 </div>
-              ) : sessions.length === 0 ? (
-                <div className="wd-empty">
-                  <span className="ic"><Compass size={20} /></span>
-                  <div>
-                    <b>No sessions yet</b>
-                    <p>Start a task above and it is saved here. You can pause anytime and come back to the exact step you were on.</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="wd-sess-list">
-                  {sessions.map((s) => {
-                    const done = (s.steps || []).filter((x) => x.status === 'done').length
-                    const tot = (s.steps || []).length
-                    const cur = (s.steps || [])[s.currentStep]
-                    const pct = tot > 0 ? Math.round(done / tot * 100) : 0
-                    const ended = s.status === 'ended'
-                    return (
-                      <div key={s.id} className="wd-sess">
-                        <span className={`wd-sess-ic${ended ? ' done' : ''}`} aria-hidden>{ended ? <Check size={15} /> : <Play size={14} />}</span>
-                        <div className="wd-sess-main">
-                          <div className="wd-sess-title">{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}</div>
-                          <div className="wd-sess-meta">{ended ? 'Completed' : (cur ? `You were at: ${cur.text}` : 'Not started yet')} &middot; <span className="wd-sess-done">{done}/{tot}</span> steps{tot > 0 ? <> &middot; {pct}%</> : null}</div>
-                          {tot > 0 && <div className="wd-sess-bar"><i style={{ width: `${pct}%` }} /></div>}
-                        </div>
-                        <button className="wd-resume" onClick={() => onOpen(s.id)}><span>{ended ? 'Open' : 'Resume'}</span> <ArrowRight size={14} /></button>
-                        <button className="wd-del" title="Delete session" aria-label="Delete session" onClick={() => { setDelTarget(s); setDelReason('') }}><Trash2 size={15} /></button>
+              ) : (() => {
+                // Only the 1-2 most recent IN-PROGRESS sessions surface here as a
+                // quick resume (server order is the resume order). The full saved
+                // and completed lists now live on the dedicated /work/tasks and
+                // /work/logs pages. Resume/open/delete handlers are kept intact.
+                const resumable = sessions.filter((s) => s.status !== 'ended').slice(0, 2)
+                if (resumable.length === 0) {
+                  return (
+                    <div className="wd-empty">
+                      <span className="ic"><Compass size={20} /></span>
+                      <div>
+                        <b>{sessions.length === 0 ? 'No sessions yet' : 'Nothing in progress'}</b>
+                        <p>{sessions.length === 0
+                          ? 'Start a task above and it is saved here. You can pause anytime and come back to the exact step you were on.'
+                          : <>Every plan you finished is in your <a className="wd-link" href="/work/tasks">completed tasks</a>, and every run is in your <a className="wd-link" href="/work/logs">session logs</a>.</>}</p>
                       </div>
-                    )
-                  })}
-                </div>
-              )}
+                    </div>
+                  )
+                }
+                return (
+                  <div className="wd-sess-list">
+                    {resumable.map((s) => {
+                      const done = (s.steps || []).filter((x) => x.status === 'done').length
+                      const tot = (s.steps || []).length
+                      const cur = (s.steps || [])[s.currentStep]
+                      const pct = tot > 0 ? Math.round(done / tot * 100) : 0
+                      const ended = s.status === 'ended'
+                      return (
+                        <div key={s.id} className="wd-sess">
+                          <span className={`wd-sess-ic${ended ? ' done' : ''}`} aria-hidden>{ended ? <Check size={15} /> : <Play size={14} />}</span>
+                          <div className="wd-sess-main">
+                            <div className="wd-sess-title">{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}</div>
+                            <div className="wd-sess-meta">{ended ? 'Completed' : (cur ? `You were at: ${cur.text}` : 'Not started yet')} &middot; <span className="wd-sess-done">{done}/{tot}</span> steps{tot > 0 ? <> &middot; {pct}%</> : null}</div>
+                            {tot > 0 && <div className="wd-sess-bar"><i style={{ width: `${pct}%` }} /></div>}
+                          </div>
+                          <button className="wd-resume" onClick={() => onOpen(s.id)}><span>{ended ? 'Open' : 'Resume'}</span> <ArrowRight size={14} /></button>
+                          <button className="wd-del" title="Delete session" aria-label="Delete session" onClick={() => { setDelTarget(s); setDelReason('') }}><Trash2 size={15} /></button>
+                        </div>
+                      )
+                    })}
+                    <a className="wd-sess-more" href="/work/logs">View all / Session logs <ArrowRight size={14} /></a>
+                  </div>
+                )
+              })()}
             </section>
 
             {!needsSub && (
