@@ -2908,6 +2908,28 @@ const CONSOLE_CSS = `
 .wc-live>svg{color:var(--obs);flex-shrink:0;margin-top:1px}
 .wc-live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--obs);--pr:var(--obs-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
 @keyframes wc-pulse{0%{box-shadow:0 0 0 0 var(--pr)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+/* PINNED guide status strip: Pause/Resume + minutes + the live reading line,
+   kept in the fixed header so they never scroll away (owner request). While a
+   frame is in flight it blinks "Analyzing"; on the reply it returns to the calm
+   reading line. Hidden at >=1240px where the right rail carries these controls. */
+.wc-guidehead{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.wc-gh-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
+.wc-ghstatus{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border-radius:11px;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.5;min-width:0}
+.wc-ghstatus>span{min-width:0;overflow-wrap:anywhere}
+.wc-ghstatus.live{color:var(--text-muted);background:var(--obs-soft);border:1px solid var(--obs-ring)}
+.wc-ghstatus.live>svg{color:var(--obs);flex-shrink:0;margin-top:1px}
+.wc-ghstatus.live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--obs);--pr:var(--obs-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
+.wc-ghstatus.wrong{color:var(--text);background:var(--warning-soft);border:1px solid var(--warning);font-weight:500}
+.wc-ghstatus.wrong>svg{color:var(--warning);flex-shrink:0;margin-top:1px}
+.wc-ghstatus.wrong b{color:var(--warning)}
+.wc-ghstatus.analyzing{align-items:center;color:var(--obs);background:var(--obs-soft);border:1px solid var(--obs-ring);font-weight:650;animation:wc-ana-blink 1.2s ease-in-out infinite}
+.wc-ana{display:inline-flex;align-items:center;gap:3px;flex-shrink:0}
+.wc-ana i{width:5px;height:5px;border-radius:50%;background:var(--obs);animation:wc-ana-bounce 1.1s infinite}
+.wc-ana i:nth-child(2){animation-delay:.15s}
+.wc-ana i:nth-child(3){animation-delay:.3s}
+@keyframes wc-ana-blink{0%,100%{opacity:1}50%{opacity:.58}}
+@keyframes wc-ana-bounce{0%,80%,100%{transform:scale(.55);opacity:.5}40%{transform:scale(1);opacity:1}}
+@media(min-width:1240px){.wc-guidehead{display:none}}
 /* The only live pill left is Plan-heavy mode (.lite); watch state lives in the header chip. */
 .wc-live-pill{display:inline-flex;align-items:center;gap:7px;height:34px;font-size:12.5px;font-weight:650;color:var(--em);background:var(--em-soft);padding:0 13px;border-radius:999px;white-space:nowrap}
 .wc-plan-title{font-family:var(--wc-display);font-size:18px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.3;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -3670,6 +3692,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [guidance, setGuidance] = useState('')      // live, screen-specific instruction for the current step
   const [flags, setFlags] = useState([])
   const [busy, setBusy] = useState(false)
+  // True from the moment a screen frame is sent until the read comes back, so the
+  // pinned status line can show a blinking "Analyzing" while the model looks, then
+  // return to the calm "Reading your screen + what it saw" state (owner request).
+  const [analyzing, setAnalyzing] = useState(false)
   const [question, setQuestion] = useState('')
   const [answer, setAnswer] = useState('')
   const [err, setErr] = useState('')
@@ -3825,7 +3851,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // choice, shared via the wc-guide-fontscale key). --wc-fs mirrors it so the
   // shared CmdBlock / CodeBlock dark code boxes scale inside the float too.
   // .fp-link is the blue inline "Open ..." hyperlink (not a button).
-  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-in .4s cubic-bezier(.2,.8,.2,1) both,fp-now 2.8s ease-in-out .4s infinite}@keyframes fp-in{0%{opacity:0;transform:translateY(8px) scale(.985)}100%{opacity:1;transform:none}}.fp-now pre{box-shadow:0 0 0 1px var(--gr) inset,0 0 22px -8px #8cf5c4}.fp-now .fp-link{display:inline-flex;padding:4px 10px 4px 8px;border-radius:9px;background:rgba(57,211,255,.12);box-shadow:0 0 0 1px rgba(57,211,255,.32) inset;font-weight:700;animation:fp-key .2s}.fp-now strong,.fp-now b{font-weight:800}.fp-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;animation:fp-pop .5s cubic-bezier(.3,1.4,.5,1) both,fp-out .5s ease 1.3s both}@keyframes fp-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}@keyframes fp-out{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){.fp-now{animation:none;box-shadow:0 0 0 2px var(--gr) inset}.fp-pulse{animation:none}.spin{animation:none}.fp-confirm{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
+  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-blink{0%,100%{opacity:1}50%{opacity:.55}}.fp-blink{animation:fp-blink 1.2s ease-in-out infinite}.fp-ana{display:inline-flex;align-items:center;gap:3px}.fp-ana i{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;animation:fp-bounce 1.1s infinite}.fp-ana i:nth-child(2){animation-delay:.15s}.fp-ana i:nth-child(3){animation-delay:.3s}@keyframes fp-bounce{0%,80%,100%{transform:scale(.55);opacity:.5}40%{transform:scale(1);opacity:1}}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-in .4s cubic-bezier(.2,.8,.2,1) both,fp-now 2.8s ease-in-out .4s infinite}@keyframes fp-in{0%{opacity:0;transform:translateY(8px) scale(.985)}100%{opacity:1;transform:none}}.fp-now pre{box-shadow:0 0 0 1px var(--gr) inset,0 0 22px -8px #8cf5c4}.fp-now .fp-link{display:inline-flex;padding:4px 10px 4px 8px;border-radius:9px;background:rgba(57,211,255,.12);box-shadow:0 0 0 1px rgba(57,211,255,.32) inset;font-weight:700;animation:fp-key .2s}.fp-now strong,.fp-now b{font-weight:800}.fp-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;animation:fp-pop .5s cubic-bezier(.3,1.4,.5,1) both,fp-out .5s ease 1.3s both}@keyframes fp-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}@keyframes fp-out{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){.fp-now{animation:none;box-shadow:0 0 0 2px var(--gr) inset}.fp-pulse{animation:none}.spin{animation:none}.fp-confirm{animation:none}.fp-blink{animation:none}.fp-ana i{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
   // Open the float with a graceful fallback chain, so the core web experience
   // never silently dies on one API:
   //   1. Document Picture-in-Picture (true always-on-top) when the browser has it;
@@ -4114,6 +4140,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     let frame = grabWatchFrame(); if (!frame) return
     frame = await prepFrame(frame)
     busyTickRef.current = true
+    setAnalyzing(true)
     // Jitter: smear concurrent users' sends across a ~600ms window so many
     // sessions do not hit the AI provider at the same instant (throttle smoothing).
     try { await new Promise((r) => setTimeout(r, Math.floor(Math.random() * 600))) } catch { /* ignore */ }
@@ -4130,7 +4157,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       // A vision/runtime error should stop the loop and say why, not spin silently.
       setErr(friendlyError(e, 'Watch failed')); setWatching(false)
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
-    } finally { busyTickRef.current = false }
+    } finally { busyTickRef.current = false; setAnalyzing(false) }
   }, [sessionId])
 
   const startWatching = async () => {
@@ -4154,7 +4181,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     if (!capturing) { const ok = await startCapture(); if (!ok) return; await new Promise((r) => setTimeout(r, 400)) }
     let frame = grabFrame(); if (!frame) return
     frame = await prepFrame(frame)
-    setBusy(true); setErr('')
+    setBusy(true); setAnalyzing(true); setErr('')
     try {
       const r = await api.workWatch(sessionId, { frame })
       if (r.status != null) setStatus(r.status)   // keep the wrong-place signal current on an on-demand read
@@ -4162,7 +4189,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
       if (r.observation) setObservation(r.observation)
       setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
-    } catch (e) { setErr(friendlyError(e, 'Could not refresh the screen')) } finally { setBusy(false) }
+    } catch (e) { setErr(friendlyError(e, 'Could not refresh the screen')) } finally { setBusy(false); setAnalyzing(false) }
   }
   // Re-plan with a reason, keeping progress (continue from here) or from scratch.
   const confirmReplan = async () => {
@@ -4604,7 +4631,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const offTrack = !ended && status === 'wrong' && !!String(observation || '').trim()
 
   return (
-    <div className="wc" style={{ ...shell, display: 'flex', flexDirection: 'column', height: '100dvh', overflow: 'hidden', '--wc-fs': fsScale }}>
+    <div className="wc" style={{ ...shell, display: 'flex', flexDirection: 'column', height: desktop ? 'calc(100dvh - 40px)' : '100dvh', overflow: 'hidden', '--wc-fs': fsScale }}>
       <style>{CONSOLE_CSS}</style>
       {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
           between it and the fixed Ask footer scrolls. */}
@@ -4664,6 +4691,33 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           )}
           {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
         </div>
+        {/* PINNED guide status strip (owner request): Pause/Resume and the live
+            "what the screen is reading" line stay stuck to the top bar instead of
+            scrolling away. While a frame is in flight it blinks "Analyzing"; on the
+            reply it returns to the calm reading line with the detected element in
+            bold. Hidden at >=1240px where the right rail carries these controls. */}
+        {sess && !ended && (
+          <div className="wc-guidehead">
+            <div className="wc-gh-controls">
+              {watchLight
+                ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
+                : paused
+                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title="Resume guiding - watching and your minutes"><Play size={15} /> Resume</button>
+                  : watching
+                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title="Pause guiding - stop watching and freeze your minutes"><Square size={13} /> Pause</button>
+                    : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
+              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+              {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
+            </div>
+            {analyzing ? (
+              <div className="wc-ghstatus analyzing" aria-live="polite"><span className="wc-ana"><i /><i /><i /></span> Analyzing your screen…</div>
+            ) : offTrack ? (
+              <div className="wc-ghstatus wrong" role="alert"><AlertTriangle size={15} /><span><b>You are in the wrong place.</b> <RichText text={observation} /></span></div>
+            ) : watching ? (
+              <div className="wc-ghstatus live"><span className="pulse" /><Eye size={13} strokeWidth={2.4} /><span>Reading {source === 'screen' ? 'your screen' : 'the camera'}. <RichText text={observation} /></span></div>
+            ) : null}
+          </div>
+        )}
       </div></div>
       {/* SCROLL AREA: everything between the fixed header and the fixed Ask footer.
           MAXIMIZED (wide) layout: a centered, boxed stage at reading width with
@@ -4824,31 +4878,21 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         ) : !ended ? (
           // Post-plan, live: one status card. The step hero below is the main view.
           <>
-            <div className="wc-guidebar">
-              {/* #2 ONGOING control: once live, a distinct Pause; when paused, a
-                  highlighted, gently pulsing Resume. The watching state itself is
-                  shown by the header status chip, not by a toggle. The first web
-                  screen-share grant keeps its own Watch button (startWatching). */}
-              {watchLight
-                ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
-                : paused
-                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title="Resume guiding - watching and your minutes"><Play size={15} /> Resume</button>
-                  : watching
-                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title="Pause guiding - stop watching and freeze your minutes"><Square size={13} /> Pause</button>
-                    : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
-              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
-              {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
-              <span className="wc-sp" />
-              {/* Read my screen / Deep pass / Photo / Re-plan now live in the header
-                  Tools menu, so this row holds only Pause-Resume and the minutes. */}
-              {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%', lineHeight: 1.45 }}>{err}</div>}
-              {photoFrame && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
-                  <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
-                  <button className="wc-tbtn ghost" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
-                </div>
-              )}
-            </div>
+            {/* Pause/Resume, the minutes and the live reading line now live PINNED in
+                the header strip above (wc-guidehead) so they never scroll away. This
+                row carries only an error or a captured photo, and renders only when
+                there is something to show. */}
+            {(err || photoFrame) && (
+              <div className="wc-guidebar">
+                {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%', lineHeight: 1.45 }}>{err}</div>}
+                {photoFrame && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
+                    <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+                    <button className="wc-tbtn ghost" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
+                  </div>
+                )}
+              </div>
+            )}
             {/* PLAN-HEAVY MODE (watch-light, set by us for Premium): a calm,
                 informational strip - no toggle. It explains that the plan is
                 richer and not watched continuously, and carries the prominent
@@ -4902,16 +4946,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             : { display: 'none' }} />
         {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>Live camera. Aim it at what you need help with.</div>}
 
-        {/* #2 + #7 WRONG-PLACE ALERT: a prominent, bold amber alert shown ONLY on
-            a real mismatch (status==='wrong'). It carries the observation (e.g.
-            "on the Gmail landing page instead of the AWS console") and hides the
-            moment the screen is correct again. */}
-        {offTrack && (
-          <div className="wc-alert" role="alert">
-            <AlertTriangle size={17} />
-            <span><span className="wc-alert-k">You are in the wrong place</span><span className="wc-alert-t"><RichText text={observation} /></span></span>
-          </div>
-        )}
+        {/* The wrong-place signal and the live "reading your screen" line now live
+            PINNED in the header strip (wc-guidehead) so they are always visible,
+            not scrolled past. Flags still sit atop the scrolling content. */}
 
         {/* Flags/warnings sit at the TOP of the guiding content so you see them
             immediately. They clear automatically as soon as you move past them. */}
@@ -4925,9 +4962,6 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         )}
 
-        {/* Calm context: shown only when ON track (the prominent alert above owns
-            the wrong-place case), so the observation never reads as flat text. */}
-        {watching && !ended && !offTrack && <div className="wc-live"><Eye size={13} strokeWidth={2.4} /><span><span className="pulse" style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: 6 }} />Reading {source === 'screen' ? 'your screen' : 'the camera'} and updating as you go. <RichText text={observation} /></span></div>}
 
         {/* THE ONE current-step card (live). The hero carries everything for the
             step so it is never rendered a second time below: the live guidance
@@ -5334,7 +5368,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       {pipWin && createPortal(
         <FloatPanel
           steps={steps} watching={watching} observation={observation} guidance={guidance}
-          flags={flags} answer={answer} busy={busy} err={err}
+          flags={flags} answer={answer} busy={busy} analyzing={analyzing} err={err}
           done={done} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal}
           fontScale={{ scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax }}
           theme={floatTheme} onToggleTheme={() => setFloatTheme((t) => t === 'light' ? 'dark' : 'light')}
@@ -5358,7 +5392,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, err, done, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onClose }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, analyzing, err, done, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onClose }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
   // Dim the panel to cut glare over your work. The browser will not let a web
@@ -5477,6 +5511,23 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         <button className="fp-btn" style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
       </div>
 
+      {/* PINNED: Pause/Resume + the live reading/analyzing line stay above the
+          scroll so the control and "what the screen is reading" are always in
+          view (owner request; matched to the console). */}
+      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7, padding: '2px 0 0' }}>
+        {paused
+          ? <button className="fp-btn fp-pulse" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
+          : watching
+            ? <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
+            : <button className="fp-btn" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
+        {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
+        {analyzing
+          ? <div className="fp-blink" style={{ fontSize: fs(12.5), fontWeight: 650, color: c.cyan, display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><span className="fp-ana"><i /><i /><i /></span> Analyzing your screen…</div>
+          : watching
+            ? <div style={{ fontSize: fs(12.5), color: c.muted, display: 'flex', gap: 8, alignItems: 'flex-start', padding: '7px 10px', lineHeight: 1.45, background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><Eye size={13} strokeWidth={2.4} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>Reading your screen. <RichText text={observation} accent={c.cyan} /></span></div>
+            : null}
+      </div>
+
       {/* SCROLL REGION: everything between the fixed header and the fixed Ask
           footer scrolls here; the header and footer stay pinned. When WIDE, a
           plan mini-map rail sits on the left and the column is centered/boxed. */}
@@ -5496,22 +5547,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         </aside>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: wide ? 680 : undefined, margin: wide ? '0 auto' : undefined, ...(wide ? { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, padding: 14, boxShadow: c.shadow } : {}) }}>
-      {/* #2 ONGOING control: a distinct Pause while live; a highlighted, gently
-          pulsing Resume when paused; the first-time "Watch my screen" grant
-          otherwise. onPause (togglePause) keeps the server pause state in sync. */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-        {paused
-          ? <button className="fp-btn fp-pulse" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
-          : watching
-            ? <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
-            : <button className="fp-btn" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
-        {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
-      </div>
-
-      {/* OBSERVATION: calm cyan-tinted context chip - what the watcher can see */}
-      {watching && (
-        <div style={{ fontSize: fs(12.5), color: c.muted, display: 'flex', gap: 8, alignItems: 'flex-start', padding: '7px 10px', lineHeight: 1.45, background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><Eye size={13} strokeWidth={2.4} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>Reading your screen. <RichText text={observation} accent={c.cyan} /></span></div>
-      )}
+      {/* Pause/Resume and the live reading/analyzing line are now PINNED above the
+          scroll (see the block after the header), so they never scroll away. */}
 
       {/* Flags first: anything to be careful about sits above the action */}
       {flags.length > 0 && (

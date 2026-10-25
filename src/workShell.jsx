@@ -43,7 +43,7 @@ const BAR_H = 32
 const CSS = `
 /* ---------- surface ---------- */
 .wshell{position:fixed;top:0;left:0;right:0;height:${BAR_H}px;z-index:2147483000;
-  box-sizing:border-box;display:flex;align-items:stretch;
+  box-sizing:border-box;display:flex;align-items:stretch;overflow:hidden;
   font-family:"Segoe UI Variable Text","Segoe UI Variable","Segoe UI",system-ui,-apple-system,sans-serif;
   font-size:12px;line-height:1;color:#424242;
   background:#f0f2f5;
@@ -73,7 +73,7 @@ const CSS = `
 .wshell-spacer{flex:1 1 auto;min-width:6px}
 
 /* ---------- overlay toggles (Fluent subtle buttons) ---------- */
-.wshell-tools{display:flex;align-items:center;gap:2px;padding:0 6px 0 4px;-webkit-app-region:no-drag}
+.wshell-tools{display:flex;align-items:center;gap:2px;padding:0 6px 0 4px;flex-shrink:0;-webkit-app-region:no-drag}
 .wshell-tool{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;
   height:24px;padding:0 8px;margin:0;border:0;border-radius:4px;
   background:transparent;color:#424242;cursor:pointer;
@@ -137,8 +137,12 @@ const CSS = `
 .wshell-cap:focus-visible{box-shadow:inset 0 0 0 2px #0f6cbd}
 [data-theme='dark'] .wshell-cap:focus-visible{box-shadow:inset 0 0 0 2px #62abf5}
 
-/* ---------- compact (guide overlay, ~460px) ---------- */
-@media (max-width:640px){
+/* ---------- compact (guide overlay / narrow windows) ----------
+   Full labels need ~750px (brand + 5 fixed-width tools + caption buttons);
+   below that the labels drop so the toolbar can never overflow and overwrite
+   the brand. Tools keep their width (flex-shrink:0 above); the spacer and the
+   ellipsizing brand name give instead. */
+@media (max-width:760px){
   .wshell-brand{gap:7px;padding:0 6px 0 10px}
   .wshell-mode{padding:0 6px 0 5px;font-size:10px}
   .wshell-tlabel{display:none}
