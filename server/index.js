@@ -2240,21 +2240,28 @@ app.post('/api/work/coverage', wrap(async (req, res) => {
   if (question.length > 1200) return res.status(400).json({ error: 'Please keep it under about 1200 characters.' })
   const ip = String(req.headers['x-forwarded-for'] || req.ip || '').split(',')[0].trim()
   if (!coverageRateOk(ip)) return res.status(429).json({ error: 'A few too many checks just now - please try again in a little while.' })
-  // If a captured lead ran this check, record the first scenario on the lead so
-  // the superadmin Leads grid shows WHAT they wanted to validate. Done BEFORE the
-  // generic fallbacks so we capture it even when platform AI is off.
+  // Log EVERY query + the AI answer against the lead so the superadmin Leads grid
+  // shows exactly what each visitor searched and what we answered (newest first).
+  // Associated by leadId once captured, otherwise buffered under the browser's
+  // anon id and attached on capture. We log the answer TEXT only - never a model
+  // id or AI cost. Logged in every return path so it is captured even when
+  // platform AI is off or the call fails.
   const leadId = String((req.body && req.body.leadId) || '').trim()
-  if (leadId) { try { store.noteWorkLeadQuestion(leadId, question) } catch { /* non-fatal */ } }
+  const anonId = String((req.body && req.body.anonId) || '').trim()
+  const logSearch = (out) => { try { store.recordWorkLeadSearch({ leadId, anonId, query: question, response: out && out.answer }) } catch { /* non-fatal */ } }
   const generic = {
     verdict: 'covered', plan: null, product: 'WorkCoPilot', degraded: true,
     answer: 'WorkCoPilot guides you through almost any task on your screen, in any field, one exact step at a time, catching a wrong move and correcting it, and keeping you on the next correct step. Sign in and describe your task to see exactly how it is covered.',
   }
-  if (!store.getWorkPlatformAllowed()) return res.json(generic)
+  if (!store.getWorkPlatformAllowed()) { logSearch(generic); return res.json(generic) }
   const cfg = store.getActiveRuntime()
-  if (!cfg) return res.json(generic)
+  if (!cfg) { logSearch(generic); return res.json(generic) }
   try {
-    res.json(await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing() }))
+    const out = await work.workCoverage(ai, cfg, { question, pricing: store.getWorkPricing() })
+    logSearch(out)
+    res.json(out)
   } catch (e) {
+    logSearch(generic)
     res.json(generic)   // never show a public visitor an error; flagged degraded
   }
 }))
@@ -2275,7 +2282,7 @@ app.post('/api/work/leads', wrap((req, res) => {
   if (!coverageRateOk(ip)) return res.status(429).json({ error: 'Too many submissions just now - please try again shortly.' })
   const lead = store.addWorkLead({
     firstName: b.firstName, lastName: b.lastName, email, phone: b.phone, company: b.company, source: b.source,
-  }, { ip })
+  }, { ip, anonId: String(b.anonId || '').trim() })
   // Enterprise mailing: notify the business of the new lead, and thank the
   // person who submitted. Fire-and-forget - never block or fail the submission.
   const notify = store.getNotifySettings()

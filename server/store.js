@@ -1581,6 +1581,18 @@ export function listCompanies() {
 // so the superadmin Leads grid is an append-only log. Trimmed + length-capped;
 // never scrubbed (these are the contact details the visitor chose to share).
 const LEAD_CAP = (s, n) => String(s == null ? '' : s).trim().slice(0, n)
+// Every live-validation query + AI response is logged against the lead so the
+// superadmin sees exactly what each visitor searched and what we answered. Kept
+// newest-first and capped per lead. We store the response TEXT only - never a
+// model/provider id or any AI cost (hard rule) - and the query is already
+// scrubbed on the device (cleanAlways), so nothing extra is persisted here.
+const LEAD_SEARCH_CAP = 50
+// Searches that arrive BEFORE the lead is captured are buffered under the
+// browser's anon id and drained into the lead when they convert (capture). In
+// the real widget the lead gate runs first, so this is a defensive path; it is
+// in-memory (not persisted) and bounded so it can never grow without limit.
+const anonSearchBuffer = new Map()   // anonId -> [{ at, query, response }] (newest first)
+const pushCapped = (arr, entry, cap) => { arr.unshift(entry); if (arr.length > cap) arr.length = cap; return arr }
 export function addWorkLead({ firstName, lastName, email, phone, company, source } = {}, meta = {}) {
   const rec = {
     id: 'ld' + id(),
@@ -1590,24 +1602,47 @@ export function addWorkLead({ firstName, lastName, email, phone, company, source
     phone: LEAD_CAP(phone, 40),
     company: LEAD_CAP(company, 140),
     source: LEAD_CAP(source || 'site', 24),
-    scenario: '',                 // filled when they run their first live check (noteWorkLeadQuestion)
+    scenario: '',                 // legacy summary column; new captures use searches[] (single source of truth)
+    searches: [],                 // [{ at, query, response }] newest-first, via recordWorkLeadSearch
     ip: LEAD_CAP(meta.ip, 60),
     createdAt: now(),
   }
   if (!rec.firstName || !rec.email) throw httpErr(400, 'Name and email are required.')
+  // Pull in anything they validated before capturing (defensive; see above).
+  const anonKey = LEAD_CAP(meta.anonId, 80)
+  if (anonKey && anonSearchBuffer.has(anonKey)) {
+    rec.searches = anonSearchBuffer.get(anonKey).slice(0, LEAD_SEARCH_CAP)
+    anonSearchBuffer.delete(anonKey)
+  }
   if (!db.leads) db.leads = []
   db.leads.push(rec)
   persistSoon()                   // a lead is low-stakes; batch the write
   return { id: rec.id }
 }
-// Attach the first scenario the lead asked about (best-effort; keeps the grid
-// useful without a second form). Silent no-op if the lead id is unknown.
-export function noteWorkLeadQuestion(leadId, scenario) {
-  if (!leadId) return
-  const l = (db.leads || []).find((x) => x.id === leadId)
-  if (!l || l.scenario) return    // keep the FIRST scenario only
-  l.scenario = LEAD_CAP(scenario, 400)
-  persistSoon()
+// Log one live-validation query + AI response against the lead (newest first,
+// capped). Associates by leadId when the visitor has been captured; otherwise
+// buffers under the anon id until they convert. Silent no-op when neither the
+// lead nor an anon id is known. Response is the answer TEXT only (no model id).
+export function recordWorkLeadSearch({ leadId, anonId, query, response } = {}) {
+  const q = LEAD_CAP(query, 1200)
+  if (!q) return
+  const entry = { at: now(), query: q, response: LEAD_CAP(response, 4000) }
+  const l = leadId ? (db.leads || []).find((x) => x.id === leadId) : null
+  if (l) {
+    if (!Array.isArray(l.searches)) l.searches = []
+    pushCapped(l.searches, entry, LEAD_SEARCH_CAP)
+    persistSoon()
+    return
+  }
+  const key = LEAD_CAP(anonId, 80)
+  if (!key) return
+  const buf = anonSearchBuffer.get(key) || []
+  pushCapped(buf, entry, LEAD_SEARCH_CAP)
+  anonSearchBuffer.set(key, buf)
+  if (anonSearchBuffer.size > 500) {   // evict oldest-inserted key to stay bounded
+    const first = anonSearchBuffer.keys().next().value
+    if (first !== undefined) anonSearchBuffer.delete(first)
+  }
 }
 export function listWorkLeads({ limit = 1000 } = {}) {
   return (db.leads || []).slice()

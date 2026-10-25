@@ -245,52 +245,64 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* FOR COMPANIES & TEAMS - the killer, up top */}
+      {/* FOR COMPANIES & TEAMS - the ROI promise, up top.
+          REDESIGN (owner, 2026-10-25): the old 4-stat row + 6-card grid read as a
+          generic feature grid and mixed product mechanics ("read-only") into ROI
+          "stats". Now: an editorial head (promise left, the money sentence right)
+          and ONE focal "ledger": the same six budget lines a decision-maker pays
+          for, each shown Before -> With WorkCoPilot. Qualitative outcomes only,
+          no invented numbers (owner rule); "weeks -> days" is the one approved
+          relative shape. The read-only property survives as the footnote. */}
       <section className="wm-sec wm-roi" id="roi">
         <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies & teams</div>
-          <h2 className="wm-h2" data-reveal>Do more, with the team you already have.</h2>
-          <p className="wm-sub" data-reveal>Lean teams take on the toughest projects and ship like specialists. Faster, secure, documented, in-house.</p>
-          {/* Qualitative outcomes only - no invented metrics (owner rule). The
-              properties below are true of the product: read-only, documented,
-              in-house, and a relative "weeks to days" shape. */}
-          <div className="wm-roi-stats" data-reveal>
-            <div className="wm-roi-stat"><b>Weeks&nbsp;&rarr;&nbsp;days</b><span>to done</span></div>
-            <div className="wm-roi-stat"><b>In-house</b><span>not outsourced</span></div>
-            <div className="wm-roi-stat"><b>Read-only</b><span>never clicks or runs</span></div>
-            <div className="wm-roi-stat"><b>Documented</b><span>every step</span></div>
+          <div className="wm-roi-head">
+            <div>
+              <div className="wm-eyebrow" data-reveal><Rocket size={14} /> For companies &amp; teams</div>
+              <h2 className="wm-h2" data-reveal>Do more, with the team you already have.</h2>
+            </div>
+            <p className="wm-roi-lead" data-reveal><b>Same payroll, more output.</b> WorkCoPilot turns the people you already have into the specialists you were about to hire or outsource: guided through the hard work step by step, in the apps they already use, with every step documented as it happens. No new headcount. No rip-and-replace.</p>
           </div>
-          <div className="wm-roi-grid">
-            <WorkCard theme="light" delay={0} texPos="0% 0%">
-              <WorkCard.Proof><span className="cb-chip">migrations</span><span className="cb-chip">hardening</span><span className="cb-chip">pentests</span><span className="cb-chip">builds</span></WorkCard.Proof>
-              <WorkCard.Head icon={Layers} title="Toughest projects, in-house" />
-              <WorkCard.Body>Your team delivers specialist work the first time. No new hires.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" tone="cyan" delay={70} texPos="100% 0%">
-              <WorkCard.Proof><b>weeks</b> <span className="cb-arrow">&rarr;</span> <b>days</b> <span className="cb-dim">to market</span></WorkCard.Proof>
-              <WorkCard.Head icon={Zap} title="Faster to market" />
-              <WorkCard.Body>Pending work clears faster, and you ship weeks sooner.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" tone="amber" delay={140} texPos="50% 100%">
-              <WorkCard.Proof><span className="cb-dim">any</span> <span className="cb-chip">framework</span><span className="cb-chip">platform</span><span className="cb-chip">tool</span></WorkCard.Proof>
-              <WorkCard.Head icon={Rocket} title="Adopt new tech and tools" />
-              <WorkCard.Body>Stand up any new framework, platform or tool correctly, the first time.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" delay={0} texPos="0% 100%">
-              <WorkCard.Proof>least privilege <span className="cb-arrow">&middot;</span> no secrets <span className="cb-arrow">&middot;</span> validated <span className="cb-arrow">&middot;</span> <b>safe by default</b></WorkCard.Proof>
-              <WorkCard.Head icon={ShieldCheck} title="Security-first in every answer" />
-              <WorkCard.Body>Every step, command, snippet and fix is written the secure way: least privilege, no hardcoded secrets, validated input, current versions, and checked for the common risks before you run it. Like a security architect, secure developer and pentester on the keys.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" tone="cyan" delay={70} texPos="100% 100%">
-              <WorkCard.Proof>every step <span className="cb-arrow">&rarr;</span> <b>write-up</b> + <b>audit log</b></WorkCard.Proof>
-              <WorkCard.Head icon={FileText} title="Everything documented" />
-              <WorkCard.Body>Every change, config and pentest ends with a write-up and a per-session audit log: what was sent, what was read from your screen, the SAST and live dependency checks run on any code, what was filtered, and every flag raised.</WorkCard.Body>
-            </WorkCard>
-            <WorkCard theme="light" tone="violet" delay={140} texPos="50% 0%">
-              <WorkCard.Proof><span className="cb-dim">contractors &middot; consultants &middot; partners</span> <span className="cb-arrow">&rarr;</span> <b>in-house</b></WorkCard.Proof>
-              <WorkCard.Head icon={Gauge} title="Kill contractor & partner spend" />
-              <WorkCard.Body>Contractors, consultants and implementation partners, brought in-house, with the quality kept.</WorkCard.Body>
-            </WorkCard>
+
+          <div className="wm-ledger" data-reveal aria-label="What changes for your team">
+            <div className="wm-ledger-top">
+              <span>Same team &middot; same payroll</span>
+              <span className="wm-ledger-live"><i /> what changes</span>
+            </div>
+            <div className="wm-ledger-cols" aria-hidden="true">
+              <span />
+              <span>Before</span>
+              <span className="now">With WorkCoPilot</span>
+            </div>
+            {[
+              ['01', 'Specialist projects', 'Migrations, hardening, pentests, builds: sent to contractors or an implementation partner.', <>Delivered by <em>your own people</em>, step by step, the first time.</>],
+              ['02', 'Time to ship', 'Work queues behind the one person who knows how.', <>Anyone on the team can take the next step. <em>Weeks become days.</em></>],
+              ['03', 'Consultants and partners', 'A statement of work for every new platform, framework or tool.', <>Your team stands it up correctly, and the know-how <em>stays in-house</em>.</>],
+              ['04', 'Onboarding', 'Months of shadowing before a new hire is trusted on real work.', <>Guided through real tasks from their <em>first task</em>, in your apps and your way of working.</>],
+              ['05', 'Mistakes', 'Found in review, in production, or by the auditor.', <>A wrong turn is <em>caught on screen</em> and corrected as it happens.</>],
+              ['06', 'Documentation', 'Written up later, if at all.', <>Every step written up and logged as it happens. <em>Audit-ready</em> when you finish.</>],
+            ].map(([k, t, before, now], i) => (
+              <div className="wm-ledger-row" key={k} data-reveal style={{ transitionDelay: `${80 + i * 70}ms` }}>
+                <span className="wm-ledger-k">{k}</span>
+                <div className="wm-ledger-before">
+                  <span className="wm-ledger-tag">Before</span>
+                  <b>{t}</b>
+                  <p>{before}</p>
+                </div>
+                <div className="wm-ledger-now">
+                  <span className="wm-ledger-tag now">With WorkCoPilot</span>
+                  <Check size={16} strokeWidth={2.6} aria-hidden="true" />
+                  <p>{now}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="wm-roi-foot" data-reveal>
+            <p className="wm-roi-note"><Lock size={14} /> Read-only by design: it guides your people and never clicks, types or runs anything for them.</p>
+            <div className="wm-roi-ctas">
+              <a className="wm-cta" href="/workcopilot/contact">Talk about your team <ArrowRight size={16} /></a>
+              <a className="wm-cta ghost" href="#enterprise">See the enterprise controls <ArrowRight size={15} /></a>
+            </div>
           </div>
         </div>
       </section>
@@ -484,18 +496,12 @@ export default function WorkMarketing() {
           <p className="wm-sub" data-reveal>Everything in Premium, plus the controls, provisioning and assurances a company needs to roll WorkCoPilot out across its people, with your data staying on your terms.</p>
           <div className="wm-ent-grid" data-reveal>
             {[
-              [Building2, 'Unlimited seats and tasks', 'One central admin console for the whole company.'],
-              [Lock, 'SSO and invite-only provisioning', 'Sign in through your identity provider (OIDC, 14 providers). Type a company email and it routes you to your single sign-on automatically.'],
-              [ShieldCheck, 'One locked company data policy', 'Set it once, and every member inherits it.'],
-              [Server, 'Per-company AI keys, or bring your own', 'Your keys, your control. Nothing is shared.'],
-              [ScanEye, 'On-device PII and PHI redaction', 'Armed and locked, enforced for everyone.'],
-              [AlertTriangle, 'Security alerts, relayed to your SOC', 'Who, where and what kind when a member enters sensitive data; into Splunk, Sentinel, Slack and more. Never the values.'],
-              [Layers, 'Company knowledge and skills', 'Your playbooks and SOPs guide your people. Private to you, never used to train the platform.'],
-              [ListChecks, 'Compliance evidence, 18 frameworks', 'Sealed per-task evidence reports and Big-4-grade session reports with scrubbed-screenshot evidence.'],
-              [Gauge, 'Executive ROI dashboard and white-label', 'A productivity view for leaders, with your brand on the product.'],
-              [FileText, 'Full audit log and compliance reports', 'Per-session evidence, ready for review.'],
-              [Scale, 'A DPA and a dedicated contact', 'A named owner for your rollout.'],
-              [Blocks, 'On-prem deployment, on request', 'Options to run it inside your own walls.'],
+              [Layers, 'Your people, working the way your company works', 'Your SOPs, playbooks and app guides shape every on-screen step, so new hires ramp faster and veterans stop guessing. Private to your company, never used to train the platform.'],
+              [Gauge, 'ROI your leaders can see', 'A productivity view for leadership: tasks completed, time spent, and an illustrative view of time and cost saved, with your brand on the product your people use.'],
+              [ShieldCheck, 'Fewer mistakes, nothing sensitive leaks', 'A wrong turn is caught as it happens, and PII and PHI are redacted on the device under one company policy you set once. Your SOC hears who and what kind, never the values.'],
+              [ListChecks, 'Audit-ready, without the scramble', 'Sealed per-task evidence mapped to 18 frameworks, a full per-session audit log, and a DPA your legal team can sign. Evidence that supports your program.'],
+              [Lock, 'Live across your company, no project plan', 'Unlimited seats, one central admin console, and sign-in through your own identity provider (OIDC, 14 providers) with invite-only provisioning. Your people start in the apps they already know.'],
+              [Server, 'Runs on your terms', 'Per-company AI keys or bring your own, and on-prem deployment on request. Your keys, your control, nothing shared.'],
             ].map(([Ic, t, d]) => (
               <div className="wm-ent-card" key={t}>
                 <span className="wm-ent-ic"><Ic size={18} /></span>
@@ -1704,7 +1710,7 @@ const CSS = `
 /* Card grid of enterprise controls - matches the site's card sections (white
    panel, light hairline, soft shadow, green/blue accent tile). The centered
    header uses the shared .wm-eyebrow/.wm-h2/.wm-sub like every other section. */
-.wm-ent-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin:4px 0 0}
+.wm-ent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:4px 0 0}
 .wm-ent-card{background:var(--panel,#fff);border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:left;
   box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -28px rgba(17,23,38,.22);transition:transform .18s ease,border-color .2s ease,box-shadow .2s ease}
 .wm-ent-card:hover{transform:translateY(-3px);border-color:rgba(10,134,207,.35);box-shadow:0 1px 2px rgba(17,23,38,.05),0 26px 52px -30px rgba(10,134,207,.34)}
@@ -1712,12 +1718,12 @@ const CSS = `
 .wm-ent-card b{display:block;color:var(--ink-brand,#062a22);font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
 .wm-ent-card i{display:block;font-style:normal;color:var(--mut);font-size:13.5px;line-height:1.5;margin-top:5px}
 .wm-ent-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:34px}
-.wm-ent-cta .wm-cta.ghost{background:#fff;color:var(--ink-brand,#062a22);border:1px solid var(--line);box-shadow:0 1px 2px rgba(6,42,34,.05)}
-.wm-ent-cta .wm-cta.ghost:hover{border-color:var(--em2);color:var(--em2);transform:translateY(-2px)}
+.wm-ent-cta .wm-cta.ghost,.wm-roi-ctas .wm-cta.ghost{background:#fff;color:var(--ink-brand,#062a22);border:1px solid var(--line);box-shadow:0 1px 2px rgba(6,42,34,.05)}
+.wm-ent-cta .wm-cta.ghost:hover,.wm-roi-ctas .wm-cta.ghost:hover{border-color:var(--em2);color:var(--em2);transform:translateY(-2px)}
 .wm-ent-strip{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:20px}
 .wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#07784f;background:rgba(10,157,102,.08);border:1px solid rgba(10,157,102,.22);border-radius:999px;padding:6px 13px}
 @media(max-width:980px){.wm-ent-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.wm-ent-grid{grid-template-columns:1fr}.wm-ent-cta{width:100%}.wm-ent-cta .wm-cta{flex:1;min-width:0}}
+@media(max-width:560px){.wm-ent-grid{grid-template-columns:1fr}.wm-ent-cta{width:100%;flex-direction:column;align-items:stretch}.wm-ent-cta .wm-cta{width:100%;justify-content:center}}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}
@@ -1767,19 +1773,57 @@ const CSS = `
    stat numeral. Words never break mid-word ("In-\nhouse"): keep-all + no
    hyphens; they wrap only at a space. Cards share one balanced height and the
    same radius/shadow family as the feature cards below them. */
-.wm-roi-stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin:6px 0 30px}
-.wm-roi-stat{display:flex;flex-direction:column;justify-content:center;gap:5px;min-height:92px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px 18px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22);transition:border-color .2s,transform .15s}
-.wm-roi-stat:hover{border-color:rgba(10,157,102,.4);transform:translateY(-2px)}
-.wm-roi-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(17px,1.55vw,21px);letter-spacing:-.015em;line-height:1.15;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;word-break:keep-all;overflow-wrap:normal;hyphens:none;text-wrap:balance}
-.wm-roi-stat span{display:block;color:var(--mut);font-size:13px;line-height:1.4}
-.wm-roi-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.wm-roi-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22);transition:border-color .2s,transform .15s}
-.wm-roi-card:hover{border-color:rgba(10,157,102,.4);transform:translateY(-2px)}
-.wm-roi-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
-.wm-roi-card h3{font-family:"Bricolage Grotesque",sans-serif;font-size:18px;margin:0 0 8px}
-.wm-roi-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
-@media(max-width:900px){.wm-roi-stats{grid-template-columns:1fr 1fr}.wm-roi-stat b{font-size:19px}.wm-roi-grid{grid-template-columns:1fr}}
-@media(max-width:480px){.wm-roi-stats{grid-template-columns:1fr;gap:10px}.wm-roi-stat{min-height:0;padding:14px 16px}}
+/* ROI band: editorial head (promise left, money sentence right) + ONE focal
+   dark "ledger" (Before -> With WorkCoPilot). The ledger is deliberately dark on
+   the light page, like the product screens: it is the one thing the eye lands on. */
+.wm-roi-head{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:22px 56px;align-items:end;margin-bottom:30px}
+.wm-roi .wm-h2{text-align:left;margin:0;max-width:14ch;font-size:clamp(34px,5.2vw,62px);line-height:1}
+.wm-roi .wm-eyebrow{margin-bottom:16px}
+.wm-roi-lead{margin:0 0 6px;color:var(--tx);font-size:17.5px;line-height:1.55;font-weight:450;text-wrap:pretty}
+.wm-roi-lead b{color:var(--ink-brand,#062a22);font-weight:800}
+.wm-ledger{--lk-bg:#0c1222;--lk-tx:#eef1f8;--lk-mut:#97a2b6;--lk-line:rgba(255,255,255,.11);--lk-em:#8cf5c4;--lk-cy:#5bd0ff;
+  position:relative;overflow:hidden;border-radius:26px;background:var(--lk-bg);color:var(--lk-tx);padding:26px 34px 22px;border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 1px 2px rgba(12,18,34,.2),0 40px 90px -46px rgba(12,18,34,.75),0 0 0 1px rgba(14,159,110,.08)}
+.wm-ledger::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--lk-em),var(--lk-cy) 55%,#f26a43);z-index:2}
+.wm-ledger::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(640px 260px at 100% 0%,rgba(140,245,196,.14),transparent 62%),radial-gradient(560px 260px at 0% 100%,rgba(91,208,255,.10),transparent 62%),
+  repeating-linear-gradient(0deg,transparent 0 23px,rgba(255,255,255,.025) 23px 24px)}
+.wm-ledger>*{position:relative;z-index:1}
+.wm-ledger-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--lk-mut)}
+.wm-ledger-live{display:inline-flex;align-items:center;gap:8px;color:var(--lk-em)}
+.wm-ledger-live i{width:8px;height:8px;border-radius:50%;background:var(--lk-em);box-shadow:0 0 0 0 rgba(140,245,196,.6);animation:wm-ledger-pulse 2.2s ease-out infinite}
+@keyframes wm-ledger-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.55)}70%{box-shadow:0 0 0 9px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}
+.wm-ledger-cols,.wm-ledger-row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.18fr);gap:0 28px;align-items:start}
+.wm-ledger-cols{padding:0 0 10px;border-bottom:1px solid var(--lk-line);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--lk-mut)}
+.wm-ledger-cols .now{color:var(--lk-em)}
+.wm-ledger-row{padding:17px 0;border-bottom:1px dashed var(--lk-line);transition:background .2s}
+.wm-ledger-row:last-of-type{border-bottom:0}
+.wm-ledger-row:hover{background:linear-gradient(90deg,transparent,rgba(140,245,196,.045) 45%,transparent)}
+.wm-ledger-k{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--lk-cy);padding-top:3px}
+.wm-ledger-before b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.25;color:var(--lk-tx);margin-bottom:4px}
+.wm-ledger-before p{margin:0;color:var(--lk-mut);font-size:14px;line-height:1.5}
+.wm-ledger-now{position:relative;padding-left:30px}
+.wm-ledger-now svg{position:absolute;left:0;top:3px;color:#062a22;background:var(--lk-em);border-radius:50%;padding:2px;width:20px;height:20px}
+.wm-ledger-now p{margin:0;font-size:15.5px;line-height:1.5;color:var(--lk-tx);font-weight:500}
+.wm-ledger-now em{font-style:normal;color:var(--lk-em);font-weight:800}
+.wm-ledger-tag{display:none}
+.wm-roi-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;margin-top:24px}
+.wm-roi-note{display:inline-flex;align-items:center;gap:8px;margin:0;color:var(--mut);font-size:13.5px;line-height:1.4}
+.wm-roi-note svg{color:var(--em);flex:none}
+.wm-roi-ctas{display:flex;gap:12px;flex-wrap:wrap}
+@media(max-width:900px){
+  .wm-roi-head{grid-template-columns:1fr;gap:14px;align-items:start}.wm-roi .wm-h2{max-width:none}
+  .wm-ledger{padding:20px 18px 14px;border-radius:20px}
+  .wm-ledger-cols{display:none}
+  .wm-ledger-row{grid-template-columns:1fr;gap:10px;padding:16px 0}.wm-ledger-k{display:none}
+  .wm-ledger-tag{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--lk-mut);margin-bottom:6px}
+  .wm-ledger-tag.now{color:var(--lk-em)}
+  .wm-ledger-now{padding-left:0}.wm-ledger-now svg{position:static;display:inline-block;vertical-align:-4px;margin-right:8px}
+  .wm-ledger-now p{display:inline}
+  .wm-roi-foot{flex-direction:column;align-items:stretch}
+}
+@media(max-width:560px){.wm-roi-ctas{flex-direction:column}.wm-roi-ctas .wm-cta{justify-content:center}}
+@media(prefers-reduced-motion:reduce){.wm-ledger-live i{animation:none}}
 /* FIELDS WE COVER - 56 fields in 10 family cards. A compact 3-up stat row,
    then a dense 4-column grid where the two biggest families span two columns
    so the roster reads as one considered composition, not ten equal boxes.

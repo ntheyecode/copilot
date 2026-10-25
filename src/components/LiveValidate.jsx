@@ -43,6 +43,16 @@ const isInApp = () => {
 const LEAD_KEY = 'wc_lv_lead_v1'   // once-per-session gate; bump suffix to re-ask
 const loadLead = () => { try { const r = sessionStorage.getItem(LEAD_KEY); return r ? JSON.parse(r) : null } catch { return null } }
 const saveLead = (l) => { try { sessionStorage.setItem(LEAD_KEY, JSON.stringify(l)) } catch { /* private window: live without it */ } }
+// A stable per-browser id sent with the lead form AND each live check, so the
+// server can attach searches to the lead even when they arrive before capture.
+const ANON_KEY = 'wc_lv_anon_v1'
+const anonId = (() => {
+  try {
+    let a = sessionStorage.getItem(ANON_KEY)
+    if (!a) { a = 'a' + Math.random().toString(36).slice(2) + Date.now().toString(36); sessionStorage.setItem(ANON_KEY, a) }
+    return a
+  } catch { return '' }   // private window: live without it (leadId still associates)
+})()
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
 
 // Render light markdown emphasis in the answer: **bold** and `code`, so the
@@ -149,7 +159,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     try {
       const r = await fetch('/api/work/leads', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...v, source }),
+        body: JSON.stringify({ ...v, source, anonId }),
       })
       const data = await r.json().catch(() => ({}))
       if (!r.ok) { setFtop(r.status >= 500 ? 'WorkCoPilot is busy, please try again in a moment.' : (data.error || 'Could not save that - please try again.')); return }
@@ -166,7 +176,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     try {
       const r = await fetch('/api/work/coverage', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: cleanAlways(question), leadId: lead && lead.id ? lead.id : undefined }),
+        body: JSON.stringify({ question: cleanAlways(question), leadId: lead && lead.id ? lead.id : undefined, anonId }),
       })
       const data = await r.json()
       if (!r.ok) { setErr(r.status >= 500 ? 'WorkCoPilot is busy, please try again in a moment.' : (data.error || 'Please try again.')) }

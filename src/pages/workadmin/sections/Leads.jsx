@@ -3,7 +3,7 @@
 // from, the first scenario the visitor validated, and the date/time. Superadmin
 // only (gated server-side). Searchable + CSV export.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, RefreshCw, Download, Trash2 } from 'lucide-react'
+import { Search, RefreshCw, Download, Trash2, ChevronRight, ChevronDown, Bot } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
@@ -14,12 +14,22 @@ function sourceBadge(s) {
   return <span className={`wka-badge ${k === 'marketing' ? 'active' : k === 'login' ? 'paused' : ''}`}>{label}</span>
 }
 
+// Every live-validation query + AI answer, newest first. New captures carry a
+// searches[] log; older leads only have the single legacy `scenario` string, so
+// present that as a one-entry log (no stored answer) - one display path for both.
+function leadSearches(l) {
+  if (Array.isArray(l.searches) && l.searches.length) return l.searches
+  if (l.scenario) return [{ at: l.createdAt, query: l.scenario, response: '' }]
+  return []
+}
+
 function toCsv(rows) {
   const head = ['First name', 'Last name', 'Email', 'Phone', 'Company', 'Source', 'Scenario', 'Captured']
   const esc = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
   const lines = [head.join(',')]
   for (const r of rows) {
-    lines.push([r.firstName, r.lastName, r.email, r.phone, r.company, r.source, r.scenario, r.createdAt].map(esc).join(','))
+    const latest = (leadSearches(r)[0] || {}).query || ''
+    lines.push([r.firstName, r.lastName, r.email, r.phone, r.company, r.source, latest, r.createdAt].map(esc).join(','))
   }
   return lines.join('\n')
 }
@@ -31,6 +41,8 @@ export default function Leads() {
   const [modal, setModal] = useState(null)   // { type: 'one'|'all', row }
   const [mBusy, setMBusy] = useState(false)
   const [mErr, setMErr] = useState(null)
+  const [open, setOpen] = useState(() => new Set())   // lead ids with their search log expanded
+  const toggle = (id) => setOpen((prev) => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n })
 
   const load = useCallback(async (isRefresh) => {
     if (isRefresh) setRefreshing(true); else setState((s) => ({ ...s, loading: true, error: null }))
@@ -63,7 +75,7 @@ export default function Leads() {
       (l.email || '').toLowerCase().includes(q) ||
       (l.company || '').toLowerCase().includes(q) ||
       (l.phone || '').toLowerCase().includes(q) ||
-      (l.scenario || '').toLowerCase().includes(q))
+      leadSearches(l).some((s) => (s.query || '').toLowerCase().includes(q)))
   }, [state.leads, query])
 
   const exportCsv = () => {
@@ -114,30 +126,66 @@ export default function Leads() {
                 <th className="no-sort">Phone</th>
                 <th className="no-sort">Company</th>
                 <th className="no-sort">From</th>
-                <th className="no-sort">Scenario validated</th>
+                <th className="no-sort">Validated (what they searched)</th>
                 <th className="no-sort">Captured</th>
                 <th className="no-sort"></th>
               </tr>
             </thead>
             <tbody>
-              {rows.map((l) => (
-                <tr key={l.id}>
-                  <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{`${l.firstName || ''} ${l.lastName || ''}`.trim() || '-'}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}><a href={`mailto:${l.email}`} style={{ color: 'var(--wka-cyan)' }}>{l.email}</a></td>
-                  <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{l.phone || '-'}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{l.company || '-'}</td>
-                  <td>{sourceBadge(l.source)}</td>
-                  <td style={{ maxWidth: 320 }}>
-                    <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={l.scenario || ''}>
-                      {l.scenario || <span style={{ color: 'var(--wka-faint)' }}>None yet</span>}
-                    </div>
-                  </td>
-                  <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(l.createdAt)}</td>
-                  <td style={{ textAlign: 'right' }}>
-                    <button type="button" className="wka-btn sm ghost" title="Delete lead" style={{ color: '#d6433b' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
-                  </td>
-                </tr>
-              ))}
+              {rows.map((l) => {
+                const searches = leadSearches(l)
+                const latest = searches[0]
+                const isOpen = open.has(l.id)
+                const more = searches.length
+                return (
+                  <React.Fragment key={l.id}>
+                    <tr>
+                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{`${l.firstName || ''} ${l.lastName || ''}`.trim() || '-'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}><a href={`mailto:${l.email}`} style={{ color: 'var(--wka-cyan)' }}>{l.email}</a></td>
+                      <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{l.phone || '-'}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{l.company || '-'}</td>
+                      <td>{sourceBadge(l.source)}</td>
+                      <td style={{ maxWidth: 340 }}>
+                        {more === 0 ? (
+                          <span style={{ color: 'var(--wka-faint)' }}>None yet</span>
+                        ) : (
+                          <button type="button" onClick={() => toggle(l.id)}
+                            style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', textAlign: 'left' }}
+                            title={isOpen ? 'Hide searches' : 'Show all searches and answers'}>
+                            {isOpen ? <ChevronDown size={14} style={{ flex: '0 0 auto', color: 'var(--wka-cyan)' }} /> : <ChevronRight size={14} style={{ flex: '0 0 auto', color: 'var(--wka-cyan)' }} />}
+                            <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{latest.query}</span>
+                            {more > 1 ? <span className="wka-badge" style={{ flex: '0 0 auto' }}>{more}</span> : null}
+                          </button>
+                        )}
+                      </td>
+                      <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(l.createdAt)}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button type="button" className="wka-btn sm ghost" title="Delete lead" style={{ color: '#d6433b' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
+                      </td>
+                    </tr>
+                    {isOpen && more > 0 ? (
+                      <tr>
+                        <td colSpan={8} style={{ background: 'var(--wka-panel-2, rgba(0,0,0,0.12))', padding: '4px 14px 14px' }}>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 900 }}>
+                            {searches.map((s, i) => (
+                              <div key={i} style={{ border: '1px solid var(--wka-border, rgba(255,255,255,0.08))', borderRadius: 8, padding: '10px 12px' }}>
+                                <div style={{ fontSize: 11, color: 'var(--wka-faint)', marginBottom: 6 }}>{fmtDateTime(s.at)}</div>
+                                <div style={{ fontWeight: 600, marginBottom: s.response ? 8 : 0, overflowWrap: 'anywhere' }}>{s.query}</div>
+                                {s.response ? (
+                                  <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', color: 'var(--wka-faint)', fontSize: 13, lineHeight: 1.5, overflowWrap: 'anywhere' }}>
+                                    <Bot size={14} style={{ flex: '0 0 auto', marginTop: 3, color: 'var(--wka-cyan)' }} />
+                                    <div style={{ whiteSpace: 'pre-wrap' }}>{s.response}</div>
+                                  </div>
+                                ) : null}
+                              </div>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </React.Fragment>
+                )
+              })}
             </tbody>
           </table>
         </div>

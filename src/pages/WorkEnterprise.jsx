@@ -273,6 +273,7 @@ export default function WorkEnterprise() {
           <Feature icon={Scale} title="Retention windows">Set how long session records and documents are kept. Expiry is automatic and visible.</Feature>
           <Feature icon={Users} title="Member oversight">Company admins can pull the report and audit log of any member session, completed or in progress.</Feature>
           <Feature icon={History} title="Accountable destructive actions">Deleting, disabling or clearing anything requires a reason, recorded with who, what, when and why.</Feature>
+          <Feature icon={KeyRound} title="Per-company AI keys, or bring your own">Route your company through its own keys, or bring your own. Your keys, your control, and nothing is shared across companies.</Feature>
         </Group>
 
         <Group id="alerts" kicker="Security alerts" title="Know the moment a member enters sensitive data."
@@ -311,6 +312,7 @@ export default function WorkEnterprise() {
           lead="An executive view of productivity, your brand on the product, and billing that matches how companies buy.">
           <Feature icon={BarChart3} title="Executive ROI dashboard">An executive role with a productivity dashboard: tasks, time, and an illustrative view of time and cost saved, exportable to PDF, image and CSV.</Feature>
           <Feature icon={Palette} title="White-label branding">Your company name and logo on the product your people use.</Feature>
+          <Feature icon={Building2} title="Unlimited seats, one admin console">Unlimited seats and tasks across your company, managed from one central admin console for the whole organization.</Feature>
           <Feature icon={Receipt} title="Per-company pricing, seat pools, statements and invoices">Separate user and admin seat pools, a company minute pool, pricing set for your company, and billing statements with downloadable invoices.</Feature>
         </Group>
 
