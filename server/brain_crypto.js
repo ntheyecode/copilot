@@ -25,6 +25,8 @@
 // Reuses Node's built-in `crypto` only (zero native deps).
 
 import crypto from 'node:crypto'
+import { deriveKey, randomSalt, KDF } from './key_derive.js'
+import { encodeMnemonic, decodeMnemonic } from './recovery_phrase.js'
 
 // 'enc:v1:' - the SAME wrap format store.js uses for its secrets. Keeping this byte-for-byte
 // identical is what makes a wrappedDek produced here decryptable by store's decSecret and
@@ -273,3 +275,103 @@ export function rotateTenantDek(companyId, wrappedDek) {
   cachePut(companyId, { dek: newDek, wrappedDek: newWrapped, dekId: newDekId })
   return { wrappedDek: newWrapped, dekId: newDekId, reEncrypt }
 }
+
+// ===========================================================================
+// CUSTOMER-HELD KEY CUSTODY (company tenants)
+// ---------------------------------------------------------------------------
+// Overrides the platform-held model for a company that opts in. A Customer Master
+// Key (CMK) - which the platform NEVER stores - wraps the per-tenant DEK instead of
+// the platform KEK. The customer holds the CMK via a passphrase + a 24-word recovery
+// phrase. seal/open and the DEK are UNCHANGED; only the DEK WRAP is re-parented.
+//
+// Honest ceiling: this gives AT-REST zero-access (nothing on disk opens without the
+// customer secret). On a running, unlocked managed instance the DEK is resident in
+// memory for the unlock window, so runtime zero-access is NOT absolute when we operate
+// the box - that is only literally true on-prem. Never market the managed model as
+// "zero-knowledge".
+// ===========================================================================
+const b64 = (buf) => buf.toString('base64')
+const unb64 = (s) => Buffer.from(String(s || ''), 'base64')
+
+// Put a DEK directly into the resident cache (the "unlocked" state for customer custody).
+function putDek(companyId, dek, wrappedDek) {
+  const entry = { dek, wrappedDek: wrappedDek || null, dekId: dekIdOf(dek) }
+  cachePut(companyId, entry)
+  return entry
+}
+
+/**
+ * enableCustomerCustody(companyId, { passphrase, platformWrappedDek? })
+ *   -> { recoveryPhrase, salt, wrapPass, wrappedDek, dekId, kdf }
+ * Mints a CMK + its 24-word recovery phrase; derives a key from the passphrase (scrypt +
+ * random salt) and wraps the CMK under it (wrapPass); re-parents the tenant's EXISTING DEK
+ * (unwrapped from platformWrappedDek under the platform KEK) - or mints a fresh born-
+ * customer-held DEK - and wraps it under the CMK. The DEK is left RESIDENT (unlocked for the
+ * enabling session). The recovery phrase is returned ONCE. The caller persists salt/wrapPass/
+ * wrappedDek + custody:'customer' and destroys the platform wrap. No content re-encryption.
+ */
+export function enableCustomerCustody(companyId, { passphrase, platformWrappedDek = null } = {}) {
+  if (!companyId) throw new Error('[brain_crypto] enableCustomerCustody requires a companyId')
+  if (!passphrase || String(passphrase).length < 8) throw new Error('[brain_crypto] a passphrase of at least 8 characters is required')
+  const dek = platformWrappedDek ? unwrapDek(platformWrappedDek) : crypto.randomBytes(DEK_BYTES)
+  const cmk = crypto.randomBytes(DEK_BYTES)
+  const recoveryPhrase = encodeMnemonic(cmk)
+  const salt = randomSalt(16)
+  const passKey = deriveKey(passphrase, salt)
+  const wrapPass = b64(seal(cmk, passKey))
+  const wrappedDek = b64(seal(dek, cmk))
+  const dekId = dekIdOf(dek)
+  putDek(companyId, dek, wrappedDek)
+  try { cmk.fill(0); passKey.fill(0) } catch { /* best-effort */ }
+  return { recoveryPhrase, salt: salt.toString('base64'), wrapPass, wrappedDek, dekId, kdf: { N: KDF.N, r: KDF.r, p: KDF.p } }
+}
+
+/** unlockWithPassphrase(companyId, { passphrase, salt, wrapPass, wrappedDek, kdf }) -> { dekId }. Throws on a wrong passphrase. */
+export function unlockWithPassphrase(companyId, { passphrase, salt, wrapPass, wrappedDek, kdf } = {}) {
+  if (!companyId) throw new Error('[brain_crypto] unlockWithPassphrase requires a companyId')
+  const passKey = deriveKey(passphrase, salt, { ...KDF, ...(kdf || {}) })
+  let cmk
+  try { cmk = open(unb64(wrapPass), passKey) }
+  catch { try { passKey.fill(0) } catch {} ; throw new Error('[brain_crypto] wrong passphrase') }
+  try { passKey.fill(0) } catch {}
+  const dek = open(unb64(wrappedDek), cmk)
+  try { cmk.fill(0) } catch {}
+  return { dekId: putDek(companyId, dek, wrappedDek).dekId }
+}
+
+/** unlockWithRecovery(companyId, { recoveryPhrase, wrappedDek }) -> { dekId }. Checksum-verified decode. */
+export function unlockWithRecovery(companyId, { recoveryPhrase, wrappedDek } = {}) {
+  if (!companyId) throw new Error('[brain_crypto] unlockWithRecovery requires a companyId')
+  const cmk = decodeMnemonic(recoveryPhrase)
+  let dek
+  try { dek = open(unb64(wrappedDek), cmk) }
+  catch { try { cmk.fill(0) } catch {} ; throw new Error('[brain_crypto] recovery phrase does not match this company') }
+  try { cmk.fill(0) } catch {}
+  return { dekId: putDek(companyId, dek, wrappedDek).dekId }
+}
+
+/**
+ * changePassphrase(companyId, { currentPassphrase?|recoveryPhrase?, salt, wrapPass, kdf?, newPassphrase })
+ *   -> { salt, wrapPass, kdf }  Re-wraps the CMK under a new passphrase; content untouched.
+ */
+export function changePassphrase(companyId, { currentPassphrase, recoveryPhrase, salt, wrapPass, kdf, newPassphrase } = {}) {
+  if (!newPassphrase || String(newPassphrase).length < 8) throw new Error('[brain_crypto] a new passphrase of at least 8 characters is required')
+  let cmk
+  if (recoveryPhrase) {
+    cmk = decodeMnemonic(recoveryPhrase)
+  } else {
+    const passKey = deriveKey(currentPassphrase, salt, { ...KDF, ...(kdf || {}) })
+    try { cmk = open(unb64(wrapPass), passKey) }
+    catch { try { passKey.fill(0) } catch {} ; throw new Error('[brain_crypto] wrong current passphrase') }
+    try { passKey.fill(0) } catch {}
+  }
+  const newSalt = randomSalt(16)
+  const newPassKey = deriveKey(newPassphrase, newSalt)
+  const newWrapPass = b64(seal(cmk, newPassKey))
+  try { cmk.fill(0); newPassKey.fill(0) } catch {}
+  return { salt: newSalt.toString('base64'), wrapPass: newWrapPass, kdf: { N: KDF.N, r: KDF.r, p: KDF.p } }
+}
+
+/** isUnlocked(companyId) -> boolean: a DEK is resident for this tenant. lock() = evictTenant(). */
+export function isUnlocked(companyId) { return _dekCache.has(companyId) }
+export function lock(companyId) { return evictTenant(companyId) }

@@ -109,6 +109,35 @@ export function setCompanyBrainDek(companyId, wrappedDek, dekId = null) {
   c.brain = { ...(c.brain || {}), v: 1, wrappedDek, dekId: dekId || (c.brain && c.brain.dekId) || null, updatedAt: new Date().toISOString() }
   persist()
 }
+// ---- Customer-held-key custody (company tenants) ----
+// 'platform' (default): the DEK is wrapped under the platform KEK; the platform can open it.
+// 'customer': the DEK is wrapped under a Customer Master Key the platform NEVER holds
+// (derived from the customer's passphrase + recovery phrase). salt/wrapPass/wrappedDek are
+// all already ciphertext or non-secret, so they are NOT in mapSecrets - the whole point is
+// the platform cannot decrypt them.
+export function getCompanyBrainCustody(companyId) {
+  const c = _company(companyId)
+  return (c && c.brain && c.brain.custody) || 'platform'
+}
+export function getCompanyBrainCrypto(companyId) {
+  const c = _company(companyId); if (!c || !c.brain) return null
+  const b = c.brain
+  return { custody: b.custody || 'platform', salt: b.salt || null, wrapPass: b.wrapPass || null, wrappedDek: b.wrappedDek || null, dekId: b.dekId || null, kdf: b.kdf || null }
+}
+// Persist the result of brain_crypto.enableCustomerCustody (the actual crypto happens there;
+// the recovery phrase is returned to the caller and NEVER stored). Destroys the platform wrap.
+export function enablePrivateEncryption(companyId, { salt, wrapPass, wrappedDek, dekId, kdf } = {}) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  c.brain = { v: 1, custody: 'customer', salt, wrapPass, wrappedDek, dekId: dekId || null, kdf: kdf || null, enabledAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+  persist()
+  return { ok: true }
+}
+export function setCompanyBrainPassphrase(companyId, { salt, wrapPass, kdf } = {}) {
+  const c = _company(companyId); if (!c || !c.brain || c.brain.custody !== 'customer') throw httpErr(400, 'Private encryption is not enabled for this company.')
+  c.brain = { ...c.brain, salt, wrapPass, kdf: kdf || c.brain.kdf, updatedAt: new Date().toISOString() }
+  persist()
+  return { ok: true }
+}
 function encSecret(plain) {
   const s = plain == null ? '' : String(plain)
   if (!s || s.startsWith(ENC_PREFIX)) return s          // empty or already encrypted

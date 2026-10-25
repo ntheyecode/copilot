@@ -42,7 +42,7 @@ import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } 
 // already-embedded chunks the desktop sends (it does not re-embed documents), and
 // grounds plans from them. configure* are wired at boot; retrieveForGoal is the
 // primary company grounding (added alongside skills, never replacing them).
-import { configureBrainCrypto } from './brain_crypto.js'
+import { configureBrainCrypto, enableCustomerCustody, unlockWithPassphrase, unlockWithRecovery, changePassphrase, lock as brainLock, isUnlocked as brainUnlocked } from './brain_crypto.js'
 import { brainStore, configureBrainStore } from './brain_store.js'
 import { retrieveForGoal } from './brain_retrieve.js'
 import { buildManifest } from './brain_ingest.js'
@@ -1508,6 +1508,72 @@ app.post('/api/work/brain/clear', requireWorkAuth, requireCompanyAdmin, wrap(asy
   store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_clear', reason, detail: `cleared ${sources.length} source(s), ${chunks} chunk(s)` })
   res.json({ cleared: sources.length, chunks })
 }))
+
+// ---- Company Brain: customer-held-key custody (enable / unlock / lock / rotate) -------
+// A company can opt into customer-held encryption: a passphrase + a 24-word recovery phrase
+// the platform NEVER stores. After that the brain is LOCKED until the admin unlocks it;
+// while unlocked the DEK is resident for a time-boxed window (idle auto-lock). Honest ceiling:
+// at-rest zero-access is real; on a running, unlocked managed instance an operator could in
+// principle reach decrypted memory during the window - it is NOT "zero-knowledge" (that is
+// only literally true on-prem, where we have no root).
+const BRAIN_UNLOCK_WINDOW_MS = Math.max(60000, parseInt(process.env.WORK_BRAIN_UNLOCK_WINDOW_MS || String(30 * 60 * 1000), 10) || (30 * 60 * 1000))
+const _brainUnlockedAt = new Map()   // companyId -> ms of last unlock (idle auto-lock)
+function _noteUnlocked(cid) { _brainUnlockedAt.set(String(cid), Date.now()) }
+function _noteLocked(cid) { _brainUnlockedAt.delete(String(cid)) }
+
+app.get('/api/work/brain/security', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const c = store.getCompanyBrainCrypto(cid)
+  const custody = (c && c.custody) || 'platform'
+  res.json({ custody, enabled: custody === 'customer', locked: custody === 'customer' ? !brainUnlocked(cid) : false, dekId: (c && c.dekId) || null, unlockWindowMinutes: Math.round(BRAIN_UNLOCK_WINDOW_MS / 60000) })
+}))
+app.post('/api/work/brain/enable-private', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const b = req.body || {}
+  const passphrase = String(b.passphrase || '')
+  if (passphrase.length < 8) return res.status(400).json({ error: 'Choose a passphrase of at least 8 characters.' })
+  if (b.acknowledge !== true) return res.status(400).json({ error: 'You must acknowledge that losing BOTH the passphrase and the recovery phrase means the data cannot be recovered.' })
+  if (store.getCompanyBrainCustody(cid) === 'customer') return res.status(409).json({ error: 'Private encryption is already enabled.' })
+  const platformWrappedDek = store.getCompanyBrainDek(cid) || null   // re-parent an existing DEK, else born customer-held
+  const en = enableCustomerCustody(cid, { passphrase, platformWrappedDek })
+  store.enablePrivateEncryption(cid, { salt: en.salt, wrapPass: en.wrapPass, wrappedDek: en.wrappedDek, dekId: en.dekId, kdf: en.kdf })
+  _noteUnlocked(cid)
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_private_enable', reason: 'enable customer-held encryption', detail: `dek ${en.dekId}` })
+  // The recovery phrase is returned ONCE and NEVER stored; the client must show it and confirm it was saved.
+  res.json({ ok: true, recoveryPhrase: en.recoveryPhrase, dekId: en.dekId })
+}))
+app.post('/api/work/brain/unlock', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const c = store.getCompanyBrainCrypto(cid)
+  if (!c || c.custody !== 'customer') return res.status(400).json({ error: 'Private encryption is not enabled for this company.' })
+  const b = req.body || {}
+  try {
+    if (b.recoveryPhrase) unlockWithRecovery(cid, { recoveryPhrase: String(b.recoveryPhrase), wrappedDek: c.wrappedDek })
+    else unlockWithPassphrase(cid, { passphrase: String(b.passphrase || ''), salt: c.salt, wrapPass: c.wrapPass, wrappedDek: c.wrappedDek, kdf: c.kdf })
+  } catch (e) { return res.status(401).json({ error: /passphrase|recovery/i.test(e.message) ? 'That passphrase or recovery phrase is not correct.' : 'Could not unlock the Company Brain.' }) }
+  _noteUnlocked(cid)
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_unlock', reason: 'unlock company brain', detail: b.recoveryPhrase ? 'via recovery phrase' : 'via passphrase' })
+  res.json({ ok: true, unlocked: true })
+}))
+app.post('/api/work/brain/lock', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  brainLock(cid); _noteLocked(cid)
+  res.json({ ok: true, locked: true })
+}))
+app.post('/api/work/brain/rotate-passphrase', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const c = store.getCompanyBrainCrypto(cid)
+  if (!c || c.custody !== 'customer') return res.status(400).json({ error: 'Private encryption is not enabled for this company.' })
+  const b = req.body || {}
+  const newPassphrase = String(b.newPassphrase || '')
+  if (newPassphrase.length < 8) return res.status(400).json({ error: 'Choose a new passphrase of at least 8 characters.' })
+  let next
+  try { next = changePassphrase(cid, { currentPassphrase: b.currentPassphrase, recoveryPhrase: b.recoveryPhrase, salt: c.salt, wrapPass: c.wrapPass, kdf: c.kdf, newPassphrase }) }
+  catch (e) { return res.status(401).json({ error: /passphrase|recovery/i.test(e.message) ? 'The current passphrase or recovery phrase is not correct.' : 'Could not change the passphrase.' }) }
+  store.setCompanyBrainPassphrase(cid, { salt: next.salt, wrapPass: next.wrapPass, kdf: next.kdf })
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_passphrase_rotate', reason: 'rotate brain passphrase', detail: b.recoveryPhrase ? 'via recovery phrase' : 'via current passphrase' })
+  res.json({ ok: true })
+}))
 // Any company user: their company's white-label branding (logo + public contact)
 // for the dashboard header. Carries no seats, pricing, AI config or cost.
 app.get('/api/work/my-company', requireWorkAuth, wrap((req, res) => {
@@ -1683,7 +1749,11 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
           const st = await brainStore.stats(req.workUser.companyId).catch(() => null)
           if (st && st.sources > 0) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'No company document covered this, so I planned from general knowledge. Add it to your Company Brain to ground future plans.' })
         }
-      } catch (e) { console.warn(`[work] brain retrieval error: ${e.message}`) }
+      } catch (e) {
+        if (e && e.code === 'BRAIN_LOCKED') {
+          store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Your Company Brain is locked. Unlock it to ground this plan in your company knowledge; for now I planned from general knowledge.' })
+        } else { console.warn(`[work] brain retrieval error: ${e.message}`) }
+      }
     }
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
@@ -2882,8 +2952,15 @@ export function start({ port } = {}) {
       // truth). Configured once at boot, before any request is served.
       try {
         configureBrainCrypto({ getMasterKey: store.brainMasterKey })
-        configureBrainStore({ getWrappedDek: store.getCompanyBrainDek, setWrappedDek: store.setCompanyBrainDek })
+        configureBrainStore({ getWrappedDek: store.getCompanyBrainDek, setWrappedDek: store.setCompanyBrainDek, getCustody: store.getCompanyBrainCustody })
       } catch (e) { console.warn(`[work] brain configure error: ${e.message}`) }
+      // Idle auto-lock: lock customer-custody brains whose unlock window has elapsed, so a
+      // DEK is never resident longer than the window (time-boxed runtime exposure).
+      const brainLockTimer = setInterval(() => {
+        const now = Date.now()
+        for (const [cid, ts] of _brainUnlockedAt) { if (now - ts > BRAIN_UNLOCK_WINDOW_MS) { try { brainLock(cid) } catch { /* best-effort */ } _brainUnlockedAt.delete(cid) } }
+      }, 60 * 1000)
+      if (brainLockTimer.unref) brainLockTimer.unref()
       // One-time migration: re-scrub stored skills + KB learnings through the
       // policy-aware chokepoint (closes the historical raw-storage gap). Idempotent
       // and guarded, so it is a no-op on every boot after the first.

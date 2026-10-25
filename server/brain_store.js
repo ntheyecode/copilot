@@ -45,6 +45,7 @@ import {
   encryptVectorForTenant,
   decryptVectorForTenant,
   ensureTenantDek,
+  isUnlocked,
 } from './brain_crypto.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -73,13 +74,15 @@ const TEXTS_FILE = 'texts.sealed'
 // touch disk until they are present: no silent fallback to an unkeyed state.
 let _getWrappedDek = null
 let _setWrappedDek = null
+let _getCustody = null   // optional: companyId -> 'platform' | 'customer'
 
-export function configureBrainStore({ getWrappedDek, setWrappedDek }) {
+export function configureBrainStore({ getWrappedDek, setWrappedDek, getCustody }) {
   if (typeof getWrappedDek !== 'function' || typeof setWrappedDek !== 'function') {
     throw new Error('[brain_store] configureBrainStore requires getWrappedDek + setWrappedDek functions')
   }
   _getWrappedDek = getWrappedDek
   _setWrappedDek = setWrappedDek
+  _getCustody = typeof getCustody === 'function' ? getCustody : null
 }
 
 function assertConfigured() {
@@ -94,6 +97,18 @@ function assertConfigured() {
 // survives a restart (never a transient in-memory-only DEK).
 function primeTenant(companyId) {
   assertConfigured()
+  // Customer-held custody: the DEK is wrapped under the customer key, which the platform
+  // KEK cannot open. It must already be UNLOCKED (resident) via brain_crypto.unlock*. If not,
+  // the tenant is LOCKED - throw a stated error (never auto-mint/auto-unwrap under the KEK,
+  // which would either fail or silently create a second, platform-held DEK).
+  if (_getCustody && _getCustody(companyId) === 'customer') {
+    if (!isUnlocked(companyId)) {
+      const err = new Error('Company Brain is locked (encrypted under your key); unlock it to continue')
+      err.code = 'BRAIN_LOCKED'
+      throw err
+    }
+    return { dekId: null }   // the resident DEK is used by encrypt/decrypt
+  }
   const existing = _getWrappedDek(companyId) || undefined
   const res = ensureTenantDek(companyId, existing)
   if (res && res.wrappedDek && res.wrappedDek !== existing) {
@@ -178,6 +193,15 @@ function emptyResident() {
 // failure. A present-but-undecryptable blob throws (never served as empty).
 function loadTenant(companyId) {
   const key = String(companyId)
+  // Custody-lock gate: a locked customer brain serves NOTHING, and we DROP any decrypted
+  // working set from memory so vectors/text do not linger in RAM after lock. This runs
+  // before the resident-cache fast path, so a lock takes effect immediately.
+  if (_getCustody && _getCustody(key) === 'customer' && !isUnlocked(key)) {
+    _lru.delete(key)
+    const err = new Error('Company Brain is locked (encrypted under your key); unlock it to continue')
+    err.code = 'BRAIN_LOCKED'
+    throw err
+  }
   const hot = touch(key)
   if (hot) return hot
 
