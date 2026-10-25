@@ -18,6 +18,7 @@ import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import useSeo from '../useSeo.js'
 import { useLocale, renderRich } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
+import en from '../i18n/locales/en.js'   // base catalog: the canonical plan-bullet count (see staticFeats)
 // The field roster lives ONCE, on the /fields page; the teaser below imports
 // its numbers so the headline count can never drift from the full list.
 import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
@@ -138,20 +139,49 @@ export default function WorkMarketing() {
     { icon: Compass, t: 'All around your goal', claim: 'Every step points at what you want.', d: 'It never loses the thread.', points: ['The goal is always in view', 'No busywork, no detours', 'Knows the moment you are done'] },
     { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
   ]
-  // Daily hours read from the live server pricing (price.dailyHours), so a
-  // superadmin change in Admin > Pricing flows straight to the cards. Fallback to
-  // the historical 1/2/4/6 only until the fetch resolves.
+  // Every plan number on the cards comes from the live server pricing
+  // (/api/work/pricing -> store.getWorkPricing(): plans / tasks / dailyHours),
+  // so a superadmin change in Admin > Pricing flows straight to the cards. The
+  // public framing is MONTHLY: monthly tasks = daily cap x 30, monthly hours =
+  // daily hours x 30 - computed here, never typed into copy, so the page can
+  // never drift from what the product enforces. Tasks are stated plainly
+  // (unused ones bank); hours are "up to" + asterisk (a day's hours expire).
+  const DAYS_PER_MONTH = 30
   const dh = (price && price.dailyHours) || {}
-  // "{n} hours" is a plural form in the catalog (common.hour_one/_two/_other),
-  // so languages with a different plural shape (Arabic, Russian) read right.
-  const hLine = (h) => t('home.pricing.hoursLine', { hours: t.n('common.hour', h) })
+  const dt = (price && price.tasks) || {}
+  const perMonth = (n) => (n == null ? null : Math.round(Number(n) * DAYS_PER_MONTH * 100) / 100)
+  // Plain numbers go into the strings (the unit words live in the catalog line
+  // itself), so a locale without these keys yet gets one consistent English
+  // fallback line, never "30 Aufgaben a month".
+  // Locales not yet retranslated for the monthly framing still carry the legacy
+  // hardcoded "1 guided task a day" as the FIRST lite bullet. The base (en)
+  // catalog is the canonical bullet list; any extra leading items in another
+  // locale are that legacy number line and are dropped, so no locale can show a
+  // stale hardcoded cap - the data-driven tasksLine replaces it for everyone.
+  const staticFeats = (id) => {
+    const list = t(`home.pricing.feats.${id}`) || []
+    const canon = ((en.home.pricing.feats || {})[id] || []).length
+    return list.length > canon ? list.slice(list.length - canon) : list
+  }
+  const planLines = (id) => {
+    const tasksDay = dt[id], hrsDay = dh[id]
+    const lines = []
+    if (tasksDay != null) lines.push(t('home.pricing.tasksMonthLine', { tasks: perMonth(tasksDay), dailyTasks: tasksDay }))
+    if (hrsDay != null) lines.push(t('home.pricing.hoursMonthLine', { hours: perMonth(hrsDay), dailyHours: hrsDay }))
+    return lines
+  }
   // Plan names (Lite/Basic/Advanced/Premium) are product names: never translated.
   const tiers = price ? [
-    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: dh.lite ?? 1, tasks: (price.tasks || {}).lite, feats: [hLine(dh.lite ?? 1), ...t('home.pricing.feats.lite')], hour: price.hour.lite },
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: dh.basic ?? 2, tasks: (price.tasks || {}).basic, feats: [hLine(dh.basic ?? 2), ...t('home.pricing.feats.basic')], hour: price.hour.basic },
-    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: dh.advanced ?? 4, tasks: (price.tasks || {}).advanced, popular: true, feats: [hLine(dh.advanced ?? 4), ...t('home.pricing.feats.advanced')], hour: price.hour.advanced },
-    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: dh.premium ?? 6, tasks: (price.tasks || {}).premium, feats: [hLine(dh.premium ?? 6), ...t('home.pricing.feats.premium')], hour: price.hour.premium },
+    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: dh.lite, tasks: dt.lite, feats: [...planLines('lite'), ...staticFeats('lite')], hour: price.hour.lite },
+    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: dh.basic, tasks: dt.basic, feats: [...planLines('basic'), ...staticFeats('basic')], hour: price.hour.basic },
+    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: dh.advanced, tasks: dt.advanced, popular: true, feats: [...planLines('advanced'), ...staticFeats('advanced')], hour: price.hour.advanced },
+    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: dh.premium, tasks: dt.premium, feats: [...planLines('premium'), ...staticFeats('premium')], hour: price.hour.premium },
   ] : []
+  // Card headline: "{N} tasks a month · up to {H} hours a month*" from the same numbers.
+  const monthlyLine = (tier) => {
+    if (tier.tasks == null && tier.hrs == null) return ''
+    return t('home.pricing.monthlyLine', { tasks: perMonth(tier.tasks ?? 0), hours: perMonth(tier.hrs ?? 0) })
+  }
 
   return (
     <div className="wm" ref={rootRef}>
@@ -449,7 +479,7 @@ export default function WorkMarketing() {
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(tier.price)}{t('common.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(tier.price))}{t('common.perYear')}</div>
                   : <div className="wm-tier-cyc dim">{t('home.pricing.billedMonthly')}</div>}
-                <div className="wm-tier-hrs">{t('home.pricing.dailyMinutes', { hours: t.n('common.hour', tier.hrs) })}{tier.tasks != null ? ` · ${t('home.pricing.upTo', { tasks: t.n('common.task', tier.tasks) })}` : ''}</div>
+                <div className="wm-tier-hrs">{monthlyLine(tier)}</div>
                 <div className="wm-tier-mins">{t('home.pricing.mins')}</div>
                 <ul>{tier.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${tier.popular ? '' : 'alt'}`} onClick={() => choosePlan(tier.id)}>{t('home.pricing.choose', { plan: tier.name })}</button>
@@ -462,6 +492,9 @@ export default function WorkMarketing() {
             <span><Check size={14} /> {t('home.pricing.trustCancel')}</span>
             <span><ShieldCheck size={14} /> {t('home.pricing.trustExpire')}</span>
           </div>
+          {/* The asterisk note: how the daily allowance behind the monthly numbers
+              works (hours expire at midnight, tasks bank). Muted and smaller. */}
+          {price && <p className="wm-footnote" data-reveal>{t('home.pricing.footnote')}</p>}
           {price && <p className="wm-fineprint" data-reveal>{t('home.pricing.fineprint', { price: money(price.image.premium), min: price.imageMinBulk })}</p>}
           {/* The full entitlement matrix (every row, every plan, the fine print)
               lives on /workcopilot/pricing; the main page keeps only the cards. */}
@@ -1733,6 +1766,10 @@ const CSS = `
 /* .wm .wm-fineprint (0,2,0) so the auto side-margins win over .wm p{margin:0}
    (0,1,1) and the block actually centers, not just its text. */
 .wm .wm-fineprint{text-align:center;color:var(--mut);font-size:14px;margin:32px auto 0;max-width:62ch}
+/* The "*" allowance note under the plan cards: muted, one step smaller than the
+   fineprint, same centering rule (.wm .wm-footnote beats .wm p{margin:0}). */
+.wm .wm-footnote{text-align:center;color:var(--mut);font-size:12.5px;line-height:1.55;margin:28px auto 0;max-width:68ch;opacity:.9}
+.wm .wm-footnote + .wm-fineprint{margin-top:14px}
 
 /* "See the full ..." link row under the fields teaser and the pricing cards */
 .wm-fld-more{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:28px}

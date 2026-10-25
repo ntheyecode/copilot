@@ -246,22 +246,38 @@ export default {
     pricing: {
       eyebrow: 'Pricing',
       h2: 'Simple plans. Real guided time.',
-      sub: 'Hours of live guidance every day. Pause anytime, and come back right where you left off.',
+      sub: 'Guided tasks and live guidance hours every month. Pause anytime, and come back right where you left off.',
       billingAria: 'Billing period',
       monthly: 'Monthly',
       annual: 'Annual',
       save: 'Save 20%',
       mostPopular: 'Most popular',
-      hoursLine: '{hours} of daily minutes - use anytime, billed per minute used',
       billedAnnually: 'billed annually',
       billedMonthly: 'billed monthly',
-      dailyMinutes: '{hours} of daily minutes',
-      upTo: 'up to {tasks}',
-      mins: 'Spend them anytime across the whole day. Billed per minute you actually use, never by the hour.',
+      // Monthly framing. Every number is injected from the live pricing config
+      // (daily cap x 30) as a PLAIN NUMBER: {tasks}/{hours} are the monthly
+      // totals, {dailyTasks}/{dailyHours} the per-day rate. The unit words stay
+      // inside the string (not common.task/hour) so a locale that has not yet
+      // translated these keys falls back to a consistent English line rather
+      // than a mixed-language one. Monthly totals are never 1, so the plural is
+      // safe. Tasks are stated plainly (unused ones bank); hours are always
+      // "up to" with the asterisk, because a day's hours expire at midnight.
+      // NOTE: these are NEW key names on purpose (the old hoursLine/dailyMinutes/
+      // upTo were daily-framed and still exist in other locales): reusing an old
+      // name would let a stale daily string swallow a monthly number.
+      monthlyLine: '{tasks} tasks a month · up to {hours} hrs a month*',
+      tasksMonthLine: '{tasks} guided tasks a month ({dailyTasks} a day - unused ones bank as credits)',
+      hoursMonthLine: 'Up to {hours} hours of guidance a month ({dailyHours} h a day, resets at midnight)*',
+      mins: 'Spend your hours anytime across the day, in as little as a minute at a time. Billed per minute you actually use, never by the hour.',
       choose: 'Choose {plan}',
       extraHour: 'Extra hour {price}',
+      // The one asterisk note under the cards. Plan-independent on purpose: the
+      // per-plan daily rate is already on each card, so this states the model.
+      footnote: '*Each day you get your plan\'s guided tasks and hours of guidance. Daily hours reset at midnight (US Eastern) - they don\'t roll over. Unused tasks bank as credits you keep, or trade 2 tasks for 1 extra hour (expires that day). Billed per minute you actually use.',
       feats: {
-        lite: ['1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
+        // The daily-task line is NOT here any more: it is rendered from the live
+        // pricing config (tasksLine/hoursLine above) so a cap change follows.
+        lite: ['Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
         basic: ['Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
         premium: ['Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],

@@ -65,11 +65,14 @@ export default deepMerge(en, {
       ] },
     },
     pricing: {
-      mins: 'Spend them any time across the whole day. Billed per minute you actually use, never by the hour.',
+      sub: 'Guided tasks and live guidance hours every month. Pause any time, and come back right where you left off.',
+      mins: 'Spend your hours any time across the day, in as little as a minute at a time. Billed per minute you actually use, never by the hour.',
+      footnote: '*Each day you get your plan\'s guided tasks and hours of guidance. Daily hours reset at midnight (US Eastern) - they don\'t roll over. Unused tasks bank as credits you keep, or trade 2 tasks for 1 extra hour (expires that day). Billed per minute you actually use.',
       trustCancel: 'Cancel any time, no contract',
       fineprint: 'Need more? Top up extra hours any time. Premium adds generated visuals, and image packs start from {price} each (min {min}). Purchased time never expires.',
       feats: {
-        lite: ['1 guided task a day', 'Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
+        // Daily-task line comes from the live pricing config (en.js tasksLine), not from here.
+        lite: ['Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
         basic: ['Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
         premium: ['Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],

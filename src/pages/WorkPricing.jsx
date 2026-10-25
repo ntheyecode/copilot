@@ -53,7 +53,7 @@ export default function WorkPricing() {
   const nav = useNavigate()
   useSeo({
     title: 'Pricing - WorkCoPilot by AdmireVeda',
-    description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with daily live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+    description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with monthly guided tasks and live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
     path: '/workcopilot/pricing',
   })
   const [price, setPrice] = useState(null)
@@ -67,7 +67,17 @@ export default function WorkPricing() {
   const hourPrice = (id) => live('hour', id)
   const dailyHrs = (id) => live('dailyHours', id)
   const tasksDay = (id) => live('tasks', id)
-  const hrLabel = (id) => { const h = dailyHrs(id); return `${h} hour${h === 1 ? '' : 's'}` }
+  // Public framing is MONTHLY: monthly tasks = daily cap x 30, monthly hours =
+  // daily hours x 30 - computed from the live config, never typed into copy, so
+  // a superadmin cap change follows here automatically. Tasks are stated
+  // plainly (unused ones bank); hours are always "up to" + asterisk because a
+  // day's hours expire at midnight and do not roll over.
+  const DAYS_PER_MONTH = 30
+  const perMonth = (n) => Math.round(Number(n) * DAYS_PER_MONTH * 100) / 100
+  const tasksMonth = (id) => perMonth(tasksDay(id))
+  const hrsMonth = (id) => perMonth(dailyHrs(id))
+  const plural = (n, word) => `${n} ${word}${Number(n) === 1 ? '' : 's'}`
+  const hrLabel = (id) => plural(dailyHrs(id), 'hour')
   // Start = the product's sign-in page with the plan carried along (the same
   // query the main page's plan cards use), so the pick survives sign-up.
   const start = (id) => nav(`/workcopilot?plan=${id}`)
@@ -79,8 +89,9 @@ export default function WorkPricing() {
   // upload is Advanced and up; Lite is the single-task entry plan.
   const PRICE_ROWS = [
     { g: 'Capacity' },
-    { k: 'Daily live guidance', v: [hrLabel('lite'), hrLabel('basic'), hrLabel('advanced'), hrLabel('premium'), 'Custom'] },
-    { k: 'Tasks per day', v: [`Up to ${tasksDay('lite')}`, `Up to ${tasksDay('basic')}`, `Up to ${tasksDay('advanced')}`, `Up to ${tasksDay('premium')}`, 'Unlimited'] },
+    { k: 'Guided tasks a month', v: [`${tasksMonth('lite')}`, `${tasksMonth('basic')}`, `${tasksMonth('advanced')}`, `${tasksMonth('premium')}`, 'Unlimited'] },
+    { k: 'Live guidance a month*', v: [`Up to ${plural(hrsMonth('lite'), 'hour')}`, `Up to ${plural(hrsMonth('basic'), 'hour')}`, `Up to ${plural(hrsMonth('advanced'), 'hour')}`, `Up to ${plural(hrsMonth('premium'), 'hour')}`, 'Custom'] },
+    { k: 'Daily rate (tasks / hours)', v: [`${tasksDay('lite')} / ${hrLabel('lite')}`, `${tasksDay('basic')} / ${hrLabel('basic')}`, `${tasksDay('advanced')} / ${hrLabel('advanced')}`, `${tasksDay('premium')} / ${hrLabel('premium')}`, 'Custom'] },
     { k: 'Seats', v: ['1 user', '1 user', '1 user', '1 user', 'Seat pools, your size'] },
     { k: 'Priority in the guidance queue', v: ['Standard', 'Standard', 'Priority', 'Highest', 'Highest'] },
     { g: 'Guidance' },
@@ -120,7 +131,7 @@ export default function WorkPricing() {
       <section className="wpr-hero">
         <div className="wpr-eyebrow"><Zap size={14} aria-hidden /> Pricing</div>
         <h1>Simple plans. <em>Real guided time.</em></h1>
-        <p>Hours of live, step-by-step guidance every day. Plans differ in daily capacity and a few power features. Security and privacy are built into every plan, never sold as an upgrade.</p>
+        <p>Guided tasks and hours of live, step-by-step guidance every month. Plans differ in capacity and a few power features. Security and privacy are built into every plan, never sold as an upgrade.</p>
       </section>
 
       {/* Plan tickets: oversized price, the three facts that differ, one Start CTA each. */}
@@ -138,11 +149,15 @@ export default function WorkPricing() {
               {p.custom ? (
                 <><span>Unlimited seats</span><span>Unlimited tasks</span><span>Dedicated contact</span></>
               ) : (
-                <><span><b>{dailyHrs(p.id)}h</b> a day</span><span>up to <b>{tasksDay(p.id)}</b> task{tasksDay(p.id) === 1 ? '' : 's'}</span><span>+1h <b>{money(hourPrice(p.id))}</b></span></>
+                <><span><b>{tasksMonth(p.id)}</b> task{tasksMonth(p.id) === 1 ? '' : 's'} a month</span><span>up to <b>{hrsMonth(p.id)}</b> hr{hrsMonth(p.id) === 1 ? '' : 's'} a month*</span><span>+1h <b>{money(hourPrice(p.id))}</b></span></>
               )}
             </div>
             {!p.custom && (
-              <p className="wpr-mins"><b>{dailyHrs(p.id)} hour{dailyHrs(p.id) === 1 ? '' : 's'}</b> of daily minutes - spend them anytime across the whole day, in as little as a minute at a time. You pay only for the minutes you actually use, never by the hour.</p>
+              <ul className="wpr-plan-lines">
+                <li><b>{plural(tasksMonth(p.id), 'guided task')}</b> a month ({tasksDay(p.id)} a day - unused ones bank as credits)</li>
+                <li><b>Up to {plural(hrsMonth(p.id), 'hour')}</b> of guidance a month ({hrLabel(p.id)} a day, resets at midnight)*</li>
+                <li>Spend your hours anytime across the day, in as little as a minute at a time. Billed per minute you actually use, never by the hour.</li>
+              </ul>
             )}
             {p.custom
               ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
@@ -221,6 +236,10 @@ export default function WorkPricing() {
           <span><Check size={14} aria-hidden /> Cancel anytime, no contract</span>
           <span><ShieldCheck size={14} aria-hidden /> Purchased time never expires</span>
         </div>
+        {/* The one "*" note for every monthly number above: how the daily allowance
+            behind it works (hours expire at midnight, tasks bank). Plan-independent
+            on purpose - each card already shows its own daily rate. */}
+        <p className="wpr-footnote">*Each day you get your plan's guided tasks and hours of guidance. Daily hours reset at midnight (US Eastern) - they don't roll over. Unused tasks bank as credits you keep, or trade 2 tasks for 1 extra hour (expires that day). Billed per minute you actually use.</p>
       </section>
 
       {/* Plain-language notes: the terms behind the matrix, honestly stated. */}
@@ -229,7 +248,7 @@ export default function WorkPricing() {
         <div className="wpr-notes-grid">
           <div className="wpr-note">
             <h3>Daily minutes, not hourly blocks</h3>
-            <p>Your plan's hours are a pool of <b>daily minutes</b> you can spend anytime across the whole day - a few minutes here, a few there. We count only the minutes you are actually being guided, billed per minute used, never rounded up to the hour. Pause anytime and come back right where you left off. The day resets each evening, US Eastern time.</p>
+            <p>Your plan's monthly hours arrive as a <b>daily allowance of minutes</b> you can spend anytime across the whole day - a few minutes here, a few there. We count only the minutes you are actually being guided, billed per minute used, never rounded up to the hour. Pause anytime and come back right where you left off. Daily hours reset at midnight, US Eastern time, and do not roll over; unused tasks bank as credits you keep.</p>
           </div>
           <div className="wpr-note">
             <h3>Extra time</h3>
@@ -302,8 +321,9 @@ const CSS = `
 .wpr-facts{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px}
 .wpr-facts span{font-size:12.5px;color:var(--mut);background:#f4f8f7;border:1px solid var(--line);border-radius:999px;padding:4px 10px;white-space:nowrap}
 .wpr-facts b{color:var(--ink);font-weight:700}
-.wpr-mins{color:var(--mut);font-size:12.5px;line-height:1.5;margin:0 0 12px;padding:9px 11px;background:#f4f8f7;border:1px solid var(--line);border-radius:10px}
-.wpr-mins b{color:var(--em);font-weight:700}
+.wpr-plan-lines{list-style:none;margin:0 0 12px;padding:9px 11px;display:flex;flex-direction:column;gap:6px;background:#f4f8f7;border:1px solid var(--line);border-radius:10px;color:var(--mut);font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
+.wpr-plan-lines b{color:var(--em);font-weight:700}
+.wpr-footnote{text-align:center;color:var(--dim);font-size:12.5px;line-height:1.55;max-width:68ch;margin:18px auto 0}
 .wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6);margin-top:auto}
 .wpr-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-btn.sm{padding:8px 14px;font-size:13px;border-radius:9px;margin-top:0}
