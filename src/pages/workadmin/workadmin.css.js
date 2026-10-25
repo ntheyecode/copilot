@@ -127,6 +127,16 @@ export const WORKADMIN_CSS = `
 }
 .wka-nav::-webkit-scrollbar { width: 8px; }
 .wka-nav::-webkit-scrollbar-thumb { background: var(--wka-line-2); border-radius: 8px; }
+/* Hardening (2026-10-25): the admin is mounted inside the app document, which loads
+   the data-theme-driven global sheets (base.css/tokens.css). Neutralize the global
+   rules that leak into the console so it ALWAYS uses its own light palette, even if
+   data-theme were ever dark: the generic .label span (base.css) stole the nav color,
+   and the global scrollbar-thumb border (3px solid var(--bg)) showed as a dark bar. */
+.wka .label { color: inherit; }
+.wka .hint { color: var(--wka-faint); }
+.wka ::-webkit-scrollbar { width: 8px; height: 8px; }
+.wka ::-webkit-scrollbar-thumb { background: var(--wka-line-2); border: 2px solid var(--wka-nav-bg); border-radius: 8px; }
+.wka { scrollbar-width: thin; scrollbar-color: var(--wka-line-2) transparent; }
 .wka-nav-item {
   display: flex; align-items: center; gap: 11px;
   padding: 11px 13px; border-radius: 11px;
