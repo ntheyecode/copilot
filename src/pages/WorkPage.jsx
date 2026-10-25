@@ -5381,6 +5381,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           onStep={setStep}
           onNav={navStep}
           onWatch={watching ? pauseWatching : startWatching}
+          onEnd={endSession}
           onClose={closeFloat}
         />, pipWin.document.body)}
     </div>
@@ -5392,7 +5393,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, analyzing, err, done, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onClose }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, analyzing, err, done, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onEnd, onClose }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
   // Dim the panel to cut glare over your work. The browser will not let a web
@@ -5515,11 +5516,17 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
           scroll so the control and "what the screen is reading" are always in
           view (owner request; matched to the console). */}
       <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7, padding: '2px 0 0' }}>
-        {paused
-          ? <button className="fp-btn fp-pulse" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
-          : watching
-            ? <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
-            : <button className="fp-btn" style={{ ...primary, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
+        <div style={{ display: 'flex', gap: 7 }}>
+          {paused
+            ? <button className="fp-btn fp-pulse" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
+            : watching
+              ? <button className="fp-btn" style={{ ...ghost, flex: 1, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
+              : <button className="fp-btn" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
+          {/* End is now always visible in the floater (owner: End button was not
+              reachable here) - ends the task and builds the summary, same as the
+              console's End. Close (X, top-right) only pops the steps back. */}
+          <button className="fp-btn" style={{ ...ghost, flexShrink: 0, justifyContent: 'center', height: 40, padding: '0 15px', fontSize: 13, fontWeight: 650, color: c.danger, borderColor: c.border }} onClick={onEnd} title="End this task and build a summary">End</button>
+        </div>
         {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
         {analyzing
           ? <div className="fp-blink" style={{ fontSize: fs(12.5), fontWeight: 650, color: c.cyan, display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><span className="fp-ana"><i /><i /><i /></span> Analyzing your screen…</div>
