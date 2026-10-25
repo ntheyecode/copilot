@@ -5,6 +5,13 @@ source of truth for the governance wizard, tokenize+rehydrate, company
 onboarding, AI-source control, the free trial, per-session cost, and image-gen
 gating.
 
+Related (built): the **Company Brain** consumes this policy. The desktop scrubs
+and embeds company documents on device and uploads only scrubbed chunks plus
+vectors; the server re-applies the scrub floor and stores them per tenant,
+encrypted. See `docs/company-brain.md` for the architecture and
+`docs/company-brain-security.md` for the envelope encryption and the
+platform-held vs customer-held-key custody model.
+
 Honesty guardrails (hold these in every surface and claim):
 - We provide **controls and audit evidence to support** a customer's compliance.
   We never claim we **make** them HIPAA/PCI/GDPR "compliant" or "certified."
@@ -132,6 +139,15 @@ data; the user gets a complete answer.
     an import.
   - **Migration:** a one-time, guarded pass (`migrateScrubStoredText`) re-scrubs
     skills and learnings stored before this control existed.
+- **Company Brain chunks are governed the same way.** Document chunks are scrubbed
+  on device with the user's effective policy BEFORE embedding or upload
+  (`scrubWithPolicy`, else the `scrubSensitive` floor), and the server intake
+  route re-applies the scrub floor as defense in depth. The chunk content hash is
+  bound to the policy version, so changing the armed policy forces a partial
+  re-embed rather than serving chunks scrubbed under an old policy. At plan time
+  the retrieved chunks pass through the same `govScrub` chokepoint as the goal and
+  documents before they enter the prompt. See `docs/company-brain.md` sections 2
+  and 4.
 
 ## 7. Per-session cost
 
