@@ -33,11 +33,21 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
+            // IP protection: R8 (the Android-authoritative tool) minifies,
+            // name-mangles/obfuscates, and tree-shakes the shipped code.
+            // shrinkResources strips unreferenced resources (requires
+            // minifyEnabled). Keep-rules live in proguard-rules.pro.
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (System.getenv("WC_STORE_FILE") != null && !System.getenv("WC_STORE_FILE").isEmpty()) {
                 signingConfig signingConfigs.release
             }
+        }
+        debug {
+            // Debug builds stay unobfuscated for fast local iteration.
+            minifyEnabled false
+            shrinkResources false
         }
     }
 
