@@ -279,6 +279,14 @@ export const api = {
   workTeamSkillsExportUrl: () => '/api/work/team/skills/export',   // direct cookie-authed download
   workTeamSkillsImport: (skills, replace) => req('POST', '/api/work/team/skills/import', { skills, ...(replace ? { replace: true } : {}) }),
   workTeamSkillsClear: (reason) => req('POST', '/api/work/team/skills/clear', { reason }),
+  // Company Brain (company admin): the per-company knowledge store the desktop
+  // app fills from documents scrubbed + embedded ON DEVICE. This console only
+  // lists what is in it and removes sources; nothing is uploaded from the web.
+  // Remove + clear are destructive, so they require a reason (logged server-side).
+  //   inventory -> { stats: { chunks, sources, bytes }, sources: [{ sourceId, title, kind, version, chunks, status, updatedAt, policyVersion }] }
+  workBrainInventory: () => req('GET', '/api/work/brain/inventory'),
+  workBrainSourceDelete: (id, reason) => req('DELETE', `/api/work/brain/sources/${encodeURIComponent(id)}`, { reason }),
+  workBrainClear: (reason) => req('POST', '/api/work/brain/clear', { reason }),
   // Company SOC / SIEM integrations (company-admin gated). Secret field values
   // are write-only: the server blanks them on read; send '' to keep a stored one.
   workCompanyIntegrationsCatalog: () => req('GET', '/api/work/company/integrations/catalog'),

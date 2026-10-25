@@ -38,6 +38,15 @@ import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from 
 import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
 import { claimsReport, claimsMarkdown } from './claims.js'
 import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } from './work-scrub.js'
+// Company Brain (per-tenant encrypted knowledge). The server stores the scrubbed,
+// already-embedded chunks the desktop sends (it does not re-embed documents), and
+// grounds plans from them. configure* are wired at boot; retrieveForGoal is the
+// primary company grounding (added alongside skills, never replacing them).
+import { configureBrainCrypto } from './brain_crypto.js'
+import { brainStore, configureBrainStore } from './brain_store.js'
+import { retrieveForGoal } from './brain_retrieve.js'
+import { buildManifest } from './brain_ingest.js'
+import { EMBED, policyVersionOf } from './brain_model.js'
 import { securityReview } from './security_gate.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
@@ -1423,6 +1432,82 @@ app.post('/api/work/team/skills/clear', requireWorkAuth, requireCompanyAdmin, wr
   store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'skills_clear', reason, detail: `cleared ${cleared} skills` })
   res.json({ cleared })
 }))
+
+// ---- Company Brain: per-tenant encrypted knowledge from the desktop ----------
+// The desktop scrubs + embeds documents ON DEVICE and posts only scrubbed chunks
+// + vectors here (never the raw files). The server re-applies the scrub floor
+// (defense in depth), stores them encrypted per tenant, and grounds plans from
+// them. Ingestion is per company source; any company user's device may contribute.
+const BRAIN_MAX_RECORDS = 1000
+app.post('/api/work/brain/chunks', requireWorkAuth, wrap(async (req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'The Company Brain is for company accounts.' })
+  const b = req.body || {}
+  const source = b.source || {}
+  if (!source.sourceId) return res.status(400).json({ error: 'A source id is required.' })
+  // A dedupe alias (same content already ingested elsewhere in the tenant): ack, store nothing.
+  if (b.alias) return res.json({ ok: true, alias: true, aliasOf: b.aliasOf || null })
+  const records = Array.isArray(b.records) ? b.records.slice(0, BRAIN_MAX_RECORDS) : null
+  if (!records || !records.length) return res.status(400).json({ error: 'No chunks to store.' })
+  // Server-side scrub floor (defense in depth; the device already scrubbed).
+  const pol = store.getEffectiveWorkPolicy(req.workUser.id)
+  const counts = {}; let redacted = 0; const stored = []
+  for (const r of records) {
+    if (!r || !r.chunkId) continue
+    const sb = pol ? scrubWithPolicy(String(r.text || ''), pol) : scrubSensitive(String(r.text || ''))
+    redacted += sb.total || 0
+    for (const [k, v] of Object.entries(sb.counts || {})) counts[k] = (counts[k] || 0) + v
+    stored.push({
+      chunkId: String(r.chunkId), sourceId: source.sourceId, sourceTitle: source.title || r.sourceTitle || '',
+      ordinal: Number(r.ordinal) || 0, text: sb.clean, vector: r.vector,
+      contentHash: r.contentHash || null, chunkHash: r.chunkHash || null,
+    })
+  }
+  if (!stored.length) return res.status(400).json({ error: 'No valid chunks to store.' })
+  const sourceMeta = {
+    title: source.title || '', kind: source.kind || '', revision: source.revision || '',
+    etag: source.etag || '', modifiedTime: source.modifiedTime || null,
+    version: source.version != null ? source.version : null, contentHash: b.contentHash || null,
+    embeddingModelVersion: `${EMBED.id}@${EMBED.rev}`, policyVersion: b.policyVersion || policyVersionOf(pol),
+  }
+  const result = b.supersede
+    ? await brainStore.supersede(cid, source.sourceId, stored, sourceMeta)
+    : await brainStore.upsert(cid, stored, sourceMeta)
+  if (redacted > 0) store.recordPiiAlert(req.workUser.id, { call: 'brain', counts, total: redacted })
+  res.json({ ok: true, ...result, redacted })
+}))
+app.get('/api/work/brain/manifest', requireWorkAuth, wrap(async (req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.json({ cursor: null, sources: [], model: EMBED, policyVersion: '' })
+  res.json(await buildManifest(cid, { since: req.query.since || null }))
+}))
+app.get('/api/work/brain/inventory', requireWorkAuth, requireCompanyAdmin, wrap(async (req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const stats = await brainStore.stats(cid)
+  const sources = (await brainStore.listSources(cid)).map((s) => ({
+    sourceId: s.sourceId, title: s.title, kind: s.kind, version: s.version,
+    chunks: (s.chunkHashes || []).length, status: s.status, updatedAt: s.updatedAt, policyVersion: s.policyVersion,
+  }))
+  res.json({ stats, sources })
+}))
+app.delete('/api/work/brain/sources/:id', requireWorkAuth, requireCompanyAdmin, wrap(async (req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const reason = String((req.body || {}).reason || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'Please give a reason for removing this source.' })
+  const r = await brainStore.delete(cid, { sourceId: req.params.id })
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_source_remove', reason, detail: `removed source ${req.params.id} (${r.removed} chunk(s))` })
+  res.json(r)
+}))
+app.post('/api/work/brain/clear', requireWorkAuth, requireCompanyAdmin, wrap(async (req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const reason = String((req.body || {}).reason || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'Please give a reason for clearing the brain.' })
+  const sources = await brainStore.listSources(cid)
+  let chunks = 0
+  for (const s of sources) { const r = await brainStore.delete(cid, { sourceId: s.sourceId }); chunks += r.removed }
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_clear', reason, detail: `cleared ${sources.length} source(s), ${chunks} chunk(s)` })
+  res.json({ cleared: sources.length, chunks })
+}))
 // Any company user: their company's white-label branding (logo + public contact)
 // for the dashboard header. Carries no seats, pricing, AI config or cost.
 app.get('/api/work/my-company', requireWorkAuth, wrap((req, res) => {
@@ -1584,10 +1669,26 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // post-date the stored record).
     const kbNotes = scrubText(store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')).clean
     const skillNotes = scrubText(store.getSkillsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((sk) => `- ${sk.title}${sk.tags ? ' [' + sk.tags + ']' : ''}: ${sk.content}`).join('\n\n')).clean
+    // Company Brain: the PRIMARY company grounding. It ADDS to skills/learnings
+    // (never replaces them), so an empty brain never degrades the plan. A brain
+    // that has sources but matched nothing surfaces a STATED fallback - never
+    // silent, never a fabricated source. Solo users have no brain (skipped).
+    let brainNotes = ''
+    if (req.workUser.companyId) {
+      try {
+        const brain = await retrieveForGoal({ companyId: req.workUser.companyId, goal: planGoal, app: s.appContext || '', topK: 6 })
+        if (brain && brain.grounded && brain.hits && brain.hits.length) {
+          brainNotes = scrubText("YOUR COMPANY'S OWN KNOWLEDGE (grounded in your company's documents; cite the named source; prefer it over generic guidance, but flag anything wrong or outdated):\n" + brain.hits.map((h) => `- (per ${h.sourceTitle}) ${h.text}`).join('\n\n')).clean
+        } else if (brain && !brain.grounded) {
+          const st = await brainStore.stats(req.workUser.companyId).catch(() => null)
+          if (st && st.sources > 0) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'No company document covered this, so I planned from general knowledge. Add it to your Company Brain to ground future plans.' })
+        }
+      } catch (e) { console.warn(`[work] brain retrieval error: ${e.message}`) }
+    }
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
       tele: planTele,
-      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup,
+      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup,
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
@@ -2776,6 +2877,13 @@ export function start({ port } = {}) {
       console.log('')
       const workIdleTimer = setInterval(sweepIdleWorkSessions, WORK_SWEEP_MS)
       if (workIdleTimer.unref) workIdleTimer.unref() // never keep the process alive just for a sweep
+      // Company Brain: inject the store's master key (KEK) + per-tenant DEK custody
+      // so the encrypted vector store reuses the one crypto scheme (single source of
+      // truth). Configured once at boot, before any request is served.
+      try {
+        configureBrainCrypto({ getMasterKey: store.brainMasterKey })
+        configureBrainStore({ getWrappedDek: store.getCompanyBrainDek, setWrappedDek: store.setCompanyBrainDek })
+      } catch (e) { console.warn(`[work] brain configure error: ${e.message}`) }
       // One-time migration: re-scrub stored skills + KB learnings through the
       // policy-aware chokepoint (closes the historical raw-storage gap). Idempotent
       // and guarded, so it is a no-op on every boot after the first.

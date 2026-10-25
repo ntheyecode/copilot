@@ -92,6 +92,23 @@ function encKey() {
   }
   return _encKey
 }
+// ---- Company Brain support: master key (KEK) + per-tenant DEK custody ----
+// The Brain reuses the SAME master key and the enc:v1: wrap scheme as this store
+// (single source of truth). brain_crypto is injected with brainMasterKey() at
+// boot; it wraps each company's data-encryption key (DEK) under the KEK, and the
+// wrapped DEK lives on the company record. The wrapped DEK is already ciphertext
+// (enc:v1:), so it is NOT listed in mapSecrets (encSecret would no-op on it);
+// dekId is a non-secret fingerprint.
+export function brainMasterKey() { return encKey() }
+export function getCompanyBrainDek(companyId) {
+  const c = _company(companyId)
+  return (c && c.brain && c.brain.wrappedDek) || null
+}
+export function setCompanyBrainDek(companyId, wrappedDek, dekId = null) {
+  const c = _company(companyId); if (!c) return
+  c.brain = { ...(c.brain || {}), v: 1, wrappedDek, dekId: dekId || (c.brain && c.brain.dekId) || null, updatedAt: new Date().toISOString() }
+  persist()
+}
 function encSecret(plain) {
   const s = plain == null ? '' : String(plain)
   if (!s || s.startsWith(ENC_PREFIX)) return s          // empty or already encrypted

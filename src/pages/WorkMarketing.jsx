@@ -6,7 +6,7 @@ import {
   Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
   Building2, Copy, Download,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
-  Code2, Table, Palette, RefreshCw,
+  Code2, Table, Palette, RefreshCw, X,
 } from 'lucide-react'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
@@ -263,39 +263,42 @@ export default function WorkMarketing() {
             <p className="wm-roi-lead" data-reveal><b>Same payroll, more output.</b> WorkCoPilot turns the people you already have into the specialists you were about to hire or outsource: guided through the hard work step by step, in the apps they already use, with every step documented as it happens. No new headcount. No rip-and-replace.</p>
           </div>
 
-          <div className="wm-ledger" data-reveal aria-label="What changes for your team">
-            <div className="wm-ledger-top">
-              <span>Same team &middot; same payroll</span>
-              <span className="wm-ledger-live"><i /> what changes</span>
-            </div>
-            <div className="wm-ledger-cols" aria-hidden="true">
-              <span />
-              <span>Before</span>
-              <span className="now">With WorkCoPilot</span>
-            </div>
-            {[
-              ['01', 'Specialist projects', 'Migrations, hardening, pentests, builds: sent to contractors or an implementation partner.', <>Delivered by <em>your own people</em>, step by step, the first time.</>],
-              ['02', 'Time to ship', 'Work queues behind the one person who knows how.', <>Anyone on the team can take the next step. <em>Weeks become days.</em></>],
-              ['03', 'Consultants and partners', 'A statement of work for every new platform, framework or tool.', <>Your team stands it up correctly, and the know-how <em>stays in-house</em>.</>],
-              ['04', 'Onboarding', 'Months of shadowing before a new hire is trusted on real work.', <>Guided through real tasks from their <em>first task</em>, in your apps and your way of working.</>],
-              ['05', 'Mistakes', 'Found in review, in production, or by the auditor.', <>A wrong turn is <em>caught on screen</em> and corrected as it happens.</>],
-              ['06', 'Documentation', 'Written up later, if at all.', <>Every step written up and logged as it happens. <em>Audit-ready</em> when you finish.</>],
-            ].map(([k, t, before, now], i) => (
-              <div className="wm-ledger-row" key={k} data-reveal style={{ transitionDelay: `${80 + i * 70}ms` }}>
-                <span className="wm-ledger-k">{k}</span>
-                <div className="wm-ledger-before">
-                  <span className="wm-ledger-tag">Before</span>
-                  <b>{t}</b>
-                  <p>{before}</p>
+          {/* The comparison: the same six budget lines, Before (muted, left) and
+              With WorkCoPilot (bright, right), in the site's own before/after
+              language (see the enterprise page's .wen-ba). Site fonts only. */}
+          {(() => {
+            const ROWS = [
+              ['Specialist projects', 'Migrations, hardening, pentests, builds: sent to contractors or an implementation partner.', <>Delivered by <em>your own people</em>, step by step, the first time.</>],
+              ['Time to ship', 'Work queues behind the one person who knows how.', <>Anyone on the team can take the next step. <em>Weeks become days.</em></>],
+              ['Consultants and partners', 'A statement of work for every new platform, framework or tool.', <>Your team stands it up correctly, and the know-how <em>stays in-house</em>.</>],
+              ['Onboarding', 'Months of shadowing before a new hire is trusted on real work.', <>Guided through real tasks from their <em>first task</em>, in your apps and your way of working.</>],
+              ['Mistakes', 'Found in review, in production, or by the auditor.', <>A wrong turn is <em>caught on screen</em> and corrected as it happens.</>],
+              ['Documentation', 'Written up later, if at all.', <>Every step written up and logged as it happens. <em>Audit-ready</em> when you finish.</>],
+            ]
+            return (
+              <div className="wm-roi-split" data-reveal aria-label="Before and after, for the same team">
+                <div className="wm-roi-col before">
+                  <div className="wm-roi-tag"><X size={13} strokeWidth={2.6} /> Before</div>
+                  <h3>Where the budget goes today.</h3>
+                  <ul>
+                    {ROWS.map(([t, before]) => (
+                      <li key={t}><span className="wm-roi-dot" aria-hidden="true" /><div><b>{t}</b><p>{before}</p></div></li>
+                    ))}
+                  </ul>
                 </div>
-                <div className="wm-ledger-now">
-                  <span className="wm-ledger-tag now">With WorkCoPilot</span>
-                  <Check size={16} strokeWidth={2.6} aria-hidden="true" />
-                  <p>{now}</p>
+                <div className="wm-roi-arrow" aria-hidden="true"><ArrowRight size={18} /></div>
+                <div className="wm-roi-col after">
+                  <div className="wm-roi-tag ok"><Check size={13} strokeWidth={3} /> With WorkCoPilot</div>
+                  <h3>What the same team does now.</h3>
+                  <ul>
+                    {ROWS.map(([t, , now]) => (
+                      <li key={t}><span className="wm-roi-tick" aria-hidden="true"><Check size={13} strokeWidth={3} /></span><div><b>{t}</b><p>{now}</p></div></li>
+                    ))}
+                  </ul>
                 </div>
               </div>
-            ))}
-          </div>
+            )
+          })()}
 
           <div className="wm-roi-foot" data-reveal>
             <p className="wm-roi-note"><Lock size={14} /> Read-only by design: it guides your people and never clicks, types or runs anything for them.</p>
@@ -1781,49 +1784,40 @@ const CSS = `
 .wm-roi .wm-eyebrow{margin-bottom:16px}
 .wm-roi-lead{margin:0 0 6px;color:var(--tx);font-size:17.5px;line-height:1.55;font-weight:450;text-wrap:pretty}
 .wm-roi-lead b{color:var(--ink-brand,#062a22);font-weight:800}
-.wm-ledger{--lk-bg:#0c1222;--lk-tx:#eef1f8;--lk-mut:#97a2b6;--lk-line:rgba(255,255,255,.11);--lk-em:#8cf5c4;--lk-cy:#5bd0ff;
-  position:relative;overflow:hidden;border-radius:26px;background:var(--lk-bg);color:var(--lk-tx);padding:26px 34px 22px;border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 1px 2px rgba(12,18,34,.2),0 40px 90px -46px rgba(12,18,34,.75),0 0 0 1px rgba(14,159,110,.08)}
-.wm-ledger::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--lk-em),var(--lk-cy) 55%,#f26a43);z-index:2}
-.wm-ledger::after{content:'';position:absolute;inset:0;pointer-events:none;
-  background:radial-gradient(640px 260px at 100% 0%,rgba(140,245,196,.14),transparent 62%),radial-gradient(560px 260px at 0% 100%,rgba(91,208,255,.10),transparent 62%),
-  repeating-linear-gradient(0deg,transparent 0 23px,rgba(255,255,255,.025) 23px 24px)}
-.wm-ledger>*{position:relative;z-index:1}
-.wm-ledger-top{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:16px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--lk-mut)}
-.wm-ledger-live{display:inline-flex;align-items:center;gap:8px;color:var(--lk-em)}
-.wm-ledger-live i{width:8px;height:8px;border-radius:50%;background:var(--lk-em);box-shadow:0 0 0 0 rgba(140,245,196,.6);animation:wm-ledger-pulse 2.2s ease-out infinite}
-@keyframes wm-ledger-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.55)}70%{box-shadow:0 0 0 9px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}
-.wm-ledger-cols,.wm-ledger-row{display:grid;grid-template-columns:44px minmax(0,1fr) minmax(0,1.18fr);gap:0 28px;align-items:start}
-.wm-ledger-cols{padding:0 0 10px;border-bottom:1px solid var(--lk-line);font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--lk-mut)}
-.wm-ledger-cols .now{color:var(--lk-em)}
-.wm-ledger-row{padding:17px 0;border-bottom:1px dashed var(--lk-line);transition:background .2s}
-.wm-ledger-row:last-of-type{border-bottom:0}
-.wm-ledger-row:hover{background:linear-gradient(90deg,transparent,rgba(140,245,196,.045) 45%,transparent)}
-.wm-ledger-k{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--lk-cy);padding-top:3px}
-.wm-ledger-before b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.25;color:var(--lk-tx);margin-bottom:4px}
-.wm-ledger-before p{margin:0;color:var(--lk-mut);font-size:14px;line-height:1.5}
-.wm-ledger-now{position:relative;padding-left:30px}
-.wm-ledger-now svg{position:absolute;left:0;top:3px;color:#062a22;background:var(--lk-em);border-radius:50%;padding:2px;width:20px;height:20px}
-.wm-ledger-now p{margin:0;font-size:15.5px;line-height:1.5;color:var(--lk-tx);font-weight:500}
-.wm-ledger-now em{font-style:normal;color:var(--lk-em);font-weight:800}
-.wm-ledger-tag{display:none}
+/* Before / With WorkCoPilot: two light columns in the site's card language
+   (white surface, brand hairline, emerald->cyan corner glow, soft shadow),
+   the "before" column quieter, the "after" column lifted. Site fonts only:
+   Bricolage for the headings and labels, Figtree for everything else. */
+.wm-roi-split{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.12fr);gap:18px;align-items:stretch}
+.wm-roi-col{position:relative;overflow:hidden;isolation:isolate;border-radius:22px;padding:26px 28px 22px;border:1px solid var(--line);background:var(--panel)}
+.wm-roi-col.before{background:linear-gradient(180deg,rgba(255,255,255,.55),rgba(255,255,255,.2)),var(--ink);border-color:rgba(17,23,38,.08)}
+.wm-roi-col.after{box-shadow:0 1px 2px rgba(10,13,18,.04),0 28px 60px -28px rgba(14,159,110,.45)}
+.wm-roi-col.after::before{content:'';position:absolute;inset:0 0 auto 0;height:2px;z-index:3;background:linear-gradient(90deg,#8cf5c4,#39d3ff 55%,transparent)}
+.wm-roi-col.after::after{content:'';position:absolute;z-index:-1;pointer-events:none;width:260px;height:260px;right:-90px;top:-140px;border-radius:50%;filter:blur(30px);opacity:.9;
+  background:radial-gradient(circle at 62% 60%,rgba(140,245,196,.55),transparent 68%),radial-gradient(circle at 42% 42%,rgba(57,211,255,.40),transparent 70%)}
+.wm-roi-tag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:6px 11px;border-radius:999px;color:var(--mut);background:rgba(17,23,38,.06);margin-bottom:14px}
+.wm-roi-tag.ok{color:#07784f;background:rgba(14,159,110,.1);border:1px solid rgba(14,159,110,.28)}
+.wm-roi-col h3{margin:0 0 16px;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(20px,2vw,24px);letter-spacing:-.02em;line-height:1.15;color:var(--ink-brand,#062a22)}
+.wm-roi-col.before h3{color:var(--tx)}
+.wm-roi-col ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.wm-roi-col li{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-top:1px solid var(--line)}
+.wm-roi-col li b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:15.5px;letter-spacing:-.01em;line-height:1.25;color:var(--tx);margin-bottom:3px}
+.wm-roi-col li p{margin:0;font-size:14px;line-height:1.5;color:var(--mut)}
+.wm-roi-col.after li p{color:var(--tx);font-size:14.5px}
+.wm-roi-col.after li em{font-style:normal;font-weight:700;color:#07784f;text-decoration:underline;text-decoration-color:rgba(14,159,110,.45);text-decoration-thickness:2px;text-underline-offset:3px}
+.wm-roi-dot{flex:none;width:22px;height:22px;border-radius:50%;margin-top:1px;border:1.5px dashed rgba(17,23,38,.28)}
+.wm-roi-tick{flex:none;width:22px;height:22px;border-radius:50%;margin-top:1px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,#10a271,#0a93c4);box-shadow:0 6px 14px -6px rgba(10,147,196,.6)}
+.wm-roi-arrow{align-self:center;display:grid;place-items:center;width:42px;height:42px;border-radius:50%;background:var(--panel);border:1px solid var(--line);color:var(--em);box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -18px rgba(10,13,18,.3)}
 .wm-roi-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:14px 24px;margin-top:24px}
 .wm-roi-note{display:inline-flex;align-items:center;gap:8px;margin:0;color:var(--mut);font-size:13.5px;line-height:1.4}
 .wm-roi-note svg{color:var(--em);flex:none}
 .wm-roi-ctas{display:flex;gap:12px;flex-wrap:wrap}
 @media(max-width:900px){
   .wm-roi-head{grid-template-columns:1fr;gap:14px;align-items:start}.wm-roi .wm-h2{max-width:none}
-  .wm-ledger{padding:20px 18px 14px;border-radius:20px}
-  .wm-ledger-cols{display:none}
-  .wm-ledger-row{grid-template-columns:1fr;gap:10px;padding:16px 0}.wm-ledger-k{display:none}
-  .wm-ledger-tag{display:block;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;color:var(--lk-mut);margin-bottom:6px}
-  .wm-ledger-tag.now{color:var(--lk-em)}
-  .wm-ledger-now{padding-left:0}.wm-ledger-now svg{position:static;display:inline-block;vertical-align:-4px;margin-right:8px}
-  .wm-ledger-now p{display:inline}
+  .wm-roi-split{grid-template-columns:1fr;gap:12px}.wm-roi-arrow{transform:rotate(90deg);justify-self:center}
   .wm-roi-foot{flex-direction:column;align-items:stretch}
 }
-@media(max-width:560px){.wm-roi-ctas{flex-direction:column}.wm-roi-ctas .wm-cta{justify-content:center}}
-@media(prefers-reduced-motion:reduce){.wm-ledger-live i{animation:none}}
+@media(max-width:560px){.wm-roi-col{padding:20px 18px 14px;border-radius:18px}.wm-roi-ctas{flex-direction:column}.wm-roi-ctas .wm-cta{justify-content:center}}
 /* FIELDS WE COVER - 56 fields in 10 family cards. A compact 3-up stat row,
    then a dense 4-column grid where the two biggest families span two columns
    so the roster reads as one considered composition, not ten equal boxes.
