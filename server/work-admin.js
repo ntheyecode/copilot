@@ -212,6 +212,11 @@ export function registerWorkAdminRoutes(app, deps = {}) {
         companyName: (wu && wu.companyName) || (wu && wu.companyId ? companyNameById.get(wu.companyId) : null) || null,
         role: r.role || 'user',
         disabled: !!(wu && wu.disabled),   // superadmin-disabled: console shows a badge + Enable label
+        // Free (comped) access + the raw plan status, so the Users console can show
+        // and toggle free access and see who is still unplanned. For a standalone
+        // user this is what unlocks guidance - the tier alone does not.
+        free: !!(wu && wu.subscription && wu.subscription.status === 'comp'),
+        planStatus: (wu && wu.subscription && wu.subscription.status) || 'none',
         mfa: (() => { try { return store.userMfaStatus(r.id) } catch { return { enabled: false, required: true } } })(),
       }
     }).sort((a, b) => a.username.localeCompare(b.username))

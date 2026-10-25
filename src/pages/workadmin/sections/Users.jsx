@@ -164,6 +164,22 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
     } finally { setBusyId(null) }
   }
 
+  // Superadmin: grant/revoke free (comped) PREMIUM access for an INDIVIDUAL user.
+  // This wires the existing comp mechanism (userFreeAccess -> subscription.status
+  // = 'comp'), which is what actually UNLOCKS guidance. Changing the tier alone
+  // does not grant access, so without this control a standalone user stays on the
+  // "choose a plan" gate. Company members are covered by their company seat.
+  const toggleFree = async (user) => {
+    if (!isSuperAdmin) return
+    setBusyId(user.id)
+    try {
+      await workAdminApi.userFreeAccess(user.id, !user.free)
+      setMsg(user.id, 'ok', user.free ? 'Free access revoked' : 'Free access granted (premium)')
+      await load()
+    } catch (error) {
+      setMsg(user.id, 'err', error.message || 'Could not change free access')
+    } finally { setBusyId(null) }
+  }
   const applyGrant = async (user) => {
     const hours = Number(grantHours)
     if (!isFinite(hours) || hours <= 0) { setMsg(user.id, 'err', 'Enter a positive number of hours'); return }
@@ -358,6 +374,14 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                               onClick={() => openAsUser(u)}
                               style={{ color: 'var(--wka-accent-dark)', borderColor: 'var(--wka-accent-line)', whiteSpace: 'nowrap' }}>
                               {busyId === u.id ? <Spinning /> : <Eye size={13} />} Open as user
+                            </button>
+                          )}
+                          {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf && (
+                            <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
+                              title={u.free ? 'Free (comped) premium access is ON - click to revoke' : 'Grant free premium access (unlocks guidance, no charge)'}
+                              onClick={() => toggleFree(u)}
+                              style={{ color: u.free ? 'var(--wka-emerald)' : undefined, whiteSpace: 'nowrap' }}>
+                              {busyId === u.id ? <Spinning /> : (u.free ? 'Free access ✓' : 'Grant free access')}
                             </button>
                           )}
                           <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Grant purchased hours' : 'Superadmin only'}
