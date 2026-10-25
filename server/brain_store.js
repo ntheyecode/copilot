@@ -635,6 +635,22 @@ export const brainStore = {
   },
 }
 
+// Read-only export helper (SUPREME RULE II: the on-disk layout stays owned HERE).
+// Returns the tenant's already-sealed blobs as raw Buffers for the password-encrypted
+// export (customer_export.js), which copies them verbatim into the encrypted archive
+// and re-wraps only the DEK under the export password. This does NOT decrypt anything
+// and does NOT change any public adapter method; it just exposes the three sealed
+// files' bytes so the archive builder does not hardcode the BRAIN_DIR layout itself.
+// `present` is false when the tenant has no stored brain (no index blob).
+export function readSealedBlobsForExport(companyId) {
+  const dir = brainDir(String(companyId))
+  const read = (f) => { try { return fs.readFileSync(path.join(dir, f)) } catch { return null } }
+  const index = read(INDEX_FILE)
+  const vectors = read(VECTORS_FILE)
+  const texts = read(TEXTS_FILE)
+  return { present: !!(index && index.length), dim: DIM, index, vectors, texts }
+}
+
 // Sum the on-disk sealed-blob sizes for the tenant.
 function statBytes(companyId) {
   const dir = brainDir(companyId)

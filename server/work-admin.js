@@ -316,7 +316,7 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     const c = store.createCompany({
       name: b.name, plan: b.plan, seats: b.seats, seatsByTier: b.seatsByTier,
       adminSeats: b.adminSeats, licenseMode: b.licenseMode, ssoProvisioning: b.ssoProvisioning,
-      scrub: b.scrub, profile: b.profile, pricing: b.pricing,
+      scrub: b.scrub, profile: b.profile, pricing: b.pricing, sensitivity: b.sensitivity,
     })
     // AI source is set after creation (the store has a dedicated setter + null
     // default). The setter rejects an unknown value with a 400, so validate it up

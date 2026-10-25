@@ -25,6 +25,11 @@ import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
+// Password -> key derivation for the password-encrypted data export. ONE source of
+// truth for scrypt (SUPREME RULE II): the same KDF the Company Brain customer-held
+// key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,
+// never the password and never a derived archive key.
+import { verifierOf, checkVerifier, randomSalt as kdfRandomSalt, KDF as EXPORT_KDF } from './key_derive.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -171,6 +176,9 @@ function mapSecrets(d, fn) {
     if (c && c.companyAi && c.companyAi.apiKey) c.companyAi.apiKey = fn(c.companyAi.apiKey)
     if (c && c.webSearch && c.webSearch.apiKey) c.webSearch.apiKey = fn(c.webSearch.apiKey)
     if (c && c.sso && c.sso.clientSecret) c.sso.clientSecret = fn(c.sso.clientSecret)
+    // The export verifier is a scrypt output (it cannot decrypt the archive), but we
+    // encrypt it at rest anyway (defense in depth), like the other company secrets.
+    if (c && c.export && c.export.verifier) c.export.verifier = fn(c.export.verifier)
   }
   if (d.sessionSecret) d.sessionSecret = fn(d.sessionSecret)
 }
@@ -976,6 +984,15 @@ function publicCompany(c) {
     webSearch: (c.webSearch && c.webSearch.apiKey)
       ? { provider: c.webSearch.provider || 'tavily', keyMasked: '••••' + String(c.webSearch.apiKey).slice(-4), setAt: c.webSearch.setAt || null }
       : null,
+    // Sensitivity tier + privacy/business-contact recipients (names + emails only;
+    // never a verifier/salt/key). Companies are the protected tier of the product.
+    sensitivity: publicSensitivity(c),
+    // Export STATUS only: whether a data-export password is set, and when. NEVER the
+    // verifier, the salt, or any derived key.
+    export: {
+      passwordSet: !!(c.export && c.export.verifier),
+      setAt: (c.export && c.export.setAt) || null,
+    },
   }
 }
 // Web-search (Tavily) key for a company. Empty clears it. Never returned raw.
@@ -1396,6 +1413,61 @@ export function clearCompanySkills(companyId) {
   if (c) c.skills = []; persistSoon(); return n
 }
 
+// ---- Company sensitivity: privacy/business-contact recipients (company admin) ----
+// GET returns the list; the setter REPLACES it and is audited (reason required). The
+// recipients are names + emails + handling flags, NOT app roles (COMPANY_ROLES is
+// unchanged). publicSensitivity never exposes any verifier/salt/key.
+export function getCompanySensitivity(companyId) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  return publicSensitivity(c)
+}
+export function setCompanyPrivacyContacts(companyId, recipients, { byUserId = null, reason = '', tier = undefined } = {}) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  const patch = { recipients: Array.isArray(recipients) ? recipients : [] }
+  if (tier !== undefined) patch.tier = tier
+  const before = (c.sensitivity && Array.isArray(c.sensitivity.recipients)) ? c.sensitivity.recipients.length : 0
+  c.sensitivity = normalizeSensitivity(patch, c.sensitivity, { addedBy: byUserId })
+  persist()
+  // Audited at this single chokepoint so every recipient edit leaves a trail.
+  recordAdminAction({ userId: byUserId, companyId, action: 'privacy_contacts_update', reason: reason || 'update privacy contacts', detail: `recipients ${before} -> ${c.sensitivity.recipients.length}` })
+  return publicSensitivity(c)
+}
+
+// ---- Password-encrypted data export: the PASSWORD VERIFIER only ------------
+// We store ONLY a scrypt verifier + its salt + the KDF params, never the password
+// and never any derived archive key (the verifier cannot decrypt the archive; it only
+// answers "is this the right password?"). The archive itself is built by
+// customer_export.js, which derives the AES-256-GCM key from the password on demand.
+export function setCompanyExportPassword(companyId, password) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  const pw = String(password == null ? '' : password)
+  if (pw.length < 8) throw httpErr(400, 'The export password must be at least 8 characters.')
+  if (pw.length > 1024) throw httpErr(400, 'That export password is too long.')
+  const salt = kdfRandomSalt(16)
+  c.export = {
+    verifier: verifierOf(pw, salt),
+    verifierSalt: salt.toString('base64'),
+    kdf: { alg: EXPORT_KDF.alg, N: EXPORT_KDF.N, r: EXPORT_KDF.r, p: EXPORT_KDF.p, dkLen: EXPORT_KDF.dkLen },
+    setAt: new Date().toISOString(),
+  }
+  persist()
+  return { passwordSet: true, setAt: c.export.setAt }
+}
+export function companyExportPasswordSet(companyId) {
+  const c = _company(companyId); return !!(c && c.export && c.export.verifier)
+}
+export function getCompanyExportStatus(companyId) {
+  const c = _company(companyId); if (!c) return { passwordSet: false, setAt: null }
+  return { passwordSet: !!(c.export && c.export.verifier), setAt: (c.export && c.export.setAt) || null }
+}
+// Constant-time check (checkVerifier uses crypto.timingSafeEqual). Returns a boolean;
+// never throws on a wrong password (a wrong password is a normal outcome, not an error).
+export function checkCompanyExportPassword(companyId, password) {
+  const c = _company(companyId)
+  if (!c || !c.export || !c.export.verifier) return false
+  return checkVerifier(String(password == null ? '' : password), c.export.verifierSalt, c.export.verifier, { ...EXPORT_KDF, ...(c.export.kdf || {}) })
+}
+
 // One-time migration: re-scrub every stored skill and KB learning through the
 // policy-aware chokepoint, closing the historical gap where this text was only
 // passed through redactIncidentText (secrets/emails) and could still hold names,
@@ -1566,7 +1638,70 @@ function normalizeProfile(p = {}) {
     phone: S(p.phone, 40), address: S(p.address, 200), city: S(p.city, 80), state: S(p.state, 80),
     country: S(p.country, 80), postalCode: S(p.postalCode, 24),
     website: S(p.website, 200),   // white-label web link shown in the company dashboard
+    // Business-contact title (the role of contactPerson, e.g. "VP Operations") and an
+    // OPTIONAL legal / privacy escalation contact. These identify WHO the business and
+    // legal points of contact are; the sensitivity.recipients list (below) is separate
+    // and governs who may RECEIVE the export password / retrieve sensitive data.
+    businessContactTitle: S(p.businessContactTitle, 120),
+    legalContactName: S(p.legalContactName, 120),
+    legalContactEmail: S(p.legalContactEmail, 160).toLowerCase(),
   }
+}
+// ---- Company sensitivity: tier + privacy/business-contact RECIPIENTS --------
+// Recipients are a LIST, NOT a 4th company role: COMPANY_ROLES stays
+// member/company_admin/executive (a role grants app permissions; a recipient is a
+// named person who may receive the export password and/or retrieve sensitive data,
+// and may not even have an account). Keeping them separate avoids overloading the
+// permission model with data-handling designations.
+export const SENSITIVITY_TIERS = ['standard', 'protected']
+const RECIPIENT_CAP = 50
+function normalizeRecipient(r = {}, { addedBy = null, existing = null } = {}) {
+  const S = (x, n) => String(x == null ? '' : x).trim().slice(0, n)
+  const email = normalizeEmail(r.email)
+  const name = S(r.name, 120)
+  if (!name || !email) throw httpErr(400, 'Each privacy contact needs a name and a valid email.')
+  const nowIso = new Date().toISOString()
+  return {
+    id: (existing && existing.id) || (r.id && String(r.id).slice(0, 40)) || ('rcpt' + id()),
+    name, email,
+    phone: S(r.phone, 40),
+    title: S(r.title, 120),
+    userId: r.userId ? String(r.userId).slice(0, 64) : null,
+    canReceivePassword: !!r.canReceivePassword,
+    canRetrieveSensitive: !!r.canRetrieveSensitive,
+    addedBy: (existing && existing.addedBy) || addedBy || null,
+    addedAt: (existing && existing.addedAt) || nowIso,
+    updatedAt: nowIso,
+  }
+}
+function normalizeSensitivity(s = {}, existing = null, { addedBy = null } = {}) {
+  const base = existing || {}
+  const tier = s.tier != null ? enumOrThrow(s.tier, SENSITIVITY_TIERS, 'Sensitivity tier') : (base.tier || 'standard')
+  let recipients
+  if (Array.isArray(s.recipients)) {
+    const prior = new Map((base.recipients || []).map((x) => [x.id, x]))
+    const seen = new Set()
+    recipients = s.recipients.slice(0, RECIPIENT_CAP).map((r) => {
+      const rec = normalizeRecipient(r, { addedBy, existing: (r && r.id) ? prior.get(String(r.id)) : null })
+      if (seen.has(rec.email)) throw httpErr(400, `A privacy contact with the email ${rec.email} is listed more than once.`)
+      seen.add(rec.email)
+      return rec
+    })
+  } else {
+    recipients = Array.isArray(base.recipients) ? base.recipients : []
+  }
+  return { tier, recipients, updatedAt: new Date().toISOString() }
+}
+function publicSensitivity(c) {
+  const s = (c && c.sensitivity) || null
+  const tier = (s && SENSITIVITY_TIERS.includes(s.tier)) ? s.tier : 'standard'
+  const recipients = (s && Array.isArray(s.recipients)) ? s.recipients.map((r) => ({
+    id: r.id, name: r.name, email: r.email, phone: r.phone || '', title: r.title || '',
+    userId: r.userId || null, canReceivePassword: !!r.canReceivePassword,
+    canRetrieveSensitive: !!r.canRetrieveSensitive,
+    addedBy: r.addedBy || null, addedAt: r.addedAt || null, updatedAt: r.updatedAt || null,
+  })) : []
+  return { tier, recipients, updatedAt: (s && s.updatedAt) || null }
 }
 // A company logo for white-label dashboards: an uploaded image (data URL) or an
 // https image link. Capped so db.json stays lean; empty clears it.
@@ -1590,7 +1725,7 @@ function normalizeCompanyName(name) {
 function companyNameTaken(nm, exceptId = null) {
   return (db.companies || []).some((c) => c.id !== exceptId && c.name.toLowerCase() === nm.toLowerCase())
 }
-export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = null, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false, profile = null, pricing = null, logo = null } = {}) {
+export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = null, adminSeats = 2, licenseMode = 'locked', ssoProvisioning = 'explicit', scrub = false, profile = null, pricing = null, logo = null, sensitivity = null } = {}) {
   const nm = normalizeCompanyName(name)
   if (!db.companies) db.companies = []
   if (companyNameTaken(nm)) throw httpErr(409, 'A company with that name already exists.')
@@ -1612,6 +1747,12 @@ export function createCompany({ name, plan = 'basic', seats = 0, seatsByTier = n
     imageGen: false,           // off until the superadmin enables it (cost gate)
     trial: { sessions: 10, used: 0, minutesPer: 60 },   // 10 x 1h, pooled across users
     companyAi: {},             // company-admin provider keys, used when aiSource === 'company'
+    // Company sensitivity classification + privacy/business-contact recipients. A
+    // company is the PROTECTED tier of the product (encrypted export, privacy
+    // contacts, governance policy); individuals use the lighter model. Default: tier
+    // 'standard', no recipients yet, no export password set.
+    sensitivity: normalizeSensitivity(sensitivity || {}, null),
+    export: null,              // set only via setCompanyExportPassword (verifier + salt, never the password)
   }
   db.companies.push(c)
   persist()
@@ -1744,6 +1885,9 @@ export function updateCompany(companyId, patch = {}) {
   if (next.licenseMode) c.licenseMode = next.licenseMode
   if (next.ssoProvisioning) c.ssoProvisioning = next.ssoProvisioning
   if (patch.profile !== undefined) c.profile = normalizeProfile({ ...(c.profile || {}), ...(patch.profile || {}) })
+  // Sensitivity tier + privacy-contact recipients (superadmin work-admin patch path).
+  // A given recipients array REPLACES the list; omit it to change only the tier.
+  if (patch.sensitivity !== undefined) c.sensitivity = normalizeSensitivity(patch.sensitivity || {}, c.sensitivity, { addedBy: 'superadmin' })
   if (patch.logo !== undefined) c.logo = normalizeLogo(patch.logo)
   if (patch.pricing !== undefined) c.pricing = normalizeCompanyPricing(patch.pricing)
   if (patch.scrub != null) c.scrub = !!patch.scrub

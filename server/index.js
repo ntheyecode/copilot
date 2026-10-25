@@ -44,6 +44,7 @@ import { scrubSensitive, scrubWithPolicy, redactionSummary, POLICY_CATEGORIES } 
 // primary company grounding (added alongside skills, never replacing them).
 import { configureBrainCrypto, enableCustomerCustody, unlockWithPassphrase, unlockWithRecovery, changePassphrase, lock as brainLock, isUnlocked as brainUnlocked } from './brain_crypto.js'
 import { brainStore, configureBrainStore } from './brain_store.js'
+import { buildCompanyArchive } from './customer_export.js'
 import { retrieveForGoal } from './brain_retrieve.js'
 import { buildManifest } from './brain_ingest.js'
 import { EMBED, policyVersionOf } from './brain_model.js'
@@ -1363,6 +1364,8 @@ app.get('/api/work/team/learnings', requireWorkAuth, requireCompanyAdmin, wrap((
 // Backup: download the company's knowledge base as JSON.
 app.get('/api/work/team/learnings/export', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  // Single chokepoint: once an export password is set, the plaintext side door closes.
+  if (store.companyExportPasswordSet(cid)) return res.status(409).json({ error: 'A data-export password is set for this company. Use the encrypted export (/api/work/team/data-export) instead.', encryptedExport: true })
   res.setHeader('Content-Type', 'application/json; charset=utf-8')
   res.setHeader('Content-Disposition', `attachment; filename="workcopilot-knowledge-base-${cid}.json"`)
   res.send(JSON.stringify({ exportedAt: new Date().toISOString(), companyId: cid, learnings: store.exportCompanyLearnings(cid) }, null, 2))
@@ -1412,6 +1415,7 @@ app.delete('/api/work/skills/:id', requireWorkAuth, wrap((req, res) => res.json(
 // Company skills download / re-upload (admin) - parallel to the KB backup/restore.
 app.get('/api/work/team/skills/export', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  if (store.companyExportPasswordSet(cid)) return res.status(409).json({ error: 'A data-export password is set for this company. Use the encrypted export (/api/work/team/data-export) instead.', encryptedExport: true })
   res.setHeader('content-type', 'application/json')
   res.send(JSON.stringify({ exportedAt: new Date().toISOString(), companyId: cid, skills: store.exportCompanySkills(cid) }, null, 2))
 }))
@@ -1431,6 +1435,59 @@ app.post('/api/work/team/skills/clear', requireWorkAuth, requireCompanyAdmin, wr
   const cleared = store.clearCompanySkills(cid)
   store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'skills_clear', reason, detail: `cleared ${cleared} skills` })
   res.json({ cleared })
+}))
+
+// ---- Company sensitivity: privacy / business-contact recipients (admin) -------
+// Recipients are a LIST of named people (who may receive the export password and/or
+// retrieve sensitive data), NOT app roles. Editing is audited (reason required).
+app.get('/api/work/team/privacy-contacts', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.getCompanySensitivity(cid))
+}))
+app.post('/api/work/team/privacy-contacts', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const b = req.body || {}
+  const reason = String(b.reason || '').trim()
+  if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to change privacy contacts (recorded in the audit trail).' })
+  const out = store.setCompanyPrivacyContacts(cid, b.recipients, { byUserId: req.workUser.id, reason, tier: b.tier })
+  res.json(out)
+}))
+
+// ---- Password-encrypted data export (company admins) -------------------------
+// Password SET AT SETUP: we store only a scrypt verifier (never the password / key).
+// If email is configured, the password is emailed to every recipient who may receive
+// it (the email carries the PASSWORD ONLY, never the archive or a link). If email is
+// off, we return the password once for the UI to show (stated mode, no silent drop).
+app.post('/api/work/team/export-password', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const password = String((req.body || {}).password || '')
+  const status = store.setCompanyExportPassword(cid, password)   // throws 400 if too weak
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'export_password_set', reason: 'set data-export password', detail: 'verifier stored; password not stored' })
+  const company = store.getCompany(cid)
+  const recipients = ((company.sensitivity && company.sensitivity.recipients) || []).filter((r) => r.canReceivePassword && r.email)
+  if (store.smtpConfigured()) {
+    // The email carries the PASSWORD ONLY. Never the archive, never a download link.
+    for (const r of recipients) sendTemplateAsync('export_password_set', r.email, { name: r.name, company: company.name, password })
+    return res.json({ ...status, delivery: 'email', emailedCount: recipients.length })
+  }
+  return res.json({
+    ...status, delivery: 'onscreen', password, emailedCount: 0,
+    note: 'Email is not configured, so the password was not sent. Share it with your authorized recipients now; it is shown here only once.',
+  })
+}))
+// DOWNLOAD: verify the password, then build + stream the WCPX v1 encrypted archive.
+app.post('/api/work/team/data-export', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const password = String((req.body || {}).password || '')
+  if (!store.companyExportPasswordSet(cid)) return res.status(409).json({ error: 'Set an export password first (POST /api/work/team/export-password).', needsPassword: true })
+  if (!store.checkCompanyExportPassword(cid, password)) return res.status(401).json({ error: 'That password does not match the export password set for this company.' })
+  const { buffer, filename, brainMode, brainIncluded, notes } = buildCompanyArchive({ companyId: cid, password })
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'data_export', reason: 'encrypted data export', detail: `wcpx ${buffer.length} bytes, brain=${brainMode}` })
+  res.setHeader('Content-Type', 'application/octet-stream')
+  res.setHeader('Content-Disposition', `attachment; filename="${filename}"`)
+  res.setHeader('X-WCPX-Brain', brainIncluded ? 'included' : 'skipped')
+  if (!brainIncluded && notes && notes.length) res.setHeader('X-WCPX-Note', encodeURIComponent(notes[0]))
+  res.send(buffer)
 }))
 
 // ---- Company Brain: per-tenant encrypted knowledge from the desktop ----------

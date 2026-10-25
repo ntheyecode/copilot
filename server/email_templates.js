@@ -1062,6 +1062,37 @@ The WorkCoPilot team`,
     },
     showRows: false,
   },
+
+  export_password_set: {
+    label: 'Data export password set',
+    category: 'security',
+    description: 'Sent to authorized recipients when a company admin sets the data-export password. Carries the password ONLY, never the archive file or a download link.',
+    eyebrow: 'Data export',
+    defaultSubject: 'Your WorkCoPilot data-export password',
+    defaultHeading: 'A data-export password was set',
+    defaultBody:
+`Hi <First_Name>,
+
+A company administrator set the password that protects the WorkCoPilot encrypted data export for <Company>. You are listed as a recipient who is authorized to receive it.
+
+Export password: **<Password>**
+
+> Keep this password safe. It is the ONLY way to open an encrypted export archive (.wcpx file). WorkCoPilot does not store it and cannot recover it if it is lost. This email contains the password only, never the export file itself and never a download link.
+
+If you did not expect this, contact your administrator so the password can be reset.`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Password>', 'The data-export password (sent once, to authorized recipients only)', 'correct-horse-battery-staple'),
+      P('<Company>', 'Company the export belongs to', 'Northwind Logistics'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      company: 'Northwind Logistics',
+      password: 'correct-horse-battery-staple',
+    },
+    showRows: false,
+  },
 }
 
 // Finish the defs: attach global placeholders, freeze.
