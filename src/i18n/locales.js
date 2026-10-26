@@ -55,17 +55,27 @@ export function resolveLocale(input) {
 // ---- Location signal: the browser's IANA time zone ---------------------------
 // A privacy-safe, client-side proxy for the visitor's LOCATION (no IP, nothing
 // sent anywhere, no dependency): Intl...timeZone is where the device is, which
-// usually matches the country. We map the major zones per supported language so
-// a visitor physically in, say, India or Japan gets Hindi or Japanese on the
-// first visit even when their browser language is English. Unmapped zones return
-// null and detection falls back to the browser language, then English.
+// usually matches the country.
+//
+// LOGIC (owner): map a zone to its PROFESSIONAL / business language, not simply
+// the majority native tongue.
+//   - A country gets a non-English language ONLY where that language (one we
+//     support) is the professional language: Japan->ja, Germany->de, Brazil->
+//     pt-BR, Spain/LatAm->es, Russia->ru, Turkey->tr, Japan/Korea/China/etc.
+//   - Where ENGLISH is the professional language (India, Pakistan, Singapore,
+//     Nigeria, the Philippines, Hong Kong, the UK, ...), OR we do not support the
+//     local language, show ENGLISH: US English for the USA & Canada, UK English
+//     everywhere else. Unmapped zones therefore default to en-GB.
+// So India -> English (not Hindi); Hindi stays reachable via a Hindi browser
+// language or the menu. A supported non-English BROWSER language still wins over
+// location (handled in detectLocale) - an explicit preference is honored.
 const TZ_LOCALE = {
-  // Hindi (India)
-  'Asia/Kolkata': 'hi', 'Asia/Calcutta': 'hi',
+  // India & neighbours: English is the professional/business lingua franca.
+  'Asia/Kolkata': 'en-GB', 'Asia/Calcutta': 'en-GB', 'Asia/Kathmandu': 'en-GB', 'Asia/Thimphu': 'en-GB',
   // Japanese / Korean
   'Asia/Tokyo': 'ja', 'Asia/Seoul': 'ko', 'Asia/Pyongyang': 'ko',
-  // Simplified Chinese
-  'Asia/Shanghai': 'zh', 'Asia/Chongqing': 'zh', 'Asia/Chungking': 'zh', 'Asia/Harbin': 'zh', 'Asia/Urumqi': 'zh', 'Asia/Macau': 'zh', 'Asia/Macao': 'zh', 'Asia/Singapore': 'zh',
+  // Simplified Chinese (mainland + Macau; Singapore/Hong Kong use English in business)
+  'Asia/Shanghai': 'zh', 'Asia/Chongqing': 'zh', 'Asia/Chungking': 'zh', 'Asia/Harbin': 'zh', 'Asia/Urumqi': 'zh', 'Asia/Macau': 'zh', 'Asia/Macao': 'zh',
   // Indonesian
   'Asia/Jakarta': 'id', 'Asia/Pontianak': 'id', 'Asia/Makassar': 'id', 'Asia/Jayapura': 'id',
   // Vietnamese
@@ -86,10 +96,15 @@ const TZ_LOCALE = {
   'Europe/Madrid': 'es', 'Africa/Ceuta': 'es', 'Atlantic/Canary': 'es', 'America/Mexico_City': 'es', 'America/Monterrey': 'es', 'America/Merida': 'es', 'America/Cancun': 'es', 'America/Chihuahua': 'es', 'America/Hermosillo': 'es', 'America/Mazatlan': 'es', 'America/Tijuana': 'es', 'America/Bogota': 'es', 'America/Lima': 'es', 'America/Santiago': 'es', 'America/Argentina/Buenos_Aires': 'es', 'America/Argentina/Cordoba': 'es', 'America/Argentina/Mendoza': 'es', 'America/Caracas': 'es', 'America/La_Paz': 'es', 'America/Guayaquil': 'es', 'America/Asuncion': 'es', 'America/Montevideo': 'es', 'America/Guatemala': 'es', 'America/Tegucigalpa': 'es', 'America/Managua': 'es', 'America/Costa_Rica': 'es', 'America/Panama': 'es', 'America/El_Salvador': 'es', 'America/Santo_Domingo': 'es', 'America/Havana': 'es', 'America/Puerto_Rico': 'es',
   // Arabic (MENA)
   'Asia/Riyadh': 'ar', 'Asia/Dubai': 'ar', 'Asia/Qatar': 'ar', 'Asia/Bahrain': 'ar', 'Asia/Kuwait': 'ar', 'Asia/Baghdad': 'ar', 'Asia/Amman': 'ar', 'Asia/Beirut': 'ar', 'Asia/Damascus': 'ar', 'Asia/Aden': 'ar', 'Asia/Muscat': 'ar', 'Africa/Cairo': 'ar', 'Africa/Tripoli': 'ar', 'Africa/Tunis': 'ar', 'Africa/Algiers': 'ar', 'Africa/Casablanca': 'ar', 'Africa/Khartoum': 'ar',
-  // English (UK/Ireland/Oceania/South Asia English)
-  'Europe/London': 'en-GB', 'Europe/Dublin': 'en-GB', 'Europe/Isle_of_Man': 'en-GB', 'Europe/Jersey': 'en-GB', 'Europe/Guernsey': 'en-GB', 'Europe/Gibraltar': 'en-GB', 'Australia/Sydney': 'en-GB', 'Australia/Melbourne': 'en-GB', 'Australia/Brisbane': 'en-GB', 'Australia/Perth': 'en-GB', 'Australia/Adelaide': 'en-GB', 'Pacific/Auckland': 'en-GB', 'Asia/Karachi': 'en-GB', 'Asia/Dhaka': 'en-GB', 'Asia/Colombo': 'en-GB', 'Africa/Johannesburg': 'en-GB', 'Africa/Lagos': 'en-GB', 'Africa/Nairobi': 'en-GB',
-  // English (US/Canada)
-  'America/New_York': 'en', 'America/Detroit': 'en', 'America/Chicago': 'en', 'America/Denver': 'en', 'America/Phoenix': 'en', 'America/Los_Angeles': 'en', 'America/Anchorage': 'en', 'America/Toronto': 'en', 'America/Vancouver': 'en', 'America/Edmonton': 'en', 'America/Winnipeg': 'en', 'America/Halifax': 'en', 'Pacific/Honolulu': 'en',
+  // English as the professional language: UK English (en-GB). UK/Ireland,
+  // Oceania, South Asia, SE-Asian English hubs (Singapore/Malaysia/Philippines/
+  // Hong Kong), and Anglophone Africa.
+  'Europe/London': 'en-GB', 'Europe/Dublin': 'en-GB', 'Europe/Isle_of_Man': 'en-GB', 'Europe/Jersey': 'en-GB', 'Europe/Guernsey': 'en-GB', 'Europe/Gibraltar': 'en-GB',
+  'Australia/Sydney': 'en-GB', 'Australia/Melbourne': 'en-GB', 'Australia/Brisbane': 'en-GB', 'Australia/Perth': 'en-GB', 'Australia/Adelaide': 'en-GB', 'Australia/Hobart': 'en-GB', 'Pacific/Auckland': 'en-GB',
+  'Asia/Karachi': 'en-GB', 'Asia/Dhaka': 'en-GB', 'Asia/Colombo': 'en-GB', 'Asia/Singapore': 'en-GB', 'Asia/Kuala_Lumpur': 'en-GB', 'Asia/Kuching': 'en-GB', 'Asia/Manila': 'en-GB', 'Asia/Hong_Kong': 'en-GB',
+  'Africa/Johannesburg': 'en-GB', 'Africa/Lagos': 'en-GB', 'Africa/Nairobi': 'en-GB', 'Africa/Accra': 'en-GB', 'Africa/Kampala': 'en-GB', 'Africa/Dar_es_Salaam': 'en-GB', 'Africa/Lusaka': 'en-GB', 'Africa/Harare': 'en-GB', 'Africa/Kigali': 'en-GB', 'Africa/Gaborone': 'en-GB',
+  // US English (en) for the USA & Canada (owner).
+  'America/New_York': 'en', 'America/Detroit': 'en', 'America/Chicago': 'en', 'America/Denver': 'en', 'America/Phoenix': 'en', 'America/Los_Angeles': 'en', 'America/Anchorage': 'en', 'America/Toronto': 'en', 'America/Vancouver': 'en', 'America/Edmonton': 'en', 'America/Winnipeg': 'en', 'America/Halifax': 'en', 'America/St_Johns': 'en', 'Pacific/Honolulu': 'en',
 }
 
 // Best-effort supported locale for the device's time zone, or null.
@@ -98,9 +113,10 @@ export function localeFromTimezone() {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!tz) return null
     if (TZ_LOCALE[tz]) return TZ_LOCALE[tz]
-    // Region fallback for unmapped zones: most of these regions are covered
-    // above; if a specific city is missing, try its area prefix cautiously.
-    if (tz.startsWith('Australia/') || tz.startsWith('Pacific/')) return 'en-GB'
-    return null
-  } catch { return null }
+    // Owner: a country whose language we do not support - or where English is the
+    // professional language - shows English. US/Canada are mapped to US English
+    // above; every other unmapped zone defaults to UK English. (A supported
+    // non-English browser language still wins over this in detectLocale.)
+    return 'en-GB'
+  } catch { return 'en-GB' }
 }

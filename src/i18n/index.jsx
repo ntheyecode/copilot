@@ -61,15 +61,16 @@ export function detectLocale() {
     const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language]
     for (const l of langs) { const hit = resolveLocale(l); if (hit) { byLang = hit; break } }
   } catch { /* no navigator (SSR/test) */ }
-  // LOCATION via the device time zone (owner: launch the language for the user's
-  // location, not just English). A deliberate NON-English browser language is the
-  // strongest preference, so it wins; otherwise the visitor's location picks the
-  // language, then any browser language, then English - the site never just
-  // defaults to English for someone in a non-English region.
+  // A deliberate NON-English browser language is an explicit preference, so it
+  // wins over location. Otherwise the visitor's LOCATION decides, via the
+  // professional-language logic in localeFromTimezone: regions where English is
+  // the professional language (India, Singapore, Nigeria, UK, ...) or whose
+  // language we do not support get English - US English for the USA & Canada, UK
+  // English elsewhere - while regions with a supported local professional language
+  // (Japan, Germany, Brazil, ...) get that language. localeFromTimezone always
+  // resolves (defaults to en-GB), so the English-browser case is fully covered.
   if (byLang && byLang !== 'en' && byLang !== 'en-GB') return byLang
-  const byTz = localeFromTimezone()
-  if (byTz) return byTz
-  return byLang || DEFAULT_LOCALE
+  return localeFromTimezone() || byLang || 'en-GB'
 }
 
 // The locale to send to the server (plan / coverage requests) - usable outside
