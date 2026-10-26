@@ -4515,7 +4515,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
   const setStep = async (i, st) => {
     setErr('')
-    try { const r = await api.workStep(sessionId, i, st); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
+    // Evidence capture: when the user MARKS A STEP DONE and is sharing their
+    // screen, send the current (on-device-scrubbed) frame so the server keeps it
+    // as that step's milestone screenshot. This gives reports scrubbed shots even
+    // when steps are confirmed manually, not only by the watch auto-confirm. The
+    // frame is the same already-redacted frame the watch/ask flows send; it is
+    // best-effort and never blocks the step update.
+    let frame = null
+    if (st === 'done') { try { const f = grabFrame(); if (f) frame = await prepFrame(f) } catch { /* evidence is best-effort */ } }
+    try { const r = await api.workStep(sessionId, i, st, frame); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
     catch (e) { setErr(friendlyError(e, 'Could not update that step. Please try again.')) }
   }
   // Prev / Next navigation of the current step (moves the pointer, does not mark

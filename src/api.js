@@ -171,7 +171,9 @@ export const api = {
   // optional live screen. Text is DLP-tokenized here before it leaves. ->
   // { replanned, answer, reason, index, step, steps }
   workAddContext: (id, body) => req('POST', `/api/work/sessions/${id}/context`, { ...(body || {}), ...(body && body.note != null ? { note: clean(body.note) } : {}), ...(body && body.docsText != null ? { docsText: clean(body.docsText) } : {}) }),
-  workStep: (id, index, status) => req('POST', `/api/work/sessions/${id}/step`, { index, status }),
+  // frame (optional, data URL) is the on-device-scrubbed screenshot kept as this
+  // step's milestone evidence when the step is marked done while sharing screen.
+  workStep: (id, index, status, frame) => req('POST', `/api/work/sessions/${id}/step`, frame ? { index, status, frame } : { index, status }),
   workCurrentStep: (id, index) => req('POST', `/api/work/sessions/${id}/current`, { index }),
   // Reference documents (Advanced & Premium): ground the plan in the user's own material.
   workDocsList: () => req('GET', '/api/work/docs'),

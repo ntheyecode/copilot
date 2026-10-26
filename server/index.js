@@ -2136,6 +2136,12 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     // One per step, best-effort, never blocks guidance.
     try {
       if (frame) {
+        // First-instruction evidence (owner): keep the VERY FIRST scrubbed frame
+        // as the current step's shot, so every guided task has an early screenshot
+        // even before any step is confirmed. captureMilestoneShot is one-per-step,
+        // so this never duplicates the on-confirm shot for the same step.
+        if (!(Array.isArray(s.shots) && s.shots.length)) store.captureMilestoneShot(req.workUser.id, req.params.id, updated.currentStep || 0, frame)
+        // Then the normal logic: one shot per step as it is confirmed on screen.
         const newly = (updated.steps || []).map((x, i) => (x.status === 'done' && !prevDone.has(i) ? i : -1)).filter((i) => i >= 0)
         if (newly.length) store.captureMilestoneShot(req.workUser.id, req.params.id, Math.max.apply(null, newly), frame)
       }
@@ -2936,9 +2942,17 @@ app.post('/api/work/admin/email-templates/:type/preview', requireAuth, requireSu
 
 // Manual step control (the user ticks/unticks or skips).
 app.post('/api/work/sessions/:id/step', requireWorkAuth, wrap((req, res) => {
-  const { index, status } = req.body || {}
+  const { index, status, frame } = req.body || {}
   if (!['done', 'current', 'pending'].includes(status)) return res.status(400).json({ error: 'Bad status' })
   const s = store.updateWorkStep(req.workUser.id, req.params.id, Number(index), status)
+  // Evidence: when a step is MARKED DONE and the client sent the current
+  // (already on-device-scrubbed) frame, keep it as that step's milestone
+  // screenshot - so reports carry scrubbed shots even when steps are confirmed
+  // manually, not only via the watch auto-confirm. One per step, best-effort,
+  // gated by the owner's reportShots setting inside captureMilestoneShot.
+  if (status === 'done' && typeof frame === 'string' && frame.startsWith('data:')) {
+    try { store.captureMilestoneShot(req.workUser.id, req.params.id, Number(index), frame) } catch { /* evidence is best-effort */ }
+  }
   res.json({ session: s, steps: s.steps, index: s.currentStep })
 }))
 
