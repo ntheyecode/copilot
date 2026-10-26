@@ -177,6 +177,25 @@ function cycleFromSub(sub) {
   return null
 }
 
+// Normalize a Stripe price to a MONTHLY-EQUIVALENT minor-unit amount, so an
+// upgrade/downgrade decision compares a monthly price against an annual price
+// fairly (annual amount / 12), not by plan-name order. Honors interval_count
+// (e.g. a price that bills every 3 months). Falls back to treating an unknown
+// interval as monthly.
+function monthlyEquivMinor(unitAmount, recurring) {
+  const a = Number(unitAmount) || 0
+  const interval = (recurring && recurring.interval) || 'month'
+  const rawCount = Number(recurring && recurring.interval_count) || 1
+  const n = rawCount > 0 ? rawCount : 1
+  switch (interval) {
+    case 'year': return a / (12 * n)
+    case 'week': return (a * 52) / (12 * n)
+    case 'day': return (a * 365) / (12 * n)
+    case 'month':
+    default: return a / n
+  }
+}
+
 // ---- webhook (raw body) ---------------------------------------------------
 // Best-effort + logged: a webhook must never throw out of the handler, or
 // Stripe would retry forever. Signature is verified with the webhook secret
@@ -338,6 +357,15 @@ async function handleEvent(s, store, event) {
     const cycle = cycleFromSub(obj) || prior.cycle || null
     const patch = { status, plan, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd: periodEndIso(obj.current_period_end) }
     if (cycle) patch.cycle = cycle
+    // On a genuine end, record WHEN it ended and (if Stripe gave one) WHY, so the
+    // cancelled-subscribers list + churn graphs have a real date + reason. We only
+    // pass a reason when Stripe reports one, so an admin-stashed reason set ahead
+    // of a period-end cancel is not overwritten with null.
+    if (type === 'customer.subscription.deleted') {
+      patch.canceledAt = new Date().toISOString()
+      const reason = (obj.cancellation_details && (obj.cancellation_details.reason || obj.cancellation_details.comment)) || null
+      if (reason) patch.cancelReason = String(reason).slice(0, 300)
+    }
     store.setSubscription(user.id, patch)
     console.log(`[billing] ${type} -> user ${user.id} plan ${plan || '(unknown)'} status ${status}`)
     // Owner alert, deduped by transition (prior-vs-new) so renewals never spam:
@@ -422,6 +450,13 @@ async function handleEvent(s, store, event) {
 // internal ids beyond the invoice id). Amount is in the currency's minor unit
 // (cents) as Stripe reports it; the client formats it.
 function mapInvoice(inv) {
+  // The billing period: prefer the (subscription) line item's own period, which
+  // is the service window the customer paid for; fall back to the invoice-level
+  // period. Both are optional and never contain a secret.
+  const toIso = (sec) => (sec ? new Date(sec * 1000).toISOString() : null)
+  const line0 = inv.lines && inv.lines.data && inv.lines.data[0]
+  const periodStart = toIso((line0 && line0.period && line0.period.start) || inv.period_start)
+  const periodEnd = toIso((line0 && line0.period && line0.period.end) || inv.period_end)
   return {
     id: inv.id || null,
     number: inv.number || null,
@@ -431,6 +466,9 @@ function mapInvoice(inv) {
     created: inv.created ? new Date(inv.created * 1000).toISOString() : null,
     hostedInvoiceUrl: inv.hosted_invoice_url || null,
     invoicePdf: inv.invoice_pdf || null,
+    paid: !!inv.paid,
+    periodStart,
+    periodEnd,
   }
 }
 // Server-only: the Stripe ids an operator action needs for one account.
@@ -447,6 +485,14 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
   // pass-through if the host did not provide the middleware, so the module stays
   // usable standalone.
   const stepUp = requireAiStepUp || ((req, res, next) => next())
+  // Finance gate = superadmin OR the `accounting` role (store.isFinanceUser).
+  // Defined once here so BOTH the Subscribers view (widened from superadmin-only)
+  // and the finance endpoints share one authority (SUPREME RULE II: single source
+  // of truth). Stripe secret/config WRITES stay superadmin-only below.
+  const financeGate = (req, res, next) => {
+    if (!req.user || !store.isFinanceUser(req.user.id)) return res.status(403).json({ error: 'Finance access only.' })
+    next()
+  }
   // Start a subscription Checkout Session for the chosen plan. Returns { url }.
   app.post('/api/work/checkout', requireWorkAuth, async (req, res) => {
     try {
@@ -550,10 +596,115 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
     }
   })
 
-  // The account's own subscription (safe fields only).
+  // The account's own subscription (safe fields only: status, plan, cycle,
+  // currentPeriodEnd, since, canceledAt, pendingChange - no Stripe ids).
   app.get('/api/work/subscription', requireWorkAuth, wrap((req, res) => {
     res.json({ subscription: store.getSubscription(req.workUser.id), configured: billingConfigured(store) })
   }))
+
+  // Self-serve UPGRADE / DOWNGRADE of the active subscription.
+  //
+  // POLICY (financial best practice; documented here and enforced below):
+  //   * Upgrade vs downgrade is decided by the RESOLVED Stripe price amounts,
+  //     each normalized to a MONTHLY-EQUIVALENT (annual / 12), so a
+  //     monthly<->annual move compares fairly - never by plan-name order.
+  //   * UPGRADE (equal-or-higher monthly-equivalent) is IMMEDIATE with
+  //     proration_behavior 'create_prorations': the customer is charged the
+  //     prorated difference now and gets the higher tier at once. The store is
+  //     updated immediately so entitlements follow right away. (Equal is folded
+  //     into "now" so a lateral move never strands the customer below what they
+  //     paid for.)
+  //   * DOWNGRADE (lower monthly-equivalent) takes effect AT PERIOD END via a
+  //     Stripe subscription schedule with proration_behavior 'none': the customer
+  //     keeps the tier they already paid for until the period ends, with no
+  //     mid-cycle credit. We record a pendingChange (shown on the dashboard) and
+  //     do NOT change the active plan now; at renewal Stripe fires
+  //     customer.subscription.updated, our webhook maps the new price -> plan and
+  //     setSubscription clears the pendingChange.
+  // Never silent (SUPREME RULE III/VI): a Stripe failure logs a work incident and
+  // returns an actionable error; it never degrades to a wrong-tier state.
+  app.post('/api/work/subscription/change', requireWorkAuth, async (req, res) => {
+    try {
+      const plan = String((req.body || {}).plan || '').trim().toLowerCase()
+      if (!PLANS.includes(plan)) return res.status(400).json({ error: 'Pick a plan: lite, basic, advanced or premium.' })
+      const cycle = String((req.body || {}).cycle || 'monthly').trim().toLowerCase() === 'annual' ? 'annual' : 'monthly'
+      const { secret, price, priceAnnual } = cfg(store)
+      const s = await getStripe(secret)
+      if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' })
+
+      const u = req.workUser
+      const sub0 = u.subscription || {}
+      const status0 = sub0.status || 'none'
+      const subId = sub0.stripeSubscriptionId || null
+      // No active/trialing Stripe subscription -> this is a first purchase, not a change.
+      if (!subId || !(status0 === 'active' || status0 === 'trialing')) {
+        return res.status(409).json({ error: 'You do not have an active subscription to change. Choose a plan to get started.', needsCheckout: true, checkout: '/api/work/checkout' })
+      }
+      const configuredId = cycle === 'annual' ? priceAnnual[plan] : price[plan]
+      if (cycle === 'annual' && !configuredId) return res.status(409).json({ error: 'Annual billing is not set up for this plan yet.', annualUnavailable: true })
+      if (!configuredId) return res.status(503).json({ error: 'That plan is not configured in Stripe yet.' })
+      const newPriceId = await resolvePriceId(s, configuredId)
+      if (!newPriceId) return res.status(503).json({ error: 'That plan is not set up correctly in Stripe (no price found). Check the admin console.' })
+
+      // Load the live subscription + its current item/price.
+      const sub = await s.subscriptions.retrieve(subId)
+      const item = sub.items && sub.items.data && sub.items.data[0]
+      if (!item || !item.price) return res.status(502).json({ error: 'Could not read your current subscription. Please try again.' })
+      if (item.price.id === newPriceId) return res.status(400).json({ error: 'You are already on that plan and billing cycle.' })
+
+      // Decide by resolved monthly-equivalent price amounts.
+      const newPrice = await s.prices.retrieve(newPriceId)
+      const curMonthly = monthlyEquivMinor(item.price.unit_amount, item.price.recurring)
+      const newMonthly = monthlyEquivMinor(newPrice.unit_amount, newPrice.recurring)
+      const isUpgrade = newMonthly >= curMonthly
+      const planLabel = `${plan[0].toUpperCase()}${plan.slice(1)} (${cycle})`
+
+      if (isUpgrade) {
+        // Immediate upgrade. If a period-end downgrade was previously scheduled,
+        // release that schedule first so it cannot later override the upgrade.
+        const schedId = (typeof sub.schedule === 'string' ? sub.schedule : (sub.schedule && sub.schedule.id)) || null
+        if (schedId) { try { await s.subscriptionSchedules.release(schedId) } catch (e) { console.warn('[billing] could not release prior schedule: ' + (e && e.message)) } }
+        const updated = await s.subscriptions.update(subId, {
+          items: [{ id: item.id, price: newPriceId }],
+          proration_behavior: 'create_prorations',
+          cancel_at_period_end: false,
+        })
+        const newStatus = mapStatus(updated.status)
+        store.setSubscription(u.id, { status: newStatus, plan, cycle, currentPeriodEnd: periodEndIso(updated.current_period_end), pendingChange: null })
+        // Applied change -> alert the owner now.
+        sendOwnerSubscriptionAlertAsync('plan_change', { user: store.getUser(u.id) || u, plan, status: newStatus, amount: (newPrice.unit_amount || 0) / 100, currency: newPrice.currency || 'usd', cycle, stripeId: subId })
+        const effectiveDate = new Date().toISOString()
+        return res.json({ ok: true, effective: 'now', effectiveDate, summary: `Upgraded to ${planLabel}, effective now.`, subscription: store.getSubscription(u.id) })
+      }
+
+      // Downgrade: schedule the new (lower) price at the current period end.
+      const periodEnd = sub.current_period_end || null
+      const effectiveDate = periodEndIso(periodEnd)
+      let schedule
+      const existingSchedId = (typeof sub.schedule === 'string' ? sub.schedule : (sub.schedule && sub.schedule.id)) || null
+      if (existingSchedId) schedule = await s.subscriptionSchedules.retrieve(existingSchedId)
+      else schedule = await s.subscriptionSchedules.create({ from_subscription: subId })
+      const phase0 = schedule.phases && schedule.phases[0]
+      if (!phase0) return res.status(502).json({ error: 'Could not schedule the change. Please try again or contact support.' })
+      const curItems = (phase0.items || []).map((it) => ({ price: (typeof it.price === 'string' ? it.price : (it.price && it.price.id)), quantity: it.quantity || 1 }))
+      const phases = [
+        { items: curItems, start_date: phase0.start_date, end_date: phase0.end_date || periodEnd },
+        { items: [{ price: newPriceId, quantity: 1 }] },
+      ]
+      await s.subscriptionSchedules.update(schedule.id, { phases, end_behavior: 'release', proration_behavior: 'none' })
+      // Record the pending change for the dashboard; the active plan is unchanged
+      // until the renewal webhook flips it (which also clears this pendingChange).
+      const pendingChange = { plan, cycle, priceId: newPriceId, effectiveDate, scheduleId: schedule.id, scheduledAt: new Date().toISOString() }
+      store.setSubscription(u.id, { pendingChange })
+      // No owner alert yet: the change is SCHEDULED, not applied. The webhook fires
+      // the plan_change alert when the downgrade actually lands at period end.
+      return res.json({ ok: true, effective: 'period_end', effectiveDate, summary: `Scheduled downgrade to ${planLabel}, effective ${effectiveDate ? effectiveDate.slice(0, 10) : 'at period end'}.`, subscription: store.getSubscription(u.id) })
+    } catch (e) {
+      console.warn('[billing] subscription change failed: ' + (e && e.message))
+      try { if (store.recordWorkIncident) store.recordWorkIncident({ kind: 'billing_change_failed', message: 'subscription change failed: ' + (e && e.message ? e.message : 'unknown'), userId: req.workUser && req.workUser.id, call: 'subscription/change' }) } catch { /* best effort */ }
+      res.status(502).json({ error: 'Could not change your plan. Please try again or contact support.' })
+    }
+  })
 
   // The signed-in account's Stripe invoices (newest first). No customer yet
   // (never checked out) returns an empty list, not an error.
@@ -682,15 +833,6 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json(out)
     })
 
-    // Subscribers list for the admin Subscribers page. Superadmin-gated (same
-    // requireAuth + requireSuperAdmin as the rest of this admin billing group).
-    // The store builds the data from accounts with a live-ish subscription
-    // (active | trialing | past_due | comp). No secrets and no Stripe ids are
-    // returned - a boolean `free` marks a comped account.
-    app.get('/api/work/admin/subscribers', requireAuth, requireSuperAdmin, wrap((req, res) => {
-      res.json(store.listSubscribers())
-    }))
-
     // Any user's invoices (for support).
     app.get('/api/work/admin/users/:id/invoices', requireAuth, requireSuperAdmin, async (req, res) => {
       try {
@@ -748,13 +890,17 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
         if (!info) return res.status(404).json({ error: 'Account not found.' })
         if (!info.subId) return res.status(400).json({ error: 'That account has no active subscription.' })
         const atPeriodEnd = !!(req.body && req.body.atPeriodEnd)
+        const reason = String((req.body && req.body.reason) || 'Canceled by admin').slice(0, 300)
         let sub
         if (atPeriodEnd) {
           sub = await s.subscriptions.update(info.subId, { cancel_at_period_end: true })
+          // Stash the reason now (status stays live until it ends) so the webhook
+          // customer.subscription.deleted lands with the reason already recorded.
+          store.setSubscription(req.params.id, { cancelReason: reason })
         } else {
           const priorStatus = (info.user.subscription && info.user.subscription.status) || 'none'
           sub = await s.subscriptions.cancel(info.subId)
-          store.setSubscription(req.params.id, { status: 'canceled' })
+          store.setSubscription(req.params.id, { status: 'canceled', canceledAt: new Date().toISOString(), cancelReason: reason })
           // Owner alert for the admin-initiated immediate cancel. We pre-set the
           // store to canceled above, so the webhook's subscription.deleted (prior
           // status already canceled) will be suppressed - fire it here instead so
@@ -773,19 +919,70 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
     })
   }
 
-  // ---- Finance: all-transactions, period summary, refunds (superadmin +
-  // accounting role). "Admin should see all transactions; accounting role sees
-  // all transactions; dashboard speaks weekly/monthly/quarterly/annual; refunds."
+  // ---- Finance: subscribers, cancelled, all-transactions, period summary,
+  // timeseries, manual-entry CRUD, refunds. Gated by financeGate (superadmin OR
+  // the accounting role). "Admin should see all transactions; accounting role
+  // sees all transactions; dashboard speaks weekly/monthly/quarterly/annual."
   if (requireAuth) {
-    const financeGate = (req, res, next) => {
-      if (!req.user || !store.isFinanceUser(req.user.id)) return res.status(403).json({ error: 'Finance access only.' })
-      next()
-    }
+    // Subscribers list for the admin Subscribers page. WIDENED from superadmin-only
+    // to financeGate so an accountant can see it (Stripe config WRITES stay
+    // superadmin-only above). Shape is unchanged for the existing admin UI (it now
+    // also carries cycle + pendingChange per row - additive). The store builds it
+    // from accounts with a live-ish subscription (active | trialing | past_due |
+    // comp); no secrets and no Stripe ids (a boolean `free` marks a comped account).
+    app.get('/api/work/admin/subscribers', requireAuth, financeGate, wrap((req, res) => {
+      res.json(store.listSubscribers())
+    }))
+    // Cancelled subscribers (churn view + graphs): every account whose sub ended,
+    // with the end date + reason recorded at cancellation and the lifetime spend.
+    app.get('/api/work/admin/subscribers/cancelled', requireAuth, financeGate, wrap((req, res) => {
+      res.json(store.listCancelledSubscribers())
+    }))
     app.get('/api/work/admin/finance/summary', requireAuth, financeGate, wrap((req, res) => res.json(store.financialSummary())))
+    // Bucketed finance timeseries for the dashboard graphs (week|month|quarter|year).
+    app.get('/api/work/admin/finance/timeseries', requireAuth, financeGate, wrap((req, res) => {
+      res.json(store.financeTimeseries(String(req.query.granularity || 'month')))
+    }))
     app.get('/api/work/admin/finance/transactions', requireAuth, financeGate, wrap((req, res) => res.json({
       transactions: store.listTransactions({ limit: Math.min(5000, Number(req.query.limit) || 500), kind: req.query.kind || null, since: req.query.since || null, until: req.query.until || null }),
       total: store.transactionCount(),
     })))
+    // ---- Manual ledger CRUD (financeGate). Create an adjustment, edit its NOTE
+    // only (posted amount immutable), or VOID a manual entry (delete). A real
+    // Stripe-sourced row cannot be edited/voided here (409 stripeSourced) - it is
+    // reversed with a Stripe refund or an offsetting adjustment. Every mutation
+    // carries WHO + reason in the entry's audit trail (store enforces this).
+    const actor = (req) => ({ byUserId: req.user && req.user.id, byName: (req.user && (req.user.displayName || req.user.username)) || null })
+    app.post('/api/work/admin/finance/transactions', requireAuth, financeGate, wrap((req, res) => {
+      const b = req.body || {}
+      const a = actor(req)
+      const rec = store.createManualTransaction({ amount: b.amount, currency: b.currency || 'usd', description: b.description || '', reason: b.reason || '', createdBy: a.byUserId, createdByName: a.byName })
+      res.json({ ok: true, transaction: rec })
+    }))
+    app.patch('/api/work/admin/finance/transactions/:id', requireAuth, financeGate, (req, res) => {
+      try {
+        const b = req.body || {}; const a = actor(req)
+        const rec = store.updateManualTransaction(req.params.id, { description: b.description, reason: b.reason || '', byUserId: a.byUserId, byName: a.byName })
+        res.json({ ok: true, transaction: rec })
+      } catch (e) {
+        const code = e && e.status ? e.status : 502
+        const body = { error: (e && e.message) || 'Could not edit that entry.' }
+        if (e && e.stripeSourced) { body.stripeSourced = true; if (e.hint) body.hint = e.hint }
+        res.status(code).json(body)
+      }
+    })
+    app.delete('/api/work/admin/finance/transactions/:id', requireAuth, financeGate, (req, res) => {
+      try {
+        const b = req.body || {}; const a = actor(req)
+        const rec = store.voidTransaction(req.params.id, { reason: b.reason || '', byUserId: a.byUserId, byName: a.byName })
+        res.json({ ok: true, voided: true, transaction: rec })
+      } catch (e) {
+        const code = e && e.status ? e.status : 502
+        const body = { error: (e && e.message) || 'Could not void that entry.' }
+        if (e && e.stripeSourced) { body.stripeSourced = true; if (e.hint) body.hint = e.hint }
+        res.status(code).json(body)
+      }
+    })
     // Refund a specific ledger transaction (by its Stripe reference). Records the
     // refund to the ledger. Optional partial amount (major units).
     app.post('/api/work/admin/finance/transactions/:id/refund', requireAuth, financeGate, async (req, res) => {
