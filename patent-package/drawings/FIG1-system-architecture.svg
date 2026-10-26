@@ -52,7 +52,7 @@
 
   <!-- Guidance client 120 -->
   <rect x="80" y="262" width="360" height="440" class="b"/>
-  <text x="90" y="280" class="h">GUIDANCE CLIENT 120 (read-only)</text>
+  <text x="184" y="280" class="h">GUIDANCE CLIENT 120 (read-only)</text>
 
   <!-- capture module 122 -->
   <rect x="96" y="294" width="150" height="44" class="b"/>
@@ -104,17 +104,17 @@
   <text x="104" y="623" class="t">event injected into 190</text>
 
   <!-- outbound only after redaction: arrow from 124 / 128 to network -->
-  <path d="M 420 322 L 500 322" class="l" marker-end="url(#a)"/>
-  <text x="430" y="310" class="t">redacted /</text>
-  <text x="430" y="350" class="t">tokenized</text>
+  <path d="M 420 322 L 496 322" class="l" marker-end="url(#a)"/>
+  <text x="478" y="296" class="t">redacted / tokenized</text>
+  <text x="478" y="364" class="t">response</text>
 
   <!-- NETWORK 140 -->
-  <ellipse cx="540" cy="322" rx="38" ry="22" class="b"/>
-  <text x="522" y="318" class="t">NETWORK</text>
-  <text x="530" y="332" class="n">140</text>
-  <path d="M 578 322 L 600 322" class="l" marker-end="url(#a)"/>
-  <path d="M 600 334 L 578 334" class="l" marker-end="url(#a)"/>
-  <path d="M 500 334 L 420 334 L 420 474" class="l" marker-end="url(#a)"/>
+  <ellipse cx="540" cy="328" rx="44" ry="24" class="b"/>
+  <text x="517" y="325" class="t">NETWORK</text>
+  <text x="531" y="339" class="n">140</text>
+  <path d="M 584 322 L 600 322" class="l" marker-end="url(#a)"/>
+  <path d="M 600 334 L 584 334" class="l" marker-end="url(#a)"/>
+  <path d="M 496 334 L 420 334 L 420 474" class="l" marker-end="url(#a)"/>
 
   <!-- GUIDANCE SERVER 150 -->
   <rect x="600" y="80" width="190" height="560" class="b"/>
@@ -172,7 +172,7 @@
   <path d="M 460 790 L 580 790 L 580 404 L 612 404" class="l" marker-end="url(#a)"/>
 
   <!-- distribution of policy to device -->
-  <path d="M 612 418 L 590 418 L 590 440 L 460 440 L 460 322" class="ld"/>
+  <path d="M 612 418 L 590 418 L 590 440 L 470 440 L 470 322" class="ld"/>
   <text x="468" y="456" class="t">policy distributed</text>
   <text x="468" y="468" class="t">to device (128)</text>
 
