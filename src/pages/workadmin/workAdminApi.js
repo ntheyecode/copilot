@@ -65,6 +65,13 @@ export const workAdminApi = {
   // Endpoint is implemented by the server agent; the UI codes defensively (it may
   // 404/501 until wired, and any field may be null).
   subscribers: () => request('GET', '/api/work/admin/subscribers'),
+  // Cancelled (churned) subscribers (superadmin + accounting). Shape:
+  // { cancelled: [ { id, username, email, plan, status:'canceled', cycle, since,
+  //   canceledAt, reason, lifetimeUsd, companyName } ],
+  //   totals: { count, lifetimeUsd } }.
+  // Endpoint is implemented by the server agent; the UI codes defensively (it may
+  // 404/501 until wired, and any field may be null).
+  subscribersCancelled: () => request('GET', '/api/work/admin/subscribers/cancelled'),
   incidents: (limit) => request('GET', `/api/work/admin/incidents${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   aiState: () => request('GET', '/api/work/admin/ai-state'),
 
@@ -85,6 +92,20 @@ export const workAdminApi = {
   financeRefund: (txId, amount, reason) => request('POST', `/api/work/admin/finance/transactions/${encodeURIComponent(txId)}/refund`, { ...(amount != null ? { amount } : {}), ...(reason ? { reason } : {}) }),
   financeStaff: () => request('GET', '/api/work/admin/finance/staff'),
   financeSetRole: (userId, role, reason) => request('POST', '/api/work/admin/finance/role', { userId, role, ...(reason ? { reason } : {}) }),
+  // Revenue + MRR timeseries for the accounting dashboard charts. granularity is
+  // one of week|month|quarter|year. Shape: { granularity, series: [ { bucket,
+  //   label, revenueUsd, refundsUsd, netUsd, mrrUsd, newSubs, cancellations } ] }.
+  // Implemented by the server agent; the UI codes defensively (may 404/501 until
+  // wired, and any field may be null).
+  financeTimeseries: (granularity) => request('GET', `/api/work/admin/finance/timeseries?granularity=${encodeURIComponent(granularity || 'month')}`),
+  // Manual ledger entries (superadmin + accounting). Full CRUD on adjustment
+  // transactions - every money/destructive call carries a REASON (logged).
+  // create: { amount, currency, kind:'adjustment', description, reason }.
+  createTransaction: (body) => request('POST', '/api/work/admin/finance/transactions', body || {}),
+  // update: patch the note/description of a manual entry (not an amount).
+  updateTransaction: (id, patch) => request('PATCH', `/api/work/admin/finance/transactions/${encodeURIComponent(id)}`, patch || {}),
+  // delete/void a manual entry (destructive - reason required).
+  deleteTransaction: (id, reason) => request('DELETE', `/api/work/admin/finance/transactions/${encodeURIComponent(id)}`, reason ? { reason } : undefined),
 
   // Notification recipients (Contact Us + leads) + thank-you toggle.
   getNotify: () => request('GET', '/api/work/admin/notify'),
