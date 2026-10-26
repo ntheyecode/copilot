@@ -106,3 +106,30 @@ table.data tbody tr { transition: background var(--dur) var(--ease), transform v
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
 }
+
+/* ==========================================================================
+   Script-aware heading line-height (fixes Hindi/Devanagari & CJK clipping).
+   Display headings use a very tight line-height (down to 1.02 on the hero) that
+   is right for Latin but CLIPS Devanagari - its matras sit above the top line
+   and marks hang below, so headings "cross borders" and get cut off. Devanagari
+   (hi) and the CJK scripts (zh/ja/ko) need more headroom. Scoped to <html lang>
+   (set by the i18n runtime) so the Latin design is untouched; the
+   html[lang=..] + element/class selectors out-specify the inline component CSS
+   regardless of load order, and loading this sheet LAST is a further guarantee.
+   Loaded globally (marketing + dashboard + admin + help), so it fixes every
+   heading, not just the hero.
+   ========================================================================== */
+html[lang="hi"] h1, html[lang="hi"] h2, html[lang="hi"] h3, html[lang="hi"] h4, html[lang="hi"] h5, html[lang="hi"] h6,
+html[lang="hi"] .wm-h1-stage, html[lang="hi"] .wm-h1-meas, html[lang="hi"] [class$="-h1"], html[lang="hi"] [class*="-h1-"], html[lang="hi"] [class*="hero"] h1 {
+  line-height: 1.45 !important;
+  overflow: visible !important;
+  padding-bottom: 0.08em;
+}
+html[lang="hi"] .wm-badge, html[lang="hi"] .wm-pill, html[lang="hi"] .wm-tag { line-height: 1.5 !important; }
+
+html[lang="zh-CN"] h1, html[lang="zh-CN"] h2, html[lang="zh-CN"] h3, html[lang="zh-CN"] .wm-h1-stage, html[lang="zh-CN"] [class*="hero"] h1,
+html[lang="ja"] h1, html[lang="ja"] h2, html[lang="ja"] h3, html[lang="ja"] .wm-h1-stage, html[lang="ja"] [class*="hero"] h1,
+html[lang="ko"] h1, html[lang="ko"] h2, html[lang="ko"] h3, html[lang="ko"] .wm-h1-stage, html[lang="ko"] [class*="hero"] h1 {
+  line-height: 1.28 !important;
+  overflow: visible !important;
+}
