@@ -2985,6 +2985,14 @@ const CONSOLE_CSS = `
 .wc-step.done .wc-step-title{text-decoration:line-through;text-decoration-color:var(--text-faint);color:var(--text-faint);font-weight:500}
 .wc-steps.ro .wc-step.done .wc-step-title{text-decoration:none;color:var(--text-muted)}
 .wc-step-when{display:inline-flex;align-items:center;gap:5px;font-size:calc(11px*var(--wc-fs,1));color:var(--text-muted);margin-top:8px;background:var(--surface-2);border:1px solid var(--border);padding:3px 9px;min-height:24px;border-radius:7px}
+/* Source attribution chip: unobtrusive, white in-product look. The "Grounded in
+   your documents" label never wraps; the source name takes the remaining width
+   and ellipsizes, so the chip never overflows or scrolls sideways at any width. */
+.wc-source{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:9px;padding:3px 9px;min-height:24px;font-size:calc(11px*var(--wc-fs,1));line-height:1.3;color:var(--text-muted);background:var(--surface-2);border:1px solid var(--border);border-radius:7px;box-sizing:border-box;vertical-align:middle}
+.wc-source svg{flex:0 0 auto;color:var(--em)}
+.wc-source-k{flex:0 0 auto;font-weight:650;white-space:nowrap}
+.wc-source-src{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.wc-source-src:before{content:'·';margin:0 6px 0 0;color:var(--text-faint)}
 .wc-step-doneat{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--success);margin-top:6px;font-weight:600}
 .wc-step-tag{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-faint);margin-top:6px;font-weight:600}
 .wc-record-head{display:flex;align-items:center;gap:7px;padding:0 2px;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-muted);font-variant-numeric:tabular-nums}
@@ -3168,7 +3176,10 @@ const CONSOLE_CSS = `
 .wc-plan-goal-t{margin-top:3px;font-size:13.5px;line-height:1.5;color:var(--text)}
 .wc-plan-count{padding:8px 16px 4px;font-size:12px;font-weight:600;color:var(--text-muted);font-variant-numeric:tabular-nums}
 .wc-plan-list{padding:4px 12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
-.wc-plan-row{display:flex;gap:11px;align-items:flex-start;padding:8px 10px;border-radius:10px}
+.wc-plan-row{display:flex;flex-wrap:wrap;gap:11px;align-items:flex-start;padding:8px 10px;border-radius:10px}
+/* The source chip drops to its own full-width line under the step, aligned past
+   the badge, so the badge + text + Now tag stay on one clean row (no overflow). */
+.wc-plan-row .wc-source{flex-basis:100%;margin:2px 0 0 34px}
 .wc-plan-row.now{background:var(--em-soft)}
 .wc-plan-row.done{opacity:.6}
 .wc-plan-badge{flex:0 0 auto;width:23px;height:23px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-muted);border:1.5px solid var(--border)}
@@ -3433,6 +3444,25 @@ function hrefForUrl(u) {
 // One consistent treatment for every command/code/link a step carries: a real
 // clickable link-out when it is a full/clickable URL, or a Copy button for the
 // command/target when it is not. Shared by the console steps + the How detail.
+// Source attribution indicator: a small, tasteful chip shown when the guide
+// grounded this step or answer in the user's/organization's OWN material (an
+// uploaded reference document, the Company Brain, or a skill/playbook). The guide
+// fills the `source` field (named once, server-side, as work.WORK_SOURCE_FIELD =
+// 'source') with a short human label like "Your document: Runbook v3" or
+// "Company Brain: Onboarding SOP"; we read that same property here. Honest and
+// defensive: renders NOTHING when there is no source (general knowledge, or an
+// older session without the field), so it never claims grounding falsely.
+function SourceChip({ source }) {
+  const label = String(source || '').trim()
+  if (!label) return null
+  return (
+    <div className="wc-source" title={`Grounded in your material: ${label}`}>
+      <BookOpen size={11} strokeWidth={2.5} aria-hidden="true" />
+      <span className="wc-source-k">Grounded in your documents</span>
+      <span className="wc-source-src">{label}</span>
+    </div>
+  )
+}
 function StepLink({ url }) {
   const [done, setDone] = useState(false)
   const s = String(url || '').trim()
@@ -5016,6 +5046,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 </DestructiveGate>
               )}
               {cur.validate && <div className="wc-step-when"><Eye size={11} /> done when: <RichText text={cur.validate} /></div>}
+              {/* Grounded-in-your-documents: shows only when the guide marked this
+                  step as grounded in the user's own material (else renders nothing). */}
+              <SourceChip source={cur.source} />
               <HowButton open={!!(howTo[key] && howTo[key].open)} loading={!!(howTo[key] && howTo[key].loading)} onClick={() => drillHow(key, cur.text, ci)} />
               <HowDetail entry={howTo[key]} onRetry={() => drillHow(key, cur.text, ci)} />
               <div className="wc-hero-actions">
@@ -5077,6 +5110,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   <span className="wc-step-check" aria-hidden="true">{isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}</span>
                   <div className="wc-step-body">
                     <div className="wc-step-title"><RichText text={s.text} /></div>
+                    <SourceChip source={s.source} />
                     {/* The record shows the commands/code and the step link ONLY for
                         steps the user actually completed - never for "Not reached"
                         steps, so the record can't leak the how-to (or generated code)
@@ -5119,6 +5153,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                       <span className="wc-plan-badge">{mk === 'done' ? <Check size={13} strokeWidth={2.5} /> : i + 1}</span>
                       <span className="wc-plan-txt"><RichText text={s.text} /></span>
                       {mk === 'current' && <span className="wc-plan-tag">Now</span>}
+                      <SourceChip source={s.source} />
                     </div>
                   )
                 })}
@@ -5302,12 +5337,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                     {maker === 'answer' && resultOut && (
                       <div className="wc-made">
                         <ResultCard result={resultOut} security={resultSec} />
+                        <SourceChip source={resultOut.source} />
                         <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null) }} title="Clear this result"><X size={14} /> Clear result</button>
                       </div>
                     )}
                     {maker === 'write' && composeOut && (
                       <div className="wc-made">
                         <ComposeCard compose={composeOut} security={composeSec} />
+                        <SourceChip source={composeOut.source} />
                         <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null) }} title="Clear this document"><X size={14} /> Clear document</button>
                       </div>
                     )}
