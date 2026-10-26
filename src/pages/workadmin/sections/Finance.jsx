@@ -96,7 +96,7 @@ export default function Finance({ isSuperAdmin }) {
           <h2 style={{ margin: 0 }}><CreditCard size={15} style={{ verticalAlign: -2, marginRight: 6 }} />All transactions</h2>
           <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{txns.length} shown</span>
         </div>
-        {msg && <div className="wka-note" style={{ marginTop: 10, color: msg.ok ? '#16a34a' : '#b45309' }}>{msg.text}</div>}
+        {msg && <div className="wka-note" style={{ marginTop: 10, color: msg.ok ? 'var(--wka-emerald)' : 'var(--wka-amber)' }}>{msg.text}</div>}
         {txns.length === 0 ? (
           <p style={{ color: 'var(--wka-muted)', fontSize: 13.5, marginTop: 10 }}>No transactions yet. They appear here as payments and refunds flow through Stripe.</p>
         ) : (
@@ -109,7 +109,7 @@ export default function Finance({ isSuperAdmin }) {
                     <td style={{ whiteSpace: 'nowrap', color: 'var(--wka-faint)', fontSize: 12.5 }}>{new Date(t.at).toLocaleDateString()}</td>
                     <td>{t.username || '-'}</td>
                     <td><span className={`fin-chip ${t.kind === 'refund' ? 'rf' : ''}`}>{KIND_LABEL[t.kind] || t.kind}</span>{t.plan ? <span style={{ fontSize: 11, color: 'var(--wka-faint)', marginLeft: 6 }}>{t.plan}</span> : null}</td>
-                    <td style={{ fontWeight: 600, color: t.kind === 'refund' ? '#b45309' : 'var(--wka-ink, #111)' }}>{t.kind === 'refund' ? '-' : ''}{money(t.amount, t.currency)}</td>
+                    <td style={{ fontWeight: 600, color: t.kind === 'refund' ? 'var(--wka-amber)' : 'var(--wka-text)' }}>{t.kind === 'refund' ? '-' : ''}{money(t.amount, t.currency)}</td>
                     <td style={{ fontSize: 12.5, color: 'var(--wka-faint)' }}>{t.status}</td>
                     <td style={{ whiteSpace: 'nowrap' }}>{t.kind !== 'refund' && t.stripeId ? (
                       <button className="wka-btn sm ghost" disabled={refunding === t.id} onClick={() => { setRefundErr(null); setRefundTx(t) }}>{refunding === t.id ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />} Refund</button>
@@ -136,21 +136,25 @@ export default function Finance({ isSuperAdmin }) {
   )
 }
 
+// Palette is token-only (SUPREME RULE IX unified style + SUPREME RULE II single
+// source): the cards, bars and chips adopt the dashboard accent (blue in the
+// superadmin console) and the shared emerald/amber/red, so Finance reads as one
+// system with the other sections rather than its own green.
 const CSS = `
 .fin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
-.fin-card{background:#fff;border:1px solid var(--wka-line,#e6ebf1);border-radius:14px;padding:16px 16px 14px}
-.fin-k{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--wka-muted,#6b7280)}
-.fin-v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px;color:var(--wka-ink,#0c1222)}
+.fin-card{background:var(--wka-panel);border:1px solid var(--wka-line);border-radius:14px;padding:16px 16px 14px;box-shadow:0 1px 2px rgba(26,31,54,0.05),0 8px 22px -14px rgba(26,31,54,0.16)}
+.fin-k{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--wka-muted)}
+.fin-v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px;color:var(--wka-text)}
 .fin-delta{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700}
-.fin-delta.up{color:#0a9d66}.fin-delta.down{color:#dc2626}
-.fin-delta span{color:var(--wka-faint,#9aa3b2);font-weight:400}
-.fin-sub{font-size:11.5px;color:var(--wka-faint,#9aa3b2);margin-top:7px;line-height:1.4}
+.fin-delta.up{color:var(--wka-emerald)}.fin-delta.down{color:var(--wka-red)}
+.fin-delta span{color:var(--wka-faint);font-weight:400}
+.fin-sub{font-size:11.5px;color:var(--wka-faint);margin-top:7px;line-height:1.4}
 .fin-chart{display:flex;align-items:flex-end;gap:8px;height:180px;margin-top:14px;padding-top:8px}
 .fin-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
-.fin-bar{width:100%;max-width:38px;background:linear-gradient(180deg,#0a9d66,#2f6f3e);border-radius:5px 5px 0 0;min-height:2px;transition:height .3s}
-.fin-bar-lab{font-size:10px;color:var(--wka-faint,#9aa3b2);margin-top:6px}
-.fin-chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:7px;background:#eef6f0;color:#2f6f3e}
-.fin-chip.rf{background:#fef3e7;color:#b45309}
+.fin-bar{width:100%;max-width:38px;background:linear-gradient(180deg,var(--wka-accent),var(--wka-accent-dark));border-radius:5px 5px 0 0;min-height:2px;transition:height .3s}
+.fin-bar-lab{font-size:10px;color:var(--wka-faint);margin-top:6px}
+.fin-chip{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:7px;background:var(--wka-accent-soft);color:var(--wka-accent-dark)}
+.fin-chip.rf{background:color-mix(in srgb, var(--wka-amber) 12%, transparent);color:var(--wka-amber)}
 @media(max-width:900px){.fin-grid{grid-template-columns:1fr 1fr}}
 @media(max-width:560px){.fin-grid{grid-template-columns:1fr}}
 `

@@ -256,7 +256,7 @@ export default function UsersSection({ isSuperAdmin }) {
                     <td>
                       <div style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                         {u.username}
-                        {u.disabled ? <span className="wka-badge" style={{ background: '#f6dcd9', color: '#c0392b' }}>Disabled</span> : null}
+                        {u.disabled ? <span className="wka-badge disabled">Disabled</span> : null}
                       </div>
                       {u.displayName ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{u.displayName}</div> : null}
                       {msg ? <div style={{ fontSize: 11, marginTop: 3, color: msg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{msg.text}</div> : null}
