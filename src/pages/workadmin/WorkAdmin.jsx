@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2 } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
@@ -29,6 +29,7 @@ import Hero from './sections/Hero.jsx'
 import Email from './sections/Email.jsx'
 import EmailTemplates from './sections/EmailTemplates.jsx'
 import Finance from './sections/Finance.jsx'
+import Subscribers from './sections/Subscribers.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
@@ -38,6 +39,7 @@ const SECTIONS = [
   { id: 'pricing', label: 'Pricing', icon: Tags, title: 'Pricing', sub: 'Plan prices, extra-hour and image rates.' },
   { id: 'billing', label: 'Billing', icon: CreditCard, title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
   { id: 'finance', label: 'Finance', icon: DollarSign, title: 'Finance', sub: 'All transactions, revenue by week/month/quarter/year, MRR, and refunds.' },
+  { id: 'subscribers', label: 'Subscribers', icon: Wallet, title: 'Subscribers', sub: 'Every paying subscriber and their operations: plan, status, cycle, MRR, lifetime paid, and today\'s activity.' },
   { id: 'email', label: 'SMTP Settings', icon: Mail, title: 'SMTP Settings (Email / SES)', sub: 'Outbound email for delivering reports. MFA-gated. Enter your SES SMTP credentials and send a test.' },
   { id: 'email-templates', label: 'Email Templates', icon: MailCheck, title: 'Email Templates', sub: 'Every email the product sends - edit the wording, placeholders and preview. Nothing is static.' },
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
@@ -113,7 +115,7 @@ export default function WorkAdmin() {
   // Hidden from a plain `admin` (the explicit superadmin / accounting / affiliate-
   // admin branches below are unaffected). Affiliates is managed by superadmin or a
   // dedicated affiliate_admin only - a plain admin would just hit a 403.
-  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'incidents', 'claims', 'affiliates'])
+  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'subscribers', 'incidents', 'claims', 'affiliates'])
   const visibleSections = isSuperAdmin ? SECTIONS
     : isAccounting ? SECTIONS.filter((s) => s.id === 'finance')
       : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates')
@@ -138,6 +140,7 @@ export default function WorkAdmin() {
       case 'email': return <Email isSuperAdmin={isSuperAdmin} />
       case 'email-templates': return <EmailTemplates isSuperAdmin={isSuperAdmin} />
       case 'finance': return <Finance isSuperAdmin={isSuperAdmin} />
+      case 'subscribers': return <Subscribers isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions isSuperAdmin={isSuperAdmin} />
       case 'leads': return <Leads />

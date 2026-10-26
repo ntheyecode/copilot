@@ -158,7 +158,7 @@ export default function Billing({ isSuperAdmin }) {
         {(() => {
           const mode = (b && b.mode) || 'live'
           const isTest = mode === 'test'
-          const C = isTest ? '#b45309' : '#16a34a'
+          const C = isTest ? 'var(--wka-amber)' : 'var(--wka-emerald)'
           const seg = (active) => ({ flex: 1, textAlign: 'center', padding: '8px 0', fontSize: 13.5, fontWeight: 700, cursor: isSuperAdmin ? 'pointer' : 'default', borderRadius: 8, border: 'none', background: active ? C : 'transparent', color: active ? '#fff' : 'var(--wka-muted, #6b7280)', transition: 'all .12s' })
           return (
             <div style={{ padding: '12px 14px', marginBottom: 16, borderRadius: 12, border: `2px solid ${C}`, background: isTest ? 'rgba(180,83,9,.06)' : 'rgba(22,163,74,.05)' }}>

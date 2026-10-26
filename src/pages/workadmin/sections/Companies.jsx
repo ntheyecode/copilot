@@ -429,7 +429,7 @@ export default function Companies({ isSuperAdmin }) {
                   <span className="co-ic"><Building2 size={16} /></span>
                   <span className="co-name">{c.name}</span>
                   <span className={`wka-badge ${c.plan}`}>{c.plan}</span>
-                  {c.disabled ? <span className="wka-badge" style={{ background: '#f6dcd9', color: '#c0392b' }}>Disabled</span> : null}
+                  {c.disabled ? <span className="wka-badge disabled">Disabled</span> : null}
                   <span className="co-meta">{c.memberCount != null ? c.memberCount : c.userCount} users &middot; {c.adminCount} admin{c.aiReady === false ? <span className="co-warn"><AlertTriangle size={12} /> AI not ready</span> : null}</span>
                   <span className={`co-scrub ${c.scrub ? 'on' : ''}`}>{c.scrub ? <><ShieldCheck size={13} /> Redaction on</> : <><Shield size={13} /> Redaction off</>}</span>
                 </button>
@@ -521,6 +521,7 @@ export default function Companies({ isSuperAdmin }) {
 
                         {/* People */}
                         <div className="co-block-t">People</div>
+                        <div className="wka-table-wrap" style={{ marginBottom: 12 }}>
                         <table className="wka-table co-users">
                           <thead><tr><th>Person</th><th>Role</th><th>Plan</th><th>Used today</th><th>Redaction</th><th></th></tr></thead>
                           <tbody>
@@ -544,6 +545,7 @@ export default function Companies({ isSuperAdmin }) {
                             })}
                           </tbody>
                         </table>
+                        </div>
                         <div className="co-adduser">
                           <div style={{ display: 'flex', gap: 6, marginRight: 4 }}>
                             <button className={`wka-btn sm${mForm.mode === 'email' ? ' primary' : ''}`} onClick={() => setMForm({ ...mForm, mode: 'email' })}><Mail size={12} /> Email</button>
@@ -581,6 +583,7 @@ export default function Companies({ isSuperAdmin }) {
                               {bill && <button className="wka-btn sm ghost" onClick={() => addBillItem(c.id)}>Add line item</button>}
                             </div>
                             {bill && (
+                              <div className="wka-table-wrap">
                               <table className="wka-table">
                                 <thead><tr><th>Description</th><th style={{ textAlign: 'right' }}>Qty</th><th style={{ textAlign: 'right' }}>Amount</th><th></th></tr></thead>
                                 <tbody>
@@ -590,6 +593,7 @@ export default function Companies({ isSuperAdmin }) {
                                 </tbody>
                                 <tfoot><tr><td colSpan={2} style={{ textAlign: 'right', fontWeight: 700 }}>Total</td><td style={{ textAlign: 'right', fontWeight: 700 }}>{money(bill.total)}</td><td /></tr></tfoot>
                               </table>
+                              </div>
                             )}
                           </div>
                         )}

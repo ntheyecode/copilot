@@ -110,7 +110,7 @@ export const WORKADMIN_CSS = `
   display: inline-flex; align-items: center; gap: 6px;
   padding: 5px 10px; border-radius: 999px;
   border: 1px solid var(--wka-line-2); background: var(--wka-panel-2);
-  font-size: 11px; color: var(--wka-text);
+  font-size: 11px; color: var(--wka-text); white-space: nowrap;
 }
 .wka-chip.ok { border-color: color-mix(in srgb, var(--wka-emerald) 40%, transparent); color: var(--wka-emerald); background: color-mix(in srgb, var(--wka-emerald) 8%, transparent); font-weight: 600; }
 .wka-chip.warn { border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); color: var(--wka-amber); }
@@ -143,6 +143,8 @@ export const WORKADMIN_CSS = `
   color: var(--wka-muted); cursor: pointer; border: 1px solid transparent;
   font-weight: 500; user-select: none;
 }
+.wka-nav-item > svg { flex-shrink: 0; }
+.wka-nav-item .label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wka-nav-item:hover { background: var(--wka-nav-hover); color: var(--wka-text); }
 .wka-nav-item:focus-visible { outline: 2px solid var(--wka-accent); outline-offset: 1px; }
 .wka-nav-item.active {
@@ -184,6 +186,10 @@ export const WORKADMIN_CSS = `
 
 /* Table */
 .wka-toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap; }
+/* A flexible spacer pushes trailing controls to the right without ever forcing
+   horizontal overflow; the gate rule (owner): toolbars flex, controls stay put,
+   the spacer is the only thing that gives. */
+.wka-spacer { flex: 1 1 auto; min-width: 0; }
 .wka-input {
   background: var(--wka-bg); border: 1px solid var(--wka-line-2); color: var(--wka-text);
   border-radius: 10px; padding: 9px 12px; font-size: 13px; outline: none; min-width: 0;
@@ -191,7 +197,7 @@ export const WORKADMIN_CSS = `
 .wka-input:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-search { flex: 1; min-width: 180px; max-width: 360px; }
 
-.wka-table-wrap { overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; background: var(--wka-panel); box-shadow: 0 1px 2px rgba(26,31,54,0.04), 0 10px 26px -16px rgba(26,31,54,0.15); }
+.wka-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; background: var(--wka-panel); box-shadow: 0 1px 2px rgba(26,31,54,0.04), 0 10px 26px -16px rgba(26,31,54,0.15); }
 table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
 .wka-table th {
   text-align: left; padding: 10px 14px; color: var(--wka-faint); font-weight: 600;
@@ -218,6 +224,13 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
 .wka-badge.ended { color: var(--wka-faint); }
 .wka-badge.paused { color: var(--wka-amber); border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); }
 .wka-badge.exhausted { color: var(--wka-red); border-color: color-mix(in srgb, var(--wka-red) 40%, transparent); }
+/* Account / subscription status pills - single source so no section hand-rolls a
+   red/amber literal (replaces the inline #f6dcd9/#c0392b disabled badges). */
+.wka-badge.disabled { color: var(--wka-red); border-color: color-mix(in srgb, var(--wka-red) 40%, transparent); background: color-mix(in srgb, var(--wka-red) 8%, transparent); }
+.wka-badge.trialing { color: var(--wka-amber); border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); }
+.wka-badge.past_due { color: var(--wka-red); border-color: color-mix(in srgb, var(--wka-red) 40%, transparent); }
+.wka-badge.canceled { color: var(--wka-faint); }
+.wka-badge.comp { color: var(--wka-accent-dark); border-color: var(--wka-accent-line); }
 
 /* Controls */
 .wka-select {
@@ -230,6 +243,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
   display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
   border: 1px solid var(--wka-line-2); background: var(--wka-panel-2); color: var(--wka-text);
   border-radius: 10px; padding: 9px 15px; font-size: 13px; font-weight: 550;
+  white-space: nowrap; flex-shrink: 0;
 }
 .wka-btn:hover:not(:disabled) { border-color: var(--wka-accent); color: var(--wka-accent-dark); }
 .wka-btn:disabled { opacity: 0.45; cursor: not-allowed; }
