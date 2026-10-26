@@ -1,11 +1,17 @@
 // WorkCoPilot - "Like having the best person in the room" moved to its own page,
-// linked from the short main page. Each of the eight cards has its OWN clean,
+// linked from the short main page. Each of the fourteen cards has its OWN clean,
 // representative header visual (inline SVG, crisp at any size) that reflects a
 // gold-standard way of working, not a repeated mock. LIGHT theme, Option C cards
 // (via the shared WorkCard primitive), to match the rest of the site.
+//
+// COPY RULE (owner, 2026-10-26): this is a sales page, not documentation. The
+// hero is one benefit line; every card is ONE benefit-first sentence; the
+// feature card is a headline, one line and three short points. No caveats in
+// cards, no mechanism talk, no code-looking strips. Keep every label inside its
+// box: SVG text is sized so it never crosses a pill or frame edge.
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, Check, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor } from 'lucide-react'
+import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
@@ -73,7 +79,7 @@ const VIZ = {
       <text x="66" y="51" textAnchor="middle" fill={RD} fontSize="12.5" fontFamily="ui-monospace,monospace" style={{ textDecoration: 'line-through' }}>0.0.0.0/0</text>
       <path d="M122 47h18" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M136 43l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="150" y="34" width="112" height="26" rx="7" fill={EMf} stroke={EM} />
-      <path d="M160 47l4 4 6-7" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="178" y="51" fill={EM} fontSize="12.5" fontFamily="ui-monospace,monospace">10.0.0.0/16</text>
+      <path d="M160 47l4 4 6-7" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="176" y="51" fill={EM} fontSize="12" fontFamily="ui-monospace,monospace">10.0.0.0/16</text>
     </Frame>
   ),
   // 5. Any app - browser, desktop window, terminal tiles.
@@ -162,9 +168,9 @@ const VIZ = {
   shield: (
     <Frame label="Illustration: a form field shown as REDACTED, a code check with a tick, and an authenticator lock">
       <rect x="20" y="24" width="112" height="20" rx="6" fill="#0a0d12" /><text x="76" y="38" textAnchor="middle" fill="#8cf5c4" fontSize="10" fontWeight="700" fontFamily="ui-monospace,monospace" letterSpacing="1">[REDACTED]</text>
-      <rect x="20" y="52" width="112" height="22" rx="7" fill={EMf} stroke={EM} /><text x="30" y="67" fill={EM} fontSize="10.5" fontFamily="ui-monospace,monospace">SAST + CVE check</text><path d="M114 63l3 3 5-6" stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="20" y="52" width="112" height="22" rx="7" fill={EMf} stroke={EM} /><text x="30" y="67" fill={EM} fontSize="10.5" fontFamily="ui-monospace,monospace">code checked</text><path d="M114 63l3 3 5-6" stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="150" y="26" width="110" height="48" rx="9" fill={PANEL} stroke={LINE} />
-      <rect x="194" y="44" width="22" height="18" rx="4" fill={CYf} stroke={CY} strokeWidth="1.6" /><path d="M198 44v-5a7 7 0 0 1 14 0v5" stroke={CY} strokeWidth="1.6" fill="none" /><text x="205" y="80" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">authenticator on every account</text>
+      <rect x="194" y="44" width="22" height="18" rx="4" fill={CYf} stroke={CY} strokeWidth="1.6" /><path d="M198 44v-5a7 7 0 0 1 14 0v5" stroke={CY} strokeWidth="1.6" fill="none" /><text x="205" y="80" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">authenticator required</text>
     </Frame>
   ),
   // 13. Skills: a playbook feeding the plan.
@@ -197,56 +203,56 @@ const VIZ = {
       <rect x="232" y="18" width="30" height="60" rx="7" fill={PANEL} stroke={LINE} /><rect x="238" y="26" width="18" height="40" rx="3" fill={EMf} /><text x="247" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">phone</text>
     </Frame>
   ),
-  // 10. The strongest AI available to you plans; live guidance keeps pace - two
-  // lanes, framed as the BENEFIT (what you get), never as the routing behind it.
-  // The PLAN lane: your plan, from the strongest AI on your key. The GUIDE lane:
-  // a run of quick, confirmed steps. A quiet "planned by" readout at the foot.
-  best: (
-    <Frame h={120} label="Illustration: two lanes, Plan from the strongest AI available to you and Guide as a run of confirmed live steps, with a readout saying Planned by the strongest AI for you">
-      {/* PLAN lane */}
-      <text x="20" y="34" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace" letterSpacing="1.5">PLAN</text>
-      <rect x="62" y="20" width="118" height="22" rx="11" fill="rgba(109,75,216,.10)" stroke="rgba(109,75,216,.55)" />
-      <path d="M75 24.5h8v4.5a4 4 0 0 1-8 0zM79 33v3M76 36.5h6" stroke="#6d4bd8" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="87" y="35" fill="#6d4bd8" fontSize="10.5" fontWeight="600" fontFamily="system-ui">strongest AI for you</text>
-      <rect x="190" y="22" width="48" height="18" rx="9" fill={PANEL} stroke={LINE} />
-      <text x="214" y="34.5" textAnchor="middle" fill={TXT} fontSize="9.5" fontFamily="ui-monospace,monospace">best</text>
-      {/* GUIDE lane */}
-      <text x="20" y="72" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace" letterSpacing="1.5">GUIDE</text>
-      <line x1="62" y1="68" x2="238" y2="68" stroke="rgba(10,147,196,.28)" strokeWidth="2" />
-      {[72, 98, 124, 150, 176, 202].map((x, i) => (
-        <g key={x}>
-          <circle cx={x} cy="68" r={i === 5 ? 6 : 5} fill={i === 5 ? CY : CYf} stroke={CY} strokeWidth="1.6" />
-          {i < 5 && <path d={`M${x - 2.4} 68l1.8 1.8 3-3.4`} stroke={CY} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />}
-        </g>
-      ))}
-      <rect x="216" y="59" width="46" height="18" rx="9" fill={PANEL} stroke={LINE} />
-      <text x="239" y="71.5" textAnchor="middle" fill={CY} fontSize="9.5" fontFamily="ui-monospace,monospace">live</text>
-      {/* readout */}
-      <line x1="20" y1="90" x2="260" y2="90" stroke={LINE} />
-      <circle cx="28" cy="104" r="6" fill={EMf} stroke={EM} strokeWidth="1.6" /><path d="M25.3 104l1.8 1.8 3.2-3.6" stroke={EM} strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="40" y="107.5" fill={TXT} fontSize="10.5" fontFamily="ui-monospace,monospace">Planned by <tspan fill={EM} fontWeight="600">the strongest AI for you</tspan></text>
-    </Frame>
-  ),
 }
 
+// 10. The loop behind every task, shown as the BENEFIT (what you get), never
+// as the routing behind it: PLAN, PROBE, GUIDE, WATCH, CORRECT, running until
+// the work is done, with a "planned by the strongest AI for you" readout.
+// Real HTML rows, not SVG text: five captioned rows need to wrap cleanly at
+// 640px and must never cross a pill edge (the old SVG version let its label
+// cross the pill border, which the owner saw live as text overlapping boxes).
+// Each label pill is nowrap + no-shrink; only the caption wraps.
+const LOOP = [
+  ['Plan', 'the strongest AI available to you plans the whole task'],
+  ['Probe', 'asks a question when it needs more, a tap or a quick answer'],
+  ['Guide', 'the exact next step, on your screen'],
+  ['Watch', 'checks that each step really worked'],
+  ['Correct', 'fixes a wrong turn the moment it happens'],
+]
+function BestLoop() {
+  return (
+    <div className="wcap-loop" role="group" aria-label="How every task runs: plan, probe, guide, watch, correct, repeating until the task is done">
+      <ol className="wcap-loop-rows">
+        {LOOP.map(([k, v]) => (
+          <li key={k}><span className="wcap-loop-k">{k}</span><span className="wcap-loop-v">{v}</span></li>
+        ))}
+      </ol>
+      <div className="wcap-loop-foot">
+        <span className="wcap-loop-again"><RefreshCw size={12} aria-hidden="true" /> repeats until the task is done</span>
+        <span className="wcap-loop-ok"><ShieldCheck size={13} aria-hidden="true" /> Planned by the strongest AI for you</span>
+      </div>
+    </div>
+  )
+}
+
+// One benefit-first sentence per card. The visual carries the "how"; the line
+// carries the payoff. Claims stay scoped: WorkCoPilot guides you through work on
+// screen in the apps you use; it is not a writing or document engine.
 const CARDS = [
-  { viz: 'steps', icon: MonitorPlay, t: 'Guided, step by step', d: 'It watches your screen and tells you the exact next move, one step at a time, and checks each one really worked before moving on.' },
-  { viz: 'command', icon: TerminalSquare, t: 'The exact how, every time', d: 'Not vague advice. The precise click, command or setting to use, spelled out and copy-ready. Always the best proven way, no shortcuts.' },
-  { viz: 'zero', icon: Compass, t: 'Starts from zero', d: 'Opens the right page, signs you in, and walks you to the exact spot. Nothing assumed, nothing skipped.' },
-  { viz: 'fix', icon: ShieldCheck, t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens, tells you why, and shows the exact fix. When a tool\'s UI has changed, it finds the new control and corrects the step instead of pointing at a button that moved.' },
-  { viz: 'apps', icon: AppWindow, t: 'Any app, not just the browser', d: 'Guides web apps, installed desktop apps, on-prem consoles at a local address, and your own custom tools. It reads whatever is on screen and fits the real environment.' },
-  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'It checks the current best practice and, on Advanced and Premium, grounds your steps in your own documents and diagrams, read on your computer - on the desktop app the file never leaves it - flagging anything in them that is wrong.' },
-  { viz: 'record', icon: FileText, t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of exactly what you did, ready to share or repeat.' },
-  { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram, an architecture or a design. It finds the real issues, then hands you a ready-to-use prompt to generate the corrected version in your own tools, with a document of the findings.' },
-  // Cross-session learning, framed as the BENEFIT (stays current, learns your
-  // tools, beats stale AI knowledge) and as a data practice (private to your
-  // company; de-identified for solo users). Never the mechanism, model or cost.
-  { viz: 'learns', icon: RefreshCw, t: 'Stays current, learns your tools', d: 'WorkCoPilot learns the current way your tools work and reuses it next time, and it researches the latest live, so you are not limited to an AI\'s training cutoff. Your team\'s learnings stay private to your company; solo users benefit from a shared, de-identified knowledge base.' },
-  { viz: 'coach', icon: ListChecks, t: 'A better task before you spend one', d: 'Before you type, a 30-second coach asks what kind of task it is and whether you are ready, then shows a tailored sample of a great task. Then you choose a Quick or a Detailed interview, so the plan fits what you know.' },
-  { viz: 'skills', icon: Layers, t: 'Teach it your skills', d: 'Paste a playbook, an SOP or a skill exported from any AI. Guidance aligns with your tools, standards and terminology, and it keeps getting better for you. Companies keep their skills private, with download and re-upload.' },
-  { viz: 'shield', icon: Lock, t: 'Protected by default', d: 'Sensitive data is redacted on your device before anything is sent, on by default and shown as [REDACTED]. Any code is checked with built-in SAST and a live dependency CVE check before you run it. Every account is protected by an authenticator, and each session keeps an audit log of what was sent, what was read from your screen, the code checks, what was filtered and every flag raised.' },
-  { viz: 'enterprise', icon: Building2, t: 'Built for companies', d: 'Company admins get security alerts when a member enters sensitive data (who, where, what kind, never the values), relayed to your SIEM, SOAR and chat tools; company SSO with email-domain auto-detect; compliance evidence reports mapped to 18 frameworks and sealed, Big-4-grade session reports; an executive ROI dashboard; white-label branding; and encryption at rest.' },
-  { viz: 'anywhere', icon: Monitor, t: 'Desktop, web and mobile. Guidance, not generation', d: 'A floating desktop overlay hidden from screen shares, the browser with nothing to install, or your phone camera on the go. WorkCoPilot never acts for you and never generates content: when you need a document, it hands you a ready prompt for your own AI.' },
+  { viz: 'steps', icon: MonitorPlay, t: 'Guided, step by step', d: 'The exact next move on your screen, checked before you go on. Nothing missed.' },
+  { viz: 'command', icon: TerminalSquare, t: 'The exact how, every time', d: 'The precise click, command or setting, copy-ready, always the proven best way.' },
+  { viz: 'zero', icon: Compass, t: 'Starts from zero', d: 'Opens the right page, signs you in and takes you to the exact spot.' },
+  { viz: 'fix', icon: ShieldCheck, t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens and shows the fix, even when a button has moved.' },
+  { viz: 'apps', icon: AppWindow, t: 'Any app, not just the browser', d: 'Web apps, desktop apps, on-prem consoles and your own tools: it reads whatever is on screen.' },
+  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'Steps follow current best practice and, on Advanced and Premium, your own documents, read on your computer.' },
+  { viz: 'record', icon: FileText, t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of what you did, ready to share or repeat.' },
+  { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram or design. It finds the real issues and gives you a ready prompt to fix them.' },
+  { viz: 'learns', icon: RefreshCw, t: 'Stays current, learns your tools', d: 'Learns how your tools work today, kept private to your company, so guidance never goes stale.' },
+  { viz: 'coach', icon: ListChecks, t: 'A better task before you spend one', d: 'A 30-second coach checks you are ready and shapes the task, so the plan fits what you know.' },
+  { viz: 'skills', icon: Layers, t: 'Teach it your skills', d: 'Paste a playbook or SOP and guidance follows your tools, standards and terminology, kept private.' },
+  { viz: 'shield', icon: Lock, t: 'Protected by default', d: 'Data redacted on your device, code checked before it runs, an authenticator on every account, a full audit log.' },
+  { viz: 'enterprise', icon: Building2, t: 'Built for companies', d: 'Security alerts to your SIEM, company SSO, sealed compliance reports across 18 frameworks and an executive ROI dashboard.' },
+  { viz: 'anywhere', icon: Monitor, t: 'Desktop, web and mobile', d: 'A desktop overlay hidden from screen shares, the browser with nothing to install, or your phone camera. It guides, never acts for you.' },
 ]
 
 // Accessibility (WEB-08): one <main>, a single H1, visually hidden H2s over the
@@ -278,13 +284,13 @@ export default function WorkCapabilities() {
       <section className="wcap-hero">
         <h1>Like having the best person<br />in the room, every time.</h1>
         {/* AEO: a direct, quotable one-sentence answer to "what does WorkCoPilot do?" */}
-        <p>WorkCoPilot watches your screen and tells you the exact next step for any task, in any app, checks that each step worked, and stays current with how your tools work today. Here is everything it does for you, and the gold-standard way it does each one.</p>
+        <p>WorkCoPilot watches your screen, shows the exact next step in the app you are in, checks it worked, and keeps going until the job is done.</p>
       </section>
       <section className="wcap-grid" aria-labelledby="wcap-grid-h">
         <h2 id="wcap-grid-h" className="wcap-sr">What WorkCoPilot does for you</h2>
         {CARDS.map((b, i) => {
-          // Nine cards in a 3 x 3 grid (the ninth, "stays current", would orphan a
-          // 4-column layout). Tones and texture crops cycle so no two neighbors match.
+          // Fourteen cards in a 3-column grid (2 columns under 1080px, 1 under
+          // 560px). Tones and texture crops cycle so no two neighbors match.
           const tones = ['', 'cyan', '', 'amber', 'cyan', '', 'cyan', 'violet', 'amber']
           const pos = ['0% 0%', '100% 0%', '50% 50%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '50% 100%']
           return (
@@ -297,32 +303,29 @@ export default function WorkCapabilities() {
         })}
       </section>
 
-      {/* THE STRONGEST AI AVAILABLE TO YOU PLANS IT - the fuller explanation, as
-          one full-width Option C card (linked from the main page's band). Framed
-          as the benefit and the honesty guarantee only: the plan comes from the
-          strongest AI your key can reach, the guidance keeps pace, and the log
-          states what planned each task. Never a universal "#1" claim, never an
-          endorsement claim, never a vendor or model name, never the routing. */}
+      {/* THE STRONGEST AI AVAILABLE TO YOU PLANS IT - one full-width Option C
+          card (linked from the main page's band). One visual, one line, three
+          short points. Framed as the benefit and the honesty guarantee only:
+          the plan comes from the strongest AI your key can reach, the guidance
+          keeps pace, and the log states what planned each task. Never a
+          universal "#1" claim, never an endorsement claim, never a vendor or
+          model name, never the routing. The old mono "goal -> plan -> guide"
+          proof strip repeated the visual as a code trace, so it is gone. */}
       <section className="wcap-feature" id="best-model" aria-labelledby="wcap-feat-h">
         <h2 id="wcap-feat-h" className="wcap-sr">How your plan is made</h2>
         <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
           <div className="wcap-feat-in">
             <div className="wcap-feat-media">
-              <WorkCard.Media>{VIZ.best}</WorkCard.Media>
-              <WorkCard.Proof>
-                <span className="wc-chip">goal</span><span className="wc-arrow" aria-hidden="true">&rarr;</span>
-                <span className="wc-chip">plan</span><b>strongest AI for you</b><span className="wc-arrow" aria-hidden="true">&rarr;</span>
-                <span className="wc-chip">guide</span><b>live, step by step</b><span className="wc-arrow" aria-hidden="true">&rarr;</span>
-                <b className="wc-ok"><Check size={11} aria-hidden="true" /> Planned by the strongest AI for you</b>
-              </WorkCard.Proof>
+              <BestLoop />
+              <p className="wcap-loop-line">It keeps your whole task in context and keeps going, improving as it learns, until the work is done.</p>
             </div>
             <div className="wcap-feat-copy">
               <WorkCard.Head align="start" icon={Trophy} eyebrow="The strongest AI available to you" title="Your plan comes from the strongest AI available to you." />
-              <WorkCard.Body>When you set a goal, WorkCoPilot plans it with the strongest AI your key can reach. Then the live guidance keeps pace with your screen, step by step, so the plan is sharp and the guidance never lags behind what you are doing.</WorkCard.Body>
+              <WorkCard.Body>Set the goal. The strongest AI on your key plans it, and live guidance keeps pace with your screen, step by step.</WorkCard.Body>
               <WorkCard.Points items={[
-                'Chosen, not guessed. The plan always comes from the strongest option actually available to you at that moment, never from one that has been retired.',
-                'Your data boundary holds. On your own or your company\'s key, every call stays on that key. Nothing is silently rerouted.',
-                'Honest by design. The log for every task states what planned it. If anything had to change mid-task to keep you going, the log says so instead of claiming otherwise.',
+                'Chosen, not guessed: always the strongest option actually available to you right now.',
+                'Your data boundary holds: every call stays on your own or your company\'s key.',
+                'Honest log: every task records what planned it and any change made mid-task.',
               ]} />
             </div>
           </div>
@@ -368,7 +371,7 @@ const CSS = `
 .wcap-grid{max-width:1160px;margin:0 auto;padding:26px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:1080px){.wcap-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.wcap-grid{grid-template-columns:1fr}}
-/* full-width feature card: visual + proof strip on the left, the claim and its
+/* full-width feature card: the loop visual on the left, the claim and its
    three grounded points on the right. Stacks under 900px. */
 .wcap-feature{max-width:1160px;margin:0 auto;padding:4px 24px 26px;scroll-margin-top:24px}
 .wcap-feat-in{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:28px;align-items:center}
@@ -376,6 +379,22 @@ const CSS = `
 .wcap-feat-copy{display:flex;flex-direction:column;gap:14px;min-width:0}
 .wcap-feat-copy .wc-title{font-size:clamp(22px,2.4vw,30px)}
 @media(max-width:900px){.wcap-feat-in{grid-template-columns:1fr;gap:18px}.wcap-feat-media{order:2}}
+/* the loop: five label/caption rows on a quiet panel. Label pills never wrap or
+   shrink (design gate: no wrapped or clipped chips); only the caption wraps.
+   It sits INSIDE a WorkCard, whose surface is always light in both themes, so
+   it uses the card's own theme-stable tokens (--wc-*), never the page's
+   --panel/--ink, which flip dark and would paint a navy box and invisible
+   text on the white card in dark mode. */
+.wcap-loop{border:1px solid var(--wc-line);border-radius:12px;background:var(--wc-s2);padding:12px 14px;min-width:0}
+.wcap-loop-rows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.wcap-loop-rows li{display:flex;align-items:center;gap:10px;min-width:0}
+.wcap-loop-k{flex:0 0 auto;width:78px;white-space:nowrap;text-align:center;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--wc-ink);background:rgba(109,75,216,.10);border:1px solid rgba(109,75,216,.45);border-radius:999px;padding:4px 0;line-height:1.3}
+.wcap-loop-v{flex:1 1 auto;min-width:0;font-size:13px;line-height:1.4;color:var(--wc-mut)}
+.wcap-loop-foot{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 12px;margin-top:11px;padding-top:10px;border-top:1px solid var(--wc-line)}
+.wcap-loop-again{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--wc-mut);white-space:nowrap}
+.wcap-loop-ok{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:#0f7f58;white-space:nowrap}
+.wcap-loop-line{margin:0;font-size:13.5px;line-height:1.5;color:var(--wc-tx);font-weight:500}
 .wcap-cta{max-width:1160px;margin:0 auto;padding:10px 24px 56px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wcap-btn{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--cta),var(--cta2));color:var(--cta-ink);border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px var(--cta2)}
 .wcap-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}

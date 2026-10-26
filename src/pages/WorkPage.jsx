@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Megaphone, Calculator, Scale, Compass, ServerCog, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Calculator, Compass, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkBilling from '../components/WorkBilling.jsx'
 import MfaGate from '../components/MfaGate.jsx'
@@ -1097,25 +1097,6 @@ const WD_CSS = `
 .wd-cta:active:not(:disabled){transform:translateY(0)}
 .wd-cta:disabled{opacity:.5;cursor:default;transform:none}
 
-/* "Or start from a space": a quiet examples row of small chips under the
-   sessions list. Each chip fills in its sample goal (title tooltip). */
-.wd-catwrap{margin-top:22px;padding-top:16px;border-top:1px solid var(--line-soft)}
-.wd-catwrap .wd-sec{margin-bottom:10px;align-items:center}
-.wd-catwrap .wd-sec h2{font-size:14.5px}
-.wd-catwrap .wd-sec p{font-size:12.5px;margin-top:1px}
-.wd-catwrap .wd-ic{width:28px;height:28px;border-radius:8px}
-.wd-cats{display:flex;flex-wrap:wrap;gap:8px}
-.wd-cat{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px 0 9px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;--tone:var(--em);transition:border-color .15s,background .15s,color .15s}
-.wd-cat:hover:not(:disabled){border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
-.wd-cat:disabled{opacity:.5;cursor:default}
-.wd-cat-ic{display:inline-flex;align-items:center;justify-content:center;color:var(--tone);line-height:0}
-.wd-cat.t-b{--tone:var(--em-2)}
-.wd-cat.t-c{--tone:var(--warm)}
-.wd-cat.t-d{--tone:var(--violet)}
-.wd-cat.t-e{--tone:var(--rose)}
-.wd-cat-label{font-weight:500}
-.wd-cat-sample{display:none}
-
 .wd-sessions{margin-top:16px}
 .wd-sec-count{font-size:12px;color:var(--mut);font-weight:600;border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:2px 9px;line-height:1.5}
 .wd-sess-list{display:flex;flex-direction:column;gap:8px}
@@ -1201,6 +1182,20 @@ const WD_CSS = `
 .wd-faq b{display:block;color:var(--tx);margin-bottom:5px;font-size:15px}
 .wd-faq p{margin:0}
 .wd-help-cta{padding:30px 0 0}
+/* On-screen flow: numbered step cards, each with a real screenshot. Two columns
+   wide, one column narrow; images are fluid (width:100%, height:auto) so nothing
+   overflows at 640. Tall captures (a menu, the answer card) get a max width so
+   they read as a card, not a tower. */
+.wd-hflow{list-style:none;padding:0!important;margin:0;counter-reset:wd-hf;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px!important}
+.wd-hflow li{position:relative;min-width:0;display:flex;flex-direction:column;gap:5px;padding:16px 16px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);line-height:1.55}
+.wd-hflow li>b{display:block;padding-left:38px;color:var(--tx);font-size:15px;font-weight:700;line-height:28px;min-height:28px}
+.wd-hflow li>b:before{counter-increment:wd-hf;content:counter(wd-hf);position:absolute;left:16px;top:16px;width:28px;height:28px;border-radius:50%;background:var(--em-fill-2);color:var(--em);border:1px solid var(--em-line);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
+.wd-hflow li>span{color:var(--mut);font-size:14px}
+.wd-hflow li>span b{color:var(--tx)}
+.wd-hflow li img{display:block;width:100%;height:auto;margin-top:10px;border:1px solid var(--line);border-radius:10px;box-shadow:var(--card-shadow)}
+.wd-hflow li img.tall{max-width:300px}
+.wd-hflow li img.mid{max-width:460px}
+@media(max-width:900px){.wd-hflow{grid-template-columns:1fr}}
 
 @media(max-width:900px){
  .wd-rail{width:64px;flex-basis:64px;padding:14px 10px}
@@ -1218,16 +1213,23 @@ const WD_CSS = `
 @media(max-width:1100px){
  .wd-addtime,.wd-signout{width:32px;padding:0}
  .wd-addtime span,.wd-signout span{display:none}
+ .wd-planpill{gap:7px;padding:0 9px 0 11px}
 }
 @media(max-width:860px){
  .wd-upgrade{width:32px;padding:0}
  .wd-upgrade span{display:none}
  .wd-buyhrs .wd-mins-l{display:none}
+ /* Pill collapses to its banked-credits stat + caret (minutes stays in the
+    min-left pill alongside; tasks + full detail live in the popover). */
+ .wd-planpill>.wd-pp-s:nth-child(1),.wd-planpill>.wd-pp-s:nth-child(3),.wd-planpill>.wd-pp-sep{display:none}
 }
 @media(max-width:760px){.wd-start{padding:18px 16px 16px}}
 @media(max-width:640px){
  .wd-main{padding:22px 16px 40px}
  .wd-top{padding:0 14px;gap:8px}
+ /* The section title gives up its space so the plan pill + controls never
+    collide or clip at narrow widths; the rail still names the section. */
+ .wd-top h2{display:none}
  .wd-top-right{gap:6px}
  .wd-mins{padding:0 10px;font-size:12.5px}
  .wd-mins .wd-mins-l{display:none}
@@ -1235,7 +1237,6 @@ const WD_CSS = `
  .wd-buddy .wd-card-end{margin-left:0;width:100%}
 }
 @media(max-width:480px){
- .wd-top h2{display:none}
  .wd-mins{padding:0 9px}
  .wd-mins.skel{min-width:64px}
  .wd-avatar{display:none}
@@ -1447,30 +1448,41 @@ const WD_CSS = `
 .wd-coach-choice.primary:hover{background:var(--em-fill)}
 .wd-coach-choice svg{flex-shrink:0}
 
-/* Plan box: replaces the 3 stat tiles. Plan name + what's left today +
-   banked credits, with an optional "trade 2 tasks for an hour" action. */
-.wd-planbox{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);padding:16px 18px}
-.wd-planbox-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px;min-width:0}
-.wd-planbox-ic{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:10px;background:var(--em-fill);color:var(--em);border:1px solid var(--em-line);flex-shrink:0}
-.wd-planbox-name{font-family:var(--wd-display);font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-planbox-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:1px solid var(--em-line);border-radius:999px;padding:3px 10px}
-.wd-planbox-tag .wd-plan-dot{width:6px;height:6px}
-.wd-planbox-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
-.wd-planstat{min-width:0}
-.wd-planstat .l{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wd-planstat .l svg{flex-shrink:0}
-.wd-planstat .v{margin-top:5px;font-size:22px;font-weight:700;font-family:var(--wd-display);line-height:1.1;white-space:nowrap;color:var(--tx)}
-.wd-planstat .v small{font-size:12.5px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
-.wd-planstat .v.skel{height:24px;width:60%;border-radius:7px;background:var(--track)}
-.wd-planstat .h{font-size:11px;color:var(--faint);margin-top:3px;line-height:1.4}
-.wd-planbox-trade{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.wd-planbox-trade .t{font-size:12.5px;color:var(--mut);line-height:1.5;min-width:0;flex:1 1 220px}
-.wd-planbox-trade .t b{color:var(--tx)}
+/* Compact plan pill (top bar): minutes left, tasks left, banked credits in one
+   tight pill, with a popover for the full detail + the trade action. Replaces
+   the old body plan card. Each micro-stat stays on one line (nowrap) and the
+   whole pill shrinks gracefully at narrow widths (labels drop, then stats drop
+   to just the banked count) so the top bar never overflows or clips. */
+.wd-planpill-wrap{position:relative;flex-shrink:0;display:inline-flex}
+.wd-planpill{display:inline-flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 10px 0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wd-planpill:hover,.wd-planpill.on{border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
+.wd-pp-s{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
+.wd-pp-s svg{flex-shrink:0;color:var(--em-2)}
+.wd-pp-s b{font-weight:700;color:var(--tx)}
+.wd-pp-sep{width:1px;height:16px;background:var(--line);flex-shrink:0}
+.wd-pp-ca{flex-shrink:0;color:var(--mut);transform:rotate(90deg)}
+.wd-planpill.on .wd-pp-ca{transform:rotate(-90deg)}
+/* Click-catcher behind the popover (closes on outside click). */
+.wd-planpop-back{position:fixed;inset:0;z-index:40;background:transparent;border:0;padding:0;margin:0;cursor:default}
+.wd-planpop{position:absolute;top:calc(100% + 8px);right:0;z-index:41;width:270px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;animation:wd-pp-pop .16s ease}
+@keyframes wd-pp-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.wd-planpop-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;min-width:0}
+.wd-planpop-name{font-family:var(--wd-display);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-planpop-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:1px solid var(--em-line);border-radius:999px;padding:3px 9px;margin-left:auto}
+.wd-planpop-tag .wd-plan-dot{width:6px;height:6px}
+.wd-planpop-stat{padding:9px 0;border-top:1px solid var(--line-soft)}
+.wd-planpop-stat:first-of-type{border-top:0;padding-top:0}
+.wd-planpop-stat .r{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
+.wd-planpop-stat .k{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);min-width:0}
+.wd-planpop-stat .k svg{flex-shrink:0;color:var(--em-2)}
+.wd-planpop-stat .v{font-family:var(--wd-display);font-weight:700;font-size:17px;line-height:1.1;color:var(--tx);white-space:nowrap;flex-shrink:0}
+.wd-planpop-stat .v small{font-size:11.5px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
+.wd-planpop-stat .h{font-size:11px;color:var(--faint);margin-top:3px;line-height:1.4}
 .wd-trade-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;height:36px;padding:0 15px;border-radius:999px;border:1px solid var(--em);background:var(--em);color:#fff;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .15s,opacity .15s}
 .wd-trade-btn:hover{filter:brightness(1.05)}
 .wd-trade-btn:disabled{opacity:.6;cursor:default}
 .wd-trade-btn svg{flex-shrink:0}
-@media(max-width:640px){.wd-planbox-grid{grid-template-columns:1fr}}
+.wd-planpop-trade{width:100%;margin-top:12px}
 
 /* Impersonation banner: a slim, persistent, warm/neutral strip at the very top
    of /work when a superadmin is viewing as this user. nowrap, never overflows.
@@ -1501,17 +1513,6 @@ const WD_CSS = `
 .wd-sess-more:hover{color:var(--em-deep)}
 @media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}.wd-coach,.wd-coach::after,.wd-coach-kind-check,.wd-coach-prog span.on,.wd-coach-adv .bar i{animation:none}}
 `
-
-const WD_CATS = [
-  { id: 'config', tone: 'a', label: 'Technical setup', icon: ServerCog, sample: 'Configure my firewall to allow only SSH and HTTPS' },
-  { id: 'build', tone: 'b', label: 'Build & implement', icon: Blocks, sample: 'Connect Stripe to my app with a webhook' },
-  { id: 'ai', tone: 'c', label: 'AI & automation', icon: Sparkles, sample: 'Build a business phone AI in n8n' },
-  { id: 'product', tone: 'd', label: 'Product & innovation', icon: Rocket, sample: 'Ship a landing page for my new idea today' },
-  { id: 'marketing', tone: 'e', label: 'Marketing & growth', icon: Megaphone, sample: 'Launch a Google Ads campaign for my product' },
-  { id: 'office', tone: 'a', label: 'Accounting & office', icon: Calculator, sample: 'Reconcile my bank statement for last month' },
-  { id: 'legal', tone: 'b', label: 'Legal & compliance', icon: Scale, sample: 'Review this vendor contract clause by clause' },
-  { id: 'general', tone: 'c', label: 'Anything else', icon: Compass, sample: 'Help me get unstuck on what is on my screen' },
-]
 
 // Reference documents on the goal card. Two paths:
 //  - DESKTOP (window.workDesktop): the shell picks + extracts the file locally,
@@ -1796,6 +1797,8 @@ function Home({ user, onOpen, onSignOut }) {
   // Impersonation: a superadmin viewing as this user (from GET /api/work/me).
   const [impersonating, setImpersonating] = useState(null)
   const [impStopping, setImpStopping] = useState(false)
+  // Compact plan pill popover (top bar): plan detail + the trade action.
+  const [planPop, setPlanPop] = useState(false)
 
   useEffect(() => {
     const id = 'wd-fonts'
@@ -1940,7 +1943,6 @@ function Home({ user, onOpen, onSignOut }) {
     try { await api.workDelete(delTarget.id, delReason.trim()); setDelTarget(null); setDelReason(''); load() }
     catch (e) { setDelErr(friendlyError(e, 'Could not delete the session. Please try again.')) } finally { setDelBusy(false) }
   }
-  const pickCat = (c) => { setGoal(c.sample); setTab('dashboard'); setTimeout(() => goalRef.current && goalRef.current.focus(), 60) }
   // Buy extra hours (or image credits) - priced per your plan in Admin > Pricing,
   // one-time via Stripe. Redirects to secure checkout.
   const [buying, setBuying] = useState(false)
@@ -1973,6 +1975,15 @@ function Home({ user, onOpen, onSignOut }) {
   // Daily hours expire at midnight; these credits bank. Trading 2 -> 1 hour is
   // offered only to a non-corporate account that actually has >= 2 to spend.
   const taskCredits = (usage && usage.tasks && Number(usage.tasks.taskCredits)) || 0
+  // Compact plan pill (top bar) values. These replace the old body plan card:
+  // minutes left, tasks left today, banked credits - plus the trade action in a
+  // small popover off the pill, so no data from the removed card is lost.
+  const tasksObj = (usage && usage.tasks) || null
+  const tasksUnlimited = !!(tasksObj && tasksObj.unlimited)
+  const tasksRemaining = tasksObj ? tasksObj.remaining : null
+  const tasksCap = tasksObj ? tasksObj.cap : null
+  const tasksResetLabel = (tasksObj && tasksObj.resetLabel) || '11:59 PM ET'
+  const tasksFace = tasksUnlimited ? '∞' : (tasksObj ? `${tasksRemaining}/${tasksCap}` : '-')
   const canTrade = taskCredits >= 2 && !isCompanyMember
   const tradeCredits = async () => {
     if (trading || !canTrade) return
@@ -1988,10 +1999,18 @@ function Home({ user, onOpen, onSignOut }) {
   const stopImpersonate = async () => {
     if (impStopping) return
     setImpStopping(true)
+    // The banner lived on /work, so a plain reload would drop the superadmin on
+    // the USER dashboard. The server returns { ok, redirect: '/work/admin' } so
+    // we navigate back to the admin console instead. On any failure, fall back
+    // to the console too (or re-enable the button if navigation did not fire).
     try {
-      await fetch('/api/work/admin/impersonate/stop', { method: 'POST', credentials: 'include', headers: (typeof window !== 'undefined' && window.refigold ? { 'X-Refigold-App': '1' } : undefined) })
-    } catch { /* ignore */ }
-    try { window.location.reload() } catch { setImpStopping(false) }
+      const res = await fetch('/api/work/admin/impersonate/stop', { method: 'POST', credentials: 'include', headers: (typeof window !== 'undefined' && window.refigold ? { 'X-Refigold-App': '1' } : undefined) })
+      let data = null
+      try { data = await res.json() } catch { /* non-JSON response; use fallback */ }
+      window.location.href = (data && data.redirect) || '/work/admin'
+    } catch {
+      try { window.location.href = '/work/admin' } catch { setImpStopping(false) }
+    }
   }
   // Server-authoritative daily reset label (do not hardcode the time/zone).
   const resetLabel = (usage && usage.resetLabel) || '11:59 PM ET'
@@ -2074,6 +2093,47 @@ function Home({ user, onOpen, onSignOut }) {
                   ? <button className="wd-buyhrs wd-retry" onClick={load} title="Could not load your remaining time. Click to retry."><AlertTriangle size={13} /> <span>Retry</span></button>
                   : <span className="wd-mins skel" aria-hidden />)
               : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l">left</span></span>}
+            {usage != null && !needsSub && (
+              <div className="wd-planpill-wrap">
+                <button type="button" className={`wd-planpill${planPop ? ' on' : ''}`} aria-haspopup="dialog" aria-expanded={planPop}
+                  onClick={() => setPlanPop((v) => !v)}
+                  title={`${planName} plan (Active)`}
+                  aria-label={`Your plan: ${planName}, active. ${minsLeft != null ? minsLeft : 'unknown'} minutes left today. ${tasksUnlimited ? 'Unlimited tasks' : `${tasksRemaining} of ${tasksCap} tasks`} left today. ${taskCredits} banked credit${taskCredits === 1 ? '' : 's'}. Open plan details.`}>
+                  <span className="wd-pp-s" title="Minutes left today"><Clock size={13} /> <b>{minsLeft != null ? minsLeft : '-'}</b></span>
+                  <span className="wd-pp-sep" aria-hidden />
+                  <span className="wd-pp-s" title="Tasks left today"><Check size={13} /> <b>{tasksFace}</b></span>
+                  <span className="wd-pp-sep" aria-hidden />
+                  <span className="wd-pp-s" title="Banked credits"><CreditCard size={13} /> <b>{taskCredits}</b></span>
+                  <ChevronRight className="wd-pp-ca" size={13} aria-hidden />
+                </button>
+                {planPop && (
+                  <>
+                    <button type="button" className="wd-planpop-back" aria-label="Close plan details" onClick={() => setPlanPop(false)} />
+                    <div className="wd-planpop" role="dialog" aria-label="Your plan">
+                      <div className="wd-planpop-head">
+                        <span className="wd-planpop-name" title={`${planName} plan`}>{planName} plan</span>
+                        <span className="wd-planpop-tag"><span className="wd-plan-dot" aria-hidden /> Active</span>
+                      </div>
+                      <div className="wd-planpop-stat">
+                        <div className="r"><span className="k"><Clock size={13} /> Minutes left today</span><span className="v">{minsLeft != null ? <>{minsLeft} <small>min</small></> : '-'}</span></div>
+                        <div className="h">Daily &middot; resets at {resetLabel}</div>
+                      </div>
+                      <div className="wd-planpop-stat">
+                        <div className="r"><span className="k"><Check size={13} /> Tasks left today</span><span className="v">{tasksUnlimited ? 'Unlimited' : <>{tasksRemaining} <small>/ {tasksCap}</small></>}</span></div>
+                        <div className="h">Daily &middot; resets at {tasksResetLabel}</div>
+                      </div>
+                      <div className="wd-planpop-stat">
+                        <div className="r"><span className="k"><CreditCard size={13} /> Banked credits</span><span className="v">{taskCredits}</span></div>
+                        <div className="h">Unused tasks you kept &middot; these never expire</div>
+                      </div>
+                      {canTrade && (
+                        <button type="button" className="wd-trade-btn wd-planpop-trade" onClick={() => { tradeCredits() }} disabled={trading}>{trading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />} Trade 2 tasks to 1 hour</button>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
             {user && !user.companyId && !isAdmin && usage != null && (
               <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title="Buy extra hours (one-time)"><Plus size={13} /> <span><span className="wd-mins-l">Buy </span>hours</span></button>
             )}
@@ -2129,7 +2189,7 @@ function Home({ user, onOpen, onSignOut }) {
               {usage
                 ? <div className="wd-plan"><span className="wd-plan-dot" /> {
                     isAdmin
-                      ? 'Administrator access · guidance unlocked'
+                      ? 'Administrator access · guidance on'
                       : isCompanyMember
                         ? `${user.companyName || 'Your company'} team · ${minsLeft} min of guidance left today`
                         : covered
@@ -2144,7 +2204,7 @@ function Home({ user, onOpen, onSignOut }) {
             {isAdmin && (
               <div className="wd-note" style={{ marginTop: 18 }}>
                 <LayoutDashboard size={16} />
-                <span>You have administrator access, so live guidance is unlocked for you. <a href="/work/admin">Open the admin console</a></span>
+                <span>You have administrator access, so live guidance is on for you. <a href="/work/admin">Open the admin console</a></span>
               </div>
             )}
 
@@ -2161,7 +2221,7 @@ function Home({ user, onOpen, onSignOut }) {
                   <span className="ic"><Rocket size={18} /></span>
                   <div>
                     <h3>Choose a plan to start</h3>
-                    <p>Your account is ready. Pick a plan to unlock live guidance. Your plan's hours are daily minutes you can spend anytime across the day - billed per minute you actually use, never by the hour. Change or cancel anytime; the daily allowance resets at {resetLabel}.</p>
+                    <p>Your account is ready. Pick a plan to turn on live guidance. Your plan's hours are daily minutes you can spend anytime across the day - billed per minute you actually use, never by the hour. Change or cancel anytime; the daily allowance resets at {resetLabel}.</p>
                   </div>
                 </div>
                 <div className="wd-sub-plans">
@@ -2176,7 +2236,7 @@ function Home({ user, onOpen, onSignOut }) {
                   ))}
                 </div>
                 {subErr && <div className="wd-sub-err"><AlertTriangle size={14} /> {subErr}</div>}
-                <div className="wd-sub-note">On a team plan? If your company covers WorkCoPilot, ask your administrator to add you and guidance unlocks automatically.</div>
+                <div className="wd-sub-note">On a team plan? If your company covers WorkCoPilot, ask your administrator to add you and guidance turns on automatically.</div>
                 <div style={{ marginTop: 14, textAlign: 'center', fontSize: 13.5 }}>
                   Not ready to subscribe? <a href="/demo" className="wd-link">See exactly how it works in the demo</a>
                 </div>
@@ -2241,7 +2301,7 @@ function Home({ user, onOpen, onSignOut }) {
                 <label htmlFor="wd-name">Name this plan <span className="req">*</span></label>
                 <input id="wd-name" className="wd-nameinput" placeholder="e.g. API pentest - transactional broker" value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
                 <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>Your goal <span className="req">*</span></label>
-                <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement. Anything, any field." value={goal} onChange={(e) => setGoal(e.target.value)} />
+                <textarea id="wd-goal" ref={goalRef} rows={3} placeholder="What do you want to get done? Type or paste the task, the ticket, or the requirement." value={goal} onChange={(e) => setGoal(e.target.value)} />
                 <div className="wd-start-row">
                   <span className="wd-hint">{ready ? 'WorkCoPilot plans it, then guides you step by step.' : 'Available once your administrator has finished AI setup.'}</span>
                   <button className="wd-cta" disabled={!ready || busy || !goal.trim() || !planTitle.trim()} onClick={beginScope} title={!planTitle.trim() ? 'Name this plan first' : (!goal.trim() ? 'Enter your goal' : '')}>{busy ? <Loader2 size={15} className="spin" /> : <Play size={16} />} Start guiding me</button>
@@ -2256,44 +2316,6 @@ function Home({ user, onOpen, onSignOut }) {
               </TaskCoach>
             </section>
 
-            {/* Plan box: plan name, what's left today, and banked credits. Daily
-                hours expire at midnight; banked task credits roll over. An
-                optional "trade 2 tasks -> 1 hour" action shows only when the
-                account has >= 2 credits and is not a corporate (company) member. */}
-            <section className="wd-planbox" aria-label="Your plan">
-              <div className="wd-planbox-head">
-                <span className="wd-planbox-ic"><LayoutDashboard size={17} /></span>
-                <span className="wd-planbox-name" title={`${planName} plan`}>{planName} plan</span>
-                <span className="wd-planbox-tag"><span className="wd-plan-dot" aria-hidden /> Active</span>
-              </div>
-              <div className="wd-planbox-grid">
-                <div className="wd-planstat">
-                  <div className="l"><Clock size={14} /> Minutes left today</div>
-                  {usage ? <div className="v">{minsLeft} <small>min</small></div> : <div className="v skel" aria-hidden />}
-                  <div className="h">Daily &middot; resets at {resetLabel}</div>
-                </div>
-                <div className="wd-planstat">
-                  <div className="l"><Check size={14} /> Tasks left today</div>
-                  {usage
-                    ? (usage.tasks && !usage.tasks.unlimited
-                        ? <div className="v">{usage.tasks.remaining} <small>/ {usage.tasks.cap}</small></div>
-                        : <div className="v">Unlimited</div>)
-                    : <div className="v skel" aria-hidden />}
-                  <div className="h">Daily &middot; resets at {resetLabel}</div>
-                </div>
-                <div className="wd-planstat">
-                  <div className="l"><CreditCard size={14} /> Banked credits</div>
-                  {usage ? <div className="v">{taskCredits}</div> : <div className="v skel" aria-hidden />}
-                  <div className="h">Unused tasks you kept &middot; these never expire</div>
-                </div>
-              </div>
-              {canTrade && (
-                <div className="wd-planbox-trade">
-                  <span className="t">You have <b>{taskCredits} banked credit{taskCredits === 1 ? '' : 's'}</b>. Trade 2 for an extra hour of guidance today.</span>
-                  <button type="button" className="wd-trade-btn" onClick={tradeCredits} disabled={trading}>{trading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />} Trade 2 tasks &rarr; 1 hour</button>
-                </div>
-              )}
-            </section>
             </>)}
 
             <section className="wd-sessions" id="wd-sessions" aria-label="Resume where you left off">
@@ -2364,27 +2386,6 @@ function Home({ user, onOpen, onSignOut }) {
                 )
               })()}
             </section>
-
-            {!needsSub && (
-              <div className="wd-catwrap">
-                <div className="wd-sec">
-                  <span className="wd-ic alt"><AppWindow size={14} /></span>
-                  <div>
-                    <h2>Or start from a space</h2>
-                    <p>Pick a starting point. It fills in a sample goal you can edit before you begin.</p>
-                  </div>
-                </div>
-                <div className="wd-cats">
-                  {WD_CATS.map((c) => (
-                    <button key={c.id} className={`wd-cat t-${c.tone}`} onClick={() => pickCat(c)} disabled={!ready} title={ready ? c.sample : 'Set up your AI above to begin'}>
-                      <span className="wd-cat-ic"><c.icon size={15} /></span>
-                      <span className="wd-cat-label">{c.label}</span>
-                      <span className="wd-cat-sample">{c.sample}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
 
             {/* Quiet secondary rows: Buddy, Data protection, Skills. */}
             <section className="wd-more" aria-label="Buddy, data protection and skills">
@@ -2565,6 +2566,7 @@ function HelpRedactShot() {
   )
 }
 const HELP_SECTIONS = [
+  { id: 'flow', t: 'On screen' },
   { id: 'start', t: 'Getting started' },
   { id: 'how', t: 'How guidance works' },
   { id: 'styles', t: 'Guide styles' },
@@ -2608,6 +2610,22 @@ function HelpDocs({ onStart }) {
         <h1>{desktop ? 'How to use the WorkCoPilot desktop app' : 'How to use WorkCoPilot'}</h1>
         <p className="wd-help-lead">An expert that watches your screen, tells you the exact next move one step at a time, catches a wrong move and corrects it, and keeps you on the next correct step until the job is done. Here is everything it does and how to get the most from it.</p>
         <HelpFlow />
+
+        {/* The main flow on real screens: start a task, the guiding console,
+            Tools, the Answer card. Static screenshots under /help/user/. */}
+        <section id="help-flow"><h2>On screen: the main flow</h2>
+          <p>Four screens, from your goal to the answer. Everything else in this guide builds on them.</p>
+          <ol className="wd-hflow">
+            <li><b>Start a task</b><span>Name the plan, write the goal in your own words, press <b>Start guiding me</b>.</span>
+              <img src="/help/user/start-task.png" width="912" height="584" loading="lazy" decoding="async" alt="The Start a task box on the Dashboard: a plan name, the goal, and the Start guiding me button." /></li>
+            <li><b>Follow Now, do this</b><span>One step at a time, with the exact command and a Copy button. The plan sits on the left; finished steps tick off as it sees them done.</span>
+              <img src="/help/user/do-this-now.png" width="670" height="613" loading="lazy" decoding="async" alt="The Now, do this card in the guiding console: the current step, the terminal command with Copy, and how to do it." /></li>
+            <li><b>Open Tools</b><span>Make something (Answer, Write, Compute), read the screen, Deep pass, re-plan, the full guide, text size and theme.</span>
+              <img className="tall" src="/help/user/tools-menu.png" width="344" height="761" loading="lazy" decoding="async" alt="The Tools menu: Answer, Write, Compute, Read my screen, Deep pass, View full plan, Re-plan, Full guide, text size, accent color and dark mode." /></li>
+            <li><b>Get the answer</b><span>Tools, then <b>Answer</b>, then <b>Get the result</b>. The card gives the result, its confidence, how it got it, how to verify it, and any company policy flags.</span>
+              <img className="mid" src="/help/user/answer.png" width="684" height="968" loading="lazy" decoding="async" alt="The Answer card: the result, a confidence meter, how I got it, verify by, the security check and company policy flags." /></li>
+          </ol>
+        </section>
 
         {desktop && (<>
           <section id="help-desktop"><h2>The desktop app</h2>
@@ -2991,6 +3009,52 @@ const CONSOLE_CSS = `
 .wc-hero-hint-btn:hover{text-decoration-color:currentColor}
 .wc-hero-text{font-family:var(--wc-body);font-size:calc(15px*var(--wc-fs,1));line-height:1.45;font-weight:650;color:var(--text);letter-spacing:-.005em;text-wrap:pretty}
 @media(max-width:640px){.wc-hero{padding:16px 16px 13px 20px;border-radius:16px}.wc-hero-text{font-size:calc(14.5px*var(--wc-fs,1))}}
+
+/* Mid-guiding clarification card: the plan asks for one essential input it
+   cannot see. Calmer than the hero (no pulse), green-tinted fill + a left accent
+   bar so it reads as the guide asking, not an error. Chips wrap freely; the text
+   form wraps the button under the input on narrow floaters so nothing overflows. */
+.wc-clarify{position:relative;margin-top:14px;padding:15px 17px 13px 19px;background:var(--em-soft);border:1px solid var(--em-ring);border-left:4px solid var(--em);border-radius:14px;box-sizing:border-box;overflow:hidden}
+.wc-clarify-head{display:inline-flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--em)}
+.wc-clarify-head svg{flex-shrink:0}
+.wc-clarify-q{font-family:var(--wc-body);margin-top:6px;font-size:calc(14.5px*var(--wc-fs,1));line-height:1.4;font-weight:650;color:var(--text);letter-spacing:-.005em;text-wrap:pretty;overflow-wrap:anywhere}
+.wc-clarify-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.wc-clarify-chip{max-width:100%;display:inline-flex;align-items:center;font:inherit;font-size:calc(12.5px*var(--wc-fs,1));font-weight:600;color:var(--text);background:var(--surface);border:1.5px solid var(--em);border-radius:999px;padding:6px 13px;min-height:32px;cursor:pointer;white-space:normal;overflow-wrap:anywhere;text-align:left;transition:background .15s,color .15s,box-shadow .15s}
+.wc-clarify-chip:hover:not(:disabled){background:var(--em);color:var(--on-em)}
+.wc-clarify-chip:focus-visible{outline:none;box-shadow:0 0 0 3px var(--em-ring)}
+.wc-clarify-chip:disabled{opacity:.5;cursor:default}
+.wc-clarify-form{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px}
+.wc-clarify-input{flex:1 1 170px;min-width:0;font:inherit;font-size:calc(13px*var(--wc-fs,1));color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:0 11px;height:36px;box-sizing:border-box}
+.wc-clarify-input::placeholder{color:var(--text-faint)}
+.wc-clarify-input:focus{outline:none;border-color:var(--em);box-shadow:0 0 0 3px var(--em-ring)}
+.wc-clarify-send{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:650;color:var(--on-em);background:var(--em);border:none;border-radius:9px;padding:0 16px;height:36px;cursor:pointer;white-space:nowrap;transition:background .15s,opacity .15s}
+.wc-clarify-send:hover:not(:disabled){filter:brightness(.93)}
+.wc-clarify-send:focus-visible{outline:none;box-shadow:0 0 0 3px var(--em-ring)}
+.wc-clarify-send:disabled{opacity:.5;cursor:default}
+/* "Other" under the chips: the escape hatch when the shortlist misses the real
+   answer. Visually secondary to the chips: a muted label, the same input, and an
+   outlined (not filled) Send. The label never wraps; the input gives. */
+.wc-clarify-form.other{margin-top:10px;align-items:center}
+.wc-clarify-other-k{flex:0 0 auto;font-size:calc(11px*var(--wc-fs,1));font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text-muted);white-space:nowrap}
+.wc-clarify-send.quiet{color:var(--em);background:var(--surface);border:1.5px solid var(--em);padding:0 14px}
+.wc-clarify-send.quiet:hover:not(:disabled){filter:none;background:var(--em);color:var(--on-em)}
+/* Footer: the hint plus the quiet Skip (the unsure path). A text-style button,
+   never loud; it wraps as prose on narrow floaters so nothing overflows. */
+.wc-clarify-foot{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-top:9px}
+.wc-clarify-hint{font-size:calc(11px*var(--wc-fs,1));color:var(--text-muted)}
+.wc-clarify-skip,.wc-clarify-undo{font:inherit;font-size:calc(11px*var(--wc-fs,1));font-weight:600;color:var(--text-muted);background:transparent;border:none;padding:0;margin:0;cursor:pointer;text-align:left;white-space:normal;overflow-wrap:anywhere;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:color .15s,text-decoration-color .15s}
+.wc-clarify-skip:hover:not(:disabled),.wc-clarify-undo:hover:not(:disabled){color:var(--em);text-decoration-color:currentColor}
+.wc-clarify-skip:focus-visible,.wc-clarify-undo:focus-visible{outline:none;color:var(--em);box-shadow:0 0 0 3px var(--em-ring)}
+.wc-clarify-skip:disabled,.wc-clarify-undo:disabled{opacity:.5;cursor:default}
+/* Answered / skipped strip: tiny and secondary, same tokens as the card. The
+   text takes the width and wraps; the Change link never wraps mid-word and
+   drops to its own line on a narrow floater instead of overflowing. */
+.wc-clarify-done{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:12px;padding:8px 12px 8px 13px;font-size:calc(12px*var(--wc-fs,1));line-height:1.4;color:var(--text-muted);background:var(--em-soft);border:1px solid var(--em-ring);border-left:3px solid var(--em);border-radius:10px;box-sizing:border-box;min-width:0}
+.wc-clarify-done>svg{flex:0 0 auto;color:var(--em)}
+.wc-clarify-done-t{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.wc-clarify-done-t b{color:var(--text);font-weight:650}
+.wc-clarify-undo{flex:0 0 auto;font-size:calc(12px*var(--wc-fs,1));color:var(--em);text-decoration-color:currentColor;white-space:nowrap}
+@media(max-width:640px){.wc-clarify{padding:13px 14px 11px 16px}.wc-clarify-send{flex:1 1 100%}.wc-clarify-form.other .wc-clarify-send{flex:0 0 auto}}
 
 /* Step navigator with a progress track */
 .wc-nav{display:flex;align-items:center;gap:12px;padding:2px 2px 6px}
@@ -3810,6 +3874,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [status, setStatus] = useState('')
   const [observation, setObservation] = useState('')
   const [guidance, setGuidance] = useState('')      // live, screen-specific instruction for the current step
+  const [clarify, setClarify] = useState(null)      // the plan's one essential question it cannot see on screen (or null)
+  const [clarifyText, setClarifyText] = useState('') // bound answer when the question has no preset options to tap
+  const [clarifyDone, setClarifyDone] = useState(null) // { question, answer } | { question, skipped } -> the confirmation strip with Change
+  const lastClarifyRef = useRef(null)                // the last question object, so Change can re-open the SAME card
   const [flags, setFlags] = useState([])
   const [busy, setBusy] = useState(false)
   // True from the moment a screen frame is sent until the read comes back, so the
@@ -4207,6 +4275,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     const o = (opts && typeof opts === 'object' && !opts.nativeEvent && !opts.target) ? opts : {}
     if (outOfMinutes()) return
     setBusy(true); setErr('')
+    setClarify(null); setClarifyText('')   // drop a stale clarify card the moment a fresh plan starts
+    if (!o.fromClarify) setClarifyDone(null)   // a fresh plan moves on; the answer-strip survives only its own re-plan
     try {
       let frame = null
       if (!capturing && !photoFrameRef.current) { const okCap = await startCapture(); if (!okCap) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
@@ -4216,7 +4286,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       let docsText = ''
       try { if (window.workDesktop) docsText = sessionStorage.getItem('wd_docs_' + sessionId) || '' } catch { /* ignore */ }
       const r = await waitFor(
-        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) }),
+        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
         'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       // Company-policy findings on the plan surface immediately as cited flags, so
@@ -4227,6 +4297,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           text: `Company policy, ${f.kind === 'forbid' ? 'prohibited' : 'required'}: ${f.title}${f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''}${f.guidance ? `. ${f.guidance}` : ''}`,
         })))
       }
+      // The plan needs one essential input it cannot read off the screen (a
+      // jurisdiction, which software, a choice). Show the card; most plans return
+      // null, so nothing shows then. Cleared at the top of the next plan().
+      setClarify(r.clarify || null); setClarifyText('')
+      if (r.clarify) setClarifyDone(null)   // a new question replaces the previous answer-strip
       if (r.replan) setReplanInfo(r.replan)   // per-task re-plan budget left
       // Input guardrail: a MEDIUM attempt is allowed through with a warning. Inform, never block.
       if (r.guard && !r.guard.blocked && r.guard.warning && onGuard) onGuard(r.guard)
@@ -4239,6 +4314,63 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     } catch (e) {
       setErr(friendlyError(e, 'Could not build the plan'))
       if (e && e.timedOut) refresh()   // pick up a plan that landed after we stopped waiting
+    } finally { setBusy(false) }
+  }
+
+  // The user answered the plan's one clarifying question. Store the answer (the
+  // server folds it into the session scope), drop the card, then re-plan through
+  // the SAME plan() path so the frame grab and watch wiring are unchanged. The
+  // fromClarify flag tells the server this re-plan is free, so asking never costs
+  // the person a re-plan from their per-task budget.
+  const submitClarify = async (answer) => {
+    const a = String(answer || '').trim()
+    if (!a || !clarify || busy) return
+    setBusy(true); setErr('')
+    try {
+      await api.workClarify(sessionId, { question: clarify.question, answer: a })
+      lastClarifyRef.current = clarify
+      setClarifyDone({ question: clarify.question, answer: a })   // "You chose: X." strip with Change
+      setClarify(null); setClarifyText('')
+      setBusy(false)
+      await plan({ fromClarify: true })
+    } catch (e) {
+      setErr(friendlyError(e, 'Could not save your answer'))
+      setBusy(false)
+    }
+  }
+
+  // Change / Answer it: a mis-tap or an accidental skip costs nothing. Revert the
+  // last answer on the server, then re-open the SAME card (same question and
+  // options) so the person picks again. No re-plan here; re-answering goes
+  // through submitClarify, which folds the corrected answer and re-plans for free.
+  const undoClarify = async () => {
+    const last = lastClarifyRef.current
+    if (!last || !clarifyDone || busy) return
+    setBusy(true); setErr('')
+    try {
+      await api.workClarifyUndo(sessionId, { question: last.question })
+      setClarifyDone(null); setClarifyText('')
+      setClarify(last)
+    } catch (e) {
+      setErr(friendlyError(e, 'Could not change the answer'))
+    } finally { setBusy(false) }
+  }
+
+  // Skip: the person is unsure, or none of the shortlist fits and they would
+  // rather not guess. The chips are only a best-guess shortlist read off the
+  // screen, so a question is never a forced choice. Record the skip and the
+  // server proceeds on its best safe assumption. The guide keeps its current
+  // steps, so there is NO re-plan here: just dismiss the card.
+  const skipClarify = async () => {
+    if (!clarify || busy) return
+    setBusy(true); setErr('')
+    try {
+      await api.workClarify(sessionId, { question: clarify.question, skipped: true })
+      lastClarifyRef.current = clarify
+      setClarifyDone({ question: clarify.question, skipped: true })   // "Skipped." strip with Answer it
+      setClarify(null); setClarifyText('')
+    } catch (e) {
+      setErr(friendlyError(e, 'Could not skip the question'))
     } finally { setBusy(false) }
   }
 
@@ -5151,6 +5283,53 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         )}
 
+
+        {/* Mid-guiding clarification: the plan asked for ONE essential input it
+            cannot see on the screen. Sits just above the current-step hero so the
+            person answers before acting. A tap (choice) or a short line (text)
+            refines the next steps. Shows only while the plan set a question. */}
+        {!ended && clarify && (() => {
+          // The chips are a best-guess shortlist, so a choice question always
+          // also offers "Other" (type your own) and Skip; a text question offers
+          // the text box and Skip. Never a forced choice.
+          const isChoice = clarify.kind === 'choice' && Array.isArray(clarify.options) && clarify.options.length > 0
+          return (
+            <div className="wc-clarify" role="group" aria-label="Quick question">
+              <div className="wc-clarify-head"><HelpCircle size={13} strokeWidth={2.5} /> Quick question</div>
+              <div className="wc-clarify-q">{clarify.question}</div>
+              {isChoice && (
+                <div className="wc-clarify-chips">
+                  {clarify.options.map((opt, i) => (
+                    <button key={i} type="button" className="wc-clarify-chip" disabled={busy} onClick={() => submitClarify(opt)}>{opt}</button>
+                  ))}
+                </div>
+              )}
+              <form className={`wc-clarify-form${isChoice ? ' other' : ''}`} onSubmit={(e) => { e.preventDefault(); submitClarify(clarifyText) }}>
+                {isChoice && <span className="wc-clarify-other-k">Other</span>}
+                <input className="wc-clarify-input" type="text" value={clarifyText} onChange={(e) => setClarifyText(e.target.value)} placeholder={isChoice ? 'Type your own answer' : 'Type your answer'} aria-label={isChoice ? `Other answer for: ${clarify.question}` : clarify.question} disabled={busy} />
+                <button type="submit" className={`wc-clarify-send${isChoice ? ' quiet' : ''}`} disabled={busy || !clarifyText.trim()}>Send</button>
+              </form>
+              <div className="wc-clarify-foot">
+                <span className="wc-clarify-hint">This refines your next steps.</span>
+                <button type="button" className="wc-clarify-skip" disabled={busy} onClick={skipClarify} title="Skip this question. The guide proceeds on a safe assumption.">Not sure? Skip and I will proceed on a safe assumption.</button>
+              </div>
+            </div>
+          )
+        })()}
+        {/* After an answer or a skip the card gives way to this small strip, which
+            stays until the next question or the task moves on. Change / Answer it
+            reverts on the server and re-opens the same card. */}
+        {!ended && !clarify && clarifyDone && (
+          <div className="wc-clarify-done" role="status">
+            <Check size={13} strokeWidth={2.5} />
+            <span className="wc-clarify-done-t">
+              {clarifyDone.skipped
+                ? 'Skipped. I will proceed on a safe assumption.'
+                : <>You chose: <b>{clarifyDone.answer}</b>.</>}
+            </span>
+            <button type="button" className="wc-clarify-undo" disabled={busy} onClick={undoClarify} title={clarifyDone.skipped ? 'Answer this question now' : 'Change your answer'}>{clarifyDone.skipped ? 'Answer it' : 'Change'}</button>
+          </div>
+        )}
 
         {/* THE ONE current-step card (live). The hero carries everything for the
             step so it is never rendered a second time below: the live guidance

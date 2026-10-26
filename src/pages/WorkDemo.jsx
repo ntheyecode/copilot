@@ -140,11 +140,9 @@ export default function WorkDemo() {
       <section className="wkd-hero">
         <div className="wkd-wrap wkd-hero-in">
           <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> A real session, start to finish</div>
-          <h1>Watch it guide one task, step by step.</h1>
+          <h1>Watch it guide one real task, step by step.</h1>
           <p className="wkd-lead">
-            No sign-up, nothing to install. This plays out exactly the way the product works:
-            it reads the screen, tells you the next move, checks it worked, and catches a mistake
-            before it costs you.
+            It reads your screen, calls the next move, and catches a mistake before it costs you.
           </p>
           <DemoPlayer />
           <div className="wkd-herocta">
@@ -158,46 +156,39 @@ export default function WorkDemo() {
         <div className="wkd-wrap wkd-loop-in">
           <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> A live co-pilot, not a how-to page</div>
           <h2 id="wkd-loop-h">It does not just tell you. It walks every step with you.</h2>
-          <p className="wkd-loop-lead">What you just watched is the real loop. On your own screen, in your own app, WorkCoPilot stays with you from the first step to done.</p>
 
           <div className="wkd-loop-grid">
             <div className="wkd-cap watch">
               <span className="ic" aria-hidden="true"><ScanEye size={20} /></span>
               <b>Watches</b>
-              <p>Sees exactly what is on your screen and keeps pace with you, not a generic script.</p>
+              <p>Sees what is on your screen and keeps pace with you.</p>
             </div>
             <div className="wkd-cap guide">
               <span className="ic" aria-hidden="true"><Compass size={20} /></span>
-              <b>Navigates</b>
-              <p>Points you to the precise click, command or value, one step at a time, in your real app.</p>
+              <b>Guides</b>
+              <p>Points to the exact click, command or value, one step at a time.</p>
             </div>
             <div className="wkd-cap correct">
               <span className="ic" aria-hidden="true"><Wand2 size={20} /></span>
               <b>Corrects</b>
-              <p>Catches a wrong move the moment it happens and puts you back on track before it costs you.</p>
+              <p>Catches a wrong move the moment it happens and puts you back on track.</p>
             </div>
             <div className="wkd-cap fix">
               <span className="ic" aria-hidden="true"><Bug size={20} /></span>
               <b>Fixes</b>
-              <p>Debugs the error in front of you and gets you unstuck, then carries on to done.</p>
+              <p>Debugs the error in front of you and gets you unstuck.</p>
             </div>
           </div>
 
-          <div className="wkd-quality">
-            <span className="ic" aria-hidden="true"><Award size={20} /></span>
-            <div>
-              <b>Quality over quantity, done right the first time.</b>
-              <p>Only what is really on your screen - no guessing, no invented steps, no filler. Every step is grounded in the current best practice for your tool and checked before you act.</p>
-            </div>
-          </div>
+          <p className="wkd-grounded"><Award size={15} aria-hidden="true" /> Grounded in what is really on your screen. No guessing, no invented steps.</p>
         </div>
       </section>
 
       <section className="wkd-final" aria-labelledby="wkd-final-h">
         <div className="wkd-wrap wkd-final-in">
           <AVMark size={44} id="avd" />
-          <h2 id="wkd-final-h">That is every task, not just this one.</h2>
-          <p>Bring your own work. WorkCoPilot takes it from the first step to done, and hands you the write-up.</p>
+          <h2 id="wkd-final-h">Now bring your own task.</h2>
+          <p>WorkCoPilot takes it from the first step to done, and hands you the write-up.</p>
           <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </section>
@@ -401,7 +392,7 @@ const CSS = `
 @media (prefers-color-scheme:dark){.wkd-nav{background:color-mix(in srgb,#0b1020 78%,transparent)}}
 .wkd-nav-in{display:flex;align-items:center;gap:18px;height:64px}
 .wkd-links{display:flex;gap:20px;margin-left:8px;flex:1}
-.wkd-links a{color:var(--mut);text-decoration:none;font-weight:600;font-size:14.5px}
+.wkd-links a{color:var(--mut);text-decoration:none;font-weight:600;font-size:14.5px;white-space:nowrap}
 .wkd-links a:hover,.wkd-links a.on{color:var(--tx)}
 .wkd-cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--g),var(--em));color:#fff;border:none;border-radius:12px;padding:12px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 8px 22px rgba(10,134,207,.28);transition:transform .15s,box-shadow .15s}
 .wkd-cta:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(10,134,207,.36)}
@@ -519,10 +510,8 @@ const CSS = `
 .wkd-cap.guide .ic{background:linear-gradient(135deg,#34e0a1,#0e9f6e)}
 .wkd-cap.correct .ic{background:linear-gradient(135deg,#b98cff,#7a4bd8)}
 .wkd-cap.fix .ic{background:linear-gradient(135deg,#ffb35c,#f26a43)}
-.wkd-quality{width:100%;margin-top:16px;display:flex;align-items:flex-start;gap:14px;text-align:left;background:color-mix(in srgb,var(--g) 8%,var(--panel));border:1px solid color-mix(in srgb,var(--g) 30%,var(--line));border-radius:16px;padding:18px 20px}
-.wkd-quality .ic{flex:0 0 40px;width:40px;height:40px;border-radius:11px;display:inline-flex;align-items:center;justify-content:center;color:#2a1a04;background:linear-gradient(135deg,#ffcf5c,#e08a2a)}
-.wkd-quality b{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-size:17px;font-weight:800;display:block}
-.wkd-quality p{margin:6px 0 0;color:var(--mut);font-size:14px;line-height:1.55}
+.wkd-grounded{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;margin:18px auto 0;max-width:52ch;color:var(--mut);font-size:14px;font-weight:600;line-height:1.45;text-align:center}
+.wkd-grounded svg{color:var(--g);flex:none}
 @media (max-width:760px){.wkd-loop-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:440px){.wkd-loop-grid{grid-template-columns:1fr}}
 
@@ -539,11 +528,14 @@ const CSS = `
 .wkd-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,58%);box-shadow:0 0 7px currentColor;animation:wkd-fw-pop 1.15s cubic-bezier(.15,.7,.3,1) forwards}
 .wkd-fw-burst.b1 i{animation-delay:.1s}.wkd-fw-burst.b2 i{animation-delay:.2s}.wkd-fw-burst.b3 i{animation-delay:.32s}.wkd-fw-burst.b4 i{animation-delay:.16s}.wkd-fw-burst.b5 i{animation-delay:.28s}.wkd-fw-burst.b6 i{animation-delay:.38s}
 @keyframes wkd-fw-pop{0%{transform:rotate(calc(var(--a) * 1deg)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(calc(var(--a) * 1deg)) translateX(70px) scale(.25);opacity:0}}
-@media (max-width:560px){
-  /* DESIGN-06: links hide on phones - push the CTA back to the right edge so the
-     header stays balanced, and let the demo card grow to fit instead of clipping */
+@media (max-width:720px){
+  /* DESIGN-06: hide the nav links before they would crowd or wrap, and push the
+     CTA back to the right edge so the header stays balanced (logo + CTA only) */
   .wkd-links{display:none}
   .wkd-cta.sm{margin-left:auto}
+}
+@media (max-width:560px){
+  /* on phones let the demo card grow to fit instead of clipping its fixed height */
   .wkd-demo{height:auto;min-height:0;overflow:visible}
 }
 `

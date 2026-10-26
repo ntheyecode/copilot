@@ -1,12 +1,11 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
-  ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
-  Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle,
+  Compass, ShieldCheck, Globe2, FileText,
+  ArrowRight, Check, Sparkles, Layers, Monitor, Smartphone, AppWindow,
+  Lock, Zap, Rocket, Target, ScanEye, ListChecks, AlertTriangle,
   Building2, Download,
-  Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
-  Code2, Table, Palette, X,
+  Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy, X,
 } from 'lucide-react'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
@@ -28,13 +27,21 @@ import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
 // LOCALIZED: all copy is read through t() from src/i18n/locales/<code>.js;
 // icons, routes, prices, commands and code stay here (never translated).
 //
-// PAGE MAP (owner sales reality check, 2026-10-26): every section earns its
-// place once, in order: HERO (promise + live demo) -> CORE VALUE (the
-// plan/guide/watch/correct loop) -> FIELDS (breadth, one compact strip) ->
-// PROOF (security + privacy) -> ENTERPRISE (ONE section: the ROI ledger +
-// control chips) -> PRICING -> FINAL CTA. The former second enterprise block
-// (a 6-card feature grid), the 10-pill benefits teaser and the fields stat
-// tiles were removed: each restated something said better elsewhere.
+// PAGE MAP (owner sales reality check, 2026-10-26: "this page is like a book,
+// shorten and make your point straight"): every section earns its place once,
+// in order, and every block leads with the payoff, one line each.
+//   HERO       one promise + one short line + CTAs + three trust cues + live demo
+//   HOW        four benefit tiles (say the goal -> next move -> caught -> documented)
+//   FIELDS     one strip of eight field chips
+//   PROOF      security + privacy, one card each
+//   ENTERPRISE one section: the before/after ledger + control chips
+//   PRICING    the plan cards
+//   FINAL CTA
+// Removed in this pass: the "best model" band with its mono plan/guide/watch/
+// correct receipt (mechanism, not benefit; its promise is now the HOW eyebrow),
+// the "any app" glyph strip (now one trust cue), the hidden people / pillars /
+// three-step / ways sections and their graphics (dead code), and every
+// multi-sentence paragraph in the catalog (src/i18n/locales/en.js, home.*).
 export default function WorkMarketing() {
   const nav = useNavigate()
   const { t, locale } = useLocale()
@@ -112,11 +119,15 @@ export default function WorkMarketing() {
   const tilt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; e.currentTarget.style.transform = `perspective(700px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg) translateY(-4px)` }
   const untilt = (e) => { e.currentTarget.style.transform = '' }
 
-  const steps = [
-    { n: '01', viz: 'goal', t: 'Scope it together', d: 'Say what you want, answer a couple of quick questions, and it scopes the job before it plans, so the plan fits what you really need.' },
-    { n: '02', viz: 'guide', t: 'Get guided live', d: 'It reads your screen, guides the exact next move, checks it worked, and corrects you the moment something looks wrong.' },
-    { n: '03', viz: 'keep', t: 'Finish & keep it', d: 'Done right, with a documented write-up you can come back to.' },
+  // HOW tiles: icon + tone per step; the title and the one-line payoff come
+  // from home.how.steps in the catalog (same order).
+  const howMeta = [
+    { ic: Target, tone: '' },
+    { ic: Compass, tone: 'cyan' },
+    { ic: AlertTriangle, tone: 'amber' },
+    { ic: ListChecks, tone: 'violet' },
   ]
+  const howSteps = t('home.how.steps').map((s, i) => ({ ...howMeta[i], ...s }))
   // Each use-case gets its OWN icon (no repeated glyph) and an accent tone. The
   // id/icon/tone rows pair 1:1 with home.fields.cards (title + blurb) in the catalog.
   const cardMeta = [
@@ -127,22 +138,12 @@ export default function WorkMarketing() {
     { id: 'marketing', ic: Megaphone, tone: 'pink' },
     { id: 'office', ic: Calculator, tone: 'cyan' },
     { id: 'legal', ic: Scale, tone: '' },
-    { id: 'general', ic: Shapes, tone: 'amber' },
+    { id: 'general', ic: Layers, tone: 'amber' },
   ]
   const cards = t('home.fields.cards').map((c, i) => ({ ...cardMeta[i], ...c }))
   const marquee = t('home.marquee')
-  const pillars = [
-    { icon: Lock, t: 'Safe and private', flagship: true, claim: 'Your data never leaves your device unprotected.', d: 'Read-only by design, with on-device redaction on by default, for everyone.', points: ['PII, PHI, secrets and IPs redacted on your device before anything is sent, shown as [REDACTED]. On by default.', 'Built-in SAST and a live dependency CVE check on any code before you run it', 'Never clicks, types or runs anything; never generates content - it hands you a prompt for your own AI', 'Hidden on screen-share, and every account protected by an authenticator (MFA)', 'A per-session audit log: what was sent, what was read from your screen, the code checks, what was filtered, every flag raised'] },
-    { icon: Rocket, t: 'Powerful', claim: 'From a one-liner to a full enterprise build.', d: 'Whatever the task, it carries it end to end.', points: ['Simplest task to the most advanced', 'Any tool, any stack, any field', 'Nothing left half-done'] },
-    { icon: Target, t: 'Accurate', claim: 'It only tells you what is really on your screen.', d: 'No guessing, no invented menus.', points: ['Never invents a button or setting', 'Catches a wrong value before you save', 'Says "I cannot see that" instead of guessing'] },
-    { icon: Gauge, t: 'Fast', claim: 'The next step before you finish reading this.', d: 'It keeps pace with you, not the other way round.', points: ['Guidance in a blink', 'No waiting, no spinning', 'Moves the plan as you move'] },
-    { icon: ScanEye, t: 'Multimodal', claim: 'Reads screens, cameras and documents.', d: 'It sees what you see, from any source.', points: ['Your screen, live', 'Your phone camera', 'Your own files for context'] },
-    { icon: Sparkles, t: 'Intelligent', claim: 'Understands the goal, not just the words.', d: 'It reasons about what you are really doing.', points: ['Fits the real app - web, desktop, on-prem or custom', 'Corrects the step when a tool\'s UI has changed', 'Thinks deeper on hard steps, fixes the plan when reality differs'] },
-    { icon: Layers, t: 'Learns how you work', claim: 'Teach it your skills. It gets more powerful for you.', d: 'Add your own playbooks and skills, from any AI, and guidance aligns with your tools, standards and terminology.', points: ['Paste a playbook, an SOP or a skill exported from any AI', 'It learns how YOU work and keeps getting better for you over time', 'Companies keep their skills private, with download and re-upload'] },
-    { icon: Globe2, t: 'Deep research', claim: 'Always up to date, never stale.', d: 'It checks the latest before it guides.', points: ['The current way, not last year\'s', 'Real official links and steps', 'Matches how tools work today'] },
-    { icon: Compass, t: 'All around your goal', claim: 'Every step points at what you want.', d: 'It never loses the thread.', points: ['The goal is always in view', 'No busywork, no detours', 'Knows the moment you are done'] },
-    { icon: ListChecks, t: 'Recorded & hand-held', claim: 'Walked through, and written down.', d: 'Guided live, and kept for later.', points: ['Guided every single step', 'A picture-rich report to keep', 'Repeat or share it anytime'] },
-  ]
+  // The three trust cues under the hero CTAs (icon here, text in home.cues).
+  const cueIcons = [AppWindow, Lock, Zap]
   // Every plan number on the cards comes from the live server pricing
   // (/api/work/pricing -> store.getWorkPricing(): plans / tasks / dailyHours),
   // so a superadmin change in Admin > Pricing flows straight to the cards. The
@@ -214,22 +215,14 @@ export default function WorkMarketing() {
               <button className="wm-cta" onClick={() => go('')}>{t('home.cta.start')} <ArrowRight size={16} className="wm-arrow" /></button>
               <button className="wm-cta alt" onClick={() => nav('/demo')}>{t('home.cta.demo')} <ArrowRight size={16} className="wm-arrow" /></button>
             </div>
-            {/* "Any app" strip: a quiet caption + a calm row of neutral category
-                glyphs, filling the space below the CTAs. Category glyphs ONLY -
-                no brand marks (honest). Tokens adapt to light + dark. */}
-            <div className="wm-anyapp" data-reveal>
-              <p className="wm-anyapp-cap">{t('home.anyapp.cap')}</p>
-              <div className="wm-anyapp-row">
-                {[Globe2, TerminalSquare, Code2, Table, FileText, Palette].map((Ic, i) => {
-                  const label = t('home.anyapp.tiles')[i]
-                  return (
-                    <span key={i} className="wm-anyapp-tile" title={label} aria-label={label}>
-                      <Ic size={17} aria-hidden />
-                    </span>
-                  )
-                })}
-              </div>
-            </div>
+            {/* Trust cues: the three facts a buyer checks first, one short line
+                each, under the CTAs (replaces the former "any app" glyph strip). */}
+            <ul className="wm-cues" data-reveal aria-label={t('home.cuesAria')}>
+              {t('home.cues').map((c, i) => {
+                const Ic = cueIcons[i] || Check
+                return <li key={c}><Ic size={14} aria-hidden="true" /> {c}</li>
+              })}
+            </ul>
           </div>
           <LiveDemo tilt={tilt} untilt={untilt} t={t} />
         </div>
@@ -242,30 +235,27 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* THE STRONGEST AI AVAILABLE TO YOU PLANS IT - one compact band. Benefit
-          + honesty guarantee only: the plan comes from the strongest AI on the
-          key in use, the guidance keeps pace, and the app states what planned
-          each task. The site claim is "available TO YOU", never a universal
-          "#1", never a vendor/model name, never the routing behind it. */}
-      <section className="wm-best" id="best-model">
+      {/* HOW - the core value in one glance: four benefit tiles in the order a
+          task happens. The eyebrow carries the "planned by the strongest AI
+          available to you" promise (a benefit; never a vendor or model name,
+          never the routing behind it). Keeps the #how and #best-model anchors. */}
+      <section className="wm-sec wm-how" id="how">
+        <span id="best-model" aria-hidden="true" />
         <div className="wm-wrap">
-          <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
-            <div className="wm-best-in">
-              <div className="wm-best-copy">
-                <div className="wm-eyebrow"><Trophy size={14} /> {t('home.best.eyebrow')}</div>
-                <h2 className="wm-best-h">{t.rich('home.best.h', null, { ai: (c) => <span className="wm-best-ai">{c}</span> })}</h2>
-                <p className="wm-best-p">{t.rich('home.best.p')}</p>
-                <WorkCard.Link as="a" href="/workcopilot/how-it-works#best-model">{t('home.best.link')} <ArrowRight size={14} className="wm-arrow" /></WorkCard.Link>
-              </div>
-              <div className="wm-best-receipt" aria-label={t('home.best.receiptAria')}>
-                <div className="wm-best-row plan"><span className="k">{t('home.best.planK')}</span><span className="v">{t.rich('home.best.planV')}</span></div>
-                <div className="wm-best-row guide"><span className="k">{t('home.best.guideK')}</span><span className="v">{t.rich('home.best.guideV')}</span></div>
-                <div className="wm-best-row watch"><span className="k">{t('home.best.watchK')}</span><span className="v">{t.rich('home.best.watchV')} <span className="wm-best-dots" aria-hidden><i /><i /><i /></span></span></div>
-                <div className="wm-best-row correct"><span className="k">{t('home.best.correctK')}</span><span className="v">{t.rich('home.best.correctV')}</span></div>
-                <WorkCard.Proof><b className="dp-ok"><Check size={11} /> {t('home.best.proofOk')}</b> <span className="cb-dim">{t('home.best.proofDim')}</span></WorkCard.Proof>
-              </div>
-            </div>
-          </WorkCard>
+          <div className="wm-eyebrow" data-reveal><Trophy size={14} /> {t('home.how.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('home.how.h2')}</h2>
+          <div className="wm-how-grid">
+            {howSteps.map((s, i) => (
+              <WorkCard key={s.t} theme="light" tone={s.tone || undefined} delay={i * 80} texPos={`${(i * 33) % 100}% ${i % 2 ? '100%' : '0%'}`}>
+                <span className="wm-how-n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+                <WorkCard.Head align="start" icon={<s.ic size={18} />} title={s.t} />
+                <WorkCard.Body>{s.d}</WorkCard.Body>
+              </WorkCard>
+            ))}
+          </div>
+          <div className="wm-fld-more" data-reveal>
+            <a className="wm-cta alt" href="/workcopilot/how-it-works">{t('home.how.link')} <ArrowRight size={15} className="wm-arrow" /></a>
+          </div>
         </div>
       </section>
 
@@ -374,85 +364,6 @@ export default function WorkMarketing() {
           </div>
         </div>
       </section>
-
-      {/* Sections below hidden per request (people / pillars / how / ways) - flip to true to restore */}
-      {false && (<>
-      {/* PEOPLE / OUTCOMES - real human moments */}
-      <section className="wm-sec wm-people">
-        <div className="wm-wrap">
-          <h2 className="wm-h2" data-reveal>For the moment it actually matters.</h2>
-          <p className="wm-sub" data-reveal>Real tasks, real pressure, and a clear next move the whole way through.</p>
-          <div className="wm-people-grid">
-            <figure className="wm-photo" data-reveal>
-              <img src="/ent-team.webp" alt="Two colleagues solving a hard problem together at a laptop in warm light" loading="lazy" width="1200" height="900" />
-              <figcaption>
-                <span className="wm-photo-tag">The toughest work, in-house</span>
-                <span className="wm-photo-cap">A lean team ships specialist work, guided to the exact next step.</span>
-              </figcaption>
-            </figure>
-            <figure className="wm-photo" data-reveal style={{ transitionDelay: '90ms' }}>
-              <img src="/ent-focus.webp" alt="A professional finishing a complex task at a laptop with quiet confidence" loading="lazy" width="1200" height="900" />
-              <figcaption>
-                <span className="wm-photo-tag">Unstuck in seconds</span>
-                <span className="wm-photo-cap">Lost halfway through. Get the precise next move and finish.</span>
-              </figcaption>
-            </figure>
-          </div>
-        </div>
-      </section>
-
-      {/* PILLARS - why we lead (animated spotlight, not boxes) */}
-      <section className="wm-sec wm-pillars">
-        <div className="wm-wrap">
-          <h2 className="wm-h2" data-reveal>Built to be the best in the room.</h2>
-          <p className="wm-sub" data-reveal>Powerful and precise, from your first click to done. This is what sets WorkCoPilot apart.</p>
-          <div data-reveal><PillarSpotlight pillars={pillars} /></div>
-        </div>
-      </section>
-
-      {/* HOW */}
-      <section className="wm-sec wm-how" id="how">
-        <div className="wm-wrap">
-          <h2 className="wm-h2" data-reveal>Three steps. Then you are moving.</h2>
-          <div className="wm-flow">
-            {steps.flatMap((s, i) => [
-              <div className="wm-flow-node" data-reveal style={{ transitionDelay: `${i * 100}ms` }} key={s.n}>
-                <div className="wm-flow-viz"><FViz k={s.viz} /></div>
-                <div className="wm-flow-head"><span className="wm-flow-n">{s.n}</span><h3>{s.t}</h3></div>
-                <p>{s.d}</p>
-              </div>,
-              i < steps.length - 1 ? <div className="wm-flow-arrow" key={`a${i}`} aria-hidden><ArrowRight size={22} /></div> : null,
-            ])}
-          </div>
-        </div>
-      </section>
-
-      {/* WAYS */}
-      <section className="wm-sec wm-ways" id="ways">
-        <div className="wm-wrap">
-          <h2 className="wm-h2" data-reveal>Use it your way. Anywhere.</h2>
-          <p className="wm-sub" data-reveal>Install the desktop or mobile app, or run it right in your browser when you cannot install a thing. <b style={{ color: 'var(--em)' }}>Every plan includes all three, on one subscription.</b></p>
-          <div className="wm-ways-grid">
-            <div className="wm-way" data-reveal onMouseMove={tilt} onMouseLeave={untilt}>
-              <div className="wm-cardbox">stealth <span className="cb-arrow">&middot;</span> see-through <span className="cb-arrow">&middot;</span> <b>click-behind</b></div>
-              <div className="wm-bhead"><span className="wm-bicon sm"><Monitor size={16} /></span><h3>Desktop app</h3></div>
-              <p><b>Stealth on screen-share.</b> Invisible when you present or record. Full control of your work underneath.</p>
-            </div>
-            <div className="wm-way feat" data-reveal style={{ transitionDelay: '70ms' }} onMouseMove={tilt} onMouseLeave={untilt}>
-              <span className="wm-feat-ribbon"><Zap size={12} /> No install</span>
-              <div className="wm-cardbox"><b>no install</b> <span className="cb-arrow">&middot;</span> <span className="cb-dim">locked-down ready</span></div>
-              <div className="wm-bhead"><span className="wm-bicon sm alt"><AppWindow size={16} /></span><h3>Browser overlay</h3></div>
-              <p>Nothing to install. Works on locked-down machines, restricted laptops and virtual desktops.</p>
-            </div>
-            <div className="wm-way" data-reveal style={{ transitionDelay: '140ms' }} onMouseMove={tilt} onMouseLeave={untilt}>
-              <div className="wm-cardbox">snap a photo <span className="cb-arrow">&middot;</span> <b>live watch</b></div>
-              <div className="wm-bhead"><span className="wm-bicon sm"><Smartphone size={16} /></span><h3>Mobile app</h3></div>
-              <p><b>Snap a photo or live-watch.</b> Point your phone camera at a screen or device and get guided on the go.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-      </>)}
 
       {/* PRICING */}
       <section className="wm-sec wm-pricing" id="pricing">
@@ -805,105 +716,6 @@ function LiveDemo({ tilt, untilt, t }) {
   )
 }
 
-// The core strengths as a big-type spotlight: a list that auto-rotates and
-// reacts to hover, with each pillar blown up on a stage. Not a box grid.
-function PillarSpotlight({ pillars }) {
-  const [active, setActive] = useState(0)
-  const [paused, setPaused] = useState(false)
-  useEffect(() => {
-    if (paused) return
-    const t = setInterval(() => setActive((a) => (a + 1) % pillars.length), 3000)
-    return () => clearInterval(t)
-  }, [paused, pillars.length])
-  const A = pillars[active]
-  return (
-    <div className="wm-spot" onMouseEnter={() => setPaused(true)} onMouseLeave={() => setPaused(false)}>
-      <div className="wm-spot-list">
-        {pillars.map((p, i) => (
-          <button key={p.t} className={`wm-spot-item${i === active ? ' on' : ''}`} onMouseEnter={() => setActive(i)} onFocus={() => setActive(i)} onClick={() => setActive(i)}>
-            <span className="wm-spot-ix">{String(i + 1).padStart(2, '0')}</span>
-            <span className="wm-spot-word">{p.t}</span>
-            <span className="wm-spot-desc">{p.d}</span>
-            {i === active && <span className={`wm-spot-prog${paused ? ' paused' : ''}`} aria-hidden><i /></span>}
-          </button>
-        ))}
-      </div>
-      <div className="wm-spot-stage">
-        <div key={active} className="wm-spot-card">
-          <div className="wm-spot-no">{String(active + 1).padStart(2, '0')} / {String(pillars.length).padStart(2, '0')}</div>
-          <div className="wm-spot-viz"><PViz t={A.t} /></div>
-          <div className="wm-spot-lower">
-            <span className="wm-spot-bigic"><A.icon size={28} /></span>
-            <h3>{A.t}</h3>
-            <div className="wm-spot-claim">{A.claim}</div>
-            <ul className="wm-spot-points">{A.points.map((p) => <li key={p}><Check size={15} /> {p}</li>)}</ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-// Mini graphics for the how-it-works flow (say goal -> guided -> keep).
-function FViz({ k }) {
-  if (k === 'goal') return (
-    <div className="fv fv-goal"><span className="fv-k">GOAL</span><span className="fv-type">Set up an AWS VPC</span><span className="fv-caret" /></div>)
-  if (k === 'guide') return (
-    <div className="fv fv-guide"><div className="fv-now"><span className="fv-lbl">DO THIS NOW</span><span className="fv-step">Create the VPC</span></div><div className="fv-dots"><i className="done" /><i className="now" /><i /><i /></div></div>)
-  if (k === 'keep') return (
-    <div className="fv fv-keep"><div className="fv-doc"><span className="l w70" /><span className="l w90" /><span className="l w50" /><span className="fv-check"><Check size={14} /></span><b>PDF</b></div></div>)
-  return null
-}
-
-// A relevant graphic for each core-strength, shown big on the spotlight stage.
-function PViz({ t }) {
-  if (t === 'Powerful') return (
-    <div className="pv pv-bars"><i style={{ height: '28%' }} /><i style={{ height: '52%' }} /><i style={{ height: '76%' }} /><i style={{ height: '100%' }} /><span className="pv-cap">simple → enterprise</span></div>)
-  if (t === 'Accurate') return (
-    <div className="pv pv-acc"><div className="pv-win"><span className="pv-bar" /><span className="pv-bar w60" /><span className="pv-btn">Create VPC<span className="pv-ring2" /></span></div><span className="pv-cap">exactly here</span></div>)
-  if (t === 'Fast') return (
-    <div className="pv pv-fast"><div className="pv-track"><i /></div><span className="pv-ms">0.3s</span></div>)
-  if (t === 'Multimodal') return (
-    <div className="pv pv-multi"><span className="pv-src"><Monitor size={18} /></span><span className="pv-src"><Camera size={18} /></span><span className="pv-src"><FileText size={18} /></span><span className="pv-join">→</span><span className="pv-hub"><Sparkles size={20} /></span></div>)
-  if (t === 'Intelligent') return (
-    <div className="pv pv-brain"><span className="pv-n a" /><span className="pv-ln l1" /><span className="pv-ln l2" /><span className="pv-n b" /><span className="pv-n c" /></div>)
-  if (t === 'Deep research') return (
-    <div className="pv pv-res"><div className="pv-search"><Globe2 size={13} /> latest way to do it</div><div className="pv-rchips"><span><Check size={10} /> 2026 docs</span><span>official</span></div></div>)
-  if (t === 'All around your goal') return (
-    <div className="pv pv-goal"><span className="pv-ring g3" /><span className="pv-ring g2" /><span className="pv-ring g1" /><Target size={24} /></div>)
-  if (t === 'Recorded & hand-held') return (
-    <div className="pv pv-doc2"><div className="pv-page"><span className="w70" /><span className="w90" /><span className="w50" /><span className="w80" /><b>PDF</b></div></div>)
-  if (t === 'Safe and private') return (
-    <div className="pv pv-safe">
-      <div className="pv-shield"><Lock size={22} /></div>
-      <div className="pv-redact">
-        <span className="chip">[PII]</span><span className="chip">[PHI]</span><span className="chip">[SSN]</span>
-        <span className="chip">[CARD]</span><span className="chip">[IP]</span><span className="chip">[SECRET]</span>
-      </div>
-      <span className="pv-cap">stripped on-device, before anything is sent</span>
-    </div>)
-  return null
-}
-
-// Animated count-up stat: ticks from 0 to the target the first time it scrolls
-// into view (eased), for a dynamic "numbers that move" feel.
-// Small purpose-built graphics for the benefit cards - show, do not tell.
-function BViz({ k }) {
-  if (k === 'steps') return (
-    <div className="bv bv-steps"><span className="bvs done" /><span className="bvl" /><span className="bvs now" /><span className="bvl dim" /><span className="bvs" /><span className="bv-cap">step 2 of 4</span></div>)
-  if (k === 'command') return (
-    <div className="bv bv-cmd"><code><b>$</b> aws ec2 create-vpc</code><span className="bv-tick"><Check size={11} /> Copied</span></div>)
-  if (k === 'zero') return (
-    <div className="bv bv-flow"><span>Open</span><i>→</i><span>Sign in</span><i>→</i><span className="on">Done</span></div>)
-  if (k === 'fix') return (
-    <div className="bv bv-fix"><span className="bad">0.0.0.0/0</span><i>→</i><span className="good"><Check size={11} /> 10.0.0.0/16</span></div>)
-  if (k === 'current') return (
-    <div className="bv bv-cur"><span className="bv-live"><span className="bv-pulse" /> LATEST</span><span className="bv-cur-t">checked just now</span></div>)
-  if (k === 'record') return (
-    <div className="bv bv-doc"><span className="bv-dl w60" /><span className="bv-dl w90" /><span className="bv-dl w45" /><span className="bv-pdf">PDF</span></div>)
-  return null
-}
-
 // ---------------------------------------------------------------------------
 // Rotating hero headline. ONE <h1> whose content is swapped (never several
 // h1s), cycling the vetted value propositions every 5s. Each line is a list of
@@ -1032,6 +844,10 @@ function RotatingHero({ paused, t, locale }) {
       .then((r) => (r && r.ok ? r.json() : null))
       .then((data) => {
         if (!alive || !data || !Array.isArray(data.pairs) || data.pairs.length === 0) return
+        // Only a superadmin OVERRIDE replaces the catalog copy. The server also
+        // ships its own built-in default set (custom:false); applying that
+        // would let stale server defaults overwrite the vetted catalog hero.
+        if (!data.custom) return
         const mapped = data.pairs
           .filter((p) => p && typeof p.h === 'string' && p.h.trim() && typeof p.s === 'string' && p.s.trim())
           .map(heroPairFromApi)
@@ -1174,24 +990,12 @@ const CSS = `
 .o3{width:40vw;height:40vw;left:30vw;top:38vh;background:radial-gradient(circle,rgba(255,122,89,.28),transparent 65%);transform:translate(calc(var(--mx)*30px),calc(var(--my)*-40px))}
 .wm section,.wm header,.wm footer{position:relative;z-index:2}
 
-/* NAV */
-.wm-nav{position:sticky;top:0;z-index:40;backdrop-filter:blur(16px);background:rgba(7,8,16,.62);border-bottom:1px solid var(--line)}
-.wm-nav-in{display:flex;align-items:center;gap:22px;height:70px}
-.wm-links{display:flex;gap:26px;margin-left:auto;color:var(--mut);font-size:15px}
-.wm-links a{position:relative}
-.wm-links a:hover{color:var(--tx)}
-.wm-navcta{display:flex;gap:10px;align-items:center;margin-left:24px}
-.wm-ghost{background:transparent;border:1px solid var(--line);color:var(--tx);border-radius:11px;padding:9px 15px;font:inherit;font-size:14px;cursor:pointer}
-.wm-ghost:hover{border-color:rgba(255,255,255,.3)}
 .wm-cta{background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:12px;padding:13px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;box-shadow:0 12px 34px -12px rgba(255,122,89,.65);transition:transform .15s,box-shadow .15s}
 .wm-cta:hover{transform:translateY(-2px);box-shadow:0 18px 44px -14px rgba(255,122,89,.75)}
 .wm-cta.sm{padding:9px 15px;font-size:14px;border-radius:11px}
 .wm-cta.big{padding:17px 30px;font-size:17px}
 .wm-cta.alt{background:rgba(255,255,255,.04);color:var(--tx);border:1px solid rgba(255,255,255,.18);box-shadow:none}
 .wm-cta.alt:hover{border-color:var(--em);color:var(--em)}
-.wm-link{background:none;border:none;color:var(--mut);font:inherit;font-size:15px;cursor:pointer;text-decoration:underline;text-underline-offset:4px}
-.wm-link:hover{color:var(--tx)}
-
 .wm [data-reveal]{opacity:0;transform:translateY(24px);transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
 .wm [data-reveal].in{opacity:1;transform:none}
 /* The two rotating hero stages are reserved at the height of their TALLEST line
@@ -1204,8 +1008,6 @@ const CSS = `
 
 /* HERO */
 .wm-hero{padding:78px 0 0;position:relative}
-.wm-hero-vid{position:absolute;inset:-70px 0 auto 0;width:100%;height:640px;object-fit:cover;opacity:.5;z-index:0;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 42%,transparent);mask-image:linear-gradient(180deg,#000 42%,transparent)}
-@media(prefers-reduced-motion:reduce){.wm-hero-vid{display:none}}
 /* align-items:start (not center): the left copy column animates its own height
    as the hero rotates; a shared centered row would make the demo box re-center
    (grow/shrink) every cycle. Top-anchoring pins the fixed-height demo box so it
@@ -1255,33 +1057,13 @@ const CSS = `
  .wm-lead .wm-h1-in{opacity:1;animation:none}
  .wm-lead .wm-h1-out{display:none}
 }
-.wm-killer{display:flex;align-items:center;gap:12px;background:linear-gradient(100deg,rgba(57,211,255,.1),rgba(140,245,196,.06));border:1px solid rgba(57,211,255,.32);border-radius:14px;padding:13px 15px;margin-bottom:26px;max-width:470px;font-size:14.5px;color:var(--tx);transition:transform .15s,border-color .2s}
-.wm-killer:hover{transform:translateY(-2px);border-color:var(--em2)}
-.wm-killer b{color:var(--em2)}
-.wm-killer-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:rgba(57,211,255,.15);color:var(--em2);flex-shrink:0}
-.wm-killer svg:last-child{margin-left:auto;color:var(--mut);flex-shrink:0}
 /* Hero controls: the two CTAs in one aligned row. */
 .wm-hero-cta{display:flex;align-items:center;flex-wrap:wrap;gap:12px}
-/* "Any app" strip - fills the space under the CTAs. Quiet caption + a calm row
-   of neutral category-glyph tiles (no brand marks). Reuses the shared tokens so
-   it reads right in both light and dark. */
-.wm-anyapp{margin-top:30px;max-width:470px}
-.wm-anyapp-cap{font-size:13px;color:var(--mut);margin:0 0 12px}
-.wm-anyapp-row{display:flex;flex-wrap:wrap;gap:10px}
-.wm-anyapp-tile{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;color:var(--mut);background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 2px rgba(0,0,0,.04);transition:transform .15s ease,border-color .2s ease,color .2s ease}
-.wm-anyapp-tile:hover{transform:translateY(-2px);border-color:var(--em);color:var(--em)}
-@media(prefers-reduced-motion:reduce){.wm-anyapp-tile{transition:border-color .2s ease,color .2s ease}.wm-anyapp-tile:hover{transform:none}}
-@media(max-width:560px){.wm-anyapp{margin-top:24px}.wm-anyapp-row{gap:8px}.wm-anyapp-tile{width:40px;height:40px;border-radius:11px}}
-.wm-modes{display:flex;align-items:center;gap:18px;margin-bottom:10px;flex-wrap:wrap}
-.wm-mode{display:flex;align-items:center;gap:10px;color:var(--tx)}
-.wm-mode svg{color:var(--em);flex-shrink:0}
-.wm-mode div{display:flex;flex-direction:column;line-height:1.25}
-.wm-mode b{font-size:14.5px}
-.wm-mode span{font-size:11.5px;color:var(--mut)}
-.wm-mode-div{width:1px;height:30px;background:var(--line)}
-.wm-ways3-note{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);margin-bottom:26px}
-.wm-ways3-note svg{color:var(--em)}
-
+/* Trust cues under the CTAs: three short facts, stacked (one per line, so
+   they can never wrap into each other at any width). */
+.wm-cues{list-style:none;margin:26px 0 0;padding:0;display:flex;flex-direction:column;gap:9px;font-size:14px;color:var(--tx);max-width:520px}
+.wm-cues li{display:flex;align-items:flex-start;gap:8px;line-height:1.4}
+.wm-cues li svg{color:var(--em);flex:none;margin-top:3px}
 /* DEMO */
 /* LAYOUT STABILITY: the box fills its grid track and can never be widened by
    its content (width:100% + min-width:0 + overflow:hidden), and every inner
@@ -1391,41 +1173,7 @@ const CSS = `
 
 /* SECURITY + PRIVACY DUO (under the hero grid) */
 .wm-duo{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:44px}
-.wm-duo-card{position:relative;display:flex;flex-direction:column;gap:14px;background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:20px;padding:22px 24px 20px;overflow:hidden;transition:transform .18s ease-out,border-color .2s,box-shadow .2s}
-.wm-duo-card:before{content:"";position:absolute;inset:0 0 auto 0;height:3px}
-.wm-duo-card.sec:before{background:linear-gradient(90deg,var(--em),transparent 80%)}
-.wm-duo-card.priv:before{background:linear-gradient(90deg,var(--em2),transparent 80%)}
-.wm-duo-card:after{content:"";position:absolute;width:260px;height:260px;right:-120px;top:-140px;border-radius:50%;pointer-events:none;opacity:.55}
-.wm-duo-card.sec:after{background:radial-gradient(circle,rgba(140,245,196,.16),transparent 68%)}
-.wm-duo-card.priv:after{background:radial-gradient(circle,rgba(57,211,255,.16),transparent 68%)}
-.wm-duo-card:hover{transform:translateY(-3px)}
-.wm-duo-card.sec:hover{border-color:rgba(140,245,196,.45)}
-.wm-duo-card.priv:hover{border-color:rgba(57,211,255,.45)}
-.wm-duo-top{display:flex;align-items:flex-start;gap:14px;position:relative;z-index:1}
-.wm-duo-ic{display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;width:46px;height:46px;border-radius:14px;color:var(--em);background:linear-gradient(135deg,rgba(140,245,196,.22),rgba(57,211,255,.12));box-shadow:0 0 26px -8px rgba(140,245,196,.55)}
-.wm-duo-card.priv .wm-duo-ic{color:var(--em2);background:linear-gradient(135deg,rgba(57,211,255,.22),rgba(140,245,196,.1));box-shadow:0 0 26px -8px rgba(57,211,255,.55)}
-.wm-duo-head{display:flex;flex-direction:column;gap:3px;min-width:0}
-.wm-duo-eyebrow{font-size:11.5px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--em)}
-.wm-duo-card.priv .wm-duo-eyebrow{color:var(--em2)}
-.wm-duo-card h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(18px,1.7vw,21px);letter-spacing:-.015em;line-height:1.18;margin:0}
-.wm-duo-points{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px;position:relative;z-index:1}
-.wm-duo-points li{display:flex;gap:9px;align-items:flex-start;font-size:14px;line-height:1.5;color:var(--tx)}
-.wm-duo-points li svg{flex:0 0 auto;margin-top:4px;color:var(--em)}
-.wm-duo-card.priv .wm-duo-points li svg{color:var(--em2)}
-/* mono "proof strip": a tiny live look at the mechanism, stays dark like every product screen */
-.wm-duo-proof{display:flex;align-items:center;flex-wrap:wrap;gap:7px;min-height:44px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);padding:9px 13px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11.5px;color:#aeb9cc;line-height:1.3;position:relative;z-index:1}
-.wm-duo-proof .dp-chip,.wm-duo-proof .dp-tok,.wm-duo-proof .dp-raw,.wm-duo-proof .dp-ok{animation:wm-demo-fade .45s ease-out both}
-.wm-duo-proof > :nth-child(2){animation-delay:.08s}.wm-duo-proof > :nth-child(3){animation-delay:.16s}.wm-duo-proof > :nth-child(4){animation-delay:.24s}.wm-duo-proof > :nth-child(5){animation-delay:.32s}.wm-duo-proof > :nth-child(6){animation-delay:.4s}
-.wm-duo-proof .dp-chip{font-weight:700;color:#8cf5c4;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.1);border-radius:6px;padding:2px 8px;font-size:10.5px}
-.wm-duo-proof .dp-arrow{color:#5bd0ff;font-weight:700}
-.wm-duo-proof .dp-ok{display:inline-flex;align-items:center;gap:4px;color:#06201a;background:linear-gradient(135deg,#8cf5c4,#5bd0ff);border-radius:6px;padding:2px 8px;font-size:10.5px;font-weight:800}
-.wm-duo-proof .dp-raw{color:#ff9a9a;text-decoration:line-through;text-decoration-color:rgba(255,120,120,.7)}
-.wm-duo-proof .dp-tok{color:#5bd0ff;font-weight:700}
-.wm-duo-link{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;background:none;border:none;padding:0;font:inherit;font-size:13.5px;font-weight:700;color:var(--em);cursor:pointer;position:relative;z-index:1;transition:gap .15s}
-.wm-duo-card.priv .wm-duo-link{color:var(--em2)}
-.wm-duo-link:hover{gap:10px;text-decoration:underline;text-underline-offset:4px}
 @media(max-width:900px){.wm-duo{grid-template-columns:1fr;gap:14px;margin-top:34px}}
-@media(max-width:560px){.wm-duo-card{padding:18px 18px 16px}.wm-duo-card h3{font-size:18px}.wm-duo-points li{font-size:13.5px}}
 
 /* MARQUEE */
 .wm-marquee{margin-top:60px;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:16px 0;overflow:hidden;-webkit-mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 12%,#000 88%,transparent)}
@@ -1433,53 +1181,25 @@ const CSS = `
 .wm-marquee-row span{opacity:.75}
 @keyframes wmscroll{to{transform:translateX(-50%)}}
 
-/* BAND */
-.wm-band{padding:30px 0}
-.wm-band-in{display:flex;align-items:center;gap:26px;background:linear-gradient(110deg,rgba(57,211,255,.1),rgba(140,245,196,.05));border:1px solid rgba(57,211,255,.28);border-radius:24px;padding:30px 34px}
-.wm-band-ic{display:inline-flex;align-items:center;justify-content:center;width:58px;height:58px;border-radius:16px;background:rgba(57,211,255,.16);color:var(--em2);flex-shrink:0}
-.wm-band-copy{flex:1}
-.wm-band-copy h2{font-family:"Bricolage Grotesque";font-size:clamp(22px,3vw,30px);letter-spacing:-.02em}
-.wm-band-copy h2 span{color:var(--em2)}
-.wm-band-copy p{color:var(--mut);font-size:15.5px;margin-top:8px;max-width:72ch}
-
-/* BEST MODEL PLANS band - an Option C card (violet tone = intelligence) holding a
-   two-column "mechanism" layout: the claim on the left, a quiet mono plan/watch
-   receipt on the right. Light only, like every WorkCard. */
-.wm-best{padding:38px 0 0}
-.wm-best-in{display:grid;grid-template-columns:1.12fr .88fr;gap:32px;align-items:center}
-.wm-best-copy{display:flex;flex-direction:column;gap:12px;min-width:0}
-.wm-best-copy .wm-eyebrow{margin-bottom:0;color:var(--wc-ink)}
-.wm-best-copy .wm-eyebrow svg{color:var(--wc-ink)}
-.wm-best-copy .wm-best-h{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(24px,3vw,34px);letter-spacing:-.025em;line-height:1.08;margin:0;max-width:22ch;color:var(--ink-brand,#062a22)}   /* two classes: outranks .wm h2 */
-.wm-best-p{color:var(--wc-mut);font-size:15.5px;line-height:1.6;max-width:62ch;margin:0}
-.wm-best-h .wm-best-ai{color:#6d4bd8;background:linear-gradient(transparent 60%, rgba(109,75,216,.18) 0);padding:0 .06em;border-radius:2px}
-.wm-best-copy .wc-link{margin-top:6px;color:var(--wc-ink)}   /* beats .wm a{color:inherit} */
-.wm-best-receipt{display:flex;flex-direction:column;gap:8px;min-width:0}
-.wm-best-row{display:grid;grid-template-columns:58px minmax(0,1fr);align-items:center;gap:12px;background:#fff;border:1px solid var(--wc-line);border-radius:12px;padding:12px 14px;
-  font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:var(--wc-mut);line-height:1.4;box-shadow:inset 0 1px 0 rgba(255,255,255,.9)}
-.wm-best-row .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;color:var(--wc-ink)}
-.wm-best-row.watch .k{color:#0a7fa8}
-.wm-best-row .v b{color:var(--wc-tx);font-weight:600}
-.wm-best-row.plan{border-color:rgba(109,75,216,.28)}
-.wm-best-row.watch{border-color:rgba(10,147,196,.28)}
-/* the "watch" lane breathes: three dots pulse in sequence (CSS only) */
-.wm-best-dots{display:inline-flex;gap:3px;margin-left:6px;vertical-align:middle}
-.wm-best-dots i{width:5px;height:5px;border-radius:50%;background:#0a84c2;opacity:.3;animation:wm-best-pulse 1.4s ease-in-out infinite}
-.wm-best-dots i:nth-child(2){animation-delay:.2s}.wm-best-dots i:nth-child(3){animation-delay:.4s}
-@keyframes wm-best-pulse{0%,100%{opacity:.3;transform:scale(1)}50%{opacity:1;transform:scale(1.25)}}
-@media(max-width:900px){.wm-best{padding-top:30px}.wm-best-in{grid-template-columns:1fr;gap:20px}}
-@media(prefers-reduced-motion:reduce){.wm-best-dots i{animation:none;opacity:.7}}
+/* HOW - four benefit tiles in task order (shared WorkCard shell). 4-up, 2-up
+   under 900px, 1-up under 560px; min-width:0 so a long title wraps inside. */
+.wm-how{border-top:1px solid var(--line)}
+.wm-how-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:30px}
+.wm-how-grid .wc-card{min-width:0}
+.wm-how-n{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;font-weight:600;letter-spacing:.1em;color:var(--wc-ink,#0a7fa8)}
+@media(max-width:900px){.wm-how-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.wm-how-grid{grid-template-columns:1fr;gap:12px}}
 
 /* SECTIONS */
 .wm-sec{padding:58px 0}
 /* Alignment rule: everything from the top of the page through the best-model
-   band stays LEFT (hero h1/.wm-lead, .wm-best-h/.wm-best-p). Every section
+   hero stays LEFT (hero h1/.wm-lead). Every section
    below the band centers its header stack - eyebrow, h2, sub - the way the
    final CTA already does. .wm-h2/.wm-sub only appear below the band, so the
    centering lives here at class level; card interiors are untouched (they do
    not inherit from these rules). The scoped .wm-sec .wm-eyebrow rule leaves
    the band's own eyebrow left-aligned. */
-.wm-h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.025em;line-height:1.06;max-width:20ch;margin:0 auto 14px;text-align:center}
+.wm-h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,4.2vw,44px);letter-spacing:-.025em;line-height:1.06;max-width:20ch;margin:0 auto 14px;text-align:center;text-wrap:balance}
 .wm-sub{color:var(--mut);font-size:18px;max-width:58ch;margin:0 auto 42px;text-align:center}
 /* The page resets .wm h2 / .wm p to margin:0 at specificity (0,1,1), which
    outranks the single-class rules above, so the auto side margins that center
@@ -1492,183 +1212,6 @@ const CSS = `
    must always take the card's own ink, whatever the page theme. */
 .wm .wc-title{color:var(--wc-title)}
 .wm-sec .wm-eyebrow{display:flex;width:fit-content;max-width:100%;margin-left:auto;margin-right:auto;text-align:center}
-
-/* PILLARS - spotlight */
-.wm-pillars{border-top:1px solid var(--line);background:linear-gradient(180deg,rgba(140,245,196,.025),transparent)}
-.wm-spot{display:grid;grid-template-columns:.92fr 1.08fr;gap:34px;align-items:stretch}
-.wm-spot-list{display:flex;flex-direction:column}
-.wm-spot-item{position:relative;display:grid;grid-template-columns:auto 1fr;align-items:baseline;gap:14px;background:none;border:none;border-top:1px solid var(--line);padding:16px 2px;cursor:pointer;text-align:left;font:inherit;color:var(--mut);transition:color .2s,padding .25s}
-.wm-spot-item:last-child{border-bottom:1px solid var(--line)}
-.wm-spot-item.on{color:var(--tx);padding-left:12px}
-.wm-spot-ix{font-family:"JetBrains Mono",monospace;font-size:12px;color:var(--mut);transition:color .2s}
-.wm-spot-item.on .wm-spot-ix{color:var(--em)}
-.wm-spot-word{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(22px,2.4vw,30px);letter-spacing:-.02em;line-height:1.1;transition:transform .25s}
-.wm-spot-item.on .wm-spot-word{background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.wm-spot-desc{display:none}
-.wm-spot-prog{grid-column:2;display:block;height:2px;background:rgba(255,255,255,.08);border-radius:2px;margin-top:10px;overflow:hidden}
-.wm-spot-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--em),var(--em2));animation:wmprog 3s linear forwards}
-.wm-spot-prog.paused i{animation-play-state:paused}
-@keyframes wmprog{to{width:100%}}
-.wm-spot-stage{position:relative;border:1px solid var(--line);border-radius:24px;overflow:hidden;background:linear-gradient(150deg,rgba(57,211,255,.08),rgba(140,245,196,.04) 45%,transparent);min-height:340px;display:flex}
-.wm-spot-card{position:relative;padding:28px 34px;display:flex;flex-direction:column;justify-content:space-between;width:100%;min-height:360px;animation:wmspot .5s cubic-bezier(.2,.7,.2,1)}
-.wm-spot-viz{flex:1;display:flex;align-items:center;justify-content:center;padding:14px 0 18px;min-height:150px}
-@keyframes wmspot{from{opacity:0;transform:translateY(16px)}}
-.wm-spot-ghost{position:absolute;top:-30px;right:-30px;color:var(--em);opacity:.07;pointer-events:none}
-.wm-spot-no{font-family:"JetBrains Mono",monospace;font-size:13px;color:var(--em2)}
-.wm-spot-bigic{display:inline-flex;align-items:center;justify-content:center;width:50px;height:50px;border-radius:14px;background:linear-gradient(135deg,rgba(140,245,196,.22),rgba(57,211,255,.14));color:var(--em);box-shadow:0 0 30px -8px rgba(140,245,196,.6);margin-bottom:14px}
-/* per-pillar stage graphics */
-.pv{position:relative;width:100%;display:flex;align-items:center;justify-content:center;gap:10px}
-.pv-bars{align-items:flex-end;height:120px;gap:12px}
-.pv-bars i{width:30px;border-radius:7px 7px 0 0;background:linear-gradient(180deg,var(--em),rgba(57,211,255,.5))}
-.pv-bars .pv-cap{position:absolute;bottom:-22px;font-size:11px;color:var(--mut)}
-.pv-acc{flex-direction:column;gap:12px}
-.pv-win{width:200px;background:#0c0e16;border:1px solid var(--line);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
-.pv-bar{height:7px;width:100%;background:#2b3345;border-radius:4px}.pv-bar.w60{width:60%}
-.pv-btn{position:relative;margin-top:4px;font-size:12px;color:#042;font-weight:700;background:linear-gradient(135deg,var(--em),var(--em2));border-radius:7px;padding:6px 12px}
-.pv-ring2{position:absolute;inset:-7px;border:2px solid var(--em2);border-radius:11px;animation:pvpulse 1.6s infinite}
-@keyframes pvpulse{0%{box-shadow:0 0 0 0 rgba(57,211,255,.5)}70%{box-shadow:0 0 0 8px rgba(57,211,255,0)}100%{box-shadow:0 0 0 0 rgba(57,211,255,0)}}
-.pv-acc .pv-cap{font-size:11px;color:var(--em2)}
-.pv-fast{flex-direction:column;gap:12px;width:220px}
-.pv-track{width:100%;height:12px;border-radius:7px;background:#2b3345;overflow:hidden}
-.pv-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--em),var(--em2));animation:pvfill 1.4s cubic-bezier(.2,.9,.2,1) infinite}
-@keyframes pvfill{0%{width:0}60%{width:100%}100%{width:100%}}
-.pv-ms{font-family:"JetBrains Mono",monospace;font-size:20px;color:var(--em)}
-.pv-multi .pv-src{width:42px;height:42px;border-radius:11px;background:#12141d;border:1px solid var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut)}
-.pv-multi .pv-join{color:var(--mut);font-size:18px}
-.pv-multi .pv-hub{width:52px;height:52px;border-radius:14px;background:linear-gradient(135deg,rgba(140,245,196,.25),rgba(57,211,255,.15));color:var(--em);display:flex;align-items:center;justify-content:center;box-shadow:0 0 26px -6px rgba(140,245,196,.6)}
-.pv-brain{height:120px}
-.pv-brain .pv-n{position:absolute;width:16px;height:16px;border-radius:50%;background:var(--em);box-shadow:0 0 14px var(--em)}
-.pv-brain .pv-n.a{left:20%;top:50%}.pv-brain .pv-n.b{right:22%;top:26%;background:var(--em2);box-shadow:0 0 14px var(--em2)}.pv-brain .pv-n.c{right:22%;bottom:26%;background:var(--em2);box-shadow:0 0 14px var(--em2)}
-.pv-brain .pv-ln{position:absolute;height:2px;background:linear-gradient(90deg,var(--em),var(--em2));transform-origin:left}
-.pv-brain .pv-ln.l1{left:calc(20% + 8px);top:48%;width:46%;transform:rotate(-20deg)}
-.pv-brain .pv-ln.l2{left:calc(20% + 8px);top:52%;width:46%;transform:rotate(20deg)}
-.pv-res{flex-direction:column;gap:10px;width:230px}
-.pv-search{display:flex;align-items:center;gap:7px;background:#0c0e16;border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;color:var(--tx)}
-.pv-search svg{color:var(--em2)}
-.pv-rchips{display:flex;gap:8px}
-.pv-rchips span{font-size:11px;color:var(--em);border:1px solid rgba(140,245,196,.3);border-radius:999px;padding:3px 9px;display:inline-flex;align-items:center;gap:4px}
-.pv-goal{height:130px;color:var(--em)}
-.pv-goal .pv-ring{position:absolute;border-radius:50%;border:2px solid rgba(140,245,196,.35)}
-.pv-goal .pv-ring.g1{width:60px;height:60px}.pv-goal .pv-ring.g2{width:100px;height:100px;opacity:.6}.pv-goal .pv-ring.g3{width:140px;height:140px;opacity:.3}
-.pv-doc2 .pv-page{width:150px;background:#0c0e16;border:1px solid var(--line);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:9px;position:relative}
-.pv-doc2 .pv-page span{height:6px;border-radius:3px;background:#2b3345}
-.pv-doc2 .pv-page .w90{width:90%}.pv-doc2 .pv-page .w70{width:70%}.pv-doc2 .pv-page .w50{width:50%}.pv-doc2 .pv-page .w80{width:80%}
-.pv-doc2 .pv-page b{position:absolute;right:-8px;bottom:-8px;font-size:10px;color:var(--em);background:#12141d;border:1px solid rgba(140,245,196,.35);border-radius:6px;padding:3px 8px}
-/* Safe & private flagship viz: on-device redaction */
-.pv-safe{flex-direction:column;gap:16px}
-.pv-safe .pv-shield{width:56px;height:56px;border-radius:16px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(140,245,196,.24),rgba(57,211,255,.15));color:var(--em);box-shadow:0 0 34px -6px rgba(140,245,196,.6)}
-.pv-safe .pv-redact{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:240px}
-.pv-safe .chip{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;font-weight:700;color:var(--em);border:1px solid rgba(140,245,196,.4);background:rgba(140,245,196,.1);border-radius:7px;padding:4px 10px;animation:wm-demo-fade .4s ease-out both}
-.pv-safe .chip:nth-child(2){animation-delay:.06s}.pv-safe .chip:nth-child(3){animation-delay:.12s}.pv-safe .chip:nth-child(4){animation-delay:.18s}.pv-safe .chip:nth-child(5){animation-delay:.24s}.pv-safe .chip:nth-child(6){animation-delay:.3s}
-.pv-safe .pv-cap{font-size:11px;color:var(--em2);text-align:center}
-.wm-spot-card h3{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(30px,4vw,44px);letter-spacing:-.02em;margin:0 0 10px}
-.wm-spot-card p{color:var(--mut);font-size:18px;max-width:40ch;margin:0}
-
-/* 8 cards in two even rows of four - a clean 4x2 block, no half-empty row. */
-.wm-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:18px}
-@media(max-width:1080px){.wm-benefits{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.wm-benefits{grid-template-columns:1fr}}
-.wm-bcard{background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:18px;padding:26px;transition:transform .15s ease-out,border-color .2s;transform-style:preserve-3d;position:relative;overflow:hidden}
-.wm-bcard:hover{border-color:rgba(140,245,196,.4)}
-.wm-bcard:after{content:"";position:absolute;inset:0;border-radius:18px;padding:1px;background:linear-gradient(130deg,rgba(140,245,196,.5),transparent 40%);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;opacity:0;transition:opacity .25s}
-.wm-bcard:hover:after{opacity:1}
-.wm-bicon{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(140,245,196,.18),rgba(57,211,255,.12));color:var(--em);margin-bottom:16px;box-shadow:0 0 22px -6px rgba(140,245,196,.5)}
-.wm-bicon.alt{background:linear-gradient(135deg,rgba(57,211,255,.2),rgba(140,245,196,.1));color:var(--em2)}
-.wm-bhead{display:flex;align-items:center;gap:10px;margin:16px 0 8px}
-.wm-bicon.sm{width:30px;height:30px;border-radius:9px;margin:0;box-shadow:none}
-.wm-bcard h3{font-family:"Bricolage Grotesque";font-size:18px;margin:0}
-.wm-bcard p{color:var(--mut);font-size:15px;margin:0}
-/* mini graphics */
-.bv{height:58px;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;gap:8px;padding:0 12px;position:relative;overflow:hidden}
-.bv-steps .bvs{width:11px;height:11px;border-radius:50%;background:#2b3345;flex-shrink:0}
-.bv-steps .bvs.done{background:var(--em)}
-.bv-steps .bvs.now{background:var(--em2);box-shadow:0 0 0 4px rgba(57,211,255,.18)}
-.bv-steps .bvl{width:34px;height:2px;background:var(--em);opacity:.6}
-.bv-steps .bvl.dim{background:#2b3345;opacity:1}
-.bv-steps .bv-cap{position:absolute;right:10px;font-size:10px;color:var(--mut)}
-.bv-cmd{justify-content:space-between;font-family:"JetBrains Mono",monospace}
-.bv-cmd code{color:#d6e9d6;font-size:12.5px}.bv-cmd code b{color:#5c7}
-.bv-tick{display:inline-flex;align-items:center;gap:4px;font-family:"Figtree";font-size:11px;color:var(--em)}
-.bv-flow span{font-size:12.5px;color:var(--mut);border:1px solid var(--line);border-radius:7px;padding:4px 9px}
-.bv-flow span.on{color:#042;background:linear-gradient(135deg,var(--em),var(--em2));border:none;font-weight:700}
-.bv-flow i{color:var(--mut);font-style:normal}
-.bv-fix span{font-family:"JetBrains Mono",monospace;font-size:12px;padding:4px 8px;border-radius:7px}
-.bv-fix .bad{color:#ff8a8a;background:rgba(255,80,80,.1);text-decoration:line-through}
-.bv-fix .good{color:var(--em);background:rgba(140,245,196,.1);display:inline-flex;align-items:center;gap:4px}
-.bv-fix i{color:var(--mut);font-style:normal}
-.bv-cur{gap:10px}
-.bv-live{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--em)}
-.bv-pulse{width:8px;height:8px;border-radius:50%;background:var(--em);box-shadow:0 0 0 0 rgba(140,245,196,.6);animation:bvpulse 1.6s infinite}
-@keyframes bvpulse{70%{box-shadow:0 0 0 8px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}
-.bv-cur-t{font-size:12px;color:var(--mut)}
-.bv-doc{justify-content:flex-start;flex-direction:column;align-items:flex-start;gap:5px;padding:10px 12px}
-.bv-doc .bv-dl{height:5px;border-radius:3px;background:#2b3345}
-.bv-dl.w90{width:90%}.bv-dl.w60{width:60%}.bv-dl.w45{width:45%}
-.bv-doc .bv-pdf{position:absolute;right:10px;bottom:10px;font-size:10px;font-weight:700;color:var(--em);border:1px solid rgba(140,245,196,.35);border-radius:6px;padding:2px 7px}
-/* spotlight claim + points */
-.wm-spot-claim{font-family:"Bricolage Grotesque";font-weight:700;font-size:clamp(17px,2vw,22px);letter-spacing:-.01em;color:var(--em);margin:4px 0 14px;max-width:26ch}
-.wm-spot-points{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:9px}
-.wm-spot-points li{display:flex;gap:9px;align-items:flex-start;color:var(--tx);font-size:15px}
-.wm-spot-points li svg{color:var(--em);flex-shrink:0;margin-top:3px}
-
-/* HOW */
-.wm-how{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(57,211,255,.03),transparent)}
-.wm-flow{display:flex;align-items:stretch;justify-content:space-between}
-.wm-flow-node{flex:1;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:18px;padding:22px}
-.wm-flow-viz{height:92px;display:flex;align-items:center;justify-content:center;border:1px solid var(--line);border-radius:12px;background:rgba(0,0,0,.25);margin-bottom:16px;padding:0 12px}
-.wm-flow-head{display:flex;align-items:baseline;gap:10px;margin-bottom:5px}
-.wm-flow-n{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;background:linear-gradient(135deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent}
-.wm-flow-node h3{font-family:"Bricolage Grotesque";font-size:19px}
-.wm-flow-node p{color:var(--mut);font-size:14.5px;margin-top:4px}
-.wm-flow-arrow{display:flex;align-items:center;color:var(--em);padding:0 12px;flex-shrink:0}
-.fv{width:100%;display:flex;align-items:center;justify-content:center;gap:8px}
-.fv-goal{background:#0b0c12;border:1px solid var(--line);border-radius:9px;padding:10px 12px;justify-content:flex-start}
-.fv-goal .fv-k{font-size:9px;letter-spacing:.14em;color:var(--mut);font-weight:700;margin-right:8px}
-.fv-goal .fv-type{color:var(--tx);font-size:13px}
-.fv-caret{width:2px;height:14px;background:var(--em);margin-left:1px;animation:wmblink 1s step-end infinite}
-.fv-guide{flex-direction:column;gap:9px}
-.fv-now{width:100%;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.06);border-radius:9px;padding:8px 10px}
-.fv-lbl{display:block;font-size:8.5px;letter-spacing:.14em;color:var(--em);font-weight:700;margin-bottom:2px}
-.fv-step{font-size:12.5px;font-weight:600;color:var(--tx)}
-.fv-dots{display:flex;gap:7px}
-.fv-dots i{width:9px;height:9px;border-radius:50%;background:#2b3345}
-.fv-dots i.done{background:var(--em)}.fv-dots i.now{background:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.2)}
-.fv-doc{position:relative;width:120px;background:#0b0c12;border:1px solid var(--line);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:7px}
-.fv-doc .l{height:5px;border-radius:3px;background:#2b3345}
-.fv-doc .l.w90{width:90%}.fv-doc .l.w70{width:70%}.fv-doc .l.w50{width:50%}
-.fv-check{position:absolute;right:-7px;top:-7px;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--em),var(--em2));color:#042;display:flex;align-items:center;justify-content:center}
-.fv-doc b{position:absolute;right:-8px;bottom:-8px;font-size:9px;color:var(--em);background:#12141d;border:1px solid rgba(140,245,196,.35);border-radius:5px;padding:2px 6px}
-
-/* WAYS */
-.wm-ways-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
-.wm-way{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.012));border:1px solid var(--line);border-radius:18px;padding:26px;transition:transform .15s ease-out,border-color .2s;overflow:hidden}
-.wm-way.feat{border-color:rgba(57,211,255,.45);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.01));box-shadow:0 30px 70px -40px rgba(57,211,255,.5)}
-.wm-feat-ribbon{position:absolute;top:14px;right:14px;display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));border-radius:999px;padding:4px 10px}
-.wm-way h3{font-family:"Bricolage Grotesque";font-size:20px;margin:0 0 8px}
-.wm-way p{color:var(--mut);font-size:15px;margin:0}
-
-/* CARDS */
-.wm-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.wm-ucard{border:1px solid var(--line);border-radius:18px;padding:22px;background:var(--panel);position:relative;overflow:hidden;transition:transform .15s ease-out}
-.wm-ucard:before{content:"";position:absolute;inset:0 0 auto 0;height:3px;opacity:.95}
-.wm-ucard.t-a:before{background:linear-gradient(90deg,var(--em2),transparent)}
-.wm-ucard.t-b:before{background:linear-gradient(90deg,var(--em),transparent)}
-.wm-ucard.t-c:before{background:linear-gradient(90deg,var(--warm),transparent)}
-.wm-ucard.t-d:before{background:linear-gradient(90deg,#b98cff,transparent)}
-.wm-ucard.t-e:before{background:linear-gradient(90deg,#ff7a9c,transparent)}
-.wm-ucard svg{color:var(--mut);margin-bottom:14px}
-.wm-ucard h3{font-family:"Bricolage Grotesque";font-size:17px;margin:0 0 6px}
-.wm-ucard p{color:var(--mut);font-size:14px;margin:0 0 16px}
-.wm-ucard-go{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--em)}
-
-/* PEOPLE / OUTCOMES */
-.wm-people-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:12px}
-.wm-photo{position:relative;margin:0;border-radius:20px;overflow:hidden;border:1px solid var(--line);background:var(--panel);box-shadow:0 40px 80px -46px rgba(0,0,0,.8);aspect-ratio:4/3}
-.wm-photo img,.wm-photo video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(1.03) contrast(1.02);transition:transform .6s ease-out}
-.wm-photo:hover img,.wm-photo:hover video{transform:scale(1.04)}
-.wm-photo figcaption{position:absolute;inset:auto 0 0 0;padding:26px 24px 22px;display:flex;flex-direction:column;gap:7px;background:linear-gradient(0deg,rgba(7,8,16,.94) 6%,rgba(7,8,16,.6) 52%,transparent)}
-.wm-photo-tag{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:20px;letter-spacing:-.01em;color:#fff}
-.wm-photo-cap{font-size:14.5px;color:#d6dae8;line-height:1.5;max-width:48ch}
 
 /* PRICING */
 .wm-pricing{border-top:1px solid var(--line)}
@@ -1683,19 +1226,12 @@ const CSS = `
 .wm-tier-cyc{font-size:12.5px;color:var(--mut);margin-top:4px;min-height:1.2em}
 .wm-tier-cyc.dim{opacity:.75}
 .wm-tier-cyc s{color:var(--mut);opacity:.8;margin-right:5px}
-.wm-tier-custom{font-size:34px}
-.wm-tier-ent{border-color:rgba(57,211,255,.35);background:linear-gradient(180deg,rgba(57,211,255,.08),rgba(255,255,255,.008))}
-/* ENTERPRISE - the flagship tier. A premium dark panel on the light page, with a
-   warm orange glow, a hairline orange accent on the top edge, an elegant
-   two-column benefit grid and a trust strip. LIGHT panel (dark ink on a warm
-   off-white) to match the light page. Orange = the brand accent (--warm / --warm2). */
 /* Enterprise control chips (inside the single enterprise section, see
    .wm-roi-controls). Chips never wrap mid-label: nowrap + the row wraps. */
 .wm-roi-ctas .wm-cta.ghost{background:#fff;color:var(--ink-brand,#062a22);border:1px solid var(--line);box-shadow:0 1px 2px rgba(6,42,34,.05)}
 .wm-roi-ctas .wm-cta.ghost:hover{border-color:var(--em2);color:var(--em2);transform:translateY(-2px)}
 .wm-ent-strip{display:flex;flex-wrap:wrap;gap:9px}
 .wm-ent-chip{display:inline-flex;align-items:center;white-space:nowrap;font-size:12px;font-weight:700;letter-spacing:.04em;color:#07784f;background:rgba(10,157,102,.08);border:1px solid rgba(10,157,102,.22);border-radius:999px;padding:6px 13px}
-.wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}
 .wm-tier-tag{position:absolute;top:-13px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,var(--em),var(--em2));color:#042;font-size:12px;font-weight:700;padding:5px 14px;border-radius:999px}
@@ -1726,29 +1262,12 @@ const CSS = `
 .wm-fld-browse{display:inline-flex;align-items:center;gap:5px;font-size:13.5px;font-weight:600;color:var(--wm-mut,#5b6676);text-decoration:none}
 .wm-fld-browse:hover{color:var(--wm-ink,#0c1222)}
 
-/* uniform dark "message box" on top of every icon card */
-.wm-cardbox{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;min-height:58px;border-radius:12px;background:#141924;border:1px solid rgba(255,255,255,.08);margin-bottom:16px;padding:10px 14px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12px;color:#aeb9cc;text-align:center;line-height:1.4}
-.wm-cardbox b{color:#8cf5c4;font-weight:700}
-.wm-cardbox .cb-chip{font-weight:700;color:#8cf5c4;border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.1);border-radius:6px;padding:3px 8px;font-size:10.5px}
-.wm-cardbox .cb-arrow{color:#5bd0ff;font-weight:700}
-.wm-cardbox .cb-dim{color:#8894a8}
 /* colored eyebrow kicker (kills grey, ties sections to brand) */
 .wm-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
 .wm-eyebrow svg{color:var(--em)}
 /* SECURITY / ENTERPRISE BAND */
-.wm-sec-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:10px}
 .wm-sec-paper{display:flex;flex-direction:column;align-items:center;gap:9px;margin-top:28px;text-align:center}
 .wm-sec-paper span{color:var(--mut);font-size:14px;max-width:54ch}
-.wm-sec-card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:24px}
-.wm-sec-ic{display:inline-flex;align-items:center;justify-content:center;width:46px;height:46px;border-radius:13px;background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.12));color:var(--em);margin-bottom:14px}
-.wm-sec-card h3{font-family:"Bricolage Grotesque";font-size:18px;margin:0 0 8px}
-.wm-sec-card p{color:var(--mut);font-size:14.5px;margin:0;line-height:1.55}
-/* HOW COMPANIES BENEFIT (ROI) */
-/* Outcome chips: FOUR word-chips (not numerals), so the grid is 4-up (a 5-up
-   grid left one empty column) and the heading is a chip scale, not a 36px
-   stat numeral. Words never break mid-word ("In-\nhouse"): keep-all + no
-   hyphens; they wrap only at a space. Cards share one balanced height and the
-   same radius/shadow family as the feature cards below them. */
 /* ROI band: editorial head (promise left, money sentence right) + ONE focal
    dark "ledger" (Before -> With WorkCoPilot). The ledger is deliberately dark on
    the light page, like the product screens: it is the one thing the eye lands on. */
@@ -1820,7 +1339,7 @@ const CSS = `
 /* PROOF - the security/privacy duo sits under its own heading now; the duo's
    default top gap (44px, for the old headless placement) tightens to match. */
 .wm-proof .wm-duo{margin-top:30px}
-@media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent-feats{gap:14px 24px}.wm-proof .wm-duo{margin-top:24px}}
+@media(max-width:900px){.wm-proof .wm-duo{margin-top:24px}}
 
 /* FINAL */
 .wm-final{padding:70px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}
@@ -1856,37 +1375,16 @@ const CSS = `
  /* (min-width:0 on the columns is now global, see .wm-hero-grid>* above.) */
  .wm-hero-grid{grid-template-columns:1fr;gap:38px}
  .wm-demo{margin-top:0}
- .wm-steps,.wm-ways-grid,.wm-tiers,.wm-people-grid{grid-template-columns:1fr}
- .wm-cards{grid-template-columns:1fr 1fr}
- .wm-flow{flex-direction:column}
- .wm-flow-arrow{transform:rotate(90deg);padding:12px 0;align-self:center}
- .wm-spot{grid-template-columns:1fr;gap:0}
- .wm-spot-stage{display:none}
- .wm-spot-item.on{padding-left:2px}
- .wm-spot-desc{display:block;grid-column:2;color:var(--mut);font-size:14.5px;margin-top:6px;line-height:1.5}
- .wm-spot-prog{display:none}
- .wm-links{display:none}
+ .wm-tiers{grid-template-columns:1fr}
  .wm-tier.pop{transform:none}
- .wm-band-in{flex-direction:column;text-align:center;align-items:flex-start}
 }
 @media(max-width:560px){
- .wm-cards{grid-template-columns:1fr}
- .wm-nav-in{gap:10px}
- .wm-navcta{margin-left:auto}
- .wm-navcta .wm-ghost{display:none}
- .wm-navcta .wm-cta.sm{padding:9px 14px;font-size:13.5px}
- .wm-modes{flex-direction:column;align-items:flex-start;gap:13px}
- .wm-mode-div{display:none}
  .wm-sec{padding:42px 0}
  .wm-hero{padding:48px 0 0}
  .wm-lead-stage{font-size:17px}
  .wm-demo{transform:none}
 }
 @media(max-width:768px){
- /* Short and powerful on phones: hero, companies ROI, what it does, how it
-    works, pricing and the final CTA. The heavier bands are hidden so the
-    page stays tight on a small screen. */
- .wm-people,.wm-pillars,.wm-ways,#cards{display:none}
  .wm-hero-cta{flex-direction:column;align-items:stretch;gap:12px}
  .wm-hero-cta .wm-cta{width:100%;justify-content:center;padding:15px 18px;font-size:16px}
  .wm-sec{padding:36px 0}
@@ -1914,8 +1412,7 @@ const CSS = `
 /* deep brand-green ink for display headings (ties to brand, not flat black) */
 .wm:not([data-wm="dark"]) .wm-hero h1,
 .wm:not([data-wm="dark"]) .wm-h2,
-.wm:not([data-wm="dark"]) .wm-final-in h2,
-.wm:not([data-wm="dark"]) .wm-band-copy h2{color:var(--ink-brand)}
+.wm:not([data-wm="dark"]) .wm-final-in h2{color:var(--ink-brand)}
 /* lead/intro copy off the muted grey so the page is not grey-dominant */
 .wm:not([data-wm="dark"]) .wm-lead{color:var(--tx);font-weight:450}
 .wm:not([data-wm="dark"]) .wm-badge{color:#07784f;background:rgba(10,157,102,.1);border-color:rgba(10,157,102,.28)}
@@ -1924,71 +1421,28 @@ const CSS = `
    the page depth. Re-scope dark vars + set color so inner text/hairlines/accents
    render light-on-dark exactly as designed (the global light vars would otherwise
    make them dark-on-dark). */
-.wm:not([data-wm="dark"]) .wm-demo,
-.wm:not([data-wm="dark"]) .bv,
-.wm:not([data-wm="dark"]) .wm-flow-viz,
-.wm:not([data-wm="dark"]) .wm-spot-stage,
-.wm:not([data-wm="dark"]) .wm-photo figcaption{
+.wm:not([data-wm="dark"]) .wm-demo{
   --tx:#eef1f8; --mut:#9aa6ba; --line:rgba(255,255,255,.12);
   --panel:#141924; --em:#8cf5c4; --em2:#5bd0ff;
   color:var(--tx);
 }
 .wm:not([data-wm="dark"]) .wm-demo-step,
-.wm:not([data-wm="dark"]) .wm-demo-now,
-.wm:not([data-wm="dark"]) .wm-spot-card h3,
-.wm:not([data-wm="dark"]) .wm-spot-card p,
-.wm:not([data-wm="dark"]) .wm-spot-points li{color:var(--tx)}
+.wm:not([data-wm="dark"]) .wm-demo-now{color:var(--tx)}
 
-/* nav */
-.wm:not([data-wm="dark"]) .wm-nav{background:rgba(255,255,255,.82);box-shadow:0 1px 0 rgba(17,23,38,.05),0 12px 34px -26px rgba(17,23,38,.35)}
-.wm:not([data-wm="dark"]) .wm-ghost{background:#fff}
-.wm:not([data-wm="dark"]) .wm-ghost:hover{border-color:rgba(17,23,38,.28)}
 .wm:not([data-wm="dark"]) .wm-cta.alt{background:#fff;border:1px solid var(--line);color:var(--tx)}
 
-/* elevated white cards - real depth so the page never looks flat */
-.wm:not([data-wm="dark"]) .wm-bcard,
-.wm:not([data-wm="dark"]) .wm-way,
-.wm:not([data-wm="dark"]) .wm-flow-node,
-.wm:not([data-wm="dark"]) .wm-tier,
-.wm:not([data-wm="dark"]) .wm-ucard{
+/* elevated white plan cards - real depth so the page never looks flat */
+.wm:not([data-wm="dark"]) .wm-tier{
   background:#fff;
   box-shadow:0 1px 2px rgba(17,23,38,.04), 0 18px 42px -26px rgba(17,23,38,.22);
 }
-.wm:not([data-wm="dark"]) .wm-bcard:hover,
-.wm:not([data-wm="dark"]) .wm-way:hover,
-.wm:not([data-wm="dark"]) .wm-ucard:hover{box-shadow:0 1px 2px rgba(17,23,38,.05), 0 28px 56px -26px rgba(17,23,38,.3)}
-.wm:not([data-wm="dark"]) .wm-way.feat{background:linear-gradient(180deg,rgba(10,134,207,.07),#fff);border-color:rgba(10,134,207,.38)}
-/* security + privacy duo: white, elevated, brand-tinted glow */
-.wm:not([data-wm="dark"]) .wm-duo-card{background:#fff;box-shadow:0 1px 2px rgba(17,23,38,.04),0 18px 42px -26px rgba(17,23,38,.22)}
-.wm:not([data-wm="dark"]) .wm-duo-card:hover{box-shadow:0 1px 2px rgba(17,23,38,.05),0 28px 56px -26px rgba(17,23,38,.3)}
-.wm:not([data-wm="dark"]) .wm-duo-card.sec:hover{border-color:rgba(10,157,102,.45)}
-.wm:not([data-wm="dark"]) .wm-duo-card.priv:hover{border-color:rgba(10,134,207,.45)}
-.wm:not([data-wm="dark"]) .wm-duo-card.sec:after{background:radial-gradient(circle,rgba(10,157,102,.12),transparent 68%)}
-.wm:not([data-wm="dark"]) .wm-duo-card.priv:after{background:radial-gradient(circle,rgba(10,134,207,.12),transparent 68%)}
-.wm:not([data-wm="dark"]) .wm-duo-ic{background:linear-gradient(135deg,rgba(10,157,102,.16),rgba(10,134,207,.1));box-shadow:none}
-.wm:not([data-wm="dark"]) .wm-duo-card.priv .wm-duo-ic{background:linear-gradient(135deg,rgba(10,134,207,.16),rgba(10,157,102,.08));box-shadow:none}
-.wm:not([data-wm="dark"]) .wm-duo-card h3{color:var(--ink-brand)}
 .wm:not([data-wm="dark"]) .wm-tier.pop{background:linear-gradient(180deg,rgba(10,157,102,.09),#fff);border-color:rgba(10,157,102,.45);box-shadow:0 32px 66px -30px rgba(10,157,102,.42)}
 
-/* spotlight stage = premium dark card (matches the demo), with real elevation */
-.wm:not([data-wm="dark"]) .wm-spot-stage{
-  background:linear-gradient(165deg,#1a2030,#0f131d);
-  border:1px solid rgba(255,255,255,.08);
-  box-shadow:0 40px 82px -40px rgba(17,23,38,.5);
-}
-.wm:not([data-wm="dark"]) .wm-spot-prog{background:rgba(17,23,38,.10)}
-/* mini "screen" thumbnails -> solid dark so their content reads crisp (not faint on grey) */
-.wm:not([data-wm="dark"]) .bv,
-.wm:not([data-wm="dark"]) .wm-flow-viz{background:#141924;border-color:rgba(255,255,255,.08)}
-
 /* subtle section atmosphere so bands read on the light page */
-.wm:not([data-wm="dark"]) .wm-pillars{background:linear-gradient(180deg,rgba(10,157,102,.045),transparent)}
 .wm:not([data-wm="dark"]) .wm-how{background:linear-gradient(180deg,rgba(10,134,207,.05),transparent)}
 .wm:not([data-wm="dark"]) .wm-fields{background:linear-gradient(180deg,rgba(10,157,102,.045),transparent 55%)}
 .wm:not([data-wm="dark"]) .wm-final{background:radial-gradient(60% 130% at 50% 0%,rgba(10,157,102,.1),transparent)}
-.wm:not([data-wm="dark"]) .wm-band-in{background:linear-gradient(110deg,rgba(10,134,207,.08),rgba(10,157,102,.05));border-color:rgba(10,134,207,.22)}
 
 .wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#e9edf4}
-.wm:not([data-wm="dark"]) .wm-photo{box-shadow:0 30px 64px -40px rgba(17,23,38,.5)}
 
 `

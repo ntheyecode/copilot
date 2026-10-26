@@ -13,8 +13,16 @@
 //            URL, so pages do not have to pass it. Pages that are not in the nav
 //            (privacy, terms, ...) simply mark nothing.
 //
-// Mobile: below 880px the links fold into a disclosure menu (button with
-// aria-expanded + aria-controls, closes on Escape, link tap or outside tap).
+// Mobile + tablet: below 1180px the links fold into a disclosure menu (button
+// with aria-expanded + aria-controls, closes on Escape, link tap or outside tap).
+//
+// FIT RULE (owner, 2026-10-26, "text overlaps boxes ... sitewide"): the bar
+// holds the brand lockup, seven links and three controls. Measured at 1280px
+// the old spacing needed ~1214px inside a 1112px bar, so "Get started" was
+// clipped on every page. Now: tighter link spacing, the language picker as
+// globe + code (its full name stays in the aria-label), and the menu folds at
+// 1180px, below which the full row can no longer fit. Nothing in the bar may
+// wrap or clip at any width; the links are the only part that folds.
 import React, { useEffect, useRef, useState } from 'react'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
@@ -117,15 +125,23 @@ const CSS = `
 .wsh.wsh{position:sticky;top:0;z-index:50}
 .wsh *{box-sizing:border-box}
 .wsh a{color:inherit;text-decoration:none}
-.wsh-in{display:flex;align-items:center;gap:22px;height:70px;max-width:1160px;margin:0 auto;padding:0 24px}
+.wsh-in{display:flex;align-items:center;gap:16px;height:70px;max-width:1160px;margin:0 auto;padding:0 24px}
 .wsh-brand{display:inline-flex;align-items:center;flex:0 0 auto;border-radius:8px}
-.wsh-links{display:flex;gap:4px;margin-inline-start:auto;font-size:15px;color:var(--sh-mut)}
-.wsh-links a{position:relative;padding:8px 11px;border-radius:9px;font-weight:500;white-space:nowrap;transition:color .15s,background .15s}
+.wsh-links{display:flex;gap:2px;margin-inline-start:auto;font-size:14.5px;color:var(--sh-mut)}
+.wsh-links a{position:relative;padding:8px 9px;border-radius:9px;font-weight:500;white-space:nowrap;transition:color .15s,background .15s}
 .wsh-links a:hover{color:var(--sh-tx);background:rgba(17,23,38,.05)}
 .wsh-links a.on{color:var(--sh-em-txt);font-weight:700}
-.wsh-links a.on::after{content:"";position:absolute;left:11px;right:11px;bottom:2px;height:2px;border-radius:2px;background:linear-gradient(90deg,#10a271,#0a93c4)}
+.wsh-links a.on::after{content:"";position:absolute;left:9px;right:9px;bottom:2px;height:2px;border-radius:2px;background:linear-gradient(90deg,#10a271,#0a93c4)}
 .wsh-m-only{display:none}
-.wsh-cta{display:flex;gap:10px;align-items:center;margin-inline-start:14px;flex:0 0 auto}
+.wsh-cta{display:flex;gap:8px;align-items:center;margin-inline-start:8px;flex:0 0 auto}
+/* Language picker in the bar: globe + language code at every width (the full
+   language name is ~140px and is what pushed "Get started" off the bar). The
+   picker's own compact rule only kicks in under 880px; the header needs it
+   always, so it is applied here, scoped to the bar. The full name remains in
+   the button's aria-label and in the open list. */
+.wsh-cta .lm-compact .lm-name{display:none}
+.wsh-cta .lm-compact .lm-short{display:inline}
+.wsh-cta .lm-compact .lm-btn{padding:0 9px}
 .wsh-ghost{background:#fff;border:1px solid var(--sh-line);color:var(--sh-tx);border-radius:11px;padding:9px 15px;font-size:14px;font-weight:500;line-height:1.3;transition:border-color .15s}
 .wsh-ghost:hover{border-color:rgba(17,23,38,.28)}
 .wsh-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,var(--sh-warm),var(--sh-warm2));color:#1a0e08!important;border-radius:11px;padding:9px 15px;font-size:14px;font-weight:700;line-height:1.3;white-space:nowrap;box-shadow:0 12px 34px -12px rgba(255,122,89,.65);transition:transform .15s,box-shadow .15s}
@@ -133,18 +149,23 @@ const CSS = `
 .wsh-burger{display:none;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:#fff;border:1px solid var(--sh-line);border-radius:11px;color:var(--sh-tx);cursor:pointer}
 .wsh a:focus-visible,.wsh button:focus-visible{outline:2px solid var(--sh-em);outline-offset:2px}
 
-@media(max-width:880px){
-  .wsh-in{gap:10px;padding:0 16px;height:62px}
+/* Folded menu below 1180px: the full link row cannot fit beside the brand and
+   the controls under that width (see FIT RULE above). */
+@media(max-width:1180px){
   .wsh-burger{display:inline-flex}
-  .wsh-cta{margin-inline-start:auto;gap:8px}
-  .wsh-ghost{display:none}
-  .wsh-btn{padding:9px 13px;font-size:13.5px}
+  .wsh-cta{margin-inline-start:auto}
   .wsh-links{display:none;position:absolute;left:0;right:0;top:100%;margin:0;flex-direction:column;gap:2px;padding:10px 16px 16px;background:#fff;border-bottom:1px solid var(--sh-line);box-shadow:0 22px 40px -24px rgba(17,23,38,.35);font-size:16px}
   .wsh-links.open{display:flex}
   .wsh-links a{padding:13px 12px;border-radius:10px}
   .wsh-links a.on::after{inset-inline-start:12px;inset-inline-end:auto;left:auto;right:auto;width:22px;bottom:7px}
   .wsh-links .wsh-m-only{display:block;border-top:1px solid var(--sh-line);margin-top:6px;border-radius:0;padding-top:15px}
   .wsh-links .wsh-m-cta{display:none}
+}
+/* Phone and small tablet: a shorter bar, and Sign in moves into the menu. */
+@media(max-width:880px){
+  .wsh-in{gap:10px;padding:0 16px;height:62px}
+  .wsh-ghost{display:none}
+  .wsh-btn{padding:9px 13px;font-size:13.5px}
 }
 /* Phone: the brand lockup + CTA + menu button would exceed 360px, so the CTA moves into the menu. */
 @media(max-width:520px){

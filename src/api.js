@@ -98,6 +98,12 @@ export const api = {
   // --- WorkCoPilot (separate product, own login) ---
   workMe: () => req('GET', '/api/work/me'),
   workSignup: (body) => req('POST', '/api/work/signup', body || {}),
+  // Legal consent (clickwrap). The manifest is the server's single source of
+  // truth for the current agreement version + the documents to link; accept
+  // records the signed-in user's acceptance of the current version and returns
+  // the updated public user ({ ok, version, user }).
+  legalManifest: () => req('GET', '/api/work/legal'),
+  legalAccept: () => req('POST', '/api/work/legal/accept', { accept: true }),
   workLogin: (username, password) => req('POST', '/api/work/login', { username, password }),
   // MFA (TOTP authenticator). Login may return { mfaSetup } (first login) or
   // { mfaRequired }; the client then calls one of these to finish signing in.
@@ -165,6 +171,16 @@ export const api = {
   workWatch: (id, body) => req('POST', `/api/work/sessions/${id}/watch`, body || {}),
   // body: { question?, frame }
   workAsk: (id, body) => req('POST', `/api/work/sessions/${id}/ask`, { ...(body || {}), ...(body && body.question != null ? { question: clean(body.question) } : {}) }),
+  // Store the answer to the plan's one clarifying question (folds it into the
+  // session scope). body: { question, answer } -> { ok, session }; a typed
+  // "Other" value is just the answer string. Skip: { question, skipped: true }
+  // with no answer, and the server proceeds on a safe assumption. The follow-up
+  // re-plan passes { fromClarify: true } so it does not burn the re-plan budget.
+  workClarify: (id, body) => req('POST', `/api/work/sessions/${id}/clarify`, body || {}),
+  // Revert the last answer (or skip) to a clarifying question so a mis-tap costs
+  // nothing. body: { question } -> { ok, undone, session }. The card re-opens
+  // client-side; the re-plan happens only when the person answers again.
+  workClarifyUndo: (id, body) => req('POST', `/api/work/sessions/${id}/clarify/undo`, body || {}),
   // Return the actual RESULT (not just steps). body: { question?, frame?, docsText?, deep? };
   // frame is optional (with it, reads the screen; without, computes from goal + pasted data).
   // Text is DLP-tokenized here before it leaves. -> { result: { kind, body, basis, verifyBy,

@@ -34,6 +34,10 @@ import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerSocialRoutes } from './social.js'
+// Legal consent (clickwrap): the current agreements + version every account must
+// accept to use the platform. ONE source of truth (SUPREME RULE II); the signup
+// gate, the accept endpoint, and the re-consent gate all read from here.
+import { LEGAL_VERSION, legalManifest } from './legal.js'
 import * as integrations from './integrations.js'
 import { registerWorkBillingRoutes, workStripeWebhook, billingConfigured } from './billing.js'
 import { registerAffiliateRoutes, bindReferralOnSignup } from './affiliate.js'
@@ -298,12 +302,26 @@ function requireWorkAuth(req, res, next) {
   req.impersonating = id.impersonating
   next()
 }
+// Best-effort client IP for consent/audit records: the first X-Forwarded-For hop
+// (we sit behind nginx), else the socket address. Bounded by the caller.
+function ipOf(req) {
+  return (String((req.headers && req.headers['x-forwarded-for']) || '').split(',')[0].trim())
+    || req.ip || (req.socket && req.socket.remoteAddress) || null
+}
 // Billing gate for the "use the service" actions (start a session + the
 // guidance calls). Free signup still gives dashboard access, so /me, /signup
 // and viewing are never gated - only the actions that actually guide. Runs
 // AFTER requireWorkAuth (needs req.workUser). Company members are covered by the
 // company; a personal account needs a live plan.
 function requireWorkSubscription(req, res, next) {
+  // LEGAL CONSENT GATE (whoever it is): no account - email signup, social login,
+  // company SSO, or admin-created - may USE the platform until it has accepted the
+  // CURRENT agreements. A version bump re-arms this for everyone. Checked BEFORE
+  // the admin bypass so it applies to every role; the client shows a blocking
+  // consent modal on legalRequired and the user accepts via POST /api/work/legal/accept.
+  if (req.workUser && !store.hasAcceptedCurrentLegal(req.workUser.id)) {
+    return res.status(403).json({ error: 'Please review and accept the current Terms and Privacy Policy to continue.', legalRequired: true, version: LEGAL_VERSION })
+  }
   // Always let admins and superadmins through for operator testing.
   if (req.user && (req.user.role === 'superadmin' || req.user.role === 'admin')) return next()
   // A superadmin-disabled account - or a disabled company - is blocked from ALL
@@ -1020,7 +1038,15 @@ app.post('/api/work/signup', wrap((req, res) => {
   // captured on the account record.
   if (!displayName) return res.status(400).json({ error: 'Enter your full name.' })
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) return res.status(400).json({ error: 'Enter a valid email address.' })
+  // CLICKWRAP: no account is created without an explicit acceptance of the current
+  // agreements. The checkbox is unticked by default, so this is a real, affirmative
+  // consent, not implied-by-signup. Recorded below with the audit fields.
+  if (b.acceptTerms !== true) return res.status(400).json({ error: 'You must accept the Terms of Service and Privacy Policy to create an account.', legalRequired: true, version: LEGAL_VERSION })
   const u = store.createWorkUser({ username, password, email, displayName, phone: b.phone, company: b.company })
+  // Record the acceptance against the new account (version + timestamp + IP + user
+  // agent), so the consent is defensible. The version comes from the server, never
+  // the client, so a stale client can never record acceptance of the wrong version.
+  store.recordLegalAcceptance(u.id, { ip: ipOf(req), userAgent: req.headers['user-agent'], method: 'signup' })
   // Affiliate attribution (first-touch): bind the referring affiliate from the
   // ?ref= the SPA captured, or the affref cookie. Best-effort, never blocks signup.
   bindReferralOnSignup(store, req, u.id)
@@ -1030,6 +1056,19 @@ app.post('/api/work/signup', wrap((req, res) => {
   req.session.pendingMfaUid = u.id
   req.session.pendingMfaAt = Date.now()
   res.json({ mfaSetup: true, username: u.username, enroll: store.startMfaEnrollment(u.id) })
+}))
+// Public: the current agreements + version, so the client can render the consent
+// checkbox at signup and the blocking consent modal on first login, and send the
+// version back. Version always comes from the server (never trusts the client).
+app.get('/api/work/legal', wrap((req, res) => res.json(legalManifest())))
+// Signed-in: accept the current agreements. This is how a social / SSO / admin-
+// created account (or any user after a version bump) clears the consent gate on
+// first use. Recorded with version + timestamp + IP + user agent. Only requires
+// auth (NOT the subscription gate), so a user who must accept can always reach it.
+app.post('/api/work/legal/accept', requireWorkAuth, wrap((req, res) => {
+  if ((req.body || {}).accept !== true) return res.status(400).json({ error: 'Confirm that you accept the current Terms and Privacy Policy.' })
+  store.recordLegalAcceptance(req.workUser.id, { ip: ipOf(req), userAgent: req.headers['user-agent'], method: 'first_login' })
+  res.json({ ok: true, version: LEGAL_VERSION, user: store.publicWorkUser(store.getUser(req.workUser.id)) })
 }))
 // Signed-in: your own MFA status.
 app.get('/api/work/mfa/status', requireWorkAuth, wrap((req, res) => {
@@ -1391,7 +1430,10 @@ app.post('/api/work/admin/impersonate/stop', requireAuth, requireSuperAdmin, wra
   delete req.session.impersonatorId
   delete req.session.impersonatorAt
   store.recordAdminAction({ userId: wasViewing, action: 'impersonate_stop', detail: wasViewing ? `support view ended by superadmin ${req.user.username || adminId}` : 'no active impersonation' })
-  res.json({ ok: true })
+  // Send the superadmin back to the ADMIN CONSOLE, not the user dashboard they were
+  // viewing. Impersonation is superadmin-only, so ending it always returns to the
+  // console; the client navigates here instead of reloading the user page.
+  res.json({ ok: true, redirect: '/work/admin' })
 }))
 // Start impersonating an individual user. Declared AFTER `/stop` so `:userId`
 // never swallows that literal path.
@@ -1618,9 +1660,35 @@ app.post('/api/work/team/learnings/clear', requireWorkAuth, requireCompanyAdmin,
   const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
   const reason = String((req.body || {}).reason || '').trim()
   if (reason.length < 3) return res.status(400).json({ error: 'Please give a reason for clearing the knowledge base.' })
-  const cleared = store.clearCompanyLearnings(cid)
-  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'kb_clear', reason, detail: `cleared ${cleared} entries` })
-  res.json({ cleared })
+  // SAFEGUARD: clearCompanyLearnings auto-backs-up the KB before wiping it, so a
+  // good knowledge base is never lost by accident. The admin gets the backup id
+  // back and can restore it from the backups list below.
+  const { cleared, backupId } = store.clearCompanyLearnings(cid, { byUserId: req.workUser.id, reason })
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'kb_clear', reason, detail: `cleared ${cleared} entries (auto-backup ${backupId || 'none'})` })
+  res.json({ cleared, backupId, backedUp: !!backupId })
+}))
+// Auto-backups taken before each clear (metadata, newest first) - the admin's
+// safety net so good learnings are recoverable after a clear-all.
+app.get('/api/work/team/learnings/backups', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  res.json({ backups: store.listCompanyKbBackups(cid) })
+}))
+// Download one auto-backup as JSON (same shape as a manual export).
+app.get('/api/work/team/learnings/backups/:bid', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const b = store.getCompanyKbBackup(cid, req.params.bid)
+  if (!b) return res.status(404).json({ error: 'Backup not found.' })
+  res.setHeader('Content-Type', 'application/json; charset=utf-8')
+  res.setHeader('Content-Disposition', `attachment; filename="workcopilot-kb-backup-${req.params.bid}.json"`)
+  res.send(JSON.stringify({ exportedAt: new Date().toISOString(), companyId: cid, backupId: b.id, takenAt: b.at, learnings: b.learnings || [] }, null, 2))
+}))
+// Restore an auto-backup into the live KB (replace by default, or merge). Logged.
+app.post('/api/work/team/learnings/backups/:bid/restore', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const replace = (req.body || {}).mode !== 'merge'
+  const count = store.restoreCompanyKbBackup(cid, req.params.bid, { replace })
+  store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'kb_restore_backup', reason: `restore backup ${req.params.bid}`, detail: `restored to ${count} entries (${replace ? 'replace' : 'merge'})` })
+  res.json({ count, mode: replace ? 'replace' : 'merge' })
 }))
 
 // ---- Skills: add your own playbooks/skills (from any AI) so guidance aligns ---
@@ -1937,7 +2005,12 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // also draws on a per-task re-plan budget, gated here BEFORE any tokens are
     // spent so a spent budget fails fast and cheap.
     const isReplan = Array.isArray(s.steps) && s.steps.length > 0 && !!s.goal
-    if (isReplan) store.gateWorkReplan(req.workUser.id, req.params.id)
+    // A clarify-driven re-plan (the user answered a question the guide asked) is
+    // NOT a user-requested re-plan: it refines the SAME task with an input we
+    // asked for, so it must not burn the per-task re-plan budget. The answer is
+    // already folded into the session scope (POST .../clarify) before this call.
+    const fromClarify = !!(req.body && req.body.fromClarify)
+    if (isReplan && !fromClarify) store.gateWorkReplan(req.workUser.id, req.params.id)
     if (!isReplan && goal != null) store.setWorkSessionGoal(req.workUser.id, req.params.id, goal)
     const useMode = work.normalizeMode(mode != null ? mode : s.mode)
     if (mode != null) store.setWorkSessionMode(req.workUser.id, req.params.id, useMode)
@@ -2078,7 +2151,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
     // Count the re-plan against this task's budget (only after it actually
     // produced a plan, so a refusal/failure never burns a re-plan).
-    if (isReplan) store.bumpWorkReplan(req.workUser.id, req.params.id)
+    if (isReplan && !fromClarify) store.bumpWorkReplan(req.workUser.id, req.params.id)
     if (plan.appContext) store.setWorkAppContext(req.workUser.id, req.params.id, plan.appContext)
     // Capture a generalized, de-identified learning the model flagged (a current
     // tool fact newer than its memory) into the cross-session KB for next time.
@@ -2095,9 +2168,51 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // name (owner rule: never expose the model to users). Full model identity lives
     // in the server audit + superadmin incidents.
     const plannedByPublic = { topRanked: !!plannedBy.topRanked, tier: plannedBy.tier || null, source: plannedBy.source || null, updated: plannedBy.updated || null, vision: !!plannedBy.vision, fellBack: !!plannedBy.fellBack }
-    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, policy, replan: store.getWorkReplanUsage(req.workUser.id, req.params.id), ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
+    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, policy, clarify: plan.clarify || null, replan: store.getWorkReplanUsage(req.workUser.id, req.params.id), ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
   } catch (e) { sendWorkError(res, e, req) }
 })
+
+// Clarify: the user answers a question the guide asked mid-task (option chip or
+// free text). We fold the answer into the session scope so the NEXT plan sees it
+// the same way it sees the scope-wizard answers, and record it on the timeline.
+// The client then triggers a re-plan with { fromClarify: true } so the refinement
+// does NOT burn the per-task re-plan budget (we asked for this input, the user did
+// not request a fresh re-plan). Honest, scoped, no new sensitive capture.
+app.post('/api/work/sessions/:id/clarify', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
+  const s = store.getWorkSession(req.workUser.id, req.params.id)
+  if (!s) return res.status(404).json({ error: 'Session not found' })
+  const question = String((req.body && req.body.question) || '').trim().slice(0, 240)
+  const answer = String((req.body && req.body.answer) || '').trim().slice(0, 600)
+  const q = question || 'Clarification'
+  // SKIP: the user is unsure. We do NOT block the task - we record the skip
+  // honestly and fold a note so the next plan proceeds on its best assumption
+  // AND confirms before anything irreversible, instead of re-asking every time.
+  // (Chips are only a shortlist the guide inferred; a typed "Other" answer takes
+  // the free-text path below, same as any answer.)
+  const skipped = !!(req.body && req.body.skipped)
+  if (skipped) {
+    store.appendWorkScopeAnswer(req.workUser.id, req.params.id, q, '(user was unsure and skipped; proceed with your best assumption, and confirm with the user before any irreversible step)')
+    store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'You skipped that question. I will proceed on my best assumption and check with you before anything that cannot be undone.' })
+    return res.json({ ok: true, skipped: true, session: store.getWorkSession(req.workUser.id, req.params.id) })
+  }
+  if (!answer) return res.status(400).json({ error: 'Add your answer first, or skip.' })
+  store.appendWorkScopeAnswer(req.workUser.id, req.params.id, q, answer)
+  store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `You answered: ${answer}. I will fold that into the next steps.` })
+  res.json({ ok: true, session: store.getWorkSession(req.workUser.id, req.params.id) })
+}))
+
+// Back / change answer: the user picked the wrong chip or skipped by accident.
+// Revert the last answer to THIS question so the guide can ask it again. The
+// client then re-opens the clarify card; re-answering folds the correct answer and
+// re-plans for free (fromClarify). Costs the user nothing to fix a mis-tap.
+app.post('/api/work/sessions/:id/clarify/undo', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
+  const s = store.getWorkSession(req.workUser.id, req.params.id)
+  if (!s) return res.status(404).json({ error: 'Session not found' })
+  const question = String((req.body && req.body.question) || '').trim().slice(0, 240)
+  const removed = store.removeLastWorkScopeAnswer(req.workUser.id, req.params.id, question)
+  if (removed) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Reverted your last answer. Choose again when you are ready.' })
+  res.json({ ok: true, undone: !!removed, session: store.getWorkSession(req.workUser.id, req.params.id) })
+}))
 
 // Scope: the requirement wizard that runs BEFORE planning. Text-only call on the
 // platform model; returns a short, goal-specific question set. The answers are

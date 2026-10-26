@@ -43,6 +43,63 @@ const isInApp = () => {
 }
 
 const LEAD_KEY = 'wc_lv_lead_v1'   // once-per-session gate; bump suffix to re-ask
+// The visitor minimised the launcher to its edge tab (kept for the session so it
+// does not pop back out on every page).
+const DOCK_KEY = 'wc_lv_dock_v1'
+const loadDock = () => { try { return sessionStorage.getItem(DOCK_KEY) === '1' } catch { return false } }
+// How far the footer may come up the viewport before the launcher docks: the
+// pill's own band (16px offset + 41px pill + a 15px breathing gap). Keep in step
+// with .lv-launch / .wm-cov-launch sizes in LV_CSS.
+const LAUNCH_BAND_PX = 72
+// At this width and below the launcher is always the edge tab (CSS media query
+// in LV_CSS); keep the two in step.
+const NARROW_QUERY = '(max-width:640px)'
+
+// Does this element paint something a floating pill must not cover: its own
+// text, an image/icon, or a control the visitor could want to click?
+const paintsContent = (el) => {
+  if (el.namespaceURI === 'http://www.w3.org/2000/svg') return true
+  if (/^(IMG|VIDEO|CANVAS|PICTURE|INPUT|TEXTAREA|SELECT|BUTTON|A|LABEL|SUMMARY)$/.test(el.tagName)) return true
+  for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) return true
+  return false
+}
+// A "box": a card, panel or chip the page drew (background, border or shadow)
+// that holds text and is not a full-bleed band. The pill must not lie on one
+// even where it misses the glyphs. A full-bleed section background is the
+// page itself, not a box; a decorative blob holds no text and is skipped.
+const isBox = (el) => {
+  if (!el.textContent || !el.textContent.trim()) return false
+  const r = el.getBoundingClientRect()
+  if (r.right >= window.innerWidth - 8 || r.width >= window.innerWidth - 16) return false
+  const cs = window.getComputedStyle(el)
+  const bg = cs.backgroundColor
+  // A border counts when it frames the element (left + right) or bands it
+  // (top + bottom); a lone divider line on a layout wrapper does not.
+  const framed = (parseFloat(cs.borderLeftWidth) > 0 && parseFloat(cs.borderRightWidth) > 0)
+    || (parseFloat(cs.borderTopWidth) > 0 && parseFloat(cs.borderBottomWidth) > 0)
+  const painted = (bg && bg !== 'transparent' && bg !== 'rgba(0, 0, 0, 0)') || (cs.backgroundImage && cs.backgroundImage !== 'none')
+    || framed || (cs.boxShadow && cs.boxShadow !== 'none')
+  return !!painted
+}
+// What is at this point: content on the hit element itself, or a box among its
+// ancestors (a card's padding hits an inner wrapper first). Stops at body.
+const contentAt = (el) => {
+  if (paintsContent(el)) return true
+  for (let e = el; e && e !== document.body; e = e.parentElement) if (isBox(e)) return true
+  return false
+}
+// Sample a 3x3 grid over the pill's footprint and look at the topmost page
+// element under each point (skipping the widget's own layer).
+const contentUnder = (root, b) => {
+  if (typeof document.elementsFromPoint !== 'function') return false
+  const xs = [b.left + 3, (b.left + b.right) / 2, b.right - 3]
+  const ys = [b.top + 3, (b.top + b.bottom) / 2, b.bottom - 3]
+  for (const x of xs) for (const y of ys) {
+    const el = document.elementsFromPoint(x, y).find((e) => !root.contains(e))
+    if (el && contentAt(el)) return true
+  }
+  return false
+}
 const loadLead = () => { try { const r = sessionStorage.getItem(LEAD_KEY); return r ? JSON.parse(r) : null } catch { return null } }
 const saveLead = (l) => { try { sessionStorage.setItem(LEAD_KEY, JSON.stringify(l)) } catch { /* private window: live without it */ } }
 // A stable per-browser id sent with the lead form AND each live check, so the
@@ -112,6 +169,79 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   const [coach, setCoach] = useState(false)   // one-time nudge pointing at the launcher
   const dismissCoach = () => { setCoach(false); try { sessionStorage.setItem('wc_lv_coach_v1', '1') } catch { /* private window */ } }
   const openWidget = () => { setOpen(true); dismissCoach() }
+
+  // ---- launcher placement: never over page text ---------------------------
+  // The launcher floats over EVERY public page, so its placement is solved
+  // here once (DESIGN-TIME QUALITY GATE: a floating pill must not cover text).
+  //   * docked  - the visitor minimised it: it becomes a slim tab hugging the
+  //               inline-end edge, inside the page gutter, still opening the
+  //               validator on click. Kept for the session.
+  //   * nearFoot - the footer has scrolled up into the launcher's band: the
+  //               pill would sit on the footer's links / legal line, so it docks
+  //               by itself and comes back when the footer scrolls away.
+  //   * overText - the page settled (scroll end / resize / reflow) with text, an
+  //               image or a control under the pill's footprint: it tucks into
+  //               the tab and comes back once that spot is clear. Checked only
+  //               when the page settles, so it never flickers mid-scroll.
+  //   * narrow  - at 640px and below the CSS media query docks it always: a
+  //               full pill covers the right column of any list on a phone.
+  const rootRef = useRef(null)
+  const launchRef = useRef(null)
+  const [docked, setDocked] = useState(loadDock)
+  const [nearFoot, setNearFoot] = useState(false)
+  const [overText, setOverText] = useState(false)
+  const tucked = docked || nearFoot || overText
+  const dockLauncher = () => { setDocked(true); dismissCoach(); try { sessionStorage.setItem(DOCK_KEY, '1') } catch { /* private window */ } }
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return
+    // The widget is mounted right after the page footer; fall back to the
+    // document's footer on a page that mounts it elsewhere.
+    const prev = rootRef.current && rootRef.current.previousElementSibling
+    const foot = prev && prev.tagName === 'FOOTER' ? prev : document.querySelector('footer')
+    if (!foot) return
+    const io = new IntersectionObserver(
+      (entries) => { const e = entries[entries.length - 1]; setNearFoot(!!(e && e.isIntersecting)) },
+      { rootMargin: `0px 0px -${LAUNCH_BAND_PX}px 0px`, threshold: 0 },
+    )
+    io.observe(foot)
+    return () => io.disconnect()
+  }, [])
+  useEffect(() => {
+    if (open || docked) return   // no launcher on screen / visitor's own choice wins
+    const root = rootRef.current
+    // `mayUntuck`: a scroll or resize is the visitor moving the page, so the
+    // pill may come back when its spot is clear. A reflow (animated content
+    // changing height, images loading) may only tuck it, never bring it back,
+    // so moving content can never make the launcher oscillate on its own.
+    const check = (mayUntuck) => {
+      const btn = launchRef.current
+      if (!btn || !root) return
+      if (window.matchMedia && window.matchMedia(NARROW_QUERY).matches) { setOverText(false); return }
+      // Measure the PILL's footprint even while tucked: drop the class for the
+      // measurement only (same task, nothing paints in between).
+      const wasTucked = root.classList.contains('lv-docked')
+      if (wasTucked) root.classList.remove('lv-docked')
+      const b = btn.getBoundingClientRect()
+      if (wasTucked) root.classList.add('lv-docked')
+      const hit = contentUnder(root, b)
+      if (hit || mayUntuck) setOverText(hit)
+    }
+    // One pending check at a time. A scroll/resize restarts the 120ms settle
+    // and grants untuck; a reflow only joins a pending check (or starts a
+    // tuck-only one) and never cancels a granted untuck.
+    let t = 0, want = false
+    const run = () => { t = 0; const w = want; want = false; check(w) }
+    const onMove = () => { want = true; clearTimeout(t); t = setTimeout(run, 120) }
+    const onReflow = () => { if (!t) t = setTimeout(run, 120) }
+    onMove()
+    window.addEventListener('scroll', onMove, { passive: true })
+    window.addEventListener('resize', onMove)
+    // Content can change under the pill without a scroll (a tab switch, images
+    // loading): any reflow of the page body re-checks too (tuck only).
+    const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(onReflow) : null
+    if (ro) ro.observe(document.body)
+    return () => { clearTimeout(t); window.removeEventListener('scroll', onMove); window.removeEventListener('resize', onMove); if (ro) ro.disconnect() }
+  }, [open, docked])
 
   // The banner demo / any page can open the validator directly (its "run YOUR
   // task" nudge dispatches wc:open-validate). Also raise a one-time coachmark that
@@ -241,9 +371,9 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   )
 
   return (
-    <div className="lv-root" data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
+    <div ref={rootRef} className={`lv-root${tucked ? ' lv-docked' : ''}`} data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
       <style>{LV_CSS}</style>
-      {!open && coach && (
+      {!open && coach && !tucked && (
         <div className="lv-coach" role="note">
           <button className="lv-coach-x" onClick={dismissCoach} aria-label={t('widgets.validate.dismiss')}>&times;</button>
           <button type="button" className="lv-coach-body" onClick={openWidget}>
@@ -255,9 +385,15 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
         </div>
       )}
       {!open && (
-        <button className="wm-cov-launch" onClick={openWidget} aria-label={t('widgets.validate.launchAria')}>
-          <span className="lv-live-dot" aria-hidden /> <Sparkles size={16} /> {t('widgets.validate.launch')}
-        </button>
+        <div className="lv-launch">
+          <button ref={launchRef} className="wm-cov-launch" onClick={openWidget} aria-label={t('widgets.validate.launchAria')}>
+            <span className="lv-live-dot" aria-hidden /><Sparkles size={16} /><span className="lv-launch-tx">{t('widgets.validate.launch')}</span>
+          </button>
+          {/* Minimise to the edge tab (pill form only; the tab is already minimal). */}
+          {!tucked && (
+            <button type="button" className="lv-min" onClick={dockLauncher} aria-label={t('widgets.validate.dismiss')} title={t('widgets.validate.dismiss')}>&times;</button>
+          )}
+        </div>
       )}
       {open && (
         <div className="wm-cov-overlay" onClick={() => setOpen(false)}>
@@ -393,6 +529,20 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   )
 }
 
+// Edge-tab (docked) form of the launcher: a 24px tab hugging the inline-end edge,
+// inside the page gutter, so it sits beside the text column instead of on it.
+// Still the same button (opens the validator); only the label is hidden. One
+// definition, used for the docked state AND for every width at or below 640px.
+const LV_DOCK = (s) => `
+${s} .lv-launch{inset-inline-end:0;max-width:none}
+${s} .wm-cov-launch{flex-direction:column;gap:7px;width:24px;padding:10px 0;border-radius:9px 0 0 9px;box-shadow:0 10px 26px -10px rgba(255,122,89,.65);animation:lv-tab-in .2s ease}
+[dir="rtl"] ${s} .wm-cov-launch{border-radius:0 9px 9px 0}
+${s} .wm-cov-launch:hover{transform:translateX(-1px)}
+[dir="rtl"] ${s} .wm-cov-launch:hover{transform:translateX(1px)}
+${s} .wm-cov-launch svg{width:15px;height:15px}
+${s} .lv-launch-tx,${s} .lv-min,${s} .lv-coach{display:none}
+`
+
 // All styles are scoped to .lv-root so the widget is identical on every page and
 // independent of the host. The colour variables are defined here (not inherited
 // from the page), light by default, dark under [data-lvtheme="dark"]. The
@@ -406,11 +556,26 @@ const LV_CSS = `
 [dir="rtl"] .lv-arrow{transform:scaleX(-1)}
 [dir="rtl"] .wm-cov-steps .cmd{direction:ltr}
 [dir="rtl"] .lv-coach-body{text-align:right}
-.wm-cov-launch{position:fixed;inset-inline-end:20px;bottom:20px;z-index:60;display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
+/* Launcher. The fixed wrapper carries the placement (inline-end corner, clear of
+   the device safe area); the pill itself is static inside it so the minimise
+   badge can sit on its corner. nowrap + max-width: the pill can never wrap or
+   push a horizontal scrollbar. Dock rules (edge-tab form) are in LV_DOCK. */
+.lv-launch{position:fixed;inset-inline-end:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:60;max-width:calc(100vw - 32px)}
+.wm-cov-launch{position:relative;display:inline-flex;align-items:center;gap:8px;max-width:100%;white-space:nowrap;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;border:none;border-radius:999px;padding:12px 18px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;box-shadow:0 16px 40px -12px rgba(255,122,89,.6);transition:transform .15s}
 .wm-cov-launch:hover{transform:translateY(-2px)}
+.wm-cov-launch{animation:lv-launch-in .2s ease}
+/* Fade only (no transform): a background tab does not advance animations, so a
+   stalled first frame must still be in place, just not yet visible. */
+@keyframes lv-launch-in{from{opacity:0}to{opacity:1}}
+@keyframes lv-tab-in{from{opacity:0}to{opacity:1}}
+.wm-cov-launch:focus-visible,.lv-min:focus-visible,.lv-coach-x:focus-visible{outline:3px solid var(--em2);outline-offset:3px}
+.wm-cov-launch svg{flex:0 0 auto}
+.lv-launch-tx{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.lv-min{position:absolute;top:-8px;inset-inline-start:-8px;width:22px;height:22px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--mut);font:inherit;font-size:15px;line-height:1;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0;z-index:1}
+.lv-min:hover{color:var(--tx)}
 /* One-time coachmark: after the banner demo, point the visitor at the launcher so
    they run THEIR own task. Bobs gently; dismissible; opens the validator. */
-.lv-coach{position:fixed;inset-inline-end:20px;bottom:78px;z-index:61;width:min(302px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:0 26px 64px -18px rgba(0,0,0,.45);padding:4px;animation:lv-coach-in .42s cubic-bezier(.2,.8,.2,1) both,lv-coach-bob 2.6s ease-in-out .6s infinite}
+.lv-coach{position:fixed;inset-inline-end:16px;bottom:calc(74px + env(safe-area-inset-bottom,0px));z-index:61;width:min(302px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:15px;box-shadow:0 26px 64px -18px rgba(0,0,0,.45);padding:4px;animation:lv-coach-in .42s cubic-bezier(.2,.8,.2,1) both,lv-coach-bob 2.6s ease-in-out .6s infinite}
 @keyframes lv-coach-in{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
 @keyframes lv-coach-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 .lv-coach-x{position:absolute;top:-9px;right:-9px;width:23px;height:23px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--mut);font-size:15px;line-height:1;cursor:pointer;z-index:2}
@@ -590,7 +755,10 @@ const LV_CSS = `
 .wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
 .wm-cov-send:disabled{opacity:.5;cursor:default}
 .wm-cov-sdots{display:inline-flex;gap:3px}.wm-cov-sdots i{width:5px;height:5px;border-radius:50%;background:#1a0e08;animation:wm-cov-bounce 1s infinite}.wm-cov-sdots i:nth-child(2){animation-delay:.15s}.wm-cov-sdots i:nth-child(3){animation-delay:.3s}
-@media(max-width:560px){.wm-cov-launch{inset-inline-end:12px;bottom:12px}.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
+@media(max-width:560px){.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
+${LV_DOCK('.lv-root.lv-docked')}
+@media(max-width:640px){${LV_DOCK('.lv-root')}}
+@media(prefers-reduced-motion:reduce){.lv-root .wm-cov-launch,.lv-root.lv-docked .wm-cov-launch{animation:none}}
 .wm-fw{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:18px}
 .wm-fw-burst{position:absolute;width:0;height:0}
 .wm-fw-burst.b0{left:22%;top:34%}.wm-fw-burst.b1{left:70%;top:26%}.wm-fw-burst.b2{left:46%;top:46%}.wm-fw-burst.b3{left:30%;top:62%}.wm-fw-burst.b4{left:78%;top:56%}.wm-fw-burst.b5{left:56%;top:22%}.wm-fw-burst.b6{left:16%;top:50%}

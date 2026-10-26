@@ -64,6 +64,7 @@ store.setCompanyAiSource(company.id, 'company')
 store.setCompanyAiKeys(company.id, { providerId: 'openai', apiKey: 'sk-test-dummy-key', chatModel: 'gpt-4o-mini', visionModel: 'gpt-4o-mini' })
 const memberPw = 'Passw0rd!member'
 const member = store.createManagedUser({ username: uniq('acme_member_'), password: memberPw, companyId: company.id, companyRole: 'member', tier: 'basic' })
+store.recordLegalAcceptance(member.id, { method: 'test' })   // accept the agreements, as a real member does on first login (the legal gate blocks guiding otherwise)
 store.setWorkPolicy({ companyId: company.id }, {
   armed: true,
   guidanceRules: [
@@ -130,6 +131,7 @@ test('no armed policy: the gate stays silent (policy is null)', async () => {
   store.setCompanyAiKeys(co2.id, { providerId: 'openai', apiKey: 'sk-test-dummy-key', chatModel: 'gpt-4o-mini', visionModel: 'gpt-4o-mini' })
   const pw = 'Passw0rd!np'
   const m2 = store.createManagedUser({ username: uniq('np_member_'), password: pw, companyId: co2.id, companyRole: 'member', tier: 'basic' })
+  store.recordLegalAcceptance(m2.id, { method: 'test' })   // accept, as a real member does on first login
   const j = jar()
   await req(j, 'POST', '/api/work/login', { username: m2.username, password: pw })
   const s = store.createWorkSession(m2.id, { goal: 'upload a file over FTP' })

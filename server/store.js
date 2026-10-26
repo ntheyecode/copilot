@@ -33,6 +33,10 @@ import { normalizeRule, ruleSummary } from './policy_rules.js'
 // i18n locale registry is pure data (no browser APIs at import), so the server
 // validates a pinned language against the SAME list the client menu offers.
 import { resolveLocale } from './locales.js'
+// Legal consent: ONE source of truth for the agreements version (SUPREME RULE II).
+// Every account must have accepted the CURRENT version to use the platform; the
+// per-user acceptance record and the re-consent gate both read LEGAL_VERSION here.
+import { LEGAL_VERSION } from './legal.js'
 // Password -> key derivation for the password-encrypted data export. ONE source of
 // truth for scrypt (SUPREME RULE II): the same KDF the Company Brain customer-held
 // key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,
@@ -515,6 +519,12 @@ export function publicWorkUser(u) {
     // not attested yet (the client shows the pin modal). Default unset.
     language: u.language || null,
     languagePinned: !!u.languagePinned,
+    // Legal consent (clickwrap): what the user last accepted, and whether they
+    // must (re-)accept the CURRENT agreements before using the platform. True for
+    // a social/SSO/admin-created account that has not accepted yet, and for anyone
+    // after a version bump. The client shows a blocking consent modal when true.
+    legal: u.legal ? { version: u.legal.version, at: u.legal.at } : null,
+    legalRequired: !(u.legal && u.legal.version === LEGAL_VERSION),
     // Per-user dashboard accent: a preset key (e.g. "teal") or a #rrggbb hex the
     // client maps to the accent CSS variables; null = the surface's own default.
     accent: u.accent || null,
@@ -1445,9 +1455,48 @@ export function exportCompanyLearnings(companyId) {
   const c = _company(companyId)
   return (c && Array.isArray(c.kb)) ? c.kb.map((l) => ({ app: l.app, fact: l.fact, kind: l.kind, at: l.at, hits: l.hits })) : []
 }
-export function clearCompanyLearnings(companyId) {
+const KB_BACKUP_CAP = 5   // keep the last N auto-backups (bounded ring buffer)
+// SAFEGUARD (owner rule): a good knowledge base must never be lost by accident.
+// Before ANY destructive clear, snapshot the whole KB to a restorable auto-backup
+// on the company record. Bounded, so it cannot grow without limit. Returns the
+// snapshot (or null when there was nothing to back up).
+function _snapshotCompanyKb(c, { byUserId = null, reason = '' } = {}) {
+  if (!c || !Array.isArray(c.kb) || !c.kb.length) return null
+  if (!Array.isArray(c.kbBackups)) c.kbBackups = []
+  const snap = {
+    id: 'kbb' + id(), at: new Date().toISOString(), byUserId: byUserId || null,
+    reason: String(reason || '').slice(0, 300), count: c.kb.length, auto: true,
+    learnings: c.kb.map((l) => ({ app: l.app, fact: l.fact, kind: l.kind, at: l.at, hits: l.hits })),
+  }
+  c.kbBackups.push(snap)
+  if (c.kbBackups.length > KB_BACKUP_CAP) c.kbBackups = c.kbBackups.slice(-KB_BACKUP_CAP)
+  return snap
+}
+export function clearCompanyLearnings(companyId, { byUserId = null, reason = '' } = {}) {
   const c = _company(companyId); const n = c && Array.isArray(c.kb) ? c.kb.length : 0
-  if (c) c.kb = []; persistSoon(); return n
+  // Auto-backup BEFORE wiping, so the admin can restore the good learnings. The
+  // snapshot is taken unconditionally here, so no caller or UI can bypass it.
+  const backup = c ? _snapshotCompanyKb(c, { byUserId, reason }) : null
+  if (c) c.kb = []; persistSoon()
+  return { cleared: n, backupId: backup ? backup.id : null }
+}
+// List the auto-backups (metadata only, newest first) for the admin to review.
+export function listCompanyKbBackups(companyId) {
+  const c = _company(companyId)
+  if (!c || !Array.isArray(c.kbBackups)) return []
+  return c.kbBackups.map((b) => ({ id: b.id, at: b.at, byUserId: b.byUserId, reason: b.reason, count: b.count, auto: !!b.auto })).reverse()
+}
+// One full backup (with its learnings) for download or restore.
+export function getCompanyKbBackup(companyId, backupId) {
+  const c = _company(companyId)
+  if (!c || !Array.isArray(c.kbBackups)) return null
+  return c.kbBackups.find((b) => b.id === backupId) || null
+}
+// Restore a backup into the live KB (replace by default, or merge).
+export function restoreCompanyKbBackup(companyId, backupId, { replace = true } = {}) {
+  const b = getCompanyKbBackup(companyId, backupId)
+  if (!b) throw httpErr(404, 'Backup not found.')
+  return importCompanyLearnings(companyId, Array.isArray(b.learnings) ? b.learnings : [], { replace })
 }
 export function importCompanyLearnings(companyId, arr, { replace = true } = {}) {
   const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
@@ -2380,6 +2429,35 @@ export function createWorkUser({ username, password, email = null, displayName =
   indexUsers()
   persist()
   return u
+}
+// --- Legal consent (clickwrap) ---------------------------------------------
+// Record that a user accepted the CURRENT agreements, with the audit fields that
+// make the consent defensible: version, timestamp, IP, user agent, and how it was
+// captured (signup / first login / re-consent). Append-only history is kept per
+// user (bounded) so the full consent trail survives a re-accept. Called on signup
+// AND on first use by social / SSO / admin-created users (they accept via the gate).
+export function recordLegalAcceptance(userId, { ip = null, userAgent = null, method = 'accept', version = LEGAL_VERSION } = {}) {
+  const u = getUser(userId); if (!u) return null
+  const rec = {
+    version: String(version || LEGAL_VERSION),
+    at: new Date().toISOString(),
+    ip: ip ? String(ip).slice(0, 64) : null,
+    userAgent: userAgent ? String(userAgent).slice(0, 256) : null,
+    method: String(method || 'accept').slice(0, 32),
+  }
+  u.legal = rec
+  if (!Array.isArray(u.legalHistory)) u.legalHistory = []
+  u.legalHistory.push(rec)
+  if (u.legalHistory.length > 20) u.legalHistory = u.legalHistory.slice(-20)
+  persist()
+  return rec
+}
+// True only when the user has accepted the CURRENT version. A version bump (or a
+// never-accepted social/SSO/admin-created account) makes this false, which the
+// gate uses to require (re-)acceptance before the platform can be used.
+export function hasAcceptedCurrentLegal(userOrId) {
+  const u = (userOrId && typeof userOrId === 'object') ? userOrId : getUser(userOrId)
+  return !!(u && u.legal && u.legal.version === LEGAL_VERSION)
 }
 // Every account, as the shared work-admin.js expects (role + products:['work']).
 export function listUsers() {
@@ -4976,6 +5054,42 @@ export function adminSessionDetail(sessionId) {
   }
 }
 export function getWorkSession(workUserId, sessionId) { return findWorkSession(workUserId, sessionId) }
+// Fold a mid-guiding clarification answer into the session's scope, so the next
+// plan sees it the same way it sees the up-front scope-wizard answers (one place
+// that holds "what the user told us about this task"). Capped like createWorkSession.
+export function appendWorkScopeAnswer(workUserId, sessionId, q, a) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) return null
+  const qq = String(q || '').trim().slice(0, 240)
+  const aa = String(a || '').trim().slice(0, 600)
+  if (!qq || !aa) return s
+  if (!Array.isArray(s.scope)) s.scope = []
+  s.scope.push({ q: qq, a: aa })
+  if (s.scope.length > 12) s.scope = s.scope.slice(-12)
+  s.lastActivityAt = Date.now()
+  persist()
+  return s
+}
+// Back / change answer: a mis-tap or an accidental skip should cost the user
+// nothing. Pop the MOST RECENT scope entry whose question matches (so the clarify
+// answer just given is removed, never an up-front wizard answer for a different
+// question), so the guide can re-ask the same question. Returns the removed entry
+// (or null when there was nothing matching to undo).
+export function removeLastWorkScopeAnswer(workUserId, sessionId, question) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s || !Array.isArray(s.scope) || !s.scope.length) return null
+  const norm = (x) => String(x || '').trim().toLowerCase()
+  const want = norm(question)
+  for (let i = s.scope.length - 1; i >= 0; i--) {
+    if (!want || norm(s.scope[i].q) === want) {
+      const [removed] = s.scope.splice(i, 1)
+      s.lastActivityAt = Date.now()
+      persist()
+      return removed || null
+    }
+  }
+  return null
+}
 export function listWorkSessions(workUserId) {
   return (db.workSessions || [])
     .filter((x) => x.workUserId === workUserId)
@@ -5172,16 +5286,15 @@ export function workUserTier(workUserId) {
 // continuous watch loop); 'full' = normal continuous watching.
 // ---- Homepage hero: superadmin-editable rotating headline + subtext pairs ----
 // Each pair: { h: headline text, s: subtext, em: substring of h to brand-gradient
-// (optional) }. Default = the shipped 5 (kept in sync with the client home hero in
-// src/i18n/locales/en.js). The superadmin can replace them from the admin console.
+// (optional) }. Default = the shipped 3 (kept in sync with the client home hero in
+// src/i18n/locales/en.js, honest scoping: no "anything / any field"). The superadmin
+// can replace them from the admin console.
 // The marketing page fetches these; an empty/missing set falls back to its built-in
 // default so the page never renders without a hero.
 const HERO_DEFAULT = [
-  { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong. Any task, any field.' },
-  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'An expert beside you in any app. It reads your screen, gives you the exact next click or command, and catches your mistakes as you make them.' },
-  { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is scanned for injection, exposed secrets, over-broad access and vulnerable libraries before it reaches you.' },
-  { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-  { h: 'The AI is on us, always included.', em: 'on us', s: 'You are never billed for how much AI a task takes. Bring every task, big or small, and focus on the work.' },
+  { h: 'Get work done right, the first time.', em: 'done right', s: 'It reads your screen, gives you the exact next move, and catches a wrong step as it happens.' },
+  { h: 'An expert beside you, in every app.', em: 'expert beside you', s: 'The exact next click or command, on your real screen, in the tools you already use.' },
+  { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped on your machine before anything is sent.' },
 ]
 export function getHeroPairs() {
   const custom = db.work && Array.isArray(db.work.hero) && db.work.hero.length ? db.work.hero : null

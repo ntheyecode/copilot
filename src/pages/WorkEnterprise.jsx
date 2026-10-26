@@ -160,10 +160,10 @@ function Group({ id, kicker, title, lead, children, aside }) {
 
 // The learning loop: four steps, in order. Copy is guarantees only.
 const LOOP = [
-  { icon: UploadCloud, k: '01', t: 'Upload your knowledge', d: 'SOPs, runbooks, playbooks, app walkthroughs, policies, data dictionaries, templates, and skills exported from any AI. Your company admin uploads once; every member inherits it.' },
-  { icon: Target, k: '02', t: 'Every step is grounded in it', d: 'Plans and steps use your app names, your fields, your approval chain and your naming. Not a generic how-to: the way your company actually does it.' },
-  { icon: Hand, k: '03', t: 'It hand-holds, on the real screen', d: 'It watches the screen, points at the exact next step in your own apps, and catches a wrong turn and corrects it as it happens. Read-only: it never clicks, types or runs anything for anyone.' },
-  { icon: RefreshCw, k: '04', t: 'It gets sharper as you add', d: 'A new playbook, a fixed SOP, an updated walkthrough: upload it and the next session reflects it. Guidance improves as your knowledge grows, for your company only.' },
+  { icon: UploadCloud, k: '01', t: 'Upload your knowledge', d: 'Your admin loads SOPs, playbooks, app guides and policies once. Every member inherits them.' },
+  { icon: Target, k: '02', t: 'Every step is grounded in it', d: 'Steps use your app names, your fields, your approval chain. Not a generic how-to.' },
+  { icon: Hand, k: '03', t: 'It hand-holds, on the real screen', d: 'It points at the exact next step in your apps and corrects a wrong turn live. Read-only: it never clicks or types for anyone.' },
+  { icon: RefreshCw, k: '04', t: 'It gets sharper as you add', d: 'Add a playbook or fix an SOP, and the next session reflects it. For your company only.' },
 ]
 
 export default function WorkEnterprise() {
@@ -185,7 +185,7 @@ export default function WorkEnterprise() {
           <div>
             <div className="wen-eyebrow"><Building2 size={14} /> For enterprises &amp; teams</div>
             <h1>Hand-holding for every step. <span className="wen-hl">Trained on how your company works.</span></h1>
-            <p className="wen-sub">WorkCoPilot watches each person's screen and walks them through the exact next step in your own apps, catching a wrong turn and correcting it as it happens. Upload your SOPs, playbooks, app guides and data, and every step is grounded in the way your company actually works. Read-only by design: it never clicks, types or runs anything for your people.</p>
+            <p className="wen-sub">It watches each person's screen and walks them through the exact next step in your own apps, correcting a wrong turn as it happens. Upload your SOPs and playbooks, and every step follows the way your company actually works. Read-only by design: it never clicks or types for your people.</p>
             <div className="wen-ctas">
               <a className="wen-cta" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={16} /></a>
               <a className="wen-cta alt" href="#learn">See how it learns your company <ArrowRight size={15} /></a>
@@ -207,7 +207,7 @@ export default function WorkEnterprise() {
           <div className="wen-kill-head">
             <div className="wen-eyebrow warm"><Sparkles size={14} /> The difference</div>
             <h2>It learns <span className="wen-hl">your</span> enterprise. Your apps, your data, your playbooks.</h2>
-            <p className="wen-lead">Generic assistants know the world. WorkCoPilot knows your company: the apps you run, the fields you fill, the approvals you need, the names you use. Your admin uploads it once, and every plan and every on-screen step speaks your language, getting sharper as your knowledge grows.</p>
+            <p className="wen-lead">Generic assistants know the world. WorkCoPilot knows your company: your apps, your fields, your approvals, your names. Upload once, and every on-screen step speaks your language, sharper as your knowledge grows.</p>
           </div>
 
           <ol className="wen-loop" aria-label="How WorkCoPilot learns your company">
@@ -225,15 +225,15 @@ export default function WorkEnterprise() {
             <div className="wen-ba-col generic">
               <div className="wen-ba-tag"><X size={13} /> Without your knowledge</div>
               <p className="wen-ba-q">"Create the change request."</p>
-              <p className="wen-ba-a">Open your ticketing system and create a new change request. Fill in the required fields, attach the approval, and submit it.</p>
+              <p className="wen-ba-a">Open your ticketing system, create a new change request, fill the required fields, attach the approval, submit.</p>
               <div className="wen-ba-foot">Correct, but your people still have to know which system, which fields, which approval.</div>
             </div>
             <div className="wen-ba-arrow" aria-hidden><ArrowRight size={18} /></div>
             <div className="wen-ba-col yours">
               <div className="wen-ba-tag"><Check size={13} /> Grounded in your company</div>
               <p className="wen-ba-q">"Create the change request."</p>
-              <p className="wen-ba-a">In ServiceNow, go to <b>Change &gt; Create New &gt; Standard</b>. Set <b>Assignment group</b> to <b>Platform-Ops</b>, pick template <b>CHG-STD-07</b>, attach the CAB approval, then Submit. From your <b>Change Playbook, section 3.2</b>.</p>
-              <div className="wen-ba-foot"><Hand size={13} /> Then it watches the screen and hand-holds through each click, and flags the wrong template before it is submitted.</div>
+              <p className="wen-ba-a">In ServiceNow: <b>Change &gt; Create New &gt; Standard</b>. Set <b>Assignment group</b> to <b>Platform-Ops</b>, template <b>CHG-STD-07</b>, attach the CAB approval, Submit. From your <b>Change Playbook, section 3.2</b>.</p>
+              <div className="wen-ba-foot"><Hand size={13} /> It hand-holds through each click and flags the wrong template before it is submitted.</div>
             </div>
           </div>
           <p className="wen-ba-note">Illustrative example. Your steps come from your own uploaded knowledge and apps.</p>
@@ -244,14 +244,14 @@ export default function WorkEnterprise() {
               <span className="wen-trust-ic"><Lock size={18} /></span>
               <div>
                 <b>Private to your tenant. Controlled by your admin.</b>
-                <p>Your knowledge makes your people better, and nobody else's. That is the deal, and it is what makes the pitch work for enterprises.</p>
+                <p>Your knowledge makes your own people better, and nobody else's.</p>
               </div>
             </div>
             <ul className="wen-trust-grid">
-              <li><span className="wen-tick"><ShieldCheck size={15} /></span><div><b>Stays inside your company</b><span>Used only to guide your own members. Never used to train a shared or global model, never shared with another company.</span></div></li>
-              <li><span className="wen-tick"><Download size={15} /></span><div><b>You keep the copy</b><span>Your admin can view what is loaded and download the company knowledge at any time.</span></div></li>
-              <li><span className="wen-tick"><RefreshCw size={15} /></span><div><b>Re-upload or replace</b><span>Merge in new material or replace the whole set. The next session uses what you loaded.</span></div></li>
-              <li><span className="wen-tick"><Trash2 size={15} /></span><div><b>Clear it when you choose</b><span>Clearing or replacing requires a reason and is logged with who, what, when and why.</span></div></li>
+              <li><span className="wen-tick"><ShieldCheck size={15} /></span><div><b>Stays inside your company</b><span>Guides your own members only. Never trains a shared model or reaches another company.</span></div></li>
+              <li><span className="wen-tick"><Download size={15} /></span><div><b>You keep the copy</b><span>View what is loaded and download your knowledge any time.</span></div></li>
+              <li><span className="wen-tick"><RefreshCw size={15} /></span><div><b>Re-upload or replace</b><span>Merge in new material or swap the whole set.</span></div></li>
+              <li><span className="wen-tick"><Trash2 size={15} /></span><div><b>Clear it when you choose</b><span>Clearing needs a reason, logged with who, what, when and why.</span></div></li>
             </ul>
           </div>
 
@@ -262,75 +262,71 @@ export default function WorkEnterprise() {
         </section>
 
         <Group id="security" kicker="Security & privacy" title="Nothing sensitive leaves a device unprotected."
-          lead="Protection is on from the first second and enforced for everyone. What you see on screen is what the platform sees: sensitive values are already masked.">
-          <Feature icon={ScanEye} title="On-device redaction, on by default">Personal and health data, keys, card numbers, IDs and more are redacted on the member's device before anything is sent, and shown as <code>[REDACTED]</code>. It is on for every member and locked by your company policy.</Feature>
-          <Feature icon={FileText} title="Per-session audit log">Every session records what was sent, what was read from the screen, the static and live dependency checks run on any code, what was filtered, and every flag raised. Pull it any time.</Feature>
-          <Feature icon={ShieldCheck} title="Built-in SAST and live dependency check">Code in a session is checked for common weaknesses, and its dependencies are checked live against the OSV vulnerability database before you run anything.</Feature>
-          <Feature icon={Database} title="Encryption at rest">Session artifacts and company data are encrypted at rest with keys you can rotate under your own operational control.</Feature>
-          <Feature icon={Lock} title="Mandatory MFA (TOTP)">Every account sets up an authenticator on first sign-in: password, company SSO and social sign-in all pass through the same second factor.</Feature>
-          <Feature icon={EyeOff} title="Hidden from screen shares">The desktop overlay stays out of screen shares and recordings by default, so guidance never leaks into a meeting.</Feature>
+          lead="Protection is on from the first second and enforced for everyone. Sensitive values are masked before anything is sent.">
+          <Feature icon={ScanEye} title="On-device redaction, on by default">Personal data, keys, card numbers and IDs are masked on the device and shown as <code>[REDACTED]</code>. On for everyone, locked by policy.</Feature>
+          <Feature icon={FileText} title="Per-session audit log">Every session logs what was sent, read, filtered and flagged. Pull it any time.</Feature>
+          <Feature icon={ShieldCheck} title="Built-in SAST and dependency check">Code in a session is scanned for weaknesses and its dependencies checked against the OSV database before you run it.</Feature>
+          <Feature icon={Database} title="Encryption at rest">Session artifacts and company data are encrypted at rest, with keys you can rotate.</Feature>
+          <Feature icon={Lock} title="Mandatory MFA (TOTP)">Every account uses an authenticator. Password, SSO and social sign-in all pass the same second factor.</Feature>
+          <Feature icon={EyeOff} title="Hidden from screen shares">The desktop overlay stays out of screen shares and recordings by default.</Feature>
         </Group>
 
         <Group id="governance" kicker="Governance / DLP" title="One company policy. Every member inherits it."
-          lead="Your written security policy becomes the rules the guide checks every step against. Decide what may leave a device, how long records are kept, and who may remove what, with every destructive action accountable.">
+          lead="Your written security policy becomes the rules every step is checked against. You decide what may leave a device, how long records are kept, and who may remove what.">
           {/* PRIME: the company's own written policy, enforced as the guide works.
               Honesty: it flags and cites, never rewrites or deletes the model's text;
               controls and evidence that support the program, never "makes you compliant". */}
-          <Feature icon={ScrollText} title="Your written security policy, enforced as it guides" tone="prime">Your admin pastes or uploads the company's own security or IT policy; WorkCoPilot extracts its require and forbid rules, and your admin reviews and arms them. From then on, every set of steps, every result and every composed document is checked against those rules on the server. A step that uses a prohibited practice, or skips a required one, is flagged inline, cited to your policy by name and section (for example <code>Acceptable Use Policy, §4.2</code>) with the compliant alternative beside it, and recorded in the session's audit log. It never rewrites the text: it flags, cites and shows the safe way, alongside on-device redaction and the built-in code checks.</Feature>
-          <Feature icon={ListChecks} title="Custom scrub rules">Add your own patterns and words to redact or block, on top of the built-in protections. Members cannot weaken them.</Feature>
-          <Feature icon={Scale} title="Retention windows">Set how long session records and documents are kept. Expiry is automatic and visible.</Feature>
-          <Feature icon={Users} title="Member oversight">Company admins can pull the report and audit log of any member session, completed or in progress.</Feature>
-          <Feature icon={History} title="Accountable destructive actions">Deleting, disabling or clearing anything requires a reason, recorded with who, what, when and why.</Feature>
-          <Feature icon={KeyRound} title="Per-company AI keys, or bring your own">Route your company through its own keys, or bring your own. Your keys, your control, and nothing is shared across companies.</Feature>
+          <Feature icon={ScrollText} title="Your written security policy, enforced as it guides" tone="prime">Paste your company's own security policy and your admin arms its rules. Every step, result and document is then checked against them on the server: a prohibited or skipped-required step is flagged inline and cited to your policy by name and section (for example <code>Acceptable Use Policy §4.2</code>), with the compliant alternative beside it and a line in the audit log. It flags and cites, it never rewrites your text.</Feature>
+          <Feature icon={ListChecks} title="Custom scrub rules">Add your own patterns and words to redact or block. Members cannot weaken them.</Feature>
+          <Feature icon={Scale} title="Retention windows">Set how long session records and documents are kept. Expiry is automatic.</Feature>
+          <Feature icon={Users} title="Member oversight">Admins can pull the report and audit log of any member session, live or complete.</Feature>
+          <Feature icon={History} title="Accountable destructive actions">Deleting or clearing anything requires a reason, logged with who, what, when and why.</Feature>
+          <Feature icon={KeyRound} title="Per-company AI keys, or bring your own">Route through your company's own keys or bring your own. Nothing is shared across companies.</Feature>
           <Feature icon={Globe} title={t('residency.title')}>{t('residency.ent')}</Feature>
         </Group>
 
-        <Group id="alerts" kicker="Security alerts" title="Know the moment a member enters sensitive data."
-          lead="When a member types PII or PHI, it is redacted on their device, and the company admin is told who, where and what kind, never the values.">
-          <Feature icon={Bell} title="Who, where, what, when" tone="amber">Each alert carries the member's name, email and role; the task and the call it happened in; the categories and counts (for example "email x1, card x1"); and the time. The actual values are never stored or sent.</Feature>
-          <Feature icon={ShieldCheck} title="Redacted before submission">The alert is evidence that the protection worked: the sensitive values were masked on the device before anything reached the platform.</Feature>
-        </Group>
-
-        <Group id="siem" kicker="SOC / SIEM integrations" title="Relay alerts into the tools your SOC already runs."
-          lead="Connect your SIEM, SOAR, chat and observability tools from the company console. Test the connection with a sample alert. Only alert metadata is relayed."
+        <Group id="alerts" kicker="Security alerts & SOC" title="Know the moment sensitive data is entered. Relay it to your SOC."
+          lead="When a member enters PII or PHI, it is masked on their device and your admin is told who, where and what kind, never the values. Relay those alerts into the SIEM, SOAR and chat tools you already run."
           aside={(
             <div className="wen-chips" aria-label="Supported destinations">
               {SIEM_TARGETS.map((t) => <span key={t} className="wen-chip cyan"><Radio size={12} /> {t}</span>)}
             </div>
           )}>
-          <Feature icon={Radio} title="Automatic relay">New security alerts are relayed to every enabled connector as they happen, with the last delivery status shown per connector.</Feature>
-          <Feature icon={Lock} title="Write-only secrets">Tokens and keys are stored write-only: the console never shows them back, and they can be rotated without re-entering anything else.</Feature>
+          <Feature icon={Bell} title="Who, where, what, when" tone="amber">Each alert names the member, the task, and the kind and count of data (for example email x1, card x1). The values are never stored or sent.</Feature>
+          <Feature icon={ShieldCheck} title="Redacted before submission">Proof the protection worked: values were masked on the device before anything reached the platform.</Feature>
+          <Feature icon={Radio} title="Automatic relay">New alerts reach every enabled connector as they happen, with per-connector delivery status.</Feature>
+          <Feature icon={Lock} title="Write-only secrets">Tokens are stored write-only and can be rotated. The console never shows them back.</Feature>
           <Feature icon={Globe} title="Generic Webhook and Syslog / CEF">Anything not on the list connects through a signed webhook or a Syslog / CEF stream.</Feature>
         </Group>
 
         <Group id="identity" kicker="Identity" title="Sign in the way your company already does."
-          lead="Invite-only provisioning, company single sign-on with your identity provider, social sign-in for individuals, and an authenticator on every path.">
-          <Feature icon={KeyRound} title="Company SSO (OIDC)">Fourteen identity providers, including Google, Microsoft Entra, Okta, Auth0, OneLogin and Ping. Members are provisioned invite-only, never self-served.</Feature>
-          <Feature icon={Sparkles} title="Email-domain auto-detect">Type a company email at sign-in and WorkCoPilot recognizes the domain and routes straight to your single sign-on.</Feature>
-          <Feature icon={Users} title="Social sign-in and profile completion">Individuals can continue with Google, Microsoft or Facebook; a new account completes its profile, then sets up its authenticator.</Feature>
+          lead="Invite-only provisioning, company single sign-on with your identity provider, and an authenticator on every path.">
+          <Feature icon={KeyRound} title="Company SSO (OIDC)">Fourteen identity providers including Google, Microsoft Entra, Okta, Auth0 and Ping. Members are invited, never self-served.</Feature>
+          <Feature icon={Sparkles} title="Email-domain auto-detect">Type a company email and WorkCoPilot routes straight to your single sign-on.</Feature>
+          <Feature icon={Users} title="Social sign-in">Individuals continue with Google, Microsoft or Facebook, then set up their authenticator.</Feature>
         </Group>
 
         <Group id="compliance" kicker="Compliance evidence & reporting" title="Evidence your auditors can work with."
-          lead="Reports that support your compliance program, grounded in what actually happened, mapped to the frameworks you answer to, and sealed so they can be verified.">
-          <Feature icon={Scale} title="Mapped to 18 frameworks">Per-task compliance evidence reports map the controls exercised in a session to eighteen frameworks, each with its own focus. Evidence that supports your program; WorkCoPilot does not certify compliance.</Feature>
-          <Feature icon={ShieldCheck} title="Authenticity seal">Every report carries a verifiable authenticity seal, so a recipient can confirm it is genuine and unaltered.</Feature>
-          <Feature icon={FileText} title="Big-4-grade session reports">Cover, contents, charts, the confirmed steps and the outcome, with scrubbed milestone screenshots as evidence of each confirmed step.</Feature>
+          lead="Reports that support your compliance program, mapped to the frameworks you answer to and sealed so they can be verified.">
+          <Feature icon={Scale} title="Mapped to 18 frameworks">Per-task evidence reports map the controls exercised in a session to eighteen frameworks. Evidence that supports your program; not a certification.</Feature>
+          <Feature icon={ShieldCheck} title="Authenticity seal">Every report carries a verifiable seal, so a recipient can confirm it is genuine and unaltered.</Feature>
+          <Feature icon={FileText} title="Big-4-grade session reports">Cover, contents, charts, the confirmed steps and the outcome, with scrubbed milestone screenshots as evidence.</Feature>
         </Group>
 
         <Group id="exec" kicker="Executive & commercial" title="Run it like a company product."
           lead="An executive view of productivity, your brand on the product, and billing that matches how companies buy.">
-          <Feature icon={BarChart3} title="Executive ROI dashboard">An executive role with a productivity dashboard: tasks, time, and an illustrative view of time and cost saved, exportable to PDF, image and CSV.</Feature>
+          <Feature icon={BarChart3} title="Executive ROI dashboard">A productivity dashboard of tasks, time, and an illustrative view of time and cost saved. Export to PDF, image or CSV.</Feature>
           <Feature icon={Palette} title="White-label branding">Your company name and logo on the product your people use.</Feature>
-          <Feature icon={Building2} title="Unlimited seats, one admin console">Unlimited seats and tasks across your company, managed from one central admin console for the whole organization.</Feature>
-          <Feature icon={Receipt} title="Per-company pricing, seat pools, statements and invoices">Separate user and admin seat pools, a company minute pool, pricing set for your company, and billing statements with downloadable invoices.</Feature>
+          <Feature icon={Building2} title="Unlimited seats, one admin console">Unlimited seats and tasks, managed from one central admin console.</Feature>
+          <Feature icon={Receipt} title="Per-company pricing and billing">Separate user and admin seat pools, a company minute pool, your pricing, and statements with downloadable invoices.</Feature>
         </Group>
 
         <Group id="platform" kicker="Platform" title="Desktop, web and mobile. Hand-holding, not automation."
-          lead="Your people use it where they work. WorkCoPilot guides their hands step by step; it never acts for them and never generates content on their behalf.">
-          <Feature icon={Monitor} title="Desktop overlay">A floating, see-through overlay that stays on top of the app you are working in, hidden from screen shares.</Feature>
-          <Feature icon={Globe} title="Web">Nothing to install. Sign in and share a screen; a floating window keeps the steps above your work.</Feature>
-          <Feature icon={Smartphone} title="Mobile">Point the camera at a screen, a device or paper and follow the steps from your phone.</Feature>
-          <Feature icon={Bot} title="No content generation">When a task needs a document or an image, WorkCoPilot hands you a well-formed prompt for your own AI, with security and privacy already built in. It never produces the content itself.</Feature>
+          lead="Your people use it where they work. It guides their hands step by step; it never acts for them and never generates content for them.">
+          <Feature icon={Monitor} title="Desktop overlay">A see-through overlay that stays on top of the app you are in, hidden from screen shares.</Feature>
+          <Feature icon={Globe} title="Web">Nothing to install. Sign in, share a screen, and a floating window keeps the steps above your work.</Feature>
+          <Feature icon={Smartphone} title="Mobile">Point your phone's camera at a screen, a device or paper and follow the steps.</Feature>
+          <Feature icon={Bot} title="No content generation">When a task needs a document or image, it hands you a ready prompt for your own AI. It never produces the content itself.</Feature>
         </Group>
 
         <section className="wen-final">

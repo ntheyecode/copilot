@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, ArrowLeft, Loader2, Check, Building2, Lock, ShieldCheck, Eye, FileText, Sparkles, AlertTriangle, BookOpen, ScanEye, Mail, KeyRound } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Loader2, Check, Building2, Lock, ShieldCheck, Eye, FileText, Sparkles, ScanEye, Mail, KeyRound } from 'lucide-react'
 import { useAuth } from '../auth.jsx'
 import MfaGate from '../components/MfaGate.jsx'
 import { api } from '../api.js'
+import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
@@ -84,10 +85,12 @@ function SocialMark({ id }) {
   )
 }
 
-// WEB brand aside: the PRODUCT, not an illustration - a dark "watching" window
-// with a goal, what it can see, steps ticked, the current step called out, and
-// two floating cards. Decorative (aria-hidden); the real copy is the headline
-// and the three trust rows.
+// WEB brand aside: the PRODUCT, not an illustration - one calm, dark "watching"
+// window with a goal, what it can see, steps ticked, and the current step called
+// out. Decorative (aria-hidden); the real copy is the headline and the three
+// trust rows. REDESIGN (owner, 2026-10-26): the two floating speech-bubble cards
+// that overlapped this window ("confusing boxes ... text overlaps boxes") are
+// gone; the window alone shows the step-by-step benefit, cleanly and corporately.
 function WlStage({ t }) {
   return (
     <div className="wl-stage" aria-hidden="true">
@@ -106,14 +109,6 @@ function WlStage({ t }) {
           <li><i /> {t('login.stage.s4')}</li>
           <li><i /> {t('login.stage.s5')}</li>
         </ol>
-      </div>
-      <div className="wl-float warn">
-        <span className="ic"><AlertTriangle size={15} /></span>
-        <div><b>{t('login.stage.warnB')}</b><span>{t('login.stage.warnS')}</span></div>
-      </div>
-      <div className="wl-float learn">
-        <span className="ic"><BookOpen size={15} /></span>
-        <div><b>{t('login.stage.learnB')}</b><span>{t('login.stage.learnS')}</span></div>
       </div>
     </div>
   )
@@ -144,6 +139,20 @@ export default function WorkLogin() {
   // Compliance sign-up fields (signup mode only).
   const [sName, setSName] = useState(''); const [sEmail, setSEmail] = useState(''); const [sPhone, setSPhone] = useState(''); const [sCompany, setSCompany] = useState('')
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false)
+  // Clickwrap consent (owner requirement): a REQUIRED, unchecked-by-default box
+  // on the create-account form. Submit is blocked until it is ticked, and the
+  // signup request carries acceptTerms only then. The agreement links/titles come
+  // from the server manifest (single source of truth), with a static fallback.
+  const [accepted, setAccepted] = useState(false)
+  const [legalDocs, setLegalDocs] = useState(null)
+  useEffect(() => {
+    let dead = false
+    api.legalManifest()
+      .then((r) => { if (!dead) setLegalDocs((r && Array.isArray(r.docs) && r.docs) || null) })
+      .catch(() => { if (!dead) setLegalDocs(null) })
+    return () => { dead = true }
+  }, [])
+  const acceptDocs = (legalDocs || LEGAL_FALLBACK_DOCS).filter((d) => !d.business)   // the core five apply to every signup
   const [forgotBusy, setForgotBusy] = useState(false); const [forgotSent, setForgotSent] = useState(false)
   const doForgot = async () => {
     const login = (uName.trim() || (typeof window !== 'undefined' ? window.prompt(t('login.form.forgotPrompt')) : '') || '').trim()
@@ -342,11 +351,14 @@ export default function WorkLogin() {
     if (mode === 'signup') {
       if (!sName.trim()) { setErr(t('login.err.enterName')); return }
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(sEmail.trim())) { setErr(t('login.err.validEmail')); return }
+      // The agreements must be accepted to create an account (clickwrap). The
+      // button is also disabled, this is the submit-time backstop.
+      if (!accepted) { setErr('Please accept the agreements to create your account.'); return }
     }
     setBusy(true); setErr('')
     try {
       const r = mode === 'signup'
-        ? await signup({ username: u, password: uPass, name: sName.trim(), email: sEmail.trim(), phone: sPhone.trim(), company: sCompany.trim() })
+        ? await signup({ username: u, password: uPass, name: sName.trim(), email: sEmail.trim(), phone: sPhone.trim(), company: sCompany.trim(), acceptTerms: accepted })
         : await login(u, uPass)
       if (r && r.mfaSetup) { setMfa({ mode: 'setup', enroll: r.enroll, username: u }); setBusy(false); return }
       if (r && r.mfaRequired) { setMfa({ mode: 'verify', username: u }); setBusy(false); return }
@@ -420,7 +432,6 @@ export default function WorkLogin() {
         <div className="wl-pitch">
           <p className="wl-pitch-k"><Sparkles size={13} aria-hidden="true" /> {t('login.pitchK')}</p>
           <p className="wl-pitch-h">{t.rich('login.pitchH', null, { hl: (c) => <span className="wl-hl">{c}</span> })}</p>
-          <p className="wl-pitch-p">{t('login.pitchP')}</p>
         </div>
         <WlStage t={t} />
         <ul className="wl-proof" aria-label={t('login.proofAria')}>
@@ -584,15 +595,32 @@ export default function WorkLogin() {
                     <span>{t.rich('login.form.improve', null, { a: (c) => <a href="/workcopilot/terms#improvement">{c}</a> })}</span>
                   </div>
                 )}
-                <button className="wl-cta" type="submit" disabled={working} aria-busy={working}>
+                {/* REQUIRED clickwrap consent: replaces the old passive "by signing up
+                    you agree" line. Submit is gated on this box being ticked, and the
+                    agreement links come from the server manifest. */}
+                {mode === 'signup' && (
+                  <div className="wl-accept">
+                    <input
+                      id="wl-accept"
+                      type="checkbox"
+                      checked={accepted}
+                      onChange={(e) => { setAccepted(e.target.checked); if (e.target.checked && err) setErr('') }}
+                      aria-required="true"
+                      aria-invalid={err && !accepted ? 'true' : undefined}
+                    />
+                    <label htmlFor="wl-accept">
+                      I have read and agree to the {acceptDocs.map((d, i) => (
+                        <span key={d.key}>{i > 0 ? (i === acceptDocs.length - 1 ? ' and ' : ', ') : ''}<a href={d.path} target="_blank" rel="noopener">{d.title}</a></span>
+                      ))}.
+                    </label>
+                  </div>
+                )}
+                <button className="wl-cta" type="submit" disabled={working || (mode === 'signup' && !accepted)} aria-busy={working}>
                   {working ? <Loader2 size={16} className="wl-spin" aria-hidden="true" /> : null}
                   {working ? <span className="wl-sr">{t('login.form.working')} </span> : null}
                   {ctaLabel}{' '}<ArrowRight size={16} aria-hidden="true" className="wl-arrow" />
                 </button>
                 </>)}
-                {mode === 'signup' && (
-                  <p className="wl-consent">{t.rich('login.form.consent', null, { terms: (c) => <a href="/workcopilot/terms">{c}</a>, privacy: (c) => <a href="/workcopilot/privacy">{c}</a> })}</p>
-                )}
                 {planName && !checkingOut && (
                   <p className="wl-next"><Lock size={12} aria-hidden="true" /> {t('login.form.next', { plan: planName })}</p>
                 )}
@@ -605,6 +633,15 @@ export default function WorkLogin() {
               </button>
             </div>
           )}
+
+          {/* Trust cues on the card itself: corporate, security-first. Shown in
+              the app and on narrow web (where the brand aside is hidden); the
+              wide-web aside already carries the same three, so it is hidden there. */}
+          <ul className="wl-cardtrust" aria-label={t('login.proofAria')}>
+            {t('login.proof').map((p, i) => (
+              <li key={i}><span className="wl-cardtrust-ic">{[<Eye size={13} aria-hidden="true" />, <ShieldCheck size={13} aria-hidden="true" />, <FileText size={13} aria-hidden="true" />][i]}</span>{p.b}</li>
+            ))}
+          </ul>
 
           {/* BOTTOM HELPER: its own slot, centered, wraps cleanly. Web: switch between
               log in / create account. App: the one "create on the web" mention. */}
@@ -672,7 +709,6 @@ const CSS = `
 .wl-web .wl-pitch-k{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.11em;text-transform:uppercase;color:var(--cyan);margin:0 0 12px}
 .wl-web .wl-pitch-h{font-family:var(--wl-display);font-weight:800;font-size:clamp(32px,3.6vw,48px);line-height:1.04;letter-spacing:-.035em;color:var(--tx);margin:0;text-wrap:balance}
 .wl-web .wl-hl{background:linear-gradient(92deg,var(--em),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
-.wl-web .wl-pitch-p{color:var(--mut);font-size:16px;line-height:1.55;max-width:46ch;margin:14px 0 0;text-wrap:pretty}
 
 /* the live-step stage */
 .wl-web .wl-stage{position:relative;width:min(100%,520px);margin:0 0 auto 0;padding:0 0 24px 0;animation:wlrise .6s cubic-bezier(.2,.8,.2,1) both}
@@ -700,15 +736,6 @@ const CSS = `
 .wl-web .wl-win-steps li.now i{border:2px solid var(--s-em);background:radial-gradient(circle,var(--s-em) 38%,transparent 42%);margin-top:3px}
 .wl-web .wl-win-steps li.now small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--s-em);margin-bottom:2px}
 .wl-web .wl-win-steps li.now b{color:var(--s-tx);background:rgba(255,255,255,.08);border-radius:4px;padding:0 4px}
-.wl-web .wl-float{position:absolute;z-index:2;display:flex;gap:10px;align-items:flex-start;width:238px;padding:11px 12px;border-radius:14px;background:var(--panel);border:1px solid var(--line);box-shadow:0 1px 2px rgba(26,31,54,.06),0 22px 44px -22px rgba(26,31,54,.4);animation:wlfloat 6s ease-in-out infinite}
-.wl-web .wl-float .ic{flex:none;width:30px;height:30px;border-radius:9px;display:grid;place-items:center}
-.wl-web .wl-float b{display:block;font-size:13px;font-weight:700;line-height:1.25;color:var(--tx)}
-.wl-web .wl-float span:not(.ic){display:block;font-size:11.5px;line-height:1.4;color:var(--mut);margin-top:2px}
-.wl-web .wl-float.warn{inset-inline-end:-14px;top:146px;border-color:rgba(183,121,31,.36)}
-.wl-web .wl-float.warn .ic{background:rgba(183,121,31,.12);color:#b7791f}
-.wl-web .wl-float.learn{inset-inline-end:6px;bottom:-4px;border-color:var(--em-line);animation-delay:-3s}
-.wl-web .wl-float.learn .ic{background:var(--em-fill-2);color:var(--em)}
-@keyframes wlfloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
 .wl-web .wl-proof{list-style:none;margin:22px 0 0;padding:20px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .wl-web .wl-proof li{display:flex;gap:10px;align-items:flex-start}
 .wl-web .wl-proof b{display:block;font-size:13px;font-weight:700;line-height:1.3;color:var(--tx)}
@@ -801,6 +828,16 @@ const CSS = `
 .wl-next svg{color:var(--em);flex:none}
 .wl-consent{color:var(--mut);font-size:11.5px;line-height:1.45;margin:10px 0 0;text-align:center}
 .wl-consent a{color:var(--cyan);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+/* REQUIRED clickwrap consent row (create account). The checkbox resets the
+   full-width text-input styling .wl-card input applies, wraps cleanly at any
+   width, and tints to the brand accent. */
+.wl-accept{display:flex;gap:9px;align-items:flex-start;margin:2px 0 11px;font-size:12.5px;line-height:1.5;color:var(--tx-2)}
+.wl-accept input[type=checkbox]{flex:none;appearance:auto;-webkit-appearance:checkbox;width:17px;height:17px;min-width:17px;padding:0;margin:1px 0 0;border:none;background:none;box-shadow:none;border-radius:0;accent-color:var(--em);cursor:pointer}
+.wl-accept input[type=checkbox]:focus{box-shadow:none;background:none}
+.wl-accept input[type=checkbox]:focus-visible{outline:2px solid var(--em);outline-offset:2px}
+.wl-accept label{cursor:pointer;font-weight:500;overflow-wrap:anywhere}
+.wl-accept a{color:var(--cyan);font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.wl-accept a:hover{color:var(--em)}
 .wl-forgot{display:inline-block;background:none;border:none;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
 .wl-forgot:hover{color:var(--cyan)}
 .wl-forgot-sent{display:flex;align-items:flex-start;gap:6px;font-size:12.5px;line-height:1.4;color:var(--tx);margin:-3px 0 10px}
@@ -843,12 +880,20 @@ const CSS = `
 .wl-switch a,.wl-link{color:var(--cyan);font-weight:700;text-decoration:underline;text-underline-offset:3px;background:none;border:0;padding:0;font:inherit;font-weight:700;cursor:pointer}
 .wl-switch a:hover,.wl-link:hover{color:var(--em)}
 .wl-legal{color:var(--mut);font-size:11.5px;margin-top:8px;text-align:center;line-height:1.4}
+/* card trust cues: compact, centered, security-first. No top border of their own
+   (the switch row below carries the single divider); items wrap as a group and
+   each stays on one line, so nothing overflows. Hidden on wide web, where the
+   brand aside already shows the same three. */
+.wl-cardtrust{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 14px}
+.wl-cardtrust li{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--tx-2);white-space:nowrap}
+.wl-cardtrust-ic{display:inline-flex;flex:none;color:var(--em)}
+@media(min-width:881px){.wl-web .wl-cardtrust{display:none}}
 
 [data-theme='dark'] .wl-card{box-shadow:var(--shadow),inset 0 1px 0 rgba(255,255,255,.05)}
 [data-theme='dark'] .wl-bg::after{opacity:.42}
 [data-theme='dark'] .wl-prov{background:var(--panel-2)}
 [data-theme='dark'] .wl-web .wl-card{box-shadow:none}
-@media(prefers-reduced-motion:reduce){.wl-orb{animation:none}.wl-stage,.wl-float,.wl-panel,.wl-ssostep,.wl-ssodetect{animation:none}.wl-cta,.wl-prov{transition:none}}
+@media(prefers-reduced-motion:reduce){.wl-orb{animation:none}.wl-stage,.wl-panel,.wl-ssostep,.wl-ssodetect{animation:none}.wl-cta,.wl-prov{transition:none}}
 
 /* ===== IN-APP MODE (.wl-app): one light, COMPACT, centered sign-in card. =====
    FORCED LIGHT: the desktop shell sets data-theme="dark" on <html>; the owner
@@ -880,7 +925,7 @@ const CSS = `
 [data-theme='dark'] .wl.wl-app .wl-ssodetect{box-shadow:none}
 [data-theme='dark'] .wl.wl-app .wl-bg::after{opacity:.22}
 
-@media(max-width:1180px){.wl-web .wl-brand{padding:28px 34px 26px}.wl-web .wl-main{padding:28px 34px}.wl-web .wl-float.warn{inset-inline-end:0}}
+@media(max-width:1180px){.wl-web .wl-brand{padding:28px 34px 26px}.wl-web .wl-main{padding:28px 34px}}
 @media(max-width:1040px){.wl-web .wl-proof{grid-template-columns:1fr;gap:10px}.wl-web .wl-stage{width:min(100%,460px)}}
 @media(max-width:880px){
  .wl.wl-web{grid-template-columns:1fr}

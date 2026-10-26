@@ -233,11 +233,11 @@ export default {
     },
     'use-cases': {
       title: 'Use Cases - WorkCoPilot by AdmireVeda',
-      description: 'What WorkCoPilot guides, in detail: technical setup and config, builds and integrations, AI and automation, product work, marketing, accounting and office tasks, legal and compliance, and everyday work on any screen.',
+      description: 'What WorkCoPilot guides, in detail: technical setup and config, builds and integrations, AI and automation, product work, marketing, accounting and office tasks, and everyday operational work on your screen.',
     },
     fields: {
-      title: 'Fields we cover - {total} professional fields - WorkCoPilot by AdmireVeda',
-      description: 'WorkCoPilot guides work across {total} professional fields in {families} families, from software and security to finance, operations, marketing, healthcare and education. One tool your whole company can use.',
+      title: 'Fields WorkCoPilot is strong in - {total} fields - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot guides hands-on work across the {total} fields it is strong in, in {families} families, from software and security to finance, operations and marketing. One tool your whole company can use.',
     },
     pricing: {
       title: 'Pricing - WorkCoPilot by AdmireVeda',
@@ -268,43 +268,44 @@ export default {
   home: {
     meta: {
       title: 'WorkCoPilot by AdmireVeda - Your expert, on every screen',
-      description: 'WorkCoPilot plans your task with the strongest AI, then guides you step by step on your real screen and corrects a wrong move as it happens, in any app. Read-only, private by design, documented when you finish.',
+      description: 'WorkCoPilot guides you step by step on your real screen, catches a wrong move as it happens, and keeps your data on your device. Planned by the strongest AI available to you.',
     },
     badge: 'Your expert, on every screen',
-    // Five rotating lines, each a DIFFERENT promise. Lines that restated a
-    // section further down the page (the strongest-AI band, the enterprise
-    // headline, compliance) were cut so the page never says one thing twice.
+    // Three rotating lines, each a DIFFERENT promise, each one tight headline
+    // plus one short supporting line (owner, 2026-10-26: "this page is like a
+    // book"). The security and the AI-included promises moved to the hero cues
+    // and the proof section, so nothing is said twice.
     hero: [
-      { h: 'Get <em>anything</em> done right, the first time.', s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong. Any task, any field.' },
-      { h: 'The <em>sharpest person</em> in the room, on every screen.', s: 'An expert beside you in any app. It reads your screen, gives you the exact next click or command, and catches your mistakes as you make them.' },
-      { h: 'Code that is <em>safe to run</em>, checked before you see it.', s: 'Every command, script and fix is scanned for injection, exposed secrets, over-broad access and vulnerable libraries before it reaches you.' },
-      { h: '<em>Private by design</em>, redacted on your device.', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-      { h: 'The AI is <em>on us</em>, always included.', s: 'You are never billed for how much AI a task takes. Bring every task, big or small, and focus on the work.' },
+      { h: 'Get work <em>done right</em>, the first time.', s: 'It reads your screen, gives you the exact next move, and catches a wrong step as it happens.' },
+      { h: 'An <em>expert beside you</em>, in every app.', s: 'The exact next click or command, on your real screen, in the tools you already use.' },
+      { h: '<em>Private by design</em>, redacted on your device.', s: 'Sensitive data is stripped on your machine before anything is sent.' },
     ],
-    cta: { start: 'Start guiding me', demo: 'See a 60-second demo' },
-    anyapp: {
-      cap: 'Works in any app you already use: web, desktop, on-prem, or your own in-house tools.',
-      tiles: ['Web browser', 'Terminal', 'Code editor', 'Spreadsheets', 'Documents', 'Design tools'],
-    },
+    cta: { start: 'Start now', demo: 'Watch the 60-second demo' },
+    // Three trust cues under the CTAs: the facts a buyer checks first, one line each.
+    cuesAria: 'What you can count on',
+    cues: ['Works in the apps you already use', 'Read-only: never clicks or runs anything for you', 'AI included, never billed extra'],
+    // Hands-on, operational and technical work only (the product guides you
+    // through work on a screen; it is not a writing or document engine).
     marquee: [
-      'AWS', 'Invoices', 'Kubernetes', 'Payroll', 'RAG pipelines', 'Tax filing', 'Firewalls', 'Pitch decks',
-      'Terraform', 'Grant applications', 'CI/CD', 'Budgets', 'Stripe', 'Procurement', 'Ansible', 'Onboarding',
-      'Postgres', 'Insurance claims', 'n8n', 'Contracts', 'Grafana', 'Resumes', 'Docker', 'Expense reports',
-      'SIEM', 'Fundraising', 'Salesforce', 'Email campaigns', 'Shopify', 'Board decks', 'Python & APIs', 'Inventory',
-      'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
+      'AWS', 'Invoices', 'Kubernetes', 'Payroll', 'RAG pipelines', 'Tax filing', 'Firewalls', 'Terraform',
+      'CI/CD', 'Budgets', 'Stripe', 'Procurement', 'Ansible', 'Onboarding', 'Postgres', 'Insurance claims',
+      'n8n', 'Grafana', 'Docker', 'Expense reports', 'SIEM', 'Salesforce', 'Email campaigns', 'Shopify',
+      'Python & APIs', 'Inventory', 'SSO / OAuth', 'Compliance', 'Nginx',
     ],
-    best: {
-      eyebrow: 'The strongest AI available to you',
-      h: 'Planned by the <ai>strongest AI</ai> you can use. <em>Then guided, watched and corrected, live on your screen.</em>',
-      p: 'Say the goal. It plans with the strongest AI on your key, then walks you through it on your real screen, one exact move at a time, and <b>catches a wrong step before it costs you</b>. A live loop, not a page of instructions.',
-      link: 'See everything it does',
-      receiptAria: 'How each task is planned, guided, watched and corrected',
-      planK: 'plan', planV: '<b>strongest AI</b> on your key',
-      guideK: 'guide', guideV: '<b>live</b>, step by step',
-      watchK: 'watch', watchV: 'your <b>screen</b>, as you go',
-      correctK: 'correct', correctV: 'a wrong step, <b>caught and fixed</b>',
-      proofOk: 'Planned by the strongest AI for you',
-      proofDim: 'the best one available on the key in use',
+    // HOW: the core value as four benefit tiles. The eyebrow carries the
+    // "planned by the strongest AI available to you" promise (a benefit, never a
+    // vendor or model name). Replaces the former mono plan/guide/watch/correct
+    // receipt, which read as mechanism rather than benefit.
+    how: {
+      eyebrow: 'Planned by the strongest AI available to you',
+      h2: 'Say the goal. Get the next move. <em>Finish right.</em>',
+      steps: [
+        { t: 'Say the goal', d: 'One line. The strongest AI available to you plans the job.' },
+        { t: 'Get the exact next move', d: 'Live on your screen: the click, the command, the value.' },
+        { t: 'Wrong step? Caught.', d: 'Flagged before it costs you, then back on track.' },
+        { t: 'Finish, documented', d: 'A write-up of every step, ready to share or repeat.' },
+      ],
+      link: 'See how it works',
     },
     // THE enterprise section (one, not two): the ROI ledger carries the money
     // argument, the control chips (home.enterprise.chips) carry the assurance,
@@ -312,39 +313,38 @@ export default {
     roi: {
       eyebrow: 'For companies and teams',
       h2: 'Do more with the team you already have.',
-      lead: '<b>Same payroll, more output.</b> Your people take on the specialist work you were about to hire or outsource, guided step by step in the apps they already use, with every step documented as it happens. No new headcount. No rip-and-replace.',
+      lead: '<b>Same payroll, more output.</b> Your people take on the specialist work you were about to outsource, guided in the apps they already use.',
       splitAria: 'Before and after, for the same team',
       beforeTag: 'Before',
       beforeH: 'Where the budget goes today.',
       afterTag: 'With WorkCoPilot',
       afterH: 'What the same team does now.',
       rows: [
-        { t: 'Specialist projects', before: 'Migrations, hardening, pentests, builds: sent to contractors or a partner.', now: 'Done by <em>your own people</em>, step by step, the first time.' },
-        { t: 'Time to ship', before: 'Work queues behind the one person who knows how.', now: 'Anyone on the team can take the next step. <em>Weeks become days.</em>' },
-        { t: 'Consultants and partners', before: 'A statement of work for every new platform or tool.', now: 'Your team stands it up, and the know-how <em>stays in-house</em>.' },
-        { t: 'Onboarding', before: 'Months of shadowing before a new hire is trusted on real work.', now: 'Productive from their <em>first task</em>, in your apps, your way.' },
-        { t: 'Mistakes', before: 'Found in review, in production, or by the auditor.', now: 'A wrong turn is <em>caught on screen</em> and corrected as it happens.' },
-        { t: 'Documentation', before: 'Written up later, if at all.', now: 'Every step logged as it happens. <em>Audit-ready</em> when you finish.' },
+        { t: 'Specialist projects', before: 'Sent to contractors or a partner.', now: 'Done by <em>your own people</em>, the first time.' },
+        { t: 'Time to ship', before: 'Queued behind the one person who knows how.', now: 'Anyone takes the next step. <em>Weeks become days.</em>' },
+        { t: 'Onboarding', before: 'Months of shadowing.', now: 'Productive from the <em>first task</em>.' },
+        { t: 'Mistakes', before: 'Found in production, or by the auditor.', now: '<em>Caught on screen</em> as they happen.' },
+        { t: 'Documentation', before: 'Written up later, if at all.', now: 'Every step logged. <em>Audit-ready.</em>' },
       ],
       controlsLbl: 'Enterprise controls, included',
-      note: 'One company policy, set once. Redaction and guidance rules apply to every seat, and your SOC sees who and what kind, never the values.',
+      note: 'One company policy, set once. Your SOC sees who and what kind, never the values.',
       ctaTeam: 'Talk about your team',
       ctaEnt: 'See every enterprise control',
     },
     fields: {
-      eyebrow: 'Every field. One tool.',
-      h2: 'Expert in your field, <em>whatever your field is.</em>',
-      sub: 'Technical or not: {total} professional fields in {families} families, with steps that read like a specialist wrote them. Pick yours.',
-      statsAria: 'Coverage at a glance',
+      eyebrow: 'Many fields. One tool.',
+      h2: 'Hands-on work, <em>in your field.</em>',
+      sub: 'From cloud and code to finance and admin: {total} fields in {families} families.',
+      statsAria: 'Fields at a glance',
       cards: [
-        { k: 'Technical Setup & Config', d: 'Firewalls, IDS/IPS, cloud, DevOps, infrastructure.' },
-        { k: 'Build & Implement', d: 'Pipelines, integrations, end-to-end builds.' },
-        { k: 'AI & Automation', d: 'Agents, RAG, enterprise AI, automated workflows.' },
-        { k: 'Product & Innovation', d: 'Prototype, build and ship a brand new idea.' },
-        { k: 'Marketing & Growth', d: 'Campaigns, analytics, launches, outreach.' },
-        { k: 'Accounting & Office', d: 'Reconciliations, reports, spreadsheets, filings.' },
-        { k: 'Legal & Compliance', d: 'Reviews, forms, process, compliance checks.' },
-        { k: 'Anything else', d: 'If it is on a screen, you are guided through it.' },
+        { k: 'Technical Setup & Config', d: 'Firewalls, cloud, DevOps.' },
+        { k: 'Build & Implement', d: 'Pipelines, integrations, builds.' },
+        { k: 'AI & Automation', d: 'Agents, RAG, workflows.' },
+        { k: 'Product & Innovation', d: 'Prototype, build, ship.' },
+        { k: 'Marketing & Growth', d: 'Campaigns, analytics, launches.' },
+        { k: 'Accounting & Office', d: 'Reconciliations, spreadsheets, filings.' },
+        { k: 'Legal & Compliance', d: 'Compliance checks, forms, process.' },
+        { k: 'Operations & more', d: 'Support, admin, back office.' },
       ],
       exploreAll: 'Explore the use cases',
       browseAll: 'Browse all {total} fields',
@@ -356,10 +356,10 @@ export default {
       h2: 'Safe on real work. Private by default.',
       sec: {
         eyebrow: 'Security',
-        title: 'Written the secure way. Checked before you see it.',
+        title: 'Every command checked before you see it.',
         points: [
-          'Every command, script and fix is checked for injection, hard-coded secrets and over-broad access before it reaches you.',
-          'Read-only by design. It guides you and never clicks, types or runs anything on your machine.',
+          'Injection, hard-coded secrets and over-broad access: caught before they reach you.',
+          'Read-only. It never clicks, types or runs anything on your machine.',
         ],
         chips: ['injection', 'secrets', 'least-priv'],
         checked: 'checked',
@@ -369,18 +369,18 @@ export default {
         eyebrow: 'Privacy',
         title: 'Scrubbed on your device, before anything leaves.',
         points: [
-          'PII, PHI and secrets are masked or tokenized on your machine. The real values never leave, and the answer is rebuilt locally.',
-          'You decide what gets scrubbed. On your own AI key, calls stay on that key. Nothing is rerouted.',
+          'PII, PHI and secrets are masked on your machine. The real values never leave.',
+          'On your own AI key, calls stay on that key.',
         ],
         link: 'See privacy in action',
       },
       ctaShow: 'See data protection in action',
-      ctaPaper: 'Read the Security and Privacy paper (PDF)',
+      ctaPaper: 'Security and privacy paper (PDF)',
     },
     pricing: {
       eyebrow: 'Pricing',
       h2: 'Simple plans. Real guided time.',
-      sub: 'Guided tasks and live guidance hours every month, with the AI included. Pause anytime and pick up where you left off.',
+      sub: 'Guided tasks and live guidance hours every month. AI included.',
       billingAria: 'Billing period',
       monthly: 'Monthly',
       annual: 'Annual',
@@ -400,21 +400,21 @@ export default {
       // upTo were daily-framed and still exist in other locales): reusing an old
       // name would let a stale daily string swallow a monthly number.
       monthlyLine: '{tasks} tasks a month · up to {hours} hrs a month*',
-      tasksMonthLine: '{tasks} guided tasks a month ({dailyTasks} a day - unused ones bank as credits)',
-      hoursMonthLine: 'Up to {hours} hours of guidance a month ({dailyHours} h a day, resets at midnight)*',
-      mins: 'Billed per minute you use, never by the hour.',
+      tasksMonthLine: '{tasks} guided tasks a month ({dailyTasks} a day, unused ones bank)',
+      hoursMonthLine: 'Up to {hours} hours of guidance a month ({dailyHours} h a day)*',
+      mins: 'Billed per minute, never by the hour.',
       choose: 'Choose {plan}',
       extraHour: 'Extra hour {price}',
       // The one asterisk note under the cards. Plan-independent on purpose: the
       // per-plan daily rate is already on each card, so this states the model.
-      footnote: '*Each day you get your plan\'s guided tasks and hours of guidance. Daily hours reset at midnight (US Eastern) - they don\'t roll over. Unused tasks bank as credits you keep, or trade 2 tasks for 1 extra hour (expires that day). Billed per minute you actually use.',
+      footnote: '*Daily hours reset at midnight (US Eastern) and do not roll over. Unused tasks bank as credits, or trade 2 tasks for 1 extra hour that day.',
       // One note next to the task counts on the cards: a "task" is substantial.
-      taskMeaning: 'Each task is a major task: a single goal, guided from start to finish, with all its sub-steps.',
+      taskMeaning: 'A task is one goal, guided from start to finish.',
       feats: {
         // The daily-task line is NOT here any more: it is rendered from the live
         // pricing config (tasksLine/hoursLine above) so a cap change follows.
-        lite: ['Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
-        basic: ['Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'],
+        lite: ['Step-by-step guidance', 'Exact commands, code & links', 'Privacy & security built in'],
+        basic: ['Everything in Lite', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
         premium: ['Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
       },
@@ -432,15 +432,15 @@ export default {
       chips: ['SSO (OIDC)', 'Mandatory MFA', 'Unlimited seats', 'Your SOPs and playbooks', 'Audit logs', 'SOC / SIEM relay', 'DPA', 'On-prem on request'],
     },
     final: {
-      h2: 'Stop guessing. Start being guided.',
-      p: 'Bring any task. It takes you from the first step to done.',
+      h2: 'Stop guessing. Start finishing.',
+      p: 'From the first step to done, on your screen.',
       useYourWay: 'Use it your way',
       browser: { rec: 'No install', b: 'Use in your browser', i: 'Nothing to install', title: 'WorkCoPilot runs right in your browser - nothing to download, no installation needed. Just sign in and go.' },
       windows: { b: 'Windows app', i: 'Desktop overlay', aria: 'Download the Windows desktop app', title: 'A floating overlay that sits on top of whatever app you are working in' },
       android: { b: 'Android app', i: 'Phone & camera' },
       note2: 'Sign in with Google, Microsoft or Facebook, or use your work email for your company SSO. <a>Enterprise sign-in</a>.',
     },
-    disclaimer: '<b>Responsible use.</b> WorkCoPilot supports lawful, legitimate work only. It will not help build weapons or means of mass harm, create malware or exploits, break into systems or accounts you do not own, or do anything illegal or harmful. Requests like these are declined.',
+    disclaimer: '<b>Responsible use.</b> Lawful, legitimate work only. Requests to build weapons or malware, cause harm, or break into systems and accounts you do not own are declined.',
     demo: {
       watching: 'watching',
       watchingTitle: 'reading your screen',

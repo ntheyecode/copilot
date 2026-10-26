@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera,
+  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
@@ -22,6 +22,7 @@ import AccentPicker from '../../components/AccentPicker.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
 import PolicyRules from './sections/PolicyRules.jsx'
+import HelpCompany from './sections/HelpCompany.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import * as SSO from '../../shared/sso_guide.js'
@@ -63,6 +64,7 @@ const SECTIONS = [
   { id: 'integrations', label: 'SOC / SIEM', icon: Globe, title: 'SOC / SIEM integrations', sub: 'Relay security alerts automatically into your SIEM, SOAR, chat and observability tools. Only alert metadata is ever sent - the kind and count of what was redacted plus who and where - never the values.' },
   { id: 'sessions', label: 'Sessions', icon: Activity, title: 'Member sessions', sub: 'Every session your people run - completed or in progress. Pull the report or audit log for any of them.' },
   { id: 'tickets', label: 'Support', icon: LifeBuoy, title: 'Support', sub: 'Open a ticket and talk to the WorkCoPilot team.' },
+  { id: 'help', label: 'Help', icon: BookOpen, title: 'Help', sub: 'How to run your company console, screen by screen.' },
   { id: 'activity', label: 'Activity', icon: ListChecks, title: 'Activity', sub: 'A record of what happened across your company.' },
   { id: 'settings', label: 'Settings', icon: SettingsIcon, title: 'Settings and profile', sub: 'Your profile, your password, and your company details.' },
 ]
@@ -1807,6 +1809,7 @@ export default function WorkCompanyAdmin() {
       case 'brainsecurity': return <BrainSecurity />
       case 'sessions': return <SessionsSection />
       case 'tickets': return <SupportTickets mode="user" />
+      case 'help': return <HelpCompany onOpen={setActive} />
       case 'activity': return <ActivitySection />
       case 'alerts': return <AlertsSection onSeen={alertsSeen} />
       case 'integrations': return <IntegrationsSection />

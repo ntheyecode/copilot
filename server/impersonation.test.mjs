@@ -83,6 +83,7 @@ test('superadmin impersonates an individual: session flips, /me shows the banner
   // Stop restores the admin's own view, no banner, and is audited.
   r = await req(j, 'POST', '/api/work/admin/impersonate/stop')
   assert.equal(r.status, 200)
+  assert.equal(r.data.redirect, '/work/admin', 'stop sends the superadmin back to the console, not the user dashboard')
   r = await req(j, 'GET', '/api/work/me')
   assert.equal(r.data.user.id, adminId, 'session restored to the admin')
   assert.ok(!r.data.impersonating, 'banner cleared after stop')

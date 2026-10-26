@@ -4,7 +4,7 @@
 // a clear "first run pending" state until a run has been recorded. Never shows
 // the internal detail (exact model / per-task). Spec: docs/accuracy-benchmark-spec.md
 import React, { useEffect, useState } from 'react'
-import { BarChart3, ShieldCheck, FlaskConical, ArrowLeft, Lock } from 'lucide-react'
+import { BarChart3, ShieldCheck, FlaskConical, Lock, ArrowRight, Check } from 'lucide-react'
 import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'   // per-route title / description / canonical (WEB-01)
@@ -12,39 +12,45 @@ import { useT } from '../i18n/index.jsx'   // localized <title>/description (seo
 
 const DOMAIN_LABEL = { dev: 'Dev / data', finance: 'Spreadsheet / finance', cross: 'Cross-profession', security: 'Security / code review' }
 const pct = (x) => `${Math.round((Number(x) || 0) * 100)}%`
+const ci = (a) => `${pct(a[0])} to ${pct(a[1])}`   // CI range, no dash
 const fmtDate = (s) => { try { return new Date(s).toLocaleString() } catch { return '' } }
 
+// One tier scorecard: the pass rate reads at a glance (big number + a bar the
+// width of the rate), then the honest per-domain breakdown. The table is built
+// to FIT its card at every width: the domain name wraps, the three number
+// columns stay on one line and right-align, so the card never grows a scrollbar.
 function ModelScore({ title, summary }) {
   if (!summary || !summary.overall) return null
   const o = summary.overall
+  const rate = Math.max(0, Math.min(1, Number(o.rate) || 0))
   return (
     <section className="wbm-card" aria-label={title}>
       <h3 className="wbm-card-h">{title}</h3>
-      <div className="wbm-overall">
-        <span className="wbm-big">{pct(o.rate)}</span>
-        <span className="wbm-meta">{o.pass}/{o.n} correct &middot; 95% CI {pct(o.ci95[0])}&ndash;{pct(o.ci95[1])}{o.aiGradedCount ? ` · ${o.aiGradedCount} AI-graded` : ''}</span>
-      </div>
-      {/* DESIGN-03: the four-column table scrolls inside its own container on a
-          narrow card, so it never widens the card or the page at 320/375. */}
-      <div className="wbm-tscroll">
-        <table className="wbm-table">
-          <caption className="wbm-sr">{title}: result correctness by domain</caption>
-          <thead><tr><th scope="col">Domain</th><th scope="col">Correct</th><th scope="col">Rate</th><th scope="col">95% CI</th></tr></thead>
-          <tbody>
-            {Object.entries(summary.domains || {}).map(([d, v]) => (
-              <tr key={d}><th scope="row">{DOMAIN_LABEL[d] || d}</th><td>{v.pass}/{v.n}</td><td>{pct(v.rate)}</td><td>{pct(v.ci95[0])}&ndash;{pct(v.ci95[1])}</td></tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <div className="wbm-big">{pct(o.rate)}</div>
+      <div className="wbm-bar" aria-hidden="true"><span style={{ width: `${rate * 100}%` }} /></div>
+      <p className="wbm-meta">{o.pass}/{o.n} correct &middot; 95% CI {ci(o.ci95)}{o.aiGradedCount ? ` · ${o.aiGradedCount} AI-graded` : ''}</p>
+      <table className="wbm-table">
+        <caption className="wbm-sr">{title}: result correctness by domain</caption>
+        <thead><tr><th scope="col">Domain</th><th scope="col" className="wbm-num">Correct</th><th scope="col" className="wbm-num">Rate</th><th scope="col" className="wbm-num">95% CI</th></tr></thead>
+        <tbody>
+          {Object.entries(summary.domains || {}).map(([d, v]) => (
+            <tr key={d}>
+              <th scope="row">{DOMAIN_LABEL[d] || d}</th>
+              <td className="wbm-num">{v.pass}/{v.n}</td>
+              <td className="wbm-num">{pct(v.rate)}</td>
+              <td className="wbm-num">{ci(v.ci95)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </section>
   )
 }
 
-// Accessibility (WEB-08): <main> was already here; this pass adds a hidden H2
-// over the tier scorecards (their titles are H3s), table captions, column and
-// row header scopes, a status role on the pending notice, hidden decorative
-// icons, visible focus rings, and a link blue that meets AA on the page tint.
+// Accessibility (WEB-08): <main>, a hidden H2 over the tier scorecards (their
+// titles are H3s), table captions, column/row header scopes, a status role on
+// the pending notice, hidden decorative icons, visible focus rings, and a link
+// blue that meets AA on the page tint.
 export default function WorkBenchmark() {
   const t = useT()
   useSeo({
@@ -69,14 +75,20 @@ export default function WorkBenchmark() {
       <main className="wbm-main" id="main">
         <div className="wbm-eyebrow"><FlaskConical size={13} aria-hidden="true" /> Accuracy benchmark</div>
         <h1>How accurate is WorkCoPilot?</h1>
-        <p className="wbm-lead">We measure <b>result correctness</b>: given a task with a known-correct answer, does WorkCoPilot return the right one. We report the real number with its sample size and confidence interval, per domain, for each AI tier the product uses, separately. We do not publish rounded-up figures, and a held-out portion of the tasks is kept private so the numbers cannot be gamed.</p>
+        <p className="wbm-lead">One measure: given a task with a known-correct answer, does WorkCoPilot return it. Real pass rates, with sample size and 95% confidence interval. Nothing rounded up.</p>
+
+        <ul className="wbm-chips" aria-label="How these numbers stay honest">
+          <li><Check size={14} aria-hidden="true" /> Graded mechanically where possible</li>
+          <li><Check size={14} aria-hidden="true" /> A held-out set kept private</li>
+          <li><Check size={14} aria-hidden="true" /> Per tier, never a model name</li>
+        </ul>
 
         {pending ? (
           <div className="wbm-pending" role="status">
             <BarChart3 size={18} aria-hidden="true" />
             <div>
               <b>First public run pending.</b>
-              <p>The benchmark is built and tested. Numbers appear here once a public run has been recorded. Until then, the methodology below is the honest statement of how we will measure.</p>
+              <p>The benchmark is built and tested. Numbers land here once a public run is recorded.</p>
             </div>
           </div>
         ) : (
@@ -90,7 +102,7 @@ export default function WorkBenchmark() {
             {Array.isArray(data.sampleTasks) && data.sampleTasks.length ? (
               <div className="wbm-sample">
                 <h2>Sample tasks</h2>
-                <p className="wbm-dim">A public sample (held-out tasks are scored but never shown).</p>
+                <p className="wbm-dim">A public sample. Held-out tasks are scored but never shown.</p>
                 <ul>{data.sampleTasks.map((t, i) => <li key={i}><span className="wbm-tag">{DOMAIN_LABEL[t.domain] || t.domain}</span> {t.prompt}</li>)}</ul>
               </div>
             ) : null}
@@ -99,19 +111,28 @@ export default function WorkBenchmark() {
 
         <section className="wbm-method">
           <h2>How we measure</h2>
-          <ul>
-            <li><b>Result correctness.</b> Each task is run through the product the same way a user's would be, and the returned answer is graded against a known-correct reference.</li>
-            <li><b>Grading, most to least rigorous.</b> Wherever an answer can be verified mechanically, it is. Only where it cannot does an AI judge compare it against the reference. AI-judged results are labeled as such, and a random sample is re-checked by a person each run.</li>
-            <li><b>Four domains.</b> Dev and data, spreadsheet and finance, a cross-profession mix, and security and code review.</li>
-            <li><b>Honest reporting.</b> Per-domain and overall pass rates with sample sizes and 95% confidence intervals, refreshed each release. Public task set plus a private held-out portion, so the numbers resist overfitting.</li>
-            <li><b>Tier labels.</b> Results are reported separately for each AI tier the product uses. We never name the specific model or provider.</li>
-          </ul>
-          <div className="wbm-note"><ShieldCheck size={14} aria-hidden="true" /> <span>We would rather publish a true, smaller number with its confidence interval than a round figure without one. Where a domain has few tasks, we say so.</span></div>
+          <div className="wbm-mgrid">
+            <div className="wbm-m"><b>Result correctness</b><span>Each task runs through the product, then is graded against a known-correct reference.</span></div>
+            <div className="wbm-m"><b>Verified first</b><span>Mechanical checks where an answer allows it. An AI judge only otherwise, flagged, with a human spot-check each run.</span></div>
+            <div className="wbm-m"><b>Four domains</b><span>Dev and data, spreadsheet and finance, a cross-profession mix, security and code review.</span></div>
+            <div className="wbm-m"><b>Honest numbers</b><span>Pass rates with sample sizes and 95% CIs. A private held-out set resists overfitting.</span></div>
+          </div>
+          <div className="wbm-note"><ShieldCheck size={14} aria-hidden="true" /> <span>We would rather publish a true, smaller number with its confidence interval than a round one without. Thin domains are labeled.</span></div>
         </section>
 
-        <nav className="wbm-cta" aria-label="Related pages">
+        <section className="wbm-cta">
+          <div>
+            <h2>See what it does, then what it costs</h2>
+            <p>WorkCoPilot guides people through real work to a finished result.</p>
+          </div>
+          <div className="wbm-ctabtns">
+            <a className="wbm-btn" href="/workcopilot/pricing">See pricing <ArrowRight size={16} aria-hidden="true" /></a>
+            <a className="wbm-btn alt" href="/workcopilot/how-it-works">How it works</a>
+          </div>
+        </section>
+
+        <nav className="wbm-links" aria-label="Related pages">
           <a className="wbm-link" href="/workcopilot/security"><Lock size={13} aria-hidden="true" /> Security &amp; data handling</a>
-          <a className="wbm-link" href="/workcopilot/how-it-works">How it works</a>
           <a className="wbm-link" href="/">Back to home</a>
         </nav>
       </main>
@@ -126,47 +147,66 @@ const CSS = `
 /* a11y: visually hidden text; visible focus ring (never outline:none) */
 .wbm-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .wbm a:focus-visible,.wbm button:focus-visible{outline:2px solid var(--em);outline-offset:3px;border-radius:6px}
-.wbm-brand{display:inline-flex;align-items:center;gap:9px;font-weight:700;color:var(--ink);text-decoration:none}
-.wbm-back:hover{color:var(--ink)}
-.wbm-main{max-width:860px;margin:0 auto;padding:20px 20px 72px}
+.wbm-main{max-width:900px;margin:0 auto;padding:20px 20px 72px}
 .wbm-eyebrow{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--em);border:1px solid rgba(10,127,168,.25);background:rgba(10,127,168,.06);padding:4px 10px;border-radius:999px}
 .wbm h1{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:clamp(26px,4vw,38px);letter-spacing:-.02em;line-height:1.1;margin:14px 0 0}
-.wbm-lead{color:var(--mut);font-size:16px;line-height:1.6;max-width:70ch;margin:14px 0 24px}
+.wbm-lead{color:var(--mut);font-size:16px;line-height:1.55;max-width:64ch;margin:12px 0 0}
+.wbm-chips{list-style:none;display:flex;flex-wrap:wrap;gap:8px 10px;padding:0;margin:16px 0 24px}
+.wbm-chips li{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:5px 12px}
+.wbm-chips svg{color:var(--em);flex-shrink:0}
 .wbm-pending{display:flex;gap:12px;align-items:flex-start;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15)}
 .wbm-pending svg{color:var(--em);flex-shrink:0;margin-top:2px}
+.wbm-pending b{font-size:15px}
 .wbm-pending p{color:var(--mut);font-size:14px;line-height:1.55;margin:4px 0 0}
 .wbm-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:10px}
-.wbm-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15)}
-.wbm-card-h{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:0;font-family:inherit}
-.wbm-overall{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin:8px 0 14px}
-.wbm-big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:34px;letter-spacing:-.02em;color:var(--ink)}
-.wbm-meta{font-size:12.5px;color:var(--mut)}
-.wbm-tscroll{overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
-.wbm-table{width:100%;border-collapse:collapse;font-size:13px}
-.wbm-table thead th{white-space:nowrap}
-.wbm-table th{text-align:left;color:var(--mut);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
-.wbm-table tbody th{color:var(--ink);font-weight:600}
-.wbm-table td{padding:6px 8px;border-bottom:1px solid var(--line);color:var(--ink)}
+.wbm-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 1px 2px rgba(26,31,54,.04),0 10px 26px -16px rgba(26,31,54,.15);min-width:0}
+.wbm-card-h{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:0 0 6px;font-family:inherit}
+.wbm-big{font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:40px;line-height:1;letter-spacing:-.02em;color:var(--ink)}
+.wbm-bar{height:7px;border-radius:999px;background:rgba(10,127,168,.12);overflow:hidden;margin:10px 0 8px}
+[data-theme='dark'] .wbm-bar{background:rgba(57,211,255,.14)}
+.wbm-bar span{display:block;height:100%;border-radius:999px;background:var(--em)}
+.wbm-meta{font-size:12.5px;color:var(--mut);margin:0 0 14px}
+.wbm-table{width:100%;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+.wbm-table th,.wbm-table td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}
+.wbm-table thead th{text-align:left;color:var(--mut);font-weight:600}
+.wbm-table .wbm-num{text-align:right;white-space:nowrap;color:var(--ink);font-variant-numeric:tabular-nums}
+.wbm-table thead th.wbm-num{color:var(--mut)}
+.wbm-table tbody th{text-align:left;color:var(--ink);font-weight:600;line-height:1.3;padding-right:8px}
 .wbm-table tr:last-child td,.wbm-table tbody tr:last-child th{border-bottom:none}
 .wbm-when{color:var(--mut);font-size:12.5px;margin:6px 0 24px}
 .wbm-sample{margin-bottom:24px}
-.wbm-sample h2,.wbm-method h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:18px;margin:0 0 6px}
+.wbm-sample h2,.wbm-method h2,.wbm-cta h2{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;margin:0}
+.wbm-sample h2,.wbm-method h2{font-size:18px;margin-bottom:6px}
 .wbm-dim{color:var(--mut);font-size:13px;margin:0 0 8px}
 .wbm-sample ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
 .wbm-sample li{font-size:13.5px;line-height:1.5;color:var(--ink)}
 .wbm-tag{display:inline-block;font-size:11px;font-weight:700;color:var(--em);background:rgba(10,127,168,.08);border:1px solid rgba(10,127,168,.2);border-radius:6px;padding:1px 7px;margin-right:6px}
 .wbm-method{margin-top:14px}
-.wbm-method ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:8px}
-.wbm-method li{font-size:14.5px;line-height:1.6;color:var(--ink)}
-.wbm-note{display:flex;gap:9px;align-items:flex-start;margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13.5px;line-height:1.55;color:var(--mut)}
+.wbm-mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.wbm-m{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 15px}
+.wbm-m b{display:block;font-size:14px;color:var(--ink);margin-bottom:3px}
+.wbm-m span{display:block;font-size:13px;line-height:1.5;color:var(--mut)}
+.wbm-note{display:flex;gap:9px;align-items:flex-start;margin-top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;font-size:13px;line-height:1.55;color:var(--mut)}
 .wbm-note svg{color:var(--em);flex-shrink:0;margin-top:1px}
-.wbm-cta{display:flex;gap:18px;flex-wrap:wrap;margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
+.wbm-cta{display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-top:26px;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;box-shadow:0 10px 26px -16px rgba(26,31,54,.18)}
+.wbm-cta h2{font-size:19px;letter-spacing:-.01em}
+.wbm-cta p{color:var(--mut);font-size:13.5px;margin:4px 0 0}
+.wbm-ctabtns{display:flex;gap:10px;flex-wrap:wrap}
+.wbm-btn{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;font-size:14px;font-weight:700;text-decoration:none;border-radius:10px;padding:10px 16px;background:var(--em);color:#fff;border:1px solid var(--em)}
+.wbm-btn:hover{filter:brightness(1.05)}
+.wbm-btn.alt{background:transparent;color:var(--em)}
+.wbm-btn.alt:hover{background:rgba(10,127,168,.06)}
+.wbm-links{display:flex;gap:18px;flex-wrap:wrap;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
 .wbm-link{display:inline-flex;align-items:center;gap:6px;color:var(--em);text-decoration:none;font-size:14px;font-weight:600}
 .wbm-link:hover{text-decoration:underline}
 @media(max-width:720px){
   .wbm-grid{grid-template-columns:1fr}
+  .wbm-mgrid{grid-template-columns:1fr}
+  .wbm-cta{flex-direction:column;align-items:flex-start}
+  .wbm-ctabtns{width:100%}
+  .wbm-btn{flex:1;justify-content:center;min-height:44px}
   /* DESIGN-06: comfortable one-handed tap targets for the footer links */
-  .wbm-cta{gap:4px 18px}
-  .wbm-link,.wbm-back{min-height:40px}
+  .wbm-links{gap:4px 18px}
+  .wbm-link{min-height:40px}
 }
 `

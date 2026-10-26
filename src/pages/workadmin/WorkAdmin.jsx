@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import AccentPicker from '../../components/AccentPicker.jsx'
 import Companies from './sections/Companies.jsx'
@@ -32,6 +32,7 @@ import EmailTemplates from './sections/EmailTemplates.jsx'
 import Finance from './sections/Finance.jsx'
 import Subscribers from './sections/Subscribers.jsx'
 import Cancelled from './sections/Cancelled.jsx'
+import HelpSuper from './sections/HelpSuper.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
@@ -50,6 +51,7 @@ const SECTIONS = [
   { id: 'leads', label: 'Leads', icon: UserPlus, title: 'Leads', sub: 'Everyone who ran a live validation on the demo or sign-in page - newest first.' },
   { id: 'hero', label: 'Hero', icon: Megaphone, title: 'Homepage hero', sub: 'The rotating headline and subtext on the public homepage. Superadmin edits; other admins view.' },
   { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
+  { id: 'help', label: 'Help', icon: BookOpen, title: 'Help', sub: 'How to run the admin console, screen by screen.' },
   { id: 'incidents', label: 'Incidents', icon: ShieldAlert, title: 'System incidents', sub: 'Real causes behind the "system is busy" message users see - AI quota, keys, 5xx, timeouts. Users never see these.' },
   { id: 'affiliates', label: 'Affiliates', icon: Share2, title: 'Affiliate program', sub: 'Approve affiliates, set commission rates, track referrals and run Stripe Connect payouts.' },
   { id: 'claims', label: 'Claims', icon: ShieldCheck, title: 'Business claims', sub: 'Every public claim mapped to the file and code that backs it, with an honesty status. MFA-gated; download a signed report.' },
@@ -168,6 +170,7 @@ export default function WorkAdmin() {
       case 'leads': return <Leads />
       case 'hero': return <Hero isSuperAdmin={isSuperAdmin} />
       case 'tickets': return <SupportTickets mode="admin" />
+      case 'help': return <HelpSuper isSuperAdmin={isSuperAdmin} onOpen={setActive} />
       case 'incidents': return <Incidents />
       case 'affiliates': return <Affiliates isSuperAdmin={isSuperAdmin} />
       case 'claims': return <Claims />

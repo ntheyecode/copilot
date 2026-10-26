@@ -16,6 +16,10 @@ const DIST = path.join(ROOT, 'dist')
 // intentionally. These are allowed at the root and under the media dirs below.
 const MEDIA_EXT = new Set(['.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.mp4', '.webm', '.pdf'])
 const MEDIA_DIRS = new Set(['buddies', 'media', 'img', 'images'])
+// In-app help screenshots: public/help/<role>/<name>.png|webp (served on purpose,
+// referenced by the three dashboards' Help sections). Screenshot formats only.
+const HELP_DIR = 'help'
+const HELP_EXT = new Set(['.png', '.webp', '.jpg', '.jpeg'])
 const ASSET_EXT = new Set(['.js', '.css', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.json', '.mp4', '.webm'])
 const ROOT_EXT = new Set(['.png', '.svg', '.ico', '.webmanifest', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm', '.pdf'])
 const ROOT_NAMES = new Set(['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'llms.txt'])
@@ -65,12 +69,17 @@ function classify(rel) {
     if (ASSET_EXT.has(ext)) return null
     return `extension "${ext || '(none)'}" not allowed under copilot-assets/`
   }
+  // In-app help screenshots under help/**: screenshot image types only.
+  if (parts[0] === HELP_DIR) {
+    if (HELP_EXT.has(ext)) return null
+    return `extension "${ext || '(none)'}" not allowed under help/ (screenshots only: png, webp, jpg)`
+  }
   // Public media directories (avatars, images): media file types only.
   if (MEDIA_DIRS.has(parts[0])) {
     if (MEDIA_EXT.has(ext)) return null
     return `extension "${ext || '(none)'}" not allowed under ${parts[0]}/ (media only)`
   }
-  return 'outside allowlist (only copilot-assets/**, media dirs and root files are permitted)'
+  return 'outside allowlist (only copilot-assets/**, help/**, media dirs and root files are permitted)'
 }
 
 function main() {

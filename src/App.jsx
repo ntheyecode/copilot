@@ -1,7 +1,8 @@
 import { lazy, Suspense, useEffect } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import ConsentBanner from './components/ConsentBanner.jsx'   // GDPR/CCPA consent, mounted globally
+import LegalConsentGate from './components/LegalConsentGate.jsx'  // unskippable clickwrap / re-consent gate for signed-in users
 import { capturePendingRef } from './consent.js'              // hold a ?ref referral until attribution consent
 import WorkMarketing from './pages/WorkMarketing.jsx'
 import WorkDemo from './pages/WorkDemo.jsx'
@@ -63,6 +64,20 @@ function RootRedirect() {
   return <Navigate to={admin ? '/work/admin' : companyAdmin ? '/work/company' : '/work'} replace />
 }
 
+// Single wiring point for the legal consent gate: every signed-in surface renders
+// through this layout route, so the blocking modal covers the guide app AND the
+// dashboards in ONE place. Public/marketing/login/legal routes stay outside it,
+// so a logged-out visitor (and a signed-in user reading an agreement in a new
+// tab) sees the site normally. The gate itself is a no-op unless the server
+// reports user.legalRequired === true.
+function GatedSurface() {
+  return (
+    <LegalConsentGate>
+      <Outlet />
+    </LegalConsentGate>
+  )
+}
+
 export default function App() {
   // Capture a ?ref referral once on load, held transiently until the visitor
   // allows attribution (consent.js). No non-essential cookie is set before then.
@@ -103,22 +118,26 @@ export default function App() {
       <Route path="/workcopilot/contact" element={<WorkContact />} />
       <Route path="/affliate" element={<AffiliatePage />} />
       <Route path="/affiliate" element={<AffiliatePage />} />
+      {/* Public token-based password set page (not signed in): stays ungated. */}
       <Route path="/work/set-password" element={<WorkSetPassword />} />
-      {/* The app itself. WorkPage self-gates on the session the server reports. */}
-      <Route path="/work" element={<WorkPage />} />
-      {/* Completed tasks + session logs: standalone pages in the dashboard's white style. */}
-      <Route path="/work/tasks" element={<WorkTasks />} />
-      <Route path="/work/completed" element={<CompletedTasks />} />
-      <Route path="/work/logs" element={<WorkLogs />} />
-      {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
-      <Route path="/work/buddy" element={<WorkBuddy />} />
-      {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
-      <Route path="/work/guide" element={<WorkFullGuide />} />
-      {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
-      <Route path="/work/admin" element={<WorkAdmin />} />
-      {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
-      <Route path="/work/company" element={<WorkCompanyAdmin />} />
-      <Route path="/work/exec" element={<WorkExec />} />
+      {/* All signed-in surfaces render through the legal consent gate (one place). */}
+      <Route element={<GatedSurface />}>
+        {/* The app itself. WorkPage self-gates on the session the server reports. */}
+        <Route path="/work" element={<WorkPage />} />
+        {/* Completed tasks + session logs: standalone pages in the dashboard's white style. */}
+        <Route path="/work/tasks" element={<WorkTasks />} />
+        <Route path="/work/completed" element={<CompletedTasks />} />
+        <Route path="/work/logs" element={<WorkLogs />} />
+        {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
+        <Route path="/work/buddy" element={<WorkBuddy />} />
+        {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}
+        <Route path="/work/guide" element={<WorkFullGuide />} />
+        {/* Separate admin console (own module + /api/work/admin/*). Self-gates on admin. */}
+        <Route path="/work/admin" element={<WorkAdmin />} />
+        {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
+        <Route path="/work/company" element={<WorkCompanyAdmin />} />
+        <Route path="/work/exec" element={<WorkExec />} />
+      </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
