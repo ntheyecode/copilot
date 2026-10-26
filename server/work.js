@@ -70,6 +70,41 @@ function withLocale(system, locale) {
   return ins ? ins + '\n\n' + String(system || '') : String(system || '')
 }
 
+// ---- Source attribution (single source of truth) --------------------------
+// When a step or answer is genuinely grounded in the user's or organization's
+// OWN supplied material - a named uploaded REFERENCE DOCUMENT, a named COMPANY
+// BRAIN source, or a named SKILL / PLAYBOOK - the guide both names it in the
+// prose AND marks it in this ONE field, so the client can show a small "grounded
+// in your documents" indicator. ONE field name, defined here and consumed by
+// every prompt, every parser and the UI, so plan / step / answer never drift
+// (SUPREME RULE II). It is OPTIONAL and empty when the step came from general
+// knowledge, so the indicator stays honest and is never fabricated.
+export const WORK_SOURCE_FIELD = 'source'
+// The one shared prompt instruction, appended to every guidance system prompt
+// that is handed the user's own material. Single source so the wording never
+// drifts between the plan, the drill-down, the live step, add-context, result
+// and compose. Keeps the existing cross-check-and-flag-when-wrong behavior.
+const SOURCE_ATTRIBUTION_RULE =
+  '\n\n---\nCITE THE USER\'S OWN MATERIAL BY NAME WHEN (AND ONLY WHEN) YOU USE IT\n' +
+  'Some of what you are given is the user\'s or organization\'s OWN supplied material: a ' +
+  'named uploaded REFERENCE DOCUMENT (its name is the heading shown above its text), a named ' +
+  'COMPANY BRAIN source (named in the grounding notes, for example "per <source>"), or a named ' +
+  'SKILL / PLAYBOOK (its title). When a step or answer is genuinely grounded in one of those, ' +
+  'briefly and naturally say so IN the text, naming it: for example "per your document <name>", ' +
+  '"from your Company Brain (<source>)", or "following your playbook <name>". Do this ONLY when ' +
+  'that internal material actually informed this step or answer. For anything built from general ' +
+  'best-practice knowledge or generic web research, do NOT name an internal source and never ' +
+  'invent one. Keep cross-checking that material: when it is wrong, risky, outdated or beaten by ' +
+  'a better proven way, still flag it plainly and give the correct path. Separately, set the "' +
+  WORK_SOURCE_FIELD + '" field to a short human label naming the internal source(s) you actually ' +
+  'used for this step or answer (for example "Your document: Runbook v3", "Company Brain: ' +
+  'Onboarding SOP", or "Playbook: Release checklist"); leave it an EMPTY STRING when the step or ' +
+  'answer did not use any of the user\'s own material.'
+// Clean + bound a source-attribution label. Prose-scrubbed like the other short
+// label fields (appContext, learning), so AI phrasing and stray tokens are
+// removed; returns '' when the model gave no internal source (the honest default).
+function cleanSource(v) { return scrubGuidance(String(v || '').trim()).slice(0, 140) }
+
 // Pull in the canonical methodology for the discipline the goal implies (OWASP
 // WSTG for pentest, risk-based design for QA, NIST SSDF for DevSecOps, and so
 // on) so the plan's depth is GROUNDED, not left to the model's memory. One
@@ -529,7 +564,8 @@ export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
     'specific to this person, their data, their account, or their screen. Omit "learning" entirely ' +
     'when nothing is newer than common knowledge.\n' +
     'Return ONLY JSON in this exact shape, nothing else:\n' +
-    '{"refusal":"<set ONLY when declining, else omit>","appContext":"<the tool/screen this targets, one short phrase>","learning":"<OPTIONAL generalized tool fact, see above; omit if nothing new>","steps":[{"text":"<the action>","validate":"<what is visible when done>","url":"<official page to open, or empty>","commands":["<exact command>"],"code":{"file":"<path>","content":"<exact text>"}}]}'
+    '{"refusal":"<set ONLY when declining, else omit>","appContext":"<the tool/screen this targets, one short phrase>","learning":"<OPTIONAL generalized tool fact, see above; omit if nothing new>","steps":[{"text":"<the action>","validate":"<what is visible when done>","url":"<official page to open, or empty>","commands":["<exact command>"],"code":{"file":"<path>","content":"<exact text>"},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this step is grounded in, named; empty string when from general knowledge>"}]}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workPlanUser({ goal, appContext, research = '', learnings = '', skills = '' }) {
   return (
@@ -598,6 +634,10 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
         url: cleanUrl(s && s.url),
         commands,
         code,
+        // Source attribution: the named internal material this step is grounded
+        // in (a user document / Company Brain source / playbook), else ''. The
+        // client shows a "grounded in your documents" chip only when it is set.
+        [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
         // Irreversible/disruptive action? The app gates it behind an explicit
         // acknowledge so the person understands the impact before running it.
         destructive: dc.destructive,
@@ -656,7 +696,8 @@ export function workHowToSystem({ base, voice = '', mode = 'stepwise' }) {
     'and the user reference documents critically (ground in them, but flag and correct anything ' +
     'wrong or outdated). Do NOT re-plan the whole goal; stay inside this one action. If the action ' +
     'is something you must not help with (SAFETY), return {"refusal":"..."} and no steps.\n' +
-    'Return ONLY JSON: {"refusal":"<only when declining>","steps":[{"text":"...","validate":"...","url":"...","commands":["..."],"code":{"file":"...","content":"..."}}]}'
+    'Return ONLY JSON: {"refusal":"<only when declining>","steps":[{"text":"...","validate":"...","url":"...","commands":["..."],"code":{"file":"...","content":"..."},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this sub-step is grounded in; empty when from general knowledge>"}]}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workHowToUser({ goal, action, appContext, research = '' }) {
   return (
@@ -702,6 +743,8 @@ export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', 
         url: cleanUrl(s && s.url),
         commands,
         code,
+        // Source attribution: named internal material grounding this sub-step, else ''.
+        [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
         destructive: dc.destructive,
         destructiveWhy: dc.why,
       }
@@ -841,7 +884,8 @@ export function workNavigateSystem({ base, voice = '', mode = 'stepwise' }) {
     'genuinely cannot find the equivalent on screen, say what changed and tell them to use Research ' +
     '(for the current UI) or the Ask box - never invent a control that is not visible.\n' +
     'Return ONLY JSON: ' +
-    '{"completed":[numbers],"current":number,"guidance":"...","observation":"...","flag":"...","done":true|false}'
+    '{"completed":[numbers],"current":number,"guidance":"...","observation":"...","flag":"...","source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this guidance is grounded in; empty when from general knowledge>","done":true|false}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workNavigateUser({ goal, steps, currentStep }) {
   const list = (steps || []).map((s, i) =>
@@ -879,6 +923,9 @@ export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise
     guidance: scrubGuidance(String(parsed.guidance || '').trim()),
     observation: scrubGuidance(String(parsed.observation || '').trim()),
     flag: scrubGuidance(String(parsed.flag || '').trim()),
+    // Source attribution for the live step: named internal material this guidance
+    // is grounded in, else ''. (Surfaced to the client by the step endpoint.)
+    [WORK_SOURCE_FIELD]: cleanSource(parsed.source),
     done,
     escalated: out.escalated,
     reason: out.reason,
@@ -1026,7 +1073,8 @@ export function workAddContextSystem({ base, voice = '', mode = 'stepwise' }) {
     'context, and the next concrete thing to do from where they are. Never say you performed an action; ' +
     'you only guide.\n' +
     'Return ONLY JSON: {"replan":true|false,"reason":"one short sentence why","answer":"...",' +
-    '"steps":[{"text":"...","validate":"...","url":null,"commands":[],"code":null}]}'
+    '"steps":[{"text":"...","validate":"...","url":null,"commands":[],"code":null,"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this step is grounded in; empty when from general knowledge>"}]}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workAddContextUser({ goal, steps = [], currentStep = 0, events = [], appContext = '', note = '', docsText = '', research = '' }) {
   const plan = (steps || []).map((s, i) => `${i + 1}. [${s.status}]${i === currentStep ? ' <- current' : ''} ${s.text}`).join('\n') || '(no plan yet)'
@@ -1065,6 +1113,8 @@ export async function workAddContext(ai, cfg, { base, voice = '', mode = 'stepwi
     url: (s && typeof s.url === 'string') ? s.url : null,
     commands: Array.isArray(s && s.commands) ? s.commands : [],
     code: (s && s.code) || null,
+    // Source attribution: named internal material grounding this step, else ''.
+    [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
   })).filter((s) => s.text)
   return {
     replan: parsed.replan === true && outSteps.length > 0,
@@ -1135,7 +1185,8 @@ export function workComposeSystem({ base, voice = '', mode = 'stepwise' }) {
     'specific facts, names, numbers or citations; in a prompt, leave those as clearly marked ' +
     'placeholders like [AMOUNT] or [CLIENT NAME] for them to fill. Ground in the discipline when one applies.\n' +
     'Return ONLY JSON: {"title":"short label","format":"prompt|code|bullets|table|outline|notes",' +
-    '"body":"the code/snippet, OR the ready-to-use prompt for their own AI","basis":"what you based it on and any assumptions","caveat":"for a prompt: attach your own source/old version to your AI tool; else one line to check, or empty"}'
+    '"body":"the code/snippet, OR the ready-to-use prompt for their own AI","basis":"what you based it on and any assumptions","caveat":"for a prompt: attach your own source/old version to your AI tool; else one line to check, or empty","source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this is grounded in; empty when from general knowledge>"}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workComposeUser({ goal, want = '', format = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '' }) {
   const plan = (steps || []).map((s, i) => `${i + 1}. [${s.status}] ${s.text}`).join('\n') || '(no plan yet)'
@@ -1177,7 +1228,8 @@ export function shapeCompose(raw) {
   const basis = scrubGuidance(String(p.basis || '').trim()).slice(0, 700)
   let caveat = scrubGuidance(String(p.caveat || '').trim()).slice(0, 300)
   if (!body) caveat = caveat || 'I could not produce the document. Add more detail or paste the source material.'
-  return { title: title || 'Draft', format, body, basis, caveat }
+  // Source attribution: named internal material this was grounded in, else ''.
+  return { title: title || 'Draft', format, body, basis, caveat, [WORK_SOURCE_FIELD]: cleanSource(p.source) }
 }
 
 // ---- Return the RESULT, not just the steps --------------------------------
@@ -1217,7 +1269,8 @@ export function workResultSystem({ base, voice = '', mode = 'stepwise' }) {
     'never write the finished piece). Put the real result in "body" and keep code and tables exact, ' +
     'with no commentary inside "body". Ground the method in the discipline when one applies. No AI ' +
     'phrasing, no em dashes.\n' +
-    'Return ONLY JSON: {"kind":"...","body":"...","basis":"...","verifyBy":"...","confidence":0.0,"need":""}'
+    'Return ONLY JSON: {"kind":"...","body":"...","basis":"...","verifyBy":"...","confidence":0.0,"need":"","source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this result is grounded in; empty when from general knowledge>"}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workResultUser({ goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', docsText = '', research = '' }) {
   const plan = (steps || []).map((s, i) => `${i + 1}. [${s.status}] ${s.text}`).join('\n') || '(no plan yet)'
@@ -1272,7 +1325,8 @@ export function shapeResult(raw, { fromScreen = false } = {}) {
   if (need) caveat = 'This needs an input I do not have. ' + (body || 'Share the missing data or attach the file and I will produce it.')
   else if (!grounded) caveat = 'Unverified - treat this as a draft and check it before you rely on it.'
   else if (fromScreen) caveat = 'Read from your screen - confirm it against the source.'
-  return { kind, body, basis, verifyBy, confidence, need: need || null, grounded, caveat }
+  // Source attribution: named internal material this result is grounded in, else ''.
+  return { kind, body, basis, verifyBy, confidence, need: need || null, grounded, caveat, [WORK_SOURCE_FIELD]: cleanSource(p.source) }
 }
 
 // ---- On-device data compute: the AI writes a SPEC, never sees the rows -----
