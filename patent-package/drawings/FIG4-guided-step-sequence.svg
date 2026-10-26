@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+  <title>FIG. 4 - Sequence diagram 400 of one guided step</title>
+  <desc>Black-and-white sequence diagram. Participants 402-410; messages 412-440.</desc>
+  <style>
+    .b { fill: none; stroke: #000; stroke-width: 1.5; }
+    .ll { fill: none; stroke: #000; stroke-width: 1; stroke-dasharray: 4 4; }
+    .l { fill: none; stroke: #000; stroke-width: 1.5; }
+    .ld { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .t { font-family: Arial, Helvetica, sans-serif; font-size: 10.5px; fill: #000; }
+    .n { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; fill: #000; }
+    .h { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; fill: #000; }
+    .f { font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; fill: #000; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <text x="72" y="56" class="h">SEQUENCE 400 (one guided step)</text>
+
+  <!-- participants: x centers 110, 250, 400, 560, 720 -->
+  <rect x="60" y="70" width="100" height="44" class="b"/>
+  <text x="70" y="88" class="t">HUMAN USER</text>
+  <text x="70" y="104" class="n">402</text>
+
+  <rect x="200" y="70" width="100" height="44" class="b"/>
+  <text x="208" y="88" class="t">TARGET APP</text>
+  <text x="208" y="104" class="n">404 (190)</text>
+
+  <rect x="350" y="70" width="100" height="44" class="b"/>
+  <text x="356" y="88" class="t">GUIDANCE CLIENT</text>
+  <text x="356" y="104" class="n">406 (120)</text>
+
+  <rect x="510" y="70" width="100" height="44" class="b"/>
+  <text x="516" y="88" class="t">GUIDANCE SERVER</text>
+  <text x="516" y="104" class="n">408 (150)</text>
+
+  <rect x="670" y="70" width="100" height="44" class="b"/>
+  <text x="680" y="88" class="t">MODEL SERVICE</text>
+  <text x="680" y="104" class="n">410 (170)</text>
+
+  <!-- lifelines -->
+  <line x1="110" y1="114" x2="110" y2="730" class="ll"/>
+  <line x1="250" y1="114" x2="250" y2="730" class="ll"/>
+  <line x1="400" y1="114" x2="400" y2="730" class="ll"/>
+  <line x1="560" y1="114" x2="560" y2="730" class="ll"/>
+  <line x1="720" y1="114" x2="720" y2="730" class="ll"/>
+
+  <!-- 412 goal -->
+  <path d="M 110 150 L 400 150" class="l" marker-end="url(#a)"/>
+  <text x="180" y="144" class="t">412 states goal</text>
+  <!-- 414 clean on device + send -->
+  <text x="404" y="172" class="t">414 clean goal on device (pipeline 300)</text>
+  <path d="M 400 182 L 560 182" class="l" marker-end="url(#a)"/>
+  <!-- 416 plan -->
+  <path d="M 560 206 L 720 206" class="l" marker-end="url(#a)"/>
+  <text x="580" y="200" class="t">416 plan request</text>
+  <path d="M 720 228 L 560 228" class="l" marker-end="url(#a)"/>
+  <text x="580" y="244" class="t">steps + visible-when-done</text>
+  <!-- 418 plan returned -->
+  <path d="M 560 262 L 400 262" class="l" marker-end="url(#a)"/>
+  <text x="430" y="256" class="t">418 plan (gated by 162)</text>
+
+  <!-- loop box -->
+  <rect x="80" y="286" width="700" height="560" class="b"/>
+  <text x="88" y="302" class="h">LOOP (per changed frame)</text>
+
+  <!-- 420 capture -->
+  <path d="M 400 330 L 258 330" class="l" marker-end="url(#a)"/>
+  <text x="262" y="324" class="t">420 capture frame of display</text>
+  <!-- 422 redact -->
+  <path d="M 400 348 L 440 348 L 440 368 L 400 368" class="l" marker-end="url(#a)"/>
+  <text x="446" y="362" class="t">422 redact frame on device</text>
+  <!-- 424 send -->
+  <path d="M 400 392 L 560 392" class="l" marker-end="url(#a)"/>
+  <text x="408" y="386" class="t">424 redacted frame + checklist</text>
+  <!-- 426 model -->
+  <path d="M 560 416 L 720 416" class="l" marker-end="url(#a)"/>
+  <text x="580" y="410" class="t">426 frame + checklist</text>
+  <!-- 428 nav record -->
+  <path d="M 720 440 L 560 440" class="l" marker-end="url(#a)"/>
+  <text x="580" y="456" class="t">428 navigation record</text>
+  <!-- 430 gate -->
+  <path d="M 560 470 L 600 470 L 600 492 L 560 492" class="l" marker-end="url(#a)"/>
+  <text x="606" y="478" class="t">430 gate; store evidence</text>
+  <text x="606" y="490" class="t">if newly verified</text>
+  <!-- 432 return -->
+  <path d="M 560 516 L 400 516" class="l" marker-end="url(#a)"/>
+  <text x="408" y="510" class="t">432 status working / wrong / done</text>
+  <!-- 434 present -->
+  <path d="M 400 548 L 118 548" class="l" marker-end="url(#a)"/>
+  <text x="124" y="542" class="t">434 shows ONE micro-action, observation, flag</text>
+
+  <!-- 436 human performs action: dashed, does not pass through client -->
+  <path d="M 110 600 L 250 600" class="ld" marker-end="url(#a)"/>
+  <text x="118" y="594" class="t">436 PERFORMS ACTION</text>
+  <text x="118" y="616" class="t">(only state change; not via 406)</text>
+  <!-- 438 display changes -->
+  <path d="M 250 640 L 290 640 L 290 660 L 250 660" class="l" marker-end="url(#a)"/>
+  <text x="296" y="654" class="t">438 display changes</text>
+  <!-- 440 next frame -->
+  <path d="M 400 700 L 258 700" class="l" marker-end="url(#a)"/>
+  <text x="262" y="694" class="t">440 capture next frame -&gt; repeat from 422</text>
+
+  <!-- bracket note -->
+  <text x="88" y="760" class="t">The subsequently captured frame is the verification oracle: advancement</text>
+  <text x="88" y="774" class="t">at 430 occurs only if the visible-when-done condition is satisfied in it;</text>
+  <text x="88" y="788" class="t">otherwise 432 carries a corrective instruction. The guidance client 406</text>
+  <text x="88" y="802" class="t">has no arrow into the target application 404.</text>
+
+  <text x="372" y="960" class="f">FIG. 4</text>
+</svg>

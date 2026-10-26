@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+  <title>FIG. 1 - Screen-aware guidance system 100</title>
+  <desc>Black-and-white line drawing. System architecture with reference numerals 100-190.</desc>
+  <style>
+    .b { fill: none; stroke: #000; stroke-width: 1.5; }
+    .bd { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .l { fill: none; stroke: #000; stroke-width: 1.5; }
+    .ld { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .t { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #000; }
+    .n { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; fill: #000; }
+    .h { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; fill: #000; }
+    .f { font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; fill: #000; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <!-- overall system label -->
+  <text x="72" y="60" class="h">SYSTEM 100</text>
+  <line x1="72" y1="66" x2="140" y2="66" class="l"/>
+
+  <!-- USER DEVICE 110 -->
+  <rect x="60" y="80" width="400" height="640" class="b"/>
+  <text x="70" y="98" class="h">USER DEVICE 110</text>
+
+  <!-- Display 112 with target application 190 -->
+  <rect x="80" y="112" width="200" height="130" class="b"/>
+  <text x="88" y="128" class="n">DISPLAY 112</text>
+  <rect x="96" y="140" width="168" height="90" class="b"/>
+  <text x="104" y="158" class="t">TARGET APPLICATION</text>
+  <text x="104" y="172" class="n">190</text>
+  <text x="104" y="190" class="t">(any third-party app;</text>
+  <text x="104" y="203" class="t">not instrumented)</text>
+
+  <!-- Input device 116 -->
+  <rect x="300" y="112" width="140" height="50" class="b"/>
+  <text x="308" y="130" class="t">INPUT DEVICE</text>
+  <text x="308" y="146" class="n">116</text>
+  <!-- dashed arrow: human performs action -->
+  <path d="M 300 150 L 268 180" class="ld" marker-end="url(#a)"/>
+  <text x="296" y="178" class="t">human performs</text>
+  <text x="296" y="190" class="t">every action</text>
+
+  <!-- Screen-capture interface 114 -->
+  <rect x="300" y="200" width="140" height="42" class="b"/>
+  <text x="308" y="216" class="t">SCREEN-CAPTURE</text>
+  <text x="308" y="230" class="t">INTERFACE <tspan class="n">114</tspan></text>
+  <path d="M 280 196 L 300 210" class="l" marker-end="url(#a)"/>
+
+  <!-- Guidance client 120 -->
+  <rect x="80" y="262" width="360" height="440" class="b"/>
+  <text x="90" y="280" class="h">GUIDANCE CLIENT 120 (read-only)</text>
+
+  <!-- capture module 122 -->
+  <rect x="96" y="294" width="150" height="44" class="b"/>
+  <text x="104" y="311" class="t">CAPTURE MODULE</text>
+  <text x="104" y="326" class="n">122</text>
+  <path d="M 370 242 L 370 252 L 171 252 L 171 294" class="l" marker-end="url(#a)"/>
+
+  <!-- redaction engine 124 -->
+  <rect x="96" y="356" width="150" height="56" class="b"/>
+  <text x="104" y="373" class="t">ON-DEVICE</text>
+  <text x="104" y="387" class="t">REDACTION ENGINE</text>
+  <text x="104" y="402" class="n">124</text>
+  <path d="M 171 338 L 171 356" class="l" marker-end="url(#a)"/>
+
+  <!-- policy enforcement 128 -->
+  <rect x="270" y="294" width="150" height="56" class="b"/>
+  <text x="278" y="311" class="t">POLICY-ENFORCEMENT</text>
+  <text x="278" y="325" class="t">MODULE</text>
+  <text x="278" y="340" class="n">128</text>
+  <path d="M 270 340 L 246 370" class="l" marker-end="url(#a)"/>
+
+  <!-- token map 126 -->
+  <rect x="270" y="370" width="150" height="56" class="bd"/>
+  <text x="278" y="387" class="t">TOKEN MAP</text>
+  <text x="278" y="401" class="t">(volatile memory only)</text>
+  <text x="278" y="416" class="n">126</text>
+
+  <!-- rehydration 130 -->
+  <rect x="270" y="446" width="150" height="56" class="b"/>
+  <text x="278" y="463" class="t">LOCAL REHYDRATION</text>
+  <text x="278" y="477" class="t">MODULE</text>
+  <text x="278" y="492" class="n">130</text>
+  <path d="M 345 426 L 345 446" class="l" marker-end="url(#a)"/>
+
+  <!-- presentation layer 132 / overlay 134 -->
+  <rect x="96" y="446" width="150" height="56" class="b"/>
+  <text x="104" y="463" class="t">PRESENTATION LAYER</text>
+  <text x="104" y="478" class="n">132</text>
+  <rect x="96" y="530" width="150" height="56" class="b"/>
+  <text x="104" y="547" class="t">FLOATING OVERLAY</text>
+  <text x="104" y="561" class="t">(no-install / desktop)</text>
+  <text x="104" y="576" class="n">134</text>
+  <path d="M 171 502 L 171 530" class="l" marker-end="url(#a)"/>
+  <path d="M 270 474 L 246 474" class="l" marker-end="url(#a)"/>
+
+  <!-- overlay presents to display: arrow up along left -->
+  <path d="M 96 558 L 70 558 L 70 177 L 80 177" class="l" marker-end="url(#a)"/>
+  <text x="104" y="610" class="t">instruction shown; no input</text>
+  <text x="104" y="623" class="t">event injected into 190</text>
+
+  <!-- outbound only after redaction: arrow from 124 / 128 to network -->
+  <path d="M 420 322 L 500 322" class="l" marker-end="url(#a)"/>
+  <text x="430" y="310" class="t">redacted /</text>
+  <text x="430" y="350" class="t">tokenized</text>
+
+  <!-- NETWORK 140 -->
+  <ellipse cx="540" cy="322" rx="38" ry="22" class="b"/>
+  <text x="522" y="318" class="t">NETWORK</text>
+  <text x="530" y="332" class="n">140</text>
+  <path d="M 578 322 L 600 322" class="l" marker-end="url(#a)"/>
+  <path d="M 600 334 L 578 334" class="l" marker-end="url(#a)"/>
+  <path d="M 500 334 L 420 334 L 420 474" class="l" marker-end="url(#a)"/>
+
+  <!-- GUIDANCE SERVER 150 -->
+  <rect x="600" y="80" width="190" height="560" class="b"/>
+  <text x="608" y="98" class="h">GUIDANCE SERVER 150</text>
+
+  <rect x="612" y="110" width="166" height="40" class="b"/>
+  <text x="620" y="126" class="t">PLANNING MODULE</text>
+  <text x="620" y="141" class="n">152</text>
+
+  <rect x="612" y="160" width="166" height="52" class="b"/>
+  <text x="620" y="176" class="t">NAVIGATION /</text>
+  <text x="620" y="190" class="t">VERIFICATION MODULE</text>
+  <text x="620" y="205" class="n">154</text>
+
+  <rect x="612" y="222" width="166" height="40" class="b"/>
+  <text x="620" y="238" class="t">POLICY RE-ENFORCEMENT</text>
+  <text x="620" y="253" class="n">155</text>
+
+  <rect x="612" y="272" width="166" height="40" class="b"/>
+  <text x="620" y="288" class="t">AUDIT LOG (append-only)</text>
+  <text x="620" y="303" class="n">156</text>
+
+  <rect x="612" y="322" width="166" height="52" class="b"/>
+  <text x="620" y="338" class="t">EVIDENCE STORE</text>
+  <text x="620" y="352" class="t">(encrypted at rest)</text>
+  <text x="620" y="367" class="n">158</text>
+
+  <rect x="612" y="384" width="166" height="40" class="b"/>
+  <text x="620" y="400" class="t">POLICY STORE</text>
+  <text x="620" y="415" class="n">160</text>
+
+  <rect x="612" y="434" width="166" height="52" class="b"/>
+  <text x="620" y="450" class="t">SECURITY GATE</text>
+  <text x="620" y="464" class="t">(destructive / vulnerable)</text>
+  <text x="620" y="479" class="n">162</text>
+
+  <!-- MODEL SERVICES 170 -->
+  <rect x="600" y="680" width="190" height="130" class="b"/>
+  <text x="608" y="698" class="h">MODEL SERVICES 170</text>
+  <rect x="612" y="708" width="166" height="40" class="b"/>
+  <text x="620" y="724" class="t">FAST VISION MODEL</text>
+  <text x="620" y="739" class="n">172</text>
+  <rect x="612" y="758" width="166" height="40" class="b"/>
+  <text x="620" y="774" class="t">STRONG MODEL</text>
+  <text x="620" y="789" class="n">174</text>
+  <path d="M 680 640 L 680 680" class="l" marker-end="url(#a)"/>
+  <path d="M 700 680 L 700 640" class="l" marker-end="url(#a)"/>
+  <text x="708" y="664" class="t">frames + plan /</text>
+  <text x="708" y="676" class="t">navigation record</text>
+
+  <!-- TENANT ADMIN CONSOLE 180 -->
+  <rect x="60" y="760" width="400" height="60" class="b"/>
+  <text x="70" y="780" class="h">TENANT ADMINISTRATION CONSOLE 180</text>
+  <text x="70" y="800" class="t">authors / arms / locks egress policy; retrieves reports + audit (own tenant only)</text>
+  <path d="M 460 790 L 580 790 L 580 404 L 612 404" class="l" marker-end="url(#a)"/>
+
+  <!-- distribution of policy to device -->
+  <path d="M 612 418 L 590 418 L 590 440 L 460 440 L 460 322" class="ld"/>
+  <text x="468" y="456" class="t">policy distributed</text>
+  <text x="468" y="468" class="t">to device (128)</text>
+
+  <!-- Figure label -->
+  <text x="372" y="960" class="f">FIG. 1</text>
+</svg>
