@@ -51,3 +51,56 @@ export function resolveLocale(input) {
   for (const l of LOCALES) if (l.match.includes(base)) return l.code
   return null
 }
+
+// ---- Location signal: the browser's IANA time zone ---------------------------
+// A privacy-safe, client-side proxy for the visitor's LOCATION (no IP, nothing
+// sent anywhere, no dependency): Intl...timeZone is where the device is, which
+// usually matches the country. We map the major zones per supported language so
+// a visitor physically in, say, India or Japan gets Hindi or Japanese on the
+// first visit even when their browser language is English. Unmapped zones return
+// null and detection falls back to the browser language, then English.
+const TZ_LOCALE = {
+  // Hindi (India)
+  'Asia/Kolkata': 'hi', 'Asia/Calcutta': 'hi',
+  // Japanese / Korean
+  'Asia/Tokyo': 'ja', 'Asia/Seoul': 'ko', 'Asia/Pyongyang': 'ko',
+  // Simplified Chinese
+  'Asia/Shanghai': 'zh', 'Asia/Chongqing': 'zh', 'Asia/Chungking': 'zh', 'Asia/Harbin': 'zh', 'Asia/Urumqi': 'zh', 'Asia/Macau': 'zh', 'Asia/Macao': 'zh', 'Asia/Singapore': 'zh',
+  // Indonesian
+  'Asia/Jakarta': 'id', 'Asia/Pontianak': 'id', 'Asia/Makassar': 'id', 'Asia/Jayapura': 'id',
+  // Vietnamese
+  'Asia/Ho_Chi_Minh': 'vi', 'Asia/Saigon': 'vi',
+  // Turkish
+  'Europe/Istanbul': 'tr', 'Asia/Istanbul': 'tr',
+  // Russian (Russia + much of the CIS)
+  'Europe/Moscow': 'ru', 'Europe/Samara': 'ru', 'Europe/Volgograd': 'ru', 'Europe/Saratov': 'ru', 'Europe/Astrakhan': 'ru', 'Europe/Ulyanovsk': 'ru', 'Europe/Kaliningrad': 'ru', 'Europe/Kirov': 'ru', 'Europe/Minsk': 'ru', 'Asia/Yekaterinburg': 'ru', 'Asia/Omsk': 'ru', 'Asia/Novosibirsk': 'ru', 'Asia/Novokuznetsk': 'ru', 'Asia/Krasnoyarsk': 'ru', 'Asia/Irkutsk': 'ru', 'Asia/Chita': 'ru', 'Asia/Yakutsk': 'ru', 'Asia/Vladivostok': 'ru', 'Asia/Magadan': 'ru', 'Asia/Sakhalin': 'ru', 'Asia/Kamchatka': 'ru', 'Asia/Anadyr': 'ru', 'Asia/Almaty': 'ru', 'Asia/Tashkent': 'ru',
+  // German
+  'Europe/Berlin': 'de', 'Europe/Vienna': 'de', 'Europe/Zurich': 'de', 'Europe/Busingen': 'de', 'Europe/Vaduz': 'de', 'Europe/Luxembourg': 'de',
+  // French
+  'Europe/Paris': 'fr', 'Europe/Monaco': 'fr', 'Indian/Reunion': 'fr', 'America/Martinique': 'fr', 'America/Guadeloupe': 'fr',
+  // Italian
+  'Europe/Rome': 'it', 'Europe/Vatican': 'it', 'Europe/San_Marino': 'it', 'Europe/Malta': 'it',
+  // Portuguese (Brazil)
+  'America/Sao_Paulo': 'pt-BR', 'America/Bahia': 'pt-BR', 'America/Fortaleza': 'pt-BR', 'America/Recife': 'pt-BR', 'America/Belem': 'pt-BR', 'America/Maceio': 'pt-BR', 'America/Manaus': 'pt-BR', 'America/Cuiaba': 'pt-BR', 'America/Porto_Velho': 'pt-BR', 'America/Boa_Vista': 'pt-BR', 'America/Rio_Branco': 'pt-BR', 'America/Noronha': 'pt-BR', 'Europe/Lisbon': 'pt-BR', 'Atlantic/Azores': 'pt-BR', 'Atlantic/Madeira': 'pt-BR',
+  // Spanish (Spain + Spanish-speaking Latin America)
+  'Europe/Madrid': 'es', 'Africa/Ceuta': 'es', 'Atlantic/Canary': 'es', 'America/Mexico_City': 'es', 'America/Monterrey': 'es', 'America/Merida': 'es', 'America/Cancun': 'es', 'America/Chihuahua': 'es', 'America/Hermosillo': 'es', 'America/Mazatlan': 'es', 'America/Tijuana': 'es', 'America/Bogota': 'es', 'America/Lima': 'es', 'America/Santiago': 'es', 'America/Argentina/Buenos_Aires': 'es', 'America/Argentina/Cordoba': 'es', 'America/Argentina/Mendoza': 'es', 'America/Caracas': 'es', 'America/La_Paz': 'es', 'America/Guayaquil': 'es', 'America/Asuncion': 'es', 'America/Montevideo': 'es', 'America/Guatemala': 'es', 'America/Tegucigalpa': 'es', 'America/Managua': 'es', 'America/Costa_Rica': 'es', 'America/Panama': 'es', 'America/El_Salvador': 'es', 'America/Santo_Domingo': 'es', 'America/Havana': 'es', 'America/Puerto_Rico': 'es',
+  // Arabic (MENA)
+  'Asia/Riyadh': 'ar', 'Asia/Dubai': 'ar', 'Asia/Qatar': 'ar', 'Asia/Bahrain': 'ar', 'Asia/Kuwait': 'ar', 'Asia/Baghdad': 'ar', 'Asia/Amman': 'ar', 'Asia/Beirut': 'ar', 'Asia/Damascus': 'ar', 'Asia/Aden': 'ar', 'Asia/Muscat': 'ar', 'Africa/Cairo': 'ar', 'Africa/Tripoli': 'ar', 'Africa/Tunis': 'ar', 'Africa/Algiers': 'ar', 'Africa/Casablanca': 'ar', 'Africa/Khartoum': 'ar',
+  // English (UK/Ireland/Oceania/South Asia English)
+  'Europe/London': 'en-GB', 'Europe/Dublin': 'en-GB', 'Europe/Isle_of_Man': 'en-GB', 'Europe/Jersey': 'en-GB', 'Europe/Guernsey': 'en-GB', 'Europe/Gibraltar': 'en-GB', 'Australia/Sydney': 'en-GB', 'Australia/Melbourne': 'en-GB', 'Australia/Brisbane': 'en-GB', 'Australia/Perth': 'en-GB', 'Australia/Adelaide': 'en-GB', 'Pacific/Auckland': 'en-GB', 'Asia/Karachi': 'en-GB', 'Asia/Dhaka': 'en-GB', 'Asia/Colombo': 'en-GB', 'Africa/Johannesburg': 'en-GB', 'Africa/Lagos': 'en-GB', 'Africa/Nairobi': 'en-GB',
+  // English (US/Canada)
+  'America/New_York': 'en', 'America/Detroit': 'en', 'America/Chicago': 'en', 'America/Denver': 'en', 'America/Phoenix': 'en', 'America/Los_Angeles': 'en', 'America/Anchorage': 'en', 'America/Toronto': 'en', 'America/Vancouver': 'en', 'America/Edmonton': 'en', 'America/Winnipeg': 'en', 'America/Halifax': 'en', 'Pacific/Honolulu': 'en',
+}
+
+// Best-effort supported locale for the device's time zone, or null.
+export function localeFromTimezone() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!tz) return null
+    if (TZ_LOCALE[tz]) return TZ_LOCALE[tz]
+    // Region fallback for unmapped zones: most of these regions are covered
+    // above; if a specific city is missing, try its area prefix cautiously.
+    if (tz.startsWith('Australia/') || tz.startsWith('Pacific/')) return 'en-GB'
+    return null
+  } catch { return null }
+}

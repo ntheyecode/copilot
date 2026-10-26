@@ -23,7 +23,7 @@
 // before the first paint of the next visit. First visit: navigator.languages.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import en from './locales/en.js'
-import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale } from './locales.js'
+import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale, localeFromTimezone } from './locales.js'
 
 export { LOCALES, DEFAULT_LOCALE, getLocaleMeta, resolveLocale }
 
@@ -55,11 +55,21 @@ export function getStoredLocale() {
 export function detectLocale() {
   const stored = getStoredLocale()
   if (stored) return stored
+  // Browser language preference (first supported in the ordered list).
+  let byLang = null
   try {
     const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language]
-    for (const l of langs) { const hit = resolveLocale(l); if (hit) return hit }
+    for (const l of langs) { const hit = resolveLocale(l); if (hit) { byLang = hit; break } }
   } catch { /* no navigator (SSR/test) */ }
-  return DEFAULT_LOCALE
+  // LOCATION via the device time zone (owner: launch the language for the user's
+  // location, not just English). A deliberate NON-English browser language is the
+  // strongest preference, so it wins; otherwise the visitor's location picks the
+  // language, then any browser language, then English - the site never just
+  // defaults to English for someone in a non-English region.
+  if (byLang && byLang !== 'en' && byLang !== 'en-GB') return byLang
+  const byTz = localeFromTimezone()
+  if (byTz) return byTz
+  return byLang || DEFAULT_LOCALE
 }
 
 // The locale to send to the server (plan / coverage requests) - usable outside
