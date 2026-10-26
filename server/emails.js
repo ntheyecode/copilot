@@ -12,8 +12,89 @@
 import { sendMail } from './mailer.js'
 import { renderEmail } from './email_templates.js'
 import * as store from './store.js'
+import * as ai from './ai.js'
+import { getLocaleMeta } from '../src/i18n/locales.js'
 
 function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
+
+// ---------------------------------------------------------------------------
+// Language-aware delivery (owner: language is the key thing when communicating).
+// When a recipient is a known user who pinned a NON-English language, the rendered
+// prose (subject + text + the visible text of the HTML) is translated best-effort
+// with the platform AI before sending. It NEVER degrades and NEVER fails silently:
+// English/unset language, no AI runtime, an AI error, an unparseable reply, or a
+// dropped link/code all fall back to the ENGLISH render and LOG the fallback. The
+// English template stays the single source of truth; nothing here edits it.
+// ---------------------------------------------------------------------------
+const ENGLISH_LOCALES = new Set(['en', 'en-GB'])
+function isEnglishLang(code) { return !code || ENGLISH_LOCALES.has(code) }
+
+// Every fallback is observable (never silent): a console warning AND a superadmin
+// incident, so the operator sees exactly which email went out in English and why.
+function logEmailTranslationFallback(type, lang, reason) {
+  const line = `email translation fallback: ${type} -> ${lang || 'unknown'} (${reason}); sent English`
+  try { console.warn(`[emails] ${line}`) } catch { /* ignore */ }
+  try { store.recordWorkIncident({ kind: 'email_translation_fallback', message: line.slice(0, 500) }) } catch { /* never break on logging */ }
+}
+
+// Tokens that MUST survive verbatim: every URL/link and email address. If the
+// translation dropped or altered any of these we do not trust it and send English.
+function emailPreserveTokens(str) {
+  const s = String(str || '')
+  const urls = s.match(/https?:\/\/[^\s"'<>)]+/gi) || []
+  const emails = s.match(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g) || []
+  return [...new Set([...urls, ...emails])]
+}
+
+// Tolerant JSON extraction from a model reply (handles a ```json fence or prose
+// around the object). Returns the parsed object or null.
+function parseJsonLoose(raw) {
+  const s = String(raw || '')
+  const fenced = s.match(/```(?:json)?\s*([\s\S]*?)```/i)
+  const body = fenced ? fenced[1] : s
+  const start = body.indexOf('{'); const end = body.lastIndexOf('}')
+  if (start < 0 || end <= start) return null
+  try { return JSON.parse(body.slice(start, end + 1)) } catch { return null }
+}
+
+// Translate one rendered message into the recipient's language. Returns a new
+// { subject, text, html } or null (caller then sends the English original). Reuses
+// the platform AI runtime (store.getActiveRuntime) and ai.generate - no new client.
+async function translateEmailMessage(msg, langCode, type) {
+  const rt = (typeof store.getActiveRuntime === 'function') ? store.getActiveRuntime() : null
+  if (!rt || !rt.apiKey) { logEmailTranslationFallback(type, langCode, 'ai-unavailable'); return null }
+  const meta = getLocaleMeta(langCode) || {}
+  const langName = meta.name || langCode
+  const system =
+    'You are a professional localizer for transactional product emails. ' +
+    `Translate the user-visible text into ${langName} (language code ${langCode}). ` +
+    'Follow these rules exactly:\n' +
+    '- Preserve VERBATIM, never translate or change: URLs and links, one-time codes, reference ids, numbers and amounts, email addresses, and proper names (people, and product/company names such as WorkCoPilot, AdmireVeda, COE Security LLC).\n' +
+    '- For the html value, translate ONLY the human-readable text. Keep every HTML tag, attribute, href, class, style and entity exactly as written.\n' +
+    '- Keep the meaning; keep it natural and professional. Do not add or remove information. Use hyphens, never em dashes.\n' +
+    '- Return ONLY a JSON object with exactly these keys: "subject", "text", "html". Each value is the translated string; return an empty string for an empty input field.'
+  const input = JSON.stringify({ subject: msg.subject || '', text: msg.text || '', html: msg.html || '' })
+  let raw
+  try { raw = await ai.generate(rt, system, input) }
+  catch (e) { logEmailTranslationFallback(type, langCode, `ai-error: ${(e && e.message) || 'failed'}`); return null }
+  const parsed = parseJsonLoose(raw)
+  if (!parsed || typeof parsed !== 'object' || typeof parsed.subject !== 'string' || !parsed.subject.trim()) {
+    logEmailTranslationFallback(type, langCode, 'unparseable'); return null
+  }
+  const out = {
+    subject: parsed.subject,
+    text: (typeof parsed.text === 'string' && parsed.text) ? parsed.text : (msg.text || ''),
+    html: (typeof parsed.html === 'string' && parsed.html) ? parsed.html : (msg.html || ''),
+  }
+  // Preservation guard: every link/email in the ORIGINAL must appear verbatim in
+  // the translation, or we distrust it and send English (never ship a broken link).
+  const original = [msg.subject, msg.text, msg.html].join('\n')
+  const translated = [out.subject, out.text, out.html].join('\n')
+  for (const tok of emailPreserveTokens(original)) {
+    if (!translated.includes(tok)) { logEmailTranslationFallback(type, langCode, 'preservation-failed'); return null }
+  }
+  return out
+}
 
 const looksLikeEmail = (s) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').trim())
 
@@ -102,6 +183,22 @@ export async function sendTemplate(type, to, data = {}, { critical = false, atta
   const overrides = (store.getEmailTemplate ? store.getEmailTemplate(type) : {}) || {}
   try { msg = renderEmail(type, data || {}, overrides) } catch { msg = null }
   if (!msg || !msg.subject || (!msg.html && !msg.text)) return fail('no-template')
+  // Language-aware delivery: translate the rendered prose into the recipient's
+  // pinned language (best-effort, English fallback + logged). Only on the
+  // non-critical path - critical mail (set-password / reset links) stays English
+  // and FAST so a blocking user action is never slowed, per the async/non-blocking
+  // rule; the time-sensitive 6-digit code emails live in mailer.js and are out of
+  // scope entirely. English/unset language or no AI runtime is a clean no-op, so
+  // emails keep working with no AI and no language set.
+  if (!critical) {
+    try {
+      const lang = (typeof store.workUserLanguageByEmail === 'function') ? store.workUserLanguageByEmail(to) : null
+      if (lang && !isEnglishLang(lang)) {
+        const translated = await translateEmailMessage(msg, lang, type)
+        if (translated) msg = translated
+      }
+    } catch (e) { logEmailTranslationFallback(type, 'unknown', (e && e.message) || 'error') }
+  }
   try {
     const r = await sendMail(cfg, { to, subject: msg.subject, text: msg.text || '', html: msg.html || '', ...(attachment ? { attachment } : {}) })
     return { ok: true, to, messageId: r.messageId || null }

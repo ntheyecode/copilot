@@ -25,6 +25,10 @@ import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
+// Language pinning (SUPREME RULE II: ONE source of supported locale codes). The
+// i18n locale registry is pure data (no browser APIs at import), so the server
+// validates a pinned language against the SAME list the client menu offers.
+import { resolveLocale } from '../src/i18n/locales.js'
 // Password -> key derivation for the password-encrypted data export. ONE source of
 // truth for scrypt (SUPREME RULE II): the same KDF the Company Brain customer-held
 // key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,
@@ -502,6 +506,11 @@ export function publicWorkUser(u) {
     companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
     companyName: co ? co.name : null,
     email: u.email || u.ssoEmail || null,         // contact email (SSO identity or the one set at creation)
+    // Pinned communication language (first-login attestation): the locale code the
+    // user chose for the app AND their emails. languagePinned=false means they have
+    // not attested yet (the client shows the pin modal). Default unset.
+    language: u.language || null,
+    languagePinned: !!u.languagePinned,
     ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
     // Per-tier feature gates (Lite has no roadmaps / diagrams) so the client can
     // hide what the plan does not include and keep the marketing claim honest.
@@ -4453,6 +4462,35 @@ export function setWorkProfile(workUserId, { displayName, onboarded } = {}) {
   if (onboarded !== undefined) u.onboarded = !!onboarded
   persist()
   return publicWorkUser(u)
+}
+// Pin the user's communication language (first-login attestation). The code is
+// validated against the SINGLE source of supported locales (resolveLocale), so an
+// unknown/forged code is rejected rather than silently stored. Once pinned, the
+// client treats it as the highest-precedence signal (app + emails) and stops
+// re-showing the pin modal. Returns the public user so the client re-hydrates.
+export function setWorkUserLanguage(workUserId, code) {
+  const u = getUser(workUserId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const resolved = resolveLocale(code)
+  if (!resolved) throw httpErr(400, 'Unsupported language.')
+  u.language = resolved
+  u.languagePinned = true
+  persist()
+  return publicWorkUser(u)
+}
+// Resolve a recipient email to that user's PINNED language code, or null when the
+// address is not a known user, has no pinned language, or the stored code no longer
+// resolves. The email layer uses this to decide whether to translate (null / an
+// English code => send English). Read-only, case-insensitive on the email.
+export function workUserLanguageByEmail(email) {
+  const mail = String(email || '').trim().toLowerCase()
+  if (!mail) return null
+  const u = (db.users || []).find((x) => {
+    const e = String((x && (x.email || x.ssoEmail)) || '').trim().toLowerCase()
+    return e && e === mail
+  })
+  if (!u || !u.languagePinned || !u.language) return null
+  return resolveLocale(u.language)
 }
 // Change your own password: verify the current one, then store the new bcrypt
 // hash (same cost factor as sign-up). SSO-only accounts (no usable password)

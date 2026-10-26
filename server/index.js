@@ -1045,6 +1045,15 @@ app.post('/api/work/profile', requireWorkAuth, wrap((req, res) => {
   const { displayName, onboarded } = req.body || {}
   res.json({ user: store.setWorkProfile(req.workUser.id, { displayName, onboarded }) })
 }))
+// Pin the signed-in user's communication language (first-login attestation). The
+// store validates the code against the supported locales (400 on an unknown one)
+// and persists it; the returned public user carries { language, languagePinned }
+// and GET /api/work/me surfaces the same, so the client always has the current
+// value in the signed-in payload.
+app.post('/api/work/profile/language', requireWorkAuth, wrap((req, res) => {
+  const { language } = req.body || {}
+  res.json({ user: store.setWorkUserLanguage(req.workUser.id, language) })
+}))
 // Change your own password. Verifies the current password server-side; the new
 // one is validated + bcrypt-hashed in the store. Available to any signed-in user.
 app.post('/api/work/profile/password', requireWorkAuth, wrap((req, res) => {
