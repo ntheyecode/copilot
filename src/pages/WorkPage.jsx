@@ -3410,6 +3410,28 @@ const CONSOLE_CSS = `
 .wc-ask-answer-foot{margin:0 2px 8px;padding:0;border-top:none;max-height:32vh;overflow-y:auto}
 
 @media(prefers-reduced-motion:reduce){.wc-tbtn.resume{animation:none}.wc-alert{animation:wc-alert-in .32s ease both}.wc-statuschip.live .wc-sdot{animation:none}}
+
+/* TASK-COMPLETE CELEBRATION: a calm success flourish above the done bar. A
+   confetti layer (pure CSS, clipped to the card, fires once) + a prominent
+   "Start another task". On-brand, white in-product aesthetic, never gaudy;
+   honours prefers-reduced-motion (no motion, confetti hidden). */
+.wc-celebrate{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;gap:11px;padding:26px 20px 22px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-sm);animation:wc-cele-in .45s cubic-bezier(.2,.8,.2,1) both}
+.wc-cele-badge{position:relative;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--success-soft);color:var(--success);flex-shrink:0}
+.wc-cele-badge svg{position:relative;z-index:1;animation:wc-check-draw .5s ease .15s both}
+.wc-cele-badge::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--success);opacity:0}
+.wc-cele-go .wc-cele-badge::after{animation:wc-cele-ring 1.5s ease-out .1s}
+.wc-cele-title{font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--text);line-height:1.2}
+.wc-cele-sub{font-size:13.5px;line-height:1.5;color:var(--text-muted);max-width:430px;margin:-3px 0 3px}
+.wc-cele-btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 20px;border:1px solid transparent;border-radius:11px;background:var(--brand-600);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 10px -3px var(--brand-600);transition:filter .15s,transform .08s}
+.wc-cele-btn:hover{filter:brightness(1.06)}
+.wc-cele-btn:active{transform:translateY(.5px)}
+.wc-cele-btn svg{flex-shrink:0}
+.wc-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.wc-confetti i{position:absolute;top:-14px;opacity:0;animation:wc-cfti var(--d,2.4s) cubic-bezier(.35,.55,.5,1) var(--delay,0s) forwards}
+@keyframes wc-cfti{0%{opacity:0;transform:translate3d(0,-14px,0) rotate(0)}8%{opacity:.95}100%{opacity:0;transform:translate3d(var(--x,0),var(--fall,240px),0) rotate(var(--rot,560deg))}}
+@keyframes wc-cele-in{from{opacity:0;transform:translateY(8px) scale(.99)}to{opacity:1;transform:none}}
+@keyframes wc-cele-ring{0%{transform:scale(.6);opacity:.55}100%{transform:scale(1.55);opacity:0}}
+@media(prefers-reduced-motion:reduce){.wc-celebrate{animation:none}.wc-confetti{display:none}.wc-cele-badge svg{animation:none}.wc-cele-badge::after{animation:none;opacity:0}}
 `
 
 // Copy text reliably across the main page AND the floating PiP / pop-out window.
@@ -3736,6 +3758,38 @@ function PlanningLoader() {
   )
 }
 
+// Pure-CSS confetti pieces for the task-complete flourish (no npm dependency).
+// Deterministic per call (computed once via useMemo at the call site). Colors
+// default to the on-brand palette; the floater passes concrete hex values
+// because the Picture-in-Picture document carries none of the app's CSS vars.
+const CONFETTI_COLORS = ['var(--brand-600, #0b8259)', 'var(--success, #16a34a)', '#f5b64b', '#5aa9ff', 'var(--brand-400, #34d399)']
+function makeConfetti(n = 14, colors = CONFETTI_COLORS) {
+  const a = []
+  for (let i = 0; i < n; i++) {
+    const rect = i % 3 !== 0
+    a.push({
+      left: Math.round((i / n) * 100 + (Math.random() * 8 - 4)),
+      bg: colors[i % colors.length],
+      x: Math.round(Math.random() * 120 - 60),
+      fall: Math.round(180 + Math.random() * 130),
+      rot: Math.round((360 + Math.random() * 440)) * (i % 2 ? 1 : -1),
+      dur: (2.0 + Math.random() * 1.1).toFixed(2),
+      delay: (Math.random() * 0.5).toFixed(2),
+      w: rect ? 7 : 8,
+      h: rect ? 11 : 8,
+      round: rect ? 2 : 50,
+    })
+  }
+  return a
+}
+// One confetti piece as an inline-styled <i>. className is 'wc-confetti' (main
+// document) or 'fp-confetti' (the float document); both define @keyframes.
+function confettiNodes(pieces) {
+  return pieces.map((p, i) => (
+    <i key={i} style={{ left: p.left + '%', width: p.w, height: p.h, borderRadius: p.round, background: p.bg, '--x': p.x + 'px', '--fall': p.fall + 'px', '--rot': p.rot + 'deg', '--d': p.dur + 's', '--delay': p.delay + 's' }} />
+  ))
+}
+
 function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
@@ -3906,7 +3960,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // choice, shared via the wc-guide-fontscale key). --wc-fs mirrors it so the
   // shared CmdBlock / CodeBlock dark code boxes scale inside the float too.
   // .fp-link is the blue inline "Open ..." hyperlink (not a button).
-  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-blink{0%,100%{opacity:1}50%{opacity:.55}}.fp-blink{animation:fp-blink 1.2s ease-in-out infinite}.fp-ana{display:inline-flex;align-items:center;gap:3px}.fp-ana i{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;animation:fp-bounce 1.1s infinite}.fp-ana i:nth-child(2){animation-delay:.15s}.fp-ana i:nth-child(3){animation-delay:.3s}@keyframes fp-bounce{0%,80%,100%{transform:scale(.55);opacity:.5}40%{transform:scale(1);opacity:1}}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-in .4s cubic-bezier(.2,.8,.2,1) both,fp-now 2.8s ease-in-out .4s infinite}@keyframes fp-in{0%{opacity:0;transform:translateY(8px) scale(.985)}100%{opacity:1;transform:none}}.fp-now pre{box-shadow:0 0 0 1px var(--gr) inset,0 0 22px -8px #8cf5c4}.fp-now .fp-link{display:inline-flex;padding:4px 10px 4px 8px;border-radius:9px;background:rgba(57,211,255,.12);box-shadow:0 0 0 1px rgba(57,211,255,.32) inset;font-weight:700;animation:fp-key .2s}.fp-now strong,.fp-now b{font-weight:800}.fp-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;animation:fp-pop .5s cubic-bezier(.3,1.4,.5,1) both,fp-out .5s ease 1.3s both}@keyframes fp-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}@keyframes fp-out{to{opacity:0;transform:translateY(-4px)}}@media(prefers-reduced-motion:reduce){.fp-now{animation:none;box-shadow:0 0 0 2px var(--gr) inset}.fp-pulse{animation:none}.spin{animation:none}.fp-confirm{animation:none}.fp-blink{animation:none}.fp-ana i{animation:none}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
+  const FLOAT_CSS = ':root{--fp-fs:1;--wc-fs:1}body{margin:0;font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,Roboto,sans-serif;font-size:calc(13.5px*var(--fp-fs,1));line-height:1.5;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}*{box-sizing:border-box}button{font:inherit;cursor:pointer}.fp-link{text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;transition:text-decoration-color .15s}.fp-link:hover,.fp-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}.fp-clamp{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}button:disabled{opacity:.5;cursor:default}input{font:inherit}input::placeholder{opacity:.6}input:focus{outline:none}button:not(:disabled):hover{filter:brightness(1.06)}button:not(:disabled):active{transform:translateY(.5px)}.fp-btn{transition:filter .15s,background .15s,border-color .15s,color .15s,box-shadow .15s,transform .08s}@keyframes spin{to{transform:rotate(360deg)}}.spin{animation:spin 1s linear infinite}@keyframes fp-pulse{0%{box-shadow:0 0 0 0 rgba(140,245,196,.5)}70%{box-shadow:0 0 0 6px rgba(140,245,196,0)}100%{box-shadow:0 0 0 0 rgba(140,245,196,0)}}.fp-pulse{animation:fp-pulse 1.6s infinite}@keyframes fp-blink{0%,100%{opacity:1}50%{opacity:.55}}.fp-blink{animation:fp-blink 1.2s ease-in-out infinite}.fp-ana{display:inline-flex;align-items:center;gap:3px}.fp-ana i{display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;animation:fp-bounce 1.1s infinite}.fp-ana i:nth-child(2){animation-delay:.15s}.fp-ana i:nth-child(3){animation-delay:.3s}@keyframes fp-bounce{0%,80%,100%{transform:scale(.55);opacity:.5}40%{transform:scale(1);opacity:1}}@keyframes fp-rise{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}.fp-rise{animation:fp-rise .22s cubic-bezier(.4,0,.2,1)}@keyframes fp-now{0%,100%{box-shadow:0 0 0 1px var(--gr) inset,0 10px 30px -16px var(--gg)}50%{box-shadow:0 0 0 1px var(--gr) inset,0 12px 44px -10px var(--gg)}}.fp-now{animation:fp-in .4s cubic-bezier(.2,.8,.2,1) both,fp-now 2.8s ease-in-out .4s infinite}@keyframes fp-in{0%{opacity:0;transform:translateY(8px) scale(.985)}100%{opacity:1;transform:none}}.fp-now pre{box-shadow:0 0 0 1px var(--gr) inset,0 0 22px -8px #8cf5c4}.fp-now .fp-link{display:inline-flex;padding:4px 10px 4px 8px;border-radius:9px;background:rgba(57,211,255,.12);box-shadow:0 0 0 1px rgba(57,211,255,.32) inset;font-weight:700;animation:fp-key .2s}.fp-now strong,.fp-now b{font-weight:800}.fp-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;animation:fp-pop .5s cubic-bezier(.3,1.4,.5,1) both,fp-out .5s ease 1.3s both}@keyframes fp-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}@keyframes fp-out{to{opacity:0;transform:translateY(-4px)}}@keyframes fp-cfti{0%{opacity:0;transform:translate3d(0,-12px,0) rotate(0)}8%{opacity:.95}100%{opacity:0;transform:translate3d(var(--x,0),var(--fall,210px),0) rotate(var(--rot,540deg))}}@keyframes fp-cele-ring{0%{transform:scale(.6);opacity:.55}100%{transform:scale(1.5);opacity:0}}.fp-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}.fp-confetti i{position:absolute;top:-12px;opacity:0;animation:fp-cfti var(--d,2.3s) cubic-bezier(.35,.55,.5,1) var(--delay,0s) forwards}.fp-cele-ring{animation:fp-cele-ring 1.5s ease-out .1s}@media(prefers-reduced-motion:reduce){.fp-now{animation:none;box-shadow:0 0 0 2px var(--gr) inset}.fp-pulse{animation:none}.spin{animation:none}.fp-confirm{animation:none}.fp-blink{animation:none}.fp-ana i{animation:none}.fp-confetti{display:none}.fp-cele-ring{animation:none;opacity:0}}::-webkit-scrollbar{width:8px;height:8px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:#8883;border-radius:8px;border:2px solid transparent;background-clip:padding-box}::-webkit-scrollbar-thumb:hover{background:#8886;background-clip:padding-box}'
   // Open the float with a graceful fallback chain, so the core web experience
   // never silently dies on one API:
   //   1. Document Picture-in-Picture (true always-on-top) when the browser has it;
@@ -4327,6 +4381,27 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     prevDoneRef.current = doneCount
     return undefined
   }, [doneCount])
+  // TASK-COMPLETE CELEBRATION: fire ONCE when a task that was being worked on
+  // reaches its completed state (every step done, or the session ended). The
+  // one-shot `celebrate` drives the confetti flourish on BOTH surfaces (the
+  // in-software done view and the floater). Guards: celebratedRef stops it
+  // re-firing on re-render; sawActiveRef means merely reopening an already-
+  // finished session for review never celebrates (we must have seen it active).
+  const completed = ended || done
+  const sawActiveRef = useRef(false)
+  const celebratedRef = useRef(false)
+  const [celebrate, setCelebrate] = useState(false)
+  useEffect(() => {
+    if (!sess) return undefined
+    if (!completed) { sawActiveRef.current = true; return undefined }
+    if (!sawActiveRef.current || celebratedRef.current) return undefined
+    celebratedRef.current = true
+    setCelebrate(true)
+    const t = setTimeout(() => setCelebrate(false), 3400)
+    return () => clearTimeout(t)
+  }, [completed, sess])
+  // Confetti pieces: computed once per mount so re-renders never reshuffle them.
+  const confettiPieces = useMemo(() => makeConfetti(14), [])
   const autoWatchRef = useRef(false)
   useEffect(() => {
     if (autoWatchRef.current || !sess) return
@@ -4876,6 +4951,20 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         )}
         {deliverOpen && <DeliverablesPanel sessionId={sessionId} grabFrame={grabFrame} videoRef={videoRef} onClose={() => setDeliverOpen(false)} />}
+
+        {/* Task-complete celebration: a one-shot flourish + a prominent "Start
+            another task" that drops back into the new-task flow (onBack -> Home,
+            where the goal box lives). Shows on the finished record; the confetti
+            fires once (guarded above) and the download bar stays below. */}
+        {ended && (
+          <div className={`wc-celebrate${celebrate ? ' wc-cele-go' : ''}`} role="status" aria-live="polite">
+            {celebrate && <div className="wc-confetti" aria-hidden="true">{confettiNodes(confettiPieces)}</div>}
+            <div className="wc-cele-badge"><Check size={26} strokeWidth={2.6} /></div>
+            <div className="wc-cele-title">Task complete</div>
+            <div className="wc-cele-sub">{steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : 'Nicely done.'} Your report and audit log are ready below.</div>
+            <button type="button" className="wc-cele-btn" onClick={onBack} title="Start a new task"><Plus size={16} strokeWidth={2.6} /> Start another task</button>
+          </div>
+        )}
 
         {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
         {ended && (
@@ -5450,7 +5539,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         <FloatPanel
           steps={steps} watching={watching} observation={observation} guidance={guidance}
           flags={flags} answer={answer} busy={busy} analyzing={analyzing} err={err}
-          done={done} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal}
+          done={done} ended={ended} celebrate={celebrate} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal}
           fontScale={{ scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax }}
           theme={floatTheme} onToggleTheme={() => setFloatTheme((t) => t === 'light' ? 'dark' : 'light')}
           usage={usage} paused={paused} onPause={togglePause}
@@ -5464,6 +5553,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           onWatch={watching ? pauseWatching : startWatching}
           onEnd={endSession}
           onClose={closeFloat}
+          onStartAnother={() => { closeFloat(); try { window.focus() } catch { /* best-effort */ } onBack() }}
         />, pipWin.document.body)}
     </div>
   )
@@ -5474,9 +5564,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, analyzing, err, done, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onEnd, onClose }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onEnd, onClose, onStartAnother }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
+  // Completed = every step done, or the session was ended. Drives the floater's
+  // task-complete celebration + "Start another task" (mirrors the in-software
+  // done view). An ended session never shows the live "now" card.
+  const complete = done || ended
   // Dim the panel to cut glare over your work. The browser will not let a web
   // Picture-in-Picture window be see-through to the app behind it, so this
   // fades the panel itself; for true see-through + click-behind use the app.
@@ -5509,6 +5603,10 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
         good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,.14)', warnRing: 'rgba(245,200,107,.34)', danger: '#ff7a6b',
         link: '#6cb6ff',
         inputBg: '#0a0d12', track: '#28303f', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(140,245,196,.3)' }
+
+  // Confetti for the completed-state flourish. Concrete hex (the PiP document
+  // has no app CSS vars); on-brand greens with two soft accents. Computed once.
+  const floatConfetti = useMemo(() => makeConfetti(12, [c.good, c.accent, '#f5b64b', '#5aa9ff']), [light])   // eslint-disable-line
 
   // Figtree for body (loaded into the PiP document head when the float opens),
   // Bricolage Grotesque for display headings - the same pairing as the app.
@@ -5674,7 +5772,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
       {/* The current step and the latest answer. Natural height; the fixed-footer
           layout lets the scroll region above handle any overflow. */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-        {current ? (
+        {(current && !ended) ? (
           <>
             {/* CURRENT STEP = the brightest element: emerald accent, emerald->cyan
                 left bar, a soft pulsing glow (reduced-motion safe via FLOAT_CSS),
@@ -5752,8 +5850,21 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
               )
             })()}
           </>
-        ) : done ? (
-          <div style={{ display: 'flex', gap: 9, alignItems: 'center', padding: '11px 13px', background: c.goodSoft, borderRadius: 11, color: c.good, fontWeight: 650, fontSize: fs(13.5) }}><Check size={17} strokeWidth={2.5} /> All steps confirmed on screen.</div>
+        ) : complete ? (
+          /* TASK COMPLETE: the floater's celebration + "Start another task". A
+             one-shot confetti flourish (clipped to this card, honours reduced
+             motion), a success burst, and a button that drops back into the
+             new-task flow in the main window. */
+          <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 11, padding: '22px 16px 20px', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, boxShadow: c.shadow }}>
+            {celebrate && <div className="fp-confetti" aria-hidden="true">{confettiNodes(floatConfetti)}</div>}
+            <span style={{ position: 'relative', width: 46, height: 46, borderRadius: '50%', display: 'grid', placeItems: 'center', background: c.goodSoft, color: c.good, flexShrink: 0 }}>
+              {celebrate && <span className="fp-cele-ring" style={{ position: 'absolute', inset: -5, borderRadius: '50%', border: `2px solid ${c.good}`, opacity: 0.45 }} aria-hidden="true" />}
+              <Check size={24} strokeWidth={2.6} style={{ position: 'relative', zIndex: 1 }} />
+            </span>
+            <div style={{ fontFamily: DISPLAY, fontSize: fs(17), fontWeight: 800, letterSpacing: '-.01em', color: c.text, lineHeight: 1.2 }}>Task complete</div>
+            <div style={{ fontSize: fs(12.5), lineHeight: 1.5, color: c.muted, maxWidth: 320 }}>{doneN ? `All ${doneN} step${doneN === 1 ? '' : 's'} done.` : 'Nicely done.'} Your report is ready in the main window.</div>
+            {onStartAnother && <button className="fp-btn" style={{ ...primary, height: 38, padding: '0 18px', fontSize: 13, fontWeight: 700 }} onClick={onStartAnother} title="Start a new task"><Plus size={15} strokeWidth={2.6} /> Start another task</button>}
+          </div>
         ) : steps.length === 0 ? (
           <div style={{ ...card, color: c.muted, fontSize: fs(13), textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
         ) : null}
