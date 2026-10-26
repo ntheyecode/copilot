@@ -5062,8 +5062,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   <span className="wc-step-check" aria-hidden="true">{isDone ? <Check size={16} strokeWidth={2.5} /> : <span className="wc-step-num">{i + 1}</span>}</span>
                   <div className="wc-step-body">
                     <div className="wc-step-title"><RichText text={s.text} /></div>
-                    {s.url && <StepLink url={s.url} />}
-                    {((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
+                    {/* The record shows the commands/code and the step link ONLY for
+                        steps the user actually completed - never for "Not reached"
+                        steps, so the record can't leak the how-to (or generated code)
+                        of work that was never performed. This mirrors the PDF report's
+                        completed-only gate. */}
+                    {isDone && s.url && <StepLink url={s.url} />}
+                    {isDone && ((s.commands && s.commands.length > 0) || (s.code && s.code.content)) && (
                       <DestructiveGate why={s.destructive ? s.destructiveWhy : null}>
                         {s.commands && s.commands.length > 0 && <CmdBlock lines={s.commands} />}
                         {s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
