@@ -19,7 +19,7 @@
 // still works unchanged. Secrets are never read back to the client.
 // ---------------------------------------------------------------------------
 
-import { sendTemplateAsync } from './emails.js'
+import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
 
 const PLANS = ['lite', 'basic', 'advanced', 'premium']
 // Where Stripe sends the customer back. Fixed to the public site by default; an
@@ -137,7 +137,8 @@ function mapStatus(st) {
     case 'trialing': return 'trialing'
     case 'active': return 'active'
     case 'past_due':
-    case 'unpaid': return 'past_due'
+    case 'unpaid':
+    case 'paused': return 'past_due'   // paused = not currently billing: block the gate (do not fall through to active)
     case 'canceled':
     case 'incomplete_expired': return 'canceled'
     case 'incomplete': return 'none'
@@ -161,6 +162,20 @@ function planFromSub(sub, price) {
   return null
 }
 const periodEndIso = (unixSeconds) => (unixSeconds ? new Date(unixSeconds * 1000).toISOString() : null)
+// Billing cycle from a subscription's price interval ('year' -> annual, else
+// monthly). Used to persist the cycle so the Subscribers view + MRR math know
+// the billing period. Returns null when the interval cannot be read (keeps any
+// cycle already stored).
+function cycleFromSub(sub) {
+  try {
+    const items = sub && sub.items && sub.items.data
+    const rec = items && items[0] && items[0].price && items[0].price.recurring
+    const interval = rec && rec.interval
+    if (interval === 'year') return 'annual'
+    if (interval === 'month' || interval === 'week' || interval === 'day') return 'monthly'
+  } catch { /* fall through */ }
+  return null
+}
 
 // ---- webhook (raw body) ---------------------------------------------------
 // Best-effort + logged: a webhook must never throw out of the handler, or
@@ -226,8 +241,14 @@ export function workStripeWebhook({ store }) {
       return res.status(400).json({ error: 'Bad signature' })
     }
     // Replay guard: a repeat of an already-processed event.id is acknowledged
-    // (so Stripe stops retrying) but not processed again.
-    if (!_eventDeduper.claim(event && event.id)) {
+    // (so Stripe stops retrying) but not processed again. Prefer the STORE-backed
+    // dedupe when the store provides it (survives a process restart, which the
+    // in-memory set does not - closing the cross-restart double-credit gap on
+    // one-time purchases); fall back to the in-memory deduper otherwise so the
+    // module still works standalone.
+    const claim = (typeof store.claimStripeEvent === 'function') ? (id) => store.claimStripeEvent(id) : (id) => _eventDeduper.claim(id)
+    const release = (typeof store.releaseStripeEvent === 'function') ? (id) => { try { store.releaseStripeEvent(id) } catch { /* best-effort */ } } : (id) => _eventDeduper.release(id)
+    if (!claim(event && event.id)) {
       console.log(`[billing] duplicate webhook ${event.id} (${event.type}) ignored`)
       return res.json({ received: true, duplicate: true })
     }
@@ -235,7 +256,7 @@ export function workStripeWebhook({ store }) {
       await handleEvent(s, store, event)
     } catch (e) {
       // Release the claim so a manual resend from the Stripe dashboard can retry.
-      _eventDeduper.release(event && event.id)
+      release(event && event.id)
       console.warn(`[billing] webhook handling error for ${event && event.type}: ` + (e && e.message))
     }
     res.json({ received: true })
@@ -267,6 +288,9 @@ async function handleEvent(s, store, event) {
     const customerId = (typeof obj.customer === 'string' ? obj.customer : (obj.customer && obj.customer.id)) || null
     const subId = (typeof obj.subscription === 'string' ? obj.subscription : (obj.subscription && obj.subscription.id)) || null
     let plan = (obj.metadata && obj.metadata.plan) || null
+    // Cycle comes from the checkout metadata first (what the customer chose), with
+    // the subscription's price interval as the authoritative fallback.
+    let cycle = (md.cycle === 'annual' || md.cycle === 'monthly') ? md.cycle : null
     let status = 'active'
     let currentPeriodEnd = null
     if (subId) {
@@ -275,15 +299,22 @@ async function handleEvent(s, store, event) {
         status = mapStatus(sub.status)
         currentPeriodEnd = periodEndIso(sub.current_period_end)
         plan = plan || planFromSub(sub, price)
+        cycle = cycleFromSub(sub) || cycle
       } catch (e) { console.warn('[billing] could not retrieve subscription on checkout: ' + (e && e.message)) }
     }
     if (userId) {
-      store.setSubscription(userId, { status, plan: plan || null, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd })
+      const patch = { status, plan: plan || null, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd }
+      if (cycle) patch.cycle = cycle
+      store.setSubscription(userId, patch)
       // The referred-annual free month was applied: mark it used (once per account).
       if (md.affiliateBenefit && /^annual_free/.test(md.affiliateBenefit) && typeof store.markAnnualBenefitUsed === 'function') {
         try { store.markAnnualBenefitUsed(userId) } catch { /* best-effort */ }
       }
       console.log(`[billing] checkout completed -> user ${userId} plan ${plan || '(unknown)'} status ${status}${md.affiliateBenefit ? ` (+${md.affiliateBenefit})` : ''}`)
+      // Owner alert: a NEW subscription was activated. Fired here (the single new-sub
+      // signal) and NOT on the first invoice.paid, so a new subscription alerts once.
+      const u = store.getUser(userId)
+      if (u) sendOwnerSubscriptionAlertAsync('new_subscription', { user: u, plan: plan || null, status, cycle: cycle || null, stripeId: subId })
     } else {
       console.warn('[billing] checkout.session.completed with no user reference; ignored')
     }
@@ -296,12 +327,31 @@ async function handleEvent(s, store, event) {
     let user = store.findUserByStripeSubscription(subId) || store.findUserByStripeCustomer(customerId)
     if (!user && obj.metadata && obj.metadata.workUserId) user = store.getUser(obj.metadata.workUserId)
     if (!user) { console.warn(`[billing] ${type} for unknown subscription ${subId}; ignored`); return }
+    // Prior state (read BEFORE we write) so we can tell a genuine change from a
+    // no-op update (Stripe sends subscription.updated for many internal changes;
+    // a renewal does not change plan or status, so it must not alert).
+    const prior = user.subscription || {}
+    const priorPlan = prior.plan || null
+    const priorStatus = prior.status || 'none'
     const status = type === 'customer.subscription.deleted' ? 'canceled' : mapStatus(obj.status)
-    const plan = planFromSub(obj, price) || (user.subscription && user.subscription.plan) || null
-    store.setSubscription(user.id, {
-      status, plan, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd: periodEndIso(obj.current_period_end),
-    })
+    const plan = planFromSub(obj, price) || priorPlan
+    const cycle = cycleFromSub(obj) || prior.cycle || null
+    const patch = { status, plan, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd: periodEndIso(obj.current_period_end) }
+    if (cycle) patch.cycle = cycle
+    store.setSubscription(user.id, patch)
     console.log(`[billing] ${type} -> user ${user.id} plan ${plan || '(unknown)'} status ${status}`)
+    // Owner alert, deduped by transition (prior-vs-new) so renewals never spam:
+    //   canceled   -> cancellation (once, when it first becomes canceled)
+    //   past_due   -> past due (once; the prior-status guard also dedupes against
+    //                 the invoice.payment_failed handler, whichever arrives first)
+    //   plan/status otherwise changed -> plan change
+    if (status === 'canceled') {
+      if (priorStatus !== 'canceled') sendOwnerSubscriptionAlertAsync('cancellation', { user, plan, status, cycle, stripeId: subId })
+    } else if (status === 'past_due') {
+      if (priorStatus !== 'past_due') sendOwnerSubscriptionAlertAsync('past_due', { user, plan, status, cycle, stripeId: subId })
+    } else if (plan !== priorPlan || status !== priorStatus) {
+      sendOwnerSubscriptionAlertAsync('plan_change', { user, plan, status, cycle, stripeId: subId })
+    }
     return
   }
 
@@ -354,9 +404,15 @@ async function handleEvent(s, store, event) {
     const subId = (typeof obj.subscription === 'string' ? obj.subscription : (obj.subscription && obj.subscription.id)) || null
     let user = store.findUserByStripeSubscription(subId) || store.findUserByStripeCustomer(customerId)
     if (!user) { console.warn(`[billing] invoice.payment_failed for unknown customer ${customerId}; ignored`); return }
+    const priorStatus = (user.subscription && user.subscription.status) || 'none'
+    const plan = (user.subscription && user.subscription.plan) || null
+    const cycle = (user.subscription && user.subscription.cycle) || null
     store.setSubscription(user.id, { status: 'past_due' })
     const to = store.effectiveUserEmail(user.id)
-    if (to) sendTemplateAsync('payment_failed', to, { name: user.displayName || user.username, description: (user.subscription && user.subscription.plan) ? `${user.subscription.plan} plan` : 'Subscription', reason: 'The card was declined or could not be charged.', amount: (obj.amount_due || 0) / 100, currency: obj.currency || 'usd', retryUrl: `${SITE}/work/billing` })
+    if (to) sendTemplateAsync('payment_failed', to, { name: user.displayName || user.username, description: plan ? `${plan} plan` : 'Subscription', reason: 'The card was declined or could not be charged.', amount: (obj.amount_due || 0) / 100, currency: obj.currency || 'usd', retryUrl: `${SITE}/work/billing` })
+    // Owner alert on the FIRST past-due (prior-status guard dedupes against the
+    // customer.subscription.updated handler and avoids alerting on every retry).
+    if (priorStatus !== 'past_due') sendOwnerSubscriptionAlertAsync('past_due', { user, plan, status: 'past_due', cycle, amount: (obj.amount_due || 0) / 100, currency: obj.currency || 'usd', stripeId: obj.id })
     console.log(`[billing] invoice.payment_failed -> user ${user.id} status past_due`)
     return
   }
@@ -626,6 +682,15 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       res.json(out)
     })
 
+    // Subscribers list for the admin Subscribers page. Superadmin-gated (same
+    // requireAuth + requireSuperAdmin as the rest of this admin billing group).
+    // The store builds the data from accounts with a live-ish subscription
+    // (active | trialing | past_due | comp). No secrets and no Stripe ids are
+    // returned - a boolean `free` marks a comped account.
+    app.get('/api/work/admin/subscribers', requireAuth, requireSuperAdmin, wrap((req, res) => {
+      res.json(store.listSubscribers())
+    }))
+
     // Any user's invoices (for support).
     app.get('/api/work/admin/users/:id/invoices', requireAuth, requireSuperAdmin, async (req, res) => {
       try {
@@ -687,8 +752,18 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
         if (atPeriodEnd) {
           sub = await s.subscriptions.update(info.subId, { cancel_at_period_end: true })
         } else {
+          const priorStatus = (info.user.subscription && info.user.subscription.status) || 'none'
           sub = await s.subscriptions.cancel(info.subId)
           store.setSubscription(req.params.id, { status: 'canceled' })
+          // Owner alert for the admin-initiated immediate cancel. We pre-set the
+          // store to canceled above, so the webhook's subscription.deleted (prior
+          // status already canceled) will be suppressed - fire it here instead so
+          // an admin cancel is never silent. Period-end cancels alert via the
+          // webhook when they actually end.
+          if (priorStatus !== 'canceled') {
+            const sb = info.user.subscription || {}
+            sendOwnerSubscriptionAlertAsync('cancellation', { user: info.user, plan: sb.plan || null, status: 'canceled', cycle: sb.cycle || null, stripeId: info.subId })
+          }
         }
         res.json({ ok: true, atPeriodEnd, subscription: store.getSubscription(req.params.id) })
       } catch (e) {
