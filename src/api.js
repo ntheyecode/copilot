@@ -124,6 +124,9 @@ export const api = {
   workCheckout: (plan, cycle) => req('POST', '/api/work/checkout', { plan, cycle: cycle || 'monthly' }),
   workBuyCredits: (kind, quantity) => req('POST', '/api/work/checkout/credits', { kind, quantity }),
   workSubscription: () => req('GET', '/api/work/subscription'),
+  // Self-serve plan change (upgrade / downgrade, monthly <-> annual) for a
+  // personal account. Returns the updated subscription + an effect summary.
+  workChangePlan: (plan, cycle) => req('POST', '/api/work/subscription/change', { plan, cycle: cycle || 'monthly' }),
   // The account's Stripe invoices, and a Customer Portal link to manage/cancel.
   workInvoices: () => req('GET', '/api/work/invoices'),
   workBillingPortal: () => req('POST', '/api/work/billing/portal'),
