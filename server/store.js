@@ -649,7 +649,11 @@ export function canManageMfa(actorUserId, targetUserId) {
 // so they do not need a personal subscription. No stripe id ever leaves to the
 // client (publicWorkUser exposes status+plan only).
 export function freshSubscription() {
-  return { status: 'none', plan: null, cycle: null, since: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
+  // canceledAt + cancelReason: stamped when the subscription ends, so the
+  // cancelled-subscribers list and the finance timeseries have a real end date
+  // and a documented reason. pendingChange: a scheduled (period-end) downgrade
+  // the dashboard can show and the renewal webhook flips into place.
+  return { status: 'none', plan: null, cycle: null, since: null, canceledAt: null, cancelReason: null, pendingChange: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
 }
 function ensureSubscription(u) {
   if (!u.subscription || typeof u.subscription !== 'object') u.subscription = freshSubscription()
@@ -660,7 +664,18 @@ export function getSubscription(userId) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')
   const s = u.subscription || {}
-  return { status: s.status || 'none', plan: s.plan || null, currentPeriodEnd: s.currentPeriodEnd || null }
+  // Safe, enriched shape (no stripe ids): the dashboard reads cycle + since +
+  // canceledAt + any pendingChange so it can show "annual", "member since", a
+  // cancellation date, and a scheduled downgrade banner.
+  return {
+    status: s.status || 'none',
+    plan: s.plan || null,
+    cycle: s.cycle || null,
+    currentPeriodEnd: s.currentPeriodEnd || null,
+    since: s.since || null,
+    canceledAt: s.canceledAt || null,
+    pendingChange: s.pendingChange || null,
+  }
 }
 // Merge a patch (from the webhook) into the account's subscription. Only known
 // fields are written, so a malformed event can never inject arbitrary keys.
@@ -669,14 +684,32 @@ export function setSubscription(userId, patch = {}) {
   if (!u) throw httpErr(404, 'Account not found')
   const s = ensureSubscription(u)
   const priorPlan = s.plan || null
+  const priorStatus = s.status || 'none'
   // 'cycle' (monthly|annual) travels from checkout metadata / the Stripe price
   // interval so the Subscribers view and MRR math know the billing period.
-  for (const k of ['status', 'plan', 'cycle', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
+  // 'canceledAt'/'cancelReason' record the end of a subscription; 'pendingChange'
+  // holds a scheduled period-end downgrade until the renewal webhook flips it.
+  for (const k of ['status', 'plan', 'cycle', 'canceledAt', 'cancelReason', 'pendingChange', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
     if (patch[k] !== undefined) s[k] = patch[k]
   }
   // Stamp when the subscription first became live, so the Subscribers list can
   // show a real "since" date rather than falling back to the account creation.
   if (!s.since && (s.status === 'active' || s.status === 'trialing' || s.status === 'comp')) s.since = now()
+  // Cancellation audit marks: stamp canceledAt the first time it enters 'canceled'
+  // (so the cancelled list + timeseries have a real end date). A GENUINE
+  // reactivation (canceled -> active/trialing) clears both marks; a plain active
+  // update does NOT, so a reason stashed ahead of a period-end cancel survives.
+  if (s.status === 'canceled') {
+    if (!s.canceledAt) s.canceledAt = patch.canceledAt || now()
+  } else if ((s.status === 'active' || s.status === 'trialing') && priorStatus === 'canceled') {
+    s.canceledAt = null; s.cancelReason = null
+  }
+  // A scheduled pending change is cleared once it actually lands (the renewal
+  // webhook flips the active plan to the pending plan) or the sub is canceled.
+  if (s.pendingChange && typeof s.pendingChange === 'object') {
+    if (s.status === 'canceled') s.pendingChange = null
+    else if (s.plan === s.pendingChange.plan && (!s.pendingChange.cycle || s.cycle === s.pendingChange.cycle)) s.pendingChange = null
+  }
   // ENTITLEMENTS FOLLOW THE SUBSCRIPTION (individual accounts only; company tiers
   // come from the company's licenses). When the plan is active/trialing/comped,
   // the account's tier = the plan, so daily hours, task caps and feature gates
@@ -3673,6 +3706,10 @@ export function recordTransaction({ kind = 'payment', userId = null, username = 
     amount: Number(amount) || 0, currency: String(currency || 'usd').toLowerCase(),
     stripeId: stripeId || null, plan: plan || null, quantity: quantity != null ? Number(quantity) : null,
     status: status || 'succeeded', description: String(description || '').slice(0, 300),
+    // manual=false marks this as a Stripe-sourced (system) row: immutable via the
+    // finance CRUD (only an offsetting adjustment can reverse it). voided=false:
+    // a voided entry stays for audit but is excluded from every total.
+    manual: false, voided: false,
     at: new Date().toISOString(),
   }
   db.transactions.unshift(rec)
@@ -3705,6 +3742,7 @@ export function financialSummary(now = new Date()) {
   const sumBetween = (startIso, endIso) => {
     let gross = 0, refunds = 0, count = 0
     for (const t of txns) {
+      if (t.voided) continue   // voided manual entries stay for audit, out of totals
       if (t.at < startIso || (endIso && t.at >= endIso)) continue
       if (t.kind === 'refund') refunds += t.amount
       else { gross += t.amount; count++ }
@@ -3737,7 +3775,7 @@ export function financialSummary(now = new Date()) {
   // Lifetime by-plan (gross) + by-kind.
   const byPlan = {}, byKind = {}
   for (const t of txns) {
-    if (t.kind === 'refund') continue
+    if (t.voided || t.kind === 'refund') continue
     if (t.plan) byPlan[t.plan] = round2((byPlan[t.plan] || 0) + t.amount)
     byKind[t.kind] = round2((byKind[t.kind] || 0) + t.amount)
   }
@@ -3774,7 +3812,7 @@ export function listSubscribers() {
   // Lifetime spend per account, from the ledger (one pass).
   const lifetimeByUser = {}
   for (const t of (db.transactions || [])) {
-    if (!t.userId) continue
+    if (!t.userId || t.voided) continue
     const amt = Number(t.amount) || 0
     if (t.kind === 'subscription' || t.kind === 'hours' || t.kind === 'images') lifetimeByUser[t.userId] = (lifetimeByUser[t.userId] || 0) + amt
     else if (t.kind === 'refund') lifetimeByUser[t.userId] = (lifetimeByUser[t.userId] || 0) - amt
@@ -3816,6 +3854,7 @@ export function listSubscribers() {
       plan: plan || null,
       status,
       cycle,
+      pendingChange: s.pendingChange || null,
       since: s.since || u.createdAt || null,
       currentPeriodEnd: s.currentPeriodEnd || null,
       mrrUsd,
@@ -3834,6 +3873,190 @@ export function listSubscribers() {
   // Newest subscriptions first (by since), so the admin sees recent activity on top.
   subscribers.sort((a, b) => String(b.since || '').localeCompare(String(a.since || '')))
   return { subscribers, totals: { count: subscribers.length, activeCount, mrrUsd: round2(mrrTotal), byPlan } }
+}
+
+// The Cancelled Subscribers view (finance role): every account whose subscription
+// status is 'canceled', with the end date + reason recorded at cancellation and
+// the lifetime spend they represented. Pure read; no secrets, no Stripe ids.
+// Newest cancellation first, so churn analysis + graphs read top-down.
+export function listCancelledSubscribers() {
+  // Lifetime spend per account (same basis as listSubscribers; excludes voided).
+  const lifetimeByUser = {}
+  for (const t of (db.transactions || [])) {
+    if (!t.userId || t.voided) continue
+    const amt = Number(t.amount) || 0
+    if (t.kind === 'subscription' || t.kind === 'hours' || t.kind === 'images') lifetimeByUser[t.userId] = (lifetimeByUser[t.userId] || 0) + amt
+    else if (t.kind === 'refund') lifetimeByUser[t.userId] = (lifetimeByUser[t.userId] || 0) - amt
+  }
+  const cancelled = []
+  let lifetimeTotal = 0
+  for (const u of (db.users || [])) {
+    const s = u.subscription || {}
+    if ((s.status || 'none') !== 'canceled') continue
+    const plan = WORK_TIERS.includes(s.plan) ? s.plan : (WORK_TIERS.includes(u.tier) ? u.tier : null)
+    const co = u.companyId ? (db.companies || []).find((c) => c.id === u.companyId) : null
+    const life = round2(lifetimeByUser[u.id] || 0)
+    cancelled.push({
+      id: u.id,
+      username: u.username,
+      email: effectiveUserEmail(u) || null,
+      plan: plan || null,
+      status: 'canceled',
+      cycle: s.cycle === 'annual' ? 'annual' : 'monthly',
+      since: s.since || u.createdAt || null,
+      canceledAt: s.canceledAt || null,
+      reason: s.cancelReason || null,
+      lifetimeUsd: life,
+      companyName: co ? co.name : null,
+    })
+    lifetimeTotal += life
+  }
+  cancelled.sort((a, b) => String(b.canceledAt || '').localeCompare(String(a.canceledAt || '')))
+  return { cancelled, totals: { count: cancelled.length, lifetimeUsd: round2(lifetimeTotal) } }
+}
+
+// A bucketed finance timeseries (finance dashboard graphs). Speaks weekly /
+// monthly / quarterly / yearly over the ledger (revenue/refunds/net, voided
+// excluded) plus subscription since/canceledAt (newSubs/cancellations), and a
+// reconstructed MRR curve. The MRR curve uses each account's CURRENT plan price
+// (we do not keep a plan-price history), so it is an approximation and is
+// documented as such; it is accurate for the counts and the money (those are
+// read straight from the ledger + the recorded dates).
+export function financeTimeseries(granularity = 'month', now = new Date()) {
+  const G = ['week', 'month', 'quarter', 'year'].includes(granularity) ? granularity : 'month'
+  const pricing = getWorkPricing()
+  const plans = pricing.plans || {}
+  const back = { week: 12, month: 12, quarter: 8, year: 5 }[G]
+  const startOfDay = (d) => { const x = new Date(d); x.setUTCHours(0, 0, 0, 0); return x }
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const Y = now.getUTCFullYear(), M = now.getUTCMonth()
+  const buckets = []
+  if (G === 'month') {
+    for (let i = back - 1; i >= 0; i--) {
+      const start = new Date(Date.UTC(Y, M - i, 1))
+      const end = new Date(Date.UTC(Y, M - i + 1, 1))
+      buckets.push({ start, end, bucket: start.toISOString().slice(0, 7), label: `${MONTHS[start.getUTCMonth()]} ${start.getUTCFullYear()}` })
+    }
+  } else if (G === 'quarter') {
+    const curQ = Math.floor(M / 3)
+    for (let i = back - 1; i >= 0; i--) {
+      const start = new Date(Date.UTC(Y, (curQ - i) * 3, 1))
+      const end = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + 3, 1))
+      const q = Math.floor(start.getUTCMonth() / 3) + 1
+      buckets.push({ start, end, bucket: `${start.getUTCFullYear()}-Q${q}`, label: `Q${q} ${start.getUTCFullYear()}` })
+    }
+  } else if (G === 'year') {
+    for (let i = back - 1; i >= 0; i--) {
+      const start = new Date(Date.UTC(Y - i, 0, 1))
+      const end = new Date(Date.UTC(Y - i + 1, 0, 1))
+      buckets.push({ start, end, bucket: String(start.getUTCFullYear()), label: String(start.getUTCFullYear()) })
+    }
+  } else { // week, Monday-start (matches financialSummary)
+    const sow = (d) => { const x = startOfDay(d); const day = (x.getUTCDay() + 6) % 7; x.setUTCDate(x.getUTCDate() - day); return x }
+    const base = sow(now)
+    for (let i = back - 1; i >= 0; i--) {
+      const start = new Date(base); start.setUTCDate(start.getUTCDate() - i * 7)
+      const end = new Date(start); end.setUTCDate(end.getUTCDate() + 7)
+      buckets.push({ start, end, bucket: start.toISOString().slice(0, 10), label: start.toISOString().slice(0, 10) })
+    }
+  }
+  // Monthly-equivalent revenue a live sub contributes, normalized like MRR.
+  const subMonthly = (u) => {
+    const s = u.subscription || {}
+    if (s.status === 'comp') return 0   // comped accounts pay nothing (match MRR basis)
+    const plan = WORK_TIERS.includes(s.plan) ? s.plan : (WORK_TIERS.includes(u.tier) ? u.tier : null)
+    if (!plan || !Number.isFinite(Number(plans[plan]))) return 0
+    const monthly = Number(plans[plan])
+    return (s.cycle === 'annual') ? (monthly * 12 * (1 - ANNUAL_DISCOUNT)) / 12 : monthly
+  }
+  const txns = db.transactions || []
+  const users = db.users || []
+  const series = buckets.map((b) => {
+    const startIso = b.start.toISOString(), endIso = b.end.toISOString()
+    let revenue = 0, refunds = 0, newSubs = 0, cancellations = 0, mrr = 0
+    for (const t of txns) {
+      if (t.voided) continue
+      if (t.at < startIso || t.at >= endIso) continue
+      if (t.kind === 'refund') refunds += Number(t.amount) || 0
+      else revenue += Number(t.amount) || 0
+    }
+    for (const u of users) {
+      const s = u.subscription || {}
+      if (s.since && s.since >= startIso && s.since < endIso) newSubs++
+      if (s.canceledAt && s.canceledAt >= startIso && s.canceledAt < endIso) cancellations++
+      // MRR as of the bucket END: counted when the sub started on/before the
+      // bucket end and had not been canceled by then (so a sub canceled later
+      // still contributes to the earlier buckets it was live through).
+      const started = s.since && s.since < endIso
+      const endedBy = s.canceledAt && s.canceledAt < endIso
+      if (started && !endedBy) mrr += subMonthly(u)
+    }
+    return { bucket: b.bucket, label: b.label, revenueUsd: round2(revenue), refundsUsd: round2(refunds), netUsd: round2(revenue - refunds), mrrUsd: round2(mrr), newSubs, cancellations }
+  })
+  return { series, granularity: G, currency: pricing.currency || 'usd', generatedAt: now.toISOString() }
+}
+
+// ---- Finance CRUD on MANUAL ledger entries (finance role) ------------------
+// Manual adjustments let an accountant post a correction the webhook never saw
+// (a chargeback write-off, a goodwill credit, a cash receipt). Financial best
+// practice is baked in: the POSTED AMOUNT IS IMMUTABLE after creation (you
+// correct with an offsetting entry, you never rewrite a posted number), only the
+// NOTE can be edited, a delete is a VOID (the row stays for audit, out of totals),
+// and a Stripe-sourced row cannot be voided here at all - it is reversed with a
+// real refund or an offsetting adjustment. Every mutation appends to the entry's
+// own audit trail (who + when + why).
+export function createManualTransaction({ amount, currency = 'usd', description = '', reason = '', createdBy = null, createdByName = null } = {}) {
+  const amt = Number(amount)
+  if (!Number.isFinite(amt) || amt === 0) throw httpErr(400, 'Enter a non-zero amount for the adjustment.')
+  if (!db.transactions) db.transactions = []
+  const at = new Date().toISOString()
+  const cleanReason = String(reason || '').slice(0, 300) || null
+  const rec = {
+    id: 'tx' + id(), kind: 'adjustment', userId: null,
+    username: createdByName || null,
+    amount: round2(amt), currency: String(currency || 'usd').toLowerCase(),
+    stripeId: null, plan: null, quantity: null,
+    status: 'posted', description: String(description || '').slice(0, 300),
+    manual: true, voided: false,
+    at, createdBy: createdBy || null,
+    audit: [{ at, by: createdBy || null, byName: createdByName || null, action: 'create', amount: round2(amt), reason: cleanReason }],
+  }
+  db.transactions.unshift(rec)
+  if (db.transactions.length > 20000) db.transactions.length = 20000
+  persist()
+  return rec
+}
+// Edit the NOTE (description) only. Posted amount is immutable by design.
+export function updateManualTransaction(txId, { description, reason = '', byUserId = null, byName = null } = {}) {
+  const tx = (db.transactions || []).find((t) => t.id === txId)
+  if (!tx) throw httpErr(404, 'Transaction not found.')
+  if (!tx.manual) { const e = httpErr(409, 'Only a manual adjustment can be edited. A Stripe-sourced row is immutable here.'); e.stripeSourced = true; throw e }
+  if (tx.voided) throw httpErr(409, 'That entry is voided and cannot be edited.')
+  if (description !== undefined) tx.description = String(description || '').slice(0, 300)
+  if (!Array.isArray(tx.audit)) tx.audit = []
+  tx.audit.push({ at: new Date().toISOString(), by: byUserId, byName, action: 'edit_note', reason: String(reason || '').slice(0, 300) || null })
+  persist()
+  return tx
+}
+// VOID a manual entry (the delete action). A Stripe-sourced row throws a 409 that
+// carries stripeSourced:true + a hint so the caller directs the operator to a
+// voiding offset instead. Voided rows stay in the ledger for audit.
+export function voidTransaction(txId, { reason = '', byUserId = null, byName = null } = {}) {
+  const tx = (db.transactions || []).find((t) => t.id === txId)
+  if (!tx) throw httpErr(404, 'Transaction not found.')
+  if (!tx.manual) {
+    const e = httpErr(409, 'A Stripe-sourced transaction cannot be voided. Post an offsetting adjustment (or issue a refund) to reverse it.')
+    e.stripeSourced = true
+    e.hint = 'Create a manual adjustment for the opposite amount to reverse this entry, or refund it through Stripe.'
+    throw e
+  }
+  if (tx.voided) return tx   // idempotent
+  tx.voided = true
+  tx.status = 'void'
+  if (!Array.isArray(tx.audit)) tx.audit = []
+  tx.audit.push({ at: new Date().toISOString(), by: byUserId, byName, action: 'void', reason: String(reason || '').slice(0, 300) || null })
+  persist()
+  return tx
 }
 
 // ---- Platform role: accounting --------------------------------------------
