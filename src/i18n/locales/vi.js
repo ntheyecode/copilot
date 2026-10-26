@@ -99,6 +99,10 @@ export default {
     sales: 'Kinh doanh và doanh nghiệp',
     ownership: 'WorkCoPilot, của AdmireVeda, một sản phẩm của COE Security LLC.',
     note: 'Chỉ dành cho công việc hợp pháp, chính đáng. Đây là hướng dẫn, không phải tư vấn chuyên môn.',
+    cookiePrefs: "Tùy chọn cookie",
+    cookiePolicy: "Chính sách cookie",
+    subprocessors: "Đơn vị xử lý phụ",
+    accessibility: "Khả năng tiếp cận",
   },
 
   home: {
@@ -558,5 +562,31 @@ export default {
     enterprise: { title: "Tính năng doanh nghiệp - WorkCoPilot by AdmireVeda", description: "WorkCoPilot học doanh nghiệp của bạn: tải lên quy trình, hướng dẫn và dữ liệu của bạn, và nó đồng hành cùng nhân sự của bạn qua từng bước chính xác trên màn hình của họ, theo đúng cách công ty bạn làm việc. Riêng tư cho tổ chức của bạn. Kèm theo che dữ liệu trên thiết bị, nhật ký kiểm toán, quản trị DLP, cảnh báo SIEM, SSO, báo cáo bằng chứng tuân thủ, ROI cho ban lãnh đạo, white-label và lập hóa đơn theo từng công ty." },
     demo: { title: "Demo 60 giây - WorkCoPilot by AdmireVeda", description: "Xem WorkCoPilot hướng dẫn một nhiệm vụ thực tế từ đầu đến cuối: nó đọc màn hình, đưa ra bước và lệnh tiếp theo chính xác, kiểm tra xem đã thành công chưa, phát hiện lỗi trước khi gây tốn kém, và trao cho bạn bản báo cáo." },
     benchmark: { title: "Chuẩn đo độ chính xác - WorkCoPilot by AdmireVeda", description: "WorkCoPilot chính xác đến mức nào, được đo một cách trung thực: độ đúng của kết quả trên các nhiệm vụ có đáp án biết trước, theo lĩnh vực và theo cấp AI, với cỡ mẫu và khoảng tin cậy 95%, cùng phương pháp luận." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Lựa chọn cookie và quyền riêng tư",
+    title: "Lựa chọn quyền riêng tư của bạn",
+    body: "Chúng tôi dùng một cookie thật sự cần thiết để giữ bạn đăng nhập. Khi bạn đồng ý, chúng tôi cũng bật lưu trữ chức năng và quy kết giới thiệu. Bạn có thể thay đổi bất cứ lúc nào.",
+    acceptAll: "Chấp nhận tất cả",
+    rejectAll: "Từ chối phần không thiết yếu",
+    manage: "Quản lý tùy chọn",
+    save: "Lưu lựa chọn",
+    back: "Quay lại",
+    close: "Đóng",
+    reopen: "Tùy chọn cookie",
+    manageTitle: "Quản lý tùy chọn của bạn",
+    manageBody: "Chọn những danh mục được phép. Lưu trữ thật sự cần thiết luôn bật để trang web và đăng nhập tiếp tục hoạt động.",
+    alwaysOn: "Luôn bật",
+    on: "Bật",
+    off: "Tắt",
+    necessaryT: "Thật sự cần thiết",
+    necessaryD: "Một cookie đăng nhập duy nhất giữ bạn luôn đăng nhập và giúp trang web hoạt động. Không thể tắt.",
+    functionalT: "Chức năng",
+    functionalD: "Ghi nhớ ngôn ngữ, giao diện và các tùy chọn khác trên thiết bị này. Không theo dõi xuyên trang.",
+    analyticsT: "Phân tích và quy kết",
+    analyticsD: "Cho phép chúng tôi ghi nhận đối tác đã giới thiệu bạn (cookie giới thiệu của bên thứ nhất). Tắt cho đến khi bạn cho phép, và không bao giờ dùng để lập hồ sơ về bạn.",
+    learn: "Đọc <a>Chính sách cookie</a> và <p>Chính sách quyền riêng tư</p> của chúng tôi.",
   },
 }

@@ -105,6 +105,10 @@ export default {
     sales: 'Ventes et entreprises',
     ownership: 'WorkCoPilot, par AdmireVeda, un produit de COE Security LLC.',
     note: 'Travail licite et légitime uniquement. Des conseils, pas un avis professionnel.',
+    cookiePrefs: "Préférences de cookies",
+    cookiePolicy: "Politique de cookies",
+    subprocessors: "Sous-traitants ultérieurs",
+    accessibility: "Accessibilité",
   },
 
   home: {
@@ -564,5 +568,31 @@ export default {
     enterprise: { title: "Fonctions entreprise - WorkCoPilot by AdmireVeda", description: "WorkCoPilot apprend votre entreprise : importez vos procédures, vos guides et vos données, et il accompagne vos équipes à chaque étape précise sur leur propre écran, selon la façon dont votre entreprise travaille. Privé à votre organisation. Plus l'expurgation sur l'appareil, les journaux d'audit, la gouvernance DLP, les alertes SIEM, le SSO, les rapports de preuve de conformité, le ROI pour la direction, la marque blanche et la facturation par entreprise." },
     demo: { title: "Démo de 60 secondes - WorkCoPilot by AdmireVeda", description: "Regardez WorkCoPilot guider une vraie tâche du début à la fin : il lit l'écran, donne l'étape et la commande exactes, vérifie que cela a marché, repère une erreur avant qu'elle ne coûte, et vous remet le compte rendu." },
     benchmark: { title: "Référence de précision - WorkCoPilot by AdmireVeda", description: "Le niveau de précision de WorkCoPilot, mesuré honnêtement : l'exactitude des résultats sur des tâches à réponse connue, par domaine et par niveau d'IA, avec les tailles d'échantillon et des intervalles de confiance à 95 %, ainsi que la méthodologie." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Choix de cookies et de confidentialité",
+    title: "Vos choix de confidentialité",
+    body: "Nous utilisons un cookie strictement nécessaire pour vous garder connecté. Avec votre consentement, nous activons aussi le stockage fonctionnel et l'attribution des parrainages. Vous pouvez changer cela à tout moment.",
+    acceptAll: "Tout accepter",
+    rejectAll: "Refuser le non essentiel",
+    manage: "Gérer les préférences",
+    save: "Enregistrer les choix",
+    back: "Retour",
+    close: "Fermer",
+    reopen: "Préférences de cookies",
+    manageTitle: "Gérez vos préférences",
+    manageBody: "Choisissez les catégories à autoriser. Le stockage strictement nécessaire reste activé pour que le site et la connexion continuent de fonctionner.",
+    alwaysOn: "Toujours actif",
+    on: "Activé",
+    off: "Désactivé",
+    necessaryT: "Strictement nécessaires",
+    necessaryD: "Un unique cookie de connexion qui vous garde connecté et fait fonctionner le site. Ne peut pas être désactivé.",
+    functionalT: "Fonctionnels",
+    functionalD: "Mémorise votre langue, votre thème et d'autres préférences sur cet appareil. Aucun suivi entre sites.",
+    analyticsT: "Analyse et attribution",
+    analyticsD: "Nous permet de créditer le partenaire qui vous a parrainé (un cookie de parrainage propriétaire). Désactivé tant que vous ne l'autorisez pas, et jamais utilisé pour vous profiler.",
+    learn: "Lisez notre <a>Politique de cookies</a> et notre <p>Politique de confidentialité</p>.",
   },
 }

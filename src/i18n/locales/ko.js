@@ -117,6 +117,10 @@ export default {
     sales: '영업 및 엔터프라이즈',
     ownership: 'WorkCoPilot, AdmireVeda 제공, COE Security LLC의 제품입니다.',
     note: '합법적이고 정당한 업무에만 사용. 안내일 뿐 전문적인 조언이 아닙니다.',
+    cookiePrefs: "쿠키 환경설정",
+    cookiePolicy: "쿠키 정책",
+    subprocessors: "하위 처리자",
+    accessibility: "접근성",
   },
 
   home: {
@@ -593,5 +597,31 @@ export default {
     enterprise: { title: "엔터프라이즈 기능 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot은 당신의 기업을 학습합니다: 절차와 가이드, 데이터를 업로드하면, 회사가 일하는 방식에 맞춰 구성원 각자의 화면에서 정확한 모든 단계를 함께합니다. 조직 전용. 여기에 기기 내 비식별화, 감사 로그, DLP 거버넌스, SIEM 경고, SSO, 규정 준수 증적 보고서, 경영진용 ROI, 화이트라벨, 회사별 청구가 더해집니다." },
     demo: { title: "60초 데모 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 실제 작업을 처음부터 끝까지 안내하는 모습을 보세요: 화면을 읽고, 다음의 정확한 단계와 명령을 제시하고, 성공했는지 확인하고, 비용이 되기 전에 실수를 잡아내며, 보고서를 건네줍니다." },
     benchmark: { title: "정확도 벤치마크 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 얼마나 정확한지 정직하게 측정: 정답이 알려진 작업에서의 결과 정확도를 도메인별, AI 등급별로, 표본 크기와 95% 신뢰구간과 함께 보고하고, 방법론도 제시합니다." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "쿠키 및 개인정보 선택",
+    title: "개인정보 선택",
+    body: "로그인 상태를 유지하기 위해 반드시 필요한 쿠키 하나를 사용합니다. 동의하시면 기능적 저장과 추천 기여도 함께 켭니다. 언제든지 변경할 수 있습니다.",
+    acceptAll: "모두 수락",
+    rejectAll: "필수 외 거부",
+    manage: "환경설정 관리",
+    save: "선택 저장",
+    back: "뒤로",
+    close: "닫기",
+    reopen: "쿠키 환경설정",
+    manageTitle: "환경설정 관리",
+    manageBody: "허용할 범주를 선택하세요. 사이트와 로그인이 계속 작동하도록 반드시 필요한 저장은 항상 켜져 있습니다.",
+    alwaysOn: "항상 켜짐",
+    on: "켜짐",
+    off: "꺼짐",
+    necessaryT: "반드시 필요",
+    necessaryD: "로그인 상태를 유지하고 사이트를 작동시키는 단일 로그인 쿠키입니다. 끌 수 없습니다.",
+    functionalT: "기능",
+    functionalD: "이 기기에서 언어, 테마 및 기타 환경설정을 기억합니다. 사이트 간 추적은 없습니다.",
+    analyticsT: "분석 및 기여",
+    analyticsD: "추천해 준 파트너에게 공을 돌릴 수 있게 합니다(자사 추천 쿠키). 허용하기 전에는 꺼져 있으며, 프로파일링에는 절대 사용되지 않습니다.",
+    learn: "<a>쿠키 정책</a>과 <p>개인정보처리방침</p>을 읽어 보세요.",
   },
 }

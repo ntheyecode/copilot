@@ -99,6 +99,10 @@ export default {
     sales: 'Satış ve kurumsal',
     ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünüdür.',
     note: 'Yalnızca yasal ve meşru işler için. Rehberliktir, profesyonel danışmanlık değildir.',
+    cookiePrefs: "Çerez tercihleri",
+    cookiePolicy: "Çerez Politikası",
+    subprocessors: "Alt işleyenler",
+    accessibility: "Erişilebilirlik",
   },
 
   home: {
@@ -558,5 +562,31 @@ export default {
     enterprise: { title: "Kurumsal özellikler - WorkCoPilot by AdmireVeda", description: "WorkCoPilot şirketinizi öğrenir: prosedürlerinizi, kılavuzlarınızı ve verilerinizi yükleyin; şirketinizin çalışma biçimine göre kişilerinize kendi ekranlarında her tam adımda eşlik etsin. Kuruluşunuza özel. Ayrıca cihazda maskeleme, denetim günlükleri, DLP yönetimi, SIEM uyarıları, SSO, uyum kanıt raporları, yönetim için ROI, beyaz etiket ve şirket bazında faturalama." },
     demo: { title: "60 saniyelik demo - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un gerçek bir görevi baştan sona yönlendirmesini izleyin: ekranı okur, bir sonraki tam adımı ve komutu verir, çalıştığını kontrol eder, maliyetli olmadan bir hatayı yakalar ve size raporu teslim eder." },
     benchmark: { title: "Doğruluk kıyaslaması - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un ne kadar doğru olduğu, dürüstçe ölçülmüş: yanıtı bilinen görevlerde sonuç doğruluğu, alan ve yapay zeka katmanı bazında, örneklem boyutları ve %95 güven aralıklarıyla, ayrıca yöntem." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Çerez ve gizlilik seçimleri",
+    title: "Gizlilik seçimleriniz",
+    body: "Oturumunuzu açık tutmak için kesinlikle gerekli bir çerez kullanırız. İzninizle işlevsel depolamayı ve yönlendirme atfını da açarız. Bunu istediğiniz zaman değiştirebilirsiniz.",
+    acceptAll: "Tümünü kabul et",
+    rejectAll: "Gerekli olmayanları reddet",
+    manage: "Tercihleri yönet",
+    save: "Seçimleri kaydet",
+    back: "Geri",
+    close: "Kapat",
+    reopen: "Çerez tercihleri",
+    manageTitle: "Tercihlerinizi yönetin",
+    manageBody: "Hangi kategorilere izin vereceğinizi seçin. Site ve oturum açma çalışmaya devam etsin diye kesinlikle gerekli depolama her zaman açıktır.",
+    alwaysOn: "Her zaman açık",
+    on: "Açık",
+    off: "Kapalı",
+    necessaryT: "Kesinlikle gerekli",
+    necessaryD: "Sizi oturumda tutan ve siteyi çalıştıran tek bir oturum açma çerezi. Kapatılamaz.",
+    functionalT: "İşlevsel",
+    functionalD: "Bu cihazda dilinizi, temanızı ve diğer tercihlerinizi hatırlar. Siteler arası izleme yok.",
+    analyticsT: "Analitik ve atıf",
+    analyticsD: "Sizi yönlendiren iş ortağını kredilendirmemizi sağlar (birinci taraf yönlendirme çerezi). İzin verene kadar kapalıdır ve sizi profillemek için asla kullanılmaz.",
+    learn: "<a>Çerez Politikamızı</a> ve <p>Gizlilik Politikamızı</p> okuyun.",
   },
 }

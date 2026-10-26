@@ -117,6 +117,10 @@ export default {
     sales: '営業・エンタープライズ',
     ownership: 'WorkCoPilot（AdmireVeda 提供、COE Security LLC の製品）。',
     note: '適法かつ正当な業務のみ。ガイドであり、専門的な助言ではありません。',
+    cookiePrefs: "Cookie 設定",
+    cookiePolicy: "Cookie ポリシー",
+    subprocessors: "サブプロセッサー",
+    accessibility: "アクセシビリティ",
   },
 
   home: {
@@ -593,5 +597,31 @@ export default {
     enterprise: { title: "エンタープライズ機能 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot はあなたの企業を学びます：手順書やガイド、データをアップロードすれば、会社の働き方に沿って、各メンバーの画面で一つひとつの正確なステップに寄り添います。組織に対して非公開。さらに端末上での秘匿化、監査ログ、DLP ガバナンス、SIEM アラート、SSO、コンプライアンス証跡レポート、経営向け ROI、ホワイトラベル、会社単位の請求。" },
     demo: { title: "60秒デモ - WorkCoPilot by AdmireVeda", description: "WorkCoPilot が実際のタスクを最初から最後までガイドする様子をご覧ください：画面を読み取り、次の正確なステップとコマンドを示し、うまくいったか確認し、代償になる前にミスを捉え、記録をお渡しします。" },
     benchmark: { title: "精度ベンチマーク - WorkCoPilot by AdmireVeda", description: "WorkCoPilot がどれほど正確か、誠実に測定：答えが既知のタスクでの結果の正しさを、分野別・AI ティア別に、サンプル数と 95% 信頼区間とともに報告し、方法論も記載します。" },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Cookie とプライバシーの選択",
+    title: "あなたのプライバシー選択",
+    body: "サインイン状態を保つために、厳密に必要な Cookie を 1 つ使用します。同意いただくと、機能的な保存と紹介のアトリビューションも有効にします。いつでも変更できます。",
+    acceptAll: "すべて同意",
+    rejectAll: "必須以外を拒否",
+    manage: "設定を管理",
+    save: "選択を保存",
+    back: "戻る",
+    close: "閉じる",
+    reopen: "Cookie 設定",
+    manageTitle: "設定を管理",
+    manageBody: "許可するカテゴリーを選んでください。サイトとサインインが動作し続けるよう、厳密に必要な保存は常に有効です。",
+    alwaysOn: "常に有効",
+    on: "オン",
+    off: "オフ",
+    necessaryT: "厳密に必要",
+    necessaryD: "サインイン状態を保ち、サイトを動作させる単一のサインイン Cookie。無効にできません。",
+    functionalT: "機能的",
+    functionalD: "この端末で言語・テーマなどの設定を記憶します。サイトをまたぐ追跡はありません。",
+    analyticsT: "分析とアトリビューション",
+    analyticsD: "紹介してくれたパートナーに功績を割り当てられます（ファーストパーティの紹介 Cookie）。許可するまでオフで、プロファイリングには一切使いません。",
+    learn: "<a>Cookie ポリシー</a>と<p>プライバシーポリシー</p>をお読みください。",
   },
 }

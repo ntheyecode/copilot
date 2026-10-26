@@ -118,6 +118,10 @@ export default {
     sales: '销售与企业',
     ownership: 'WorkCoPilot,由 AdmireVeda 出品,COE Security LLC 的产品。',
     note: '仅限合法、正当的工作。提供引导,而非专业咨询。',
+    cookiePrefs: "Cookie 偏好设置",
+    cookiePolicy: "Cookie 政策",
+    subprocessors: "子处理方",
+    accessibility: "无障碍",
   },
 
   home: {
@@ -594,5 +598,31 @@ export default {
     enterprise: { title: "企业功能 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 学习你的企业：上传你的流程、指南和数据，它便会按照你公司的工作方式，在员工自己的屏幕上陪他们完成每一个精确步骤。仅对你的组织私有。此外还有设备端脱敏、审计日志、DLP 治理、SIEM 告警、SSO、合规证据报告、面向管理层的 ROI、白标以及按公司计费。" },
     demo: { title: "60 秒演示 - WorkCoPilot by AdmireVeda", description: "观看 WorkCoPilot 从头到尾引导一个真实任务：读取屏幕、给出精确的下一步和命令、确认是否成功、在错误造成代价前将其发现，并把记录交给你。" },
     benchmark: { title: "准确率基准 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 有多准确，诚实衡量：在有已知答案的任务上的结果正确率，按领域和按 AI 层级报告，附样本量与 95% 置信区间，以及方法说明。" },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Cookie 与隐私选择",
+    title: "您的隐私选择",
+    body: "我们使用一个严格必要的 Cookie 来保持您的登录状态。在您同意后，我们还会开启功能性存储与推荐归因。您可以随时更改。",
+    acceptAll: "全部接受",
+    rejectAll: "拒绝非必要",
+    manage: "管理偏好",
+    save: "保存选择",
+    back: "返回",
+    close: "关闭",
+    reopen: "Cookie 偏好设置",
+    manageTitle: "管理您的偏好",
+    manageBody: "选择允许哪些类别。严格必要的存储始终开启，以便网站和登录正常工作。",
+    alwaysOn: "始终开启",
+    on: "开",
+    off: "关",
+    necessaryT: "严格必要",
+    necessaryD: "一个让您保持登录并使网站正常工作的登录 Cookie。无法关闭。",
+    functionalT: "功能性",
+    functionalD: "在本设备上记住您的语言、主题和其他偏好。不进行跨站跟踪。",
+    analyticsT: "分析与归因",
+    analyticsD: "让我们能够为推荐您的合作伙伴记功（第一方推荐 Cookie）。在您允许之前关闭，且绝不用于对您画像。",
+    learn: "请阅读我们的<a>Cookie 政策</a>和<p>隐私政策</p>。",
   },
 }

@@ -105,6 +105,10 @@ export default {
     sales: 'Ventas y empresas',
     ownership: 'WorkCoPilot, de AdmireVeda, un producto de COE Security LLC.',
     note: 'Solo para trabajo lícito y legítimo. Es una guía, no asesoría profesional.',
+    cookiePrefs: "Preferencias de cookies",
+    cookiePolicy: "Política de cookies",
+    subprocessors: "Subencargados",
+    accessibility: "Accesibilidad",
   },
 
   home: {
@@ -564,5 +568,31 @@ export default {
     enterprise: { title: "Funciones para empresas - WorkCoPilot by AdmireVeda", description: "WorkCoPilot aprende tu empresa: sube tus procedimientos, guías y datos, y acompaña a tu gente en cada paso exacto en su propia pantalla, según cómo trabaja tu empresa. Privado para tu organización. Además, redacción en el dispositivo, registros de auditoría, gobierno de DLP, alertas SIEM, SSO, informes de evidencia de cumplimiento, ROI para dirección, marca blanca y facturación por empresa." },
     demo: { title: "Demo de 60 segundos - WorkCoPilot by AdmireVeda", description: "Mira a WorkCoPilot guiar una tarea real de principio a fin: lee la pantalla, da el siguiente paso y comando exacto, comprueba que funcionó, detecta un error antes de que cueste y te entrega el informe." },
     benchmark: { title: "Referencia de precisión - WorkCoPilot by AdmireVeda", description: "Qué tan preciso es WorkCoPilot, medido con honestidad: corrección de resultados en tareas con respuestas conocidas, por dominio y por nivel de IA, con tamaños de muestra e intervalos de confianza del 95%, más la metodología." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Opciones de cookies y privacidad",
+    title: "Tus opciones de privacidad",
+    body: "Usamos una cookie estrictamente necesaria para mantener tu sesión. Con tu consentimiento también activamos el almacenamiento funcional y la atribución de referidos. Puedes cambiarlo cuando quieras.",
+    acceptAll: "Aceptar todo",
+    rejectAll: "Rechazar no esenciales",
+    manage: "Gestionar preferencias",
+    save: "Guardar opciones",
+    back: "Atrás",
+    close: "Cerrar",
+    reopen: "Preferencias de cookies",
+    manageTitle: "Gestiona tus preferencias",
+    manageBody: "Elige qué categorías permitir. El almacenamiento estrictamente necesario siempre está activado para que el sitio y el inicio de sesión sigan funcionando.",
+    alwaysOn: "Siempre activo",
+    on: "Activado",
+    off: "Desactivado",
+    necessaryT: "Estrictamente necesarias",
+    necessaryD: "Una sola cookie de inicio de sesión que te mantiene conectado y hace funcionar el sitio. No se puede desactivar.",
+    functionalT: "Funcionales",
+    functionalD: "Recuerda tu idioma, tema y otras preferencias en este dispositivo. Sin seguimiento entre sitios.",
+    analyticsT: "Analítica y atribución",
+    analyticsD: "Nos permite acreditar al socio que te refirió (una cookie de referido propia). Desactivada hasta que la permitas, y nunca para perfilarte.",
+    learn: "Lee nuestra <a>Política de cookies</a> y la <p>Política de privacidad</p>.",
   },
 }

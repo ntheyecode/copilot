@@ -105,6 +105,10 @@ export default {
     sales: 'Vertrieb und Unternehmen',
     ownership: 'WorkCoPilot, von AdmireVeda, ein Produkt der COE Security LLC.',
     note: 'Nur für rechtmäßige, legitime Arbeit. Anleitung, keine fachliche Beratung.',
+    cookiePrefs: "Cookie-Einstellungen",
+    cookiePolicy: "Cookie-Richtlinie",
+    subprocessors: "Unterauftragsverarbeiter",
+    accessibility: "Barrierefreiheit",
   },
 
   home: {
@@ -564,5 +568,31 @@ export default {
     enterprise: { title: "Enterprise-Funktionen - WorkCoPilot by AdmireVeda", description: "WorkCoPilot lernt Ihr Unternehmen: Laden Sie Ihre Verfahren, Leitfäden und Daten hoch, und es begleitet Ihre Leute bei jedem exakten Schritt auf ihrem eigenen Bildschirm, so wie Ihr Unternehmen arbeitet. Privat für Ihre Organisation. Dazu Schwärzung auf dem Gerät, Audit-Protokolle, DLP-Governance, SIEM-Warnungen, SSO, Compliance-Nachweisberichte, ROI für die Führung, White-Label und Abrechnung je Unternehmen." },
     demo: { title: "60-Sekunden-Demo - WorkCoPilot by AdmireVeda", description: "Sehen Sie, wie WorkCoPilot eine echte Aufgabe von Anfang bis Ende anleitet: Es liest den Bildschirm, gibt den exakten nächsten Schritt und Befehl, prüft den Erfolg, erkennt einen Fehler, bevor er teuer wird, und übergibt Ihnen das Protokoll." },
     benchmark: { title: "Genauigkeits-Benchmark - WorkCoPilot by AdmireVeda", description: "Wie genau WorkCoPilot ist, ehrlich gemessen: Ergebnisgenauigkeit bei Aufgaben mit bekannten Antworten, je Bereich und je KI-Stufe, mit Stichprobengrößen und 95%-Konfidenzintervallen, dazu die Methodik." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Cookie- und Datenschutzoptionen",
+    title: "Ihre Datenschutzoptionen",
+    body: "Wir verwenden ein unbedingt erforderliches Cookie, um Sie angemeldet zu halten. Mit Ihrer Einwilligung aktivieren wir zusätzlich funktionale Speicherung und Empfehlungs-Attribution. Sie können dies jederzeit ändern.",
+    acceptAll: "Alle akzeptieren",
+    rejectAll: "Nicht notwendige ablehnen",
+    manage: "Einstellungen verwalten",
+    save: "Auswahl speichern",
+    back: "Zurück",
+    close: "Schließen",
+    reopen: "Cookie-Einstellungen",
+    manageTitle: "Verwalten Sie Ihre Einstellungen",
+    manageBody: "Wählen Sie, welche Kategorien Sie zulassen. Unbedingt erforderliche Speicherung bleibt an, damit Website und Anmeldung weiter funktionieren.",
+    alwaysOn: "Immer an",
+    on: "An",
+    off: "Aus",
+    necessaryT: "Unbedingt erforderlich",
+    necessaryD: "Ein einziges Anmelde-Cookie, das Sie angemeldet hält und die Website funktionsfähig macht. Kann nicht deaktiviert werden.",
+    functionalT: "Funktional",
+    functionalD: "Merkt sich Sprache, Design und andere Einstellungen auf diesem Gerät. Kein seitenübergreifendes Tracking.",
+    analyticsT: "Analyse und Attribution",
+    analyticsD: "Ermöglicht es, einen Partner zu vergüten, der Sie empfohlen hat (ein Erstanbieter-Empfehlungs-Cookie). Aus, bis Sie es erlauben, und nie zur Profilbildung.",
+    learn: "Lesen Sie unsere <a>Cookie-Richtlinie</a> und <p>Datenschutzerklärung</p>.",
   },
 }

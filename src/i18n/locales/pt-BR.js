@@ -99,6 +99,10 @@ export default {
     sales: 'Vendas e empresas',
     ownership: 'WorkCoPilot, da AdmireVeda, um produto da COE Security LLC.',
     note: 'Somente para trabalho lícito e legítimo. Orientação, não aconselhamento profissional.',
+    cookiePrefs: "Preferências de cookies",
+    cookiePolicy: "Política de cookies",
+    subprocessors: "Subprocessadores",
+    accessibility: "Acessibilidade",
   },
 
   home: {
@@ -558,5 +562,31 @@ export default {
     enterprise: { title: "Recursos para empresas - WorkCoPilot by AdmireVeda", description: "O WorkCoPilot aprende a sua empresa: envie seus procedimentos, guias e dados, e ele acompanha suas pessoas em cada passo exato na própria tela, conforme a maneira como a sua empresa trabalha. Privado para a sua organização. Além de redação no dispositivo, trilhas de auditoria, governança de DLP, alertas SIEM, SSO, relatórios de evidência de conformidade, ROI para a liderança, marca branca e cobrança por empresa." },
     demo: { title: "Demo de 60 segundos - WorkCoPilot by AdmireVeda", description: "Veja o WorkCoPilot orientar uma tarefa real do início ao fim: ele lê a tela, dá o próximo passo e comando exatos, confere se funcionou, detecta um erro antes que ele custe, e entrega o relatório." },
     benchmark: { title: "Referência de precisão - WorkCoPilot by AdmireVeda", description: "O quão preciso o WorkCoPilot é, medido com honestidade: correção dos resultados em tarefas com respostas conhecidas, por domínio e por nível de IA, com tamanhos de amostra e intervalos de confiança de 95%, além da metodologia." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Opções de cookies e privacidade",
+    title: "Suas opções de privacidade",
+    body: "Usamos um cookie estritamente necessário para manter você conectado. Com o seu consentimento, também ativamos o armazenamento funcional e a atribuição de indicações. Você pode alterar isso quando quiser.",
+    acceptAll: "Aceitar tudo",
+    rejectAll: "Recusar não essenciais",
+    manage: "Gerenciar preferências",
+    save: "Salvar escolhas",
+    back: "Voltar",
+    close: "Fechar",
+    reopen: "Preferências de cookies",
+    manageTitle: "Gerencie suas preferências",
+    manageBody: "Escolha quais categorias permitir. O armazenamento estritamente necessário fica sempre ativado para que o site e o login continuem funcionando.",
+    alwaysOn: "Sempre ativo",
+    on: "Ativado",
+    off: "Desativado",
+    necessaryT: "Estritamente necessários",
+    necessaryD: "Um único cookie de login que mantém você conectado e faz o site funcionar. Não pode ser desativado.",
+    functionalT: "Funcionais",
+    functionalD: "Lembra seu idioma, tema e outras preferências neste dispositivo. Sem rastreamento entre sites.",
+    analyticsT: "Análise e atribuição",
+    analyticsD: "Permite creditar o parceiro que indicou você (um cookie de indicação próprio). Desativado até você permitir, e nunca usado para traçar seu perfil.",
+    learn: "Leia nossa <a>Política de Cookies</a> e a <p>Política de Privacidade</p>.",
   },
 }

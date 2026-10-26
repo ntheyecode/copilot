@@ -99,6 +99,10 @@ export default {
     sales: 'Penjualan dan perusahaan',
     ownership: 'WorkCoPilot, oleh AdmireVeda, produk dari COE Security LLC.',
     note: 'Hanya untuk pekerjaan yang sah dan legal. Ini panduan, bukan nasihat profesional.',
+    cookiePrefs: "Preferensi cookie",
+    cookiePolicy: "Kebijakan Cookie",
+    subprocessors: "Subpemroses",
+    accessibility: "Aksesibilitas",
   },
 
   home: {
@@ -558,5 +562,31 @@ export default {
     enterprise: { title: "Fitur perusahaan - WorkCoPilot by AdmireVeda", description: "WorkCoPilot mempelajari perusahaan Anda: unggah prosedur, panduan, dan data Anda, dan ia mendampingi orang-orang Anda pada setiap langkah yang tepat di layar mereka sendiri, sesuai cara kerja perusahaan Anda. Privat untuk organisasi Anda. Ditambah penyuntingan di perangkat, log audit, tata kelola DLP, peringatan SIEM, SSO, laporan bukti kepatuhan, ROI untuk pimpinan, white-label, dan penagihan per perusahaan." },
     demo: { title: "Demo 60 detik - WorkCoPilot by AdmireVeda", description: "Lihat WorkCoPilot memandu satu tugas nyata dari awal hingga akhir: ia membaca layar, memberi langkah dan perintah berikutnya yang tepat, memeriksa bahwa itu berhasil, menangkap kesalahan sebelum merugikan, dan menyerahkan laporannya kepada Anda." },
     benchmark: { title: "Tolok ukur akurasi - WorkCoPilot by AdmireVeda", description: "Seberapa akurat WorkCoPilot, diukur dengan jujur: ketepatan hasil pada tugas dengan jawaban yang diketahui, per domain dan per tingkat AI, dengan ukuran sampel dan interval kepercayaan 95%, serta metodologinya." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Pilihan cookie dan privasi",
+    title: "Pilihan privasi Anda",
+    body: "Kami menggunakan satu cookie yang sangat diperlukan untuk menjaga Anda tetap masuk. Dengan persetujuan Anda, kami juga mengaktifkan penyimpanan fungsional dan atribusi rujukan. Anda dapat mengubahnya kapan saja.",
+    acceptAll: "Terima semua",
+    rejectAll: "Tolak yang tidak penting",
+    manage: "Kelola preferensi",
+    save: "Simpan pilihan",
+    back: "Kembali",
+    close: "Tutup",
+    reopen: "Preferensi cookie",
+    manageTitle: "Kelola preferensi Anda",
+    manageBody: "Pilih kategori yang diizinkan. Penyimpanan yang sangat diperlukan selalu aktif agar situs dan proses masuk tetap berfungsi.",
+    alwaysOn: "Selalu aktif",
+    on: "Aktif",
+    off: "Nonaktif",
+    necessaryT: "Sangat diperlukan",
+    necessaryD: "Satu cookie masuk yang menjaga Anda tetap login dan membuat situs berfungsi. Tidak dapat dinonaktifkan.",
+    functionalT: "Fungsional",
+    functionalD: "Mengingat bahasa, tema, dan preferensi lain di perangkat ini. Tanpa pelacakan lintas situs.",
+    analyticsT: "Analitik dan atribusi",
+    analyticsD: "Memungkinkan kami memberi kredit kepada mitra yang merujuk Anda (cookie rujukan pihak pertama). Nonaktif hingga Anda mengizinkan, dan tidak pernah dipakai untuk memprofilkan Anda.",
+    learn: "Baca <a>Kebijakan Cookie</a> dan <p>Kebijakan Privasi</p> kami.",
   },
 }
