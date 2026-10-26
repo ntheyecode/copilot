@@ -5463,31 +5463,96 @@ export function setWorkTicketStatus(ticketId, status) {
 // Downloadable as a .log. Best-effort: auditing must never break a scan.
 // ===========================================================================
 const AUDIT_DIR = path.join(DATA_DIR, 'audit')
+// One place derives the on-disk file for a session id (sanitized), so the
+// writer and every reader agree and no caller can steer the path.
+function auditFile(sessionId) { return path.join(AUDIT_DIR, `${String(sessionId || '').replace(/[^\w-]/g, '')}.log`) }
+
+// Tamper evidence: every entry carries seq, prev (the previous entry's hash,
+// or "genesis" for the first) and hash = SHA-256 over the entry itself. An
+// edited, removed or reordered line breaks the chain, which
+// verifyWorkAuditChain() reports and the readable download states in its
+// header. The fields are additive JSON, so existing readers (the formatter,
+// compliance evidence, tests) are unaffected. The chain tail is cached in
+// memory per session and recovered from the file tail after a restart.
+const _auditTail = new Map()   // sessionId -> { seq, hash } of the last line written
+function auditEntryHash(body) { return crypto.createHash('sha256').update(JSON.stringify(body)).digest('hex') }
+function auditTail(sessionId, file) {
+  const cached = _auditTail.get(sessionId)
+  if (cached) return cached
+  let seq = 0, hash = ''
+  try {
+    if (fs.existsSync(file)) {
+      const lines = fs.readFileSync(file, 'utf8').split('\n').filter(Boolean)
+      if (lines.length) {
+        seq = lines.length
+        try { const last = JSON.parse(lines[lines.length - 1]); if (Number.isInteger(last.seq)) seq = last.seq; hash = typeof last.hash === 'string' ? last.hash : '' } catch { /* legacy or damaged tail: chain restarts from here */ }
+      }
+    }
+  } catch { /* unreadable: start a fresh chain */ }
+  return { seq, hash }
+}
 export function appendWorkAudit(sessionId, entry) {
   if (!sessionId) return
   try {
     if (!fs.existsSync(AUDIT_DIR)) fs.mkdirSync(AUDIT_DIR, { recursive: true, mode: 0o700 })
-    const line = JSON.stringify({ at: new Date().toISOString(), ...entry }) + '\n'
-    fs.appendFileSync(path.join(AUDIT_DIR, `${sessionId}.log`), line, { mode: 0o600 })
+    const file = auditFile(sessionId)
+    const tail = auditTail(sessionId, file)
+    const body = { at: new Date().toISOString(), ...entry, seq: tail.seq + 1, prev: tail.hash || 'genesis' }
+    const hash = auditEntryHash(body)
+    fs.appendFileSync(file, JSON.stringify({ ...body, hash }) + '\n', { mode: 0o600 })
+    _auditTail.set(sessionId, { seq: body.seq, hash })
   } catch { /* never break the scan on an audit write */ }
 }
 export function readWorkAuditRaw(sessionId) {
   try {
-    const f = path.join(AUDIT_DIR, `${String(sessionId).replace(/[^\w-]/g, '')}.log`)
+    const f = auditFile(sessionId)
     if (!fs.existsSync(f)) return ''
     return fs.readFileSync(f, 'utf8')
   } catch { return '' }
+}
+// Walk the chain. Entries written before chaining existed carry no hash and
+// are counted as `legacy` (recorded, but not tamper-evident); the chain is
+// checked from the first hashed entry on. Returns
+// { ok, entries, chained, legacy, brokenAt } where brokenAt is the 1-based
+// line number of the first entry whose hash or prev-link does not verify.
+export function verifyWorkAuditChain(sessionId) {
+  const lines = readWorkAuditRaw(sessionId).split('\n').filter(Boolean)
+  let chained = 0, legacy = 0, brokenAt = null, prevHash = ''
+  lines.forEach((l, i) => {
+    if (brokenAt != null) return
+    let e
+    try { e = JSON.parse(l) } catch { brokenAt = i + 1; return }
+    if (typeof e.hash !== 'string') { legacy++; return }
+    const { hash, ...body } = e
+    const expectPrev = prevHash || 'genesis'
+    if (auditEntryHash(body) !== hash || body.prev !== expectPrev) { brokenAt = i + 1; return }
+    prevHash = hash
+    chained++
+  })
+  return { ok: brokenAt == null, entries: lines.length, chained, legacy, brokenAt }
 }
 // Human-readable .log for download.
 export function formatWorkAuditLog(sessionId, session) {
   const raw = readWorkAuditRaw(sessionId)
   const lines = raw.split('\n').filter(Boolean)
+  // Integrity line: the reader sees at a glance whether the on-disk log is
+  // intact. Never throws (a verification error must not block the download).
+  let integrity = 'Integrity: not verified'
+  try {
+    const v = verifyWorkAuditChain(sessionId)
+    if (!v.entries) integrity = 'Integrity: no entries'
+    else if (!v.ok) integrity = `Integrity: CHAIN BROKEN at entry ${v.brokenAt} - this log was altered after it was written (SHA-256 hash chain does not verify).`
+    else if (v.legacy && !v.chained) integrity = `Integrity: ${v.legacy} entries recorded before hash chaining was enabled (not tamper-evident).`
+    else if (v.legacy) integrity = `Integrity: hash chain intact for ${v.chained} entries (SHA-256, each entry linked to the previous); ${v.legacy} earlier entries predate chaining.`
+    else integrity = `Integrity: hash chain intact (${v.chained} entries, SHA-256, each entry linked to the previous).`
+  } catch { /* keep the default */ }
   const head = [
     'WorkCoPilot - session audit log',
     `Session: ${sessionId}`,
     session ? `Goal: ${session.goal || '(none)'}` : null,
     `Generated: ${new Date().toISOString()}`,
     `Transmissions logged: ${lines.length}`,
+    integrity,
     'This log records, per interaction: what was sent to the AI, what the assistant read from your screen, the security checks run on any code (SAST + a live dependency CVE check), what sensitive content was filtered, and any flags raised. The goal is shown once above and is not repeated on every line.',
     'Times are shown in UTC (24-hour).',
     'Redaction is ON by default: sensitive values are stripped on the device before transmission and appear as [REDACTED].',
@@ -5523,7 +5588,8 @@ export function formatWorkAuditLog(sessionId, session) {
   return head + body + '\n'
 }
 export function deleteWorkAudit(sessionId) {
-  try { const f = path.join(AUDIT_DIR, `${String(sessionId).replace(/[^\w-]/g, '')}.log`); if (fs.existsSync(f)) fs.unlinkSync(f) } catch { /* best effort */ }
+  _auditTail.delete(sessionId)
+  try { const f = auditFile(sessionId); if (fs.existsSync(f)) fs.unlinkSync(f) } catch { /* best effort */ }
 }
 
 // ---- Compliance evidence ---------------------------------------------------
