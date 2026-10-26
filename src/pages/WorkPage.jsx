@@ -1201,6 +1201,20 @@ const WD_CSS = `
 .wd-help-body li{line-height:1.6}
 .wd-tip{display:flex;gap:9px;align-items:flex-start;background:var(--em-fill);border:1px solid var(--em-line);border-radius:12px;padding:12px 14px;color:var(--tx)!important;font-size:14px;margin-top:6px}
 .wd-tip svg{color:var(--em);flex-shrink:0;margin-top:3px}
+/* Help visuals: the 4-step "how it works" flow + inline-SVG UI mockups. A clean
+   responsive grid (4 -> 2 -> 1 columns) so nothing ever overflows. */
+.wd-hf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 22px}
+@media(max-width:820px){.wd-hf{grid-template-columns:1fr 1fr}}
+@media(max-width:480px){.wd-hf{grid-template-columns:1fr}}
+.wd-hf-card{display:flex;flex-direction:column;gap:7px;padding:15px 14px 16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--em-fill),#ffffff 72%);box-shadow:var(--card-shadow);min-width:0}
+.wd-hf-top{display:flex;align-items:center;justify-content:space-between}
+.wd-hf-ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid var(--em-line);color:var(--em);flex-shrink:0}
+.wd-hf-n{font-family:var(--wd-display);font-weight:800;font-size:22px;line-height:1;color:var(--em-line)}
+.wd-hf-t{font-size:14px;font-weight:700;color:var(--tx);line-height:1.3}
+.wd-hf-b{font-size:12.5px;color:var(--mut);line-height:1.5}
+.wd-fig{margin:14px 0 8px}
+.wd-shot{display:block;width:100%;max-width:440px;height:auto}
+.wd-figcap{margin-top:7px;font-size:12px;color:var(--mut);line-height:1.45;font-style:italic}
 .wd-steps{list-style:none;padding:0!important;counter-reset:wd-step;display:flex;flex-direction:column;gap:14px!important}
 .wd-steps li{position:relative;padding-left:42px;line-height:1.62;min-height:28px;display:block}
 .wd-steps li:before{counter-increment:wd-step;content:counter(wd-step);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--em-fill-2);color:var(--em);border:1px solid var(--em-line);display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-weight:700}
@@ -2054,7 +2068,7 @@ function Home({ user, onOpen, onSignOut }) {
           <a className="wd-nav" href="/work/logs" title="Session logs"><FileText size={18} /> <span className="wd-nav-t">Session logs</span></a>
           <button type="button" className="wd-nav" onClick={goSkills} title="Skills"><Blocks size={18} /> <span className="wd-nav-t">Skills</span></button>
           <div className="wd-sect">Help</div><span className="wd-sect-rule" aria-hidden />
-          <button type="button" className={`wd-nav${tab === 'help' ? ' on' : ''}`} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')} title="How-to"><BookOpen size={18} /> <span className="wd-nav-t">How-to</span></button>
+          <button type="button" className={`wd-nav${tab === 'help' ? ' on' : ''}`} aria-current={tab === 'help' ? 'page' : undefined} onClick={() => setTab('help')} title="Help &amp; how-to"><BookOpen size={18} /> <span className="wd-nav-t">Help</span></button>
           <button type="button" className={`wd-nav${tab === 'support' ? ' on' : ''}`} aria-current={tab === 'support' ? 'page' : undefined} onClick={() => setTab('support')} title="Support"><LifeBuoy size={18} /> <span className="wd-nav-t">Support</span></button>
           {isCompanyAdmin && (
             <button type="button" className={`wd-nav${tab === 'team' ? ' on' : ''}`} aria-current={tab === 'team' ? 'page' : undefined} onClick={() => setTab('team')} title="Team"><Users size={18} /> <span className="wd-nav-t">Team</span></button>
@@ -2535,6 +2549,79 @@ function Home({ user, onOpen, onSignOut }) {
 
 // Detailed how-to / help. A sticky section nav on the left, rich content right.
 // The nav highlights the section in view (scroll-synced) and on click.
+// ---- Help visuals (owner: the help must be VISUAL for visual learners) -------
+// Built as HTML + inline SVG so the text stays crisp and on-brand, they scale to
+// any width with no overflow, and they follow the white dashboard palette. No
+// external images to host; no AI-rendered text to go wrong.
+function HelpFlow() {
+  const steps = [
+    { Icon: Rocket, t: 'Tell it your goal', b: 'Type what you want done, in your own words. Add a document or point it at your app for sharper steps.' },
+    { Icon: ScanLine, t: 'Follow the exact next move', b: 'It watches your screen and shows one precise step at a time - the click, the command, or the code to use.' },
+    { Icon: AlertTriangle, t: 'It catches mistakes', b: 'Land in the wrong place and it says so, then puts you back on track - you never drift silently.' },
+    { Icon: Check, t: 'Keep going until done', b: 'Each confirmed step moves you to the next, to the finish - with an audit trail and a clean report.' },
+  ]
+  return (
+    <div className="wd-hf" role="img" aria-label="How WorkCoPilot works: tell it your goal, follow the exact next move, it catches mistakes, and keep going until done.">
+      {steps.map((s, i) => (
+        <div key={i} className="wd-hf-card">
+          <span className="wd-hf-top"><span className="wd-hf-ic"><s.Icon size={19} /></span><span className="wd-hf-n">{i + 1}</span></span>
+          <b className="wd-hf-t">{s.t}</b>
+          <span className="wd-hf-b">{s.b}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+// A minimal mockup of the guiding card: the current step + the exact code to use.
+function HelpGuideShot() {
+  return (
+    <figure className="wd-fig">
+      <svg className="wd-shot" viewBox="0 0 440 226" role="img" aria-label="The guiding card shows the current step with the exact command or code to use, and a Mark done button." xmlns="http://www.w3.org/2000/svg" fontFamily="'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif">
+        <rect x="1" y="1" width="438" height="224" rx="16" fill="#ffffff" stroke="#e7eaf2" />
+        <rect x="18" y="17" width="104" height="22" rx="11" fill="#eafaf3" stroke="#bde9d5" />
+        <circle cx="31" cy="28" r="3.2" fill="#0e9f6e" />
+        <text x="41" y="32" fontSize="10" fontWeight="700" fill="#0b7a53">NOW, DO THIS</text>
+        <text x="134" y="32" fontSize="11" fill="#8a90a6">Step 2 of 9</text>
+        <text x="18" y="60" fontSize="13.5" fontWeight="700" fill="#1b2033">Create the Apex class in the Developer Console</text>
+        <rect x="18" y="74" width="404" height="92" rx="10" fill="#0c1222" />
+        <circle cx="34" cy="90" r="3.4" fill="#ff5f57" /><circle cx="46" cy="90" r="3.4" fill="#febc2e" /><circle cx="58" cy="90" r="3.4" fill="#28c840" />
+        <text x="372" y="94" fontSize="9.5" fill="#6b7280" fontFamily="Consolas,monospace">TERMINAL</text>
+        <text x="30" y="120" fontSize="11.5" fill="#86efac" fontFamily="Consolas,monospace">$ sfdx force:apex:class:create -n Sample</text>
+        <text x="30" y="140" fontSize="11.5" fill="#d6e9d6" fontFamily="Consolas,monospace">public class Sample {'{ /* ... */ }'}</text>
+        <rect x="18" y="182" width="108" height="30" rx="9" fill="#0e9f6e" />
+        <path d="M34 197 l4 4 l8 -8" stroke="#ffffff" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <text x="52" y="201" fontSize="12" fontWeight="700" fill="#ffffff">Mark done</text>
+        <rect x="134" y="182" width="92" height="30" rx="9" fill="#f1f3fa" stroke="#e2e6f1" />
+        <text x="151" y="201" fontSize="12" fill="#5c6484">Hide how</text>
+      </svg>
+      <figcaption className="wd-figcap">The guiding card: one step at a time, with the exact command or code and a Mark done button.</figcaption>
+    </figure>
+  )
+}
+// A minimal mockup of on-device redaction: sensitive values become [REDACTED].
+function HelpRedactShot() {
+  return (
+    <figure className="wd-fig">
+      <svg className="wd-shot" viewBox="0 0 440 200" role="img" aria-label="Sensitive on-screen values are replaced with REDACTED on your device before anything is sent." xmlns="http://www.w3.org/2000/svg" fontFamily="'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif">
+        <rect x="1" y="1" width="438" height="198" rx="14" fill="#ffffff" stroke="#e7eaf2" />
+        <path d="M1 15 a14 14 0 0 1 14 -14 h410 a14 14 0 0 1 14 14 v16 h-438 z" fill="#f6f8fd" />
+        <circle cx="20" cy="16" r="4" fill="#e2e6f1" /><circle cx="34" cy="16" r="4" fill="#e2e6f1" /><circle cx="48" cy="16" r="4" fill="#e2e6f1" />
+        <rect x="70" y="9" width="300" height="14" rx="7" fill="#eef1f7" />
+        <text x="22" y="58" fontSize="12.5" fill="#1b2033">Account: Acme Corp</text>
+        <text x="22" y="84" fontSize="12.5" fill="#5c6484">Email</text>
+        <rect x="66" y="72" width="118" height="17" rx="4" fill="#fdeadb" stroke="#f1c7a3" />
+        <text x="74" y="85" fontSize="10" fontWeight="700" fill="#c85a16" fontFamily="Consolas,monospace">[REDACTED]</text>
+        <text x="22" y="110" fontSize="12.5" fill="#5c6484">API key</text>
+        <rect x="76" y="98" width="118" height="17" rx="4" fill="#fdeadb" stroke="#f1c7a3" />
+        <text x="84" y="111" fontSize="10" fontWeight="700" fill="#c85a16" fontFamily="Consolas,monospace">[REDACTED]</text>
+        <rect x="18" y="150" width="404" height="34" rx="9" fill="#eafaf3" stroke="#bde9d5" />
+        <path d="M37 158 l7 -3 l7 3 v7 c0 5 -3.5 8.5 -7 10.5 c-3.5 -2 -7 -5.5 -7 -10.5 z" fill="#0e9f6e" />
+        <text x="58" y="171" fontSize="11.5" fill="#0b7a53">Redacted on your device - only the scrubbed text is ever sent.</text>
+      </svg>
+      <figcaption className="wd-figcap">Governance on: sensitive values are stripped on your device before anything leaves it.</figcaption>
+    </figure>
+  )
+}
 const HELP_SECTIONS = [
   { id: 'start', t: 'Getting started' },
   { id: 'how', t: 'How guidance works' },
@@ -2578,6 +2665,7 @@ function HelpDocs({ onStart }) {
       <div className="wd-help-body">
         <h1>{desktop ? 'How to use the WorkCoPilot desktop app' : 'How to use WorkCoPilot'}</h1>
         <p className="wd-help-lead">An expert that watches your screen, tells you the exact next move one step at a time, catches a wrong move and corrects it, and keeps you on the next correct step until the job is done. Here is everything it does and how to get the most from it.</p>
+        <HelpFlow />
 
         {desktop && (<>
           <section id="help-desktop"><h2>The desktop app</h2>
@@ -2639,6 +2727,7 @@ function HelpDocs({ onStart }) {
 
         <section id="help-how"><h2>How guidance works</h2>
           <p>WorkCoPilot reads your screen and tells you the exact next move. It does not click or type for you, so you stay in control the whole time. It starts from the very beginning, opening the right page and signing in, and assumes nothing.</p>
+          <HelpGuideShot />
           <h3 className="sub">What you see</h3>
           <ul>
             <li><b>DO THIS NOW</b> shows the current step, rewritten for exactly what is on your screen right now.</li>
@@ -2699,8 +2788,9 @@ function HelpDocs({ onStart }) {
         </section>
 
         <section id="help-record"><h2>Keeping a record</h2>
-          <p>Every session can be saved as a clean <b>PDF report</b>: the task, what was achieved, every step with the exact commands and code, any warnings, and your questions and answers. Use <b>Report</b> to download it, or <b>Print</b> for a paper copy or a PDF from your print dialog.</p>
-          <p className="wd-tip"><Printer size={14} /> The report is handy as a runbook for next time, or to hand to a teammate who needs to do the same task.</p>
+          <p>Every session can be saved as a clean record: the task, what was achieved, every confirmed step with its exact commands and code, any warnings, and your questions and answers. Use <b>Download</b> to choose the format - a <b>PDF report</b>, a plain-<b>text report</b>, or the full <b>audit log</b> - or <b>Print</b> for a paper copy. Commands and code appear only for steps you actually completed, and the report includes up to five <b>scrubbed milestone screenshots</b> as evidence.</p>
+          <HelpRedactShot />
+          <p className="wd-tip"><Printer size={14} /> The report is handy as a runbook for next time, or to hand to a teammate who needs to do the same task. Every screenshot is redacted on your device before capture - only the scrubbed image is ever stored.</p>
         </section>
 
         <section id="help-safe"><h2>Safety and acceptable use</h2>
