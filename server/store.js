@@ -28,7 +28,7 @@ import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Language pinning (SUPREME RULE II: ONE source of supported locale codes). The
 // i18n locale registry is pure data (no browser APIs at import), so the server
 // validates a pinned language against the SAME list the client menu offers.
-import { resolveLocale } from '../src/i18n/locales.js'
+import { resolveLocale } from './locales.js'
 // Password -> key derivation for the password-encrypted data export. ONE source of
 // truth for scrypt (SUPREME RULE II): the same KDF the Company Brain customer-held
 // key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,

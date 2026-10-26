@@ -13,7 +13,7 @@ import { sendMail } from './mailer.js'
 import { renderEmail } from './email_templates.js'
 import * as store from './store.js'
 import * as ai from './ai.js'
-import { getLocaleMeta } from '../src/i18n/locales.js'
+import { getLocaleMeta } from './locales.js'
 
 function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
 
