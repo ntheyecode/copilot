@@ -196,17 +196,22 @@ const CSS = `
 .cb-learn{font-size:12.5px;line-height:1.5;color:var(--cb-mut);margin:14px 0 0;text-align:start;overflow-wrap:anywhere}
 .cb-learn a{color:var(--cb-em);font-weight:600;text-decoration:underline;text-underline-offset:2px}
 .cb-pactions{margin-top:18px;justify-content:flex-end}
-/* ---- narrow (~640px and below): stack, full-width buttons, no overflow ---- */
+/* ---- narrow (~640px and below): full-width action row that WRAPS, never
+   clips. The two main buttons share a row and grow; if a long (e.g. German)
+   label does not fit beside its neighbour the row wraps it to the next line
+   rather than overflowing. "Manage preferences" drops to its own full-width
+   line below. No button ever truncates and no horizontal scroll appears. ---- */
 @media(max-width:640px){
   .cb-bar{inset-inline:8px;bottom:8px;padding:14px;gap:12px}
-  .cb-actions{width:100%;justify-content:stretch;flex-wrap:nowrap}
-  .cb-bar .cb-actions .cb-btn{flex:1 1 0;min-width:0;padding:0 8px}
-  .cb-bar .cb-actions .cb-btn.ghost{flex:0 0 auto}
-  .cb-pactions{flex-wrap:nowrap}
-  .cb-pactions .cb-btn{flex:1 1 0}
+  .cb-actions{width:100%;flex-wrap:wrap}
+  .cb-bar .cb-actions .cb-btn{flex:1 1 auto;padding:0 10px}
+  .cb-bar .cb-actions .cb-btn.ghost{flex:1 1 100%;order:3}
+  .cb-pactions{flex-wrap:wrap}
+  .cb-pactions .cb-btn{flex:1 1 auto}
 }
-@media(max-width:380px){
-  .cb-actions{flex-wrap:wrap}
+/* Very narrow: every action button takes its own full-width line, so even the
+   longest label has the whole row and cannot overflow. */
+@media(max-width:420px){
   .cb-bar .cb-actions .cb-btn,.cb-pactions .cb-btn{flex:1 1 100%}
 }
 @media(prefers-reduced-motion:reduce){.cb-btn,.cb-toggle,.cb-knob{transition:none}}
