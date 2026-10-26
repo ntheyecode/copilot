@@ -2082,6 +2082,20 @@ app.post('/api/work/policy', requireWorkAuth, wrap((req, res) => {
   res.json({ policy: store.setWorkPolicy(scope, b, (req.workUser && req.workUser.username) || null) })
 }))
 
+// Company-level screenshot-capture policy. When OFF, WorkCoPilot keeps NO
+// milestone screenshot in any of this company's users' reports or session logs;
+// when ON (the default), the existing per-step evidence capture applies. Gated to
+// company admins (requireCompanyAdmin - same gate as every other company write
+// route) and scoped to the admin's OWN company: the companyId comes from the
+// authenticated workUser, never the body, so an admin can only change their own
+// company. The store records who/when/what and returns the effective value.
+app.post('/api/work/company/report-shots', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const enabled = !!(req.body || {}).enabled
+  const out = store.setCompanyReportShots(req.workUser.companyId, enabled, (req.workUser && req.workUser.username) || null)
+  res.json(out)
+}))
+
 // Company admin oversight: list every session of the admin's company members
 // (completed AND in progress), so they can pull the report + audit log for any.
 app.get('/api/work/company/sessions', requireWorkAuth, wrap((req, res) => {

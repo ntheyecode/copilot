@@ -14,7 +14,7 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks,
+  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
@@ -1051,6 +1051,60 @@ function AiSection() {
 }
 
 // ===========================================================================
+// Company-level screenshot-capture policy. A company admin decides whether their
+// company's users' reports AND session logs keep milestone screenshots. Default
+// ON; mirrors the company-vs-individual governance pattern on the server
+// (workUserReportShotsOn). Self-contained card: reads the value from the company
+// payload, saves through the shared admin client, and syncs the parent so the
+// value stays correct across tab switches. Never fails silently (SUPREME RULE
+// III): a save error is surfaced and the toggle reverts to the real state.
+function ReportShotsCard({ company, onCompany }) {
+  const loaded = !!(company && Object.prototype.hasOwnProperty.call(company, 'reportShots'))
+  const [on, setOn] = useState(loaded ? company.reportShots !== false : true)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState(null)
+  const companyVal = loaded ? company.reportShots !== false : null
+  useEffect(() => { if (loaded) setOn(companyVal) }, [loaded, companyVal])
+
+  const apply = async (next) => {
+    if (saving || next === on) return
+    setSaving(true); setErr(null); setSaved(false)
+    const prev = on
+    setOn(next)   // optimistic
+    try {
+      const r = await api.workCompanySetReportShots(next)
+      const val = !!(r && r.reportShots !== false)
+      setOn(val)
+      if (onCompany && company) onCompany({ ...company, reportShots: val })
+      setSaved(true); setTimeout(() => setSaved(false), 2500)
+    } catch (error) { setOn(prev); setErr(error) } finally { setSaving(false) }
+  }
+
+  return (
+    <div className="wka-panel">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 16, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0, flex: '1 1 320px' }}>
+          <h2 style={{ margin: 0 }}><Camera size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Capture screenshots in reports and logs</h2>
+          <p className="desc" style={{ marginBottom: 0 }}>When off, WorkCoPilot keeps no milestone screenshots in your users' reports or session logs. Everything else is unchanged. Applies to everyone in your company.</p>
+        </div>
+        <div style={{ display: 'inline-flex', gap: 8, flexShrink: 0 }} role="group" aria-label="Screenshot capture">
+          <button type="button" className={`wka-btn sm${on ? ' primary' : ''}`} disabled={saving || !loaded} aria-pressed={on} onClick={() => apply(true)}>{saving && on ? <Spinning /> : <Check size={14} />} On</button>
+          <button type="button" className={`wka-btn sm${!on ? ' primary' : ''}`} disabled={saving || !loaded} aria-pressed={!on} onClick={() => apply(false)}>{saving && !on ? <Spinning /> : <X size={14} />} Off</button>
+        </div>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        {!loaded ? <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>Loading current setting...</span>
+          : <span style={{ fontSize: 12.5, color: on ? 'var(--wka-emerald)' : 'var(--wka-amber)', fontWeight: 600 }}>
+            {on ? 'On - milestone screenshots are kept as evidence.' : 'Off - no screenshots are kept for any of your users.'}
+          </span>}
+        <SavedTag show={saved} />
+        {err ? <div className="wka-note" style={{ color: 'var(--wka-red)', marginTop: 8 }}><AlertTriangle size={14} /> {(err && err.message) || 'Could not change the setting. Please try again.'}</div> : null}
+      </div>
+    </div>
+  )
+}
+
 // Governance (DLP) - company scoped, read-only when a superadmin has locked it
 // ===========================================================================
 const GOV_ACTIONS = ['send', 'mask', 'withhold', 'tokenize']
@@ -1728,7 +1782,7 @@ export default function WorkCompanyAdmin() {
       case 'sso': return <SsoSection company={company} />
       case 'ai': return <AiSection />
       case 'billing': return <BillingSection />
-      case 'governance': return <GovernanceSection companyId={viewer && viewer.companyId} />
+      case 'governance': return (<><ReportShotsCard company={company} onCompany={setCompany} /><GovernanceSection companyId={viewer && viewer.companyId} /></>)
       case 'brain': return <CompanyBrain />
       case 'brainsecurity': return <BrainSecurity />
       case 'sessions': return <SessionsSection />

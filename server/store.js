@@ -928,9 +928,40 @@ export function setWorkUserReportShots(userId, enabled) {
   return publicWorkUser(u)
 }
 export function workUserReportShotsOn(userId) {
+  // COMPANY-AWARE, mirroring workUserScrubOn / getEffectiveWorkPolicy: a user who
+  // belongs to a company is governed by the COMPANY's report-shots setting (the
+  // company admin owns it, applies to every member, default ON when unset). An
+  // INDIVIDUAL user (no company) governs themselves via their own flag. One
+  // resolution, no parallel flag system.
   const u = getUser(userId)
   if (!u) return false
-  return u.reportShots !== false   // default on
+  if (u.companyId) {
+    const c = (db.companies || []).find((x) => x.id === u.companyId)
+    if (c) return c.reportShots !== false   // company default ON; admin may turn OFF
+  }
+  return u.reportShots !== false   // individual default on
+}
+// COMPANY-level report-shots policy (company admin owned). Governs whether ANY
+// milestone screenshot is kept for THIS company's users - covering both report
+// evidence and session logs (the gate lives in the single shot writer below).
+// Records an accountable who/what/when entry in the one audit sink the company
+// Activity tab reads (recordAdminAction -> listWorkActivity), never a parallel
+// log. Never silent (SUPREME RULE III): the change is logged and the value is
+// returned so the caller can surface it.
+export function setCompanyReportShots(companyId, enabled, by = null) {
+  const c = (db.companies || []).find((x) => x.id === companyId)
+  if (!c) throw httpErr(404, 'Company not found.')
+  const next = !!enabled
+  const prev = c.reportShots !== false
+  c.reportShots = next
+  persist()
+  recordAdminAction({
+    companyId,
+    action: 'report_shots',
+    reason: by ? `set by ${by}` : 'company report-shots policy changed',
+    detail: `Capture screenshots in reports and logs ${next ? 'ENABLED' : 'DISABLED'} for all company users (was ${prev ? 'on' : 'off'}).`,
+  })
+  return { reportShots: next }
 }
 // Keep ONE scrubbed screenshot as the evidence for a step the user JUST confirmed.
 // Idempotent per step (never piles up duplicates - no junk), gated by the setting,
@@ -1024,6 +1055,10 @@ function publicCompany(c) {
     pricingOverride: c.pricing || null,               // just this company's overrides, for the edit form
     billingItemCount: ((c.billing && c.billing.items) || []).length,
     scrub: !!c.scrub, createdAt: c.createdAt,
+    // Whether milestone screenshots are kept in this company's users' reports and
+    // session logs (company admin owned; default ON when unset). The company-admin
+    // console reads it here to render + drive the toggle.
+    reportShots: c.reportShots !== false,
     disabled: !!c.disabled,                            // superadmin-disabled (all members blocked)
     disabledReason: c.disabled ? (c.disabledReason || null) : null,
     // Authorization attestation: the company admin affirms their organization
@@ -4560,6 +4595,16 @@ const WORK_SHOTS_MAX = 60
 export function addWorkStepShot(workUserId, sessionId, { stepIndex, dataUrl, caption } = {}) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
+  // SINGLE screenshot chokepoint. Every kept screenshot - the auto milestone frames
+  // (via captureMilestoneShot) AND the direct per-step upload route
+  // (/api/work/sessions/:id/shot) - lands here, so enforcing the effective
+  // report-shots policy at this one point covers BOTH reports and session logs for
+  // company users and individuals alike. When the policy is OFF we keep NO image;
+  // this is a policy decision, not a failure, so we return an explicit, non-silent
+  // result (SUPREME RULE III) instead of throwing - the step itself still records.
+  if (!workUserReportShotsOn(workUserId)) {
+    return { ok: true, stored: false, reason: 'report_shots_disabled', count: Array.isArray(s.shots) ? s.shots.length : 0 }
+  }
   const m = /^data:(image\/(?:png|jpe?g|webp));base64,(.+)$/i.exec(String(dataUrl || ''))
   if (!m) throw httpErr(400, 'Screenshot must be a base64 image data URL.')
   const ext = /png/i.test(m[1]) ? 'png' : /webp/i.test(m[1]) ? 'webp' : 'jpg'

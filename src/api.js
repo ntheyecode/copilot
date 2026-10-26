@@ -259,6 +259,9 @@ export const api = {
   // company admin: own-company data-governance (DLP) policy
   workPolicy: (companyId) => req('GET', `/api/work/policy?companyId=${encodeURIComponent(companyId || '')}`),
   workSetPolicy: (body) => req('POST', '/api/work/policy', body || {}),
+  // company admin: company-level screenshot-capture policy (reports + session
+  // logs). Scoped server-side to the admin's own company. -> { reportShots }
+  workCompanySetReportShots: (enabled) => req('POST', '/api/work/company/report-shots', { enabled: !!enabled }),
   // individual user (no company): manage your OWN scrub rules. No scope param ->
   // the server defaults to your own user policy; company members are denied.
   workMyPolicy: () => req('GET', '/api/work/policy'),
