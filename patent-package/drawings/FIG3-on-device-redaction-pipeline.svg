@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+  <title>FIG. 3 - On-device redaction / tokenization pipeline 300 with local reconstruction</title>
+  <desc>Black-and-white block diagram. Reference numerals 300-336; device boundary 110.</desc>
+  <style>
+    .b { fill: none; stroke: #000; stroke-width: 1.5; }
+    .bd { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .l { fill: none; stroke: #000; stroke-width: 1.5; }
+    .ld { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .t { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #000; }
+    .n { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; fill: #000; }
+    .h { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; fill: #000; }
+    .f { font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; fill: #000; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <text x="72" y="60" class="h">PIPELINE 300</text>
+
+  <!-- USER DEVICE boundary -->
+  <rect x="60" y="76" width="696" height="560" class="bd"/>
+  <text x="70" y="94" class="h">USER DEVICE 110 (nothing below this line leaves the device unprotected)</text>
+
+  <!-- inputs -->
+  <rect x="80" y="112" width="130" height="40" class="b"/>
+  <text x="88" y="129" class="t">OUTBOUND TEXT</text>
+  <text x="88" y="144" class="n">302</text>
+
+  <rect x="80" y="330" width="130" height="40" class="b"/>
+  <text x="88" y="347" class="t">OUTBOUND FRAME</text>
+  <text x="88" y="362" class="n">304</text>
+
+  <!-- OCR 316 -->
+  <path d="M 210 350 L 250 350" class="l" marker-end="url(#a)"/>
+  <rect x="250" y="330" width="120" height="40" class="b"/>
+  <text x="258" y="347" class="t">ON-DEVICE OCR</text>
+  <text x="258" y="362" class="t">(text lines + boxes) <tspan class="n">316</tspan></text>
+
+  <!-- detector 306 (shared) -->
+  <path d="M 210 132 L 250 132" class="l" marker-end="url(#a)"/>
+  <rect x="250" y="112" width="120" height="60" class="b"/>
+  <text x="258" y="129" class="t">SENSITIVE-SPAN</text>
+  <text x="258" y="143" class="t">DETECTOR (rules;</text>
+  <text x="258" y="157" class="t">same code as server)</text>
+  <text x="340" y="168" class="n">306</text>
+  <!-- OCR lines go to the SAME detector -->
+  <path d="M 310 330 L 310 172" class="l" marker-end="url(#a)"/>
+  <text x="318" y="282" class="t">each line</text>
+  <text x="318" y="294" class="t">checked by</text>
+  <text x="318" y="306" class="t">SAME detector</text>
+
+  <!-- policy 308 -->
+  <rect x="250" y="196" width="120" height="56" class="b"/>
+  <text x="258" y="213" class="t">EGRESS POLICY</text>
+  <text x="258" y="227" class="t">(categories, block</text>
+  <text x="258" y="241" class="t">words, mode) <tspan class="n">308</tspan></text>
+  <path d="M 310 196 L 310 172" class="l" marker-end="url(#a)"/>
+
+  <!-- action router 310 -->
+  <path d="M 370 142 L 410 142" class="l" marker-end="url(#a)"/>
+  <rect x="410" y="112" width="130" height="60" class="b"/>
+  <text x="418" y="129" class="t">ACTION ROUTER</text>
+  <text x="418" y="143" class="t">send / redact /</text>
+  <text x="418" y="157" class="t">tokenize / block</text>
+  <text x="520" y="168" class="n">310</text>
+
+  <!-- token generator 312 -->
+  <path d="M 540 142 L 580 142" class="l" marker-end="url(#a)"/>
+  <rect x="580" y="112" width="160" height="60" class="b"/>
+  <text x="588" y="129" class="t">TOKEN GENERATOR</text>
+  <text x="588" y="143" class="t">[[EMAIL_1]] [[IP_2]] ...</text>
+  <text x="588" y="157" class="t">same value -&gt; same token</text>
+  <text x="720" y="168" class="n">312</text>
+
+  <!-- token map 314 (device only) -->
+  <path d="M 660 172 L 660 196" class="l" marker-end="url(#a)"/>
+  <rect x="580" y="196" width="160" height="56" class="bd"/>
+  <text x="588" y="213" class="t">TOKEN MAP token-&gt;value</text>
+  <text x="588" y="227" class="t">VOLATILE MEMORY ONLY;</text>
+  <text x="588" y="241" class="t">NEVER TRANSMITTED <tspan class="n">314</tspan></text>
+
+  <!-- tokenized text 322 -->
+  <path d="M 475 172 L 475 262" class="l" marker-end="url(#a)"/>
+  <rect x="410" y="262" width="130" height="40" class="b"/>
+  <text x="418" y="279" class="t">TOKENIZED /</text>
+  <text x="418" y="293" class="t">REDACTED TEXT <tspan class="n">322</tspan></text>
+
+  <!-- line mask 318 and redacted frame 320 -->
+  <path d="M 370 350 L 410 350" class="l" marker-end="url(#a)"/>
+  <rect x="410" y="330" width="130" height="56" class="b"/>
+  <text x="418" y="347" class="t">LINE MASK: paint</text>
+  <text x="418" y="361" class="t">opaque box over whole</text>
+  <text x="418" y="375" class="t">sensitive line <tspan class="n">318</tspan></text>
+  <text x="258" y="424" class="t">OCR unavailable -&gt;</text>
+  <text x="258" y="436" class="t">fail-safe downscale</text>
+  <path d="M 370 430 L 410 430" class="ld" marker-end="url(#a)"/>
+  <path d="M 475 386 L 475 410" class="l" marker-end="url(#a)"/>
+  <rect x="410" y="410" width="130" height="40" class="b"/>
+  <text x="418" y="427" class="t">REDACTED FRAME</text>
+  <text x="418" y="441" class="t">(re-encoded) <tspan class="n">320</tspan></text>
+
+  <!-- transmission 324 -->
+  <path d="M 540 282 L 600 282 L 600 470" class="l"/>
+  <path d="M 540 430 L 600 430 L 600 470" class="l" marker-end="url(#a)"/>
+  <rect x="540" y="470" width="120" height="40" class="b"/>
+  <text x="548" y="487" class="t">TRANSMIT (shows</text>
+  <text x="548" y="501" class="t">user summary) <tspan class="n">324</tspan></text>
+
+  <!-- audit entry 336 -->
+  <rect x="80" y="470" width="150" height="56" class="b"/>
+  <text x="88" y="487" class="t">AUDIT ENTRY: counts by</text>
+  <text x="88" y="501" class="t">category, frame sent?,</text>
+  <text x="88" y="515" class="t">protected text <tspan class="n">336</tspan></text>
+  <path d="M 540 490 L 230 490" class="ld" marker-end="url(#a)"/>
+
+  <!-- rehydration 330, missing handler 332, displayed answer 334 (inside device) -->
+  <rect x="410" y="560" width="130" height="56" class="b"/>
+  <text x="418" y="577" class="t">LOCAL REHYDRATION</text>
+  <text x="418" y="591" class="t">token -&gt; value (incl.</text>
+  <text x="418" y="605" class="t">streamed chunks) <tspan class="n">330</tspan></text>
+  <path d="M 660 252 L 660 290 L 700 290 L 700 588 L 540 588" class="ld" marker-end="url(#a)"/>
+  <text x="704" y="420" class="t">map</text>
+  <text x="704" y="432" class="t">read</text>
+  <text x="704" y="444" class="t">locally</text>
+
+  <rect x="250" y="560" width="130" height="56" class="b"/>
+  <text x="258" y="577" class="t">MISSING-TOKEN HANDLER:</text>
+  <text x="258" y="591" class="t">leave placeholder, flag,</text>
+  <text x="258" y="605" class="t">never guess <tspan class="n">332</tspan></text>
+  <path d="M 410 588 L 380 588" class="l" marker-end="url(#a)"/>
+
+  <rect x="80" y="560" width="130" height="56" class="b"/>
+  <text x="88" y="577" class="t">DISPLAYED ANSWER</text>
+  <text x="88" y="591" class="t">with real values</text>
+  <text x="88" y="605" class="n">334</text>
+  <path d="M 250 588 L 210 588" class="l" marker-end="url(#a)"/>
+
+  <!-- outside device: server + model -->
+  <path d="M 600 510 L 600 680" class="l" marker-end="url(#a)"/>
+  <rect x="520" y="680" width="160" height="40" class="b"/>
+  <text x="528" y="697" class="t">GUIDANCE SERVER 150</text>
+  <text x="528" y="711" class="t">(policy re-applied, 155)</text>
+  <path d="M 600 720 L 600 760" class="l" marker-end="url(#a)"/>
+  <rect x="520" y="760" width="160" height="40" class="b"/>
+  <text x="528" y="777" class="t">REMOTE MODEL</text>
+  <text x="528" y="791" class="t">(sees tokens only) <tspan class="n">326</tspan></text>
+
+  <!-- response 328 back up into device -->
+  <path d="M 520 780 L 445 780 L 445 740" class="l" marker-end="url(#a)"/>
+  <rect x="380" y="700" width="130" height="40" class="b"/>
+  <text x="388" y="717" class="t">RESPONSE WITH</text>
+  <text x="388" y="731" class="t">PLACEHOLDERS <tspan class="n">328</tspan></text>
+  <path d="M 445 700 L 445 616" class="l" marker-end="url(#a)"/>
+
+  <text x="80" y="660" class="t">LEGEND: dashed box = data that never leaves the device;</text>
+  <text x="80" y="674" class="t">dashed arrow = local read / audit (no transmission).</text>
+
+  <text x="372" y="960" class="f">FIG. 3</text>
+</svg>

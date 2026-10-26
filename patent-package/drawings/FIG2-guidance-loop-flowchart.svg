@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+  <title>FIG. 2 - Observe-instruct-verify-correct-advance guidance loop 200</title>
+  <desc>Black-and-white flowchart. Reference numerals 200-228.</desc>
+  <style>
+    .b { fill: none; stroke: #000; stroke-width: 1.5; }
+    .bd { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .l { fill: none; stroke: #000; stroke-width: 1.5; }
+    .ld { fill: none; stroke: #000; stroke-width: 1.5; stroke-dasharray: 6 4; }
+    .t { font-family: Arial, Helvetica, sans-serif; font-size: 11px; fill: #000; }
+    .n { font-family: Arial, Helvetica, sans-serif; font-size: 11px; font-weight: bold; fill: #000; }
+    .h { font-family: Arial, Helvetica, sans-serif; font-size: 12px; font-weight: bold; fill: #000; }
+    .f { font-family: Arial, Helvetica, sans-serif; font-size: 16px; font-weight: bold; fill: #000; }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#000"/>
+    </marker>
+  </defs>
+
+  <text x="72" y="60" class="h">GUIDANCE LOOP 200</text>
+
+  <!-- 202 start: receive goal (rounded) -->
+  <rect x="308" y="76" width="200" height="40" rx="20" class="b"/>
+  <text x="330" y="93" class="t">RECEIVE USER-STATED GOAL</text>
+  <text x="394" y="108" class="n">202</text>
+  <path d="M 408 116 L 408 136" class="l" marker-end="url(#a)"/>
+
+  <!-- 204 plan -->
+  <rect x="288" y="136" width="240" height="52" class="b"/>
+  <text x="298" y="153" class="t">GENERATE ORDERED PLAN; EACH STEP HAS</text>
+  <text x="298" y="167" class="t">A VISIBLE-WHEN-DONE CONDITION</text>
+  <text x="394" y="182" class="n">204</text>
+  <path d="M 408 188 L 408 208" class="l" marker-end="url(#a)"/>
+
+  <!-- 206 capture frame -->
+  <rect x="308" y="208" width="200" height="40" class="b"/>
+  <text x="326" y="225" class="t">CAPTURE FRAME OF DISPLAY</text>
+  <text x="394" y="240" class="n">206</text>
+  <path d="M 408 248 L 408 268" class="l" marker-end="url(#a)"/>
+
+  <!-- 208 redact on device -->
+  <rect x="288" y="268" width="240" height="52" class="b"/>
+  <text x="298" y="285" class="t">REDACT FRAME ON DEVICE (OCR + POLICY,</text>
+  <text x="298" y="299" class="t">MASK SENSITIVE LINES) - BEFORE SENDING</text>
+  <text x="394" y="314" class="n">208</text>
+  <path d="M 408 320 L 408 340" class="l" marker-end="url(#a)"/>
+
+  <!-- 210 transmit -->
+  <rect x="288" y="340" width="240" height="40" class="b"/>
+  <text x="298" y="357" class="t">TRANSMIT REDACTED FRAME + CHECKLIST</text>
+  <text x="394" y="372" class="n">210</text>
+  <path d="M 408 380 L 408 400" class="l" marker-end="url(#a)"/>
+
+  <!-- 212 model navigation record -->
+  <rect x="268" y="400" width="280" height="76" class="b"/>
+  <text x="278" y="417" class="t">VISION MODEL READS SCREEN AND RETURNS</text>
+  <text x="278" y="431" class="t">NAVIGATION RECORD: completed, current,</text>
+  <text x="278" y="445" class="t">guidance (one micro-action), observation,</text>
+  <text x="278" y="459" class="t">flag, done</text>
+  <text x="394" y="470" class="n">212</text>
+  <path d="M 408 476 L 408 500" class="l" marker-end="url(#a)"/>
+
+  <!-- 214 decision diamond -->
+  <polygon points="408,500 528,556 408,612 288,556" class="b"/>
+  <text x="330" y="548" class="t">EXPECTED RESULT OF LAST</text>
+  <text x="326" y="562" class="t">INSTRUCTED STEP VISIBLE?</text>
+  <text x="394" y="590" class="n">214</text>
+
+  <!-- YES branch to 216 (left) -->
+  <path d="M 288 556 L 200 556" class="l" marker-end="url(#a)"/>
+  <text x="240" y="548" class="t">YES</text>
+  <rect x="60" y="520" width="140" height="72" class="b"/>
+  <text x="68" y="537" class="t">MARK STEP DONE;</text>
+  <text x="68" y="551" class="t">TIMESTAMP; KEEP</text>
+  <text x="68" y="565" class="t">REDACTED FRAME AS</text>
+  <text x="68" y="579" class="t">EVIDENCE (if allowed)</text>
+  <text x="66" y="608" class="n">216</text>
+  <path d="M 130 592 L 130 700 L 288 700" class="l" marker-end="url(#a)"/>
+
+  <!-- NO branch to 218 (right) -->
+  <path d="M 528 556 L 616 556" class="l" marker-end="url(#a)"/>
+  <text x="560" y="548" class="t">NO</text>
+  <rect x="616" y="520" width="150" height="72" class="b"/>
+  <text x="624" y="537" class="t">DO NOT ADVANCE;</text>
+  <text x="624" y="551" class="t">CORRECTIVE MICRO-</text>
+  <text x="624" y="565" class="t">ACTION / EXACT FIX /</text>
+  <text x="624" y="579" class="t">MISSING PREREQUISITE</text>
+  <text x="622" y="608" class="n">218</text>
+  <path d="M 691 592 L 691 620" class="l" marker-end="url(#a)"/>
+  <rect x="616" y="620" width="150" height="40" class="b"/>
+  <text x="624" y="637" class="t">SURFACE FLAG</text>
+  <text x="624" y="651" class="t">(clears when back on track)</text>
+  <text x="770" y="651" class="n">220</text>
+  <path d="M 691 660 L 691 700 L 528 700" class="l" marker-end="url(#a)"/>
+
+  <!-- 222 present -->
+  <rect x="288" y="680" width="240" height="40" class="b"/>
+  <text x="298" y="697" class="t">PRESENT ONE INSTRUCTION TO USER</text>
+  <text x="394" y="712" class="n">222</text>
+  <path d="M 408 720 L 408 744" class="l" marker-end="url(#a)"/>
+
+  <!-- 224 human performs action (dashed - outside system) -->
+  <rect x="268" y="744" width="280" height="44" class="bd"/>
+  <text x="278" y="761" class="t">HUMAN USER PERFORMS THE ACTION IN THE</text>
+  <text x="278" y="775" class="t">TARGET APPLICATION (system injects no input)</text>
+  <text x="432" y="806" class="n">224</text>
+  <path d="M 408 788 L 408 820" class="l" marker-end="url(#a)"/>
+
+  <!-- 226 decision done? -->
+  <polygon points="408,820 488,856 408,892 328,856" class="b"/>
+  <text x="372" y="852" class="t">GOAL DONE</text>
+  <text x="372" y="866" class="t">ON SCREEN?</text>
+  <text x="394" y="912" class="n">226</text>
+
+  <!-- NO loop back to 206 -->
+  <path d="M 328 856 L 160 856 L 160 228 L 308 228" class="l" marker-end="url(#a)"/>
+  <text x="300" y="848" class="t">NO</text>
+  <text x="166" y="400" class="t">next frame</text>
+
+  <!-- YES to 228 end -->
+  <path d="M 488 856 L 580 856" class="l" marker-end="url(#a)"/>
+  <text x="520" y="848" class="t">YES</text>
+  <rect x="580" y="836" width="180" height="40" rx="20" class="b"/>
+  <text x="596" y="853" class="t">END: SESSION REPORT +</text>
+  <text x="596" y="867" class="t">AUDIT LOG</text>
+  <text x="766" y="867" class="n">228</text>
+
+  <text x="372" y="980" class="f">FIG. 2</text>
+</svg>
