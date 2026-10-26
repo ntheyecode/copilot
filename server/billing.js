@@ -297,10 +297,15 @@ async function handleEvent(s, store, event) {
       const qty = Math.max(0, Math.round(Number(md.quantity) || 0))
       const user = store.getUser(userId)
       if (qty > 0 && user) {
-        if (md.kind === 'hours') store.grantWorkPurchasedSeconds(userId, qty * 3600)
-        else store.grantWorkImageCredits(userId, qty)
-        ledgerAndEmail(store, { kind: md.kind, user, amountMinor: obj.amount_total, currency: obj.currency, stripeId: (typeof obj.payment_intent === 'string' ? obj.payment_intent : obj.id), emailType: 'purchase_receipt', description: md.kind === 'hours' ? `${qty} extra hour${qty === 1 ? '' : 's'}` : `${qty} image credit${qty === 1 ? '' : 's'}` })
-        console.log(`[billing] credit purchase -> user ${userId} ${qty} ${md.kind}`)
+        let bonusTasks = 0
+        if (md.kind === 'hours') {
+          store.grantWorkPurchasedSeconds(userId, qty * 3600)
+          // Buying extra hours also grants bonus task credits (tasksPerExtraHour per
+          // hour, all tiers, superadmin-editable). Tied to the real purchase only.
+          bonusTasks = store.grantTaskCreditsForPurchasedHours(userId, qty)
+        } else store.grantWorkImageCredits(userId, qty)
+        ledgerAndEmail(store, { kind: md.kind, user, amountMinor: obj.amount_total, currency: obj.currency, stripeId: (typeof obj.payment_intent === 'string' ? obj.payment_intent : obj.id), emailType: 'purchase_receipt', description: md.kind === 'hours' ? `${qty} extra hour${qty === 1 ? '' : 's'}${bonusTasks ? ` (+${bonusTasks} task${bonusTasks === 1 ? '' : 's'})` : ''}` : `${qty} image credit${qty === 1 ? '' : 's'}` })
+        console.log(`[billing] credit purchase -> user ${userId} ${qty} ${md.kind}${bonusTasks ? ` (+${bonusTasks} tasks)` : ''}`)
       }
       return
     }

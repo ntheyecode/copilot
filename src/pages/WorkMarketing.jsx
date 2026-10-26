@@ -481,6 +481,8 @@ export default function WorkMarketing() {
               </div>
             ))}
           </div>
+          {/* One note by the card task counts: a "task" is substantial. */}
+          <p className="wm-tasknote" data-reveal>{t('home.pricing.taskMeaning')}</p>
           <div className="wm-trust" data-reveal>
             <span><Lock size={14} /> {t('home.pricing.trustStripe')}</span>
             <span><Check size={14} /> {t('home.pricing.trustCancel')}</span>
@@ -1716,6 +1718,7 @@ const CSS = `
 /* The "*" allowance note under the plan cards: muted, one step smaller than the
    fineprint, same centering rule (.wm .wm-footnote beats .wm p{margin:0}). */
 .wm .wm-footnote{text-align:center;color:var(--mut);font-size:12.5px;line-height:1.55;margin:28px auto 0;max-width:68ch;opacity:.9}
+.wm .wm-tasknote{text-align:center;color:var(--mut);font-size:14px;line-height:1.55;margin:26px auto 0;max-width:64ch}
 .wm .wm-footnote + .wm-fineprint{margin-top:14px}
 
 /* "See the full ..." link row under the fields teaser and the pricing cards */

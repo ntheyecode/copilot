@@ -408,6 +408,8 @@ export default {
       // The one asterisk note under the cards. Plan-independent on purpose: the
       // per-plan daily rate is already on each card, so this states the model.
       footnote: '*Each day you get your plan\'s guided tasks and hours of guidance. Daily hours reset at midnight (US Eastern) - they don\'t roll over. Unused tasks bank as credits you keep, or trade 2 tasks for 1 extra hour (expires that day). Billed per minute you actually use.',
+      // One note next to the task counts on the cards: a "task" is substantial.
+      taskMeaning: 'Each task is a major task: a single goal, guided from start to finish, with all its sub-steps.',
       feats: {
         // The daily-task line is NOT here any more: it is rendered from the live
         // pricing config (tasksLine/hoursLine above) so a cap change follows.

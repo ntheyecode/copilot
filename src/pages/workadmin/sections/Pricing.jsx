@@ -30,6 +30,7 @@ function formFrom(p) {
     replans: { ...(p.replans || {}) },
     dailyHours: { ...(p.dailyHours || {}) },
     imagesPerDay: { ...(p.imagesPerDay || {}) },
+    tasksPerExtraHour: p.tasksPerExtraHour,
   }
 }
 
@@ -69,6 +70,7 @@ export default function Pricing({ isSuperAdmin }) {
     for (const t of TIERS) { const n = num((form.replans || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
     for (const t of TIERS) { const n = num((form.dailyHours || {})[t]); if (isNaN(n) || n < 0 || n > 24) return true }
     for (const t of TIERS) { const n = num((form.imagesPerDay || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
+    const tph = num(form.tasksPerExtraHour); if (isNaN(tph) || tph < 0 || !Number.isInteger(tph) || tph > 100) return true
     return false
   })()
 
@@ -85,6 +87,7 @@ export default function Pricing({ isSuperAdmin }) {
         replans: Object.fromEntries(TIERS.map((t) => [t, num((form.replans || {})[t])])),
         dailyHours: Object.fromEntries(TIERS.map((t) => [t, num((form.dailyHours || {})[t])])),
         imagesPerDay: Object.fromEntries(TIERS.map((t) => [t, num((form.imagesPerDay || {})[t])])),
+        tasksPerExtraHour: num(form.tasksPerExtraHour),
       }
       const p = await workAdminApi.setPricing(patch)
       const f = formFrom(p)
@@ -134,6 +137,7 @@ export default function Pricing({ isSuperAdmin }) {
             ))}
             <RecRow label="Corporate" value="Unlimited tasks and re-plans" />
             <RecRow label="Bulk minimum" value={`${form.imageMinBulk} images`} />
+            <RecRow label="Bonus tasks per extra hour" value={`${form.tasksPerExtraHour == null ? '-' : form.tasksPerExtraHour} task${form.tasksPerExtraHour === 1 ? '' : 's'} per hour bought (all tiers)`} />
             <RecRow label="Free images per day" value={TIERS.map((t) => `${cap(t)} ${(form.imagesPerDay || {})[t] == null ? '-' : form.imagesPerDay[t]}`).join('  ·  ')} />
           </div>
           <SavedTag show={saved} />
@@ -208,6 +212,14 @@ export default function Pricing({ isSuperAdmin }) {
         <h2>Extra hour, per tier</h2>
         <p className="desc">Price of one additional hour beyond the daily allowance. Purchased hours never expire.</p>
         <div className="wka-grid">{TIERS.map((t) => <Money key={t} group="hour" tier={t} />)}</div>
+        <div className="wka-grid" style={{ marginTop: 16 }}>
+          <div className="wka-field">
+            <label>Bonus tasks per extra hour (all tiers)</label>
+            <input className="wka-input" type="number" min="0" max="100" step="1" disabled={disabled}
+              value={form.tasksPerExtraHour == null ? '' : form.tasksPerExtraHour} onChange={(e) => setTop('tasksPerExtraHour', e.target.value)} />
+            <span className="hint">Task credits granted when a user buys one extra hour. Same for every tier. 0 turns it off.</span>
+          </div>
+        </div>
       </div>
 
       <div className="wka-panel">

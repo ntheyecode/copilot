@@ -2873,6 +2873,25 @@ export function getWorkTaskCredits(workUserId) {
   }
   return { balance: Math.max(0, Math.round(Number(u.taskCredits) || 0)), dailyRate: rate, lastAccrualDay: u.lastAccrualDay }
 }
+// When a user BUYS extra hours (real money), grant bonus task credits too:
+// tasksPerExtraHour (superadmin-editable, default 1) per hour, the same for every
+// tier. Corporate accounts are unlimited and skip this. Tied to the PURCHASE only
+// (billing fulfillment), never to the credits-for-hours trade, so it cannot be
+// farmed. Settles the daily accrual first, then adds the bonus. Returns the credits
+// granted (0 when disabled, corporate, or nothing bought).
+export function grantTaskCreditsForPurchasedHours(workUserId, hours) {
+  const h = Math.max(0, Math.round(Number(hours) || 0))
+  if (h <= 0) return 0
+  const per = Math.max(0, Math.round(Number(getWorkPricing().tasksPerExtraHour) || 0))
+  const bonus = h * per
+  if (bonus <= 0) return 0
+  const c = getWorkTaskCredits(workUserId)   // settle accrual to today; null = corporate (unlimited)
+  if (!c) return 0
+  const u = getUser(workUserId); if (!u) return 0
+  u.taskCredits = Math.max(0, Math.round((Number(u.taskCredits) || 0) + bonus))
+  persist()
+  return bonus
+}
 // Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
 // information; it never changes the original request (that is frozen by
 // setWorkSessionGoal once a task is planned). Corporate/company = unlimited.
@@ -3263,6 +3282,7 @@ const WORK_PRICING_DEFAULT = {
   replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
   dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },    // DAILY INCLUDED hours per tier (the "bucket" each plan includes per day). Superadmin-editable; workDailyLimit reads this so a change reflects for every user immediately. Fractional allowed (e.g. 1.5).
   imagesPerDay: { lite: 0, basic: 0, advanced: 0, premium: 5 },  // FREE generated images per day per tier. Superadmin-editable; getWorkImageUsage reads this (0 = none).
+  tasksPerExtraHour: 1,  // BONUS task credits granted per EXTRA HOUR purchased (real money), the same for all tiers. Superadmin-editable; 0 disables the bonus. Applied at purchase fulfillment, not for the credits-for-hours trade.
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}
@@ -3276,6 +3296,7 @@ export function getWorkPricing() {
     replans: { ...WORK_PRICING_DEFAULT.replans, ...(p.replans || {}) },
     dailyHours: { ...WORK_PRICING_DEFAULT.dailyHours, ...(p.dailyHours || {}) },
     imagesPerDay: { ...WORK_PRICING_DEFAULT.imagesPerDay, ...(p.imagesPerDay || {}) },
+    tasksPerExtraHour: Number.isFinite(Number(p.tasksPerExtraHour)) ? Number(p.tasksPerExtraHour) : WORK_PRICING_DEFAULT.tasksPerExtraHour,
   }
 }
 // Keep only the numeric override keys a company may set (partial is fine); null
@@ -3358,6 +3379,13 @@ export function setWorkPricing(patch) {
     }
     return r
   }
+  // Bonus task credits per extra hour purchased (all tiers): a whole number 0..100.
+  let tasksPerExtraHour = cur.tasksPerExtraHour
+  if (p.tasksPerExtraHour != null && p.tasksPerExtraHour !== '') {
+    const n = Number(p.tasksPerExtraHour)
+    if (!Number.isInteger(n) || n < 0 || n > 100) throw httpErr(400, 'Tasks per extra hour must be a whole number between 0 and 100.')
+    tasksPerExtraHour = n
+  }
   db.work.pricing = {
     currency,
     plans: { ...cur.plans, ...tiers(p.plans, 'Plan') },
@@ -3368,6 +3396,7 @@ export function setWorkPricing(patch) {
     replans: { ...cur.replans, ...taskCounts(p.replans, 're-plan') },
     dailyHours: { ...cur.dailyHours, ...hourVals(p.dailyHours) },
     imagesPerDay: { ...cur.imagesPerDay, ...taskCounts(p.imagesPerDay, 'images-per-day') },
+    tasksPerExtraHour,
   }
   persist()
   return getWorkPricing()

@@ -132,7 +132,7 @@ const GROUPS = [
         links: [{ label: 'See the full plan comparison', href: '/workcopilot/pricing' }] },
       { q: 'What is included in every plan?',
         a: 'Every plan includes step-by-step guidance on any task, the exact commands, code and links, security on every plan, and browser, desktop and mobile on one subscription.',
-        d: 'Lite is the entry plan for a single simple task at a time. Basic adds roadmaps, the floating guide and a session write-up; Advanced adds uploading your own documents and more daily hours and tasks; Premium adds generated visuals and diagrams, and priority in the guidance queue.',
+        d: 'A task means a major task: one goal, guided end to end, with all the sub-steps it takes. Lite is the entry plan for one task at a time. Basic adds roadmaps, the floating guide and a session write-up; Advanced adds uploading your own documents and more daily hours and tasks; Premium adds generated visuals and diagrams, and priority in the guidance queue.',
         links: [{ label: 'Compare plans', href: '/workcopilot/pricing' }] },
       { q: 'What happens if I run out of hours for the day?',
         a: 'You can top up extra guided hours whenever you need, and purchased time never expires.',

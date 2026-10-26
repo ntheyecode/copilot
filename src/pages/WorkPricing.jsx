@@ -34,7 +34,7 @@ const FALLBACK = {
 // what checkout charges. Column order is Lite, Basic, Advanced, Premium,
 // Enterprise - the same order as every matrix row's 5 values.
 const PLAN_META = [
-  { id: 'lite', name: 'Lite', blurb: 'The entry plan: one simple task at a time, walked through step by step.' },
+  { id: 'lite', name: 'Lite', blurb: 'The entry plan: one task at a time, walked through step by step.' },
   { id: 'basic', name: 'Basic', blurb: 'For one person who wants an expert at their side a couple of hours a day.' },
   { id: 'advanced', name: 'Advanced', popular: true, blurb: 'Half a working day of guidance, grounded in your own documents.' },
   { id: 'premium', name: 'Premium', blurb: 'The deepest plan: most hours, generated visuals, first in line.' },
@@ -168,6 +168,11 @@ export default function WorkPricing() {
           </article>
         ))}
       </section>
+
+      {/* One clarification next to the task counts: a "task" is substantial, not a
+          single click. Stated once here (the counts' most prominent home), not
+          repeated per card. */}
+      <p className="wpr-tasknote">A task is a <b>major task</b>: one goal, guided end to end, including every sub-step it takes.</p>
 
       {/* THE MATRIX. Desktop and tablet: a table that scrolls inside its own
           card when the viewport is narrower than it (the page never scrolls
@@ -329,6 +334,8 @@ const CSS = `
 .wpr-plan-lines{list-style:none;margin:0 0 12px;padding:9px 11px;display:flex;flex-direction:column;gap:6px;background:#f4f8f7;border:1px solid var(--line);border-radius:10px;color:var(--mut);font-size:12.5px;line-height:1.5;overflow-wrap:anywhere}
 .wpr-plan-lines b{color:var(--em);font-weight:700}
 .wpr-footnote{text-align:center;color:var(--dim);font-size:12.5px;line-height:1.55;max-width:68ch;margin:18px auto 0}
+.wpr-tasknote{text-align:center;color:var(--mut);font-size:14px;line-height:1.55;max-width:70ch;margin:16px auto 0;padding:0 24px}
+.wpr-tasknote b{color:var(--ink);font-weight:700}
 .wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 20px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6);margin-top:auto}
 .wpr-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-btn.sm{padding:8px 14px;font-size:13px;border-radius:9px;margin-top:0}
