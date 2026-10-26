@@ -4940,6 +4940,7 @@ export function setWorkSessionSteps(workUserId, sessionId, steps) {
     code: (x && x.code && String((x.code.content || '')).trim())
       ? { file: String(x.code.file || '').trim() || null, content: String(x.code.content) }
       : null,
+    source: (x && x.source) ? String(x.source) : '',
     status: i === 0 ? 'current' : 'pending',
   })).filter((x) => x.text)
   s.currentStep = 0
@@ -4961,6 +4962,7 @@ export function replanKeepingProgress(workUserId, sessionId, newSteps) {
     url: (x && typeof x.url === 'string' && /^https?:\/\/\S+$/i.test(x.url.trim())) ? x.url.trim() : null,
     commands: Array.isArray(x && x.commands) ? x.commands.map((c) => String(c || '').trim()).filter(Boolean) : [],
     code: (x && x.code && String((x.code.content || '')).trim()) ? { file: String(x.code.file || '').trim() || null, content: String(x.code.content) } : null,
+    source: (x && x.source) ? String(x.source) : '',
     status: 'pending',
     doneAt: null,
   })).filter((x) => x.text)

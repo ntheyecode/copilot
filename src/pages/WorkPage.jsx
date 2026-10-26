@@ -1695,7 +1695,31 @@ function Home({ user, onOpen, onSignOut }) {
   // info) shown beside the WorkCoPilot identity. null = solo user, nothing
   // company-branded renders.
   const [company, setCompany] = useState(null)
-  const [tab, setTab] = useState('dashboard')
+  // Deep link: the ticket emails link to /work?tab=support, so read a `tab` (or
+  // `section`) query param on load and land on that dashboard section. Only a
+  // known section is honoured (Team only when this user is a company admin);
+  // anything else falls back to the Dashboard. The param is then stripped from
+  // the URL so a later reload is clean and does not override manual navigation.
+  const initialTab = (() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      const want = String(sp.get('tab') || sp.get('section') || '').toLowerCase().trim()
+      const allowed = ['dashboard', 'help', 'support', 'team']
+      if (allowed.includes(want) && (want !== 'team' || isCompanyAdmin)) return want
+    } catch { /* no window / bad query: fall back to the dashboard */ }
+    return 'dashboard'
+  })()
+  const [tab, setTab] = useState(initialTab)
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search)
+      if (sp.has('tab') || sp.has('section')) {
+        sp.delete('tab'); sp.delete('section')
+        const q = sp.toString()
+        window.history.replaceState({}, '', window.location.pathname + (q ? '?' + q : '') + window.location.hash)
+      }
+    } catch { /* leaving the query as-is is harmless */ }
+  }, [])
   const [planTitle, setPlanTitle] = useState('')    // name the user gives the plan/session, carried everywhere
   const [deskDocs, setDeskDocs] = useState([])   // desktop on-device governed docs (ephemeral, client-only)
   const [delTarget, setDelTarget] = useState(null)  // session pending delete (reason modal)

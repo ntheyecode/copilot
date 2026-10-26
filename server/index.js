@@ -2168,8 +2168,9 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     res.json({
       status: r.flag ? 'wrong' : (allDone ? 'done' : 'working'),
       observation: r.observation, flag: r.flag, guidance: r.guidance,
-      index: updated.currentStep, step: updated.steps[updated.currentStep] || null,
-      done: allDone, steps: updated.steps, escalated,
+      index: updated.currentStep,
+      step: updated.steps[updated.currentStep] ? { ...updated.steps[updated.currentStep], source: updated.steps[updated.currentStep].source || '' } : null,
+      done: allDone, steps: (updated.steps || []).map((x) => ({ ...x, source: x.source || '' })), escalated,
     })
   } catch (e) { sendWorkError(res, e, req) }
 })
@@ -2356,8 +2357,9 @@ app.post('/api/work/sessions/:id/context', requireWorkAuth, requireWorkSubscript
     const cur = store.getWorkSession(req.workUser.id, req.params.id)
     res.json({
       replanned, reason: out.reason, answer: out.answer,
-      index: cur.currentStep, step: (cur.steps || [])[cur.currentStep] || null,
-      steps: cur.steps || [], escalated,
+      index: cur.currentStep,
+      step: (cur.steps || [])[cur.currentStep] ? { ...(cur.steps || [])[cur.currentStep], source: (cur.steps || [])[cur.currentStep].source || '' } : null,
+      steps: (cur.steps || []).map((x) => ({ ...x, source: x.source || '' })), escalated,
       ...(gCtx && gCtx.guard ? { guard: gCtx.guard } : {}),
     })
   } catch (e) { sendWorkError(res, e, req) }

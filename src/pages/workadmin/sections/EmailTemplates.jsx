@@ -8,7 +8,7 @@ import { Save, RotateCcw, Mail, Eye, Check, AlertTriangle, Pencil, X, Bell } fro
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
 
-const CATEGORY_LABEL = { account: 'Account', security: 'Security', billing: 'Billing', forms: 'Forms', notifications: 'Notifications' }
+const CATEGORY_LABEL = { account: 'Account', security: 'Security', billing: 'Billing', forms: 'Forms', notifications: 'Notifications', support: 'Support' }
 
 export default function EmailTemplates({ isSuperAdmin }) {
   const [state, setState] = useState({ loading: true, error: null })
