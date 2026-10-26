@@ -117,6 +117,52 @@ app.use((req, res, next) => {
   next()
 })
 
+// ---- Sanctions / embargo geo-block (compliance) --------------------------
+// Block comprehensively US-embargoed jurisdictions from the public site and the
+// app BEFORE anything loads (HTTP 451 Unavailable For Legal Reasons). The
+// visitor's country is read from the edge (CDN / nginx) country header - we do
+// NOT geolocate here. FAIL-OPEN by design: an unknown country is never blocked,
+// so a missing header can never take the whole site down (SUPREME RULE VIII);
+// the edge must set a country header for this to take effect. The Stripe webhook
+// (registered above) is unaffected. Fully configurable via env:
+//   WORK_SANCTIONS_COUNTRIES  comma list of ISO-3166 alpha-2 (default below)
+//   WORK_SANCTIONS_HEADER     an extra header name to check first
+//   WORK_SANCTIONS_OFF=1      disable entirely
+// NOTE: the authoritative sanctions list is a LEGAL determination - this default
+// (OFAC comprehensively-embargoed countries) must be reviewed by counsel and
+// kept current. Region-level embargoes (Crimea / Donetsk / Luhansk within UA)
+// need region-level geo data at the edge and are added there, not here.
+const SANCTIONS_OFF = process.env.WORK_SANCTIONS_OFF === '1'
+const SANCTIONED_COUNTRIES = new Set(
+  String(process.env.WORK_SANCTIONS_COUNTRIES || 'CU,IR,KP,SY')
+    .split(',').map((c) => c.trim().toUpperCase()).filter(Boolean),
+)
+const COUNTRY_HEADERS = ['cf-ipcountry', 'x-country', 'x-geo-country', 'x-vercel-ip-country', 'x-appengine-country']
+function visitorCountry(req) {
+  const custom = process.env.WORK_SANCTIONS_HEADER
+  const names = custom ? [String(custom).toLowerCase(), ...COUNTRY_HEADERS] : COUNTRY_HEADERS
+  for (const h of names) {
+    const v = req.headers[h]
+    if (v) { const c = String(v).trim().toUpperCase(); if (c && c !== 'XX' && c !== 'T1') return c }
+  }
+  return null
+}
+if (!SANCTIONS_OFF && SANCTIONED_COUNTRIES.size) {
+  app.use((req, res, next) => {
+    const c = visitorCountry(req)
+    if (!c || !SANCTIONED_COUNTRIES.has(c)) return next()
+    // Log page-level blocks so an operator can see embargoed traffic; skip assets
+    // to avoid flooding the incident feed.
+    const isPage = !req.path.startsWith('/api/') && !/\.[a-z0-9]{2,5}$/i.test(req.path)
+    try { if (isPage && store.recordWorkIncident) store.recordWorkIncident({ kind: 'sanctions_block', message: `Blocked request from ${c}: ${req.path}`.slice(0, 200) }) } catch { /* never break on logging */ }
+    console.warn(`[sanctions] blocked request from ${c} ${req.method} ${req.path}`)
+    res.status(451)
+    if (req.path.startsWith('/api/')) return res.json({ error: 'This service is not available in your location.', code: 'unavailable_legal' })
+    res.setHeader('Content-Type', 'text/html; charset=utf-8')
+    return res.send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unavailable</title></head><body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:40rem;margin:12vh auto;padding:0 1.25rem;color:#1a1a1a"><h1 style="font-size:1.4rem;margin:0 0 .6rem">WorkCoPilot is not available in your location</h1><p style="color:#555;line-height:1.6;margin:0">For legal and regulatory reasons, WorkCoPilot (AdmireVeda / COE Security LLC) cannot be offered in your country. If you believe this is a mistake, contact support@admireveda.com.</p></body></html>')
+  })
+}
+
 app.use(session({
   name: 'workcopilot.sid',
   store: new FileSessionStore(),
