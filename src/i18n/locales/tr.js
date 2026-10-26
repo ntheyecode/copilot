@@ -552,6 +552,11 @@ export default {
   },
 
   // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  residency: {
+    title: "Kurumsal için veri yerleşimi",
+    ent: "Kurumsal ve şirket müşterilerinin verilerini kendi bölgelerinde tutmak için her türlü makul çabayı gösteriyoruz - Avrupa verileri Avrupa'da, Hindistan verileri Hindistan'da, ABD verileri ABD'de - kurumsal katılım sürecinin bir parçası olarak. Yönetilen verilerin kendi sınırınız içinde kalması için WorkCoPilot'u kendi yapay zeka anahtarlarınızla veya yerinde (on-prem) çalıştırın.",
+    sec: "Kurumsal ve şirket müşterilerinin verilerini kendi bölgelerinde tutmak için her türlü makul çabayı gösteriyoruz - Avrupa verileri Avrupa'da, Hindistan verileri Hindistan'da, ABD verileri ABD'de - kurumsal katılım sürecinin bir parçası olarak. Şirketler ayrıca yönetilen verilerin kendi sınırları içinde kalması için WorkCoPilot'u kendi yapay zeka anahtarlarıyla veya yerinde (on-prem) çalıştırabilir.",
+  },
   seo: {
     'how-it-works': { title: "Nasıl çalışır - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un yaptığı her şey: ekranınızda adım adım rehberlik, tam komut veya tıklama, sıfırdan başlayarak, hataları yakalayıp düzelterek, her uygulamada, kendi belgelerinize dayanarak, sizde kalan bir kayıt, araçlarınızı öğrenerek güncel kalma, görev öncesi koç, kendi becerileriniz, SAST ile cihazda maskeleme ve canlı bağımlılık denetimi, şirket kontrolleri ve erişebildiğiniz en güçlü yapay zekadan planlar." },
     'use-cases': { title: "Kullanım senaryoları - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un ayrıntılı olarak yönlendirdiği işler: teknik kurulum, yapılar ve entegrasyonlar, yapay zeka ve otomasyon, ürün, pazarlama, muhasebe ve ofis işleri, hukuk ve uyum, ve her ekranda günlük çalışma." },

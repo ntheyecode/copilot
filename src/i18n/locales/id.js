@@ -552,6 +552,11 @@ export default {
   },
 
   // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  residency: {
+    title: "Residensi data untuk perusahaan",
+    ent: "Kami melakukan segala upaya yang wajar untuk menyimpan data pelanggan enterprise dan perusahaan di wilayah mereka - data Eropa di Eropa, data India di India, data AS di AS - sebagai bagian dari onboarding enterprise. Jalankan WorkCoPilot dengan kunci AI Anda sendiri, atau on-prem, agar data yang dikelola tetap berada di dalam batas Anda sendiri.",
+    sec: "Kami melakukan segala upaya yang wajar untuk menyimpan data pelanggan enterprise dan perusahaan di wilayah mereka - data Eropa di Eropa, data India di India, data AS di AS - sebagai bagian dari onboarding enterprise. Perusahaan juga dapat menjalankannya dengan kunci AI mereka sendiri, atau on-prem, agar data yang dikelola tetap berada di dalam batas mereka.",
+  },
   seo: {
     'how-it-works': { title: "Cara kerjanya - WorkCoPilot by AdmireVeda", description: "Semua yang dilakukan WorkCoPilot: panduan langkah demi langkah di layar Anda, perintah atau klik yang tepat, mulai dari nol, menangkap dan memperbaiki kesalahan, di aplikasi mana pun, berdasarkan dokumen Anda sendiri, catatan yang Anda simpan, selalu terkini dengan mempelajari alat Anda, pendamping sebelum tugas, keterampilan Anda sendiri, penyuntingan di perangkat dengan SAST dan pemeriksaan dependensi langsung, kontrol perusahaan, serta rencana dari AI terkuat yang dapat Anda jangkau." },
     'use-cases': { title: "Kasus penggunaan - WorkCoPilot by AdmireVeda", description: "Apa yang dipandu WorkCoPilot, secara rinci: penyiapan teknis, pembangunan dan integrasi, AI dan otomatisasi, produk, pemasaran, akuntansi dan pekerjaan kantor, hukum dan kepatuhan, serta pekerjaan sehari-hari di layar apa pun." },

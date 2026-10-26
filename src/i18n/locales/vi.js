@@ -552,6 +552,11 @@ export default {
   },
 
   // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  residency: {
+    title: "Lưu trữ dữ liệu theo khu vực cho doanh nghiệp",
+    ent: "Chúng tôi nỗ lực hết sức hợp lý để lưu giữ dữ liệu của khách hàng doanh nghiệp và công ty trong khu vực của họ - dữ liệu châu Âu ở châu Âu, dữ liệu Ấn Độ ở Ấn Độ, dữ liệu Hoa Kỳ ở Hoa Kỳ - như một phần của quá trình onboarding doanh nghiệp. Chạy WorkCoPilot bằng khóa AI của riêng bạn, hoặc on-prem, để giữ dữ liệu được quản trị trong phạm vi ranh giới của riêng bạn.",
+    sec: "Chúng tôi nỗ lực hết sức hợp lý để lưu giữ dữ liệu của khách hàng doanh nghiệp và công ty trong khu vực của họ - dữ liệu châu Âu ở châu Âu, dữ liệu Ấn Độ ở Ấn Độ, dữ liệu Hoa Kỳ ở Hoa Kỳ - như một phần của quá trình onboarding doanh nghiệp. Các công ty cũng có thể chạy bằng khóa AI của riêng mình, hoặc on-prem, để giữ dữ liệu được quản trị trong phạm vi ranh giới của họ.",
+  },
   seo: {
     'how-it-works': { title: "Cách hoạt động - WorkCoPilot by AdmireVeda", description: "Mọi điều WorkCoPilot làm: hướng dẫn từng bước trên màn hình của bạn, lệnh hoặc cú nhấp chính xác, bắt đầu từ con số không, phát hiện và sửa lỗi, trong mọi ứng dụng, dựa trên tài liệu của chính bạn, một bản ghi bạn giữ lại, luôn cập nhật bằng cách học công cụ của bạn, một trợ lý trước nhiệm vụ, các kỹ năng của riêng bạn, che dữ liệu ngay trên thiết bị với SAST và kiểm tra phụ thuộc trực tiếp, các kiểm soát doanh nghiệp, và kế hoạch từ AI mạnh nhất mà bạn có thể dùng." },
     'use-cases': { title: "Trường hợp sử dụng - WorkCoPilot by AdmireVeda", description: "Những gì WorkCoPilot hướng dẫn, chi tiết: thiết lập kỹ thuật, xây dựng và tích hợp, AI và tự động hóa, sản phẩm, tiếp thị, kế toán và công việc văn phòng, pháp lý và tuân thủ, cùng công việc hằng ngày trên mọi màn hình." },

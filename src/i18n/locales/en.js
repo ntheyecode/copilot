@@ -199,6 +199,18 @@ export default {
     },
   },
 
+  // Data residency / data-localization claim for enterprise and company
+  // customers. HONESTY CONTRACT (owner-enforced): best-efforts, NOT a blanket
+  // present-tense guarantee. Must stay consistent with the Privacy page's
+  // international-transfers section (data may be processed in other countries,
+  // with safeguards), bring-your-own-keys, and on-prem options. Shown on the
+  // Enterprise page (feature) and the Security page (brief note). Hyphens only.
+  residency: {
+    title: 'Data residency for enterprise',
+    ent: 'We make all reasonable efforts to keep enterprise and company customers\' data in their region - European data in Europe, Indian data in India, US data in the US - as part of enterprise onboarding. Run WorkCoPilot on your own AI keys, or on-prem, to keep the governed data inside your own boundary.',
+    sec: 'We make all reasonable efforts to keep enterprise and company customers\' data in their region - European data in Europe, Indian data in India, US data in the US - as part of enterprise onboarding. Companies can also run on their own AI keys, or on-prem, to keep the governed data inside their boundary.',
+  },
+
   // Per-route <title> + meta description for the MARKETING pages (home + login
   // keep their own home.meta/login.meta). Read by each page's useSeo() as
   // seo.<key>.title / .description. Legal pages stay English and are NOT here.

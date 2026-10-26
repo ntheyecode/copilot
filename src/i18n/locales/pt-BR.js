@@ -552,6 +552,11 @@ export default {
   },
 
   // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  residency: {
+    title: "Residência de dados para empresas",
+    ent: "Fazemos todos os esforços razoáveis para manter os dados de clientes corporativos e empresariais em sua região - dados europeus na Europa, dados indianos na Índia, dados dos EUA nos EUA - como parte do onboarding empresarial. Execute o WorkCoPilot com suas próprias chaves de IA, ou on-prem, para manter os dados governados dentro do seu próprio perímetro.",
+    sec: "Fazemos todos os esforços razoáveis para manter os dados de clientes corporativos e empresariais em sua região - dados europeus na Europa, dados indianos na Índia, dados dos EUA nos EUA - como parte do onboarding empresarial. As empresas também podem executá-lo com suas próprias chaves de IA, ou on-prem, para manter os dados governados dentro do seu perímetro.",
+  },
   seo: {
     'how-it-works': { title: "Como funciona - WorkCoPilot by AdmireVeda", description: "Tudo o que o WorkCoPilot faz: orientação passo a passo na sua tela, o comando ou clique exato, começando do zero, detectando e corrigindo erros, em qualquer app, apoiado nos seus próprios documentos, um registro que você mantém, sempre atualizado aprendendo suas ferramentas, um apoio antes da tarefa, suas próprias habilidades, redação no dispositivo com SAST e verificação de dependências ao vivo, controles de empresa e planos da IA mais forte ao seu alcance." },
     'use-cases': { title: "Casos de uso - WorkCoPilot by AdmireVeda", description: "O que o WorkCoPilot orienta, em detalhe: configuração técnica, construções e integrações, IA e automação, produto, marketing, contabilidade e tarefas de escritório, jurídico e conformidade, e o trabalho do dia a dia em qualquer tela." },

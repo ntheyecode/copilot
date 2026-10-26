@@ -558,6 +558,11 @@ export default {
   },
 
   // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  residency: {
+    title: "Résidence des données pour les entreprises",
+    ent: "Nous faisons tous les efforts raisonnables pour conserver les données des clients entreprises et sociétés dans leur région - les données européennes en Europe, les données indiennes en Inde, les données américaines aux États-Unis - dans le cadre de l'intégration entreprise. Exécutez WorkCoPilot avec vos propres clés d'IA, ou sur site (on-prem), afin que les données gouvernées restent à l'intérieur de votre propre périmètre.",
+    sec: "Nous faisons tous les efforts raisonnables pour conserver les données des clients entreprises et sociétés dans leur région - les données européennes en Europe, les données indiennes en Inde, les données américaines aux États-Unis - dans le cadre de l'intégration entreprise. Les sociétés peuvent aussi l'exécuter avec leurs propres clés d'IA, ou sur site (on-prem), afin que les données gouvernées restent à l'intérieur de leur périmètre.",
+  },
   seo: {
     'how-it-works': { title: "Comment ça marche - WorkCoPilot by AdmireVeda", description: "Tout ce que fait WorkCoPilot : un guidage pas à pas sur votre écran, la commande ou le clic exact, en partant de zéro, en repérant et corrigeant les erreurs, dans n'importe quelle app, appuyé sur vos propres documents, un compte rendu que vous gardez, toujours à jour en apprenant vos outils, un coach avant la tâche, vos propres compétences, l'expurgation sur l'appareil avec SAST et vérification des dépendances en direct, des contrôles d'entreprise et des plans issus de l'IA la plus puissante à votre portée." },
     'use-cases': { title: "Cas d'usage - WorkCoPilot by AdmireVeda", description: "Ce que WorkCoPilot guide, en détail : configuration technique, constructions et intégrations, IA et automatisation, produit, marketing, comptabilité et tâches de bureau, juridique et conformité, et le travail quotidien sur n'importe quel écran." },

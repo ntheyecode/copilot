@@ -588,6 +588,11 @@ export default {
   },
 
   // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  residency: {
+    title: "面向企业的数据驻留",
+    ent: "作为企业接入的一部分，我们尽一切合理努力将企业和公司客户的数据保留在其所在地区 - 欧洲数据存放在欧洲，印度数据存放在印度，美国数据存放在美国。您可以使用自己的 AI 密钥或在本地（on-prem）运行 WorkCoPilot，让受管控的数据保留在您自己的边界内。",
+    sec: "作为企业接入的一部分，我们尽一切合理努力将企业和公司客户的数据保留在其所在地区 - 欧洲数据存放在欧洲，印度数据存放在印度，美国数据存放在美国。公司还可以使用自己的 AI 密钥或在本地（on-prem）运行，让受管控的数据保留在其边界内。",
+  },
   seo: {
     'how-it-works': { title: "工作原理 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 所做的一切：在你的屏幕上逐步引导，给出精确的命令或点击，从零开始，发现并纠正错误，适用于任何应用，依据你自己的文档，留下你保存的记录，通过学习你的工具保持最新，任务前的教练，你自己的技能，在设备上进行脱敏并配合 SAST 与实时依赖检查，企业级控制，以及来自你可用的最强 AI 的方案。" },
     'use-cases': { title: "使用场景 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 详细引导的内容：技术搭建与配置、构建与集成、AI 与自动化、产品、营销、财务与办公事务、法律与合规，以及任何屏幕上的日常工作。" },
