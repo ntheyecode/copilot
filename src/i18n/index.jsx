@@ -52,7 +52,25 @@ export function getStoredLocale() {
   try { return resolveLocale(localStorage.getItem(STORAGE_KEY)) } catch { return null }
 }
 
+// The `?lang=<code>` query parameter: the TOP-priority signal, so a shared or
+// crawled URL (e.g. https://admireveda.com/workcopilot/pricing?lang=de) renders
+// that language deterministically - Google runs our JS, so ?lang=de renders
+// German. It beats the stored choice, the browser language and the location, and
+// it is PERSISTED (the provider writes `locale` to localStorage on mount), so the
+// rest of the visit stays in that language even after the param is gone. We read
+// `lang` first, then `hl` (the de-facto web convention) as an alias.
+export function localeFromQuery() {
+  if (typeof window === 'undefined' || !window.location) return null
+  try {
+    const q = new URLSearchParams(window.location.search)
+    return resolveLocale(q.get('lang')) || resolveLocale(q.get('hl'))
+  } catch { return null }
+}
+
 export function detectLocale() {
+  // 1) ?lang= wins over everything and persists (see localeFromQuery).
+  const byQuery = localeFromQuery()
+  if (byQuery) return byQuery
   const stored = getStoredLocale()
   if (stored) return stored
   // Browser language preference (first supported in the ordered list).

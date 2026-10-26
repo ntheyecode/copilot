@@ -11,6 +11,7 @@ import { OWNERSHIP_LINE } from '../components/LegalPage.jsx'   // single source 
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
+import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys)
 
 // AdmireVeda WorkCoPilot - detailed use cases (/workcopilot/use-cases).
 // Every use case explained, each with a worked mini-guide graphic.
@@ -21,9 +22,10 @@ import useSeo from '../useSeo.js'                          // per-route title / 
 export default function WorkUseCases() {
   const nav = useNavigate()
   const rootRef = useRef(null)
+  const t = useT()
   useSeo({
-    title: 'Use Cases - WorkCoPilot by AdmireVeda',
-    description: 'What WorkCoPilot guides, in detail: technical setup and config, builds and integrations, AI and automation, product work, marketing, accounting and office tasks, legal and compliance, and everyday work on any screen.',
+    title: t('seo.use-cases.title'),
+    description: t('seo.use-cases.description'),
     path: '/workcopilot/use-cases',
   })
   useEffect(() => {

@@ -10,6 +10,7 @@ import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 
 // Viz palette on brand tokens: the frame surface and inks follow the page theme
 // (light or dark), the accents are the brand emerald / cyan.
@@ -253,9 +254,10 @@ const CARDS = [
 // icons are hidden, and focus rings are visible.
 export default function WorkCapabilities() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: 'How It Works - WorkCoPilot by AdmireVeda',
-    description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, staying current by learning your tools, a pre-task coach, your own skills, on-device redaction with SAST and live dependency checks, company controls, and plans from the strongest AI available to you.',
+    title: t('seo.how-it-works.title'),
+    description: t('seo.how-it-works.description'),
     path: '/workcopilot/how-it-works',
   })
   // Deep links like /workcopilot/how-it-works#best-model (from the main page's

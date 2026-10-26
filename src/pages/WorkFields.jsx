@@ -17,6 +17,7 @@ import {
 import AdmireVedaLogo from '../components/AdmireVedaLogo.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 
@@ -111,9 +112,10 @@ const TEX = ['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '
 
 export default function WorkFields() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: `Fields we cover - ${FIELD_TOTAL} professional fields - WorkCoPilot by AdmireVeda`,
-    description: `WorkCoPilot guides work across ${FIELD_TOTAL} professional fields in ${FIELD_FAMILIES.length} families, from software and security to finance, operations, marketing, healthcare and education. One tool your whole company can use.`,
+    title: t('seo.fields.title', { total: FIELD_TOTAL, families: FIELD_FAMILIES.length }),
+    description: t('seo.fields.description', { total: FIELD_TOTAL, families: FIELD_FAMILIES.length }),
     path: '/workcopilot/fields',
   })
   // Deep links like /workcopilot/fields#security-resilience land on the family.

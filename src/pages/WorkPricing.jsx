@@ -16,6 +16,7 @@ import { ArrowLeft, ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Build
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import useSeo from '../useSeo.js'
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 
 // Offline fallbacks (USD / month and per-tier values). These MATCH
 // server/store.js WORK_PRICING_DEFAULT so the page is never blank and never
@@ -51,9 +52,10 @@ function Cell({ v }) {
 
 export default function WorkPricing() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: 'Pricing - WorkCoPilot by AdmireVeda',
-    description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with monthly guided tasks and live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+    title: t('seo.pricing.title'),
+    description: t('seo.pricing.description'),
     path: '/workcopilot/pricing',
   })
   const [price, setPrice] = useState(null)

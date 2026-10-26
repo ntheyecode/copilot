@@ -16,6 +16,7 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive (also loads the brand fonts)
 import useSeo, { useJsonLd } from '../useSeo.js'   // per-route title/description/canonical (WEB-01) + safe JSON-LD
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 import { FIELD_TOTAL } from './WorkFields.jsx'      // the fields roster is the single source for the count (never drifts)
 
 const SUPPORT = 'support@admireveda.com'           // product help, billing
@@ -279,9 +280,10 @@ const GLANCE = [
 export default function WorkFaq() {
   const nav = useNavigate()
   const [query, setQuery] = useState('')
+  const t = useT()
   useSeo({
-    title: 'FAQ - WorkCoPilot by AdmireVeda',
-    description: 'Straight answers about WorkCoPilot: what it is, how the step-by-step guidance works, platforms and install, what leaves your device, pricing and billing, how it stays current by learning your tools, who it is for, data and compliance, and getting started.',
+    title: t('seo.faq.title'),
+    description: t('seo.faq.description'),
     path: '/workcopilot/faq',
   })
   useJsonLd(FAQ_LD)   // FAQPage structured data, injected safely (textContent, no HTML sink)
