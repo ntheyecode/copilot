@@ -24,15 +24,29 @@ import { sendAffiliateApplicationReceivedAsync, sendAffiliateApprovedAsync } fro
 
 const SITE = PUBLIC_SITE || 'https://admireveda.com'
 
-// Read the affref cookie without requiring cookie-parser (we only need one key).
-function cookieRef(req) {
+// Read one cookie value without requiring cookie-parser.
+function readCookie(req, name) {
   const raw = req.headers && req.headers.cookie
   if (!raw) return ''
   for (const part of String(raw).split(';')) {
     const [k, ...v] = part.trim().split('=')
-    if (k === 'affref') return decodeURIComponent(v.join('=') || '')
+    if (k === name) return decodeURIComponent(v.join('=') || '')
   }
   return ''
+}
+
+function cookieRef(req) { return readCookie(req, 'affref') }
+
+// CONSENT GATE (GDPR/CCPA): the affref referral cookie is NON-ESSENTIAL
+// (Analytics / Attribution category). We set it only once the visitor has
+// allowed attribution. The client's consent banner (src/consent.js) mirrors the
+// decision into a first-party 'wc_consent' cookie as "...:a1" (allowed) or
+// "...:a0" (declined); a consent record is itself exempt, so reading it needs no
+// prior consent. No decision yet -> treat as NOT consented (opt-in, not opt-out).
+function hasAttributionConsent(req) {
+  const c = readCookie(req, 'wc_consent')
+  if (!c) return false
+  return /(^|:)a1(:|$)/.test(c)
 }
 
 export function registerAffiliateRoutes(app, deps = {}) {
@@ -62,13 +76,19 @@ export function registerAffiliateRoutes(app, deps = {}) {
     res.json({ ok: true, id: out.id })
   }))
 
-  // Tracked referral link: bump the click, set a 30-day attribution cookie, and
-  // redirect to the public site carrying ?ref=CODE (the SPA stores it for signup).
+  // Tracked referral link: bump the click (aggregate, server-side, no device
+  // storage) and redirect to the public site carrying ?ref=CODE. The code always
+  // travels in the URL, so the SPA can capture and bind it at signup regardless
+  // of consent. The NON-ESSENTIAL affref cookie is set here ONLY when the visitor
+  // has already allowed attribution (hasAttributionConsent). On a first touch
+  // there is no consent yet, so no cookie is set; once the visitor accepts in the
+  // consent banner, the client promotes the captured ?ref to the affref cookie
+  // (src/consent.js), which this server then reads at signup (cookieRef).
   app.get('/api/work/affiliate/go/:code', w((req, res) => {
     const code = String(req.params.code || '').toUpperCase().slice(0, 16)
     const ok = store.recordAffiliateClick(code)
     const days = store.getAffiliateConfig().cookieDays || 30
-    if (ok) {
+    if (ok && hasAttributionConsent(req)) {
       res.cookie
         ? res.cookie('affref', code, { maxAge: days * 24 * 3600 * 1000, httpOnly: false, sameSite: 'lax', path: '/' })
         : res.setHeader('Set-Cookie', `affref=${encodeURIComponent(code)}; Max-Age=${days * 24 * 3600}; Path=/; SameSite=Lax`)

@@ -1,6 +1,8 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
+import ConsentBanner from './components/ConsentBanner.jsx'   // GDPR/CCPA consent, mounted globally
+import { capturePendingRef } from './consent.js'              // hold a ?ref referral until attribution consent
 import WorkMarketing from './pages/WorkMarketing.jsx'
 import WorkDemo from './pages/WorkDemo.jsx'
 import WorkLogin from './pages/WorkLogin.jsx'
@@ -13,6 +15,9 @@ import WorkTerms from './pages/WorkTerms.jsx'
 import WorkAcceptableUse from './pages/WorkAcceptableUse.jsx'
 import WorkDPA from './pages/WorkDPA.jsx'
 import WorkRefund from './pages/WorkRefund.jsx'
+import WorkCookiePolicy from './pages/WorkCookiePolicy.jsx'
+import WorkSubprocessors from './pages/WorkSubprocessors.jsx'
+import WorkAccessibility from './pages/WorkAccessibility.jsx'
 import WorkBenchmark from './pages/WorkBenchmark.jsx'
 import WorkCapabilities from './pages/WorkCapabilities.jsx'
 import WorkFields from './pages/WorkFields.jsx'
@@ -59,7 +64,11 @@ function RootRedirect() {
 }
 
 export default function App() {
+  // Capture a ?ref referral once on load, held transiently until the visitor
+  // allows attribution (consent.js). No non-essential cookie is set before then.
+  useEffect(() => { capturePendingRef() }, [])
   return (
+    <>
     <Suspense fallback={<Splash />}>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
@@ -80,6 +89,10 @@ export default function App() {
       <Route path="/workcopilot/acceptable-use" element={<WorkAcceptableUse />} />
       <Route path="/workcopilot/dpa" element={<WorkDPA />} />
       <Route path="/workcopilot/refund" element={<WorkRefund />} />
+      {/* Added compliance pages (global standard): cookie policy, subprocessors, accessibility. */}
+      <Route path="/workcopilot/cookie-policy" element={<WorkCookiePolicy />} />
+      <Route path="/workcopilot/subprocessors" element={<WorkSubprocessors />} />
+      <Route path="/workcopilot/accessibility" element={<WorkAccessibility />} />
       <Route path="/workcopilot/benchmark" element={<WorkBenchmark />} />
       <Route path="/workcopilot/how-it-works" element={<WorkCapabilities />} />
       {/* Content moved off the short main page (owner rule), linked from its footer. */}
@@ -109,5 +122,8 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
+    {/* Global GDPR/CCPA consent banner + re-openable preferences (footer link). */}
+    <ConsentBanner />
+    </>
   )
 }

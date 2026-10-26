@@ -117,6 +117,37 @@ export default {
     sales: 'Sales and enterprise',
     ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
     note: 'Lawful, legitimate work only. Guidance, not professional advice.',
+    cookiePrefs: 'Cookie preferences',
+    cookiePolicy: 'Cookie Policy',
+    subprocessors: 'Subprocessors',
+    accessibility: 'Accessibility',
+  },
+
+  // Cookie / storage consent banner (ConsentBanner.jsx). GDPR + CCPA: reject is
+  // as easy as accept, and non-essential storage stays off until allowed.
+  consent: {
+    aria: 'Cookie and privacy choices',
+    title: 'Your privacy choices',
+    body: 'We use one strictly necessary cookie to keep you signed in. With your consent we also turn on functional storage and referral attribution. You can change this anytime.',
+    acceptAll: 'Accept all',
+    rejectAll: 'Reject non-essential',
+    manage: 'Manage preferences',
+    save: 'Save choices',
+    back: 'Back',
+    close: 'Close',
+    reopen: 'Cookie preferences',
+    manageTitle: 'Manage your preferences',
+    manageBody: 'Choose which categories to allow. Strictly necessary storage is always on so the site and sign-in keep working.',
+    alwaysOn: 'Always on',
+    on: 'On',
+    off: 'Off',
+    necessaryT: 'Strictly necessary',
+    necessaryD: 'A single sign-in cookie that keeps you logged in and the site working. Cannot be turned off.',
+    functionalT: 'Functional',
+    functionalD: 'Remembers your language, theme and other preferences on this device. No cross-site tracking.',
+    analyticsT: 'Analytics and attribution',
+    analyticsD: 'Lets us credit a partner who referred you (a first-party referral cookie). Off until you allow it, and never used to profile you.',
+    learn: 'Read our <a>Cookie Policy</a> and <p>Privacy Policy</p>.',
   },
 
   // Per-route <title> + meta description for the MARKETING pages (home + login
