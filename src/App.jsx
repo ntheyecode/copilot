@@ -31,6 +31,7 @@ const WorkCompanyAdmin = lazy(() => import('./pages/workadmin/WorkCompanyAdmin.j
 const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
 // Standalone white sub-pages of the dashboard (same tokens, own routes).
 const WorkTasks = lazy(() => import('./pages/WorkTasks.jsx'))
+const CompletedTasks = lazy(() => import('./pages/WorkTasks.jsx').then((m) => ({ default: m.CompletedTasks })))
 const WorkLogs = lazy(() => import('./pages/WorkLogs.jsx'))
 import { useAuth } from './auth.jsx'
 
@@ -94,6 +95,7 @@ export default function App() {
       <Route path="/work" element={<WorkPage />} />
       {/* Completed tasks + session logs: standalone pages in the dashboard's white style. */}
       <Route path="/work/tasks" element={<WorkTasks />} />
+      <Route path="/work/completed" element={<CompletedTasks />} />
       <Route path="/work/logs" element={<WorkLogs />} />
       {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
       <Route path="/work/buddy" element={<WorkBuddy />} />

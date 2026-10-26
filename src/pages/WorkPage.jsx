@@ -2057,7 +2057,8 @@ function Home({ user, onOpen, onSignOut }) {
         <nav className="wd-navs" aria-label="Sections">
           <button type="button" className={`wd-nav${tab === 'dashboard' ? ' on' : ''}`} aria-current={tab === 'dashboard' ? 'page' : undefined} onClick={() => setTab('dashboard')} title="Dashboard"><LayoutDashboard size={18} /> <span className="wd-nav-t">Dashboard</span></button>
           <button type="button" className="wd-nav" onClick={goStart} title="Start a task"><Play size={18} /> <span className="wd-nav-t">Start a task</span></button>
-          <a className="wd-nav" href="/work/tasks" title="My tasks (completed)"><Clock size={18} /> <span className="wd-nav-t">My tasks</span></a>
+          <a className="wd-nav" href="/work/tasks" title="My tasks (in progress or paused)"><Clock size={18} /> <span className="wd-nav-t">My tasks</span></a>
+          <a className="wd-nav" href="/work/completed" title="Completed tasks"><Check size={18} /> <span className="wd-nav-t">Completed tasks</span></a>
           <a className="wd-nav" href="/work/logs" title="Session logs"><FileText size={18} /> <span className="wd-nav-t">Session logs</span></a>
           <button type="button" className="wd-nav" onClick={goSkills} title="Skills"><Blocks size={18} /> <span className="wd-nav-t">Skills</span></button>
           <div className="wd-sect">Help</div><span className="wd-sect-rule" aria-hidden />
@@ -2345,7 +2346,7 @@ function Home({ user, onOpen, onSignOut }) {
                         <b>{sessions.length === 0 ? 'No sessions yet' : 'Nothing in progress'}</b>
                         <p>{sessions.length === 0
                           ? 'Start a task above and it is saved here. You can pause anytime and come back to the exact step you were on.'
-                          : <>Every plan you finished is in your <a className="wd-link" href="/work/tasks">completed tasks</a>, and every run is in your <a className="wd-link" href="/work/logs">session logs</a>.</>}</p>
+                          : <>Every plan you finished is in your <a className="wd-link" href="/work/completed">completed tasks</a>, and every run is in your <a className="wd-link" href="/work/logs">session logs</a>.</>}</p>
                       </div>
                     </div>
                   )

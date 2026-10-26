@@ -75,7 +75,7 @@ export const WS_CSS = `
 .ws-row{display:flex;align-items:center;gap:14px;padding:14px 4px;min-width:0}
 .ws-row + .ws-row{border-top:1px solid var(--line)}
 .ws-row-ic{width:30px;height:30px;border-radius:8px;background:var(--info-fill);color:var(--em-2);display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px}
-.ws-row-ic.done{background:var(--em-fill);color:var(--em)}
+.ws-row-ic.done,.ws-row-ic.ended{background:var(--em-fill);color:var(--em)}
 .ws-row-ic.paused{background:var(--chip);color:var(--mut)}
 .ws-row-main{flex:1 1 240px;min-width:0}
 .ws-row-t{font-weight:600;font-size:14.5px;line-height:1.35;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx)}
@@ -251,7 +251,8 @@ export function WorkSubShell({ active, title, children }) {
         </Link>
         <span className="ws-top-sp" />
         <nav className="ws-tabs" aria-label="Your sessions">
-          <Link to="/work/tasks" className={`ws-tab${active === 'tasks' ? ' on' : ''}`} aria-current={active === 'tasks' ? 'page' : undefined} title="Completed tasks"><CheckCircle2 size={14} /><span>Completed tasks</span></Link>
+          <Link to="/work/tasks" className={`ws-tab${active === 'tasks' ? ' on' : ''}`} aria-current={active === 'tasks' ? 'page' : undefined} title="My tasks (active)"><ClipboardList size={14} /><span>My tasks</span></Link>
+          <Link to="/work/completed" className={`ws-tab${active === 'completed' ? ' on' : ''}`} aria-current={active === 'completed' ? 'page' : undefined} title="Completed tasks"><CheckCircle2 size={14} /><span>Completed tasks</span></Link>
           <Link to="/work/logs" className={`ws-tab${active === 'logs' ? ' on' : ''}`} aria-current={active === 'logs' ? 'page' : undefined} title="Session logs"><History size={14} /><span>Session logs</span></Link>
         </nav>
       </header>
@@ -260,23 +261,30 @@ export function WorkSubShell({ active, title, children }) {
   )
 }
 
-// ---- Completed tasks ----------------------------------------------------------
-export default function WorkTasks() {
+// ---- Task lists: My tasks (active) + Completed tasks (ended) -------------------
+// One shared list, two modes. "My tasks" is what's in progress or paused (open to
+// resume at the exact step); "Completed tasks" is finished work, each with its
+// downloadable report. A paused task never blocks starting a new one, so several
+// active tasks can live here at once.
+function SessionList({ mode }) {
+  const isDone = mode === 'completed'
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
-  // Download errors from the format chooser surface here.
   const [dlErr, setDlErr] = useState('')
-  // Completed = status 'ended'. Newest completion first (endedAt, then startedAt).
-  const done = useMemo(() => sessions
-    .filter((s) => s && s.status === 'ended')
-    .sort((a, b) => String(b.endedAt || b.startedAt || '').localeCompare(String(a.endedAt || a.startedAt || ''))), [sessions])
+  const list = useMemo(() => sessions
+    .filter((s) => s && (isDone ? s.status === 'ended' : s.status !== 'ended'))
+    .sort((a, b) => String((isDone ? b.endedAt : (b.lastActivityAt || b.startedAt)) || b.startedAt || '')
+      .localeCompare(String((isDone ? a.endedAt : (a.lastActivityAt || a.startedAt)) || a.startedAt || ''))), [sessions, isDone])
+  const title = isDone ? 'Completed tasks' : 'My tasks'
   return (
-    <WorkSubShell active="tasks" title="Completed tasks">
+    <WorkSubShell active={isDone ? 'completed' : 'tasks'} title={title}>
       <div className="ws-head">
-        <span className="ic"><CheckCircle2 size={18} /></span>
+        <span className="ic">{isDone ? <CheckCircle2 size={18} /> : <ClipboardList size={18} />}</span>
         <div>
-          <h1>Completed tasks{loaded && !err && done.length > 0 && <span className="ws-count">{done.length}</span>}</h1>
-          <p>Every task you finished, with its report. Open one to review the steps or download the PDF.</p>
+          <h1>{title}{loaded && !err && list.length > 0 && <span className="ws-count">{list.length}</span>}</h1>
+          <p>{isDone
+            ? 'Every task you finished, with its report. Open one to review the steps, or download it as a PDF, text report or audit log.'
+            : 'Tasks you have in progress or paused. Open one to pick up at the exact step you left off - pausing one lets you start another.'}</p>
         </div>
       </div>
       {dlErr && <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', padding: '10px 13px', borderRadius: 10, background: 'var(--warning-soft, #fff7e0)', border: '1px solid var(--warning, #d98a00)', color: 'var(--text, #1a1a2e)', fontSize: 13.5 }}><AlertTriangle size={15} /> {dlErr}</div>}
@@ -284,33 +292,36 @@ export default function WorkTasks() {
         <SkeletonRows />
       ) : err ? (
         <LoadError onRetry={reload} />
-      ) : done.length === 0 ? (
+      ) : list.length === 0 ? (
         <div className="ws-empty">
           <span className="ic"><ClipboardList size={20} /></span>
           <div>
-            <b>No completed tasks yet</b>
-            <p>When you finish a task it lands here with its report. <Link to="/work" className="ws-link">Start a task</Link> or pick one up from your <Link to="/work/logs" className="ws-link">session logs</Link>.</p>
+            {isDone
+              ? <><b>No completed tasks yet</b><p>When you finish a task it lands here with its report. <Link to="/work" className="ws-link">Start a task</Link>.</p></>
+              : <><b>No active tasks</b><p>A task you start and pause shows here so you can resume it. <Link to="/work" className="ws-link">Start a task</Link>, or see your <Link to="/work/completed" className="ws-link">completed tasks</Link>.</p></>}
           </div>
         </div>
       ) : (
-        <div className="ws-list" role="list" aria-label="Completed tasks">
-          {done.map((s) => {
+        <div className="ws-list" role="list" aria-label={title}>
+          {list.map((s) => {
             const st = stepStats(s)
-            const when = fmtDate(s.endedAt || s.startedAt)
+            const status = statusOf(s)
+            const when = fmtDate(isDone ? (s.endedAt || s.startedAt) : (s.lastActivityAt || s.startedAt))
             return (
               <div key={s.id} className="ws-row" role="listitem">
-                <span className="ws-row-ic done" aria-hidden><Check size={15} /></span>
+                <span className={`ws-row-ic ${status.key}`} aria-hidden><status.Icon size={15} /></span>
                 <div className="ws-row-main">
                   <div className="ws-row-t" title={sessionLabel(s)}>{sessionLabel(s)}</div>
                   <div className="ws-row-m">
-                    <span>Completed{when ? ` ${when}` : ''}</span>
+                    <span className={`ws-st ${status.key}`}>{status.label}</span>
+                    {when && <><span className="sep" aria-hidden>&middot;</span><span>{when}</span></>}
                     <span className="sep" aria-hidden>&middot;</span>
-                    <span><span className="done">{st.done}/{st.total}</span> steps done</span>
+                    <span><span className="done">{st.done}/{st.total}</span> steps{isDone ? ' done' : ''}</span>
                   </div>
                 </div>
                 <div className="ws-row-acts">
-                  <button type="button" className="ws-btn go" onClick={() => open(s.id)}>Open <ArrowRight size={14} /></button>
-                  <DownloadMenu sessionId={s.id} className="ws-btn" label="Download" onError={setDlErr} />
+                  <button type="button" className="ws-btn go" onClick={() => open(s.id)}>{!isDone && status.key === 'paused' ? 'Resume' : 'Open'} <ArrowRight size={14} /></button>
+                  {isDone && <DownloadMenu sessionId={s.id} className="ws-btn" label="Download" onError={setDlErr} />}
                 </div>
               </div>
             )
@@ -320,6 +331,8 @@ export default function WorkTasks() {
     </WorkSubShell>
   )
 }
+export default function WorkTasks() { return <SessionList mode="active" /> }
+export function CompletedTasks() { return <SessionList mode="completed" /> }
 
 // Exported for WorkLogs (status chip + icon share one rule with this page).
 export function statusOf(s) {
