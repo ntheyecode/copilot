@@ -40,7 +40,7 @@ export default function PolicyNote({ policy }) {
                 <span>
                   <b>{f.kind === 'forbid' ? 'Prohibited' : 'Required'}: {f.title || (f.kind === 'forbid' ? 'a prohibited practice' : 'a required practice')}.</b>
                   {f.guidance ? ' ' + f.guidance : ''}
-                  {cite ? <span className="pn-cite"> — per {cite}</span> : null}
+                  {cite ? <span className="pn-cite"> (per {cite})</span> : null}
                 </span>
               </li>
             )
@@ -65,8 +65,8 @@ function ensureAssets() {
 
 const POLICYNOTE_CSS = `
 .pn-wrap{display:flex;flex-direction:column;gap:8px;padding-top:13px;border-top:1px solid var(--wc-line)}
-.pn-head{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",ui-monospace,monospace;
-  font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--wc-ink)}
+.pn-head{display:inline-flex;align-items:center;gap:6px;font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;
+  font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--wc-ink)}
 .pn-wrap.pn-flag .pn-head{color:#b45309}
 .pn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
 .pn-list li{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5;color:var(--wc-tx);

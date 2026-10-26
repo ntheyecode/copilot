@@ -77,10 +77,11 @@ export default function Incidents() {
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
           {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
         </button>
-        <button type="button" className="wka-btn sm" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.incidents.length === 0} style={{ color: '#d6433b' }}>
+        <button type="button" className="wka-btn sm ghost" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.incidents.length === 0} style={{ color: 'var(--wka-red)' }}>
           <Trash2 size={13} /> Clear all
         </button>
-        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>
+        <span className="wka-spacer" />
+        <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>
           Showing {rows.length} of {state.total}{state.total > state.incidents.length ? ` (latest ${state.incidents.length})` : ''}
         </span>
       </div>
@@ -116,7 +117,7 @@ export default function Incidents() {
                     {(i.provider || i.model) ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{[i.provider ? `provider: ${i.provider}` : null, i.model ? `model: ${i.model}` : null].filter(Boolean).join('  |  ')}</div> : null}
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <button type="button" className="wka-btn sm ghost" title="Delete incident" style={{ color: '#d6433b' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: i }) }}><Trash2 size={13} /></button>
+                    <button type="button" className="wka-btn sm ghost" title="Delete incident" style={{ color: 'var(--wka-red)' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: i }) }}><Trash2 size={13} /></button>
                   </td>
                 </tr>
               ))}

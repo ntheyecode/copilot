@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { api } from '../api.js'
 import {
   CreditCard, ExternalLink, FileText, AlertTriangle, Loader2, Check,
-  ArrowUpRight, ArrowDownRight, CalendarClock, ShieldCheck, Ban, Info,
+  ArrowUpRight, ArrowDownRight, CalendarClock, ShieldCheck, Ban, Info, Lock,
 } from 'lucide-react'
 
 // Self-serve Billing section for the authenticated /work dashboard. It is the
@@ -321,6 +321,14 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
       </div>
       {portalErr && <div className="wb-note warn" role="alert"><AlertTriangle size={15} /> <span>{portalErr}</span></div>}
 
+      {/* Trust footer: an explicit security cue for the payment surface. Payment
+          details and card data are handled on Stripe's PCI-compliant pages; we
+          never store card numbers. */}
+      <div className="wb-trust">
+        <span className="wb-trust-badge"><Lock size={13} /> Secured by Stripe</span>
+        <span className="wb-trust-txt"><ShieldCheck size={13} /> PCI-compliant checkout · your card details are never stored on our servers.</span>
+      </div>
+
       {/* Confirm a plan change. Honest copy mirroring the server contract. */}
       {confirm && (() => {
         const curIdx = PLAN_ORDER.indexOf(plan)
@@ -378,6 +386,15 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
 }
 
 const CSS = `
+/* ACCENT ADOPT (SUPREME RULE II single-source): the primary-accent tokens this
+   surface uses derive from the shared per-user --accent set (src/theme/accent.js),
+   each with the dashboard's CURRENT value as the fallback, so with no accent set
+   nothing changes and when the user picks one, every primary-accent cue here
+   (status chips, current-plan highlight, solid buttons, cycle toggle, focus)
+   follows it live. --em-2 stays the brand-blue secondary used for text links,
+   matching how the dashboard itself separates the primary accent from links. */
+.wb{--em:var(--accent,#0e9f6e);--on-em:var(--accent-contrast,#ffffff);
+  --em-fill:var(--accent-soft,#eafaf3);--em-fill-2:var(--accent-soft,#d9f3e7);--em-line:var(--accent-line,#bde9d5)}
 .wb{margin-top:18px;border:1px solid var(--line);background:linear-gradient(180deg,var(--panel-2),var(--panel));border-radius:18px;padding:18px;box-shadow:var(--shadow);color:var(--tx)}
 .wb *{box-sizing:border-box}
 .wb h3,.wb h4{margin:0;font-family:"Bricolage Grotesque",var(--wd-display,system-ui),sans-serif;letter-spacing:-.012em}
@@ -498,8 +515,18 @@ const CSS = `
 .wb-modal-btns{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:18px}
 .wb-modal-btns .wb-btn{margin-inline-start:0}
 
+/* Trust footer (payment-surface security cue) */
+.wb-trust{display:flex;align-items:center;gap:10px 16px;flex-wrap:wrap;margin-top:16px;padding-top:15px;border-top:1px solid var(--line)}
+.wb-trust-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--em);border:1px solid var(--em-line);background:var(--em-fill);border-radius:999px;padding:4px 11px;white-space:nowrap;flex-shrink:0}
+.wb-trust-badge svg{flex-shrink:0}
+.wb-trust-txt{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--mut);line-height:1.45;min-width:0}
+.wb-trust-txt svg{color:var(--em);flex-shrink:0}
+
 @media(max-width:640px){
   .wb{padding:15px}
+  /* Two roomy columns at narrow width so plan names never truncate behind the
+     Current badge (SUPREME RULE XIV: no clipped/truncated labels). */
+  .wb-plan-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
   .wb-head-txt{flex-basis:100%}
   .wb-btn{margin-inline-start:0}
   .wb-head>.wb-btn{width:100%}

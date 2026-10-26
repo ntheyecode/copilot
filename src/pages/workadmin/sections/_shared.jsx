@@ -1,7 +1,7 @@
 // Shared presentational primitives for the WorkCoPilot admin sections.
 // Pure UI, no data fetching. Only react + lucide-react are imported.
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, Pencil, X } from 'lucide-react'
+import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, XCircle, Pencil, X } from 'lucide-react'
 
 export function Loading({ label = 'Loading' }) {
   return (
@@ -71,6 +71,23 @@ export function RecRow({ label, value }) {
   )
 }
 
+// One line of a "live state" checklist: a green check / amber warning / red
+// cross, a bold label and a muted detail. Single source for the Billing and AI
+// config state lists (SUPREME RULE II - they used to carry identical copies).
+export function StateRow({ ok, warn, label, detail }) {
+  const Icon = ok ? CheckCircle2 : (warn ? AlertTriangle : XCircle)
+  const color = ok ? 'var(--wka-emerald)' : (warn ? 'var(--wka-amber)' : 'var(--wka-red)')
+  return (
+    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid var(--wka-line)' }}>
+      <Icon size={18} style={{ color, flexShrink: 0, marginTop: 1 }} />
+      <div style={{ minWidth: 0 }}>
+        <div style={{ fontWeight: 600 }}>{label}</div>
+        <div style={{ color: 'var(--wka-muted)', fontSize: 12 }}>{detail}</div>
+      </div>
+    </div>
+  )
+}
+
 // The Edit / Save+Cancel control row + header affordance for a collapsible card.
 // `editing` + `onEdit`/`onCancel` toggle; the caller renders the record vs form.
 export function EditToggle({ editing, onEdit, disabled }) {
@@ -104,7 +121,7 @@ export function ReasonModal({
           <X size={18} />
         </button>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <AlertTriangle size={18} style={{ color: danger ? '#d6433b' : 'var(--wka-emerald)' }} /> {title}
+          <AlertTriangle size={18} style={{ color: danger ? 'var(--wka-red)' : 'var(--wka-emerald)' }} /> {title}
         </h2>
         {message ? <p className="desc">{message}</p> : null}
         {extra}
@@ -117,7 +134,7 @@ export function ReasonModal({
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
           <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>Cancel</button>
           <button type="button" className="wka-btn sm" onClick={confirm} disabled={!can}
-            style={danger ? { background: '#d6433b', borderColor: '#d6433b', color: '#fff' } : undefined}>
+            style={danger ? { background: 'var(--wka-red)', borderColor: 'var(--wka-red)', color: '#fff' } : undefined}>
             {busy ? <Spinning /> : null} {confirmLabel}
           </button>
         </div>
@@ -182,7 +199,7 @@ export function StepUpGate({ status, verify, onUnlock, label = 'This page' }) {
   }
   return (
     <div className="wka-panel" style={{ maxWidth: 460, margin: '8px auto', textAlign: 'center' }}>
-      <div style={{ width: 52, height: 52, borderRadius: 14, margin: '4px auto 14px', display: 'grid', placeItems: 'center', background: 'rgba(10,157,102,0.1)', border: '1px solid rgba(10,157,102,0.3)' }}>
+      <div style={{ width: 52, height: 52, borderRadius: 14, margin: '4px auto 14px', display: 'grid', placeItems: 'center', background: 'color-mix(in srgb, var(--wka-emerald) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--wka-emerald) 30%, transparent)' }}>
         <Lock size={22} style={{ color: 'var(--wka-emerald)' }} />
       </div>
       <h2 style={{ justifyContent: 'center' }}>{label} are locked</h2>
@@ -221,7 +238,7 @@ export function StepUpBanner({ status, onLocked, lock, label = 'Settings' }) {
   const mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000)
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
-      padding: '9px 14px', marginBottom: 14, borderRadius: 10, border: '1px solid rgba(10,157,102,0.35)', background: 'rgba(10,157,102,0.07)' }}>
+      padding: '9px 14px', marginBottom: 14, borderRadius: 10, border: '1px solid color-mix(in srgb, var(--wka-emerald) 35%, transparent)', background: 'color-mix(in srgb, var(--wka-emerald) 7%, transparent)' }}>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: 'var(--wka-emerald)' }}>
         <CheckCircle2 size={15} />
         {status.breakGlass ? `MFA is disabled platform-wide - ${label.toLowerCase()} are open.` : `Verified with your authenticator - locks in ${mm}:${String(ss).padStart(2, '0')}.`}
@@ -252,7 +269,7 @@ export function StepUpPrompt({ verify, onUnlocked, onCancel, label = 'This actio
       style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(12,18,28,0.55)', backdropFilter: 'blur(2px)', padding: 16 }}
       onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel && onCancel() }}>
       <div className="wka-panel" style={{ maxWidth: 420, width: '100%', textAlign: 'center' }}>
-        <div style={{ width: 48, height: 48, borderRadius: 13, margin: '2px auto 12px', display: 'grid', placeItems: 'center', background: 'rgba(10,157,102,0.1)', border: '1px solid rgba(10,157,102,0.3)' }}>
+        <div style={{ width: 48, height: 48, borderRadius: 13, margin: '2px auto 12px', display: 'grid', placeItems: 'center', background: 'color-mix(in srgb, var(--wka-emerald) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--wka-emerald) 30%, transparent)' }}>
           <Lock size={20} style={{ color: 'var(--wka-emerald)' }} />
         </div>
         <h2 style={{ justifyContent: 'center' }}>Confirm it&rsquo;s you</h2>

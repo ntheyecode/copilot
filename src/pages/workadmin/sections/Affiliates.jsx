@@ -11,7 +11,7 @@ import {
   Settings2, ExternalLink, AlertTriangle, Info,
 } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal, SavedTag, StepUpPrompt, isLockError } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal, SavedTag, StepUpPrompt, isLockError, RecRow, EditToggle } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
 
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`
@@ -69,8 +69,12 @@ function toForm(c) {
   }
 }
 
+// UX: like every other saved setting in the console, the card COLLAPSES to a
+// read-only record once a config exists; Edit reopens the form, Cancel reverts
+// to the last-saved values, Save collapses it again.
 function ProgramSettings({ config, isSuperAdmin, onSaved }) {
   const [form, setForm] = useState(() => toForm(config))
+  const [editing, setEditing] = useState(() => !config)   // nothing saved yet -> open the form
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [err, setErr] = useState(null)
@@ -89,20 +93,34 @@ function ProgramSettings({ config, isSuperAdmin, onSaved }) {
     setSaving(true); setErr(null)
     try {
       await workAdminApi.setAffiliateConfig({ enabled: !!form.enabled, defaultRatePct: rate, minPayoutUsd: min, cookieDays: days })
-      setSaved(true)
+      setSaved(true); setEditing(false)   // collapse back to the record
       onSaved()
     } catch (e) { setErr(e) } finally { setSaving(false) }
   }
+  const cancel = () => { setForm(toForm(config)); setErr(null); setEditing(false) }
 
   const ro = saving
+  const c = config || {}
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}><Settings2 size={16} style={{ color: 'var(--wka-accent)' }} /> Program settings</h2>
-        <SavedTag show={saved} />
+        {!editing ? <EditToggle editing={editing} onEdit={() => { setForm(toForm(config)); setErr(null); setSaved(false); setEditing(true) }} /> : null}
       </div>
       <p className="desc" style={{ marginTop: 6 }}>Applies to new approvals and new referrals. An affiliate&rsquo;s own rate (set at approval or edited in the table) overrides the default.</p>
 
+      {!editing ? (
+        <>
+          <div className="wka-record">
+            <RecRow label="Applications" value={c.enabled !== false ? 'Open - the public page shows the apply form' : 'Closed - the public page says applications are closed'} />
+            <RecRow label="Default commission" value={c.defaultRatePct != null ? `${c.defaultRatePct}% of first payment` : 'Not set'} />
+            <RecRow label="Minimum payout" value={c.minPayoutUsd != null ? money(c.minPayoutUsd) : 'Not set'} />
+            <RecRow label="Referral cookie window" value={c.cookieDays != null ? `${c.cookieDays} day${Number(c.cookieDays) === 1 ? '' : 's'}` : 'Not set'} />
+          </div>
+          <SavedTag show={saved} />
+        </>
+      ) : (
+      <>
       <div className={`wka-toggle${form.enabled ? ' on' : ''}${ro ? ' disabled' : ''}`} role="switch" aria-checked={form.enabled}
         onClick={() => !ro && set('enabled', !form.enabled)} style={{ marginBottom: 16 }}>
         <span className="track"><span className="knob" /></span>
@@ -128,10 +146,13 @@ function ProgramSettings({ config, isSuperAdmin, onSaved }) {
       </div>
 
       {err ? <div style={{ marginTop: 14 }}><ErrorBox error={err} /></div> : null}
-      <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 16 }}>
-        <button type="button" className="wka-btn sm ghost" disabled={!dirty || saving} onClick={() => { setForm(toForm(config)); setErr(null) }}>Discard</button>
-        <button type="button" className="wka-btn sm primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinning /> : <Check size={13} />} Save settings</button>
+      <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 16, flexWrap: 'wrap' }}>
+        <button type="button" className="wka-btn primary" disabled={!dirty || saving} onClick={save}>{saving ? <Spinning /> : <Check size={14} />} Save settings</button>
+        <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
+        <SavedTag show={saved} />
       </div>
+      </>
+      )}
     </div>
   )
 }
@@ -200,7 +221,7 @@ function AffiliateAdmins() {
                     <td style={{ fontSize: 12.5 }}>{u.email || '-'}</td>
                     <td><span className={`wka-badge ${u.role === 'superadmin' ? 'active' : 'paused'}`}>{u.role === 'superadmin' ? 'Superadmin' : 'Affiliate admin'}</span></td>
                     <td style={{ textAlign: 'right' }}>
-                      {u.role === 'affiliate_admin' ? <button type="button" className="wka-btn sm ghost" disabled={revoking === u.id} onClick={() => revoke(u)} style={{ color: '#d6433b' }}>{revoking === u.id ? <Spinning /> : <Ban size={13} />} Revoke</button> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>-</span>}
+                      {u.role === 'affiliate_admin' ? <button type="button" className="wka-btn sm ghost" disabled={revoking === u.id} onClick={() => revoke(u)} style={{ color: 'var(--wka-red)' }}>{revoking === u.id ? <Spinning /> : <Ban size={13} />} Revoke</button> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>-</span>}
                     </td>
                   </tr>
                 ))}
@@ -524,7 +545,8 @@ export default function Affiliates({ isSuperAdmin }) {
         <button type="button" className="wka-btn sm" onClick={() => load('refresh')} disabled={refreshing}>
           {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
         </button>
-        {counts.pending ? <span style={{ color: 'var(--wka-amber)', fontSize: 12, fontWeight: 600 }}>{counts.pending} awaiting review</span> : null}
+        <span className="wka-spacer" />
+        {counts.pending ? <span style={{ color: 'var(--wka-amber)', fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap' }}>{counts.pending} awaiting review</span> : null}
       </div>
 
       {notice ? (
@@ -596,13 +618,13 @@ export default function Affiliates({ isSuperAdmin }) {
                           {a.status === 'pending' ? (
                             <>
                               <button type="button" className="wka-btn sm primary" onClick={() => setApprove(a)} title="Approve and set a rate"><UserCheck size={13} /> Approve</button>
-                              <button type="button" className="wka-btn sm ghost" style={{ color: '#d6433b' }} onClick={() => { setRErr(null); setReason({ type: 'reject', row: a }) }} title="Reject with a reason"><X size={13} /> Reject</button>
+                              <button type="button" className="wka-btn sm ghost" style={{ color: 'var(--wka-red)' }} onClick={() => { setRErr(null); setReason({ type: 'reject', row: a }) }} title="Reject with a reason"><X size={13} /> Reject</button>
                             </>
                           ) : null}
                           {a.status === 'approved' ? (
                             <>
                               <button type="button" className="wka-btn sm" onClick={() => setPayout(a)} title="Pay out the pending balance through Stripe Connect" disabled={(Number(a.pendingUsd) || 0) <= 0}><Banknote size={13} /> Pay out</button>
-                              <button type="button" className="wka-btn sm ghost" style={{ color: '#d6433b' }} onClick={() => { setRErr(null); setReason({ type: 'suspend', row: a }) }} title="Suspend with a reason"><Ban size={13} /> Suspend</button>
+                              <button type="button" className="wka-btn sm ghost" style={{ color: 'var(--wka-red)' }} onClick={() => { setRErr(null); setReason({ type: 'suspend', row: a }) }} title="Suspend with a reason"><Ban size={13} /> Suspend</button>
                             </>
                           ) : null}
                           {a.status === 'suspended' ? (

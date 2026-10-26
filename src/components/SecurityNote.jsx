@@ -82,8 +82,8 @@ function ensureAssets() {
 // flagged one is given an amber-ish emphasis via the ink token.
 const SECURITYNOTE_CSS = `
 .sn-wrap{display:flex;flex-direction:column;gap:8px;padding-top:13px;border-top:1px solid var(--wc-line)}
-.sn-head{display:inline-flex;align-items:center;gap:6px;font-family:"JetBrains Mono",ui-monospace,monospace;
-  font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--wc-ink)}
+.sn-head{display:inline-flex;align-items:center;gap:6px;font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;
+  font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--wc-ink)}
 .sn-wrap.sn-flag .sn-head{color:#b45309}
 .sn-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
 .sn-list li{display:flex;gap:8px;align-items:flex-start;font-size:13px;line-height:1.5;color:var(--wc-tx);

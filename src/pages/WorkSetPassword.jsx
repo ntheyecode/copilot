@@ -3,7 +3,7 @@
 // sends them to sign in. Used for both "welcome, set your password" and
 // "forgot password" (same token purpose).
 import React, { useEffect, useState } from 'react'
-import { KeyRound, Check, Loader2, ArrowRight, AlertTriangle, Eye, EyeOff } from 'lucide-react'
+import { KeyRound, Check, Loader2, ArrowRight, AlertTriangle, Eye, EyeOff, ShieldCheck, Lock } from 'lucide-react'
 import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 
@@ -78,8 +78,10 @@ export default function WorkSetPassword() {
             </div>
             {err && <div className="wsp-err">{err}</div>}
             <button className="wsp-btn" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wsp-spin" /> : <Check size={16} />} Set password</button>
+            <p className="wsp-secure"><Lock size={13} aria-hidden="true" /> Your password is encrypted and stored securely. We never see it in plain text.</p>
           </form>
         )}
+        <div className="wsp-foot"><ShieldCheck size={13} aria-hidden="true" /> Enterprise-grade security · AdmireVeda WorkCoPilot</div>
       </div>
     </div>
   )
@@ -88,11 +90,11 @@ export default function WorkSetPassword() {
 const CSS = `
 /* Brand tokens (emerald / cyan, orange CTA, Bricolage + Figtree), light by
    default with a dark override, matching the sign-in page it hands off to. */
-.wsp-root{--bg:#f3f5fb;--panel:#ffffff;--field:#fbfcff;--line:#e6e8f1;--line2:#d3d7e5;--tx:#161a2b;--mut:#5c6484;--em:#0e9f6e;--cy:#0a84c2;--em-fill:rgba(14,159,110,.10);--em-line:rgba(14,159,110,.30);--cta:#f26a43;--cta2:#e35a31;--cta-ink:#ffffff;--err:#b42318;--err-fill:rgba(180,35,24,.08);--err-line:rgba(180,35,24,.28);
+.wsp-root{--bg:#f3f5fb;--panel:#ffffff;--field:#fbfcff;--line:#e6e8f1;--line2:#d3d7e5;--tx:#161a2b;--mut:#5c6484;--em:var(--accent,#0e9f6e);--cy:#0a84c2;--em-fill:var(--accent-soft,rgba(14,159,110,.10));--em-line:var(--accent-line,rgba(14,159,110,.30));--cta:#f26a43;--cta2:#e35a31;--cta-ink:#ffffff;--err:#b42318;--err-fill:rgba(180,35,24,.08);--err-line:rgba(180,35,24,.28);
   min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(900px 420px at 80% -10%, var(--em-fill) 0%, transparent 60%), var(--bg);
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;color:var(--tx);-webkit-font-smoothing:antialiased}
-[data-theme='dark'] .wsp-root{--bg:#0a0b12;--panel:#13141f;--field:#0b0c13;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--cy:#39d3ff;--em-fill:rgba(140,245,196,.10);--em-line:rgba(140,245,196,.34);--cta:#ffb561;--cta2:#ff7a59;--cta-ink:#241206;--err:#ff8b81;--err-fill:rgba(255,139,129,.10);--err-line:rgba(255,139,129,.30)}
-.wsp-card{width:100%;max-width:420px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:30px 28px;box-shadow:0 18px 50px -28px rgba(12,18,34,.3);text-align:center;position:relative;overflow:hidden}
+[data-theme='dark'] .wsp-root{--bg:#0a0b12;--panel:#13141f;--field:#0b0c13;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.15);--tx:#eef0f6;--mut:#9aa0b4;--em:var(--accent,#8cf5c4);--cy:#39d3ff;--em-fill:var(--accent-soft,rgba(140,245,196,.10));--em-line:var(--accent-line,rgba(140,245,196,.34));--cta:#ffb561;--cta2:#ff7a59;--cta-ink:#241206;--err:#ff8b81;--err-fill:rgba(255,139,129,.10);--err-line:rgba(255,139,129,.30)}
+.wsp-card{width:100%;max-width:430px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:30px 30px 22px;box-shadow:0 1px 2px rgba(26,31,54,.05),0 24px 60px -34px rgba(12,18,34,.34);text-align:center;position:relative;overflow:hidden}
 .wsp-card::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--em),var(--cy))}
 .wsp-brand{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em;color:var(--tx);text-decoration:none;margin-bottom:18px}
 .wsp-brand i{font-style:normal;color:var(--em)}
@@ -114,5 +116,9 @@ const CSS = `
 .wsp-btn.ghost{background:var(--panel);color:var(--tx);border:1px solid var(--line2);box-shadow:none}
 .wsp-err{background:var(--err-fill);border:1px solid var(--err-line);color:var(--err);border-radius:10px;padding:9px 12px;font-size:13px;margin-bottom:14px;text-align:left}
 .wsp-center p{margin-bottom:16px}
+.wsp-secure{display:flex;align-items:flex-start;gap:7px;margin:14px 2px 0;font-size:12px;line-height:1.45;color:var(--mut);text-align:left}
+.wsp-secure svg{flex:none;margin-top:2px;color:var(--em)}
+.wsp-foot{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:20px;padding-top:15px;border-top:1px solid var(--line);font-size:11.5px;letter-spacing:.01em;color:var(--mut)}
+.wsp-foot svg{flex:none;color:var(--em)}
 .wsp-spin{animation:wsp-sp .8s linear infinite}@keyframes wsp-sp{to{transform:rotate(360deg)}}
 `

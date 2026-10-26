@@ -11,36 +11,22 @@
 // Nothing here ever displays a stored secret value (SUPREME RULE III style: the
 // state is surfaced plainly as configured / not configured, never leaked).
 import React, { useEffect, useState, useCallback } from 'react'
-import { Lock, CheckCircle2, XCircle, CreditCard, Link2, Copy, Check, Pencil, Zap, AlertTriangle } from 'lucide-react'
+import { Lock, CheckCircle2, XCircle, CreditCard, Link2, Copy, Check, X, Zap, AlertTriangle, Activity } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, Spinning, SavedTag, StepUpPrompt, isLockError } from './_shared.jsx'
+import { Loading, ErrorBox, Spinning, SavedTag, StepUpPrompt, isLockError, RecRow, EditToggle, StateRow } from './_shared.jsx'
 
-function StateRow({ ok, label, detail }) {
-  const Icon = ok ? CheckCircle2 : XCircle
-  const color = ok ? 'var(--wka-emerald)' : 'var(--wka-red)'
-  return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid var(--wka-line)' }}>
-      <Icon size={18} style={{ color, flexShrink: 0, marginTop: 1 }} />
-      <div>
-        <div style={{ fontWeight: 600 }}>{label}</div>
-        <div style={{ color: 'var(--wka-muted)', fontSize: 12 }}>{detail}</div>
-      </div>
-    </div>
-  )
-}
-
-// One line of the saved summary: a label on the left, the value (or a masked
-// "Set") on the right, with a small status dot.
+// One line of the saved record: the shared RecRow (same collapse-to-record look
+// as every other saved setting in the console) with a small status dot in front
+// of the value so set / not-set still reads at a glance.
 function SummaryRow({ label, value, ok, neutral }) {
   const color = neutral ? 'var(--wka-faint)' : (ok ? 'var(--wka-emerald)' : 'var(--wka-red)')
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '11px 0', borderBottom: '1px solid var(--wka-line)' }}>
-      <span style={{ color: 'var(--wka-muted)', fontSize: 13 }}>{label}</span>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontWeight: 600, fontSize: 13, minWidth: 0 }}>
-        <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} />
-        <span className="wka-mono" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 320 }}>{value}</span>
+    <RecRow label={label} value={(
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
+        <span style={{ width: 7, height: 7, borderRadius: '50%', background: color, flexShrink: 0 }} aria-hidden="true" />
+        <span className="wka-mono" style={{ overflowWrap: 'anywhere' }}>{value}</span>
       </span>
-    </div>
+    )} />
   )
 }
 
@@ -153,25 +139,31 @@ export default function Billing({ isSuperAdmin }) {
       {!isSuperAdmin ? <div className="wka-note"><Lock size={14} /> Only a superadmin can change the billing configuration. The current state is shown below.</div> : null}
 
       <div className="wka-panel">
-        <h2><CreditCard size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Stripe configuration</h2>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
+          <h2 style={{ margin: 0 }}><CreditCard size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Stripe configuration</h2>
+          {!editing ? <EditToggle editing={editing} disabled={!isSuperAdmin} onEdit={() => { setTestResult(null); setTestErr(null); setEditing(true) }} /> : null}
+        </div>
+        <p className="desc">{editing
+          ? 'Paste your Stripe keys and the three plan ids here. Each plan takes a price id (price_...) or a product id (prod_...), whichever you copy from Stripe. The secret key and webhook secret are write-only: once saved they are never shown again, and leaving them blank keeps the stored value. Values set here take priority over environment variables.'
+          : 'Your Stripe keys and plan ids are saved. Secrets are never shown back. Use Test connection to confirm they work, or Edit to change them.'}</p>
 
         {(() => {
           const mode = (b && b.mode) || 'live'
           const isTest = mode === 'test'
           const C = isTest ? 'var(--wka-amber)' : 'var(--wka-emerald)'
-          const seg = (active) => ({ flex: 1, textAlign: 'center', padding: '8px 0', fontSize: 13.5, fontWeight: 700, cursor: isSuperAdmin ? 'pointer' : 'default', borderRadius: 8, border: 'none', background: active ? C : 'transparent', color: active ? '#fff' : 'var(--wka-muted, #6b7280)', transition: 'all .12s' })
+          const seg = (active) => ({ flex: 1, textAlign: 'center', padding: '8px 0', font: 'inherit', fontSize: 13.5, fontWeight: 700, cursor: isSuperAdmin ? 'pointer' : 'default', borderRadius: 8, border: 'none', background: active ? C : 'transparent', color: active ? '#fff' : 'var(--wka-muted)', transition: 'all .12s' })
           return (
-            <div style={{ padding: '12px 14px', marginBottom: 16, borderRadius: 12, border: `2px solid ${C}`, background: isTest ? 'rgba(180,83,9,.06)' : 'rgba(22,163,74,.05)' }}>
+            <div style={{ padding: '12px 14px', marginBottom: 16, borderRadius: 12, border: `2px solid ${C}`, background: `color-mix(in srgb, ${C} 6%, transparent)` }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C }}>Payment mode &mdash; {isTest ? 'TEST (no real charges)' : 'LIVE (real charges)'}</span>
                 {isSuperAdmin && (
-                  <div style={{ display: 'flex', gap: 3, background: 'var(--wka-bg-2, #eef0f6)', borderRadius: 10, padding: 3, minWidth: 180 }}>
+                  <div style={{ display: 'flex', gap: 3, background: 'var(--wka-bg-2)', borderRadius: 10, padding: 3, minWidth: 180 }}>
                     <button type="button" style={seg(!isTest)} onClick={() => !isTest || switchMode('live')}>LIVE</button>
                     <button type="button" style={seg(isTest)} onClick={() => isTest || switchMode('test')}>TEST</button>
                   </div>
                 )}
               </div>
-              <div style={{ fontSize: 12.5, color: 'var(--wka-muted, #6b7280)', marginTop: 7 }}>
+              <div style={{ fontSize: 12.5, color: 'var(--wka-muted)', marginTop: 7 }}>
                 Switching applies immediately &mdash; checkout, the webhook and Test connection all use the <b>{isTest ? 'test' : 'live'}</b> keys. Each mode keeps its own keys + price ids; fill them in separately under Edit.
               </div>
             </div>
@@ -180,8 +172,7 @@ export default function Billing({ isSuperAdmin }) {
 
         {!editing ? (
           <>
-            <p className="desc">Your Stripe keys and plan ids are saved. Secrets are never shown back. Use Test connection to confirm they work, or Edit to change them.</p>
-            <div style={{ maxWidth: 640 }}>
+            <div className="wka-record" style={{ maxWidth: 640 }}>
               <SummaryRow label="Secret key" value={secretSet ? 'Set, hidden' : 'Not set'} ok={secretSet} />
               <SummaryRow label="Webhook signing secret" value={webhookSet ? 'Set, hidden' : 'Not set'} ok={webhookSet} />
               <SummaryRow label="Lite plan" value={b.priceLite || 'Not set'} ok={!!b.priceLite} />
@@ -193,9 +184,6 @@ export default function Billing({ isSuperAdmin }) {
               <SummaryRow label="Billing" value={b.enabled !== false ? 'On' : 'Off'} ok={b.enabled !== false} />
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 18, flexWrap: 'wrap' }}>
-              <button type="button" className="wka-btn primary" disabled={!isSuperAdmin} onClick={() => { setTestResult(null); setTestErr(null); setEditing(true) }}>
-                <Pencil size={14} /> Edit configuration
-              </button>
               <button type="button" className="wka-btn" disabled={!secretSet || testing} onClick={test}>
                 {testing ? <Spinning /> : <Zap size={14} />} Test connection
               </button>
@@ -204,7 +192,7 @@ export default function Billing({ isSuperAdmin }) {
 
             {testErr ? <div style={{ marginTop: 14 }}><ErrorBox error={testErr} /></div> : null}
             {testResult && !testErr ? (
-              <div style={{ marginTop: 16, border: `1px solid ${testResult.ok ? 'rgba(10,157,102,.35)' : 'rgba(181,121,15,.35)'}`, background: testResult.ok ? 'rgba(10,157,102,.06)' : 'rgba(181,121,15,.06)', borderRadius: 12, padding: '14px 16px', maxWidth: 640 }}>
+              <div style={{ marginTop: 16, border: `1px solid color-mix(in srgb, ${testResult.ok ? 'var(--wka-emerald)' : 'var(--wka-amber)'} 35%, transparent)`, background: `color-mix(in srgb, ${testResult.ok ? 'var(--wka-emerald)' : 'var(--wka-amber)'} 6%, transparent)`, borderRadius: 12, padding: '14px 16px', maxWidth: 640 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 9, fontWeight: 700, marginBottom: 10 }}>
                   {testResult.ok ? <CheckCircle2 size={17} style={{ color: 'var(--wka-emerald)' }} /> : <AlertTriangle size={17} style={{ color: 'var(--wka-amber)' }} />}
                   {testResult.ok ? 'Connected to Stripe. Checkout is ready.' : 'Connected, but something is incomplete.'}
@@ -246,8 +234,6 @@ export default function Billing({ isSuperAdmin }) {
           </>
         ) : (
           <>
-            <p className="desc">Paste your Stripe keys and the three plan ids here. Each plan takes a price id (price_...) or a product id (prod_...), whichever you copy from Stripe. The secret key and webhook secret are write-only: once saved they are never shown again, and leaving them blank keeps the stored value. Values set here take priority over environment variables.</p>
-
             <div style={{ display: 'grid', gap: 16, maxWidth: 640 }}>
               <div className="wka-field">
                 <label>Secret key {secretSet ? <span style={{ color: 'var(--wka-emerald)' }}>(set)</span> : <span style={{ color: 'var(--wka-red)' }}>(not set)</span>}</label>
@@ -314,7 +300,7 @@ export default function Billing({ isSuperAdmin }) {
                   {saving ? <Spinning /> : null} Save configuration
                 </button>
                 {(secretSet || pricesSet) && (
-                  <button type="button" className="wka-btn ghost" disabled={saving} onClick={() => { setSaveError(null); load() }}>Cancel</button>
+                  <button type="button" className="wka-btn ghost" disabled={saving} onClick={() => { setSaveError(null); load() }}><X size={14} /> Cancel</button>
                 )}
                 <SavedTag show={saved} />
               </div>
@@ -334,7 +320,7 @@ export default function Billing({ isSuperAdmin }) {
       </div>
 
       <div className="wka-panel">
-        <h2>Live state</h2>
+        <h2><Activity size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Live state</h2>
         <p className="desc">Whether WorkCoPilot can take payments right now.</p>
         <StateRow ok={secretSet} label={secretSet ? 'Secret key is set' : 'No secret key'} detail={secretSet ? (b.hasSecretKey ? 'Stored in the console.' : 'Provided by an environment variable.') : 'Add a Stripe secret key so checkout can run.'} />
         <StateRow ok={webhookSet} label={webhookSet ? 'Webhook secret is set' : 'No webhook secret'} detail={webhookSet ? (b.hasWebhookSecret ? 'Stored in the console.' : 'Provided by an environment variable.') : 'Webhook events will be acknowledged but not processed until this is set.'} />

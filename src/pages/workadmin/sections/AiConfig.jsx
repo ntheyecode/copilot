@@ -4,24 +4,19 @@
 //   2. Is a platform provider actually configured and ready to answer?
 // No API key value and no provider/model name is ever shown.
 import React, { useEffect, useState, useCallback } from 'react'
-import { Lock, CheckCircle2, XCircle, AlertTriangle, Shield, Globe, Sparkles, RefreshCw, Eye, KeyRound, DollarSign, Award, Plus } from 'lucide-react'
+import { Lock, CheckCircle2, XCircle, Shield, Globe, Sparkles, RefreshCw, Eye, KeyRound, DollarSign, Award, Plus, Cpu } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { fmtDateTime } from '../workadmin.css.js'
-import { Loading, ErrorBox, Spinning, SavedTag, EmptyState, useReasonModal } from './_shared.jsx'
+// Step-up gate, banner, lock-error check and the live-state row all come from
+// the shared primitives (SUPREME RULE II): this file used to carry private copies
+// of each, which is how the AI page drifted visually from SMTP / Claims.
+import { Loading, ErrorBox, Spinning, SavedTag, EmptyState, useReasonModal, StateRow, StepUpGate, StepUpBanner, isLockError } from './_shared.jsx'
 
-function StateRow({ ok, warn, label, detail }) {
-  const Icon = ok ? CheckCircle2 : (warn ? AlertTriangle : XCircle)
-  const color = ok ? 'var(--wka-emerald)' : (warn ? 'var(--wka-amber)' : 'var(--wka-red)')
-  return (
-    <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', padding: '12px 0', borderBottom: '1px solid var(--wka-line)' }}>
-      <Icon size={18} style={{ color, flexShrink: 0, marginTop: 1 }} />
-      <div>
-        <div style={{ fontWeight: 600 }}>{label}</div>
-        <div style={{ color: 'var(--wka-muted)', fontSize: 12 }}>{detail}</div>
-      </div>
-    </div>
-  )
-}
+// Token-only tints for the "active / recommended" card treatment (no rgba
+// literals - the console accent + emerald tokens are the single source).
+const EMERALD_LINE = 'color-mix(in srgb, var(--wka-emerald) 55%, transparent)'
+const EMERALD_WASH = 'color-mix(in srgb, var(--wka-emerald) 9%, transparent)'
+const EMERALD_RING = 'color-mix(in srgb, var(--wka-emerald) 8%, transparent)'
 
 // Relative time ("3 min ago") for the recommendation's computed-at stamp.
 function relTime(at) {
@@ -46,8 +41,8 @@ function priceLabel(m) {
 
 const VIS_TAG = {
   display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700,
-  color: 'var(--wka-emerald)', border: '1px solid rgba(10,157,102,0.4)', background: 'rgba(10,157,102,0.08)',
-  borderRadius: 999, padding: '2px 7px',
+  color: 'var(--wka-emerald)', border: '1px solid color-mix(in srgb, var(--wka-emerald) 40%, transparent)', background: EMERALD_RING,
+  borderRadius: 999, padding: '2px 7px', whiteSpace: 'nowrap',
 }
 
 // One "overall" pick tile (cheapest / cheapest-with-vision / best).
@@ -101,9 +96,9 @@ function CostModelCard({ m }) {
     <div style={{
       position: 'relative', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0,
       padding: '16px 16px 14px', borderRadius: 12,
-      border: rec ? '1px solid rgba(10,157,102,0.55)' : '1px solid var(--wka-line)',
-      background: rec ? 'linear-gradient(160deg, rgba(10,157,102,0.09), var(--wka-panel-2) 60%)' : 'var(--wka-panel-2)',
-      boxShadow: rec ? '0 0 0 3px rgba(10,157,102,0.08)' : 'none',
+      border: rec ? `1px solid ${EMERALD_LINE}` : '1px solid var(--wka-line)',
+      background: rec ? `linear-gradient(160deg, ${EMERALD_WASH}, var(--wka-panel-2) 60%)` : 'var(--wka-panel-2)',
+      boxShadow: rec ? `0 0 0 3px ${EMERALD_RING}` : 'none',
       opacity: avoid ? 0.62 : 1,
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
@@ -112,7 +107,7 @@ function CostModelCard({ m }) {
           <div style={{ fontWeight: 700, fontSize: 15, wordBreak: 'break-word', textDecoration: avoid ? 'line-through' : 'none', textDecorationColor: 'var(--wka-faint)' }}>{m.model}</div>
         </div>
         {rec ? <span style={{ ...VIS_TAG, fontSize: 10.5, padding: '3px 9px' }}><Award size={11} /> Recommended - cheapest</span> : null}
-        {avoid ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: 'var(--wka-red)', border: '1px solid rgba(255,138,138,0.4)', borderRadius: 999, padding: '3px 9px' }}><XCircle size={11} /> Avoid for vision</span> : null}
+        {avoid ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 10.5, fontWeight: 700, color: 'var(--wka-red)', border: '1px solid color-mix(in srgb, var(--wka-red) 40%, transparent)', borderRadius: 999, padding: '3px 9px', whiteSpace: 'nowrap' }}><XCircle size={11} /> Avoid for vision</span> : null}
       </div>
 
       {avoid ? null : (
@@ -170,9 +165,9 @@ function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, o
     <div style={{
       position: 'relative', display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0,
       padding: '16px 16px 14px', borderRadius: 12,
-      border: p.active ? '1px solid rgba(10,157,102,0.55)' : '1px solid var(--wka-line)',
-      background: p.active ? 'linear-gradient(160deg, rgba(10,157,102,0.09), var(--wka-panel-2) 60%)' : 'var(--wka-panel-2)',
-      boxShadow: p.active ? '0 0 0 3px rgba(10,157,102,0.08)' : 'none',
+      border: p.active ? `1px solid ${EMERALD_LINE}` : '1px solid var(--wka-line)',
+      background: p.active ? `linear-gradient(160deg, ${EMERALD_WASH}, var(--wka-panel-2) 60%)` : 'var(--wka-panel-2)',
+      boxShadow: p.active ? `0 0 0 3px ${EMERALD_RING}` : 'none',
     }}>
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
         <div style={{ minWidth: 0 }}>
@@ -214,7 +209,7 @@ function ProviderCard({ p, isSuperAdmin, busy, onSaveTest, onTest, onActivate, o
           {p.chatModels && p.chatModels.length ? (
             <div className="wka-field" style={{ margin: 0 }}>
               <label style={{ fontSize: 11 }}>Chat model (optional)</label>
-              <select className="wka-input" value={model} onChange={(e) => setModel(e.target.value)} disabled={working}>
+              <select className="wka-select" value={model} onChange={(e) => setModel(e.target.value)} disabled={working}>
                 <option value="">Auto (provider default)</option>
                 {p.chatModels.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
@@ -562,74 +557,6 @@ function RecommendedModels() {
   )
 }
 
-// A mutation hit while the authenticator window had lapsed server-side.
-function isLockError(e) { return !!(e && e.status === 403 && e.data && e.data.locked) }
-
-// The OTP lock that stands in front of the whole page until a code is verified.
-function OtpGate({ status, onUnlock }) {
-  const [code, setCode] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState(null)
-  const needsEnroll = status && !status.mfaEnrolled && !status.breakGlass
-  const submit = async (e) => {
-    if (e) e.preventDefault()
-    if (busy || !code.trim()) return
-    setBusy(true); setError(null)
-    try { const st = await workAdminApi.verifyAiStepUp(code.trim()); setCode(''); onUnlock(st) }
-    catch (err) { setError(err) } finally { setBusy(false) }
-  }
-  return (
-    <div className="wka-panel" style={{ maxWidth: 460, margin: '8px auto', textAlign: 'center' }}>
-      <div style={{ width: 52, height: 52, borderRadius: 14, margin: '4px auto 14px', display: 'grid', placeItems: 'center', background: 'rgba(10,157,102,0.1)', border: '1px solid rgba(10,157,102,0.3)' }}>
-        <Lock size={22} style={{ color: 'var(--wka-emerald)' }} />
-      </div>
-      <h2 style={{ justifyContent: 'center' }}>AI settings are locked</h2>
-      <p className="desc" style={{ textAlign: 'center' }}>This is a critical page. Enter the 6-digit code from your authenticator to view and change AI configuration. It re-locks automatically after a few minutes of inactivity.</p>
-      {needsEnroll ? (
-        <div className="wka-note" style={{ marginTop: 10, justifyContent: 'center' }}><AlertTriangle size={14} /> Set up multi-factor authentication on your account first, then return here.</div>
-      ) : (
-        <form onSubmit={submit} style={{ marginTop: 8 }}>
-          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder="123456" value={code}
-            onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))} autoFocus
-            style={{ maxWidth: 200, margin: '0 auto', textAlign: 'center', letterSpacing: '0.4em', fontSize: 20 }} />
-          {error ? <div style={{ margin: '12px 0' }}><ErrorBox error={error} /></div> : null}
-          <div style={{ marginTop: 14 }}>
-            <button type="submit" className="wka-btn primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} Verify &amp; open</button>
-          </div>
-        </form>
-      )}
-    </div>
-  )
-}
-
-// Thin banner above the unlocked page: live countdown to auto-lock + lock-now.
-function StepUpBanner({ status, onLocked }) {
-  const [left, setLeft] = useState(() => Math.max(0, (status.until || 0) - Date.now()))
-  useEffect(() => {
-    if (status.breakGlass) return
-    const t = setInterval(() => {
-      const ms = Math.max(0, (status.until || 0) - Date.now())
-      setLeft(ms)
-      if (ms <= 0) { clearInterval(t); onLocked() }
-    }, 1000)
-    return () => clearInterval(t)
-  }, [status.until, status.breakGlass, onLocked])
-  const lockNow = async () => { try { await workAdminApi.lockAiConfig() } catch { /* lock locally regardless */ } onLocked() }
-  const mm = Math.floor(left / 60000), ss = Math.floor((left % 60000) / 1000)
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap',
-      padding: '9px 14px', marginBottom: 14, borderRadius: 10, border: '1px solid rgba(10,157,102,0.35)', background: 'rgba(10,157,102,0.07)' }}>
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: 'var(--wka-emerald)' }}>
-        <CheckCircle2 size={15} />
-        {status.breakGlass
-          ? 'MFA is disabled platform-wide - AI settings are open.'
-          : `Verified with your authenticator - locks in ${mm}:${String(ss).padStart(2, '0')}.`}
-      </span>
-      {!status.breakGlass ? <button type="button" className="wka-btn sm ghost" onClick={lockNow}><Lock size={13} /> Lock now</button> : null}
-    </div>
-  )
-}
-
 function AiConfigBody({ isSuperAdmin, stepUp, onLocked }) {
   const [state, setState] = useState({ loading: true, error: null, allowed: false, configured: false, ready: false })
   const [saving, setSaving] = useState(false)
@@ -667,14 +594,14 @@ function AiConfigBody({ isSuperAdmin, stepUp, onLocked }) {
 
   return (
     <div>
-      <StepUpBanner status={stepUp} onLocked={onLocked} />
+      <StepUpBanner status={stepUp} onLocked={onLocked} lock={workAdminApi.lockAiConfig} label="AI settings" />
 
       <PlatformProviders isSuperAdmin={isSuperAdmin} onLocked={onLocked} />
 
       <CostEffectiveModels />
 
       <div className="wka-panel">
-        <h2>Platform AI for WorkCoPilot</h2>
+        <h2><Cpu size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Platform AI for WorkCoPilot</h2>
         <p className="desc">When on, WorkCoPilot users run on the platform provider managed in AI Settings. When off, each user adds and tests their own key before the app unlocks.</p>
         <div className={`wka-toggle${state.allowed ? ' on' : ''}${(!isSuperAdmin || saving) ? ' disabled' : ''}`} onClick={toggle} role="switch" aria-checked={state.allowed}>
           <span className="track"><span className="knob" /></span>
@@ -723,7 +650,7 @@ export default function AiConfig({ isSuperAdmin }) {
   if (!isSuperAdmin) return <div className="wka-note"><Lock size={14} /> AI settings are superadmin-only and protected by an authenticator code.</div>
   if (gate.loading) return <Loading label="Checking AI settings lock" />
   if (gate.error) return <ErrorBox error={gate.error} onRetry={loadGate} />
-  if (!gate.status || !gate.status.active) return <OtpGate status={gate.status || {}} onUnlock={(status) => setGate({ loading: false, error: null, status })} />
+  if (!gate.status || !gate.status.active) return <StepUpGate status={gate.status || {}} verify={workAdminApi.verifyAiStepUp} onUnlock={(status) => setGate({ loading: false, error: null, status })} label="AI settings" />
 
   return <AiConfigBody isSuperAdmin={isSuperAdmin} stepUp={gate.status} onLocked={loadGate} />
 }

@@ -92,7 +92,7 @@ function describeSpecPlain(spec) {
 // Format a numeric result readably (thousands separators, sane decimals) while
 // keeping the raw value for copy / download. Strings pass through unchanged.
 function fmtNum(v) {
-  if (v == null || v === '') return '—'
+  if (v == null || v === '') return '-'
   if (typeof v === 'number' && Number.isFinite(v)) {
     const r = Math.round(v * 1e6) / 1e6
     return r.toLocaleString(undefined, { maximumFractionDigits: 6 })
@@ -276,8 +276,8 @@ const COMPUTECARD_CSS = `
 
 /* HOW IT WAS COMPUTED - the reproducible basis */
 .cm-trust{display:flex;flex-direction:column;gap:9px;padding-top:13px;border-top:1px solid var(--wc-line)}
-.cm-trust-k{display:inline-flex;align-items:center;gap:5px;font-family:"JetBrains Mono",ui-monospace,monospace;
-  font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--wc-ink)}
+.cm-trust-k{display:inline-flex;align-items:center;gap:5px;font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;
+  font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--wc-ink)}
 .cm-basis{margin:0;font-size:13px;line-height:1.55;color:var(--wc-mut);overflow-wrap:anywhere}
 .cm-steps{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
 .cm-steps li{font-size:13px;line-height:1.5;color:var(--wc-mut);overflow-wrap:anywhere}

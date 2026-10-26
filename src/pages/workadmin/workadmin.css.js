@@ -44,13 +44,17 @@ export const WORKADMIN_CSS = `
   --wka-font-body: Figtree, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --wka-font-head: "Bricolage Grotesque", Figtree, Inter, ui-sans-serif, system-ui, sans-serif;
 
-  /* Company-admin theme (default): brand green. */
-  --wka-accent: #0e9f6e;
-  --wka-accent-dark: #0b7f58;
-  --wka-accent-ink: #085e41;
-  --wka-accent-soft: rgba(14,159,110,0.10);
-  --wka-accent-line: rgba(14,159,110,0.35);
-  --wka-accent-shadow: rgba(14,159,110,0.25);
+  /* Company-admin theme (default): brand green. Every accent token DERIVES from
+     the per-user --accent vars (src/theme/accent.js sets them on :root when the
+     user picks an accent) with this console's own color as the fallback - so with
+     no user choice the console is exactly as designed, and a user choice recolors
+     it live. Single source: never hardcode an accent literal below this block. */
+  --wka-accent: var(--accent, #0e9f6e);
+  --wka-accent-dark: var(--accent-dark, #0b7f58);
+  --wka-accent-ink: var(--accent-ink, #085e41);
+  --wka-accent-soft: var(--accent-soft, rgba(14,159,110,0.10));
+  --wka-accent-line: var(--accent-line, rgba(14,159,110,0.35));
+  --wka-accent-shadow: var(--accent-shadow, rgba(14,159,110,0.25));
   /* White, minimal left rail (owner design law: white everywhere in-product).
      The nav is pure white with a hairline divider; hover is a quiet neutral
      wash, active is the quiet accent (green here, blue under .wka-super). */
@@ -74,12 +78,13 @@ export const WORKADMIN_CSS = `
 /* Superadmin theme: deep brand blue - distinct from the green company console,
    harmonious with the brand (#0a84c2 is the site's cyan/blue). */
 .wka.wka-super {
-  --wka-accent: #0a84c2;
-  --wka-accent-dark: #086b9e;
-  --wka-accent-ink: #0b4f73;
-  --wka-accent-soft: rgba(10,132,194,0.10);
-  --wka-accent-line: rgba(10,132,194,0.35);
-  --wka-accent-shadow: rgba(10,132,194,0.25);
+  /* Blue by default; a user-picked accent (--accent) wins here too. */
+  --wka-accent: var(--accent, #0a84c2);
+  --wka-accent-dark: var(--accent-dark, #086b9e);
+  --wka-accent-ink: var(--accent-ink, #0b4f73);
+  --wka-accent-soft: var(--accent-soft, rgba(10,132,194,0.10));
+  --wka-accent-line: var(--accent-line, rgba(10,132,194,0.35));
+  --wka-accent-shadow: var(--accent-shadow, rgba(10,132,194,0.25));
   /* Superadmin stays on a WHITE surface too - only the accent differs (brand
      blue vs the company console's green), so the two dashboards read as the
      same minimal white product with distinct accents, never a dark shell. */
@@ -262,6 +267,41 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
 }
 .wka-btn.danger:hover:not(:disabled) { background: #a5301f; border-color: #a5301f; color: #fff; }
 .wka-btn.sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
+
+/* Collapsible rule rows (PolicyRules): a list of multi-field items that render as
+   compact one-line rows by default and expand on click to edit — the scannable
+   saved-card pattern. The severity accent is the left border; the head never wraps
+   its controls (toggle/kind/sev/title/trash/chevron), only the title truncates. At
+   phone width the citation drops to a muted second line so nothing overflows. */
+.wka-rule { border: 1px solid var(--wka-line); border-left: 3px solid var(--wka-line-2); border-radius: 10px; background: var(--wka-panel); }
+.wka-rule.off { opacity: 0.55; }
+.wka-rule-head {
+  display: flex; align-items: center; gap: 9px; width: 100%; min-width: 0;
+  padding: 9px 11px; cursor: pointer; border-radius: 9px; background: none; border: 0;
+  font: inherit; color: inherit; text-align: left;
+}
+.wka-rule-head:hover { background: var(--wka-panel-2); }
+.wka-rule-head:focus-visible { outline: 2px solid var(--wka-accent); outline-offset: -2px; }
+.wka-rule-toggle { width: 15px; height: 15px; flex-shrink: 0; cursor: pointer; }
+.wka-rule-kind {
+  display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;
+  padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 600;
+  border: 1px solid var(--wka-line-2); white-space: nowrap;
+}
+.wka-rule-kind.forbid { color: var(--wka-amber); border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); }
+.wka-rule-kind.req { color: var(--wka-cyan); border-color: var(--wka-accent-line); }
+.wka-rule-sev { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+.wka-rule-title { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 550; color: var(--wka-text); }
+.wka-rule-cite { flex: 0 1 auto; max-width: 38%; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: var(--wka-faint); }
+.wka-rule-x { flex-shrink: 0; padding: 4px 7px; }
+.wka-rule-chev { flex-shrink: 0; display: inline-flex; color: var(--wka-faint); }
+.wka-rule-body { padding: 12px 12px 14px; border-top: 1px solid var(--wka-line); }
+@media (max-width: 640px) {
+  /* Collapse gracefully: let the head wrap and push the citation onto its own
+     muted second line, flush under the title — never a horizontal scrollbar. */
+  .wka-rule-head { flex-wrap: wrap; row-gap: 4px; }
+  .wka-rule-cite { order: 10; flex-basis: 100%; max-width: 100%; padding-left: 24px; }
+}
 
 /* Forms */
 .wka-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }

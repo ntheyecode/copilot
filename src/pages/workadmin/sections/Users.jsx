@@ -3,7 +3,7 @@
 // disables the controls and explains why for a non-superadmin admin). Also the
 // support-only "Open as user" (impersonation) control for INDIVIDUAL users.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2, Eye } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2, Eye, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
@@ -227,12 +227,13 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
           onClick={() => { setShowCreate((v) => !v); setCreateMsg(null) }}>
           <UserPlus size={14} /> New user
         </button>
-        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{rows.length} of {state.users.length}</span>
+        <span className="wka-spacer" />
+        <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{rows.length} of {state.users.length}</span>
       </div>
 
       {showCreate && isSuperAdmin && (
-        <form className="wka-panel" onSubmit={createUser} style={{ marginBottom: 16 }}>
-          <h2 style={{ marginTop: 0 }}><UserPlus size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Create a user</h2>
+        <form className="wka-panel" onSubmit={createUser}>
+          <h2><UserPlus size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Create a user</h2>
           <p className="desc">Create a WorkCoPilot account. Optionally put them in a company as a member or a <b>company admin</b>, set the tier, and grant free (comped) access so they can use the service without Stripe.</p>
           <div className="wka-formgrid">
             <div className="wka-field"><label>Username</label><input className="wka-input" value={nu.username} onChange={(e) => setNu((f) => ({ ...f, username: e.target.value }))} placeholder="jordan" autoComplete="off" /></div>
@@ -262,7 +263,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
             <button type="submit" className="wka-btn primary" disabled={creating}>{creating ? <Spinning /> : <UserPlus size={14} />} Create user</button>
-            <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setNu(EMPTY_NEW); setCreateMsg(null) }}>Cancel</button>
+            <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setNu(EMPTY_NEW); setCreateMsg(null) }}><X size={14} /> Cancel</button>
             {createMsg ? <span style={{ fontSize: 13, color: createMsg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{createMsg.text}</span> : null}
           </div>
         </form>
@@ -353,7 +354,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                         ? <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Lock size={12} /> On
                             <button type="button" className="wka-btn sm ghost" title={isSuperAdmin ? 'Reset authenticator (lost phone / offboarding)' : 'Superadmin only'} disabled={!isSuperAdmin || busyId === u.id} onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'mfa' }) }} style={{ marginLeft: 4 }}><RotateCcw size={12} /></button>
                           </span>
-                        : <span style={{ color: 'var(--wka-amber, #c77700)' }}>Not set up</span>}
+                        : <span style={{ color: 'var(--wka-amber)' }}>Not set up</span>}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {grantFor === u.id ? (
@@ -414,7 +415,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                             <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
                               title="Delete this account and its sessions permanently"
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'delete' }) }}
-                              style={{ color: '#d6433b' }}>
+                              style={{ color: 'var(--wka-red)' }}>
                               <Trash2 size={13} /> Delete
                             </button>
                           )}

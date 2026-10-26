@@ -75,7 +75,7 @@ export default function ScrubRules() {
       </div>
 
       <div style={{ marginTop: 16 }}>
-        <div style={{ ...muted, fontWeight: 600, marginBottom: 6 }}>Block words <span style={{ fontWeight: 400 }}>(one per line — always removed, never sent)</span></div>
+        <div style={{ ...muted, fontWeight: 600, marginBottom: 6 }}>Block words <span style={{ fontWeight: 400 }}>(one per line, always removed, never sent)</span></div>
         <textarea className="input" rows={3} style={{ width: '100%', resize: 'vertical', fontFamily: 'inherit' }}
           placeholder={'Acme Confidential\nProject Orion'}
           value={(p.blockWords || []).join('\n')}
@@ -85,7 +85,7 @@ export default function ScrubRules() {
       {st.error && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 10 }}>{st.error}</div>}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 14 }}>
         <button className="btn btn-primary" onClick={save} disabled={st.saving}>{st.saving ? <><Loader2 size={14} className="spin" /> Saving</> : 'Save my rules'}</button>
-        {st.saved && <span style={{ color: 'var(--em, #12a06a)', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Check size={14} /> Saved — on across your sessions</span>}
+        {st.saved && <span style={{ color: 'var(--em, #12a06a)', fontSize: 13, display: 'inline-flex', alignItems: 'center', gap: 5 }}><Check size={14} /> Saved, on across your sessions</span>}
       </div>
     </div>
   )

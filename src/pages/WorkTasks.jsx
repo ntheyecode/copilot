@@ -30,7 +30,9 @@ export const WS_CSS = `
   --bg:#f5f7fb;--panel:#ffffff;
   --line:#e7eaf2;--line-2:#d5d9e6;--line-soft:#eef1f7;
   --tx:#1b2033;--tx-2:#2b3250;--mut:#5c6484;--faint:#8a90a6;
-  --em:#0e9f6e;--em-deep:#0b7a53;--em-fill:#eafaf3;--em-line:#bde9d5;
+  /* Accent tokens derive from the per-user --accent vars (src/theme/accent.js);
+     the literal is this surface's own default. --em-2 (info blue) stays fixed. */
+  --em:var(--accent,#0e9f6e);--em-deep:var(--accent-dark,#0b7a53);--em-fill:var(--accent-soft,#eafaf3);--em-line:var(--accent-line,#bde9d5);
   --em-2:#0a84c2;--info-fill:#e9f5fc;--info-line:rgba(10,134,194,.26);
   --warm:#c85a16;--warm-fill:rgba(200,90,22,.07);--warm-line:rgba(200,90,22,.28);
   --danger:#e23b4e;--chip:#f1f3fa;--chip-line:#e2e6f1;--field:#fcfdff;--track:#e7eaf2;
@@ -287,7 +289,7 @@ function SessionList({ mode }) {
             : 'Tasks you have in progress or paused. Open one to pick up at the exact step you left off - pausing one lets you start another.'}</p>
         </div>
       </div>
-      {dlErr && <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', padding: '10px 13px', borderRadius: 10, background: 'var(--warning-soft, #fff7e0)', border: '1px solid var(--warning, #d98a00)', color: 'var(--text, #1a1a2e)', fontSize: 13.5 }}><AlertTriangle size={15} /> {dlErr}</div>}
+      {dlErr && <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', padding: '10px 13px', borderRadius: 10, background: 'var(--warm-fill, rgba(200,90,22,.07))', border: '1px solid var(--warm-line, rgba(200,90,22,.28))', color: 'var(--tx, #1b2033)', fontSize: 13.5 }}><AlertTriangle size={15} style={{ color: 'var(--warm, #c85a16)', flexShrink: 0 }} /> {dlErr}</div>}
       {!loaded ? (
         <SkeletonRows />
       ) : err ? (

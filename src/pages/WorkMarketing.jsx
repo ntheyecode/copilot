@@ -1,17 +1,16 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  MonitorPlay, TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
+  TerminalSquare, Compass, ShieldCheck, Globe2, FileText,
   ArrowRight, Check, Camera, Sparkles, Layers, Monitor, Smartphone, AppWindow,
-  Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle, RotateCcw,
-  Building2, Copy, Download,
+  Lock, Zap, Rocket, Gauge, Target, ScanEye, ListChecks, AlertTriangle,
+  Building2, Download,
   Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy,
-  Code2, Table, Palette, RefreshCw, X,
+  Code2, Table, Palette, X,
 } from 'lucide-react'
-import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
 import SiteFooter from '../components/SiteFooter.jsx'   // shared footer across the whole site
-import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import CopyChip from '../components/CopyChip.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide premium card primitive
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
@@ -28,6 +27,14 @@ import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
 // Motion-rich, benefits-first. Never names a model, never mentions limits.
 // LOCALIZED: all copy is read through t() from src/i18n/locales/<code>.js;
 // icons, routes, prices, commands and code stay here (never translated).
+//
+// PAGE MAP (owner sales reality check, 2026-10-26): every section earns its
+// place once, in order: HERO (promise + live demo) -> CORE VALUE (the
+// plan/guide/watch/correct loop) -> FIELDS (breadth, one compact strip) ->
+// PROOF (security + privacy) -> ENTERPRISE (ONE section: the ROI ledger +
+// control chips) -> PRICING -> FINAL CTA. The former second enterprise block
+// (a 6-card feature grid), the 10-pill benefits teaser and the fields stat
+// tiles were removed: each restated something said better elsewhere.
 export default function WorkMarketing() {
   const nav = useNavigate()
   const { t, locale } = useLocale()
@@ -105,10 +112,6 @@ export default function WorkMarketing() {
   const tilt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; e.currentTarget.style.transform = `perspective(700px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg) translateY(-4px)` }
   const untilt = (e) => { e.currentTarget.style.transform = '' }
 
-  // Benefit pills: the icon order here pairs 1:1 with home.benefits.items in the
-  // catalog (titles only are rendered; the long descriptions live on /how-it-works).
-  const benefitIcons = [MonitorPlay, TerminalSquare, Compass, ShieldCheck, Zap, Monitor, Globe2, FileText, ScanEye, RefreshCw]
-  const benefits = t('home.benefits.items').map((title, i) => ({ icon: benefitIcons[i] || Sparkles, t: title }))
   const steps = [
     { n: '01', viz: 'goal', t: 'Scope it together', d: 'Say what you want, answer a couple of quick questions, and it scopes the job before it plans, so the plan fits what you really need.' },
     { n: '02', viz: 'guide', t: 'Get guided live', d: 'It reads your screen, guides the exact next move, checks it worked, and corrects you the moment something looks wrong.' },
@@ -266,27 +269,65 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* FOR COMPANIES & TEAMS - the ROI promise, up top.
-          REDESIGN (owner, 2026-10-25): the old 4-stat row + 6-card grid read as a
-          generic feature grid and mixed product mechanics ("read-only") into ROI
-          "stats". Now: an editorial head (promise left, the money sentence right)
-          and ONE focal "ledger": the same six budget lines a decision-maker pays
-          for, each shown Before -> With WorkCoPilot. Qualitative outcomes only,
-          no invented numbers (owner rule); "weeks -> days" is the one approved
-          relative shape. The read-only property survives as the footnote. */}
-      <section className="wm-sec wm-roi" id="roi">
+      {/* FIELDS - breadth in one compact strip: headline, one line, eight
+          field chips (each deep-links to its use case) and the two roster links.
+          The full 10-family grid lives on /workcopilot/fields; the numbers come
+          from the roster exported by that page, so they can never drift. */}
+      <section className="wm-sec wm-fields" id="fields">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><Shapes size={14} /> {t('home.fields.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('home.fields.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('home.fields.sub', { total: FIELD_TOTAL, families: FIELD_FAMILIES.length })}</p>
+          <div className="wm-fld-chips" data-reveal aria-label={t('home.fields.statsAria')}>
+            {cards.map((c) => (
+              <button key={c.id} type="button" className={`wm-fld-chip${c.tone ? ` t-${c.tone}` : ''}`} onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
+                <span className="wm-fld-chip-ic"><c.ic size={16} /></span>
+                <span className="wm-fld-chip-t"><b>{c.k}</b><i>{c.d}</i></span>
+                <ArrowRight size={14} className="wm-arrow wm-fld-chip-go" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+          <div className="wm-fld-more" data-reveal>
+            <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>{t('home.fields.exploreAll')} <ArrowRight size={15} className="wm-arrow" /></button>
+            <a className="wm-fld-browse" href="/workcopilot/fields">{t('home.fields.browseAll', { total: FIELD_TOTAL })} <ArrowRight size={13} className="wm-arrow" /></a>
+          </div>
+        </div>
+      </section>
+
+      {/* PROOF - security + privacy, the two facts a buyer checks before trusting
+          a tool on real work. Each card shows a real sample (checked chips, a
+          redaction token swap) and both route to the showcase page. */}
+      <section className="wm-sec wm-proof" id="proof">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><ShieldCheck size={14} /> {t('home.trust.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t('home.trust.h2')}</h2>
+          <TrustDuo nav={nav} t={t} />
+          <div className="wm-sec-paper" data-reveal>
+            <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> {t('home.trust.ctaShow')}</a>
+            <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> {t('home.trust.ctaPaper')}</a>
+          </div>
+        </div>
+      </section>
+
+      {/* ENTERPRISE - the ONE companies-and-teams section (owner, 2026-10-26:
+          the page had two). The money argument is the focal ledger: the same
+          six budget lines a decision-maker pays for, Before -> With WorkCoPilot.
+          Qualitative outcomes only, no invented numbers; "weeks -> days" is the
+          one approved relative shape. The enterprise controls are a chip row
+          under the ledger (the full feature list is the enterprise page), and
+          the two CTAs go to contact and to that page. The section keeps BOTH
+          anchors (#enterprise on the section, #roi inside) so no old link dies. */}
+      <section className="wm-sec wm-roi" id="enterprise">
+        <span id="roi" aria-hidden="true" />
         <div className="wm-wrap">
           <div className="wm-roi-head">
             <div>
-              <div className="wm-eyebrow" data-reveal><Rocket size={14} /> {t('home.roi.eyebrow')}</div>
+              <div className="wm-eyebrow" data-reveal><Building2 size={14} /> {t('home.roi.eyebrow')}</div>
               <h2 className="wm-h2" data-reveal>{t('home.roi.h2')}</h2>
             </div>
             <p className="wm-roi-lead" data-reveal>{t.rich('home.roi.lead')}</p>
           </div>
 
-          {/* The comparison: the same six budget lines, Before (muted, left) and
-              With WorkCoPilot (bright, right), in the site's own before/after
-              language (see the enterprise page's .wen-ba). Site fonts only. */}
           {(() => {
             const ROWS = t('home.roi.rows')   // [{ t, before, now(<em> rich) }]
             return (
@@ -314,71 +355,23 @@ export default function WorkMarketing() {
             )
           })()}
 
+          {/* Enterprise controls, as chips: the assurance line under the money line. */}
+          <div className="wm-roi-controls" data-reveal aria-label={t('home.enterprise.stripAria')}>
+            <span className="wm-roi-controls-lbl"><ShieldCheck size={14} /> {t('home.roi.controlsLbl')}</span>
+            <div className="wm-ent-strip">
+              {t('home.enterprise.chips').map((c) => (
+                <span key={c} className="wm-ent-chip">{c}</span>
+              ))}
+            </div>
+          </div>
+
           <div className="wm-roi-foot" data-reveal>
             <p className="wm-roi-note"><Lock size={14} /> {t('home.roi.note')}</p>
             <div className="wm-roi-ctas">
               <a className="wm-cta" href="/workcopilot/contact">{t('home.roi.ctaTeam')} <ArrowRight size={16} className="wm-arrow" /></a>
-              <a className="wm-cta ghost" href="#enterprise">{t('home.roi.ctaEnt')} <ArrowRight size={15} className="wm-arrow" /></a>
+              <a className="wm-cta ghost" href="/workcopilot/enterprise">{t('home.roi.ctaEnt')} <ArrowRight size={15} className="wm-arrow" /></a>
             </div>
           </div>
-        </div>
-      </section>
-
-      {/* FIELDS WE COVER - a SHORT teaser only. The full 10-family grid lives on
-          /workcopilot/fields (owner rule: extra content on separate pages,
-          linked from the footer; keep the main page short). The numbers come
-          from the roster exported by that page, so they can never drift. */}
-      <section className="wm-sec wm-fields" id="fields">
-        <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Shapes size={14} /> {t('home.fields.eyebrow')}</div>
-          <h2 className="wm-h2" data-reveal>{t.rich('home.fields.h2')}</h2>
-          <p className="wm-sub" data-reveal>{t('home.fields.sub', { total: FIELD_TOTAL, families: FIELD_FAMILIES.length })}</p>
-          <div className="wm-fld-stats" data-reveal aria-label={t('home.fields.statsAria')}>
-            <div className="wm-fld-stat"><b>{FIELD_TOTAL}</b><span>{t('home.fields.statFields')}</span></div>
-            <div className="wm-fld-stat"><b>{FIELD_FAMILIES.length}</b><span>{t('home.fields.statFamilies')}</span></div>
-            <div className="wm-fld-stat"><b>1</b><span>{t('home.fields.statOne')}</span></div>
-          </div>
-          <div className="wm-cards" data-reveal>
-            {cards.map((c, i) => (
-              <WorkCard key={c.id} theme="light" tone={c.tone || undefined} delay={i * 55}
-                texPos={['0% 0%', '100% 0%', '50% 100%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%'][i % 8]}
-                onClick={() => nav(`/workcopilot/use-cases#${c.id}`)}>
-                <WorkCard.Proof><span className="cb-dim">{c.d}</span></WorkCard.Proof>
-                <WorkCard.Head icon={c.ic} title={c.k} />
-                <WorkCard.Link>{t('common.seeInDetail')} <ArrowRight size={14} className="wm-arrow" /></WorkCard.Link>
-              </WorkCard>
-            ))}
-          </div>
-          <div className="wm-fld-more" data-reveal>
-            <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>{t('home.fields.exploreAll')} <ArrowRight size={15} className="wm-arrow" /></button>
-            <a className="wm-fld-browse" href="/workcopilot/fields">{t('home.fields.browseAll', { total: FIELD_TOTAL })} <ArrowRight size={13} className="wm-arrow" /></a>
-          </div>
-        </div>
-      </section>
-
-      {/* Security + Privacy teaser cards + the two showcase buttons. Placed right
-          after the fields it protects: the work is written and handled the safe
-          way across every one of those fields. Both cards link to the showcase. */}
-      <div className="wm-wrap">
-        <TrustDuo nav={nav} t={t} />
-        <div className="wm-sec-paper" data-reveal>
-          <a className="wm-cta" href="/workcopilot/security"><ScanEye size={16} /> {t('home.trust.ctaShow')}</a>
-          <a className="wm-cta alt" href="/api/work/security-paper.pdf" target="_blank" rel="noopener"><FileText size={16} /> {t('home.trust.ctaPaper')}</a>
-        </div>
-      </div>
-
-
-      {/* BENEFITS teaser - the full, visual breakdown lives on its own page. */}
-      <section className="wm-sec">
-        <div className="wm-wrap" data-reveal style={{ textAlign: 'center' }}>
-          <h2 className="wm-h2">{t('home.benefits.h2')}</h2>
-          <p className="wm-sub" style={{ margin: '12px auto 22px', maxWidth: 700 }}>{t('home.benefits.sub')}</p>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', marginBottom: 26 }}>
-            {benefits.map((b) => (
-              <span key={b.t} style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 13.5, fontWeight: 600, color: 'var(--tx)', background: 'var(--panel)', border: '1px solid var(--line)', borderRadius: 999, padding: '7px 14px' }}><b.icon size={15} style={{ color: 'var(--em)' }} /> {b.t}</span>
-            ))}
-          </div>
-          <button className="wm-cta" onClick={() => nav('/workcopilot/how-it-works')}>{t('home.benefits.cta')} <ArrowRight size={16} className="wm-arrow" /></button>
         </div>
       </section>
 
@@ -505,40 +498,6 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* ENTERPRISE - matches the site's section pattern: centered eyebrow + h2 +
-          sub, then a card grid of the enterprise controls, a centered CTA (custom
-          pricing is by quote), and a trust strip. Site light palette (green/blue
-          emphasis, orange CTA). Routes to the contact form. */}
-      <section className="wm-sec wm-ent-sec" id="enterprise">
-        <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><Building2 size={14} /> {t('home.enterprise.eyebrow')}</div>
-          <h2 className="wm-h2" data-reveal>{t('home.enterprise.h2')}</h2>
-          <p className="wm-sub" data-reveal>{t('home.enterprise.sub')}</p>
-          <div className="wm-ent-grid" data-reveal>
-            {/* Icon order pairs 1:1 with home.enterprise.cards in the catalog. */}
-            {t('home.enterprise.cards').map((c, i) => {
-              const Ic = [Layers, Gauge, ShieldCheck, ListChecks, Lock, Server][i] || Layers
-              return (
-                <div className="wm-ent-card" key={i}>
-                  <span className="wm-ent-ic"><Ic size={18} /></span>
-                  <b>{c.t}</b>
-                  <i>{c.d}</i>
-                </div>
-              )
-            })}
-          </div>
-          <div className="wm-ent-cta" data-reveal>
-            <a className="wm-cta" href="/workcopilot/enterprise">{t('home.enterprise.ctaExplore')} <ArrowRight size={16} className="wm-arrow" /></a>
-            <a className="wm-cta ghost" href="/workcopilot/contact">{t('home.enterprise.ctaQuote')} <ArrowRight size={15} className="wm-arrow" /></a>
-          </div>
-          <div className="wm-ent-strip" aria-label={t('home.enterprise.stripAria')}>
-            {t('home.enterprise.chips').map((c) => (
-              <span key={c} className="wm-ent-chip">{c}</span>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* FINAL */}
       <section className="wm-final">
         <div className="wm-wrap wm-final-in" data-reveal>
@@ -566,13 +525,10 @@ export default function WorkMarketing() {
                 <span className="wm-dl-soon">{t('common.comingSoon')}</span>
               </div>
             </div>
-            <span className="wm-dl-note">{t.rich('home.final.note1')}</span>
             <span className="wm-dl-note">{t.rich('home.final.note2', null, { a: (c) => <a href="/workcopilot/enterprise">{c}</a> })}</span>
           </div>
         </div>
       </section>
-
-      <ReleaseNote groups={['global', 'privacy', 'billing', 'enterprise']} withHeader />
 
       <div className="wm-disclaimer-wrap">
         <div className="wm-wrap">
@@ -1731,24 +1687,12 @@ const CSS = `
    warm orange glow, a hairline orange accent on the top edge, an elegant
    two-column benefit grid and a trust strip. LIGHT panel (dark ink on a warm
    off-white) to match the light page. Orange = the brand accent (--warm / --warm2). */
-.wm-ent-sec{padding-top:0}
-/* Card grid of enterprise controls - matches the site's card sections (white
-   panel, light hairline, soft shadow, green/blue accent tile). The centered
-   header uses the shared .wm-eyebrow/.wm-h2/.wm-sub like every other section. */
-.wm-ent-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:4px 0 0}
-.wm-ent-card{background:var(--panel,#fff);border:1px solid var(--line);border-radius:16px;padding:20px 18px;text-align:left;
-  box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -28px rgba(17,23,38,.22);transition:transform .18s ease,border-color .2s ease,box-shadow .2s ease}
-.wm-ent-card:hover{transform:translateY(-3px);border-color:rgba(10,134,207,.35);box-shadow:0 1px 2px rgba(17,23,38,.05),0 26px 52px -30px rgba(10,134,207,.34)}
-.wm-ent-ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:12px;color:#fff;background:linear-gradient(135deg,var(--em),var(--em2));box-shadow:0 8px 18px -10px rgba(10,134,207,.7);margin-bottom:13px}
-.wm-ent-card b{display:block;color:var(--ink-brand,#062a22);font-size:15px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
-.wm-ent-card i{display:block;font-style:normal;color:var(--mut);font-size:13.5px;line-height:1.5;margin-top:5px}
-.wm-ent-cta{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:34px}
-.wm-ent-cta .wm-cta.ghost,.wm-roi-ctas .wm-cta.ghost{background:#fff;color:var(--ink-brand,#062a22);border:1px solid var(--line);box-shadow:0 1px 2px rgba(6,42,34,.05)}
-.wm-ent-cta .wm-cta.ghost:hover,.wm-roi-ctas .wm-cta.ghost:hover{border-color:var(--em2);color:var(--em2);transform:translateY(-2px)}
-.wm-ent-strip{display:flex;flex-wrap:wrap;gap:9px;justify-content:center;margin-top:20px}
-.wm-ent-chip{display:inline-flex;align-items:center;font-size:12px;font-weight:700;letter-spacing:.04em;color:#07784f;background:rgba(10,157,102,.08);border:1px solid rgba(10,157,102,.22);border-radius:999px;padding:6px 13px}
-@media(max-width:980px){.wm-ent-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:560px){.wm-ent-grid{grid-template-columns:1fr}.wm-ent-cta{width:100%;flex-direction:column;align-items:stretch}.wm-ent-cta .wm-cta{width:100%;justify-content:center}}
+/* Enterprise control chips (inside the single enterprise section, see
+   .wm-roi-controls). Chips never wrap mid-label: nowrap + the row wraps. */
+.wm-roi-ctas .wm-cta.ghost{background:#fff;color:var(--ink-brand,#062a22);border:1px solid var(--line);box-shadow:0 1px 2px rgba(6,42,34,.05)}
+.wm-roi-ctas .wm-cta.ghost:hover{border-color:var(--em2);color:var(--em2);transform:translateY(-2px)}
+.wm-ent-strip{display:flex;flex-wrap:wrap;gap:9px}
+.wm-ent-chip{display:inline-flex;align-items:center;white-space:nowrap;font-size:12px;font-weight:700;letter-spacing:.04em;color:#07784f;background:rgba(10,157,102,.08);border:1px solid rgba(10,157,102,.22);border-radius:999px;padding:6px 13px}
 .wm-tier-ent .wm-tier-hrs{color:var(--em2)}
 .wm-tier{border:1px solid var(--line);border-radius:22px;padding:28px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.008));position:relative;display:flex;flex-direction:column}
 .wm-tier.pop{border-color:rgba(140,245,196,.5);background:linear-gradient(180deg,rgba(140,245,196,.1),rgba(255,255,255,.01));box-shadow:0 40px 80px -40px rgba(140,245,196,.55)}
@@ -1807,7 +1751,12 @@ const CSS = `
    the light page, like the product screens: it is the one thing the eye lands on. */
 .wm-roi-head{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:22px 56px;align-items:end;margin-bottom:30px}
 .wm-roi .wm-h2{text-align:left;margin:0;max-width:14ch;font-size:clamp(34px,5.2vw,62px);line-height:1}
-.wm-roi .wm-eyebrow{margin-bottom:16px}
+/* The head is left-aligned (editorial), so the eyebrow sits flush with the h2
+   rather than centering like the other sections' eyebrows. */
+.wm-roi .wm-eyebrow{margin-bottom:16px;margin-left:0;margin-right:0}
+.wm-roi-controls{display:flex;flex-wrap:wrap;align-items:center;gap:10px 16px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.wm-roi-controls-lbl{display:inline-flex;align-items:center;gap:7px;white-space:nowrap;flex-shrink:0;font-size:12.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-brand,#062a22)}
+.wm-roi-controls-lbl svg{color:var(--em);flex:none}
 .wm-roi-lead{margin:0 0 6px;color:var(--tx);font-size:17.5px;line-height:1.55;font-weight:450;text-wrap:pretty}
 .wm-roi-lead b{color:var(--ink-brand,#062a22);font-weight:800}
 /* Before / With WorkCoPilot: two light columns in the site's card language
@@ -1844,21 +1793,31 @@ const CSS = `
   .wm-roi-foot{flex-direction:column;align-items:stretch}
 }
 @media(max-width:560px){.wm-roi-col{padding:20px 18px 14px;border-radius:18px}.wm-roi-ctas{flex-direction:column}.wm-roi-ctas .wm-cta{justify-content:center}}
-/* FIELDS WE COVER - 56 fields in 10 family cards. A compact 3-up stat row,
-   then a dense 4-column grid where the two biggest families span two columns
-   so the roster reads as one considered composition, not ten equal boxes.
-   Cards are the shared WorkCard shell; the field pills use its --wc-* ink so
-   they sit correctly on the white surface in both page themes. */
+/* FIELDS - one compact strip: eight field chips in a 4-up grid (2-up under
+   900px, 1-up under 560px). Each chip is a real button that deep-links to its
+   use case: icon tile, bold title, one-line blurb, arrow. Titles never wrap
+   mid-word; the blurb wraps. .wm-sub carries NO bottom margin (the page's
+   .wm p reset wins), so the grid owns the gap below the subhead. */
 .wm-fields{border-top:1px solid var(--line)}
-/* .wm-sub carries NO bottom margin (the page's .wm p reset wins), so the stat
-   row owns the gap below the subhead, like .wm-roi-stats does in the ROI band. */
-.wm-fld-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;max-width:640px;margin:26px auto 30px}
-.wm-fld-stat{text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px 12px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 16px 36px -26px rgba(17,23,38,.2)}
-.wm-fld-stat b{display:block;font-family:"Bricolage Grotesque",sans-serif;font-weight:800;font-size:clamp(28px,3.6vw,40px);letter-spacing:-.02em;background:linear-gradient(120deg,var(--em),var(--em2));-webkit-background-clip:text;background-clip:text;color:transparent;line-height:1.02;word-break:keep-all;overflow-wrap:normal;hyphens:none}
-.wm-fld-stat span{display:block;margin-top:6px;color:var(--mut);font-size:13px;line-height:1.35}
-/* (the family card grid + tag styles moved with the grid to WorkFields.jsx) */
-@media(max-width:560px){.wm-fld-stats{gap:10px;margin-bottom:22px}.wm-fld-stat{padding:14px 8px;border-radius:13px}.wm-fld-stat span{font-size:12px}}
-@media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent-feats{gap:14px 24px}}
+.wm-fld-chips{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:26px 0 0}
+.wm-fld-chip{display:flex;align-items:center;gap:11px;min-width:0;text-align:left;font:inherit;color:var(--tx);cursor:pointer;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 13px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 14px 30px -24px rgba(17,23,38,.2);transition:transform .15s ease,border-color .2s ease,box-shadow .2s ease}
+.wm-fld-chip:hover{transform:translateY(-2px);border-color:var(--em);box-shadow:0 1px 2px rgba(17,23,38,.05),0 22px 44px -26px rgba(17,23,38,.3)}
+.wm-fld-chip-ic{display:inline-flex;align-items:center;justify-content:center;flex:none;width:36px;height:36px;border-radius:10px;color:var(--em);background:rgba(14,159,110,.1)}
+.wm-fld-chip.t-cyan .wm-fld-chip-ic{color:var(--em2);background:rgba(10,132,194,.1)}
+.wm-fld-chip.t-violet .wm-fld-chip-ic{color:#6d4bd8;background:rgba(109,75,216,.1)}
+.wm-fld-chip.t-amber .wm-fld-chip-ic{color:#b45f12;background:rgba(255,154,77,.14)}
+.wm-fld-chip.t-pink .wm-fld-chip-ic{color:#b8286b;background:rgba(232,72,138,.1)}
+.wm-fld-chip-t{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto}
+.wm-fld-chip-t b{font-size:14px;font-weight:700;letter-spacing:-.005em;line-height:1.25;color:var(--ink-brand,#062a22);overflow-wrap:anywhere}
+.wm-fld-chip-t i{font-style:normal;font-size:12.5px;line-height:1.35;color:var(--mut)}
+.wm-fld-chip-go{flex:none;color:var(--mut);transition:transform .15s ease,color .2s ease}
+.wm-fld-chip:hover .wm-fld-chip-go{color:var(--em);transform:translateX(3px)}
+@media(max-width:900px){.wm-fld-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:560px){.wm-fld-chips{grid-template-columns:1fr;gap:10px}}
+/* PROOF - the security/privacy duo sits under its own heading now; the duo's
+   default top gap (44px, for the old headless placement) tightens to match. */
+.wm-proof .wm-duo{margin-top:30px}
+@media(max-width:900px){.wm-sec-grid{grid-template-columns:1fr}.wm-ent-feats{gap:14px 24px}.wm-proof .wm-duo{margin-top:24px}}
 
 /* FINAL */
 .wm-final{padding:70px 0;text-align:center;border-top:1px solid var(--line);background:radial-gradient(60% 130% at 50% 0%,rgba(140,245,196,.09),transparent)}

@@ -4,7 +4,7 @@
 // the built-in default. Also sets where Contact Us + lead notifications go.
 // Bound to /api/work/admin/email-templates* and /api/work/admin/notify.
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { Save, RotateCcw, Mail, Eye, Check, AlertTriangle, Pencil, X, Bell } from 'lucide-react'
+import { Save, RotateCcw, Mail, Eye, X, Bell } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
 
@@ -39,7 +39,7 @@ export default function EmailTemplates({ isSuperAdmin }) {
       <NotifyCard isSuperAdmin={isSuperAdmin} />
 
       <div className="wka-panel">
-        <h2><Mail size={15} style={{ verticalAlign: -2, marginRight: 6 }} />Email templates</h2>
+        <h2><Mail size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Email templates</h2>
         <p className="desc">Every email WorkCoPilot sends. Edit the wording with <code>&lt;Placeholder&gt;</code> tokens, preview it live, then save. Reset returns a template to its built-in default. The branded layout (header, footer, buttons) stays consistent automatically.</p>
         <div className="wmt-wrap">
           <nav className="wmt-list">
@@ -122,19 +122,24 @@ function Editor({ tpl, isSuperAdmin, onSaved }) {
 
       <div className="wmt-cols">
         <div className="wmt-form">
-          <label className="wmt-lab">Subject</label>
-          <input ref={refs.subject} className="wmt-in" disabled={disabled} value={form.subject} onFocus={() => (focusRef.current = 'subject')} onChange={(e) => set('subject', e.target.value)} />
-
-          <label className="wmt-lab">Heading</label>
-          <input ref={refs.heading} className="wmt-in" disabled={disabled} value={form.heading} onFocus={() => (focusRef.current = 'heading')} onChange={(e) => set('heading', e.target.value)} />
-
-          <label className="wmt-lab">Body <span className="wmt-hint">(blank line = new paragraph)</span></label>
-          <textarea ref={refs.body} className="wmt-in" rows={8} disabled={disabled} value={form.body} onFocus={() => (focusRef.current = 'body')} onChange={(e) => set('body', e.target.value)} />
-
-          {tpl.hasCta && (<>
-            <label className="wmt-lab">Button label <span className="wmt-hint">(leave blank for no button)</span></label>
-            <input ref={refs.ctaLabel} className="wmt-in" disabled={disabled} value={form.ctaLabel} onFocus={() => (focusRef.current = 'ctaLabel')} onChange={(e) => set('ctaLabel', e.target.value)} />
-          </>)}
+          <div className="wka-field">
+            <label htmlFor={`wmt-subject-${tpl.type}`}>Subject</label>
+            <input id={`wmt-subject-${tpl.type}`} ref={refs.subject} className="wka-input" disabled={disabled} value={form.subject} onFocus={() => (focusRef.current = 'subject')} onChange={(e) => set('subject', e.target.value)} />
+          </div>
+          <div className="wka-field">
+            <label htmlFor={`wmt-heading-${tpl.type}`}>Heading</label>
+            <input id={`wmt-heading-${tpl.type}`} ref={refs.heading} className="wka-input" disabled={disabled} value={form.heading} onFocus={() => (focusRef.current = 'heading')} onChange={(e) => set('heading', e.target.value)} />
+          </div>
+          <div className="wka-field">
+            <label htmlFor={`wmt-body-${tpl.type}`}>Body <span className="hint">(blank line = new paragraph)</span></label>
+            <textarea id={`wmt-body-${tpl.type}`} ref={refs.body} className="wka-input" rows={8} disabled={disabled} value={form.body} onFocus={() => (focusRef.current = 'body')} onChange={(e) => set('body', e.target.value)} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
+          </div>
+          {tpl.hasCta && (
+            <div className="wka-field">
+              <label htmlFor={`wmt-cta-${tpl.type}`}>Button label <span className="hint">(leave blank for no button)</span></label>
+              <input id={`wmt-cta-${tpl.type}`} ref={refs.ctaLabel} className="wka-input" disabled={disabled} value={form.ctaLabel} onFocus={() => (focusRef.current = 'ctaLabel')} onChange={(e) => set('ctaLabel', e.target.value)} />
+            </div>
+          )}
 
           {tpl.placeholders && tpl.placeholders.length > 0 && (
             <div className="wmt-ph">
@@ -197,7 +202,7 @@ function NotifyCard({ isSuperAdmin }) {
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <h2 style={{ margin: 0 }}><Bell size={15} style={{ verticalAlign: -2, marginRight: 6 }} />Notification recipients</h2>
+        <h2 style={{ margin: 0 }}><Bell size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Notification recipients</h2>
         <EditToggle editing={editing} disabled={disabled} onEdit={() => { setForm({ ...cfg }); setEditing(true) }} />
       </div>
       <p className="desc">Where Contact Us messages and new "Validate it live" leads are emailed, and whether the person who submits gets a thank-you.</p>
@@ -209,11 +214,11 @@ function NotifyCard({ isSuperAdmin }) {
         </div>
       ) : (
         <>
-          <div className="wka-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+          <div className="wka-formgrid" style={{ marginBottom: 10 }}>
             <div className="wka-field"><label>Contact Us recipient</label><input className="wka-input" disabled={disabled} value={form.contactTo} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, contactTo: e.target.value })) }} /></div>
             <div className="wka-field"><label>New-lead recipient</label><input className="wka-input" disabled={disabled} value={form.leadTo} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, leadTo: e.target.value })) }} /></div>
           </div>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, marginTop: 4, cursor: 'pointer' }}>
+          <label className="wka-check" style={{ marginTop: 4 }}>
             <input type="checkbox" disabled={disabled} checked={!!form.thankYou} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, thankYou: e.target.checked })) }} />
             Send a thank-you email to people who submit the Contact and lead forms
           </label>
@@ -237,19 +242,19 @@ const CSS = `
 .wmt-item:hover{background:var(--wka-nav-hover)}
 .wmt-item.on{background:var(--wka-accent-soft);border-color:var(--wka-accent-line);font-weight:600}
 .wmt-edited{font-style:normal;font-size:10.5px;font-weight:700;color:var(--wka-accent-dark);background:var(--wka-accent-soft);border-radius:6px;padding:1px 6px}
-.wmt-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-.wmt-edit-head h3{margin:0 0 3px;font-size:16px}
-.wmt-edit-head p{margin:0 0 12px;color:var(--wka-muted);font-size:13px}
-.wmt-lab{display:block;font-size:12.5px;font-weight:700;color:var(--wka-text);margin:12px 0 5px}
+.wmt-cols{display:grid;grid-template-columns:1fr 1fr;gap:18px;min-width:0}
+.wmt-form{display:flex;flex-direction:column;gap:12px;min-width:0}
+.wmt-form .wka-input{width:100%}
+.wmt-edit-head h3{margin:0 0 3px;font-family:var(--wka-font-head);font-size:15.5px;font-weight:700;letter-spacing:-0.1px;color:var(--wka-text)}
+.wmt-edit-head p{margin:0 0 12px;color:var(--wka-muted);font-size:12px}
 .wmt-hint{font-weight:400;color:var(--wka-muted)}
-.wmt-in{width:100%;box-sizing:border-box;border:1px solid var(--wka-line-2);border-radius:9px;padding:9px 11px;font:inherit;font-size:13.5px;color:var(--wka-text);background:var(--wka-bg);outline:none;resize:vertical}
-.wmt-in:focus{border-color:var(--wka-accent);box-shadow:0 0 0 3px var(--wka-accent-soft)}
-.wmt-ph{margin-top:14px}
+.wmt-ph{margin-top:2px}
 .wmt-ph-h{font-size:12px;font-weight:700;color:var(--wka-text);margin-bottom:7px}
 .wmt-ph-chips{display:flex;flex-wrap:wrap;gap:6px}
 .wmt-chip{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;background:var(--wka-panel-2);border:1px solid var(--wka-line-2);border-radius:7px;padding:3px 8px;color:var(--wka-text);cursor:pointer}
 .wmt-chip:hover{background:var(--wka-accent-soft);border-color:var(--wka-accent-line)}
-.wmt-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:16px}
+.wmt-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:4px}
+.wmt-preview{min-width:0}
 .wmt-preview-h{font-size:12px;font-weight:700;color:var(--wka-text);margin-bottom:7px;display:flex;align-items:center;gap:6px}
 .wmt-frame{width:100%;height:560px;border:1px solid var(--wka-line);border-radius:12px;background:var(--wka-bg)}
 @media(max-width:1024px){.wmt-wrap{grid-template-columns:1fr}.wmt-cols{grid-template-columns:1fr}.wmt-frame{height:460px}}

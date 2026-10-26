@@ -276,8 +276,8 @@ const RESULTCARD_CSS = `
 
 /* HONESTY CONTRACT block */
 .rc-trust{display:flex;flex-direction:column;gap:11px;padding-top:13px;border-top:1px solid var(--wc-line)}
-.rc-trust-k{display:inline-flex;align-items:center;gap:5px;font-family:"JetBrains Mono",ui-monospace,monospace;
-  font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--wc-ink)}
+.rc-trust-k{display:inline-flex;align-items:center;gap:5px;font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;
+  font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--wc-ink)}
 .rc-meterrow{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .rc-meter{position:relative;flex:1;min-width:120px;height:7px;border-radius:999px;overflow:hidden;
   background:color-mix(in srgb,var(--wc-mut) 20%,transparent)}

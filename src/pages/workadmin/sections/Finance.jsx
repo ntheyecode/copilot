@@ -20,7 +20,7 @@
 // 404/501 until wired - each degrades to a calm "not available yet" note in its
 // own block while the rest of the dashboard keeps working. Every field may be null.
 import React, { useEffect, useState, useCallback } from 'react'
-import { TrendingUp, TrendingDown, RefreshCw, RotateCcw, DollarSign, Activity, CreditCard, Loader2, BarChart3, Plus, Pencil, Trash2, Ban, Users, Check, X } from 'lucide-react'
+import { TrendingUp, TrendingDown, RefreshCw, RotateCcw, DollarSign, Activity, CreditCard, BarChart3, Plus, Pencil, Trash2, Ban, Users, Check, X, CalendarRange } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal, useReasonModal, TierBadge } from './_shared.jsx'
 
@@ -148,7 +148,7 @@ function RevenueTimeseries() {
   return (
     <div className="wka-panel">
       <div className="fin-tsc-head">
-        <h2 style={{ margin: 0 }}><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6 }} />Revenue and MRR over time</h2>
+        <h2 style={{ margin: 0 }}><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Revenue and MRR over time</h2>
         <div className="fin-seg" role="group" aria-label="Chart granularity">
           {GRANULARITIES.map(([g, label]) => (
             <button key={g} type="button" className={`wka-btn sm${granularity === g ? ' primary' : ' ghost'}`}
@@ -194,7 +194,7 @@ function SubscriptionsOverview({ onCancel }) {
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-        <h2 style={{ margin: 0 }}><Users size={15} style={{ verticalAlign: -2, marginRight: 6 }} />Paid users and subscriptions</h2>
+        <h2 style={{ margin: 0 }}><Users size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Paid users and subscriptions</h2>
         <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> Refresh</button>
       </div>
       {st.loading ? <Loading label="Loading subscriptions" />
@@ -371,22 +371,22 @@ export default function Finance({ isSuperAdmin }) {
     <div>
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0 }}><DollarSign size={16} style={{ verticalAlign: -3 }} /> Revenue at a glance</h2>
-          <button className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> Refresh</button>
+          <h2 style={{ margin: 0 }}><DollarSign size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Revenue at a glance</h2>
+          <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> Refresh</button>
         </div>
-        <p style={{ color: 'var(--wka-muted)', fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{narrative}</p>
+        <p className="desc" style={{ fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{narrative}</p>
       </div>
 
-      {/* Period cards */}
-      <div className="fin-grid">
+      {/* Period cards - the console's own stat tiles (same as Overview / Subscribers) */}
+      <div className="wka-cards">
         {[['This week', sum.week], ['This month', sum.month], ['This quarter', sum.quarter], ['This year', sum.year]].map(([label, p]) => {
           const d = pct(p.current.net, p.previous.net)
           return (
-            <div className="fin-card" key={label}>
-              <div className="fin-k">{label}</div>
-              <div className="fin-v">{money(p.current.net, cur)}</div>
+            <div className="wka-card" key={label}>
+              <div className="k"><CalendarRange size={14} /> {label}</div>
+              <div className="v wka-mono">{money(p.current.net, cur)}</div>
               <div className={`fin-delta ${d >= 0 ? 'up' : 'down'}`}>{d >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />} {Math.abs(d)}% <span>vs previous</span></div>
-              <div className="fin-sub">{money(p.current.gross, cur)} gross{p.current.refunds ? ` · ${money(p.current.refunds, cur)} refunded` : ''} · {p.current.count} payment{p.current.count === 1 ? '' : 's'}</div>
+              <div className="foot">{money(p.current.gross, cur)} gross{p.current.refunds ? ` · ${money(p.current.refunds, cur)} refunded` : ''} · {p.current.count} payment{p.current.count === 1 ? '' : 's'}</div>
             </div>
           )
         })}
@@ -397,7 +397,7 @@ export default function Finance({ isSuperAdmin }) {
 
       {/* 12-month revenue chart (kept) */}
       <div className="wka-panel">
-        <h2><Activity size={15} style={{ verticalAlign: -2, marginRight: 6 }} />Net revenue, last 12 months</h2>
+        <h2><Activity size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Net revenue, last 12 months</h2>
         <div className="fin-chart" role="img" aria-label="Monthly net revenue, last 12 months">
           {sum.series.map((s) => (
             <div className="fin-bar-wrap" key={s.month} title={`${s.month}: ${money(s.net, cur)} net`}>
@@ -414,7 +414,7 @@ export default function Finance({ isSuperAdmin }) {
       {/* Transactions + manual ledger CRUD */}
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0 }}><CreditCard size={15} style={{ verticalAlign: -2, marginRight: 6 }} />All transactions</h2>
+          <h2 style={{ margin: 0 }}><CreditCard size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />All transactions</h2>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
             <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{txns.length} shown</span>
             <button type="button" className="wka-btn sm primary" onClick={() => { setShowCreate((v) => !v); setCreateMsg(null) }}>
@@ -491,11 +491,11 @@ export default function Finance({ isSuperAdmin }) {
                           !editing ? (
                             <span style={{ display: 'inline-flex', gap: 6 }}>
                               <button type="button" className="wka-btn sm ghost" disabled={rowBusy === t.id} title="Edit the note" onClick={() => { setEditNoteId(t.id); setEditNoteVal(t.description || '') }}><Pencil size={13} /> Note</button>
-                              <button type="button" className="wka-btn sm ghost" disabled={rowBusy === t.id} title="Void this manual entry" onClick={() => voidEntry(t)} style={{ color: 'var(--wka-red)' }}>{rowBusy === t.id ? <Loader2 size={13} className="spin" /> : <Trash2 size={13} />} Void</button>
+                              <button type="button" className="wka-btn sm ghost" disabled={rowBusy === t.id} title="Void this manual entry" onClick={() => voidEntry(t)} style={{ color: 'var(--wka-red)' }}>{rowBusy === t.id ? <Spinning /> : <Trash2 size={13} />} Void</button>
                             </span>
                           ) : null
                         ) : (t.kind !== 'refund' && t.stripeId ? (
-                          <button className="wka-btn sm ghost" disabled={refunding === t.id} onClick={() => { setRefundErr(null); setRefundTx(t) }}>{refunding === t.id ? <Loader2 size={13} className="spin" /> : <RotateCcw size={13} />} Refund</button>
+                          <button type="button" className="wka-btn sm ghost" disabled={refunding === t.id} onClick={() => { setRefundErr(null); setRefundTx(t) }}>{refunding === t.id ? <Spinning /> : <RotateCcw size={13} />} Refund</button>
                         ) : null)}
                       </td>
                     </tr>
@@ -528,14 +528,9 @@ export default function Finance({ isSuperAdmin }) {
 // superadmin console) and the shared emerald/amber/red, so Finance reads as one
 // system with the other sections rather than its own green.
 const CSS = `
-.fin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px}
-.fin-card{background:var(--wka-panel);border:1px solid var(--wka-line);border-radius:14px;padding:16px 16px 14px;box-shadow:0 1px 2px rgba(26,31,54,0.05),0 8px 22px -14px rgba(26,31,54,0.16)}
-.fin-k{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--wka-muted)}
-.fin-v{font-size:26px;font-weight:800;letter-spacing:-.02em;margin:6px 0 4px;color:var(--wka-text)}
-.fin-delta{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700}
+.fin-delta{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;margin-top:4px}
 .fin-delta.up{color:var(--wka-emerald)}.fin-delta.down{color:var(--wka-red)}
 .fin-delta span{color:var(--wka-faint);font-weight:400}
-.fin-sub{font-size:11.5px;color:var(--wka-faint);margin-top:7px;line-height:1.4}
 .fin-chart{display:flex;align-items:flex-end;gap:8px;height:180px;margin-top:14px;padding-top:8px}
 .fin-bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
 .fin-bar{width:100%;max-width:38px;background:linear-gradient(180deg,var(--wka-accent),var(--wka-accent-dark));border-radius:5px 5px 0 0;min-height:2px;transition:height .3s}
@@ -563,6 +558,6 @@ const CSS = `
 .fin-create{border:1px solid var(--wka-line);background:var(--wka-panel-2);border-radius:12px;padding:16px;margin:12px 0 4px}
 .fin-create-grid{display:grid;grid-template-columns:140px 110px 130px 1fr;gap:12px;margin-bottom:12px}
 .fin-create-desc{min-width:0}
-@media(max-width:900px){.fin-grid{grid-template-columns:1fr 1fr}.fin-create-grid{grid-template-columns:1fr 1fr}}
-@media(max-width:560px){.fin-grid{grid-template-columns:1fr}.fin-mini-tiles{grid-template-columns:1fr}.fin-create-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.fin-create-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.fin-mini-tiles{grid-template-columns:1fr}.fin-create-grid{grid-template-columns:1fr}}
 `

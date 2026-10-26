@@ -687,7 +687,7 @@ async function runPolicyGate(userId, sessionId, text) {
         policy: findings.length
           ? `${findings.length} company-policy ${findings.length === 1 ? 'issue' : 'issues'} found in the guidance (${counts.forbid} prohibited, ${counts.require} required-but-missing).`
           : `Guidance checked against ${rules.length} company security ${rules.length === 1 ? 'rule' : 'rules'}; no issues.`,
-        flags: findings.slice(0, 8).map((f) => `${f.kind === 'forbid' ? 'Prohibited' : 'Required'}: ${f.title}${f.doc ? ` — per ${f.doc}${f.section ? ` §${f.section}` : ''}` : ''}${f.guidance ? `. ${f.guidance}` : ''}`),
+        flags: findings.slice(0, 8).map((f) => `${f.kind === 'forbid' ? 'Prohibited' : 'Required'}: ${f.title}${f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''}${f.guidance ? `. ${f.guidance}` : ''}`),
       })
     } catch { /* audit is best-effort, never blocks the gate */ }
     // User-facing flags carry the citation so the person sees WHICH policy applies.
@@ -1091,6 +1091,12 @@ app.post('/api/work/profile', requireWorkAuth, wrap((req, res) => {
 app.post('/api/work/profile/language', requireWorkAuth, wrap((req, res) => {
   const { language } = req.body || {}
   res.json({ user: store.setWorkUserLanguage(req.workUser.id, language) })
+}))
+// Set (or clear) the signed-in user's dashboard accent color so it follows them
+// across devices. Body: { accent: "<preset key>" | "#rrggbb" | null }.
+app.post('/api/work/profile/accent', requireWorkAuth, wrap((req, res) => {
+  const accent = (req.body || {}).accent
+  res.json({ user: store.setWorkUserAccent(req.workUser.id, accent) })
 }))
 // Change your own password. Verifies the current password server-side; the new
 // one is validated + bcrypt-hashed in the store. Available to any signed-in user.

@@ -109,6 +109,7 @@ export const api = {
   workCompanyResetUserMfa: (id, reason) => req('POST', `/api/work/company/users/${id}/mfa/reset`, { reason }),
   workLogout: () => req('POST', '/api/work/logout'),
   workSetProfile: (body) => req('POST', '/api/work/profile', body || {}),
+  workSetAccent: (accent) => req('POST', '/api/work/profile/accent', { accent }),
   // AI readiness (platform-allowed or own tested key, must have a vision model)
   workAi: () => req('GET', '/api/work/ai'),
   workAiKey: (body) => req('POST', '/api/work/ai/key', body || {}),

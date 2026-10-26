@@ -37,7 +37,7 @@ function statusBadge(status) {
   const s = String(status || 'ready').toLowerCase()
   if (['ready', 'indexed', 'active', 'ok', 'complete', 'completed'].includes(s)) return <span className="wka-badge active">Ready</span>
   if (['pending', 'processing', 'indexing', 'uploading', 'queued', 'syncing'].includes(s)) return <span className="wka-badge paused">In progress</span>
-  if (['error', 'failed', 'rejected'].includes(s)) return <span className="wka-badge" style={{ color: 'var(--wka-red, #ff6b6b)', borderColor: 'rgba(255,107,107,0.45)' }}>Failed</span>
+  if (['error', 'failed', 'rejected'].includes(s)) return <span className="wka-badge exhausted">Failed</span>
   if (['removed', 'deleted', 'stale', 'superseded'].includes(s)) return <span className="wka-badge" style={{ color: 'var(--wka-faint)' }}>{s.charAt(0).toUpperCase() + s.slice(1)}</span>
   return <span className="wka-badge">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
 }
@@ -141,11 +141,12 @@ export default function CompanyBrain() {
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
           {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
         </button>
-        <button type="button" className="wka-btn sm" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={!hasSources} style={{ color: '#d6433b' }}>
+        <button type="button" className="wka-btn sm ghost" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={!hasSources} style={{ color: 'var(--wka-red)' }}>
           <Trash2 size={13} /> Clear all
         </button>
+        <span className="wka-spacer" />
         {hasSources ? (
-          <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>Showing {rows.length} of {state.sources.length}</span>
+          <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>Showing {rows.length} of {state.sources.length}</span>
         ) : null}
       </div>
 
@@ -183,7 +184,7 @@ export default function CompanyBrain() {
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(s.updatedAt)}</td>
                   <td>{statusBadge(s.status)}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button type="button" className="wka-btn sm ghost" title="Remove this document from the Company Brain" style={{ color: '#d6433b' }}
+                    <button type="button" className="wka-btn sm ghost" title="Remove this document from the Company Brain" style={{ color: 'var(--wka-red)' }}
                       onClick={() => { setMErr(null); setModal({ type: 'one', row: s }) }}>
                       <Trash2 size={13} /> Remove
                     </button>

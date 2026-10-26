@@ -5,6 +5,14 @@
 // 45s, updates in place), white-label (company logo + name), and exportable
 // (CSV / JPG / PDF).
 //
+// PRESENTATION (2026-10-26): reskinned to wear the SAME design system as the
+// company-admin console (the platform gold standard). It injects WORKADMIN_CSS
+// and renders inside the shared `.wka` shell (top bar + main), with the
+// executive metrics in `wka-card` stat tiles and every chart/export framed in
+// `wka-panel` cards. Chart accents are recolored to the brand green/blue `wka`
+// palette. This is PRESENTATION ONLY - every datum, chart, export and
+// interaction is preserved (no-degrade).
+//
 // HONESTY / BUSINESS RULES (mandatory - do not relax):
 //   * "Time saved" and "Value delivered ($)" are HYPOTHETICAL estimates. They
 //     are always labelled "Est." and the assumptions (manual min/step at $/hr)
@@ -16,14 +24,16 @@
 //
 // All data comes from api.workExecProductivity(days); branding from
 // api.workMyCompany(); CSV from api.workExecCsvUrl(days). Charts are inline SVG
-// so they theme (light/dark) and export cleanly with no chart library.
+// so they export cleanly with no chart library.
 // ============================================================================
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   CheckCircle2, Clock3, DollarSign, Gauge, Layers3, Timer, Users, Loader2,
-  FileDown, ImageDown, FileSpreadsheet, Info, TrendingUp, Activity,
+  FileDown, ImageDown, FileSpreadsheet, Info, TrendingUp, Activity, BarChart3,
 } from 'lucide-react'
 import { api, friendlyError } from '../api.js'
+import { WORKADMIN_CSS, ensureWorkAdminFonts } from './workadmin/workadmin.css.js'
+import { Loading, ErrorBox, EmptyState } from './workadmin/sections/_shared.jsx'
 
 const RANGES = [7, 30, 90]
 const POLL_MS = 45000
@@ -44,45 +54,29 @@ const stamp = () => {
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}`
 }
 
-// ---- resolve theme + chart colors from the app's CSS tokens ----------------
-// Reading the computed tokens (rather than hard-coding) keeps the charts in
-// lockstep with the app's light/dark themes AND exports the real colors (we
-// pass explicit hex into the SVG so html2canvas never has to resolve var()).
-function readToken(name, fallback) {
-  try {
-    const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-    return v || fallback
-  } catch { return fallback }
+// ---- chart palette ---------------------------------------------------------
+// Fixed to the company-admin `wka` light palette (the in-product surface is
+// always the light `.wka` console; theme.jsx pins data-theme=light). Explicit
+// hex so the inline-SVG charts export cleanly through html2canvas (no var()
+// resolution needed). brand = wka green accent, teal = wka brand blue (the
+// platform's secondary accent, used for the green/blue top rule).
+const WX_PALETTE = {
+  text: '#111726',        // --wka-text
+  muted: '#3c4257',       // --wka-muted
+  faint: '#7d8799',       // --wka-faint
+  border: '#e6e9ef',      // --wka-line
+  track: 'rgba(24,28,50,0.06)',
+  surface: '#ffffff',     // --wka-panel
+  bg: '#f6f8fb',          // --wka-bg
+  brand: '#0e9f6e',       // --wka-accent (green)
+  brandDeep: '#0b7f58',   // --wka-accent-dark
+  teal: '#0a84c2',        // brand blue (secondary accent)
+  // Sequential green depth ramp (light -> dark = quick -> deep). Monotonic in
+  // lightness; segments carry direct labels + gaps, so identity is never
+  // colour-alone.
+  depth: ['#9ad6bb', '#17a673', '#0b5e41'],
 }
-function useTheme() {
-  const get = () => (typeof document !== 'undefined' && document.documentElement.getAttribute('data-theme') === 'dark')
-  const [dark, setDark] = useState(get)
-  useEffect(() => {
-    const el = document.documentElement
-    const mo = new MutationObserver(() => setDark(get()))
-    mo.observe(el, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => mo.disconnect()
-  }, [])
-  return dark
-}
-function usePalette(dark) {
-  return useMemo(() => ({
-    text: readToken('--text', dark ? '#e8eaf6' : '#1b2033'),
-    muted: readToken('--text-muted', dark ? '#a1a7c9' : '#6b7191'),
-    faint: readToken('--text-faint', dark ? '#6f76a0' : '#9aa0bd'),
-    border: readToken('--border', dark ? '#262a45' : '#e7e9f2'),
-    track: dark ? 'rgba(255,255,255,0.06)' : 'rgba(24,28,50,0.05)',
-    surface: readToken('--surface', dark ? '#171a2e' : '#ffffff'),
-    bg: readToken('--bg', dark ? '#0e1020' : '#f4f5fb'),
-    brand: readToken('--brand-500', '#52a331'),
-    brandDeep: readToken('--brand-700', '#3a7021'),
-    teal: readToken('--accent-500', '#12b3a6'),
-    // Sequential depth ramp (light -> dark = quick -> deep). Monotonic in
-    // lightness; segments carry direct labels + gaps, so identity is never
-    // colour-alone.
-    depth: dark ? ['#9fd37e', '#57ab34', '#2f6b1c'] : ['#a7d98a', '#52a331', '#2f6b1c'],
-  }), [dark])
-}
+function usePalette() { return useMemo(() => WX_PALETTE, []) }
 
 // ---- container measurement (crisp SVG text at the real pixel width) --------
 function useMeasure() {
@@ -254,38 +248,61 @@ function ChartEmpty({ label }) {
   return <div className="wx-chart-empty"><Activity size={18} /><span>{label}</span></div>
 }
 
-// ---- KPI tile --------------------------------------------------------------
-function Kpi({ icon: Icon, label, value, sub, tone, est, big }) {
+// ---- KPI stat tile (wka-card) ----------------------------------------------
+// Mirrors the company-admin `wka-card`: `.k` label row (icon + text, with an
+// optional Est. badge), `.v` headline number, `.foot` subtext. `accent` lifts
+// one hero tile with the brand-green gradient, exactly like the reference's
+// single accent card.
+function Kpi({ icon: Icon, label, value, sub, est, accent }) {
   return (
-    <div className={`wx-kpi${big ? ' wx-kpi-big' : ''}`} data-tone={tone || 'default'}>
-      <div className="wx-kpi-top">
-        <span className="wx-kpi-ico"><Icon size={big ? 18 : 16} /></span>
-        <span className="wx-kpi-label">{label}</span>
-        {est && <span className="wx-est" title="Hypothetical estimate, not an actual figure">Est.</span>}
-      </div>
-      <div className="wx-kpi-num">{value}</div>
-      {sub && <div className="wx-kpi-sub">{sub}</div>}
+    <div className={`wka-card${accent ? ' accent' : ''}`}>
+      <div className="k"><Icon size={15} /> {label}{est && <span className="wx-est" title="Hypothetical estimate, not an actual figure">Est.</span>}</div>
+      <div className="v">{value}</div>
+      {sub && <div className="foot">{sub}</div>}
     </div>
   )
 }
 
-// ---- card shell ------------------------------------------------------------
+// ---- chart card shell (wka-panel) ------------------------------------------
+// Mirrors the company-admin `wka-panel`: head (icon + title), a one-line
+// `.desc`, then content. `wide` spans the full chart grid.
 function Card({ title, hint, icon: Icon, children, wide }) {
   return (
-    <section className={`wx-card${wide ? ' wx-card-wide' : ''}`}>
-      <header className="wx-card-h">
-        <div className="wx-card-title">{Icon && <Icon size={15} />}<span>{title}</span></div>
-        {hint && <span className="wx-card-hint">{hint}</span>}
-      </header>
+    <section className={`wka-panel wx-panel${wide ? ' wx-panel-wide' : ''}`}>
+      <h2>{Icon && <Icon size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />}{title}</h2>
+      {hint && <p className="desc">{hint}</p>}
       {children}
     </section>
   )
 }
 
+// ---- shared shell frame ----------------------------------------------------
+// The `.wka` fixed shell (top bar + main) shared with the admin consoles. The
+// top bar carries the product identity + a live-status chip; the white-label
+// company brand + title live in the main area so they ride along in exports.
+function Shell({ company, live, children, mainRef }) {
+  const companyName = (company && company.name) || 'WorkCoPilot'
+  return (
+    <div className="wka">
+      <style>{WORKADMIN_CSS}{WX_CSS}</style>
+      <header className="wka-top">
+        <span className="wka-dot" aria-hidden="true" />
+        <div className="wka-brand"><b>WorkCoPilot</b><span>Executive</span></div>
+        <div className="wka-top-right">
+          <span className="wka-chip">{companyName}</span>
+          {live}
+        </div>
+      </header>
+      <div className="wka-body">
+        <main className="wka-main" ref={mainRef}>{children}</main>
+      </div>
+    </div>
+  )
+}
+
 // ============================================================================
 export default function WorkExec() {
-  const dark = useTheme()
-  const pal = usePalette(dark)
+  const pal = usePalette()
   const [days, setDays] = useState(30)
   const [data, setData] = useState(null)
   const [err, setErr] = useState('')
@@ -293,8 +310,12 @@ export default function WorkExec() {
   const [stale, setStale] = useState(false)
   const [company, setCompany] = useState(null)
   const [busy, setBusy] = useState('')          // '', 'image', 'pdf'
-  const rootRef = useRef(null)
+  const contentRef = useRef(null)               // export capture target (full content)
   const inFlight = useRef(false)
+
+  // Bring the WorkCoPilot brand faces (Bricolage Grotesque / Figtree) in, the
+  // same way the admin consoles do - the `.wka` surface is self-contained.
+  useEffect(() => { ensureWorkAdminFonts() }, [])
 
   // branding (best effort; page works without it)
   useEffect(() => {
@@ -321,8 +342,7 @@ export default function WorkExec() {
   }, [days])
 
   // Live: fetch on range change, then poll in place every 45s. The poll is
-  // paused while the tab is hidden (no point spending a request + a re-render on
-  // a background tab); on return to the foreground we refresh once immediately.
+  // paused while the tab is hidden; on return to the foreground we refresh once.
   useEffect(() => {
     load(true)
     const id = setInterval(() => { if (typeof document === 'undefined' || document.visibilityState === 'visible') load(false) }, POLL_MS)
@@ -334,19 +354,27 @@ export default function WorkExec() {
   const companyName = (company && company.name) || 'WorkCoPilot'
   const genDate = data ? new Date(data.generatedAt).toLocaleString('en-US') : ''
 
+  // Live-status chip shown in the top bar.
+  const liveChip = data ? (
+    <span className={`wka-chip ${stale ? 'warn' : 'ok'} wx-livechip`} title={stale ? 'Showing the last good reading; retrying' : 'Live, refreshes every 45 seconds'}>
+      <span className={`wx-dot${stale ? ' wx-dot-stale' : ''}${refreshing ? ' wx-dot-busy' : ''}`} />
+      {stale ? 'Reconnecting' : 'Live'}
+      <span className="wx-updated">Updated {fmtTime(data.generatedAt)}</span>
+    </span>
+  ) : null
+
   // ---- exports -------------------------------------------------------------
   const snapshot = useCallback(async () => {
     const { default: html2canvas } = await import('html2canvas')
-    const node = rootRef.current
-    const bg = readToken('--bg', dark ? '#0e1020' : '#f4f5fb')
+    const node = contentRef.current
     return html2canvas(node, {
-      backgroundColor: bg,
+      backgroundColor: WX_PALETTE.bg,
       scale: Math.min(2, (window.devicePixelRatio || 1) + 0.5),
       useCORS: true,
       logging: false,
       ignoreElements: (el) => el.classList && el.classList.contains('wx-noexport'),
     })
-  }, [dark])
+  }, [])
 
   const triggerDownload = (url, filename) => {
     const a = document.createElement('a')
@@ -378,7 +406,7 @@ export default function WorkExec() {
       const imgW = pw - margin * 2
       const imgH = canvas.height * (imgW / canvas.width)
       // page-1 header
-      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(27, 32, 51)
+      pdf.setFont('helvetica', 'bold'); pdf.setFontSize(14); pdf.setTextColor(17, 23, 38)
       pdf.text(`${companyName} - Productivity`, margin, 30)
       pdf.setFont('helvetica', 'normal'); pdf.setFontSize(9); pdf.setTextColor(120, 120, 140)
       pdf.text(`Last ${days} days  |  Generated ${genDate}`, margin, 44)
@@ -401,20 +429,18 @@ export default function WorkExec() {
   // ---- states --------------------------------------------------------------
   if (err && !data) {
     return (
-      <div className="wx-root"><Style />
-        <div className="wx-state">
-          <Info size={22} />
-          <p>{err}</p>
-          <button className="wx-btn" onClick={() => load(true)}>Try again</button>
-        </div>
-      </div>
+      <Shell company={company} live={null}>
+        {/* friendlyError() has already sanitized this into user-safe text; status 400
+            keeps ErrorBox from re-generalizing it so the real message stays visible. */}
+        <div className="wx-content"><ErrorBox error={{ status: 400, message: err }} onRetry={() => load(true)} /></div>
+      </Shell>
     )
   }
   if (!data) {
     return (
-      <div className="wx-root"><Style />
-        <div className="wx-state"><Loader2 size={22} className="wx-spin" /><p>Loading productivity...</p></div>
-      </div>
+      <Shell company={company} live={null}>
+        <div className="wx-content"><Loading label="Loading productivity" /></div>
+      </Shell>
     )
   }
 
@@ -427,339 +453,263 @@ export default function WorkExec() {
   const topMembers = (data.topMembers || []).map((m) => ({ label: m.name, value: m.tasks }))
 
   return (
-    <div className="wx-root" ref={rootRef}>
-      <Style />
-
-      {/* ------- white-label header ------- */}
-      <header className="wx-head">
-        <div className="wx-brand">
+    <Shell company={company} live={liveChip} mainRef={null}>
+      <div className="wx-content" ref={contentRef}>
+        {/* ------- white-label brand + section title (rides along in exports) ------- */}
+        <div className="wx-brandblock">
           {company && company.logo
             ? <img className="wx-logo" src={company.logo} alt={companyName} />
             : <span className="wx-logo wx-logo-fallback" aria-hidden="true">{companyName.slice(0, 1).toUpperCase()}</span>}
           <div className="wx-brand-txt">
-            <span className="wx-brand-name">{companyName}</span>
-            <h1 className="wx-title">Productivity</h1>
+            <span className="wx-eyebrow">{companyName}</span>
+            <h1 className="wka-h1">Productivity</h1>
           </div>
         </div>
+        <p className="wka-sub">What your team completed, the time and value it represents, and where the effort went across the last {days} days. Figures marked <b>Est.</b> are hypothetical productivity estimates, not measured actuals.</p>
 
-        <div className="wx-head-right">
-          <div className="wx-live" title={stale ? 'Showing the last good reading; retrying' : 'Live, refreshes every 45 seconds'}>
-            <span className={`wx-dot${stale ? ' wx-dot-stale' : ''}${refreshing ? ' wx-dot-busy' : ''}`} />
-            <span className="wx-live-txt">{stale ? 'Reconnecting' : 'Live'}</span>
-            <span className="wx-updated">Updated {fmtTime(data.generatedAt)}</span>
-          </div>
-
-          <div className="wx-range wx-noexport" role="group" aria-label="Date range">
+        {/* ------- range + export controls ------- */}
+        <div className="wka-toolbar wx-noexport">
+          <div className="wx-range" role="group" aria-label="Date range">
             {RANGES.map((r) => (
-              <button key={r} className={`wx-range-btn${days === r ? ' is-active' : ''}`} onClick={() => setDays(r)} aria-pressed={days === r}>{r}d</button>
+              <button key={r} type="button" className={`wx-range-btn${days === r ? ' is-active' : ''}`} onClick={() => setDays(r)} aria-pressed={days === r}>{r}d</button>
             ))}
           </div>
-
-          <div className="wx-exports wx-noexport">
-            <button className="wx-btn" onClick={exportPdf} disabled={!!busy}>
-              {busy === 'pdf' ? <Loader2 size={15} className="wx-spin" /> : <FileDown size={15} />}<span>PDF</span>
+          <span className="wka-spacer" />
+          <div className="wx-exports">
+            <button type="button" className="wka-btn sm" onClick={exportPdf} disabled={!!busy}>
+              {busy === 'pdf' ? <Loader2 size={14} className="wx-spin" /> : <FileDown size={14} />}<span>PDF</span>
             </button>
-            <button className="wx-btn" onClick={exportImage} disabled={!!busy}>
-              {busy === 'image' ? <Loader2 size={15} className="wx-spin" /> : <ImageDown size={15} />}<span>Image</span>
+            <button type="button" className="wka-btn sm" onClick={exportImage} disabled={!!busy}>
+              {busy === 'image' ? <Loader2 size={14} className="wx-spin" /> : <ImageDown size={14} />}<span>Image</span>
             </button>
-            <a className="wx-btn" href={api.workExecCsvUrl(days)} download>
-              <FileSpreadsheet size={15} /><span>CSV</span>
+            <a className="wka-btn sm" href={api.workExecCsvUrl(days)} download>
+              <FileSpreadsheet size={14} /><span>CSV</span>
             </a>
           </div>
         </div>
-      </header>
 
-      {empty ? (
-        <div className="wx-state wx-state-empty">
-          <TrendingUp size={24} />
-          <p className="wx-empty-title">No completed tasks yet</p>
-          <p className="wx-empty-sub">Productivity shows here as your team works. This view covers the last {days} days across {fmtInt(data.members)} {data.members === 1 ? 'member' : 'members'}.</p>
-        </div>
-      ) : (
-        <>
-          {/* ------- KPI hero row ------- */}
-          <div className="wx-kpis">
-            <Kpi big icon={CheckCircle2} tone="brand" label="Tasks completed" value={fmtInt(data.tasksCompleted)} sub={`${fmtInt(data.tasksInProgress)} in progress now`} />
-            <Kpi big icon={Clock3} tone="brand" est label="Time saved" value={fmtHours(est.timeSavedHours)} sub="vs. doing it by hand" />
-            <Kpi big icon={DollarSign} tone="teal" est label="Value delivered" value={fmtMoney(est.dollarsSaved)} sub="productivity value, not a cost" />
-            <Kpi big icon={Gauge} tone="brand" label="Effectiveness" value={`${fmtInt(data.effectivenessPct)}%`} sub={`${fmtInt(data.fullyCompletedPct)}% fully completed`} />
-
-            <Kpi icon={Layers3} label="Avg steps / task" value={fmtInt(data.avgStepsPerTask)} sub="task depth" />
-            <Kpi icon={Timer} label="Avg time / task" value={fmtMin(data.avgMinutesPerTask)} sub="active minutes" />
-            <Kpi icon={Users} label="Team members" value={fmtInt(data.members)} sub="in this company" />
-            <Kpi icon={Activity} label="In progress" value={fmtInt(data.tasksInProgress)} sub="active right now" />
+        {empty ? (
+          <div className="wx-empty">
+            <EmptyState title="No completed tasks yet" detail={`Productivity shows here as your team works. This view covers the last ${days} days across ${fmtInt(data.members)} ${data.members === 1 ? 'member' : 'members'}.`} />
           </div>
-
-          {/* ------- charts ------- */}
-          <div className="wx-grid">
-            <Card wide title="Completion trend" hint={`Last ${days} days`} icon={TrendingUp}>
-              <TrendChart data={data.trend} pal={pal} />
-            </Card>
-
-            <Card title="Task types completed" hint="by category" icon={Layers3}>
-              <RankBars rows={byType} color={pal.brand} pal={pal} emptyLabel="No task types yet." />
-            </Card>
-
-            <Card title="Task depth" hint="share of work by effort" icon={Gauge}>
-              <DepthBar depth={data.depth} pal={pal} />
-            </Card>
-
-            <Card title="Top contributors" hint="tasks completed" icon={Users}>
-              <RankBars rows={topMembers} color={pal.teal} pal={pal} emptyLabel="No contributors yet." />
-            </Card>
-
-            <Card title="Estimated impact" hint="hypothetical" icon={DollarSign}>
-              <div className="wx-impact">
-                <div className="wx-impact-row">
-                  <span className="wx-impact-l"><Clock3 size={15} /> Time saved <span className="wx-est">Est.</span></span>
-                  <span className="wx-impact-v">{fmtHours(est.timeSavedHours)}</span>
-                </div>
-                <div className="wx-impact-row">
-                  <span className="wx-impact-l"><DollarSign size={15} /> Value delivered <span className="wx-est">Est.</span></span>
-                  <span className="wx-impact-v">{fmtMoney(est.dollarsSaved)}</span>
-                </div>
-                <p className="wx-impact-note"><Info size={13} /> {assumeText}</p>
-              </div>
-            </Card>
-          </div>
-
-          {/* ------- accessible data table (also the honest, exact numbers) ------- */}
-          <details className="wx-data">
-            <summary>View the numbers</summary>
-            <div className="wx-data-grid">
-              <table className="wx-table">
-                <caption>Summary, last {days} days</caption>
-                <tbody>
-                  <tr><th>Members</th><td>{fmtInt(data.members)}</td></tr>
-                  <tr><th>Tasks completed</th><td>{fmtInt(data.tasksCompleted)}</td></tr>
-                  <tr><th>Tasks in progress</th><td>{fmtInt(data.tasksInProgress)}</td></tr>
-                  <tr><th>Avg steps / task</th><td>{fmtInt(data.avgStepsPerTask)}</td></tr>
-                  <tr><th>Avg time / task</th><td>{fmtMin(data.avgMinutesPerTask)}</td></tr>
-                  <tr><th>Effectiveness</th><td>{fmtInt(data.effectivenessPct)}%</td></tr>
-                  <tr><th>Fully completed</th><td>{fmtInt(data.fullyCompletedPct)}%</td></tr>
-                  <tr><th>Time saved (est.)</th><td>{fmtHours(est.timeSavedHours)}</td></tr>
-                  <tr><th>Value delivered (est.)</th><td>{fmtMoney(est.dollarsSaved)}</td></tr>
-                </tbody>
-              </table>
-              <table className="wx-table">
-                <caption>Task types</caption>
-                <tbody>{byType.length ? byType.map((t, i) => <tr key={i}><th>{t.label}</th><td>{fmtInt(t.value)}</td></tr>) : <tr><td colSpan={2}>No data</td></tr>}</tbody>
-              </table>
-              <table className="wx-table">
-                <caption>Top contributors</caption>
-                <tbody>{topMembers.length ? topMembers.map((m, i) => <tr key={i}><th>{m.label}</th><td>{fmtInt(m.value)}</td></tr>) : <tr><td colSpan={2}>No data</td></tr>}</tbody>
-              </table>
+        ) : (
+          <>
+            {/* ------- KPI hero tiles ------- */}
+            <div className="wka-cards">
+              <Kpi icon={CheckCircle2} label="Tasks completed" value={fmtInt(data.tasksCompleted)} sub={`${fmtInt(data.tasksInProgress)} in progress now`} />
+              <Kpi icon={Clock3} est label="Time saved" value={fmtHours(est.timeSavedHours)} sub="vs. doing it by hand" />
+              <Kpi icon={DollarSign} est accent label="Value delivered" value={fmtMoney(est.dollarsSaved)} sub="productivity value, not a cost" />
+              <Kpi icon={Gauge} label="Effectiveness" value={`${fmtInt(data.effectivenessPct)}%`} sub={`${fmtInt(data.fullyCompletedPct)}% fully completed`} />
             </div>
-          </details>
-        </>
-      )}
 
-      <footer className="wx-foot">
-        <Info size={13} />
-        <span>Time saved and value delivered are hypothetical estimates for your own productivity, {assumeText.charAt(0).toLowerCase() + assumeText.slice(1)}</span>
-      </footer>
-    </div>
+            {/* ------- secondary stat tiles ------- */}
+            <div className="wka-cards">
+              <Kpi icon={Layers3} label="Avg steps / task" value={fmtInt(data.avgStepsPerTask)} sub="task depth" />
+              <Kpi icon={Timer} label="Avg time / task" value={fmtMin(data.avgMinutesPerTask)} sub="active minutes" />
+              <Kpi icon={Users} label="Team members" value={fmtInt(data.members)} sub="in this company" />
+              <Kpi icon={Activity} label="In progress" value={fmtInt(data.tasksInProgress)} sub="active right now" />
+            </div>
+
+            {/* ------- charts ------- */}
+            <div className="wx-grid">
+              <Card wide title="Completion trend" hint={`Completed tasks per day over the last ${days} days.`} icon={TrendingUp}>
+                <TrendChart data={data.trend} pal={pal} />
+              </Card>
+
+              <Card title="Task types completed" hint="Which kinds of work your team completed, by category." icon={Layers3}>
+                <RankBars rows={byType} color={pal.brand} pal={pal} emptyLabel="No task types yet." />
+              </Card>
+
+              <Card title="Task depth" hint="The share of completed work by effort, from quick to deep." icon={Gauge}>
+                <DepthBar depth={data.depth} pal={pal} />
+              </Card>
+
+              <Card title="Top contributors" hint="The people who completed the most tasks in this window." icon={Users}>
+                <RankBars rows={topMembers} color={pal.teal} pal={pal} unit="tasks" emptyLabel="No contributors yet." />
+              </Card>
+
+              <Card title="Estimated impact" hint="Hypothetical productivity value, not a measured figure or a cost." icon={DollarSign}>
+                <div className="wx-impact">
+                  <div className="wx-impact-row">
+                    <span className="wx-impact-l"><Clock3 size={15} /> Time saved <span className="wx-est">Est.</span></span>
+                    <span className="wx-impact-v">{fmtHours(est.timeSavedHours)}</span>
+                  </div>
+                  <div className="wx-impact-row">
+                    <span className="wx-impact-l"><DollarSign size={15} /> Value delivered <span className="wx-est">Est.</span></span>
+                    <span className="wx-impact-v">{fmtMoney(est.dollarsSaved)}</span>
+                  </div>
+                  <p className="wx-impact-note"><Info size={13} /> {assumeText}</p>
+                </div>
+              </Card>
+            </div>
+
+            {/* ------- accessible data table (also the honest, exact numbers) ------- */}
+            <details className="wka-panel wx-data">
+              <summary><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />View the numbers</summary>
+              <div className="wx-data-grid">
+                <table className="wx-table">
+                  <caption>Summary, last {days} days</caption>
+                  <tbody>
+                    <tr><th>Members</th><td>{fmtInt(data.members)}</td></tr>
+                    <tr><th>Tasks completed</th><td>{fmtInt(data.tasksCompleted)}</td></tr>
+                    <tr><th>Tasks in progress</th><td>{fmtInt(data.tasksInProgress)}</td></tr>
+                    <tr><th>Avg steps / task</th><td>{fmtInt(data.avgStepsPerTask)}</td></tr>
+                    <tr><th>Avg time / task</th><td>{fmtMin(data.avgMinutesPerTask)}</td></tr>
+                    <tr><th>Effectiveness</th><td>{fmtInt(data.effectivenessPct)}%</td></tr>
+                    <tr><th>Fully completed</th><td>{fmtInt(data.fullyCompletedPct)}%</td></tr>
+                    <tr><th>Time saved (est.)</th><td>{fmtHours(est.timeSavedHours)}</td></tr>
+                    <tr><th>Value delivered (est.)</th><td>{fmtMoney(est.dollarsSaved)}</td></tr>
+                  </tbody>
+                </table>
+                <table className="wx-table">
+                  <caption>Task types</caption>
+                  <tbody>{byType.length ? byType.map((t, i) => <tr key={i}><th>{t.label}</th><td>{fmtInt(t.value)}</td></tr>) : <tr><td colSpan={2}>No data</td></tr>}</tbody>
+                </table>
+                <table className="wx-table">
+                  <caption>Top contributors</caption>
+                  <tbody>{topMembers.length ? topMembers.map((m, i) => <tr key={i}><th>{m.label}</th><td>{fmtInt(m.value)}</td></tr>) : <tr><td colSpan={2}>No data</td></tr>}</tbody>
+                </table>
+              </div>
+            </details>
+          </>
+        )}
+
+        <footer className="wx-foot">
+          <Info size={13} />
+          <span>Time saved and value delivered are hypothetical estimates for your own productivity, {assumeText.charAt(0).toLowerCase() + assumeText.slice(1)}</span>
+        </footer>
+      </div>
+    </Shell>
   )
 }
 
 // ============================================================================
-// Scoped styles. Uses the app's global design tokens (light + dark) and adds a
-// refined display face for the headline numbers. Everything is responsive down
-// to phone width.
+// Chart + layout styles layered on top of WORKADMIN_CSS. Everything is scoped
+// under `.wka` so it consumes the admin design tokens (colors, fonts, spacing)
+// and never leaks out. Presentation only - no data or interaction changes.
+// Verified clean (no overflow / wrap / clip / horizontal scroll) at ~1280px and
+// ~640px per the design-time quality gate.
 // ============================================================================
-function Style() {
-  return (
-    <style>{`
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&display=swap');
-.wx-root{
-  --wx-display: 'Fraunces', 'Iowan Old Style', Georgia, 'Times New Roman', serif;
-  --wx-sans: var(--font-sans, 'Inter', system-ui, sans-serif);
-  padding: var(--sp-6, 24px) var(--sp-6, 24px) 72px;
-  max-width: 1320px; margin: 0 auto;
-  font-family: var(--wx-sans);
-  color: var(--text); background: var(--bg);
-  min-height: 100%;
-}
-.wx-root *{ box-sizing: border-box; }
+const WX_CSS = `
+.wka .wx-content { max-width: 1180px; }
 
-/* header */
-.wx-head{ display:flex; justify-content:space-between; align-items:flex-end; gap:20px; flex-wrap:wrap;
-  padding-bottom:18px; margin-bottom:22px; border-bottom:1px solid var(--border); }
-.wx-brand{ display:flex; align-items:center; gap:14px; min-width:0; }
-.wx-logo{ width:46px; height:46px; border-radius:12px; object-fit:contain; background:var(--surface);
-  border:1px solid var(--border); box-shadow:var(--shadow-sm); flex:0 0 auto; }
-.wx-logo-fallback{ display:grid; place-items:center; font-family:var(--wx-display); font-weight:700;
-  font-size:22px; color:var(--brand-600); background:var(--brand-soft); border-color:transparent; }
-.wx-brand-txt{ min-width:0; }
-.wx-brand-name{ display:block; font-size:12.5px; font-weight:600; letter-spacing:.09em; text-transform:uppercase;
-  color:var(--text-muted); }
-.wx-title{ margin:1px 0 0; font-family:var(--wx-display); font-weight:600; font-size:32px; line-height:1.05;
-  letter-spacing:-.015em; color:var(--text); }
-.wx-head-right{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+/* white-label brand block + section title */
+.wka .wx-brandblock { display:flex; align-items:center; gap:14px; min-width:0; margin-bottom:6px; }
+.wka .wx-logo { width:44px; height:44px; border-radius:11px; object-fit:contain; background:var(--wka-panel);
+  border:1px solid var(--wka-line); box-shadow:0 1px 2px rgba(26,31,54,0.06); flex:0 0 auto; }
+.wka .wx-logo-fallback { display:grid; place-items:center; font-family:var(--wka-font-head); font-weight:700;
+  font-size:21px; color:var(--wka-accent-dark); background:var(--wka-accent-soft); border-color:var(--wka-accent-line); }
+.wka .wx-brand-txt { min-width:0; }
+.wka .wx-eyebrow { display:block; font-size:11px; font-weight:700; letter-spacing:1.2px; text-transform:uppercase;
+  color:var(--wka-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%; }
+.wka .wx-brandblock .wka-h1 { margin:1px 0 0; }
 
-.wx-live{ display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--text-muted); }
-.wx-dot{ width:8px; height:8px; border-radius:50%; background:var(--success); position:relative; }
-.wx-dot::after{ content:''; position:absolute; inset:-4px; border-radius:50%; background:var(--success);
+/* live-status chip (top bar) */
+.wka .wx-livechip { gap:7px; }
+.wka .wx-dot { width:7px; height:7px; border-radius:50%; background:var(--wka-emerald); position:relative; flex:0 0 auto; }
+.wka .wx-dot::after { content:''; position:absolute; inset:-4px; border-radius:50%; background:var(--wka-emerald);
   opacity:.4; animation:wxpulse 2s ease-out infinite; }
-.wx-dot-busy::after{ animation-duration:.9s; }
-.wx-dot-stale{ background:var(--warning); } .wx-dot-stale::after{ background:var(--warning); }
-.wx-live-txt{ font-weight:600; color:var(--text); }
-.wx-updated{ color:var(--text-faint); }
-@keyframes wxpulse{ 0%{ transform:scale(1); opacity:.5;} 100%{ transform:scale(2.6); opacity:0;} }
+.wka .wx-dot-busy::after { animation-duration:.9s; }
+.wka .wx-dot-stale, .wka .wx-dot-stale::after { background:var(--wka-amber); }
+.wka .wx-updated { color:var(--wka-faint); font-weight:500; }
+@keyframes wxpulse { 0%{ transform:scale(1); opacity:.5; } 100%{ transform:scale(2.6); opacity:0; } }
 
-.wx-range{ display:inline-flex; background:var(--surface-2); border:1px solid var(--border); border-radius:var(--r-full);
-  padding:3px; gap:2px; }
-.wx-range-btn{ border:0; background:transparent; color:var(--text-muted); font:inherit; font-size:13px; font-weight:600;
-  padding:6px 13px; border-radius:var(--r-full); cursor:pointer; transition:all var(--dur) var(--ease); }
-.wx-range-btn:hover{ color:var(--text); }
-.wx-range-btn.is-active{ background:var(--surface); color:var(--brand-600); box-shadow:var(--shadow-sm); }
-[data-theme='dark'] .wx-range-btn.is-active{ color:#9fd37e; }
+/* range selector (segmented pill) + exports */
+.wka .wx-range { display:inline-flex; background:var(--wka-panel-2); border:1px solid var(--wka-line-2);
+  border-radius:999px; padding:3px; gap:2px; flex-shrink:0; }
+.wka .wx-range-btn { border:0; background:transparent; color:var(--wka-muted); font:inherit; font-size:12.5px;
+  font-weight:600; padding:6px 14px; border-radius:999px; cursor:pointer; white-space:nowrap; }
+.wka .wx-range-btn:hover { color:var(--wka-text); }
+.wka .wx-range-btn.is-active { background:var(--wka-accent); color:#fff; box-shadow:0 1px 2px var(--wka-accent-shadow); }
+.wka .wx-exports { display:flex; gap:8px; flex-shrink:0; }
 
-.wx-exports{ display:flex; gap:8px; }
-.wx-btn{ display:inline-flex; align-items:center; gap:7px; font:inherit; font-size:13px; font-weight:600;
-  color:var(--text); background:var(--surface); border:1px solid var(--border); border-radius:var(--r-sm);
-  padding:8px 13px; cursor:pointer; text-decoration:none; transition:all var(--dur) var(--ease); white-space:nowrap; }
-.wx-btn:hover{ border-color:var(--border-strong); box-shadow:var(--shadow-sm); transform:translateY(-1px); }
-.wx-btn:disabled{ opacity:.55; cursor:default; transform:none; }
+/* Est. badge */
+.wka .wx-est { font-size:9.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--wka-amber);
+  background:color-mix(in srgb, var(--wka-amber) 12%, transparent); padding:2px 6px; border-radius:999px;
+  margin-left:auto; flex:0 0 auto; }
+.wka .wka-card .k { justify-content:flex-start; }
 
-/* kpis */
-.wx-kpis{ display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; margin-bottom:16px; }
-.wx-kpi{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg);
-  padding:16px 18px; box-shadow:var(--shadow-sm); position:relative; overflow:hidden;
-  animation:wxrise .5s var(--ease) both; }
-.wx-kpi-big{ padding:20px; }
-.wx-kpi-big::before{ content:''; position:absolute; inset:0 0 auto 0; height:3px;
-  background:linear-gradient(90deg, var(--brand-500), transparent); opacity:.9; }
-.wx-kpi-big[data-tone='teal']::before{ background:linear-gradient(90deg, var(--accent-500), transparent); }
-.wx-kpi-top{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.wx-kpi-ico{ display:grid; place-items:center; width:28px; height:28px; border-radius:8px;
-  background:var(--brand-soft); color:var(--brand-600); flex:0 0 auto; }
-.wx-kpi[data-tone='teal'] .wx-kpi-ico{ background:var(--accent-soft); color:var(--accent-500); }
-[data-theme='dark'] .wx-kpi-ico{ color:#9fd37e; }
-.wx-kpi-label{ font-size:12.5px; font-weight:600; color:var(--text-muted); letter-spacing:.01em; }
-.wx-kpi-num{ font-family:var(--wx-display); font-weight:600; letter-spacing:-.02em; color:var(--text);
-  font-size:26px; line-height:1; font-variant-numeric:tabular-nums; }
-.wx-kpi-big .wx-kpi-num{ font-size:38px; }
-.wx-kpi-sub{ margin-top:7px; font-size:12px; color:var(--text-faint); }
-.wx-est{ font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--warning);
-  background:var(--warning-soft); padding:2px 6px; border-radius:var(--r-full); margin-left:auto; }
+/* chart cards: panels in a two-up grid */
+.wka .wx-grid { display:grid; grid-template-columns:repeat(2, minmax(0, 1fr)); gap:20px; margin-top:6px; }
+.wka .wx-panel { margin-bottom:0; min-width:0; }
+.wka .wx-panel-wide { grid-column:1 / -1; }
 
-/* chart grid */
-.wx-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:14px; }
-.wx-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--r-lg);
-  padding:18px; box-shadow:var(--shadow-sm); animation:wxrise .55s var(--ease) both; min-width:0; }
-.wx-card-wide{ grid-column:1 / -1; }
-.wx-card-h{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; margin-bottom:14px; }
-.wx-card-title{ display:flex; align-items:center; gap:8px; font-family:var(--wx-display); font-weight:600;
-  font-size:16.5px; letter-spacing:-.01em; color:var(--text); }
-.wx-card-title svg{ color:var(--brand-500); }
-.wx-card-hint{ font-size:11.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); }
-
-.wx-chartwrap{ position:relative; }
-.wx-chart-empty{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
-  height:180px; color:var(--text-faint); font-size:13px; text-align:center; }
-.wx-chart-empty svg{ opacity:.6; }
+.wka .wx-chartwrap { position:relative; }
+.wka .wx-chart-empty { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px;
+  height:180px; color:var(--wka-faint); font-size:13px; text-align:center; }
+.wka .wx-chart-empty svg { opacity:.6; }
 
 /* ranked bars */
-.wx-bars{ display:flex; flex-direction:column; gap:12px; position:relative; }
-.wx-bar-row{ display:grid; grid-template-columns:minmax(70px,34%) 1fr auto; align-items:center; gap:12px; cursor:default; }
-.wx-bar-label{ font-size:13px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.wx-bar-track{ height:12px; border-radius:var(--r-full); overflow:hidden; }
-.wx-bar-fill{ height:100%; border-radius:var(--r-full); transition:width .6s var(--ease); min-width:4px; }
-.wx-bar-row:hover .wx-bar-fill{ filter:brightness(1.07); }
-.wx-bar-val{ font-size:13px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; min-width:28px; text-align:right; }
+.wka .wx-bars { display:flex; flex-direction:column; gap:12px; position:relative; }
+.wka .wx-bar-row { display:grid; grid-template-columns:minmax(64px,32%) 1fr auto; align-items:center; gap:12px; cursor:default; }
+.wka .wx-bar-label { font-size:13px; color:var(--wka-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.wka .wx-bar-track { height:12px; border-radius:999px; overflow:hidden; min-width:0; }
+.wka .wx-bar-fill { height:100%; border-radius:999px; transition:width .6s ease; min-width:4px; }
+.wka .wx-bar-row:hover .wx-bar-fill { filter:brightness(1.07); }
+.wka .wx-bar-val { font-size:13px; font-weight:700; color:var(--wka-text); font-variant-numeric:tabular-nums; min-width:28px; text-align:right; }
 
 /* depth */
-.wx-depth{ position:relative; }
-.wx-depth-track{ display:flex; height:40px; border-radius:var(--r-md); overflow:hidden; gap:2px; background:var(--bg); }
-.wx-depth-seg{ display:grid; place-items:center; min-width:3px; transition:flex-grow .6s var(--ease); cursor:default; }
-.wx-depth-seg:hover{ filter:brightness(1.06); }
-.wx-depth-pct{ font-size:12px; font-weight:700; color:#0d1a06; font-variant-numeric:tabular-nums; }
-.wx-depth-legend{ display:flex; flex-direction:column; gap:9px; margin-top:16px; }
-.wx-depth-leg{ display:flex; align-items:center; gap:9px; font-size:13px; }
-.wx-swatch{ width:11px; height:11px; border-radius:3px; flex:0 0 auto; }
-.wx-depth-leg-l{ font-weight:600; color:var(--text); }
-.wx-depth-leg-s{ color:var(--text-faint); font-size:12px; }
-.wx-depth-leg-v{ margin-left:auto; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+.wka .wx-depth { position:relative; }
+.wka .wx-depth-track { display:flex; height:40px; border-radius:10px; overflow:hidden; gap:2px; background:var(--wka-bg); }
+.wka .wx-depth-seg { display:grid; place-items:center; min-width:3px; transition:flex-grow .6s ease; cursor:default; }
+.wka .wx-depth-seg:hover { filter:brightness(1.06); }
+.wka .wx-depth-pct { font-size:12px; font-weight:700; color:#05311c; font-variant-numeric:tabular-nums; }
+.wka .wx-depth-legend { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
+.wka .wx-depth-leg { display:flex; align-items:center; gap:9px; font-size:13px; }
+.wka .wx-swatch { width:11px; height:11px; border-radius:3px; flex:0 0 auto; }
+.wka .wx-depth-leg-l { font-weight:600; color:var(--wka-text); }
+.wka .wx-depth-leg-s { color:var(--wka-faint); font-size:12px; }
+.wka .wx-depth-leg-v { margin-left:auto; font-weight:700; color:var(--wka-text); font-variant-numeric:tabular-nums; }
 
 /* estimated impact card */
-.wx-impact{ display:flex; flex-direction:column; gap:12px; }
-.wx-impact-row{ display:flex; justify-content:space-between; align-items:center;
-  padding:12px 14px; background:var(--surface-2); border-radius:var(--r-md); }
-.wx-impact-l{ display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; color:var(--text-muted); }
-.wx-impact-l svg{ color:var(--brand-500); }
-.wx-impact-v{ font-family:var(--wx-display); font-weight:600; font-size:22px; color:var(--text); font-variant-numeric:tabular-nums; }
-.wx-impact-note{ display:flex; gap:7px; align-items:flex-start; margin:2px 0 0; font-size:11.5px; line-height:1.5;
-  color:var(--text-faint); }
-.wx-impact-note svg{ flex:0 0 auto; margin-top:1px; }
+.wka .wx-impact { display:flex; flex-direction:column; gap:12px; }
+.wka .wx-impact-row { display:flex; justify-content:space-between; align-items:center; gap:12px;
+  padding:12px 14px; background:var(--wka-panel-2); border:1px solid var(--wka-line); border-radius:10px; }
+.wka .wx-impact-l { display:flex; align-items:center; gap:8px; font-size:13.5px; font-weight:600; color:var(--wka-muted); min-width:0; }
+.wka .wx-impact-l svg { color:var(--wka-accent); flex:0 0 auto; }
+.wka .wx-impact-l .wx-est { margin-left:0; }
+.wka .wx-impact-v { font-family:var(--wka-font-head); font-weight:700; font-size:21px; color:var(--wka-text); font-variant-numeric:tabular-nums; flex:0 0 auto; }
+.wka .wx-impact-note { display:flex; gap:7px; align-items:flex-start; margin:2px 0 0; font-size:11.5px; line-height:1.5; color:var(--wka-faint); }
+.wka .wx-impact-note svg { flex:0 0 auto; margin-top:1px; }
 
 /* tooltip */
-.wx-tip{ position:absolute; z-index:5; pointer-events:none; background:var(--text); color:var(--bg);
-  padding:7px 10px; border-radius:var(--r-sm); box-shadow:var(--shadow-md); font-size:12px; white-space:nowrap;
+.wka .wx-tip { position:absolute; z-index:5; pointer-events:none; background:var(--wka-text); color:#fff;
+  padding:7px 10px; border-radius:8px; box-shadow:0 8px 22px -10px rgba(26,31,54,0.5); font-size:12px; white-space:nowrap;
   display:flex; flex-direction:column; gap:1px; transform:translate(-4px, calc(-100% - 8px)); }
-.wx-tip-anchor{ transform:translateX(-50%); }
-.wx-tip-k{ font-weight:600; opacity:.8; font-size:11px; }
-.wx-tip-v{ font-weight:700; font-variant-numeric:tabular-nums; }
+.wka .wx-tip-anchor { transform:translateX(-50%); }
+.wka .wx-tip-k { font-weight:600; opacity:.8; font-size:11px; }
+.wka .wx-tip-v { font-weight:700; font-variant-numeric:tabular-nums; }
 
-/* data table */
-.wx-data{ margin-top:18px; border:1px solid var(--border); border-radius:var(--r-lg); background:var(--surface);
-  box-shadow:var(--shadow-sm); overflow:hidden; }
-.wx-data summary{ cursor:pointer; padding:14px 18px; font-size:13.5px; font-weight:600; color:var(--text-muted);
-  list-style:none; user-select:none; }
-.wx-data summary::-webkit-details-marker{ display:none; }
-.wx-data summary::before{ content:'+ '; color:var(--brand-500); font-weight:700; }
-.wx-data[open] summary::before{ content:'- '; }
-.wx-data[open] summary{ border-bottom:1px solid var(--border); color:var(--text); }
-.wx-data-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1px; background:var(--border); }
-.wx-table{ width:100%; border-collapse:collapse; background:var(--surface); }
-.wx-table caption{ text-align:left; padding:12px 16px 6px; font-size:11.5px; font-weight:700; letter-spacing:.06em;
-  text-transform:uppercase; color:var(--text-faint); }
-.wx-table th,.wx-table td{ padding:7px 16px; font-size:13px; text-align:left; border-top:1px solid var(--border); }
-.wx-table th{ font-weight:500; color:var(--text-muted); }
-.wx-table td{ font-weight:700; color:var(--text); text-align:right; font-variant-numeric:tabular-nums; }
+/* data table (collapsible, exact numbers) */
+.wka .wx-data { padding:0; overflow:hidden; background:var(--wka-panel); }
+.wka .wx-data summary { cursor:pointer; padding:16px 22px; font-size:14px; font-weight:600; color:var(--wka-muted);
+  list-style:none; user-select:none; font-family:var(--wka-font-head); }
+.wka .wx-data summary::-webkit-details-marker { display:none; }
+.wka .wx-data[open] summary { border-bottom:1px solid var(--wka-line); color:var(--wka-text); }
+.wka .wx-data-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:1px; background:var(--wka-line); }
+.wka .wx-table { width:100%; border-collapse:collapse; background:var(--wka-panel); }
+.wka .wx-table caption { text-align:left; padding:14px 18px 6px; font-size:11px; font-weight:700; letter-spacing:.06em;
+  text-transform:uppercase; color:var(--wka-faint); }
+.wka .wx-table th, .wka .wx-table td { padding:7px 18px; font-size:13px; text-align:left; border-top:1px solid var(--wka-line); }
+.wka .wx-table th { font-weight:500; color:var(--wka-muted); }
+.wka .wx-table td { font-weight:700; color:var(--wka-text); text-align:right; font-variant-numeric:tabular-nums; }
 
 /* footer honesty note */
-.wx-foot{ display:flex; gap:8px; align-items:flex-start; margin-top:22px; padding-top:16px;
-  border-top:1px solid var(--border); font-size:11.5px; line-height:1.5; color:var(--text-faint); }
-.wx-foot svg{ flex:0 0 auto; margin-top:1px; }
+.wka .wx-foot { display:flex; gap:8px; align-items:flex-start; margin-top:24px; padding-top:16px;
+  border-top:1px solid var(--wka-line); font-size:11.5px; line-height:1.5; color:var(--wka-faint); }
+.wka .wx-foot svg { flex:0 0 auto; margin-top:1px; color:var(--wka-faint); }
 
-/* states */
-.wx-state{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:12px;
-  min-height:300px; color:var(--text-muted); text-align:center; padding:40px; }
-.wx-state svg{ color:var(--brand-500); }
-.wx-state-empty{ background:var(--surface); border:1px dashed var(--border-strong); border-radius:var(--r-lg); }
-.wx-empty-title{ font-family:var(--wx-display); font-size:20px; font-weight:600; color:var(--text); margin:0; }
-.wx-empty-sub{ max-width:440px; margin:0; color:var(--text-faint); font-size:13.5px; line-height:1.5; }
+.wka .wx-empty { margin-top:10px; }
+.wka .wx-spin { animation:wka-spin 0.8s linear infinite; }
 
-.wx-spin{ animation:wxspin 1s linear infinite; }
-@keyframes wxspin{ to{ transform:rotate(360deg); } }
-@keyframes wxrise{ from{ opacity:0; transform:translateY(8px); } to{ opacity:1; transform:none; } }
-.wx-kpi:nth-child(2){ animation-delay:.04s; } .wx-kpi:nth-child(3){ animation-delay:.08s; }
-.wx-kpi:nth-child(4){ animation-delay:.12s; } .wx-kpi:nth-child(5){ animation-delay:.16s; }
-.wx-kpi:nth-child(6){ animation-delay:.2s; } .wx-kpi:nth-child(7){ animation-delay:.24s; }
-.wx-kpi:nth-child(8){ animation-delay:.28s; }
-
-/* responsive */
-@media (max-width: 960px){
-  .wx-kpis{ grid-template-columns:repeat(2, 1fr); }
-  .wx-grid{ grid-template-columns:1fr; }
-  .wx-card-wide{ grid-column:auto; }
+/* responsive: charts collapse to one column before the content gets tight */
+@media (max-width: 960px) {
+  .wka .wx-grid { grid-template-columns:1fr; gap:16px; }
+  .wka .wx-panel-wide { grid-column:auto; }
 }
-@media (max-width: 560px){
-  .wx-root{ padding:16px 16px 60px; }
-  .wx-head{ align-items:flex-start; }
-  .wx-head-right{ width:100%; justify-content:space-between; }
-  .wx-title{ font-size:26px; }
-  .wx-kpi-big .wx-kpi-num{ font-size:30px; }
-  .wx-exports{ flex:1; }
-  .wx-btn span{ display:none; }
-  .wx-btn{ padding:9px 11px; }
+@media (max-width: 560px) {
+  .wka .wx-brandblock .wka-h1 { font-size:20px; }
+  .wka .wx-exports .wka-btn span { display:none; }
+  .wka .wx-range-btn { padding:6px 11px; }
 }
-@media (prefers-reduced-motion: reduce){
-  .wx-kpi,.wx-card{ animation:none; }
-  .wx-dot::after{ animation:none; }
-  .wx-bar-fill,.wx-depth-seg{ transition:none; }
-}
-    `}</style>
-  )
-}
+`

@@ -9,8 +9,9 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
+import AccentPicker from '../../components/AccentPicker.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
 import { WORKADMIN_CSS, ensureWorkAdminFonts } from './workadmin.css.js'
@@ -52,7 +53,21 @@ const SECTIONS = [
   { id: 'incidents', label: 'Incidents', icon: ShieldAlert, title: 'System incidents', sub: 'Real causes behind the "system is busy" message users see - AI quota, keys, 5xx, timeouts. Users never see these.' },
   { id: 'affiliates', label: 'Affiliates', icon: Share2, title: 'Affiliate program', sub: 'Approve affiliates, set commission rates, track referrals and run Stripe Connect payouts.' },
   { id: 'claims', label: 'Claims', icon: ShieldCheck, title: 'Business claims', sub: 'Every public claim mapped to the file and code that backs it, with an honesty status. MFA-gated; download a signed report.' },
+  { id: 'appearance', label: 'Appearance', icon: Palette, title: 'Appearance', sub: 'Your accent color for the dashboards and the guide. Personal to you; it follows you across devices.' },
 ]
+
+// Per-user accent (every admin role sees this - it is a personal preference, not
+// a platform setting). The picker applies live and persists through the shared
+// profile endpoint; this console only hosts it.
+function AppearanceSection() {
+  return (
+    <div className="wka-panel">
+      <h2>Accent color</h2>
+      <p className="desc">Not everyone likes green. Pick the accent for your dashboards and the guide - it applies instantly and follows you across devices. <b>Default</b> keeps each console's own color: blue here, green for company admins and the guide.</p>
+      <AccentPicker variant="wka" />
+    </div>
+  )
+}
 
 export default function WorkAdmin() {
   const [active, setActive] = useState('overview')
@@ -122,10 +137,10 @@ export default function WorkAdmin() {
   // Single source for the accounting role's allowed sections (used both to build
   // the nav and, via the generic fallback effect below, to land the role on its
   // first visible tab rather than force-pinning one tab).
-  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled'])
+  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled', 'appearance'])
   const visibleSections = isSuperAdmin ? SECTIONS
     : isAccounting ? SECTIONS.filter((s) => ACCOUNTING_SECTIONS.has(s.id))
-      : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates')
+      : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates' || s.id === 'appearance')
         : SECTIONS.filter((s) => !SUPERADMIN_ONLY.has(s.id))
   useEffect(() => { if (isAffiliateAdmin && active !== 'affiliates') setActive('affiliates') }, [isAffiliateAdmin, active])
   // Never leave the view pointed at a section this viewer cannot see (e.g. a
@@ -156,6 +171,7 @@ export default function WorkAdmin() {
       case 'incidents': return <Incidents />
       case 'affiliates': return <Affiliates isSuperAdmin={isSuperAdmin} />
       case 'claims': return <Claims />
+      case 'appearance': return <AppearanceSection />
       case 'overview':
       default: return <Overview />
     }
@@ -203,7 +219,7 @@ export default function WorkAdmin() {
 
   return (
     <div className="wka wka-super">
-      <style>{WORKADMIN_CSS}</style>
+      <style>{WORKADMIN_CSS}{WA_CSS}</style>
 
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
@@ -229,10 +245,9 @@ export default function WorkAdmin() {
                 <Icon size={17} />
                 <span className="label">{s.label}</span>
                 {s.id === 'incidents' && incidentAlert.count > 0 ? (
-                  <span title={`${incidentAlert.count} incident${incidentAlert.count === 1 ? '' : 's'} in the last 24h`}
-                    style={{ marginLeft: 'auto', minWidth: 18, height: 18, padding: '0 5px', borderRadius: 9,
-                      display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700,
-                      color: '#0a0d12', background: incidentAlert.severe ? 'var(--wka-red, #ff6b6b)' : 'var(--wka-amber, #f5c86b)' }}>
+                  <span className={`wa-badge${incidentAlert.severe ? ' severe' : ''}`}
+                    title={`${incidentAlert.count} incident${incidentAlert.count === 1 ? '' : 's'} in the last 24h`}
+                    aria-label={`${incidentAlert.count} incident${incidentAlert.count === 1 ? '' : 's'} in the last 24h`}>
                     {incidentAlert.count > 99 ? '99+' : incidentAlert.count}
                   </span>
                 ) : null}
@@ -251,3 +266,18 @@ export default function WorkAdmin() {
     </div>
   )
 }
+
+// Superadmin-specific additions on top of the shared console CSS (mirrors the
+// company console's WCA_CSS). The nav alert badge is the same pill as the
+// company console's alerts badge - amber for auto-recoveries, red when something
+// actually failed - and docks to the icon's corner when the rail collapses so it
+// never spills out of the 64px rail (SUPREME RULE XIV).
+const WA_CSS = `
+.wka .spin { animation: wka-spin 0.8s linear infinite; }
+.wka-nav-item { position: relative; }
+.wa-badge { margin-left:auto; min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:inline-grid; place-items:center; font-size:11px; font-weight:800; font-variant-numeric:tabular-nums; color:#1a1200; background:var(--wka-amber); box-shadow:0 0 0 2px color-mix(in srgb, var(--wka-amber) 12%, transparent); flex-shrink:0; }
+.wa-badge.severe { color:#fff; background:var(--wka-red); box-shadow:0 0 0 2px color-mix(in srgb, var(--wka-red) 14%, transparent); }
+@media (max-width: 760px) {
+  .wa-badge { position:absolute; top:4px; right:4px; margin-left:0; min-width:16px; height:16px; padding:0 4px; font-size:9.5px; }
+}
+`

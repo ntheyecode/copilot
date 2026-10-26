@@ -376,7 +376,7 @@ const CSS = `
 .mg-badge{flex:none;width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;
   background:linear-gradient(135deg,var(--mg-em),var(--mg-em2));box-shadow:0 10px 24px -12px rgba(10,134,207,.7),inset 0 1px 0 rgba(255,255,255,.35)}
 .mg-badge-ok{background:linear-gradient(135deg,#12b87a,var(--mg-em))}
-.mg-eyebrow{font-family:"JetBrains Mono",monospace;font-weight:500;font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--mg-em);margin-bottom:3px}
+.mg-eyebrow{font-family:"Figtree",system-ui,sans-serif;font-weight:600;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--mg-em);margin-bottom:3px}
 .mg .mg-h{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-weight:700;font-size:24px;line-height:1.1;letter-spacing:-.02em;margin:0;color:var(--mg-tx)}
 .mg .mg-h:focus{outline:none}
 .mg-who{display:inline-block;font-size:12.5px;color:var(--mg-mut);background:var(--mg-soft);border:1px solid rgba(10,157,102,.18);border-radius:999px;padding:4px 11px;margin:4px 0 2px}

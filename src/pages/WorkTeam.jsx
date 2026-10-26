@@ -76,7 +76,7 @@ export default function WorkTeam() {
               <h2><Users size={20} /> Your team{company && company.name ? ` · ${company.name}` : ''}</h2>
               <p>Add people to your company and set what they can do. New users sign in with the username and password you set here.</p>
             </div>
-            <div style={{ display: 'flex', gap: 10 }}>
+            <div className="wt-headacts">
               <button className="wt-btn" onClick={() => setView('ai')}><KeyRound size={15} /> AI keys</button>
               <button className="wt-btn" onClick={() => setView('activity')}><FileText size={15} /> User activity</button>
               <button className="wt-btn primary" onClick={() => { setErr(''); setOk(''); setView('new') }}><Plus size={15} /> Add user</button>
@@ -92,7 +92,7 @@ export default function WorkTeam() {
                   {users.map((u) => (
                     <li key={u.id}>
                       <span className="wt-ava">{(u.displayName || u.username || '?').slice(0, 1).toUpperCase()}</span>
-                      <span className="wt-name">{u.displayName || u.username}<span className="wt-uname">{u.username}</span></span>
+                      <span className="wt-name"><span className="wt-dname">{u.displayName || u.username}</span><span className="wt-uname">{u.username}</span></span>
                       <span className={`wt-role r-${u.companyRole || 'member'}`}>
                         {u.companyRole === 'company_admin' ? <ShieldCheck size={12} /> : <UserIcon size={12} />}
                         {ROLE_LABEL[u.companyRole] || 'Member'}
@@ -146,7 +146,7 @@ export default function WorkTeam() {
             <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
           </div>
           {aiCompany && (
-            <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--text,#141726)', border: '1px solid var(--line,#e3e6ee)' }}>
+            <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--tx,#1b2033)', border: '1px solid var(--line,#e7eaf2)' }}>
               {aiCompany.companyAi
                 ? <span>Current: key {aiCompany.companyAi.keyMasked} · {aiCompany.companyAi.owner === 'company' ? 'your own key' : 'set up for you by WorkCoPilot'}</span>
                 : <span>No keys set yet. Your company is on the platform AI.</span>}
@@ -171,7 +171,7 @@ export default function WorkTeam() {
             <h2 style={{ fontSize: 17 }}><Globe size={18} /> Live web learning</h2>
             <p className="wt-form-sub">When set, your company&rsquo;s live web learning runs on your own Tavily key (your data boundary and billing). Guidance is grounded in the latest web sources.</p>
             {aiCompany && (
-              <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--text,#141726)', border: '1px solid var(--line,#e3e6ee)' }}>
+              <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--tx,#1b2033)', border: '1px solid var(--line,#e7eaf2)' }}>
                 {aiCompany.webSearchConfigured
                   ? <span>Current: <b>{(aiCompany.webSearch && aiCompany.webSearch.provider) || 'tavily'}</b> · key {aiCompany.webSearch && aiCompany.webSearch.keyMasked}</span>
                   : <span>No web-search key set. Live web learning is off for your company.</span>}
@@ -220,41 +220,54 @@ export default function WorkTeam() {
   )
 }
 
+// Styles consume the product tokens the WorkCoPilot dashboard defines on its
+// `.wd` root (WorkPage) - this Team panel always renders inside it - so it reads
+// as the same white/emerald product family as the admin console and the rest of
+// the app: one emerald accent (--em #0e9f6e, solid primary, NO blue-green
+// gradient), one hairline, one ink/muted pair. Every var carries the correct
+// emerald fallback so it still looks on-brand if ever mounted standalone.
 const CSS = `
 .wt{max-width:860px;margin:0 auto}
-.wt h2{font-size:20px;margin:0 0 4px;display:flex;align-items:center;gap:9px}
-.wt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px}
-.wt-head p{color:var(--text-dim,#667);font-size:14px;margin:0;max-width:60ch}
-.wt-btn{display:inline-flex;align-items:center;gap:7px;background:var(--panel,#fff);border:1px solid var(--line,#e3e6ee);color:var(--text,#141726);border-radius:10px;padding:9px 15px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap}
-.wt-btn:hover{border-color:var(--text-dim,#99a)}
-.wt-btn.primary{background:linear-gradient(135deg,#0a9d66,#0a86cf);color:#fff;border:none}
+.wt h2{font-size:20px;margin:0 0 4px;display:flex;align-items:center;gap:9px;font-family:var(--wd-display,"Bricolage Grotesque","Figtree",system-ui,sans-serif);letter-spacing:-.01em;min-width:0}
+.wt h2 svg{flex-shrink:0;color:var(--em,var(--accent,#0e9f6e))}
+.wt-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;min-width:0}
+.wt-head>div:first-child{min-width:0}
+.wt-head p{color:var(--mut,#5c6484);font-size:14px;margin:0;max-width:60ch}
+.wt-headacts{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end;flex-shrink:0}
+.wt-btn{display:inline-flex;align-items:center;gap:7px;background:var(--panel,#fff);border:1px solid var(--line,#e7eaf2);color:var(--tx,#1b2033);border-radius:10px;padding:9px 15px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s,border-color .15s,color .15s}
+.wt-btn svg{flex-shrink:0}
+.wt-btn:hover:not(:disabled){border-color:var(--line-2,#d5d9e6);background:var(--line-soft,#eef1f7);color:var(--tx,#1b2033)}
+.wt-btn.primary{background:var(--em,var(--accent,#0e9f6e));color:#fff;border:1px solid var(--em,var(--accent,#0e9f6e));box-shadow:0 1px 2px var(--accent-shadow,rgba(14,159,110,.22))}
+.wt-btn.primary:hover:not(:disabled){background:var(--em-deep,var(--accent-dark,#0b7a53));border-color:var(--em-deep,var(--accent-dark,#0b7a53));color:#fff}
 .wt-btn:disabled{opacity:.55;cursor:default}
 .wt-list{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-.wt-list li{display:flex;align-items:center;gap:12px;background:var(--panel,#fff);border:1px solid var(--line,#e3e6ee);border-radius:12px;padding:12px 15px}
-.wt-ava{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,#0a9d66,#0a86cf)}
-.wt-name{flex:1;min-width:0;display:flex;flex-direction:column;font-weight:600;color:var(--text,#141726);overflow:hidden}
-.wt-uname{font-weight:400;font-size:12px;color:var(--text-dim,#667)}
-.wt-role{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap}
-.r-company_admin{background:rgba(10,157,102,.15);color:#06603f}
-.r-member{background:rgba(120,130,150,.15);color:#596074}
-.wt-when{color:var(--text-dim,#667);font-size:12px;white-space:nowrap}
+.wt-list li{display:flex;align-items:center;gap:12px;background:var(--panel,#fff);border:1px solid var(--line,#e7eaf2);border-radius:var(--r,12px);padding:12px 15px;box-shadow:var(--card-shadow,0 1px 2px rgba(20,24,44,.03))}
+.wt-ava{width:34px;height:34px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:800;font-size:14px;color:#fff;background:linear-gradient(135deg,var(--em,var(--accent,#0e9f6e)),var(--em-2,#0a84c2))}
+.wt-name{flex:1;min-width:0;display:flex;flex-direction:column;font-weight:600;color:var(--tx,#1b2033);overflow:hidden}
+.wt-dname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-uname{font-weight:400;font-size:12px;color:var(--mut,#5c6484);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-role{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:4px 10px;border-radius:999px;white-space:nowrap;flex-shrink:0;border:1px solid transparent}
+.r-company_admin{background:var(--em-fill,var(--accent-soft,#eafaf3));color:var(--em-deep,var(--accent-dark,#0b7a53));border-color:var(--em-line,var(--accent-line,#bde9d5))}
+.r-member{background:var(--chip,#f1f3fa);color:var(--mut,#5c6484);border-color:var(--chip-line,#e2e6f1)}
+.wt-when{color:var(--mut,#5c6484);font-size:12px;white-space:nowrap;flex-shrink:0}
 .wt-acts{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:8px}
-.wt-acts li{display:flex;align-items:flex-start;gap:12px;background:var(--panel,#fff);border:1px solid var(--line,#e3e6ee);border-radius:12px;padding:12px 15px}
-.wt-act-ic{width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center;color:#c0392b;background:rgba(192,57,43,.12)}
+.wt-acts li{display:flex;align-items:flex-start;gap:12px;background:var(--panel,#fff);border:1px solid var(--line,#e7eaf2);border-radius:var(--r,12px);padding:12px 15px;box-shadow:var(--card-shadow,0 1px 2px rgba(20,24,44,.03))}
+.wt-act-ic{width:30px;height:30px;flex:none;border-radius:8px;display:grid;place-items:center;color:var(--danger,#e23b4e);background:color-mix(in srgb,var(--danger,#e23b4e) 12%,transparent)}
 .wt-act-main{flex:1;min-width:0}
-.wt-act-top{font-size:13.5px;color:var(--text,#141726)}
-.wt-act-sess{font-size:12.5px;color:var(--text-dim,#667);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wt-act-reason{font-size:13px;color:var(--text,#141726);margin-top:6px;font-style:italic}
+.wt-act-top{font-size:13.5px;color:var(--tx,#1b2033)}
+.wt-act-sess{font-size:12.5px;color:var(--mut,#5c6484);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wt-act-reason{font-size:13px;color:var(--tx,#1b2033);margin-top:6px;font-style:italic;overflow-wrap:anywhere}
 @media(max-width:560px){.wt-acts li{flex-wrap:wrap}.wt-acts .wt-when{order:4;width:100%}}
-.wt-empty{color:var(--text-dim,#667);padding:26px 0;text-align:center;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
-.wt-err{color:#c0392b;font-size:13px;margin-top:12px}
-.wt-ok{display:inline-flex;align-items:center;gap:7px;color:#06603f;background:rgba(10,157,102,.12);border:1px solid rgba(10,157,102,.3);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;margin-bottom:14px}
+.wt-empty{color:var(--mut,#5c6484);padding:26px 0;text-align:center;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px}
+.wt-err{color:var(--danger,#e23b4e);font-size:13px;margin-top:12px}
+.wt-ok{display:inline-flex;align-items:center;gap:7px;color:var(--em-deep,var(--accent-dark,#0b7a53));background:var(--em-fill,var(--accent-soft,#eafaf3));border:1px solid var(--em-line,var(--accent-line,#bde9d5));border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;margin-bottom:14px}
+.wt-ok svg{flex-shrink:0}
 .wt-form{max-width:520px;margin:0 auto}
-.wt-form-sub{color:var(--text-dim,#667);font-size:14px;margin:0 0 18px}
-.wt-label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--text,#141726);margin-bottom:14px}
-.wt-label input,.wt-label select{background:var(--panel,#fff);border:1px solid var(--line,#e3e6ee);border-radius:10px;padding:10px 12px;color:var(--text,#141726);font:inherit;font-size:14px;font-weight:400;outline:none}
-.wt-label input:focus,.wt-label select:focus{border-color:#0a86cf}
-.wt-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px}
+.wt-form-sub{color:var(--mut,#5c6484);font-size:14px;margin:0 0 18px}
+.wt-label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600;color:var(--tx,#1b2033);margin-bottom:14px}
+.wt-label input,.wt-label select{background:var(--field,#fcfdff);border:1px solid var(--line,#e7eaf2);border-radius:10px;padding:10px 12px;color:var(--tx,#1b2033);font:inherit;font-size:14px;font-weight:400;outline:none;transition:border-color .15s,box-shadow .15s}
+.wt-label input:focus,.wt-label select:focus{border-color:var(--em,var(--accent,#0e9f6e));box-shadow:0 0 0 3px var(--em-fill,var(--accent-soft,#eafaf3))}
+.wt-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
 .spin{animation:wt-spin 1s linear infinite}@keyframes wt-spin{to{transform:rotate(360deg)}}
-@media(max-width:560px){.wt-head{flex-direction:column}.wt-list li{flex-wrap:wrap;gap:8px}.wt-when{order:4;width:100%}}
+@media(max-width:560px){.wt-head{flex-direction:column}.wt-headacts{justify-content:flex-start}.wt-list li{flex-wrap:wrap;gap:8px}.wt-when{order:4;width:100%}}
 `

@@ -163,9 +163,8 @@ export default function Sessions({ isSuperAdmin }) {
         <button type="button" className="wka-btn sm" onClick={() => load(page, true)} disabled={refreshing}>
           {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
         </button>
-        <span style={{ color: 'var(--wka-emerald)', fontSize: 12, fontWeight: 600 }}>
-          {state.liveCount} live
-        </span>
+        <span className="wka-badge active"><Activity size={11} /> {state.liveCount} live</span>
+        <span className="wka-spacer" />
         <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>
           {state.total} in the last {state.windowDays} days (older auto-delete)
         </span>
@@ -189,7 +188,7 @@ export default function Sessions({ isSuperAdmin }) {
             </thead>
             <tbody>
               {rows.map((s) => (
-                <tr key={s.id} style={s.live ? { background: 'rgba(10,157,102,0.05)' } : undefined}>
+                <tr key={s.id} style={s.live ? { background: 'color-mix(in srgb, var(--wka-emerald) 5%, transparent)' } : undefined}>
                   <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{s.username}</td>
                   <td style={{ maxWidth: 300 }}>
                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={s.goal || s.title || ''}>
@@ -202,7 +201,7 @@ export default function Sessions({ isSuperAdmin }) {
                   {isSuperAdmin ? <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{money(s.costUsd)}</td> : null}
                   <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
                     <button type="button" className="wka-btn sm ghost" onClick={() => setViewId(s.id)} title="View detail"><Eye size={13} /> View</button>
-                    <button type="button" className="wka-btn sm ghost" onClick={() => { setDelErr(null); setDel(s) }} title="Delete record" style={{ marginLeft: 6, color: '#d6433b' }}><Trash2 size={13} /></button>
+                    <button type="button" className="wka-btn sm ghost" onClick={() => { setDelErr(null); setDel(s) }} title="Delete record" style={{ marginLeft: 6, color: 'var(--wka-red)' }}><Trash2 size={13} /></button>
                   </td>
                 </tr>
               ))}

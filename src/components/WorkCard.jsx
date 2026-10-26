@@ -240,8 +240,8 @@ const WORKCARD_CSS = `
   background:linear-gradient(160deg,rgba(255,255,255,.3),rgba(255,255,255,0) 55%)}
 .wc-ic>svg{position:relative;z-index:1;width:21px;height:21px}
 .wc-htext{display:flex;flex-direction:column;gap:4px;min-width:0}
-.wc-eyebrow{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:11px;font-weight:500;
-  letter-spacing:.12em;text-transform:uppercase;color:var(--wc-ink)}
+.wc-eyebrow{font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--wc-ink)}
 .wc-title{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;
   font-size:clamp(19px,1.8vw,23px);letter-spacing:-.02em;line-height:1.16;margin:0;color:var(--wc-title)}
 

@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
+import AccentPicker from '../../components/AccentPicker.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
 import PolicyRules from './sections/PolicyRules.jsx'
@@ -1704,6 +1705,12 @@ function SettingsSection({ viewer, company, onProfile }) {
             <div style={{ display: 'flex', gap: 12, alignItems: 'center' }}><button type="button" className="wka-btn primary" disabled={pBusy} onClick={saveProfile}>{pBusy ? <Spinning /> : <Check size={14} />} Save</button><button type="button" className="wka-btn ghost" disabled={pBusy} onClick={cancelProfile}><X size={14} /> Cancel</button><SavedTag show={pOk} /></div>
           </>
         )}
+      </div>
+
+      <div className="wka-panel">
+        <h2>Appearance</h2>
+        <p className="desc">Not everyone likes green. Pick the accent for your dashboard and the guide - it applies instantly and follows you across devices. <b>Default</b> keeps the product's own green.</p>
+        <AccentPicker variant="wka" />
       </div>
 
       <div className="wka-panel">

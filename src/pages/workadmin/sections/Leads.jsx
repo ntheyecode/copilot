@@ -106,10 +106,11 @@ export default function Leads() {
         <button type="button" className="wka-btn sm" onClick={exportCsv} disabled={rows.length === 0}>
           <Download size={13} /> Export CSV
         </button>
-        <button type="button" className="wka-btn sm" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.leads.length === 0} style={{ color: '#d6433b' }}>
+        <button type="button" className="wka-btn sm ghost" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.leads.length === 0} style={{ color: 'var(--wka-red)' }}>
           <Trash2 size={13} /> Clear all
         </button>
-        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>
+        <span className="wka-spacer" />
+        <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>
           Showing {rows.length} of {state.total}{state.total > state.leads.length ? ` (latest ${state.leads.length})` : ''}
         </span>
       </div>
@@ -160,15 +161,15 @@ export default function Leads() {
                       </td>
                       <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(l.createdAt)}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <button type="button" className="wka-btn sm ghost" title="Delete lead" style={{ color: '#d6433b' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
+                        <button type="button" className="wka-btn sm ghost" title="Delete lead" style={{ color: 'var(--wka-red)' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
                       </td>
                     </tr>
                     {isOpen && more > 0 ? (
                       <tr>
-                        <td colSpan={8} style={{ background: 'var(--wka-panel-2, rgba(0,0,0,0.12))', padding: '4px 14px 14px' }}>
+                        <td colSpan={8} style={{ background: 'var(--wka-bg-2)', padding: '4px 14px 14px' }}>
                           <div style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 900 }}>
                             {searches.map((s, i) => (
-                              <div key={i} style={{ border: '1px solid var(--wka-border, rgba(255,255,255,0.08))', borderRadius: 8, padding: '10px 12px' }}>
+                              <div key={i} style={{ border: '1px solid var(--wka-line)', borderRadius: 10, padding: '10px 12px', background: 'var(--wka-panel)' }}>
                                 <div style={{ fontSize: 11, color: 'var(--wka-faint)', marginBottom: 6 }}>{fmtDateTime(s.at)}</div>
                                 <div style={{ fontWeight: 600, marginBottom: s.response ? 8 : 0, overflowWrap: 'anywhere' }}>{s.query}</div>
                                 {s.response ? (

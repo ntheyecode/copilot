@@ -280,7 +280,7 @@ function stepShots(doc, shots, W, { frame = false, exhibit = null } = {}) {
         const n = exhibit ? exhibit() : null
         let when = ''
         try { when = shot.at ? new Date(shot.at).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : '' } catch { when = '' }
-        const label = (n ? `Exhibit ${n}` : 'Exhibit') + (cap ? ` — ${cap}` : '') + (when ? `  (${when})` : '')
+        const label = (n ? `Exhibit ${n}` : 'Exhibit') + (cap ? `: ${cap}` : '') + (when ? `  (${when})` : '')
         doc.font('Helvetica-Oblique').fontSize(8).fillColor(MUTED).text(label, x0, doc.y, { width: W, lineBreak: false, height: 12 })
         doc.x = x0
         doc.moveDown(0.6)
@@ -1051,7 +1051,7 @@ function fwChart(ctx, frameworks, scale, focus) {
     doc.rect(barX, y + 2.5, barW, 8).fill(ZEBRA)
     if (appW > 0) doc.rect(barX, y + 2.5, appW, 8).fill(TINT_2)
     if (satW > 0) doc.rect(barX, y + 2.5, satW, 8).fill(st.fill)
-    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(f.applicable ? `${f.satisfied} / ${f.applicable}` : '—', barX + barW + 6, y + 1.5, { width: valW, lineBreak: false, height: 11 })
+    doc.font('Helvetica').fontSize(8).fillColor(MUTED).text(f.applicable ? `${f.satisfied} / ${f.applicable}` : '-', barX + barW + 6, y + 1.5, { width: valW, lineBreak: false, height: 11 })
     chip(doc, L + W - chipWidth(doc, st.label.toUpperCase()), y, st.label.toUpperCase(), { fill: st.fill, h: 12, size: 6.5 })
     y += rowH
   }
@@ -1182,9 +1182,9 @@ function drawCover(ctx, { title, goal, company, member, generatedBy, modeLabel, 
   let gy = Math.max(doc.y + 34, 440)
   const rows = metaRows || (() => {
     const r = [
-      ['Organization', company || '—', 'Operator', member || '—'],
-      ['Report ID', session.id || '—', 'Issue date', fmtDate(issued.toISOString())],
-      ['Task performed', fmtDate(session.startedAt) || '—', focus ? 'Framework' : 'Guide style', focus ? focus.name : (modeLabel || '—')],
+      ['Organization', company || '-', 'Operator', member || '-'],
+      ['Report ID', session.id || '-', 'Issue date', fmtDate(issued.toISOString())],
+      ['Task performed', fmtDate(session.startedAt) || '-', focus ? 'Framework' : 'Guide style', focus ? focus.name : (modeLabel || '-')],
     ]
     if (generatedBy) r.push(['Requested by', generatedBy, '', ''])
     return r
@@ -1239,7 +1239,7 @@ function drawTocFrame(ctx, { kind = 'compliance' } = {}) {
       stepMarker(doc, L + 6, sy + 6, 6, st)
       doc.font('Helvetica-Bold').fontSize(8.8).fillColor(INK_HEAD).text(label, L + 20, sy + 1.5, { lineBreak: false, height: 12 })
       const lw = doc.widthOfString(label)
-      doc.font('Helvetica').fontSize(8.8).fillColor(INK).text('— ' + desc, L + 20 + lw + 6, sy + 1.5, { width: W - 20 - lw - 6, lineBreak: false, height: 12 })
+      doc.font('Helvetica').fontSize(8.8).fillColor(INK).text(desc, L + 20 + lw + 6, sy + 1.5, { width: W - 20 - lw - 6, lineBreak: false, height: 12 })
       sy += 20
     }
     sy += 10

@@ -5,9 +5,9 @@
 // is WRITE-ONLY: the server never returns it (the view only says whether one is
 // set). After Save the form COLLAPSES to a read-only record (Edit to reopen).
 import React, { useEffect, useState, useCallback } from 'react'
-import { Save, Mail, Send, Check, AlertTriangle, Pencil, X } from 'lucide-react'
+import { Save, Mail, Send, Check, AlertTriangle, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, Spinning, SavedTag, StepUpGate, StepUpBanner, isLockError, RecRow } from './_shared.jsx'
+import { Loading, ErrorBox, Spinning, SavedTag, StepUpGate, StepUpBanner, isLockError, RecRow, EditToggle } from './_shared.jsx'
 
 export default function Email({ isSuperAdmin }) {
   const [gate, setGate] = useState({ loading: true, error: null, status: null })
@@ -90,8 +90,8 @@ function EmailBody({ isSuperAdmin, stepUp, onLocked }) {
 
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h2 style={{ margin: 0 }}><Mail size={15} style={{ verticalAlign: -2, marginRight: 6 }} />SMTP / SES credentials</h2>
-          {!editing && !disabled && <button type="button" className="wka-btn sm ghost" onClick={() => { setForm(blankForm(cfg)); setEditing(true) }}><Pencil size={13} /> Edit</button>}
+          <h2 style={{ margin: 0 }}><Mail size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />SMTP / SES credentials</h2>
+          {!editing ? <EditToggle editing={editing} disabled={disabled} onEdit={() => { setForm(blankForm(cfg)); setEditing(true) }} /> : null}
         </div>
         <p className="desc">The outbound-email account used to deliver reports. For AWS SES, use the <b>SMTP credentials</b> SES issues (not your AWS access keys). The From address must be a verified SES identity.</p>
 
@@ -112,7 +112,7 @@ function EmailBody({ isSuperAdmin, stepUp, onLocked }) {
         ) : (
           // ---- Edit form ----
           <>
-            <div className="wka-grid" style={{ gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+            <div className="wka-formgrid">
               <div className="wka-field" style={{ gridColumn: '1 / -1' }}><label>SMTP host</label><input className="wka-input" disabled={disabled} placeholder="email-smtp.us-east-1.amazonaws.com" value={form.host} onChange={(e) => set('host', e.target.value)} /></div>
               <div className="wka-field"><label>Port</label><input className="wka-input" type="number" min="1" max="65535" disabled={disabled} value={form.port} onChange={(e) => set('port', e.target.value)} /><span className="hint">587 = STARTTLS, 465 = TLS</span></div>
               <div className="wka-field"><label>Security</label>
@@ -138,7 +138,7 @@ function EmailBody({ isSuperAdmin, stepUp, onLocked }) {
       </div>
 
       <div className="wka-panel">
-        <h2><Send size={15} style={{ verticalAlign: -2, marginRight: 6 }} />Send a test email</h2>
+        <h2><Send size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Send a test email</h2>
         <p className="desc">Uses the <b>saved</b> settings above. Save first, then send a test to confirm the credentials work end to end before relying on report delivery.</p>
         <div style={{ display: 'flex', gap: 10, alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div className="wka-field" style={{ maxWidth: 360, flex: 1 }}><label>Recipient</label><input className="wka-input" disabled={disabled || !cfg.host} placeholder="defaults to the From address" value={testTo} onChange={(e) => setTestTo(e.target.value)} /></div>

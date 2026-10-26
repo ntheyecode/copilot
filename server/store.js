@@ -515,6 +515,9 @@ export function publicWorkUser(u) {
     // not attested yet (the client shows the pin modal). Default unset.
     language: u.language || null,
     languagePinned: !!u.languagePinned,
+    // Per-user dashboard accent: a preset key (e.g. "teal") or a #rrggbb hex the
+    // client maps to the accent CSS variables; null = the surface's own default.
+    accent: u.accent || null,
     ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
     // Per-tier feature gates (Lite has no roadmaps / diagrams) so the client can
     // hide what the plan does not include and keep the marketing claim honest.
@@ -4497,6 +4500,20 @@ export function setWorkUserLanguage(workUserId, code) {
   persist()
   return publicWorkUser(u)
 }
+// Per-user dashboard accent color. Accepts a short preset key (the client's palette,
+// e.g. "green"/"teal"/"indigo") OR a #rrggbb hex (custom color), or null to clear
+// back to the surface default. Validated to a safe, bounded token - the client owns
+// the key -> color mapping (single source on the client); the server just persists
+// the operator's choice so it follows them across devices.
+export function setWorkUserAccent(workUserId, accent) {
+  const u = getUser(workUserId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const a = accent == null ? null : String(accent).trim().toLowerCase()
+  if (a && !/^#[0-9a-f]{6}$/.test(a) && !/^[a-z][a-z0-9-]{1,23}$/.test(a)) throw httpErr(400, 'Invalid accent.')
+  u.accent = a || null
+  persist()
+  return publicWorkUser(u)
+}
 // Resolve a recipient email to that user's PINNED language code, or null when the
 // address is not a known user, has no pinned language, or the stored code no longer
 // resolves. The email layer uses this to decide whether to translate (null / an
@@ -5126,21 +5143,16 @@ export function workUserTier(workUserId) {
 // continuous watch loop); 'full' = normal continuous watching.
 // ---- Homepage hero: superadmin-editable rotating headline + subtext pairs ----
 // Each pair: { h: headline text, s: subtext, em: substring of h to brand-gradient
-// (optional) }. Default = the shipped 8; the superadmin can replace them from the
-// admin console. The marketing page fetches these; an empty/missing set falls back
-// to its built-in default so the page never renders without a hero.
+// (optional) }. Default = the shipped 5 (kept in sync with the client home hero in
+// src/i18n/locales/en.js). The superadmin can replace them from the admin console.
+// The marketing page fetches these; an empty/missing set falls back to its built-in
+// default so the page never renders without a hero.
 const HERO_DEFAULT = [
-  { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong, keeping you on the next correct step until the job is done. Any task, any field.' },
-  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'A genius peer sits beside you in any app, reads your screen, tells you the exact next move, and corrects you when a step goes wrong.' },
-  { h: 'Always on. The expert you need, the moment you need one.', em: 'Always on.', s: 'No scheduling, no waiting. Bring any task, any field, and get expert guidance right now, step by step.' },
-  { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is written the secure way, then scanned for injection, exposed secrets, over-broad access and known-vulnerable libraries, so what you get is ready to go.' },
+  { h: 'Get anything done right, the first time.', em: 'anything', s: 'It watches your screen, tells you the exact next move, and corrects you the moment a step goes wrong. Any task, any field.' },
+  { h: 'The sharpest person in the room, on every screen.', em: 'sharpest person', s: 'An expert beside you in any app. It reads your screen, gives you the exact next click or command, and catches your mistakes as you make them.' },
+  { h: 'Code that is safe to run, checked before you see it.', em: 'safe to run', s: 'Every command, script and fix is scanned for injection, exposed secrets, over-broad access and vulnerable libraries before it reaches you.' },
   { h: 'Private by design, redacted on your device.', em: 'Private by design', s: 'Sensitive data is stripped or tokenized on your machine before anything is sent. Your files and secrets never leave.' },
-  { h: 'The strongest AI plans it. Guided and corrected, live.', em: 'strongest AI', s: 'Your plan comes from the strongest AI your key can reach. Then it guides you step by step, watches your screen, and catches and corrects a wrong move in real time.' },
-  { h: 'Gets smarter every session, never stuck on old knowledge.', em: 'smarter every session', s: 'WorkCoPilot reads the current way your tools work and carries it forward, so your team starts each task ahead of the AI\'s training cutoff, not behind it.' },
-  { h: 'Do more with the team you already have.', em: 'team you already have', s: 'Lean teams take on specialist work and ship like experts, without new hires or outsourcing.' },
-  { h: 'Compliance-ready for the frameworks you answer to.', em: 'Compliance-ready', s: 'Arm a policy for the frameworks you report to, lock it, and get controls and audit evidence to support your compliance.' },
-  { h: 'The AI is on us, always included.', em: 'on us', s: 'You are never billed for how much AI a task takes. It is part of your plan, so bring every task, big or small, and focus on the work, not the cost.' },
-  { h: 'Quality over quantity, on every step.', em: 'Quality over quantity', s: 'You get the one correct next move, done the proven way for your field and checked before you see it, not a pile of options to sort through. Do it once, and do it right.' },
+  { h: 'The AI is on us, always included.', em: 'on us', s: 'You are never billed for how much AI a task takes. Bring every task, big or small, and focus on the work.' },
 ]
 export function getHeroPairs() {
   const custom = db.work && Array.isArray(db.work.hero) && db.work.hero.length ? db.work.hero : null

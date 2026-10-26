@@ -279,8 +279,8 @@ const COMPOSECARD_CSS = `
 
 /* WHAT I BASED IT ON + caveat */
 .cc-trust{display:flex;flex-direction:column;gap:11px;padding-top:13px;border-top:1px solid var(--wc-line)}
-.cc-trust-k{display:inline-flex;align-items:center;gap:5px;font-family:"JetBrains Mono",ui-monospace,monospace;
-  font-size:10.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:var(--wc-ink)}
+.cc-trust-k{display:inline-flex;align-items:center;gap:5px;font-family:"Figtree","Helvetica Neue",system-ui,sans-serif;
+  font-size:10.5px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--wc-ink)}
 .cc-fact{display:flex;flex-direction:column;gap:3px}
 .cc-fact p{margin:0;font-size:13px;line-height:1.55;color:var(--wc-mut);overflow-wrap:anywhere}
 .cc-caveat{display:flex;gap:8px;align-items:flex-start;font-size:12.5px;line-height:1.5;color:var(--wc-mut);

@@ -166,6 +166,7 @@ import RichText from '../components/RichText.jsx'
 import DownloadMenu from '../components/DownloadMenu.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
+import AccentPicker from '../components/AccentPicker.jsx'
 import { stepWindow, progressText, stepProgress, planMarker } from '../shared/step_window.js'
 // Pre-task readiness coach content (single source, client-only, zero AI cost).
 import { TASK_KINDS, READINESS, TASK_TIPS, readinessWarnings, sampleTask } from '../shared/task_starters.js'
@@ -749,10 +750,10 @@ function TaskCoach({ tier, onContext, docs, children }) {
           )}
           <div className="wd-coach-foot">
             {!place
-              ? <span className="wd-coach-foothint">Pick where you're working — or skip with “I know my task”.</span>
+              ? <span className="wd-coach-foothint">Pick where you're working, or skip with “I know my task”.</span>
               : <span />}
             {advancing
-              ? <span className="wd-coach-adv"><Check size={14} /> Got it — opening next step<span className="bar"><i /></span></span>
+              ? <span className="wd-coach-adv"><Check size={14} /> Got it. Opening next step<span className="bar"><i /></span></span>
               : <button type="button" className="wd-cta" disabled={!place} onClick={() => setStage('docs')}>Continue <ArrowRight size={15} /></button>}
           </div>
         </div>
@@ -801,16 +802,19 @@ const WD_CSS = `
   --panel:#ffffff;--panel-2:#ffffff;--panel-3:#f6f8fd;
   --line:#e7eaf2;--line-2:#d5d9e6;--line-soft:#eef1f7;
   --tx:#1b2033;--tx-2:#2b3250;--mut:#5c6484;--mut-2:#434a68;--faint:#8a90a6;
-  --em:#0e9f6e;--em-2:#0a84c2;--on-em:#ffffff;--em-deep:#0b7a53;
+  /* Accent tokens derive from the per-user --accent vars (src/theme/accent.js);
+     the literal is this surface's own default. --em-2 (cyan) stays the fixed
+     "observation" color so it keeps contrasting whatever accent the user picks. */
+  --em:var(--accent,#0e9f6e);--em-2:#0a84c2;--on-em:var(--accent-contrast,#ffffff);--em-deep:var(--accent-dark,#0b7a53);
   --warm:#c85a16;--warm-2:#e4612f;--cta-ink:#ffffff;
   --violet:#7a4ddb;--rose:#d23e6b;
-  --em-fill:#eafaf3;--em-fill-2:#d9f3e7;--em-line:#bde9d5;
+  --em-fill:var(--accent-soft,#eafaf3);--em-fill-2:#d9f3e7;--em-line:var(--accent-line,#bde9d5);
   --warm-fill:rgba(200,90,22,.07);--warm-line:rgba(200,90,22,.28);
   --card-a:#ffffff;--card-b:#fbfcff;
   --chip:#f1f3fa;--chip-line:#e2e6f1;
   --field:#fcfdff;--track:#e7eaf2;
   --shadow:0 22px 48px -30px rgba(30,40,80,.30);--shadow-sm:0 2px 12px rgba(30,40,80,.08);
-  --focus:#0e9f6e;--danger:#e23b4e;
+  --focus:var(--accent,#0e9f6e);--danger:#e23b4e;
   --card-shadow:0 1px 2px rgba(20,24,44,.03);
   --card-shadow-hover:0 1px 2px rgba(20,24,44,.04),0 8px 22px -16px rgba(26,31,54,.18);
   --info:#0a6fb3;--info-fill:#e9f5fc;--info-line:rgba(10,134,194,.26);
@@ -818,6 +822,9 @@ const WD_CSS = `
   position:relative;display:flex;min-height:100vh;background:var(--ink);color:var(--tx);overflow-x:clip;
   --wd-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+/* The one tint with no --accent-* counterpart: derived only once a user accent is
+   set (data-accent on :root), so the default stays the designed literal above. */
+[data-accent] .wd{--em-fill-2:color-mix(in srgb,var(--accent) 18%,#ffffff)}
 .wd *{box-sizing:border-box}
 .wd h1,.wd h2,.wd h3{margin:0;color:var(--tx);font-family:var(--wd-display);letter-spacing:-.01em}
 .wd p{margin:0}
@@ -2476,8 +2483,8 @@ function Home({ user, onOpen, onSignOut }) {
                 autoFocus
                 style={{ width: '100%', background: 'var(--field)', border: '1px solid var(--line)', borderRadius: 11, padding: '11px', color: 'var(--tx)', font: 'inherit', fontSize: 14, outline: 'none' }} />
               <div className="wd-modal-note" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <span>Unit price: <b>{unit != null ? money(unit) : '—'}</b>{kind === 'hours' ? ' / hour' : ' / image'}</span>
-                <span>Total: <b>{total != null ? money(total) : '—'}</b></span>
+                <span>Unit price: <b>{unit != null ? money(unit) : '-'}</b>{kind === 'hours' ? ' / hour' : ' / image'}</span>
+                <span>Total: <b>{total != null ? money(total) : '-'}</b></span>
               </div>
               {buyErr && <div className="wd-note warn" role="alert" style={{ marginTop: 12 }}><AlertTriangle size={15} /> <span>{buyErr}</span></div>}
               <div className="wd-modal-btns">
@@ -2828,24 +2835,27 @@ const CONSOLE_CSS = `
   --wc-body:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
   --wc-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-family:var(--wc-body);
-  --brand-500:#0e9f6e;--brand-600:#0b8259;--brand-700:#086647;--brand-soft:rgba(14,159,110,.12);--brand-50:rgba(14,159,110,.12);
+  --brand-500:var(--accent,#0e9f6e);--brand-600:var(--accent-dark,#0b8259);--brand-700:var(--accent-ink,#086647);--brand-soft:var(--accent-soft,rgba(14,159,110,.12));--brand-50:var(--accent-soft,rgba(14,159,110,.12));
   /* Semantic guiding palette (color-coded by meaning): EMERALD = the current
      step / live action (the brightest thing), CYAN = calm context the watcher
      can see (observation), amber = warnings (--warning, already defined). Light
      values here; the dark overrides follow. Derived from the brand set
      emerald #8cf5c4 / cyan #39d3ff for dark; darkened for contrast on white. */
-  --em:#0e9f6e;--em-2:#0a84c2;--on-em:#ffffff;
-  --em-soft:rgba(14,159,110,.10);--em-ring:rgba(14,159,110,.32);--em-glow:rgba(14,159,110,.16);
+  --em:var(--accent,#0e9f6e);--em-2:#0a84c2;--on-em:var(--accent-contrast,#ffffff);
+  --em-soft:var(--accent-soft,rgba(14,159,110,.10));--em-ring:var(--accent-line,rgba(14,159,110,.32));--em-glow:rgba(14,159,110,.16);
   --obs:#0a84c2;--obs-soft:rgba(10,132,194,.09);--obs-ring:rgba(10,132,194,.30);
   /* MS-docs blue, for the inline "Open ..." hyperlinks (distinct from the green
      accent so a link reads as a link). --wc-fs is the reader text-size multiplier
      (set inline on .wc); guidance font-sizes below are calc(px * var(--wc-fs)). */
   --wc-link:#0067c0;--wc-fs:1;
   font-feature-settings:"tnum" 1,"cv11" 1}
-[data-theme='dark'] .wc{--brand-500:#34d8a0;--brand-600:#12b981;--brand-700:#0e9f6e;--brand-soft:rgba(52,216,160,.16);--brand-50:rgba(52,216,160,.16);
-  --em:#8cf5c4;--em-2:#39d3ff;--on-em:#052a1d;
-  --em-soft:rgba(140,245,196,.14);--em-ring:rgba(140,245,196,.34);--em-glow:rgba(140,245,196,.20);
+[data-theme='dark'] .wc{--brand-500:var(--accent,#34d8a0);--brand-600:var(--accent,#12b981);--brand-700:var(--accent,#0e9f6e);--brand-soft:var(--accent-soft,rgba(52,216,160,.16));--brand-50:var(--accent-soft,rgba(52,216,160,.16));
+  --em:var(--accent,#8cf5c4);--em-2:#39d3ff;--on-em:var(--accent-contrast,#052a1d);
+  --em-soft:var(--accent-soft,rgba(140,245,196,.14));--em-ring:var(--accent-line,rgba(140,245,196,.34));--em-glow:rgba(140,245,196,.20);
   --obs:#39d3ff;--obs-soft:rgba(57,211,255,.12);--obs-ring:rgba(57,211,255,.34);--wc-link:#6cb6ff}
+/* --em-glow has no --accent-* counterpart: derived only once a user accent is set
+   (data-accent on :root), after the dark block so it applies in both themes. */
+[data-accent] .wc{--em-glow:color-mix(in srgb,var(--accent) 18%,transparent)}
 .wc .fill{flex:1 1 auto;min-width:0}
 
 /* Header toolbar: one quiet row under a hairline. Float on top is the primary
@@ -4214,7 +4224,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.policy && Array.isArray(r.policy.findings) && r.policy.findings.length) {
         setFlags(r.policy.findings.slice(0, 4).map((f, i) => ({
           t: Date.now() + i,
-          text: `Company policy — ${f.kind === 'forbid' ? 'prohibited' : 'required'}: ${f.title}${f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''}${f.guidance ? `. ${f.guidance}` : ''}`,
+          text: `Company policy, ${f.kind === 'forbid' ? 'prohibited' : 'required'}: ${f.title}${f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''}${f.guidance ? `. ${f.guidance}` : ''}`,
         })))
       }
       if (r.replan) setReplanInfo(r.replan)   // per-task re-plan budget left
@@ -4848,6 +4858,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   {!isMobile && <button role="menuitem" className="wc-menu-item" onClick={fromMenu(openFullGuide)}><Monitor size={15} /><span><b>Full guide</b><small>Clean, full-screen guidance on your other monitor</small></span></button>}
                   <div className="wc-menu-sec">View</div>
                   <div className="wc-menu-row"><span className="wc-menu-row-k">Text size</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
+                  {/* Per-user accent: applies live everywhere (guide + dashboards) and persists. Stays open like Text size. */}
+                  <div className="wc-menu-row" style={{ display: 'block' }}><AccentPicker variant="guide" /></div>
                   <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? 'Dark mode' : 'Light mode'}</b><small>Switch the guiding panel theme</small></span></button>
                 </div>
               )}

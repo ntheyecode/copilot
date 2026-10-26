@@ -627,7 +627,7 @@ const CSS = `
 /* WorkCoPilot auth: brand green/blue with the orange CTA. Light by default;
    dark follows the app's data-theme attribute. Tokens mirror the dashboard. */
 .wl{--bg:#f3f5fb;--panel:#ffffff;--panel-2:#f7f9fd;--line:#e6e8f1;--line-2:#d3d7e5;--tx:#161a2b;--tx-2:#2b3250;--mut:#5c6484;
-  --em:#0e9f6e;--cyan:#0a84c2;--on-em:#ffffff;--em-fill:rgba(14,159,110,.08);--em-fill-2:rgba(14,159,110,.14);--em-line:rgba(14,159,110,.30);
+  --em:var(--accent,#0e9f6e);--cyan:#0a84c2;--on-em:var(--accent-contrast,#ffffff);--em-fill:var(--accent-soft,rgba(14,159,110,.08));--em-fill-2:var(--accent-soft,rgba(14,159,110,.14));--em-line:var(--accent-line,rgba(14,159,110,.30));
   --cyan-fill:rgba(10,132,194,.08);--cyan-line:rgba(10,132,194,.26);
   --cta:#f26a43;--cta-2:#e35a31;--cta-ink:#ffffff;--cta-soft:rgba(242,106,67,.10);--cta-line:rgba(242,106,67,.32);--cta-text:#b63f1c;
   --chip:#f1f3fa;--field:#fbfcff;--err:#b42318;
@@ -636,7 +636,7 @@ const CSS = `
   position:relative;min-height:100vh;display:grid;grid-template-columns:1.05fr .95fr;background:var(--bg);color:var(--tx);
   font-family:"Figtree",system-ui,sans-serif;overflow-x:hidden;-webkit-font-smoothing:antialiased;text-align:start}
 [data-theme='dark'] .wl{--bg:#0a0b12;--panel:#13141f;--panel-2:#181b27;--line:rgba(255,255,255,.08);--line-2:rgba(255,255,255,.15);--tx:#eef0f6;--tx-2:#d3d8e6;--mut:#9aa0b4;
-  --em:#8cf5c4;--cyan:#39d3ff;--on-em:#052a1d;--em-fill:rgba(140,245,196,.10);--em-fill-2:rgba(140,245,196,.17);--em-line:rgba(140,245,196,.34);
+  --em:var(--accent,#8cf5c4);--cyan:#39d3ff;--on-em:var(--accent-contrast,#052a1d);--em-fill:var(--accent-soft,rgba(140,245,196,.10));--em-fill-2:var(--accent-soft,rgba(140,245,196,.17));--em-line:var(--accent-line,rgba(140,245,196,.34));
   --cyan-fill:rgba(57,211,255,.10);--cyan-line:rgba(57,211,255,.30);
   --cta:#ffb561;--cta-2:#ff7a59;--cta-ink:#241206;--cta-soft:rgba(255,160,80,.10);--cta-line:rgba(255,160,80,.32);--cta-text:#ffb561;
   --chip:rgba(255,255,255,.05);--field:#0b0c13;--err:#ff8b81;
@@ -856,7 +856,7 @@ const CSS = `
    dark selector. Plain, calm background; no brand aside. */
 .wl.wl-app{grid-template-columns:1fr;background:#f3f5fb;min-height:100vh}
 [data-theme='dark'] .wl.wl-app{--bg:#f3f5fb;--panel:#ffffff;--panel-2:#f7f9fd;--line:#e6e8f1;--line-2:#d3d7e5;--tx:#161a2b;--tx-2:#2b3250;--mut:#5c6484;
-  --em:#0e9f6e;--cyan:#0a84c2;--on-em:#ffffff;--em-fill:rgba(14,159,110,.08);--em-fill-2:rgba(14,159,110,.14);--em-line:rgba(14,159,110,.30);
+  --em:var(--accent,#0e9f6e);--cyan:#0a84c2;--on-em:var(--accent-contrast,#ffffff);--em-fill:var(--accent-soft,rgba(14,159,110,.08));--em-fill-2:var(--accent-soft,rgba(14,159,110,.14));--em-line:var(--accent-line,rgba(14,159,110,.30));
   --cyan-fill:rgba(10,132,194,.08);--cyan-line:rgba(10,132,194,.26);
   --cta:#f26a43;--cta-2:#e35a31;--cta-ink:#ffffff;--cta-soft:rgba(242,106,67,.10);--cta-line:rgba(242,106,67,.32);--cta-text:#b63f1c;
   --chip:#f1f3fa;--field:#fbfcff;--err:#b42318;
