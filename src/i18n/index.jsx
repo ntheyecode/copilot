@@ -52,6 +52,19 @@ export function getStoredLocale() {
   try { return resolveLocale(localStorage.getItem(STORAGE_KEY)) } catch { return null }
 }
 
+// The signed-in user's PINNED language (first-login attestation). It is the
+// HIGHEST-precedence signal: once the app knows who is signed in and that they
+// pinned a language, that language supersedes our detection everywhere. It is not
+// known until /api/work/me resolves, so the app calls setPinnedUserLocale() with
+// the user's code on load (see LanguagePinModal). Module-scoped so detectLocale()
+// and getLocale() - which run outside React too (api.js) - honor it immediately.
+let pinnedUserLocale = null
+export function setPinnedUserLocale(code) {
+  pinnedUserLocale = resolveLocale(code) || null
+  return pinnedUserLocale
+}
+export function getPinnedUserLocale() { return pinnedUserLocale }
+
 // The `?lang=<code>` query parameter: the TOP-priority signal, so a shared or
 // crawled URL (e.g. https://admireveda.com/workcopilot/pricing?lang=de) renders
 // that language deterministically - Google runs our JS, so ?lang=de renders
@@ -68,7 +81,10 @@ export function localeFromQuery() {
 }
 
 export function detectLocale() {
-  // 1) ?lang= wins over everything and persists (see localeFromQuery).
+  // 0) A signed-in user's PINNED language supersedes everything (owner: language
+  // is pinned at first login and we always honor it). Set once /api/work/me loads.
+  if (pinnedUserLocale) return pinnedUserLocale
+  // 1) ?lang= wins over the rest and persists (see localeFromQuery).
   const byQuery = localeFromQuery()
   if (byQuery) return byQuery
   const stored = getStoredLocale()

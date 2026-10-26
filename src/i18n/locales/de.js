@@ -2,6 +2,14 @@
 // Nie übersetzt: Code, Befehle, URLs/Pfade, Marken (WorkCoPilot, AdmireVeda), Tarifnamen.
 export default {
   lang: { label: 'Sprache', choose: 'Sprache wählen' },
+  languagePin: {
+    title: 'Wählen Sie Ihre Sprache',
+    intro: 'Damit legen Sie Ihre Sprache für die WorkCoPilot-App und für die E-Mails fest, die wir Ihnen senden.',
+    note: 'Wählen Sie die Sprache, in der Sie am liebsten arbeiten. Sie können sie später im Sprachmenü ändern.',
+    confirm: 'Sprache speichern',
+    saving: 'Wird gespeichert...',
+    error: 'Ihre Sprache konnte nicht gespeichert werden. Bitte versuchen Sie es erneut.',
+  },
 
   widgets: {
     copy: {

@@ -4,6 +4,7 @@ import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor
 import SupportTickets from '../components/SupportTickets.jsx'
 import WorkBilling from '../components/WorkBilling.jsx'
 import MfaGate from '../components/MfaGate.jsx'
+import LanguagePinModal from '../components/LanguagePinModal.jsx'
 import WorkTeam from './WorkTeam.jsx'
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
@@ -6094,6 +6095,10 @@ export default function WorkPage() {
   if (!sess.signedIn) { window.location.href = '/workcopilot'; return null }
   if (!sess.access) return frame(<NoAccess onSignOut={signOut} />)
   const user = sess.user
-  if (openId) return frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Console sessionId={openId} watchLight={!!((user && user.watchLight) || (sess && sess.watchLight))} onBack={() => { setOpenId(null); clearGuard() }} onGuard={showGuard} /></>)
-  return frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Home user={user} onOpen={openSession} onSignOut={signOut} /></>)
+  // First-login language attestation (paid users). Mounted once at the dashboard
+  // root; it self-gates on paid && !languagePinned and also applies an already-
+  // pinned language on load. onPinned re-hydrates /me so it stops showing once set.
+  const langPin = <LanguagePinModal user={user} onPinned={loadMe} />
+  if (openId) return frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Console sessionId={openId} watchLight={!!((user && user.watchLight) || (sess && sess.watchLight))} onBack={() => { setOpenId(null); clearGuard() }} onGuard={showGuard} />{langPin}</>)
+  return frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Home user={user} onOpen={openSession} onSignOut={signOut} />{langPin}</>)
 }

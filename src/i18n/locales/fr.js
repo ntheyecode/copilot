@@ -2,6 +2,14 @@
 // Jamais traduit : code, commandes, URL/chemins, marques (WorkCoPilot, AdmireVeda), noms des offres.
 export default {
   lang: { label: 'Langue', choose: 'Choisissez votre langue' },
+  languagePin: {
+    title: 'Choisissez votre langue',
+    intro: "Cela définit votre langue pour l'application WorkCoPilot et pour les e-mails que nous vous envoyons.",
+    note: "Choisissez la langue dans laquelle vous êtes le plus à l'aise pour travailler. Vous pourrez la changer plus tard dans le menu des langues.",
+    confirm: 'Enregistrer la langue',
+    saving: 'Enregistrement...',
+    error: "Impossible d'enregistrer votre langue. Veuillez réessayer.",
+  },
 
   widgets: {
     copy: {

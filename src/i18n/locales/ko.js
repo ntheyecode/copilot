@@ -10,6 +10,14 @@ export default {
     label: '언어',
     choose: '언어를 선택하세요',
   },
+  languagePin: {
+    title: '언어를 선택하세요',
+    intro: '이렇게 하면 WorkCoPilot 앱과 저희가 보내는 이메일의 언어가 설정됩니다.',
+    note: '가장 편하게 작업할 수 있는 언어를 선택하세요. 나중에 언어 메뉴에서 변경할 수 있습니다.',
+    confirm: '언어 저장',
+    saving: '저장 중...',
+    error: '언어를 저장하지 못했습니다. 다시 시도해 주세요.',
+  },
 
   common: {
     signIn: '로그인',

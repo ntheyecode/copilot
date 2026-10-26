@@ -11,6 +11,17 @@ export default {
     choose: 'Choose your language',
   },
 
+  // First-login language attestation modal (LanguagePinModal). Shown once to a
+  // paid user; pins the language for the app AND their emails.
+  languagePin: {
+    title: 'Choose your language',
+    intro: 'This sets your language for the WorkCoPilot app and for the emails we send you.',
+    note: 'Pick the language you are most comfortable working in. You can change it later from the language menu.',
+    confirm: 'Save language',
+    saving: 'Saving...',
+    error: 'Could not save your language. Please try again.',
+  },
+
   common: {
     signIn: 'Sign in',
     getStarted: 'Get started',

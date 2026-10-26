@@ -2,6 +2,14 @@
 // Nunca se traduce: código, comandos, URLs/rutas, marcas (WorkCoPilot, AdmireVeda), nombres de planes.
 export default {
   lang: { label: 'Idioma', choose: 'Elige tu idioma' },
+  languagePin: {
+    title: 'Elige tu idioma',
+    intro: 'Esto define tu idioma para la aplicación WorkCoPilot y para los correos que te enviamos.',
+    note: 'Elige el idioma en el que te sientes más cómodo trabajando. Puedes cambiarlo más tarde desde el menú de idioma.',
+    confirm: 'Guardar idioma',
+    saving: 'Guardando...',
+    error: 'No se pudo guardar tu idioma. Inténtalo de nuevo.',
+  },
 
   widgets: {
     copy: {

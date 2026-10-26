@@ -11,6 +11,14 @@ export default {
     label: '语言',
     choose: '选择您的语言',
   },
+  languagePin: {
+    title: '选择您的语言',
+    intro: '这将设置您在 WorkCoPilot 应用中以及我们发送给您的邮件的语言。',
+    note: '请选择您最习惯使用的语言。您以后可以在语言菜单中更改。',
+    confirm: '保存语言',
+    saving: '正在保存...',
+    error: '无法保存您的语言，请重试。',
+  },
 
   common: {
     signIn: '登录',

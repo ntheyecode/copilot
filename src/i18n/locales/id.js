@@ -2,6 +2,14 @@
 // Tidak pernah diterjemahkan: kode, perintah, URL/path, merek (WorkCoPilot, AdmireVeda), nama paket.
 export default {
   lang: { label: 'Bahasa', choose: 'Pilih bahasa Anda' },
+  languagePin: {
+    title: 'Pilih bahasa Anda',
+    intro: 'Ini menetapkan bahasa Anda untuk aplikasi WorkCoPilot dan untuk email yang kami kirimkan kepada Anda.',
+    note: 'Pilih bahasa yang paling nyaman Anda gunakan untuk bekerja. Anda dapat mengubahnya nanti dari menu bahasa.',
+    confirm: 'Simpan bahasa',
+    saving: 'Menyimpan...',
+    error: 'Tidak dapat menyimpan bahasa Anda. Silakan coba lagi.',
+  },
 
   widgets: {
     copy: { copy: 'Salin', copied: 'Tersalin', copyCommand: 'Salin perintah', copyAria: 'Salin ke papan klip', copiedAria: 'Tersalin ke papan klip' },

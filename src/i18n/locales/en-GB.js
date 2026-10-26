@@ -16,6 +16,14 @@ const deepMerge = (base, patch) => {
 
 export default deepMerge(en, {
   lang: { choose: 'Choose your language' },
+  languagePin: {
+    title: 'Choose your language',
+    intro: 'This sets your language for the WorkCoPilot app and for the emails we send you.',
+    note: 'Pick the language you are most comfortable working in. You can change it later from the language menu.',
+    confirm: 'Save language',
+    saving: 'Saving...',
+    error: 'Could not save your language. Please try again.',
+  },
   footer: {
     tag: 'Your expert, on every screen. Read-only guidance that watches your screen and tells you the exact next move, in any app, with your data protected on your device.',
     aup: 'Acceptable Use',

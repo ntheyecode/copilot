@@ -2,6 +2,14 @@
 // Nunca traduzido: código, comandos, URLs/caminhos, marcas (WorkCoPilot, AdmireVeda), nomes dos planos.
 export default {
   lang: { label: 'Idioma', choose: 'Escolha seu idioma' },
+  languagePin: {
+    title: 'Escolha seu idioma',
+    intro: 'Isto define seu idioma para o aplicativo WorkCoPilot e para os e-mails que enviamos a você.',
+    note: 'Escolha o idioma com o qual você se sente mais à vontade para trabalhar. Você pode mudá-lo depois no menu de idiomas.',
+    confirm: 'Salvar idioma',
+    saving: 'Salvando...',
+    error: 'Não foi possível salvar seu idioma. Tente novamente.',
+  },
 
   widgets: {
     copy: { copy: 'Copiar', copied: 'Copiado', copyCommand: 'Copiar o comando', copyAria: 'Copiar para a área de transferência', copiedAria: 'Copiado para a área de transferência' },

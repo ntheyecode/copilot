@@ -2,6 +2,14 @@
 // Không bao giờ dịch: mã, lệnh, URL/đường dẫn, thương hiệu (WorkCoPilot, AdmireVeda), tên gói.
 export default {
   lang: { label: 'Ngôn ngữ', choose: 'Chọn ngôn ngữ của bạn' },
+  languagePin: {
+    title: 'Chọn ngôn ngữ của bạn',
+    intro: 'Thao tác này đặt ngôn ngữ của bạn cho ứng dụng WorkCoPilot và cho các email chúng tôi gửi cho bạn.',
+    note: 'Hãy chọn ngôn ngữ bạn thấy thoải mái nhất khi làm việc. Bạn có thể thay đổi sau trong menu ngôn ngữ.',
+    confirm: 'Lưu ngôn ngữ',
+    saving: 'Đang lưu...',
+    error: 'Không thể lưu ngôn ngữ của bạn. Vui lòng thử lại.',
+  },
 
   widgets: {
     copy: { copy: 'Sao chép', copied: 'Đã sao chép', copyCommand: 'Sao chép lệnh', copyAria: 'Sao chép vào bộ nhớ tạm', copiedAria: 'Đã sao chép vào bộ nhớ tạm' },

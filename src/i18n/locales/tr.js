@@ -2,6 +2,14 @@
 // Asla çevrilmez: kod, komutlar, URL/yollar, markalar (WorkCoPilot, AdmireVeda), plan adları.
 export default {
   lang: { label: 'Dil', choose: 'Dilinizi seçin' },
+  languagePin: {
+    title: 'Dilinizi seçin',
+    intro: 'Bu, WorkCoPilot uygulaması ve size gönderdiğimiz e-postalar için dilinizi belirler.',
+    note: 'En rahat çalıştığınız dili seçin. Daha sonra dil menüsünden değiştirebilirsiniz.',
+    confirm: 'Dili kaydet',
+    saving: 'Kaydediliyor...',
+    error: 'Diliniz kaydedilemedi. Lütfen tekrar deneyin.',
+  },
 
   widgets: {
     copy: { copy: 'Kopyala', copied: 'Kopyalandı', copyCommand: 'Komutu kopyala', copyAria: 'Panoya kopyala', copiedAria: 'Panoya kopyalandı' },
