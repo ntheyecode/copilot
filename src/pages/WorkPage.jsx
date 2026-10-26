@@ -4395,11 +4395,19 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     if (!sess) return undefined
     if (!completed) { sawActiveRef.current = true; return undefined }
     if (!sawActiveRef.current || celebratedRef.current) return undefined
+    // Fire only when the surface that SHOWS the celebration first appears, so
+    // the confetti always lands on a visible completed view: the in-software
+    // done view renders at `ended`; the floater's completed block renders as
+    // soon as every step is done (or the session ends). Marking all steps done
+    // in-software (no floater) waits for End, which is exactly when its banner
+    // shows.
+    const surfaceReady = ended || (done && !!pipWin)
+    if (!surfaceReady) return undefined
     celebratedRef.current = true
     setCelebrate(true)
     const t = setTimeout(() => setCelebrate(false), 3400)
     return () => clearTimeout(t)
-  }, [completed, sess])
+  }, [completed, ended, done, pipWin, sess])
   // Confetti pieces: computed once per mount so re-renders never reshuffle them.
   const confettiPieces = useMemo(() => makeConfetti(14), [])
   const autoWatchRef = useRef(false)
