@@ -26,8 +26,7 @@
   <line x1="92" y1="138" x2="128" y2="138" class="l"/>
   <line x1="110" y1="160" x2="96" y2="184" class="l"/>
   <line x1="110" y1="160" x2="124" y2="184" class="l"/>
-  <text x="70" y="204" class="t">TENANT ADMIN</text>
-  <text x="100" y="218" class="n">502</text>
+  <text x="56" y="92" class="t">TENANT ADMIN <tspan class="n">502</tspan></text>
   <path d="M 130 140 L 190 140" class="l" marker-end="url(#a)"/>
 
   <!-- policy editor 504 -->
@@ -40,24 +39,24 @@
   <!-- policy object 506 -->
   <rect x="380" y="90" width="380" height="250" class="b"/>
   <text x="390" y="108" class="h">EGRESS POLICY OBJECT 506 (versioned; updatedBy)</text>
-  <rect x="392" y="118" width="170" height="40" class="b"/>
-  <text x="398" y="134" class="t">PER-CATEGORY ACTION: send /</text>
-  <text x="398" y="148" class="t">redact / withhold / tokenize <tspan class="n">508</tspan></text>
-  <rect x="574" y="118" width="176" height="40" class="b"/>
-  <text x="580" y="134" class="t">BLOCK WORDS (always</text>
-  <text x="580" y="148" class="t">removed, never reversible) <tspan class="n">510</tspan></text>
-  <rect x="392" y="168" width="170" height="40" class="b"/>
+  <rect x="392" y="118" width="174" height="40" class="b"/>
+  <text x="398" y="134" class="t">PER-CATEGORY ACTION: send,</text>
+  <text x="398" y="148" class="t">redact, withhold, tokenize <tspan class="n">508</tspan></text>
+  <rect x="576" y="118" width="174" height="40" class="b"/>
+  <text x="582" y="134" class="t">BLOCK WORDS (always</text>
+  <text x="582" y="148" class="t">removed, never reversible) <tspan class="n">510</tspan></text>
+  <rect x="392" y="168" width="174" height="40" class="b"/>
   <text x="398" y="184" class="t">MODE: redact | tokenize</text>
   <text x="398" y="198" class="n">512</text>
-  <rect x="574" y="168" width="176" height="40" class="b"/>
-  <text x="580" y="184" class="t">SCREENSHOT-EVIDENCE</text>
-  <text x="580" y="198" class="t">RETENTION on/off <tspan class="n">514</tspan></text>
-  <rect x="392" y="218" width="170" height="40" class="b"/>
+  <rect x="576" y="168" width="174" height="40" class="b"/>
+  <text x="582" y="184" class="t">SCREENSHOT-EVIDENCE</text>
+  <text x="582" y="198" class="t">RETENTION on/off <tspan class="n">514</tspan></text>
+  <rect x="392" y="218" width="174" height="40" class="b"/>
   <text x="398" y="234" class="t">RETENTION WINDOW (days)</text>
   <text x="398" y="248" class="n">516</text>
-  <rect x="574" y="218" width="176" height="40" class="b"/>
-  <text x="580" y="234" class="t">ARMED / LOCKED state</text>
-  <text x="580" y="248" class="t">(unlock = re-auth + audit) <tspan class="n">518</tspan></text>
+  <rect x="576" y="218" width="174" height="40" class="b"/>
+  <text x="582" y="234" class="t">ARMED / LOCKED state</text>
+  <text x="582" y="248" class="t">(unlock = re-auth + audit) <tspan class="n">518</tspan></text>
   <rect x="392" y="268" width="358" height="40" class="b"/>
   <text x="398" y="284" class="t">CUSTOM PATTERNS with own action; applied to typed text AND to</text>
   <text x="398" y="298" class="t">OCR'd screen frames identically</text>
@@ -68,11 +67,11 @@
   <text x="390" y="388" class="t">SCOPE RESOLUTION: tenant member -&gt; tenant's armed policy (cannot</text>
   <text x="390" y="402" class="t">edit, weaken or opt out); individual -&gt; own policy; platform admin</text>
   <text x="390" y="416" class="t">-&gt; any policy, may lock</text>
-  <text x="740" y="432" class="n">520</text>
+  <text x="728" y="432" class="n">520</text>
 
   <!-- distribution 522 to member devices -->
   <path d="M 380 405 L 300 405 L 300 470" class="l" marker-end="url(#a)"/>
-  <text x="200" y="458" class="t">522 distribute armed policy</text>
+  <text x="308" y="458" class="t">522 distribute armed policy</text>
 
   <rect x="60" y="470" width="320" height="150" class="b"/>
   <text x="70" y="488" class="h">MEMBER USER DEVICE 110 (one of many)</text>

@@ -27,9 +27,9 @@
   <path d="M 408 116 L 408 136" class="l" marker-end="url(#a)"/>
 
   <!-- 204 plan -->
-  <rect x="288" y="136" width="240" height="52" class="b"/>
-  <text x="298" y="153" class="t">GENERATE ORDERED PLAN; EACH STEP HAS</text>
-  <text x="298" y="167" class="t">A VISIBLE-WHEN-DONE CONDITION</text>
+  <rect x="258" y="136" width="300" height="52" class="b"/>
+  <text x="268" y="153" class="t">GENERATE ORDERED PLAN; EACH STEP HAS</text>
+  <text x="268" y="167" class="t">A VISIBLE-WHEN-DONE CONDITION</text>
   <text x="394" y="182" class="n">204</text>
   <path d="M 408 188 L 408 208" class="l" marker-end="url(#a)"/>
 
@@ -40,15 +40,15 @@
   <path d="M 408 248 L 408 268" class="l" marker-end="url(#a)"/>
 
   <!-- 208 redact on device -->
-  <rect x="288" y="268" width="240" height="52" class="b"/>
-  <text x="298" y="285" class="t">REDACT FRAME ON DEVICE (OCR + POLICY,</text>
-  <text x="298" y="299" class="t">MASK SENSITIVE LINES) - BEFORE SENDING</text>
+  <rect x="258" y="268" width="300" height="52" class="b"/>
+  <text x="268" y="285" class="t">REDACT FRAME ON DEVICE (OCR + POLICY,</text>
+  <text x="268" y="299" class="t">MASK SENSITIVE LINES) - BEFORE SENDING</text>
   <text x="394" y="314" class="n">208</text>
   <path d="M 408 320 L 408 340" class="l" marker-end="url(#a)"/>
 
   <!-- 210 transmit -->
-  <rect x="288" y="340" width="240" height="40" class="b"/>
-  <text x="298" y="357" class="t">TRANSMIT REDACTED FRAME + CHECKLIST</text>
+  <rect x="258" y="340" width="300" height="40" class="b"/>
+  <text x="268" y="357" class="t">TRANSMIT REDACTED FRAME + CHECKLIST</text>
   <text x="394" y="372" class="n">210</text>
   <path d="M 408 380 L 408 400" class="l" marker-end="url(#a)"/>
 
@@ -114,9 +114,9 @@
   <text x="394" y="912" class="n">226</text>
 
   <!-- NO loop back to 206 -->
-  <path d="M 328 856 L 160 856 L 160 228 L 308 228" class="l" marker-end="url(#a)"/>
+  <path d="M 328 856 L 44 856 L 44 228 L 308 228" class="l" marker-end="url(#a)"/>
   <text x="300" y="848" class="t">NO</text>
-  <text x="166" y="400" class="t">next frame</text>
+  <text x="50" y="400" class="t">next frame</text>
 
   <!-- YES to 228 end -->
   <path d="M 488 856 L 580 856" class="l" marker-end="url(#a)"/>

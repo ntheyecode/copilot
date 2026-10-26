@@ -35,7 +35,7 @@
 | `06-micro-entity-certification.md` | Draft notes for form PTO/SB/15A (micro entity, gross income basis): the four requirements, the current income limit, who signs. |
 | `07-oath-declaration-notes.md` | Inventor declaration (PTO/AIA/01), assignment to COE Security LLC, inventorship determination, power of attorney — checklist. |
 
-All drawings are **black-and-white line art SVG** (no color, no grayscale fills, no photos), each with its figure label and numbered reference numerals matching the specification. They were rendered and visually checked at 816×1056 px (US Letter) for overlaps; convert to **PDF** for upload (see §3).
+All drawings are **black-and-white line art SVG** (no color, no grayscale fills, no photos), each with its figure label and numbered reference numerals matching the specification. They were rendered at 816×1056 px (US Letter) in headless Chrome and checked both visually and with a geometric audit (every text's measured bounding box must sit inside its box with ≥3 px padding, no two labels may overlap, and no line segment may cross a label); convert to **PDF** for upload (see §3).
 
 ---
 
