@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus } from 'lucide-react'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
@@ -30,6 +30,7 @@ import Email from './sections/Email.jsx'
 import EmailTemplates from './sections/EmailTemplates.jsx'
 import Finance from './sections/Finance.jsx'
 import Subscribers from './sections/Subscribers.jsx'
+import Cancelled from './sections/Cancelled.jsx'
 
 const SECTIONS = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
@@ -40,6 +41,7 @@ const SECTIONS = [
   { id: 'billing', label: 'Billing', icon: CreditCard, title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
   { id: 'finance', label: 'Finance', icon: DollarSign, title: 'Finance', sub: 'All transactions, revenue by week/month/quarter/year, MRR, and refunds.' },
   { id: 'subscribers', label: 'Subscribers', icon: Wallet, title: 'Subscribers', sub: 'Every paying subscriber and their operations: plan, status, cycle, MRR, lifetime paid, and today\'s activity.' },
+  { id: 'cancelled', label: 'Cancelled', icon: UserMinus, title: 'Cancelled subscribers', sub: 'Churned subscriptions: who canceled, when, why, and the lifetime revenue they brought before leaving.' },
   { id: 'email', label: 'SMTP Settings', icon: Mail, title: 'SMTP Settings (Email / SES)', sub: 'Outbound email for delivering reports. MFA-gated. Enter your SES SMTP credentials and send a test.' },
   { id: 'email-templates', label: 'Email Templates', icon: MailCheck, title: 'Email Templates', sub: 'Every email the product sends - edit the wording, placeholders and preview. Nothing is static.' },
   { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
@@ -106,8 +108,9 @@ export default function WorkAdmin() {
   const isSuperAdmin = !!(viewer && viewer.isSuperAdmin)
   const isAccounting = !!(viewer && viewer.role === 'accounting' && !viewer.isSuperAdmin)
   const isAffiliateAdmin = !!(viewer && viewer.role === 'affiliate_admin' && !viewer.isSuperAdmin)
-  // Accounting sees only Finance; an affiliate admin sees only Affiliates; a
-  // superadmin sees everything.
+  // The accounting role sees the full finance picture - the Finance dashboard,
+  // Subscribers and Cancelled (owner 2026-10-25); an affiliate admin sees only
+  // Affiliates; a superadmin sees everything.
   // Business rule (owner 2026-10-23): AI model names and AI cost are superadmin
   // ONLY. So a plain `admin` does NOT see AI config, Finance, Incidents (which
   // surface provider/model + estimated cost) or Claims (internal file paths +
@@ -115,12 +118,15 @@ export default function WorkAdmin() {
   // Hidden from a plain `admin` (the explicit superadmin / accounting / affiliate-
   // admin branches below are unaffected). Affiliates is managed by superadmin or a
   // dedicated affiliate_admin only - a plain admin would just hit a 403.
-  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'subscribers', 'incidents', 'claims', 'affiliates'])
+  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'subscribers', 'cancelled', 'incidents', 'claims', 'affiliates'])
+  // Single source for the accounting role's allowed sections (used both to build
+  // the nav and, via the generic fallback effect below, to land the role on its
+  // first visible tab rather than force-pinning one tab).
+  const ACCOUNTING_SECTIONS = new Set(['finance', 'subscribers', 'cancelled'])
   const visibleSections = isSuperAdmin ? SECTIONS
-    : isAccounting ? SECTIONS.filter((s) => s.id === 'finance')
+    : isAccounting ? SECTIONS.filter((s) => ACCOUNTING_SECTIONS.has(s.id))
       : isAffiliateAdmin ? SECTIONS.filter((s) => s.id === 'affiliates')
         : SECTIONS.filter((s) => !SUPERADMIN_ONLY.has(s.id))
-  useEffect(() => { if (isAccounting && active !== 'finance') setActive('finance') }, [isAccounting, active])
   useEffect(() => { if (isAffiliateAdmin && active !== 'affiliates') setActive('affiliates') }, [isAffiliateAdmin, active])
   // Never leave the view pointed at a section this viewer cannot see (e.g. a
   // plain admin whose stored tab is now gated) - fall back to the first visible.
@@ -141,6 +147,7 @@ export default function WorkAdmin() {
       case 'email-templates': return <EmailTemplates isSuperAdmin={isSuperAdmin} />
       case 'finance': return <Finance isSuperAdmin={isSuperAdmin} />
       case 'subscribers': return <Subscribers isSuperAdmin={isSuperAdmin} />
+      case 'cancelled': return <Cancelled isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions isSuperAdmin={isSuperAdmin} />
       case 'leads': return <Leads />
