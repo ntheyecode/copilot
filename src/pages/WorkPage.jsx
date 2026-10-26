@@ -3649,7 +3649,7 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
             <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2: recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
             <div className="wc-dl-actions">
               <button className="btn btn-outline" onClick={() => setResult(null)}>Capture more</button>
-              <button className="btn btn-primary" onClick={() => window.open(api.workDeliverablesPdfUrl(sessionId, true), '_blank')}><Download size={15} /> Download review PDF</button>
+              <button className="btn btn-primary" onClick={async () => { try { await api.downloadFile(api.workDeliverablesPdfUrl(sessionId, true), `workcopilot-${sessionId}-review.pdf`) } catch (e) { setErr(friendlyError(e, 'Could not download the review PDF. Please try again.')) } }}><Download size={15} /> Download review PDF</button>
             </div>
           </div>
         )}
@@ -4526,6 +4526,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     try { const r = await api.workStep(sessionId, i, st, frame); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
     catch (e) { setErr(friendlyError(e, 'Could not update that step. Please try again.')) }
   }
+  // Robust download (web + desktop app): fetch with the window's own authenticated
+  // session and save via a blob, instead of window.open / <a download> which could
+  // fail to download in the desktop app (signed-out external browser / partition).
+  const downloadDoc = async (url, filename) => {
+    try { await api.downloadFile(url, filename) }
+    catch (e) { setErr(friendlyError(e, 'Could not download that file. Please try again.')) }
+  }
   // Prev / Next navigation of the current step (moves the pointer, does not mark
   // done). Shared by the main card header and the floating overlay.
   const navStep = async (dir) => {
@@ -4821,9 +4828,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <span className="wc-donebar-lead"><span className="wc-done-ic"><Check size={15} strokeWidth={2.5} /></span><span>Completed<small>{steps.length ? `${doneCount} of ${steps.length} steps done. ` : ''}Download what you need.</small></span></span>
             <div className="wc-donebar-actions">
               <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
-              <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, true), '_blank')}><Download size={14} /> Report (PDF)</button>
+              <button className="wc-chip-btn" onClick={() => downloadDoc(api.workReportUrl(sessionId, true), `workcopilot-${sessionId}.pdf`)}><Download size={14} /> Report (PDF)</button>
               <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>
-              <a className="wc-chip-btn" href={api.workAuditUrl(sessionId)} download><FileText size={14} /> Audit log</a>
+              <button type="button" className="wc-chip-btn" onClick={() => downloadDoc(api.workAuditUrl(sessionId), `workcopilot-${sessionId}-audit.log`)}><FileText size={14} /> Audit log</button>
             </div>
           </div>
         )}

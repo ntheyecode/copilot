@@ -566,4 +566,28 @@ export const api = {
   // Licensing
   licenseStatus: () => req('GET', '/api/license/status'),
   licenseActivate: (token) => req('POST', '/api/license/activate', { token }),
+
+  // Reliable download across web AND the desktop app: fetch the file with the
+  // window's OWN authenticated cookie session and save it via a blob + a
+  // programmatic <a download>. This replaces window.open / <a target="_blank">
+  // for report/audit/deliverable downloads, which in the desktop app could route
+  // the request to a signed-out external browser (401) or a session partition the
+  // download did not carry the cookie on - the reason "download sessions" could
+  // silently fail there. Same pattern the deliverables review download already
+  // uses. Throws a user-safe error on a non-OK response (surfaced by the caller).
+  downloadFile: async (url, filename) => {
+    const res = await fetch(url, { credentials: 'include', headers: IS_APP ? { 'X-Refigold-App': '1' } : undefined })
+    if (!res.ok) {
+      let msg = `Download failed (${res.status})`
+      try { const j = await res.json(); if (j && j.error) msg = j.error } catch { /* not json */ }
+      const e = new Error(msg); e.status = res.status; throw e
+    }
+    const blob = await res.blob()
+    const href = URL.createObjectURL(blob)
+    try {
+      const a = document.createElement('a')
+      a.href = href; a.download = filename || 'download'
+      document.body.appendChild(a); a.click(); a.remove()
+    } finally { setTimeout(() => { try { URL.revokeObjectURL(href) } catch { /* ignore */ } }, 5000) }
+  },
 }

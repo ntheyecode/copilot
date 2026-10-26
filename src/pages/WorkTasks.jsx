@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Play, Pause, Download, Loader2, AlertTriangle, CheckCircle2, ClipboardList, History } from 'lucide-react'
-import { api } from '../api.js'
+import { api, friendlyError } from '../api.js'
 import { useAuth } from '../auth.jsx'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
@@ -263,6 +263,16 @@ export function WorkSubShell({ active, title, children }) {
 export default function WorkTasks() {
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
+  // Robust report download (web + desktop app): fetch with the window's own
+  // authenticated session and save via a blob, instead of a target=_blank link.
+  const [dlId, setDlId] = useState(null)
+  const [dlErr, setDlErr] = useState('')
+  const downloadReport = async (id) => {
+    setDlErr(''); setDlId(id)
+    try { await api.downloadFile(api.workReportUrl(id, true), `workcopilot-${id}.pdf`) }
+    catch (e) { setDlErr(friendlyError(e, 'Could not download the report. Please try again.')) }
+    finally { setDlId(null) }
+  }
   // Completed = status 'ended'. Newest completion first (endedAt, then startedAt).
   const done = useMemo(() => sessions
     .filter((s) => s && s.status === 'ended')
@@ -276,6 +286,7 @@ export default function WorkTasks() {
           <p>Every task you finished, with its report. Open one to review the steps or download the PDF.</p>
         </div>
       </div>
+      {dlErr && <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', padding: '10px 13px', borderRadius: 10, background: 'var(--warning-soft, #fff7e0)', border: '1px solid var(--warning, #d98a00)', color: 'var(--text, #1a1a2e)', fontSize: 13.5 }}><AlertTriangle size={15} /> {dlErr}</div>}
       {!loaded ? (
         <SkeletonRows />
       ) : err ? (
@@ -306,7 +317,7 @@ export default function WorkTasks() {
                 </div>
                 <div className="ws-row-acts">
                   <button type="button" className="ws-btn go" onClick={() => open(s.id)}>Open <ArrowRight size={14} /></button>
-                  <a className="ws-btn" href={api.workReportUrl(s.id, true)} target="_blank" rel="noopener noreferrer" title="Download the report (PDF)"><Download size={14} /> Report (PDF)</a>
+                  <button type="button" className="ws-btn" disabled={dlId === s.id} onClick={() => downloadReport(s.id)} title="Download the report (PDF)">{dlId === s.id ? <Loader2 size={14} className="spin" /> : <Download size={14} />} Report (PDF)</button>
                 </div>
               </div>
             )
