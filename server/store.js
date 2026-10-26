@@ -608,15 +608,22 @@ export function verifyUserMfa(userId, token) {
 }
 
 // Reset (clear) an account's MFA so the next login forces a fresh setup. Used by
-// admins (lost device). The CALLER is responsible for the authorization check and
-// for logging the action with a reason (recordAdminAction).
-export function resetMfa(targetUserId) {
+// admins (lost device) and by the owner (new phone). The CALLER is responsible
+// for the authorization check and for logging the action with a reason
+// (recordAdminAction). `self` marks an owner-initiated reset so the security
+// notice says "by you" rather than "by an administrator"; `by` is the acting
+// admin's sign-in name (optional, for the notice's audit line).
+export function resetMfa(targetUserId, { self = false, by = '' } = {}) {
   const u = getUser(targetUserId)
   if (!u) throw httpErr(404, 'User not found.')
   const wasEnabled = !!(u.mfa && u.mfa.enabled)
   u.mfa = {}
   bumpSessionEpoch(u.id)   // sign the user out everywhere so they re-enroll on next login
   persist()
+  // Security notice to the owner. Only when an authenticator was actually
+  // enrolled: resetting an account that never finished setup changes nothing
+  // the owner could notice, and a notice for it would only confuse.
+  if (wasEnabled) emitStoreEvent('mfa_reset', { userId: u.id, username: u.username, self: !!self, by: String(by || ''), at: new Date().toISOString() })
   return { ok: true, wasEnabled, username: u.username }
 }
 
@@ -1621,6 +1628,29 @@ export function migrateScrubStoredText() {
   persist()
   return { records, redacted }
 }
+// ---- Domain events (store -> communications) --------------------------------
+// A mutation that must trigger a communication (ticket opened, support replied,
+// account disabled / re-enabled, authenticator reset, company suspended) emits
+// ONE named event from the store function that performs it. server/emails.js
+// subscribes at boot and turns each event into the matching EMAIL_DEFS email.
+// Why here and not in the routes: the same mutation is reachable from several
+// routes (superadmin console in work-admin.js, company admin + self-service in
+// index.js, tests), so wiring the email at the mutation is the single source -
+// no route can forget it. Listeners are injected so store.js never imports the
+// mailer, and a listener can never break the mutation (errors are swallowed;
+// the email layer logs its own incidents).
+const _eventListeners = new Set()
+export function onStoreEvent(fn) {
+  if (typeof fn !== 'function') return () => {}
+  _eventListeners.add(fn)
+  return () => _eventListeners.delete(fn)
+}
+function emitStoreEvent(type, payload = {}) {
+  for (const fn of _eventListeners) {
+    try { fn(type, payload) } catch { /* a notification hook must never break the action */ }
+  }
+}
+
 // ---- Destructive-action audit: who did what, when, and WHY (reason required) -
 // Superadmin-visible. Holds only a summary + reason, never the data itself; the
 // reason is redacted of any secret/PII that might be pasted in.
@@ -3506,7 +3536,10 @@ export function deleteWorkTicket(ticketId, { reason = '', by = '' } = {}) {
   const i = (db.workTickets || []).findIndex((x) => x.id === ticketId)
   if (i < 0) throw httpErr(404, 'Ticket not found.')
   const t = db.workTickets[i]; db.workTickets.splice(i, 1)
-  recordAdminAction({ userId: t.workUserId || null, action: 'ticket_deleted', reason: r, detail: `${ticketId} by ${by}` })
+  // Tickets key their owner as `userId` (see createWorkTicket); the old
+  // `t.workUserId` read was always undefined, so the audit entry lost WHOSE
+  // ticket was deleted.
+  recordAdminAction({ userId: t.userId || null, action: 'ticket_deleted', reason: r, detail: `${ticketId} by ${by}` })
   persist(); return { ok: true }
 }
 // -- Contact messages --
@@ -3539,12 +3572,16 @@ export function setUserDisabled(userId, disabled, { reason = '', by = '' } = {})
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found.')
   if (u.role === 'superadmin') throw httpErr(400, 'A superadmin account cannot be disabled.')
+  const changed = !!u.disabled !== !!disabled
   u.disabled = !!disabled
   u.disabledAt = disabled ? new Date().toISOString() : null
   u.disabledReason = disabled ? r : null
   bumpSessionEpoch(userId)   // sign the account out everywhere immediately
   recordAdminAction({ userId, companyId: u.companyId || null, action: disabled ? 'user_disabled' : 'user_enabled', reason: r, detail: `${u.username} by ${by}` })
   persist()
+  // Notice only on a real state change (re-sending "disabled" to an already
+  // disabled account is logged above but is not news to the owner).
+  if (changed) emitStoreEvent(disabled ? 'user_disabled' : 'user_enabled', { userId: u.id, username: u.username, reason: r, by: String(by || ''), at: new Date().toISOString() })
   return publicWorkUser(u)
 }
 export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
@@ -3556,7 +3593,9 @@ export function deleteWorkUser(userId, { reason = '', by = '' } = {}) {
   for (const s of (db.workSessions || []).filter((x) => x.workUserId === userId).slice()) {
     try { deleteWorkSession(userId, s.id, `account deleted: ${r}`) } catch { /* continue */ }
   }
-  db.workTickets = (db.workTickets || []).filter((t) => t.workUserId !== userId)
+  // Tickets key their owner as `userId`; the old `t.workUserId` comparison never
+  // matched, so a deleted account's tickets silently outlived the account.
+  db.workTickets = (db.workTickets || []).filter((t) => t.userId !== userId)
   bumpSessionEpoch(userId)
   const i = (db.users || []).findIndex((x) => x.id === userId)
   if (i >= 0) db.users.splice(i, 1)
@@ -3570,12 +3609,17 @@ export function setCompanyDisabled(companyId, disabled, { reason = '', by = '' }
   const r = requireReason(reason)
   const c = (db.companies || []).find((x) => x.id === companyId)
   if (!c) throw httpErr(404, 'Company not found.')
+  const changed = !!c.disabled !== !!disabled
   c.disabled = !!disabled
   c.disabledAt = disabled ? new Date().toISOString() : null
   c.disabledReason = disabled ? r : null
   for (const m of (db.users || []).filter((x) => x.companyId === companyId)) { try { bumpSessionEpoch(m.id) } catch { /* ignore */ } }
   recordAdminAction({ companyId, action: disabled ? 'company_disabled' : 'company_enabled', reason: r, detail: `${c.name} by ${by}` })
   persist()
+  // Notify the company's administrators (not every member - the admins own the
+  // relationship and are the ones who can act on it).
+  const adminIds = (db.users || []).filter((x) => x.companyId === companyId && x.companyRole === 'company_admin').map((x) => x.id)
+  if (changed) emitStoreEvent(disabled ? 'company_disabled' : 'company_enabled', { companyId, name: c.name, adminIds, reason: r, by: String(by || ''), at: new Date().toISOString() })
   return publicCompany(c)
 }
 export function deleteCompany(companyId, { reason = '', by = '', deleteMembers = false } = {}) {
@@ -5354,7 +5398,10 @@ export function createWorkTicket(userId, { category, subject, body } = {}) {
   }
   db.workTickets.push(rec)
   persist()
-  return publicTicket(rec)
+  const pub = publicTicket(rec)
+  // Requester gets a "we received it" confirmation; staff get the alert.
+  emitStoreEvent('ticket_created', { ticket: pub, message: text })
+  return pub
 }
 
 export function listWorkTicketsForUser(userId) {
@@ -5393,7 +5440,11 @@ export function addWorkTicketMessage(ticketId, { from, by, text }) {
   if (msg.from === 'admin') { if (t.status !== 'closed') t.status = 'answered' }
   else { if (t.status !== 'closed') t.status = 'open'; else t.status = 'open' }
   persist()
-  return publicTicket(t)
+  const pub = publicTicket(t)
+  // Staff reply -> the requester is emailed "you have a reply"; requester
+  // reply -> staff are alerted so the reopened ticket does not wait unseen.
+  emitStoreEvent(msg.from === 'admin' ? 'ticket_admin_reply' : 'ticket_user_reply', { ticket: pub, message: msg })
+  return pub
 }
 
 export function setWorkTicketStatus(ticketId, status) {

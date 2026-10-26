@@ -955,7 +955,7 @@ app.get('/api/work/mfa/status', requireWorkAuth, wrap((req, res) => {
 // then signs you out everywhere so you re-enroll on next sign-in.
 app.post('/api/work/mfa/reset', requireWorkAuth, wrap((req, res) => {
   if (!store.verifyUserMfa(req.workUser.id, (req.body || {}).code)) return res.status(401).json({ error: 'Enter your current 6-digit code to reset your authenticator.' })
-  store.resetMfa(req.workUser.id)
+  store.resetMfa(req.workUser.id, { self: true })   // owner-initiated: the security notice says "by you"
   store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId || null, action: 'mfa_self_reset', reason: 'reset own authenticator', detail: 're-enroll on next sign-in' })
   res.json({ ok: true, loggedOut: true })
 }))
@@ -971,7 +971,7 @@ app.post('/api/work/company/users/:id/mfa/reset', requireWorkAuth, requireCompan
   if (!store.canManageMfa(req.workUser.id, targetId)) return res.status(403).json({ error: 'You can only reset MFA for people in your company.' })
   const reason = String((req.body || {}).reason || '').trim()
   if (reason.length < 3) return res.status(400).json({ error: 'A reason is required to reset a member\'s authenticator (recorded in your audit trail).' })
-  const r = store.resetMfa(targetId)
+  const r = store.resetMfa(targetId, { by: req.user.username })   // the store emits the owner's security notice
   store.recordAdminAction({ userId: req.workUser.id, companyId: req.workUser.companyId || null, action: 'mfa_reset', reason, detail: `reset authenticator for ${r.username || targetId}` })
   res.json({ ok: true })
 }))

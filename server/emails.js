@@ -182,3 +182,91 @@ export function sendPasswordChangedAsync(userId) {
     return sendTemplate('password_changed', to, { name: u.displayName || u.username })
   }).catch(() => {})
 }
+
+// ---- Store-event subscriber: support tickets + account security notices ----
+// The store emits a named event from the mutation itself (store.onStoreEvent),
+// so every route that performs the action - superadmin console, company admin,
+// self-service - triggers the same communication with no per-route wiring.
+// Each handler resolves recipients, builds the template data, and fires
+// sendTemplateAsync (never awaits, never throws; failures land in the incident
+// log through sendTemplate). Staff alerts reuse the superadmin-set notification
+// inbox (store.getNotifySettings().contactTo), the same one Contact Us uses.
+const SUPPORT_URL = `${APP_BASE}/work?tab=support`
+const ADMIN_URL = `${APP_BASE}/work/admin`
+
+function userEmail(userId) {
+  return (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(userId) : null
+}
+function userName(u) { return (u && (u.displayName || u.username)) || '' }
+function staffInbox() {
+  try { const n = typeof store.getNotifySettings === 'function' ? store.getNotifySettings() : null; return (n && n.contactTo) || null } catch { return null }
+}
+
+function ticketCommon(t) {
+  const u = store.getUser(t.userId)
+  const company = (u && u.companyId && typeof store.getCompany === 'function') ? ((store.getCompany(u.companyId) || {}).name || '') : ''
+  return { u, ticketId: t.id, subject: t.subject || '(no subject)', category: t.category || 'other', company }
+}
+
+// Requester opened a ticket: confirmation to them + alert to staff.
+function onTicketCreated({ ticket: t, message }) {
+  if (!t) return
+  const { u, ticketId, subject, category, company } = ticketCommon(t)
+  const to = userEmail(t.userId)
+  if (to) sendTemplateAsync('ticket_received', to, { name: userName(u), ticketId, subject, category, message: message || '', createdAt: t.createdAt, ticketUrl: SUPPORT_URL })
+  const inbox = staffInbox()
+  if (inbox) sendTemplateAsync('ticket_staff_notify', inbox, { event: 'New support ticket', name: userName(u) || t.username, username: t.username, email: to || '', company, ticketId, subject, category, message: message || '', submittedAt: t.createdAt, adminUrl: ADMIN_URL })
+}
+// Staff replied: "you have a reply" to the requester.
+function onTicketAdminReply({ ticket: t, message: m }) {
+  if (!t || !m) return
+  const { u, ticketId, subject } = ticketCommon(t)
+  const to = userEmail(t.userId)
+  if (to) sendTemplateAsync('ticket_reply', to, { name: userName(u), ticketId, subject, reply: m.text || '', repliedBy: m.by || 'Support', repliedAt: m.at, ticketUrl: SUPPORT_URL })
+}
+// Requester replied (ticket reopened): staff alert so it does not wait unseen.
+function onTicketUserReply({ ticket: t, message: m }) {
+  if (!t || !m) return
+  const { u, ticketId, subject, category, company } = ticketCommon(t)
+  const inbox = staffInbox()
+  if (inbox) sendTemplateAsync('ticket_staff_notify', inbox, { event: 'New reply on a support ticket', name: userName(u) || t.username, username: t.username, email: userEmail(t.userId) || '', company, ticketId, subject, category, message: m.text || '', submittedAt: m.at, adminUrl: ADMIN_URL })
+}
+// Account disabled / re-enabled by an administrator: tell the owner.
+function onUserAccess(type, { userId, reason, at }) {
+  const u = store.getUser(userId); if (!u) return
+  const to = userEmail(u.id); if (!to) return
+  if (type === 'user_disabled') sendTemplateAsync('account_disabled', to, { name: userName(u), username: u.username, reason: reason || '', disabledAt: at })
+  else sendTemplateAsync('account_enabled', to, { name: userName(u), username: u.username, enabledAt: at })
+}
+// Authenticator reset (by an admin or by the owner): security notice.
+function onMfaReset({ userId, self, at }) {
+  const u = store.getUser(userId); if (!u) return
+  const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('mfa_reset', to, { name: userName(u), username: u.username, resetBy: self ? 'you' : 'an administrator', resetAt: at })
+}
+// Company disabled / re-enabled: tell each company administrator.
+function onCompanyAccess(type, { name, adminIds, reason, at }) {
+  for (const id of (Array.isArray(adminIds) ? adminIds : [])) {
+    const u = store.getUser(id); if (!u) continue
+    const to = userEmail(u.id); if (!to) continue
+    if (type === 'company_disabled') sendTemplateAsync('company_disabled', to, { name: userName(u), company: name || '', reason: reason || '', disabledAt: at })
+    else sendTemplateAsync('company_enabled', to, { name: userName(u), company: name || '', enabledAt: at })
+  }
+}
+
+export function handleStoreEvent(type, payload = {}) {
+  switch (type) {
+    case 'ticket_created': return onTicketCreated(payload)
+    case 'ticket_admin_reply': return onTicketAdminReply(payload)
+    case 'ticket_user_reply': return onTicketUserReply(payload)
+    case 'user_disabled':
+    case 'user_enabled': return onUserAccess(type, payload)
+    case 'mfa_reset': return onMfaReset(payload)
+    case 'company_disabled':
+    case 'company_enabled': return onCompanyAccess(type, payload)
+    default: return undefined
+  }
+}
+// Subscribe once at import. index.js (and work-admin.js) import this module at
+// boot, so the hook is live before any route can run.
+if (typeof store.onStoreEvent === 'function') store.onStoreEvent(handleStoreEvent)

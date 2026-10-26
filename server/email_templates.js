@@ -218,6 +218,11 @@ function resolveToken(rawName, data) {
       if (v == null) return ''
       if (v instanceof Date) return formatDate(v)
       if (typeof v === 'object') return ''
+      // Any timestamp key (createdAt, disabledAt, resetAt, ...) carrying an ISO
+      // datetime renders as a readable date + time, so a template author never
+      // sees a raw "2026-10-23T18:14:00.000Z". One rule for every *At key
+      // instead of a per-key DERIVED entry each time a template adds one.
+      if (/At$/.test(k) && typeof v === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(v)) return formatDate(v, { withTime: true })
       return String(v)
     }
   }
@@ -1228,6 +1233,299 @@ If you did not expect this, contact your administrator so the password can be re
       name: 'Alex Morgan',
       company: 'Northwind Logistics',
       password: 'correct-horse-battery-staple',
+    },
+    showRows: false,
+  },
+
+  // ---- Support tickets ------------------------------------------------------
+  ticket_received: {
+    label: 'Support ticket - received (to the requester)',
+    category: 'support',
+    description: 'Confirmation sent to the person who opened a support ticket, with the reference and what they wrote.',
+    eyebrow: 'Support',
+    defaultSubject: 'We received your request: <Subject> [<Ticket_Id>]',
+    defaultHeading: 'We have your request',
+    defaultBody:
+`Hi <First_Name>,
+
+Thanks for reaching out. Your support request is in and a member of the WorkCoPilot team will reply here and in your Support tab. Keep the reference below if you need to refer to it.
+
+Reference: **<Ticket_Id>**
+Subject: **<Subject>**
+Category: <Category>
+Opened: <Created_At>
+
+> **Your message**
+> <Message>
+
+You can add more detail at any time from the Support tab inside WorkCoPilot, and you will get an email as soon as we reply.
+
+The WorkCoPilot team`,
+    defaultCtaLabel: 'View my ticket',
+    ctaUrlToken: 'ticketUrl',
+    placeholders: [
+      P('<Ticket_Id>', 'Ticket reference', 'tk8f3a2c'),
+      P('<Subject>', 'Ticket subject', 'Cannot export the session report'),
+      P('<Category>', 'Ticket category (feature, bug, billing, access, other)', 'bug'),
+      P('<Message>', 'The message they wrote when opening the ticket', 'The Download report button spins and never finishes...'),
+      P('<Created_At>', 'When the ticket was opened', 'October 23, 2026 at 9:41 AM EDT'),
+      P('<Ticket_Url>', 'Link to the Support tab in the app', 'https://admireveda.com/work?tab=support'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      ticketId: 'tk8f3a2c',
+      subject: 'Cannot export the session report',
+      category: 'bug',
+      message: 'The Download report button spins and never finishes on my last two sessions. Chrome on Windows 11.',
+      createdAt: '2026-10-23T13:41:00Z',
+      ticketUrl: 'https://admireveda.com/work?tab=support',
+    },
+    showRows: false,
+  },
+
+  ticket_staff_notify: {
+    label: 'Support ticket - staff notification',
+    category: 'support',
+    description: 'Internal alert to the support inbox when a ticket is opened or the requester adds a reply (so nothing waits unseen).',
+    eyebrow: 'Support ticket',
+    badge: 'Internal',
+    defaultSubject: '<Event>: <Subject> [<Ticket_Id>] from <Username>',
+    defaultHeading: '<Event> from <Name>',
+    defaultBody:
+`A WorkCoPilot user needs a reply. Details are below; the button opens the ticket in the superadmin console.
+
+> **Message**
+> <Message>`,
+    defaultCtaLabel: 'Open in the console',
+    ctaUrlToken: 'adminUrl',
+    placeholders: [
+      P('<Event>', '"New support ticket" or "New reply on a support ticket"', 'New support ticket'),
+      P('<Ticket_Id>', 'Ticket reference', 'tk8f3a2c'),
+      P('<Subject>', 'Ticket subject', 'Cannot export the session report'),
+      P('<Category>', 'Ticket category', 'bug'),
+      P('<Username>', 'Sign-in name of the requester', 'alex.morgan'),
+      P('<Email>', 'Requester email on file (if any)', 'alex.morgan@northwind.example'),
+      P('<Company>', 'Requester company (if any)', 'Northwind Logistics'),
+      P('<Message>', 'The message they wrote', 'The Download report button spins and never finishes...'),
+      P('<Submitted_At>', 'When it was submitted', 'October 23, 2026 at 9:41 AM EDT'),
+      P('<Admin_Url>', 'Link to the ticket in the superadmin console', 'https://admireveda.com/work/admin'),
+    ],
+    rowFields: [
+      R('Reference', 'ticketId', { mono: true }),
+      R('Subject', 'subject', { strong: true }),
+      R('Category', 'category'),
+      R('From', 'username'),
+      R('Email', 'email'),
+      R('Company', 'company'),
+      R('Submitted', 'submittedAt', { fmt: 'datetime' }),
+    ],
+    sampleData: {
+      event: 'New support ticket',
+      name: 'Alex Morgan',
+      username: 'alex.morgan',
+      email: 'alex.morgan@northwind.example',
+      company: 'Northwind Logistics',
+      ticketId: 'tk8f3a2c',
+      subject: 'Cannot export the session report',
+      category: 'bug',
+      message: 'The Download report button spins and never finishes on my last two sessions. Chrome on Windows 11.',
+      submittedAt: '2026-10-23T13:41:00Z',
+      adminUrl: 'https://admireveda.com/work/admin',
+    },
+    showRows: true,
+  },
+
+  ticket_reply: {
+    label: 'Support ticket - reply from support (to the requester)',
+    category: 'support',
+    description: 'Sent to the requester when a member of the support team replies on their ticket.',
+    eyebrow: 'Support',
+    defaultSubject: 'Re: <Subject> [<Ticket_Id>]',
+    defaultHeading: 'You have a reply from support',
+    defaultBody:
+`Hi <First_Name>,
+
+<Replied_By> from the WorkCoPilot team replied to your request **<Subject>** (reference <Ticket_Id>).
+
+> <Reply>
+
+To continue the conversation, open the Support tab in WorkCoPilot and write back on the same ticket. Replies to this email are not added to the ticket.
+
+The WorkCoPilot team`,
+    defaultCtaLabel: 'View the reply',
+    ctaUrlToken: 'ticketUrl',
+    placeholders: [
+      P('<Ticket_Id>', 'Ticket reference', 'tk8f3a2c'),
+      P('<Subject>', 'Ticket subject', 'Cannot export the session report'),
+      P('<Reply>', 'The reply the support team wrote', 'Thanks for the details. We found the cause...'),
+      P('<Replied_By>', 'Name of the staff member who replied', 'Support'),
+      P('<Replied_At>', 'When the reply was posted', 'October 23, 2026 at 11:05 AM EDT'),
+      P('<Ticket_Url>', 'Link to the Support tab in the app', 'https://admireveda.com/work?tab=support'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      ticketId: 'tk8f3a2c',
+      subject: 'Cannot export the session report',
+      reply: 'Thanks for the details. We found the cause: the report was waiting on a screenshot that never finished encrypting. A fix is live; please try the download again and let us know.',
+      repliedBy: 'Support',
+      repliedAt: '2026-10-23T15:05:00Z',
+      ticketUrl: 'https://admireveda.com/work?tab=support',
+    },
+    showRows: false,
+  },
+
+  // ---- Account security notices --------------------------------------------
+  account_disabled: {
+    label: 'Account disabled',
+    category: 'security',
+    description: 'Sent to the account holder when an administrator disables their account, so they know why access stopped and whom to contact.',
+    eyebrow: 'Account notice',
+    defaultSubject: 'Your WorkCoPilot account has been disabled',
+    defaultHeading: 'Your account has been disabled',
+    defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot account (**<Username>**) was disabled by an administrator on <Disabled_At>. You have been signed out everywhere and cannot sign in until it is re-enabled. Your sessions, documents and settings are kept.
+
+Reason given: <Reason>
+
+> If you believe this was a mistake, contact your administrator or write to <Support_Email>. We will let you know by email if the account is re-enabled.
+
+The WorkCoPilot team`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Username>', 'Sign-in name of the account', 'alex.morgan'),
+      P('<Reason>', 'The reason the administrator recorded', 'Contract ended'),
+      P('<Disabled_At>', 'When the account was disabled', 'October 23, 2026 at 2:14 PM EDT'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      username: 'alex.morgan',
+      reason: 'Contract ended; access paused pending renewal.',
+      disabledAt: '2026-10-23T18:14:00Z',
+    },
+    showRows: false,
+  },
+
+  account_enabled: {
+    label: 'Account re-enabled',
+    category: 'security',
+    description: 'Sent to the account holder when an administrator re-enables a previously disabled account.',
+    eyebrow: 'Account notice',
+    defaultSubject: 'Your WorkCoPilot account is active again',
+    defaultHeading: 'Welcome back - your account is active',
+    defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot account (**<Username>**) was re-enabled by an administrator on <Enabled_At>. You can sign in again; everything you had is right where you left it.
+
+> If you did not expect this, write to <Support_Email> and we will look into it.
+
+The WorkCoPilot team`,
+    defaultCtaLabel: 'Sign in to WorkCoPilot',
+    ctaUrlToken: 'appUrl',
+    placeholders: [
+      P('<Username>', 'Sign-in name of the account', 'alex.morgan'),
+      P('<Enabled_At>', 'When the account was re-enabled', 'October 24, 2026 at 9:02 AM EDT'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      username: 'alex.morgan',
+      enabledAt: '2026-10-24T13:02:00Z',
+    },
+    showRows: false,
+  },
+
+  mfa_reset: {
+    label: 'Two-factor authenticator reset',
+    category: 'security',
+    description: 'Security notice sent when the two-factor authenticator on an account is reset (by an administrator or by the owner), so the owner notices if it was not them.',
+    eyebrow: 'Security notice',
+    defaultSubject: 'Your WorkCoPilot two-factor authenticator was reset',
+    defaultHeading: 'Your authenticator was reset',
+    defaultBody:
+`Hi <First_Name>,
+
+The two-factor authenticator on your WorkCoPilot account (**<Username>**) was reset by <Reset_By> on <Reset_At>. You have been signed out everywhere, and the next time you sign in you will be asked to set up a new authenticator app. Your previous codes and backup codes no longer work.
+
+> **Did not expect this?** Do not sign in from a device you do not trust. Write to <Support_Email> right away so we can secure your account.
+
+Thanks for keeping your account secure.`,
+    defaultCtaLabel: 'Sign in and re-enroll',
+    ctaUrlToken: 'appUrl',
+    placeholders: [
+      P('<Username>', 'Sign-in name of the account', 'alex.morgan'),
+      P('<Reset_By>', 'Who performed the reset ("you" or "an administrator")', 'an administrator'),
+      P('<Reset_At>', 'When the reset happened', 'October 23, 2026 at 2:14 PM EDT'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      username: 'alex.morgan',
+      resetBy: 'an administrator',
+      resetAt: '2026-10-23T18:14:00Z',
+    },
+    showRows: false,
+  },
+
+  company_disabled: {
+    label: 'Company account disabled (to company admins)',
+    category: 'security',
+    description: 'Sent to each company administrator when WorkCoPilot disables the company account, so they know why their team lost access and whom to contact.',
+    eyebrow: 'Company notice',
+    defaultSubject: 'The <Company> WorkCoPilot account has been disabled',
+    defaultHeading: 'Your company account has been disabled',
+    defaultBody:
+`Hi <First_Name>,
+
+The WorkCoPilot company account for **<Company>** was disabled on <Disabled_At>. Everyone in the company has been signed out and cannot sign in until the account is re-enabled. Company data, sessions and settings are kept.
+
+Reason given: <Reason>
+
+> If you believe this was a mistake or need to resolve it, write to <Support_Email>. We will email you when the account is re-enabled.
+
+The WorkCoPilot team`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Company>', 'Company name', 'Northwind Logistics'),
+      P('<Reason>', 'The reason recorded', 'Invoice overdue'),
+      P('<Disabled_At>', 'When the company was disabled', 'October 23, 2026 at 2:14 PM EDT'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      company: 'Northwind Logistics',
+      reason: 'Invoice 2026-091 overdue by 45 days.',
+      disabledAt: '2026-10-23T18:14:00Z',
+    },
+    showRows: false,
+  },
+
+  company_enabled: {
+    label: 'Company account re-enabled (to company admins)',
+    category: 'security',
+    description: 'Sent to each company administrator when a disabled company account is re-enabled.',
+    eyebrow: 'Company notice',
+    defaultSubject: 'The <Company> WorkCoPilot account is active again',
+    defaultHeading: 'Your company account is active again',
+    defaultBody:
+`Hi <First_Name>,
+
+The WorkCoPilot company account for **<Company>** was re-enabled on <Enabled_At>. Everyone in the company can sign in again; all data and settings are as they were.
+
+> If you did not expect this, write to <Support_Email>.
+
+The WorkCoPilot team`,
+    defaultCtaLabel: 'Open WorkCoPilot',
+    ctaUrlToken: 'appUrl',
+    placeholders: [
+      P('<Company>', 'Company name', 'Northwind Logistics'),
+      P('<Enabled_At>', 'When the company was re-enabled', 'October 24, 2026 at 9:02 AM EDT'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      company: 'Northwind Logistics',
+      enabledAt: '2026-10-24T13:02:00Z',
     },
     showRows: false,
   },
