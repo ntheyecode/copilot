@@ -36,6 +36,8 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { LOCALES } from '../src/i18n/locales.js'   // single source for hreflang tags + ?lang codes
+import en from '../src/i18n/locales/en.js'          // source of truth for localized marketing meta (seo.*, login.meta)
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -78,8 +80,8 @@ route({
   path: '/workcopilot',
   label: 'Sign in or create an account',
   source: 'WorkLogin.jsx',
-  title: 'Sign In or Create an Account - WorkCoPilot by AdmireVeda',
-  description: 'Sign in to WorkCoPilot, or create a free account, to get step-by-step guidance on your own screen. Company single sign-on is supported.',
+  title: en.login.meta.title,
+  description: en.login.meta.description,
   h1: 'WorkCoPilot by AdmireVeda: your expert, on every screen',
   lede: [
     'AdmireVeda\'s WorkCoPilot sits beside you and guides any task, step by step, all the way to done.',
@@ -95,8 +97,8 @@ route({
   path: '/workcopilot/how-it-works',
   label: 'How it works',
   source: 'WorkCapabilities.jsx',
-  title: 'How It Works - WorkCoPilot by AdmireVeda',
-  description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, staying current by learning your tools, and plans from the strongest AI available to you.',
+  title: en.seo['how-it-works'].title,
+  description: en.seo['how-it-works'].description,
   h1: 'Like having the best person in the room, every time.',
   lede: [
     'WorkCoPilot watches your screen and tells you the exact next step for any task, in any app, checks that each step worked, and stays current with how your tools work today.',
@@ -115,8 +117,8 @@ route({
   path: '/workcopilot/use-cases',
   label: 'Use cases',
   source: 'WorkUseCases.jsx',
-  title: 'Use Cases - WorkCoPilot by AdmireVeda',
-  description: 'What WorkCoPilot guides, in detail: technical setup and config, builds and integrations, AI and automation, product work, marketing, accounting and office tasks, legal and compliance, and everyday work on any screen.',
+  title: en.seo['use-cases'].title,
+  description: en.seo['use-cases'].description,
   h1: 'Every kind of work. Guided in detail.',
   lede: [
     'Not just a to-do list. For each task, WorkCoPilot shows the exact step, exactly how to do it, and how to know it worked. Here is what that looks like, across the work people actually do.',
@@ -136,13 +138,16 @@ route({
 {
   const n = FIELDS ? FIELDS.total : null
   const fam = FIELDS ? FIELDS.fams.length : null
+  // Derive from en.seo.fields (the source of truth), injecting the live counts
+  // parsed from WorkFields.jsx into its {total}/{families} placeholders.
+  const interp = (s) => String(s).replace(/\{total\}/g, n).replace(/\{families\}/g, fam)
   route({
     path: '/workcopilot/fields',
     label: 'Fields we cover',
     source: 'WorkFields.jsx',
-    title: n ? `Fields we cover - ${n} professional fields - WorkCoPilot by AdmireVeda` : 'Fields we cover - WorkCoPilot by AdmireVeda',
+    title: n ? interp(en.seo.fields.title) : 'Fields we cover - WorkCoPilot by AdmireVeda',
     description: n
-      ? `WorkCoPilot guides work across ${n} professional fields in ${fam} families, from software and security to finance, operations, marketing, healthcare and education. One tool your whole company can use.`
+      ? interp(en.seo.fields.description)
       : 'WorkCoPilot guides work across many professional fields, from software and security to finance, operations, marketing, healthcare and education. One tool your whole company can use.',
     h1: 'Expert in your field, whatever your field is.',
     lede: [
@@ -159,8 +164,8 @@ route({
   path: '/workcopilot/pricing',
   label: 'Pricing',
   source: 'WorkPricing.jsx',
-  title: 'Pricing - WorkCoPilot by AdmireVeda',
-  description: 'WorkCoPilot plans compared side by side: Basic, Advanced and Premium with daily live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+  title: en.seo.pricing.title,
+  description: en.seo.pricing.description,
   h1: 'Simple plans. Real guided time.',
   lede: [
     'Hours of live, step-by-step guidance every day. Plans differ in daily capacity and a few power features. Security and privacy are built into every plan, never sold as an upgrade.',
@@ -198,8 +203,8 @@ route({
   path: '/workcopilot/faq',
   label: 'FAQ',
   source: 'WorkFaq.jsx',
-  title: 'FAQ - WorkCoPilot by AdmireVeda',
-  description: 'Straight answers about WorkCoPilot: what it is, how the step-by-step guidance works, platforms and install, what leaves your device, pricing and billing, how it stays current by learning your tools, who it is for, data and compliance, and getting started.',
+  title: en.seo.faq.title,
+  description: en.seo.faq.description,
   h1: 'Straight answers, before you start.',
   lede: [
     'Everything people ask about WorkCoPilot, in plain words: what it is, how it guides you, what leaves your device, what it costs, and how it stays current when your tools change.',
@@ -227,6 +232,18 @@ function jsonLd(r) {
       { '@type': 'WebPage', '@id': url + '#page', url, name: r.title, description: r.description, isPartOf: { '@id': ORIGIN + '/#org' } },
     ],
   }, null, 2).replace(/</g, '\\u003c')
+}
+
+// Per-route hreflang alternates for the prerendered <head>: one <link> per
+// locale (href = this route's clean path + ?lang=<code>) plus x-default (clean
+// path). Matches what useSeo.js emits at runtime and what gen-sitemap.mjs writes,
+// from the one LOCALES source. The static shell carries the HOME set; render()
+// swaps the whole run for this route's.
+function altBlock(routePath) {
+  const url = ORIGIN + routePath
+  const lines = LOCALES.map((l) => `    <link rel="alternate" hreflang="${esc(l.tag)}" href="${esc(url)}?lang=${encodeURIComponent(l.code)}" />`)
+  lines.push(`    <link rel="alternate" hreflang="x-default" href="${esc(url)}" />`)
+  return lines.join('\n')
 }
 
 function seoBlock(r) {
@@ -261,6 +278,14 @@ function render(template, r) {
   h = swap(h, /<title>[\s\S]*?<\/title>/, `<title>${esc(r.title)}</title>`, '<title>')
   h = swap(h, /<meta name="description" content="[^"]*"\s*\/?>/, `<meta name="description" content="${esc(r.description)}" />`, 'meta description')
   h = swap(h, /<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${esc(url)}" />`, 'canonical')
+  // Replace the shell's HOME hreflang run with this route's. If the shell has no
+  // alternates (older build), insert the block right after the canonical instead.
+  const altRun = /(?:[ \t]*<link rel="alternate" hreflang="[^"]*" href="[^"]*"\s*\/?>\s*)+/
+  if (altRun.test(h)) {
+    h = h.replace(altRun, `${altBlock(r.path)}\n`)
+  } else {
+    h = swap(h, /<link rel="canonical" href="[^"]*"\s*\/?>/, `<link rel="canonical" href="${esc(url)}" />\n${altBlock(r.path)}`, 'canonical (for hreflang insert)')
+  }
   h = swap(h, /<meta property="og:title" content="[^"]*"\s*\/?>/, `<meta property="og:title" content="${esc(r.title)}" />`, 'og:title')
   h = swap(h, /<meta property="og:description" content="[^"]*"\s*\/?>/, `<meta property="og:description" content="${esc(r.description)}" />`, 'og:description')
   h = swap(h, /<meta property="og:url" content="[^"]*"\s*\/?>/, `<meta property="og:url" content="${esc(url)}" />`, 'og:url')
@@ -279,12 +304,33 @@ function render(template, r) {
 function tags(html, re) { return [...html.matchAll(re)].map((m) => m[0]).sort() }
 const BUNDLE_RE = /<(script)\b[^>]*\bsrc="\/copilot-assets\/[^"]+"[^>]*><\/script>|<link\b[^>]*\bhref="\/copilot-assets\/[^"]+"[^>]*>/g
 
+// Routes whose page reads its <title>/description from the i18n catalog. For
+// these the prerender literal IS taken from en.js (same object), so the two
+// cannot silently drift; the check instead confirms the page still reads the
+// expected catalog key (catches a page reverted to a hard-coded string or wired
+// to the wrong key). Routes not listed here still use a literal useSeo() and are
+// checked by matching the prerender copy against the page source (e.g. security).
+const I18N_KEY = {
+  '/workcopilot': 'login.meta',
+  '/workcopilot/how-it-works': 'seo.how-it-works',
+  '/workcopilot/use-cases': 'seo.use-cases',
+  '/workcopilot/fields': 'seo.fields',
+  '/workcopilot/pricing': 'seo.pricing',
+  '/workcopilot/faq': 'seo.faq',
+}
+
 function checkCopy() {
   const warnings = []
   for (const r of R) {
     let src = ''
     try { src = fs.readFileSync(path.join(SRC_PAGES, r.source), 'utf8') } catch { warnings.push(`${r.path}: cannot read ${r.source}`); continue }
-    if (r.source === 'WorkFields.jsx') continue   // template-literal strings, derived from source above
+    const key = I18N_KEY[r.path]
+    if (key) {
+      for (const leaf of ['title', 'description']) {
+        if (!src.includes(`${key}.${leaf}`)) warnings.push(`${r.path}: page no longer reads t('${key}.${leaf}') in src/pages/${r.source} (prerender copy comes from en.js)`)
+      }
+      continue
+    }
     for (const [k, v] of [['title', r.title], ['description', r.description]]) {
       if (!src.includes(v)) warnings.push(`${r.path}: ${k} no longer matches useSeo() in src/pages/${r.source}`)
     }

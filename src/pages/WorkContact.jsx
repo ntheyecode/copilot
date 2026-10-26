@@ -7,11 +7,13 @@ import { api } from '../api.js'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu)
 import SiteFooter from '../components/SiteFooter.jsx'
 import useSeo from '../useSeo.js'                        // per-route title / description / canonical (WEB-01)
+import { useT } from '../i18n/index.jsx'                 // localized <title>/description (seo.* keys)
 
 export default function WorkContact() {
+  const t = useT()
   useSeo({
-    title: 'Contact us - WorkCoPilot by AdmireVeda',
-    description: 'Get in touch with the WorkCoPilot team about the product, a demo for your team, security or compliance, or anything else. Send a note and we will get back to you.',
+    title: t('seo.contact.title'),
+    description: t('seo.contact.description'),
     path: '/workcopilot/contact',
   })
   const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' })

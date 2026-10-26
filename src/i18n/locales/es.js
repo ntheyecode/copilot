@@ -105,6 +105,10 @@ export default {
     sales: 'Ventas y empresas',
     ownership: 'WorkCoPilot, de AdmireVeda, un producto de COE Security LLC.',
     note: 'Solo para trabajo lícito y legítimo. Es una guía, no asesoría profesional.',
+    cookiePrefs: "Preferencias de cookies",
+    cookiePolicy: "Política de cookies",
+    subprocessors: "Subencargados",
+    accessibility: "Accesibilidad",
   },
 
   home: {
@@ -551,5 +555,54 @@ export default {
       validEmail: 'Escribe una dirección de email válida.',
       loginAgain: 'Tu sesión de inicio ha caducado. Inicia sesión de nuevo.',
     },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "Cómo funciona - WorkCoPilot by AdmireVeda", description: "Todo lo que hace WorkCoPilot: guía paso a paso en tu pantalla, el comando o clic exacto, empezando desde cero, detectando y corrigiendo errores, en cualquier app, apoyado en tus propios documentos, un registro que conservas, siempre al día aprendiendo tus herramientas, un asistente previo a la tarea, tus propias habilidades, redacción en el dispositivo con SAST y comprobación de dependencias en vivo, controles de empresa y planes de la IA más potente a tu alcance." },
+    'use-cases': { title: "Casos de uso - WorkCoPilot by AdmireVeda", description: "Lo que guía WorkCoPilot, en detalle: configuración técnica, construcciones e integraciones, IA y automatización, producto, marketing, contabilidad y tareas de oficina, legal y cumplimiento, y el trabajo diario en cualquier pantalla." },
+    fields: { title: "Campos que cubrimos - {total} campos profesionales - WorkCoPilot by AdmireVeda", description: "WorkCoPilot guía el trabajo en {total} campos profesionales de {families} familias, desde software y seguridad hasta finanzas, operaciones, marketing, salud y educación. Una sola herramienta para toda tu empresa." },
+    pricing: { title: "Precios - WorkCoPilot by AdmireVeda", description: "Los planes de WorkCoPilot comparados: Lite, Basic, Advanced y Premium con tareas guiadas y horas de guía en vivo al mes, carga de documentos, imágenes generadas, seguridad en cada plan, y condiciones de excedente y cancelación. Enterprise es a medida." },
+    faq: { title: "Preguntas frecuentes - WorkCoPilot by AdmireVeda", description: "Respuestas claras sobre WorkCoPilot: qué es, cómo funciona la guía paso a paso, plataformas e instalación, qué sale de tu dispositivo, precios y facturación, cómo se mantiene al día aprendiendo tus herramientas, para quién es, datos y cumplimiento, y cómo empezar." },
+    contact: { title: "Contacto - WorkCoPilot by AdmireVeda", description: "Ponte en contacto con el equipo de WorkCoPilot sobre el producto, una demo para tu equipo, seguridad o cumplimiento, o lo que necesites. Escríbenos y te responderemos." },
+    enterprise: { title: "Funciones para empresas - WorkCoPilot by AdmireVeda", description: "WorkCoPilot aprende tu empresa: sube tus procedimientos, guías y datos, y acompaña a tu gente en cada paso exacto en su propia pantalla, según cómo trabaja tu empresa. Privado para tu organización. Además, redacción en el dispositivo, registros de auditoría, gobierno de DLP, alertas SIEM, SSO, informes de evidencia de cumplimiento, ROI para dirección, marca blanca y facturación por empresa." },
+    demo: { title: "Demo de 60 segundos - WorkCoPilot by AdmireVeda", description: "Mira a WorkCoPilot guiar una tarea real de principio a fin: lee la pantalla, da el siguiente paso y comando exacto, comprueba que funcionó, detecta un error antes de que cueste y te entrega el informe." },
+    benchmark: { title: "Referencia de precisión - WorkCoPilot by AdmireVeda", description: "Qué tan preciso es WorkCoPilot, medido con honestidad: corrección de resultados en tareas con respuestas conocidas, por dominio y por nivel de IA, con tamaños de muestra e intervalos de confianza del 95%, más la metodología." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Opciones de cookies y privacidad",
+    title: "Tus opciones de privacidad",
+    body: "Usamos una cookie estrictamente necesaria para mantener tu sesión. Con tu consentimiento también activamos el almacenamiento funcional y la atribución de referidos. Puedes cambiarlo cuando quieras.",
+    acceptAll: "Aceptar todo",
+    rejectAll: "Rechazar no esenciales",
+    manage: "Gestionar preferencias",
+    save: "Guardar opciones",
+    back: "Atrás",
+    close: "Cerrar",
+    reopen: "Preferencias de cookies",
+    manageTitle: "Gestiona tus preferencias",
+    manageBody: "Elige qué categorías permitir. El almacenamiento estrictamente necesario siempre está activado para que el sitio y el inicio de sesión sigan funcionando.",
+    alwaysOn: "Siempre activo",
+    on: "Activado",
+    off: "Desactivado",
+    necessaryT: "Estrictamente necesarias",
+    necessaryD: "Una sola cookie de inicio de sesión que te mantiene conectado y hace funcionar el sitio. No se puede desactivar.",
+    functionalT: "Funcionales",
+    functionalD: "Recuerda tu idioma, tema y otras preferencias en este dispositivo. Sin seguimiento entre sitios.",
+    analyticsT: "Analítica y atribución",
+    analyticsD: "Nos permite acreditar al socio que te refirió (una cookie de referido propia). Desactivada hasta que la permitas, y nunca para perfilarte.",
+    learn: "Lee nuestra <a>Política de cookies</a> y la <p>Política de privacidad</p>.",
+  },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Novedades de esta versión",
+    sub: "Disponible hoy, en todos los planes.",
+    global: { eyebrow: "Global por defecto", h: "Funciona en 16 idiomas, elegido para tu región", line: "El sitio y el producto hablan 16 idiomas, elegidos automáticamente para tu región.", points: ["El sitio y el producto hablan 16 idiomas.", "Se elige el adecuado automáticamente según tu región: inglés donde el inglés es el idioma de trabajo, como India, EE. UU. y el Reino Unido, y el idioma profesional local en el resto.", "Puedes cambiar de idioma cuando quieras, y tu elección se recuerda."] },
+    privacy: { eyebrow: "Privado y conforme", h: "Conforme al RGPD y la CCPA, privado por diseño", points: ["Redacción en el dispositivo: los datos personales, de salud, secretos y claves se eliminan o se tokenizan en tu propio dispositivo antes de enviar nada.", "Solo lectura por diseño: WorkCoPilot guía y nunca hace clic, escribe ni ejecuta nada por ti.", "Un control de consentimiento de cookies tuyo: acepta o rechaza el almacenamiento no esencial con un clic, y cámbialo cuando quieras.", "Alineado con el RGPD y la CCPA. Hay un Acuerdo de Tratamiento de Datos disponible para empresas."] },
+    billing: { eyebrow: "Facturación autogestionada", h: "Cambia tu plan tú mismo, cuando quieras", points: ["Mejora de plan cuando quieras y se aplica de inmediato, con crédito prorrateado por lo que ya pagaste.", "Baja de plan cuando quieras y surte efecto en tu próxima renovación.", "Cancela tú mismo cuando quieras, sin contrato.", "Consulta tus facturas mensuales en tu panel, y las horas extra que compres nunca caducan."] },
+    enterprise: { eyebrow: "Controles de empresa", h: "Gobernanza que tus administradores definen una vez", points: ["Los administradores de empresa definen una política de prevención de pérdida de datos que gobierna lo que puede salir del dispositivo, una vez, para todos.", "Controles por empresa, y conocimiento privado de la empresa que nunca se usa para entrenar la plataforma.", "Un rol de contabilidad con un panel financiero para facturación y gasto.", "Inicio de sesión único con tu proveedor de identidad, y un DPA que tu equipo legal puede firmar."] },
   },
 }

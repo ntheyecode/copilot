@@ -117,6 +117,10 @@ export default {
     sales: '영업 및 엔터프라이즈',
     ownership: 'WorkCoPilot, AdmireVeda 제공, COE Security LLC의 제품입니다.',
     note: '합법적이고 정당한 업무에만 사용. 안내일 뿐 전문적인 조언이 아닙니다.',
+    cookiePrefs: "쿠키 환경설정",
+    cookiePolicy: "쿠키 정책",
+    subprocessors: "하위 처리자",
+    accessibility: "접근성",
   },
 
   home: {
@@ -580,5 +584,54 @@ export default {
       validEmail: '올바른 이메일 주소를 입력하세요.',
       loginAgain: '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.',
     },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "작동 방식 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 하는 모든 것: 화면에서 단계별 안내, 정확한 명령어나 클릭, 처음부터 시작, 실수를 잡아 바로잡기, 어떤 앱에서든, 당신의 문서에 근거하여, 당신이 보관하는 기록, 도구를 학습해 항상 최신 유지, 작업 전 코치, 당신만의 스킬, SAST와 함께 기기에서의 비식별화 및 실시간 의존성 점검, 기업용 제어, 그리고 사용할 수 있는 가장 강력한 AI의 계획." },
+    'use-cases': { title: "활용 사례 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 자세히 안내하는 것: 기술 설정, 구축과 통합, AI와 자동화, 제품, 마케팅, 회계와 사무 업무, 법무와 규정 준수, 그리고 어떤 화면에서든 일상 업무." },
+    fields: { title: "지원 분야 - {total}개 전문 분야 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot은 {families}개 계열에 걸친 {total}개 전문 분야의 업무를 안내합니다. 소프트웨어와 보안부터 재무, 운영, 마케팅, 의료, 교육까지. 회사 전체가 쓰는 하나의 도구입니다." },
+    pricing: { title: "요금 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 요금제 나란히 비교: Lite, Basic, Advanced, Premium. 월별 안내 작업과 실시간 안내 시간, 문서 업로드, 생성 이미지, 모든 요금제에 포함된 보안, 초과 사용 및 해지 조건 포함. Enterprise는 맞춤형입니다." },
+    faq: { title: "자주 묻는 질문 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot에 대한 명료한 답변: 무엇인지, 단계별 안내가 어떻게 작동하는지, 플랫폼과 설치, 기기에서 무엇이 나가는지, 요금과 청구, 도구를 학습해 어떻게 최신을 유지하는지, 누구를 위한 것인지, 데이터와 규정 준수, 그리고 시작하는 방법." },
+    contact: { title: "문의하기 - WorkCoPilot by AdmireVeda", description: "제품, 팀을 위한 데모, 보안이나 규정 준수, 그 밖의 무엇이든 WorkCoPilot 팀에 문의하세요. 메시지를 남겨 주시면 회신해 드립니다." },
+    enterprise: { title: "엔터프라이즈 기능 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot은 당신의 기업을 학습합니다: 절차와 가이드, 데이터를 업로드하면, 회사가 일하는 방식에 맞춰 구성원 각자의 화면에서 정확한 모든 단계를 함께합니다. 조직 전용. 여기에 기기 내 비식별화, 감사 로그, DLP 거버넌스, SIEM 경고, SSO, 규정 준수 증적 보고서, 경영진용 ROI, 화이트라벨, 회사별 청구가 더해집니다." },
+    demo: { title: "60초 데모 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 실제 작업을 처음부터 끝까지 안내하는 모습을 보세요: 화면을 읽고, 다음의 정확한 단계와 명령을 제시하고, 성공했는지 확인하고, 비용이 되기 전에 실수를 잡아내며, 보고서를 건네줍니다." },
+    benchmark: { title: "정확도 벤치마크 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 얼마나 정확한지 정직하게 측정: 정답이 알려진 작업에서의 결과 정확도를 도메인별, AI 등급별로, 표본 크기와 95% 신뢰구간과 함께 보고하고, 방법론도 제시합니다." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "쿠키 및 개인정보 선택",
+    title: "개인정보 선택",
+    body: "로그인 상태를 유지하기 위해 반드시 필요한 쿠키 하나를 사용합니다. 동의하시면 기능적 저장과 추천 기여도 함께 켭니다. 언제든지 변경할 수 있습니다.",
+    acceptAll: "모두 수락",
+    rejectAll: "필수 외 거부",
+    manage: "환경설정 관리",
+    save: "선택 저장",
+    back: "뒤로",
+    close: "닫기",
+    reopen: "쿠키 환경설정",
+    manageTitle: "환경설정 관리",
+    manageBody: "허용할 범주를 선택하세요. 사이트와 로그인이 계속 작동하도록 반드시 필요한 저장은 항상 켜져 있습니다.",
+    alwaysOn: "항상 켜짐",
+    on: "켜짐",
+    off: "꺼짐",
+    necessaryT: "반드시 필요",
+    necessaryD: "로그인 상태를 유지하고 사이트를 작동시키는 단일 로그인 쿠키입니다. 끌 수 없습니다.",
+    functionalT: "기능",
+    functionalD: "이 기기에서 언어, 테마 및 기타 환경설정을 기억합니다. 사이트 간 추적은 없습니다.",
+    analyticsT: "분석 및 기여",
+    analyticsD: "추천해 준 파트너에게 공을 돌릴 수 있게 합니다(자사 추천 쿠키). 허용하기 전에는 꺼져 있으며, 프로파일링에는 절대 사용되지 않습니다.",
+    learn: "<a>쿠키 정책</a>과 <p>개인정보처리방침</p>을 읽어 보세요.",
+  },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "이번 릴리스의 새로운 기능",
+    sub: "오늘부터, 모든 요금제에서.",
+    global: { eyebrow: "기본적으로 글로벌", h: "16개 언어로 작동하며 지역에 맞게 선택", line: "사이트와 제품은 16개 언어를 지원하며, 지역에 맞게 자동으로 선택됩니다.", points: ["사이트와 제품은 16개 언어를 지원합니다.", "지역에 따라 적절한 언어가 자동 선택됩니다. 영어가 업무 언어인 인도, 미국, 영국 등에서는 영어가, 그 외 지역에서는 현지 전문 언어가 표시됩니다.", "언제든지 언어를 바꿀 수 있으며, 선택이 기억됩니다."] },
+    privacy: { eyebrow: "비공개이며 규정 준수", h: "GDPR 및 CCPA에 맞춰 설계, 설계상 비공개", points: ["기기 내 비식별화: 개인정보, 건강정보, 비밀값, 키는 무엇이든 전송되기 전에 사용자의 기기에서 제거되거나 토큰화됩니다.", "설계상 읽기 전용: WorkCoPilot은 안내만 하며, 사용자를 대신해 클릭, 입력, 실행을 결코 하지 않습니다.", "사용자의 쿠키 동의 제어: 비필수 저장을 한 번의 클릭으로 수락하거나 거부하고, 언제든지 변경할 수 있습니다.", "GDPR 및 CCPA에 부합합니다. 기업용 데이터 처리 부속서(DPA)를 제공합니다."] },
+    billing: { eyebrow: "셀프서비스 청구", h: "언제든지 직접 요금제 변경", points: ["언제든 업그레이드하면 즉시 적용되며, 이미 결제한 금액에 대해 일할 크레딧이 제공됩니다.", "언제든 다운그레이드하면 다음 갱신 시 적용됩니다.", "계약 없이 언제든 직접 해지할 수 있습니다.", "대시보드에서 월별 청구서를 확인할 수 있으며, 구매한 추가 시간은 만료되지 않습니다."] },
+    enterprise: { eyebrow: "회사 제어", h: "관리자가 한 번 설정하는 거버넌스", points: ["회사 관리자는 기기에서 무엇이 나갈 수 있는지를 모두에게 한 번에 정하는 데이터 유출 방지 정책을 설정합니다.", "회사별 제어, 그리고 플랫폼 학습에 결코 사용되지 않는 비공개 회사 지식.", "청구 및 지출을 위한 재무 대시보드를 갖춘 회계 역할.", "사용 중인 ID 공급자를 통한 싱글 사인온과 법무팀이 서명할 수 있는 DPA."] },
   },
 }

@@ -8,6 +8,7 @@ import { BarChart3, ShieldCheck, FlaskConical, ArrowLeft, Lock } from 'lucide-re
 import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'   // per-route title / description / canonical (WEB-01)
+import { useT } from '../i18n/index.jsx'   // localized <title>/description (seo.* keys)
 
 const DOMAIN_LABEL = { dev: 'Dev / data', finance: 'Spreadsheet / finance', cross: 'Cross-profession', security: 'Security / code review' }
 const pct = (x) => `${Math.round((Number(x) || 0) * 100)}%`
@@ -45,9 +46,10 @@ function ModelScore({ title, summary }) {
 // row header scopes, a status role on the pending notice, hidden decorative
 // icons, visible focus rings, and a link blue that meets AA on the page tint.
 export default function WorkBenchmark() {
+  const t = useT()
   useSeo({
-    title: 'Accuracy Benchmark - WorkCoPilot by AdmireVeda',
-    description: 'How accurate WorkCoPilot is, measured honestly: result correctness on tasks with known answers, reported per domain and per AI tier with sample sizes and 95% confidence intervals, plus the methodology.',
+    title: t('seo.benchmark.title'),
+    description: t('seo.benchmark.description'),
     path: '/workcopilot/benchmark',
   })
   const [data, setData] = useState(null)

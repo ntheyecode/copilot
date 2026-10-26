@@ -117,6 +117,10 @@ export default {
     sales: '営業・エンタープライズ',
     ownership: 'WorkCoPilot（AdmireVeda 提供、COE Security LLC の製品）。',
     note: '適法かつ正当な業務のみ。ガイドであり、専門的な助言ではありません。',
+    cookiePrefs: "Cookie 設定",
+    cookiePolicy: "Cookie ポリシー",
+    subprocessors: "サブプロセッサー",
+    accessibility: "アクセシビリティ",
   },
 
   home: {
@@ -580,5 +584,54 @@ export default {
       validEmail: '有効なメールアドレスを入力してください。',
       loginAgain: 'サインインセッションがタイムアウトしました。もう一度ログインしてください。',
     },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "使い方 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot ができることのすべて：画面上での段階的なガイド、正確なコマンドやクリック、ゼロからの開始、ミスの検知と修正、あらゆるアプリで、あなた自身の文書に基づき、手元に残る記録、ツールを学んで常に最新、タスク前のコーチ、あなた独自のスキル、SAST を伴う端末上での秘匿化とライブ依存関係チェック、企業向けの制御、そして利用できる最も強力な AI による計画。" },
+    'use-cases': { title: "ユースケース - WorkCoPilot by AdmireVeda", description: "WorkCoPilot が詳しくガイドする内容：技術的なセットアップ、構築と統合、AI と自動化、プロダクト、マーケティング、経理やオフィス業務、法務とコンプライアンス、そしてあらゆる画面での日々の作業。" },
+    fields: { title: "対応する分野 - {total} の専門分野 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot は {families} のファミリーにまたがる {total} の専門分野で作業をガイドします。ソフトウェアやセキュリティから、財務、運用、マーケティング、医療、教育まで。会社全体で使える 1 つのツールです。" },
+    pricing: { title: "料金 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot の各プランを並べて比較：Lite、Basic、Advanced、Premium。月あたりのガイド付きタスクとライブガイドの時間、文書アップロード、生成画像、すべてのプランに備わるセキュリティ、超過と解約の条件付き。Enterprise はカスタムです。" },
+    faq: { title: "よくある質問 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot についての率直な回答：それは何か、段階的ガイドの仕組み、プラットフォームとインストール、端末から何が出ていくか、料金と請求、ツールを学んでどう最新を保つか、誰のためのものか、データとコンプライアンス、そして始め方。" },
+    contact: { title: "お問い合わせ - WorkCoPilot by AdmireVeda", description: "製品、チーム向けのデモ、セキュリティやコンプライアンス、その他どんなことでも WorkCoPilot チームにご連絡ください。メッセージをいただければ折り返します。" },
+    enterprise: { title: "エンタープライズ機能 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot はあなたの企業を学びます：手順書やガイド、データをアップロードすれば、会社の働き方に沿って、各メンバーの画面で一つひとつの正確なステップに寄り添います。組織に対して非公開。さらに端末上での秘匿化、監査ログ、DLP ガバナンス、SIEM アラート、SSO、コンプライアンス証跡レポート、経営向け ROI、ホワイトラベル、会社単位の請求。" },
+    demo: { title: "60秒デモ - WorkCoPilot by AdmireVeda", description: "WorkCoPilot が実際のタスクを最初から最後までガイドする様子をご覧ください：画面を読み取り、次の正確なステップとコマンドを示し、うまくいったか確認し、代償になる前にミスを捉え、記録をお渡しします。" },
+    benchmark: { title: "精度ベンチマーク - WorkCoPilot by AdmireVeda", description: "WorkCoPilot がどれほど正確か、誠実に測定：答えが既知のタスクでの結果の正しさを、分野別・AI ティア別に、サンプル数と 95% 信頼区間とともに報告し、方法論も記載します。" },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Cookie とプライバシーの選択",
+    title: "あなたのプライバシー選択",
+    body: "サインイン状態を保つために、厳密に必要な Cookie を 1 つ使用します。同意いただくと、機能的な保存と紹介のアトリビューションも有効にします。いつでも変更できます。",
+    acceptAll: "すべて同意",
+    rejectAll: "必須以外を拒否",
+    manage: "設定を管理",
+    save: "選択を保存",
+    back: "戻る",
+    close: "閉じる",
+    reopen: "Cookie 設定",
+    manageTitle: "設定を管理",
+    manageBody: "許可するカテゴリーを選んでください。サイトとサインインが動作し続けるよう、厳密に必要な保存は常に有効です。",
+    alwaysOn: "常に有効",
+    on: "オン",
+    off: "オフ",
+    necessaryT: "厳密に必要",
+    necessaryD: "サインイン状態を保ち、サイトを動作させる単一のサインイン Cookie。無効にできません。",
+    functionalT: "機能的",
+    functionalD: "この端末で言語・テーマなどの設定を記憶します。サイトをまたぐ追跡はありません。",
+    analyticsT: "分析とアトリビューション",
+    analyticsD: "紹介してくれたパートナーに功績を割り当てられます（ファーストパーティの紹介 Cookie）。許可するまでオフで、プロファイリングには一切使いません。",
+    learn: "<a>Cookie ポリシー</a>と<p>プライバシーポリシー</p>をお読みください。",
+  },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "このリリースの新機能",
+    sub: "本日より、すべてのプランで。",
+    global: { eyebrow: "既定でグローバル", h: "16 言語で動作し、地域に合わせて選択", line: "サイトと製品は 16 言語に対応し、地域に合わせて自動で選ばれます。", points: ["サイトと製品は 16 言語に対応しています。", "地域に応じて適切な言語が自動で選ばれます。インド・米国・英国など英語が業務言語の地域では英語、その他の地域ではその土地の専門言語になります。", "いつでも言語を切り替えられ、選択は記憶されます。"] },
+    privacy: { eyebrow: "プライベートかつ準拠", h: "GDPR と CCPA に沿って構築、設計段階からプライベート", points: ["端末上での秘匿化：個人データ、健康データ、秘密情報、鍵は、何かを送信する前にあなたの端末上で削除またはトークン化されます。", "設計段階から読み取り専用：WorkCoPilot はガイドするだけで、あなたの代わりにクリック・入力・実行を一切行いません。", "あなたのための Cookie 同意コントロール：必須でない保存をワンクリックで許可または拒否でき、いつでも変更できます。", "GDPR と CCPA に整合。企業向けにデータ処理補遺（DPA）をご用意しています。"] },
+    billing: { eyebrow: "セルフサービス課金", h: "いつでも自分でプランを変更", points: ["いつでもアップグレードでき、すぐに適用。すでにお支払い分は日割りでクレジットされます。", "いつでもダウングレードでき、次回の更新時に適用されます。", "いつでも自分で解約でき、契約は不要です。", "毎月の請求書はダッシュボードで確認でき、購入した追加時間は失効しません。"] },
+    enterprise: { eyebrow: "企業向けの制御", h: "管理者が一度設定するガバナンス", points: ["企業の管理者は、端末から何を持ち出せるかを全員に対して一度で定めるデータ損失防止ポリシーを設定します。", "企業ごとの制御と、プラットフォームの学習には決して使われない非公開の企業ナレッジ。", "請求と支出のための財務ダッシュボードを備えた経理ロール。", "ご利用の ID プロバイダーによるシングルサインオンと、法務チームが署名できる DPA。"] },
   },
 }

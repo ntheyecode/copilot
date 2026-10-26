@@ -99,6 +99,10 @@ export default {
     sales: 'Penjualan dan perusahaan',
     ownership: 'WorkCoPilot, oleh AdmireVeda, produk dari COE Security LLC.',
     note: 'Hanya untuk pekerjaan yang sah dan legal. Ini panduan, bukan nasihat profesional.',
+    cookiePrefs: "Preferensi cookie",
+    cookiePolicy: "Kebijakan Cookie",
+    subprocessors: "Subpemroses",
+    accessibility: "Aksesibilitas",
   },
 
   home: {
@@ -545,5 +549,54 @@ export default {
       validEmail: 'Masukkan alamat email yang valid.',
       loginAgain: 'Sesi masuk Anda habis. Silakan masuk lagi.',
     },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "Cara kerjanya - WorkCoPilot by AdmireVeda", description: "Semua yang dilakukan WorkCoPilot: panduan langkah demi langkah di layar Anda, perintah atau klik yang tepat, mulai dari nol, menangkap dan memperbaiki kesalahan, di aplikasi mana pun, berdasarkan dokumen Anda sendiri, catatan yang Anda simpan, selalu terkini dengan mempelajari alat Anda, pendamping sebelum tugas, keterampilan Anda sendiri, penyuntingan di perangkat dengan SAST dan pemeriksaan dependensi langsung, kontrol perusahaan, serta rencana dari AI terkuat yang dapat Anda jangkau." },
+    'use-cases': { title: "Kasus penggunaan - WorkCoPilot by AdmireVeda", description: "Apa yang dipandu WorkCoPilot, secara rinci: penyiapan teknis, pembangunan dan integrasi, AI dan otomatisasi, produk, pemasaran, akuntansi dan pekerjaan kantor, hukum dan kepatuhan, serta pekerjaan sehari-hari di layar apa pun." },
+    fields: { title: "Bidang yang kami cakup - {total} bidang profesional - WorkCoPilot by AdmireVeda", description: "WorkCoPilot memandu pekerjaan di {total} bidang profesional dalam {families} keluarga, dari perangkat lunak dan keamanan hingga keuangan, operasi, pemasaran, kesehatan, dan pendidikan. Satu alat untuk seluruh perusahaan Anda." },
+    pricing: { title: "Harga - WorkCoPilot by AdmireVeda", description: "Paket WorkCoPilot berdampingan: Lite, Basic, Advanced, dan Premium, dengan tugas terpandu dan jam panduan langsung per bulan, unggah dokumen, gambar yang dihasilkan, keamanan di setiap paket, serta ketentuan kelebihan pemakaian dan pembatalan. Enterprise bersifat khusus." },
+    faq: { title: "Pertanyaan umum - WorkCoPilot by AdmireVeda", description: "Jawaban lugas tentang WorkCoPilot: apa itu, bagaimana panduan langkah demi langkah bekerja, platform dan pemasangan, apa yang meninggalkan perangkat Anda, harga dan penagihan, bagaimana ia tetap terkini dengan mempelajari alat Anda, untuk siapa, data dan kepatuhan, dan cara memulai." },
+    contact: { title: "Kontak - WorkCoPilot by AdmireVeda", description: "Hubungi tim WorkCoPilot tentang produk, demo untuk tim Anda, keamanan atau kepatuhan, atau hal lainnya. Kirim pesan dan kami akan menghubungi Anda kembali." },
+    enterprise: { title: "Fitur perusahaan - WorkCoPilot by AdmireVeda", description: "WorkCoPilot mempelajari perusahaan Anda: unggah prosedur, panduan, dan data Anda, dan ia mendampingi orang-orang Anda pada setiap langkah yang tepat di layar mereka sendiri, sesuai cara kerja perusahaan Anda. Privat untuk organisasi Anda. Ditambah penyuntingan di perangkat, log audit, tata kelola DLP, peringatan SIEM, SSO, laporan bukti kepatuhan, ROI untuk pimpinan, white-label, dan penagihan per perusahaan." },
+    demo: { title: "Demo 60 detik - WorkCoPilot by AdmireVeda", description: "Lihat WorkCoPilot memandu satu tugas nyata dari awal hingga akhir: ia membaca layar, memberi langkah dan perintah berikutnya yang tepat, memeriksa bahwa itu berhasil, menangkap kesalahan sebelum merugikan, dan menyerahkan laporannya kepada Anda." },
+    benchmark: { title: "Tolok ukur akurasi - WorkCoPilot by AdmireVeda", description: "Seberapa akurat WorkCoPilot, diukur dengan jujur: ketepatan hasil pada tugas dengan jawaban yang diketahui, per domain dan per tingkat AI, dengan ukuran sampel dan interval kepercayaan 95%, serta metodologinya." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Pilihan cookie dan privasi",
+    title: "Pilihan privasi Anda",
+    body: "Kami menggunakan satu cookie yang sangat diperlukan untuk menjaga Anda tetap masuk. Dengan persetujuan Anda, kami juga mengaktifkan penyimpanan fungsional dan atribusi rujukan. Anda dapat mengubahnya kapan saja.",
+    acceptAll: "Terima semua",
+    rejectAll: "Tolak yang tidak penting",
+    manage: "Kelola preferensi",
+    save: "Simpan pilihan",
+    back: "Kembali",
+    close: "Tutup",
+    reopen: "Preferensi cookie",
+    manageTitle: "Kelola preferensi Anda",
+    manageBody: "Pilih kategori yang diizinkan. Penyimpanan yang sangat diperlukan selalu aktif agar situs dan proses masuk tetap berfungsi.",
+    alwaysOn: "Selalu aktif",
+    on: "Aktif",
+    off: "Nonaktif",
+    necessaryT: "Sangat diperlukan",
+    necessaryD: "Satu cookie masuk yang menjaga Anda tetap login dan membuat situs berfungsi. Tidak dapat dinonaktifkan.",
+    functionalT: "Fungsional",
+    functionalD: "Mengingat bahasa, tema, dan preferensi lain di perangkat ini. Tanpa pelacakan lintas situs.",
+    analyticsT: "Analitik dan atribusi",
+    analyticsD: "Memungkinkan kami memberi kredit kepada mitra yang merujuk Anda (cookie rujukan pihak pertama). Nonaktif hingga Anda mengizinkan, dan tidak pernah dipakai untuk memprofilkan Anda.",
+    learn: "Baca <a>Kebijakan Cookie</a> dan <p>Kebijakan Privasi</p> kami.",
+  },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Baru di rilis ini",
+    sub: "Tersedia hari ini, di setiap paket.",
+    global: { eyebrow: "Global secara bawaan", h: "Bekerja dalam 16 bahasa, dipilih untuk wilayah Anda", line: "Situs dan produk berbicara dalam 16 bahasa, dipilih otomatis untuk wilayah Anda.", points: ["Situs dan produk berbicara dalam 16 bahasa.", "Bahasa yang tepat dipilih otomatis dari wilayah Anda: bahasa Inggris di tempat Inggris menjadi bahasa kerja, seperti India, AS, dan Inggris, dan bahasa profesional lokal di tempat lain.", "Anda dapat mengganti bahasa kapan saja, dan pilihan Anda diingat."] },
+    privacy: { eyebrow: "Privat dan patuh", h: "Dibangun untuk GDPR dan CCPA, privat secara desain", points: ["Penyuntingan di perangkat: data pribadi, data kesehatan, rahasia, dan kunci dihapus atau ditokenisasi di perangkat Anda sebelum apa pun dikirim.", "Hanya-baca secara desain: WorkCoPilot memandu dan tidak pernah mengeklik, mengetik, atau menjalankan apa pun untuk Anda.", "Kontrol persetujuan cookie milik Anda: terima atau tolak penyimpanan non-esensial dalam satu klik, dan ubah kapan saja.", "Selaras dengan GDPR dan CCPA. Tersedia Adendum Pemrosesan Data untuk perusahaan."] },
+    billing: { eyebrow: "Penagihan swalayan", h: "Ubah paket Anda sendiri, kapan saja", points: ["Naikkan paket kapan saja dan berlaku langsung, dengan kredit prorata untuk yang sudah Anda bayar.", "Turunkan paket kapan saja dan berlaku pada perpanjangan berikutnya.", "Batalkan sendiri kapan saja, tanpa kontrak.", "Lihat faktur bulanan Anda di dasbor, dan jam ekstra yang Anda beli tidak pernah kedaluwarsa."] },
+    enterprise: { eyebrow: "Kontrol perusahaan", h: "Tata kelola yang diatur admin Anda satu kali", points: ["Admin perusahaan menetapkan kebijakan pencegahan kehilangan data yang mengatur apa yang boleh meninggalkan perangkat, satu kali, untuk semua orang.", "Kontrol per perusahaan, dan pengetahuan perusahaan privat yang tidak pernah dipakai untuk melatih platform.", "Peran akunting dengan dasbor keuangan untuk penagihan dan pengeluaran.", "Masuk tunggal melalui penyedia identitas Anda, dan DPA yang dapat ditandatangani tim hukum Anda."] },
   },
 }

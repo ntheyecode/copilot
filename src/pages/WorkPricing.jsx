@@ -15,7 +15,9 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2 } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import useSeo from '../useSeo.js'
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 
 // Offline fallbacks (USD / month and per-tier values). These MATCH
 // server/store.js WORK_PRICING_DEFAULT so the page is never blank and never
@@ -51,9 +53,10 @@ function Cell({ v }) {
 
 export default function WorkPricing() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: 'Pricing - WorkCoPilot by AdmireVeda',
-    description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with monthly guided tasks and live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+    title: t('seo.pricing.title'),
+    description: t('seo.pricing.description'),
     path: '/workcopilot/pricing',
   })
   const [price, setPrice] = useState(null)
@@ -265,6 +268,8 @@ export default function WorkPricing() {
         </div>
         <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> Final entitlements and prices are confirmed at checkout. Taxes may apply by location.</p>
       </section>
+
+      <ReleaseNote groups={['billing']} />
 
       <section className="wpr-cta">
         <button className="wpr-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden /></button>

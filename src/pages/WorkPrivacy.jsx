@@ -9,7 +9,7 @@
 // a reader can cite. Same light design language as WorkSecurity (.wsx-*).
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Lock, ArrowLeft, ArrowRight, Monitor, Send, Database, ShieldCheck, Scale, Mail, Gavel, FileSignature } from 'lucide-react'
+import { Lock, ArrowLeft, ArrowRight, Monitor, Send, Database, ShieldCheck, Scale, Mail, Gavel, FileSignature, Cookie } from 'lucide-react'
 import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
@@ -47,10 +47,14 @@ const SECTIONS = [
   { id: 'leaves', n: '04', title: 'What leaves your device' },
   { id: 'store', n: '05', title: 'What we store and for how long' },
   { id: 'protect', n: '06', title: 'How it is protected' },
-  { id: 'third', n: '07', title: 'Third parties' },
-  { id: 'choices', n: '08', title: 'Your choices and rights' },
-  { id: 'changes', n: '09', title: 'Changes to this policy' },
-  { id: 'contact', n: '10', title: 'Contact' },
+  { id: 'cookies', n: '07', title: 'Cookies and storage' },
+  { id: 'third', n: '08', title: 'Third parties' },
+  { id: 'bases', n: '09', title: 'Legal bases for processing' },
+  { id: 'transfers', n: '10', title: 'International data transfers' },
+  { id: 'choices', n: '11', title: 'Your choices and rights' },
+  { id: 'california', n: '12', title: 'California privacy rights' },
+  { id: 'changes', n: '13', title: 'Changes to this policy' },
+  { id: 'contact', n: '14', title: 'Contact' },
 ]
 
 function Sec({ id, children }) {
@@ -199,13 +203,33 @@ export default function WorkPrivacy() {
             ]} />
           </Sec>
 
+          <Sec id="cookies">
+            <p>WorkCoPilot uses one strictly necessary sign-in cookie and, with your consent, a first-party referral cookie and functional browser storage (for example your language and theme). It sets no advertising cookies and no cross-site tracking.</p>
+            <p>The full list, with the purpose and lifetime of each cookie and storage key, is in the <a href="/workcopilot/cookie-policy">Cookie Policy</a>. You can turn functional and attribution storage on or off at any time from the <b>Cookie preferences</b> link in the footer, and rejecting non-essential storage is as easy as accepting it.</p>
+          </Sec>
+
           <Sec id="third">
-            <p>These are the third parties involved in providing the service.</p>
+            <p>These are the third parties involved in providing the service. The <a href="/workcopilot/subprocessors">Subprocessors</a> page lists the role each one plays.</p>
             <Items items={[
               ['The AI provider', 'Guidance is produced by an AI provider. By default it runs on the platform\'s keys. Your company, or you, can instead run WorkCoPilot on your own AI keys, which keeps the governed data inside your own provider boundary. The specific model in use is not shown to end users.'],
               ['Stripe', 'Billing and payment details are handled by Stripe.'],
               ['Your identity provider', 'When your company uses enterprise single sign-on, your identity provider authenticates you.'],
             ]} />
+          </Sec>
+
+          <Sec id="bases">
+            <p>Where data protection law (such as the EU/UK GDPR) applies, we rely on these legal bases to process your personal data.</p>
+            <Items items={[
+              ['Performing our contract', 'To give you the service you signed up for - your account, sign-in, running guided sessions and billing - we process the data needed to do that.'],
+              ['Legitimate interests', 'To keep the service secure, prevent abuse, and keep guidance current through de-identified learnings, balanced against your rights and freedoms.'],
+              ['Consent', 'For non-essential storage such as the referral cookie, we rely on your consent, which you can withdraw at any time from Cookie preferences.'],
+              ['Legal obligation', 'Where the law requires us to keep certain records (for example for tax or accounting), we process data to meet that obligation.'],
+            ]} />
+          </Sec>
+
+          <Sec id="transfers">
+            <p>We and our subprocessors may process data in countries other than the one you are in. Where personal data is transferred across borders, we rely on an appropriate safeguard for that transfer - such as the relevant standard contractual clauses or a transfer being to a country with an adequacy decision - as applicable to the parties involved.</p>
+            <p>The <a href="/workcopilot/subprocessors">Subprocessors</a> page and the <a href="/workcopilot/dpa">Data Processing Addendum</a> describe who is involved and how transfers are handled for company accounts.</p>
           </Sec>
 
           <Sec id="choices">
@@ -229,6 +253,19 @@ export default function WorkPrivacy() {
             ]} />
           </Sec>
 
+          <Sec id="california">
+            <p>If you are a California resident, the California Consumer Privacy Act as amended by the CPRA gives you specific rights. We honor these rights for California residents.</p>
+            <Items items={[
+              ['Right to know and access', 'Request the categories and specific pieces of personal information we have collected about you, and a copy of it.'],
+              ['Right to delete', 'Request deletion of your personal information, subject to any record we are required by law to keep.'],
+              ['Right to correct', 'Request correction of inaccurate personal information.'],
+              ['Sale and sharing', 'We do not sell your personal information, and we do not share it for cross-context behavioral advertising. There is nothing to opt out of on that front; you can still decline the referral cookie from Cookie preferences.'],
+              ['Sensitive information', 'We do not use sensitive personal information to infer characteristics about you. On-device redaction keeps sensitive values from leaving your device in the first place.'],
+              ['No discrimination', 'We will not discriminate against you for exercising any of these rights.'],
+              ['How to exercise', `Write to ${CONTACT}. We will verify your request and respond within the time the law allows. An authorized agent may act for you where the law permits.`],
+            ]} />
+          </Sec>
+
           <Sec id="changes">
             <p>When this page changes, the "Last updated" date at the top changes with it. Where a change matters to how your data is handled, we will say what changed in plain language.</p>
           </Sec>
@@ -245,6 +282,7 @@ export default function WorkPrivacy() {
         <button className="wlx-btn" onClick={() => nav('/workcopilot/security')}><ShieldCheck size={16} aria-hidden="true" /> See the full data flow</button>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot/terms')}><Gavel size={15} aria-hidden="true" /> Terms</button>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot/dpa')}><FileSignature size={15} aria-hidden="true" /> DPA</button>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot/cookie-policy')}><Cookie size={15} aria-hidden="true" /> Cookie Policy</button>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot/disclaimer')}><Scale size={15} aria-hidden="true" /> Disclaimer</button>
         <a className="wlx-btn alt" href={'mailto:' + CONTACT}><Mail size={15} aria-hidden="true" /> Contact</a>
         <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>

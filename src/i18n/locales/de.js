@@ -105,6 +105,10 @@ export default {
     sales: 'Vertrieb und Unternehmen',
     ownership: 'WorkCoPilot, von AdmireVeda, ein Produkt der COE Security LLC.',
     note: 'Nur für rechtmäßige, legitime Arbeit. Anleitung, keine fachliche Beratung.',
+    cookiePrefs: "Cookie-Einstellungen",
+    cookiePolicy: "Cookie-Richtlinie",
+    subprocessors: "Unterauftragsverarbeiter",
+    accessibility: "Barrierefreiheit",
   },
 
   home: {
@@ -551,5 +555,54 @@ export default {
       validEmail: 'Geben Sie eine gültige E-Mail-Adresse ein.',
       loginAgain: 'Ihre Anmeldesitzung ist abgelaufen. Bitte melden Sie sich erneut an.',
     },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "So funktioniert es - WorkCoPilot by AdmireVeda", description: "Alles, was WorkCoPilot leistet: Schritt-für-Schritt-Anleitung auf Ihrem Bildschirm, der exakte Befehl oder Klick, von Grund auf, erkennt und korrigiert Fehler, in jeder App, gestützt auf Ihre eigenen Dokumente, ein Protokoll, das Sie behalten, stets aktuell durch das Lernen Ihrer Werkzeuge, ein Coach vor der Aufgabe, Ihre eigenen Fähigkeiten, Schwärzung auf dem Gerät mit SAST und Live-Prüfung der Abhängigkeiten, Unternehmenskontrollen und Pläne aus der stärksten für Sie erreichbaren KI." },
+    'use-cases': { title: "Anwendungsfälle - WorkCoPilot by AdmireVeda", description: "Was WorkCoPilot im Detail anleitet: technische Einrichtung, Aufbau und Integrationen, KI und Automatisierung, Produktarbeit, Marketing, Buchhaltung und Büroaufgaben, Recht und Compliance, und die tägliche Arbeit auf jedem Bildschirm." },
+    fields: { title: "Abgedeckte Bereiche - {total} Fachbereiche - WorkCoPilot by AdmireVeda", description: "WorkCoPilot leitet Arbeit in {total} Fachbereichen aus {families} Familien an, von Software und Sicherheit bis zu Finanzen, Betrieb, Marketing, Gesundheit und Bildung. Ein Werkzeug für Ihr ganzes Unternehmen." },
+    pricing: { title: "Preise - WorkCoPilot by AdmireVeda", description: "Die WorkCoPilot-Pläne im Vergleich: Lite, Basic, Advanced und Premium, mit geführten Aufgaben und Stunden an Live-Anleitung pro Monat, Dokument-Upload, generierten Bildern, Sicherheit in jedem Plan sowie Mehrverbrauch- und Kündigungsbedingungen. Enterprise ist maßgeschneidert." },
+    faq: { title: "Häufige Fragen - WorkCoPilot by AdmireVeda", description: "Klare Antworten zu WorkCoPilot: was es ist, wie die Schritt-für-Schritt-Anleitung funktioniert, Plattformen und Installation, was Ihr Gerät verlässt, Preise und Abrechnung, wie es durch das Lernen Ihrer Werkzeuge aktuell bleibt, für wen es ist, Daten und Compliance, und wie Sie starten." },
+    contact: { title: "Kontakt - WorkCoPilot by AdmireVeda", description: "Wenden Sie sich an das WorkCoPilot-Team zum Produkt, zu einer Demo für Ihr Team, zu Sicherheit oder Compliance oder zu allem anderen. Schreiben Sie uns, und wir melden uns." },
+    enterprise: { title: "Enterprise-Funktionen - WorkCoPilot by AdmireVeda", description: "WorkCoPilot lernt Ihr Unternehmen: Laden Sie Ihre Verfahren, Leitfäden und Daten hoch, und es begleitet Ihre Leute bei jedem exakten Schritt auf ihrem eigenen Bildschirm, so wie Ihr Unternehmen arbeitet. Privat für Ihre Organisation. Dazu Schwärzung auf dem Gerät, Audit-Protokolle, DLP-Governance, SIEM-Warnungen, SSO, Compliance-Nachweisberichte, ROI für die Führung, White-Label und Abrechnung je Unternehmen." },
+    demo: { title: "60-Sekunden-Demo - WorkCoPilot by AdmireVeda", description: "Sehen Sie, wie WorkCoPilot eine echte Aufgabe von Anfang bis Ende anleitet: Es liest den Bildschirm, gibt den exakten nächsten Schritt und Befehl, prüft den Erfolg, erkennt einen Fehler, bevor er teuer wird, und übergibt Ihnen das Protokoll." },
+    benchmark: { title: "Genauigkeits-Benchmark - WorkCoPilot by AdmireVeda", description: "Wie genau WorkCoPilot ist, ehrlich gemessen: Ergebnisgenauigkeit bei Aufgaben mit bekannten Antworten, je Bereich und je KI-Stufe, mit Stichprobengrößen und 95%-Konfidenzintervallen, dazu die Methodik." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Cookie- und Datenschutzoptionen",
+    title: "Ihre Datenschutzoptionen",
+    body: "Wir verwenden ein unbedingt erforderliches Cookie, um Sie angemeldet zu halten. Mit Ihrer Einwilligung aktivieren wir zusätzlich funktionale Speicherung und Empfehlungs-Attribution. Sie können dies jederzeit ändern.",
+    acceptAll: "Alle akzeptieren",
+    rejectAll: "Nicht notwendige ablehnen",
+    manage: "Einstellungen verwalten",
+    save: "Auswahl speichern",
+    back: "Zurück",
+    close: "Schließen",
+    reopen: "Cookie-Einstellungen",
+    manageTitle: "Verwalten Sie Ihre Einstellungen",
+    manageBody: "Wählen Sie, welche Kategorien Sie zulassen. Unbedingt erforderliche Speicherung bleibt an, damit Website und Anmeldung weiter funktionieren.",
+    alwaysOn: "Immer an",
+    on: "An",
+    off: "Aus",
+    necessaryT: "Unbedingt erforderlich",
+    necessaryD: "Ein einziges Anmelde-Cookie, das Sie angemeldet hält und die Website funktionsfähig macht. Kann nicht deaktiviert werden.",
+    functionalT: "Funktional",
+    functionalD: "Merkt sich Sprache, Design und andere Einstellungen auf diesem Gerät. Kein seitenübergreifendes Tracking.",
+    analyticsT: "Analyse und Attribution",
+    analyticsD: "Ermöglicht es, einen Partner zu vergüten, der Sie empfohlen hat (ein Erstanbieter-Empfehlungs-Cookie). Aus, bis Sie es erlauben, und nie zur Profilbildung.",
+    learn: "Lesen Sie unsere <a>Cookie-Richtlinie</a> und <p>Datenschutzerklärung</p>.",
+  },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Neu in dieser Version",
+    sub: "Ab heute verfügbar, in jedem Tarif.",
+    global: { eyebrow: "Global von Haus aus", h: "Funktioniert in 16 Sprachen, passend zu Ihrer Region", line: "Website und Produkt sprechen 16 Sprachen, automatisch passend zu Ihrer Region gewählt.", points: ["Website und Produkt sprechen 16 Sprachen.", "Die richtige wird automatisch nach Ihrer Region gewählt - Englisch, wo Englisch die Arbeitssprache ist, etwa in Indien, den USA und Großbritannien, und die lokale Fachsprache anderswo.", "Sie können die Sprache jederzeit wechseln, und Ihre Wahl wird gemerkt."] },
+    privacy: { eyebrow: "Privat und konform", h: "Nach DSGVO und CCPA gebaut, privat durch Design", points: ["Schwärzung auf dem Gerät: personenbezogene Daten, Gesundheitsdaten, Geheimnisse und Schlüssel werden auf Ihrem eigenen Gerät entfernt oder tokenisiert, bevor etwas gesendet wird.", "Nur lesend durch Design: WorkCoPilot führt und klickt, tippt oder führt nie etwas für Sie aus.", "Eine Cookie-Einwilligung, die Ihnen gehört: nicht notwendige Speicherung mit einem Klick annehmen oder ablehnen und jederzeit ändern.", "An DSGVO und CCPA ausgerichtet. Ein Auftragsverarbeitungsvertrag ist für Unternehmen verfügbar."] },
+    billing: { eyebrow: "Selbstbedienungs-Abrechnung", h: "Ändern Sie Ihren Tarif selbst, jederzeit", points: ["Jederzeit upgraden, sofort wirksam, mit anteiliger Gutschrift für das bereits Bezahlte.", "Jederzeit downgraden, wirksam zur nächsten Verlängerung.", "Jederzeit selbst kündigen, ohne Vertrag.", "Sehen Sie Ihre monatlichen Rechnungen in Ihrem Dashboard, und gekaufte Zusatzstunden verfallen nie."] },
+    enterprise: { eyebrow: "Unternehmenssteuerung", h: "Governance, die Ihre Admins einmal festlegen", points: ["Unternehmensadmins legen eine Richtlinie zum Schutz vor Datenverlust fest, die einmal für alle regelt, was das Gerät verlassen darf.", "Steuerung je Unternehmen, und privates Unternehmenswissen, das nie zum Training der Plattform genutzt wird.", "Eine Buchhaltungsrolle mit einem Finanz-Dashboard für Abrechnung und Ausgaben.", "Single Sign-on über Ihren Identitätsanbieter und ein DPA, das Ihr Rechtsteam unterschreiben kann."] },
   },
 }

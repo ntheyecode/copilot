@@ -6,6 +6,7 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
+import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys)
 
 // WorkCoPilot - scripted 60-second demo (admireveda.com/demo).
 // Fully canned: no login, no AI, no network calls. It replays one real guided
@@ -99,9 +100,10 @@ const WRITEUP = [
 // header inks were raised to AA contrast.
 export default function WorkDemo() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
-    title: '60-Second Demo - WorkCoPilot by AdmireVeda',
-    description: 'Watch WorkCoPilot guide one real task start to finish: it reads the screen, gives the exact next step and command, checks it worked, catches a mistake before it costs you, and hands you the write-up.',
+    title: t('seo.demo.title'),
+    description: t('seo.demo.description'),
     path: '/demo',
   })
 

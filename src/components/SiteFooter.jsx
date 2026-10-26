@@ -14,6 +14,7 @@ import { Mail, ArrowUpRight } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
 import { SUPPORT_CONTACT, LEGAL_CONTACT } from './LegalPage.jsx'
 import { useT } from '../i18n/index.jsx'
+import { openPreferences } from '../consent.js'   // re-open the cookie consent panel
 
 // Link groups: the catalog key for each label (footer.<key> / nav.<key>) and the
 // href. Labels are translated at render; hrefs never are.
@@ -27,7 +28,8 @@ const GROUPS = [
   ] },
   { key: 'legal', links: [
     ['footer.privacy', '/workcopilot/privacy'], ['footer.terms', '/workcopilot/terms'], ['footer.aup', '/workcopilot/acceptable-use'],
-    ['footer.dpa', '/workcopilot/dpa'], ['footer.refund', '/workcopilot/refund'], ['footer.disclaimer', '/workcopilot/disclaimer'],
+    ['footer.cookiePolicy', '/workcopilot/cookie-policy'], ['footer.dpa', '/workcopilot/dpa'], ['footer.subprocessors', '/workcopilot/subprocessors'],
+    ['footer.refund', '/workcopilot/refund'], ['footer.disclaimer', '/workcopilot/disclaimer'], ['footer.accessibility', '/workcopilot/accessibility'],
   ] },
 ]
 
@@ -63,7 +65,10 @@ export default function SiteFooter({ dark = true }) {
       </div>
       <div className="sf-bottom">
         <span>&copy; {new Date().getFullYear()} COE Security LLC. {t('footer.ownership')}</span>
-        <span className="sf-note">{t('footer.note')}</span>
+        <span className="sf-bottom-r">
+          <button type="button" className="sf-cookie" onClick={openPreferences}>{t('footer.cookiePrefs')}</button>
+          <span className="sf-note">{t('footer.note')}</span>
+        </span>
       </div>
     </footer>
   )
@@ -96,8 +101,12 @@ const CSS = `
 .sf-group a{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--sf-mut);transition:color .15s;overflow-wrap:anywhere}
 .sf-group a:hover{color:var(--sf-tx)}
 .sf-group a:focus-visible,.sf-btn:focus-visible,.sf-brand a:focus-visible{outline:2px solid var(--sf-cyan);outline-offset:3px;border-radius:6px}
-.sf-bottom{max-width:1160px;margin:0 auto;padding:16px 24px 28px;border-top:1px solid var(--sf-line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--sf-mut)}
+.sf-bottom{max-width:1160px;margin:0 auto;padding:16px 24px 28px;border-top:1px solid var(--sf-line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;font-size:12.5px;color:var(--sf-mut)}
+.sf-bottom-r{display:inline-flex;align-items:center;gap:14px;flex-wrap:wrap;justify-content:flex-end}
 .sf-note{opacity:.9}
+.sf-cookie{flex-shrink:0;white-space:nowrap;background:none;border:0;padding:0;margin:0;font:inherit;font-size:12.5px;font-weight:600;color:var(--sf-cyan);cursor:pointer;text-decoration:none}
+.sf-cookie:hover{text-decoration:underline}
+.sf-cookie:focus-visible{outline:2px solid var(--sf-cyan);outline-offset:3px;border-radius:5px}
 @media(max-width:980px){.sf-in{grid-template-columns:1fr 1fr 1fr}.sf-brand{grid-column:1 / -1}}
 @media(max-width:560px){.sf-in{grid-template-columns:1fr 1fr;gap:22px;padding:34px 18px 20px}.sf-bottom{flex-direction:column;gap:6px;padding:14px 18px 24px}}
 @media(prefers-reduced-motion:reduce){.sf-btn{transition:none}}

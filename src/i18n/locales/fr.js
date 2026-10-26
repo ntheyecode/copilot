@@ -105,6 +105,10 @@ export default {
     sales: 'Ventes et entreprises',
     ownership: 'WorkCoPilot, par AdmireVeda, un produit de COE Security LLC.',
     note: 'Travail licite et légitime uniquement. Des conseils, pas un avis professionnel.',
+    cookiePrefs: "Préférences de cookies",
+    cookiePolicy: "Politique de cookies",
+    subprocessors: "Sous-traitants ultérieurs",
+    accessibility: "Accessibilité",
   },
 
   home: {
@@ -551,5 +555,54 @@ export default {
       validEmail: 'Saisissez une adresse e-mail valide.',
       loginAgain: 'Votre session de connexion a expiré. Reconnectez-vous.',
     },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "Comment ça marche - WorkCoPilot by AdmireVeda", description: "Tout ce que fait WorkCoPilot : un guidage pas à pas sur votre écran, la commande ou le clic exact, en partant de zéro, en repérant et corrigeant les erreurs, dans n'importe quelle app, appuyé sur vos propres documents, un compte rendu que vous gardez, toujours à jour en apprenant vos outils, un coach avant la tâche, vos propres compétences, l'expurgation sur l'appareil avec SAST et vérification des dépendances en direct, des contrôles d'entreprise et des plans issus de l'IA la plus puissante à votre portée." },
+    'use-cases': { title: "Cas d'usage - WorkCoPilot by AdmireVeda", description: "Ce que WorkCoPilot guide, en détail : configuration technique, constructions et intégrations, IA et automatisation, produit, marketing, comptabilité et tâches de bureau, juridique et conformité, et le travail quotidien sur n'importe quel écran." },
+    fields: { title: "Domaines couverts - {total} domaines professionnels - WorkCoPilot by AdmireVeda", description: "WorkCoPilot guide le travail dans {total} domaines professionnels répartis en {families} familles, du logiciel et de la sécurité à la finance, aux opérations, au marketing, à la santé et à l'éducation. Un seul outil pour toute votre entreprise." },
+    pricing: { title: "Tarifs - WorkCoPilot by AdmireVeda", description: "Les forfaits WorkCoPilot comparés : Lite, Basic, Advanced et Premium, avec des tâches guidées et des heures de guidage en direct par mois, l'import de documents, les visuels générés, la sécurité sur chaque forfait, et les conditions de dépassement et d'annulation. Enterprise est sur mesure." },
+    faq: { title: "FAQ - WorkCoPilot by AdmireVeda", description: "Des réponses claires sur WorkCoPilot : ce que c'est, comment fonctionne le guidage pas à pas, les plateformes et l'installation, ce qui quitte votre appareil, les tarifs et la facturation, comment il reste à jour en apprenant vos outils, à qui il s'adresse, les données et la conformité, et comment démarrer." },
+    contact: { title: "Contact - WorkCoPilot by AdmireVeda", description: "Contactez l'équipe WorkCoPilot au sujet du produit, d'une démo pour votre équipe, de la sécurité ou de la conformité, ou de toute autre question. Écrivez-nous et nous vous répondrons." },
+    enterprise: { title: "Fonctions entreprise - WorkCoPilot by AdmireVeda", description: "WorkCoPilot apprend votre entreprise : importez vos procédures, vos guides et vos données, et il accompagne vos équipes à chaque étape précise sur leur propre écran, selon la façon dont votre entreprise travaille. Privé à votre organisation. Plus l'expurgation sur l'appareil, les journaux d'audit, la gouvernance DLP, les alertes SIEM, le SSO, les rapports de preuve de conformité, le ROI pour la direction, la marque blanche et la facturation par entreprise." },
+    demo: { title: "Démo de 60 secondes - WorkCoPilot by AdmireVeda", description: "Regardez WorkCoPilot guider une vraie tâche du début à la fin : il lit l'écran, donne l'étape et la commande exactes, vérifie que cela a marché, repère une erreur avant qu'elle ne coûte, et vous remet le compte rendu." },
+    benchmark: { title: "Référence de précision - WorkCoPilot by AdmireVeda", description: "Le niveau de précision de WorkCoPilot, mesuré honnêtement : l'exactitude des résultats sur des tâches à réponse connue, par domaine et par niveau d'IA, avec les tailles d'échantillon et des intervalles de confiance à 95 %, ainsi que la méthodologie." },
+  },
+
+  // Cookie / storage consent banner (see en.js consent).
+  consent: {
+    aria: "Choix de cookies et de confidentialité",
+    title: "Vos choix de confidentialité",
+    body: "Nous utilisons un cookie strictement nécessaire pour vous garder connecté. Avec votre consentement, nous activons aussi le stockage fonctionnel et l'attribution des parrainages. Vous pouvez changer cela à tout moment.",
+    acceptAll: "Tout accepter",
+    rejectAll: "Refuser le non essentiel",
+    manage: "Gérer les préférences",
+    save: "Enregistrer les choix",
+    back: "Retour",
+    close: "Fermer",
+    reopen: "Préférences de cookies",
+    manageTitle: "Gérez vos préférences",
+    manageBody: "Choisissez les catégories à autoriser. Le stockage strictement nécessaire reste activé pour que le site et la connexion continuent de fonctionner.",
+    alwaysOn: "Toujours actif",
+    on: "Activé",
+    off: "Désactivé",
+    necessaryT: "Strictement nécessaires",
+    necessaryD: "Un unique cookie de connexion qui vous garde connecté et fait fonctionner le site. Ne peut pas être désactivé.",
+    functionalT: "Fonctionnels",
+    functionalD: "Mémorise votre langue, votre thème et d'autres préférences sur cet appareil. Aucun suivi entre sites.",
+    analyticsT: "Analyse et attribution",
+    analyticsD: "Nous permet de créditer le partenaire qui vous a parrainé (un cookie de parrainage propriétaire). Désactivé tant que vous ne l'autorisez pas, et jamais utilisé pour vous profiler.",
+    learn: "Lisez notre <a>Politique de cookies</a> et notre <p>Politique de confidentialité</p>.",
+  },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Nouveautés de cette version",
+    sub: "Disponible aujourd'hui, sur toutes les offres.",
+    global: { eyebrow: "Global par défaut", h: "Fonctionne en 16 langues, choisie pour votre région", line: "Le site et le produit parlent 16 langues, choisies automatiquement selon votre région.", points: ["Le site et le produit parlent 16 langues.", "La bonne est choisie automatiquement selon votre région : anglais là où l'anglais est la langue de travail, comme en Inde, aux États-Unis et au Royaume-Uni, et la langue professionnelle locale ailleurs.", "Vous pouvez changer de langue à tout moment, et votre choix est mémorisé."] },
+    privacy: { eyebrow: "Privé et conforme", h: "Conforme au RGPD et au CCPA, privé par conception", points: ["Expurgation sur l'appareil : les données personnelles, de santé, les secrets et les clés sont supprimés ou tokenisés sur votre propre appareil avant tout envoi.", "Lecture seule par conception : WorkCoPilot guide et ne clique, ne saisit et ne lance jamais rien à votre place.", "Un contrôle de consentement aux cookies qui vous appartient : acceptez ou refusez le stockage non essentiel en un clic, et modifiez-le à tout moment.", "Aligné sur le RGPD et le CCPA. Un accord de traitement des données est disponible pour les entreprises."] },
+    billing: { eyebrow: "Facturation en libre-service", h: "Changez votre offre vous-même, à tout moment", points: ["Montez en gamme à tout moment, avec effet immédiat et un crédit au prorata de ce que vous avez déjà payé.", "Descendez en gamme à tout moment, avec effet à votre prochain renouvellement.", "Résiliez vous-même à tout moment, sans engagement.", "Consultez vos factures mensuelles dans votre tableau de bord, et les heures supplémentaires achetées n'expirent jamais."] },
+    enterprise: { eyebrow: "Contrôles d'entreprise", h: "Une gouvernance que vos administrateurs définissent une fois", points: ["Les administrateurs d'entreprise définissent une politique de prévention des pertes de données qui régit ce qui peut quitter l'appareil, une fois, pour tout le monde.", "Des contrôles par entreprise, et un savoir d'entreprise privé qui ne sert jamais à entraîner la plateforme.", "Un rôle comptable avec un tableau de bord financier pour la facturation et les dépenses.", "L'authentification unique via votre fournisseur d'identité, et un DPA que votre équipe juridique peut signer."] },
   },
 }

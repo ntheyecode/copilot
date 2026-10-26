@@ -16,6 +16,7 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive (also loads the brand fonts)
 import useSeo, { useJsonLd } from '../useSeo.js'   // per-route title/description/canonical (WEB-01) + safe JSON-LD
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 import { FIELD_TOTAL } from './WorkFields.jsx'      // the fields roster is the single source for the count (never drifts)
 
 const SUPPORT = 'support@admireveda.com'           // product help, billing
@@ -84,6 +85,9 @@ const GROUPS = [
       { q: 'Can I use WorkCoPilot from my phone?',
         a: 'The mobile app lets you point your phone camera at a screen or a device, snap a photo or live-watch, and get guided on the go; the Android app is coming soon.',
         d: 'Until then, the browser version works on any device with a modern browser.' },
+      { q: 'Which languages does WorkCoPilot support?',
+        a: 'WorkCoPilot is available in 16 languages, and the right one is chosen automatically for your region.',
+        d: 'Regions where English is the working language, such as India, the US and the UK, see English; regions with another professional language see that language. You can switch language anytime, and your choice is remembered.' },
     ],
   },
   {
@@ -113,6 +117,10 @@ const GROUPS = [
       { q: 'Is WorkCoPilot visible when I share my screen or record?',
         a: 'No. The desktop app is hidden from screen shares by default, so it is invisible when you present or record.',
         d: 'You choose when to share and which display.' },
+      { q: 'Do you use cookies, and can I control them?',
+        a: 'We use one strictly necessary sign-in cookie, and any non-essential storage stays off until you allow it in the cookie-consent control, where rejecting is as easy as accepting.',
+        d: 'You can change your choice anytime from the Cookie preferences link in the footer. The Cookie Policy lists every cookie and storage key and its purpose, and the product is aligned with GDPR and CCPA.',
+        links: [{ label: 'Cookie Policy', href: '/workcopilot/cookie-policy' }, { label: 'Privacy Policy', href: '/workcopilot/privacy' }] },
     ],
   },
   {
@@ -144,6 +152,14 @@ const GROUPS = [
       { q: 'How do I pay?',
         a: 'Checkout is handled by Stripe, and we never see or store your card number.',
         d: 'Your invoices are available from the billing portal in your account.' },
+      { q: 'Can I upgrade or downgrade my plan, and when does it take effect?',
+        a: 'Yes. You change your plan yourself anytime: an upgrade applies right away with prorated credit for what you have already paid, and a downgrade takes effect at your next renewal.',
+        d: 'Your monthly invoices are available in your dashboard, and any extra hours you buy never expire.',
+        links: [{ label: 'See pricing', href: '/workcopilot/pricing' }] },
+      { q: 'Is there a finance view for companies?',
+        a: 'Yes. A company can give someone an accounting role with a finance dashboard for billing and spend, separate from the technical admin.',
+        d: 'Enterprise adds company-wide governance such as a data-loss-prevention policy for what may leave the device, single sign-on and a signed DPA.',
+        links: [{ label: 'Enterprise', href: '/workcopilot/enterprise' }] },
     ],
   },
   {
@@ -279,9 +295,10 @@ const GLANCE = [
 export default function WorkFaq() {
   const nav = useNavigate()
   const [query, setQuery] = useState('')
+  const t = useT()
   useSeo({
-    title: 'FAQ - WorkCoPilot by AdmireVeda',
-    description: 'Straight answers about WorkCoPilot: what it is, how the step-by-step guidance works, platforms and install, what leaves your device, pricing and billing, how it stays current by learning your tools, who it is for, data and compliance, and getting started.',
+    title: t('seo.faq.title'),
+    description: t('seo.faq.description'),
     path: '/workcopilot/faq',
   })
   useJsonLd(FAQ_LD)   // FAQPage structured data, injected safely (textContent, no HTML sink)

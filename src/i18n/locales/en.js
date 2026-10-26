@@ -117,6 +117,129 @@ export default {
     sales: 'Sales and enterprise',
     ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
     note: 'Lawful, legitimate work only. Guidance, not professional advice.',
+    cookiePrefs: 'Cookie preferences',
+    cookiePolicy: 'Cookie Policy',
+    subprocessors: 'Subprocessors',
+    accessibility: 'Accessibility',
+  },
+
+  // Cookie / storage consent banner (ConsentBanner.jsx). GDPR + CCPA: reject is
+  // as easy as accept, and non-essential storage stays off until allowed.
+  consent: {
+    aria: 'Cookie and privacy choices',
+    title: 'Your privacy choices',
+    body: 'We use one strictly necessary cookie to keep you signed in. With your consent we also turn on functional storage and referral attribution. You can change this anytime.',
+    acceptAll: 'Accept all',
+    rejectAll: 'Reject non-essential',
+    manage: 'Manage preferences',
+    save: 'Save choices',
+    back: 'Back',
+    close: 'Close',
+    reopen: 'Cookie preferences',
+    manageTitle: 'Manage your preferences',
+    manageBody: 'Choose which categories to allow. Strictly necessary storage is always on so the site and sign-in keep working.',
+    alwaysOn: 'Always on',
+    on: 'On',
+    off: 'Off',
+    necessaryT: 'Strictly necessary',
+    necessaryD: 'A single sign-in cookie that keeps you logged in and the site working. Cannot be turned off.',
+    functionalT: 'Functional',
+    functionalD: 'Remembers your language, theme and other preferences on this device. No cross-site tracking.',
+    analyticsT: 'Analytics and attribution',
+    analyticsD: 'Lets us credit a partner who referred you (a first-party referral cookie). Off until you allow it, and never used to profile you.',
+    learn: 'Read our <a>Cookie Policy</a> and <p>Privacy Policy</p>.',
+  },
+
+  // "New in this release" marketing highlights (ReleaseNote.jsx), shown on the
+  // home page (all four) and one card on each relevant page. HONEST: every point
+  // describes shipped behavior - no certifications, invented numbers or unshipped
+  // specifics. 16 is the real supported-language count (LOCALES).
+  rel: {
+    title: 'New in this release',
+    sub: 'Shipping today, on every plan.',
+    global: {
+      eyebrow: 'Global by default',
+      h: 'Works in 16 languages, picked for your region',
+      line: 'The site and the product speak 16 languages, chosen automatically for your region.',
+      points: [
+        'The site and the product speak 16 languages.',
+        'The right one is chosen automatically from your region - English where English is the working language, such as India, the US and the UK, and the local professional language elsewhere.',
+        'You can switch language anytime, and your choice is remembered.',
+      ],
+    },
+    privacy: {
+      eyebrow: 'Private and compliant',
+      h: 'Built to GDPR and CCPA, private by design',
+      points: [
+        'On-device redaction: personal data, health data, secrets and keys are stripped or tokenized on your own device before anything is sent.',
+        'Read-only by design: WorkCoPilot guides, and never clicks, types or runs anything for you.',
+        'A cookie-consent control you own: accept or reject non-essential storage in one click, and change it anytime.',
+        'Aligned with GDPR and CCPA. A Data Processing Addendum is available for companies.',
+      ],
+    },
+    billing: {
+      eyebrow: 'Self-serve billing',
+      h: 'Change your plan yourself, anytime',
+      points: [
+        'Upgrade anytime and it applies right away, with prorated credit for what you have already paid.',
+        'Downgrade anytime and it takes effect at your next renewal.',
+        'Cancel yourself anytime, with no contract.',
+        'See your monthly invoices in your dashboard, and extra hours you buy never expire.',
+      ],
+    },
+    enterprise: {
+      eyebrow: 'Company controls',
+      h: 'Governance your admins set once',
+      points: [
+        'Company admins set a data-loss-prevention policy that governs what may leave the device, once, for everyone.',
+        'Per-company controls, and private company knowledge that is never used to train the platform.',
+        'An accounting role with a finance dashboard for billing and spend.',
+        'Single sign-on through your identity provider, and a DPA your legal team can sign.',
+      ],
+    },
+  },
+
+  // Per-route <title> + meta description for the MARKETING pages (home + login
+  // keep their own home.meta/login.meta). Read by each page's useSeo() as
+  // seo.<key>.title / .description. Legal pages stay English and are NOT here.
+  // {total}/{families} on the fields entry are injected from WorkFields.jsx.
+  seo: {
+    'how-it-works': {
+      title: 'How It Works - WorkCoPilot by AdmireVeda',
+      description: 'Everything WorkCoPilot does: step-by-step guidance on your screen, the exact command or click, starting from zero, catching and correcting mistakes, any app, grounded in your own documents, a record you keep, staying current by learning your tools, a pre-task coach, your own skills, on-device redaction with SAST and live dependency checks, company controls, and plans from the strongest AI available to you.',
+    },
+    'use-cases': {
+      title: 'Use Cases - WorkCoPilot by AdmireVeda',
+      description: 'What WorkCoPilot guides, in detail: technical setup and config, builds and integrations, AI and automation, product work, marketing, accounting and office tasks, legal and compliance, and everyday work on any screen.',
+    },
+    fields: {
+      title: 'Fields we cover - {total} professional fields - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot guides work across {total} professional fields in {families} families, from software and security to finance, operations, marketing, healthcare and education. One tool your whole company can use.',
+    },
+    pricing: {
+      title: 'Pricing - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with monthly guided tasks and live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+    },
+    faq: {
+      title: 'FAQ - WorkCoPilot by AdmireVeda',
+      description: 'Straight answers about WorkCoPilot: what it is, how the step-by-step guidance works, platforms and install, what leaves your device, pricing and billing, how it stays current by learning your tools, who it is for, data and compliance, and getting started.',
+    },
+    contact: {
+      title: 'Contact us - WorkCoPilot by AdmireVeda',
+      description: 'Get in touch with the WorkCoPilot team about the product, a demo for your team, security or compliance, or anything else. Send a note and we will get back to you.',
+    },
+    enterprise: {
+      title: 'Enterprise features - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot learns your enterprise: upload your SOPs, playbooks, app guides and data, and it hand-holds your people through every exact step on their own screens, grounded in how your company works. Private to your tenant. Plus on-device redaction, audit logs, DLP governance, SIEM alerts, SSO, compliance evidence reports, executive ROI, white-label and per-company billing.',
+    },
+    demo: {
+      title: '60-Second Demo - WorkCoPilot by AdmireVeda',
+      description: 'Watch WorkCoPilot guide one real task start to finish: it reads the screen, gives the exact next step and command, checks it worked, catches a mistake before it costs you, and hands you the write-up.',
+    },
+    benchmark: {
+      title: 'Accuracy Benchmark - WorkCoPilot by AdmireVeda',
+      description: 'How accurate WorkCoPilot is, measured honestly: result correctness on tasks with known answers, reported per domain and per AI tier with sample sizes and 95% confidence intervals, plus the methodology.',
+    },
   },
 
   home: {

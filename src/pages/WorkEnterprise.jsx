@@ -31,8 +31,10 @@ import {
   UploadCloud, Hand, RefreshCw, Download, Trash2, History, Target, X,
 } from 'lucide-react'
 import SiteFooter from '../components/SiteFooter.jsx'
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 
 // The SOC / SIEM relay targets. Names only (no third-party logos).
 const SIEM_TARGETS = ['Splunk', 'Microsoft Sentinel', 'IBM QRadar', 'Elastic', 'Datadog', 'Sumo Logic', 'Google Chronicle', 'PagerDuty', 'Opsgenie', 'Slack', 'Microsoft Teams', 'ServiceNow', 'Webhook', 'Syslog / CEF']
@@ -165,9 +167,10 @@ const LOOP = [
 ]
 
 export default function WorkEnterprise() {
+  const t = useT()
   useSeo({
-    title: 'Enterprise features - WorkCoPilot by AdmireVeda',
-    description: 'WorkCoPilot learns your enterprise: upload your SOPs, playbooks, app guides and data, and it hand-holds your people through every exact step on their own screens, grounded in how your company works. Private to your tenant. Plus on-device redaction, audit logs, DLP governance, SIEM alerts, SSO, compliance evidence reports, executive ROI, white-label and per-company billing.',
+    title: t('seo.enterprise.title'),
+    description: t('seo.enterprise.description'),
     path: '/workcopilot/enterprise',
   })
   return (
@@ -332,6 +335,7 @@ export default function WorkEnterprise() {
             <a className="wen-cta alt" href="/workcopilot/dpa">Read the DPA <ArrowRight size={15} /></a>
           </div>
         </section>
+      <ReleaseNote groups={['enterprise']} />
       </main>
       <SiteFooter />
     </div>
