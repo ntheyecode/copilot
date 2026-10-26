@@ -649,7 +649,7 @@ export function canManageMfa(actorUserId, targetUserId) {
 // so they do not need a personal subscription. No stripe id ever leaves to the
 // client (publicWorkUser exposes status+plan only).
 export function freshSubscription() {
-  return { status: 'none', plan: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
+  return { status: 'none', plan: null, cycle: null, since: null, stripeCustomerId: null, stripeSubscriptionId: null, currentPeriodEnd: null }
 }
 function ensureSubscription(u) {
   if (!u.subscription || typeof u.subscription !== 'object') u.subscription = freshSubscription()
@@ -669,9 +669,14 @@ export function setSubscription(userId, patch = {}) {
   if (!u) throw httpErr(404, 'Account not found')
   const s = ensureSubscription(u)
   const priorPlan = s.plan || null
-  for (const k of ['status', 'plan', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
+  // 'cycle' (monthly|annual) travels from checkout metadata / the Stripe price
+  // interval so the Subscribers view and MRR math know the billing period.
+  for (const k of ['status', 'plan', 'cycle', 'stripeCustomerId', 'stripeSubscriptionId', 'currentPeriodEnd']) {
     if (patch[k] !== undefined) s[k] = patch[k]
   }
+  // Stamp when the subscription first became live, so the Subscribers list can
+  // show a real "since" date rather than falling back to the account creation.
+  if (!s.since && (s.status === 'active' || s.status === 'trialing' || s.status === 'comp')) s.since = now()
   // ENTITLEMENTS FOLLOW THE SUBSCRIPTION (individual accounts only; company tiers
   // come from the company's licenses). When the plan is active/trialing/comped,
   // the account's tier = the plan, so daily hours, task caps and feature gates
@@ -727,7 +732,7 @@ export function setUserFreeAccess(userId, free) {
   if (!u) throw httpErr(404, 'Account not found')
   const s = ensureSubscription(u)
   s.status = free ? 'comp' : 'none'
-  if (free) s.plan = s.plan || 'premium'
+  if (free) { s.plan = s.plan || 'premium'; if (!s.since) s.since = now() }
   persist()
   return publicWorkUser(u)
 }
@@ -739,6 +744,51 @@ export function findUserByStripeCustomer(customerId) {
 export function findUserByStripeSubscription(subscriptionId) {
   if (!subscriptionId) return null
   return (db.users || []).find((u) => u.subscription && u.subscription.stripeSubscriptionId === subscriptionId) || null
+}
+
+// ---- Store-backed webhook idempotency (survives restarts) -----------------
+// Stripe delivers at-least-once, so the same event.id can arrive twice -
+// including AFTER a process restart (the in-memory deduper in billing.js is
+// lost on restart). Most of our handlers are idempotent on their own
+// (recordTransaction dedupes on kind:stripeId, setSubscription is a state
+// setter), but the one-time credit grant (grantWorkPurchasedSeconds /
+// grantWorkImageCredits) is ADDITIVE and would double-credit on a replay across
+// a restart. A persisted claim on event.id closes that gap exactly-once. The
+// claim is written synchronously (persist, not persistSoon) so it lands on disk
+// before the grant that follows it, and the id set is bounded so it cannot grow
+// without limit. Only billing.js calls this, after Stripe signature
+// verification, so unauthenticated callers can never seed it.
+const STRIPE_EVENT_LIMIT = 10000
+function stripeEventStore() {
+  if (!db.stripeEvents || typeof db.stripeEvents !== 'object') db.stripeEvents = { seen: {}, order: [] }
+  if (!db.stripeEvents.seen || typeof db.stripeEvents.seen !== 'object') db.stripeEvents.seen = {}
+  if (!Array.isArray(db.stripeEvents.order)) db.stripeEvents.order = []
+  return db.stripeEvents
+}
+// true when this id is new (and is now recorded as processed); false if already
+// seen. A missing id never blocks processing (mirrors the in-memory deduper).
+export function claimStripeEvent(eventId) {
+  if (!eventId) return true
+  const key = String(eventId)
+  const se = stripeEventStore()
+  if (se.seen[key]) return false
+  se.seen[key] = new Date().toISOString()
+  se.order.push(key)
+  while (se.order.length > STRIPE_EVENT_LIMIT) { const old = se.order.shift(); if (old) delete se.seen[old] }
+  persist()
+  return true
+}
+// Give an id back so a handler that threw (transient store error) can be
+// reprocessed on Stripe's next retry, instead of being swallowed as a duplicate.
+export function releaseStripeEvent(eventId) {
+  if (!eventId) return
+  const key = String(eventId)
+  const se = stripeEventStore()
+  if (se.seen[key]) {
+    delete se.seen[key]
+    se.order = se.order.filter((x) => x !== key)
+    persist()
+  }
 }
 
 // ---- Stripe billing configuration (superadmin, UI or env) -----------------
@@ -2910,6 +2960,10 @@ export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
 }
 
 // WorkCoPilot pricing (superadmin-editable; the marketing site reads it).
+// Annual plans bill yearly at 20% off (see billing.js cfg: priceAnnual = 20% off).
+// Used to normalize an annual subscriber's yearly charge to a monthly-equivalent
+// MRR: yearly = monthly * 12 * (1 - ANNUAL_DISCOUNT); mrr = yearly / 12.
+const ANNUAL_DISCOUNT = 0.2
 const WORK_PRICING_DEFAULT = {
   currency: 'usd',
   plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },   // monthly plan price
@@ -3543,6 +3597,84 @@ export function financialSummary(now = new Date()) {
   }
 }
 function round2(n) { return Math.round((Number(n) || 0) * 100) / 100 }
+
+// The Subscribers view (superadmin): every account with a live-ish subscription
+// (active | trialing | past_due | comp), with the numbers the admin page shows.
+// Pure read. Carries NO secrets and NO Stripe ids (a boolean `free` marks a
+// comped account; stripeCustomerId / stripeSubscriptionId are never exposed).
+//   - mrrUsd: from the configured monthly plan price; an annual subscriber's
+//     yearly charge normalized to a monthly-equivalent (see ANNUAL_DISCOUNT).
+//     comped (free) and past_due accounts contribute 0 to MRR.
+//   - lifetimeUsd: that account's subscription + hours + images ledger entries
+//     minus its refunds.
+//   - tasks/hours/sessions/lastActive: from the usage + session stores.
+export function listSubscribers() {
+  const pricing = getWorkPricing()
+  const plans = pricing.plans || {}
+  // Lifetime spend per account, from the ledger (one pass).
+  const lifetimeByUser = {}
+  for (const t of (db.transactions || [])) {
+    if (!t.userId) continue
+    const amt = Number(t.amount) || 0
+    if (t.kind === 'subscription' || t.kind === 'hours' || t.kind === 'images') lifetimeByUser[t.userId] = (lifetimeByUser[t.userId] || 0) + amt
+    else if (t.kind === 'refund') lifetimeByUser[t.userId] = (lifetimeByUser[t.userId] || 0) - amt
+  }
+  // Sessions per account, for the count + last-active timestamp (one pass).
+  const sessByUser = {}
+  for (const sx of (db.workSessions || [])) {
+    if (!sx.workUserId) continue
+    const agg = sessByUser[sx.workUserId] || (sessByUser[sx.workUserId] = { count: 0, last: 0 })
+    agg.count++
+    const when = Number(sx.lastActivityAt) || (sx.endedAt ? Date.parse(sx.endedAt) : (sx.startedAt ? Date.parse(sx.startedAt) : 0)) || 0
+    if (when > agg.last) agg.last = when
+  }
+  const COUNTED = new Set(['active', 'trialing', 'past_due', 'comp'])
+  const byPlan = { lite: 0, basic: 0, advanced: 0, premium: 0 }
+  const subscribers = []
+  let mrrTotal = 0, activeCount = 0
+  for (const u of (db.users || [])) {
+    const s = u.subscription || {}
+    const status = s.status || 'none'
+    if (!COUNTED.has(status)) continue
+    const free = status === 'comp'
+    const plan = WORK_TIERS.includes(s.plan) ? s.plan : (WORK_TIERS.includes(u.tier) ? u.tier : null)
+    const cycle = s.cycle === 'annual' ? 'annual' : 'monthly'
+    let mrrUsd = 0
+    // MRR counts only paying, currently-billing subscribers: comped accounts pay
+    // nothing, and a past_due account is not currently producing revenue.
+    if (!free && (status === 'active' || status === 'trialing') && plan && Number.isFinite(Number(plans[plan]))) {
+      const monthly = Number(plans[plan])
+      mrrUsd = round2(cycle === 'annual' ? (monthly * 12 * (1 - ANNUAL_DISCOUNT)) / 12 : monthly)
+    }
+    const usage = getWorkUsage(u.id)
+    const sess = sessByUser[u.id] || { count: 0, last: 0 }
+    const co = u.companyId ? (db.companies || []).find((c) => c.id === u.companyId) : null
+    subscribers.push({
+      id: u.id,
+      username: u.username,
+      email: effectiveUserEmail(u) || null,
+      plan: plan || null,
+      status,
+      cycle,
+      since: s.since || u.createdAt || null,
+      currentPeriodEnd: s.currentPeriodEnd || null,
+      mrrUsd,
+      lifetimeUsd: round2(lifetimeByUser[u.id] || 0),
+      tasksToday: workTasksToday(u.id),
+      hoursUsedToday: round2((usage.usedSeconds || 0) / 3600),
+      sessionCount: sess.count,
+      lastActive: sess.last ? new Date(sess.last).toISOString() : null,
+      companyName: co ? co.name : null,
+      free,
+    })
+    if (plan && byPlan[plan] !== undefined) byPlan[plan]++
+    if (status === 'active' || status === 'trialing') activeCount++
+    mrrTotal += mrrUsd
+  }
+  // Newest subscriptions first (by since), so the admin sees recent activity on top.
+  subscribers.sort((a, b) => String(b.since || '').localeCompare(String(a.since || '')))
+  return { subscribers, totals: { count: subscribers.length, activeCount, mrrUsd: round2(mrrTotal), byPlan } }
+}
 
 // ---- Platform role: accounting --------------------------------------------
 // A read-only finance role: sees all transactions + the finance dashboard +
