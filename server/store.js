@@ -3732,6 +3732,10 @@ export function setUserPasswordById(userId, newPassword) {
   if (pw.length > 256) throw httpErr(400, 'Password must be 256 characters or fewer.')
   u.passwordHash = bcrypt.hashSync(pw, 10)
   persist()
+  // Security notice to the owner is wired here, at the mutation, so every path
+  // that changes a password (emailed link, self-service, future admin flows)
+  // sends it - previously only the emailed-link route did.
+  emitStoreEvent('password_changed', { userId: u.id, at: new Date().toISOString() })
   return true
 }
 // Find an account by username OR contact/SSO email (for "forgot password").
@@ -4463,6 +4467,7 @@ export function setWorkUserPassword(workUserId, currentPassword, newPassword) {
   if (verifyPassword(u, next)) throw httpErr(400, 'The new password must be different from the current one.')
   u.passwordHash = bcrypt.hashSync(next, 10)
   persist()
+  emitStoreEvent('password_changed', { userId: u.id, at: new Date().toISOString() })
   return { ok: true }
 }
 // Company admin: change a member's role and/or plan, strictly inside the admin's

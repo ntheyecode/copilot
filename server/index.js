@@ -25,7 +25,7 @@ import { sendMail } from './mailer.js'
 import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './report_sign.js'
 import { formatWorkReportText } from './report_text.js'
 import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
-import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordReset, sendPasswordChangedAsync } from './emails.js'
+import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordReset } from './emails.js'
 import { EMAIL_DEFS, renderEmail } from './email_templates.js'
 import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
@@ -2743,8 +2743,7 @@ app.post('/api/work/password/set', wrap((req, res) => {
   if (String(password || '').length < 6) return res.status(400).json({ error: 'Choose a password of at least 6 characters.' })
   const userId = store.consumeEmailToken(String(token || ''), 'set_password')
   if (!userId) return res.status(400).json({ error: 'This link is invalid or has expired. Ask for a new one.' })
-  store.setUserPasswordById(userId, password)
-  sendPasswordChangedAsync(userId)
+  store.setUserPasswordById(userId, password)   // the store emits password_changed -> the owner's notice
   res.json({ ok: true })
 }))
 // Forgot password: send a reset link. ALWAYS 200 (no account enumeration).

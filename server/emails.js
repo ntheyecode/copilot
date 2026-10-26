@@ -174,13 +174,15 @@ export async function sendPasswordReset(userId) {
   return sendTemplate('reset_password', to, { name: u.displayName || u.username, resetLink: setPasswordLink(raw), expiresLabel: SET_PASSWORD_TTL_LABEL })
 }
 
-// Confirm a password was just changed (reuses the set link flow).
+// Confirm a password was just changed. Fired from the store's password_changed
+// event (both setUserPasswordById and setWorkUserPassword), so callers do not
+// invoke it directly - doing so would send the notice twice.
 export function sendPasswordChangedAsync(userId) {
-  Promise.resolve().then(async () => {
-    const u = store.getUser(userId); if (!u || u.ssoEmail) return
-    const to = store.effectiveUserEmail(u.id); if (!to) return
-    return sendTemplate('password_changed', to, { name: u.displayName || u.username })
-  }).catch(() => {})
+  // Recipient is resolved synchronously (like every other store-event handler)
+  // so the notice reflects the account as it was at the moment of the change.
+  const u = store.getUser(userId); if (!u || u.ssoEmail) return
+  const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('password_changed', to, { name: userName(u) })
 }
 
 // ---- Store-event subscriber: support tickets + account security notices ----
@@ -262,6 +264,7 @@ export function handleStoreEvent(type, payload = {}) {
     case 'user_disabled':
     case 'user_enabled': return onUserAccess(type, payload)
     case 'mfa_reset': return onMfaReset(payload)
+    case 'password_changed': return sendPasswordChangedAsync(payload.userId)
     case 'company_disabled':
     case 'company_enabled': return onCompanyAccess(type, payload)
     default: return undefined
