@@ -1006,6 +1006,79 @@ Questions about your plan? Just reply to this email.`,
     showRows: false,
   },
 
+  subscription_changed: {
+    label: 'Plan changed (upgrade/downgrade)',
+    category: 'billing',
+    description: 'Sent to the customer when they upgrade or downgrade their plan. Shows the new plan, the new price, and when the change takes effect (now for an upgrade, at the next renewal for a downgrade).',
+    eyebrow: 'Plan change',
+    defaultSubject: 'Your WorkCoPilot plan was changed to <Plan>',
+    defaultHeading: 'Your plan was changed',
+    defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot plan has been changed. The details are below for your records.
+
+> Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.
+
+Questions about your plan? Just reply to this email.`,
+    defaultCtaLabel: 'Manage subscription',
+    ctaUrlToken: 'billingUrl',
+    placeholders: [
+      P('<Plan>', 'The new plan name', 'Advanced (monthly)'),
+      P('<Cycle>', 'Billing cycle', 'monthly'),
+      P('<Amount>', 'The new price, formatted with currency', '$149.00'),
+      P('<Effective_Label>', 'When the change takes effect', 'Now (prorated for the rest of this period)'),
+    ],
+    rowFields: [
+      R('New plan', 'plan', { strong: true }),
+      R('Billing', 'cycle'),
+      R('New price', 'amount', { fmt: 'money', strong: true }),
+      R('Takes effect', 'effectiveLabel'),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      plan: 'Advanced (monthly)',
+      cycle: 'monthly',
+      amount: 149,
+      currency: 'usd',
+      effectiveLabel: 'Now (prorated for the rest of this period)',
+    },
+    showRows: true,
+  },
+
+  subscription_canceled: {
+    label: 'Subscription canceled',
+    category: 'billing',
+    description: 'Sent to the customer when their subscription is canceled. Confirms they will not be charged again; shows the date access continues until when one applies (a period-end cancel).',
+    eyebrow: 'Subscription canceled',
+    defaultSubject: 'Your WorkCoPilot plan is canceled',
+    defaultHeading: 'Your plan is canceled',
+    defaultBody:
+`Hi <First_Name>,
+
+Your WorkCoPilot <Plan> plan has been canceled, and you will not be charged again.
+
+> You can come back any time. Your settings and history will be waiting for you.
+
+If this was not meant to happen, reply to this email and we will help right away.`,
+    defaultCtaLabel: 'Reactivate my plan',
+    ctaUrlToken: 'billingUrl',
+    placeholders: [
+      P('<Plan>', 'The plan that was canceled', 'Advanced'),
+      P('<Access_Until>', 'Date access continues until (period-end cancels only)', 'November 23, 2026'),
+    ],
+    rowFields: [
+      R('Plan', 'plan'),
+      R('Access until', 'accessUntil', { fmt: 'date', strong: true }),
+    ],
+    sampleData: {
+      name: 'Alex Morgan',
+      plan: 'Advanced',
+      accessUntil: '2026-11-23',
+    },
+    showRows: true,
+  },
+
   owner_subscription_alert: {
     label: 'Owner alert - subscription event',
     category: 'notifications',

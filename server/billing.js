@@ -374,11 +374,19 @@ async function handleEvent(s, store, event) {
     //                 the invoice.payment_failed handler, whichever arrives first)
     //   plan/status otherwise changed -> plan change
     if (status === 'canceled') {
-      if (priorStatus !== 'canceled') sendOwnerSubscriptionAlertAsync('cancellation', { user, plan, status, cycle, stripeId: subId })
+      if (priorStatus !== 'canceled') {
+        sendOwnerSubscriptionAlertAsync('cancellation', { user, plan, status, cycle, stripeId: subId })
+        // Confirm the cancellation to the CUSTOMER (access-until shown when a paid period remains).
+        const toC = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
+        if (toC) sendTemplateAsync('subscription_canceled', toC, { name: user.displayName || user.username, plan: plan ? plan[0].toUpperCase() + plan.slice(1) : 'your', accessUntil: patch.currentPeriodEnd })
+      }
     } else if (status === 'past_due') {
       if (priorStatus !== 'past_due') sendOwnerSubscriptionAlertAsync('past_due', { user, plan, status, cycle, stripeId: subId })
     } else if (plan !== priorPlan || status !== priorStatus) {
       sendOwnerSubscriptionAlertAsync('plan_change', { user, plan, status, cycle, stripeId: subId })
+      // Confirm a plan/status change (e.g. via the Stripe portal) to the CUSTOMER.
+      const toU = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
+      if (toU) sendTemplateAsync('subscription_update', toU, { name: user.displayName || user.username, plan: plan ? plan[0].toUpperCase() + plan.slice(1) : '', status: status === 'active' ? 'updated' : status, nextBillingDate: patch.currentPeriodEnd })
     }
     return
   }
@@ -673,6 +681,9 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
         store.setSubscription(u.id, { status: newStatus, plan, cycle, currentPeriodEnd: periodEndIso(updated.current_period_end), pendingChange: null })
         // Applied change -> alert the owner now.
         sendOwnerSubscriptionAlertAsync('plan_change', { user: store.getUser(u.id) || u, plan, status: newStatus, amount: (newPrice.unit_amount || 0) / 100, currency: newPrice.currency || 'usd', cycle, stripeId: subId })
+        // Confirm the upgrade to the CUSTOMER, with the new price.
+        const toUp = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(u.id) : null
+        if (toUp) sendTemplateAsync('subscription_changed', toUp, { name: (store.getUser(u.id) || u).displayName || u.username, plan: planLabel, cycle, amount: (newPrice.unit_amount || 0) / 100, currency: newPrice.currency || 'usd', effectiveLabel: 'Now (prorated for the rest of this period)' })
         const effectiveDate = new Date().toISOString()
         return res.json({ ok: true, effective: 'now', effectiveDate, summary: `Upgraded to ${planLabel}, effective now.`, subscription: store.getSubscription(u.id) })
       }
@@ -696,6 +707,9 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
       // until the renewal webhook flips it (which also clears this pendingChange).
       const pendingChange = { plan, cycle, priceId: newPriceId, effectiveDate, scheduleId: schedule.id, scheduledAt: new Date().toISOString() }
       store.setSubscription(u.id, { pendingChange })
+      // Confirm the SCHEDULED downgrade to the CUSTOMER, with the new price + date.
+      const toDn = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(u.id) : null
+      if (toDn) sendTemplateAsync('subscription_changed', toDn, { name: (store.getUser(u.id) || u).displayName || u.username, plan: planLabel, cycle, amount: (newPrice.unit_amount || 0) / 100, currency: newPrice.currency || 'usd', effectiveLabel: effectiveDate ? `At your next renewal (${effectiveDate.slice(0, 10)})` : 'At your next renewal' })
       // No owner alert yet: the change is SCHEDULED, not applied. The webhook fires
       // the plan_change alert when the downgrade actually lands at period end.
       return res.json({ ok: true, effective: 'period_end', effectiveDate, summary: `Scheduled downgrade to ${planLabel}, effective ${effectiveDate ? effectiveDate.slice(0, 10) : 'at period end'}.`, subscription: store.getSubscription(u.id) })
@@ -909,6 +923,9 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
           if (priorStatus !== 'canceled') {
             const sb = info.user.subscription || {}
             sendOwnerSubscriptionAlertAsync('cancellation', { user: info.user, plan: sb.plan || null, status: 'canceled', cycle: sb.cycle || null, stripeId: info.subId })
+            // Immediate admin cancel: access ends now, so no access-until date is sent.
+            const toAc = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(info.user.id) : null
+            if (toAc) sendTemplateAsync('subscription_canceled', toAc, { name: info.user.displayName || info.user.username, plan: sb.plan ? sb.plan[0].toUpperCase() + sb.plan.slice(1) : 'your' })
           }
         }
         res.json({ ok: true, atPeriodEnd, subscription: store.getSubscription(req.params.id) })
