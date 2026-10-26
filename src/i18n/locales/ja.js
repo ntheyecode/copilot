@@ -581,4 +581,17 @@ export default {
       loginAgain: 'サインインセッションがタイムアウトしました。もう一度ログインしてください。',
     },
   },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "使い方 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot ができることのすべて：画面上での段階的なガイド、正確なコマンドやクリック、ゼロからの開始、ミスの検知と修正、あらゆるアプリで、あなた自身の文書に基づき、手元に残る記録、ツールを学んで常に最新、タスク前のコーチ、あなた独自のスキル、SAST を伴う端末上での秘匿化とライブ依存関係チェック、企業向けの制御、そして利用できる最も強力な AI による計画。" },
+    'use-cases': { title: "ユースケース - WorkCoPilot by AdmireVeda", description: "WorkCoPilot が詳しくガイドする内容：技術的なセットアップ、構築と統合、AI と自動化、プロダクト、マーケティング、経理やオフィス業務、法務とコンプライアンス、そしてあらゆる画面での日々の作業。" },
+    fields: { title: "対応する分野 - {total} の専門分野 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot は {families} のファミリーにまたがる {total} の専門分野で作業をガイドします。ソフトウェアやセキュリティから、財務、運用、マーケティング、医療、教育まで。会社全体で使える 1 つのツールです。" },
+    pricing: { title: "料金 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot の各プランを並べて比較：Lite、Basic、Advanced、Premium。月あたりのガイド付きタスクとライブガイドの時間、文書アップロード、生成画像、すべてのプランに備わるセキュリティ、超過と解約の条件付き。Enterprise はカスタムです。" },
+    faq: { title: "よくある質問 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot についての率直な回答：それは何か、段階的ガイドの仕組み、プラットフォームとインストール、端末から何が出ていくか、料金と請求、ツールを学んでどう最新を保つか、誰のためのものか、データとコンプライアンス、そして始め方。" },
+    contact: { title: "お問い合わせ - WorkCoPilot by AdmireVeda", description: "製品、チーム向けのデモ、セキュリティやコンプライアンス、その他どんなことでも WorkCoPilot チームにご連絡ください。メッセージをいただければ折り返します。" },
+    enterprise: { title: "エンタープライズ機能 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot はあなたの企業を学びます：手順書やガイド、データをアップロードすれば、会社の働き方に沿って、各メンバーの画面で一つひとつの正確なステップに寄り添います。組織に対して非公開。さらに端末上での秘匿化、監査ログ、DLP ガバナンス、SIEM アラート、SSO、コンプライアンス証跡レポート、経営向け ROI、ホワイトラベル、会社単位の請求。" },
+    demo: { title: "60秒デモ - WorkCoPilot by AdmireVeda", description: "WorkCoPilot が実際のタスクを最初から最後までガイドする様子をご覧ください：画面を読み取り、次の正確なステップとコマンドを示し、うまくいったか確認し、代償になる前にミスを捉え、記録をお渡しします。" },
+    benchmark: { title: "精度ベンチマーク - WorkCoPilot by AdmireVeda", description: "WorkCoPilot がどれほど正確か、誠実に測定：答えが既知のタスクでの結果の正しさを、分野別・AI ティア別に、サンプル数と 95% 信頼区間とともに報告し、方法論も記載します。" },
+  },
 }

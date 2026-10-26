@@ -582,4 +582,17 @@ export default {
       loginAgain: '您的登录会话已超时。请重新登录。',
     },
   },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "工作原理 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 所做的一切：在你的屏幕上逐步引导，给出精确的命令或点击，从零开始，发现并纠正错误，适用于任何应用，依据你自己的文档，留下你保存的记录，通过学习你的工具保持最新，任务前的教练，你自己的技能，在设备上进行脱敏并配合 SAST 与实时依赖检查，企业级控制，以及来自你可用的最强 AI 的方案。" },
+    'use-cases': { title: "使用场景 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 详细引导的内容：技术搭建与配置、构建与集成、AI 与自动化、产品、营销、财务与办公事务、法律与合规，以及任何屏幕上的日常工作。" },
+    fields: { title: "我们覆盖的领域 - {total} 个专业领域 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 引导 {families} 个门类下 {total} 个专业领域的工作，从软件与安全到财务、运营、营销、医疗和教育。整个公司都能使用的一款工具。" },
+    pricing: { title: "价格 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 各套餐对比：Lite、Basic、Advanced 和 Premium，含每月引导任务与实时引导小时数、文档上传、生成图像、每个套餐都内置安全，以及超量与取消条款。Enterprise 为定制方案。" },
+    faq: { title: "常见问题 - WorkCoPilot by AdmireVeda", description: "关于 WorkCoPilot 的直接解答：它是什么、逐步引导如何运作、平台与安装、哪些内容会离开你的设备、价格与账单、它如何通过学习你的工具保持最新、适合谁、数据与合规，以及如何开始。" },
+    contact: { title: "联系我们 - WorkCoPilot by AdmireVeda", description: "就产品、为你的团队做演示、安全或合规，或任何其他问题，联系 WorkCoPilot 团队。给我们留言，我们会回复你。" },
+    enterprise: { title: "企业功能 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 学习你的企业：上传你的流程、指南和数据，它便会按照你公司的工作方式，在员工自己的屏幕上陪他们完成每一个精确步骤。仅对你的组织私有。此外还有设备端脱敏、审计日志、DLP 治理、SIEM 告警、SSO、合规证据报告、面向管理层的 ROI、白标以及按公司计费。" },
+    demo: { title: "60 秒演示 - WorkCoPilot by AdmireVeda", description: "观看 WorkCoPilot 从头到尾引导一个真实任务：读取屏幕、给出精确的下一步和命令、确认是否成功、在错误造成代价前将其发现，并把记录交给你。" },
+    benchmark: { title: "准确率基准 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 有多准确，诚实衡量：在有已知答案的任务上的结果正确率，按领域和按 AI 层级报告，附样本量与 95% 置信区间，以及方法说明。" },
+  },
 }

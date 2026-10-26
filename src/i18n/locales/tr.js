@@ -546,4 +546,17 @@ export default {
       loginAgain: 'Giriş oturumunuz zaman aşımına uğradı. Lütfen tekrar giriş yapın.',
     },
   },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "Nasıl çalışır - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un yaptığı her şey: ekranınızda adım adım rehberlik, tam komut veya tıklama, sıfırdan başlayarak, hataları yakalayıp düzelterek, her uygulamada, kendi belgelerinize dayanarak, sizde kalan bir kayıt, araçlarınızı öğrenerek güncel kalma, görev öncesi koç, kendi becerileriniz, SAST ile cihazda maskeleme ve canlı bağımlılık denetimi, şirket kontrolleri ve erişebildiğiniz en güçlü yapay zekadan planlar." },
+    'use-cases': { title: "Kullanım senaryoları - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un ayrıntılı olarak yönlendirdiği işler: teknik kurulum, yapılar ve entegrasyonlar, yapay zeka ve otomasyon, ürün, pazarlama, muhasebe ve ofis işleri, hukuk ve uyum, ve her ekranda günlük çalışma." },
+    fields: { title: "Kapsadığımız alanlar - {total} profesyonel alan - WorkCoPilot by AdmireVeda", description: "WorkCoPilot, {families} aileye yayılan {total} profesyonel alanda çalışmayı yönlendirir; yazılım ve güvenlikten finans, operasyon, pazarlama, sağlık ve eğitime kadar. Tüm şirketinizin kullanabileceği tek bir araç." },
+    pricing: { title: "Fiyatlandırma - WorkCoPilot by AdmireVeda", description: "WorkCoPilot planları yan yana: Lite, Basic, Advanced ve Premium; aylık yönlendirilen görevler ve canlı rehberlik saatleri, belge yükleme, üretilen görseller, her planda güvenlik ve aşım ile iptal koşulları. Enterprise özeldir." },
+    faq: { title: "Sıkça sorulan sorular - WorkCoPilot by AdmireVeda", description: "WorkCoPilot hakkında net yanıtlar: nedir, adım adım rehberlik nasıl çalışır, platformlar ve kurulum, cihazınızdan ne çıkar, fiyatlar ve faturalama, araçlarınızı öğrenerek nasıl güncel kalır, kimler için, veri ve uyum, ve nasıl başlanır." },
+    contact: { title: "İletişim - WorkCoPilot by AdmireVeda", description: "Ürün, ekibiniz için bir demo, güvenlik veya uyum ya da başka bir konu için WorkCoPilot ekibiyle iletişime geçin. Bize yazın, size geri dönelim." },
+    enterprise: { title: "Kurumsal özellikler - WorkCoPilot by AdmireVeda", description: "WorkCoPilot şirketinizi öğrenir: prosedürlerinizi, kılavuzlarınızı ve verilerinizi yükleyin; şirketinizin çalışma biçimine göre kişilerinize kendi ekranlarında her tam adımda eşlik etsin. Kuruluşunuza özel. Ayrıca cihazda maskeleme, denetim günlükleri, DLP yönetimi, SIEM uyarıları, SSO, uyum kanıt raporları, yönetim için ROI, beyaz etiket ve şirket bazında faturalama." },
+    demo: { title: "60 saniyelik demo - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un gerçek bir görevi baştan sona yönlendirmesini izleyin: ekranı okur, bir sonraki tam adımı ve komutu verir, çalıştığını kontrol eder, maliyetli olmadan bir hatayı yakalar ve size raporu teslim eder." },
+    benchmark: { title: "Doğruluk kıyaslaması - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un ne kadar doğru olduğu, dürüstçe ölçülmüş: yanıtı bilinen görevlerde sonuç doğruluğu, alan ve yapay zeka katmanı bazında, örneklem boyutları ve %95 güven aralıklarıyla, ayrıca yöntem." },
+  },
 }

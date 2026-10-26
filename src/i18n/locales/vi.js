@@ -546,4 +546,17 @@ export default {
       loginAgain: 'Phiên đăng nhập của bạn đã hết hạn. Vui lòng đăng nhập lại.',
     },
   },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "Cách hoạt động - WorkCoPilot by AdmireVeda", description: "Mọi điều WorkCoPilot làm: hướng dẫn từng bước trên màn hình của bạn, lệnh hoặc cú nhấp chính xác, bắt đầu từ con số không, phát hiện và sửa lỗi, trong mọi ứng dụng, dựa trên tài liệu của chính bạn, một bản ghi bạn giữ lại, luôn cập nhật bằng cách học công cụ của bạn, một trợ lý trước nhiệm vụ, các kỹ năng của riêng bạn, che dữ liệu ngay trên thiết bị với SAST và kiểm tra phụ thuộc trực tiếp, các kiểm soát doanh nghiệp, và kế hoạch từ AI mạnh nhất mà bạn có thể dùng." },
+    'use-cases': { title: "Trường hợp sử dụng - WorkCoPilot by AdmireVeda", description: "Những gì WorkCoPilot hướng dẫn, chi tiết: thiết lập kỹ thuật, xây dựng và tích hợp, AI và tự động hóa, sản phẩm, tiếp thị, kế toán và công việc văn phòng, pháp lý và tuân thủ, cùng công việc hằng ngày trên mọi màn hình." },
+    fields: { title: "Các lĩnh vực chúng tôi hỗ trợ - {total} lĩnh vực chuyên môn - WorkCoPilot by AdmireVeda", description: "WorkCoPilot hướng dẫn công việc trên {total} lĩnh vực chuyên môn thuộc {families} nhóm, từ phần mềm và bảo mật đến tài chính, vận hành, tiếp thị, y tế và giáo dục. Một công cụ cho toàn bộ công ty của bạn." },
+    pricing: { title: "Giá - WorkCoPilot by AdmireVeda", description: "Các gói WorkCoPilot đặt cạnh nhau: Lite, Basic, Advanced và Premium, với số nhiệm vụ được hướng dẫn và số giờ hướng dẫn trực tiếp mỗi tháng, tải tài liệu lên, hình ảnh tạo sẵn, bảo mật trong mọi gói, cùng điều khoản vượt mức và hủy. Enterprise được tùy chỉnh." },
+    faq: { title: "Câu hỏi thường gặp - WorkCoPilot by AdmireVeda", description: "Những câu trả lời thẳng thắn về WorkCoPilot: nó là gì, hướng dẫn từng bước hoạt động ra sao, nền tảng và cài đặt, điều gì rời khỏi thiết bị của bạn, giá và thanh toán, cách nó luôn cập nhật bằng việc học công cụ của bạn, dành cho ai, dữ liệu và tuân thủ, và cách bắt đầu." },
+    contact: { title: "Liên hệ - WorkCoPilot by AdmireVeda", description: "Liên hệ với nhóm WorkCoPilot về sản phẩm, một buổi demo cho nhóm của bạn, bảo mật hoặc tuân thủ, hay bất cứ điều gì khác. Gửi lời nhắn và chúng tôi sẽ phản hồi." },
+    enterprise: { title: "Tính năng doanh nghiệp - WorkCoPilot by AdmireVeda", description: "WorkCoPilot học doanh nghiệp của bạn: tải lên quy trình, hướng dẫn và dữ liệu của bạn, và nó đồng hành cùng nhân sự của bạn qua từng bước chính xác trên màn hình của họ, theo đúng cách công ty bạn làm việc. Riêng tư cho tổ chức của bạn. Kèm theo che dữ liệu trên thiết bị, nhật ký kiểm toán, quản trị DLP, cảnh báo SIEM, SSO, báo cáo bằng chứng tuân thủ, ROI cho ban lãnh đạo, white-label và lập hóa đơn theo từng công ty." },
+    demo: { title: "Demo 60 giây - WorkCoPilot by AdmireVeda", description: "Xem WorkCoPilot hướng dẫn một nhiệm vụ thực tế từ đầu đến cuối: nó đọc màn hình, đưa ra bước và lệnh tiếp theo chính xác, kiểm tra xem đã thành công chưa, phát hiện lỗi trước khi gây tốn kém, và trao cho bạn bản báo cáo." },
+    benchmark: { title: "Chuẩn đo độ chính xác - WorkCoPilot by AdmireVeda", description: "WorkCoPilot chính xác đến mức nào, được đo một cách trung thực: độ đúng của kết quả trên các nhiệm vụ có đáp án biết trước, theo lĩnh vực và theo cấp AI, với cỡ mẫu và khoảng tin cậy 95%, cùng phương pháp luận." },
+  },
 }

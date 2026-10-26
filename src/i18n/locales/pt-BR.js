@@ -546,4 +546,17 @@ export default {
       loginAgain: 'Sua sessão de login expirou. Entre de novo.',
     },
   },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "Como funciona - WorkCoPilot by AdmireVeda", description: "Tudo o que o WorkCoPilot faz: orientação passo a passo na sua tela, o comando ou clique exato, começando do zero, detectando e corrigindo erros, em qualquer app, apoiado nos seus próprios documentos, um registro que você mantém, sempre atualizado aprendendo suas ferramentas, um apoio antes da tarefa, suas próprias habilidades, redação no dispositivo com SAST e verificação de dependências ao vivo, controles de empresa e planos da IA mais forte ao seu alcance." },
+    'use-cases': { title: "Casos de uso - WorkCoPilot by AdmireVeda", description: "O que o WorkCoPilot orienta, em detalhe: configuração técnica, construções e integrações, IA e automação, produto, marketing, contabilidade e tarefas de escritório, jurídico e conformidade, e o trabalho do dia a dia em qualquer tela." },
+    fields: { title: "Áreas que cobrimos - {total} áreas profissionais - WorkCoPilot by AdmireVeda", description: "O WorkCoPilot orienta o trabalho em {total} áreas profissionais de {families} famílias, de software e segurança a finanças, operações, marketing, saúde e educação. Uma única ferramenta para toda a sua empresa." },
+    pricing: { title: "Preços - WorkCoPilot by AdmireVeda", description: "Os planos do WorkCoPilot lado a lado: Lite, Basic, Advanced e Premium, com tarefas guiadas e horas de orientação ao vivo por mês, envio de documentos, imagens geradas, segurança em todos os planos, e condições de excedente e cancelamento. Enterprise é sob medida." },
+    faq: { title: "Perguntas frequentes - WorkCoPilot by AdmireVeda", description: "Respostas diretas sobre o WorkCoPilot: o que é, como funciona a orientação passo a passo, plataformas e instalação, o que sai do seu dispositivo, preços e cobrança, como se mantém atualizado aprendendo suas ferramentas, para quem é, dados e conformidade, e como começar." },
+    contact: { title: "Contato - WorkCoPilot by AdmireVeda", description: "Fale com a equipe do WorkCoPilot sobre o produto, uma demonstração para sua equipe, segurança ou conformidade, ou qualquer outra coisa. Envie uma mensagem e retornaremos." },
+    enterprise: { title: "Recursos para empresas - WorkCoPilot by AdmireVeda", description: "O WorkCoPilot aprende a sua empresa: envie seus procedimentos, guias e dados, e ele acompanha suas pessoas em cada passo exato na própria tela, conforme a maneira como a sua empresa trabalha. Privado para a sua organização. Além de redação no dispositivo, trilhas de auditoria, governança de DLP, alertas SIEM, SSO, relatórios de evidência de conformidade, ROI para a liderança, marca branca e cobrança por empresa." },
+    demo: { title: "Demo de 60 segundos - WorkCoPilot by AdmireVeda", description: "Veja o WorkCoPilot orientar uma tarefa real do início ao fim: ele lê a tela, dá o próximo passo e comando exatos, confere se funcionou, detecta um erro antes que ele custe, e entrega o relatório." },
+    benchmark: { title: "Referência de precisão - WorkCoPilot by AdmireVeda", description: "O quão preciso o WorkCoPilot é, medido com honestidade: correção dos resultados em tarefas com respostas conhecidas, por domínio e por nível de IA, com tamanhos de amostra e intervalos de confiança de 95%, além da metodologia." },
+  },
 }

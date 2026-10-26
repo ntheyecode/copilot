@@ -581,4 +581,17 @@ export default {
       loginAgain: '로그인 세션이 만료되었습니다. 다시 로그인해 주세요.',
     },
   },
+
+  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
+  seo: {
+    'how-it-works': { title: "작동 방식 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 하는 모든 것: 화면에서 단계별 안내, 정확한 명령어나 클릭, 처음부터 시작, 실수를 잡아 바로잡기, 어떤 앱에서든, 당신의 문서에 근거하여, 당신이 보관하는 기록, 도구를 학습해 항상 최신 유지, 작업 전 코치, 당신만의 스킬, SAST와 함께 기기에서의 비식별화 및 실시간 의존성 점검, 기업용 제어, 그리고 사용할 수 있는 가장 강력한 AI의 계획." },
+    'use-cases': { title: "활용 사례 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 자세히 안내하는 것: 기술 설정, 구축과 통합, AI와 자동화, 제품, 마케팅, 회계와 사무 업무, 법무와 규정 준수, 그리고 어떤 화면에서든 일상 업무." },
+    fields: { title: "지원 분야 - {total}개 전문 분야 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot은 {families}개 계열에 걸친 {total}개 전문 분야의 업무를 안내합니다. 소프트웨어와 보안부터 재무, 운영, 마케팅, 의료, 교육까지. 회사 전체가 쓰는 하나의 도구입니다." },
+    pricing: { title: "요금 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot 요금제 나란히 비교: Lite, Basic, Advanced, Premium. 월별 안내 작업과 실시간 안내 시간, 문서 업로드, 생성 이미지, 모든 요금제에 포함된 보안, 초과 사용 및 해지 조건 포함. Enterprise는 맞춤형입니다." },
+    faq: { title: "자주 묻는 질문 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot에 대한 명료한 답변: 무엇인지, 단계별 안내가 어떻게 작동하는지, 플랫폼과 설치, 기기에서 무엇이 나가는지, 요금과 청구, 도구를 학습해 어떻게 최신을 유지하는지, 누구를 위한 것인지, 데이터와 규정 준수, 그리고 시작하는 방법." },
+    contact: { title: "문의하기 - WorkCoPilot by AdmireVeda", description: "제품, 팀을 위한 데모, 보안이나 규정 준수, 그 밖의 무엇이든 WorkCoPilot 팀에 문의하세요. 메시지를 남겨 주시면 회신해 드립니다." },
+    enterprise: { title: "엔터프라이즈 기능 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot은 당신의 기업을 학습합니다: 절차와 가이드, 데이터를 업로드하면, 회사가 일하는 방식에 맞춰 구성원 각자의 화면에서 정확한 모든 단계를 함께합니다. 조직 전용. 여기에 기기 내 비식별화, 감사 로그, DLP 거버넌스, SIEM 경고, SSO, 규정 준수 증적 보고서, 경영진용 ROI, 화이트라벨, 회사별 청구가 더해집니다." },
+    demo: { title: "60초 데모 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 실제 작업을 처음부터 끝까지 안내하는 모습을 보세요: 화면을 읽고, 다음의 정확한 단계와 명령을 제시하고, 성공했는지 확인하고, 비용이 되기 전에 실수를 잡아내며, 보고서를 건네줍니다." },
+    benchmark: { title: "정확도 벤치마크 - WorkCoPilot by AdmireVeda", description: "WorkCoPilot이 얼마나 정확한지 정직하게 측정: 정답이 알려진 작업에서의 결과 정확도를 도메인별, AI 등급별로, 표본 크기와 95% 신뢰구간과 함께 보고하고, 방법론도 제시합니다." },
+  },
 }
