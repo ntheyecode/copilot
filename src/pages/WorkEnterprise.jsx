@@ -277,6 +277,7 @@ export default function WorkEnterprise() {
           <Feature icon={Users} title="Member oversight">Company admins can pull the report and audit log of any member session, completed or in progress.</Feature>
           <Feature icon={History} title="Accountable destructive actions">Deleting, disabling or clearing anything requires a reason, recorded with who, what, when and why.</Feature>
           <Feature icon={KeyRound} title="Per-company AI keys, or bring your own">Route your company through its own keys, or bring your own. Your keys, your control, and nothing is shared across companies.</Feature>
+          <Feature icon={Globe} title={t('residency.title')}>{t('residency.ent')}</Feature>
         </Group>
 
         <Group id="alerts" kicker="Security alerts" title="Know the moment a member enters sensitive data."

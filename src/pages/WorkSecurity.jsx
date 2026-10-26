@@ -13,6 +13,7 @@ import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
+import { useT } from '../i18n/index.jsx'           // localized data-residency note (residency.* keys)
 
 // A representative integration screen. `redacted` swaps each sensitive value for
 // an on-device mask, exactly what the frame redactor does before a frame is sent.
@@ -223,6 +224,7 @@ const SENT = 'Connect our billing to Stripe. Account email [[EMAIL_3]], API key 
 // tab, and the faint mock-screen / step-number inks were raised to AA contrast.
 export default function WorkSecurity() {
   const nav = useNavigate()
+  const t = useT()
   useSeo({
     title: 'Security and Privacy - WorkCoPilot by AdmireVeda',
     description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, read-only guidance, encryption at rest, the full data flow, retention, and compliance readiness.',
@@ -271,6 +273,7 @@ export default function WorkSecurity() {
           {HANDLING.map((g, i) => <HandlingGroup key={g.id} g={g} index={i} />)}
         </div>
         <div className="wsx-note"><ShieldCheck size={14} aria-hidden="true" /> <span><b>We state our data practices plainly.</b> Encryption at rest covers your stored keys, secrets and report artifacts, including milestone screenshots. By default sessions stay until you or your admin delete them, and an automatic retention window can be configured to purge older sessions on a schedule. Where something is under your control or still improving, we say so rather than let you assume it is covered.</span></div>
+        <div className="wsx-note"><Globe size={14} aria-hidden="true" /> <span><b>{t('residency.title')}.</b> {t('residency.sec')}</span></div>
       </section>
 
       <section className="wsx-block wsx-comp" id="compliance">
