@@ -23,15 +23,34 @@
   custom-priced Enterprise plan (SSO via OIDC, company data policy, seat pools,
   a DPA). Current prices: https://admireveda.com/workcopilot/pricing
 
+## Languages
+The site is available in 16 languages. Append ?lang=<code> to any URL to render
+that language (for example https://admireveda.com/workcopilot/pricing?lang=de).
+Codes: en, en-GB, es, fr, pt-BR, it, de, tr, ru, ar, hi, id, vi, zh, ja, ko.
+
 ## Key pages
 - Home: https://admireveda.com/
 - How it works: https://admireveda.com/workcopilot/how-it-works
 - Fields it covers: https://admireveda.com/workcopilot/fields
 - Use cases: https://admireveda.com/workcopilot/use-cases
+- Enterprise features: https://admireveda.com/workcopilot/enterprise
 - Security and privacy: https://admireveda.com/workcopilot/security
+- Accuracy benchmark: https://admireveda.com/workcopilot/benchmark
 - Pricing: https://admireveda.com/workcopilot/pricing
 - FAQ: https://admireveda.com/workcopilot/faq
+- 60-second demo: https://admireveda.com/demo
 - Affiliate program: https://admireveda.com/affiliate
+
+## Legal and compliance pages
+- Privacy Policy: https://admireveda.com/workcopilot/privacy
+- Terms of Service: https://admireveda.com/workcopilot/terms
+- Acceptable Use: https://admireveda.com/workcopilot/acceptable-use
+- Cookie Policy: https://admireveda.com/workcopilot/cookie-policy
+- Data Processing Addendum: https://admireveda.com/workcopilot/dpa
+- Subprocessors: https://admireveda.com/workcopilot/subprocessors
+- Refund and Cancellation: https://admireveda.com/workcopilot/refund
+- Disclaimer: https://admireveda.com/workcopilot/disclaimer
+- Accessibility: https://admireveda.com/workcopilot/accessibility
 
 ## Honesty
 Claims on this site are kept to what the product actually does. WorkCoPilot
