@@ -1201,17 +1201,10 @@ const WD_CSS = `
 .wd-help-body li{line-height:1.6}
 .wd-tip{display:flex;gap:9px;align-items:flex-start;background:var(--em-fill);border:1px solid var(--em-line);border-radius:12px;padding:12px 14px;color:var(--tx)!important;font-size:14px;margin-top:6px}
 .wd-tip svg{color:var(--em);flex-shrink:0;margin-top:3px}
-/* Help visuals: the 4-step "how it works" flow + inline-SVG UI mockups. A clean
-   responsive grid (4 -> 2 -> 1 columns) so nothing ever overflows. */
-.wd-hf{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0 22px}
-@media(max-width:820px){.wd-hf{grid-template-columns:1fr 1fr}}
-@media(max-width:480px){.wd-hf{grid-template-columns:1fr}}
-.wd-hf-card{display:flex;flex-direction:column;gap:7px;padding:15px 14px 16px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,var(--em-fill),#ffffff 72%);box-shadow:var(--card-shadow);min-width:0}
-.wd-hf-top{display:flex;align-items:center;justify-content:space-between}
-.wd-hf-ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:#fff;border:1px solid var(--em-line);color:var(--em);flex-shrink:0}
-.wd-hf-n{font-family:var(--wd-display);font-weight:800;font-size:22px;line-height:1;color:var(--em-line)}
-.wd-hf-t{font-size:14px;font-weight:700;color:var(--tx);line-height:1.3}
-.wd-hf-b{font-size:12.5px;color:var(--mut);line-height:1.5}
+/* Help visuals: a "how it works" illustration + inline-SVG UI mockups. The
+   illustration scales to the column width (max 860) and never overflows. */
+.wd-hf-fig{margin:18px 0 22px}
+.wd-hf-img{display:block;width:100%;max-width:860px;height:auto;border-radius:16px;border:1px solid var(--line);box-shadow:var(--card-shadow)}
 .wd-fig{margin:14px 0 8px}
 .wd-shot{display:block;width:100%;max-width:440px;height:auto}
 .wd-figcap{margin-top:7px;font-size:12px;color:var(--mut);line-height:1.45;font-style:italic}
@@ -2554,22 +2547,11 @@ function Home({ user, onOpen, onSignOut }) {
 // any width with no overflow, and they follow the white dashboard palette. No
 // external images to host; no AI-rendered text to go wrong.
 function HelpFlow() {
-  const steps = [
-    { Icon: Rocket, t: 'Tell it your goal', b: 'Type what you want done, in your own words. Add a document or point it at your app for sharper steps.' },
-    { Icon: ScanLine, t: 'Follow the exact next move', b: 'It watches your screen and shows one precise step at a time - the click, the command, or the code to use.' },
-    { Icon: AlertTriangle, t: 'It catches mistakes', b: 'Land in the wrong place and it says so, then puts you back on track - you never drift silently.' },
-    { Icon: Check, t: 'Keep going until done', b: 'Each confirmed step moves you to the next, to the finish - with an audit trail and a clean report.' },
-  ]
   return (
-    <div className="wd-hf" role="img" aria-label="How WorkCoPilot works: tell it your goal, follow the exact next move, it catches mistakes, and keep going until done.">
-      {steps.map((s, i) => (
-        <div key={i} className="wd-hf-card">
-          <span className="wd-hf-top"><span className="wd-hf-ic"><s.Icon size={19} /></span><span className="wd-hf-n">{i + 1}</span></span>
-          <b className="wd-hf-t">{s.t}</b>
-          <span className="wd-hf-b">{s.b}</span>
-        </div>
-      ))}
-    </div>
+    <figure className="wd-hf-fig">
+      <img className="wd-hf-img" src="/help-how-it-works.webp" width="1720" height="960" loading="lazy"
+        alt="How WorkCoPilot works, in four steps: 1) Tell it your goal. 2) Follow the exact next move it shows on your screen - the click, the command or the code. 3) It catches and corrects a wrong move. 4) Keep going until done, with an audit trail and a clean report." />
+    </figure>
   )
 }
 // A minimal mockup of the guiding card: the current step + the exact code to use.
