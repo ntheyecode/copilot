@@ -23,14 +23,14 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { TrendingUp, TrendingDown, RefreshCw, RotateCcw, DollarSign, Activity, CreditCard, BarChart3, Plus, Pencil, Trash2, Ban, Users, Check, X, CalendarRange } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal, useReasonModal, TierBadge } from './_shared.jsx'
+import { useT } from '../../../i18n/index.jsx'
 
 const money = (n, cur = 'usd') => { try { return new Intl.NumberFormat('en-US', { style: 'currency', currency: (cur || 'usd').toUpperCase() }).format(Number(n) || 0) } catch { return `$${(Number(n) || 0).toFixed(2)}` } }
 const pct = (cur, prev) => { if (!prev) return cur > 0 ? 100 : 0; return Math.round(((cur - prev) / Math.abs(prev)) * 100) }
 // Compact axis/label money ($1.2k, $3.4M) so axis ticks never overrun the gutter.
 const compact = (n) => { const v = Number(n) || 0, a = Math.abs(v), sign = v < 0 ? '-' : ''; if (a >= 1e6) return `${sign}$${(a / 1e6).toFixed(1)}M`; if (a >= 1e3) return `${sign}$${(a / 1e3).toFixed(1)}k`; return `${sign}$${Math.round(a)}` }
-const KIND_LABEL = { subscription: 'Subscription', hours: 'Extra hours', images: 'Image credits', refund: 'Refund', payment: 'Payment', invoice: 'Invoice', adjustment: 'Adjustment' }
 const CURRENCIES = ['usd', 'eur', 'gbp', 'cad', 'aud', 'inr']
-const GRANULARITIES = [['week', 'Weekly'], ['month', 'Monthly'], ['quarter', 'Quarterly'], ['year', 'Yearly']]
+const GRANULARITIES = ['week', 'month', 'quarter', 'year']
 
 // ------------------------------------------------------------------ chart ----
 // Hand-rolled inline-SVG combo chart: net-revenue bars (left axis) + MRR line
@@ -38,11 +38,12 @@ const GRANULARITIES = [['week', 'Weekly'], ['month', 'Monthly'], ['quarter', 'Qu
 // space and is rendered at width:100%, so it scales to its container without
 // clipping or horizontal scroll at any width.
 function TimeseriesChart({ series }) {
+  const t = useT()
   const VBW = 840, VBH = 300, padL = 54, padR = 56, padT = 18, padB = 46
   const plotW = VBW - padL - padR, plotH = VBH - padT - padB
   const n = series.length
   if (!n) {
-    return <div className="wka-note" style={{ marginTop: 6 }}>No data in this range yet.</div>
+    return <div className="wka-note" style={{ marginTop: 6 }}>{t('financeAdmin.timeseries.noData')}</div>
   }
   const nets = series.map((s) => Number(s.netUsd != null ? s.netUsd : s.revenueUsd) || 0)
   const mrrs = series.map((s) => Number(s.mrrUsd) || 0)
@@ -72,11 +73,11 @@ function TimeseriesChart({ series }) {
   return (
     <div>
       <div className="fin-legend">
-        <span className="it"><span className="dot bar" /> Net revenue</span>
-        <span className="it"><span className="dot line" /> MRR</span>
+        <span className="it"><span className="dot bar" /> {t('financeAdmin.timeseries.legendNet')}</span>
+        <span className="it"><span className="dot line" /> {t('financeAdmin.timeseries.legendMrr')}</span>
       </div>
       <svg className="fin-svg" viewBox={`0 0 ${VBW} ${VBH}`} role="img"
-        aria-label={`Net revenue and MRR across ${n} periods`} preserveAspectRatio="xMidYMid meet">
+        aria-label={t('financeAdmin.timeseries.chartAria', { n })} preserveAspectRatio="xMidYMid meet">
         {/* gridlines + left (net) axis labels + right (MRR) axis labels */}
         {gridYs.map((gy, k) => {
           const leftVal = hi - ((hi - lo) * k) / GRID
@@ -101,11 +102,11 @@ function TimeseriesChart({ series }) {
             <g key={`b${i}`}>
               <rect className="fin-svg-bar" x={x.toFixed(1)} y={top.toFixed(1)} width={barW.toFixed(1)} height={h.toFixed(1)} rx="3" fill="var(--wka-accent)">
                 <title>{`${s.label || s.bucket}
-Revenue: ${money(s.revenueUsd, 'usd')}
-Refunds: ${money(s.refundsUsd, 'usd')}
-Net: ${money(s.netUsd != null ? s.netUsd : v, 'usd')}
-MRR: ${s.mrrUsd == null ? '-' : money(s.mrrUsd, 'usd')}
-New subs: ${s.newSubs == null ? '-' : s.newSubs} · Cancellations: ${s.cancellations == null ? '-' : s.cancellations}`}</title>
+${t('financeAdmin.timeseries.tipRevenue', { amount: money(s.revenueUsd, 'usd') })}
+${t('financeAdmin.timeseries.tipRefunds', { amount: money(s.refundsUsd, 'usd') })}
+${t('financeAdmin.timeseries.tipNet', { amount: money(s.netUsd != null ? s.netUsd : v, 'usd') })}
+${t('financeAdmin.timeseries.tipMrr', { value: s.mrrUsd == null ? '-' : money(s.mrrUsd, 'usd') })}
+${t('financeAdmin.timeseries.tipSubs', { newSubs: s.newSubs == null ? '-' : s.newSubs, cancellations: s.cancellations == null ? '-' : s.cancellations })}`}</title>
               </rect>
               {showValueLabels ? <text x={xc(i).toFixed(1)} y={(top - 5).toFixed(1)} textAnchor="middle" fontSize="9.5" fill="var(--wka-muted)">{compact(v)}</text> : null}
             </g>
@@ -115,7 +116,7 @@ New subs: ${s.newSubs == null ? '-' : s.newSubs} · Cancellations: ${s.cancellat
         {linePath ? <path d={linePath} fill="none" stroke="var(--wka-emerald)" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" /> : null}
         {series.map((s, i) => (s.mrrUsd == null ? null : (
           <circle key={`p${i}`} cx={xc(i).toFixed(1)} cy={yR(Number(s.mrrUsd) || 0).toFixed(1)} r="2.6" fill="var(--wka-emerald)">
-            <title>{`${s.label || s.bucket} MRR: ${money(s.mrrUsd, 'usd')}`}</title>
+            <title>{t('financeAdmin.timeseries.pointMrr', { label: s.label || s.bucket, amount: money(s.mrrUsd, 'usd') })}</title>
           </circle>
         )))}
         {/* x-axis labels (thinned) */}
@@ -130,6 +131,7 @@ New subs: ${s.newSubs == null ? '-' : s.newSubs} · Cancellations: ${s.cancellat
 // Self-contained timeseries panel: owns the granularity switch + its own fetch,
 // degrades gracefully if the endpoint is not wired.
 function RevenueTimeseries() {
+  const t = useT()
   const [granularity, setGranularity] = useState('month')
   const [st, setSt] = useState({ loading: true, error: null, unavailable: false, series: [] })
 
@@ -148,19 +150,19 @@ function RevenueTimeseries() {
   return (
     <div className="wka-panel">
       <div className="fin-tsc-head">
-        <h2 style={{ margin: 0 }}><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Revenue and MRR over time</h2>
-        <div className="fin-seg" role="group" aria-label="Chart granularity">
-          {GRANULARITIES.map(([g, label]) => (
+        <h2 style={{ margin: 0 }}><BarChart3 size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('financeAdmin.timeseries.title')}</h2>
+        <div className="fin-seg" role="group" aria-label={t('financeAdmin.timeseries.granularityAria')}>
+          {GRANULARITIES.map((g) => (
             <button key={g} type="button" className={`wka-btn sm${granularity === g ? ' primary' : ' ghost'}`}
-              aria-pressed={granularity === g} onClick={() => setGranularity(g)}>{label}</button>
+              aria-pressed={granularity === g} onClick={() => setGranularity(g)}>{t('financeAdmin.granularity.' + g)}</button>
           ))}
         </div>
       </div>
-      {st.loading ? <Loading label="Loading chart" />
+      {st.loading ? <Loading label={t('financeAdmin.timeseries.loading')} />
         : st.error ? <ErrorBox error={st.error} onRetry={() => load(granularity)} />
           : st.unavailable ? (
             <div className="wka-note" style={{ marginTop: 6 }}>
-              The revenue timeseries is not available on this server yet. The period cards and transactions below are live; this chart fills in once the endpoint is wired.
+              {t('financeAdmin.timeseries.unavailable')}
             </div>
           ) : <TimeseriesChart series={st.series} />}
     </div>
@@ -169,6 +171,7 @@ function RevenueTimeseries() {
 
 // ---------------------------------------------------- subscriptions overview --
 function SubscriptionsOverview({ onCancel }) {
+  const t = useT()
   const [st, setSt] = useState({ loading: true, error: null, unavailable: false, subscribers: [], totals: null })
   const load = useCallback(async () => {
     setSt((s) => ({ ...s, loading: true, error: null }))
@@ -183,10 +186,10 @@ function SubscriptionsOverview({ onCancel }) {
   useEffect(() => { load() }, [load])
 
   const subs = st.subscribers
-  const t = st.totals || {}
-  const count = t.count != null ? t.count : subs.length
-  const activeCount = t.activeCount != null ? t.activeCount : subs.filter((s) => s.status === 'active' || s.status === 'trialing').length
-  const mrr = t.mrrUsd != null ? t.mrrUsd : subs.reduce((a, s) => a + (Number(s.mrrUsd) || 0), 0)
+  const tot = st.totals || {}
+  const count = tot.count != null ? tot.count : subs.length
+  const activeCount = tot.activeCount != null ? tot.activeCount : subs.filter((s) => s.status === 'active' || s.status === 'trialing').length
+  const mrr = tot.mrrUsd != null ? tot.mrrUsd : subs.reduce((a, s) => a + (Number(s.mrrUsd) || 0), 0)
   // Cancellable = has a live subscription (active / trialing / past_due) and is not comped.
   const CANCELLABLE = new Set(['active', 'trialing', 'past_due'])
   const live = subs.filter((s) => CANCELLABLE.has(s.status) && !s.free).slice(0, 50)
@@ -194,26 +197,26 @@ function SubscriptionsOverview({ onCancel }) {
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-        <h2 style={{ margin: 0 }}><Users size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Paid users and subscriptions</h2>
-        <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> Refresh</button>
+        <h2 style={{ margin: 0 }}><Users size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('financeAdmin.subs.title')}</h2>
+        <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> {t('financeAdmin.subs.refresh')}</button>
       </div>
-      {st.loading ? <Loading label="Loading subscriptions" />
+      {st.loading ? <Loading label={t('financeAdmin.subs.loading')} />
         : st.error ? <ErrorBox error={st.error} onRetry={load} />
           : st.unavailable ? (
-            <div className="wka-note" style={{ marginTop: 6 }}>The subscribers endpoint is not wired on this server yet. The paid-user overview fills in once it is live.</div>
+            <div className="wka-note" style={{ marginTop: 6 }}>{t('financeAdmin.subs.unavailable')}</div>
           ) : (
             <div>
               <div className="fin-mini-tiles">
-                <div className="fin-mini"><div className="l">Paying</div><div className="n wka-mono">{count}</div></div>
-                <div className="fin-mini"><div className="l">Active / trialing</div><div className="n wka-mono">{activeCount}</div></div>
-                <div className="fin-mini"><div className="l">MRR</div><div className="n wka-mono">{money(mrr, 'usd')}</div></div>
+                <div className="fin-mini"><div className="l">{t('financeAdmin.subs.paying')}</div><div className="n wka-mono">{count}</div></div>
+                <div className="fin-mini"><div className="l">{t('financeAdmin.subs.activeTrialing')}</div><div className="n wka-mono">{activeCount}</div></div>
+                <div className="fin-mini"><div className="l">{t('financeAdmin.subs.mrr')}</div><div className="n wka-mono">{money(mrr, 'usd')}</div></div>
               </div>
               {live.length === 0 ? (
-                <p style={{ color: 'var(--wka-muted)', fontSize: 13.5, marginTop: 12 }}>No live subscriptions to manage right now.</p>
+                <p style={{ color: 'var(--wka-muted)', fontSize: 13.5, marginTop: 12 }}>{t('financeAdmin.subs.none')}</p>
               ) : (
                 <div className="wka-table-wrap" style={{ marginTop: 12 }}>
                   <table className="wka-table" style={{ minWidth: 640 }}>
-                    <thead><tr><th>User</th><th>Plan</th><th>Status</th><th>Cycle</th><th>MRR</th><th></th></tr></thead>
+                    <thead><tr><th>{t('financeAdmin.subs.colUser')}</th><th>{t('financeAdmin.subs.colPlan')}</th><th>{t('financeAdmin.subs.colStatus')}</th><th>{t('financeAdmin.subs.colCycle')}</th><th>{t('financeAdmin.subs.colMrr')}</th><th></th></tr></thead>
                     <tbody>
                       {live.map((s) => (
                         <tr key={s.id != null ? s.id : `${s.username}-${s.email}`}>
@@ -222,20 +225,20 @@ function SubscriptionsOverview({ onCancel }) {
                             {s.email ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{s.email}</div> : null}
                           </td>
                           <td>{s.plan ? <TierBadge tier={s.plan} /> : <span style={{ color: 'var(--wka-faint)' }}>-</span>}</td>
-                          <td><span className={`wka-badge ${s.status === 'past_due' ? 'past_due' : s.status === 'trialing' ? 'trialing' : 'active'}`}>{s.status === 'past_due' ? 'Past due' : s.status === 'trialing' ? 'Trialing' : 'Active'}</span></td>
-                          <td style={{ whiteSpace: 'nowrap' }}>{s.cycle ? (String(s.cycle).toLowerCase().startsWith('year') || String(s.cycle).toLowerCase().startsWith('annual') ? 'Annual' : 'Monthly') : '-'}</td>
+                          <td><span className={`wka-badge ${s.status === 'past_due' ? 'past_due' : s.status === 'trialing' ? 'trialing' : 'active'}`}>{s.status === 'past_due' ? t('financeAdmin.subs.statusPastDue') : s.status === 'trialing' ? t('financeAdmin.subs.statusTrialing') : t('financeAdmin.subs.statusActive')}</span></td>
+                          <td style={{ whiteSpace: 'nowrap' }}>{s.cycle ? (String(s.cycle).toLowerCase().startsWith('year') || String(s.cycle).toLowerCase().startsWith('annual') ? t('financeAdmin.subs.annual') : t('financeAdmin.subs.monthly')) : '-'}</td>
                           <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{s.mrrUsd == null ? '-' : money(s.mrrUsd, 'usd')}</td>
                           <td style={{ whiteSpace: 'nowrap' }}>
                             {s.id != null ? (
-                              <button type="button" className="wka-btn sm ghost" title="Cancel this subscription now"
-                                onClick={() => onCancel(s, load)}><Ban size={13} /> Cancel sub</button>
+                              <button type="button" className="wka-btn sm ghost" title={t('financeAdmin.subs.cancelTitle')}
+                                onClick={() => onCancel(s, load)}><Ban size={13} /> {t('financeAdmin.subs.cancelSub')}</button>
                             ) : null}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
-                  {subs.length > live.length ? <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 8 }}>Showing {live.length} live subscriptions. See the Subscribers tab for the full list.</div> : null}
+                  {subs.length > live.length ? <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 8 }}>{t('financeAdmin.subs.showing', { count: live.length })}</div> : null}
                 </div>
               )}
             </div>
@@ -247,6 +250,10 @@ function SubscriptionsOverview({ onCancel }) {
 const EMPTY_CREATE = { amount: '', currency: 'usd', description: '' }
 
 export default function Finance({ isSuperAdmin }) {
+  const t = useT()
+  // Transaction-kind label resolved at the call site (codes stay subscription/
+  // hours/images/refund/payment/invoice/adjustment); unknown kinds echo the code.
+  const kindLabel = (k) => (t.has('financeAdmin.kinds.' + k) ? t('financeAdmin.kinds.' + k) : k)
   const [state, setState] = useState({ loading: true, error: null })
   const [sum, setSum] = useState(null)
   const [txns, setTxns] = useState([])
@@ -285,7 +292,7 @@ export default function Finance({ isSuperAdmin }) {
     try {
       const r = await workAdminApi.financeRefund(tx.id, undefined, reason)
       setRefundTx(null)
-      flash(true, `Refunded ${money(r.refund.amount, r.refund.currency)}.`); await load()
+      flash(true, t('financeAdmin.msg.refunded', { amount: money(r.refund.amount, r.refund.currency) })); await load()
     } catch (e) { setRefundErr(e) }
     finally { setRefunding('') }
   }
@@ -295,21 +302,21 @@ export default function Finance({ isSuperAdmin }) {
   const submitCreate = async (e) => {
     e && e.preventDefault()
     const amount = Number(create.amount)
-    if (!isFinite(amount) || amount === 0) { setCreateMsg({ kind: 'err', text: 'Enter a non-zero amount (use a negative amount for a debit).' }); return }
-    if ((create.description || '').trim().length < 2) { setCreateMsg({ kind: 'err', text: 'Add a short description for this entry.' }); return }
+    if (!isFinite(amount) || amount === 0) { setCreateMsg({ kind: 'err', text: t('financeAdmin.msg.amountInvalid') }); return }
+    if ((create.description || '').trim().length < 2) { setCreateMsg({ kind: 'err', text: t('financeAdmin.msg.descriptionRequired') }); return }
     const reason = await askReason({
-      title: 'Record a manual ledger entry',
-      detail: `Add a manual ${money(amount, create.currency)} adjustment to the ledger. This is recorded against the books and logged.`,
-      confirmLabel: 'Record entry', danger: false, placeholder: 'Reason (recorded in the audit trail)',
+      title: t('financeAdmin.reason.createTitle'),
+      detail: t('financeAdmin.reason.createDetail', { amount: money(amount, create.currency) }),
+      confirmLabel: t('financeAdmin.reason.createConfirm'), danger: false, placeholder: t('financeAdmin.reason.createPlaceholder'),
     })
     if (!reason) return
     setCreating(true); setCreateMsg(null)
     try {
       await workAdminApi.createTransaction({ kind: 'adjustment', amount, currency: create.currency, description: create.description.trim(), reason })
       setCreate(EMPTY_CREATE); setShowCreate(false)
-      flash(true, `Recorded ${money(amount, create.currency)} adjustment.`); await load()
+      flash(true, t('financeAdmin.msg.recorded', { amount: money(amount, create.currency) })); await load()
     } catch (err) {
-      setCreateMsg({ kind: 'err', text: err.message || 'Could not record the entry.' })
+      setCreateMsg({ kind: 'err', text: err.message || t('financeAdmin.msg.recordFailed') })
     } finally { setCreating(false) }
   }
 
@@ -319,51 +326,57 @@ export default function Finance({ isSuperAdmin }) {
     try {
       await workAdminApi.updateTransaction(tx.id, { description: editNoteVal.trim() })
       setTxns((list) => list.map((x) => x.id === tx.id ? { ...x, description: editNoteVal.trim() } : x))
-      setEditNoteId(null); setEditNoteVal(''); flash(true, 'Note updated.')
-    } catch (err) { flash(false, err.message || 'Could not update the note.') }
+      setEditNoteId(null); setEditNoteVal(''); flash(true, t('financeAdmin.msg.noteUpdated'))
+    } catch (err) { flash(false, err.message || t('financeAdmin.msg.noteFailed')) }
     finally { setRowBusy('') }
   }
 
   // Void (delete) a manual entry - destructive, so it goes through the reason gate.
   const voidEntry = async (tx) => {
     const reason = await askReason({
-      title: `Void ${money(tx.amount, tx.currency)} entry`,
-      detail: `Remove this manual ledger entry (${KIND_LABEL[tx.kind] || tx.kind}). This cannot be undone.`,
-      confirmLabel: 'Void entry', danger: true,
+      title: t('financeAdmin.reason.voidTitle', { amount: money(tx.amount, tx.currency) }),
+      detail: t('financeAdmin.reason.voidDetail', { kind: kindLabel(tx.kind) }),
+      confirmLabel: t('financeAdmin.reason.voidConfirm'), danger: true,
     })
     if (!reason) return
     setRowBusy(tx.id)
     try {
       await workAdminApi.deleteTransaction(tx.id, reason)
-      setTxns((list) => list.filter((x) => x.id !== tx.id)); flash(true, 'Entry voided.'); await load()
-    } catch (err) { flash(false, err.message || 'Could not void the entry.') }
+      setTxns((list) => list.filter((x) => x.id !== tx.id)); flash(true, t('financeAdmin.msg.entryVoided')); await load()
+    } catch (err) { flash(false, err.message || t('financeAdmin.msg.voidFailed')) }
     finally { setRowBusy('') }
   }
 
   // Cancel a subscription from the overview block (existing admin endpoint).
   const cancelSubscription = async (sub, reload) => {
     const reason = await askReason({
-      title: `Cancel subscription for ${sub.username || 'this account'}`,
-      detail: 'End this subscription now. Their access stops immediately.',
-      confirmLabel: 'Cancel subscription', danger: true,
+      title: t('financeAdmin.reason.cancelTitle', { name: sub.username || t('financeAdmin.fallback.thisAccount') }),
+      detail: t('financeAdmin.reason.cancelDetail'),
+      confirmLabel: t('financeAdmin.reason.cancelConfirm'), danger: true,
     })
     if (!reason) return
     try {
       await workAdminApi.cancelUserSubscription(sub.id, false, reason)
-      flash(true, `Subscription canceled for ${sub.username || 'account'}.`)
+      flash(true, t('financeAdmin.msg.subCanceled', { name: sub.username || t('financeAdmin.fallback.account') }))
       if (reload) await reload()
       await load()
-    } catch (err) { flash(false, err.message || 'Could not cancel the subscription.') }
+    } catch (err) { flash(false, err.message || t('financeAdmin.msg.cancelFailed')) }
   }
 
-  if (state.loading) return <Loading label="Loading finance" />
+  if (state.loading) return <Loading label={t('financeAdmin.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
   if (!sum) return null
   const cur = sum.currency
 
   // The narrative line - the dashboard "speaking".
   const m = sum.month, mDelta = pct(m.current.net, m.previous.net)
-  const narrative = `This month you have earned ${money(m.current.net, cur)} net${m.previous.net ? ` (${mDelta >= 0 ? 'up' : 'down'} ${Math.abs(mDelta)}% vs last month)` : ''}. Estimated recurring revenue is ${money(sum.mrr, cur)} across ${sum.activeSubs} active plan${sum.activeSubs === 1 ? '' : 's'}. ${sum.year.current.refunds ? `${money(sum.year.current.refunds, cur)} refunded year to date.` : 'No refunds year to date.'}`
+  const narrative = t('financeAdmin.narrative.lead', {
+    net: money(m.current.net, cur),
+    delta: m.previous.net ? t('financeAdmin.narrative.delta', { dir: mDelta >= 0 ? t('financeAdmin.narrative.up') : t('financeAdmin.narrative.down'), pct: Math.abs(mDelta) }) : '',
+    mrr: money(sum.mrr, cur),
+    plans: `${sum.activeSubs} ${t.n('financeAdmin.narrative.plans', sum.activeSubs)}`,
+    refunds: sum.year.current.refunds ? t('financeAdmin.narrative.refundsYtd', { amount: money(sum.year.current.refunds, cur) }) : t('financeAdmin.narrative.noRefundsYtd'),
+  })
 
   const maxNet = Math.max(1, ...sum.series.map((s) => Math.max(s.net, 0)))
 
@@ -371,22 +384,22 @@ export default function Finance({ isSuperAdmin }) {
     <div>
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0 }}><DollarSign size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Revenue at a glance</h2>
-          <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> Refresh</button>
+          <h2 style={{ margin: 0 }}><DollarSign size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('financeAdmin.glance.title')}</h2>
+          <button type="button" className="wka-btn sm ghost" onClick={load}><RefreshCw size={13} /> {t('financeAdmin.glance.refresh')}</button>
         </div>
         <p className="desc" style={{ fontSize: 14, lineHeight: 1.55, margin: '8px 0 4px' }}>{narrative}</p>
       </div>
 
       {/* Period cards - the console's own stat tiles (same as Overview / Subscribers) */}
       <div className="wka-cards">
-        {[['This week', sum.week], ['This month', sum.month], ['This quarter', sum.quarter], ['This year', sum.year]].map(([label, p]) => {
+        {[['week', sum.week], ['month', sum.month], ['quarter', sum.quarter], ['year', sum.year]].map(([code, p]) => {
           const d = pct(p.current.net, p.previous.net)
           return (
-            <div className="wka-card" key={label}>
-              <div className="k"><CalendarRange size={14} /> {label}</div>
+            <div className="wka-card" key={code}>
+              <div className="k"><CalendarRange size={14} /> {t('financeAdmin.cards.' + code)}</div>
               <div className="v wka-mono">{money(p.current.net, cur)}</div>
-              <div className={`fin-delta ${d >= 0 ? 'up' : 'down'}`}>{d >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />} {Math.abs(d)}% <span>vs previous</span></div>
-              <div className="foot">{money(p.current.gross, cur)} gross{p.current.refunds ? ` · ${money(p.current.refunds, cur)} refunded` : ''} · {p.current.count} payment{p.current.count === 1 ? '' : 's'}</div>
+              <div className={`fin-delta ${d >= 0 ? 'up' : 'down'}`}>{d >= 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />} {Math.abs(d)}% <span>{t('financeAdmin.cards.vsPrevious')}</span></div>
+              <div className="foot">{t('financeAdmin.cards.foot', { gross: money(p.current.gross, cur), refunded: p.current.refunds ? t('financeAdmin.cards.refundedSuffix', { amount: money(p.current.refunds, cur) }) : '', count: p.current.count, payments: t.n('financeAdmin.cards.payments', p.current.count) })}</div>
             </div>
           )
         })}
@@ -397,10 +410,10 @@ export default function Finance({ isSuperAdmin }) {
 
       {/* 12-month revenue chart (kept) */}
       <div className="wka-panel">
-        <h2><Activity size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Net revenue, last 12 months</h2>
-        <div className="fin-chart" role="img" aria-label="Monthly net revenue, last 12 months">
+        <h2><Activity size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('financeAdmin.mini.title')}</h2>
+        <div className="fin-chart" role="img" aria-label={t('financeAdmin.mini.aria')}>
           {sum.series.map((s) => (
-            <div className="fin-bar-wrap" key={s.month} title={`${s.month}: ${money(s.net, cur)} net`}>
+            <div className="fin-bar-wrap" key={s.month} title={t('financeAdmin.mini.barTitle', { month: s.month, amount: money(s.net, cur) })}>
               <div className="fin-bar" style={{ height: `${Math.max(2, Math.round((Math.max(s.net, 0) / maxNet) * 100))}%` }} />
               <div className="fin-bar-lab">{s.month.slice(5)}</div>
             </div>
@@ -414,11 +427,11 @@ export default function Finance({ isSuperAdmin }) {
       {/* Transactions + manual ledger CRUD */}
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-          <h2 style={{ margin: 0 }}><CreditCard size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />All transactions</h2>
+          <h2 style={{ margin: 0 }}><CreditCard size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('financeAdmin.txns.title')}</h2>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
-            <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{txns.length} shown</span>
+            <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{t('financeAdmin.txns.shown', { count: txns.length })}</span>
             <button type="button" className="wka-btn sm primary" onClick={() => { setShowCreate((v) => !v); setCreateMsg(null) }}>
-              <Plus size={13} /> Manual entry
+              <Plus size={13} /> {t('financeAdmin.txns.manualEntry')}
             </button>
           </div>
         </div>
@@ -427,29 +440,29 @@ export default function Finance({ isSuperAdmin }) {
           <form className="fin-create" onSubmit={submitCreate}>
             <div className="fin-create-grid">
               <div className="wka-field">
-                <label>Amount <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>(negative for a debit)</span></label>
+                <label>{t('financeAdmin.txns.amount')} <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>{t('financeAdmin.txns.amountHint')}</span></label>
                 <input className="wka-input" type="number" step="0.01" value={create.amount}
-                  onChange={(e) => setCreate((f) => ({ ...f, amount: e.target.value }))} placeholder="e.g. 49.00" />
+                  onChange={(e) => setCreate((f) => ({ ...f, amount: e.target.value }))} placeholder={t('financeAdmin.txns.amountPlaceholder')} />
               </div>
               <div className="wka-field">
-                <label>Currency</label>
+                <label>{t('financeAdmin.txns.currency')}</label>
                 <select className="wka-select" value={create.currency} onChange={(e) => setCreate((f) => ({ ...f, currency: e.target.value }))}>
                   {CURRENCIES.map((c) => <option key={c} value={c}>{c.toUpperCase()}</option>)}
                 </select>
               </div>
               <div className="wka-field">
-                <label>Kind</label>
-                <input className="wka-input" value="Adjustment" disabled readOnly />
+                <label>{t('financeAdmin.txns.kind')}</label>
+                <input className="wka-input" value={t('financeAdmin.kinds.adjustment')} disabled readOnly />
               </div>
               <div className="wka-field fin-create-desc">
-                <label>Description</label>
+                <label>{t('financeAdmin.txns.description')}</label>
                 <input className="wka-input" value={create.description}
-                  onChange={(e) => setCreate((f) => ({ ...f, description: e.target.value }))} placeholder="What this adjustment is for" />
+                  onChange={(e) => setCreate((f) => ({ ...f, description: e.target.value }))} placeholder={t('financeAdmin.txns.descriptionPlaceholder')} />
               </div>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4, flexWrap: 'wrap' }}>
-              <button type="submit" className="wka-btn primary" disabled={creating}>{creating ? <Spinning /> : <Plus size={14} />} Record entry</button>
-              <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setCreate(EMPTY_CREATE); setCreateMsg(null) }}>Cancel</button>
+              <button type="submit" className="wka-btn primary" disabled={creating}>{creating ? <Spinning /> : <Plus size={14} />} {t('financeAdmin.txns.recordEntry')}</button>
+              <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setCreate(EMPTY_CREATE); setCreateMsg(null) }}>{t('financeAdmin.txns.cancel')}</button>
               {createMsg ? <span style={{ fontSize: 13, color: createMsg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{createMsg.text}</span> : null}
             </div>
           </form>
@@ -457,45 +470,45 @@ export default function Finance({ isSuperAdmin }) {
 
         {msg && <div className="wka-note" style={{ marginTop: 10, color: msg.ok ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{msg.text}</div>}
         {txns.length === 0 ? (
-          <p style={{ color: 'var(--wka-muted)', fontSize: 13.5, marginTop: 10 }}>No transactions yet. They appear here as payments and refunds flow through Stripe, and whenever you record a manual entry.</p>
+          <p style={{ color: 'var(--wka-muted)', fontSize: 13.5, marginTop: 10 }}>{t('financeAdmin.txns.none')}</p>
         ) : (
           <div className="wka-table-wrap" style={{ marginTop: 10 }}>
             <table className="wka-table" style={{ minWidth: 760 }}>
-              <thead><tr><th>Date</th><th>Who</th><th>Type &amp; note</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+              <thead><tr><th>{t('financeAdmin.txns.colDate')}</th><th>{t('financeAdmin.txns.colWho')}</th><th>{t('financeAdmin.txns.colType')}</th><th>{t('financeAdmin.txns.colAmount')}</th><th>{t('financeAdmin.txns.colStatus')}</th><th></th></tr></thead>
               <tbody>
-                {txns.map((t) => {
-                  const isManual = t.kind === 'adjustment'
-                  const editing = editNoteId === t.id
+                {txns.map((tx) => {
+                  const isManual = tx.kind === 'adjustment'
+                  const editing = editNoteId === tx.id
                   return (
-                    <tr key={t.id}>
-                      <td style={{ whiteSpace: 'nowrap', color: 'var(--wka-faint)', fontSize: 12.5 }}>{t.at ? new Date(t.at).toLocaleDateString() : '-'}</td>
-                      <td>{t.username || '-'}</td>
+                    <tr key={tx.id}>
+                      <td style={{ whiteSpace: 'nowrap', color: 'var(--wka-faint)', fontSize: 12.5 }}>{tx.at ? new Date(tx.at).toLocaleDateString() : '-'}</td>
+                      <td>{tx.username || '-'}</td>
                       <td style={{ maxWidth: 320 }}>
-                        <span className={`fin-chip ${t.kind === 'refund' ? 'rf' : isManual ? 'adj' : ''}`}>{KIND_LABEL[t.kind] || t.kind}</span>
-                        {t.plan ? <span style={{ fontSize: 11, color: 'var(--wka-faint)', marginLeft: 6 }}>{t.plan}</span> : null}
+                        <span className={`fin-chip ${tx.kind === 'refund' ? 'rf' : isManual ? 'adj' : ''}`}>{kindLabel(tx.kind)}</span>
+                        {tx.plan ? <span style={{ fontSize: 11, color: 'var(--wka-faint)', marginLeft: 6 }}>{tx.plan}</span> : null}
                         {editing ? (
                           <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
                             <input className="wka-input" style={{ padding: '6px 8px', minWidth: 160 }} value={editNoteVal} autoFocus
-                              onChange={(e) => setEditNoteVal(e.target.value)} placeholder="Note" />
-                            <button type="button" className="wka-btn sm primary" disabled={rowBusy === t.id} onClick={() => saveNote(t)}>{rowBusy === t.id ? <Spinning /> : <Check size={13} />} Save</button>
+                              onChange={(e) => setEditNoteVal(e.target.value)} placeholder={t('financeAdmin.txns.notePlaceholder')} />
+                            <button type="button" className="wka-btn sm primary" disabled={rowBusy === tx.id} onClick={() => saveNote(tx)}>{rowBusy === tx.id ? <Spinning /> : <Check size={13} />} {t('financeAdmin.txns.save')}</button>
                             <button type="button" className="wka-btn sm ghost" onClick={() => { setEditNoteId(null); setEditNoteVal('') }}><X size={13} /></button>
                           </span>
                         ) : (
-                          t.description ? <div style={{ fontSize: 11.5, color: 'var(--wka-muted)', marginTop: 3 }}>{t.description}</div> : null
+                          tx.description ? <div style={{ fontSize: 11.5, color: 'var(--wka-muted)', marginTop: 3 }}>{tx.description}</div> : null
                         )}
                       </td>
-                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap', color: (t.kind === 'refund' || Number(t.amount) < 0) ? 'var(--wka-amber)' : 'var(--wka-text)' }}>{t.kind === 'refund' ? '-' : ''}{money(t.amount, t.currency)}</td>
-                      <td style={{ fontSize: 12.5, color: 'var(--wka-faint)' }}>{t.status || (isManual ? 'manual' : '-')}</td>
+                      <td style={{ fontWeight: 600, whiteSpace: 'nowrap', color: (tx.kind === 'refund' || Number(tx.amount) < 0) ? 'var(--wka-amber)' : 'var(--wka-text)' }}>{tx.kind === 'refund' ? '-' : ''}{money(tx.amount, tx.currency)}</td>
+                      <td style={{ fontSize: 12.5, color: 'var(--wka-faint)' }}>{tx.status || (isManual ? t('financeAdmin.txns.statusManual') : '-')}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>
                         {isManual ? (
                           !editing ? (
                             <span style={{ display: 'inline-flex', gap: 6 }}>
-                              <button type="button" className="wka-btn sm ghost" disabled={rowBusy === t.id} title="Edit the note" onClick={() => { setEditNoteId(t.id); setEditNoteVal(t.description || '') }}><Pencil size={13} /> Note</button>
-                              <button type="button" className="wka-btn sm ghost" disabled={rowBusy === t.id} title="Void this manual entry" onClick={() => voidEntry(t)} style={{ color: 'var(--wka-red)' }}>{rowBusy === t.id ? <Spinning /> : <Trash2 size={13} />} Void</button>
+                              <button type="button" className="wka-btn sm ghost" disabled={rowBusy === tx.id} title={t('financeAdmin.txns.editNote')} onClick={() => { setEditNoteId(tx.id); setEditNoteVal(tx.description || '') }}><Pencil size={13} /> {t('financeAdmin.txns.note')}</button>
+                              <button type="button" className="wka-btn sm ghost" disabled={rowBusy === tx.id} title={t('financeAdmin.txns.voidTitle')} onClick={() => voidEntry(tx)} style={{ color: 'var(--wka-red)' }}>{rowBusy === tx.id ? <Spinning /> : <Trash2 size={13} />} {t('financeAdmin.txns.void')}</button>
                             </span>
                           ) : null
-                        ) : (t.kind !== 'refund' && t.stripeId ? (
-                          <button type="button" className="wka-btn sm ghost" disabled={refunding === t.id} onClick={() => { setRefundErr(null); setRefundTx(t) }}>{refunding === t.id ? <Spinning /> : <RotateCcw size={13} />} Refund</button>
+                        ) : (tx.kind !== 'refund' && tx.stripeId ? (
+                          <button type="button" className="wka-btn sm ghost" disabled={refunding === tx.id} onClick={() => { setRefundErr(null); setRefundTx(tx) }}>{refunding === tx.id ? <Spinning /> : <RotateCcw size={13} />} {t('financeAdmin.txns.refund')}</button>
                         ) : null)}
                       </td>
                     </tr>
@@ -509,9 +522,9 @@ export default function Finance({ isSuperAdmin }) {
 
       {refundTx ? (
         <ReasonModal
-          title={`Refund ${money(refundTx.amount, refundTx.currency)}`}
-          message={`Refund ${money(refundTx.amount, refundTx.currency)} to ${refundTx.username || 'this account'}. This moves real money and cannot be undone.`}
-          confirmLabel="Refund"
+          title={t('financeAdmin.reason.refundTitle', { amount: money(refundTx.amount, refundTx.currency) })}
+          message={t('financeAdmin.reason.refundMessage', { amount: money(refundTx.amount, refundTx.currency), name: refundTx.username || t('financeAdmin.fallback.thisAccount') })}
+          confirmLabel={t('financeAdmin.reason.refundConfirm')}
           busy={refunding === refundTx.id} error={refundErr}
           onConfirm={confirmRefund}
           onCancel={() => { if (refunding !== refundTx.id) setRefundTx(null) }}

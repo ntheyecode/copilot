@@ -2,12 +2,14 @@
 // Pure UI, no data fetching. Only react + lucide-react are imported.
 import React, { useState, useEffect, useRef, useCallback } from 'react'
 import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, XCircle, Pencil, X } from 'lucide-react'
+import { useT } from '../../../i18n/index.jsx'
 
-export function Loading({ label = 'Loading' }) {
+export function Loading({ label }) {
+  const t = useT()
   return (
     <div className="wka-state">
       <div className="wka-spinner" aria-hidden="true" />
-      <div>{label}...</div>
+      <div>{label === undefined ? t('shared.loading') : label}...</div>
     </div>
   )
 }
@@ -17,28 +19,30 @@ export function ErrorBox({ error, onRetry }) {
   // "already exists"); 5xx / network / unknown errors are generalized so a raw
   // server message (which could carry internal detail) never reaches a company
   // admin or user. Superadmin sees the real cause in the Incidents feed.
+  const t = useT()
   const status = error && error.status
   const actionable = typeof status === 'number' && status >= 400 && status < 500
   const msg = actionable
-    ? (error.message || 'Something went wrong.')
-    : 'WorkCoPilot had a problem. Please try again in a moment.'
+    ? (error.message || t('shared.errorGeneric'))
+    : t('shared.errorServer')
   return (
     <div className="wka-error">
       <span className="msg"><AlertTriangle size={16} /> {msg}</span>
       {onRetry ? (
         <button type="button" className="wka-btn sm ghost" onClick={onRetry}>
-          <RefreshCw size={13} /> Retry
+          <RefreshCw size={13} /> {t('shared.retry')}
         </button>
       ) : null}
     </div>
   )
 }
 
-export function EmptyState({ title = 'Nothing here yet', detail = '' }) {
+export function EmptyState({ title, detail = '' }) {
+  const t = useT()
   return (
     <div className="wka-state">
       <Inbox size={26} style={{ opacity: 0.5, marginBottom: 10 }} />
-      <div className="big">{title}</div>
+      <div className="big">{title === undefined ? t('shared.emptyTitle') : title}</div>
       {detail ? <div>{detail}</div> : null}
     </div>
   )
@@ -55,8 +59,9 @@ export function Spinning() {
 }
 
 export function SavedTag({ show }) {
+  const t = useT()
   if (!show) return null
-  return <span className="wka-saved"><Check size={14} /> Saved</span>
+  return <span className="wka-saved"><Check size={14} /> {t('shared.saved')}</span>
 }
 
 // One label/value row in a collapsed "record" view (a saved config shown
@@ -91,8 +96,9 @@ export function StateRow({ ok, warn, label, detail }) {
 // The Edit / Save+Cancel control row + header affordance for a collapsible card.
 // `editing` + `onEdit`/`onCancel` toggle; the caller renders the record vs form.
 export function EditToggle({ editing, onEdit, disabled }) {
+  const t = useT()
   if (editing || disabled) return null
-  return <button type="button" className="wka-btn sm ghost" onClick={onEdit}><Pencil size={13} /> Edit</button>
+  return <button type="button" className="wka-btn sm ghost" onClick={onEdit}><Pencil size={13} /> {t('shared.edit')}</button>
 }
 
 // A 403 {locked:true} from a step-up-gated endpoint (re-prompt for the code).
@@ -104,10 +110,14 @@ export function isLockError(e) { return !!(e && e.status === 403 && e.data && e.
 // `extra` renders additional controls (e.g. a "also delete members" checkbox)
 // between the message and the reason box.
 export function ReasonModal({
-  title = 'Confirm', message = '', confirmLabel = 'Delete', onConfirm, onCancel,
+  title, message = '', confirmLabel, onConfirm, onCancel,
   busy = false, error = null, extra = null, danger = true,
-  placeholder = 'Reason (recorded in the audit trail)',
+  placeholder,
 }) {
+  const t = useT()
+  const titleText = title === undefined ? t('shared.confirm') : title
+  const confirmText = confirmLabel === undefined ? t('shared.delete') : confirmLabel
+  const placeholderText = placeholder === undefined ? t('shared.reasonPlaceholder') : placeholder
   const [reason, setReason] = useState('')
   const can = reason.trim().length >= 3 && !busy
   const confirm = () => { if (can) onConfirm(reason.trim()) }
@@ -116,26 +126,26 @@ export function ReasonModal({
       style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(12,18,28,0.55)', backdropFilter: 'blur(2px)', padding: 16 }}
       onMouseDown={(e) => { if (e.target === e.currentTarget && !busy) onCancel && onCancel() }}>
       <div className="wka-panel" style={{ maxWidth: 460, width: '100%', position: 'relative' }}>
-        <button type="button" aria-label="Close" onClick={() => !busy && onCancel && onCancel()}
+        <button type="button" aria-label={t('shared.close')} onClick={() => !busy && onCancel && onCancel()}
           style={{ position: 'absolute', top: 10, right: 10, background: 'none', border: 'none', cursor: 'pointer', color: 'var(--wka-faint)' }}>
           <X size={18} />
         </button>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <AlertTriangle size={18} style={{ color: danger ? 'var(--wka-red)' : 'var(--wka-emerald)' }} /> {title}
+          <AlertTriangle size={18} style={{ color: danger ? 'var(--wka-red)' : 'var(--wka-emerald)' }} /> {titleText}
         </h2>
         {message ? <p className="desc">{message}</p> : null}
         {extra}
-        <textarea className="wka-input" rows={3} value={reason} autoFocus placeholder={placeholder}
+        <textarea className="wka-input" rows={3} value={reason} autoFocus placeholder={placeholderText}
           onChange={(e) => setReason(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) confirm() }}
           style={{ width: '100%', resize: 'vertical', marginTop: 4 }} />
-        <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 4 }}>A reason of at least 3 characters is required. It is kept in the audit trail.</div>
+        <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 4 }}>{t('shared.reasonHint')}</div>
         {error ? <div style={{ margin: '10px 0' }}><ErrorBox error={error} /></div> : null}
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end', marginTop: 14 }}>
-          <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>Cancel</button>
+          <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>{t('shared.cancel')}</button>
           <button type="button" className="wka-btn sm" onClick={confirm} disabled={!can}
             style={danger ? { background: 'var(--wka-red)', borderColor: 'var(--wka-red)', color: '#fff' } : undefined}>
-            {busy ? <Spinning /> : null} {confirmLabel}
+            {busy ? <Spinning /> : null} {confirmText}
           </button>
         </div>
       </div>
@@ -185,7 +195,9 @@ export function useReasonModal() {
 // (async code -> status) and the current `status` (from the step-up endpoint).
 // WorkCoPilot uses ONE shared step-up window, so unlocking here also unlocks the
 // other sensitive pages for the window's lifetime.
-export function StepUpGate({ status, verify, onUnlock, label = 'This page' }) {
+export function StepUpGate({ status, verify, onUnlock, label }) {
+  const t = useT()
+  const labelText = label === undefined ? t('shared.stepUpPage') : label
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -202,18 +214,18 @@ export function StepUpGate({ status, verify, onUnlock, label = 'This page' }) {
       <div style={{ width: 52, height: 52, borderRadius: 14, margin: '4px auto 14px', display: 'grid', placeItems: 'center', background: 'color-mix(in srgb, var(--wka-emerald) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--wka-emerald) 30%, transparent)' }}>
         <Lock size={22} style={{ color: 'var(--wka-emerald)' }} />
       </div>
-      <h2 style={{ justifyContent: 'center' }}>{label} are locked</h2>
-      <p className="desc" style={{ textAlign: 'center' }}>This is a critical page. Enter the 6-digit code from your authenticator to view and change it. It re-locks automatically after a few minutes of inactivity.</p>
+      <h2 style={{ justifyContent: 'center' }}>{t('shared.locked', { label: labelText })}</h2>
+      <p className="desc" style={{ textAlign: 'center' }}>{t('shared.stepUpDesc')}</p>
       {needsEnroll ? (
-        <div className="wka-note" style={{ marginTop: 10, justifyContent: 'center' }}><AlertTriangle size={14} /> Set up multi-factor authentication on your account first, then return here.</div>
+        <div className="wka-note" style={{ marginTop: 10, justifyContent: 'center' }}><AlertTriangle size={14} /> {t('shared.mfaEnrollFirst')}</div>
       ) : (
         <form onSubmit={submit} style={{ marginTop: 8 }}>
-          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder="123456" value={code}
+          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder={t('shared.otpPlaceholder')} value={code}
             onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))} autoFocus
             style={{ maxWidth: 200, margin: '0 auto', textAlign: 'center', letterSpacing: '0.4em', fontSize: 20 }} />
           {error ? <div style={{ margin: '12px 0' }}><ErrorBox error={error} /></div> : null}
           <div style={{ marginTop: 14 }}>
-            <button type="submit" className="wka-btn primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} Verify &amp; open</button>
+            <button type="submit" className="wka-btn primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} {t('shared.verifyOpen')}</button>
           </div>
         </form>
       )}
@@ -223,7 +235,9 @@ export function StepUpGate({ status, verify, onUnlock, label = 'This page' }) {
 
 // Thin banner above an unlocked step-up page: live countdown + lock-now. `lock`
 // is the async lock fn; `onLocked` re-checks the gate.
-export function StepUpBanner({ status, onLocked, lock, label = 'Settings' }) {
+export function StepUpBanner({ status, onLocked, lock, label }) {
+  const t = useT()
+  const labelText = label === undefined ? t('shared.stepUpBannerLabel') : label
   const [left, setLeft] = useState(() => Math.max(0, (status.until || 0) - Date.now()))
   useEffect(() => {
     if (status.breakGlass) return
@@ -241,9 +255,9 @@ export function StepUpBanner({ status, onLocked, lock, label = 'Settings' }) {
       padding: '9px 14px', marginBottom: 14, borderRadius: 10, border: '1px solid color-mix(in srgb, var(--wka-emerald) 35%, transparent)', background: 'color-mix(in srgb, var(--wka-emerald) 7%, transparent)' }}>
       <span style={{ display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 12.5, fontWeight: 600, color: 'var(--wka-emerald)' }}>
         <CheckCircle2 size={15} />
-        {status.breakGlass ? `MFA is disabled platform-wide - ${label.toLowerCase()} are open.` : `Verified with your authenticator - locks in ${mm}:${String(ss).padStart(2, '0')}.`}
+        {status.breakGlass ? t('shared.mfaDisabled', { label: labelText.toLowerCase() }) : t('shared.verifiedCountdown', { time: `${mm}:${String(ss).padStart(2, '0')}` })}
       </span>
-      {!status.breakGlass ? <button type="button" className="wka-btn sm ghost" onClick={lockNow}><Lock size={13} /> Lock now</button> : null}
+      {!status.breakGlass ? <button type="button" className="wka-btn sm ghost" onClick={lockNow}><Lock size={13} /> {t('shared.lockNow')}</button> : null}
     </div>
   )
 }
@@ -253,7 +267,9 @@ export function StepUpBanner({ status, onLocked, lock, label = 'Settings' }) {
 // is the async code -> status fn (workAdminApi.verifyAiStepUp); on success it calls
 // onUnlocked(status) so the caller can retry the action. Decoupled: takes verify
 // as a prop, imports nothing beyond react + lucide.
-export function StepUpPrompt({ verify, onUnlocked, onCancel, label = 'This action' }) {
+export function StepUpPrompt({ verify, onUnlocked, onCancel, label }) {
+  const t = useT()
+  const labelText = label === undefined ? t('shared.stepUpAction') : label
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState(null)
@@ -272,16 +288,16 @@ export function StepUpPrompt({ verify, onUnlocked, onCancel, label = 'This actio
         <div style={{ width: 48, height: 48, borderRadius: 13, margin: '2px auto 12px', display: 'grid', placeItems: 'center', background: 'color-mix(in srgb, var(--wka-emerald) 10%, transparent)', border: '1px solid color-mix(in srgb, var(--wka-emerald) 30%, transparent)' }}>
           <Lock size={20} style={{ color: 'var(--wka-emerald)' }} />
         </div>
-        <h2 style={{ justifyContent: 'center' }}>Confirm it&rsquo;s you</h2>
-        <p className="desc" style={{ textAlign: 'center' }}>{label} needs a fresh authenticator code. Enter the 6-digit code from your app to continue.</p>
+        <h2 style={{ justifyContent: 'center' }}>{t('shared.confirmItsYou')}</h2>
+        <p className="desc" style={{ textAlign: 'center' }}>{t('shared.stepUpActionDesc', { label: labelText })}</p>
         <form onSubmit={submit}>
-          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder="123456" value={code} autoFocus
+          <input className="wka-input wka-mono" inputMode="numeric" autoComplete="one-time-code" maxLength={8} placeholder={t('shared.otpPlaceholder')} value={code} autoFocus
             onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
             style={{ maxWidth: 200, margin: '0 auto', textAlign: 'center', letterSpacing: '0.4em', fontSize: 20 }} />
           {error ? <div style={{ margin: '12px 0' }}><ErrorBox error={error} /></div> : null}
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginTop: 14 }}>
-            <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>Cancel</button>
-            <button type="submit" className="wka-btn sm primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} Verify &amp; continue</button>
+            <button type="button" className="wka-btn sm ghost" onClick={() => onCancel && onCancel()} disabled={busy}>{t('shared.cancel')}</button>
+            <button type="submit" className="wka-btn sm primary" disabled={busy || !code.trim()}>{busy ? <Spinning /> : <Shield size={14} />} {t('shared.verifyContinue')}</button>
           </div>
         </form>
       </div>

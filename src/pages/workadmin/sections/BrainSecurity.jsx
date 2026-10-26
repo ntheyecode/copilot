@@ -23,6 +23,7 @@ import {
   Plus, Trash2, RefreshCw, Eye, EyeOff, Fingerprint, FileArchive, Users, Info, X, ArrowRight, Clock,
 } from 'lucide-react'
 import { api } from '../../../api.js'
+import { useT } from '../../../i18n/index.jsx'
 import { Loading, ErrorBox, Spinning, ReasonModal } from './_shared.jsx'
 
 // ---------------------------------------------------------------------------
@@ -46,25 +47,31 @@ export function passStrength(p) {
   return { score: n, label, pct: s.length < 8 ? 12 : [28, 48, 70, 88, 100][n] }
 }
 
+// passStrength() keeps its English labels as internal values (they are compared
+// in logic below); the i18n key is looked up only here, at display time.
+const STRENGTH_LABEL_KEY = { 'Too short': 'tooShort', Weak: 'weak', Fair: 'fair', Good: 'good', Strong: 'strong', 'Very strong': 'veryStrong' }
+
 function StrengthBar({ value }) {
+  const t = useT()
   const st = passStrength(value)
   if (!value) return null
   const tone = st.label === 'Too short' || st.score === 0 ? 'var(--wka-red)' : st.score === 1 ? 'var(--wka-amber)' : 'var(--wka-emerald)'
   return (
     <div className="wcb-strength" aria-live="polite">
       <div className="track"><div className="fill" style={{ width: `${st.pct}%`, background: tone }} /></div>
-      <span style={{ color: tone }}>{st.label}</span>
+      <span style={{ color: tone }}>{t(`brainSecurity.strength.${STRENGTH_LABEL_KEY[st.label]}`)}</span>
     </div>
   )
 }
 
 function PassInput({ value, onChange, placeholder, autoFocus, autoComplete = 'new-password', id }) {
+  const t = useT()
   const [show, setShow] = useState(false)
   return (
     <div className="wcb-pass">
       <input id={id} className="wka-input" type={show ? 'text' : 'password'} value={value} autoFocus={autoFocus} autoComplete={autoComplete}
         placeholder={placeholder} onChange={(e) => onChange(e.target.value)} spellCheck={false} />
-      <button type="button" className="eye" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide' : 'Show'} title={show ? 'Hide' : 'Show'}>
+      <button type="button" className="eye" onClick={() => setShow((v) => !v)} aria-label={show ? t('brainSecurity.pass.hide') : t('brainSecurity.pass.show')} title={show ? t('brainSecurity.pass.hide') : t('brainSecurity.pass.show')}>
         {show ? <EyeOff size={14} /> : <Eye size={14} />}
       </button>
     </div>
@@ -95,6 +102,7 @@ const fmtWhen = (s) => { try { return new Date(s).toLocaleString(undefined, { mo
 // Enable wizard: passphrase -> recovery phrase -> saved-it check
 // ---------------------------------------------------------------------------
 function EnableWizard({ onDone, onCancel }) {
+  const t = useT()
   const [step, setStep] = useState(1)                 // 1 passphrase, 2 phrase, 3 verify
   const [pass, setPass] = useState('')
   const [pass2, setPass2] = useState('')
@@ -122,15 +130,15 @@ function EnableWizard({ onDone, onCancel }) {
   const toVerify = () => { setChecks(pickIndices(words.length, 3)); setAnswers({}); setVerifyErr(null); setStep(3) }
   const verify = () => {
     const bad = checks.filter((i) => String(answers[i] || '').trim().toLowerCase() !== words[i].toLowerCase())
-    if (bad.length) { setVerifyErr(`Word${bad.length === 1 ? '' : 's'} #${bad.map((i) => i + 1).join(', #')} ${bad.length === 1 ? 'does' : 'do'} not match. Check your saved copy and try again.`); return }
+    if (bad.length) { setVerifyErr(t.n('brainSecurity.wizard.mismatch', bad.length, { list: bad.map((i) => i + 1).join(', #') })); return }
     setResult(null)   // drop the phrase from memory; it is never shown again
     onDone()
   }
 
   return (
     <div className="wka-panel wcb-wizard">
-      <div className="wcb-steps" aria-label="Progress">
-        {['Passphrase', 'Recovery phrase', 'Confirm saved'].map((label, i) => (
+      <div className="wcb-steps" aria-label={t('brainSecurity.wizard.progress')}>
+        {[t('brainSecurity.wizard.step1'), t('brainSecurity.wizard.step2'), t('brainSecurity.wizard.step3')].map((label, i) => (
           <span key={label} className={`wcb-step${step === i + 1 ? ' on' : step > i + 1 ? ' done' : ''}`}>
             <i>{step > i + 1 ? <Check size={11} /> : i + 1}</i>{label}
           </span>
@@ -139,30 +147,30 @@ function EnableWizard({ onDone, onCancel }) {
 
       {step === 1 ? (
         <>
-          <h2><KeyRound size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />Choose your passphrase</h2>
-          <p className="desc">Your Company Brain is encrypted at rest with AES-256-GCM under a key only you hold. This passphrase wraps that key. WorkCoPilot never stores the passphrase or the recovery phrase, so there is no backdoor - like a crypto wallet.</p>
+          <h2><KeyRound size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('brainSecurity.wizard.chooseTitle')}</h2>
+          <p className="desc">{t('brainSecurity.wizard.chooseDesc')}</p>
           <div className="wka-formgrid" style={{ maxWidth: 640 }}>
             <div className="wka-field">
-              <label htmlFor="wcb-pass">Passphrase</label>
-              <PassInput id="wcb-pass" value={pass} onChange={setPass} placeholder="At least 8 characters - a long sentence is best" autoFocus />
+              <label htmlFor="wcb-pass">{t('brainSecurity.common.passphrase')}</label>
+              <PassInput id="wcb-pass" value={pass} onChange={setPass} placeholder={t('brainSecurity.wizard.passPlaceholder')} autoFocus />
               <StrengthBar value={pass} />
-              {!pass ? <span className="hint">Tip: 4-5 unrelated words are easy to remember and hard to guess.</span> : null}
+              {!pass ? <span className="hint">{t('brainSecurity.wizard.passTip')}</span> : null}
             </div>
             <div className="wka-field">
-              <label htmlFor="wcb-pass2">Repeat passphrase</label>
-              <PassInput id="wcb-pass2" value={pass2} onChange={setPass2} placeholder="Type it again" />
-              {pass2 && pass2 !== pass ? <span className="hint" style={{ color: 'var(--wka-red)' }}>The passphrases do not match.</span> : pass2 && pass2 === pass ? <span className="hint" style={{ color: 'var(--wka-emerald)' }}>Matches.</span> : null}
+              <label htmlFor="wcb-pass2">{t('brainSecurity.wizard.repeatPassphrase')}</label>
+              <PassInput id="wcb-pass2" value={pass2} onChange={setPass2} placeholder={t('brainSecurity.common.typeItAgain')} />
+              {pass2 && pass2 !== pass ? <span className="hint" style={{ color: 'var(--wka-red)' }}>{t('brainSecurity.common.passphrasesNoMatch')}</span> : pass2 && pass2 === pass ? <span className="hint" style={{ color: 'var(--wka-emerald)' }}>{t('brainSecurity.wizard.matches')}</span> : null}
             </div>
           </div>
           <label className="wcb-ack">
             <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />
-            <span>I understand that if I lose <b>both</b> my passphrase and my recovery phrase, the data cannot be recovered - there is no backdoor, and WorkCoPilot cannot reset it for me.</span>
+            <span>{t.rich('brainSecurity.wizard.ack')}</span>
           </label>
           {err ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
           <div className="wcb-actions">
-            <button type="button" className="wka-btn ghost" onClick={onCancel} disabled={busy}><X size={14} /> Cancel</button>
-            <button type="button" className="wka-btn primary" onClick={enable} disabled={!canEnable} title={!ack ? 'Tick the acknowledgement first' : st.label === 'Too short' ? 'At least 8 characters' : ''}>
-              {busy ? <Spinning /> : <Lock size={14} />} Enable private encryption
+            <button type="button" className="wka-btn ghost" onClick={onCancel} disabled={busy}><X size={14} /> {t('brainSecurity.common.cancel')}</button>
+            <button type="button" className="wka-btn primary" onClick={enable} disabled={!canEnable} title={!ack ? t('brainSecurity.wizard.tickAck') : st.label === 'Too short' ? t('brainSecurity.common.atLeast8') : ''}>
+              {busy ? <Spinning /> : <Lock size={14} />} {t('brainSecurity.wizard.enable')}
             </button>
           </div>
         </>
@@ -170,29 +178,29 @@ function EnableWizard({ onDone, onCancel }) {
 
       {step === 2 && result ? (
         <>
-          <h2><Fingerprint size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />Your recovery phrase - shown only once</h2>
-          <p className="desc">Write these {words.length} words down, in order, and keep them somewhere safe and offline (a password manager or a safe). They unlock your Company Brain if you forget the passphrase. WorkCoPilot does not keep a copy and cannot show them again.</p>
-          <div className="wcb-words" role="list" aria-label="Recovery phrase">
+          <h2><Fingerprint size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('brainSecurity.wizard.phraseTitle')}</h2>
+          <p className="desc">{t('brainSecurity.wizard.phraseDesc', { n: words.length })}</p>
+          <div className="wcb-words" role="list" aria-label={t('brainSecurity.wizard.phraseAria')}>
             {words.map((w, i) => (
               <span key={i} className="wcb-word" role="listitem"><i>{i + 1}</i>{w}</span>
             ))}
           </div>
           <div className="wcb-actions" style={{ justifyContent: 'space-between' }}>
-            <button type="button" className="wka-btn sm" onClick={() => copy(words.join(' '))}>{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy phrase'}</button>
-            <button type="button" className="wka-btn primary" onClick={toVerify}><Check size={14} /> I have saved it</button>
+            <button type="button" className="wka-btn sm" onClick={() => copy(words.join(' '))}>{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? t('brainSecurity.common.copied') : t('brainSecurity.wizard.copyPhrase')}</button>
+            <button type="button" className="wka-btn primary" onClick={toVerify}><Check size={14} /> {t('brainSecurity.wizard.savedIt')}</button>
           </div>
-          <div className="wka-note" style={{ marginTop: 14, marginBottom: 0, color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> Anyone holding this phrase can unlock your Company Brain. Do not paste it into chat, email or a ticket.</div>
+          <div className="wka-note" style={{ marginTop: 14, marginBottom: 0, color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {t('brainSecurity.wizard.phraseWarn')}</div>
         </>
       ) : null}
 
       {step === 3 && result ? (
         <>
-          <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />Confirm you saved it</h2>
-          <p className="desc">Type the requested words from your saved copy. This is the last time the phrase can be checked against what WorkCoPilot holds in memory for this step.</p>
+          <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('brainSecurity.wizard.confirmTitle')}</h2>
+          <p className="desc">{t('brainSecurity.wizard.confirmDesc')}</p>
           <div className="wcb-verify">
             {checks.map((i) => (
               <div key={i} className="wka-field">
-                <label htmlFor={`wcb-w${i}`}>Word #{i + 1}</label>
+                <label htmlFor={`wcb-w${i}`}>{t('brainSecurity.wizard.wordN', { n: i + 1 })}</label>
                 <input id={`wcb-w${i}`} className="wka-input" value={answers[i] || ''} autoComplete="off" spellCheck={false} autoFocus={i === checks[0]}
                   onChange={(e) => setAnswers((a) => ({ ...a, [i]: e.target.value }))}
                   onKeyDown={(e) => { if (e.key === 'Enter') verify() }} />
@@ -201,8 +209,8 @@ function EnableWizard({ onDone, onCancel }) {
           </div>
           {verifyErr ? <div className="wka-error" style={{ marginTop: 10 }}><span className="msg"><AlertTriangle size={16} /> {verifyErr}</span></div> : null}
           <div className="wcb-actions" style={{ justifyContent: 'space-between' }}>
-            <button type="button" className="wka-btn ghost" onClick={() => { setStep(2); setVerifyErr(null) }}>Show the phrase again</button>
-            <button type="button" className="wka-btn primary" onClick={verify} disabled={checks.some((i) => !String(answers[i] || '').trim())}><ArrowRight size={14} /> Confirm and continue</button>
+            <button type="button" className="wka-btn ghost" onClick={() => { setStep(2); setVerifyErr(null) }}>{t('brainSecurity.wizard.showAgain')}</button>
+            <button type="button" className="wka-btn primary" onClick={verify} disabled={checks.some((i) => !String(answers[i] || '').trim())}><ArrowRight size={14} /> {t('brainSecurity.wizard.confirmContinue')}</button>
           </div>
         </>
       ) : null}
@@ -214,6 +222,7 @@ function EnableWizard({ onDone, onCancel }) {
 // Custody status + unlock / lock / rotate
 // ---------------------------------------------------------------------------
 function CustodyPanel({ sec, onChanged }) {
+  const t = useT()
   const [mode, setMode] = useState('passphrase')      // unlock with: passphrase | recovery
   const [secret, setSecret] = useState('')
   const [busy, setBusy] = useState(false)
@@ -235,25 +244,25 @@ function CustodyPanel({ sec, onChanged }) {
     setBusy(true); setErr(null)
     try {
       await api.workBrainUnlock(mode === 'recovery' ? { recoveryPhrase: secret.trim() } : { passphrase: secret })
-      setSecret(''); flash(`Unlocked. It re-locks after ${sec.unlockWindowMinutes || 30} idle minutes.`); onChanged()
+      setSecret(''); flash(t('brainSecurity.custody.unlockedFlash', { n: sec.unlockWindowMinutes || 30 })); onChanged()
     } catch (er) { setErr(er) } finally { setBusy(false) }
   }
   const lock = async () => {
     if (busy) return
     setBusy(true); setErr(null)
-    try { await api.workBrainLock(); flash('Locked. Guidance stops drawing on the Company Brain until it is unlocked again.'); onChanged() }
+    try { await api.workBrainLock(); flash(t('brainSecurity.custody.lockedFlash')); onChanged() }
     catch (er) { setErr(er) } finally { setBusy(false) }
   }
   const rotate = async () => {
     if (rBusy) return
-    if (rNew.length < 8) { setRErr(new Error('Choose a new passphrase of at least 8 characters.')); return }
-    if (rNew !== rNew2) { setRErr(new Error('The new passphrases do not match.')); return }
-    if (!rCurrent.trim()) { setRErr(new Error(rMode === 'recovery' ? 'Enter your recovery phrase.' : 'Enter your current passphrase.')); return }
+    if (rNew.length < 8) { setRErr(new Error(t('brainSecurity.custody.errNewTooShort'))); return }
+    if (rNew !== rNew2) { setRErr(new Error(t('brainSecurity.custody.errNewNoMatch'))); return }
+    if (!rCurrent.trim()) { setRErr(new Error(rMode === 'recovery' ? t('brainSecurity.custody.errEnterRecovery') : t('brainSecurity.custody.errEnterCurrent'))); return }
     setRBusy(true); setRErr(null)
     try {
       await api.workBrainRotatePassphrase({ ...(rMode === 'recovery' ? { recoveryPhrase: rCurrent.trim() } : { currentPassphrase: rCurrent }), newPassphrase: rNew })
       setRotating(false); setRCurrent(''); setRNew(''); setRNew2('')
-      flash('Passphrase changed. Your recovery phrase is unchanged and still works.'); onChanged()
+      flash(t('brainSecurity.custody.rotatedFlash')); onChanged()
     } catch (er) { setRErr(er) } finally { setRBusy(false) }
   }
 
@@ -261,74 +270,74 @@ function CustodyPanel({ sec, onChanged }) {
   return (
     <div className="wka-panel">
       <div className="wcb-head">
-        <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-emerald)' }} />Private encryption is on</h2>
+        <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-emerald)' }} />{t('brainSecurity.custody.title')}</h2>
         <div className="wcb-status">
-          <span className="wka-badge active"><Lock size={11} /> Encrypted - key held by you</span>
+          <span className="wka-badge active"><Lock size={11} /> {t('brainSecurity.custody.badgeEncrypted')}</span>
           {locked
-            ? <span className="wka-badge paused"><Lock size={11} /> Locked</span>
-            : <span className="wka-badge active"><Unlock size={11} /> Unlocked</span>}
-          <span className="wka-badge" title="After this much idle time the brain re-locks on its own."><Clock size={11} /> {sec.unlockWindowMinutes || 30} min idle window</span>
+            ? <span className="wka-badge paused"><Lock size={11} /> {t('brainSecurity.custody.badgeLocked')}</span>
+            : <span className="wka-badge active"><Unlock size={11} /> {t('brainSecurity.custody.badgeUnlocked')}</span>}
+          <span className="wka-badge" title={t('brainSecurity.custody.idleWindowTitle')}><Clock size={11} /> {t('brainSecurity.custody.idleWindow', { n: sec.unlockWindowMinutes || 30 })}</span>
         </div>
       </div>
-      <p className="desc">Your Company Brain is encrypted at rest with AES-256-GCM under a key only you hold{sec.dekId ? <> (key id <code className="wka-mono">{String(sec.dekId).slice(0, 12)}</code>)</> : null}. While locked, guidance cannot draw on it and the encrypted export skips it. Unlock it for your team with the passphrase; it re-locks after {sec.unlockWindowMinutes || 30} idle minutes.</p>
+      <p className="desc">{t.rich('brainSecurity.custody.desc', { id: sec.dekId ? String(sec.dekId).slice(0, 12) : '', n: sec.unlockWindowMinutes || 30 }, { keyid: (c) => (sec.dekId ? c : null), code: (c) => <code className="wka-mono">{c}</code> })}</p>
 
       {ok ? <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {ok}</div> : null}
       {err ? <div style={{ marginBottom: 12 }}><ErrorBox error={err} /></div> : null}
 
       {locked ? (
         <form onSubmit={unlock} className="wcb-unlock">
-          <div className="wcb-seg" role="tablist" aria-label="Unlock with">
-            <button type="button" role="tab" aria-selected={mode === 'passphrase'} className={mode === 'passphrase' ? 'on' : ''} onClick={() => { setMode('passphrase'); setSecret('') }}><KeyRound size={13} /> Passphrase</button>
-            <button type="button" role="tab" aria-selected={mode === 'recovery'} className={mode === 'recovery' ? 'on' : ''} onClick={() => { setMode('recovery'); setSecret('') }}><Fingerprint size={13} /> Recovery phrase</button>
+          <div className="wcb-seg" role="tablist" aria-label={t('brainSecurity.custody.unlockWith')}>
+            <button type="button" role="tab" aria-selected={mode === 'passphrase'} className={mode === 'passphrase' ? 'on' : ''} onClick={() => { setMode('passphrase'); setSecret('') }}><KeyRound size={13} /> {t('brainSecurity.common.passphrase')}</button>
+            <button type="button" role="tab" aria-selected={mode === 'recovery'} className={mode === 'recovery' ? 'on' : ''} onClick={() => { setMode('recovery'); setSecret('') }}><Fingerprint size={13} /> {t('brainSecurity.common.recoveryPhrase')}</button>
           </div>
           <div className="wka-field" style={{ maxWidth: 520 }}>
-            <label htmlFor="wcb-unlock">{mode === 'recovery' ? 'Your 24-word recovery phrase' : 'Passphrase'}</label>
+            <label htmlFor="wcb-unlock">{mode === 'recovery' ? t('brainSecurity.custody.recoveryLabel') : t('brainSecurity.common.passphrase')}</label>
             {mode === 'recovery'
-              ? <textarea id="wcb-unlock" className="wka-input" rows={2} value={secret} autoComplete="off" spellCheck={false} placeholder="word1 word2 word3 ..." onChange={(e) => setSecret(e.target.value)} style={{ resize: 'vertical' }} />
-              : <PassInput id="wcb-unlock" value={secret} onChange={setSecret} placeholder="Your passphrase" autoComplete="current-password" />}
+              ? <textarea id="wcb-unlock" className="wka-input" rows={2} value={secret} autoComplete="off" spellCheck={false} placeholder={t('brainSecurity.common.phrasePlaceholder')} onChange={(e) => setSecret(e.target.value)} style={{ resize: 'vertical' }} />
+              : <PassInput id="wcb-unlock" value={secret} onChange={setSecret} placeholder={t('brainSecurity.custody.yourPassphrase')} autoComplete="current-password" />}
           </div>
           <div className="wcb-actions" style={{ justifyContent: 'flex-start' }}>
-            <button type="submit" className="wka-btn primary" disabled={busy || !secret.trim()}>{busy ? <Spinning /> : <Unlock size={14} />} Unlock Company Brain</button>
-            <button type="button" className="wka-btn ghost" onClick={() => setRotating((v) => !v)} disabled={busy}><RefreshCw size={14} /> Change passphrase</button>
+            <button type="submit" className="wka-btn primary" disabled={busy || !secret.trim()}>{busy ? <Spinning /> : <Unlock size={14} />} {t('brainSecurity.custody.unlockBtn')}</button>
+            <button type="button" className="wka-btn ghost" onClick={() => setRotating((v) => !v)} disabled={busy}><RefreshCw size={14} /> {t('brainSecurity.common.changePassphrase')}</button>
           </div>
         </form>
       ) : (
         <div className="wcb-actions" style={{ justifyContent: 'flex-start' }}>
-          <button type="button" className="wka-btn" onClick={lock} disabled={busy}>{busy ? <Spinning /> : <Lock size={14} />} Lock now</button>
-          <button type="button" className="wka-btn ghost" onClick={() => setRotating((v) => !v)} disabled={busy}><RefreshCw size={14} /> Change passphrase</button>
+          <button type="button" className="wka-btn" onClick={lock} disabled={busy}>{busy ? <Spinning /> : <Lock size={14} />} {t('brainSecurity.custody.lockNow')}</button>
+          <button type="button" className="wka-btn ghost" onClick={() => setRotating((v) => !v)} disabled={busy}><RefreshCw size={14} /> {t('brainSecurity.common.changePassphrase')}</button>
         </div>
       )}
 
       {rotating ? (
         <div className="wcb-sub">
-          <h3><RefreshCw size={14} /> Change the passphrase</h3>
-          <p className="desc">Prove you hold the current passphrase or the recovery phrase, then choose a new one. The recovery phrase stays the same.</p>
-          <div className="wcb-seg" role="tablist" aria-label="Prove with">
-            <button type="button" role="tab" aria-selected={rMode === 'passphrase'} className={rMode === 'passphrase' ? 'on' : ''} onClick={() => { setRMode('passphrase'); setRCurrent('') }}><KeyRound size={13} /> Current passphrase</button>
-            <button type="button" role="tab" aria-selected={rMode === 'recovery'} className={rMode === 'recovery' ? 'on' : ''} onClick={() => { setRMode('recovery'); setRCurrent('') }}><Fingerprint size={13} /> Recovery phrase</button>
+          <h3><RefreshCw size={14} /> {t('brainSecurity.custody.rotateTitle')}</h3>
+          <p className="desc">{t('brainSecurity.custody.rotateDesc')}</p>
+          <div className="wcb-seg" role="tablist" aria-label={t('brainSecurity.custody.proveWith')}>
+            <button type="button" role="tab" aria-selected={rMode === 'passphrase'} className={rMode === 'passphrase' ? 'on' : ''} onClick={() => { setRMode('passphrase'); setRCurrent('') }}><KeyRound size={13} /> {t('brainSecurity.common.currentPassphrase')}</button>
+            <button type="button" role="tab" aria-selected={rMode === 'recovery'} className={rMode === 'recovery' ? 'on' : ''} onClick={() => { setRMode('recovery'); setRCurrent('') }}><Fingerprint size={13} /> {t('brainSecurity.common.recoveryPhrase')}</button>
           </div>
           <div className="wka-formgrid" style={{ maxWidth: 640, marginBottom: 10 }}>
             <div className="wka-field" style={{ gridColumn: '1 / -1' }}>
-              <label htmlFor="wcb-rcur">{rMode === 'recovery' ? 'Recovery phrase' : 'Current passphrase'}</label>
+              <label htmlFor="wcb-rcur">{rMode === 'recovery' ? t('brainSecurity.common.recoveryPhrase') : t('brainSecurity.common.currentPassphrase')}</label>
               {rMode === 'recovery'
-                ? <textarea id="wcb-rcur" className="wka-input" rows={2} value={rCurrent} autoComplete="off" spellCheck={false} placeholder="word1 word2 word3 ..." onChange={(e) => setRCurrent(e.target.value)} style={{ resize: 'vertical' }} />
-                : <PassInput id="wcb-rcur" value={rCurrent} onChange={setRCurrent} placeholder="Current passphrase" autoComplete="current-password" />}
+                ? <textarea id="wcb-rcur" className="wka-input" rows={2} value={rCurrent} autoComplete="off" spellCheck={false} placeholder={t('brainSecurity.common.phrasePlaceholder')} onChange={(e) => setRCurrent(e.target.value)} style={{ resize: 'vertical' }} />
+                : <PassInput id="wcb-rcur" value={rCurrent} onChange={setRCurrent} placeholder={t('brainSecurity.common.currentPassphrase')} autoComplete="current-password" />}
             </div>
             <div className="wka-field">
-              <label htmlFor="wcb-rnew">New passphrase</label>
-              <PassInput id="wcb-rnew" value={rNew} onChange={setRNew} placeholder="At least 8 characters" />
+              <label htmlFor="wcb-rnew">{t('brainSecurity.custody.newPassphrase')}</label>
+              <PassInput id="wcb-rnew" value={rNew} onChange={setRNew} placeholder={t('brainSecurity.common.atLeast8')} />
               <StrengthBar value={rNew} />
             </div>
             <div className="wka-field">
-              <label htmlFor="wcb-rnew2">Repeat new passphrase</label>
-              <PassInput id="wcb-rnew2" value={rNew2} onChange={setRNew2} placeholder="Type it again" />
-              {rNew2 && rNew2 !== rNew ? <span className="hint" style={{ color: 'var(--wka-red)' }}>The passphrases do not match.</span> : null}
+              <label htmlFor="wcb-rnew2">{t('brainSecurity.custody.repeatNewPassphrase')}</label>
+              <PassInput id="wcb-rnew2" value={rNew2} onChange={setRNew2} placeholder={t('brainSecurity.common.typeItAgain')} />
+              {rNew2 && rNew2 !== rNew ? <span className="hint" style={{ color: 'var(--wka-red)' }}>{t('brainSecurity.common.passphrasesNoMatch')}</span> : null}
             </div>
           </div>
           {rErr ? <div style={{ marginBottom: 10 }}><ErrorBox error={rErr} /></div> : null}
           <div className="wcb-actions" style={{ justifyContent: 'flex-start' }}>
-            <button type="button" className="wka-btn primary" onClick={rotate} disabled={rBusy}>{rBusy ? <Spinning /> : <KeyRound size={14} />} Change passphrase</button>
-            <button type="button" className="wka-btn ghost" onClick={() => { setRotating(false); setRErr(null); setRCurrent(''); setRNew(''); setRNew2('') }} disabled={rBusy}>Cancel</button>
+            <button type="button" className="wka-btn primary" onClick={rotate} disabled={rBusy}>{rBusy ? <Spinning /> : <KeyRound size={14} />} {t('brainSecurity.common.changePassphrase')}</button>
+            <button type="button" className="wka-btn ghost" onClick={() => { setRotating(false); setRErr(null); setRCurrent(''); setRNew(''); setRNew2('') }} disabled={rBusy}>{t('brainSecurity.common.cancel')}</button>
           </div>
         </div>
       ) : null}
@@ -352,6 +361,7 @@ function Toggle({ on, onChange, label, disabled }) {
 }
 
 function PrivacyContacts({ data, onSaved }) {
+  const t = useT()
   const [rows, setRows] = useState(() => (data.recipients || []).map((r) => ({ ...r })))
   const [dirty, setDirty] = useState(false)
   const [modal, setModal] = useState(false)
@@ -369,47 +379,47 @@ function PrivacyContacts({ data, onSaved }) {
     setBusy(true); setErr(null)
     try {
       const out = await api.workTeamSetPrivacyContacts(rows.map((r) => ({ ...(r.id ? { id: r.id } : {}), name: r.name, email: r.email, phone: r.phone, title: r.title, canReceivePassword: !!r.canReceivePassword, canRetrieveSensitive: !!r.canRetrieveSensitive })), reason)
-      setModal(false); setDirty(false); setOk('Privacy contacts saved. Logged to the audit trail.'); setTimeout(() => setOk(''), 3200)
+      setModal(false); setDirty(false); setOk(t('brainSecurity.contacts.saved')); setTimeout(() => setOk(''), 3200)
       onSaved(out)
     } catch (e) { setErr(e) } finally { setBusy(false) }
   }
 
   return (
     <div className="wcb-sub">
-      <h3><Users size={14} /> Privacy contacts</h3>
-      <p className="desc">The named people at your company who may <b>receive the export password</b> (by email, when you set it) and who are authorized to <b>retrieve sensitive data</b>. These are people, not app roles. Changes need a reason and are logged.</p>
+      <h3><Users size={14} /> {t('brainSecurity.contacts.title')}</h3>
+      <p className="desc">{t.rich('brainSecurity.contacts.desc')}</p>
       {ok ? <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {ok}</div> : null}
-      {rows.length === 0 ? <div className="wka-note"><Info size={14} /> No privacy contacts yet. Add at least one person who may receive the export password.</div> : null}
+      {rows.length === 0 ? <div className="wka-note"><Info size={14} /> {t('brainSecurity.contacts.empty')}</div> : null}
       <div className="wcb-contacts">
         {rows.map((r, i) => (
           <div key={r.id || `new-${i}`} className="wcb-contact">
             <div className="wcb-contact-grid">
-              <div className="wka-field"><label>Name</label><input className="wka-input" value={r.name || ''} maxLength={120} placeholder="Alex Morgan" onChange={(e) => edit(i, { name: e.target.value })} /></div>
-              <div className="wka-field"><label>Email</label><input className="wka-input" type="email" value={r.email || ''} maxLength={160} placeholder="alex@yourcompany.com" onChange={(e) => edit(i, { email: e.target.value })} /></div>
-              <div className="wka-field"><label>Phone <span className="hint">optional</span></label><input className="wka-input" value={r.phone || ''} maxLength={40} placeholder="+1 555 0100" onChange={(e) => edit(i, { phone: e.target.value })} /></div>
-              <div className="wka-field"><label>Title <span className="hint">optional</span></label><input className="wka-input" value={r.title || ''} maxLength={120} placeholder="Data Protection Officer" onChange={(e) => edit(i, { title: e.target.value })} /></div>
+              <div className="wka-field"><label>{t('brainSecurity.contacts.name')}</label><input className="wka-input" value={r.name || ''} maxLength={120} placeholder={t('brainSecurity.contacts.namePlaceholder')} onChange={(e) => edit(i, { name: e.target.value })} /></div>
+              <div className="wka-field"><label>{t('brainSecurity.contacts.email')}</label><input className="wka-input" type="email" value={r.email || ''} maxLength={160} placeholder={t('brainSecurity.contacts.emailPlaceholder')} onChange={(e) => edit(i, { email: e.target.value })} /></div>
+              <div className="wka-field"><label>{t('brainSecurity.contacts.phone')} <span className="hint">{t('brainSecurity.common.optional')}</span></label><input className="wka-input" value={r.phone || ''} maxLength={40} placeholder={t('brainSecurity.contacts.phonePlaceholder')} onChange={(e) => edit(i, { phone: e.target.value })} /></div>
+              <div className="wka-field"><label>{t('brainSecurity.contacts.jobTitle')} <span className="hint">{t('brainSecurity.common.optional')}</span></label><input className="wka-input" value={r.title || ''} maxLength={120} placeholder={t('brainSecurity.contacts.jobTitlePlaceholder')} onChange={(e) => edit(i, { title: e.target.value })} /></div>
             </div>
             <div className="wcb-contact-foot">
-              <Toggle on={r.canReceivePassword} onChange={(v) => edit(i, { canReceivePassword: v })} label="May receive the export password" />
-              <Toggle on={r.canRetrieveSensitive} onChange={(v) => edit(i, { canRetrieveSensitive: v })} label="May retrieve sensitive data" />
-              <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 'auto', color: 'var(--wka-red)' }} onClick={() => remove(i)} title="Remove this contact"><Trash2 size={13} /> Remove</button>
+              <Toggle on={r.canReceivePassword} onChange={(v) => edit(i, { canReceivePassword: v })} label={t('brainSecurity.contacts.mayReceivePassword')} />
+              <Toggle on={r.canRetrieveSensitive} onChange={(v) => edit(i, { canRetrieveSensitive: v })} label={t('brainSecurity.contacts.mayRetrieveSensitive')} />
+              <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 'auto', color: 'var(--wka-red)' }} onClick={() => remove(i)} title={t('brainSecurity.contacts.removeTitle')}><Trash2 size={13} /> {t('brainSecurity.contacts.remove')}</button>
             </div>
           </div>
         ))}
       </div>
       {err && !modal ? <div style={{ margin: '10px 0' }}><ErrorBox error={err} /></div> : null}
       <div className="wcb-actions" style={{ justifyContent: 'flex-start' }}>
-        <button type="button" className="wka-btn sm" onClick={add}><Plus size={13} /> Add contact</button>
-        <button type="button" className="wka-btn sm primary" disabled={!dirty || !!invalid || busy} onClick={() => { setErr(null); setModal(true) }} title={invalid ? 'Every contact needs a name and a valid email' : ''}>
-          <Check size={13} /> Save contacts
+        <button type="button" className="wka-btn sm" onClick={add}><Plus size={13} /> {t('brainSecurity.contacts.add')}</button>
+        <button type="button" className="wka-btn sm primary" disabled={!dirty || !!invalid || busy} onClick={() => { setErr(null); setModal(true) }} title={invalid ? t('brainSecurity.contacts.invalidTitle') : ''}>
+          <Check size={13} /> {t('brainSecurity.contacts.save')}
         </button>
-        {dirty ? <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>Unsaved changes</span> : null}
+        {dirty ? <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>{t('brainSecurity.contacts.unsaved')}</span> : null}
       </div>
       {modal ? (
         <ReasonModal
-          title="Save privacy contacts"
-          message={`Update the list of people who may receive the export password or retrieve sensitive data (${rows.length} contact${rows.length === 1 ? '' : 's'}). Anyone removed stops receiving the export password from now on.`}
-          confirmLabel="Save contacts" danger={false}
+          title={t('brainSecurity.contacts.modalTitle')}
+          message={t.n('brainSecurity.contacts.modalMessage', rows.length)}
+          confirmLabel={t('brainSecurity.contacts.save')} danger={false}
           busy={busy} error={err}
           onConfirm={save}
           onCancel={() => { if (!busy) setModal(false) }}
@@ -420,6 +430,7 @@ function PrivacyContacts({ data, onSaved }) {
 }
 
 function ExportPassword({ contacts }) {
+  const t = useT()
   const [pw, setPw] = useState('')
   const [pw2, setPw2] = useState('')
   const [busy, setBusy] = useState(false)
@@ -430,8 +441,8 @@ function ExportPassword({ contacts }) {
 
   const set = async () => {
     if (busy) return
-    if (pw.length < 8) { setErr(new Error('The export password must be at least 8 characters.')); return }
-    if (pw !== pw2) { setErr(new Error('The passwords do not match.')); return }
+    if (pw.length < 8) { setErr(new Error(t('brainSecurity.exportPw.errTooShort'))); return }
+    if (pw !== pw2) { setErr(new Error(t('brainSecurity.common.passwordsNoMatch'))); return }
     setBusy(true); setErr(null); setResult(null)
     try { const r = await api.workTeamSetExportPassword(pw); setResult(r); setPw(''); setPw2('') }
     catch (e) { setErr(e) } finally { setBusy(false) }
@@ -439,38 +450,38 @@ function ExportPassword({ contacts }) {
 
   return (
     <div className="wcb-sub">
-      <h3><KeyRound size={14} /> Export password</h3>
-      <p className="desc">The archive is encrypted with AES-256-GCM under a key derived from this password. WorkCoPilot keeps only a verifier (enough to check the password, not to decrypt the archive). When you set it, the password alone is emailed to the privacy contacts who may receive it - never the archive, never a link.</p>
-      {eligible === 0 ? <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> No privacy contact is marked "may receive the export password". If email is on, nobody will be sent the password - add a contact above first.</div> : null}
+      <h3><KeyRound size={14} /> {t('brainSecurity.exportPw.title')}</h3>
+      <p className="desc">{t('brainSecurity.exportPw.desc')}</p>
+      {eligible === 0 ? <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {t('brainSecurity.exportPw.noEligible')}</div> : null}
       <div className="wka-formgrid" style={{ maxWidth: 640, marginBottom: 10 }}>
         <div className="wka-field">
-          <label htmlFor="wcb-xpw">New export password</label>
-          <PassInput id="wcb-xpw" value={pw} onChange={setPw} placeholder="At least 8 characters" />
+          <label htmlFor="wcb-xpw">{t('brainSecurity.exportPw.newLabel')}</label>
+          <PassInput id="wcb-xpw" value={pw} onChange={setPw} placeholder={t('brainSecurity.common.atLeast8')} />
           <StrengthBar value={pw} />
         </div>
         <div className="wka-field">
-          <label htmlFor="wcb-xpw2">Repeat password</label>
-          <PassInput id="wcb-xpw2" value={pw2} onChange={setPw2} placeholder="Type it again" />
-          {pw2 && pw2 !== pw ? <span className="hint" style={{ color: 'var(--wka-red)' }}>The passwords do not match.</span> : null}
+          <label htmlFor="wcb-xpw2">{t('brainSecurity.exportPw.repeatLabel')}</label>
+          <PassInput id="wcb-xpw2" value={pw2} onChange={setPw2} placeholder={t('brainSecurity.common.typeItAgain')} />
+          {pw2 && pw2 !== pw ? <span className="hint" style={{ color: 'var(--wka-red)' }}>{t('brainSecurity.common.passwordsNoMatch')}</span> : null}
         </div>
       </div>
       {err ? <div style={{ marginBottom: 10 }}><ErrorBox error={err} /></div> : null}
       <div className="wcb-actions" style={{ justifyContent: 'flex-start' }}>
-        <button type="button" className="wka-btn primary" onClick={set} disabled={busy || pw.length < 8 || pw !== pw2}>{busy ? <Spinning /> : <KeyRound size={14} />} Set export password</button>
-        <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>Setting a new one replaces the old; earlier archives still open with the password they were made with.</span>
+        <button type="button" className="wka-btn primary" onClick={set} disabled={busy || pw.length < 8 || pw !== pw2}>{busy ? <Spinning /> : <KeyRound size={14} />} {t('brainSecurity.exportPw.setBtn')}</button>
+        <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{t('brainSecurity.exportPw.replacesNote')}</span>
       </div>
       {result ? (
         result.delivery === 'onscreen' ? (
           <div className="wcb-onscreen">
-            <div className="k"><AlertTriangle size={14} /> Shown once - email is not configured</div>
+            <div className="k"><AlertTriangle size={14} /> {t('brainSecurity.exportPw.onscreenTitle')}</div>
             <div className="pw"><code className="wka-mono">{result.password}</code>
-              <button type="button" className="wka-btn sm" onClick={() => copy(result.password)}>{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy'}</button>
+              <button type="button" className="wka-btn sm" onClick={() => copy(result.password)}>{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? t('brainSecurity.common.copied') : t('brainSecurity.common.copy')}</button>
             </div>
-            <div className="n">{result.note || 'Share it with your authorized recipients now; it is not shown again.'}</div>
-            <button type="button" className="wka-btn sm ghost" style={{ marginTop: 8 }} onClick={() => setResult(null)}><X size={13} /> I have shared it - hide</button>
+            <div className="n">{result.note || t('brainSecurity.exportPw.onscreenNote')}</div>
+            <button type="button" className="wka-btn sm ghost" style={{ marginTop: 8 }} onClick={() => setResult(null)}><X size={13} /> {t('brainSecurity.exportPw.sharedHide')}</button>
           </div>
         ) : (
-          <div className="wka-note" style={{ marginTop: 12, color: 'var(--wka-emerald)' }}><Mail size={14} /> Export password set{result.setAt ? ` (${fmtWhen(result.setAt)})` : ''}. Emailed to {result.emailedCount || 0} privacy contact{result.emailedCount === 1 ? '' : 's'} - password only, no archive.</div>
+          <div className="wka-note" style={{ marginTop: 12, color: 'var(--wka-emerald)' }}><Mail size={14} /> {t.n('brainSecurity.exportPw.emailed', result.emailedCount || 0, { when: result.setAt ? ` (${fmtWhen(result.setAt)})` : '' })}</div>
         )
       ) : null}
     </div>
@@ -478,6 +489,7 @@ function ExportPassword({ contacts }) {
 }
 
 function DownloadExport({ brainLockedHint }) {
+  const t = useT()
   const [pw, setPw] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState(null)
@@ -497,20 +509,20 @@ function DownloadExport({ brainLockedHint }) {
   const needsPw = err && err.status === 409 && err.data && err.data.needsPassword
   return (
     <div className="wcb-sub">
-      <h3><FileArchive size={14} /> Download my data</h3>
-      <p className="desc">Everything WorkCoPilot holds for your company - people, sessions, knowledge base, skills, policies and (when unlocked) the Company Brain - as one <code className="wka-mono">.wcpx</code> archive encrypted with AES-256-GCM. Open it on your side with the standalone WCPX opener and the export password. Every download is logged.</p>
-      {brainLockedHint ? <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><Lock size={14} /> Your Company Brain is locked, so it will be skipped in this export. Unlock it above first if you want it included.</div> : null}
+      <h3><FileArchive size={14} /> {t('brainSecurity.download.title')}</h3>
+      <p className="desc">{t.rich('brainSecurity.download.desc', null, { code: (c) => <code className="wka-mono">{c}</code> })}</p>
+      {brainLockedHint ? <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><Lock size={14} /> {t('brainSecurity.download.lockedHint')}</div> : null}
       <form onSubmit={run} className="wcb-actions" style={{ justifyContent: 'flex-start', alignItems: 'flex-end', marginTop: 0 }}>
         <div className="wka-field" style={{ minWidth: 260, flex: '0 1 360px' }}>
-          <label htmlFor="wcb-dlpw">Export password</label>
-          <PassInput id="wcb-dlpw" value={pw} onChange={setPw} placeholder="The export password you set" autoComplete="current-password" />
+          <label htmlFor="wcb-dlpw">{t('brainSecurity.download.pwLabel')}</label>
+          <PassInput id="wcb-dlpw" value={pw} onChange={setPw} placeholder={t('brainSecurity.download.pwPlaceholder')} autoComplete="current-password" />
         </div>
-        <button type="submit" className="wka-btn primary" disabled={busy || !pw}>{busy ? <Spinning /> : <Download size={14} />} Download .wcpx</button>
+        <button type="submit" className="wka-btn primary" disabled={busy || !pw}>{busy ? <Spinning /> : <Download size={14} />} {t('brainSecurity.download.btn')}</button>
       </form>
       {err ? (
         <div style={{ marginTop: 10 }}>
           {needsPw
-            ? <div className="wka-note" style={{ color: 'var(--wka-amber)', marginBottom: 0 }}><AlertTriangle size={14} /> No export password is set yet. Set one above, then download.</div>
+            ? <div className="wka-note" style={{ color: 'var(--wka-amber)', marginBottom: 0 }}><AlertTriangle size={14} /> {t('brainSecurity.download.needsPw')}</div>
             : <ErrorBox error={err} />}
         </div>
       ) : null}
@@ -518,7 +530,7 @@ function DownloadExport({ brainLockedHint }) {
         <div className="wka-note" style={{ marginTop: 12, marginBottom: 0, color: done.brain === 'skipped' ? 'var(--wka-amber)' : 'var(--wka-emerald)', alignItems: 'flex-start' }}>
           {done.brain === 'skipped' ? <AlertTriangle size={14} style={{ marginTop: 2 }} /> : <Check size={14} style={{ marginTop: 2 }} />}
           <span>
-            Downloaded <code className="wka-mono">{done.filename}</code>. Company Brain: <b>{done.brain === 'skipped' ? 'skipped' : 'included'}</b>.
+            {t.rich('brainSecurity.download.done', { file: done.filename, state: done.brain === 'skipped' ? t('brainSecurity.download.skipped') : t('brainSecurity.download.included') }, { code: (c) => <code className="wka-mono">{c}</code> })}
             {done.note ? <> {done.note}</> : null}
           </span>
         </div>
@@ -531,6 +543,7 @@ function DownloadExport({ brainLockedHint }) {
 // Section
 // ---------------------------------------------------------------------------
 export default function BrainSecurity() {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, sec: null, contacts: null })
   const [refreshing, setRefreshing] = useState(false)
   const [wizard, setWizard] = useState(false)
@@ -550,7 +563,7 @@ export default function BrainSecurity() {
   }, [])
   useEffect(() => { load(false) }, [load])
 
-  if (state.loading) return <Loading label="Checking your encryption and export settings" />
+  if (state.loading) return <Loading label={t('brainSecurity.common.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
   const sec = state.sec || {}
   const contacts = state.contacts || { recipients: [] }
@@ -561,30 +574,30 @@ export default function BrainSecurity() {
 
       <div className="wka-cards">
         <div className={`wka-card${sec.enabled ? ' accent' : ''}`}>
-          <div className="k"><Lock size={15} /> Key custody</div>
-          <div className="v" style={{ fontSize: 22 }}>{sec.enabled ? 'You' : 'WorkCoPilot'}</div>
-          <div className="foot">{sec.enabled ? 'Only you hold the key' : 'Platform-managed key, encrypted at rest'}</div>
+          <div className="k"><Lock size={15} /> {t('brainSecurity.section.keyCustody')}</div>
+          <div className="v" style={{ fontSize: 22 }}>{sec.enabled ? t('brainSecurity.section.custodyYou') : t('brainSecurity.section.custodyPlatform')}</div>
+          <div className="foot">{sec.enabled ? t('brainSecurity.section.custodyYouFoot') : t('brainSecurity.section.custodyPlatformFoot')}</div>
         </div>
         <div className="wka-card">
-          <div className="k">{sec.enabled && sec.locked ? <Lock size={15} /> : <Unlock size={15} />} Brain state</div>
-          <div className="v" style={{ fontSize: 22 }}>{!sec.enabled ? 'Available' : sec.locked ? 'Locked' : 'Unlocked'}</div>
-          <div className="foot">{!sec.enabled ? 'Guidance can use it' : sec.locked ? 'Guidance paused until unlocked' : `Re-locks after ${sec.unlockWindowMinutes || 30} idle min`}</div>
+          <div className="k">{sec.enabled && sec.locked ? <Lock size={15} /> : <Unlock size={15} />} {t('brainSecurity.section.brainState')}</div>
+          <div className="v" style={{ fontSize: 22 }}>{!sec.enabled ? t('brainSecurity.section.stateAvailable') : sec.locked ? t('brainSecurity.section.stateLocked') : t('brainSecurity.section.stateUnlocked')}</div>
+          <div className="foot">{!sec.enabled ? t('brainSecurity.section.footAvailable') : sec.locked ? t('brainSecurity.section.footLocked') : t('brainSecurity.section.footRelocks', { n: sec.unlockWindowMinutes || 30 })}</div>
         </div>
         <div className="wka-card">
-          <div className="k"><FileArchive size={15} /> Privacy contacts</div>
+          <div className="k"><FileArchive size={15} /> {t('brainSecurity.section.privacyContacts')}</div>
           <div className="v" style={{ fontSize: 22 }}>{(contacts.recipients || []).length}</div>
-          <div className="foot">{(contacts.recipients || []).filter((c) => c.canReceivePassword).length} may receive the export password</div>
+          <div className="foot">{t('brainSecurity.section.mayReceiveFoot', { n: (contacts.recipients || []).filter((c) => c.canReceivePassword).length })}</div>
         </div>
       </div>
 
       {sec.semanticSearchReady === false ? (
         <div className="wka-note" style={{ color: 'var(--wka-amber)', borderColor: 'color-mix(in srgb, var(--wka-amber) 36%, transparent)' }}>
-          <ShieldAlert size={14} /> {sec.note || 'Semantic search is running in keyword-only mode until the on-device model is available.'}
+          <ShieldAlert size={14} /> {sec.note || t('brainSecurity.section.semanticFallback')}
         </div>
       ) : null}
 
       <div className="wka-toolbar" style={{ justifyContent: 'flex-end' }}>
-        <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>{refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh</button>
+        <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>{refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('brainSecurity.common.refresh')}</button>
       </div>
 
       {/* ---- Custody ---- */}
@@ -594,21 +607,21 @@ export default function BrainSecurity() {
         <EnableWizard onDone={() => { setWizard(false); load(true) }} onCancel={() => setWizard(false)} />
       ) : (
         <div className="wka-panel">
-          <h2><KeyRound size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />Private encryption (customer-held key)</h2>
-          <p className="desc">Today your Company Brain is encrypted at rest with a key WorkCoPilot manages for you. Turn on private encryption and the key is wrapped under a passphrase only you hold, with a 24-word recovery phrase as the only backup. WorkCoPilot can no longer open it on its own - like a crypto wallet, there is no backdoor.</p>
+          <h2><KeyRound size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('brainSecurity.section.offTitle')}</h2>
+          <p className="desc">{t('brainSecurity.section.offDesc')}</p>
           <ul className="wcb-facts">
-            <li><ShieldCheck size={13} /> AES-256-GCM at rest; your passphrase wraps the data key, which is never stored in the clear.</li>
-            <li><Clock size={13} /> You unlock it for your team; it re-locks after {sec.unlockWindowMinutes || 30} idle minutes.</li>
-            <li><AlertTriangle size={13} /> Lose both the passphrase and the recovery phrase and the data is gone - nobody can recover it.</li>
+            <li><ShieldCheck size={13} /> {t('brainSecurity.section.fact1')}</li>
+            <li><Clock size={13} /> {t('brainSecurity.section.fact2', { n: sec.unlockWindowMinutes || 30 })}</li>
+            <li><AlertTriangle size={13} /> {t('brainSecurity.section.fact3')}</li>
           </ul>
-          <button type="button" className="wka-btn primary" onClick={() => setWizard(true)}><Lock size={14} /> Enable private encryption</button>
+          <button type="button" className="wka-btn primary" onClick={() => setWizard(true)}><Lock size={14} /> {t('brainSecurity.section.enable')}</button>
         </div>
       )}
 
       {/* ---- Export ---- */}
       <div className="wka-panel">
-        <h2><Download size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />Encrypted data export</h2>
-        <p className="desc">Take a complete, password-encrypted copy of your company's data whenever you want. Decide who may receive the password, set it, then download.</p>
+        <h2><Download size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('brainSecurity.section.exportTitle')}</h2>
+        <p className="desc">{t('brainSecurity.section.exportDesc')}</p>
         <PrivacyContacts data={contacts} onSaved={(out) => setState((s) => ({ ...s, contacts: out }))} />
         <ExportPassword contacts={contacts.recipients} />
         <DownloadExport brainLockedHint={!!(sec.enabled && sec.locked)} />

@@ -16,6 +16,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Megaphone, Plus, Trash2, ArrowUp, ArrowDown, Save, RotateCcw, Lock, Sparkles, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, EditToggle } from './_shared.jsx'
+import { useT } from '../../../i18n/index.jsx'
 
 const MAX_PAIRS = 12
 const H_MAX = 140
@@ -26,9 +27,10 @@ const EM_MAX = 80
 // the superadmin sees exactly what the hero will emphasize. Case-insensitive,
 // first match only; if em isn't found, the line shows plain (honest preview).
 function HeroPreview({ h, em }) {
+  const t = useT()
   const head = String(h || '')
   const needle = String(em || '').trim()
-  if (!needle) return <span>{head || <em style={{ opacity: 0.5 }}>empty headline</em>}</span>
+  if (!needle) return <span>{head || <em style={{ opacity: 0.5 }}>{t('heroAdmin.emptyHeadline')}</em>}</span>
   const i = head.toLowerCase().indexOf(needle.toLowerCase())
   if (i < 0) return <span>{head}</span>
   return (
@@ -41,6 +43,7 @@ function HeroPreview({ h, em }) {
 }
 
 export default function Hero({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null })
   const [pairs, setPairs] = useState([])
   const [baseline, setBaseline] = useState([])   // last-saved pairs, for Cancel
@@ -110,7 +113,7 @@ export default function Hero({ isSuperAdmin }) {
 
   const cancel = () => { setPairs(baseline); setDirty(false); setSaveError(null); setSaved(false); setEditing(false) }
 
-  if (state.loading) return <div className="wka-panel"><Loading label="Loading hero copy" /></div>
+  if (state.loading) return <div className="wka-panel"><Loading label={t('heroAdmin.loading')} /></div>
   if (state.error) return <div className="wka-panel"><ErrorBox error={state.error} onRetry={load} /></div>
 
   // ---- Collapsed preview record ----
@@ -118,21 +121,21 @@ export default function Hero({ isSuperAdmin }) {
     return (
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-          <h2 style={{ margin: 0 }}><Megaphone size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Homepage hero</h2>
+          <h2 style={{ margin: 0 }}><Megaphone size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />{t('heroAdmin.heading')}</h2>
           <EditToggle editing={editing} disabled={!isSuperAdmin} onEdit={() => { setPairs(baseline); setDirty(false); setEditing(true); setSaveError(null) }} />
         </div>
         <p className="desc">
-          The headline + subtext the homepage rotates through. {custom ? 'Showing your custom copy.' : 'Showing the built-in default - edit and save to make it yours.'} {isSuperAdmin ? 'Click Edit to change the copy.' : ''}
+          {t('heroAdmin.descBase')} {custom ? t('heroAdmin.customYes') : t('heroAdmin.customNo')} {isSuperAdmin ? t('heroAdmin.clickEdit') : ''}
         </p>
         {!isSuperAdmin ? (
-          <div className="wka-note" style={{ margin: '6px 0 12px' }}><Lock size={14} /> Only a superadmin can edit the hero. The current copy is shown below.</div>
+          <div className="wka-note" style={{ margin: '6px 0 12px' }}><Lock size={14} /> {t('heroAdmin.superadminNote')}</div>
         ) : null}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {pairs.length === 0 ? (
-            <div className="wka-note">No hero lines saved; the marketing page shows its built-in default.</div>
+            <div className="wka-note">{t('heroAdmin.noLines')}</div>
           ) : pairs.map((p, i) => (
             <div key={i} style={{ border: '1px solid var(--wka-line)', borderRadius: 12, padding: '12px 14px', background: 'var(--wka-panel-2)' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--wka-faint)', marginBottom: 6 }}>Line {i + 1}</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--wka-faint)', marginBottom: 6 }}>{t('heroAdmin.lineN', { n: i + 1 })}</div>
               <div style={{ fontSize: 17, fontWeight: 700, lineHeight: 1.25, color: 'var(--wka-text)' }}><HeroPreview h={p.h} em={p.em} /></div>
               {p.s ? <div style={{ fontSize: 13, color: 'var(--wka-muted)', marginTop: 5, lineHeight: 1.5 }}>{p.s}</div> : null}
             </div>
@@ -146,52 +149,51 @@ export default function Hero({ isSuperAdmin }) {
   // ---- Edit view ----
   return (
     <div className="wka-panel">
-      <h2><Megaphone size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Homepage hero</h2>
+      <h2><Megaphone size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />{t('heroAdmin.heading')}</h2>
       <p className="desc">
-        The headline + subtext the homepage rotates through, one every few seconds. The <strong>emphasis</strong> word
-        is a word or phrase inside the headline rendered in the brand gradient. {custom
-          ? 'Showing your custom copy.'
-          : 'Showing the built-in default - edit and save to make it yours.'}
+        {t.rich('heroAdmin.editDesc')} {custom
+          ? t('heroAdmin.customYes')
+          : t('heroAdmin.customNo')}
       </p>
 
       {!isSuperAdmin ? (
-        <div className="wka-note" style={{ margin: '6px 0 16px' }}><Lock size={14} /> Only a superadmin can edit the hero. The current copy is shown below.</div>
+        <div className="wka-note" style={{ margin: '6px 0 16px' }}><Lock size={14} /> {t('heroAdmin.superadminNote')}</div>
       ) : null}
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
         {pairs.map((p, i) => (
           <div key={i} style={{ border: '1px solid var(--wka-line)', borderRadius: 12, padding: '14px 16px', background: 'var(--wka-panel-2)' }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--wka-muted)' }}>Line {i + 1}</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--wka-muted)' }}>{t('heroAdmin.lineN', { n: i + 1 })}</div>
               {isSuperAdmin ? (
                 <div style={{ display: 'flex', gap: 6 }}>
-                  <button type="button" className="wka-btn sm ghost" disabled={i === 0} onClick={() => move(i, -1)} title="Move up"><ArrowUp size={13} /></button>
-                  <button type="button" className="wka-btn sm ghost" disabled={i === pairs.length - 1} onClick={() => move(i, 1)} title="Move down"><ArrowDown size={13} /></button>
-                  <button type="button" className="wka-btn sm ghost" onClick={() => removePair(i)} title="Remove line"><Trash2 size={13} /></button>
+                  <button type="button" className="wka-btn sm ghost" disabled={i === 0} onClick={() => move(i, -1)} title={t('heroAdmin.moveUp')}><ArrowUp size={13} /></button>
+                  <button type="button" className="wka-btn sm ghost" disabled={i === pairs.length - 1} onClick={() => move(i, 1)} title={t('heroAdmin.moveDown')}><ArrowDown size={13} /></button>
+                  <button type="button" className="wka-btn sm ghost" onClick={() => removePair(i)} title={t('heroAdmin.removeLine')}><Trash2 size={13} /></button>
                 </div>
               ) : null}
             </div>
 
             <div className="wka-field" style={{ marginBottom: 10 }}>
-              <label>Headline</label>
-              <input className="wka-input" value={p.h} maxLength={H_MAX} placeholder="e.g. Get anything done right, the first time."
+              <label>{t('heroAdmin.headlineLabel')}</label>
+              <input className="wka-input" value={p.h} maxLength={H_MAX} placeholder={t('heroAdmin.headlinePlaceholder')}
                 readOnly={!isSuperAdmin} onChange={(e) => setField(i, 'h', e.target.value)} />
             </div>
 
             <div className="wka-field" style={{ marginBottom: 10, maxWidth: 360 }}>
-              <label>Emphasis word <span style={{ color: 'var(--wka-faint)', fontWeight: 400 }}>(a word or phrase inside the headline)</span></label>
-              <input className="wka-input" value={p.em} maxLength={EM_MAX} placeholder="e.g. anything"
+              <label>{t('heroAdmin.emphasisLabel')} <span style={{ color: 'var(--wka-faint)', fontWeight: 400 }}>{t('heroAdmin.emphasisHint')}</span></label>
+              <input className="wka-input" value={p.em} maxLength={EM_MAX} placeholder={t('heroAdmin.emphasisPlaceholder')}
                 readOnly={!isSuperAdmin} onChange={(e) => setField(i, 'em', e.target.value)} />
             </div>
 
             <div className="wka-field" style={{ marginBottom: 12 }}>
-              <label>Subtext</label>
-              <textarea className="wka-input" rows={2} value={p.s} maxLength={S_MAX} placeholder="One or two sentences under the headline."
+              <label>{t('heroAdmin.subtextLabel')}</label>
+              <textarea className="wka-input" rows={2} value={p.s} maxLength={S_MAX} placeholder={t('heroAdmin.subtextPlaceholder')}
                 readOnly={!isSuperAdmin} onChange={(e) => setField(i, 's', e.target.value)} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
             </div>
 
             <div style={{ borderTop: '1px dashed var(--wka-line)', paddingTop: 10 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--wka-faint)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}><Sparkles size={12} /> Preview</div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--wka-faint)', display: 'flex', alignItems: 'center', gap: 5, marginBottom: 5 }}><Sparkles size={12} /> {t('heroAdmin.preview')}</div>
               <div style={{ fontSize: 18, fontWeight: 700, lineHeight: 1.25, color: 'var(--wka-text)' }}><HeroPreview h={p.h} em={p.em} /></div>
               {p.s ? <div style={{ fontSize: 13, color: 'var(--wka-muted)', marginTop: 5, lineHeight: 1.5 }}>{p.s}</div> : null}
             </div>
@@ -202,24 +204,24 @@ export default function Hero({ isSuperAdmin }) {
       {isSuperAdmin ? (
         <>
           <div style={{ marginTop: 14 }}>
-            <button type="button" className="wka-btn" disabled={pairs.length >= MAX_PAIRS} onClick={addPair}><Plus size={14} /> Add line</button>
-            {pairs.length >= MAX_PAIRS ? <span style={{ marginLeft: 10, fontSize: 12, color: 'var(--wka-faint)' }}>Maximum {MAX_PAIRS} lines.</span> : null}
+            <button type="button" className="wka-btn" disabled={pairs.length >= MAX_PAIRS} onClick={addPair}><Plus size={14} /> {t('heroAdmin.addLine')}</button>
+            {pairs.length >= MAX_PAIRS ? <span style={{ marginLeft: 10, fontSize: 12, color: 'var(--wka-faint)' }}>{t('heroAdmin.maxLines', { max: MAX_PAIRS })}</span> : null}
           </div>
 
           {saveError ? <div style={{ marginTop: 14 }}><ErrorBox error={saveError} /></div> : null}
 
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginTop: 16, paddingTop: 16, borderTop: '1px solid var(--wka-line)' }}>
-            <button type="button" className="wka-btn primary" disabled={saving || !dirty || !ready.length} onClick={save}>{saving ? <Spinning /> : <Save size={14} />} Save hero</button>
-            <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
-            <button type="button" className="wka-btn ghost" disabled={saving} onClick={resetDefault} title="Replace with the built-in default copy"><RotateCcw size={13} /> Reset to default</button>
+            <button type="button" className="wka-btn primary" disabled={saving || !dirty || !ready.length} onClick={save}>{saving ? <Spinning /> : <Save size={14} />} {t('heroAdmin.saveHero')}</button>
+            <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> {t('heroAdmin.cancel')}</button>
+            <button type="button" className="wka-btn ghost" disabled={saving} onClick={resetDefault} title={t('heroAdmin.resetTitle')}><RotateCcw size={13} /> {t('heroAdmin.resetDefault')}</button>
             <SavedTag show={saved} />
-            {dirty && !saving ? <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>Unsaved changes</span> : null}
-            {!ready.length ? <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>Add at least one line with a headline and subtext.</span> : null}
+            {dirty && !saving ? <span style={{ fontSize: 12, color: 'var(--wka-amber)' }}>{t('heroAdmin.unsaved')}</span> : null}
+            {!ready.length ? <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{t('heroAdmin.needLine')}</span> : null}
           </div>
         </>
       ) : (
         <div style={{ marginTop: 16 }}>
-          <button type="button" className="wka-btn ghost" onClick={cancel}><X size={14} /> Close</button>
+          <button type="button" className="wka-btn ghost" onClick={cancel}><X size={14} /> {t('heroAdmin.close')}</button>
         </div>
       )}
     </div>

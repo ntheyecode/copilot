@@ -20,6 +20,7 @@
 import React, { useState, useCallback } from 'react'
 import { ScrollText, Plus, Trash2, AlertTriangle, Sparkles, Upload, Ban, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react'
 import { Spinning } from './_shared.jsx'
+import { useT } from '../../../i18n/index.jsx'
 
 const KINDS = ['forbid', 'require']
 const SEVERITIES = ['critical', 'high', 'medium', 'low']
@@ -33,6 +34,7 @@ const MAX_DOC_CHARS = 200000
 const keyOf = (r, i) => (r && r.id) || `idx-${i}`
 
 export default function PolicyRules({ rules = [], docs = [], onChange, readOnly = false, extract, armed = false }) {
+  const t = useT()
   const [text, setText] = useState('')
   const [docName, setDocName] = useState('')
   const [extracting, setExtracting] = useState(false)
@@ -60,10 +62,10 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
 
   const onFile = (e) => {
     const f = e.target.files && e.target.files[0]; if (!f) return
-    if (f.size > 5 * 1024 * 1024) { setErr(new Error('That file is larger than 5 MB. Paste the relevant sections instead.')); return }
+    if (f.size > 5 * 1024 * 1024) { setErr(new Error(t('policyRules.fileTooLarge'))); return }
     const reader = new FileReader()
     reader.onload = () => { setText(String(reader.result || '').slice(0, MAX_DOC_CHARS)); if (!docName) setDocName(f.name.replace(/\.[^.]+$/, '').slice(0, 120)) }
-    reader.onerror = () => setErr(new Error('Could not read that file.'))
+    reader.onerror = () => setErr(new Error(t('policyRules.couldNotRead')))
     reader.readAsText(f)
     e.target.value = ''
   }
@@ -71,7 +73,7 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
   const runExtract = async () => {
     if (readOnly || extracting || !extract) return
     const body = text.trim()
-    if (body.replace(/\s+/g, '').length < 40) { setErr(new Error('Paste or upload the policy text first (at least a short paragraph).')); return }
+    if (body.replace(/\s+/g, '').length < 40) { setErr(new Error(t('policyRules.pastePolicyFirst'))); return }
     setExtracting(true); setErr(null); setNote(null)
     try {
       const r = await extract({ text: body, docName: docName.trim() })
@@ -81,11 +83,12 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
       const have = new Set(rules.map(key))
       const added = got.filter((x) => !have.has(key(x)))
       const nextRules = [...rules, ...added]
-      const nextDocs = [...docs, { name: (docName.trim() || 'Policy document'), addedAt: Date.now(), ruleCount: added.length, chars: body.length }]
+      const nextDocs = [...docs, { name: (docName.trim() || t('policyRules.defaultDocName')), addedAt: Date.now(), ruleCount: added.length, chars: body.length }]
       emit(nextRules, nextDocs)
       // Extracted rows join the list COLLAPSED — the operator sees a tidy list of N
       // rows and clicks the ones they want to review/edit (open set is left as-is).
-      setNote({ source: r.source, msg: `${added.length} rule${added.length === 1 ? '' : 's'} added${got.length - added.length > 0 ? ` (${got.length - added.length} duplicate${got.length - added.length === 1 ? '' : 's'} skipped)` : ''}. ${r.note || ''}` })
+      const dup = got.length - added.length
+      setNote({ source: r.source, msg: `${t.n('policyRules.rulesAdded', added.length, { n: added.length })}${dup > 0 ? t.n('policyRules.duplicatesSkipped', dup, { n: dup }) : ''}. ${r.note || ''}` })
       setText('')
     } catch (e) { setErr(e) } finally { setExtracting(false) }
   }
@@ -95,9 +98,9 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
 
   return (
     <div className="wka-panel">
-      <h2 style={{ margin: 0 }}><ScrollText size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Security practice rules</h2>
+      <h2 style={{ margin: 0 }}><ScrollText size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('policyRules.heading')}</h2>
       <p className="desc">
-        Load your written security policy and WorkCoPilot turns it into rules it enforces <b>while guiding</b>, flagging any step that uses a <b>prohibited</b> practice or is missing a <b>required</b> one, and citing your policy by name. This governs <i>how the guidance is written</i>, on top of the data-handling rules above.
+        {t.rich('policyRules.desc')}
       </p>
 
       {/* --- Ingest a policy document --- */}
@@ -105,28 +108,28 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
         <div style={{ border: '1px solid var(--wka-line, #e2e8f0)', borderRadius: 12, padding: 14, marginBottom: 16 }}>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'flex-end', marginBottom: 10 }}>
             <div className="wka-field" style={{ flex: '1 1 220px', minWidth: 0, margin: 0 }}>
-              <label>Policy document name</label>
+              <label>{t('policyRules.docNameLabel')}</label>
               <input className="wka-input" style={{ width: '100%' }} value={docName} maxLength={120}
-                onChange={(e) => setDocName(e.target.value)} placeholder="e.g. Acme InfoSec Policy v3" />
+                onChange={(e) => setDocName(e.target.value)} placeholder={t('policyRules.docNamePlaceholder')} />
             </div>
-            <label className="wka-btn sm" style={{ cursor: 'pointer', flexShrink: 0 }} title="Load a .txt / .md / .json policy file">
-              <Upload size={13} /> Upload file
+            <label className="wka-btn sm" style={{ cursor: 'pointer', flexShrink: 0 }} title={t('policyRules.uploadTitle')}>
+              <Upload size={13} /> {t('policyRules.uploadFile')}
               <input type="file" accept=".txt,.md,.markdown,.json,.csv,.log,text/*" style={{ display: 'none' }} onChange={onFile} />
             </label>
           </div>
           <textarea className="wka-input" style={{ width: '100%', minHeight: 120, resize: 'vertical' }}
             value={text} onChange={(e) => setText(e.target.value.slice(0, MAX_DOC_CHARS))}
-            placeholder={'Paste your security policy here. For example:\n\n“Secrets must never be stored in plaintext; use the approved vault.”\n“FTP must not be used; use SFTP.”\n“Production access requires MFA.”'} />
+            placeholder={t('policyRules.textPlaceholder')} />
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginTop: 10 }}>
             <button type="button" className="wka-btn primary" disabled={extracting || !text.trim()} onClick={runExtract}>
-              {extracting ? <Spinning /> : <Sparkles size={14} />} Extract rules
+              {extracting ? <Spinning /> : <Sparkles size={14} />} {t('policyRules.extractRules')}
             </button>
-            <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>The document text is used only to extract rules. It is not stored.</span>
+            <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{t('policyRules.notStored')}</span>
           </div>
           {note && (
             <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--wka-muted)', display: 'flex', gap: 8, alignItems: 'flex-start' }}>
               <CheckCircle2 size={14} style={{ flexShrink: 0, marginTop: 1, color: 'var(--wka-emerald, #059669)' }} />
-              <span>{note.msg}{note.source === 'heuristic' ? ' (derived without AI, review carefully.)' : ''}</span>
+              <span>{note.msg}{note.source === 'heuristic' ? t('policyRules.derivedWithoutAI') : ''}</span>
             </div>
           )}
           {err && <div style={{ marginTop: 10, fontSize: 12.5, color: 'var(--wka-red)', display: 'flex', gap: 8 }}><AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} /> {String(err.message || err)}</div>}
@@ -135,21 +138,21 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
 
       {/* --- Rule summary + review --- */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 13, fontWeight: 600 }}>{rules.length} rule{rules.length === 1 ? '' : 's'}</span>
+        <span style={{ fontSize: 13, fontWeight: 600 }}>{t.n('policyRules.ruleCount', rules.length, { n: rules.length })}</span>
         <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>·</span>
-        <span style={{ fontSize: 12.5, color: SEV_COLOR.high, display: 'inline-flex', gap: 4, alignItems: 'center' }}><Ban size={12} /> {forbidN} forbid</span>
-        <span style={{ fontSize: 12.5, color: 'var(--wka-cyan)', display: 'inline-flex', gap: 4, alignItems: 'center' }}><CheckCircle2 size={12} /> {requireN} require</span>
-        {armed && rules.length > 0 && <span style={{ fontSize: 11.5, color: 'var(--wka-emerald, #059669)', fontWeight: 600 }}>Enforced on every call</span>}
+        <span style={{ fontSize: 12.5, color: SEV_COLOR.high, display: 'inline-flex', gap: 4, alignItems: 'center' }}><Ban size={12} /> {t('policyRules.forbidCount', { n: forbidN })}</span>
+        <span style={{ fontSize: 12.5, color: 'var(--wka-cyan)', display: 'inline-flex', gap: 4, alignItems: 'center' }}><CheckCircle2 size={12} /> {t('policyRules.requireCount', { n: requireN })}</span>
+        {armed && rules.length > 0 && <span style={{ fontSize: 11.5, color: 'var(--wka-emerald, #059669)', fontWeight: 600 }}>{t('policyRules.enforcedOnEveryCall')}</span>}
         <span className="wka-spacer" />
         {rules.length > 1 && (
           <button type="button" className="wka-btn sm ghost" style={{ flexShrink: 0 }} onClick={allOpen ? collapseAll : expandAll}>
-            {allOpen ? <><ChevronRight size={13} /> Collapse all</> : <><ChevronDown size={13} /> Expand all</>}
+            {allOpen ? <><ChevronRight size={13} /> {t('policyRules.collapseAll')}</> : <><ChevronDown size={13} /> {t('policyRules.expandAll')}</>}
           </button>
         )}
       </div>
 
       {rules.length === 0 ? (
-        <div style={{ fontSize: 13, color: 'var(--wka-faint)', padding: '10px 0' }}>No rules yet. Extract them from your policy above{readOnly ? '.' : ', or add one by hand.'}</div>
+        <div style={{ fontSize: 13, color: 'var(--wka-faint)', padding: '10px 0' }}>{readOnly ? t('policyRules.noRulesReadOnly') : t('policyRules.noRulesEditable')}</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {rules.map((r, i) => {
@@ -167,17 +170,17 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
                   onClick={() => toggle(k)}
                   onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(k) } }}>
                   <input type="checkbox" className="wka-rule-toggle" checked={!off} disabled={readOnly}
-                    title="Enforce this rule" aria-label="Enforce this rule"
+                    title={t('policyRules.enforceThisRule')} aria-label={t('policyRules.enforceThisRule')}
                     onClick={(e) => e.stopPropagation()}
                     onChange={(e) => patchRule(i, { enabled: e.target.checked })} />
                   <span className={`wka-rule-kind ${isReq ? 'req' : 'forbid'}`}>
-                    {isReq ? <CheckCircle2 size={12} /> : <Ban size={12} />}{isReq ? 'Require' : 'Forbid'}
+                    {isReq ? <CheckCircle2 size={12} /> : <Ban size={12} />}{isReq ? t('policyRules.kindRequire') : t('policyRules.kindForbid')}
                   </span>
-                  <span className="wka-rule-sev" style={{ background: sev }} title={`${(r.severity || 'low')[0].toUpperCase()}${(r.severity || 'low').slice(1)} severity`} />
-                  <span className="wka-rule-title">{String(r.title || '').trim() || <span style={{ color: 'var(--wka-faint)', fontStyle: 'italic', fontWeight: 400 }}>Untitled rule</span>}</span>
-                  {needsTrigger && <AlertTriangle size={13} className="wka-rule-warn" style={{ color: 'var(--wka-amber)', flexShrink: 0 }} aria-label="Needs a trigger" />}
-                  {cite && <span className="wka-rule-cite">per {cite}</span>}
-                  {!readOnly && <button type="button" className="wka-btn sm ghost wka-rule-x" title="Remove rule" aria-label="Remove rule" onClick={(e) => { e.stopPropagation(); removeRule(i) }}><Trash2 size={13} /></button>}
+                  <span className="wka-rule-sev" style={{ background: sev }} title={t('policyRules.severityTitle', { label: t('policyRules.sev.' + (r.severity || 'low')) })} />
+                  <span className="wka-rule-title">{String(r.title || '').trim() || <span style={{ color: 'var(--wka-faint)', fontStyle: 'italic', fontWeight: 400 }}>{t('policyRules.untitledRule')}</span>}</span>
+                  {needsTrigger && <AlertTriangle size={13} className="wka-rule-warn" style={{ color: 'var(--wka-amber)', flexShrink: 0 }} aria-label={t('policyRules.needsTrigger')} />}
+                  {cite && <span className="wka-rule-cite">{t('policyRules.perCite', { cite })}</span>}
+                  {!readOnly && <button type="button" className="wka-btn sm ghost wka-rule-x" title={t('policyRules.removeRule')} aria-label={t('policyRules.removeRule')} onClick={(e) => { e.stopPropagation(); removeRule(i) }}><Trash2 size={13} /></button>}
                   <span className="wka-rule-chev" aria-hidden="true">{isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />}</span>
                 </div>
 
@@ -186,48 +189,48 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
                   <div className="wka-rule-body">
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', marginBottom: 10 }}>
                       <select className="wka-select" style={{ flexShrink: 0 }} value={isReq ? 'require' : 'forbid'} disabled={readOnly} onChange={(e) => patchRule(i, { kind: e.target.value })}>
-                        {KINDS.map((kk) => <option key={kk} value={kk}>{kk === 'forbid' ? 'Forbid' : 'Require'}</option>)}
+                        {KINDS.map((kk) => <option key={kk} value={kk}>{kk === 'forbid' ? t('policyRules.kindForbid') : t('policyRules.kindRequire')}</option>)}
                       </select>
                       <select className="wka-select" style={{ flexShrink: 0 }} value={r.severity || 'high'} disabled={readOnly} onChange={(e) => patchRule(i, { severity: e.target.value })}>
-                        {SEVERITIES.map((s) => <option key={s} value={s}>{s[0].toUpperCase() + s.slice(1)}</option>)}
+                        {SEVERITIES.map((s) => <option key={s} value={s}>{t('policyRules.sev.' + s)}</option>)}
                       </select>
                       <input className="wka-input" style={{ flex: '1 1 200px', minWidth: 0 }} value={r.title || ''} maxLength={120} disabled={readOnly}
-                        placeholder="Short label (e.g. No plaintext secrets)" onChange={(e) => patchRule(i, { title: e.target.value })} />
+                        placeholder={t('policyRules.titlePlaceholder')} onChange={(e) => patchRule(i, { title: e.target.value })} />
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: isReq ? 'repeat(auto-fit, minmax(220px, 1fr))' : '1fr', gap: 8, marginBottom: 8 }}>
                       <div className="wka-field" style={{ margin: 0 }}>
-                        <label>{isReq ? 'Required practice (must appear)' : 'Prohibited practice (must not appear)'}</label>
+                        <label>{isReq ? t('policyRules.requiredPractice') : t('policyRules.prohibitedPractice')}</label>
                         <input className="wka-input" style={{ width: '100%' }} value={r.pattern || ''} maxLength={400} disabled={readOnly}
-                          placeholder={isReq ? 'mfa, multi-factor, 2fa' : 'ftp, plaintext password, 0.0.0.0/0'} onChange={(e) => patchRule(i, { pattern: e.target.value })} />
+                          placeholder={isReq ? t('policyRules.requiredPatternPlaceholder') : t('policyRules.prohibitedPatternPlaceholder')} onChange={(e) => patchRule(i, { pattern: e.target.value })} />
                       </div>
                       {isReq && (
                         <div className="wka-field" style={{ margin: 0 }}>
-                          <label>When relevant (trigger)</label>
+                          <label>{t('policyRules.whenRelevant')}</label>
                           <input className="wka-input" style={{ width: '100%' }} value={r.context || ''} maxLength={400} disabled={readOnly}
-                            placeholder="production, deploy, login" onChange={(e) => patchRule(i, { context: e.target.value })} />
+                            placeholder={t('policyRules.contextPlaceholder')} onChange={(e) => patchRule(i, { context: e.target.value })} />
                         </div>
                       )}
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 8 }}>
                       <div className="wka-field" style={{ margin: 0 }}>
-                        <label>Cited document</label>
+                        <label>{t('policyRules.citedDocument')}</label>
                         <input className="wka-input" style={{ width: '100%' }} value={r.doc || ''} maxLength={160} disabled={readOnly}
-                          placeholder="Acme InfoSec Policy" onChange={(e) => patchRule(i, { doc: e.target.value })} />
+                          placeholder={t('policyRules.citedDocPlaceholder')} onChange={(e) => patchRule(i, { doc: e.target.value })} />
                       </div>
                       <div className="wka-field" style={{ margin: 0 }}>
-                        <label>Section</label>
+                        <label>{t('policyRules.section')}</label>
                         <input className="wka-input" style={{ width: '100%' }} value={r.section || ''} maxLength={160} disabled={readOnly}
-                          placeholder="§4.2 Secrets" onChange={(e) => patchRule(i, { section: e.target.value })} />
+                          placeholder={t('policyRules.sectionPlaceholder')} onChange={(e) => patchRule(i, { section: e.target.value })} />
                       </div>
                       <div className="wka-field" style={{ margin: 0, gridColumn: '1 / -1' }}>
-                        <label>Compliant alternative to recommend</label>
+                        <label>{t('policyRules.compliantAlternative')}</label>
                         <input className="wka-input" style={{ width: '100%' }} value={r.guidance || ''} maxLength={400} disabled={readOnly}
-                          placeholder="Use the approved vault instead of config files." onChange={(e) => patchRule(i, { guidance: e.target.value })} />
+                          placeholder={t('policyRules.guidancePlaceholder')} onChange={(e) => patchRule(i, { guidance: e.target.value })} />
                       </div>
                     </div>
                     {needsTrigger && (
                       <div style={{ marginTop: 8, fontSize: 11.5, color: 'var(--wka-amber, #d97706)', display: 'flex', gap: 6 }}>
-                        <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} /> Add a trigger so this requirement is only checked on relevant steps.
+                        <AlertTriangle size={12} style={{ flexShrink: 0, marginTop: 1 }} /> {t('policyRules.addTriggerHint')}
                       </div>
                     )}
                   </div>
@@ -239,12 +242,12 @@ export default function PolicyRules({ rules = [], docs = [], onChange, readOnly 
       )}
 
       {!readOnly && (
-        <button type="button" className="wka-btn sm" style={{ marginTop: 12 }} onClick={addRule}><Plus size={13} /> Add rule by hand</button>
+        <button type="button" className="wka-btn sm" style={{ marginTop: 12 }} onClick={addRule}><Plus size={13} /> {t('policyRules.addRuleByHand')}</button>
       )}
 
       {docs.length > 0 && (
         <div style={{ marginTop: 14, fontSize: 12, color: 'var(--wka-faint)' }}>
-          From: {docs.map((d, i) => <span key={i}>{i > 0 ? ', ' : ''}{d.name}{d.ruleCount ? ` (${d.ruleCount})` : ''}</span>)}
+          {t('policyRules.fromLabel')} {docs.map((d, i) => <span key={i}>{i > 0 ? ', ' : ''}{d.name}{d.ruleCount ? ` (${d.ruleCount})` : ''}</span>)}
         </div>
       )}
     </div>

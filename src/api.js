@@ -4,10 +4,19 @@
 // users may only sign in through the app.
 import { clean, rehydrateDeep } from './scrub.js'   // client-side DLP: strip/tokenize before sending, rehydrate tokens in responses
 const IS_APP = typeof window !== 'undefined' && !!window.refigold
+// The user's chosen UI language (localStorage 'wc_locale', written by the i18n
+// LocaleProvider / STORAGE_KEY). We send it on every request so the SERVER renders
+// guidance, scope questions and emails in THAT language, not the browser's own
+// Accept-Language. This is what makes the language choice reach the guide + app,
+// not just the marketing pages.
+function chosenLocale() {
+  try { return (typeof localStorage !== 'undefined' && localStorage.getItem('wc_locale')) || '' } catch { return '' }
+}
 async function req(method, url, body) {
   const headers = {}
   if (body) headers['Content-Type'] = 'application/json'
   if (IS_APP) headers['X-Refigold-App'] = '1'
+  const loc = chosenLocale(); if (loc) headers['X-WC-Locale'] = loc
   const res = await fetch(url, {
     method,
     credentials: 'include',

@@ -13,47 +13,49 @@ import { Search, RefreshCw, Users, CheckCircle2, DollarSign, Layers, Building2, 
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning } from './_shared.jsx'
 import { fmtDateTime, fmtMoney } from '../workadmin.css.js'
+import { useT } from '../../../i18n/index.jsx'
 
 // Columns mirror the Users table pattern: sortable where a sort makes sense.
 const COLUMNS = [
-  { key: 'username', label: 'User', sortable: true },
-  { key: 'email', label: 'Email', sortable: true },
-  { key: 'plan', label: 'Plan', sortable: true },
-  { key: 'status', label: 'Status', sortable: true },
-  { key: 'cycle', label: 'Cycle', sortable: true },
-  { key: 'since', label: 'Since', sortable: true },
-  { key: 'currentPeriodEnd', label: 'Renews', sortable: true },
-  { key: 'mrrUsd', label: 'MRR', sortable: true },
-  { key: 'lifetimeUsd', label: 'Lifetime paid', sortable: true },
-  { key: 'tasksToday', label: 'Tasks today', sortable: true },
-  { key: 'hoursUsedToday', label: 'Hours today', sortable: true },
-  { key: 'sessionCount', label: 'Sessions', sortable: true },
-  { key: 'lastActive', label: 'Last active', sortable: true },
-  { key: 'companyName', label: 'Company', sortable: true },
+  { key: 'username', labelKey: 'columns.user', sortable: true },
+  { key: 'email', labelKey: 'columns.email', sortable: true },
+  { key: 'plan', labelKey: 'columns.plan', sortable: true },
+  { key: 'status', labelKey: 'columns.status', sortable: true },
+  { key: 'cycle', labelKey: 'columns.cycle', sortable: true },
+  { key: 'since', labelKey: 'columns.since', sortable: true },
+  { key: 'currentPeriodEnd', labelKey: 'columns.renews', sortable: true },
+  { key: 'mrrUsd', labelKey: 'columns.mrr', sortable: true },
+  { key: 'lifetimeUsd', labelKey: 'columns.lifetimePaid', sortable: true },
+  { key: 'tasksToday', labelKey: 'columns.tasksToday', sortable: true },
+  { key: 'hoursUsedToday', labelKey: 'columns.hoursToday', sortable: true },
+  { key: 'sessionCount', labelKey: 'columns.sessions', sortable: true },
+  { key: 'lastActive', labelKey: 'columns.lastActive', sortable: true },
+  { key: 'companyName', labelKey: 'columns.company', sortable: true },
 ]
 
 // status -> shared badge class (see WORKADMIN_CSS). A comped (free) account reads
 // as "comp" even if the server also flags `free`.
 const STATUS_CLASS = { active: 'active', trialing: 'trialing', past_due: 'past_due', canceled: 'canceled', comp: 'comp' }
-const STATUS_LABEL = { active: 'Active', trialing: 'Trialing', past_due: 'Past due', canceled: 'Canceled', comp: 'Comp' }
+const STATUS_LABEL_KEY = { active: 'status.active', trialing: 'status.trialing', past_due: 'status.past_due', canceled: 'status.canceled', comp: 'status.comp' }
 function StatusBadge({ status, free }) {
+  const t = useT()
   const s = free && (!status || status === 'active') ? 'comp' : String(status || 'active')
-  return <span className={`wka-badge ${STATUS_CLASS[s] || 'basic'}`}>{STATUS_LABEL[s] || (s.charAt(0).toUpperCase() + s.slice(1))}</span>
+  return <span className={`wka-badge ${STATUS_CLASS[s] || 'basic'}`}>{STATUS_LABEL_KEY[s] ? t(`subscribersAdmin.${STATUS_LABEL_KEY[s]}`) : (s.charAt(0).toUpperCase() + s.slice(1))}</span>
 }
 
 // Hours used today: the server sends a number of hours (may be null). Render it
 // as a compact, honest "-" when unknown rather than guessing 0.
-function fmtHours(n) {
+function fmtHours(n, t) {
   const v = Number(n)
   if (!isFinite(v)) return '-'
-  if (v === 0) return '0h'
-  return `${v % 1 === 0 ? v : v.toFixed(1)}h`
+  if (v === 0) return t('subscribersAdmin.hoursZero')
+  return t('subscribersAdmin.hours', { v: v % 1 === 0 ? v : v.toFixed(1) })
 }
 function fmtCount(n) { const v = Number(n); return isFinite(v) ? v : '-' }
-function fmtCycle(c) {
+function fmtCycle(c, t) {
   const k = String(c || '').toLowerCase()
-  if (k === 'month' || k === 'monthly') return 'Monthly'
-  if (k === 'year' || k === 'annual' || k === 'yearly') return 'Annual'
+  if (k === 'month' || k === 'monthly') return t('subscribersAdmin.cycle.monthly')
+  if (k === 'year' || k === 'annual' || k === 'yearly') return t('subscribersAdmin.cycle.annual')
   return c || '-'
 }
 
@@ -69,6 +71,7 @@ function StatTile({ icon, label, value, foot, accent }) {
 }
 
 export default function Subscribers({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, subscribers: [], totals: null, unavailable: false })
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'mrrUsd', dir: 'desc' })
@@ -118,59 +121,59 @@ export default function Subscribers({ isSuperAdmin }) {
 
   const toggleSort = (key) => setSort((s) => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'desc' })
 
-  if (state.loading) return <Loading label="Loading subscribers" />
+  if (state.loading) return <Loading label={t('subscribersAdmin.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
 
   // Totals: prefer the server summary; fall back to a count derived from the rows
   // so the tiles are never blank when the endpoint omits totals.
-  const t = state.totals || {}
-  const count = t.count != null ? t.count : state.subscribers.length
-  const activeCount = t.activeCount != null ? t.activeCount
+  const totals = state.totals || {}
+  const count = totals.count != null ? totals.count : state.subscribers.length
+  const activeCount = totals.activeCount != null ? totals.activeCount
     : state.subscribers.filter((s) => s.status === 'active' || s.status === 'trialing').length
-  const mrr = t.mrrUsd != null ? t.mrrUsd
+  const mrr = totals.mrrUsd != null ? totals.mrrUsd
     : state.subscribers.reduce((sum, s) => sum + (Number(s.mrrUsd) || 0), 0)
-  const byPlan = t.byPlan || {}
+  const byPlan = totals.byPlan || {}
   const planFoot = ['lite', 'basic', 'advanced', 'premium']
     .filter((p) => byPlan[p] != null)
-    .map((p) => `${p.charAt(0).toUpperCase() + p.slice(1)} ${byPlan[p]}`)
-    .join(' · ') || 'No plan breakdown'
+    .map((p) => t('subscribersAdmin.planFootItem', { plan: t(`subscribersAdmin.plan.${p}`), count: byPlan[p] }))
+    .join(' · ') || t('subscribersAdmin.noPlanBreakdown')
 
   return (
     <div>
       {!isSuperAdmin ? (
-        <div className="wka-note"><Lock size={14} /> Subscribers are visible to superadmins. You can view everything here.</div>
+        <div className="wka-note"><Lock size={14} /> {t('subscribersAdmin.viewOnlyNote')}</div>
       ) : null}
 
       <div className="wka-cards">
-        <StatTile icon={<Users size={14} />} label="Paying subscribers" value={fmtCount(count)}
-          foot={state.unavailable ? 'Awaiting data' : 'All subscriptions on record'} />
-        <StatTile icon={<CheckCircle2 size={14} />} label="Active" value={fmtCount(activeCount)} accent
-          foot="Active or trialing right now" />
-        <StatTile icon={<DollarSign size={14} />} label="MRR" value={fmtMoney(mrr, 'usd')}
-          foot="Estimated monthly recurring revenue" />
-        <StatTile icon={<Layers size={14} />} label="By plan" value={fmtCount(count)}
+        <StatTile icon={<Users size={14} />} label={t('subscribersAdmin.tiles.payingSubscribers')} value={fmtCount(count)}
+          foot={state.unavailable ? t('subscribersAdmin.tiles.awaitingData') : t('subscribersAdmin.tiles.allOnRecord')} />
+        <StatTile icon={<CheckCircle2 size={14} />} label={t('subscribersAdmin.tiles.active')} value={fmtCount(activeCount)} accent
+          foot={t('subscribersAdmin.tiles.activeFoot')} />
+        <StatTile icon={<DollarSign size={14} />} label={t('subscribersAdmin.tiles.mrr')} value={fmtMoney(mrr, 'usd')}
+          foot={t('subscribersAdmin.tiles.mrrFoot')} />
+        <StatTile icon={<Layers size={14} />} label={t('subscribersAdmin.tiles.byPlan')} value={fmtCount(count)}
           foot={planFoot} />
       </div>
 
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 360 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search user, email, company or plan"
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('subscribersAdmin.searchPlaceholder')}
             value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
-          {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
+          {refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('subscribersAdmin.refresh')}
         </button>
         <span className="wka-spacer" />
-        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{rows.length} of {state.subscribers.length}</span>
+        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{t('subscribersAdmin.countOf', { shown: rows.length, total: state.subscribers.length })}</span>
       </div>
 
       {state.unavailable ? (
-        <EmptyState title="Subscribers are not available yet"
-          detail="The subscribers endpoint is not wired on this server yet. Once it is live, every paying subscriber and their operations appear here. Use Refresh to check again." />
+        <EmptyState title={t('subscribersAdmin.unavailable.title')}
+          detail={t('subscribersAdmin.unavailable.detail')} />
       ) : rows.length === 0 ? (
-        <EmptyState title="No subscribers match"
-          detail={query ? 'Try a different search.' : 'No paying subscribers yet. They appear here as subscriptions are created.'} />
+        <EmptyState title={t('subscribersAdmin.empty.title')}
+          detail={query ? t('subscribersAdmin.empty.detailSearch') : t('subscribersAdmin.empty.detailNone')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table" style={{ minWidth: 1180 }}>
@@ -178,7 +181,7 @@ export default function Subscribers({ isSuperAdmin }) {
               <tr>
                 {COLUMNS.map((c) => (
                   <th key={c.key} className={c.sortable ? '' : 'no-sort'} onClick={c.sortable ? () => toggleSort(c.key) : undefined}>
-                    {c.label}{c.sortable && sort.key === c.key ? <span className="arrow">{sort.dir === 'asc' ? '↑' : '↓'}</span> : null}
+                    {t(`subscribersAdmin.${c.labelKey}`)}{c.sortable && sort.key === c.key ? <span className="arrow">{sort.dir === 'asc' ? '↑' : '↓'}</span> : null}
                   </th>
                 ))}
               </tr>
@@ -194,19 +197,19 @@ export default function Subscribers({ isSuperAdmin }) {
                   </td>
                   <td>{u.plan ? <TierBadge tier={u.plan} /> : <span style={{ color: 'var(--wka-faint)' }}>-</span>}</td>
                   <td><StatusBadge status={u.status} free={u.free} /></td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{fmtCycle(u.cycle)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{fmtCycle(u.cycle, t)}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.since ? fmtDateTime(u.since) : '-'}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.currentPeriodEnd ? fmtDateTime(u.currentPeriodEnd) : '-'}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.mrrUsd == null ? '-' : fmtMoney(u.mrrUsd, 'usd')}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.lifetimeUsd == null ? '-' : fmtMoney(u.lifetimeUsd, 'usd')}</td>
                   <td className="wka-mono">{fmtCount(u.tasksToday)}</td>
-                  <td className="wka-mono">{fmtHours(u.hoursUsedToday)}</td>
+                  <td className="wka-mono">{fmtHours(u.hoursUsedToday, t)}</td>
                   <td className="wka-mono">{fmtCount(u.sessionCount)}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.lastActive ? fmtDateTime(u.lastActive) : '-'}</td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {u.companyName
                       ? <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><Building2 size={13} style={{ color: 'var(--wka-faint)' }} />{u.companyName}</span>
-                      : <span style={{ color: 'var(--wka-faint)' }}>Individual</span>}
+                      : <span style={{ color: 'var(--wka-faint)' }}>{t('subscribersAdmin.individual')}</span>}
                   </td>
                 </tr>
               ))}

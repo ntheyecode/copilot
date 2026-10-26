@@ -10,6 +10,7 @@
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
 import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen } from 'lucide-react'
+import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import AccentPicker from '../../components/AccentPicker.jsx'
 import Companies from './sections/Companies.jsx'
@@ -34,44 +35,47 @@ import Subscribers from './sections/Subscribers.jsx'
 import Cancelled from './sections/Cancelled.jsx'
 import HelpSuper from './sections/HelpSuper.jsx'
 
+// label/title/sub are i18n keys; the nav and shell resolve them with t().
 const SECTIONS = [
-  { id: 'overview', label: 'Overview', icon: LayoutDashboard, title: 'Overview', sub: 'WorkCoPilot at a glance.' },
-  { id: 'companies', label: 'Companies', icon: Building2, title: 'Companies', sub: 'Tenancy: companies, company admins, users and redaction policy.' },
-  { id: 'governance', label: 'Governance', icon: ShieldCheck, title: 'Data governance', sub: 'Per-company DLP policy: what leaves the device, block words, compliance frameworks, arm & lock.' },
-  { id: 'users', label: 'Users', icon: Users, title: 'Users', sub: 'Tiers, balances and granted hours.' },
-  { id: 'pricing', label: 'Pricing', icon: Tags, title: 'Pricing', sub: 'Plan prices, extra-hour and image rates.' },
-  { id: 'billing', label: 'Billing', icon: CreditCard, title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
-  { id: 'finance', label: 'Finance', icon: DollarSign, title: 'Finance', sub: 'All transactions, revenue by week/month/quarter/year, MRR, and refunds.' },
-  { id: 'subscribers', label: 'Subscribers', icon: Wallet, title: 'Subscribers', sub: 'Every paying subscriber and their operations: plan, status, cycle, MRR, lifetime paid, and today\'s activity.' },
-  { id: 'cancelled', label: 'Cancelled', icon: UserMinus, title: 'Cancelled subscribers', sub: 'Churned subscriptions: who canceled, when, why, and the lifetime revenue they brought before leaving.' },
-  { id: 'email', label: 'SMTP Settings', icon: Mail, title: 'SMTP Settings (Email / SES)', sub: 'Outbound email for delivering reports. MFA-gated. Enter your SES SMTP credentials and send a test.' },
-  { id: 'email-templates', label: 'Email Templates', icon: MailCheck, title: 'Email Templates', sub: 'Every email the product sends - edit the wording, placeholders and preview. Nothing is static.' },
-  { id: 'ai', label: 'AI config', icon: Cpu, title: 'AI configuration', sub: 'Platform AI for WorkCoPilot users.' },
-  { id: 'sessions', label: 'Sessions', icon: ListChecks, title: 'Sessions', sub: 'Recent guided sessions across users.' },
-  { id: 'leads', label: 'Leads', icon: UserPlus, title: 'Leads', sub: 'Everyone who ran a live validation on the demo or sign-in page - newest first.' },
-  { id: 'hero', label: 'Hero', icon: Megaphone, title: 'Homepage hero', sub: 'The rotating headline and subtext on the public homepage. Superadmin edits; other admins view.' },
-  { id: 'tickets', label: 'Tickets', icon: LifeBuoy, title: 'Support tickets', sub: 'Feature requests, bugs, billing and access issues from users.' },
-  { id: 'help', label: 'Help', icon: BookOpen, title: 'Help', sub: 'How to run the admin console, screen by screen.' },
-  { id: 'incidents', label: 'Incidents', icon: ShieldAlert, title: 'System incidents', sub: 'Real causes behind the "system is busy" message users see - AI quota, keys, 5xx, timeouts. Users never see these.' },
-  { id: 'affiliates', label: 'Affiliates', icon: Share2, title: 'Affiliate program', sub: 'Approve affiliates, set commission rates, track referrals and run Stripe Connect payouts.' },
-  { id: 'claims', label: 'Claims', icon: ShieldCheck, title: 'Business claims', sub: 'Every public claim mapped to the file and code that backs it, with an honesty status. MFA-gated; download a signed report.' },
-  { id: 'appearance', label: 'Appearance', icon: Palette, title: 'Appearance', sub: 'Your accent color for the dashboards and the guide. Personal to you; it follows you across devices.' },
+  { id: 'overview', label: 'superAdmin.nav.overview', icon: LayoutDashboard, title: 'superAdmin.sections.overview.title', sub: 'superAdmin.sections.overview.sub' },
+  { id: 'companies', label: 'superAdmin.nav.companies', icon: Building2, title: 'superAdmin.sections.companies.title', sub: 'superAdmin.sections.companies.sub' },
+  { id: 'governance', label: 'superAdmin.nav.governance', icon: ShieldCheck, title: 'superAdmin.sections.governance.title', sub: 'superAdmin.sections.governance.sub' },
+  { id: 'users', label: 'superAdmin.nav.users', icon: Users, title: 'superAdmin.sections.users.title', sub: 'superAdmin.sections.users.sub' },
+  { id: 'pricing', label: 'superAdmin.nav.pricing', icon: Tags, title: 'superAdmin.sections.pricing.title', sub: 'superAdmin.sections.pricing.sub' },
+  { id: 'billing', label: 'superAdmin.nav.billing', icon: CreditCard, title: 'superAdmin.sections.billing.title', sub: 'superAdmin.sections.billing.sub' },
+  { id: 'finance', label: 'superAdmin.nav.finance', icon: DollarSign, title: 'superAdmin.sections.finance.title', sub: 'superAdmin.sections.finance.sub' },
+  { id: 'subscribers', label: 'superAdmin.nav.subscribers', icon: Wallet, title: 'superAdmin.sections.subscribers.title', sub: 'superAdmin.sections.subscribers.sub' },
+  { id: 'cancelled', label: 'superAdmin.nav.cancelled', icon: UserMinus, title: 'superAdmin.sections.cancelled.title', sub: 'superAdmin.sections.cancelled.sub' },
+  { id: 'email', label: 'superAdmin.nav.email', icon: Mail, title: 'superAdmin.sections.email.title', sub: 'superAdmin.sections.email.sub' },
+  { id: 'email-templates', label: 'superAdmin.nav.email-templates', icon: MailCheck, title: 'superAdmin.sections.email-templates.title', sub: 'superAdmin.sections.email-templates.sub' },
+  { id: 'ai', label: 'superAdmin.nav.ai', icon: Cpu, title: 'superAdmin.sections.ai.title', sub: 'superAdmin.sections.ai.sub' },
+  { id: 'sessions', label: 'superAdmin.nav.sessions', icon: ListChecks, title: 'superAdmin.sections.sessions.title', sub: 'superAdmin.sections.sessions.sub' },
+  { id: 'leads', label: 'superAdmin.nav.leads', icon: UserPlus, title: 'superAdmin.sections.leads.title', sub: 'superAdmin.sections.leads.sub' },
+  { id: 'hero', label: 'superAdmin.nav.hero', icon: Megaphone, title: 'superAdmin.sections.hero.title', sub: 'superAdmin.sections.hero.sub' },
+  { id: 'tickets', label: 'superAdmin.nav.tickets', icon: LifeBuoy, title: 'superAdmin.sections.tickets.title', sub: 'superAdmin.sections.tickets.sub' },
+  { id: 'help', label: 'superAdmin.nav.help', icon: BookOpen, title: 'superAdmin.sections.help.title', sub: 'superAdmin.sections.help.sub' },
+  { id: 'incidents', label: 'superAdmin.nav.incidents', icon: ShieldAlert, title: 'superAdmin.sections.incidents.title', sub: 'superAdmin.sections.incidents.sub' },
+  { id: 'affiliates', label: 'superAdmin.nav.affiliates', icon: Share2, title: 'superAdmin.sections.affiliates.title', sub: 'superAdmin.sections.affiliates.sub' },
+  { id: 'claims', label: 'superAdmin.nav.claims', icon: ShieldCheck, title: 'superAdmin.sections.claims.title', sub: 'superAdmin.sections.claims.sub' },
+  { id: 'appearance', label: 'superAdmin.nav.appearance', icon: Palette, title: 'superAdmin.sections.appearance.title', sub: 'superAdmin.sections.appearance.sub' },
 ]
 
 // Per-user accent (every admin role sees this - it is a personal preference, not
 // a platform setting). The picker applies live and persists through the shared
 // profile endpoint; this console only hosts it.
 function AppearanceSection() {
+  const t = useT()
   return (
     <div className="wka-panel">
-      <h2>Accent color</h2>
-      <p className="desc">Not everyone likes green. Pick the accent for your dashboards and the guide - it applies instantly and follows you across devices. <b>Default</b> keeps each console's own color: blue here, green for company admins and the guide.</p>
+      <h2>{t('superAdmin.appearancePanel.title')}</h2>
+      <p className="desc">{t.rich('superAdmin.appearancePanel.desc')}</p>
       <AccentPicker variant="wka" />
     </div>
   )
 }
 
 export default function WorkAdmin() {
+  const t = useT()
   const [active, setActive] = useState('overview')
   // gate: 'loading' | 'ready' | 'denied' | 'error'
   const [gate, setGate] = useState('loading')
@@ -186,8 +190,8 @@ export default function WorkAdmin() {
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <Loader2 size={26} style={{ animation: 'wka-spin 0.8s linear infinite', color: 'var(--wka-accent)', marginBottom: 12 }} />
-          <h2>Checking access</h2>
-          <p>One moment.</p>
+          <h2>{t('superAdmin.gate.checkingTitle')}</h2>
+          <p>{t('superAdmin.gate.checkingBody')}</p>
         </div></div>
       </div>
     )
@@ -199,8 +203,8 @@ export default function WorkAdmin() {
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <ShieldAlert size={30} />
-          <h2>You need admin access</h2>
-          <p>The WorkCoPilot admin console is available to AdmireVeda administrators. Sign in with an admin account to continue.</p>
+          <h2>{t('superAdmin.gate.deniedTitle')}</h2>
+          <p>{t('superAdmin.gate.deniedBody')}</p>
         </div></div>
       </div>
     )
@@ -212,9 +216,9 @@ export default function WorkAdmin() {
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <ShieldAlert size={30} style={{ color: 'var(--wka-red)' }} />
-          <h2>Could not load the console</h2>
-          <p>{(gateError && gateError.message) || 'Please try again.'}</p>
-          <button type="button" className="wka-btn primary" style={{ marginTop: 16 }} onClick={checkAccess}>Try again</button>
+          <h2>{t('superAdmin.gate.errorTitle')}</h2>
+          <p>{(gateError && gateError.message) || t('superAdmin.gate.errorBody')}</p>
+          <button type="button" className="wka-btn primary" style={{ marginTop: 16 }} onClick={checkAccess}>{t('superAdmin.gate.retry')}</button>
         </div></div>
       </div>
     )
@@ -228,12 +232,12 @@ export default function WorkAdmin() {
         <span className="wka-dot" aria-hidden="true" />
         <div className="wka-brand">
           <b>WorkCoPilot</b>
-          <span>AdmireVeda Admin</span>
+          <span>{t('superAdmin.brandSub')}</span>
         </div>
         <div className="wka-top-right">
           {viewer ? <span className="wka-chip">{viewer.username}</span> : null}
-          <span className={`wka-chip ${isSuperAdmin ? 'ok' : ''}`}>{isSuperAdmin ? 'Superadmin' : 'Admin'}</span>
-          <button type="button" className="wka-btn sm ghost" onClick={signOut} title="Sign out"><LogOut size={14} /> Sign out</button>
+          <span className={`wka-chip ${isSuperAdmin ? 'ok' : ''}`}>{isSuperAdmin ? t('superAdmin.roleSuper') : t('superAdmin.roleAdmin')}</span>
+          <button type="button" className="wka-btn sm ghost" onClick={signOut} title={t('superAdmin.signOut')}><LogOut size={14} /> {t('superAdmin.signOut')}</button>
         </div>
       </header>
 
@@ -246,23 +250,23 @@ export default function WorkAdmin() {
                 onClick={() => setActive(s.id)} role="button" tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActive(s.id) } }}>
                 <Icon size={17} />
-                <span className="label">{s.label}</span>
+                <span className="label">{t(s.label)}</span>
                 {s.id === 'incidents' && incidentAlert.count > 0 ? (
                   <span className={`wa-badge${incidentAlert.severe ? ' severe' : ''}`}
-                    title={`${incidentAlert.count} incident${incidentAlert.count === 1 ? '' : 's'} in the last 24h`}
-                    aria-label={`${incidentAlert.count} incident${incidentAlert.count === 1 ? '' : 's'} in the last 24h`}>
+                    title={t.n('superAdmin.badge.incidents', incidentAlert.count)}
+                    aria-label={t.n('superAdmin.badge.incidents', incidentAlert.count)}>
                     {incidentAlert.count > 99 ? '99+' : incidentAlert.count}
                   </span>
                 ) : null}
               </div>
             )
           })}
-          <div className="wka-nav-foot">WorkCoPilot - a separate product surface. Changes here do not touch the interview admin.</div>
+          <div className="wka-nav-foot">{t('superAdmin.navFoot')}</div>
         </nav>
 
         <main className="wka-main">
-          <h1 className="wka-h1">{current.title}</h1>
-          <p className="wka-sub">{current.sub}</p>
+          <h1 className="wka-h1">{t(current.title)}</h1>
+          <p className="wka-sub">{t(current.sub)}</p>
           {renderSection()}
         </main>
       </div>

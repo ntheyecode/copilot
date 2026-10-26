@@ -6,14 +6,16 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Search, RefreshCw, Download, ShieldCheck } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, StepUpGate, StepUpBanner } from './_shared.jsx'
+import { useT } from '../../../i18n/index.jsx'
 
 const STATUS_BADGE = {
-  substantiated: { label: 'Substantiated', cls: 'active' },
-  partial: { label: 'Partial', cls: 'paused' },
-  unbacked: { label: 'Unbacked', cls: 'ended' },
+  substantiated: { labelKey: 'claimsAdmin.status.substantiated', cls: 'active' },
+  partial: { labelKey: 'claimsAdmin.status.partial', cls: 'paused' },
+  unbacked: { labelKey: 'claimsAdmin.status.unbacked', cls: 'ended' },
 }
 
 function ClaimsBody({ stepUp, onLocked }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, data: null })
   const [query, setQuery] = useState('')
   const [filter, setFilter] = useState('all')
@@ -27,7 +29,7 @@ function ClaimsBody({ stepUp, onLocked }) {
   }, [])
   useEffect(() => { load(false) }, [load])
 
-  if (state.loading) return <Loading label="Loading claims" />
+  if (state.loading) return <Loading label={t('claimsAdmin.loadingClaims')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
   const { claims = [], summary = {}, attestation = {} } = state.data || {}
   const q = query.trim().toLowerCase()
@@ -45,44 +47,45 @@ function ClaimsBody({ stepUp, onLocked }) {
 
   return (
     <div>
-      <StepUpBanner status={stepUp} onLocked={onLocked} lock={workAdminApi.lockAiConfig} label="Business claims" />
-      <p className="desc">Every concrete claim the public website makes, mapped to the file and code block that backs it. Status: substantiated (code proves it), partial (true with caveats), or unbacked (no code found - an honesty risk). The downloaded report carries a SHA-256 + signature authenticity seal.</p>
+      <StepUpBanner status={stepUp} onLocked={onLocked} lock={workAdminApi.lockAiConfig} label={t('claimsAdmin.stepUpLabel')} />
+      <p className="desc">{t('claimsAdmin.desc')}</p>
 
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 320 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search claim, page or category" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('claimsAdmin.searchPlaceholder')} value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <Count k="all" label="All" />
-        <Count k="unbacked" label="Unbacked" />
-        <Count k="partial" label="Partial" />
-        <Count k="substantiated" label="Substantiated" />
-        <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>{refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh</button>
-        <a className="wka-btn sm primary" href={workAdminApi.claimsMdUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}><Download size={13} /> Download signed report</a>
+        <Count k="all" label={t('claimsAdmin.filterAll')} />
+        <Count k="unbacked" label={t('claimsAdmin.status.unbacked')} />
+        <Count k="partial" label={t('claimsAdmin.status.partial')} />
+        <Count k="substantiated" label={t('claimsAdmin.status.substantiated')} />
+        <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>{refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('claimsAdmin.refresh')}</button>
+        <a className="wka-btn sm primary" href={workAdminApi.claimsMdUrl} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}><Download size={13} /> {t('claimsAdmin.downloadReport')}</a>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState title="No claims" detail="Try a different search or filter." />
+        <EmptyState title={t('claimsAdmin.empty.title')} detail={t('claimsAdmin.empty.detail')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table">
             <thead>
               <tr>
-                <th className="no-sort">Claim</th>
-                <th className="no-sort">Where</th>
-                <th className="no-sort">Status</th>
-                <th className="no-sort">Backed by</th>
+                <th className="no-sort">{t('claimsAdmin.columns.claim')}</th>
+                <th className="no-sort">{t('claimsAdmin.columns.where')}</th>
+                <th className="no-sort">{t('claimsAdmin.columns.status')}</th>
+                <th className="no-sort">{t('claimsAdmin.columns.backedBy')}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((c) => {
-                const b = STATUS_BADGE[c.status] || { label: c.status, cls: 'paused' }
+                const sb = STATUS_BADGE[c.status]
+                const b = sb ? { label: t(sb.labelKey), cls: sb.cls } : { label: c.status, cls: 'paused' }
                 return (
                   <tr key={c.id}>
                     <td style={{ maxWidth: 360 }}>
                       <div style={{ fontWeight: 600 }}>{c.claim}</div>
                       {c.category ? <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 2 }}>{c.category}</div> : null}
-                      {c.risk && c.status !== 'substantiated' ? <div style={{ fontSize: 12, color: 'var(--wka-amber, #b26a00)', marginTop: 4 }}>Risk: {c.risk}</div> : null}
+                      {c.risk && c.status !== 'substantiated' ? <div style={{ fontSize: 12, color: 'var(--wka-amber, #b26a00)', marginTop: 4 }}>{t('claimsAdmin.risk', { risk: c.risk })}</div> : null}
                     </td>
                     <td style={{ fontSize: 12.5, whiteSpace: 'nowrap' }}>{c.page || '-'}</td>
                     <td><span className={`wka-badge ${b.cls}`}>{b.label}</span></td>
@@ -93,7 +96,7 @@ function ClaimsBody({ stepUp, onLocked }) {
                             {e.file}{e.line ? ':' + e.line : ''}{e.symbol ? ` (${e.symbol})` : ''}
                           </div>
                         ))
-                        : <span style={{ color: 'var(--wka-faint)' }}>no code evidence</span>}
+                        : <span style={{ color: 'var(--wka-faint)' }}>{t('claimsAdmin.noEvidence')}</span>}
                     </td>
                   </tr>
                 )
@@ -106,7 +109,7 @@ function ClaimsBody({ stepUp, onLocked }) {
       {attestation.hash ? (
         <div className="wka-note" style={{ marginTop: 14, display: 'flex', gap: 8, alignItems: 'flex-start' }}>
           <ShieldCheck size={14} />
-          <span style={{ fontSize: 12 }}>Authenticity: {attestation.alg} seal, hash {String(attestation.hash).slice(0, 16)}..., issued {attestation.issuedAt}. The downloaded report is signed in full.</span>
+          <span style={{ fontSize: 12 }}>{t('claimsAdmin.authenticity', { alg: attestation.alg, hash: String(attestation.hash).slice(0, 16), issuedAt: attestation.issuedAt })}</span>
         </div>
       ) : null}
     </div>
@@ -114,6 +117,7 @@ function ClaimsBody({ stepUp, onLocked }) {
 }
 
 export default function Claims() {
+  const t = useT()
   const [gate, setGate] = useState({ loading: true, status: null, error: null })
   const loadGate = useCallback(async () => {
     setGate({ loading: true, status: null, error: null })
@@ -122,10 +126,10 @@ export default function Claims() {
   }, [])
   useEffect(() => { loadGate() }, [loadGate])
 
-  if (gate.loading) return <Loading label="Checking access" />
+  if (gate.loading) return <Loading label={t('claimsAdmin.checkingAccess')} />
   if (gate.error) return <ErrorBox error={gate.error} onRetry={loadGate} />
   if (!gate.status || !gate.status.active) {
-    return <StepUpGate status={gate.status || {}} verify={workAdminApi.verifyAiStepUp} onUnlock={(st) => setGate({ loading: false, status: st, error: null })} label="Business claims" />
+    return <StepUpGate status={gate.status || {}} verify={workAdminApi.verifyAiStepUp} onUnlock={(st) => setGate({ loading: false, status: st, error: null })} label={t('claimsAdmin.stepUpLabel')} />
   }
   return <ClaimsBody stepUp={gate.status} onLocked={loadGate} />
 }

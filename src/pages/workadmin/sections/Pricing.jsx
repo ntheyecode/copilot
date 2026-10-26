@@ -14,6 +14,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Save, Lock, Info, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
+import { useT } from '../../../i18n/index.jsx'
 
 const TIERS = ['lite', 'basic', 'advanced', 'premium']
 
@@ -35,6 +36,7 @@ function formFrom(p) {
 }
 
 export default function Pricing({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null })
   const [form, setForm] = useState(null)
   const [baseline, setBaseline] = useState(null)   // last-saved values, for Cancel
@@ -99,7 +101,7 @@ export default function Pricing({ isSuperAdmin }) {
 
   const cancel = () => { setForm(baseline); setSaveError(null); setSaved(false); setEditing(false) }
 
-  if (state.loading) return <Loading label="Loading pricing" />
+  if (state.loading) return <Loading label={t('pricingAdmin.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
   if (!form) return null
 
@@ -110,7 +112,7 @@ export default function Pricing({ isSuperAdmin }) {
 
   const Money = ({ group, tier }) => (
     <div className="wka-field">
-      <label>{cap(tier)}</label>
+      <label>{t('pricingAdmin.tiers.' + tier)}</label>
       <div className="wka-inline-money">
         <span className="sym">$</span>
         <input className="wka-input" type="number" min="0" step="0.01" disabled={disabled}
@@ -123,22 +125,22 @@ export default function Pricing({ isSuperAdmin }) {
   if (!editing) {
     return (
       <div>
-        {disabled ? <div className="wka-note"><Lock size={14} /> Editing pricing requires superadmin access. Values below are read-only for you.</div> : null}
+        {disabled ? <div className="wka-note"><Lock size={14} /> {t('pricingAdmin.superadminNote')}</div> : null}
         <div className="wka-panel">
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <h2 style={{ margin: 0 }}>Pricing</h2>
+            <h2 style={{ margin: 0 }}>{t('pricingAdmin.record.title')}</h2>
             <EditToggle editing={editing} disabled={disabled} onEdit={() => { setForm(baseline); setEditing(true); setSaveError(null) }} />
           </div>
-          <p className="desc">What each tier costs and the per-tier limits. {disabled ? '' : 'Click Edit to change any of it.'}</p>
+          <p className="desc">{t('pricingAdmin.record.desc')} {disabled ? '' : t('pricingAdmin.record.descEdit')}</p>
           <div className="wka-record">
-            <RecRow label="Currency" value={cur} />
-            {TIERS.map((t) => (
-              <RecRow key={t} label={cap(t)} value={`${money(form.plans[t])}/mo  ·  ${(form.dailyHours || {})[t] == null ? '-' : form.dailyHours[t]} hrs/day  ·  ${form.tasks[t] == null ? '-' : form.tasks[t]} tasks/day  ·  ${(form.replans || {})[t] == null ? '-' : form.replans[t]} re-plans  ·  ${money(form.hour[t])}/extra hr  ·  ${money(form.image[t])}/image`} />
+            <RecRow label={t('pricingAdmin.record.currency')} value={cur} />
+            {TIERS.map((tier) => (
+              <RecRow key={tier} label={t('pricingAdmin.tiers.' + tier)} value={t('pricingAdmin.record.tierSummary', { price: money(form.plans[tier]), hours: (form.dailyHours || {})[tier] == null ? '-' : form.dailyHours[tier], tasks: form.tasks[tier] == null ? '-' : form.tasks[tier], replans: (form.replans || {})[tier] == null ? '-' : form.replans[tier], extraHr: money(form.hour[tier]), image: money(form.image[tier]) })} />
             ))}
-            <RecRow label="Corporate" value="Unlimited tasks and re-plans" />
-            <RecRow label="Bulk minimum" value={`${form.imageMinBulk} images`} />
-            <RecRow label="Bonus tasks per extra hour" value={`${form.tasksPerExtraHour == null ? '-' : form.tasksPerExtraHour} task${form.tasksPerExtraHour === 1 ? '' : 's'} per hour bought (all tiers)`} />
-            <RecRow label="Free images per day" value={TIERS.map((t) => `${cap(t)} ${(form.imagesPerDay || {})[t] == null ? '-' : form.imagesPerDay[t]}`).join('  ·  ')} />
+            <RecRow label={t('pricingAdmin.record.corporate')} value={t('pricingAdmin.record.corporateValue')} />
+            <RecRow label={t('pricingAdmin.record.bulkMin')} value={t('pricingAdmin.record.bulkMinValue', { count: form.imageMinBulk })} />
+            <RecRow label={t('pricingAdmin.record.bonusTasks')} value={t.n('pricingAdmin.record.bonusTasksValue', form.tasksPerExtraHour, { count: form.tasksPerExtraHour == null ? '-' : form.tasksPerExtraHour })} />
+            <RecRow label={t('pricingAdmin.record.freeImages')} value={TIERS.map((tier) => `${t('pricingAdmin.tiers.' + tier)} ${(form.imagesPerDay || {})[tier] == null ? '-' : form.imagesPerDay[tier]}`).join('  ·  ')} />
           </div>
           <SavedTag show={saved} />
         </div>
@@ -149,92 +151,92 @@ export default function Pricing({ isSuperAdmin }) {
   // ---- Edit view: all the panels + Save / Cancel ----
   return (
     <div>
-      {disabled ? <div className="wka-note"><Lock size={14} /> Editing pricing requires superadmin access. Values below are read-only for you.</div> : null}
+      {disabled ? <div className="wka-note"><Lock size={14} /> {t('pricingAdmin.superadminNote')}</div> : null}
 
       <div className="wka-panel">
-        <h2>Monthly plan price</h2>
-        <p className="desc">What each tier costs per month. The daily guiding hours each tier includes are set below.</p>
-        <div className="wka-grid">{TIERS.map((t) => <Money key={t} group="plans" tier={t} />)}</div>
+        <h2>{t('pricingAdmin.edit.monthly.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.monthly.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => <Money key={tier} group="plans" tier={tier} />)}</div>
       </div>
 
       <div className="wka-panel">
-        <h2>Daily included hours, per tier</h2>
-        <p className="desc">How many hours of real guiding time each tier includes per day (the "bucket"). This is the daily allowance; extra hours beyond it are billed at the per-tier rate below. A change here applies to every user immediately. Fractional hours are allowed (e.g. 1.5). Resets 11:59 PM ET.</p>
-        <div className="wka-grid">{TIERS.map((t) => (
-          <div className="wka-field" key={t}>
-            <label>{cap(t)}</label>
+        <h2>{t('pricingAdmin.edit.dailyHours.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.dailyHours.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => (
+          <div className="wka-field" key={tier}>
+            <label>{t('pricingAdmin.tiers.' + tier)}</label>
             <input className="wka-input" type="number" min="0" max="24" step="0.25" disabled={disabled}
-              value={(form.dailyHours || {})[t] == null ? '' : form.dailyHours[t]} onChange={(e) => setField('dailyHours', t, e.target.value)} />
-            <span className="hint">hours per day</span>
+              value={(form.dailyHours || {})[tier] == null ? '' : form.dailyHours[tier]} onChange={(e) => setField('dailyHours', tier, e.target.value)} />
+            <span className="hint">{t('pricingAdmin.edit.dailyHours.hint')}</span>
           </div>
         ))}</div>
       </div>
 
       <div className="wka-panel">
-        <h2>Daily task limit, per tier</h2>
-        <p className="desc">Maximum guided tasks (sessions) a user can start per day. Users must finish the current task before starting a new one, and spend their minutes inside each task. Resets 11:59 PM ET. Corporate (company) accounts are unlimited.</p>
-        <div className="wka-grid">{TIERS.map((t) => (
-          <div className="wka-field" key={t}>
-            <label>{cap(t)}</label>
+        <h2>{t('pricingAdmin.edit.dailyTasks.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.dailyTasks.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => (
+          <div className="wka-field" key={tier}>
+            <label>{t('pricingAdmin.tiers.' + tier)}</label>
             <input className="wka-input" type="number" min="0" step="1" disabled={disabled}
-              value={form.tasks[t] == null ? '' : form.tasks[t]} onChange={(e) => setField('tasks', t, e.target.value)} />
-            <span className="hint">tasks per day</span>
+              value={form.tasks[tier] == null ? '' : form.tasks[tier]} onChange={(e) => setField('tasks', tier, e.target.value)} />
+            <span className="hint">{t('pricingAdmin.edit.dailyTasks.hint')}</span>
           </div>
         ))}
           <div className="wka-field">
-            <label>Corporate</label>
-            <input className="wka-input" value="Unlimited" readOnly disabled />
-            <span className="hint">Company accounts have no daily task cap.</span>
+            <label>{t('pricingAdmin.edit.corporate')}</label>
+            <input className="wka-input" value={t('pricingAdmin.edit.unlimited')} readOnly disabled />
+            <span className="hint">{t('pricingAdmin.edit.noDailyTaskCap')}</span>
           </div>
         </div>
       </div>
 
       <div className="wka-panel">
-        <h2>Re-plans per task, per tier</h2>
-        <p className="desc">How many times a user can re-plan a single task. A re-plan only re-adapts the steps to new information &mdash; it never changes the original request, so it is not a backdoor to a new task. Counts per task (not per day). Corporate (company) accounts are unlimited.</p>
-        <div className="wka-grid">{TIERS.map((t) => (
-          <div className="wka-field" key={t}>
-            <label>{cap(t)}</label>
+        <h2>{t('pricingAdmin.edit.replans.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.replans.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => (
+          <div className="wka-field" key={tier}>
+            <label>{t('pricingAdmin.tiers.' + tier)}</label>
             <input className="wka-input" type="number" min="0" step="1" disabled={disabled}
-              value={(form.replans || {})[t] == null ? '' : form.replans[t]} onChange={(e) => setField('replans', t, e.target.value)} />
-            <span className="hint">re-plans per task</span>
+              value={(form.replans || {})[tier] == null ? '' : form.replans[tier]} onChange={(e) => setField('replans', tier, e.target.value)} />
+            <span className="hint">{t('pricingAdmin.edit.replans.hint')}</span>
           </div>
         ))}
           <div className="wka-field">
-            <label>Corporate</label>
-            <input className="wka-input" value="Unlimited" readOnly disabled />
-            <span className="hint">Company accounts have no re-plan cap.</span>
+            <label>{t('pricingAdmin.edit.corporate')}</label>
+            <input className="wka-input" value={t('pricingAdmin.edit.unlimited')} readOnly disabled />
+            <span className="hint">{t('pricingAdmin.edit.noReplanCap')}</span>
           </div>
         </div>
       </div>
 
       <div className="wka-panel">
-        <h2>Extra hour, per tier</h2>
-        <p className="desc">Price of one additional hour beyond the daily allowance. Purchased hours never expire.</p>
-        <div className="wka-grid">{TIERS.map((t) => <Money key={t} group="hour" tier={t} />)}</div>
+        <h2>{t('pricingAdmin.edit.extraHour.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.extraHour.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => <Money key={tier} group="hour" tier={tier} />)}</div>
         <div className="wka-grid" style={{ marginTop: 16 }}>
           <div className="wka-field">
-            <label>Bonus tasks per extra hour (all tiers)</label>
+            <label>{t('pricingAdmin.edit.extraHour.bonusLabel')}</label>
             <input className="wka-input" type="number" min="0" max="100" step="1" disabled={disabled}
               value={form.tasksPerExtraHour == null ? '' : form.tasksPerExtraHour} onChange={(e) => setTop('tasksPerExtraHour', e.target.value)} />
-            <span className="hint">Task credits granted when a user buys one extra hour. Same for every tier. 0 turns it off.</span>
+            <span className="hint">{t('pricingAdmin.edit.extraHour.bonusHint')}</span>
           </div>
         </div>
       </div>
 
       <div className="wka-panel">
-        <h2>Image generation, per tier</h2>
-        <p className="desc">Price per generated image. Purchased image credits never expire.</p>
-        <div className="wka-grid">{TIERS.map((t) => <Money key={t} group="image" tier={t} />)}</div>
+        <h2>{t('pricingAdmin.edit.image.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.image.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => <Money key={tier} group="image" tier={tier} />)}</div>
         <div className="wka-grid" style={{ marginTop: 16 }}>
           <div className="wka-field">
-            <label>Bulk minimum (images)</label>
+            <label>{t('pricingAdmin.edit.image.bulkLabel')}</label>
             <input className="wka-input" type="number" min="1" step="1" disabled={disabled}
               value={form.imageMinBulk} onChange={(e) => setTop('imageMinBulk', e.target.value)} />
-            <span className="hint">Smallest image bundle a user can buy.</span>
+            <span className="hint">{t('pricingAdmin.edit.image.bulkHint')}</span>
           </div>
           <div className="wka-field">
-            <label>Currency</label>
+            <label>{t('pricingAdmin.edit.currency')}</label>
             <input className="wka-input" value={cur} disabled={disabled}
               onChange={(e) => setTop('currency', e.target.value.toLowerCase())} />
           </div>
@@ -242,14 +244,14 @@ export default function Pricing({ isSuperAdmin }) {
       </div>
 
       <div className="wka-panel">
-        <h2>Free images per day, per tier</h2>
-        <p className="desc">How many images each tier may generate for free per day (0 = none). Beyond this daily allowance, images are billed at the per-tier price above. A change here applies to every user immediately. Resets 11:59 PM ET.</p>
-        <div className="wka-grid">{TIERS.map((t) => (
-          <div className="wka-field" key={t}>
-            <label>{cap(t)}</label>
+        <h2>{t('pricingAdmin.edit.freeImages.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.freeImages.desc')}</p>
+        <div className="wka-grid">{TIERS.map((tier) => (
+          <div className="wka-field" key={tier}>
+            <label>{t('pricingAdmin.tiers.' + tier)}</label>
             <input className="wka-input" type="number" min="0" max="1000" step="1" disabled={disabled}
-              value={(form.imagesPerDay || {})[t] == null ? '' : form.imagesPerDay[t]} onChange={(e) => setField('imagesPerDay', t, e.target.value)} />
-            <span className="hint">free images per day</span>
+              value={(form.imagesPerDay || {})[tier] == null ? '' : form.imagesPerDay[tier]} onChange={(e) => setField('imagesPerDay', tier, e.target.value)} />
+            <span className="hint">{t('pricingAdmin.edit.freeImages.hint')}</span>
           </div>
         ))}</div>
       </div>
@@ -258,11 +260,11 @@ export default function Pricing({ isSuperAdmin }) {
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <button type="button" className="wka-btn primary" disabled={disabled || saving || invalid} onClick={save}>
-          {saving ? <Spinning /> : <Save size={15} />} Save pricing
+          {saving ? <Spinning /> : <Save size={15} />} {t('pricingAdmin.edit.save')}
         </button>
-        <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
+        <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> {t('pricingAdmin.edit.cancel')}</button>
         <SavedTag show={saved} />
-        {invalid && !disabled ? <span style={{ color: 'var(--wka-amber)', fontSize: 12, display: 'inline-flex', gap: 6, alignItems: 'center' }}><Info size={13} /> All prices must be zero or more; bulk minimum at least 1.</span> : null}
+        {invalid && !disabled ? <span style={{ color: 'var(--wka-amber)', fontSize: 12, display: 'inline-flex', gap: 6, alignItems: 'center' }}><Info size={13} /> {t('pricingAdmin.edit.invalid')}</span> : null}
       </div>
     </div>
   )

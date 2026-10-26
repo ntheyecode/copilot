@@ -13,24 +13,25 @@ import { Search, RefreshCw, UserMinus, DollarSign, CalendarX, Building2, Lock } 
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning } from './_shared.jsx'
 import { fmtDateTime, fmtMoney } from '../workadmin.css.js'
+import { useT } from '../../../i18n/index.jsx'
 
 // Columns mirror the Subscribers table pattern: sortable where a sort makes sense.
 const COLUMNS = [
-  { key: 'username', label: 'User', sortable: true },
-  { key: 'email', label: 'Email', sortable: true },
-  { key: 'plan', label: 'Plan', sortable: true },
-  { key: 'cycle', label: 'Cycle', sortable: true },
-  { key: 'since', label: 'Subscribed', sortable: true },
-  { key: 'canceledAt', label: 'Canceled', sortable: true },
-  { key: 'reason', label: 'Reason', sortable: false },
-  { key: 'lifetimeUsd', label: 'Lifetime paid', sortable: true },
-  { key: 'companyName', label: 'Company', sortable: true },
+  { key: 'username', labelKey: 'columns.user', sortable: true },
+  { key: 'email', labelKey: 'columns.email', sortable: true },
+  { key: 'plan', labelKey: 'columns.plan', sortable: true },
+  { key: 'cycle', labelKey: 'columns.cycle', sortable: true },
+  { key: 'since', labelKey: 'columns.subscribed', sortable: true },
+  { key: 'canceledAt', labelKey: 'columns.canceled', sortable: true },
+  { key: 'reason', labelKey: 'columns.reason', sortable: false },
+  { key: 'lifetimeUsd', labelKey: 'columns.lifetimePaid', sortable: true },
+  { key: 'companyName', labelKey: 'columns.company', sortable: true },
 ]
 
-function fmtCycle(c) {
+function fmtCycle(c, t) {
   const k = String(c || '').toLowerCase()
-  if (k === 'month' || k === 'monthly') return 'Monthly'
-  if (k === 'year' || k === 'annual' || k === 'yearly') return 'Annual'
+  if (k === 'month' || k === 'monthly') return t('cancelledAdmin.cycle.monthly')
+  if (k === 'year' || k === 'annual' || k === 'yearly') return t('cancelledAdmin.cycle.annual')
   return c || '-'
 }
 
@@ -47,6 +48,7 @@ function StatTile({ icon, label, value, foot, accent }) {
 }
 
 export default function Cancelled({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, cancelled: [], totals: null, unavailable: false })
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'canceledAt', dir: 'desc' })
@@ -97,48 +99,48 @@ export default function Cancelled({ isSuperAdmin }) {
 
   const toggleSort = (key) => setSort((s) => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'desc' })
 
-  if (state.loading) return <Loading label="Loading cancelled subscribers" />
+  if (state.loading) return <Loading label={t('cancelledAdmin.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
 
   // Totals: prefer the server summary; fall back to values derived from the rows
   // so the tiles are never blank when the endpoint omits totals.
-  const t = state.totals || {}
-  const count = t.count != null ? t.count : state.cancelled.length
-  const lifetime = t.lifetimeUsd != null ? t.lifetimeUsd
+  const tot = state.totals || {}
+  const count = tot.count != null ? tot.count : state.cancelled.length
+  const lifetime = tot.lifetimeUsd != null ? tot.lifetimeUsd
     : state.cancelled.reduce((sum, s) => sum + (Number(s.lifetimeUsd) || 0), 0)
 
   return (
     <div>
       {!isSuperAdmin ? (
-        <div className="wka-note"><Lock size={14} /> Cancelled subscribers are visible to superadmins and the accounting role. You can view everything here.</div>
+        <div className="wka-note"><Lock size={14} /> {t('cancelledAdmin.viewOnlyNote')}</div>
       ) : null}
 
       <div className="wka-cards">
-        <StatTile icon={<UserMinus size={14} />} label="Cancelled subscribers" value={count}
-          foot={state.unavailable ? 'Awaiting data' : 'All churned subscriptions on record'} accent />
-        <StatTile icon={<DollarSign size={14} />} label="Lifetime revenue (churned)" value={fmtMoney(lifetime, 'usd')}
-          foot="Total paid before they left" />
+        <StatTile icon={<UserMinus size={14} />} label={t('cancelledAdmin.tiles.cancelledSubscribers')} value={count}
+          foot={state.unavailable ? t('cancelledAdmin.tiles.awaitingData') : t('cancelledAdmin.tiles.allChurned')} accent />
+        <StatTile icon={<DollarSign size={14} />} label={t('cancelledAdmin.tiles.lifetimeRevenue')} value={fmtMoney(lifetime, 'usd')}
+          foot={t('cancelledAdmin.tiles.totalPaid')} />
       </div>
 
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 360 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search user, email, company, plan or reason"
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('cancelledAdmin.searchPlaceholder')}
             value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
-          {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
+          {refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('cancelledAdmin.refresh')}
         </button>
         <span className="wka-spacer" />
-        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{rows.length} of {state.cancelled.length}</span>
+        <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{t('cancelledAdmin.countOf', { shown: rows.length, total: state.cancelled.length })}</span>
       </div>
 
       {state.unavailable ? (
-        <EmptyState title="Cancelled subscribers are not available yet"
-          detail="The cancelled-subscribers endpoint is not wired on this server yet. Once it is live, every churned subscriber and the revenue they brought appear here. Use Refresh to check again." />
+        <EmptyState title={t('cancelledAdmin.unavailableTitle')}
+          detail={t('cancelledAdmin.unavailableDetail')} />
       ) : rows.length === 0 ? (
-        <EmptyState title="No cancelled subscribers match"
-          detail={query ? 'Try a different search.' : 'No subscriptions have been canceled yet. Churned subscribers appear here when a subscription ends.'} />
+        <EmptyState title={t('cancelledAdmin.noMatchTitle')}
+          detail={query ? t('cancelledAdmin.noMatchSearch') : t('cancelledAdmin.noMatchEmpty')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table" style={{ minWidth: 980 }}>
@@ -146,7 +148,7 @@ export default function Cancelled({ isSuperAdmin }) {
               <tr>
                 {COLUMNS.map((c) => (
                   <th key={c.key} className={c.sortable ? '' : 'no-sort'} onClick={c.sortable ? () => toggleSort(c.key) : undefined}>
-                    {c.label}{c.sortable && sort.key === c.key ? <span className="arrow">{sort.dir === 'asc' ? '↑' : '↓'}</span> : null}
+                    {t(`cancelledAdmin.${c.labelKey}`)}{c.sortable && sort.key === c.key ? <span className="arrow">{sort.dir === 'asc' ? '↑' : '↓'}</span> : null}
                   </th>
                 ))}
               </tr>
@@ -157,14 +159,14 @@ export default function Cancelled({ isSuperAdmin }) {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                       {u.username || '-'}
-                      <span className="wka-badge canceled">Canceled</span>
+                      <span className="wka-badge canceled">{t('cancelledAdmin.canceledBadge')}</span>
                     </div>
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {u.email ? <a href={`mailto:${u.email}`} style={{ color: 'var(--wka-cyan)' }}>{u.email}</a> : <span style={{ color: 'var(--wka-faint)' }}>-</span>}
                   </td>
                   <td>{u.plan ? <TierBadge tier={u.plan} /> : <span style={{ color: 'var(--wka-faint)' }}>-</span>}</td>
-                  <td style={{ whiteSpace: 'nowrap' }}>{fmtCycle(u.cycle)}</td>
+                  <td style={{ whiteSpace: 'nowrap' }}>{fmtCycle(u.cycle, t)}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.since ? fmtDateTime(u.since) : '-'}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{u.canceledAt ? fmtDateTime(u.canceledAt) : '-'}</td>
                   <td style={{ maxWidth: 240 }}>
@@ -174,7 +176,7 @@ export default function Cancelled({ isSuperAdmin }) {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     {u.companyName
                       ? <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}><Building2 size={13} style={{ color: 'var(--wka-faint)' }} />{u.companyName}</span>
-                      : <span style={{ color: 'var(--wka-faint)' }}>Individual</span>}
+                      : <span style={{ color: 'var(--wka-faint)' }}>{t('cancelledAdmin.individual')}</span>}
                   </td>
                 </tr>
               ))}

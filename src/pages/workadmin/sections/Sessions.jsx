@@ -5,26 +5,27 @@
 // be deleted (reason required + logged).
 import React, { useEffect, useState, useCallback } from 'react'
 import { Search, RefreshCw, Eye, Trash2, Activity } from 'lucide-react'
+import { useT } from '../../../i18n/index.jsx'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
 
 const money = (n) => ((n || 0) > 0 ? ((n || 0) < 0.01 ? '<$0.01' : '$' + (n || 0).toFixed(2)) : '-')
 
-function statusBadge(s) {
-  if (s.live) return <span className="wka-badge active" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Activity size={11} /> Live</span>
-  if (s.status === 'ended') return <span className="wka-badge ended">Ended</span>
-  if (s.paused) return <span className="wka-badge paused">Paused</span>
-  return <span className="wka-badge active">Active</span>
+function statusBadge(s, t) {
+  if (s.live) return <span className="wka-badge active" style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}><Activity size={11} /> {t('sessionsAdmin.statusLive')}</span>
+  if (s.status === 'ended') return <span className="wka-badge ended">{t('sessionsAdmin.statusEnded')}</span>
+  if (s.paused) return <span className="wka-badge paused">{t('sessionsAdmin.statusPaused')}</span>
+  return <span className="wka-badge active">{t('sessionsAdmin.statusActive')}</span>
 }
 
-function Progress({ done, total, current }) {
-  if (!total) return <span style={{ color: 'var(--wka-faint)' }}>No steps yet</span>
+function Progress({ done, total, current, t }) {
+  if (!total) return <span style={{ color: 'var(--wka-faint)' }}>{t('sessionsAdmin.noSteps')}</span>
   const pct = Math.min(100, Math.round((done / total) * 100))
   return (
     <div style={{ minWidth: 150 }}>
       <div className="wka-mono" style={{ fontSize: 12, marginBottom: 4 }}>
-        Step {Math.min((current || 0) + 1, total)} of {total} - {done} done
+        {t('sessionsAdmin.progressStep', { current: Math.min((current || 0) + 1, total), total, done })}
       </div>
       <div style={{ height: 6, borderRadius: 999, background: 'var(--wka-line-2)', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg, var(--wka-cyan), var(--wka-emerald))' }} />
@@ -37,6 +38,7 @@ function Progress({ done, total, current }) {
 // stats (premium calls, round-robins, estimated cost) are superadmin-only -
 // model names and AI cost are a superadmin-only business rule (owner 2026-10-23).
 function DetailModal({ id, onClose, isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, d: null })
   useEffect(() => {
     let alive = true
@@ -58,35 +60,35 @@ function DetailModal({ id, onClose, isSuperAdmin }) {
       style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'grid', placeItems: 'center', background: 'rgba(12,18,28,0.55)', backdropFilter: 'blur(2px)', padding: 16 }}
       onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
       <div className="wka-panel" style={{ maxWidth: 620, width: '100%', maxHeight: '88vh', overflowY: 'auto' }}>
-        {state.loading ? <Loading label="Loading session" /> : state.error ? <ErrorBox error={state.error} /> : d ? (
+        {state.loading ? <Loading label={t('sessionsAdmin.loadingSession')} /> : state.error ? <ErrorBox error={state.error} /> : d ? (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
               <h2 style={{ margin: 0 }}>{d.username}{d.displayName ? ` (${d.displayName})` : ''}</h2>
-              {statusBadge(d)}
+              {statusBadge(d, t)}
             </div>
-            <p className="desc" style={{ marginTop: 6 }}>{d.goal || d.title || 'No goal set'}</p>
+            <p className="desc" style={{ marginTop: 6 }}>{d.goal || d.title || t('sessionsAdmin.noGoalSet')}</p>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, margin: '12px 0' }}>
-              <Stat label="Calls" value={d.calls} hint="total AI calls" />
-              {isSuperAdmin ? <Stat label="Premium" value={d.premiumCalls} hint="top-tier model" /> : null}
-              {isSuperAdmin ? <Stat label="Round-robins" value={d.roundRobins} hint="model switches" /> : null}
-              <Stat label="Refinements" value={d.refinements} hint="re-plans" />
-              <Stat label="Mins left" value={d.remainingMinutes == null ? '-' : d.remainingMinutes} hint="today" />
-              {isSuperAdmin ? <Stat label="Est. cost" value={money(d.costUsd)} /> : null}
+              <Stat label={t('sessionsAdmin.statCalls')} value={d.calls} hint={t('sessionsAdmin.statCallsHint')} />
+              {isSuperAdmin ? <Stat label={t('sessionsAdmin.statPremium')} value={d.premiumCalls} hint={t('sessionsAdmin.statPremiumHint')} /> : null}
+              {isSuperAdmin ? <Stat label={t('sessionsAdmin.statRoundRobins')} value={d.roundRobins} hint={t('sessionsAdmin.statRoundRobinsHint')} /> : null}
+              <Stat label={t('sessionsAdmin.statRefinements')} value={d.refinements} hint={t('sessionsAdmin.statRefinementsHint')} />
+              <Stat label={t('sessionsAdmin.statMinsLeft')} value={d.remainingMinutes == null ? '-' : d.remainingMinutes} hint={t('sessionsAdmin.statMinsLeftHint')} />
+              {isSuperAdmin ? <Stat label={t('sessionsAdmin.estCost')} value={money(d.costUsd)} /> : null}
             </div>
 
             <div style={{ margin: '8px 0 14px' }}>
-              <Progress done={d.progress.done} total={d.progress.total} current={d.progress.currentIndex} />
+              <Progress done={d.progress.done} total={d.progress.total} current={d.progress.currentIndex} t={t} />
               {d.progress.currentStep ? (
                 <div style={{ marginTop: 8, fontSize: 13 }}>
-                  <span style={{ color: 'var(--wka-muted)' }}>Currently on: </span>{d.progress.currentStep}
+                  <span style={{ color: 'var(--wka-muted)' }}>{t('sessionsAdmin.currentlyOn')} </span>{d.progress.currentStep}
                 </div>
               ) : null}
             </div>
 
             {d.byKind && Object.keys(d.byKind).length ? (
               <div style={{ marginBottom: 12 }}>
-                <div style={{ fontSize: 11, color: 'var(--wka-muted)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>Calls by kind</div>
+                <div style={{ fontSize: 11, color: 'var(--wka-muted)', textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{t('sessionsAdmin.callsByKind')}</div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {Object.entries(d.byKind).map(([k, n]) => (
                     <span key={k} className="wka-badge" style={{ background: 'var(--wka-line-2,#eef1f5)' }}>{k}: {n}</span>
@@ -96,14 +98,14 @@ function DetailModal({ id, onClose, isSuperAdmin }) {
             ) : null}
 
             <div className="wka-mono" style={{ fontSize: 12, color: 'var(--wka-muted)', lineHeight: 1.7 }}>
-              <div>Tier: {d.tier || '-'}{d.companyId ? ' (company)' : ''}</div>
-              <div>Started: {fmtDateTime(d.startedAt)}</div>
-              <div>Last activity: {fmtDateTime(d.lastActivityAt)}{d.idleSeconds != null ? ` (idle ${d.idleSeconds}s)` : ''}</div>
-              {d.lastCallAt ? <div>Last AI call: {fmtDateTime(d.lastCallAt)}</div> : null}
-              {d.endedAt ? <div>Ended: {fmtDateTime(d.endedAt)}</div> : null}
+              <div>{t('sessionsAdmin.tierLabel')} {d.tier || '-'}{d.companyId ? ` ${t('sessionsAdmin.company')}` : ''}</div>
+              <div>{t('sessionsAdmin.startedLabel')} {fmtDateTime(d.startedAt)}</div>
+              <div>{t('sessionsAdmin.lastActivityLabel')} {fmtDateTime(d.lastActivityAt)}{d.idleSeconds != null ? ` ${t('sessionsAdmin.idleSuffix', { n: d.idleSeconds })}` : ''}</div>
+              {d.lastCallAt ? <div>{t('sessionsAdmin.lastCallLabel')} {fmtDateTime(d.lastCallAt)}</div> : null}
+              {d.endedAt ? <div>{t('sessionsAdmin.endedLabel')} {fmtDateTime(d.endedAt)}</div> : null}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 16 }}>
-              <button type="button" className="wka-btn sm ghost" onClick={onClose}>Close</button>
+              <button type="button" className="wka-btn sm ghost" onClick={onClose}>{t('sessionsAdmin.close')}</button>
             </div>
           </>
         ) : null}
@@ -113,6 +115,7 @@ function DetailModal({ id, onClose, isSuperAdmin }) {
 }
 
 export default function Sessions({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, sessions: [], total: 0, liveCount: 0, windowDays: 7 })
   const [page, setPage] = useState(1)
   const [pageSize] = useState(25)   // keep only a small page in the browser at a time
@@ -149,7 +152,7 @@ export default function Sessions({ isSuperAdmin }) {
     (s.username || '').toLowerCase().includes(q) || (s.goal || '').toLowerCase().includes(q) || (s.title || '').toLowerCase().includes(q))
   const totalPages = Math.max(1, Math.ceil(state.total / pageSize))
 
-  if (state.loading) return <Loading label="Loading sessions" />
+  if (state.loading) return <Loading label={t('sessionsAdmin.loadingSessions')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(page, false)} />
 
   return (
@@ -157,32 +160,32 @@ export default function Sessions({ isSuperAdmin }) {
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 320 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search this page"
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('sessionsAdmin.searchPlaceholder')}
             value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <button type="button" className="wka-btn sm" onClick={() => load(page, true)} disabled={refreshing}>
-          {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
+          {refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('sessionsAdmin.refresh')}
         </button>
-        <span className="wka-badge active"><Activity size={11} /> {state.liveCount} live</span>
+        <span className="wka-badge active"><Activity size={11} /> {t('sessionsAdmin.liveCount', { n: state.liveCount })}</span>
         <span className="wka-spacer" />
         <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>
-          {state.total} in the last {state.windowDays} days (older auto-delete)
+          {t('sessionsAdmin.windowSummary', { total: state.total, days: state.windowDays })}
         </span>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState title="No sessions" detail={q ? 'Try a different search.' : 'No sessions in the last 7 days.'} />
+        <EmptyState title={t('sessionsAdmin.emptyTitle')} detail={q ? t('sessionsAdmin.emptySearchDetail') : t('sessionsAdmin.emptyDetail')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table">
             <thead>
               <tr>
-                <th className="no-sort">User</th>
-                <th className="no-sort">Goal</th>
-                <th className="no-sort">Progress</th>
-                <th className="no-sort">Started</th>
-                <th className="no-sort">Status</th>
-                {isSuperAdmin ? <th className="no-sort" title="Estimated AI cost (list prices, chars/4 estimate)">Est. cost</th> : null}
+                <th className="no-sort">{t('sessionsAdmin.colUser')}</th>
+                <th className="no-sort">{t('sessionsAdmin.colGoal')}</th>
+                <th className="no-sort">{t('sessionsAdmin.colProgress')}</th>
+                <th className="no-sort">{t('sessionsAdmin.colStarted')}</th>
+                <th className="no-sort">{t('sessionsAdmin.colStatus')}</th>
+                {isSuperAdmin ? <th className="no-sort" title={t('sessionsAdmin.estCostTitle')}>{t('sessionsAdmin.estCost')}</th> : null}
                 <th className="no-sort"></th>
               </tr>
             </thead>
@@ -192,16 +195,16 @@ export default function Sessions({ isSuperAdmin }) {
                   <td style={{ fontWeight: 600, whiteSpace: 'nowrap' }}>{s.username}</td>
                   <td style={{ maxWidth: 300 }}>
                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={s.goal || s.title || ''}>
-                      {s.goal || s.title || <span style={{ color: 'var(--wka-faint)' }}>No goal set</span>}
+                      {s.goal || s.title || <span style={{ color: 'var(--wka-faint)' }}>{t('sessionsAdmin.noGoalSet')}</span>}
                     </div>
                   </td>
-                  <td><Progress done={s.stepDone} total={s.stepTotal} current={s.currentStep} /></td>
+                  <td><Progress done={s.stepDone} total={s.stepTotal} current={s.currentStep} t={t} /></td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(s.startedAt)}</td>
-                  <td>{statusBadge(s)}</td>
+                  <td>{statusBadge(s, t)}</td>
                   {isSuperAdmin ? <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{money(s.costUsd)}</td> : null}
                   <td style={{ whiteSpace: 'nowrap', textAlign: 'right' }}>
-                    <button type="button" className="wka-btn sm ghost" onClick={() => setViewId(s.id)} title="View detail"><Eye size={13} /> View</button>
-                    <button type="button" className="wka-btn sm ghost" onClick={() => { setDelErr(null); setDel(s) }} title="Delete record" style={{ marginLeft: 6, color: 'var(--wka-red)' }}><Trash2 size={13} /></button>
+                    <button type="button" className="wka-btn sm ghost" onClick={() => setViewId(s.id)} title={t('sessionsAdmin.viewTitle')}><Eye size={13} /> {t('sessionsAdmin.view')}</button>
+                    <button type="button" className="wka-btn sm ghost" onClick={() => { setDelErr(null); setDel(s) }} title={t('sessionsAdmin.deleteRecordTitle')} style={{ marginLeft: 6, color: 'var(--wka-red)' }}><Trash2 size={13} /></button>
                   </td>
                 </tr>
               ))}
@@ -212,18 +215,18 @@ export default function Sessions({ isSuperAdmin }) {
 
       {totalPages > 1 ? (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 14 }}>
-          <button type="button" className="wka-btn sm ghost" disabled={page <= 1 || refreshing} onClick={() => setPage((p) => Math.max(1, p - 1))}>Previous</button>
-          <span style={{ fontSize: 12.5, color: 'var(--wka-muted)' }}>Page {page} of {totalPages}</span>
-          <button type="button" className="wka-btn sm ghost" disabled={page >= totalPages || refreshing} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>Next</button>
+          <button type="button" className="wka-btn sm ghost" disabled={page <= 1 || refreshing} onClick={() => setPage((p) => Math.max(1, p - 1))}>{t('sessionsAdmin.previous')}</button>
+          <span style={{ fontSize: 12.5, color: 'var(--wka-muted)' }}>{t('sessionsAdmin.pageOf', { page, total: totalPages })}</span>
+          <button type="button" className="wka-btn sm ghost" disabled={page >= totalPages || refreshing} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>{t('sessionsAdmin.next')}</button>
         </div>
       ) : null}
 
       {viewId ? <DetailModal id={viewId} onClose={() => setViewId(null)} isSuperAdmin={isSuperAdmin} /> : null}
       {del ? (
         <ReasonModal
-          title="Delete session record"
-          message={`Permanently delete ${del.username}'s session "${del.goal || del.title || 'Untitled'}" and its evidence. This cannot be undone.`}
-          confirmLabel="Delete session"
+          title={t('sessionsAdmin.deleteTitle')}
+          message={t('sessionsAdmin.deleteMessage', { user: del.username, title: del.goal || del.title || t('sessionsAdmin.untitled') })}
+          confirmLabel={t('sessionsAdmin.deleteConfirm')}
           busy={delBusy} error={delErr}
           onConfirm={confirmDelete}
           onCancel={() => { if (!delBusy) setDel(null) }}

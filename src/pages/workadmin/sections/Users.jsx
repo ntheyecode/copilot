@@ -7,21 +7,23 @@ import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarS
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
+import { useT } from '../../../i18n/index.jsx'
 
 const COLUMNS = [
-  { key: 'username', label: 'User', sortable: true },
-  { key: 'tier', label: 'Tier', sortable: true },
-  { key: 'companyName', label: 'Company & role', sortable: true },
-  { key: 'freeLeftSeconds', label: 'Free left today', sortable: true },
-  { key: 'purchasedSeconds', label: 'Purchased balance', sortable: true },
-  { key: 'remainingSeconds', label: 'Total remaining', sortable: true },
-  { key: 'sessionCount', label: 'Sessions', sortable: true },
-  { key: 'mfa', label: '2FA', sortable: false },
-  { key: 'actions', label: '', sortable: false },
+  { key: 'username', labelKey: 'columns.user', sortable: true },
+  { key: 'tier', labelKey: 'columns.tier', sortable: true },
+  { key: 'companyName', labelKey: 'columns.company', sortable: true },
+  { key: 'freeLeftSeconds', labelKey: 'columns.freeLeft', sortable: true },
+  { key: 'purchasedSeconds', labelKey: 'columns.purchased', sortable: true },
+  { key: 'remainingSeconds', labelKey: 'columns.remaining', sortable: true },
+  { key: 'sessionCount', labelKey: 'columns.sessions', sortable: true },
+  { key: 'mfa', labelKey: 'columns.mfa', sortable: false },
+  { key: 'actions', labelKey: null, sortable: false },
 ]
 const EMPTY_NEW = { username: '', email: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
 
 export default function UsersSection({ isSuperAdmin, viewer }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, users: [], tiers: [], companies: [] })
   const [query, setQuery] = useState('')
   const [sort, setSort] = useState({ key: 'username', dir: 'asc' })
@@ -54,10 +56,10 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
     e && e.preventDefault()
     const username = nu.username.trim()
     const email = (nu.email || '').trim()
-    if (username.length < 2) { setCreateMsg({ kind: 'err', text: 'Enter a username (2+ characters).' }); return }
-    if (nu.password && nu.password.length < 6) { setCreateMsg({ kind: 'err', text: 'A password must be at least 6 characters.' }); return }
-    if (!nu.password && !email) { setCreateMsg({ kind: 'err', text: 'Add an email to send a set-password link, or set a password.' }); return }
-    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setCreateMsg({ kind: 'err', text: 'Enter a valid email address.' }); return }
+    if (username.length < 2) { setCreateMsg({ kind: 'err', text: t('usersAdmin.createMsg.usernameMin') }); return }
+    if (nu.password && nu.password.length < 6) { setCreateMsg({ kind: 'err', text: t('usersAdmin.createMsg.passwordMin') }); return }
+    if (!nu.password && !email) { setCreateMsg({ kind: 'err', text: t('usersAdmin.createMsg.emailOrPassword') }); return }
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { setCreateMsg({ kind: 'err', text: t('usersAdmin.createMsg.emailInvalid') }); return }
     setCreating(true); setCreateMsg(null)
     try {
       // When an email is given, the person is emailed a set-password link (even
@@ -68,11 +70,14 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
         companyRole: nu.companyId ? nu.companyRole : undefined,
         tier: nu.tier, free: !!nu.free,
       })
-      setCreateMsg({ kind: 'ok', text: `Created ${username}${nu.companyId ? ` (${nu.companyRole === 'company_admin' ? 'company admin' : nu.companyRole === 'executive' ? 'executive' : 'member'})` : ''}.${email ? ` A set-password link was emailed to ${email}.` : ''}` })
+      const roleWord = nu.companyRole === 'company_admin' ? t('usersAdmin.createMsg.roleCompanyAdmin') : nu.companyRole === 'executive' ? t('usersAdmin.createMsg.roleExecutive') : t('usersAdmin.createMsg.roleMember')
+      const companySuffix = nu.companyId ? ` (${roleWord})` : ''
+      const emailSuffix = email ? ` ${t('usersAdmin.createMsg.setPasswordEmailed', { email })}` : ''
+      setCreateMsg({ kind: 'ok', text: t('usersAdmin.createMsg.created', { username, companySuffix, emailSuffix }) })
       setNu(EMPTY_NEW)
       await load()
     } catch (error) {
-      setCreateMsg({ kind: 'err', text: error.message || 'Could not create the user.' })
+      setCreateMsg({ kind: 'err', text: error.message || t('usersAdmin.createMsg.couldNotCreate') })
     } finally { setCreating(false) }
   }
 
@@ -81,11 +86,11 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
     setBusyId(user.id)
     try {
       await workAdminApi.userCompany(user.id, companyId || null, companyId ? companyRole : null)
-      setMsg(user.id, 'ok', companyId ? `Moved to ${(state.companies.find((c) => c.id === companyId) || {}).name || 'company'}` : 'Removed from company')
+      setMsg(user.id, 'ok', companyId ? t('usersAdmin.toasts.movedTo', { name: (state.companies.find((c) => c.id === companyId) || {}).name || t('usersAdmin.toasts.companyFallback') }) : t('usersAdmin.toasts.removedFromCompany'))
       setCompanyFor(null)
       await load()
     } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not update the company')
+      setMsg(user.id, 'err', error.message || t('usersAdmin.toasts.couldNotUpdateCompany'))
     } finally { setBusyId(null) }
   }
 
@@ -103,7 +108,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
       window.location.assign('/work')
       // Keep the row busy while the browser navigates away.
     } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not open the dashboard as this user')
+      setMsg(user.id, 'err', error.message || t('usersAdmin.toasts.couldNotOpenAsUser'))
       setBusyId(null)
     }
   }
@@ -127,28 +132,28 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
         const r = await workAdminApi.refundUser(user.id, { last: true, reason })
         const amt = r && r.refund ? (r.refund.amount / 100).toFixed(2) : null
         setConfirmAction(null)
-        setMsg(user.id, 'ok', amt != null ? `Refunded ${amt} ${(r.refund.currency || 'usd').toUpperCase()}` : 'Refund processed')
+        setMsg(user.id, 'ok', amt != null ? t('usersAdmin.toasts.refunded', { amt, currency: (r.refund.currency || 'usd').toUpperCase() }) : t('usersAdmin.toasts.refundProcessed'))
       }
-      else if (mode === 'cancel') { await workAdminApi.cancelUserSubscription(user.id, false, reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Subscription canceled') }
-      else if (mode === 'mfa') { await workAdminApi.resetUserMfa(user.id, reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Two-factor reset.'); await load() }
-      else if (mode === 'accounting-grant') { await workAdminApi.financeSetRole(user.id, 'accounting', reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Accounting role granted.'); await load() }
-      else if (mode === 'accounting-remove') { await workAdminApi.financeSetRole(user.id, 'user', reason); setConfirmAction(null); setMsg(user.id, 'ok', 'Accounting role removed.'); await load() }
+      else if (mode === 'cancel') { await workAdminApi.cancelUserSubscription(user.id, false, reason); setConfirmAction(null); setMsg(user.id, 'ok', t('usersAdmin.toasts.subscriptionCanceled')) }
+      else if (mode === 'mfa') { await workAdminApi.resetUserMfa(user.id, reason); setConfirmAction(null); setMsg(user.id, 'ok', t('usersAdmin.toasts.twoFactorReset')); await load() }
+      else if (mode === 'accounting-grant') { await workAdminApi.financeSetRole(user.id, 'accounting', reason); setConfirmAction(null); setMsg(user.id, 'ok', t('usersAdmin.toasts.accountingGranted')); await load() }
+      else if (mode === 'accounting-remove') { await workAdminApi.financeSetRole(user.id, 'user', reason); setConfirmAction(null); setMsg(user.id, 'ok', t('usersAdmin.toasts.accountingRemoved')); await load() }
     } catch (e) { setCaErr(e) } finally { setCaBusy(false) }
   }
 
   // Copy for each confirm mode (title / message / confirm button / danger tint).
   const CONFIRM_COPY = (mode, u) => {
-    const name = (u && u.username) || 'this account'
+    const name = (u && u.username) || t('usersAdmin.confirm.nameFallback')
     switch (mode) {
-      case 'delete': return { title: `Delete ${name}`, message: 'Permanently delete this account and all of its sessions and evidence. This cannot be undone.', confirmLabel: 'Delete account', danger: true }
-      case 'enable': return { title: `Re-enable ${name}`, message: 'The account can sign in and use the service again.', confirmLabel: 'Enable', danger: false }
-      case 'disable': return { title: `Disable ${name}`, message: 'The account is signed out everywhere and cannot sign in until re-enabled.', confirmLabel: 'Disable', danger: true }
-      case 'refund': return { title: `Refund ${name}`, message: 'Refund the most recent payment for this account. This moves real money and cannot be undone.', confirmLabel: 'Refund last payment', danger: true }
-      case 'cancel': return { title: `Cancel subscription for ${name}`, message: 'End the subscription now. Their guiding access stops immediately.', confirmLabel: 'Cancel subscription', danger: true }
-      case 'mfa': return { title: `Reset two-factor for ${name}`, message: 'They are signed out and must set up their authenticator again on next sign-in. Use this when someone loses their phone.', confirmLabel: 'Reset authenticator', danger: true }
-      case 'accounting-grant': return { title: `Grant accounting role to ${name}`, message: 'They will see all transactions and can issue refunds, but nothing else in the admin console.', confirmLabel: 'Grant accounting', danger: false }
-      case 'accounting-remove': return { title: `Remove accounting role from ${name}`, message: 'They lose access to transactions and refunds.', confirmLabel: 'Remove accounting', danger: false }
-      default: return { title: 'Confirm', message: '', confirmLabel: 'Confirm', danger: true }
+      case 'delete': return { title: t('usersAdmin.confirm.deleteTitle', { name }), message: t('usersAdmin.confirm.deleteMessage'), confirmLabel: t('usersAdmin.confirm.deleteConfirm'), danger: true }
+      case 'enable': return { title: t('usersAdmin.confirm.enableTitle', { name }), message: t('usersAdmin.confirm.enableMessage'), confirmLabel: t('usersAdmin.confirm.enableConfirm'), danger: false }
+      case 'disable': return { title: t('usersAdmin.confirm.disableTitle', { name }), message: t('usersAdmin.confirm.disableMessage'), confirmLabel: t('usersAdmin.confirm.disableConfirm'), danger: true }
+      case 'refund': return { title: t('usersAdmin.confirm.refundTitle', { name }), message: t('usersAdmin.confirm.refundMessage'), confirmLabel: t('usersAdmin.confirm.refundConfirm'), danger: true }
+      case 'cancel': return { title: t('usersAdmin.confirm.cancelTitle', { name }), message: t('usersAdmin.confirm.cancelMessage'), confirmLabel: t('usersAdmin.confirm.cancelConfirm'), danger: true }
+      case 'mfa': return { title: t('usersAdmin.confirm.mfaTitle', { name }), message: t('usersAdmin.confirm.mfaMessage'), confirmLabel: t('usersAdmin.confirm.mfaConfirm'), danger: true }
+      case 'accounting-grant': return { title: t('usersAdmin.confirm.accountingGrantTitle', { name }), message: t('usersAdmin.confirm.accountingGrantMessage'), confirmLabel: t('usersAdmin.confirm.accountingGrantConfirm'), danger: false }
+      case 'accounting-remove': return { title: t('usersAdmin.confirm.accountingRemoveTitle', { name }), message: t('usersAdmin.confirm.accountingRemoveMessage'), confirmLabel: t('usersAdmin.confirm.accountingRemoveConfirm'), danger: false }
+      default: return { title: t('usersAdmin.confirm.defaultTitle'), message: '', confirmLabel: t('usersAdmin.confirm.defaultConfirm'), danger: true }
     }
   }
 
@@ -158,9 +163,9 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
     try {
       const usage = await workAdminApi.setTier(user.id, tier)
       setState((s) => ({ ...s, users: s.users.map((u) => u.id === user.id ? { ...u, ...usage } : u) }))
-      setMsg(user.id, 'ok', `Tier set to ${tier}`)
+      setMsg(user.id, 'ok', t('usersAdmin.toasts.tierSet', { tier }))
     } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not change tier')
+      setMsg(user.id, 'err', error.message || t('usersAdmin.toasts.couldNotChangeTier'))
     } finally { setBusyId(null) }
   }
 
@@ -174,23 +179,23 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
     setBusyId(user.id)
     try {
       await workAdminApi.userFreeAccess(user.id, !user.free)
-      setMsg(user.id, 'ok', user.free ? 'Free access revoked' : 'Free access granted (premium)')
+      setMsg(user.id, 'ok', user.free ? t('usersAdmin.toasts.freeRevoked') : t('usersAdmin.toasts.freeGranted'))
       await load()
     } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not change free access')
+      setMsg(user.id, 'err', error.message || t('usersAdmin.toasts.couldNotChangeFree'))
     } finally { setBusyId(null) }
   }
   const applyGrant = async (user) => {
     const hours = Number(grantHours)
-    if (!isFinite(hours) || hours <= 0) { setMsg(user.id, 'err', 'Enter a positive number of hours'); return }
+    if (!isFinite(hours) || hours <= 0) { setMsg(user.id, 'err', t('usersAdmin.toasts.grantHoursPositive')); return }
     setBusyId(user.id)
     try {
       const usage = await workAdminApi.grantHours(user.id, hours)
       setState((s) => ({ ...s, users: s.users.map((u) => u.id === user.id ? { ...u, ...usage } : u) }))
-      setMsg(user.id, 'ok', `Granted ${hours}h`)
+      setMsg(user.id, 'ok', t('usersAdmin.toasts.granted', { hours }))
       setGrantFor(null); setGrantHours('1')
     } catch (error) {
-      setMsg(user.id, 'err', error.message || 'Could not grant hours')
+      setMsg(user.id, 'err', error.message || t('usersAdmin.toasts.couldNotGrantHours'))
     } finally { setBusyId(null) }
   }
 
@@ -209,68 +214,68 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
 
   const toggleSort = (key) => setSort((s) => s.key === key ? { key, dir: s.dir === 'asc' ? 'desc' : 'asc' } : { key, dir: 'asc' })
 
-  if (state.loading) return <Loading label="Loading users" />
+  if (state.loading) return <Loading label={t('usersAdmin.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
 
   return (
     <div>
       {!isSuperAdmin ? (
-        <div className="wka-note"><Lock size={14} /> Changing a tier or granting hours requires superadmin access. You can view everything here.</div>
+        <div className="wka-note"><Lock size={14} /> {t('usersAdmin.viewOnlyNote')}</div>
       ) : null}
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 360 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search by username"
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('usersAdmin.searchPlaceholder')}
             value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
-        <button type="button" className="wka-btn sm primary" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Create a new WorkCoPilot user' : 'Superadmin only'}
+        <button type="button" className="wka-btn sm primary" disabled={!isSuperAdmin} title={isSuperAdmin ? t('usersAdmin.newUserTitle') : t('usersAdmin.superadminOnly')}
           onClick={() => { setShowCreate((v) => !v); setCreateMsg(null) }}>
-          <UserPlus size={14} /> New user
+          <UserPlus size={14} /> {t('usersAdmin.newUser')}
         </button>
         <span className="wka-spacer" />
-        <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{rows.length} of {state.users.length}</span>
+        <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{t('usersAdmin.countOf', { shown: rows.length, total: state.users.length })}</span>
       </div>
 
       {showCreate && isSuperAdmin && (
         <form className="wka-panel" onSubmit={createUser}>
-          <h2><UserPlus size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />Create a user</h2>
-          <p className="desc">Create a WorkCoPilot account. Optionally put them in a company as a member or a <b>company admin</b>, set the tier, and grant free (comped) access so they can use the service without Stripe.</p>
+          <h2><UserPlus size={15} style={{ verticalAlign: '-2px', marginRight: 6, color: 'var(--wka-cyan)' }} />{t('usersAdmin.create.heading')}</h2>
+          <p className="desc">{t.rich('usersAdmin.create.desc')}</p>
           <div className="wka-formgrid">
-            <div className="wka-field"><label>Username</label><input className="wka-input" value={nu.username} onChange={(e) => setNu((f) => ({ ...f, username: e.target.value }))} placeholder="jordan" autoComplete="off" /></div>
-            <div className="wka-field"><label>Email <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>(sends a set-password link)</span></label><input className="wka-input" type="email" value={nu.email} onChange={(e) => setNu((f) => ({ ...f, email: e.target.value }))} placeholder="jordan@acme.com" autoComplete="off" /></div>
-            <div className="wka-field"><label>Temporary password <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>(optional)</span></label><input className="wka-input" type="text" value={nu.password} onChange={(e) => setNu((f) => ({ ...f, password: e.target.value }))} placeholder="leave blank - they set it from the email" autoComplete="off" /></div>
-            <div className="wka-field"><label>Company (optional)</label>
+            <div className="wka-field"><label>{t('usersAdmin.create.username')}</label><input className="wka-input" value={nu.username} onChange={(e) => setNu((f) => ({ ...f, username: e.target.value }))} placeholder={t('usersAdmin.create.usernamePlaceholder')} autoComplete="off" /></div>
+            <div className="wka-field"><label>{t('usersAdmin.create.email')} <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>{t('usersAdmin.create.emailHint')}</span></label><input className="wka-input" type="email" value={nu.email} onChange={(e) => setNu((f) => ({ ...f, email: e.target.value }))} placeholder={t('usersAdmin.create.emailPlaceholder')} autoComplete="off" /></div>
+            <div className="wka-field"><label>{t('usersAdmin.create.tempPassword')} <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>{t('usersAdmin.create.tempPasswordHint')}</span></label><input className="wka-input" type="text" value={nu.password} onChange={(e) => setNu((f) => ({ ...f, password: e.target.value }))} placeholder={t('usersAdmin.create.tempPasswordPlaceholder')} autoComplete="off" /></div>
+            <div className="wka-field"><label>{t('usersAdmin.create.company')}</label>
               <select className="wka-select" value={nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyId: e.target.value }))}>
-                <option value="">No company (individual user)</option>
+                <option value="">{t('usersAdmin.create.noCompanyOption')}</option>
                 {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
-            <div className="wka-field"><label>Role in company</label>
+            <div className="wka-field"><label>{t('usersAdmin.create.roleInCompany')}</label>
               <select className="wka-select" value={nu.companyRole} disabled={!nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyRole: e.target.value }))}>
-                <option value="member">Member</option>
-                <option value="company_admin">Company admin</option>
-                <option value="executive">Executive (productivity dashboard, read-only)</option>
+                <option value="member">{t('usersAdmin.create.roleMember')}</option>
+                <option value="company_admin">{t('usersAdmin.create.roleCompanyAdmin')}</option>
+                <option value="executive">{t('usersAdmin.create.roleExecutiveLong')}</option>
               </select>
             </div>
-            <div className="wka-field"><label>Tier</label>
+            <div className="wka-field"><label>{t('usersAdmin.create.tier')}</label>
               <select className="wka-select" value={nu.tier} onChange={(e) => setNu((f) => ({ ...f, tier: e.target.value }))}>
                 {state.tiers.map((t) => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
               </select>
             </div>
             <div className="wka-field" style={{ justifyContent: 'flex-end' }}>
-              <label className="wka-check"><input type="checkbox" checked={nu.free} onChange={(e) => setNu((f) => ({ ...f, free: e.target.checked }))} /> Free (comped) access, no Stripe needed</label>
+              <label className="wka-check"><input type="checkbox" checked={nu.free} onChange={(e) => setNu((f) => ({ ...f, free: e.target.checked }))} /> {t('usersAdmin.create.freeCheckbox')}</label>
             </div>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
-            <button type="submit" className="wka-btn primary" disabled={creating}>{creating ? <Spinning /> : <UserPlus size={14} />} Create user</button>
-            <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setNu(EMPTY_NEW); setCreateMsg(null) }}><X size={14} /> Cancel</button>
+            <button type="submit" className="wka-btn primary" disabled={creating}>{creating ? <Spinning /> : <UserPlus size={14} />} {t('usersAdmin.create.submit')}</button>
+            <button type="button" className="wka-btn ghost" onClick={() => { setShowCreate(false); setNu(EMPTY_NEW); setCreateMsg(null) }}><X size={14} /> {t('usersAdmin.create.cancel')}</button>
             {createMsg ? <span style={{ fontSize: 13, color: createMsg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{createMsg.text}</span> : null}
           </div>
         </form>
       )}
 
       {rows.length === 0 ? (
-        <EmptyState title="No users match" detail={query ? 'Try a different search.' : 'No WorkCoPilot users have been provisioned yet.'} />
+        <EmptyState title={t('usersAdmin.empty.title')} detail={query ? t('usersAdmin.empty.detailSearch') : t('usersAdmin.empty.detailNone')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table">
@@ -278,7 +283,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
               <tr>
                 {COLUMNS.map((c) => (
                   <th key={c.key} className={c.sortable ? '' : 'no-sort'} onClick={c.sortable ? () => toggleSort(c.key) : undefined}>
-                    {c.label}{c.sortable && sort.key === c.key ? <span className="arrow">{sort.dir === 'asc' ? '↑' : '↓'}</span> : null}
+                    {c.labelKey ? t('usersAdmin.' + c.labelKey) : ''}{c.sortable && sort.key === c.key ? <span className="arrow">{sort.dir === 'asc' ? '↑' : '↓'}</span> : null}
                   </th>
                 ))}
               </tr>
@@ -299,7 +304,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                     <td>
                       <div style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
                         {u.username}
-                        {u.disabled ? <span className="wka-badge disabled">Disabled</span> : null}
+                        {u.disabled ? <span className="wka-badge disabled">{t('usersAdmin.disabledBadge')}</span> : null}
                       </div>
                       {u.displayName ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{u.displayName}</div> : null}
                       {msg ? <div style={{ fontSize: 11, marginTop: 3, color: msg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{msg.text}</div> : null}
@@ -316,19 +321,19 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                       {companyFor === u.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           <select className="wka-select" defaultValue={u.companyId || ''} id={`co-${u.id}`} style={{ maxWidth: 150 }}>
-                            <option value="">No company</option>
+                            <option value="">{t('usersAdmin.companyEdit.noCompany')}</option>
                             {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
                           <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 190 }}>
-                            <option value="member">Member</option>
-                            <option value="company_admin">Company admin</option>
-                            <option value="executive">Executive (read-only)</option>
+                            <option value="member">{t('usersAdmin.companyEdit.member')}</option>
+                            <option value="company_admin">{t('usersAdmin.companyEdit.companyAdmin')}</option>
+                            <option value="executive">{t('usersAdmin.companyEdit.executiveReadOnly')}</option>
                           </select>
                           <button type="button" className="wka-btn sm primary" disabled={busyId === u.id}
                             onClick={() => { const cid = document.getElementById(`co-${u.id}`).value; const cr = document.getElementById(`cr-${u.id}`).value; applyCompany(u, cid, cr) }}>
-                            {busyId === u.id ? <Spinning /> : 'Save'}
+                            {busyId === u.id ? <Spinning /> : t('usersAdmin.companyEdit.save')}
                           </button>
-                          <button type="button" className="wka-btn sm ghost" onClick={() => setCompanyFor(null)}>Cancel</button>
+                          <button type="button" className="wka-btn sm ghost" onClick={() => setCompanyFor(null)}>{t('usersAdmin.companyEdit.cancel')}</button>
                         </span>
                       ) : (
                         <span style={{ display: 'inline-flex', gap: 8, alignItems: 'center' }}>
@@ -336,87 +341,87 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                               <Building2 size={13} style={{ color: 'var(--wka-faint)' }} />
                               <span style={{ fontWeight: 600 }}>{u.companyName}</span>
-                              {u.companyRole === 'company_admin' ? <span className="wka-badge active">admin</span> : u.companyRole === 'executive' ? <span className="wka-badge active">executive</span> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>member</span>}
+                              {u.companyRole === 'company_admin' ? <span className="wka-badge active">{t('usersAdmin.companyRole.admin')}</span> : u.companyRole === 'executive' ? <span className="wka-badge active">{t('usersAdmin.companyRole.executive')}</span> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{t('usersAdmin.companyRole.member')}</span>}
                             </span>
-                          ) : <span style={{ color: 'var(--wka-faint)', fontSize: 13 }}>Individual</span>}
-                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Set company & role' : 'Superadmin only'} onClick={() => setCompanyFor(u.id)}>Change</button>
+                          ) : <span style={{ color: 'var(--wka-faint)', fontSize: 13 }}>{t('usersAdmin.individual')}</span>}
+                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title={isSuperAdmin ? t('usersAdmin.changeCompanyTitle') : t('usersAdmin.superadminOnly')} onClick={() => setCompanyFor(u.id)}>{t('usersAdmin.change')}</button>
                         </span>
                       )}
                     </td>
                     <td className="wka-mono">{hmFromSeconds(u.freeLeftSeconds)}
-                      {u.exhausted ? <span className="wka-badge exhausted" style={{ marginLeft: 8 }}>exhausted</span> : null}
+                      {u.exhausted ? <span className="wka-badge exhausted" style={{ marginLeft: 8 }}>{t('usersAdmin.exhausted')}</span> : null}
                     </td>
                     <td className="wka-mono">{hmFromSeconds(u.purchasedSeconds)}</td>
                     <td className="wka-mono">{hmFromSeconds(u.remainingSeconds)}</td>
                     <td className="wka-mono">{u.sessionCount}</td>
                     <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
                       {u.mfa && u.mfa.enabled
-                        ? <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Lock size={12} /> On
-                            <button type="button" className="wka-btn sm ghost" title={isSuperAdmin ? 'Reset authenticator (lost phone / offboarding)' : 'Superadmin only'} disabled={!isSuperAdmin || busyId === u.id} onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'mfa' }) }} style={{ marginLeft: 4 }}><RotateCcw size={12} /></button>
+                        ? <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}><Lock size={12} /> {t('usersAdmin.mfaOn')}
+                            <button type="button" className="wka-btn sm ghost" title={isSuperAdmin ? t('usersAdmin.mfaResetTitle') : t('usersAdmin.superadminOnly')} disabled={!isSuperAdmin || busyId === u.id} onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'mfa' }) }} style={{ marginLeft: 4 }}><RotateCcw size={12} /></button>
                           </span>
-                        : <span style={{ color: 'var(--wka-amber)' }}>Not set up</span>}
+                        : <span style={{ color: 'var(--wka-amber)' }}>{t('usersAdmin.mfaNotSet')}</span>}
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {grantFor === u.id ? (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                           <input className="wka-input" style={{ width: 70, padding: '6px 8px' }} type="number" min="0" step="0.5"
-                            value={grantHours} onChange={(e) => setGrantHours(e.target.value)} aria-label="Hours to grant" />
+                            value={grantHours} onChange={(e) => setGrantHours(e.target.value)} aria-label={t('usersAdmin.actions.hoursAriaLabel')} />
                           <button type="button" className="wka-btn sm primary" disabled={busyId === u.id} onClick={() => applyGrant(u)}>
-                            {busyId === u.id ? <Spinning /> : 'Add'}
+                            {busyId === u.id ? <Spinning /> : t('usersAdmin.actions.add')}
                           </button>
-                          <button type="button" className="wka-btn sm ghost" onClick={() => { setGrantFor(null); setGrantHours('1') }}>Cancel</button>
+                          <button type="button" className="wka-btn sm ghost" onClick={() => { setGrantFor(null); setGrantHours('1') }}>{t('usersAdmin.actions.cancel')}</button>
                         </span>
                       ) : (
                         <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
                           {/* Individual = no company (u.companyId is null in the list payload). Company members never get this control. */}
                           {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
-                              title="Open the dashboard as this user (support view; recorded in the audit trail)"
+                              title={t('usersAdmin.actions.openAsUserTitle')}
                               onClick={() => openAsUser(u)}
                               style={{ color: 'var(--wka-accent-dark)', borderColor: 'var(--wka-accent-line)', whiteSpace: 'nowrap' }}>
-                              {busyId === u.id ? <Spinning /> : <Eye size={13} />} Open as user
+                              {busyId === u.id ? <Spinning /> : <Eye size={13} />} {t('usersAdmin.actions.openAsUser')}
                             </button>
                           )}
                           {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
-                              title={u.free ? 'Free (comped) premium access is ON - click to revoke' : 'Grant free premium access (unlocks guidance, no charge)'}
+                              title={u.free ? t('usersAdmin.actions.freeAccessOnTitle') : t('usersAdmin.actions.freeAccessGrantTitle')}
                               onClick={() => toggleFree(u)}
                               style={{ color: u.free ? 'var(--wka-emerald)' : undefined, whiteSpace: 'nowrap' }}>
-                              {busyId === u.id ? <Spinning /> : (u.free ? 'Free access ✓' : 'Grant free access')}
+                              {busyId === u.id ? <Spinning /> : (u.free ? t('usersAdmin.actions.freeAccessOn') : t('usersAdmin.actions.freeAccessGrant'))}
                             </button>
                           )}
-                          <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? 'Grant purchased hours' : 'Superadmin only'}
+                          <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? t('usersAdmin.actions.grantHoursTitle') : t('usersAdmin.superadminOnly')}
                             onClick={() => { setGrantFor(u.id); setGrantHours('1') }}>
-                            <Plus size={13} /> <Clock size={13} /> Grant hours
+                            <Plus size={13} /> <Clock size={13} /> {t('usersAdmin.actions.grantHours')}
                           </button>
-                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? 'Refund the most recent payment' : 'Superadmin only'}
+                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? t('usersAdmin.actions.refundLastTitle') : t('usersAdmin.superadminOnly')}
                             onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'refund' }) }}>
-                            <RotateCcw size={13} /> Refund last
+                            <RotateCcw size={13} /> {t('usersAdmin.actions.refundLast')}
                           </button>
-                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? 'Cancel the subscription now' : 'Superadmin only'}
+                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? t('usersAdmin.actions.cancelSubTitle') : t('usersAdmin.superadminOnly')}
                             onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'cancel' }) }}>
-                            <Ban size={13} /> Cancel sub
+                            <Ban size={13} /> {t('usersAdmin.actions.cancelSub')}
                           </button>
                           {u.role !== 'superadmin' && !isSelf && (
-                            <button type="button" className={`wka-btn sm${u.role === 'accounting' ? '' : ' ghost'}`} disabled={!isSuperAdmin || busyId === u.id} title={u.role === 'accounting' ? 'Remove the accounting role' : 'Make accounting (sees all transactions + refunds)'}
+                            <button type="button" className={`wka-btn sm${u.role === 'accounting' ? '' : ' ghost'}`} disabled={!isSuperAdmin || busyId === u.id} title={u.role === 'accounting' ? t('usersAdmin.actions.accountingRemoveTitle') : t('usersAdmin.actions.accountingGrantTitle')}
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.role === 'accounting' ? 'accounting-remove' : 'accounting-grant' }) }}>
-                              <DollarSign size={13} /> {u.role === 'accounting' ? 'Accounting ✓' : 'Accounting'}
+                              <DollarSign size={13} /> {u.role === 'accounting' ? t('usersAdmin.actions.accountingOn') : t('usersAdmin.actions.accounting')}
                             </button>
                           )}
                           {u.role !== 'superadmin' && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
-                              title={u.disabled ? 'Re-enable this account' : 'Disable this account (signs them out, blocks sign-in)'}
+                              title={u.disabled ? t('usersAdmin.actions.enableTitle') : t('usersAdmin.actions.disableTitle')}
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.disabled ? 'enable' : 'disable' }) }}
                               style={u.disabled ? { color: 'var(--wka-emerald)' } : undefined}>
-                              {u.disabled ? <ShieldCheck size={13} /> : <ShieldOff size={13} />} {u.disabled ? 'Enable' : 'Disable'}
+                              {u.disabled ? <ShieldCheck size={13} /> : <ShieldOff size={13} />} {u.disabled ? t('usersAdmin.actions.enable') : t('usersAdmin.actions.disable')}
                             </button>
                           )}
                           {u.role !== 'superadmin' && !isSelf && (
                             <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
-                              title="Delete this account and its sessions permanently"
+                              title={t('usersAdmin.actions.deleteTitle')}
                               onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'delete' }) }}
                               style={{ color: 'var(--wka-red)' }}>
-                              <Trash2 size={13} /> Delete
+                              <Trash2 size={13} /> {t('usersAdmin.actions.delete')}
                             </button>
                           )}
                         </span>

@@ -7,10 +7,11 @@ import { Search, RefreshCw, Download, Trash2, ChevronRight, ChevronDown, Bot } f
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
+import { useT } from '../../../i18n/index.jsx'
 
-function sourceBadge(s) {
+function sourceBadge(s, t) {
   const k = String(s || 'site').toLowerCase()
-  const label = k === 'marketing' ? 'Demo page' : k === 'login' ? 'Sign-in' : (k.charAt(0).toUpperCase() + k.slice(1))
+  const label = k === 'marketing' ? t('leadsAdmin.source.marketing') : k === 'login' ? t('leadsAdmin.source.login') : (k.charAt(0).toUpperCase() + k.slice(1))
   return <span className={`wka-badge ${k === 'marketing' ? 'active' : k === 'login' ? 'paused' : ''}`}>{label}</span>
 }
 
@@ -23,8 +24,8 @@ function leadSearches(l) {
   return []
 }
 
-function toCsv(rows) {
-  const head = ['First name', 'Last name', 'Email', 'Phone', 'Company', 'Source', 'Scenario', 'Captured']
+function toCsv(rows, t) {
+  const head = [t('leadsAdmin.csv.firstName'), t('leadsAdmin.csv.lastName'), t('leadsAdmin.csv.email'), t('leadsAdmin.csv.phone'), t('leadsAdmin.csv.company'), t('leadsAdmin.csv.source'), t('leadsAdmin.csv.scenario'), t('leadsAdmin.csv.captured')]
   const esc = (v) => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s }
   const lines = [head.join(',')]
   for (const r of rows) {
@@ -35,6 +36,7 @@ function toCsv(rows) {
 }
 
 export default function Leads() {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, leads: [], total: 0 })
   const [query, setQuery] = useState('')
   const [refreshing, setRefreshing] = useState(false)
@@ -80,7 +82,7 @@ export default function Leads() {
 
   const exportCsv = () => {
     try {
-      const blob = new Blob([toCsv(rows)], { type: 'text/csv;charset=utf-8' })
+      const blob = new Blob([toCsv(rows, t)], { type: 'text/csv;charset=utf-8' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url; a.download = `workcopilot-leads-${new Date().toISOString().slice(0, 10)}.csv`
@@ -89,7 +91,7 @@ export default function Leads() {
     } catch { /* download blocked */ }
   }
 
-  if (state.loading) return <Loading label="Loading leads" />
+  if (state.loading) return <Loading label={t('leadsAdmin.loadingLeads')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
 
   return (
@@ -97,38 +99,40 @@ export default function Leads() {
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 360 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search name, email, company or scenario"
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('leadsAdmin.searchPlaceholder')}
             value={query} onChange={(e) => setQuery(e.target.value)} />
         </div>
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
-          {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
+          {refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('leadsAdmin.refresh')}
         </button>
         <button type="button" className="wka-btn sm" onClick={exportCsv} disabled={rows.length === 0}>
-          <Download size={13} /> Export CSV
+          <Download size={13} /> {t('leadsAdmin.exportCsv')}
         </button>
         <button type="button" className="wka-btn sm ghost" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={state.leads.length === 0} style={{ color: 'var(--wka-red)' }}>
-          <Trash2 size={13} /> Clear all
+          <Trash2 size={13} /> {t('leadsAdmin.clearAll')}
         </button>
         <span className="wka-spacer" />
         <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>
-          Showing {rows.length} of {state.total}{state.total > state.leads.length ? ` (latest ${state.leads.length})` : ''}
+          {state.total > state.leads.length
+            ? t('leadsAdmin.showingLatest', { shown: rows.length, total: state.total, latest: state.leads.length })
+            : t('leadsAdmin.showing', { shown: rows.length, total: state.total })}
         </span>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState title="No leads yet" detail={query ? 'Try a different search.' : 'When visitors run a live validation, their details appear here.'} />
+        <EmptyState title={t('leadsAdmin.empty.title')} detail={query ? t('leadsAdmin.empty.detailSearch') : t('leadsAdmin.empty.detailNone')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table">
             <thead>
               <tr>
-                <th className="no-sort">Name</th>
-                <th className="no-sort">Email</th>
-                <th className="no-sort">Phone</th>
-                <th className="no-sort">Company</th>
-                <th className="no-sort">From</th>
-                <th className="no-sort">Validated (what they searched)</th>
-                <th className="no-sort">Captured</th>
+                <th className="no-sort">{t('leadsAdmin.columns.name')}</th>
+                <th className="no-sort">{t('leadsAdmin.columns.email')}</th>
+                <th className="no-sort">{t('leadsAdmin.columns.phone')}</th>
+                <th className="no-sort">{t('leadsAdmin.columns.company')}</th>
+                <th className="no-sort">{t('leadsAdmin.columns.from')}</th>
+                <th className="no-sort">{t('leadsAdmin.columns.validated')}</th>
+                <th className="no-sort">{t('leadsAdmin.columns.captured')}</th>
                 <th className="no-sort"></th>
               </tr>
             </thead>
@@ -145,14 +149,14 @@ export default function Leads() {
                       <td style={{ whiteSpace: 'nowrap' }}><a href={`mailto:${l.email}`} style={{ color: 'var(--wka-cyan)' }}>{l.email}</a></td>
                       <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{l.phone || '-'}</td>
                       <td style={{ whiteSpace: 'nowrap' }}>{l.company || '-'}</td>
-                      <td>{sourceBadge(l.source)}</td>
+                      <td>{sourceBadge(l.source, t)}</td>
                       <td style={{ maxWidth: 340 }}>
                         {more === 0 ? (
-                          <span style={{ color: 'var(--wka-faint)' }}>None yet</span>
+                          <span style={{ color: 'var(--wka-faint)' }}>{t('leadsAdmin.noneYet')}</span>
                         ) : (
                           <button type="button" onClick={() => toggle(l.id)}
                             style={{ display: 'flex', alignItems: 'center', gap: 6, width: '100%', background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', font: 'inherit', textAlign: 'left' }}
-                            title={isOpen ? 'Hide searches' : 'Show all searches and answers'}>
+                            title={isOpen ? t('leadsAdmin.hideSearches') : t('leadsAdmin.showSearches')}>
                             {isOpen ? <ChevronDown size={14} style={{ flex: '0 0 auto', color: 'var(--wka-cyan)' }} /> : <ChevronRight size={14} style={{ flex: '0 0 auto', color: 'var(--wka-cyan)' }} />}
                             <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{latest.query}</span>
                             {more > 1 ? <span className="wka-badge" style={{ flex: '0 0 auto' }}>{more}</span> : null}
@@ -161,7 +165,7 @@ export default function Leads() {
                       </td>
                       <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(l.createdAt)}</td>
                       <td style={{ textAlign: 'right' }}>
-                        <button type="button" className="wka-btn sm ghost" title="Delete lead" style={{ color: 'var(--wka-red)' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
+                        <button type="button" className="wka-btn sm ghost" title={t('leadsAdmin.deleteLead')} style={{ color: 'var(--wka-red)' }} onClick={() => { setMErr(null); setModal({ type: 'one', row: l }) }}><Trash2 size={13} /></button>
                       </td>
                     </tr>
                     {isOpen && more > 0 ? (
@@ -194,11 +198,11 @@ export default function Leads() {
 
       {modal ? (
         <ReasonModal
-          title={modal.type === 'all' ? 'Clear all leads' : 'Delete lead'}
+          title={modal.type === 'all' ? t('leadsAdmin.modal.clearAllTitle') : t('leadsAdmin.deleteLead')}
           message={modal.type === 'all'
-            ? `Permanently delete all ${state.leads.length} lead records. This cannot be undone.`
-            : `Permanently delete the lead for ${modal.row.email || 'this visitor'}. This cannot be undone.`}
-          confirmLabel={modal.type === 'all' ? 'Clear all' : 'Delete lead'}
+            ? t('leadsAdmin.modal.clearAllMessage', { n: state.leads.length })
+            : t('leadsAdmin.modal.deleteMessage', { who: modal.row.email || t('leadsAdmin.modal.thisVisitor') })}
+          confirmLabel={modal.type === 'all' ? t('leadsAdmin.clearAll') : t('leadsAdmin.deleteLead')}
           busy={mBusy} error={mErr}
           onConfirm={confirmModal}
           onCancel={() => { if (!mBusy) setModal(null) }}

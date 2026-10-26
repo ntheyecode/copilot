@@ -10,6 +10,7 @@
 // steps and shots stack in one column - no horizontal scroll at 640.
 import React from 'react'
 import { ChevronRight, ExternalLink } from 'lucide-react'
+import { useT } from '../../../i18n/index.jsx'
 
 export const HELP_CSS = `
 .wkh-flow { display:flex; flex-wrap:wrap; align-items:center; gap:8px 4px; margin:2px 0 0; }
@@ -44,9 +45,10 @@ export const HELP_CSS = `
 
 // The main flow as a strip of numbered pills. Each pill scrolls to its area.
 export function HelpFlow({ steps }) {
+  const t = useT()
   const jump = (id) => { const el = document.getElementById('wkh-' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
   return (
-    <div className="wkh-flow" role="list" aria-label="The main flow">
+    <div className="wkh-flow" role="list" aria-label={t('helpShared.flowLabel')}>
       {steps.map((s, i) => (
         <React.Fragment key={s.id}>
           <button type="button" className="wkh-flow-step" role="listitem" onClick={() => jump(s.id)}>
@@ -62,11 +64,12 @@ export function HelpFlow({ steps }) {
 // One help area: heading, lead, a few numbered steps, screenshot(s), and an
 // optional "Open" button that switches the console to that section.
 export function HelpArea({ id, icon: Icon, title, lead, steps = [], shots = [], open, onOpen, children }) {
+  const t = useT()
   return (
     <section id={'wkh-' + id} className="wka-panel wkh-area" aria-labelledby={'wkh-h-' + id}>
       <div className="wkh-head">
         <h2 id={'wkh-h-' + id}>{Icon ? <Icon size={15} /> : null}{title}</h2>
-        {open && onOpen ? <button type="button" className="wka-btn sm ghost wkh-open" onClick={() => onOpen(open.id)}><ExternalLink size={13} /> Open {open.label}</button> : null}
+        {open && onOpen ? <button type="button" className="wka-btn sm ghost wkh-open" onClick={() => onOpen(open.id)}><ExternalLink size={13} /> {t('helpShared.open', { label: open.label })}</button> : null}
       </div>
       {lead ? <p className="wkh-lead">{lead}</p> : null}
       {steps.length ? (

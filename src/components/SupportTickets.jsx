@@ -3,18 +3,21 @@ import { api } from '../api.js'
 import { workAdminApi } from '../pages/workadmin/workAdminApi.js'
 import { ReasonModal } from '../pages/workadmin/sections/_shared.jsx'
 import { Plus, ChevronLeft, Send, Loader2, CheckCircle2, RotateCcw, Trash2 } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'
 
 // One ticket surface for BOTH sides (single source of truth):
 //   mode="user"  -> my tickets, open a new one, reply in the thread
 //   mode="admin" -> every ticket (superadmin), reply, set status
 // A ticket: { id, username, category, subject, status, messages:[{from,by,text,at}] }
 
-const CAT_LABEL = { feature: 'Feature request', bug: 'Report a bug', billing: 'Billing issue', access: 'Access issue', other: 'Something else' }
-const STATUS_LABEL = { open: 'Open', answered: 'Answered', closed: 'Closed' }
 const fmt = (s) => { try { return new Date(s).toLocaleString() } catch { return '' } }
 
 export default function SupportTickets({ mode = 'user' }) {
   const admin = mode === 'admin'
+  const t = useT()
+  // Display labels keyed by stored category/status codes (codes are NOT localized).
+  const CAT_LABEL = { feature: t('supportTickets.cat.feature'), bug: t('supportTickets.cat.bug'), billing: t('supportTickets.cat.billing'), access: t('supportTickets.cat.access'), other: t('supportTickets.cat.other') }
+  const STATUS_LABEL = { open: t('supportTickets.status.open'), answered: t('supportTickets.status.answered'), closed: t('supportTickets.status.closed') }
   const [list, setList] = useState(null)
   const [counts, setCounts] = useState(null)
   const [cats, setCats] = useState(['feature', 'bug', 'billing', 'access', 'other'])
@@ -42,14 +45,14 @@ export default function SupportTickets({ mode = 'user' }) {
   const open = async (id) => {
     setErr('')
     try { const t = await (admin ? api.workAdminTicketGet(id) : api.workTicketGet(id)); setSel(t); setView('thread') }
-    catch { setErr('Could not open that ticket.') }
+    catch { setErr(t('supportTickets.errors.open')) }
   }
   const create = async () => {
     if (busy) return
-    if (!form.subject.trim() && !form.body.trim()) { setErr('Add a subject and a short description.'); return }
+    if (!form.subject.trim() && !form.body.trim()) { setErr(t('supportTickets.errors.needSubject')); return }
     setBusy(true); setErr('')
     try { const t = await api.workTicketCreate(form); setForm({ category: 'feature', subject: '', body: '' }); await load(); setSel(t); setView('thread') }
-    catch (e) { setErr(e.message || 'Could not create the ticket.') } finally { setBusy(false) }
+    catch (e) { setErr(e.message || t('supportTickets.errors.create')) } finally { setBusy(false) }
   }
   const sendReply = async () => {
     const text = reply.trim(); if (!text || busy || !sel) return
@@ -57,13 +60,13 @@ export default function SupportTickets({ mode = 'user' }) {
     try {
       const t = admin ? await api.workAdminTicketReply(sel.id, text) : await api.workTicketReply(sel.id, text)
       setReply(''); setSel(t); load()
-    } catch (e) { setErr(e.message || 'Could not send.') } finally { setBusy(false) }
+    } catch (e) { setErr(e.message || t('supportTickets.errors.send')) } finally { setBusy(false) }
   }
   const setStatus = async (status) => {
     if (!sel) return
     setBusy(true); setErr('')
     try { const t = await api.workAdminTicketStatus(sel.id, status); setSel(t); load() }
-    catch (e) { setErr(e.message || 'Could not update.') } finally { setBusy(false) }
+    catch (e) { setErr(e.message || t('supportTickets.errors.update')) } finally { setBusy(false) }
   }
   // Admin: permanently delete a ticket. Reason required + logged server-side.
   const deleteTicket = async (reason) => {
@@ -82,10 +85,10 @@ export default function SupportTickets({ mode = 'user' }) {
           {!admin && (
             <div className="st-head">
               <div>
-                <h2>Help &amp; Support</h2>
-                <p>Request a feature, report a bug, or get help with billing or access. We respond here.</p>
+                <h2>{t('supportTickets.head.title')}</h2>
+                <p>{t('supportTickets.head.blurb')}</p>
               </div>
-              <button className="st-btn primary" onClick={() => { setErr(''); setView('new') }}><Plus size={15} /> New ticket</button>
+              <button className="st-btn primary" onClick={() => { setErr(''); setView('new') }}><Plus size={15} /> {t('supportTickets.head.newTicket')}</button>
             </div>
           )}
 
@@ -93,14 +96,14 @@ export default function SupportTickets({ mode = 'user' }) {
             <div className="st-filters">
               {['', 'open', 'answered', 'closed'].map((s) => (
                 <button key={s || 'all'} className={`st-chip ${filter === s ? 'on' : ''}`} onClick={() => setFilter(s)}>
-                  {s ? STATUS_LABEL[s] : 'All'}{counts && s && counts[s] != null ? ` (${counts[s]})` : ''}
+                  {s ? STATUS_LABEL[s] : t('supportTickets.filters.all')}{counts && s && counts[s] != null ? ` (${counts[s]})` : ''}
                 </button>
               ))}
             </div>
           )}
 
-          {list == null ? <div className="st-empty">Loading...</div>
-            : list.length === 0 ? <div className="st-empty">{admin ? 'No tickets yet.' : 'No tickets yet. Open one and we will get back to you.'}</div>
+          {list == null ? <div className="st-empty">{t('supportTickets.loading')}</div>
+            : list.length === 0 ? <div className="st-empty">{admin ? t('supportTickets.emptyAdmin') : t('supportTickets.emptyUser')}</div>
               : (
                 <ul className="st-list">
                   {list.map((t) => (
@@ -122,42 +125,42 @@ export default function SupportTickets({ mode = 'user' }) {
 
       {view === 'new' && !admin && (
         <div className="st-form">
-          <button className="st-back" onClick={() => { setErr(''); setView('list') }}><ChevronLeft size={15} /> Back</button>
-          <h2>Open a ticket</h2>
-          <label className="st-label">What is it about?
+          <button className="st-back" onClick={() => { setErr(''); setView('list') }}><ChevronLeft size={15} /> {t('supportTickets.back')}</button>
+          <h2>{t('supportTickets.form.title')}</h2>
+          <label className="st-label">{t('supportTickets.form.aboutLabel')}
             <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })}>
               {cats.map((c) => <option key={c} value={c}>{CAT_LABEL[c] || c}</option>)}
             </select>
           </label>
-          <label className="st-label">Subject
-            <input value={form.subject} maxLength={160} placeholder="A short summary" onChange={(e) => setForm({ ...form, subject: e.target.value })} />
+          <label className="st-label">{t('supportTickets.form.subjectLabel')}
+            <input value={form.subject} maxLength={160} placeholder={t('supportTickets.form.subjectPlaceholder')} onChange={(e) => setForm({ ...form, subject: e.target.value })} />
           </label>
-          <label className="st-label">Details
-            <textarea rows={6} value={form.body} maxLength={8000} placeholder="What do you need? Steps to reproduce a bug, the feature you want, or the billing/access problem." onChange={(e) => setForm({ ...form, body: e.target.value })} />
+          <label className="st-label">{t('supportTickets.form.detailsLabel')}
+            <textarea rows={6} value={form.body} maxLength={8000} placeholder={t('supportTickets.form.detailsPlaceholder')} onChange={(e) => setForm({ ...form, body: e.target.value })} />
           </label>
           {err && <div className="st-err">{err}</div>}
           <div className="st-actions">
-            <button className="st-btn" onClick={() => setView('list')}>Cancel</button>
-            <button className="st-btn primary" disabled={busy} onClick={create}>{busy ? <Loader2 size={15} className="spin" /> : 'Submit ticket'}</button>
+            <button className="st-btn" onClick={() => setView('list')}>{t('supportTickets.form.cancel')}</button>
+            <button className="st-btn primary" disabled={busy} onClick={create}>{busy ? <Loader2 size={15} className="spin" /> : t('supportTickets.form.submit')}</button>
           </div>
         </div>
       )}
 
       {view === 'thread' && sel && (
         <div className="st-thread">
-          <button className="st-back" onClick={() => { setErr(''); setSel(null); setView('list'); load() }}><ChevronLeft size={15} /> Back</button>
+          <button className="st-back" onClick={() => { setErr(''); setSel(null); setView('list'); load() }}><ChevronLeft size={15} /> {t('supportTickets.back')}</button>
           <div className="st-thead">
             <span className={`st-tag c-${sel.category}`}>{CAT_LABEL[sel.category] || sel.category}</span>
             <h2>{sel.subject}</h2>
             <span className={`st-status s-${sel.status}`}>{STATUS_LABEL[sel.status] || sel.status}</span>
           </div>
-          {admin && <div className="st-sub">From <b>{sel.username}</b> &middot; opened {fmt(sel.createdAt)}</div>}
+          {admin && <div className="st-sub">{t.rich('supportTickets.thread.fromOpened', { username: sel.username, date: fmt(sel.createdAt) })}</div>}
 
           <div className="st-msgs">
-            {(sel.messages || []).length === 0 && <div className="st-empty">No messages yet.</div>}
+            {(sel.messages || []).length === 0 && <div className="st-empty">{t('supportTickets.thread.noMessages')}</div>}
             {(sel.messages || []).map((m, i) => (
               <div key={i} className={`st-msg ${m.from === 'admin' ? 'admin' : 'user'}`}>
-                <div className="st-msg-by">{m.from === 'admin' ? 'Support' : (admin ? m.by : 'You')} &middot; <span>{fmt(m.at)}</span></div>
+                <div className="st-msg-by">{m.from === 'admin' ? t('supportTickets.thread.support') : (admin ? m.by : t('supportTickets.thread.you'))} &middot; <span>{fmt(m.at)}</span></div>
                 <div className="st-msg-text">{m.text}</div>
               </div>
             ))}
@@ -165,24 +168,24 @@ export default function SupportTickets({ mode = 'user' }) {
 
           {sel.status !== 'closed' && (
             <div className="st-reply">
-              <textarea rows={3} value={reply} placeholder={admin ? 'Write a reply to the user...' : 'Add a message...'} onChange={(e) => setReply(e.target.value)} />
-              <button className="st-btn primary" disabled={busy || !reply.trim()} onClick={sendReply}>{busy ? <Loader2 size={15} className="spin" /> : <><Send size={14} /> Send</>}</button>
+              <textarea rows={3} value={reply} placeholder={admin ? t('supportTickets.thread.replyPlaceholderAdmin') : t('supportTickets.thread.replyPlaceholderUser')} onChange={(e) => setReply(e.target.value)} />
+              <button className="st-btn primary" disabled={busy || !reply.trim()} onClick={sendReply}>{busy ? <Loader2 size={15} className="spin" /> : <><Send size={14} /> {t('supportTickets.thread.send')}</>}</button>
             </div>
           )}
           {admin && (
             <div className="st-admin-actions">
               {sel.status !== 'closed'
-                ? <button className="st-btn" onClick={() => setStatus('closed')}><CheckCircle2 size={14} /> Mark resolved & close</button>
-                : <button className="st-btn" onClick={() => setStatus('open')}><RotateCcw size={14} /> Reopen</button>}
-              <button className="st-btn" style={{ color: '#c0392b' }} onClick={() => { setDelErr(null); setDelOpen(true) }}><Trash2 size={14} /> Delete ticket</button>
+                ? <button className="st-btn" onClick={() => setStatus('closed')}><CheckCircle2 size={14} /> {t('supportTickets.thread.close')}</button>
+                : <button className="st-btn" onClick={() => setStatus('open')}><RotateCcw size={14} /> {t('supportTickets.thread.reopen')}</button>}
+              <button className="st-btn" style={{ color: '#c0392b' }} onClick={() => { setDelErr(null); setDelOpen(true) }}><Trash2 size={14} /> {t('supportTickets.thread.delete')}</button>
             </div>
           )}
           {err && <div className="st-err">{err}</div>}
           {delOpen && (
             <ReasonModal
-              title="Delete ticket"
-              message="Permanently delete this support ticket and its thread. This cannot be undone."
-              confirmLabel="Delete ticket"
+              title={t('supportTickets.del.title')}
+              message={t('supportTickets.del.message')}
+              confirmLabel={t('supportTickets.del.confirm')}
               busy={delBusy} error={delErr}
               onConfirm={deleteTicket}
               onCancel={() => { if (!delBusy) setDelOpen(false) }}

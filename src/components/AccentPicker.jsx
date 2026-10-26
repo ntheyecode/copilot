@@ -26,6 +26,7 @@ import { Check, RotateCcw } from 'lucide-react'
 import { ACCENT_PRESETS, DEFAULT_ACCENT_HEX, accentHexFor, applyAccent, currentAccentKey, deriveAccentVars, storedAccent } from '../theme/accent.js'
 import { api } from '../api.js'
 import { useAuth } from '../auth.jsx'
+import { useT } from '../i18n/index.jsx'
 
 const ACP_CSS = `
 .acp{--acp-line:var(--wka-line-2,#d5d9e6);--acp-muted:var(--wka-muted,#5c6484);--acp-text:var(--wka-text,#1b2033);--acp-panel:var(--wka-panel,#ffffff);--acp-ring:var(--wka-accent,#0e9f6e);--acp-sw:26px;--acp-gap:9px;
@@ -60,7 +61,15 @@ const ACP_CSS = `
 // unstyled (invisible swatches). Duplicate identical sheets are harmless.
 function AccentPickerStyle() { return <style data-acp="1">{ACP_CSS}</style> }
 
-export default function AccentPicker({ variant = 'wka', label = 'Accent color', note, onChange }) {
+export default function AccentPicker({ variant = 'wka', label, note, onChange }) {
+  const t = useT()
+  // The label prop keeps its contract: omitted -> the localized default; an
+  // explicit empty/null value still hides the label row (and the aria-label
+  // falls back to the default name below).
+  const labelText = label === undefined ? t('accentPicker.label') : label
+  // Preset display names are localized by preset KEY; an unkeyed preset (one
+  // added to accent.js without a string) falls back to its catalog name.
+  const presetName = (p) => (t.has(`accentPicker.presets.${p.key}`) ? t(`accentPicker.presets.${p.key}`) : p.name)
   const auth = useAuth()
   const user = auth && auth.user
   const serverAccent = user && user.accent != null ? user.accent : null
@@ -92,31 +101,32 @@ export default function AccentPicker({ variant = 'wka', label = 'Accent color', 
   const activeKey = currentAccentKey(value)        // 'green' | ... | 'custom' | null
   const customHex = activeKey === 'custom' ? accentHexFor(value) : null
   const customInk = customHex ? deriveAccentVars(customHex)['--accent-contrast'] : '#fff'
-  const currentName = activeKey === 'custom' ? `Custom ${customHex.toUpperCase()}`
-    : activeKey ? (ACCENT_PRESETS.find((p) => p.key === activeKey) || {}).name
-      : 'Default'
+  const activePreset = activeKey && activeKey !== 'custom' ? ACCENT_PRESETS.find((p) => p.key === activeKey) : null
+  const currentName = activeKey === 'custom' ? t('accentPicker.customName', { hex: customHex.toUpperCase() })
+    : activeKey ? (activePreset ? presetName(activePreset) : undefined)
+      : t('accentPicker.defaultName')
 
   return (
-    <div className={`acp acp-${variant}`} role="group" aria-label={label || 'Accent color'}>
+    <div className={`acp acp-${variant}`} role="group" aria-label={labelText || t('accentPicker.label')}>
       <AccentPickerStyle />
-      {label ? <div className="acp-k"><span className="t">{label}</span><span className="cur" aria-live="polite">{currentName}</span></div> : null}
+      {labelText ? <div className="acp-k"><span className="t">{labelText}</span><span className="cur" aria-live="polite">{currentName}</span></div> : null}
       <div className="acp-row">
         {ACCENT_PRESETS.map((p) => {
           const on = activeKey === p.key
           return (
             <button key={p.key} type="button" className={`acp-sw${on ? ' on' : ''}`} style={{ '--sw': p.hex }}
-              title={p.name} aria-label={`${p.name} accent`} aria-pressed={on} onClick={() => pick(p.key)}>
+              title={presetName(p)} aria-label={t('accentPicker.presetAria', { name: presetName(p) })} aria-pressed={on} onClick={() => pick(p.key)}>
               {on ? <Check aria-hidden="true" /> : null}
             </button>
           )
         })}
         <label className={`acp-sw acp-custom${activeKey === 'custom' ? ' on' : ''}`} style={{ '--sw': customHex || DEFAULT_ACCENT_HEX, '--sw-ink': customInk }}
-          title={customHex ? `Custom color ${customHex.toUpperCase()}` : 'Custom color'}>
+          title={customHex ? t('accentPicker.customColorHex', { hex: customHex.toUpperCase() }) : t('accentPicker.customColor')}>
           {activeKey === 'custom' ? <Check aria-hidden="true" /> : <span className="plus" aria-hidden="true">+</span>}
-          <input type="color" aria-label="Custom accent color" value={customHex || accentHexFor(value) || DEFAULT_ACCENT_HEX} onInput={onCustomInput} onChange={onCustomInput} />
+          <input type="color" aria-label={t('accentPicker.customAria')} value={customHex || accentHexFor(value) || DEFAULT_ACCENT_HEX} onInput={onCustomInput} onChange={onCustomInput} />
         </label>
-        <button type="button" className={`acp-sw acp-reset${activeKey == null ? ' on' : ''}`} title="Default - each console keeps its own color"
-          aria-label="Default accent" aria-pressed={activeKey == null} onClick={() => pick(null)}>
+        <button type="button" className={`acp-sw acp-reset${activeKey == null ? ' on' : ''}`} title={t('accentPicker.defaultTitle')}
+          aria-label={t('accentPicker.defaultAria')} aria-pressed={activeKey == null} onClick={() => pick(null)}>
           <RotateCcw aria-hidden="true" />
         </button>
       </div>

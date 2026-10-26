@@ -7,10 +7,10 @@ import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Save, RotateCcw, Mail, Eye, X, Bell } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
-
-const CATEGORY_LABEL = { account: 'Account', security: 'Security', billing: 'Billing', forms: 'Forms', notifications: 'Notifications', support: 'Support' }
+import { useT } from '../../../i18n/index.jsx'
 
 export default function EmailTemplates({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null })
   const [templates, setTemplates] = useState([])
   const [sel, setSel] = useState(null)        // selected type
@@ -27,36 +27,37 @@ export default function EmailTemplates({ isSuperAdmin }) {
   }, [])
   useEffect(() => { load() }, [load])
 
-  if (state.loading) return <Loading label="Loading email templates" />
+  if (state.loading) return <Loading label={t('emailTemplatesAdmin.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
 
   const byCat = {}
-  for (const t of templates) { (byCat[t.category] = byCat[t.category] || []).push(t) }
-  const current = templates.find((t) => t.type === sel) || null
+  for (const tpl of templates) { (byCat[tpl.category] = byCat[tpl.category] || []).push(tpl) }
+  const current = templates.find((x) => x.type === sel) || null
+  const catLabel = (cat) => (t.has(`emailTemplatesAdmin.category.${cat}`) ? t(`emailTemplatesAdmin.category.${cat}`) : cat)
 
   return (
     <div>
       <NotifyCard isSuperAdmin={isSuperAdmin} />
 
       <div className="wka-panel">
-        <h2><Mail size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Email templates</h2>
-        <p className="desc">Every email WorkCoPilot sends. Edit the wording with <code>&lt;Placeholder&gt;</code> tokens, preview it live, then save. Reset returns a template to its built-in default. The branded layout (header, footer, buttons) stays consistent automatically.</p>
+        <h2><Mail size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('emailTemplatesAdmin.title')}</h2>
+        <p className="desc">{t.rich('emailTemplatesAdmin.desc')}</p>
         <div className="wmt-wrap">
           <nav className="wmt-list">
             {Object.keys(byCat).map((cat) => (
               <div key={cat} className="wmt-group">
-                <div className="wmt-group-h">{CATEGORY_LABEL[cat] || cat}</div>
-                {byCat[cat].map((t) => (
-                  <button key={t.type} className={`wmt-item${sel === t.type ? ' on' : ''}`} onClick={() => setSel(t.type)}>
-                    <span>{t.label}</span>
-                    {t.override && (t.override.subject || t.override.heading || t.override.body || t.override.ctaLabel) ? <em className="wmt-edited">edited</em> : null}
+                <div className="wmt-group-h">{catLabel(cat)}</div>
+                {byCat[cat].map((tpl) => (
+                  <button key={tpl.type} className={`wmt-item${sel === tpl.type ? ' on' : ''}`} onClick={() => setSel(tpl.type)}>
+                    <span>{tpl.label}</span>
+                    {tpl.override && (tpl.override.subject || tpl.override.heading || tpl.override.body || tpl.override.ctaLabel) ? <em className="wmt-edited">{t('emailTemplatesAdmin.edited')}</em> : null}
                   </button>
                 ))}
               </div>
             ))}
           </nav>
           <div className="wmt-editor">
-            {current ? <Editor key={current.type} tpl={current} isSuperAdmin={isSuperAdmin} onSaved={load} /> : <div className="wka-note">Select a template.</div>}
+            {current ? <Editor key={current.type} tpl={current} isSuperAdmin={isSuperAdmin} onSaved={load} /> : <div className="wka-note">{t('emailTemplatesAdmin.selectTemplate')}</div>}
           </div>
         </div>
       </div>
@@ -66,6 +67,7 @@ export default function EmailTemplates({ isSuperAdmin }) {
 }
 
 function Editor({ tpl, isSuperAdmin, onSaved }) {
+  const t = useT()
   const eff = (f) => (tpl.override && tpl.override[f] != null ? tpl.override[f] : tpl.defaults[f]) || ''
   const [form, setForm] = useState({ subject: eff('subject'), heading: eff('heading'), body: eff('body'), ctaLabel: eff('ctaLabel') })
   const [saving, setSaving] = useState(false)
@@ -107,7 +109,7 @@ function Editor({ tpl, isSuperAdmin, onSaved }) {
     catch (error) { setErr(error) } finally { setSaving(false) }
   }
   const reset = async () => {
-    if (!window.confirm('Reset this email to its built-in default? Your custom wording will be removed.')) return
+    if (!window.confirm(t('emailTemplatesAdmin.resetConfirm'))) return
     setSaving(true); setErr(null)
     try { await workAdminApi.resetEmailTemplate(tpl.type); setForm({ subject: tpl.defaults.subject || '', heading: tpl.defaults.heading || '', body: tpl.defaults.body || '', ctaLabel: tpl.defaults.ctaLabel || '' }); onSaved() }
     catch (error) { setErr(error) } finally { setSaving(false) }
@@ -123,30 +125,30 @@ function Editor({ tpl, isSuperAdmin, onSaved }) {
       <div className="wmt-cols">
         <div className="wmt-form">
           <div className="wka-field">
-            <label htmlFor={`wmt-subject-${tpl.type}`}>Subject</label>
+            <label htmlFor={`wmt-subject-${tpl.type}`}>{t('emailTemplatesAdmin.subject')}</label>
             <input id={`wmt-subject-${tpl.type}`} ref={refs.subject} className="wka-input" disabled={disabled} value={form.subject} onFocus={() => (focusRef.current = 'subject')} onChange={(e) => set('subject', e.target.value)} />
           </div>
           <div className="wka-field">
-            <label htmlFor={`wmt-heading-${tpl.type}`}>Heading</label>
+            <label htmlFor={`wmt-heading-${tpl.type}`}>{t('emailTemplatesAdmin.heading')}</label>
             <input id={`wmt-heading-${tpl.type}`} ref={refs.heading} className="wka-input" disabled={disabled} value={form.heading} onFocus={() => (focusRef.current = 'heading')} onChange={(e) => set('heading', e.target.value)} />
           </div>
           <div className="wka-field">
-            <label htmlFor={`wmt-body-${tpl.type}`}>Body <span className="hint">(blank line = new paragraph)</span></label>
+            <label htmlFor={`wmt-body-${tpl.type}`}>{t('emailTemplatesAdmin.body')} <span className="hint">{t('emailTemplatesAdmin.bodyHint')}</span></label>
             <textarea id={`wmt-body-${tpl.type}`} ref={refs.body} className="wka-input" rows={8} disabled={disabled} value={form.body} onFocus={() => (focusRef.current = 'body')} onChange={(e) => set('body', e.target.value)} style={{ resize: 'vertical', fontFamily: 'inherit' }} />
           </div>
           {tpl.hasCta && (
             <div className="wka-field">
-              <label htmlFor={`wmt-cta-${tpl.type}`}>Button label <span className="hint">(leave blank for no button)</span></label>
+              <label htmlFor={`wmt-cta-${tpl.type}`}>{t('emailTemplatesAdmin.buttonLabel')} <span className="hint">{t('emailTemplatesAdmin.buttonLabelHint')}</span></label>
               <input id={`wmt-cta-${tpl.type}`} ref={refs.ctaLabel} className="wka-input" disabled={disabled} value={form.ctaLabel} onFocus={() => (focusRef.current = 'ctaLabel')} onChange={(e) => set('ctaLabel', e.target.value)} />
             </div>
           )}
 
           {tpl.placeholders && tpl.placeholders.length > 0 && (
             <div className="wmt-ph">
-              <div className="wmt-ph-h">Placeholders <span className="wmt-hint">click to insert</span></div>
+              <div className="wmt-ph-h">{t('emailTemplatesAdmin.placeholders')} <span className="wmt-hint">{t('emailTemplatesAdmin.clickToInsert')}</span></div>
               <div className="wmt-ph-chips">
                 {tpl.placeholders.map((p) => (
-                  <button key={p.token} type="button" className="wmt-chip" title={`${p.desc || ''}${p.sample ? ` (e.g. ${p.sample})` : ''}`} disabled={disabled} onClick={() => insertToken(p.token)}>{p.token}</button>
+                  <button key={p.token} type="button" className="wmt-chip" title={`${p.desc || ''}${p.sample ? t('emailTemplatesAdmin.placeholderSample', { sample: p.sample }) : ''}`} disabled={disabled} onClick={() => insertToken(p.token)}>{p.token}</button>
                 ))}
               </div>
             </div>
@@ -154,16 +156,16 @@ function Editor({ tpl, isSuperAdmin, onSaved }) {
 
           {err && <ErrorBox error={err} />}
           <div className="wmt-actions">
-            <button type="button" className="wka-btn primary" disabled={disabled || saving} onClick={save}>{saving ? <Spinning /> : <Save size={14} />} Save</button>
-            <button type="button" className="wka-btn ghost" disabled={saving} onClick={doPreview}>{previewing ? <Spinning /> : <Eye size={14} />} Refresh preview</button>
-            <button type="button" className="wka-btn ghost" disabled={disabled || saving} onClick={reset}><RotateCcw size={13} /> Reset to default</button>
+            <button type="button" className="wka-btn primary" disabled={disabled || saving} onClick={save}>{saving ? <Spinning /> : <Save size={14} />} {t('emailTemplatesAdmin.save')}</button>
+            <button type="button" className="wka-btn ghost" disabled={saving} onClick={doPreview}>{previewing ? <Spinning /> : <Eye size={14} />} {t('emailTemplatesAdmin.refreshPreview')}</button>
+            <button type="button" className="wka-btn ghost" disabled={disabled || saving} onClick={reset}><RotateCcw size={13} /> {t('emailTemplatesAdmin.resetToDefault')}</button>
             <SavedTag show={saved} />
           </div>
         </div>
 
         <div className="wmt-preview">
-          <div className="wmt-preview-h"><Eye size={13} /> Live preview <span className="wmt-hint">with sample data</span></div>
-          <iframe title="Email preview" className="wmt-frame" sandbox="" srcDoc={preview || '<p style="font:14px sans-serif;color:#888;padding:20px">Rendering preview...</p>'} />
+          <div className="wmt-preview-h"><Eye size={13} /> {t('emailTemplatesAdmin.livePreview')} <span className="wmt-hint">{t('emailTemplatesAdmin.withSampleData')}</span></div>
+          <iframe title={t('emailTemplatesAdmin.previewTitle')} className="wmt-frame" sandbox="" srcDoc={preview || `<p style="font:14px sans-serif;color:#888;padding:20px">${t('emailTemplatesAdmin.renderingPreview')}</p>`} />
         </div>
       </div>
     </div>
@@ -173,6 +175,7 @@ function Editor({ tpl, isSuperAdmin, onSaved }) {
 // Where Contact Us + lead notifications go, and the thank-you toggle. Collapses
 // to a record after save (consistent with the other dashboards).
 function NotifyCard({ isSuperAdmin }) {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null })
   const [cfg, setCfg] = useState(null)
   const [form, setForm] = useState(null)
@@ -194,7 +197,7 @@ function NotifyCard({ isSuperAdmin }) {
     catch (error) { setErr(error) } finally { setSaving(false) }
   }
 
-  if (state.loading) return <div className="wka-panel"><Loading label="Loading notifications" /></div>
+  if (state.loading) return <div className="wka-panel"><Loading label={t('emailTemplatesAdmin.loadingNotifications')} /></div>
   if (state.error) return <div className="wka-panel"><ErrorBox error={state.error} onRetry={load} /></div>
   if (!cfg || !form) return null
   const disabled = !isSuperAdmin
@@ -202,30 +205,30 @@ function NotifyCard({ isSuperAdmin }) {
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <h2 style={{ margin: 0 }}><Bell size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Notification recipients</h2>
+        <h2 style={{ margin: 0 }}><Bell size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('emailTemplatesAdmin.notifyTitle')}</h2>
         <EditToggle editing={editing} disabled={disabled} onEdit={() => { setForm({ ...cfg }); setEditing(true) }} />
       </div>
-      <p className="desc">Where Contact Us messages and new "Validate it live" leads are emailed, and whether the person who submits gets a thank-you.</p>
+      <p className="desc">{t('emailTemplatesAdmin.notifyDesc')}</p>
       {!editing ? (
         <div className="wka-record">
-          <RecRow label="Contact Us goes to" value={cfg.contactTo} />
-          <RecRow label="New leads go to" value={cfg.leadTo} />
-          <RecRow label="Thank-you to submitter" value={cfg.thankYou ? 'On' : 'Off'} />
+          <RecRow label={t('emailTemplatesAdmin.contactGoesTo')} value={cfg.contactTo} />
+          <RecRow label={t('emailTemplatesAdmin.newLeadsGoTo')} value={cfg.leadTo} />
+          <RecRow label={t('emailTemplatesAdmin.thankYouToSubmitter')} value={cfg.thankYou ? t('emailTemplatesAdmin.on') : t('emailTemplatesAdmin.off')} />
         </div>
       ) : (
         <>
           <div className="wka-formgrid" style={{ marginBottom: 10 }}>
-            <div className="wka-field"><label>Contact Us recipient</label><input className="wka-input" disabled={disabled} value={form.contactTo} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, contactTo: e.target.value })) }} /></div>
-            <div className="wka-field"><label>New-lead recipient</label><input className="wka-input" disabled={disabled} value={form.leadTo} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, leadTo: e.target.value })) }} /></div>
+            <div className="wka-field"><label>{t('emailTemplatesAdmin.contactRecipient')}</label><input className="wka-input" disabled={disabled} value={form.contactTo} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, contactTo: e.target.value })) }} /></div>
+            <div className="wka-field"><label>{t('emailTemplatesAdmin.newLeadRecipient')}</label><input className="wka-input" disabled={disabled} value={form.leadTo} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, leadTo: e.target.value })) }} /></div>
           </div>
           <label className="wka-check" style={{ marginTop: 4 }}>
             <input type="checkbox" disabled={disabled} checked={!!form.thankYou} onChange={(e) => { setSaved(false); setForm((f) => ({ ...f, thankYou: e.target.checked })) }} />
-            Send a thank-you email to people who submit the Contact and lead forms
+            {t('emailTemplatesAdmin.thankYouCheckbox')}
           </label>
           {err && <ErrorBox error={err} />}
           <div style={{ display: 'flex', gap: 10, alignItems: 'center', marginTop: 14 }}>
-            <button type="button" className="wka-btn primary" disabled={disabled || saving} onClick={save}>{saving ? <Spinning /> : <Save size={14} />} Save</button>
-            <button type="button" className="wka-btn ghost" disabled={saving} onClick={() => { setForm({ ...cfg }); setEditing(false); setErr(null) }}><X size={14} /> Cancel</button>
+            <button type="button" className="wka-btn primary" disabled={disabled || saving} onClick={save}>{saving ? <Spinning /> : <Save size={14} />} {t('emailTemplatesAdmin.save')}</button>
+            <button type="button" className="wka-btn ghost" disabled={saving} onClick={() => { setForm({ ...cfg }); setEditing(false); setErr(null) }}><X size={14} /> {t('emailTemplatesAdmin.cancel')}</button>
             <SavedTag show={saved} />
           </div>
         </>

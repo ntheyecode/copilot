@@ -11,6 +11,7 @@ import { Brain, FileText, Layers, HardDrive, RefreshCw, Trash2, Search, ShieldCh
 import { api } from '../../../api.js'
 import { Loading, ErrorBox, EmptyState, Spinning, ReasonModal } from './_shared.jsx'
 import { fmtDateTime } from '../workadmin.css.js'
+import { useT } from '../../../i18n/index.jsx'
 
 // Human-readable byte size (1024-based, one decimal above KB).
 export function fmtBytes(n) {
@@ -33,18 +34,17 @@ function kindBadge(kind) {
 // Status of a source in the brain. The server's vocabulary is not fixed yet, so
 // map the obvious families (ready / in progress / failed) and show anything
 // else verbatim rather than hiding it.
-function statusBadge(status) {
+function statusBadge(status, t) {
   const s = String(status || 'ready').toLowerCase()
-  if (['ready', 'indexed', 'active', 'ok', 'complete', 'completed'].includes(s)) return <span className="wka-badge active">Ready</span>
-  if (['pending', 'processing', 'indexing', 'uploading', 'queued', 'syncing'].includes(s)) return <span className="wka-badge paused">In progress</span>
-  if (['error', 'failed', 'rejected'].includes(s)) return <span className="wka-badge exhausted">Failed</span>
+  if (['ready', 'indexed', 'active', 'ok', 'complete', 'completed'].includes(s)) return <span className="wka-badge active">{t('companyBrain.statusReady')}</span>
+  if (['pending', 'processing', 'indexing', 'uploading', 'queued', 'syncing'].includes(s)) return <span className="wka-badge paused">{t('companyBrain.statusInProgress')}</span>
+  if (['error', 'failed', 'rejected'].includes(s)) return <span className="wka-badge exhausted">{t('companyBrain.statusFailed')}</span>
   if (['removed', 'deleted', 'stale', 'superseded'].includes(s)) return <span className="wka-badge" style={{ color: 'var(--wka-faint)' }}>{s.charAt(0).toUpperCase() + s.slice(1)}</span>
   return <span className="wka-badge">{s.charAt(0).toUpperCase() + s.slice(1)}</span>
 }
 
-const EMPTY_DETAIL = "No documents yet - your team's documents are added privately from the desktop app, scrubbed on their device before anything leaves."
-
 export default function CompanyBrain() {
+  const t = useT()
   const [state, setState] = useState({ loading: true, error: null, stats: null, sources: [] })
   const [refreshing, setRefreshing] = useState(false)
   const [query, setQuery] = useState('')
@@ -81,10 +81,10 @@ export default function CompanyBrain() {
     try {
       if (modal.type === 'all') {
         const r = await api.workBrainClear(reason)
-        flash(`Cleared ${r && r.cleared != null ? fmtInt(r.cleared) : 'all'} source${r && r.cleared === 1 ? '' : 's'} from the Company Brain. Logged to the audit trail.`)
+        flash(t.n('companyBrain.clearedToast', r && r.cleared === 1 ? 1 : 2, { count: r && r.cleared != null ? fmtInt(r.cleared) : t('companyBrain.all') }))
       } else {
         await api.workBrainSourceDelete(modal.row.sourceId, reason)
-        flash(`Removed "${modal.row.title || modal.row.sourceId}" from the Company Brain. Logged to the audit trail.`)
+        flash(t('companyBrain.removedToast', { name: modal.row.title || modal.row.sourceId }))
       }
       setModal(null)
       load(true)
@@ -102,7 +102,7 @@ export default function CompanyBrain() {
       String(s.status || '').toLowerCase().includes(q))
   }, [state.sources, query])
 
-  if (state.loading) return <Loading label="Loading your Company Brain" />
+  if (state.loading) return <Loading label={t('companyBrain.loading')} />
   if (state.error) return <ErrorBox error={state.error} onRetry={() => load(false)} />
 
   const stats = state.stats || { sources: 0, chunks: 0, bytes: 0 }
@@ -112,62 +112,62 @@ export default function CompanyBrain() {
     <div>
       <div className="wka-cards">
         <div className="wka-card">
-          <div className="k"><FileText size={15} /> Documents</div>
+          <div className="k"><FileText size={15} /> {t('companyBrain.documents')}</div>
           <div className="v">{fmtInt(stats.sources)}</div>
-          <div className="foot">Sources in your brain</div>
+          <div className="foot">{t('companyBrain.sourcesInBrain')}</div>
         </div>
         <div className="wka-card">
-          <div className="k"><Layers size={15} /> Chunks</div>
+          <div className="k"><Layers size={15} /> {t('companyBrain.chunks')}</div>
           <div className="v">{fmtInt(stats.chunks)}</div>
-          <div className="foot">Scrubbed passages stored</div>
+          <div className="foot">{t('companyBrain.chunksFoot')}</div>
         </div>
         <div className="wka-card">
-          <div className="k"><HardDrive size={15} /> Size</div>
+          <div className="k"><HardDrive size={15} /> {t('companyBrain.size')}</div>
           <div className="v">{fmtBytes(stats.bytes)}</div>
-          <div className="foot">Encrypted for your company</div>
+          <div className="foot">{t('companyBrain.sizeFoot')}</div>
         </div>
       </div>
 
-      <div className="wka-note"><ShieldCheck size={14} /> Documents are scrubbed and prepared on each person's device before anything leaves it. Only the scrubbed passages reach WorkCoPilot, stored encrypted and private to your company. Nothing here is used to train the platform.</div>
+      <div className="wka-note"><ShieldCheck size={14} /> {t('companyBrain.privacyNote')}</div>
 
       {done ? <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><ShieldCheck size={14} /> {done}</div> : null}
 
       <div className="wka-toolbar">
         <div className="wka-inline-money wka-search" style={{ maxWidth: 360 }}>
           <span className="sym"><Search size={14} /></span>
-          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder="Search title, kind or status"
+          <input className="wka-input" style={{ paddingLeft: 30, width: '100%' }} placeholder={t('companyBrain.searchPlaceholder')}
             value={query} onChange={(e) => setQuery(e.target.value)} disabled={!hasSources} />
         </div>
         <button type="button" className="wka-btn sm" onClick={() => load(true)} disabled={refreshing}>
-          {refreshing ? <Spinning /> : <RefreshCw size={13} />} Refresh
+          {refreshing ? <Spinning /> : <RefreshCw size={13} />} {t('companyBrain.refresh')}
         </button>
         <button type="button" className="wka-btn sm ghost" onClick={() => { setMErr(null); setModal({ type: 'all' }) }} disabled={!hasSources} style={{ color: 'var(--wka-red)' }}>
-          <Trash2 size={13} /> Clear all
+          <Trash2 size={13} /> {t('companyBrain.clearAll')}
         </button>
         <span className="wka-spacer" />
         {hasSources ? (
-          <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>Showing {rows.length} of {state.sources.length}</span>
+          <span style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{t('companyBrain.showing', { shown: rows.length, total: state.sources.length })}</span>
         ) : null}
       </div>
 
       {!hasSources ? (
         <div className="wka-panel">
-          <h2><Brain size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Company Brain</h2>
-          <EmptyState title="Your Company Brain is empty" detail={EMPTY_DETAIL} />
+          <h2><Brain size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('companyBrain.heading')}</h2>
+          <EmptyState title={t('companyBrain.emptyTitle')} detail={t('companyBrain.emptyDetail')} />
         </div>
       ) : rows.length === 0 ? (
-        <EmptyState title="No matching documents" detail="Try a different search." />
+        <EmptyState title={t('companyBrain.noMatchTitle')} detail={t('companyBrain.noMatchDetail')} />
       ) : (
         <div className="wka-table-wrap">
           <table className="wka-table">
             <thead>
               <tr>
-                <th className="no-sort">Title</th>
-                <th className="no-sort">Kind</th>
-                <th className="no-sort">Version</th>
-                <th className="no-sort" style={{ textAlign: 'right' }}>Chunks</th>
-                <th className="no-sort">Last updated</th>
-                <th className="no-sort">Status</th>
+                <th className="no-sort">{t('companyBrain.colTitle')}</th>
+                <th className="no-sort">{t('companyBrain.colKind')}</th>
+                <th className="no-sort">{t('companyBrain.colVersion')}</th>
+                <th className="no-sort" style={{ textAlign: 'right' }}>{t('companyBrain.colChunks')}</th>
+                <th className="no-sort">{t('companyBrain.colUpdated')}</th>
+                <th className="no-sort">{t('companyBrain.colStatus')}</th>
                 <th className="no-sort"></th>
               </tr>
             </thead>
@@ -176,17 +176,17 @@ export default function CompanyBrain() {
                 <tr key={s.sourceId}>
                   <td style={{ fontWeight: 600, maxWidth: 420 }}>
                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={s.title || s.sourceId}>{s.title || s.sourceId}</div>
-                    {s.policyVersion != null ? <div style={{ fontSize: 11, color: 'var(--wka-faint)', fontWeight: 400 }}>Scrub policy v{s.policyVersion}</div> : null}
+                    {s.policyVersion != null ? <div style={{ fontSize: 11, color: 'var(--wka-faint)', fontWeight: 400 }}>{t('companyBrain.scrubPolicy', { v: s.policyVersion })}</div> : null}
                   </td>
                   <td>{kindBadge(s.kind)}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{s.version != null && s.version !== '' ? String(s.version) : '-'}</td>
                   <td className="wka-mono" style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>{fmtInt(s.chunks)}</td>
                   <td className="wka-mono" style={{ whiteSpace: 'nowrap' }}>{fmtDateTime(s.updatedAt)}</td>
-                  <td>{statusBadge(s.status)}</td>
+                  <td>{statusBadge(s.status, t)}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <button type="button" className="wka-btn sm ghost" title="Remove this document from the Company Brain" style={{ color: 'var(--wka-red)' }}
+                    <button type="button" className="wka-btn sm ghost" title={t('companyBrain.removeTitle')} style={{ color: 'var(--wka-red)' }}
                       onClick={() => { setMErr(null); setModal({ type: 'one', row: s }) }}>
-                      <Trash2 size={13} /> Remove
+                      <Trash2 size={13} /> {t('companyBrain.remove')}
                     </button>
                   </td>
                 </tr>
@@ -198,11 +198,11 @@ export default function CompanyBrain() {
 
       {modal ? (
         <ReasonModal
-          title={modal.type === 'all' ? 'Clear the Company Brain' : 'Remove document'}
+          title={modal.type === 'all' ? t('companyBrain.modalClearTitle') : t('companyBrain.modalRemoveTitle')}
           message={modal.type === 'all'
-            ? `Permanently remove all ${fmtInt(state.sources.length)} source${state.sources.length === 1 ? '' : 's'} (${fmtInt(stats.chunks)} chunks) from your Company Brain. Guidance stops drawing on them right away. Documents can be added again from the desktop app. This cannot be undone.`
-            : `Permanently remove "${modal.row.title || modal.row.sourceId}" (${fmtInt(modal.row.chunks)} chunk${Number(modal.row.chunks) === 1 ? '' : 's'}) from your Company Brain. It can be added again from the desktop app. This cannot be undone.`}
-          confirmLabel={modal.type === 'all' ? 'Clear all' : 'Remove document'}
+            ? t.n('companyBrain.clearAllMessage', state.sources.length, { count: fmtInt(state.sources.length), chunks: fmtInt(stats.chunks) })
+            : t.n('companyBrain.removeOneMessage', Number(modal.row.chunks), { name: modal.row.title || modal.row.sourceId, chunks: fmtInt(modal.row.chunks) })}
+          confirmLabel={modal.type === 'all' ? t('companyBrain.clearAll') : t('companyBrain.modalRemoveTitle')}
           busy={mBusy} error={mErr}
           onConfirm={confirmModal}
           onCancel={() => { if (!mBusy) setModal(null) }}

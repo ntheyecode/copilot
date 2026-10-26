@@ -12,14 +12,15 @@ import { ShieldCheck, Lock, AlertTriangle, Plus, Trash2, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
 import PolicyRules from './PolicyRules.jsx'
+import { useT } from '../../../i18n/index.jsx'
 
 const ACTIONS = ['send', 'mask', 'withhold', 'tokenize']
-const ACTION_LABEL = { send: 'Send as-is', mask: 'Mask', withhold: 'Withhold', tokenize: 'Tokenize (on-device)' }
 
 // Platform-wide automatic data retention. 0 = keep forever (default). When set,
 // sessions (and their screenshots + audit) older than N days are auto-purged on
 // an hourly sweep, and immediately when saved. Superadmin-only.
 function RetentionCard({ isSuperAdmin }) {
+  const t = useT()
   const [days, setDays] = useState('')
   const [baseline, setBaseline] = useState('0')   // last-saved value, for Cancel
   const [editing, setEditing] = useState(false)
@@ -48,38 +49,38 @@ function RetentionCard({ isSuperAdmin }) {
   const cancel = () => { setDays(baseline); setError(null); setSaved(false); setEditing(false) }
 
   const n = Number(days)
-  const recLabel = Number(baseline) > 0 ? `${baseline} day${Number(baseline) === 1 ? '' : 's'}` : 'Keep forever (no automatic deletion)'
+  const recLabel = Number(baseline) > 0 ? t.n('governanceAdmin.retention.days', Number(baseline)) : t('governanceAdmin.retention.keepForever')
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-        <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data retention (individual accounts)</h2>
+        <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('governanceAdmin.retention.title')}</h2>
         {loaded && !editing ? <EditToggle editing={editing} disabled={!isSuperAdmin} onEdit={() => { setDays(baseline); setEditing(true); setError(null) }} /> : null}
       </div>
-      <p className="desc">Automatically delete sessions (and their milestone screenshots and audit log) older than this many days, for <b>individual (non-company) accounts</b>. Company accounts are governed by their own company admin, not here. <b>0 means keep forever</b>; users can still delete their own sessions anytime. Applied on an hourly sweep.</p>
-      {!loaded ? <Loading label="Loading retention" />
+      <p className="desc">{t.rich('governanceAdmin.retention.desc')}</p>
+      {!loaded ? <Loading label={t('governanceAdmin.retention.loading')} />
         : !editing ? (
           <>
-            <div className="wka-record"><RecRow label="Retention window" value={recLabel} /></div>
+            <div className="wka-record"><RecRow label={t('governanceAdmin.retention.windowLabel')} value={recLabel} /></div>
             {error ? <div style={{ margin: '10px 0' }}><ErrorBox error={error} /></div> : null}
-            {!isSuperAdmin ? <div className="wka-note" style={{ marginTop: 8 }}><Lock size={14} /> Only a superadmin can change data retention.</div> : null}
+            {!isSuperAdmin ? <div className="wka-note" style={{ marginTop: 8 }}><Lock size={14} /> {t('governanceAdmin.retention.superadminOnly')}</div> : null}
             <SavedTag show={saved} />
-            {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Purged {purged} session{purged === 1 ? '' : 's'} on the last save.</span> : null}
+            {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>{t.n('governanceAdmin.retention.purgedLastSave', purged)}</span> : null}
           </>
         ) : (
           <>
             <div className="wka-field" style={{ maxWidth: 260 }}>
-              <label>Retention window (days)</label>
+              <label>{t('governanceAdmin.retention.windowDays')}</label>
               <input className="wka-input" type="number" min="0" max="3650" step="1" disabled={!isSuperAdmin}
                 value={days} onChange={(e) => setDays(e.target.value)} />
-              <span className="hint">{n > 0 ? `Sessions older than ${n} day${n === 1 ? '' : 's'} are purged.` : 'Keep forever (no automatic deletion).'}</span>
+              <span className="hint">{n > 0 ? t.n('governanceAdmin.retention.purgeHint', n) : t('governanceAdmin.retention.keepForeverDot')}</span>
             </div>
             {error ? <div style={{ margin: '10px 0' }}><ErrorBox error={error} /></div> : null}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
-              <button type="button" className="wka-btn primary" disabled={saving || !Number.isInteger(n) || n < 0 || n > 3650} onClick={save}>{saving ? <Spinning /> : null} Save retention</button>
-              <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
+              <button type="button" className="wka-btn primary" disabled={saving || !Number.isInteger(n) || n < 0 || n > 3650} onClick={save}>{saving ? <Spinning /> : null} {t('governanceAdmin.retention.save')}</button>
+              <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> {t('governanceAdmin.retention.cancel')}</button>
               <SavedTag show={saved} />
-              {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>Purged {purged} session{purged === 1 ? '' : 's'} now.</span> : null}
-              {purged === 0 && saved ? <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>Nothing to purge.</span> : null}
+              {purged != null && purged > 0 ? <span style={{ fontSize: 12, color: 'var(--wka-muted)' }}>{t.n('governanceAdmin.retention.purgedNow', purged)}</span> : null}
+              {purged === 0 && saved ? <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{t('governanceAdmin.retention.nothingToPurge')}</span> : null}
             </div>
           </>
         )}
@@ -88,6 +89,7 @@ function RetentionCard({ isSuperAdmin }) {
 }
 
 export default function Governance({ isSuperAdmin }) {
+  const t = useT()
   const [companies, setCompanies] = useState(null)
   const [companyId, setCompanyId] = useState('')
   const [state, setState] = useState({ loading: false, error: null, policy: null, presets: {}, labels: {}, categories: [] })
@@ -155,57 +157,57 @@ export default function Governance({ isSuperAdmin }) {
   }
   const cancel = () => { setState((s) => ({ ...s, policy: baseline })); setSaveErr(null); setSaved(false); setEditing(false) }
 
-  if (companies == null) return <Loading label="Loading companies" />
+  if (companies == null) return <Loading label={t('governanceAdmin.loadingCompanies')} />
   if (!companies.length) return (
     <div>
       <RetentionCard isSuperAdmin={isSuperAdmin} />
-      <div className="wka-note">Create a company first in the Companies tab, then set its data governance policy here.</div>
+      <div className="wka-note">{t('governanceAdmin.createCompanyFirst')}</div>
     </div>
   )
 
   return (
     <div>
       <RetentionCard isSuperAdmin={isSuperAdmin} />
-      {!isSuperAdmin && <div className="wka-note"><Lock size={14} /> Only a superadmin can change a company policy.</div>}
+      {!isSuperAdmin && <div className="wka-note"><Lock size={14} /> {t('governanceAdmin.superadminOnlyPolicy')}</div>}
       <div className="wka-toolbar">
-        <label style={{ fontSize: 13, color: 'var(--wka-muted)' }}>Company</label>
+        <label style={{ fontSize: 13, color: 'var(--wka-muted)' }}>{t('governanceAdmin.companyLabel')}</label>
         <select className="wka-select" value={companyId} onChange={(e) => setCompanyId(e.target.value)}>
           {companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
 
-      {state.loading ? <Loading label="Loading policy" /> : state.error ? <ErrorBox error={state.error} onRetry={load} /> : p && (
+      {state.loading ? <Loading label={t('governanceAdmin.loadingPolicy')} /> : state.error ? <ErrorBox error={state.error} onRetry={load} /> : p && (
         !editing ? (
           // ---- Collapsed policy record ----
           <div className="wka-panel">
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-              <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Data governance policy</h2>
+              <h2 style={{ margin: 0 }}><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('governanceAdmin.record.title')}</h2>
               <EditToggle editing={editing} disabled={!isSuperAdmin} onEdit={() => { setState((s) => ({ ...s, policy: baseline })); setEditing(true); setSaveErr(null) }} />
             </div>
-            <p className="desc">The saved DLP policy for this company. {isSuperAdmin ? 'Click Edit to change what leaves the device.' : ''}</p>
+            <p className="desc">{t('governanceAdmin.record.desc')} {isSuperAdmin ? t('governanceAdmin.record.clickEdit') : ''}</p>
             <div className="wka-record">
-              <RecRow label="Status" value={
+              <RecRow label={t('governanceAdmin.record.status')} value={
                 <span style={{ display: 'inline-flex', gap: 10, alignItems: 'center' }}>
-                  <span style={{ color: p.armed ? 'var(--wka-emerald)' : 'var(--wka-amber)', fontWeight: 600 }}>{p.armed ? 'Armed (enforced on every call)' : 'Not armed'}</span>
+                  <span style={{ color: p.armed ? 'var(--wka-emerald)' : 'var(--wka-amber)', fontWeight: 600 }}>{p.armed ? t('governanceAdmin.record.armed') : t('governanceAdmin.record.notArmed')}</span>
                   <span style={{ color: 'var(--wka-faint)' }}>·</span>
-                  <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>{p.locked ? <><Lock size={12} /> Locked</> : 'Unlocked'}</span>
+                  <span style={{ display: 'inline-flex', gap: 4, alignItems: 'center' }}>{p.locked ? <><Lock size={12} /> {t('governanceAdmin.record.locked')}</> : t('governanceAdmin.record.unlocked')}</span>
                 </span>
               } />
-              <RecRow label="Mode" value={p.mode === 'tokenize' ? 'Tokenize (rebuilt on-device)' : 'Scrub (removed before sending)'} />
-              <RecRow label="Frameworks" value={(p.frameworks || []).length ? (p.frameworks || []).map((k) => k.toUpperCase().replace(/_/g, ' ')).join(', ') : 'None'} />
-              <RecRow label="Category rules" value={`${Object.keys(p.categories || {}).length} set`} />
-              <RecRow label="Block words" value={`${(p.blockWords || []).length}`} />
-              <RecRow label="Custom fields" value={`${(p.customFields || []).length}`} />
-              <RecRow label="Practice rules" value={`${(p.guidanceRules || []).length}${(p.guidanceRules || []).length ? ` (${(p.guidanceRules || []).filter((r) => r.kind !== 'require').length} forbid, ${(p.guidanceRules || []).filter((r) => r.kind === 'require').length} require)` : ''}`} />
-              <RecRow label="Version" value={`${p.version || 0}`} />
+              <RecRow label={t('governanceAdmin.record.mode')} value={p.mode === 'tokenize' ? t('governanceAdmin.record.modeTokenize') : t('governanceAdmin.record.modeScrub')} />
+              <RecRow label={t('governanceAdmin.record.frameworks')} value={(p.frameworks || []).length ? (p.frameworks || []).map((k) => k.toUpperCase().replace(/_/g, ' ')).join(', ') : t('governanceAdmin.record.none')} />
+              <RecRow label={t('governanceAdmin.record.categoryRules')} value={t('governanceAdmin.record.categoryRulesSet', { n: Object.keys(p.categories || {}).length })} />
+              <RecRow label={t('governanceAdmin.record.blockWords')} value={`${(p.blockWords || []).length}`} />
+              <RecRow label={t('governanceAdmin.record.customFields')} value={`${(p.customFields || []).length}`} />
+              <RecRow label={t('governanceAdmin.record.practiceRules')} value={`${(p.guidanceRules || []).length}${(p.guidanceRules || []).length ? t('governanceAdmin.record.practiceRulesBreakdown', { forbid: (p.guidanceRules || []).filter((r) => r.kind !== 'require').length, require: (p.guidanceRules || []).filter((r) => r.kind === 'require').length }) : ''}`} />
+              <RecRow label={t('governanceAdmin.record.version')} value={`${p.version || 0}`} />
             </div>
             <SavedTag show={saved} />
           </div>
         ) : (
         <>
           <div className="wka-panel">
-            <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />Compliance frameworks</h2>
-            <p className="desc">Click a framework to seed sensible defaults, then fine-tune below. (Controls and audit evidence to support your compliance, not a certification.)</p>
+            <h2><ShieldCheck size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-cyan)' }} />{t('governanceAdmin.frameworks.title')}</h2>
+            <p className="desc">{t('governanceAdmin.frameworks.desc')}</p>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {Object.keys(state.presets).map((k) => (
                 <button key={k} type="button" className={`wka-btn sm${(p.frameworks || []).includes(k) ? ' primary' : ''}`} disabled={!isSuperAdmin} onClick={() => applyPreset(k)} title={state.labels[k] || k}>{k.toUpperCase().replace(/_/g, ' ')}</button>
@@ -214,17 +216,17 @@ export default function Governance({ isSuperAdmin }) {
           </div>
 
           <div className="wka-panel">
-            <h2>What leaves the device, by category</h2>
-            <p className="desc">For each kind of sensitive data: send as-is, mask, withhold, or tokenize (kept on-device and rebuilt in the response).</p>
+            <h2>{t('governanceAdmin.categories.title')}</h2>
+            <p className="desc">{t('governanceAdmin.categories.desc')}</p>
             <div className="wka-table-wrap">
               <table className="wka-table">
-                <thead><tr><th>Category</th><th>Action</th></tr></thead>
+                <thead><tr><th>{t('governanceAdmin.categories.colCategory')}</th><th>{t('governanceAdmin.categories.colAction')}</th></tr></thead>
                 <tbody>
                   {state.categories.map((cat) => (
                     <tr key={cat}>
                       <td style={{ textTransform: 'capitalize' }}>{cat}</td>
                       <td><select className="wka-select" value={(p.categories || {})[cat] || 'withhold'} disabled={!isSuperAdmin} onChange={(e) => setCat(cat, e.target.value)}>
-                        {ACTIONS.map((a) => <option key={a} value={a}>{ACTION_LABEL[a]}</option>)}
+                        {ACTIONS.map((a) => <option key={a} value={a}>{t(`governanceAdmin.actions.${a}`)}</option>)}
                       </select></td>
                     </tr>
                   ))}
@@ -234,43 +236,43 @@ export default function Governance({ isSuperAdmin }) {
           </div>
 
           <div className="wka-panel">
-            <h2>Never send these words</h2>
-            <p className="desc">Exact words or phrases that must never leave the device (one per line).</p>
+            <h2>{t('governanceAdmin.blockWords.title')}</h2>
+            <p className="desc">{t('governanceAdmin.blockWords.desc')}</p>
             <textarea className="wka-input" style={{ width: '100%', minHeight: 92, resize: 'vertical' }} disabled={!isSuperAdmin}
               value={(p.blockWords || []).join('\n')}
               onChange={(e) => patchPolicy({ blockWords: e.target.value.split('\n').map((x) => x.trim()).filter(Boolean) })}
-              placeholder={'Project Atlas\nacme-prod-db\ninternal codename'} />
+              placeholder={t('governanceAdmin.blockWords.placeholder')} />
             {(p.blockWords || []).length > 0 && (
               <div style={{ marginTop: 9, fontSize: 12.5, color: 'var(--wka-amber)', display: 'flex', gap: 8 }}>
                 <AlertTriangle size={14} style={{ flexShrink: 0, marginTop: 1 }} />
-                Blocking words can make an answer incomplete or wrong where a word is actually needed. WorkCoPilot never guesses a blocked value.
+                {t('governanceAdmin.blockWords.warning')}
               </div>
             )}
           </div>
 
           <div className="wka-panel">
-            <h2>Custom fields</h2>
-            <p className="desc">Your own sensitive data types, on top of the built-in categories. Give each a name, a match (a word/phrase, or a <code>/regex/</code> like <code>/EMP-\d&#123;6&#125;/</code>), and what to do. Redact replaces it with a <code>[LABEL]</code> tag; Block replaces it with <code>[BLOCKED]</code>. Applied on the device before anything is sent.</p>
+            <h2>{t('governanceAdmin.customFields.title')}</h2>
+            <p className="desc">{t.rich('governanceAdmin.customFields.desc')}</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
               {(p.customFields || []).map((f, i) => (
                 <div key={i} style={{ display: 'grid', gridTemplateColumns: '1fr 1.2fr auto auto', gap: 8, alignItems: 'center' }}>
-                  <input className="wka-input" placeholder="Label (e.g. Employee ID)" disabled={!isSuperAdmin} value={f.label || ''}
+                  <input className="wka-input" placeholder={t('governanceAdmin.customFields.labelPlaceholder')} disabled={!isSuperAdmin} value={f.label || ''}
                     onChange={(e) => { const cf = [...(p.customFields || [])]; cf[i] = { ...cf[i], label: e.target.value }; patchPolicy({ customFields: cf }) }} />
-                  <input className="wka-input" placeholder="Match: a word/phrase or /regex/" disabled={!isSuperAdmin} value={f.pattern || ''}
+                  <input className="wka-input" placeholder={t('governanceAdmin.customFields.matchPlaceholder')} disabled={!isSuperAdmin} value={f.pattern || ''}
                     onChange={(e) => { const cf = [...(p.customFields || [])]; cf[i] = { ...cf[i], pattern: e.target.value }; patchPolicy({ customFields: cf }) }} />
                   <select className="wka-select" disabled={!isSuperAdmin} value={f.action || 'redact'}
                     onChange={(e) => { const cf = [...(p.customFields || [])]; cf[i] = { ...cf[i], action: e.target.value }; patchPolicy({ customFields: cf }) }}>
-                    <option value="redact">Redact</option>
-                    <option value="block">Block</option>
+                    <option value="redact">{t('governanceAdmin.customFields.redact')}</option>
+                    <option value="block">{t('governanceAdmin.customFields.block')}</option>
                   </select>
-                  <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title="Remove"
+                  <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title={t('governanceAdmin.customFields.remove')}
                     onClick={() => { const cf = (p.customFields || []).filter((_, k) => k !== i); patchPolicy({ customFields: cf }) }}><Trash2 size={13} /></button>
                 </div>
               ))}
             </div>
             <button type="button" className="wka-btn sm" style={{ marginTop: 10 }} disabled={!isSuperAdmin}
               onClick={() => patchPolicy({ customFields: [...(p.customFields || []), { label: '', pattern: '', action: 'redact' }] })}>
-              <Plus size={13} /> Add custom field
+              <Plus size={13} /> {t('governanceAdmin.customFields.add')}
             </button>
           </div>
 
@@ -284,22 +286,22 @@ export default function Governance({ isSuperAdmin }) {
           />
 
           <div className="wka-panel">
-            <h2>Mode and status</h2>
+            <h2>{t('governanceAdmin.modeStatus.title')}</h2>
             <div className="wka-field" style={{ marginBottom: 16, maxWidth: 560 }}>
-              <label>How sensitive data is handled</label>
+              <label>{t('governanceAdmin.modeStatus.howHandled')}</label>
               <select className="wka-select" value={p.mode || 'scrub'} disabled={!isSuperAdmin} onChange={(e) => patchPolicy({ mode: e.target.value })}>
-                <option value="scrub">Scrub: remove before sending (safest; answers may have gaps)</option>
-                <option value="tokenize">Tokenize: keep on device and rebuild the full answer here (premium)</option>
+                <option value="scrub">{t('governanceAdmin.modeStatus.optScrub')}</option>
+                <option value="tokenize">{t('governanceAdmin.modeStatus.optTokenize')}</option>
               </select>
             </div>
             <div style={{ display: 'flex', gap: 24, alignItems: 'center', flexWrap: 'wrap' }}>
-              <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 14 }}><input type="checkbox" checked={!!p.armed} disabled={!isSuperAdmin} onChange={(e) => patchPolicy({ armed: e.target.checked })} /> Armed (enforced on every call)</label>
-              <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 14 }}><input type="checkbox" checked={!!p.locked} disabled={!isSuperAdmin} onChange={(e) => patchPolicy({ locked: e.target.checked })} /> <Lock size={13} /> Locked</label>
-              <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>version {p.version || 0}</span>
+              <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 14 }}><input type="checkbox" checked={!!p.armed} disabled={!isSuperAdmin} onChange={(e) => patchPolicy({ armed: e.target.checked })} /> {t('governanceAdmin.modeStatus.armed')}</label>
+              <label style={{ display: 'inline-flex', gap: 8, alignItems: 'center', fontSize: 14 }}><input type="checkbox" checked={!!p.locked} disabled={!isSuperAdmin} onChange={(e) => patchPolicy({ locked: e.target.checked })} /> <Lock size={13} /> {t('governanceAdmin.modeStatus.locked')}</label>
+              <span style={{ fontSize: 12, color: 'var(--wka-faint)' }}>{t('governanceAdmin.modeStatus.versionN', { n: p.version || 0 })}</span>
             </div>
             <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginTop: 18 }}>
-              <button type="button" className="wka-btn primary" disabled={!isSuperAdmin || saving} onClick={save}>{saving ? <Spinning /> : null} Save policy</button>
-              <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> Cancel</button>
+              <button type="button" className="wka-btn primary" disabled={!isSuperAdmin || saving} onClick={save}>{saving ? <Spinning /> : null} {t('governanceAdmin.modeStatus.save')}</button>
+              <button type="button" className="wka-btn ghost" disabled={saving} onClick={cancel}><X size={14} /> {t('governanceAdmin.modeStatus.cancel')}</button>
               <SavedTag show={saved} />
             </div>
             {saveErr ? <div style={{ marginTop: 12 }}><ErrorBox error={saveErr} /></div> : null}

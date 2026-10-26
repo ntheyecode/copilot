@@ -217,6 +217,13 @@ function sendWorkError(res, e, req) {
 // Accept-Language header, then to 'en'. work.* treats 'en'/unknown as a no-op, so
 // this is safe until the client starts sending `locale`.
 function readLocale(req) {
+  // The user's EXPLICITLY chosen UI language wins: the client sends it on every
+  // request as X-WC-Locale (from localStorage 'wc_locale'), so guidance, scope
+  // questions and emails render in that language across the app, not just the
+  // marketing pages. Fall back to an explicit body.locale, then the browser's
+  // Accept-Language, then English. withLocale() validates the code downstream.
+  const hdr = String((req && req.headers && req.headers['x-wc-locale']) || '').trim()
+  if (hdr) return hdr
   const body = (req && req.body && typeof req.body.locale === 'string') ? req.body.locale.trim() : ''
   if (body) return body
   const al = String((req && req.headers && req.headers['accept-language']) || '').trim()
