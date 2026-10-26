@@ -1006,6 +1006,64 @@ Questions about your plan? Just reply to this email.`,
     showRows: false,
   },
 
+  owner_subscription_alert: {
+    label: 'Owner alert - subscription event',
+    category: 'notifications',
+    description: 'Internal owner notification sent to the owner addresses on a subscription lifecycle event (new subscription, plan change, cancellation, first past due). Not sent on routine renewals.',
+    eyebrow: 'Subscription',
+    badge: 'Owner alert',
+    defaultSubject: 'WorkCoPilot subscription <Event>: <Customer>',
+    defaultHeading: 'Subscription <Event>',
+    defaultBody:
+`A WorkCoPilot subscription event just occurred. The details are below.
+
+Customer: **<Customer>**
+Email: <Customer_Email>
+Plan: **<Plan>**
+Billing: <Cycle>
+Status: **<Status>**
+Amount: <Amount>
+Reference: <Reference>
+
+> This is an automated owner notification. It is sent for a new subscription, a plan change, a cancellation and the first past-due event - not on routine renewals.`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Customer>', 'The subscriber name', 'Alex Morgan'),
+      P('<Customer_Email>', 'The subscriber email', 'alex.morgan@northwind.example'),
+      P('<Plan>', 'Plan name', 'Advanced'),
+      P('<Cycle>', 'Billing cycle (monthly or annual)', 'monthly'),
+      P('<Status>', 'Subscription status', 'active'),
+      P('<Amount>', 'Amount for this event, formatted with currency', '$299.00'),
+      P('<Event>', 'What happened (activated, plan change, canceled, past due)', 'activated'),
+      P('<Reference>', 'Stripe reference (invoice or subscription id)', 'in_3Q8vL2SAMPLE'),
+    ],
+    rowFields: [
+      R('Customer', 'customer', { strong: true }),
+      R('Email', 'customerEmail'),
+      R('Plan', 'plan'),
+      R('Billing', 'cycle'),
+      R('Status', 'status'),
+      R('Amount', 'amount', { fmt: 'money' }),
+      R('Event', 'event'),
+      R('When', 'date', { fmt: 'datetime' }),
+      R('Reference', 'reference', { mono: true }),
+    ],
+    sampleData: {
+      customer: 'Alex Morgan',
+      customerEmail: 'alex.morgan@northwind.example',
+      plan: 'Advanced',
+      cycle: 'monthly',
+      status: 'active',
+      amount: 299,
+      currency: 'usd',
+      event: 'activated',
+      reference: 'in_3Q8vL2SAMPLE',
+      date: '2026-10-23T13:41:00Z',
+    },
+    showRows: true,
+  },
+
   affiliate_application_received: {
     label: 'Affiliate - application received',
     category: 'account',
