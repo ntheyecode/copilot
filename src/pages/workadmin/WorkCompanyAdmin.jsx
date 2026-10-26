@@ -20,6 +20,7 @@ import { api } from '../../api.js'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
+import PolicyRules from './sections/PolicyRules.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import * as SSO from '../../shared/sso_guide.js'
@@ -1158,6 +1159,8 @@ function GovernanceSection({ companyId }) {
       const r = await api.workSetPolicy({
         companyId, categories: p.categories || {}, blockWords: p.blockWords || [], frameworks: p.frameworks || [],
         customFields: (p.customFields || []).filter((f) => f && String(f.label || '').trim() && String(f.pattern || '').trim()),
+        guidanceRules: (p.guidanceRules || []).filter((r) => r && String(r.pattern || '').trim()),
+        policyDocs: p.policyDocs || [],
         mode: p.mode || 'scrub', armed: !!p.armed,
       })
       setState((s) => ({ ...s, policy: r.policy })); setBaseline(r.policy); setEditing(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
@@ -1193,6 +1196,7 @@ function GovernanceSection({ companyId }) {
             <RecRow label="Category rules" value={`${Object.keys(p.categories || {}).length} set`} />
             <RecRow label="Block words" value={`${(p.blockWords || []).length}`} />
             <RecRow label="Custom fields" value={`${(p.customFields || []).length}`} />
+            <RecRow label="Practice rules" value={`${(p.guidanceRules || []).length}${(p.guidanceRules || []).length ? ` (${(p.guidanceRules || []).filter((r) => r.kind !== 'require').length} forbid, ${(p.guidanceRules || []).filter((r) => r.kind === 'require').length} require)` : ''}`} />
             <RecRow label="Version" value={`${p.version || 0}`} />
           </div>
           <SavedTag show={saved} />
@@ -1263,6 +1267,15 @@ function GovernanceSection({ companyId }) {
         </div>
         <button type="button" className="wka-btn sm" style={{ marginTop: 10 }} disabled={ro} onClick={() => patchPolicy({ customFields: [...(p.customFields || []), { label: '', pattern: '', action: 'redact' }] })}><Plus size={13} /> Add custom field</button>
       </div>
+
+      <PolicyRules
+        rules={p.guidanceRules || []}
+        docs={p.policyDocs || []}
+        readOnly={ro}
+        armed={!!p.armed}
+        extract={(body) => api.workExtractPolicyRules({ ...body, companyId })}
+        onChange={({ guidanceRules, policyDocs }) => patchPolicy({ guidanceRules, policyDocs })}
+      />
 
       <div className="wka-panel">
         <h2>Mode and status</h2>

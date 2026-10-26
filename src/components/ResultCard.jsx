@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { Hash, Table, Code2, FileText, Sparkles, Check, Copy, Download, AlertTriangle, ShieldCheck } from 'lucide-react'
 import WorkCard from './WorkCard.jsx'
 import SecurityNote from './SecurityNote.jsx'
+import PolicyNote from './PolicyNote.jsx'
 
 // ResultCard - renders the actual ANSWER WorkCoPilot returns (not guidance): a
 // number, a table, a draft, a query, or an analysis. Built on the shared
@@ -103,7 +104,7 @@ function CopyAction({ text, label = 'Copy' }) {
   )
 }
 
-export default function ResultCard({ result, security = null, className = '' }) {
+export default function ResultCard({ result, security = null, policy = null, className = '' }) {
   ensureAssets()
   if (!result) return null
   const { kind = 'text', body, basis, verifyBy, confidence, need, grounded, caveat } = result
@@ -218,6 +219,8 @@ export default function ResultCard({ result, security = null, className = '' }) 
 
       {/* Security check - present only for code results (server attaches it then). */}
       <SecurityNote security={security} />
+      {/* Company-policy check - present when the company has armed guidance rules. */}
+      <PolicyNote policy={policy} />
     </WorkCard>
   )
 }

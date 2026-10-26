@@ -3826,6 +3826,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [pasteData, setPasteData] = useState('')        // wired to docsText
   const [resultOut, setResultOut] = useState(null)      // the returned result object
   const [resultSec, setResultSec] = useState(null)      // security check (code results only)
+  const [resultPol, setResultPol] = useState(null)      // company-policy check (armed-policy companies)
   const [resultBusy, setResultBusy] = useState(false)
   const [resultErr, setResultErr] = useState('')
   // "Compose" feature: WorkCoPilot can WRITE a full document (a letter, report,
@@ -3838,6 +3839,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [composeSrc, setComposeSrc] = useState('')      // wired to docsText
   const [composeOut, setComposeOut] = useState(null)    // the returned compose object
   const [composeSec, setComposeSec] = useState(null)    // security check (code compositions only)
+  const [composePol, setComposePol] = useState(null)    // company-policy check (armed-policy companies)
   const [composeBusy, setComposeBusy] = useState(false)
   const [composeErr, setComposeErr] = useState('')
   // "Compute from a file" feature: privacy-first, on-device data compute. The
@@ -4207,6 +4209,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}) }),
         'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
+      // Company-policy findings on the plan surface immediately as cited flags, so
+      // the person sees which company rule a step breaks and the compliant fix.
+      if (r.policy && Array.isArray(r.policy.findings) && r.policy.findings.length) {
+        setFlags(r.policy.findings.slice(0, 4).map((f, i) => ({
+          t: Date.now() + i,
+          text: `Company policy — ${f.kind === 'forbid' ? 'prohibited' : 'required'}: ${f.title}${f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''}${f.guidance ? `. ${f.guidance}` : ''}`,
+        })))
+      }
       if (r.replan) setReplanInfo(r.replan)   // per-task re-plan budget left
       // Input guardrail: a MEDIUM attempt is allowed through with a warning. Inform, never block.
       if (r.guard && !r.guard.blocked && r.guard.warning && onGuard) onGuard(r.guard)
@@ -4529,7 +4539,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // on the returned result and is surfaced by ResultCard.
   const getResult = async (forceScreen) => {
     if (outOfMinutes()) return
-    setResultBusy(true); setResultErr(''); setResultOut(null); setResultSec(null)
+    setResultBusy(true); setResultErr(''); setResultOut(null); setResultSec(null); setResultPol(null)
     try {
       let frame = null
       if (forceScreen) {
@@ -4543,7 +4553,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (pasteData.trim()) body.docsText = pasteData
       const r = await waitFor(api.workResult(sessionId, body), 'Getting the result is taking longer than expected. Try again.')
       noteStrong(r)
-      if (r && r.result) { setResultOut(r.result); setResultSec(r.security || null) }
+      if (r && r.result) { setResultOut(r.result); setResultSec(r.security || null); setResultPol(r.policy || null) }
       else setResultErr('No result came back. Try again.')
     } catch (e) {
       setResultErr((e && e.message) || 'Could not get the result')
@@ -4562,7 +4572,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     const want = composeWant.trim()
     if (!want) { setComposeErr('Tell me what to write first.'); return }
     if (outOfMinutes()) return
-    setComposeBusy(true); setComposeErr(''); setComposeOut(null); setComposeSec(null)
+    setComposeBusy(true); setComposeErr(''); setComposeOut(null); setComposeSec(null); setComposePol(null)
     try {
       let frame = null
       if (forceScreen) {
@@ -4577,7 +4587,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (frame) body.frame = frame
       const r = await waitFor(api.workCompose(sessionId, body), 'Writing this is taking longer than expected. Try again.')
       noteStrong(r)
-      if (r && r.compose) { setComposeOut(r.compose); setComposeSec(r.security || null) }
+      if (r && r.compose) { setComposeOut(r.compose); setComposeSec(r.security || null); setComposePol(r.policy || null) }
       else setComposeErr('Nothing came back. Try again.')
     } catch (e) {
       setComposeErr((e && e.message) || 'Could not write this')
@@ -5458,16 +5468,16 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                         "Ready" chips reopen them. */}
                     {maker === 'answer' && resultOut && (
                       <div className="wc-made">
-                        <ResultCard result={resultOut} security={resultSec} />
+                        <ResultCard result={resultOut} security={resultSec} policy={resultPol} />
                         <SourceChip source={resultOut.source} />
-                        <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null) }} title="Clear this result"><X size={14} /> Clear result</button>
+                        <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null); setResultPol(null) }} title="Clear this result"><X size={14} /> Clear result</button>
                       </div>
                     )}
                     {maker === 'write' && composeOut && (
                       <div className="wc-made">
-                        <ComposeCard compose={composeOut} security={composeSec} />
+                        <ComposeCard compose={composeOut} security={composeSec} policy={composePol} />
                         <SourceChip source={composeOut.source} />
-                        <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null) }} title="Clear this document"><X size={14} /> Clear document</button>
+                        <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null); setComposePol(null) }} title="Clear this document"><X size={14} /> Clear document</button>
                       </div>
                     )}
                     {maker === 'compute' && computeOut && (

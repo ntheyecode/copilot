@@ -51,6 +51,7 @@ import { buildManifest } from './brain_ingest.js'
 import { EMBED, policyVersionOf } from './brain_model.js'
 import { embedderReady } from './brain_embed.js'
 import { securityReview } from './security_gate.js'
+import { enforceRules, extractRulesAI, extractRulesHeuristic, ruleSummary } from './policy_rules.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
 import { estimateCostUsd } from './model-prices.js'
 import * as llmGuard from './llm_guard.js'
@@ -662,6 +663,43 @@ async function runSecurityGate(userId, sessionId, codeText) {
       store.appendWorkEvent(userId, sessionId, { kind: 'flag', text: `Security: ${v.name} ${v.version} has ${v.vulns.length} known ${v.vulns.length === 1 ? 'vulnerability' : 'vulnerabilities'} (${ids}${v.vulns.length > 3 ? ', and more' : ''}). Upgrade to ${safe}${v.latest ? ' (latest)' : ' or later'}.` })
     }
     return security
+  } catch { return null }
+}
+// COMPANY-POLICY gate, in ONE place (SUPREME RULE II). Enforces the company's OWN
+// written security rules (forbid/require, extracted from their policy doc) against
+// the guidance we are about to hand the user. It NEVER rewrites or deletes the
+// model's text (SUPREME RULE VI, no-degrade): it SURFACES each violation / unmet
+// requirement with a CITATION back to the policy doc + section and the compliant
+// alternative, records it to the immutable audit, and returns the `policy` object
+// for the response. Only runs when the company has an ARMED policy carrying rules.
+async function runPolicyGate(userId, sessionId, text) {
+  try {
+    if (!text || !text.trim()) return null
+    const pol = store.getEffectiveWorkPolicy(userId)
+    const rules = (pol && Array.isArray(pol.guidanceRules)) ? pol.guidanceRules.filter((r) => r && r.enabled !== false) : []
+    if (!rules.length) return null
+    const { findings, counts } = enforceRules(text, rules)
+    // Audit that the policy gate RAN, with any findings (proves enforcement even
+    // when nothing fired - SUPREME RULE III, never silently skip).
+    try {
+      store.appendWorkAudit(sessionId, {
+        call: 'policy', scrub: null,
+        policy: findings.length
+          ? `${findings.length} company-policy ${findings.length === 1 ? 'issue' : 'issues'} found in the guidance (${counts.forbid} prohibited, ${counts.require} required-but-missing).`
+          : `Guidance checked against ${rules.length} company security ${rules.length === 1 ? 'rule' : 'rules'}; no issues.`,
+        flags: findings.slice(0, 8).map((f) => `${f.kind === 'forbid' ? 'Prohibited' : 'Required'}: ${f.title}${f.doc ? ` — per ${f.doc}${f.section ? ` §${f.section}` : ''}` : ''}${f.guidance ? `. ${f.guidance}` : ''}`),
+      })
+    } catch { /* audit is best-effort, never blocks the gate */ }
+    // User-facing flags carry the citation so the person sees WHICH policy applies.
+    for (const f of findings.slice(0, 4)) {
+      const cite = f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''
+      const fix = f.guidance ? ` ${f.guidance}` : ''
+      const lead = f.kind === 'forbid'
+        ? `This step uses something your company policy prohibits: ${f.title}${cite}.${fix}`
+        : `Your company policy requires ${f.title}${cite}, which this step does not mention.${fix}`
+      store.appendWorkEvent(userId, sessionId, { kind: 'flag', text: 'Company policy: ' + lead })
+    }
+    return { findings, counts, rulesChecked: rules.length }
   } catch { return null }
 }
 // Resolve the runtime a request should use. needVision=true requires a vision
@@ -2043,11 +2081,15 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // MANDATORY security gate over every command + code block the plan hands over.
     const planCode = (updated.steps || []).map((s) => [...(Array.isArray(s.commands) ? s.commands : []), (s.code && s.code.content) || ''].join('\n')).join('\n')
     const security = await runSecurityGate(req.workUser.id, req.params.id, planCode)
+    // Company-policy gate runs over the WHOLE plan (prose + commands + code), since
+    // a forbidden/required practice can live in the step text, not only in code.
+    const planText = (updated.steps || []).map((s) => [s.text || '', s.validate || '', ...(Array.isArray(s.commands) ? s.commands : []), (s.code && s.code.content) || ''].join('\n')).join('\n')
+    const policy = await runPolicyGate(req.workUser.id, req.params.id, planText)
     // User-facing plannedBy carries QUALITY signals only, never the model/provider
     // name (owner rule: never expose the model to users). Full model identity lives
     // in the server audit + superadmin incidents.
     const plannedByPublic = { topRanked: !!plannedBy.topRanked, tier: plannedBy.tier || null, source: plannedBy.source || null, updated: plannedBy.updated || null, vision: !!plannedBy.vision, fellBack: !!plannedBy.fellBack }
-    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, replan: store.getWorkReplanUsage(req.workUser.id, req.params.id), ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
+    res.json({ session: store.getWorkSession(req.workUser.id, req.params.id), steps: updated.steps, appContext: updated.appContext, plannedBy: plannedByPublic, security, policy, replan: store.getWorkReplanUsage(req.workUser.id, req.params.id), ...(gPlan && gPlan.guard ? { guard: gPlan.guard } : {}) })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -2136,6 +2178,36 @@ app.post('/api/work/policy', requireWorkAuth, wrap((req, res) => {
   if (!canManagePolicy(req, scope)) return res.status(403).json({ error: 'You cannot manage this policy.' })
   res.json({ policy: store.setWorkPolicy(scope, b, (req.workUser && req.workUser.username) || null) })
 }))
+
+// Ingest a written security policy document and EXTRACT enforceable guidance rules
+// (forbid/require) for review. The admin reviews/edits the draft, then saves it via
+// POST /api/work/policy (guidanceRules + policyDocs). AI-assisted with a
+// deterministic fallback, so it NEVER comes back empty when there are real rules in
+// the text (SUPREME RULE III). The policy document text is used only to extract
+// rules; it is not stored (only the resulting rules + a provenance stub are).
+app.post('/api/work/policy/rules/extract', requireWorkAuth, async (req, res) => {
+  try {
+    const b = req.body || {}
+    const scope = b.companyId ? { companyId: b.companyId } : (b.userId ? { userId: b.userId } : { userId: req.workUser.id })
+    if (!canManagePolicy(req, scope)) return res.status(403).json({ error: 'You cannot manage this policy.' })
+    const text = String(b.text || '').slice(0, 200000)
+    const docName = String(b.docName || '').trim().slice(0, 160)
+    if (text.replace(/\s+/g, '').length < 40) return res.status(400).json({ error: 'Paste or upload the security policy text first (at least a short paragraph).' })
+    // Soft runtime: use the company/platform/user key if one is ready; otherwise fall
+    // back to the deterministic extractor rather than erroring (RULE VIII graceful).
+    let rt = null
+    try {
+      const companyRt = store.getCompanyRuntime(req.workUser.id)
+      const platform = store.getWorkPlatformAllowed()
+      const base = companyRt || (platform ? store.getActiveRuntime() : store.getWorkUserRuntime(req.workUser.id))
+      if (base && base.apiKey) rt = withFailover(req, base)
+    } catch { rt = null }
+    const result = rt
+      ? await extractRulesAI(ai, rt, text, docName)
+      : { rules: extractRulesHeuristic(text, docName), source: 'heuristic', note: 'No AI key is configured, so rules were derived deterministically from the policy text. Review them before arming.' }
+    res.json({ ...result, summary: ruleSummary(result.rules), docName })
+  } catch (e) { sendWorkError(res, e, req) }
+})
 
 // Company-level screenshot-capture policy. When OFF, WorkCoPilot keeps NO
 // milestone screenshot in any of this company's users' reports or session logs;
@@ -2308,7 +2380,9 @@ app.post('/api/work/sessions/:id/result', requireWorkAuth, requireWorkSubscripti
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'result', text: `${out.kind}: ${String(out.need || out.body || '').replace(/\s+/g, ' ').trim().slice(0, 200)}` })
     // Security gate on CODE-related results only (a command/query/script we hand back).
     const security = out.kind === 'code' ? await runSecurityGate(req.workUser.id, req.params.id, out.body || '') : null
-    res.json({ result: out, escalated, security })
+    // Company-policy gate on the full result (every kind, not only code).
+    const policy = await runPolicyGate(req.workUser.id, req.params.id, [out.body, out.basis, out.need].filter(Boolean).join('\n'))
+    res.json({ result: out, escalated, security, policy })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -3096,7 +3170,9 @@ app.post('/api/work/sessions/:id/compose', requireWorkAuth, requireWorkSubscript
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'compose', text: `${out.format}: ${String(out.title || '').slice(0, 120)}` })
     // Security gate on CODE-related compositions only (an authored script/query/config).
     const security = out.format === 'code' ? await runSecurityGate(req.workUser.id, req.params.id, out.body || '') : null
-    res.json({ compose: out, escalated, security })
+    // Company-policy gate on the composed document (any format).
+    const policy = await runPolicyGate(req.workUser.id, req.params.id, [out.title, out.body].filter(Boolean).join('\n'))
+    res.json({ compose: out, escalated, security, policy })
   } catch (e) { sendWorkError(res, e, req) }
 })
 

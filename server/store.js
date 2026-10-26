@@ -25,6 +25,10 @@ import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
+// Company security-policy -> enforced guidance rules. ONE source of truth for the
+// rule schema + sanitization (SUPREME RULE II): the store validates stored rules
+// with the SAME normalizer the engine and endpoints use.
+import { normalizeRule, ruleSummary } from './policy_rules.js'
 // Language pinning (SUPREME RULE II: ONE source of supported locale codes). The
 // i18n locale registry is pure data (no browser APIs at import), so the server
 // validates a pinned language against the SAME list the client menu offers.
@@ -1004,7 +1008,7 @@ function policyKey(scope) {
   return null
 }
 function defaultWorkPolicy(scope) {
-  return { scope: scope || {}, armed: false, locked: false, frameworks: [], regions: [], categories: {}, blockWords: [], customFields: [], mode: 'scrub', updatedBy: null, updatedAt: null, version: 0 }
+  return { scope: scope || {}, armed: false, locked: false, frameworks: [], regions: [], categories: {}, blockWords: [], customFields: [], guidanceRules: [], policyDocs: [], mode: 'scrub', updatedBy: null, updatedAt: null, version: 0 }
 }
 export function getWorkPolicy(scope) {
   const k = policyKey(scope); if (!k) return defaultWorkPolicy(scope)
@@ -1029,6 +1033,21 @@ export function setWorkPolicy(scope, patch = {}, by = null) {
       pattern: String((f && f.pattern) || '').trim().slice(0, 200),
       action: ['redact', 'tokenize', 'block'].includes(f && f.action) ? f.action : 'redact',
     })).filter((f) => f.label && f.pattern) : cur.customFields,
+    // Enforced guidance rules extracted from the company's written security policy
+    // (forbid/require). Validated through the SAME normalizer the engine uses, so a
+    // stored rule is always well-formed and bounded. Capped to keep enforcement fast.
+    guidanceRules: Array.isArray(patch.guidanceRules)
+      ? patch.guidanceRules.slice(0, 200).map((r, i) => normalizeRule(r, i)).filter((r) => r.pattern)
+      : cur.guidanceRules || [],
+    // Provenance of the policy documents the rules were extracted from.
+    policyDocs: Array.isArray(patch.policyDocs)
+      ? patch.policyDocs.slice(0, 20).map((d) => ({
+          name: String((d && d.name) || '').trim().slice(0, 160),
+          addedAt: Number((d && d.addedAt)) || now(),
+          ruleCount: Math.max(0, Math.min(500, Number((d && d.ruleCount)) || 0)),
+          chars: Math.max(0, Math.min(10_000_000, Number((d && d.chars)) || 0)),
+        })).filter((d) => d.name)
+      : cur.policyDocs || [],
     mode: ['scrub', 'tokenize'].includes(patch.mode) ? patch.mode : cur.mode,
     armed: patch.armed != null ? !!patch.armed : cur.armed,
     locked: patch.locked != null ? !!patch.locked : cur.locked,

@@ -2,6 +2,7 @@ import React, { useState } from 'react'
 import { Mail, FileText, ListTree, List, Table, Code2, StickyNote, PenLine, Check, Copy, Download, AlertTriangle, BookOpen } from 'lucide-react'
 import WorkCard from './WorkCard.jsx'
 import SecurityNote from './SecurityNote.jsx'
+import PolicyNote from './PolicyNote.jsx'
 
 // ComposeCard - renders a FINISHED document WorkCoPilot wrote (not guidance, not a
 // one-line answer): a letter, report, resume section, contract clause, red-line
@@ -133,7 +134,7 @@ function CopyAction({ text, label = 'Copy' }) {
   )
 }
 
-export default function ComposeCard({ compose, security = null, className = '' }) {
+export default function ComposeCard({ compose, security = null, policy = null, className = '' }) {
   ensureAssets()
   if (!compose) return null
   const { title, format, body, basis, caveat } = compose
@@ -232,6 +233,7 @@ export default function ComposeCard({ compose, security = null, className = '' }
 
       {/* Security check - present only for code compositions (server attaches it then). */}
       <SecurityNote security={security} />
+      <PolicyNote policy={policy} />
     </WorkCard>
   )
 }

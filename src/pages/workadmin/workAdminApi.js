@@ -226,6 +226,8 @@ export const workAdminApi = {
   // presets + the category list; POST saves it. Superadmin manages any company.
   policy: (companyId) => request('GET', `/api/work/policy?companyId=${encodeURIComponent(companyId)}`),
   setPolicy: (body) => request('POST', '/api/work/policy', body),
+  // Extract enforceable guidance rules (forbid/require) from a pasted policy doc.
+  extractPolicyRules: (body) => request('POST', '/api/work/policy/rules/extract', body),
 
   // Stripe billing config (superadmin). GET returns booleans + ids only (never a
   // secret); POST writes config (secrets are write-only, blank keeps stored).

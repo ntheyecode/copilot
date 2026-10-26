@@ -11,6 +11,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { ShieldCheck, Lock, AlertTriangle, Plus, Trash2, X } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
+import PolicyRules from './PolicyRules.jsx'
 
 const ACTIONS = ['send', 'mask', 'withhold', 'tokenize']
 const ACTION_LABEL = { send: 'Send as-is', mask: 'Mask', withhold: 'Withhold', tokenize: 'Tokenize (on-device)' }
@@ -145,6 +146,8 @@ export default function Governance({ isSuperAdmin }) {
         companyId, _unlock: true,   // superadmin may always change
         categories: p.categories || {}, blockWords: p.blockWords || [], frameworks: p.frameworks || [],
         customFields: (p.customFields || []).filter((f) => f && String(f.label || '').trim() && String(f.pattern || '').trim()),
+        guidanceRules: (p.guidanceRules || []).filter((r) => r && String(r.pattern || '').trim()),
+        policyDocs: p.policyDocs || [],
         mode: p.mode || 'scrub', armed: !!p.armed, locked: !!p.locked,
       })
       setState((s) => ({ ...s, policy: r.policy })); setBaseline(r.policy); setEditing(false); setSaved(true); setTimeout(() => setSaved(false), 2500)
@@ -193,6 +196,7 @@ export default function Governance({ isSuperAdmin }) {
               <RecRow label="Category rules" value={`${Object.keys(p.categories || {}).length} set`} />
               <RecRow label="Block words" value={`${(p.blockWords || []).length}`} />
               <RecRow label="Custom fields" value={`${(p.customFields || []).length}`} />
+              <RecRow label="Practice rules" value={`${(p.guidanceRules || []).length}${(p.guidanceRules || []).length ? ` (${(p.guidanceRules || []).filter((r) => r.kind !== 'require').length} forbid, ${(p.guidanceRules || []).filter((r) => r.kind === 'require').length} require)` : ''}`} />
               <RecRow label="Version" value={`${p.version || 0}`} />
             </div>
             <SavedTag show={saved} />
@@ -269,6 +273,15 @@ export default function Governance({ isSuperAdmin }) {
               <Plus size={13} /> Add custom field
             </button>
           </div>
+
+          <PolicyRules
+            rules={p.guidanceRules || []}
+            docs={p.policyDocs || []}
+            readOnly={!isSuperAdmin}
+            armed={!!p.armed}
+            extract={(body) => workAdminApi.extractPolicyRules({ ...body, companyId })}
+            onChange={({ guidanceRules, policyDocs }) => patchPolicy({ guidanceRules, policyDocs })}
+          />
 
           <div className="wka-panel">
             <h2>Mode and status</h2>

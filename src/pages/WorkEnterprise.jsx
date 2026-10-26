@@ -28,7 +28,7 @@ import React from 'react'
 import {
   ShieldCheck, ScanEye, FileText, Lock, KeyRound, Bell, Radio, BookOpen, Scale, BarChart3, Palette,
   Monitor, Globe, Smartphone, Check, ArrowRight, Building2, Users, Receipt, EyeOff, Database, ListChecks, Bot, Sparkles,
-  UploadCloud, Hand, RefreshCw, Download, Trash2, History, Target, X,
+  UploadCloud, Hand, RefreshCw, Download, Trash2, History, Target, X, ScrollText,
 } from 'lucide-react'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
@@ -194,6 +194,7 @@ export default function WorkEnterprise() {
               <li><Check size={14} /> Watches the screen and hand-holds through each exact step</li>
               <li><Check size={14} /> Catches a wrong turn and corrects it in real time</li>
               <li><Check size={14} /> Grounded in your playbooks, private to your tenant</li>
+              <li><Check size={14} /> Checks every step against your own written security policy</li>
             </ul>
           </div>
           <LoopArt />
@@ -271,7 +272,11 @@ export default function WorkEnterprise() {
         </Group>
 
         <Group id="governance" kicker="Governance / DLP" title="One company policy. Every member inherits it."
-          lead="Decide what may leave a device, how long records are kept, and who may remove what, with every destructive action accountable.">
+          lead="Your written security policy becomes the rules the guide checks every step against. Decide what may leave a device, how long records are kept, and who may remove what, with every destructive action accountable.">
+          {/* PRIME: the company's own written policy, enforced as the guide works.
+              Honesty: it flags and cites, never rewrites or deletes the model's text;
+              controls and evidence that support the program, never "makes you compliant". */}
+          <Feature icon={ScrollText} title="Your written security policy, enforced as it guides" tone="prime">Your admin pastes or uploads the company's own security or IT policy; WorkCoPilot extracts its require and forbid rules, and your admin reviews and arms them. From then on, every set of steps, every result and every composed document is checked against those rules on the server. A step that uses a prohibited practice, or skips a required one, is flagged inline, cited to your policy by name and section (for example <code>Acceptable Use Policy, §4.2</code>) with the compliant alternative beside it, and recorded in the session's audit log. It never rewrites the text: it flags, cites and shows the safe way, alongside on-device redaction and the built-in code checks.</Feature>
           <Feature icon={ListChecks} title="Custom scrub rules">Add your own patterns and words to redact or block, on top of the built-in protections. Members cannot weaken them.</Feature>
           <Feature icon={Scale} title="Retention windows">Set how long session records and documents are kept. Expiry is automatic and visible.</Feature>
           <Feature icon={Users} title="Member oversight">Company admins can pull the report and audit log of any member session, completed or in progress.</Feature>
@@ -474,6 +479,14 @@ const CSS = `
 .wen-card.amber{background:var(--amber-soft);border-color:var(--amber-line)}
 .wen-card.amber .wen-ic{background:var(--panel);color:var(--amber);border-color:var(--amber-line)}
 .wen-card.amber::before{background:var(--amber);opacity:1}
+/* the PRIME card: full-width lead of its group, icon beside the copy, brand tint */
+.wen-card.prime{grid-column:1/-1;display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:16px;row-gap:6px;align-items:start;padding:22px 24px 21px;
+  background:linear-gradient(135deg,var(--em-fill-2),var(--cyan-fill) 70%),var(--panel);border-color:var(--em-line);box-shadow:0 1px 2px rgba(26,31,54,.05),0 22px 48px -30px rgba(14,159,110,.55)}
+.wen-card.prime::before{opacity:1}
+.wen-card.prime .wen-ic{grid-row:1/span 2;width:44px;height:44px;border-radius:13px;background:var(--panel);box-shadow:var(--card-shadow)}
+.wen-card.prime b{font-family:var(--display);font-size:19px;font-weight:800;letter-spacing:-.02em;line-height:1.2;text-wrap:balance}
+.wen-card.prime p{font-size:14.5px;line-height:1.6;color:var(--tx);max-width:96ch;text-wrap:pretty}
+.wen-card.prime code{white-space:nowrap}
 .wen-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px}
 .wen-chip{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--tx);background:var(--em-fill);border:1px solid var(--em-line)}
 .wen-chip.cyan{background:var(--cyan-fill);border-color:var(--cyan-line)}
