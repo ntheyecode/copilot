@@ -357,8 +357,6 @@ export const api = {
   // Company admin: read / set SSO for their own company (secret is write-only).
   workCompanyGetSso: () => req('GET', '/api/work/company/sso'),
   workCompanySetSso: (cfg) => req('POST', '/api/work/company/sso', cfg || {}),
-  // audit log download URL (per session)
-  workAuditUrl: (id) => `/api/work/sessions/${id}/audit.log`,
   // superadmin WorkCoPilot config
   workAdminGetPlatformAi: () => req('GET', '/api/work/admin/platform-ai'),
   workAdminSetPlatformAi: (allowed) => req('POST', '/api/work/admin/platform-ai', { allowed }),
