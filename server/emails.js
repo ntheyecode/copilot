@@ -15,6 +15,69 @@ import * as store from './store.js'
 
 function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
 
+const looksLikeEmail = (s) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').trim())
+
+// ---- Owner subscription alerts --------------------------------------------
+// SINGLE SOURCE OF TRUTH for who gets notified of subscription lifecycle events.
+// Defaults to the two owner addresses; overridable via OWNER_ALERT_EMAILS
+// (comma / space / semicolon separated). Invalid entries are dropped, and an
+// empty / all-invalid override falls back to the defaults so alerts are never
+// silently addressed to nobody.
+const OWNER_ALERT_DEFAULTS = ['ravi.yerra@coesecurity.com', 'yerraslife@gmail.com']
+export const OWNER_ALERT_RECIPIENTS = Object.freeze((() => {
+  const raw = String(process.env.OWNER_ALERT_EMAILS || '').trim()
+  const parsed = raw ? raw.split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean).filter(looksLikeEmail) : []
+  const uniq = [...new Set(parsed.length ? parsed : OWNER_ALERT_DEFAULTS)]
+  return uniq
+})())
+
+// Human labels for the alert kinds the billing webhook fires.
+const OWNER_ALERT_KIND_LABELS = {
+  new_subscription: 'activated',
+  plan_change: 'plan change',
+  cancellation: 'canceled',
+  past_due: 'past due',
+}
+
+// Notify BOTH owner addresses about one subscription lifecycle event. Reuses the
+// graceful sendTemplate path (per-recipient, never throws into the caller). Owner
+// rule - never SILENTLY fail: if any recipient did not actually send (SMTP not
+// configured, or a send error), a work incident is logged so the miss is
+// observable, in addition to the per-send incident sendTemplate already records.
+export async function sendOwnerSubscriptionAlert(kind, { user = null, plan = null, status = null, amount = null, currency = 'usd', cycle = null, stripeId = null } = {}) {
+  const customer = user ? (user.displayName || user.username || 'A customer') : 'A customer'
+  let customerEmail = ''
+  try { customerEmail = user ? (store.effectiveUserEmail(user.id) || '') : '' } catch { customerEmail = '' }
+  const event = OWNER_ALERT_KIND_LABELS[kind] || String(kind || 'update').replace(/_/g, ' ')
+  const data = {
+    customer, customerEmail,
+    plan: plan || '', status: status || '', cycle: cycle || '',
+    amount: amount == null ? '' : amount, currency: currency || 'usd',
+    event, reference: stripeId || '', date: new Date().toISOString(), kind: String(kind || ''),
+  }
+  const results = []
+  for (const to of OWNER_ALERT_RECIPIENTS) {
+    const r = await sendTemplate('owner_subscription_alert', to, data, {})
+    results.push({ to, ...r })
+  }
+  const undelivered = results.filter((r) => !r.ok)
+  if (undelivered.length) {
+    try {
+      store.recordWorkIncident({
+        kind: 'owner_alert_failed',
+        message: `Owner subscription alert "${event}" for ${customer} not delivered: ${undelivered.map((r) => `${r.to} (${r.skipped || r.error || 'failed'})`).join('; ')}`.slice(0, 900),
+        userId: user ? user.id : null,
+      })
+    } catch { /* never break on logging */ }
+  }
+  return results
+}
+
+// Fire-and-forget wrapper for the webhook hot path: never awaited, never throws.
+export function sendOwnerSubscriptionAlertAsync(kind, info = {}) {
+  Promise.resolve().then(() => sendOwnerSubscriptionAlert(kind, info)).catch(() => { /* already logged */ })
+}
+
 /**
  * Send one templated email.
  * @param {string} type   an EMAIL_TYPES key (email_templates.js)
