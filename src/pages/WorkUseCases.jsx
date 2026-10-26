@@ -7,6 +7,7 @@ import {
 import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import { OWNERSHIP_LINE } from '../components/LegalPage.jsx'   // single source of truth for the ownership line (correct legal entity)
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
@@ -138,6 +139,7 @@ export default function WorkUseCases() {
           <button className="uc-cta big" onClick={go}>Get started <ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </section>
+      <ReleaseNote groups={['global']} />
       </main>
 
       <SiteFooter />

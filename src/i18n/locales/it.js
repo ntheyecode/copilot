@@ -589,4 +589,14 @@ export default {
     analyticsD: "Ci consente di accreditare il partner che ti ha segnalato (un cookie di referral di prima parte). Disattivato finché non lo consenti e mai usato per profilarti.",
     learn: "Leggi la nostra <a>Informativa sui cookie</a> e la <p>Informativa sulla privacy</p>.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Novità di questa versione",
+    sub: "Disponibile oggi, su ogni piano.",
+    global: { eyebrow: "Globale per impostazione predefinita", h: "Funziona in 16 lingue, scelta per la tua regione", line: "Il sito e il prodotto parlano 16 lingue, scelte automaticamente per la tua regione.", points: ["Il sito e il prodotto parlano 16 lingue.", "Quella giusta viene scelta automaticamente in base alla tua regione: inglese dove l'inglese è la lingua di lavoro, come India, USA e Regno Unito, e la lingua professionale locale altrove.", "Puoi cambiare lingua in qualsiasi momento, e la tua scelta viene ricordata."] },
+    privacy: { eyebrow: "Privato e conforme", h: "Conforme a GDPR e CCPA, privato per progettazione", points: ["Oscuramento sul dispositivo: dati personali, sanitari, segreti e chiavi vengono rimossi o tokenizzati sul tuo dispositivo prima di inviare qualsiasi cosa.", "Sola lettura per progettazione: WorkCoPilot guida e non fa mai clic, non digita e non esegue nulla al posto tuo.", "Un controllo del consenso ai cookie che è tuo: accetta o rifiuta lo spazio non essenziale con un clic, e cambialo quando vuoi.", "Allineato a GDPR e CCPA. È disponibile un Accordo sul Trattamento dei Dati per le aziende."] },
+    billing: { eyebrow: "Fatturazione self-service", h: "Cambia il tuo piano da solo, quando vuoi", points: ["Passa a un piano superiore quando vuoi, con effetto immediato e un credito proporzionale a quanto hai già pagato.", "Passa a un piano inferiore quando vuoi, con effetto dal prossimo rinnovo.", "Annulla da solo quando vuoi, senza contratto.", "Vedi le tue fatture mensili nella dashboard, e le ore extra che acquisti non scadono mai."] },
+    enterprise: { eyebrow: "Controlli aziendali", h: "Governance che i tuoi amministratori impostano una volta", points: ["Gli amministratori aziendali impostano una policy di prevenzione della perdita di dati che governa cosa può lasciare il dispositivo, una volta, per tutti.", "Controlli per azienda, e conoscenza aziendale privata che non viene mai usata per addestrare la piattaforma.", "Un ruolo di contabilità con una dashboard finanziaria per fatturazione e spesa.", "Single sign-on tramite il tuo provider di identità, e un DPA che il tuo team legale può firmare."] },
+  },
 }

@@ -31,6 +31,7 @@ import {
   UploadCloud, Hand, RefreshCw, Download, Trash2, History, Target, X,
 } from 'lucide-react'
 import SiteFooter from '../components/SiteFooter.jsx'
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import SiteHeader from '../components/SiteHeader.jsx'
 import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
@@ -334,6 +335,7 @@ export default function WorkEnterprise() {
             <a className="wen-cta alt" href="/workcopilot/dpa">Read the DPA <ArrowRight size={15} /></a>
           </div>
         </section>
+      <ReleaseNote groups={['enterprise']} />
       </main>
       <SiteFooter />
     </div>

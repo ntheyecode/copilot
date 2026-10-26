@@ -15,6 +15,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2 } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 
@@ -267,6 +268,8 @@ export default function WorkPricing() {
         </div>
         <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> Final entitlements and prices are confirmed at checkout. Taxes may apply by location.</p>
       </section>
+
+      <ReleaseNote groups={['billing']} />
 
       <section className="wpr-cta">
         <button className="wpr-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden /></button>

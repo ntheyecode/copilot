@@ -595,4 +595,14 @@ export default {
     analyticsD: "Nos permite acreditar al socio que te refirió (una cookie de referido propia). Desactivada hasta que la permitas, y nunca para perfilarte.",
     learn: "Lee nuestra <a>Política de cookies</a> y la <p>Política de privacidad</p>.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Novedades de esta versión",
+    sub: "Disponible hoy, en todos los planes.",
+    global: { eyebrow: "Global por defecto", h: "Funciona en 16 idiomas, elegido para tu región", line: "El sitio y el producto hablan 16 idiomas, elegidos automáticamente para tu región.", points: ["El sitio y el producto hablan 16 idiomas.", "Se elige el adecuado automáticamente según tu región: inglés donde el inglés es el idioma de trabajo, como India, EE. UU. y el Reino Unido, y el idioma profesional local en el resto.", "Puedes cambiar de idioma cuando quieras, y tu elección se recuerda."] },
+    privacy: { eyebrow: "Privado y conforme", h: "Conforme al RGPD y la CCPA, privado por diseño", points: ["Redacción en el dispositivo: los datos personales, de salud, secretos y claves se eliminan o se tokenizan en tu propio dispositivo antes de enviar nada.", "Solo lectura por diseño: WorkCoPilot guía y nunca hace clic, escribe ni ejecuta nada por ti.", "Un control de consentimiento de cookies tuyo: acepta o rechaza el almacenamiento no esencial con un clic, y cámbialo cuando quieras.", "Alineado con el RGPD y la CCPA. Hay un Acuerdo de Tratamiento de Datos disponible para empresas."] },
+    billing: { eyebrow: "Facturación autogestionada", h: "Cambia tu plan tú mismo, cuando quieras", points: ["Mejora de plan cuando quieras y se aplica de inmediato, con crédito prorrateado por lo que ya pagaste.", "Baja de plan cuando quieras y surte efecto en tu próxima renovación.", "Cancela tú mismo cuando quieras, sin contrato.", "Consulta tus facturas mensuales en tu panel, y las horas extra que compres nunca caducan."] },
+    enterprise: { eyebrow: "Controles de empresa", h: "Gobernanza que tus administradores definen una vez", points: ["Los administradores de empresa definen una política de prevención de pérdida de datos que gobierna lo que puede salir del dispositivo, una vez, para todos.", "Controles por empresa, y conocimiento privado de la empresa que nunca se usa para entrenar la plataforma.", "Un rol de contabilidad con un panel financiero para facturación y gasto.", "Inicio de sesión único con tu proveedor de identidad, y un DPA que tu equipo legal puede firmar."] },
+  },
 }

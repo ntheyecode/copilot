@@ -589,4 +589,14 @@ export default {
     analyticsD: "Permite creditar o parceiro que indicou você (um cookie de indicação próprio). Desativado até você permitir, e nunca usado para traçar seu perfil.",
     learn: "Leia nossa <a>Política de Cookies</a> e a <p>Política de Privacidade</p>.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Novidades desta versão",
+    sub: "Disponível hoje, em todos os planos.",
+    global: { eyebrow: "Global por padrão", h: "Funciona em 16 idiomas, escolhido para a sua região", line: "O site e o produto falam 16 idiomas, escolhidos automaticamente para a sua região.", points: ["O site e o produto falam 16 idiomas.", "O idioma certo é escolhido automaticamente pela sua região: inglês onde o inglês é a língua de trabalho, como Índia, EUA e Reino Unido, e o idioma profissional local nos demais lugares.", "Você pode trocar de idioma a qualquer momento, e sua escolha fica salva."] },
+    privacy: { eyebrow: "Privado e em conformidade", h: "Em conformidade com GDPR e CCPA, privado por design", points: ["Redação no dispositivo: dados pessoais, de saúde, segredos e chaves são removidos ou tokenizados no seu próprio dispositivo antes de qualquer envio.", "Somente leitura por design: o WorkCoPilot orienta e nunca clica, digita ou executa nada por você.", "Um controle de consentimento de cookies que é seu: aceite ou recuse o armazenamento não essencial com um clique, e mude quando quiser.", "Alinhado ao GDPR e à CCPA. Há um Adendo de Processamento de Dados disponível para empresas."] },
+    billing: { eyebrow: "Cobrança self-service", h: "Mude seu plano você mesmo, quando quiser", points: ["Faça upgrade quando quiser e ele vale na hora, com crédito proporcional ao que você já pagou.", "Faça downgrade quando quiser e ele passa a valer na próxima renovação.", "Cancele você mesmo quando quiser, sem contrato.", "Veja suas faturas mensais no seu painel, e as horas extras que você comprar nunca expiram."] },
+    enterprise: { eyebrow: "Controles de empresa", h: "Governança que seus administradores definem uma vez", points: ["Os administradores da empresa definem uma política de prevenção de perda de dados que governa o que pode sair do dispositivo, uma vez, para todos.", "Controles por empresa, e conhecimento privado da empresa que nunca é usado para treinar a plataforma.", "Uma função de contabilidade com um painel financeiro para cobrança e gastos.", "Login único pelo seu provedor de identidade, e um DPA que seu time jurídico pode assinar."] },
+  },
 }

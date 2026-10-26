@@ -150,6 +150,55 @@ export default {
     learn: 'Read our <a>Cookie Policy</a> and <p>Privacy Policy</p>.',
   },
 
+  // "New in this release" marketing highlights (ReleaseNote.jsx), shown on the
+  // home page (all four) and one card on each relevant page. HONEST: every point
+  // describes shipped behavior - no certifications, invented numbers or unshipped
+  // specifics. 16 is the real supported-language count (LOCALES).
+  rel: {
+    title: 'New in this release',
+    sub: 'Shipping today, on every plan.',
+    global: {
+      eyebrow: 'Global by default',
+      h: 'Works in 16 languages, picked for your region',
+      line: 'The site and the product speak 16 languages, chosen automatically for your region.',
+      points: [
+        'The site and the product speak 16 languages.',
+        'The right one is chosen automatically from your region - English where English is the working language, such as India, the US and the UK, and the local professional language elsewhere.',
+        'You can switch language anytime, and your choice is remembered.',
+      ],
+    },
+    privacy: {
+      eyebrow: 'Private and compliant',
+      h: 'Built to GDPR and CCPA, private by design',
+      points: [
+        'On-device redaction: personal data, health data, secrets and keys are stripped or tokenized on your own device before anything is sent.',
+        'Read-only by design: WorkCoPilot guides, and never clicks, types or runs anything for you.',
+        'A cookie-consent control you own: accept or reject non-essential storage in one click, and change it anytime.',
+        'Aligned with GDPR and CCPA. A Data Processing Addendum is available for companies.',
+      ],
+    },
+    billing: {
+      eyebrow: 'Self-serve billing',
+      h: 'Change your plan yourself, anytime',
+      points: [
+        'Upgrade anytime and it applies right away, with prorated credit for what you have already paid.',
+        'Downgrade anytime and it takes effect at your next renewal.',
+        'Cancel yourself anytime, with no contract.',
+        'See your monthly invoices in your dashboard, and extra hours you buy never expire.',
+      ],
+    },
+    enterprise: {
+      eyebrow: 'Company controls',
+      h: 'Governance your admins set once',
+      points: [
+        'Company admins set a data-loss-prevention policy that governs what may leave the device, once, for everyone.',
+        'Per-company controls, and private company knowledge that is never used to train the platform.',
+        'An accounting role with a finance dashboard for billing and spend.',
+        'Single sign-on through your identity provider, and a DPA your legal team can sign.',
+      ],
+    },
+  },
+
   // Per-route <title> + meta description for the MARKETING pages (home + login
   // keep their own home.meta/login.meta). Read by each page's useSeo() as
   // seo.<key>.title / .description. Legal pages stay English and are NOT here.

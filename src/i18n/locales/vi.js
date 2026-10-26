@@ -589,4 +589,14 @@ export default {
     analyticsD: "Cho phép chúng tôi ghi nhận đối tác đã giới thiệu bạn (cookie giới thiệu của bên thứ nhất). Tắt cho đến khi bạn cho phép, và không bao giờ dùng để lập hồ sơ về bạn.",
     learn: "Đọc <a>Chính sách cookie</a> và <p>Chính sách quyền riêng tư</p> của chúng tôi.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Mới trong bản phát hành này",
+    sub: "Có sẵn hôm nay, trên mọi gói.",
+    global: { eyebrow: "Toàn cầu theo mặc định", h: "Hoạt động bằng 16 ngôn ngữ, chọn theo khu vực của bạn", line: "Trang web và sản phẩm nói 16 ngôn ngữ, được chọn tự động theo khu vực của bạn.", points: ["Trang web và sản phẩm nói 16 ngôn ngữ.", "Ngôn ngữ phù hợp được chọn tự động theo khu vực của bạn: tiếng Anh ở nơi tiếng Anh là ngôn ngữ làm việc, như Ấn Độ, Hoa Kỳ và Anh, và ngôn ngữ chuyên môn địa phương ở nơi khác.", "Bạn có thể đổi ngôn ngữ bất cứ lúc nào, và lựa chọn của bạn được ghi nhớ."] },
+    privacy: { eyebrow: "Riêng tư và tuân thủ", h: "Xây dựng theo GDPR và CCPA, riêng tư theo thiết kế", points: ["Che dữ liệu trên thiết bị: dữ liệu cá nhân, dữ liệu sức khỏe, bí mật và khóa được loại bỏ hoặc mã hóa thành token ngay trên thiết bị của bạn trước khi bất cứ thứ gì được gửi đi.", "Chỉ đọc theo thiết kế: WorkCoPilot hướng dẫn và không bao giờ nhấp, gõ hay chạy bất cứ thứ gì thay bạn.", "Một kiểm soát đồng ý cookie thuộc về bạn: chấp nhận hoặc từ chối lưu trữ không thiết yếu chỉ bằng một cú nhấp, và thay đổi bất cứ lúc nào.", "Phù hợp với GDPR và CCPA. Có sẵn Phụ lục Xử lý Dữ liệu cho doanh nghiệp."] },
+    billing: { eyebrow: "Thanh toán tự phục vụ", h: "Tự đổi gói của bạn, bất cứ lúc nào", points: ["Nâng cấp bất cứ lúc nào và áp dụng ngay, với tín dụng theo tỷ lệ cho phần bạn đã trả.", "Hạ cấp bất cứ lúc nào và có hiệu lực vào kỳ gia hạn tiếp theo.", "Tự hủy bất cứ lúc nào, không hợp đồng.", "Xem hóa đơn hàng tháng trong bảng điều khiển của bạn, và số giờ mua thêm không bao giờ hết hạn."] },
+    enterprise: { eyebrow: "Kiểm soát của công ty", h: "Quản trị mà quản trị viên của bạn thiết lập một lần", points: ["Quản trị viên công ty thiết lập một chính sách chống thất thoát dữ liệu, một lần cho mọi người, quy định những gì được phép rời khỏi thiết bị.", "Kiểm soát theo từng công ty, và tri thức riêng của công ty không bao giờ dùng để huấn luyện nền tảng.", "Một vai trò kế toán với bảng điều khiển tài chính cho việc lập hóa đơn và chi tiêu.", "Đăng nhập một lần qua nhà cung cấp danh tính của bạn, và một DPA mà đội ngũ pháp lý của bạn có thể ký."] },
+  },
 }

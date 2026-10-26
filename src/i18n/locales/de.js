@@ -595,4 +595,14 @@ export default {
     analyticsD: "Ermöglicht es, einen Partner zu vergüten, der Sie empfohlen hat (ein Erstanbieter-Empfehlungs-Cookie). Aus, bis Sie es erlauben, und nie zur Profilbildung.",
     learn: "Lesen Sie unsere <a>Cookie-Richtlinie</a> und <p>Datenschutzerklärung</p>.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Neu in dieser Version",
+    sub: "Ab heute verfügbar, in jedem Tarif.",
+    global: { eyebrow: "Global von Haus aus", h: "Funktioniert in 16 Sprachen, passend zu Ihrer Region", line: "Website und Produkt sprechen 16 Sprachen, automatisch passend zu Ihrer Region gewählt.", points: ["Website und Produkt sprechen 16 Sprachen.", "Die richtige wird automatisch nach Ihrer Region gewählt - Englisch, wo Englisch die Arbeitssprache ist, etwa in Indien, den USA und Großbritannien, und die lokale Fachsprache anderswo.", "Sie können die Sprache jederzeit wechseln, und Ihre Wahl wird gemerkt."] },
+    privacy: { eyebrow: "Privat und konform", h: "Nach DSGVO und CCPA gebaut, privat durch Design", points: ["Schwärzung auf dem Gerät: personenbezogene Daten, Gesundheitsdaten, Geheimnisse und Schlüssel werden auf Ihrem eigenen Gerät entfernt oder tokenisiert, bevor etwas gesendet wird.", "Nur lesend durch Design: WorkCoPilot führt und klickt, tippt oder führt nie etwas für Sie aus.", "Eine Cookie-Einwilligung, die Ihnen gehört: nicht notwendige Speicherung mit einem Klick annehmen oder ablehnen und jederzeit ändern.", "An DSGVO und CCPA ausgerichtet. Ein Auftragsverarbeitungsvertrag ist für Unternehmen verfügbar."] },
+    billing: { eyebrow: "Selbstbedienungs-Abrechnung", h: "Ändern Sie Ihren Tarif selbst, jederzeit", points: ["Jederzeit upgraden, sofort wirksam, mit anteiliger Gutschrift für das bereits Bezahlte.", "Jederzeit downgraden, wirksam zur nächsten Verlängerung.", "Jederzeit selbst kündigen, ohne Vertrag.", "Sehen Sie Ihre monatlichen Rechnungen in Ihrem Dashboard, und gekaufte Zusatzstunden verfallen nie."] },
+    enterprise: { eyebrow: "Unternehmenssteuerung", h: "Governance, die Ihre Admins einmal festlegen", points: ["Unternehmensadmins legen eine Richtlinie zum Schutz vor Datenverlust fest, die einmal für alle regelt, was das Gerät verlassen darf.", "Steuerung je Unternehmen, und privates Unternehmenswissen, das nie zum Training der Plattform genutzt wird.", "Eine Buchhaltungsrolle mit einem Finanz-Dashboard für Abrechnung und Ausgaben.", "Single Sign-on über Ihren Identitätsanbieter und ein DPA, das Ihr Rechtsteam unterschreiben kann."] },
+  },
 }

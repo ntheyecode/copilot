@@ -11,6 +11,7 @@ import { ShieldCheck, Lock, ScanEye, FileText, ArrowLeft, ArrowRight, Check, Glo
 import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 
 // A representative integration screen. `redacted` swaps each sensitive value for
@@ -293,6 +294,7 @@ export default function WorkSecurity() {
         <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> Read the Security &amp; Privacy paper<span className="wsx-sr"> (PDF, opens in a new tab)</span></a>
         <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
+      <ReleaseNote groups={['privacy']} />
       </main>
       <SiteFooter />
     </div>

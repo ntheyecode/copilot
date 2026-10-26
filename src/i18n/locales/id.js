@@ -589,4 +589,14 @@ export default {
     analyticsD: "Memungkinkan kami memberi kredit kepada mitra yang merujuk Anda (cookie rujukan pihak pertama). Nonaktif hingga Anda mengizinkan, dan tidak pernah dipakai untuk memprofilkan Anda.",
     learn: "Baca <a>Kebijakan Cookie</a> dan <p>Kebijakan Privasi</p> kami.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Baru di rilis ini",
+    sub: "Tersedia hari ini, di setiap paket.",
+    global: { eyebrow: "Global secara bawaan", h: "Bekerja dalam 16 bahasa, dipilih untuk wilayah Anda", line: "Situs dan produk berbicara dalam 16 bahasa, dipilih otomatis untuk wilayah Anda.", points: ["Situs dan produk berbicara dalam 16 bahasa.", "Bahasa yang tepat dipilih otomatis dari wilayah Anda: bahasa Inggris di tempat Inggris menjadi bahasa kerja, seperti India, AS, dan Inggris, dan bahasa profesional lokal di tempat lain.", "Anda dapat mengganti bahasa kapan saja, dan pilihan Anda diingat."] },
+    privacy: { eyebrow: "Privat dan patuh", h: "Dibangun untuk GDPR dan CCPA, privat secara desain", points: ["Penyuntingan di perangkat: data pribadi, data kesehatan, rahasia, dan kunci dihapus atau ditokenisasi di perangkat Anda sebelum apa pun dikirim.", "Hanya-baca secara desain: WorkCoPilot memandu dan tidak pernah mengeklik, mengetik, atau menjalankan apa pun untuk Anda.", "Kontrol persetujuan cookie milik Anda: terima atau tolak penyimpanan non-esensial dalam satu klik, dan ubah kapan saja.", "Selaras dengan GDPR dan CCPA. Tersedia Adendum Pemrosesan Data untuk perusahaan."] },
+    billing: { eyebrow: "Penagihan swalayan", h: "Ubah paket Anda sendiri, kapan saja", points: ["Naikkan paket kapan saja dan berlaku langsung, dengan kredit prorata untuk yang sudah Anda bayar.", "Turunkan paket kapan saja dan berlaku pada perpanjangan berikutnya.", "Batalkan sendiri kapan saja, tanpa kontrak.", "Lihat faktur bulanan Anda di dasbor, dan jam ekstra yang Anda beli tidak pernah kedaluwarsa."] },
+    enterprise: { eyebrow: "Kontrol perusahaan", h: "Tata kelola yang diatur admin Anda satu kali", points: ["Admin perusahaan menetapkan kebijakan pencegahan kehilangan data yang mengatur apa yang boleh meninggalkan perangkat, satu kali, untuk semua orang.", "Kontrol per perusahaan, dan pengetahuan perusahaan privat yang tidak pernah dipakai untuk melatih platform.", "Peran akunting dengan dasbor keuangan untuk penagihan dan pengeluaran.", "Masuk tunggal melalui penyedia identitas Anda, dan DPA yang dapat ditandatangani tim hukum Anda."] },
+  },
 }

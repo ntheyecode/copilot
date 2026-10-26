@@ -595,4 +595,14 @@ export default {
     analyticsD: "Nous permet de créditer le partenaire qui vous a parrainé (un cookie de parrainage propriétaire). Désactivé tant que vous ne l'autorisez pas, et jamais utilisé pour vous profiler.",
     learn: "Lisez notre <a>Politique de cookies</a> et notre <p>Politique de confidentialité</p>.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Nouveautés de cette version",
+    sub: "Disponible aujourd'hui, sur toutes les offres.",
+    global: { eyebrow: "Global par défaut", h: "Fonctionne en 16 langues, choisie pour votre région", line: "Le site et le produit parlent 16 langues, choisies automatiquement selon votre région.", points: ["Le site et le produit parlent 16 langues.", "La bonne est choisie automatiquement selon votre région : anglais là où l'anglais est la langue de travail, comme en Inde, aux États-Unis et au Royaume-Uni, et la langue professionnelle locale ailleurs.", "Vous pouvez changer de langue à tout moment, et votre choix est mémorisé."] },
+    privacy: { eyebrow: "Privé et conforme", h: "Conforme au RGPD et au CCPA, privé par conception", points: ["Expurgation sur l'appareil : les données personnelles, de santé, les secrets et les clés sont supprimés ou tokenisés sur votre propre appareil avant tout envoi.", "Lecture seule par conception : WorkCoPilot guide et ne clique, ne saisit et ne lance jamais rien à votre place.", "Un contrôle de consentement aux cookies qui vous appartient : acceptez ou refusez le stockage non essentiel en un clic, et modifiez-le à tout moment.", "Aligné sur le RGPD et le CCPA. Un accord de traitement des données est disponible pour les entreprises."] },
+    billing: { eyebrow: "Facturation en libre-service", h: "Changez votre offre vous-même, à tout moment", points: ["Montez en gamme à tout moment, avec effet immédiat et un crédit au prorata de ce que vous avez déjà payé.", "Descendez en gamme à tout moment, avec effet à votre prochain renouvellement.", "Résiliez vous-même à tout moment, sans engagement.", "Consultez vos factures mensuelles dans votre tableau de bord, et les heures supplémentaires achetées n'expirent jamais."] },
+    enterprise: { eyebrow: "Contrôles d'entreprise", h: "Une gouvernance que vos administrateurs définissent une fois", points: ["Les administrateurs d'entreprise définissent une politique de prévention des pertes de données qui régit ce qui peut quitter l'appareil, une fois, pour tout le monde.", "Des contrôles par entreprise, et un savoir d'entreprise privé qui ne sert jamais à entraîner la plateforme.", "Un rôle comptable avec un tableau de bord financier pour la facturation et les dépenses.", "L'authentification unique via votre fournisseur d'identité, et un DPA que votre équipe juridique peut signer."] },
+  },
 }

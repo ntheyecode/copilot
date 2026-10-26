@@ -589,4 +589,14 @@ export default {
     analyticsD: "Sizi yönlendiren iş ortağını kredilendirmemizi sağlar (birinci taraf yönlendirme çerezi). İzin verene kadar kapalıdır ve sizi profillemek için asla kullanılmaz.",
     learn: "<a>Çerez Politikamızı</a> ve <p>Gizlilik Politikamızı</p> okuyun.",
   },
+
+  // "New in this release" highlights (see en.js rel).
+  rel: {
+    title: "Bu sürümde yeni",
+    sub: "Bugün, her planda.",
+    global: { eyebrow: "Varsayılan olarak küresel", h: "16 dilde çalışır, bölgenize göre seçilir", line: "Site ve ürün 16 dil konuşur, bölgenize göre otomatik seçilir.", points: ["Site ve ürün 16 dil konuşur.", "Doğru dil bölgenize göre otomatik seçilir: İngilizcenin iş dili olduğu Hindistan, ABD ve Birleşik Krallık gibi yerlerde İngilizce, başka yerlerde yerel meslek dili.", "Dili istediğiniz zaman değiştirebilirsiniz ve seçiminiz hatırlanır."] },
+    privacy: { eyebrow: "Gizli ve uyumlu", h: "GDPR ve CCPA’ya göre tasarlandı, tasarım gereği gizli", points: ["Cihazda maskeleme: kişisel veriler, sağlık verileri, sırlar ve anahtarlar, bir şey gönderilmeden önce kendi cihazınızda kaldırılır veya tokenlaştırılır.", "Tasarım gereği salt okunur: WorkCoPilot yol gösterir ve sizin yerinize asla tıklamaz, yazmaz veya çalıştırmaz.", "Size ait bir çerez onayı kontrolü: zorunlu olmayan depolamayı tek tıkla kabul edin veya reddedin ve istediğiniz zaman değiştirin.", "GDPR ve CCPA ile uyumlu. Şirketler için bir Veri İşleme Ek Sözleşmesi mevcuttur."] },
+    billing: { eyebrow: "Self servis faturalama", h: "Planınızı kendiniz, istediğiniz zaman değiştirin", points: ["İstediğiniz zaman yükseltin; hemen geçerli olur ve önceden ödediğiniz için orantılı kredi verilir.", "İstediğiniz zaman düşürün; bir sonraki yenilemede geçerli olur.", "İstediğiniz zaman kendiniz iptal edin, sözleşme yok.", "Aylık faturalarınızı panonuzda görün; satın aldığınız ek saatler asla sona ermez."] },
+    enterprise: { eyebrow: "Şirket kontrolleri", h: "Yöneticilerinizin bir kez belirlediği yönetişim", points: ["Şirket yöneticileri, cihazdan neyin çıkabileceğini herkes için bir kez belirleyen bir veri kaybını önleme politikası tanımlar.", "Şirket bazında kontroller ve platformu eğitmek için asla kullanılmayan özel şirket bilgisi.", "Faturalama ve harcama için finans panosu olan bir muhasebe rolü.", "Kimlik sağlayıcınız üzerinden çoklu oturum açma ve hukuk ekibinizin imzalayabileceği bir DPA."] },
+  },
 }

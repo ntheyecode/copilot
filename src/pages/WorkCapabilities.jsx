@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom'
 import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, Check, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
+import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
 import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
@@ -333,6 +334,7 @@ export default function WorkCapabilities() {
         <a className="wcap-btn alt" href="/workcopilot/enterprise">Enterprise features</a>
         <a className="wcap-btn alt" href="/demo">See a 60-second demo</a>
       </section>
+      <ReleaseNote groups={['global']} />
       </main>
       <SiteFooter />
     </div>
