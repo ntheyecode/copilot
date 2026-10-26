@@ -57,6 +57,14 @@ export const workAdminApi = {
   sessionDetail: (id) => request('GET', `/api/work/admin/sessions/${encodeURIComponent(id)}`),
   deleteSession: (id, reason) => request('DELETE', `/api/work/admin/sessions/${encodeURIComponent(id)}`, { reason }),
   leads: (limit) => request('GET', `/api/work/admin/leads${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
+  // Subscribers: every paying subscriber + their operations (superadmin). Shape:
+  // { subscribers: [ { id, username, email, plan, status, cycle, since,
+  //   currentPeriodEnd, mrrUsd, lifetimeUsd, tasksToday, hoursUsedToday,
+  //   sessionCount, lastActive, companyName, free } ],
+  //   totals: { count, activeCount, mrrUsd, byPlan: { lite, basic, advanced, premium } } }.
+  // Endpoint is implemented by the server agent; the UI codes defensively (it may
+  // 404/501 until wired, and any field may be null).
+  subscribers: () => request('GET', '/api/work/admin/subscribers'),
   incidents: (limit) => request('GET', `/api/work/admin/incidents${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
   aiState: () => request('GET', '/api/work/admin/ai-state'),
 
