@@ -161,6 +161,7 @@ async function parseDataFile(file) {
 import { api, friendlyError } from '../api.js'
 import AnswerBody from '../components/AnswerBody.jsx'
 import RichText from '../components/RichText.jsx'
+import DownloadMenu from '../components/DownloadMenu.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
 import { stepWindow, progressText, stepProgress, planMarker } from '../shared/step_window.js'
@@ -4828,9 +4829,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <span className="wc-donebar-lead"><span className="wc-done-ic"><Check size={15} strokeWidth={2.5} /></span><span>Completed<small>{steps.length ? `${doneCount} of ${steps.length} steps done. ` : ''}Download what you need.</small></span></span>
             <div className="wc-donebar-actions">
               <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
-              <button className="wc-chip-btn" onClick={() => downloadDoc(api.workReportUrl(sessionId, true), `workcopilot-${sessionId}.pdf`)}><Download size={14} /> Report (PDF)</button>
+              <DownloadMenu sessionId={sessionId} className="wc-chip-btn" label="Download" onError={(m) => setErr(m)} />
               <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>
-              <button type="button" className="wc-chip-btn" onClick={() => downloadDoc(api.workAuditUrl(sessionId), `workcopilot-${sessionId}-audit.log`)}><FileText size={14} /> Audit log</button>
             </div>
           </div>
         )}

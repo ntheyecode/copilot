@@ -184,6 +184,7 @@ export const api = {
   workModes: () => req('GET', '/api/work/modes'),
   workSetMode: (id, mode) => req('POST', `/api/work/sessions/${id}/mode`, { mode }),
   workReportUrl: (id, dl) => `/api/work/sessions/${id}/report.pdf${dl ? '?dl=1' : ''}`,
+  workReportTxtUrl: (id, dl) => `/api/work/sessions/${id}/report.txt${dl ? '?dl=1' : ''}`,
   workComplianceUrl: (id, dl, framework) => `/api/work/sessions/${id}/compliance.pdf?${[dl ? 'dl=1' : '', framework ? `framework=${encodeURIComponent(framework)}` : ''].filter(Boolean).join('&')}`,
   workComplianceFrameworks: () => req('GET', '/api/work/compliance/frameworks'),
   workComplianceEmail: (id, body) => req('POST', `/api/work/sessions/${id}/compliance/email`, body || {}),

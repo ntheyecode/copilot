@@ -23,6 +23,7 @@ import * as work from './work.js'
 import { buildWorkReportPdf, buildDeliverablesPdf, buildComplianceReportPdf } from './pdf.js'
 import { sendMail } from './mailer.js'
 import { verifyReport, attestReport, attestationText, REPORT_CONTACTS } from './report_sign.js'
+import { formatWorkReportText } from './report_text.js'
 import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
 import { sendTemplate, sendTemplateAsync, sendAccountWelcomeAsync, sendPasswordReset, sendPasswordChangedAsync } from './emails.js'
 import { EMAIL_DEFS, renderEmail } from './email_templates.js'
@@ -2439,6 +2440,29 @@ app.get('/api/work/sessions/:id/report.pdf', requireWorkAuth, async (req, res) =
     res.setHeader('Content-Type', 'application/pdf')
     res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="${fname}"`)
     buildWorkReportPdf(s, res, { achieved, modeLabel })
+  } catch (e) { sendWorkError(res, e, req) }
+})
+
+// Plain-TEXT session report (same content + completed-only gate as the PDF, as
+// a .txt download). Same access scope and summary handling as report.pdf.
+app.get('/api/work/sessions/:id/report.txt', requireWorkAuth, async (req, res) => {
+  try {
+    let s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) s = store.getWorkSessionForCompanyAdmin(req.workUser.id, req.params.id)
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const ownerId = s.workUserId
+    let achieved = s.summary || ''
+    if (!achieved) {
+      try {
+        const rt = store.getWorkUserRuntime(ownerId)
+        if (rt) { achieved = await work.workSummarize(ai, rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(ownerId), ownerId) }); if (achieved) store.setWorkSessionSummary(ownerId, req.params.id, achieved) }
+      } catch { /* leave empty; the text report falls back to the list of done steps */ }
+    }
+    const modeLabel = (work.WORK_MODES.find((m) => m.id === work.normalizeMode(s.mode)) || {}).label || ''
+    const fname = `workcopilot-${String(s.startedAt || '').slice(0, 10) || 'session'}.txt`
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.setHeader('Content-Disposition', `${req.query.dl ? 'attachment' : 'inline'}; filename="${fname}"`)
+    res.send(formatWorkReportText(s, { achieved, modeLabel }))
   } catch (e) { sendWorkError(res, e, req) }
 })
 

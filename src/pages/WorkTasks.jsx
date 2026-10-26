@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, ArrowRight, Check, Play, Pause, Download, Loader2, AlertTriangle, CheckCircle2, ClipboardList, History } from 'lucide-react'
 import { api, friendlyError } from '../api.js'
+import DownloadMenu from '../components/DownloadMenu.jsx'
 import { useAuth } from '../auth.jsx'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
@@ -263,16 +264,8 @@ export function WorkSubShell({ active, title, children }) {
 export default function WorkTasks() {
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
-  // Robust report download (web + desktop app): fetch with the window's own
-  // authenticated session and save via a blob, instead of a target=_blank link.
-  const [dlId, setDlId] = useState(null)
+  // Download errors from the format chooser surface here.
   const [dlErr, setDlErr] = useState('')
-  const downloadReport = async (id) => {
-    setDlErr(''); setDlId(id)
-    try { await api.downloadFile(api.workReportUrl(id, true), `workcopilot-${id}.pdf`) }
-    catch (e) { setDlErr(friendlyError(e, 'Could not download the report. Please try again.')) }
-    finally { setDlId(null) }
-  }
   // Completed = status 'ended'. Newest completion first (endedAt, then startedAt).
   const done = useMemo(() => sessions
     .filter((s) => s && s.status === 'ended')
@@ -317,7 +310,7 @@ export default function WorkTasks() {
                 </div>
                 <div className="ws-row-acts">
                   <button type="button" className="ws-btn go" onClick={() => open(s.id)}>Open <ArrowRight size={14} /></button>
-                  <button type="button" className="ws-btn" disabled={dlId === s.id} onClick={() => downloadReport(s.id)} title="Download the report (PDF)">{dlId === s.id ? <Loader2 size={14} className="spin" /> : <Download size={14} />} Report (PDF)</button>
+                  <DownloadMenu sessionId={s.id} className="ws-btn" label="Download" onError={setDlErr} />
                 </div>
               </div>
             )
