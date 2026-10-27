@@ -5,9 +5,10 @@
 // are never localized here; only their display text is.
 //
 // Plan model (2026-10-27): each tier includes guided HOURS PER MONTH (one pool
-// per person, renewed on the 1st, with a month-end policy) and a plain number of
-// guided TASKS PER DAY. The former daily hours bucket and the "bonus tasks per
-// extra hour" trade are retired, so no key here describes them.
+// per person, renewed on the 1st, with a month-end policy). Hours are the only
+// usage limit: the per-day task cap, the former daily hours bucket and the
+// "bonus tasks per extra hour" trade are all retired, so no key here describes
+// them.
 export default {
   pricingAdmin: {
     loading: 'Loading pricing',
@@ -24,23 +25,23 @@ export default {
     // Collapsed record summary
     record: {
       title: 'Pricing',
-      desc: 'What each tier costs, the guided hours it includes each month and its per-day task cap.',
+      desc: 'What each tier costs and the guided hours it includes each month. Hours are the only usage limit; there is no per-day task cap.',
       descEdit: 'Click Edit to change any of it.',
       currency: 'Currency',
-      tierSummary: '{price}/mo  ·  {hours} h/month  ·  {tasks} tasks/day  ·  {replans} re-plans  ·  {extraHr}/extra hr  ·  {image}/image',
+      tierSummary: '{price}/mo  ·  {hours} h/month  ·  {replans} re-plans  ·  {extraHr}/extra hr  ·  {image}/image',
       monthEnd: 'At month end',
       monthEndForfeit: 'Unused plan hours are forfeited; purchased hours never expire.',
       monthEndCarry: 'Unused plan hours carry forward, up to {cap} h in total.',
       monthEndCarryNoCap: 'Unused plan hours carry forward with no cap.',
       corporate: 'Corporate',
-      corporateValue: 'Unlimited tasks and re-plans',
+      corporateValue: 'Unlimited re-plans; tasks per company policy',
       bulkMin: 'Bulk minimum',
       bulkMinValue: '{count} images',
       freeImages: 'Free images per day',
       // Plans at a glance: the per-tier ladder under the record.
       glanceTitle: 'Plans at a glance',
       perMonthShort: '/mo',
-      glanceLine: '{hours} h/month  ·  {tasks} tasks/day',
+      glanceLine: '{hours} h/month',
       glanceFoot: 'Bars compare the included hours per month across tiers.',
     },
 
@@ -48,7 +49,7 @@ export default {
     edit: {
       monthly: {
         title: 'Monthly plan price',
-        desc: 'What each tier costs per month. The guided hours each tier includes per month and its tasks per day are set below.',
+        desc: 'What each tier costs per month. The guided hours each tier includes per month are set below.',
       },
       monthlyHours: {
         title: 'Monthly included hours, per tier',
@@ -65,11 +66,6 @@ export default {
         cap: 'Carry-forward cap (hours)',
         capHint: 'The most that can ever build up in one pool. Leave blank for no cap.',
         noCap: 'No cap',
-      },
-      dailyTasks: {
-        title: 'Guided tasks per day, per tier',
-        desc: 'How many guided tasks (sessions) a person may start per day: 4 on Lite and Basic, 6 on Advanced, 8 on Premium by default. A plain cap: nothing banks, nothing is earned or traded. Someone must pause or finish the current task before starting another. Resets 11:59 PM ET. Corporate (company) accounts are unlimited unless their admin sets a ceiling.',
-        hint: 'tasks per day',
       },
       replans: {
         title: 'Re-plans per task, per tier',
@@ -93,7 +89,6 @@ export default {
       },
       corporate: 'Corporate',
       unlimited: 'Unlimited',
-      noDailyTaskCap: 'Company accounts have no per-day task cap unless their company admin sets one.',
       noReplanCap: 'Company accounts have no re-plan cap.',
       currency: 'Currency',
       save: 'Save pricing',

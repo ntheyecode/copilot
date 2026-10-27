@@ -40,7 +40,7 @@ export default {
       notifications: { title: 'Notifications', sub: 'Enterprise alerts: companies nearing their pool, and additional-hours requests to review.' },
       governance: { title: 'Data governance', sub: 'Per-company DLP policy: what leaves the device, block words, compliance frameworks, arm & lock.' },
       users: { title: 'Users', sub: 'Tiers, balances and granted hours.' },
-      pricing: { title: 'Pricing', sub: 'Plan prices, included hours per month, guided tasks per day, extra-hour and image rates.' },
+      pricing: { title: 'Pricing', sub: 'Plan prices, included hours per month, extra-hour and image rates.' },
       billing: { title: 'Billing', sub: 'Stripe keys, plan price ids and the webhook endpoint.' },
       finance: { title: 'Finance', sub: 'All transactions, revenue by week/month/quarter/year, MRR, and refunds.' },
       subscribers: { title: 'Subscribers', sub: 'Every paying subscriber and their operations: plan, status, cycle, MRR, lifetime paid, and today\'s activity.' },
