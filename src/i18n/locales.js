@@ -120,3 +120,17 @@ export function localeFromTimezone() {
     return 'en-GB'
   } catch { return 'en-GB' }
 }
+
+// The EXPLICIT time-zone mapping, with NO default: the supported locale a zone is
+// deliberately mapped to, or null when the zone is not in the table. detectLocale
+// uses this to tell a CONFIDENT region (e.g. India -> English) from an unmapped
+// zone that merely falls back to English, so that in an English-professional
+// region English wins even over a non-English browser language, while an unmapped
+// zone still lets a supported browser language through (owner: India -> English by
+// default; do not regress unmapped regions).
+export function localeFromTimezoneExplicit() {
+  try {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    return (tz && TZ_LOCALE[tz]) || null
+  } catch { return null }
+}

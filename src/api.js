@@ -12,7 +12,7 @@ const IS_APP = typeof window !== 'undefined' && !!window.refigold
 function chosenLocale() {
   try { return (typeof localStorage !== 'undefined' && localStorage.getItem('wc_locale')) || '' } catch { return '' }
 }
-async function req(method, url, body) {
+async function req(method, url, body, opts) {
   const headers = {}
   if (body) headers['Content-Type'] = 'application/json'
   if (IS_APP) headers['X-Refigold-App'] = '1'
@@ -22,6 +22,10 @@ async function req(method, url, body) {
     credentials: 'include',
     headers: Object.keys(headers).length ? headers : undefined,
     body: body ? JSON.stringify(body) : undefined,
+    // Optional AbortSignal so a caller can time-box a request. Used by the auth
+    // hydration so a stalled network can never hold the whole app on its loading
+    // splash forever (SUPREME RULE VIII: degrade gracefully, never a stuck state).
+    signal: (opts && opts.signal) || undefined,
   })
   let data = null
   try { data = await res.json() } catch { /* no body */ }
@@ -105,7 +109,7 @@ export const api = {
   meetAdminGetDeepgram: () => req('GET', '/api/meet/admin/deepgram'),
   meetAdminSetDeepgram: (apiKey, model) => req('POST', '/api/meet/admin/deepgram', { apiKey, model }),
   // --- WorkCoPilot (separate product, own login) ---
-  workMe: () => req('GET', '/api/work/me'),
+  workMe: (opts) => req('GET', '/api/work/me', undefined, opts),
   workSignup: (body) => req('POST', '/api/work/signup', body || {}),
   // Legal consent (clickwrap). The manifest is the server's single source of
   // truth for the current agreement version + the documents to link; accept

@@ -23,7 +23,7 @@
 // before the first paint of the next visit. First visit: navigator.languages.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import enBase from './locales/en.js'
-import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale, localeFromTimezone } from './locales.js'
+import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale, localeFromTimezone, localeFromTimezoneExplicit } from './locales.js'
 
 // Per-section English key partials (src/i18n/locales/en/*.js). This lets MANY i18n
 // waves add keys AT THE SAME TIME, each writing its OWN partial file under a distinct
@@ -112,14 +112,20 @@ export function detectLocale() {
     const langs = (navigator.languages && navigator.languages.length) ? navigator.languages : [navigator.language]
     for (const l of langs) { const hit = resolveLocale(l); if (hit) { byLang = hit; break } }
   } catch { /* no navigator (SSR/test) */ }
-  // A deliberate NON-English browser language is an explicit preference, so it
-  // wins over location. Otherwise the visitor's LOCATION decides, via the
-  // professional-language logic in localeFromTimezone: regions where English is
-  // the professional language (India, Singapore, Nigeria, UK, ...) or whose
-  // language we do not support get English - US English for the USA & Canada, UK
-  // English elsewhere - while regions with a supported local professional language
-  // (Japan, Germany, Brazil, ...) get that language. localeFromTimezone always
-  // resolves (defaults to en-GB), so the English-browser case is fully covered.
+  // Where the visitor's LOCATION is an English-professional region that we map
+  // deliberately (India, Pakistan, Singapore, UK, Anglophone Africa, the US, ...),
+  // English is the default EVEN IF the browser is set to a non-English language:
+  // those markets use the product in English, and a Hindi (or other) browser
+  // locale there is not a request for the product in that language. The visitor
+  // can still choose any language from the menu, which is stored and wins above.
+  // Owner rule: India -> English by default. We use the EXPLICIT mapping (null when
+  // unmapped) so an unmapped zone still lets a supported browser language through.
+  const tzExplicit = localeFromTimezoneExplicit()
+  if (tzExplicit === 'en' || tzExplicit === 'en-GB') return tzExplicit
+  // Elsewhere a deliberate non-English browser language is an explicit preference
+  // and wins over location; otherwise the visitor's location decides (English for
+  // unmapped/English-professional zones, the local professional language for
+  // Japan / Germany / Brazil / ...). localeFromTimezone always resolves to en-GB.
   if (byLang && byLang !== 'en' && byLang !== 'en-GB') return byLang
   return localeFromTimezone() || byLang || 'en-GB'
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { api } from './api.js'
 import { setScrubEnabled, setGovPolicy } from './scrub.js'
 import { initAccent } from './theme/accent.js'
@@ -14,9 +14,25 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [ready, setReady] = useState(false) // false until the first /api/work/me check resolves
 
+  // One hydration at a time. On a flaky mobile network the focus/visibility
+  // handlers below can fire repeatedly (e.g. while the user is on a phone call),
+  // which otherwise stacks up many concurrent /api/work/me requests. This guard
+  // collapses them to a single in-flight check (SUPREME RULE VIII: no runaway).
+  const inflight = useRef(false)
+
   const refresh = useCallback(async () => {
+    if (inflight.current) return
+    inflight.current = true
+    // Time-box the session check. fetch has no built-in timeout, so a stalled
+    // connection (no response, no error) would await forever and `ready` would
+    // never flip to true, leaving the WHOLE site stuck on its loading splash
+    // (the reported India blank-page). Abort after a few seconds so `finally`
+    // always runs and the public site renders even when the session check never
+    // answers (SUPREME RULE VIII: degrade gracefully, never a stuck screen).
+    const ctrl = (typeof AbortController !== 'undefined') ? new AbortController() : null
+    const cap = ctrl ? setTimeout(() => { try { ctrl.abort() } catch { /* ignore */ } }, 5000) : null
     try {
-      const r = await api.workMe()
+      const r = await api.workMe(ctrl ? { signal: ctrl.signal } : undefined)
       const u = (r && r.signedIn && r.user) ? r.user : null
       setUser(u)
       setScrubEnabled(!!(u && u.scrub))   // legacy on/off scrub
@@ -25,11 +41,13 @@ export function AuthProvider({ children }) {
     } catch (e) {
       // Only a DEFINITIVE server refusal ends the session: we reached the server
       // and it said no (401 not-signed-in / 403 suspended). A transient network
-      // error (offline, DNS blip, aborted request) has no e.status, and must NOT
-      // null an established user.
+      // error (offline, DNS blip, aborted/timed-out request) has no e.status, and
+      // must NOT null an established user.
       if (e && e.status) setUser(null)
     } finally {
+      if (cap) clearTimeout(cap)
       setReady(true)
+      inflight.current = false
     }
   }, [])
 
