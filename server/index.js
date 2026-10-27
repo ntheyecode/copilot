@@ -31,6 +31,7 @@ import { Writable } from 'node:stream'
 import { registerWorkAdminRoutes } from './work-admin.js'
 import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
+import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerSocialRoutes } from './social.js'
@@ -2440,9 +2441,14 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
     const { frame } = req.body || {}
+    // Optional on-demand "Verify this step" (the user's own confidence check):
+    // the SAME engine read of the SAME frame, metered and audited the same, but
+    // NOTHING is applied - no step marked done, no pointer moved, no milestone
+    // shot, no flag event. The verdict goes back to the user, who decides.
+    const verifyOnly = !!(req.body && req.body.verify)
     if (!frame) return res.status(400).json({ error: 'No screen frame supplied.' })
     if (!Array.isArray(s.steps) || s.steps.length === 0) {
-      return res.json({ status: 'working', observation: '', flag: '', guidance: '', index: 0, step: null, done: false, steps: [] })
+      return res.json({ status: 'working', observation: '', flag: '', guidance: '', index: 0, step: null, done: false, steps: [], ...(verifyOnly ? { verify: true, stepDone: false } : {}) })
     }
     const rr = await resolveWorkRuntime(req, res, { needVision: true }); if (!rr) return
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
@@ -2462,7 +2468,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     // the header, NOT repeated on every line), plus - for genuine transparency -
     // what the assistant READ from this screen and the guidance it related back.
     store.appendWorkAudit(req.params.id, {
-      call: 'watch', model: usedModel || call.visionModel || rr.visionModel || null, scrub: watchScrubOn,
+      call: verifyOnly ? 'verify' : 'watch', model: usedModel || call.visionModel || rr.visionModel || null, scrub: watchScrubOn,
       frame: 'screenshot sent',
       sent: watchScrubOn
         ? 'Screen frame (sensitive on-screen text redacted on the device before sending) + the goal and current plan (goal in the header, not repeated here).'
@@ -2470,6 +2476,7 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
       observed: r.observation || '',
       flag: r.flag || '',
     })
+    if (verifyOnly) return res.json(verifyResponse(r, s, { escalated }))
     // Snapshot which steps were already done, so we can tell which ones become
     // confirmed on THIS frame and keep that exact frame as their evidence.
     const prevDone = new Set((s.steps || []).map((x, i) => (x.status === 'done' ? i : -1)).filter((i) => i >= 0))
