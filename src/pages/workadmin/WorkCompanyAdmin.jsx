@@ -32,6 +32,7 @@ import { Meter, VIZ_CSS } from './sections/_viz.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './sections/AiSourceChoice.jsx'
 import { aiSetupOf } from '../../shared/ai_source_options.js'
 import * as SSO from '../../shared/sso_guide.js'
+import { OIDC_PROVIDER_LABELS as SSO_PROVIDER_LABELS, OIDC_PROVIDER_IDS as SSO_PROVIDER_ORDER } from '../../shared/oidc_providers.js'
 
 // Destructive confirms use the shared promise-style useReasonModal from
 // sections/_shared.jsx (single source - SUPREME RULE II; the local copy was deleted).
@@ -40,14 +41,8 @@ const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced
 // User-facing role labels resolve through i18n keys (plan names Basic/Advanced/
 // Premium are brand terms and stay literal). Call sites wrap these with t().
 const ROLE_LABEL = { company_admin: 'companyAdmin.roles.companyAdmin', member: 'companyAdmin.roles.member', executive: 'companyAdmin.roles.executive' }
-// Friendly labels for every OpenID Connect provider the backend accepts.
-const SSO_PROVIDER_LABELS = {
-  google: 'Google Workspace', microsoft: 'Microsoft Entra ID', okta: 'Okta', auth0: 'Auth0',
-  onelogin: 'OneLogin', ping: 'Ping Identity (PingOne)', jumpcloud: 'JumpCloud',
-  keycloak: 'Keycloak', cognito: 'AWS Cognito', azuread_b2c: 'Microsoft Entra B2C',
-  authentik: 'Authentik', duo: 'Duo', centrify: 'Centrify', oidc: 'Other (any OpenID Connect)',
-}
-const SSO_PROVIDER_ORDER = ['google', 'microsoft', 'okta', 'auth0', 'onelogin', 'ping', 'jumpcloud', 'keycloak', 'cognito', 'azuread_b2c', 'authentik', 'duo', 'centrify', 'oidc']
+// OIDC provider labels + order come from the single registry (src/shared/
+// oidc_providers.js), imported above as SSO_PROVIDER_LABELS / SSO_PROVIDER_ORDER.
 const fmtDate = (s) => { if (!s) return '-'; const d = new Date(s); return isNaN(d) ? '-' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
 const fmtDT = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
 const money = (n) => `$${(Number(n) || 0).toFixed(2)}`

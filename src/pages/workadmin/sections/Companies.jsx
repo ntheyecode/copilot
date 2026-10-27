@@ -12,26 +12,10 @@ import CompanyConsumption from './CompanyConsumption.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './AiSourceChoice.jsx'
 import { aiSetupOf, aiSourceFor } from '../../../shared/ai_source_options.js'
 import { useT } from '../../../i18n/index.jsx'
+import { OIDC_PROVIDERS, oidcIssuerExample } from '../../../shared/oidc_providers.js'
 
-// Friendly labels for every OpenID Connect provider the backend accepts. The
-// engine is generic OIDC, so the list can grow without code changes.
-const SSO_PROVIDERS = [
-  ['google', 'companiesAdmin.sso.providers.google', 'https://accounts.google.com'],
-  ['microsoft', 'companiesAdmin.sso.providers.microsoft', 'https://login.microsoftonline.com/YOUR_TENANT_ID/v2.0'],
-  ['okta', 'companiesAdmin.sso.providers.okta', 'https://YOUR_ORG.okta.com'],
-  ['auth0', 'companiesAdmin.sso.providers.auth0', 'https://YOUR_TENANT.us.auth0.com'],
-  ['onelogin', 'companiesAdmin.sso.providers.onelogin', 'https://YOUR_ORG.onelogin.com/oidc/2'],
-  ['ping', 'companiesAdmin.sso.providers.ping', 'https://auth.pingone.com/ENV_ID/as'],
-  ['jumpcloud', 'companiesAdmin.sso.providers.jumpcloud', 'https://oauth.id.jumpcloud.com/'],
-  ['keycloak', 'companiesAdmin.sso.providers.keycloak', 'https://YOUR_HOST/realms/YOUR_REALM'],
-  ['cognito', 'companiesAdmin.sso.providers.cognito', 'https://cognito-idp.REGION.amazonaws.com/POOL_ID'],
-  ['azuread_b2c', 'companiesAdmin.sso.providers.azuread_b2c', 'https://YOUR_TENANT.b2clogin.com/YOUR_TENANT.onmicrosoft.com/v2.0'],
-  ['authentik', 'companiesAdmin.sso.providers.authentik', 'https://YOUR_HOST/application/o/SLUG/'],
-  ['duo', 'companiesAdmin.sso.providers.duo', 'https://sso.YOUR_ORG.duosecurity.com/oidc/CLIENT'],
-  ['centrify', 'companiesAdmin.sso.providers.centrify', 'https://YOUR_TENANT.my.centrify.com/OIDC'],
-  ['oidc', 'companiesAdmin.sso.providers.oidc', 'https://your-identity-provider/...'],
-]
-const SSO_HINT = Object.fromEntries(SSO_PROVIDERS.map(([id, , hint]) => [id, hint]))
+// The OIDC provider list + example issuers come from the single registry
+// (src/shared/oidc_providers.js): one list, no parallel copies (SUPREME RULE II).
 
 // Destructive confirms use the shared promise-style useReasonModal from
 // _shared.jsx (single source - SUPREME RULE II; the local copy was deleted).
@@ -89,11 +73,11 @@ function SsoPanel({ company, onSaved }) {
         <div className="co-sso-body">
           <div className="co-sso-row"><label>{t('companiesAdmin.sso.provider')}</label>
             <select className="wka-select" value={form.provider} onChange={(e) => setForm({ ...form, provider: e.target.value })}>
-              {SSO_PROVIDERS.map(([id, labelKey]) => <option key={id} value={id}>{t(labelKey)}</option>)}
+              {OIDC_PROVIDERS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
             </select>
           </div>
-          <div className="co-sso-row"><label>{t('companiesAdmin.sso.issuerUrl')}</label><input className="wka-input" placeholder={SSO_HINT[form.provider]} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
-          <div className="co-sso-hint">{t('companiesAdmin.sso.exampleHint', { hint: SSO_HINT[form.provider] })}</div>
+          <div className="co-sso-row"><label>{t('companiesAdmin.sso.issuerUrl')}</label><input className="wka-input" placeholder={oidcIssuerExample(form.provider)} value={form.issuer} onChange={(e) => setForm({ ...form, issuer: e.target.value })} /></div>
+          <div className="co-sso-hint">{t('companiesAdmin.sso.exampleHint', { hint: oidcIssuerExample(form.provider) })}</div>
           <div className="co-sso-row"><label>{t('companiesAdmin.sso.clientId')}</label><input className="wka-input" value={form.clientId} onChange={(e) => setForm({ ...form, clientId: e.target.value })} /></div>
           <div className="co-sso-row"><label>{t('companiesAdmin.sso.clientSecret')}</label><input className="wka-input" type="password" placeholder={hasSecret ? t('companiesAdmin.sso.secretStored') : t('companiesAdmin.sso.secretPaste')} value={form.clientSecret} onChange={(e) => setForm({ ...form, clientSecret: e.target.value })} /></div>
           <div className="co-sso-row"><label>{t('companiesAdmin.sso.emailDomain')}</label><input className="wka-input" placeholder="example.com" value={form.domain} onChange={(e) => setForm({ ...form, domain: e.target.value })} /></div>
