@@ -931,6 +931,20 @@ const LV_CSS = `
  .lv-verdict.ok .lv-vbadge{animation:none}
  .lv-root .wm-cov-launch,.lv-root.lv-docked .wm-cov-launch{animation:none}
 }
+/* Margin-bearing paragraphs, scoped under .lv-root: a host page's own tag reset
+   (e.g. ".page p{margin:0}", specificity 0,1,1) outranks a lone class (0,1,0) and
+   silently collapsed the widget's spacing - the "Recommended" ribbon then sat on
+   the CTA sub-line. Two classes (0,2,0) win on every host. The ribbon clearance
+   lives on the plan card's top margin so it never depends on the paragraph. */
+.lv-root .lv-ask-sub{margin:0}
+.lv-root .wm-cov-intro{margin:0}
+.lv-root .lv-privacy{margin:0}
+.lv-root .wm-cov-err{margin-top:12px}
+.lv-root .lv-top-err{margin:0}
+.lv-root .lv-answer{margin:12px 2px 0}
+.lv-root .lv-cta-sub{margin:5px 0 8px}
+.lv-root .lv-plan{margin-top:18px}
+.lv-root .lv-trust{margin:11px 0 0}
 ${LV_DOCK('.lv-root.lv-docked')}
 @media(max-width:640px){${LV_DOCK('.lv-root')}}
 `
