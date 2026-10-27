@@ -2,18 +2,10 @@
 // No global app CSS is imported anywhere in this namespace; everything the
 // console renders is scoped under .wka so it can be lifted out standalone.
 
-// Google Fonts URL for the WorkCoPilot brand faces (Bricolage Grotesque for
-// headings, Figtree for body). The console is self-contained, so each shell
-// injects this itself (see ensureWorkAdminFonts) instead of relying on global
-// app CSS. Fallbacks keep the console readable before the sheet arrives.
-export const WORKADMIN_FONTS_HREF = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Figtree:wght@400;500;600;700&display=swap'
-export function ensureWorkAdminFonts() {
-  if (typeof document === 'undefined') return
-  if (document.getElementById('wka-fonts')) return
-  const l = document.createElement('link')
-  l.id = 'wka-fonts'; l.rel = 'stylesheet'; l.href = WORKADMIN_FONTS_HREF
-  document.head.appendChild(l)
-}
+// The WorkCoPilot brand faces (Bricolage Grotesque for headings, Figtree for
+// body) are self-hosted and loaded globally in src/main.jsx, so no runtime
+// Google Fonts link is injected. This hook is kept as a no-op for its callers.
+export function ensureWorkAdminFonts() { /* fonts loaded globally in src/main.jsx */ }
 
 // THEME TOKENS - one token set per dashboard, scoped by a class on the .wka
 // root, so each console is styled independently and nothing bleeds across:

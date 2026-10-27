@@ -305,15 +305,6 @@ export default function WorkLogin() {
   const openSso = () => { setSsoErr(''); setSsoView(true) }
   const closeSso = () => { setSsoView(false); setSsoErr('') }
 
-  useEffect(() => {
-    const id = 'wm-fonts'
-    if (!document.getElementById(id)) {
-      const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-      document.head.appendChild(l)
-    }
-  }, [])
-
   // In the desktop app the sign-in screen is plan mode (large, windowed, not
   // on top); it carries the custom title bar so the frameless window can be
   // moved and closed before the user is signed in.

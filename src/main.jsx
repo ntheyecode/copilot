@@ -2,6 +2,13 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import '@fontsource-variable/inter'
+// Self-hosted display + mono fonts (ePrivacy: no third-party Google Fonts request
+// before consent). Static @fontsource packages register the exact family names
+// the UI references ('Bricolage Grotesque', 'Figtree', 'JetBrains Mono'), so no
+// font-family reference changes are needed and no fonts.googleapis.com link loads.
+import '@fontsource/bricolage-grotesque'
+import '@fontsource/figtree'
+import '@fontsource/jetbrains-mono'
 import './styles/tokens.css'
 import './styles/base.css'
 import './styles/app.css'

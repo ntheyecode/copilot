@@ -1240,17 +1240,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [mode, setMode] = useState('stepwise')
   const [modes, setModes] = useState([])
   useEffect(() => { api.workModes().then((r) => setModes(r.modes || [])).catch(() => {}) }, [])
-  // Bring the console into the site's type system even when it is opened directly
-  // (no dashboard mount first): Bricolage Grotesque display, Figtree body,
-  // JetBrains Mono code, matching the marketing + float surfaces.
-  useEffect(() => {
-    const id = 'wc-fonts'
-    if (!document.getElementById(id)) {
-      const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-      document.head.appendChild(l)
-    }
-  }, [])
+  // The console's type system (Bricolage Grotesque display, Figtree body,
+  // JetBrains Mono code) is self-hosted and loaded globally in src/main.jsx.
   const changeMode = async (m) => { setMode(m); try { await api.workSetMode(sessionId, m) } catch {} }
 
   // Light/dark for the guiding panel (same global theme as the dashboard).
@@ -1331,18 +1322,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       // (no injection sink; the title is set above). Build it with the DOM API.
       try { if (!w.document.body && w.document.documentElement) w.document.documentElement.appendChild(w.document.createElement('body')) } catch {}
     }
-    try {
-      // The PiP window is a separate document and inherits none of the app's
-      // web fonts, so pull Figtree (body) + Bricolage Grotesque (display) into
-      // its head. If the network blocks it, the inline stack falls back to a
-      // clean system font, so text is always legible.
-      const head = w.document.head || w.document.documentElement
-      const pc1 = w.document.createElement('link'); pc1.rel = 'preconnect'; pc1.href = 'https://fonts.googleapis.com'
-      const pc2 = w.document.createElement('link'); pc2.rel = 'preconnect'; pc2.href = 'https://fonts.gstatic.com'; pc2.crossOrigin = 'anonymous'
-      const fl = w.document.createElement('link'); fl.rel = 'stylesheet'
-      fl.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap'
-      head.appendChild(pc1); head.appendChild(pc2); head.appendChild(fl)
-    } catch { /* fonts are optional; the inline stack still reads well */ }
+    // The PiP window is a separate document and inherits none of the app's web
+    // fonts; no Google Fonts link is injected (fonts are self-hosted in the main
+    // app). The inline font stack falls back to a clean system font, so the
+    // floating panel text is always legible.
     try {
       const st = w.document.createElement('style')
       st.textContent = FLOAT_CSS

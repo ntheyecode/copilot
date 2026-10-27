@@ -124,15 +124,7 @@ export default function WorkAppLayout() {
     try { desktop.setMode(onSession ? 'guide' : 'plan') } catch { /* ignore */ }
   }, [desktop, onSession, sess])
 
-  // Mount the dashboard fonts once (shared by every signed-in page).
-  useEffect(() => {
-    const id = 'wd-fonts'
-    if (!document.getElementById(id)) {
-      const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-      document.head.appendChild(l)
-    }
-  }, [])
+  // Dashboard fonts are self-hosted and loaded globally in src/main.jsx.
 
   const authed = !!(sess && sess.signedIn && sess.access)
   const frame = (content) => desktop
@@ -357,7 +349,9 @@ export default function WorkAppLayout() {
   const desk = !!desktop
   const stickyTop = desk ? { top: 40 } : undefined
   const railStyle = desk ? { top: 40, height: 'calc(100vh - 40px)' } : undefined
-  const TITLES = { '/work': 'Dashboard', '/work/start': 'Start a task', '/work/skills': 'Skills', '/work/help': 'How-to', '/work/support': 'Support' }
+  // One entry per in-shell route; the labels match the rail so the top bar and
+  // the highlighted rail item always name the same section.
+  const TITLES = { '/work': 'Dashboard', '/work/start': 'Start a task', '/work/tasks': 'My tasks', '/work/completed': 'Completed tasks', '/work/logs': 'Session logs', '/work/skills': 'Skills', '/work/help': 'How-to', '/work/support': 'Support' }
   const title = TITLES[pathname] || 'Dashboard'
   const wide = /^\/work\/(help|support)$/.test(pathname)
   const initial = String((user && (user.displayName || user.username)) || '').trim().charAt(0) || '?'

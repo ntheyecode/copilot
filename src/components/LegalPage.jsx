@@ -23,15 +23,8 @@ export const LEGAL_CONTACT = 'support@coesecurity.com'      // security, legal, 
 export const SUPPORT_CONTACT = 'support@admireveda.com'     // product support, billing
 export const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
-// Brand fonts, loaded once (same link the sign-in and marketing pages use).
-const FONT_ID = 'work-legal-fonts'
-function ensureFonts() {
-  if (typeof document === 'undefined' || document.getElementById(FONT_ID)) return
-  const l = document.createElement('link')
-  l.id = FONT_ID; l.rel = 'stylesheet'
-  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-  document.head.appendChild(l)
-}
+// Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
+// Google Fonts link is injected here.
 
 // Two-column "name / how" rows, identical to the Privacy page vocabulary.
 export function Items({ items }) {
@@ -87,7 +80,6 @@ export function DataTable({ caption, columns, rows, showCaption = false }) {
 export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro, lastUpdated, tagline, seo, glance = [], sections, links = [], contact = LEGAL_CONTACT }) {
   const nav = useNavigate()
   useSeo(seo || {})
-  useEffect(() => { ensureFonts() }, [])
   return (
     <div className="wlx">
       <style>{CSS}</style>

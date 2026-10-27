@@ -11,7 +11,7 @@
 //   work/Skills.jsx          the skills page (/work/skills)
 //   work/Help.jsx            the how-to page (/work/help)
 //   work/Support.jsx         the support page (/work/support)
-//   work/MyTasks|Completed|Logs.jsx  the standalone sub-pages
+//   work/MyTasks|Completed|Logs.jsx  the in-shell list pages (/work/tasks|completed|logs)
 //   work/lib.js              shared capture/parse utils + shell style objects
 //   work/workApp.css.js      the white dashboard CSS (WD_CSS)
 //

@@ -22,15 +22,8 @@ const ENTITY = 'COE Security LLC'
 const OWNERSHIP = 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.'
 const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
-// Brand fonts, loaded once (same link the sign-in and marketing pages use).
-const FONT_ID = 'work-legal-fonts'
-function ensureFonts() {
-  if (typeof document === 'undefined' || document.getElementById(FONT_ID)) return
-  const l = document.createElement('link')
-  l.id = FONT_ID; l.rel = 'stylesheet'
-  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-  document.head.appendChild(l)
-}
+// Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
+// Google Fonts link is injected here.
 
 // The three facts a reader should leave with, before the detail.
 const GLANCE = [
@@ -86,7 +79,6 @@ export default function WorkPrivacy() {
     description: 'What WorkCoPilot collects, what leaves your device after on-device redaction, what is stored and for how long (including de-identified learnings that keep guidance current), how it is protected, the third parties involved, and your rights and choices.',
     path: '/workcopilot/privacy',
   })
-  useEffect(() => { ensureFonts() }, [])
   return (
     <div className="wlx">
       <style>{CSS}</style>

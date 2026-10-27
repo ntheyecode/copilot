@@ -40,14 +40,6 @@ export default function WorkUseCases() {
     path: '/workcopilot/use-cases',
   })
   useEffect(() => {
-    const id = 'wm-fonts'
-    if (!document.getElementById(id)) {
-      const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-      l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-      document.head.appendChild(l)
-    }
-  }, [])
-  useEffect(() => {
     const els = rootRef.current ? rootRef.current.querySelectorAll('[data-reveal]') : []
     const io = new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) { x.target.classList.add('in'); io.unobserve(x.target) } }), { threshold: 0.12 })
     els.forEach((el) => io.observe(el)); return () => io.disconnect()

@@ -15,6 +15,15 @@ const deepMerge = (base, patch) => {
 }
 
 export default deepMerge(en, {
+  // Two Wave namespaces (en/workDashboard.js, en/workStart.js). en-GB is a sparse
+  // override onto the US catalog, so only the keys whose British spelling genuinely
+  // differs are listed; every other key inherits the US English at runtime.
+  workDashboard: {
+    dp: { captionSolo: 'Customise what gets scrubbed before sending' },
+  },
+  workStart: {
+    gateCompanyNoLicense: 'Your company has not assigned you a WorkCoPilot licence yet, or all licences are in use. Ask your company administrator to add you.',
+  },
   lang: { choose: 'Choose your language' },
   languagePin: {
     title: 'Choose your language',

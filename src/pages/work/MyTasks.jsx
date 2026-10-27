@@ -1,6 +1,6 @@
-// My tasks (/work/tasks). Re-homes the existing WorkTasks surface under the
-// work/ page namespace. The list body, sessions hook and row helpers remain the
-// single source in WorkTasks.jsx (SUPREME RULE II); this page renders them
-// unchanged so behavior is identical. It keeps its own white sub-shell for now;
-// folding it into the unified rail shell is a later (redesign) step.
-export { default } from '../WorkTasks.jsx'
+// My tasks (/work/tasks): a child route of WorkAppLayout, rendered through the
+// shell's <Outlet/> so the left rail + top bar persist. The list body, sessions
+// hook and row helpers remain the single source in WorkTasks.jsx (SUPREME RULE
+// II); `embedded` tells its sub-shell to emit only the list (no second header).
+import WorkTasks from '../WorkTasks.jsx'
+export default function MyTasks() { return <WorkTasks embedded /> }

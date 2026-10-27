@@ -107,14 +107,7 @@ export default function WorkDemo() {
     path: '/demo',
   })
 
-  // Load the same fonts the marketing page uses, so the demo matches it.
-  useEffect(() => {
-    const id = 'wkd-fonts'
-    if (document.getElementById(id)) return
-    const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-    l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-    document.head.appendChild(l)
-  }, [])
+  // Fonts are self-hosted and loaded globally in src/main.jsx.
 
   const start = () => nav('/workcopilot')
 

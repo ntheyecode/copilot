@@ -41,15 +41,8 @@ export const SITE_LINKS = [
   { key: 'faq', href: '/workcopilot/faq' },
 ]
 
-// Brand fonts, loaded once (same link the other marketing pages use).
-const FONT_ID = 'work-legal-fonts'
-function ensureFonts() {
-  if (typeof document === 'undefined' || document.getElementById(FONT_ID)) return
-  const l = document.createElement('link')
-  l.id = FONT_ID; l.rel = 'stylesheet'
-  l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap'
-  document.head.appendChild(l)
-}
+// Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
+// Google Fonts link is injected here.
 
 function currentFromPath() {
   if (typeof window === 'undefined') return null
@@ -63,8 +56,6 @@ export default function SiteHeader({ current }) {
   const [open, setOpen] = useState(false)
   const rootRef = useRef(null)
   const active = current || currentFromPath()
-
-  useEffect(() => { ensureFonts() }, [])
 
   useEffect(() => {
     if (!open) return undefined

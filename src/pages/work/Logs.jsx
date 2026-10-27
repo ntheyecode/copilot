@@ -1,4 +1,5 @@
-// Session logs (/work/logs). Re-homes the existing WorkLogs surface under the
-// work/ page namespace; the body stays the single source in WorkLogs.jsx so
-// behavior is identical.
-export { default } from '../WorkLogs.jsx'
+// Session logs (/work/logs): a child route of WorkAppLayout, rendered through
+// the shell's <Outlet/> so the left rail + top bar persist. The body stays the
+// single source in WorkLogs.jsx; `embedded` emits only the list.
+import WorkLogs from '../WorkLogs.jsx'
+export default function Logs() { return <WorkLogs embedded /> }

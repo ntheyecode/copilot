@@ -64,14 +64,7 @@ export default function AffiliatePage() {
   const [connectNote, setConnectNote] = useState('')
   const [loading, setLoading] = useState(true)
 
-  // Same display + body faces as the marketing page so the two read as one site.
-  useEffect(() => {
-    const id = 'wm-fonts'
-    if (document.getElementById(id)) return
-    const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'
-    l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap'
-    document.head.appendChild(l)
-  }, [])
+  // Display + body faces are self-hosted and loaded globally in src/main.jsx.
 
   // Mount: program config + who is signed in, in parallel. If signed in, try the
   // dashboard (404 = a regular account, show the landing). A ?connect=done or

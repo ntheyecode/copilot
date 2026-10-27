@@ -33,16 +33,11 @@ import { Check } from 'lucide-react'
 // repetitive. If an asset fails to load the card still looks finished on CSS alone.
 
 const STYLE_ID = 'workcard-css'
-const FONT_ID = 'workcard-fonts'
 
+// Brand fonts are self-hosted and loaded globally in src/main.jsx; only the
+// scoped component stylesheet is injected at runtime.
 function ensureAssets() {
   if (typeof document === 'undefined') return
-  if (!document.getElementById(FONT_ID)) {
-    const l = document.createElement('link')
-    l.id = FONT_ID; l.rel = 'stylesheet'
-    l.href = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap'
-    document.head.appendChild(l)
-  }
   if (!document.getElementById(STYLE_ID)) {
     const s = document.createElement('style')
     s.id = STYLE_ID; s.textContent = WORKCARD_CSS

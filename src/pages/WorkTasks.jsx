@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { WorkAppContext } from './work/WorkAppContext.jsx'
 import { ArrowLeft, ArrowRight, Check, Play, Pause, Download, Loader2, AlertTriangle, CheckCircle2, ClipboardList, History } from 'lucide-react'
 import { api, friendlyError } from '../api.js'
 import DownloadMenu from '../components/DownloadMenu.jsx'
@@ -8,22 +9,26 @@ import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
 
 // ---------------------------------------------------------------------------
-// Completed tasks (/work/tasks) + the shared white sub-page shell.
+// My tasks (/work/tasks) + Completed tasks (/work/completed) + the shared
+// sub-page shell (WorkSubShell), also used by WorkLogs.jsx.
 //
-// The dashboard (/work) is the white minimal shell; these standalone pages
-// use the SAME palette + type (page #f5f7fb, cards #fff, line #e7eaf2, ink
-// #1b2033, muted #5c6484, green #0e9f6e; Figtree body, Bricolage Grotesque
-// display). The shell, the sessions hook and the row helpers are defined ONCE
-// here and imported by WorkLogs.jsx (single source of truth: one top bar, one
-// token block, one "which label do we show for a session" rule).
+// These pages render INSIDE the signed-in app shell (WorkAppLayout: left rail
+// + top bar) as child routes, so the rail never unmounts when the user moves
+// between Dashboard / My tasks / Completed / Logs. WorkSubShell therefore has
+// two modes: `embedded` (the default whenever WorkAppContext is present) emits
+// ONLY the list body for the shell's <main>; standalone emits the full white
+// page with its own top bar, for any host that mounts it outside the shell.
+// Either way the palette + type match the dashboard (page #f5f7fb, cards #fff,
+// line #e7eaf2, ink #1b2033, muted #5c6484, green #0e9f6e; Figtree body,
+// Bricolage Grotesque display). The shell, the sessions hook and the row
+// helpers are defined ONCE here and imported by WorkLogs.jsx (single source
+// of truth: one token block, one "which label do we show for a session" rule).
 //
 // Data: api.workList() (GET /api/work/sessions) - the same call the dashboard
 // makes. A session: { id, title, goal, status ('ended' = completed), steps[]
 // ({ status: 'done' | ... }), currentStep, startedAt (ISO), endedAt (ISO|null),
 // lastActivityAt (ms), paused }.
 // ---------------------------------------------------------------------------
-
-export const WS_FONTS = 'https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap'
 
 export const WS_CSS = `
 .ws{
@@ -66,6 +71,11 @@ export const WS_CSS = `
 .ws-tab svg{flex-shrink:0}
 
 .ws-main{width:100%;max-width:900px;margin:0 auto;padding:30px 26px 56px;min-width:0;flex:1}
+/* ---- Embedded in the app shell (WorkAppLayout <main class="wd-main">): the
+   shell already owns the page background, the padding/max-width and the
+   vertical scroll, so this is a plain block that only carries the tokens.
+   No min-height (no second scroll region), no page background. ---- */
+.ws.ws-embedded{min-height:0;display:block;background:transparent;width:100%;min-width:0}
 .ws-head{display:flex;align-items:flex-start;gap:14px;margin-bottom:18px}
 .ws-head .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill);border:1px solid var(--em-line);color:var(--em);flex-shrink:0;margin-top:2px}
 .ws-head h1{font-size:24px;font-weight:700;line-height:1.25}
@@ -174,15 +184,19 @@ export function fmtDate(v, withTime) {
       : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
   } catch { return d.toDateString() }
 }
-// Open a session in the dashboard console. WorkPage reads sessionStorage
-// 'wc_open' on mount (src/pages/WorkPage.jsx, openId state) and goes straight
-// to that session's console instead of the home view.
+// Open a session in the guiding console. Inside the app shell this is the
+// shell's own onOpen (direct deep link to /work/session/:id, same path the
+// Dashboard resume rows take). Outside the shell it falls back to the legacy
+// sessionStorage 'wc_open' hand-off that WorkAppLayout honors on /work.
 export function useOpenSession() {
   const navigate = useNavigate()
+  const ctx = useContext(WorkAppContext)
+  const onOpen = ctx && ctx.onOpen
   return useCallback((id) => {
+    if (onOpen) { onOpen(id); return }
     try { sessionStorage.setItem('wc_open', String(id)) } catch { /* ignore */ }
     navigate('/work')
-  }, [navigate])
+  }, [navigate, onOpen])
 }
 // The user's sessions - the same list the dashboard loads (api.workList).
 // err is separate from "empty" so a connection hiccup never reads as "no tasks".
@@ -220,24 +234,33 @@ export function LoadError({ onRetry }) {
   )
 }
 
-// ---- Shell: fonts, auth gate, top bar, main column ---------------------------
-// `active` is 'tasks' | 'logs' (which sibling tab is highlighted). Not signed
-// in -> the WorkCoPilot sign-in, exactly like /work does.
-export function WorkSubShell({ active, title, children }) {
+// ---- Shell: tokens (+ in standalone mode: auth gate, top bar, main column) ----
+// `active` is 'tasks' | 'completed' | 'logs' (which sibling tab is highlighted
+// in standalone mode). `embedded` (default: true whenever WorkAppContext is
+// present, i.e. rendered through WorkAppLayout's <Outlet/>) emits only the list
+// body: the rail already provides the navigation, the shell top bar shows the
+// title, and the shell has already gated on the session, so there is no second
+// header, no back link, no tabs, no full-page container and no second gate.
+// Standalone (no shell): not signed in -> the WorkCoPilot sign-in, like /work.
+export function WorkSubShell({ active, title, children, embedded }) {
+  const inShell = !!useContext(WorkAppContext)
+  const isEmbedded = embedded == null ? inShell : !!embedded
   const { user, ready } = useAuth()
-  useEffect(() => {
-    const id = 'wd-fonts'   // same id as the dashboard: one stylesheet, never two
-    if (!document.getElementById(id)) {
-      const l = document.createElement('link'); l.id = id; l.rel = 'stylesheet'; l.href = WS_FONTS
-      document.head.appendChild(l)
-    }
-  }, [])
+  // Brand fonts are self-hosted and loaded globally in src/main.jsx.
   useEffect(() => {
     const prev = document.title
     if (title) document.title = `${title} - WorkCoPilot`
     return () => { document.title = prev }
   }, [title])
-  useEffect(() => { if (ready && !user) window.location.href = '/workcopilot' }, [ready, user])
+  useEffect(() => { if (!isEmbedded && ready && !user) window.location.href = '/workcopilot' }, [isEmbedded, ready, user])
+  if (isEmbedded) {
+    return (
+      <div className="ws ws-embedded">
+        <style>{WS_CSS}</style>
+        {children}
+      </div>
+    )
+  }
   // Desktop app: frameless window, so the custom title bar wraps every branch.
   const desktop = typeof window !== 'undefined' ? window.workDesktop : null
   const frame = (content) => desktop ? <><WorkShell authed={!!user} /><div style={{ paddingTop: 40 }}>{content}</div></> : content
@@ -268,7 +291,7 @@ export function WorkSubShell({ active, title, children }) {
 // resume at the exact step); "Completed tasks" is finished work, each with its
 // downloadable report. A paused task never blocks starting a new one, so several
 // active tasks can live here at once.
-function SessionList({ mode }) {
+function SessionList({ mode, embedded }) {
   const isDone = mode === 'completed'
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
@@ -279,7 +302,7 @@ function SessionList({ mode }) {
       .localeCompare(String((isDone ? a.endedAt : (a.lastActivityAt || a.startedAt)) || a.startedAt || ''))), [sessions, isDone])
   const title = isDone ? 'Completed tasks' : 'My tasks'
   return (
-    <WorkSubShell active={isDone ? 'completed' : 'tasks'} title={title}>
+    <WorkSubShell active={isDone ? 'completed' : 'tasks'} title={title} embedded={embedded}>
       <div className="ws-head">
         <span className="ic">{isDone ? <CheckCircle2 size={18} /> : <ClipboardList size={18} />}</span>
         <div>
@@ -333,8 +356,8 @@ function SessionList({ mode }) {
     </WorkSubShell>
   )
 }
-export default function WorkTasks() { return <SessionList mode="active" /> }
-export function CompletedTasks() { return <SessionList mode="completed" /> }
+export default function WorkTasks({ embedded } = {}) { return <SessionList mode="active" embedded={embedded} /> }
+export function CompletedTasks({ embedded } = {}) { return <SessionList mode="completed" embedded={embedded} /> }
 
 // Exported for WorkLogs (status chip + icon share one rule with this page).
 export function statusOf(s) {

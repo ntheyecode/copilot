@@ -141,13 +141,15 @@ export default function App() {
           <Route path="skills" element={<Skills />} />
           <Route path="help" element={<Help />} />
           <Route path="support" element={<Support />} />
+          {/* My tasks / completed / session logs render INSIDE the shell (left
+              rail + top bar persist across clicks). They were sibling routes
+              outside this block, which swapped the whole shell on every click;
+              the list bodies stay the single source in WorkTasks/WorkLogs.jsx. */}
+          <Route path="tasks" element={<WorkTasks />} />
+          <Route path="completed" element={<CompletedTasks />} />
+          <Route path="logs" element={<WorkLogs />} />
           <Route path="session/:id" element={<Guiding />} />
         </Route>
-        {/* My tasks / completed / session logs: standalone pages in the
-            dashboard's white style (their own sub-shell, behavior unchanged). */}
-        <Route path="/work/tasks" element={<WorkTasks />} />
-        <Route path="/work/completed" element={<CompletedTasks />} />
-        <Route path="/work/logs" element={<WorkLogs />} />
         {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}
         <Route path="/work/buddy" element={<WorkBuddy />} />
         {/* Full-screen guidance for a second monitor (read-only; drive from /work). */}

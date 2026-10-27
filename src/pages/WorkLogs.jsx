@@ -14,7 +14,7 @@ import { WorkSubShell, useSessions, useOpenSession, sessionLabel, stepStats, fmt
 // (DELETE /api/work/sessions/:id?reason=...), the same call the dashboard
 // makes. The server records who / when / why / what for administrators.
 // ---------------------------------------------------------------------------
-export default function WorkLogs() {
+export default function WorkLogs({ embedded } = {}) {
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
   const [delTarget, setDelTarget] = useState(null)   // session pending delete (reason modal)
@@ -40,7 +40,7 @@ export default function WorkLogs() {
   // api.workList already returns newest-first (startedAt desc); keep that order.
   const canDelete = !!delTarget && !!delReason.trim() && !delBusy
   return (
-    <WorkSubShell active="logs" title="Session logs">
+    <WorkSubShell active="logs" title="Session logs" embedded={embedded}>
       <div className="ws-head">
         <span className="ic"><History size={18} /></span>
         <div>

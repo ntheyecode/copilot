@@ -90,9 +90,10 @@ export const DASH_CSS = `
  .wd-m-hero-ic{width:46px;height:46px}
  .wd-m-hero-title{font-size:20px}
  .wd-m-hero-cta{flex-basis:100%;width:100%}
- /* On a stacked (full-width) tile the tooltip has room to sit left-aligned. */
- .wd-m-tip{right:auto;left:0}
- .wd-m-tip:after{right:auto;left:12px}
+ /* The tooltip keeps the base right:0 (opens leftward from the info button at the
+    tile's right edge) so at narrow width it stays on-screen instead of spilling
+    past the right edge. Do not flip it to left:0 here, the anchor is the info
+    button near the tile's right edge, not the tile's left. */
 }
 @media(prefers-reduced-motion:reduce){
  .wd-m-tile,.wd-m-tip,.wd-m-hero-cta,.wd-m-trade-btn{transition:none}
