@@ -3149,7 +3149,7 @@ export function getWorkUsage(workUserId) {
     resetLabel: ps ? ps.renewsLabel : eq.tzResetLabel((co && co.enterprise && co.enterprise.timezone) || 'America/New_York'),
     renewsAt: ps ? ps.renewsAt : null,             // 'YYYY-MM-01': when the plan hours renew (clients format it per locale)
     plan: ps,                                      // hoursMonthly, grantSeconds, poolSeconds, usedMonthSeconds, expiry, renews*
-    tasks: getWorkTaskUsage(workUserId),           // per-day task cap state for the app + New Task gate
+    tasks: getWorkTaskUsage(workUserId),           // open-slot (individual) or ceiling (company) task state for the app + New Task gate
   }
   if (co) {
     // A company user is ALSO bounded by their per-user/group HOUR ceiling: the
@@ -3263,10 +3263,12 @@ export function blockingWorkTask(workUserId) {
 export function countOpenWorkTasks(workUserId) {
   return (db.workSessions || []).filter((x) => x.workUserId === workUserId && x.status === 'active').length
 }
-// Task usage for the client (the New Task surface + /me). For INDIVIDUAL users
-// this is the plan's per-day cap (tasks[tier] in superadmin pricing): used
-// today, remaining, and when it resets. COMPANY users are unlimited unless their
-// company admin set a task ceiling (enterprise), and keep their old shape.
+// Task usage for the client (the New Task surface + /me). INDIVIDUAL users get
+// the open-slot shape { unlimited:false, maxOpen, open, remaining, activeTaskId }:
+// how many of the at-once slots are in use (hours are their only usage limit, so
+// there is no cap and nothing resets). COMPANY users are unlimited unless their
+// company admin set a task ceiling (enterprise), and keep the windowed shape
+// { unlimited, cap, usedToday, remaining, activeTaskId, resetLabel }.
 export function getWorkTaskUsage(workUserId) {
   const u = getUser(workUserId)
   // Only a RUNNING task blocks a new start; a paused one waits under "Resume
@@ -3697,7 +3699,7 @@ export function setWorkPricing(patch) {
     }
     hoursExpiry = { mode, carryCapHours: mode === 'carryforward' ? carryCapHours : null }
   }
-  if (p.dailyHours != null || p.tasksPerExtraHour != null) throw httpErr(400, 'dailyHours and tasksPerExtraHour are retired: plans now include monthly hours (hoursMonthly) and a per-day task cap (tasks).')
+  if (p.dailyHours != null || p.tasksPerExtraHour != null) throw httpErr(400, 'dailyHours and tasksPerExtraHour are retired: plans now include monthly hours (hoursMonthly); tasks are not capped per day.')
   db.work.pricing = {
     currency,
     plans: { ...cur.plans, ...tiers(p.plans, 'Plan') },

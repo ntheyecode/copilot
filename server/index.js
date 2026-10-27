@@ -360,21 +360,26 @@ function requireWorkSubscription(req, res, next) {
   }
   requireWorkTime(req, res, next)
 }
-// Out-of-time gate: a seat / subscription lets you IN, but you still need time
-// left today (free daily minutes + purchased balance + company pool). When it is
-// all used up we stop the chargeable actions server-side with an ACTIONABLE
-// message, instead of relying on the client to notice the heartbeat. Enterprise
-// behaviour: never silently keep consuming AI past the limit.
+// Out-of-hours gate: a seat / subscription lets you IN, but you still need
+// guided hours left (this month's plan pool + purchased top-up hours + a shared
+// company pool). When they are gone we stop the chargeable actions server-side
+// with an ACTIONABLE message, instead of relying on the client to notice the
+// heartbeat. Enterprise behaviour: never silently keep consuming AI past the
+// limit. ONE flag for one meaning (SUPREME RULE II): `outOfHours` here is the
+// same flag store.startWorkTask throws, so every client reads a single signal
+// whichever gate fires first (`needsTime` stays as its older alias). Hours are
+// the only usage limit: nothing resets daily, the plan renews at resetLabel.
 function requireWorkTime(req, res, next) {
   try {
     const usage = store.getWorkUsage(req.workUser.id)
     if (usage && usage.exhausted) {
+      const when = usage.resetLabel || 'on the 1st'
       const how = req.workUser.companyId
-        ? 'Your company admin can allocate more minutes from the company pool.'
-        : 'Add hours from your dashboard to keep going now.'
+        ? `They renew ${when}. Your company admin can allocate more from the company pool before then.`
+        : `They renew ${when}, or add hours from your dashboard to keep going now.`
       return res.status(402).json({
-        error: `You have used all your WorkCoPilot time for today. It resets at ${usage.resetLabel || '11:59 PM ET'}. ${how}`,
-        needsTime: true, resetLabel: usage.resetLabel || '11:59 PM ET',
+        error: `You are out of guided hours for now. ${how}`,
+        outOfHours: true, needsTime: true, resetLabel: when,
       })
     }
   } catch (e) {
@@ -1545,14 +1550,19 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
   // Company free trial: a pool of 1-hour sessions shared across the company's
   // users. Consume one here; gate when the pool is used up.
   const cu = store.getUser(req.workUser.id)
-  // Daily task gate FIRST (before consuming a company trial): corporate/company
-  // accounts are unlimited; capped tiers must finish the current task and stay
-  // under their daily task cap (superadmin-set in pricing).
+  // Task gate FIRST (before consuming a company trial). Individuals: hours are
+  // the only usage limit (402 outOfHours) and up to WORK_MAX_OPEN_TASKS may be
+  // open at once (409 tooManyOpen). Company members: unlimited unless their
+  // admin set a task ceiling (402 taskLimit). Every coded flag the store sets is
+  // forwarded so the client can show the matching message and action instead of
+  // guessing from the status alone (the old mustCompleteCurrent flag is retired
+  // with the single-running-task block).
   try {
     store.startWorkTask(req.workUser.id)
   } catch (e) {
     const body = { error: e.message }
-    if (e.mustCompleteCurrent) { body.mustCompleteCurrent = true; body.activeTaskId = e.activeTaskId }
+    if (e.outOfHours) { body.outOfHours = true; body.resetLabel = e.resetLabel }
+    if (e.tooManyOpen) { body.tooManyOpen = true; body.maxOpen = e.maxOpen; body.open = e.open }
     if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel; if (e.window) body.window = e.window }
     return res.status(e.status || 402).json(body)
   }
