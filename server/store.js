@@ -3074,6 +3074,13 @@ export function nextTierUp(tier) {
 // every person's pool at once (plan_allowance applies the difference on the
 // next read). Falls back to the built-in default.
 export function planGrantSeconds(tier) { return plan.grantSeconds(String(tier || 'basic')) }
+// The signed-in person's day-by-day consumption (seconds + tasks started) for the
+// last `days` days in THEIR day zone (company time zone for company users,
+// Eastern otherwise), oldest first. Powers the dashboard's month view.
+export function getWorkUsageHistory(workUserId, days = 31) {
+  const u = getUser(workUserId); if (!u) throw httpErr(404, 'Account not found')
+  return { days: plan.history(u, days, userTz(u)) }
+}
 
 // The "usage day" in Eastern time, boundary at 23:59 (reset time).
 function easternDayKey(ts = Date.now()) {

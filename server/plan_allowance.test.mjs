@@ -157,6 +157,18 @@ test('company members stay unlimited on tasks; a pool-based company draws nothin
   assert.equal(usage.poolSeconds, 10 * 3600)
 })
 
+test('usage history lists the last N days with seconds consumed and tasks started, oldest first', () => {
+  const u = person('basic')
+  for (let i = 0; i < 3; i++) store.addWorkUsage(u.id, 60)
+  store.startWorkTask(u.id)
+  const h = store.getWorkUsageHistory(u.id, 14).days
+  assert.equal(h.length, 14)
+  assert.match(h[0].day, /^\d{4}-\d{2}-\d{2}$/)
+  assert.ok(h[0].day < h[13].day)
+  assert.deepEqual({ seconds: h[13].seconds, tasks: h[13].tasks }, { seconds: 180, tasks: 1 })   // today is last
+  assert.equal(h[12].seconds, 0)
+})
+
 test('the credit economy is gone from the store: no trade, no balance, no legacy pricing keys', () => {
   assert.equal(typeof store.tradeWorkTaskCreditsForHours, 'undefined')
   assert.equal(typeof store.getWorkTaskCredits, 'undefined')

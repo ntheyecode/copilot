@@ -93,6 +93,20 @@ export function createPlanAllowance(ctx) {
     }
     return secs
   }
+  // Day-by-day consumption for the last `days` civil days in `tz` (seconds and
+  // tasks started), oldest first: the personal dashboard's month view. Reads the
+  // same daily records the pool math uses, never a parallel counter.
+  function history(u, days = 31, tz = PLAN_TZ) {
+    const usage = db().workUsage || {}, tasks = db().workTasks || {}
+    const n = Math.max(1, Math.min(366, Math.round(Number(days) || 31)))
+    const out = []
+    for (let i = n - 1; i >= 0; i--) {
+      const day = eq.tzDayKey(tz, Date.now() - i * 86400000)
+      const rec = usage[`${u.id}:${day}`] || {}
+      out.push({ day, seconds: Math.max(0, Number(rec.consumedSeconds) || 0), tasks: Math.max(0, Number(tasks[`${u.id}:${day}`]) || 0) })
+    }
+    return out
+  }
   // The client-facing view of the plan allowance (hours side).
   function snapshot(u) {
     const p = rollUserPool(u)
@@ -129,5 +143,5 @@ export function createPlanAllowance(ctx) {
     return s
   }
 
-  return { hoursMonthly, grantSeconds, dailyTaskCap, expiry, rollUserPool, consume, usedMonthSeconds, snapshot, taskState, gateTaskStart }
+  return { hoursMonthly, grantSeconds, dailyTaskCap, expiry, rollUserPool, consume, usedMonthSeconds, history, snapshot, taskState, gateTaskStart }
 }
