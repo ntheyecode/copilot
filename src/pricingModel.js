@@ -76,7 +76,7 @@ export function planExpiryLine(model, t) {
 // and a translator. Each line is omitted when the API did not supply its
 // number, so the card can never show an invented figure. With
 // { heroHours: true } the hours line is left out because the card already
-// shows the monthly hours as its hero (HoursBloom), never twice.
+// shows the monthly hours as its hero (HoursBadge), never twice.
 export function planValueLines(model, id, t, opts = {}) {
   if (!model) return []
   const lines = []
@@ -87,7 +87,7 @@ export function planValueLines(model, id, t, opts = {}) {
   return lines
 }
 
-// How full this plan's bloom is: its monthly hours as a share (0..1) of the
+// How full this plan's badge arc is: its monthly hours as a share (0..1) of the
 // LARGEST plan's monthly hours, read from the same model. The hero visual
 // scales from this, so a bigger plan visibly reads as more generous and the
 // relation follows a superadmin change automatically. null when the API did

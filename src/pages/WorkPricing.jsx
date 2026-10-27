@@ -11,9 +11,10 @@
 // shows when the API cannot be reached, and it says so on screen.
 //
 // Public framing is MONTHLY HOURS, and hours are the HERO of every card: the
-// HoursBloom (src/components/HoursBloom.jsx) shows the plan's monthly hours as
-// a bloom that fills with the plan's share of the largest plan, so a bigger
-// plan FEELS more generous at a glance (owner, 2026-10-27). There is no
+// HoursBadge (src/components/HoursBadge.jsx) shows the plan's monthly hours as
+// a corporate seal whose thin ring arc fills with the plan's share of the
+// largest plan, so a bigger plan reads as more at a glance (owner, 2026-10-27:
+// "like BADGEs", professional, not decorative). There is no
 // per-day task cap any more (server commit e8679cc), so nothing on this page
 // mentions tasks; the retired credit model (banked credits, daily hours x 30)
 // is gone on purpose too. Monthly / annual (20% off) is one toggle, the same
@@ -34,7 +35,7 @@ import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in t
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console: what an hour of guided time looks like
 import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'
-import HoursBloom, { HOURS_BLOOM_CSS } from '../components/HoursBloom.jsx'
+import HoursBadge, { HOURS_BADGE_CSS } from '../components/HoursBadge.jsx'
 import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, planRange, money, hours, PLAN_IDS, LIST_PRICE_FALLBACK } from '../pricingModel.js'
 
 // Product names are never translated; the per-plan promise and highlight live
@@ -149,11 +150,12 @@ export default function WorkPricing() {
     : annual && !loading && priceOf(id) != null
       ? <div className="wpr-cyc"><s>{money(priceOf(id))}{t('pricing.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(priceOf(id)))}{t('common.perYear')}</div>
       : <div className="wpr-cyc">{t('pricing.billedMonthly')}</div>)
-  // The hours hero of a card: the bloom fills with the plan's share of the
-  // largest plan's monthly hours (planHoursShare), the number is the plan's own.
-  const Bloom = ({ id }) => (id === 'enterprise'
-    ? <HoursBloom custom customLabel={t('pricing.bloomCustom')} customSub={t('pricing.bloomCustomSub')} />
-    : <HoursBloom hours={loading || !model || model.hoursMonthly[id] == null ? null : hours(model.hoursMonthly[id])} share={loading ? null : planHoursShare(model, id)} unit={t('pricing.bloomUnit')} sub={t('pricing.bloomSub')} loadingLabel={t('pricing.loading')} />)
+  // The hours hero of a card: the badge's ring arc fills with the plan's share
+  // of the largest plan's monthly hours (planHoursShare), the number is the
+  // plan's own.
+  const Badge = ({ id }) => (id === 'enterprise'
+    ? <HoursBadge custom customLabel={t('pricing.badgeCustom')} customSub={t('pricing.badgeCustomSub')} />
+    : <HoursBadge hours={loading || !model || model.hoursMonthly[id] == null ? null : hours(model.hoursMonthly[id])} share={loading ? null : planHoursShare(model, id)} unit={t('pricing.badgeUnit')} sub={t('pricing.badgeSub')} loadingLabel={t('pricing.loading')} />)
 
   // The comparison rows, every number from the model. Enterprise capacity is
   // custom (seat pools, its own ceiling), so those cells read Unlimited/Custom.
@@ -207,7 +209,7 @@ export default function WorkPricing() {
         <button type="button" role="tab" aria-selected={annual} className={`wpr-cycle-b${annual ? ' on' : ''}`} onClick={() => setCycle('annual')}>{t('home.pricing.annual')} <span className="wpr-cycle-save">{t('home.pricing.save')}</span></button>
       </div>
 
-      {/* Plan cards: name, the HOURS bloom (hero), price, one promise, the live
+      {/* Plan cards: name, the HOURS badge (hero), price, one promise, the live
           value lines, one CTA. */}
       <section className="wpr-plans" aria-label={t('pricing.plansAria')}>
         {COLS.map((id) => {
@@ -220,7 +222,7 @@ export default function WorkPricing() {
                 ? <div className="wpr-tag rec"><Zap size={11} aria-hidden /> {t('home.pricing.recommended')}</div>
                 : id === POPULAR && <div className="wpr-tag">{t('pricing.mostPopular')}</div>}
               <h2 className="wpr-plan-name">{ent && <Building2 size={16} aria-hidden />} {PLAN_NAME[id]}</h2>
-              <Bloom id={id} />
+              <Badge id={id} />
               <PriceTag id={id} />
               <CycleLine id={id} />
               <p className="wpr-value-line">{meta.value}</p>
@@ -370,7 +372,7 @@ const CSS = `
 .wpr-plan.pop::before{opacity:1}
 .wpr-plan.ent{background:linear-gradient(180deg,rgba(10,147,196,.06),var(--panel) 40%)}
 /* On a plan card the pill floats over the top edge (as on the home teaser), so
-   the five hours blooms sit on one line whether or not a card carries a pill. */
+   the five hours badges sit on one line whether or not a card carries a pill. */
 .wpr-plan>.wpr-tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);z-index:2;max-width:calc(100% - 32px)}
 .wpr-tag{display:inline-flex;align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy));border-radius:999px;padding:3px 9px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .wpr-plan.rec{border-color:rgba(242,106,67,.55);box-shadow:0 0 0 3px rgba(255,154,77,.22),0 28px 56px -28px rgba(242,106,67,.45);transform:translateY(-4px)}
@@ -393,10 +395,9 @@ const CSS = `
 .wpr-cycle-b{display:inline-flex;align-items:center;gap:8px;border:none;background:none;color:var(--mut);font:inherit;font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:color .15s,background .15s}
 .wpr-cycle-b.on{color:var(--ink);background:linear-gradient(135deg,rgba(16,162,113,.14),rgba(10,132,194,.12))}
 .wpr-cycle-save{font-size:11px;font-weight:800;letter-spacing:.02em;color:#06603f;background:rgba(10,157,102,.16);border-radius:999px;padding:2px 8px;white-space:nowrap}
-/* the hours hero: page tokens -> bloom tokens; a hover turns the flower a little */
-.wpr .hb{--hb-a:var(--em);--hb-b:var(--cy);--hb-ink:var(--ink);--hb-mut:var(--mut);--hb-dim:var(--line-strong);--hb-disc:var(--panel);--hb-disc2:var(--panel2);margin:6px auto 10px}
-.wpr-plan:hover .hb-ring svg{transform:rotate(15deg)}
-[data-theme='dark'] .wpr .hb{--hb-dim:rgba(255,255,255,.14)}
+/* the hours hero: page tokens -> badge tokens */
+.wpr .hbg{--hbg-a:var(--em);--hbg-b:var(--cy);--hbg-ink:var(--ink);--hbg-mut:var(--mut);--hbg-track:var(--line-strong);--hbg-disc:var(--panel);margin:6px auto 10px}
+[data-theme='dark'] .wpr .hbg{--hbg-track:rgba(255,255,255,.14)}
 .wpr-value-line{color:var(--mut);font-size:13.5px;line-height:1.5;min-height:2.9em;margin:2px 0 2px}
 .wpr-plan-lines{list-style:none;margin:4px 0 16px;padding:0;display:flex;flex-direction:column;gap:9px;min-height:6.4em}
 .wpr-plan-lines li{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--mut);line-height:1.4}
@@ -481,5 +482,5 @@ const CSS = `
   .wpr-plan-lines{min-height:0}
 }
 @media(max-width:400px){.wpr-stats{grid-template-columns:1fr}.wpr-cta .wpr-btn{width:100%}.wpr-cycle-b{padding:8px 12px;font-size:13px}}
-@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}.wpr-skel-bar{animation:none}.wpr-btn{transition:none}.wpr-btn:hover{transform:none}.wpr-plan:hover .hb-ring svg{transform:none}}
-` + HOURS_BLOOM_CSS
+@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}.wpr-skel-bar{animation:none}.wpr-btn{transition:none}.wpr-btn:hover{transform:none}}
+` + HOURS_BADGE_CSS

@@ -23,7 +23,7 @@ import { useLocale, renderRich } from '../i18n/index.jsx'   // every visible str
 // The plan contract (/api/work/pricing) is read through ONE view model shared
 // with the pricing page, so the two can never say different numbers.
 import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, money, hours, PLAN_IDS } from '../pricingModel.js'
-import HoursBloom, { HOURS_BLOOM_CSS } from '../components/HoursBloom.jsx'
+import HoursBadge, { HOURS_BADGE_CSS } from '../components/HoursBadge.jsx'
 // The field roster lives ONCE, on the /fields page; the teaser below imports
 // its numbers so the headline count can never drift from the full list.
 import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
@@ -154,7 +154,7 @@ export default function WorkMarketing() {
   const tiers = model ? PLAN_IDS.map((id) => ({
     id, name: PLAN_NAME[id], price: model.plans[id], popular: id === 'advanced',
     hrs: model.hoursMonthly[id], share: planHoursShare(model, id),
-    // The hours line is the card's hero (HoursBloom below), so it is not
+    // The hours line is the card's hero (HoursBadge below), so it is not
     // repeated as a bullet; the expiry line and the static features remain.
     feats: [...planValueLines(model, id, t, { heroHours: true }), ...staticFeats(id)], hour: model.hour[id],
   })) : []
@@ -371,9 +371,9 @@ export default function WorkMarketing() {
               <div className={`wm-tier${tier.popular ? ' pop' : ''}`} data-reveal key={tier.id}>
                 {tier.popular && <div className="wm-tier-tag">{t('home.pricing.mostPopular')}</div>}
                 <div className="wm-tier-name">{tier.name}</div>
-                {/* HOURS are the hero: the bloom fills with this plan's share of
-                    the largest plan's monthly hours (same model, same numbers). */}
-                <HoursBloom size="sm" hours={tier.hrs == null ? null : hours(tier.hrs)} share={tier.share} unit={t('pricing.bloomUnit')} sub={t('pricing.bloomSub')} loadingLabel={t('pricing.loading')} />
+                {/* HOURS are the hero: the badge's ring arc fills with this plan's
+                    share of the largest plan's monthly hours (same model, same numbers). */}
+                <HoursBadge size="sm" hours={tier.hrs == null ? null : hours(tier.hrs)} share={tier.share} unit={t('pricing.badgeUnit')} sub={t('pricing.badgeSub')} loadingLabel={t('pricing.loading')} />
                 <div className="wm-tier-price">{money(monthlyRate(tier.price))}<span>{t('common.perMonth')}</span></div>
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(tier.price)}{t('common.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(tier.price))}{t('common.perYear')}</div>
@@ -1249,10 +1249,9 @@ const CSS = `
 .wm-tier-price{font-family:"Bricolage Grotesque";font-weight:800;font-size:48px;letter-spacing:-.03em;margin:4px 0 0}
 .wm-tier-price span{font-size:17px;color:var(--mut);font-weight:400}
 .wm-tier-mins{color:var(--mut);font-size:12px;line-height:1.5;margin:6px 0 20px}
-/* the hours hero on the teaser cards: page tokens -> bloom tokens */
-.wm .hb{--hb-a:var(--em);--hb-b:var(--em2);--hb-ink:var(--tx);--hb-mut:var(--mut);--hb-dim:var(--line);--hb-disc:var(--panel);--hb-disc2:var(--panel);margin:12px auto 6px}
-.wm:not([data-wm="dark"]) .hb{--hb-dim:#dfe5ef;--hb-disc2:#eef7f3}
-.wm-tier:hover .hb-ring svg{transform:rotate(15deg)}
+/* the hours hero on the teaser cards: page tokens -> badge tokens */
+.wm .hbg{--hbg-a:var(--em);--hbg-b:var(--em2);--hbg-ink:var(--tx);--hbg-mut:var(--mut);--hbg-track:var(--line);--hbg-disc:var(--panel);margin:12px auto 6px}
+.wm:not([data-wm="dark"]) .hbg{--hbg-track:#dde3ee}
 .wm-tier ul{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:11px;flex:1 0 auto}
 .wm-tier li{display:flex;gap:9px;align-items:flex-start;color:var(--tx);font-size:14.5px}
 .wm-tier li svg{color:var(--em);flex-shrink:0;margin-top:3px}
@@ -1466,4 +1465,4 @@ const CSS = `
 
 .wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#e9edf4}
 
-` + HOURS_BLOOM_CSS
+` + HOURS_BADGE_CSS

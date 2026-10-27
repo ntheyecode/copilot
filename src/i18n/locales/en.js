@@ -1085,7 +1085,7 @@ export default {
       // (+ carryCapHours). There is no per-day task cap. Every number is
       // injected from that API through src/pricingModel.js as a PLAIN NUMBER;
       // the unit words stay inside the string so a locale reads as one
-      // consistent line. The hours hero (pricing.bloom*), the expiry line and
+      // consistent line. The hours hero (pricing.badge*), the expiry line and
       // the footnote are the SAME keys the pricing page uses, so the two pages
       // can never say different things.
       mins: 'Billed per minute, never by the hour.',
@@ -1093,7 +1093,7 @@ export default {
       extraHour: 'Extra hour {price}',
       feats: {
         // The hours line is NOT here: it is the card's hero, rendered from the
-        // live pricing config (pricing.bloom*) so a change follows.
+        // live pricing config (pricing.badge*) so a change follows.
         lite: ['Step-by-step guidance', 'Exact commands, code & links', 'Privacy & security built in'],
         basic: ['Everything in Lite', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
@@ -1631,12 +1631,13 @@ export default {
     loadFail: 'Live prices did not load. Retry, or see every plan at checkout.',
     retry: 'Retry',
     hoursMonthly: '{hours} hours of expert guidance every month',
-    // The hours hero on every plan card (HoursBloom): a big number, the unit
-    // under it, one line below. Enterprise shows the custom pair instead.
-    bloomUnit: 'hours',
-    bloomSub: 'of expert guidance a month',
-    bloomCustom: 'Custom',
-    bloomCustomSub: 'hours sized to your team',
+    // The hours hero on every plan card (HoursBadge, a corporate seal): a big
+    // number, the unit under it, one line below the seal. Enterprise shows the
+    // custom pair instead. (Final key names; the earlier bloom* names are gone.)
+    badgeUnit: 'hours',
+    badgeSub: 'of expert guidance a month',
+    badgeCustom: 'Custom',
+    badgeCustomSub: 'hours sized to your team',
     carry: 'Unused hours carry forward',
     carryCap: 'Unused hours carry forward, up to {cap} hours',
     expire: 'Hours reset at the start of each month',
