@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect } from 'react'
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom'
 import { Loader2 } from 'lucide-react'
 import ConsentBanner from './components/ConsentBanner.jsx'   // GDPR/CCPA consent, mounted globally
+import ErrorBoundary from './components/ErrorBoundary.jsx'    // top-level: a render throw shows a fallback, never a blank page
 import LegalConsentGate from './components/LegalConsentGate.jsx'  // unskippable clickwrap / re-consent gate for signed-in users
 import { capturePendingRef } from './consent.js'              // hold a ?ref referral until attribution consent
 import WorkMarketing from './pages/WorkMarketing.jsx'
@@ -91,7 +92,7 @@ export default function App() {
   // allows attribution (consent.js). No non-essential cookie is set before then.
   useEffect(() => { capturePendingRef() }, [])
   return (
-    <>
+    <ErrorBoundary>
     <Suspense fallback={<Splash />}>
     <Routes>
       <Route path="/" element={<RootRedirect />} />
@@ -165,6 +166,6 @@ export default function App() {
     </Suspense>
     {/* Global GDPR/CCPA consent banner + re-openable preferences (footer link). */}
     <ConsentBanner />
-    </>
+    </ErrorBoundary>
   )
 }
