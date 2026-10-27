@@ -992,7 +992,7 @@ export default {
       h2: 'Say the goal. Get the next move. <em>Finish right.</em>',
       steps: [
         { t: 'Say the goal', d: 'One line. The strongest AI available to you plans the job.' },
-        { t: 'Get the exact next move', d: 'Live on your screen: the click, the command, the value.' },
+        { t: 'Get the exact next move', d: 'Live on your screen, at the depth you choose: the click, the command, the value.' },
         { t: 'Wrong step? Caught.', d: 'Flagged before it costs you, then back on track.' },
         { t: 'Finish, documented', d: 'A write-up of every step, ready to share or repeat.' },
       ],

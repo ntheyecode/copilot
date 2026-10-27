@@ -424,7 +424,7 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
     if (!looksLikeModelError(e) && !isRateLimited(e)) throw e
     const reason = reasonOf(e)
     const live = await listModels(cfg).catch(() => [])
-    const vis = live.filter((x) => VISION_HINT.test(x))
+    const vis = live.filter((x) => isVisionModel(p.id, x))
     const alt = pickPreferredModel(vis, { avoid: model }) || vis.find((x) => x !== model) || null
     if (!alt || alt === model) {
       const code = reason === 'rate_limit' ? AI_CODES.RATE : AI_CODES.EXHAUSTED
@@ -441,22 +441,24 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
 
 // Not every chat model can see images. If the pinned model is not vision-capable
 // we look for one that is on the SAME key rather than failing. Cached, because
-// screen reading happens mid-session where latency is felt.
-const VISION_HINT = /vision|scout|maverick|gpt-4o|gpt-4\.1|o4|gemini|llava|pixtral|qwen.*vl/i
+// screen reading happens mid-session where latency is felt. Vision-capability is
+// decided by isVisionModel (one source: the curated ratecard), NOT a second
+// regex here - a separate VISION_HINT list used to drift from the ratecard and
+// dropped qwen*-flash screen readers the ratecard already priced as vision.
 const visionCache = new Map()
 const VISION_TTL_MS = 10 * 60 * 1000
 export async function findVisionModel(cfg) {
   const p = providerOf(cfg)
   if (!p || !cfg.apiKey) return null
   // An explicit operator-pinned vision model wins.
-  if (cfg.visionModel && VISION_HINT.test(cfg.visionModel)) return cfg.visionModel
+  if (cfg.visionModel && isVisionModel(cfg.providerId, cfg.visionModel)) return cfg.visionModel
   const requested = cfg.chatModel || p.chatModels[0]
-  if (VISION_HINT.test(requested)) return requested
+  if (isVisionModel(cfg.providerId, requested)) return requested
   const cacheKey = `${cfg.providerId}:${String(cfg.apiKey).slice(-6)}`
   const hit = visionCache.get(cacheKey)
   if (hit && Date.now() - hit.at < VISION_TTL_MS) return hit.model
   const live = await listModels(cfg).catch(() => [])
-  const model = live.find((m) => VISION_HINT.test(m)) || null
+  const model = live.find((m) => isVisionModel(cfg.providerId, m)) || null
   visionCache.set(cacheKey, { model, at: Date.now() })
   return model
 }
@@ -553,9 +555,22 @@ const RATECARD = {
 // scout/instant/turbo. 2 = fast, 1 = normal. For the "fastest" recommendation.
 const FAST_HINT = /flash|lite|nano|mini|haiku|instant|turbo|\b8b\b|scout|-fast\b/i
 const speedOf = (model) => (FAST_HINT.test(String(model)) ? 2 : 1)
+// Last-resort name hint for a model not in any ratecard row (new/unlisted). The
+// ratecard is the authority; this only decides a model the ratecard has never
+// seen. Kept broad but conservative.
+const VISION_HINT = /vision|scout|maverick|gpt-4o|gpt-4\.1|o4|gemini|llava|pixtral|qwen.*(vl|flash|omni)/i
 function rateFor(providerId, model) {
   for (const row of (RATECARD[providerId] || [])) if (row.re.test(String(model))) return { ...row, speed: speedOf(model) }
   return { usd: null, q: 2, vision: VISION_HINT.test(String(model)), speed: speedOf(model) } // unknown model: conservative
+}
+// ONE source of truth for "can this model read a screen": the curated ratecard's
+// vision flag (matched most-specific-first), with VISION_HINT only as the
+// unlisted-model fallback inside rateFor. Replaces a second VISION_HINT regex
+// that drifted - it missed qwen*-flash while the ratecard priced them as vision,
+// so the vision failover dropped valid cheap screen readers (SUPREME II).
+export function isVisionModel(providerId, model) {
+  if (!model) return false
+  return !!rateFor(providerId, model).vision
 }
 
 // Where our model ranking comes from, so the "best model plans your work" claim
