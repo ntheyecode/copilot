@@ -933,7 +933,7 @@ export default {
     },
     pricing: {
       title: 'Pricing - WorkCoPilot by AdmireVeda',
-      description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with hours of live guidance every month and guided tasks every day, document upload, generated visuals, security on every plan, extra hours and cancellation terms. Enterprise is custom.',
+      description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with hours of live guidance every month, document upload, generated visuals, security on every plan, extra hours and cancellation terms. Enterprise is custom.',
     },
     faq: {
       title: 'FAQ - WorkCoPilot by AdmireVeda',
@@ -1072,7 +1072,7 @@ export default {
     pricing: {
       eyebrow: 'Pricing',
       h2: 'Simple plans. Real guided time.',
-      sub: 'Hours of expert guidance every month, guided tasks every day. AI included.',
+      sub: 'Hours of expert guidance every month. AI included.',
       billingAria: 'Billing period',
       monthly: 'Monthly',
       annual: 'Annual',
@@ -1082,24 +1082,19 @@ export default {
       billedAnnually: 'billed annually',
       billedMonthly: 'billed monthly',
       // The plan contract (GET /api/work/pricing): hoursMonthly = guided hours
-      // included per calendar month, tasks = guided tasks per DAY, hoursExpiry =
-      // forfeit | carryforward (+ carryCapHours). Every number is injected from
-      // that API through src/pricingModel.js as a PLAIN NUMBER; the unit words
-      // stay inside the string so a locale reads as one consistent line. The
-      // per-plan value lines and the expiry footnote are the SAME keys the
-      // pricing page uses (pricing.hoursMonthly / tasksDay / carry / expire /
-      // footnote*), so the two pages can never say different things. The card
-      // headline below is the only home-specific line. NEW key name on purpose:
-      // the old monthlyLine/hoursLine were framed on daily hours x 30.
-      headline: '{hours} hrs of guidance a month · {tasks} tasks a day',
+      // included per calendar month, hoursExpiry = forfeit | carryforward
+      // (+ carryCapHours). There is no per-day task cap. Every number is
+      // injected from that API through src/pricingModel.js as a PLAIN NUMBER;
+      // the unit words stay inside the string so a locale reads as one
+      // consistent line. The hours hero (pricing.bloom*), the expiry line and
+      // the footnote are the SAME keys the pricing page uses, so the two pages
+      // can never say different things.
       mins: 'Billed per minute, never by the hour.',
       choose: 'Choose {plan}',
       extraHour: 'Extra hour {price}',
-      // One note next to the task counts on the cards: a "task" is substantial.
-      taskMeaning: 'A task is one goal, guided from start to finish.',
       feats: {
-        // The daily-task line is NOT here any more: it is rendered from the live
-        // pricing config (tasksLine/hoursLine above) so a cap change follows.
+        // The hours line is NOT here: it is the card's hero, rendered from the
+        // live pricing config (pricing.bloom*) so a change follows.
         lite: ['Step-by-step guidance', 'Exact commands, code & links', 'Privacy & security built in'],
         basic: ['Everything in Lite', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
@@ -1623,7 +1618,7 @@ export default {
   pricing: {
     eyebrow: 'Pricing',
     h1: 'Simple plans. <em>Real guided time.</em>',
-    sub: 'Hours of expert guidance every month and guided tasks every day. Security and privacy come with every plan, never as an upsell.',
+    sub: 'Pick the plan by the hours of expert guidance your month needs. Security and privacy come with every plan, never as an upsell.',
     plansAria: 'Plans',
     mostPopular: 'Most popular',
     custom: 'Custom',
@@ -1637,8 +1632,12 @@ export default {
     loadFail: 'Live prices did not load. Retry, or see every plan at checkout.',
     retry: 'Retry',
     hoursMonthly: '{hours} hours of expert guidance every month',
-    tasksDay_one: '{n} guided task a day',
-    tasksDay_other: '{n} guided tasks a day',
+    // The hours hero on every plan card (HoursBloom): a big number, the unit
+    // under it, one line below. Enterprise shows the custom pair instead.
+    bloomUnit: 'hours',
+    bloomSub: 'of expert guidance a month',
+    bloomCustom: 'Custom',
+    bloomCustomSub: 'hours sized to your team',
     carry: 'Unused hours carry forward',
     carryCap: 'Unused hours carry forward, up to {cap} hours',
     expire: 'Hours reset at the start of each month',
@@ -1647,24 +1646,20 @@ export default {
     valueH2: 'Expert help by the hour. <em>Every month, on every plan.</em>',
     valueSub: 'Pick the plan by how much guided time your month needs. Every hour is live, on your screen, to a confirmed finish.',
     statHours: 'hours a month',
-    statTasks: 'tasks a day',
     statCarry: 'Carry forward',
     statReset: 'Monthly reset',
     statUnused: 'unused hours',
     rowHours: 'Expert guidance a month',
-    rowTasks: 'Guided tasks a day',
     rowCarry: 'Unused hours',
     rowExtra: 'Extra hour',
     hoursVal: '{hours} hours',
-    tasksVal_one: '{n} task',
-    tasksVal_other: '{n} tasks',
     carryVal: 'Carry forward',
     carryCapVal: 'Carry forward, up to {cap} h',
     resetVal: 'Reset monthly',
     unlimited: 'Unlimited',
-    footnoteCarry: 'Unused hours carry forward to the next month. Guided tasks reset every day. Billed per minute you actually use.',
-    footnoteCarryCap: 'Unused hours carry forward to the next month, up to {cap} hours. Guided tasks reset every day. Billed per minute you actually use.',
-    footnoteForfeit: 'Hours reset at the start of each month and do not roll over. Guided tasks reset every day. Billed per minute you actually use.',
+    footnoteCarry: 'Unused hours carry forward to the next month. Billed per minute you actually use.',
+    footnoteCarryCap: 'Unused hours carry forward to the next month, up to {cap} hours. Billed per minute you actually use.',
+    footnoteForfeit: 'Hours reset at the start of each month and do not roll over. Billed per minute you actually use.',
     noteExtra: 'Busy month? Add an hour whenever you need one. Purchased time never expires.',
     // Live-price status (the page reads /api/work/pricing; while it loads the
     // numbers are skeletons, and if it cannot be reached the list prices show
@@ -1674,7 +1669,6 @@ export default {
     // API across the four plans, never typed here.
     rangeVal: '{lo} to {hi}',
     statHoursSub: 'included in every plan, from Lite to Premium',
-    statTasksSub: 'each a whole goal, guided start to finish',
     statCarrySub: 'what you did not use this month is yours next month',
     statResetSub: 'a fresh pool on the first of every month',
     valueConsoleEyebrow: 'What an hour looks like',
@@ -1688,8 +1682,7 @@ export default {
       premium: { value: 'The most guided time, generated visuals, first in the queue.', highlight: 'Generated visuals on demand' },
       enterprise: { value: 'SSO, company policy, seat pools and a DPA.', highlight: 'Dedicated contact' },
     },
-    entLines: ['Seat pools, your size', 'Unlimited guided tasks', 'SSO, company policy and a DPA'],
-    taskNote: 'A task is one goal, guided from start to finish through every step it takes.',
+    entLines: ['Seat pools, your size', 'Guided hours sized to your team', 'SSO, company policy and a DPA'],
     // The side-by-side matrix.
     matrix: {
       h2: 'Every plan, side by side.',

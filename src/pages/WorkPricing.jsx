@@ -2,7 +2,6 @@
 //
 // The plan contract is GET /api/work/pricing (server/store.js getWorkPricing):
 //   hoursMonthly  guided hours INCLUDED per calendar month, per tier
-//   tasks         guided tasks a person may START per day, per tier (a plain cap)
 //   hoursExpiry   forfeit | carryforward (+ carryCapHours) for unused hours
 //   plans / hour  USD a month, USD per extra hour
 // Everything numeric on this page is read from that API through the ONE view
@@ -11,25 +10,32 @@
 // into copy; the only constant is the labelled list-price fallback the page
 // shows when the API cannot be reached, and it says so on screen.
 //
-// Public framing is MONTHLY: hours of expert guidance every month, guided tasks
-// every day. The retired credit model (banked credits, daily hours x 30,
-// "extra hour adds a task") is gone from this page on purpose.
+// Public framing is MONTHLY HOURS, and hours are the HERO of every card: the
+// HoursBloom (src/components/HoursBloom.jsx) shows the plan's monthly hours as
+// a bloom that fills with the plan's share of the largest plan, so a bigger
+// plan FEELS more generous at a glance (owner, 2026-10-27). There is no
+// per-day task cap any more (server commit e8679cc), so nothing on this page
+// mentions tasks; the retired credit model (banked credits, daily hours x 30)
+// is gone on purpose too. Monthly / annual (20% off) is one toggle, the same
+// math as the home teaser (pricingModel.annualMonthlyRate).
 //
-// Sections: hero -> plan cards (+ Enterprise) -> value band (the three facts
-// of the plan model beside a compact GuideConsole, so the page SHOWS what an
-// hour of guided time is) -> the side-by-side matrix -> good to know -> CTA.
+// Sections: hero -> billing toggle -> plan cards (+ Enterprise) -> value band
+// (the two facts of the plan model beside a compact GuideConsole, so the page
+// SHOWS what an hour of guided time is) -> the side-by-side matrix -> good to
+// know -> CTA.
 // Honesty rules: no model names, no AI cost, never "certified"; final
 // entitlements are confirmed at checkout.
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2, RotateCcw, Clock3, ListChecks, CalendarCheck, ScanEye } from 'lucide-react'
+import { ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2, RotateCcw, Clock3, CalendarCheck, ScanEye } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console: what an hour of guided time looks like
 import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'
-import { normalizePricing, planValueLines, expiryFootnote, planRange, money, hours, PLAN_IDS, LIST_PRICE_FALLBACK } from '../pricingModel.js'
+import HoursBloom, { HOURS_BLOOM_CSS } from '../components/HoursBloom.jsx'
+import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, planRange, money, hours, PLAN_IDS, LIST_PRICE_FALLBACK } from '../pricingModel.js'
 
 // Product names are never translated; the per-plan promise and highlight live
 // in the catalog (pricing.plans.<id>). Column order is Lite, Basic, Advanced,
@@ -46,15 +52,13 @@ function Cell({ v, t }) {
   return <span className="wpr-val">{v}</span>
 }
 
-// The three facts of the plan model, each with the live range across plans.
+// The two facts of the plan model, each with the live range across plans.
 function ValueBand({ model, t }) {
   const h = planRange(model, 'hoursMonthly')
-  const d = planRange(model, 'tasksDaily')
   const carry = model.expiry.mode === 'carryforward'
   const scenario = t('guide.scenarios.finance')
   const tiles = [
     h && { ic: Clock3, big: t('pricing.rangeVal', { lo: hours(h.lo), hi: hours(h.hi) }), k: t('pricing.statHours'), sub: t('pricing.statHoursSub') },
-    d && { ic: ListChecks, big: t('pricing.rangeVal', { lo: d.lo, hi: d.hi }), k: t('pricing.statTasks'), sub: t('pricing.statTasksSub') },
     h && { ic: CalendarCheck, big: carry ? t('pricing.statCarry') : t('pricing.statReset'), k: t('pricing.statUnused'), sub: carry ? t('pricing.statCarrySub') : t('pricing.statResetSub'), small: true },
   ].filter(Boolean)
   return (
@@ -125,13 +129,31 @@ export default function WorkPricing() {
   const model = useMemo(() => normalizePricing(price), [price])
   const loading = state === 'loading'
 
-  const start = (id) => nav(`/workcopilot?plan=${id}`)
+  // Monthly / annual (20% off): the same toggle and math as the home teaser.
+  // An annual pick is carried to sign-up as ?cycle=annual so checkout applies
+  // the yearly price; it is never charged the monthly amount by surprise.
+  const [cycle, setCycle] = useState('monthly')
+  const annual = cycle === 'annual'
+  const rate = (p) => (annual ? annualMonthlyRate(p) : p)
+  const start = (id) => nav(`/workcopilot?plan=${id}${annual ? '&cycle=annual' : ''}`)
   const planMeta = (id) => t(`pricing.plans.${id}`) || {}
   const priceOf = (id) => (loading || !model ? null : model.plans[id])
   const hourOf = (id) => (loading || !model ? null : model.hour[id])
   const PriceTag = ({ id }) => (id === 'enterprise'
     ? <div className="wpr-price wpr-custom">{t('pricing.custom')}</div>
-    : <div className={`wpr-price${loading ? ' wpr-skel' : ''}`} aria-busy={loading || undefined}>{loading ? <span className="wpr-skel-bar" aria-label={t('pricing.loading')} /> : money(priceOf(id))}<span>{t('pricing.perMonth')}</span></div>)
+    : <div className={`wpr-price${loading ? ' wpr-skel' : ''}`} aria-busy={loading || undefined}>{loading ? <span className="wpr-skel-bar" aria-label={t('pricing.loading')} /> : money(rate(priceOf(id)))}<span>{t('pricing.perMonth')}</span></div>)
+  // Under the price: "billed monthly" or, on annual, the struck monthly rate
+  // and the yearly total.
+  const CycleLine = ({ id }) => (id === 'enterprise'
+    ? <div className="wpr-cyc">{t('pricing.forTeams')}</div>
+    : annual && !loading && priceOf(id) != null
+      ? <div className="wpr-cyc"><s>{money(priceOf(id))}{t('pricing.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(priceOf(id)))}{t('common.perYear')}</div>
+      : <div className="wpr-cyc">{t('pricing.billedMonthly')}</div>)
+  // The hours hero of a card: the bloom fills with the plan's share of the
+  // largest plan's monthly hours (planHoursShare), the number is the plan's own.
+  const Bloom = ({ id }) => (id === 'enterprise'
+    ? <HoursBloom custom customLabel={t('pricing.bloomCustom')} customSub={t('pricing.bloomCustomSub')} />
+    : <HoursBloom hours={loading || !model || model.hoursMonthly[id] == null ? null : hours(model.hoursMonthly[id])} share={loading ? null : planHoursShare(model, id)} unit={t('pricing.bloomUnit')} sub={t('pricing.bloomSub')} loadingLabel={t('pricing.loading')} />)
 
   // The comparison rows, every number from the model. Enterprise capacity is
   // custom (seat pools, its own ceiling), so those cells read Unlimited/Custom.
@@ -141,7 +163,6 @@ export default function WorkPricing() {
   const ROWS = [
     { g: mx('groups.capacity') },
     { k: t('pricing.rowHours'), v: val((id) => (m.hoursMonthly[id] == null ? '' : t('pricing.hoursVal', { hours: hours(m.hoursMonthly[id]) }))).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
-    { k: t('pricing.rowTasks'), v: val((id) => (m.tasksDaily[id] == null ? '' : t.n('pricing.tasksVal', m.tasksDaily[id]))).map((x, i) => (i === 4 ? t('pricing.unlimited') : x)) },
     { k: t('pricing.rowCarry'), v: val(() => (m.expiry.mode === 'carryforward' ? (m.expiry.carryCapHours ? t('pricing.carryCapVal', { cap: hours(m.expiry.carryCapHours) }) : t('pricing.carryVal')) : t('pricing.resetVal'))).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
     { k: t('pricing.rowExtra'), v: val((id) => (m.hour[id] == null ? '' : `${money(m.hour[id])}/hr`)).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
     { k: mx('seats'), v: [mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatPools')] },
@@ -180,23 +201,31 @@ export default function WorkPricing() {
         </div>
       )}
 
-      {/* Plan cards: name, price, one promise, the live value lines, one CTA. */}
+      {/* Monthly / annual toggle (the same keys and math as the home teaser). */}
+      <div className="wpr-cycle" role="tablist" aria-label={t('home.pricing.billingAria')}>
+        <button type="button" role="tab" aria-selected={!annual} className={`wpr-cycle-b${!annual ? ' on' : ''}`} onClick={() => setCycle('monthly')}>{t('home.pricing.monthly')}</button>
+        <button type="button" role="tab" aria-selected={annual} className={`wpr-cycle-b${annual ? ' on' : ''}`} onClick={() => setCycle('annual')}>{t('home.pricing.annual')} <span className="wpr-cycle-save">{t('home.pricing.save')}</span></button>
+      </div>
+
+      {/* Plan cards: name, the HOURS bloom (hero), price, one promise, the live
+          value lines, one CTA. */}
       <section className="wpr-plans" aria-label={t('pricing.plansAria')}>
         {COLS.map((id) => {
           const ent = id === 'enterprise'
           const meta = planMeta(id)
-          const lines = ent ? (t('pricing.entLines') || []) : (model && !loading ? planValueLines(model, id, t) : [])
+          const lines = ent ? (t('pricing.entLines') || []) : (model && !loading ? planValueLines(model, id, t, { heroHours: true }) : [])
           return (
             <article key={id} id={`wpr-plan-${id}`} className={`wpr-plan${id === POPULAR ? ' pop' : ''}${ent ? ' ent' : ''}${id === rec ? ' rec' : ''}`}>
               {id === rec
                 ? <div className="wpr-tag rec"><Zap size={11} aria-hidden /> {t('home.pricing.recommended')}</div>
                 : id === POPULAR && <div className="wpr-tag">{t('pricing.mostPopular')}</div>}
               <h2 className="wpr-plan-name">{ent && <Building2 size={16} aria-hidden />} {PLAN_NAME[id]}</h2>
+              <Bloom id={id} />
               <PriceTag id={id} />
-              <div className="wpr-cyc">{ent ? t('pricing.forTeams') : t('pricing.billedMonthly')}</div>
+              <CycleLine id={id} />
               <p className="wpr-value-line">{meta.value}</p>
               <ul className="wpr-plan-lines" aria-busy={!ent && loading ? true : undefined}>
-                {!ent && loading && [0, 1, 2].map((k) => <li key={k} className="wpr-skel-li"><span className="wpr-skel-bar" /></li>)}
+                {!ent && loading && [0, 1].map((k) => <li key={k} className="wpr-skel-li"><span className="wpr-skel-bar" /></li>)}
                 {lines.map((l) => <li key={l}><Check size={15} aria-hidden /><span>{l}</span></li>)}
                 {!ent && !loading && hourOf(id) != null && <li><Check size={15} aria-hidden /><span>{t('pricing.extraHour', { price: `${money(hourOf(id))}/hr` })}</span></li>}
                 {meta.highlight && <li className="hl"><Check size={15} aria-hidden /><span>{meta.highlight}</span></li>}
@@ -206,9 +235,8 @@ export default function WorkPricing() {
           )
         })}
       </section>
-      <p className="wpr-tasknote">{t('pricing.taskNote')}</p>
 
-      {/* The plan model, shown: three facts with the live ranges, beside the
+      {/* The plan model, shown: two facts with the live ranges, beside the
           console playing what one hour of guided time is. */}
       {model && !loading && <ValueBand model={model} t={t} />}
 
@@ -226,7 +254,7 @@ export default function WorkPricing() {
                     <th scope="col" key={id} className={id === POPULAR ? 'pop' : ''}>
                       {id === POPULAR && <span className="wpr-tag inline">{t('pricing.mostPopular')}</span>}
                       {PLAN_NAME[id]}
-                      <span className="wpr-th-price">{id === 'enterprise' ? t('pricing.custom') : loading ? '' : `${money(priceOf(id))}${t('pricing.perMonth')}`}</span>
+                      <span className="wpr-th-price">{id === 'enterprise' ? t('pricing.custom') : loading ? '' : `${money(rate(priceOf(id)))}${t('pricing.perMonth')}`}</span>
                     </th>
                   ))}
                 </tr>
@@ -255,7 +283,7 @@ export default function WorkPricing() {
           {COLS.map((id, j) => (
             <article className={`wpr-tcard${id === POPULAR ? ' pop' : ''}`} key={id}>
               <div className="wpr-tname">
-                <span>{PLAN_NAME[id]} <small>{id === 'enterprise' ? t('pricing.custom') : loading ? '' : `${money(priceOf(id))}${t('pricing.perMonth')}`}</small></span>
+                <span>{PLAN_NAME[id]} <small>{id === 'enterprise' ? t('pricing.custom') : loading ? '' : `${money(rate(priceOf(id)))}${t('pricing.perMonth')}`}</small></span>
                 {id === POPULAR && <span className="wpr-tag inline">{t('pricing.mostPopular')}</span>}
               </div>
               <ul>
@@ -335,12 +363,15 @@ const CSS = `
 .wpr-retry{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 
 /* plan cards */
-.wpr-plans{max-width:1160px;margin:0 auto;padding:26px 24px 10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:stretch}
+.wpr-plans{max-width:1160px;margin:0 auto;padding:30px 24px 10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:stretch}
 .wpr-plan{position:relative;display:flex;flex-direction:column;gap:7px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:24px 20px 22px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 20px 44px -30px rgba(10,13,18,.25);min-width:0}
 .wpr-plan::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,var(--em),var(--cy));opacity:.55}
 .wpr-plan.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),var(--panel) 38%);box-shadow:0 1px 2px rgba(10,13,18,.04),0 24px 50px -28px rgba(16,162,113,.4)}
 .wpr-plan.pop::before{opacity:1}
 .wpr-plan.ent{background:linear-gradient(180deg,rgba(10,147,196,.06),var(--panel) 40%)}
+/* On a plan card the pill floats over the top edge (as on the home teaser), so
+   the five hours blooms sit on one line whether or not a card carries a pill. */
+.wpr-plan>.wpr-tag{position:absolute;top:-12px;left:50%;transform:translateX(-50%);z-index:2;max-width:calc(100% - 32px)}
 .wpr-tag{display:inline-flex;align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy));border-radius:999px;padding:3px 9px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .wpr-plan.rec{border-color:rgba(242,106,67,.55);box-shadow:0 0 0 3px rgba(255,154,77,.22),0 28px 56px -28px rgba(242,106,67,.45);transform:translateY(-4px)}
 .wpr-tag.rec{align-items:center;gap:5px;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59)}
@@ -355,14 +386,23 @@ const CSS = `
 .wpr-skel-bar{display:inline-block;width:3.2em;height:.8em;border-radius:6px;background:linear-gradient(90deg,var(--line),var(--panel2),var(--line));background-size:200% 100%;animation:wpr-shimmer 1.2s linear infinite;vertical-align:middle}
 .wpr-skel-li .wpr-skel-bar{width:70%;height:12px}
 @keyframes wpr-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
-.wpr-cyc{color:var(--dim);font-size:13px;margin-top:-2px}
+.wpr-cyc{color:var(--dim);font-size:13px;margin-top:-2px;min-height:1.3em}
+.wpr-cyc s{opacity:.8;margin-right:3px}
+/* monthly / annual toggle (same look as the home teaser) */
+.wpr-cycle{display:flex;width:fit-content;max-width:100%;gap:4px;margin:18px auto 0;padding:4px;border:1px solid var(--line);border-radius:999px;background:var(--panel);position:relative;z-index:1}
+.wpr-cycle-b{display:inline-flex;align-items:center;gap:8px;border:none;background:none;color:var(--mut);font:inherit;font-weight:700;font-size:14px;padding:9px 18px;border-radius:999px;cursor:pointer;white-space:nowrap;transition:color .15s,background .15s}
+.wpr-cycle-b.on{color:var(--ink);background:linear-gradient(135deg,rgba(16,162,113,.14),rgba(10,132,194,.12))}
+.wpr-cycle-save{font-size:11px;font-weight:800;letter-spacing:.02em;color:#06603f;background:rgba(10,157,102,.16);border-radius:999px;padding:2px 8px;white-space:nowrap}
+/* the hours hero: page tokens -> bloom tokens; a hover turns the flower a little */
+.wpr .hb{--hb-a:var(--em);--hb-b:var(--cy);--hb-ink:var(--ink);--hb-mut:var(--mut);--hb-dim:var(--line-strong);--hb-disc:var(--panel);--hb-disc2:var(--panel2);margin:6px auto 10px}
+.wpr-plan:hover .hb-ring svg{transform:rotate(15deg)}
+[data-theme='dark'] .wpr .hb{--hb-dim:rgba(255,255,255,.14)}
 .wpr-value-line{color:var(--mut);font-size:13.5px;line-height:1.5;min-height:2.9em;margin:2px 0 2px}
-.wpr-plan-lines{list-style:none;margin:4px 0 16px;padding:0;display:flex;flex-direction:column;gap:9px;min-height:9.5em}
+.wpr-plan-lines{list-style:none;margin:4px 0 16px;padding:0;display:flex;flex-direction:column;gap:9px;min-height:6.4em}
 .wpr-plan-lines li{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--mut);line-height:1.4}
 .wpr-plan-lines li svg{color:var(--em);flex-shrink:0;margin-top:2px}
 .wpr-plan-lines li.hl span{color:var(--ink);font-weight:700}
 .wpr-footnote{text-align:center;color:var(--dim);font-size:12.5px;line-height:1.55;max-width:64ch;margin:18px auto 0}
-.wpr-tasknote{text-align:center;color:var(--mut);font-size:14px;line-height:1.55;max-width:66ch;margin:16px auto 0;padding:0 24px}
 .wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--cta);color:#fff;border:0;border-radius:11px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(242,106,67,.7);margin-top:auto;white-space:nowrap;transition:transform .15s,filter .15s}
 .wpr-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
 .wpr-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
@@ -374,7 +414,7 @@ const CSS = `
 .wpr-value-grid::before{content:"";position:absolute;inset:auto -10% -40% auto;width:60%;height:120%;background:radial-gradient(closest-side,rgba(57,211,255,.16),transparent 70%);pointer-events:none}
 .wpr-value-copy,.wpr-value-console{position:relative;min-width:0}
 .wpr-value-sub{color:var(--mut);font-size:15.5px;line-height:1.55;max-width:52ch;margin-bottom:20px}
-.wpr-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wpr-stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .wpr-stat{display:flex;flex-direction:column;gap:3px;padding:14px 14px 12px;border-radius:16px;background:var(--panel2);border:1px solid var(--line);min-width:0}
 .wpr-stat svg{color:var(--em);margin-bottom:4px}
 .wpr-stat b{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(20px,2vw,26px);letter-spacing:-.02em;line-height:1.05;color:var(--ink);white-space:nowrap}
@@ -435,12 +475,11 @@ const CSS = `
   .wpr-plans{grid-template-columns:1fr;padding:20px 16px 8px}
   .wpr-notes-grid{grid-template-columns:1fr}
   .wpr-hero{padding:24px 16px 6px}.wpr-hero h1{font-size:30px}
-  .wpr-value,.wpr-matrix,.wpr-notes,.wpr-cta,.wpr-tasknote,.wpr-status{padding-left:16px;padding-right:16px}
+  .wpr-value,.wpr-matrix,.wpr-notes,.wpr-cta,.wpr-status{padding-left:16px;padding-right:16px}
+  .wpr-cycle{margin-top:14px}
   .wpr-value-grid{padding:18px 16px;border-radius:20px}
-  .wpr-stats{grid-template-columns:1fr 1fr}
-  .wpr-stat:last-child{grid-column:1 / -1}
   .wpr-plan-lines{min-height:0}
 }
-@media(max-width:400px){.wpr-stats{grid-template-columns:1fr}.wpr-stat:last-child{grid-column:auto}.wpr-cta .wpr-btn{width:100%}}
-@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}.wpr-skel-bar{animation:none}.wpr-btn{transition:none}.wpr-btn:hover{transform:none}}
-`
+@media(max-width:400px){.wpr-stats{grid-template-columns:1fr}.wpr-cta .wpr-btn{width:100%}.wpr-cycle-b{padding:8px 12px;font-size:13px}}
+@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}.wpr-skel-bar{animation:none}.wpr-btn{transition:none}.wpr-btn:hover{transform:none}.wpr-plan:hover .hb-ring svg{transform:none}}
+` + HOURS_BLOOM_CSS

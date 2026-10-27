@@ -81,7 +81,6 @@ export default deepMerge(en, {
     pricing: {
       // The value lines and the expiry footnote come from the shared pricing.*
       // keys (same wording in UK English), so nothing daily-framed lives here.
-      taskMeaning: 'Each task is a major task: a single goal, guided from start to finish, with all its sub-steps.',
       trustCancel: 'Cancel any time, no contract',
       feats: {
         // Daily-task line comes from the live pricing config (en.js tasksLine), not from here.

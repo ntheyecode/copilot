@@ -5,17 +5,20 @@
 //   plans        { lite, basic, advanced, premium }  USD per month
 //   hour         { ... }                              extra hour, USD
 //   hoursMonthly { ... }  guided hours INCLUDED per calendar month
-//   tasks        { ... }  guided tasks per DAY
 //   hoursExpiry  { mode: 'forfeit' | 'carryforward', carryCapHours }
 //   image, imageMinBulk, currency, annualReady
 //
 // Both the home page plan cards (WorkMarketing) and the pricing page
 // (WorkPricing) consume THIS normalized object, so the value lines ("60 hours
-// of expert guidance every month", "4 guided tasks a day", "unused hours carry
-// forward") are computed once, from the API, never typed into copy and never
-// held as a second copy of the numbers (SUPREME RULE II). A field the API does
-// not carry comes back null and the page simply omits that line: nothing is
-// invented and nothing falls back to a hardcoded figure.
+// of expert guidance every month", "unused hours carry forward") are computed
+// once, from the API, never typed into copy and never held as a second copy of
+// the numbers (SUPREME RULE II). A field the API does not carry comes back null
+// and the page simply omits that line: nothing is invented and nothing falls
+// back to a hardcoded figure.
+//
+// There is NO per-day task cap any more (owner, 2026-10-27; server commit
+// e8679cc retired it): hours are the one usage story, so nothing here reads or
+// exposes a tasks figure and the pages have no tasks line to show.
 export const PLAN_IDS = ['lite', 'basic', 'advanced', 'premium']
 
 const num = (v) => {
@@ -39,7 +42,6 @@ export function normalizePricing(api) {
     plans: perPlan(api.plans),
     hour: perPlan(api.hour),
     hoursMonthly: perPlan(api.hoursMonthly),
-    tasksDaily: perPlan(api.tasks),
     expiry: { mode, carryCapHours: cap && cap > 0 ? cap : null },
     image: api.image && typeof api.image === 'object' ? api.image : {},
     imageMinBulk: num(api.imageMinBulk),
@@ -62,21 +64,53 @@ export function hours(n) {
   return Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10)
 }
 
+// What happens to unused plan hours, as one card line, worded for the expiry
+// mode the API reports. null when the model is missing.
+export function planExpiryLine(model, t) {
+  if (!model) return null
+  if (model.expiry.mode === 'carryforward') return model.expiry.carryCapHours ? t('pricing.carryCap', { cap: hours(model.expiry.carryCapHours) }) : t('pricing.carry')
+  return t('pricing.expire')
+}
+
 // The value lines for one plan, in display order, from the normalized model
 // and a translator. Each line is omitted when the API did not supply its
-// number, so the card can never show an invented figure.
-export function planValueLines(model, id, t) {
+// number, so the card can never show an invented figure. With
+// { heroHours: true } the hours line is left out because the card already
+// shows the monthly hours as its hero (HoursBloom), never twice.
+export function planValueLines(model, id, t, opts = {}) {
   if (!model) return []
   const lines = []
   const h = model.hoursMonthly[id]
-  const d = model.tasksDaily[id]
-  if (h != null) lines.push(t('pricing.hoursMonthly', { hours: hours(h) }))
-  if (d != null) lines.push(t.n('pricing.tasksDay', d))
-  if (h != null) {
-    if (model.expiry.mode === 'carryforward') lines.push(model.expiry.carryCapHours ? t('pricing.carryCap', { cap: hours(model.expiry.carryCapHours) }) : t('pricing.carry'))
-    else lines.push(t('pricing.expire'))
-  }
+  if (h == null) return lines
+  if (!opts.heroHours) lines.push(t('pricing.hoursMonthly', { hours: hours(h) }))
+  lines.push(planExpiryLine(model, t))
   return lines
+}
+
+// How full this plan's bloom is: its monthly hours as a share (0..1) of the
+// LARGEST plan's monthly hours, read from the same model. The hero visual
+// scales from this, so a bigger plan visibly reads as more generous and the
+// relation follows a superadmin change automatically. null when the API did
+// not carry hours (the visual then stays unlit rather than invent a size).
+export function planHoursShare(model, id) {
+  const r = planRange(model, 'hoursMonthly')
+  const h = model && model.hoursMonthly ? model.hoursMonthly[id] : null
+  if (!r || !r.hi || h == null) return null
+  return Math.max(0, Math.min(1, h / r.hi))
+}
+
+// Annual billing: 20% off the monthly rate, shown as a per-month figure billed
+// yearly. ONE definition for the home teaser and the pricing page (the two
+// toggles can never disagree). The server applies the same discount at
+// checkout; annualReady says whether the yearly Stripe prices exist yet.
+export const ANNUAL_DISCOUNT = 0.2
+export function annualMonthlyRate(p) {
+  if (p == null) return null
+  return Math.round(Number(p) * (1 - ANNUAL_DISCOUNT))
+}
+export function annualTotal(p) {
+  const m = annualMonthlyRate(p)
+  return m == null ? null : m * 12
 }
 
 // The one footnote under the cards, matching the expiry mode the API reports.
@@ -106,7 +140,6 @@ export const LIST_PRICE_FALLBACK = {
   currency: 'usd',
   plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },
   hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },
-  tasks: { lite: 4, basic: 4, advanced: 6, premium: 8 },
   hoursMonthly: { lite: 30, basic: 60, advanced: 120, premium: 180 },
   hoursExpiry: { mode: 'forfeit', carryCapHours: null },
   image: { lite: 3, basic: 2, advanced: 1, premium: 0.5 },

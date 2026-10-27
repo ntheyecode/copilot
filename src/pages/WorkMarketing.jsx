@@ -22,7 +22,8 @@ import useSeo from '../useSeo.js'
 import { useLocale, renderRich } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
 // The plan contract (/api/work/pricing) is read through ONE view model shared
 // with the pricing page, so the two can never say different numbers.
-import { normalizePricing, planValueLines, expiryFootnote, money, hours, PLAN_IDS } from '../pricingModel.js'
+import { normalizePricing, planValueLines, planHoursShare, annualMonthlyRate, annualTotal, expiryFootnote, money, hours, PLAN_IDS } from '../pricingModel.js'
+import HoursBloom, { HOURS_BLOOM_CSS } from '../components/HoursBloom.jsx'
 // The field roster lives ONCE, on the /fields page; the teaser below imports
 // its numbers so the headline count can never drift from the full list.
 import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
@@ -108,9 +109,9 @@ export default function WorkMarketing() {
     }
     go(plan, cycle)
   }
-  // Annual = 20% off the monthly rate, shown as a per-month figure billed yearly.
-  const monthlyRate = (p) => (cycle === 'annual' ? Math.round(Number(p) * 0.8) : Number(p))
-  const annualTotal = (p) => Math.round(Number(p) * 0.8) * 12
+  // Annual = 20% off the monthly rate, shown as a per-month figure billed
+  // yearly; ONE definition shared with /workcopilot/pricing (pricingModel).
+  const monthlyRate = (p) => (cycle === 'annual' ? annualMonthlyRate(p) : Number(p))
   const tilt = (e) => { const r = e.currentTarget.getBoundingClientRect(); const px = (e.clientX - r.left) / r.width - 0.5, py = (e.clientY - r.top) / r.height - 0.5; e.currentTarget.style.transform = `perspective(700px) rotateX(${(-py * 6).toFixed(2)}deg) rotateY(${(px * 7).toFixed(2)}deg) translateY(-4px)` }
   const untilt = (e) => { e.currentTarget.style.transform = '' }
 
@@ -141,8 +142,8 @@ export default function WorkMarketing() {
   const cueIcons = [AppWindow, Lock, Zap]
   // Every plan number on the cards comes from the live server pricing
   // (/api/work/pricing -> store.getWorkPricing()): plans, hour, hoursMonthly
-  // (guided hours included per calendar month), tasks (guided tasks per DAY)
-  // and hoursExpiry (forfeit | carryforward). It is read through the ONE view
+  // (guided hours included per calendar month) and hoursExpiry (forfeit |
+  // carryforward); there is no per-day task cap. It is read through the ONE view
   // model in src/pricingModel.js, shared with /workcopilot/pricing, so a
   // superadmin change in Admin > Pricing flows to both pages identically and
   // no number is ever typed into copy. A field the API does not carry is simply
@@ -152,11 +153,11 @@ export default function WorkMarketing() {
   const PLAN_NAME = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }   // product names: never translated
   const tiers = model ? PLAN_IDS.map((id) => ({
     id, name: PLAN_NAME[id], price: model.plans[id], popular: id === 'advanced',
-    hrs: model.hoursMonthly[id], tasks: model.tasksDaily[id],
-    feats: [...planValueLines(model, id, t), ...staticFeats(id)], hour: model.hour[id],
+    hrs: model.hoursMonthly[id], share: planHoursShare(model, id),
+    // The hours line is the card's hero (HoursBloom below), so it is not
+    // repeated as a bullet; the expiry line and the static features remain.
+    feats: [...planValueLines(model, id, t, { heroHours: true }), ...staticFeats(id)], hour: model.hour[id],
   })) : []
-  // Card headline: "{H} hrs of guidance a month · {N} tasks a day" from the same numbers.
-  const headline = (tier) => (tier.hrs == null || tier.tasks == null ? '' : t('home.pricing.headline', { hours: hours(tier.hrs), tasks: tier.tasks }))
 
   return (
     <div className="wm" ref={rootRef}>
@@ -370,11 +371,13 @@ export default function WorkMarketing() {
               <div className={`wm-tier${tier.popular ? ' pop' : ''}`} data-reveal key={tier.id}>
                 {tier.popular && <div className="wm-tier-tag">{t('home.pricing.mostPopular')}</div>}
                 <div className="wm-tier-name">{tier.name}</div>
+                {/* HOURS are the hero: the bloom fills with this plan's share of
+                    the largest plan's monthly hours (same model, same numbers). */}
+                <HoursBloom size="sm" hours={tier.hrs == null ? null : hours(tier.hrs)} share={tier.share} unit={t('pricing.bloomUnit')} sub={t('pricing.bloomSub')} loadingLabel={t('pricing.loading')} />
                 <div className="wm-tier-price">{money(monthlyRate(tier.price))}<span>{t('common.perMonth')}</span></div>
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(tier.price)}{t('common.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(tier.price))}{t('common.perYear')}</div>
                   : <div className="wm-tier-cyc dim">{t('home.pricing.billedMonthly')}</div>}
-                <div className="wm-tier-hrs">{headline(tier)}</div>
                 <div className="wm-tier-mins">{t('home.pricing.mins')}</div>
                 <ul>{tier.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${tier.popular ? '' : 'alt'}`} onClick={() => choosePlan(tier.id)}>{t('home.pricing.choose', { plan: tier.name })}</button>
@@ -382,8 +385,6 @@ export default function WorkMarketing() {
               </div>
             ))}
           </div>
-          {/* One note by the card task counts: a "task" is substantial. */}
-          <p className="wm-tasknote" data-reveal>{t('home.pricing.taskMeaning')}</p>
           <div className="wm-trust" data-reveal>
             <span><Lock size={14} /> {t('home.pricing.trustStripe')}</span>
             <span><Check size={14} /> {t('home.pricing.trustCancel')}</span>
@@ -1247,8 +1248,11 @@ const CSS = `
 .wm-tier-name{font-family:"Bricolage Grotesque";font-weight:800;font-size:21px}
 .wm-tier-price{font-family:"Bricolage Grotesque";font-weight:800;font-size:48px;letter-spacing:-.03em;margin:4px 0 0}
 .wm-tier-price span{font-size:17px;color:var(--mut);font-weight:400}
-.wm-tier-hrs{color:var(--em);font-size:14px;margin-bottom:8px}
-.wm-tier-mins{color:var(--mut);font-size:12px;line-height:1.5;margin-bottom:20px}
+.wm-tier-mins{color:var(--mut);font-size:12px;line-height:1.5;margin:6px 0 20px}
+/* the hours hero on the teaser cards: page tokens -> bloom tokens */
+.wm .hb{--hb-a:var(--em);--hb-b:var(--em2);--hb-ink:var(--tx);--hb-mut:var(--mut);--hb-dim:var(--line);--hb-disc:var(--panel);--hb-disc2:var(--panel);margin:12px auto 6px}
+.wm:not([data-wm="dark"]) .hb{--hb-dim:#dfe5ef;--hb-disc2:#eef7f3}
+.wm-tier:hover .hb-ring svg{transform:rotate(15deg)}
 .wm-tier ul{list-style:none;padding:0;margin:0 0 24px;display:flex;flex-direction:column;gap:11px;flex:1 0 auto}
 .wm-tier li{display:flex;gap:9px;align-items:flex-start;color:var(--tx);font-size:14.5px}
 .wm-tier li svg{color:var(--em);flex-shrink:0;margin-top:3px}
@@ -1263,7 +1267,6 @@ const CSS = `
 /* The "*" allowance note under the plan cards: muted, one step smaller than the
    fineprint, same centering rule (.wm .wm-footnote beats .wm p{margin:0}). */
 .wm .wm-footnote{text-align:center;color:var(--mut);font-size:12.5px;line-height:1.55;margin:28px auto 0;max-width:68ch;opacity:.9}
-.wm .wm-tasknote{text-align:center;color:var(--mut);font-size:14px;line-height:1.55;margin:26px auto 0;max-width:64ch}
 .wm .wm-footnote + .wm-fineprint{margin-top:14px}
 
 /* "See the full ..." link row under the fields teaser and the pricing cards */
@@ -1463,4 +1466,4 @@ const CSS = `
 
 .wm:not([data-wm="dark"]) .wm-disclaimer-wrap{background:#e9edf4}
 
-`
+` + HOURS_BLOOM_CSS
