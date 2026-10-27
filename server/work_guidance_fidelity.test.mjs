@@ -11,7 +11,7 @@
 // ===========================================================================
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { workPlan, workPlanSystem, workNavigate, workWatch, workAsk } from './work.js'
+import { workPlan, workPlanSystem, workNavigate, workNavigateSystem, workAskSystem, workWatch, workAsk, normalizeLevel } from './work.js'
 import { isVerifyStep, hasFailureSignal } from './work_deep_plan.js'
 
 // ---- stubs ----------------------------------------------------------------
@@ -219,6 +219,41 @@ test('workPlan does NOT run the critique pass for a plain linear task', async ()
   const out = await workPlan(ai, {}, { base: 'B', goal: 'rename a file on my desktop' })
   assert.equal(ai.calls.length, 1, 'a plain linear task should not pay for a second pass')
   assert.equal(out.steps.length, 1)
+})
+
+// ---- guidance strength (the user-chosen register) -------------------------
+test('guidance strength: each level stamps its register into the plan, navigate and ask prompts', () => {
+  for (const lvl of ['easy', 'medium', 'technical', 'executive']) {
+    const tag = new RegExp(`GUIDANCE STRENGTH: ${lvl.toUpperCase()}`)
+    assert.match(workPlanSystem({ base: 'B', level: lvl }), tag)
+    assert.match(workNavigateSystem({ base: 'B', level: lvl }), tag)
+    assert.match(workAskSystem({ base: 'B', level: lvl }), tag)
+  }
+})
+
+test('guidance strength: EASY and TECHNICAL registers differ, unknown/absent defaults to MEDIUM', () => {
+  const easy = workPlanSystem({ base: 'B', level: 'easy' })
+  const tech = workPlanSystem({ base: 'B', level: 'technical' })
+  assert.notEqual(easy, tech, 'EASY and TECHNICAL must produce different registers')
+  assert.match(easy, /GUIDANCE STRENGTH: EASY/)
+  assert.match(tech, /GUIDANCE STRENGTH: TECHNICAL/)
+  assert.match(workPlanSystem({ base: 'B' }), /GUIDANCE STRENGTH: MEDIUM/)        // default
+  assert.match(workPlanSystem({ base: 'B', level: 'ultra' }), /GUIDANCE STRENGTH: MEDIUM/) // unknown
+  assert.equal(normalizeLevel('ultra'), 'medium')
+  assert.equal(normalizeLevel('technical'), 'technical')
+})
+
+test('guidance strength: workNavigate threads the chosen level into the live system prompt', async () => {
+  let seenPrompt = ''
+  const ai = {
+    async analyseImages(_cfg, prompt) { seenPrompt = prompt; return JSON.stringify({ completed: [], current: 1, guidance: 'x', observation: 'y', flag: '', done: false }) },
+  }
+  await workNavigate(ai, {}, {
+    base: 'B', level: 'technical', goal: 'g',
+    steps: [{ status: 'current', text: 'Type a command', validate: 'it ran' }], currentStep: 0,
+    frame: 'data:image/jpeg;base64,x', visionModel: 'vm',
+  })
+  assert.match(seenPrompt, /GUIDANCE STRENGTH: TECHNICAL/, 'a mid-session level change must reach the next navigate output')
 })
 
 // ---- mid-task ASK: learn and adapt the plan from the question -------------

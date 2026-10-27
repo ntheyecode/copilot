@@ -479,6 +479,56 @@ function modeDirective(mode) {
   }
 }
 
+// ---- Guidance strength (the user-chosen REGISTER) -------------------------
+// A SEPARATE axis from the work mode above: mode is the task style (step-by-step
+// vs architect vs debug), level is how much detail and hand-holding the prose
+// carries. The user can change it MIDWAY through a session; because the planner
+// and the live navigate both take it per call, the next output re-phrases to the
+// new level immediately (already-done steps are left as they were). Single source
+// of truth (SUPREME RULE II): these four are defined here and nowhere else.
+export const WORK_LEVELS = [
+  { id: 'easy',      label: 'Easy',      hint: 'Assume no knowledge. One tiny action at a time, every button and keystroke spelled out, plain words.' },
+  { id: 'medium',    label: 'Medium',    hint: 'Balanced. The key controls and exact values, without the most basic hand-holding.' },
+  { id: 'technical', label: 'Technical', hint: 'Terse and expert. Exact commands and precise control names, minimal prose.' },
+  { id: 'executive', label: 'Executive', hint: 'High level. The key moves and decisions, not every click. Shortest.' },
+]
+export const WORK_LEVEL_IDS = WORK_LEVELS.map((l) => l.id)
+export function normalizeLevel(level) {
+  return WORK_LEVEL_IDS.includes(String(level || '')) ? String(level) : 'medium'
+}
+// The register directive for one level. Appended after the mode directive by the
+// plan / navigate / ask / explain system builders. It shapes HOW the prose reads;
+// it never changes WHAT the product can do, so read-only honesty, the exactness
+// of commands/code, and the fidelity + deep-planning rules all stay intact.
+function levelDirective(level) {
+  switch (normalizeLevel(level)) {
+    case 'easy':
+      return '\n\n---\nGUIDANCE STRENGTH: EASY\n' +
+        'Assume the person knows nothing about this. Give ONE tiny action at a time and name every ' +
+        'button, menu, tab and field by its exact on-screen label, say exactly where it is, and ' +
+        'spell out every keystroke including how to save and exit. Use plain everyday words, define ' +
+        'any term the moment it appears, and add a short word of reassurance. Never skip a detail ' +
+        'because it seems obvious.'
+    case 'technical':
+      return '\n\n---\nGUIDANCE STRENGTH: TECHNICAL\n' +
+        'The person is fluent with this class of tool. Be terse and expert: the exact command, code ' +
+        'or precise control name and nothing more, minimal prose, no basic explanation and no ' +
+        'reassurance. Dense and fast. Still exact and correct; still read-only (you guide, you do ' +
+        'not act).'
+    case 'executive':
+      return '\n\n---\nGUIDANCE STRENGTH: EXECUTIVE\n' +
+        'The person is overseeing the work and wants the gist, not every click. Give the key moves ' +
+        'and the decision points at a high level, outcome first, as briefly as possible. Name a ' +
+        'specific control or value only when it is the crux. Shortest of all the levels.'
+    case 'medium':
+    default:
+      return '\n\n---\nGUIDANCE STRENGTH: MEDIUM\n' +
+        'Balanced, for a competent person who is just unfamiliar with this tool. Name the key ' +
+        'controls and give the exact commands and values, but skip the most basic hand-holding and ' +
+        'the keystroke-by-keystroke detail. Clear and concise.'
+  }
+}
+
 function baseWith(base, voice = '', mode = 'stepwise') {
   const parts = [String(base || '').trim()]
   if (voice && voice.trim()) parts.push('\n' + voice.trim())
@@ -491,8 +541,8 @@ function baseWith(base, voice = '', mode = 'stepwise') {
 // Produces concrete steps, each with a `validate` condition: the thing that
 // will be visible on screen once the step is genuinely done. The watcher later
 // checks frames against that condition.
-export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
-  return baseWith(base, voice, mode) +
+export function workPlanSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return baseWith(base, voice, mode) + levelDirective(level) +
     '\n\n---\nPLAN THE WORK\n' +
     'You are given the user\'s GOAL and, when available, a screenshot of where they are now. ' +
     'Break the goal into an ordered checklist of concrete steps the user performs themselves. ' +
@@ -606,7 +656,7 @@ export function workPlanUser({ goal, appContext, research = '', learnings = '', 
 }
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
-export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null, locale = 'en' }) {
+export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null, locale = 'en' }) {
   const heavy = thorough ? (
     '\n\n---\nPLAN-HEAVY MODE\n' +
     'The user will follow this plan with only LIGHT, on-demand checks, not continuous watching. ' +
@@ -615,7 +665,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
     'anticipate the common branch and the common error inline, and end each step with a clear ' +
     'self-check the user can confirm without you watching. Err toward more detail per step.'
   ) : ''
-  const system = withLocale(workPlanSystem({ base, voice, mode }) + heavy + methodAnchorBlock(goal, appContext), locale)
+  const system = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy + methodAnchorBlock(goal, appContext), locale)
   const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -637,7 +687,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
   // cost). Any failure keeps the draft, never degrading it (SUPREME RULES VI, VIII).
   if (!parsed.refusal && deepWorthy({ goal, appContext, draftSteps: parsed.steps })) {
     try {
-      const critiqueSystem = withLocale(workPlanSystem({ base, voice, mode }) + heavy +
+      const critiqueSystem = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy +
         methodAnchorBlock(goal, appContext) + PLAN_CRITIQUE_DIRECTIVE, locale)
       const critiqueUser = planCritiqueUser({ goal, appContext, draftSteps: parsed.steps })
       const critiqueCfg = (strong && strong.cfg) ? strong.cfg : cfg
@@ -749,8 +799,8 @@ export function destructiveCheck(commands, code) {
 // grounded in the goal + research + the user's docs. Same step shape as the
 // planner so the console renders it the same way, and it becomes part of the
 // goal (guided + verified, then the flow continues).
-export function workHowToSystem({ base, voice = '', mode = 'stepwise' }) {
-  return baseWith(base, voice, mode) +
+export function workHowToSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return baseWith(base, voice, mode) + levelDirective(level) +
     '\n\n---\nEXPLAIN ONE ACTION IN FULL\n' +
     'The person is working toward a GOAL and has asked HOW to do ONE specific ACTION in it. Break ' +
     'THAT action, and only that action, into an ordered checklist of micro-steps they perform ' +
@@ -777,8 +827,8 @@ export function workHowToUser({ goal, action, appContext, research = '' }) {
       : '') +
     'Produce the sub-step checklist JSON for this one action now.')
 }
-export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null, locale = 'en' }) {
-  const system = withLocale(workHowToSystem({ base, voice, mode }) + methodAnchorBlock(`${goal} ${action}`, appContext), locale)
+export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null, locale = 'en' }) {
+  const system = withLocale(workHowToSystem({ base, voice, mode, level }) + methodAnchorBlock(`${goal} ${action}`, appContext), locale)
   const user = workHowToUser({ goal, action, appContext, research })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -918,8 +968,8 @@ function navigateBase(base, voice = '', mode = 'stepwise') {
   parts.push(modeDirective(mode))
   return parts.join('')
 }
-export function workNavigateSystem({ base, voice = '', mode = 'stepwise' }) {
-  return navigateBase(base, voice, mode) +
+export function workNavigateSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return navigateBase(base, voice, mode) + levelDirective(level) +
     '\n\n---\nGUIDE CONTINUOUSLY BY WATCHING THE SCREEN\n' +
     'You are guiding one person through their GOAL in real time. You are given the full ordered ' +
     'CHECKLIST (each step numbered, with what DONE looks like and its state) and a screenshot of ' +
@@ -1035,8 +1085,8 @@ export function workNavigateUser({ goal, steps, currentStep }) {
     `CHECKLIST (the list currently assumes step ${Number(currentStep || 0) + 1} is next):\n${list}\n\n` +
     'Look at the screenshot and return the navigation JSON now.')
 }
-export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', goal, steps, currentStep, frame, visionModel, strong = null }) {
-  const system = workNavigateSystem({ base, voice, mode })
+export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, steps, currentStep, frame, visionModel, strong = null }) {
+  const system = workNavigateSystem({ base, voice, mode, level })
   const user = workNavigateUser({ goal, steps, currentStep })
   const n = (steps || []).length
   const curPlanIdx = Number.isFinite(Number(currentStep)) ? Math.round(Number(currentStep)) : null
@@ -1172,8 +1222,8 @@ export async function workAudit(ai, cfg, { base, voice = '', mode = 'stepwise', 
 // ---- On-demand: "what is this / what do I do here" ------------------------
 // Reads the current frame and answers the user's question (or, with no question,
 // explains what is on screen and what to do about it), grounded in the goal.
-export function workAskSystem({ base, voice = '', mode = 'stepwise' }) {
-  return baseWith(base, voice, mode) +
+export function workAskSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return baseWith(base, voice, mode) + levelDirective(level) +
     '\n\n---\nANALYZE THIS SCREEN\n' +
     'The user is asking about, or asking you to analyze, what is on their screen right now. You ' +
     'are given their ORIGINAL GOAL, the plan so far and where they are in it, and recent notes. ' +
@@ -1225,8 +1275,8 @@ export function workAskUser({ goal, question, steps = [], currentStep = 0, event
     (q ? `WHAT TO ANALYZE (the user's focus): ${q}\n\n` : 'No specific focus was given. Review the whole screen against the goal and the plan.\n\n') +
     'Answer now, grounded in what the screenshot shows, tied to the goal and the plan.')
 }
-export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null, locale = 'en' }) {
-  const system = withLocale(workAskSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext), locale)
+export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null, locale = 'en' }) {
+  const system = withLocale(workAskSystem({ base, voice, mode, level }) + methodAnchorBlock(goal, appContext), locale)
   const user = workAskUser({ goal, question, steps, currentStep, events, appContext })
   const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
   // Weak = no usable answer at all (no JSON answer and no prose), which is when
