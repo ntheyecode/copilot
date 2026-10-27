@@ -111,6 +111,40 @@ export const GUIDE_CSS = `
 .gv-btn.ghost:hover:not(:disabled){background:var(--gv-surface-2);color:var(--gv-text);border-color:transparent}
 .gv-btn.wide{width:100%}
 
+/* ---- optional "Verify on my screen": a calm inline verdict ABOVE the action
+   row (green = looks done, amber = not yet, quiet dots while checking); the
+   primary Mark done right beneath is the shortcut, and gets a soft green ring
+   (.is-ready) when the verdict is "Looks done". Never a modal. ------------- */
+.gv-verify{display:flex;align-items:flex-start;gap:9px;margin-top:14px;padding:10px 11px 10px 13px;border-radius:12px;border:1px solid var(--gv-border);background:var(--gv-surface-2);min-width:0;animation:gv-in .25s cubic-bezier(.2,.8,.2,1) both}
+.gv-verify.is-done{background:var(--gv-good-soft);border-color:color-mix(in srgb,var(--gv-good) 45%,transparent)}
+.gv-verify.is-notyet{background:var(--gv-warn-soft);border-color:color-mix(in srgb,var(--gv-warn) 45%,transparent)}
+.gv-verify.is-error{border-color:color-mix(in srgb,var(--gv-danger) 40%,transparent)}
+.gv-verify-ic{flex:0 0 auto;display:inline-flex;align-items:center;margin-top:3px;color:var(--gv-muted)}
+.gv-verify.is-checking .gv-verify-ic{color:var(--gv-obs)}
+.gv-verify.is-done .gv-verify-ic{color:var(--gv-good)}
+.gv-verify.is-notyet .gv-verify-ic{color:var(--gv-warn)}
+.gv-verify.is-error .gv-verify-ic{color:var(--gv-danger)}
+.gv-verify-b{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.gv-verify-k{font-size:calc(13.5px*var(--wc-fs,1));font-weight:700;line-height:1.4;color:var(--gv-text);overflow-wrap:anywhere}
+.gv-verify.is-checking .gv-verify-k{font-weight:600;color:var(--gv-muted)}
+.gv-verify.is-done .gv-verify-k{color:var(--gv-good)}
+.gv-verify.is-notyet .gv-verify-k{color:var(--gv-warn)}
+.gv-verify.is-error .gv-verify-k{color:var(--gv-danger)}
+.gv-verify-t{font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--gv-text);overflow-wrap:anywhere}
+.gv-verify-hint{font-size:calc(12px*var(--wc-fs,1));line-height:1.4;color:var(--gv-muted)}
+.gv-verify-saw{display:flex;align-items:flex-start;gap:6px;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.45;color:var(--gv-muted);min-width:0;overflow-wrap:anywhere}
+.gv-verify-saw>.gv-k{margin-top:2px}
+.gv-verify-saw>span:last-child{min-width:0}
+.gv-verify-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}
+.gv-verify-link{font:inherit;font-size:calc(12.5px*var(--wc-fs,1));font-weight:650;color:var(--gv-accent);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;white-space:nowrap}
+.gv-verify-link:hover{text-decoration-color:currentColor}
+.gv-verify-link:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring);border-radius:4px}
+.gv-verify-x{flex:0 0 auto;width:26px;height:26px;margin:-3px -3px 0 0;border-radius:7px;border:none;background:transparent;color:var(--gv-faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.gv-verify-x:hover{background:var(--gv-surface);color:var(--gv-text)}
+.gv-verify-x:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring)}
+.gv-btn.is-ready{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 3px var(--gv-good-soft),0 0 0 4px var(--gv-good);animation:gv-ready 1.4s ease-out 1}
+@keyframes gv-ready{0%{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 0 var(--gv-good-soft),0 0 0 0 var(--gv-good)}60%{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 6px var(--gv-good-soft),0 0 0 4px var(--gv-good)}100%{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 3px var(--gv-good-soft),0 0 0 4px var(--gv-good)}}
+
 /* ---- next step (one quiet line) + prev / next with a progress track ------- */
 .gv-next{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:11px;background:var(--gv-surface-2);border:1px solid var(--gv-border);opacity:.8;min-width:0}
 .gv-next-n{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--gv-faint);border:1px solid var(--gv-border)}
@@ -169,11 +203,16 @@ export const GUIDE_CSS = `
   .gv-step-text{font-size:calc(16.5px*var(--wc-fs,1))}
   .gv-ask-body{font-size:calc(14.5px*var(--wc-fs,1))}
   .gv-step-actions .gv-btn,.gv-ask-actions .gv-btn{flex:1 1 auto}
+  /* Mark done + Verify stay side by side in a 380px floater even with its
+     scrollbar showing (tighter padding, 13px); below ~320px they wrap to
+     full-width rows, never clip. */
+  .gv-step-actions .gv-btn{padding:0 12px;font-size:13px;gap:6px}
+  .gv-verify{padding:9px 9px 9px 11px;margin-top:12px}
   .gv-reading{padding:9px 11px 9px 12px}
   .gv-offer-form .gv-btn{flex:1 1 100%}
 }
 @media(prefers-reduced-motion:reduce){
-  .gv-swap.out,.gv-swap.in,.gv-confirm,.gv-ana i,.gv-spin{animation:none}
+  .gv-swap.out,.gv-swap.in,.gv-confirm,.gv-ana i,.gv-spin,.gv-verify,.gv-btn.is-ready{animation:none}
   .gv-swap.out{opacity:0}
 }
 `
