@@ -29,12 +29,21 @@ export default {
     notReady: 'Fill this in now. The final step unlocks once your administrator finishes AI setup.',
     parkedNote: 'Your plan is parked here and nothing you entered is lost.',
     setupAiLink: 'Set up AI on the dashboard',
-    gateMustComplete: 'Finish your current task before starting a new one. Open it from your tasks, wrap it up, then start the next.',
-    gateTaskLimit: 'You have used all your tasks for today. They reset at {reset}.',
+    // Hours are the only usage limit; a person may keep up to {max} tasks open
+    // at once (running or paused). Nothing resets on a clock.
+    gateTooManyOpen: 'You already have {max} tasks on the go. Finish or pick one up to start another.',
+    gateOutOfHours: 'You are out of guided hours. They renew {reset}, or add hours to keep going.',
+    gateOutOfHoursCompany: 'You are out of guided hours. They renew {reset}. Ask your administrator if you need more before then.',
+    gateOutOfHoursAct: 'Add hours',
+    // A company member whose admin set a task ceiling (company policy).
+    gateCompanyTaskLimit: 'You have reached the task limit your company set. New tasks open {reset}. Ask your company administrator if you need more.',
     gateCompanyNoLicense: 'Your company has not assigned you a WorkCoPilot license yet, or all licenses are in use. Ask your company administrator to add you.',
-    capFinish: 'Finish your current task before starting a new one.',
-    capLeft: '{remaining} of {cap} tasks left today. Resets {reset}.',
-    capLeftOne: '{remaining} of {cap} task left today. Resets {reset}.',
+    // The quiet slots line under the goal box.
+    openSlots_one: '{open} of {max} tasks open. Room for {n} more.',
+    openSlots_other: '{open} of {max} tasks open. Room for {n} more.',
+    openFull: '{max} of {max} tasks open. Finish or pick one up before starting another.',
+    capLeft: '{remaining} of {cap} tasks left. Resets {reset}.',
+    capLeftOne: '{remaining} of {cap} task left. Resets {reset}.',
 
     // Step 1: where are you working
     placeQ: 'Where are you working?',

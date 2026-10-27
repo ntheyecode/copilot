@@ -7,8 +7,11 @@
 //           top-up hours (never expire), a seat-based company's shared pool,
 //           a company member's admin-set allowance, a pool-based member's day
 //           ceiling
-//   tasks   today's per-day cap (used / remaining / reset time)
-//   state   the single actionable state: ok, low, exhausted, taskCap, ceiling
+//   tasks   ONE shape for both server models: mode 'open' (individuals: how
+//           many of the at-once task slots are in use; hours are the only usage
+//           limit, nothing resets), mode 'limit' (a company member's admin-set
+//           task ceiling: started / cap / reset) or mode 'unlimited'
+//   state   the single actionable state: ok, low, exhausted, tasksFull, ceiling
 //           (your allowance is spent) or pool (the company pool is empty)
 //
 // Pure functions, no React, no fetches: the pill and the meters can never
@@ -95,16 +98,31 @@ export function planView(usage, opts = {}) {
     ? { remainingSeconds: Math.max(0, num(ent.pool.remainingSeconds)), monthlySeconds: num(ent.pool.monthlySeconds), usedPct: num(ent.pool.usedPct), monthEnd: ent.pool.monthEnd || 'forfeit' }
     : null
 
-  // ---- Tasks: a plain per-day cap ---------------------------------------
-  const tasks = tasksRaw ? {
-    unlimited: !!tasksRaw.unlimited,
-    cap: tasksRaw.cap == null ? null : Math.max(0, num(tasksRaw.cap)),
-    usedToday: Math.max(0, num(tasksRaw.usedToday)),
-    remaining: tasksRaw.remaining == null ? null : Math.max(0, num(tasksRaw.remaining)),
-    resetLabel: tasksRaw.resetLabel || '',
-    activeTaskId: tasksRaw.activeTaskId || null,
-  } : null
-  const taskCap = !!(tasks && !tasks.unlimited && tasks.cap != null && tasks.remaining != null && tasks.remaining <= 0)
+  // ---- Tasks: open slots (individuals) or a company ceiling ---------------
+  // The server sends two shapes (server/store.js getWorkTaskUsage):
+  //   individual  { unlimited:false, maxOpen, open, remaining }      -> mode 'open'
+  //   company     { unlimited, cap, usedToday, remaining, resetLabel } -> mode
+  //               'limit' when the admin set a ceiling, else 'unlimited'
+  // Both fold into used / max / remaining so the pips, the "{used} of {max}"
+  // face and the full check are written once. Only mode 'limit' has a reset;
+  // an open slot frees when a task is finished, never on a clock. The retired
+  // per-day fields (cap, usedToday) are deliberately NOT exposed.
+  let tasks = null
+  if (tasksRaw) {
+    const unlimited = !!tasksRaw.unlimited
+    const openModel = !unlimited && tasksRaw.maxOpen != null
+    const max = unlimited ? null : openModel ? Math.max(0, num(tasksRaw.maxOpen)) : (tasksRaw.cap == null ? null : Math.max(0, num(tasksRaw.cap)))
+    const used = Math.max(0, num(openModel ? tasksRaw.open : tasksRaw.usedToday))
+    const remaining = tasksRaw.remaining == null ? (max == null ? null : Math.max(0, max - used)) : Math.max(0, num(tasksRaw.remaining))
+    tasks = {
+      mode: unlimited ? 'unlimited' : openModel ? 'open' : 'limit',
+      unlimited, max, used, remaining,
+      resetLabel: openModel ? '' : (tasksRaw.resetLabel || ''),
+      activeTaskId: tasksRaw.activeTaskId || null,
+    }
+  }
+  // Every slot in use (open) or the company ceiling reached (limit).
+  const tasksFull = !!(tasks && !tasks.unlimited && tasks.max != null && tasks.remaining != null && tasks.remaining <= 0)
 
   // ---- The one actionable state (most blocking first) --------------------
   const state = isAdmin ? 'ok'
@@ -112,7 +130,7 @@ export function planView(usage, opts = {}) {
       : usage.ceilingHit ? 'ceiling'
         : exhausted ? 'exhausted'
           : low ? 'low'
-            : taskCap ? 'taskCap'
+            : tasksFull ? 'tasksFull'
               : 'ok'
 
   return {
@@ -120,9 +138,12 @@ export function planView(usage, opts = {}) {
     included, left, used, carriedExtra, carryForward, carryCapHours: expiry.carryCapHours == null ? null : num(expiry.carryCapHours),
     renewsAt: usage.renewsAt || null, resetLabel: usage.resetLabel || '',
     topupSeconds, companyPoolSeconds, pool, allowance,
+    // dailySeconds is a POOL-BASED COMPANY member's admin-set day ceiling
+    // (server/store.js getWorkUsage sets it only for them); it is null for
+    // every individual, who has no per-day hours allowance any more.
     dailySeconds: usage.dailySeconds == null ? null : Math.max(0, num(usage.dailySeconds)),
     usedToday: Math.max(0, num(usage.usedSeconds)),
     remainingSeconds, exhausted, low,
-    tasks, taskCap, state,
+    tasks, tasksFull, state,
   }
 }

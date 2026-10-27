@@ -210,6 +210,9 @@ export const WD_CSS = `
 .wd-note{display:flex;gap:11px;align-items:flex-start;margin:0 0 14px;padding:12px 15px;border-radius:12px;font-size:13.5px;line-height:1.5;border:1px solid var(--info-line);background:var(--info-fill);color:var(--tx)}
 .wd-note svg{flex-shrink:0;margin-top:2px;color:var(--info)}
 .wd-note a{color:var(--info);font-weight:600;text-decoration:underline;text-underline-offset:3px}
+/* An action inside a note (e.g. "Add hours" next to the out-of-hours gate): reads as a link, no box. */
+.wd-note .wd-note-act{background:none;border:none;padding:0;margin:0;font:inherit;font-weight:600;color:var(--info);text-decoration:underline;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
+.wd-note.warn .wd-note-act{color:var(--warm)}
 .wd-note.warn{border-color:var(--warm-line);background:var(--warm-fill)}
 .wd-note.warn svg{color:var(--warm)}
 
@@ -443,7 +446,10 @@ export const WD_CSS = `
 @media(max-width:760px){.wd-start{padding:18px 16px 16px}}
 @media(max-width:640px){
  .wd-main{padding:22px 16px 40px}
- .wd-top{padding:0 14px;gap:8px}
+ /* z-index 32 > the rail's 31: at this width the plan pill's popover pins to the
+    viewport gutters (planPill.css.js) and must paint over the rail, and the top
+    bar is the stacking context it lives in. Wider up, the two never overlap. */
+ .wd-top{padding:0 14px;gap:8px;z-index:32}
  /* The section title gives up its space so the plan pill + controls never
     collide or clip at narrow widths; the rail still names the section. */
  .wd-top h2{display:none}

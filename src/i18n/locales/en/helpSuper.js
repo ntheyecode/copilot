@@ -76,14 +76,14 @@ export default {
     pricing: {
       open: 'Pricing',
       title: 'Pricing',
-      lead: 'What each tier costs and what it includes: guided hours per month and guided tasks per day.',
+      lead: 'What each tier costs and what it includes: guided hours per month. Hours are the only usage limit; there is no per-day task cap.',
       steps: {
         edit: { t: 'Edit', d: 'Opens every value for change.' },
-        perTier: { t: 'Per tier', d: 'Monthly price, included hours per month, tasks per day, re-plans, extra hour and image rates, and what happens to unused hours at month end.' },
+        perTier: { t: 'Per tier', d: 'Monthly price, included hours per month, re-plans, extra hour and image rates, and what happens to unused hours at month end.' },
         save: { t: 'Save', d: 'Prices apply to new purchases right away. A change to included hours reaches every person\'s live monthly balance at once.' },
       },
       shot: {
-        alt: 'Pricing: currency, the per-tier price, hours per month, tasks per day, re-plans, extra hour and image rates, the month-end rule and the plans-at-a-glance bars.',
+        alt: 'Pricing: currency, the per-tier price, hours per month, re-plans, extra hour and image rates, the month-end rule and the plans-at-a-glance bars.',
         caption: 'Pricing record. Edit to change it.',
       },
     },

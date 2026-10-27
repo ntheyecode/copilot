@@ -1,6 +1,6 @@
 // Dashboard PLAN METERS (src/pages/work/PlanMeters.jsx): the "Your plan at a
 // glance" tile row (hours this month as a ring, top-up hours or a company
-// allowance, today's tasks as pips) and the one state banner under it. Classes
+// allowance, open tasks as pips) and the one state banner under it. Classes
 // are namespaced wd-pm-*; the ring + pips classes come from planPill.css.js
 // (injected by the shell's PlanPill, the single owner of those two meters).
 // Tokens come from .wd in workApp.css.js.

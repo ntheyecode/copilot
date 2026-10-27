@@ -17,7 +17,8 @@ export const PLAN_PILL_CSS = `
 .wd-ring.out .wd-ring-track{stroke:color-mix(in srgb,var(--danger) 28%,transparent)}
 .wd-ring.out .wd-ring-fill{stroke:var(--danger)}
 
-/* ---- Task pips: one dot per task in today's cap, filled once used. ---- */
+/* ---- Task pips: one dot per task slot (open tasks of the at-once maximum, or a
+   company ceiling), filled while in use. ---- */
 .wd-pips{display:inline-flex;align-items:center;gap:3px;flex-shrink:0;line-height:0}
 .wd-pips i{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--panel);border:1.5px solid var(--em-2);box-sizing:border-box}
 .wd-pips i.on{background:var(--em-2)}
@@ -36,10 +37,14 @@ export const PLAN_PILL_CSS = `
 .wd-pp-ca{flex-shrink:0;color:var(--mut);transform:rotate(90deg)}
 .wd-planpill.on .wd-pp-ca{transform:rotate(-90deg)}
 
-/* ---- The popover: plan name, the hours meter, top-up / company lines, today's
-   tasks, then the one actionable state with its action. ---- */
+/* ---- The popover: plan name, the hours meter, top-up / company lines, the task
+   slots, then the one actionable state with its action. ---- */
 .wd-planpop-back{position:fixed;inset:0;z-index:40;background:transparent;border:0;padding:0;margin:0;cursor:default}
-.wd-planpop{position:absolute;top:calc(100% + 8px);right:0;z-index:41;width:300px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;animation:wd-pp-pop .16s ease;text-align:left}
+/* white-space:normal on purpose: the top bar's control cluster (.wd-top-right) is
+   nowrap so the pills never wrap, and the popover inherits it; every note and
+   hint inside must wrap like prose. */
+.wd-planpop{position:absolute;top:calc(100% + 8px);right:0;z-index:41;width:300px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;animation:wd-pp-pop .16s ease;text-align:left;white-space:normal}
+.wd-planpop-note .t span{min-width:0;overflow-wrap:anywhere}
 @keyframes wd-pp-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .wd-planpop-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;min-width:0}
 .wd-planpop-name{font-family:var(--wd-display);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -62,7 +67,7 @@ export const PLAN_PILL_CSS = `
 .wd-planpop-bar.out{background:color-mix(in srgb,var(--danger) 25%,transparent)}
 .wd-planpop-bar.out i{background:var(--danger)}
 .wd-planpop-pips{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0;flex-wrap:wrap}
-/* State note + action: warm for low / task cap, danger for exhausted. */
+/* State note + action: warm for low / every slot in use, danger for exhausted. */
 .wd-planpop-note{margin-top:10px;display:flex;flex-direction:column;gap:9px;padding:10px 12px;border-radius:11px;border:1px solid var(--warm-line);background:var(--warm-fill);font-size:12.5px;line-height:1.45;color:var(--tx)}
 .wd-planpop-note.out{border-color:color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 7%,transparent)}
 .wd-planpop-note .t{display:flex;gap:8px;align-items:flex-start}
@@ -79,5 +84,9 @@ export const PLAN_PILL_CSS = `
    ring + caret so the control stays recognizable at every width. */
 @media(max-width:1100px){.wd-planpill{gap:7px;padding:0 9px 0 10px}}
 @media(max-width:860px){.wd-planpill>.wd-pp-s.tasks,.wd-planpill>.wd-pp-sep{display:none}}
+/* Floater / phone width: a 300px popover right-anchored to a pill near the
+   middle of a 380px bar would run off the left edge, so it pins to the
+   viewport's side gutters under the 58px top bar instead. */
+@media(max-width:480px){.wd-planpop{position:fixed;top:66px;left:14px;right:14px;width:auto;max-width:none}}
 @media(prefers-reduced-motion:reduce){.wd-planpop{animation:none}.wd-ring .wd-ring-fill,.wd-planpop-bar i{transition:none}}
 `

@@ -1,7 +1,8 @@
 // "Plans at a glance" for the collapsed Pricing record: one row per tier with
-// the monthly price, the included guided hours per month as a bar (relative to
-// the most generous tier) and the guided tasks per day. Pure presentation over
-// the saved pricing form; the editor stays the single place values change.
+// the monthly price and the included guided hours per month as a bar (relative
+// to the most generous tier). Hours are the only usage limit, so there is no
+// per-day task count. Pure presentation over the saved pricing form; the editor
+// stays the single place values change.
 import React from 'react'
 import { BarList, VIZ_CSS } from './_viz.jsx'
 import { useT } from '../../../i18n/index.jsx'
@@ -16,7 +17,7 @@ export default function PricingGlance({ form, money }) {
     label: t('pricingAdmin.tiers.' + tier),
     sub: `${money(form.plans[tier])}${t('pricingAdmin.record.perMonthShort')}`,
     value: num((form.hoursMonthly || {})[tier]),
-    valueLabel: t('pricingAdmin.record.glanceLine', { hours: num((form.hoursMonthly || {})[tier]), tasks: form.tasks[tier] == null ? '-' : form.tasks[tier] }),
+    valueLabel: t('pricingAdmin.record.glanceLine', { hours: num((form.hoursMonthly || {})[tier]) }),
   }))
   return (
     <div style={{ marginTop: 16, paddingTop: 14, borderTop: '1px solid var(--wka-line)' }}>

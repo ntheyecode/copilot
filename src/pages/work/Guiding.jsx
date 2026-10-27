@@ -1049,7 +1049,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const fromMenu = (fn) => () => { setMenuOpen(false); fn() }
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
-  // Usage metering: plan hours left this month, today's task cap, pause. The
+  // Usage metering: plan hours left this month, the task slots in use, pause. The
   // copy comes from usageCopy.js (the shared plan model), never inline math.
   const [usage, setUsage] = useState(null)
   const [paused, setPaused] = useState(false)
