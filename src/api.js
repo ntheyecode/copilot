@@ -233,8 +233,10 @@ export const api = {
   workPasswordToken: (token) => req('GET', `/api/work/password/token/${encodeURIComponent(token)}`),
   workPasswordSet: (token, password) => req('POST', '/api/work/password/set', { token, password }),
   workPasswordForgot: (login) => req('POST', '/api/work/password/forgot', { login }),
-  workResearch: (id, question) => req('POST', `/api/work/sessions/${id}/research`, { question: clean(question) }),
+  workResearch: (id, question, extra) => req('POST', `/api/work/sessions/${id}/research`, { ...(extra || {}), question: clean(question) }),
   workUsage: () => req('GET', '/api/work/usage'),
+  // Guided seconds + tasks started per day, oldest first ({ days: [{ day, seconds, tasks }] }).
+  workUsageHistory: (days) => req('GET', `/api/work/usage/history?days=${encodeURIComponent(Number(days) || 31)}`),
   workHeartbeat: (id, seconds) => req('POST', '/api/work/usage/heartbeat', { sessionId: id, seconds }),
   workPause: (id, paused) => req('PATCH', `/api/work/sessions/${id}/pause`, { paused }),
   // Compose: WRITE the actual document. body: { want (what to write), format?

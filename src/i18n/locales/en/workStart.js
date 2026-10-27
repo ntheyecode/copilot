@@ -27,6 +27,8 @@ export default {
     // Not-ready gate + gate messages
     notReadyTitle: 'AI setup is not finished yet',
     notReady: 'Fill this in now. The final step unlocks once your administrator finishes AI setup.',
+    parkedNote: 'Your plan is parked here and nothing you entered is lost.',
+    setupAiLink: 'Set up AI on the dashboard',
     gateMustComplete: 'Finish your current task before starting a new one. Open it from your tasks, wrap it up, then start the next.',
     gateTaskLimit: 'You have used all your tasks for today. They reset at {reset}.',
     gateCompanyNoLicense: 'Your company has not assigned you a WorkCoPilot license yet, or all licenses are in use. Ask your company administrator to add you.',
@@ -89,6 +91,7 @@ export default {
     goalLabel: 'Your goal',
     goalPh: 'What do you want to get done? Type or paste the task, the ticket, or the requirement.',
     goalReadyHint: 'WorkCoPilot plans it, then guides you step by step.',
+    continueHint: 'Add a plan name and your goal to continue.',
     addContext: 'Add workspace context first',
 
     // Step 4: reflection (NEW)

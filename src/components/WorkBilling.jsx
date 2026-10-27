@@ -75,7 +75,8 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
   // Monthly list price per tier from live pricing; annual = 20% off (billing.js).
   const monthlyPrice = (p) => { const v = pricing && pricing.plans ? Number(pricing.plans[p]) : NaN; return isFinite(v) ? v : null }
   const annualPrice = (p) => { const m = monthlyPrice(p); return m == null ? null : Math.round(m * 12 * 0.8) }
-  const dailyHours = (p) => { const v = pricing && pricing.dailyHours ? Number(pricing.dailyHours[p]) : NaN; return isFinite(v) ? v : null }
+  // Included guided hours per MONTH per tier (plan model: renewed on the 1st).
+  const hoursMonthly = (p) => { const v = pricing && pricing.hoursMonthly ? Number(pricing.hoursMonthly[p]) : NaN; return isFinite(v) ? v : null }
   const annualReady = !!(pricing && pricing.annualReady)
 
   // Plans available to choose from, from pricing (single source), in tier order.
@@ -83,7 +84,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
     const src = (pricing && pricing.plans) || {}
     const ids = PLAN_ORDER.filter((p) => src[p] != null)
     return (ids.length ? ids : PLAN_ORDER).map((id) => ({
-      id, name: cap(id), monthly: monthlyPrice(id), annual: annualPrice(id), hrs: dailyHours(id),
+      id, name: cap(id), monthly: monthlyPrice(id), annual: annualPrice(id), hrs: hoursMonthly(id),
     }))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pricing])
@@ -196,8 +197,8 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
                 <i>/{(cycle || 'month') === 'annual' ? 'year' : 'month'}</i>
               </span>
             )}
-            {plan && dailyHours(plan) != null && (
-              <span className="wb-meta-item">{dailyHours(plan)} {dailyHours(plan) === 1 ? 'hour' : 'hours'} / day</span>
+            {plan && hoursMonthly(plan) != null && (
+              <span className="wb-meta-item">{hoursMonthly(plan)} {hoursMonthly(plan) === 1 ? 'hour' : 'hours'} / month</span>
             )}
             {periodEnd && (
               <span className="wb-meta-item">
@@ -262,7 +263,7 @@ export default function WorkBilling({ user, pricing, invoices, billingConfigured
                   <div className="wb-plan-price">
                     {price != null ? <>{money(price)}<i>/{pickCycle === 'annual' ? 'yr' : 'mo'}</i></> : <span className="wb-plan-na">Contact us</span>}
                   </div>
-                  {p.hrs != null && <div className="wb-plan-sub">{p.hrs} {p.hrs === 1 ? 'hour' : 'hours'} of guidance / day</div>}
+                  {p.hrs != null && <div className="wb-plan-sub">{p.hrs} {p.hrs === 1 ? 'hour' : 'hours'} of guided time / month</div>}
                   <button
                     className={`wb-btn ${dir === 'up' ? 'solid' : 'outline'} wb-plan-cta`}
                     disabled={isCurrent || price == null || changeBusy}

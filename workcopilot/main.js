@@ -36,15 +36,17 @@ const PARTITION = 'persist:workcopilot'   // its own cookie jar, separate from t
 let SERVER_ORIGIN = ''
 try { SERVER_ORIGIN = new URL(SERVER_URL).origin } catch { SERVER_ORIGIN = SERVER_URL }
 
-const BUDDY_W = 340
+// Guide redesign (owner): roughly double the comfortable default so the
+// step card reads at quality; clampBounds still fits it to a small screen.
+const BUDDY_W = 480
 // The buddy is a free-floating desktop mascot (no box): a cloud/speech bubble
 // stacked ABOVE the animated character. The window anchors to its BOTTOM-LEFT and
 // grows UPWARD (setBuddyHeight), so the mascot stays pinned to the bottom while the
 // cloud expands up to fit a long instruction. The starting height holds the mascot
 // + a compact cloud + the hover control strip; it grows taller for longer guidance.
-const BUDDY_H = 236          // compact starting height (mascot + small cloud + control strip)
-const BUDDY_H_MIN = 210      // never shorter than the compact mascot + cloud
-const BUDDY_H_MAX = 560      // grows this tall to show a long instruction above the mascot, then scrolls
+const BUDDY_H = 300          // compact starting height (mascot + small cloud + control strip)
+const BUDDY_H_MIN = 260      // never shorter than the compact mascot + cloud
+const BUDDY_H_MAX = 720      // grows this tall to show a long instruction above the mascot, then scrolls
 let buddyH = BUDDY_H         // current allowed height (the page asks us to grow to fit)
 
 let win = null          // main console window
@@ -77,8 +79,17 @@ let onTop = false            // user/mode-controlled always-on-top for the main 
 let contentProtected = true  // hidden from screen share by default; user-toggleable
 let planBounds = null        // remembered plan-mode geometry
 let guideBounds = null       // remembered guide-mode geometry
-const GUIDE_W = 460
-const GUIDE_H = 820
+// Guide-mode default geometry (owner: the old 460 x 820 floater was too small
+// for quality; this is roughly double the area). clampBounds keeps it inside
+// a small work area, so a 768px laptop still gets a reachable window.
+const GUIDE_W = 760
+const GUIDE_H = 960
+// GUIDE-MODE "MAXIMIZE" = CENTERED, not full-bleed: a large reading window
+// centered on the work area (never stretched edge to edge, never stuck in a
+// corner). Toggled by the title-bar maximize button and by an OS maximize
+// (double-click / Win+Up), both of which land in applyGuideMax below.
+let guideMax = false
+let guideRestore = null       // the compact bounds to return to when un-maximized
 
 function applyOnTop() {
   if (alive(win)) win.setAlwaysOnTop(onTop, onTop ? 'screen-saver' : 'normal')
@@ -103,11 +114,14 @@ function clampBounds(b, minW = 380, minH = 480) {
 }
 // Broadcast the live overlay state to the renderer(s) so the title bar always
 // reflects reality (hotkeys, mode switches and OS maximize all flow back here).
+function isMaxed() {
+  return !!(win && !win.isDestroyed() && (win.isMaximized() || (mode === 'guide' && guideMax)))
+}
 function sendState() {
   const st = {
     mode, onTop, contentProtected, clickThrough,
     opacity: OPACITIES[opacityIdx],
-    maximized: !!(win && !win.isDestroyed() && win.isMaximized()),
+    maximized: isMaxed(),
   }
   for (const w of [win, buddy]) {
     try { if (w && !w.isDestroyed()) w.webContents.send('work:state', st) } catch { /* ignore */ }
@@ -118,6 +132,33 @@ function cornerBounds(w, h) {
     const a = screen.getPrimaryDisplay().workArea
     return { x: a.x + a.width - w - 24, y: a.y + 56, width: w, height: h }
   } catch { return { x: 120, y: 80, width: w, height: h } }
+}
+// The centered guide-max rectangle: a comfortable reading width, nearly the
+// full work-area height, centered on the display the window is on.
+function centeredGuideBounds() {
+  try {
+    const d = (alive(win) && screen.getDisplayMatching(win.getBounds())) || screen.getPrimaryDisplay()
+    const a = d.workArea
+    const w = Math.min(1100, a.width - 80)
+    const h = Math.min(1200, a.height - 48)
+    return { x: a.x + Math.round((a.width - w) / 2), y: a.y + Math.round((a.height - h) / 2), width: w, height: h }
+  } catch { return { x: 160, y: 40, width: 1000, height: 900 } }
+}
+// Toggle (or set) the centered guide-max state. Remembers the compact bounds
+// so un-maximizing returns exactly where the floater was.
+function applyGuideMax(next) {
+  if (!alive(win) || mode !== 'guide') return false
+  const want = typeof next === 'boolean' ? next : !guideMax
+  if (want === guideMax) return guideMax
+  if (want) {
+    guideRestore = win.getBounds()
+    win.setBounds(clampBounds(centeredGuideBounds()))
+  } else {
+    win.setBounds(clampBounds(guideRestore || cornerBounds(GUIDE_W, GUIDE_H)))
+  }
+  guideMax = want
+  sendState()
+  return guideMax
 }
 function centeredPlanBounds() {
   try {
@@ -135,8 +176,9 @@ function applyMode(next) {
   if (next === mode) { sendState(); return mode }
   if (!win.isMaximized()) {
     if (mode === 'plan') planBounds = win.getBounds()
-    else guideBounds = win.getBounds()
+    else guideBounds = guideMax ? (guideRestore || win.getBounds()) : win.getBounds()
   }
+  guideMax = false; guideRestore = null
   mode = next
   if (mode === 'guide') {
     if (win.isMaximized()) win.unmaximize()
@@ -695,7 +737,13 @@ function createWindow() {
   win.on('restore', hideBuddy)
   win.on('focus', hideBuddy)
   // Reflect OS-driven maximize/restore back to the title bar's maximize button.
-  win.on('maximize', () => sendState())
+  // In GUIDE mode an OS maximize (double-click the bar, Win+Up) must not
+  // stretch the floater edge to edge: it is undone and becomes the centered
+  // guide-max instead.
+  win.on('maximize', () => {
+    if (mode === 'guide') { try { win.unmaximize() } catch { /* ignore */ } applyGuideMax(true); return }
+    sendState()
+  })
   win.on('unmaximize', () => sendState())
 
   // Closing the main window closes the product. Before this, the (hidden) buddy
@@ -961,6 +1009,7 @@ ipcMain.handle('work:open-main', () => {                          // reopen the 
 ipcMain.handle('work:win-minimize', () => { if (win && !win.isDestroyed()) win.minimize() })  // 'minimize' -> showBuddy
 ipcMain.handle('work:win-maximize', () => {
   if (!win || win.isDestroyed()) return false
+  if (mode === 'guide') return applyGuideMax()          // centered, never full-bleed
   if (win.isMaximized()) win.unmaximize(); else win.maximize()
   sendState()
   return win.isMaximized()
@@ -972,7 +1021,7 @@ ipcMain.handle('work:set-content-protection', (_e, on) => { setContentProtection
 ipcMain.handle('work:get-state', () => ({
   mode, onTop, contentProtected, clickThrough,
   opacity: OPACITIES[opacityIdx],
-  maximized: !!(win && !win.isDestroyed() && win.isMaximized()),
+  maximized: isMaxed(),
 }))
 
 // --- on-device reference documents -----------------------------------------

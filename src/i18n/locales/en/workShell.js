@@ -1,6 +1,8 @@
 // English strings for the signed-in WorkCoPilot app CHROME: the shared shell
-// (src/pages/work/WorkAppLayout.jsx: rail + top-bar section titles, Android
-// update banner, no-access and signed-out-elsewhere screens, guardrail notice),
+// (src/pages/work/WorkAppLayout.jsx: rail + top-bar section titles and
+// controls, the plan pill + its popover (src/pages/work/PlanPill.jsx), the buy
+// hours modal, Android update banner, no-access and signed-out-elsewhere
+// screens, guardrail notice),
 // the My tasks / Completed tasks / Session logs sub-pages (src/pages/WorkTasks.jsx,
 // src/pages/WorkLogs.jsx) and the legal re-consent gate
 // (src/components/LegalConsentGate.jsx). One partial per i18n wave, deep-merged
@@ -57,6 +59,92 @@ export default {
       title: 'Signed out',
       body: 'Your account was just signed in from another location. For your security, WorkCoPilot keeps <b>one active session at a time</b>, so this session was signed out.',
       cta: 'Sign in again',
+    },
+
+    // ---- Top bar: menu toggle, the time chip, buy hours, add time, upgrade,
+    // the Windows app link, sign out, and the admin impersonation banner ----
+    top: {
+      viewingAs: 'You are viewing as <b>{name}</b> (admin support)',
+      stop: 'Stop',
+      collapseMenu: 'Collapse menu',
+      expandMenu: 'Expand menu',
+      retryUsage: 'Could not load your plan. Retry',
+      retry: 'Retry',
+      timeChipTitle: '{plan} plan: {time} of guided time left',
+      left: 'left',
+      buyHoursTitle: 'Buy top-up hours. They never expire.',
+      buyHours: 'Buy hours',
+      buyHoursShort: 'Buy',
+      addTime: 'Add time',
+      upgradeTitle: 'Upgrade to {tier}',
+      upgradeTitleGeneric: 'Upgrade your plan',
+      upgrade: 'Upgrade',
+      windowsAppTitle: 'Get the Windows app',
+      windowsApp: 'Windows app',
+      signOut: 'Sign out',
+    },
+
+    // ---- The plan pill (src/pages/work/PlanPill.jsx) and its popover: this
+    // month's included hours, top-up hours, a company allowance or pool, today's
+    // tasks, and the one actionable state. The unit words feed fmtDuration. ----
+    plan: {
+      unitH: 'h',
+      unitMin: 'min',
+      active: 'Active',
+      name: '{plan} plan',
+      open: '{plan} plan, {time} of guided time left, {tasks}. Open plan details',
+      close: 'Close plan details',
+      dialog: 'Your plan',
+      hoursTitle: 'Hours this month',
+      usedOf: '{used} used of {included}',
+      renews: 'Renews {date}',
+      carry: 'Unused hours carry over to next month',
+      carryCap: 'Unused hours carry over, up to {hours}',
+      carried: '{time} carried over from last month',
+      allowance: 'Your allowance',
+      allowanceUsed: '{used} used of {limit} per {window}',
+      windowDay: 'day',
+      windowWeek: 'week',
+      windowMonth: 'month',
+      companyPool: 'Company pool',
+      companyPoolNote: 'Shared hours your whole team draws from this month.',
+      topup: 'Top-up hours',
+      topupNote: 'Bought on top of your plan. They never expire.',
+      tasksTitle: 'Tasks today',
+      tasksUnlimited: 'Unlimited',
+      tasksUnlimitedAria: 'unlimited tasks today',
+      tasksLeftAria: '{remaining} of {cap} tasks left today',
+      tasksReset: 'Resets {reset}',
+      tasksOpen: 'New tasks open {reset}',
+      statePool: "Your company's shared hours for this month are used up. Ask your administrator to add hours.",
+      stateCeiling: 'You have used the guided time {company} set for you. It opens again at the next reset.',
+      stateExhausted: 'Your plan hours for this month are used up. Buy top-up hours, upgrade, or wait for {date}.',
+      stateExhaustedCompany: 'Your plan hours for this month are used up. They renew {date}. Ask your administrator if you need more before then.',
+      stateLow: 'Only {time} of guided time left this month.',
+      stateLowCompany: 'Only {time} of guided time left this month. Ask your administrator if you need more.',
+      stateTaskCap: 'You have started all {cap} tasks for today. New tasks open {reset}.',
+      actBuy: 'Buy hours',
+      actUpgrade: 'Upgrade',
+    },
+
+    // ---- Buy top-up hours / an image bundle (one-time checkout modal) ----
+    buy: {
+      titleHours: 'Buy top-up hours',
+      titleImages: 'Buy an image bundle',
+      bodyHours: 'Top-up hours stack on your {plan} plan and never expire. You pay once; your subscription does not change.',
+      bodyImages: 'Images on the {plan} plan come in bundles of {min} or more. They never expire.',
+      qtyHours: 'Number of hours',
+      qtyImages: 'Number of images',
+      required: 'required',
+      unit: 'Price',
+      perHour: 'per hour',
+      perImage: 'per image',
+      total: 'Total',
+      cancel: 'Cancel',
+      continue: 'Continue to checkout',
+      errWhole: 'Enter a whole number greater than zero.',
+      errMin: 'The smallest image bundle is {min}.',
+      errCheckout: 'Could not start checkout. Please try again.',
     },
 
     // ---- My tasks / Completed tasks (+ the standalone sub-page top bar) ----

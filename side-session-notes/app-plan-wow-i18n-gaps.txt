@@ -1,0 +1,2789 @@
+[locale-parity] ar: missing workDashboard.plan.companyLeft
+[locale-parity] ar: missing workDashboard.plan.coveredMonth
+[locale-parity] ar: missing workDashboard.plan.freeLeft
+[locale-parity] ar: missing workDashboard.meters.heading
+[locale-parity] ar: missing workDashboard.meters.sub
+[locale-parity] ar: missing workDashboard.meters.info
+[locale-parity] ar: missing workDashboard.meters.on
+[locale-parity] ar: missing workDashboard.meters.onSub
+[locale-parity] ar: missing workDashboard.meters.tipAdmin
+[locale-parity] ar: missing workDashboard.meters.hours.label
+[locale-parity] ar: missing workDashboard.meters.hours.left
+[locale-parity] ar: missing workDashboard.meters.hours.usedOf
+[locale-parity] ar: missing workDashboard.meters.hours.renews
+[locale-parity] ar: missing workDashboard.meters.hours.carry
+[locale-parity] ar: missing workDashboard.meters.hours.carried
+[locale-parity] ar: missing workDashboard.meters.hours.tip
+[locale-parity] ar: missing workDashboard.meters.hours.tipCarry
+[locale-parity] ar: missing workDashboard.meters.allowance.label
+[locale-parity] ar: missing workDashboard.meters.allowance.tip
+[locale-parity] ar: missing workDashboard.meters.allowance.usedOf
+[locale-parity] ar: missing workDashboard.meters.allowance.resets
+[locale-parity] ar: missing workDashboard.meters.pool.label
+[locale-parity] ar: missing workDashboard.meters.pool.tip
+[locale-parity] ar: missing workDashboard.meters.pool.leftOf
+[locale-parity] ar: missing workDashboard.meters.pool.resets
+[locale-parity] ar: missing workDashboard.meters.pool.shared
+[locale-parity] ar: missing workDashboard.meters.topup.label
+[locale-parity] ar: missing workDashboard.meters.topup.tip
+[locale-parity] ar: missing workDashboard.meters.topup.none
+[locale-parity] ar: missing workDashboard.meters.topup.never
+[locale-parity] ar: missing workDashboard.meters.topup.buy
+[locale-parity] ar: missing workDashboard.meters.tasks.label
+[locale-parity] ar: missing workDashboard.meters.tasks.tip
+[locale-parity] ar: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] ar: missing workDashboard.meters.tasks.unlimited
+[locale-parity] ar: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] ar: missing workDashboard.meters.tasks.usedOf
+[locale-parity] ar: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] ar: missing workDashboard.meters.tasks.capHit
+[locale-parity] ar: missing workDashboard.meters.tasks.resets
+[locale-parity] ar: missing workDashboard.meters.state.pool
+[locale-parity] ar: missing workDashboard.meters.state.ceiling
+[locale-parity] ar: missing workDashboard.meters.state.exhausted
+[locale-parity] ar: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] ar: missing workDashboard.meters.state.low
+[locale-parity] ar: missing workDashboard.meters.state.lowCompany
+[locale-parity] ar: missing workDashboard.meters.state.taskCap
+[locale-parity] ar: missing workDashboard.meters.state.buy
+[locale-parity] ar: missing workDashboard.meters.state.upgrade
+[locale-parity] ar: missing workDashboard.month.heading
+[locale-parity] ar: missing workDashboard.month.sub
+[locale-parity] ar: missing workDashboard.month.legendTime
+[locale-parity] ar: missing workDashboard.month.legendTasks
+[locale-parity] ar: missing workDashboard.month.today
+[locale-parity] ar: missing workDashboard.month.tasks_one
+[locale-parity] ar: missing workDashboard.month.tasks_other
+[locale-parity] ar: missing workDashboard.month.aria
+[locale-parity] ar: missing workDashboard.month.dayAria
+[locale-parity] ar: missing workDashboard.month.axisH
+[locale-parity] ar: missing workDashboard.month.axisMin
+[locale-parity] ar: missing workDashboard.month.empty
+[locale-parity] ar: missing workDashboard.month.total
+[locale-parity] ar: missing workDashboard.month.busiest
+[locale-parity] ar: missing workDashboard.month.table
+[locale-parity] ar: missing workDashboard.month.tableHide
+[locale-parity] ar: missing workDashboard.month.colDay
+[locale-parity] ar: missing workDashboard.month.colTime
+[locale-parity] ar: missing workDashboard.month.colTasks
+[locale-parity] ar: missing workDashboard.month.tableNote
+[locale-parity] ar: missing workDashboard.month.errTitle
+[locale-parity] ar: missing workDashboard.month.errBody
+[locale-parity] ar: missing workDashboard.month.retry
+[locale-parity] ar: missing workDashboard.outcomes.heading
+[locale-parity] ar: missing workDashboard.outcomes.sub
+[locale-parity] ar: missing workDashboard.outcomes.viewAll
+[locale-parity] ar: missing workDashboard.outcomes.finished
+[locale-parity] ar: missing workDashboard.outcomes.steps
+[locale-parity] ar: missing workDashboard.outcomes.goal
+[locale-parity] ar: missing workDashboard.outcomes.stepsTitle
+[locale-parity] ar: missing workDashboard.outcomes.moreSteps
+[locale-parity] ar: missing workDashboard.outcomes.open
+[locale-parity] ar: missing workDashboard.outcomes.download
+[locale-parity] ar: missing workDashboard.flow.heading
+[locale-parity] ar: missing workDashboard.flow.sub
+[locale-parity] ar: missing workDashboard.flow.aria
+[locale-parity] ar: missing workDashboard.flow.watch
+[locale-parity] ar: missing workDashboard.flow.watchD
+[locale-parity] ar: missing workDashboard.flow.next
+[locale-parity] ar: missing workDashboard.flow.nextD
+[locale-parity] ar: missing workDashboard.flow.correct
+[locale-parity] ar: missing workDashboard.flow.correctD
+[locale-parity] ar: missing workDashboard.flow.confirm
+[locale-parity] ar: missing workDashboard.flow.confirmD
+[locale-parity] ar: missing workDashboard.flow.complete
+[locale-parity] ar: missing workDashboard.flow.completeD
+[locale-parity] ar: missing workDashboard.flow.note
+[locale-parity] ar: missing workDashboard.flow.cta
+[locale-parity] ar: missing workDashboard.sub.leadMonth
+[locale-parity] ar: missing workDashboard.sub.tasks_one
+[locale-parity] ar: missing workDashboard.sub.tasks_other
+[locale-parity] ar: missing workDashboard.buy.bodyMonth
+[locale-parity] ar: missing workDashboard.buy.buy
+[locale-parity] ar: extra workDashboard.plan.company (not in en)
+[locale-parity] ar: extra workDashboard.plan.covered (not in en)
+[locale-parity] ar: extra workDashboard.plan.free (not in en)
+[locale-parity] ar: extra workDashboard.metrics.heading (not in en)
+[locale-parity] ar: extra workDashboard.metrics.sub (not in en)
+[locale-parity] ar: extra workDashboard.metrics.info (not in en)
+[locale-parity] ar: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] ar: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] ar: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] ar: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] ar: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] ar: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] ar: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] ar: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] ar: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] ar: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] ar: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] ar: extra workDashboard.metrics.low (not in en)
+[locale-parity] ar: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] ar: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] ar: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] ar: extra workDashboard.sub.lead (not in en)
+[locale-parity] ar: extra workDashboard.buy.body (not in en)
+[locale-parity] de: missing workDashboard.plan.companyLeft
+[locale-parity] de: missing workDashboard.plan.coveredMonth
+[locale-parity] de: missing workDashboard.plan.freeLeft
+[locale-parity] de: missing workDashboard.meters.heading
+[locale-parity] de: missing workDashboard.meters.sub
+[locale-parity] de: missing workDashboard.meters.info
+[locale-parity] de: missing workDashboard.meters.on
+[locale-parity] de: missing workDashboard.meters.onSub
+[locale-parity] de: missing workDashboard.meters.tipAdmin
+[locale-parity] de: missing workDashboard.meters.hours.label
+[locale-parity] de: missing workDashboard.meters.hours.left
+[locale-parity] de: missing workDashboard.meters.hours.usedOf
+[locale-parity] de: missing workDashboard.meters.hours.renews
+[locale-parity] de: missing workDashboard.meters.hours.carry
+[locale-parity] de: missing workDashboard.meters.hours.carried
+[locale-parity] de: missing workDashboard.meters.hours.tip
+[locale-parity] de: missing workDashboard.meters.hours.tipCarry
+[locale-parity] de: missing workDashboard.meters.allowance.label
+[locale-parity] de: missing workDashboard.meters.allowance.tip
+[locale-parity] de: missing workDashboard.meters.allowance.usedOf
+[locale-parity] de: missing workDashboard.meters.allowance.resets
+[locale-parity] de: missing workDashboard.meters.pool.label
+[locale-parity] de: missing workDashboard.meters.pool.tip
+[locale-parity] de: missing workDashboard.meters.pool.leftOf
+[locale-parity] de: missing workDashboard.meters.pool.resets
+[locale-parity] de: missing workDashboard.meters.pool.shared
+[locale-parity] de: missing workDashboard.meters.topup.label
+[locale-parity] de: missing workDashboard.meters.topup.tip
+[locale-parity] de: missing workDashboard.meters.topup.none
+[locale-parity] de: missing workDashboard.meters.topup.never
+[locale-parity] de: missing workDashboard.meters.topup.buy
+[locale-parity] de: missing workDashboard.meters.tasks.label
+[locale-parity] de: missing workDashboard.meters.tasks.tip
+[locale-parity] de: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] de: missing workDashboard.meters.tasks.unlimited
+[locale-parity] de: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] de: missing workDashboard.meters.tasks.usedOf
+[locale-parity] de: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] de: missing workDashboard.meters.tasks.capHit
+[locale-parity] de: missing workDashboard.meters.tasks.resets
+[locale-parity] de: missing workDashboard.meters.state.pool
+[locale-parity] de: missing workDashboard.meters.state.ceiling
+[locale-parity] de: missing workDashboard.meters.state.exhausted
+[locale-parity] de: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] de: missing workDashboard.meters.state.low
+[locale-parity] de: missing workDashboard.meters.state.lowCompany
+[locale-parity] de: missing workDashboard.meters.state.taskCap
+[locale-parity] de: missing workDashboard.meters.state.buy
+[locale-parity] de: missing workDashboard.meters.state.upgrade
+[locale-parity] de: missing workDashboard.month.heading
+[locale-parity] de: missing workDashboard.month.sub
+[locale-parity] de: missing workDashboard.month.legendTime
+[locale-parity] de: missing workDashboard.month.legendTasks
+[locale-parity] de: missing workDashboard.month.today
+[locale-parity] de: missing workDashboard.month.tasks_one
+[locale-parity] de: missing workDashboard.month.tasks_other
+[locale-parity] de: missing workDashboard.month.aria
+[locale-parity] de: missing workDashboard.month.dayAria
+[locale-parity] de: missing workDashboard.month.axisH
+[locale-parity] de: missing workDashboard.month.axisMin
+[locale-parity] de: missing workDashboard.month.empty
+[locale-parity] de: missing workDashboard.month.total
+[locale-parity] de: missing workDashboard.month.busiest
+[locale-parity] de: missing workDashboard.month.table
+[locale-parity] de: missing workDashboard.month.tableHide
+[locale-parity] de: missing workDashboard.month.colDay
+[locale-parity] de: missing workDashboard.month.colTime
+[locale-parity] de: missing workDashboard.month.colTasks
+[locale-parity] de: missing workDashboard.month.tableNote
+[locale-parity] de: missing workDashboard.month.errTitle
+[locale-parity] de: missing workDashboard.month.errBody
+[locale-parity] de: missing workDashboard.month.retry
+[locale-parity] de: missing workDashboard.outcomes.heading
+[locale-parity] de: missing workDashboard.outcomes.sub
+[locale-parity] de: missing workDashboard.outcomes.viewAll
+[locale-parity] de: missing workDashboard.outcomes.finished
+[locale-parity] de: missing workDashboard.outcomes.steps
+[locale-parity] de: missing workDashboard.outcomes.goal
+[locale-parity] de: missing workDashboard.outcomes.stepsTitle
+[locale-parity] de: missing workDashboard.outcomes.moreSteps
+[locale-parity] de: missing workDashboard.outcomes.open
+[locale-parity] de: missing workDashboard.outcomes.download
+[locale-parity] de: missing workDashboard.flow.heading
+[locale-parity] de: missing workDashboard.flow.sub
+[locale-parity] de: missing workDashboard.flow.aria
+[locale-parity] de: missing workDashboard.flow.watch
+[locale-parity] de: missing workDashboard.flow.watchD
+[locale-parity] de: missing workDashboard.flow.next
+[locale-parity] de: missing workDashboard.flow.nextD
+[locale-parity] de: missing workDashboard.flow.correct
+[locale-parity] de: missing workDashboard.flow.correctD
+[locale-parity] de: missing workDashboard.flow.confirm
+[locale-parity] de: missing workDashboard.flow.confirmD
+[locale-parity] de: missing workDashboard.flow.complete
+[locale-parity] de: missing workDashboard.flow.completeD
+[locale-parity] de: missing workDashboard.flow.note
+[locale-parity] de: missing workDashboard.flow.cta
+[locale-parity] de: missing workDashboard.sub.leadMonth
+[locale-parity] de: missing workDashboard.sub.tasks_one
+[locale-parity] de: missing workDashboard.sub.tasks_other
+[locale-parity] de: missing workDashboard.buy.bodyMonth
+[locale-parity] de: missing workDashboard.buy.buy
+[locale-parity] de: extra workDashboard.plan.company (not in en)
+[locale-parity] de: extra workDashboard.plan.covered (not in en)
+[locale-parity] de: extra workDashboard.plan.free (not in en)
+[locale-parity] de: extra workDashboard.metrics.heading (not in en)
+[locale-parity] de: extra workDashboard.metrics.sub (not in en)
+[locale-parity] de: extra workDashboard.metrics.info (not in en)
+[locale-parity] de: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] de: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] de: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] de: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] de: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] de: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] de: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] de: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] de: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] de: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] de: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] de: extra workDashboard.metrics.low (not in en)
+[locale-parity] de: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] de: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] de: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] de: extra workDashboard.sub.lead (not in en)
+[locale-parity] de: extra workDashboard.buy.body (not in en)
+[locale-parity] es: missing workDashboard.plan.companyLeft
+[locale-parity] es: missing workDashboard.plan.coveredMonth
+[locale-parity] es: missing workDashboard.plan.freeLeft
+[locale-parity] es: missing workDashboard.meters.heading
+[locale-parity] es: missing workDashboard.meters.sub
+[locale-parity] es: missing workDashboard.meters.info
+[locale-parity] es: missing workDashboard.meters.on
+[locale-parity] es: missing workDashboard.meters.onSub
+[locale-parity] es: missing workDashboard.meters.tipAdmin
+[locale-parity] es: missing workDashboard.meters.hours.label
+[locale-parity] es: missing workDashboard.meters.hours.left
+[locale-parity] es: missing workDashboard.meters.hours.usedOf
+[locale-parity] es: missing workDashboard.meters.hours.renews
+[locale-parity] es: missing workDashboard.meters.hours.carry
+[locale-parity] es: missing workDashboard.meters.hours.carried
+[locale-parity] es: missing workDashboard.meters.hours.tip
+[locale-parity] es: missing workDashboard.meters.hours.tipCarry
+[locale-parity] es: missing workDashboard.meters.allowance.label
+[locale-parity] es: missing workDashboard.meters.allowance.tip
+[locale-parity] es: missing workDashboard.meters.allowance.usedOf
+[locale-parity] es: missing workDashboard.meters.allowance.resets
+[locale-parity] es: missing workDashboard.meters.pool.label
+[locale-parity] es: missing workDashboard.meters.pool.tip
+[locale-parity] es: missing workDashboard.meters.pool.leftOf
+[locale-parity] es: missing workDashboard.meters.pool.resets
+[locale-parity] es: missing workDashboard.meters.pool.shared
+[locale-parity] es: missing workDashboard.meters.topup.label
+[locale-parity] es: missing workDashboard.meters.topup.tip
+[locale-parity] es: missing workDashboard.meters.topup.none
+[locale-parity] es: missing workDashboard.meters.topup.never
+[locale-parity] es: missing workDashboard.meters.topup.buy
+[locale-parity] es: missing workDashboard.meters.tasks.label
+[locale-parity] es: missing workDashboard.meters.tasks.tip
+[locale-parity] es: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] es: missing workDashboard.meters.tasks.unlimited
+[locale-parity] es: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] es: missing workDashboard.meters.tasks.usedOf
+[locale-parity] es: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] es: missing workDashboard.meters.tasks.capHit
+[locale-parity] es: missing workDashboard.meters.tasks.resets
+[locale-parity] es: missing workDashboard.meters.state.pool
+[locale-parity] es: missing workDashboard.meters.state.ceiling
+[locale-parity] es: missing workDashboard.meters.state.exhausted
+[locale-parity] es: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] es: missing workDashboard.meters.state.low
+[locale-parity] es: missing workDashboard.meters.state.lowCompany
+[locale-parity] es: missing workDashboard.meters.state.taskCap
+[locale-parity] es: missing workDashboard.meters.state.buy
+[locale-parity] es: missing workDashboard.meters.state.upgrade
+[locale-parity] es: missing workDashboard.month.heading
+[locale-parity] es: missing workDashboard.month.sub
+[locale-parity] es: missing workDashboard.month.legendTime
+[locale-parity] es: missing workDashboard.month.legendTasks
+[locale-parity] es: missing workDashboard.month.today
+[locale-parity] es: missing workDashboard.month.tasks_one
+[locale-parity] es: missing workDashboard.month.tasks_other
+[locale-parity] es: missing workDashboard.month.aria
+[locale-parity] es: missing workDashboard.month.dayAria
+[locale-parity] es: missing workDashboard.month.axisH
+[locale-parity] es: missing workDashboard.month.axisMin
+[locale-parity] es: missing workDashboard.month.empty
+[locale-parity] es: missing workDashboard.month.total
+[locale-parity] es: missing workDashboard.month.busiest
+[locale-parity] es: missing workDashboard.month.table
+[locale-parity] es: missing workDashboard.month.tableHide
+[locale-parity] es: missing workDashboard.month.colDay
+[locale-parity] es: missing workDashboard.month.colTime
+[locale-parity] es: missing workDashboard.month.colTasks
+[locale-parity] es: missing workDashboard.month.tableNote
+[locale-parity] es: missing workDashboard.month.errTitle
+[locale-parity] es: missing workDashboard.month.errBody
+[locale-parity] es: missing workDashboard.month.retry
+[locale-parity] es: missing workDashboard.outcomes.heading
+[locale-parity] es: missing workDashboard.outcomes.sub
+[locale-parity] es: missing workDashboard.outcomes.viewAll
+[locale-parity] es: missing workDashboard.outcomes.finished
+[locale-parity] es: missing workDashboard.outcomes.steps
+[locale-parity] es: missing workDashboard.outcomes.goal
+[locale-parity] es: missing workDashboard.outcomes.stepsTitle
+[locale-parity] es: missing workDashboard.outcomes.moreSteps
+[locale-parity] es: missing workDashboard.outcomes.open
+[locale-parity] es: missing workDashboard.outcomes.download
+[locale-parity] es: missing workDashboard.flow.heading
+[locale-parity] es: missing workDashboard.flow.sub
+[locale-parity] es: missing workDashboard.flow.aria
+[locale-parity] es: missing workDashboard.flow.watch
+[locale-parity] es: missing workDashboard.flow.watchD
+[locale-parity] es: missing workDashboard.flow.next
+[locale-parity] es: missing workDashboard.flow.nextD
+[locale-parity] es: missing workDashboard.flow.correct
+[locale-parity] es: missing workDashboard.flow.correctD
+[locale-parity] es: missing workDashboard.flow.confirm
+[locale-parity] es: missing workDashboard.flow.confirmD
+[locale-parity] es: missing workDashboard.flow.complete
+[locale-parity] es: missing workDashboard.flow.completeD
+[locale-parity] es: missing workDashboard.flow.note
+[locale-parity] es: missing workDashboard.flow.cta
+[locale-parity] es: missing workDashboard.sub.leadMonth
+[locale-parity] es: missing workDashboard.sub.tasks_one
+[locale-parity] es: missing workDashboard.sub.tasks_other
+[locale-parity] es: missing workDashboard.buy.bodyMonth
+[locale-parity] es: missing workDashboard.buy.buy
+[locale-parity] es: extra workDashboard.plan.company (not in en)
+[locale-parity] es: extra workDashboard.plan.covered (not in en)
+[locale-parity] es: extra workDashboard.plan.free (not in en)
+[locale-parity] es: extra workDashboard.metrics.heading (not in en)
+[locale-parity] es: extra workDashboard.metrics.sub (not in en)
+[locale-parity] es: extra workDashboard.metrics.info (not in en)
+[locale-parity] es: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] es: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] es: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] es: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] es: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] es: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] es: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] es: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] es: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] es: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] es: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] es: extra workDashboard.metrics.low (not in en)
+[locale-parity] es: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] es: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] es: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] es: extra workDashboard.sub.lead (not in en)
+[locale-parity] es: extra workDashboard.buy.body (not in en)
+[locale-parity] fr: missing workDashboard.plan.companyLeft
+[locale-parity] fr: missing workDashboard.plan.coveredMonth
+[locale-parity] fr: missing workDashboard.plan.freeLeft
+[locale-parity] fr: missing workDashboard.meters.heading
+[locale-parity] fr: missing workDashboard.meters.sub
+[locale-parity] fr: missing workDashboard.meters.info
+[locale-parity] fr: missing workDashboard.meters.on
+[locale-parity] fr: missing workDashboard.meters.onSub
+[locale-parity] fr: missing workDashboard.meters.tipAdmin
+[locale-parity] fr: missing workDashboard.meters.hours.label
+[locale-parity] fr: missing workDashboard.meters.hours.left
+[locale-parity] fr: missing workDashboard.meters.hours.usedOf
+[locale-parity] fr: missing workDashboard.meters.hours.renews
+[locale-parity] fr: missing workDashboard.meters.hours.carry
+[locale-parity] fr: missing workDashboard.meters.hours.carried
+[locale-parity] fr: missing workDashboard.meters.hours.tip
+[locale-parity] fr: missing workDashboard.meters.hours.tipCarry
+[locale-parity] fr: missing workDashboard.meters.allowance.label
+[locale-parity] fr: missing workDashboard.meters.allowance.tip
+[locale-parity] fr: missing workDashboard.meters.allowance.usedOf
+[locale-parity] fr: missing workDashboard.meters.allowance.resets
+[locale-parity] fr: missing workDashboard.meters.pool.label
+[locale-parity] fr: missing workDashboard.meters.pool.tip
+[locale-parity] fr: missing workDashboard.meters.pool.leftOf
+[locale-parity] fr: missing workDashboard.meters.pool.resets
+[locale-parity] fr: missing workDashboard.meters.pool.shared
+[locale-parity] fr: missing workDashboard.meters.topup.label
+[locale-parity] fr: missing workDashboard.meters.topup.tip
+[locale-parity] fr: missing workDashboard.meters.topup.none
+[locale-parity] fr: missing workDashboard.meters.topup.never
+[locale-parity] fr: missing workDashboard.meters.topup.buy
+[locale-parity] fr: missing workDashboard.meters.tasks.label
+[locale-parity] fr: missing workDashboard.meters.tasks.tip
+[locale-parity] fr: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] fr: missing workDashboard.meters.tasks.unlimited
+[locale-parity] fr: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] fr: missing workDashboard.meters.tasks.usedOf
+[locale-parity] fr: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] fr: missing workDashboard.meters.tasks.capHit
+[locale-parity] fr: missing workDashboard.meters.tasks.resets
+[locale-parity] fr: missing workDashboard.meters.state.pool
+[locale-parity] fr: missing workDashboard.meters.state.ceiling
+[locale-parity] fr: missing workDashboard.meters.state.exhausted
+[locale-parity] fr: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] fr: missing workDashboard.meters.state.low
+[locale-parity] fr: missing workDashboard.meters.state.lowCompany
+[locale-parity] fr: missing workDashboard.meters.state.taskCap
+[locale-parity] fr: missing workDashboard.meters.state.buy
+[locale-parity] fr: missing workDashboard.meters.state.upgrade
+[locale-parity] fr: missing workDashboard.month.heading
+[locale-parity] fr: missing workDashboard.month.sub
+[locale-parity] fr: missing workDashboard.month.legendTime
+[locale-parity] fr: missing workDashboard.month.legendTasks
+[locale-parity] fr: missing workDashboard.month.today
+[locale-parity] fr: missing workDashboard.month.tasks_one
+[locale-parity] fr: missing workDashboard.month.tasks_other
+[locale-parity] fr: missing workDashboard.month.aria
+[locale-parity] fr: missing workDashboard.month.dayAria
+[locale-parity] fr: missing workDashboard.month.axisH
+[locale-parity] fr: missing workDashboard.month.axisMin
+[locale-parity] fr: missing workDashboard.month.empty
+[locale-parity] fr: missing workDashboard.month.total
+[locale-parity] fr: missing workDashboard.month.busiest
+[locale-parity] fr: missing workDashboard.month.table
+[locale-parity] fr: missing workDashboard.month.tableHide
+[locale-parity] fr: missing workDashboard.month.colDay
+[locale-parity] fr: missing workDashboard.month.colTime
+[locale-parity] fr: missing workDashboard.month.colTasks
+[locale-parity] fr: missing workDashboard.month.tableNote
+[locale-parity] fr: missing workDashboard.month.errTitle
+[locale-parity] fr: missing workDashboard.month.errBody
+[locale-parity] fr: missing workDashboard.month.retry
+[locale-parity] fr: missing workDashboard.outcomes.heading
+[locale-parity] fr: missing workDashboard.outcomes.sub
+[locale-parity] fr: missing workDashboard.outcomes.viewAll
+[locale-parity] fr: missing workDashboard.outcomes.finished
+[locale-parity] fr: missing workDashboard.outcomes.steps
+[locale-parity] fr: missing workDashboard.outcomes.goal
+[locale-parity] fr: missing workDashboard.outcomes.stepsTitle
+[locale-parity] fr: missing workDashboard.outcomes.moreSteps
+[locale-parity] fr: missing workDashboard.outcomes.open
+[locale-parity] fr: missing workDashboard.outcomes.download
+[locale-parity] fr: missing workDashboard.flow.heading
+[locale-parity] fr: missing workDashboard.flow.sub
+[locale-parity] fr: missing workDashboard.flow.aria
+[locale-parity] fr: missing workDashboard.flow.watch
+[locale-parity] fr: missing workDashboard.flow.watchD
+[locale-parity] fr: missing workDashboard.flow.next
+[locale-parity] fr: missing workDashboard.flow.nextD
+[locale-parity] fr: missing workDashboard.flow.correct
+[locale-parity] fr: missing workDashboard.flow.correctD
+[locale-parity] fr: missing workDashboard.flow.confirm
+[locale-parity] fr: missing workDashboard.flow.confirmD
+[locale-parity] fr: missing workDashboard.flow.complete
+[locale-parity] fr: missing workDashboard.flow.completeD
+[locale-parity] fr: missing workDashboard.flow.note
+[locale-parity] fr: missing workDashboard.flow.cta
+[locale-parity] fr: missing workDashboard.sub.leadMonth
+[locale-parity] fr: missing workDashboard.sub.tasks_one
+[locale-parity] fr: missing workDashboard.sub.tasks_other
+[locale-parity] fr: missing workDashboard.buy.bodyMonth
+[locale-parity] fr: missing workDashboard.buy.buy
+[locale-parity] fr: extra workDashboard.plan.company (not in en)
+[locale-parity] fr: extra workDashboard.plan.covered (not in en)
+[locale-parity] fr: extra workDashboard.plan.free (not in en)
+[locale-parity] fr: extra workDashboard.metrics.heading (not in en)
+[locale-parity] fr: extra workDashboard.metrics.sub (not in en)
+[locale-parity] fr: extra workDashboard.metrics.info (not in en)
+[locale-parity] fr: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] fr: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] fr: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] fr: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] fr: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] fr: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] fr: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] fr: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] fr: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] fr: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] fr: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] fr: extra workDashboard.metrics.low (not in en)
+[locale-parity] fr: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] fr: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] fr: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] fr: extra workDashboard.sub.lead (not in en)
+[locale-parity] fr: extra workDashboard.buy.body (not in en)
+[locale-parity] hi: missing workDashboard.plan.companyLeft
+[locale-parity] hi: missing workDashboard.plan.coveredMonth
+[locale-parity] hi: missing workDashboard.plan.freeLeft
+[locale-parity] hi: missing workDashboard.meters.heading
+[locale-parity] hi: missing workDashboard.meters.sub
+[locale-parity] hi: missing workDashboard.meters.info
+[locale-parity] hi: missing workDashboard.meters.on
+[locale-parity] hi: missing workDashboard.meters.onSub
+[locale-parity] hi: missing workDashboard.meters.tipAdmin
+[locale-parity] hi: missing workDashboard.meters.hours.label
+[locale-parity] hi: missing workDashboard.meters.hours.left
+[locale-parity] hi: missing workDashboard.meters.hours.usedOf
+[locale-parity] hi: missing workDashboard.meters.hours.renews
+[locale-parity] hi: missing workDashboard.meters.hours.carry
+[locale-parity] hi: missing workDashboard.meters.hours.carried
+[locale-parity] hi: missing workDashboard.meters.hours.tip
+[locale-parity] hi: missing workDashboard.meters.hours.tipCarry
+[locale-parity] hi: missing workDashboard.meters.allowance.label
+[locale-parity] hi: missing workDashboard.meters.allowance.tip
+[locale-parity] hi: missing workDashboard.meters.allowance.usedOf
+[locale-parity] hi: missing workDashboard.meters.allowance.resets
+[locale-parity] hi: missing workDashboard.meters.pool.label
+[locale-parity] hi: missing workDashboard.meters.pool.tip
+[locale-parity] hi: missing workDashboard.meters.pool.leftOf
+[locale-parity] hi: missing workDashboard.meters.pool.resets
+[locale-parity] hi: missing workDashboard.meters.pool.shared
+[locale-parity] hi: missing workDashboard.meters.topup.label
+[locale-parity] hi: missing workDashboard.meters.topup.tip
+[locale-parity] hi: missing workDashboard.meters.topup.none
+[locale-parity] hi: missing workDashboard.meters.topup.never
+[locale-parity] hi: missing workDashboard.meters.topup.buy
+[locale-parity] hi: missing workDashboard.meters.tasks.label
+[locale-parity] hi: missing workDashboard.meters.tasks.tip
+[locale-parity] hi: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] hi: missing workDashboard.meters.tasks.unlimited
+[locale-parity] hi: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] hi: missing workDashboard.meters.tasks.usedOf
+[locale-parity] hi: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] hi: missing workDashboard.meters.tasks.capHit
+[locale-parity] hi: missing workDashboard.meters.tasks.resets
+[locale-parity] hi: missing workDashboard.meters.state.pool
+[locale-parity] hi: missing workDashboard.meters.state.ceiling
+[locale-parity] hi: missing workDashboard.meters.state.exhausted
+[locale-parity] hi: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] hi: missing workDashboard.meters.state.low
+[locale-parity] hi: missing workDashboard.meters.state.lowCompany
+[locale-parity] hi: missing workDashboard.meters.state.taskCap
+[locale-parity] hi: missing workDashboard.meters.state.buy
+[locale-parity] hi: missing workDashboard.meters.state.upgrade
+[locale-parity] hi: missing workDashboard.month.heading
+[locale-parity] hi: missing workDashboard.month.sub
+[locale-parity] hi: missing workDashboard.month.legendTime
+[locale-parity] hi: missing workDashboard.month.legendTasks
+[locale-parity] hi: missing workDashboard.month.today
+[locale-parity] hi: missing workDashboard.month.tasks_one
+[locale-parity] hi: missing workDashboard.month.tasks_other
+[locale-parity] hi: missing workDashboard.month.aria
+[locale-parity] hi: missing workDashboard.month.dayAria
+[locale-parity] hi: missing workDashboard.month.axisH
+[locale-parity] hi: missing workDashboard.month.axisMin
+[locale-parity] hi: missing workDashboard.month.empty
+[locale-parity] hi: missing workDashboard.month.total
+[locale-parity] hi: missing workDashboard.month.busiest
+[locale-parity] hi: missing workDashboard.month.table
+[locale-parity] hi: missing workDashboard.month.tableHide
+[locale-parity] hi: missing workDashboard.month.colDay
+[locale-parity] hi: missing workDashboard.month.colTime
+[locale-parity] hi: missing workDashboard.month.colTasks
+[locale-parity] hi: missing workDashboard.month.tableNote
+[locale-parity] hi: missing workDashboard.month.errTitle
+[locale-parity] hi: missing workDashboard.month.errBody
+[locale-parity] hi: missing workDashboard.month.retry
+[locale-parity] hi: missing workDashboard.outcomes.heading
+[locale-parity] hi: missing workDashboard.outcomes.sub
+[locale-parity] hi: missing workDashboard.outcomes.viewAll
+[locale-parity] hi: missing workDashboard.outcomes.finished
+[locale-parity] hi: missing workDashboard.outcomes.steps
+[locale-parity] hi: missing workDashboard.outcomes.goal
+[locale-parity] hi: missing workDashboard.outcomes.stepsTitle
+[locale-parity] hi: missing workDashboard.outcomes.moreSteps
+[locale-parity] hi: missing workDashboard.outcomes.open
+[locale-parity] hi: missing workDashboard.outcomes.download
+[locale-parity] hi: missing workDashboard.flow.heading
+[locale-parity] hi: missing workDashboard.flow.sub
+[locale-parity] hi: missing workDashboard.flow.aria
+[locale-parity] hi: missing workDashboard.flow.watch
+[locale-parity] hi: missing workDashboard.flow.watchD
+[locale-parity] hi: missing workDashboard.flow.next
+[locale-parity] hi: missing workDashboard.flow.nextD
+[locale-parity] hi: missing workDashboard.flow.correct
+[locale-parity] hi: missing workDashboard.flow.correctD
+[locale-parity] hi: missing workDashboard.flow.confirm
+[locale-parity] hi: missing workDashboard.flow.confirmD
+[locale-parity] hi: missing workDashboard.flow.complete
+[locale-parity] hi: missing workDashboard.flow.completeD
+[locale-parity] hi: missing workDashboard.flow.note
+[locale-parity] hi: missing workDashboard.flow.cta
+[locale-parity] hi: missing workDashboard.sub.leadMonth
+[locale-parity] hi: missing workDashboard.sub.tasks_one
+[locale-parity] hi: missing workDashboard.sub.tasks_other
+[locale-parity] hi: missing workDashboard.buy.bodyMonth
+[locale-parity] hi: missing workDashboard.buy.buy
+[locale-parity] hi: extra workDashboard.plan.company (not in en)
+[locale-parity] hi: extra workDashboard.plan.covered (not in en)
+[locale-parity] hi: extra workDashboard.plan.free (not in en)
+[locale-parity] hi: extra workDashboard.metrics.heading (not in en)
+[locale-parity] hi: extra workDashboard.metrics.sub (not in en)
+[locale-parity] hi: extra workDashboard.metrics.info (not in en)
+[locale-parity] hi: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] hi: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] hi: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] hi: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] hi: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] hi: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] hi: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] hi: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] hi: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] hi: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] hi: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] hi: extra workDashboard.metrics.low (not in en)
+[locale-parity] hi: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] hi: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] hi: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] hi: extra workDashboard.sub.lead (not in en)
+[locale-parity] hi: extra workDashboard.buy.body (not in en)
+[locale-parity] id: missing workDashboard.plan.companyLeft
+[locale-parity] id: missing workDashboard.plan.coveredMonth
+[locale-parity] id: missing workDashboard.plan.freeLeft
+[locale-parity] id: missing workDashboard.meters.heading
+[locale-parity] id: missing workDashboard.meters.sub
+[locale-parity] id: missing workDashboard.meters.info
+[locale-parity] id: missing workDashboard.meters.on
+[locale-parity] id: missing workDashboard.meters.onSub
+[locale-parity] id: missing workDashboard.meters.tipAdmin
+[locale-parity] id: missing workDashboard.meters.hours.label
+[locale-parity] id: missing workDashboard.meters.hours.left
+[locale-parity] id: missing workDashboard.meters.hours.usedOf
+[locale-parity] id: missing workDashboard.meters.hours.renews
+[locale-parity] id: missing workDashboard.meters.hours.carry
+[locale-parity] id: missing workDashboard.meters.hours.carried
+[locale-parity] id: missing workDashboard.meters.hours.tip
+[locale-parity] id: missing workDashboard.meters.hours.tipCarry
+[locale-parity] id: missing workDashboard.meters.allowance.label
+[locale-parity] id: missing workDashboard.meters.allowance.tip
+[locale-parity] id: missing workDashboard.meters.allowance.usedOf
+[locale-parity] id: missing workDashboard.meters.allowance.resets
+[locale-parity] id: missing workDashboard.meters.pool.label
+[locale-parity] id: missing workDashboard.meters.pool.tip
+[locale-parity] id: missing workDashboard.meters.pool.leftOf
+[locale-parity] id: missing workDashboard.meters.pool.resets
+[locale-parity] id: missing workDashboard.meters.pool.shared
+[locale-parity] id: missing workDashboard.meters.topup.label
+[locale-parity] id: missing workDashboard.meters.topup.tip
+[locale-parity] id: missing workDashboard.meters.topup.none
+[locale-parity] id: missing workDashboard.meters.topup.never
+[locale-parity] id: missing workDashboard.meters.topup.buy
+[locale-parity] id: missing workDashboard.meters.tasks.label
+[locale-parity] id: missing workDashboard.meters.tasks.tip
+[locale-parity] id: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] id: missing workDashboard.meters.tasks.unlimited
+[locale-parity] id: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] id: missing workDashboard.meters.tasks.usedOf
+[locale-parity] id: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] id: missing workDashboard.meters.tasks.capHit
+[locale-parity] id: missing workDashboard.meters.tasks.resets
+[locale-parity] id: missing workDashboard.meters.state.pool
+[locale-parity] id: missing workDashboard.meters.state.ceiling
+[locale-parity] id: missing workDashboard.meters.state.exhausted
+[locale-parity] id: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] id: missing workDashboard.meters.state.low
+[locale-parity] id: missing workDashboard.meters.state.lowCompany
+[locale-parity] id: missing workDashboard.meters.state.taskCap
+[locale-parity] id: missing workDashboard.meters.state.buy
+[locale-parity] id: missing workDashboard.meters.state.upgrade
+[locale-parity] id: missing workDashboard.month.heading
+[locale-parity] id: missing workDashboard.month.sub
+[locale-parity] id: missing workDashboard.month.legendTime
+[locale-parity] id: missing workDashboard.month.legendTasks
+[locale-parity] id: missing workDashboard.month.today
+[locale-parity] id: missing workDashboard.month.tasks_one
+[locale-parity] id: missing workDashboard.month.tasks_other
+[locale-parity] id: missing workDashboard.month.aria
+[locale-parity] id: missing workDashboard.month.dayAria
+[locale-parity] id: missing workDashboard.month.axisH
+[locale-parity] id: missing workDashboard.month.axisMin
+[locale-parity] id: missing workDashboard.month.empty
+[locale-parity] id: missing workDashboard.month.total
+[locale-parity] id: missing workDashboard.month.busiest
+[locale-parity] id: missing workDashboard.month.table
+[locale-parity] id: missing workDashboard.month.tableHide
+[locale-parity] id: missing workDashboard.month.colDay
+[locale-parity] id: missing workDashboard.month.colTime
+[locale-parity] id: missing workDashboard.month.colTasks
+[locale-parity] id: missing workDashboard.month.tableNote
+[locale-parity] id: missing workDashboard.month.errTitle
+[locale-parity] id: missing workDashboard.month.errBody
+[locale-parity] id: missing workDashboard.month.retry
+[locale-parity] id: missing workDashboard.outcomes.heading
+[locale-parity] id: missing workDashboard.outcomes.sub
+[locale-parity] id: missing workDashboard.outcomes.viewAll
+[locale-parity] id: missing workDashboard.outcomes.finished
+[locale-parity] id: missing workDashboard.outcomes.steps
+[locale-parity] id: missing workDashboard.outcomes.goal
+[locale-parity] id: missing workDashboard.outcomes.stepsTitle
+[locale-parity] id: missing workDashboard.outcomes.moreSteps
+[locale-parity] id: missing workDashboard.outcomes.open
+[locale-parity] id: missing workDashboard.outcomes.download
+[locale-parity] id: missing workDashboard.flow.heading
+[locale-parity] id: missing workDashboard.flow.sub
+[locale-parity] id: missing workDashboard.flow.aria
+[locale-parity] id: missing workDashboard.flow.watch
+[locale-parity] id: missing workDashboard.flow.watchD
+[locale-parity] id: missing workDashboard.flow.next
+[locale-parity] id: missing workDashboard.flow.nextD
+[locale-parity] id: missing workDashboard.flow.correct
+[locale-parity] id: missing workDashboard.flow.correctD
+[locale-parity] id: missing workDashboard.flow.confirm
+[locale-parity] id: missing workDashboard.flow.confirmD
+[locale-parity] id: missing workDashboard.flow.complete
+[locale-parity] id: missing workDashboard.flow.completeD
+[locale-parity] id: missing workDashboard.flow.note
+[locale-parity] id: missing workDashboard.flow.cta
+[locale-parity] id: missing workDashboard.sub.leadMonth
+[locale-parity] id: missing workDashboard.sub.tasks_one
+[locale-parity] id: missing workDashboard.sub.tasks_other
+[locale-parity] id: missing workDashboard.buy.bodyMonth
+[locale-parity] id: missing workDashboard.buy.buy
+[locale-parity] id: extra workDashboard.plan.company (not in en)
+[locale-parity] id: extra workDashboard.plan.covered (not in en)
+[locale-parity] id: extra workDashboard.plan.free (not in en)
+[locale-parity] id: extra workDashboard.metrics.heading (not in en)
+[locale-parity] id: extra workDashboard.metrics.sub (not in en)
+[locale-parity] id: extra workDashboard.metrics.info (not in en)
+[locale-parity] id: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] id: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] id: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] id: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] id: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] id: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] id: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] id: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] id: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] id: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] id: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] id: extra workDashboard.metrics.low (not in en)
+[locale-parity] id: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] id: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] id: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] id: extra workDashboard.sub.lead (not in en)
+[locale-parity] id: extra workDashboard.buy.body (not in en)
+[locale-parity] it: missing workDashboard.plan.companyLeft
+[locale-parity] it: missing workDashboard.plan.coveredMonth
+[locale-parity] it: missing workDashboard.plan.freeLeft
+[locale-parity] it: missing workDashboard.meters.heading
+[locale-parity] it: missing workDashboard.meters.sub
+[locale-parity] it: missing workDashboard.meters.info
+[locale-parity] it: missing workDashboard.meters.on
+[locale-parity] it: missing workDashboard.meters.onSub
+[locale-parity] it: missing workDashboard.meters.tipAdmin
+[locale-parity] it: missing workDashboard.meters.hours.label
+[locale-parity] it: missing workDashboard.meters.hours.left
+[locale-parity] it: missing workDashboard.meters.hours.usedOf
+[locale-parity] it: missing workDashboard.meters.hours.renews
+[locale-parity] it: missing workDashboard.meters.hours.carry
+[locale-parity] it: missing workDashboard.meters.hours.carried
+[locale-parity] it: missing workDashboard.meters.hours.tip
+[locale-parity] it: missing workDashboard.meters.hours.tipCarry
+[locale-parity] it: missing workDashboard.meters.allowance.label
+[locale-parity] it: missing workDashboard.meters.allowance.tip
+[locale-parity] it: missing workDashboard.meters.allowance.usedOf
+[locale-parity] it: missing workDashboard.meters.allowance.resets
+[locale-parity] it: missing workDashboard.meters.pool.label
+[locale-parity] it: missing workDashboard.meters.pool.tip
+[locale-parity] it: missing workDashboard.meters.pool.leftOf
+[locale-parity] it: missing workDashboard.meters.pool.resets
+[locale-parity] it: missing workDashboard.meters.pool.shared
+[locale-parity] it: missing workDashboard.meters.topup.label
+[locale-parity] it: missing workDashboard.meters.topup.tip
+[locale-parity] it: missing workDashboard.meters.topup.none
+[locale-parity] it: missing workDashboard.meters.topup.never
+[locale-parity] it: missing workDashboard.meters.topup.buy
+[locale-parity] it: missing workDashboard.meters.tasks.label
+[locale-parity] it: missing workDashboard.meters.tasks.tip
+[locale-parity] it: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] it: missing workDashboard.meters.tasks.unlimited
+[locale-parity] it: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] it: missing workDashboard.meters.tasks.usedOf
+[locale-parity] it: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] it: missing workDashboard.meters.tasks.capHit
+[locale-parity] it: missing workDashboard.meters.tasks.resets
+[locale-parity] it: missing workDashboard.meters.state.pool
+[locale-parity] it: missing workDashboard.meters.state.ceiling
+[locale-parity] it: missing workDashboard.meters.state.exhausted
+[locale-parity] it: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] it: missing workDashboard.meters.state.low
+[locale-parity] it: missing workDashboard.meters.state.lowCompany
+[locale-parity] it: missing workDashboard.meters.state.taskCap
+[locale-parity] it: missing workDashboard.meters.state.buy
+[locale-parity] it: missing workDashboard.meters.state.upgrade
+[locale-parity] it: missing workDashboard.month.heading
+[locale-parity] it: missing workDashboard.month.sub
+[locale-parity] it: missing workDashboard.month.legendTime
+[locale-parity] it: missing workDashboard.month.legendTasks
+[locale-parity] it: missing workDashboard.month.today
+[locale-parity] it: missing workDashboard.month.tasks_one
+[locale-parity] it: missing workDashboard.month.tasks_other
+[locale-parity] it: missing workDashboard.month.aria
+[locale-parity] it: missing workDashboard.month.dayAria
+[locale-parity] it: missing workDashboard.month.axisH
+[locale-parity] it: missing workDashboard.month.axisMin
+[locale-parity] it: missing workDashboard.month.empty
+[locale-parity] it: missing workDashboard.month.total
+[locale-parity] it: missing workDashboard.month.busiest
+[locale-parity] it: missing workDashboard.month.table
+[locale-parity] it: missing workDashboard.month.tableHide
+[locale-parity] it: missing workDashboard.month.colDay
+[locale-parity] it: missing workDashboard.month.colTime
+[locale-parity] it: missing workDashboard.month.colTasks
+[locale-parity] it: missing workDashboard.month.tableNote
+[locale-parity] it: missing workDashboard.month.errTitle
+[locale-parity] it: missing workDashboard.month.errBody
+[locale-parity] it: missing workDashboard.month.retry
+[locale-parity] it: missing workDashboard.outcomes.heading
+[locale-parity] it: missing workDashboard.outcomes.sub
+[locale-parity] it: missing workDashboard.outcomes.viewAll
+[locale-parity] it: missing workDashboard.outcomes.finished
+[locale-parity] it: missing workDashboard.outcomes.steps
+[locale-parity] it: missing workDashboard.outcomes.goal
+[locale-parity] it: missing workDashboard.outcomes.stepsTitle
+[locale-parity] it: missing workDashboard.outcomes.moreSteps
+[locale-parity] it: missing workDashboard.outcomes.open
+[locale-parity] it: missing workDashboard.outcomes.download
+[locale-parity] it: missing workDashboard.flow.heading
+[locale-parity] it: missing workDashboard.flow.sub
+[locale-parity] it: missing workDashboard.flow.aria
+[locale-parity] it: missing workDashboard.flow.watch
+[locale-parity] it: missing workDashboard.flow.watchD
+[locale-parity] it: missing workDashboard.flow.next
+[locale-parity] it: missing workDashboard.flow.nextD
+[locale-parity] it: missing workDashboard.flow.correct
+[locale-parity] it: missing workDashboard.flow.correctD
+[locale-parity] it: missing workDashboard.flow.confirm
+[locale-parity] it: missing workDashboard.flow.confirmD
+[locale-parity] it: missing workDashboard.flow.complete
+[locale-parity] it: missing workDashboard.flow.completeD
+[locale-parity] it: missing workDashboard.flow.note
+[locale-parity] it: missing workDashboard.flow.cta
+[locale-parity] it: missing workDashboard.sub.leadMonth
+[locale-parity] it: missing workDashboard.sub.tasks_one
+[locale-parity] it: missing workDashboard.sub.tasks_other
+[locale-parity] it: missing workDashboard.buy.bodyMonth
+[locale-parity] it: missing workDashboard.buy.buy
+[locale-parity] it: extra workDashboard.plan.company (not in en)
+[locale-parity] it: extra workDashboard.plan.covered (not in en)
+[locale-parity] it: extra workDashboard.plan.free (not in en)
+[locale-parity] it: extra workDashboard.metrics.heading (not in en)
+[locale-parity] it: extra workDashboard.metrics.sub (not in en)
+[locale-parity] it: extra workDashboard.metrics.info (not in en)
+[locale-parity] it: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] it: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] it: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] it: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] it: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] it: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] it: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] it: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] it: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] it: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] it: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] it: extra workDashboard.metrics.low (not in en)
+[locale-parity] it: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] it: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] it: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] it: extra workDashboard.sub.lead (not in en)
+[locale-parity] it: extra workDashboard.buy.body (not in en)
+[locale-parity] ja: missing workDashboard.plan.companyLeft
+[locale-parity] ja: missing workDashboard.plan.coveredMonth
+[locale-parity] ja: missing workDashboard.plan.freeLeft
+[locale-parity] ja: missing workDashboard.meters.heading
+[locale-parity] ja: missing workDashboard.meters.sub
+[locale-parity] ja: missing workDashboard.meters.info
+[locale-parity] ja: missing workDashboard.meters.on
+[locale-parity] ja: missing workDashboard.meters.onSub
+[locale-parity] ja: missing workDashboard.meters.tipAdmin
+[locale-parity] ja: missing workDashboard.meters.hours.label
+[locale-parity] ja: missing workDashboard.meters.hours.left
+[locale-parity] ja: missing workDashboard.meters.hours.usedOf
+[locale-parity] ja: missing workDashboard.meters.hours.renews
+[locale-parity] ja: missing workDashboard.meters.hours.carry
+[locale-parity] ja: missing workDashboard.meters.hours.carried
+[locale-parity] ja: missing workDashboard.meters.hours.tip
+[locale-parity] ja: missing workDashboard.meters.hours.tipCarry
+[locale-parity] ja: missing workDashboard.meters.allowance.label
+[locale-parity] ja: missing workDashboard.meters.allowance.tip
+[locale-parity] ja: missing workDashboard.meters.allowance.usedOf
+[locale-parity] ja: missing workDashboard.meters.allowance.resets
+[locale-parity] ja: missing workDashboard.meters.pool.label
+[locale-parity] ja: missing workDashboard.meters.pool.tip
+[locale-parity] ja: missing workDashboard.meters.pool.leftOf
+[locale-parity] ja: missing workDashboard.meters.pool.resets
+[locale-parity] ja: missing workDashboard.meters.pool.shared
+[locale-parity] ja: missing workDashboard.meters.topup.label
+[locale-parity] ja: missing workDashboard.meters.topup.tip
+[locale-parity] ja: missing workDashboard.meters.topup.none
+[locale-parity] ja: missing workDashboard.meters.topup.never
+[locale-parity] ja: missing workDashboard.meters.topup.buy
+[locale-parity] ja: missing workDashboard.meters.tasks.label
+[locale-parity] ja: missing workDashboard.meters.tasks.tip
+[locale-parity] ja: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] ja: missing workDashboard.meters.tasks.unlimited
+[locale-parity] ja: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] ja: missing workDashboard.meters.tasks.usedOf
+[locale-parity] ja: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] ja: missing workDashboard.meters.tasks.capHit
+[locale-parity] ja: missing workDashboard.meters.tasks.resets
+[locale-parity] ja: missing workDashboard.meters.state.pool
+[locale-parity] ja: missing workDashboard.meters.state.ceiling
+[locale-parity] ja: missing workDashboard.meters.state.exhausted
+[locale-parity] ja: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] ja: missing workDashboard.meters.state.low
+[locale-parity] ja: missing workDashboard.meters.state.lowCompany
+[locale-parity] ja: missing workDashboard.meters.state.taskCap
+[locale-parity] ja: missing workDashboard.meters.state.buy
+[locale-parity] ja: missing workDashboard.meters.state.upgrade
+[locale-parity] ja: missing workDashboard.month.heading
+[locale-parity] ja: missing workDashboard.month.sub
+[locale-parity] ja: missing workDashboard.month.legendTime
+[locale-parity] ja: missing workDashboard.month.legendTasks
+[locale-parity] ja: missing workDashboard.month.today
+[locale-parity] ja: missing workDashboard.month.tasks_one
+[locale-parity] ja: missing workDashboard.month.tasks_other
+[locale-parity] ja: missing workDashboard.month.aria
+[locale-parity] ja: missing workDashboard.month.dayAria
+[locale-parity] ja: missing workDashboard.month.axisH
+[locale-parity] ja: missing workDashboard.month.axisMin
+[locale-parity] ja: missing workDashboard.month.empty
+[locale-parity] ja: missing workDashboard.month.total
+[locale-parity] ja: missing workDashboard.month.busiest
+[locale-parity] ja: missing workDashboard.month.table
+[locale-parity] ja: missing workDashboard.month.tableHide
+[locale-parity] ja: missing workDashboard.month.colDay
+[locale-parity] ja: missing workDashboard.month.colTime
+[locale-parity] ja: missing workDashboard.month.colTasks
+[locale-parity] ja: missing workDashboard.month.tableNote
+[locale-parity] ja: missing workDashboard.month.errTitle
+[locale-parity] ja: missing workDashboard.month.errBody
+[locale-parity] ja: missing workDashboard.month.retry
+[locale-parity] ja: missing workDashboard.outcomes.heading
+[locale-parity] ja: missing workDashboard.outcomes.sub
+[locale-parity] ja: missing workDashboard.outcomes.viewAll
+[locale-parity] ja: missing workDashboard.outcomes.finished
+[locale-parity] ja: missing workDashboard.outcomes.steps
+[locale-parity] ja: missing workDashboard.outcomes.goal
+[locale-parity] ja: missing workDashboard.outcomes.stepsTitle
+[locale-parity] ja: missing workDashboard.outcomes.moreSteps
+[locale-parity] ja: missing workDashboard.outcomes.open
+[locale-parity] ja: missing workDashboard.outcomes.download
+[locale-parity] ja: missing workDashboard.flow.heading
+[locale-parity] ja: missing workDashboard.flow.sub
+[locale-parity] ja: missing workDashboard.flow.aria
+[locale-parity] ja: missing workDashboard.flow.watch
+[locale-parity] ja: missing workDashboard.flow.watchD
+[locale-parity] ja: missing workDashboard.flow.next
+[locale-parity] ja: missing workDashboard.flow.nextD
+[locale-parity] ja: missing workDashboard.flow.correct
+[locale-parity] ja: missing workDashboard.flow.correctD
+[locale-parity] ja: missing workDashboard.flow.confirm
+[locale-parity] ja: missing workDashboard.flow.confirmD
+[locale-parity] ja: missing workDashboard.flow.complete
+[locale-parity] ja: missing workDashboard.flow.completeD
+[locale-parity] ja: missing workDashboard.flow.note
+[locale-parity] ja: missing workDashboard.flow.cta
+[locale-parity] ja: missing workDashboard.sub.leadMonth
+[locale-parity] ja: missing workDashboard.sub.tasks_one
+[locale-parity] ja: missing workDashboard.sub.tasks_other
+[locale-parity] ja: missing workDashboard.buy.bodyMonth
+[locale-parity] ja: missing workDashboard.buy.buy
+[locale-parity] ja: extra workDashboard.plan.company (not in en)
+[locale-parity] ja: extra workDashboard.plan.covered (not in en)
+[locale-parity] ja: extra workDashboard.plan.free (not in en)
+[locale-parity] ja: extra workDashboard.metrics.heading (not in en)
+[locale-parity] ja: extra workDashboard.metrics.sub (not in en)
+[locale-parity] ja: extra workDashboard.metrics.info (not in en)
+[locale-parity] ja: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] ja: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] ja: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] ja: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] ja: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] ja: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] ja: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] ja: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] ja: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] ja: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] ja: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] ja: extra workDashboard.metrics.low (not in en)
+[locale-parity] ja: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] ja: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] ja: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] ja: extra workDashboard.sub.lead (not in en)
+[locale-parity] ja: extra workDashboard.buy.body (not in en)
+[locale-parity] ko: missing workDashboard.plan.companyLeft
+[locale-parity] ko: missing workDashboard.plan.coveredMonth
+[locale-parity] ko: missing workDashboard.plan.freeLeft
+[locale-parity] ko: missing workDashboard.meters.heading
+[locale-parity] ko: missing workDashboard.meters.sub
+[locale-parity] ko: missing workDashboard.meters.info
+[locale-parity] ko: missing workDashboard.meters.on
+[locale-parity] ko: missing workDashboard.meters.onSub
+[locale-parity] ko: missing workDashboard.meters.tipAdmin
+[locale-parity] ko: missing workDashboard.meters.hours.label
+[locale-parity] ko: missing workDashboard.meters.hours.left
+[locale-parity] ko: missing workDashboard.meters.hours.usedOf
+[locale-parity] ko: missing workDashboard.meters.hours.renews
+[locale-parity] ko: missing workDashboard.meters.hours.carry
+[locale-parity] ko: missing workDashboard.meters.hours.carried
+[locale-parity] ko: missing workDashboard.meters.hours.tip
+[locale-parity] ko: missing workDashboard.meters.hours.tipCarry
+[locale-parity] ko: missing workDashboard.meters.allowance.label
+[locale-parity] ko: missing workDashboard.meters.allowance.tip
+[locale-parity] ko: missing workDashboard.meters.allowance.usedOf
+[locale-parity] ko: missing workDashboard.meters.allowance.resets
+[locale-parity] ko: missing workDashboard.meters.pool.label
+[locale-parity] ko: missing workDashboard.meters.pool.tip
+[locale-parity] ko: missing workDashboard.meters.pool.leftOf
+[locale-parity] ko: missing workDashboard.meters.pool.resets
+[locale-parity] ko: missing workDashboard.meters.pool.shared
+[locale-parity] ko: missing workDashboard.meters.topup.label
+[locale-parity] ko: missing workDashboard.meters.topup.tip
+[locale-parity] ko: missing workDashboard.meters.topup.none
+[locale-parity] ko: missing workDashboard.meters.topup.never
+[locale-parity] ko: missing workDashboard.meters.topup.buy
+[locale-parity] ko: missing workDashboard.meters.tasks.label
+[locale-parity] ko: missing workDashboard.meters.tasks.tip
+[locale-parity] ko: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] ko: missing workDashboard.meters.tasks.unlimited
+[locale-parity] ko: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] ko: missing workDashboard.meters.tasks.usedOf
+[locale-parity] ko: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] ko: missing workDashboard.meters.tasks.capHit
+[locale-parity] ko: missing workDashboard.meters.tasks.resets
+[locale-parity] ko: missing workDashboard.meters.state.pool
+[locale-parity] ko: missing workDashboard.meters.state.ceiling
+[locale-parity] ko: missing workDashboard.meters.state.exhausted
+[locale-parity] ko: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] ko: missing workDashboard.meters.state.low
+[locale-parity] ko: missing workDashboard.meters.state.lowCompany
+[locale-parity] ko: missing workDashboard.meters.state.taskCap
+[locale-parity] ko: missing workDashboard.meters.state.buy
+[locale-parity] ko: missing workDashboard.meters.state.upgrade
+[locale-parity] ko: missing workDashboard.month.heading
+[locale-parity] ko: missing workDashboard.month.sub
+[locale-parity] ko: missing workDashboard.month.legendTime
+[locale-parity] ko: missing workDashboard.month.legendTasks
+[locale-parity] ko: missing workDashboard.month.today
+[locale-parity] ko: missing workDashboard.month.tasks_one
+[locale-parity] ko: missing workDashboard.month.tasks_other
+[locale-parity] ko: missing workDashboard.month.aria
+[locale-parity] ko: missing workDashboard.month.dayAria
+[locale-parity] ko: missing workDashboard.month.axisH
+[locale-parity] ko: missing workDashboard.month.axisMin
+[locale-parity] ko: missing workDashboard.month.empty
+[locale-parity] ko: missing workDashboard.month.total
+[locale-parity] ko: missing workDashboard.month.busiest
+[locale-parity] ko: missing workDashboard.month.table
+[locale-parity] ko: missing workDashboard.month.tableHide
+[locale-parity] ko: missing workDashboard.month.colDay
+[locale-parity] ko: missing workDashboard.month.colTime
+[locale-parity] ko: missing workDashboard.month.colTasks
+[locale-parity] ko: missing workDashboard.month.tableNote
+[locale-parity] ko: missing workDashboard.month.errTitle
+[locale-parity] ko: missing workDashboard.month.errBody
+[locale-parity] ko: missing workDashboard.month.retry
+[locale-parity] ko: missing workDashboard.outcomes.heading
+[locale-parity] ko: missing workDashboard.outcomes.sub
+[locale-parity] ko: missing workDashboard.outcomes.viewAll
+[locale-parity] ko: missing workDashboard.outcomes.finished
+[locale-parity] ko: missing workDashboard.outcomes.steps
+[locale-parity] ko: missing workDashboard.outcomes.goal
+[locale-parity] ko: missing workDashboard.outcomes.stepsTitle
+[locale-parity] ko: missing workDashboard.outcomes.moreSteps
+[locale-parity] ko: missing workDashboard.outcomes.open
+[locale-parity] ko: missing workDashboard.outcomes.download
+[locale-parity] ko: missing workDashboard.flow.heading
+[locale-parity] ko: missing workDashboard.flow.sub
+[locale-parity] ko: missing workDashboard.flow.aria
+[locale-parity] ko: missing workDashboard.flow.watch
+[locale-parity] ko: missing workDashboard.flow.watchD
+[locale-parity] ko: missing workDashboard.flow.next
+[locale-parity] ko: missing workDashboard.flow.nextD
+[locale-parity] ko: missing workDashboard.flow.correct
+[locale-parity] ko: missing workDashboard.flow.correctD
+[locale-parity] ko: missing workDashboard.flow.confirm
+[locale-parity] ko: missing workDashboard.flow.confirmD
+[locale-parity] ko: missing workDashboard.flow.complete
+[locale-parity] ko: missing workDashboard.flow.completeD
+[locale-parity] ko: missing workDashboard.flow.note
+[locale-parity] ko: missing workDashboard.flow.cta
+[locale-parity] ko: missing workDashboard.sub.leadMonth
+[locale-parity] ko: missing workDashboard.sub.tasks_one
+[locale-parity] ko: missing workDashboard.sub.tasks_other
+[locale-parity] ko: missing workDashboard.buy.bodyMonth
+[locale-parity] ko: missing workDashboard.buy.buy
+[locale-parity] ko: extra workDashboard.plan.company (not in en)
+[locale-parity] ko: extra workDashboard.plan.covered (not in en)
+[locale-parity] ko: extra workDashboard.plan.free (not in en)
+[locale-parity] ko: extra workDashboard.metrics.heading (not in en)
+[locale-parity] ko: extra workDashboard.metrics.sub (not in en)
+[locale-parity] ko: extra workDashboard.metrics.info (not in en)
+[locale-parity] ko: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] ko: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] ko: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] ko: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] ko: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] ko: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] ko: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] ko: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] ko: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] ko: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] ko: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] ko: extra workDashboard.metrics.low (not in en)
+[locale-parity] ko: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] ko: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] ko: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] ko: extra workDashboard.sub.lead (not in en)
+[locale-parity] ko: extra workDashboard.buy.body (not in en)
+[locale-parity] pt-BR: missing workDashboard.plan.companyLeft
+[locale-parity] pt-BR: missing workDashboard.plan.coveredMonth
+[locale-parity] pt-BR: missing workDashboard.plan.freeLeft
+[locale-parity] pt-BR: missing workDashboard.meters.heading
+[locale-parity] pt-BR: missing workDashboard.meters.sub
+[locale-parity] pt-BR: missing workDashboard.meters.info
+[locale-parity] pt-BR: missing workDashboard.meters.on
+[locale-parity] pt-BR: missing workDashboard.meters.onSub
+[locale-parity] pt-BR: missing workDashboard.meters.tipAdmin
+[locale-parity] pt-BR: missing workDashboard.meters.hours.label
+[locale-parity] pt-BR: missing workDashboard.meters.hours.left
+[locale-parity] pt-BR: missing workDashboard.meters.hours.usedOf
+[locale-parity] pt-BR: missing workDashboard.meters.hours.renews
+[locale-parity] pt-BR: missing workDashboard.meters.hours.carry
+[locale-parity] pt-BR: missing workDashboard.meters.hours.carried
+[locale-parity] pt-BR: missing workDashboard.meters.hours.tip
+[locale-parity] pt-BR: missing workDashboard.meters.hours.tipCarry
+[locale-parity] pt-BR: missing workDashboard.meters.allowance.label
+[locale-parity] pt-BR: missing workDashboard.meters.allowance.tip
+[locale-parity] pt-BR: missing workDashboard.meters.allowance.usedOf
+[locale-parity] pt-BR: missing workDashboard.meters.allowance.resets
+[locale-parity] pt-BR: missing workDashboard.meters.pool.label
+[locale-parity] pt-BR: missing workDashboard.meters.pool.tip
+[locale-parity] pt-BR: missing workDashboard.meters.pool.leftOf
+[locale-parity] pt-BR: missing workDashboard.meters.pool.resets
+[locale-parity] pt-BR: missing workDashboard.meters.pool.shared
+[locale-parity] pt-BR: missing workDashboard.meters.topup.label
+[locale-parity] pt-BR: missing workDashboard.meters.topup.tip
+[locale-parity] pt-BR: missing workDashboard.meters.topup.none
+[locale-parity] pt-BR: missing workDashboard.meters.topup.never
+[locale-parity] pt-BR: missing workDashboard.meters.topup.buy
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.label
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.tip
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.unlimited
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.usedOf
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.capHit
+[locale-parity] pt-BR: missing workDashboard.meters.tasks.resets
+[locale-parity] pt-BR: missing workDashboard.meters.state.pool
+[locale-parity] pt-BR: missing workDashboard.meters.state.ceiling
+[locale-parity] pt-BR: missing workDashboard.meters.state.exhausted
+[locale-parity] pt-BR: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] pt-BR: missing workDashboard.meters.state.low
+[locale-parity] pt-BR: missing workDashboard.meters.state.lowCompany
+[locale-parity] pt-BR: missing workDashboard.meters.state.taskCap
+[locale-parity] pt-BR: missing workDashboard.meters.state.buy
+[locale-parity] pt-BR: missing workDashboard.meters.state.upgrade
+[locale-parity] pt-BR: missing workDashboard.month.heading
+[locale-parity] pt-BR: missing workDashboard.month.sub
+[locale-parity] pt-BR: missing workDashboard.month.legendTime
+[locale-parity] pt-BR: missing workDashboard.month.legendTasks
+[locale-parity] pt-BR: missing workDashboard.month.today
+[locale-parity] pt-BR: missing workDashboard.month.tasks_one
+[locale-parity] pt-BR: missing workDashboard.month.tasks_other
+[locale-parity] pt-BR: missing workDashboard.month.aria
+[locale-parity] pt-BR: missing workDashboard.month.dayAria
+[locale-parity] pt-BR: missing workDashboard.month.axisH
+[locale-parity] pt-BR: missing workDashboard.month.axisMin
+[locale-parity] pt-BR: missing workDashboard.month.empty
+[locale-parity] pt-BR: missing workDashboard.month.total
+[locale-parity] pt-BR: missing workDashboard.month.busiest
+[locale-parity] pt-BR: missing workDashboard.month.table
+[locale-parity] pt-BR: missing workDashboard.month.tableHide
+[locale-parity] pt-BR: missing workDashboard.month.colDay
+[locale-parity] pt-BR: missing workDashboard.month.colTime
+[locale-parity] pt-BR: missing workDashboard.month.colTasks
+[locale-parity] pt-BR: missing workDashboard.month.tableNote
+[locale-parity] pt-BR: missing workDashboard.month.errTitle
+[locale-parity] pt-BR: missing workDashboard.month.errBody
+[locale-parity] pt-BR: missing workDashboard.month.retry
+[locale-parity] pt-BR: missing workDashboard.outcomes.heading
+[locale-parity] pt-BR: missing workDashboard.outcomes.sub
+[locale-parity] pt-BR: missing workDashboard.outcomes.viewAll
+[locale-parity] pt-BR: missing workDashboard.outcomes.finished
+[locale-parity] pt-BR: missing workDashboard.outcomes.steps
+[locale-parity] pt-BR: missing workDashboard.outcomes.goal
+[locale-parity] pt-BR: missing workDashboard.outcomes.stepsTitle
+[locale-parity] pt-BR: missing workDashboard.outcomes.moreSteps
+[locale-parity] pt-BR: missing workDashboard.outcomes.open
+[locale-parity] pt-BR: missing workDashboard.outcomes.download
+[locale-parity] pt-BR: missing workDashboard.flow.heading
+[locale-parity] pt-BR: missing workDashboard.flow.sub
+[locale-parity] pt-BR: missing workDashboard.flow.aria
+[locale-parity] pt-BR: missing workDashboard.flow.watch
+[locale-parity] pt-BR: missing workDashboard.flow.watchD
+[locale-parity] pt-BR: missing workDashboard.flow.next
+[locale-parity] pt-BR: missing workDashboard.flow.nextD
+[locale-parity] pt-BR: missing workDashboard.flow.correct
+[locale-parity] pt-BR: missing workDashboard.flow.correctD
+[locale-parity] pt-BR: missing workDashboard.flow.confirm
+[locale-parity] pt-BR: missing workDashboard.flow.confirmD
+[locale-parity] pt-BR: missing workDashboard.flow.complete
+[locale-parity] pt-BR: missing workDashboard.flow.completeD
+[locale-parity] pt-BR: missing workDashboard.flow.note
+[locale-parity] pt-BR: missing workDashboard.flow.cta
+[locale-parity] pt-BR: missing workDashboard.sub.leadMonth
+[locale-parity] pt-BR: missing workDashboard.sub.tasks_one
+[locale-parity] pt-BR: missing workDashboard.sub.tasks_other
+[locale-parity] pt-BR: missing workDashboard.buy.bodyMonth
+[locale-parity] pt-BR: missing workDashboard.buy.buy
+[locale-parity] pt-BR: extra workDashboard.plan.company (not in en)
+[locale-parity] pt-BR: extra workDashboard.plan.covered (not in en)
+[locale-parity] pt-BR: extra workDashboard.plan.free (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.heading (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.sub (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.info (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.low (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] pt-BR: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] pt-BR: extra workDashboard.sub.lead (not in en)
+[locale-parity] pt-BR: extra workDashboard.buy.body (not in en)
+[locale-parity] ru: missing workDashboard.plan.companyLeft
+[locale-parity] ru: missing workDashboard.plan.coveredMonth
+[locale-parity] ru: missing workDashboard.plan.freeLeft
+[locale-parity] ru: missing workDashboard.meters.heading
+[locale-parity] ru: missing workDashboard.meters.sub
+[locale-parity] ru: missing workDashboard.meters.info
+[locale-parity] ru: missing workDashboard.meters.on
+[locale-parity] ru: missing workDashboard.meters.onSub
+[locale-parity] ru: missing workDashboard.meters.tipAdmin
+[locale-parity] ru: missing workDashboard.meters.hours.label
+[locale-parity] ru: missing workDashboard.meters.hours.left
+[locale-parity] ru: missing workDashboard.meters.hours.usedOf
+[locale-parity] ru: missing workDashboard.meters.hours.renews
+[locale-parity] ru: missing workDashboard.meters.hours.carry
+[locale-parity] ru: missing workDashboard.meters.hours.carried
+[locale-parity] ru: missing workDashboard.meters.hours.tip
+[locale-parity] ru: missing workDashboard.meters.hours.tipCarry
+[locale-parity] ru: missing workDashboard.meters.allowance.label
+[locale-parity] ru: missing workDashboard.meters.allowance.tip
+[locale-parity] ru: missing workDashboard.meters.allowance.usedOf
+[locale-parity] ru: missing workDashboard.meters.allowance.resets
+[locale-parity] ru: missing workDashboard.meters.pool.label
+[locale-parity] ru: missing workDashboard.meters.pool.tip
+[locale-parity] ru: missing workDashboard.meters.pool.leftOf
+[locale-parity] ru: missing workDashboard.meters.pool.resets
+[locale-parity] ru: missing workDashboard.meters.pool.shared
+[locale-parity] ru: missing workDashboard.meters.topup.label
+[locale-parity] ru: missing workDashboard.meters.topup.tip
+[locale-parity] ru: missing workDashboard.meters.topup.none
+[locale-parity] ru: missing workDashboard.meters.topup.never
+[locale-parity] ru: missing workDashboard.meters.topup.buy
+[locale-parity] ru: missing workDashboard.meters.tasks.label
+[locale-parity] ru: missing workDashboard.meters.tasks.tip
+[locale-parity] ru: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] ru: missing workDashboard.meters.tasks.unlimited
+[locale-parity] ru: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] ru: missing workDashboard.meters.tasks.usedOf
+[locale-parity] ru: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] ru: missing workDashboard.meters.tasks.capHit
+[locale-parity] ru: missing workDashboard.meters.tasks.resets
+[locale-parity] ru: missing workDashboard.meters.state.pool
+[locale-parity] ru: missing workDashboard.meters.state.ceiling
+[locale-parity] ru: missing workDashboard.meters.state.exhausted
+[locale-parity] ru: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] ru: missing workDashboard.meters.state.low
+[locale-parity] ru: missing workDashboard.meters.state.lowCompany
+[locale-parity] ru: missing workDashboard.meters.state.taskCap
+[locale-parity] ru: missing workDashboard.meters.state.buy
+[locale-parity] ru: missing workDashboard.meters.state.upgrade
+[locale-parity] ru: missing workDashboard.month.heading
+[locale-parity] ru: missing workDashboard.month.sub
+[locale-parity] ru: missing workDashboard.month.legendTime
+[locale-parity] ru: missing workDashboard.month.legendTasks
+[locale-parity] ru: missing workDashboard.month.today
+[locale-parity] ru: missing workDashboard.month.tasks_one
+[locale-parity] ru: missing workDashboard.month.tasks_other
+[locale-parity] ru: missing workDashboard.month.aria
+[locale-parity] ru: missing workDashboard.month.dayAria
+[locale-parity] ru: missing workDashboard.month.axisH
+[locale-parity] ru: missing workDashboard.month.axisMin
+[locale-parity] ru: missing workDashboard.month.empty
+[locale-parity] ru: missing workDashboard.month.total
+[locale-parity] ru: missing workDashboard.month.busiest
+[locale-parity] ru: missing workDashboard.month.table
+[locale-parity] ru: missing workDashboard.month.tableHide
+[locale-parity] ru: missing workDashboard.month.colDay
+[locale-parity] ru: missing workDashboard.month.colTime
+[locale-parity] ru: missing workDashboard.month.colTasks
+[locale-parity] ru: missing workDashboard.month.tableNote
+[locale-parity] ru: missing workDashboard.month.errTitle
+[locale-parity] ru: missing workDashboard.month.errBody
+[locale-parity] ru: missing workDashboard.month.retry
+[locale-parity] ru: missing workDashboard.outcomes.heading
+[locale-parity] ru: missing workDashboard.outcomes.sub
+[locale-parity] ru: missing workDashboard.outcomes.viewAll
+[locale-parity] ru: missing workDashboard.outcomes.finished
+[locale-parity] ru: missing workDashboard.outcomes.steps
+[locale-parity] ru: missing workDashboard.outcomes.goal
+[locale-parity] ru: missing workDashboard.outcomes.stepsTitle
+[locale-parity] ru: missing workDashboard.outcomes.moreSteps
+[locale-parity] ru: missing workDashboard.outcomes.open
+[locale-parity] ru: missing workDashboard.outcomes.download
+[locale-parity] ru: missing workDashboard.flow.heading
+[locale-parity] ru: missing workDashboard.flow.sub
+[locale-parity] ru: missing workDashboard.flow.aria
+[locale-parity] ru: missing workDashboard.flow.watch
+[locale-parity] ru: missing workDashboard.flow.watchD
+[locale-parity] ru: missing workDashboard.flow.next
+[locale-parity] ru: missing workDashboard.flow.nextD
+[locale-parity] ru: missing workDashboard.flow.correct
+[locale-parity] ru: missing workDashboard.flow.correctD
+[locale-parity] ru: missing workDashboard.flow.confirm
+[locale-parity] ru: missing workDashboard.flow.confirmD
+[locale-parity] ru: missing workDashboard.flow.complete
+[locale-parity] ru: missing workDashboard.flow.completeD
+[locale-parity] ru: missing workDashboard.flow.note
+[locale-parity] ru: missing workDashboard.flow.cta
+[locale-parity] ru: missing workDashboard.sub.leadMonth
+[locale-parity] ru: missing workDashboard.sub.tasks_one
+[locale-parity] ru: missing workDashboard.sub.tasks_other
+[locale-parity] ru: missing workDashboard.buy.bodyMonth
+[locale-parity] ru: missing workDashboard.buy.buy
+[locale-parity] ru: extra workDashboard.plan.company (not in en)
+[locale-parity] ru: extra workDashboard.plan.covered (not in en)
+[locale-parity] ru: extra workDashboard.plan.free (not in en)
+[locale-parity] ru: extra workDashboard.metrics.heading (not in en)
+[locale-parity] ru: extra workDashboard.metrics.sub (not in en)
+[locale-parity] ru: extra workDashboard.metrics.info (not in en)
+[locale-parity] ru: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] ru: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] ru: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] ru: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] ru: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] ru: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] ru: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] ru: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] ru: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] ru: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] ru: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] ru: extra workDashboard.metrics.low (not in en)
+[locale-parity] ru: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] ru: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] ru: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] ru: extra workDashboard.sub.lead (not in en)
+[locale-parity] ru: extra workDashboard.buy.body (not in en)
+[locale-parity] tr: missing workDashboard.plan.companyLeft
+[locale-parity] tr: missing workDashboard.plan.coveredMonth
+[locale-parity] tr: missing workDashboard.plan.freeLeft
+[locale-parity] tr: missing workDashboard.meters.heading
+[locale-parity] tr: missing workDashboard.meters.sub
+[locale-parity] tr: missing workDashboard.meters.info
+[locale-parity] tr: missing workDashboard.meters.on
+[locale-parity] tr: missing workDashboard.meters.onSub
+[locale-parity] tr: missing workDashboard.meters.tipAdmin
+[locale-parity] tr: missing workDashboard.meters.hours.label
+[locale-parity] tr: missing workDashboard.meters.hours.left
+[locale-parity] tr: missing workDashboard.meters.hours.usedOf
+[locale-parity] tr: missing workDashboard.meters.hours.renews
+[locale-parity] tr: missing workDashboard.meters.hours.carry
+[locale-parity] tr: missing workDashboard.meters.hours.carried
+[locale-parity] tr: missing workDashboard.meters.hours.tip
+[locale-parity] tr: missing workDashboard.meters.hours.tipCarry
+[locale-parity] tr: missing workDashboard.meters.allowance.label
+[locale-parity] tr: missing workDashboard.meters.allowance.tip
+[locale-parity] tr: missing workDashboard.meters.allowance.usedOf
+[locale-parity] tr: missing workDashboard.meters.allowance.resets
+[locale-parity] tr: missing workDashboard.meters.pool.label
+[locale-parity] tr: missing workDashboard.meters.pool.tip
+[locale-parity] tr: missing workDashboard.meters.pool.leftOf
+[locale-parity] tr: missing workDashboard.meters.pool.resets
+[locale-parity] tr: missing workDashboard.meters.pool.shared
+[locale-parity] tr: missing workDashboard.meters.topup.label
+[locale-parity] tr: missing workDashboard.meters.topup.tip
+[locale-parity] tr: missing workDashboard.meters.topup.none
+[locale-parity] tr: missing workDashboard.meters.topup.never
+[locale-parity] tr: missing workDashboard.meters.topup.buy
+[locale-parity] tr: missing workDashboard.meters.tasks.label
+[locale-parity] tr: missing workDashboard.meters.tasks.tip
+[locale-parity] tr: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] tr: missing workDashboard.meters.tasks.unlimited
+[locale-parity] tr: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] tr: missing workDashboard.meters.tasks.usedOf
+[locale-parity] tr: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] tr: missing workDashboard.meters.tasks.capHit
+[locale-parity] tr: missing workDashboard.meters.tasks.resets
+[locale-parity] tr: missing workDashboard.meters.state.pool
+[locale-parity] tr: missing workDashboard.meters.state.ceiling
+[locale-parity] tr: missing workDashboard.meters.state.exhausted
+[locale-parity] tr: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] tr: missing workDashboard.meters.state.low
+[locale-parity] tr: missing workDashboard.meters.state.lowCompany
+[locale-parity] tr: missing workDashboard.meters.state.taskCap
+[locale-parity] tr: missing workDashboard.meters.state.buy
+[locale-parity] tr: missing workDashboard.meters.state.upgrade
+[locale-parity] tr: missing workDashboard.month.heading
+[locale-parity] tr: missing workDashboard.month.sub
+[locale-parity] tr: missing workDashboard.month.legendTime
+[locale-parity] tr: missing workDashboard.month.legendTasks
+[locale-parity] tr: missing workDashboard.month.today
+[locale-parity] tr: missing workDashboard.month.tasks_one
+[locale-parity] tr: missing workDashboard.month.tasks_other
+[locale-parity] tr: missing workDashboard.month.aria
+[locale-parity] tr: missing workDashboard.month.dayAria
+[locale-parity] tr: missing workDashboard.month.axisH
+[locale-parity] tr: missing workDashboard.month.axisMin
+[locale-parity] tr: missing workDashboard.month.empty
+[locale-parity] tr: missing workDashboard.month.total
+[locale-parity] tr: missing workDashboard.month.busiest
+[locale-parity] tr: missing workDashboard.month.table
+[locale-parity] tr: missing workDashboard.month.tableHide
+[locale-parity] tr: missing workDashboard.month.colDay
+[locale-parity] tr: missing workDashboard.month.colTime
+[locale-parity] tr: missing workDashboard.month.colTasks
+[locale-parity] tr: missing workDashboard.month.tableNote
+[locale-parity] tr: missing workDashboard.month.errTitle
+[locale-parity] tr: missing workDashboard.month.errBody
+[locale-parity] tr: missing workDashboard.month.retry
+[locale-parity] tr: missing workDashboard.outcomes.heading
+[locale-parity] tr: missing workDashboard.outcomes.sub
+[locale-parity] tr: missing workDashboard.outcomes.viewAll
+[locale-parity] tr: missing workDashboard.outcomes.finished
+[locale-parity] tr: missing workDashboard.outcomes.steps
+[locale-parity] tr: missing workDashboard.outcomes.goal
+[locale-parity] tr: missing workDashboard.outcomes.stepsTitle
+[locale-parity] tr: missing workDashboard.outcomes.moreSteps
+[locale-parity] tr: missing workDashboard.outcomes.open
+[locale-parity] tr: missing workDashboard.outcomes.download
+[locale-parity] tr: missing workDashboard.flow.heading
+[locale-parity] tr: missing workDashboard.flow.sub
+[locale-parity] tr: missing workDashboard.flow.aria
+[locale-parity] tr: missing workDashboard.flow.watch
+[locale-parity] tr: missing workDashboard.flow.watchD
+[locale-parity] tr: missing workDashboard.flow.next
+[locale-parity] tr: missing workDashboard.flow.nextD
+[locale-parity] tr: missing workDashboard.flow.correct
+[locale-parity] tr: missing workDashboard.flow.correctD
+[locale-parity] tr: missing workDashboard.flow.confirm
+[locale-parity] tr: missing workDashboard.flow.confirmD
+[locale-parity] tr: missing workDashboard.flow.complete
+[locale-parity] tr: missing workDashboard.flow.completeD
+[locale-parity] tr: missing workDashboard.flow.note
+[locale-parity] tr: missing workDashboard.flow.cta
+[locale-parity] tr: missing workDashboard.sub.leadMonth
+[locale-parity] tr: missing workDashboard.sub.tasks_one
+[locale-parity] tr: missing workDashboard.sub.tasks_other
+[locale-parity] tr: missing workDashboard.buy.bodyMonth
+[locale-parity] tr: missing workDashboard.buy.buy
+[locale-parity] tr: extra workDashboard.plan.company (not in en)
+[locale-parity] tr: extra workDashboard.plan.covered (not in en)
+[locale-parity] tr: extra workDashboard.plan.free (not in en)
+[locale-parity] tr: extra workDashboard.metrics.heading (not in en)
+[locale-parity] tr: extra workDashboard.metrics.sub (not in en)
+[locale-parity] tr: extra workDashboard.metrics.info (not in en)
+[locale-parity] tr: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] tr: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] tr: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] tr: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] tr: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] tr: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] tr: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] tr: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] tr: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] tr: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] tr: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] tr: extra workDashboard.metrics.low (not in en)
+[locale-parity] tr: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] tr: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] tr: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] tr: extra workDashboard.sub.lead (not in en)
+[locale-parity] tr: extra workDashboard.buy.body (not in en)
+[locale-parity] vi: missing workDashboard.plan.companyLeft
+[locale-parity] vi: missing workDashboard.plan.coveredMonth
+[locale-parity] vi: missing workDashboard.plan.freeLeft
+[locale-parity] vi: missing workDashboard.meters.heading
+[locale-parity] vi: missing workDashboard.meters.sub
+[locale-parity] vi: missing workDashboard.meters.info
+[locale-parity] vi: missing workDashboard.meters.on
+[locale-parity] vi: missing workDashboard.meters.onSub
+[locale-parity] vi: missing workDashboard.meters.tipAdmin
+[locale-parity] vi: missing workDashboard.meters.hours.label
+[locale-parity] vi: missing workDashboard.meters.hours.left
+[locale-parity] vi: missing workDashboard.meters.hours.usedOf
+[locale-parity] vi: missing workDashboard.meters.hours.renews
+[locale-parity] vi: missing workDashboard.meters.hours.carry
+[locale-parity] vi: missing workDashboard.meters.hours.carried
+[locale-parity] vi: missing workDashboard.meters.hours.tip
+[locale-parity] vi: missing workDashboard.meters.hours.tipCarry
+[locale-parity] vi: missing workDashboard.meters.allowance.label
+[locale-parity] vi: missing workDashboard.meters.allowance.tip
+[locale-parity] vi: missing workDashboard.meters.allowance.usedOf
+[locale-parity] vi: missing workDashboard.meters.allowance.resets
+[locale-parity] vi: missing workDashboard.meters.pool.label
+[locale-parity] vi: missing workDashboard.meters.pool.tip
+[locale-parity] vi: missing workDashboard.meters.pool.leftOf
+[locale-parity] vi: missing workDashboard.meters.pool.resets
+[locale-parity] vi: missing workDashboard.meters.pool.shared
+[locale-parity] vi: missing workDashboard.meters.topup.label
+[locale-parity] vi: missing workDashboard.meters.topup.tip
+[locale-parity] vi: missing workDashboard.meters.topup.none
+[locale-parity] vi: missing workDashboard.meters.topup.never
+[locale-parity] vi: missing workDashboard.meters.topup.buy
+[locale-parity] vi: missing workDashboard.meters.tasks.label
+[locale-parity] vi: missing workDashboard.meters.tasks.tip
+[locale-parity] vi: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] vi: missing workDashboard.meters.tasks.unlimited
+[locale-parity] vi: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] vi: missing workDashboard.meters.tasks.usedOf
+[locale-parity] vi: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] vi: missing workDashboard.meters.tasks.capHit
+[locale-parity] vi: missing workDashboard.meters.tasks.resets
+[locale-parity] vi: missing workDashboard.meters.state.pool
+[locale-parity] vi: missing workDashboard.meters.state.ceiling
+[locale-parity] vi: missing workDashboard.meters.state.exhausted
+[locale-parity] vi: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] vi: missing workDashboard.meters.state.low
+[locale-parity] vi: missing workDashboard.meters.state.lowCompany
+[locale-parity] vi: missing workDashboard.meters.state.taskCap
+[locale-parity] vi: missing workDashboard.meters.state.buy
+[locale-parity] vi: missing workDashboard.meters.state.upgrade
+[locale-parity] vi: missing workDashboard.month.heading
+[locale-parity] vi: missing workDashboard.month.sub
+[locale-parity] vi: missing workDashboard.month.legendTime
+[locale-parity] vi: missing workDashboard.month.legendTasks
+[locale-parity] vi: missing workDashboard.month.today
+[locale-parity] vi: missing workDashboard.month.tasks_one
+[locale-parity] vi: missing workDashboard.month.tasks_other
+[locale-parity] vi: missing workDashboard.month.aria
+[locale-parity] vi: missing workDashboard.month.dayAria
+[locale-parity] vi: missing workDashboard.month.axisH
+[locale-parity] vi: missing workDashboard.month.axisMin
+[locale-parity] vi: missing workDashboard.month.empty
+[locale-parity] vi: missing workDashboard.month.total
+[locale-parity] vi: missing workDashboard.month.busiest
+[locale-parity] vi: missing workDashboard.month.table
+[locale-parity] vi: missing workDashboard.month.tableHide
+[locale-parity] vi: missing workDashboard.month.colDay
+[locale-parity] vi: missing workDashboard.month.colTime
+[locale-parity] vi: missing workDashboard.month.colTasks
+[locale-parity] vi: missing workDashboard.month.tableNote
+[locale-parity] vi: missing workDashboard.month.errTitle
+[locale-parity] vi: missing workDashboard.month.errBody
+[locale-parity] vi: missing workDashboard.month.retry
+[locale-parity] vi: missing workDashboard.outcomes.heading
+[locale-parity] vi: missing workDashboard.outcomes.sub
+[locale-parity] vi: missing workDashboard.outcomes.viewAll
+[locale-parity] vi: missing workDashboard.outcomes.finished
+[locale-parity] vi: missing workDashboard.outcomes.steps
+[locale-parity] vi: missing workDashboard.outcomes.goal
+[locale-parity] vi: missing workDashboard.outcomes.stepsTitle
+[locale-parity] vi: missing workDashboard.outcomes.moreSteps
+[locale-parity] vi: missing workDashboard.outcomes.open
+[locale-parity] vi: missing workDashboard.outcomes.download
+[locale-parity] vi: missing workDashboard.flow.heading
+[locale-parity] vi: missing workDashboard.flow.sub
+[locale-parity] vi: missing workDashboard.flow.aria
+[locale-parity] vi: missing workDashboard.flow.watch
+[locale-parity] vi: missing workDashboard.flow.watchD
+[locale-parity] vi: missing workDashboard.flow.next
+[locale-parity] vi: missing workDashboard.flow.nextD
+[locale-parity] vi: missing workDashboard.flow.correct
+[locale-parity] vi: missing workDashboard.flow.correctD
+[locale-parity] vi: missing workDashboard.flow.confirm
+[locale-parity] vi: missing workDashboard.flow.confirmD
+[locale-parity] vi: missing workDashboard.flow.complete
+[locale-parity] vi: missing workDashboard.flow.completeD
+[locale-parity] vi: missing workDashboard.flow.note
+[locale-parity] vi: missing workDashboard.flow.cta
+[locale-parity] vi: missing workDashboard.sub.leadMonth
+[locale-parity] vi: missing workDashboard.sub.tasks_one
+[locale-parity] vi: missing workDashboard.sub.tasks_other
+[locale-parity] vi: missing workDashboard.buy.bodyMonth
+[locale-parity] vi: missing workDashboard.buy.buy
+[locale-parity] vi: extra workDashboard.plan.company (not in en)
+[locale-parity] vi: extra workDashboard.plan.covered (not in en)
+[locale-parity] vi: extra workDashboard.plan.free (not in en)
+[locale-parity] vi: extra workDashboard.metrics.heading (not in en)
+[locale-parity] vi: extra workDashboard.metrics.sub (not in en)
+[locale-parity] vi: extra workDashboard.metrics.info (not in en)
+[locale-parity] vi: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] vi: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] vi: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] vi: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] vi: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] vi: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] vi: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] vi: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] vi: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] vi: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] vi: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] vi: extra workDashboard.metrics.low (not in en)
+[locale-parity] vi: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] vi: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] vi: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] vi: extra workDashboard.sub.lead (not in en)
+[locale-parity] vi: extra workDashboard.buy.body (not in en)
+[locale-parity] zh: missing workDashboard.plan.companyLeft
+[locale-parity] zh: missing workDashboard.plan.coveredMonth
+[locale-parity] zh: missing workDashboard.plan.freeLeft
+[locale-parity] zh: missing workDashboard.meters.heading
+[locale-parity] zh: missing workDashboard.meters.sub
+[locale-parity] zh: missing workDashboard.meters.info
+[locale-parity] zh: missing workDashboard.meters.on
+[locale-parity] zh: missing workDashboard.meters.onSub
+[locale-parity] zh: missing workDashboard.meters.tipAdmin
+[locale-parity] zh: missing workDashboard.meters.hours.label
+[locale-parity] zh: missing workDashboard.meters.hours.left
+[locale-parity] zh: missing workDashboard.meters.hours.usedOf
+[locale-parity] zh: missing workDashboard.meters.hours.renews
+[locale-parity] zh: missing workDashboard.meters.hours.carry
+[locale-parity] zh: missing workDashboard.meters.hours.carried
+[locale-parity] zh: missing workDashboard.meters.hours.tip
+[locale-parity] zh: missing workDashboard.meters.hours.tipCarry
+[locale-parity] zh: missing workDashboard.meters.allowance.label
+[locale-parity] zh: missing workDashboard.meters.allowance.tip
+[locale-parity] zh: missing workDashboard.meters.allowance.usedOf
+[locale-parity] zh: missing workDashboard.meters.allowance.resets
+[locale-parity] zh: missing workDashboard.meters.pool.label
+[locale-parity] zh: missing workDashboard.meters.pool.tip
+[locale-parity] zh: missing workDashboard.meters.pool.leftOf
+[locale-parity] zh: missing workDashboard.meters.pool.resets
+[locale-parity] zh: missing workDashboard.meters.pool.shared
+[locale-parity] zh: missing workDashboard.meters.topup.label
+[locale-parity] zh: missing workDashboard.meters.topup.tip
+[locale-parity] zh: missing workDashboard.meters.topup.none
+[locale-parity] zh: missing workDashboard.meters.topup.never
+[locale-parity] zh: missing workDashboard.meters.topup.buy
+[locale-parity] zh: missing workDashboard.meters.tasks.label
+[locale-parity] zh: missing workDashboard.meters.tasks.tip
+[locale-parity] zh: missing workDashboard.meters.tasks.tipUnlimited
+[locale-parity] zh: missing workDashboard.meters.tasks.unlimited
+[locale-parity] zh: missing workDashboard.meters.tasks.unlimitedSub
+[locale-parity] zh: missing workDashboard.meters.tasks.usedOf
+[locale-parity] zh: missing workDashboard.meters.tasks.pipsAria
+[locale-parity] zh: missing workDashboard.meters.tasks.capHit
+[locale-parity] zh: missing workDashboard.meters.tasks.resets
+[locale-parity] zh: missing workDashboard.meters.state.pool
+[locale-parity] zh: missing workDashboard.meters.state.ceiling
+[locale-parity] zh: missing workDashboard.meters.state.exhausted
+[locale-parity] zh: missing workDashboard.meters.state.exhaustedCompany
+[locale-parity] zh: missing workDashboard.meters.state.low
+[locale-parity] zh: missing workDashboard.meters.state.lowCompany
+[locale-parity] zh: missing workDashboard.meters.state.taskCap
+[locale-parity] zh: missing workDashboard.meters.state.buy
+[locale-parity] zh: missing workDashboard.meters.state.upgrade
+[locale-parity] zh: missing workDashboard.month.heading
+[locale-parity] zh: missing workDashboard.month.sub
+[locale-parity] zh: missing workDashboard.month.legendTime
+[locale-parity] zh: missing workDashboard.month.legendTasks
+[locale-parity] zh: missing workDashboard.month.today
+[locale-parity] zh: missing workDashboard.month.tasks_one
+[locale-parity] zh: missing workDashboard.month.tasks_other
+[locale-parity] zh: missing workDashboard.month.aria
+[locale-parity] zh: missing workDashboard.month.dayAria
+[locale-parity] zh: missing workDashboard.month.axisH
+[locale-parity] zh: missing workDashboard.month.axisMin
+[locale-parity] zh: missing workDashboard.month.empty
+[locale-parity] zh: missing workDashboard.month.total
+[locale-parity] zh: missing workDashboard.month.busiest
+[locale-parity] zh: missing workDashboard.month.table
+[locale-parity] zh: missing workDashboard.month.tableHide
+[locale-parity] zh: missing workDashboard.month.colDay
+[locale-parity] zh: missing workDashboard.month.colTime
+[locale-parity] zh: missing workDashboard.month.colTasks
+[locale-parity] zh: missing workDashboard.month.tableNote
+[locale-parity] zh: missing workDashboard.month.errTitle
+[locale-parity] zh: missing workDashboard.month.errBody
+[locale-parity] zh: missing workDashboard.month.retry
+[locale-parity] zh: missing workDashboard.outcomes.heading
+[locale-parity] zh: missing workDashboard.outcomes.sub
+[locale-parity] zh: missing workDashboard.outcomes.viewAll
+[locale-parity] zh: missing workDashboard.outcomes.finished
+[locale-parity] zh: missing workDashboard.outcomes.steps
+[locale-parity] zh: missing workDashboard.outcomes.goal
+[locale-parity] zh: missing workDashboard.outcomes.stepsTitle
+[locale-parity] zh: missing workDashboard.outcomes.moreSteps
+[locale-parity] zh: missing workDashboard.outcomes.open
+[locale-parity] zh: missing workDashboard.outcomes.download
+[locale-parity] zh: missing workDashboard.flow.heading
+[locale-parity] zh: missing workDashboard.flow.sub
+[locale-parity] zh: missing workDashboard.flow.aria
+[locale-parity] zh: missing workDashboard.flow.watch
+[locale-parity] zh: missing workDashboard.flow.watchD
+[locale-parity] zh: missing workDashboard.flow.next
+[locale-parity] zh: missing workDashboard.flow.nextD
+[locale-parity] zh: missing workDashboard.flow.correct
+[locale-parity] zh: missing workDashboard.flow.correctD
+[locale-parity] zh: missing workDashboard.flow.confirm
+[locale-parity] zh: missing workDashboard.flow.confirmD
+[locale-parity] zh: missing workDashboard.flow.complete
+[locale-parity] zh: missing workDashboard.flow.completeD
+[locale-parity] zh: missing workDashboard.flow.note
+[locale-parity] zh: missing workDashboard.flow.cta
+[locale-parity] zh: missing workDashboard.sub.leadMonth
+[locale-parity] zh: missing workDashboard.sub.tasks_one
+[locale-parity] zh: missing workDashboard.sub.tasks_other
+[locale-parity] zh: missing workDashboard.buy.bodyMonth
+[locale-parity] zh: missing workDashboard.buy.buy
+[locale-parity] zh: extra workDashboard.plan.company (not in en)
+[locale-parity] zh: extra workDashboard.plan.covered (not in en)
+[locale-parity] zh: extra workDashboard.plan.free (not in en)
+[locale-parity] zh: extra workDashboard.metrics.heading (not in en)
+[locale-parity] zh: extra workDashboard.metrics.sub (not in en)
+[locale-parity] zh: extra workDashboard.metrics.info (not in en)
+[locale-parity] zh: extra workDashboard.metrics.minutes.label (not in en)
+[locale-parity] zh: extra workDashboard.metrics.minutes.unit (not in en)
+[locale-parity] zh: extra workDashboard.metrics.minutes.on (not in en)
+[locale-parity] zh: extra workDashboard.metrics.minutes.onSub (not in en)
+[locale-parity] zh: extra workDashboard.metrics.minutes.tip (not in en)
+[locale-parity] zh: extra workDashboard.metrics.minutes.tipAdmin (not in en)
+[locale-parity] zh: extra workDashboard.metrics.tasks.label (not in en)
+[locale-parity] zh: extra workDashboard.metrics.tasks.unlimited (not in en)
+[locale-parity] zh: extra workDashboard.metrics.tasks.tip (not in en)
+[locale-parity] zh: extra workDashboard.metrics.credits.label (not in en)
+[locale-parity] zh: extra workDashboard.metrics.credits.tip (not in en)
+[locale-parity] zh: extra workDashboard.metrics.low (not in en)
+[locale-parity] zh: extra workDashboard.metrics.trade.label (not in en)
+[locale-parity] zh: extra workDashboard.metrics.trade.busy (not in en)
+[locale-parity] zh: extra workDashboard.metrics.trade.note (not in en)
+[locale-parity] zh: extra workDashboard.sub.lead (not in en)
+[locale-parity] zh: extra workDashboard.buy.body (not in en)
+[locale-parity] FAILED: 1428 missing/mismatched key(s), 322 extra in 14 locale(s) under workDashboard.
+[locale-parity] ar: missing workShell.top.viewingAs
+[locale-parity] ar: missing workShell.top.stop
+[locale-parity] ar: missing workShell.top.collapseMenu
+[locale-parity] ar: missing workShell.top.expandMenu
+[locale-parity] ar: missing workShell.top.retryUsage
+[locale-parity] ar: missing workShell.top.retry
+[locale-parity] ar: missing workShell.top.timeChipTitle
+[locale-parity] ar: missing workShell.top.left
+[locale-parity] ar: missing workShell.top.buyHoursTitle
+[locale-parity] ar: missing workShell.top.buyHours
+[locale-parity] ar: missing workShell.top.buyHoursShort
+[locale-parity] ar: missing workShell.top.addTime
+[locale-parity] ar: missing workShell.top.upgradeTitle
+[locale-parity] ar: missing workShell.top.upgradeTitleGeneric
+[locale-parity] ar: missing workShell.top.upgrade
+[locale-parity] ar: missing workShell.top.windowsAppTitle
+[locale-parity] ar: missing workShell.top.windowsApp
+[locale-parity] ar: missing workShell.top.signOut
+[locale-parity] ar: missing workShell.plan.unitH
+[locale-parity] ar: missing workShell.plan.unitMin
+[locale-parity] ar: missing workShell.plan.active
+[locale-parity] ar: missing workShell.plan.name
+[locale-parity] ar: missing workShell.plan.open
+[locale-parity] ar: missing workShell.plan.close
+[locale-parity] ar: missing workShell.plan.dialog
+[locale-parity] ar: missing workShell.plan.hoursTitle
+[locale-parity] ar: missing workShell.plan.usedOf
+[locale-parity] ar: missing workShell.plan.renews
+[locale-parity] ar: missing workShell.plan.carry
+[locale-parity] ar: missing workShell.plan.carryCap
+[locale-parity] ar: missing workShell.plan.carried
+[locale-parity] ar: missing workShell.plan.allowance
+[locale-parity] ar: missing workShell.plan.allowanceUsed
+[locale-parity] ar: missing workShell.plan.windowDay
+[locale-parity] ar: missing workShell.plan.windowWeek
+[locale-parity] ar: missing workShell.plan.windowMonth
+[locale-parity] ar: missing workShell.plan.companyPool
+[locale-parity] ar: missing workShell.plan.companyPoolNote
+[locale-parity] ar: missing workShell.plan.topup
+[locale-parity] ar: missing workShell.plan.topupNote
+[locale-parity] ar: missing workShell.plan.tasksTitle
+[locale-parity] ar: missing workShell.plan.tasksUnlimited
+[locale-parity] ar: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] ar: missing workShell.plan.tasksLeftAria
+[locale-parity] ar: missing workShell.plan.tasksReset
+[locale-parity] ar: missing workShell.plan.tasksOpen
+[locale-parity] ar: missing workShell.plan.statePool
+[locale-parity] ar: missing workShell.plan.stateCeiling
+[locale-parity] ar: missing workShell.plan.stateExhausted
+[locale-parity] ar: missing workShell.plan.stateExhaustedCompany
+[locale-parity] ar: missing workShell.plan.stateLow
+[locale-parity] ar: missing workShell.plan.stateLowCompany
+[locale-parity] ar: missing workShell.plan.stateTaskCap
+[locale-parity] ar: missing workShell.plan.actBuy
+[locale-parity] ar: missing workShell.plan.actUpgrade
+[locale-parity] ar: missing workShell.buy.titleHours
+[locale-parity] ar: missing workShell.buy.titleImages
+[locale-parity] ar: missing workShell.buy.bodyHours
+[locale-parity] ar: missing workShell.buy.bodyImages
+[locale-parity] ar: missing workShell.buy.qtyHours
+[locale-parity] ar: missing workShell.buy.qtyImages
+[locale-parity] ar: missing workShell.buy.required
+[locale-parity] ar: missing workShell.buy.unit
+[locale-parity] ar: missing workShell.buy.perHour
+[locale-parity] ar: missing workShell.buy.perImage
+[locale-parity] ar: missing workShell.buy.total
+[locale-parity] ar: missing workShell.buy.cancel
+[locale-parity] ar: missing workShell.buy.continue
+[locale-parity] ar: missing workShell.buy.errWhole
+[locale-parity] ar: missing workShell.buy.errMin
+[locale-parity] ar: missing workShell.buy.errCheckout
+[locale-parity] de: missing workShell.top.viewingAs
+[locale-parity] de: missing workShell.top.stop
+[locale-parity] de: missing workShell.top.collapseMenu
+[locale-parity] de: missing workShell.top.expandMenu
+[locale-parity] de: missing workShell.top.retryUsage
+[locale-parity] de: missing workShell.top.retry
+[locale-parity] de: missing workShell.top.timeChipTitle
+[locale-parity] de: missing workShell.top.left
+[locale-parity] de: missing workShell.top.buyHoursTitle
+[locale-parity] de: missing workShell.top.buyHours
+[locale-parity] de: missing workShell.top.buyHoursShort
+[locale-parity] de: missing workShell.top.addTime
+[locale-parity] de: missing workShell.top.upgradeTitle
+[locale-parity] de: missing workShell.top.upgradeTitleGeneric
+[locale-parity] de: missing workShell.top.upgrade
+[locale-parity] de: missing workShell.top.windowsAppTitle
+[locale-parity] de: missing workShell.top.windowsApp
+[locale-parity] de: missing workShell.top.signOut
+[locale-parity] de: missing workShell.plan.unitH
+[locale-parity] de: missing workShell.plan.unitMin
+[locale-parity] de: missing workShell.plan.active
+[locale-parity] de: missing workShell.plan.name
+[locale-parity] de: missing workShell.plan.open
+[locale-parity] de: missing workShell.plan.close
+[locale-parity] de: missing workShell.plan.dialog
+[locale-parity] de: missing workShell.plan.hoursTitle
+[locale-parity] de: missing workShell.plan.usedOf
+[locale-parity] de: missing workShell.plan.renews
+[locale-parity] de: missing workShell.plan.carry
+[locale-parity] de: missing workShell.plan.carryCap
+[locale-parity] de: missing workShell.plan.carried
+[locale-parity] de: missing workShell.plan.allowance
+[locale-parity] de: missing workShell.plan.allowanceUsed
+[locale-parity] de: missing workShell.plan.windowDay
+[locale-parity] de: missing workShell.plan.windowWeek
+[locale-parity] de: missing workShell.plan.windowMonth
+[locale-parity] de: missing workShell.plan.companyPool
+[locale-parity] de: missing workShell.plan.companyPoolNote
+[locale-parity] de: missing workShell.plan.topup
+[locale-parity] de: missing workShell.plan.topupNote
+[locale-parity] de: missing workShell.plan.tasksTitle
+[locale-parity] de: missing workShell.plan.tasksUnlimited
+[locale-parity] de: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] de: missing workShell.plan.tasksLeftAria
+[locale-parity] de: missing workShell.plan.tasksReset
+[locale-parity] de: missing workShell.plan.tasksOpen
+[locale-parity] de: missing workShell.plan.statePool
+[locale-parity] de: missing workShell.plan.stateCeiling
+[locale-parity] de: missing workShell.plan.stateExhausted
+[locale-parity] de: missing workShell.plan.stateExhaustedCompany
+[locale-parity] de: missing workShell.plan.stateLow
+[locale-parity] de: missing workShell.plan.stateLowCompany
+[locale-parity] de: missing workShell.plan.stateTaskCap
+[locale-parity] de: missing workShell.plan.actBuy
+[locale-parity] de: missing workShell.plan.actUpgrade
+[locale-parity] de: missing workShell.buy.titleHours
+[locale-parity] de: missing workShell.buy.titleImages
+[locale-parity] de: missing workShell.buy.bodyHours
+[locale-parity] de: missing workShell.buy.bodyImages
+[locale-parity] de: missing workShell.buy.qtyHours
+[locale-parity] de: missing workShell.buy.qtyImages
+[locale-parity] de: missing workShell.buy.required
+[locale-parity] de: missing workShell.buy.unit
+[locale-parity] de: missing workShell.buy.perHour
+[locale-parity] de: missing workShell.buy.perImage
+[locale-parity] de: missing workShell.buy.total
+[locale-parity] de: missing workShell.buy.cancel
+[locale-parity] de: missing workShell.buy.continue
+[locale-parity] de: missing workShell.buy.errWhole
+[locale-parity] de: missing workShell.buy.errMin
+[locale-parity] de: missing workShell.buy.errCheckout
+[locale-parity] es: missing workShell.top.viewingAs
+[locale-parity] es: missing workShell.top.stop
+[locale-parity] es: missing workShell.top.collapseMenu
+[locale-parity] es: missing workShell.top.expandMenu
+[locale-parity] es: missing workShell.top.retryUsage
+[locale-parity] es: missing workShell.top.retry
+[locale-parity] es: missing workShell.top.timeChipTitle
+[locale-parity] es: missing workShell.top.left
+[locale-parity] es: missing workShell.top.buyHoursTitle
+[locale-parity] es: missing workShell.top.buyHours
+[locale-parity] es: missing workShell.top.buyHoursShort
+[locale-parity] es: missing workShell.top.addTime
+[locale-parity] es: missing workShell.top.upgradeTitle
+[locale-parity] es: missing workShell.top.upgradeTitleGeneric
+[locale-parity] es: missing workShell.top.upgrade
+[locale-parity] es: missing workShell.top.windowsAppTitle
+[locale-parity] es: missing workShell.top.windowsApp
+[locale-parity] es: missing workShell.top.signOut
+[locale-parity] es: missing workShell.plan.unitH
+[locale-parity] es: missing workShell.plan.unitMin
+[locale-parity] es: missing workShell.plan.active
+[locale-parity] es: missing workShell.plan.name
+[locale-parity] es: missing workShell.plan.open
+[locale-parity] es: missing workShell.plan.close
+[locale-parity] es: missing workShell.plan.dialog
+[locale-parity] es: missing workShell.plan.hoursTitle
+[locale-parity] es: missing workShell.plan.usedOf
+[locale-parity] es: missing workShell.plan.renews
+[locale-parity] es: missing workShell.plan.carry
+[locale-parity] es: missing workShell.plan.carryCap
+[locale-parity] es: missing workShell.plan.carried
+[locale-parity] es: missing workShell.plan.allowance
+[locale-parity] es: missing workShell.plan.allowanceUsed
+[locale-parity] es: missing workShell.plan.windowDay
+[locale-parity] es: missing workShell.plan.windowWeek
+[locale-parity] es: missing workShell.plan.windowMonth
+[locale-parity] es: missing workShell.plan.companyPool
+[locale-parity] es: missing workShell.plan.companyPoolNote
+[locale-parity] es: missing workShell.plan.topup
+[locale-parity] es: missing workShell.plan.topupNote
+[locale-parity] es: missing workShell.plan.tasksTitle
+[locale-parity] es: missing workShell.plan.tasksUnlimited
+[locale-parity] es: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] es: missing workShell.plan.tasksLeftAria
+[locale-parity] es: missing workShell.plan.tasksReset
+[locale-parity] es: missing workShell.plan.tasksOpen
+[locale-parity] es: missing workShell.plan.statePool
+[locale-parity] es: missing workShell.plan.stateCeiling
+[locale-parity] es: missing workShell.plan.stateExhausted
+[locale-parity] es: missing workShell.plan.stateExhaustedCompany
+[locale-parity] es: missing workShell.plan.stateLow
+[locale-parity] es: missing workShell.plan.stateLowCompany
+[locale-parity] es: missing workShell.plan.stateTaskCap
+[locale-parity] es: missing workShell.plan.actBuy
+[locale-parity] es: missing workShell.plan.actUpgrade
+[locale-parity] es: missing workShell.buy.titleHours
+[locale-parity] es: missing workShell.buy.titleImages
+[locale-parity] es: missing workShell.buy.bodyHours
+[locale-parity] es: missing workShell.buy.bodyImages
+[locale-parity] es: missing workShell.buy.qtyHours
+[locale-parity] es: missing workShell.buy.qtyImages
+[locale-parity] es: missing workShell.buy.required
+[locale-parity] es: missing workShell.buy.unit
+[locale-parity] es: missing workShell.buy.perHour
+[locale-parity] es: missing workShell.buy.perImage
+[locale-parity] es: missing workShell.buy.total
+[locale-parity] es: missing workShell.buy.cancel
+[locale-parity] es: missing workShell.buy.continue
+[locale-parity] es: missing workShell.buy.errWhole
+[locale-parity] es: missing workShell.buy.errMin
+[locale-parity] es: missing workShell.buy.errCheckout
+[locale-parity] fr: missing workShell.top.viewingAs
+[locale-parity] fr: missing workShell.top.stop
+[locale-parity] fr: missing workShell.top.collapseMenu
+[locale-parity] fr: missing workShell.top.expandMenu
+[locale-parity] fr: missing workShell.top.retryUsage
+[locale-parity] fr: missing workShell.top.retry
+[locale-parity] fr: missing workShell.top.timeChipTitle
+[locale-parity] fr: missing workShell.top.left
+[locale-parity] fr: missing workShell.top.buyHoursTitle
+[locale-parity] fr: missing workShell.top.buyHours
+[locale-parity] fr: missing workShell.top.buyHoursShort
+[locale-parity] fr: missing workShell.top.addTime
+[locale-parity] fr: missing workShell.top.upgradeTitle
+[locale-parity] fr: missing workShell.top.upgradeTitleGeneric
+[locale-parity] fr: missing workShell.top.upgrade
+[locale-parity] fr: missing workShell.top.windowsAppTitle
+[locale-parity] fr: missing workShell.top.windowsApp
+[locale-parity] fr: missing workShell.top.signOut
+[locale-parity] fr: missing workShell.plan.unitH
+[locale-parity] fr: missing workShell.plan.unitMin
+[locale-parity] fr: missing workShell.plan.active
+[locale-parity] fr: missing workShell.plan.name
+[locale-parity] fr: missing workShell.plan.open
+[locale-parity] fr: missing workShell.plan.close
+[locale-parity] fr: missing workShell.plan.dialog
+[locale-parity] fr: missing workShell.plan.hoursTitle
+[locale-parity] fr: missing workShell.plan.usedOf
+[locale-parity] fr: missing workShell.plan.renews
+[locale-parity] fr: missing workShell.plan.carry
+[locale-parity] fr: missing workShell.plan.carryCap
+[locale-parity] fr: missing workShell.plan.carried
+[locale-parity] fr: missing workShell.plan.allowance
+[locale-parity] fr: missing workShell.plan.allowanceUsed
+[locale-parity] fr: missing workShell.plan.windowDay
+[locale-parity] fr: missing workShell.plan.windowWeek
+[locale-parity] fr: missing workShell.plan.windowMonth
+[locale-parity] fr: missing workShell.plan.companyPool
+[locale-parity] fr: missing workShell.plan.companyPoolNote
+[locale-parity] fr: missing workShell.plan.topup
+[locale-parity] fr: missing workShell.plan.topupNote
+[locale-parity] fr: missing workShell.plan.tasksTitle
+[locale-parity] fr: missing workShell.plan.tasksUnlimited
+[locale-parity] fr: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] fr: missing workShell.plan.tasksLeftAria
+[locale-parity] fr: missing workShell.plan.tasksReset
+[locale-parity] fr: missing workShell.plan.tasksOpen
+[locale-parity] fr: missing workShell.plan.statePool
+[locale-parity] fr: missing workShell.plan.stateCeiling
+[locale-parity] fr: missing workShell.plan.stateExhausted
+[locale-parity] fr: missing workShell.plan.stateExhaustedCompany
+[locale-parity] fr: missing workShell.plan.stateLow
+[locale-parity] fr: missing workShell.plan.stateLowCompany
+[locale-parity] fr: missing workShell.plan.stateTaskCap
+[locale-parity] fr: missing workShell.plan.actBuy
+[locale-parity] fr: missing workShell.plan.actUpgrade
+[locale-parity] fr: missing workShell.buy.titleHours
+[locale-parity] fr: missing workShell.buy.titleImages
+[locale-parity] fr: missing workShell.buy.bodyHours
+[locale-parity] fr: missing workShell.buy.bodyImages
+[locale-parity] fr: missing workShell.buy.qtyHours
+[locale-parity] fr: missing workShell.buy.qtyImages
+[locale-parity] fr: missing workShell.buy.required
+[locale-parity] fr: missing workShell.buy.unit
+[locale-parity] fr: missing workShell.buy.perHour
+[locale-parity] fr: missing workShell.buy.perImage
+[locale-parity] fr: missing workShell.buy.total
+[locale-parity] fr: missing workShell.buy.cancel
+[locale-parity] fr: missing workShell.buy.continue
+[locale-parity] fr: missing workShell.buy.errWhole
+[locale-parity] fr: missing workShell.buy.errMin
+[locale-parity] fr: missing workShell.buy.errCheckout
+[locale-parity] hi: missing workShell.top.viewingAs
+[locale-parity] hi: missing workShell.top.stop
+[locale-parity] hi: missing workShell.top.collapseMenu
+[locale-parity] hi: missing workShell.top.expandMenu
+[locale-parity] hi: missing workShell.top.retryUsage
+[locale-parity] hi: missing workShell.top.retry
+[locale-parity] hi: missing workShell.top.timeChipTitle
+[locale-parity] hi: missing workShell.top.left
+[locale-parity] hi: missing workShell.top.buyHoursTitle
+[locale-parity] hi: missing workShell.top.buyHours
+[locale-parity] hi: missing workShell.top.buyHoursShort
+[locale-parity] hi: missing workShell.top.addTime
+[locale-parity] hi: missing workShell.top.upgradeTitle
+[locale-parity] hi: missing workShell.top.upgradeTitleGeneric
+[locale-parity] hi: missing workShell.top.upgrade
+[locale-parity] hi: missing workShell.top.windowsAppTitle
+[locale-parity] hi: missing workShell.top.windowsApp
+[locale-parity] hi: missing workShell.top.signOut
+[locale-parity] hi: missing workShell.plan.unitH
+[locale-parity] hi: missing workShell.plan.unitMin
+[locale-parity] hi: missing workShell.plan.active
+[locale-parity] hi: missing workShell.plan.name
+[locale-parity] hi: missing workShell.plan.open
+[locale-parity] hi: missing workShell.plan.close
+[locale-parity] hi: missing workShell.plan.dialog
+[locale-parity] hi: missing workShell.plan.hoursTitle
+[locale-parity] hi: missing workShell.plan.usedOf
+[locale-parity] hi: missing workShell.plan.renews
+[locale-parity] hi: missing workShell.plan.carry
+[locale-parity] hi: missing workShell.plan.carryCap
+[locale-parity] hi: missing workShell.plan.carried
+[locale-parity] hi: missing workShell.plan.allowance
+[locale-parity] hi: missing workShell.plan.allowanceUsed
+[locale-parity] hi: missing workShell.plan.windowDay
+[locale-parity] hi: missing workShell.plan.windowWeek
+[locale-parity] hi: missing workShell.plan.windowMonth
+[locale-parity] hi: missing workShell.plan.companyPool
+[locale-parity] hi: missing workShell.plan.companyPoolNote
+[locale-parity] hi: missing workShell.plan.topup
+[locale-parity] hi: missing workShell.plan.topupNote
+[locale-parity] hi: missing workShell.plan.tasksTitle
+[locale-parity] hi: missing workShell.plan.tasksUnlimited
+[locale-parity] hi: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] hi: missing workShell.plan.tasksLeftAria
+[locale-parity] hi: missing workShell.plan.tasksReset
+[locale-parity] hi: missing workShell.plan.tasksOpen
+[locale-parity] hi: missing workShell.plan.statePool
+[locale-parity] hi: missing workShell.plan.stateCeiling
+[locale-parity] hi: missing workShell.plan.stateExhausted
+[locale-parity] hi: missing workShell.plan.stateExhaustedCompany
+[locale-parity] hi: missing workShell.plan.stateLow
+[locale-parity] hi: missing workShell.plan.stateLowCompany
+[locale-parity] hi: missing workShell.plan.stateTaskCap
+[locale-parity] hi: missing workShell.plan.actBuy
+[locale-parity] hi: missing workShell.plan.actUpgrade
+[locale-parity] hi: missing workShell.buy.titleHours
+[locale-parity] hi: missing workShell.buy.titleImages
+[locale-parity] hi: missing workShell.buy.bodyHours
+[locale-parity] hi: missing workShell.buy.bodyImages
+[locale-parity] hi: missing workShell.buy.qtyHours
+[locale-parity] hi: missing workShell.buy.qtyImages
+[locale-parity] hi: missing workShell.buy.required
+[locale-parity] hi: missing workShell.buy.unit
+[locale-parity] hi: missing workShell.buy.perHour
+[locale-parity] hi: missing workShell.buy.perImage
+[locale-parity] hi: missing workShell.buy.total
+[locale-parity] hi: missing workShell.buy.cancel
+[locale-parity] hi: missing workShell.buy.continue
+[locale-parity] hi: missing workShell.buy.errWhole
+[locale-parity] hi: missing workShell.buy.errMin
+[locale-parity] hi: missing workShell.buy.errCheckout
+[locale-parity] id: missing workShell.top.viewingAs
+[locale-parity] id: missing workShell.top.stop
+[locale-parity] id: missing workShell.top.collapseMenu
+[locale-parity] id: missing workShell.top.expandMenu
+[locale-parity] id: missing workShell.top.retryUsage
+[locale-parity] id: missing workShell.top.retry
+[locale-parity] id: missing workShell.top.timeChipTitle
+[locale-parity] id: missing workShell.top.left
+[locale-parity] id: missing workShell.top.buyHoursTitle
+[locale-parity] id: missing workShell.top.buyHours
+[locale-parity] id: missing workShell.top.buyHoursShort
+[locale-parity] id: missing workShell.top.addTime
+[locale-parity] id: missing workShell.top.upgradeTitle
+[locale-parity] id: missing workShell.top.upgradeTitleGeneric
+[locale-parity] id: missing workShell.top.upgrade
+[locale-parity] id: missing workShell.top.windowsAppTitle
+[locale-parity] id: missing workShell.top.windowsApp
+[locale-parity] id: missing workShell.top.signOut
+[locale-parity] id: missing workShell.plan.unitH
+[locale-parity] id: missing workShell.plan.unitMin
+[locale-parity] id: missing workShell.plan.active
+[locale-parity] id: missing workShell.plan.name
+[locale-parity] id: missing workShell.plan.open
+[locale-parity] id: missing workShell.plan.close
+[locale-parity] id: missing workShell.plan.dialog
+[locale-parity] id: missing workShell.plan.hoursTitle
+[locale-parity] id: missing workShell.plan.usedOf
+[locale-parity] id: missing workShell.plan.renews
+[locale-parity] id: missing workShell.plan.carry
+[locale-parity] id: missing workShell.plan.carryCap
+[locale-parity] id: missing workShell.plan.carried
+[locale-parity] id: missing workShell.plan.allowance
+[locale-parity] id: missing workShell.plan.allowanceUsed
+[locale-parity] id: missing workShell.plan.windowDay
+[locale-parity] id: missing workShell.plan.windowWeek
+[locale-parity] id: missing workShell.plan.windowMonth
+[locale-parity] id: missing workShell.plan.companyPool
+[locale-parity] id: missing workShell.plan.companyPoolNote
+[locale-parity] id: missing workShell.plan.topup
+[locale-parity] id: missing workShell.plan.topupNote
+[locale-parity] id: missing workShell.plan.tasksTitle
+[locale-parity] id: missing workShell.plan.tasksUnlimited
+[locale-parity] id: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] id: missing workShell.plan.tasksLeftAria
+[locale-parity] id: missing workShell.plan.tasksReset
+[locale-parity] id: missing workShell.plan.tasksOpen
+[locale-parity] id: missing workShell.plan.statePool
+[locale-parity] id: missing workShell.plan.stateCeiling
+[locale-parity] id: missing workShell.plan.stateExhausted
+[locale-parity] id: missing workShell.plan.stateExhaustedCompany
+[locale-parity] id: missing workShell.plan.stateLow
+[locale-parity] id: missing workShell.plan.stateLowCompany
+[locale-parity] id: missing workShell.plan.stateTaskCap
+[locale-parity] id: missing workShell.plan.actBuy
+[locale-parity] id: missing workShell.plan.actUpgrade
+[locale-parity] id: missing workShell.buy.titleHours
+[locale-parity] id: missing workShell.buy.titleImages
+[locale-parity] id: missing workShell.buy.bodyHours
+[locale-parity] id: missing workShell.buy.bodyImages
+[locale-parity] id: missing workShell.buy.qtyHours
+[locale-parity] id: missing workShell.buy.qtyImages
+[locale-parity] id: missing workShell.buy.required
+[locale-parity] id: missing workShell.buy.unit
+[locale-parity] id: missing workShell.buy.perHour
+[locale-parity] id: missing workShell.buy.perImage
+[locale-parity] id: missing workShell.buy.total
+[locale-parity] id: missing workShell.buy.cancel
+[locale-parity] id: missing workShell.buy.continue
+[locale-parity] id: missing workShell.buy.errWhole
+[locale-parity] id: missing workShell.buy.errMin
+[locale-parity] id: missing workShell.buy.errCheckout
+[locale-parity] it: missing workShell.top.viewingAs
+[locale-parity] it: missing workShell.top.stop
+[locale-parity] it: missing workShell.top.collapseMenu
+[locale-parity] it: missing workShell.top.expandMenu
+[locale-parity] it: missing workShell.top.retryUsage
+[locale-parity] it: missing workShell.top.retry
+[locale-parity] it: missing workShell.top.timeChipTitle
+[locale-parity] it: missing workShell.top.left
+[locale-parity] it: missing workShell.top.buyHoursTitle
+[locale-parity] it: missing workShell.top.buyHours
+[locale-parity] it: missing workShell.top.buyHoursShort
+[locale-parity] it: missing workShell.top.addTime
+[locale-parity] it: missing workShell.top.upgradeTitle
+[locale-parity] it: missing workShell.top.upgradeTitleGeneric
+[locale-parity] it: missing workShell.top.upgrade
+[locale-parity] it: missing workShell.top.windowsAppTitle
+[locale-parity] it: missing workShell.top.windowsApp
+[locale-parity] it: missing workShell.top.signOut
+[locale-parity] it: missing workShell.plan.unitH
+[locale-parity] it: missing workShell.plan.unitMin
+[locale-parity] it: missing workShell.plan.active
+[locale-parity] it: missing workShell.plan.name
+[locale-parity] it: missing workShell.plan.open
+[locale-parity] it: missing workShell.plan.close
+[locale-parity] it: missing workShell.plan.dialog
+[locale-parity] it: missing workShell.plan.hoursTitle
+[locale-parity] it: missing workShell.plan.usedOf
+[locale-parity] it: missing workShell.plan.renews
+[locale-parity] it: missing workShell.plan.carry
+[locale-parity] it: missing workShell.plan.carryCap
+[locale-parity] it: missing workShell.plan.carried
+[locale-parity] it: missing workShell.plan.allowance
+[locale-parity] it: missing workShell.plan.allowanceUsed
+[locale-parity] it: missing workShell.plan.windowDay
+[locale-parity] it: missing workShell.plan.windowWeek
+[locale-parity] it: missing workShell.plan.windowMonth
+[locale-parity] it: missing workShell.plan.companyPool
+[locale-parity] it: missing workShell.plan.companyPoolNote
+[locale-parity] it: missing workShell.plan.topup
+[locale-parity] it: missing workShell.plan.topupNote
+[locale-parity] it: missing workShell.plan.tasksTitle
+[locale-parity] it: missing workShell.plan.tasksUnlimited
+[locale-parity] it: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] it: missing workShell.plan.tasksLeftAria
+[locale-parity] it: missing workShell.plan.tasksReset
+[locale-parity] it: missing workShell.plan.tasksOpen
+[locale-parity] it: missing workShell.plan.statePool
+[locale-parity] it: missing workShell.plan.stateCeiling
+[locale-parity] it: missing workShell.plan.stateExhausted
+[locale-parity] it: missing workShell.plan.stateExhaustedCompany
+[locale-parity] it: missing workShell.plan.stateLow
+[locale-parity] it: missing workShell.plan.stateLowCompany
+[locale-parity] it: missing workShell.plan.stateTaskCap
+[locale-parity] it: missing workShell.plan.actBuy
+[locale-parity] it: missing workShell.plan.actUpgrade
+[locale-parity] it: missing workShell.buy.titleHours
+[locale-parity] it: missing workShell.buy.titleImages
+[locale-parity] it: missing workShell.buy.bodyHours
+[locale-parity] it: missing workShell.buy.bodyImages
+[locale-parity] it: missing workShell.buy.qtyHours
+[locale-parity] it: missing workShell.buy.qtyImages
+[locale-parity] it: missing workShell.buy.required
+[locale-parity] it: missing workShell.buy.unit
+[locale-parity] it: missing workShell.buy.perHour
+[locale-parity] it: missing workShell.buy.perImage
+[locale-parity] it: missing workShell.buy.total
+[locale-parity] it: missing workShell.buy.cancel
+[locale-parity] it: missing workShell.buy.continue
+[locale-parity] it: missing workShell.buy.errWhole
+[locale-parity] it: missing workShell.buy.errMin
+[locale-parity] it: missing workShell.buy.errCheckout
+[locale-parity] ja: missing workShell.top.viewingAs
+[locale-parity] ja: missing workShell.top.stop
+[locale-parity] ja: missing workShell.top.collapseMenu
+[locale-parity] ja: missing workShell.top.expandMenu
+[locale-parity] ja: missing workShell.top.retryUsage
+[locale-parity] ja: missing workShell.top.retry
+[locale-parity] ja: missing workShell.top.timeChipTitle
+[locale-parity] ja: missing workShell.top.left
+[locale-parity] ja: missing workShell.top.buyHoursTitle
+[locale-parity] ja: missing workShell.top.buyHours
+[locale-parity] ja: missing workShell.top.buyHoursShort
+[locale-parity] ja: missing workShell.top.addTime
+[locale-parity] ja: missing workShell.top.upgradeTitle
+[locale-parity] ja: missing workShell.top.upgradeTitleGeneric
+[locale-parity] ja: missing workShell.top.upgrade
+[locale-parity] ja: missing workShell.top.windowsAppTitle
+[locale-parity] ja: missing workShell.top.windowsApp
+[locale-parity] ja: missing workShell.top.signOut
+[locale-parity] ja: missing workShell.plan.unitH
+[locale-parity] ja: missing workShell.plan.unitMin
+[locale-parity] ja: missing workShell.plan.active
+[locale-parity] ja: missing workShell.plan.name
+[locale-parity] ja: missing workShell.plan.open
+[locale-parity] ja: missing workShell.plan.close
+[locale-parity] ja: missing workShell.plan.dialog
+[locale-parity] ja: missing workShell.plan.hoursTitle
+[locale-parity] ja: missing workShell.plan.usedOf
+[locale-parity] ja: missing workShell.plan.renews
+[locale-parity] ja: missing workShell.plan.carry
+[locale-parity] ja: missing workShell.plan.carryCap
+[locale-parity] ja: missing workShell.plan.carried
+[locale-parity] ja: missing workShell.plan.allowance
+[locale-parity] ja: missing workShell.plan.allowanceUsed
+[locale-parity] ja: missing workShell.plan.windowDay
+[locale-parity] ja: missing workShell.plan.windowWeek
+[locale-parity] ja: missing workShell.plan.windowMonth
+[locale-parity] ja: missing workShell.plan.companyPool
+[locale-parity] ja: missing workShell.plan.companyPoolNote
+[locale-parity] ja: missing workShell.plan.topup
+[locale-parity] ja: missing workShell.plan.topupNote
+[locale-parity] ja: missing workShell.plan.tasksTitle
+[locale-parity] ja: missing workShell.plan.tasksUnlimited
+[locale-parity] ja: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] ja: missing workShell.plan.tasksLeftAria
+[locale-parity] ja: missing workShell.plan.tasksReset
+[locale-parity] ja: missing workShell.plan.tasksOpen
+[locale-parity] ja: missing workShell.plan.statePool
+[locale-parity] ja: missing workShell.plan.stateCeiling
+[locale-parity] ja: missing workShell.plan.stateExhausted
+[locale-parity] ja: missing workShell.plan.stateExhaustedCompany
+[locale-parity] ja: missing workShell.plan.stateLow
+[locale-parity] ja: missing workShell.plan.stateLowCompany
+[locale-parity] ja: missing workShell.plan.stateTaskCap
+[locale-parity] ja: missing workShell.plan.actBuy
+[locale-parity] ja: missing workShell.plan.actUpgrade
+[locale-parity] ja: missing workShell.buy.titleHours
+[locale-parity] ja: missing workShell.buy.titleImages
+[locale-parity] ja: missing workShell.buy.bodyHours
+[locale-parity] ja: missing workShell.buy.bodyImages
+[locale-parity] ja: missing workShell.buy.qtyHours
+[locale-parity] ja: missing workShell.buy.qtyImages
+[locale-parity] ja: missing workShell.buy.required
+[locale-parity] ja: missing workShell.buy.unit
+[locale-parity] ja: missing workShell.buy.perHour
+[locale-parity] ja: missing workShell.buy.perImage
+[locale-parity] ja: missing workShell.buy.total
+[locale-parity] ja: missing workShell.buy.cancel
+[locale-parity] ja: missing workShell.buy.continue
+[locale-parity] ja: missing workShell.buy.errWhole
+[locale-parity] ja: missing workShell.buy.errMin
+[locale-parity] ja: missing workShell.buy.errCheckout
+[locale-parity] ko: missing workShell.top.viewingAs
+[locale-parity] ko: missing workShell.top.stop
+[locale-parity] ko: missing workShell.top.collapseMenu
+[locale-parity] ko: missing workShell.top.expandMenu
+[locale-parity] ko: missing workShell.top.retryUsage
+[locale-parity] ko: missing workShell.top.retry
+[locale-parity] ko: missing workShell.top.timeChipTitle
+[locale-parity] ko: missing workShell.top.left
+[locale-parity] ko: missing workShell.top.buyHoursTitle
+[locale-parity] ko: missing workShell.top.buyHours
+[locale-parity] ko: missing workShell.top.buyHoursShort
+[locale-parity] ko: missing workShell.top.addTime
+[locale-parity] ko: missing workShell.top.upgradeTitle
+[locale-parity] ko: missing workShell.top.upgradeTitleGeneric
+[locale-parity] ko: missing workShell.top.upgrade
+[locale-parity] ko: missing workShell.top.windowsAppTitle
+[locale-parity] ko: missing workShell.top.windowsApp
+[locale-parity] ko: missing workShell.top.signOut
+[locale-parity] ko: missing workShell.plan.unitH
+[locale-parity] ko: missing workShell.plan.unitMin
+[locale-parity] ko: missing workShell.plan.active
+[locale-parity] ko: missing workShell.plan.name
+[locale-parity] ko: missing workShell.plan.open
+[locale-parity] ko: missing workShell.plan.close
+[locale-parity] ko: missing workShell.plan.dialog
+[locale-parity] ko: missing workShell.plan.hoursTitle
+[locale-parity] ko: missing workShell.plan.usedOf
+[locale-parity] ko: missing workShell.plan.renews
+[locale-parity] ko: missing workShell.plan.carry
+[locale-parity] ko: missing workShell.plan.carryCap
+[locale-parity] ko: missing workShell.plan.carried
+[locale-parity] ko: missing workShell.plan.allowance
+[locale-parity] ko: missing workShell.plan.allowanceUsed
+[locale-parity] ko: missing workShell.plan.windowDay
+[locale-parity] ko: missing workShell.plan.windowWeek
+[locale-parity] ko: missing workShell.plan.windowMonth
+[locale-parity] ko: missing workShell.plan.companyPool
+[locale-parity] ko: missing workShell.plan.companyPoolNote
+[locale-parity] ko: missing workShell.plan.topup
+[locale-parity] ko: missing workShell.plan.topupNote
+[locale-parity] ko: missing workShell.plan.tasksTitle
+[locale-parity] ko: missing workShell.plan.tasksUnlimited
+[locale-parity] ko: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] ko: missing workShell.plan.tasksLeftAria
+[locale-parity] ko: missing workShell.plan.tasksReset
+[locale-parity] ko: missing workShell.plan.tasksOpen
+[locale-parity] ko: missing workShell.plan.statePool
+[locale-parity] ko: missing workShell.plan.stateCeiling
+[locale-parity] ko: missing workShell.plan.stateExhausted
+[locale-parity] ko: missing workShell.plan.stateExhaustedCompany
+[locale-parity] ko: missing workShell.plan.stateLow
+[locale-parity] ko: missing workShell.plan.stateLowCompany
+[locale-parity] ko: missing workShell.plan.stateTaskCap
+[locale-parity] ko: missing workShell.plan.actBuy
+[locale-parity] ko: missing workShell.plan.actUpgrade
+[locale-parity] ko: missing workShell.buy.titleHours
+[locale-parity] ko: missing workShell.buy.titleImages
+[locale-parity] ko: missing workShell.buy.bodyHours
+[locale-parity] ko: missing workShell.buy.bodyImages
+[locale-parity] ko: missing workShell.buy.qtyHours
+[locale-parity] ko: missing workShell.buy.qtyImages
+[locale-parity] ko: missing workShell.buy.required
+[locale-parity] ko: missing workShell.buy.unit
+[locale-parity] ko: missing workShell.buy.perHour
+[locale-parity] ko: missing workShell.buy.perImage
+[locale-parity] ko: missing workShell.buy.total
+[locale-parity] ko: missing workShell.buy.cancel
+[locale-parity] ko: missing workShell.buy.continue
+[locale-parity] ko: missing workShell.buy.errWhole
+[locale-parity] ko: missing workShell.buy.errMin
+[locale-parity] ko: missing workShell.buy.errCheckout
+[locale-parity] pt-BR: missing workShell.top.viewingAs
+[locale-parity] pt-BR: missing workShell.top.stop
+[locale-parity] pt-BR: missing workShell.top.collapseMenu
+[locale-parity] pt-BR: missing workShell.top.expandMenu
+[locale-parity] pt-BR: missing workShell.top.retryUsage
+[locale-parity] pt-BR: missing workShell.top.retry
+[locale-parity] pt-BR: missing workShell.top.timeChipTitle
+[locale-parity] pt-BR: missing workShell.top.left
+[locale-parity] pt-BR: missing workShell.top.buyHoursTitle
+[locale-parity] pt-BR: missing workShell.top.buyHours
+[locale-parity] pt-BR: missing workShell.top.buyHoursShort
+[locale-parity] pt-BR: missing workShell.top.addTime
+[locale-parity] pt-BR: missing workShell.top.upgradeTitle
+[locale-parity] pt-BR: missing workShell.top.upgradeTitleGeneric
+[locale-parity] pt-BR: missing workShell.top.upgrade
+[locale-parity] pt-BR: missing workShell.top.windowsAppTitle
+[locale-parity] pt-BR: missing workShell.top.windowsApp
+[locale-parity] pt-BR: missing workShell.top.signOut
+[locale-parity] pt-BR: missing workShell.plan.unitH
+[locale-parity] pt-BR: missing workShell.plan.unitMin
+[locale-parity] pt-BR: missing workShell.plan.active
+[locale-parity] pt-BR: missing workShell.plan.name
+[locale-parity] pt-BR: missing workShell.plan.open
+[locale-parity] pt-BR: missing workShell.plan.close
+[locale-parity] pt-BR: missing workShell.plan.dialog
+[locale-parity] pt-BR: missing workShell.plan.hoursTitle
+[locale-parity] pt-BR: missing workShell.plan.usedOf
+[locale-parity] pt-BR: missing workShell.plan.renews
+[locale-parity] pt-BR: missing workShell.plan.carry
+[locale-parity] pt-BR: missing workShell.plan.carryCap
+[locale-parity] pt-BR: missing workShell.plan.carried
+[locale-parity] pt-BR: missing workShell.plan.allowance
+[locale-parity] pt-BR: missing workShell.plan.allowanceUsed
+[locale-parity] pt-BR: missing workShell.plan.windowDay
+[locale-parity] pt-BR: missing workShell.plan.windowWeek
+[locale-parity] pt-BR: missing workShell.plan.windowMonth
+[locale-parity] pt-BR: missing workShell.plan.companyPool
+[locale-parity] pt-BR: missing workShell.plan.companyPoolNote
+[locale-parity] pt-BR: missing workShell.plan.topup
+[locale-parity] pt-BR: missing workShell.plan.topupNote
+[locale-parity] pt-BR: missing workShell.plan.tasksTitle
+[locale-parity] pt-BR: missing workShell.plan.tasksUnlimited
+[locale-parity] pt-BR: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] pt-BR: missing workShell.plan.tasksLeftAria
+[locale-parity] pt-BR: missing workShell.plan.tasksReset
+[locale-parity] pt-BR: missing workShell.plan.tasksOpen
+[locale-parity] pt-BR: missing workShell.plan.statePool
+[locale-parity] pt-BR: missing workShell.plan.stateCeiling
+[locale-parity] pt-BR: missing workShell.plan.stateExhausted
+[locale-parity] pt-BR: missing workShell.plan.stateExhaustedCompany
+[locale-parity] pt-BR: missing workShell.plan.stateLow
+[locale-parity] pt-BR: missing workShell.plan.stateLowCompany
+[locale-parity] pt-BR: missing workShell.plan.stateTaskCap
+[locale-parity] pt-BR: missing workShell.plan.actBuy
+[locale-parity] pt-BR: missing workShell.plan.actUpgrade
+[locale-parity] pt-BR: missing workShell.buy.titleHours
+[locale-parity] pt-BR: missing workShell.buy.titleImages
+[locale-parity] pt-BR: missing workShell.buy.bodyHours
+[locale-parity] pt-BR: missing workShell.buy.bodyImages
+[locale-parity] pt-BR: missing workShell.buy.qtyHours
+[locale-parity] pt-BR: missing workShell.buy.qtyImages
+[locale-parity] pt-BR: missing workShell.buy.required
+[locale-parity] pt-BR: missing workShell.buy.unit
+[locale-parity] pt-BR: missing workShell.buy.perHour
+[locale-parity] pt-BR: missing workShell.buy.perImage
+[locale-parity] pt-BR: missing workShell.buy.total
+[locale-parity] pt-BR: missing workShell.buy.cancel
+[locale-parity] pt-BR: missing workShell.buy.continue
+[locale-parity] pt-BR: missing workShell.buy.errWhole
+[locale-parity] pt-BR: missing workShell.buy.errMin
+[locale-parity] pt-BR: missing workShell.buy.errCheckout
+[locale-parity] ru: missing workShell.top.viewingAs
+[locale-parity] ru: missing workShell.top.stop
+[locale-parity] ru: missing workShell.top.collapseMenu
+[locale-parity] ru: missing workShell.top.expandMenu
+[locale-parity] ru: missing workShell.top.retryUsage
+[locale-parity] ru: missing workShell.top.retry
+[locale-parity] ru: missing workShell.top.timeChipTitle
+[locale-parity] ru: missing workShell.top.left
+[locale-parity] ru: missing workShell.top.buyHoursTitle
+[locale-parity] ru: missing workShell.top.buyHours
+[locale-parity] ru: missing workShell.top.buyHoursShort
+[locale-parity] ru: missing workShell.top.addTime
+[locale-parity] ru: missing workShell.top.upgradeTitle
+[locale-parity] ru: missing workShell.top.upgradeTitleGeneric
+[locale-parity] ru: missing workShell.top.upgrade
+[locale-parity] ru: missing workShell.top.windowsAppTitle
+[locale-parity] ru: missing workShell.top.windowsApp
+[locale-parity] ru: missing workShell.top.signOut
+[locale-parity] ru: missing workShell.plan.unitH
+[locale-parity] ru: missing workShell.plan.unitMin
+[locale-parity] ru: missing workShell.plan.active
+[locale-parity] ru: missing workShell.plan.name
+[locale-parity] ru: missing workShell.plan.open
+[locale-parity] ru: missing workShell.plan.close
+[locale-parity] ru: missing workShell.plan.dialog
+[locale-parity] ru: missing workShell.plan.hoursTitle
+[locale-parity] ru: missing workShell.plan.usedOf
+[locale-parity] ru: missing workShell.plan.renews
+[locale-parity] ru: missing workShell.plan.carry
+[locale-parity] ru: missing workShell.plan.carryCap
+[locale-parity] ru: missing workShell.plan.carried
+[locale-parity] ru: missing workShell.plan.allowance
+[locale-parity] ru: missing workShell.plan.allowanceUsed
+[locale-parity] ru: missing workShell.plan.windowDay
+[locale-parity] ru: missing workShell.plan.windowWeek
+[locale-parity] ru: missing workShell.plan.windowMonth
+[locale-parity] ru: missing workShell.plan.companyPool
+[locale-parity] ru: missing workShell.plan.companyPoolNote
+[locale-parity] ru: missing workShell.plan.topup
+[locale-parity] ru: missing workShell.plan.topupNote
+[locale-parity] ru: missing workShell.plan.tasksTitle
+[locale-parity] ru: missing workShell.plan.tasksUnlimited
+[locale-parity] ru: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] ru: missing workShell.plan.tasksLeftAria
+[locale-parity] ru: missing workShell.plan.tasksReset
+[locale-parity] ru: missing workShell.plan.tasksOpen
+[locale-parity] ru: missing workShell.plan.statePool
+[locale-parity] ru: missing workShell.plan.stateCeiling
+[locale-parity] ru: missing workShell.plan.stateExhausted
+[locale-parity] ru: missing workShell.plan.stateExhaustedCompany
+[locale-parity] ru: missing workShell.plan.stateLow
+[locale-parity] ru: missing workShell.plan.stateLowCompany
+[locale-parity] ru: missing workShell.plan.stateTaskCap
+[locale-parity] ru: missing workShell.plan.actBuy
+[locale-parity] ru: missing workShell.plan.actUpgrade
+[locale-parity] ru: missing workShell.buy.titleHours
+[locale-parity] ru: missing workShell.buy.titleImages
+[locale-parity] ru: missing workShell.buy.bodyHours
+[locale-parity] ru: missing workShell.buy.bodyImages
+[locale-parity] ru: missing workShell.buy.qtyHours
+[locale-parity] ru: missing workShell.buy.qtyImages
+[locale-parity] ru: missing workShell.buy.required
+[locale-parity] ru: missing workShell.buy.unit
+[locale-parity] ru: missing workShell.buy.perHour
+[locale-parity] ru: missing workShell.buy.perImage
+[locale-parity] ru: missing workShell.buy.total
+[locale-parity] ru: missing workShell.buy.cancel
+[locale-parity] ru: missing workShell.buy.continue
+[locale-parity] ru: missing workShell.buy.errWhole
+[locale-parity] ru: missing workShell.buy.errMin
+[locale-parity] ru: missing workShell.buy.errCheckout
+[locale-parity] tr: missing workShell.top.viewingAs
+[locale-parity] tr: missing workShell.top.stop
+[locale-parity] tr: missing workShell.top.collapseMenu
+[locale-parity] tr: missing workShell.top.expandMenu
+[locale-parity] tr: missing workShell.top.retryUsage
+[locale-parity] tr: missing workShell.top.retry
+[locale-parity] tr: missing workShell.top.timeChipTitle
+[locale-parity] tr: missing workShell.top.left
+[locale-parity] tr: missing workShell.top.buyHoursTitle
+[locale-parity] tr: missing workShell.top.buyHours
+[locale-parity] tr: missing workShell.top.buyHoursShort
+[locale-parity] tr: missing workShell.top.addTime
+[locale-parity] tr: missing workShell.top.upgradeTitle
+[locale-parity] tr: missing workShell.top.upgradeTitleGeneric
+[locale-parity] tr: missing workShell.top.upgrade
+[locale-parity] tr: missing workShell.top.windowsAppTitle
+[locale-parity] tr: missing workShell.top.windowsApp
+[locale-parity] tr: missing workShell.top.signOut
+[locale-parity] tr: missing workShell.plan.unitH
+[locale-parity] tr: missing workShell.plan.unitMin
+[locale-parity] tr: missing workShell.plan.active
+[locale-parity] tr: missing workShell.plan.name
+[locale-parity] tr: missing workShell.plan.open
+[locale-parity] tr: missing workShell.plan.close
+[locale-parity] tr: missing workShell.plan.dialog
+[locale-parity] tr: missing workShell.plan.hoursTitle
+[locale-parity] tr: missing workShell.plan.usedOf
+[locale-parity] tr: missing workShell.plan.renews
+[locale-parity] tr: missing workShell.plan.carry
+[locale-parity] tr: missing workShell.plan.carryCap
+[locale-parity] tr: missing workShell.plan.carried
+[locale-parity] tr: missing workShell.plan.allowance
+[locale-parity] tr: missing workShell.plan.allowanceUsed
+[locale-parity] tr: missing workShell.plan.windowDay
+[locale-parity] tr: missing workShell.plan.windowWeek
+[locale-parity] tr: missing workShell.plan.windowMonth
+[locale-parity] tr: missing workShell.plan.companyPool
+[locale-parity] tr: missing workShell.plan.companyPoolNote
+[locale-parity] tr: missing workShell.plan.topup
+[locale-parity] tr: missing workShell.plan.topupNote
+[locale-parity] tr: missing workShell.plan.tasksTitle
+[locale-parity] tr: missing workShell.plan.tasksUnlimited
+[locale-parity] tr: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] tr: missing workShell.plan.tasksLeftAria
+[locale-parity] tr: missing workShell.plan.tasksReset
+[locale-parity] tr: missing workShell.plan.tasksOpen
+[locale-parity] tr: missing workShell.plan.statePool
+[locale-parity] tr: missing workShell.plan.stateCeiling
+[locale-parity] tr: missing workShell.plan.stateExhausted
+[locale-parity] tr: missing workShell.plan.stateExhaustedCompany
+[locale-parity] tr: missing workShell.plan.stateLow
+[locale-parity] tr: missing workShell.plan.stateLowCompany
+[locale-parity] tr: missing workShell.plan.stateTaskCap
+[locale-parity] tr: missing workShell.plan.actBuy
+[locale-parity] tr: missing workShell.plan.actUpgrade
+[locale-parity] tr: missing workShell.buy.titleHours
+[locale-parity] tr: missing workShell.buy.titleImages
+[locale-parity] tr: missing workShell.buy.bodyHours
+[locale-parity] tr: missing workShell.buy.bodyImages
+[locale-parity] tr: missing workShell.buy.qtyHours
+[locale-parity] tr: missing workShell.buy.qtyImages
+[locale-parity] tr: missing workShell.buy.required
+[locale-parity] tr: missing workShell.buy.unit
+[locale-parity] tr: missing workShell.buy.perHour
+[locale-parity] tr: missing workShell.buy.perImage
+[locale-parity] tr: missing workShell.buy.total
+[locale-parity] tr: missing workShell.buy.cancel
+[locale-parity] tr: missing workShell.buy.continue
+[locale-parity] tr: missing workShell.buy.errWhole
+[locale-parity] tr: missing workShell.buy.errMin
+[locale-parity] tr: missing workShell.buy.errCheckout
+[locale-parity] vi: missing workShell.top.viewingAs
+[locale-parity] vi: missing workShell.top.stop
+[locale-parity] vi: missing workShell.top.collapseMenu
+[locale-parity] vi: missing workShell.top.expandMenu
+[locale-parity] vi: missing workShell.top.retryUsage
+[locale-parity] vi: missing workShell.top.retry
+[locale-parity] vi: missing workShell.top.timeChipTitle
+[locale-parity] vi: missing workShell.top.left
+[locale-parity] vi: missing workShell.top.buyHoursTitle
+[locale-parity] vi: missing workShell.top.buyHours
+[locale-parity] vi: missing workShell.top.buyHoursShort
+[locale-parity] vi: missing workShell.top.addTime
+[locale-parity] vi: missing workShell.top.upgradeTitle
+[locale-parity] vi: missing workShell.top.upgradeTitleGeneric
+[locale-parity] vi: missing workShell.top.upgrade
+[locale-parity] vi: missing workShell.top.windowsAppTitle
+[locale-parity] vi: missing workShell.top.windowsApp
+[locale-parity] vi: missing workShell.top.signOut
+[locale-parity] vi: missing workShell.plan.unitH
+[locale-parity] vi: missing workShell.plan.unitMin
+[locale-parity] vi: missing workShell.plan.active
+[locale-parity] vi: missing workShell.plan.name
+[locale-parity] vi: missing workShell.plan.open
+[locale-parity] vi: missing workShell.plan.close
+[locale-parity] vi: missing workShell.plan.dialog
+[locale-parity] vi: missing workShell.plan.hoursTitle
+[locale-parity] vi: missing workShell.plan.usedOf
+[locale-parity] vi: missing workShell.plan.renews
+[locale-parity] vi: missing workShell.plan.carry
+[locale-parity] vi: missing workShell.plan.carryCap
+[locale-parity] vi: missing workShell.plan.carried
+[locale-parity] vi: missing workShell.plan.allowance
+[locale-parity] vi: missing workShell.plan.allowanceUsed
+[locale-parity] vi: missing workShell.plan.windowDay
+[locale-parity] vi: missing workShell.plan.windowWeek
+[locale-parity] vi: missing workShell.plan.windowMonth
+[locale-parity] vi: missing workShell.plan.companyPool
+[locale-parity] vi: missing workShell.plan.companyPoolNote
+[locale-parity] vi: missing workShell.plan.topup
+[locale-parity] vi: missing workShell.plan.topupNote
+[locale-parity] vi: missing workShell.plan.tasksTitle
+[locale-parity] vi: missing workShell.plan.tasksUnlimited
+[locale-parity] vi: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] vi: missing workShell.plan.tasksLeftAria
+[locale-parity] vi: missing workShell.plan.tasksReset
+[locale-parity] vi: missing workShell.plan.tasksOpen
+[locale-parity] vi: missing workShell.plan.statePool
+[locale-parity] vi: missing workShell.plan.stateCeiling
+[locale-parity] vi: missing workShell.plan.stateExhausted
+[locale-parity] vi: missing workShell.plan.stateExhaustedCompany
+[locale-parity] vi: missing workShell.plan.stateLow
+[locale-parity] vi: missing workShell.plan.stateLowCompany
+[locale-parity] vi: missing workShell.plan.stateTaskCap
+[locale-parity] vi: missing workShell.plan.actBuy
+[locale-parity] vi: missing workShell.plan.actUpgrade
+[locale-parity] vi: missing workShell.buy.titleHours
+[locale-parity] vi: missing workShell.buy.titleImages
+[locale-parity] vi: missing workShell.buy.bodyHours
+[locale-parity] vi: missing workShell.buy.bodyImages
+[locale-parity] vi: missing workShell.buy.qtyHours
+[locale-parity] vi: missing workShell.buy.qtyImages
+[locale-parity] vi: missing workShell.buy.required
+[locale-parity] vi: missing workShell.buy.unit
+[locale-parity] vi: missing workShell.buy.perHour
+[locale-parity] vi: missing workShell.buy.perImage
+[locale-parity] vi: missing workShell.buy.total
+[locale-parity] vi: missing workShell.buy.cancel
+[locale-parity] vi: missing workShell.buy.continue
+[locale-parity] vi: missing workShell.buy.errWhole
+[locale-parity] vi: missing workShell.buy.errMin
+[locale-parity] vi: missing workShell.buy.errCheckout
+[locale-parity] zh: missing workShell.top.viewingAs
+[locale-parity] zh: missing workShell.top.stop
+[locale-parity] zh: missing workShell.top.collapseMenu
+[locale-parity] zh: missing workShell.top.expandMenu
+[locale-parity] zh: missing workShell.top.retryUsage
+[locale-parity] zh: missing workShell.top.retry
+[locale-parity] zh: missing workShell.top.timeChipTitle
+[locale-parity] zh: missing workShell.top.left
+[locale-parity] zh: missing workShell.top.buyHoursTitle
+[locale-parity] zh: missing workShell.top.buyHours
+[locale-parity] zh: missing workShell.top.buyHoursShort
+[locale-parity] zh: missing workShell.top.addTime
+[locale-parity] zh: missing workShell.top.upgradeTitle
+[locale-parity] zh: missing workShell.top.upgradeTitleGeneric
+[locale-parity] zh: missing workShell.top.upgrade
+[locale-parity] zh: missing workShell.top.windowsAppTitle
+[locale-parity] zh: missing workShell.top.windowsApp
+[locale-parity] zh: missing workShell.top.signOut
+[locale-parity] zh: missing workShell.plan.unitH
+[locale-parity] zh: missing workShell.plan.unitMin
+[locale-parity] zh: missing workShell.plan.active
+[locale-parity] zh: missing workShell.plan.name
+[locale-parity] zh: missing workShell.plan.open
+[locale-parity] zh: missing workShell.plan.close
+[locale-parity] zh: missing workShell.plan.dialog
+[locale-parity] zh: missing workShell.plan.hoursTitle
+[locale-parity] zh: missing workShell.plan.usedOf
+[locale-parity] zh: missing workShell.plan.renews
+[locale-parity] zh: missing workShell.plan.carry
+[locale-parity] zh: missing workShell.plan.carryCap
+[locale-parity] zh: missing workShell.plan.carried
+[locale-parity] zh: missing workShell.plan.allowance
+[locale-parity] zh: missing workShell.plan.allowanceUsed
+[locale-parity] zh: missing workShell.plan.windowDay
+[locale-parity] zh: missing workShell.plan.windowWeek
+[locale-parity] zh: missing workShell.plan.windowMonth
+[locale-parity] zh: missing workShell.plan.companyPool
+[locale-parity] zh: missing workShell.plan.companyPoolNote
+[locale-parity] zh: missing workShell.plan.topup
+[locale-parity] zh: missing workShell.plan.topupNote
+[locale-parity] zh: missing workShell.plan.tasksTitle
+[locale-parity] zh: missing workShell.plan.tasksUnlimited
+[locale-parity] zh: missing workShell.plan.tasksUnlimitedAria
+[locale-parity] zh: missing workShell.plan.tasksLeftAria
+[locale-parity] zh: missing workShell.plan.tasksReset
+[locale-parity] zh: missing workShell.plan.tasksOpen
+[locale-parity] zh: missing workShell.plan.statePool
+[locale-parity] zh: missing workShell.plan.stateCeiling
+[locale-parity] zh: missing workShell.plan.stateExhausted
+[locale-parity] zh: missing workShell.plan.stateExhaustedCompany
+[locale-parity] zh: missing workShell.plan.stateLow
+[locale-parity] zh: missing workShell.plan.stateLowCompany
+[locale-parity] zh: missing workShell.plan.stateTaskCap
+[locale-parity] zh: missing workShell.plan.actBuy
+[locale-parity] zh: missing workShell.plan.actUpgrade
+[locale-parity] zh: missing workShell.buy.titleHours
+[locale-parity] zh: missing workShell.buy.titleImages
+[locale-parity] zh: missing workShell.buy.bodyHours
+[locale-parity] zh: missing workShell.buy.bodyImages
+[locale-parity] zh: missing workShell.buy.qtyHours
+[locale-parity] zh: missing workShell.buy.qtyImages
+[locale-parity] zh: missing workShell.buy.required
+[locale-parity] zh: missing workShell.buy.unit
+[locale-parity] zh: missing workShell.buy.perHour
+[locale-parity] zh: missing workShell.buy.perImage
+[locale-parity] zh: missing workShell.buy.total
+[locale-parity] zh: missing workShell.buy.cancel
+[locale-parity] zh: missing workShell.buy.continue
+[locale-parity] zh: missing workShell.buy.errWhole
+[locale-parity] zh: missing workShell.buy.errMin
+[locale-parity] zh: missing workShell.buy.errCheckout
+[locale-parity] FAILED: 994 missing/mismatched key(s) in 14 locale(s) under workShell.
+[locale-parity] ar: missing workStart.parkedNote
+[locale-parity] ar: missing workStart.setupAiLink
+[locale-parity] ar: missing workStart.continueHint
+[locale-parity] de: missing workStart.parkedNote
+[locale-parity] de: missing workStart.setupAiLink
+[locale-parity] de: missing workStart.continueHint
+[locale-parity] es: missing workStart.parkedNote
+[locale-parity] es: missing workStart.setupAiLink
+[locale-parity] es: missing workStart.continueHint
+[locale-parity] fr: missing workStart.parkedNote
+[locale-parity] fr: missing workStart.setupAiLink
+[locale-parity] fr: missing workStart.continueHint
+[locale-parity] hi: missing workStart.parkedNote
+[locale-parity] hi: missing workStart.setupAiLink
+[locale-parity] hi: missing workStart.continueHint
+[locale-parity] id: missing workStart.parkedNote
+[locale-parity] id: missing workStart.setupAiLink
+[locale-parity] id: missing workStart.continueHint
+[locale-parity] it: missing workStart.parkedNote
+[locale-parity] it: missing workStart.setupAiLink
+[locale-parity] it: missing workStart.continueHint
+[locale-parity] ja: missing workStart.parkedNote
+[locale-parity] ja: missing workStart.setupAiLink
+[locale-parity] ja: missing workStart.continueHint
+[locale-parity] ko: missing workStart.parkedNote
+[locale-parity] ko: missing workStart.setupAiLink
+[locale-parity] ko: missing workStart.continueHint
+[locale-parity] pt-BR: missing workStart.parkedNote
+[locale-parity] pt-BR: missing workStart.setupAiLink
+[locale-parity] pt-BR: missing workStart.continueHint
+[locale-parity] ru: missing workStart.parkedNote
+[locale-parity] ru: missing workStart.setupAiLink
+[locale-parity] ru: missing workStart.continueHint
+[locale-parity] tr: missing workStart.parkedNote
+[locale-parity] tr: missing workStart.setupAiLink
+[locale-parity] tr: missing workStart.continueHint
+[locale-parity] vi: missing workStart.parkedNote
+[locale-parity] vi: missing workStart.setupAiLink
+[locale-parity] vi: missing workStart.continueHint
+[locale-parity] zh: missing workStart.parkedNote
+[locale-parity] zh: missing workStart.setupAiLink
+[locale-parity] zh: missing workStart.continueHint
+[locale-parity] FAILED: 42 missing/mismatched key(s) in 14 locale(s) under workStart.

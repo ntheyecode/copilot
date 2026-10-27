@@ -1,11 +1,16 @@
 import React from 'react'
 import { ExternalLink } from 'lucide-react'
 import CopyChip from './CopyChip.jsx'
+import ValueChip from './ValueChip.jsx'
 
 // Render WorkCoPilot guidance text with light, SAFE inline formatting so the
 // model's markdown shows as real emphasis instead of literal characters:
-//   **bold**      -> bold + accent color (a key action or term to notice)
-//   `code`        -> inline monospace chip (a command, path, value to type)
+//   **bold**      -> a KEY TERM: the control / button / field / literal value
+//                    the user must act on. Bold, brand-colored and softly
+//                    highlighted so the eye lands on exactly what to do.
+//   `code`        -> a literal value (a command, path, record, value to type)
+//                    as a ONE-TAP COPY chip (ValueChip), so no value is ever
+//                    shown without a way to copy it.
 //   ==highlight== -> a highlighted phrase
 // Everything else is plain text; newlines become line breaks. It never renders
 // raw HTML, only these span types, so it is safe for model output.
@@ -16,9 +21,10 @@ import CopyChip from './CopyChip.jsx'
 //              in a new tab (rel="noopener noreferrer"), shown without the scheme.
 //   keys     - a `code` span that is a keyboard shortcut (`Ctrl+Shift+V`,
 //              `Enter`, `Cmd+K`) renders as key chips instead of a code chip.
-//   copyOver - a `code` span at least this many characters long (a full
-//              command or dependency line) gets a Copy chip after it, so no
-//              code is ever shown that cannot be copied. 0 = off.
+//   copyOver - legacy: with chips=false, a `code` span at least this many
+//              characters long gets a Copy chip after it. 0 = off.
+//   chips    - (default true) every `code` span is a one-tap copy chip. Pass
+//              false to get the plain monospace span (dense lists, titles).
 const TOKEN = /(\*{2,}[^*]+?\*{2,}|`[^`]+?`|==[^=]+?==)/g
 const URL_RE = /(https?:\/\/[^\s<>"'()]+)/g
 const MONO = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace'
@@ -56,7 +62,23 @@ function withLinks(seg, key, accent) {
   return out
 }
 
-export default function RichText({ text, accent = 'var(--em, #12a06a)', links = false, keys = false, copyOver = 0 }) {
+// The same text with the inline markers removed, for places that can only
+// hold plain text: a title attribute, an uppercase label, a window title.
+export function plainText(text) {
+  return String(text == null ? '' : text).replace(/\*{2,}([^*]+?)\*{2,}/g, '$1').replace(/`([^`]+?)`/g, '$1').replace(/==([^=]+?)==/g, '$1')
+}
+
+// The key-term treatment. color-mix keeps the soft highlight in the accent's
+// own hue in both themes and for any user-picked accent; the plain-color
+// fallback covers an engine without color-mix (the highlight is then absent,
+// the bold + color still carry the emphasis).
+const keyStyle = (accent) => ({
+  fontWeight: 750, color: accent, borderRadius: 4, padding: '0 0.22em', margin: '0 -0.04em',
+  background: `color-mix(in srgb, ${accent} 13%, transparent)`,
+  boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone',
+})
+
+export default function RichText({ text, accent = 'var(--em, #12a06a)', links = false, keys = false, copyOver = 0, chips = true }) {
   const s = String(text == null ? '' : text)
   if (!s) return null
   const out = []
@@ -66,7 +88,7 @@ export default function RichText({ text, accent = 'var(--em, #12a06a)', links = 
       if (!p) return
       const key = li + '-' + i
       if (/^\*{2,}[\s\S]+\*{2,}$/.test(p)) {
-        out.push(<strong key={key} style={{ fontWeight: 700, color: accent }}>{p.replace(/^\*+|\*+$/g, '')}</strong>)
+        out.push(<strong key={key} className="gv-key" style={keyStyle(accent)}>{p.replace(/^\*+|\*+$/g, '')}</strong>)
       } else if (p.length > 1 && p.startsWith('`') && p.endsWith('`')) {
         const code = p.slice(1, -1)
         if (keys && isKeyCombo(code)) {
@@ -74,6 +96,8 @@ export default function RichText({ text, accent = 'var(--em, #12a06a)', links = 
           out.push(<span key={key} style={{ whiteSpace: 'nowrap' }}>{parts.map((k, j) => <React.Fragment key={j}>{j > 0 && <span aria-hidden="true" style={{ margin: '0 2px', opacity: 0.7 }}>+</span>}<kbd style={kbdStyle}>{k}</kbd></React.Fragment>)}</span>)
         } else if (links && hrefOf(code)) {
           out.push(...withLinks(code, key, accent))
+        } else if (chips) {
+          out.push(<ValueChip key={key} value={code} />)
         } else {
           out.push(<code key={key} style={{ fontFamily: MONO, fontSize: '0.9em', background: 'rgba(127,127,127,.16)', borderRadius: 5, padding: '1px 5px', wordBreak: 'break-word' }}>{code}</code>)
           if (copyOver > 0 && code.length >= copyOver) out.push(<React.Fragment key={key + 'c'}> <CopyChip text={code} /></React.Fragment>)

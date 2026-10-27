@@ -1,23 +1,25 @@
 // Shared signed-in shell for the WorkCoPilot app: the session gate, the desktop
 // title-bar frame + window-mode switch, the left rail, the top bar (plan pill,
 // buy hours, add time, upgrade, sign out), the impersonation banner, and the
-// buy-credits modal. It loads the shared state ONCE and provides it via
+// buy-hours modal. It loads the shared state ONCE and provides it via
 // WorkAppContext, then renders the active page through <Outlet/>. This replaces
 // the old WorkPage default export (session gate + Home/Console switch) and the
 // Home shell (rail + top bar). Moved from WorkPage.jsx with behavior preserved;
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Trash2, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, CreditCard, RefreshCw, Download, AlertTriangle, Play, Blocks, BarChart3, Settings } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings } from 'lucide-react'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
-import { useT } from '../../i18n/index.jsx'
+import { useLocale, useT } from '../../i18n/index.jsx'
 import { WD_CSS } from './workApp.css.js'
 import { card, shell } from './lib.js'
 import { WorkAppContext } from './WorkAppContext.jsx'
+import PlanPill from './PlanPill.jsx'
+import { planView, fmtRenewDate, fmtDuration } from './planModel.js'
 
 // ---- Android self-update banner (moved verbatim from WorkPage) --------------
 function AppUpdateBanner() {
@@ -75,7 +77,7 @@ function GuardNotice({ note, onClose }) {
 }
 
 export default function WorkAppLayout() {
-  const t = useT()
+  const { t, tag } = useLocale()
   const navigate = useNavigate()
   const location = useLocation()
   const pathname = location.pathname
@@ -138,6 +140,17 @@ export default function WorkAppLayout() {
   const frame = (content) => desktop
     ? <><WorkShell authed={authed} /><div style={{ paddingTop: 40 }}>{content}</div></>
     : content
+  // The GUIDING console is a fixed-height column: the viewport (minus the
+  // desktop title bar) is the box, the console is its flex child and shrinks
+  // to fit, so a banner or notice above it can never push the guide under the
+  // title bar or below the fold (the content-behind-the-header-icons bug on
+  // small windows). The console's own header / scroll / footer split the box.
+  const guideFrame = (content) => (
+    <>
+      {desktop && <WorkShell authed={authed} />}
+      <div style={{ height: '100dvh', boxSizing: 'border-box', paddingTop: desktop ? 40 : 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{content}</div>
+    </>
+  )
 
   // ---- Shared app state (moved from Home.load / loadAi) ---------------------
   const user = sess && sess.user
@@ -168,9 +181,7 @@ export default function WorkAppLayout() {
   // Top-bar controls
   const [railOpen, setRailOpen] = useState(true)
   const [showBuy, setShowBuy] = useState(false)
-  const [planPop, setPlanPop] = useState(false)
-  const [trading, setTrading] = useState(false)
-  // Buy credits (extra hours / image credits): a small quantity + price modal.
+  // Buy top-up hours or an image bundle: a small quantity + price modal.
   const [buyErr, setBuyErr] = useState('')
   const [buyModal, setBuyModal] = useState(null)   // { kind: 'hours' | 'images' } | null
   const [buyQty, setBuyQty] = useState('')
@@ -249,35 +260,28 @@ export default function WorkAppLayout() {
     } catch { /* leaving the query as-is is harmless */ }
   }, [pathname, navigate])
 
-  // ---- Derived plan-pill + billing values (verbatim from Home) --------------
-  const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : null
-  const taskCredits = (usage && usage.tasks && Number(usage.tasks.taskCredits)) || 0
-  const tasksObj = (usage && usage.tasks) || null
-  const tasksUnlimited = !!(tasksObj && tasksObj.unlimited)
-  const tasksRemaining = tasksObj ? tasksObj.remaining : null
-  const tasksCap = tasksObj ? tasksObj.cap : null
-  const tasksResetLabel = (tasksObj && tasksObj.resetLabel) || '11:59 PM ET'
-  const tasksFace = tasksUnlimited ? '∞' : (tasksObj ? `${tasksRemaining}/${tasksCap}` : '-')
-  const canTrade = taskCredits >= 2 && !isCompanyMember
-  const resetLabel = (usage && usage.resetLabel) || '11:59 PM ET'
+  // ---- Derived plan values (ONE derivation, planModel.planView) -------------
+  // The pill, its popover, the dashboard meters and the console all read `plan`:
+  // this month's included hours, top-up hours, a company allowance / pool, today's
+  // task cap and the one actionable state. The old minutes-per-day, banked
+  // credits and trade values are gone with the monthly plan model.
+  const plan = useMemo(() => planView(usage, { isCompanyMember, isAdmin }), [usage, isCompanyMember, isAdmin])
+  // When the plan hours renew, localized from the server's 'YYYY-MM-01' key; a
+  // pool-based company member (no monthly plan) gets the company's reset label.
+  const renewLabel = useMemo(() => (usage ? (fmtRenewDate(usage.renewsAt, tag) || usage.resetLabel || '') : ''), [usage, tag])
+  const tasksResetLabel = (plan && plan.tasks && plan.tasks.resetLabel) || ''
+  const units = useMemo(() => ({ h: t('workShell.plan.unitH'), min: t('workShell.plan.unitMin') }), [t])
+  const timeLeft = plan ? fmtDuration(plan.remainingSeconds, units, true) : null
   const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
-  const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || 'Active'
-  const low = !!usage && (usage.exhausted || (usage.remainingSeconds != null && usage.remainingSeconds <= 900))
+  const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || t('workShell.plan.active')
+  const low = !!plan && (plan.exhausted || plan.low)
   const tier = (usage && usage.tier) || 'basic'
   const titleCase = useCallback((s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : ''), [])
   const money = useCallback((n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`), [])
   const showBilling = hasPlan || (Array.isArray(invoices) && invoices.length > 0)
+  const canBuyHours = !!(user && !user.companyId && !isAdmin && usage != null)
+  const upgradeHref = '/workcopilot/pricing'
 
-  const tradeCredits = useCallback(async () => {
-    if (trading || !canTrade) return
-    setTrading(true)
-    setUsage((u) => (u && u.tasks) ? { ...u, tasks: { ...u.tasks, taskCredits: Math.max(0, (Number(u.tasks.taskCredits) || 0) - 2) } } : u)
-    try {
-      await fetch('/api/work/credits/trade', { method: 'POST', credentials: 'include', headers: { 'Content-Type': 'application/json', ...(typeof window !== 'undefined' && window.refigold ? { 'X-Refigold-App': '1' } : {}) }, body: JSON.stringify({ hours: 1 }) })
-    } catch { /* the refetch below corrects the optimistic change */ }
-    try { const u = await api.workUsage(); setUsage(u) } catch { /* ignore */ }
-    setTrading(false)
-  }, [trading, canTrade])
   const stopImpersonate = async () => {
     if (impStopping) return
     setImpStopping(true)
@@ -290,7 +294,7 @@ export default function WorkAppLayout() {
       try { window.location.href = '/work/admin' } catch { setImpStopping(false) }
     }
   }
-  // Buy extra hours / image credits (one-time, Stripe). Triggered from the top bar.
+  // Buy top-up hours / an image bundle (one-time, Stripe). Triggered from the top bar.
   const buyTier = (usage && usage.tier) || 'basic'
   const imageMin = Math.max(1, Number(pricing && pricing.imageMinBulk) || 1)
   const buyUnit = (kind) => {
@@ -304,14 +308,14 @@ export default function WorkAppLayout() {
     if (buying || !buyModal) return
     const kind = buyModal.kind
     const qty = Number(buyQty)
-    if (!isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) { setBuyErr('Enter a whole number greater than zero.'); return }
-    if (kind === 'images' && qty < imageMin) { setBuyErr(`The smallest image bundle is ${imageMin}.`); return }
+    if (!isFinite(qty) || qty <= 0 || !Number.isInteger(qty)) { setBuyErr(t('workShell.buy.errWhole')); return }
+    if (kind === 'images' && qty < imageMin) { setBuyErr(t('workShell.buy.errMin', { min: imageMin })); return }
     setBuying(true); setBuyErr('')
     try {
       const r = await api.workBuyCredits(kind, qty)
       if (r && r.url) { window.location.assign(r.url); return }
-      setBuyErr('Could not start checkout. Please try again.')
-    } catch (e) { setBuyErr((e && e.message) || 'Could not start checkout. Please try again.') } finally { setBuying(false) }
+      setBuyErr(t('workShell.buy.errCheckout'))
+    } catch (e) { setBuyErr((e && e.message) || t('workShell.buy.errCheckout')) } finally { setBuying(false) }
   }
 
   // Open a session (from a Dashboard resume row or the StartTask hand-off).
@@ -321,8 +325,7 @@ export default function WorkAppLayout() {
     user, sess, signOut, onOpen, showGuard,
     isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
     company,
-    usage, usageErr, minsLeft, resetLabel, tier, planName, low, taskCredits,
-    tasksObj, tasksUnlimited, tasksRemaining, tasksCap, tasksResetLabel, tasksFace, canTrade, tradeCredits, trading,
+    usage, usageErr, plan, renewLabel, timeLeft, tasksResetLabel, tier, planName, low, canBuyHours, upgradeHref,
     pricing, money, titleCase,
     aiStatus, ready, aiErr, loadAi,
     needsSub, setNeedsSub, gateMsg, setGateMsg,
@@ -333,11 +336,10 @@ export default function WorkAppLayout() {
     desk: !!desktop,
   }), [
     user, sess, onOpen, showGuard, isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
-    company, usage, usageErr, minsLeft, resetLabel, tier, planName, low, taskCredits,
-    tasksObj, tasksUnlimited, tasksRemaining, tasksCap, tasksResetLabel, tasksFace, canTrade, trading,
+    company, usage, usageErr, plan, renewLabel, timeLeft, tasksResetLabel, tier, planName, low, canBuyHours, upgradeHref,
     pricing, aiStatus, ready, aiErr, loadAi, needsSub, gateMsg, billingOn, invoices, showBilling,
     sessions, sessLoaded, sessErr, reload, refreshUsage, buddyPref, showBuy, buyCredits, desktop,
-    signOut, tradeCredits, money, titleCase,
+    signOut, money, titleCase,
   ])
 
   // ---- Gate screens (moved verbatim from WorkPage) --------------------------
@@ -379,7 +381,7 @@ export default function WorkAppLayout() {
   if (onSession) {
     return (
       <WorkAppContext.Provider value={ctx}>
-        {frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Suspense fallback={<div style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}><Loader2 size={22} className="spin" style={{ color: 'var(--brand-500, #0b8259)' }} /></div>}><Outlet /></Suspense>{langPin}</>)}
+        {guideFrame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Suspense fallback={<div style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}><Loader2 size={22} className="spin" style={{ color: 'var(--brand-500, #0b8259)' }} /></div>}><Outlet /></Suspense>{langPin}</>)}
       </WorkAppContext.Provider>
     )
   }
@@ -393,8 +395,8 @@ export default function WorkAppLayout() {
       {impersonating && (
         <div className="wd-imp" role="status">
           <Eye size={15} />
-          <span className="wd-imp-t">You're viewing as <b>{user.displayName || user.username}</b> (admin support)</span>
-          <button type="button" className="wd-imp-stop" onClick={stopImpersonate} disabled={impStopping}>{impStopping ? <Loader2 size={13} className="spin" /> : null} Stop</button>
+          <span className="wd-imp-t">{t.rich('workShell.top.viewingAs', { name: user.displayName || user.username })}</span>
+          <button type="button" className="wd-imp-stop" onClick={stopImpersonate} disabled={impStopping}>{impStopping ? <Loader2 size={13} className="spin" /> : null} {t('workShell.top.stop')}</button>
         </div>
       )}
       <div className="wd">
@@ -429,67 +431,30 @@ export default function WorkAppLayout() {
 
         <div className="wd-main-col">
           <header className="wd-top" style={stickyTop}>
-            <button type="button" className="wd-collapse" onClick={() => setRailOpen((v) => !v)} aria-expanded={railOpen} aria-label={railOpen ? 'Collapse menu' : 'Expand menu'} title={railOpen ? 'Collapse menu' : 'Expand menu'}><MenuIcon size={18} /></button>
+            <button type="button" className="wd-collapse" onClick={() => setRailOpen((v) => !v)} aria-expanded={railOpen} aria-label={railOpen ? t('workShell.top.collapseMenu') : t('workShell.top.expandMenu')} title={railOpen ? t('workShell.top.collapseMenu') : t('workShell.top.expandMenu')}><MenuIcon size={18} /></button>
             <h2>{title}</h2>
             <span className="wd-top-sp" />
             <div className="wd-top-right">
               {usage == null
                 ? (usageErr
-                    ? <button className="wd-buyhrs wd-retry" onClick={reload} title="Could not load your remaining time. Click to retry."><AlertTriangle size={13} /> <span>Retry</span></button>
+                    ? <button className="wd-buyhrs wd-retry" onClick={reload} title={t('workShell.top.retryUsage')}><AlertTriangle size={13} /> <span>{t('workShell.top.retry')}</span></button>
                     : <span className="wd-mins skel" aria-hidden />)
-                : minsLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={`${usage.tier} plan`}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {minsLeft} min<span className="wd-mins-l">left</span></span>}
-              {usage != null && !needsSub && (
-                <div className="wd-planpill-wrap">
-                  <button type="button" className={`wd-planpill${planPop ? ' on' : ''}`} aria-haspopup="dialog" aria-expanded={planPop}
-                    onClick={() => setPlanPop((v) => !v)}
-                    title={`${planName} plan (Active)`}
-                    aria-label={`Your plan: ${planName}, active. ${minsLeft != null ? minsLeft : 'unknown'} minutes left today. ${tasksUnlimited ? 'Unlimited tasks' : `${tasksRemaining} of ${tasksCap} tasks`} left today. ${taskCredits} banked credit${taskCredits === 1 ? '' : 's'}. Open plan details.`}>
-                    <span className="wd-pp-s" title="Minutes left today"><Clock size={13} /> <b>{minsLeft != null ? minsLeft : '-'}</b></span>
-                    <span className="wd-pp-sep" aria-hidden />
-                    <span className="wd-pp-s" title="Tasks left today"><Check size={13} /> <b>{tasksFace}</b></span>
-                    <span className="wd-pp-sep" aria-hidden />
-                    <span className="wd-pp-s" title="Banked credits"><CreditCard size={13} /> <b>{taskCredits}</b></span>
-                    <ChevronRight className="wd-pp-ca" size={13} aria-hidden />
-                  </button>
-                  {planPop && (
-                    <>
-                      <button type="button" className="wd-planpop-back" aria-label="Close plan details" onClick={() => setPlanPop(false)} />
-                      <div className="wd-planpop" role="dialog" aria-label="Your plan">
-                        <div className="wd-planpop-head">
-                          <span className="wd-planpop-name" title={`${planName} plan`}>{planName} plan</span>
-                          <span className="wd-planpop-tag"><span className="wd-plan-dot" aria-hidden /> Active</span>
-                        </div>
-                        <div className="wd-planpop-stat">
-                          <div className="r"><span className="k"><Clock size={13} /> Minutes left today</span><span className="v">{minsLeft != null ? <>{minsLeft} <small>min</small></> : '-'}</span></div>
-                          <div className="h">Daily &middot; resets at {resetLabel}</div>
-                        </div>
-                        <div className="wd-planpop-stat">
-                          <div className="r"><span className="k"><Check size={13} /> Tasks left today</span><span className="v">{tasksUnlimited ? 'Unlimited' : <>{tasksRemaining} <small>/ {tasksCap}</small></>}</span></div>
-                          <div className="h">Daily &middot; resets at {tasksResetLabel}</div>
-                        </div>
-                        <div className="wd-planpop-stat">
-                          <div className="r"><span className="k"><CreditCard size={13} /> Banked credits</span><span className="v">{taskCredits}</span></div>
-                          <div className="h">Unused tasks you kept &middot; these never expire</div>
-                        </div>
-                        {canTrade && (
-                          <button type="button" className="wd-trade-btn wd-planpop-trade" onClick={() => { tradeCredits() }} disabled={trading}>{trading ? <Loader2 size={14} className="spin" /> : <RefreshCw size={14} />} Trade 2 tasks to 1 hour</button>
-                        )}
-                      </div>
-                    </>
-                  )}
-                </div>
+                : timeLeft != null && <span className={`wd-mins${low ? ' low' : ''}`} title={t('workShell.top.timeChipTitle', { plan: planName, time: timeLeft })}>{low ? <AlertTriangle size={13} /> : <Clock size={13} />} {timeLeft}<span className="wd-mins-l">{t('workShell.top.left')}</span></span>}
+              {plan != null && !needsSub && (
+                <PlanPill plan={plan} planName={planName} renewLabel={renewLabel} companyName={(company && company.name) || (user && user.companyName) || ''}
+                  canBuy={canBuyHours} canUpgrade={!!(user && user.canUpgrade)} upgradeHref={upgradeHref} onBuyHours={() => buyCredits('hours')} />
               )}
-              {user && !user.companyId && !isAdmin && usage != null && (
-                <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title="Buy extra hours (one-time)"><Plus size={13} /> <span><span className="wd-mins-l">Buy </span>hours</span></button>
+              {canBuyHours && (
+                <button className="wd-buyhrs" onClick={() => buyCredits('hours')} disabled={buying} title={t('workShell.top.buyHoursTitle')}><Plus size={13} /> <span className="full">{t('workShell.top.buyHours')}</span><span className="short">{t('workShell.top.buyHoursShort')}</span></button>
               )}
-              <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy} title="Add time"><Zap size={15} /> <span>Add time</span></button>
+              <button className="wd-addtime" onClick={() => setShowBuy((v) => !v)} aria-expanded={showBuy} title={t('workShell.top.addTime')}><Zap size={15} /> <span>{t('workShell.top.addTime')}</span></button>
               {user && user.canUpgrade && (
-                <a className="wd-upgrade" href="/workcopilot/pricing" title={`Upgrade${user.nextTier ? ' to ' + user.nextTier.charAt(0).toUpperCase() + user.nextTier.slice(1) : ''} for more hours, tasks${user.caps && !user.caps.roadmaps ? ', roadmaps' : ''} and more`}><Sparkles size={14} /> <span>Upgrade</span></a>
+                <a className="wd-upgrade" href={upgradeHref} title={user.nextTier ? t('workShell.top.upgradeTitle', { tier: titleCase(user.nextTier) }) : t('workShell.top.upgradeTitleGeneric')}><Sparkles size={14} /> <span>{t('workShell.top.upgrade')}</span></a>
               )}
               {!desk && (
-                <a className="wd-getapp" href="/api/work/desktop-setup.exe" title="Download the Windows app" aria-label="Download the Windows app"><Monitor size={16} /> <span>Windows app</span></a>
+                <a className="wd-getapp" href="/api/work/desktop-setup.exe" title={t('workShell.top.windowsAppTitle')} aria-label={t('workShell.top.windowsAppTitle')}><Monitor size={16} /> <span>{t('workShell.top.windowsApp')}</span></a>
               )}
-              <button className="wd-signout" onClick={signOut} title="Sign out"><LogOut size={15} /> <span>Sign out</span></button>
+              <button className="wd-signout" onClick={signOut} title={t('workShell.top.signOut')}><LogOut size={15} /> <span>{t('workShell.top.signOut')}</span></button>
               <span className="wd-avatar" title={(user && (user.displayName || user.username)) || ''} aria-hidden>{initial}</span>
             </div>
           </header>
@@ -508,27 +473,26 @@ export default function WorkAppLayout() {
         const qtyN = Number(buyQty)
         const validQty = isFinite(qtyN) && qtyN > 0 && Number.isInteger(qtyN)
         const total = (unit != null && validQty) ? unit * qtyN : null
-        const noun = kind === 'hours' ? 'extra hour' : 'image credit'
         return (
           <div className="wd-modal-ov" onClick={() => !buying && setBuyModal(null)}>
-            <div className="wd-modal" onClick={(e) => e.stopPropagation()}>
-              <h3 style={{ color: 'inherit' }}><Zap size={17} style={{ color: 'var(--em)' }} /> Buy {kind === 'hours' ? 'extra hours' : 'image credits'}</h3>
+            <div className="wd-modal" role="dialog" aria-modal="true" aria-labelledby="wd-buy-title" onClick={(e) => e.stopPropagation()}>
+              <h3 id="wd-buy-title" style={{ color: 'inherit' }}><Zap size={17} style={{ color: 'var(--em)' }} /> {kind === 'hours' ? t('workShell.buy.titleHours') : t('workShell.buy.titleImages')}</h3>
               <p style={{ fontSize: 13.5, color: 'var(--mut)', margin: '0 0 14px', lineHeight: 1.5 }}>
-                One-time purchase, priced for your {titleCase(buyTier)} plan. {kind === 'hours' ? 'Purchased hours never expire and stack on top of your daily allowance.' : `Purchased image credits never expire. Smallest bundle: ${imageMin}.`}
+                {kind === 'hours' ? t('workShell.buy.bodyHours', { plan: titleCase(buyTier) }) : t('workShell.buy.bodyImages', { plan: titleCase(buyTier), min: imageMin })}
               </p>
-              <label htmlFor="wd-buyqty">How many {noun}{qtyN === 1 ? '' : 's'}? <span className="req">required</span></label>
+              <label htmlFor="wd-buyqty">{kind === 'hours' ? t('workShell.buy.qtyHours') : t('workShell.buy.qtyImages')} <span className="req">{t('workShell.buy.required')}</span></label>
               <input id="wd-buyqty" type="number" min={kind === 'images' ? imageMin : 1} step="1" value={buyQty}
                 onChange={(e) => { setBuyErr(''); setBuyQty(e.target.value.replace(/[^0-9]/g, '')) }}
                 autoFocus
                 style={{ width: '100%', background: 'var(--field)', border: '1px solid var(--line)', borderRadius: 11, padding: '11px', color: 'var(--tx)', font: 'inherit', fontSize: 14, outline: 'none' }} />
-              <div className="wd-modal-note" style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-                <span>Unit price: <b>{unit != null ? money(unit) : '-'}</b>{kind === 'hours' ? ' / hour' : ' / image'}</span>
-                <span>Total: <b>{total != null ? money(total) : '-'}</b></span>
+              <div className="wd-modal-note" style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                <span>{t('workShell.buy.unit')}: <b>{unit != null ? money(unit) : '-'}</b> {kind === 'hours' ? t('workShell.buy.perHour') : t('workShell.buy.perImage')}</span>
+                <span>{t('workShell.buy.total')}: <b>{total != null ? money(total) : '-'}</b></span>
               </div>
               {buyErr && <div className="wd-note warn" role="alert" style={{ marginTop: 12 }}><AlertTriangle size={15} /> <span>{buyErr}</span></div>}
               <div className="wd-modal-btns">
-                <button className="btn btn-ghost" onClick={() => setBuyModal(null)} disabled={buying}>Cancel</button>
-                <button className="btn btn-primary" onClick={confirmBuy} disabled={buying || !validQty}>{buying ? <Loader2 size={14} className="spin" /> : <ArrowRight size={14} />} Continue to checkout</button>
+                <button className="btn btn-ghost" onClick={() => setBuyModal(null)} disabled={buying}>{t('workShell.buy.cancel')}</button>
+                <button className="btn btn-primary" onClick={confirmBuy} disabled={buying || !validQty}>{buying ? <Loader2 size={14} className="spin" /> : <ArrowRight size={14} />} {t('workShell.buy.continue')}</button>
               </div>
             </div>
           </div>
