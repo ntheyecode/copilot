@@ -26,26 +26,33 @@ import { discover, newPkce, newState, buildAuthorizeUrl, exchangeCode, verifyIdT
 // Subscribe onboarding (onboarding.js): the start URL may carry ?flow=onboarding
 // &plan=&cycle=; the callback then lands on the pay step instead of the login page.
 import { socialOnboardingIntent, finishSocialOnboarding, resolveSocialAccount } from './onboarding.js'
+import * as store from './store.js'   // superadmin-configured social OAuth apps (DB first, env fallback)
 
 const MFA_PENDING_TTL_MS = 15 * 60 * 1000
 const FB_VER = 'v19.0'
 
-// A provider is "configured" when it has both a client id and secret in env.
+// A provider is "configured" when it has both a client id and secret. The
+// superadmin's DB config (Settings, SSO) is read FIRST so social sign-in can be
+// turned on without an env deploy; env vars are the fallback.
 function cfgFor(provider) {
   const P = String(provider || '').toLowerCase()
   const e = process.env
+  let dbc = null
+  try { dbc = store.getSocialProviderConfig(P) } catch { dbc = null }
+  const id = (k) => (dbc && dbc.clientId) || e[k]
+  const sec = (k) => (dbc && dbc.clientSecret) || e[k]
   if (P === 'google') {
-    return (e.WORK_GOOGLE_CLIENT_ID && e.WORK_GOOGLE_CLIENT_SECRET)
-      ? { kind: 'oidc', issuer: 'https://accounts.google.com', clientId: e.WORK_GOOGLE_CLIENT_ID, clientSecret: e.WORK_GOOGLE_CLIENT_SECRET } : null
+    const clientId = id('WORK_GOOGLE_CLIENT_ID'), clientSecret = sec('WORK_GOOGLE_CLIENT_SECRET')
+    return (clientId && clientSecret) ? { kind: 'oidc', issuer: 'https://accounts.google.com', clientId, clientSecret } : null
   }
   if (P === 'microsoft') {
-    const tenant = e.WORK_MICROSOFT_TENANT || 'common'
-    return (e.WORK_MICROSOFT_CLIENT_ID && e.WORK_MICROSOFT_CLIENT_SECRET)
-      ? { kind: 'oidc', issuer: `https://login.microsoftonline.com/${tenant}/v2.0`, clientId: e.WORK_MICROSOFT_CLIENT_ID, clientSecret: e.WORK_MICROSOFT_CLIENT_SECRET } : null
+    const tenant = (dbc && dbc.tenant) || e.WORK_MICROSOFT_TENANT || 'common'
+    const clientId = id('WORK_MICROSOFT_CLIENT_ID'), clientSecret = sec('WORK_MICROSOFT_CLIENT_SECRET')
+    return (clientId && clientSecret) ? { kind: 'oidc', issuer: `https://login.microsoftonline.com/${tenant}/v2.0`, clientId, clientSecret } : null
   }
   if (P === 'facebook') {
-    return (e.WORK_FACEBOOK_CLIENT_ID && e.WORK_FACEBOOK_CLIENT_SECRET)
-      ? { kind: 'oauth2', clientId: e.WORK_FACEBOOK_CLIENT_ID, clientSecret: e.WORK_FACEBOOK_CLIENT_SECRET } : null
+    const clientId = id('WORK_FACEBOOK_CLIENT_ID'), clientSecret = sec('WORK_FACEBOOK_CLIENT_SECRET')
+    return (clientId && clientSecret) ? { kind: 'oauth2', clientId, clientSecret } : null
   }
   return null
 }

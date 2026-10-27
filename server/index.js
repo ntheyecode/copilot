@@ -1346,6 +1346,16 @@ app.post('/api/work/admin/ai/providers/:id/vision', requireAuth, requireSuperAdm
   const model = req.body && req.body.model ? String(req.body.model) : null
   res.json({ providers: store.setVisionPlatformProvider(id, model), activeProvider: store.getActiveProviderId(), visionProvider: store.getVisionProviderId(), visionModel: store.getVisionModel() })
 }))
+// Platform social sign-in (Google / Microsoft / Facebook) OAuth apps. PLATFORM
+// level (one app each, every customer's sign-in uses it), configured by the
+// superadmin here instead of env vars. Secrets are set-only; the state is masked.
+app.get('/api/work/admin/social', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json({ social: store.getSocialConfigState() })
+}))
+app.post('/api/work/admin/social/:provider', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  const { clientId, clientSecret, tenant } = req.body || {}
+  res.json({ social: store.setSocialProvider(req.params.provider, { clientId, clientSecret, tenant }) })
+}))
 // Remove ALL of a provider's keys; if it was active, active hands off to another.
 app.delete('/api/work/admin/ai/providers/:id', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
   res.json({ providers: store.clearAiProvider(req.params.id), activeProvider: store.getActiveProviderId() })

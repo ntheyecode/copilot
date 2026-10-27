@@ -3022,6 +3022,37 @@ export function clearAiProvider(providerId) {
   return adminAiProviders()
 }
 
+// ---- Platform social sign-in (superadmin) ---------------------------------
+// Google / Microsoft / Facebook OAuth apps for the social sign-in buttons. These
+// are PLATFORM-level (one app each, used by every customer's sign-in), NOT
+// per-company. Stored here so the superadmin can configure them without an env
+// deploy; social.js reads these first and falls back to env. Secrets are
+// server-only; the state getter masks them.
+const SOCIAL_PROVIDERS = ['google', 'microsoft', 'facebook']
+function socialState() { if (!db.social) db.social = {}; return db.social }
+export function getSocialProviderConfig(provider) {
+  const p = String(provider || '').toLowerCase()
+  const s = socialState()[p]
+  if (!s || !s.clientId || !s.clientSecret) return null
+  return { clientId: s.clientId, clientSecret: s.clientSecret, tenant: s.tenant || null }
+}
+export function setSocialProvider(provider, { clientId, clientSecret, tenant } = {}) {
+  const p = String(provider || '').toLowerCase()
+  if (!SOCIAL_PROVIDERS.includes(p)) throw httpErr(400, `Unknown social provider: ${provider}`)
+  const s = socialState()
+  const id = String(clientId || '').trim(), sec = String(clientSecret || '').trim()
+  if (!id && !sec) { delete s[p]; persist(); return getSocialConfigState() }   // clear
+  if (!id || !sec) throw httpErr(400, 'Both a client ID and a client secret are required.')
+  if (id.length > 512 || sec.length > 2048) throw httpErr(400, 'That value is too long to be valid.')
+  s[p] = { clientId: id, clientSecret: sec, ...(p === 'microsoft' && tenant ? { tenant: String(tenant).slice(0, 128) } : {}), setAt: new Date().toISOString() }
+  persist(); return getSocialConfigState()
+}
+export function getSocialConfigState() {
+  const s = socialState()
+  const one = (p) => { const c = s[p]; return { configured: !!(c && c.clientId && c.clientSecret), clientIdMasked: (c && c.clientId) ? '••••' + String(c.clientId).slice(-4) : null, tenant: (c && c.tenant) || null, setAt: (c && c.setAt) || null } }
+  return { google: one('google'), microsoft: one('microsoft'), facebook: one('facebook') }
+}
+
 // ---- AI-settings OTP step-up (owner 2026-10-23) ---------------------------
 // The AI configuration page is critical: nothing is shown and nothing is changed
 // without a fresh authenticator (TOTP) confirmation. Verifying opens a SHORT
