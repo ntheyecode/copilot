@@ -12,6 +12,7 @@
 import { readdirSync } from 'node:fs'
 import { pathToFileURL } from 'node:url'
 import { join, resolve } from 'node:path'
+import { deepMergeEn } from '../src/i18n/deep_merge_en.js'
 
 const dir = resolve('src/i18n/locales')
 const scope = process.argv[2] || ''
@@ -26,7 +27,15 @@ function keys(val, path, out) {
   return out
 }
 
-const en = await load('en.js')
+// English = en.js base + EVERY en/*.js partial, deep-merged exactly as the
+// runtime does (src/i18n/index.jsx), so a namespace that lives only in a
+// partial (most admin namespaces) is gated instead of invisible.
+const enBase = await load('en.js')
+const partialsDir = join(dir, 'en')
+const en = { ...enBase }
+for (const f of readdirSync(partialsDir).filter((x) => x.endsWith('.js')).sort()) {
+  deepMergeEn(en, (await import(pathToFileURL(join(partialsDir, f)).href)).default || {})
+}
 const base = keys(dig(en, scope), scope, new Map())
 let missing = 0, extra = 0
 for (const f of files) {

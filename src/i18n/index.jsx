@@ -23,6 +23,7 @@
 // before the first paint of the next visit. First visit: navigator.languages.
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import enBase from './locales/en.js'
+import { deepMergeEn } from './deep_merge_en.js'
 import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale, localeFromTimezone, localeFromTimezoneExplicit } from './locales.js'
 
 // Per-section English key partials (src/i18n/locales/en/*.js). This lets MANY i18n
@@ -32,14 +33,6 @@ import { DEFAULT_LOCALE, LOCALES, getLocaleMeta, resolveLocale, localeFromTimezo
 // fallback). A non-English locale that lacks a key still falls back to this merged
 // English, so a newly keyed string reads in English until it is translated.
 const EN_PARTIALS = import.meta.glob('./locales/en/*.js', { eager: true })
-function deepMergeEn(target, src) {
-  for (const k of Object.keys(src || {})) {
-    const v = src[k]
-    if (v && typeof v === 'object' && !Array.isArray(v)) target[k] = deepMergeEn({ ...(target[k] || {}) }, v)
-    else target[k] = v
-  }
-  return target
-}
 const en = Object.values(EN_PARTIALS).reduce((acc, m) => deepMergeEn(acc, (m && m.default) || {}), { ...enBase })
 
 export { LOCALES, DEFAULT_LOCALE, getLocaleMeta, resolveLocale }
