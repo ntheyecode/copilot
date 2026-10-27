@@ -6,12 +6,12 @@
 // /work, onGuard surfaces via the app shell. The step link / terminal / code
 // blocks and the copy helper live in src/components (shared with the public
 // "try it live" widget) and are imported below.
-import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo, useReducer } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
 import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor, Camera, Eye, HelpCircle, Square, Play, AlertTriangle, ClipboardCopy, Menu as MenuIcon, PictureInPicture2, Sun, Moon, ScanLine, Printer, Zap, ExternalLink, Globe, LayoutDashboard, BookOpen, ChevronRight, Sparkles, Rocket, Calculator, Compass, Blocks, Clock, Smartphone, AppWindow, ArrowRight, LifeBuoy, Users, FileText, CreditCard, ShieldCheck, RefreshCw, Paperclip, PenLine, Upload, FileSpreadsheet, Building2, Phone, MapPin, BarChart3, Settings, Wrench, Table } from 'lucide-react'
 import { api, friendlyError } from '../../api.js'
-import AnswerBody from '../../components/AnswerBody.jsx'
+import AnswerBody, { splitSegments } from '../../components/AnswerBody.jsx'
 import RichText from '../../components/RichText.jsx'
 import { StepLink, CmdBlock, CodeBlock } from '../../components/StepBlocks.jsx'   // the ONE step link / terminal / code renderer (shared with the public widget)
 import { copyText } from '../../components/CopyChip.jsx'
@@ -30,6 +30,20 @@ import { useTheme } from '../../theme.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
 import { usageTimeLeft, usageOutOfTime, usageLowNote } from './usageCopy.js'
 import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
+// The guide view (owner redesign): ONE stylesheet + small shared modules used
+// by the console AND the floating panel, so both read identically.
+import { GUIDE_CSS, gvVars } from './guideView.css.js'
+import FadeSwap from './FadeSwap.jsx'
+import ReadingStrip, { readingIsProminent } from './ReadingStrip.jsx'
+import StepCard from './StepCard.jsx'
+import AskFocus from './AskFocus.jsx'
+import GoalLine from './GoalLine.jsx'
+import DestructiveGate from './DestructiveGate.jsx'
+import { askReducer, initialAsk, askFocused, normalizeAskResponse, applyResume, ASK_OFFER, ASK_ANSWERED } from './askFlow.js'
+import useStuck from './useStuck.js'
+import GuideLevelControl, { useGuideLevel } from '../../components/GuideLevel.jsx'
+import FloatPanel from './FloatPanel.jsx'
+import { makeConfetti, confettiNodes } from './confetti.jsx'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
 // .wc wrapper so it never touches the rest of the app. On a phone it enlarges
@@ -39,6 +53,7 @@ const CONSOLE_CSS = `
 .wc{overflow-x:hidden}
 .wc *{box-sizing:border-box}
 .wc pre{max-width:100%}
+@media(max-width:600px){.wc-top .wc-lbl{display:none}.wc-top .wc-tbtn{padding:0 9px}}
 @media(max-width:640px){
   .wc .btn{min-height:44px;height:auto;padding-top:9px;padding-bottom:9px}
   .wc .btn-sm{min-height:40px;height:auto;padding-top:7px;padding-bottom:7px}
@@ -171,12 +186,6 @@ const CONSOLE_CSS = `
 .wc-guidebar .wc-tbtn.ghost{background:transparent}
 .wc-watch{height:34px;padding:0 15px;font-size:13px;font-weight:650}
 /* First-run hint: share your screen, then float the steps above your work. */
-.wc-tip{position:relative;display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 12px 10px 15px;margin-bottom:12px;border-radius:12px;background:var(--brand-soft);color:var(--text);font-size:13px;line-height:1.45;overflow:hidden}
-.wc-tip::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--brand-500)}
-.wc-tip>svg{color:var(--brand-600);flex-shrink:0}
-.wc-tip b{font-weight:650}
-.wc-tip .wc-tbtn{margin-left:auto;box-shadow:none}
-@media(max-width:640px){.wc-tip .wc-tbtn{margin-left:0;flex:1 1 100%;justify-content:center}}
 
 /* PLAN-HEAVY MODE (watch-light, forced by us for Premium): a calm informational
    strip + an on-demand "Check my progress" action. There is no toggle. One
@@ -213,9 +222,6 @@ const CONSOLE_CSS = `
 .wc-banner.warn svg{color:var(--warning)}
 
 /* OBSERVATION = calm context the watcher can see: a cyan-tinted chip. */
-.wc-live{display:flex;align-items:flex-start;gap:9px;margin:10px 0;padding:9px 13px;font-size:calc(12.5px*var(--wc-fs,1));color:var(--text-muted);line-height:1.5;background:var(--obs-soft);border:1px solid var(--obs-ring);border-radius:11px}
-.wc-live>svg{color:var(--obs);flex-shrink:0;margin-top:1px}
-.wc-live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--obs);--pr:var(--obs-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
 @keyframes wc-pulse{0%{box-shadow:0 0 0 0 var(--pr)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
 /* PINNED guide status strip: Pause/Resume + minutes + the live reading line,
    kept in the fixed header so they never scroll away (owner request). While a
@@ -223,21 +229,6 @@ const CONSOLE_CSS = `
    reading line. Hidden at >=1240px where the right rail carries these controls. */
 .wc-guidehead{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 .wc-gh-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;min-width:0}
-.wc-ghstatus{display:flex;align-items:flex-start;gap:9px;padding:9px 13px;border-radius:11px;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.5;min-width:0}
-.wc-ghstatus>span{min-width:0;overflow-wrap:anywhere}
-.wc-ghstatus.live{color:var(--text-muted);background:var(--obs-soft);border:1px solid var(--obs-ring)}
-.wc-ghstatus.live>svg{color:var(--obs);flex-shrink:0;margin-top:1px}
-.wc-ghstatus.live .pulse{width:8px;height:8px;flex-shrink:0;border-radius:50%;background:var(--obs);--pr:var(--obs-ring);box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite;margin-top:4px}
-.wc-ghstatus.wrong{color:var(--text);background:var(--warning-soft);border:1px solid var(--warning);font-weight:500}
-.wc-ghstatus.wrong>svg{color:var(--warning);flex-shrink:0;margin-top:1px}
-.wc-ghstatus.wrong b{color:var(--warning)}
-.wc-ghstatus.analyzing{align-items:center;color:var(--obs);background:var(--obs-soft);border:1px solid var(--obs-ring);font-weight:650;animation:wc-ana-blink 1.2s ease-in-out infinite}
-.wc-ana{display:inline-flex;align-items:center;gap:3px;flex-shrink:0}
-.wc-ana i{width:5px;height:5px;border-radius:50%;background:var(--obs);animation:wc-ana-bounce 1.1s infinite}
-.wc-ana i:nth-child(2){animation-delay:.15s}
-.wc-ana i:nth-child(3){animation-delay:.3s}
-@keyframes wc-ana-blink{0%,100%{opacity:1}50%{opacity:.58}}
-@keyframes wc-ana-bounce{0%,80%,100%{transform:scale(.55);opacity:.5}40%{transform:scale(1);opacity:1}}
 @media(min-width:1240px){.wc-guidehead{display:none}}
 /* The only live pill left is Plan-heavy mode (.lite); watch state lives in the header chip. */
 .wc-live-pill{display:inline-flex;align-items:center;gap:7px;height:34px;font-size:12.5px;font-weight:650;color:var(--em);background:var(--em-soft);padding:0 13px;border-radius:999px;white-space:nowrap}
@@ -252,18 +243,6 @@ const CONSOLE_CSS = `
 /* DO THIS NOW hero: the single strongest focus on the screen */
 /* CURRENT STEP = the brightest element: emerald accent, an emerald->cyan left
    bar, and a gentle pulsing glow (disabled under prefers-reduced-motion). */
-.wc-hero{position:relative;margin-top:14px;padding:20px 22px 16px 26px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset;overflow:hidden;animation:wc-hero-in .42s cubic-bezier(.2,.8,.2,1) both,wc-now-glow 2.8s ease-in-out .42s infinite}
-.wc-hero::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;z-index:2;background:linear-gradient(180deg,var(--em),var(--em-2))}
-.wc-hero::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 180px at 0% 0%,var(--em-glow),transparent 72%)}
-.wc-hero>*{position:relative;z-index:1}
-@keyframes wc-now-glow{0%,100%{box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset,0 14px 38px -20px var(--em-glow)}50%{box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset,0 16px 52px -14px var(--em-glow)}}
-.wc-hero-eyebrow{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-.wc-hero-chip{display:inline-flex;align-items:center;gap:6px;height:24px;font-size:10px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--on-em);background:linear-gradient(135deg,var(--em),var(--em-2));padding:0 10px;border-radius:999px}
-.wc-hero-hint{font-size:12px;color:var(--text-muted)}
-.wc-hero-hint-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:650;color:var(--brand-600);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s}
-.wc-hero-hint-btn:hover{text-decoration-color:currentColor}
-.wc-hero-text{font-family:var(--wc-body);font-size:calc(15px*var(--wc-fs,1));line-height:1.45;font-weight:650;color:var(--text);letter-spacing:-.005em;text-wrap:pretty}
-@media(max-width:640px){.wc-hero{padding:16px 16px 13px 20px;border-radius:16px}.wc-hero-text{font-size:calc(14.5px*var(--wc-fs,1))}}
 
 /* Mid-guiding clarification card: the plan asks for one essential input it
    cannot see. Calmer than the hero (no pulse), green-tinted fill + a left accent
@@ -312,14 +291,6 @@ const CONSOLE_CSS = `
 @media(max-width:640px){.wc-clarify{padding:13px 14px 11px 16px}.wc-clarify-send{flex:1 1 100%}.wc-clarify-form.other .wc-clarify-send{flex:0 0 auto}}
 
 /* Step navigator with a progress track */
-.wc-nav{display:flex;align-items:center;gap:12px;padding:2px 2px 6px}
-.wc-nav-btn{display:inline-flex;align-items:center;gap:4px;height:32px;padding:0 11px;border-radius:9px;border:1px solid transparent;background:transparent;color:var(--text-muted);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s,border-color .16s}
-.wc-nav-btn:hover:not(:disabled){background:var(--surface);border-color:var(--border);color:var(--text)}
-.wc-nav-btn:disabled{opacity:.4;cursor:default}
-.wc-nav-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;align-items:center}
-.wc-nav-count{font-size:10.5px;font-weight:700;letter-spacing:.08em;color:var(--text-muted);text-transform:uppercase;white-space:nowrap;font-variant-numeric:tabular-nums}
-.wc-nav-track{width:100%;height:4px;border-radius:999px;background:var(--surface-3);overflow:hidden}
-.wc-nav-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--em),var(--em-2));transition:width .35s var(--ease,cubic-bezier(.4,0,.2,1))}
 
 /* Step cards: current leads, pending recedes, done is struck. When the task is
    over (.wc-steps.ro) the same cards become a calm, read-only record. */
@@ -358,11 +329,6 @@ const CONSOLE_CSS = `
 /* All-done confirmation + flags */
 .wc-alldone{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--success-soft);border-radius:13px;color:var(--success);font-weight:650;font-size:13.5px;line-height:1.45}
 .wc-alldone svg{flex-shrink:0}
-.wc-flag{position:relative;display:flex;gap:10px;align-items:flex-start;padding:10px 13px 10px 16px;background:var(--warning-soft);border-radius:12px;font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--text);overflow:hidden;animation:wc-line-in .3s cubic-bezier(.2,.8,.2,1) both}
-.wc-flag::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
-.wc-flag svg{color:var(--warning);flex-shrink:0;margin-top:2px}
-.wc-flag-k{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warning);margin-right:6px}
-.wc-flags{display:flex;flex-direction:column;gap:8px;margin:12px 0 0}
 /* Blue MS-docs inline hyperlink for "Open ..." actions (a link, not a button).
    Underlines on hover/focus; scales with the reader text size. */
 .wc-open{display:inline-flex;align-items:center;gap:5px;margin-top:8px;color:var(--wc-link);font-size:calc(13px*var(--wc-fs,1));font-weight:600;text-decoration:none;text-decoration-color:transparent;text-underline-offset:3px;border-radius:4px;overflow-wrap:anywhere;transition:text-decoration-color .15s}
@@ -406,7 +372,6 @@ const CONSOLE_CSS = `
 .wc-ask input.input:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
 .wc-ask .wc-ib{width:36px;height:36px}
 .wc-ask .wc-tbtn{height:36px}
-.wc-ask-answer{margin:8px 2px 2px;padding:12px 4px 4px;border-top:1px solid var(--border);font-size:14px;line-height:1.6}
 .wc-ask-k{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-600)}
 
 /* Pre-plan starter + session summary */
@@ -521,7 +486,7 @@ const CONSOLE_CSS = `
 .wc-compute-load{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-muted)}
 @media(prefers-reduced-motion:reduce){.wc-compute-drop{transition:none}}
 
-@media(prefers-reduced-motion:reduce){.wc-hero{animation:none}.wc-live .pulse,.wc-live-pill .pulse{animation:none}}
+@media(prefers-reduced-motion:reduce){.wc-live-pill .pulse{animation:none}}
 
 /* Rolling-window progress line + quiet "View full plan" link (live guiding). */
 .wc-plan-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:0 2px 2px}
@@ -632,13 +597,6 @@ const CONSOLE_CSS = `
 /* #2 + #7 Wrong-place ALERT: shown ONLY on a real mismatch (status==='wrong').
    Amber, bold, with a restrained entry slide + a soft sustained glow so a
    critical "you are in the wrong place" moment reads as urgent, not flat. */
-.wc-alert{position:relative;display:flex;gap:11px;align-items:flex-start;margin:12px 0 2px;padding:12px 14px 12px 17px;border-radius:13px;background:var(--warning-soft);border:1px solid var(--warning);color:var(--text);font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;overflow:hidden;animation:wc-alert-in .32s cubic-bezier(.2,.8,.2,1) both,wc-alert-glow 2.4s ease-in-out infinite}
-.wc-alert::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--warning)}
-.wc-alert>svg{color:var(--warning);flex-shrink:0;margin-top:1px}
-.wc-alert-k{display:block;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--warning);margin-bottom:3px}
-.wc-alert-t{font-weight:600}
-@keyframes wc-alert-in{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
-@keyframes wc-alert-glow{0%,100%{box-shadow:0 0 0 1px var(--warning) inset,0 8px 26px -16px var(--warning)}50%{box-shadow:0 0 0 1px var(--warning) inset,0 11px 34px -12px var(--warning)}}
 
 /* #5 Copy affordance for a command/target that is not a clickable link. */
 .wc-copyrow{display:flex;align-items:center;gap:8px;margin-top:8px;padding:5px 7px 5px 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;max-width:100%}
@@ -649,16 +607,8 @@ const CONSOLE_CSS = `
 
 /* The hero is the ONE current-step card: the quieter plan-step line (shown only
    when the live guidance differs from it), and the Mark done action row. */
-.wc-hero-step{display:flex;align-items:flex-start;gap:8px;margin-top:9px;font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--text-muted)}
-.wc-hero-step-k{flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em);margin-top:3px}
-.wc-hero .wc-step-when{margin-top:10px}
-.wc-hero-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:13px}
 /* Brief "Next" line under the progress bar: the one step after the current, as
    a single clamped title line. Never expanded, never the current step again. */
-.wc-next{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:11px;background:var(--surface-2);border:1px solid var(--border);opacity:.78;min-width:0}
-.wc-next-k{flex:0 0 auto;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--text-faint)}
-.wc-next-n{flex:0 0 auto;width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-size:10.5px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--text-faint);border:1px solid var(--border)}
-.wc-next-t{flex:1;min-width:0;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.4;color:var(--text-muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
 /* "Make something" opened as a SEPARATE deliverable sheet (on the shared fixed
    .wc-plan-ov backdrop), so it never reads as a second input stacked above the
@@ -709,21 +659,10 @@ const CONSOLE_CSS = `
    "Step confirmed" check pops in the moment a step is confirmed on screen; the
    wrong-place icon pulses on entry. Reduced motion keeps every emphasis as a
    static strong ring and only removes the movement. */
-@keyframes wc-hero-in{0%{opacity:0;transform:translateY(10px) scale(.985)}60%{opacity:1}100%{opacity:1;transform:none}}
-.wc-hero::before{animation:wc-hero-beam 2.8s ease-in-out infinite}
-@keyframes wc-hero-beam{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
-.wc-hero-chip{box-shadow:0 0 0 0 var(--em-ring);animation:wc-chip-ring 2.8s ease-in-out infinite}
 @keyframes wc-chip-ring{0%,100%{box-shadow:0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 5px transparent}}
 /* key action emphasis inside the hero */
-.wc-hero .wc-open{display:inline-flex;padding:4px 10px 4px 8px;margin-top:10px;border-radius:9px;background:var(--obs-soft);box-shadow:0 0 0 1px var(--obs-ring) inset;font-weight:700;text-decoration:none;animation:wc-key-glow 2.2s ease-in-out infinite}
-.wc-hero .wc-open:hover,.wc-hero .wc-open:focus-visible{background:var(--obs-ring);text-decoration:none}
-.wc-hero .wc-copyrow{box-shadow:0 0 0 1px var(--em-ring) inset;animation:wc-key-glow 2.2s ease-in-out infinite}
-.wc-hero pre{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 22px -8px var(--em)}
 @keyframes wc-key-glow{0%,100%{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 0 4px transparent}}
 /* emphasized words / values in the instruction */
-.wc-hero-text strong,.wc-hero-text b{font-weight:800;color:var(--text);background:linear-gradient(transparent 58%,var(--em-soft) 58%);border-radius:3px;padding:0 2px}
-.wc-hero-text mark{color:var(--text);background:var(--em-soft);box-shadow:0 0 0 1px var(--em-ring) inset;border-radius:5px;padding:1px 5px;font-weight:700}
-.wc-hero-text code{font-family:var(--wc-mono);font-size:.92em;background:var(--surface-2);border:1px solid var(--em-ring);border-radius:6px;padding:1px 6px;color:var(--text)}
 /* step confirmed: a check that pops in, then fades */
 .wc-confirm{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--success);background:var(--success-soft);box-shadow:0 0 0 1px var(--success) inset;animation:wc-pop .5s cubic-bezier(.3,1.4,.5,1) both,wc-fade-out .5s ease 1.3s both}
 .wc-confirm svg{animation:wc-check-draw .45s ease .1s both}
@@ -731,23 +670,16 @@ const CONSOLE_CSS = `
 @keyframes wc-check-draw{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
 @keyframes wc-fade-out{to{opacity:0;transform:translateY(-4px)}}
 /* wrong-place: the icon pulses three times on entry so it cannot be missed */
-.wc-alert>svg{animation:wc-alert-icon 1.1s ease-in-out 3}
-@keyframes wc-alert-icon{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
 /* DARK = first-class: deeper, more luminous hero and key-action glow on dark */
-[data-theme='dark'] .wc-hero{box-shadow:var(--shadow-md),0 0 0 1px var(--em-ring) inset,0 18px 48px -18px var(--em-glow),inset 0 1px 0 rgba(255,255,255,.04)}
-[data-theme='dark'] .wc-hero pre{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 30px -8px var(--em)}
 [data-theme='dark'] .wc-make-sheet,[data-theme='dark'] .wc-menu-pop{box-shadow:0 28px 70px -28px rgba(0,0,0,.85),0 0 0 1px var(--em-ring) inset,inset 0 1px 0 rgba(255,255,255,.04)}
 @media(prefers-reduced-motion:reduce){
-  .wc-hero{animation:none;box-shadow:var(--shadow-md),0 0 0 2px var(--em-ring) inset}
-  .wc-hero::before,.wc-hero-chip,.wc-hero .wc-open,.wc-hero .wc-copyrow,.wc-alert>svg{animation:none}
   .wc-confirm,.wc-confirm svg{animation:none}
 }
 
 /* Ask bar in the fixed footer: the (optional) answer sits above the row with a
    capped, scrollable height so the footer never grows to swallow the screen. */
-.wc-ask-answer-foot{margin:0 2px 8px;padding:0;border-top:none;max-height:32vh;overflow-y:auto}
 
-@media(prefers-reduced-motion:reduce){.wc-tbtn.resume{animation:none}.wc-alert{animation:wc-alert-in .32s ease both}.wc-statuschip.live .wc-sdot{animation:none}}
+@media(prefers-reduced-motion:reduce){.wc-tbtn.resume{animation:none}.wc-statuschip.live .wc-sdot{animation:none}}
 
 /* TASK-COMPLETE CELEBRATION: a calm success flourish above the done bar. A
    confetti layer (pure CSS, clipped to the card, fires once) + a prominent
@@ -797,30 +729,6 @@ function SourceChip({ source }) {
     </div>
   )
 }
-// Gate a destructive step's command/code behind a deliberate acknowledge, so the
-// person reads the impact before they can copy or run it (risk: acting without
-// understanding impact). A no-op wrapper when `why` is falsy.
-function DestructiveGate({ why, children }) {
-  const [shown, setShown] = useState(false)
-  if (!why) return <>{children}</>
-  return (
-    <div style={{ marginTop: 9, border: '1px solid rgba(255,159,67,0.5)', borderRadius: 10, overflow: 'hidden' }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 8, background: 'rgba(255,159,67,0.12)', padding: '9px 11px', fontSize: 12.5, color: '#ffb35c', lineHeight: 1.5 }}>
-        <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
-        <span><b>Destructive step.</b> This {why}. Read it carefully before you run it.</span>
-      </div>
-      {shown
-        ? <div style={{ padding: '0 9px 9px' }}>{children}</div>
-        : <div style={{ padding: '10px 11px' }}>
-            <button className="btn btn-sm" onClick={() => setShown(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12.5, color: '#ffb35c', background: 'rgba(255,159,67,0.14)', border: '1px solid rgba(255,159,67,0.5)' }}>
-              <AlertTriangle size={13} /> I understand, show the command
-            </button>
-          </div>}
-    </div>
-  )
-}
-
 // A small "How?" control shown next to a step or the live guidance. Tapping it
 // asks the server to break that one action into detailed sub-steps. It shows a
 // spinner while it loads and flips to "Hide how" once the detail is open.
@@ -1029,38 +937,6 @@ function PlanningLoader() {
   )
 }
 
-// Pure-CSS confetti pieces for the task-complete flourish (no npm dependency).
-// Deterministic per call (computed once via useMemo at the call site). Colors
-// default to the on-brand palette; the floater passes concrete hex values
-// because the Picture-in-Picture document carries none of the app's CSS vars.
-const CONFETTI_COLORS = ['var(--brand-600, #0b8259)', 'var(--success, #16a34a)', '#f5b64b', '#5aa9ff', 'var(--brand-400, #34d399)']
-function makeConfetti(n = 14, colors = CONFETTI_COLORS) {
-  const a = []
-  for (let i = 0; i < n; i++) {
-    const rect = i % 3 !== 0
-    a.push({
-      left: Math.round((i / n) * 100 + (Math.random() * 8 - 4)),
-      bg: colors[i % colors.length],
-      x: Math.round(Math.random() * 120 - 60),
-      fall: Math.round(180 + Math.random() * 130),
-      rot: Math.round((360 + Math.random() * 440)) * (i % 2 ? 1 : -1),
-      dur: (2.0 + Math.random() * 1.1).toFixed(2),
-      delay: (Math.random() * 0.5).toFixed(2),
-      w: rect ? 7 : 8,
-      h: rect ? 11 : 8,
-      round: rect ? 2 : 50,
-    })
-  }
-  return a
-}
-// One confetti piece as an inline-styled <i>. className is 'wc-confetti' (main
-// document) or 'fp-confetti' (the float document); both define @keyframes.
-function confettiNodes(pieces) {
-  return pieces.map((p, i) => (
-    <i key={i} style={{ left: p.left + '%', width: p.w, height: p.h, borderRadius: p.round, background: p.bg, '--x': p.x + 'px', '--fall': p.fall + 'px', '--rot': p.rot + 'deg', '--d': p.dur + 's', '--delay': p.delay + 's' }} />
-  ))
-}
-
 function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [sess, setSess] = useState(null)
   const [goal, setGoal] = useState('')
@@ -1082,7 +958,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // return to the calm "Reading your screen + what it saw" state (owner request).
   const [analyzing, setAnalyzing] = useState(false)
   const [question, setQuestion] = useState('')
-  const [answer, setAnswer] = useState('')
+  // Mid-task ASK flow (focused answer / stuck check-in), one state machine
+  // shared with the floater (askFlow.js). Replaces the old `answer` string.
+  const [askState, dispatchAsk] = useReducer(askReducer, initialAsk)
+  const askBoxRef = useRef(null)
+  const focusAskBox = () => { try { askBoxRef.current && askBoxRef.current.focus() } catch { /* ignore */ } }
+  // Guidance strength (Easy / Medium / Technical / Executive), persisted per
+  // session; every engine call from here on carries it as `level`.
+  const { level, setLevel } = useGuideLevel(sessionId)
+  const withLevel = (body) => ({ ...(body || {}), level })
   const [err, setErr] = useState('')
   const [frames, setFrames] = useState(0)            // how many frames actually sent (cost visibility)
   const [photoFrame, setPhotoFrame] = useState(null) // last one-shot camera Photo (mobile capture), a downscaled dataURL
@@ -1275,7 +1159,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     // floating panel text is always legible.
     try {
       const st = w.document.createElement('style')
-      st.textContent = FLOAT_CSS
+      st.textContent = FLOAT_CSS + GUIDE_CSS
       ;(w.document.head || w.document.documentElement).appendChild(st)
     } catch { /* the panel is inline-styled; only the keyframes are lost */ }
     // Only the window that is still current may clear the state, so a late
@@ -1349,6 +1233,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.replan) setReplanInfo(r.replan)   // per-task re-plan budget left
       if (r.session && r.session.goal != null) setGoal(r.session.goal || '')
       if (r.session && r.session.guidance) setGuidance(r.session.guidance)
+      if (r.session && r.session.observation) setObservation(r.session.observation)
+      if (r.session && r.session.flag) setFlags([{ t: Date.now(), text: r.session.flag }])
       if (r.session && r.session.mode) setMode(r.session.mode)
       if (r.session) setPaused(!!r.session.paused)
     } catch (e) {
@@ -1473,7 +1359,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       let docsText = ''
       try { if (window.workDesktop) docsText = sessionStorage.getItem('wd_docs_' + sessionId) || '' } catch { /* ignore */ }
       const r = await waitFor(
-        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
+        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, level, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
         'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       // Company-policy findings on the plan surface immediately as cited flags, so
@@ -1594,7 +1480,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     // sessions do not hit the AI provider at the same instant (throttle smoothing).
     try { await new Promise((r) => setTimeout(r, Math.floor(Math.random() * 600))) } catch { /* ignore */ }
     try {
-      const r = await api.workWatch(sessionId, { frame })
+      const r = await api.workWatch(sessionId, withLevel({ frame }))
       noteStrong(r)
       lastSentRef.current = Date.now(); setFrames((n) => n + 1)
       setStatus(r.status); setObservation(r.observation || '')
@@ -1632,7 +1518,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     frame = await prepFrame(frame)
     setBusy(true); setAnalyzing(true); setErr('')
     try {
-      const r = await api.workWatch(sessionId, { frame })
+      const r = await api.workWatch(sessionId, withLevel({ frame }))
       if (r.status != null) setStatus(r.status)   // keep the wrong-place signal current on an on-demand read
       if (r.guidance != null) setGuidance(r.guidance || '')
       if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
@@ -1731,6 +1617,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const sawActiveRef = useRef(false)
   const celebratedRef = useRef(false)
   const [celebrate, setCelebrate] = useState(false)
+  // PROACTIVE STUCK HELP: when the current step sits for STUCK_MS while guiding
+  // is live (not paused, no focus screen, no open question), the step steps
+  // aside for a gentle "Stuck? Any issues?" offer. Dismissing snoozes it.
+  const currentIdx = steps.findIndex((x) => x.status === 'current')
+  const stuckActive = !!sess && !ended && !done && !paused && !clarify && steps.length > 0 && !askFocused(askState)
+  const { snooze: snoozeStuck } = useStuck({ stepIndex: currentIdx, active: stuckActive, onStuck: () => dispatchAsk({ type: 'offer' }) })
+  const dismissOffer = () => { snoozeStuck(); dispatchAsk({ type: 'dismiss' }) }
   useEffect(() => {
     if (!sess) return undefined
     if (!completed) { sawActiveRef.current = true; return undefined }
@@ -1764,27 +1657,63 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // Resume button. Same behaviour on web and in the desktop app (the desktop
   // also snaps the window back to the large plan-mode layout). Reopening it
   // loads paused state, so the user resumes exactly where they left off.
+  // HOME = the dashboard. On the desktop the main window is in the compact
+  // GUIDE geometry while a session is open; the dashboard must never render
+  // inside it. So the window expands back to PLAN mode FIRST (large, centered,
+  // opaque, not on top), then the dashboard route loads. On the web this is
+  // just the navigation.
+  const goHome = async () => {
+    try { if (desktop && typeof desktop.setMode === 'function') await desktop.setMode('plan') } catch { /* the layout re-asserts the mode */ }
+    onBack()
+  }
   const leaveToPlan = async () => {
     stopCapture()
     try { if (sess && sess.status !== 'ended' && !paused) await api.workPause(sessionId, true) } catch { /* still leave */ }
-    onBack()
+    goHome()
   }
 
-  const ask = async (qText) => {
+  // The engine reply, in the ONE contract { answer, planChanged, steps?, resumeAt }
+  // (normalizeAskResponse also maps the older { answer, steps, index } shape).
+  // An empty reply (no answer, no plan change) shows nothing and returns to the step.
+  const askCtx = () => ({ steps, current: Math.max(0, steps.findIndex((x) => x.status === 'current')) })
+  const receiveReply = (r) => {
+    const n = normalizeAskResponse(r, askCtx())
+    if (!n.answer && !n.planChanged) { dispatchAsk({ type: 'done' }); return }
+    dispatchAsk({ type: 'receive', ...n })
+  }
+  // CONTINUE: rope the user back into guiding. When the question changed the
+  // plan, the engine's forward steps replace the plan and guiding resumes at
+  // resumeAt; otherwise it resumes where they were. FadeSwap crossfades the
+  // answer out and the step card in.
+  // The focused answer: prose through RichText (key terms highlighted, values
+  // copyable, links live), fenced code through the shared dark code panel.
+  const renderAnswer = (t) => splitSegments(String(t || '')).map((seg, i) => seg.type === 'code'
+    ? <CodeBlock key={i} file={seg.lang || ''} content={seg.body} />
+    : <RichText key={i} text={seg.body} accent="var(--gv-accent)" links />)
+  const resumeGuiding = () => {
+    if (askState.phase === ASK_ANSWERED && askState.planChanged) setSess((s) => applyResume(s, askState))
+    dispatchAsk({ type: 'done' })
+  }
+
+  const ask = async (qText, kindArg) => {
     // Called both from onClick (passes an event) and from the Float panel
     // (passes a string). Only treat a string argument as the question text.
     const q = (typeof qText === 'string' ? qText : question).trim()
     if (!q) return
     if (outOfMinutes()) return
-    setBusy(true); setErr(''); setAnswer('')
+    // A question from the stuck check-in is sent as such, so the engine answers
+    // with a clearer explanation of the current step (or adapts the plan).
+    const kind = typeof kindArg === 'string' ? kindArg : (askState.phase === ASK_OFFER ? 'stuck' : 'ask')
+    dispatchAsk({ type: 'begin', question: q, kind })
+    setBusy(true); setErr('')
     try {
       // Include the screen only if we are already capturing - so pasting a big API
       // response or a long error and hitting Ask does NOT trigger a screen-share
       // prompt. The pasted text is analysed with the goal + plan context.
       const frame = await prepFrame(capturing ? grabFrame() : (photoFrameRef.current || null))
-      const r = await api.workAsk(sessionId, { question: q, frame })
-      noteStrong(r); setAnswer(r.answer || ''); if (typeof qText !== 'string') setQuestion('')
-    } catch (e) { setErr(friendlyError(e, 'Could not answer')) } finally { setBusy(false) }
+      const r = await api.workAsk(sessionId, withLevel({ question: q, frame, ...(kind === 'stuck' ? { stuck: true } : {}) }))
+      noteStrong(r); receiveReply(r); if (typeof qText !== 'string') setQuestion('')
+    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not answer')) } finally { setBusy(false) }
   }
 
   // Add context MID-TASK: a typed note, a text document, and/or an uploaded image
@@ -1797,15 +1726,16 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     const hasText = !!(String(note).trim() || String(docsText).trim())
     if (!hasText && !image) return
     if (outOfMinutes()) return
-    setBusy(true); setErr(''); setAnswer('')
+    dispatchAsk({ type: 'begin', question: String(note || '').trim(), kind: 'context' })
+    setBusy(true); setErr('')
     try {
       const frame = await prepFrame(capturing ? grabFrame() : (photoFrameRef.current || null))
-      const r = await api.workAddContext(sessionId, { note, docsText, image, frame })
+      const r = await api.workAddContext(sessionId, withLevel({ note, docsText, image, frame }))
       noteStrong(r)
-      setAnswer(r.answer || '')
-      if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
+      // A re-plan from the new context is applied on Continue (askFlow contract).
+      receiveReply(r)
       setQuestion('')
-    } catch (e) { setErr(friendlyError(e, 'Could not add that')) } finally { setBusy(false) }
+    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not add that')) } finally { setBusy(false) }
   }
   // Attach handler shared by the console + float: read the file, then send it with
   // whatever note is typed. Surfaces an inline error for an unreadable/unsupported
@@ -1825,18 +1755,19 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     const f = (typeof focus === 'string' ? focus : '').trim()
     const deep = !!forceDeep
     if (outOfMinutes()) return
-    setBusy(true); setErr(''); setAnswer('')
+    dispatchAsk({ type: 'begin', question: f, kind: 'analyze' })
+    setBusy(true); setErr('')
     try {
-      if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) { setBusy(false); return } await new Promise((r) => setTimeout(r, 400)) }
+      if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) { setBusy(false); dispatchAsk({ type: 'dismiss' }); return } await new Promise((r) => setTimeout(r, 400)) }
       const frame = await prepFrame(grabFrame())
-      const r = await api.workAsk(sessionId, { question: f, frame, deep })
-      noteStrong(r); setAnswer(r.answer || '')
+      const r = await api.workAsk(sessionId, withLevel({ question: f, frame, deep }))
+      noteStrong(r); receiveReply({ answer: r.answer, planChanged: false })
       // The screenshot review should also help the plan: run one navigator pass
       // on the SAME frame so the steps and the live guidance reflect what was
       // just seen (advance, correct, or flag), without losing the goal.
       if (sess && Array.isArray(sess.steps) && sess.steps.length) {
         try {
-          const w = await api.workWatch(sessionId, { frame, deep })
+          const w = await api.workWatch(sessionId, withLevel({ frame, deep }))
           if (w.status != null) setStatus(w.status)   // keep the wrong-place signal current after a deep/analyze pass
           if (w.guidance != null) setGuidance(w.guidance || '')
           if (w.steps) setSess((s) => s ? { ...s, steps: w.steps, currentStep: w.index } : s)
@@ -1846,7 +1777,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           setFlags(w.flag ? [{ t: Date.now(), text: w.flag }] : [])
         } catch { /* the answer already showed; a nav refresh failure is non-fatal */ }
       }
-    } catch (e) { setErr(friendlyError(e, 'Could not analyze the screen')) } finally { setBusy(false) }
+    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not analyze the screen')) } finally { setBusy(false) }
   }
 
   // Research = user-triggered web lookup, then a current answer. Only runs when
@@ -1854,9 +1785,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const doResearch = async (qArg) => {
     const q = (typeof qArg === 'string' ? qArg : question).trim()
     if (outOfMinutes()) return
-    setBusy(true); setErr(''); setAnswer('')
-    try { const r = await api.workResearch(sessionId, q); setAnswer(r.answer || '') }
-    catch (e) { setErr(friendlyError(e, 'Could not research')) } finally { setBusy(false) }
+    dispatchAsk({ type: 'begin', question: q, kind: 'research' })
+    setBusy(true); setErr('')
+    try { const r = await api.workResearch(sessionId, q, withLevel()); receiveReply({ answer: r.answer, planChanged: false }) }
+    catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not research')) } finally { setBusy(false) }
   }
 
   // Get the RESULT: hand back the actual answer for the goal, not the next step.
@@ -2055,7 +1987,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const body = { action: act }
       if (stepIndex != null) body.stepIndex = stepIndex
       if (frame) body.frame = frame
-      const r = await api.workHowTo(sessionId, body)
+      const r = await api.workHowTo(sessionId, withLevel(body))
       noteStrong(r)
       if (r && r.refusal) setHowTo((h) => ({ ...h, [key]: { open: true, loading: false, refusal: r.refusal } }))
       else setHowTo((h) => ({ ...h, [key]: { open: true, loading: false, steps: (r && r.steps) || [] } }))
@@ -2136,8 +2068,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const offTrack = !ended && status === 'wrong' && !!String(observation || '').trim()
 
   return (
-    <div className="wc" style={{ ...shell, display: 'flex', flexDirection: 'column', height: desktop ? 'calc(100dvh - 40px)' : '100dvh', overflow: 'hidden', '--wc-fs': fsScale }}>
-      <style>{CONSOLE_CSS}</style>
+    <div className="wc" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': fsScale }}>
+      <style>{CONSOLE_CSS}{GUIDE_CSS}</style>
       {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
           between it and the fixed Ask footer scrolls. */}
       <div className="wc-fixedhead"><div className="wc-shellw">
@@ -2165,14 +2097,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <span style={{ flex: 1 }} />
           {/* Float on top is the core web feature: a labeled, filled button, not a bare icon. */}
           {floatCapable && sess && !ended && (pipWin
-            ? <button className="wc-tbtn on" title={floatIsPip ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> {floatIsPip ? 'Unfloat' : 'Close pop-out'}</button>
-            : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>)}
+            ? <button className="wc-tbtn on" title={floatIsPip ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{floatIsPip ? 'Unfloat' : 'Close pop-out'}</span></button>
+            : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{pipSupported ? 'Float on top' : 'Pop out'}</span></button>)}
           {/* TOOLS: one dropdown for everything that need not sit on screen.
               Make something opens a focused modal; the rest run their existing
               handlers. Pause/Resume, Float and End stay as the visible essentials. */}
           {sess && !ended && (
             <div className="wc-menu" ref={menuRef}>
-              <button className={`wc-tbtn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen} title="Tools: make a deliverable, read the screen, re-plan, full guide, text size, theme"><MenuIcon size={15} /> Tools</button>
+              <button className={`wc-tbtn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen} title="Tools: make a deliverable, read the screen, re-plan, full guide, text size, theme"><MenuIcon size={15} /> <span className="wc-lbl">Tools</span></button>
               {menuOpen && (
                 <div className="wc-menu-pop" role="menu" aria-label="Tools">
                   <div className="wc-menu-sec">Make something</div>
@@ -2189,6 +2121,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   {!isMobile && <button role="menuitem" className="wc-menu-item" onClick={fromMenu(openFullGuide)}><Monitor size={15} /><span><b>Full guide</b><small>Clean, full-screen guidance on your other monitor</small></span></button>}
                   <div className="wc-menu-sec">View</div>
                   <div className="wc-menu-row"><span className="wc-menu-row-k">Text size</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
+                  <div className="wc-menu-row"><span className="wc-menu-row-k">Guidance</span><GuideLevelControl level={level} onChange={setLevel} compact theme={{ border: 'var(--border)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)', accentSoft: 'var(--em-soft)' }} /></div>
                   {/* Per-user accent: applies live everywhere (guide + dashboards) and persists. Stays open like Text size. */}
                   <div className="wc-menu-row" style={{ display: 'block' }}><AccentPicker variant="guide" /></div>
                   <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? 'Dark mode' : 'Light mode'}</b><small>Switch the guiding panel theme</small></span></button>
@@ -2216,13 +2149,6 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, hours renew ${usage.resetLabel}`}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
               {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
             </div>
-            {analyzing ? (
-              <div className="wc-ghstatus analyzing" aria-live="polite"><span className="wc-ana"><i /><i /><i /></span> Analyzing your screen…</div>
-            ) : offTrack ? (
-              <div className="wc-ghstatus wrong" role="alert"><AlertTriangle size={15} /><span><b>You are in the wrong place.</b> <RichText text={observation} /></span></div>
-            ) : watching ? (
-              <div className="wc-ghstatus live"><span className="pulse" /><Eye size={13} strokeWidth={2.4} /><span>Reading {source === 'screen' ? 'your screen' : 'the camera'}. <RichText text={observation} /></span></div>
-            ) : null}
           </div>
         )}
       </div></div>
@@ -2242,7 +2168,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 {steps.map((s, i) => { const mk = planMarker(s, i, steps); return (
                   <button key={i} type="button" className={`wc-mm-row ${mk}`} onClick={() => jumpStep(i)} title={String(s.text || '')} aria-current={mk === 'current' ? 'step' : undefined}>
                     <span className="wc-mm-badge">{mk === 'done' ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
-                    <span className="wc-mm-t">{s.text}</span>
+                    <span className="wc-mm-t"><RichText text={s.text} accent="var(--gv-muted, var(--text-muted))" chips={false} /></span>
                   </button>
                 ) })}
               </div>
@@ -2305,7 +2231,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   <p style={{ color: 'var(--text-dim)', fontSize: 12, margin: '10px 0 0' }}>The full report, prompts and audit log are under <b>Pick up where you left off</b>.</p>
                   <div className="wd-modal-btns">
                     <button className="btn btn-ghost" onClick={() => setEndState(null)}>Stay here</button>
-                    <button className="btn btn-primary" onClick={() => { setEndState(null); onBack() }}><Check size={15} /> OK, back to plan</button>
+                    <button className="btn btn-primary" onClick={() => { setEndState(null); goHome() }}><Check size={15} /> OK, back to plan</button>
                   </div>
                 </>
               )}
@@ -2324,7 +2250,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wc-cele-badge"><Check size={26} strokeWidth={2.6} /></div>
             <div className="wc-cele-title">Task complete</div>
             <div className="wc-cele-sub">{steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : 'Nicely done.'} Your report and audit log are ready below.</div>
-            <button type="button" className="wc-cele-btn" onClick={onBack} title="Start a new task"><Plus size={16} strokeWidth={2.6} /> Start another task</button>
+            <button type="button" className="wc-cele-btn" onClick={goHome} title="Start a new task"><Plus size={16} strokeWidth={2.6} /> Start another task</button>
           </div>
         )}
 
@@ -2426,28 +2352,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 <button type="button" className="wc-tbtn primary wc-wl-check" onClick={refreshScreen} disabled={busy || paused} title="Read the screen once, right now, and update your steps"><ScanLine size={15} /> Check my progress</button>
               </div>
             )}
-            {/* The screen-share + float story for a first-time web user. Shows only
-                before the share is live (and never once floating), so the resting
-                guide view stays uncluttered. */}
-            {!watchLight && floatCapable && !pipWin && !watching && (
-              <div className="wc-tip">
-                <PictureInPicture2 size={15} />
-                <span className="fill">{watching ? <>Keep these steps above your work: <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> opens them in a small window that stays {pipSupported ? 'on top' : 'open'} while you work underneath.</> : <>Share your <b>whole screen</b>, then <b>{pipSupported ? 'Float on top' : 'Pop out'}</b> to keep the steps above your work.</>}</span>
-                <button className="wc-tbtn" onClick={openFloat} title={pipSupported ? 'Float the steps in a small always-on-top window' : 'Pop the steps out into their own window'}><PictureInPicture2 size={14} /> {pipSupported ? 'Float on top' : 'Pop out'}</button>
-              </div>
-            )}
           </>
         ) : null}
-        {/* Plan title lives with the guiding content (not in the header menu). */}
-        {ended && err && <div style={{ color: 'var(--danger)', fontSize: 13, lineHeight: 1.45, margin: '0 2px 10px' }}>{err}</div>}
-        {sess && steps.length > 0 && (sess.title || sess.goal) && (
+        {/* Finished task: the kicker + title head the read-only record. */}
+        {ended && sess && steps.length > 0 && (sess.title || sess.goal) && (
           <>
-            <div className="wc-plan-kicker">{ended ? <><Check size={11} /> Finished task</> : 'Your plan'}</div>
+            <div className="wc-plan-kicker"><Check size={11} /> Finished task</div>
             <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
           </>
         )}
-        {/* Reader text-size control. While guiding it lives in the Tools menu; on
-            the finished record (no menu) it stays here atop the steps. */}
         {sess && steps.length > 0 && ended && (
           <div className="wc-readbar">
             <span className="wc-readbar-k">Text size</span>
@@ -2455,6 +2368,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} />
           </div>
         )}
+        {ended && err && <div style={{ color: 'var(--danger)', fontSize: 13, lineHeight: 1.45, margin: '0 2px 10px' }}>{err}</div>}
         {/* hidden camera-photo picker, always mounted */}
         <input ref={photoInputRef} type="file" accept="image/*" capture="environment" onChange={onPhotoPicked} style={{ display: 'none' }} />
 
@@ -2467,27 +2381,34 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             : { display: 'none' }} />
         {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>Live camera. Aim it at what you need help with.</div>}
 
-        {/* The wrong-place signal and the live "reading your screen" line now live
-            PINNED in the header strip (wc-guidehead) so they are always visible,
-            not scrolled past. Flags still sit atop the scrolling content. */}
-
-        {/* Flags/warnings sit at the TOP of the guiding content so you see them
-            immediately. They clear automatically as soon as you move past them. */}
-        {flags.length > 0 && !ended && (
-          <div className="wc-flags">
-            {flags.map((f) => (
-              <div key={f.t} className="wc-flag">
-                <AlertTriangle size={15} /> <span><span className="wc-flag-k">Careful</span>{f.text}</span>
-              </div>
-            ))}
-          </div>
-        )}
-
-
-        {/* Mid-guiding clarification: the plan asked for ONE essential input it
-            cannot see on the screen. Sits just above the current-step hero so the
-            person answers before acting. A tap (choice) or a short line (text)
-            refines the next steps. Shows only while the plan set a question. */}
+        {/* ONE SCREEN AT A TIME (owner direction). The guide view is a sequence
+            of single focused screens with a hide/show fade between them: the
+            current step + guidance (the hero), or the plan's one question, or
+            the stuck check-in, or the short working moment, or the focused
+            answer / clearer explanation, then back to the step. Nothing stacks.
+            The observation is a quiet "I can see" glance UNDER the step and
+            rises above it, amber, only when it caught a problem. The goal is
+            one muted, expandable line. */}
+        {!ended && steps.length > 0 && (() => {
+          const win = stepWindow(steps)
+          const cur = win.length ? win[0] : null
+          const ci = cur ? cur.index : -1
+          const focused = askFocused(askState)
+          const flagText = flags.length ? String(flags[0].text || '') : ''
+          const prominent = readingIsProminent({ offTrack, flag: flagText, observation })
+          const view = focused ? 'ask:' + askState.phase : clarify ? 'clarify' : done ? 'done' : 'step:' + ci
+          const key = 'step-' + ci
+          const reading = <ReadingStrip watching={watching} analyzing={analyzing} offTrack={offTrack} observation={observation} flag={flagText} source={source} />
+          return (
+            <div className="gv" style={{ marginTop: 12 }}>
+              <GoalLine title={sess.title} goal={sess.goal} />
+              <FadeSwap k={view}>
+                {focused ? (
+                  <AskFocus ask={askState} steps={askState.planChanged ? applyResume(sess, askState).steps : steps} stepText={cur ? cur.step.text : ''} busy={busy}
+                    onAsk={(q) => ask(q, 'stuck')} onDismiss={dismissOffer} onContinue={resumeGuiding} onFollowUp={focusAskBox}
+                    renderAnswer={renderAnswer} />
+                ) : clarify ? (
+                  <>
         {!ended && clarify && (() => {
           // The chips are a best-guess shortlist, so a choice question always
           // also offers "Other" (type your own) and Skip; a text question offers
@@ -2516,9 +2437,27 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             </div>
           )
         })()}
-        {/* After an answer or a skip the card gives way to this small strip, which
-            stays until the next question or the task moves on. Change / Answer it
-            reverts on the server and re-opens the same card. */}
+                  </>
+                ) : done ? (
+                  <div className="wc-alldone"><Check size={16} strokeWidth={2.5} /> Every step is confirmed on screen. End and summarize when you are ready.</div>
+                ) : cur ? (
+                  <>
+                    {prominent && reading}
+                    <StepCard step={cur.step} index={ci} total={steps.length} guidance={guidance} confirmN={confirmN} busy={busy}
+                      hint={paused
+                        ? <span className="gv-step-hint">Paused. Resume to keep this live.</span>
+                        : watchLight
+                          ? <span className="gv-step-hint">Plan-heavy mode. Tap Check my progress for a fresh read.</span>
+                          : !watching && <button type="button" className="gv-step-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
+                      onDone={() => setStep(ci, 'done')}
+                      extra={<>
+                        {/* Grounded-in-your-documents: shows only when the guide marked this
+                            step as grounded in the user's own material (else renders nothing). */}
+                        <SourceChip source={cur.step.source} />
+                        <HowButton open={!!(howTo[key] && howTo[key].open)} loading={!!(howTo[key] && howTo[key].loading)} onClick={() => drillHow(key, cur.step.text, ci)} />
+                        <HowDetail entry={howTo[key]} onRetry={() => drillHow(key, cur.step.text, ci)} />
+                      </>} />
+                    {!prominent && reading}
         {!ended && !clarify && clarifyDone && (
           <div className="wc-clarify-done" role="status">
             <Check size={13} strokeWidth={2.5} />
@@ -2531,100 +2470,41 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         )}
 
-        {/* THE ONE current-step card (live). The hero carries everything for the
-            step so it is never rendered a second time below: the live guidance
-            headline (falling back to the step's own text before the first watch
-            or while paused, so it is never empty), the plan step line when it
-            differs, link-or-copy, exact commands/code, "done when", the How?
-            sub-steps drill-down (auto-opened, #3) and Mark done. */}
-        {!ended && !done && steps.length > 0 && (() => {
-          const win = stepWindow(steps)
-          if (!win.length) return null
-          const { step: cur, index: ci } = win[0]
-          const g = String(guidance || '').trim()
-          const t = String(cur.text || '').trim()
-          const headline = g || t
-          const showStepLine = !!(g && t && g !== t)
-          const key = 'step-' + ci
-          return (
-            /* keyed on the step so advancing replays the entrance sweep */
-            <div className="wc-hero" key={'hero-' + ci}>
-              <div className="wc-hero-eyebrow">
-                <span className="wc-hero-chip"><Eye size={11} strokeWidth={2.5} /> Now, do this</span>
-                {confirmN > 0 && <span className="wc-confirm" role="status"><Check size={12} strokeWidth={3} /> Step {confirmN === 1 ? '1' : confirmN} confirmed</span>}
-                <span className="wc-hero-hint" style={{ fontVariantNumeric: 'tabular-nums' }}>Step {ci + 1} of {steps.length}</span>
-                {paused
-                  ? <span className="wc-hero-hint">Paused. Resume to keep this live.</span>
-                  : watchLight
-                    ? <span className="wc-hero-hint">Plan-heavy mode. Tap Check my progress when you want a fresh read.</span>
-                    : !watching && <button type="button" className="wc-hero-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
-              </div>
-              <div className="wc-hero-text"><RichText text={headline} accent="var(--em)" /></div>
-              {showStepLine && <div className="wc-hero-step"><span className="wc-hero-step-k">Step {ci + 1}</span><RichText text={t} /></div>}
-              {cur.url && <StepLink url={cur.url} />}
-              {((cur.commands && cur.commands.length > 0) || (cur.code && cur.code.content)) && (
-                <DestructiveGate why={cur.destructive ? cur.destructiveWhy : null}>
-                  {cur.commands && cur.commands.length > 0 && <CmdBlock lines={cur.commands} />}
-                  {cur.code && cur.code.content && <CodeBlock file={cur.code.file} content={cur.code.content} />}
-                </DestructiveGate>
-              )}
-              {cur.validate && <div className="wc-step-when"><Eye size={11} /> done when: <RichText text={cur.validate} /></div>}
-              {/* Grounded-in-your-documents: shows only when the guide marked this
-                  step as grounded in the user's own material (else renders nothing). */}
-              <SourceChip source={cur.source} />
-              <HowButton open={!!(howTo[key] && howTo[key].open)} loading={!!(howTo[key] && howTo[key].loading)} onClick={() => drillHow(key, cur.text, ci)} />
-              <HowDetail entry={howTo[key]} onRetry={() => drillHow(key, cur.text, ci)} />
-              <div className="wc-hero-actions">
-                <button className="wc-tbtn primary" onClick={() => setStep(ci, 'done')} title="Mark this step done and move to the next"><Check size={15} strokeWidth={2.5} /> Mark done</button>
-              </div>
+                    {steps.length > 1 && (
+                      <div className="gv-nav">
+                        <button type="button" className="gv-nav-btn" disabled={ci <= 0} onClick={() => navStep(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
+                        <div className="gv-nav-mid">
+                          <span className="gv-nav-count">Step {ci + 1} of {steps.length}</span>
+                          <div className="gv-nav-track"><div className="gv-nav-fill" style={{ width: `${((ci + 1) / steps.length) * 100}%` }} /></div>
+                        </div>
+                        <button type="button" className="gv-nav-btn" disabled={ci >= steps.length - 1 || cur.step.status !== 'done'} onClick={() => navStep(1)} title={cur.step.status !== 'done' ? 'Finish this step first. It advances on its own when done.' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
+                      </div>
+                    )}
+                    {/* the ONE step after this one, as a single quiet line, plus the full plan */}
+                    {win[1] && (
+                      <div className="gv-next" title={String(win[1].step.text || '')}>
+                        <span className="gv-k">Next</span>
+                        <span className="gv-next-n">{win[1].index + 1}</span>
+                        <span className="gv-next-t"><RichText text={win[1].step.text} accent="var(--gv-muted)" chips={false} /></span>
+                      </div>
+                    )}
+                    {steps.length > 1 && (
+                      <div className="wc-plan-bar">
+                        <span className="wc-plan-prog">{doneCount} of {steps.length} done</span>
+                        <button type="button" className="wc-plan-link" onClick={() => setPlanOpen(true)}>View full plan</button>
+                      </div>
+                    )}
+                  </>
+                ) : null}
+              </FadeSwap>
             </div>
           )
         })()}
 
-        {steps.length > 0 && (
-          <div className={`wc-steps${ended ? ' ro' : ''}`}>
-            {ended && <div className="wc-record-head"><Check size={13} strokeWidth={2.5} /> What was done. {doneCount} of {steps.length} steps</div>}
-            {steps.length > 1 && !ended && (() => {
-              const ci = steps.findIndex((s) => s.status === 'current')
-              const no = ci >= 0 ? ci : Math.min(sess?.currentStep || 0, steps.length - 1)
-              return (
-                <div className="wc-nav">
-                  <button className="wc-nav-btn" disabled={no <= 0} onClick={() => navStep(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
-                  <div className="wc-nav-mid">
-                    <span className="wc-nav-count">Step {no + 1} of {steps.length}</span>
-                    <div className="wc-nav-track"><div className="wc-nav-fill" style={{ width: `${((no + 1) / steps.length) * 100}%` }} /></div>
-                  </div>
-                  <button className="wc-nav-btn" disabled={no >= steps.length - 1 || (steps[no] && steps[no].status !== 'done')} onClick={() => navStep(1)} title={steps[no] && steps[no].status !== 'done' ? 'Finish this step first - it advances on its own when done' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
-                </div>
-              )
-            })()}
-            {/* Progress line + full-plan access (live only). This line tells you
-                where you are in the whole plan; "View full plan" opens all of it. */}
-            {!ended && (() => {
-              const prog = progressText(steps)
-              if (!prog) return null
-              const hasMore = steps.some((s) => s.status !== 'done' && s.status !== 'current') || steps.length > 1
-              return (
-                <div className="wc-plan-bar">
-                  <span className="wc-plan-prog">{prog}</span>
-                  {hasMore && <button type="button" className="wc-plan-link" onClick={() => setPlanOpen(true)}>View full plan</button>}
-                </div>
-              )
-            })()}
-            {/* #4 ONE STEP AT A TIME, ONCE: during a LIVE session the current step
-                lives ONLY in the hero above (never repeated here). The one step
-                after it shows as a single brief title line - not expanded. The
-                full step list renders only when the task has ENDED (the record). */}
-            {!ended && (() => {
-              const next = stepWindow(steps).slice(1, 2)
-              return next.map(({ step: s, index: n }) => (
-                <div key={n} className="wc-next" title={String(s.text || '')}>
-                  <span className="wc-next-k">Next</span>
-                  <span className="wc-next-n">{n + 1}</span>
-                  <span className="wc-next-t"><RichText text={s.text} /></span>
-                </div>
-              ))
-            })()}
+        {/* The finished task: a calm, read-only record of every step. */}
+        {ended && steps.length > 0 && (
+          <div className="wc-steps ro">
+            <div className="wc-record-head"><Check size={13} strokeWidth={2.5} /> What was done. {doneCount} of {steps.length} steps</div>
             {ended && steps.map((s, i) => {
               const isDone = s.status === 'done'
               const tone = isDone ? 'done' : 'skipped'
@@ -2652,7 +2532,6 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 </div>
               )
             })}
-            {done && !ended && <div className="wc-alldone"><Check size={16} strokeWidth={2.5} /> Every step is confirmed on screen. End and summarize when you are ready.</div>}
           </div>
         )}
 
@@ -2932,10 +2811,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       {sess && !ended && (
         <div className="wc-fixedfoot"><div className="wc-shellw">
           <div className="wc-ask">
-            {answer && <div className="wc-ask-answer wc-ask-answer-foot"><div className="wc-ask-k"><Sparkles size={11} /> Answer</div><AnswerBody text={answer} /></div>}
             <div className="wc-ask-row wc-askrow">
               <input ref={contextFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) attachContext(f, question); e.target.value = '' }} />
-              <textarea className="input wc-ask-ta" rows={1} placeholder={source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, paste an error, or attach a screenshot or document for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
+              <textarea ref={askBoxRef} className="input wc-ask-ta" rows={1} placeholder={askState.phase === ASK_OFFER ? 'Tell me what is in the way' : askFocused(askState) ? 'Ask a follow-up' : source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, paste an error, or attach a screenshot or document for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
               <button className="wc-ib" onClick={() => contextFileRef.current && contextFileRef.current.click()} disabled={busy} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={16} /></button>
               <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
               <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
@@ -2948,14 +2826,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       {pipWin && createPortal(
         <FloatPanel
           steps={steps} watching={watching} observation={observation} guidance={guidance}
-          flags={flags} answer={answer} busy={busy} analyzing={analyzing} err={err}
-          done={done} ended={ended} celebrate={celebrate} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal}
+          flags={flags} ask={askState} onContinue={resumeGuiding} onDismissOffer={dismissOffer} busy={busy} analyzing={analyzing} err={err}
+          level={level} onLevel={setLevel}
+          done={done} ended={ended} celebrate={celebrate} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal} title={sess && sess.title}
           fontScale={{ scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax }}
           theme={floatTheme} onToggleTheme={() => setFloatTheme((t) => t === 'light' ? 'dark' : 'light')}
           usage={usage} paused={paused} onPause={togglePause}
           onDeep={() => analyze(floatQ.trim(), true)}
           onResearch={() => doResearch(floatQ.trim())}
-          onAsk={(q) => { ask(q); setFloatQ('') }}
+          onAsk={(q, kind) => { ask(q, kind); setFloatQ('') }}
           onAnalyze={analyze}
           onAddContext={async (file) => { await attachContext(file, floatQ.trim()); setFloatQ('') }}
           onStep={setStep}
@@ -2963,414 +2842,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           onWatch={watching ? pauseWatching : startWatching}
           onEnd={endSession}
           onClose={closeFloat}
-          onStartAnother={() => { closeFloat(); try { window.focus() } catch { /* best-effort */ } onBack() }}
+          onStartAnother={() => { closeFloat(); try { window.focus() } catch { /* best-effort */ } goHome() }}
         />, pipWin.document.body)}
     </div>
   )
 }
-
-// The floating overlay shown in the Document Picture-in-Picture window. It
-// mirrors the console's live state (steps, the current step, what the watcher
-// sees, flags, the latest answer) and lets the user ask and tick steps off
-// without leaving the app they are working in. Styles are inline because the
-// PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, answer, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onEnd, onClose, onStartAnother }) {
-  const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
-  const current = steps.find((s) => s.status === 'current')
-  // Completed = every step done, or the session was ended. Drives the floater's
-  // task-complete celebration + "Start another task" (mirrors the in-software
-  // done view). An ended session never shows the live "now" card.
-  const complete = done || ended
-  // Dim the panel to cut glare over your work. The browser will not let a web
-  // Picture-in-Picture window be see-through to the app behind it, so this
-  // fades the panel itself; for true see-through + click-behind use the app.
-  const DIM_LEVELS = [1, 0.85, 0.65, 0.45]
-  const [dim, setDim] = useState(1)
-  const cycleDim = () => setDim((d) => DIM_LEVELS[(DIM_LEVELS.indexOf(d) + 1) % DIM_LEVELS.length] || 1)
-  // The full roadmap is tucked away by default so the current step and the
-  // latest answer own the panel. A compact chip expands it on demand.
-  const [stepsOpen, setStepsOpen] = useState(false)
-
-  const light = theme === 'light'
-  // Color-coded by meaning (one source of truth with the console + full guide):
-  //   accent (EMERALD) = the current step / the one live action - the brightest
-  //   thing on the panel and the primary button; cyan = calm context the watcher
-  //   can see (observation); warn (AMBER) = a warning that must interrupt; good =
-  //   the done check. Brand emerald #8cf5c4 / cyan #39d3ff / amber #f5c86b for
-  //   dark; darkened equivalents for contrast on the white light panel.
-  //   Everything here is inline because the PiP document carries none of the
-  //   app's CSS.
-  const c = light
-    ? { canvas: '#f3f5f9', panel: '#ffffff', panel2: '#f5f7fb', border: '#e2e6ed', borderStrong: '#c6cdd8', text: '#171a21', muted: '#58606e', faint: '#8b93a1',
-        accent: '#0e9f6e', accentHi: '#12b47e', onAccent: '#ffffff', accentSoft: 'rgba(14,159,110,.10)', accentRing: 'rgba(14,159,110,.30)', accentGlow: 'rgba(14,159,110,.20)',
-        cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,.10)', cyanRing: 'rgba(10,132,194,.28)',
-        good: '#107c41', goodSoft: 'rgba(16,124,65,.12)', warn: '#b86e00', warnSoft: 'rgba(245,200,107,.16)', warnRing: 'rgba(184,110,0,.30)', danger: '#c42b1c',
-        link: '#0067c0',
-        inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)', heroShadow: '0 2px 4px rgba(14,159,110,.06), 0 14px 32px -16px rgba(14,159,110,.32)' }
-    : { canvas: '#0a0d12', panel: '#141a24', panel2: '#1b2130', border: '#28303f', borderStrong: '#3b4455', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780',
-        accent: '#8cf5c4', accentHi: '#8cf5c4', onAccent: '#052a1d', accentSoft: 'rgba(140,245,196,.14)', accentRing: 'rgba(140,245,196,.34)', accentGlow: 'rgba(140,245,196,.22)',
-        cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,.13)', cyanRing: 'rgba(57,211,255,.32)',
-        good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,.14)', warnRing: 'rgba(245,200,107,.34)', danger: '#ff7a6b',
-        link: '#6cb6ff',
-        inputBg: '#0a0d12', track: '#28303f', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(140,245,196,.3)' }
-
-  // Confetti for the completed-state flourish. Concrete hex (the PiP document
-  // has no app CSS vars); on-brand greens with two soft accents. Computed once.
-  const floatConfetti = useMemo(() => makeConfetti(12, [c.good, c.accent, '#f5b64b', '#5aa9ff']), [light])   // eslint-disable-line
-
-  // Figtree for body (loaded into the PiP document head when the float opens),
-  // Bricolage Grotesque for display headings - the same pairing as the app.
-  // Both degrade to a clean system stack if the webfont is blocked.
-  const FONT = '"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI","Inter",system-ui,sans-serif'
-  const DISPLAY = '"Bricolage Grotesque",' + FONT
-  // Microsoft-Learn / Docs reading scale. fs(px) multiplies a GUIDANCE text size
-  // by --fp-fs (the reader's A- / A / A+ choice, shared with the console + full
-  // guide through the one wc-guide-fontscale key). Chrome (header, buttons,
-  // eyebrows, badges) stays a stable size so the panel never blows up. The vars
-  // are set here inline AND on the PiP document root by the console, so the
-  // body default and every sized element agree.
-  const fsScale = (fontScale && Number.isFinite(fontScale.scale)) ? fontScale.scale : 1
-  const fs = (px) => `calc(${px}px * var(--fp-fs, 1))`
-  // FIXED header + footer: the panel is a full-height flex column that does not
-  // itself scroll (overflow hidden); the header and the Ask footer are pinned
-  // (flexShrink 0) and only the middle region scrolls.
-  const wrap = { '--fp-fs': fsScale, '--wc-fs': fsScale, padding: '10px 12px 12px', display: 'flex', flexDirection: 'column', gap: 9, height: '100vh', overflow: 'hidden', opacity: dim, color: c.text, background: c.canvas, fontFamily: FONT, fontSize: fs(13.5), lineHeight: 1.5, fontFeatureSettings: '"tnum" 1, "cv11" 1', WebkitFontSmoothing: 'antialiased' }
-  const card = { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 12, padding: 12, boxShadow: c.shadow }
-  // Blue inline hyperlink for "Open <host>" (MS-docs style), NOT a button.
-  const link = { display: 'inline-flex', alignItems: 'center', gap: 5, color: c.link, fontSize: fs(13), fontWeight: 600, textDecoration: 'none', overflowWrap: 'anywhere' }
-  // One small-button family: icon (header), ghost (secondary), primary (the one action).
-  const iconBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .15s, color .15s' }
-  const ghost = { background: c.panel2, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, height: 32, padding: '0 11px', fontSize: 12.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'background .15s, border-color .15s, color .15s' }
-  const primary = { background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, color: c.onAccent, border: '1px solid transparent', borderRadius: 9, height: 32, padding: '0 13px', fontSize: 12.5, fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', boxShadow: `0 1px 2px rgba(0,0,0,.12), 0 0 0 1px ${c.accentRing} inset` }
-  const navBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }
-  const eyebrow = { fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }
-  // The current-step / answer left bar reads emerald -> cyan (the color-coded
-  // "now" accent). Flags override this to amber below.
-  const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accent}, ${c.cyan})` }
-
-  const timeLeft = usage ? usageTimeLeft(usage) : ''
-  // #1 ONE calm status chip: Guiding when live, Paused otherwise. The watching
-  // state is implied by this chip, not by a separate "Live / Not watching" label.
-  const liveFP = watching && !paused
-  const status = liveFP
-    ? { label: 'Guiding', color: c.accent, soft: c.accentSoft }
-    : { label: 'Paused', color: c.warn, soft: c.warnSoft }
-  const doneN = steps.filter((s) => s.status === 'done').length
-  // MAXIMIZED float: when the PiP / pop-out window is wide, use the space - a
-  // left plan mini-map rail beside a centered reading column instead of one
-  // stretched strip. Measured on the panel root (its own window), so it works
-  // in the separate PiP document. Narrow = the single column as before.
-  const rootRef = useRef(null)
-  const [wide, setWide] = useState(false)
-  useEffect(() => {
-    const el = rootRef.current
-    if (!el || typeof ResizeObserver === 'undefined') return undefined
-    const ro = new ResizeObserver((es) => { const w = es[0] && es[0].contentRect ? es[0].contentRect.width : 0; setWide(w >= 900) })
-    ro.observe(el)
-    return () => ro.disconnect()
-  }, [])
-  // "Step confirmed" pop on the now-card when the done count rises (presentational).
-  const [fpConfirm, setFpConfirm] = useState(0)
-  const prevDoneN = useRef(doneN)
-  useEffect(() => {
-    if (doneN > prevDoneN.current) { setFpConfirm(doneN); const t = setTimeout(() => setFpConfirm(0), 1800); prevDoneN.current = doneN; return () => clearTimeout(t) }
-    prevDoneN.current = doneN
-    return undefined
-  }, [doneN])
-
-  return (
-    <div style={wrap} ref={rootRef}>
-      {/* FIXED HEADER: brand, ONE status chip, minutes, icon controls, under a hairline */}
-      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 10, borderBottom: `1px solid ${c.border}` }}>
-        <span style={{ width: 25, height: 25, borderRadius: 9, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset, 0 2px 6px -2px ${c.accentRing}` }}>
-          <Eye size={13} color="#fff" strokeWidth={2.4} />
-        </span>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 6 }}>
-          <strong style={{ fontFamily: DISPLAY, fontSize: 14.5, fontWeight: 700, letterSpacing: '-.015em', whiteSpace: 'nowrap' }}>WorkCoPilot</strong>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, height: 20, fontSize: 10, fontWeight: 700, letterSpacing: '.05em', textTransform: 'uppercase', color: status.color, background: status.soft, borderRadius: 999, padding: '0 8px', whiteSpace: 'nowrap' }}>
-            <span className={watching && !paused ? 'fp-pulse' : undefined} style={{ width: 6, height: 6, borderRadius: '50%', background: status.color }} />
-            {status.label}
-          </span>
-          {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{timeLeft}</span>}
-        </div>
-        {/* Pause/Resume now lives in the prominent control below (#2); the header
-            stays a clean row of secondary icons so the status cluster is calm. */}
-        <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: take a closer look at this one frame and weave it back into the steps, then carry on at normal speed."><Zap size={15} /></button>
-        <button className="fp-btn" style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
-        <button className="fp-btn" style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
-        <button className="fp-btn" style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
-      </div>
-
-      {/* PINNED: Pause/Resume + the live reading/analyzing line stay above the
-          scroll so the control and "what the screen is reading" are always in
-          view (owner request; matched to the console). */}
-      <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7, padding: '2px 0 0' }}>
-        <div style={{ display: 'flex', gap: 7 }}>
-          {paused
-            ? <button className="fp-btn fp-pulse" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
-            : watching
-              ? <button className="fp-btn" style={{ ...ghost, flex: 1, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
-              : <button className="fp-btn" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
-          {/* End is now always visible in the floater (owner: End button was not
-              reachable here) - ends the task and builds the summary, same as the
-              console's End. Close (X, top-right) only pops the steps back. */}
-          <button className="fp-btn" style={{ ...ghost, flexShrink: 0, justifyContent: 'center', height: 40, padding: '0 15px', fontSize: 13, fontWeight: 650, color: c.danger, borderColor: c.border }} onClick={onEnd} title="End this task and build a summary">End</button>
-        </div>
-        {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
-        {analyzing
-          ? <div className="fp-blink" style={{ fontSize: fs(12.5), fontWeight: 650, color: c.cyan, display: 'flex', gap: 8, alignItems: 'center', padding: '7px 10px', background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><span className="fp-ana"><i /><i /><i /></span> Analyzing your screen…</div>
-          : watching
-            ? <div style={{ fontSize: fs(12.5), color: c.muted, display: 'flex', gap: 8, alignItems: 'flex-start', padding: '7px 10px', lineHeight: 1.45, background: c.cyanSoft, border: `1px solid ${c.cyanRing}`, borderRadius: 10 }}><Eye size={13} strokeWidth={2.4} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>Reading your screen. <RichText text={observation} accent={c.cyan} /></span></div>
-            : null}
-      </div>
-
-      {/* SCROLL REGION: everything between the fixed header and the fixed Ask
-          footer scrolls here; the header and footer stay pinned. When WIDE, a
-          plan mini-map rail sits on the left and the column is centered/boxed. */}
-      <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: wide ? 'grid' : 'flex', gridTemplateColumns: wide ? '220px minmax(0,1fr)' : undefined, flexDirection: 'column', gap: wide ? 16 : 9, alignItems: wide ? 'start' : undefined }}>
-      {wide && steps.length > 0 && (
-        <aside style={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 8, ...card, padding: 10 }} aria-label="Plan">
-          <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>Plan <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps)}</span></span>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '48vh', overflowY: 'auto' }}>
-            {steps.map((s, i) => { const isDone = s.status === 'done', isNow = s.status === 'current'; return (
-              <button key={i} className="fp-btn" onClick={() => onStep(i, 'current')} title={String(s.text || '')} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: '6px 7px', borderRadius: 8, border: `1px solid ${isNow ? c.accentRing : 'transparent'}`, background: isNow ? c.accentSoft : 'transparent', color: isNow ? c.text : isDone ? c.faint : c.muted, fontFamily: FONT, fontSize: fs(12), lineHeight: 1.4, fontWeight: isNow ? 650 : 500 }}>
-                <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: isDone ? c.good : isNow ? c.onAccent : c.faint, background: isNow ? c.accent : isDone ? c.goodSoft : 'transparent', border: `1.5px solid ${isNow ? c.accent : isDone ? 'transparent' : c.border}` }}>{isDone ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
-                <span className="fp-clamp" style={{ flex: 1, minWidth: 0, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}>{s.text}</span>
-              </button>
-            ) })}
-          </div>
-          <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 32 }} onClick={() => setStepsOpen(true)} title="View the full plan"><MenuIcon size={14} /> Full plan</button>
-        </aside>
-      )}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: wide ? 680 : undefined, margin: wide ? '0 auto' : undefined, ...(wide ? { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, padding: 14, boxShadow: c.shadow } : {}) }}>
-      {/* Pause/Resume and the live reading/analyzing line are now PINNED above the
-          scroll (see the block after the header), so they never scroll away. */}
-
-      {/* Flags first: anything to be careful about sits above the action */}
-      {flags.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-          {flags.map((f, i) => (
-            <div key={i} style={{ position: 'relative', display: 'flex', gap: 9, alignItems: 'flex-start', padding: '8px 10px 8px 13px', background: c.warnSoft, borderRadius: 10, fontSize: fs(13), lineHeight: 1.5, color: c.text, overflow: 'hidden' }}>
-              <span style={{ ...accentBar, width: 3, background: c.warn }} />
-              <AlertTriangle size={14} style={{ color: c.warn, flexShrink: 0, marginTop: 2 }} />
-              <span style={{ overflowWrap: 'anywhere' }}><RichText text={f.text} accent={c.warn} /></span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Read bar: the goal (what all this is for) on the left, the shared
-          A- / A / A+ text-size control on the right. The control writes the one
-          wc-guide-fontscale key, so the console and full guide follow along. */}
-      {steps.length > 0 && (
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 10, padding: '0 2px' }}>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            {goal && goal.trim() && (
-              <>
-                <span style={{ ...eyebrow, fontSize: 9.5, color: c.cyan }}>Goal</span>
-                <div className="fp-clamp" title={goal} style={{ fontSize: fs(12.5), lineHeight: 1.45, color: c.muted, overflowWrap: 'anywhere', marginTop: 1 }}>{goal}</div>
-              </>
-            )}
-          </div>
-          {fontScale && (
-            <GuideFontControl scale={fontScale.scale} dec={fontScale.dec} inc={fontScale.inc} reset={fontScale.reset} atMin={fontScale.atMin} atMax={fontScale.atMax}
-              theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />
-          )}
-        </div>
-      )}
-
-      {/* The current step and the latest answer. Natural height; the fixed-footer
-          layout lets the scroll region above handle any overflow. */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
-        {(current && !ended) ? (
-          <>
-            {/* CURRENT STEP = the brightest element: emerald accent, emerald->cyan
-                left bar, a soft pulsing glow (reduced-motion safe via FLOAT_CSS),
-                a "NOW · STEP X OF Y" eyebrow. Then the docs hierarchy, compact:
-                step (semibold, the thing to do) -> how (the live guidance) ->
-                done-when -> Open link (blue inline) -> dark code box with Copy. */}
-            <div className="fp-now" key={'now-' + steps.indexOf(current)} style={{ ...card, position: 'relative', overflow: 'hidden', padding: '12px 13px 12px 16px', borderColor: c.accentRing, boxShadow: c.heroShadow, '--gr': c.accentRing, '--gg': c.accentGlow }}>
-              <span style={accentBar} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7, flexWrap: 'wrap' }}>
-                <span style={{ ...eyebrow, display: 'inline-flex', alignItems: 'center', gap: 5, color: c.onAccent, background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, padding: '3px 9px', borderRadius: 999 }}><Eye size={10} strokeWidth={2.6} /> Now · step {steps.indexOf(current) + 1} of {steps.length}</span>
-                {fpConfirm > 0 && <span className="fp-confirm" role="status" style={{ color: c.good, background: c.goodSoft, boxShadow: `0 0 0 1px ${c.good} inset` }}><Check size={11} strokeWidth={3} /> Step {fpConfirm} confirmed</span>}
-                {paused
-                  ? <span style={{ fontSize: 11, color: c.faint }}>Paused. Resume to keep this live.</span>
-                  : !watching && <span style={{ fontSize: 11, color: c.faint }}>Watch my screen to keep this live</span>}
-              </div>
-              <div style={{ fontFamily: FONT, fontWeight: 600, fontSize: fs(15), lineHeight: 1.4, color: c.text, overflowWrap: 'anywhere', textWrap: 'pretty' }}><RichText text={current.text} accent={c.accent} /></div>
-              {guidance && guidance.trim() && guidance.trim() !== String(current.text || '').trim() && (
-                <div style={{ fontSize: fs(13.5), color: c.text, marginTop: 7, lineHeight: 1.55, overflowWrap: 'anywhere' }}><RichText text={guidance} accent={c.accent} /></div>
-              )}
-              {current.validate && <div style={{ display: 'inline-flex', alignItems: 'flex-start', gap: 5, fontSize: fs(12), color: c.muted, marginTop: 8, lineHeight: 1.45, background: c.panel2, border: `1px solid ${c.border}`, padding: '3px 9px', borderRadius: 7, maxWidth: '100%' }}><Eye size={11} style={{ flexShrink: 0, marginTop: 3 }} /> <span style={{ overflowWrap: 'anywhere' }}>Done when: <RichText text={current.validate} accent={c.accent} /></span></div>}
-              {/* #5 A real link-out for a full/clickable URL, or a Copy button for
-                  a command/target that is not a URL (never a dead plain string). */}
-              {current.url && (hrefForUrl(current.url)
-                ? <div><a href={hrefForUrl(current.url)} target="_blank" rel="noopener noreferrer" className="fp-link" style={{ ...link, marginTop: 8 }}>Open {linkHost(hrefForUrl(current.url))} <ExternalLink size={12} style={{ flexShrink: 0 }} /></a></div>
-                : <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, padding: '5px 7px 5px 11px', background: c.panel2, border: `1px solid ${c.border}`, borderRadius: 9, maxWidth: '100%' }}>
-                    <span style={{ flex: 1, minWidth: 0, fontFamily: '"JetBrains Mono",ui-monospace,monospace', fontSize: fs(12.5), color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={current.url}>{current.url}</span>
-                    <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', height: 28, padding: '0 10px', fontSize: 11.5, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }} title="Copy this" onClick={(e) => copyText(String(current.url), e)}><ClipboardCopy size={13} /> Copy</button>
-                  </div>)}
-              {((current.commands && current.commands.length > 0) || (current.code && current.code.content)) && (
-                <DestructiveGate why={current.destructive ? current.destructiveWhy : null}>
-                  {current.commands && current.commands.length > 0 && <CmdBlock lines={current.commands} />}
-                  {current.code && current.code.content && <CodeBlock file={current.code.file} content={current.code.content} />}
-                </DestructiveGate>
-              )}
-              <button className="fp-btn" style={{ ...primary, marginTop: 11, width: '100%', justifyContent: 'center', height: 34, fontSize: 13 }} onClick={() => onStep(steps.indexOf(current), 'done')}><Check size={15} strokeWidth={2.5} /> Mark done</button>
-            </div>
-
-            {/* Prev - Step N of M - Next, with a progress track */}
-            {steps.length > 1 && onNav && (() => {
-              const no = steps.indexOf(current)
-              const locked = steps[no] && steps[no].status !== 'done'
-              return (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '0 2px' }}>
-                  <button className="fp-btn" style={navBtn} disabled={no <= 0} onClick={() => onNav(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
-                  <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 5, alignItems: 'center' }}>
-                    <span style={{ ...eyebrow, fontSize: 10.5, fontWeight: 700, letterSpacing: '.06em', color: c.muted, whiteSpace: 'nowrap' }}>Step {no + 1} of {steps.length}</span>
-                    <div style={{ width: '100%', height: 4, borderRadius: 999, background: c.track, overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${((no + 1) / steps.length) * 100}%`, borderRadius: 999, background: `linear-gradient(90deg, ${c.accent}, ${c.cyan})`, transition: 'width .35s cubic-bezier(.4,0,.2,1)' }} />
-                    </div>
-                  </div>
-                  <button className="fp-btn" style={navBtn} disabled={no >= steps.length - 1 || locked} onClick={() => onNav(1)} title={locked ? 'Finish this step first. It advances on its own when done.' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
-                </div>
-              )
-            })()}
-
-            {/* NEXT (brief): the ONE step after the current one, as a single
-                title-only line - not expanded (no sub-tasks / commands / code),
-                and not a multi-item list. The current step above is the only
-                thing shown in full. A quiet progress line shows where you are. */}
-            {(() => {
-              const next = stepWindow(steps).slice(1, 2) // exactly one: the step after the current
-              return (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: '0 2px' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: 8 }}>
-                    <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint }}>{next.length ? 'Next' : 'Progress'}</span>
-                    <span style={{ fontSize: fs(10.5), color: c.faint, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', minWidth: 0 }}>{progressText(steps)}</span>
-                  </div>
-                  {next.map(({ step: s, index: n }) => (
-                    <div key={n} title={String(s.text || '')} style={{ display: 'flex', gap: 9, alignItems: 'center', padding: '6px 10px', borderRadius: 10, background: c.panel2, border: `1px solid ${c.border}`, opacity: 0.72 }}>
-                      <span style={{ flexShrink: 0, width: 19, height: 19, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: c.faint, border: `1px solid ${c.border}` }}>{n + 1}</span>
-                      <span className="fp-clamp" style={{ flex: 1, minWidth: 0, fontSize: fs(12.5), lineHeight: 1.4, color: c.muted, overflowWrap: 'anywhere', WebkitLineClamp: 1 }}><RichText text={s.text} accent={c.accent} /></span>
-                    </div>
-                  ))}
-                </div>
-              )
-            })()}
-          </>
-        ) : complete ? (
-          /* TASK COMPLETE: the floater's celebration + "Start another task". A
-             one-shot confetti flourish (clipped to this card, honours reduced
-             motion), a success burst, and a button that drops back into the
-             new-task flow in the main window. */
-          <div style={{ position: 'relative', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: 11, padding: '22px 16px 20px', background: c.panel, border: `1px solid ${c.border}`, borderRadius: 14, boxShadow: c.shadow }}>
-            {celebrate && <div className="fp-confetti" aria-hidden="true">{confettiNodes(floatConfetti)}</div>}
-            <span style={{ position: 'relative', width: 46, height: 46, borderRadius: '50%', display: 'grid', placeItems: 'center', background: c.goodSoft, color: c.good, flexShrink: 0 }}>
-              {celebrate && <span className="fp-cele-ring" style={{ position: 'absolute', inset: -5, borderRadius: '50%', border: `2px solid ${c.good}`, opacity: 0.45 }} aria-hidden="true" />}
-              <Check size={24} strokeWidth={2.6} style={{ position: 'relative', zIndex: 1 }} />
-            </span>
-            <div style={{ fontFamily: DISPLAY, fontSize: fs(17), fontWeight: 800, letterSpacing: '-.01em', color: c.text, lineHeight: 1.2 }}>Task complete</div>
-            <div style={{ fontSize: fs(12.5), lineHeight: 1.5, color: c.muted, maxWidth: 320 }}>{doneN ? `All ${doneN} step${doneN === 1 ? '' : 's'} done.` : 'Nicely done.'} Your report is ready in the main window.</div>
-            {onStartAnother && <button className="fp-btn" style={{ ...primary, height: 38, padding: '0 18px', fontSize: 13, fontWeight: 700 }} onClick={onStartAnother} title="Start a new task"><Plus size={15} strokeWidth={2.6} /> Start another task</button>}
-          </div>
-        ) : steps.length === 0 ? (
-          <div style={{ ...card, color: c.muted, fontSize: fs(13), textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
-        ) : null}
-
-        {/* VIEW FULL PLAN: the complete plan, tucked into a compact chip so it
-            never eats the panel. Tap to reveal every step with its done /
-            current marker; each row jumps or marks done. This is the full plan
-            the window above summarizes. */}
-        {steps.length > 0 && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: stepsOpen ? 7 : 0 }}>
-            <button className="fp-btn" onClick={() => setStepsOpen((o) => !o)}
-              style={{ ...ghost, width: '100%', justifyContent: 'space-between', height: 36, background: stepsOpen ? c.panel2 : 'transparent', borderColor: stepsOpen ? c.border : 'transparent', color: c.muted }}
-              title={stepsOpen ? 'Hide the full plan' : 'View the full plan'}>
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
-                <MenuIcon size={14} style={{ color: c.faint, flexShrink: 0 }} />
-                <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>View full plan</span>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: c.text, fontVariantNumeric: 'tabular-nums' }}>{doneN} of {steps.length} done</span>
-              </span>
-              <ChevronRight size={16} style={{ color: c.faint, flexShrink: 0, transition: 'transform .18s cubic-bezier(.4,0,.2,1)', transform: stepsOpen ? 'rotate(90deg)' : 'none' }} />
-            </button>
-            {stepsOpen && (
-              <div className="fp-rise" style={{ maxHeight: 248, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 2 }}>
-                {steps.map((s, i) => {
-                  const isDone = s.status === 'done', isNow = s.status === 'current'
-                  const isPending = !isDone && !isNow
-                  return (
-                    <div key={i} style={{ position: 'relative', display: 'flex', gap: 10, alignItems: 'flex-start', padding: '9px 11px 9px 13px', borderRadius: 11, overflow: 'hidden',
-                      background: isDone ? c.panel2 : c.panel, border: `1px solid ${isNow ? 'transparent' : c.border}`, boxShadow: isNow ? c.shadow : 'none', opacity: isPending ? 0.62 : 1, transition: 'opacity .16s, box-shadow .16s' }}>
-                      {isNow && <span style={{ ...accentBar, width: 3 }} />}
-                      <button className="fp-btn" style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center', padding: 0, marginTop: 1,
-                        border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
-                        onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
-                      {isNow
-                        ? <span style={{ flex: 1, minWidth: 0, fontSize: fs(13), lineHeight: 1.45, color: c.text, fontWeight: 650, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
-                        : <button onClick={() => onStep(i, 'current')} title="Jump to this step" style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, fontFamily: FONT, fontSize: fs(13), lineHeight: 1.45, color: isDone ? c.faint : c.muted, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></button>}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* The latest answer is the highlighted focus. It fills the free space,
-            updates in place, and scrolls when long. Empty = a calm hint. */}
-        <div style={{ flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column' }}>
-          {answer ? (
-            <div key={answer} className="fp-rise" style={{ ...card, position: 'relative', overflow: 'hidden', padding: 0, flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column', borderColor: c.accentRing, boxShadow: c.heroShadow }}>
-              <span style={accentBar} />
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 13px 9px 17px', borderBottom: `1px solid ${c.border}`, background: c.accentSoft }}>
-                <Sparkles size={13} style={{ color: c.accent, flexShrink: 0 }} />
-                <span style={{ ...eyebrow, color: c.accent, fontSize: 10.5 }}>Answer</span>
-                {busy && <span style={{ marginLeft: 'auto', display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, fontWeight: 600, color: c.muted }}><Loader2 size={12} className="spin" /> Updating</span>}
-              </div>
-              <div style={{ flex: 1, minHeight: 0, overflowY: 'auto', padding: '10px 13px 12px 16px', fontSize: fs(13.5), lineHeight: 1.55, color: c.text, overflowWrap: 'anywhere' }}><RichText text={answer} accent={c.accent} /></div>
-            </div>
-          ) : busy ? (
-            <div style={{ ...card, flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, color: c.muted, boxShadow: 'none' }}>
-              <Loader2 size={18} className="spin" style={{ color: c.accent }} />
-              <span style={{ fontSize: 12.5, fontWeight: 600 }}>Working on it...</span>
-            </div>
-          ) : (
-            <div style={{ ...card, flex: 1, minHeight: 108, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 10, textAlign: 'center', color: c.faint, borderStyle: 'dashed', boxShadow: 'none', padding: '18px 20px' }}>
-              <span style={{ width: 36, height: 36, borderRadius: 12, display: 'grid', placeItems: 'center', background: c.accentSoft, color: c.accent }}><Sparkles size={18} /></span>
-              <span style={{ fontSize: fs(12.5), lineHeight: 1.5, maxWidth: 260, color: c.muted }}>Ask a question or analyze your screen. The answer shows up right here.</span>
-            </div>
-          )}
-        </div>
-      </div>
-      </div>
-      </div>
-
-      {/* FIXED FOOTER: the Ask row is pinned to the bottom, always reachable
-          without scrolling (the step content above scrolls independently). */}
-      <div style={{ ...card, padding: 11, flexShrink: 0, marginTop: 0 }}>
-        {onAddContext && <input ref={floatFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onAddContext(f); e.target.value = '' }} />}
-        <input
-          style={{ width: '100%', height: 40, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 11, padding: '0 13px', outline: 'none', fontSize: 13.5, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
-          placeholder="Ask, say what to analyze, or attach a screenshot or document" value={floatQ}
-          onChange={(e) => setFloatQ(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter' && floatQ.trim()) onAsk(floatQ.trim()) }}
-          onPaste={(e) => { if (!onAddContext) return; const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); onAddContext(f); return } } } }}
-        />
-        <div style={{ display: 'flex', gap: 6, marginTop: 9 }}>
-          <button className="fp-btn" style={{ ...primary, flex: 1.25, minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : <><ArrowRight size={14} style={{ flexShrink: 0 }} /> Ask</>}</button>
-          {onAddContext && <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy} onClick={() => floatFileRef.current && floatFileRef.current.click()} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={14} style={{ flexShrink: 0 }} /></button>}
-          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title="Screenshot now and analyze. Type a focus above, or leave blank for a full read."><ScanLine size={14} style={{ flexShrink: 0 }} /> Analyze</button>
-          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={onResearch} title="Look up the latest on the web, then answer (only when you tap it)."><Globe size={14} style={{ flexShrink: 0 }} /> Research</button>
-        </div>
-        {err && <div style={{ marginTop: 9, display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12, color: c.danger, lineHeight: 1.45 }}><AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>{err}</span></div>}
-      </div>
-    </div>
-  )
-}
-
-
 
 // Route entry: the guiding console for /work/session/:id. The session id is the
 // URL (deep-linkable + reload-safe), replacing the old openId/wc_open prop. The

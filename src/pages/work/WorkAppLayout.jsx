@@ -140,6 +140,17 @@ export default function WorkAppLayout() {
   const frame = (content) => desktop
     ? <><WorkShell authed={authed} /><div style={{ paddingTop: 40 }}>{content}</div></>
     : content
+  // The GUIDING console is a fixed-height column: the viewport (minus the
+  // desktop title bar) is the box, the console is its flex child and shrinks
+  // to fit, so a banner or notice above it can never push the guide under the
+  // title bar or below the fold (the content-behind-the-header-icons bug on
+  // small windows). The console's own header / scroll / footer split the box.
+  const guideFrame = (content) => (
+    <>
+      {desktop && <WorkShell authed={authed} />}
+      <div style={{ height: '100dvh', boxSizing: 'border-box', paddingTop: desktop ? 40 : 0, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>{content}</div>
+    </>
+  )
 
   // ---- Shared app state (moved from Home.load / loadAi) ---------------------
   const user = sess && sess.user
@@ -370,7 +381,7 @@ export default function WorkAppLayout() {
   if (onSession) {
     return (
       <WorkAppContext.Provider value={ctx}>
-        {frame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Suspense fallback={<div style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}><Loader2 size={22} className="spin" style={{ color: 'var(--brand-500, #0b8259)' }} /></div>}><Outlet /></Suspense>{langPin}</>)}
+        {guideFrame(<><AppUpdateBanner /><GuardNotice note={guardNote} onClose={clearGuard} /><Suspense fallback={<div style={{ display: 'grid', placeItems: 'center', minHeight: '60vh' }}><Loader2 size={22} className="spin" style={{ color: 'var(--brand-500, #0b8259)' }} /></div>}><Outlet /></Suspense>{langPin}</>)}
       </WorkAppContext.Provider>
     )
   }

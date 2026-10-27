@@ -30,6 +30,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from
 import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile, Check, Minus, BookOpen } from 'lucide-react'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import BuddyPicker from '../components/BuddyPicker.jsx'
+import RichText from '../components/RichText.jsx'
 
 const ACCENT = '#1f9d6b'   // emerald ink (on white cloud)
 const AMBER = '#b7791f'    // paused / warn ink (on white cloud)
@@ -65,6 +66,11 @@ export default function WorkBuddy() {
   const aliveRef = useRef(true)
 
   const paused = !!(session && session.paused)
+  // The session this buddy was showing has ENDED (it finalized, or vanished):
+  // show a calm completed cloud, then hand over to the main console. The buddy
+  // is a thin read-only overlay and never turns into the dashboard.
+  const [completed, setCompleted] = useState(false)
+  const hadSessionRef = useRef(false)
 
   // --- buddy preferences (persisted, each read/write guarded) ---------------
   // character: which avatar; the preference is saved, the rendered character is
@@ -100,7 +106,10 @@ export default function WorkBuddy() {
           s = r && r.session
         } catch { /* session may have been finalized/removed */ }
         // Drop a session that ended or vanished so the next tick rediscovers one.
-        if (!s || s.status !== 'active') { idRef.current = null; s = null }
+        if (!s || s.status !== 'active') {
+          idRef.current = null; s = null
+          if (hadSessionRef.current && aliveRef.current) setCompleted(true)
+        } else hadSessionRef.current = true
         if (aliveRef.current) setSession(s)
       }
       try {
@@ -162,6 +171,13 @@ export default function WorkBuddy() {
   }, [paused, busy])
 
   const openMain = useCallback(() => { try { window.workDesktop?.openMain?.() } catch { /* ignore */ } }, [])
+  // On completion: a beat to read "Session completed", then the main console
+  // comes forward in plan mode (its 'show' / 'focus' hides this buddy).
+  useEffect(() => {
+    if (!completed) return undefined
+    const t = setTimeout(() => { openMain() }, 1600)
+    return () => clearTimeout(t)
+  }, [completed, openMain])
   const openGuide = useCallback(() => { try { window.workDesktop?.openFullGuide?.() } catch { /* ignore */ } }, [])
   // HIDDEN = truly gone: the page renders NOTHING (zero desktop footprint). The
   // shell hides the window and pauses + saves guidance in the main window (its
@@ -238,7 +254,8 @@ export default function WorkBuddy() {
     : 'thinking'
 
   // Calm one-liners for the non-active states, shown in the cloud.
-  const calmMsg = status === 'loading' ? 'Waking up and connecting'
+  const calmMsg = completed ? 'Session completed. Your summary is ready in the main window.'
+    : status === 'loading' ? 'Waking up and connecting'
     : status === 'error' ? 'Cannot reach the server. Retrying.'
     : status === 'signin' ? 'Sign in to WorkCoPilot in the main window and your steps show up here.'
     : status === 'empty' ? 'No active task yet. Open WorkCoPilot to start one.'
@@ -317,7 +334,7 @@ export default function WorkBuddy() {
           <span aria-hidden style={{ ...S.lobe, width: 30, height: 30, top: 18, right: -12 }} />
 
           <div style={S.cloudBody}>
-            {status === 'ok' && session ? (
+            {status === 'ok' && session && !completed ? (
               <>
                 <div style={S.stepLabel} title={stepTitle}>
                   {!allDone && <Loader2 size={11} style={{ ...S.spin, opacity: paused ? 0.3 : 0.8, marginRight: 5, flex: '0 0 auto' }} />}
@@ -325,7 +342,7 @@ export default function WorkBuddy() {
                 </div>
                 {/* The next move is THE thing to read: it flashes emerald for a beat
                     when a step advances, and a confirm check pops beside the label. */}
-                <div style={S.moveText} className={pulse ? 'wb-flash' : undefined}>{nextMove}</div>
+                <div style={S.moveText} className={pulse ? 'wb-flash' : undefined}><RichText text={nextMove} accent={ACCENT} /></div>
                 {pulse && <span className="wb-confirm" role="status"><Check size={11} strokeWidth={3} /> Step confirmed</span>}
                 <div style={S.metaRow}>
                   {progressLabel && (
@@ -342,8 +359,11 @@ export default function WorkBuddy() {
               </>
             ) : (
               <div key={calmMsg} style={S.calm}>
-                {status === 'loading' && <Loader2 size={13} style={{ ...S.spin, marginRight: 6, flex: '0 0 auto' }} />}
+                {completed
+                  ? <Check size={14} style={{ color: ACCENT, marginRight: 6, flex: '0 0 auto' }} />
+                  : status === 'loading' && <Loader2 size={13} style={{ ...S.spin, marginRight: 6, flex: '0 0 auto' }} />}
                 <span>{calmMsg}</span>
+                {completed && <button type="button" onClick={openMain} style={{ ...S.iconBtn, width: 'auto', padding: '0 9px', marginLeft: 8, color: ACCENT, background: 'rgba(31,157,107,0.12)', fontSize: 11.5, fontWeight: 700, whiteSpace: 'nowrap' }}>Open WorkCoPilot</button>}
               </div>
             )}
           </div>
@@ -360,7 +380,7 @@ export default function WorkBuddy() {
         {/* The MASCOT: floating free at the bottom, no plate behind it. */}
         {!textOnly && (
           <div style={S.mascot}>
-            <AliveBuddy character={character} state={aliveState} size={90} motion={!motionOff} interactive />
+            <AliveBuddy character={character} state={aliveState} size={104} motion={!motionOff} interactive />
           </div>
         )}
       </div>
@@ -449,7 +469,7 @@ const styles = {
     WebkitAppRegion: 'drag',
     position: 'relative',
     width: '100%',
-    maxWidth: 300,
+    maxWidth: 420,
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -492,9 +512,9 @@ const styles = {
   // The exact next move, shown IN FULL and refreshed in place. Long guidance
   // scrolls inside the cloud once the window hits its height cap.
   moveText: {
-    fontSize: 13, fontWeight: 600, color: '#161a2b', lineHeight: 1.38,
+    fontSize: 14.5, fontWeight: 600, color: '#161a2b', lineHeight: 1.4,
     whiteSpace: 'normal', overflowWrap: 'anywhere',
-    maxHeight: 260, overflowY: 'auto',
+    maxHeight: 340, overflowY: 'auto',
   },
   metaRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, marginTop: 1 },
   progWrap: { display: 'flex', alignItems: 'center', gap: 6, minWidth: 0 },

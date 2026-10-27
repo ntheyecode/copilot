@@ -42,11 +42,14 @@ export default function ReadingStrip({ watching, analyzing, offTrack, observatio
       </div>
     )
   }
-  if (!analyzing && !(watching && obs)) return null
+  if (!analyzing && !obs) return null
+  // Honest label: "I can see" only while live; after a pause or a reload the
+  // last observation is shown as exactly that, the last read.
+  const k = analyzing ? `Reading ${what}` : watching ? 'I can see' : 'Last read'
   return (
-    <button type="button" className={`gv-glance${open ? ' open' : ''}${analyzing ? ' is-analyzing' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={open ? 'Hide what I can see' : 'Show what I can see'}>
+    <button type="button" className={`gv-glance${open ? ' open' : ''}${analyzing ? ' is-analyzing' : ''}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title={open ? 'Hide what the guide read on your screen' : 'Show what the guide read on your screen'}>
       <span className="gv-glance-ic" aria-hidden="true">{analyzing ? <span className="gv-ana"><i /><i /><i /></span> : <Eye size={12} strokeWidth={2.4} />}</span>
-      <span className="gv-glance-k">{analyzing ? `Reading ${what}` : 'I can see'}</span>
+      <span className="gv-glance-k">{k}</span>
       {!analyzing && <span className="gv-glance-t"><RichText text={obs} accent="var(--gv-muted)" chips={false} /></span>}
       {!analyzing && <ChevronDown size={12} className="gv-glance-chev" aria-hidden="true" />}
     </button>

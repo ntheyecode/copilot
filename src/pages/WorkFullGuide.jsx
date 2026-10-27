@@ -17,6 +17,13 @@ import { Clock, Eye, AlertTriangle, Check, Loader2, Maximize, Minimize, Pause, S
 import RichText from '../components/RichText.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
+import GuideLevelControl, { useGuideLevel } from '../components/GuideLevel.jsx'
+// The same guide view as the console + floater (shared modules, one stylesheet).
+import { GUIDE_CSS, gvVars } from './work/guideView.css.js'
+import StepCard from './work/StepCard.jsx'
+import ReadingStrip, { readingIsProminent } from './work/ReadingStrip.jsx'
+import GoalLine from './work/GoalLine.jsx'
+import FadeSwap from './work/FadeSwap.jsx'
 import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
 import { usageTimeLeft, usageTasksToday } from './work/usageCopy.js'
 
@@ -84,6 +91,8 @@ export default function WorkFullGuide() {
   // Reader-controlled text size, shared with the console via one localStorage
   // key (wc-guide-fontscale). Compact default; A- / A / A+ step it.
   const { scale, dec, inc, reset, atMin, atMax } = useGuideFontScale()
+  // Guidance strength, per session, shared with the console through storage.
+  const { level, setLevel } = useGuideLevel(session && session.id)
 
   const tick = useCallback(async () => {
     try {
@@ -186,6 +195,7 @@ export default function WorkFullGuide() {
           )}
           <span style={{ ...S.time, color: exhausted ? c.warn : c.muted }} title={exhausted ? 'Your plan hours for this month are used up' : 'Plan hours left this month'}><Clock size={14} /> {timeLeft || '--'}</span>
           {tasksToday && <span style={S.time} title="Guided tasks started today, of your daily cap"><ListChecks size={14} /> {tasksToday}</span>}
+          {status === 'ok' && <GuideLevelControl level={level} onChange={setLevel} compact={!wide} theme={{ border: c.border, muted: c.muted, panel: c.panel, accent: c.accent, accentSoft: c.accentSoft }} />}
           <GuideFontControl scale={scale} dec={dec} inc={inc} reset={reset} atMin={atMin} atMax={atMax}
             theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />
           <button style={S.iconBtn} onClick={() => setDark((d) => !d)} title="Light or dark" aria-label="Toggle light or dark">{dark ? <Sun size={16} /> : <Moon size={16} />}</button>
@@ -196,43 +206,44 @@ export default function WorkFullGuide() {
       {status === 'ok' && session ? (
         <div style={S.body}>
           <div style={S.main}>
-            {session.goal && <div style={S.goal}><span style={S.goalK}>Your goal</span><div style={S.goalText}>{session.goal}</div></div>}
-
-            <div style={S.nowRow}>
-            <div style={{ flex: 1, minWidth: 0 }}>
-            {allDone ? (
-              <div style={S.nowCard}>
-                <span style={S.nowBar} />
-                <div style={{ ...S.nowK, color: c.accent }}><Check size={14} strokeWidth={2.5} /> All steps done</div>
-                <div style={S.nowText}>Every step is confirmed. Head back to the main window to finish up and get your summary.</div>
-              </div>
-            ) : (
-              <div className={paused ? undefined : 'wfg-now'} style={{ ...S.nowCard, '--gr': c.accentRing, '--gg': c.accentGlow }}>
-                <span style={S.nowBar} />
-                <div style={S.nowK}>
-                  {status === 'ok' && <Loader2 size={13} style={{ ...S.spin, opacity: paused ? 0.3 : 0.85 }} />}
-                  Now · step {Math.min(curIdx + 1, total)} of {total}
+            {/* ONE screen, the same guide view as the console: the goal as a quiet
+                line, the step card as the hero (read-only here: you mark steps done
+                in the main window or the floater), the observation as a quiet
+                glance under it, rising above it only when it caught a problem. */}
+            {(() => {
+              const prominent = readingIsProminent({ offTrack: false, flag, observation })
+              const reading = <ReadingStrip watching analyzing={false} offTrack={false} observation={observation} flag={flag} />
+              return (
+                <div className="gv" style={{ ...gvVars(c), '--wc-fs': scale }}>
+                  <GoalLine title={session.title} goal={session.goal} />
+                  <div style={S.nowRow}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <FadeSwap k={allDone ? 'done' : 'step:' + curIdx}>
+                        {allDone ? (
+                          <div style={S.nowCard}>
+                            <span style={S.nowBar} />
+                            <div style={{ ...S.nowK, color: c.accent }}><Check size={14} strokeWidth={2.5} /> All steps done</div>
+                            <div style={S.nowText}>Every step is confirmed. Head back to the main window to finish up and get your summary.</div>
+                          </div>
+                        ) : (
+                          <>
+                            {prominent && reading}
+                            <StepCard step={cur || { text: guidance || 'Reading your screen for the next move' }} index={cur ? curIdx : null} total={total} guidance={cur ? guidance : ''}
+                              hint={paused ? <span className="gv-step-hint">Paused in the main window.</span> : <span className="gv-step-hint">Live. Mark it done in the main window or the floater.</span>} />
+                            {!prominent && reading}
+                          </>
+                        )}
+                      </FadeSwap>
+                    </div>
+                    {wide && (
+                      <div style={S.buddyCol}>
+                        <AliveBuddy character={character} state={aliveState} size={132} interactive />
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div style={S.nowText}><RichText text={(cur && (cur.text || cur.title)) || guidance || 'Reading your screen for the next move'} accent={c.accent} /></div>
-                {guidance && cur && guidance !== cur.text && (
-                  <div style={S.guide}><RichText text={guidance} accent={c.accent} /></div>
-                )}
-                {cur && cur.url && <div style={{ marginTop: 10 }}><a className="wfg-link" href={cur.url} target="_blank" rel="noopener noreferrer" style={S.link}>{(() => { try { return 'Open ' + new URL(cur.url).host.replace(/^www\./, '') } catch { return 'Open link' } })()}<ExternalLink size={13} style={{ flexShrink: 0 }} /></a></div>}
-                {cur && Array.isArray(cur.commands) && cur.commands.length > 0 && <Mono lines={cur.commands} label="Run this" theme={c} fs={scale} />}
-                {cur && cur.code && cur.code.content && <Mono lines={cur.code.content} label={cur.code.file || 'Code'} theme={c} fs={scale} />}
-                {cur && cur.validate && <div style={S.when}><Eye size={14} /> done when: <RichText text={cur.validate} accent={c.accent} /></div>}
-              </div>
-            )}
-            </div>
-            {wide && (
-              <div style={S.buddyCol}>
-                <AliveBuddy character={character} state={aliveState} size={132} interactive />
-              </div>
-            )}
-            </div>
-
-            {flag && <div style={S.flag}><AlertTriangle size={16} style={{ color: c.warn, flexShrink: 0, marginTop: 2 }} /> <span><RichText text={flag} accent={c.warn} /></span></div>}
-            {observation && !allDone && <div style={S.obs}><Eye size={14} style={{ color: c.cyan, flexShrink: 0, marginTop: 2 }} /> <span><RichText text={observation} accent={c.cyan} /></span></div>}
+              )
+            })()}
           </div>
 
           <aside style={S.rail}>
@@ -311,8 +322,8 @@ export default function WorkFullGuide() {
 // themes, matching the console's CmdBlock/CodeBlock). `link` is the MS-docs blue
 // used for the inline "Open ..." hyperlinks.
 const THEME = {
-  dark: { bg: '#0a0d12', panel: '#11161d', panel2: '#0e131a', codeBg: '#0b0f15', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#8ea3c0', link: '#6cb6ff', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780', border: 'rgba(255,255,255,0.09)', accent: 'var(--accent, #8cf5c4)', accentSoft: 'var(--accent-soft, rgba(140,245,196,0.12))', accentRing: 'var(--accent-line, rgba(140,245,196,0.34))', accentGlow: 'var(--accent-shadow, rgba(140,245,196,0.22))', cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,0.12)', cyanRing: 'rgba(57,211,255,0.32)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,0.13)', warnRing: 'rgba(245,200,107,0.34)', danger: '#f6a3a3', dangerSoft: 'rgba(246,163,163,0.1)' },
-  light: { bg: '#f5f7f9', panel: '#ffffff', panel2: '#f6f8fa', codeBg: '#0f141a', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#9aa6b8', link: '#0067c0', text: '#121821', muted: '#5a6672', faint: '#8a95a0', border: 'rgba(16,24,40,0.1)', accent: 'var(--accent, #0e9f6e)', accentSoft: 'var(--accent-soft, rgba(14,159,110,0.1))', accentRing: 'var(--accent-line, rgba(14,159,110,0.3))', accentGlow: 'var(--accent-shadow, rgba(14,159,110,0.18))', cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,0.09)', cyanRing: 'rgba(10,132,194,0.28)', warn: '#b7791f', warnSoft: 'rgba(183,121,31,0.12)', warnRing: 'rgba(183,121,31,0.3)', danger: '#b91c1c', dangerSoft: 'rgba(185,28,28,0.07)' },
+  dark: { onAccent: '#052a1d', good: '#54b97b', goodSoft: 'rgba(84,185,123,0.16)', bg: '#0a0d12', panel: '#11161d', panel2: '#0e131a', codeBg: '#0b0f15', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#8ea3c0', link: '#6cb6ff', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780', border: 'rgba(255,255,255,0.09)', accent: 'var(--accent, #8cf5c4)', accentSoft: 'var(--accent-soft, rgba(140,245,196,0.12))', accentRing: 'var(--accent-line, rgba(140,245,196,0.34))', accentGlow: 'var(--accent-shadow, rgba(140,245,196,0.22))', cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,0.12)', cyanRing: 'rgba(57,211,255,0.32)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,0.13)', warnRing: 'rgba(245,200,107,0.34)', danger: '#f6a3a3', dangerSoft: 'rgba(246,163,163,0.1)' },
+  light: { onAccent: '#ffffff', good: '#107c41', goodSoft: 'rgba(16,124,65,0.12)', bg: '#f5f7f9', panel: '#ffffff', panel2: '#f6f8fa', codeBg: '#0f141a', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#9aa6b8', link: '#0067c0', text: '#121821', muted: '#5a6672', faint: '#8a95a0', border: 'rgba(16,24,40,0.1)', accent: 'var(--accent, #0e9f6e)', accentSoft: 'var(--accent-soft, rgba(14,159,110,0.1))', accentRing: 'var(--accent-line, rgba(14,159,110,0.3))', accentGlow: 'var(--accent-shadow, rgba(14,159,110,0.18))', cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,0.09)', cyanRing: 'rgba(10,132,194,0.28)', warn: '#b7791f', warnSoft: 'rgba(183,121,31,0.12)', warnRing: 'rgba(183,121,31,0.3)', danger: '#b91c1c', dangerSoft: 'rgba(185,28,28,0.07)' },
 }
 
 // Microsoft-Learn / Docs reading style: compact, scannable body (~13-14px), a
@@ -385,7 +396,7 @@ function styles(c, wide = true, fs = 1) {
 
 if (typeof document !== 'undefined' && !document.getElementById('wfg-kf')) {
   const el = document.createElement('style'); el.id = 'wfg-kf'
-  el.textContent = '@keyframes wb-spin{to{transform:rotate(360deg)}}'
+  el.textContent = GUIDE_CSS + '@keyframes wb-spin{to{transform:rotate(360deg)}}'
     + '@keyframes wfg-now-glow{0%,100%{box-shadow:0 6px 22px rgba(0,0,0,.16),0 0 0 1px var(--gr) inset,0 10px 30px -18px var(--gg)}50%{box-shadow:0 6px 22px rgba(0,0,0,.16),0 0 0 1px var(--gr) inset,0 12px 40px -12px var(--gg)}}'
     + '.wfg-now{animation:wfg-now-glow 2.8s ease-in-out infinite}'
     + '.wfg-link{text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s}'

@@ -39,7 +39,7 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
         <section className="gv-ask-card gv-offer" aria-labelledby="gv-offer-h" role="dialog">
           <span className="gv-k" style={{ color: 'var(--gv-accent)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><LifeBuoy size={12} aria-hidden="true" /> A quick check-in</span>
           <h2 id="gv-offer-h" className="gv-offer-h">Stuck? Any issues?</h2>
-          <p className="gv-offer-p">This step has been open for a while{stepText ? <>: <b><RichText text={stepText} accent="var(--gv-accent)" chips={false} /></b></> : '.'} Tell me what is in the way, or I can explain it another way.</p>
+          <p className="gv-offer-p">This step has been open for a while{stepText ? <>: <b><RichText text={stepText} accent="var(--gv-accent)" chips={false} /></b>.</> : '.'} Tell me what is in the way, or I can explain it another way.</p>
           <form className="gv-offer-form" onSubmit={(e) => { e.preventDefault(); send(draft) }}>
             <input ref={boxRef} className="gv-offer-input" type="text" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="For example: the Verify button is grey" aria-label="What is in the way" disabled={busy} />
             <button type="submit" className="gv-btn primary" disabled={busy}><ArrowRight size={15} strokeWidth={2.6} aria-hidden="true" /> {draft.trim() ? 'Send' : 'Explain this step again'}</button>
