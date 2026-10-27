@@ -18,7 +18,12 @@ const ROOT = dirname(fileURLToPath(import.meta.url))
 // checkout. Allow its resolved location so the self-hosted fonts load in both
 // cases, without hardcoding any machine path.
 const NODE_MODULES = existsSync(join(ROOT, 'node_modules')) ? realpathSync(join(ROOT, 'node_modules')) : null
-const liveApiProxy = () => ({ '/api': { target: 'https://admireveda.com', changeOrigin: true, secure: true } })
+// `--mode localapi` points /api at a LOCAL API server instead (the seeded one
+// on :4444, or LOCAL_API_PORT), for signed-in surfaces that must not touch
+// production data (dashboards, consoles). Any other mode keeps the live proxy.
+const apiProxy = (mode) => (mode === 'localapi'
+  ? { '/api': { target: `http://localhost:${process.env.LOCAL_API_PORT || 4444}`, changeOrigin: true } }
+  : { '/api': { target: 'https://admireveda.com', changeOrigin: true, secure: true } })
 
 export default defineConfig((env) => {
   const b = typeof base === 'function' ? base(env) : base
@@ -30,10 +35,10 @@ export default defineConfig((env) => {
       port: 5191,
       strictPort: true,
       fs: { allow: [ROOT, NODE_MODULES].filter(Boolean) },
-      proxy: liveApiProxy(),
+      proxy: apiProxy(env.mode),
     },
     // Not strict (preview would otherwise inherit server.strictPort): if 5192 is
     // taken, Vite moves to the next free port and prints it.
-    preview: { host: '127.0.0.1', port: 5192, strictPort: false, proxy: liveApiProxy() },
+    preview: { host: '127.0.0.1', port: 5192, strictPort: false, proxy: apiProxy(env.mode) },
   }
 })
