@@ -15,18 +15,28 @@
 //            already invested in their question.
 //   REVEAL - the product itself, live: a WorkCoPilot console that reads the goal,
 //            plans the exact steps with real commands, reveals them one by one,
-//            shows what a full session unlocks, and recommends the plan that fits,
-//            with a straight path to the pricing page -> plan -> account -> checkout.
+//            then plays a short LIVE-SESSION PREVIEW on that very plan (clearly
+//            labelled as simulated): a step is seen done on screen, the guide
+//            corrects a wrong turn on the next one in its own words, and the plan
+//            ends "Task complete, confirmed on your screen". Then it recommends
+//            the plan that fits, with a straight path to the pricing page ->
+//            plan -> account -> checkout.
 // The scenario is scrubbed (cleanAlways) before it leaves the browser; the lead's
 // own contact details are sent as typed (that is what they chose to share).
+// A step's link, click path, terminal command and inline code are drawn by the
+// SAME components as the real guiding floater (StepBlocks / RichText / CopyChip),
+// so a command here copies and a link here opens exactly as it does in a session.
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, ShieldCheck, ArrowRight,
-  RotateCcw, Copy, Loader2, ChevronDown, Lock, Zap, Eye, ListChecks,
+  RotateCcw, Loader2, ChevronDown, Lock, Zap, Eye, ListChecks, CheckCheck, Undo2, BadgeCheck, Footprints,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 import { useLocale, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
 import { countryOptions, countryNameEn } from '../shared/countries.js'   // the ONE country list (ISO alpha-2 + localised names)
+import RichText from './RichText.jsx'                       // the ONE inline renderer (bold, code, keys, links), shared with the guiding console
+import { StepLink, CmdBlock } from './StepBlocks.jsx'       // the ONE step link / terminal renderer, shared with the guiding console
+import { hrefForUrl, looksLikeClickPath } from '../shared/links.js'
 
 // The validator is a lead-capture widget for PUBLIC web visitors only. Inside the
 // desktop app or the mobile app the person is already a user, so it must never
@@ -122,27 +132,77 @@ const anonId = (() => {
   } catch { return '' }   // private window: live without it (leadId still associates)
 })()
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+// Inline text in the console: the shared RichText with the console's accent,
+// bare URLs as real links, shortcuts as key chips, and a Copy chip after any
+// code span long enough to be a command or dependency line (never a code span
+// the visitor cannot copy).
+const ACCENT = '#8cf5c4'
+const COPY_OVER = 24
+const Rich = ({ text }) => <RichText text={text} accent={ACCENT} links keys copyOver={COPY_OVER} />
 
-// Render light markdown emphasis in the answer: **bold** and `code`, so the
-// response reads as structured guidance, not flat running text. A backticked
-// span is ALWAYS shown in full (as a chip when short, plain when long) so a
-// command or code line is never collapsed to a fragment.
-function renderRich(text) {
-  const out = []
-  const s = String(text || '')
-  const re = /(\*\*([^*]+)\*\*|`([^`]+)`)/g
-  const plain = (t) => t.replace(/[`*]/g, '')
-  let last = 0, m, k = 0
-  while ((m = re.exec(s))) {
-    if (m.index > last) out.push(plain(s.slice(last, m.index)))
-    if (m[2] !== undefined) out.push(<strong key={k++} className="wm-cov-b">{m[2]}</strong>)
-    else if (m[3].length > 22 || /[,;]/.test(m[3])) out.push(m[3])   // long/code: render plain, never a giant chip
-    else out.push(<code key={k++} className="wm-cov-code">{m[3]}</code>)
-    last = m.index + m[0].length
-  }
-  if (last < s.length) out.push(plain(s.slice(last)))
-  return out
+// What the plan looks like: the first `shown` steps in full, the rest as the
+// roadmap of what a live session continues with. ONE derivation, used by the
+// render and by the reveal timeline (so the two can never disagree).
+function planShape(res) {
+  const preview = (res && Array.isArray(res.preview)) ? res.preview : []
+  const shown = preview.length
+  const roadmap = (res && Array.isArray(res.roadmap) && res.roadmap.length >= shown) ? res.roadmap : preview.map((p) => p.do)
+  const total = roadmap.length
+  return { preview, shown, roadmap, total, remaining: Math.max(0, total - shown) }
 }
+// What a step carries besides its text, named the way the server names it
+// (url / path / cmd, each empty when it does not apply). A response from before
+// those fields existed put all three in one "cmd" string: a link, a click path
+// ("Settings > Billing > Add card") or a terminal command, told apart here so
+// each still renders the right way (link-out, copy row, terminal).
+function stepMedia(p) {
+  const url = String((p && p.url) || '').trim(), path = String((p && p.path) || '').trim(), cmd = String((p && p.cmd) || '').trim()
+  if (url || path) {
+    const href = hrefForUrl(url)
+    return { href, path: path || (url && !href ? url : ''), cmd }
+  }
+  const href = hrefForUrl(cmd)
+  if (href) return { href, path: '', cmd: '' }
+  if (looksLikeClickPath(cmd)) return { href: '', path: cmd, cmd: '' }
+  return { href: '', path: '', cmd }
+}
+
+// ---- The live-session preview, played on the plan ------------------------
+// Simulated on purpose and labelled as such (the widget watches nothing): it
+// shows, on the visitor's OWN steps, the three things a live session does that
+// a list of steps cannot show. One step is seen done on screen (the guide
+// hand-holds and detects completion), the next gets the guide's correction in
+// its own words (it corrects a wrong turn the moment it happens), the rest tick
+// through and the plan ends confirmed on screen. The events run in order, each
+// after a delay from the previous one; under reduced motion the end state is
+// shown at once.
+function simEvents(shown, remaining) {
+  const ev = []
+  const driftAt = shown > 1 ? 1 : 0   // the correction plays on step 2 when there is one
+  for (let i = 0; i < shown; i++) {
+    ev.push({ k: 'watch', i, ms: i === 0 ? 0 : 380 })
+    if (i === driftAt) { ev.push({ k: 'drift', i, ms: 600 }); ev.push({ k: 'fixed', i, ms: 1250 }) }
+    ev.push({ k: 'done', i, ms: i === driftAt ? 760 : 560 })
+  }
+  for (let j = 0; j < remaining; j++) ev.push({ k: 'tick', j, ms: j === 0 ? 440 : 140 })
+  ev.push({ k: 'complete', ms: 380 })
+  return ev
+}
+// Fold the events up to `at` into what the plan shows right now.
+function simState(ev, at) {
+  const s = { on: at >= 0, cur: -1, done: 0, drift: -1, fixed: false, ticks: 0, complete: false }
+  for (let n = 0; n <= at && n < ev.length; n++) {
+    const e = ev[n]
+    if (e.k === 'watch') s.cur = e.i
+    else if (e.k === 'drift') s.drift = e.i
+    else if (e.k === 'fixed') s.fixed = true
+    else if (e.k === 'done') { s.done = e.i + 1; s.cur = -1 }
+    else if (e.k === 'tick') s.ticks = e.j + 1
+    else if (e.k === 'complete') s.complete = true
+  }
+  return s
+}
+const reducedMotion = () => { try { return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) } catch { return false } }
 
 // Where the funnel goes next. The primary CTA takes the visitor to the PRICING
 // page with the recommended plan highlighted (?plan=X&from=validate); choosing a
@@ -188,8 +248,8 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   const [phase, setPhase] = useState('idle')
   const [scanTick, setScanTick] = useState(0)
   const [fire, setFire] = useState(false)
-  const [copiedCmd, setCopiedCmd] = useState(-1)
-  const copyCmd = (text, i) => { try { navigator.clipboard.writeText(text || ''); setCopiedCmd(i); setTimeout(() => setCopiedCmd(-1), 1400) } catch { /* clipboard blocked */ } }
+  // the live-session preview: index of the last event played (-1 = not started)
+  const [simAt, setSimAt] = useState(-1)
   const taRef = useRef(null)
   const timers = useRef([])
   const later = (fn, ms) => { const id = setTimeout(fn, ms); timers.current.push(id); return id }
@@ -302,7 +362,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
 
   // Reset to a fresh question (the lead stays captured for the session).
   const tryAnother = () => {
-    clearTimers(); setRes(null); setErr(''); setFire(false); setPhase('idle'); setScanTick(0); setPendingQ(''); setQ('')
+    clearTimers(); setRes(null); setErr(''); setFire(false); setPhase('idle'); setScanTick(0); setSimAt(-1); setPendingQ(''); setQ('')
     setStage('ask'); setTimeout(() => taRef.current && taRef.current.focus(), 0)
   }
 
@@ -310,7 +370,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   // on-screen time of the "planning live" lines run in parallel, so a fast
   // answer still lands as a sequence and a slow one never looks stuck.
   const runCheck = async (question) => {
-    clearTimers(); setErr(''); setRes(null); setFire(false); setScanTick(0); setPhase('scan'); setStage('reveal'); setBusy(true)
+    clearTimers(); setErr(''); setRes(null); setFire(false); setScanTick(0); setSimAt(-1); setPhase('scan'); setStage('reveal'); setBusy(true)
     const tick = setInterval(() => setScanTick((n) => (n < 2 ? n + 1 : n)), SCAN_TICK_MS)
     const minWait = new Promise((r) => later(r, SCAN_MIN_MS))
     const call = fetch('/api/work/coverage', {
@@ -334,8 +394,16 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
         if (data.verdict === 'covered' || data.verdict === 'about') { setFire(true); later(() => setFire(false), 1800) }
       }, 380)
       later(() => setPhase('steps'), 1150)
-      const shown = Array.isArray(data.preview) ? data.preview.length : 0
-      later(() => setPhase('done'), 1150 + 420 + shown * STEP_STAGGER_MS + 450)
+      const { shown, remaining } = planShape(data)
+      const stepsIn = 1150 + 420 + shown * STEP_STAGGER_MS   // the last step card has risen
+      later(() => setPhase('done'), stepsIn + 450)
+      // The live-session preview starts once the steps have been on screen a
+      // moment, and plays event by event. Reduced motion: the end state at once.
+      if (shown > 0) {
+        const ev = simEvents(shown, remaining)
+        if (reducedMotion()) later(() => setSimAt(ev.length - 1), stepsIn + 600)
+        else { let at = stepsIn + 600; ev.forEach((e, n) => { at += e.ms; later(() => setSimAt(n), at) }) }
+      }
     } catch (e) {
       clearInterval(tick)
       setErr(e && e.message && e.status ? e.message : t('widgets.validate.unreachable'))
@@ -399,18 +467,19 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   }
   const vm = res ? (verdictMeta[res.verdict] || verdictMeta.about) : null
   const VIcon = vm ? vm.Icon : null
-  // What the plan looks like: the first `shown` steps in full, the rest as the
-  // roadmap of what a live session continues with.
-  const preview = (res && Array.isArray(res.preview)) ? res.preview : []
-  const shown = preview.length
-  const roadmap = (res && Array.isArray(res.roadmap) && res.roadmap.length >= shown) ? res.roadmap : preview.map((p) => p.do)
-  const total = roadmap.length
-  const remaining = Math.max(0, total - shown)
+  const { preview, shown, roadmap, total, remaining } = planShape(res)
+  // The live-session preview as it stands right now (all false until it starts).
+  const sim = simState(simEvents(shown, remaining), simAt)
+  const stepsLanded = phase === 'steps' || phase === 'done'
   // The recommendation: the plan the live check names, else the popular plan when
   // the visitor asked about the product. Never for an off-topic question.
   const recPlan = res ? ((res.plan && PLAN_NAMES[String(res.plan).toLowerCase()]) ? String(res.plan).toLowerCase() : (res.verdict === 'no' || res.verdict === 'offtopic' ? '' : 'basic')) : ''
   const recPrice = pricing && pricing.plans ? pricing.plans[recPlan] : null
-  const recHours = pricing && pricing.dailyHours ? pricing.dailyHours[recPlan] : null
+  // Allowances come from the pricing API, never hardcoded: hoursMonthly is the
+  // guided hours included per calendar month, tasks the guided tasks per day.
+  // An API that does not carry hoursMonthly yet (the older shape) hides the
+  // hours rather than showing a number with the wrong unit.
+  const recHours = pricing && pricing.hoursMonthly ? pricing.hoursMonthly[recPlan] : null
   const recTasks = pricing && pricing.tasks ? pricing.tasks[recPlan] : null
   const showCta = !!(res && recPlan && res.verdict !== 'offtopic' && res.verdict !== 'no')
 
@@ -495,7 +564,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                   onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} aria-label={t('widgets.validate.askH')} />
                 <div className="lv-chips" aria-label={t('widgets.validate.tryOne')}>
                   <span className="lv-chips-l">{t('widgets.validate.tryOne')}</span>
-                  {[1, 2, 3, 4].map((i) => (
+                  {[1, 2, 3, 4, 5, 6].map((i) => (
                     <button type="button" key={i} className="lv-chip" onClick={() => { setQ(t(`widgets.validate.chip${i}`)); taRef.current && taRef.current.focus() }}>{t(`widgets.validate.chip${i}`)}</button>
                   ))}
                 </div>
@@ -562,7 +631,7 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                           <span className="lv-vbadge">{VIcon && <VIcon size={20} />}</span>
                           <span className="lv-vlabel">{vm.label}</span>
                         </div>
-                        {res.answer && <p className="lv-answer">{renderRich(res.answer)}</p>}
+                        {res.answer && <p className="lv-answer"><Rich text={res.answer} /></p>}
                         {res.sees && (
                           <div className="lv-sees">
                             <span className="lv-scan-beam soft" aria-hidden />
@@ -570,36 +639,64 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                             <span className="lv-seetxt">{res.sees}</span>
                           </div>
                         )}
+                        {/* The one precondition line (signed in, the app open): never a step. */}
+                        {stepsLanded && shown > 0 && res.ready && (
+                          <div className="lv-ready"><Check size={13} /><span><span className="lv-k">{t('widgets.validate.ready')}</span><Rich text={res.ready} /></span></div>
+                        )}
 
-                        {(phase === 'steps' || phase === 'done') && shown > 0 && (
+                        {/* The live-session preview, labelled as what it is: simulated, on this plan. */}
+                        {sim.on && (
+                          <div className="lv-sim" role="note">
+                            <span className="lv-sim-h"><i aria-hidden /> {t('widgets.validate.sim.eyebrow')}</span>
+                            <span className="lv-sim-n">{t('widgets.validate.sim.note')}</span>
+                          </div>
+                        )}
+
+                        {stepsLanded && shown > 0 && (
                           <ol className="lv-steps">
-                            {preview.map((p, i) => (
-                              <li key={i} className="lv-step" style={{ '--i': i }}>
-                                <div className="lv-step-l">
-                                  <span><TerminalSquare size={11} /> {t('widgets.validate.doThisNow')}</span>
-                                  <span className="lv-step-n">{t('widgets.validate.stepOf', { n: i + 1, total: total || shown })}</span>
-                                </div>
-                                <div className="lv-step-do">{renderRich(p.do)}</div>
-                                {p.cmd && (
-                                  <div className="lv-term" dir="ltr">
-                                    <div className="lv-term-h"><span>{t('widgets.validate.terminal')}</span>
-                                      <button type="button" onClick={() => copyCmd(p.cmd, i)} aria-label={t('widgets.validate.copyCmd')}>{copiedCmd === i ? <><Check size={12} /> {t('widgets.validate.copied')}</> : <><Copy size={12} /> {t('widgets.validate.copy')}</>}</button>
-                                    </div>
-                                    <code>{p.cmd}</code>
+                            {preview.map((p, i) => {
+                              const m = stepMedia(p)
+                              const isCur = sim.cur === i, isOk = i < sim.done, isDrift = sim.drift === i
+                              return (
+                                <li key={i} className={`lv-step${isCur ? ' cur' : ''}${isOk ? ' ok' : ''}${isDrift && !sim.fixed ? ' drift' : ''}`} style={{ '--i': i }}>
+                                  <div className="lv-step-l">
+                                    {isOk
+                                      ? <span className="ok"><Check size={11} /> {t('widgets.validate.sim.stepDone')}</span>
+                                      : isCur
+                                        ? <span className="watch"><Eye size={11} /> {t('widgets.validate.sim.watching')}</span>
+                                        : <span><TerminalSquare size={11} /> {t('widgets.validate.doThisNow')}</span>}
+                                    <span className="lv-step-n">{t('widgets.validate.stepOf', { n: i + 1, total: total || shown })}</span>
                                   </div>
-                                )}
-                                {p.how && p.how.length > 0 && (
-                                  <details className="lv-how" open={i === 0}>
-                                    <summary>{t('widgets.validate.exactlyHow')}</summary>
-                                    <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
-                                  </details>
-                                )}
-                              </li>
-                            ))}
+                                  <div className="lv-step-do"><Rich text={p.do} /></div>
+                                  {m.href && <StepLink url={m.href} />}
+                                  {m.path && <StepLink url={m.path} />}
+                                  {m.cmd && <CmdBlock lines={m.cmd.split('\n')} />}
+                                  {p.how && p.how.length > 0 && (
+                                    <details className="lv-how" open={i === 0}>
+                                      <summary>{t('widgets.validate.exactlyHow')}</summary>
+                                      <ol>{p.how.map((h, k) => <li key={k}><Rich text={h} /></li>)}</ol>
+                                    </details>
+                                  )}
+                                  {/* the guide's correction, in its own words, tied to this step */}
+                                  {isDrift && (
+                                    <div className="lv-bubble">
+                                      <span className="av" aria-hidden><Undo2 size={12} /></span>
+                                      <span className="who">{t('widgets.validate.sim.guide')}</span>
+                                      <Rich text={p.drift || t('widgets.validate.sim.driftFallback', { step: p.do })} />
+                                      {sim.fixed && <span className="fix"><Check size={12} /> {t('widgets.validate.sim.backOnTrack')}</span>}
+                                    </div>
+                                  )}
+                                  {isCur && !isDrift && <div className="lv-step-st watch"><i aria-hidden /><span>{t('widgets.validate.sim.watchingLine')}</span></div>}
+                                  {isOk && (
+                                    <div className="lv-step-st"><Check size={13} /><span><b>{t('widgets.validate.sim.seenDone')}</b>{p.done && <span className="m"> &middot; <Rich text={p.done} /></span>}</span></div>
+                                  )}
+                                </li>
+                              )
+                            })}
                           </ol>
                         )}
 
-                        {(phase === 'steps' || phase === 'done') && remaining > 0 && (
+                        {stepsLanded && remaining > 0 && (
                           <div className="lv-locked" style={{ '--d': `${afterSteps}ms` }}>
                             <div className="lv-locked-h">
                               <ListChecks size={14} /> {t.n('widgets.validate.lockedMore', remaining)}
@@ -607,16 +704,24 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                             </div>
                             <ol>
                               {roadmap.slice(shown).map((title, i) => (
-                                <li key={i}>
-                                  <span className="n">{shown + i + 1}</span>
-                                  <div className="t">{renderRich(title)}<span className="bars" aria-hidden><i /><i /><i /></span></div>
+                                <li key={i} className={i < sim.ticks ? 'tick' : ''}>
+                                  <span className="n">{i < sim.ticks ? <Check size={11} /> : shown + i + 1}</span>
+                                  <div className="t"><Rich text={title} /><span className="bars" aria-hidden><i /><i /><i /></span></div>
                                 </li>
                               ))}
                             </ol>
                           </div>
                         )}
 
-                        {(phase === 'steps' || phase === 'done') && res.verdict !== 'offtopic' && (
+                        {/* the end of every live session: the result seen and confirmed */}
+                        {sim.complete && (
+                          <div className="lv-complete" role="status">
+                            <span className="lv-vbadge"><CheckCheck size={20} /></span>
+                            <span><b>{t('widgets.validate.sim.complete')}</b><span>{t('widgets.validate.sim.completeSub')}</span></span>
+                          </div>
+                        )}
+
+                        {stepsLanded && res.verdict !== 'offtopic' && (
                           <div className="lv-val" style={{ '--d': `${afterSteps + 120}ms` }}>
                             {total > 0 && <span><ListChecks size={13} /> {t.n('widgets.validate.step', total)}</span>}
                             <span><TerminalSquare size={13} /> {t('widgets.validate.valExact')}</span>
@@ -629,13 +734,19 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                           <div className="lv-cta">
                             <div className="lv-cta-h">{t('widgets.validate.ctaH')}</div>
                             <p className="lv-cta-sub">{t('widgets.validate.ctaSub')}</p>
+                            {/* the three things a live session does, in three pills */}
+                            <ul className="lv-promise" aria-label={t('widgets.validate.sim.eyebrow')}>
+                              <li><Undo2 size={13} /> {t('widgets.validate.promise1')}</li>
+                              <li><Footprints size={13} /> {t('widgets.validate.promise2')}</li>
+                              <li><BadgeCheck size={13} /> {t('widgets.validate.promise3')}</li>
+                            </ul>
                             <div className="lv-plan">
                               <span className="lv-plan-rib">{t('widgets.validate.recommended')}</span>
                               <span className="lv-plan-n">{PLAN_NAMES[recPlan]}</span>
                               {recPrice != null && <span className="lv-plan-p">{money(recPrice)}<small>{t('common.perMonth')}</small></span>}
                               {(recHours != null || recTasks != null) && (
                                 <span className="lv-plan-d">
-                                  {recHours != null && t.n('widgets.validate.hrs', recHours)}
+                                  {recHours != null && t.n('widgets.validate.hrsMonth', recHours)}
                                   {recHours != null && recTasks != null && ' · '}
                                   {recTasks != null && t.n('widgets.validate.tasksN', recTasks)}
                                 </span>
@@ -741,7 +852,7 @@ const LV_CSS = `
 .lv-live-pill{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-family:"Figtree",system-ui,sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#e23b3b;background:rgba(226,59,59,.1);border:1px solid rgba(226,59,59,.3);border-radius:999px;padding:3px 9px}
 .wm-cov-x{background:none;border:none;color:var(--mut);font-size:26px;line-height:1;cursor:pointer;padding:0 6px;flex:0 0 auto}
 .wm-cov-x:hover{color:var(--tx)}
-.wm-cov-body{flex:1;overflow-y:auto;padding:22px 24px;min-height:130px}
+.wm-cov-body{flex:1;overflow-y:auto;overscroll-behavior:contain;padding:22px 24px;min-height:130px}
 .wm-cov-intro{color:var(--mut);font-size:14.5px;line-height:1.6;margin:0}
 .wm-cov-intro b{color:var(--tx)}
 .wm-cov-err{margin-top:12px;color:#c0392b;font-size:14px}
@@ -841,8 +952,9 @@ const LV_CSS = `
 .lv-verdict.off{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
 .lv-verdict.off .lv-vbadge{background:rgba(255,255,255,.08);color:#cfd6e6}.lv-verdict.off .lv-vlabel{color:#cfd6e6;font-size:16px}
 .lv-answer{margin:12px 2px 0;font-size:14.5px;line-height:1.65;color:#dfe4f0;overflow-wrap:anywhere;opacity:0;animation:lv-rise .45s ease .2s forwards}
-.lv-answer .wm-cov-b{font-weight:800;color:#fff;background:linear-gradient(transparent 62%,rgba(140,245,196,.35) 0);padding:0 1px}
-.wm-cov-code{font-family:var(--mono);font-size:.86em;background:rgba(57,211,255,.12);color:#39d3ff;border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:normal;overflow-wrap:anywhere}
+/* Inline code / keys / links come from the shared RichText (inline styles); only
+   the focus ring is the console's. Every control in the console shows focus. */
+.lv-console a:focus-visible,.lv-console button:focus-visible,.lv-console summary:focus-visible{outline:2px solid #39d3ff;outline-offset:2px;border-radius:6px}
 .lv-sees{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;padding:9px 12px;border:1px solid rgba(57,211,255,.3);background:rgba(57,211,255,.07);border-radius:11px;font-size:13px;line-height:1.5;color:#eef0f6;overflow:hidden;opacity:0;animation:lv-rise .45s ease .32s forwards}
 .lv-seek{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#39d3ff}
 .lv-seetxt{flex:1;min-width:0;overflow-wrap:anywhere}
@@ -854,11 +966,19 @@ const LV_CSS = `
 .lv-step-l>span{display:inline-flex;align-items:center;gap:6px;min-width:0}
 .lv-step-n{color:#9aa0b4;letter-spacing:.06em;font-weight:700;white-space:nowrap;text-transform:none;flex:0 0 auto}
 .lv-step-do{font-size:14.5px;font-weight:600;line-height:1.5;color:#f3f5fa;overflow-wrap:anywhere}
-.lv-term{margin-top:9px;border:1px solid #27324a;border-radius:11px;overflow:hidden;direction:ltr;text-align:left}
-.lv-term-h{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0c1222;color:#8ea3c0;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px}
-.lv-term-h button{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;border-radius:7px;padding:3px 8px;font:inherit;font-size:10.5px;letter-spacing:.04em;text-transform:none;cursor:pointer;transition:background .14s;white-space:nowrap}
-.lv-term-h button:hover{background:rgba(255,255,255,.12)}
-.lv-term code{display:block;padding:9px 11px;background:#0b1020;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#8ff0c4;white-space:pre-wrap;overflow-wrap:anywhere}
+/* The step's link-out / copy row (shared StepLink markup, the console's look).
+   The terminal block carries its own styles (shared CmdBlock), only its font
+   scale variable is set here. Commands and paths stay LTR in RTL locales. */
+.lv-console{--wc-fs:1}
+.lv-console .wc-open{display:inline-flex;align-items:center;gap:6px;max-width:100%;margin-top:9px;padding:6px 11px 6px 10px;border-radius:9px;color:#39d3ff;background:rgba(57,211,255,.1);border:1px solid rgba(57,211,255,.35);font-size:13px;font-weight:700;text-decoration:none;overflow-wrap:anywhere;transition:background .14s}
+.lv-console .wc-open:hover,.lv-console .wc-open:focus-visible{background:rgba(57,211,255,.2);text-decoration:underline;text-underline-offset:3px}
+.lv-console .wc-open svg{flex:0 0 auto}
+.lv-console .wc-copyrow{display:flex;align-items:center;gap:8px;margin-top:9px;padding:5px 7px 5px 11px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:9px;max-width:100%;min-width:0;direction:ltr;text-align:left}
+.lv-console .wc-copyrow-t{flex:1;min-width:0;font-family:var(--mono);font-size:12.5px;color:#eef0f6;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-console .wc-copybtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:5px;height:28px;padding:0 10px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;font:inherit;font-size:11.5px;font-weight:600;cursor:pointer;white-space:nowrap;transition:background .14s}
+.lv-console .wc-copybtn:hover{background:rgba(255,255,255,.12)}
+.lv-console .wc-copybtn.done{color:#8cf5c4;border-color:rgba(140,245,196,.4);background:rgba(10,157,102,.18)}
+.lv-console pre{max-width:100%}
 .lv-how{margin-top:9px;border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:8px 11px;background:rgba(255,255,255,.02)}
 .lv-how summary{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#39d3ff;font-weight:800;cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none}
 .lv-how summary::-webkit-details-marker{display:none}
@@ -878,6 +998,49 @@ const LV_CSS = `
 .lv-locked .bars{display:flex;gap:6px;margin-top:5px}
 .lv-locked .bars i{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.09);filter:blur(1.5px)}
 .lv-locked .bars i:nth-child(1){width:46%}.lv-locked .bars i:nth-child(2){width:28%}.lv-locked .bars i:nth-child(3){width:16%}
+.lv-locked li.tick .n{background:#0a9d66;border-color:#0a9d66;color:#042;transition:background .25s,border-color .25s}
+/* ===== the live-session preview, on the plan ============================= */
+/* the one precondition line */
+.lv-ready{display:flex;align-items:flex-start;gap:8px;margin-top:12px;padding:0 2px;font-size:13px;line-height:1.5;color:#dfe4f0;overflow-wrap:anywhere;opacity:0;animation:lv-rise .45s ease .3s forwards}
+.lv-ready>svg{flex:0 0 auto;margin-top:3px;color:#8cf5c4}
+.lv-ready>span{min-width:0}
+/* the band that names what is playing: simulated, on this plan */
+.lv-sim{margin-top:14px;display:flex;flex-direction:column;gap:3px;padding:9px 12px;border-radius:11px;border:1px solid rgba(255,179,92,.38);background:rgba(255,179,92,.08);min-width:0;animation:lv-rise .4s ease both}
+.lv-sim-h{display:inline-flex;align-items:center;gap:7px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;font-weight:800;color:#ffcf8a}
+.lv-sim-h i{width:7px;height:7px;border-radius:50%;background:#ffb35c;flex:0 0 auto;animation:lv-pulse-warm 1.5s infinite}
+@keyframes lv-pulse-warm{0%{box-shadow:0 0 0 0 rgba(255,179,92,.5)}70%{box-shadow:0 0 0 6px rgba(255,179,92,0)}100%{box-shadow:0 0 0 0 rgba(255,179,92,0)}}
+.lv-sim-n{font-size:12px;line-height:1.45;color:#cfd6e6;overflow-wrap:anywhere}
+/* step card states: being watched, seen done, corrected */
+.lv-step{transition:border-color .3s,background .3s,box-shadow .3s}
+.lv-step.cur{border-color:rgba(57,211,255,.6);background:rgba(57,211,255,.06);box-shadow:0 0 0 3px rgba(57,211,255,.13)}
+.lv-step.drift{border-color:rgba(255,179,92,.65);background:rgba(255,179,92,.06);box-shadow:0 0 0 3px rgba(255,179,92,.14)}
+.lv-step.ok{border-color:rgba(140,245,196,.6);background:rgba(10,157,102,.11)}
+.lv-step-l .watch{color:#39d3ff}
+.lv-step-l .ok{color:#8cf5c4}
+.lv-step-st{display:flex;align-items:flex-start;gap:7px;margin-top:9px;font-size:12.5px;line-height:1.45;color:#8cf5c4;overflow-wrap:anywhere;animation:lv-rise .35s ease both}
+.lv-step-st>svg{flex:0 0 auto;margin-top:2px}
+.lv-step-st>span{min-width:0}
+.lv-step-st b{font-weight:800}
+.lv-step-st .m{color:#cfd6e6;font-weight:500}
+.lv-step-st.watch{color:#39d3ff;align-items:center}
+.lv-step-st.watch i{width:8px;height:8px;border-radius:50%;background:#39d3ff;flex:0 0 auto;animation:lv-blip .9s ease-in-out infinite}
+/* the guide's correction bubble, in its own words */
+.lv-bubble{position:relative;margin-top:10px;padding:9px 11px 9px 38px;border-radius:12px;border:1px solid rgba(255,179,92,.45);background:rgba(255,179,92,.12);font-size:13px;line-height:1.5;color:#ffe9cf;overflow-wrap:anywhere;animation:lv-bubble-in .4s cubic-bezier(.2,.9,.3,1.2) both}
+[dir="rtl"] .lv-bubble{padding:9px 38px 9px 11px}
+.lv-bubble .av{position:absolute;inset-inline-start:10px;top:10px;width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#ffb35c,#ff7a59);color:#1a0e08;display:inline-flex;align-items:center;justify-content:center}
+.lv-bubble .who{display:block;font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#ffcf8a;margin-bottom:2px}
+.lv-bubble .fix{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:11.5px;font-weight:800;color:#8cf5c4;animation:lv-rise .3s ease both}
+@keyframes lv-bubble-in{from{opacity:0;transform:translateY(6px) scale(.97)}to{opacity:1;transform:none}}
+/* the end of the plan: seen and confirmed */
+.lv-complete{display:flex;align-items:center;gap:12px;margin-top:12px;padding:12px 14px;border-radius:14px;background:rgba(10,157,102,.16);border:1px solid rgba(140,245,196,.45);min-width:0;animation:lv-pop .55s cubic-bezier(.2,1.4,.4,1) both}
+.lv-complete .lv-vbadge{background:#0a9d66;color:#042;animation:lv-glow 1.7s ease-in-out infinite}
+.lv-complete>span:last-child{min-width:0}
+.lv-complete b{display:block;font-family:var(--disp);font-weight:800;font-size:16.5px;line-height:1.2;color:#8cf5c4;overflow-wrap:anywhere}
+.lv-complete span span{display:block;font-size:12.5px;line-height:1.4;color:#cfd6e6;margin-top:2px;overflow-wrap:anywhere}
+/* the three promises, as pills (rows on a phone, so a pill never wraps) */
+.lv-promise{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-wrap:wrap;gap:7px}
+.lv-promise li{display:inline-flex;align-items:center;gap:6px;max-width:100%;padding:5px 11px 5px 9px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);font-size:12px;font-weight:700;color:#eef0f6;white-space:nowrap}
+.lv-promise svg{flex:0 0 auto;color:#ffcf8a}
 /* what you get, in one line */
 .lv-val{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:#9aa0b4;opacity:0;animation:lv-rise .4s ease forwards;animation-delay:var(--d,0ms)}
 .lv-val span{display:inline-flex;align-items:center;gap:6px}
@@ -923,12 +1086,25 @@ const LV_CSS = `
  /* The title must never truncate: smaller type and the LIVE pill keeps only its dot. */
  .wm-cov-head-t{font-size:16px;gap:8px}.lv-live-pill{padding:4px 6px}.lv-live-pill-tx{display:none}
  .lv-start,.lv-compare,.lv-again-go{flex:1 1 100%}
+ .lv-promise li{flex:1 1 100%;white-space:normal;border-radius:11px}
+}
+/* On a phone the starter chips become full-width rows (a chip never wraps). */
+@media(max-width:640px){
+ .lv-chips-l{flex-basis:100%}
+ .lv-chip{flex:1 1 100%;border-radius:11px}
+}
+/* On a phone a long click path wraps instead of truncating, so the visitor
+   reads the whole thing (the full value is also what the button copies). */
+@media(max-width:560px){
+ .lv-console .wc-copyrow{align-items:flex-start}
+ .lv-console .wc-copyrow-t{white-space:normal;overflow-wrap:anywhere;text-overflow:clip;line-height:1.45;padding:4px 0}
 }
 @media(prefers-reduced-motion:reduce){
- .lv-step,.lv-locked,.lv-val,.lv-answer,.lv-sees{animation:none;opacity:1}
+ .lv-step,.lv-locked,.lv-val,.lv-answer,.lv-sees,.lv-ready,.lv-sim,.lv-step-st,.lv-bubble,.lv-bubble .fix,.lv-complete{animation:none;opacity:1}
  .lv-scan-beam,.lv-prep-bar{display:none}
  .lv-verdict,.lv-cta{animation:none}
- .lv-verdict.ok .lv-vbadge{animation:none}
+ .lv-verdict.ok .lv-vbadge,.lv-complete .lv-vbadge,.lv-sim-h i,.lv-step-st.watch i{animation:none}
+ .lv-step{transition:none}
  .lv-root .wm-cov-launch,.lv-root.lv-docked .wm-cov-launch{animation:none}
 }
 /* Margin-bearing paragraphs, scoped under .lv-root: a host page's own tag reset

@@ -92,7 +92,7 @@ test('company minute pool: grant, allocate to a user, and visibility', () => {
   // The user sees the pool in their usage.
   let usage = store.getWorkUsage(u.id)
   assert.equal(usage.poolSeconds, 3600)
-  assert.ok(usage.remainingSeconds >= usage.dailySeconds + 3600)
+  assert.ok(usage.remainingSeconds >= usage.plan.poolSeconds + 3600)   // the seat's monthly plan pool + the company pool
   // Allocate 600s from the pool to the user's own balance.
   const alloc = store.allocateCompanyPoolToUser(co.id, u.id, 600)
   assert.equal(alloc.poolSeconds, 3000)
@@ -102,19 +102,23 @@ test('company minute pool: grant, allocate to a user, and visibility', () => {
   throws403or400(() => store.allocateCompanyPoolToUser(co.id, u.id, 999999))
 })
 
-test('usage draws free, then the user purchased balance, then the company pool', () => {
+test('usage draws the seat plan pool, then the user purchased balance, then the company pool', () => {
   const co = store.createCompany({ name: uniq('Draw'), seats: 0 })
   const u = store.addCompanyMemberByEmail({ companyId: co.id, email: 'draw@d.test', tier: 'basic' })
+  store.setWorkPricing({ hoursMonthly: { basic: 0.1 } })   // a 360 s monthly plan pool keeps the loop short
   store.grantWorkPurchasedSeconds(u.id, 100)
   store.grantCompanyPoolSeconds(co.id, 200)
-  const daily = store.workDailyLimit('basic') // 7200
-  const total = daily + 100 + 200
+  const monthly = store.planGrantSeconds('basic')         // 360
+  assert.equal(monthly, 360)
+  const total = monthly + 100 + 200
   let n = 0
   for (let acc = 0; acc < total; acc += 60) { store.addWorkUsage(u.id, 60); if (++n > 1000) break }
   const usage = store.getWorkUsage(u.id)
-  assert.equal(usage.usedSeconds, daily)      // free bucket filled exactly to the daily cap
+  assert.equal(usage.usedSeconds, total)      // everything consumed today, from all three sources
+  assert.equal(usage.plan.poolSeconds, 0)     // the seat's monthly plan pool drained first
   assert.equal(usage.purchasedSeconds, 0)     // personal balance drained next
   assert.equal(usage.poolSeconds, 0)          // company pool drained last
+  assert.equal(usage.exhausted, true)
 })
 
 test('SSO provider allowlist accepts standard providers and rejects junk', () => {

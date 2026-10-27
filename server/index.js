@@ -1553,7 +1553,7 @@ app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((r
   } catch (e) {
     const body = { error: e.message }
     if (e.mustCompleteCurrent) { body.mustCompleteCurrent = true; body.activeTaskId = e.activeTaskId }
-    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel; if (e.taskCredits != null) body.taskCredits = e.taskCredits }
+    if (e.taskLimit) { body.taskLimit = true; body.cap = e.cap; body.resetLabel = e.resetLabel; if (e.window) body.window = e.window }
     return res.status(e.status || 402).json(body)
   }
   if (cu && cu.companyId) {
@@ -2909,13 +2909,11 @@ app.post('/api/work/sessions/:id/research', requireWorkAuth, async (req, res) =>
 
 // ---- Usage metering -------------------------------------------------------
 app.get('/api/work/usage', requireWorkAuth, wrap((req, res) => { res.json(store.getWorkUsage(req.workUser.id)) }))
-// Task-credit economy (individual users): read the banked balance + earn rate,
-// and trade credits for extra guidance hours (today only). The plan box reads
-// the balance here; the usage response also carries it under `tasks`.
-app.get('/api/work/credits', requireWorkAuth, wrap((req, res) => { res.json(store.getWorkCreditsSummary(req.workUser.id)) }))
-app.post('/api/work/credits/trade', requireWorkAuth, wrap((req, res) => {
-  const { hours } = req.body || {}
-  res.json(store.tradeWorkTaskCreditsForHours(req.workUser.id, hours))
+// Day-by-day consumption (seconds + tasks started) for the dashboard's month
+// view: the last `days` days (7..92, default 31) in the person's own day zone.
+app.get('/api/work/usage/history', requireWorkAuth, wrap((req, res) => {
+  const days = Math.min(92, Math.max(7, Math.round(Number((req.query || {}).days) || 31)))
+  res.json(store.getWorkUsageHistory(req.workUser.id, days))
 }))
 app.post('/api/work/usage/heartbeat', requireWorkAuth, wrap((req, res) => {
   const seconds = Math.max(0, Math.min(20, Number((req.body || {}).seconds) || 0)) // cap one beat

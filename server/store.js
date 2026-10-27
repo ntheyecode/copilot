@@ -52,6 +52,7 @@ import { verifierOf, checkVerifier, randomSalt as kdfRandomSalt, KDF as EXPORT_K
 // hot-path hooks the consumption engine calls.
 import * as eq from './enterprise_quota.js'
 import { createEnterpriseBilling } from './enterprise_billing.js'
+import { createPlanAllowance } from './plan_allowance.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -400,6 +401,12 @@ export const {
   listNotifications, listNotificationsForUser, listSuperadminNotifications, superadminUnreadCount,
   unreadNotificationCount, markNotificationRead, markSuperadminNotificationRead,
 } = ent
+// ---- Plan allowance (module: plan_allowance.js) ----
+// Individuals and seat-based company members: ONE monthly hours pool per person
+// (superadmin pricing: hoursMonthly per tier, expiry policy hoursExpiry) and a
+// plain per-day task cap (tasks per tier). Pool-based enterprise companies skip
+// it: their company pool is the budget (enterprise_billing.js).
+const plan = createPlanAllowance({ db: () => db, persistSoon, getWorkPricing, workUserTier, tasksToday: workTasksToday, httpErr })
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -3036,11 +3043,12 @@ export function requireStepUpActive(userId, label = 'This page') {
 }
 
 // ---- WorkCoPilot metering + tiers -----------------------------------------
-// Daily cap is REAL USED MINUTES (active guiding only). The FREE daily bucket
-// resets at 11:59 PM Eastern; PURCHASED time is a persistent balance drawn only
-// after the free allowance is used up.
+// Metering counts REAL USED SECONDS (active guiding only). Every plan includes a
+// MONTHLY pool of hours (superadmin pricing hoursMonthly; renews on the 1st in
+// Eastern time; month-end expiry policy superadmin-set); PURCHASED time is a
+// persistent balance drawn after the plan pool; a seat-based company's shared
+// pool comes last. Nothing resets daily except the per-day task cap.
 export const WORK_TIERS = ['lite', 'basic', 'advanced', 'premium']
-const WORK_TIER_SECONDS = { lite: 1 * 3600, basic: 2 * 3600, advanced: 4 * 3600, premium: 6 * 3600 }
 // Upgrade ladder (low -> high). Used to show the right "Upgrade" target and to
 // decide who sees the Upgrade button (everyone below premium, except company
 // users). Keep in sync with WORK_TIERS order.
@@ -3061,16 +3069,17 @@ export function tierAllows(tier, feature) {
 export function nextTierUp(tier) {
   const i = TIER_ORDER.indexOf(tier); return (i >= 0 && i < TIER_ORDER.length - 1) ? TIER_ORDER[i + 1] : null
 }
-// Daily included SECONDS for a tier. Reads the LIVE superadmin pricing
-// (dailyHours), so changing a plan's daily hours in Admin > Pricing reflects
-// immediately for every user (getWorkUsage -> dailySeconds -> remaining/exhausted
-// and the client usage display). Falls back to the built-in default.
-export function workDailyLimit(tier) {
-  const t = String(tier || 'basic')
-  let h
-  try { h = (getWorkPricing().dailyHours || {})[t] } catch { h = undefined }
-  if (Number.isFinite(Number(h)) && Number(h) >= 0) return Math.round(Number(h) * 3600)
-  return WORK_TIER_SECONDS[t] || WORK_TIER_SECONDS.basic
+// Included guided SECONDS per calendar month for a tier. Reads the LIVE
+// superadmin pricing (hoursMonthly), so a change in Admin > Pricing reaches
+// every person's pool at once (plan_allowance applies the difference on the
+// next read). Falls back to the built-in default.
+export function planGrantSeconds(tier) { return plan.grantSeconds(String(tier || 'basic')) }
+// The signed-in person's day-by-day consumption (seconds + tasks started) for the
+// last `days` days in THEIR day zone (company time zone for company users,
+// Eastern otherwise), oldest first. Powers the dashboard's month view.
+export function getWorkUsageHistory(workUserId, days = 31) {
+  const u = getUser(workUserId); if (!u) throw httpErr(404, 'Account not found')
+  return { days: plan.history(u, days, userTz(u)) }
 }
 
 // The "usage day" in Eastern time, boundary at 23:59 (reset time).
@@ -3088,13 +3097,6 @@ function dayKeyToUTC(key) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(key || ''))
   if (!m) return NaN
   return Date.UTC(+m[1], +m[2] - 1, +m[3])
-}
-// Whole Eastern days elapsed from `fromKey` up to `toKey` (never negative). Used
-// by the lazy task-credit accrual to catch up on every day since the last read.
-function easternDaysBetween(fromKey, toKey) {
-  const a = dayKeyToUTC(fromKey), b = dayKeyToUTC(toKey)
-  if (!Number.isFinite(a) || !Number.isFinite(b)) return 0
-  return Math.max(0, Math.round((b - a) / 86400000))
 }
 
 export function getWorkTier(workUserId) {
@@ -3121,33 +3123,33 @@ export function getWorkUsage(workUserId) {
   const u = getUser(workUserId)
   const co = (u && u.companyId) ? (db.companies || []).find((x) => x.id === u.companyId) : null
   if (co) rollCompanyPool(co)                      // lazy month-end rollover before we read the pool
-  // ENTERPRISE (pool-based company: AdmireVeda set a monthly pool): the pool is
-  // the ONLY time source and every guided second draws from it, so the tier's
-  // daily free bucket does not apply and "used today" is everything consumed.
-  // Seat-based companies (no pool set) and individuals keep the free bucket.
+  // Three time sources, in the order addWorkUsage draws them:
+  //   1. the person's MONTHLY plan pool (individuals and seat-based company
+  //      members; a pool-based enterprise company has none, its pool is the budget)
+  //   2. purchased top-up hours (non-expiring, the person's own)
+  //   3. a seat-based company's shared pool (superadmin "Add hours")
   const poolBasedCo = isPoolBased(co)
-  const dailySeconds = poolBasedCo ? 0 : workDailyLimit(tier)
+  const ps = (u && !poolBasedCo) ? plan.snapshot(u) : null
   // A company user's day boundary is in the COMPANY timezone; individuals stay ET.
   const key = `${workUserId}:${u ? userDayKey(u) : easternDayKey()}`
   const rec = (db.workUsage && db.workUsage[key]) || null
-  const used = poolBasedCo ? ((rec && rec.consumedSeconds) || 0) : ((rec && rec.usedSeconds) || 0)
-  // Bonus seconds granted TODAY by trading task credits for extra hours expire at
-  // the local day boundary (a new day gets a fresh record) and never join the
-  // persistent purchased-hours pool. They extend the free daily bucket.
-  const bonusSeconds = (rec && rec.bonusSeconds) || 0
+  const used = (rec && rec.consumedSeconds) || 0                        // consumed today, all sources
   const purchasedSeconds = (u && u.purchasedSeconds) || 0
-  const freeLeft = poolBasedCo ? 0 : Math.max(0, (dailySeconds + bonusSeconds) - used)
+  const planSeconds = ps ? ps.poolSeconds : 0
   const poolSeconds = co ? Math.max(0, Number(co.poolSeconds) || 0) : 0
-  const resetLabel = co ? eq.tzResetLabel((co.enterprise && co.enterprise.timezone) || 'America/New_York') : '11:59 PM ET'
-  const poolBased = freeLeft + purchasedSeconds + poolSeconds
+  const poolBased = planSeconds + purchasedSeconds + poolSeconds
   const out = {
-    tier, dailySeconds, usedSeconds: used, purchasedSeconds,
-    bonusSeconds,                                  // today-only bonus minutes (from a credit trade); expire at the local day boundary
+    tier, usedSeconds: used, purchasedSeconds,
+    planSeconds,                                   // included plan hours left this month (0 for a pool-based company)
     poolSeconds,                                   // shared company minutes also available
-    freeLeft, remainingSeconds: poolBased,
+    freeLeft: planSeconds,                         // the heartbeat client's "included time left"
+    dailySeconds: null,                            // no daily bucket any more (a pool-based company's day ceiling is set below)
+    remainingSeconds: poolBased,
     exhausted: poolBased <= 0,
-    resetLabel,
-    tasks: getWorkTaskUsage(workUserId),           // task-credit state (banked balance + earn rate) for the app + New Task gate
+    resetLabel: ps ? ps.renewsLabel : eq.tzResetLabel((co && co.enterprise && co.enterprise.timezone) || 'America/New_York'),
+    renewsAt: ps ? ps.renewsAt : null,             // 'YYYY-MM-01': when the plan hours renew (clients format it per locale)
+    plan: ps,                                      // hoursMonthly, grantSeconds, poolSeconds, usedMonthSeconds, expiry, renews*
+    tasks: getWorkTaskUsage(workUserId),           // per-day task cap state for the app + New Task gate
   }
   if (co) {
     // A company user is ALSO bounded by their per-user/group HOUR ceiling: the
@@ -3168,77 +3170,18 @@ export function getWorkUsage(workUserId) {
   return out
 }
 
-// ---- TASK-CREDIT economy (banked, owner-confirmed) ------------------------
-// A "task" is one guided session. INDIVIDUAL users no longer have a use-it-or-
-// lose-it daily cap: each Eastern day they EARN their tier's daily task count
-// (tasks[tier], superadmin-set in pricing) into a persisted, BANKED credit
-// balance. Unused credits ACCUMULATE with NO cap. Starting a guided task
-// CONSUMES 1 credit (an abandoned/deleted task is NOT refunded - consume on
-// start, matching the old no-refund rule). Credits can also be traded for extra
-// guidance hours (see tradeWorkTaskCreditsForHours).
-// Accrual is LAZY (no cron): on any balance read or task start we catch up -
-// add `dailyRate` for each ET day elapsed since lastAccrualDay, up to today.
-// CORPORATE / company accounts are UNLIMITED exactly as before (their minute
-// pool is the real limiter) - they have NO credit accounting.
+// ---- TASKS: a plain per-day cap per plan (owner, 2026-10-27) -------------
+// A "task" is one guided session. Individuals (and seat-based company members
+// where a company ceiling does not apply) may START tasks[tier] (superadmin
+// pricing) per Eastern day. No banked credits, no earning, no trading: the rules
+// live in plan_allowance.js. Company users are unlimited unless their company
+// admin set an enterprise task ceiling (their pool is the real limiter).
 const WORK_TASKS_UNLIMITED = Infinity
-// The tier's DAILY task-credit EARN RATE. Infinity => unlimited (corporate).
-// Reads the LIVE pricing (getWorkPricing().tasks) so a superadmin change takes
-// effect immediately; falls back to the built-in default per tier.
+// The per-day task cap for a person. Infinity => unlimited (company).
 export function workDailyTaskLimit(workUserId) {
   const u = getUser(workUserId)
-  if (u && u.companyId) return WORK_TASKS_UNLIMITED       // corporate: unlimited
-  const tasks = getWorkPricing().tasks || {}
-  const tier = workUserTier(workUserId)
-  const cap = tasks[tier]
-  return Number.isInteger(cap) ? cap : (WORK_PRICING_DEFAULT.tasks[tier] || 0)
-}
-// SINGLE SOURCE OF TRUTH for an individual's task-credit balance. Lazily accrues
-// the tier's daily rate for every Eastern day elapsed since the last accrual,
-// banks unused credits (no cap), persists, and returns the current balance.
-// Everything that reads or spends credits goes through here - there is no
-// parallel counter. Corporate/company users are unlimited and have no balance,
-// so this returns null for them (callers treat null as "unlimited").
-export function getWorkTaskCredits(workUserId) {
-  const u = getUser(workUserId)
-  if (!u) throw httpErr(404, 'Account not found')
-  if (u.companyId) return null                            // corporate: unlimited, no credit accounting
-  const rate = workDailyTaskLimit(workUserId)             // tasks[tier] from live pricing
-  const today = easternDayKey()
-  // First ever read: seed one day's worth so a new user can start today, and
-  // anchor the accrual clock to today.
-  if (!Number.isFinite(u.taskCredits) || !u.lastAccrualDay) {
-    u.taskCredits = Math.max(0, Math.round(rate))
-    u.lastAccrualDay = today
-    persist()
-    return { balance: u.taskCredits, dailyRate: rate, lastAccrualDay: today }
-  }
-  // Catch up: one earn for each whole ET day since lastAccrualDay, up to today.
-  const elapsed = easternDaysBetween(u.lastAccrualDay, today)
-  if (elapsed > 0) {
-    u.taskCredits = Math.max(0, Math.round((Number(u.taskCredits) || 0) + rate * elapsed))
-    u.lastAccrualDay = today
-    persist()
-  }
-  return { balance: Math.max(0, Math.round(Number(u.taskCredits) || 0)), dailyRate: rate, lastAccrualDay: u.lastAccrualDay }
-}
-// When a user BUYS extra hours (real money), grant bonus task credits too:
-// tasksPerExtraHour (superadmin-editable, default 1) per hour, the same for every
-// tier. Corporate accounts are unlimited and skip this. Tied to the PURCHASE only
-// (billing fulfillment), never to the credits-for-hours trade, so it cannot be
-// farmed. Settles the daily accrual first, then adds the bonus. Returns the credits
-// granted (0 when disabled, corporate, or nothing bought).
-export function grantTaskCreditsForPurchasedHours(workUserId, hours) {
-  const h = Math.max(0, Math.round(Number(hours) || 0))
-  if (h <= 0) return 0
-  const per = Math.max(0, Math.round(Number(getWorkPricing().tasksPerExtraHour) || 0))
-  const bonus = h * per
-  if (bonus <= 0) return 0
-  const c = getWorkTaskCredits(workUserId)   // settle accrual to today; null = corporate (unlimited)
-  if (!c) return 0
-  const u = getUser(workUserId); if (!u) return 0
-  u.taskCredits = Math.max(0, Math.round((Number(u.taskCredits) || 0) + bonus))
-  persist()
-  return bonus
+  if (u && u.companyId) return WORK_TASKS_UNLIMITED       // company: unlimited (enterprise ceilings gate separately)
+  return plan.dailyTaskCap(workUserTier(workUserId))
 }
 // Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
 // information; it never changes the original request (that is frozen by
@@ -3310,11 +3253,9 @@ export function blockingWorkTask(workUserId) {
   return (db.workSessions || []).find((x) => x.workUserId === workUserId && x.status === 'active' && !x.paused) || null
 }
 // Task usage for the client (the New Task surface + /me). For INDIVIDUAL users
-// this reports the banked task-credit balance (after lazy accrual) and the
-// per-day earn rate; the client derives the monthly figure (dailyRate x 30).
-// `remaining` is the banked balance (how many tasks can be started right now) so
-// the existing New Task surface stays honest. CORPORATE users are unlimited and
-// keep exactly their old shape (no credit fields, cap null).
+// this is the plan's per-day cap (tasks[tier] in superadmin pricing): used
+// today, remaining, and when it resets. COMPANY users are unlimited unless their
+// company admin set a task ceiling (enterprise), and keep their old shape.
 export function getWorkTaskUsage(workUserId) {
   const u = getUser(workUserId)
   // Only a RUNNING task blocks a new start; a paused one waits under "Resume
@@ -3343,23 +3284,13 @@ export function getWorkTaskUsage(workUserId) {
       resetLabel: eq.tzResetLabel(userTz(u)),
     }
   }
-  const c = getWorkTaskCredits(workUserId)              // single source (lazy accrual)
-  return {
-    unlimited: false,
-    taskCredits: c.balance,                             // current BANKED balance
-    dailyRate: c.dailyRate,                             // credits earned per ET day
-    monthlyRate: c.dailyRate * 30,                      // convenience (client can also derive)
-    cap: c.dailyRate,                                   // per-day earn rate (kept for back-compat)
-    remaining: c.balance,                               // startable-now count = banked balance
-    usedToday: workTasksToday(workUserId),              // tasks started today (informational)
-    activeTaskId,
-    resetLabel: '11:59 PM ET',
-  }
+  return { ...plan.taskState({ id: workUserId }), activeTaskId }   // { unlimited:false, cap, usedToday, remaining, resetLabel }
 }
 // Gate + record a new task start. Throws a coded httpErr the caller surfaces, or
-// returns the new usage on success. Corporate/company accounts are unlimited
-// (no credit accounting); individuals must finish the current task first, then
-// CONSUME 1 banked credit (no refund on abandon).
+// returns the new usage on success. Company accounts are unlimited unless an
+// enterprise task ceiling applies; individuals must pause or finish the running
+// task first, then stay within today's per-day cap (a started task counts even
+// if it is abandoned: no refund).
 export function startWorkTask(workUserId) {
   const u = getUser(workUserId)
   // COMPANY: no task-credit economy, but now governed by the company TASK CEILING
@@ -3384,79 +3315,18 @@ export function startWorkTask(workUserId) {
     persist()
     return { usedToday, cap: (cs && cs.tasks && cs.tasks.limited) ? cs.tasks.day && cs.tasks.day.limit : null, unlimited: !(cs && cs.tasks && cs.tasks.limited) }
   }
-  // Rule 1 (revised): only a task that is actively RUNNING blocks a new start.
-  // A PAUSED task waits under "Resume where you left off" and must NOT block
-  // (owner: as long as you have task credits you can start another). Pausing the
-  // current task is therefore the way to start a second one.
+  // Rule 1: only a task that is actively RUNNING blocks a new start. A PAUSED
+  // task waits under "Resume where you left off" and must NOT block (owner: with
+  // tasks left today you can start another). Pausing the current task is
+  // therefore the way to start a second one.
   const active = blockingWorkTask(workUserId)
   if (active) { const e = httpErr(409, 'Pause or finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
-  // Rule 2 (new): spend one banked task credit. Lazy accrual runs inside
-  // getWorkTaskCredits, so the balance is current before we gate.
-  const c = getWorkTaskCredits(workUserId)
-  const rate = c.dailyRate
-  if (c.balance < 1) {
-    const e = httpErr(402, `You're out of task credits. You earn ${rate} more ${rate === 1 ? 'credit' : 'credits'} tomorrow at 11:59 PM ET, or trade 2 credits for 1 bonus hour of guidance.`)
-    e.taskLimit = true; e.cap = rate; e.taskCredits = c.balance; e.resetLabel = '11:59 PM ET'
-    throw e
-  }
-  u.taskCredits = Math.max(0, c.balance - 1)            // consume on start (no refund)
+  // Rule 2: today's per-day cap for the plan (a coded 402 with the reset time
+  // when it is used up). Counted on start, so an abandoned task is not refunded.
+  const s = plan.gateTaskStart({ id: workUserId })
   const usedToday = bumpWorkTasksToday(workUserId)
   persist()
-  return { usedToday, taskCredits: u.taskCredits, dailyRate: rate, cap: rate, unlimited: false }
-}
-// Trade banked task credits for EXTRA guidance hours, TODAY ONLY. Owner ratio:
-// 2 task credits -> 1 extra hour, in multiples of 2 (4 credits = 2 hours, ...).
-// The granted hour(s) are added as "bonus minutes" on today's Eastern-day usage
-// record, so they extend the free daily bucket and EXPIRE at ET midnight - they
-// never join the persistent purchased-hours pool. Individuals only; corporate is
-// already unlimited. Rejects (400, honest message) when the balance is < 2.
-const WORK_CREDITS_PER_HOUR = 2
-export function tradeWorkTaskCreditsForHours(workUserId, hours) {
-  const u = getUser(workUserId)
-  if (!u) throw httpErr(404, 'Account not found')
-  if (u.companyId) throw httpErr(400, 'Task credits apply to individual accounts only. Corporate accounts already have unlimited tasks.')
-  const h = Number(hours)
-  if (!Number.isInteger(h) || h < 1 || h > 100) throw httpErr(400, 'Enter a whole number of hours (1 to 100) to trade for.')
-  const cost = WORK_CREDITS_PER_HOUR * h                // 2 credits per hour
-  const c = getWorkTaskCredits(workUserId)              // lazy accrual first (current balance)
-  if (c.balance < cost) {
-    throw httpErr(400, `You need ${cost} task credit${cost === 1 ? '' : 's'} to trade for ${h} hour${h === 1 ? '' : 's'} (${WORK_CREDITS_PER_HOUR} per hour). You have ${c.balance}.`)
-  }
-  u.taskCredits = Math.max(0, c.balance - cost)
-  // Grant today-only bonus seconds on the ET-day usage record (auto-expire at ET midnight).
-  if (!db.workUsage) db.workUsage = {}
-  const key = `${workUserId}:${easternDayKey()}`
-  const rec = db.workUsage[key] || (db.workUsage[key] = { usedSeconds: 0 })
-  rec.bonusSeconds = Math.max(0, (rec.bonusSeconds || 0) + h * 3600)
-  // Record the trade in the single audit sink (who/what/when).
-  try { recordAdminAction({ userId: workUserId, action: 'credit_trade', detail: `${cost} task credits -> ${h}h bonus guidance (today only)` }) } catch { /* audit is best-effort */ }
-  persist()
-  return {
-    taskCredits: u.taskCredits,
-    dailyRate: c.dailyRate,
-    creditsSpent: cost,
-    hoursGranted: h,
-    creditsPerHour: WORK_CREDITS_PER_HOUR,
-    usage: getWorkUsage(workUserId),                    // fresh usage incl. the new bonusSeconds
-  }
-}
-// Credit summary for the plan box: banked balance (after lazy accrual), the
-// per-day earn rate, the monthly figure, and the trade ratio. Corporate users
-// are unlimited (no balance).
-export function getWorkCreditsSummary(workUserId) {
-  const u = getUser(workUserId)
-  if (u && u.companyId) {
-    return { unlimited: true, taskCredits: null, dailyRate: null, monthlyRate: null, creditsPerHour: WORK_CREDITS_PER_HOUR, resetLabel: '11:59 PM ET' }
-  }
-  const c = getWorkTaskCredits(workUserId)
-  return {
-    unlimited: false,
-    taskCredits: c.balance,
-    dailyRate: c.dailyRate,
-    monthlyRate: c.dailyRate * 30,
-    creditsPerHour: WORK_CREDITS_PER_HOUR,
-    resetLabel: '11:59 PM ET',
-  }
+  return { usedToday, cap: s.cap, remaining: Math.max(0, s.cap - usedToday), unlimited: false, resetLabel: s.resetLabel }
 }
 // A company admin's license + usage dashboard: seat pools, who holds a license,
 // the tier breakdown, the minute pool, and each person's live usage. Everything
@@ -3586,10 +3456,12 @@ export function companyBilling(companyId) {
     generatedAt: now(),
   }
 }
-// Accrue active seconds: fill the free daily bucket first, then draw purchased,
-// then the shared company pool. For a company user the heartbeat is first CLAMPED
-// to the most-binding hour ceiling so an allowance is never overrun, and every
-// consumed second is recorded for the per-user/week/month roll-ups + 75% alerts.
+// Accrue active seconds: draw the person's monthly plan pool first, then their
+// purchased top-ups, then a seat-based company's shared pool (a pool-based
+// enterprise company has no plan pool: only its company pool). For a company
+// user the heartbeat is first CLAMPED to the most-binding hour ceiling so an
+// allowance is never overrun, and every consumed second is recorded for the
+// per-user/week/month roll-ups + 75% alerts.
 export function addWorkUsage(workUserId, seconds) {
   let secs = Math.max(0, Math.min(60, Math.round(Number(seconds) || 0)))
   if (!secs) return getWorkUsage(workUserId)
@@ -3605,24 +3477,17 @@ export function addWorkUsage(workUserId, seconds) {
     if (Number.isFinite(headroom)) secs = Math.min(secs, Math.max(0, headroom))
     if (!secs) { maybeFireAlerts(c, u, cs); return getWorkUsage(workUserId) }   // nothing consumed: the state just computed is still exact
   }
-  const tier = getWorkTier(workUserId)
-  // Pool-based company: no free daily bucket, so every second lands on the
-  // person's purchased top-ups and then the company pool (owner: "all deducted
-  // from the pool"). Seat-based companies and individuals keep the free bucket.
-  const dailySeconds = (c && isPoolBased(c)) ? 0 : workDailyLimit(tier)
   const key = `${workUserId}:${u ? userDayKey(u) : easternDayKey()}`
-  const rec = db.workUsage[key] || (db.workUsage[key] = { usedSeconds: 0 })
+  const rec = db.workUsage[key] || (db.workUsage[key] = { consumedSeconds: 0 })
   const startSecs = secs
-  // Today's free bucket = the tier's daily seconds PLUS any bonus seconds granted
-  // today by a task-credit trade (both expire at the local day boundary; spent
-  // before the persistent purchased balance so a top-up is never burned first).
-  const bonusSeconds = rec.bonusSeconds || 0
-  const freeLeft = Math.max(0, (dailySeconds + bonusSeconds) - rec.usedSeconds)
-  const fromFree = Math.min(freeLeft, secs); rec.usedSeconds += fromFree; secs -= fromFree
-  if (secs > 0 && u) {
-    // Draw the person's own purchased balance first, then the shared company pool
-    // (so a member's top-ups are spent before the company's pooled time).
-    const take = Math.min(u.purchasedSeconds || 0, secs); u.purchasedSeconds = (u.purchasedSeconds || 0) - take; secs -= take
+  if (u) {
+    // 1. The person's monthly plan pool (expiring first), unless their company is
+    //    pool-based (owner: "all deducted from the pool" for an enterprise).
+    if (!(c && isPoolBased(c))) secs = plan.consume(u, secs)
+    // 2. Their own purchased balance (never expires), spent before the company's
+    //    pooled time so a member's top-ups are not stranded.
+    if (secs > 0) { const take = Math.min(u.purchasedSeconds || 0, secs); u.purchasedSeconds = (u.purchasedSeconds || 0) - take; secs -= take }
+    // 3. The shared company pool.
     if (secs > 0 && c && (c.poolSeconds || 0) > 0) { const fromPool = Math.min(c.poolSeconds, secs); c.poolSeconds -= fromPool; secs -= fromPool }
   }
   // Record EVERY consumed second (all buckets) so week/month roll-ups + ceilings
@@ -3671,11 +3536,31 @@ const WORK_PRICING_DEFAULT = {
   hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },      // extra hour, per tier
   image: { lite: 3, basic: 2, advanced: 1, premium: 0.5 },       // per generated image, per tier
   imageMinBulk: 10,                                    // images bought in bulk, min 10
-  tasks: { lite: 1, basic: 2, advanced: 4, premium: 6 },        // DAILY task-credit EARN RATE per tier (corporate = unlimited). Each ET day an individual earns this many task credits into a banked balance (unused credits accumulate, no cap). Starting a guided task consumes 1 credit. Superadmin-editable; getWorkTaskCredits reads this so a change reflects immediately.
+  tasks: { lite: 4, basic: 4, advanced: 6, premium: 8 },        // guided tasks a person may START per ET day, per tier (company = unlimited unless an enterprise ceiling applies). A plain cap: no banked credits, no earning, no trading (owner, 2026-10-27). Superadmin-editable; plan_allowance reads it live.
   replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
-  dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },    // DAILY INCLUDED hours per tier (the "bucket" each plan includes per day). Superadmin-editable; workDailyLimit reads this so a change reflects for every user immediately. Fractional allowed (e.g. 1.5).
+  hoursMonthly: { lite: 30, basic: 60, advanced: 120, premium: 180 },  // INCLUDED guided hours per calendar month, per tier: the plan's pool, renewed on the 1st (ET). Superadmin-editable; a change reaches every person's pool at once. Fractional allowed.
+  hoursExpiry: { mode: 'forfeit', carryCapHours: null },        // What happens to unused plan hours at month end: 'forfeit' (expire) or 'carryforward' (roll over, up to carryCapHours when set). Superadmin-editable; same rules as the enterprise pool (enterprise_quota.rolloverPool).
   imagesPerDay: { lite: 0, basic: 0, advanced: 0, premium: 5 },  // FREE generated images per day per tier. Superadmin-editable; getWorkImageUsage reads this (0 = none).
-  tasksPerExtraHour: 1,  // BONUS task credits granted per EXTRA HOUR purchased (real money), the same for all tiers. Superadmin-editable; 0 disables the bonus. Applied at purchase fulfillment, not for the credits-for-hours trade.
+}
+// The stored pricing may predate the monthly model (it carried dailyHours, the
+// per-day bucket, and tasksPerExtraHour, the bonus-credit rate). Read-side
+// migration: a stored dailyHours override becomes hoursMonthly x30 once, so no
+// customer's allowance shrinks; the retired keys are ignored and dropped on the
+// next save (SUPREME RULE II: one concept, one place).
+function hoursMonthlyFromStored(p) {
+  if (p.hoursMonthly && typeof p.hoursMonthly === 'object') return { ...WORK_PRICING_DEFAULT.hoursMonthly, ...p.hoursMonthly }
+  const out = { ...WORK_PRICING_DEFAULT.hoursMonthly }
+  for (const k of WORK_TIERS) {
+    const d = Number((p.dailyHours || {})[k])
+    if (Number.isFinite(d) && d >= 0) out[k] = Math.round(d * 30 * 100) / 100
+  }
+  return out
+}
+function hoursExpiryFromStored(p) {
+  const e = (p.hoursExpiry && typeof p.hoursExpiry === 'object') ? p.hoursExpiry : {}
+  const mode = eq.MONTH_END_MODES.includes(e.mode) ? e.mode : WORK_PRICING_DEFAULT.hoursExpiry.mode
+  const cap = Number(e.carryCapHours)
+  return { mode, carryCapHours: (mode === 'carryforward' && e.carryCapHours != null && Number.isFinite(cap) && cap >= 0) ? cap : null }
 }
 export function getWorkPricing() {
   const p = (db.work && db.work.pricing) || {}
@@ -3687,9 +3572,9 @@ export function getWorkPricing() {
     imageMinBulk: p.imageMinBulk || WORK_PRICING_DEFAULT.imageMinBulk,
     tasks: { ...WORK_PRICING_DEFAULT.tasks, ...(p.tasks || {}) },
     replans: { ...WORK_PRICING_DEFAULT.replans, ...(p.replans || {}) },
-    dailyHours: { ...WORK_PRICING_DEFAULT.dailyHours, ...(p.dailyHours || {}) },
+    hoursMonthly: hoursMonthlyFromStored(p),
+    hoursExpiry: hoursExpiryFromStored(p),
     imagesPerDay: { ...WORK_PRICING_DEFAULT.imagesPerDay, ...(p.imagesPerDay || {}) },
-    tasksPerExtraHour: Number.isFinite(Number(p.tasksPerExtraHour)) ? Number(p.tasksPerExtraHour) : WORK_PRICING_DEFAULT.tasksPerExtraHour,
   }
 }
 // Keep only the numeric override keys a company may set (partial is fine); null
@@ -3760,25 +3645,34 @@ export function setWorkPricing(patch) {
     }
     return r
   }
-  // Daily included hours per tier: finite, 0..24, fractional allowed (e.g. 1.5h).
+  // Monthly included hours per tier: finite, 0..744 (31 days), fractional allowed.
   const hourVals = (o) => {
     if (o == null) return {}
-    if (typeof o !== 'object') throw httpErr(400, 'Daily hours must be an object keyed by tier.')
+    if (typeof o !== 'object') throw httpErr(400, 'Monthly hours must be an object keyed by tier.')
     const r = {}
     for (const k of WORK_TIERS) if (o[k] != null && o[k] !== '') {
       const n = Number(o[k])
-      if (!Number.isFinite(n) || n < 0 || n > 24) throw httpErr(400, `${k} daily hours must be a number between 0 and 24.`)
+      if (!Number.isFinite(n) || n < 0 || n > 744) throw httpErr(400, `${k} monthly hours must be a number between 0 and 744.`)
       r[k] = Math.round(n * 100) / 100
     }
     return r
   }
-  // Bonus task credits per extra hour purchased (all tiers): a whole number 0..100.
-  let tasksPerExtraHour = cur.tasksPerExtraHour
-  if (p.tasksPerExtraHour != null && p.tasksPerExtraHour !== '') {
-    const n = Number(p.tasksPerExtraHour)
-    if (!Number.isInteger(n) || n < 0 || n > 100) throw httpErr(400, 'Tasks per extra hour must be a whole number between 0 and 100.')
-    tasksPerExtraHour = n
+  // Month-end policy for unused plan hours: forfeit, or carry forward up to a cap.
+  let hoursExpiry = cur.hoursExpiry
+  if (p.hoursExpiry != null) {
+    if (typeof p.hoursExpiry !== 'object') throw httpErr(400, 'Hours expiry must be an object with mode and carryCapHours.')
+    const mode = p.hoursExpiry.mode == null ? cur.hoursExpiry.mode : String(p.hoursExpiry.mode)
+    if (!eq.MONTH_END_MODES.includes(mode)) throw httpErr(400, `Hours expiry mode must be one of: ${eq.MONTH_END_MODES.join(', ')}.`)
+    let carryCapHours = (p.hoursExpiry.carryCapHours === undefined) ? cur.hoursExpiry.carryCapHours : p.hoursExpiry.carryCapHours
+    if (carryCapHours === '' || carryCapHours === null) carryCapHours = null
+    else {
+      const n = Number(carryCapHours)
+      if (!Number.isFinite(n) || n < 0 || n > 100000) throw httpErr(400, 'Carry-forward cap must be a number of hours between 0 and 100000, or empty for no cap.')
+      carryCapHours = Math.round(n * 100) / 100
+    }
+    hoursExpiry = { mode, carryCapHours: mode === 'carryforward' ? carryCapHours : null }
   }
+  if (p.dailyHours != null || p.tasksPerExtraHour != null) throw httpErr(400, 'dailyHours and tasksPerExtraHour are retired: plans now include monthly hours (hoursMonthly) and a per-day task cap (tasks).')
   db.work.pricing = {
     currency,
     plans: { ...cur.plans, ...tiers(p.plans, 'Plan') },
@@ -3787,9 +3681,9 @@ export function setWorkPricing(patch) {
     imageMinBulk,
     tasks: { ...cur.tasks, ...taskCounts(p.tasks) },
     replans: { ...cur.replans, ...taskCounts(p.replans, 're-plan') },
-    dailyHours: { ...cur.dailyHours, ...hourVals(p.dailyHours) },
+    hoursMonthly: { ...cur.hoursMonthly, ...hourVals(p.hoursMonthly) },
+    hoursExpiry,
     imagesPerDay: { ...cur.imagesPerDay, ...taskCounts(p.imagesPerDay, 'images-per-day') },
-    tasksPerExtraHour,
   }
   persist()
   return getWorkPricing()

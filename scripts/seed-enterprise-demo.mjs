@@ -36,4 +36,13 @@ store.startWorkTask(m2.id)
 // A pending additional-hours request for the superadmin to decide.
 store.requestCompanyHours(co.id, admin.id, { hours: 40, note: 'Quarter-end close' })
 
-console.log(JSON.stringify({ companyId: co.id, admin: admin.username, members: [m1.username, m2.username] }))
+// An INDIVIDUAL subscriber on Basic (60 h a month, 4 tasks a day) with some of
+// this month's hours used, two tasks started today, and a one-hour top-up, so the
+// personal dashboard's plan box, meters and task counter have something to show.
+const solo = store.createWorkUser({ username: 'solo_dev', password, displayName: 'Riley Chen' })
+store.setWorkTier(solo.id, 'basic')
+for (let i = 0; i < 95; i++) store.addWorkUsage(solo.id, 60)   // 1 h 35 min of the 60 h
+store.startWorkTask(solo.id); store.startWorkTask(solo.id)
+store.grantWorkPurchasedSeconds(solo.id, 3600)
+
+console.log(JSON.stringify({ companyId: co.id, admin: admin.username, members: [m1.username, m2.username], individual: solo.username }))

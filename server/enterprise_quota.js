@@ -95,6 +95,20 @@ export function tzResetLabel(tz) {
     return `11:59 PM ${name}`
   } catch { return '11:59 PM ET' }
 }
+// The first day of the NEXT civil month in the zone: when a monthly allowance
+// renews. As a date key ('YYYY-MM-01', for clients to format per locale) and as
+// a short English label ("Nov 1", for logs and the default UI).
+export function tzNextMonthStart(tz, ts = Date.now()) {
+  const { y, m } = civilParts(tz, ts)
+  const ny = m === 12 ? y + 1 : y, nm = m === 12 ? 1 : m + 1
+  return `${ny}-${String(nm).padStart(2, '0')}-01`
+}
+export function tzNextMonthLabel(tz, ts = Date.now(), locale = 'en-US') {
+  const [y, m, d] = tzNextMonthStart(tz, ts).split('-').map(Number)
+  try {
+    return new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, d, 12)))
+  } catch { return `${y}-${String(m).padStart(2, '0')}-01` }
+}
 export function isValidTimezone(tz) {
   if (!tz || typeof tz !== 'string') return false
   try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true } catch { return false }

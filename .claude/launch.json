@@ -6,6 +6,40 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev:web"],
       "port": 5180
+    },
+    {
+      "name": "api-seeded",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--env-file=C:/Users/1/AppData/Local/Temp/claude/D--RadarOps-copilot/1bb12420-0c30-43b4-b1ab-7db196c8622e/scratchpad/billing/.env.local", "server/index.js"],
+      "port": 4444
+    },
+    {
+      "name": "app-wow",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "D:/RadarOps/wt-app/vite.verify.config.js", "--mode", "localapi", "--port", "5193", "--strictPort"],
+      "port": 5193,
+      "url": "http://127.0.0.1:5193"
+    },
+    {
+      "name": "admin-wow",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "D:/RadarOps/wt-admin/vite.verify.config.js", "--mode", "localapi", "--port", "5194", "--strictPort"],
+      "port": 5194,
+      "url": "http://127.0.0.1:5194"
+    },
+    {
+      "name": "site-wow",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "D:/RadarOps/wt-site/vite.verify.config.js", "--port", "5192", "--strictPort"],
+      "port": 5192,
+      "url": "http://127.0.0.1:5192"
+    },
+    {
+      "name": "validate-wow",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "D:/RadarOps/wt-validate/vite.verify.config.js"],
+      "port": 5191,
+      "url": "http://127.0.0.1:5191"
     }
   ]
 }
