@@ -1040,7 +1040,7 @@ export default {
     pricing: {
       eyebrow: 'Pricing',
       h2: 'Simple plans. Real guided time.',
-      sub: 'Guided tasks and live guidance hours every month. AI included.',
+      sub: 'Hours of expert guidance every month, guided tasks every day. AI included.',
       billingAria: 'Billing period',
       monthly: 'Monthly',
       annual: 'Annual',
@@ -1049,26 +1049,20 @@ export default {
       recommended: 'Recommended for your task',
       billedAnnually: 'billed annually',
       billedMonthly: 'billed monthly',
-      // Monthly framing. Every number is injected from the live pricing config
-      // (daily cap x 30) as a PLAIN NUMBER: {tasks}/{hours} are the monthly
-      // totals, {dailyTasks}/{dailyHours} the per-day rate. The unit words stay
-      // inside the string (not common.task/hour) so a locale that has not yet
-      // translated these keys falls back to a consistent English line rather
-      // than a mixed-language one. Monthly totals are never 1, so the plural is
-      // safe. Tasks are stated plainly (unused ones bank); hours are always
-      // "up to" with the asterisk, because a day's hours expire at midnight.
-      // NOTE: these are NEW key names on purpose (the old hoursLine/dailyMinutes/
-      // upTo were daily-framed and still exist in other locales): reusing an old
-      // name would let a stale daily string swallow a monthly number.
-      monthlyLine: '{tasks} tasks a month · up to {hours} hrs a month*',
-      tasksMonthLine: '{tasks} guided tasks a month ({dailyTasks} a day, unused ones bank)',
-      hoursMonthLine: 'Up to {hours} hours of guidance a month ({dailyHours} h a day)*',
+      // The plan contract (GET /api/work/pricing): hoursMonthly = guided hours
+      // included per calendar month, tasks = guided tasks per DAY, hoursExpiry =
+      // forfeit | carryforward (+ carryCapHours). Every number is injected from
+      // that API through src/pricingModel.js as a PLAIN NUMBER; the unit words
+      // stay inside the string so a locale reads as one consistent line. The
+      // per-plan value lines and the expiry footnote are the SAME keys the
+      // pricing page uses (pricing.hoursMonthly / tasksDay / carry / expire /
+      // footnote*), so the two pages can never say different things. The card
+      // headline below is the only home-specific line. NEW key name on purpose:
+      // the old monthlyLine/hoursLine were framed on daily hours x 30.
+      headline: '{hours} hrs of guidance a month · {tasks} tasks a day',
       mins: 'Billed per minute, never by the hour.',
       choose: 'Choose {plan}',
       extraHour: 'Extra hour {price}',
-      // The one asterisk note under the cards. Plan-independent on purpose: the
-      // per-plan daily rate is already on each card, so this states the model.
-      footnote: '*Daily hours reset at midnight (US Eastern) and do not roll over. Unused tasks bank as credits, or trade 2 tasks for 1 extra hour that day.',
       // One note next to the task counts on the cards: a "task" is substantial.
       taskMeaning: 'A task is one goal, guided from start to finish.',
       feats: {
@@ -1364,5 +1358,280 @@ export default {
       validEmail: 'Enter a valid email address.',
       loginAgain: 'Your sign-in session timed out. Please log in again.',
     },
+  },
+  // ---- Shared demonstrations: GuideConsole / GuideShowcase / NotAChatBox ----
+  // The animated guide console that plays on the public pages: watching -> one
+  // exact step -> a wrong turn caught and corrected -> step confirmed -> task
+  // complete, confirmed. Labels here; the per-field scenarios below. Every
+  // scenario is a plausible sample task, never a claim about a customer.
+  // `tab` is the index of the app menu the step happens in; `target` is the
+  // control to act on and `wrong` the one the person drifts to.
+  guide: {
+    region: 'Example guided session: {goal}',
+    watching: 'watching',
+    watchingTitle: 'reading your screen',
+    goal: 'Goal',
+    see: 'I can see',
+    doNow: 'Do this now',
+    where: 'Where',
+    holdOn: 'Hold on',
+    notThat: 'Not that',
+    here: 'here',
+    confirmed: 'Step confirmed',
+    complete: 'Task complete, confirmed',
+    stepOf: 'Step {n} of {total}',
+    sumSteps_one: '{n} step confirmed',
+    sumSteps_other: '{n} steps confirmed',
+    sumFixes_one: '{n} wrong turn caught',
+    sumFixes_other: '{n} wrong turns caught',
+    sumNoFix: 'no wrong turns',
+    readOnly: 'Read-only: it never clicks or types for you.',
+    next: 'Next',
+    replay: 'Replay',
+    pause: 'Pause',
+    play: 'Play',
+    showcase: {
+      tabsAria: 'Choose a field to watch',
+      hint: 'Every field gets the same hand-holding: it watches, gives one exact step, corrects a wrong turn, and confirms the finish.',
+    },
+    scenarios: {
+      finance: {
+        tag: 'Finance ops', app: 'AP system', goal: 'Approve the Northwind invoice for payment',
+        nav: ['Inbox', 'Invoices', 'Vendors', 'Reports'],
+        steps: [
+          { tab: 1, see: 'The invoice queue is open with items waiting', do: 'Open invoice 4471 from Northwind Trading', where: 'Invoices tab, first row of the queue', target: 'Open 4471', wrong: 'Sort by date', done: 'Invoice 4471 is open and the amount matches the purchase order' },
+          { tab: 1, see: 'Invoice 4471 is open. Amount and PO number match', do: 'Set the approval route to Finance lead', where: 'The dropdown next to Status, not the Vendors menu', target: 'Route: Finance lead', wrong: 'Vendors', drift: 'You opened the Vendors menu', correct: 'Not that menu: it is the dropdown next to Status.', done: 'The route reads Finance lead' },
+          { tab: 1, see: 'Route set, nothing left to fill', do: 'Click Approve, then confirm the amount in the dialog', where: 'Top right, the green button', target: 'Approve', wrong: 'Save draft', done: 'Status shows Approved and the entry is in the audit log' },
+        ],
+        complete: 'Invoice 4471 approved and logged. Every step confirmed on screen.',
+      },
+      logistics: {
+        tag: 'Logistics', app: 'Carrier portal', goal: 'Book the carrier and print the labels for order 8820',
+        nav: ['Orders', 'Shipments', 'Carriers', 'Returns'],
+        steps: [
+          { tab: 1, see: 'Order 8820 is packed: three cartons, ready to ship', do: 'Create a shipment from order 8820', where: 'Shipments tab, New shipment', target: 'New shipment', wrong: 'Import CSV', done: 'A draft shipment lists all three cartons' },
+          { tab: 1, see: 'The draft shipment is open', do: 'Pick the Ground 2-day service, not Express', where: 'The service dropdown next to Carrier', target: 'Ground 2-day', wrong: 'Express', drift: 'You picked Express overnight', correct: 'Not that service: Ground 2-day meets the delivery date and costs less.', done: 'Service reads Ground 2-day' },
+          { tab: 1, see: 'Service and address are confirmed', do: 'Book it and print the three labels', where: 'Bottom right, Book and print', target: 'Book and print', wrong: 'Save for later', done: 'Three labels printed and the tracking number is on the order' },
+        ],
+        complete: 'Order 8820 booked, labels printed, tracking saved. Every step confirmed on screen.',
+      },
+      healthcare: {
+        tag: 'Healthcare admin', app: 'Clinic scheduler', goal: 'Book the follow-up visit and send the pre-visit forms',
+        nav: ['Today', 'Schedule', 'Patients', 'Forms'],
+        steps: [
+          { tab: 1, see: 'Today\'s list is open and the 2:30 visit just finished', do: 'Open the Schedule and pick next Tuesday', where: 'Schedule tab, the week view', target: 'Next Tuesday', wrong: 'Print day sheet', done: 'Tuesday\'s open slots are showing' },
+          { tab: 1, see: 'Tuesday has open slots in the afternoon', do: 'Choose Follow-up, 20 minutes, with Dr. Lin', where: 'The dropdown next to Today, not the Patients menu', target: 'Follow-up, 20 min', wrong: 'Patients', drift: 'You opened the Patients menu', correct: 'Not that menu: it is the dropdown next to Today.', done: 'Visit type reads Follow-up, 20 min' },
+          { tab: 3, see: 'The slot is booked', do: 'Send the pre-visit forms to the patient portal', where: 'Forms tab, Send to portal', target: 'Send to portal', wrong: 'Print forms', done: 'The portal shows the forms as sent' },
+        ],
+        complete: 'Follow-up booked and forms sent. Every step confirmed on screen.',
+      },
+      retail: {
+        tag: 'Retail', app: 'Store back office', goal: 'Set up the weekend promotion on every register',
+        nav: ['Sales', 'Products', 'Promotions', 'Staff'],
+        steps: [
+          { tab: 2, see: 'The back office is open on Sales', do: 'Create a new promotion called Weekend 15', where: 'Promotions tab, New promotion', target: 'New promotion', wrong: 'Export sales', done: 'Weekend 15 appears as a draft' },
+          { tab: 2, see: 'The draft is open with no dates yet', do: 'Set it to run Saturday and Sunday only', where: 'The date picker next to Active, not the Staff menu', target: 'Sat to Sun', wrong: 'Staff', drift: 'You opened the Staff schedule', correct: 'Not that menu: the dates live next to Active.', done: 'The promotion shows Saturday to Sunday' },
+          { tab: 2, see: 'Dates and discount are in', do: 'Publish it to all three registers', where: 'Top right, Publish', target: 'Publish', wrong: 'Save draft', done: 'All three registers show the promotion as live' },
+        ],
+        complete: 'Weekend promotion live on every register. Every step confirmed on screen.',
+      },
+      hr: {
+        tag: 'HR', app: 'HR system', goal: 'Onboard Priya, who starts on Monday',
+        nav: ['People', 'Onboarding', 'Payroll', 'Documents'],
+        steps: [
+          { tab: 1, see: 'The onboarding board is open with one new hire', do: 'Open Priya\'s record and set the start date to Monday', where: 'Onboarding tab, her card', target: 'Start: Monday', wrong: 'Archive', done: 'Start date reads Monday' },
+          { tab: 1, see: 'Her record is open', do: 'Assign the Engineering onboarding checklist', where: 'The dropdown next to Team, not the Payroll menu', target: 'Engineering checklist', wrong: 'Payroll', drift: 'You opened Payroll', correct: 'Not that menu: the checklist is the dropdown next to Team.', done: 'Checklist shows Engineering' },
+          { tab: 3, see: 'The checklist is assigned', do: 'Send the welcome pack and the equipment request', where: 'Documents tab, Send welcome pack', target: 'Send welcome pack', wrong: 'Print', done: 'Priya has the welcome pack and IT has the equipment request' },
+        ],
+        complete: 'Priya is set up for Monday. Every step confirmed on screen.',
+      },
+      engineering: {
+        tag: 'Engineering', app: 'Release pipeline', goal: 'Ship the hotfix through the release pipeline',
+        nav: ['Repos', 'Pipelines', 'Releases', 'Settings'],
+        steps: [
+          { tab: 1, see: 'The hotfix branch is pushed and the checks are green', do: 'Run the release pipeline on the hotfix branch', where: 'Pipelines tab, Run pipeline', target: 'Run: hotfix', wrong: 'Edit YAML', done: 'The run is queued on the hotfix branch' },
+          { tab: 1, see: 'The run asks for a target environment', do: 'Choose staging first, not production', where: 'The environment dropdown next to Run', target: 'staging', wrong: 'production', drift: 'You selected production', correct: 'Not that one: staging first. The smoke test gates production.', done: 'Environment reads staging and the smoke test passed' },
+          { tab: 2, see: 'Staging is green', do: 'Promote the same build to production', where: 'Releases tab, Promote', target: 'Promote to production', wrong: 'Rebuild', done: 'Production shows the hotfix build and the health checks pass' },
+        ],
+        complete: 'Hotfix in production with checks green. Every step confirmed on screen.',
+      },
+      support: {
+        tag: 'Support', app: 'Help desk', goal: 'Escalate ticket 5190 with the right priority',
+        nav: ['Queue', 'Tickets', 'Customers', 'Reports'],
+        steps: [
+          { tab: 1, see: 'Ticket 5190 is open: a checkout outage for one customer', do: 'Set the priority to High', where: 'The priority dropdown at the top of the ticket', target: 'Priority: High', wrong: 'Merge', done: 'Priority reads High and the SLA timer updated' },
+          { tab: 1, see: 'Priority is set', do: 'Assign it to the Payments team', where: 'The dropdown next to Assignee, not the Customers menu', target: 'Assign: Payments', wrong: 'Customers', drift: 'You opened the Customers list', correct: 'Not that menu: it is the dropdown next to Assignee.', done: 'Assignee reads Payments team' },
+          { tab: 1, see: 'The ticket is routed', do: 'Add the customer-facing update and send it', where: 'Reply box, Send update', target: 'Send update', wrong: 'Internal note', done: 'The customer received the update and the ticket shows Escalated' },
+        ],
+        complete: 'Ticket 5190 escalated and the customer informed. Every step confirmed on screen.',
+      },
+      // The sign-in page aside: the finance task its copy has always shown.
+      vendor: {
+        tag: 'Finance', app: 'Payments portal', goal: 'Set up the new vendor in the payments portal',
+        nav: ['Finance', 'Vendors', 'Customers', 'Approvals'],
+        steps: [
+          { tab: 1, see: 'The Vendors tab is open and the form is empty', do: 'Click New vendor and enter the legal name', where: 'Vendors tab, top right', target: 'New vendor', wrong: 'Import', done: 'The vendor record exists as a draft' },
+          { tab: 1, see: 'The draft is open', do: 'Set payment terms to Net 30, then enter the Tax ID', where: 'The Terms dropdown, not the Customers tab', target: 'Net 30', wrong: 'Customers', drift: 'You opened Customers', correct: 'Wrong tab: back to Vendors, then set Terms to Net 30.', done: 'Terms read Net 30 and the Tax ID is saved' },
+          { tab: 3, see: 'Terms and Tax ID are in', do: 'Attach the signed W-9 and submit for approval', where: 'Approvals, Submit', target: 'Submit for approval', wrong: 'Discard', done: 'The vendor is pending approval with the W-9 attached' },
+        ],
+        complete: 'New vendor submitted for approval. Every step confirmed on screen.',
+      },
+    },
+  },
+
+  // "Not another chat box": the same request side by side, then the three
+  // things a chat box does not do. Shared by the home page and the inner pages.
+  notChat: {
+    eyebrow: 'Not another chat box',
+    h2: 'A chat box answers. <em>WorkCoPilot gets it done with you.</em>',
+    sub: 'Same request, two very different outcomes.',
+    vs: 'vs',
+    chatTitle: 'A chat box',
+    chatYou: 'You',
+    chatAsk: 'How do I approve the Northwind invoice in our AP system?',
+    chatAnswer: 'Open your accounts payable system, find the invoice in the queue, check it against the purchase order, choose the right approval route, then click Approve.',
+    chatTail: 'An answer. Then you are on your own.',
+    guideTail: 'On your real screen. Corrected when you drift. Confirmed when done.',
+    three: [
+      { t: 'It corrects you', d: 'Wrong menu, wrong field, skipped step: caught the moment it happens, on your real screen.' },
+      { t: 'It hand-holds you', d: 'One exact step at a time, in the app you are in. It waits until you have done it.' },
+      { t: 'It sees it through', d: 'It keeps going to the finish and confirms the task is complete, not just answered.' },
+    ],
+    readOnly: 'Read-only by design. It never clicks, types or runs anything for you.',
+  },
+
+  // /workcopilot/how-it-works
+  how: {
+    demoEyebrow: 'Watch it work',
+    demoH2: 'It watches your screen, gives one exact step, corrects a wrong turn, and confirms the finish.',
+    demoSub: 'A real session shape, played on a sample task. Hover to hold a frame.',
+    bandEyebrow: 'In the apps you already use',
+    bandH2: 'A guide at your side, on the real screen.',
+    bandP: 'Nothing to learn and nothing to switch to. It reads the app you are in and tells you the exact next move there, then checks that it worked.',
+    bandAlt: 'A professional at a laptop with a soft glowing guide panel beside the screen',
+  },
+
+  // /workcopilot/use-cases
+  useCases: {
+    showcaseEyebrow: 'Pick a field',
+    showcaseH2: 'Watch it guide work that looks like yours.',
+    showcaseSub: 'Seven fields, one shape: it watches, steps you through, corrects a wrong turn and confirms the finish.',
+  },
+
+  // /workcopilot/fields (and the home field strip): the real-screen vignettes.
+  fieldsPage: {
+    vignettesEyebrow: 'Many fields, one guide',
+    vignettesH2: 'Real screens, real work, guided to done.',
+    vignettesSub: 'Pick a picture that looks like your day and watch the same hand-holding on that work.',
+    vignettesAria: 'Fields, with a sample guided session for each',
+    showcaseEyebrow: 'Pick a field',
+    showcaseH2: 'Pick a field and watch it guide.',
+    vignettes: {
+      finance: { cap: 'Finance ops', job: 'Approve the vendor invoice', alt: 'A finance specialist reviewing an invoice approval on two monitors' },
+      logistics: { cap: 'Logistics', job: 'Book the carrier, print the labels', alt: 'A logistics coordinator at a laptop in a bright warehouse' },
+      healthcare: { cap: 'Healthcare admin', job: 'Book the follow-up, send the forms', alt: 'A clinic administrator scheduling an appointment at the front desk' },
+      retail: { cap: 'Retail', job: 'Set up the weekend promotion', alt: 'A store manager at a back-office point-of-sale terminal' },
+      hr: { cap: 'HR', job: 'Onboard the new hire', alt: 'An HR specialist and a new hire working through onboarding at a laptop' },
+      engineering: { cap: 'Engineering', job: 'Ship the hotfix', alt: 'A software engineer at an ultrawide monitor during a release' },
+      support: { cap: 'Support', job: 'Escalate the ticket', alt: 'A support agent with a headset handling a ticket queue' },
+    },
+  },
+
+  // /workcopilot/enterprise
+  enterprise: {
+    demoEyebrow: 'On your people\'s screens',
+    demoH2: 'Hand-holding, grounded in your own playbook.',
+    demoSub: 'The same session shape, with the steps taken from your SOPs, your apps and your approval chain.',
+    demoNote: 'Steps from your Onboarding SOP, section 2.1. Read-only: it never clicks or types for anyone.',
+    teamAlt: 'Two colleagues working through a dashboard together',
+  },
+
+  // /workcopilot/security
+  security: {
+    sweepEyebrow: 'Watch it protect',
+    sweepH2: 'See it, before and after',
+    sweepP: 'Every outbound frame is checked on your device. Sensitive lines are blacked out before it leaves.',
+    sweepBefore: 'Before, on your device',
+    sweepAfter: 'After, what leaves the device',
+    sweepTitle: 'Protecting on your device',
+    sweepDone: 'Protected before it left the device',
+    sweepNote: 'That sweep happens on your machine, on every frame, before anything is sent.',
+    replay: 'Replay',
+    readOnlyT: 'Read-only by design',
+    readOnlyD: 'It guides your hands and never moves them: no clicks, no typing, no commands run for you.',
+  },
+
+  // /workcopilot/benchmark
+  benchmark: {
+    scoreEyebrow: 'How a task is scored',
+    flow: [
+      { t: 'A task with a known-correct answer', d: 'Written and held by us, part of the set kept private.' },
+      { t: 'Runs through the product', d: 'The same guidance a customer gets, no special path.' },
+      { t: 'Graded against the reference', d: 'Mechanically where possible; an AI judge only otherwise, and flagged.' },
+      { t: 'Counted with its interval', d: 'Pass rate, sample size and the 95% confidence interval, published together.' },
+    ],
+    ciTitle: 'Why the interval matters',
+    ciP: 'A pass rate alone hides the sample size. The interval is published with it, so a thin domain reads as thin and a solid one as solid.',
+    ciAria: 'Illustration: two pass-rate bars with their confidence-interval whiskers, one wide from a thin sample, one narrow from a solid sample. No numbers.',
+    ciRate: 'pass rate',
+    ciBand: '95% confidence interval',
+    ciThin: 'thin sample, wide interval',
+    ciSolid: 'solid sample, narrow interval',
+  },
+
+  // /demo
+  demo: {
+    pickEyebrow: 'Your field next',
+    pickH2: 'Watch it in your field.',
+    pickSub: 'Pick a field. The same hand-holding on that work: it watches, gives one exact step, corrects a wrong turn, confirms the finish.',
+  },
+
+  // /workcopilot/pricing. Every number comes from /api/work/pricing through
+  // src/pricingModel.js; these strings only carry the words around it.
+  pricing: {
+    eyebrow: 'Pricing',
+    h1: 'Simple plans. <em>Real guided time.</em>',
+    sub: 'Hours of expert guidance every month and guided tasks every day. Security and privacy come with every plan, never as an upsell.',
+    plansAria: 'Plans',
+    mostPopular: 'Most popular',
+    custom: 'Custom',
+    perMonth: '/mo',
+    billedMonthly: 'billed monthly',
+    forTeams: 'for regulated teams',
+    start: 'Start {plan}',
+    startShort: 'Start',
+    contact: 'Contact sales',
+    loading: 'Loading live prices',
+    loadFail: 'Live prices did not load. Retry, or see every plan at checkout.',
+    retry: 'Retry',
+    hoursMonthly: '{hours} hours of expert guidance every month',
+    tasksDay_one: '{n} guided task a day',
+    tasksDay_other: '{n} guided tasks a day',
+    carry: 'Unused hours carry forward',
+    carryCap: 'Unused hours carry forward, up to {cap} hours',
+    expire: 'Hours reset at the start of each month',
+    extraHour: 'Extra hour {price}',
+    valueEyebrow: 'What a plan buys you',
+    valueH2: 'Expert help by the hour. <em>Every month, on every plan.</em>',
+    valueSub: 'Pick the plan by how much guided time your month needs. Every hour is live, on your screen, to a confirmed finish.',
+    statHours: 'hours a month',
+    statTasks: 'tasks a day',
+    statCarry: 'carry forward',
+    statReset: 'monthly reset',
+    rowHours: 'Expert guidance a month',
+    rowTasks: 'Guided tasks a day',
+    rowCarry: 'Unused hours',
+    rowExtra: 'Extra hour',
+    hoursVal: '{hours} hours',
+    tasksVal_one: '{n} task',
+    tasksVal_other: '{n} tasks',
+    carryVal: 'Carry forward',
+    carryCapVal: 'Carry forward, up to {cap} h',
+    resetVal: 'Reset monthly',
+    unlimited: 'Unlimited',
+    footnoteCarry: 'Unused hours carry forward to the next month. Guided tasks reset every day. Billed per minute you actually use.',
+    footnoteCarryCap: 'Unused hours carry forward to the next month, up to {cap} hours. Guided tasks reset every day. Billed per minute you actually use.',
+    footnoteForfeit: 'Hours reset at the start of each month and do not roll over. Guided tasks reset every day. Billed per minute you actually use.',
+    noteExtra: 'Busy month? Add an hour whenever you need one. Purchased time never expires.',
   },
 }

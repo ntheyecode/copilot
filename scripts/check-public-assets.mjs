@@ -23,6 +23,25 @@ const HELP_EXT = new Set(['.png', '.webp', '.jpg', '.jpeg'])
 const ASSET_EXT = new Set(['.js', '.css', '.woff2', '.woff', '.ttf', '.png', '.jpg', '.jpeg', '.svg', '.webp', '.gif', '.ico', '.json', '.mp4', '.webm'])
 const ROOT_EXT = new Set(['.png', '.svg', '.ico', '.webmanifest', '.jpg', '.jpeg', '.webp', '.gif', '.mp4', '.webm', '.pdf'])
 const ROOT_NAMES = new Set(['index.html', 'robots.txt', 'sitemap.xml', 'favicon.ico', 'llms.txt'])
+// Root MEDIA is allowed by NAME, not just by extension: every picture, video or
+// paper served from the site root is listed here on purpose, so a stray export,
+// a screenshot or a draft dropped into public/ fails the gate instead of
+// shipping. Add a new asset here in the same change that adds the file.
+const ROOT_MEDIA = new Set([
+  // favicon set (derived from the AdmireVeda brand mark, scripts in the site-wow pass)
+  'favicon.svg', 'favicon-32.png', 'favicon-192.png', 'apple-touch-icon.png',
+  // social share + the public security paper
+  'og-image.png', 'WorkCoPilot-Security-and-Privacy.pdf',
+  // hero / section media
+  'hero-aurora.jpg', 'hero-aurora.mp4', 'people-focus.jpg', 'people-focus.mp4', 'people-done.jpg',
+  'affiliate-hero.webp', 'ent-focus.webp', 'ent-team.webp', 'help-how-it-works.webp',
+  'card-wash-light.jpg', 'card-texture-dark.png',
+  // field vignettes (1600x900 + 800x450 "-sm"), generated for the site-wow pass
+  'wow-finance.webp', 'wow-finance-sm.webp', 'wow-logistics.webp', 'wow-logistics-sm.webp',
+  'wow-healthcare.webp', 'wow-healthcare-sm.webp', 'wow-retail.webp', 'wow-retail-sm.webp',
+  'wow-hr.webp', 'wow-hr-sm.webp', 'wow-engineering.webp', 'wow-engineering-sm.webp',
+  'wow-support.webp', 'wow-support-sm.webp', 'wow-guide.webp', 'wow-guide-sm.webp',
+])
 const SAFE_DOTFILES = new Set(['.well-known', '.htaccess-none-placeholder'])
 
 // ---- block rules (checked first, anywhere in dist/) -----------------------
@@ -62,8 +81,9 @@ function classify(rel) {
 
   // --- allow ---
   if (parts.length === 1) {
-    if (ROOT_NAMES.has(lname) || ROOT_EXT.has(ext)) return null
-    return 'not on the root allowlist (index.html, robots.txt, sitemap.xml, favicon.ico, *.png/*.svg/*.ico/*.webmanifest)'
+    if (ROOT_NAMES.has(lname) || ROOT_MEDIA.has(name)) return null
+    if (ROOT_EXT.has(ext)) return `root media "${name}" is not in the ROOT_MEDIA allowlist (scripts/check-public-assets.mjs): add it there in the change that adds the file`
+    return 'not on the root allowlist (index.html, robots.txt, sitemap.xml, favicon.ico, llms.txt, or a ROOT_MEDIA entry)'
   }
   if (parts[0] === 'copilot-assets') {
     if (ASSET_EXT.has(ext)) return null

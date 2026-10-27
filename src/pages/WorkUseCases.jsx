@@ -9,8 +9,9 @@ import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
+import GuideShowcase from '../components/GuideShowcase.jsx'   // pick a field, watch the guide console on that work
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys) + useCases.* / notChat.*
 import { revealOnScroll } from '../reveal.js'              // the ONE scroll-reveal mechanism for the site
 
 // AdmireVeda WorkCoPilot - use cases (/workcopilot/use-cases).
@@ -165,6 +166,22 @@ export default function WorkUseCases() {
         </div>
       </section>
 
+      {/* PICK A FIELD: the shared guide showcase (seven fields, one console).
+          Deep links #watch-<id> from the field vignettes land here. */}
+      <section className="uc-showcase" id="watch" aria-labelledby="uc-showcase-h">
+        <div className="uc-wrap">
+          <div className="uc-showcase-head" data-reveal>
+            <span className="uc-eyebrow">{t('useCases.showcaseEyebrow')}</span>
+            <h2 id="uc-showcase-h">{t('useCases.showcaseH2')}</h2>
+            <p>{t('useCases.showcaseSub')}</p>
+          </div>
+          <div className="uc-showcase-body" data-reveal>
+            <GuideShowcase idPrefix="uc" />
+          </div>
+          <p className="uc-ro" data-reveal><Check size={14} aria-hidden="true" /> {t('notChat.readOnly')}</p>
+        </div>
+      </section>
+
       {cases.map((c, i) => (
         <section className={`uc-case${i % 2 ? ' alt' : ''}`} id={c.id} key={c.id} aria-labelledby={`${c.id}-h`}>
           <div className="uc-wrap uc-case-in">
@@ -284,6 +301,15 @@ const CSS = `
 .uc-chip:hover{color:var(--tx);border-color:rgba(140,245,196,.4)}
 .uc-chip svg{color:var(--em);flex-shrink:0}
 
+/* PICK A FIELD showcase: centered head, the tab row + console capped at a
+   comfortable reading width */
+.uc-showcase{padding:34px 0 46px;border-top:1px solid var(--line);scroll-margin-top:24px}
+.uc-showcase-head{text-align:center;max-width:720px;margin:0 auto 20px}
+.uc-showcase-head h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(25px,3.2vw,36px);line-height:1.08;letter-spacing:-.02em;margin:0 0 10px}
+.uc-showcase-head p{color:var(--mut);font-size:16.5px;line-height:1.55;margin:0}
+.uc-showcase-body{max-width:760px;margin:0 auto}
+.uc-ro{display:flex;align-items:center;justify-content:center;gap:7px;margin:16px auto 0;font-size:13.5px;color:var(--mut);text-align:center}
+.uc-ro svg{color:var(--em);flex:none}
 .uc-case{padding:56px 0;border-top:1px solid var(--line)}
 .uc-case-in{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
 .uc-case.alt .uc-case-copy{order:2}

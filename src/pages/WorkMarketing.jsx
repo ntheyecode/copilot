@@ -5,7 +5,7 @@ import {
   ArrowRight, Check, Sparkles, Layers, Monitor, Smartphone, AppWindow,
   Lock, Zap, Rocket, Target, ScanEye, ListChecks, AlertTriangle,
   Building2, Download,
-  Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy, X,
+  Server, Blocks, Bot, Megaphone, Calculator, Scale, Shapes, Trophy, X, MessageSquareOff,
 } from 'lucide-react'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
@@ -14,11 +14,15 @@ import SiteFooter from '../components/SiteFooter.jsx'   // shared footer across 
 import CopyChip from '../components/CopyChip.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide premium card primitive
 import LiveValidate from '../components/LiveValidate.jsx'   // the "Validate it live" widget (lead gate + live coverage check)
+import NotAChatBox from '../components/NotAChatBox.jsx'     // "not another chat box": chat answer vs the guide console, + the three differences
+import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen field photographs, deep-linking to the use-cases showcase
 import { useAuth } from '../auth.jsx'
 import { api } from '../api.js'
 import useSeo from '../useSeo.js'
 import { useLocale, renderRich } from '../i18n/index.jsx'   // every visible string on this page comes from the locale catalog (home.*)
-import en from '../i18n/locales/en.js'   // base catalog: the canonical plan-bullet count (see staticFeats)
+// The plan contract (/api/work/pricing) is read through ONE view model shared
+// with the pricing page, so the two can never say different numbers.
+import { normalizePricing, planValueLines, expiryFootnote, money, hours, PLAN_IDS } from '../pricingModel.js'
 // The field roster lives ONCE, on the /fields page; the teaser below imports
 // its numbers so the headline count can never drift from the full list.
 import { FIELD_FAMILIES, FIELD_TOTAL } from './WorkFields.jsx'
@@ -104,7 +108,6 @@ export default function WorkMarketing() {
     }
     go(plan, cycle)
   }
-  const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
   // Annual = 20% off the monthly rate, shown as a per-month figure billed yearly.
   const monthlyRate = (p) => (cycle === 'annual' ? Math.round(Number(p) * 0.8) : Number(p))
   const annualTotal = (p) => Math.round(Number(p) * 0.8) * 12
@@ -137,48 +140,23 @@ export default function WorkMarketing() {
   // The three trust cues under the hero CTAs (icon here, text in home.cues).
   const cueIcons = [AppWindow, Lock, Zap]
   // Every plan number on the cards comes from the live server pricing
-  // (/api/work/pricing -> store.getWorkPricing(): plans / tasks / dailyHours),
-  // so a superadmin change in Admin > Pricing flows straight to the cards. The
-  // public framing is MONTHLY: monthly tasks = daily cap x 30, monthly hours =
-  // daily hours x 30 - computed here, never typed into copy, so the page can
-  // never drift from what the product enforces. Tasks are stated plainly
-  // (unused ones bank); hours are "up to" + asterisk (a day's hours expire).
-  const DAYS_PER_MONTH = 30
-  const dh = (price && price.dailyHours) || {}
-  const dt = (price && price.tasks) || {}
-  const perMonth = (n) => (n == null ? null : Math.round(Number(n) * DAYS_PER_MONTH * 100) / 100)
-  // Plain numbers go into the strings (the unit words live in the catalog line
-  // itself), so a locale without these keys yet gets one consistent English
-  // fallback line, never "30 Aufgaben a month".
-  // Locales not yet retranslated for the monthly framing still carry the legacy
-  // hardcoded "1 guided task a day" as the FIRST lite bullet. The base (en)
-  // catalog is the canonical bullet list; any extra leading items in another
-  // locale are that legacy number line and are dropped, so no locale can show a
-  // stale hardcoded cap - the data-driven tasksLine replaces it for everyone.
-  const staticFeats = (id) => {
-    const list = t(`home.pricing.feats.${id}`) || []
-    const canon = ((en.home.pricing.feats || {})[id] || []).length
-    return list.length > canon ? list.slice(list.length - canon) : list
-  }
-  const planLines = (id) => {
-    const tasksDay = dt[id], hrsDay = dh[id]
-    const lines = []
-    if (tasksDay != null) lines.push(t('home.pricing.tasksMonthLine', { tasks: perMonth(tasksDay), dailyTasks: tasksDay }))
-    if (hrsDay != null) lines.push(t('home.pricing.hoursMonthLine', { hours: perMonth(hrsDay), dailyHours: hrsDay }))
-    return lines
-  }
-  // Plan names (Lite/Basic/Advanced/Premium) are product names: never translated.
-  const tiers = price ? [
-    { id: 'lite', name: 'Lite', price: price.plans.lite, hrs: dh.lite, tasks: dt.lite, feats: [...planLines('lite'), ...staticFeats('lite')], hour: price.hour.lite },
-    { id: 'basic', name: 'Basic', price: price.plans.basic, hrs: dh.basic, tasks: dt.basic, feats: [...planLines('basic'), ...staticFeats('basic')], hour: price.hour.basic },
-    { id: 'advanced', name: 'Advanced', price: price.plans.advanced, hrs: dh.advanced, tasks: dt.advanced, popular: true, feats: [...planLines('advanced'), ...staticFeats('advanced')], hour: price.hour.advanced },
-    { id: 'premium', name: 'Premium', price: price.plans.premium, hrs: dh.premium, tasks: dt.premium, feats: [...planLines('premium'), ...staticFeats('premium')], hour: price.hour.premium },
-  ] : []
-  // Card headline: "{N} tasks a month · up to {H} hours a month*" from the same numbers.
-  const monthlyLine = (tier) => {
-    if (tier.tasks == null && tier.hrs == null) return ''
-    return t('home.pricing.monthlyLine', { tasks: perMonth(tier.tasks ?? 0), hours: perMonth(tier.hrs ?? 0) })
-  }
+  // (/api/work/pricing -> store.getWorkPricing()): plans, hour, hoursMonthly
+  // (guided hours included per calendar month), tasks (guided tasks per DAY)
+  // and hoursExpiry (forfeit | carryforward). It is read through the ONE view
+  // model in src/pricingModel.js, shared with /workcopilot/pricing, so a
+  // superadmin change in Admin > Pricing flows to both pages identically and
+  // no number is ever typed into copy. A field the API does not carry is simply
+  // not shown: nothing is invented.
+  const model = useMemo(() => normalizePricing(price), [price])
+  const staticFeats = (id) => t(`home.pricing.feats.${id}`) || []
+  const PLAN_NAME = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }   // product names: never translated
+  const tiers = model ? PLAN_IDS.map((id) => ({
+    id, name: PLAN_NAME[id], price: model.plans[id], popular: id === 'advanced',
+    hrs: model.hoursMonthly[id], tasks: model.tasksDaily[id],
+    feats: [...planValueLines(model, id, t), ...staticFeats(id)], hour: model.hour[id],
+  })) : []
+  // Card headline: "{H} hrs of guidance a month · {N} tasks a day" from the same numbers.
+  const headline = (tier) => (tier.hrs == null || tier.tasks == null ? '' : t('home.pricing.headline', { hours: hours(tier.hrs), tasks: tier.tasks }))
 
   return (
     <div className="wm" ref={rootRef}>
@@ -227,6 +205,20 @@ export default function WorkMarketing() {
         </div>
       </section>
 
+      {/* NOT ANOTHER CHAT BOX (owner, 2026-10-27: "people think you are another
+          ChatGPT"). The same request side by side: a chat box hands back a
+          paragraph and leaves you on your own; the guide console walks the task
+          on the real screen, catches the wrong turn and confirms the finish.
+          Then the three things a chat box never does, as three cards. */}
+      <section className="wm-sec wm-notchat" id="not-a-chat-box">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><MessageSquareOff size={14} /> {t('notChat.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('notChat.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('notChat.sub')}</p>
+          <div data-reveal><NotAChatBox scenarioId="finance" /></div>
+        </div>
+      </section>
+
       {/* HOW - the core value in one glance: four benefit tiles in the order a
           task happens. The eyebrow carries the "planned by the strongest AI
           available to you" promise (a benefit; never a vendor or model name,
@@ -268,6 +260,12 @@ export default function WorkMarketing() {
                 <ArrowRight size={14} className="wm-arrow wm-fld-chip-go" aria-hidden="true" />
               </button>
             ))}
+          </div>
+          {/* Four real-screen vignettes (finance, healthcare, logistics,
+              engineering): each opens that field's guided session in the
+              use-cases showcase. Lazy, sized, below the fold. */}
+          <div className="wm-fv" data-reveal>
+            <FieldVignettes ids={['finance', 'healthcare', 'logistics', 'engineering']} />
           </div>
           <div className="wm-fld-more" data-reveal>
             <button className="wm-cta alt" onClick={() => nav('/workcopilot/use-cases')}>{t('home.fields.exploreAll')} <ArrowRight size={15} className="wm-arrow" /></button>
@@ -376,7 +374,7 @@ export default function WorkMarketing() {
                 {cycle === 'annual'
                   ? <div className="wm-tier-cyc"><s>{money(tier.price)}{t('common.perMonth')}</s> {t('home.pricing.billedAnnually')} &middot; {money(annualTotal(tier.price))}{t('common.perYear')}</div>
                   : <div className="wm-tier-cyc dim">{t('home.pricing.billedMonthly')}</div>}
-                <div className="wm-tier-hrs">{monthlyLine(tier)}</div>
+                <div className="wm-tier-hrs">{headline(tier)}</div>
                 <div className="wm-tier-mins">{t('home.pricing.mins')}</div>
                 <ul>{tier.feats.map((f) => <li key={f}><Check size={15} /> {f}</li>)}</ul>
                 <button className={`wm-cta ${tier.popular ? '' : 'alt'}`} onClick={() => choosePlan(tier.id)}>{t('home.pricing.choose', { plan: tier.name })}</button>
@@ -391,10 +389,11 @@ export default function WorkMarketing() {
             <span><Check size={14} /> {t('home.pricing.trustCancel')}</span>
             <span><ShieldCheck size={14} /> {t('home.pricing.trustExpire')}</span>
           </div>
-          {/* The asterisk note: how the daily allowance behind the monthly numbers
-              works (hours expire at midnight, tasks bank). Muted and smaller. */}
-          {price && <p className="wm-footnote" data-reveal>{t('home.pricing.footnote')}</p>}
-          {price && <p className="wm-fineprint" data-reveal>{t('home.pricing.fineprint', { price: money(price.image.premium), min: price.imageMinBulk })}</p>}
+          {/* The one note under the cards: what happens to unused hours, worded
+              for the expiry mode the API reports (carry forward, with or without
+              a cap, or a monthly reset). Muted and smaller. */}
+          {model && <p className="wm-footnote" data-reveal>{expiryFootnote(model, t)}</p>}
+          {model && model.image.premium != null && model.imageMinBulk != null && <p className="wm-fineprint" data-reveal>{t('home.pricing.fineprint', { price: money(model.image.premium), min: model.imageMinBulk })}</p>}
           {/* The full entitlement matrix (every row, every plan, the fine print)
               lives on /workcopilot/pricing; the main page keeps only the cards. */}
           <div className="wm-fld-more" data-reveal>
@@ -1346,6 +1345,15 @@ const CSS = `
 .wm-fld-chip:hover .wm-fld-chip-go{color:var(--em);transform:translateX(3px)}
 @media(max-width:900px){.wm-fld-chips{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.wm-fld-chips{grid-template-columns:1fr;gap:10px}}
+/* NOT ANOTHER CHAT BOX - the duel (chat pane vs guide console) and the three
+   difference cards come from src/components/NotAChatBox.jsx. The h2 is longer
+   than the other section heads, so its cap is wider. */
+.wm-notchat{border-top:1px solid var(--line)}
+.wm-notchat .wm-h2{max-width:28ch}
+.wm-notchat .wm-sub{margin-bottom:30px}
+.wm:not([data-wm="dark"]) .wm-notchat{background:linear-gradient(180deg,rgba(255,154,77,.06),transparent 60%)}
+/* FIELD VIGNETTES - the four real-screen pictures under the field chips. */
+.wm-fv{margin-top:22px}
 /* PROOF - the security/privacy duo sits under its own heading now; the duo's
    default top gap (44px, for the old headless placement) tightens to match. */
 .wm-proof .wm-duo{margin-top:30px}

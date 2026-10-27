@@ -79,8 +79,8 @@ export default deepMerge(en, {
       ] },
     },
     pricing: {
-      sub: 'Guided tasks and live guidance hours every month, with the AI included. Pause any time and pick up where you left off.',
-      footnote: '*Each day you get your plan\'s guided tasks and hours of guidance. Daily hours reset at midnight (US Eastern) - they don\'t roll over. Unused tasks bank as credits you keep, or trade 2 tasks for 1 extra hour (expires that day). Billed per minute you actually use.',
+      // The value lines and the expiry footnote come from the shared pricing.*
+      // keys (same wording in UK English), so nothing daily-framed lives here.
       taskMeaning: 'Each task is a major task: a single goal, guided from start to finish, with all its sub-steps.',
       trustCancel: 'Cancel any time, no contract',
       feats: {

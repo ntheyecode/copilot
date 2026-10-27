@@ -185,7 +185,7 @@ route({
   label: 'Security and privacy',
   source: 'WorkSecurity.jsx',
   title: 'Security and Privacy - WorkCoPilot by AdmireVeda',
-  description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, read-only guidance, encryption at rest, the full data flow, retention, and compliance readiness.',
+  description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, code checked before you run it, an authenticator on every account, a per-session audit log, encryption at rest, and compliance evidence mapped to the frameworks you report to.',
   h1: 'See exactly what is protected',
   lede: [
     'Before anything is sent, sensitive data is stripped or tokenized on your own device, in screenshots and in text. You decide what counts as sensitive, on top of the industry-standard detectors.',

@@ -6,8 +6,9 @@ import SiteHeader from '../components/SiteHeader.jsx'   // the shared site nav (
 import SiteFooter from '../components/SiteFooter.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
+import GuideShowcase from '../components/GuideShowcase.jsx'   // "watch it in your field": the shared guide console per field
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys) + demo.* strings
 
 // WorkCoPilot - scripted 60-second demo (admireveda.com/demo).
 // Fully canned: no login, no AI, no network calls. It replays one real guided
@@ -168,6 +169,17 @@ export default function WorkDemo() {
           </div>
 
           <p className="wkd-grounded"><Award size={15} aria-hidden="true" /> Grounded in what is really on your screen. No guessing, no invented steps.</p>
+        </div>
+      </section>
+
+      {/* YOUR FIELD NEXT: the same hand-holding on seven other kinds of work,
+          picked by the visitor (shared GuideShowcase). */}
+      <section className="wkd-pick" aria-labelledby="wkd-pick-h">
+        <div className="wkd-wrap wkd-pick-in">
+          <div className="wkd-badge"><Compass size={13} aria-hidden="true" /> {t('demo.pickEyebrow')}</div>
+          <h2 id="wkd-pick-h">{t('demo.pickH2')}</h2>
+          <p className="wkd-loop-lead">{t('demo.pickSub')}</p>
+          <div className="wkd-pick-body"><GuideShowcase idPrefix="demo" /></div>
         </div>
       </section>
 
@@ -496,6 +508,12 @@ const CSS = `
 @media (max-width:760px){.wkd-loop-grid{grid-template-columns:repeat(2,1fr)}}
 @media (max-width:440px){.wkd-loop-grid{grid-template-columns:1fr}}
 
+/* your field next: centered head over the field tabs + console */
+.wkd-pick{padding:30px 0 10px;text-align:center}
+.wkd-pick-in{display:flex;flex-direction:column;align-items:center}
+.wkd-pick h2{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-weight:800;font-size:clamp(23px,3.6vw,32px);letter-spacing:-.02em;margin:16px 0 0}
+.wkd-pick-body{width:100%;max-width:640px;text-align:left}
+@media (prefers-color-scheme:dark){.wkd-pick .gs-tab{--gs-mut:#9aa4bd;--gs-panel:#121725;--gs-line:#242b3d;--gs-tx:#eef1f8}}
 .wkd-final{padding:40px 0 60px;text-align:center}
 .wkd-final-in{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:40px 24px;box-shadow:0 20px 50px rgba(10,30,70,.07)}
 .wkd-final h2{font-family:'Bricolage Grotesque',Figtree,sans-serif;font-weight:800;font-size:clamp(24px,4vw,34px);margin:10px 0 0;letter-spacing:-.02em}

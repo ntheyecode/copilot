@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, ArrowLeft, Loader2, Check, Building2, Lock, ShieldCheck, Eye, FileText, Sparkles, ScanEye, Mail, KeyRound } from 'lucide-react'
+import { ArrowRight, ArrowLeft, Loader2, Check, Building2, Lock, ShieldCheck, Eye, FileText, Sparkles, Mail, KeyRound } from 'lucide-react'
 import { useAuth } from '../auth.jsx'
 import MfaGate from '../components/MfaGate.jsx'
+import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console (watch -> step -> correct -> confirm) in the brand aside
 import { api } from '../api.js'
 import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
@@ -85,31 +86,17 @@ function SocialMark({ id }) {
   )
 }
 
-// WEB brand aside: the PRODUCT, not an illustration - one calm, dark "watching"
-// window with a goal, what it can see, steps ticked, and the current step called
-// out. Decorative (aria-hidden); the real copy is the headline and the three
-// trust rows. REDESIGN (owner, 2026-10-26): the two floating speech-bubble cards
-// that overlapped this window ("confusing boxes ... text overlaps boxes") are
-// gone; the window alone shows the step-by-step benefit, cleanly and corporately.
+// WEB brand aside: the PRODUCT, not an illustration. It used to be a static
+// "watching" window (goal, I can see, steps ticked); it is now the shared
+// GuideConsole playing the same finance task live: watching -> one exact step
+// -> the wrong tab caught and corrected -> step confirmed -> task complete,
+// confirmed. The real copy stays the headline and the three trust rows; the
+// console carries its own screen-reader list and holds on hover/focus.
 function WlStage({ t }) {
+  const scenario = t('guide.scenarios.vendor')
   return (
-    <div className="wl-stage" aria-hidden="true">
-      <div className="wl-win">
-        <div className="wl-win-bar">
-          <span className="wl-win-dots"><i /><i /><i /></span>
-          <span className="wl-win-t"><AVMark size={12} id="avst" /> WorkCoPilot <em><ScanEye size={11} /> {t('login.stage.watching')}</em></span>
-          <span className="wl-win-tag">{t('login.stage.stepTag')}</span>
-        </div>
-        <div className="wl-win-row goal"><span>{t('login.stage.goal')}</span><b>{t('login.stage.goalText')}</b></div>
-        <div className="wl-win-row see"><span>{t('login.stage.see')}</span><b>{t('login.stage.seeText')}</b></div>
-        <ol className="wl-win-steps">
-          <li className="done"><i /> {t('login.stage.s1')}</li>
-          <li className="done"><i /> {t('login.stage.s2')}</li>
-          <li className="now"><i /><div><small>{t('login.stage.doThisNow')}</small>{t.rich('login.stage.s3')}</div></li>
-          <li><i /> {t('login.stage.s4')}</li>
-          <li><i /> {t('login.stage.s5')}</li>
-        </ol>
-      </div>
+    <div className="wl-stage">
+      <GuideConsole scenario={scenario} compact />
     </div>
   )
 }
@@ -438,7 +425,10 @@ export default function WorkLogin() {
           {/* Card top: brand (app + phones) and the language picker. */}
           <div className="wl-top">
             <div className="wl-card-brand"><AVMark size={18} id="avlc" /> Work<i>CoPilot</i> <span className="wl-by">{t('login.byAdmireVeda')}</span></div>
-            <LanguageMenu className="wl-lang" />
+            {/* compact (globe + code) on the card, as in the site header: the full
+                language name is ~140px and pushed the 375px sign-up card past the
+                viewport (design gate: nothing in the card may widen it). */}
+            <LanguageMenu className="wl-lang" compact />
           </div>
 
           {/* Checkout intent: which plan, what it costs, what happens next (one compact row). */}
@@ -701,32 +691,10 @@ const CSS = `
 .wl-web .wl-pitch-h{font-family:var(--wl-display);font-weight:800;font-size:clamp(32px,3.6vw,48px);line-height:1.04;letter-spacing:-.035em;color:var(--tx);margin:0;text-wrap:balance}
 .wl-web .wl-hl{background:linear-gradient(92deg,var(--em),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* the live-step stage */
+/* the live stage: the shared GuideConsole (src/components/GuideConsole.jsx),
+   compact, capped at the width the old static window had */
 .wl-web .wl-stage{position:relative;width:min(100%,520px);margin:0 0 auto 0;padding:0 0 24px 0;animation:wlrise .6s cubic-bezier(.2,.8,.2,1) both}
-.wl-web .wl-win{--s-bg:#0f1420;--s-bg2:#0b0f18;--s-line:rgba(255,255,255,.09);--s-tx:#eef1f8;--s-mut:#9aa6ba;--s-em:#8cf5c4;--s-cy:#5bd0ff;
-  position:relative;z-index:1;width:min(100%,440px);border-radius:18px;background:linear-gradient(180deg,var(--s-bg),var(--s-bg2));border:1px solid var(--s-line);box-shadow:0 1px 0 rgba(255,255,255,.06) inset,0 40px 80px -36px rgba(17,23,38,.6);color:var(--s-tx);font-size:13px;overflow:hidden}
-.wl-web .wl-win::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--s-em),var(--s-cy))}
-.wl-web .wl-win-bar{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--s-line);font-size:12px}
-.wl-web .wl-win-dots{display:inline-flex;gap:5px}
-.wl-web .wl-win-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.14)}
-.wl-web .wl-win-t{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--s-tx)}
-.wl-web .wl-win-t em{display:inline-flex;align-items:center;gap:4px;font-style:normal;font-size:9.5px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--s-em);background:rgba(140,245,196,.1);border:1px solid rgba(140,245,196,.25);border-radius:999px;padding:2px 7px;margin-inline-start:4px}
-.wl-web .wl-win-tag{margin-inline-start:auto;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:10.5px;color:var(--s-mut)}
-.wl-web .wl-win-row{display:grid;grid-template-columns:70px 1fr;gap:10px;align-items:baseline;padding:9px 14px;border-bottom:1px solid var(--s-line)}
-.wl-web .wl-win-row span{font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--s-mut)}
-.wl-web .wl-win-row.see span{color:var(--s-cy)}
-.wl-web .wl-win-row b{font-weight:600;color:var(--s-tx);line-height:1.4}
-.wl-web .wl-win-row.see b{color:#cfe6f6}
-.wl-web .wl-win-steps{list-style:none;margin:0;padding:10px 12px 12px;display:flex;flex-direction:column;gap:6px}
-.wl-web .wl-win-steps li{display:flex;align-items:flex-start;gap:9px;padding:6px 8px;border-radius:9px;color:var(--s-mut);line-height:1.4}
-.wl-web .wl-win-steps li i{flex:none;width:16px;height:16px;border-radius:50%;border:1.5px dashed rgba(255,255,255,.22);margin-top:1px}
-.wl-web .wl-win-steps li.done{color:#c4ccdc}
-.wl-web .wl-win-steps li.done i{border:0;background:var(--s-em);position:relative}
-.wl-web .wl-win-steps li.done i::after{content:'';position:absolute;left:5px;top:3px;width:4px;height:7px;border:solid #06201a;border-width:0 2px 2px 0;transform:rotate(45deg)}
-.wl-web .wl-win-steps li.now{color:var(--s-tx);background:rgba(140,245,196,.09);border:1px solid rgba(140,245,196,.28);padding:9px 10px;box-shadow:inset 3px 0 0 var(--s-em)}
-.wl-web .wl-win-steps li.now i{border:2px solid var(--s-em);background:radial-gradient(circle,var(--s-em) 38%,transparent 42%);margin-top:3px}
-.wl-web .wl-win-steps li.now small{display:block;font-size:9.5px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--s-em);margin-bottom:2px}
-.wl-web .wl-win-steps li.now b{color:var(--s-tx);background:rgba(255,255,255,.08);border-radius:4px;padding:0 4px}
+.wl-web .wl-stage .gc{width:min(100%,460px)}
 .wl-web .wl-proof{list-style:none;margin:22px 0 0;padding:20px 0 0;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .wl-web .wl-proof li{display:flex;gap:10px;align-items:flex-start}
 .wl-web .wl-proof b{display:block;font-size:13px;font-weight:700;line-height:1.3;color:var(--tx)}
@@ -743,11 +711,18 @@ const CSS = `
 .wl-web .wl-card h1{font-size:clamp(26px,2.4vw,31px);font-weight:800;letter-spacing:-.03em;line-height:1.1}
 
 /* ===================== CARD (shared) ===================== */
-.wl-main{position:relative;z-index:2;display:grid;place-items:center;padding:28px}
-.wl-card{position:relative;width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 24px 18px;box-shadow:var(--shadow);overflow:visible}
+/* min-width:0 on the column, the main and the card: a grid track defaults to
+   min-width:auto, so any nowrap content inside (the brand lockup + language
+   button row) used to widen the whole column past a 375px viewport and the
+   sign-up card was cut off on the right. The track is now minmax(0,1fr) at
+   every width (see the 880px rule), so content wraps or shrinks INSIDE the
+   card and can never widen it (design gate: no horizontal overflow). */
+.wl-main{position:relative;z-index:2;display:grid;place-items:center;padding:28px;min-width:0}
+.wl-card{position:relative;width:100%;max-width:440px;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px 24px 18px;box-shadow:var(--shadow);overflow:visible}
 .wl-card::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;border-radius:20px 20px 0 0;background:linear-gradient(90deg,var(--em),var(--cyan))}
-.wl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;min-height:38px}
-.wl-card-brand{display:flex;align-items:center;gap:7px;font-family:var(--wl-display);font-weight:800;font-size:15px;white-space:nowrap}
+.wl-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;min-height:38px;min-width:0}
+.wl-card-brand{display:flex;align-items:center;gap:7px;font-family:var(--wl-display);font-weight:800;font-size:15px;white-space:nowrap;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.wl-card-brand>svg{flex:none}
 .wl-by{font-family:"Figtree";font-weight:400;font-size:12px;color:var(--mut);letter-spacing:0}
 .wl-lang{margin-inline-start:auto}
 .wl-card h1{font-family:var(--wl-display);font-size:25px;font-weight:800;letter-spacing:-.025em;line-height:1.12}
@@ -919,7 +894,7 @@ const CSS = `
 @media(max-width:1180px){.wl-web .wl-brand{padding:28px 34px 26px}.wl-web .wl-main{padding:28px 34px}}
 @media(max-width:1040px){.wl-web .wl-proof{grid-template-columns:1fr;gap:10px}.wl-web .wl-stage{width:min(100%,460px)}}
 @media(max-width:880px){
- .wl.wl-web{grid-template-columns:1fr}
+ .wl.wl-web,.wl.wl-app{grid-template-columns:minmax(0,1fr)}
  .wl-web .wl-brand{display:none}
  .wl-web .wl-card-brand{display:flex}
  .wl-web .wl-main{padding:24px 18px 32px;background:var(--bg)}
@@ -935,4 +910,13 @@ const CSS = `
  .wl-plan-price{text-align:start}
  .wl-tab{font-size:12.5px;gap:5px}
 }
+/* Narrow phones: a provider label wraps to a second line beside its "coming
+   soon" tag instead of being cut with an ellipsis (design gate: no truncated
+   labels), and the "by AdmireVeda" tail folds away on the narrowest screens so
+   the brand and the language button always share the top row without clipping. */
+@media(max-width:420px){
+ .wl-prov{height:auto;min-height:44px;padding:8px 11px;font-size:13.5px}
+ .wl-prov>span{white-space:normal;overflow:visible;text-overflow:clip;line-height:1.25}
+}
+@media(max-width:360px){.wl-by{display:none}}
 `

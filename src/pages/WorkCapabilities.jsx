@@ -16,8 +16,10 @@ import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console: watch -> step -> correct -> confirm
+import { DifferenceStrip } from '../components/NotAChatBox.jsx'   // the three things a chat box does not do
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys) + the how.* / guide.* strings
 
 // Viz palette on brand tokens: the frame surface and inks follow the page theme
 // (light or dark), the accents are the brand emerald / cyan.
@@ -286,6 +288,24 @@ export default function WorkCapabilities() {
         {/* AEO: a direct, quotable one-sentence answer to "what does WorkCoPilot do?" */}
         <p>WorkCoPilot watches your screen, shows the exact next step in the app you are in, checks it worked, and keeps going until the job is done.</p>
       </section>
+
+      {/* WATCH IT WORK: the live guide console on a healthcare-admin task next to
+          the three things a chat box does not do (it corrects you, it hand-holds
+          you, it sees it through). Shown, not claimed, before the card grid. */}
+      <section className="wcap-demo" aria-labelledby="wcap-demo-h">
+        <div className="wcap-demo-head">
+          <div className="wcap-eyebrow"><MonitorPlay size={14} aria-hidden="true" /> {t('how.demoEyebrow')}</div>
+          <h2 id="wcap-demo-h">{t('how.demoH2')}</h2>
+          <p>{t('how.demoSub')}</p>
+        </div>
+        <div className="wcap-demo-in">
+          <GuideConsole scenario={t('guide.scenarios.healthcare')} />
+          <div className="wcap-demo-side">
+            <DifferenceStrip />
+          </div>
+        </div>
+      </section>
+
       <section className="wcap-grid" aria-labelledby="wcap-grid-h">
         <h2 id="wcap-grid-h" className="wcap-sr">What WorkCoPilot does for you</h2>
         {CARDS.map((b, i) => {
@@ -332,6 +352,23 @@ export default function WorkCapabilities() {
         </WorkCard>
       </section>
 
+      {/* IN THE APPS YOU ALREADY USE: one real-screen photograph (lazy, sized)
+          beside the one-line promise. */}
+      <section className="wcap-band" aria-labelledby="wcap-band-h">
+        <WorkCard theme="light" tone="cyan" delay={0} texPos="0% 100%" className="wcap-band-card">
+          <div className="wcap-band-in">
+            <figure className="wcap-band-fig">
+              <img src="/wow-guide.webp" srcSet="/wow-guide-sm.webp 800w, /wow-guide.webp 1600w" sizes="(max-width: 900px) 92vw, 520px" width="1600" height="900" loading="lazy" decoding="async" alt={t('how.bandAlt')} />
+            </figure>
+            <div className="wcap-band-copy">
+              <WorkCard.Head align="start" icon={AppWindow} eyebrow={t('how.bandEyebrow')} title={t('how.bandH2')} />
+              <WorkCard.Body>{t('how.bandP')}</WorkCard.Body>
+              <h2 id="wcap-band-h" className="wcap-sr">{t('how.bandH2')}</h2>
+            </div>
+          </div>
+        </WorkCard>
+      </section>
+
       <section className="wcap-cta" aria-label="Next steps">
         <button className="wcap-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden="true" /></button>
         <a className="wcap-btn alt" href="/workcopilot/enterprise">Enterprise features</a>
@@ -368,6 +405,23 @@ const CSS = `
 .wcap-hero h1{font-size:40px;line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
 .wcap-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:560px;line-height:1.55}
 @media(max-width:620px){.wcap-hero h1{font-size:28px}.wcap-hero br{display:none}}
+/* WATCH IT WORK: centered head, then the console beside the three difference
+   cards (stacked). Under 900px the console comes first, full width. */
+.wcap-demo{max-width:1160px;margin:0 auto;padding:22px 24px 6px}
+.wcap-demo-head{text-align:center;max-width:720px;margin:0 auto 22px}
+.wcap-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:12px}
+.wcap-demo-head h2{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;line-height:1.12;margin:0 0 10px;color:var(--ink);text-wrap:balance}
+.wcap-demo-head p{margin:0;color:var(--mut);font-size:15.5px;line-height:1.55}
+.wcap-demo-in{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:18px;align-items:start}
+.wcap-demo-side .nc-three{grid-template-columns:1fr;gap:12px}
+@media(max-width:900px){.wcap-demo-in{grid-template-columns:1fr}}
+/* IN THE APPS YOU ALREADY USE: picture + copy in one wide card */
+.wcap-band{max-width:1160px;margin:0 auto;padding:6px 24px 10px}
+.wcap-band-in{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:center}
+.wcap-band-fig{margin:0;border-radius:14px;overflow:hidden;line-height:0;box-shadow:0 18px 40px -26px rgba(10,13,18,.45)}
+.wcap-band-fig img{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover}
+.wcap-band-copy{display:flex;flex-direction:column;gap:12px;min-width:0}
+@media(max-width:900px){.wcap-band-in{grid-template-columns:1fr;gap:16px}}
 .wcap-grid{max-width:1160px;margin:0 auto;padding:26px 24px;display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
 @media(max-width:1080px){.wcap-grid{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.wcap-grid{grid-template-columns:1fr}}
