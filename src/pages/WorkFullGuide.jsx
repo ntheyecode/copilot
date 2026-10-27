@@ -13,21 +13,16 @@
 // Served from the same origin + session as the console (cookie auth), it polls the
 // active session read-only and degrades calmly when there is nothing to show.
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
-import { Clock, Eye, AlertTriangle, Check, Loader2, Maximize, Minimize, Pause, Sun, Moon, ExternalLink, Coins } from 'lucide-react'
+import { Clock, Eye, AlertTriangle, Check, Loader2, Maximize, Minimize, Pause, Sun, Moon, ExternalLink, ListChecks } from 'lucide-react'
 import RichText from '../components/RichText.jsx'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import GuideFontControl, { useGuideFontScale } from '../components/GuideFontScale.jsx'
 import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
+import { usageTimeLeft, usageTasksToday } from './work/usageCopy.js'
 
 const POLL_MS = 2500
 const POLL_PAUSED_MS = 6000
 
-function fmtTime(secs) {
-  const s = Math.max(0, Math.round(Number(secs) || 0))
-  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
-  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`
-  return `${m}:${String(sec).padStart(2, '0')}`
-}
 async function getJSON(url) {
   const r = await fetch(url, { credentials: 'include', headers: { Accept: 'application/json' } })
   if (!r.ok) throw new Error(`HTTP ${r.status}`)
@@ -57,51 +52,9 @@ function Mono({ lines, label, theme, fs = 1 }) {
   )
 }
 
-// A quiet, on-brand affordance for the banked task-credit economy. Only INDIVIDUAL
-// users have credits (corporate accounts are unlimited, so nothing shows). When
-// the reader has at least one hour's worth banked, this chip lets them spend
-// `creditsPerHour` (2) credits for one bonus guidance hour - handy when they are
-// running low mid-task. Honest: the bonus hour is good for today only. It matches
-// the guide theme (panel fill, hairline border, emerald accent for the action)
-// and shrinks to fit so it never clips or forces horizontal overflow.
-function CreditChip({ credits, onTrade, trading, theme: c }) {
-  if (!credits || credits.unlimited) return null
-  const cost = Number(credits.creditsPerHour) || 2
-  const n = Number(credits.taskCredits)
-  if (!Number.isFinite(n) || n < cost) return null
-  return (
-    <button
-      type="button"
-      onClick={onTrade}
-      disabled={trading}
-      title={`Trade ${cost} of your ${n} task credits for 1 bonus hour of guidance. The bonus hour is good for today only (expires at end of day).`}
-      style={{
-        display: 'inline-flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1,
-        maxWidth: '100%', padding: '4px 11px', borderRadius: 999,
-        background: c.panel, border: `1px solid ${c.border}`, color: c.muted,
-        cursor: trading ? 'default' : 'pointer', opacity: trading ? 0.65 : 1,
-        fontFamily: 'inherit', lineHeight: 1.15, textAlign: 'left',
-        transition: 'border-color .15s, background .15s',
-      }}
-    >
-      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-        {trading ? <Loader2 size={13} style={{ animation: 'wb-spin 1s linear infinite', flexShrink: 0 }} /> : <Coins size={13} style={{ color: c.accent, flexShrink: 0 }} />}
-        <span style={{ color: c.text }}>{n} credit{n === 1 ? '' : 's'}</span>
-        <span style={{ color: c.faint }}>·</span>
-        <span style={{ color: c.accent, fontWeight: 700 }}>{trading ? 'Adding 1 hour…' : 'Add 1 hour'}</span>
-      </span>
-      <span style={{ fontSize: 9.5, fontWeight: 600, letterSpacing: '0.01em', color: c.faint, whiteSpace: 'nowrap' }}>
-        {cost} credits · bonus hour, ends today
-      </span>
-    </button>
-  )
-}
-
 export default function WorkFullGuide() {
   const [session, setSession] = useState(null)
   const [usage, setUsage] = useState(null)
-  const [credits, setCredits] = useState(null)
-  const [trading, setTrading] = useState(false)
   const [status, setStatus] = useState('loading') // loading | ok | empty | signin | error
   const [fs, setFs] = useState(false)
   const [planOpen, setPlanOpen] = useState(false) // read-only "full plan" overlay
@@ -147,7 +100,6 @@ export default function WorkFullGuide() {
         if (aliveRef.current) setSession(s)
       }
       try { const u = await getJSON('/api/work/usage'); if (aliveRef.current) setUsage(u) } catch { /* keep last */ }
-      try { const cr = await getJSON('/api/work/credits'); if (aliveRef.current) setCredits(cr) } catch { /* keep last */ }
       if (aliveRef.current) setStatus(idRef.current ? 'ok' : 'empty')
     } catch (e) {
       const signedOut = /HTTP 401/.test((e && e.message) || '')
@@ -155,25 +107,6 @@ export default function WorkFullGuide() {
       if (aliveRef.current) setStatus((s) => (signedOut ? 'signin' : (s === 'loading' ? 'error' : s)))
     }
   }, [])
-
-  // Spend creditsPerHour (2) banked task credits for one bonus guidance hour
-  // (today only), then refresh the balance + usage so the time-left and the chip
-  // both reflect the trade immediately. Guarded so a double-tap can't double-spend.
-  const tradeCredit = useCallback(async () => {
-    if (trading) return
-    setTrading(true)
-    try {
-      const r = await fetch('/api/work/credits/trade', {
-        method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-        body: JSON.stringify({ hours: 1 }),
-      })
-      if (r.ok) { try { const cr = await r.json(); if (aliveRef.current && cr && typeof cr === 'object') setCredits((p) => ({ ...(p || {}), ...cr })) } catch { /* ignore */ } }
-      try { const cr = await getJSON('/api/work/credits'); if (aliveRef.current) setCredits(cr) } catch { /* keep */ }
-      try { const u = await getJSON('/api/work/usage'); if (aliveRef.current) setUsage(u) } catch { /* keep */ }
-    } catch { /* leave balance as-is; next poll reconciles */ }
-    finally { if (aliveRef.current) setTrading(false) }
-  }, [trading])
 
   useEffect(() => {
     aliveRef.current = true
@@ -210,7 +143,10 @@ export default function WorkFullGuide() {
   // line, both from the shared single source so all three surfaces agree.
   const win = stepWindow(steps)
   const progress = progressText(steps)
-  const remaining = usage ? usage.remainingSeconds : null
+  // Plan hours left this month + today's tasks, from the shared plan model
+  // (usageCopy.js), so this screen agrees with the console and the dashboard.
+  const timeLeft = usage ? usageTimeLeft(usage) : ''
+  const tasksToday = usage ? usageTasksToday(usage) : ''
   const exhausted = !!(usage && usage.exhausted)
   const guidance = (session && session.guidance) || ''
   const observation = (session && session.observation) || ''
@@ -248,8 +184,8 @@ export default function WorkFullGuide() {
               {paused ? <><Pause size={13} /> Paused</> : <><span style={{ ...S.live }} /> Live</>}
             </span>
           )}
-          <span style={S.time}><Clock size={14} /> {remaining == null ? '--' : (exhausted ? 'No time left' : `${fmtTime(remaining)} left`)}</span>
-          <CreditChip credits={credits} onTrade={tradeCredit} trading={trading} theme={c} />
+          <span style={{ ...S.time, color: exhausted ? c.warn : c.muted }} title={exhausted ? 'Your plan hours for this month are used up' : 'Plan hours left this month'}><Clock size={14} /> {timeLeft || '--'}</span>
+          {tasksToday && <span style={S.time} title="Guided tasks started today, of your daily cap"><ListChecks size={14} /> {tasksToday}</span>}
           <GuideFontControl scale={scale} dec={dec} inc={inc} reset={reset} atMin={atMin} atMax={atMax}
             theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />
           <button style={S.iconBtn} onClick={() => setDark((d) => !d)} title="Light or dark" aria-label="Toggle light or dark">{dark ? <Sun size={16} /> : <Moon size={16} />}</button>

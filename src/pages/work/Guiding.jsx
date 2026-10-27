@@ -28,6 +28,7 @@ import { clean, cleanForStore, isDlpActive } from '../../scrub.js'
 import { redactFrame, warmFrameScrub } from '../../frame_scrub.js'
 import { useTheme } from '../../theme.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
+import { usageTimeLeft, usageOutOfTime, usageLowNote } from './usageCopy.js'
 import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
@@ -1164,14 +1165,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const fromMenu = (fn) => () => { setMenuOpen(false); fn() }
   const noteStrong = (r) => { if (r && r.escalated) { setStrongUsed(true); setTimeout(() => setStrongUsed(false), 5000) } }
 
-  // Usage metering (Phase 1): remaining minutes, daily cap, pause.
+  // Usage metering: plan hours left this month, today's task cap, pause. The
+  // copy comes from usageCopy.js (the shared plan model), never inline math.
   const [usage, setUsage] = useState(null)
   const [paused, setPaused] = useState(false)
   const [dismissedLow, setDismissedLow] = useState(false)
   const applyUsage = (u) => { setUsage(u); if (u && u.remainingSeconds > 900) setDismissedLow(false) }   // re-arm the warning after buying more
   const refreshUsage = useCallback(async () => { try { applyUsage(await api.workUsage()) } catch {} }, [])
   useEffect(() => { refreshUsage() }, [refreshUsage])
-  const outOfMinutes = () => { if (usage && usage.exhausted) { setErr(`Out of minutes for today. Buy more time, or it resets at ${(usage && usage.resetLabel) || '11:59 PM ET'}.`); return true } return false }
+  const outOfMinutes = () => { if (usage && usage.exhausted) { setErr(usageOutOfTime(usage)); return true } return false }
 
   // Plan-heavy, watch-light: FORCED by us for Premium users (both company and
   // regular), never chosen here. The flag rides on the user profile loaded from
@@ -2207,11 +2209,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               {watchLight
                 ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
                 : paused
-                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title="Resume guiding - watching and your minutes"><Play size={15} /> Resume</button>
+                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title="Resume guiding - watching resumes and the clock runs again"><Play size={15} /> Resume</button>
                   : watching
-                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title="Pause guiding - stop watching and freeze your minutes"><Square size={13} /> Pause</button>
+                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title="Pause guiding - stop watching and stop the clock"><Square size={13} /> Pause</button>
                     : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
-              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, resets ${usage.resetLabel}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, hours renew ${usage.resetLabel}`}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
               {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
             </div>
             {analyzing ? (
@@ -2340,12 +2342,12 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
         {usage && usage.exhausted && (
           <div className="wc-banner danger">
-            <AlertTriangle size={16} /> <span className="fill">You are out of minutes for today. Buy more time, or it resets at {(usage && usage.resetLabel) || '11:59 PM ET'}.</span>
+            <AlertTriangle size={16} /> <span className="fill">{usageOutOfTime(usage)}</span>
           </div>
         )}
         {usage && !usage.exhausted && usage.remainingSeconds <= 900 && !dismissedLow && (
           <div className="wc-banner warn">
-            <AlertTriangle size={16} /> <span className="fill">About {Math.ceil(usage.remainingSeconds / 60)} minutes left today. You can pause anytime, or top up to keep going.</span>
+            <AlertTriangle size={16} /> <span className="fill">{usageLowNote(usage)}</span>
             <button className="wc-tbtn ghost" onClick={() => setDismissedLow(true)}>Dismiss</button>
           </div>
         )}
@@ -2894,7 +2896,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wc-rail-card">
               <div className="wc-rail-status">
                 <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={chip.title}><span className="wc-sdot" />{chip.label}</span>
-                {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
+                {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
               </div>
               {watchLight
                 ? <button type="button" className="wc-tbtn primary wc-rail-wide" onClick={refreshScreen} disabled={busy || paused}><ScanLine size={15} /> Check my progress</button>
@@ -3046,7 +3048,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
   // "now" accent). Flags override this to amber below.
   const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accent}, ${c.cyan})` }
 
-  const minsLeft = usage ? Math.ceil((usage.remainingSeconds || 0) / 60) : 0
+  const timeLeft = usage ? usageTimeLeft(usage) : ''
   // #1 ONE calm status chip: Guiding when live, Paused otherwise. The watching
   // state is implied by this chip, not by a separate "Live / Not watching" label.
   const liveFP = watching && !paused
@@ -3089,7 +3091,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
             <span className={watching && !paused ? 'fp-pulse' : undefined} style={{ width: 6, height: 6, borderRadius: '50%', background: status.color }} />
             {status.label}
           </span>
-          {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{minsLeft}m left</span>}
+          {usage && <span style={{ fontSize: 11, fontWeight: 600, color: usage.exhausted ? c.danger : c.faint, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{timeLeft}</span>}
         </div>
         {/* Pause/Resume now lives in the prominent control below (#2); the header
             stays a clean row of secondary icons so the status cluster is calm. */}

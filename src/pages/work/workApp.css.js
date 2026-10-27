@@ -429,15 +429,12 @@ export const WD_CSS = `
 @media(max-width:1100px){
  .wd-addtime,.wd-signout{width:32px;padding:0}
  .wd-addtime span,.wd-signout span{display:none}
- .wd-planpill{gap:7px;padding:0 9px 0 11px}
 }
 @media(max-width:860px){
  .wd-upgrade{width:32px;padding:0}
  .wd-upgrade span{display:none}
  .wd-buyhrs .wd-mins-l{display:none}
- /* Pill collapses to its banked-credits stat + caret (minutes stays in the
-    min-left pill alongside; tasks + full detail live in the popover). */
- .wd-planpill>.wd-pp-s:nth-child(1),.wd-planpill>.wd-pp-s:nth-child(3),.wd-planpill>.wd-pp-sep{display:none}
+ /* The plan pill's own collapse rules live in planPill.css.js (one owner). */
 }
 @media(max-width:760px){.wd-start{padding:18px 16px 16px}}
 @media(max-width:640px){
@@ -664,41 +661,8 @@ export const WD_CSS = `
 .wd-coach-choice.primary:hover{background:var(--em-fill)}
 .wd-coach-choice svg{flex-shrink:0}
 
-/* Compact plan pill (top bar): minutes left, tasks left, banked credits in one
-   tight pill, with a popover for the full detail + the trade action. Replaces
-   the old body plan card. Each micro-stat stays on one line (nowrap) and the
-   whole pill shrinks gracefully at narrow widths (labels drop, then stats drop
-   to just the banked count) so the top bar never overflows or clips. */
-.wd-planpill-wrap{position:relative;flex-shrink:0;display:inline-flex}
-.wd-planpill{display:inline-flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 10px 0 12px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
-.wd-planpill:hover,.wd-planpill.on{border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
-.wd-pp-s{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
-.wd-pp-s svg{flex-shrink:0;color:var(--em-2)}
-.wd-pp-s b{font-weight:700;color:var(--tx)}
-.wd-pp-sep{width:1px;height:16px;background:var(--line);flex-shrink:0}
-.wd-pp-ca{flex-shrink:0;color:var(--mut);transform:rotate(90deg)}
-.wd-planpill.on .wd-pp-ca{transform:rotate(-90deg)}
-/* Click-catcher behind the popover (closes on outside click). */
-.wd-planpop-back{position:fixed;inset:0;z-index:40;background:transparent;border:0;padding:0;margin:0;cursor:default}
-.wd-planpop{position:absolute;top:calc(100% + 8px);right:0;z-index:41;width:270px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;animation:wd-pp-pop .16s ease}
-@keyframes wd-pp-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
-.wd-planpop-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;min-width:0}
-.wd-planpop-name{font-family:var(--wd-display);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-planpop-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:1px solid var(--em-line);border-radius:999px;padding:3px 9px;margin-left:auto}
-.wd-planpop-tag .wd-plan-dot{width:6px;height:6px}
-.wd-planpop-stat{padding:9px 0;border-top:1px solid var(--line-soft)}
-.wd-planpop-stat:first-of-type{border-top:0;padding-top:0}
-.wd-planpop-stat .r{display:flex;align-items:baseline;justify-content:space-between;gap:10px;min-width:0}
-.wd-planpop-stat .k{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--mut);min-width:0}
-.wd-planpop-stat .k svg{flex-shrink:0;color:var(--em-2)}
-.wd-planpop-stat .v{font-family:var(--wd-display);font-weight:700;font-size:17px;line-height:1.1;color:var(--tx);white-space:nowrap;flex-shrink:0}
-.wd-planpop-stat .v small{font-size:11.5px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
-.wd-planpop-stat .h{font-size:11px;color:var(--faint);margin-top:3px;line-height:1.4}
-.wd-trade-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;height:36px;padding:0 15px;border-radius:999px;border:1px solid var(--em);background:var(--em);color:#fff;font:inherit;font-size:13.5px;font-weight:600;cursor:pointer;transition:filter .15s,opacity .15s}
-.wd-trade-btn:hover{filter:brightness(1.05)}
-.wd-trade-btn:disabled{opacity:.6;cursor:default}
-.wd-trade-btn svg{flex-shrink:0}
-.wd-planpop-trade{width:100%;margin-top:12px}
+/* The top-bar plan pill, its popover, the hours ring and the task pips are
+   styled in planPill.css.js (injected by PlanPill.jsx, their single owner). */
 
 /* Impersonation banner: a slim, persistent, warm/neutral strip at the very top
    of /work when a superadmin is viewing as this user. nowrap, never overflows.

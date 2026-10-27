@@ -1,7 +1,7 @@
 // Shared signed-in shell for the WorkCoPilot app: the session gate, the desktop
 // title-bar frame + window-mode switch, the left rail, the top bar (plan pill,
 // buy hours, add time, upgrade, sign out), the impersonation banner, and the
-// buy-credits modal. It loads the shared state ONCE and provides it via
+// buy-hours modal. It loads the shared state ONCE and provides it via
 // WorkAppContext, then renders the active page through <Outlet/>. This replaces
 // the old WorkPage default export (session gate + Home/Console switch) and the
 // Home shell (rail + top bar). Moved from WorkPage.jsx with behavior preserved;
@@ -14,7 +14,7 @@ import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
-import { useLocale } from '../../i18n/index.jsx'
+import { useLocale, useT } from '../../i18n/index.jsx'
 import { WD_CSS } from './workApp.css.js'
 import { card, shell } from './lib.js'
 import { WorkAppContext } from './WorkAppContext.jsx'
@@ -170,7 +170,7 @@ export default function WorkAppLayout() {
   // Top-bar controls
   const [railOpen, setRailOpen] = useState(true)
   const [showBuy, setShowBuy] = useState(false)
-  // Buy credits (extra hours / image credits): a small quantity + price modal.
+  // Buy top-up hours or an image bundle: a small quantity + price modal.
   const [buyErr, setBuyErr] = useState('')
   const [buyModal, setBuyModal] = useState(null)   // { kind: 'hours' | 'images' } | null
   const [buyQty, setBuyQty] = useState('')
@@ -283,7 +283,7 @@ export default function WorkAppLayout() {
       try { window.location.href = '/work/admin' } catch { setImpStopping(false) }
     }
   }
-  // Buy extra hours / image credits (one-time, Stripe). Triggered from the top bar.
+  // Buy top-up hours / an image bundle (one-time, Stripe). Triggered from the top bar.
   const buyTier = (usage && usage.tier) || 'basic'
   const imageMin = Math.max(1, Number(pricing && pricing.imageMinBulk) || 1)
   const buyUnit = (kind) => {
