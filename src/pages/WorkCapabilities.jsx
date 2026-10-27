@@ -218,7 +218,8 @@ const LOOP = [
   ['Plan', 'the strongest AI available to you plans the whole task'],
   ['Probe', 'asks a question when it needs more, a tap or a quick answer'],
   ['Guide', 'the exact next step, on your screen'],
-  ['Watch', 'checks that each step really worked'],
+  // Continuous by default; the optional on-demand check is the user's call.
+  ['Watch', 'checks that each step really worked, and double-checks any step the moment you ask'],
   ['Correct', 'fixes a wrong turn the moment it happens'],
 ]
 function BestLoop() {
@@ -241,7 +242,9 @@ function BestLoop() {
 // carries the payoff. Claims stay scoped: WorkCoPilot guides you through work on
 // screen in the apps you use; it is not a writing or document engine.
 const CARDS = [
-  { viz: 'steps', icon: MonitorPlay, t: 'Guided, step by step', d: 'The exact next move on your screen, checked before you go on. Nothing missed.' },
+  // Depth is the user's pick (simplest to technical), so the same task reads
+  // right for a beginner or an expert. Stated as the benefit, never the setting.
+  { viz: 'steps', icon: MonitorPlay, t: 'Guided, step by step', d: 'The exact next move on your screen, explained at the depth you choose, from simplest to technical, and checked before you go on.' },
   { viz: 'command', icon: TerminalSquare, t: 'The exact how, every time', d: 'The precise click, command or setting, copy-ready, always the proven best way.' },
   { viz: 'zero', icon: Compass, t: 'Starts from zero', d: 'Opens the right page, signs you in and takes you to the exact spot.' },
   { viz: 'fix', icon: ShieldCheck, t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens and shows the fix, even when a button has moved.' },
