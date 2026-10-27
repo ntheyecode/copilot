@@ -256,7 +256,8 @@ const CSS = `
 .gc-goal{font-size:14px;line-height:1.4;background:rgba(255,255,255,.03);border:1px solid var(--gc-line);border-radius:11px;padding:8px 11px;min-height:50px;overflow-wrap:anywhere}
 .gc-k{font-size:10px;letter-spacing:.14em;color:var(--gc-mut);font-weight:800;margin-inline-end:7px}
 
-/* the watched screen */
+/* the watched screen (overflow hidden here, not on the controls, so the
+   target's pulse ring is visible and nothing can leave the mock window) */
 .gc-scr{border:1px solid var(--gc-line);border-radius:12px;overflow:hidden;background:#0a0f18}
 .gc-scr-bar{display:flex;align-items:center;gap:5px;padding:6px 10px;background:#0c1220;border-bottom:1px solid rgba(255,255,255,.05)}
 .gc-scr-bar i{width:6px;height:6px;border-radius:50%;background:#2a3550}
@@ -268,7 +269,7 @@ const CSS = `
 .gc-scr-main{position:relative;padding:14px 14px;display:flex;flex-direction:column;gap:9px}
 .gc-row{height:7px;border-radius:4px;background:rgba(255,255,255,.07)}
 .gc-row.w80{width:80%}.gc-row.w55{width:55%}.gc-row.w65{width:65%}
-.gc-ctl{position:absolute;display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:9px;font-size:11.5px;font-weight:700;white-space:nowrap;max-width:62%;overflow:hidden;text-overflow:ellipsis;transition:background .35s,color .35s,box-shadow .35s,border-color .35s;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#aab6cc}
+.gc-ctl{position:absolute;display:inline-flex;align-items:center;gap:4px;padding:6px 11px;border-radius:9px;font-size:11.5px;font-weight:700;white-space:nowrap;max-width:62%;overflow:visible;transition:background .35s,color .35s,box-shadow .35s,border-color .35s;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.05);color:#aab6cc}
 .gc-ctl.target{inset-inline-end:14px;top:40px}
 .gc-ctl.wrong{inset-inline-start:14px;bottom:14px}
 .gc-ctl.target.hot{color:#06201a;background:linear-gradient(135deg,var(--gc-em),var(--gc-cy));border-color:transparent}

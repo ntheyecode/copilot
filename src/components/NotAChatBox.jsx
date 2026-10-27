@@ -54,11 +54,15 @@ function ChatPane() {
   const t = useT()
   const ref = useRef(null)
   const [stage, setStage] = useState(() => (shouldRevealAtOnce() ? 3 : 0))   // 0 idle, 1 asked, 2 thinking, 3 answered
+  // Armed ONCE on mount (empty deps): the earlier version re-ran this effect
+  // on every stage change, so the cleanup that followed stage 0 -> 1 cleared
+  // the timers for stages 2 and 3 and the chat box never "answered" (caught
+  // in render verification 2026-10-27). The cleanup now runs only on unmount.
   useEffect(() => {
-    if (stage !== 0) return undefined
+    if (shouldRevealAtOnce()) return undefined
     const el = ref.current
     if (!el) return undefined
-    let timers = []
+    const timers = []
     const go = () => {
       timers.push(setTimeout(() => setStage(1), 300))
       timers.push(setTimeout(() => setStage(2), 1300))
@@ -67,7 +71,7 @@ function ChatPane() {
     const io = new IntersectionObserver((ents) => { if (ents.some((e) => e.isIntersecting)) { io.disconnect(); go() } }, { threshold: 0.3 })
     io.observe(el)
     return () => { io.disconnect(); timers.forEach(clearTimeout) }
-  }, [stage])
+  }, [])
   return (
     <div className="nc-chat" ref={ref} aria-label={t('notChat.chatTitle')} role="group">
       <div className="nc-chat-head"><span className="nc-chat-dots" aria-hidden="true"><i /><i /><i /></span><b>{t('notChat.chatTitle')}</b></div>
