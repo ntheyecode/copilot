@@ -47,3 +47,13 @@ Servers already running this machine: api-seeded :4444 (seed data present), admi
 2. If any overflow: fix in _viz.jsx or the section (nowrap + flex-shrink / collapse), re-verify.
 3. REFRESH help screenshots (owner mandatory last step): public/help/super/overview.png (1048x420), companies.png (1048x295), users.png (1048x781), pricing.png (1048x557); public/help/company/overview.png (1048x929). Sizes/alt in HelpSuper.jsx + HelpCompany.jsx `shots`.
 4. Final gates (jsx-imports, locale-integrity, locale-parity per touched ns, build, build:harden, check-public-assets, npm test=531), then `cd D:\RadarOps\copilot && git merge feat-admin-plan-wow` (NO push). Then feat-app-plan-wow, then feat-site-wow; publish all three together (server + client flip together).
+
+## RENDER-VERIFY DONE 2026-10-27 (SUPREME RULE XIV) — all clean, German (worst-case), 1280 + 640
+Verified live against api-seeded :4444 via admin-wow :5194 (superadmin `admin`, company admin `nw_admin`):
+- Superadmin Overview: new "Benutzer nach Stufe" StackedBar + seat/stat cards. No overflow at 1280 or 640.
+- Superadmin Pricing RECORD: plan-model values (30/60/120/180 h/month, 4/4/6/8 tasks/day), new "Zum Monatsende" row, Plans-at-a-glance BarList; retired bonus-tasks row gone. No overflow.
+- Superadmin Pricing EDITOR: "Monatlich enthaltene Stunden" grid, "Zum Monatsende" select with conditional "Übertragungs-Obergrenze" cap field revealed on carryforward, "Geführte Aufgaben pro Tag". 2-col grid collapses cleanly at 640 (241px x2). No overflow at 1280 or 640.
+- Superadmin Companies list: no overflow at 640.
+- Company-admin Overview: new CompanyPoolCard "Stundenpool in diesem Monat" + Meter. No overflow at 1280 or 640.
+Shared _viz (Meter/StackedBar/BarList) render clean in multiple contexts both widths; CompanyConsumption reuses the same verified primitives.
+REMAINING before publish (batched into the final pre-publish pass, not per-branch): refresh help screenshots public/help/super/{overview,companies,users,pricing}.png + public/help/company/overview.png to the new layouts.
