@@ -11,7 +11,7 @@
 // value is not published we say "Included" rather than invent a number, and
 // the page says final entitlements are confirmed at checkout.
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2 } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
@@ -55,6 +55,30 @@ function Cell({ v }) {
 export default function WorkPricing() {
   const nav = useNavigate()
   const t = useT()
+  // Arriving from the live check (?plan=<id>&from=validate): the plan it
+  // recommended is ribboned "Recommended for your task", lifted, scrolled into
+  // view, and its Start button pulses, so the visitor lands on their next click.
+  const [sp] = useSearchParams()
+  const recId = (sp.get('plan') || '').toLowerCase()
+  const rec = PLAN_META.some((p) => p.id === recId && !p.custom) ? recId : ''
+  useEffect(() => {
+    if (!rec) return undefined
+    // Two attempts: the first right after paint, a second once the live prices
+    // have landed and the cards have their final height (on a phone the first
+    // smooth scroll can be cut short by that reflow). Skipped if already in view.
+    const go = () => {
+      try {
+        const el = document.getElementById(`wpr-plan-${rec}`)
+        if (!el) return
+        const r = el.getBoundingClientRect()
+        if (r.top >= 0 && r.bottom <= window.innerHeight) return
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      } catch { /* ignore */ }
+    }
+    const t1 = setTimeout(go, 350)
+    const t2 = setTimeout(go, 1300)
+    return () => { clearTimeout(t1); clearTimeout(t2) }
+  }, [rec])
   useSeo({
     title: t('seo.pricing.title'),
     description: t('seo.pricing.description'),
@@ -129,8 +153,10 @@ export default function WorkPricing() {
       {/* Plan cards: name, price, one value line, a short benefit list, one CTA. */}
       <section className="wpr-plans" aria-label="Plans">
         {PLANS.map((p) => (
-          <article key={p.id} className={`wpr-plan${p.popular ? ' pop' : ''}${p.custom ? ' ent' : ''}`}>
-            {p.popular && <div className="wpr-tag">Most popular</div>}
+          <article key={p.id} id={`wpr-plan-${p.id}`} className={`wpr-plan${p.popular ? ' pop' : ''}${p.custom ? ' ent' : ''}${p.id === rec ? ' rec' : ''}`}>
+            {p.id === rec
+              ? <div className="wpr-tag rec"><Zap size={11} aria-hidden /> {t('home.pricing.recommended')}</div>
+              : p.popular && <div className="wpr-tag">Most popular</div>}
             <h2 className="wpr-plan-name">{p.custom && <Building2 size={16} aria-hidden />} {p.name}</h2>
             {p.custom
               ? <div className="wpr-price wpr-custom">Custom</div>
@@ -156,7 +182,7 @@ export default function WorkPricing() {
             </ul>
             {p.custom
               ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
-              : <button className={`wpr-btn${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
+              : <button className={`wpr-btn${p.popular || p.id === rec ? '' : ' alt'}${p.id === rec ? ' rec' : ''}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
           </article>
         ))}
       </section>
@@ -224,7 +250,7 @@ export default function WorkPricing() {
               </ul>
               {p.custom
                 ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
-                : <button className={`wpr-btn${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
+                : <button className={`wpr-btn${p.popular || p.id === rec ? '' : ' alt'}${p.id === rec ? ' rec' : ''}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
             </article>
           ))}
         </div>
@@ -307,6 +333,12 @@ const CSS = `
 .wpr-plan.pop::before{opacity:1}
 .wpr-plan.ent{background:linear-gradient(180deg,rgba(10,147,196,.06),var(--panel) 40%)}
 .wpr-tag{display:inline-flex;align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy));border-radius:999px;padding:3px 9px;white-space:nowrap}
+/* Recommended by the live check: a warm ring + lift, the warm ribbon, a pulsing Start. */
+.wpr-plan.rec{border-color:rgba(242,106,67,.55);box-shadow:0 0 0 3px rgba(255,154,77,.22),0 28px 56px -28px rgba(242,106,67,.45);transform:translateY(-4px)}
+.wpr-tag.rec{align-items:center;gap:5px;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59)}
+.wpr-btn.rec{background:linear-gradient(135deg,#ffb35c,#ff7a59);color:#1a0e08;box-shadow:0 12px 28px -12px rgba(242,106,67,.7);animation:wpr-rec-pulse 1.8s ease-in-out .6s 3}
+@keyframes wpr-rec-pulse{0%,100%{box-shadow:0 12px 28px -12px rgba(242,106,67,.7)}50%{box-shadow:0 0 0 6px rgba(255,154,77,.28),0 12px 28px -12px rgba(242,106,67,.7)}}
+@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}}
 .wpr-tag.inline{display:block;width:fit-content;margin:0 auto 6px}
 .wpr-plan-name{display:inline-flex;align-items:center;gap:6px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px;margin:0;color:var(--ink)}
 .wpr-plan-name svg{color:var(--cy);flex-shrink:0}

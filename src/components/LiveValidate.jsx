@@ -1,26 +1,28 @@
-// LiveValidate - the public "Validate it live" widget.
+// LiveValidate - the public "Try it on your task, live" widget.
 //
-// Single source of truth for the validator that used to live inside
-// WorkMarketing as <CoverageChat>. It is now a self-contained component used on
-// EVERY public page (marketing/demo + the WorkCoPilot sign-in page): it injects
-// its own styles once and defines its own colour variables on .lv-root, so it
-// looks identical wherever it is mounted and does not depend on the host page's
-// CSS.
+// Single source of truth for the live validator used on EVERY public page
+// (marketing / demo / use-cases / sign-in). It injects its own styles once and
+// defines its own colour variables on .lv-root, so it looks identical wherever it
+// is mounted and does not depend on the host page's CSS.
 //
-// Two stages behind one floating launcher:
-//   1. LEAD GATE - before the first question we capture First/Last/Email/Phone/
-//      Country/Company (all mandatory), ONCE per browser session (kept in sessionStorage so it is asked
-//      only once). The lead is POSTed to /api/work/leads and lands in the
-//      superadmin Leads grid with a timestamp + which page it came from.
-//   2. LIVE VALIDATION - the visitor describes a real task and our AI validates,
-//      live, whether WorkCoPilot can guide it, how, and which plan fits. The
-//      scenario is scrubbed (cleanAlways) before it leaves the browser; the
-//      lead's own contact details are sent as typed (that is what they chose to
-//      share), never scrubbed.
+// The visitor's journey (one floating launcher, three stages in a dialog):
+//   ASK    - a big, inviting prompt: describe a real task (or tap a starter chip).
+//   LEAD   - once per browser session, BEFORE the plan is revealed, we capture
+//            First/Last/Email/Phone/Country/Company (all mandatory). The lead is
+//            POSTed to /api/work/leads and lands in the superadmin Leads grid.
+//            Asking the task FIRST and the details SECOND keeps attribution exact
+//            (the live check always carries the lead id) while the visitor has
+//            already invested in their question.
+//   REVEAL - the product itself, live: a WorkCoPilot console that reads the goal,
+//            plans the exact steps with real commands, reveals them one by one,
+//            shows what a full session unlocks, and recommends the plan that fits,
+//            with a straight path to the pricing page -> plan -> account -> checkout.
+// The scenario is scrubbed (cleanAlways) before it leaves the browser; the lead's
+// own contact details are sent as typed (that is what they chose to share).
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
-  Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare,
-  ShieldCheck, ArrowRight, RotateCcw, Copy, Loader2, Play, ChevronDown,
+  Sparkles, ScanEye, Check, AlertTriangle, TerminalSquare, ShieldCheck, ArrowRight,
+  RotateCcw, Copy, Loader2, ChevronDown, Lock, Zap, Eye, ListChecks,
 } from 'lucide-react'
 import { cleanAlways } from '../scrub.js'   // strip PII/PHI from the scenario before it leaves the browser (public form: always on)
 import { useLocale, getLocale } from '../i18n/index.jsx'   // every visible string comes from the catalog (widgets.validate.*); the live check carries the locale
@@ -30,11 +32,9 @@ import { countryOptions, countryNameEn } from '../shared/countries.js'   // the 
 // desktop app or the mobile app the person is already a user, so it must never
 // appear. The WorkCoPilot DESKTOP shell exposes window.workDesktop (see
 // workcopilot/preload.js - NOT window.refigold, which is the other products'
-// shell); the MOBILE app sets a WorkCoPilotApp/<n> user agent (see WorkPage's
-// WorkCoPilotApp matcher). One gate here covers EVERY mount (marketing / demo /
-// use-cases / login) - SUPREME RULE II, single source, instead of editing each
-// call site. Environment-constant, so the early return is stable across renders
-// (hook count never changes).
+// shell); the MOBILE app sets a WorkCoPilotApp/<n> user agent. One gate here
+// covers EVERY mount (SUPREME RULE II, single source). Environment-constant, so
+// the early return is stable across renders (hook count never changes).
 const isInApp = () => {
   try {
     if (typeof window !== 'undefined' && window.workDesktop) return true
@@ -54,6 +54,15 @@ const LAUNCH_BAND_PX = 72
 // At this width and below the launcher is always the edge tab (CSS media query
 // in LV_CSS); keep the two in step.
 const NARROW_QUERY = '(max-width:640px)'
+// The plan ids the live check can recommend, and the public plan names (brand
+// names, never translated). Order = the pricing ladder.
+const PLAN_NAMES = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium: 'Premium' }
+// Minimum time the "planning live" sequence stays on screen even when the server
+// answers faster: the three status lines need to land one after another, so the
+// reveal never snaps from a blank beat to a wall of text.
+const SCAN_MIN_MS = 1900
+const SCAN_TICK_MS = 560
+const STEP_STAGGER_MS = 220
 
 // Does this element paint something a floating pill must not cover: its own
 // text, an image/icon, or a control the visitor could want to click?
@@ -135,13 +144,27 @@ function renderRich(text) {
   return out
 }
 
-const defaultGo = (plan) => { try { window.location.href = `/workcopilot${plan ? `?plan=${plan}` : ''}` } catch { /* noop */ } }
+// Where the funnel goes next. The primary CTA takes the visitor to the PRICING
+// page with the recommended plan highlighted (?plan=X&from=validate); choosing a
+// plan there carries it to sign-up, and the account step continues straight into
+// Stripe Checkout (WorkLogin). `go` is kept for hosts that pass their own router.
+const defaultToPricing = (plan) => {
+  try { window.location.href = `/workcopilot/pricing${plan ? `?plan=${encodeURIComponent(plan)}&from=validate` : ''}` } catch { /* noop */ }
+}
+const money = (n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
 
-export default function LiveValidate({ go = defaultGo, theme = 'light', source = 'site' }) {
+export default function LiveValidate({ toPricing = defaultToPricing, theme = 'light', source = 'site' }) {
   if (isInApp()) return null   // hide the lead widget inside the desktop/mobile app
   const { t, locale } = useLocale()   // `locale` is reactive: the country names re-sort when the visitor switches language
   const [open, setOpen] = useState(false)
   const [lead, setLead] = useState(loadLead)          // null until captured this session
+  // 'ask' -> ('lead' once per session) -> 'reveal'
+  const [stage, setStage] = useState('ask')
+  // The lead captured a moment ago has not flushed into state when the check
+  // starts right after capture; the ref is set synchronously so the fresh id is
+  // always on the request (exact attribution in the Leads grid).
+  const leadRef = useRef(lead)
+  useEffect(() => { leadRef.current = lead }, [lead])
 
   // ---- lead-capture form state -------------------------------------------
   // `country` holds the ISO alpha-2 code the visitor picked ('' until chosen).
@@ -155,20 +178,35 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   // recomputed only when the language changes (~250 Intl lookups otherwise per keystroke).
   const countries = useMemo(() => countryOptions(locale), [locale])
 
-  // ---- validator (live check) state --------------------------------------
+  // ---- live check state --------------------------------------------------
   const [q, setQ] = useState('')
+  const [pendingQ, setPendingQ] = useState('')         // the task being planned (shown as the GOAL)
   const [busy, setBusy] = useState(false)
   const [res, setRes] = useState(null)
   const [err, setErr] = useState('')
+  // reveal choreography: 'scan' (status lines tick on) -> 'verdict' -> 'steps' -> 'done' (CTA)
+  const [phase, setPhase] = useState('idle')
+  const [scanTick, setScanTick] = useState(0)
   const [fire, setFire] = useState(false)
-  const [typed, setTyped] = useState('')
-  const [typingDone, setTypingDone] = useState(false)
   const [copiedCmd, setCopiedCmd] = useState(-1)
   const copyCmd = (text, i) => { try { navigator.clipboard.writeText(text || ''); setCopiedCmd(i); setTimeout(() => setCopiedCmd(-1), 1400) } catch { /* clipboard blocked */ } }
   const taRef = useRef(null)
+  const timers = useRef([])
+  const later = (fn, ms) => { const id = setTimeout(fn, ms); timers.current.push(id); return id }
+  const clearTimers = () => { timers.current.forEach(clearTimeout); timers.current = [] }
+  useEffect(() => () => clearTimers(), [])
   const [coach, setCoach] = useState(false)   // one-time nudge pointing at the launcher
   const dismissCoach = () => { setCoach(false); try { sessionStorage.setItem('wc_lv_coach_v1', '1') } catch { /* private window */ } }
   const openWidget = () => { setOpen(true); dismissCoach() }
+  // Live plan prices/allowances for the recommendation card (same endpoint the
+  // pricing page uses). Fetched once, the first time the dialog opens.
+  const [pricing, setPricing] = useState(null)
+  useEffect(() => {
+    if (!open || pricing) return
+    let alive = true
+    fetch('/api/work/pricing').then((r) => r.json()).then((p) => { if (alive) setPricing(p) }).catch(() => {})
+    return () => { alive = false }
+  }, [open, pricing])
 
   // ---- launcher placement: never over page text ---------------------------
   // The launcher floats over EVERY public page, so its placement is solved
@@ -229,10 +267,10 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     // One pending check at a time. A scroll/resize restarts the 120ms settle
     // and grants untuck; a reflow only joins a pending check (or starts a
     // tuck-only one) and never cancels a granted untuck.
-    let t = 0, want = false
-    const run = () => { t = 0; const w = want; want = false; check(w) }
-    const onMove = () => { want = true; clearTimeout(t); t = setTimeout(run, 120) }
-    const onReflow = () => { if (!t) t = setTimeout(run, 120) }
+    let tm = 0, want = false
+    const run = () => { tm = 0; const w = want; want = false; check(w) }
+    const onMove = () => { want = true; clearTimeout(tm); tm = setTimeout(run, 120) }
+    const onReflow = () => { if (!tm) tm = setTimeout(run, 120) }
     onMove()
     window.addEventListener('scroll', onMove, { passive: true })
     window.addEventListener('resize', onMove)
@@ -240,7 +278,7 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     // loading): any reflow of the page body re-checks too (tuck only).
     const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(onReflow) : null
     if (ro) ro.observe(document.body)
-    return () => { clearTimeout(t); window.removeEventListener('scroll', onMove); window.removeEventListener('resize', onMove); if (ro) ro.disconnect() }
+    return () => { clearTimeout(tm); window.removeEventListener('scroll', onMove); window.removeEventListener('resize', onMove); if (ro) ro.disconnect() }
   }, [open, docked])
 
   // The banner demo / any page can open the validator directly (its "run YOUR
@@ -250,33 +288,70 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
   useEffect(() => {
     const openIt = () => openWidget()
     window.addEventListener('wc:open-validate', openIt)
-    let t
-    try { if (!sessionStorage.getItem('wc_lv_coach_v1')) t = setTimeout(() => setCoach(true), 6500) } catch { /* private window */ }
-    return () => { window.removeEventListener('wc:open-validate', openIt); if (t) clearTimeout(t) }
+    let tm
+    try { if (!sessionStorage.getItem('wc_lv_coach_v1')) tm = setTimeout(() => setCoach(true), 6500) } catch { /* private window */ }
+    return () => { window.removeEventListener('wc:open-validate', openIt); if (tm) clearTimeout(tm) }
   }, [])
 
   // Focus the right first input when the dialog opens / stage changes.
   useEffect(() => {
     if (!open) return
-    const t = setTimeout(() => { (lead ? taRef.current : firstRef.current)?.focus() }, 30)
-    return () => clearTimeout(t)
-  }, [open, lead])
+    const tm = setTimeout(() => { (stage === 'lead' ? firstRef.current : stage === 'ask' ? taRef.current : null)?.focus() }, 30)
+    return () => clearTimeout(tm)
+  }, [open, stage])
 
-  // Typewriter reveal of the answer.
-  useEffect(() => {
-    if (!res || !res.answer) { setTyped(''); setTypingDone(false); return }
-    const full = String(res.answer).replace(/\*\*/g, '').replace(/`/g, '')
-    setTyped(''); setTypingDone(false)
-    let i = 0
-    const id = setInterval(() => {
-      i += 2
-      if (i >= full.length) { setTyped(full); setTypingDone(true); clearInterval(id) }
-      else setTyped(full.slice(0, i))
-    }, 16)
-    return () => clearInterval(id)
-  }, [res])
+  // Reset to a fresh question (the lead stays captured for the session).
+  const tryAnother = () => {
+    clearTimers(); setRes(null); setErr(''); setFire(false); setPhase('idle'); setScanTick(0); setPendingQ(''); setQ('')
+    setStage('ask'); setTimeout(() => taRef.current && taRef.current.focus(), 0)
+  }
 
-  const clearAll = () => { setQ(''); setRes(null); setErr(''); setTyped(''); setTypingDone(false); setFire(false); setTimeout(() => taRef.current && taRef.current.focus(), 0) }
+  // The live check with its reveal choreography. The request and the minimum
+  // on-screen time of the "planning live" lines run in parallel, so a fast
+  // answer still lands as a sequence and a slow one never looks stuck.
+  const runCheck = async (question) => {
+    clearTimers(); setErr(''); setRes(null); setFire(false); setScanTick(0); setPhase('scan'); setStage('reveal'); setBusy(true)
+    const tick = setInterval(() => setScanTick((n) => (n < 2 ? n + 1 : n)), SCAN_TICK_MS)
+    const minWait = new Promise((r) => later(r, SCAN_MIN_MS))
+    const call = fetch('/api/work/coverage', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      // `locale` = the visitor's global language choice, so the server answers in it.
+      // The lead captured a moment ago may not have flushed into state yet, so the
+      // ref (set synchronously on capture) is the source of the id: exact attribution.
+      body: JSON.stringify({ question: cleanAlways(question), leadId: (leadRef.current && leadRef.current.id) ? leadRef.current.id : undefined, anonId, locale: getLocale() }),
+    }).then(async (r) => {
+      const data = await r.json().catch(() => ({}))
+      if (!r.ok) { const e = new Error(r.status >= 500 ? t('widgets.validate.busy') : (data.error || t('widgets.validate.tryAgain'))); e.status = r.status; throw e }
+      return data
+    })
+    try {
+      const [data] = await Promise.all([call, minWait])
+      clearInterval(tick); setScanTick(3)
+      setRes(data); setQ('')
+      // Verdict stamp first, then the steps slide in one by one, then the CTA.
+      later(() => {
+        setPhase('verdict')
+        if (data.verdict === 'covered' || data.verdict === 'about') { setFire(true); later(() => setFire(false), 1800) }
+      }, 380)
+      later(() => setPhase('steps'), 1150)
+      const shown = Array.isArray(data.preview) ? data.preview.length : 0
+      later(() => setPhase('done'), 1150 + 420 + shown * STEP_STAGGER_MS + 450)
+    } catch (e) {
+      clearInterval(tick)
+      setErr(e && e.message && e.status ? e.message : t('widgets.validate.unreachable'))
+      setPhase('idle'); setStage('ask'); setQ(question)
+    } finally { setBusy(false) }
+  }
+
+  // ASK -> the lead gate (once per session) or straight to the live check.
+  const submitAsk = () => {
+    const question = q.trim()
+    if (!question || busy) return
+    setErr(''); setPendingQ(question)
+    if (lead) runCheck(question)
+    else { setFtop(''); setFerr({}); setStage('lead') }
+  }
+  const onKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); submitAsk() } }
 
   const submitLead = async (e) => {
     e && e.preventDefault()
@@ -303,47 +378,41 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
     try {
       const r = await fetch('/api/work/leads', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...v, source, anonId, locale: getLocale() }),
+        body: JSON.stringify({ ...v, source, anonId, locale: getLocale(), question: pendingQ }),
       })
       const data = await r.json().catch(() => ({}))
       if (!r.ok) { setFtop(r.status >= 500 ? t('widgets.validate.busy') : (data.error || t('widgets.validate.saveFail'))); return }
       const stored = { ...v, id: data.id || null, at: Date.now() }
-      saveLead(stored); setLead(stored)   // gate cleared for this session -> straight to the live check
+      saveLead(stored); setLead(stored)   // gate cleared for this session -> reveal the plan
+      runCheckWithLead(stored, pendingQ)
     } catch { setFtop(t('widgets.validate.offline')) }
     finally { setFbusy(false) }
   }
-
-  const ask = async () => {
-    const question = q.trim()
-    if (!question || busy) return
-    setBusy(true); setErr(''); setRes(null); setFire(false); setTyped(''); setTypingDone(false)
-    try {
-      const r = await fetch('/api/work/coverage', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        // `locale` = the visitor's global language choice, so the server can answer
-        // in it (server hook: see the i18n report). Harmless until the server reads it.
-        body: JSON.stringify({ question: cleanAlways(question), leadId: lead && lead.id ? lead.id : undefined, anonId, locale: getLocale() }),
-      })
-      const data = await r.json()
-      if (!r.ok) { setErr(r.status >= 500 ? t('widgets.validate.busy') : (data.error || t('widgets.validate.tryAgain'))) }
-      else {
-        setRes(data); setQ('')
-        if (data.verdict === 'covered') { setFire(true); setTimeout(() => setFire(false), 1800) }
-      }
-    } catch { setErr(t('widgets.validate.unreachable')) }
-    finally { setBusy(false) }
-  }
-  const onKey = (e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); ask() } }
+  const runCheckWithLead = (stored, question) => { leadRef.current = stored; runCheck(question) }
 
   const verdictMeta = {
     covered: { label: t('widgets.validate.verdict.covered'), cls: 'ok', Icon: Check },
+    about: { label: t('widgets.validate.verdict.about'), cls: 'ok', Icon: Sparkles },
     partial: { label: t('widgets.validate.verdict.partial'), cls: 'mid', Icon: AlertTriangle },
     no: { label: t('widgets.validate.verdict.no'), cls: 'no', Icon: AlertTriangle },
     offtopic: { label: t('widgets.validate.verdict.offtopic'), cls: 'off', Icon: Sparkles },
-    about: { label: t('widgets.validate.verdict.about'), cls: 'ok', Icon: Sparkles },
   }
-  const vm = res ? verdictMeta[res.verdict] : null
+  const vm = res ? (verdictMeta[res.verdict] || verdictMeta.about) : null
   const VIcon = vm ? vm.Icon : null
+  // What the plan looks like: the first `shown` steps in full, the rest as the
+  // roadmap of what a live session continues with.
+  const preview = (res && Array.isArray(res.preview)) ? res.preview : []
+  const shown = preview.length
+  const roadmap = (res && Array.isArray(res.roadmap) && res.roadmap.length >= shown) ? res.roadmap : preview.map((p) => p.do)
+  const total = roadmap.length
+  const remaining = Math.max(0, total - shown)
+  // The recommendation: the plan the live check names, else the popular plan when
+  // the visitor asked about the product. Never for an off-topic question.
+  const recPlan = res ? ((res.plan && PLAN_NAMES[String(res.plan).toLowerCase()]) ? String(res.plan).toLowerCase() : (res.verdict === 'no' || res.verdict === 'offtopic' ? '' : 'basic')) : ''
+  const recPrice = pricing && pricing.plans ? pricing.plans[recPlan] : null
+  const recHours = pricing && pricing.dailyHours ? pricing.dailyHours[recPlan] : null
+  const recTasks = pricing && pricing.tasks ? pricing.tasks[recPlan] : null
+  const showCta = !!(res && recPlan && res.verdict !== 'offtopic' && res.verdict !== 'no')
 
   // A plain render helper (NOT a component) - defining a component inside render
   // would give each field a new type every keystroke and drop focus. Inlined
@@ -369,6 +438,10 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
       </span>
     </div>
   )
+
+  const scanRows = [t('widgets.validate.scan1'), t('widgets.validate.scan2'), t('widgets.validate.scan3')]
+  // Reveal timing in ms, shared with the CSS stagger via inline --d.
+  const afterSteps = 420 + shown * STEP_STAGGER_MS
 
   return (
     <div ref={rootRef} className={`lv-root${tucked ? ' lv-docked' : ''}`} data-lvtheme={theme === 'dark' ? 'dark' : 'light'}>
@@ -407,16 +480,42 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
               <div className="wm-cov-head-t">
                 <ScanEye size={18} />
                 <span>{t('widgets.validate.title')}</span>
-                <span className="lv-live-pill"><span className="lv-live-dot" /> {t('widgets.validate.live')}</span>
+                <span className="lv-live-pill"><span className="lv-live-dot" /><span className="lv-live-pill-tx">{t('widgets.validate.live')}</span></span>
               </div>
               <button className="wm-cov-x" onClick={() => setOpen(false)} aria-label={t('widgets.validate.close')}>&times;</button>
             </div>
 
-            {/* STAGE 1 - lead gate (once per session) */}
-            {!lead && (
+            {/* STAGE 1 - ASK: a real task, in the visitor's words */}
+            {stage === 'ask' && (
+              <div className="wm-cov-body lv-ask">
+                <h3 className="lv-ask-h">{t('widgets.validate.askH')}</h3>
+                <p className="lv-ask-sub">{t('widgets.validate.askSub')}</p>
+                {err && <p className="wm-cov-err lv-top-err">{err}</p>}
+                <textarea ref={taRef} rows={3} value={q} maxLength={1200} placeholder={t('widgets.validate.askPh')}
+                  onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} aria-label={t('widgets.validate.askH')} />
+                <div className="lv-chips" aria-label={t('widgets.validate.tryOne')}>
+                  <span className="lv-chips-l">{t('widgets.validate.tryOne')}</span>
+                  {[1, 2, 3, 4].map((i) => (
+                    <button type="button" key={i} className="lv-chip" onClick={() => { setQ(t(`widgets.validate.chip${i}`)); taRef.current && taRef.current.focus() }}>{t(`widgets.validate.chip${i}`)}</button>
+                  ))}
+                </div>
+                <button type="button" className="lv-go" onClick={submitAsk} disabled={busy || !q.trim()}>
+                  <Zap size={17} /> {t('widgets.validate.watchIt')} <ArrowRight size={17} className="lv-arrow" />
+                </button>
+                <p className="lv-privacy"><ShieldCheck size={13} /> {t('widgets.validate.privacy')}</p>
+              </div>
+            )}
+
+            {/* STAGE 2 - LEAD (once per session): the plan is being prepared; where do we send it */}
+            {stage === 'lead' && (
               <form className="wm-cov-body lv-form" onSubmit={submitLead}>
+                <div className="lv-prep" role="status">
+                  <span className="lv-prep-bar" aria-hidden />
+                  <ScanEye size={15} /><b>{t('widgets.validate.prepH')}</b>
+                  <span className="lv-prep-q">&ldquo;{pendingQ}&rdquo;</span>
+                </div>
                 {ftop && <p className="wm-cov-err lv-top-err">{ftop}</p>}
-                <p className="wm-cov-intro">{t.rich('widgets.validate.introLead')}</p>
+                <p className="wm-cov-intro">{t.rich('widgets.validate.leadIntro')}</p>
                 <div className="lv-grid">
                   {field('firstName', t('widgets.validate.firstName'), { placeholder: t('widgets.validate.firstNamePh'), half: true, inputRef: firstRef, autoComplete: 'given-name' })}
                   {field('lastName', t('widgets.validate.lastName'), { placeholder: t('widgets.validate.lastNamePh'), half: true, autoComplete: 'family-name' })}
@@ -426,99 +525,139 @@ export default function LiveValidate({ go = defaultGo, theme = 'light', source =
                   {field('company', t('widgets.validate.company'), { placeholder: t('widgets.validate.companyPh'), autoComplete: 'organization' })}
                 </div>
                 <button type="submit" className="lv-submit" disabled={fbusy}>
-                  {fbusy ? <><Loader2 size={16} className="lv-spin" /> {t('widgets.validate.saving')}</> : <>{t('widgets.validate.startCheck')} <ArrowRight size={16} className="lv-arrow" /></>}
+                  {fbusy ? <><Loader2 size={16} className="lv-spin" /> {t('widgets.validate.saving')}</> : <>{t('widgets.validate.reveal')} <ArrowRight size={16} className="lv-arrow" /></>}
                 </button>
+                <button type="button" className="lv-back" onClick={() => { setStage('ask'); setErr('') }}>{t('widgets.validate.editTask')}</button>
                 <p className="lv-privacy"><ShieldCheck size={13} /> {t('widgets.validate.privacy')}</p>
               </form>
             )}
 
-            {/* STAGE 2 - live validation */}
-            {lead && (
+            {/* STAGE 3 - REVEAL: the product, live, on the visitor's task */}
+            {stage === 'reveal' && (
               <>
-                <div className="wm-cov-body">
-                  {!res && !busy && <p className="wm-cov-intro">{t.rich('widgets.validate.introAsk')}</p>}
-                  {busy && <div className="wm-cov-think"><span /><span /><span /> {t('widgets.validate.validating')}</div>}
-                  {res && (
-                    <div className="wm-cov-ans" key={res.answer}>
-                      {vm && (
-                        <div className={`wm-cov-verdict ${vm.cls}`}>
-                          <span className="wm-cov-vbadge">{VIcon && <VIcon size={22} />}</span>
-                          <span className="wm-cov-vlabel">{vm.label}</span>
-                        </div>
-                      )}
-                      <p className="wm-cov-text">{typingDone ? renderRich(res.answer) : <>{typed}<span className="wm-cov-caret" /></>}</p>
-                      {res.preview && res.preview.length > 0 && (() => {
-                        const preview = res.preview
-                        const shown = preview.length
-                        // The whole-task roadmap; fall back to the preview titles if the
-                        // model did not return a longer one. The first `shown` are
-                        // expanded; the rest are upcoming guided steps.
-                        const roadmap = (Array.isArray(res.roadmap) && res.roadmap.length >= shown) ? res.roadmap : preview.map((p) => p.do)
-                        const total = roadmap.length
-                        const remaining = total - shown
-                        return (
-                          <div className={`wm-cov-flow${typingDone ? ' show' : ''}`}>
-                            {res.sees && (
-                              <div className="wm-cov-sees">
-                                <span className="wm-cov-scan" aria-hidden />
-                                <span className="wm-cov-seek"><ScanEye size={13} /> {t('widgets.validate.iCanSee')}</span>
-                                <span className="wm-cov-seetxt">{res.sees}</span>
-                              </div>
-                            )}
-                            <div className="wm-cov-flow-h"><TerminalSquare size={14} /> {t('widgets.validate.planH')}{total ? <span className="wm-cov-flow-sub"> · {t.n('widgets.validate.step', total)}{remaining > 0 ? `, ${t('widgets.validate.firstInFull', { n: shown })}` : ''}</span> : null}</div>
-                            <ol className="wm-cov-steps">
-                              {roadmap.map((title, i) => {
-                                if (i >= shown) return (
-                                  <li key={i} className="next">
-                                    <span className="n play"><Play size={10} /></span>
-                                    <div className="s"><div className="do up">{renderRich(title)}</div></div>
-                                  </li>
-                                )
-                                const p = preview[i]
-                                return (
-                                  <li key={i}>
-                                    <span className="n">{i + 1}</span>
-                                    <div className="s">
-                                      <div className="do">{renderRich(p.do)}</div>
-                                      {p.cmd && (
-                                        <div className="cmd">
-                                          <code>{p.cmd}</code>
-                                          <button onClick={() => copyCmd(p.cmd, i)} title={t('widgets.copy.copy')} aria-label={t('widgets.copy.copyCommand')}>{copiedCmd === i ? <Check size={13} /> : <Copy size={13} />}</button>
-                                        </div>
-                                      )}
-                                      {p.how && p.how.length > 0 && (
-                                        <details className="wm-cov-how">
-                                          <summary>{t('widgets.validate.showHow')}</summary>
-                                          <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
-                                        </details>
-                                      )}
-                                    </div>
-                                  </li>
-                                )
-                              })}
-                            </ol>
-                            {remaining > 0 && <div className="wm-cov-more"><Play size={12} /> {t('widgets.validate.more', { steps: t.n('widgets.validate.step', remaining) })}</div>}
-                          </div>
-                        )
-                      })()}
-                      <div className={`wm-cov-foot${typingDone ? ' show' : ''}`}>
-                        {res.verdict !== 'offtopic' && (
-                          <button className="lv-cta" onClick={() => go(res.plan ? res.plan.toLowerCase() : '')}>{t('common.getStarted')} <ArrowRight size={14} className="lv-arrow" /></button>
-                        )}
-                      </div>
+                <div className="wm-cov-body lv-reveal">
+                  <div className="lv-console" aria-live="polite">
+                    <div className="lv-con-head">
+                      <span className="d r" /><span className="d y" /><span className="d g" />
+                      <b>WorkCoPilot</b>
+                      <span className="lv-con-live"><i aria-hidden />{t('widgets.validate.watching')}</span>
+                      {res && vm && <span className="lv-con-tag">{t('widgets.validate.live')}</span>}
                     </div>
-                  )}
+                    <div className="lv-con-goal"><span className="lv-k">{t('widgets.validate.goal')}</span>{pendingQ}</div>
+
+                    {phase === 'scan' && (
+                      <div className="lv-scan">
+                        <span className="lv-scan-beam" aria-hidden />
+                        {scanRows.map((row, i) => (
+                          <div key={i} className={`lv-scan-row${scanTick > i ? ' done' : scanTick === i ? ' on' : ''}`}>
+                            <span className="tick">{scanTick > i ? <Check size={12} /> : null}</span>{row}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {phase !== 'scan' && res && vm && (
+                      <>
+                        <div className={`lv-verdict ${vm.cls}`}>
+                          <span className="lv-vbadge">{VIcon && <VIcon size={20} />}</span>
+                          <span className="lv-vlabel">{vm.label}</span>
+                        </div>
+                        {res.answer && <p className="lv-answer">{renderRich(res.answer)}</p>}
+                        {res.sees && (
+                          <div className="lv-sees">
+                            <span className="lv-scan-beam soft" aria-hidden />
+                            <span className="lv-seek"><Eye size={12} /> {t('widgets.validate.iCanSee')}</span>
+                            <span className="lv-seetxt">{res.sees}</span>
+                          </div>
+                        )}
+
+                        {(phase === 'steps' || phase === 'done') && shown > 0 && (
+                          <ol className="lv-steps">
+                            {preview.map((p, i) => (
+                              <li key={i} className="lv-step" style={{ '--i': i }}>
+                                <div className="lv-step-l">
+                                  <span><TerminalSquare size={11} /> {t('widgets.validate.doThisNow')}</span>
+                                  <span className="lv-step-n">{t('widgets.validate.stepOf', { n: i + 1, total: total || shown })}</span>
+                                </div>
+                                <div className="lv-step-do">{renderRich(p.do)}</div>
+                                {p.cmd && (
+                                  <div className="lv-term" dir="ltr">
+                                    <div className="lv-term-h"><span>{t('widgets.validate.terminal')}</span>
+                                      <button type="button" onClick={() => copyCmd(p.cmd, i)} aria-label={t('widgets.validate.copyCmd')}>{copiedCmd === i ? <><Check size={12} /> {t('widgets.validate.copied')}</> : <><Copy size={12} /> {t('widgets.validate.copy')}</>}</button>
+                                    </div>
+                                    <code>{p.cmd}</code>
+                                  </div>
+                                )}
+                                {p.how && p.how.length > 0 && (
+                                  <details className="lv-how" open={i === 0}>
+                                    <summary>{t('widgets.validate.exactlyHow')}</summary>
+                                    <ol>{p.how.map((h, k) => <li key={k}>{renderRich(h)}</li>)}</ol>
+                                  </details>
+                                )}
+                              </li>
+                            ))}
+                          </ol>
+                        )}
+
+                        {(phase === 'steps' || phase === 'done') && remaining > 0 && (
+                          <div className="lv-locked" style={{ '--d': `${afterSteps}ms` }}>
+                            <div className="lv-locked-h">
+                              <ListChecks size={14} /> {t.n('widgets.validate.lockedMore', remaining)}
+                              <span className="lv-lock"><Lock size={10} /> {t('widgets.validate.lockedTag')}</span>
+                            </div>
+                            <ol>
+                              {roadmap.slice(shown).map((title, i) => (
+                                <li key={i}>
+                                  <span className="n">{shown + i + 1}</span>
+                                  <div className="t">{renderRich(title)}<span className="bars" aria-hidden><i /><i /><i /></span></div>
+                                </li>
+                              ))}
+                            </ol>
+                          </div>
+                        )}
+
+                        {(phase === 'steps' || phase === 'done') && res.verdict !== 'offtopic' && (
+                          <div className="lv-val" style={{ '--d': `${afterSteps + 120}ms` }}>
+                            {total > 0 && <span><ListChecks size={13} /> {t.n('widgets.validate.step', total)}</span>}
+                            <span><TerminalSquare size={13} /> {t('widgets.validate.valExact')}</span>
+                            <span><Check size={13} /> {t('widgets.validate.valCheck')}</span>
+                            <span><ShieldCheck size={13} /> {t('widgets.validate.valRo')}</span>
+                          </div>
+                        )}
+
+                        {phase === 'done' && showCta && (
+                          <div className="lv-cta">
+                            <div className="lv-cta-h">{t('widgets.validate.ctaH')}</div>
+                            <p className="lv-cta-sub">{t('widgets.validate.ctaSub')}</p>
+                            <div className="lv-plan">
+                              <span className="lv-plan-rib">{t('widgets.validate.recommended')}</span>
+                              <span className="lv-plan-n">{PLAN_NAMES[recPlan]}</span>
+                              {recPrice != null && <span className="lv-plan-p">{money(recPrice)}<small>{t('common.perMonth')}</small></span>}
+                              {(recHours != null || recTasks != null) && (
+                                <span className="lv-plan-d">
+                                  {recHours != null && t.n('widgets.validate.hrs', recHours)}
+                                  {recHours != null && recTasks != null && ' · '}
+                                  {recTasks != null && t.n('widgets.validate.tasksN', recTasks)}
+                                </span>
+                              )}
+                            </div>
+                            <div className="lv-cta-btns">
+                              <button type="button" className="lv-start" onClick={() => toPricing(recPlan)}>{t('widgets.validate.startWith', { plan: PLAN_NAMES[recPlan] })} <ArrowRight size={16} className="lv-arrow" /></button>
+                              <button type="button" className="lv-compare" onClick={() => toPricing('')}>{t('widgets.validate.comparePlans')}</button>
+                            </div>
+                            <p className="lv-trust"><span><Check size={12} /> {t('widgets.validate.trustCancel')}</span><span><Lock size={12} /> {t('widgets.validate.trustStripe')}</span></p>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
                   {err && <p className="wm-cov-err">{err}</p>}
                 </div>
-                <div className="wm-cov-input">
-                  <textarea ref={taRef} rows={2} value={q} maxLength={1200} placeholder={t('widgets.validate.askPh')}
-                    onChange={(e) => setQ(e.target.value)} onKeyDown={onKey} />
-                  <div className="wm-cov-ibtns">
-                    {(q || res) && <button className="wm-cov-clear" onClick={clearAll} title={t('widgets.validate.clearTitle')} aria-label={t('widgets.validate.clear')}><RotateCcw size={15} /> {t('widgets.validate.clear')}</button>}
-                    <button className="wm-cov-send" onClick={ask} disabled={busy || !q.trim()} aria-label={t('widgets.validate.send')}>
-                      {busy ? <span className="wm-cov-sdots"><i /><i /><i /></span> : <ArrowRight size={18} className="lv-arrow" />}
-                    </button>
-                  </div>
+                <div className="wm-cov-input lv-again">
+                  <button type="button" className="wm-cov-clear" onClick={tryAnother} disabled={busy}><RotateCcw size={15} /> {t('widgets.validate.tryAnother')}</button>
+                  {phase === 'done' && showCta && (
+                    <button type="button" className="lv-again-go" onClick={() => toPricing(recPlan)}>{t('widgets.validate.startWith', { plan: PLAN_NAMES[recPlan] })} <ArrowRight size={15} className="lv-arrow" /></button>
+                  )}
                 </div>
               </>
             )}
@@ -545,16 +684,14 @@ ${s} .lv-launch-tx,${s} .lv-min,${s} .lv-coach{display:none}
 
 // All styles are scoped to .lv-root so the widget is identical on every page and
 // independent of the host. The colour variables are defined here (not inherited
-// from the page), light by default, dark under [data-lvtheme="dark"]. The
-// .wm-cov*/.wm-fw* rules are the validator's original styles, moved here so
-// there is exactly ONE copy (they were deleted from WorkMarketing).
+// from the page), light by default, dark under [data-lvtheme="dark"]. The reveal
+// console is always dark: it is the product's own surface, shown as-is.
 const LV_CSS = `
-.lv-root{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--chip:rgba(10,20,40,.04)}
+.lv-root{--ink:#f4f7fb;--panel:#ffffff;--line:#e2e7f0;--tx:#0c1222;--mut:#3f4a5c;--em:#0a9d66;--em2:#0a86cf;--warm:#ff9a4d;--warm2:#f26a43;--chip:rgba(10,20,40,.04);--disp:"Bricolage Grotesque","Figtree",sans-serif;--mono:"JetBrains Mono",ui-monospace,monospace}
 .lv-root[data-lvtheme="dark"]{--ink:#070810;--panel:#12141d;--line:rgba(255,255,255,.09);--tx:#eef0f6;--mut:#9aa0b4;--em:#8cf5c4;--em2:#39d3ff;--warm:#ffb35c;--warm2:#ff7a59;--chip:rgba(255,255,255,.05)}
 /* RTL: the launcher + coachmark hug the inline-end corner; arrows flip; commands stay LTR. */
 .lv-root{text-align:start}
 [dir="rtl"] .lv-arrow{transform:scaleX(-1)}
-[dir="rtl"] .wm-cov-steps .cmd{direction:ltr}
 [dir="rtl"] .lv-coach-body{text-align:right}
 /* Launcher. The fixed wrapper carries the placement (inline-end corner, clear of
    the device safe area); the pill itself is static inside it so the minimise
@@ -594,25 +731,44 @@ const LV_CSS = `
 .lv-live-dot{width:8px;height:8px;border-radius:50%;background:#e23b3b;box-shadow:0 0 0 0 rgba(226,59,59,.6);animation:lv-pulse 1.5s infinite}
 @keyframes lv-pulse{0%{box-shadow:0 0 0 0 rgba(226,59,59,.55)}70%{box-shadow:0 0 0 7px rgba(226,59,59,0)}100%{box-shadow:0 0 0 0 rgba(226,59,59,0)}}
 .wm-cov-overlay{position:fixed;inset:0;z-index:70;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,20,16,.5);backdrop-filter:blur(4px);animation:wm-cov-fade .18s ease}
-.wm-cov{z-index:71;width:min(720px,calc(100vw - 36px));max-height:min(860px,calc(100vh - 56px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 60px 140px -34px rgba(0,0,0,.55);animation:wm-cov-pop .22s cubic-bezier(.2,.8,.2,1)}
+.wm-cov{position:relative;z-index:71;width:min(760px,calc(100vw - 36px));max-height:min(900px,calc(100vh - 56px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:22px;overflow:hidden;box-shadow:0 60px 140px -34px rgba(0,0,0,.55);animation:wm-cov-pop .22s cubic-bezier(.2,.8,.2,1)}
 @keyframes wm-cov-fade{from{opacity:0}to{opacity:1}}
 @keyframes wm-cov-pop{from{opacity:0;transform:translateY(16px) scale(.96)}to{opacity:1;transform:none}}
-.wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(57,211,255,.06),transparent)}
-.wm-cov-head-t{display:inline-flex;align-items:center;gap:10px;font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:19px;color:var(--tx)}
-.wm-cov-head-t svg{color:var(--em2)}
-.lv-live-pill{display:inline-flex;align-items:center;gap:6px;font-family:"Figtree",system-ui,sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#e23b3b;background:rgba(226,59,59,.1);border:1px solid rgba(226,59,59,.3);border-radius:999px;padding:3px 9px}
-.wm-cov-x{background:none;border:none;color:var(--mut);font-size:26px;line-height:1;cursor:pointer;padding:0 6px}
+.wm-cov-head{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(57,211,255,.06),transparent)}
+.wm-cov-head-t{display:inline-flex;align-items:center;gap:10px;min-width:0;font-family:var(--disp);font-weight:800;font-size:18px;color:var(--tx)}
+.wm-cov-head-t>span:first-of-type{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wm-cov-head-t svg{color:var(--em2);flex:0 0 auto}
+.lv-live-pill{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-family:"Figtree",system-ui,sans-serif;font-size:10.5px;font-weight:800;letter-spacing:.1em;color:#e23b3b;background:rgba(226,59,59,.1);border:1px solid rgba(226,59,59,.3);border-radius:999px;padding:3px 9px}
+.wm-cov-x{background:none;border:none;color:var(--mut);font-size:26px;line-height:1;cursor:pointer;padding:0 6px;flex:0 0 auto}
 .wm-cov-x:hover{color:var(--tx)}
 .wm-cov-body{flex:1;overflow-y:auto;padding:22px 24px;min-height:130px}
-.wm-cov-intro{color:var(--mut);font-size:15px;line-height:1.6;margin:0}
+.wm-cov-intro{color:var(--mut);font-size:14.5px;line-height:1.6;margin:0}
 .wm-cov-intro b{color:var(--tx)}
-.wm-cov-think{display:flex;align-items:center;gap:10px;color:var(--mut);font-size:14px;font-weight:500}
-.wm-cov-think span{width:8px;height:8px;border-radius:50%;background:var(--em2);animation:wm-cov-bounce 1s infinite}
-.wm-cov-think span:nth-child(2){animation-delay:.15s}.wm-cov-think span:nth-child(3){animation-delay:.3s}
-@keyframes wm-cov-bounce{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1);opacity:1}}
-/* lead-capture form */
-.lv-form{display:flex;flex-direction:column;gap:16px}
+.wm-cov-err{margin-top:12px;color:#c0392b;font-size:14px}
 .lv-top-err{margin:0}
+/* ===== ASK =============================================================== */
+.lv-ask{display:flex;flex-direction:column;gap:13px}
+.lv-ask-h{margin:0;font-family:var(--disp);font-weight:800;font-size:25px;letter-spacing:-.015em;line-height:1.15;color:var(--tx)}
+.lv-ask-sub{margin:0;color:var(--mut);font-size:14.5px;line-height:1.55;max-width:60ch}
+.lv-ask textarea{width:100%;box-sizing:border-box;min-height:98px;resize:vertical;background:var(--ink);border:1px solid var(--line);border-radius:14px;padding:13px 15px;color:var(--tx);font:inherit;font-size:15.5px;line-height:1.5;outline:none;transition:border-color .14s,box-shadow .14s}
+.lv-ask textarea::placeholder{color:var(--mut);opacity:.75}
+.lv-ask textarea:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.14)}
+.lv-chips{display:flex;flex-wrap:wrap;gap:7px;align-items:center}
+.lv-chips-l{font-size:12px;font-weight:700;color:var(--mut);margin-inline-end:2px;white-space:nowrap}
+.lv-chip{border:1px solid var(--line);background:var(--chip);color:var(--tx);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;cursor:pointer;max-width:100%;text-align:start;line-height:1.3;transition:border-color .14s,background .14s,transform .14s}
+.lv-chip:hover{border-color:var(--em2);background:rgba(57,211,255,.08);transform:translateY(-1px)}
+.lv-go{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;border-radius:13px;padding:15px 18px;font:inherit;font-weight:800;font-size:16px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;box-shadow:0 16px 36px -14px rgba(255,122,89,.6);transition:transform .14s,opacity .14s,box-shadow .14s}
+.lv-go:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 20px 40px -14px rgba(255,122,89,.7)}
+.lv-go:disabled{opacity:.55;cursor:default}
+.lv-go svg{flex:0 0 auto}
+/* ===== LEAD ============================================================== */
+.lv-form{display:flex;flex-direction:column;gap:15px}
+.lv-prep{position:relative;display:flex;align-items:center;gap:9px;flex-wrap:wrap;overflow:hidden;padding:11px 13px 13px;border-radius:12px;border:1px solid rgba(57,211,255,.32);background:rgba(57,211,255,.07);font-size:13.5px;color:var(--tx)}
+.lv-prep svg{color:var(--em2);flex:0 0 auto}
+.lv-prep b{font-weight:800}
+.lv-prep-q{flex-basis:100%;min-width:0;color:var(--mut);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lv-prep-bar{position:absolute;left:0;bottom:0;height:3px;width:38%;border-radius:2px;background:linear-gradient(90deg,var(--em2),var(--em));animation:lv-prepbar 1.5s ease-in-out infinite}
+@keyframes lv-prepbar{0%{transform:translateX(-110%)}100%{transform:translateX(290%)}}
 .lv-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
 .lv-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .lv-field.half{grid-column:span 1}
@@ -637,132 +793,144 @@ const LV_CSS = `
 .lv-submit{display:inline-flex;align-items:center;justify-content:center;gap:9px;width:100%;border:none;border-radius:13px;padding:14px 18px;font:inherit;font-weight:800;font-size:15.5px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;transition:transform .14s,box-shadow .14s;box-shadow:0 14px 34px -14px rgba(255,122,89,.55)}
 .lv-submit:hover{transform:translateY(-1px)}
 .lv-submit:disabled{opacity:.6;cursor:default;transform:none}
+.lv-back{align-self:center;background:none;border:none;color:var(--mut);font:inherit;font-size:13px;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:2px 6px;margin-top:-6px}
+.lv-back:hover{color:var(--tx)}
 .lv-spin{animation:lv-rot 1s linear infinite}
 @keyframes lv-rot{to{transform:rotate(360deg)}}
 .lv-privacy{display:flex;align-items:flex-start;gap:8px;margin:0;font-size:12px;line-height:1.5;color:var(--mut)}
 .lv-privacy svg{flex:0 0 auto;margin-top:2px;color:var(--em)}
 @media(max-width:560px){.lv-grid{grid-template-columns:1fr}.lv-field.half{grid-column:1 / -1}}
-.wm-cov-ans{border:1px solid var(--line);border-radius:16px;padding:18px 20px;background:linear-gradient(180deg,rgba(140,245,196,.08),transparent);animation:wm-cov-rise .3s cubic-bezier(.2,.8,.2,1)}
-@keyframes wm-cov-rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-.wm-cov-verdict{display:inline-flex;align-items:center;gap:13px;margin-bottom:16px;animation:wm-cov-vpop .5s cubic-bezier(.2,1.4,.4,1)}
-@keyframes wm-cov-vpop{0%{opacity:0;transform:scale(.55)}55%{transform:scale(1.1)}100%{opacity:1;transform:scale(1)}}
-.wm-cov-vbadge{width:44px;height:44px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.wm-cov-vlabel{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:27px;letter-spacing:-.01em;line-height:1}
-.wm-cov-verdict.ok .wm-cov-vbadge{background:rgba(10,157,102,.18);color:#0a9d66;animation:wm-cov-glow 1.7s ease-in-out infinite}
-.wm-cov-verdict.ok .wm-cov-vlabel{color:#0a9d66}
-@keyframes wm-cov-glow{0%,100%{box-shadow:0 0 0 5px rgba(10,157,102,.09)}50%{box-shadow:0 0 0 11px rgba(10,157,102,.14)}}
-.wm-cov-verdict.mid .wm-cov-vbadge{background:rgba(255,179,92,.22);color:#b5790f}.wm-cov-verdict.mid .wm-cov-vlabel{color:#b5790f}
-.wm-cov-verdict.no .wm-cov-vbadge{background:rgba(255,99,99,.18);color:#c0392b}.wm-cov-verdict.no .wm-cov-vlabel{color:#c0392b}
-.wm-cov-verdict.off .wm-cov-vbadge{background:rgba(120,130,150,.16);color:var(--mut)}.wm-cov-verdict.off .wm-cov-vlabel{color:var(--mut);font-size:21px}
-.wm-cov-text{color:var(--tx);font-size:16px;line-height:1.7;margin:0;min-height:1.2em;overflow-wrap:anywhere}
-.wm-cov-b{font-weight:800;color:var(--tx);background:linear-gradient(transparent 62%,rgba(140,245,196,.45) 0);padding:0 1px}
-.wm-cov-code{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:.86em;background:rgba(57,211,255,.12);color:var(--em2);border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:normal;overflow-wrap:anywhere}
-.wm-cov-caret{display:inline-block;width:2px;height:1.05em;background:var(--em2);margin-left:2px;vertical-align:-2px;animation:wm-cov-blink .8s step-end infinite}
-@keyframes wm-cov-blink{50%{opacity:0}}
-.wm-cov-points{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:11px;opacity:0;transform:translateY(6px);transition:opacity .4s ease .08s,transform .4s ease .08s}
-.wm-cov-points.show{opacity:1;transform:none}
-.wm-cov-points li{display:flex;gap:10px;align-items:flex-start;font-size:14.5px;line-height:1.55;color:var(--tx)}
-.wm-cov-points li svg{color:var(--em);flex-shrink:0;margin-top:3px}
-/* LIVE LOOP showcase - what the real product does: watch -> navigate -> correct -> fix */
-.wm-cov-loop{margin-top:16px;border:1px solid rgba(57,211,255,.3);border-radius:16px;padding:16px;background:linear-gradient(145deg,rgba(57,211,255,.1),rgba(140,245,196,.07) 55%,rgba(255,179,92,.08));opacity:0;transform:translateY(8px);transition:opacity .45s ease .1s,transform .45s ease .1s}
-.wm-cov-loop.show{opacity:1;transform:none}
-.wm-cov-loop-h{display:inline-flex;align-items:center;gap:8px;font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:14px;color:var(--tx);margin-bottom:14px}
-.wm-cov-loop-grid{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;align-items:stretch;gap:9px}
-.wm-cov-cap{display:flex;flex-direction:column;gap:5px;padding:12px 11px;border-radius:12px;background:var(--panel);border:1px solid var(--line);min-width:0}
-.wm-cov-cap .ic{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;color:#042;margin-bottom:3px}
-.wm-cov-cap b{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-size:14.5px;font-weight:800;color:var(--tx);letter-spacing:-.01em}
-.wm-cov-cap p{margin:0;font-size:12px;line-height:1.45;color:var(--mut)}
-.wm-cov-cap.watch .ic{background:linear-gradient(135deg,#39d3ff,#0a86cf)}
-.wm-cov-cap.guide .ic{background:linear-gradient(135deg,#8cf5c4,#0a9d66)}
-.wm-cov-cap.correct .ic{background:linear-gradient(135deg,#b98cff,#7a4bd8);color:#fff}
-.wm-cov-cap.fix .ic{background:linear-gradient(135deg,#ffb35c,#f26a43);color:#2a1206}
-.wm-cov-cap.watch{box-shadow:0 0 0 0 rgba(57,211,255,.4);animation:wm-cov-cappulse 3.2s ease-in-out infinite}
-.wm-cov-cap.guide{animation:wm-cov-cappulse 3.2s ease-in-out .8s infinite}
-.wm-cov-cap.correct{animation:wm-cov-cappulse 3.2s ease-in-out 1.6s infinite}
-.wm-cov-cap.fix{animation:wm-cov-cappulse 3.2s ease-in-out 2.4s infinite}
-@keyframes wm-cov-cappulse{0%,100%{box-shadow:0 0 0 0 rgba(57,211,255,0)}30%{box-shadow:0 10px 26px -14px rgba(57,211,255,.6)}}
-.wm-cov-cap.arrow{flex-direction:row;align-items:center;justify-content:center;background:none;border:none;padding:0;color:var(--em2);animation:wm-cov-arrflow 2.4s ease-in-out infinite}
-@keyframes wm-cov-arrflow{0%,100%{opacity:.35;transform:translateX(-2px)}50%{opacity:1;transform:translateX(2px)}}
-.wm-cov-loop-foot{display:flex;align-items:flex-start;gap:8px;margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;line-height:1.55;color:var(--mut)}
-.wm-cov-loop-foot svg{flex:0 0 auto;margin-top:1px;color:var(--em2)}
-.wm-cov-loop-foot b{color:var(--tx)}
-@media(max-width:620px){.wm-cov-loop-grid{grid-template-columns:1fr 1fr;gap:9px}.wm-cov-cap.arrow{display:none}}
-.wm-cov-flow{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;background:rgba(57,211,255,.05);opacity:0;transform:translateY(6px);transition:opacity .4s ease .12s,transform .4s ease .12s}
-.wm-cov-flow.show{opacity:1;transform:none}
-.wm-cov-flow-h{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em2);margin-bottom:12px}
-.wm-cov-flow-sub{color:var(--mut);font-weight:700;letter-spacing:.02em;text-transform:none}
-/* "I can see" - the product perceiving. Highlighted + scanning to match the
-   demo card, with a one-time glow as it appears (quality: consistent language). */
-.wm-cov-sees{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:12px;padding:10px 12px;border:1px solid rgba(57,211,255,.32);background:rgba(57,211,255,.07);border-radius:11px;font-size:13px;line-height:1.5;color:var(--tx);overflow:hidden;animation:wm-cov-seeglow 1.6s ease-out .05s both}
-@keyframes wm-cov-seeglow{0%{box-shadow:0 0 0 0 rgba(57,211,255,0)}26%{box-shadow:0 0 0 4px rgba(57,211,255,.2),0 12px 30px -12px rgba(57,211,255,.5)}100%{box-shadow:0 0 0 0 rgba(57,211,255,0)}}
-.wm-cov-scan{position:absolute;top:0;bottom:0;left:0;width:38%;background:linear-gradient(90deg,transparent,rgba(57,211,255,.16),transparent);animation:wm-cov-scanx 2s linear infinite;pointer-events:none}
-@keyframes wm-cov-scanx{from{transform:translateX(-120%)}to{transform:translateX(330%)}}
-.wm-cov-seek{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10.5px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--em2)}
-.wm-cov-seek svg{color:var(--em2);flex-shrink:0}
-.wm-cov-seetxt{flex:1;min-width:0;color:var(--tx)}
-@media(prefers-reduced-motion:reduce){.wm-cov-sees{animation:none}.wm-cov-scan{display:none}}
-.wm-cov-steps li.next{opacity:.85}
-.wm-cov-steps .n.play{background:rgba(255,255,255,.06);color:var(--mut);border:1px solid var(--line)}
-.wm-cov-steps .do.up{color:var(--mut);font-size:14px;padding-top:2px}
-.wm-cov-more{display:flex;align-items:center;gap:8px;margin-top:13px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mut)}
-.wm-cov-more svg{color:var(--em2);flex-shrink:0}
-.wm-cov-live{display:flex;gap:11px;align-items:flex-start;margin-bottom:14px;padding:12px 14px;border-radius:12px;background:linear-gradient(135deg,rgba(57,211,255,.14),rgba(140,245,196,.11));border:1px solid rgba(57,211,255,.32)}
-.wm-cov-live-ic{flex:0 0 32px;width:32px;height:32px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--em),var(--em2));color:#042}
-.wm-cov-live div{font-size:13.5px;line-height:1.55;color:var(--tx)}
-.wm-cov-live b{color:var(--tx);font-weight:700}
-.wm-cov-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;counter-reset:cv}
-.wm-cov-steps li{display:flex;gap:11px;align-items:flex-start}
-.wm-cov-steps .n{flex:0 0 22px;width:22px;height:22px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#042;background:linear-gradient(135deg,var(--em),var(--em2));margin-top:1px}
-.wm-cov-steps .s{flex:1;min-width:0}
-.wm-cov-steps .do{font-size:14.5px;line-height:1.5;color:var(--tx)}
-.wm-cov-steps .cmd{margin-top:7px;display:flex;align-items:center;gap:8px;background:#0b1020;border:1px solid rgba(57,211,255,.22);border-radius:9px;padding:8px 10px}
-.wm-cov-steps .cmd code{flex:1;min-width:0;font-family:"JetBrains Mono",ui-monospace,monospace;font-size:12.5px;color:#8ff0c4;white-space:pre-wrap;overflow-wrap:anywhere}
-.wm-cov-steps .cmd button{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;width:28px;height:26px;border-radius:7px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;cursor:pointer;transition:background .14s}
-.wm-cov-steps .cmd button:hover{background:rgba(255,255,255,.12)}
-.wm-cov-how{margin-top:9px}
-.wm-cov-how summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--em2);list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none}
-.wm-cov-how summary::-webkit-details-marker{display:none}
-.wm-cov-how summary:before{content:'▸';display:inline-block;transition:transform .15s}
-.wm-cov-how[open] summary:before{transform:rotate(90deg)}
-.wm-cov-how ol{margin:9px 0 0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
-.wm-cov-how li{font-size:13px;line-height:1.55;color:var(--mut);overflow-wrap:anywhere}
-.wm-cov-trust{margin-top:16px;border:1px solid var(--line);border-radius:14px;padding:15px 16px;background:linear-gradient(180deg,rgba(140,245,196,.06),transparent);opacity:0;transform:translateY(6px);transition:opacity .4s ease .16s,transform .4s ease .16s}
-.wm-cov-trust.show{opacity:1;transform:none}
-.wm-cov-trust-row{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
-.wm-cov-pillar{display:flex;gap:10px;align-items:flex-start}
-.wm-cov-pillar .ic{flex:0 0 30px;width:30px;height:30px;border-radius:9px;display:inline-flex;align-items:center;justify-content:center}
-.wm-cov-pillar .ic.qlt{background:rgba(255,179,92,.18);color:#e08a2a}
-.wm-cov-pillar .ic.ent{background:rgba(185,140,255,.16);color:#b98cff}
-.wm-cov-pillar .ic.sec{background:rgba(57,211,255,.14);color:var(--em2)}
-.wm-cov-pillar .ic.cmp{background:rgba(10,157,102,.16);color:var(--em)}
-.wm-cov-pillar b{display:block;font-size:13.5px;color:var(--tx);margin-bottom:3px}
-.wm-cov-pillar p{margin:0;font-size:12.5px;line-height:1.5;color:var(--mut)}
-.wm-cov-chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:14px;padding-top:13px;border-top:1px solid var(--line)}
-.wm-cov-chips span{font-size:11.5px;font-weight:700;letter-spacing:.02em;color:var(--tx);background:var(--chip);border:1px solid var(--line);border-radius:999px;padding:4px 11px}
-@media(max-width:620px){.wm-cov-trust-row{grid-template-columns:1fr;gap:12px}}
-.wm-cov-foot{opacity:0;transform:translateY(6px);transition:opacity .4s ease,transform .4s ease;pointer-events:none}
-.wm-cov-foot.show{opacity:1;transform:none;pointer-events:auto}
-.wm-cov-plan{margin-top:14px;font-size:14px;color:var(--mut)}.wm-cov-plan b{color:var(--em2)}
-.lv-cta{margin-top:14px;display:inline-flex;align-items:center;gap:8px;border:none;border-radius:12px;padding:12px 18px;font:inherit;font-weight:800;font-size:14.5px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;transition:transform .14s}
-.lv-cta:hover{transform:translateY(-1px)}
-.wm-cov-err{margin-top:12px;color:#c0392b;font-size:14px}
-.wm-cov-input{display:flex;gap:10px;align-items:flex-end;padding:16px 20px;border-top:1px solid var(--line)}
-.wm-cov-input textarea{flex:1;resize:none;background:var(--ink);border:1px solid var(--line);border-radius:13px;padding:12px 14px;color:var(--tx);font:inherit;font-size:15px;line-height:1.5;outline:none}
-.wm-cov-input textarea:focus{border-color:var(--em2);box-shadow:0 0 0 3px rgba(57,211,255,.12)}
-.wm-cov-ibtns{display:flex;align-items:center;gap:8px}
-.wm-cov-clear{flex:0 0 auto;height:46px;padding:0 15px;border-radius:13px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s}
-.wm-cov-clear:hover{color:var(--tx);border-color:var(--em2)}
-.wm-cov-send{flex:0 0 auto;width:46px;height:46px;border-radius:13px;border:none;background:linear-gradient(135deg,var(--warm),var(--warm2));color:#1a0e08;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
-.wm-cov-send:disabled{opacity:.5;cursor:default}
-.wm-cov-sdots{display:inline-flex;gap:3px}.wm-cov-sdots i{width:5px;height:5px;border-radius:50%;background:#1a0e08;animation:wm-cov-bounce 1s infinite}.wm-cov-sdots i:nth-child(2){animation-delay:.15s}.wm-cov-sdots i:nth-child(3){animation-delay:.3s}
-@media(max-width:560px){.wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 48px)}.wm-cov-body{padding:18px}.wm-cov-head{padding:15px 18px}.wm-cov-input{padding:14px 16px}}
-${LV_DOCK('.lv-root.lv-docked')}
-@media(max-width:640px){${LV_DOCK('.lv-root')}}
-@media(prefers-reduced-motion:reduce){.lv-root .wm-cov-launch,.lv-root.lv-docked .wm-cov-launch{animation:none}}
+/* ===== REVEAL: the product console ======================================= */
+.lv-reveal{padding:16px 18px 18px}
+.lv-console{background:linear-gradient(180deg,#151829 0%,#0c0e18 100%);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px 16px 16px;color:#eef0f6;box-shadow:0 34px 80px -34px rgba(0,0,0,.7),inset 0 1px 0 rgba(255,255,255,.05);min-width:0;overflow:hidden}
+.lv-con-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:0 2px 12px;color:#cfd6e6;min-width:0}
+.lv-con-head .d{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.lv-con-head .d.r{background:#ff5f57}.lv-con-head .d.y{background:#febc2e}.lv-con-head .d.g{background:#28c840}
+.lv-con-head b{margin-inline-start:6px;font-family:var(--disp);font-weight:800;color:#fff;white-space:nowrap}
+.lv-con-live{display:inline-flex;align-items:center;gap:5px;margin-inline-start:8px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:#8cf5c4;white-space:nowrap}
+.lv-con-live i{width:7px;height:7px;border-radius:50%;background:#e23b3b;animation:lv-pulse 1.5s infinite}
+.lv-con-tag{margin-inline-start:auto;font-size:10px;letter-spacing:.12em;color:#8cf5c4;border:1px solid rgba(140,245,196,.3);border-radius:999px;padding:2px 9px;white-space:nowrap}
+.lv-con-goal{font-size:14px;line-height:1.5;color:#f3f5fa;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:9px 12px;overflow-wrap:anywhere}
+.lv-k{font-size:10px;letter-spacing:.14em;color:#8cf5c4;font-weight:800;margin-inline-end:8px;vertical-align:1px}
+/* planning live: three status lines that land one after another */
+.lv-scan{position:relative;margin-top:12px;display:flex;flex-direction:column;gap:10px;padding:13px 13px;border:1px solid rgba(57,211,255,.28);border-radius:13px;background:rgba(57,211,255,.05);overflow:hidden}
+.lv-scan-beam{position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(90deg,transparent,rgba(57,211,255,.14),transparent);animation:lv-beam 1.7s linear infinite;pointer-events:none}
+.lv-scan-beam.soft{opacity:.7;animation-duration:2.2s}
+@keyframes lv-beam{from{transform:translateX(-120%)}to{transform:translateX(320%)}}
+.lv-scan-row{position:relative;display:flex;align-items:center;gap:10px;font-size:13.5px;line-height:1.4;color:#7f879b;transition:color .25s}
+.lv-scan-row .tick{position:relative;width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;color:transparent;transition:background .25s,border-color .25s,box-shadow .25s}
+.lv-scan-row.on{color:#eef0f6}
+.lv-scan-row.on .tick{border-color:#39d3ff;box-shadow:0 0 0 4px rgba(57,211,255,.12)}
+.lv-scan-row.on .tick:after{content:'';width:8px;height:8px;border-radius:50%;background:#39d3ff;animation:lv-blip .9s ease-in-out infinite}
+@keyframes lv-blip{0%,100%{transform:scale(.6);opacity:.5}50%{transform:scale(1);opacity:1}}
+.lv-scan-row.done{color:#cfd6e6}
+.lv-scan-row.done .tick{background:#0a9d66;border-color:#0a9d66;color:#042}
+/* verdict stamp + answer + what it sees */
+.lv-verdict{display:flex;align-items:center;gap:12px;margin-top:13px;padding:12px 14px;border-radius:14px;animation:lv-pop .55s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes lv-pop{0%{opacity:0;transform:scale(.6)}55%{transform:scale(1.06)}100%{opacity:1;transform:scale(1)}}
+.lv-vbadge{width:40px;height:40px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.lv-vlabel{font-family:var(--disp);font-weight:800;font-size:19px;line-height:1.2;letter-spacing:-.01em;min-width:0;overflow-wrap:anywhere}
+.lv-verdict.ok{background:rgba(10,157,102,.16);border:1px solid rgba(140,245,196,.38)}
+.lv-verdict.ok .lv-vbadge{background:#0a9d66;color:#042;animation:lv-glow 1.7s ease-in-out infinite}
+.lv-verdict.ok .lv-vlabel{color:#8cf5c4}
+@keyframes lv-glow{0%,100%{box-shadow:0 0 0 5px rgba(10,157,102,.12)}50%{box-shadow:0 0 0 11px rgba(10,157,102,.18)}}
+.lv-verdict.mid{background:rgba(255,179,92,.14);border:1px solid rgba(255,179,92,.4)}
+.lv-verdict.mid .lv-vbadge{background:#ffb35c;color:#2a1206}.lv-verdict.mid .lv-vlabel{color:#ffcf8a}
+.lv-verdict.no{background:rgba(255,99,99,.12);border:1px solid rgba(255,99,99,.35)}
+.lv-verdict.no .lv-vbadge{background:#ff6363;color:#fff}.lv-verdict.no .lv-vlabel{color:#ff9b9b}
+.lv-verdict.off{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1)}
+.lv-verdict.off .lv-vbadge{background:rgba(255,255,255,.08);color:#cfd6e6}.lv-verdict.off .lv-vlabel{color:#cfd6e6;font-size:16px}
+.lv-answer{margin:12px 2px 0;font-size:14.5px;line-height:1.65;color:#dfe4f0;overflow-wrap:anywhere;opacity:0;animation:lv-rise .45s ease .2s forwards}
+.lv-answer .wm-cov-b{font-weight:800;color:#fff;background:linear-gradient(transparent 62%,rgba(140,245,196,.35) 0);padding:0 1px}
+.wm-cov-code{font-family:var(--mono);font-size:.86em;background:rgba(57,211,255,.12);color:#39d3ff;border:1px solid rgba(57,211,255,.28);border-radius:6px;padding:1px 6px;white-space:normal;overflow-wrap:anywhere}
+.lv-sees{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:12px;padding:9px 12px;border:1px solid rgba(57,211,255,.3);background:rgba(57,211,255,.07);border-radius:11px;font-size:13px;line-height:1.5;color:#eef0f6;overflow:hidden;opacity:0;animation:lv-rise .45s ease .32s forwards}
+.lv-seek{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:#39d3ff}
+.lv-seetxt{flex:1;min-width:0;overflow-wrap:anywhere}
+@keyframes lv-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* the steps, one by one, exactly as the product shows them */
+.lv-steps{list-style:none;margin:14px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.lv-step{--i:0;opacity:0;animation:lv-rise .45s cubic-bezier(.2,.8,.2,1) forwards;animation-delay:calc(var(--i) * ${STEP_STAGGER_MS}ms);border:1px solid rgba(140,245,196,.32);background:rgba(140,245,196,.06);border-radius:13px;padding:11px 13px;min-width:0}
+.lv-step-l{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8cf5c4;font-weight:800;margin-bottom:6px}
+.lv-step-l>span{display:inline-flex;align-items:center;gap:6px;min-width:0}
+.lv-step-n{color:#9aa0b4;letter-spacing:.06em;font-weight:700;white-space:nowrap;text-transform:none;flex:0 0 auto}
+.lv-step-do{font-size:14.5px;font-weight:600;line-height:1.5;color:#f3f5fa;overflow-wrap:anywhere}
+.lv-term{margin-top:9px;border:1px solid #27324a;border-radius:11px;overflow:hidden;direction:ltr;text-align:left}
+.lv-term-h{display:flex;justify-content:space-between;align-items:center;gap:8px;background:#0c1222;color:#8ea3c0;font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px}
+.lv-term-h button{display:inline-flex;align-items:center;gap:5px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);color:#cfe9ff;border-radius:7px;padding:3px 8px;font:inherit;font-size:10.5px;letter-spacing:.04em;text-transform:none;cursor:pointer;transition:background .14s;white-space:nowrap}
+.lv-term-h button:hover{background:rgba(255,255,255,.12)}
+.lv-term code{display:block;padding:9px 11px;background:#0b1020;font-family:var(--mono);font-size:12.5px;line-height:1.5;color:#8ff0c4;white-space:pre-wrap;overflow-wrap:anywhere}
+.lv-how{margin-top:9px;border:1px solid rgba(255,255,255,.08);border-radius:11px;padding:8px 11px;background:rgba(255,255,255,.02)}
+.lv-how summary{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#39d3ff;font-weight:800;cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;user-select:none}
+.lv-how summary::-webkit-details-marker{display:none}
+.lv-how summary:before{content:'\\25B8';display:inline-block;transition:transform .15s;font-size:11px}
+.lv-how[open] summary:before{transform:rotate(90deg)}
+.lv-how ol{margin:8px 0 0;padding-inline-start:18px;display:flex;flex-direction:column;gap:6px}
+.lv-how li{font-size:13px;line-height:1.5;color:#c5cbdb;overflow-wrap:anywhere}
+/* what a live session continues with: real step titles, detail held back */
+.lv-locked{position:relative;margin-top:12px;border:1px dashed rgba(255,255,255,.16);border-radius:13px;padding:11px 13px;background:rgba(255,255,255,.02);opacity:0;animation:lv-rise .45s ease forwards;animation-delay:var(--d,0ms);min-width:0}
+.lv-locked-h{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:#cfd6e6;margin-bottom:9px;min-width:0;flex-wrap:wrap}
+.lv-locked-h>svg{color:#8cf5c4;flex:0 0 auto}
+.lv-lock{display:inline-flex;align-items:center;gap:5px;margin-inline-start:auto;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#ffb35c;border:1px solid rgba(255,179,92,.35);border-radius:999px;padding:2px 8px;white-space:nowrap}
+.lv-locked ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.lv-locked li{display:flex;gap:10px;align-items:flex-start;min-width:0}
+.lv-locked .n{flex:0 0 20px;width:20px;height:20px;border-radius:50%;border:1px solid rgba(255,255,255,.16);display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#9aa0b4;margin-top:1px}
+.lv-locked .t{flex:1;min-width:0;font-size:13.5px;line-height:1.45;color:#dfe4f0;overflow-wrap:anywhere}
+.lv-locked .bars{display:flex;gap:6px;margin-top:5px}
+.lv-locked .bars i{display:block;height:7px;border-radius:4px;background:rgba(255,255,255,.09);filter:blur(1.5px)}
+.lv-locked .bars i:nth-child(1){width:46%}.lv-locked .bars i:nth-child(2){width:28%}.lv-locked .bars i:nth-child(3){width:16%}
+/* what you get, in one line */
+.lv-val{margin-top:12px;display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:#9aa0b4;opacity:0;animation:lv-rise .4s ease forwards;animation-delay:var(--d,0ms)}
+.lv-val span{display:inline-flex;align-items:center;gap:6px}
+.lv-val svg{color:#8cf5c4;flex:0 0 auto}
+/* the ask: your plan, every day */
+.lv-cta{margin-top:14px;border-radius:16px;padding:16px;background:linear-gradient(135deg,rgba(255,154,77,.18),rgba(242,106,67,.1));border:1px solid rgba(255,154,77,.42);animation:lv-ctain .5s cubic-bezier(.2,.8,.2,1) both;min-width:0}
+@keyframes lv-ctain{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+.lv-cta-h{font-family:var(--disp);font-weight:800;font-size:20px;color:#fff;letter-spacing:-.01em;line-height:1.2}
+.lv-cta-sub{margin:5px 0 26px;font-size:13.5px;color:#dfe4f0;line-height:1.5}
+.lv-plan{position:relative;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:13px;padding:14px 13px 11px;min-width:0}
+.lv-plan-rib{position:absolute;top:-10px;inset-inline-start:12px;font-size:10px;letter-spacing:.1em;text-transform:uppercase;font-weight:800;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59);border-radius:999px;padding:3px 9px;white-space:nowrap}
+.lv-plan-n{font-family:var(--disp);font-weight:800;font-size:19px;color:#fff}
+.lv-plan-p{font-weight:800;font-size:17px;color:#ffcf8a;white-space:nowrap}
+.lv-plan-p small{font-weight:600;font-size:12px;color:#9aa0b4;margin-inline-start:1px}
+.lv-plan-d{flex-basis:100%;font-size:12.5px;color:#cfd6e6;line-height:1.4}
+.lv-cta-btns{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+.lv-start{flex:1 1 230px;display:inline-flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:12px;padding:13px 18px;font:inherit;font-weight:800;font-size:15px;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59);cursor:pointer;box-shadow:0 16px 36px -14px rgba(255,122,89,.7);transition:transform .14s,box-shadow .14s;white-space:nowrap;min-width:0}
+.lv-start:hover{transform:translateY(-1px);box-shadow:0 20px 40px -14px rgba(255,122,89,.8)}
+.lv-compare{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:7px;border:1px solid rgba(255,255,255,.2);background:transparent;color:#eef0f6;border-radius:12px;padding:13px 16px;font:inherit;font-weight:700;font-size:14px;cursor:pointer;white-space:nowrap;transition:background .14s}
+.lv-compare:hover{background:rgba(255,255,255,.06)}
+.lv-trust{margin:11px 0 0;font-size:12px;color:#9aa0b4;display:flex;flex-wrap:wrap;gap:6px 14px}
+.lv-trust span{display:inline-flex;align-items:center;gap:5px}
+.lv-trust svg{color:#8cf5c4}
+/* footer bar in the reveal: try another / start */
+.wm-cov-input{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 18px;border-top:1px solid var(--line)}
+.wm-cov-clear{flex:0 0 auto;height:44px;padding:0 15px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--mut);display:inline-flex;align-items:center;gap:7px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap}
+.wm-cov-clear:hover:not(:disabled){color:var(--tx);border-color:var(--em2)}
+.wm-cov-clear:disabled{opacity:.5;cursor:default}
+.lv-again-go{flex:1 1 220px;height:44px;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:none;border-radius:12px;padding:0 16px;font:inherit;font-weight:800;font-size:14.5px;color:#1a0e08;background:linear-gradient(135deg,var(--warm),var(--warm2));cursor:pointer;white-space:nowrap;min-width:0;transition:transform .14s}
+.lv-again-go:hover{transform:translateY(-1px)}
+/* fireworks on a covered verdict */
 .wm-fw{position:absolute;inset:0;pointer-events:none;z-index:5;overflow:hidden;border-radius:18px}
 .wm-fw-burst{position:absolute;width:0;height:0}
 .wm-fw-burst.b0{left:22%;top:34%}.wm-fw-burst.b1{left:70%;top:26%}.wm-fw-burst.b2{left:46%;top:46%}.wm-fw-burst.b3{left:30%;top:62%}.wm-fw-burst.b4{left:78%;top:56%}.wm-fw-burst.b5{left:56%;top:22%}.wm-fw-burst.b6{left:16%;top:50%}
 .wm-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,56%);box-shadow:0 0 6px currentColor;animation:wm-fw-pop 1.25s cubic-bezier(.15,.7,.3,1) forwards}
 .wm-fw-burst.b1 i{animation-delay:.12s}.wm-fw-burst.b2 i{animation-delay:.22s}.wm-fw-burst.b3 i{animation-delay:.34s}.wm-fw-burst.b4 i{animation-delay:.18s}.wm-fw-burst.b5 i{animation-delay:.3s}.wm-fw-burst.b6 i{animation-delay:.4s}
 @keyframes wm-fw-pop{0%{transform:rotate(calc(var(--a) * 1deg)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(calc(var(--a) * 1deg)) translateX(64px) scale(.25);opacity:0}}
+/* ===== narrow + motion + dock =========================================== */
+@media(max-width:560px){
+ .wm-cov{width:calc(100vw - 24px);max-height:calc(100vh - 40px)}
+ .wm-cov-body{padding:18px}.lv-reveal{padding:12px}.wm-cov-head{padding:14px 16px}.wm-cov-input{padding:12px 14px}
+ .lv-ask-h{font-size:21px}.lv-console{padding:12px}.lv-vlabel{font-size:17px}.lv-cta{padding:14px}.lv-cta-h{font-size:18px}
+ /* The title must never truncate: smaller type and the LIVE pill keeps only its dot. */
+ .wm-cov-head-t{font-size:16px;gap:8px}.lv-live-pill{padding:4px 6px}.lv-live-pill-tx{display:none}
+ .lv-start,.lv-compare,.lv-again-go{flex:1 1 100%}
+}
+@media(prefers-reduced-motion:reduce){
+ .lv-step,.lv-locked,.lv-val,.lv-answer,.lv-sees{animation:none;opacity:1}
+ .lv-scan-beam,.lv-prep-bar{display:none}
+ .lv-verdict,.lv-cta{animation:none}
+ .lv-verdict.ok .lv-vbadge{animation:none}
+ .lv-root .wm-cov-launch,.lv-root.lv-docked .wm-cov-launch{animation:none}
+}
+${LV_DOCK('.lv-root.lv-docked')}
+@media(max-width:640px){${LV_DOCK('.lv-root')}}
 `
