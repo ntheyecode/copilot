@@ -10,7 +10,7 @@
 import { defineConfig } from 'vite'
 import { fileURLToPath } from 'node:url'
 import { dirname, join } from 'node:path'
-import { existsSync, realpathSync } from 'node:fs'
+import { existsSync, realpathSync, readFileSync } from 'node:fs'
 import base from './vite.config.js'
 
 const ROOT = dirname(fileURLToPath(import.meta.url))
@@ -18,7 +18,19 @@ const ROOT = dirname(fileURLToPath(import.meta.url))
 // checkout. Allow its resolved location so the self-hosted fonts load in both
 // cases, without hardcoding any machine path.
 const NODE_MODULES = existsSync(join(ROOT, 'node_modules')) ? realpathSync(join(ROOT, 'node_modules')) : null
-const liveApiProxy = () => ({ '/api': { target: 'https://admireveda.com', changeOrigin: true, secure: true } })
+// Where /api goes: the live site by default. To exercise a server change that
+// is not deployed yet (a new prompt), point it at a local server instead, via
+// VERIFY_API=http://127.0.0.1:4455 or a one-line `.verify-api.local` file in
+// this folder (gitignored by *.local, so it can never ship). Logged at start so
+// a screenshot can never be mistaken for the other target.
+const apiTarget = () => {
+  const file = join(ROOT, '.verify-api.local')
+  const fromFile = existsSync(file) ? readFileSync(file, 'utf8').trim() : ''
+  const target = process.env.VERIFY_API || fromFile || 'https://admireveda.com'
+  console.log(`[verify] /api -> ${target}`)
+  return target
+}
+const liveApiProxy = () => { const target = apiTarget(); return { '/api': { target, changeOrigin: true, secure: target.startsWith('https://') } } }
 
 export default defineConfig((env) => {
   const b = typeof base === 'function' ? base(env) : base

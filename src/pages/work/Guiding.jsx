@@ -1,9 +1,11 @@
 // The guiding console as its own deep-linkable route (/work/session/:id).
-// The Console, its helpers (CopyButton, CmdBlock, DeliverablesPanel,
-// PlanningLoader, confetti, ...) and the FloatPanel overlay are moved here
-// VERBATIM from WorkPage.jsx (no logic edits, per the restructure plan's
-// risk mitigation G1). Only the entry wrapper is new: sessionId comes from the
-// route param, onBack navigates to /work, onGuard surfaces via the app shell.
+// The Console, its helpers (DeliverablesPanel, PlanningLoader, confetti, ...)
+// and the FloatPanel overlay are moved here VERBATIM from WorkPage.jsx (no
+// logic edits, per the restructure plan's risk mitigation G1). Only the entry
+// wrapper is new: sessionId comes from the route param, onBack navigates to
+// /work, onGuard surfaces via the app shell. The step link / terminal / code
+// blocks and the copy helper live in src/components (shared with the public
+// "try it live" widget) and are imported below.
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { createPortal } from 'react-dom'
 import { useParams, useNavigate } from 'react-router-dom'
@@ -11,6 +13,9 @@ import { Loader2, Check, X, Plus, LogOut, ChevronLeft, Trash2, Download, Monitor
 import { api, friendlyError } from '../../api.js'
 import AnswerBody from '../../components/AnswerBody.jsx'
 import RichText from '../../components/RichText.jsx'
+import { StepLink, CmdBlock, CodeBlock } from '../../components/StepBlocks.jsx'   // the ONE step link / terminal / code renderer (shared with the public widget)
+import { copyText } from '../../components/CopyChip.jsx'
+import { hrefForUrl } from '../../shared/links.js'
 import DownloadMenu from '../../components/DownloadMenu.jsx'
 import GuideFontControl, { useGuideFontScale } from '../../components/GuideFontScale.jsx'
 import AccentPicker from '../../components/AccentPicker.jsx'
@@ -24,8 +29,6 @@ import { redactFrame, warmFrameScrub } from '../../frame_scrub.js'
 import { useTheme } from '../../theme.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
 import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
-
-const MONO = '"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
 // .wc wrapper so it never touches the rest of the app. On a phone it enlarges
@@ -768,62 +771,12 @@ const CONSOLE_CSS = `
 @media(prefers-reduced-motion:reduce){.wc-celebrate{animation:none}.wc-confetti{display:none}.wc-cele-badge svg{animation:none}.wc-cele-badge::after{animation:none;opacity:0}}
 `
 
-// Copy text reliably across the main page AND the floating PiP / pop-out window.
-// The async clipboard API needs its OWN window focused, so use the clipboard of
-// the window that owns the clicked button (that one is focused), and fall back
-// to a hidden textarea + execCommand in that same document.
-function fallbackCopy(text, doc) {
-  try {
-    const ta = doc.createElement('textarea')
-    ta.value = text
-    ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0'
-    doc.body.appendChild(ta); ta.focus(); ta.select()
-    const ok = doc.execCommand && doc.execCommand('copy')
-    doc.body.removeChild(ta)
-    return !!ok
-  } catch { return false }
-}
-function copyFromEvent(text, e) {
-  const node = e && e.currentTarget
-  const doc = (node && node.ownerDocument) || document
-  const win = doc.defaultView || window
-  try {
-    if (win.navigator && win.navigator.clipboard && win.isSecureContext !== false) {
-      const p = win.navigator.clipboard.writeText(text)
-      if (p && p.catch) p.catch(() => fallbackCopy(text, doc))
-      return true
-    }
-  } catch { /* fall through to execCommand */ }
-  return fallbackCopy(text, doc)
-}
-// Copy-to-clipboard pill used by the command/code blocks. A real tap target
-// (good on mobile) that confirms with a Copied state.
-function CopyButton({ text }) {
-  const [done, setDone] = useState(false)
-  return (
-    <button title="Copy to clipboard" onClick={(e) => { if (copyFromEvent(text, e)) { setDone(true); setTimeout(() => setDone(false), 1400) } }}
-      style={{ display: 'inline-flex', alignItems: 'center', gap: 5, background: done ? 'rgba(74,208,122,0.16)' : 'rgba(255,255,255,0.08)', color: done ? '#7ee7a6' : '#cdd6e5', border: `1px solid ${done ? '#3a7a55' : 'rgba(255,255,255,0.14)'}`, borderRadius: 7, padding: '4px 9px', fontSize: 11.5, fontWeight: 600, cursor: 'pointer', flexShrink: 0 }}>
-      {done ? <Check size={13} /> : <ClipboardCopy size={13} />} {done ? 'Copied' : 'Copy'}
-    </button>
-  )
-}
-const dot = (bg) => ({ width: 9, height: 9, borderRadius: '50%', background: bg, display: 'inline-block' })
-// Normalize a step's target into a clickable href, or '' when it is not a URL.
-// A full http(s) URL passes through; a bare host like "www.google.com" gets a
-// https:// prefix so the link-out works (linkHost threw on the bare form, which
-// rendered a broken relative <a href> - the #5 "plain text, no link" bug). A
-// value that is not a URL (a command, a menu path) returns '' -> a copy button.
-function hrefForUrl(u) {
-  const s = String(u || '').trim()
-  if (!s) return ''
-  if (/^https?:\/\//i.test(s)) return s
-  if (/\s/.test(s)) return ''
-  if (/^(localhost|[a-z0-9-]+(\.[a-z0-9-]+)+)(:\d+)?(\/[^\s]*)?$/i.test(s)) return 'https://' + s
-  return ''
-}
-// One consistent treatment for every command/code/link a step carries: a real
-// clickable link-out when it is a full/clickable URL, or a Copy button for the
-// command/target when it is not. Shared by the console steps + the How detail.
+// The copy helper (copyText), the step link-out (StepLink) and the terminal /
+// code blocks (CmdBlock, CodeBlock) that used to be private here now live in
+// src/components/CopyChip.jsx, src/components/StepBlocks.jsx and
+// src/shared/links.js (hrefForUrl), shared with the public "try it live" widget
+// so there is ONE renderer for a step's link / command / code. Same markup,
+// same classes, same behaviour in the console and the floating panel.
 // Source attribution indicator: a small, tasteful chip shown when the guide
 // grounded this step or answer in the user's/organization's OWN material (an
 // uploaded reference document, the Company Brain, or a skill/playbook). The guide
@@ -840,54 +793,6 @@ function SourceChip({ source }) {
       <BookOpen size={11} strokeWidth={2.5} aria-hidden="true" />
       <span className="wc-source-k">Grounded in your documents</span>
       <span className="wc-source-src">{label}</span>
-    </div>
-  )
-}
-function StepLink({ url }) {
-  const [done, setDone] = useState(false)
-  const s = String(url || '').trim()
-  if (!s) return null
-  const href = hrefForUrl(s)
-  if (href) {
-    return <div><a className="wc-open" href={href} target="_blank" rel="noopener noreferrer">Open {linkHost(href)}<ExternalLink size={13} /></a></div>
-  }
-  return (
-    <div className="wc-copyrow">
-      <span className="wc-copyrow-t" title={s}>{s}</span>
-      <button type="button" className={`wc-copybtn${done ? ' done' : ''}`} title="Copy this" onClick={(e) => { if (copyFromEvent(s, e)) { setDone(true); setTimeout(() => setDone(false), 1400) } }}>
-        {done ? <Check size={13} /> : <ClipboardCopy size={13} />} {done ? 'Copied' : 'Copy'}
-      </button>
-    </div>
-  )
-}
-// The EXACT terminal commands for a step, copy-paste ready - styled as a terminal.
-function CmdBlock({ lines }) {
-  const text = (lines || []).join('\n')
-  return (
-    <div style={{ marginTop: 9, borderRadius: 10, overflow: 'hidden', border: '1px solid #27324a', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#0c1222', padding: '6px 9px' }}>
-        <span style={{ display: 'inline-flex', gap: 5 }}><span style={dot('#ff5f57')} /><span style={dot('#febc2e')} /><span style={dot('#28c840')} /></span>
-        <span style={{ fontSize: 10.5, color: '#8ea3c0', flex: 1, letterSpacing: 0.6, fontWeight: 600 }}>TERMINAL</span>
-        <CopyButton text={text} />
-      </div>
-      <pre style={{ margin: 0, padding: '10px 11px', background: '#0c1222', color: '#d6e9d6', fontSize: 'calc(12.5px * var(--wc-fs, 1))', lineHeight: 1.6, fontFamily: MONO, overflowX: 'auto', whiteSpace: 'pre' }}>
-        {(lines || []).map((l, i) => <div key={i}><span style={{ color: '#58c974' }}>$ </span>{l}</div>)}
-      </pre>
-    </div>
-  )
-}
-// The EXACT file content for a step, copy-paste ready, labelled with its path.
-function CodeBlock({ file, content }) {
-  const ext = (file && file.includes('.')) ? file.split('.').pop() : ''
-  return (
-    <div style={{ marginTop: 9, borderRadius: 10, overflow: 'hidden', border: '1px solid #2a2a3c', boxShadow: '0 1px 3px rgba(0,0,0,0.25)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: '#15151f', padding: '6px 9px' }}>
-        <span style={dot('#8b7cff')} />
-        <span style={{ fontSize: 11.5, color: '#c7cbd8', flex: 1, fontFamily: MONO, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file || 'code'}</span>
-        {ext && <span style={{ fontSize: 9.5, color: '#9a9ab0', background: 'rgba(255,255,255,0.09)', borderRadius: 5, padding: '1px 6px', textTransform: 'uppercase', letterSpacing: 0.5, flexShrink: 0 }}>{ext}</span>}
-        <CopyButton text={content} />
-      </div>
-      <pre style={{ margin: 0, padding: '10px 11px', background: '#15151f', color: '#e6e6f2', fontSize: 'calc(12.5px * var(--wc-fs, 1))', lineHeight: 1.55, fontFamily: MONO, overflowX: 'auto', whiteSpace: 'pre' }}>{content}</pre>
     </div>
   )
 }
@@ -3302,7 +3207,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, answer, bus
                 ? <div><a href={hrefForUrl(current.url)} target="_blank" rel="noopener noreferrer" className="fp-link" style={{ ...link, marginTop: 8 }}>Open {linkHost(hrefForUrl(current.url))} <ExternalLink size={12} style={{ flexShrink: 0 }} /></a></div>
                 : <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 8, padding: '5px 7px 5px 11px', background: c.panel2, border: `1px solid ${c.border}`, borderRadius: 9, maxWidth: '100%' }}>
                     <span style={{ flex: 1, minWidth: 0, fontFamily: '"JetBrains Mono",ui-monospace,monospace', fontSize: fs(12.5), color: c.text, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={current.url}>{current.url}</span>
-                    <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', height: 28, padding: '0 10px', fontSize: 11.5, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }} title="Copy this" onClick={(e) => copyFromEvent(String(current.url), e)}><ClipboardCopy size={13} /> Copy</button>
+                    <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', height: 28, padding: '0 10px', fontSize: 11.5, color: c.accent, borderColor: c.accentRing, background: c.accentSoft }} title="Copy this" onClick={(e) => copyText(String(current.url), e)}><ClipboardCopy size={13} /> Copy</button>
                   </div>)}
               {((current.commands && current.commands.length > 0) || (current.code && current.code.content)) && (
                 <DestructiveGate why={current.destructive ? current.destructiveWhy : null}>
