@@ -933,7 +933,7 @@ export default {
     },
     pricing: {
       title: 'Pricing - WorkCoPilot by AdmireVeda',
-      description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with monthly guided tasks and live guidance hours, document upload, generated visuals, security on every plan, overage and cancellation terms. Enterprise is custom.',
+      description: 'WorkCoPilot plans compared side by side: Lite, Basic, Advanced and Premium with hours of live guidance every month and guided tasks every day, document upload, generated visuals, security on every plan, extra hours and cancellation terms. Enterprise is custom.',
     },
     faq: {
       title: 'FAQ - WorkCoPilot by AdmireVeda',
@@ -1648,8 +1648,9 @@ export default {
     valueSub: 'Pick the plan by how much guided time your month needs. Every hour is live, on your screen, to a confirmed finish.',
     statHours: 'hours a month',
     statTasks: 'tasks a day',
-    statCarry: 'carry forward',
-    statReset: 'monthly reset',
+    statCarry: 'Carry forward',
+    statReset: 'Monthly reset',
+    statUnused: 'unused hours',
     rowHours: 'Expert guidance a month',
     rowTasks: 'Guided tasks a day',
     rowCarry: 'Unused hours',
@@ -1665,5 +1666,62 @@ export default {
     footnoteCarryCap: 'Unused hours carry forward to the next month, up to {cap} hours. Guided tasks reset every day. Billed per minute you actually use.',
     footnoteForfeit: 'Hours reset at the start of each month and do not roll over. Guided tasks reset every day. Billed per minute you actually use.',
     noteExtra: 'Busy month? Add an hour whenever you need one. Purchased time never expires.',
+    // Live-price status (the page reads /api/work/pricing; while it loads the
+    // numbers are skeletons, and if it cannot be reached the list prices show
+    // with this label, never silently).
+    listPrices: 'Showing list prices: live prices did not load.',
+    // The value band ("what a plan buys you"): the ranges are computed from the
+    // API across the four plans, never typed here.
+    rangeVal: '{lo} to {hi}',
+    statHoursSub: 'included in every plan, from Lite to Premium',
+    statTasksSub: 'each a whole goal, guided start to finish',
+    statCarrySub: 'what you did not use this month is yours next month',
+    statResetSub: 'a fresh pool on the first of every month',
+    valueConsoleEyebrow: 'What an hour looks like',
+    valueConsoleP: 'Every hour of guided time looks like this: it watches your screen, gives one exact step, catches a wrong turn and confirms the finish. Not a chat answer you then have to go and do.',
+    // Plan cards: a one-line promise and the one feature that best sells each
+    // tier. Product names (Lite, Basic, Advanced, Premium) are never translated.
+    plans: {
+      lite: { value: 'A guide for the occasional task, with the full hand-holding.', highlight: 'Step-by-step, start to finish' },
+      basic: { value: 'A guide at your side most working days.', highlight: 'Roadmaps and session write-ups' },
+      advanced: { value: 'Deep guided time, grounded in your own documents.', highlight: 'Upload your own documents' },
+      premium: { value: 'The most guided time, generated visuals, first in the queue.', highlight: 'Generated visuals on demand' },
+      enterprise: { value: 'SSO, company policy, seat pools and a DPA.', highlight: 'Dedicated contact' },
+    },
+    entLines: ['Seat pools, your size', 'Unlimited guided tasks', 'SSO, company policy and a DPA'],
+    taskNote: 'A task is one goal, guided from start to finish through every step it takes.',
+    // The side-by-side matrix.
+    matrix: {
+      h2: 'Every plan, side by side.',
+      colFeature: 'What you get',
+      included: 'Included',
+      notIncluded: 'Not included',
+      groups: { capacity: 'Capacity', guidance: 'What the guidance does', security: 'Security, on every plan', enterprise: 'Enterprise' },
+      seats: 'Seats',
+      seatOne: '1 user',
+      seatPools: 'Seat pools, your size',
+      queue: 'Queue priority',
+      queueStd: 'Standard',
+      queuePri: 'Priority',
+      queueTop: 'Highest',
+      guidanceRows: ['Step-by-step, start to finish', 'Exact commands, code and links', 'Works on desktop, browser and mobile'],
+      roadmaps: 'Roadmaps',
+      upload: 'Upload your own reference documents',
+      visuals: 'Generated visuals and diagrams',
+      securityRows: ['On-device redaction, read-only, encrypted at rest', 'Security-first checked answers'],
+      enterpriseRows: ['SSO (OIDC) and team provisioning', 'Company redaction policy, audit log and DPA', 'Per-company AI keys, or bring your own', 'On-prem deployment, on request', 'Dedicated contact'],
+    },
+    notes: {
+      h2: 'Good to know.',
+      items: [
+        { t: 'Minutes, not blocks', d: 'Spend your hours a few minutes at a time across the month, billed per minute you use, never rounded up to the hour.' },
+        { t: 'Extra time', d: 'Busy month? Add an hour whenever you need one. Purchased time never expires.' },
+        { t: 'Billing', d: 'Billed monthly, annual at a discount where available. Cancel yourself anytime, no contract.' },
+        { t: 'Teams', d: 'Lite to Premium are single-user. For seat pools, SSO and a DPA, talk to us about Enterprise.' },
+      ],
+    },
+    fine: 'Final entitlements and prices are confirmed at checkout. Taxes may apply by location.',
+    ctaRefund: 'Refund policy',
+    ctaDemo: 'See a 60-second demo',
   },
 }

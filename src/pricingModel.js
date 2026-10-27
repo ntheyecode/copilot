@@ -87,3 +87,29 @@ export function expiryFootnote(model, t) {
   }
   return t('pricing.footnoteForfeit')
 }
+
+// The lowest and highest value of one per-plan group across the four plans
+// (for the "30 to 180 hours a month" value band). null when the API did not
+// carry that group, so the band omits the tile rather than invent a range.
+export function planRange(model, group) {
+  if (!model || !model[group]) return null
+  const vals = PLAN_IDS.map((id) => model[group][id]).filter((v) => v != null)
+  if (!vals.length) return null
+  return { lo: Math.min(...vals), hi: Math.max(...vals) }
+}
+
+// LIST PRICES, used ONLY when /api/work/pricing cannot be reached, and always
+// shown with a visible "showing list prices" label (pricing.listPrices). They
+// mirror server/store.js WORK_PRICING_DEFAULT; the live API overrides them the
+// moment it answers. Nothing on a page reads these while the API is reachable.
+export const LIST_PRICE_FALLBACK = {
+  currency: 'usd',
+  plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },
+  hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },
+  tasks: { lite: 4, basic: 4, advanced: 6, premium: 8 },
+  hoursMonthly: { lite: 30, basic: 60, advanced: 120, premium: 180 },
+  hoursExpiry: { mode: 'forfeit', carryCapHours: null },
+  image: { lite: 3, basic: 2, advanced: 1, premium: 0.5 },
+  imageMinBulk: 10,
+  annualReady: false,
+}

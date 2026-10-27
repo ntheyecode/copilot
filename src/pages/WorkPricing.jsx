@@ -1,55 +1,88 @@
-// WorkCoPilot - pricing page (audit WEB-05). Four plan cards (Lite / Basic /
-// Advanced / Premium) plus a custom-priced Enterprise column, and ONE
-// side-by-side comparison. Copy is cut to short phrases: tier name, price, a
-// tight value line, a scannable benefit list, one Start CTA each.
+// WorkCoPilot - pricing page, on the PLAN MODEL (owner, 2026-10-27).
 //
-// PRICE_ROWS is the ONE place the comparison matrix lives in the renderer
-// (the main page links here instead of carrying a copy). Prices come from
-// /api/work/pricing exactly as the main page's plan cards do, with the
-// published list prices as the offline fallback so the page is never blank.
-// Honesty rules: no model names, no AI cost, never "certified"; where an exact
-// value is not published we say "Included" rather than invent a number, and
-// the page says final entitlements are confirmed at checkout.
-import { useEffect, useState } from 'react'
+// The plan contract is GET /api/work/pricing (server/store.js getWorkPricing):
+//   hoursMonthly  guided hours INCLUDED per calendar month, per tier
+//   tasks         guided tasks a person may START per day, per tier (a plain cap)
+//   hoursExpiry   forfeit | carryforward (+ carryCapHours) for unused hours
+//   plans / hour  USD a month, USD per extra hour
+// Everything numeric on this page is read from that API through the ONE view
+// model in src/pricingModel.js (shared with the home page cards), so a
+// superadmin change in Admin > Pricing lands here untouched. Nothing is typed
+// into copy; the only constant is the labelled list-price fallback the page
+// shows when the API cannot be reached, and it says so on screen.
+//
+// Public framing is MONTHLY: hours of expert guidance every month, guided tasks
+// every day. The retired credit model (banked credits, daily hours x 30,
+// "extra hour adds a task") is gone from this page on purpose.
+//
+// Sections: hero -> plan cards (+ Enterprise) -> value band (the three facts
+// of the plan model beside a compact GuideConsole, so the page SHOWS what an
+// hour of guided time is) -> the side-by-side matrix -> good to know -> CTA.
+// Honesty rules: no model names, no AI cost, never "certified"; final
+// entitlements are confirmed at checkout.
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2 } from 'lucide-react'
+import { ArrowRight, Check, Lock, ShieldCheck, Zap, BadgeCheck, Building2, RotateCcw, Clock3, ListChecks, CalendarCheck, ScanEye } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
+import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console: what an hour of guided time looks like
 import useSeo from '../useSeo.js'
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'
+import { normalizePricing, planValueLines, expiryFootnote, planRange, money, hours, PLAN_IDS, LIST_PRICE_FALLBACK } from '../pricingModel.js'
 
-// Offline fallbacks (USD / month and per-tier values). These MATCH
-// server/store.js WORK_PRICING_DEFAULT so the page is never blank and never
-// shows a stale number; the live /api/work/pricing values override them.
-const FALLBACK = {
-  plans: { lite: 69, basic: 99, advanced: 299, premium: 399 },
-  hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },
-  tasks: { lite: 1, basic: 2, advanced: 4, premium: 6 },
-  dailyHours: { lite: 1, basic: 2, advanced: 4, premium: 6 },
-}
-
-// Static plan metadata; the numbers (price, hours, tasks, overage) are derived
-// from the live API in the component so the page can never drift from what
-// checkout charges. Column order is Lite, Basic, Advanced, Premium, Enterprise
-// - the same order as every matrix row's 5 values. "highlight" is the one
-// feature that best sells each tier, shown as the last benefit line.
-const PLAN_META = [
-  { id: 'lite', name: 'Lite', value: 'One task at a time, walked through step by step.', highlight: 'One task at a time' },
-  { id: 'basic', name: 'Basic', value: 'A guide at your side a couple of hours a day.', highlight: 'Roadmaps and session write-ups' },
-  { id: 'advanced', name: 'Advanced', popular: true, value: 'Half a day of guidance, grounded in your own documents.', highlight: 'Upload your own documents' },
-  { id: 'premium', name: 'Premium', value: 'The most hours, generated visuals, first in the queue.', highlight: 'Generated visuals on demand' },
-  { id: 'enterprise', name: 'Enterprise', custom: true, value: 'SSO, company policy, seat pools and a DPA.', highlight: 'Dedicated contact' },
-]
-// Matrix cells: true = included, false = not included, a string = the value shown.
-// Five values per row, aligned to PLAN_META: [Lite, Basic, Advanced, Premium, Enterprise].
+// Product names are never translated; the per-plan promise and highlight live
+// in the catalog (pricing.plans.<id>). Column order is Lite, Basic, Advanced,
+// Premium, Enterprise, the same order as every matrix row's 5 values.
+const PLAN_NAME = { lite: 'Lite', basic: 'Basic', advanced: 'Advanced', premium: 'Premium', enterprise: 'Enterprise' }
+const COLS = [...PLAN_IDS, 'enterprise']
+const POPULAR = 'advanced'
 const ALL = [true, true, true, true, true]
 const ENT = [false, false, false, false, true]
 
-function Cell({ v }) {
-  if (v === true) return <span className="wpr-yes" role="img" aria-label="Included"><Check size={15} aria-hidden /></span>
-  if (v === false) return <span className="wpr-no" role="img" aria-label="Not included"><i aria-hidden /></span>
+function Cell({ v, t }) {
+  if (v === true) return <span className="wpr-yes" role="img" aria-label={t('pricing.matrix.included')}><Check size={15} aria-hidden /></span>
+  if (v === false) return <span className="wpr-no" role="img" aria-label={t('pricing.matrix.notIncluded')}><i aria-hidden /></span>
   return <span className="wpr-val">{v}</span>
+}
+
+// The three facts of the plan model, each with the live range across plans.
+function ValueBand({ model, t }) {
+  const h = planRange(model, 'hoursMonthly')
+  const d = planRange(model, 'tasksDaily')
+  const carry = model.expiry.mode === 'carryforward'
+  const scenario = t('guide.scenarios.finance')
+  const tiles = [
+    h && { ic: Clock3, big: t('pricing.rangeVal', { lo: hours(h.lo), hi: hours(h.hi) }), k: t('pricing.statHours'), sub: t('pricing.statHoursSub') },
+    d && { ic: ListChecks, big: t('pricing.rangeVal', { lo: d.lo, hi: d.hi }), k: t('pricing.statTasks'), sub: t('pricing.statTasksSub') },
+    h && { ic: CalendarCheck, big: carry ? t('pricing.statCarry') : t('pricing.statReset'), k: t('pricing.statUnused'), sub: carry ? t('pricing.statCarrySub') : t('pricing.statResetSub'), small: true },
+  ].filter(Boolean)
+  return (
+    <section className="wpr-value" aria-labelledby="wpr-value-h">
+      <div className="wpr-value-grid">
+        <div className="wpr-value-copy">
+          <div className="wpr-eyebrow"><BadgeCheck size={14} aria-hidden /> {t('pricing.valueEyebrow')}</div>
+          <h2 id="wpr-value-h" className="wpr-h2 start">{t.rich('pricing.valueH2')}</h2>
+          <p className="wpr-value-sub">{t('pricing.valueSub')}</p>
+          <div className="wpr-stats">
+            {tiles.map((x) => (
+              <div className="wpr-stat" key={x.k}>
+                <x.ic size={18} aria-hidden />
+                <b className={x.small ? 'sm' : ''}>{x.big}</b>
+                <span>{x.k}</span>
+                <small>{x.sub}</small>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="wpr-value-console">
+          <div className="wpr-console-eyebrow"><ScanEye size={14} aria-hidden /> {t('pricing.valueConsoleEyebrow')}</div>
+          {scenario && typeof scenario === 'object' && <GuideConsole scenario={scenario} compact />}
+          <p className="wpr-console-p">{t('pricing.valueConsoleP')}</p>
+        </div>
+      </div>
+    </section>
+  )
 }
 
 export default function WorkPricing() {
@@ -60,12 +93,9 @@ export default function WorkPricing() {
   // view, and its Start button pulses, so the visitor lands on their next click.
   const [sp] = useSearchParams()
   const recId = (sp.get('plan') || '').toLowerCase()
-  const rec = PLAN_META.some((p) => p.id === recId && !p.custom) ? recId : ''
+  const rec = PLAN_IDS.includes(recId) ? recId : ''
   useEffect(() => {
     if (!rec) return undefined
-    // Two attempts: the first right after paint, a second once the live prices
-    // have landed and the cards have their final height (on a phone the first
-    // smooth scroll can be cut short by that reflow). Skipped if already in view.
     const go = () => {
       try {
         const el = document.getElementById(`wpr-plan-${rec}`)
@@ -79,65 +109,56 @@ export default function WorkPricing() {
     const t2 = setTimeout(go, 1300)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [rec])
-  useSeo({
-    title: t('seo.pricing.title'),
-    description: t('seo.pricing.description'),
-    path: '/workcopilot/pricing',
-  })
+  useSeo({ title: t('seo.pricing.title'), description: t('seo.pricing.description'), path: '/workcopilot/pricing' })
+
+  // Live prices: loading -> live | fallback (labelled on screen, with Retry).
   const [price, setPrice] = useState(null)
-  useEffect(() => { fetch('/api/work/pricing').then((r) => r.json()).then(setPrice).catch(() => {}) }, [])
+  const [state, setState] = useState('loading')   // loading | live | fallback
+  const load = () => {
+    setState('loading')
+    fetch('/api/work/pricing')
+      .then((r) => { if (!r.ok) throw new Error(String(r.status)); return r.json() })
+      .then((j) => { setPrice(j); setState('live') })
+      .catch(() => { setPrice(LIST_PRICE_FALLBACK); setState('fallback') })
+  }
+  useEffect(load, [])
+  const model = useMemo(() => normalizePricing(price), [price])
+  const loading = state === 'loading'
 
-  const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
-  // Every per-tier number reads the live API first, then the server-matching
-  // fallback. Final prices and entitlements are confirmed at checkout.
-  const live = (group, id) => (price && price[group] && price[group][id] != null ? price[group][id] : FALLBACK[group][id])
-  const planPrice = (id) => live('plans', id)
-  const hourPrice = (id) => live('hour', id)
-  const dailyHrs = (id) => live('dailyHours', id)
-  const tasksDay = (id) => live('tasks', id)
-  // Public framing is MONTHLY: monthly tasks = daily cap x 30, monthly hours =
-  // daily hours x 30 - computed from the live config, never typed into copy, so
-  // a superadmin cap change follows here automatically.
-  const DAYS_PER_MONTH = 30
-  const perMonth = (n) => Math.round(Number(n) * DAYS_PER_MONTH * 100) / 100
-  const tasksMonth = (id) => perMonth(tasksDay(id))
-  const hrsMonth = (id) => perMonth(dailyHrs(id))
-  const plural = (n, word) => `${n} ${word}${Number(n) === 1 ? '' : 's'}`
-  // Start = the product's sign-in page with the plan carried along (the same
-  // query the main page's plan cards use), so the pick survives sign-up.
   const start = (id) => nav(`/workcopilot?plan=${id}`)
+  const planMeta = (id) => t(`pricing.plans.${id}`) || {}
+  const priceOf = (id) => (loading || !model ? null : model.plans[id])
+  const hourOf = (id) => (loading || !model ? null : model.hour[id])
+  const PriceTag = ({ id }) => (id === 'enterprise'
+    ? <div className="wpr-price wpr-custom">{t('pricing.custom')}</div>
+    : <div className={`wpr-price${loading ? ' wpr-skel' : ''}`} aria-busy={loading || undefined}>{loading ? <span className="wpr-skel-bar" aria-label={t('pricing.loading')} /> : money(priceOf(id))}<span>{t('pricing.perMonth')}</span></div>)
 
-  const PLANS = PLAN_META
-  // The comparison matrix, built with the derived numbers so capacity and
-  // overage rows always agree with the plan cards above. Trimmed to the rows
-  // a buyer actually compares on: capacity, what the guidance does, the few
-  // power features that differ, security (same for all), and Enterprise.
-  // Domain fact kept true: buying an extra hour grants ONE extra task (rate
-  // per tier, superadmin-configurable); a task is a MAJOR task of many steps.
-  const PRICE_ROWS = [
-    { g: 'Capacity' },
-    { k: 'Major tasks a month', v: [`${tasksMonth('lite')}`, `${tasksMonth('basic')}`, `${tasksMonth('advanced')}`, `${tasksMonth('premium')}`, 'Unlimited'] },
-    { k: 'Live guidance a month*', v: [`Up to ${plural(hrsMonth('lite'), 'hour')}`, `Up to ${plural(hrsMonth('basic'), 'hour')}`, `Up to ${plural(hrsMonth('advanced'), 'hour')}`, `Up to ${plural(hrsMonth('premium'), 'hour')}`, 'Custom'] },
-    { k: 'Extra hour adds 1 task', v: [`${money(hourPrice('lite'))}/hr`, `${money(hourPrice('basic'))}/hr`, `${money(hourPrice('advanced'))}/hr`, `${money(hourPrice('premium'))}/hr`, 'Custom'] },
-    { k: 'Seats', v: ['1 user', '1 user', '1 user', '1 user', 'Seat pools, your size'] },
-    { k: 'Queue priority', v: ['Standard', 'Standard', 'Priority', 'Highest', 'Highest'] },
-    { g: 'What the guidance does' },
-    { k: 'Step-by-step, start to finish', v: ALL },
-    { k: 'Exact commands, code and links', v: ALL },
-    { k: 'Works on desktop, browser and mobile', v: ALL },
-    { k: 'Roadmaps', v: [false, true, true, true, true] },
-    { k: 'Upload your own reference documents', v: [false, false, true, true, true] },
-    { k: 'Generated visuals and diagrams', v: [false, false, false, true, true] },
-    { g: 'Security, on every plan' },
-    { k: 'On-device redaction, read-only, encrypted at rest', v: ALL },
-    { k: 'Security-first checked answers', v: ALL },
-    { g: 'Enterprise' },
-    { k: 'SSO (OIDC) and team provisioning', v: ENT },
-    { k: 'Company redaction policy, audit log and DPA', v: ENT },
-    { k: 'Per-company AI keys, or bring your own', v: ENT },
-    { k: 'On-prem deployment, on request', v: ENT },
-    { k: 'Dedicated contact', v: ENT },
+  // The comparison rows, every number from the model. Enterprise capacity is
+  // custom (seat pools, its own ceiling), so those cells read Unlimited/Custom.
+  const m = model
+  const mx = (k) => t(`pricing.matrix.${k}`)
+  const val = (fn) => PLAN_IDS.map((id) => (m ? fn(id) : '')).concat([''])
+  const ROWS = [
+    { g: mx('groups.capacity') },
+    { k: t('pricing.rowHours'), v: val((id) => (m.hoursMonthly[id] == null ? '' : t('pricing.hoursVal', { hours: hours(m.hoursMonthly[id]) }))).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
+    { k: t('pricing.rowTasks'), v: val((id) => (m.tasksDaily[id] == null ? '' : t.n('pricing.tasksVal', m.tasksDaily[id]))).map((x, i) => (i === 4 ? t('pricing.unlimited') : x)) },
+    { k: t('pricing.rowCarry'), v: val(() => (m.expiry.mode === 'carryforward' ? (m.expiry.carryCapHours ? t('pricing.carryCapVal', { cap: hours(m.expiry.carryCapHours) }) : t('pricing.carryVal')) : t('pricing.resetVal'))).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
+    { k: t('pricing.rowExtra'), v: val((id) => (m.hour[id] == null ? '' : `${money(m.hour[id])}/hr`)).map((x, i) => (i === 4 ? t('pricing.custom') : x)) },
+    { k: mx('seats'), v: [mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatOne'), mx('seatPools')] },
+    { k: mx('queue'), v: [mx('queueStd'), mx('queueStd'), mx('queuePri'), mx('queueTop'), mx('queueTop')] },
+    { g: mx('groups.guidance') },
+    ...(mx('guidanceRows') || []).map((k) => ({ k, v: ALL })),
+    { k: mx('roadmaps'), v: [false, true, true, true, true] },
+    { k: mx('upload'), v: [false, false, true, true, true] },
+    { k: mx('visuals'), v: [false, false, false, true, true] },
+    { g: mx('groups.security') },
+    ...(mx('securityRows') || []).map((k) => ({ k, v: ALL })),
+    { g: mx('groups.enterprise') },
+    ...(mx('enterpriseRows') || []).map((k) => ({ k, v: ENT })),
   ]
+  const StartBtn = ({ id, small }) => (id === 'enterprise'
+    ? <a className={`wpr-btn alt${small ? ' sm' : ''}`} href="/workcopilot/contact">{t('pricing.contact')}{!small && <ArrowRight size={15} aria-hidden />}</a>
+    : <button className={`wpr-btn${small ? ' sm' : ''}${id === POPULAR || id === rec ? '' : ' alt'}${id === rec ? ' rec' : ''}`} onClick={() => start(id)} aria-label={t('pricing.start', { plan: PLAN_NAME[id] })}>{small ? t('pricing.startShort') : t('pricing.start', { plan: PLAN_NAME[id] })}{!small && <ArrowRight size={15} aria-hidden />}</button>)
 
   return (
     <div className="wpr">
@@ -145,91 +166,85 @@ export default function WorkPricing() {
       <SiteHeader current="pricing" />
 
       <section className="wpr-hero">
-        <div className="wpr-eyebrow"><Zap size={14} aria-hidden /> Pricing</div>
-        <h1>Simple plans. <em>Real guided time.</em></h1>
-        <p>Guided major tasks and hours of live, on-screen guidance every month. Security and privacy come with every plan, never as an upsell.</p>
+        <div className="wpr-eyebrow"><Zap size={14} aria-hidden /> {t('pricing.eyebrow')}</div>
+        <h1>{t.rich('pricing.h1')}</h1>
+        <p>{t('pricing.sub')}</p>
       </section>
 
-      {/* Plan cards: name, price, one value line, a short benefit list, one CTA. */}
-      <section className="wpr-plans" aria-label="Plans">
-        {PLANS.map((p) => (
-          <article key={p.id} id={`wpr-plan-${p.id}`} className={`wpr-plan${p.popular ? ' pop' : ''}${p.custom ? ' ent' : ''}${p.id === rec ? ' rec' : ''}`}>
-            {p.id === rec
-              ? <div className="wpr-tag rec"><Zap size={11} aria-hidden /> {t('home.pricing.recommended')}</div>
-              : p.popular && <div className="wpr-tag">Most popular</div>}
-            <h2 className="wpr-plan-name">{p.custom && <Building2 size={16} aria-hidden />} {p.name}</h2>
-            {p.custom
-              ? <div className="wpr-price wpr-custom">Custom</div>
-              : <div className="wpr-price">{money(planPrice(p.id))}<span>/mo</span></div>}
-            <div className="wpr-cyc">{p.custom ? 'for regulated teams' : 'billed monthly'}</div>
-            <p className="wpr-value">{p.value}</p>
-            <ul className="wpr-plan-lines">
-              {p.custom ? (
-                <>
-                  <li><Check size={15} aria-hidden /><span>Seat pools, your size</span></li>
-                  <li><Check size={15} aria-hidden /><span>Unlimited major tasks</span></li>
-                  <li><Check size={15} aria-hidden /><span>SSO, company policy and a DPA</span></li>
-                  <li><Check size={15} aria-hidden /><span>{p.highlight}</span></li>
-                </>
-              ) : (
-                <>
-                  <li><Check size={15} aria-hidden /><span><b>{plural(tasksMonth(p.id), 'major task')}</b> a month</span></li>
-                  <li><Check size={15} aria-hidden /><span>Up to <b>{plural(hrsMonth(p.id), 'hour')}</b> of guidance*</span></li>
-                  <li><Check size={15} aria-hidden /><span>Extra hour adds 1 task, <b>{money(hourPrice(p.id))}/hr</b></span></li>
-                  <li><Check size={15} aria-hidden /><span>{p.highlight}</span></li>
-                </>
-              )}
-            </ul>
-            {p.custom
-              ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
-              : <button className={`wpr-btn${p.popular || p.id === rec ? '' : ' alt'}${p.id === rec ? ' rec' : ''}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
-          </article>
-        ))}
-      </section>
+      {/* Live-price status: only when the API could not be reached (labelled,
+          with Retry). While loading, the prices are skeleton bars. */}
+      {state === 'fallback' && (
+        <div className="wpr-status" role="status">
+          <span>{t('pricing.listPrices')}</span>
+          <button type="button" className="wpr-retry" onClick={load}><RotateCcw size={13} aria-hidden /> {t('pricing.retry')}</button>
+        </div>
+      )}
 
-      {/* One clarification next to the task counts: a "task" is substantial. */}
-      <p className="wpr-tasknote">A task is a <b>major task</b>: one goal, guided end to end through every sub-step it takes.</p>
+      {/* Plan cards: name, price, one promise, the live value lines, one CTA. */}
+      <section className="wpr-plans" aria-label={t('pricing.plansAria')}>
+        {COLS.map((id) => {
+          const ent = id === 'enterprise'
+          const meta = planMeta(id)
+          const lines = ent ? (t('pricing.entLines') || []) : (model && !loading ? planValueLines(model, id, t) : [])
+          return (
+            <article key={id} id={`wpr-plan-${id}`} className={`wpr-plan${id === POPULAR ? ' pop' : ''}${ent ? ' ent' : ''}${id === rec ? ' rec' : ''}`}>
+              {id === rec
+                ? <div className="wpr-tag rec"><Zap size={11} aria-hidden /> {t('home.pricing.recommended')}</div>
+                : id === POPULAR && <div className="wpr-tag">{t('pricing.mostPopular')}</div>}
+              <h2 className="wpr-plan-name">{ent && <Building2 size={16} aria-hidden />} {PLAN_NAME[id]}</h2>
+              <PriceTag id={id} />
+              <div className="wpr-cyc">{ent ? t('pricing.forTeams') : t('pricing.billedMonthly')}</div>
+              <p className="wpr-value-line">{meta.value}</p>
+              <ul className="wpr-plan-lines" aria-busy={!ent && loading ? true : undefined}>
+                {!ent && loading && [0, 1, 2].map((k) => <li key={k} className="wpr-skel-li"><span className="wpr-skel-bar" /></li>)}
+                {lines.map((l) => <li key={l}><Check size={15} aria-hidden /><span>{l}</span></li>)}
+                {!ent && !loading && hourOf(id) != null && <li><Check size={15} aria-hidden /><span>{t('pricing.extraHour', { price: `${money(hourOf(id))}/hr` })}</span></li>}
+                {meta.highlight && <li className="hl"><Check size={15} aria-hidden /><span>{meta.highlight}</span></li>}
+              </ul>
+              <StartBtn id={id} />
+            </article>
+          )
+        })}
+      </section>
+      <p className="wpr-tasknote">{t('pricing.taskNote')}</p>
+
+      {/* The plan model, shown: three facts with the live ranges, beside the
+          console playing what one hour of guided time is. */}
+      {model && !loading && <ValueBand model={model} t={t} />}
 
       {/* THE MATRIX. Wide and tablet: a table that scrolls inside its own card
-          when the viewport is narrower than it (the page never scrolls
-          sideways). Phones: one card per plan with the same facts. */}
+          (the page never scrolls sideways). Phones: one card per plan. */}
       <section className="wpr-matrix" aria-labelledby="wpr-matrix-h">
-        <h2 id="wpr-matrix-h" className="wpr-h2">Every plan, side by side.</h2>
+        <h2 id="wpr-matrix-h" className="wpr-h2">{t('pricing.matrix.h2')}</h2>
         <div className="wpr-card">
           <div className="wpr-scroll">
             <table className="wpr-tbl">
               <thead>
                 <tr>
-                  <th scope="col" className="wpr-feat">What you get</th>
-                  {PLANS.map((p) => (
-                    <th scope="col" key={p.id} className={p.popular ? 'pop' : ''}>
-                      {p.popular && <span className="wpr-tag inline">Most popular</span>}
-                      {p.name}
-                      <span className="wpr-th-price">{p.custom ? 'Custom' : `${money(planPrice(p.id))}/mo`}</span>
+                  <th scope="col" className="wpr-feat">{t('pricing.matrix.colFeature')}</th>
+                  {COLS.map((id) => (
+                    <th scope="col" key={id} className={id === POPULAR ? 'pop' : ''}>
+                      {id === POPULAR && <span className="wpr-tag inline">{t('pricing.mostPopular')}</span>}
+                      {PLAN_NAME[id]}
+                      <span className="wpr-th-price">{id === 'enterprise' ? t('pricing.custom') : loading ? '' : `${money(priceOf(id))}${t('pricing.perMonth')}`}</span>
                     </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {PRICE_ROWS.map((r, i) => (r.g
-                  ? <tr className="wpr-group" key={`g${i}`}><td colSpan={PLANS.length + 1}>{r.g}</td></tr>
+                {ROWS.map((r, i) => (r.g
+                  ? <tr className="wpr-group" key={`g${i}`}><td colSpan={COLS.length + 1}>{r.g}</td></tr>
                   : (
                     <tr key={r.k}>
                       <th scope="row" className="wpr-feat">{r.k}</th>
-                      {r.v.map((v, j) => <td key={PLANS[j].id} className={PLANS[j].popular ? 'pop' : ''}><Cell v={v} /></td>)}
+                      {r.v.map((v, j) => <td key={COLS[j]} className={COLS[j] === POPULAR ? 'pop' : ''}><Cell v={v} t={t} /></td>)}
                     </tr>
                   )))}
               </tbody>
               <tfoot>
                 <tr>
                   <td className="wpr-feat" />
-                  {PLANS.map((p) => (
-                    <td key={p.id} className={p.popular ? 'pop' : ''}>
-                      {p.custom
-                        ? <a className="wpr-btn sm alt" href="/workcopilot/contact">Contact sales</a>
-                        : <button className={`wpr-btn sm${p.popular ? '' : ' alt'}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start</button>}
-                    </td>
-                  ))}
+                  {COLS.map((id) => <td key={id} className={id === POPULAR ? 'pop' : ''}><StartBtn id={id} small /></td>)}
                 </tr>
               </tfoot>
             </table>
@@ -237,62 +252,46 @@ export default function WorkPricing() {
         </div>
 
         <div className="wpr-stack">
-          {PLANS.map((p, j) => (
-            <article className={`wpr-tcard${p.popular ? ' pop' : ''}`} key={p.id}>
+          {COLS.map((id, j) => (
+            <article className={`wpr-tcard${id === POPULAR ? ' pop' : ''}`} key={id}>
               <div className="wpr-tname">
-                <span>{p.name} <small>{p.custom ? 'Custom' : `${money(planPrice(p.id))}/mo`}</small></span>
-                {p.popular && <span className="wpr-tag inline">Most popular</span>}
+                <span>{PLAN_NAME[id]} <small>{id === 'enterprise' ? t('pricing.custom') : loading ? '' : `${money(priceOf(id))}${t('pricing.perMonth')}`}</small></span>
+                {id === POPULAR && <span className="wpr-tag inline">{t('pricing.mostPopular')}</span>}
               </div>
               <ul>
-                {PRICE_ROWS.map((r, i) => (r.g
+                {ROWS.map((r, i) => (r.g
                   ? <li className="wpr-tgroup" key={`g${i}`}>{r.g}</li>
-                  : <li key={r.k} className={r.v[j] === false ? 'off' : ''}><Cell v={r.v[j]} /><span>{r.k}</span></li>))}
+                  : <li key={r.k} className={r.v[j] === false ? 'off' : ''}><Cell v={r.v[j]} t={t} /><span>{r.k}</span></li>))}
               </ul>
-              {p.custom
-                ? <a className="wpr-btn alt" href="/workcopilot/contact">Contact sales <ArrowRight size={15} aria-hidden /></a>
-                : <button className={`wpr-btn${p.popular || p.id === rec ? '' : ' alt'}${p.id === rec ? ' rec' : ''}`} onClick={() => start(p.id)} aria-label={`Start ${p.name}`}>Start {p.name} <ArrowRight size={15} aria-hidden /></button>}
+              <StartBtn id={id} />
             </article>
           ))}
         </div>
 
         <div className="wpr-trust">
-          <span><Lock size={14} aria-hidden /> Secure checkout, powered by Stripe</span>
-          <span><Check size={14} aria-hidden /> Cancel anytime, no contract</span>
-          <span><ShieldCheck size={14} aria-hidden /> Purchased time never expires</span>
+          <span><Lock size={14} aria-hidden /> {t('home.pricing.trustStripe')}</span>
+          <span><Check size={14} aria-hidden /> {t('home.pricing.trustCancel')}</span>
+          <span><ShieldCheck size={14} aria-hidden /> {t('home.pricing.trustExpire')}</span>
         </div>
-        <p className="wpr-footnote">*Daily hours reset at midnight (US Eastern) and do not roll over. Unused tasks bank as credits you keep. Billed per minute you actually use.</p>
+        {model && !loading && <p className="wpr-footnote">{expiryFootnote(model, t)}</p>}
       </section>
 
-      {/* Good to know: four short points, one sentence each. */}
       <section className="wpr-notes" aria-labelledby="wpr-notes-h">
-        <h2 id="wpr-notes-h" className="wpr-h2">Good to know.</h2>
+        <h2 id="wpr-notes-h" className="wpr-h2">{t('pricing.notes.h2')}</h2>
         <div className="wpr-notes-grid">
-          <div className="wpr-note">
-            <h3>Minutes, not blocks</h3>
-            <p>Spend your hours a few minutes at a time across the day, billed per minute you use, never rounded to the hour.</p>
-          </div>
-          <div className="wpr-note">
-            <h3>Extra time</h3>
-            <p>Busy day? Top up an hour and get one more task. Purchased time never expires.</p>
-          </div>
-          <div className="wpr-note">
-            <h3>Billing</h3>
-            <p>Billed monthly, annual at a discount where available. Cancel yourself anytime, no contract.</p>
-          </div>
-          <div className="wpr-note">
-            <h3>Teams</h3>
-            <p>Lite to Premium are single-user. For seat pools, SSO and a DPA, talk to us about Enterprise.</p>
-          </div>
+          {(t('pricing.notes.items') || []).map((n) => (
+            <div className="wpr-note" key={n.t}><h3>{n.t}</h3><p>{n.d}</p></div>
+          ))}
         </div>
-        <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> Final entitlements and prices are confirmed at checkout. Taxes may apply by location.</p>
+        <p className="wpr-fine"><BadgeCheck size={14} aria-hidden /> {t('pricing.fine')}</p>
       </section>
 
       <ReleaseNote groups={['billing']} />
 
       <section className="wpr-cta">
-        <button className="wpr-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden /></button>
-        <a className="wpr-btn alt" href="/workcopilot/refund">Refund policy</a>
-        <a className="wpr-btn alt" href="/demo">See a 60-second demo</a>
+        <button className="wpr-btn" onClick={() => nav('/workcopilot')}>{t('common.getStarted')} <ArrowRight size={15} aria-hidden /></button>
+        <a className="wpr-btn alt" href="/workcopilot/refund">{t('pricing.ctaRefund')}</a>
+        <a className="wpr-btn alt" href="/demo">{t('pricing.ctaDemo')}</a>
       </section>
 
       <SiteFooter />
@@ -303,7 +302,7 @@ export default function WorkPricing() {
 // Same light inner-page shell as /how-it-works, /fields and /security.
 const CSS = `
 [data-theme='dark'] .wpr{--ink:#eef0f6;--mut:#9aa0b4;--dim:#6c7780;--line:rgba(255,255,255,.08);--line-strong:rgba(255,255,255,.15);--panel:#13141f;--panel2:#181b27;--bg:#0a0b12;--em:#8cf5c4;--cy:#39d3ff;--emf:rgba(140,245,196,.08);--chip:rgba(255,255,255,.04)}
-.wpr{--ink:#161a2b;--mut:#5c6484;--dim:#8b93a1;--line:#e6e8f1;--line-strong:#d3d7e5;--panel:#ffffff;--panel2:#f6f8fd;--bg:#f3f5fb;--em:#0e9f6e;--cy:#0a84c2;--emf:rgba(16,162,113,.08);--chip:#f4f8f7;
+.wpr{--ink:#161a2b;--mut:#5c6484;--dim:#8b93a1;--line:#e6e8f1;--line-strong:#d3d7e5;--panel:#ffffff;--panel2:#f6f8fd;--bg:#f3f5fb;--em:#0e9f6e;--cy:#0a84c2;--emf:rgba(16,162,113,.08);--chip:#f4f8f7;--cta:#f26a43;
   color:var(--ink);min-height:100vh;position:relative;overflow-x:hidden;
   font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
   background:
@@ -311,6 +310,10 @@ const CSS = `
     radial-gradient(900px 500px at 100% 0%, rgba(57,211,255,.14), transparent 60%),
     var(--bg)}
 .wpr *{box-sizing:border-box}
+/* min-width:0 only on the page's own grid children (never on a wildcard: the
+   shared header lives inside .wpr and its nowrap nav links must keep their
+   intrinsic width so the measured fold can trigger) */
+.wpr-plan,.wpr-plan *,.wpr-value-copy,.wpr-value-console,.wpr-stat,.wpr-tcard,.wpr-note{min-width:0}
 .wpr a{color:inherit;text-decoration:none}
 .wpr p{margin:0}
 .wpr::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
@@ -320,10 +323,16 @@ const CSS = `
 .wpr :focus-visible{outline:2px solid var(--cy);outline-offset:3px;border-radius:8px}
 .wpr-hero{max-width:1160px;margin:0 auto;padding:30px 24px 10px;text-align:center}
 .wpr-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-bottom:14px}
-.wpr-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600}
-.wpr-hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
-.wpr-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:600px;line-height:1.55}
-.wpr-h2{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-align:center;color:var(--ink)}
+.wpr-hero h1{font-size:clamp(30px,4.4vw,46px);line-height:1.06;letter-spacing:-.022em;margin:0 0 14px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;text-wrap:balance}
+.wpr-hero h1 em,.wpr-h2 em{font-style:normal;background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
+.wpr-hero p{color:var(--mut);font-size:17px;margin:0 auto;max-width:620px;line-height:1.55}
+.wpr-h2{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;font-size:clamp(24px,3vw,32px);letter-spacing:-.02em;line-height:1.1;margin:0 0 18px;text-align:center;color:var(--ink);text-wrap:balance}
+.wpr-h2.start{text-align:start;margin-bottom:12px}
+
+/* live-price status (fallback only) */
+.wpr-status{max-width:1160px;margin:14px auto 0;padding:0 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px 16px;font-size:13.5px;color:#7a3e10}
+.wpr-status>span{background:#fff4e5;border:1px solid #ffd9a8;border-radius:999px;padding:6px 13px}
+.wpr-retry{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:700;color:var(--ink);background:var(--panel);border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap}
 
 /* plan cards */
 .wpr-plans{max-width:1160px;margin:0 auto;padding:26px 24px 10px;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:14px;align-items:stretch}
@@ -332,32 +341,48 @@ const CSS = `
 .wpr-plan.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),var(--panel) 38%);box-shadow:0 1px 2px rgba(10,13,18,.04),0 24px 50px -28px rgba(16,162,113,.4)}
 .wpr-plan.pop::before{opacity:1}
 .wpr-plan.ent{background:linear-gradient(180deg,rgba(10,147,196,.06),var(--panel) 40%)}
-.wpr-tag{display:inline-flex;align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy));border-radius:999px;padding:3px 9px;white-space:nowrap}
-/* Recommended by the live check: a warm ring + lift, the warm ribbon, a pulsing Start. */
+.wpr-tag{display:inline-flex;align-self:flex-start;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy));border-radius:999px;padding:3px 9px;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .wpr-plan.rec{border-color:rgba(242,106,67,.55);box-shadow:0 0 0 3px rgba(255,154,77,.22),0 28px 56px -28px rgba(242,106,67,.45);transform:translateY(-4px)}
 .wpr-tag.rec{align-items:center;gap:5px;color:#1a0e08;background:linear-gradient(135deg,#ffb35c,#ff7a59)}
 .wpr-btn.rec{background:linear-gradient(135deg,#ffb35c,#ff7a59);color:#1a0e08;box-shadow:0 12px 28px -12px rgba(242,106,67,.7);animation:wpr-rec-pulse 1.8s ease-in-out .6s 3}
 @keyframes wpr-rec-pulse{0%,100%{box-shadow:0 12px 28px -12px rgba(242,106,67,.7)}50%{box-shadow:0 0 0 6px rgba(255,154,77,.28),0 12px 28px -12px rgba(242,106,67,.7)}}
-@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}}
 .wpr-tag.inline{display:block;width:fit-content;margin:0 auto 6px}
 .wpr-plan-name{display:inline-flex;align-items:center;gap:6px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px;margin:0;color:var(--ink)}
 .wpr-plan-name svg{color:var(--cy);flex-shrink:0}
-.wpr-price{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(32px,3.2vw,44px);letter-spacing:-.03em;line-height:1;color:var(--ink);white-space:nowrap}
+.wpr-price{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(32px,3.2vw,44px);letter-spacing:-.03em;line-height:1;color:var(--ink);white-space:nowrap;min-height:1em;display:flex;align-items:baseline}
 .wpr-price span{font-family:"Figtree",sans-serif;font-weight:500;font-size:15px;letter-spacing:0;color:var(--dim);margin-left:3px}
 .wpr-custom{font-size:clamp(28px,2.8vw,36px);background:linear-gradient(120deg,var(--em),var(--cy));-webkit-background-clip:text;background-clip:text;color:transparent}
+.wpr-skel-bar{display:inline-block;width:3.2em;height:.8em;border-radius:6px;background:linear-gradient(90deg,var(--line),var(--panel2),var(--line));background-size:200% 100%;animation:wpr-shimmer 1.2s linear infinite;vertical-align:middle}
+.wpr-skel-li .wpr-skel-bar{width:70%;height:12px}
+@keyframes wpr-shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
 .wpr-cyc{color:var(--dim);font-size:13px;margin-top:-2px}
-.wpr-value{color:var(--mut);font-size:13.5px;line-height:1.5;min-height:2.9em;margin:2px 0 2px}
-.wpr-plan-lines{list-style:none;margin:4px 0 16px;padding:0;display:flex;flex-direction:column;gap:9px}
+.wpr-value-line{color:var(--mut);font-size:13.5px;line-height:1.5;min-height:2.9em;margin:2px 0 2px}
+.wpr-plan-lines{list-style:none;margin:4px 0 16px;padding:0;display:flex;flex-direction:column;gap:9px;min-height:9.5em}
 .wpr-plan-lines li{display:flex;gap:9px;align-items:flex-start;font-size:13px;color:var(--mut);line-height:1.4}
 .wpr-plan-lines li svg{color:var(--em);flex-shrink:0;margin-top:2px}
-.wpr-plan-lines b{color:var(--ink);font-weight:700}
+.wpr-plan-lines li.hl span{color:var(--ink);font-weight:700}
 .wpr-footnote{text-align:center;color:var(--dim);font-size:12.5px;line-height:1.55;max-width:64ch;margin:18px auto 0}
 .wpr-tasknote{text-align:center;color:var(--mut);font-size:14px;line-height:1.55;max-width:66ch;margin:16px auto 0;padding:0 24px}
-.wpr-tasknote b{color:var(--ink);font-weight:700}
-.wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:linear-gradient(135deg,#8cf5c4,#39d3ff);color:#06120d;border:0;border-radius:11px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(10,147,196,.6);margin-top:auto;white-space:nowrap}
+.wpr-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--cta);color:#fff;border:0;border-radius:11px;padding:12px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;box-shadow:0 10px 24px -12px rgba(242,106,67,.7);margin-top:auto;white-space:nowrap;transition:transform .15s,filter .15s}
+.wpr-btn:hover{filter:brightness(1.05);transform:translateY(-1px)}
 .wpr-btn.alt{background:var(--panel);color:var(--ink);border:1px solid var(--line-strong);box-shadow:0 1px 2px rgba(10,13,18,.05)}
 .wpr-btn.sm{padding:8px 14px;font-size:13px;border-radius:9px;margin-top:0}
-.wpr-btn:hover{filter:brightness(1.03)}
+
+/* value band: the three plan facts beside the console */
+.wpr-value{max-width:1160px;margin:0 auto;padding:44px 24px 6px}
+.wpr-value-grid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:28px 40px;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:24px;padding:30px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 24px 56px -34px rgba(10,13,18,.3);position:relative;overflow:hidden}
+.wpr-value-grid::before{content:"";position:absolute;inset:auto -10% -40% auto;width:60%;height:120%;background:radial-gradient(closest-side,rgba(57,211,255,.16),transparent 70%);pointer-events:none}
+.wpr-value-copy,.wpr-value-console{position:relative;min-width:0}
+.wpr-value-sub{color:var(--mut);font-size:15.5px;line-height:1.55;max-width:52ch;margin-bottom:20px}
+.wpr-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.wpr-stat{display:flex;flex-direction:column;gap:3px;padding:14px 14px 12px;border-radius:16px;background:var(--panel2);border:1px solid var(--line);min-width:0}
+.wpr-stat svg{color:var(--em);margin-bottom:4px}
+.wpr-stat b{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:clamp(20px,2vw,26px);letter-spacing:-.02em;line-height:1.05;color:var(--ink);white-space:nowrap}
+.wpr-stat b.sm{font-size:clamp(16px,1.5vw,19px);white-space:normal}
+.wpr-stat span{font-size:12.5px;font-weight:700;color:var(--em);letter-spacing:.02em}
+.wpr-stat small{font-size:12px;color:var(--mut);line-height:1.4}
+.wpr-console-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--cy);margin-bottom:10px}
+.wpr-console-p{margin-top:12px;font-size:13.5px;color:var(--mut);line-height:1.5}
 
 /* matrix */
 .wpr-matrix{max-width:1160px;margin:0 auto;padding:40px 24px 10px}
@@ -367,7 +392,7 @@ const CSS = `
 .wpr-tbl th,.wpr-tbl td{padding:13px 16px;text-align:center;border-top:1px solid var(--line);vertical-align:middle}
 .wpr-tbl thead th{border-top:none;padding:18px 16px 14px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:17px;color:var(--ink);background:var(--emf)}
 .wpr-tbl thead th.pop{color:var(--em)}
-.wpr-th-price{display:block;font-family:"Figtree",sans-serif;font-weight:600;font-size:12.5px;color:var(--dim);margin-top:2px}
+.wpr-th-price{display:block;font-family:"Figtree",sans-serif;font-weight:600;font-size:12.5px;color:var(--dim);margin-top:2px;min-height:1.2em}
 .wpr-tbl .wpr-feat{text-align:left;font-weight:500;color:var(--ink);width:32%;min-width:230px;position:sticky;left:0;z-index:1;background:var(--panel)}
 .wpr-tbl thead .wpr-feat{font-family:"Figtree",sans-serif;font-weight:700;font-size:12.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);background:var(--panel)}
 .wpr-tbl td.pop{background:rgba(16,162,113,.04)}
@@ -380,13 +405,13 @@ const CSS = `
 .wpr-stack{display:none}
 .wpr-tcard{display:flex;flex-direction:column;gap:12px;border:1px solid var(--line);border-radius:18px;padding:20px;background:var(--panel);min-width:0}
 .wpr-tcard.pop{border-color:rgba(16,162,113,.45);background:linear-gradient(180deg,rgba(16,162,113,.07),var(--panel) 30%)}
-.wpr-tname{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px}
+.wpr-tname{display:flex;align-items:center;justify-content:space-between;gap:10px;font-family:"Bricolage Grotesque",sans-serif;font-weight:600;font-size:20px;flex-wrap:wrap}
 .wpr-tname small{font-family:"Figtree",sans-serif;font-weight:600;font-size:13px;color:var(--dim);margin-left:6px}
 .wpr-tcard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .wpr-tcard li{display:flex;align-items:flex-start;gap:10px;font-size:14px;color:var(--ink);line-height:1.45}
 .wpr-tcard li.off{color:var(--dim)}
 .wpr-tcard li .wpr-yes,.wpr-tcard li .wpr-no{width:22px;height:22px;flex-shrink:0}
-.wpr-tcard li .wpr-val{flex-shrink:0;font-size:13px;color:var(--em);padding-top:1px;white-space:normal}
+.wpr-tcard li .wpr-val{flex-shrink:0;font-size:13px;color:var(--em);padding-top:1px;white-space:normal;max-width:45%}
 .wpr-tcard li.wpr-tgroup{display:block;font-size:11.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--em);margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
 .wpr-tcard li.wpr-tgroup:first-child{margin-top:0;padding-top:0;border-top:none}
 .wpr-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:12px 28px;margin-top:22px}
@@ -399,12 +424,23 @@ const CSS = `
 .wpr-note{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;box-shadow:0 1px 2px rgba(10,13,18,.04)}
 .wpr-note h3{font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;font-size:16px;margin:0 0 7px;color:var(--ink)}
 .wpr-note p{color:var(--mut);font-size:13.5px;line-height:1.5}
-.wpr-fine{display:flex;align-items:center;justify-content:center;gap:7px;text-align:center;color:var(--dim);font-size:13.5px;margin-top:20px}
-.wpr-fine svg{color:var(--cy);flex-shrink:0}
+.wpr-fine{display:flex;align-items:flex-start;justify-content:center;gap:7px;text-align:center;color:var(--dim);font-size:13.5px;margin-top:20px;line-height:1.45}
+.wpr-fine svg{color:var(--cy);flex-shrink:0;margin-top:2px}
 .wpr-cta{max-width:1160px;margin:0 auto;padding:26px 24px 40px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wpr-cta .wpr-btn{margin-top:0}
 
-@media(max-width:1080px){.wpr-plans{grid-template-columns:repeat(2,minmax(0,1fr))}.wpr-notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:1080px){.wpr-plans{grid-template-columns:repeat(2,minmax(0,1fr))}.wpr-notes-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.wpr-value-grid{grid-template-columns:1fr;padding:24px}}
 @media(max-width:768px){.wpr-card{display:none}.wpr-stack{display:grid;grid-template-columns:1fr;gap:14px}}
-@media(max-width:560px){.wpr-plans{grid-template-columns:1fr}.wpr-notes-grid{grid-template-columns:1fr}.wpr-hero h1{font-size:30px}}
+@media(max-width:560px){
+  .wpr-plans{grid-template-columns:1fr;padding:20px 16px 8px}
+  .wpr-notes-grid{grid-template-columns:1fr}
+  .wpr-hero{padding:24px 16px 6px}.wpr-hero h1{font-size:30px}
+  .wpr-value,.wpr-matrix,.wpr-notes,.wpr-cta,.wpr-tasknote,.wpr-status{padding-left:16px;padding-right:16px}
+  .wpr-value-grid{padding:18px 16px;border-radius:20px}
+  .wpr-stats{grid-template-columns:1fr 1fr}
+  .wpr-stat:last-child{grid-column:1 / -1}
+  .wpr-plan-lines{min-height:0}
+}
+@media(max-width:400px){.wpr-stats{grid-template-columns:1fr}.wpr-stat:last-child{grid-column:auto}.wpr-cta .wpr-btn{width:100%}}
+@media(prefers-reduced-motion:reduce){.wpr-btn.rec{animation:none}.wpr-plan.rec{transform:none}.wpr-skel-bar{animation:none}.wpr-btn{transition:none}.wpr-btn:hover{transform:none}}
 `

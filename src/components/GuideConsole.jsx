@@ -134,7 +134,7 @@ export default function GuideConsole({ scenario, autoplay = true, loop = true, c
       <div className="gc-head">
         <span className="gc-dots" aria-hidden="true"><i /><i /><i /></span>
         <b>WorkCoPilot</b>
-        {!isComplete && <span className="gc-live" title={t('guide.watchingTitle')}><i aria-hidden="true" />{t('guide.watching')}</span>}
+        {!isComplete && <span className="gc-live" title={t('guide.watchingTitle')} aria-label={t('guide.watching')}><i aria-hidden="true" /><span>{t('guide.watching')}</span></span>}
         <span className="gc-tag">{scenario.tag}</span>
         {!manual && (
           <button type="button" className="gc-ctl-btn" onClick={() => setPaused((p) => !p)} aria-label={paused ? t('guide.play') : t('guide.pause')} aria-pressed={paused}>
@@ -243,7 +243,7 @@ const CSS = `
 .gc *{box-sizing:border-box;min-width:0}
 .gc::before{content:'';position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,var(--gc-em),var(--gc-cy))}
 .gc-head{display:flex;align-items:center;gap:7px;font-size:13px;padding:0 2px 10px;border-bottom:1px solid var(--gc-line)}
-.gc-head b{font-family:"Bricolage Grotesque","Figtree",sans-serif;margin-inline-start:4px;white-space:nowrap}
+.gc-head b{font-family:"Bricolage Grotesque","Figtree",sans-serif;margin-inline-start:4px;white-space:nowrap;flex-shrink:0}
 .gc-dots{display:inline-flex;gap:5px}.gc-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.16)}
 .gc-dots i:first-child{background:#ff5f57}.gc-dots i:nth-child(2){background:#febc2e}.gc-dots i:last-child{background:#28c840}
 .gc-live{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:var(--gc-em);white-space:nowrap}
@@ -332,7 +332,8 @@ const CSS = `
 .gc-compact .gc-scr-body{height:132px;grid-template-columns:84px minmax(0,1fr)}
 .gc-compact .gc-guide{min-height:108px}
 .gc-compact .gc-goal{min-height:44px;font-size:13px}
-@media(max-width:420px){.gc-scr-body{grid-template-columns:78px minmax(0,1fr)}.gc-ctl{max-width:58%;font-size:11px;padding:5px 9px}}
+@media(max-width:420px){.gc-scr-body{grid-template-columns:78px minmax(0,1fr)}.gc-ctl{max-width:58%;font-size:11px;padding:5px 9px}
+  .gc-dots{display:none}.gc-head b{margin-inline-start:0}.gc-live span{display:none}}
 @media(prefers-reduced-motion:reduce){
   .gc-live i,.gc-ctl.target.hot .gc-ring,.gc-ctl.wrong.bad,.gc-scr-complete svg{animation:none}
   .gc-beat,.gc-correct,.gc-here,.gc-scr-complete{animation:none}
