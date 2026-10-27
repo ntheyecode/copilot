@@ -9,15 +9,18 @@ import { Gauge, Hourglass, LifeBuoy, ArrowRight } from 'lucide-react'
 import { api } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
 import { Meter, VIZ_CSS } from './_viz.jsx'
+import { ErrorBox } from './_shared.jsx'
 
 const fmtH = (secs) => { const h = (Number(secs) || 0) / 3600; return h >= 10 || h % 1 === 0 ? `${Math.round(h)}h` : `${h.toFixed(1)}h` }
 
 export default function CompanyPoolCard({ onOpen }) {
   const t = useT()
   const [data, setData] = useState(undefined)   // undefined = loading, null = unavailable
-  const load = useCallback(() => { api.workTeamPool().then((d) => setData(d || null)).catch(() => setData(null)) }, [])
+  const [error, setError] = useState(null)        // a failed request is shown with a retry, never swallowed
+  const load = useCallback(() => { setError(null); api.workTeamPool().then((d) => setData(d || null)).catch((e) => { setError(e); setData(null) }) }, [])
   useEffect(() => { load() }, [load])
-  if (data === undefined || data === null) return null   // no pool dashboard: the minute-pool card still tells the story
+  if (error) return <div className="wka-panel"><ErrorBox error={error} onRetry={load} /></div>
+  if (data === undefined || data === null) return null   // still loading (or an empty reply): nothing to show yet
   const pool = data.pool || {}
   const policy = data.policy || {}
   const hasPool = (pool.monthlySeconds || 0) > 0
