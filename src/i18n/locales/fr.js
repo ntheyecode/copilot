@@ -2704,7 +2704,7 @@ export default {
       companyAdmin: 'Administrateur de l\'entreprise',
       approve: 'Approuver',
       deny: 'Refuser',
-      denyReason: 'Ajoutez une courte note pour l\'administrateur (facultatif) :',
+      denyReason: 'Ajoutez une courte note pour l\'administrateur de l\'entreprise. Elle est envoyée avec la décision.',
     },
     loadingCompanies: "Chargement des entreprises",
     loadingCompany: "Chargement de l'entreprise",

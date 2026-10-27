@@ -706,7 +706,7 @@ export default function Companies({ isSuperAdmin }) {
                                   <td>{u.displayName || u.username}<div className="co-dim">{u.ssoEmail || u.username}</div></td>
                                   <td>{ROLE_CHIP[u.companyRole] ? <span className="wka-chip ok">{t(ROLE_CHIP[u.companyRole])}</span> : t('companiesAdmin.people.member')}</td>
                                   <td><select className="wka-select" value={u.tier || 'basic'} onChange={(e) => setUserTier(u, c.id, e.target.value)}><option value="basic">{t('companiesAdmin.plans.basic')}</option><option value="advanced">{t('companiesAdmin.plans.advanced')}</option><option value="premium">{t('companiesAdmin.plans.premium')}</option></select></td>
-                                  <td className="co-dim">{mu ? `${fmtMins(mu.usage.usedSeconds)} / ${fmtMins(mu.usage.dailySeconds)}` : '-'}</td>
+                                  <td className="co-dim">{mu ? (mu.usage.dailySeconds != null ? `${fmtMins(mu.usage.usedSeconds)} / ${fmtMins(mu.usage.dailySeconds)}` : fmtMins(mu.usage.usedSeconds)) : '-'}</td>
                                   <td>{isSuperAdmin ? <button className={`co-toggle ${u.scrub ? 'on' : ''}`} onClick={() => toggleUserScrub(u, c.id)}>{u.scrub ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button> : (u.scrub ? t('companiesAdmin.on') : t('companiesAdmin.off'))}</td>
                                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                                     <button className="wka-btn sm ghost" title={t('companiesAdmin.people.addHours')} onClick={() => grantUserHours(u, c.id)}><Clock size={12} /></button>

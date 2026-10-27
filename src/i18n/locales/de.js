@@ -3009,7 +3009,7 @@ export default {
       companyAdmin: 'Unternehmens-Administrator',
       approve: 'Freigeben',
       deny: 'Ablehnen',
-      denyReason: 'Füge eine kurze Notiz für den Admin hinzu (optional):',
+      denyReason: 'Füge eine kurze Notiz für den Firmen-Admin hinzu. Sie wird mit der Entscheidung gesendet.',
     },
     loadingCompanies: 'Unternehmen werden geladen',
     loadingCompany: 'Unternehmen wird geladen',

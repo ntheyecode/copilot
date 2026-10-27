@@ -2018,7 +2018,7 @@ export default {
       companyAdmin: 'Administrador de la empresa',
       approve: 'Aprobar',
       deny: 'Rechazar',
-      denyReason: 'Añade una nota breve para el administrador (opcional):',
+      denyReason: 'Añade una nota breve para el administrador de la empresa. Se envía junto con la decisión.',
     },
     loadingCompanies: 'Cargando empresas',
     loadingCompany: 'Cargando empresa',

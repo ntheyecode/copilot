@@ -43,6 +43,11 @@ export function createEnterpriseBilling(ctx) {
     return c.enterprise
   }
   function userCompany(u) { return (u && u.companyId) ? findCompany(u.companyId) : null }
+  // A company is POOL-BASED once AdmireVeda has set a monthly pool: the pool is
+  // then the ONLY time source and every guided second draws from it (owner:
+  // "all deducted from the pool"). The tier's daily free bucket applies only to
+  // seat-based companies (no pool set) and to individuals.
+  function isPoolBased(c) { return !!(c && c.enterprise && (Number(c.enterprise.poolMonthlySeconds) || 0) > 0) }
   function userTz(u) { const c = userCompany(u); return (c && c.enterprise && c.enterprise.timezone) || DEFAULT_TZ }
   // A company user's "usage day" is in the COMPANY time zone (daily resets at
   // company-local 11:59 PM). Individuals stay on Eastern, so for a company-less
@@ -368,7 +373,7 @@ export function createEnterpriseBilling(ctx) {
   return {
     // hooks used by the consumption engine (store.js)
     defaults: () => eq.enterpriseDefaults(),
-    companyEnterprise, userCompany, userTz, userDayKey, userAllocGroup, resetLabel, resetLabelForUser,
+    companyEnterprise, userCompany, isPoolBased, userTz, userDayKey, userAllocGroup, resetLabel, resetLabelForUser,
     rollCompanyPool, userCeilingState, userHourHeadroom, companyUsageSnapshot, publicEnterprise, maybeFireAlerts,
     // public API (re-exported by the store)
     setCompanyEnterprise, setCompanyAllocation, setUserAllocation, publicCompanyAllocation, companyPoolDashboard,

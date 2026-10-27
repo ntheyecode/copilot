@@ -561,7 +561,7 @@ function OverviewSection({ company }) {
                       <td>{m.displayName || m.username}{m.email ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{m.email}</div> : null}</td>
                       <td>{t(ROLE_LABEL[m.companyRole] || 'companyAdmin.roles.member')}</td>
                       <td><span className={`wka-badge ${m.tier}`}>{m.tier}</span></td>
-                      <td>{fmtMins(m.usage.usedSeconds)} <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span></td>
+                      <td>{fmtMins(m.usage.usedSeconds)} {m.usage.dailySeconds != null ? <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span> : null}</td>
                       <td>{m.usage.purchasedSeconds ? fmtMins(m.usage.purchasedSeconds) : '-'}</td>
                       <td>{m.licensed ? <span className="wka-chip ok">{t('companyAdmin.overview.statusActive')}</span> : <span className="wka-chip" style={{ color: 'var(--wka-amber)' }}>{t('companyAdmin.overview.statusNoSeat')}</span>}</td>
                     </tr>
@@ -751,7 +751,7 @@ function TeamSection({ meId, onCompany }) {
                               {TIERS.map((tier) => <option key={tier.id} value={tier.id}>{tier.name}</option>)}
                             </select>
                           </td>
-                          <td style={{ fontSize: 12.5 }}>{fmtMins(m.usage.usedSeconds)} <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span></td>
+                          <td style={{ fontSize: 12.5 }}>{fmtMins(m.usage.usedSeconds)} {m.usage.dailySeconds != null ? <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span> : null}</td>
                           <td style={{ fontSize: 12.5 }}>
                             {allocFor === m.id
                               ? <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center' }}>

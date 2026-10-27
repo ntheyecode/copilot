@@ -3083,7 +3083,7 @@ export default {
       companyAdmin: '회사 관리자',
       approve: '승인',
       deny: '거절',
-      denyReason: '관리자에게 전할 짧은 메모를 추가하세요(선택):',
+      denyReason: '회사 관리자에게 전할 짧은 메모를 추가하세요. 결정과 함께 전달됩니다.',
     },
     loadingCompanies: '회사를 불러오는 중',
     loadingCompany: '회사를 불러오는 중',

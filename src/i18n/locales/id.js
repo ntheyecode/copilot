@@ -2871,7 +2871,7 @@ export default {
       companyAdmin: 'Admin perusahaan',
       approve: 'Setujui',
       deny: 'Tolak',
-      denyReason: 'Tambahkan catatan singkat untuk admin (opsional):',
+      denyReason: 'Tambahkan catatan singkat untuk admin perusahaan. Catatan ini dikirim bersama keputusan.',
     },
     loadingCompanies: 'Memuat perusahaan',
     loadingCompany: 'Memuat perusahaan',

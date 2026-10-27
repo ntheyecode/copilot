@@ -393,7 +393,7 @@ const ent = createEnterpriseBilling({
   db: () => db, persist, persistSoon, getUser, company: _company, publicCompany, publicWorkUser,
   httpErr, id, now, emitStoreEvent,
 })
-const { rollCompanyPool, userCompany, userTz, userDayKey, userCeilingState, userHourHeadroom, companyUsageSnapshot, maybeFireAlerts } = ent
+const { rollCompanyPool, userCompany, isPoolBased, userTz, userDayKey, userCeilingState, userHourHeadroom, companyUsageSnapshot, maybeFireAlerts } = ent
 export const {
   setCompanyEnterprise, setCompanyAllocation, setUserAllocation, publicCompanyAllocation, companyPoolDashboard,
   requestCompanyHours, listCompanyHourRequests, decideCompanyHours,
@@ -3118,20 +3118,25 @@ export function grantWorkPurchasedSeconds(workUserId, seconds) {
 }
 export function getWorkUsage(workUserId) {
   const tier = getWorkTier(workUserId)
-  const dailySeconds = workDailyLimit(tier)
   const u = getUser(workUserId)
   const co = (u && u.companyId) ? (db.companies || []).find((x) => x.id === u.companyId) : null
   if (co) rollCompanyPool(co)                      // lazy month-end rollover before we read the pool
+  // ENTERPRISE (pool-based company: AdmireVeda set a monthly pool): the pool is
+  // the ONLY time source and every guided second draws from it, so the tier's
+  // daily free bucket does not apply and "used today" is everything consumed.
+  // Seat-based companies (no pool set) and individuals keep the free bucket.
+  const poolBasedCo = isPoolBased(co)
+  const dailySeconds = poolBasedCo ? 0 : workDailyLimit(tier)
   // A company user's day boundary is in the COMPANY timezone; individuals stay ET.
   const key = `${workUserId}:${u ? userDayKey(u) : easternDayKey()}`
   const rec = (db.workUsage && db.workUsage[key]) || null
-  const used = (rec && rec.usedSeconds) || 0
+  const used = poolBasedCo ? ((rec && rec.consumedSeconds) || 0) : ((rec && rec.usedSeconds) || 0)
   // Bonus seconds granted TODAY by trading task credits for extra hours expire at
   // the local day boundary (a new day gets a fresh record) and never join the
   // persistent purchased-hours pool. They extend the free daily bucket.
   const bonusSeconds = (rec && rec.bonusSeconds) || 0
   const purchasedSeconds = (u && u.purchasedSeconds) || 0
-  const freeLeft = Math.max(0, (dailySeconds + bonusSeconds) - used)
+  const freeLeft = poolBasedCo ? 0 : Math.max(0, (dailySeconds + bonusSeconds) - used)
   const poolSeconds = co ? Math.max(0, Number(co.poolSeconds) || 0) : 0
   const resetLabel = co ? eq.tzResetLabel((co.enterprise && co.enterprise.timezone) || 'America/New_York') : '11:59 PM ET'
   const poolBased = freeLeft + purchasedSeconds + poolSeconds
@@ -3156,6 +3161,9 @@ export function getWorkUsage(workUserId) {
     out.ceilingHit = Number.isFinite(headroom) && headroom <= 0 && poolBased > 0   // pool has time, your allowance is spent
     out.poolExhausted = poolBased <= 0                                             // the company pool itself is empty
     out.enterprise = companyUsageSnapshot(co, u, cs)
+    // Pool-based: the honest daily denominator is the user's own day ceiling
+    // (null when none), never the tier bucket they no longer draw from.
+    if (poolBasedCo) out.dailySeconds = (cs && cs.hours && cs.hours.day && cs.hours.day.limit != null) ? cs.hours.day.limit : null
   }
   return out
 }
@@ -3598,7 +3606,10 @@ export function addWorkUsage(workUserId, seconds) {
     if (!secs) { maybeFireAlerts(c, u, cs); return getWorkUsage(workUserId) }   // nothing consumed: the state just computed is still exact
   }
   const tier = getWorkTier(workUserId)
-  const dailySeconds = workDailyLimit(tier)
+  // Pool-based company: no free daily bucket, so every second lands on the
+  // person's purchased top-ups and then the company pool (owner: "all deducted
+  // from the pool"). Seat-based companies and individuals keep the free bucket.
+  const dailySeconds = (c && isPoolBased(c)) ? 0 : workDailyLimit(tier)
   const key = `${workUserId}:${u ? userDayKey(u) : easternDayKey()}`
   const rec = db.workUsage[key] || (db.workUsage[key] = { usedSeconds: 0 })
   const startSecs = secs

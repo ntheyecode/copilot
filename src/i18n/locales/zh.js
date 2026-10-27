@@ -2608,7 +2608,7 @@ export default {
       companyAdmin: '公司管理员',
       approve: '批准',
       deny: '拒绝',
-      denyReason: '为管理员添加简短备注（可选）：',
+      denyReason: '为公司管理员添加简短备注。备注会随决定一并发送。',
     },
     loadingCompanies: '正在加载公司',
     loadingCompany: '正在加载公司',

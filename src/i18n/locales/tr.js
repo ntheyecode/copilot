@@ -2640,7 +2640,7 @@ export default {
       companyAdmin: 'Şirket yöneticisi',
       approve: 'Onayla',
       deny: 'Reddet',
-      denyReason: 'Yönetici için kısa bir not ekleyin (isteğe bağlı):',
+      denyReason: 'Şirket yöneticisi için kısa bir not ekleyin. Not, kararla birlikte gönderilir.',
     },
     loadingCompanies: 'Şirketler yükleniyor',
     loadingCompany: 'Şirket yükleniyor',

@@ -1397,7 +1397,7 @@ export default {
       companyAdmin: 'Administrador da empresa',
       approve: 'Aprovar',
       deny: 'Recusar',
-      denyReason: 'Adicione uma observação curta para o administrador (opcional):',
+      denyReason: 'Adicione uma observação curta para o administrador da empresa. Ela é enviada junto com a decisão.',
     },
     loadingCompanies: 'Carregando empresas',
     loadingCompany: 'Carregando empresa',

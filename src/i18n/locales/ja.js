@@ -2497,7 +2497,7 @@ export default {
       companyAdmin: '会社管理者',
       approve: '承認',
       deny: '却下',
-      denyReason: '管理者向けに短い備考を追加（任意）：',
+      denyReason: '会社の管理者向けに短い備考を追加してください。決定とともに送信されます。',
     },
     loadingCompanies: '会社を読み込んでいます',
     loadingCompany: '会社を読み込んでいます',

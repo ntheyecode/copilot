@@ -2371,7 +2371,7 @@ export default {
       companyAdmin: 'مشرف الشركة',
       approve: 'موافقة',
       deny: 'رفض',
-      denyReason: 'أضف ملاحظة قصيرة للمشرف (اختياري):',
+      denyReason: 'أضف ملاحظة قصيرة لمشرف الشركة. تُرسل مع القرار.',
     },
     loadingCompanies: 'جارٍ تحميل الشركات',
     loadingCompany: 'جارٍ تحميل الشركة',

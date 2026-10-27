@@ -63,6 +63,19 @@ test('with no allocation set, a company user stays unlimited on tasks', () => {
   assert.equal(store.getWorkTaskUsage(m3.id).unlimited, true)
 })
 
+test('pool-based company: every guided second draws from the pool, not a tier free bucket', () => {
+  const m6 = store.createManagedUser({ username: 'nw_m6', password: 'Passw0rd!x', companyId: co.id, companyRole: 'member', tier: 'advanced' })
+  const before = store.companyPoolDashboard(co.id).pool.remainingSeconds
+  for (let i = 0; i < 3; i++) store.addWorkUsage(m6.id, 60)
+  const after = store.companyPoolDashboard(co.id).pool.remainingSeconds
+  assert.equal(before - after, 180)                               // the pool moved by exactly what was consumed
+  const usage = store.getWorkUsage(m6.id)
+  assert.equal(usage.usedSeconds, 180)                            // "used today" is everything consumed
+  assert.equal(usage.freeLeft, 0)                                 // no tier free bucket once a pool is set
+  assert.equal(usage.dailySeconds, null)                          // no day ceiling: no misleading denominator
+  assert.equal(usage.poolExhausted, false)
+})
+
 test('additional-hours request flows admin -> superadmin approve -> pool + invoice', () => {
   const before = store.companyPoolDashboard(co.id).pool.remainingSeconds
   const req = store.requestCompanyHours(co.id, admin.id, { hours: 50, note: 'quarter-end push' })

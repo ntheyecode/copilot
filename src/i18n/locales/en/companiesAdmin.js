@@ -50,7 +50,7 @@ export default {
       companyAdmin: 'Company admin',
       approve: 'Approve',
       deny: 'Decline',
-      denyReason: 'Add a short note for the company admin (optional):',
+      denyReason: 'Add a short note for the company admin. It is sent with the decision.',
     },
     sso: {
       providers: {

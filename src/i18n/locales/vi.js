@@ -1317,7 +1317,7 @@ export default {
       companyAdmin: 'Quản trị viên công ty',
       approve: 'Duyệt',
       deny: 'Từ chối',
-      denyReason: 'Thêm ghi chú ngắn cho quản trị viên (tùy chọn):',
+      denyReason: 'Thêm ghi chú ngắn cho quản trị viên công ty. Ghi chú sẽ được gửi kèm quyết định.',
     },
     loadingCompanies: 'Đang tải danh sách công ty',
     loadingCompany: 'Đang tải công ty',

@@ -2063,7 +2063,7 @@ export default {
       companyAdmin: 'Amministratore dell\'azienda',
       approve: 'Approva',
       deny: 'Rifiuta',
-      denyReason: 'Aggiungi una breve nota per l\'amministratore (facoltativa):',
+      denyReason: 'Aggiungi una breve nota per l\'amministratore dell\'azienda. Verrà inviata insieme alla decisione.',
     },
     loadingCompanies: 'Caricamento aziende',
     loadingCompany: 'Caricamento azienda',
