@@ -1,5 +1,9 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
+// React Router v7: BrowserRouter runs every navigation inside
+// React.startTransition (the v6 v7_startTransition flag is now the default), so
+// a lazy route keeps the current screen up until its chunk is ready instead of
+// flashing a Suspense fallback. useTransitions={false} is the opt-out.
 import { BrowserRouter } from 'react-router-dom'
 import '@fontsource-variable/inter'
 // Self-hosted display + mono fonts (ePrivacy: no third-party Google Fonts request

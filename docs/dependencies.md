@@ -1,6 +1,6 @@
 # WorkCoPilot - Dependency Technical Document
 
-Last updated: 2026-10-23. Scope: every third-party dependency in the WorkCoPilot
+Last updated: 2026-10-27. Scope: every third-party dependency in the WorkCoPilot
 project (the web app + server, and the desktop shell), where each is used, and
 why. This is a deliberately lean dependency set: the fewer moving parts, the
 smaller the attack surface and the easier the audit.
@@ -20,7 +20,7 @@ The project has two package manifests:
 |---|---|---|---|---|
 | `react` | ^18.3.1 | Client | all of `src/` | UI library for the single-page app. |
 | `react-dom` | ^18.3.1 | Client | `src/main.jsx` | React's DOM renderer. |
-| `react-router-dom` | ^6.26.0 | Client | `src/App.jsx` | Client-side routing for every page (`/work`, `/work/exec`, `/work/admin`, the public marketing pages, etc.). |
+| `react-router-dom` | ^7.18.4 | Client | `src/main.jsx`, `src/App.jsx` | Client-side routing for every page (`/work`, `/work/exec`, `/work/admin`, the public marketing pages, etc.). In v7 it re-exports `react-router`, and navigations run inside `React.startTransition` by default. |
 | `lucide-react` | ^0.427.0 | Client | across `src/pages/*`, `src/components/*` | Icon set. Tree-shaken, so only the icons actually imported ship. |
 | `@fontsource-variable/inter` | ^5.0.18 | Client | `src/main.jsx` | Self-hosted Inter variable font (bundled, so no third-party font CDN call at runtime; good for privacy and offline). |
 | `jspdf` | ^4.2.1 | Client | `src/pages/WorkExec.jsx` | Builds the executive dashboard PDF export. Lazy-imported only when the operator clicks Export, so it never weighs down first load. |
@@ -37,8 +37,9 @@ The project has two package manifests:
 
 | Package | Version | Where used | Why |
 |---|---|---|---|
-| `vite` | ^5.4.0 | build (`npm run build` -> `dist/`) | Bundler/dev server for the React client. Produces the hashed assets in `dist/copilot-assets/`. |
-| `@vitejs/plugin-react` | ^4.3.1 | `vite.config.*` | React (JSX + fast refresh) support for Vite. |
+| `vite` | ^8.3.5 | build (`npm run build` -> `dist/`) | Bundler (Rolldown) and dev server for the React client. Produces the hashed assets in `dist/copilot-assets/`. Needs Node ^20.19 or >=22.12 on the machine that builds; the server only runs `server/index.js`. |
+| `@vitejs/plugin-react` | ^6.1.2 | `vite.config.*` | React (JSX + fast refresh, via Oxc) support for Vite 8. |
+| `javascript-obfuscator` | ^5.2.1 | `vite.config.js` (`npm run build:harden`, `build:harden:max`) | Obfuscates the first-party chunks of hardened builds; vendor chunks stay minified only. |
 
 Node's built-in test runner (`node --test`) runs the suite in `server/*.test.mjs`
 and `server/eval/*.test.mjs`; no third-party test framework is used.
@@ -84,12 +85,12 @@ The desktop app is a thin Electron wrapper that loads the live web console
   library (the executive dashboard charts are hand-built inline SVG), no ORM (the
   store is a single JSON persistence layer). This keeps the bundle small, the
   audit surface narrow, and the offline story simple.
-- **Supply-chain hygiene.** `npm audit` currently reports a small number of
-  advisories in the transitive tree (as of 2026-10-23: a few moderate and one
-  high, all transitive). None are in a runtime path that handles untrusted input
-  on the server; they are tracked for a dependency bump. Run `npm audit` for the
-  current list before each release and bump where a fix is available without a
-  breaking change.
+- **Supply-chain hygiene.** As of 2026-10-27, `npm audit` reports 0
+  vulnerabilities. The react-router-dom 7 and vite 8 upgrades cleared the last
+  advisories (react-router open redirect and SSR hydration, the vite dev-server
+  and launch-editor issues, and the esbuild dev-server issue; esbuild is no
+  longer in the tree). Run `npm audit` before each release and bump where a fix
+  is available.
 - **How to regenerate this list.** `node -e "const p=require('./package.json');
   console.log(p.dependencies, p.devDependencies)"` for the root, and the same
   against `workcopilot/package.json` for the desktop shell. Update this document
