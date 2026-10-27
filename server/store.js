@@ -3177,11 +3177,16 @@ export function getWorkUsage(workUserId) {
 // live in plan_allowance.js. Company users are unlimited unless their company
 // admin set an enterprise task ceiling (their pool is the real limiter).
 const WORK_TASKS_UNLIMITED = Infinity
-// The per-day task cap for a person. Infinity => unlimited (company).
-export function workDailyTaskLimit(workUserId) {
+// Owner 2026-10-27: there is NO per-day task cap. Hours are the only usage limit,
+// and a person may keep up to this many tasks OPEN at once (running or paused).
+// Universal, not a tier perk, never advertised on pricing. Single source of truth.
+export const WORK_MAX_OPEN_TASKS = 4
+// How many tasks a person may keep OPEN at once. Infinity => unlimited (company;
+// enterprise ceilings gate separately). Individuals share one universal cap.
+export function workMaxOpenTasks(workUserId) {
   const u = getUser(workUserId)
-  if (u && u.companyId) return WORK_TASKS_UNLIMITED       // company: unlimited (enterprise ceilings gate separately)
-  return plan.dailyTaskCap(workUserTier(workUserId))
+  if (u && u.companyId) return WORK_TASKS_UNLIMITED
+  return WORK_MAX_OPEN_TASKS
 }
 // Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
 // information; it never changes the original request (that is frozen by
@@ -3252,6 +3257,12 @@ function bumpWorkTasksToday(workUserId) {
 export function blockingWorkTask(workUserId) {
   return (db.workSessions || []).find((x) => x.workUserId === workUserId && x.status === 'active' && !x.paused) || null
 }
+// How many tasks the person has OPEN right now: status 'active' = unfinished,
+// whether running or paused. The open-task cap counts these; finished and
+// abandoned sessions carry a terminal status and are not counted.
+export function countOpenWorkTasks(workUserId) {
+  return (db.workSessions || []).filter((x) => x.workUserId === workUserId && x.status === 'active').length
+}
 // Task usage for the client (the New Task surface + /me). For INDIVIDUAL users
 // this is the plan's per-day cap (tasks[tier] in superadmin pricing): used
 // today, remaining, and when it resets. COMPANY users are unlimited unless their
@@ -3284,7 +3295,10 @@ export function getWorkTaskUsage(workUserId) {
       resetLabel: eq.tzResetLabel(userTz(u)),
     }
   }
-  return { ...plan.taskState({ id: workUserId }), activeTaskId }   // { unlimited:false, cap, usedToday, remaining, resetLabel }
+  // Individuals: no daily cap. Report how many of the open-task slots are in use
+  // (hours are the usage limit; see getWorkUsage for the hours side).
+  const open = countOpenWorkTasks(workUserId)
+  return { unlimited: false, maxOpen: WORK_MAX_OPEN_TASKS, open, remaining: Math.max(0, WORK_MAX_OPEN_TASKS - open), activeTaskId }
 }
 // Gate + record a new task start. Throws a coded httpErr the caller surfaces, or
 // returns the new usage on success. Company accounts are unlimited unless an
@@ -3315,18 +3329,28 @@ export function startWorkTask(workUserId) {
     persist()
     return { usedToday, cap: (cs && cs.tasks && cs.tasks.limited) ? cs.tasks.day && cs.tasks.day.limit : null, unlimited: !(cs && cs.tasks && cs.tasks.limited) }
   }
-  // Rule 1: only a task that is actively RUNNING blocks a new start. A PAUSED
-  // task waits under "Resume where you left off" and must NOT block (owner: with
-  // tasks left today you can start another). Pausing the current task is
-  // therefore the way to start a second one.
-  const active = blockingWorkTask(workUserId)
-  if (active) { const e = httpErr(409, 'Pause or finish your current task before starting a new one.'); e.mustCompleteCurrent = true; e.activeTaskId = active.id; throw e }
-  // Rule 2: today's per-day cap for the plan (a coded 402 with the reset time
-  // when it is used up). Counted on start, so an abandoned task is not refunded.
-  const s = plan.gateTaskStart({ id: workUserId })
-  const usedToday = bumpWorkTasksToday(workUserId)
+  // New model (owner 2026-10-27): NO per-day task cap. Hours are the only usage
+  // limit, and a person may keep up to WORK_MAX_OPEN_TASKS tasks open at once.
+  // 1) Out of hours? Nothing runs without guided time (the monthly plan pool plus
+  //    purchased hours plus any shared company pool). This replaces the old
+  //    daily-task 402 as the real limit.
+  const avail = getWorkUsage(workUserId)
+  if (avail && avail.exhausted) {
+    const e = httpErr(402, `You're out of guided hours for now. They renew ${avail.resetLabel}, or add hours to keep going.`)
+    e.outOfHours = true; e.resetLabel = avail.resetLabel
+    throw e
+  }
+  // 2) Too many open at once? Finish or pick one up first. A paused task counts as
+  //    open (it waits under "Resume where you left off").
+  const open = countOpenWorkTasks(workUserId)
+  if (open >= WORK_MAX_OPEN_TASKS) {
+    const e = httpErr(409, `You already have ${WORK_MAX_OPEN_TASKS} tasks on the go. Finish or pick one up before you start another.`)
+    e.tooManyOpen = true; e.maxOpen = WORK_MAX_OPEN_TASKS; e.open = open
+    throw e
+  }
+  const usedToday = bumpWorkTasksToday(workUserId)   // kept for the month history only; no longer a gate
   persist()
-  return { usedToday, cap: s.cap, remaining: Math.max(0, s.cap - usedToday), unlimited: false, resetLabel: s.resetLabel }
+  return { open: open + 1, maxOpen: WORK_MAX_OPEN_TASKS, unlimited: false, usedToday }
 }
 // A company admin's license + usage dashboard: seat pools, who holds a license,
 // the tier breakdown, the minute pool, and each person's live usage. Everything
@@ -3536,7 +3560,9 @@ const WORK_PRICING_DEFAULT = {
   hour: { lite: 25, basic: 20, advanced: 15, premium: 10 },      // extra hour, per tier
   image: { lite: 3, basic: 2, advanced: 1, premium: 0.5 },       // per generated image, per tier
   imageMinBulk: 10,                                    // images bought in bulk, min 10
-  tasks: { lite: 4, basic: 4, advanced: 6, premium: 8 },        // guided tasks a person may START per ET day, per tier (company = unlimited unless an enterprise ceiling applies). A plain cap: no banked credits, no earning, no trading (owner, 2026-10-27). Superadmin-editable; plan_allowance reads it live.
+  // No per-day task cap any more (owner 2026-10-27): hours are the only usage
+  // limit and a person may keep up to store.WORK_MAX_OPEN_TASKS tasks open at
+  // once. The old per-tier `tasks` config is retired.
   replans: { lite: 5, basic: 10, advanced: 10, premium: 10 },    // MAX re-plans PER TASK, per tier (corporate = unlimited). A re-plan only re-adapts the plan with new info; it NEVER changes the original request. Superadmin-editable.
   hoursMonthly: { lite: 30, basic: 60, advanced: 120, premium: 180 },  // INCLUDED guided hours per calendar month, per tier: the plan's pool, renewed on the 1st (ET). Superadmin-editable; a change reaches every person's pool at once. Fractional allowed.
   hoursExpiry: { mode: 'forfeit', carryCapHours: null },        // What happens to unused plan hours at month end: 'forfeit' (expire) or 'carryforward' (roll over, up to carryCapHours when set). Superadmin-editable; same rules as the enterprise pool (enterprise_quota.rolloverPool).
@@ -3570,7 +3596,6 @@ export function getWorkPricing() {
     hour: { ...WORK_PRICING_DEFAULT.hour, ...(p.hour || {}) },
     image: { ...WORK_PRICING_DEFAULT.image, ...(p.image || {}) },
     imageMinBulk: p.imageMinBulk || WORK_PRICING_DEFAULT.imageMinBulk,
-    tasks: { ...WORK_PRICING_DEFAULT.tasks, ...(p.tasks || {}) },
     replans: { ...WORK_PRICING_DEFAULT.replans, ...(p.replans || {}) },
     hoursMonthly: hoursMonthlyFromStored(p),
     hoursExpiry: hoursExpiryFromStored(p),
@@ -3679,7 +3704,6 @@ export function setWorkPricing(patch) {
     hour: { ...cur.hour, ...tiers(p.hour, 'Hour') },
     image: { ...cur.image, ...tiers(p.image, 'Image') },
     imageMinBulk,
-    tasks: { ...cur.tasks, ...taskCounts(p.tasks) },
     replans: { ...cur.replans, ...taskCounts(p.replans, 're-plan') },
     hoursMonthly: { ...cur.hoursMonthly, ...hourVals(p.hoursMonthly) },
     hoursExpiry,

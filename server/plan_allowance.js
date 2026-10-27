@@ -26,11 +26,10 @@ import * as eq from './enterprise_quota.js'
 
 export const PLAN_TZ = 'America/New_York'          // individuals and seats run on Eastern, like the rest of the engine
 const DEFAULT_HOURS_MONTHLY = { lite: 30, basic: 60, advanced: 120, premium: 180 }
-const DEFAULT_TASKS_DAILY = { lite: 4, basic: 4, advanced: 6, premium: 8 }
 
-// ctx: { db: () => object, persistSoon, getWorkPricing, workUserTier, tasksToday(userId), httpErr }
+// ctx: { db: () => object, persistSoon, getWorkPricing, workUserTier, httpErr }
 export function createPlanAllowance(ctx) {
-  const { persistSoon, getWorkPricing, workUserTier, tasksToday, httpErr } = ctx
+  const { persistSoon, getWorkPricing, workUserTier, httpErr } = ctx
   const db = () => ctx.db()
 
   // ---- Live pricing reads (never a parallel copy of the numbers) --------
@@ -39,10 +38,6 @@ export function createPlanAllowance(ctx) {
     return Number.isFinite(h) && h >= 0 ? h : (DEFAULT_HOURS_MONTHLY[tier] || 0)
   }
   const grantSeconds = (tier) => Math.round(hoursMonthly(tier) * 3600)
-  function dailyTaskCap(tier) {
-    const n = ((getWorkPricing().tasks) || {})[tier]
-    return Number.isInteger(n) && n >= 0 ? n : (DEFAULT_TASKS_DAILY[tier] || 0)
-  }
   function expiry() {
     const e = (getWorkPricing().hoursExpiry) || {}
     const mode = eq.MONTH_END_MODES.includes(e.mode) ? e.mode : 'forfeit'
@@ -124,24 +119,11 @@ export function createPlanAllowance(ctx) {
     }
   }
 
-  // ---- Tasks: a plain per-day cap ------------------------------------------
-  function taskState(u) {
-    const cap = dailyTaskCap(workUserTier(u.id))
-    const usedToday = tasksToday(u.id)
-    return { unlimited: false, cap, usedToday, remaining: Math.max(0, cap - usedToday), resetLabel: eq.tzResetLabel(PLAN_TZ) }
-  }
-  // Throws the coded 402 the client turns into an actionable "today's tasks are
-  // used" state; returns the state when a start is allowed.
-  function gateTaskStart(u) {
-    const s = taskState(u)
-    if (s.usedToday >= s.cap) {
-      const tier = workUserTier(u.id)
-      const e = httpErr(402, `You've used today's ${s.cap} guided ${s.cap === 1 ? 'task' : 'tasks'} on the ${tier} plan. New tasks open at ${s.resetLabel}, or upgrade for more each day.`)
-      e.taskLimit = true; e.cap = s.cap; e.window = 'day'; e.resetLabel = s.resetLabel
-      throw e
-    }
-    return s
-  }
+  // ---- Tasks ----------------------------------------------------------------
+  // There is NO per-day task cap any more (owner 2026-10-27): hours are the only
+  // usage limit, and a person may keep up to a small number of tasks open at once
+  // (enforced in store.js, which owns the session records). This module stays the
+  // single authority on the HOURS side only.
 
-  return { hoursMonthly, grantSeconds, dailyTaskCap, expiry, rollUserPool, consume, usedMonthSeconds, history, snapshot, taskState, gateTaskStart }
+  return { hoursMonthly, grantSeconds, expiry, rollUserPool, consume, usedMonthSeconds, history, snapshot }
 }

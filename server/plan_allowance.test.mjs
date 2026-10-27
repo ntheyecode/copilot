@@ -1,8 +1,9 @@
 // Plan allowance (owner, 2026-10-27): every plan includes MONTHLY hours that
-// renew on the 1st (ET) with a superadmin-set month-end policy, and a plain
-// per-day task cap (4 / 4 / 6 / 8). No banked task credits, no earning, no
-// trading hours for tasks. Buying hours grants hours only. Phrased as the
-// business rules, so the suite protects the rules, not the implementation.
+// renew on the 1st (ET) with a superadmin-set month-end policy. There is NO
+// per-day task cap: hours are the only usage limit, and a person may keep up to
+// WORK_MAX_OPEN_TASKS (4) tasks open at once. Monthly hours and the extra-hour
+// rate are dynamic per tier (superadmin-editable). Buying hours grants hours
+// only. Phrased as the business rules, so the suite protects the rules.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import fs from 'node:fs'
@@ -19,11 +20,12 @@ const store = await import(storePath)
 const uniq = (p) => p + Math.random().toString(36).slice(2, 7)
 const person = (tier) => { const u = store.createWorkUser({ username: uniq(tier), password: 'Passw0rd!x' }); store.setWorkTier(u.id, tier); return u }
 
-test('plans include monthly hours and a per-day task cap: 30/60/120/180 h and 4/4/6/8 tasks', () => {
+test('plans include monthly hours and an extra-hour rate per tier (dynamic), and NO per-day task cap', () => {
   const p = store.getWorkPricing()
   assert.deepEqual(p.hoursMonthly, { lite: 30, basic: 60, advanced: 120, premium: 180 })
-  assert.deepEqual(p.tasks, { lite: 4, basic: 4, advanced: 6, premium: 8 })
+  assert.deepEqual(p.hour, { lite: 25, basic: 20, advanced: 15, premium: 10 })   // extra-hour rate per tier, superadmin-editable
   assert.deepEqual(p.hoursExpiry, { mode: 'forfeit', carryCapHours: null })
+  assert.equal('tasks' in p, false)                  // the per-day task cap is retired
   assert.equal('dailyHours' in p, false)             // the per-day bucket is gone
   assert.equal('tasksPerExtraHour' in p, false)      // and so is the bonus-credit rate
 })
@@ -110,43 +112,50 @@ test('month end: carry forward keeps the leftover, up to the superadmin cap', ()
   store.setWorkPricing({ hoursExpiry: { mode: 'forfeit' } })
 })
 
-test('tasks: 4 a day on lite and basic, 6 on advanced, 8 on premium', () => {
-  for (const [tier, cap] of [['lite', 4], ['basic', 4], ['advanced', 6], ['premium', 8]]) {
+test('no per-day task cap: every individual tier reports the same open-task slots (4)', () => {
+  for (const tier of ['lite', 'basic', 'advanced', 'premium']) {
     const u = person(tier)
     const t = store.getWorkTaskUsage(u.id)
     assert.equal(t.unlimited, false)
-    assert.equal(t.cap, cap, tier)
-    assert.equal(t.usedToday, 0)
-    assert.equal(t.remaining, cap)
-    assert.equal('taskCredits' in t, false)
+    assert.equal(t.maxOpen, 4, tier)
+    assert.equal(t.open, 0)
+    assert.equal(t.remaining, 4)
+    assert.equal('cap' in t, false)        // the old daily cap is gone
+    assert.equal('usedToday' in t, false)
   }
 })
 
-test('the start after the day cap is refused with a 402 that says when new tasks open', () => {
+test('out of guided hours is a 402 (hours are the only usage limit, no daily cap)', () => {
+  store.setWorkPricing({ hoursMonthly: { lite: 0.05 } })   // 180 s pool, small on purpose
   const u = person('lite')
-  for (let i = 0; i < 4; i++) {
-    const r = store.startWorkTask(u.id)
-    assert.equal(r.cap, 4); assert.equal(r.usedToday, i + 1); assert.equal(r.remaining, 3 - i)
-  }
-  assert.throws(() => store.startWorkTask(u.id), (e) => e.status === 402 && e.taskLimit === true && e.cap === 4 && e.window === 'day' && /11:59 PM/.test(e.resetLabel) && /upgrade/i.test(e.message))
-  const t = store.getWorkTaskUsage(u.id)
-  assert.equal(t.usedToday, 4); assert.equal(t.remaining, 0)
+  // addWorkUsage records a bounded tick per call, so drain the pool in steps.
+  for (let i = 0; i < 20 && !store.getWorkUsage(u.id).exhausted; i++) store.addWorkUsage(u.id, 60)
+  assert.equal(store.getWorkUsage(u.id).exhausted, true)
+  assert.throws(() => store.startWorkTask(u.id), (e) => e.status === 402 && e.outOfHours === true && /add hours|renew/i.test(e.message))
+  store.setWorkPricing({ hoursMonthly: { lite: 30 } })      // restore for other tests
 })
 
-test('a started task counts even if it is abandoned (no refund), and a running task blocks a second start', () => {
+test('up to 4 tasks open at once; the 5th start is refused with a 409 until one is finished', () => {
   const u = person('basic')
-  store.startWorkTask(u.id)
-  const s = store.createWorkSession(u.id, { goal: 'Reconcile the October ledger', app: 'Spreadsheet' })
-  assert.throws(() => store.startWorkTask(u.id), (e) => e.status === 409 && e.mustCompleteCurrent === true)
-  store.deleteWorkSession(u.id, s.id, 'abandoned in test')   // destructive actions carry a reason
-  assert.equal(store.getWorkTaskUsage(u.id).usedToday, 1)
+  const sessions = []
+  for (let i = 0; i < 4; i++) {
+    store.startWorkTask(u.id)                               // gate passes (fewer than 4 open)
+    sessions.push(store.createWorkSession(u.id, { goal: `Ledger ${i}`, app: 'Spreadsheet' }))
+  }
+  assert.equal(store.getWorkTaskUsage(u.id).open, 4)
+  assert.equal(store.getWorkTaskUsage(u.id).remaining, 0)
+  assert.throws(() => store.startWorkTask(u.id), (e) => e.status === 409 && e.tooManyOpen === true && e.maxOpen === 4 && e.open === 4)
+  store.deleteWorkSession(u.id, sessions[0].id, 'done in test')   // finishing one frees a slot
+  assert.equal(store.getWorkTaskUsage(u.id).open, 3)
+  const r = store.startWorkTask(u.id)
+  assert.equal(r.unlimited, false); assert.equal(r.maxOpen, 4)
 })
 
 test('company members stay unlimited on tasks; a pool-based company draws nothing from a plan pool', () => {
   const co = store.createCompany({ name: uniq('PlanCo'), plan: 'advanced', seats: 5 })
   const m = store.createManagedUser({ username: uniq('m'), password: 'Passw0rd!x', companyId: co.id, tier: 'advanced' })
   assert.equal(store.getWorkTaskUsage(m.id).unlimited, true)
-  assert.equal(store.workDailyTaskLimit(m.id), Infinity)
+  assert.equal(store.workMaxOpenTasks(m.id), Infinity)
   // Seat-based: the seat carries the plan's monthly pool.
   assert.equal(store.getWorkUsage(m.id).plan.hoursMonthly, 120)
   // Pool-based (AdmireVeda sets a company pool): the company pool is the only budget.

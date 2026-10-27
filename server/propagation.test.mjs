@@ -34,12 +34,14 @@ test('changing a tier monthly hours in pricing reflects in planGrantSeconds + an
   assert.throws(() => store.setWorkPricing({ tasksPerExtraHour: 1 }), (e) => e.status === 400)
 })
 
-test('changing a tier per-day task cap in pricing reflects in workDailyTaskLimit', () => {
+test('the open-task cap is one universal number for individuals, not a per-tier pricing value', () => {
   const u = store.createWorkUser({ username: uniq('tsk'), password: 'Passw0rd!x' })
   store.setWorkTier(u.id, 'basic')
-  assert.equal(store.workDailyTaskLimit(u.id), 4)       // default cap (4/4/6/8)
-  store.setWorkPricing({ tasks: { basic: 7 } })
-  assert.equal(store.workDailyTaskLimit(u.id), 7)       // reflects live
+  assert.equal(store.workMaxOpenTasks(u.id), 4)         // same for every individual tier
+  store.setWorkTier(u.id, 'premium')
+  assert.equal(store.workMaxOpenTasks(u.id), 4)
+  // the retired per-tier `tasks` config no longer exists or affects anything
+  assert.equal('tasks' in store.getWorkPricing(), false)
 })
 
 test('the month-end policy for plan hours is superadmin-set and validated', () => {
