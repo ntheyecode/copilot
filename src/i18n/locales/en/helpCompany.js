@@ -34,13 +34,13 @@ export default {
       title: 'Overview',
       lead: 'Your company at a glance, and the two things to do once.',
       steps: {
-        cards: { t: 'Read the cards', d: 'Licenses, admin seats, the minute pool and guided sessions.' },
+        cards: { t: 'Read the cards', d: 'Licenses and admin seats with their meters, the minute pool, guided sessions, and your hours pool for the month.' },
         authorize: { t: 'Confirm authorization', d: 'One click. It records who affirmed and when.' },
         retention: { t: 'Set data retention', d: 'Edit, choose the days, Save retention. 0 keeps everything.' },
         backup: { t: 'Back up the knowledge base', d: 'Download a JSON snapshot any time. Restore it later.' },
       },
       shot: {
-        alt: 'Company admin Overview: license cards, the authorization confirmation, data retention and the knowledge base.',
+        alt: 'Company admin Overview: license cards with seat meters, the hours pool for the month, the authorization confirmation, data retention and the knowledge base.',
         caption: 'Overview with the authorization card, retention and knowledge base.',
       },
     },

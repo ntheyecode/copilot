@@ -1,8 +1,13 @@
 // English strings for the superadmin Pricing section
-// (src/pages/workadmin/sections/Pricing.jsx). One partial per i18n wave,
-// deep-merged into the English base by src/i18n/index.jsx. Keys live under the
-// `pricingAdmin` namespace. Tier CODES (lite/basic/advanced/premium) are never
-// localized here; only their display text is.
+// (src/pages/workadmin/sections/Pricing.jsx + PricingGlance.jsx). One partial per
+// i18n wave, deep-merged into the English base by src/i18n/index.jsx. Keys live
+// under the `pricingAdmin` namespace. Tier CODES (lite/basic/advanced/premium)
+// are never localized here; only their display text is.
+//
+// Plan model (2026-10-27): each tier includes guided HOURS PER MONTH (one pool
+// per person, renewed on the 1st, with a month-end policy) and a plain number of
+// guided TASKS PER DAY. The former daily hours bucket and the "bonus tasks per
+// extra hour" trade are retired, so no key here describes them.
 export default {
   pricingAdmin: {
     loading: 'Loading pricing',
@@ -19,34 +24,51 @@ export default {
     // Collapsed record summary
     record: {
       title: 'Pricing',
-      desc: 'What each tier costs and the per-tier limits.',
+      desc: 'What each tier costs, the guided hours it includes each month and its per-day task cap.',
       descEdit: 'Click Edit to change any of it.',
       currency: 'Currency',
-      tierSummary: '{price}/mo  ·  {hours} hrs/day  ·  {tasks} tasks/day  ·  {replans} re-plans  ·  {extraHr}/extra hr  ·  {image}/image',
+      tierSummary: '{price}/mo  ·  {hours} h/month  ·  {tasks} tasks/day  ·  {replans} re-plans  ·  {extraHr}/extra hr  ·  {image}/image',
+      monthEnd: 'At month end',
+      monthEndForfeit: 'Unused plan hours are forfeited; purchased hours never expire.',
+      monthEndCarry: 'Unused plan hours carry forward, up to {cap} h in total.',
+      monthEndCarryNoCap: 'Unused plan hours carry forward with no cap.',
       corporate: 'Corporate',
       corporateValue: 'Unlimited tasks and re-plans',
       bulkMin: 'Bulk minimum',
       bulkMinValue: '{count} images',
-      bonusTasks: 'Bonus tasks per extra hour',
-      bonusTasksValue_one: '{count} task per hour bought (all tiers)',
-      bonusTasksValue_other: '{count} tasks per hour bought (all tiers)',
       freeImages: 'Free images per day',
+      // Plans at a glance: the per-tier ladder under the record.
+      glanceTitle: 'Plans at a glance',
+      perMonthShort: '/mo',
+      glanceLine: '{hours} h/month  ·  {tasks} tasks/day',
+      glanceFoot: 'Bars compare the included hours per month across tiers.',
     },
 
     // Edit view panels
     edit: {
       monthly: {
         title: 'Monthly plan price',
-        desc: 'What each tier costs per month. The daily guiding hours each tier includes are set below.',
+        desc: 'What each tier costs per month. The guided hours each tier includes per month and its tasks per day are set below.',
       },
-      dailyHours: {
-        title: 'Daily included hours, per tier',
-        desc: 'How many hours of real guiding time each tier includes per day (the "bucket"). This is the daily allowance; extra hours beyond it are billed at the per-tier rate below. A change here applies to every user immediately. Fractional hours are allowed (e.g. 1.5). Resets 11:59 PM ET.',
-        hint: 'hours per day',
+      monthlyHours: {
+        title: 'Monthly included hours, per tier',
+        desc: 'How many hours of real guiding time each tier includes per calendar month. Every person has one monthly pool that renews on the 1st (US Eastern). A change here reaches every person\'s live pool at once, as the difference against their current balance, never below zero. Hours beyond the pool come from purchased hours at the per-tier rate below. Fractional hours are allowed (e.g. 37.5).',
+        hint: 'hours per month',
+      },
+      monthEnd: {
+        title: 'At month end',
+        desc: 'What happens to plan hours a person did not use when the month renews. Purchased hours are a separate balance and never expire.',
+        mode: 'Unused plan hours',
+        modeHint: 'Applies to individuals and to seat-based company members. Enterprise pools have their own month-end rule on the Companies page.',
+        forfeit: 'Forfeit unused hours',
+        carryforward: 'Carry unused hours forward',
+        cap: 'Carry-forward cap (hours)',
+        capHint: 'The most that can ever build up in one pool. Leave blank for no cap.',
+        noCap: 'No cap',
       },
       dailyTasks: {
-        title: 'Daily task limit, per tier',
-        desc: 'Maximum guided tasks (sessions) a user can start per day. Users must finish the current task before starting a new one, and spend their minutes inside each task. Resets 11:59 PM ET. Corporate (company) accounts are unlimited.',
+        title: 'Guided tasks per day, per tier',
+        desc: 'How many guided tasks (sessions) a person may start per day: 4 on Lite and Basic, 6 on Advanced, 8 on Premium by default. A plain cap: nothing banks, nothing is earned or traded. Someone must pause or finish the current task before starting another. Resets 11:59 PM ET. Corporate (company) accounts are unlimited unless their admin sets a ceiling.',
         hint: 'tasks per day',
       },
       replans: {
@@ -56,9 +78,7 @@ export default {
       },
       extraHour: {
         title: 'Extra hour, per tier',
-        desc: 'Price of one additional hour beyond the daily allowance. Purchased hours never expire.',
-        bonusLabel: 'Bonus tasks per extra hour (all tiers)',
-        bonusHint: 'Task credits granted when a user buys one extra hour. Same for every tier. 0 turns it off.',
+        desc: 'Price of one additional hour beyond the monthly included hours. Purchased hours never expire and are drawn only after the plan hours are used up.',
       },
       image: {
         title: 'Image generation, per tier',
@@ -73,12 +93,12 @@ export default {
       },
       corporate: 'Corporate',
       unlimited: 'Unlimited',
-      noDailyTaskCap: 'Company accounts have no daily task cap.',
+      noDailyTaskCap: 'Company accounts have no per-day task cap unless their company admin sets one.',
       noReplanCap: 'Company accounts have no re-plan cap.',
       currency: 'Currency',
       save: 'Save pricing',
       cancel: 'Cancel',
-      invalid: 'All prices must be zero or more; bulk minimum at least 1.',
+      invalid: 'Prices must be zero or more, hours per month between 0 and 744, tasks and re-plans whole numbers up to 1000, the carry-forward cap 0 to 100000, and the bulk minimum at least 1.',
     },
   },
 }

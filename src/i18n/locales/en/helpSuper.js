@@ -40,7 +40,7 @@ export default {
         platformAi: { t: 'Platform AI', d: 'On or off. Off means users run their own keys.' },
       },
       shot: {
-        alt: 'Admin Overview cards: users, active now, sessions today, total sessions, purchased hours and platform AI.',
+        alt: 'Admin Overview cards: users, active now, sessions today, total sessions, purchased hours and platform AI, with the users-by-tier bar.',
         caption: 'Overview cards.',
       },
     },
@@ -50,7 +50,7 @@ export default {
       lead: 'Every tenant, its admins, its people and its policy.',
       steps: {
         new: { t: 'New company', d: 'Name, plan and licenses. Everything after is scoped to it.' },
-        expand: { t: 'Expand a row', d: 'Admins, users, SSO, AI source and redaction, all in one place.' },
+        expand: { t: 'Expand a row', d: 'Admins, users, SSO, AI source, redaction, seat meters and the enterprise pool with who is consuming it, all in one place.' },
         admin: { t: 'Add its admin', d: 'The first company admin runs the rest from their own console.' },
       },
       shot: {
@@ -66,24 +66,24 @@ export default {
         search: { t: 'Search', d: 'By username.' },
         tier: { t: 'Tier', d: 'Change it inline.' },
         companyRole: { t: 'Company and role', d: 'Change moves a user into a company or sets their role.' },
-        hours: { t: 'Hours and access', d: 'Grant hours, or comp premium access for an individual.' },
+        hours: { t: 'Hours and access', d: 'Grant purchased hours, or comp premium access for an individual. Plan hours left shows the included hours still open this month.' },
       },
       shot: {
-        alt: 'Users table: tier selector, company and role with a Change button, free time left today, purchased balance and sessions.',
+        alt: 'Users table: tier selector, company and role with a Change button, used today, plan hours left this month, purchased balance and sessions.',
         caption: 'Users with inline tier and company controls.',
       },
     },
     pricing: {
       open: 'Pricing',
       title: 'Pricing',
-      lead: 'What each tier costs and what it includes.',
+      lead: 'What each tier costs and what it includes: guided hours per month and guided tasks per day.',
       steps: {
         edit: { t: 'Edit', d: 'Opens every value for change.' },
-        perTier: { t: 'Per tier', d: 'Monthly price, hours per day, tasks per day, re-plans, extra hour and image rates.' },
-        save: { t: 'Save', d: 'Takes effect for new purchases right away.' },
+        perTier: { t: 'Per tier', d: 'Monthly price, included hours per month, tasks per day, re-plans, extra hour and image rates, and what happens to unused hours at month end.' },
+        save: { t: 'Save', d: 'Prices apply to new purchases right away. A change to included hours reaches every person\'s live monthly balance at once.' },
       },
       shot: {
-        alt: 'Pricing: currency and the per-tier price, hours, tasks, re-plans, extra hour and image rates.',
+        alt: 'Pricing: currency, the per-tier price, hours per month, tasks per day, re-plans, extra hour and image rates, the month-end rule and the plans-at-a-glance bars.',
         caption: 'Pricing record. Edit to change it.',
       },
     },

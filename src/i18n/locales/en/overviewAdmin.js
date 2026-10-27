@@ -9,7 +9,6 @@ export default {
 
     // Stat tiles: label + foot
     users: 'WorkCoPilot users',
-    usersFoot: 'Basic {basic} - Advanced {advanced} - Premium {premium}',
     activeNow: 'Active now',
     activeNowFoot: 'Guiding in the last 5 minutes',
     sessionsToday: 'Sessions today',
@@ -27,5 +26,9 @@ export default {
     aiFootReady: 'Platform AI is on and a provider is configured',
     aiFootNoProvider: 'Platform AI is on but no provider is configured',
     aiFootOff: 'Platform AI is off (users run their own key)',
+
+    // Users-by-tier graph (shares of all users, from the overview counts)
+    byTierTitle: 'Users by tier',
+    byTierDesc: 'How the {total} WorkCoPilot users split across tiers right now.',
   },
 }

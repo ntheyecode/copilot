@@ -8,6 +8,7 @@ import { Gauge, Users as UsersIcon, Hourglass, BellRing, Check, ChevronDown, Che
 import { api } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
 import { Loading, ErrorBox, EmptyState, Spinning } from './_shared.jsx'
+import { Meter, pctOf, VIZ_CSS } from './_viz.jsx'
 
 const GROUPS = ['admin', 'supervisor', 'member']
 const fmtH = (secs) => { const h = (Number(secs) || 0) / 3600; return h >= 10 || h % 1 === 0 ? `${Math.round(h)}h` : `${h.toFixed(1)}h` }
@@ -123,7 +124,7 @@ export default function UsageLimits() {
 
   return (
     <div>
-      <style>{CSS}</style>
+      <style>{CSS}{VIZ_CSS}</style>
 
       {/* Live pool */}
       <div className="wka-panel">
@@ -202,6 +203,12 @@ export default function UsageLimits() {
               {d.byUser.map((u) => {
                 const hM = u.hours && u.hours.month, tM = u.tasks && u.tasks.month
                 const open = openUser === u.id, ed = userEdit[u.id]
+                // The bar reads against this person's monthly hour limit when one
+                // is set, else as their share of the company pool (honest, no cap).
+                const usedM = u.consumedSeconds.month
+                const limited = !!(hM && hM.limit != null)
+                const barMax = limited ? hM.limit : (pool.monthlySeconds || 0)
+                const barHint = limited ? t('companyPlan.usage.ofLimit', { pct: hM.pct != null ? hM.pct : pctOf(usedM, hM.limit) }) : t('companyPlan.usage.ofPool', { pct: pctOf(usedM, barMax) })
                 return (
                   <div key={u.id} className="ul-person">
                     <button className="ul-person-head" onClick={() => openUserEdit(u)} aria-expanded={open}>
@@ -214,6 +221,11 @@ export default function UsageLimits() {
                         {' · '}{t('companyAdmin.usage.usedTasksMonth', { n: u.taskCount.month })}
                         {tM && tM.limit != null ? ` / ${tM.limit}` : ''}
                       </span>
+                      {barMax > 0 ? (
+                        <span className="ul-person-bar" title={barHint}>
+                          <Meter value={usedM} max={barMax} thin warnAt={limited ? (d.policy.notifyPct || 75) : 101} hotAt={limited ? 100 : 101} tone={limited ? undefined : 'accent'} ariaLabel={`${u.displayName}: ${barHint}`} />
+                        </span>
+                      ) : null}
                     </button>
                     {open && ed && (
                       <div className="ul-person-body">
@@ -299,6 +311,7 @@ const CSS = `
 .ul-person-name{font-weight:600;font-size:13.5px}
 .ul-chip{font-size:11px;font-weight:700;color:var(--wka-accent-ink,var(--wka-accent));background:var(--wka-accent-soft,color-mix(in srgb,var(--wka-accent) 12%,transparent));border-radius:999px;padding:2px 9px;white-space:nowrap}
 .ul-person-use{margin-left:auto;font-size:12px;color:var(--wka-muted);white-space:nowrap}
+.ul-person-bar{flex:1 0 100%;display:block;min-width:0;padding-left:24px}
 .ul-person-body{padding:12px 13px;border-top:1px solid var(--wka-line);background:var(--wka-bg-2);display:flex;flex-direction:column;gap:12px}
 .ul-override-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .ul-sub{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--wka-faint);margin-bottom:5px}
@@ -316,5 +329,6 @@ const CSS = `
   .ul-group-name{margin-top:4px}
   .ul-override-grid{grid-template-columns:1fr}
   .ul-person-use{margin-left:0;width:100%;white-space:normal}
+  .ul-person-bar{padding-left:0}
 }
 `

@@ -25,8 +25,10 @@ import UsageLimits from './sections/UsageLimits.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
 import PolicyRules from './sections/PolicyRules.jsx'
 import HelpCompany from './sections/HelpCompany.jsx'
+import CompanyPoolCard from './sections/CompanyPoolCard.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
+import { Meter, VIZ_CSS } from './sections/_viz.jsx'
 import * as SSO from '../../shared/sso_guide.js'
 
 // Destructive confirms use the shared promise-style useReasonModal from
@@ -460,7 +462,7 @@ function EnterpriseDeployCard() {
   )
 }
 
-function OverviewSection({ company }) {
+function OverviewSection({ company, onOpen }) {
   const t = useT()
   const [state, setState] = useState({ loading: true, error: null, lic: null, cons: null })
   const load = useCallback(() => {
@@ -482,17 +484,25 @@ function OverviewSection({ company }) {
   const adminLabel = lic.adminSeats > 0 ? t('companyAdmin.overview.seatsOf', { used: lic.adminSeatsUsed, total: lic.adminSeats }) : `${lic.adminSeatsUsed || 0}`
   const aiReady = company ? company.aiReady : undefined
 
+  // Seat meters: only where a limit exists (an unlimited pool has no honest bar).
+  const seatMeter = (used, total) => (total > 0
+    ? <div style={{ marginTop: 8 }}><Meter value={used || 0} max={total} thin tone={(used || 0) >= total ? 'warn' : 'accent'} ariaLabel={t('companyPlan.seats.meterAria', { used: used || 0, total })} /></div>
+    : null)
+
   return (
     <div>
+      <style>{VIZ_CSS}</style>
       <div className="wka-cards">
         <div className="wka-card">
           <div className="k"><Users size={15} /> {t('companyAdmin.overview.userLicenses')}</div>
           <div className="v">{userLabel}</div>
+          {seatMeter(lic.userSeatsUsed, lic.userSeats)}
           <div className="foot">{lic.userSeatsLeft == null ? t('companyAdmin.overview.noLimitSet') : t('companyAdmin.overview.left', { n: lic.userSeatsLeft })}</div>
         </div>
         <div className="wka-card">
           <div className="k"><UserCog size={15} /> {t('companyAdmin.overview.adminSeats')}</div>
           <div className="v">{adminLabel}</div>
+          {seatMeter(lic.adminSeatsUsed, lic.adminSeats)}
           <div className="foot">{lic.adminSeatsLeft == null ? t('companyAdmin.overview.noLimitSet') : t('companyAdmin.overview.left', { n: lic.adminSeatsLeft })}</div>
         </div>
         <div className="wka-card">
@@ -508,9 +518,10 @@ function OverviewSection({ company }) {
       </div>
 
       {company && aiReady === false && (
-        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReason || t('companyAdmin.overview.aiNotConfigured')} {company.aiSource === 'company' ? t('companyAdmin.overview.aiSetKeys') : ''}</div>
+        <div className="wka-note" style={{ color: 'var(--wka-amber)' }}><AlertTriangle size={14} /> {company.aiReason || t('companyAdmin.overview.aiNotConfigured')} {company.aiSource === 'company' ? <button type="button" className="wka-btn sm ghost" style={{ marginLeft: 6 }} onClick={() => onOpen && onOpen('ai')}>{t('companyAdmin.overview.aiSetKeys')}</button> : ''}</div>
       )}
 
+      <CompanyPoolCard onOpen={onOpen} />
       <AuthorizationCard />
       <CompanyRetentionCard />
       <KnowledgeBaseCard />
@@ -527,6 +538,7 @@ function OverviewSection({ company }) {
                 <div key={tier.id} className="wka-card">
                   <div className="k">{tier.name}</div>
                   <div className="v">{t('companyAdmin.overview.seatsOf', { used: tu.used, total: tu.allocated })}</div>
+                  {seatMeter(tu.used, tu.allocated)}
                   <div className="foot">{t('companyAdmin.overview.available', { n: tu.left })}</div>
                 </div>
               )
@@ -561,7 +573,9 @@ function OverviewSection({ company }) {
                       <td>{m.displayName || m.username}{m.email ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{m.email}</div> : null}</td>
                       <td>{t(ROLE_LABEL[m.companyRole] || 'companyAdmin.roles.member')}</td>
                       <td><span className={`wka-badge ${m.tier}`}>{m.tier}</span></td>
-                      <td>{fmtMins(m.usage.usedSeconds)} {m.usage.dailySeconds != null ? <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span> : null}</td>
+                      {/* Consumed today from every source; the only denominator is this
+                          person's own daily ceiling (pool-based companies), never a tier bucket. */}
+                      <td title={m.usage.dailySeconds != null ? t('companyPlan.usedTodayCeiling') : undefined}>{fmtMins(m.usage.usedSeconds)} {m.usage.dailySeconds != null ? <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span> : null}</td>
                       <td>{m.usage.purchasedSeconds ? fmtMins(m.usage.purchasedSeconds) : '-'}</td>
                       <td>{m.licensed ? <span className="wka-chip ok">{t('companyAdmin.overview.statusActive')}</span> : <span className="wka-chip" style={{ color: 'var(--wka-amber)' }}>{t('companyAdmin.overview.statusNoSeat')}</span>}</td>
                     </tr>
@@ -751,7 +765,7 @@ function TeamSection({ meId, onCompany }) {
                               {TIERS.map((tier) => <option key={tier.id} value={tier.id}>{tier.name}</option>)}
                             </select>
                           </td>
-                          <td style={{ fontSize: 12.5 }}>{fmtMins(m.usage.usedSeconds)} {m.usage.dailySeconds != null ? <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span> : null}</td>
+                          <td style={{ fontSize: 12.5 }} title={m.usage.dailySeconds != null ? t('companyPlan.usedTodayCeiling') : undefined}>{fmtMins(m.usage.usedSeconds)} {m.usage.dailySeconds != null ? <span style={{ color: 'var(--wka-faint)' }}>/ {fmtMins(m.usage.dailySeconds)}</span> : null}</td>
                           <td style={{ fontSize: 12.5 }}>
                             {allocFor === m.id
                               ? <span style={{ display: 'inline-flex', gap: 5, alignItems: 'center' }}>
@@ -1845,7 +1859,7 @@ export default function WorkCompanyAdmin() {
       case 'integrations': return <IntegrationsSection />
       case 'settings': return <SettingsSection viewer={viewer} company={company} onProfile={(u) => setViewer(u)} />
       case 'overview':
-      default: return <OverviewSection company={company} />
+      default: return <OverviewSection company={company} onOpen={setActive} />
     }
   }
 

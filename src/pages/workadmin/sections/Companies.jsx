@@ -7,6 +7,8 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { Plus, Building2, ShieldCheck, Shield, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle, ShieldOff, X, Gauge, Bell } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, useReasonModal, ReasonModal as SharedReasonModal } from './_shared.jsx'
+import { Meter, VIZ_CSS } from './_viz.jsx'
+import CompanyConsumption from './CompanyConsumption.jsx'
 import { useT } from '../../../i18n/index.jsx'
 
 // Friendly labels for every OpenID Connect provider the backend accepts. The
@@ -227,6 +229,8 @@ function EnterprisePanel({ company, onSaved }) {
   const [msg, setMsg] = useState('')
   const [ok, setOk] = useState(false)
   const [reqs, setReqs] = useState(null)
+  // Bumped after every save / decision so the live consumption view re-reads.
+  const [poolKey, setPoolKey] = useState(0)
   // Denying a request is reason-logged through the ONE shared ReasonModal
   // (owner standing rule: no browser prompts, every refusal carries a reason).
   const [askReason, reasonModal] = useReasonModal()
@@ -253,7 +257,7 @@ function EnterprisePanel({ company, onSaved }) {
       stripeEnabled: !!f.stripeEnabled,
       taskPolicy: { mode: f.taskMode, day: f.taskDay === '' ? null : Number(f.taskDay), week: f.taskWeek === '' ? null : Number(f.taskWeek), month: f.taskMonth === '' ? null : Number(f.taskMonth) },
     }
-    try { await workAdminApi.companyEnterprise(company.id, body); setOk(true); onSaved && onSaved() }
+    try { await workAdminApi.companyEnterprise(company.id, body); setOk(true); setPoolKey((k) => k + 1); onSaved && onSaved() }
     catch (e) { setMsg(e.message || t('companiesAdmin.enterprise.saveFailed')) } finally { setBusy(false) }
   }
   const decide = async (rid, approve) => {
@@ -262,7 +266,7 @@ function EnterprisePanel({ company, onSaved }) {
       note = await askReason({ title: t('companiesAdmin.enterprise.deny'), detail: t('companiesAdmin.enterprise.denyReason'), confirmLabel: t('companiesAdmin.enterprise.deny') })
       if (note == null) return   // cancelled: the request stays pending
     }
-    try { await workAdminApi.decideHourRequest(company.id, rid, approve, note); loadReqs(); onSaved && onSaved() }
+    try { await workAdminApi.decideHourRequest(company.id, rid, approve, note); loadReqs(); setPoolKey((k) => k + 1); onSaved && onSaved() }
     catch (e) { setMsg(e.message) }
   }
 
@@ -336,6 +340,8 @@ function EnterprisePanel({ company, onSaved }) {
               ))}
             </div>
           )}
+          {/* Live pool + who is consuming it this month (existing pool dashboard). */}
+          <CompanyConsumption companyId={company.id} notifyPct={Number(f.notifyPct) || 75} refreshKey={poolKey} />
         </div>
       )}
       {reasonModal}
@@ -517,7 +523,7 @@ export default function Companies({ isSuperAdmin }) {
 
   return (
     <div>
-      <style>{CSS}</style>
+      <style>{CSS}{VIZ_CSS}</style>
       {reasonModal}
       {delCompany ? (
         <SharedReasonModal
@@ -673,11 +679,16 @@ export default function Companies({ isSuperAdmin }) {
                               <div className="co-tiers">
                                 {['basic', 'advanced', 'premium'].map((tier) => {
                                   const tu = lic.tierUsage[tier]; const ed = seatEdit[c.id]
-                                  return <div key={tier} className="co-tier"><span className="co-tier-n">{codeLabel(tier)}</span>{ed ? <input className="wka-input co-seat-in" value={ed[tier]} onChange={(e) => setSeatEdit((s) => ({ ...s, [c.id]: { ...s[c.id], [tier]: e.target.value.replace(/[^0-9]/g, '') } }))} /> : <b>{tu.used} / {tu.allocated}</b>}<span className="co-dim">{ed ? t('companiesAdmin.licenses.allocated') : t('companiesAdmin.licenses.free', { n: tu.left })}</span></div>
+                                  return <div key={tier} className="co-tier"><span className="co-tier-n">{codeLabel(tier)}</span>{ed ? <input className="wka-input co-seat-in" value={ed[tier]} onChange={(e) => setSeatEdit((s) => ({ ...s, [c.id]: { ...s[c.id], [tier]: e.target.value.replace(/[^0-9]/g, '') } }))} /> : <b>{tu.used} / {tu.allocated}</b>}<span className="co-dim">{ed ? t('companiesAdmin.licenses.allocated') : t('companiesAdmin.licenses.free', { n: tu.left })}</span>{!ed ? <div className="co-tier-m"><Meter value={tu.used} max={tu.allocated} thin warnAt={101} hotAt={101} tone={tu.allocated > 0 && tu.used >= tu.allocated ? 'warn' : 'accent'} ariaLabel={`${codeLabel(tier)} ${tu.used} / ${tu.allocated}`} /></div> : null}</div>
                                 })}
-                                <div className="co-tier"><span className="co-tier-n">{t('companiesAdmin.licenses.admin')}</span>{seatEdit[c.id] ? <input className="wka-input co-seat-in" value={seatEdit[c.id].adminSeats} onChange={(e) => setSeatEdit((s) => ({ ...s, [c.id]: { ...s[c.id], adminSeats: e.target.value.replace(/[^0-9]/g, '') } }))} /> : <b>{lic.adminSeatsUsed} / {lic.adminSeats}</b>}<span className="co-dim">{t('companiesAdmin.licenses.seats')}</span></div>
+                                <div className="co-tier"><span className="co-tier-n">{t('companiesAdmin.licenses.admin')}</span>{seatEdit[c.id] ? <input className="wka-input co-seat-in" value={seatEdit[c.id].adminSeats} onChange={(e) => setSeatEdit((s) => ({ ...s, [c.id]: { ...s[c.id], adminSeats: e.target.value.replace(/[^0-9]/g, '') } }))} /> : <b>{lic.adminSeatsUsed} / {lic.adminSeats}</b>}<span className="co-dim">{t('companiesAdmin.licenses.seats')}</span>{!seatEdit[c.id] && lic.adminSeats > 0 ? <div className="co-tier-m"><Meter value={lic.adminSeatsUsed} max={lic.adminSeats} thin tone={lic.adminSeatsUsed >= lic.adminSeats ? 'warn' : 'accent'} ariaLabel={`${t('companiesAdmin.licenses.admin')} ${lic.adminSeatsUsed} / ${lic.adminSeats}`} /></div> : null}</div>
                               </div>
-                            ) : <div className="co-dim">{t('companiesAdmin.licenses.totalSeats', { used: lic.userSeatsUsed, total: lic.userSeats || t('companiesAdmin.noLimit'), adminUsed: lic.adminSeatsUsed, adminTotal: lic.adminSeats })}</div>}
+                            ) : (
+                              <div>
+                                <div className="co-dim">{t('companiesAdmin.licenses.totalSeats', { used: lic.userSeatsUsed, total: lic.userSeats || t('companiesAdmin.noLimit'), adminUsed: lic.adminSeatsUsed, adminTotal: lic.adminSeats })}</div>
+                                {lic.userSeats > 0 ? <div style={{ maxWidth: 420, marginTop: 6 }}><Meter value={lic.userSeatsUsed} max={lic.userSeats} thin tone={lic.userSeatsUsed >= lic.userSeats ? 'warn' : 'accent'} ariaLabel={t('companiesAdmin.licenses.totalSeats', { used: lic.userSeatsUsed, total: lic.userSeats, adminUsed: lic.adminSeatsUsed, adminTotal: lic.adminSeats })} /></div> : null}
+                              </div>
+                            )}
                             <div className="co-inline-wrap">
                               {seatEdit[c.id]
                                 ? <><button className="wka-btn sm primary" onClick={() => saveSeats(c.id)}>{t('companiesAdmin.licenses.save')}</button><button className="wka-btn sm ghost" onClick={() => setSeatEdit((s) => ({ ...s, [c.id]: undefined }))}>{t('companiesAdmin.cancel')}</button></>
@@ -706,7 +717,10 @@ export default function Companies({ isSuperAdmin }) {
                                   <td>{u.displayName || u.username}<div className="co-dim">{u.ssoEmail || u.username}</div></td>
                                   <td>{ROLE_CHIP[u.companyRole] ? <span className="wka-chip ok">{t(ROLE_CHIP[u.companyRole])}</span> : t('companiesAdmin.people.member')}</td>
                                   <td><select className="wka-select" value={u.tier || 'basic'} onChange={(e) => setUserTier(u, c.id, e.target.value)}><option value="basic">{t('companiesAdmin.plans.basic')}</option><option value="advanced">{t('companiesAdmin.plans.advanced')}</option><option value="premium">{t('companiesAdmin.plans.premium')}</option></select></td>
-                                  <td className="co-dim">{mu ? (mu.usage.dailySeconds != null ? `${fmtMins(mu.usage.usedSeconds)} / ${fmtMins(mu.usage.dailySeconds)}` : fmtMins(mu.usage.usedSeconds)) : '-'}</td>
+                                  {/* Consumed today from every source. A pool-based company member's
+                                      own day ceiling is the only honest denominator; nobody has a
+                                      daily tier bucket any more, so none is implied. */}
+                                  <td className="co-dim" title={mu && mu.usage.dailySeconds != null ? t('companiesAdmin.people.ceilingHint') : undefined}>{mu ? (mu.usage.dailySeconds != null ? `${fmtMins(mu.usage.usedSeconds)} / ${fmtMins(mu.usage.dailySeconds)}` : fmtMins(mu.usage.usedSeconds)) : '-'}</td>
                                   <td>{isSuperAdmin ? <button className={`co-toggle ${u.scrub ? 'on' : ''}`} onClick={() => toggleUserScrub(u, c.id)}>{u.scrub ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button> : (u.scrub ? t('companiesAdmin.on') : t('companiesAdmin.off'))}</td>
                                   <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
                                     <button className="wka-btn sm ghost" title={t('companiesAdmin.people.addHours')} onClick={() => grantUserHours(u, c.id)}><Clock size={12} /></button>
@@ -830,9 +844,10 @@ const CSS = `
 .co-block{margin:12px 0;padding:12px 14px;border:1px solid var(--wka-line);border-radius:10px;background:var(--wka-panel)}
 .co-block-t{font-size:12.5px;font-weight:700;color:var(--wka-text);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .co-tiers{display:flex;gap:10px;flex-wrap:wrap}
-.co-tier{display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-width:84px;padding:8px 10px;border:1px solid var(--wka-line);border-radius:8px}
+.co-tier{display:flex;flex-direction:column;gap:2px;align-items:flex-start;min-width:84px;flex:1 1 110px;max-width:200px;padding:8px 10px;border:1px solid var(--wka-line);border-radius:8px}
 .co-tier-n{font-size:11px;text-transform:capitalize;color:var(--wka-faint)}
 .co-tier b{font-size:15px}
+.co-tier-m{width:100%;margin-top:4px}
 .co-seat-in{width:56px;padding:3px 6px}
 .co-price-in{width:66px;padding:4px 6px}
 .co-users{width:100%;margin-bottom:12px}
