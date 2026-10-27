@@ -20,14 +20,17 @@ export default {
       exec: 'Executive dashboard',
     },
 
-    // ---- Hello + plan line (the single h1). {time} is the compact time left. ----
+    // ---- Hello + plan line (the single h1). {time} is the compact time left.
+    // The monthly lines carry NEW key names (companyLeft / coveredMonth /
+    // freeLeft) so a locale still holding the old daily-minutes text ({mins})
+    // falls back to this English instead of showing a raw placeholder. ----
     hello: 'Hello {name}',
     plan: {
       admin: 'Administrator access, guidance on',
-      company: '{company} team, {time} of guided time left',
-      covered: '{plan} plan, {time} of guided time left this month',
+      companyLeft: '{company} team, {time} of guided time left',
+      coveredMonth: '{plan} plan, {time} of guided time left this month',
       choose: 'Free account, choose a plan to start guiding',
-      free: 'Free access, {time} of guided time left',
+      freeLeft: 'Free access, {time} of guided time left',
       yourCompany: 'Your company',
     },
 
@@ -61,6 +64,13 @@ export default {
         leftOf: '{left} left of {monthly}',
         resets: 'Renews {reset}',
         shared: 'Shared with your team',
+      },
+      // A pool-based company member with no day ceiling (the hours tile is the
+      // pool): their own guided time today.
+      today: {
+        label: 'Used today',
+        tip: 'Guided time you used today, counted only while WorkCoPilot is actively guiding you.',
+        sub: 'Counted only while guiding',
       },
       topup: {
         label: 'Top-up hours',
@@ -170,7 +180,8 @@ export default {
     // ---- Plan chooser (needsSub) ----
     sub: {
       title: 'Choose a plan to start',
-      lead: 'Pick a plan to turn on live guidance. Every plan includes guided hours each month, renewed on the 1st, plus a number of guided tasks per day. Change or cancel anytime.',
+      // leadMonth / bodyMonth: new names for the same reason as plan.* above.
+      leadMonth: 'Pick a plan to turn on live guidance. Every plan includes guided hours each month, renewed on the 1st, plus a number of guided tasks per day. Change or cancel anytime.',
       popular: 'Most popular',
       perMonth: '/mo',
       hours_one: '{n} guided hour per month',
@@ -189,7 +200,7 @@ export default {
     buy: {
       titleOut: 'You are out of plan hours for this month',
       title: 'Add more guided time',
-      body: 'Your plan hours renew {date}. Top-up hours never expire and stack on your plan. If your company manages your account, ask your administrator to add hours.',
+      bodyMonth: 'Your plan hours renew {date}. Top-up hours never expire and stack on your plan. If your company manages your account, ask your administrator to add hours.',
       buy: 'Buy hours',
       dismiss: 'Dismiss',
     },

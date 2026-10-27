@@ -148,12 +148,12 @@ export default function Dashboard() {
               isAdmin
                 ? t('workDashboard.plan.admin')
                 : isCompanyMember
-                  ? t('workDashboard.plan.company', { company: companyName || t('workDashboard.plan.yourCompany'), time: timeLeft })
+                  ? t('workDashboard.plan.companyLeft', { company: companyName || t('workDashboard.plan.yourCompany'), time: timeLeft })
                   : (covered || (plan && plan.hasPlan))
-                    ? t('workDashboard.plan.covered', { plan: planName, time: timeLeft })
+                    ? t('workDashboard.plan.coveredMonth', { plan: planName, time: timeLeft })
                     : needsSub
                       ? t('workDashboard.plan.choose')
-                      : t('workDashboard.plan.free', { time: timeLeft })
+                      : t('workDashboard.plan.freeLeft', { time: timeLeft })
             }</div>
           : <div className="wd-plan-skel" aria-hidden />}
       </section>
@@ -190,12 +190,6 @@ export default function Dashboard() {
           )}
         </section>
       )}
-      {firstRun && !ready && (
-        <div className="wd-note warn" role="note" style={{ marginTop: 12 }}>
-          <AlertTriangle size={16} />
-          <span>{t('workDashboard.start.locked')}</span>
-        </div>
-      )}
 
       {/* 5. AI-setup / add-time / gate notes */}
       {gateMsg && (
@@ -211,7 +205,7 @@ export default function Dashboard() {
             <span className="ic"><Zap size={18} /></span>
             <div>
               <h3>{plan && plan.exhausted ? t('workDashboard.buy.titleOut') : t('workDashboard.buy.title')}</h3>
-              <p>{t('workDashboard.buy.body', { date: renewLabel })}</p>
+              <p>{t('workDashboard.buy.bodyMonth', { date: renewLabel })}</p>
               {canBuyHours && <button type="button" className="wd-m-buy-act" onClick={buyHours}><Plus size={13} /> {t('workDashboard.buy.buy')}</button>}
             </div>
             <button className="x" title={t('workDashboard.buy.dismiss')} aria-label={t('workDashboard.buy.dismiss')} onClick={() => setShowBuy(false)}><X size={16} /></button>
@@ -249,7 +243,7 @@ export default function Dashboard() {
             <span className="ic"><Rocket size={18} /></span>
             <div>
               <h3>{t('workDashboard.sub.title')}</h3>
-              <p>{t('workDashboard.sub.lead')}</p>
+              <p>{t('workDashboard.sub.leadMonth')}</p>
             </div>
           </div>
           <div className="wd-sub-plans">

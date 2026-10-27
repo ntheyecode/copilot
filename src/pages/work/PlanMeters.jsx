@@ -147,6 +147,19 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
         </div>
       </div>
     )
+  } else if (!plan.hasPlan && plan.dailySeconds == null) {
+    // Pool-based company member with no ceiling: the hours tile already shows
+    // the shared pool, so this tile reads today's own usage instead of
+    // repeating the pool.
+    secondTile = (
+      <div className="wd-pm-tile">
+        <div className="wd-pm-top"><span className="wd-pm-ic alt"><Clock size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.today.label')}</span><Tip id="wd-pm-tip-today" label={info} text={t('workDashboard.meters.today.tip')} /></div>
+        <div className="wd-pm-body"><div className="wd-pm-main">
+          <div className="wd-pm-value">{fmtDuration(plan.usedToday, units, true)}</div>
+          <div className="wd-pm-sub">{t('workDashboard.meters.today.sub')}</div>
+        </div></div>
+      </div>
+    )
   } else {
     // Seat-based company member with no ceiling: the shared company hours they
     // draw from after their plan hours (shown even when zero, honestly).
