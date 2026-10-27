@@ -29,6 +29,8 @@ import CompanyPoolCard from './sections/CompanyPoolCard.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import { Meter, VIZ_CSS } from './sections/_viz.jsx'
+import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './sections/AiSourceChoice.jsx'
+import { aiSetupOf } from '../../shared/ai_source_options.js'
 import * as SSO from '../../shared/sso_guide.js'
 
 // Destructive confirms use the shared promise-style useReasonModal from
@@ -40,7 +42,7 @@ const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced
 const ROLE_LABEL = { company_admin: 'companyAdmin.roles.companyAdmin', member: 'companyAdmin.roles.member', executive: 'companyAdmin.roles.executive' }
 // Friendly labels for every OpenID Connect provider the backend accepts.
 const SSO_PROVIDER_LABELS = {
-  google: 'Google', microsoft: 'Microsoft (Entra ID)', okta: 'Okta', auth0: 'Auth0',
+  google: 'Google Workspace', microsoft: 'Microsoft Entra ID', okta: 'Okta', auth0: 'Auth0',
   onelogin: 'OneLogin', ping: 'Ping Identity (PingOne)', jumpcloud: 'JumpCloud',
   keycloak: 'Keycloak', cognito: 'AWS Cognito', azuread_b2c: 'Microsoft Entra B2C',
   authentik: 'Authentik', duo: 'Duo', centrify: 'Centrify', oidc: 'Other (any OpenID Connect)',
@@ -851,11 +853,17 @@ function SsoSection({ company }) {
 
   return (
     <div>
+      {/* Owner confusion 2026-10-27: the provider list (Google, Microsoft, ...)
+          read like the public social sign-in buttons. Say up front what this is. */}
+      <div className="wka-note"><Info size={14} /> {t('companyAdmin.sso.notSocial')}</div>
       <div className="wka-note"><Info size={14} /> {t('companyAdmin.sso.registerCallback')} <CopyField value={callbackUrl} /></div>
       <div className="wka-note" style={{ color: inviteOnly ? 'var(--wka-amber)' : undefined }}><Lock size={14} />
-        {inviteOnly
+        {/* .wka-note is a flex row: rich text with inline <b> must sit in ONE
+            child, or each text run becomes its own flex item and the sentence
+            stacks into a column (seen 2026-10-27 at 1280px). */}
+        <span style={{ minWidth: 0 }}>{inviteOnly
           ? <>{t.rich('companyAdmin.sso.inviteNote')}</>
-          : <>{t.rich('companyAdmin.sso.openPre')}{state.sso && state.sso.domain ? <b>@{state.sso.domain}</b> : t('companyAdmin.sso.yourEmailDomain')}{t('companyAdmin.sso.openPost')}</>}
+          : <>{t.rich('companyAdmin.sso.openPre')}{state.sso && state.sso.domain ? <b>@{state.sso.domain}</b> : t('companyAdmin.sso.yourEmailDomain')}{t('companyAdmin.sso.openPost')}</>}</span>
       </div>
       <div className="wka-panel">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
@@ -1041,19 +1049,26 @@ function AiSection() {
   }
 
   const cur = company && company.companyAi
+  // Which of the three setups this company is on (one registry, RULE II). A
+  // company admin can act on option 1 only (enter their own key, below); moving
+  // onto the team-entered or shared platform keys is the WorkCoPilot team's call,
+  // so those two stay visible but locked with the reason. Picking option 1 just
+  // moves focus to the key field; the switch itself happens when a key is saved.
+  const setup = aiSetupOf(company)
+  const providerRef = useRef(null)
   return (
     <div>
       {reasonModal}
       <div className="wka-panel">
-        <h2>{t('companyAdmin.ai.currentAi')}</h2>
+        <AiSourceChoice name="wca-ai" voice="company" value={setup || ''} company={company} lockedIds={['managed', 'platform']} onChange={(id) => { if (id === 'client' && providerRef.current) providerRef.current.focus() }} />
         {cur
-          ? <p className="desc">{t('companyAdmin.ai.keyPrefix')} <code className="wka-mono">{cur.keyMasked}</code> {t('companyAdmin.ai.isSet')} {cur.owner === 'company' ? t('companyAdmin.ai.ownerOwn') : t('companyAdmin.ai.ownerTeam')}</p>
-          : <p className="desc">{t('companyAdmin.ai.noKeys')}</p>}
+          ? <p className="desc" style={{ margin: '12px 0 0' }}>{t('companyAdmin.ai.keyPrefix')} <code className="wka-mono">{cur.keyMasked}</code> {t('companyAdmin.ai.isSet')} {cur.owner === 'company' ? t('companyAdmin.ai.ownerOwn') : t('companyAdmin.ai.ownerTeam')}</p>
+          : (setup && setup !== 'platform' ? <div className="wka-note" style={{ color: 'var(--wka-amber)', marginTop: 12 }}><AlertTriangle size={14} /> {t('companyAdmin.ai.pausedNoKey')}</div> : null)}
       </div>
       <div className="wka-panel">
         <h2>{t('companyAdmin.ai.useOwnKeys')} <Help text={t('companyAdmin.ai.useOwnKeysHelp')} /></h2>
         <div className="wka-formgrid">
-          <div className="wka-field"><label>{t('companyAdmin.ai.provider')}</label><input className="wka-input" value={form.providerId} placeholder={t('companyAdmin.ai.providerPh')} onChange={(e) => setForm({ ...form, providerId: e.target.value })} /></div>
+          <div className="wka-field"><label>{t('companyAdmin.ai.provider')}</label><input ref={providerRef} className="wka-input" value={form.providerId} placeholder={t('companyAdmin.ai.providerPh')} onChange={(e) => setForm({ ...form, providerId: e.target.value })} /></div>
           <div className="wka-field"><label>{t('companyAdmin.ai.apiKey')}</label><input className="wka-input" type="password" value={form.apiKey} placeholder={t('companyAdmin.ai.apiKeyPh')} autoComplete="new-password" onChange={(e) => setForm({ ...form, apiKey: e.target.value })} /></div>
         </div>
         {ok && <div className="wka-note" style={{ color: 'var(--wka-emerald)' }}><Check size={14} /> {ok}</div>}
@@ -1831,7 +1846,7 @@ export default function WorkCompanyAdmin() {
   const alertsSeen = useCallback(() => setAlertBadge(0), [])
 
   const Gate = ({ icon, title, body, action }) => (
-    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}</style>
+    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}</style>
       <div className="wka-gate"><div className="box">{icon}<h2>{title}</h2><p>{body}</p>{action}</div></div>
     </div>
   )
@@ -1864,7 +1879,7 @@ export default function WorkCompanyAdmin() {
   }
 
   return (
-    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}</style>
+    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
         <div className="wka-brand"><b>WorkCoPilot</b><span>{t('companyAdmin.shell.companyAdmin')}</span></div>

@@ -9,6 +9,8 @@ import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, useReasonModal, ReasonModal as SharedReasonModal } from './_shared.jsx'
 import { Meter, VIZ_CSS } from './_viz.jsx'
 import CompanyConsumption from './CompanyConsumption.jsx'
+import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './AiSourceChoice.jsx'
+import { aiSetupOf, aiSourceFor } from '../../../shared/ai_source_options.js'
 import { useT } from '../../../i18n/index.jsx'
 
 // Friendly labels for every OpenID Connect provider the backend accepts. The
@@ -187,7 +189,9 @@ function BrandingPanel({ company, onSaved }) {
 }
 
 const BLANK_NEW = {
-  name: '', plan: 'basic', aiSource: '', scrub: false, logo: '',
+  // aiSetup is the 3-way pick (client | managed | platform); it maps to the
+  // stored aiSource on submit via aiSourceFor (one registry, RULE II).
+  name: '', plan: 'basic', aiSetup: '', scrub: false, logo: '',
   adminSeats: 2, licenseMode: 'locked', ssoProvisioning: 'explicit',
   byTier: { basic: '', advanced: '', premium: '' },
   profile: { contactPerson: '', email: '', billingEmail: '', phone: '', address: '', city: '', state: '', country: '', postalCode: '', website: '' },
@@ -389,7 +393,7 @@ export default function Companies({ isSuperAdmin }) {
       profile: form.profile,
       ...(form.logo ? { logo: form.logo } : {}),
       ...(seatTotal > 0 ? { seatsByTier: byTier } : {}),
-      ...(form.aiSource ? { aiSource: form.aiSource } : {}),
+      ...(form.aiSetup ? { aiSource: aiSourceFor(form.aiSetup) } : {}),
     }
     try { await workAdminApi.createCompany(body); setForm(BLANK_NEW); setShowNew(false); await load() }
     catch (e) { setMsg(e.message || t('companiesAdmin.errors.createFailed')) } finally { setBusy(false) }
@@ -417,6 +421,16 @@ export default function Companies({ isSuperAdmin }) {
 
   // Corporate AI keys.
   const [aiForm, setAiForm] = useState({})
+  // The operator's 3-way pick per company for the no-key-yet case: 'client' and
+  // 'managed' both store aiSource 'company' and only differ in who types the key,
+  // so until a key exists the server cannot tell them apart (see
+  // src/shared/ai_source_options.js). Patches the stored source only when it changes.
+  const [aiPick, setAiPick] = useState({})
+  const chooseAiSetup = (co, id) => {
+    setAiPick((p) => ({ ...p, [co.id]: id }))
+    const next = aiSourceFor(id)
+    if (next && next !== co.aiSource) patchCompany(co.id, { aiSource: next })
+  }
   const setAiField = (id, k, v) => setAiForm((f) => ({ ...f, [id]: { ...(f[id] || {}), [k]: v } }))
   const saveAiKeys = async (id) => { try { await workAdminApi.companyAiKeys(id, aiForm[id] || {}); setAiForm((f) => ({ ...f, [id]: {} })); refreshDetail(id); setMsg(t('companiesAdmin.toasts.aiKeysSaved')) } catch (e) { setMsg(e.message) } }
   const clearAiKeys = async (id) => {
@@ -523,7 +537,7 @@ export default function Companies({ isSuperAdmin }) {
 
   return (
     <div>
-      <style>{CSS}{VIZ_CSS}</style>
+      <style>{CSS}{VIZ_CSS}{AI_SOURCE_CHOICE_CSS}</style>
       {reasonModal}
       {delCompany ? (
         <SharedReasonModal
@@ -549,7 +563,11 @@ export default function Companies({ isSuperAdmin }) {
           <div className="wka-grid co-grid">
             <L label={t('companiesAdmin.create.name')}><input className="wka-input" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></L>
             <L label={t('companiesAdmin.create.plan')}><select className="wka-select" value={form.plan} onChange={(e) => setForm({ ...form, plan: e.target.value })}><option value="basic">{t('companiesAdmin.plans.basic')}</option><option value="advanced">{t('companiesAdmin.plans.advanced')}</option><option value="premium">{t('companiesAdmin.plans.premium')}</option></select></L>
-            <L label={t('companiesAdmin.create.aiSource')} hint={t('companiesAdmin.create.aiSourceHint')}><select className="wka-select" value={form.aiSource} onChange={(e) => setForm({ ...form, aiSource: e.target.value })}><option value="">{t('companiesAdmin.create.select')}</option><option value="platform">{t('companiesAdmin.create.aiPlatform')}</option><option value="company">{t('companiesAdmin.create.aiCompany')}</option></select></L>
+          </div>
+          {/* The 3-way AI setup (client keys / we set their keys / shared platform
+              keys). Full width: three cards do not fit a 220px grid cell. */}
+          <div className="co-grid"><AiSourceChoice name="co-new-ai" voice="operator" value={form.aiSetup} onChange={(id) => setForm({ ...form, aiSetup: id })} legend={t('companiesAdmin.create.aiSource')} />
+            {form.aiSetup === 'managed' ? <div className="co-l-cap" style={{ marginTop: 8 }}>{t('companiesAdmin.create.aiManagedNote')}</div> : null}
           </div>
           <div className="co-sec">{t('companiesAdmin.create.secBranding')}</div>
           <div className="wka-grid co-grid">
@@ -633,31 +651,42 @@ export default function Companies({ isSuperAdmin }) {
 
                         {isSuperAdmin && <BrandingPanel key={`${c.id}:${(detail.company.logo || '').length}:${(detail.company.profile && detail.company.profile.website) || ''}`} company={detail.company} onSaved={() => refreshDetail(c.id)} />}
 
-                        {isSuperAdmin && (
-                          <div className="co-detail-top" style={{ gap: 14, flexWrap: 'wrap' }}>
-                            <label className="co-inline">{t('companiesAdmin.detail.aiSource')}
-                              <select className="wka-select" value={detail.company.aiSource || ''} onChange={(e) => patchCompany(c.id, { aiSource: e.target.value || null })}>
-                                <option value="">{t('companiesAdmin.detail.select')}</option><option value="platform">{t('companiesAdmin.detail.platformKeys')}</option><option value="company">{t('companiesAdmin.detail.companyKeys')}</option>
-                              </select>
-                            </label>
-                            {detail.company.aiReady === false && <span className="co-amber"><AlertTriangle size={13} /> {detail.company.aiReason}</span>}
-                            <button className={`co-toggle ${detail.company.imageGen ? 'on' : ''}`} onClick={() => patchCompany(c.id, { imageGen: !detail.company.imageGen })}>{t('companiesAdmin.detail.imageGen')}{detail.company.imageGen ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button>
-                          </div>
-                        )}
-
-                        {isSuperAdmin && detail.company.aiSource === 'company' && (
-                          <div className="co-block">
-                            <div className="co-block-t">{t('companiesAdmin.aiKeys.title')} {detail.company.companyAi ? <span className="co-dim">· {detail.company.companyAi.providerId} · {detail.company.companyAi.keyMasked}</span> : <span className="co-amber">· {t('companiesAdmin.aiKeys.noneSet')}</span>}</div>
-                            <div className="co-inline-wrap">
-                              <input className="wka-input" placeholder={t('companiesAdmin.aiKeys.providerPlaceholder')} value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 190 }} />
-                              <input className="wka-input" type="password" autoComplete="new-password" placeholder={t('companiesAdmin.aiKeys.apiKeyPlaceholder')} value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 210 }} />
-                              <input className="wka-input" placeholder={t('companiesAdmin.aiKeys.chatModelPlaceholder')} value={(aiForm[c.id]?.chatModel) || ''} onChange={(e) => setAiField(c.id, 'chatModel', e.target.value)} style={{ width: 140 }} />
-                              <input className="wka-input" placeholder={t('companiesAdmin.aiKeys.visionModelPlaceholder')} value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 140 }} />
-                              <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>{t('companiesAdmin.aiKeys.save')}</button>
-                              {detail.company.companyAi && <button className="wka-btn sm ghost" onClick={() => clearAiKeys(c.id)}>{t('companiesAdmin.clear')}</button>}
+                        {isSuperAdmin && (() => {
+                          // The 3-way AI setup for THIS company (one registry, RULE II).
+                          const setup = aiSetupOf(detail.company, aiPick[c.id])
+                          const keys = detail.company.companyAi || null
+                          return (
+                            <div className="co-block">
+                              <AiSourceChoice name={`co-ai-${c.id}`} voice="operator" value={setup || ''} company={detail.company} onChange={(id) => chooseAiSetup(detail.company, id)} />
+                              {/* Option 2 (we set up their keys): the key form. Option 1 (the
+                                  client sets up): the key status only, since the company admin
+                                  types it in their own console. A stored key can always be cleared. */}
+                              {setup === 'managed' || (setup === 'client' && keys) ? (
+                                <div style={{ marginTop: 12 }}>
+                                  <div className="co-block-t">{t('companiesAdmin.aiKeys.title')} {keys ? <span className="co-dim">· {keys.providerId} · {keys.keyMasked}</span> : <span className="co-amber">· {t('companiesAdmin.aiKeys.noneSet')}</span>}</div>
+                                  {setup === 'client' ? <div className="co-dim" style={{ marginBottom: 6 }}>{t('companiesAdmin.aiKeys.clientHasKey')}</div> : null}
+                                  <div className="co-inline-wrap">
+                                    {setup === 'managed' ? (
+                                      <>
+                                        <input className="wka-input" placeholder={t('companiesAdmin.aiKeys.providerPlaceholder')} value={(aiForm[c.id]?.providerId) || ''} onChange={(e) => setAiField(c.id, 'providerId', e.target.value)} style={{ width: 190 }} />
+                                        <input className="wka-input" type="password" autoComplete="new-password" placeholder={t('companiesAdmin.aiKeys.apiKeyPlaceholder')} value={(aiForm[c.id]?.apiKey) || ''} onChange={(e) => setAiField(c.id, 'apiKey', e.target.value)} style={{ width: 210 }} />
+                                        <input className="wka-input" placeholder={t('companiesAdmin.aiKeys.chatModelPlaceholder')} value={(aiForm[c.id]?.chatModel) || ''} onChange={(e) => setAiField(c.id, 'chatModel', e.target.value)} style={{ width: 140 }} />
+                                        <input className="wka-input" placeholder={t('companiesAdmin.aiKeys.visionModelPlaceholder')} value={(aiForm[c.id]?.visionModel) || ''} onChange={(e) => setAiField(c.id, 'visionModel', e.target.value)} style={{ width: 140 }} />
+                                        <button className="wka-btn sm" onClick={() => saveAiKeys(c.id)}>{t('companiesAdmin.aiKeys.save')}</button>
+                                      </>
+                                    ) : null}
+                                    {keys && <button className="wka-btn sm ghost" onClick={() => clearAiKeys(c.id)}>{t('companiesAdmin.clear')}</button>}
+                                  </div>
+                                </div>
+                              ) : setup === 'client' ? (
+                                <div className="co-dim" style={{ marginTop: 10 }}>{t('companiesAdmin.aiKeys.clientWaiting')}</div>
+                              ) : null}
+                              <div className="co-inline-wrap" style={{ marginTop: 12 }}>
+                                <button className={`co-toggle ${detail.company.imageGen ? 'on' : ''}`} onClick={() => patchCompany(c.id, { imageGen: !detail.company.imageGen })}>{t('companiesAdmin.detail.imageGen')}{detail.company.imageGen ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )
+                        })()}
 
                         {isSuperAdmin && (
                           <div className="co-block">

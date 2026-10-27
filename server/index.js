@@ -1688,12 +1688,17 @@ app.post('/api/work/team/ai-keys', requireWorkAuth, requireCompanyAdmin, wrap((r
 }))
 app.get('/api/work/team/ai', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
-  // Company admins never see the model, provider, or owner of the AI config
-  // (platform IP) - only whether a key is set and its masked tail. publicCompany
-  // returns a fresh object, and the superadmin console reads it through the admin
-  // routes, so this narrowing is scoped to the company-admin surface only.
+  // Company admins never see the model or provider of the AI config (platform
+  // IP) - only whether a key is set, its masked tail, when, and WHO entered it
+  // (`owner`: 'company' = their own admin, 'corporate' = the WorkCoPilot team).
+  // `owner` is the company's own fact, not platform IP, and the console's
+  // "Remove my keys" path and the 3-way AI setup read it (stripping it once hid
+  // that button for every company admin). publicCompany returns a fresh object,
+  // and the superadmin console reads it through the admin routes, so this
+  // narrowing is scoped to the company-admin surface only. Gated by
+  // server/company_ai_surface.test.mjs.
   const c = store.getCompany(req.workUser.companyId)
-  if (c && c.companyAi) c.companyAi = { keyMasked: c.companyAi.keyMasked, setAt: c.companyAi.setAt }
+  if (c && c.companyAi) c.companyAi = { keyMasked: c.companyAi.keyMasked, setAt: c.companyAi.setAt, owner: c.companyAi.owner }
   res.json(c)
 }))
 // Company admin: this company's own web-search (Tavily) key for live web learning.
