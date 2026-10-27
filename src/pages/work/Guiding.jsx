@@ -1552,7 +1552,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.observation) setObservation(r.observation)   // the quiet "Last read" glance stays honest
       setVerdict({ ...verdictFromWatch(r), stepIndex, t: Date.now() })
     } catch (e) {
-      setVerdict({ kind: VERIFY_ERROR, stepIndex, detail: friendlyError(e, ''), t: Date.now() })
+      // Detail only when the server sent a user-facing message (402/403/409/429,
+      // the one list inside friendlyError); otherwise the i18n headline alone.
+      const coded = friendlyError(e, ''), generic = friendlyError(null, '')
+      setVerdict({ kind: VERIFY_ERROR, stepIndex, detail: coded === generic ? '' : coded, t: Date.now() })
     } finally { setVerifying(false) }
   }
   const clearVerdict = () => setVerdict(null)
@@ -2431,6 +2434,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           const focused = askFocused(askState)
           const flagText = flags.length ? String(flags[0].text || '') : ''
           const prominent = readingIsProminent({ offTrack, flag: flagText, observation })
+          const stepVerdict = verdictForStep(verdict, ci)   // only the verdict read for THIS step
           const view = focused ? 'ask:' + askState.phase : clarify ? 'clarify' : done ? 'done' : 'step:' + ci
           const key = 'step-' + ci
           const reading = <ReadingStrip watching={watching} analyzing={analyzing} offTrack={offTrack} observation={observation} flag={flagText} source={source} />
@@ -2485,8 +2489,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                           ? <span className="gv-step-hint">Plan-heavy mode. Tap Check my progress for a fresh read.</span>
                           : !watching && <button type="button" className="gv-step-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
                       onDone={() => { clearVerdict(); setStep(ci, 'done') }}
-                      doneReady={!!(verdictForStep(verdict, ci) && verdictForStep(verdict, ci).kind === VERIFY_DONE)}
-                      notice={<VerifyVerdict verdict={verdictForStep(verdict, ci)} verifying={verifying} onRetry={verifyStep} onDismiss={clearVerdict} />}
+                      doneReady={!!(stepVerdict && stepVerdict.kind === VERIFY_DONE)}
+                      notice={<VerifyVerdict verdict={stepVerdict} verifying={verifying} onRetry={verifyStep} onDismiss={clearVerdict} />}
                       actions={<VerifyButton onClick={verifyStep} verifying={verifying} disabled={busy || paused} />}
                       extra={<>
                         {/* Grounded-in-your-documents: shows only when the guide marked this

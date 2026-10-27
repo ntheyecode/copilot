@@ -221,6 +221,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
           const prominent = readingIsProminent({ offTrack: false, flag: flagText, observation })
           const reading = <ReadingStrip watching={watching} analyzing={analyzing} offTrack={false} observation={observation} flag={flagText} />
           const next = stepWindow(steps).slice(1, 2)
+          const stepVerdict = verdictForStep(verdict, idx)   // only the verdict read for THIS step
           const view = focused && !complete ? 'ask:' + ask.phase : complete ? 'complete' : current ? 'step:' + idx : 'empty'
           return (
             <FadeSwap k={view}>
@@ -249,8 +250,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
                       ? <span className="gv-step-hint">Paused. Resume to keep this live.</span>
                       : !watching && <span className="gv-step-hint">Watch my screen to keep this live</span>}
                     onDone={() => { if (onVerdictDismiss) onVerdictDismiss(); onStep(idx, 'done') }}
-                    doneReady={!!(verdictForStep(verdict, idx) && verdictForStep(verdict, idx).kind === VERIFY_DONE)}
-                    notice={onVerify ? <VerifyVerdict verdict={verdictForStep(verdict, idx)} verifying={verifying} onRetry={onVerify} onDismiss={onVerdictDismiss} /> : null}
+                    doneReady={!!(stepVerdict && stepVerdict.kind === VERIFY_DONE)}
+                    notice={onVerify ? <VerifyVerdict verdict={stepVerdict} verifying={verifying} onRetry={onVerify} onDismiss={onVerdictDismiss} /> : null}
                     actions={onVerify ? <VerifyButton onClick={onVerify} verifying={verifying} disabled={busy || paused} /> : null} />
                   {!prominent && reading}
                   {steps.length > 1 && onNav && (

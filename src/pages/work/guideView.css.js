@@ -136,7 +136,7 @@ export const GUIDE_CSS = `
 .gv-verify-saw>.gv-k{margin-top:2px}
 .gv-verify-saw>span:last-child{min-width:0}
 .gv-verify-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:2px}
-.gv-verify-link{font:inherit;font-size:12.5px;font-weight:650;color:var(--gv-accent);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;white-space:nowrap}
+.gv-verify-link{font:inherit;font-size:calc(12.5px*var(--wc-fs,1));font-weight:650;color:var(--gv-accent);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px;white-space:nowrap}
 .gv-verify-link:hover{text-decoration-color:currentColor}
 .gv-verify-link:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring);border-radius:4px}
 .gv-verify-x{flex:0 0 auto;width:26px;height:26px;margin:-3px -3px 0 0;border-radius:7px;border:none;background:transparent;color:var(--gv-faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}

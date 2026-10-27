@@ -10,7 +10,13 @@
 
 // The engine reports 0-based `completed` indices, an optional new `current`
 // pointer, and `done` (every step complete). The current step reads as done
-// when any of those says the user has moved past it.
+// when any of those says the user has moved past it: the same "advanced"
+// notion the engine's own consistency guard uses on the verification step
+// (work.js workNavigate). Note the continuous loop (store.applyWorkNav) only
+// MARKS a step done when it is listed in `completed`; a bare pointer move
+// relabels it and moves on. Here that case still reads "Looks done", because
+// the engine has left the step behind and the user's Mark done is the click
+// that records it.
 export function verifyVerdict(r, currentStep) {
   const res = r || {}
   const cur = Number.isFinite(Number(currentStep)) ? Math.round(Number(currentStep)) : 0

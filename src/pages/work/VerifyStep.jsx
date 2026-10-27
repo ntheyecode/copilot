@@ -22,17 +22,24 @@ export function VerifyButton({ onClick, verifying = false, disabled = false }) {
   )
 }
 
+// Always renders the (persistent) polite live region, so the checking line
+// and the verdict that replaces it are both announced; empty when idle.
 export function VerifyVerdict({ verdict, verifying = false, onRetry, onDismiss }) {
+  return <div className="gv-verify-live" aria-live="polite">{verifying ? <Checking /> : verdict ? <Verdict verdict={verdict} onRetry={onRetry} onDismiss={onDismiss} /> : null}</div>
+}
+
+function Checking() {
   const t = useT()
-  if (verifying) {
-    return (
-      <div className="gv-verify is-checking" role="status" aria-live="polite">
-        <span className="gv-verify-ic" aria-hidden="true"><span className="gv-ana"><i /><i /><i /></span></span>
-        <div className="gv-verify-b"><span className="gv-verify-k">{t('workGuide.verify.checking')}</span></div>
-      </div>
-    )
-  }
-  if (!verdict) return null
+  return (
+    <div className="gv-verify is-checking">
+      <span className="gv-verify-ic" aria-hidden="true"><span className="gv-ana"><i /><i /><i /></span></span>
+      <div className="gv-verify-b"><span className="gv-verify-k">{t('workGuide.verify.checking')}</span></div>
+    </div>
+  )
+}
+
+function Verdict({ verdict, onRetry, onDismiss }) {
+  const t = useT()
   const done = verdict.kind === VERIFY_DONE
   const notYet = verdict.kind === VERIFY_NOT_YET
   const cls = done ? 'is-done' : notYet ? 'is-notyet' : 'is-error'
@@ -43,7 +50,7 @@ export function VerifyVerdict({ verdict, verifying = false, onRetry, onDismiss }
   const obs = String(verdict.observation || '').trim()
   const detail = notYet ? (String(verdict.detail || '').trim() || t('workGuide.verify.notYetDefault')) : String(verdict.detail || '').trim()
   return (
-    <div className={`gv-verify ${cls}`} role={notYet ? 'alert' : 'status'}>
+    <div className={`gv-verify ${cls}`}>
       <span className="gv-verify-ic" aria-hidden="true">{done ? <Check size={15} strokeWidth={2.8} /> : <AlertTriangle size={15} strokeWidth={2.4} />}</span>
       <div className="gv-verify-b">
         <span className="gv-verify-k">{head}</span>

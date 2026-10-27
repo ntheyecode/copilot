@@ -2476,6 +2476,10 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
       observed: r.observation || '',
       flag: r.flag || '',
     })
+    // A model substitution is never silent (SUPREME RULE III), on a verify-only
+    // read too: these two events land before the verify return.
+    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model${call.forcedStrong ? ' - deep pass' : ' to resolve this step'}.` })
+    else if (r.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this step.' })
     if (verifyOnly) return res.json(verifyResponse(r, s, { escalated }))
     // Snapshot which steps were already done, so we can tell which ones become
     // confirmed on THIS frame and keep that exact frame as their evidence.
@@ -2499,8 +2503,6 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
       }
     } catch { /* evidence capture is best-effort */ }
     if (r.flag) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: r.flag })
-    if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Used a stronger model${call.forcedStrong ? ' - deep pass' : ' to resolve this step'}.` })
-    else if (r.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this step.' })
     const allDone = r.done || updated.currentStep >= updated.steps.length
     res.json({
       status: r.flag ? 'wrong' : (allDone ? 'done' : 'working'),
