@@ -2089,6 +2089,11 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     if (!isReplan && goal != null) store.setWorkSessionGoal(req.workUser.id, req.params.id, goal)
     const useMode = work.normalizeMode(mode != null ? mode : s.mode)
     if (mode != null) store.setWorkSessionMode(req.workUser.id, req.params.id, useMode)
+    // Guidance strength: the register the operator chose (switchable mid-session).
+    // Use the request's level when sent, else the session's; persist a change so
+    // the live watch loop and audit stay consistent even if a later call omits it.
+    const useLevel = work.normalizeLevel(req.body && req.body.level != null ? req.body.level : s.level)
+    if (req.body && req.body.level != null && String(req.body.level) !== String(s.level || '')) store.setWorkSessionLevel(req.workUser.id, req.params.id, req.body.level)
     // On a re-plan we plan from the FROZEN original goal, never the (possibly
     // edited) goal the client sent - the request is locked.
     const useGoal = (isReplan ? s.goal : (goal != null ? goal : s.goal)) || ''
@@ -2198,7 +2203,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
       tele: planTele,
-      base: store.getSystemPrompt(), mode: useMode, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup, locale: readLocale(req),
+      base: store.getSystemPrompt(), mode: useMode, level: useLevel, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup, locale: readLocale(req),
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
@@ -2443,8 +2448,10 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const call = workCallRuntime(rr, !!(req.body && req.body.deep))
     const watchScrubOn = store.workUserScrubOn(req.workUser.id)
     const watchGoal = scrubForAi(s, watchScrubOn, req.workUser.id).goal
+    const watchLevel = work.normalizeLevel(req.body && req.body.level != null ? req.body.level : s.level)
+    if (req.body && req.body.level != null && String(req.body.level) !== String(s.level || '')) store.setWorkSessionLevel(req.workUser.id, req.params.id, req.body.level)
     const r = await work.workNavigate(ai, call.rt, {
-      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), level: watchLevel, goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
       frame, visionModel: call.visionModel, strong: call.backup,
     })
     const escalated = r.escalated || call.forcedStrong
@@ -2515,8 +2522,10 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     const qScrub = askScrubOn ? scrubSensitive(question || '') : { clean: question || '', counts: {}, total: 0 }
     store.appendWorkAudit(req.params.id, { call: 'ask', model: call.visionModel || rr.visionModel || null, scrub: askScrubOn, redacted: qScrub.total, frame: 'screenshot sent', sent: qScrub.clean || '[question about the current screen]' })
     if (qScrub.total) store.recordPiiAlert(req.workUser.id, { sessionId: req.params.id, call: 'ask', counts: qScrub.counts, total: qScrub.total })
+    const askLevel = work.normalizeLevel(req.body && req.body.level != null ? req.body.level : s.level)
+    if (req.body && req.body.level != null && String(req.body.level) !== String(s.level || '')) store.setWorkSessionLevel(req.workUser.id, req.params.id, req.body.level)
     const out = await work.workAsk(ai, call.rt, {
-      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: sa.goal,
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), level: askLevel, goal: sa.goal,
       question: qScrub.clean, steps: s.steps || [], currentStep: s.currentStep || 0,
       events: sa.events, appContext: s.appContext || '', frame, visionModel: call.visionModel, strong: call.backup, locale: readLocale(req),
     })
@@ -2526,9 +2535,28 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '', frame ? 1 : 0, { kind: 'ask' })
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
+    // LEARN-AND-ADAPT: when the question implies the remaining plan should change,
+    // re-plan from the current step forward, keeping every finished step and its
+    // captured values intact (store.replanKeepingProgress merges done + forward).
+    let planChanged = false
+    let resumeAt = out.resumeAt
+    if (out.planChanged && Array.isArray(out.steps) && out.steps.length) {
+      const cur0 = store.replanKeepingProgress(req.workUser.id, req.params.id, out.steps)
+      planChanged = true
+      resumeAt = cur0.currentStep
+      store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Updated the steps ahead from your question, and kept everything you had already finished.' })
+    }
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
     else if (out.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this answer.' })
-    res.json({ answer: out.answer, escalated, ...(gAsk && gAsk.guard ? { guard: gAsk.guard } : {}) })
+    const curSess = store.getWorkSession(req.workUser.id, req.params.id)
+    res.json({
+      answer: out.answer, escalated, planChanged, resumeAt,
+      // The new forward steps, only on a change (contract); plus the merged plan
+      // and resume index so the client can reconcile without a refetch.
+      steps: planChanged ? out.steps : [],
+      plan: planChanged ? (curSess.steps || []).map((x) => ({ ...x, source: x.source || '' })) : undefined,
+      ...(gAsk && gAsk.guard ? { guard: gAsk.guard } : {}),
+    })
   } catch (e) { sendWorkError(res, e, req) }
 })
 
@@ -2713,8 +2741,10 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
     const grounded = userDocs
       ? (`USER REFERENCE DOCUMENTS (ground in these, but verify against best practice and flag anything wrong):\n${userDocs}\n\n` + (notes || ''))
       : notes
+    const howToLevel = work.normalizeLevel(req.body && req.body.level != null ? req.body.level : s.level)
+    if (req.body && req.body.level != null && String(req.body.level) !== String(s.level || '')) store.setWorkSessionLevel(req.workUser.id, req.params.id, req.body.level)
     const out = await work.workHowTo(ai, call.rt, {
-      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), goal: safeGoal, action: act,
+      base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), level: howToLevel, goal: safeGoal, action: act,
       frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: grounded, strong: call.backup, locale: readLocale(req),
     })
     if (out.refusal) {
@@ -2738,6 +2768,16 @@ app.post('/api/work/sessions/:id/mode', requireWorkAuth, wrap((req, res) => {
   const useMode = work.normalizeMode((req.body || {}).mode)
   const s = store.setWorkSessionMode(req.workUser.id, req.params.id, useMode)
   res.json({ session: s, mode: s.mode })
+}))
+
+// Set the guidance strength (easy | medium | technical | executive) for a
+// session. Switchable mid-session from the floater / console; the next plan,
+// watch, ask and how-to call picks it up. normalizeLevel is the single
+// authority on valid values, so an unknown value falls back to medium.
+app.post('/api/work/sessions/:id/strength', requireWorkAuth, wrap((req, res) => {
+  const useLevel = work.normalizeLevel((req.body || {}).level)
+  const s = store.setWorkSessionLevel(req.workUser.id, req.params.id, useLevel)
+  res.json({ session: s, level: work.normalizeLevel(s.level) })
 }))
 
 // Post-session report (PDF). ?dl=1 forces a download; else it opens inline.

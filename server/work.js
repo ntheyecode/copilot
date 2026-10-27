@@ -20,6 +20,10 @@
 import { scrubGuidance } from './ai_language.js'
 import { methodAnchorFor } from './method_anchors.js'
 import { validateSpec, describeSpecForAI } from './compute_spec.js'
+import {
+  CROSS_SYSTEM_RULE, DEEP_PLAN_STRUCTURE, PLAN_CRITIQUE_DIRECTIVE, planCritiqueUser,
+  deepWorthy, isVerifyStep, hasFailureSignal, cleanBranches, cleanOnFail,
+} from './work_deep_plan.js'
 
 // ---- Respond in the user's language --------------------------------------
 // The client picks a UI language and sends its locale with each guidance call.
@@ -475,6 +479,56 @@ function modeDirective(mode) {
   }
 }
 
+// ---- Guidance strength (the user-chosen REGISTER) -------------------------
+// A SEPARATE axis from the work mode above: mode is the task style (step-by-step
+// vs architect vs debug), level is how much detail and hand-holding the prose
+// carries. The user can change it MIDWAY through a session; because the planner
+// and the live navigate both take it per call, the next output re-phrases to the
+// new level immediately (already-done steps are left as they were). Single source
+// of truth (SUPREME RULE II): these four are defined here and nowhere else.
+export const WORK_LEVELS = [
+  { id: 'easy',      label: 'Easy',      hint: 'Assume no knowledge. One tiny action at a time, every button and keystroke spelled out, plain words.' },
+  { id: 'medium',    label: 'Medium',    hint: 'Balanced. The key controls and exact values, without the most basic hand-holding.' },
+  { id: 'technical', label: 'Technical', hint: 'Terse and expert. Exact commands and precise control names, minimal prose.' },
+  { id: 'executive', label: 'Executive', hint: 'High level. The key moves and decisions, not every click. Shortest.' },
+]
+export const WORK_LEVEL_IDS = WORK_LEVELS.map((l) => l.id)
+export function normalizeLevel(level) {
+  return WORK_LEVEL_IDS.includes(String(level || '')) ? String(level) : 'medium'
+}
+// The register directive for one level. Appended after the mode directive by the
+// plan / navigate / ask / explain system builders. It shapes HOW the prose reads;
+// it never changes WHAT the product can do, so read-only honesty, the exactness
+// of commands/code, and the fidelity + deep-planning rules all stay intact.
+function levelDirective(level) {
+  switch (normalizeLevel(level)) {
+    case 'easy':
+      return '\n\n---\nGUIDANCE STRENGTH: EASY\n' +
+        'Assume the person knows nothing about this. Give ONE tiny action at a time and name every ' +
+        'button, menu, tab and field by its exact on-screen label, say exactly where it is, and ' +
+        'spell out every keystroke including how to save and exit. Use plain everyday words, define ' +
+        'any term the moment it appears, and add a short word of reassurance. Never skip a detail ' +
+        'because it seems obvious.'
+    case 'technical':
+      return '\n\n---\nGUIDANCE STRENGTH: TECHNICAL\n' +
+        'The person is fluent with this class of tool. Be terse and expert: the exact command, code ' +
+        'or precise control name and nothing more, minimal prose, no basic explanation and no ' +
+        'reassurance. Dense and fast. Still exact and correct; still read-only (you guide, you do ' +
+        'not act).'
+    case 'executive':
+      return '\n\n---\nGUIDANCE STRENGTH: EXECUTIVE\n' +
+        'The person is overseeing the work and wants the gist, not every click. Give the key moves ' +
+        'and the decision points at a high level, outcome first, as briefly as possible. Name a ' +
+        'specific control or value only when it is the crux. Shortest of all the levels.'
+    case 'medium':
+    default:
+      return '\n\n---\nGUIDANCE STRENGTH: MEDIUM\n' +
+        'Balanced, for a competent person who is just unfamiliar with this tool. Name the key ' +
+        'controls and give the exact commands and values, but skip the most basic hand-holding and ' +
+        'the keystroke-by-keystroke detail. Clear and concise.'
+  }
+}
+
 function baseWith(base, voice = '', mode = 'stepwise') {
   const parts = [String(base || '').trim()]
   if (voice && voice.trim()) parts.push('\n' + voice.trim())
@@ -487,8 +541,8 @@ function baseWith(base, voice = '', mode = 'stepwise') {
 // Produces concrete steps, each with a `validate` condition: the thing that
 // will be visible on screen once the step is genuinely done. The watcher later
 // checks frames against that condition.
-export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
-  return baseWith(base, voice, mode) +
+export function workPlanSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return baseWith(base, voice, mode) + levelDirective(level) +
     '\n\n---\nPLAN THE WORK\n' +
     'You are given the user\'s GOAL and, when available, a screenshot of where they are now. ' +
     'Break the goal into an ordered checklist of concrete steps the user performs themselves. ' +
@@ -544,6 +598,8 @@ export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
     'prerequisite already exists, add a short CHECK step ("Confirm you are on the blank scenario ' +
     'canvas; if not, create a new scenario first") rather than skip it. A plan that only works if the ' +
     'person already did the hidden setup is a failure.\n' +
+    CROSS_SYSTEM_RULE +
+    DEEP_PLAN_STRUCTURE +
     'MATCH THE REAL ENVIRONMENT - DO NOT ASSUME A WEB BROWSER. Work happens in many places and the ' +
     'first steps must fit the actual one: (a) a WEB app -> open the official or given URL in the ' +
     'browser (use "url"); (b) a DESKTOP or INSTALLED app (for example Check Point SmartConsole, SQL ' +
@@ -580,7 +636,7 @@ export function workPlanSystem({ base, voice = '', mode = 'stepwise' }) {
     'when nothing is newer than common knowledge.\n' +
     'CLARIFY ONLY WHEN YOU GENUINELY NEED TO. Scoping already asked the key questions, so usually just plan. If ONE essential input is still missing and it would change the RIGHT steps (for example which jurisdiction or state, which software or whether they do it manually, which account or variant), set a top-level "clarify": one short, specific question, with "kind":"choice" and 2 to 5 concrete "options" when there are clear choices, or "kind":"text" and empty options when no option fits. Ask only what MATERIALLY changes the plan, one question, relevant to this goal. PREFER to plan: omit "clarify" entirely when you can plan well without it. Never use it to firefight or to ask for something already visible on the screen. Your "options" are a best-guess SHORTLIST inferred from the screen and context, NEVER the only possibilities: the user can always type their own answer (an option you did not list) or skip, so do not force a false choice. When the right steps genuinely depend on this and you cannot read it off the screen, you need a definitive answer from the user, so ask; when you can read it off the screen, do not ask.\n' +
     'Return ONLY JSON in this exact shape, nothing else:\n' +
-    '{"refusal":"<set ONLY when declining, else omit>","appContext":"<the tool/screen this targets, one short phrase>","clarify":{"question":"<only when one essential input is missing, else OMIT the whole clarify object>","kind":"choice|text","options":["<2 to 5 short options for choice; empty array for text>"]},"learning":"<OPTIONAL generalized tool fact, see above; omit if nothing new>","steps":[{"text":"<the action>","validate":"<what is visible when done>","url":"<official page to open, or empty>","commands":["<exact command>"],"code":{"file":"<path>","content":"<exact text>"},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this step is grounded in, named; empty string when from general knowledge>"}]}' +
+    '{"refusal":"<set ONLY when declining, else omit>","appContext":"<the tool/screen this targets, one short phrase>","clarify":{"question":"<only when one essential input is missing, else OMIT the whole clarify object>","kind":"choice|text","options":["<2 to 5 short options for choice; empty array for text>"]},"learning":"<OPTIONAL generalized tool fact, see above; omit if nothing new>","steps":[{"text":"<the action>","validate":"<what is visible when done>","url":"<official page to open, or empty>","commands":["<exact command>"],"code":{"file":"<path>","content":"<exact text>"},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this step is grounded in, named; empty string when from general knowledge>","branches":"<OPTIONAL, only where the next action forks on screen: [{\\"when\\":\\"<condition on screen>\\",\\"guidance\\":\\"<action for that case>\\"}]; omit otherwise>","onFail":"<OPTIONAL, only on a verify/connect/save step: [{\\"cause\\":\\"<how the failure reads on screen>\\",\\"fix\\":\\"<exact recovery action>\\"}]; omit otherwise>"}]}' +
     SOURCE_ATTRIBUTION_RULE
 }
 export function workPlanUser({ goal, appContext, research = '', learnings = '', skills = '' }) {
@@ -600,7 +656,7 @@ export function workPlanUser({ goal, appContext, research = '', learnings = '', 
 }
 // frame = a single downscaled data URL (optional). visionModel required only
 // when a frame is supplied. research = current web notes grounding the steps.
-export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null, locale = 'en' }) {
+export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, frame = null, visionModel = null, appContext = '', research = '', learnings = '', skills = '', strong = null, thorough = false, tele = null, locale = 'en' }) {
   const heavy = thorough ? (
     '\n\n---\nPLAN-HEAVY MODE\n' +
     'The user will follow this plan with only LIGHT, on-demand checks, not continuous watching. ' +
@@ -609,7 +665,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
     'anticipate the common branch and the common error inline, and end each step with a clear ' +
     'self-check the user can confirm without you watching. Err toward more detail per step.'
   ) : ''
-  const system = withLocale(workPlanSystem({ base, voice, mode }) + heavy + methodAnchorBlock(goal, appContext), locale)
+  const system = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy + methodAnchorBlock(goal, appContext), locale)
   const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -621,7 +677,31 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
   }
   // preferKey 'steps' so a stray leading object cannot shadow the real plan; a
   // pure {"refusal":...} reply still parses (it is the only/first object).
-  const parsed = extractJson(raw, 'steps') || {}
+  let parsed = extractJson(raw, 'steps') || {}
+  // DEEP PLANNING (plan the forks, failures and loops ONCE, now). When the goal
+  // genuinely branches or can fail (cross-system handoff, verification, sign-in,
+  // install, configure), run a second text-only self-critique pass that hardens
+  // the draft: missing prerequisite, the fork, onFail recovery, a value the user
+  // may not have, a loop. Planning is once per task, so this depth is affordable;
+  // the per-frame navigate stays lean. Skipped for a plain linear task (no added
+  // cost). Any failure keeps the draft, never degrading it (SUPREME RULES VI, VIII).
+  if (!parsed.refusal && deepWorthy({ goal, appContext, draftSteps: parsed.steps })) {
+    try {
+      const critiqueSystem = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy +
+        methodAnchorBlock(goal, appContext) + PLAN_CRITIQUE_DIRECTIVE, locale)
+      const critiqueUser = planCritiqueUser({ goal, appContext, draftSteps: parsed.steps })
+      const critiqueCfg = (strong && strong.cfg) ? strong.cfg : cfg
+      const craw = await ai.generate(critiqueCfg, critiqueSystem, critiqueUser, tele)
+      const cparsed = extractJson(craw, 'steps')
+      // Accept the hardened plan only when it is a real, non-empty plan that did
+      // not turn into a refusal and did not DROP steps; otherwise keep the draft.
+      const draftLen = Array.isArray(parsed.steps) ? parsed.steps.length : 0
+      if (cparsed && !cparsed.refusal && Array.isArray(cparsed.steps) && cparsed.steps.length >= draftLen && cparsed.steps.length > 0) {
+        parsed = cparsed
+        if (strong && strong.cfg) { escalated = true; reason = reason || 'deep' }
+      }
+    } catch { /* keep the draft on any critique failure - graceful degradation */ }
+  }
   const steps = Array.isArray(parsed.steps) ? parsed.steps : []
   // NOTE: text/validate are prose and get the AI-language scrub. commands/code
   // are EXACT things the user types or pastes - never scrub them, it would
@@ -658,6 +738,12 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
       const commands = cleanCmds(s && s.commands)
       const code = cleanCode(s && s.code)
       const dc = destructiveCheck(commands, code)
+      // Deep-plan structure carried on the step (optional, backward compatible):
+      // branches = on-screen forks the live guidance chooses between; onFail =
+      // the planned recovery for a verify/connect/save step. Attached only when
+      // non-empty so existing flows and stored sessions are unchanged.
+      const branches = cleanBranches(s && s.branches)
+      const onFail = cleanOnFail(s && s.onFail)
       return {
         text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
         validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
@@ -672,6 +758,8 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', g
         // acknowledge so the person understands the impact before running it.
         destructive: dc.destructive,
         destructiveWhy: dc.why,
+        ...(branches.length ? { branches } : {}),
+        ...(onFail.length ? { onFail } : {}),
       }
     }).filter((s) => s.text),
     escalated,
@@ -711,8 +799,8 @@ export function destructiveCheck(commands, code) {
 // grounded in the goal + research + the user's docs. Same step shape as the
 // planner so the console renders it the same way, and it becomes part of the
 // goal (guided + verified, then the flow continues).
-export function workHowToSystem({ base, voice = '', mode = 'stepwise' }) {
-  return baseWith(base, voice, mode) +
+export function workHowToSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return baseWith(base, voice, mode) + levelDirective(level) +
     '\n\n---\nEXPLAIN ONE ACTION IN FULL\n' +
     'The person is working toward a GOAL and has asked HOW to do ONE specific ACTION in it. Break ' +
     'THAT action, and only that action, into an ordered checklist of micro-steps they perform ' +
@@ -739,8 +827,8 @@ export function workHowToUser({ goal, action, appContext, research = '' }) {
       : '') +
     'Produce the sub-step checklist JSON for this one action now.')
 }
-export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null, locale = 'en' }) {
-  const system = withLocale(workHowToSystem({ base, voice, mode }) + methodAnchorBlock(`${goal} ${action}`, appContext), locale)
+export async function workHowTo(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, action, frame = null, visionModel = null, appContext = '', research = '', strong = null, locale = 'en' }) {
+  const system = withLocale(workHowToSystem({ base, voice, mode, level }) + methodAnchorBlock(`${goal} ${action}`, appContext), locale)
   const user = workHowToUser({ goal, action, appContext, research })
   let raw, escalated = false, reason = ''
   if (frame && visionModel) {
@@ -802,8 +890,20 @@ export function workWatchSystem({ base, voice = '' }) {
     '- "working": they are on it but it is not complete yet.\n' +
     '- "wrong": they did something that will cause a problem (wrong value, wrong place, an error ' +
     'is shown). Put the specific issue and the fix in "flag".\n' +
-    'Keep "observation" to one short sentence about what is on screen. Only report what is ' +
-    'visible. Return ONLY JSON: {"status":"done|working|wrong","observation":"...","flag":"..."}'
+    'DESCRIBE BEFORE YOU JUDGE, AND LOOK FOR FAILURE. First read the concrete specifics into ' +
+    '"observation": the exact dialog or page title and any status or error text word for word, ' +
+    'including both values when the screen shows an expected value next to a found one. Your status ' +
+    'must follow from what you actually see, not from what DONE was expected to look like. Saves and ' +
+    'verifications FAIL often: when the screen shows failed, error, invalid, could not find, does ' +
+    'not match, not found, or a warning or red state, the status is "wrong" (never "done"), and ' +
+    'when a verification shows an expected value and a different found value, say both and point to ' +
+    'correcting the entered value so it matches.\n' +
+    'KEEP IT SINGLE AND NON-REDUNDANT. "observation" is ONE self-contained sentence that says what ' +
+    'is on screen and, when something is wrong, what is wrong. Use "flag" for at most ONE short, ' +
+    'actionable thing and ONLY when it adds something the observation did not already say; if it ' +
+    'would just restate the observation, leave "flag" empty, and never give two near-duplicate ' +
+    'warnings for the same cause.\n' +
+    'Only report what is visible. Return ONLY JSON: {"status":"done|working|wrong","observation":"...","flag":"..."}'
 }
 export function workWatchUser({ goal, step }) {
   return (
@@ -816,11 +916,21 @@ export async function workWatch(ai, cfg, { base, voice = '', goal, step, frame, 
   const system = workWatchSystem({ base, voice })
   const raw = await ai.analyseImages(cfg, `${system}\n\n${workWatchUser({ goal, step })}`, [frame], visionModel)
   const parsed = extractJson(raw) || {}
-  const status = ['done', 'working', 'wrong'].includes(parsed.status) ? parsed.status : 'working'
+  let status = ['done', 'working', 'wrong'].includes(parsed.status) ? parsed.status : 'working'
+  let flagText = String(parsed.flag || '').trim()
+  // CONSISTENCY GUARD (task C, SUPREME RULE III): on a verify/confirm step, never
+  // let the verdict read "done" when the model's own observation or flag carries
+  // clear failure words. A hallucinated "done" that self-contradicts is forced to
+  // "wrong". Conservative (clear failure words, verify step only) so a genuinely
+  // successful step is never blocked.
+  if (status === 'done' && isVerifyStep(step) && hasFailureSignal(`${parsed.observation || ''} ${flagText}`)) {
+    status = 'wrong'
+    if (!flagText) flagText = 'The screen shows this step did not succeed. Read the exact message on screen and fix what it reports before moving on.'
+  }
   return {
     status,
     observation: scrubGuidance(String(parsed.observation || '').trim()),
-    flag: scrubGuidance(String(parsed.flag || '').trim()),
+    flag: scrubGuidance(flagText),
   }
 }
 
@@ -858,8 +968,8 @@ function navigateBase(base, voice = '', mode = 'stepwise') {
   parts.push(modeDirective(mode))
   return parts.join('')
 }
-export function workNavigateSystem({ base, voice = '', mode = 'stepwise' }) {
-  return navigateBase(base, voice, mode) +
+export function workNavigateSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return navigateBase(base, voice, mode) + levelDirective(level) +
     '\n\n---\nGUIDE CONTINUOUSLY BY WATCHING THE SCREEN\n' +
     'You are guiding one person through their GOAL in real time. You are given the full ordered ' +
     'CHECKLIST (each step numbered, with what DONE looks like and its state) and a screenshot of ' +
@@ -913,52 +1023,135 @@ export function workNavigateSystem({ base, voice = '', mode = 'stepwise' }) {
     'old wording. Note briefly in "observation" that the UI differs from the plan. Only if you ' +
     'genuinely cannot find the equivalent on screen, say what changed and tell them to use Research ' +
     '(for the current UI) or the Ask box - never invent a control that is not visible.\n' +
+    'DESCRIBE WHAT IS ACTUALLY ON SCREEN BEFORE YOU JUDGE. First read the concrete specifics: the ' +
+    'exact dialog or page title, any status or error text word for word, and when a screen shows an ' +
+    'expected value next to a found value, BOTH values. Your verdict (which steps are completed, ' +
+    'whether done) must follow from what you actually see, never from what the checklist expected ' +
+    'to happen.\n' +
+    'THE CHECKLIST IS WHAT SHOULD HAPPEN, NOT PROOF THAT IT DID. Saves, connects and especially ' +
+    'verifications FAIL often, and the screen is the only truth, so actively look for failure. When ' +
+    'the screen shows failed, error, invalid, could not find, does not match, not found, or a red ' +
+    'or warning state, the step is NOT done no matter what the list assumed: keep "current" on that ' +
+    'step, do not add it to "completed", do not set "done", and make "guidance" the exact fix. ' +
+    'Never report a step done because the plan expected it.\n' +
+    'READ THE MISMATCH ON A VERIFICATION SCREEN. When a verify screen shows the value it EXPECTED ' +
+    'and a DIFFERENT value it FOUND (for example it expected one token but found another), state ' +
+    'both and guide them to correct the value at its source: copy the current expected value and ' +
+    'REPLACE the old or wrong one where it was entered, not add a second copy. Do not just tell ' +
+    'them to wait and verify again when the values plainly do not match.\n' +
+    'WHEN THE NEXT ACTION BELONGS ON A DIFFERENT SYSTEM, HAND OFF - DO NOT INVENT A CONTROL. If what ' +
+    'must happen next is on another system than the one on screen (for example a value shown here ' +
+    'must be entered at the user\'s domain registrar, or a key copied here must be pasted in another ' +
+    'console), make "guidance" a plain hand-off that names the other system and what to do there ' +
+    '(for example "Open your domain registrar\'s DNS settings and add this TXT record"). NEVER name ' +
+    'a button, dropdown or field that is not visible on the current screen. If the person says they ' +
+    'do not have something the step mentions, do not invent where it is: tell them plainly which ' +
+    'system to open to do it.\n' +
+    'FOLLOW THE PLANNED BRANCHES AND RECOVERY. A step may carry "if the screen shows: A -> do X; B ' +
+    '-> do Y" and "if it fails: cause -> fix". When it does, pick the branch that matches the real ' +
+    'screen and guide THAT exact action, and when a verify step fails, give the matching fix as the ' +
+    'next micro-action instead of improvising or looping "go check and try again". These were ' +
+    'planned for this goal, so prefer them over guessing. If the real screen clearly matches no ' +
+    'planned branch, guide from what is actually there, and still never invent a control.\n' +
+    'KEEP THE OUTPUT SINGLE AND CLEAN. Write ONE self-contained "observation" sentence that says ' +
+    'what is on screen and, when something is wrong, what is wrong, so it reads as a single line. ' +
+    'Use "flag" for at most ONE short, actionable warning and ONLY when it adds something the ' +
+    'observation did not already say; if it would just restate the observation, leave "flag" empty, ' +
+    'and never give two near-duplicate warnings for the same cause. EMPHASIZE THE ONE THING TO ACT ' +
+    'ON: in "guidance", wrap the exact control to click, open, select or find, and any literal value ' +
+    'to type, in **double asterisks** using the real on-screen label (for example Click **Verify**; ' +
+    'in the **Host** field type **@**; paste **google-site-verification=...**). Emphasize every ' +
+    'actionable control or value and nothing else; keep full terminal commands and code exact in the ' +
+    'guidance, not split out.\n' +
     'Return ONLY JSON: ' +
     '{"completed":[numbers],"current":number,"guidance":"...","observation":"...","flag":"...","source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this guidance is grounded in; empty when from general knowledge>","done":true|false}' +
     SOURCE_ATTRIBUTION_RULE
 }
 export function workNavigateUser({ goal, steps, currentStep }) {
-  const list = (steps || []).map((s, i) =>
-    `${i + 1}. [${s.status}] ${s.text}${s.validate ? ` (done when: ${s.validate})` : ''}`).join('\n') || '(no steps yet)'
+  const list = (steps || []).map((s, i) => {
+    let line = `${i + 1}. [${s.status}] ${s.text}${s.validate ? ` (done when: ${s.validate})` : ''}`
+    // Carry the deep-plan structure so the live guidance FOLLOWS it instead of
+    // improvising at the fork or the failure (the planned branches and recovery).
+    if (Array.isArray(s.branches) && s.branches.length) {
+      line += `\n   if the screen shows: ${s.branches.map((b) => `${b.when} -> ${b.guidance}`).join('; ')}`
+    }
+    if (Array.isArray(s.onFail) && s.onFail.length) {
+      line += `\n   if it fails: ${s.onFail.map((f) => `${f.cause} -> ${f.fix}`).join('; ')}`
+    }
+    return line
+  }).join('\n') || '(no steps yet)'
   return (
     `GOAL:\n${String(goal || '').trim()}\n\n` +
     `CHECKLIST (the list currently assumes step ${Number(currentStep || 0) + 1} is next):\n${list}\n\n` +
     'Look at the screenshot and return the navigation JSON now.')
 }
-export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', goal, steps, currentStep, frame, visionModel, strong = null }) {
-  const system = workNavigateSystem({ base, voice, mode })
+export async function workNavigate(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, steps, currentStep, frame, visionModel, strong = null }) {
+  const system = workNavigateSystem({ base, voice, mode, level })
   const user = workNavigateUser({ goal, steps, currentStep })
-  // The watch loop reads the screen at MEDIUM image resolution: ~half the image
-  // tokens of the default, still enough to track progress and name the next
-  // control. One-off reads (plan / ask / "what is this") keep full detail.
-  const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm, { mediaRes: 'medium' })
+  const n = (steps || []).length
+  const curPlanIdx = Number.isFinite(Number(currentStep)) ? Math.round(Number(currentStep)) : null
+  const planStep = (curPlanIdx != null && curPlanIdx >= 0 && curPlanIdx < n) ? steps[curPlanIdx] : null
+  // VERIFY/CONFIRM MOMENT ESCALATION (task D). Reading pass/fail and the exact
+  // values on a verification or confirmation screen is precisely where the cheap
+  // model at medium resolution misreads, so on these moments ONLY we read at FULL
+  // image resolution and prefer the strong model up front. Ordinary navigation
+  // stays on the cheap model at medium res, so cost discipline holds (SUPREME
+  // RULE VI: the limit scales with the moment, it does not narrow the default).
+  const verifyMoment = isVerifyStep(planStep)
+  const res = verifyMoment ? 'high' : 'medium'
+  const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm, { mediaRes: res })
   // Weak = the model gave nothing usable to move the plan. That is when the
   // stronger backup earns its cost.
   const isWeak = (r) => { const p = extractJson(r) || {}; return !(p.guidance || (Array.isArray(p.completed) && p.completed.length) || p.current != null || p.observation || p.done === true) }
-  const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak)
+  // On a verify moment with a strong model available, run the strong model as the
+  // primary (full res) and keep the cheap model only as the error/weak fallback so
+  // the watch loop still survives a strong-model hiccup (graceful degradation).
+  const preferStrong = verifyMoment && !!(strong && strong.cfg)
+  const primary = preferStrong ? { cfg: strong.cfg, visionModel: strong.visionModel } : { cfg, visionModel }
+  const backup = preferStrong ? { cfg, visionModel } : strong
+  const out = await escalateVision(run, primary, backup, isWeak)
   const raw = out.raw
   const parsed = extractJson(raw) || {}
-  const n = (steps || []).length
   // Model returns 1-based step numbers; convert to 0-based indices and bound.
   const toIdx = (v) => (Number.isFinite(Number(v)) ? Math.round(Number(v)) - 1 : null)
-  const completed = Array.isArray(parsed.completed)
+  let completed = Array.isArray(parsed.completed)
     ? parsed.completed.map(toIdx).filter((x) => x != null && x >= 0 && x < n)
     : []
   let current = toIdx(parsed.current)
   if (current != null) current = Math.max(0, Math.min(n - 1, current))
-  const done = parsed.done === true || (n > 0 && completed.length >= n)
+  let done = parsed.done === true || (n > 0 && completed.length >= n)
+  let flagText = String(parsed.flag || '').trim()
+  // CONSISTENCY GUARD (task C, SUPREME RULE III: never silently pass a wrong
+  // state). On the current verification step, if the model's own observation or
+  // flag carries clear failure words yet its verdict would still advance past or
+  // complete that step, override: drop the step from completed, hold current on
+  // it, clear done, and surface the failure. Conservative - only clear failure
+  // words, and only on a verify step - so a genuinely successful step is never
+  // blocked. Catches a hallucinated "done" even when the model self-contradicts.
+  if (curPlanIdx != null && curPlanIdx >= 0 && curPlanIdx < n && isVerifyStep(planStep) &&
+      hasFailureSignal(`${parsed.observation || ''} ${flagText}`)) {
+    const advanced = completed.includes(curPlanIdx) || done || (current != null && current > curPlanIdx)
+    if (advanced) {
+      completed = completed.filter((x) => x !== curPlanIdx)
+      current = curPlanIdx
+      done = false
+      if (!flagText) flagText = 'The screen shows this check did not pass. Read the exact message on screen (for example a value that does not match, or a record that was not found) and correct it before this step can count as done.'
+    }
+  }
   return {
     completed,
     current,
     guidance: scrubGuidance(String(parsed.guidance || '').trim()),
     observation: scrubGuidance(String(parsed.observation || '').trim()),
-    flag: scrubGuidance(String(parsed.flag || '').trim()),
+    flag: scrubGuidance(flagText),
     // Source attribution for the live step: named internal material this guidance
     // is grounded in, else ''. (Surfaced to the client by the step endpoint.)
     [WORK_SOURCE_FIELD]: cleanSource(parsed.source),
     done,
-    escalated: out.escalated,
-    reason: out.reason,
+    // Honest telemetry: a verify moment really used the strong model, so report
+    // it as escalated (the caller meters the strong model accordingly).
+    escalated: out.escalated || preferStrong,
+    reason: out.escalated ? out.reason : (preferStrong ? 'verify' : out.reason),
   }
 }
 
@@ -1029,8 +1222,8 @@ export async function workAudit(ai, cfg, { base, voice = '', mode = 'stepwise', 
 // ---- On-demand: "what is this / what do I do here" ------------------------
 // Reads the current frame and answers the user's question (or, with no question,
 // explains what is on screen and what to do about it), grounded in the goal.
-export function workAskSystem({ base, voice = '', mode = 'stepwise' }) {
-  return baseWith(base, voice, mode) +
+export function workAskSystem({ base, voice = '', mode = 'stepwise', level = 'medium' }) {
+  return baseWith(base, voice, mode) + levelDirective(level) +
     '\n\n---\nANALYZE THIS SCREEN\n' +
     'The user is asking about, or asking you to analyze, what is on their screen right now. You ' +
     'are given their ORIGINAL GOAL, the plan so far and where they are in it, and recent notes. ' +
@@ -1043,7 +1236,30 @@ export function workAskSystem({ base, voice = '', mode = 'stepwise' }) {
     'is a terminal command or code, give the EXACT command or code to run or paste, ready to ' +
     'copy, with real values filled in. If an error or dialog is shown, explain it and give the ' +
     'exact fix. Keep it short and plainly spoken. Never tell them you performed an action - you ' +
-    'only guide.'
+    'only guide. Wrap the exact control to act on and any literal value in **double asterisks**.\n' +
+    'THEN LEARN FROM THE QUESTION AND ADAPT THE PLAN FROM HERE. A mid-task question often reveals ' +
+    'something new: a different tool or path, a constraint, that they do NOT have something the ' +
+    'plan assumed, or that an earlier assumption was wrong. After you answer, decide ONE thing: ' +
+    'does the REMAINING plan need to change from where they are now?\n' +
+    '- If it does, set "planChanged" true and RE-PLAN FROM THE CURRENT STEP FORWARD ONLY: return ' +
+    'in "steps" the full ordered list from where they are now to the goal. Do NOT include or repeat ' +
+    'any step already marked done, and do NOT re-plan the whole goal from scratch - keep the ' +
+    'verified progress and any captured values intact. Each new step keeps the plan shape (text, ' +
+    'validate, url, commands, code) and carries its branch or recovery structure where the work ' +
+    'forks or can fail ("branches" and "onFail"), exactly like the planner. Include every ' +
+    'prerequisite; never assume a set-up step is already done unless the screen shows it.\n' +
+    '- If it does not, set "planChanged" false and "steps" to [].\n' +
+    'STUCK-HELP MODE. Sometimes this is triggered because the person seems STUCK on the current ' +
+    'step, and their message is empty or vague ("not sure", "where?", or nothing). That is ' +
+    'confusion, not new information: do NOT churn the plan. Set "planChanged" false and make ' +
+    '"answer" a CLEARER, fuller explanation of the CURRENT step - what to look for, exactly where ' +
+    'it is on this screen, and why - so they can get unstuck. Only re-plan when their words ' +
+    'genuinely reveal a needed change.\n' +
+    'Only change the plan when the question genuinely implies it; a plain informational question, ' +
+    'or a stuck person who just needs the current step explained, is planChanged false with just ' +
+    'the answer. Return ONLY JSON: ' +
+    '{"answer":"...","planChanged":true|false,"steps":[{"text":"...","validate":"...","url":null,"commands":[],"code":null,"branches":[],"onFail":[],"source":""}]}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workAskUser({ goal, question, steps = [], currentStep = 0, events = [], appContext = '' }) {
   const q = String(question || '').trim()
@@ -1059,13 +1275,51 @@ export function workAskUser({ goal, question, steps = [], currentStep = 0, event
     (q ? `WHAT TO ANALYZE (the user's focus): ${q}\n\n` : 'No specific focus was given. Review the whole screen against the goal and the plan.\n\n') +
     'Answer now, grounded in what the screenshot shows, tied to the goal and the plan.')
 }
-export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null, locale = 'en' }) {
-  const system = withLocale(workAskSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext), locale)
+export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', level = 'medium', goal, question = '', steps = [], currentStep = 0, events = [], appContext = '', frame, visionModel, strong = null, locale = 'en' }) {
+  const system = withLocale(workAskSystem({ base, voice, mode, level }) + methodAnchorBlock(goal, appContext), locale)
   const user = workAskUser({ goal, question, steps, currentStep, events, appContext })
   const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
-  const isWeak = (r) => String(r || '').trim().length < 8
+  // Weak = no usable answer at all (no JSON answer and no prose), which is when
+  // the stronger backup earns its cost.
+  const isWeak = (r) => { const p = extractJson(r) || {}; if (p.answer || (Array.isArray(p.steps) && p.steps.length)) return false; return String(r || '').trim().length < 8 }
   const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak)
-  return { answer: scrubGuidance(String(out.raw || '').trim()), escalated: out.escalated, reason: out.reason }
+  const raw = out.raw
+  const parsed = extractJson(raw, 'answer') || {}
+  const jsonSeen = !!extractJson(raw)
+  // Graceful fallback: if the model ignored the JSON contract, keep its prose as
+  // the answer rather than lose it (SUPREME RULE VIII); plan change just stays off.
+  const answer = scrubGuidance((parsed.answer != null ? String(parsed.answer) : (jsonSeen ? '' : String(raw || ''))).trim())
+  // Re-planned FORWARD steps (from where they are now), carrying the deep-plan
+  // branch/recovery structure so the runtime keeps following a structured plan.
+  const outSteps = (Array.isArray(parsed.steps) ? parsed.steps : []).map((s) => {
+    const branches = cleanBranches(s && s.branches)
+    const onFail = cleanOnFail(s && s.onFail)
+    return {
+      text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+      validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
+      url: (s && typeof s.url === 'string') ? s.url : null,
+      commands: Array.isArray(s && s.commands) ? s.commands : [],
+      code: (s && s.code) || null,
+      [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
+      ...(branches.length ? { branches } : {}),
+      ...(onFail.length ? { onFail } : {}),
+    }
+  }).filter((s) => s.text)
+  // resumeAt = where the user continues. On a plan change the finished (done)
+  // steps are kept and the forward steps begin right after them, so that is the
+  // count of done steps; otherwise it is simply the current step. Matches how the
+  // store merges (replanKeepingProgress keeps done steps, then appends these).
+  const doneCount = (steps || []).filter((x) => x && x.status === 'done').length
+  const planChanged = parsed.planChanged === true && outSteps.length > 0
+  const curIdx = Number.isFinite(Number(currentStep)) ? Math.max(0, Math.round(Number(currentStep))) : doneCount
+  return {
+    answer,
+    planChanged,
+    steps: planChanged ? outSteps : [],
+    resumeAt: planChanged ? doneCount : curIdx,
+    escalated: out.escalated,
+    reason: out.reason,
+  }
 }
 
 // ---- Mid-task: the user hands over new context (text / document / image) ---
