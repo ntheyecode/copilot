@@ -99,7 +99,6 @@ export default {
       ctaSub: 'Langkah berikutnya yang tepat, setiap saat, di aplikasi yang sudah Anda pakai.',
       recommended: 'Direkomendasikan untuk tugas Anda',
       hrsMonth_one: '{n} jam panduan langsung per bulan', hrsMonth_two: '{n} jam panduan langsung per bulan', hrsMonth_other: '{n} jam panduan langsung per bulan',
-      tasksN_one: '{n} tugas terpandu per hari', tasksN_two: '{n} tugas terpandu per hari', tasksN_other: '{n} tugas terpandu per hari',
       startWith: 'Mulai dengan {plan}',
       comparePlans: 'Bandingkan semua paket',
       trustCancel: 'Tanpa kontrak, batalkan kapan saja',

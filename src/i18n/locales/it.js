@@ -99,7 +99,6 @@ export default {
       ctaSub: 'Il prossimo passo esatto, ogni volta, nelle app che già usi.',
       recommended: 'Consigliato per il tuo compito',
       hrsMonth_one: '{n} ora di guida dal vivo al mese', hrsMonth_two: '{n} ore di guida dal vivo al mese', hrsMonth_other: '{n} ore di guida dal vivo al mese',
-      tasksN_one: '{n} attività guidata al giorno', tasksN_two: '{n} attività guidate al giorno', tasksN_other: '{n} attività guidate al giorno',
       startWith: 'Inizia con {plan}',
       comparePlans: 'Confronta tutti i piani',
       trustCancel: 'Senza vincoli, disdici quando vuoi',

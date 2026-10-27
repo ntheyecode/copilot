@@ -480,7 +480,6 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   // An API that does not carry hoursMonthly yet (the older shape) hides the
   // hours rather than showing a number with the wrong unit.
   const recHours = pricing && pricing.hoursMonthly ? pricing.hoursMonthly[recPlan] : null
-  const recTasks = pricing && pricing.tasks ? pricing.tasks[recPlan] : null
   const showCta = !!(res && recPlan && res.verdict !== 'offtopic' && res.verdict !== 'no')
 
   // A plain render helper (NOT a component) - defining a component inside render
@@ -744,11 +743,9 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                               <span className="lv-plan-rib">{t('widgets.validate.recommended')}</span>
                               <span className="lv-plan-n">{PLAN_NAMES[recPlan]}</span>
                               {recPrice != null && <span className="lv-plan-p">{money(recPrice)}<small>{t('common.perMonth')}</small></span>}
-                              {(recHours != null || recTasks != null) && (
+                              {recHours != null && (
                                 <span className="lv-plan-d">
                                   {recHours != null && t.n('widgets.validate.hrsMonth', recHours)}
-                                  {recHours != null && recTasks != null && ' · '}
-                                  {recTasks != null && t.n('widgets.validate.tasksN', recTasks)}
                                 </span>
                               )}
                             </div>

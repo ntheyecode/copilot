@@ -99,7 +99,6 @@ export default {
       ctaSub: 'Tam olarak bir sonraki hamle, her seferinde, zaten kullandığınız uygulamalarda.',
       recommended: 'Göreviniz için önerilen',
       hrsMonth_one: 'Ayda {n} saat canlı rehberlik', hrsMonth_two: 'Ayda {n} saat canlı rehberlik', hrsMonth_other: 'Ayda {n} saat canlı rehberlik',
-      tasksN_one: 'Günde {n} rehberli görev', tasksN_two: 'Günde {n} rehberli görev', tasksN_other: 'Günde {n} rehberli görev',
       startWith: '{plan} ile başla',
       comparePlans: 'Tüm planları karşılaştır',
       trustCancel: 'Sözleşme yok, istediğiniz zaman iptal edin',

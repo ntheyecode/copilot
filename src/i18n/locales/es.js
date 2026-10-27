@@ -105,7 +105,6 @@ export default {
       ctaSub: 'El siguiente paso exacto, siempre, en las apps que ya usas.',
       recommended: 'Recomendado para tu tarea',
       hrsMonth_one: '{n} hora de guía en vivo al mes', hrsMonth_two: '{n} horas de guía en vivo al mes', hrsMonth_other: '{n} horas de guía en vivo al mes',
-      tasksN_one: '{n} tarea guiada al día', tasksN_two: '{n} tareas guiadas al día', tasksN_other: '{n} tareas guiadas al día',
       startWith: 'Empezar con {plan}',
       comparePlans: 'Comparar todos los planes',
       trustCancel: 'Sin contrato, cancela cuando quieras',

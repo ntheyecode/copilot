@@ -431,7 +431,6 @@ export default {
       ctaSub: '매번 정확한 다음 동작을, 이미 쓰고 있는 앱 안에서.',
       recommended: '내 작업에 추천',
       hrsMonth_one: '월 {n}시간 실시간 안내', hrsMonth_two: '월 {n}시간 실시간 안내', hrsMonth_other: '월 {n}시간 실시간 안내',
-      tasksN_one: '하루 {n}개 안내 작업', tasksN_two: '하루 {n}개 안내 작업', tasksN_other: '하루 {n}개 안내 작업',
       startWith: '{plan}(으)로 시작',
       comparePlans: '모든 요금제 비교',
       trustCancel: '약정 없음, 언제든 해지',

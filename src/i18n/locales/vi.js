@@ -99,7 +99,6 @@ export default {
       ctaSub: 'Đúng bước tiếp theo, mọi lúc, ngay trong các ứng dụng bạn đang dùng.',
       recommended: 'Đề xuất cho việc của bạn',
       hrsMonth_one: '{n} giờ hướng dẫn trực tiếp mỗi tháng', hrsMonth_two: '{n} giờ hướng dẫn trực tiếp mỗi tháng', hrsMonth_other: '{n} giờ hướng dẫn trực tiếp mỗi tháng',
-      tasksN_one: '{n} việc được hướng dẫn mỗi ngày', tasksN_two: '{n} việc được hướng dẫn mỗi ngày', tasksN_other: '{n} việc được hướng dẫn mỗi ngày',
       startWith: 'Bắt đầu với {plan}',
       comparePlans: 'So sánh tất cả các gói',
       trustCancel: 'Không ràng buộc, hủy bất cứ lúc nào',

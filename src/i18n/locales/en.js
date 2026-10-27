@@ -293,7 +293,7 @@ export default {
       roleExecutiveLong: 'Executive (productivity dashboard, read-only)',
       roleCompanyAdmin: 'Company admin',
       plan: 'Plan',
-      planHelp: 'Each plan includes guided hours per month and a number of guided tasks per day, set by the WorkCoPilot team. Your company\'s per-plan license count is enforced.',
+      planHelp: 'Each plan includes guided hours per month, set by the WorkCoPilot team. Your company\'s per-plan license count is enforced.',
       peopleTitle: 'People',
       peopleHelp: 'Change a person\'s role or plan inline (allowed even when the roster is managed). Give extra minutes from the company pool. Removing detaches them and signs them out everywhere.',
       loading: 'Loading your team',
@@ -770,9 +770,8 @@ export default {
       ctaH: 'Get guided like this, on every task',
       ctaSub: 'The exact next move, every time, in the apps you already use.',
       recommended: 'Recommended for your task',
-      // Allowances read from the pricing API: guided hours per calendar month, guided tasks per day.
+      // Allowance read from the pricing API: guided hours per calendar month (no per-day task cap).
       hrsMonth_one: '{n} hour of live guidance a month', hrsMonth_two: '{n} hours of live guidance a month', hrsMonth_other: '{n} hours of live guidance a month',
-      tasksN_one: '{n} guided task a day', tasksN_two: '{n} guided tasks a day', tasksN_other: '{n} guided tasks a day',
       startWith: 'Start with {plan}',
       comparePlans: 'Compare all plans',
       trustCancel: 'No contract, cancel any time',

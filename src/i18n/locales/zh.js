@@ -432,7 +432,6 @@ export default {
       ctaSub: '每一次都告诉您确切的下一步,就在您已在用的应用里。',
       recommended: '为您的任务推荐',
       hrsMonth_one: '每月 {n} 小时实时引导', hrsMonth_two: '每月 {n} 小时实时引导', hrsMonth_other: '每月 {n} 小时实时引导',
-      tasksN_one: '每天 {n} 个引导任务', tasksN_two: '每天 {n} 个引导任务', tasksN_other: '每天 {n} 个引导任务',
       startWith: '从 {plan} 开始',
       comparePlans: '比较所有套餐',
       trustCancel: '无合约,随时取消',

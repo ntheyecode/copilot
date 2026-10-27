@@ -105,7 +105,6 @@ export default {
       ctaSub: 'Der genaue nächste Schritt, jedes Mal, in den Apps, die Sie schon nutzen.',
       recommended: 'Empfohlen für Ihre Aufgabe',
       hrsMonth_one: '{n} Stunde Live-Anleitung pro Monat', hrsMonth_two: '{n} Stunden Live-Anleitung pro Monat', hrsMonth_other: '{n} Stunden Live-Anleitung pro Monat',
-      tasksN_one: '{n} geführte Aufgabe pro Tag', tasksN_two: '{n} geführte Aufgaben pro Tag', tasksN_other: '{n} geführte Aufgaben pro Tag',
       startWith: 'Mit {plan} starten',
       comparePlans: 'Alle Tarife vergleichen',
       trustCancel: 'Kein Vertrag, jederzeit kündbar',

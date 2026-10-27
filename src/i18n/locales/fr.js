@@ -105,7 +105,6 @@ export default {
       ctaSub: 'Le prochain geste exact, à chaque fois, dans les applications que vous utilisez déjà.',
       recommended: 'Recommandé pour votre tâche',
       hrsMonth_one: '{n} heure d\'accompagnement en direct par mois', hrsMonth_two: '{n} heures d\'accompagnement en direct par mois', hrsMonth_other: '{n} heures d\'accompagnement en direct par mois',
-      tasksN_one: '{n} tâche guidée par jour', tasksN_two: '{n} tâches guidées par jour', tasksN_other: '{n} tâches guidées par jour',
       startWith: 'Commencer avec {plan}',
       comparePlans: 'Comparer toutes les offres',
       trustCancel: 'Sans engagement, résiliez quand vous voulez',

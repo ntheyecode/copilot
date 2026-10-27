@@ -431,7 +431,6 @@ export default {
       ctaSub: '次に取るべき正確な一手を、毎回、いつものアプリの中で。',
       recommended: 'あなたのタスクにおすすめ',
       hrsMonth_one: '月 {n} 時間のライブ案内', hrsMonth_two: '月 {n} 時間のライブ案内', hrsMonth_other: '月 {n} 時間のライブ案内',
-      tasksN_one: '1日 {n} 件の案内付きタスク', tasksN_two: '1日 {n} 件の案内付きタスク', tasksN_other: '1日 {n} 件の案内付きタスク',
       startWith: '{plan} で始める',
       comparePlans: 'すべてのプランを比較',
       trustCancel: '契約なし、いつでもキャンセル可能',
