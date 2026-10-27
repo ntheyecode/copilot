@@ -20,9 +20,11 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   ArrowRight, Shapes, Code2, ShieldCheck, BrainCircuit, Kanban, Cpu,
-  Landmark, Briefcase, Megaphone, HeartPulse, GraduationCap,
+  Landmark, Briefcase, Megaphone, HeartPulse, GraduationCap, MonitorPlay,
 } from 'lucide-react'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen photographs per field, each opening its guided session below
+import GuideShowcase from '../components/GuideShowcase.jsx'     // pick a field, watch the guide console on that work
 import useSeo from '../useSeo.js'
 import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
 import SiteHeader from '../components/SiteHeader.jsx'
@@ -150,6 +152,17 @@ export default function WorkFields() {
         ))}
       </nav>
 
+      {/* REAL SCREENS: seven field photographs, each a link to that field's
+          guided session in the showcase further down (#watch-<id>). */}
+      <section className="wfl-vig" aria-labelledby="wfl-vig-h">
+        <div className="wfl-sec-head">
+          <div className="wfl-eyebrow"><MonitorPlay size={14} aria-hidden /> {t('fieldsPage.vignettesEyebrow')}</div>
+          <h2 id="wfl-vig-h">{t('fieldsPage.vignettesH2')}</h2>
+          <p>{t('fieldsPage.vignettesSub')}</p>
+        </div>
+        <FieldVignettes to="/workcopilot/fields" className="wfl-fv" />
+      </section>
+
       <section className="wfl-grid" aria-label="Groups of work and the fields in each">
         {FIELD_FAMILIES.map((f, i) => (
           <WorkCard key={f.k} theme="light" tone={f.tone || undefined} delay={i * 45}
@@ -161,6 +174,15 @@ export default function WorkFields() {
             </ul>
           </WorkCard>
         ))}
+      </section>
+
+      {/* PICK A FIELD: the shared showcase, the target of the vignette links. */}
+      <section className="wfl-show" id="watch" aria-labelledby="wfl-show-h">
+        <div className="wfl-sec-head">
+          <div className="wfl-eyebrow"><Shapes size={14} aria-hidden /> {t('fieldsPage.showcaseEyebrow')}</div>
+          <h2 id="wfl-show-h">{t('fieldsPage.showcaseH2')}</h2>
+        </div>
+        <div className="wfl-show-body"><GuideShowcase idPrefix="wfl" /></div>
       </section>
 
       <section className="wfl-cta">
@@ -209,6 +231,17 @@ const CSS = `
 .wfl-jump{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex-shrink:0;font-size:12.5px;font-weight:600;color:var(--mut);background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:6px 12px;box-shadow:0 1px 2px rgba(10,13,18,.04);transition:border-color .2s ease,color .2s ease,transform .2s ease}
 .wfl-jump svg{color:var(--em);flex-shrink:0}
 .wfl-jump:hover{color:var(--ink);border-color:var(--line-strong);transform:translateY(-1px)}
+/* section heads shared by the vignettes and the showcase */
+.wfl-sec-head{max-width:760px;margin:0 auto 18px;padding:0 24px;text-align:center}
+.wfl-sec-head h2{font-size:clamp(24px,3vw,32px);line-height:1.1;letter-spacing:-.02em;margin:0 0 10px;color:var(--ink);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:600;text-wrap:balance}
+.wfl-sec-head p{color:var(--mut);font-size:15.5px;margin:0;line-height:1.55}
+.wfl-vig{max-width:1160px;margin:30px auto 0;padding:0 24px}
+.wfl-fv{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:1080px){.wfl-fv{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:760px){.wfl-fv{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:380px){.wfl-fv{grid-template-columns:1fr}}
+.wfl-show{max-width:1160px;margin:34px auto 0;padding:0 24px;scroll-margin-top:24px}
+.wfl-show-body{max-width:760px;margin:0 auto}
 /* dense-flow group grid: the two biggest groups span two columns */
 .wfl-grid{max-width:1160px;margin:0 auto;padding:28px 24px 6px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));grid-auto-flow:dense;gap:16px}
 .wfl-grid .wfl-wide{grid-column:span 2}

@@ -9,7 +9,7 @@
     "dev:api": "node --watch server/index.js",
     "check:jsx-imports": "node scripts/check-jsx-imports.mjs",
     "check:locale-integrity": "node scripts/check-locale-integrity.mjs",
-    "prebuild": "node scripts/check-jsx-imports.mjs && node scripts/check-locale-integrity.mjs && node scripts/check-locale-parity.mjs widgets",
+    "prebuild": "node scripts/check-jsx-imports.mjs && node scripts/check-css-page-wildcards.mjs && node scripts/check-locale-integrity.mjs && node scripts/check-locale-parity.mjs widgets",
     "build": "vite build",
     "build:harden": "vite build --mode harden",
     "build:harden:max": "vite build --mode hardenmax",

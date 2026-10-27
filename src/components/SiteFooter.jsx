@@ -108,6 +108,9 @@ const CSS = `
 .sf-cookie:hover{text-decoration:underline}
 .sf-cookie:focus-visible{outline:2px solid var(--sf-cyan);outline-offset:3px;border-radius:5px}
 @media(max-width:980px){.sf-in{grid-template-columns:1fr 1fr 1fr}.sf-brand{grid-column:1 / -1}}
-@media(max-width:560px){.sf-in{grid-template-columns:1fr 1fr;gap:22px;padding:34px 18px 20px}.sf-bottom{flex-direction:column;gap:6px;padding:14px 18px 24px}}
+@media(max-width:560px){.sf-in{grid-template-columns:1fr 1fr;gap:22px;padding:34px 18px 20px}.sf-bottom{flex-direction:column;gap:6px;padding:14px 18px 24px}
+  /* the contact group carries two email addresses that must never break
+     mid-word (design gate): on a phone it takes the whole row */
+  .sf-group:has(a[href^="mailto:"]){grid-column:1 / -1}.sf-group a[href^="mailto:"]{overflow-wrap:normal;word-break:normal}}
 @media(prefers-reduced-motion:reduce){.sf-btn{transition:none}}
 `

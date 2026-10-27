@@ -33,8 +33,9 @@ import {
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
 import SiteHeader from '../components/SiteHeader.jsx'
+import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console on an HR task grounded in the company SOP
 import useSeo from '../useSeo.js'
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys) + enterprise.* / guide.*
 
 // The SOC / SIEM relay targets. Names only (no third-party logos).
 const SIEM_TARGETS = ['Splunk', 'Microsoft Sentinel', 'IBM QRadar', 'Elastic', 'Datadog', 'Sumo Logic', 'Google Chronicle', 'PagerDuty', 'Opsgenie', 'Slack', 'Microsoft Teams', 'ServiceNow', 'Webhook', 'Syslog / CEF']
@@ -219,6 +220,24 @@ export default function WorkEnterprise() {
               </li>
             ))}
           </ol>
+
+          {/* ON YOUR PEOPLE'S SCREENS: the live guide console on an HR onboarding
+              task, every step taken from the company's own SOP (the note under
+              the console says so), beside a real-screen photograph of that work.
+              It corrects the wrong menu and confirms the finish, read-only. */}
+          <div className="wen-demo">
+            <div className="wen-demo-head">
+              <div className="wen-eyebrow"><Hand size={14} /> {t('enterprise.demoEyebrow')}</div>
+              <h3>{t('enterprise.demoH2')}</h3>
+              <p className="wen-lead">{t('enterprise.demoSub')}</p>
+            </div>
+            <div className="wen-demo-in">
+              <GuideConsole scenario={t('guide.scenarios.hr')} note={t('enterprise.demoNote')} />
+              <figure className="wen-demo-fig">
+                <img src="/wow-hr.webp" srcSet="/wow-hr-sm.webp 800w, /wow-hr.webp 1600w" sizes="(max-width: 980px) 92vw, 480px" width="1600" height="900" loading="lazy" decoding="async" alt={t('fieldsPage.vignettes.hr.alt')} />
+              </figure>
+            </div>
+          </div>
 
           {/* Before / after: the same step, generic vs grounded in your company */}
           <div className="wen-ba" aria-label="The same step, with and without your company knowledge">
@@ -421,6 +440,14 @@ const CSS = `
 .wen-loop-step b{font-family:var(--display);font-size:17px;font-weight:800;letter-spacing:-.015em;line-height:1.2}
 .wen-loop-step p{margin:0;font-size:13.5px;line-height:1.55;color:var(--mut)}
 
+/* on your people's screens: console + photograph, equal height on wide */
+.wen-demo{margin-top:30px}
+.wen-demo-head{max-width:70ch;margin-bottom:16px}
+.wen-demo-head h3{margin:0;font-family:var(--display);font-weight:800;font-size:clamp(22px,2.6vw,30px);letter-spacing:-.02em;line-height:1.1;color:var(--tx);text-wrap:balance}
+.wen-demo-in{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:18px;align-items:stretch}
+.wen-demo-fig{position:relative;margin:0;min-height:320px;border-radius:18px;overflow:hidden;line-height:0;border:1px solid var(--line);box-shadow:var(--card-shadow);background:#0e1020}
+.wen-demo-fig img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@media(max-width:980px){.wen-demo-in{grid-template-columns:1fr}.wen-demo-fig{min-height:0}.wen-demo-fig img{position:static;height:auto;aspect-ratio:16/9}}
 /* before / after */
 .wen-ba{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.15fr);gap:14px;align-items:stretch;margin-top:26px}
 .wen-ba-col{position:relative;display:flex;flex-direction:column;gap:10px;padding:20px 20px 18px;border-radius:18px;border:1px solid var(--line);background:var(--panel-2)}

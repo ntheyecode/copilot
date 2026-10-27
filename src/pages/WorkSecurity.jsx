@@ -18,8 +18,9 @@ import { ShieldCheck, Lock, ScanEye, FileText, ArrowRight, Globe, BadgeCheck, Bu
 import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
+import RedactionSweep from '../components/RedactionSweep.jsx'   // "watch it protect": the on-device sweep over the after screen
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'           // localized data-residency note (residency.* keys)
+import { useT } from '../i18n/index.jsx'           // localized data-residency note (residency.* keys) + security.* strings
 
 // The guarantees, one line each. Every claim maps to a shipped capability.
 const GUARANTEES = [
@@ -56,11 +57,13 @@ function ScreenMock({ redacted }) {
         <div className="wsx-crumb">Integrations <span>/</span> <b>Payment gateway</b></div>
         <div className="wsx-card">
           <div className="wsx-ctitle">Connection details</div>
-          {FIELDS.map((f) => (
+          {FIELDS.map((f, i) => (
             <div className="wsx-row" key={f.k}>
               <span className="wsx-key">{f.k}</span>
               {f.s && redacted
-                ? <span className="wsx-mask" />
+                /* the mask sits OVER the value, so the sweep can reveal it row by
+                   row (RedactionSweep drives data-sweep; --i staggers the rows) */
+                ? <span className="wsx-valwrap"><span className="wsx-val" aria-hidden="true">{f.v}</span><span className="wsx-mask" style={{ '--i': i }} /></span>
                 : <span className={'wsx-val' + (f.ok ? ' ok' : '')}>{f.ok && <span className="wsx-okdot" />}{f.v}</span>}
             </div>
           ))}
@@ -143,17 +146,26 @@ export default function WorkSecurity() {
       </section>
 
       <section className="wsx-block">
-        <div className="wsx-bhead"><span className="wsx-bi"><ScanEye size={16} aria-hidden="true" /></span><div><h2>See it, before and after</h2><p>Every outbound frame is checked on your device. Sensitive lines are blacked out before it leaves.</p></div></div>
-        <div className="wsx-ba">
-          <WorkCard theme="light" tone="danger" delay={0} texPos="0% 0%"><div className="wsx-lab before">Before, on your device</div><ScreenMock redacted={false} /></WorkCard>
-          <WorkCard theme="light" tone="ok" delay={90} texPos="100% 0%"><div className="wsx-lab after">After, what leaves the device</div><ScreenMock redacted /></WorkCard>
-        </div>
+        <div className="wsx-bhead"><span className="wsx-bi"><ScanEye size={16} aria-hidden="true" /></span><div><h2>{t('security.sweepH2')}</h2><p>{t('security.sweepP')}</p></div></div>
+        {/* WATCH IT PROTECT: the scan sweeps the after screen and each sensitive
+            value is masked as it passes, then the seal lands. Replayable. */}
+        <RedactionSweep
+          before={<WorkCard theme="light" tone="danger" delay={0} texPos="0% 0%"><ScreenMock redacted={false} /></WorkCard>}
+          after={<WorkCard theme="light" tone="ok" delay={90} texPos="100% 0%"><ScreenMock redacted /></WorkCard>}
+        />
         <div className="wsx-proof" aria-label="The same protection in text: each sensitive value becomes a token, the real value stays on your device">
           <span className="wsx-pk">In text</span>
-          <span className="wsx-raw">ops@northwind-trading.com</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[EMAIL_3]]</span>
-          <span className="wsx-raw">sk-live-4eC39Hq…</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[SECRET_2]]</span>
-          <span className="wsx-raw">4539 1488 0343 6467</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[CARD_1]]</span>
+          {/* each raw -> token swap is one unbreakable unit (design gate: a
+              pair never splits across lines; on a phone the units stack) */}
+          <span className="wsx-swap"><span className="wsx-raw">ops@northwind-trading.com</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[EMAIL_3]]</span></span>
+          <span className="wsx-swap"><span className="wsx-raw">sk-live-4eC39Hq…</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[SECRET_2]]</span></span>
+          <span className="wsx-swap"><span className="wsx-raw">4539 1488 0343 6467</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[CARD_1]]</span></span>
           <span className="wsx-pe">Answer rebuilt on your device. Add your own words and patterns on top of the built-in detectors.</span>
+        </div>
+        {/* Read-only by design: the one line a security reviewer asks about first. */}
+        <div className="wsx-ro">
+          <span className="wsx-roi"><Hand size={16} aria-hidden="true" /></span>
+          <div><b>{t('security.readOnlyT')}</b><span>{t('security.readOnlyD')}</span></div>
         </div>
       </section>
 
@@ -229,11 +241,39 @@ const CSS = `
 .wsx-gt span{font-size:13px;line-height:1.5;color:var(--mut);overflow-wrap:anywhere}
 @media(max-width:900px){.wsx-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:560px){.wsx-grid{grid-template-columns:1fr}}
-/* BEFORE / AFTER - the one proof visual */
-.wsx-ba{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
-@media(max-width:760px){.wsx-ba{grid-template-columns:1fr}.wsx-hero h1{font-size:29px}}
-.wsx-lab{font-size:12.5px;font-weight:700;margin-bottom:8px}
-.wsx-lab.before{color:#dc2626}.wsx-lab.after{color:#15803d}
+/* BEFORE / AFTER - the one proof visual, driven by RedactionSweep (data-sweep
+   on .rs: idle -> sweep -> done). The scan line crosses the after screen and the
+   masks land row by row behind it; the seal marks the finish. */
+.rs{display:flex;flex-direction:column;gap:10px}
+.rs-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+@media(max-width:760px){.rs-grid{grid-template-columns:1fr}.wsx-hero h1{font-size:29px}}
+.rs-col{min-width:0}
+.rs-lab{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;margin-bottom:8px}
+.rs-lab.before{color:#dc2626}.rs-lab.after{color:#15803d}
+.rs-stage{position:relative}
+.rs-line{position:absolute;left:0;right:0;top:0;height:3px;border-radius:2px;background:linear-gradient(90deg,transparent,#39d3ff,#8cf5c4,transparent);box-shadow:0 0 18px rgba(57,211,255,.8);opacity:0;pointer-events:none;z-index:4}
+.rs[data-sweep="sweep"] .rs-line{opacity:1;animation:rs-scan 2.2s cubic-bezier(.4,0,.2,1) .2s both}
+@keyframes rs-scan{from{top:0}to{top:calc(100% - 3px)}}
+.rs-seal{position:absolute;right:14px;bottom:14px;z-index:4;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:#16b364;color:#fff;box-shadow:0 10px 24px -8px rgba(22,179,100,.7);animation:rs-seal .5s cubic-bezier(.2,.8,.2,1) both}
+@keyframes rs-seal{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.rs-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.rs-note{font-size:13px;color:var(--mut);min-width:0}
+.rs-replay{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:7px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer}
+.rs-replay:hover{border-color:var(--em)}
+/* the masks sit over the values: hidden while idle, landing one row after
+   another as the line passes (--i is the row index), on for good once done */
+.wsx-valwrap{position:relative;display:inline-block;min-width:0;max-width:62%}
+.wsx-valwrap .wsx-val{display:block}
+.wsx-valwrap .wsx-mask{position:absolute;left:0;top:0;width:100%;height:100%;border-radius:3px;background:#0b1220;opacity:1}
+.rs[data-sweep="idle"] .wsx-valwrap .wsx-mask{opacity:0}
+.rs[data-sweep="sweep"] .wsx-valwrap .wsx-mask{opacity:0;animation:rs-mask .25s ease-out forwards;animation-delay:calc(.45s + var(--i,0) * .26s)}
+@keyframes rs-mask{to{opacity:1}}
+@media(prefers-reduced-motion:reduce){.rs-line{display:none}.rs-seal{animation:none}.rs[data-sweep="sweep"] .wsx-valwrap .wsx-mask{animation:none;opacity:1}}
+/* read-only by design */
+.wsx-ro{display:flex;gap:12px;align-items:flex-start;margin-top:14px;padding:12px 14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);min-width:0}
+.wsx-roi{flex:0 0 auto;width:34px;height:34px;border-radius:10px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--em),var(--cy))}
+.wsx-ro b{display:block;font-size:14.5px;color:var(--ink);margin-bottom:2px}
+.wsx-ro div>span{display:block;font-size:13px;line-height:1.5;color:var(--mut);overflow-wrap:anywhere}
 .wsx-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .wsx a:focus-visible,.wsx button:focus-visible{outline:2px solid var(--em);outline-offset:2px;border-radius:6px}
 .wsx-screen{display:flex;border-radius:12px;overflow:hidden;border:1px solid var(--line);box-shadow:0 8px 24px rgba(15,23,42,.08);background:var(--panel)}
@@ -257,7 +297,8 @@ const CSS = `
 .wsx-proof{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:14px;padding:11px 14px;border-radius:12px;background:linear-gradient(180deg,#f4f8f7,#f8fbfa);border:1px solid var(--line);font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:12px;color:var(--tx2);line-height:1.5}
 .wsx-pk{font-family:"Figtree",system-ui,sans-serif;font-weight:700;font-size:12.5px;color:var(--ink);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
 .wsx-raw{color:#c0322b;text-decoration:line-through;text-decoration-color:rgba(192,50,43,.5);overflow-wrap:anywhere}
-.wsx-arr{color:var(--mut)}
+.wsx-swap{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-width:0}
+.wsx-arr{color:var(--mut);flex:0 0 auto}
 .wsx-tok{color:#0a7fa8;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:7px;padding:2px 7px;white-space:nowrap}
 .wsx-pe{flex:1 1 100%;font-family:"Figtree",system-ui,sans-serif;font-size:13px;color:var(--mut)}
 /* DATA HANDLING - three short cards, then two one-line facts */
@@ -286,5 +327,15 @@ const CSS = `
 .wsx-cta{max-width:1040px;margin:0 auto;padding:16px 20px 56px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wsx-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;background:var(--em);color:#fff;border:1px solid var(--em);border-radius:11px;padding:11px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap}
 .wsx-btn.alt{background:var(--panel);color:var(--ink);border-color:var(--line)}
-@media(max-width:480px){.wsx-side{flex-basis:116px}}
+/* Phone: the mock's sidebar folds to a 34px rail (dot + bars, no words) so the
+   values, which are the whole demonstration, show in full; a long value drops
+   under its label instead of being cut with an ellipsis (design gate). */
+@media(max-width:480px){
+  .wsx-side{flex-basis:34px;padding:12px 0}
+  .wsx-brand{padding:0 0 12px;justify-content:center;font-size:0}.wsx-brand .wsx-dot{width:10px;height:10px}
+  .wsx-nav{font-size:0;height:22px;padding:0;margin:4px 9px;border-radius:4px;background:rgba(148,163,184,.25)}.wsx-nav.on{background:#38bdf8}
+  .wsx-card{margin:10px;padding:12px}
+  .wsx-row{flex-wrap:wrap;row-gap:2px}
+  .wsx-val,.wsx-valwrap{white-space:nowrap;overflow:visible;text-overflow:clip;max-width:100%}
+}
 `
