@@ -9,7 +9,7 @@
 // Routing is by local state (no react-router inside). The owner wires this
 // component at a /work/admin route in App.jsx.
 import React, { useEffect, useState, useCallback } from 'react'
-import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell } from 'lucide-react'
+import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, LogIn, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell } from 'lucide-react'
 import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import AccentPicker from '../../components/AccentPicker.jsx'
@@ -21,6 +21,7 @@ import Overview from './sections/Overview.jsx'
 import UsersSection from './sections/Users.jsx'
 import Pricing from './sections/Pricing.jsx'
 import AiConfig from './sections/AiConfig.jsx'
+import SocialSignIn from './sections/SocialSignIn.jsx'
 import Billing from './sections/Billing.jsx'
 import Sessions from './sections/Sessions.jsx'
 import Leads from './sections/Leads.jsx'
@@ -51,6 +52,7 @@ const SECTIONS = [
   { id: 'email', label: 'superAdmin.nav.email', icon: Mail, title: 'superAdmin.sections.email.title', sub: 'superAdmin.sections.email.sub' },
   { id: 'email-templates', label: 'superAdmin.nav.email-templates', icon: MailCheck, title: 'superAdmin.sections.email-templates.title', sub: 'superAdmin.sections.email-templates.sub' },
   { id: 'ai', label: 'superAdmin.nav.ai', icon: Cpu, title: 'superAdmin.sections.ai.title', sub: 'superAdmin.sections.ai.sub' },
+  { id: 'social', label: 'superAdmin.nav.social', icon: LogIn, title: 'superAdmin.sections.social.title', sub: 'superAdmin.sections.social.sub' },
   { id: 'sessions', label: 'superAdmin.nav.sessions', icon: ListChecks, title: 'superAdmin.sections.sessions.title', sub: 'superAdmin.sections.sessions.sub' },
   { id: 'leads', label: 'superAdmin.nav.leads', icon: UserPlus, title: 'superAdmin.sections.leads.title', sub: 'superAdmin.sections.leads.sub' },
   { id: 'hero', label: 'superAdmin.nav.hero', icon: Megaphone, title: 'superAdmin.sections.hero.title', sub: 'superAdmin.sections.hero.sub' },
@@ -141,7 +143,7 @@ export default function WorkAdmin() {
   // Hidden from a plain `admin` (the explicit superadmin / accounting / affiliate-
   // admin branches below are unaffected). Affiliates is managed by superadmin or a
   // dedicated affiliate_admin only - a plain admin would just hit a 403.
-  const SUPERADMIN_ONLY = new Set(['ai', 'finance', 'subscribers', 'cancelled', 'incidents', 'claims', 'affiliates', 'notifications'])
+  const SUPERADMIN_ONLY = new Set(['ai', 'social', 'finance', 'subscribers', 'cancelled', 'incidents', 'claims', 'affiliates', 'notifications'])
   // Single source for the accounting role's allowed sections (used both to build
   // the nav and, via the generic fallback effect below, to land the role on its
   // first visible tab rather than force-pinning one tab).
@@ -173,6 +175,7 @@ export default function WorkAdmin() {
       case 'subscribers': return <Subscribers isSuperAdmin={isSuperAdmin} />
       case 'cancelled': return <Cancelled isSuperAdmin={isSuperAdmin} />
       case 'ai': return <AiConfig isSuperAdmin={isSuperAdmin} />
+      case 'social': return <SocialSignIn isSuperAdmin={isSuperAdmin} />
       case 'sessions': return <Sessions isSuperAdmin={isSuperAdmin} />
       case 'leads': return <Leads />
       case 'hero': return <Hero isSuperAdmin={isSuperAdmin} />
