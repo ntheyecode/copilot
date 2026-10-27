@@ -11,9 +11,12 @@ import DestructiveGate from './DestructiveGate.jsx'
 // values in the text are bold + highlighted by RichText; values are one-tap
 // copy chips. Shared by the console and the floating panel; styled by
 // guideView.css.js (.gv-step). `extra` slots host-specific bits (the How?
-// drill-down, the source chip) above the action row.
+// drill-down, the source chip) above the action row; `notice` is the calm
+// inline result strip (the optional verify verdict) directly above the
+// actions, and `doneReady` softly rings the primary Mark done when that
+// verdict says the step looks done (the shortcut is the button itself).
 export default function StepCard({
-  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = 'Mark done', busy = false, extra, actions,
+  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = 'Mark done', busy = false, extra, actions, notice, doneReady = false,
 }) {
   if (!step) return null
   const g = String(guidance || '').trim()
@@ -44,8 +47,9 @@ export default function StepCard({
         </DestructiveGate>
       )}
       {extra}
+      {notice}
       <div className="gv-step-actions">
-        {onDone && <button type="button" className="gv-btn primary" onClick={onDone} disabled={busy} title="Mark this step done and move to the next"><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
+        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title="Mark this step done and move to the next"><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
         {actions}
       </div>
     </section>
