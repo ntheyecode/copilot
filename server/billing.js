@@ -20,8 +20,9 @@
 // ---------------------------------------------------------------------------
 
 import { sendTemplateAsync, sendOwnerSubscriptionAlertAsync } from './emails.js'
-
-const PLANS = ['lite', 'basic', 'advanced', 'premium']
+// Shared with the onboarding confirm path (billing_checkout.js): one param
+// builder + one activation function, so webhook and confirm never drift.
+import { PLANS, mapStatus, planFromSub, periodEndIso, cycleFromSub, subscriptionCheckoutParams, applyCheckoutSession } from './billing_checkout.js'
 // Where Stripe sends the customer back. Fixed to the public site by default; an
 // operator can override it for a staging host via WORK_PUBLIC_URL.
 const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/\/+$/, '')
@@ -128,53 +129,6 @@ async function resolvePriceId(s, configuredId) {
     console.warn(`[billing] could not resolve default price for product ${id}: ` + (e && e.message))
     return ''
   }
-}
-
-// Map Stripe subscription status -> our enum (store expects none|trialing|
-// active|past_due|canceled). Unknown-but-usable states fall back to active.
-function mapStatus(st) {
-  switch (st) {
-    case 'trialing': return 'trialing'
-    case 'active': return 'active'
-    case 'past_due':
-    case 'unpaid':
-    case 'paused': return 'past_due'   // paused = not currently billing: block the gate (do not fall through to active)
-    case 'canceled':
-    case 'incomplete_expired': return 'canceled'
-    case 'incomplete': return 'none'
-    default: return 'active'
-  }
-}
-// Resolve the plan name from a subscription's price id (reverse of the price map).
-function planFromSub(sub, price) {
-  try {
-    const items = sub && sub.items && sub.items.data
-    const p0 = items && items[0] && items[0].price
-    const priceId = p0 && p0.id
-    const productId = p0 && (typeof p0.product === 'string' ? p0.product : (p0.product && p0.product.id))
-    if (!priceId && !productId) return null
-    // The configured id may be a price id or a product id, so match on either.
-    for (const p of PLANS) {
-      const cfgId = price[p]
-      if (cfgId && (cfgId === priceId || cfgId === productId)) return p
-    }
-  } catch { /* fall through */ }
-  return null
-}
-const periodEndIso = (unixSeconds) => (unixSeconds ? new Date(unixSeconds * 1000).toISOString() : null)
-// Billing cycle from a subscription's price interval ('year' -> annual, else
-// monthly). Used to persist the cycle so the Subscribers view + MRR math know
-// the billing period. Returns null when the interval cannot be read (keeps any
-// cycle already stored).
-function cycleFromSub(sub) {
-  try {
-    const items = sub && sub.items && sub.items.data
-    const rec = items && items[0] && items[0].price && items[0].price.recurring
-    const interval = rec && rec.interval
-    if (interval === 'year') return 'annual'
-    if (interval === 'month' || interval === 'week' || interval === 'day') return 'monthly'
-  } catch { /* fall through */ }
-  return null
 }
 
 // Normalize a Stripe price to a MONTHLY-EQUIVALENT minor-unit amount, so an
@@ -306,39 +260,15 @@ async function handleEvent(s, store, event) {
       }
       return
     }
-    const customerId = (typeof obj.customer === 'string' ? obj.customer : (obj.customer && obj.customer.id)) || null
-    const subId = (typeof obj.subscription === 'string' ? obj.subscription : (obj.subscription && obj.subscription.id)) || null
-    let plan = (obj.metadata && obj.metadata.plan) || null
-    // Cycle comes from the checkout metadata first (what the customer chose), with
-    // the subscription's price interval as the authoritative fallback.
-    let cycle = (md.cycle === 'annual' || md.cycle === 'monthly') ? md.cycle : null
-    let status = 'active'
-    let currentPeriodEnd = null
-    if (subId) {
-      try {
-        const sub = await s.subscriptions.retrieve(subId)
-        status = mapStatus(sub.status)
-        currentPeriodEnd = periodEndIso(sub.current_period_end)
-        plan = plan || planFromSub(sub, price)
-        cycle = cycleFromSub(sub) || cycle
-      } catch (e) { console.warn('[billing] could not retrieve subscription on checkout: ' + (e && e.message)) }
-    }
-    if (userId) {
-      const patch = { status, plan: plan || null, stripeCustomerId: customerId, stripeSubscriptionId: subId, currentPeriodEnd }
-      if (cycle) patch.cycle = cycle
-      store.setSubscription(userId, patch)
-      // The referred-annual free month was applied: mark it used (once per account).
-      if (md.affiliateBenefit && /^annual_free/.test(md.affiliateBenefit) && typeof store.markAnnualBenefitUsed === 'function') {
-        try { store.markAnnualBenefitUsed(userId) } catch { /* best-effort */ }
-      }
-      console.log(`[billing] checkout completed -> user ${userId} plan ${plan || '(unknown)'} status ${status}${md.affiliateBenefit ? ` (+${md.affiliateBenefit})` : ''}`)
-      // Owner alert: a NEW subscription was activated. Fired here (the single new-sub
-      // signal) and NOT on the first invoice.paid, so a new subscription alerts once.
-      const u = store.getUser(userId)
-      if (u) sendOwnerSubscriptionAlertAsync('new_subscription', { user: u, plan: plan || null, status, cycle: cycle || null, stripeId: subId })
-    } else {
-      console.warn('[billing] checkout.session.completed with no user reference; ignored')
-    }
+    // Subscription purchase: ONE shared activation path with the onboarding
+    // confirm endpoint (billing_checkout.js). Idempotent; the owner alert fires
+    // once, on the first of webhook / confirm to land.
+    const r = await applyCheckoutSession(s, store, obj, {
+      price,
+      onNew: ({ user, plan, status, cycle, subId }) => sendOwnerSubscriptionAlertAsync('new_subscription', { user, plan, status, cycle, stripeId: subId }),
+    })
+    if (r) console.log(`[billing] checkout completed -> user ${r.userId} plan ${r.plan || '(unknown)'} status ${r.status}${md.affiliateBenefit ? ` (+${md.affiliateBenefit})` : ''}`)
+    else console.warn('[billing] checkout.session.completed with no user reference; ignored')
     return
   }
 
@@ -489,6 +419,48 @@ function userStripe(store, userId) {
   return { user: u, customer: sub.stripeCustomerId || null, subId: sub.stripeSubscriptionId || null }
 }
 
+// ---- Subscription checkout (shared by the dashboard route + onboarding) ----
+// Resolve the plan's price (monthly or annual), the affiliate trial, and create
+// the Stripe Checkout Session. Throws an error with .status (+ optional .body
+// fields) for every operator-facing refusal, so each caller maps it to its own
+// response shape; unexpected Stripe failures throw plain errors (callers return
+// a 502). Returns { url, id } of the created session.
+const checkoutRefusal = (status, message, body) => { const e = new Error(message); e.status = status; if (body) e.body = body; return e }
+export async function createSubscriptionCheckout(store, user, { plan, cycle = 'monthly', successUrl, cancelUrl }) {
+  const p = String(plan || '').trim().toLowerCase()
+  if (!PLANS.includes(p)) throw checkoutRefusal(400, 'Pick a plan: lite, basic, advanced or premium.')
+  const cyc = cycle === 'annual' ? 'annual' : 'monthly'
+  const { secret, price, priceAnnual } = cfg(store)
+  const s = await getStripe(secret)
+  // Annual uses the yearly price id when configured; if annual was requested
+  // but not set up, say so clearly (the client falls back) rather than
+  // silently charging the monthly price.
+  const configuredId = cyc === 'annual' ? priceAnnual[p] : price[p]
+  if (!s) throw checkoutRefusal(503, 'Billing is not configured yet.')
+  if (cyc === 'annual' && !configuredId) throw checkoutRefusal(409, 'Annual billing is not set up for this plan yet.', { annualUnavailable: true })
+  if (!configuredId) throw checkoutRefusal(503, 'Billing is not configured yet.')
+  const priceId = await resolvePriceId(s, configuredId)
+  if (!priceId) throw checkoutRefusal(503, 'That plan is not set up correctly in Stripe (no price found for the configured id). Check the price or product id in the admin console.')
+  // Referred-user perk: an affiliate referral enrolling ANNUALLY gets a free
+  // month, delivered as a trial on the subscription (1 free month of access,
+  // then the 12-month annual charge = 13 months total). Entitlement flows
+  // automatically because trialing counts as active. Once per account.
+  let benefitDays = 0
+  try {
+    if (cyc === 'annual' && typeof store.affiliateAnnualBenefitDays === 'function') benefitDays = store.affiliateAnnualBenefitDays(user.id) || 0
+  } catch { benefitDays = 0 }
+  // Seed the email so Stripe creates/attaches a customer: the contact email
+  // first (onboarding accounts always have one), else an email-shaped username.
+  const contact = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
+  const customerEmail = looksLikeEmail(contact) ? contact : (looksLikeEmail(user.username) ? user.username : null)
+  const params = subscriptionCheckoutParams({ user, plan: p, cycle: cyc, priceId, benefitDays, successUrl, cancelUrl, customerEmail })
+  const checkout = await s.checkout.sessions.create(params)
+  if (!checkout || !checkout.url) throw checkoutRefusal(502, 'Could not start checkout. Please try again.')
+  return { url: checkout.url, id: checkout.id || null }
+}
+// The configured plan -> price id map (for reverse lookups by other modules).
+export function billingPriceMap(store) { return cfg(store).price }
+
 // ---- JSON routes (checkout + read + invoices + portal + admin) ------------
 export function registerWorkBillingRoutes(app, { store, requireWorkAuth, requireAuth, requireSuperAdmin, requireAiStepUp, wrap }) {
   // Step-up on the most sensitive writes (Stripe secret/webhook keys). A no-op
@@ -507,50 +479,11 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
   app.post('/api/work/checkout', requireWorkAuth, async (req, res) => {
     try {
       const plan = String((req.body || {}).plan || '').trim().toLowerCase()
-      if (!PLANS.includes(plan)) return res.status(400).json({ error: 'Pick a plan: basic, advanced or premium.' })
       const cycle = String((req.body || {}).cycle || 'monthly').trim().toLowerCase() === 'annual' ? 'annual' : 'monthly'
-      const { secret, price, priceAnnual } = cfg(store)
-      const s = await getStripe(secret)
-      // Annual uses the yearly price id when configured; if annual was requested
-      // but not set up, say so clearly (the client falls back) rather than
-      // silently charging the monthly price.
-      const configuredId = cycle === 'annual' ? priceAnnual[plan] : price[plan]
-      if (!s) return res.status(503).json({ error: 'Billing is not configured yet.' })
-      if (cycle === 'annual' && !configuredId) return res.status(409).json({ error: 'Annual billing is not set up for this plan yet.', annualUnavailable: true })
-      if (!configuredId) return res.status(503).json({ error: 'Billing is not configured yet.' })
-      const priceId = await resolvePriceId(s, configuredId)
-      if (!priceId) return res.status(503).json({ error: 'That plan is not set up correctly in Stripe (no price found for the configured id). Check the price or product id in the admin console.' })
-
-      const u = req.workUser
-      const existingCustomer = (u.subscription && u.subscription.stripeCustomerId) || null
-      // Referred-user perk: an affiliate referral enrolling ANNUALLY gets a free
-      // month, delivered as a trial on the subscription (1 free month of access,
-      // then the 12-month annual charge = 13 months total). Entitlement flows
-      // automatically because trialing counts as active. Once per account.
-      let benefitDays = 0
-      try {
-        if (cycle === 'annual' && typeof store.affiliateAnnualBenefitDays === 'function') benefitDays = store.affiliateAnnualBenefitDays(u.id) || 0
-      } catch { benefitDays = 0 }
-      const subData = { metadata: { workUserId: String(u.id), plan, cycle } }
-      if (benefitDays > 0) subData.trial_period_days = benefitDays
-      const params = {
-        mode: 'subscription',
-        line_items: [{ price: priceId, quantity: 1 }],
-        client_reference_id: String(u.id),
-        metadata: { workUserId: String(u.id), plan, cycle, affiliateBenefit: benefitDays > 0 ? `annual_free_${benefitDays}d` : '' },
-        subscription_data: subData,
-        allow_promotion_codes: true,
-        success_url: `${SITE}/work?checkout=success`,
-        cancel_url: `${SITE}/#pricing`,
-      }
-      // Reuse a known customer; otherwise seed the email so Stripe creates/attaches one.
-      if (existingCustomer) params.customer = existingCustomer
-      else if (looksLikeEmail(u.username)) params.customer_email = u.username
-
-      const checkout = await s.checkout.sessions.create(params)
-      if (!checkout || !checkout.url) return res.status(502).json({ error: 'Could not start checkout. Please try again.' })
-      res.json({ url: checkout.url })
+      const r = await createSubscriptionCheckout(store, req.workUser, { plan, cycle, successUrl: `${SITE}/work?checkout=success`, cancelUrl: `${SITE}/#pricing` })
+      res.json({ url: r.url })
     } catch (e) {
+      if (e && e.status) return res.status(e.status).json({ error: e.message, ...(e.body || {}) })
       console.warn('[billing] checkout create failed: ' + (e && e.message))
       res.status(502).json({ error: 'Could not start checkout. Please try again.' })
     }

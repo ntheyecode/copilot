@@ -136,7 +136,7 @@ export default function WorkPricing() {
   const [cycle, setCycle] = useState('monthly')
   const annual = cycle === 'annual'
   const rate = (p) => (annual ? annualMonthlyRate(p) : p)
-  const start = (id) => nav(`/workcopilot?plan=${id}${annual ? '&cycle=annual' : ''}`)
+  const start = (id) => nav(`/workcopilot/signup?plan=${id}${annual ? '&cycle=annual' : ''}`)
   const planMeta = (id) => t(`pricing.plans.${id}`) || {}
   const priceOf = (id) => (loading || !model ? null : model.plans[id])
   const hourOf = (id) => (loading || !model ? null : model.hour[id])

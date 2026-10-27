@@ -53,6 +53,7 @@ import { verifierOf, checkVerifier, randomSalt as kdfRandomSalt, KDF as EXPORT_K
 import * as eq from './enterprise_quota.js'
 import { createEnterpriseBilling } from './enterprise_billing.js'
 import { createPlanAllowance } from './plan_allowance.js'
+import { createOnboarding } from './onboarding_store.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -407,6 +408,17 @@ export const {
 // plain per-day task cap (tasks per tier). Pool-based enterprise companies skip
 // it: their company pool is the budget (enterprise_billing.js).
 const plan = createPlanAllowance({ db: () => db, persistSoon, getWorkPricing, workUserTier, tasksToday: workTasksToday, httpErr })
+// ---- Subscribe onboarding (module: onboarding_store.js) ----
+// Email verification codes + the per-account plan intent for the sign-up ->
+// verify -> pay -> welcome flow. Hoisted account helpers are handed in, so the
+// module never imports the store (no cycle); the public API is re-exported so
+// index.js / onboarding.js keep their `store.*` names.
+const onb = createOnboarding({ db: () => db, persist, getUser, findUserByLogin, findUserByVerifiedLogin, createWorkUser, normalizeEmail, httpErr, now })
+export const {
+  createOnboardingUser, isEmailVerified, markEmailVerified,
+  getOnboarding, setOnboardingIntent, setOnboardingCheckout, completeOnboarding,
+  changeOnboardingEmail, issueEmailOtp, verifyEmailOtp, emailOtpStatus,
+} = onb
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -538,6 +550,7 @@ export function publicWorkUser(u) {
   return {
     id: u.id, username: u.username, role: u.role || 'user', root: !!u.root,
     createdAt: u.createdAt, onboarded: !!u.onboarded, displayName: u.displayName || null,
+    emailVerified: u.emailVerified === true,   // sign-up email proven (onboarding code or a consumed reset link); legacy accounts read false
     tier: (WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),   // plan tier, for the team roster + settings
     scrub: workUserScrubOn(u.id),   // EFFECTIVE policy (own flag OR company default)
     reportShots: u.reportShots !== false,   // keep scrubbed milestone screenshots in the report (default on)
@@ -4111,6 +4124,26 @@ export function setUserPasswordById(userId, newPassword) {
   emitStoreEvent('password_changed', { userId: u.id, at: new Date().toISOString() })
   return true
 }
+// IDENTITY-GRADE lookup: which account does this sign-in name / email PROVE?
+// A classic sign-up can type ANY contact email (never verified) and even pick an
+// email-shaped username, so matching on those alone would let an attacker
+// pre-register a victim's address and capture the victim's social sign-in or
+// email login. Here an email (as contact email or as username) counts only when
+// the account has PROVEN it (emailVerified), and an ssoEmail always counts (the
+// IdP verified it). Exact username match for a password login stays with
+// findUser (the password proves that one). Use THIS for anything that binds a
+// session or a payment to an account by email; keep findUserByLogin (broad) for
+// "does any account use this address" checks and for mail that goes to the
+// account's own address (forgot-password).
+export function findUserByVerifiedLogin(login) {
+  const s = String(login || '').trim().toLowerCase()
+  if (!s) return null
+  return (db.users || []).find((u) => {
+    if (String(u.ssoEmail || '').toLowerCase() === s) return true
+    if (u.emailVerified !== true) return false
+    return String(u.email || '').toLowerCase() === s || String(u.username || '').toLowerCase() === s
+  }) || null
+}
 // Find an account by username OR contact/SSO email (for "forgot password").
 export function findUserByLogin(login) {
   const s = String(login || '').trim().toLowerCase()
@@ -4123,12 +4156,20 @@ export function findUserByLogin(login) {
 export function createSocialUser({ email, displayName = '', provider = '' } = {}) {
   const mail = normalizeEmail(email)
   if (!mail) throw httpErr(400, 'The provider did not share a valid email address.')
-  const existing = findUserByLogin(mail)
+  // Link only to an account that PROVED this address (or an IdP identity).
+  const existing = findUserByVerifiedLogin(mail)
   if (existing) return existing
+  // An account that merely TYPED this address (unverified classic sign-up) is
+  // never silently linked or shadowed: its owner signs in with the password or
+  // resets it (the reset link proves the mailbox and verifies the address).
+  if (findUserByLogin(mail)) throw httpErr(409, 'An account with this email already exists. Sign in with your password, or reset it, to continue.')
   const uname = mail.length <= 64 ? mail : ('social_' + crypto.randomBytes(6).toString('hex'))
   const u = createWorkUser({ username: uname, password: crypto.randomBytes(24).toString('hex'), email: mail, displayName: String(displayName || '').trim() || null })
   u.social = { provider: String(provider || '').slice(0, 24), at: Date.now() }
   u.needsProfile = true
+  // The provider verified the address, so the account starts verified.
+  u.emailVerified = true
+  u.emailVerifiedAt = now()
   persist()
   return u
 }

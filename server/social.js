@@ -23,6 +23,9 @@
 // button is shown disabled. No em dashes in operator-facing text.
 // ---------------------------------------------------------------------------
 import { discover, newPkce, newState, buildAuthorizeUrl, exchangeCode, verifyIdToken, extractEmail } from './sso.js'
+// Subscribe onboarding (onboarding.js): the start URL may carry ?flow=onboarding
+// &plan=&cycle=; the callback then lands on the pay step instead of the login page.
+import { socialOnboardingIntent, finishSocialOnboarding, resolveSocialAccount } from './onboarding.js'
 
 const MFA_PENDING_TTL_MS = 15 * 60 * 1000
 const FB_VER = 'v19.0'
@@ -77,15 +80,16 @@ export function registerSocialRoutes(app, deps = {}) {
       if (!cfg) return loginError(res, 'That sign-in method is not set up yet.')
       const state = newState()
       const redirectUri = socialCallbackUrl(req)
+      const onboarding = socialOnboardingIntent(req.query)   // null outside the subscribe flow
       if (cfg.kind === 'oidc') {
         const disco = await discover(cfg.issuer)
         const { verifier, challenge } = newPkce()
         const nonce = newState()
-        req.session.social = { provider, state, verifier, nonce, issuer: cfg.issuer }
+        req.session.social = { provider, state, verifier, nonce, issuer: cfg.issuer, onboarding }
         const url = buildAuthorizeUrl(disco, cfg, { state, challenge, nonce, redirectUri })
         req.session.save(() => res.redirect(url))
       } else {
-        req.session.social = { provider, state }
+        req.session.social = { provider, state, onboarding }
         const u = new URL(`https://www.facebook.com/${FB_VER}/dialog/oauth`)
         u.searchParams.set('client_id', cfg.clientId)
         u.searchParams.set('redirect_uri', redirectUri)
@@ -131,17 +135,23 @@ export function registerSocialRoutes(app, deps = {}) {
       }
       if (!email || !email.includes('@')) return loginError(res, 'Your provider did not share an email address. Please use email sign-up instead.')
 
-      const existing = store.findUserByLogin(email)
-      if (existing) {
-        if (existing.disabled) return loginError(res, 'This account has been disabled. Please contact your administrator.')
+      // ONE identity rule for both flows (onboarding.js resolveSocialAccount): a
+      // provider-verified email binds only to an account that proved the same
+      // address; a company-SSO account or an unverified classic sign-up is refused.
+      const resolved = resolveSocialAccount(store, { email, displayName: name, provider })
+      if (resolved.error) return loginError(res, resolved.error)
+      const { user: existing, isNew } = resolved
+      // SUBSCRIBE FLOW: continue to the pay step with the plan; the app entry
+      // still goes through the MFA gate (POST /api/work/onboarding/enter).
+      if (sess.onboarding) return finishSocialOnboarding(req, res, { store, user: existing, isNew, intent: sess.onboarding })
+      if (!isNew) {
         if (!store.mfaGloballyEnabled()) { establishSession(req, existing); return req.session.save(() => res.redirect('/work')) }
         req.session.pendingMfaUid = existing.id
         req.session.pendingMfaAt = Date.now()
         return req.session.save(() => res.redirect('/workcopilot/login?social=1'))
       }
-      // New account: create it (no password; social-linked), then collect profile.
-      const u = store.createSocialUser({ email, displayName: name, provider })
-      req.session.pendingSocialUid = u.id
+      // New account (no password; social-linked): collect the profile, then MFA.
+      req.session.pendingSocialUid = existing.id
       req.session.pendingSocialAt = Date.now()
       req.session.save(() => res.redirect('/workcopilot/login?social=complete'))
     } catch (e) { loginError(res, e.message || 'Sign-in could not be completed.') }

@@ -28,6 +28,7 @@ import WorkFaq from './pages/WorkFaq.jsx'
 import WorkContact from './pages/WorkContact.jsx'
 import AffiliatePage from './pages/AffiliatePage.jsx'
 import WorkSetPassword from './pages/WorkSetPassword.jsx'
+import OnboardingPage from './pages/onboarding/OnboardingPage.jsx'   // subscribe: create account -> verify -> pay -> welcome
 // Signed-in app + admin consoles are code-split: public marketing/SEO visitors
 // never download them, which keeps the initial bundle (and LCP) small.
 // The signed-in app is a shared shell (WorkAppLayout) with per-route pages under
@@ -101,6 +102,9 @@ export default function App() {
       {/* The product's own branded sign-in page. */}
       <Route path="/workcopilot" element={<WorkLogin />} />
       <Route path="/workcopilot/login" element={<WorkLogin />} />
+      {/* Subscribe onboarding (public; the server state picks the step, the URL mirrors it). */}
+      <Route path="/workcopilot/signup" element={<OnboardingPage />} />
+      <Route path="/workcopilot/signup/:step" element={<OnboardingPage />} />
       <Route path="/workcopilot/use-cases" element={<WorkUseCases />} />
       <Route path="/workcopilot/security" element={<WorkSecurity />} />
       {/* Enterprise features: the full list, linked from the main page + nav. */}
