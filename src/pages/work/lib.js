@@ -5,7 +5,10 @@
 import { isDlpActive } from '../../scrub.js'
 import { redactFrame } from '../../frame_scrub.js'
 
-export const linkHost = (u) => { try { return new URL(u).host.replace(/^www\./, '') } catch { return 'link' } }
+// linkHost now lives in src/shared/links.js (shared with the public widget,
+// which must not import this module's capture/scrub helpers); re-exported here
+// so Dashboard.jsx / Guiding.jsx keep importing it from lib.js unchanged.
+export { linkHost } from '../../shared/links.js'
 
 // Read a file the user attaches MID-TASK into a context payload for the engine.
 // An image (screenshot or phone photo) is returned as a data URL, on-device
