@@ -29,3 +29,6 @@ Translation rule: native, professional, brand voice, no em-dashes, US-English so
 4. Render-verify at 1280 + 640, EN + DE, via admin-wow preview (--mode localapi) against api-seeded (seed recipe in HANDOFF-CONTINUE.md): superadmin Overview/Companies/Users/Pricing; company admin Overview/Usage & limits. Rule XIV: zero overflow/clipping.
 5. Refresh in-app help screenshots (mandatory last step): public/help/super/overview.png, companies.png, users.png, pricing.png; public/help/company/overview.png (sizes in HelpSuper.jsx/HelpCompany.jsx `shots`).
 6. Merge to main (no push), then feat-app-plan-wow, then feat-site-wow; publish all together.
+
+## Translation tool (2026-10-27)
+scripts/i18n-apply-patch.mjs <locale> <patch.json> [--dry] applies {set, delete} key patches to ONE locale file textually (EN sibling order, missing parents created, comments kept), re-imports to verify and ROLLS BACK on any mismatch. One patch per locale (keys listed above); dry-run first; commit each locale right after it verifies.
