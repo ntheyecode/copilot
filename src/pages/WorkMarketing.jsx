@@ -195,20 +195,6 @@ export default function WorkMarketing() {
         </div>
       </section>
 
-      {/* NOT ANOTHER CHAT BOX (owner, 2026-10-27: "people think you are another
-          ChatGPT"). The same request side by side: a chat box hands back a
-          paragraph and leaves you on your own; the guide console walks the task
-          on the real screen, catches the wrong turn and confirms the finish.
-          Then the three things a chat box never does, as three cards. */}
-      <section className="wm-sec wm-notchat" id="not-a-chat-box">
-        <div className="wm-wrap">
-          <div className="wm-eyebrow" data-reveal><MessageSquareOff size={14} /> {t('notChat.eyebrow')}</div>
-          <h2 className="wm-h2" data-reveal>{t.rich('notChat.h2')}</h2>
-          <p className="wm-sub" data-reveal>{t('notChat.sub')}</p>
-          <div data-reveal><NotAChatBox scenarioId="finance" /></div>
-        </div>
-      </section>
-
       {/* HOW - the core value in one glance: four benefit tiles in the order a
           task happens. The eyebrow carries the "planned by the strongest AI
           available to you" promise (a benefit; never a vendor or model name,
@@ -230,6 +216,26 @@ export default function WorkMarketing() {
           <div className="wm-fld-more" data-reveal>
             <a className="wm-cta alt" href="/workcopilot/how-it-works">{t('home.how.link')} <ArrowRight size={15} className="wm-arrow" /></a>
           </div>
+        </div>
+      </section>
+
+      {/* NOT ANOTHER CHAT BOX (owner, 2026-10-27: "people think you are another
+          ChatGPT"). The same request side by side: a chat box hands back a
+          paragraph and leaves you on your own; the guide console walks the task
+          on the real screen, catches the wrong turn and confirms the finish.
+          Then the three things a chat box never does, as three cards.
+          PLACEMENT RULE: this section sits BELOW "How it works", never directly
+          under the hero. Its comparison frame carries a dark console, and the
+          hero already ends on one; stacked, the two read as "two black boxes
+          one after the other" (owner, 2026-10-27). The four light How cards
+          are the required separator, so the console here reads as a callback
+          to the hero, not a repeat. Keep that order when adding sections. */}
+      <section className="wm-sec wm-notchat" id="not-a-chat-box">
+        <div className="wm-wrap">
+          <div className="wm-eyebrow" data-reveal><MessageSquareOff size={14} /> {t('notChat.eyebrow')}</div>
+          <h2 className="wm-h2" data-reveal>{t.rich('notChat.h2')}</h2>
+          <p className="wm-sub" data-reveal>{t('notChat.sub')}</p>
+          <div data-reveal><NotAChatBox scenarioId="finance" /></div>
         </div>
       </section>
 
@@ -1338,7 +1344,9 @@ const CSS = `
 @media(max-width:560px){.wm-fld-chips{grid-template-columns:1fr;gap:10px}}
 /* NOT ANOTHER CHAT BOX - the duel (chat pane vs guide console) and the three
    difference cards come from src/components/NotAChatBox.jsx. The h2 is longer
-   than the other section heads, so its cap is wider. */
+   than the other section heads, so its cap is wider. Page order: this section
+   renders AFTER .wm-how (see the JSX placement rule), so the duel's dark half
+   never sits directly under the hero console. */
 .wm-notchat{border-top:1px solid var(--line)}
 .wm-notchat .wm-h2{max-width:28ch}
 .wm-notchat .wm-sub{margin-bottom:30px}

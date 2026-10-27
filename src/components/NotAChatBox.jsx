@@ -99,7 +99,12 @@ export default function NotAChatBox({ scenarioId = 'finance', variant = 'full' }
           size and sits flush inside the right half of a light frame, the "vs"
           badge straddles the divider, and each half ends in its own verdict
           band (red: on your own / mint: confirmed). The dark area is now half
-          of a comparison object, not another hero. */}
+          of a comparison object, not another hero. That framing alone was
+          NOT enough while the section sat directly under the hero (owner,
+          2026-10-27, second pass: still "both black boxes one after another"),
+          so the home page now renders this section below "How it works";
+          the four light cards there are the separator. See the placement
+          rule on the section in src/pages/WorkMarketing.jsx. */}
       <div className="nc-duel">
         <div className="nc-col nc-col-chat">
           <ChatPane />
