@@ -92,13 +92,21 @@ export default function NotAChatBox({ scenarioId = 'finance', variant = 'full' }
   if (variant === 'strip') return <DifferenceStrip />
   return (
     <div className="nc">
+      {/* ONE split-screen frame, not two free-standing cards. The home hero
+          already shows the big dark console; a second dark card of the same
+          shape one screen below read as a repeat (owner, 2026-10-27: "two
+          black boxes one after the other"). Here the console is the compact
+          size and sits flush inside the right half of a light frame, the "vs"
+          badge straddles the divider, and each half ends in its own verdict
+          band (red: on your own / mint: confirmed). The dark area is now half
+          of a comparison object, not another hero. */}
       <div className="nc-duel">
-        <div className="nc-col">
+        <div className="nc-col nc-col-chat">
           <ChatPane />
         </div>
         <div className="nc-vs" aria-hidden="true"><span>{t('notChat.vs')}</span></div>
-        <div className="nc-col">
-          {scenario && typeof scenario === 'object' ? <GuideConsole scenario={scenario} /> : null}
+        <div className="nc-col nc-col-guide">
+          {scenario && typeof scenario === 'object' ? <GuideConsole scenario={scenario} compact className="nc-gc" /> : null}
           <p className="nc-guide-tail"><ShieldCheck size={13} aria-hidden="true" /> {t('notChat.guideTail')}</p>
         </div>
       </div>
@@ -110,40 +118,66 @@ export default function NotAChatBox({ scenarioId = 'finance', variant = 'full' }
 
 const CSS = `
 .nc{display:flex;flex-direction:column;gap:22px;min-width:0}
-.nc-duel{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1.15fr);gap:14px 18px;align-items:start}
-.nc-col{min-width:0;display:flex;flex-direction:column;gap:10px}
-.nc-vs{align-self:center;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e2e7f0;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -18px rgba(10,13,18,.3);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:12px;letter-spacing:.06em;color:#3f4a5c}
+/* the duel: one framed split screen (light left, dark right), equal halves */
+.nc-duel{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);align-items:stretch;background:#fff;border:1px solid #e2e7f0;border-radius:22px;overflow:hidden;box-shadow:0 1px 2px rgba(10,13,18,.04),0 30px 60px -36px rgba(10,13,18,.35)}
+.nc-col{min-width:0;display:flex;flex-direction:column}
+.nc-col-chat{background:#fbfcfe;border-inline-end:1px solid #e2e7f0}
+.nc-col-guide{background:linear-gradient(180deg,#141924,#0b0f1c)}
+.nc-vs{position:absolute;z-index:2;top:50%;inset-inline-start:50%;margin:-22px 0 0 -22px;display:grid;place-items:center;width:44px;height:44px;border-radius:50%;background:#fff;border:1px solid #e2e7f0;box-shadow:0 1px 2px rgba(10,13,18,.04),0 14px 30px -18px rgba(10,13,18,.3);font-family:"Bricolage Grotesque","Figtree",sans-serif;font-weight:800;font-size:12px;letter-spacing:.06em;color:#3f4a5c}
+[dir="rtl"] .nc-vs{margin:-22px -22px 0 0}
+/* the console, flush in its half: the frame carries radius, border and shadow */
+.nc-col-guide .gc{flex:1;border-radius:0;border:0;box-shadow:none}
 /* the chat box: a plain, light chat window on purpose (it is what people
    expect from "another ChatGPT"), kept quiet next to the console */
-.nc-chat{display:flex;flex-direction:column;background:#fff;border:1px solid #e2e7f0;border-radius:20px;padding:14px 15px 12px;min-height:420px;box-shadow:0 1px 2px rgba(10,13,18,.04),0 18px 40px -26px rgba(10,13,18,.2);color:#0c1222;font-family:"Figtree",system-ui,sans-serif}
-.nc-chat-head{display:flex;align-items:center;gap:9px;font-size:13px;padding:0 2px 10px;border-bottom:1px solid #e2e7f0;color:#3f4a5c}
+.nc-chat{flex:1;display:flex;flex-direction:column;min-height:0;color:#0c1222;font-family:"Figtree",system-ui,sans-serif}
+.nc-chat-head{display:flex;align-items:center;gap:9px;font-size:13px;padding:16px 18px 10px;border-bottom:1px solid #e2e7f0;color:#3f4a5c}
 .nc-chat-head b{font-family:"Bricolage Grotesque","Figtree",sans-serif;color:#0c1222}
 .nc-chat-dots{display:inline-flex;gap:5px}.nc-chat-dots i{width:8px;height:8px;border-radius:50%;background:#d6d9e8}
-.nc-chat-body{flex:1;display:flex;flex-direction:column;gap:10px;padding:14px 0 8px}
+.nc-chat-body{flex:1;display:flex;flex-direction:column;gap:10px;padding:14px 18px 12px}
 .nc-bub{max-width:88%;border-radius:14px;padding:10px 13px;font-size:13.5px;line-height:1.5;animation:nc-in .35s ease-out both;overflow-wrap:anywhere}
 .nc-bub.you{align-self:flex-end;background:#eef0f8;color:#0c1222;border-bottom-right-radius:5px}
-.nc-bub.bot{align-self:flex-start;background:#f6f8fd;border:1px solid #e2e7f0;color:#3f4a5c;border-bottom-left-radius:5px}
+.nc-bub.bot{align-self:flex-start;background:#fff;border:1px solid #e2e7f0;color:#3f4a5c;border-bottom-left-radius:5px}
 .nc-who{display:block;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#6b7191;margin-bottom:3px}
 .nc-think{display:inline-flex;gap:5px;padding:12px 14px}
 .nc-think i{width:7px;height:7px;border-radius:50%;background:#9aa0bd;animation:nc-dot 1s ease-in-out infinite}
 .nc-think i:nth-child(2){animation-delay:.15s}.nc-think i:nth-child(3){animation-delay:.3s}
 @keyframes nc-dot{0%,100%{opacity:.35;transform:translateY(0)}50%{opacity:1;transform:translateY(-3px)}}
 @keyframes nc-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.nc-chat-tail{margin-top:auto;padding-top:10px;border-top:1px dashed #d6d9e8;font-size:13px;font-weight:700;color:#b63f1c;opacity:0;transition:opacity .4s}
+/* verdict bands: the same slot at the foot of each half, so the two outcomes
+   line up and read as one comparison (space reserved; only the text fades in) */
+.nc-chat-tail{margin-top:auto;padding:11px 18px;border-top:1px solid rgba(182,63,28,.14);background:#fff3ee;font-size:13px;font-weight:700;color:#b63f1c;line-height:1.4;opacity:0;transition:opacity .4s}
 .nc-chat-tail.in{opacity:1}
-.nc-guide-tail{display:flex;align-items:flex-start;gap:7px;margin:0;font-size:13px;font-weight:600;color:#07784f;line-height:1.4}
+.nc-guide-tail{display:flex;align-items:flex-start;gap:7px;margin:0;padding:11px 16px;border-top:1px solid rgba(7,120,79,.14);background:#e9faf2;font-size:13px;font-weight:600;color:#07784f;line-height:1.4}
 .nc-guide-tail svg{flex:none;margin-top:2px}
 .nc-three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
 .nc-three .wc-card{min-width:0}
 .nc-ro{display:flex;align-items:center;justify-content:center;gap:8px;margin:0;font-size:13.5px;color:#3f4a5c;text-align:center}
 .nc-ro svg{color:#0e9f6e;flex:none}
+[data-theme='dark'] .nc-duel{background:#13141f;border-color:rgba(255,255,255,.12)}
+[data-theme='dark'] .nc-col-chat{background:#13141f;border-color:rgba(255,255,255,.12)}
+[data-theme='dark'] .nc-chat{color:#eef0f6}
+[data-theme='dark'] .nc-chat-head{border-color:rgba(255,255,255,.12);color:#9aa0b4}
+[data-theme='dark'] .nc-chat-head b{color:#eef0f6}
+[data-theme='dark'] .nc-bub.you{background:rgba(255,255,255,.1);color:#eef0f6}
+[data-theme='dark'] .nc-bub.bot{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12);color:#9aa0b4}
+[data-theme='dark'] .nc-chat-tail{background:rgba(255,122,89,.1);border-color:rgba(255,122,89,.3);color:#ffb35c}
+[data-theme='dark'] .nc-guide-tail{background:rgba(140,245,196,.08);border-color:rgba(140,245,196,.25);color:#8cf5c4}
 [data-theme='dark'] .nc-vs{background:#13141f;border-color:rgba(255,255,255,.12);color:#9aa0b4}
 [data-theme='dark'] .nc-ro{color:#9aa0b4}
 @media(max-width:900px){
-  .nc-duel{grid-template-columns:1fr;gap:12px}
-  .nc-vs{justify-self:center}
-  .nc-chat{min-height:0}
+  /* stacked: the chat half on top, the console under it; the vs badge gets
+     a short gutter row of its own on the seam and overlaps each half by only
+     10px, so it lands in the verdict band's bottom padding and the console's
+     top padding, never on the one-line verdict text (375px check) */
+  .nc-duel{grid-template-columns:1fr;border-radius:18px}
+  .nc-col-chat{border-inline-end:0;border-bottom:1px solid #e2e7f0}
+  .nc-vs{position:relative;margin:-10px auto;inset-inline-start:auto;top:auto}
+  [dir="rtl"] .nc-vs{margin:-10px auto}
+  .nc-chat-head{padding:14px 16px 10px}
+  .nc-chat-body{padding:12px 16px 10px}
+  .nc-chat-tail{padding:10px 16px}
   .nc-three{grid-template-columns:1fr;gap:12px}
+  [data-theme='dark'] .nc-col-chat{border-color:rgba(255,255,255,.12)}
 }
 @media(prefers-reduced-motion:reduce){.nc-bub,.nc-think i{animation:none}.nc-chat-tail{transition:none}}
 `
