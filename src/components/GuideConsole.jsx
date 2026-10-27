@@ -332,7 +332,12 @@ const CSS = `
 .gc-compact .gc-scr-body{height:132px;grid-template-columns:84px minmax(0,1fr)}
 .gc-compact .gc-guide{min-height:108px}
 .gc-compact .gc-goal{min-height:44px;font-size:13px}
-@media(max-width:420px){.gc-scr-body{grid-template-columns:78px minmax(0,1fr)}.gc-ctl{max-width:58%;font-size:11px;padding:5px 9px}
+/* Phone-width cards: the two mock controls sit in opposite corners (target
+   top-right, wrong bottom-left), so each may use almost the full row instead
+   of 58% (which clipped "Open 4471" at 375px); the nav column keeps its
+   longest label ("Onboarding") whole at a smaller size. */
+@media(max-width:420px){.gc-scr-body{grid-template-columns:84px minmax(0,1fr)}.gc-scr-nav{padding:10px 6px}.gc-scr-nav span{font-size:10px;padding:5px 6px}
+  .gc-scr-main{padding:14px 10px}.gc-ctl{max-width:calc(100% - 20px);font-size:10.5px;padding:5px 9px}.gc-ctl.target{inset-inline-end:10px}.gc-ctl.wrong{inset-inline-start:10px}.gc-here{inset-inline-end:10px}
   .gc-dots{display:none}.gc-head b{margin-inline-start:0}.gc-live span{display:none}}
 @media(prefers-reduced-motion:reduce){
   .gc-live i,.gc-ctl.target.hot .gc-ring,.gc-ctl.wrong.bad,.gc-scr-complete svg{animation:none}

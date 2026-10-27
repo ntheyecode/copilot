@@ -155,9 +155,11 @@ export default function WorkSecurity() {
         />
         <div className="wsx-proof" aria-label="The same protection in text: each sensitive value becomes a token, the real value stays on your device">
           <span className="wsx-pk">In text</span>
-          <span className="wsx-raw">ops@northwind-trading.com</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[EMAIL_3]]</span>
-          <span className="wsx-raw">sk-live-4eC39Hq…</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[SECRET_2]]</span>
-          <span className="wsx-raw">4539 1488 0343 6467</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[CARD_1]]</span>
+          {/* each raw -> token swap is one unbreakable unit (design gate: a
+              pair never splits across lines; on a phone the units stack) */}
+          <span className="wsx-swap"><span className="wsx-raw">ops@northwind-trading.com</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[EMAIL_3]]</span></span>
+          <span className="wsx-swap"><span className="wsx-raw">sk-live-4eC39Hq…</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[SECRET_2]]</span></span>
+          <span className="wsx-swap"><span className="wsx-raw">4539 1488 0343 6467</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[CARD_1]]</span></span>
           <span className="wsx-pe">Answer rebuilt on your device. Add your own words and patterns on top of the built-in detectors.</span>
         </div>
         {/* Read-only by design: the one line a security reviewer asks about first. */}
@@ -295,7 +297,8 @@ const CSS = `
 .wsx-proof{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:14px;padding:11px 14px;border-radius:12px;background:linear-gradient(180deg,#f4f8f7,#f8fbfa);border:1px solid var(--line);font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:12px;color:var(--tx2);line-height:1.5}
 .wsx-pk{font-family:"Figtree",system-ui,sans-serif;font-weight:700;font-size:12.5px;color:var(--ink);text-transform:uppercase;letter-spacing:.06em;margin-right:4px}
 .wsx-raw{color:#c0322b;text-decoration:line-through;text-decoration-color:rgba(192,50,43,.5);overflow-wrap:anywhere}
-.wsx-arr{color:var(--mut)}
+.wsx-swap{display:inline-flex;align-items:center;gap:8px;max-width:100%;min-width:0}
+.wsx-arr{color:var(--mut);flex:0 0 auto}
 .wsx-tok{color:#0a7fa8;font-weight:600;background:#fff;border:1px solid var(--line);border-radius:7px;padding:2px 7px;white-space:nowrap}
 .wsx-pe{flex:1 1 100%;font-family:"Figtree",system-ui,sans-serif;font-size:13px;color:var(--mut)}
 /* DATA HANDLING - three short cards, then two one-line facts */
@@ -324,5 +327,15 @@ const CSS = `
 .wsx-cta{max-width:1040px;margin:0 auto;padding:16px 20px 56px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
 .wsx-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;background:var(--em);color:#fff;border:1px solid var(--em);border-radius:11px;padding:11px 18px;font:inherit;font-size:14.5px;font-weight:700;cursor:pointer;text-decoration:none;white-space:nowrap}
 .wsx-btn.alt{background:var(--panel);color:var(--ink);border-color:var(--line)}
-@media(max-width:480px){.wsx-side{flex-basis:116px}}
+/* Phone: the mock's sidebar folds to a 34px rail (dot + bars, no words) so the
+   values, which are the whole demonstration, show in full; a long value drops
+   under its label instead of being cut with an ellipsis (design gate). */
+@media(max-width:480px){
+  .wsx-side{flex-basis:34px;padding:12px 0}
+  .wsx-brand{padding:0 0 12px;justify-content:center;font-size:0}.wsx-brand .wsx-dot{width:10px;height:10px}
+  .wsx-nav{font-size:0;height:22px;padding:0;margin:4px 9px;border-radius:4px;background:rgba(148,163,184,.25)}.wsx-nav.on{background:#38bdf8}
+  .wsx-card{margin:10px;padding:12px}
+  .wsx-row{flex-wrap:wrap;row-gap:2px}
+  .wsx-val,.wsx-valwrap{white-space:nowrap;overflow:visible;text-overflow:clip;max-width:100%}
+}
 `
