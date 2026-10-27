@@ -25,7 +25,7 @@ import ReadingStrip, { readingIsProminent } from './work/ReadingStrip.jsx'
 import GoalLine from './work/GoalLine.jsx'
 import FadeSwap from './work/FadeSwap.jsx'
 import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
-import { usageTimeLeft, usageTasksToday } from './work/usageCopy.js'
+import { usageTimeLeft, usageTasksLine } from './work/usageCopy.js'
 
 const POLL_MS = 2500
 const POLL_PAUSED_MS = 6000
@@ -152,10 +152,10 @@ export default function WorkFullGuide() {
   // line, both from the shared single source so all three surfaces agree.
   const win = stepWindow(steps)
   const progress = progressText(steps)
-  // Plan hours left this month + today's tasks, from the shared plan model
-  // (usageCopy.js), so this screen agrees with the console and the dashboard.
+  // Plan hours left this month + the task slots in use, from the shared plan
+  // model (usageCopy.js), so this screen agrees with the console and the dashboard.
   const timeLeft = usage ? usageTimeLeft(usage) : ''
-  const tasksToday = usage ? usageTasksToday(usage) : ''
+  const tasksLine = usage ? usageTasksLine(usage) : ''
   const exhausted = !!(usage && usage.exhausted)
   const guidance = (session && session.guidance) || ''
   const observation = (session && session.observation) || ''
@@ -194,7 +194,7 @@ export default function WorkFullGuide() {
             </span>
           )}
           <span style={{ ...S.time, color: exhausted ? c.warn : c.muted }} title={exhausted ? 'Your plan hours for this month are used up' : 'Plan hours left this month'}><Clock size={14} /> {timeLeft || '--'}</span>
-          {tasksToday && <span style={S.time} title="Guided tasks started today, of your daily cap"><ListChecks size={14} /> {tasksToday}</span>}
+          {tasksLine && <span style={S.time} title="Tasks open right now, of the most you can have open at once"><ListChecks size={14} /> {tasksLine}</span>}
           {status === 'ok' && <GuideLevelControl level={level} onChange={setLevel} compact={!wide} theme={{ border: c.border, muted: c.muted, panel: c.panel, accent: c.accent, accentSoft: c.accentSoft }} />}
           <GuideFontControl scale={scale} dec={dec} inc={inc} reset={reset} atMin={atMin} atMax={atMax}
             theme={{ border: c.border, text: c.text, muted: c.muted, panel: c.panel, accent: c.accent }} />

@@ -32,12 +32,16 @@
 //   continue -> "Continue"
 //   notReadyTitle -> "AI setup is not finished yet"
 //   notReady -> "Available once your administrator has finished AI setup. You can fill this in now; the final step opens when setup is done."
-//   gateMustComplete -> "Finish your current task before starting a new one. Open it from your tasks, wrap it up, then start the next."
-//   gateTaskLimit -> "You have used all your tasks for today. They reset at {reset}."
+//   gateTooManyOpen -> "You already have {max} tasks on the go. Finish or pick one up to start another."
+//   gateOutOfHours -> "You are out of guided hours. They renew {reset}, or add hours to keep going."
+//   gateOutOfHoursCompany -> "You are out of guided hours. They renew {reset}. Ask your administrator if you need more before then."
+//   gateOutOfHoursAct -> "Add hours"
+//   gateCompanyTaskLimit -> "You have reached the task limit your company set. New tasks open {reset}. Ask your company administrator if you need more."
 //   gateCompanyNoLicense -> "Your company has not assigned you a WorkCoPilot license yet, or all licenses are in use. Ask your company administrator to add you."
-//   capFinish -> "Finish your current task before starting a new one."
-//   capLeft -> "{remaining} of {cap} tasks left today. Resets {reset}."
-//   capLeftOne -> "{remaining} of {cap} task left today. Resets {reset}."
+//   openSlots -> "{open} of {max} tasks open. Room for {n} more."
+//   openFull -> "{max} of {max} tasks open. Finish or pick one up before starting another."
+//   capLeft -> "{remaining} of {cap} tasks left. Resets {reset}."
+//   capLeftOne -> "{remaining} of {cap} task left. Resets {reset}."
 //   placeQ -> "Where are you working?"
 //   placeSub -> "A quick pointer so WorkCoPilot tailors the steps to the right place. Optional, you can skip straight to your task."
 //   placeSaasLabel -> "Website or SaaS app"
@@ -365,7 +369,7 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
 export default function StartTask() {
   const navigate = useNavigate()
   const t = useT()
-  const { ready, usage, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin } = useWorkApp()
+  const { ready, usage, plan, renewLabel, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin, canBuyHours, buyCredits, refreshUsage } = useWorkApp()
   const tier = (usage && usage.tier) || 'basic'
 
   // A parked draft (see DRAFT_KEY) resumes where the person left off.
@@ -399,6 +403,7 @@ export default function StartTask() {
   // Create / hand-off (step 8)
   const [busy, setBusy] = useState(false)
   const [gateMsg, setGateMsg] = useState('')
+  const [gateAct, setGateAct] = useState('')      // 'hours' = offer Add hours next to the out-of-hours message
 
   const firstFieldRef = useRef(null)
   const advTimer = useRef(null)
@@ -431,14 +436,32 @@ export default function StartTask() {
         : { href: '/work', label: t('workStart.setupAiLink', 'Set up AI on the dashboard') }
   const goalComplete = !!(goal.trim() && planTitle.trim())
 
-  // A gated action failed (same rules as before): task-limit / must-complete /
-  // company-member messages show here; a personal 402 routes to the dashboard
-  // plan chooser.
+  // A gated action failed. The server's coded flags (server/index.js POST
+  // /api/work/sessions) pick the message and the action:
+  //   409 tooManyOpen  every at-once task slot is in use: finish or pick one up
+  //   402 outOfHours   no guided hours left: renewal date + Add hours (individuals)
+  //                    or ask your administrator (company members)
+  //   402 taskLimit    a company member hit the admin-set task ceiling
+  //   402 (no flag)    company member without a license / individual without a
+  //                    plan (routes to the dashboard plan chooser)
   const handleGate = (e) => {
     const status = e && e.status
     const d = (e && e.data) || {}
-    if (d.mustCompleteCurrent) { setGateMsg(t('workStart.gateMustComplete')); return }
-    if (d.taskLimit) { setGateMsg(e.message || t('workStart.gateTaskLimit', { reset: d.resetLabel || '11:59 PM ET' })); return }
+    setGateAct('')
+    if (d.tooManyOpen) {
+      const max = d.maxOpen != null ? d.maxOpen : (plan && plan.tasks && plan.tasks.max != null ? plan.tasks.max : null)
+      setGateMsg(max != null ? t('workStart.gateTooManyOpen', { max }) : (e.message || ''))
+      refreshUsage && refreshUsage()
+      return
+    }
+    if (d.outOfHours) {
+      const reset = d.resetLabel || renewLabel || ''
+      setGateMsg(isCompanyMember ? t('workStart.gateOutOfHoursCompany', { reset }) : t('workStart.gateOutOfHours', { reset }))
+      if (!isCompanyMember && canBuyHours) setGateAct('hours')
+      refreshUsage && refreshUsage()
+      return
+    }
+    if (d.taskLimit) { setGateMsg(t('workStart.gateCompanyTaskLimit', { reset: d.resetLabel || renewLabel || '' })); return }
     if (status === 402) {
       if (isCompanyMember) setGateMsg(t('workStart.gateCompanyNoLicense'))
       else { setNeedsSub(true); navigate('/work') }
@@ -588,7 +611,7 @@ export default function StartTask() {
       {gateMsg && (
         <div className="wd-note warn" role="alert" style={{ marginBottom: 14 }}>
           <AlertTriangle size={16} />
-          <span>{gateMsg}</span>
+          <span>{gateMsg}{gateAct === 'hours' && buyCredits && <> <button type="button" className="wd-note-act" onClick={() => buyCredits('hours')}>{t('workStart.gateOutOfHoursAct')}</button></>}</span>
         </div>
       )}
 
@@ -710,13 +733,18 @@ export default function StartTask() {
                 ? t('workStart.continueHint', 'Add a plan name and your goal to continue.')
                 : (ready ? t('workStart.goalReadyHint') : t('workStart.notReady'))}
             </span>
-            {usage && usage.tasks && !usage.tasks.unlimited && (
+            {/* Task slots, from the shared derivation (planModel): open tasks of
+                the at-once maximum (individuals; nothing resets), or a company
+                member's admin-set ceiling with its reset. */}
+            {plan && plan.tasks && !plan.tasks.unlimited && plan.tasks.max != null && (
               <div className="wd-taskcap">
-                {usage.tasks.activeTaskId
-                  ? t('workStart.capFinish')
-                  : (usage.tasks.cap === 1
-                      ? t('workStart.capLeftOne', { remaining: usage.tasks.remaining, cap: usage.tasks.cap, reset: usage.tasks.resetLabel || '11:59 PM ET' })
-                      : t('workStart.capLeft', { remaining: usage.tasks.remaining, cap: usage.tasks.cap, reset: usage.tasks.resetLabel || '11:59 PM ET' }))}
+                {plan.tasks.mode === 'open'
+                  ? (plan.tasksFull
+                      ? t('workStart.openFull', { max: plan.tasks.max })
+                      : t.n('workStart.openSlots', plan.tasks.remaining, { open: plan.tasks.used, max: plan.tasks.max, n: plan.tasks.remaining }))
+                  : (plan.tasks.max === 1
+                      ? t('workStart.capLeftOne', { remaining: plan.tasks.remaining, cap: plan.tasks.max, reset: plan.tasks.resetLabel })
+                      : t('workStart.capLeft', { remaining: plan.tasks.remaining, cap: plan.tasks.max, reset: plan.tasks.resetLabel }))}
               </div>
             )}
             <Foot

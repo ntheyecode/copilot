@@ -475,12 +475,12 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
   // the visitor asked about the product. Never for an off-topic question.
   const recPlan = res ? ((res.plan && PLAN_NAMES[String(res.plan).toLowerCase()]) ? String(res.plan).toLowerCase() : (res.verdict === 'no' || res.verdict === 'offtopic' ? '' : 'basic')) : ''
   const recPrice = pricing && pricing.plans ? pricing.plans[recPlan] : null
-  // Allowances come from the pricing API, never hardcoded: hoursMonthly is the
-  // guided hours included per calendar month, tasks the guided tasks per day.
-  // An API that does not carry hoursMonthly yet (the older shape) hides the
-  // hours rather than showing a number with the wrong unit.
+  // The allowance comes from the pricing API, never hardcoded: hoursMonthly is
+  // the guided hours included per calendar month (hours are the only usage
+  // limit; there is no per-day task count any more). An API that does not carry
+  // hoursMonthly yet (the older shape) hides the hours rather than showing a
+  // number with the wrong unit.
   const recHours = pricing && pricing.hoursMonthly ? pricing.hoursMonthly[recPlan] : null
-  const recTasks = pricing && pricing.tasks ? pricing.tasks[recPlan] : null
   const showCta = !!(res && recPlan && res.verdict !== 'offtopic' && res.verdict !== 'no')
 
   // A plain render helper (NOT a component) - defining a component inside render
@@ -744,12 +744,8 @@ export default function LiveValidate({ toPricing = defaultToPricing, theme = 'li
                               <span className="lv-plan-rib">{t('widgets.validate.recommended')}</span>
                               <span className="lv-plan-n">{PLAN_NAMES[recPlan]}</span>
                               {recPrice != null && <span className="lv-plan-p">{money(recPrice)}<small>{t('common.perMonth')}</small></span>}
-                              {(recHours != null || recTasks != null) && (
-                                <span className="lv-plan-d">
-                                  {recHours != null && t.n('widgets.validate.hrsMonth', recHours)}
-                                  {recHours != null && recTasks != null && ' · '}
-                                  {recTasks != null && t.n('widgets.validate.tasksN', recTasks)}
-                                </span>
+                              {recHours != null && (
+                                <span className="lv-plan-d">{t.n('widgets.validate.hrsMonth', recHours)}</span>
                               )}
                             </div>
                             <div className="lv-cta-btns">

@@ -2,14 +2,15 @@
 // in-session console, src/pages/work/Guiding.jsx, and the second-monitor full
 // guide, src/pages/WorkFullGuide.jsx). Both read the SAME usage snapshot
 // (GET /api/work/usage) through planModel.planView, so the time left, the
-// tasks-today line and the out-of-hours message can never disagree with the
+// task-slots line and the out-of-hours message can never disagree with the
 // shell's plan pill or the dashboard meters (SUPREME RULE II). Pure functions,
 // no React: the console passes the usage object it already polls.
 //
 // Honest wording for the monthly plan model: hours are included per month and
 // renew on the 1st (usage.resetLabel is the renewal date, "Nov 1"), top-up hours
-// never expire, and tasks are a plain per-day cap. No minutes-per-day, no
-// banked credits, no trade.
+// never expire, and tasks are open slots (up to a few at once; a company member
+// may instead have an admin-set ceiling). No minutes-per-day, no per-day task
+// cap, no banked credits, no trade.
 import { planView, fmtDuration } from './planModel.js'
 
 const UNITS = { h: 'h', min: 'min' }
@@ -23,12 +24,13 @@ export function usageTimeLeft(usage) {
   return `${fmtDuration(plan.remainingSeconds, UNITS, true)} left`
 }
 
-// "2 of 4 tasks today" or '' when the cap does not apply (unlimited / unknown).
-export function usageTasksToday(usage) {
+// "1 of 4 tasks open" (individuals: the at-once slots) or "2 of 3 tasks" (a
+// company ceiling), or '' when no limit applies (unlimited / unknown).
+export function usageTasksLine(usage) {
   const plan = planView(usage)
   const t = plan && plan.tasks
-  if (!t || t.unlimited || t.cap == null) return ''
-  return `${t.usedToday} of ${t.cap} tasks today`
+  if (!t || t.unlimited || t.max == null) return ''
+  return t.mode === 'open' ? `${t.used} of ${t.max} tasks open` : `${t.used} of ${t.max} tasks`
 }
 
 // What to do when the plan hours are gone. A company member (the usage snapshot
