@@ -34,3 +34,9 @@ Translation rule: native, professional, brand voice, no em-dashes, US-English so
 scripts/i18n-apply-patch.mjs <locale> <patch.json> [--dry] applies {set, delete} key patches to ONE locale file textually (EN sibling order, missing parents created, comments kept), re-imports to verify and ROLLS BACK on any mismatch. One patch per locale (keys listed above); dry-run first; commit each locale right after it verifies.
 
 Tool update: inline one-line objects (`k: { a: 1, b: 2 },`) are supported for set/delete (help steps + section subtitles use them).
+
+## STATUS 2026-10-27 (later): translations DONE, gates green
+- All 14 locales applied with the tool and committed one per locale (de 9183bd4 ... zh 8079636). Patches kept in side-session-notes/i18n-patches/admin-plan-wow/.
+- Gates on the branch: check-jsx-imports PASS (110 files), locale-integrity OK, parity(widgets) OK, build clean, check-public-assets PASS, npm test 531/531, build:harden ran.
+- Whole-catalog parity (now truthful after the gate fix) = 265 missing + 467 extra across the 14 locales: PRE-EXISTING debt in other namespaces (home.* gaps owned by feat-site-wow, plus dead keys), NOT this branch; every namespace this branch touched is clean for every locale.
+- Remaining here: (a) CompanyPoolCard silent-error fix, (b) render-verify 1280/640 EN+DE via admin-wow + api-seeded, (c) refresh help screenshots (super overview/companies/users/pricing, company overview), (d) merge to main (no push).
