@@ -62,7 +62,9 @@ export default function PlanPill({ plan, planName, renewLabel, companyName, canB
   const timeLeft = fmtDuration(plan.remainingSeconds, units)
   const tasksAria = !tasks ? '' : tasks.unlimited ? t('workShell.plan.tasksUnlimitedAria')
     : t('workShell.plan.tasksLeftAria', { remaining: tasks.remaining != null ? tasks.remaining : 0, cap: tasks.cap != null ? tasks.cap : 0 })
-  const tasksFace = !tasks ? '-' : tasks.unlimited ? '∞' : `${tasks.remaining != null ? tasks.remaining : '-'}/${tasks.cap != null ? tasks.cap : '-'}`
+  // The face reads USED of cap, the same way the pips fill and the dashboard
+  // tile counts ("3 of 4 started"); the aria label says what is left.
+  const tasksFace = !tasks ? '-' : tasks.unlimited ? '∞' : `${tasks.usedToday}/${tasks.cap != null ? tasks.cap : '-'}`
   const windowWord = (w) => t(w === 'week' ? 'workShell.plan.windowWeek' : w === 'month' ? 'workShell.plan.windowMonth' : 'workShell.plan.windowDay')
 
   // The one state note + its action.

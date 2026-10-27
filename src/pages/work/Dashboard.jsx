@@ -149,7 +149,7 @@ export default function Dashboard() {
                 ? t('workDashboard.plan.admin')
                 : isCompanyMember
                   ? t('workDashboard.plan.company', { company: companyName || t('workDashboard.plan.yourCompany'), time: timeLeft })
-                  : covered
+                  : (covered || (plan && plan.hasPlan))
                     ? t('workDashboard.plan.covered', { plan: planName, time: timeLeft })
                     : needsSub
                       ? t('workDashboard.plan.choose')

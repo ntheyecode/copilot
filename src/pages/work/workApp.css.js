@@ -77,6 +77,8 @@ export const WD_CSS = `
    nowrap + flex-shrink:0 on every one of them. */
 .wd-getapp,.wd-addtime,.wd-signout,.wd-buyhrs,.wd-upgrade,.wd-mins{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13.5px;font-weight:500;line-height:1;text-decoration:none;cursor:pointer;padding:0 13px;transition:color .15s,border-color .15s,background .15s,filter .15s}
 .wd-getapp:hover,.wd-addtime:hover,.wd-signout:hover,.wd-buyhrs:hover{border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
+/* Buy hours: the full label wide, the short one from 1100px down, icon only at 480. */
+.wd-buyhrs .short{display:none}
 .wd-getapp{position:relative;width:32px;padding:0;color:var(--mut)}
 /* Icon-only link: the label stays in the DOM for screen readers and the
    title tooltip carries it for everyone else. */
@@ -429,6 +431,8 @@ export const WD_CSS = `
 @media(max-width:1100px){
  .wd-addtime,.wd-signout{width:32px;padding:0}
  .wd-addtime span,.wd-signout span{display:none}
+ .wd-buyhrs .full{display:none}
+ .wd-buyhrs .short{display:inline}
 }
 @media(max-width:860px){
  .wd-upgrade{width:32px;padding:0}
@@ -454,6 +458,10 @@ export const WD_CSS = `
  .wd-mins.skel{min-width:64px}
  .wd-avatar{display:none}
  .wd-buyhrs:not(.wd-retry){width:32px;padding:0}
+ /* Phone width: the desktop-app link steps aside so sign out never clips. */
+ .wd-getapp,.wd-addtime{display:none}
+ /* List rows wrap their title and meta instead of clipping them. */
+ .wd-sess-title,.wd-sess-meta{white-space:normal;overflow-wrap:anywhere}
  .wd-buyhrs:not(.wd-retry) span{display:none}
  .wd-resume span{display:none}
 }

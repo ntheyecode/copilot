@@ -40,8 +40,9 @@ export const PLAN_METERS_CSS = `
 .wd-pm-value small{font-size:13px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif;margin-left:3px}
 .wd-pm-tile.low .wd-pm-value{color:var(--warm)}
 .wd-pm-tile.out .wd-pm-value{color:var(--danger)}
-.wd-pm-sub{font-size:12px;color:var(--mut);line-height:1.4;margin-top:3px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-pm-sub.wrap{white-space:normal}
+/* Sub lines wrap rather than clip: a tile is never allowed to cut a value off,
+   not even with an ellipsis (design-time gate). */
+.wd-pm-sub{font-size:12px;color:var(--mut);line-height:1.4;margin-top:3px;min-width:0;overflow-wrap:anywhere}
 .wd-pm-sub.warm{color:var(--warm);font-weight:600}
 .wd-pm-sub.out{color:var(--danger);font-weight:600}
 .wd-pm-sub svg{vertical-align:-2px;margin-right:3px}

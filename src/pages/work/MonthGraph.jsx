@@ -77,8 +77,14 @@ export default function MonthGraph({ refreshKey }) {
     if (prev !== undefined && refreshKey !== prev) load()
   }, [load, refreshKey])
 
-  // Measure the wrapper so labels stay real pixels at every width.
+  // Measure the wrapper so labels stay real pixels at every width. The plot
+  // (and so the wrapper) only mounts once the first load lands, so the effect
+  // re-runs on that transition; a mount-only effect would find no element and
+  // leave the SVG at its default width, scaled by CSS (tiny text on a phone,
+  // oversized on a desktop).
+  const hasPlot = days != null
   useEffect(() => {
+    if (!hasPlot) return undefined
     const el = wrapRef.current
     if (!el) return undefined
     const read = () => { const w = el.clientWidth; if (w > 0) setWidth(w) }
@@ -86,7 +92,7 @@ export default function MonthGraph({ refreshKey }) {
     if (typeof ResizeObserver === 'undefined') { window.addEventListener('resize', read); return () => window.removeEventListener('resize', read) }
     const ro = new ResizeObserver(read); ro.observe(el)
     return () => ro.disconnect()
-  }, [])
+  }, [hasPlot])
 
   const model = useMemo(() => {
     const list = days || []

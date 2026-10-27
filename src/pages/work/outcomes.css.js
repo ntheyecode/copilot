@@ -32,5 +32,6 @@ export const OUTCOMES_CSS = `
 .wd-oc-all{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-2);font-size:13px;font-weight:600;text-decoration:none;padding:6px 2px}
 .wd-oc-all:hover{color:var(--em-deep)}
 @media(max-width:640px){.wd-oc-body{padding-left:14px}}
+@media(max-width:480px){.wd-oc-t,.wd-oc-m{white-space:normal;overflow-wrap:anywhere}}
 @media(prefers-reduced-motion:reduce){.wd-oc-row,.wd-oc-chev,.wd-oc-open{transition:none}}
 `

@@ -22,7 +22,9 @@ export const MONTH_GRAPH_CSS = `
 .wd-mg-plot{position:relative;min-width:0;outline:none}
 .wd-mg-plot.refresh svg{opacity:.55;transition:opacity .2s}
 .wd-mg-plot:focus-visible{outline:2px solid var(--focus);outline-offset:4px;border-radius:10px}
-.wd-mg svg{display:block;width:100%;height:auto;overflow:visible;font-family:"Figtree",system-ui,sans-serif}
+/* Only the plot SVG fills its wrapper; the lucide icons in the head and the
+   table button keep their own size attributes. */
+.wd-mg-plot>svg{display:block;width:100%;height:auto;overflow:visible;font-family:"Figtree",system-ui,sans-serif}
 .wd-mg .grid{stroke:var(--line-soft);stroke-width:1}
 .wd-mg .base{stroke:var(--line-2);stroke-width:1}
 .wd-mg .month{stroke:var(--line-2);stroke-width:1}
