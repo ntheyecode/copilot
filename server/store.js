@@ -42,14 +42,16 @@ import { LEGAL_VERSION } from './legal.js'
 // key uses. We store ONLY a verifier (useless for decrypting anything) + its salt,
 // never the password and never a derived archive key.
 import { verifierOf, checkVerifier, randomSalt as kdfRandomSalt, KDF as EXPORT_KDF } from './key_derive.js'
-// Enterprise quota math (SUPREME RULE II: ONE source of truth). The pure, testable
-// core of the enterprise billing hierarchy - per-company timezone date keys,
-// settings/allocation validation, the monthly-pool rollover, the effective
-// per-user allocation merge, and the ceiling math - lives in enterprise_quota.js.
-// This store is the only orchestrator: it reads/writes db, persists, and emits
-// events, delegating every DECISION to the pure module so the rules are unit
-// tested without a server (pool math, ceiling enforcement, month-end expiry).
+// Enterprise billing hierarchy (SUPREME RULE II: ONE source of truth, and the
+// owner's no-monolith rule). The pure, testable rules - per-company timezone date
+// keys, settings/allocation validation, the monthly-pool rollover, the effective
+// per-user allocation merge, and the ceiling math - live in enterprise_quota.js;
+// the orchestration (setters, dashboards, hour requests, alerts, inboxes) lives
+// in enterprise_billing.js and is created below with this store's context, so
+// the store stays the single owner of db + persistence and keeps only the thin
+// hot-path hooks the consumption engine calls.
 import * as eq from './enterprise_quota.js'
+import { createEnterpriseBilling } from './enterprise_billing.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -381,6 +383,23 @@ function persistSoon() {
 const id = () => (++db.seq).toString()
 const now = () => new Date().toISOString()
 export function httpErr(status, message) { const e = new Error(message); e.status = status; return e }
+
+// ---- Enterprise billing + quota hierarchy (module: enterprise_billing.js) ----
+// Created here, right after the store primitives it needs (everything else it
+// takes is a hoisted function declaration). The consumption engine further down
+// calls the hooks by their plain names; the public API is re-exported unchanged
+// so server/index.js and the tests keep their `store.*` names.
+const ent = createEnterpriseBilling({
+  db: () => db, persist, persistSoon, getUser, company: _company, publicCompany, publicWorkUser,
+  httpErr, id, now, emitStoreEvent,
+})
+const { rollCompanyPool, userCompany, userTz, userDayKey, userCeilingState, userHourHeadroom, companyUsageSnapshot, maybeFireAlerts } = ent
+export const {
+  setCompanyEnterprise, setCompanyAllocation, setUserAllocation, publicCompanyAllocation, companyPoolDashboard,
+  requestCompanyHours, listCompanyHourRequests, decideCompanyHours,
+  listNotifications, listNotificationsForUser, listSuperadminNotifications, superadminUnreadCount,
+  unreadNotificationCount, markNotificationRead, markSuperadminNotificationRead,
+} = ent
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -1114,25 +1133,7 @@ function publicCompany(c) {
     // Enterprise billing hierarchy (superadmin-owned settings + live pool state).
     // Never includes AI cost or any model/provider name. alertState is internal
     // and intentionally omitted; hourRequests are summarized (count + pending).
-    enterprise: (() => {
-      const ent = c.enterprise || eq.enterpriseDefaults()
-      const monthly = ent.poolMonthlySeconds || 0
-      const remaining = Math.max(0, Number(c.poolSeconds) || 0)
-      return {
-        poolMonthlySeconds: monthly, poolRemainingSeconds: remaining,
-        poolUsedPct: monthly > 0 ? Math.min(100, Math.round(((monthly - remaining) / monthly) * 100)) : 0,
-        poolPeriodKey: ent.poolPeriodKey || null,
-        monthEnd: ent.monthEnd, carryCapSeconds: ent.carryCapSeconds,
-        timezone: ent.timezone, resetLabel: eq.tzResetLabel(ent.timezone),
-        overageUsdPerHour: ent.overageUsdPerHour || 0,
-        requestsEnabled: !!ent.requestsEnabled, stripeEnabled: !!ent.stripeEnabled,
-        notifyPct: ent.notifyPct || 75,
-        taskPolicy: ent.taskPolicy || { mode: 'unlimited', day: null, week: null, month: null },
-        groups: ent.groups || { admin: eq.emptyAlloc(), supervisor: eq.emptyAlloc(), member: eq.emptyAlloc() },
-        hourRequestCount: (ent.hourRequests || []).length,
-        pendingHourRequests: (ent.hourRequests || []).filter((r) => r.status === 'pending').length,
-      }
-    })(),
+    enterprise: ent.publicEnterprise(c),
     profile: c.profile || normalizeProfile({}),
     pricing: effectiveCompanyPricing(c.id),           // the prices that apply (global + overrides)
     pricingOverride: c.pricing || null,               // just this company's overrides, for the edit form
@@ -3594,7 +3595,7 @@ export function addWorkUsage(workUserId, seconds) {
     const cs = userCeilingState(u)
     const headroom = userHourHeadroom(cs)
     if (Number.isFinite(headroom)) secs = Math.min(secs, Math.max(0, headroom))
-    if (!secs) { maybeFireAlerts(c, u); return getWorkUsage(workUserId) }
+    if (!secs) { maybeFireAlerts(c, u, cs); return getWorkUsage(workUserId) }   // nothing consumed: the state just computed is still exact
   }
   const tier = getWorkTier(workUserId)
   const dailySeconds = workDailyLimit(tier)
@@ -3646,333 +3647,6 @@ export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
   u.purchasedSeconds = Math.max(0, (u.purchasedSeconds || 0) + want)
   persist()
   return { ok: true, poolSeconds: c.poolSeconds, user: publicWorkUser(u) }
-}
-
-// ===========================================================================
-// ENTERPRISE BILLING + QUOTA HIERARCHY
-// (AdmireVeda sets the company pool + policy -> company admin sub-allocates per
-//  user/group -> every guided second and task draws from the ONE company pool.)
-// ===========================================================================
-// SINGLE SOURCE OF TRUTH (SUPREME RULE II): the LIVE remaining pool stays
-// c.poolSeconds (the field addWorkUsage already draws down). enterprise.* adds
-// only the monthly grant, period tracking, month-end behavior, ceilings and
-// alerts AROUND it. All DECISIONS delegate to the pure enterprise_quota module.
-function companyEnterprise(c) {
-  if (!c) return eq.enterpriseDefaults()
-  if (!c.enterprise) c.enterprise = eq.enterpriseDefaults()
-  return c.enterprise
-}
-function userCompany(u) { return (u && u.companyId) ? _company(u.companyId) : null }
-function userTz(u) { const c = userCompany(u); return (c && c.enterprise && c.enterprise.timezone) || 'America/New_York' }
-// A company user's "usage day" key is in the COMPANY timezone (daily resets at
-// company-local 11:59 PM). Individuals stay on Eastern, so userDayKey for a
-// company-less account is identical to easternDayKey (no behavior change).
-function userDayKey(u) { return eq.tzDayKey(userTz(u)) }
-function userAllocGroup(u) {
-  const g = u && u.allocGroup
-  return eq.ALLOC_GROUPS.includes(g) ? g : eq.defaultAllocGroup(u && u.companyRole)
-}
-
-// Apply the lazy month-end rollover to a company's pool when its month changed:
-// forfeit (reset to one monthly grant) or carryforward (add a grant, up to an
-// optional cap). Resets the per-period alert state so each new month can alert
-// again. Persists only when something changed (cheap on the hot read path).
-function rollCompanyPool(c) {
-  if (!c) return eq.enterpriseDefaults()
-  const ent = companyEnterprise(c)
-  const r = eq.rolloverPool({
-    poolSeconds: c.poolSeconds || 0, poolPeriodKey: ent.poolPeriodKey,
-    poolMonthlySeconds: ent.poolMonthlySeconds || 0, monthEnd: ent.monthEnd, carryCapSeconds: ent.carryCapSeconds,
-  }, ent.timezone)
-  if (r.rolled) {
-    c.poolSeconds = r.poolSeconds
-    ent.poolPeriodKey = r.poolPeriodKey
-    ent.alertState = {}
-    persistSoon()
-  }
-  return ent
-}
-
-// ---- Per-user consumption roll-ups (derived from the daily records) --------
-// Daily usage/task records are the single source; week/month totals are summed
-// from them so there is no parallel counter to drift. Day keys are company-tz.
-function _windowPredicate(window, u) {
-  const tz = userTz(u), now = Date.now()
-  if (window === 'week') { const wk = eq.tzWeekKey(tz, now); return (dk) => eq.weekKeyOfDayKey(dk) === wk }
-  if (window === 'month') { const mk = eq.tzMonthKey(tz, now); return (dk) => dk.slice(0, 7) === mk }
-  const dk0 = eq.tzDayKey(tz, now); return (dk) => dk === dk0
-}
-function userConsumedSeconds(u, window) {
-  if (!u) return 0
-  const pred = _windowPredicate(window, u), prefix = `${u.id}:`
-  let secs = 0
-  for (const key in (db.workUsage || {})) {
-    if (key.indexOf(prefix) !== 0) continue
-    if (!pred(key.slice(prefix.length))) continue
-    secs += Math.max(0, Number((db.workUsage[key] || {}).consumedSeconds) || 0)
-  }
-  return secs
-}
-function userTaskCount(u, window) {
-  if (!u) return 0
-  const pred = _windowPredicate(window, u), prefix = `${u.id}:`
-  let n = 0
-  for (const key in (db.workTasks || {})) {
-    if (key.indexOf(prefix) !== 0) continue
-    if (!pred(key.slice(prefix.length))) continue
-    n += Math.max(0, Number(db.workTasks[key]) || 0)
-  }
-  return n
-}
-function _tighter(a, b) { if (a == null) return b == null ? null : b; if (b == null) return a; return Math.min(a, b) }
-
-// The user's EFFECTIVE ceiling = group default merged with per-user override,
-// then (for tasks) the company-wide policy, keeping the TIGHTER limit. Returns
-// null for individuals (they use the task-credit economy, unchanged).
-function userEffectiveAlloc(u) {
-  const c = userCompany(u); if (!c) return null
-  const ent = companyEnterprise(c)
-  const group = (ent.groups && ent.groups[userAllocGroup(u)]) || eq.emptyAlloc()
-  return eq.effectiveAlloc({ group, user: (u && u.alloc) || null })
-}
-function userCeilingState(u) {
-  const c = userCompany(u); if (!c) return null
-  const ent = companyEnterprise(c)
-  const alloc = userEffectiveAlloc(u)
-  const policyTasks = (ent.taskPolicy && ent.taskPolicy.mode === 'limited')
-    ? { day: ent.taskPolicy.day, week: ent.taskPolicy.week, month: ent.taskPolicy.month }
-    : { day: null, week: null, month: null }
-  const taskLimits = {
-    day: _tighter(alloc.tasks.day, policyTasks.day),
-    week: _tighter(alloc.tasks.week, policyTasks.week),
-    month: _tighter(alloc.tasks.month, policyTasks.month),
-  }
-  const hours = eq.windowState(alloc.hours, { day: userConsumedSeconds(u, 'day'), week: userConsumedSeconds(u, 'week'), month: userConsumedSeconds(u, 'month') })
-  const tasks = eq.windowState(taskLimits, { day: userTaskCount(u, 'day'), week: userTaskCount(u, 'week'), month: userTaskCount(u, 'month') })
-  return { group: userAllocGroup(u), alloc, taskLimits, hours, tasks }
-}
-// Remaining guided SECONDS before the most binding HOUR ceiling (Infinity when
-// no hour window is limited). The pool is still the separate hard company cap.
-function userHourHeadroom(cs) {
-  if (!cs || !cs.hours || !cs.hours.limited) return Infinity
-  let h = Infinity
-  for (const w of ['day', 'week', 'month']) { const ws = cs.hours[w]; if (ws && ws.limit != null) h = Math.min(h, ws.remaining) }
-  return h
-}
-
-// Compact enterprise snapshot for the client usage object (pool + ceiling +
-// actionable state). Never exposes AI cost or any model/provider name.
-function companyUsageSnapshot(c, u, cs = null) {
-  const ent = companyEnterprise(c)
-  cs = cs || userCeilingState(u)
-  const monthly = ent.poolMonthlySeconds || 0
-  const remaining = Math.max(0, c.poolSeconds || 0)
-  return {
-    timezone: ent.timezone, resetLabel: eq.tzResetLabel(ent.timezone),
-    pool: { remainingSeconds: remaining, monthlySeconds: monthly, usedPct: monthly > 0 ? Math.min(100, Math.round(((monthly - remaining) / monthly) * 100)) : 0, monthEnd: ent.monthEnd },
-    group: cs ? cs.group : null, hours: cs ? cs.hours : null, tasks: cs ? cs.tasks : null,
-    requestsEnabled: !!ent.requestsEnabled, stripeEnabled: !!ent.stripeEnabled, overageUsdPerHour: ent.overageUsdPerHour || 0,
-  }
-}
-
-// ---- 75% consumption alerts (email + dashboard, once per period) -----------
-const SUPER_INBOX = '__super'
-function companyAdminIds(companyId) {
-  return (db.users || []).filter((x) => x.companyId === companyId && x.companyRole === 'company_admin').map((x) => x.id)
-}
-function addNotification(recipient, n) {
-  if (!db.notifications) db.notifications = {}
-  const list = db.notifications[recipient] || (db.notifications[recipient] = [])
-  list.unshift({ id: 'ntf' + id(), at: new Date().toISOString(), read: false, ...n })
-  if (list.length > 200) list.length = 200
-}
-export function listNotifications(recipient, { limit = 50 } = {}) {
-  const list = (db.notifications && db.notifications[recipient]) || []
-  return list.slice(0, Math.max(1, Math.min(200, limit)))
-}
-export function listNotificationsForUser(workUserId, { limit = 50 } = {}) {
-  const u = getUser(workUserId); if (!u) return []
-  return listNotifications(workUserId, { limit })
-}
-export function listSuperadminNotifications({ limit = 100 } = {}) { return listNotifications(SUPER_INBOX, { limit }) }
-export function superadminUnreadCount() { return unreadNotificationCount(SUPER_INBOX) }
-export function markSuperadminNotificationRead(idOrAll = '*') { return markNotificationRead(SUPER_INBOX, idOrAll) }
-export function unreadNotificationCount(recipient) {
-  return ((db.notifications && db.notifications[recipient]) || []).filter((x) => !x.read).length
-}
-export function markNotificationRead(recipient, idOrAll = '*') {
-  const list = (db.notifications && db.notifications[recipient]) || []
-  if (idOrAll === '*' || idOrAll == null) { for (const x of list) x.read = true }
-  else { const x = list.find((y) => y.id === idOrAll); if (x) x.read = true }
-  persistSoon()
-  return { unread: unreadNotificationCount(recipient) }
-}
-function notifySuperadminPool(c, usedPct) {
-  addNotification(SUPER_INBOX, {
-    type: 'company_pool_threshold', companyId: c.id, companyName: c.name, pct: usedPct,
-    title: `${c.name}: ${usedPct}% of monthly pool used`,
-    body: `The monthly guided-hours pool for ${c.name} is ${usedPct}% consumed.`,
-  })
-  emitStoreEvent('company_pool_threshold', { companyId: c.id, companyName: c.name, pct: usedPct })
-}
-function notifyCompanyAdminsUser(c, u, pct) {
-  const name = u.displayName || u.username
-  for (const aid of companyAdminIds(c.id)) {
-    addNotification(aid, {
-      type: 'user_ceiling_threshold', companyId: c.id, userId: u.id, pct,
-      title: `${name}: ${pct}% of allowance used`,
-      body: `${name} has reached ${pct}% of their guided-time or task allowance.`,
-    })
-  }
-  emitStoreEvent('user_ceiling_threshold', { companyId: c.id, companyName: c.name, userId: u.id, userName: name, pct })
-}
-// Fire the threshold alerts for a company (pool -> superadmin) and user (ceiling
-// -> company admins) at most once per period. Never throws into the consume path.
-function maybeFireAlerts(c, u) {
-  try {
-    const ent = companyEnterprise(c)
-    const threshold = Math.max(1, Math.min(100, Number(ent.notifyPct) || 75))
-    if (!ent.alertState) ent.alertState = {}
-    const monthly = ent.poolMonthlySeconds || 0
-    if (monthly > 0) {
-      const usedPct = Math.min(100, Math.round(((monthly - Math.max(0, c.poolSeconds || 0)) / monthly) * 100))
-      const periodKey = ent.poolPeriodKey || eq.tzMonthKey(ent.timezone)
-      const fired = ent.alertState.company
-      if (usedPct >= threshold && (!fired || fired.period !== periodKey)) {
-        ent.alertState.company = { period: periodKey, pct: usedPct, at: now() }
-        notifySuperadminPool(c, usedPct); persistSoon()
-      }
-    }
-    if (u) {
-      const cs = userCeilingState(u)
-      const peak = eq.peakPct(cs && cs.hours, cs && cs.tasks)
-      if (peak >= threshold) {
-        if (!ent.alertState.users) ent.alertState.users = {}
-        const periodKey = eq.tzWeekKey(ent.timezone)   // re-alert at most once per week per user
-        const prev = ent.alertState.users[u.id]
-        if (!prev || prev.period !== periodKey) {
-          ent.alertState.users[u.id] = { period: periodKey, pct: peak, at: now() }
-          notifyCompanyAdminsUser(c, u, peak); persistSoon()
-        }
-      }
-    }
-  } catch { /* alerts must never break consumption */ }
-}
-
-// ---- Superadmin + company-admin setters / dashboards -----------------------
-// Superadmin: per-company pool, policy, overage price, timezone, month-end
-// behavior, request + Stripe toggles. Validated atomically; no silent fail.
-export function setCompanyEnterprise(companyId, patch = {}) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  let next
-  try { next = eq.normalizeEnterprise(patch, c.enterprise) } catch (e) { throw httpErr(400, e.message) }
-  next.poolPeriodKey = (c.enterprise && c.enterprise.poolPeriodKey) || null
-  next.alertState = (c.enterprise && c.enterprise.alertState) || {}
-  next.hourRequests = (c.enterprise && c.enterprise.hourRequests) || []
-  c.enterprise = next
-  rollCompanyPool(c)   // seed the live pool immediately when a grant is first set
-  persist()
-  return publicCompany(c)
-}
-// Company admin: per-GROUP ceilings + company-wide task policy. Can only
-// TIGHTEN (the shared pool is the hard company cap set by AdmireVeda).
-export function setCompanyAllocation(companyId, patch = {}) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  const ent = companyEnterprise(c)
-  let next
-  try { next = eq.normalizeEnterprise({ groups: patch.groups, taskPolicy: patch.taskPolicy }, ent) } catch (e) { throw httpErr(400, e.message) }
-  if (patch.groups != null) ent.groups = next.groups
-  if (patch.taskPolicy != null) ent.taskPolicy = next.taskPolicy
-  persist()
-  return publicCompanyAllocation(c)
-}
-export function setUserAllocation(companyId, targetUserId, { group, alloc } = {}) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  const u = getUser(targetUserId)
-  if (!u || String(u.companyId) !== String(companyId)) throw httpErr(404, 'That user is not in your company.')
-  if (group != null) { if (!eq.ALLOC_GROUPS.includes(group)) throw httpErr(400, 'Unknown allocation group.'); u.allocGroup = group }
-  if (alloc !== undefined) u.alloc = (alloc == null) ? null : eq.normalizeAlloc(alloc)
-  persist()
-  return publicWorkUser(u)
-}
-export function publicCompanyAllocation(c) {
-  c = (typeof c === 'string') ? _company(c) : c
-  if (!c) throw httpErr(404, 'Company not found.')
-  const ent = companyEnterprise(c)
-  return { groups: ent.groups, taskPolicy: ent.taskPolicy, timezone: ent.timezone, resetLabel: eq.tzResetLabel(ent.timezone), notifyPct: ent.notifyPct }
-}
-// Live pool + per-user consumption for BOTH consoles (superadmin: any company;
-// company admin: their own). Reflects every rule set above.
-export function companyPoolDashboard(companyId) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  rollCompanyPool(c)
-  const ent = companyEnterprise(c)
-  const monthly = ent.poolMonthlySeconds || 0
-  const remaining = Math.max(0, c.poolSeconds || 0)
-  const members = (db.users || []).filter((x) => x.companyId === companyId)
-  const byUser = members.map((u) => {
-    const cs = userCeilingState(u)
-    return {
-      id: u.id, username: u.username, displayName: u.displayName || u.username,
-      companyRole: u.companyRole || 'member', group: cs ? cs.group : eq.defaultAllocGroup(u.companyRole),
-      hours: cs ? cs.hours : null, tasks: cs ? cs.tasks : null, alloc: u.alloc || null,
-      consumedSeconds: { day: userConsumedSeconds(u, 'day'), week: userConsumedSeconds(u, 'week'), month: userConsumedSeconds(u, 'month') },
-      taskCount: { day: userTaskCount(u, 'day'), week: userTaskCount(u, 'week'), month: userTaskCount(u, 'month') },
-    }
-  }).sort((a, b) => b.consumedSeconds.month - a.consumedSeconds.month)
-  return {
-    companyId, name: c.name, timezone: ent.timezone, resetLabel: eq.tzResetLabel(ent.timezone),
-    pool: { remainingSeconds: remaining, monthlySeconds: monthly, usedSeconds: Math.max(0, monthly - remaining), usedPct: monthly > 0 ? Math.min(100, Math.round(((monthly - remaining) / monthly) * 100)) : 0, monthEnd: ent.monthEnd, periodKey: ent.poolPeriodKey, carryCapSeconds: ent.carryCapSeconds },
-    policy: { task: ent.taskPolicy, notifyPct: ent.notifyPct, overageUsdPerHour: ent.overageUsdPerHour, requestsEnabled: ent.requestsEnabled, stripeEnabled: ent.stripeEnabled },
-    groups: ent.groups,
-    pendingRequests: (ent.hourRequests || []).filter((r) => r.status === 'pending').length,
-    byUser,
-  }
-}
-
-// ---- Additional-hours requests (company admin requests -> superadmin decides)
-export function requestCompanyHours(companyId, byUserId, { hours, note } = {}) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  const ent = companyEnterprise(c)
-  if (!ent.requestsEnabled) throw httpErr(403, 'Additional-hours requests are turned off for your company. Contact AdmireVeda.')
-  const h = Math.round(Number(hours))
-  if (!Number.isFinite(h) || h <= 0 || h > 1e6) throw httpErr(400, 'Enter how many hours to request.')
-  const by = getUser(byUserId)
-  const req = { id: 'hreq' + id(), hours: h, note: String(note || '').slice(0, 500), status: 'pending', byUserId: byUserId || null, byName: (by && (by.displayName || by.username)) || '', at: new Date().toISOString(), decidedBy: null, decidedAt: null, decisionNote: '' }
-  ent.hourRequests.unshift(req)
-  if (ent.hourRequests.length > 200) ent.hourRequests.length = 200
-  addNotification(SUPER_INBOX, { type: 'hours_requested', companyId: c.id, companyName: c.name, requestId: req.id, hours: h, title: `${c.name} requested ${h} more hours`, body: `${req.byName} requested ${h} additional pooled hours.${req.note ? ' Note: ' + req.note : ''}` })
-  emitStoreEvent('hours_requested', { companyId: c.id, companyName: c.name, requestId: req.id, hours: h, byName: req.byName, note: req.note })
-  persist()
-  return req
-}
-export function listCompanyHourRequests(companyId) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  return (companyEnterprise(c).hourRequests || []).slice()
-}
-export function decideCompanyHours(companyId, requestId, { approve, by, note } = {}) {
-  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
-  const ent = companyEnterprise(c)
-  const req = (ent.hourRequests || []).find((r) => r.id === requestId)
-  if (!req) throw httpErr(404, 'Request not found.')
-  if (req.status !== 'pending') throw httpErr(409, 'That request was already decided.')
-  req.status = approve ? 'approved' : 'denied'
-  req.decidedBy = by || 'superadmin'; req.decidedAt = new Date().toISOString(); req.decisionNote = String(note || '').slice(0, 500)
-  if (approve) {
-    rollCompanyPool(c)
-    c.poolSeconds = Math.max(0, (Number(c.poolSeconds) || 0) + req.hours * 3600)
-    const price = Number(ent.overageUsdPerHour) || 0
-    if (price > 0) {
-      if (!c.billing) c.billing = { items: [] }
-      c.billing.items.push({ id: 'bi' + id(), at: new Date().toISOString(), label: `${req.hours} additional guided hours`, qty: req.hours, unit: price, amount: +(req.hours * price).toFixed(2) })
-    }
-  }
-  for (const aid of companyAdminIds(c.id)) {
-    addNotification(aid, { type: 'hours_decided', companyId: c.id, requestId: req.id, hours: req.hours, title: `Your ${req.hours}-hour request was ${req.status}`, body: approve ? `AdmireVeda approved ${req.hours} more hours; they are in your pool now.` : `AdmireVeda could not approve your ${req.hours}-hour request.${req.decisionNote ? ' ' + req.decisionNote : ''}` })
-  }
-  emitStoreEvent('hours_decided', { companyId: c.id, companyName: c.name, requestId: req.id, hours: req.hours, status: req.status, note: req.decisionNote })
-  persist()
-  return req
 }
 
 // WorkCoPilot pricing (superadmin-editable; the marketing site reads it).

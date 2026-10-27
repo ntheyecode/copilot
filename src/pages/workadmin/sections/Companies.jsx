@@ -227,6 +227,9 @@ function EnterprisePanel({ company, onSaved }) {
   const [msg, setMsg] = useState('')
   const [ok, setOk] = useState(false)
   const [reqs, setReqs] = useState(null)
+  // Denying a request is reason-logged through the ONE shared ReasonModal
+  // (owner standing rule: no browser prompts, every refusal carries a reason).
+  const [askReason, reasonModal] = useReasonModal()
   const num = (v) => v.replace(/[^0-9.]/g, '')
   const int = (v) => v.replace(/[^0-9]/g, '')
 
@@ -255,7 +258,10 @@ function EnterprisePanel({ company, onSaved }) {
   }
   const decide = async (rid, approve) => {
     let note = ''
-    if (!approve) { note = window.prompt(t('companiesAdmin.enterprise.denyReason')) || ''; }
+    if (!approve) {
+      note = await askReason({ title: t('companiesAdmin.enterprise.deny'), detail: t('companiesAdmin.enterprise.denyReason'), confirmLabel: t('companiesAdmin.enterprise.deny') })
+      if (note == null) return   // cancelled: the request stays pending
+    }
     try { await workAdminApi.decideHourRequest(company.id, rid, approve, note); loadReqs(); onSaved && onSaved() }
     catch (e) { setMsg(e.message) }
   }
@@ -321,7 +327,7 @@ function EnterprisePanel({ company, onSaved }) {
               <div className="co-block-t">{t('companiesAdmin.enterprise.requestsTitle')}</div>
               {pending.map((r) => (
                 <div key={r.id} className="co-ent-req">
-                  <span className="co-ent-req-main">{t('companiesAdmin.enterprise.requestLine', { hours: r.hours, by: r.byName || t('companiesAdmin.enterprise.companyAdmin') })}{r.note ? <span className="co-dim"> — {r.note}</span> : null}</span>
+                  <span className="co-ent-req-main">{t('companiesAdmin.enterprise.requestLine', { hours: r.hours, by: r.byName || t('companiesAdmin.enterprise.companyAdmin') })}{r.note ? <span className="co-dim">: {r.note}</span> : null}</span>
                   <span className="co-ent-req-act">
                     <button className="wka-btn sm primary" onClick={() => decide(r.id, true)}>{t('companiesAdmin.enterprise.approve')}</button>
                     <button className="wka-btn sm ghost" onClick={() => decide(r.id, false)}>{t('companiesAdmin.enterprise.deny')}</button>
@@ -332,6 +338,7 @@ function EnterprisePanel({ company, onSaved }) {
           )}
         </div>
       )}
+      {reasonModal}
     </div>
   )
 }
