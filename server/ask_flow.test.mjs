@@ -4,7 +4,7 @@
 // building to: { answer, planChanged, steps?, resumeAt }.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { askReducer, initialAsk, normalizeAskResponse, applyResume, askFocused, ASK_ASKING, ASK_ANSWERED, ASK_RESUMING, ASK_IDLE } from '../src/pages/work/askFlow.js'
+import { askReducer, initialAsk, normalizeAskResponse, applyResume, askFocused, isStuck, STUCK_MS, ASK_ASKING, ASK_ANSWERED, ASK_RESUMING, ASK_IDLE, ASK_OFFER } from '../src/pages/work/askFlow.js'
 
 const plan = () => [
   { text: 'Open the DNS panel', status: 'done' },
@@ -88,4 +88,22 @@ test('applyResume: a full plan replaces the list and keeps its done marks', () =
   assert.equal(out.steps[0].status, 'done')
   assert.equal(out.steps[2].status, 'current')
   assert.equal(out.currentStep, 2)
+})
+
+test('stuck offer: only from idle, begin from it is kind stuck, dismiss returns to guiding', () => {
+  let s = askReducer(initialAsk, { type: 'offer' })
+  assert.equal(s.phase, ASK_OFFER)
+  assert.ok(askFocused(s))
+  assert.equal(askReducer(askReducer(initialAsk, { type: 'begin', question: 'x' }), { type: 'offer' }).phase, ASK_ASKING)
+  const b = askReducer(s, { type: 'begin', question: 'the Verify button is grey' })
+  assert.equal(b.phase, ASK_ASKING)
+  assert.equal(b.kind, 'stuck')
+  assert.equal(askReducer(s, { type: 'dismiss' }).phase, ASK_IDLE)
+})
+
+test('isStuck: five minutes on one step, unless snoozed', () => {
+  assert.equal(isStuck(STUCK_MS - 1), false)
+  assert.equal(isStuck(STUCK_MS), true)
+  assert.equal(isStuck(STUCK_MS * 2, Date.now() + 1000), false)
+  assert.equal(isStuck(NaN), false)
 })

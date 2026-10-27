@@ -15,9 +15,19 @@
 // the engine side can land independently.
 
 export const ASK_IDLE = 'idle'           // guiding; no focused answer on screen
+export const ASK_OFFER = 'offer'         // proactive "Stuck? Any issues?" card (the step steps aside)
 export const ASK_ASKING = 'asking'       // the question is in flight: a short "working" moment
 export const ASK_ANSWERED = 'answered'   // the focused answer is on screen with Continue
 export const ASK_RESUMING = 'resuming'   // Continue pressed: the answer fades, guiding fades back in
+
+// PROACTIVE STUCK HELP: when the current step has not advanced for this long,
+// the guide steps aside and gently asks "Stuck? Any issues?". An offer that is
+// dismissed waits a full interval again before offering on the same step.
+export const STUCK_MS = 5 * 60 * 1000
+// The question sent when the user takes the offer without typing anything: the
+// engine then re-explains the current step more clearly (planChanged false) or
+// adapts the plan (planChanged true). Plain words, honest about what we want.
+export const STUCK_DEFAULT_QUESTION = 'I am stuck on this step. Explain it more clearly, or adapt the plan if something needs to change.'
 
 export const initialAsk = Object.freeze({
   phase: ASK_IDLE, kind: 'ask', question: '', answer: '',
@@ -26,8 +36,11 @@ export const initialAsk = Object.freeze({
 
 export function askReducer(state, action) {
   switch (action.type) {
+    case 'offer':
+      // Only interrupt plain guiding; never over an answer or a question in flight.
+      return state.phase === ASK_IDLE ? { ...initialAsk, phase: ASK_OFFER, kind: 'stuck' } : state
     case 'begin':
-      return { ...initialAsk, phase: ASK_ASKING, kind: action.kind || 'ask', question: String(action.question || '') }
+      return { ...initialAsk, phase: ASK_ASKING, kind: action.kind || (state.phase === ASK_OFFER ? 'stuck' : 'ask'), question: String(action.question || '') }
     case 'receive':
       return {
         ...state, phase: ASK_ANSWERED, error: '',
@@ -48,8 +61,16 @@ export function askReducer(state, action) {
   }
 }
 
-// True while the focused answer view owns the screen (the step view is hidden).
+// True while a focus screen (offer, working, answer) owns the view and the step
+// card is hidden. ONE screen at a time: the host renders exactly one of them.
 export const askFocused = (ask) => !!ask && ask.phase !== ASK_IDLE
+
+// Stuck rule, pure: the step has not advanced for STUCK_MS and no snooze is in
+// effect. `sinceMs` = now - the time the current step index last changed.
+export function isStuck(sinceMs, snoozedUntil = 0, now = Date.now(), threshold = STUCK_MS) {
+  if (!Number.isFinite(sinceMs) || sinceMs < threshold) return false
+  return !(Number.isFinite(snoozedUntil) && snoozedUntil > now)
+}
 
 // Build the contract shape from an engine reply.
 //   r           the raw JSON reply

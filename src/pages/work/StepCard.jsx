@@ -1,0 +1,53 @@
+import { Check, CheckCircle2, ArrowRight } from 'lucide-react'
+import RichText from '../../components/RichText.jsx'
+import { StepLink, CmdBlock, CodeBlock } from '../../components/StepBlocks.jsx'
+import DestructiveGate from './DestructiveGate.jsx'
+
+// THE STEP CARD: the current micro-step, front and center, in the same clean
+// card style as the task-planning wizard. One thing to do (the live guidance,
+// or the plan step before the first read), the quieter plan line when the two
+// differ, the "done when" check beneath, the step's link / exact commands /
+// code (copy-ready), then ONE primary action. Key control names and literal
+// values in the text are bold + highlighted by RichText; values are one-tap
+// copy chips. Shared by the console and the floating panel; styled by
+// guideView.css.js (.gv-step). `extra` slots host-specific bits (the How?
+// drill-down, the source chip) above the action row.
+export default function StepCard({
+  step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = 'Mark done', busy = false, extra, actions,
+}) {
+  if (!step) return null
+  const g = String(guidance || '').trim()
+  const t = String(step.text || '').trim()
+  const headline = g || t
+  const showPlanLine = !!(g && t && g !== t)
+  const n = Number.isInteger(index) ? index + 1 : null
+  return (
+    <section className="gv-step" aria-labelledby={`gv-step-h-${n || 0}`}>
+      <div className="gv-step-top">
+        {n != null && <span className="gv-step-n"><ArrowRight size={11} strokeWidth={2.8} aria-hidden="true" /> Step {n}{total ? ` of ${total}` : ''}</span>}
+        {confirmN > 0 && <span className="gv-confirm" role="status"><Check size={11} strokeWidth={3} aria-hidden="true" /> Step {confirmN} confirmed</span>}
+        {hint}
+      </div>
+      <h2 id={`gv-step-h-${n || 0}`} className="gv-step-text" style={{ margin: 0 }}><RichText text={headline} accent="var(--gv-accent)" /></h2>
+      {showPlanLine && <div className="gv-step-plan"><span className="gv-k">Plan</span><span><RichText text={t} accent="var(--gv-accent)" /></span></div>}
+      {step.validate && (
+        <div className="gv-step-when">
+          <CheckCircle2 size={14} strokeWidth={2.2} aria-hidden="true" />
+          <span><b>Done when</b> <RichText text={step.validate} accent="var(--gv-accent)" /></span>
+        </div>
+      )}
+      {step.url && <StepLink url={step.url} />}
+      {((step.commands && step.commands.length > 0) || (step.code && step.code.content)) && (
+        <DestructiveGate why={step.destructive ? step.destructiveWhy : null}>
+          {step.commands && step.commands.length > 0 && <CmdBlock lines={step.commands} />}
+          {step.code && step.code.content && <CodeBlock file={step.code.file} content={step.code.content} />}
+        </DestructiveGate>
+      )}
+      {extra}
+      <div className="gv-step-actions">
+        {onDone && <button type="button" className="gv-btn primary" onClick={onDone} disabled={busy} title="Mark this step done and move to the next"><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
+        {actions}
+      </div>
+    </section>
+  )
+}
