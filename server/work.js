@@ -1186,7 +1186,30 @@ export function workAskSystem({ base, voice = '', mode = 'stepwise' }) {
     'is a terminal command or code, give the EXACT command or code to run or paste, ready to ' +
     'copy, with real values filled in. If an error or dialog is shown, explain it and give the ' +
     'exact fix. Keep it short and plainly spoken. Never tell them you performed an action - you ' +
-    'only guide.'
+    'only guide. Wrap the exact control to act on and any literal value in **double asterisks**.\n' +
+    'THEN LEARN FROM THE QUESTION AND ADAPT THE PLAN FROM HERE. A mid-task question often reveals ' +
+    'something new: a different tool or path, a constraint, that they do NOT have something the ' +
+    'plan assumed, or that an earlier assumption was wrong. After you answer, decide ONE thing: ' +
+    'does the REMAINING plan need to change from where they are now?\n' +
+    '- If it does, set "planChanged" true and RE-PLAN FROM THE CURRENT STEP FORWARD ONLY: return ' +
+    'in "steps" the full ordered list from where they are now to the goal. Do NOT include or repeat ' +
+    'any step already marked done, and do NOT re-plan the whole goal from scratch - keep the ' +
+    'verified progress and any captured values intact. Each new step keeps the plan shape (text, ' +
+    'validate, url, commands, code) and carries its branch or recovery structure where the work ' +
+    'forks or can fail ("branches" and "onFail"), exactly like the planner. Include every ' +
+    'prerequisite; never assume a set-up step is already done unless the screen shows it.\n' +
+    '- If it does not, set "planChanged" false and "steps" to [].\n' +
+    'STUCK-HELP MODE. Sometimes this is triggered because the person seems STUCK on the current ' +
+    'step, and their message is empty or vague ("not sure", "where?", or nothing). That is ' +
+    'confusion, not new information: do NOT churn the plan. Set "planChanged" false and make ' +
+    '"answer" a CLEARER, fuller explanation of the CURRENT step - what to look for, exactly where ' +
+    'it is on this screen, and why - so they can get unstuck. Only re-plan when their words ' +
+    'genuinely reveal a needed change.\n' +
+    'Only change the plan when the question genuinely implies it; a plain informational question, ' +
+    'or a stuck person who just needs the current step explained, is planChanged false with just ' +
+    'the answer. Return ONLY JSON: ' +
+    '{"answer":"...","planChanged":true|false,"steps":[{"text":"...","validate":"...","url":null,"commands":[],"code":null,"branches":[],"onFail":[],"source":""}]}' +
+    SOURCE_ATTRIBUTION_RULE
 }
 export function workAskUser({ goal, question, steps = [], currentStep = 0, events = [], appContext = '' }) {
   const q = String(question || '').trim()
@@ -1206,9 +1229,47 @@ export async function workAsk(ai, cfg, { base, voice = '', mode = 'stepwise', go
   const system = withLocale(workAskSystem({ base, voice, mode }) + methodAnchorBlock(goal, appContext), locale)
   const user = workAskUser({ goal, question, steps, currentStep, events, appContext })
   const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
-  const isWeak = (r) => String(r || '').trim().length < 8
+  // Weak = no usable answer at all (no JSON answer and no prose), which is when
+  // the stronger backup earns its cost.
+  const isWeak = (r) => { const p = extractJson(r) || {}; if (p.answer || (Array.isArray(p.steps) && p.steps.length)) return false; return String(r || '').trim().length < 8 }
   const out = await escalateVision(run, { cfg, visionModel }, strong, isWeak)
-  return { answer: scrubGuidance(String(out.raw || '').trim()), escalated: out.escalated, reason: out.reason }
+  const raw = out.raw
+  const parsed = extractJson(raw, 'answer') || {}
+  const jsonSeen = !!extractJson(raw)
+  // Graceful fallback: if the model ignored the JSON contract, keep its prose as
+  // the answer rather than lose it (SUPREME RULE VIII); plan change just stays off.
+  const answer = scrubGuidance((parsed.answer != null ? String(parsed.answer) : (jsonSeen ? '' : String(raw || ''))).trim())
+  // Re-planned FORWARD steps (from where they are now), carrying the deep-plan
+  // branch/recovery structure so the runtime keeps following a structured plan.
+  const outSteps = (Array.isArray(parsed.steps) ? parsed.steps : []).map((s) => {
+    const branches = cleanBranches(s && s.branches)
+    const onFail = cleanOnFail(s && s.onFail)
+    return {
+      text: scrubGuidance(String((s && (s.text || s.step)) || '').trim()),
+      validate: scrubGuidance(String((s && s.validate) || '').trim()) || null,
+      url: (s && typeof s.url === 'string') ? s.url : null,
+      commands: Array.isArray(s && s.commands) ? s.commands : [],
+      code: (s && s.code) || null,
+      [WORK_SOURCE_FIELD]: cleanSource(s && s.source),
+      ...(branches.length ? { branches } : {}),
+      ...(onFail.length ? { onFail } : {}),
+    }
+  }).filter((s) => s.text)
+  // resumeAt = where the user continues. On a plan change the finished (done)
+  // steps are kept and the forward steps begin right after them, so that is the
+  // count of done steps; otherwise it is simply the current step. Matches how the
+  // store merges (replanKeepingProgress keeps done steps, then appends these).
+  const doneCount = (steps || []).filter((x) => x && x.status === 'done').length
+  const planChanged = parsed.planChanged === true && outSteps.length > 0
+  const curIdx = Number.isFinite(Number(currentStep)) ? Math.max(0, Math.round(Number(currentStep))) : doneCount
+  return {
+    answer,
+    planChanged,
+    steps: planChanged ? outSteps : [],
+    resumeAt: planChanged ? doneCount : curIdx,
+    escalated: out.escalated,
+    reason: out.reason,
+  }
 }
 
 // ---- Mid-task: the user hands over new context (text / document / image) ---

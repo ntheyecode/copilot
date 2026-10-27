@@ -2526,9 +2526,28 @@ app.post('/api/work/sessions/:id/ask', requireWorkAuth, requireWorkSubscription,
     meterCost(req.params.id, usedModel || call.visionModel, qScrub.clean + (sa.goal || ''), (out && out.answer) || '', frame ? 1 : 0, { kind: 'ask' })
     if (question) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ask', text: String(question) })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'answer', text: out.answer })
+    // LEARN-AND-ADAPT: when the question implies the remaining plan should change,
+    // re-plan from the current step forward, keeping every finished step and its
+    // captured values intact (store.replanKeepingProgress merges done + forward).
+    let planChanged = false
+    let resumeAt = out.resumeAt
+    if (out.planChanged && Array.isArray(out.steps) && out.steps.length) {
+      const cur0 = store.replanKeepingProgress(req.workUser.id, req.params.id, out.steps)
+      planChanged = true
+      resumeAt = cur0.currentStep
+      store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'Updated the steps ahead from your question, and kept everything you had already finished.' })
+    }
     if (escalated) store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: `Answered with a stronger model${call.forcedStrong ? ' - deep pass' : ''}.` })
     else if (out.reason === 'strong_failed') store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: 'A stronger model was tried but was unavailable, so the quick model result was kept for this answer.' })
-    res.json({ answer: out.answer, escalated, ...(gAsk && gAsk.guard ? { guard: gAsk.guard } : {}) })
+    const curSess = store.getWorkSession(req.workUser.id, req.params.id)
+    res.json({
+      answer: out.answer, escalated, planChanged, resumeAt,
+      // The new forward steps, only on a change (contract); plus the merged plan
+      // and resume index so the client can reconcile without a refetch.
+      steps: planChanged ? out.steps : [],
+      plan: planChanged ? (curSess.steps || []).map((x) => ({ ...x, source: x.source || '' })) : undefined,
+      ...(gAsk && gAsk.guard ? { guard: gAsk.guard } : {}),
+    })
   } catch (e) { sendWorkError(res, e, req) }
 })
 

@@ -5389,6 +5389,11 @@ export function replanKeepingProgress(workUserId, sessionId, newSteps) {
     commands: Array.isArray(x && x.commands) ? x.commands.map((c) => String(c || '').trim()).filter(Boolean) : [],
     code: (x && x.code && String((x.code.content || '')).trim()) ? { file: String(x.code.file || '').trim() || null, content: String(x.code.content) } : null,
     source: (x && x.source) ? String(x.source) : '',
+    // Preserve the deep-plan branch/recovery structure through a re-plan so the
+    // runtime navigate keeps following it (attached only when present - keeps old
+    // sessions and plain steps unchanged).
+    ...(Array.isArray(x && x.branches) && x.branches.length ? { branches: x.branches } : {}),
+    ...(Array.isArray(x && x.onFail) && x.onFail.length ? { onFail: x.onFail } : {}),
     status: 'pending',
     doneAt: null,
   })).filter((x) => x.text)
