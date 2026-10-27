@@ -173,7 +173,7 @@ test('the onboarding marker never leaks into another account and expires cleanly
   assert.equal((await req(jar(), 'POST', '/api/work/onboarding/confirm', { sessionId: 'cs_test_x' })).status, 440)
 })
 
-test('a signed-in account with a classic username can also sign in by its contact email', async () => {
+test('a classic account signs in by its contact email only once that email is VERIFIED (never on a typed, unproven address)', async () => {
   const j = jar()
   const uname = 'classic' + Math.random().toString(36).slice(2, 7)
   const email = uniq()
@@ -181,6 +181,37 @@ test('a signed-in account with a classic username can also sign in by its contac
   assert.equal(s.status, 200, JSON.stringify(s.data))
   const byName = await req(jar(), 'POST', '/api/work/login', { username: uname, password: PW })
   assert.equal(byName.status, 200)
+  const byMailUnverified = await req(jar(), 'POST', '/api/work/login', { username: email, password: PW })
+  assert.equal(byMailUnverified.status, 401, 'an unverified contact email never selects an account')
+  const u = store.findUser(uname)
+  store.markEmailVerified(u.id)
   const byMail = await req(jar(), 'POST', '/api/work/login', { username: email, password: PW })
-  assert.equal(byMail.status, 200, 'email fallback')
+  assert.equal(byMail.status, 200, 'verified email fallback')
+  // An email-shaped USERNAME typed by someone else never captures that address either.
+  const victim = uniq()
+  await req(jar(), 'POST', '/api/work/signup', { username: victim, password: PW, name: 'Squatter', email: 'other' + uniq(), acceptTerms: true })
+  assert.equal(store.findUserByVerifiedLogin(victim), null, 'unverified email-shaped username is not an identity')
+  assert.ok(store.findUserByLogin(victim), 'but it still counts as "an account uses this address"')
+})
+
+test('changing the sign-up email keeps the send budget (no mail cannon) and entry needs a verified identity', async () => {
+  const j = jar()
+  const email = uniq()
+  await req(j, 'POST', '/api/work/onboarding/signup', { email, password: PW, acceptTerms: true })
+  const fixed = uniq()
+  const ch = await req(j, 'POST', '/api/work/onboarding/email', { email: fixed })
+  assert.equal(ch.status, 200); assert.equal(ch.data.email, fixed)
+  assert.match(await lastCode(fixed), /^\d{6}$/, 'the corrected address gets its code right away')
+  const rs = await req(j, 'POST', '/api/work/onboarding/resend')
+  assert.equal(rs.status, 429, 'the cooldown from that send applies to a plain resend')
+  // Flipping addresses never exceeds the hourly budget (6 sends/hour per account).
+  let capped = null
+  for (let i = 0; i < 8; i++) { const r = await req(j, 'POST', '/api/work/onboarding/email', { email: uniq() }); assert.equal(r.status, 200); if (r.data.codeSent === false) { capped = r; break } }
+  assert.ok(capped, 'the hourly cap stops the address flip (address saved, no mail)'); assert.ok(capped.data.resendInMs > 0)
+  await new Promise((r) => setTimeout(r, 60))
+  const sunk = fs.readFileSync(process.env.WORK_EMAIL_SINK_FILE, 'utf8').split('\n').filter((l) => l.includes(capped.data.email))
+  assert.equal(sunk.length, 0, 'no email left for the capped address')
+  // Not verified: the app refuses entry even though billing is off here.
+  const en = await req(j, 'POST', '/api/work/onboarding/enter')
+  assert.equal(en.status, 403); assert.equal(en.data.needsVerification, true)
 })

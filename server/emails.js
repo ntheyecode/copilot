@@ -166,7 +166,7 @@ export function sendOwnerSubscriptionAlertAsync(kind, info = {}) {
 // or a reset link without an SMTP server, and lets the end-to-end tests drive
 // the real sign-up flow. Never set in production (the file would hold codes).
 // Unset = no-op; a write failure is swallowed so it can never break a send.
-const EMAIL_SINK_FILE = process.env.WORK_EMAIL_SINK_FILE || ''
+const EMAIL_SINK_FILE = (process.env.WORK_HOSTED === '1' || process.env.NODE_ENV === 'production') ? '' : (process.env.WORK_EMAIL_SINK_FILE || '')
 function sinkEmailForDev(type, to, data) {
   if (!EMAIL_SINK_FILE) return
   try {

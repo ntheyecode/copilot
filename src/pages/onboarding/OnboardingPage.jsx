@@ -94,7 +94,7 @@ export default function OnboardingPage() {
   if (screen === 'verify') {
     return (
       <OnboardingShell title={t('onboarding.verify.h1')} subtitle={t('onboarding.verify.p')}>
-        <VerifyEmailStep key={state.email} state={state} onState={apply} onExpired={onExpired} />
+        <VerifyEmailStep state={state} onState={apply} onExpired={onExpired} />
       </OnboardingShell>
     )
   }

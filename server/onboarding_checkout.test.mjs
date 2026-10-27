@@ -22,11 +22,12 @@ const store = await import(relative('store.js'))
 const { registerOnboardingRoutes } = await import(relative('onboarding.js'))
 
 // ---- a fake Stripe: records what was created, serves what we tell it -------
-const stripeState = { created: [], sessions: {}, subs: {} }
+const stripeState = { created: [], sessions: {}, subs: {}, expired: [] }
 const fakeStripe = {
   checkout: { sessions: {
     create: async (params) => { const id = 'cs_test_' + (stripeState.created.length + 1); stripeState.created.push({ id, params }); stripeState.sessions[id] = { id, status: 'open', url: 'https://checkout.stripe.test/' + id, ...params, payment_status: 'unpaid' }; return { id, url: stripeState.sessions[id].url } },
     retrieve: async (id) => { const s = stripeState.sessions[id]; if (!s) throw new Error('No such checkout.session: ' + id); return s },
+    expire: async (id) => { const s = stripeState.sessions[id]; if (!s) throw new Error('No such checkout.session: ' + id); s.status = 'expired'; stripeState.expired.push(id); return s },
   } },
   subscriptions: { retrieve: async (id) => stripeState.subs[id] },
 }
@@ -72,6 +73,7 @@ async function codeFor(email) {
   return lines[lines.length - 1].data.code
 }
 const uniq = () => 'pay' + Math.random().toString(36).slice(2, 8) + '@example.com'
+const sidOf = (c) => c.data.url.split('/').pop()
 const PW = 'Str0ng-passw0rd'
 async function verifiedAccount(j, plan = 'advanced', cycle = 'annual') {
   const email = uniq()
@@ -99,12 +101,19 @@ test('checkout creates one Stripe session, reuses it while open, and re-creates 
   // A double click / refresh: the same open session comes back, nothing new is created.
   const c2 = await req(j, 'POST', '/api/work/onboarding/checkout', {})
   assert.equal(c2.data.url, c1.data.url); assert.equal(c2.data.reused, true); assert.equal(stripeState.created.length, created)
-  // Change plan: the stale session is dropped and a fresh one is created for the new price.
+  // A reload that re-sends the SAME intent through GET /state is a pure read: the open session survives.
+  const st = await req(j, 'GET', '/api/work/onboarding/state?plan=advanced&cycle=annual')
+  assert.equal(st.data.step, 'pay'); assert.equal(store.getOnboarding(user.id).checkoutSessionId, sidOf(c1))
+  const c2b = await req(j, 'POST', '/api/work/onboarding/checkout', {})
+  assert.equal(c2b.data.reused, true)
+  // Change plan: the old session is EXPIRED at Stripe before a fresh one exists (never two payable sessions).
   const pl = await req(j, 'POST', '/api/work/onboarding/plan', { plan: 'basic', cycle: 'monthly' })
   assert.equal(pl.data.plan, 'basic'); assert.equal(store.getOnboarding(user.id).checkoutSessionId, null)
   const c3 = await req(j, 'POST', '/api/work/onboarding/checkout', {})
   assert.notEqual(c3.data.url, c1.data.url); assert.equal(stripeState.created.length, created + 1)
   assert.equal(stripeState.created[created].params.metadata.plan, 'basic')
+  assert.ok(stripeState.expired.includes(sidOf(c1)), 'the replaced session was expired at Stripe')
+  assert.equal(stripeState.sessions[sidOf(c1)].status, 'expired')
 })
 
 test('confirm: foreign session refused, open session is pending, paid session activates once, webhook replay is a no-op', async () => {
@@ -162,6 +171,17 @@ test('webhook-first: when Stripe activates before the browser returns, confirm j
   assert.equal(conf.data.status, 'active')
   assert.equal(store.getUser(user.id).subscription.plan, 'basic', 'the checkout metadata plan (what the customer chose) wins, as in the webhook')
   assert.equal(store.getUser(user.id).subscription.cycle, 'monthly', 'the cycle comes from the Stripe price interval')
+})
+
+test('a paid session whose subscription is still incomplete is "processing", not active', async () => {
+  const j = jar()
+  const { user } = await verifiedAccount(j, 'basic', 'monthly')
+  const c = await req(j, 'POST', '/api/work/onboarding/checkout', {})
+  const sid = c.data.url.split('/').pop()
+  stripePays(sid, { status: 'incomplete' })
+  const conf = await req(j, 'POST', '/api/work/onboarding/confirm', { sessionId: sid })
+  assert.equal(conf.data.status, 'processing'); assert.equal(store.userCanUseService(user.id), false)
+  assert.equal((await req(j, 'POST', '/api/work/onboarding/enter')).status, 402)
 })
 
 test('a signed-in subscriber who hits the flow again is told so and never charged', async () => {

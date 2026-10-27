@@ -44,4 +44,8 @@ test('resend policy: cooldown, then an hourly cap that a re-issue cannot reset',
   assert.equal(r.reason, 'hourly')
   assert.ok(r.waitMs > 0)
   assert.equal(otp.canResend(rec, now + 3600 * 1000 + 1).ok, true, 'the window rolls')
+  // An address change may skip the cooldown once, never the hourly cap.
+  const fresh = otp.newOtpRecord('333333', { now: 0 })
+  assert.equal(otp.canResend(fresh, 1000, { ignoreCooldown: true }).ok, true)
+  assert.equal(otp.canResend(rec, now, { ignoreCooldown: true }).ok, false, 'hourly cap still applies')
 })

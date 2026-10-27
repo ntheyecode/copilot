@@ -80,6 +80,7 @@ export function createOnboarding(ctx) {
       cycle: CYCLES.includes(o.cycle) ? o.cycle : 'monthly',
       startedAt: o.startedAt || null,
       checkoutSessionId: o.checkoutSessionId || null,
+      staleCheckoutSessionId: o.staleCheckoutSessionId || null,   // a replaced session still open at Stripe until expired
       completedAt: o.completedAt || null,
     }
   }
@@ -92,17 +93,25 @@ export function createOnboarding(ctx) {
     const o = ensureOnboarding(u)
     const p = cleanPlan(plan)
     if (plan != null && !p) throw httpErr(400, 'Pick a plan: lite, basic, advanced or premium.')
-    if (p) o.plan = p
-    if (cycle != null) o.cycle = cleanCycle(cycle)
+    const nextPlan = p || o.plan
+    const nextCycle = cycle != null ? cleanCycle(cycle) : (CYCLES.includes(o.cycle) ? o.cycle : 'monthly')
+    const changed = nextPlan !== o.plan || nextCycle !== o.cycle
+    if (!changed) return getOnboarding(userId)   // a re-read with the same intent writes nothing
+    o.plan = nextPlan
+    o.cycle = nextCycle
     if (!o.startedAt) o.startedAt = now()
-    // A new intent means any earlier Checkout Session is stale (different price).
-    if (p || cycle != null) o.checkoutSessionId = null
+    // A CHANGED intent means any earlier Checkout Session is for the wrong price:
+    // the caller expires it at Stripe before creating a replacement.
+    o.staleCheckoutSessionId = o.checkoutSessionId || null
+    o.checkoutSessionId = null
     persist()
     return getOnboarding(userId)
   }
   function setOnboardingCheckout(userId, sessionId) {
     const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
-    ensureOnboarding(u).checkoutSessionId = sessionId ? String(sessionId) : null
+    const o = ensureOnboarding(u)
+    o.checkoutSessionId = sessionId ? String(sessionId) : null
+    o.staleCheckoutSessionId = null
     persist()
   }
   function completeOnboarding(userId) {
@@ -126,7 +135,11 @@ export function createOnboarding(ctx) {
     const oldMail = String(u.email || '').toLowerCase()
     u.email = mail
     if (String(u.username || '').toLowerCase() === oldMail && mail.length <= 64) u.username = mail
-    delete otps()[u.id]   // the old code was for the old address
+    // The old code was for the old address: drop the secret, KEEP the send
+    // budget (sends) so switching addresses can never mint unlimited emails.
+    const all = otps()
+    const prior = all[u.id]
+    if (prior) all[u.id] = { sends: Array.isArray(prior.sends) ? prior.sends : [] }
     persist()
     return mail
   }
@@ -134,11 +147,11 @@ export function createOnboarding(ctx) {
   // ---- codes ----------------------------------------------------------------
   // Issue a code. Enforces the resend policy (cooldown + hourly cap) and returns
   // the PLAINTEXT code to the caller for delivery (it is never stored).
-  function issueEmailOtp(userId, at = Date.now()) {
+  function issueEmailOtp(userId, at = Date.now(), { ignoreCooldown = false } = {}) {
     const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
     const all = otps()
     const prior = all[u.id] || null
-    const gate = otp.canResend(prior, at)
+    const gate = otp.canResend(prior, at, { ignoreCooldown })
     if (!gate.ok) {
       const e = httpErr(429, gate.reason === 'hourly' ? 'Too many codes were requested. Please try again later.' : 'A code was just sent. Please wait a moment before requesting another.')
       e.body = { resendInMs: gate.waitMs }

@@ -413,7 +413,7 @@ const plan = createPlanAllowance({ db: () => db, persistSoon, getWorkPricing, wo
 // verify -> pay -> welcome flow. Hoisted account helpers are handed in, so the
 // module never imports the store (no cycle); the public API is re-exported so
 // index.js / onboarding.js keep their `store.*` names.
-const onb = createOnboarding({ db: () => db, persist, getUser, findUserByLogin, createWorkUser, normalizeEmail, httpErr, now })
+const onb = createOnboarding({ db: () => db, persist, getUser, findUserByLogin, findUserByVerifiedLogin, createWorkUser, normalizeEmail, httpErr, now })
 export const {
   createOnboardingUser, isEmailVerified, markEmailVerified,
   getOnboarding, setOnboardingIntent, setOnboardingCheckout, completeOnboarding,
@@ -4098,6 +4098,26 @@ export function setUserPasswordById(userId, newPassword) {
   emitStoreEvent('password_changed', { userId: u.id, at: new Date().toISOString() })
   return true
 }
+// IDENTITY-GRADE lookup: which account does this sign-in name / email PROVE?
+// A classic sign-up can type ANY contact email (never verified) and even pick an
+// email-shaped username, so matching on those alone would let an attacker
+// pre-register a victim's address and capture the victim's social sign-in or
+// email login. Here an email (as contact email or as username) counts only when
+// the account has PROVEN it (emailVerified), and an ssoEmail always counts (the
+// IdP verified it). Exact username match for a password login stays with
+// findUser (the password proves that one). Use THIS for anything that binds a
+// session or a payment to an account by email; keep findUserByLogin (broad) for
+// "does any account use this address" checks and for mail that goes to the
+// account's own address (forgot-password).
+export function findUserByVerifiedLogin(login) {
+  const s = String(login || '').trim().toLowerCase()
+  if (!s) return null
+  return (db.users || []).find((u) => {
+    if (String(u.ssoEmail || '').toLowerCase() === s) return true
+    if (u.emailVerified !== true) return false
+    return String(u.email || '').toLowerCase() === s || String(u.username || '').toLowerCase() === s
+  }) || null
+}
 // Find an account by username OR contact/SSO email (for "forgot password").
 export function findUserByLogin(login) {
   const s = String(login || '').trim().toLowerCase()
@@ -4110,12 +4130,20 @@ export function findUserByLogin(login) {
 export function createSocialUser({ email, displayName = '', provider = '' } = {}) {
   const mail = normalizeEmail(email)
   if (!mail) throw httpErr(400, 'The provider did not share a valid email address.')
-  const existing = findUserByLogin(mail)
+  // Link only to an account that PROVED this address (or an IdP identity).
+  const existing = findUserByVerifiedLogin(mail)
   if (existing) return existing
+  // An account that merely TYPED this address (unverified classic sign-up) is
+  // never silently linked or shadowed: its owner signs in with the password or
+  // resets it (the reset link proves the mailbox and verifies the address).
+  if (findUserByLogin(mail)) throw httpErr(409, 'An account with this email already exists. Sign in with your password, or reset it, to continue.')
   const uname = mail.length <= 64 ? mail : ('social_' + crypto.randomBytes(6).toString('hex'))
   const u = createWorkUser({ username: uname, password: crypto.randomBytes(24).toString('hex'), email: mail, displayName: String(displayName || '').trim() || null })
   u.social = { provider: String(provider || '').slice(0, 24), at: Date.now() }
   u.needsProfile = true
+  // The provider verified the address, so the account starts verified.
+  u.emailVerified = true
+  u.emailVerifiedAt = now()
   persist()
   return u
 }

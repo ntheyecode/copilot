@@ -428,7 +428,7 @@ function userStripe(store, userId) {
 const checkoutRefusal = (status, message, body) => { const e = new Error(message); e.status = status; if (body) e.body = body; return e }
 export async function createSubscriptionCheckout(store, user, { plan, cycle = 'monthly', successUrl, cancelUrl }) {
   const p = String(plan || '').trim().toLowerCase()
-  if (!PLANS.includes(p)) throw checkoutRefusal(400, 'Pick a plan: basic, advanced or premium.')
+  if (!PLANS.includes(p)) throw checkoutRefusal(400, 'Pick a plan: lite, basic, advanced or premium.')
   const cyc = cycle === 'annual' ? 'annual' : 'monthly'
   const { secret, price, priceAnnual } = cfg(store)
   const s = await getStripe(secret)

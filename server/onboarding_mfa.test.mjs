@@ -27,7 +27,7 @@ const relative = (f) => 'file://' + path.join(here, f).replace(/\\/g, '/')
 const index = await import(relative('index.js'))
 const store = await import(relative('store.js'))
 const totp = await import(relative('totp.js'))
-const { socialOnboardingIntent, finishSocialOnboarding } = await import(relative('onboarding.js'))
+const { socialOnboardingIntent, finishSocialOnboarding, resolveSocialAccount } = await import(relative('onboarding.js'))
 const srv = await new Promise((resolve) => { const s = index.app.listen(0, () => resolve(s)) })
 const base = `http://127.0.0.1:${srv.address().port}`
 after(() => { globalThis.fetch = realFetch; try { srv.closeAllConnections?.() } catch {} return new Promise((r) => srv.close(r)) })
@@ -81,6 +81,7 @@ test('social hooks: the intent is read only in the subscribe flow; a provider-ve
   const email = uniq()
   const u = store.createSocialUser({ email, displayName: 'Sam Social', provider: 'google' })
   assert.equal(u.needsProfile, true)
+  assert.equal(u.emailVerified, true, 'provider-verified from creation')
   let redirected = ''
   const req2 = { session: { save: (cb) => cb() } }
   const res2 = { redirect: (to) => { redirected = to } }
@@ -91,4 +92,30 @@ test('social hooks: the intent is read only in the subscribe flow; a provider-ve
   assert.equal(fresh.emailVerified, true, 'the provider verified the address')
   assert.equal(fresh.needsProfile, false, 'nothing else is asked at sign-up')
   assert.equal(store.getOnboarding(u.id).plan, 'premium')
+})
+
+test('resolveSocialAccount: binds only to a proven identity; refuses SSO accounts and unverified classic sign-ups', async () => {
+  // A classic sign-up that merely TYPED the victim address (unverified): never linked, never shadowed.
+  const victim = uniq()
+  const squat = await req(jar(), 'POST', '/api/work/signup', { username: 'sq' + Math.random().toString(36).slice(2, 7), password: 'Str0ng-passw0rd', name: 'Squatter', email: victim, acceptTerms: true })
+  assert.equal(squat.status, 200)
+  const r1 = resolveSocialAccount(store, { email: victim, displayName: 'Victim', provider: 'google' })
+  assert.ok(r1.error && /already exists/.test(r1.error), 'refused with a sign-in / reset hint')
+  assert.equal(store.findUserByVerifiedLogin(victim), null)
+  // Once that account PROVES the address (reset link consumed), the social login binds to it.
+  const squatter = store.findUserByLogin(victim)
+  store.markEmailVerified(squatter.id)
+  const r2 = resolveSocialAccount(store, { email: victim, displayName: 'Victim', provider: 'google' })
+  assert.equal(r2.user && r2.user.id, squatter.id); assert.equal(r2.isNew, false)
+  // Nobody has the address: a verified social account is created.
+  const fresh = uniq()
+  const r3 = resolveSocialAccount(store, { email: fresh, displayName: 'New Person', provider: 'microsoft' })
+  assert.equal(r3.isNew, true); assert.equal(r3.user.emailVerified, true); assert.equal(r3.user.username, fresh)
+  const r4 = resolveSocialAccount(store, { email: fresh, displayName: 'New Person', provider: 'microsoft' })
+  assert.equal(r4.isNew, false); assert.equal(r4.user.id, r3.user.id, 'second social login finds the same account')
+  // A company SSO account signs in through its IdP only.
+  const sso = store.getUser(r3.user.id); sso.ssoEmail = fresh
+  const r5 = resolveSocialAccount(store, { email: fresh, displayName: 'x', provider: 'google' })
+  assert.ok(r5.error && /single sign-on/.test(r5.error))
+  delete sso.ssoEmail
 })

@@ -51,8 +51,9 @@ export const ONBOARDING_SUCCESS_URL = `${billingDefault.PUBLIC_SITE}/workcopilot
 export const ONBOARDING_CANCEL_URL = `${billingDefault.PUBLIC_SITE}/workcopilot/signup/pay?checkout=cancel`
 
 // deps: { store, establishSession, resolveWorkIdentity, authBlocked, authFail,
-//         authOk, ipOf, bindReferralOnSignup?, LEGAL_VERSION, socialConfigured?,
-//         billing? }  billing = { createSubscriptionCheckout, stripeClient,
+//         authOk, ipOf, ipRateOk?, bindReferralOnSignup?, LEGAL_VERSION,
+//         socialConfigured?, billing? }  ipRateOk(ip) = the host's per-IP
+//         submission limiter (index.js coverageRateOk) for the mail-sending routes  billing = { createSubscriptionCheckout, stripeClient,
 //         billingConfigured, billingPriceMap } (defaults to billing.js; tests
 //         inject a fake Stripe without touching the network)
 export function registerOnboardingRoutes(app, deps = {}) {
@@ -62,6 +63,12 @@ export function registerOnboardingRoutes(app, deps = {}) {
   }
   const { createSubscriptionCheckout, stripeClient, billingConfigured, billingPriceMap } = { ...billingDefault, ...(deps.billing || {}) }
   const socialConfigured = deps.socialConfigured || (() => ({ google: false, microsoft: false, facebook: false }))
+  const ipRateOk = typeof deps.ipRateOk === 'function' ? deps.ipRateOk : () => true
+  const mailRateBlocked = (req, res) => {
+    if (ipRateOk(ipOf(req))) return false
+    res.status(429).json({ error: 'Too many requests just now. Please try again in a little while.' })
+    return true
+  }
 
   // ---- identity ------------------------------------------------------------
   function identity(req) {
@@ -106,6 +113,8 @@ export function registerOnboardingRoutes(app, deps = {}) {
     }
     if (!idn) return { ...base, step: 'account', email: null, emailVerified: false }
     const u = idn.user
+    // A URL intent is recorded on the account (setOnboardingIntent writes only
+    // when the plan or cycle actually CHANGES, so a reload is a pure read).
     if (base.plan || urlIntent.cycle) {
       try { store.setOnboardingIntent(u.id, { plan: base.plan || undefined, cycle: urlIntent.cycle ? base.cycle : undefined }) } catch { /* keep going on a bad intent */ }
     }
@@ -133,8 +142,8 @@ export function registerOnboardingRoutes(app, deps = {}) {
   const intentFrom = (src) => ({ plan: src && src.plan, cycle: src && src.cycle })
 
   // Send (or re-send) the verification code. Returns the resend wait for the UI.
-  function sendCode(u) {
-    const { code, resendInMs } = store.issueEmailOtp(u.id)
+  function sendCode(u, opts) {
+    const { code, resendInMs } = store.issueEmailOtp(u.id, Date.now(), opts || {})
     const to = store.effectiveUserEmail(u.id)
     if (to) sendTemplateAsync('verify_email', to, { name: u.displayName || '', code, expiresLabel: OTP_TTL_LABEL })
     return resendInMs
@@ -150,6 +159,7 @@ export function registerOnboardingRoutes(app, deps = {}) {
   app.post('/api/work/onboarding/signup', (req, res) => {
     try {
       if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
+      if (mailRateBlocked(req, res)) return
       const b = req.body || {}
       const email = String(b.email || '').trim().toLowerCase()
       const password = String(b.password || '')
@@ -216,6 +226,7 @@ export function registerOnboardingRoutes(app, deps = {}) {
 
   app.post('/api/work/onboarding/resend', (req, res) => {
     try {
+      if (authBlocked(req) || mailRateBlocked(req, res)) return authBlocked(req) ? res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' }) : undefined
       const idn = identity(req)
       if (!idn) return res.status(440).json({ error: 'Your sign-up session expired. Please start again.', restart: true })
       if (store.isEmailVerified(idn.user)) return res.status(409).json({ error: 'This email is already verified.', verified: true })
@@ -226,12 +237,17 @@ export function registerOnboardingRoutes(app, deps = {}) {
 
   app.post('/api/work/onboarding/email', (req, res) => {
     try {
+      if (authBlocked(req)) return res.status(429).json({ error: 'Too many attempts. Please wait a few minutes and try again.' })
+      if (mailRateBlocked(req, res)) return
       const idn = identity(req)
       if (!idn) return res.status(440).json({ error: 'Your sign-up session expired. Please start again.', restart: true })
       const email = store.changeOnboardingEmail(idn.user.id, (req.body || {}).email)
-      let resendInMs = 0
-      try { resendInMs = sendCode(idn.user) } catch (e) { if (!(e && e.status === 429)) throw e; resendInMs = (e.body && e.body.resendInMs) || 0 }
-      res.json({ ...stateFor(req, idn), email, resendInMs })
+      // The corrected address gets its code right away (cooldown waived once);
+      // the hourly budget still applies and is carried across the change.
+      let resendInMs = 0, codeSent = true
+      try { resendInMs = sendCode(idn.user, { ignoreCooldown: true }) }
+      catch (e) { if (!(e && e.status === 429)) throw e; codeSent = false; resendInMs = (e.body && e.body.resendInMs) || 0 }   // hourly budget spent: address saved, no mail
+      res.json({ ...stateFor(req, idn), email, resendInMs, codeSent })
     } catch (e) { reply(res, e, 'Could not change the email. Please try again.') }
   })
 
@@ -270,6 +286,15 @@ export function registerOnboardingRoutes(app, deps = {}) {
           if (prev && prev.status === 'open' && prev.url && (prev.metadata || {}).plan === ob.plan && (prev.metadata || {}).cycle === ob.cycle) return res.json({ url: prev.url, reused: true })
         } catch { /* stale id: create a fresh session below */ }
       }
+      // A session this account can no longer use (plan changed, or stale) is
+      // EXPIRED at Stripe before a replacement exists, so at most one payable
+      // Checkout Session is ever open for the account (no double subscription
+      // from a second tab or the back button). Best-effort: an already-expired
+      // or unknown id just logs.
+      for (const oldId of [ob.staleCheckoutSessionId, ob.checkoutSessionId].filter(Boolean)) {
+        try { const s = await stripeClient(store); if (s) await s.checkout.sessions.expire(oldId) }
+        catch (e) { console.log(`[onboarding] could not expire checkout ${oldId}: ${(e && e.message) || e}`) }
+      }
       const r = await createSubscriptionCheckout(store, u, { plan: ob.plan, cycle: ob.cycle, successUrl: ONBOARDING_SUCCESS_URL, cancelUrl: ONBOARDING_CANCEL_URL })
       store.setOnboardingCheckout(u.id, r.id)
       res.json({ url: r.url })
@@ -300,12 +325,16 @@ export function registerOnboardingRoutes(app, deps = {}) {
       const owner = sess && (sess.client_reference_id || (sess.metadata && sess.metadata.workUserId))
       if (!sess || String(owner) !== String(u.id)) return res.status(403).json({ error: 'That checkout does not belong to this account.' })
       if (checkoutSessionPaid(sess)) {
-        await applyCheckoutSession(s, store, sess, {
+        const r = await applyCheckoutSession(s, store, sess, {
           price: billingPriceMap(store),
           onNew: ({ user, plan, status, cycle, subId }) => sendOwnerSubscriptionAlertAsync('new_subscription', { user, plan, status, cycle, stripeId: subId }),
         })
-        console.log(`[onboarding] confirm -> user ${u.id} activated from ${sessionId}`)
-        return done()
+        // "active" only when the account can actually use the service now; a paid
+        // session whose subscription Stripe still reports as incomplete/past_due
+        // is honest about it (the client keeps checking).
+        if (hasAccess(u)) { console.log(`[onboarding] confirm -> user ${u.id} activated from ${sessionId}`); return done() }
+        console.warn(`[onboarding] confirm -> user ${u.id} paid session ${sessionId} but subscription status ${r && r.status}`)
+        return res.json({ status: 'processing', ...stateFor(req, idn) })
       }
       // Not (yet) paid: say which, so the client can wait, retry or re-open.
       const st = sess.status === 'expired' ? 'expired'
@@ -326,6 +355,9 @@ export function registerOnboardingRoutes(app, deps = {}) {
       if (!idn) return res.status(440).json({ error: 'Your sign-up session expired. Please sign in to continue.', restart: true })
       const u = idn.user
       if (u.disabled) return res.status(403).json({ error: 'This account has been disabled. Please contact your administrator.' })
+      // Only a proven identity enters: a full sign-in, a verified email, or a
+      // provider/IdP identity. (Billing being off never waives verification.)
+      if (!idn.full && !(store.isEmailVerified(u) || u.social || u.ssoEmail)) return res.status(403).json({ error: 'Verify your email first.', needsVerification: true })
       if (!(hasAccess(u) || !billingConfigured(store))) return res.status(402).json({ error: 'A subscription is needed to start.', needsSubscription: true })
       store.completeOnboarding(u.id)
       if (idn.full) return res.json({ user: store.publicWorkUser(u) })
@@ -351,14 +383,36 @@ export function socialOnboardingIntent(query = {}) {
   if (String(query.flow || '') !== 'onboarding') return null
   return { plan: cleanPlan(query.plan), cycle: cleanCycle(query.cycle) }
 }
+// Which account does a provider-VERIFIED email belong to? ONE rule for the plain
+// social login and the subscribe flow (SUPREME RULE II):
+//   * an account that PROVED this address (emailVerified) or an IdP identity
+//     that is NOT company-SSO-bound -> that account
+//   * a company SSO account (ssoEmail) -> refused: it signs in through its IdP
+//     only (the password route enforces the same)
+//   * an account that merely TYPED this address (unverified classic sign-up) ->
+//     refused: never linked, never shadowed; its owner signs in or resets
+//   * nobody -> create the social account (verified by the provider)
+// Returns { user, isNew } or { error } (operator-facing English; social.js
+// redirects with it).
+export function resolveSocialAccount(store, { email, displayName = '', provider = '' }) {
+  const existing = store.findUserByVerifiedLogin(email)
+  if (existing) {
+    if (existing.disabled) return { error: 'This account has been disabled. Please contact your administrator.' }
+    if (existing.ssoEmail) return { error: "This is a company single sign-on account. Use 'Sign in with your company (SSO)' and enter your company email domain." }
+    return { user: existing, isNew: false }
+  }
+  if (store.findUserByLogin(email)) return { error: 'An account with this email already exists. Sign in with your password, or reset it, to continue.' }
+  try { return { user: store.createSocialUser({ email, displayName, provider }), isNew: true } }
+  catch (e) { return { error: (e && e.message) || 'Sign-in could not be completed.' } }
+}
 // After a VERIFIED provider email resolved to `user` (new or existing): keep the
 // plan, mark the marker, and land on the pay step. A brand-new social account is
 // email-verified by the provider, so it skips the code; it also needs no profile
 // form (the provider gave the name; nothing else is asked at sign-up).
 export function finishSocialOnboarding(req, res, { store, user, isNew, intent }) {
   if (isNew) {
-    user.needsProfile = false
-    store.markEmailVerified(user.id)   // persists (the provider verified the address)
+    user.needsProfile = false           // nothing else is asked at sign-up (the provider gave the name)
+    store.markEmailVerified(user.id)   // persists (createSocialUser already set it; this also drops any code)
   }
   try { store.setOnboardingIntent(user.id, intent || {}) } catch { /* no plan yet: the pay step offers the picker */ }
   req.session.onboardingUid = user.id

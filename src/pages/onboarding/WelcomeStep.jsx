@@ -9,7 +9,7 @@ import { useNavigate } from 'react-router-dom'
 import { ArrowRight, Loader2, Check } from 'lucide-react'
 import { useT } from '../../i18n/index.jsx'
 import { useAuth } from '../../auth.jsx'
-import { api } from '../../api.js'
+import { api, friendlyError } from '../../api.js'
 import MfaGate from '../../components/MfaGate.jsx'
 import { clearIntent } from './planIntent.js'
 
@@ -38,9 +38,19 @@ export default function WelcomeStep({ state, variant = 'welcome', onExpired }) {
       await enterApp()
     } catch (e) {
       if (e && (e.status === 440 || (e.data && e.data.restart))) { onExpired(); return }
-      setErr((e && e.status === 402) ? (e.message || t('onboarding.errors.generic')) : t('onboarding.errors.generic'))
+      setErr(friendlyError(e, t('onboarding.errors.generic')))
       setBusy(false)
     }
+  }
+  // Already-subscribed + signed in: the Stripe customer portal (existing
+  // endpoint) to manage or cancel; falls back to the dashboard's billing card.
+  const [portalBusy, setPortalBusy] = useState(false)
+  const manage = async () => {
+    if (portalBusy) return
+    setPortalBusy(true)
+    try { const r = await api.workBillingPortal(); if (r && r.url) { window.location.assign(r.url); return } } catch { /* fall back below */ }
+    setPortalBusy(false)
+    nav('/work', { replace: true })
   }
   // MfaGate contract: THROW on a bad code so it shows the message inline.
   const handleMfaSubmit = async (code) => {
@@ -74,6 +84,9 @@ export default function WelcomeStep({ state, variant = 'welcome', onExpired }) {
       <button type="button" className="ob-cta" onClick={start} disabled={busy} autoFocus>
         {busy ? <><Loader2 size={16} className="ob-spin" aria-hidden="true" /> {t('onboarding.welcome.opening')}</> : <>{already ? t('onboarding.pay.already.open') : t('onboarding.welcome.cta')} <ArrowRight size={16} aria-hidden="true" /></>}
       </button>
+      {already && state.signedIn && (
+        <button type="button" className="ob-link ob-center ob-manage" onClick={manage} disabled={portalBusy}>{t('onboarding.pay.already.manage')}</button>
+      )}
     </div>
   )
 }

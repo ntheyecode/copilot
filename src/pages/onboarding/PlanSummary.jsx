@@ -76,7 +76,7 @@ export default function PlanSummary({ state, intent, onIntent, onState, hasAccou
                 <li key={p}>
                   <button type="button" role="radio" aria-checked={on} className={`ob-plan-opt${on ? ' on' : ''}`} disabled={busy} onClick={() => choose(p, cycle)}>
                     <span className="ob-plan-opt-n">{t(`onboarding.plan.names.${p}`)}</span>
-                    <span className="ob-plan-opt-p">{shown && <>{shown}<small>/mo</small></>}</span>
+                    <span className="ob-plan-opt-p">{shown && <>{shown}<small>{t('onboarding.plan.perMonthShort')}</small></>}</span>
                     <span className="ob-plan-opt-i" aria-hidden="true">{on && <Check size={14} />}</span>
                   </button>
                 </li>

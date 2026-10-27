@@ -11,7 +11,7 @@ export default function OnboardingShell({ title, subtitle, children, aside = nul
     <div className="ob">
       <main className="ob-main" id="main">
         <div className={`ob-card${wide ? ' ob-card-wide' : ''}`}>
-          <a className="ob-brand" href="/" aria-label="AdmireVeda WorkCoPilot">
+          <a className="ob-brand" href="/" aria-label={t('onboarding.brandAria')}>
             <AVMark size={22} id="avob" glow={false} />
             <span className="ob-brand-t">Work<i>CoPilot</i></span>
             <span className="ob-brand-by">{t('onboarding.byAdmireVeda')}</span>
@@ -21,7 +21,7 @@ export default function OnboardingShell({ title, subtitle, children, aside = nul
           {subtitle && <p className="ob-sub">{subtitle}</p>}
           {children}
         </div>
-        <nav className="ob-foot" aria-label="Legal and help">
+        <nav className="ob-foot" aria-label={t('onboarding.footerAria')}>
           <a href="/workcopilot/terms" target="_blank" rel="noopener">{t('onboarding.footer.terms')}</a>
           <a href="/workcopilot/privacy" target="_blank" rel="noopener">{t('onboarding.footer.privacy')}</a>
           <a href="/workcopilot/faq" target="_blank" rel="noopener">{t('onboarding.footer.help')}</a>

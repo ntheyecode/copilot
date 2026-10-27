@@ -968,10 +968,10 @@ function authOk(req) { _authFails.delete(_authIp(req)) }
 app.post('/api/work/login', wrap((req, res) => {
   if (authBlocked(req)) return res.status(429).json({ error: 'Too many sign-in attempts. Please wait a few minutes and try again.' })
   const { username, password } = req.body || {}
-  // Exact sign-in name first (unchanged), then the contact/SSO email: accounts
-  // created by the subscribe flow use their email as the sign-in name, and a
-  // classic account may sign in with its contact email too.
-  const u = store.findUser(username) || store.findUserByLogin(username)
+  // Exact sign-in name first (unchanged), then a VERIFIED contact email or an
+  // SSO email (findUserByVerifiedLogin): an unverified contact address can be
+  // typed by anyone at classic sign-up, so it never selects an account here.
+  const u = store.findUser(username) || store.findUserByVerifiedLogin(username)
   // SSO-bound accounts (pre-provisioned by email, no usable password) must come
   // in through their company identity provider, not this form. Tell them plainly
   // instead of returning a confusing "wrong password".
@@ -3410,7 +3410,7 @@ registerSocialRoutes(app, { store, establishSession, wrap })
 // Subscribe onboarding: create account -> verify email -> pay -> welcome -> app.
 // Runs on the onboarding marker / full session; the app entry reuses the MFA
 // gate above (pendingMfaUid + /api/work/login/mfa*), so no login path is bypassed.
-registerOnboardingRoutes(app, { store, establishSession, resolveWorkIdentity, authBlocked, authFail, authOk, ipOf, bindReferralOnSignup, LEGAL_VERSION, socialConfigured })
+registerOnboardingRoutes(app, { store, establishSession, resolveWorkIdentity, authBlocked, authFail, authOk, ipOf, ipRateOk: coverageRateOk, bindReferralOnSignup, LEGAL_VERSION, socialConfigured })
 
 // SOC/SIEM: auto-relay company alerts (e.g. PII/PHI entered) to the company's
 // configured destinations. The relay forwards ONLY alert metadata (categories/

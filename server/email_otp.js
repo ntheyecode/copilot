@@ -52,12 +52,15 @@ export function newOtpRecord(code, { now = Date.now(), priorSends = [] } = {}) {
 }
 
 // May another code be sent now? { ok:true } or { ok:false, waitMs, reason }.
-export function canResend(rec, now = Date.now()) {
+// ignoreCooldown: a CHANGED address may send once right away (the person just
+// fixed a typo), but the hourly budget always applies, so an address switch
+// can never turn into unlimited mail.
+export function canResend(rec, now = Date.now(), { ignoreCooldown = false } = {}) {
   if (!rec) return { ok: true, waitMs: 0 }
   const sends = Array.isArray(rec.sends) ? rec.sends.filter((t) => now - t < 3600 * 1000) : []
   if (!sends.length) return { ok: true, waitMs: 0 }
   const last = Math.max(...sends)   // never a truthiness check: a timestamp can legitimately be 0
-  if (now - last < OTP_RESEND_MIN_MS) return { ok: false, waitMs: OTP_RESEND_MIN_MS - (now - last), reason: 'cooldown' }
+  if (!ignoreCooldown && now - last < OTP_RESEND_MIN_MS) return { ok: false, waitMs: OTP_RESEND_MIN_MS - (now - last), reason: 'cooldown' }
   if (sends.length >= OTP_MAX_SENDS_PER_HOUR) {
     const oldest = Math.min(...sends)
     return { ok: false, waitMs: Math.max(1000, 3600 * 1000 - (now - oldest)), reason: 'hourly' }

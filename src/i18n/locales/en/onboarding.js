@@ -8,6 +8,8 @@ export default {
       description: 'Create your WorkCoPilot account, verify your email and start your plan in a few minutes.',
     },
     byAdmireVeda: 'by AdmireVeda',
+    brandAria: 'AdmireVeda WorkCoPilot',
+    footerAria: 'Legal and help',
     plan: {
       selected: 'Selected plan',
       none: 'No plan selected',
@@ -20,6 +22,7 @@ export default {
       annual: 'Annual',
       annualSave: 'Save 20%',
       perMonth: '{price}/month',
+      perMonthShort: '/mo',
       perMonthAnnual: '{price}/month, billed {total} yearly',
       billedMonthly: 'Billed monthly',
       billedAnnually: 'Billed yearly',
@@ -99,6 +102,7 @@ export default {
       canceledP: 'No charge was made. Your account and plan are saved, so you can pay whenever you are ready.',
       retry: 'Try payment again',
       expiredP: 'That checkout session expired. Start a new one when you are ready.',
+      invalidP: 'That payment reference could not be confirmed. Start a new payment when you are ready.',
       already: {
         h1: 'You already have an active plan',
         p: 'No further payment is needed.',
