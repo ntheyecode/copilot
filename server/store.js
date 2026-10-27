@@ -1618,6 +1618,210 @@ export function clearCompanySkills(companyId) {
   if (c) c.skills = []; persistSoon(); return n
 }
 
+// ---- Workflow templates (the "private brain" / task-workflow knowledge base) ----
+// When WorkCoPilot cleanly guides a task to success, work.js DISTILLS that session
+// into a de-identified, reusable WORKFLOW TEMPLATE (goal signature + app + the proven
+// ordered steps + the selections + the de-identified environment). This layer PERSISTS
+// and MANAGES those templates so a similar future task can be SERVED from proven data
+// instead of a cold AI plan. Same scope model as learnings/skills, exactly:
+//   - company user -> that company's PRIVATE brain (company.workflowTemplates), shared
+//     across its own users; never cross-tenant, never used to train the platform.
+//   - solo user    -> the de-identified PLATFORM brain (db.work.globalWorkflowTemplates),
+//     under the consent captured at signup (owner decision 5).
+// Gated by the SAME master switch as learnings/skills: company.kbEnabled === false ->
+// no capture, no retrieval (the holder returns null; callers no-op, never degrade).
+// Owner decisions honored: 1 auto-capture + immediately servable (no approval gate);
+// 3 caller only calls capture on a CLEAN success; 6 cap ~500 per holder, decay unused
+// ~90 days, keep exactly ONE prior version on supersede (all tunable below). No new
+// dependency (SUPREME RULE XIII); no silent fallback / no degraded behavior (III/VI).
+const TEMPLATE_CAP = 500   // per holder (company brain / platform brain). Tunable (owner decision 6).
+const DECAY_DAYS = 90      // a template unused this long decays out of the brain. Tunable.
+const _DAY_MS = 24 * 60 * 60 * 1000
+function _templateHolder(userId) {
+  const u = getUser(userId); if (!u) return null
+  if (u.companyId) {
+    const c = (db.companies || []).find((x) => x.id === u.companyId)
+    if (!c) return null
+    // SAME master switch as learnings/skills: OFF -> no brain on our servers.
+    if (c.kbEnabled === false) return null
+    return { kind: 'company', obj: c, field: 'workflowTemplates', cap: TEMPLATE_CAP }
+  }
+  if (!db.work) db.work = {}
+  // Platform brain shares the same per-holder cap (tunable).
+  return { kind: 'global', obj: db.work, field: 'globalWorkflowTemplates', cap: TEMPLATE_CAP }
+}
+const _normSig = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim()
+// Dedupe/supersede key: a template is "the same workflow" when its normalized goal
+// signature AND its normalized app both match (owner decision: dedupe by goalSig+app).
+const _tplKey = (goalSig, app) => _normSig(goalSig) + '\u0000' + _normSig(app)
+// Recursively run every human-readable STRING through the one stored-text scrub
+// chokepoint (scrubStoredText -> policy-aware, full-scrub fallback), de-identifying
+// the template before it is stored and (for companies) shared across the team. Object
+// KEYS are preserved (jurisdiction/region/software...); only string VALUES are scrubbed.
+// Caps string length and collection size so one record can never bloat the brain.
+function _scrubDeep(value, policy, depth = 0) {
+  if (depth > 6) return undefined
+  if (typeof value === 'string') return scrubStoredText(value, policy).clean.slice(0, 2000)
+  if (Array.isArray(value)) return value.slice(0, 80).map((v) => _scrubDeep(v, policy, depth + 1)).filter((v) => v !== undefined)
+  if (value && typeof value === 'object') {
+    const out = {}
+    for (const [k, v] of Object.entries(value)) { const sv = _scrubDeep(v, policy, depth + 1); if (sv !== undefined) out[String(k).slice(0, 80)] = sv }
+    return out
+  }
+  if (typeof value === 'number' || typeof value === 'boolean' || value === null) return value
+  return undefined
+}
+const _clamp01 = (n, dflt) => { const x = Number(n); return Number.isFinite(x) ? Math.max(0, Math.min(1, x)) : dflt }
+// Build the canonical stored record from a DISTILLED record produced by work.js.
+// Every free-text field is de-identified here (single chokepoint); ids/timestamps/
+// scores are normalized. `goalSig` is mandatory (no signature -> nothing to match on).
+function _normalizeTemplate(record, policy, existing = null) {
+  const r = (record && typeof record === 'object') ? record : {}
+  const goalSig = (_scrubDeep(String(r.goalSig || ''), policy) || '').trim()
+  if (goalSig.length < 2) return null
+  const nowIso = new Date().toISOString()
+  return {
+    id: (existing && existing.id) || ('wt' + id()),
+    goalSig,
+    app: (_scrubDeep(String(r.app || ''), policy) || '').slice(0, 80),
+    appVersion: r.appVersion != null ? String(r.appVersion).slice(0, 40) : null,
+    environment: (r.environment && typeof r.environment === 'object') ? _scrubDeep(r.environment, policy) : {},
+    steps: Array.isArray(r.steps) ? _scrubDeep(r.steps, policy) : [],
+    selections: (r.selections !== undefined) ? _scrubDeep(r.selections, policy) : (Array.isArray(r.steps) ? [] : {}),
+    successAt: r.successAt ? String(r.successAt).slice(0, 40) : ((existing && existing.successAt) || nowIso),
+    sourceSessionId: r.sourceSessionId ? String(r.sourceSessionId).slice(0, 80) : ((existing && existing.sourceSessionId) || null),
+    createdAt: (existing && existing.createdAt) || nowIso,
+    updatedAt: nowIso,
+    hits: existing ? (existing.hits || 0) : (Number.isInteger(r.hits) && r.hits >= 0 ? r.hits : 0),
+    confidence: _clamp01(r.confidence, existing ? existing.confidence : 0.5),
+    freshnessAt: nowIso,
+    version: existing ? ((existing.version || 1) + 1) : 1,
+    status: 'active',
+    priorVersion: null,
+  }
+}
+// A single prior-version snapshot (owner decision 6: keep exactly ONE). Never nests a
+// prior-of-a-prior, so the record can't grow unbounded across many supersedes.
+const _snapshotPrior = (t) => {
+  if (!t) return null
+  const { priorVersion, ...rest } = t
+  return rest
+}
+// Evict least-recently-used (oldest freshnessAt first) once a holder is over cap.
+function _enforceTemplateCap(arr, cap) {
+  if (!Array.isArray(arr) || arr.length <= cap) return arr
+  arr.sort((a, b) => Date.parse(a.freshnessAt || a.updatedAt || a.createdAt || 0) - Date.parse(b.freshnessAt || b.updatedAt || b.createdAt || 0))
+  arr.splice(0, arr.length - cap)
+  return arr
+}
+// CAPTURE: persist a distilled template. The caller (work.js) only calls this on a
+// CLEAN success (owner decision 3). Dedupe/supersede by goalSig+app: if the same
+// workflow already exists, bump its hits and update it in place, keeping ONE prior
+// version; otherwise insert new. Enforces the per-holder cap (LRU eviction). Returns
+// the stored record, or null when there is no brain / the record has no signature
+// (safe no-op, never throws).
+export function captureWorkflowTemplate(userId, record) {
+  const sc = _templateHolder(userId); if (!sc) return null
+  const policy = getEffectiveWorkPolicy(userId)
+  if (!Array.isArray(sc.obj[sc.field])) sc.obj[sc.field] = []
+  const arr = sc.obj[sc.field]
+  const normIncoming = _normalizeTemplate(record, policy)
+  if (!normIncoming) return null
+  const key = _tplKey(normIncoming.goalSig, normIncoming.app)
+  const dup = arr.find((t) => t && t.status === 'active' && _tplKey(t.goalSig, t.app) === key)
+  if (dup) {
+    // Supersede in place: snapshot the current version as the ONE prior version, then
+    // overwrite with the freshly distilled steps/selections/environment; bump hits +
+    // version; refresh freshness. No parallel duplicate (single source of truth).
+    const prior = _snapshotPrior(dup)
+    const updated = _normalizeTemplate(record, policy, dup)
+    updated.hits = (dup.hits || 0) + 1
+    updated.priorVersion = prior
+    const i = arr.indexOf(dup)
+    arr[i] = updated
+    persistSoon()
+    return updated
+  }
+  arr.push(normIncoming)
+  _enforceTemplateCap(arr, sc.cap)
+  persistSoon()
+  // The record may have been evicted if the holder was already at cap and this one was
+  // the oldest - return whatever is actually stored under its id (null if evicted).
+  return arr.find((t) => t.id === normIncoming.id) || null
+}
+// RETRIEVE: the holder's ACTIVE templates (the work.js matcher scores + ranks them).
+// Tenant-isolated via _templateHolder. Safe empty list when there is no brain.
+export function getWorkflowTemplates(userId) {
+  const sc = _templateHolder(userId); if (!sc) return []
+  const arr = sc.obj[sc.field]
+  return Array.isArray(arr) ? arr.filter((t) => t && t.status === 'active') : []
+}
+// Served/succeeded: bump hits and refresh freshness (resets the decay clock). No-op
+// when the template or brain is gone (never throws).
+export function recordTemplateServed(userId, templateId) {
+  const sc = _templateHolder(userId); if (!sc) return null
+  const arr = sc.obj[sc.field]; if (!Array.isArray(arr)) return null
+  const t = arr.find((x) => x && x.id === templateId && x.status === 'active'); if (!t) return null
+  t.hits = (t.hits || 0) + 1
+  t.freshnessAt = new Date().toISOString()
+  persistSoon()
+  return t
+}
+// SELF-HEAL: a served workflow drifted (the watch loop found a moved control), so
+// replace its steps/selections/environment with the corrected newRecord, keep ONE
+// prior version, bump version, refresh freshness. Preserves id + hits + createdAt.
+export function supersedeTemplate(userId, templateId, newRecord) {
+  const sc = _templateHolder(userId); if (!sc) return null
+  const arr = sc.obj[sc.field]; if (!Array.isArray(arr)) return null
+  const t = arr.find((x) => x && x.id === templateId && x.status === 'active'); if (!t) return null
+  const policy = getEffectiveWorkPolicy(userId)
+  const prior = _snapshotPrior(t)
+  const updated = _normalizeTemplate(newRecord, policy, t)
+  if (!updated) return null
+  updated.hits = t.hits || 0          // self-heal is not a new serve; keep the hit count
+  updated.priorVersion = prior
+  const i = arr.indexOf(t)
+  arr[i] = updated
+  persistSoon()
+  return updated
+}
+// DECAY + prune: drop templates unused for > DECAY_DAYS (freshnessAt older than the
+// window) and enforce the per-holder cap (LRU). Returns the number dropped. Safe
+// no-op when there is no brain.
+export function decayWorkflowTemplates(userId) {
+  const sc = _templateHolder(userId); if (!sc) return 0
+  const arr = sc.obj[sc.field]; if (!Array.isArray(arr) || !arr.length) return 0
+  const cutoff = Date.now() - DECAY_DAYS * _DAY_MS
+  const before = arr.length
+  const kept = arr.filter((t) => Date.parse((t && t.freshnessAt) || t.updatedAt || t.createdAt || 0) >= cutoff)
+  _enforceTemplateCap(kept, sc.cap)
+  sc.obj[sc.field] = kept
+  const dropped = before - kept.length
+  if (dropped) persistSoon()
+  return dropped
+}
+// Light status/list for a future admin UI (no heavy step payloads): the caller's own
+// holder only. Tenant-isolated.
+export function listWorkflowTemplatesMeta(userId) {
+  const sc = _templateHolder(userId); if (!sc) return []
+  const arr = sc.obj[sc.field]
+  return (Array.isArray(arr) ? arr : []).filter((t) => t && t.status === 'active').map((t) => ({
+    id: t.id, goalSig: t.goalSig, app: t.app, hits: t.hits || 0,
+    confidence: t.confidence, updatedAt: t.updatedAt, version: t.version,
+  }))
+}
+// Company-admin-scoped reader (mirrors exportCompanyLearnings): the full active
+// templates for ONE company's brain, for the admin "Your Task Brain" surface. NEVER
+// the platform brain, never another tenant. Non-throwing (empty list for unknown co).
+export function getCompanyWorkflowTemplates(companyId) {
+  const c = _company(companyId)
+  return (c && Array.isArray(c.workflowTemplates)) ? c.workflowTemplates.filter((t) => t && t.status === 'active') : []
+}
+export function getCompanyWorkflowTemplatesCount(companyId) {
+  const c = _company(companyId)
+  return (c && Array.isArray(c.workflowTemplates)) ? c.workflowTemplates.filter((t) => t && t.status === 'active').length : 0
+}
+
 // ---- Company sensitivity: privacy/business-contact recipients (company admin) ----
 // GET returns the list; the setter REPLACES it and is audited (reason required). The
 // recipients are names + emails + handling flags, NOT app roles (COMPANY_ROLES is

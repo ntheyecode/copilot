@@ -29,16 +29,24 @@ import AffiliatePage from './pages/AffiliatePage.jsx'
 import WorkSetPassword from './pages/WorkSetPassword.jsx'
 // Signed-in app + admin consoles are code-split: public marketing/SEO visitors
 // never download them, which keeps the initial bundle (and LCP) small.
-const WorkPage = lazy(() => import('./pages/WorkPage.jsx'))
+// The signed-in app is a shared shell (WorkAppLayout) with per-route pages under
+// it; the former single WorkPage.jsx was split into these (see src/pages/work/).
+const WorkAppLayout = lazy(() => import('./pages/work/WorkAppLayout.jsx'))
+const Dashboard = lazy(() => import('./pages/work/Dashboard.jsx'))
+const StartTask = lazy(() => import('./pages/work/StartTask.jsx'))
+const Guiding = lazy(() => import('./pages/work/Guiding.jsx'))
+const Skills = lazy(() => import('./pages/work/Skills.jsx'))
+const Help = lazy(() => import('./pages/work/Help.jsx'))
+const Support = lazy(() => import('./pages/work/Support.jsx'))
 const WorkBuddy = lazy(() => import('./pages/WorkBuddy.jsx'))
 const WorkFullGuide = lazy(() => import('./pages/WorkFullGuide.jsx'))
 const WorkAdmin = lazy(() => import('./pages/workadmin/WorkAdmin.jsx'))
 const WorkCompanyAdmin = lazy(() => import('./pages/workadmin/WorkCompanyAdmin.jsx'))
 const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
-// Standalone white sub-pages of the dashboard (same tokens, own routes).
-const WorkTasks = lazy(() => import('./pages/WorkTasks.jsx'))
-const CompletedTasks = lazy(() => import('./pages/WorkTasks.jsx').then((m) => ({ default: m.CompletedTasks })))
-const WorkLogs = lazy(() => import('./pages/WorkLogs.jsx'))
+// Standalone white sub-pages of the dashboard (same tokens, own white sub-shell).
+const WorkTasks = lazy(() => import('./pages/work/MyTasks.jsx'))
+const CompletedTasks = lazy(() => import('./pages/work/Completed.jsx'))
+const WorkLogs = lazy(() => import('./pages/work/Logs.jsx'))
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -122,9 +130,21 @@ export default function App() {
       <Route path="/work/set-password" element={<WorkSetPassword />} />
       {/* All signed-in surfaces render through the legal consent gate (one place). */}
       <Route element={<GatedSurface />}>
-        {/* The app itself. WorkPage self-gates on the session the server reports. */}
-        <Route path="/work" element={<WorkPage />} />
-        {/* Completed tasks + session logs: standalone pages in the dashboard's white style. */}
+        {/* The signed-in app: a shared shell (rail + top bar + plan pill +
+            desktop frame + app context) that self-gates on the session the
+            server reports, with the per-route pages rendered through its
+            Outlet. The guiding console is a child route so it is deep-linkable
+            and reload-safe (replacing the old openId / wc_open mechanism). */}
+        <Route path="/work" element={<WorkAppLayout />}>
+          <Route index element={<Dashboard />} />
+          <Route path="start" element={<StartTask />} />
+          <Route path="skills" element={<Skills />} />
+          <Route path="help" element={<Help />} />
+          <Route path="support" element={<Support />} />
+          <Route path="session/:id" element={<Guiding />} />
+        </Route>
+        {/* My tasks / completed / session logs: standalone pages in the
+            dashboard's white style (their own sub-shell, behavior unchanged). */}
         <Route path="/work/tasks" element={<WorkTasks />} />
         <Route path="/work/completed" element={<CompletedTasks />} />
         <Route path="/work/logs" element={<WorkLogs />} />

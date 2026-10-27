@@ -130,6 +130,15 @@ export function getLocale() {
   return getStoredLocale() || detectLocale()
 }
 
+// Warm the active locale's dictionary into the module cache BEFORE first paint,
+// so a non-English visitor never flashes a frame of English fallback on load or
+// on a full-page navigation: LocaleProvider initializes its dict from `cache`,
+// which is already populated once this resolves. Safe to await in the entrypoint
+// - it never rejects (loadDictionary swallows a failed import and keeps English).
+export async function preloadActiveLocale() {
+  try { const code = getLocale(); await loadDictionary(code); return code } catch { return null }
+}
+
 // <html lang> + <html dir>. Arabic flips the document to right-to-left; every
 // other supported locale is left-to-right. Also sets a data-locale attribute so
 // CSS can target a language if it ever needs to (e.g. a font stack).
@@ -202,7 +211,16 @@ export function makeT(dict, locale) {
     if (v === undefined) { warnMissing(locale, key); return key }
     return v
   }
-  const t = (key, vars) => {
+  // t(key, vars) is the normal call. As a convenience a page may pass an inline
+  // English fallback string as the 2nd arg - t(key, fallback, vars) - so a key
+  // not yet in any dictionary reads as that fallback instead of the raw key
+  // (SUPREME RULE III: never a silent blank). An object 2nd arg is vars, exactly
+  // as before (backward compatible), so this ONE translator serves every surface
+  // and no page needs its own fallback wrapper.
+  const t = (key, a, b) => {
+    const hasFb = typeof a === 'string'
+    const vars = hasFb ? b : a
+    if (hasFb && lookup(dict, key) === undefined && lookup(en, key) === undefined) return interpolate(a, vars)
     const v = get(key)
     return typeof v === 'string' ? interpolate(v, vars) : v
   }

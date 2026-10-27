@@ -1723,3 +1723,315 @@ export function workDeliverablesDocument({ goal, d }) {
   lines.push('---'); lines.push('_Produced by WorkCoPilot. Paste a prompt into your own LLM or diagram tool to generate the design._')
   return lines.join('\n')
 }
+
+// ===========================================================================
+// PRIVATE BRAIN - the Task-Workflow Knowledge Base (DISTILLER + MATCHER).
+//
+// When WorkCoPilot guides a task to a clean finish it holds, in one place, the
+// goal, the scope answers, and the ordered steps that were CONFIRMED on the real
+// screen. These two PURE functions turn that into reusable, de-identified
+// knowledge and retrieve it on the next similar task:
+//
+//   distillWorkflowTemplate(session) -> a template RECORD (store layer persists)
+//   matchWorkflowTemplate(goal, app, environment, templates) -> { template, score, tier }
+//
+// Both are deterministic, no AI, no I/O (the optional cheap AI GENERALIZATION
+// pass is a SEPARATE later hook, per the design doc - never called here). The
+// store layer (store.js) owns persistence (id, hits, confidence evolution,
+// version, supersede, the policy-aware scrubStoredText chokepoint) and the
+// index.js hooks own capture/serve gating; these functions only shape + score.
+// Design: scratchpad/private-brain-design.md; owner decisions:
+// memory/project-task-workflow-knowledge-base.md (decisions 1 serve-now,
+// 2 one cheap adapt call, 3 clean-success bar).
+// ===========================================================================
+
+// ---- Tiering thresholds + weights (named consts, single source of truth) ----
+// The matcher blends three deterministic signals into one 0..1 score:
+//   score = GOAL_WEIGHT*goalSim + APP_WEIGHT*appScore + ENV_WEIGHT*envScore
+// and maps it to a tier. Tunable in one place so the serve/seed/none decision is
+// explainable and never a hidden heuristic (SUPREME RULE III).
+export const WORKFLOW_SERVE_FLOOR = 0.75        // STRONG: serve the proven workflow (+ app match + env compatible)
+export const WORKFLOW_SEED_FLOOR = 0.45         // PARTIAL: seed the plan with a similar past task
+export const WORKFLOW_GOAL_WEIGHT = 0.6         // goal-signature similarity is the primary signal
+export const WORKFLOW_APP_WEIGHT = 0.25         // same app/tool is a strong gate
+export const WORKFLOW_ENV_WEIGHT = 0.15         // jurisdiction/software compatibility is a bonus
+export const WORKFLOW_ENV_COMPAT_FLOOR = 0.5    // min env score required to SERVE (STRONG) when env is given
+export const WORKFLOW_CONFIDENCE_SEED = 0.5     // a first single-success capture can SEED but is watched (decision 1)
+
+// Generic UI words that are not the app's identity; stripped so "Okta admin
+// console" and "okta" normalize to the same app key.
+const WORKFLOW_APP_STOPWORDS = new Set([
+  'admin', 'console', 'dashboard', 'portal', 'the', 'app', 'application', 'web',
+  'site', 'website', 'panel', 'ui', 'page', 'pages', 'settings', 'management',
+])
+// Filler words carried by almost any goal; dropped so only the task-bearing
+// tokens remain for signature matching.
+const WORKFLOW_GOAL_STOPWORDS = new Set([
+  'a', 'an', 'the', 'my', 'our', 'your', 'their', 'his', 'her', 'its', 'for',
+  'to', 'of', 'in', 'on', 'at', 'with', 'and', 'or', 'but', 'from', 'by',
+  'into', 'as', 'is', 'are', 'be', 'this', 'that', 'these', 'those', 'i', 'we',
+  'you', 'they', 'it', 'me', 'us', 'them', 'do', 'does', 'please', 'can', 'how',
+  'want', 'wants', 'need', 'needs', 'using', 'use',
+])
+
+// De-identify a prose string DEFENSIVELY (emails, long digit runs) before it
+// enters a shared/platform record. This is belt-and-suspenders only: the store
+// layer runs the real policy-aware scrubStoredText chokepoint on every stored
+// string (design 2.4). Commands/code are NEVER passed through here - they are
+// exact things the user runs and scrubbing them corrupts syntax.
+function deidentifyText(v) {
+  return String(v || '')
+    .replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, '[email]')   // email addresses
+    .replace(/\b\d{7,}\b/g, '[number]')                 // phone / account / id runs
+    .trim()
+}
+function capText(v, n) { return deidentifyText(v).slice(0, n) }
+
+// Normalize an app/tool name to a stable key: lowercased, punctuation to spaces,
+// generic UI words dropped. "Okta admin console > Directory" -> "okta directory".
+// Both the stored app and the query app pass through this, so the comparison is
+// symmetric (SUPREME RULE II - one normalizer, no drift).
+function normalizeApp(v) {
+  return String(v || '')
+    .toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(/\s+/)
+    .filter((w) => w && !WORKFLOW_APP_STOPWORDS.has(w)).join(' ').trim()
+}
+
+// Deterministic, simple goal signature (no AI): lowercase, strip emails/URLs,
+// possessives, pure-number/version tokens (volatile specifics like a year, a
+// count, a version), and filler stopwords; light singularization so
+// "accounts"->"account". Similar goals collapse to the SAME ordered token set.
+// Returns { sig, tokens } - sig is the readable normalized phrase, tokens feeds
+// the matcher and the stored goalTokens.
+export function workflowGoalSignature(goal) {
+  const words = String(goal || '')
+    .toLowerCase()
+    .replace(/[\w.+-]+@[\w.-]+\.\w{2,}/g, ' ')   // drop emails
+    .replace(/https?:\/\/\S+/g, ' ')             // drop URLs
+    .replace(/['’]s\b/g, '')                // strip possessive 's
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim().split(/\s+/).filter(Boolean)
+  const tokens = []
+  for (let w of words) {
+    if (w.length < 2) continue                   // stray single chars (e.g. the "x" from "2024.x")
+    if (/^v?\d+$/.test(w)) continue              // pure number, year, or v<n> - a volatile specific
+    if (WORKFLOW_GOAL_STOPWORDS.has(w)) continue
+    if (w.length > 3 && w.endsWith('s') && !w.endsWith('ss')) w = w.slice(0, -1)  // light singular
+    if (!tokens.includes(w)) tokens.push(w)      // dedupe, keep first-appearance order
+  }
+  return { sig: tokens.join(' '), tokens }
+}
+
+// Clean + cap + de-identify the scope Q->A answers into a reusable outline.
+function cleanWorkflowScope(scope) {
+  return (Array.isArray(scope) ? scope : [])
+    .map((x) => ({ q: capText((x && x.q) || '', 240), a: capText((x && x.a) || '', 600) }))
+    .filter((x) => x.q && x.a)
+    .slice(0, 12)
+}
+// Pull the jurisdiction/region answer out of the scope, generalized + scrubbed.
+function jurisdictionFromScope(scope) {
+  const hit = scope.find((x) => /jurisdiction|region|country|state|province|located|where/i.test(x.q))
+  return hit ? capText(hit.a, 80) : null
+}
+// Pull the software/tool answers out of the scope (what tools were in play),
+// skipping a "manual" answer (that is the manual flag, not a tool name).
+function softwareFromScope(scope) {
+  const out = []
+  for (const x of scope) {
+    if (!/software|app|tool|service|portal|platform|system|version/i.test(x.q)) continue
+    const a = capText(x.a, 80)
+    if (a && !/^manual\b|\bmanually\b/i.test(a)) out.push(a)
+  }
+  return out.slice(0, 8)
+}
+// Software-vs-manual: true when an answer says the work is done manually, false
+// when a concrete tool was named, null when the scope does not say.
+function manualFromScope(scope) {
+  for (const x of scope) {
+    if (/manual|software|how|tool/i.test(x.q) && /\bmanual(ly)?\b/i.test(x.a)) return true
+  }
+  for (const x of scope) {
+    if (/software|app|tool|service|platform/i.test(x.q) && x.a.trim()) return false
+  }
+  return null
+}
+// A version-like token from the app context or scope ("2024.x", "v3", "1.2.3").
+function appVersionFrom(appContext, scope) {
+  const hay = [String(appContext || ''), ...scope.map((x) => `${x.q} ${x.a}`)].join(' ')
+  const m = hay.match(/\bv?\d+(?:\.\d+)+\b|\b\d{4}\.x\b|\bv\d+\b/i)
+  return m ? m[0].slice(0, 24) : null
+}
+// The KIND of action a step is, so the outline is reusable without replaying raw
+// commands blindly: command / code / navigate / ui.
+function workflowStepKind(st) {
+  if (st && Array.isArray(st.commands) && st.commands.length) return 'command'
+  if (st && st.code && String(st.code.content || '').trim()) return 'code'
+  if (st && st.url) return 'navigate'
+  return 'ui'
+}
+// The key selection the step turned on: the first bolded on-screen target the
+// guide marked (**...**), generalized. Null when the step has no bold target.
+function firstBoldSelection(text) {
+  const m = String(text || '').match(/\*\*(.+?)\*\*/)
+  return m ? capText(m[1], 120) || null : null
+}
+// The ISO time the last step was confirmed done (the success moment).
+function lastDoneAt(steps) {
+  let t = null
+  for (const st of steps) if (st && st.doneAt) t = st.doneAt
+  return t
+}
+
+// ---- DISTILLER: a COMPLETED session -> a reusable workflow template record ---
+// Mechanical extraction only (no AI). Returns null when the session is not a
+// CLEAN SUCCESS (decision 3): no steps, any step not confirmed done, or an
+// unresolved flag on the tail. The store layer adds id/hits/version and runs its
+// scrub chokepoint; this sets an initial confidence SEED only.
+export function distillWorkflowTemplate(session) {
+  const s = session || {}
+  const steps = Array.isArray(s.steps) ? s.steps : []
+  // Decision 3 clean-success bar (defensive; index.js gates too):
+  if (!steps.length) return null                                   // nothing happened -> no template
+  if (!steps.every((st) => st && st.status === 'done')) return null // any step not confirmed done -> not clean
+  const events = Array.isArray(s.events) ? s.events : []
+  const lastEvent = events.length ? events[events.length - 1] : null
+  if (lastEvent && lastEvent.kind === 'flag') return null          // a flag dominates the tail -> not a clean template
+
+  const scope = cleanWorkflowScope(s.scope)
+  const { sig: goalSig, tokens: goalTokens } = workflowGoalSignature(s.goal)
+  const software = softwareFromScope(scope)
+  // Prefer a named tool from the scope answers (cleaner) over the observed app
+  // context phrase; normalize either to the stable app key.
+  const app = normalizeApp(software[0] || s.appContext || '') || null
+  const appVersion = appVersionFrom(s.appContext, scope)
+
+  const outSteps = steps.map((st, i) => ({
+    n: i + 1,
+    text: capText((st && st.text) || '', 400),
+    validate: st && st.validate ? capText(st.validate, 300) : null,
+    kind: workflowStepKind(st),
+    url: (st && typeof st.url === 'string' && /^https?:\/\/\S+$/i.test(st.url.trim())) ? st.url.trim() : null,
+    // commands/code are EXACT (never de-identified/scrubbed - it would corrupt
+    // the syntax); the store layer applies its policy scrub at persist time.
+    commands: Array.isArray(st && st.commands) ? st.commands.map((c) => String(c || '').trim()).filter(Boolean) : [],
+    code: (st && st.code && String(st.code.content || '').trim())
+      ? { file: String(st.code.file || '').trim() || null, content: String(st.code.content) }
+      : null,
+    selection: firstBoldSelection(st && st.text),
+  }))
+  const lastDone = steps[steps.length - 1]
+  const successSignal = lastDone && lastDone.validate ? capText(lastDone.validate, 300) : null
+
+  return {
+    // ---- match signature ----
+    goalSig,
+    goalTokens,
+    app,
+    appVersion: appVersion || null,
+    // ---- environment captured (the "fewer questions" fuel) ----
+    environment: {
+      jurisdiction: jurisdictionFromScope(scope),
+      software,
+      manual: manualFromScope(scope),
+      conventions: scope,          // generalized Q->A house rules proven in this task
+    },
+    // ---- the proven workflow ----
+    steps: outSteps,
+    selections: scope,             // key choices captured from the scope/clarify answers
+    successSignal,
+    // ---- provenance + seed ----
+    successAt: lastDoneAt(steps) || s.endedAt || null,
+    sourceSessionId: s.id || null,
+    confidence: WORKFLOW_CONFIDENCE_SEED,   // SEED only; the store owns the evolving confidence/hits/version/id
+  }
+}
+
+// Blended token similarity (0..1): average of Jaccard (guards against a tiny set
+// matching a big one) and overlap coefficient (rewards a near-identical subset).
+// Deterministic and symmetric.
+function workflowTokenSim(a, b) {
+  const A = new Set(a || []), B = new Set(b || [])
+  if (!A.size || !B.size) return 0
+  let inter = 0
+  for (const x of A) if (B.has(x)) inter++
+  const union = new Set([...A, ...B]).size
+  const jaccard = inter / union
+  const overlap = inter / Math.min(A.size, B.size)
+  return 0.5 * jaccard + 0.5 * overlap
+}
+// App match: 1 (and match:true) when the normalized apps are equal or one is a
+// token-subset of the other; a partial token-overlap score (match:false) when
+// they differ; a neutral 0.5 (match:false) when either side is unknown.
+function workflowAppScore(a, b) {
+  const na = normalizeApp(a), nb = normalizeApp(b)
+  if (!na || !nb) return { score: 0.5, match: false }
+  if (na === nb) return { score: 1, match: true }
+  const sa = new Set(na.split(' ')), sb = new Set(nb.split(' '))
+  let inter = 0
+  for (const x of sa) if (sb.has(x)) inter++
+  if (inter && (inter === sa.size || inter === sb.size)) return { score: 1, match: true }  // subset
+  return { score: inter / Math.min(sa.size, sb.size), match: false }
+}
+// Environment compatibility: a soft 0..1 score AND a hard compatible flag.
+// Incompatible only on a real CONTRADICTION - jurisdictions both set and
+// different, softwares both named and disjoint, or manual-vs-software conflict.
+// When nothing is comparable the score is a neutral 0.5 and compatible stays true
+// (an empty query env can never contradict a template).
+function workflowEnvCompat(q, c) {
+  const qe = q || {}, ce = c || {}
+  const signals = []
+  let compatible = true
+  const normJur = (x) => String(x || '').toLowerCase().replace(/[^a-z0-9]+/g, '')
+  const qj = normJur(qe.jurisdiction), cj = normJur(ce.jurisdiction)
+  if (qj && cj) { if (qj === cj) signals.push(1); else { signals.push(0); compatible = false } }
+  const norm = (list) => (Array.isArray(list) ? list : (list ? [list] : [])).map(normalizeApp).filter(Boolean)
+  const qs = new Set(norm(qe.software)), cs = new Set(norm(ce.software))
+  if (qs.size && cs.size) {
+    let inter = 0
+    for (const x of qs) if (cs.has(x)) inter++
+    const overlap = inter / Math.min(qs.size, cs.size)
+    signals.push(overlap)
+    if (overlap === 0) compatible = false
+  }
+  if (typeof qe.manual === 'boolean' && typeof ce.manual === 'boolean' && qe.manual !== ce.manual) {
+    signals.push(0); compatible = false
+  }
+  const score = signals.length ? signals.reduce((x, y) => x + y, 0) / signals.length : 0.5
+  return { score, compatible }
+}
+
+// ---- MATCHER: best template for a new task + its serve/seed/none tier --------
+// Deterministic and fast (runs on every /plan). Scores every candidate and maps
+// the best to a tier:
+//   STRONG  (serve the proven workflow)  score >= SERVE_FLOOR, app matches, env compatible
+//   PARTIAL (seed the plan)              score >= SEED_FLOOR
+//   NONE    (full AI plan)               below SEED_FLOOR / no candidates
+// Returns { template, score, tier }; template is null on 'none' (a near-miss is
+// ADAPTED via PARTIAL, never force-fit as if proven - SUPREME RULE VI).
+export function matchWorkflowTemplate(goal, app, environment, templates) {
+  const list = Array.isArray(templates) ? templates : []
+  if (!list.length) return { template: null, score: 0, tier: 'none' }
+  const qTokens = workflowGoalSignature(goal).tokens
+  let best = null
+  for (const t of list) {
+    if (!t) continue
+    const cTokens = (Array.isArray(t.goalTokens) && t.goalTokens.length)
+      ? t.goalTokens
+      : workflowGoalSignature(t.goalSig || '').tokens
+    const goalSim = workflowTokenSim(qTokens, cTokens)
+    const appR = workflowAppScore(app, t.app)
+    const envR = workflowEnvCompat(environment, t.environment)
+    const score = Math.round(
+      (WORKFLOW_GOAL_WEIGHT * goalSim + WORKFLOW_APP_WEIGHT * appR.score + WORKFLOW_ENV_WEIGHT * envR.score) * 1000
+    ) / 1000
+    if (!best || score > best.score) best = { template: t, score, appMatch: appR.match, envCompatible: envR.compatible, envScore: envR.score }
+  }
+  let tier = 'none'
+  if (best.score >= WORKFLOW_SERVE_FLOOR && best.appMatch && best.envCompatible && best.envScore >= WORKFLOW_ENV_COMPAT_FLOOR) {
+    tier = 'strong'
+  } else if (best.score >= WORKFLOW_SEED_FLOOR) {
+    tier = 'partial'
+  }
+  return { template: tier === 'none' ? null : best.template, score: best.score, tier }
+}
