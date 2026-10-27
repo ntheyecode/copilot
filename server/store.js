@@ -5481,6 +5481,18 @@ export function setWorkSessionMode(workUserId, sessionId, mode) {
   persistSoon()
   return s
 }
+// Guidance strength (easy | medium | technical | executive): the operator's
+// chosen register, switchable mid-session. Stored raw here; work.normalizeLevel
+// is the single authority that validates it at read time (no import cycle). It
+// shapes HOW guidance reads, never WHAT the product does (SUPREME RULE VI).
+export function setWorkSessionLevel(workUserId, sessionId, level) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) throw httpErr(404, 'Session not found')
+  s.level = String(level || '')
+  s.lastActivityAt = Date.now()
+  persistSoon()
+  return s
+}
 // The effective plan tier for a user (premium gating for watch-light). A company
 // member inherits the company plan; otherwise the user's own tier.
 export function workUserTier(workUserId) {
