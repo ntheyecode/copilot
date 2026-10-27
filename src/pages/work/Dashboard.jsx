@@ -3,7 +3,7 @@
 // /work/start). Built from small sections, each in its own module:
 //
 //   PlanMeters   "Your plan at a glance": hours this month (ring), top-up hours
-//                or a company allowance / pool, today's tasks (pips), and the ONE
+//                or a company allowance / pool, open tasks (pips), and the ONE
 //                actionable state with the action that resolves it
 //   TaskFlow     first run (no session yet): what a guided task looks like, with
 //                the Start CTA; replaces the hero + the empty resume list
@@ -16,7 +16,8 @@
 // billing). Every plan number comes from the shell's ONE derivation
 // (WorkAppContext.plan = planModel.planView(usage)), so the top-bar pill and the
 // meters can never disagree. The retired daily-minutes / banked-credits / trade
-// mechanics are gone: plans include hours per month and tasks per day.
+// mechanics are gone: plans include hours per month; tasks are open slots (up
+// to a few at once), never a per-day count.
 //
 // Strings: src/i18n/locales/en/workDashboard.js (namespace workDashboard.*).
 // Page-only styles: dash.css.js; each section carries its own stylesheet.
@@ -65,9 +66,10 @@ export default function Dashboard() {
   const [subBusy, setSubBusy] = useState('')
   const [subErr, setSubErr] = useState('')
 
-  // Plans + their monthly hours and daily tasks come from live pricing (the
-  // single source, superadmin-editable); a value pricing lacks is simply not
-  // shown rather than invented here.
+  // Plans + their monthly hours come from live pricing (the single source,
+  // superadmin-editable); a value pricing lacks is simply not shown rather than
+  // invented here. There is no per-tier task count any more (hours are the only
+  // usage limit).
   const PLAN_META = useMemo(() => {
     const plans = (pricing && pricing.plans) || null
     const ids = plans ? PLAN_TIER_ORDER.filter((tier) => plans[tier] != null) : ['basic', 'advanced', 'premium']
@@ -76,7 +78,6 @@ export default function Dashboard() {
       id,
       name: titleCase(id),
       hrs: num(pricing && pricing.hoursMonthly, id),
-      tasks: num(pricing && pricing.tasks, id),
     }))
   }, [pricing, titleCase])
   const startCheckout = async (plan) => {
@@ -165,7 +166,7 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* 3. Plan meters: hours this month, top-ups / allowance, today's tasks, the one state */}
+      {/* 3. Plan meters: hours this month, top-ups / allowance, open tasks, the one state */}
       {!needsSub && (
         <PlanMeters plan={plan} renewLabel={renewLabel} companyName={companyName}
           canBuy={canBuyHours} canUpgrade={canUpgrade} upgradeHref={upgradeHref} onBuyHours={buyHours} />
@@ -253,7 +254,6 @@ export default function Dashboard() {
                 <span className="nm">{p.name}</span>
                 <span className="pr">{pricing ? money(pricing.plans[p.id]) : ''}<i>{t('workDashboard.sub.perMonth')}</i></span>
                 {p.hrs != null && <span className="hr">{t.n('workDashboard.sub.hours', p.hrs, { n: p.hrs })}</span>}
-                {p.tasks != null && <span className="hr">{t.n('workDashboard.sub.tasks', p.tasks, { n: p.tasks })}</span>}
                 <span className="go">{subBusy === p.id ? <Loader2 size={15} className="spin" /> : <>{t('workDashboard.sub.choose', { plan: p.name })} <ArrowRight size={14} /></>}</span>
               </button>
             ))}

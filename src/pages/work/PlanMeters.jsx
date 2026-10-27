@@ -8,17 +8,20 @@
 //                         shared company pool)
 //   2. Top-up hours       bought on top of the plan, never expire, Buy hours
 //                         (company members instead see their admin-set allowance)
-//   3. Today's tasks      one pip per task in today's cap, used / cap, reset time;
-//                         the cap-hit state says when new tasks open
+//   3. Open tasks         one pip per at-once task slot, "1 of 4 open", room left
+//                         or "finish or pick one up"; nothing resets, hours are
+//                         the only usage limit (a company member with an
+//                         admin-set task ceiling sees started / cap and its reset)
 //
 // and ONE state banner under them with the action that resolves it (buy hours,
 // upgrade, wait for the renewal, ask your administrator). No banked credits, no
 // trade control: those mechanics are retired. Styles: planMeters.css.js (the
 // ring + pips come from planPill.css.js, injected by the shell's PlanPill).
-import { Clock, Check, Zap, Info, AlertTriangle, CheckCircle2, Plus, Sparkles, Building2 } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Clock, Check, Zap, Info, AlertTriangle, CheckCircle2, Plus, Sparkles, Building2, ListChecks } from 'lucide-react'
 import { useT } from '../../i18n/index.jsx'
 import { fmtDuration, fmtHours, share } from './planModel.js'
-import { HoursRing, TaskPips, MAX_PIPS, hoursTone } from './PlanPill.jsx'
+import { HoursRing, TaskPips, MAX_PIPS, hoursTone, taskSlotCopy } from './PlanPill.jsx'
 import { PLAN_METERS_CSS } from './planMeters.css.js'
 
 function Tip({ id, text, label }) {
@@ -86,6 +89,8 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
       </div>
     )
   } else if (plan.dailySeconds != null) {
+    // Pool-based company member whose admin set a DAY ceiling (company policy;
+    // individuals never have a per-day hours allowance, dailySeconds is null).
     const pct = 1 - share(plan.usedToday, plan.dailySeconds)
     hoursTile = (
       <div className={`wd-pm-tile ${tone === 'ok' ? '' : tone}`}>
@@ -174,12 +179,18 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     )
   }
 
-  // ---- Tile 3: today's tasks -----------------------------------------------
-  const tasksAria = !tasks ? '' : tasks.unlimited ? t('workShell.plan.tasksUnlimitedAria') : t('workDashboard.meters.tasks.pipsAria', { used: tasks.usedToday, cap: tasks.cap != null ? tasks.cap : 0 })
+  // ---- Tile 3: task slots (open tasks, or a company ceiling) -----------------
+  // mode 'open' (individuals): "1 of 4 open", pips = slots in use, room left or
+  // "finish or pick one up"; no reset copy, a slot frees when a task is done.
+  // mode 'limit' (company ceiling): started of cap and when it resets.
+  const openMode = !!(tasks && tasks.mode === 'open')
+  const slot = taskSlotCopy(t, tasks, plan.tasksFull, 'workShell.plan')
+  const tasksTip = !tasks || tasks.unlimited ? t('workDashboard.meters.tasks.tipUnlimited')
+    : openMode ? t('workDashboard.meters.tasks.tipOpen', { max: tasks.max }) : t('workDashboard.meters.tasks.tipLimit', { reset: tasks.resetLabel })
   const tasksTile = (
-    <div className={`wd-pm-tile${plan.taskCap ? ' low' : ''}`}>
-      <div className="wd-pm-top"><span className={`wd-pm-ic${plan.taskCap ? ' warm' : ' alt'}`}><Check size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.tasks.label')}</span>
-        <Tip id="wd-pm-tip-tasks" label={info} text={tasks && tasks.unlimited ? t('workDashboard.meters.tasks.tipUnlimited') : t('workDashboard.meters.tasks.tip', { reset: tasks ? tasks.resetLabel : '' })} /></div>
+    <div className={`wd-pm-tile${plan.tasksFull ? ' low' : ''}`}>
+      <div className="wd-pm-top"><span className={`wd-pm-ic${plan.tasksFull ? ' warm' : ' alt'}`}><Check size={15} /></span><span className="wd-pm-label">{openMode ? t('workDashboard.meters.tasks.labelOpen') : t('workDashboard.meters.tasks.label')}</span>
+        <Tip id="wd-pm-tip-tasks" label={info} text={tasksTip} /></div>
       <div className="wd-pm-body"><div className="wd-pm-main">
         {!tasks || tasks.unlimited ? (
           <>
@@ -188,12 +199,12 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
           </>
         ) : (
           <>
-            <div className="wd-pm-value">{tasks.usedToday}<small>/ {tasks.cap != null ? tasks.cap : '-'}</small></div>
+            <div className="wd-pm-value">{tasks.used}<small>/ {tasks.max != null ? tasks.max : '-'}</small></div>
             <div className="wd-pm-pipsrow">
-              {tasks.cap != null && tasks.cap <= MAX_PIPS && <TaskPips used={tasks.usedToday} cap={tasks.cap} label={tasksAria} size="lg" />}
-              <span className="wd-pm-sub" style={{ marginTop: 0 }}>{t('workDashboard.meters.tasks.usedOf', { used: tasks.usedToday, cap: tasks.cap != null ? tasks.cap : '-' })}</span>
+              {tasks.max != null && tasks.max <= MAX_PIPS && <TaskPips used={tasks.used} max={tasks.max} label={slot.aria} size="lg" />}
+              <span className="wd-pm-sub" style={{ marginTop: 0 }}>{openMode ? t('workDashboard.meters.tasks.openOf', { open: tasks.used, max: tasks.max }) : t('workDashboard.meters.tasks.usedOf', { used: tasks.used, cap: tasks.max != null ? tasks.max : '-' })}</span>
             </div>
-            <div className={`wd-pm-sub${plan.taskCap ? ' warm' : ''}`}>{plan.taskCap ? t('workDashboard.meters.tasks.capHit', { reset: tasks.resetLabel }) : t('workDashboard.meters.tasks.resets', { reset: tasks.resetLabel })}</div>
+            <div className={`wd-pm-sub${plan.tasksFull ? ' warm' : ''}`}>{slot.note}</div>
           </>
         )}
       </div></div>
@@ -208,9 +219,14 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     if (s === 'ceiling') return { out: true, text: t('workDashboard.meters.state.ceiling', { company: companyName || t('workDashboard.plan.yourCompany') }) }
     if (s === 'exhausted') return { out: true, text: plan.isCompany ? t('workDashboard.meters.state.exhaustedCompany', { date: renewLabel }) : t('workDashboard.meters.state.exhausted', { date: renewLabel }), buy: true, upgrade: true }
     if (s === 'low') return { out: false, text: plan.isCompany ? t('workDashboard.meters.state.lowCompany', { time: timeLeft }) : t('workDashboard.meters.state.low', { time: timeLeft }), buy: true }
-    if (s === 'taskCap') return { out: false, text: t('workDashboard.meters.state.taskCap', { cap: tasks ? tasks.cap : 0, reset: tasks ? tasks.resetLabel : '' }), upgrade: true }
+    if (s === 'tasksFull') {
+      return openMode
+        ? { out: false, text: t('workDashboard.meters.state.tasksFull', { max: tasks.max }), tasks: true }
+        : { out: false, text: t('workDashboard.meters.state.tasksLimit', { cap: tasks ? tasks.max : 0, reset: tasks ? tasks.resetLabel : '' }) }
+    }
     return null
   })()
+  const bannerActs = banner && ((banner.buy && canBuy) || (banner.upgrade && canUpgrade) || banner.tasks)
 
   return (
     <section className="wd-pm" aria-label={t('workDashboard.meters.heading')}>
@@ -220,10 +236,11 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
       {banner && (
         <div className={`wd-pm-state${banner.out ? ' out' : ''}`} role="status">
           <div className="wd-pm-state-t"><AlertTriangle size={15} /> <span>{banner.text}</span></div>
-          {((banner.buy && canBuy) || (banner.upgrade && canUpgrade)) && (
+          {bannerActs && (
             <div className="wd-pm-state-acts">
               {banner.buy && canBuy && <button type="button" className="wd-pm-state-act" onClick={onBuyHours}><Plus size={13} /> {t('workDashboard.meters.state.buy')}</button>}
               {banner.upgrade && canUpgrade && <a className="wd-pm-state-act ghost" href={upgradeHref || '/workcopilot/pricing'}><Sparkles size={13} /> {t('workDashboard.meters.state.upgrade')}</a>}
+              {banner.tasks && <Link className="wd-pm-state-act ghost" to="/work/tasks"><ListChecks size={13} /> {t('workDashboard.meters.state.tasks')}</Link>}
             </div>
           )}
         </div>

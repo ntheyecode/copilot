@@ -262,14 +262,14 @@ export default function WorkAppLayout() {
 
   // ---- Derived plan values (ONE derivation, planModel.planView) -------------
   // The pill, its popover, the dashboard meters and the console all read `plan`:
-  // this month's included hours, top-up hours, a company allowance / pool, today's
-  // task cap and the one actionable state. The old minutes-per-day, banked
-  // credits and trade values are gone with the monthly plan model.
+  // this month's included hours, top-up hours, a company allowance / pool, the
+  // task slots in use and the one actionable state. The old minutes-per-day,
+  // per-day task cap, banked credits and trade values are gone with the monthly
+  // plan model.
   const plan = useMemo(() => planView(usage, { isCompanyMember, isAdmin }), [usage, isCompanyMember, isAdmin])
   // When the plan hours renew, localized from the server's 'YYYY-MM-01' key; a
   // pool-based company member (no monthly plan) gets the company's reset label.
   const renewLabel = useMemo(() => (usage ? (fmtRenewDate(usage.renewsAt, tag) || usage.resetLabel || '') : ''), [usage, tag])
-  const tasksResetLabel = (plan && plan.tasks && plan.tasks.resetLabel) || ''
   const units = useMemo(() => ({ h: t('workShell.plan.unitH'), min: t('workShell.plan.unitMin') }), [t])
   const timeLeft = plan ? fmtDuration(plan.remainingSeconds, units, true) : null
   const cap = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
@@ -325,7 +325,7 @@ export default function WorkAppLayout() {
     user, sess, signOut, onOpen, showGuard,
     isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
     company,
-    usage, usageErr, plan, renewLabel, timeLeft, tasksResetLabel, tier, planName, low, canBuyHours, upgradeHref,
+    usage, usageErr, plan, renewLabel, timeLeft, tier, planName, low, canBuyHours, upgradeHref,
     pricing, money, titleCase,
     aiStatus, ready, aiErr, loadAi,
     needsSub, setNeedsSub, gateMsg, setGateMsg,
@@ -336,7 +336,7 @@ export default function WorkAppLayout() {
     desk: !!desktop,
   }), [
     user, sess, onOpen, showGuard, isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
-    company, usage, usageErr, plan, renewLabel, timeLeft, tasksResetLabel, tier, planName, low, canBuyHours, upgradeHref,
+    company, usage, usageErr, plan, renewLabel, timeLeft, tier, planName, low, canBuyHours, upgradeHref,
     pricing, aiStatus, ready, aiErr, loadAi, needsSub, gateMsg, billingOn, invoices, showBilling,
     sessions, sessLoaded, sessErr, reload, refreshUsage, buddyPref, showBuy, buyCredits, desktop,
     signOut, money, titleCase,

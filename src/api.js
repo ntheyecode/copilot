@@ -39,7 +39,7 @@ async function req(method, url, body, opts) {
     }
     const err = new Error((data && data.error) || `Request failed (${res.status})`)
     err.status = res.status
-    err.data = data || null          // full response body (e.g. taskLimit, mustCompleteCurrent, activeTaskId)
+    err.data = data || null          // full response body (e.g. outOfHours, tooManyOpen + maxOpen/open, taskLimit)
     throw err
   }
   // On-device rehydrate: substitute tokenized values back into the response so

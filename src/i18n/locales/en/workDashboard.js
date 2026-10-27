@@ -7,9 +7,10 @@
 // falls back to this English, so a newly keyed string reads in English until it
 // is translated.
 //
-// Plan model (2026-10): every plan includes guided HOURS PER MONTH, renewed on
-// the 1st, plus a plain number of guided TASKS PER DAY. Top-up hours never
-// expire. There are no daily minutes, no banked credits and no trade.
+// Plan model (2026-10-27): every plan includes guided HOURS PER MONTH, renewed
+// on the 1st; hours are the ONLY usage limit. A person may keep a few tasks
+// open at once (open slots, nothing resets). Top-up hours never expire. There
+// are no daily minutes, no per-day task cap, no banked credits and no trade.
 export default {
   workDashboard: {
     // ---- Co-brand strip (company users) ----
@@ -37,7 +38,7 @@ export default {
     // ---- Plan meters: "Your plan at a glance" (PlanMeters.jsx) ----
     meters: {
       heading: 'Your plan at a glance',
-      sub: "Hours this month, top-ups and today's tasks. Hover the info on a tile for how it works.",
+      sub: 'Hours this month, top-ups and open tasks. Hover the info on a tile for how it works.',
       info: 'How this works',
       on: 'Guidance on',
       onSub: 'Always available on your account',
@@ -79,16 +80,21 @@ export default {
         never: 'Never expire',
         buy: 'Buy hours',
       },
+      // Task slots. Individuals: open tasks of the at-once maximum ("1 of 4
+      // open"; hours are the only usage limit, nothing resets). Company members
+      // with an admin-set ceiling: started of cap, and when it resets. The pip
+      // notes (room left / finish one / resets) are shared with the plan pill
+      // (workShell.plan.tasks*).
       tasks: {
-        label: "Today's tasks",
-        tip: 'How many guided tasks you can start each day. Resets {reset}.',
+        labelOpen: 'Open tasks',
+        label: 'Tasks',
+        tipOpen: 'Up to {max} tasks can be open at once, running or paused. Finish one, or pick it up from My tasks, to free a slot. Your hours are the only usage limit.',
+        tipLimit: 'How many guided tasks your company lets you start. Resets {reset}.',
         tipUnlimited: 'You can start as many guided tasks as you need.',
         unlimited: 'Unlimited',
         unlimitedSub: 'Start as many tasks as you need',
+        openOf: '{open} of {max} open',
         usedOf: '{used} of {cap} started',
-        pipsAria: '{used} of {cap} tasks started today',
-        capHit: 'New tasks open {reset}',
-        resets: 'Resets {reset}',
       },
       // The one state banner under the tiles, with the action that resolves it.
       state: {
@@ -98,9 +104,11 @@ export default {
         exhaustedCompany: 'Your plan hours for this month are used up. They renew {date}. Ask your administrator if you need more before then.',
         low: 'Only {time} of guided time left this month.',
         lowCompany: 'Only {time} of guided time left this month. Ask your administrator if you need more.',
-        taskCap: 'You have started all {cap} tasks for today. New tasks open {reset}.',
+        tasksFull: 'You have {max} tasks open, the most at once. Finish or pick one up to start another.',
+        tasksLimit: 'You have started all {cap} tasks your company allows for now. New tasks open {reset}.',
         buy: 'Buy hours',
         upgrade: 'Upgrade',
+        tasks: 'My tasks',
       },
     },
 
@@ -181,13 +189,11 @@ export default {
     sub: {
       title: 'Choose a plan to start',
       // leadMonth / bodyMonth: new names for the same reason as plan.* above.
-      leadMonth: 'Pick a plan to turn on live guidance. Every plan includes guided hours each month, renewed on the 1st, plus a number of guided tasks per day. Change or cancel anytime.',
+      leadMonth: 'Pick a plan to turn on live guidance. Every plan includes guided hours each month, renewed on the 1st. Change or cancel anytime.',
       popular: 'Most popular',
       perMonth: '/mo',
       hours_one: '{n} guided hour per month',
       hours_other: '{n} guided hours per month',
-      tasks_one: '{n} task per day',
-      tasks_other: '{n} tasks per day',
       choose: 'Choose {plan}',
       errGeneric: 'Could not start checkout. Please try again.',
       errBilling: 'Billing is not available right now.',
