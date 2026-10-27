@@ -17,11 +17,14 @@ const hoursWin = (v) => ({ day: secToH(v && v.day), week: secToH(v && v.week), m
 const numOrNull = (s) => (s === '' || s == null ? null : Number(s))
 
 // One day/week/month triple of inputs (hours as decimals, tasks as whole counts).
-function WindowInputs({ value, onChange, step }) {
+// `caption` names the triple (Hours / Tasks) where no column header can: it is
+// shown only at narrow widths, where the group grid stacks and hides its header.
+function WindowInputs({ value, onChange, step, caption = null }) {
   const t = useT()
   const clean = step === 1 ? (v) => v.replace(/[^0-9]/g, '') : (v) => v.replace(/[^0-9.]/g, '')
   return (
     <div className="ul-win">
+      {caption ? <div className="ul-win-cap">{caption}</div> : null}
       {['day', 'week', 'month'].map((w) => (
         <label key={w} className="ul-win-f">
           <span>{t(`companyAdmin.usage.per.${w}`)}</span>
@@ -168,8 +171,8 @@ export default function UsageLimits() {
           {GROUPS.map((grp) => (
             <div key={grp} className="ul-grouprow">
               <div className="ul-group-name">{t(`companyAdmin.usage.groups.${grp}`)}</div>
-              <WindowInputs value={groupForm[grp].hours} onChange={(v) => setGroupForm((g) => ({ ...g, [grp]: { ...g[grp], hours: v } }))} step={0.1} />
-              <WindowInputs value={groupForm[grp].tasks} onChange={(v) => setGroupForm((g) => ({ ...g, [grp]: { ...g[grp], tasks: v } }))} step={1} />
+              <WindowInputs value={groupForm[grp].hours} onChange={(v) => setGroupForm((g) => ({ ...g, [grp]: { ...g[grp], hours: v } }))} step={0.1} caption={t('companyAdmin.usage.hoursCol')} />
+              <WindowInputs value={groupForm[grp].tasks} onChange={(v) => setGroupForm((g) => ({ ...g, [grp]: { ...g[grp], tasks: v } }))} step={1} caption={t('companyAdmin.usage.tasksCol')} />
             </div>
           ))}
           <div className="co-block-t" style={{ marginTop: 12 }}>{t('companyAdmin.usage.taskPolicyTitle')}</div>
@@ -284,6 +287,7 @@ const CSS = `
 .ul-col-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--wka-faint)}
 .ul-group-name{font-size:13px;font-weight:600;color:var(--wka-text)}
 .ul-win{display:flex;gap:8px;flex-wrap:wrap}
+.ul-win-cap{display:none;flex:1 0 100%;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--wka-faint);margin-bottom:-2px}
 .ul-win-f{display:flex;flex-direction:column;gap:3px;flex:1 1 72px;min-width:64px}
 .ul-win-f>span{font-size:11px;color:var(--wka-faint)}
 .ul-win-f .wka-input{width:100%}
@@ -308,6 +312,7 @@ const CSS = `
 @media(max-width:720px){
   .ul-grouprow{grid-template-columns:1fr;gap:8px}
   .ul-grouphead{display:none}
+  .ul-win-cap{display:block}
   .ul-group-name{margin-top:4px}
   .ul-override-grid{grid-template-columns:1fr}
   .ul-person-use{margin-left:0;width:100%;white-space:normal}
