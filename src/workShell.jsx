@@ -168,6 +168,8 @@ function injectOnce() {
 // Windows-style caption glyphs as inline SVG (exact, icon-library-independent).
 function CapMin() { return <svg width="11" height="11" viewBox="0 0 11 11"><rect x="1" y="5" width="9" height="1" fill="currentColor" /></svg> }
 function CapMax() { return <svg width="11" height="11" viewBox="0 0 11 11"><rect x="1.5" y="1.5" width="8" height="8" fill="none" stroke="currentColor" strokeWidth="1" /></svg> }
+function CapFull() { return <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1"><path d="M1.5 4V1.5H4M7 1.5h2.5V4M9.5 7v2.5H7M4 9.5H1.5V7" /></svg> }
+function CapExitFull() { return <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" strokeWidth="1"><path d="M4 1.5V4H1.5M9.5 4H7V1.5M7 9.5V7h2.5M1.5 7H4v2.5" /></svg> }
 function CapRestore() {
   return (
     <svg width="11" height="11" viewBox="0 0 11 11">
@@ -180,7 +182,7 @@ function CapClose() { return <svg width="11" height="11" viewBox="0 0 11 11"><pa
 
 export default function WorkShell({ authed = false }) {
   const desk = typeof window !== 'undefined' ? window.workDesktop : null
-  const [st, setSt] = useState({ mode: 'plan', onTop: false, contentProtected: true, clickThrough: false, opacity: 1, maximized: false })
+  const [st, setSt] = useState({ mode: 'plan', onTop: false, contentProtected: true, clickThrough: false, opacity: 1, maximized: false, fullscreen: false })
 
   useEffect(() => {
     if (!desk) return
@@ -255,7 +257,8 @@ export default function WorkShell({ authed = false }) {
 
       <div className="wshell-caps">
         <button type="button" className="wshell-cap" onClick={() => call('winMinimize')} aria-label="Minimize"><CapMin /></button>
-        <button type="button" className="wshell-cap" onClick={() => call('winMaximize')} aria-label={st.maximized ? 'Restore' : 'Maximize'}>{st.maximized ? <CapRestore /> : <CapMax />}</button>
+        <button type="button" className="wshell-cap" onClick={() => call('winMaximize')} aria-label={st.maximized ? 'Restore' : 'Maximize'} title={st.mode === 'guide' ? 'Maximize (centered)' : (st.maximized ? 'Restore' : 'Maximize')}>{st.maximized ? <CapRestore /> : <CapMax />}</button>
+        <button type="button" className="wshell-cap" onClick={() => call('winFullscreen')} aria-label={st.fullscreen ? 'Exit full screen' : 'Full screen'} title={st.fullscreen ? 'Exit full screen' : 'Full screen (fills the screen, good on a second monitor)'}>{st.fullscreen ? <CapExitFull /> : <CapFull />}</button>
         <button type="button" className="wshell-cap close" onClick={() => call('winClose')} aria-label="Close"><CapClose /></button>
       </div>
     </div>

@@ -122,6 +122,7 @@ function sendState() {
     mode, onTop, contentProtected, clickThrough,
     opacity: OPACITIES[opacityIdx],
     maximized: isMaxed(),
+    fullscreen: !!(win && !win.isDestroyed() && win.isFullScreen()),
   }
   for (const w of [win, buddy]) {
     try { if (w && !w.isDestroyed()) w.webContents.send('work:state', st) } catch { /* ignore */ }
@@ -174,6 +175,7 @@ function applyMode(next) {
   if (!win || win.isDestroyed()) return mode
   if (next !== 'plan' && next !== 'guide') return mode
   if (next === mode) { sendState(); return mode }
+  if (win.isFullScreen()) { try { win.setFullScreen(false) } catch { /* ignore */ } }   // a mode switch leaves full screen
   if (!win.isMaximized()) {
     if (mode === 'plan') planBounds = win.getBounds()
     else guideBounds = guideMax ? (guideRestore || win.getBounds()) : win.getBounds()
@@ -745,6 +747,8 @@ function createWindow() {
     sendState()
   })
   win.on('unmaximize', () => sendState())
+  win.on('enter-full-screen', () => sendState())        // reflect OS-driven full screen (F11) back to the UI toggle
+  win.on('leave-full-screen', () => sendState())
 
   // Closing the main window closes the product. Before this, the (hidden) buddy
   // and the monitor picker were separate BrowserWindows that outlived the main
@@ -1015,6 +1019,17 @@ ipcMain.handle('work:win-maximize', () => {
   return win.isMaximized()
 })
 ipcMain.handle('work:win-close', () => { if (win && !win.isDestroyed()) win.close() })
+// Owner 2026-10-27: the maximize button stays CENTERED (above); this is the
+// separate TRUE full-screen toggle (edge to edge), useful on a second monitor.
+// Full screen and the centered guide-max are mutually exclusive.
+ipcMain.handle('work:win-fullscreen', () => {
+  if (!win || win.isDestroyed()) return false
+  const want = !win.isFullScreen()
+  if (want && mode === 'guide' && guideMax) { guideMax = false }   // leave centered-max for full screen
+  try { win.setFullScreen(want) } catch { /* ignore */ }
+  sendState()
+  return win.isFullScreen()
+})
 ipcMain.handle('work:set-mode', (_e, m) => applyMode(m))
 ipcMain.handle('work:set-always-on-top', (_e, on) => { onTop = !!on; applyOnTop(); sendState(); return onTop })
 ipcMain.handle('work:set-content-protection', (_e, on) => { setContentProtection(on); return contentProtected })
@@ -1022,6 +1037,7 @@ ipcMain.handle('work:get-state', () => ({
   mode, onTop, contentProtected, clickThrough,
   opacity: OPACITIES[opacityIdx],
   maximized: isMaxed(),
+  fullscreen: !!(win && !win.isDestroyed() && win.isFullScreen()),
 }))
 
 // --- on-device reference documents -----------------------------------------

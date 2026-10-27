@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('workDesktop', {
   // Frameless window controls (the title bar draws its own min / max / close).
   winMinimize: () => ipcRenderer.invoke('work:win-minimize'),
   winMaximize: () => ipcRenderer.invoke('work:win-maximize'),
+  winFullscreen: () => ipcRenderer.invoke('work:win-fullscreen'),
   winClose: () => ipcRenderer.invoke('work:win-close'),
   // Current overlay state, and a subscription for live updates (hotkeys, OS
   // maximize, mode switches all push a fresh state).
