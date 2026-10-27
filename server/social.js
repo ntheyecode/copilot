@@ -23,6 +23,9 @@
 // button is shown disabled. No em dashes in operator-facing text.
 // ---------------------------------------------------------------------------
 import { discover, newPkce, newState, buildAuthorizeUrl, exchangeCode, verifyIdToken, extractEmail } from './sso.js'
+// Subscribe onboarding (onboarding.js): the start URL may carry ?flow=onboarding
+// &plan=&cycle=; the callback then lands on the pay step instead of the login page.
+import { socialOnboardingIntent, finishSocialOnboarding } from './onboarding.js'
 
 const MFA_PENDING_TTL_MS = 15 * 60 * 1000
 const FB_VER = 'v19.0'
@@ -77,15 +80,16 @@ export function registerSocialRoutes(app, deps = {}) {
       if (!cfg) return loginError(res, 'That sign-in method is not set up yet.')
       const state = newState()
       const redirectUri = socialCallbackUrl(req)
+      const onboarding = socialOnboardingIntent(req.query)   // null outside the subscribe flow
       if (cfg.kind === 'oidc') {
         const disco = await discover(cfg.issuer)
         const { verifier, challenge } = newPkce()
         const nonce = newState()
-        req.session.social = { provider, state, verifier, nonce, issuer: cfg.issuer }
+        req.session.social = { provider, state, verifier, nonce, issuer: cfg.issuer, onboarding }
         const url = buildAuthorizeUrl(disco, cfg, { state, challenge, nonce, redirectUri })
         req.session.save(() => res.redirect(url))
       } else {
-        req.session.social = { provider, state }
+        req.session.social = { provider, state, onboarding }
         const u = new URL(`https://www.facebook.com/${FB_VER}/dialog/oauth`)
         u.searchParams.set('client_id', cfg.clientId)
         u.searchParams.set('redirect_uri', redirectUri)
@@ -132,6 +136,14 @@ export function registerSocialRoutes(app, deps = {}) {
       if (!email || !email.includes('@')) return loginError(res, 'Your provider did not share an email address. Please use email sign-up instead.')
 
       const existing = store.findUserByLogin(email)
+      // SUBSCRIBE FLOW: the provider just verified the email, so the account (new
+      // or existing) continues to the pay step with its plan; the app entry still
+      // goes through the MFA gate (POST /api/work/onboarding/enter).
+      if (sess.onboarding) {
+        if (existing && existing.disabled) return loginError(res, 'This account has been disabled. Please contact your administrator.')
+        const user = existing || store.createSocialUser({ email, displayName: name, provider })
+        return finishSocialOnboarding(req, res, { store, user, isNew: !existing, intent: sess.onboarding })
+      }
       if (existing) {
         if (existing.disabled) return loginError(res, 'This account has been disabled. Please contact your administrator.')
         if (!store.mfaGloballyEnabled()) { establishSession(req, existing); return req.session.save(() => res.redirect('/work')) }

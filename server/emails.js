@@ -9,6 +9,7 @@
 // enterprise product mails: one place, consistent, observable, degrades
 // gracefully when SMTP is not yet configured.
 // ---------------------------------------------------------------------------
+import fs from 'node:fs'
 import { sendMail } from './mailer.js'
 import { renderEmail } from './email_templates.js'
 import * as store from './store.js'
@@ -159,6 +160,22 @@ export function sendOwnerSubscriptionAlertAsync(kind, info = {}) {
   Promise.resolve().then(() => sendOwnerSubscriptionAlert(kind, info)).catch(() => { /* already logged */ })
 }
 
+// LOCAL DEV / TEST ONLY: when WORK_EMAIL_SINK_FILE names a file, every templated
+// email is ALSO appended there as one JSON line ({ at, type, to, subject, text,
+// data }) before delivery is attempted. Lets a developer read a verification code
+// or a reset link without an SMTP server, and lets the end-to-end tests drive
+// the real sign-up flow. Never set in production (the file would hold codes).
+// Unset = no-op; a write failure is swallowed so it can never break a send.
+const EMAIL_SINK_FILE = process.env.WORK_EMAIL_SINK_FILE || ''
+function sinkEmailForDev(type, to, data) {
+  if (!EMAIL_SINK_FILE) return
+  try {
+    let subject = '', text = ''
+    try { const m = renderEmail(type, data || {}, {}); subject = m.subject || ''; text = m.text || '' } catch { /* keep the raw data */ }
+    fs.appendFileSync(EMAIL_SINK_FILE, JSON.stringify({ at: new Date().toISOString(), type, to, subject, text, data: data || {} }) + '\n')
+  } catch { /* dev aid only */ }
+}
+
 /**
  * Send one templated email.
  * @param {string} type   an EMAIL_TYPES key (email_templates.js)
@@ -175,6 +192,7 @@ export async function sendTemplate(type, to, data = {}, { critical = false, atta
     return { ok: false, ...(skip ? { skipped: skip } : {}), ...(err ? { error: err.message } : {}) }
   }
   if (!to || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(to))) return fail('invalid-recipient')
+  sinkEmailForDev(type, to, data)
   const cfg = store.getSmtpSendConfig ? store.getSmtpSendConfig() : null
   if (!cfg) return fail('smtp-not-configured')
   let msg = null

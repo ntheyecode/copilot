@@ -33,7 +33,8 @@ import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerSsoRoutes } from './sso.js'
-import { registerSocialRoutes } from './social.js'
+import { registerSocialRoutes, socialConfigured } from './social.js'
+import { registerOnboardingRoutes } from './onboarding.js'
 // Legal consent (clickwrap): the current agreements + version every account must
 // accept to use the platform. ONE source of truth (SUPREME RULE II); the signup
 // gate, the accept endpoint, and the re-consent gate all read from here.
@@ -967,7 +968,10 @@ function authOk(req) { _authFails.delete(_authIp(req)) }
 app.post('/api/work/login', wrap((req, res) => {
   if (authBlocked(req)) return res.status(429).json({ error: 'Too many sign-in attempts. Please wait a few minutes and try again.' })
   const { username, password } = req.body || {}
-  const u = store.findUser(username)
+  // Exact sign-in name first (unchanged), then the contact/SSO email: accounts
+  // created by the subscribe flow use their email as the sign-in name, and a
+  // classic account may sign in with its contact email too.
+  const u = store.findUser(username) || store.findUserByLogin(username)
   // SSO-bound accounts (pre-provisioned by email, no usable password) must come
   // in through their company identity provider, not this form. Tell them plainly
   // instead of returning a confusing "wrong password".
@@ -3069,6 +3073,9 @@ app.post('/api/work/password/set', wrap((req, res) => {
   const userId = store.consumeEmailToken(String(token || ''), 'set_password')
   if (!userId) return res.status(400).json({ error: 'This link is invalid or has expired. Ask for a new one.' })
   store.setUserPasswordById(userId, password)   // the store emits password_changed -> the owner's notice
+  // A link delivered to the mailbox proves ownership of the address: this is the
+  // verification recovery path for an account that never entered its code.
+  store.markEmailVerified(userId)
   res.json({ ok: true })
 }))
 // Forgot password: send a reset link. ALWAYS 200 (no account enumeration).
@@ -3400,6 +3407,10 @@ registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, 
 // Social sign-in for individual users (Google + Microsoft OIDC, Facebook OAuth2).
 // Reuses the OIDC machinery and the same MFA gate as password + SSO login.
 registerSocialRoutes(app, { store, establishSession, wrap })
+// Subscribe onboarding: create account -> verify email -> pay -> welcome -> app.
+// Runs on the onboarding marker / full session; the app entry reuses the MFA
+// gate above (pendingMfaUid + /api/work/login/mfa*), so no login path is bypassed.
+registerOnboardingRoutes(app, { store, establishSession, resolveWorkIdentity, authBlocked, authFail, authOk, ipOf, bindReferralOnSignup, LEGAL_VERSION, socialConfigured })
 
 // SOC/SIEM: auto-relay company alerts (e.g. PII/PHI entered) to the company's
 // configured destinations. The relay forwards ONLY alert metadata (categories/

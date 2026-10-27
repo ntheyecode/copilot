@@ -660,6 +660,32 @@ The WorkCoPilot team`,
     showRows: false,
   },
 
+  verify_email: {
+    label: 'Verify your email - sign-up code',
+    category: 'security',
+    description: 'Sent during sign-up with the six-digit code that confirms the email address.',
+    eyebrow: 'Verify your email',
+    defaultSubject: '<Code> is your WorkCoPilot verification code',
+    defaultHeading: 'Confirm your email address',
+    defaultBody:
+`Hi <First_Name>,
+
+Enter this code on the sign-up page to confirm your email address:
+
+**<Code>**
+
+> The code expires in <Expires_Label> and works once. If you did not create a WorkCoPilot account, you can ignore this email. Nothing happens without the code.`,
+    defaultCtaLabel: '',
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Code>', 'The six-digit verification code', '482913'),
+      P('<Expires_Label>', 'How long the code is valid', '10 minutes'),
+    ],
+    defaults: { expiresLabel: '10 minutes' },
+    sampleData: { name: 'Alex Morgan', code: '482913', expiresLabel: '10 minutes' },
+    showRows: false,
+  },
+
   reset_password: {
     label: 'Password reset',
     category: 'security',

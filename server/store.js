@@ -53,6 +53,7 @@ import { verifierOf, checkVerifier, randomSalt as kdfRandomSalt, KDF as EXPORT_K
 import * as eq from './enterprise_quota.js'
 import { createEnterpriseBilling } from './enterprise_billing.js'
 import { createPlanAllowance } from './plan_allowance.js'
+import { createOnboarding } from './onboarding_store.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 // WORK_DATA_DIR lets the owner point the DB + on-disk docs/shots anywhere (the
@@ -407,6 +408,17 @@ export const {
 // plain per-day task cap (tasks per tier). Pool-based enterprise companies skip
 // it: their company pool is the budget (enterprise_billing.js).
 const plan = createPlanAllowance({ db: () => db, persistSoon, getWorkPricing, workUserTier, tasksToday: workTasksToday, httpErr })
+// ---- Subscribe onboarding (module: onboarding_store.js) ----
+// Email verification codes + the per-account plan intent for the sign-up ->
+// verify -> pay -> welcome flow. Hoisted account helpers are handed in, so the
+// module never imports the store (no cycle); the public API is re-exported so
+// index.js / onboarding.js keep their `store.*` names.
+const onb = createOnboarding({ db: () => db, persist, getUser, findUserByLogin, createWorkUser, normalizeEmail, httpErr, now })
+export const {
+  createOnboardingUser, isEmailVerified, markEmailVerified,
+  getOnboarding, setOnboardingIntent, setOnboardingCheckout, completeOnboarding,
+  changeOnboardingEmail, issueEmailOtp, verifyEmailOtp, emailOtpStatus,
+} = onb
 
 // ---- AI seed (one-time, at deploy) ---------------------------------------
 // If an ai-seed.json exists and the platform AI is not already configured, load
@@ -538,6 +550,7 @@ export function publicWorkUser(u) {
   return {
     id: u.id, username: u.username, role: u.role || 'user', root: !!u.root,
     createdAt: u.createdAt, onboarded: !!u.onboarded, displayName: u.displayName || null,
+    emailVerified: u.emailVerified === true,   // sign-up email proven (onboarding code or a consumed reset link); legacy accounts read false
     tier: (WORK_TIERS.includes(u.tier) ? u.tier : 'basic'),   // plan tier, for the team roster + settings
     scrub: workUserScrubOn(u.id),   // EFFECTIVE policy (own flag OR company default)
     reportShots: u.reportShots !== false,   // keep scrubbed milestone screenshots in the report (default on)
