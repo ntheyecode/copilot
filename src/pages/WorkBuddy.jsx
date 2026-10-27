@@ -30,7 +30,7 @@ import React, { useEffect, useLayoutEffect, useRef, useState, useCallback } from
 import { Clock, Pause, Play, X, Maximize2, Loader2, Sparkles, Type, Smile, Check, Minus, BookOpen } from 'lucide-react'
 import AliveBuddy, { readBuddyPref, resolveCharacter } from '../components/AliveBuddy.jsx'
 import BuddyPicker from '../components/BuddyPicker.jsx'
-import RichText from '../components/RichText.jsx'
+import RichText, { plainText } from '../components/RichText.jsx'
 
 const ACCENT = '#1f9d6b'   // emerald ink (on white cloud)
 const AMBER = '#b7791f'    // paused / warn ink (on white cloud)
@@ -217,7 +217,7 @@ export default function WorkBuddy() {
   const allDone = total > 0 && curIdx >= total
   const stepTitle = allDone
     ? 'All steps done'
-    : (steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || (session && session.goal) || 'Getting ready'
+    : plainText((steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || (session && session.goal) || 'Getting ready')
   const nextMove = allDone
     ? 'You are all set. Open the full window to finish up.'
     : (session && session.guidance) || (steps[curIdx] && (steps[curIdx].text || steps[curIdx].title)) || 'Watching your screen for the next move'

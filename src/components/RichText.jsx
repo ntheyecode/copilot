@@ -62,6 +62,12 @@ function withLinks(seg, key, accent) {
   return out
 }
 
+// The same text with the inline markers removed, for places that can only
+// hold plain text: a title attribute, an uppercase label, a window title.
+export function plainText(text) {
+  return String(text == null ? '' : text).replace(/\*{2,}([^*]+?)\*{2,}/g, '$1').replace(/`([^`]+?)`/g, '$1').replace(/==([^=]+?)==/g, '$1')
+}
+
 // The key-term treatment. color-mix keeps the soft highlight in the accent's
 // own hue in both themes and for any user-picked accent; the plain-color
 // fallback covers an engine without color-mix (the highlight is then absent,
