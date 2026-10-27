@@ -701,7 +701,6 @@ export default {
       recommended: '为您的任务推荐',
       billedAnnually: '按年计费',
       billedMonthly: '按月计费',
-      headline: '每月 {hours} 小时引导 · 每天 {tasks} 项任务',
       // 按月表述。每个数字都由实时价格配置注入
       // (每日上限 x 30),为纯数字:{tasks}/{hours} 是每月
       // 总量,{dailyTasks}/{dailyHours} 是每日额度。单位词留在
@@ -719,7 +718,6 @@ export default {
       mins: '您可以在一天中随时使用这些小时数,每次最短只用一分钟也行。按您实际使用的分钟计费,绝不按小时。',
       choose: '选择 {plan}',
       extraHour: '加购 1 小时 {price}',
-      taskMeaning: '一项任务就是一个目标，从头到尾全程引导。',
       // 卡片下方唯一的星号说明。故意与套餐无关:
       // 每套餐的每日额度已在各自卡片上,这里只说明计费方式。
       footnote: '*每天您都会获得所在套餐的引导任务数和引导小时数。每日小时数在午夜(美国东部时间)重置 - 不滚存。用不完的任务会存为您保留的额度,或用 2 项任务换 1 个加购小时(当天到期)。按您实际使用的分钟计费。',
@@ -1576,8 +1574,6 @@ export default {
     loadFail: '实时价格未能加载。请重试，或在结账页查看所有套餐。',
     retry: '重试',
     hoursMonthly: '每月 {hours} 小时专家引导',
-    tasksDay_one: '每天 {n} 项引导任务',
-    tasksDay_other: '每天 {n} 项引导任务',
     carry: '未用完的小时数结转',
     carryCap: '未用完的小时数结转，最多 {cap} 小时',
     expire: '小时数在每月初重置',
@@ -1586,17 +1582,13 @@ export default {
     valueH2: '按小时计的专家帮助。<em>每个月，每个套餐。</em>',
     valueSub: '按您每月需要的引导时间来选套餐。每一小时都是实时的，在您的屏幕上，直到确认完成。',
     statHours: '小时/月',
-    statTasks: '任务/天',
     statCarry: '结转',
     statReset: '每月重置',
     statUnused: '未用小时数',
     rowHours: '每月专家引导',
-    rowTasks: '每天引导任务',
     rowCarry: '未用小时数',
     rowExtra: '加购 1 小时',
     hoursVal: '{hours} 小时',
-    tasksVal_one: '{n} 项任务',
-    tasksVal_other: '{n} 项任务',
     carryVal: '结转',
     carryCapVal: '结转，最多 {cap} 小时',
     resetVal: '每月重置',
@@ -1608,7 +1600,6 @@ export default {
     listPrices: '显示的是标价：实时价格未能加载。',
     rangeVal: '{lo} 至 {hi}',
     statHoursSub: '从 Lite 到 Premium，每个套餐都包含',
-    statTasksSub: '每项都是一个完整目标，从头到尾全程引导',
     statCarrySub: '这个月没用完的，下个月还是您的',
     statResetSub: '每月 1 日重新充满',
     valueConsoleEyebrow: '一小时是什么样',
@@ -1640,7 +1631,6 @@ export default {
       '无限引导任务',
       'SSO、公司策略和 DPA',
     ],
-    taskNote: '一项任务就是一个目标，经过所需的每一步，从头到尾全程引导。',
     matrix: {
       h2: '所有套餐，并排比较。',
       colFeature: '您将获得',

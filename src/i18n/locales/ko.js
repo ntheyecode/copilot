@@ -700,7 +700,6 @@ export default {
       recommended: '내 작업에 추천',
       billedAnnually: '연간 결제',
       billedMonthly: '월간 결제',
-      headline: '월 {hours}시간 안내 · 하루 {tasks}개 작업',
       // 월 단위 표현. 모든 숫자는 라이브 요금 설정(일일 한도 x 30)에서
       // 일반 숫자로 주입됩니다: {tasks}/{hours}는 월 합계,
       // {dailyTasks}/{dailyHours}는 하루 기준입니다. 단위 단어는 문자열 안에
@@ -718,7 +717,6 @@ export default {
       mins: '하루 중 언제든, 한 번에 1분 단위로도 시간을 쓰세요. 시간 단위가 아니라 실제로 쓴 분 단위로 청구됩니다.',
       choose: '{plan} 선택',
       extraHour: '추가 시간 {price}',
-      taskMeaning: '작업이란 하나의 목표를 처음부터 끝까지 안내받는 것입니다.',
       // 카드 아래의 별표 한 줄. 요금제와 무관하게 공통입니다: 요금제별 일일
       // 기준은 이미 각 카드에 있으므로, 여기서는 모델을 설명합니다.
       footnote: '*매일 요금제의 안내 작업과 안내 시간이 제공됩니다. 하루 시간은 자정(미국 동부 시간)에 초기화되며 이월되지 않습니다. 쓰지 않은 작업은 크레딧으로 적립되어 보관되며, 작업 2개를 추가 시간 1시간과 교환할 수도 있습니다(당일 소멸). 실제로 쓴 분 단위로 청구됩니다.',
@@ -1575,8 +1573,6 @@ export default {
     loadFail: '실시간 요금을 불러오지 못했습니다. 다시 시도하거나 결제 화면에서 모든 요금제를 확인하세요.',
     retry: '다시 시도',
     hoursMonthly: '매달 {hours}시간 전문가 안내',
-    tasksDay_one: '하루 {n}개 안내 작업',
-    tasksDay_other: '하루 {n}개 안내 작업',
     carry: '남은 시간은 이월',
     carryCap: '남은 시간은 최대 {cap}시간까지 이월',
     expire: '시간은 매달 초에 초기화',
@@ -1585,17 +1581,13 @@ export default {
     valueH2: '시간 단위의 전문가 도움. <em>매달, 모든 요금제에서.</em>',
     valueSub: '한 달에 필요한 안내 시간에 맞춰 요금제를 고르세요. 모든 시간은 실시간으로, 화면 위에서, 확인된 마무리까지 이어집니다.',
     statHours: '시간/월',
-    statTasks: '작업/일',
     statCarry: '이월',
     statReset: '매달 초기화',
     statUnused: '남은 시간',
     rowHours: '월 전문가 안내',
-    rowTasks: '하루 안내 작업',
     rowCarry: '남은 시간',
     rowExtra: '추가 1시간',
     hoursVal: '{hours}시간',
-    tasksVal_one: '{n}개 작업',
-    tasksVal_other: '{n}개 작업',
     carryVal: '이월',
     carryCapVal: '최대 {cap}시간까지 이월',
     resetVal: '매달 초기화',
@@ -1607,7 +1599,6 @@ export default {
     listPrices: '정가를 표시 중: 실시간 요금을 불러오지 못했습니다.',
     rangeVal: '{lo}~{hi}',
     statHoursSub: 'Lite부터 Premium까지 모든 요금제에 포함',
-    statTasksSub: '각각 하나의 목표를 처음부터 끝까지 안내',
     statCarrySub: '이번 달에 쓰지 않은 시간은 다음 달에 내 것',
     statResetSub: '매달 1일에 새로 채워집니다',
     valueConsoleEyebrow: '1시간의 모습',
@@ -1639,7 +1630,6 @@ export default {
       '무제한 안내 작업',
       'SSO, 회사 정책, DPA',
     ],
-    taskNote: '작업이란 하나의 목표를 필요한 모든 단계를 거쳐 처음부터 끝까지 안내받는 것입니다.',
     matrix: {
       h2: '모든 요금제를 나란히.',
       colFeature: '제공 내용',

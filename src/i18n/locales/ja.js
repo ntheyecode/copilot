@@ -700,7 +700,6 @@ export default {
       recommended: 'あなたのタスクにおすすめ',
       billedAnnually: '年額一括請求',
       billedMonthly: '月額請求',
-      headline: '月 {hours} 時間の案内 · 1日 {tasks} タスク',
       // 月単位の表現。すべての数値はライブの料金設定から（1日の上限 × 30 を）
       // プレーンな数値として注入される: {tasks}/{hours} は月の合計、
       // {dailyTasks}/{dailyHours} は1日あたりの割り当て。単位の語は
@@ -718,7 +717,6 @@ export default {
       mins: '1日の中でいつでも、1分単位から時間を使えます。実際に使った分だけ分単位で請求、時間単位ではありません。',
       choose: '{plan} を選ぶ',
       extraHour: '追加1時間 {price}',
-      taskMeaning: 'タスクとは、一つの目標を最初から最後まで案内することです。',
       // カードの下にある唯一のアスタリスク注記。意図的にプラン非依存:
       // プランごとの1日の割り当ては各カードにすでにあるので、ここでは仕組みを説明する。
       footnote: '*毎日、ご利用のプランの案内付きタスクと案内時間が付与されます。1日の時間は深夜（米国東部時間）にリセットされ、繰り越されません。未使用のタスクは保持できるクレジットとして繰り越すか、2タスクを追加1時間（その日のうちに失効）と交換できます。実際に使った分だけ分単位で請求します。',
@@ -1575,8 +1573,6 @@ export default {
     loadFail: '最新の料金を読み込めませんでした。再試行するか、チェックアウトですべてのプランをご確認ください。',
     retry: '再試行',
     hoursMonthly: '毎月 {hours} 時間の専門家による案内',
-    tasksDay_one: '1日 {n} 件の案内付きタスク',
-    tasksDay_other: '1日 {n} 件の案内付きタスク',
     carry: '未使用の時間は繰り越し',
     carryCap: '未使用の時間は最大 {cap} 時間まで繰り越し',
     expire: '時間は毎月初めにリセット',
@@ -1585,17 +1581,13 @@ export default {
     valueH2: '専門家の手助けを時間単位で。<em>毎月、すべてのプランで。</em>',
     valueSub: '月に必要な案内時間でプランを選んでください。すべての時間がライブで、あなたの画面上で、確認済みの完了まで続きます。',
     statHours: '時間/月',
-    statTasks: 'タスク/日',
     statCarry: '繰り越し',
     statReset: '毎月リセット',
     statUnused: '未使用の時間',
     rowHours: '月の専門家による案内',
-    rowTasks: '1日の案内付きタスク',
     rowCarry: '未使用の時間',
     rowExtra: '追加 1 時間',
     hoursVal: '{hours} 時間',
-    tasksVal_one: '{n} タスク',
-    tasksVal_other: '{n} タスク',
     carryVal: '繰り越し',
     carryCapVal: '最大 {cap} 時間まで繰り越し',
     resetVal: '毎月リセット',
@@ -1607,7 +1599,6 @@ export default {
     listPrices: '定価を表示しています: 最新の料金を読み込めませんでした。',
     rangeVal: '{lo} 〜 {hi}',
     statHoursSub: 'Lite から Premium まで、すべてのプランに含まれます',
-    statTasksSub: 'それぞれが一つの目標を、最初から最後まで案内',
     statCarrySub: '今月使わなかった分は来月のあなたのもの',
     statResetSub: '毎月 1 日に新しい枠に',
     valueConsoleEyebrow: '1 時間の中身',
@@ -1639,7 +1630,6 @@ export default {
       '案内付きタスク無制限',
       'SSO、会社ポリシー、DPA',
     ],
-    taskNote: 'タスクとは、一つの目標を、必要なすべてのステップを通して最初から最後まで案内することです。',
     matrix: {
       h2: 'すべてのプランを並べて比較。',
       colFeature: '含まれるもの',
