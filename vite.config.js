@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { nullIndirectCallZeros } from './scripts/harden-indirect-calls.mjs'
 
 // Everything is bundled locally - no CDN, no external runtime deps.
 // In dev, /api is proxied to the Express server on :4444.
@@ -25,9 +26,9 @@ import react from '@vitejs/plugin-react'
 //
 // It obfuscates ONLY first-party chunks (any chunk that contains a module
 // from /src/). Pure-vendor chunks (react bundle, jspdf, html2canvas,
-// dompurify, lucide icons) are left as esbuild already minified them - that
-// keeps the bundle from ballooning and keeps runtime cost low, and those
-// libraries are public anyway (no IP to protect there).
+// dompurify, lucide icons) are left as Vite's minifier (Oxc since Vite 8)
+// already minified them - that keeps the bundle from ballooning and keeps
+// runtime cost low, and those libraries are public anyway (no IP to protect).
 // ---------------------------------------------------------------------------
 
 function ipHardenPlugin(mode) {
@@ -41,96 +42,131 @@ function ipHardenPlugin(mode) {
     apply: 'build',
     enforce: 'post',
     // IMPORTANT: obfuscate in generateBundle, NOT renderChunk. renderChunk runs
-    // BEFORE Rollup/Vite resolve their internal chunk-filename placeholders
-    // (the `!~{NNN}~` tokens inside Vite's __vite__mapDeps preload map). If the
-    // obfuscator base64-encodes those placeholders into its string array, Vite
-    // can no longer substitute the real hashed filenames and lazy imports 404
-    // at runtime. generateBundle is the documented hook where chunk code is
-    // FINAL (placeholders already resolved) while chunk.modules is still
-    // available for first-party detection. (Caveat: the content hash in the
-    // filename reflects the pre-obfuscation bytes, which is harmless - all
-    // cross-chunk references are already resolved and internally consistent.)
-    async generateBundle(_options, bundle) {
-      if (!obfuscator) obfuscator = (await import('javascript-obfuscator')).default
+    // BEFORE the bundler (Rolldown since Vite 8) and Vite resolve their internal
+    // chunk-filename placeholders (the `!~{NNN}~` tokens inside Vite's
+    // __vite__mapDeps preload map). If the obfuscator base64-encodes those
+    // placeholders into its string array, Vite can no longer substitute the
+    // real hashed filenames and lazy imports 404 at runtime.
+    // ORDER 'post': run AFTER Vite's own generateBundle hooks. Vite's
+    // build-import-analysis fills each lazy import's preload list by reading
+    // the literal `import('./X.js')` specifier. Obfuscating before it (as this
+    // plugin did up to the Vite 8 upgrade) moved most specifiers into the string
+    // array, so Vite wrote empty lists and lazy chunks fetched their imports one
+    // after another. Running last, the chunk code is final (preload lists
+    // written) and chunk.modules is still there for first-party detection.
+    // (Caveat: the content hash in the filename reflects the pre-obfuscation
+    // bytes, which is harmless - all cross-chunk references are already
+    // resolved and internally consistent.)
+    generateBundle: {
+      order: 'post',
+      async handler(_options, bundle) {
+        if (!obfuscator) obfuscator = (await import('javascript-obfuscator')).default
+        let hardened = 0
+        let nulled = 0
 
-      for (const file of Object.values(bundle)) {
-        if (file.type !== 'chunk') continue
-        // Only first-party code (a module physically under /src/). This skips
-        // pure-vendor chunks (react, jspdf, html2canvas, dompurify) so we don't
-        // balloon public library code that has no IP to protect.
-        const ids = Object.keys(file.modules || {})
-        const isFirstParty = ids.some((id) => id.replace(/\\/g, '/').includes('/src/'))
-        if (!isFirstParty) continue
+        for (const file of Object.values(bundle)) {
+          if (file.type !== 'chunk') continue
+          // Only first-party code (a module physically under /src/). This skips
+          // pure-vendor chunks (react, jspdf, html2canvas, dompurify) so we don't
+          // balloon public library code that has no IP to protect.
+          const ids = Object.keys(file.modules || {})
+          const isFirstParty = ids.some((id) => id.replace(/\\/g, '/').includes('/src/'))
+          if (!isFirstParty) continue
 
-        const options = {
-          target: 'browser',
-          compact: true,
-          sourceMap: false,
-          // "jumble names" - rename every local/function identifier to hex.
-          identifierNamesGenerator: 'hexadecimal',
-          // SAFETY: never rename module-scope (exported/imported) bindings or
-          // real globals - that is what preserves ESM import/export wiring and
-          // is the #1 thing that breaks React obfuscation.
-          renameGlobals: false,
-          // "optionally encrypt" - collect string literals into a rotated array
-          // and base64-encode them (light: raises the bar without the runtime
-          // cost of rc4 on a 2.5 MB bundle).
-          stringArray: true,
-          stringArrayThreshold: 0.75,
-          stringArrayEncoding: ['base64'],
-          stringArrayRotate: true,
-          stringArrayShuffle: true,
-          // splitStrings fragments every literal - strong, but it roughly
-          // doubles the string-array cost on top of base64. It adds little once
-          // strings are already base64-encoded, so keep it for the heaviest tier.
-          splitStrings: HARDEN_MAX,
-          splitStringsChunkLength: 10,
-          numbersToExpressions: true,
-          simplify: true,
-          // Deliberately OFF by default (SUPREME RULE VI - never degrade):
-          //  - selfDefending / debugProtection break some WebView/Electron
-          //    contexts and are trivially stripped anyway.
-          //  - disableConsoleOutput would hide the app's own real logs.
-          //  - deadCodeInjection + transformObjectKeys bloat size / risk props.
-          selfDefending: false,
-          debugProtection: false,
-          disableConsoleOutput: false,
-          deadCodeInjection: false,
-          transformObjectKeys: false,
-          // HARDEN=max adds control-flow flattening (the heaviest layer) - this
-          // is the knob the on-prem/desktop "heaviest protection" path uses.
-          controlFlowFlattening: HARDEN_MAX,
-          controlFlowFlatteningThreshold: HARDEN_MAX ? 0.5 : 0,
+          // Keep Rolldown's indirect CommonJS calls `(0, ns.fn)()` from being
+          // inflated by numbersToExpressions (see scripts/harden-indirect-calls.mjs).
+          const pre = nullIndirectCallZeros(file.code, (code) => this.parse(code))
+          if (pre.skipped) this.warn(`${file.fileName}: indirect-call pre-pass skipped (${pre.skipped}); the chunk is still obfuscated, only larger`)
+          nulled += pre.count
+
+          const options = {
+            target: 'browser',
+            compact: true,
+            sourceMap: false,
+            // "jumble names" - rename every local/function identifier to hex.
+            identifierNamesGenerator: 'hexadecimal',
+            // SAFETY: never rename module-scope (exported/imported) bindings or
+            // real globals - that is what preserves ESM import/export wiring and
+            // is the #1 thing that breaks React obfuscation.
+            renameGlobals: false,
+            // "optionally encrypt" - collect string literals into a rotated array
+            // and base64-encode them (light: raises the bar without the runtime
+            // cost of rc4 on a 2.5 MB bundle).
+            stringArray: true,
+            stringArrayThreshold: 0.75,
+            stringArrayEncoding: ['base64'],
+            stringArrayRotate: true,
+            stringArrayShuffle: true,
+            // splitStrings fragments every literal - strong, but it roughly
+            // doubles the string-array cost on top of base64. It adds little once
+            // strings are already base64-encoded, so keep it for the heaviest tier.
+            splitStrings: HARDEN_MAX,
+            splitStringsChunkLength: 10,
+            numbersToExpressions: true,
+            simplify: true,
+            // Deliberately OFF by default (SUPREME RULE VI - never degrade):
+            //  - selfDefending / debugProtection break some WebView/Electron
+            //    contexts and are trivially stripped anyway.
+            //  - disableConsoleOutput would hide the app's own real logs.
+            //  - deadCodeInjection + transformObjectKeys bloat size / risk props.
+            selfDefending: false,
+            debugProtection: false,
+            disableConsoleOutput: false,
+            deadCodeInjection: false,
+            transformObjectKeys: false,
+            // HARDEN=max adds control-flow flattening (the heaviest layer) - this
+            // is the knob the on-prem/desktop "heaviest protection" path uses.
+            controlFlowFlattening: HARDEN_MAX,
+            controlFlowFlatteningThreshold: HARDEN_MAX ? 0.5 : 0,
+          }
+
+          file.code = obfuscator.obfuscate(pre.code, options).getObfuscatedCode()
+          hardened++
         }
-
-        file.code = obfuscator.obfuscate(file.code, options).getObfuscatedCode()
-      }
+        // One visible line per build, so a hardened build is provably hardened.
+        this.info(`obfuscated ${hardened} first-party chunk(s); ${nulled} indirect-call zero(s) kept as null`)
+      },
     },
   }
 }
 
+// Browser floor (SUPREME RULE VI - never degrade). Vite 8's default target,
+// 'baseline-widely-available' (Chrome/Edge 111, Firefox 114, Safari/iOS 16.4),
+// is narrower than what this site shipped on Vite 5 ('modules': es2020, Edge 88,
+// Firefox 78, Chrome 87, Safari 14). Pinning the Vite 5 floor keeps every
+// browser and Android WebView that loaded the site before the upgrade working
+// after it. build.cssTarget follows build.target, so CSS lowering matches too.
+const BROWSER_FLOOR = ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14']
+
+// The always-loaded React ecosystem. `[\\/]` matches the path separator on
+// Windows and POSIX alike (the bundler sees native module ids).
+const VENDOR_RE = /[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler)[\\/]/
+
 export default defineConfig(({ mode }) => ({
   plugins: [react(), ipHardenPlugin(mode)].filter(Boolean),
   build: {
+    target: BROWSER_FLOOR,
     assetsDir: 'copilot-assets',
     // Defense-in-depth: NEVER ship source maps to production (they would leak
     // the readable original source). Vite's default is already false; we pin
     // it so a future accidental flip is a visible diff, not a silent leak.
     sourcemap: false,
-    rollupOptions: {
+    // Vite 8 bundles with Rolldown: rolldownOptions replaces the deprecated
+    // rollupOptions alias, and output.codeSplitting replaces manualChunks.
+    rolldownOptions: {
       output: {
         // Split the always-loaded React ecosystem into its own `vendor` chunk.
         // Two wins: (1) under hardening it is a pure-vendor chunk, so the IP
         // plugin skips it - we don't pay to obfuscate public library code that
         // has no IP to protect, which keeps the entry chunk small and fast;
-        // (2) it fixes the pre-existing >500 kB entry-chunk warning. Lazy
-        // vendor libs (jspdf, html2canvas, dompurify) are left to Rollup's
-        // default splitting so they stay lazily loaded.
-        manualChunks(id) {
-          const p = id.replace(/\\/g, '/')
-          if (/\/node_modules\/(react|react-dom|react-router|react-router-dom|scheduler)\//.test(p)) {
-            return 'vendor'
-          }
+        // (2) the library code caches separately from app releases (the entry
+        // chunk itself is still over the 500 kB warning line). Lazy
+        // vendor libs (jspdf, html2canvas, dompurify) are left to the default
+        // splitting so they stay lazily loaded. A group also takes in the
+        // captured modules' own dependencies (includeDependenciesRecursively),
+        // so the chunk stays pure vendor.
+        codeSplitting: {
+          groups: [{ name: 'vendor', test: VENDOR_RE }],
         },
       },
     },
