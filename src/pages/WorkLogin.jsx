@@ -6,6 +6,7 @@ import MfaGate from '../components/MfaGate.jsx'
 import { api } from '../api.js'
 import { LEGAL_FALLBACK_DOCS } from '../components/LegalConsentGate.jsx'   // shared fallback agreement list
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import SocialMark from '../components/SocialMark.jsx'   // Google / Microsoft / Facebook marks (shared with the subscribe onboarding)
 import WorkShell from '../workShell.jsx'
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 import LanguageMenu from '../components/LanguageMenu.jsx'   // pick a language at login; the app adopts it
@@ -57,34 +58,6 @@ const SOCIAL = [
   { id: 'microsoft', short: 'Microsoft' },
   { id: 'facebook', short: 'Facebook' },
 ]
-// Brand marks as small inline SVGs (no external assets), in official brand colors.
-function SocialMark({ id }) {
-  if (id === 'google') {
-    return (
-      <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden="true">
-        <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.5l6.7-6.7C35.6 2.5 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.6 17.7 9.5 24 9.5z" />
-        <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8c4.4-4.1 7.1-10.1 7.1-17z" />
-        <path fill="#FBBC05" d="M10.4 28.7A14.6 14.6 0 0 1 9.5 24c0-1.6.3-3.2.8-4.7l-7.8-6.1A24 24 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.1z" />
-        <path fill="#34A853" d="M24 48c6.2 0 11.6-2.1 15.4-5.6l-7.5-5.8c-2.1 1.4-4.8 2.3-7.9 2.3-6.3 0-11.7-4.1-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48z" />
-      </svg>
-    )
-  }
-  if (id === 'microsoft') {
-    return (
-      <svg width="17" height="17" viewBox="0 0 23 23" aria-hidden="true">
-        <rect x="1" y="1" width="10" height="10" fill="#F25022" /><rect x="12" y="1" width="10" height="10" fill="#7FBA00" />
-        <rect x="1" y="12" width="10" height="10" fill="#00A4EF" /><rect x="12" y="12" width="10" height="10" fill="#FFB900" />
-      </svg>
-    )
-  }
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true">
-      <circle cx="12" cy="12" r="12" fill="#1877F2" />
-      <path fill="#fff" d="M15.9 15.5l.5-3.5h-3.3V9.7c0-1 .5-1.9 2-1.9h1.5V4.8s-1.4-.2-2.7-.2c-2.7 0-4.5 1.6-4.5 4.6V12H6.3v3.5h3.1V24a12 12 0 0 0 3.7 0v-8.5h2.8z" />
-    </svg>
-  )
-}
-
 // WEB brand aside: the PRODUCT, not an illustration - one calm, dark "watching"
 // window with a goal, what it can see, steps ticked, and the current step called
 // out. Decorative (aria-hidden); the real copy is the headline and the three
@@ -128,7 +101,16 @@ export default function WorkLogin() {
 
   // A chosen plan means a new customer, so default to create-account; otherwise
   // default to log-in. The visitor can switch either way (web only).
-  const [modeState, setMode] = useState(plan ? 'signup' : 'signin')
+  // ?mode=signin (the subscribe onboarding's "Already have an account? Sign in")
+  // keeps the plan but opens the sign-in form.
+  const [modeState, setMode] = useState(plan && sp.get('mode') !== 'signin' ? 'signup' : 'signin')
+  // The plan-carrying create-account experience is the subscribe onboarding page
+  // (/workcopilot/signup). Hand over on the web; the app is sign-in only anyway.
+  useEffect(() => {
+    if (!IN_APP && plan && sp.get('mode') !== 'signin' && !sp.get('social') && !sp.get('social_error') && !sp.get('sso_error')) {
+      nav(`/workcopilot/signup?plan=${encodeURIComponent(plan)}${cycle !== 'monthly' ? `&cycle=${encodeURIComponent(cycle)}` : ''}`, { replace: true })
+    }
+  }, [])   // eslint-disable-line react-hooks/exhaustive-deps
   const mode = IN_APP ? 'signin' : modeState   // the app is sign-in only; accounts are created on the web
   // The two tabs: 'social' | 'email'. A returning SSO error lands on the email
   // tab (that is where company SSO lives).
@@ -171,7 +153,6 @@ export default function WorkLogin() {
   const [ssoDomain, setSsoDomain] = useState('')
   const [ssoBusy, setSsoBusy] = useState(false)
   const [ssoErr, setSsoErr] = useState(sp.get('sso_error') || '')
-  const [checkingOut, setCheckingOut] = useState(false)
 
   // SSO AUTO-DETECT. When the typed email (sign-in "username or email", or the
   // sign-up email) is syntactically valid, debounce ~400ms (or fire on blur) and
@@ -310,28 +291,18 @@ export default function WorkLogin() {
   // moved and closed before the user is signed in.
   useEffect(() => { if (WD_DESK) { try { WD_DESK.setMode('plan') } catch { /* ignore */ } } }, [])
 
-  // Once the account is ready: if a plan was chosen, start Checkout; otherwise
-  // open the dashboard. If billing is not configured, we still open the
-  // dashboard. A brand-new social return finishes its pending step first.
+  // Once the account is ready: if a plan was chosen, resume the subscribe
+  // onboarding on its pay step (it starts Checkout with the plan, and knows when
+  // the account already has an active plan, so nobody is charged twice);
+  // otherwise open the dashboard. A brand-new social return finishes its
+  // pending step first.
   useEffect(() => {
-    if (!user || checkingOut || socialStep) return
-    let cancelled = false
-    const run = async () => {
-      if (plan) {
-        setCheckingOut(true)
-        try {
-          const r = await api.workCheckout(plan, cycle)
-          if (!cancelled && r && r.url) { window.location = r.url; return }
-        } catch { /* billing not ready or annual not set up: fall through to the dashboard */ }
-      }
-      const isAdmin = !!(user && ['superadmin', 'admin', 'accounting', 'affiliate_admin'].includes(user.role))
-      const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && !isAdmin)
-      const dest = plan ? '/work' : isAdmin ? '/work/admin' : isCompanyAdmin ? '/work/company' : '/work'
-      if (!cancelled) nav(dest, { replace: true })
-    }
-    run()
-    return () => { cancelled = true }
-  }, [user, plan, cycle, checkingOut, nav, socialStep])
+    if (!user || socialStep) return
+    if (plan) { nav(`/workcopilot/signup/pay?plan=${encodeURIComponent(plan)}${cycle !== 'monthly' ? `&cycle=${encodeURIComponent(cycle)}` : ''}`, { replace: true }); return }
+    const isAdmin = !!(user && ['superadmin', 'admin', 'accounting', 'affiliate_admin'].includes(user.role))
+    const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && !isAdmin)
+    nav(isAdmin ? '/work/admin' : isCompanyAdmin ? '/work/company' : '/work', { replace: true })
+  }, [user, plan, cycle, nav, socialStep])
 
   const submit = async (e) => {
     e && e.preventDefault()
@@ -394,7 +365,7 @@ export default function WorkLogin() {
   // Called after the user has saved their backup codes: now enter the app.
   const handleMfaDone = async () => { try { await refresh() } catch { /* routing effect still fires on next check */ } }
 
-  const working = busy || checkingOut
+  const working = busy
   const heading = mode === 'signup'
     ? (planName ? t('login.heading.createPlan', { plan: planName }) : t('login.heading.create'))
     : (planName ? t('login.heading.loginPlan', { plan: planName }) : t('login.heading.welcome'))
@@ -404,8 +375,7 @@ export default function WorkLogin() {
   const showProfile = socialStep === 'profile' && !mfa
   const socialLoading = socialStep === 'loading' && !mfa
   const switchMode = (m) => { setErr(''); setForgotSent(false); setSsoView(false); setMode(m) }
-  const ctaLabel = checkingOut ? t('login.form.openingCheckout')
-    : mode === 'signup' ? (planName ? t('login.form.createContinue') : t('login.form.create'))
+  const ctaLabel = mode === 'signup' ? (planName ? t('login.form.createContinue') : t('login.form.create'))
       : (planName ? t('login.form.loginContinue') : t('login.form.login'))
 
   return (
@@ -526,7 +496,7 @@ export default function WorkLogin() {
               </div>
               {socialErr && <div className="wl-err" role="alert">{socialErr}</div>}
               <p className="wl-hint"><ShieldCheck size={13} aria-hidden="true" /> {t('login.social.hint')}</p>
-              {planName && !checkingOut && <p className="wl-next"><Lock size={12} aria-hidden="true" /> {t('login.form.next', { plan: planName })}</p>}
+              {planName && <p className="wl-next"><Lock size={12} aria-hidden="true" /> {t('login.form.next', { plan: planName })}</p>}
             </div>
           ) : (
             <div className="wl-panel" role="tabpanel" id="wl-panel-email" aria-labelledby="wl-tab-email">
@@ -612,7 +582,7 @@ export default function WorkLogin() {
                   {ctaLabel}{' '}<ArrowRight size={16} aria-hidden="true" className="wl-arrow" />
                 </button>
                 </>)}
-                {planName && !checkingOut && (
+                {planName && (
                   <p className="wl-next"><Lock size={12} aria-hidden="true" /> {t('login.form.next', { plan: planName })}</p>
                 )}
               </form>

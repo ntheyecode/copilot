@@ -78,32 +78,20 @@ export default function WorkMarketing() {
   const [heroFocus, setHeroFocus] = useState(false)
 
   const [cycle, setCycle] = useState('monthly')   // 'monthly' | 'annual' (annual = 20% off)
-  const go = (plan, cyc) => {
+  // Subscribe onboarding (/workcopilot/signup): the plan + cycle ride along in the
+  // URL; a signed-in visitor lands on its pay step (which also knows when the
+  // account already has an active plan and never charges twice).
+  const go = (plan, cyc, signedIn) => {
     const qs = []
     if (plan) qs.push(`plan=${plan}`)
     if (cyc && cyc !== 'monthly') qs.push(`cycle=${cyc}`)
-    return nav(`/workcopilot${qs.length ? `?${qs.join('&')}` : ''}`)
+    return nav(`/workcopilot/signup${signedIn ? '/pay' : ''}${qs.length ? `?${qs.join('&')}` : ''}`)
   }
   const { user } = useAuth()
-  // Choose a plan. Monthly: a signed-in visitor goes straight to Stripe Checkout;
-  // a new visitor signs up with the plan carried along. Annual (20% off) is
-  // carried to sign-up with the cycle so the correct annual price is applied
-  // there - we never start a monthly checkout for an annual selection.
-  const choosePlan = async (plan) => {
-    // Annual checkout is only started when it is actually wired in Stripe
-    // (price.annualReady). Otherwise an annual pick shows the 20%-off price and
-    // is carried to sign-up, never charged the monthly amount by surprise.
-    if (cycle === 'annual' && !(price && price.annualReady)) { go(plan, 'annual'); return }
-    if (user) {
-      try {
-        const r = await api.workCheckout(plan, cycle)
-        if (r && r.url) { window.location = r.url; return }
-      } catch { /* billing not ready: fall through to the dashboard */ }
-      nav('/work')
-      return
-    }
-    go(plan, cycle)
-  }
+  // Choose a plan. Annual (20% off) is carried with the cycle so the correct
+  // annual price is applied at checkout - we never start a monthly checkout for
+  // an annual selection (the pay step falls back visibly when annual is not wired).
+  const choosePlan = (plan) => go(plan, cycle, !!user)
   const money = (n) => (n == null ? '-' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
   // Annual = 20% off the monthly rate, shown as a per-month figure billed yearly.
   const monthlyRate = (p) => (cycle === 'annual' ? Math.round(Number(p) * 0.8) : Number(p))

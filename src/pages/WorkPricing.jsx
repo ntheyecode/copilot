@@ -105,7 +105,7 @@ export default function WorkPricing() {
   const plural = (n, word) => `${n} ${word}${Number(n) === 1 ? '' : 's'}`
   // Start = the product's sign-in page with the plan carried along (the same
   // query the main page's plan cards use), so the pick survives sign-up.
-  const start = (id) => nav(`/workcopilot?plan=${id}`)
+  const start = (id) => nav(`/workcopilot/signup?plan=${id}`)   // subscribe onboarding: account -> verify -> pay
 
   const PLANS = PLAN_META
   // The comparison matrix, built with the derived numbers so capacity and

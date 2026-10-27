@@ -323,6 +323,20 @@ export const api = {
   //                | { step:'mfa_verify', username } | HTTP 440 { restart:true }
   //   complete  -> POST { name, phone } -> { mfaSetup:true, username, enroll } | { user }
   workSocialProviders: () => req('GET', '/api/work/social/providers'),
+  // Social sign-in INSIDE the subscribe onboarding: the callback lands on the pay
+  // step with the plan kept (server/social.js reads ?flow=onboarding&plan=&cycle=).
+  workSocialOnboardingUrl: (provider, plan, cycle) => `/api/work/social/${encodeURIComponent(provider)}/start?flow=onboarding${plan ? `&plan=${encodeURIComponent(plan)}` : ''}${cycle ? `&cycle=${encodeURIComponent(cycle)}` : ''}`,
+  // Subscribe onboarding (server/onboarding.js): state is the single source of
+  // which step to show; every mutation returns the fresh state.
+  onboardingState: (plan, cycle) => req('GET', `/api/work/onboarding/state${plan || cycle ? `?${[plan ? `plan=${encodeURIComponent(plan)}` : '', cycle ? `cycle=${encodeURIComponent(cycle)}` : ''].filter(Boolean).join('&')}` : ''}`),
+  onboardingSignup: (body) => req('POST', '/api/work/onboarding/signup', body || {}),
+  onboardingVerify: (code) => req('POST', '/api/work/onboarding/verify', { code }),
+  onboardingResend: () => req('POST', '/api/work/onboarding/resend', {}),
+  onboardingChangeEmail: (email) => req('POST', '/api/work/onboarding/email', { email }),
+  onboardingPlan: (plan, cycle) => req('POST', '/api/work/onboarding/plan', { plan, cycle }),
+  onboardingCheckout: (plan, cycle) => req('POST', '/api/work/onboarding/checkout', plan ? { plan, cycle } : {}),
+  onboardingConfirm: (sessionId) => req('POST', '/api/work/onboarding/confirm', { sessionId }),
+  onboardingEnter: () => req('POST', '/api/work/onboarding/enter', {}),
   workSocialStartUrl: (provider) => `/api/work/social/${encodeURIComponent(provider)}/start`,
   workSocialPending: () => req('GET', '/api/work/social/pending'),
   // Skills: playbooks / SOPs / skills (pasted from any AI) that teach WorkCoPilot
