@@ -2992,6 +2992,24 @@ export function setActivePlatformProvider(providerId) {
   persist()
   return adminAiProviders()
 }
+// Owner 2026-10-27: VISION (screen reading) is chosen SEPARATELY from chat.
+// activeProvider is the CHAT/planning primary; this is the VISION primary. An
+// explicit choice is HONORED even when the model name is not in the vision
+// heuristic (the operator tested that it reads screens), and it may be ANY
+// configured provider (including OpenRouter/Qwen or Moonshot/Kimi), not just the
+// built-in Gemini > OpenAI > Groq order. null/'' = auto (that preference order).
+export function getVisionProviderId() { return aiState().visionProvider || null }
+export function getVisionModel() { return aiState().visionModel || null }
+export function setVisionPlatformProvider(providerId, model) {
+  const ai = aiState()
+  if (providerId == null || providerId === '') { delete ai.visionProvider; delete ai.visionModel; persist(); return adminAiProviders() }
+  if (!providerDefinition(providerId)) throw httpErr(400, `Unknown provider: ${providerId}`)
+  if (!poolKeys(ai.providers[providerId]).length) throw httpErr(400, 'Add and save a key for this provider before using it for vision.')
+  ai.visionProvider = providerId
+  if (model) ai.visionModel = String(model).slice(0, 120); else delete ai.visionModel
+  persist()
+  return adminAiProviders()
+}
 // Remove ALL of a provider's keys; if it was active, hand active to another one.
 export function clearAiProvider(providerId) {
   const ai = aiState()
@@ -2999,6 +3017,7 @@ export function clearAiProvider(providerId) {
   if (ai.activeProvider === providerId) {
     ai.activeProvider = Object.keys(ai.providers || {}).find((k) => poolKeys(ai.providers[k]).length) || null
   }
+  if (ai.visionProvider === providerId) { delete ai.visionProvider; delete ai.visionModel }   // vision falls back to auto
   persist()
   return adminAiProviders()
 }
