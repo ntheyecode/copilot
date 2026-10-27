@@ -44,6 +44,8 @@ import useStuck from './useStuck.js'
 import GuideLevelControl, { useGuideLevel } from '../../components/GuideLevel.jsx'
 import FloatPanel from './FloatPanel.jsx'
 import { makeConfetti, confettiNodes } from './confetti.jsx'
+import { VerifyButton, VerifyVerdict } from './VerifyStep.jsx'
+import { verdictFromWatch, verdictForStep, VERIFY_DONE, VERIFY_NO_FRAME, VERIFY_ERROR } from './verifyFlow.js'
 
 // Responsive layer for the (otherwise inline-styled) Console. Scoped to the
 // .wc wrapper so it never touches the rest of the app. On a phone it enlarges
@@ -1526,6 +1528,34 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
     } catch (e) { setErr(friendlyError(e, 'Could not refresh the screen')) } finally { setBusy(false); setAnalyzing(false) }
   }
+  // OPTIONAL "Verify on my screen" (owner: "a live verify button, if at all the
+  // user wants to use it"): ONE frame, ONE read, NOTHING applied. Works with the
+  // continuous watch ON (grabs the current frame of the live share) or OFF
+  // (prompts for the share once, keeps it for the next verify, never starts the
+  // loop), and never disrupts an active watch: it has its own in-flight state
+  // (not `busy`/`analyzing`), and the server's verify-only read leaves the plan
+  // untouched (server/work_verify.js). The verdict is keyed to the step it was
+  // read for, so a plan that moves meanwhile hides it (verifyFlow.js).
+  const [verifying, setVerifying] = useState(false)
+  const [verdict, setVerdict] = useState(null)
+  const verifyStep = async () => {
+    if (verifying || outOfMinutes()) return
+    const stepIndex = (sess && sess.steps ? sess.steps : []).findIndex((x) => x.status === 'current')
+    setErr('')
+    if (!capturing && !photoFrameRef.current) { const ok = await startCapture(); if (!ok) return; await new Promise((r) => setTimeout(r, 400)) }
+    let frame = grabFrame()
+    if (!frame) { setVerdict({ kind: VERIFY_NO_FRAME, stepIndex, t: Date.now() }); return }
+    setVerifying(true); setVerdict(null)
+    try {
+      frame = await prepFrame(frame)
+      const r = await api.workWatch(sessionId, withLevel({ frame, verify: true }))
+      if (r.observation) setObservation(r.observation)   // the quiet "Last read" glance stays honest
+      setVerdict({ ...verdictFromWatch(r), stepIndex, t: Date.now() })
+    } catch (e) {
+      setVerdict({ kind: VERIFY_ERROR, stepIndex, detail: friendlyError(e, ''), t: Date.now() })
+    } finally { setVerifying(false) }
+  }
+  const clearVerdict = () => setVerdict(null)
   // Re-plan with a reason, keeping progress (continue from here) or from scratch.
   const confirmReplan = async () => {
     const keep = replanScope === 'here'
@@ -1593,6 +1623,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // temporal dead zone and crashed the whole plan/Console view (blank page).
   const steps = (sess && sess.steps) || []
   const done = steps.length > 0 && steps.every((x) => x.status === 'done')
+  // A verify verdict belongs to one step: when the current step changes (marked
+  // done, auto-advanced by the watch, or navigated), it is cleared here, in ONE
+  // place, so no stale "Looks done" can ever sit under a different step.
+  const curStepIdx = steps.findIndex((x) => x.status === 'current')
+  useEffect(() => { setVerdict(null) }, [curStepIdx])
   // A finished task is a record, not a live screen: every live control (watch
   // state, Refresh / Deep pass / Re-plan, Prev / Next, checkboxes, Ask) is
   // hidden and the steps render read-only. Deliverable actions stay.
@@ -2449,7 +2484,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                         : watchLight
                           ? <span className="gv-step-hint">Plan-heavy mode. Tap Check my progress for a fresh read.</span>
                           : !watching && <button type="button" className="gv-step-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
-                      onDone={() => setStep(ci, 'done')}
+                      onDone={() => { clearVerdict(); setStep(ci, 'done') }}
+                      doneReady={!!(verdictForStep(verdict, ci) && verdictForStep(verdict, ci).kind === VERIFY_DONE)}
+                      notice={<VerifyVerdict verdict={verdictForStep(verdict, ci)} verifying={verifying} onRetry={verifyStep} onDismiss={clearVerdict} />}
+                      actions={<VerifyButton onClick={verifyStep} verifying={verifying} disabled={busy || paused} />}
                       extra={<>
                         {/* Grounded-in-your-documents: shows only when the guide marked this
                             step as grounded in the user's own material (else renders nothing). */}
@@ -2840,6 +2878,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           onStep={setStep}
           onNav={navStep}
           onWatch={watching ? pauseWatching : startWatching}
+          onVerify={verifyStep} verifying={verifying} verdict={verdict} onVerdictDismiss={clearVerdict}
           onEnd={endSession}
           onClose={closeFloat}
           onStartAnother={() => { closeFloat(); try { window.focus() } catch { /* best-effort */ } goHome() }}

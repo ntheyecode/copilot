@@ -17,6 +17,8 @@ import { gvVars } from './guideView.css.js'
 import FadeSwap from './FadeSwap.jsx'
 import ReadingStrip, { readingIsProminent } from './ReadingStrip.jsx'
 import StepCard from './StepCard.jsx'
+import { VerifyButton, VerifyVerdict } from './VerifyStep.jsx'
+import { verdictForStep, VERIFY_DONE } from './verifyFlow.js'
 import AskFocus from './AskFocus.jsx'
 import GoalLine from './GoalLine.jsx'
 import { askFocused } from './askFlow.js'
@@ -26,7 +28,7 @@ export default // The floating overlay shown in the Document Picture-in-Picture 
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, ask, onContinue, onDismissOffer, level, onLevel, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, title, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onEnd, onClose, onStartAnother }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, ask, onContinue, onDismissOffer, level, onLevel, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, title, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onVerify, verifying = false, verdict = null, onVerdictDismiss, onEnd, onClose, onStartAnother }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
   // Completed = every step done, or the session was ended. Drives the floater's
@@ -246,7 +248,10 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
                     hint={paused
                       ? <span className="gv-step-hint">Paused. Resume to keep this live.</span>
                       : !watching && <span className="gv-step-hint">Watch my screen to keep this live</span>}
-                    onDone={() => onStep(idx, 'done')} />
+                    onDone={() => { if (onVerdictDismiss) onVerdictDismiss(); onStep(idx, 'done') }}
+                    doneReady={!!(verdictForStep(verdict, idx) && verdictForStep(verdict, idx).kind === VERIFY_DONE)}
+                    notice={onVerify ? <VerifyVerdict verdict={verdictForStep(verdict, idx)} verifying={verifying} onRetry={onVerify} onDismiss={onVerdictDismiss} /> : null}
+                    actions={onVerify ? <VerifyButton onClick={onVerify} verifying={verifying} disabled={busy || paused} /> : null} />
                   {!prominent && reading}
                   {steps.length > 1 && onNav && (
                     <div className="gv-nav">
