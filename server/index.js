@@ -558,10 +558,21 @@ async function findWorkVision(req) {
     return vm ? { rt: { ...companyRt, chatModel: vm, visionModel: vm }, visionModel: vm } : null
   }
   if (store.getWorkPlatformAllowed()) {
+    // The operator's chosen VISION provider wins (owner 2026-10-27): it is tried
+    // first and, when a specific vision model was set, honored directly even if
+    // the model name is not in the vision heuristic (they tested it reads
+    // screens). This is what lets a cheap screen-reader like OpenRouter/Qwen or
+    // Moonshot/Kimi actually do the reading, instead of the built-in order.
+    const chosen = store.getVisionProviderId()
+    const chosenModel = store.getVisionModel()
     const PREF = ['gemini', 'openai', 'groq']
+    const rank = (id) => (id === chosen ? -1 : ((PREF.indexOf(id) + 1) || 99))
     const cfgs = store.getConfiguredRuntimes()
-    cfgs.sort((a, b) => ((PREF.indexOf(a.providerId) + 1) || 99) - ((PREF.indexOf(b.providerId) + 1) || 99))
+    cfgs.sort((a, b) => rank(a.providerId) - rank(b.providerId))
     for (const rt of cfgs) {
+      if (rt.providerId === chosen && chosenModel) {
+        return { rt: { ...rt, chatModel: chosenModel, visionModel: chosenModel }, visionModel: chosenModel }
+      }
       const vm = await pickWorkVision(rt)
       if (vm) return { rt: { ...rt, chatModel: vm, visionModel: vm }, visionModel: vm }
     }
@@ -614,9 +625,27 @@ async function computeAiRecommendation(runtimes) {
     .map((p) => p.best ? { ...p.best, provider: p.provider, label: p.label } : null)
     .filter(Boolean)
     .sort((a, b) => (b.quality - a.quality) || ((a.usdPerMtok ?? 99) - (b.usdPerMtok ?? 99)))[0] || null
+  // Every scored model across every reachable provider, so we can recommend a
+  // RELIABLE / CHEAPEST / FASTEST pick for CHAT and (separately) for VISION. Chat
+  // can use any model; vision (screen reading) only the vision-capable ones.
+  const all = providers.flatMap((p) => (p.models || []).map((m) => ({ ...m, label: p.label })))
+  const label = (id) => (providers.find((p) => p.provider === id) || {}).label || id
+  const withLabel = (x) => x ? { ...x, label: x.label || label(x.provider) } : null
+  const priced = (list) => list.filter((x) => x.usdPerMtok != null)
+  const byCheap = (a, b) => a.usdPerMtok - b.usdPerMtok
+  const byReliable = (a, b) => (b.quality - a.quality) || ((a.usdPerMtok ?? 99) - (b.usdPerMtok ?? 99))
+  const byFast = (a, b) => (b.speed - a.speed) || ((a.usdPerMtok ?? 99) - (b.usdPerMtok ?? 99)) || (b.quality - a.quality)
+  const first = (list, cmp) => (list.length ? withLabel(list.slice().sort(cmp)[0]) : null)
+  const rec = (pool) => ({
+    reliable: first(pool, byReliable),
+    cheapest: first(priced(pool).length ? priced(pool) : pool, byCheap),
+    fastest: first(pool, byFast),
+  })
   return {
     providers,
     overall: { cheapest: pickMin('cheapest'), cheapestVision: pickMin('cheapestVision'), best: pickBest() },
+    chat: rec(all),                              // reliable / cheapest / fastest for planning + answers
+    vision: rec(all.filter((x) => x.vision)),    // reliable / cheapest / fastest for screen reading
     note: 'Approximate published list prices, for guidance only - providers change them. The recommendation is drawn from each key\'s live model catalog and refreshes daily.',
   }
 }
@@ -1265,7 +1294,7 @@ app.delete('/api/work/admin/ai/stepup', requireAuth, requireAdmin, wrap((req, re
 // NEVER returned - the list only carries a masked tail. OTP step-up gated: the
 // list carries masked keys + model config, so it is not shown until verified.
 app.get('/api/work/admin/ai/providers', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
-  res.json({ providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId() })
+  res.json({ providers: store.adminAiProviders(), activeProvider: store.getActiveProviderId(), visionProvider: store.getVisionProviderId(), visionModel: store.getVisionModel() })
 }))
 // Save a provider's key (optionally pin chat/vision model) AND test it in one
 // step, so the operator sees right away whether it works and can read a screen.
@@ -1306,7 +1335,26 @@ app.post('/api/work/admin/ai/providers/:id/test', requireAuth, requireSuperAdmin
 })
 // Make a (configured) provider the active/primary platform runtime.
 app.post('/api/work/admin/ai/providers/:id/activate', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
-  res.json({ providers: store.setActivePlatformProvider(req.params.id), activeProvider: store.getActiveProviderId() })
+  res.json({ providers: store.setActivePlatformProvider(req.params.id), activeProvider: store.getActiveProviderId(), visionProvider: store.getVisionProviderId(), visionModel: store.getVisionModel() })
+}))
+// Set (or clear, with :id = 'auto') the provider/model that READS THE SCREEN,
+// independent of the chat primary. Honors an explicit model even outside the
+// vision heuristic, so a tested cheap reader (OpenRouter/Qwen, Moonshot/Kimi)
+// actually does the reading. body.model optional (pins a specific vision model).
+app.post('/api/work/admin/ai/providers/:id/vision', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  const id = req.params.id === 'auto' ? null : req.params.id
+  const model = req.body && req.body.model ? String(req.body.model) : null
+  res.json({ providers: store.setVisionPlatformProvider(id, model), activeProvider: store.getActiveProviderId(), visionProvider: store.getVisionProviderId(), visionModel: store.getVisionModel() })
+}))
+// Platform social sign-in (Google / Microsoft / Facebook) OAuth apps. PLATFORM
+// level (one app each, every customer's sign-in uses it), configured by the
+// superadmin here instead of env vars. Secrets are set-only; the state is masked.
+app.get('/api/work/admin/social', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json({ social: store.getSocialConfigState() })
+}))
+app.post('/api/work/admin/social/:provider', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {
+  const { clientId, clientSecret, tenant } = req.body || {}
+  res.json({ social: store.setSocialProvider(req.params.provider, { clientId, clientSecret, tenant }) })
 }))
 // Remove ALL of a provider's keys; if it was active, active hands off to another.
 app.delete('/api/work/admin/ai/providers/:id', requireAuth, requireSuperAdmin, requireAiStepUp, wrap((req, res) => {

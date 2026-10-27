@@ -534,10 +534,28 @@ const RATECARD = {
     { re: /maverick/i, usd: 0.20, q: 4, vision: true },
     { re: /llama.*vl|vision/i, usd: 0.20, q: 3, vision: true },
   ],
+  // OpenRouter and Moonshot reach cheap screen-reading models. Prices approximate
+  // (guidance only, providers change them); most-specific first.
+  openrouter: [
+    { re: /qwen.*vl/i, usd: 0.20, q: 4, vision: true },
+    { re: /qwen3?\.?\d?.*flash|qwen.*flash/i, usd: 0.05, q: 3, vision: true },
+    { re: /qwen/i, usd: 0.12, q: 3, vision: true },
+    { re: /gemini.*flash/i, usd: 0.10, q: 3, vision: true },
+    { re: /llava|pixtral/i, usd: 0.20, q: 3, vision: true },
+    { re: /deepseek/i, usd: 0.14, q: 4, vision: false },
+  ],
+  moonshot: [
+    { re: /kimi.*vl|kimi.*thinking|kimi-?k2\.\d|k2\.\d/i, usd: 0.60, q: 4, vision: true },
+    { re: /kimi|moonshot/i, usd: 0.60, q: 4, vision: false },
+  ],
 }
+// Rough speed tier from the model name: fast = flash/lite/nano/mini/haiku/8b/
+// scout/instant/turbo. 2 = fast, 1 = normal. For the "fastest" recommendation.
+const FAST_HINT = /flash|lite|nano|mini|haiku|instant|turbo|\b8b\b|scout|-fast\b/i
+const speedOf = (model) => (FAST_HINT.test(String(model)) ? 2 : 1)
 function rateFor(providerId, model) {
-  for (const row of (RATECARD[providerId] || [])) if (row.re.test(String(model))) return row
-  return { usd: null, q: 2, vision: VISION_HINT.test(String(model)) } // unknown model: conservative
+  for (const row of (RATECARD[providerId] || [])) if (row.re.test(String(model))) return { ...row, speed: speedOf(model) }
+  return { usd: null, q: 2, vision: VISION_HINT.test(String(model)), speed: speedOf(model) } // unknown model: conservative
 }
 
 // Where our model ranking comes from, so the "best model plans your work" claim
@@ -580,6 +598,6 @@ export async function recommendModels(cfg) {
   const cheapest = (priced.length ? priced : scored).slice().sort(byCheap)[0] || null
   const cheapestVision = (priced.filter((x) => x.vision).length ? priced.filter((x) => x.vision) : scored.filter((x) => x.vision)).slice().sort(byCheap)[0] || null
   const best = scored.slice().sort(byBest)[0] || null
-  const strip = (x) => x ? { model: x.model, usdPerMtok: x.usd, quality: x.q, vision: x.vision } : null
-  return { provider: p.id, label: p.label, count: scored.length, cheapest: strip(cheapest), cheapestVision: strip(cheapestVision), best: strip(best) }
+  const strip = (x) => x ? { provider: p.id, model: x.model, usdPerMtok: x.usd, quality: x.q, vision: x.vision, speed: x.speed } : null
+  return { provider: p.id, label: p.label, count: scored.length, cheapest: strip(cheapest), cheapestVision: strip(cheapestVision), best: strip(best), models: scored.map(strip) }
 }
