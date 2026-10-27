@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Check, Play, Pause, Download, Loader2, AlertTria
 import { api, friendlyError } from '../api.js'
 import DownloadMenu from '../components/DownloadMenu.jsx'
 import { useAuth } from '../auth.jsx'
+import { useLocale } from '../i18n/index.jsx'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
 
@@ -163,9 +164,12 @@ export const WS_CSS = `
 // ---- Helpers shared by both pages --------------------------------------------
 // The dashboard hides the auto-generated "Session <date>" title in favor of the
 // goal; the same rule applies here so a task reads the same everywhere.
-export function sessionLabel(s) {
-  if (!s) return 'Untitled session'
-  return (s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title || 'Untitled session')
+// `untitled` is the translated placeholder (callers pass
+// t('workDashboard.del.untitled'), the dashboard's own key); the English default
+// keeps the helper usable outside React.
+export function sessionLabel(s, untitled = 'Untitled session') {
+  if (!s) return untitled
+  return (s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title || untitled)
 }
 export function stepStats(s) {
   const steps = Array.isArray(s && s.steps) ? s.steps : []
@@ -174,14 +178,16 @@ export function stepStats(s) {
   return { done, total, pct: total > 0 ? Math.round(done / total * 100) : 0 }
 }
 // Accepts an ISO string (startedAt / endedAt) or a ms number (lastActivityAt).
-export function fmtDate(v, withTime) {
+// `tag` is the active locale's BCP-47 tag (useLocale().tag) so the date reads in
+// the language the user chose, not the browser default; omitted = browser.
+export function fmtDate(v, withTime, tag) {
   if (v == null || v === '') return ''
   const d = typeof v === 'number' ? new Date(v) : new Date(String(v))
   if (Number.isNaN(d.getTime())) return ''
   try {
     return withTime
-      ? d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
-      : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
+      ? d.toLocaleString(tag || undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+      : d.toLocaleDateString(tag || undefined, { year: 'numeric', month: 'short', day: 'numeric' })
   } catch { return d.toDateString() }
 }
 // Open a session in the guiding console. Inside the app shell this is the
@@ -222,13 +228,16 @@ export function SkeletonRows({ n = 3 }) {
     </div>
   )
 }
+// Same copy as the dashboard's sessions load error, so it reads the dashboard's
+// own keys (one text, one key) rather than a duplicate under workShell.
 export function LoadError({ onRetry }) {
+  const { t } = useLocale()
   return (
     <div className="ws-empty" role="alert">
       <span className="ic"><AlertTriangle size={20} /></span>
       <div>
-        <b>Could not load your sessions</b>
-        <p>This looks like a connection hiccup, not an empty list. <button type="button" className="ws-link" onClick={onRetry}>Try again</button></p>
+        <b>{t('workDashboard.sessions.loadErrTitle')}</b>
+        <p>{t('workDashboard.sessions.loadErrBodyPre')} <button type="button" className="ws-link" onClick={onRetry}>{t('workDashboard.sessions.tryAgain')}</button></p>
       </div>
     </div>
   )
@@ -246,6 +255,7 @@ export function WorkSubShell({ active, title, children, embedded }) {
   const inShell = !!useContext(WorkAppContext)
   const isEmbedded = embedded == null ? inShell : !!embedded
   const { user, ready } = useAuth()
+  const { t } = useLocale()
   // Brand fonts are self-hosted and loaded globally in src/main.jsx.
   useEffect(() => {
     const prev = document.title
@@ -269,16 +279,16 @@ export function WorkSubShell({ active, title, children, embedded }) {
     <div className="ws">
       <style>{WS_CSS}</style>
       <header className="ws-top">
-        <Link to="/work" className="ws-back" title="Back to dashboard" aria-label="Back to dashboard"><ArrowLeft size={15} /><span>Dashboard</span></Link>
+        <Link to="/work" className="ws-back" title={t('workShell.tasks.backToDashboard')} aria-label={t('workShell.tasks.backToDashboard')}><ArrowLeft size={15} /><span>{t('workShell.nav.dashboard')}</span></Link>
         <Link to="/work" className="ws-brand" title="WorkCoPilot by AdmireVeda">
           <span className="mark"><AVMark size={26} id="avsub" glow={false} /></span>
           <span className="bt"><small>AdmireVeda</small><b>WorkCoPilot</b></span>
         </Link>
         <span className="ws-top-sp" />
-        <nav className="ws-tabs" aria-label="Your sessions">
-          <Link to="/work/tasks" className={`ws-tab${active === 'tasks' ? ' on' : ''}`} aria-current={active === 'tasks' ? 'page' : undefined} title="My tasks (active)"><ClipboardList size={14} /><span>My tasks</span></Link>
-          <Link to="/work/completed" className={`ws-tab${active === 'completed' ? ' on' : ''}`} aria-current={active === 'completed' ? 'page' : undefined} title="Completed tasks"><CheckCircle2 size={14} /><span>Completed tasks</span></Link>
-          <Link to="/work/logs" className={`ws-tab${active === 'logs' ? ' on' : ''}`} aria-current={active === 'logs' ? 'page' : undefined} title="Session logs"><History size={14} /><span>Session logs</span></Link>
+        <nav className="ws-tabs" aria-label={t('workShell.tasks.sessionsNav')}>
+          <Link to="/work/tasks" className={`ws-tab${active === 'tasks' ? ' on' : ''}`} aria-current={active === 'tasks' ? 'page' : undefined} title={t('workShell.tasks.tasksTip')}><ClipboardList size={14} /><span>{t('workShell.nav.tasks')}</span></Link>
+          <Link to="/work/completed" className={`ws-tab${active === 'completed' ? ' on' : ''}`} aria-current={active === 'completed' ? 'page' : undefined} title={t('workShell.nav.completed')}><CheckCircle2 size={14} /><span>{t('workShell.nav.completed')}</span></Link>
+          <Link to="/work/logs" className={`ws-tab${active === 'logs' ? ' on' : ''}`} aria-current={active === 'logs' ? 'page' : undefined} title={t('workShell.nav.logs')}><History size={14} /><span>{t('workShell.nav.logs')}</span></Link>
         </nav>
       </header>
       <main className="ws-main">{children}</main>
@@ -293,6 +303,7 @@ export function WorkSubShell({ active, title, children, embedded }) {
 // active tasks can live here at once.
 function SessionList({ mode, embedded }) {
   const isDone = mode === 'completed'
+  const { t, tag } = useLocale()
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
   const [dlErr, setDlErr] = useState('')
@@ -300,16 +311,16 @@ function SessionList({ mode, embedded }) {
     .filter((s) => s && (isDone ? s.status === 'ended' : s.status !== 'ended'))
     .sort((a, b) => String((isDone ? b.endedAt : (b.lastActivityAt || b.startedAt)) || b.startedAt || '')
       .localeCompare(String((isDone ? a.endedAt : (a.lastActivityAt || a.startedAt)) || a.startedAt || ''))), [sessions, isDone])
-  const title = isDone ? 'Completed tasks' : 'My tasks'
+  const title = isDone ? t('workShell.nav.completed') : t('workShell.nav.tasks')
+  const untitled = t('workDashboard.del.untitled')
+  const startLink = (c) => <Link to="/work" className="ws-link">{c}</Link>
   return (
     <WorkSubShell active={isDone ? 'completed' : 'tasks'} title={title} embedded={embedded}>
       <div className="ws-head">
         <span className="ic">{isDone ? <CheckCircle2 size={18} /> : <ClipboardList size={18} />}</span>
         <div>
           <h1>{title}{loaded && !err && list.length > 0 && <span className="ws-count">{list.length}</span>}</h1>
-          <p>{isDone
-            ? 'Every task you finished, with its report. Open one to review the steps, or download it as a PDF, text report or audit log.'
-            : 'Tasks you have in progress or paused. Open one to pick up at the exact step you left off - pausing one lets you start another.'}</p>
+          <p>{isDone ? t('workShell.tasks.leadCompleted') : t('workShell.tasks.leadActive')}</p>
         </div>
       </div>
       {dlErr && <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', padding: '10px 13px', borderRadius: 10, background: 'var(--warm-fill, rgba(200,90,22,.07))', border: '1px solid var(--warm-line, rgba(200,90,22,.28))', color: 'var(--tx, #1b2033)', fontSize: 13.5 }}><AlertTriangle size={15} style={{ color: 'var(--warm, #c85a16)', flexShrink: 0 }} /> {dlErr}</div>}
@@ -322,8 +333,8 @@ function SessionList({ mode, embedded }) {
           <span className="ic"><ClipboardList size={20} /></span>
           <div>
             {isDone
-              ? <><b>No completed tasks yet</b><p>When you finish a task it lands here with its report. <Link to="/work" className="ws-link">Start a task</Link>.</p></>
-              : <><b>No active tasks</b><p>A task you start and pause shows here so you can resume it. <Link to="/work" className="ws-link">Start a task</Link>, or see your <Link to="/work/completed" className="ws-link">completed tasks</Link>.</p></>}
+              ? <><b>{t('workShell.tasks.emptyCompletedTitle')}</b><p>{t.rich('workShell.tasks.emptyCompletedBody', null, { start: startLink })}</p></>
+              : <><b>{t('workShell.tasks.emptyActiveTitle')}</b><p>{t.rich('workShell.tasks.emptyActiveBody', null, { start: startLink, completed: (c) => <Link to="/work/completed" className="ws-link">{c}</Link> })}</p></>}
           </div>
         </div>
       ) : (
@@ -331,22 +342,23 @@ function SessionList({ mode, embedded }) {
           {list.map((s) => {
             const st = stepStats(s)
             const status = statusOf(s)
-            const when = fmtDate(isDone ? (s.endedAt || s.startedAt) : (s.lastActivityAt || s.startedAt))
+            const when = fmtDate(isDone ? (s.endedAt || s.startedAt) : (s.lastActivityAt || s.startedAt), false, tag)
+            const label = sessionLabel(s, untitled)
             return (
               <div key={s.id} className="ws-row" role="listitem">
                 <span className={`ws-row-ic ${status.key}`} aria-hidden><status.Icon size={15} /></span>
                 <div className="ws-row-main">
-                  <div className="ws-row-t" title={sessionLabel(s)}>{sessionLabel(s)}</div>
+                  <div className="ws-row-t" title={label}>{label}</div>
                   <div className="ws-row-m">
-                    <span className={`ws-st ${status.key}`}>{status.label}</span>
+                    <span className={`ws-st ${status.key}`}>{t(status.labelKey, status.label)}</span>
                     {when && <><span className="sep" aria-hidden>&middot;</span><span>{when}</span></>}
                     <span className="sep" aria-hidden>&middot;</span>
-                    <span><span className="done">{st.done}/{st.total}</span> steps{isDone ? ' done' : ''}</span>
+                    <span>{t.rich(isDone ? 'workShell.tasks.stepsDone' : 'workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="done">{c}</span> })}</span>
                   </div>
                 </div>
                 <div className="ws-row-acts">
-                  <button type="button" className="ws-btn go" onClick={() => open(s.id)}>{!isDone && status.key === 'paused' ? 'Resume' : 'Open'} <ArrowRight size={14} /></button>
-                  {isDone && <DownloadMenu sessionId={s.id} className="ws-btn" label="Download" onError={setDlErr} />}
+                  <button type="button" className="ws-btn go" onClick={() => open(s.id)}>{!isDone && status.key === 'paused' ? t('workShell.tasks.resume') : t('workShell.tasks.open')} <ArrowRight size={14} /></button>
+                  {isDone && <DownloadMenu sessionId={s.id} className="ws-btn" label={t('workShell.tasks.download')} onError={setDlErr} />}
                 </div>
               </div>
             )
@@ -360,9 +372,11 @@ export default function WorkTasks({ embedded } = {}) { return <SessionList mode=
 export function CompletedTasks({ embedded } = {}) { return <SessionList mode="completed" embedded={embedded} /> }
 
 // Exported for WorkLogs (status chip + icon share one rule with this page).
+// `label` is the English fallback; render t(labelKey, label) for the user's
+// language (pure function, so it stays usable outside React).
 export function statusOf(s) {
-  if (!s) return { key: 'active', label: 'In progress', Icon: Play }
-  if (s.status === 'ended') return { key: 'ended', label: 'Completed', Icon: Check }
-  if (s.paused) return { key: 'paused', label: 'Paused', Icon: Pause }
-  return { key: 'active', label: 'In progress', Icon: Play }
+  if (!s) return { key: 'active', label: 'In progress', labelKey: 'workShell.tasks.status.active', Icon: Play }
+  if (s.status === 'ended') return { key: 'ended', label: 'Completed', labelKey: 'workShell.tasks.status.ended', Icon: Check }
+  if (s.paused) return { key: 'paused', label: 'Paused', labelKey: 'workShell.tasks.status.paused', Icon: Pause }
+  return { key: 'active', label: 'In progress', labelKey: 'workShell.tasks.status.active', Icon: Play }
 }

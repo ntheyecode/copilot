@@ -5,6 +5,23 @@
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+    <!-- Set <html lang>/<dir> from the chosen language BEFORE React mounts, so the
+         document language is correct for assistive tech and crawlers from the first
+         byte (not a static "en"), and Arabic lays out right-to-left with no flash.
+         Mirrors the i18n resolver's priority: ?lang= wins, else the saved choice. -->
+    <script>
+      (function () {
+        try {
+          var p = new URLSearchParams(location.search).get('lang');
+          var ls = null; try { ls = localStorage.getItem('wc_locale'); } catch (e) {}
+          var l = String(p || ls || 'en').trim() || 'en';
+          var d = document.documentElement;
+          d.lang = l;
+          d.dir = /^ar(\b|-)/i.test(l) ? 'rtl' : 'ltr';
+        } catch (e) { /* leave the markup default */ }
+      })();
+    </script>
+
     <!-- Primary -->
     <title>WorkCoPilot by AdmireVeda - Your expert, on every screen</title>
     <meta name="description" content="AdmireVeda's WorkCoPilot watches your screen and guides you through any task step by step, with the exact command, code or click. It catches a wrong move, corrects it, and keeps you on the next correct step, until the job is done. Works on desktop, mobile, and right in your browser, even on locked-down machines. For every field." />
@@ -108,7 +125,18 @@
     </script>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- First-paint splash: a quiet brand spinner that lives inside #root until
+         React renders over it (createRoot replaces these children). Guarantees the
+         user never stares at a blank white page while the app's JS and the chosen
+         language dictionary load (SUPREME RULE VIII: never a stuck blank state). -->
+    <style>
+      @keyframes wcspin { to { transform: rotate(360deg) } }
+      #wc-splash { position: fixed; inset: 0; display: grid; place-items: center; background: #f4f7fb }
+      #wc-splash i { width: 30px; height: 30px; border: 3px solid rgba(17,24,39,.12); border-top-color: #0b8259; border-radius: 50%; animation: wcspin .7s linear infinite; display: block }
+      @media (prefers-color-scheme: dark) { #wc-splash { background: #0b0f1a } #wc-splash i { border-color: rgba(255,255,255,.14); border-top-color: #22c08a } }
+      @media (prefers-reduced-motion: reduce) { #wc-splash i { animation-duration: 1.6s } }
+    </style>
+    <div id="root"><div id="wc-splash" aria-hidden="true"><i></i></div></div>
     <noscript>
       <h1>WorkCoPilot by AdmireVeda - your expert on every screen</h1>
       <p>WorkCoPilot watches your screen and guides you through any task step by step, with the exact command, code or click. It starts from zero, catches a wrong move and corrects it, and keeps you on the next correct step until the job is done. It works on desktop, on mobile, and right in your browser, even on locked-down machines where you cannot install anything.</p>

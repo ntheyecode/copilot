@@ -1,7 +1,7 @@
 // How-to / help page (/work/help). The visuals (HelpFlow, HelpGuideShot,
 // HelpRedactShot) and HelpDocs are moved verbatim from WorkPage.jsx. Rendered
 // inside the shared WorkAppLayout shell; "Start a task" navigates to the wizard.
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Play, ShieldCheck, Printer, Sparkles, Zap, AppWindow } from 'lucide-react'
 
@@ -85,7 +85,31 @@ function HelpDocs({ onStart }) {
     ? [{ id: 'desktop', t: 'The desktop app' }, { id: 'desktopsec', t: 'Security & safety (desktop)' }, { id: 'desktopfaq', t: 'Desktop FAQ' }, ...HELP_SECTIONS]
     : HELP_SECTIONS
   const [active, setActive] = useState(sections[0].id)
+  const navRef = useRef(null)
   const jump = (id) => { setActive(id); const el = document.getElementById('help-' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
+  // Narrow layout: the section list is one horizontally scrollable chip row, so
+  // keep the active chip in view as the reader scrolls (horizontal scroll only;
+  // never scrollIntoView, which would also yank the page vertically).
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav || nav.scrollWidth <= nav.clientWidth) return
+    const btn = nav.querySelector('button.on')
+    if (!btn) return
+    const left = btn.offsetLeft, right = left + btn.offsetWidth
+    if (left < nav.scrollLeft) nav.scrollTo({ left: Math.max(0, left - 12), behavior: 'smooth' })
+    else if (right > nav.scrollLeft + nav.clientWidth) nav.scrollTo({ left: right - nav.clientWidth + 12, behavior: 'smooth' })
+  }, [active])
+  // "More to the right" affordance for the chip row: data-more drives a CSS
+  // edge fade, so a chip cut by the row's edge reads as scrollable, not clipped.
+  useEffect(() => {
+    const nav = navRef.current
+    if (!nav) return undefined
+    const update = () => { nav.dataset.more = nav.scrollLeft + nav.clientWidth < nav.scrollWidth - 2 ? '1' : '0' }
+    update()
+    nav.addEventListener('scroll', update, { passive: true })
+    window.addEventListener('resize', update)
+    return () => { nav.removeEventListener('scroll', update); window.removeEventListener('resize', update) }
+  }, [])
   useEffect(() => {
     if (typeof IntersectionObserver === 'undefined') return
     const els = sections.map((s) => document.getElementById('help-' + s.id)).filter(Boolean)
@@ -99,7 +123,7 @@ function HelpDocs({ onStart }) {
   }, [])   // eslint-disable-line
   return (
     <div className="wd-help">
-      <aside className="wd-help-nav">
+      <aside className="wd-help-nav" ref={navRef} aria-label="How-to guide sections">
         <div className="wd-help-navlabel">How-to guide</div>
         {sections.map((s) => <button key={s.id} className={active === s.id ? 'on' : ''} aria-current={active === s.id ? 'true' : undefined} onClick={() => jump(s.id)}>{s.t}</button>)}
         <button className="wd-help-start" onClick={onStart}><Play size={13} /> Start a task</button>

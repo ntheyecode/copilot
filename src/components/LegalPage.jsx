@@ -175,7 +175,12 @@ const CSS = `
 .wlx-glance{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;align-items:stretch}
 .wlx-gcard{min-width:0}
 .wlx-gcard .wc-title{font-size:18px}
-.wlx-doc{display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;align-items:start;padding-top:10px}
+/* The rail column sizes to its LONGEST link (fit-content, capped at 400px) so a
+   section title never wraps onto a second line at desktop widths, whatever the
+   document (the Terms rail needs ~390px); only a title longer than the cap would
+   wrap, and nothing clips. The document block is a little wider than the other
+   blocks so the article keeps a comfortable measure beside a wide rail. */
+.wlx-doc{display:grid;grid-template-columns:fit-content(400px) minmax(0,1fr);gap:36px;align-items:start;padding-top:10px;max-width:1120px}
 .wlx-toc{position:sticky;top:18px;min-width:0}
 .wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
 .wlx-toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}

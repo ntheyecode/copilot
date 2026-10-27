@@ -38,4 +38,12 @@ function mount() {
 // Preload the chosen locale's dictionary BEFORE first paint so a non-English
 // visitor never sees a flash of English on load or reload. preloadActiveLocale
 // never rejects, so mount always runs (English resolves instantly from cache).
-preloadActiveLocale().finally(mount)
+// Cap the wait: if the dictionary chunk is slow (flaky network), mount anyway
+// after a short budget rather than leaving the splash up indefinitely - the
+// LocaleProvider re-renders when the dictionary lands (SUPREME RULE VIII: degrade
+// gracefully, never a stuck screen). The HTML splash covers this brief window.
+const LOCALE_PRELOAD_BUDGET_MS = 1200
+Promise.race([
+  preloadActiveLocale(),
+  new Promise((resolve) => setTimeout(resolve, LOCALE_PRELOAD_BUDGET_MS)),
+]).finally(mount)

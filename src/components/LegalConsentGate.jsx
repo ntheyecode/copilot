@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { ShieldCheck, LogOut, Loader2, ArrowRight, ExternalLink } from 'lucide-react'
 import { api } from '../api.js'
 import { useAuth } from '../auth.jsx'
+import { useT } from '../i18n/index.jsx'
 
 // ---------------------------------------------------------------------------
 // LegalConsentGate - the unskippable first-login / re-consent gate.
@@ -31,7 +32,9 @@ import { useAuth } from '../auth.jsx'
 
 // Fallback used ONLY if the manifest fetch fails - the server manifest is the
 // single source of truth. The five core agreements apply to everyone; the DPA
-// (business:true) is added for company/business accounts.
+// (business:true) is added for company/business accounts. `title` is the English
+// default; the gate DISPLAYS t('workShell.legal.docs.<key>', title), keyed by the
+// manifest doc key, so the server list and this fallback both render translated.
 export const LEGAL_FALLBACK_DOCS = [
   { key: 'terms', title: 'Terms of Service', path: '/workcopilot/terms' },
   { key: 'privacy', title: 'Privacy Policy', path: '/workcopilot/privacy' },
@@ -40,7 +43,11 @@ export const LEGAL_FALLBACK_DOCS = [
   { key: 'disclaimer', title: 'Disclaimer', path: '/workcopilot/disclaimer' },
 ]
 
+// Manifest doc key ('acceptable-use') -> i18n leaf ('acceptableUse').
+const docTitleKey = (key) => 'workShell.legal.docs.' + String(key || '').replace(/-([a-z0-9])/g, (_, c) => c.toUpperCase())
+
 export default function LegalConsentGate({ children }) {
+  const t = useT()
   const { user, refresh, logout } = useAuth()
   const gated = !!(user && user.legalRequired)
 
@@ -100,7 +107,7 @@ export default function LegalConsentGate({ children }) {
       // If, for any reason, the refreshed user is still gated, keep the modal up
       // with an honest message rather than silently passing through.
     } catch (e2) {
-      setErr((e2 && e2.message) || 'We could not record your acceptance. Please try again.')
+      setErr((e2 && e2.message) || t('workShell.legal.errGeneric'))
     } finally {
       setBusy(false)
     }
@@ -124,16 +131,16 @@ export default function LegalConsentGate({ children }) {
           onKeyDown={onKeyDown}
         >
           <div className="lcg-ic" aria-hidden="true"><ShieldCheck size={22} /></div>
-          <h2 id="lcg-title" className="lcg-title">One step before you continue</h2>
+          <h2 id="lcg-title" className="lcg-title">{t('workShell.legal.title')}</h2>
           <p id="lcg-desc" className="lcg-desc">
-            We updated the agreements that govern WorkCoPilot. Please review them and accept to keep using your account.
+            {t('workShell.legal.body')}
           </p>
 
-          <ul className="lcg-docs" aria-label="Agreements to review">
+          <ul className="lcg-docs" aria-label={t('workShell.legal.listAria')}>
             {shown.map((d) => (
               <li key={d.key}>
                 <a href={d.path} target="_blank" rel="noopener noreferrer">
-                  <span>{d.title}</span>
+                  <span>{t(docTitleKey(d.key), d.title)}</span>
                   <ExternalLink size={14} aria-hidden="true" />
                 </a>
               </li>
@@ -149,19 +156,19 @@ export default function LegalConsentGate({ children }) {
               onChange={(e) => { setAccepted(e.target.checked); if (e.target.checked && err) setErr('') }}
               aria-required="true"
             />
-            <span>I have read and agree to the agreements listed above.</span>
+            <span>{t('workShell.legal.agree')}</span>
           </label>
 
           {err && <div className="lcg-err" role="alert">{err}</div>}
 
           <button type="button" className="lcg-cta" onClick={accept} disabled={!accepted || busy} aria-busy={busy}>
             {busy ? <Loader2 size={16} className="lcg-spin" aria-hidden="true" /> : null}
-            Agree and continue
+            {t('workShell.legal.cta')}
             <ArrowRight size={16} aria-hidden="true" />
           </button>
 
           <button type="button" className="lcg-signout" onClick={signOut} disabled={busy}>
-            <LogOut size={14} aria-hidden="true" /> Sign out instead
+            <LogOut size={14} aria-hidden="true" /> {t('workShell.legal.signOut')}
           </button>
         </div>
       </div>

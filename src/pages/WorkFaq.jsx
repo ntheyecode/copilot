@@ -431,13 +431,16 @@ const CSS = `
 .wfq-gcard{min-width:0}
 .wfq-gcard .wc-title{font-size:18px}
 /* document: sticky rail + ledger */
-.wfq-doc{display:grid;grid-template-columns:240px minmax(0,1fr);gap:36px;align-items:start;padding-top:6px}
+/* The rail column sizes to its LONGEST link (fit-content, capped at 340px) so a
+   section title plus its count badge never wraps onto a second line at desktop
+   widths; only a title longer than the cap would wrap, and nothing clips. */
+.wfq-doc{display:grid;grid-template-columns:fit-content(400px) minmax(0,1fr);gap:36px;align-items:start;padding-top:6px}
 .wfq-rail{position:sticky;top:18px;min-width:0}
 .wfq-railt{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:0 0 10px}
 .wfq-rail ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .wfq-rail a{display:flex;align-items:baseline;gap:9px;padding:7px 10px;border:1px solid transparent;border-radius:9px;font-size:13.5px;font-weight:600;color:var(--ink);text-decoration:none;line-height:1.35}
 .wfq-rail a:hover{background:var(--panel);border-color:var(--line)}
-.wfq-railname{flex:1;min-width:0}
+.wfq-railname{flex:1 1 auto;min-width:0}
 .wfq-railc{flex:0 0 auto;font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:10.5px;font-weight:500;color:var(--dim);background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:1px 6px}
 .wfq-rail li.off a{opacity:.45}
 .wfq-all{margin:12px 0 0 10px;background:none;border:1px solid var(--line-strong);border-radius:999px;padding:6px 12px;font:inherit;font-size:12.5px;font-weight:600;color:var(--mut);cursor:pointer;white-space:nowrap}

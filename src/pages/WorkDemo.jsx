@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ScanEye, AlertTriangle, ArrowRight, Check, FileText, Sparkles, Compass, Wand2, Bug, Award } from 'lucide-react'
-import AdmireVedaLogo, { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import SiteHeader from '../components/SiteHeader.jsx'   // the shared site nav (full routes, language menu, mobile menu), same as every public page
 import SiteFooter from '../components/SiteFooter.jsx'
 import CopyChip from '../components/CopyChip.jsx'
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the demo page too
@@ -92,8 +93,9 @@ const WRITEUP = [
   'Added a 0.0.0.0/0 route to the gateway so traffic can get out.',
 ]
 
-// Accessibility (WEB-08): one <main>, a single H1, a labeled site nav with
-// aria-current on this page, the auto-playing player is a labeled region that
+// Accessibility (WEB-08): one <main>, a single H1, the shared labeled site nav
+// (SiteHeader, so the demo carries the same links, language menu and mobile
+// menu as every other public page), the auto-playing player is a labeled region that
 // is NOT a live region (it changes every few seconds; announcing each change
 // would drown a screen-reader user), decorative dots and icons are hidden,
 // motion honors prefers-reduced-motion, and the faint step counter / terminal
@@ -116,18 +118,10 @@ export default function WorkDemo() {
       <style>{CSS}</style>
       <div className="wkd-bg" aria-hidden><span className="orb a" /><span className="orb b" /></div>
 
-      <header className="wkd-nav">
-        <div className="wkd-wrap wkd-nav-in">
-          <a href="/" aria-label="AdmireVeda"><AdmireVedaLogo size={26} /></a>
-          <nav className="wkd-links" aria-label="Site">
-            <a href="/#how">How it works</a>
-            <a href="/demo" className="on" aria-current="page">Demo</a>
-            <a href="/workcopilot/use-cases">Use cases</a>
-            <a href="/#pricing">Pricing</a>
-          </nav>
-          <button className="wkd-cta sm" onClick={start}>Start free <ArrowRight size={15} aria-hidden="true" /></button>
-        </div>
-      </header>
+      {/* QA M4: the demo used to carry its own header (same-page anchors, no
+          language menu, English in every locale). The shared SiteHeader gives it
+          the site's real routes, the language picker and the mobile menu. */}
+      <SiteHeader />
 
       <main id="main">
       <section className="wkd-hero">
@@ -381,15 +375,9 @@ const CSS = `
 .wkd-bg .orb.b{width:560px;height:560px;background:radial-gradient(circle,rgba(10,134,207,.5),transparent 70%);top:140px;right:-160px}
 .wkd-wrap{max-width:1040px;margin:0 auto;padding:0 20px;position:relative;z-index:1}
 
-.wkd-nav{position:sticky;top:0;z-index:30;backdrop-filter:blur(10px);background:color-mix(in srgb,#f7f9fd 78%,transparent);border-bottom:1px solid var(--line)}
-@media (prefers-color-scheme:dark){.wkd-nav{background:color-mix(in srgb,#0b1020 78%,transparent)}}
-.wkd-nav-in{display:flex;align-items:center;gap:18px;height:64px}
-.wkd-links{display:flex;gap:20px;margin-left:8px;flex:1}
-.wkd-links a{color:var(--mut);text-decoration:none;font-weight:600;font-size:14.5px;white-space:nowrap}
-.wkd-links a:hover,.wkd-links a.on{color:var(--tx)}
+/* The top bar is the shared SiteHeader (its own scoped styles + stacking). */
 .wkd-cta{display:inline-flex;align-items:center;gap:8px;background:linear-gradient(135deg,var(--g),var(--em));color:#fff;border:none;border-radius:12px;padding:12px 20px;font:inherit;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 8px 22px rgba(10,134,207,.28);transition:transform .15s,box-shadow .15s}
 .wkd-cta:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(10,134,207,.36)}
-.wkd-cta.sm{padding:9px 15px;font-size:14px}
 .wkd-cta.big{padding:15px 26px;font-size:16px}
 
 .wkd-hero{padding:46px 0 20px;text-align:center}
@@ -521,12 +509,6 @@ const CSS = `
 .wkd-fw-burst i{position:absolute;left:0;top:0;width:6px;height:6px;border-radius:50%;background:hsl(calc(var(--a) + 150),92%,58%);box-shadow:0 0 7px currentColor;animation:wkd-fw-pop 1.15s cubic-bezier(.15,.7,.3,1) forwards}
 .wkd-fw-burst.b1 i{animation-delay:.1s}.wkd-fw-burst.b2 i{animation-delay:.2s}.wkd-fw-burst.b3 i{animation-delay:.32s}.wkd-fw-burst.b4 i{animation-delay:.16s}.wkd-fw-burst.b5 i{animation-delay:.28s}.wkd-fw-burst.b6 i{animation-delay:.38s}
 @keyframes wkd-fw-pop{0%{transform:rotate(calc(var(--a) * 1deg)) translateX(2px) scale(1);opacity:1}100%{transform:rotate(calc(var(--a) * 1deg)) translateX(70px) scale(.25);opacity:0}}
-@media (max-width:720px){
-  /* DESIGN-06: hide the nav links before they would crowd or wrap, and push the
-     CTA back to the right edge so the header stays balanced (logo + CTA only) */
-  .wkd-links{display:none}
-  .wkd-cta.sm{margin-left:auto}
-}
 @media (max-width:560px){
   /* on phones let the demo card grow to fit instead of clipping its fixed height */
   .wkd-demo{height:auto;min-height:0;overflow:visible}

@@ -413,9 +413,17 @@ export const WD_CSS = `
  .wd-rail .wd-nav{justify-content:center;padding:9px 0}
  .wd-apps-grid{grid-template-columns:1fr}
  .wd-help{grid-template-columns:1fr}
- .wd-help-nav{position:static;flex-direction:row;flex-wrap:wrap;gap:6px;margin-bottom:10px}
- .wd-help-nav .wd-help-navlabel{width:100%}
+ /* Narrow: the section list becomes ONE horizontally scrollable row of chips
+    (never a multi-row wrap, per the design-time quality gate). Each chip is
+    nowrap + flex-shrink:0; the row scrolls, the page never gets a sideways bar. */
+ .wd-help-nav{position:static;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:6px;margin:0 0 10px;max-width:100%;overflow-x:auto;overflow-y:hidden;overscroll-behavior-x:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:6px;scroll-snap-type:x proximity}
+ .wd-help-nav .wd-help-navlabel{flex:0 0 auto;margin:0 4px 0 0}
+ .wd-help-nav button{flex:0 0 auto;white-space:nowrap;scroll-snap-align:start}
  .wd-help-nav button.on{box-shadow:inset 0 -2px 0 var(--em)}
+ .wd-help-nav .wd-help-start{margin-top:0}
+ /* While more chips sit past the right edge (data-more, set by Help.jsx), the
+    row fades out there so the cut chip reads as "scroll for more", not clipped. */
+ .wd-help-nav[data-more="1"]{-webkit-mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent);mask-image:linear-gradient(to right,#000 calc(100% - 40px),transparent)}
 }
 /* Top bar collapse, widest first. Labels never wrap; they drop to icons. */
 @media(max-width:1100px){

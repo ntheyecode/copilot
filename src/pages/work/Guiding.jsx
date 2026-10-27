@@ -382,6 +382,14 @@ const CONSOLE_CSS = `
 .wc-loading-line.past svg{color:var(--success)}
 .wc-loading-line.on svg{color:var(--brand-600)}
 @keyframes wc-line-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+/* Share-prompt state (M7): the first thing after hand-off, before any phase. */
+.wc-share{gap:10px;text-align:center}
+.wc-share-ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;color:var(--brand-600);background:var(--brand-soft);margin-bottom:6px}
+.wc-share-t{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em}
+.wc-share-s{font-size:14px;line-height:1.55;color:var(--text-muted);max-width:420px}
+.wc-share-s b{color:var(--text)}
+.wc-share-slow{display:flex;align-items:flex-start;gap:8px;margin-top:8px;max-width:440px;text-align:left;font-size:13px;line-height:1.5;color:var(--text);background:var(--warning-soft);border:1px solid var(--warning);border-radius:12px;padding:10px 12px}
+.wc-share-slow svg{flex-shrink:0;margin-top:2px;color:var(--warning)}
 
 /* Ask / analyse bar + answer */
 .wc-ask{margin-top:0;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:8px 8px 8px 10px;transition:border-color .16s,box-shadow .16s}
@@ -1061,8 +1069,39 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
   )
 }
 
+// The share-prompt state (QA M7): shown INSTEAD of the planning phases while
+// the browser's screen-share (or camera) prompt is open, so nothing claims
+// progress before the person has actually shared. If the prompt has not
+// resolved after a while (it can hide behind another window, or the picker
+// was left open), the card says so and tells them what to do.
+const SHARE_WAIT_HINT_MS = 20000
+function SharePrompt({ source }) {
+  const [slow, setSlow] = useState(false)
+  useEffect(() => { const id = setTimeout(() => setSlow(true), SHARE_WAIT_HINT_MS); return () => clearTimeout(id) }, [])
+  const screen = source === 'screen'
+  return (
+    <div className="wc-loading wc-share" role="status" aria-live="polite">
+      <div className="wc-share-ic">{screen ? <Monitor size={26} /> : <Camera size={26} />}</div>
+      <div className="wc-share-t">{screen ? 'Share your screen to start' : 'Allow the camera to start'}</div>
+      <div className="wc-share-s">
+        {screen
+          ? <>In the browser prompt, choose your <b>whole screen</b> (not just a tab) so WorkCoPilot can guide you through any app. Planning begins the moment you share.</>
+          : <>Choose <b>Allow</b> in the browser prompt. Planning begins the moment the camera is on.</>}
+      </div>
+      {slow && (
+        <div className="wc-share-slow" role="alert">
+          <AlertTriangle size={14} />
+          <span>Still waiting for the {screen ? 'share' : 'camera'} prompt. If you do not see it, look for a browser dialog behind this window. Cancelling it brings you back here, where <b>Plan the steps</b> asks again.</span>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // The planning animation: phases reveal one by one while the plan is being
-// built, then the Console swaps to the step view the moment steps arrive.
+// built, then the Console swaps to the step view the moment steps arrive. It
+// mounts only once the plan request is actually in flight (never while the
+// share prompt is still open), so its ticks never run ahead of reality.
 function PlanningLoader() {
   const PHASES = ['Understanding your goal', 'Thinking', 'Preparing the plan', 'Thinking deep', 'Working with multimodal vision', 'Writing your steps']
   const [i, setI] = useState(0)
@@ -1121,6 +1160,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [goal, setGoal] = useState('')
   const [source, setSource] = useState(() => isMobileUA() ? 'camera' : 'screen')     // 'screen' | 'camera' (phones default to camera: no screen share on mobile)
   const [capturing, setCapturing] = useState(false)
+  const [sharePrompt, setSharePrompt] = useState(false)   // true while the browser's share / camera prompt is open (M7)
   const [watching, setWatching] = useState(false)
   const [status, setStatus] = useState('')
   const [observation, setObservation] = useState('')
@@ -1253,7 +1293,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const autoPlannedRef = useRef(false)
   useEffect(() => {
     if (autoPlannedRef.current || !sess) return
-    if (((sess.steps || []).length) > 0) { autoPlannedRef.current = true; return }
+    if (((sess.steps || []).length) > 0 || sess.status === 'ended') { autoPlannedRef.current = true; return }   // a finished session is never re-planned (it would ask to share a screen under "Task complete")
     if (!(goal && goal.trim())) return
     autoPlannedRef.current = true
     plan()   // defined below; the effect body runs after render
@@ -1452,9 +1492,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     // frame can be redacted without a cold-load delay.
     if (isDlpActive()) warmFrameScrub()
     try {
-      const stream = source === 'screen'
-        ? await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false })
-        : await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+      // The prompt is open from here until the promise settles; the console
+      // shows "Share your screen to start" (not the planning phases) meanwhile.
+      setSharePrompt(true)
+      let stream
+      try {
+        stream = source === 'screen'
+          ? await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 1 }, audio: false })
+          : await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })
+      } finally { setSharePrompt(false) }
       streamRef.current = stream
       // The user stopping the share from the browser chrome ends capture cleanly.
       stream.getVideoTracks().forEach((t) => { t.onended = () => stopCapture() })
@@ -2165,6 +2211,18 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   }, [pipWin, fsScale])
 
   const live = watching && !paused
+  // ONE status chip definition for both the header and the right rail (single
+  // source of truth). It never says "Ready" while the share prompt is open or
+  // the first plan is being built (QA M7).
+  const chip = paused
+    ? { label: 'Paused', title: 'Paused. Resume to keep guiding.' }
+    : live
+      ? { label: 'Guiding', title: 'Guiding live from your screen' }
+      : sharePrompt
+        ? { label: source === 'screen' ? 'Share screen' : 'Camera', title: source === 'screen' ? 'Waiting for you to share your screen' : 'Waiting for camera access' }
+        : (busy && steps.length === 0)
+          ? { label: 'Planning', title: 'Building your plan from your goal and screen' }
+          : { label: 'Ready', title: 'Ready. Start watching to go live.' }
   // #2 Wrong-place gate: the mismatch signal the watch response carries (the
   // server sets status='wrong' when it raises a flag, index.js). The prominent
   // alert shows ONLY on a real mismatch and hides when the screen is correct.
@@ -2193,8 +2251,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <span className="wc-brand-name">WorkCoPilot</span>
           </span>
           {sess && !ended && (
-            <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={paused ? 'Paused. Resume to keep guiding.' : (live ? 'Guiding live from your screen' : 'Ready. Start watching to go live.')}>
-              <span className="wc-sdot" />{paused ? 'Paused' : (live ? 'Guiding' : 'Ready')}
+            <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={chip.title}>
+              <span className="wc-sdot" />{chip.label}
             </span>
           )}
           <span style={{ flex: 1 }} />
@@ -2407,9 +2465,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           </div>
         ) : steps.length === 0 ? (
           busy ? (
-            // Planning: the thinking animation reveals phases, then the view swaps
-            // to the step card the moment the plan is ready.
-            <PlanningLoader />
+            // First the share prompt (nothing is claimed until the person has
+            // shared), then planning: the thinking animation reveals phases, and
+            // the view swaps to the step card the moment the plan is ready.
+            sharePrompt ? <SharePrompt source={source} /> : <PlanningLoader />
           ) : (
             // Not planning yet (first frame) or screen-share was declined: the
             // goal starter + Plan button as a clean fallback.
@@ -2929,7 +2988,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <aside className="wc-rail wc-rail-r" aria-label="Controls">
             <div className="wc-rail-card">
               <div className="wc-rail-status">
-                <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`}><span className="wc-sdot" />{paused ? 'Paused' : (live ? 'Guiding' : 'Ready')}</span>
+                <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={chip.title}><span className="wc-sdot" />{chip.label}</span>
                 {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {Math.ceil((usage.remainingSeconds || 0) / 60)}m left</span>}
               </div>
               {watchLight

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Check } from 'lucide-react'
+import { shouldRevealAtOnce, REVEAL_MAX_STAGGER_MS } from '../reveal.js'
 
 // WorkCard - the single, shared marketing card primitive for the whole site.
 // One premium shell (layered surface + brand hairline + corner glow + optional
@@ -45,24 +46,27 @@ function ensureAssets() {
   }
 }
 
-// On-scroll reveal with a per-card stagger, gated by prefers-reduced-motion.
+// On-scroll reveal with a (capped) per-card stagger. Timing and the "reveal at
+// once" rules (reduced motion, crawler, no observer) come from src/reveal.js so
+// cards reveal exactly like every other section on the site (QA M5).
 function useReveal(enabled, delay) {
   const ref = useRef(null)
   const [shown, setShown] = useState(!enabled)
   useEffect(() => {
     if (!enabled) { setShown(true); return }
-    const reduce = typeof window !== 'undefined' && window.matchMedia
-      && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-    if (reduce) { setShown(true); return }
-    const el = ref.current; if (!el) return
+    const el = ref.current
+    if (!el || shouldRevealAtOnce()) { setShown(true); return }
     let timer
+    const stagger = Math.min(Math.max(0, delay || 0), REVEAL_MAX_STAGGER_MS)
     const io = new IntersectionObserver((ents) => {
       ents.forEach((e) => {
-        if (e.isIntersecting) { io.disconnect(); timer = setTimeout(() => setShown(true), delay || 0) }
+        if (e.isIntersecting) { io.disconnect(); timer = setTimeout(() => setShown(true), stagger) }
       })
-    }, { threshold: 0.14 })
+    }, { threshold: 0, rootMargin: '0px 0px -6% 0px' })
     io.observe(el)
-    return () => { io.disconnect(); clearTimeout(timer) }
+    // Already on screen but not reported (observer races at mount): show anyway.
+    const sweep = setTimeout(() => { const r = el.getBoundingClientRect(); if (r.bottom > 0 && r.top < (window.innerHeight || 0)) { io.disconnect(); setShown(true) } }, 600)
+    return () => { io.disconnect(); clearTimeout(timer); clearTimeout(sweep) }
   }, [enabled, delay])
   return [ref, shown]
 }
@@ -162,7 +166,7 @@ const WORKCARD_CSS = `
   color:var(--wc-tx);overflow:hidden;isolation:isolate;
   background-color:var(--wc-s1);
   box-shadow:var(--wc-sh);
-  transition:transform .45s var(--wc-ease),border-color .45s var(--wc-ease),box-shadow .45s var(--wc-ease);
+  transition:transform .3s var(--wc-ease),opacity .3s var(--wc-ease),border-color .45s var(--wc-ease),box-shadow .45s var(--wc-ease);
 }
 .wc-card>*{position:relative;z-index:1}
 
@@ -222,7 +226,7 @@ const WORKCARD_CSS = `
   border-color:color-mix(in srgb,var(--wc-ink) 32%, var(--wc-line))}
 
 /* reveal */
-.wc-card.wc-reveal{opacity:0;transform:translateY(22px)}
+.wc-card.wc-reveal{opacity:0;transform:translateY(14px)}
 .wc-card.wc-reveal.wc-in{opacity:1;transform:none}
 
 /* HEAD - duotone glass icon tile + mono eyebrow + Bricolage title */

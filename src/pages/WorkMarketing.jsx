@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu) - same as every inner page
+import { revealOnScroll } from '../reveal.js'            // the ONE scroll-reveal mechanism for the site (timing + crawler/print safety)
 import SiteFooter from '../components/SiteFooter.jsx'   // shared footer across the whole site
 import CopyChip from '../components/CopyChip.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // the shared, site-wide premium card primitive
@@ -67,12 +68,10 @@ export default function WorkMarketing() {
     return () => window.removeEventListener('pointermove', onMove)
   }, [])
 
-  // Scroll reveals
-  useEffect(() => {
-    const els = rootRef.current ? rootRef.current.querySelectorAll('[data-reveal]') : []
-    const io = new IntersectionObserver((ents) => ents.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target) } }), { threshold: 0.12 })
-    els.forEach((el) => io.observe(el)); return () => io.disconnect()
-  }, [price])
+  // Scroll reveals: the shared site mechanism (src/reveal.js) - reveal as soon
+  // as an element enters the viewport, short fade, never opacity 0 for a
+  // crawler, reduced motion or print.
+  useEffect(() => revealOnScroll(rootRef.current, (el) => el.classList.add('in')), [price])
 
   // Hero headline rotation holds while the pointer or keyboard focus is in the hero.
   const [heroHover, setHeroHover] = useState(false)
@@ -659,6 +658,16 @@ function LiveDemo({ tilt, untilt, t }) {
     <div className="wm-demo" data-reveal onMouseMove={tilt} onMouseLeave={untilt}>
       <div className="wm-demo-head"><span className="d r" /><span className="d y" /><span className="d g" /><b>WorkCoPilot</b><span className="wm-demo-live" title={t('home.demo.watchingTitle')}><i />{t('home.demo.watching')}</span><span className="wm-demo-tag">{d.tag}</span></div>
       <div className="wm-demo-goal"><span className="wm-demo-k">{t('home.demo.goal')}</span> {typed}<span className="wm-caret" /></div>
+      {/* QA L11: while the goal is still being typed the card is not an empty
+          dark box. It shows the screen it is watching (the stylized app window
+          with a scan sweep), so the WATCHING pill has something to watch from
+          the first frame. Purely visual, no copy to translate. */}
+      {!show && (
+        <div className="wm-demo-idle" aria-hidden="true">
+          <div className="wm-demo-sees"><span className="wm-demo-scan" /><span className="wm-demo-seek"><ScanEye size={12} /> {t('home.demo.iCanSee')}</span><span className="wm-demo-idle-line" /></div>
+          <div className="wm-scr wm-scr-idle"><div className="wm-scr-bar"><i /><i /><i /><span>{d.app}</span></div><div className="wm-scr-body"><span className="wm-scr-row" /><span className="wm-scr-row w70" /><span className="wm-scr-row w45" /></div></div>
+        </div>
+      )}
       <div className={`wm-demo-body${show ? ' in' : ''}`}>
         {reveal >= 1 && (
           <div className="wm-demo-sees wm-beat glow" key={'see' + safeSi}><span className="wm-demo-scan" aria-hidden /><span className="wm-demo-seek"><ScanEye size={12} /> {t('home.demo.iCanSee')}</span> {s.sees}</div>
@@ -989,15 +998,18 @@ const CSS = `
 .wm-cta.big{padding:17px 30px;font-size:17px}
 .wm-cta.alt{background:rgba(255,255,255,.04);color:var(--tx);border:1px solid rgba(255,255,255,.18);box-shadow:none}
 .wm-cta.alt:hover{border-color:var(--em);color:var(--em)}
-.wm [data-reveal]{opacity:0;transform:translateY(24px);transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
+/* Reveal fade: .3s (src/reveal.js REVEAL_MS). It used to be .75s on a 12%
+   threshold, which left whole screens blank on a phone while scrolling. */
+.wm [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .3s cubic-bezier(.2,.7,.2,1),transform .3s cubic-bezier(.2,.7,.2,1)}
 .wm [data-reveal].in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.wm [data-reveal]{opacity:1;transform:none;transition:none}}
 /* The two rotating hero stages are reserved at the height of their TALLEST line
    (set inline, same value for every pair), so a rotation never changes the box
    and nothing under the headline moves. The reveal transition is re-declared
    here (opacity + transform only; no height animation, there is no height change
    to animate) and className stays static so the reveal "in" class is never
    overwritten by a re-render. */
-.wm .wm-h1-stage[data-reveal],.wm .wm-lead-stage[data-reveal]{transition:opacity .75s cubic-bezier(.2,.7,.2,1),transform .75s cubic-bezier(.2,.7,.2,1)}
+.wm .wm-h1-stage[data-reveal],.wm .wm-lead-stage[data-reveal]{transition:opacity .3s cubic-bezier(.2,.7,.2,1),transform .3s cubic-bezier(.2,.7,.2,1)}
 
 /* HERO */
 .wm-hero{padding:78px 0 0;position:relative}
@@ -1075,6 +1087,11 @@ const CSS = `
 @keyframes wmblink{50%{opacity:0}}
 .wm-demo-body{margin-top:9px;opacity:0;transform:translateY(8px);transition:opacity .5s,transform .5s;flex:1;display:flex;flex-direction:column}
 .wm-demo-body.in{opacity:1;transform:none}
+/* Idle state while the goal types (L11): the watched screen, so the box is never
+   empty. It is swapped for the walkthrough body the moment the goal is in. */
+.wm-demo-idle{margin-top:9px;display:flex;flex-direction:column;animation:wm-demo-fade .3s ease-out both}
+.wm-demo-idle-line{display:inline-block;flex:1 1 auto;height:8px;max-width:46%;border-radius:4px;background:rgba(255,255,255,.08)}
+.wm-scr-idle .wm-scr-body{height:132px;justify-content:flex-start}
 .wm-demo-now{border:1px solid rgba(140,245,196,.35);background:rgba(140,245,196,.06);border-radius:13px;padding:11px 13px}
 .wm-demo-label{font-size:10px;letter-spacing:.14em;color:var(--em);font-weight:700;margin-bottom:5px}
 .wm-demo-step{font-weight:600;overflow-wrap:anywhere}

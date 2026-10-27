@@ -29,9 +29,10 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   CheckCircle2, Clock3, DollarSign, Gauge, Layers3, Timer, Users, Loader2,
-  FileDown, ImageDown, FileSpreadsheet, Info, TrendingUp, Activity, BarChart3,
+  FileDown, ImageDown, FileSpreadsheet, Info, TrendingUp, Activity, BarChart3, Building2,
 } from 'lucide-react'
 import { api, friendlyError } from '../api.js'
+import { useT } from '../i18n/index.jsx'
 import { WORKADMIN_CSS, ensureWorkAdminFonts } from './workadmin/workadmin.css.js'
 import { Loading, ErrorBox, EmptyState } from './workadmin/sections/_shared.jsx'
 
@@ -303,9 +304,12 @@ function Shell({ company, live, children, mainRef }) {
 // ============================================================================
 export default function WorkExec() {
   const pal = usePalette()
+  const t = useT()
   const [days, setDays] = useState(30)
   const [data, setData] = useState(null)
   const [err, setErr] = useState('')
+  const [errStatus, setErrStatus] = useState(0)   // HTTP status of the blocking error (403 = not in a company's scope)
+  const [me, setMe] = useState(null)                // the signed-in user (best effort; decides which way out to offer)
   const [refreshing, setRefreshing] = useState(false)
   const [stale, setStale] = useState(false)
   const [company, setCompany] = useState(null)
@@ -317,10 +321,11 @@ export default function WorkExec() {
   // same way the admin consoles do - the `.wka` surface is self-contained.
   useEffect(() => { ensureWorkAdminFonts() }, [])
 
-  // branding (best effort; page works without it)
+  // branding + identity (best effort; the page works without either)
   useEffect(() => {
     let alive = true
     api.workMyCompany().then((c) => { if (alive) setCompany(c || null) }).catch(() => {})
+    api.workMe().then((r) => { if (alive) setMe((r && r.user) || null) }).catch(() => {})
     return () => { alive = false }
   }, [])
 
@@ -330,11 +335,11 @@ export default function WorkExec() {
     if (spin) setRefreshing(true)
     try {
       const r = await api.workExecProductivity(days)
-      setData(r); setErr(''); setStale(false)
+      setData(r); setErr(''); setErrStatus(0); setStale(false)
     } catch (e) {
       // Keep the last good data on a transient poll failure; only hard-error
       // when we have nothing to show.
-      setData((prev) => { if (!prev) setErr(friendlyError(e, 'Could not load productivity.')); else setStale(true); return prev })
+      setData((prev) => { if (!prev) { setErr(friendlyError(e, 'Could not load productivity.')); setErrStatus(Number(e && e.status) || 0) } else setStale(true); return prev })
     } finally {
       inFlight.current = false
       setRefreshing(false)
@@ -427,6 +432,31 @@ export default function WorkExec() {
   }, [busy, snapshot, days, companyName, genDate])
 
   // ---- states --------------------------------------------------------------
+  // Not in a company's scope (403): an ACTIONABLE state, never a dead end (QA
+  // M6). It says who this view is for and offers the right way out: the admin
+  // console for a WorkCoPilot administrator (the same card /work/company shows
+  // a superadmin), the dashboard for everyone else.
+  if (errStatus === 403 && !data) {
+    const superadmin = !!(me && (me.role === 'superadmin' || me.role === 'admin'))
+    return (
+      <Shell company={company} live={null}>
+        <div className="wx-content">
+          <div className="wka-state wx-scope" role="status">
+            <Building2 size={28} style={{ color: 'var(--wka-accent)', marginBottom: 12 }} />
+            <div className="big">{superadmin ? t('companyAdmin.gate.useAdminTitle') : t('workExec.scope.title', 'This view is for company accounts')}</div>
+            <div className="wx-scope-body">
+              {t('workExec.scope.body', 'The executive view shows what a company\'s team completed, the time it represents and where the effort went. It opens for executives and company administrators of a company account.')}
+              {superadmin ? ' ' + t('companyAdmin.gate.useAdminBody') : ''}
+            </div>
+            <div className="wx-scope-actions">
+              {superadmin && <a className="wka-btn primary" href="/work/admin">{t('companyAdmin.gate.openAdmin')}</a>}
+              <a className={`wka-btn${superadmin ? '' : ' primary'}`} href="/work">{t('companyAdmin.gate.backToWork')}</a>
+            </div>
+          </div>
+        </div>
+      </Shell>
+    )
+  }
   if (err && !data) {
     return (
       <Shell company={company} live={null}>
@@ -700,6 +730,11 @@ const WX_CSS = `
 .wka .wx-foot svg { flex:0 0 auto; margin-top:1px; color:var(--wka-faint); }
 
 .wka .wx-empty { margin-top:10px; }
+/* not-in-scope state (M6): centered card, readable measure, actions never wrap or clip */
+.wka .wx-scope { max-width:560px; margin:24px auto 0; text-align:center; }
+.wka .wx-scope-body { margin-top:6px; font-size:14px; line-height:1.6; color:var(--wka-muted); overflow-wrap:anywhere; }
+.wka .wx-scope-actions { display:flex; flex-wrap:wrap; justify-content:center; gap:10px; margin-top:18px; }
+.wka .wx-scope-actions .wka-btn { white-space:nowrap; flex:0 0 auto; }
 .wka .wx-spin { animation:wka-spin 0.8s linear infinite; }
 
 /* responsive: charts collapse to one column before the content gets tight */

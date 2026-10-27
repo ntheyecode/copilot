@@ -192,6 +192,24 @@ import { WIZ_CSS } from './wizard.css.js'
 function tierRank(t) { const m = { lite: 0, basic: 1, advanced: 2, premium: 3 }; return m[t] != null ? m[t] : 1 }
 
 const COACH_SKIP_KEY = 'wc.coach.skip'
+// PARKED PLAN (QA H5): everything the person types in the wizard is kept in
+// sessionStorage (this tab only) until the plan is created, so walking away to
+// finish AI setup (or an accidental reload) never loses the goal. Cleared the
+// moment "Begin guiding" succeeds.
+const DRAFT_KEY = 'wc.start.draft'
+function readDraft() {
+  try { const d = JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null'); return d && typeof d === 'object' ? d : null } catch { return null }
+}
+function writeDraft(d) {
+  try { if (d) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d)); else sessionStorage.removeItem(DRAFT_KEY) } catch { /* ignore */ }
+}
+// Steps that depend on transient server state (the scope call) are not resumed
+// as-is: a parked draft reopens on the review step when answers exist, else on
+// the depth step, so nothing stale is shown.
+function resumeStep(s, answers) {
+  if (s === 'research' || s === 'scopeerror' || s === 'questions') return answers && answers.length ? 'review' : 'depth'
+  return STEP_ORDER.includes(s) ? s : null
+}
 // Ordered steps of the one unified stepper (research sits between depth and the
 // questions; the transient scope-error state maps onto the research segment).
 const STEP_ORDER = ['place', 'docs', 'goal', 'reflect', 'depth', 'research', 'questions', 'review']
@@ -347,32 +365,34 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
 export default function StartTask() {
   const navigate = useNavigate()
   const t = useT()
-  const { ready, usage, showGuard, onOpen, setNeedsSub, isCompanyMember } = useWorkApp()
+  const { ready, usage, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin } = useWorkApp()
   const tier = (usage && usage.tier) || 'basic'
 
+  // A parked draft (see DRAFT_KEY) resumes where the person left off.
+  const draft = useMemo(readDraft, [])
   // Remembered-skip: repeat users who have skipped the interview land on the goal.
   const remembered = (() => { try { return localStorage.getItem(COACH_SKIP_KEY) === '1' } catch { return false } })()
-  const [step, setStep] = useState(remembered ? 'goal' : 'place')
+  const [step, setStep] = useState((draft && resumeStep(draft.step, draft.answers)) || (remembered ? 'goal' : 'place'))
 
   // Interview (step 1)
-  const [place, setPlace] = useState('')
-  const [appName, setAppName] = useState('')
-  const [appUrl, setAppUrl] = useState('')
-  const [appPath, setAppPath] = useState('')
-  const [otherText, setOtherText] = useState('')
+  const [place, setPlace] = useState((draft && draft.place) || '')
+  const [appName, setAppName] = useState((draft && draft.appName) || '')
+  const [appUrl, setAppUrl] = useState((draft && draft.appUrl) || '')
+  const [appPath, setAppPath] = useState((draft && draft.appPath) || '')
+  const [otherText, setOtherText] = useState((draft && draft.otherText) || '')
   const [advancing, setAdvancing] = useState(false)
   // Documents (step 2)
-  const [docsChoice, setDocsChoice] = useState('')   // use | skip
+  const [docsChoice, setDocsChoice] = useState((draft && draft.docsChoice) || '')   // use | skip
   const [deskDocs, setDeskDocs] = useState([])
   // Goal (step 3)
-  const [planTitle, setPlanTitle] = useState('')
-  const [goal, setGoal] = useState('')
+  const [planTitle, setPlanTitle] = useState((draft && draft.planTitle) || '')
+  const [goal, setGoal] = useState((draft && draft.goal) || '')
   const [taskContext, setTaskContext] = useState('')
   // Depth / scope (steps 5 to 7)
-  const [depth, setDepth] = useState('')
+  const [depth, setDepth] = useState((draft && draft.depth) || '')
   const [questions, setQuestions] = useState([])
   const [idx, setIdx] = useState(0)
-  const [answers, setAnswers] = useState([])
+  const [answers, setAnswers] = useState((draft && Array.isArray(draft.answers)) ? draft.answers : [])
   const [txt, setTxt] = useState('')
   const [other, setOther] = useState(false)
   const [scopeErr, setScopeErr] = useState('')
@@ -390,6 +410,26 @@ export default function StartTask() {
   useEffect(() => { aliveRef.current = true; return () => { aliveRef.current = false; if (advTimer.current) clearTimeout(advTimer.current) } }, [])
 
   const remember = () => { try { localStorage.setItem(COACH_SKIP_KEY, '1') } catch { /* ignore */ } }
+
+  // Park the draft on every change (the goal, the interview, the depth and the
+  // answers). An untouched wizard stores nothing.
+  useEffect(() => {
+    const touched = !!(place || appName || appUrl || appPath || otherText || docsChoice || planTitle || goal || depth || answers.length)
+    writeDraft(touched ? { step, place, appName, appUrl, appPath, otherText, docsChoice, planTitle, goal, depth, answers } : null)
+  }, [step, place, appName, appUrl, appPath, otherText, docsChoice, planTitle, goal, depth, answers])
+
+  // Where AI setup happens for THIS person: platform admins in the admin
+  // console, company admins in the company console, personal accounts in the
+  // dashboard's AI box. Company members cannot set it up themselves (their
+  // admin does), so they get no link, only the honest message.
+  const aiSetupLink = isAdmin
+    ? { href: '/work/admin', label: t('companyAdmin.gate.openAdmin') }
+    : isCompanyAdmin
+      ? { href: '/work/company', label: t('companyAdmin.gate.openAdmin') }
+      : isCompanyMember
+        ? null
+        : { href: '/work', label: t('workStart.setupAiLink', 'Set up AI on the dashboard') }
+  const goalComplete = !!(goal.trim() && planTitle.trim())
 
   // A gated action failed (same rules as before): task-limit / must-complete /
   // company-member messages show here; a personal 402 routes to the dashboard
@@ -454,6 +494,15 @@ export default function StartTask() {
         if (Array.isArray(mons) && mons.length > 1) monQ = { id: 'monitor', qCanon: 'Which screen should I watch?', text: t('workStart.monitorQ'), kind: 'monitor', monitors: mons }
       }
     } catch { /* ignore - fall back to the capture-time picker */ }
+    // AI not provisioned yet (H5): the AI-written interview cannot run, so the
+    // wizard asks only its own two questions (environment, phrasing) and parks
+    // the plan on the review step. Nothing is lost; "Begin guiding" opens once
+    // setup is done. The server is not called, so no misleading error either.
+    if (!ready) {
+      if (!aliveRef.current) return
+      setQuestions([ENV_Q, ...(monQ ? [monQ] : []), STYLE_Q]); setIdx(0); setStep('questions')
+      return
+    }
     try {
       const r = await api.workScope(goal, d)
       if (!aliveRef.current) return
@@ -483,6 +532,7 @@ export default function StartTask() {
       if (window.workDesktop && deskDocs.length) {
         try { sessionStorage.setItem('wd_docs_' + r.session.id, deskDocs.map((d) => `# ${d.name}\n${d.text}`).join('\n\n').slice(0, 8000)) } catch { /* ignore */ }
       }
+      writeDraft(null)   // the plan exists now; the parked draft has done its job
       showGuard(r.guard)
       onOpen(r.session.id, r.guard)
     } catch (e) { setBusy(false); handleGate(e) }
@@ -560,7 +610,7 @@ export default function StartTask() {
         {!ready && (
           <div className="wd-wz-gate" role="note">
             <AlertTriangle size={15} />
-            <span><b>{t('workStart.notReadyTitle')}</b> {t('workStart.notReady')}</span>
+            <span><b>{t('workStart.notReadyTitle')}</b> {t('workStart.notReady')}{aiSetupLink && <> <a className="wd-wz-gate-link" href={aiSetupLink.href}>{aiSetupLink.label} <ArrowRight size={12} /></a></>}</span>
           </div>
         )}
 
@@ -571,7 +621,7 @@ export default function StartTask() {
             <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>{t('workStart.placeSub')}</div>
             <div className="wd-coach-kinds">
               {WORKPLACES.map((k, i) => { const Ic = k.icon; return (
-                <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${place === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => pickPlace(k.id)} aria-pressed={place === k.id}>
+                <button key={k.id} type="button" className={`wd-coach-kind wd-wiz-reveal${place === k.id ? ' on' : ''}`} style={{ '--d': `${80 + i * 45}ms` }} onClick={() => pickPlace(k.id)} aria-pressed={place === k.id} aria-label={`${t('workStart.' + k.labelKey)}. ${t('workStart.' + k.blurbKey)}`}>
                   <span className="wd-coach-kind-ic"><Ic size={17} /></span>
                   <span className="wd-coach-kind-l">{t('workStart.' + k.labelKey)}</span>
                   <span className="wd-coach-kind-b">{t('workStart.' + k.blurbKey)}</span>
@@ -652,7 +702,14 @@ export default function StartTask() {
               <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>{t('workStart.goalLabel')} <span className="req">*</span></label>
               <textarea id="wd-goal" ref={goalRef} rows={3} placeholder={t('workStart.goalPh')} value={goal} onChange={(e) => setGoal(e.target.value)} />
             </div>
-            <span className="wd-wz-hint">{ready ? t('workStart.goalReadyHint') : t('workStart.notReady')}</span>
+            {/* Visible helper text, also the Continue button's description
+                (aria-describedby), so the button's NAME stays "Continue" and the
+                reason it is disabled is read as its description (L6). */}
+            <span className="wd-wz-hint" id="wd-wz-goal-hint" aria-live="polite">
+              {!goalComplete
+                ? t('workStart.continueHint', 'Add a plan name and your goal to continue.')
+                : (ready ? t('workStart.goalReadyHint') : t('workStart.notReady'))}
+            </span>
             {usage && usage.tasks && !usage.tasks.unlimited && (
               <div className="wd-taskcap">
                 {usage.tasks.activeTaskId
@@ -664,7 +721,7 @@ export default function StartTask() {
             )}
             <Foot
               left={<button type="button" className="wd-wz-link" onClick={() => setStep('place')}><ChevronLeft size={14} /> {t('workStart.addContext')}</button>}
-              right={<button type="button" className="wd-cta" disabled={!ready || !goal.trim() || !planTitle.trim()} onClick={() => setStep('reflect')} title={!planTitle.trim() ? t('workStart.nameLabel') : (!goal.trim() ? t('workStart.goalLabel') : '')}>{t('workStart.continue')} <ArrowRight size={15} /></button>}
+              right={<button type="button" className="wd-cta" disabled={!goalComplete} onClick={() => setStep('reflect')} aria-describedby="wd-wz-goal-hint">{t('workStart.continue')} <ArrowRight size={15} /></button>}
             />
           </div>
         )}
@@ -693,7 +750,7 @@ export default function StartTask() {
             </div>
             <Foot
               left={<button type="button" className="wd-wz-link" onClick={() => setStep('goal')}><ChevronLeft size={14} /> {t('workStart.back')}</button>}
-              right={<button type="button" className="wd-cta" disabled={!ready} onClick={() => setStep('depth')}>{t('workStart.reflectContinue')} <ArrowRight size={15} /></button>}
+              right={<button type="button" className="wd-cta" onClick={() => setStep('depth')}>{t('workStart.reflectContinue')} <ArrowRight size={15} /></button>}
             />
           </div>
         )}
@@ -837,10 +894,20 @@ export default function StartTask() {
               </div>
             </div>
             <div className="wd-wz-beginwrap wd-wiz-reveal" style={{ '--d': '120ms' }}>
-              <button type="button" className="wd-wz-begin" onClick={begin} disabled={!ready || busy}>
+              {/* The ONLY AI-gated control (H5). When setup is not done the reason
+                  and the way out are inline, visible text (not a title tooltip),
+                  and the parked plan stays right here. */}
+              <button type="button" className="wd-wz-begin" onClick={begin} disabled={!ready || busy} aria-describedby="wd-wz-begin-sub">
                 {busy ? <Loader2 size={18} className="spin" /> : <Rocket size={18} />} {t('workStart.beginGuiding')}
               </button>
-              <div className="wd-wz-beginsub">{ready ? t('workStart.beginSub') : t('workStart.beginNotReady')}</div>
+              {ready
+                ? <div className="wd-wz-beginsub" id="wd-wz-begin-sub">{t('workStart.beginSub')}</div>
+                : (
+                  <div className="wd-wz-gate wd-wz-begingate" id="wd-wz-begin-sub" role="status">
+                    <AlertTriangle size={15} />
+                    <span><b>{t('workStart.notReadyTitle')}</b> {t('workStart.beginNotReady')} {t('workStart.parkedNote', 'Your plan is parked here and nothing you entered is lost.')}{aiSetupLink && <> <a className="wd-wz-gate-link" href={aiSetupLink.href}>{aiSetupLink.label} <ArrowRight size={12} /></a></>}</span>
+                  </div>
+                )}
             </div>
             <Foot left={<button type="button" className="wd-wz-link" onClick={() => setStep(questions.length ? 'questions' : 'depth')}><ChevronLeft size={14} /> {t('workStart.back')}</button>} right={null} />
           </div>

@@ -49,6 +49,12 @@ export const WIZ_CSS = `
 .wd-wz-gate{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border-radius:12px;background:var(--warm-fill);border:1px solid var(--warm-line);color:var(--tx);font-size:13px;line-height:1.5}
 .wd-wz-gate svg{flex-shrink:0;margin-top:2px;color:var(--warm)}
 .wd-wz-gate b{color:var(--warm)}
+/* The way out of the gate: an inline link (admin console / dashboard), never a
+   title-only tooltip. Wraps with the sentence; never clips. */
+.wd-wz-gate-link{display:inline-flex;align-items:center;gap:3px;color:var(--em-2);font-weight:700;text-decoration:underline;text-underline-offset:2px;white-space:nowrap}
+.wd-wz-gate-link svg{margin:0;color:inherit;flex-shrink:0}
+.wd-wz-gate-link:hover{color:var(--em)}
+.wd-wz-begingate{margin-top:2px;text-align:left}
 
 /* Reflection + review summary rows: label, value, and (reflection only) an Edit
    button that jumps straight back to the step that set it. */

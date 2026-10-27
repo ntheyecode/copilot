@@ -14,12 +14,14 @@ import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
+import { useT } from '../../i18n/index.jsx'
 import { WD_CSS } from './workApp.css.js'
 import { card, shell } from './lib.js'
 import { WorkAppContext } from './WorkAppContext.jsx'
 
 // ---- Android self-update banner (moved verbatim from WorkPage) --------------
 function AppUpdateBanner() {
+  const t = useT()
   const [upd, setUpd] = useState(null)
   useEffect(() => {
     const m = (typeof navigator !== 'undefined' ? navigator.userAgent || '' : '').match(/WorkCoPilotApp\/(\d+)/)
@@ -34,19 +36,20 @@ function AppUpdateBanner() {
   return (
     <div style={{ background: 'var(--brand-600)', color: '#fff', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10, fontSize: 14 }}>
       <Download size={16} />
-      <div style={{ flex: 1 }}>A new version of WorkCoPilot{upd.versionName ? ` (${upd.versionName})` : ''} is ready.</div>
-      <button className="btn btn-sm" style={{ background: '#fff', color: 'var(--brand-700, #1a1a2e)' }} onClick={() => { window.location.href = '/work-updates/WorkCoPilot.apk' }}>Update</button>
+      <div style={{ flex: 1 }}>{upd.versionName ? t('workShell.update.bodyVersion', { version: upd.versionName }) : t('workShell.update.body')}</div>
+      <button className="btn btn-sm" style={{ background: '#fff', color: 'var(--brand-700, #1a1a2e)' }} onClick={() => { window.location.href = '/work-updates/WorkCoPilot.apk' }}>{t('workShell.update.cta')}</button>
     </div>
   )
 }
 
 function NoAccess({ onSignOut }) {
+  const t = useT()
   return (
     <div style={{ ...shell, display: 'grid', placeItems: 'center', padding: 16 }}>
       <div style={{ ...card, maxWidth: 420, padding: 24, textAlign: 'center' }}>
         <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand-600)', marginBottom: 8 }}>WorkCoPilot</div>
-        <div style={{ color: 'var(--text-dim)' }}>Your account does not have WorkCoPilot access. Ask your administrator to enable it.</div>
-        <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={onSignOut}><LogOut size={15} /> Sign out</button>
+        <div style={{ color: 'var(--text-dim)' }}>{t('workShell.noAccess.body')}</div>
+        <button className="btn btn-outline" style={{ marginTop: 16 }} onClick={onSignOut}><LogOut size={15} /> {t('workShell.noAccess.signOut')}</button>
       </div>
     </div>
   )
@@ -55,22 +58,24 @@ function NoAccess({ onSignOut }) {
 // Lives at the shell level so it survives navigation between pages. Auto-
 // dismisses after ~8s; the user can also close it.
 function GuardNotice({ note, onClose }) {
+  const t = useT()
   useEffect(() => {
     if (!note) return undefined
-    const t = setTimeout(onClose, 8000)
-    return () => clearTimeout(t)
+    const tm = setTimeout(onClose, 8000)
+    return () => clearTimeout(tm)
   }, [note, onClose])
   if (!note) return null
   return (
     <div role="status" aria-live="polite" style={{ position: 'fixed', top: 12, left: '50%', transform: 'translateX(-50%)', zIndex: 9999, width: 'min(560px, calc(100vw - 24px))', display: 'flex', alignItems: 'flex-start', gap: 10, background: 'var(--warning-soft, #fff7e0)', color: 'var(--text, #1a1a2e)', borderLeft: '3px solid var(--warning, #d98a00)', borderRadius: 12, padding: '11px 14px', fontSize: 13.5, lineHeight: 1.45, boxShadow: '0 6px 24px rgba(0,0,0,.18)' }}>
       <AlertTriangle size={16} style={{ flexShrink: 0, marginTop: 2, color: 'var(--warning, #d98a00)' }} />
       <span style={{ flex: 1 }}>{note.warning}</span>
-      <button type="button" aria-label="Dismiss notice" onClick={onClose} style={{ background: 'none', border: 0, padding: 2, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}><X size={15} /></button>
+      <button type="button" aria-label={t('workShell.guard.dismiss')} onClick={onClose} style={{ background: 'none', border: 0, padding: 2, cursor: 'pointer', color: 'inherit', display: 'inline-flex' }}><X size={15} /></button>
     </div>
   )
 }
 
 export default function WorkAppLayout() {
+  const t = useT()
   const navigate = useNavigate()
   const location = useLocation()
   const pathname = location.pathname
@@ -114,7 +119,10 @@ export default function WorkAppLayout() {
     } catch { /* ignore */ }
   }, [loadMe])
 
-  const signOut = async () => { try { await api.logout() } catch {} ; window.location.href = '/workcopilot' }
+  // Stable identity (useCallback with no closure state) so it does not bust the
+  // shared-context memo below (SUPREME RULE I: fix the re-render class at the
+  // mechanism - every fn flowing through WorkAppContext is memoized, not patched).
+  const signOut = useCallback(async () => { try { await api.logout() } catch {} ; window.location.href = '/workcopilot' }, [])
 
   // Desktop app: drive the window mode. Planning is a large windowed "plan"
   // mode; an open guiding session is the compact floating "guide" mode.
@@ -256,11 +264,11 @@ export default function WorkAppLayout() {
   const planName = cap((user && user.subscription && user.subscription.plan) || (usage && usage.tier) || '') || 'Active'
   const low = !!usage && (usage.exhausted || (usage.remainingSeconds != null && usage.remainingSeconds <= 900))
   const tier = (usage && usage.tier) || 'basic'
-  const titleCase = (s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : '')
-  const money = (n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`)
+  const titleCase = useCallback((s) => (s ? String(s).charAt(0).toUpperCase() + String(s).slice(1) : ''), [])
+  const money = useCallback((n) => (n == null ? '' : `$${Number(n) % 1 ? Number(n).toFixed(2) : Number(n)}`), [])
   const showBilling = hasPlan || (Array.isArray(invoices) && invoices.length > 0)
 
-  const tradeCredits = async () => {
+  const tradeCredits = useCallback(async () => {
     if (trading || !canTrade) return
     setTrading(true)
     setUsage((u) => (u && u.tasks) ? { ...u, tasks: { ...u.tasks, taskCredits: Math.max(0, (Number(u.tasks.taskCredits) || 0) - 2) } } : u)
@@ -269,7 +277,7 @@ export default function WorkAppLayout() {
     } catch { /* the refetch below corrects the optimistic change */ }
     try { const u = await api.workUsage(); setUsage(u) } catch { /* ignore */ }
     setTrading(false)
-  }
+  }, [trading, canTrade])
   const stopImpersonate = async () => {
     if (impStopping) return
     setImpStopping(true)
@@ -291,7 +299,7 @@ export default function WorkAppLayout() {
     const n = Number(v)
     return isFinite(n) ? n : null
   }
-  const buyCredits = (kind) => { setBuyErr(''); setBuyQty(kind === 'hours' ? '1' : String(imageMin)); setBuyModal({ kind }) }
+  const buyCredits = useCallback((kind) => { setBuyErr(''); setBuyQty(kind === 'hours' ? '1' : String(imageMin)); setBuyModal({ kind }) }, [imageMin])
   const confirmBuy = async () => {
     if (buying || !buyModal) return
     const kind = buyModal.kind
@@ -329,15 +337,22 @@ export default function WorkAppLayout() {
     tasksObj, tasksUnlimited, tasksRemaining, tasksCap, tasksResetLabel, tasksFace, canTrade, trading,
     pricing, aiStatus, ready, aiErr, loadAi, needsSub, gateMsg, billingOn, invoices, showBilling,
     sessions, sessLoaded, sessErr, reload, refreshUsage, buddyPref, showBuy, buyCredits, desktop,
+    signOut, tradeCredits, money, titleCase,
   ])
 
   // ---- Gate screens (moved verbatim from WorkPage) --------------------------
-  if (evicted) return frame(
+  // Evicted = this window got signed out because the account signed in elsewhere.
+  // Two paths deliver it: an in-flight call hits a stale session -> 401 {loggedOut}
+  // -> wc:signed-out event -> `evicted` (above); OR the shell's own /api/work/me
+  // check returns 200 {signedIn:false, loggedOut:true}. Honor BOTH here so the user
+  // always lands on the clear "signed in elsewhere" screen, never a silent bounce
+  // to the login page with no explanation (SUPREME RULE VIII: actionable state).
+  if (evicted || (sess && sess.loggedOut)) return frame(
     <div style={{ ...shell, display: 'grid', placeItems: 'center', padding: 20 }}>
       <div style={{ maxWidth: 400, width: '100%', textAlign: 'center', background: 'var(--surface, #fff)', border: '1px solid var(--border, #e5e7eb)', borderRadius: 16, padding: '26px 24px', boxShadow: '0 10px 40px -18px rgba(0,0,0,.25)' }}>
-        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand-600, #0b8259)', marginBottom: 8 }}>Signed out</div>
-        <p style={{ color: 'var(--text-dim, #5c6484)', fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>Your account was just signed in from another location. For your security, WorkCoPilot keeps <b>one active session at a time</b>, so this session was signed out.</p>
-        <button className="btn btn-primary" onClick={() => { window.location.href = '/workcopilot' }}><LogOut size={15} /> Sign in again</button>
+        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--brand-600, #0b8259)', marginBottom: 8 }}>{t('workShell.evicted.title')}</div>
+        <p style={{ color: 'var(--text-dim, #5c6484)', fontSize: 14, lineHeight: 1.55, margin: '0 0 18px' }}>{t.rich('workShell.evicted.body')}</p>
+        <button className="btn btn-primary" onClick={() => { window.location.href = '/workcopilot' }}><LogOut size={15} /> {t('workShell.evicted.cta')}</button>
       </div>
     </div>
   )
@@ -349,10 +364,12 @@ export default function WorkAppLayout() {
   const desk = !!desktop
   const stickyTop = desk ? { top: 40 } : undefined
   const railStyle = desk ? { top: 40, height: 'calc(100vh - 40px)' } : undefined
-  // One entry per in-shell route; the labels match the rail so the top bar and
-  // the highlighted rail item always name the same section.
-  const TITLES = { '/work': 'Dashboard', '/work/start': 'Start a task', '/work/tasks': 'My tasks', '/work/completed': 'Completed tasks', '/work/logs': 'Session logs', '/work/skills': 'Skills', '/work/help': 'How-to', '/work/support': 'Support' }
-  const title = TITLES[pathname] || 'Dashboard'
+  // One entry per in-shell route; the top bar and the rail item read the SAME
+  // `workShell.nav.*` key, so they always name the section identically in every
+  // language (the help route is the one deliberate exception: rail "Help", title
+  // "How-to", exactly as before).
+  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support') }
+  const title = TITLES[pathname] || t('workShell.nav.dashboard')
   const wide = /^\/work\/(help|support)$/.test(pathname)
   const initial = String((user && (user.displayName || user.username)) || '').trim().charAt(0) || '?'
   const navClass = ({ isActive }) => `wd-nav${isActive ? ' on' : ''}`
@@ -388,24 +405,24 @@ export default function WorkAppLayout() {
             <span className="mark"><AVMark size={26} id="avrail" glow={false} /></span>
             <span className="bt"><small>AdmireVeda</small><b>WorkCoPilot</b></span>
           </Link>
-          <nav className="wd-navs" aria-label="Sections">
-            <NavLink end to="/work" className={navClass} title="Dashboard"><LayoutDashboard size={18} /> <span className="wd-nav-t">Dashboard</span></NavLink>
-            <NavLink to="/work/start" className={navClass} title="Start a task"><Play size={18} /> <span className="wd-nav-t">Start a task</span></NavLink>
-            <NavLink to="/work/tasks" className={navClass} title="My tasks (in progress or paused)"><Clock size={18} /> <span className="wd-nav-t">My tasks</span></NavLink>
-            <NavLink to="/work/completed" className={navClass} title="Completed tasks"><Check size={18} /> <span className="wd-nav-t">Completed tasks</span></NavLink>
-            <NavLink to="/work/logs" className={navClass} title="Session logs"><FileText size={18} /> <span className="wd-nav-t">Session logs</span></NavLink>
-            <NavLink to="/work/skills" className={navClass} title="Skills"><Blocks size={18} /> <span className="wd-nav-t">Skills</span></NavLink>
-            <div className="wd-sect">Help</div><span className="wd-sect-rule" aria-hidden />
-            <NavLink to="/work/help" className={navClass} title="Help &amp; how-to"><BookOpen size={18} /> <span className="wd-nav-t">Help</span></NavLink>
-            <NavLink to="/work/support" className={navClass} title="Support"><LifeBuoy size={18} /> <span className="wd-nav-t">Support</span></NavLink>
+          <nav className="wd-navs" aria-label={t('workShell.nav.sections')}>
+            <NavLink end to="/work" className={navClass} title={t('workShell.nav.dashboard')}><LayoutDashboard size={18} /> <span className="wd-nav-t">{t('workShell.nav.dashboard')}</span></NavLink>
+            <NavLink to="/work/start" className={navClass} title={t('workShell.nav.start')}><Play size={18} /> <span className="wd-nav-t">{t('workShell.nav.start')}</span></NavLink>
+            <NavLink to="/work/tasks" className={navClass} title={t('workShell.nav.tasksTip')}><Clock size={18} /> <span className="wd-nav-t">{t('workShell.nav.tasks')}</span></NavLink>
+            <NavLink to="/work/completed" className={navClass} title={t('workShell.nav.completed')}><Check size={18} /> <span className="wd-nav-t">{t('workShell.nav.completed')}</span></NavLink>
+            <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>
+            <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
+            <div className="wd-sect">{t('workShell.nav.help')}</div><span className="wd-sect-rule" aria-hidden />
+            <NavLink to="/work/help" className={navClass} title={t('workShell.nav.helpTip')}><BookOpen size={18} /> <span className="wd-nav-t">{t('workShell.nav.help')}</span></NavLink>
+            <NavLink to="/work/support" className={navClass} title={t('workShell.nav.support')}><LifeBuoy size={18} /> <span className="wd-nav-t">{t('workShell.nav.support')}</span></NavLink>
             {isCompanyAdmin && (
-              <a className="wd-nav" href="/work/company" title="Team"><Users size={18} /> <span className="wd-nav-t">Team</span></a>
+              <a className="wd-nav" href="/work/company" title={t('workShell.nav.team')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.team')}</span></a>
             )}
           </nav>
           {(isExecutive || isAdmin) && (
             <div className="wd-rail-foot">
-              {isExecutive && <a className="wd-nav foot" href="/work/exec" title="Executive dashboard"><BarChart3 size={18} /> <span className="wd-nav-t">Executive dashboard</span></a>}
-              {isAdmin && <a className="wd-nav foot" href="/work/admin" title="Admin console"><Settings size={18} /> <span className="wd-nav-t">Admin console</span></a>}
+              {isExecutive && <a className="wd-nav foot" href="/work/exec" title={t('workShell.nav.exec')}><BarChart3 size={18} /> <span className="wd-nav-t">{t('workShell.nav.exec')}</span></a>}
+              {isAdmin && <a className="wd-nav foot" href="/work/admin" title={t('workShell.nav.admin')}><Settings size={18} /> <span className="wd-nav-t">{t('workShell.nav.admin')}</span></a>}
             </div>
           )}
         </aside>

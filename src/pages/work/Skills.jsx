@@ -39,18 +39,21 @@ function SkillsCard({ user }) {
     catch (e2) { setErr(friendlyError(e2, 'Could not remove that skill.')) }
   }
   const n = skills ? skills.length : null
+  const subtitle = n == null ? 'Teach it how you want work done' : n === 0 ? 'Add a playbook, SOP or skill from any AI' : `${n} ${n === 1 ? 'skill' : 'skills'} guiding your plans`
   return (
     <div className="wd-card wd-dp wd-skills">
-      <button type="button" className="wd-dp-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+      {/* The disclosure control carries an explicit accessible name (title +
+          status) so it never reads as an unnamed button to assistive tech. */}
+      <button type="button" className="wd-dp-btn" onClick={() => setOpen((v) => !v)} aria-expanded={open} aria-controls="wd-skills-body" aria-label={`Skills. ${subtitle}`}>
         <span className="wd-ic alt"><Blocks size={16} /></span>
         <span className="wd-card-body">
           <span className="wd-card-t">Skills</span>
-          <span className="wd-card-c">{n == null ? 'Teach it how you want work done' : n === 0 ? 'Add a playbook, SOP or skill from any AI' : `${n} ${n === 1 ? 'skill' : 'skills'} guiding your plans`}</span>
+          <span className="wd-card-c">{subtitle}</span>
         </span>
         <ChevronRight size={16} className={`wd-dp-chev${open ? ' open' : ''}`} />
       </button>
       {open && (
-        <div className="wd-dp-body wd-sk">
+        <div className="wd-dp-body wd-sk" id="wd-skills-body">
           <p className="wd-sk-lead">Skills teach WorkCoPilot how you (or your org) want work done, so guidance aligns with your tools, standards and terminology. Paste a playbook, an SOP, or a skill exported from any AI.</p>
           {scope === 'company'
             ? <div className="wd-sk-note private"><ShieldCheck size={14} /><span><b>Private to your company.</b> These skills guide only your company's people. They are never used to train the platform, and your admin can download or re-upload them at any time.</span></div>

@@ -201,7 +201,9 @@ const CSS = `
 .wlx-gcard{min-width:0}
 .wlx-gcard .wc-title{font-size:18px}
 /* document: sticky contents + article */
-.wlx-doc{display:grid;grid-template-columns:220px minmax(0,1fr);gap:36px;align-items:start;padding-top:10px}
+/* Rail sized to its longest link (fit-content, 400px cap) so no section title
+   wraps at desktop widths; mirrors components/LegalPage.jsx (QA M9). */
+.wlx-doc{display:grid;grid-template-columns:fit-content(400px) minmax(0,1fr);gap:36px;align-items:start;padding-top:10px;max-width:1120px}
 .wlx-toc{position:sticky;top:18px;min-width:0}
 .wlx-toct{font-family:"JetBrains Mono",ui-monospace,Consolas,monospace;font-size:11px;font-weight:500;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);margin:0 0 10px}
 .wlx-toc ol{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}

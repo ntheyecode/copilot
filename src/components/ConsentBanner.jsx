@@ -26,7 +26,10 @@ export default function ConsentBanner() {
   const { dir } = useLocale()
   const [open, setOpen] = useState(false)
   const [mode, setMode] = useState('bar')        // 'bar' | 'manage'
-  const [functional, setFunctional] = useState(true)
+  // Non-essential categories start OFF (GDPR / ePrivacy: no pre-ticked boxes).
+  // Only "Necessary" is on, and it is locked. A stored decision re-seeds these
+  // from what the visitor actually chose (see the open handler below).
+  const [functional, setFunctional] = useState(false)
   const [analytics, setAnalytics] = useState(false)
   const firstBtn = useRef(null)
 
@@ -38,8 +41,8 @@ export default function ConsentBanner() {
   useEffect(() => {
     const onOpen = () => {
       const c = readConsent()
-      setFunctional(c ? c.functional : true)
-      setAnalytics(c ? c.analytics : false)
+      setFunctional(c ? !!c.functional : false)
+      setAnalytics(c ? !!c.analytics : false)
       setMode('manage'); setOpen(true)
     }
     window.addEventListener(CONSENT_OPEN_EVENT, onOpen)

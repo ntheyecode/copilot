@@ -11,6 +11,7 @@ import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in t
 import LiveValidate from '../components/LiveValidate.jsx'   // "Validate it live" widget on the use-cases page too
 import useSeo from '../useSeo.js'                          // per-route title / description / canonical (WEB-01)
 import { useT } from '../i18n/index.jsx'                   // localized <title>/description (seo.* keys)
+import { revealOnScroll } from '../reveal.js'              // the ONE scroll-reveal mechanism for the site
 
 // AdmireVeda WorkCoPilot - use cases (/workcopilot/use-cases).
 // Each use case leads with the RESULT (a short outcome headline + one benefit
@@ -39,11 +40,8 @@ export default function WorkUseCases() {
     description: t('seo.use-cases.description'),
     path: '/workcopilot/use-cases',
   })
-  useEffect(() => {
-    const els = rootRef.current ? rootRef.current.querySelectorAll('[data-reveal]') : []
-    const io = new IntersectionObserver((e) => e.forEach((x) => { if (x.isIntersecting) { x.target.classList.add('in'); io.unobserve(x.target) } }), { threshold: 0.12 })
-    els.forEach((el) => io.observe(el)); return () => io.disconnect()
-  }, [])
+  // Scroll reveals: the shared site mechanism (src/reveal.js).
+  useEffect(() => revealOnScroll(rootRef.current, (el) => el.classList.add('in')), [])
   const go = () => nav('/workcopilot')
 
   // Each case: a short category label (eyebrow + chip), a result-led outcome
@@ -263,7 +261,7 @@ const CSS = `
 .orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.26}
 .o1{width:46vw;height:46vw;left:-12vw;top:-16vw;background:radial-gradient(circle,rgba(57,211,255,.5),transparent 65%)}
 .o2{width:42vw;height:42vw;right:-12vw;top:30vh;background:radial-gradient(circle,rgba(140,245,196,.42),transparent 65%)}
-.uc [data-reveal]{opacity:0;transform:translateY(22px);transition:opacity .7s cubic-bezier(.2,.7,.2,1),transform .7s cubic-bezier(.2,.7,.2,1)}
+.uc [data-reveal]{opacity:0;transform:translateY(14px);transition:opacity .3s cubic-bezier(.2,.7,.2,1),transform .3s cubic-bezier(.2,.7,.2,1)}
 .uc [data-reveal].in{opacity:1;transform:none}
 /* a11y: visually hidden text; visible focus ring (never outline:none); honor reduced motion */
 .uc-sr{position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}

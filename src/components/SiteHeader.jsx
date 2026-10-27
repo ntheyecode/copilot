@@ -13,21 +13,33 @@
 //            URL, so pages do not have to pass it. Pages that are not in the nav
 //            (privacy, terms, ...) simply mark nothing.
 //
-// Mobile + tablet: below 1180px the links fold into a disclosure menu (button
-// with aria-expanded + aria-controls, closes on Escape, link tap or outside tap).
+// Folding: the links fold into a disclosure menu (button with aria-expanded +
+// aria-controls, closes on Escape, link tap or outside tap) whenever the full
+// row would not fit the bar.
 //
 // FIT RULE (owner, 2026-10-26, "text overlaps boxes ... sitewide"): the bar
 // holds the brand lockup, seven links and three controls. Measured at 1280px
 // the old spacing needed ~1214px inside a 1112px bar, so "Get started" was
 // clipped on every page. Now: tighter link spacing, the language picker as
-// globe + code (its full name stays in the aria-label), and the menu folds at
-// 1180px, below which the full row can no longer fit. Nothing in the bar may
+// globe + code (its full name stays in the aria-label). Nothing in the bar may
 // wrap or clip at any width; the links are the only part that folds.
-import React, { useEffect, useRef, useState } from 'react'
+//
+// MEASURED FOLD (QA H3, 2026-10-27): a fixed 1180px fold point only fit the
+// ENGLISH labels. German ("So funktioniert es", "Anwendungsfälle", "Loslegen")
+// needed ~1190px inside the 1112px bar at 1280 wide, so the orange CTA was
+// clipped off the right edge on every page. The fold is now decided by
+// MEASUREMENT, not by a breakpoint: the bar lays out the full row, and when
+// that row overflows the bar it folds to the hamburger; it unfolds again when
+// the bar is wide enough for the row it last measured. That holds for any
+// locale, any font, and any future label, which is what kills the class of
+// "the nav clips in language X" bugs. Measurement runs in a layout effect (so
+// there is no unfolded flash before paint) and re-runs on resize and whenever
+// the labels change (locale switch).
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { ArrowRight, Menu, X } from 'lucide-react'
 import AdmireVedaLogo from './AdmireVedaLogo.jsx'
 import LanguageMenu from './LanguageMenu.jsx'   // globe + language picker (16 locales), lives in the header on every public page
-import { useT } from '../i18n/index.jsx'
+import { useT, useLocale } from '../i18n/index.jsx'
 
 // Labels come from the locale catalog (nav.<key>) so the menu reads in the
 // visitor's language; the hrefs are never translated.
@@ -53,9 +65,49 @@ function currentFromPath() {
 
 export default function SiteHeader({ current }) {
   const t = useT()
+  const { locale } = useLocale()
   const [open, setOpen] = useState(false)
+  const [folded, setFolded] = useState(false)
   const rootRef = useRef(null)
+  const innerRef = useRef(null)
+  const needRef = useRef(0)        // width the full (unfolded) row last needed
   const active = current || currentFromPath()
+
+  // Measure before paint. Unfolded: fold if the row overflows the bar (and
+  // remember how much it needed). Folded: unfold once the bar is at least as
+  // wide as that remembered need. A locale change resets the memory and lays
+  // the full row out once more, so a shorter language can unfold again.
+  useLayoutEffect(() => { needRef.current = 0; setFolded(false) }, [locale])
+  useLayoutEffect(() => {
+    const el = innerRef.current
+    if (!el) return undefined
+    const SLACK = 8
+    const check = () => {
+      const avail = el.clientWidth
+      if (!avail) return
+      if (!folded) {
+        const need = el.scrollWidth
+        if (need > avail + 1) { needRef.current = need; setFolded(true) }
+      } else if (needRef.current && avail >= needRef.current + SLACK) {
+        setFolded(false)
+      }
+    }
+    check()
+    // A late web-font swap widens the links without changing the bar's own box,
+    // so the links row is observed too, and the check re-runs once fonts land.
+    let alive = true
+    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (alive) check() }) } catch { /* ignore */ }
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', check)
+      return () => { alive = false; window.removeEventListener('resize', check) }
+    }
+    const ro = new ResizeObserver(check)
+    ro.observe(el)
+    const links = el.querySelector('.wsh-links')
+    if (links) ro.observe(links)
+    return () => { alive = false; ro.disconnect() }
+  }, [folded, locale])
+  useEffect(() => { if (!folded) setOpen(false) }, [folded])
 
   useEffect(() => {
     if (!open) return undefined
@@ -70,9 +122,9 @@ export default function SiteHeader({ current }) {
   }, [open])
 
   return (
-    <header className="wsh" ref={rootRef}>
+    <header className={'wsh' + (folded ? ' wsh-folded' : '')} ref={rootRef}>
       <style>{CSS}</style>
-      <div className="wsh-in">
+      <div className="wsh-in" ref={innerRef}>
         <a className="wsh-brand" href="/" aria-label={t('nav.home')}><AdmireVedaLogo size={26} idSuffix="sh" /></a>
 
         <nav className={'wsh-links' + (open ? ' open' : '')} id="wsh-menu" aria-label={t('nav.main')}>
@@ -140,18 +192,17 @@ const CSS = `
 .wsh-burger{display:none;align-items:center;justify-content:center;width:40px;height:40px;padding:0;background:#fff;border:1px solid var(--sh-line);border-radius:11px;color:var(--sh-tx);cursor:pointer}
 .wsh a:focus-visible,.wsh button:focus-visible{outline:2px solid var(--sh-em);outline-offset:2px}
 
-/* Folded menu below 1180px: the full link row cannot fit beside the brand and
-   the controls under that width (see FIT RULE above). */
-@media(max-width:1180px){
-  .wsh-burger{display:inline-flex}
-  .wsh-cta{margin-inline-start:auto}
-  .wsh-links{display:none;position:absolute;left:0;right:0;top:100%;margin:0;flex-direction:column;gap:2px;padding:10px 16px 16px;background:#fff;border-bottom:1px solid var(--sh-line);box-shadow:0 22px 40px -24px rgba(17,23,38,.35);font-size:16px}
-  .wsh-links.open{display:flex}
-  .wsh-links a{padding:13px 12px;border-radius:10px}
-  .wsh-links a.on::after{inset-inline-start:12px;inset-inline-end:auto;left:auto;right:auto;width:22px;bottom:7px}
-  .wsh-links .wsh-m-only{display:block;border-top:1px solid var(--sh-line);margin-top:6px;border-radius:0;padding-top:15px}
-  .wsh-links .wsh-m-cta{display:none}
-}
+/* Folded menu (.wsh-folded, set by MEASUREMENT, see the header note): the full
+   link row did not fit beside the brand and the controls, so the links fold
+   into a disclosure panel under the bar. */
+.wsh-folded .wsh-burger{display:inline-flex}
+.wsh-folded .wsh-cta{margin-inline-start:auto}
+.wsh-folded .wsh-links{display:none;position:absolute;left:0;right:0;top:100%;margin:0;flex-direction:column;gap:2px;padding:10px 16px 16px;background:#fff;border-bottom:1px solid var(--sh-line);box-shadow:0 22px 40px -24px rgba(17,23,38,.35);font-size:16px}
+.wsh-folded .wsh-links.open{display:flex}
+.wsh-folded .wsh-links a{padding:13px 12px;border-radius:10px}
+.wsh-folded .wsh-links a.on::after{inset-inline-start:12px;inset-inline-end:auto;left:auto;right:auto;width:22px;bottom:7px}
+.wsh-folded .wsh-links .wsh-m-only{display:block;border-top:1px solid var(--sh-line);margin-top:6px;border-radius:0;padding-top:15px}
+.wsh-folded .wsh-links .wsh-m-cta{display:none}
 /* Phone and small tablet: a shorter bar, and Sign in moves into the menu. */
 @media(max-width:880px){
   .wsh-in{gap:10px;padding:0 16px;height:62px}

@@ -105,24 +105,26 @@ const CSS = `
 .lm-btn[aria-expanded="true"] .lm-chev{transform:rotate(180deg)}
 .lm-short{display:none;font-size:11.5px;font-weight:800;letter-spacing:.06em}
 .lm-btn:focus-visible{outline:2px solid var(--lm-em);outline-offset:2px}
-.lm-pop{position:absolute;top:calc(100% + 8px);inset-inline-end:0;z-index:80;min-width:250px;background:var(--lm-panel);border:1px solid var(--lm-line);border-radius:14px;box-shadow:0 1px 0 rgba(17,23,38,.05),0 24px 56px -24px rgba(17,23,38,.45);padding:8px;animation:lm-in .16s cubic-bezier(.2,.8,.2,1) both;transform-origin:top}
+.lm-pop{position:absolute;top:calc(100% + 8px);inset-inline-end:0;z-index:80;min-width:min(92vw,430px);background:var(--lm-panel);border:1px solid var(--lm-line);border-radius:14px;box-shadow:0 1px 0 rgba(17,23,38,.05),0 24px 56px -24px rgba(17,23,38,.45);padding:8px;animation:lm-in .16s cubic-bezier(.2,.8,.2,1) both;transform-origin:top}
 .lm-pop.lm-start{inset-inline-end:auto;inset-inline-start:0}
 @keyframes lm-in{from{opacity:0;transform:translateY(-4px) scale(.98)}to{opacity:1;transform:none}}
 .lm-head{font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--lm-em-txt);padding:6px 10px 8px;border-bottom:1px solid var(--lm-line);margin-bottom:6px;background:linear-gradient(90deg,var(--lm-em),var(--lm-cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lm-list{list-style:none;margin:0;padding:0;max-height:min(62vh,420px);overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:2px;scrollbar-width:thin}
+/* FIT RULE (design-time quality gate): no language name is ever ellipsized and
+   no code ("PT-BR") ever breaks across lines. The list lays out in columns of
+   at least 196px (wide enough for the longest own-name, "Português (Brasil)",
+   plus its code and tick); below that the grid drops to one column by itself. */
+.lm-list{list-style:none;margin:0;padding:0;max-height:min(62vh,420px);overflow:auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(196px,1fr));gap:2px;scrollbar-width:thin}
 .lm-opt{display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;cursor:pointer;color:var(--lm-tx);font-size:14px;font-weight:500;line-height:1.2;transition:background .12s}
 .lm-opt.hi{background:var(--lm-hover)}
 .lm-opt.on{background:var(--lm-em-fill);color:var(--lm-em-txt);font-weight:700}
-.lm-opt-name{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.lm-opt-code{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--lm-mut);opacity:.8}
+.lm-opt-name{flex:1 1 auto;min-width:0;overflow-wrap:anywhere}
+.lm-opt-code{flex:0 0 auto;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--lm-mut);opacity:.8}
 .lm-opt.on .lm-opt-code{color:inherit}
 .lm-tick{color:var(--lm-em);flex:none}
 @media(max-width:880px){
   .lm-compact .lm-name{display:none}
   .lm-compact .lm-short{display:inline}
   .lm-compact .lm-btn{padding:0 9px}
-  .lm-pop{min-width:min(92vw,330px)}
 }
-@media(max-width:400px){.lm-list{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.lm-pop{animation:none}.lm-chev{transition:none}}
 `

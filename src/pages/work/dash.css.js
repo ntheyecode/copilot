@@ -35,7 +35,13 @@ export const DASH_CSS = `
 .wd-m-info:hover{color:var(--em-2);border-color:var(--info-line);background:var(--info-fill)}
 .wd-m-tip{position:absolute;z-index:20;top:calc(100% + 8px);left:auto;right:0;width:max-content;max-width:min(248px,72vw);background:var(--tx);color:#fff;font-size:12px;font-weight:500;line-height:1.5;border-radius:10px;padding:9px 11px;box-shadow:var(--shadow);opacity:0;visibility:hidden;transform:translateY(-3px);transition:opacity .15s,transform .15s,visibility .15s;pointer-events:none}
 .wd-m-tip:after{content:"";position:absolute;bottom:100%;right:12px;border:5px solid transparent;border-bottom-color:var(--tx)}
-.wd-m-info-wrap:hover .wd-m-tip,.wd-m-info-wrap:focus-within .wd-m-tip{opacity:1;visibility:visible;transform:none}
+.wd-m-info-wrap:hover .wd-m-tip{opacity:1;visibility:visible;transform:none}
+/* ONE tip at a time. A mouse click leaves the info button focused, so a plain
+   :focus-within kept that tip open while the next tile was hovered (two tips
+   visible). Keyboard users still get the tip: it opens on :focus-visible (set
+   by Tab, not by a click). Browsers without :has() keep the focus-within rule. */
+@supports selector(:has(a)){.wd-m-info-wrap:has(.wd-m-info:focus-visible) .wd-m-tip{opacity:1;visibility:visible;transform:none}}
+@supports not selector(:has(a)){.wd-m-info-wrap:focus-within .wd-m-tip{opacity:1;visibility:visible;transform:none}}
 
 .wd-m-value{margin-top:10px;font-family:var(--wd-display);font-weight:700;font-size:26px;line-height:1.05;letter-spacing:-.01em;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wd-m-tile.low .wd-m-value{color:var(--warm)}
