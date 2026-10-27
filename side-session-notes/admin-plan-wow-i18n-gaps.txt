@@ -1,0 +1,882 @@
+[locale-parity] ar: missing companyPlan.pool.title
+[locale-parity] ar: missing companyPlan.pool.line
+[locale-parity] ar: missing companyPlan.pool.pctUsed
+[locale-parity] ar: missing companyPlan.pool.forfeit
+[locale-parity] ar: missing companyPlan.pool.carryforward
+[locale-parity] ar: missing companyPlan.pool.pending_one
+[locale-parity] ar: missing companyPlan.pool.pending_other
+[locale-parity] ar: missing companyPlan.pool.openUsage
+[locale-parity] ar: missing companyPlan.pool.requestHours
+[locale-parity] ar: missing companyPlan.pool.none
+[locale-parity] ar: missing companyPlan.pool.askSupport
+[locale-parity] ar: missing companyPlan.seats.meterAria
+[locale-parity] ar: missing companyPlan.usedTodayCeiling
+[locale-parity] ar: missing companyPlan.usage.ofLimit
+[locale-parity] ar: missing companyPlan.usage.ofPool
+[locale-parity] ar: extra companyPlan (not in en)
+[locale-parity] de: missing companyPlan.pool.title
+[locale-parity] de: missing companyPlan.pool.line
+[locale-parity] de: missing companyPlan.pool.pctUsed
+[locale-parity] de: missing companyPlan.pool.forfeit
+[locale-parity] de: missing companyPlan.pool.carryforward
+[locale-parity] de: missing companyPlan.pool.pending_one
+[locale-parity] de: missing companyPlan.pool.pending_other
+[locale-parity] de: missing companyPlan.pool.openUsage
+[locale-parity] de: missing companyPlan.pool.requestHours
+[locale-parity] de: missing companyPlan.pool.none
+[locale-parity] de: missing companyPlan.pool.askSupport
+[locale-parity] de: missing companyPlan.seats.meterAria
+[locale-parity] de: missing companyPlan.usedTodayCeiling
+[locale-parity] de: missing companyPlan.usage.ofLimit
+[locale-parity] de: missing companyPlan.usage.ofPool
+[locale-parity] de: extra companyPlan (not in en)
+[locale-parity] es: missing companyPlan.pool.title
+[locale-parity] es: missing companyPlan.pool.line
+[locale-parity] es: missing companyPlan.pool.pctUsed
+[locale-parity] es: missing companyPlan.pool.forfeit
+[locale-parity] es: missing companyPlan.pool.carryforward
+[locale-parity] es: missing companyPlan.pool.pending_one
+[locale-parity] es: missing companyPlan.pool.pending_other
+[locale-parity] es: missing companyPlan.pool.openUsage
+[locale-parity] es: missing companyPlan.pool.requestHours
+[locale-parity] es: missing companyPlan.pool.none
+[locale-parity] es: missing companyPlan.pool.askSupport
+[locale-parity] es: missing companyPlan.seats.meterAria
+[locale-parity] es: missing companyPlan.usedTodayCeiling
+[locale-parity] es: missing companyPlan.usage.ofLimit
+[locale-parity] es: missing companyPlan.usage.ofPool
+[locale-parity] es: extra companyPlan (not in en)
+[locale-parity] fr: missing companyPlan.pool.title
+[locale-parity] fr: missing companyPlan.pool.line
+[locale-parity] fr: missing companyPlan.pool.pctUsed
+[locale-parity] fr: missing companyPlan.pool.forfeit
+[locale-parity] fr: missing companyPlan.pool.carryforward
+[locale-parity] fr: missing companyPlan.pool.pending_one
+[locale-parity] fr: missing companyPlan.pool.pending_other
+[locale-parity] fr: missing companyPlan.pool.openUsage
+[locale-parity] fr: missing companyPlan.pool.requestHours
+[locale-parity] fr: missing companyPlan.pool.none
+[locale-parity] fr: missing companyPlan.pool.askSupport
+[locale-parity] fr: missing companyPlan.seats.meterAria
+[locale-parity] fr: missing companyPlan.usedTodayCeiling
+[locale-parity] fr: missing companyPlan.usage.ofLimit
+[locale-parity] fr: missing companyPlan.usage.ofPool
+[locale-parity] fr: extra companyPlan (not in en)
+[locale-parity] hi: missing companyPlan.pool.title
+[locale-parity] hi: missing companyPlan.pool.line
+[locale-parity] hi: missing companyPlan.pool.pctUsed
+[locale-parity] hi: missing companyPlan.pool.forfeit
+[locale-parity] hi: missing companyPlan.pool.carryforward
+[locale-parity] hi: missing companyPlan.pool.pending_one
+[locale-parity] hi: missing companyPlan.pool.pending_other
+[locale-parity] hi: missing companyPlan.pool.openUsage
+[locale-parity] hi: missing companyPlan.pool.requestHours
+[locale-parity] hi: missing companyPlan.pool.none
+[locale-parity] hi: missing companyPlan.pool.askSupport
+[locale-parity] hi: missing companyPlan.seats.meterAria
+[locale-parity] hi: missing companyPlan.usedTodayCeiling
+[locale-parity] hi: missing companyPlan.usage.ofLimit
+[locale-parity] hi: missing companyPlan.usage.ofPool
+[locale-parity] hi: extra companyPlan (not in en)
+[locale-parity] id: missing companyPlan.pool.title
+[locale-parity] id: missing companyPlan.pool.line
+[locale-parity] id: missing companyPlan.pool.pctUsed
+[locale-parity] id: missing companyPlan.pool.forfeit
+[locale-parity] id: missing companyPlan.pool.carryforward
+[locale-parity] id: missing companyPlan.pool.pending_one
+[locale-parity] id: missing companyPlan.pool.pending_other
+[locale-parity] id: missing companyPlan.pool.openUsage
+[locale-parity] id: missing companyPlan.pool.requestHours
+[locale-parity] id: missing companyPlan.pool.none
+[locale-parity] id: missing companyPlan.pool.askSupport
+[locale-parity] id: missing companyPlan.seats.meterAria
+[locale-parity] id: missing companyPlan.usedTodayCeiling
+[locale-parity] id: missing companyPlan.usage.ofLimit
+[locale-parity] id: missing companyPlan.usage.ofPool
+[locale-parity] id: extra companyPlan (not in en)
+[locale-parity] it: missing companyPlan.pool.title
+[locale-parity] it: missing companyPlan.pool.line
+[locale-parity] it: missing companyPlan.pool.pctUsed
+[locale-parity] it: missing companyPlan.pool.forfeit
+[locale-parity] it: missing companyPlan.pool.carryforward
+[locale-parity] it: missing companyPlan.pool.pending_one
+[locale-parity] it: missing companyPlan.pool.pending_other
+[locale-parity] it: missing companyPlan.pool.openUsage
+[locale-parity] it: missing companyPlan.pool.requestHours
+[locale-parity] it: missing companyPlan.pool.none
+[locale-parity] it: missing companyPlan.pool.askSupport
+[locale-parity] it: missing companyPlan.seats.meterAria
+[locale-parity] it: missing companyPlan.usedTodayCeiling
+[locale-parity] it: missing companyPlan.usage.ofLimit
+[locale-parity] it: missing companyPlan.usage.ofPool
+[locale-parity] it: extra companyPlan (not in en)
+[locale-parity] ja: missing companyPlan.pool.title
+[locale-parity] ja: missing companyPlan.pool.line
+[locale-parity] ja: missing companyPlan.pool.pctUsed
+[locale-parity] ja: missing companyPlan.pool.forfeit
+[locale-parity] ja: missing companyPlan.pool.carryforward
+[locale-parity] ja: missing companyPlan.pool.pending_one
+[locale-parity] ja: missing companyPlan.pool.pending_other
+[locale-parity] ja: missing companyPlan.pool.openUsage
+[locale-parity] ja: missing companyPlan.pool.requestHours
+[locale-parity] ja: missing companyPlan.pool.none
+[locale-parity] ja: missing companyPlan.pool.askSupport
+[locale-parity] ja: missing companyPlan.seats.meterAria
+[locale-parity] ja: missing companyPlan.usedTodayCeiling
+[locale-parity] ja: missing companyPlan.usage.ofLimit
+[locale-parity] ja: missing companyPlan.usage.ofPool
+[locale-parity] ja: extra companyPlan (not in en)
+[locale-parity] ko: missing companyPlan.pool.title
+[locale-parity] ko: missing companyPlan.pool.line
+[locale-parity] ko: missing companyPlan.pool.pctUsed
+[locale-parity] ko: missing companyPlan.pool.forfeit
+[locale-parity] ko: missing companyPlan.pool.carryforward
+[locale-parity] ko: missing companyPlan.pool.pending_one
+[locale-parity] ko: missing companyPlan.pool.pending_other
+[locale-parity] ko: missing companyPlan.pool.openUsage
+[locale-parity] ko: missing companyPlan.pool.requestHours
+[locale-parity] ko: missing companyPlan.pool.none
+[locale-parity] ko: missing companyPlan.pool.askSupport
+[locale-parity] ko: missing companyPlan.seats.meterAria
+[locale-parity] ko: missing companyPlan.usedTodayCeiling
+[locale-parity] ko: missing companyPlan.usage.ofLimit
+[locale-parity] ko: missing companyPlan.usage.ofPool
+[locale-parity] ko: extra companyPlan (not in en)
+[locale-parity] pt-BR: missing companyPlan.pool.title
+[locale-parity] pt-BR: missing companyPlan.pool.line
+[locale-parity] pt-BR: missing companyPlan.pool.pctUsed
+[locale-parity] pt-BR: missing companyPlan.pool.forfeit
+[locale-parity] pt-BR: missing companyPlan.pool.carryforward
+[locale-parity] pt-BR: missing companyPlan.pool.pending_one
+[locale-parity] pt-BR: missing companyPlan.pool.pending_other
+[locale-parity] pt-BR: missing companyPlan.pool.openUsage
+[locale-parity] pt-BR: missing companyPlan.pool.requestHours
+[locale-parity] pt-BR: missing companyPlan.pool.none
+[locale-parity] pt-BR: missing companyPlan.pool.askSupport
+[locale-parity] pt-BR: missing companyPlan.seats.meterAria
+[locale-parity] pt-BR: missing companyPlan.usedTodayCeiling
+[locale-parity] pt-BR: missing companyPlan.usage.ofLimit
+[locale-parity] pt-BR: missing companyPlan.usage.ofPool
+[locale-parity] pt-BR: extra companyPlan (not in en)
+[locale-parity] ru: missing companyPlan.pool.title
+[locale-parity] ru: missing companyPlan.pool.line
+[locale-parity] ru: missing companyPlan.pool.pctUsed
+[locale-parity] ru: missing companyPlan.pool.forfeit
+[locale-parity] ru: missing companyPlan.pool.carryforward
+[locale-parity] ru: missing companyPlan.pool.pending_one
+[locale-parity] ru: missing companyPlan.pool.pending_other
+[locale-parity] ru: missing companyPlan.pool.openUsage
+[locale-parity] ru: missing companyPlan.pool.requestHours
+[locale-parity] ru: missing companyPlan.pool.none
+[locale-parity] ru: missing companyPlan.pool.askSupport
+[locale-parity] ru: missing companyPlan.seats.meterAria
+[locale-parity] ru: missing companyPlan.usedTodayCeiling
+[locale-parity] ru: missing companyPlan.usage.ofLimit
+[locale-parity] ru: missing companyPlan.usage.ofPool
+[locale-parity] ru: extra companyPlan (not in en)
+[locale-parity] tr: missing companyPlan.pool.title
+[locale-parity] tr: missing companyPlan.pool.line
+[locale-parity] tr: missing companyPlan.pool.pctUsed
+[locale-parity] tr: missing companyPlan.pool.forfeit
+[locale-parity] tr: missing companyPlan.pool.carryforward
+[locale-parity] tr: missing companyPlan.pool.pending_one
+[locale-parity] tr: missing companyPlan.pool.pending_other
+[locale-parity] tr: missing companyPlan.pool.openUsage
+[locale-parity] tr: missing companyPlan.pool.requestHours
+[locale-parity] tr: missing companyPlan.pool.none
+[locale-parity] tr: missing companyPlan.pool.askSupport
+[locale-parity] tr: missing companyPlan.seats.meterAria
+[locale-parity] tr: missing companyPlan.usedTodayCeiling
+[locale-parity] tr: missing companyPlan.usage.ofLimit
+[locale-parity] tr: missing companyPlan.usage.ofPool
+[locale-parity] tr: extra companyPlan (not in en)
+[locale-parity] vi: missing companyPlan.pool.title
+[locale-parity] vi: missing companyPlan.pool.line
+[locale-parity] vi: missing companyPlan.pool.pctUsed
+[locale-parity] vi: missing companyPlan.pool.forfeit
+[locale-parity] vi: missing companyPlan.pool.carryforward
+[locale-parity] vi: missing companyPlan.pool.pending_one
+[locale-parity] vi: missing companyPlan.pool.pending_other
+[locale-parity] vi: missing companyPlan.pool.openUsage
+[locale-parity] vi: missing companyPlan.pool.requestHours
+[locale-parity] vi: missing companyPlan.pool.none
+[locale-parity] vi: missing companyPlan.pool.askSupport
+[locale-parity] vi: missing companyPlan.seats.meterAria
+[locale-parity] vi: missing companyPlan.usedTodayCeiling
+[locale-parity] vi: missing companyPlan.usage.ofLimit
+[locale-parity] vi: missing companyPlan.usage.ofPool
+[locale-parity] vi: extra companyPlan (not in en)
+[locale-parity] zh: missing companyPlan.pool.title
+[locale-parity] zh: missing companyPlan.pool.line
+[locale-parity] zh: missing companyPlan.pool.pctUsed
+[locale-parity] zh: missing companyPlan.pool.forfeit
+[locale-parity] zh: missing companyPlan.pool.carryforward
+[locale-parity] zh: missing companyPlan.pool.pending_one
+[locale-parity] zh: missing companyPlan.pool.pending_other
+[locale-parity] zh: missing companyPlan.pool.openUsage
+[locale-parity] zh: missing companyPlan.pool.requestHours
+[locale-parity] zh: missing companyPlan.pool.none
+[locale-parity] zh: missing companyPlan.pool.askSupport
+[locale-parity] zh: missing companyPlan.seats.meterAria
+[locale-parity] zh: missing companyPlan.usedTodayCeiling
+[locale-parity] zh: missing companyPlan.usage.ofLimit
+[locale-parity] zh: missing companyPlan.usage.ofPool
+[locale-parity] zh: extra companyPlan (not in en)
+[locale-parity] ar: missing pricingAdmin.record.monthEnd
+[locale-parity] ar: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] ar: missing pricingAdmin.record.monthEndCarry
+[locale-parity] ar: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] ar: missing pricingAdmin.record.glanceTitle
+[locale-parity] ar: missing pricingAdmin.record.perMonthShort
+[locale-parity] ar: missing pricingAdmin.record.glanceLine
+[locale-parity] ar: missing pricingAdmin.record.glanceFoot
+[locale-parity] ar: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] ar: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] ar: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] ar: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] ar: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] ar: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] ar: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] ar: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] ar: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] ar: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] ar: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] ar: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] de: missing pricingAdmin.record.monthEnd
+[locale-parity] de: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] de: missing pricingAdmin.record.monthEndCarry
+[locale-parity] de: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] de: missing pricingAdmin.record.glanceTitle
+[locale-parity] de: missing pricingAdmin.record.perMonthShort
+[locale-parity] de: missing pricingAdmin.record.glanceLine
+[locale-parity] de: missing pricingAdmin.record.glanceFoot
+[locale-parity] de: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] de: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] de: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] de: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] de: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] de: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] de: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] de: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] de: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] de: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] de: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] de: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] es: missing pricingAdmin.record.monthEnd
+[locale-parity] es: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] es: missing pricingAdmin.record.monthEndCarry
+[locale-parity] es: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] es: missing pricingAdmin.record.glanceTitle
+[locale-parity] es: missing pricingAdmin.record.perMonthShort
+[locale-parity] es: missing pricingAdmin.record.glanceLine
+[locale-parity] es: missing pricingAdmin.record.glanceFoot
+[locale-parity] es: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] es: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] es: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] es: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] es: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] es: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] es: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] es: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] es: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] es: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] es: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] es: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] fr: missing pricingAdmin.record.monthEnd
+[locale-parity] fr: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] fr: missing pricingAdmin.record.monthEndCarry
+[locale-parity] fr: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] fr: missing pricingAdmin.record.glanceTitle
+[locale-parity] fr: missing pricingAdmin.record.perMonthShort
+[locale-parity] fr: missing pricingAdmin.record.glanceLine
+[locale-parity] fr: missing pricingAdmin.record.glanceFoot
+[locale-parity] fr: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] fr: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] fr: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] fr: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] fr: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] fr: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] fr: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] fr: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] fr: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] fr: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] fr: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] fr: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] hi: missing pricingAdmin.record.monthEnd
+[locale-parity] hi: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] hi: missing pricingAdmin.record.monthEndCarry
+[locale-parity] hi: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] hi: missing pricingAdmin.record.glanceTitle
+[locale-parity] hi: missing pricingAdmin.record.perMonthShort
+[locale-parity] hi: missing pricingAdmin.record.glanceLine
+[locale-parity] hi: missing pricingAdmin.record.glanceFoot
+[locale-parity] hi: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] hi: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] hi: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] hi: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] hi: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] hi: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] hi: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] hi: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] hi: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] hi: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] hi: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] hi: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] id: missing pricingAdmin.record.monthEnd
+[locale-parity] id: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] id: missing pricingAdmin.record.monthEndCarry
+[locale-parity] id: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] id: missing pricingAdmin.record.glanceTitle
+[locale-parity] id: missing pricingAdmin.record.perMonthShort
+[locale-parity] id: missing pricingAdmin.record.glanceLine
+[locale-parity] id: missing pricingAdmin.record.glanceFoot
+[locale-parity] id: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] id: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] id: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] id: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] id: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] id: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] id: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] id: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] id: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] id: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] id: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] id: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] it: missing pricingAdmin.record.monthEnd
+[locale-parity] it: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] it: missing pricingAdmin.record.monthEndCarry
+[locale-parity] it: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] it: missing pricingAdmin.record.glanceTitle
+[locale-parity] it: missing pricingAdmin.record.perMonthShort
+[locale-parity] it: missing pricingAdmin.record.glanceLine
+[locale-parity] it: missing pricingAdmin.record.glanceFoot
+[locale-parity] it: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] it: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] it: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] it: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] it: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] it: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] it: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] it: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] it: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] it: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] it: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] it: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] ja: missing pricingAdmin.record.monthEnd
+[locale-parity] ja: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] ja: missing pricingAdmin.record.monthEndCarry
+[locale-parity] ja: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] ja: missing pricingAdmin.record.glanceTitle
+[locale-parity] ja: missing pricingAdmin.record.perMonthShort
+[locale-parity] ja: missing pricingAdmin.record.glanceLine
+[locale-parity] ja: missing pricingAdmin.record.glanceFoot
+[locale-parity] ja: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] ja: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] ja: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] ja: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] ja: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] ja: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] ja: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] ja: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] ja: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] ja: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] ja: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] ja: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] ko: missing pricingAdmin.record.monthEnd
+[locale-parity] ko: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] ko: missing pricingAdmin.record.monthEndCarry
+[locale-parity] ko: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] ko: missing pricingAdmin.record.glanceTitle
+[locale-parity] ko: missing pricingAdmin.record.perMonthShort
+[locale-parity] ko: missing pricingAdmin.record.glanceLine
+[locale-parity] ko: missing pricingAdmin.record.glanceFoot
+[locale-parity] ko: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] ko: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] ko: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] ko: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] ko: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] ko: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] ko: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] ko: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] ko: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] ko: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] ko: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] ko: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] pt-BR: missing pricingAdmin.record.monthEnd
+[locale-parity] pt-BR: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] pt-BR: missing pricingAdmin.record.monthEndCarry
+[locale-parity] pt-BR: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] pt-BR: missing pricingAdmin.record.glanceTitle
+[locale-parity] pt-BR: missing pricingAdmin.record.perMonthShort
+[locale-parity] pt-BR: missing pricingAdmin.record.glanceLine
+[locale-parity] pt-BR: missing pricingAdmin.record.glanceFoot
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] pt-BR: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] pt-BR: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] pt-BR: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] ru: missing pricingAdmin.record.monthEnd
+[locale-parity] ru: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] ru: missing pricingAdmin.record.monthEndCarry
+[locale-parity] ru: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] ru: missing pricingAdmin.record.glanceTitle
+[locale-parity] ru: missing pricingAdmin.record.perMonthShort
+[locale-parity] ru: missing pricingAdmin.record.glanceLine
+[locale-parity] ru: missing pricingAdmin.record.glanceFoot
+[locale-parity] ru: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] ru: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] ru: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] ru: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] ru: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] ru: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] ru: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] ru: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] ru: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] ru: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] ru: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] ru: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] tr: missing pricingAdmin.record.monthEnd
+[locale-parity] tr: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] tr: missing pricingAdmin.record.monthEndCarry
+[locale-parity] tr: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] tr: missing pricingAdmin.record.glanceTitle
+[locale-parity] tr: missing pricingAdmin.record.perMonthShort
+[locale-parity] tr: missing pricingAdmin.record.glanceLine
+[locale-parity] tr: missing pricingAdmin.record.glanceFoot
+[locale-parity] tr: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] tr: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] tr: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] tr: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] tr: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] tr: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] tr: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] tr: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] tr: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] tr: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] tr: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] tr: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] vi: missing pricingAdmin.record.monthEnd
+[locale-parity] vi: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] vi: missing pricingAdmin.record.monthEndCarry
+[locale-parity] vi: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] vi: missing pricingAdmin.record.glanceTitle
+[locale-parity] vi: missing pricingAdmin.record.perMonthShort
+[locale-parity] vi: missing pricingAdmin.record.glanceLine
+[locale-parity] vi: missing pricingAdmin.record.glanceFoot
+[locale-parity] vi: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] vi: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] vi: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] vi: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] vi: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] vi: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] vi: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] vi: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] vi: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] vi: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] vi: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] vi: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] zh: missing pricingAdmin.record.monthEnd
+[locale-parity] zh: missing pricingAdmin.record.monthEndForfeit
+[locale-parity] zh: missing pricingAdmin.record.monthEndCarry
+[locale-parity] zh: missing pricingAdmin.record.monthEndCarryNoCap
+[locale-parity] zh: missing pricingAdmin.record.glanceTitle
+[locale-parity] zh: missing pricingAdmin.record.perMonthShort
+[locale-parity] zh: missing pricingAdmin.record.glanceLine
+[locale-parity] zh: missing pricingAdmin.record.glanceFoot
+[locale-parity] zh: missing pricingAdmin.edit.monthlyHours.title
+[locale-parity] zh: missing pricingAdmin.edit.monthlyHours.desc
+[locale-parity] zh: missing pricingAdmin.edit.monthlyHours.hint
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.title
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.desc
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.mode
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.modeHint
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.forfeit
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.carryforward
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.cap
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.capHint
+[locale-parity] zh: missing pricingAdmin.edit.monthEnd.noCap
+[locale-parity] zh: extra pricingAdmin.record.bonusTasks (not in en)
+[locale-parity] zh: extra pricingAdmin.record.bonusTasksValue_one (not in en)
+[locale-parity] zh: extra pricingAdmin.record.bonusTasksValue_other (not in en)
+[locale-parity] zh: extra pricingAdmin.edit.dailyHours.title (not in en)
+[locale-parity] zh: extra pricingAdmin.edit.dailyHours.desc (not in en)
+[locale-parity] zh: extra pricingAdmin.edit.dailyHours.hint (not in en)
+[locale-parity] zh: extra pricingAdmin.edit.extraHour.bonusLabel (not in en)
+[locale-parity] zh: extra pricingAdmin.edit.extraHour.bonusHint (not in en)
+[locale-parity] ar: missing companiesAdmin.consumption.title
+[locale-parity] ar: missing companiesAdmin.consumption.loading
+[locale-parity] ar: missing companiesAdmin.consumption.refresh
+[locale-parity] ar: missing companiesAdmin.consumption.poolLine
+[locale-parity] ar: missing companiesAdmin.consumption.pctUsed
+[locale-parity] ar: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] ar: missing companiesAdmin.consumption.group.admin
+[locale-parity] ar: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] ar: missing companiesAdmin.consumption.group.member
+[locale-parity] ar: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] ar: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] ar: missing companiesAdmin.people.ceilingHint
+[locale-parity] de: missing companiesAdmin.consumption.title
+[locale-parity] de: missing companiesAdmin.consumption.loading
+[locale-parity] de: missing companiesAdmin.consumption.refresh
+[locale-parity] de: missing companiesAdmin.consumption.poolLine
+[locale-parity] de: missing companiesAdmin.consumption.pctUsed
+[locale-parity] de: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] de: missing companiesAdmin.consumption.group.admin
+[locale-parity] de: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] de: missing companiesAdmin.consumption.group.member
+[locale-parity] de: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] de: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] de: missing companiesAdmin.people.ceilingHint
+[locale-parity] es: missing companiesAdmin.consumption.title
+[locale-parity] es: missing companiesAdmin.consumption.loading
+[locale-parity] es: missing companiesAdmin.consumption.refresh
+[locale-parity] es: missing companiesAdmin.consumption.poolLine
+[locale-parity] es: missing companiesAdmin.consumption.pctUsed
+[locale-parity] es: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] es: missing companiesAdmin.consumption.group.admin
+[locale-parity] es: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] es: missing companiesAdmin.consumption.group.member
+[locale-parity] es: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] es: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] es: missing companiesAdmin.people.ceilingHint
+[locale-parity] fr: missing companiesAdmin.consumption.title
+[locale-parity] fr: missing companiesAdmin.consumption.loading
+[locale-parity] fr: missing companiesAdmin.consumption.refresh
+[locale-parity] fr: missing companiesAdmin.consumption.poolLine
+[locale-parity] fr: missing companiesAdmin.consumption.pctUsed
+[locale-parity] fr: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] fr: missing companiesAdmin.consumption.group.admin
+[locale-parity] fr: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] fr: missing companiesAdmin.consumption.group.member
+[locale-parity] fr: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] fr: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] fr: missing companiesAdmin.people.ceilingHint
+[locale-parity] hi: missing companiesAdmin.consumption.title
+[locale-parity] hi: missing companiesAdmin.consumption.loading
+[locale-parity] hi: missing companiesAdmin.consumption.refresh
+[locale-parity] hi: missing companiesAdmin.consumption.poolLine
+[locale-parity] hi: missing companiesAdmin.consumption.pctUsed
+[locale-parity] hi: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] hi: missing companiesAdmin.consumption.group.admin
+[locale-parity] hi: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] hi: missing companiesAdmin.consumption.group.member
+[locale-parity] hi: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] hi: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] hi: missing companiesAdmin.people.ceilingHint
+[locale-parity] id: missing companiesAdmin.consumption.title
+[locale-parity] id: missing companiesAdmin.consumption.loading
+[locale-parity] id: missing companiesAdmin.consumption.refresh
+[locale-parity] id: missing companiesAdmin.consumption.poolLine
+[locale-parity] id: missing companiesAdmin.consumption.pctUsed
+[locale-parity] id: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] id: missing companiesAdmin.consumption.group.admin
+[locale-parity] id: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] id: missing companiesAdmin.consumption.group.member
+[locale-parity] id: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] id: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] id: missing companiesAdmin.people.ceilingHint
+[locale-parity] it: missing companiesAdmin.consumption.title
+[locale-parity] it: missing companiesAdmin.consumption.loading
+[locale-parity] it: missing companiesAdmin.consumption.refresh
+[locale-parity] it: missing companiesAdmin.consumption.poolLine
+[locale-parity] it: missing companiesAdmin.consumption.pctUsed
+[locale-parity] it: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] it: missing companiesAdmin.consumption.group.admin
+[locale-parity] it: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] it: missing companiesAdmin.consumption.group.member
+[locale-parity] it: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] it: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] it: missing companiesAdmin.people.ceilingHint
+[locale-parity] ja: missing companiesAdmin.consumption.title
+[locale-parity] ja: missing companiesAdmin.consumption.loading
+[locale-parity] ja: missing companiesAdmin.consumption.refresh
+[locale-parity] ja: missing companiesAdmin.consumption.poolLine
+[locale-parity] ja: missing companiesAdmin.consumption.pctUsed
+[locale-parity] ja: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] ja: missing companiesAdmin.consumption.group.admin
+[locale-parity] ja: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] ja: missing companiesAdmin.consumption.group.member
+[locale-parity] ja: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] ja: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] ja: missing companiesAdmin.people.ceilingHint
+[locale-parity] ko: missing companiesAdmin.consumption.title
+[locale-parity] ko: missing companiesAdmin.consumption.loading
+[locale-parity] ko: missing companiesAdmin.consumption.refresh
+[locale-parity] ko: missing companiesAdmin.consumption.poolLine
+[locale-parity] ko: missing companiesAdmin.consumption.pctUsed
+[locale-parity] ko: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] ko: missing companiesAdmin.consumption.group.admin
+[locale-parity] ko: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] ko: missing companiesAdmin.consumption.group.member
+[locale-parity] ko: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] ko: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] ko: missing companiesAdmin.people.ceilingHint
+[locale-parity] pt-BR: missing companiesAdmin.consumption.title
+[locale-parity] pt-BR: missing companiesAdmin.consumption.loading
+[locale-parity] pt-BR: missing companiesAdmin.consumption.refresh
+[locale-parity] pt-BR: missing companiesAdmin.consumption.poolLine
+[locale-parity] pt-BR: missing companiesAdmin.consumption.pctUsed
+[locale-parity] pt-BR: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] pt-BR: missing companiesAdmin.consumption.group.admin
+[locale-parity] pt-BR: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] pt-BR: missing companiesAdmin.consumption.group.member
+[locale-parity] pt-BR: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] pt-BR: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] pt-BR: missing companiesAdmin.people.ceilingHint
+[locale-parity] ru: missing companiesAdmin.consumption.title
+[locale-parity] ru: missing companiesAdmin.consumption.loading
+[locale-parity] ru: missing companiesAdmin.consumption.refresh
+[locale-parity] ru: missing companiesAdmin.consumption.poolLine
+[locale-parity] ru: missing companiesAdmin.consumption.pctUsed
+[locale-parity] ru: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] ru: missing companiesAdmin.consumption.group.admin
+[locale-parity] ru: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] ru: missing companiesAdmin.consumption.group.member
+[locale-parity] ru: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] ru: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] ru: missing companiesAdmin.people.ceilingHint
+[locale-parity] tr: missing companiesAdmin.consumption.title
+[locale-parity] tr: missing companiesAdmin.consumption.loading
+[locale-parity] tr: missing companiesAdmin.consumption.refresh
+[locale-parity] tr: missing companiesAdmin.consumption.poolLine
+[locale-parity] tr: missing companiesAdmin.consumption.pctUsed
+[locale-parity] tr: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] tr: missing companiesAdmin.consumption.group.admin
+[locale-parity] tr: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] tr: missing companiesAdmin.consumption.group.member
+[locale-parity] tr: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] tr: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] tr: missing companiesAdmin.people.ceilingHint
+[locale-parity] vi: missing companiesAdmin.consumption.title
+[locale-parity] vi: missing companiesAdmin.consumption.loading
+[locale-parity] vi: missing companiesAdmin.consumption.refresh
+[locale-parity] vi: missing companiesAdmin.consumption.poolLine
+[locale-parity] vi: missing companiesAdmin.consumption.pctUsed
+[locale-parity] vi: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] vi: missing companiesAdmin.consumption.group.admin
+[locale-parity] vi: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] vi: missing companiesAdmin.consumption.group.member
+[locale-parity] vi: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] vi: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] vi: missing companiesAdmin.people.ceilingHint
+[locale-parity] zh: missing companiesAdmin.consumption.title
+[locale-parity] zh: missing companiesAdmin.consumption.loading
+[locale-parity] zh: missing companiesAdmin.consumption.refresh
+[locale-parity] zh: missing companiesAdmin.consumption.poolLine
+[locale-parity] zh: missing companiesAdmin.consumption.pctUsed
+[locale-parity] zh: missing companiesAdmin.consumption.ofCeiling
+[locale-parity] zh: missing companiesAdmin.consumption.group.admin
+[locale-parity] zh: missing companiesAdmin.consumption.group.supervisor
+[locale-parity] zh: missing companiesAdmin.consumption.group.member
+[locale-parity] zh: missing companiesAdmin.consumption.emptyTitle
+[locale-parity] zh: missing companiesAdmin.consumption.emptyDetail
+[locale-parity] zh: missing companiesAdmin.people.ceilingHint
+[locale-parity] ar: missing overviewAdmin.byTierTitle
+[locale-parity] ar: missing overviewAdmin.byTierDesc
+[locale-parity] ar: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] de: missing overviewAdmin.byTierTitle
+[locale-parity] de: missing overviewAdmin.byTierDesc
+[locale-parity] de: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] es: missing overviewAdmin.byTierTitle
+[locale-parity] es: missing overviewAdmin.byTierDesc
+[locale-parity] es: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] fr: missing overviewAdmin.byTierTitle
+[locale-parity] fr: missing overviewAdmin.byTierDesc
+[locale-parity] fr: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] hi: missing overviewAdmin.byTierTitle
+[locale-parity] hi: missing overviewAdmin.byTierDesc
+[locale-parity] hi: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] id: missing overviewAdmin.byTierTitle
+[locale-parity] id: missing overviewAdmin.byTierDesc
+[locale-parity] id: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] it: missing overviewAdmin.byTierTitle
+[locale-parity] it: missing overviewAdmin.byTierDesc
+[locale-parity] it: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] ja: missing overviewAdmin.byTierTitle
+[locale-parity] ja: missing overviewAdmin.byTierDesc
+[locale-parity] ja: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] ko: missing overviewAdmin.byTierTitle
+[locale-parity] ko: missing overviewAdmin.byTierDesc
+[locale-parity] ko: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] pt-BR: missing overviewAdmin.byTierTitle
+[locale-parity] pt-BR: missing overviewAdmin.byTierDesc
+[locale-parity] pt-BR: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] ru: missing overviewAdmin.byTierTitle
+[locale-parity] ru: missing overviewAdmin.byTierDesc
+[locale-parity] ru: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] tr: missing overviewAdmin.byTierTitle
+[locale-parity] tr: missing overviewAdmin.byTierDesc
+[locale-parity] tr: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] vi: missing overviewAdmin.byTierTitle
+[locale-parity] vi: missing overviewAdmin.byTierDesc
+[locale-parity] vi: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] zh: missing overviewAdmin.byTierTitle
+[locale-parity] zh: missing overviewAdmin.byTierDesc
+[locale-parity] zh: extra overviewAdmin.usersFoot (not in en)
+[locale-parity] ar: missing usersAdmin.columns.usedToday
+[locale-parity] ar: missing usersAdmin.columns.planLeft
+[locale-parity] ar: missing usersAdmin.planLeftTitle
+[locale-parity] ar: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] de: missing usersAdmin.columns.usedToday
+[locale-parity] de: missing usersAdmin.columns.planLeft
+[locale-parity] de: missing usersAdmin.planLeftTitle
+[locale-parity] de: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] es: missing usersAdmin.columns.usedToday
+[locale-parity] es: missing usersAdmin.columns.planLeft
+[locale-parity] es: missing usersAdmin.planLeftTitle
+[locale-parity] es: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] fr: missing usersAdmin.columns.usedToday
+[locale-parity] fr: missing usersAdmin.columns.planLeft
+[locale-parity] fr: missing usersAdmin.planLeftTitle
+[locale-parity] fr: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] hi: missing usersAdmin.columns.usedToday
+[locale-parity] hi: missing usersAdmin.columns.planLeft
+[locale-parity] hi: missing usersAdmin.planLeftTitle
+[locale-parity] hi: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] id: missing usersAdmin.columns.usedToday
+[locale-parity] id: missing usersAdmin.columns.planLeft
+[locale-parity] id: missing usersAdmin.planLeftTitle
+[locale-parity] id: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] it: missing usersAdmin.columns.usedToday
+[locale-parity] it: missing usersAdmin.columns.planLeft
+[locale-parity] it: missing usersAdmin.planLeftTitle
+[locale-parity] it: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] ja: missing usersAdmin.columns.usedToday
+[locale-parity] ja: missing usersAdmin.columns.planLeft
+[locale-parity] ja: missing usersAdmin.planLeftTitle
+[locale-parity] ja: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] ko: missing usersAdmin.columns.usedToday
+[locale-parity] ko: missing usersAdmin.columns.planLeft
+[locale-parity] ko: missing usersAdmin.planLeftTitle
+[locale-parity] ko: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] pt-BR: missing usersAdmin.columns.usedToday
+[locale-parity] pt-BR: missing usersAdmin.columns.planLeft
+[locale-parity] pt-BR: missing usersAdmin.planLeftTitle
+[locale-parity] pt-BR: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] ru: missing usersAdmin.columns.usedToday
+[locale-parity] ru: missing usersAdmin.columns.planLeft
+[locale-parity] ru: missing usersAdmin.planLeftTitle
+[locale-parity] ru: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] tr: missing usersAdmin.columns.usedToday
+[locale-parity] tr: missing usersAdmin.columns.planLeft
+[locale-parity] tr: missing usersAdmin.planLeftTitle
+[locale-parity] tr: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] vi: missing usersAdmin.columns.usedToday
+[locale-parity] vi: missing usersAdmin.columns.planLeft
+[locale-parity] vi: missing usersAdmin.planLeftTitle
+[locale-parity] vi: extra usersAdmin.columns.freeLeft (not in en)
+[locale-parity] zh: missing usersAdmin.columns.usedToday
+[locale-parity] zh: missing usersAdmin.columns.planLeft
+[locale-parity] zh: missing usersAdmin.planLeftTitle
+[locale-parity] zh: extra usersAdmin.columns.freeLeft (not in en)

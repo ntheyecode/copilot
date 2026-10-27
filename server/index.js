@@ -2909,6 +2909,12 @@ app.post('/api/work/sessions/:id/research', requireWorkAuth, async (req, res) =>
 
 // ---- Usage metering -------------------------------------------------------
 app.get('/api/work/usage', requireWorkAuth, wrap((req, res) => { res.json(store.getWorkUsage(req.workUser.id)) }))
+// Day-by-day consumption (seconds + tasks started) for the dashboard's month
+// view: the last `days` days (7..92, default 31) in the person's own day zone.
+app.get('/api/work/usage/history', requireWorkAuth, wrap((req, res) => {
+  const days = Math.min(92, Math.max(7, Math.round(Number((req.query || {}).days) || 31)))
+  res.json(store.getWorkUsageHistory(req.workUser.id, days))
+}))
 app.post('/api/work/usage/heartbeat', requireWorkAuth, wrap((req, res) => {
   const seconds = Math.max(0, Math.min(20, Number((req.body || {}).seconds) || 0)) // cap one beat
   const usage = store.addWorkUsage(req.workUser.id, seconds)

@@ -17,7 +17,7 @@ export default {
     enterprise: {
       title: 'Enterprise pool and quotas',
       poolSummary: '{remaining} of {monthly} left ({pct}% used)',
-      noPool: 'No monthly pool set',
+      noPool: 'No monthly pool set yet: open to set one',
       pendingBadge: '{n} to review',
       poolHours: 'Monthly pool (hours)',
       poolHoursHint: 'Total guided hours the whole company shares each month.',
@@ -51,6 +51,18 @@ export default {
       approve: 'Approve',
       deny: 'Decline',
       denyReason: 'Add a short note for the company admin. It is sent with the decision.',
+    },
+    // Live pool + per-member consumption this month (from the pool dashboard).
+    consumption: {
+      title: 'Consumption this month',
+      loading: 'Loading consumption',
+      refresh: 'Refresh',
+      poolLine: '{used} of {monthly} used. Resets {reset}.',
+      pctUsed: '{pct}% used',
+      ofCeiling: '{used} of {limit}',
+      group: { admin: 'Admin', supervisor: 'Supervisor', member: 'Member' },
+      emptyTitle: 'No guided time used yet this month',
+      emptyDetail: 'Each member\'s hours appear here as soon as they are guided.',
     },
     sso: {
       providers: {
@@ -291,6 +303,7 @@ export default {
       role: 'Role',
       plan: 'Plan',
       usedToday: 'Used today',
+      ceilingHint: 'Guided time used today, of this person\'s own daily ceiling set by their company admin.',
       redaction: 'Redaction',
       empty: 'No people yet.',
       member: 'Member',

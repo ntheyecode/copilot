@@ -12,7 +12,8 @@ export default {
       user: 'User',
       tier: 'Tier',
       company: 'Company & role',
-      freeLeft: 'Free left today',
+      usedToday: 'Used today',
+      planLeft: 'Plan hours left',
       purchased: 'Purchased balance',
       remaining: 'Total remaining',
       sessions: 'Sessions',
@@ -75,6 +76,8 @@ export default {
     // Row: disabled badge, display name, company column
     disabledBadge: 'Disabled',
     exhausted: 'exhausted',
+    // Hover on the Plan hours left cell: what the number is.
+    planLeftTitle: 'Included plan hours left this month. It renews on the 1st; purchased hours are counted separately.',
     companyEdit: {
       noCompany: 'No company',
       member: 'Member',

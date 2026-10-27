@@ -13,7 +13,12 @@ const COLUMNS = [
   { key: 'username', labelKey: 'columns.user', sortable: true },
   { key: 'tier', labelKey: 'columns.tier', sortable: true },
   { key: 'companyName', labelKey: 'columns.company', sortable: true },
-  { key: 'freeLeftSeconds', labelKey: 'columns.freeLeft', sortable: true },
+  // Plan model: `usedSeconds` is what the person consumed TODAY from every
+  // source; `freeLeftSeconds` is the included plan hours left THIS MONTH (the
+  // admin users payload maps it from usage.freeLeft). There is no daily
+  // denominator any more, so none is shown.
+  { key: 'usedSeconds', labelKey: 'columns.usedToday', sortable: true },
+  { key: 'freeLeftSeconds', labelKey: 'columns.planLeft', sortable: true },
   { key: 'purchasedSeconds', labelKey: 'columns.purchased', sortable: true },
   { key: 'remainingSeconds', labelKey: 'columns.remaining', sortable: true },
   { key: 'sessionCount', labelKey: 'columns.sessions', sortable: true },
@@ -348,11 +353,12 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                         </span>
                       )}
                     </td>
-                    <td className="wka-mono">{hmFromSeconds(u.freeLeftSeconds)}
+                    <td className="wka-mono">{hmFromSeconds(u.usedSeconds)}</td>
+                    <td className="wka-mono" title={t('usersAdmin.planLeftTitle')}>{hmFromSeconds(u.freeLeftSeconds)}</td>
+                    <td className="wka-mono">{hmFromSeconds(u.purchasedSeconds)}</td>
+                    <td className="wka-mono">{hmFromSeconds(u.remainingSeconds)}
                       {u.exhausted ? <span className="wka-badge exhausted" style={{ marginLeft: 8 }}>{t('usersAdmin.exhausted')}</span> : null}
                     </td>
-                    <td className="wka-mono">{hmFromSeconds(u.purchasedSeconds)}</td>
-                    <td className="wka-mono">{hmFromSeconds(u.remainingSeconds)}</td>
                     <td className="wka-mono">{u.sessionCount}</td>
                     <td style={{ whiteSpace: 'nowrap', fontSize: 12 }}>
                       {u.mfa && u.mfa.enabled

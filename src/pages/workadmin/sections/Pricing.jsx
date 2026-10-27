@@ -1,26 +1,41 @@
 // Pricing: bound to GET /api/work/pricing, saved via POST /api/work/admin/pricing
 // (superadmin-only). Fields mirror the store pricing shape exactly:
-//   { currency, plans:{basic,advanced,premium}, hour:{...}, image:{...}, imageMinBulk }
-// The Premium daily image cap (5/day) is a fixed product rule, not part of the
-// stored pricing object, so it is shown read-only rather than as a control that
-// could not actually save.
+//   { currency, plans:{lite,basic,advanced,premium}, hour:{...}, image:{...},
+//     imageMinBulk, tasks:{...} (guided tasks per DAY), replans:{...},
+//     hoursMonthly:{...} (included guided hours per calendar MONTH),
+//     hoursExpiry:{ mode:'forfeit'|'carryforward', carryCapHours:number|null },
+//     imagesPerDay:{...} }
+// The plan model (server/plan_allowance.js): each person has ONE monthly hours
+// pool renewed on the first of the month; a change to hoursMonthly reaches every
+// live pool at once as a delta; tasks are a plain per-day cap (no banked credits,
+// no earning, no trading). The retired dailyHours / tasksPerExtraHour keys are
+// never sent: the server rejects them with a 400.
 //
 // UX: pricing always has values (the server seeds defaults), so after loading -
 // and after a successful save - the whole editor COLLAPSES to one compact record
-// summary with an Edit button; editing reopens all the panels plus Save/Cancel.
-// Cancel reverts the form to the last-saved values. Non-superadmins only ever see
-// the record (no Edit button).
+// summary (plus the plans-at-a-glance ladder) with an Edit button; editing
+// reopens all the panels plus Save/Cancel. Cancel reverts the form to the
+// last-saved values. Non-superadmins only ever see the record (no Edit button).
 import React, { useEffect, useState, useCallback } from 'react'
-import { Save, Lock, Info, X } from 'lucide-react'
+import { Save, Lock, Info, X, CalendarClock } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, Spinning, SavedTag, RecRow, EditToggle } from './_shared.jsx'
+import PricingGlance from './PricingGlance.jsx'
 import { useT } from '../../../i18n/index.jsx'
 
 const TIERS = ['lite', 'basic', 'advanced', 'premium']
+const MONTH_END_MODES = ['forfeit', 'carryforward']
+// Validation ranges mirror server/store.js setWorkPricing exactly (one source of
+// truth for the numbers; the form only pre-checks so Save is never a dead click).
+const HOURS_MONTH_MAX = 744      // 31 days x 24 h
+const CARRY_CAP_MAX = 100000
+const COUNT_MAX = 1000
 
 function num(v) { const n = Number(v); return isFinite(n) ? n : NaN }
+const isCount = (v) => { const n = num(v); return !isNaN(n) && Number.isInteger(n) && n >= 0 && n <= COUNT_MAX }
 // Normalize a pricing payload from the server into the editable form shape.
 function formFrom(p) {
+  const ex = (p.hoursExpiry && typeof p.hoursExpiry === 'object') ? p.hoursExpiry : {}
   return {
     currency: p.currency || 'usd',
     plans: { ...p.plans },
@@ -29,9 +44,9 @@ function formFrom(p) {
     imageMinBulk: p.imageMinBulk,
     tasks: { ...(p.tasks || {}) },
     replans: { ...(p.replans || {}) },
-    dailyHours: { ...(p.dailyHours || {}) },
+    hoursMonthly: { ...(p.hoursMonthly || {}) },
+    hoursExpiry: { mode: MONTH_END_MODES.includes(ex.mode) ? ex.mode : 'forfeit', carryCapHours: ex.carryCapHours == null ? '' : String(ex.carryCapHours) },
     imagesPerDay: { ...(p.imagesPerDay || {}) },
-    tasksPerExtraHour: p.tasksPerExtraHour,
   }
 }
 
@@ -62,34 +77,38 @@ export default function Pricing({ isSuperAdmin }) {
     setForm((f) => ({ ...f, [group]: { ...f[group], [tier]: value } }))
   }
   const setTop = (key, value) => { setSaved(false); setForm((f) => ({ ...f, [key]: value })) }
+  const setExpiry = (key, value) => { setSaved(false); setForm((f) => ({ ...f, hoursExpiry: { ...f.hoursExpiry, [key]: value } })) }
 
+  const carry = !!form && form.hoursExpiry.mode === 'carryforward'
   const invalid = (() => {
     if (!form) return true
     const groups = ['plans', 'hour', 'image']
-    for (const g of groups) for (const t of TIERS) { const n = num(form[g][t]); if (isNaN(n) || n < 0) return true }
+    for (const g of groups) for (const tier of TIERS) { const n = num(form[g][tier]); if (isNaN(n) || n < 0) return true }
     const mb = num(form.imageMinBulk); if (isNaN(mb) || mb < 1) return true
-    for (const t of TIERS) { const n = num(form.tasks[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
-    for (const t of TIERS) { const n = num((form.replans || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
-    for (const t of TIERS) { const n = num((form.dailyHours || {})[t]); if (isNaN(n) || n < 0 || n > 24) return true }
-    for (const t of TIERS) { const n = num((form.imagesPerDay || {})[t]); if (isNaN(n) || n < 0 || !Number.isInteger(n) || n > 1000) return true }
-    const tph = num(form.tasksPerExtraHour); if (isNaN(tph) || tph < 0 || !Number.isInteger(tph) || tph > 100) return true
+    for (const tier of TIERS) if (!isCount(form.tasks[tier])) return true
+    for (const tier of TIERS) if (!isCount((form.replans || {})[tier])) return true
+    for (const tier of TIERS) { const n = num((form.hoursMonthly || {})[tier]); if (isNaN(n) || n < 0 || n > HOURS_MONTH_MAX) return true }
+    for (const tier of TIERS) if (!isCount((form.imagesPerDay || {})[tier])) return true
+    if (carry && String(form.hoursExpiry.carryCapHours).trim() !== '') { const c = num(form.hoursExpiry.carryCapHours); if (isNaN(c) || c < 0 || c > CARRY_CAP_MAX) return true }
     return false
   })()
 
   const save = async () => {
     setSaving(true); setSaveError(null); setSaved(false)
     try {
+      const cap = String(form.hoursExpiry.carryCapHours).trim()
       const patch = {
         currency: form.currency,
-        plans: Object.fromEntries(TIERS.map((t) => [t, num(form.plans[t])])),
-        hour: Object.fromEntries(TIERS.map((t) => [t, num(form.hour[t])])),
-        image: Object.fromEntries(TIERS.map((t) => [t, num(form.image[t])])),
+        plans: Object.fromEntries(TIERS.map((tier) => [tier, num(form.plans[tier])])),
+        hour: Object.fromEntries(TIERS.map((tier) => [tier, num(form.hour[tier])])),
+        image: Object.fromEntries(TIERS.map((tier) => [tier, num(form.image[tier])])),
         imageMinBulk: num(form.imageMinBulk),
-        tasks: Object.fromEntries(TIERS.map((t) => [t, num(form.tasks[t])])),
-        replans: Object.fromEntries(TIERS.map((t) => [t, num((form.replans || {})[t])])),
-        dailyHours: Object.fromEntries(TIERS.map((t) => [t, num((form.dailyHours || {})[t])])),
-        imagesPerDay: Object.fromEntries(TIERS.map((t) => [t, num((form.imagesPerDay || {})[t])])),
-        tasksPerExtraHour: num(form.tasksPerExtraHour),
+        tasks: Object.fromEntries(TIERS.map((tier) => [tier, num(form.tasks[tier])])),
+        replans: Object.fromEntries(TIERS.map((tier) => [tier, num((form.replans || {})[tier])])),
+        hoursMonthly: Object.fromEntries(TIERS.map((tier) => [tier, num((form.hoursMonthly || {})[tier])])),
+        // The cap only means something when hours carry forward; forfeit sends null.
+        hoursExpiry: { mode: form.hoursExpiry.mode, carryCapHours: carry && cap !== '' ? num(cap) : null },
+        imagesPerDay: Object.fromEntries(TIERS.map((tier) => [tier, num((form.imagesPerDay || {})[tier])])),
       }
       const p = await workAdminApi.setPricing(patch)
       const f = formFrom(p)
@@ -108,7 +127,7 @@ export default function Pricing({ isSuperAdmin }) {
   const disabled = !isSuperAdmin
   const cur = String(form.currency || 'usd').toUpperCase()
   const money = (v) => { const n = num(v); return isNaN(n) ? '-' : `$${n}` }
-  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1)
+  const hoursVal = (tier) => { const n = num((form.hoursMonthly || {})[tier]); return isNaN(n) ? '-' : n }
 
   const Money = ({ group, tier }) => (
     <div className="wka-field">
@@ -120,6 +139,11 @@ export default function Pricing({ isSuperAdmin }) {
       </div>
     </div>
   )
+
+  // What happens to unused plan hours at month end, as one honest record line.
+  const monthEndValue = form.hoursExpiry.mode === 'carryforward'
+    ? (String(form.hoursExpiry.carryCapHours).trim() === '' ? t('pricingAdmin.record.monthEndCarryNoCap') : t('pricingAdmin.record.monthEndCarry', { cap: form.hoursExpiry.carryCapHours }))
+    : t('pricingAdmin.record.monthEndForfeit')
 
   // ---- Collapsed record view: one compact summary of every key value ----
   if (!editing) {
@@ -135,13 +159,14 @@ export default function Pricing({ isSuperAdmin }) {
           <div className="wka-record">
             <RecRow label={t('pricingAdmin.record.currency')} value={cur} />
             {TIERS.map((tier) => (
-              <RecRow key={tier} label={t('pricingAdmin.tiers.' + tier)} value={t('pricingAdmin.record.tierSummary', { price: money(form.plans[tier]), hours: (form.dailyHours || {})[tier] == null ? '-' : form.dailyHours[tier], tasks: form.tasks[tier] == null ? '-' : form.tasks[tier], replans: (form.replans || {})[tier] == null ? '-' : form.replans[tier], extraHr: money(form.hour[tier]), image: money(form.image[tier]) })} />
+              <RecRow key={tier} label={t('pricingAdmin.tiers.' + tier)} value={t('pricingAdmin.record.tierSummary', { price: money(form.plans[tier]), hours: hoursVal(tier), tasks: form.tasks[tier] == null ? '-' : form.tasks[tier], replans: (form.replans || {})[tier] == null ? '-' : form.replans[tier], extraHr: money(form.hour[tier]), image: money(form.image[tier]) })} />
             ))}
+            <RecRow label={t('pricingAdmin.record.monthEnd')} value={monthEndValue} />
             <RecRow label={t('pricingAdmin.record.corporate')} value={t('pricingAdmin.record.corporateValue')} />
             <RecRow label={t('pricingAdmin.record.bulkMin')} value={t('pricingAdmin.record.bulkMinValue', { count: form.imageMinBulk })} />
-            <RecRow label={t('pricingAdmin.record.bonusTasks')} value={t.n('pricingAdmin.record.bonusTasksValue', form.tasksPerExtraHour, { count: form.tasksPerExtraHour == null ? '-' : form.tasksPerExtraHour })} />
             <RecRow label={t('pricingAdmin.record.freeImages')} value={TIERS.map((tier) => `${t('pricingAdmin.tiers.' + tier)} ${(form.imagesPerDay || {})[tier] == null ? '-' : form.imagesPerDay[tier]}`).join('  ·  ')} />
           </div>
+          <PricingGlance form={form} money={money} />
           <SavedTag show={saved} />
         </div>
       </div>
@@ -160,16 +185,39 @@ export default function Pricing({ isSuperAdmin }) {
       </div>
 
       <div className="wka-panel">
-        <h2>{t('pricingAdmin.edit.dailyHours.title')}</h2>
-        <p className="desc">{t('pricingAdmin.edit.dailyHours.desc')}</p>
+        <h2>{t('pricingAdmin.edit.monthlyHours.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.monthlyHours.desc')}</p>
         <div className="wka-grid">{TIERS.map((tier) => (
           <div className="wka-field" key={tier}>
             <label>{t('pricingAdmin.tiers.' + tier)}</label>
-            <input className="wka-input" type="number" min="0" max="24" step="0.25" disabled={disabled}
-              value={(form.dailyHours || {})[tier] == null ? '' : form.dailyHours[tier]} onChange={(e) => setField('dailyHours', tier, e.target.value)} />
-            <span className="hint">{t('pricingAdmin.edit.dailyHours.hint')}</span>
+            <input className="wka-input" type="number" min="0" max={HOURS_MONTH_MAX} step="0.5" disabled={disabled}
+              value={(form.hoursMonthly || {})[tier] == null ? '' : form.hoursMonthly[tier]} onChange={(e) => setField('hoursMonthly', tier, e.target.value)} />
+            <span className="hint">{t('pricingAdmin.edit.monthlyHours.hint')}</span>
           </div>
         ))}</div>
+      </div>
+
+      <div className="wka-panel">
+        <h2><CalendarClock size={15} style={{ verticalAlign: -2, marginRight: 6, color: 'var(--wka-accent)' }} />{t('pricingAdmin.edit.monthEnd.title')}</h2>
+        <p className="desc">{t('pricingAdmin.edit.monthEnd.desc')}</p>
+        <div className="wka-grid">
+          <div className="wka-field">
+            <label>{t('pricingAdmin.edit.monthEnd.mode')}</label>
+            <select className="wka-select" value={form.hoursExpiry.mode} disabled={disabled} onChange={(e) => setExpiry('mode', e.target.value)}>
+              <option value="forfeit">{t('pricingAdmin.edit.monthEnd.forfeit')}</option>
+              <option value="carryforward">{t('pricingAdmin.edit.monthEnd.carryforward')}</option>
+            </select>
+            <span className="hint">{t('pricingAdmin.edit.monthEnd.modeHint')}</span>
+          </div>
+          {carry ? (
+            <div className="wka-field">
+              <label>{t('pricingAdmin.edit.monthEnd.cap')}</label>
+              <input className="wka-input" type="number" min="0" max={CARRY_CAP_MAX} step="1" disabled={disabled} placeholder={t('pricingAdmin.edit.monthEnd.noCap')}
+                value={form.hoursExpiry.carryCapHours} onChange={(e) => setExpiry('carryCapHours', e.target.value)} />
+              <span className="hint">{t('pricingAdmin.edit.monthEnd.capHint')}</span>
+            </div>
+          ) : null}
+        </div>
       </div>
 
       <div className="wka-panel">
@@ -178,7 +226,7 @@ export default function Pricing({ isSuperAdmin }) {
         <div className="wka-grid">{TIERS.map((tier) => (
           <div className="wka-field" key={tier}>
             <label>{t('pricingAdmin.tiers.' + tier)}</label>
-            <input className="wka-input" type="number" min="0" step="1" disabled={disabled}
+            <input className="wka-input" type="number" min="0" max={COUNT_MAX} step="1" disabled={disabled}
               value={form.tasks[tier] == null ? '' : form.tasks[tier]} onChange={(e) => setField('tasks', tier, e.target.value)} />
             <span className="hint">{t('pricingAdmin.edit.dailyTasks.hint')}</span>
           </div>
@@ -197,7 +245,7 @@ export default function Pricing({ isSuperAdmin }) {
         <div className="wka-grid">{TIERS.map((tier) => (
           <div className="wka-field" key={tier}>
             <label>{t('pricingAdmin.tiers.' + tier)}</label>
-            <input className="wka-input" type="number" min="0" step="1" disabled={disabled}
+            <input className="wka-input" type="number" min="0" max={COUNT_MAX} step="1" disabled={disabled}
               value={(form.replans || {})[tier] == null ? '' : form.replans[tier]} onChange={(e) => setField('replans', tier, e.target.value)} />
             <span className="hint">{t('pricingAdmin.edit.replans.hint')}</span>
           </div>
@@ -214,14 +262,6 @@ export default function Pricing({ isSuperAdmin }) {
         <h2>{t('pricingAdmin.edit.extraHour.title')}</h2>
         <p className="desc">{t('pricingAdmin.edit.extraHour.desc')}</p>
         <div className="wka-grid">{TIERS.map((tier) => <Money key={tier} group="hour" tier={tier} />)}</div>
-        <div className="wka-grid" style={{ marginTop: 16 }}>
-          <div className="wka-field">
-            <label>{t('pricingAdmin.edit.extraHour.bonusLabel')}</label>
-            <input className="wka-input" type="number" min="0" max="100" step="1" disabled={disabled}
-              value={form.tasksPerExtraHour == null ? '' : form.tasksPerExtraHour} onChange={(e) => setTop('tasksPerExtraHour', e.target.value)} />
-            <span className="hint">{t('pricingAdmin.edit.extraHour.bonusHint')}</span>
-          </div>
-        </div>
       </div>
 
       <div className="wka-panel">
@@ -249,7 +289,7 @@ export default function Pricing({ isSuperAdmin }) {
         <div className="wka-grid">{TIERS.map((tier) => (
           <div className="wka-field" key={tier}>
             <label>{t('pricingAdmin.tiers.' + tier)}</label>
-            <input className="wka-input" type="number" min="0" max="1000" step="1" disabled={disabled}
+            <input className="wka-input" type="number" min="0" max={COUNT_MAX} step="1" disabled={disabled}
               value={(form.imagesPerDay || {})[tier] == null ? '' : form.imagesPerDay[tier]} onChange={(e) => setField('imagesPerDay', tier, e.target.value)} />
             <span className="hint">{t('pricingAdmin.edit.freeImages.hint')}</span>
           </div>
@@ -258,7 +298,7 @@ export default function Pricing({ isSuperAdmin }) {
 
       {saveError ? <div style={{ marginBottom: 14 }}><ErrorBox error={saveError} /></div> : null}
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
         <button type="button" className="wka-btn primary" disabled={disabled || saving || invalid} onClick={save}>
           {saving ? <Spinning /> : <Save size={15} />} {t('pricingAdmin.edit.save')}
         </button>

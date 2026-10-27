@@ -69,7 +69,7 @@ export default {
       totalForCompany: 'Total for your company',
       noDataYet: 'No data yet',
       aiNotConfigured: 'AI is not configured yet.',
-      aiSetKeys: 'Set your keys in the AI keys tab.',
+      aiSetKeys: 'Open AI keys',
       licensesByPlan: 'Licenses by plan',
       licensesByPlanHelp: 'How many of each plan your company bought, and how many are assigned. Assigning beyond a plan\'s allocation is blocked.',
       available: '{n} available',
@@ -92,7 +92,7 @@ export default {
       ssoConnected: 'Connected ({provider})',
       ssoNotConnected: 'Not connected',
       peopleUsage: 'People and usage',
-      peopleUsageHelp: 'Each person, their plan, how much guiding time they used today versus their daily allowance, and any extra minutes they hold.',
+      peopleUsageHelp: 'Each person, their plan, how much guiding time they used today (against their own daily ceiling, if you set one), and any extra minutes they hold.',
       noPeople: 'No people yet',
       noPeopleDetail: 'Add your team on the Team tab.',
       thPerson: 'Person',
@@ -293,7 +293,7 @@ export default {
       roleExecutiveLong: 'Executive (productivity dashboard, read-only)',
       roleCompanyAdmin: 'Company admin',
       plan: 'Plan',
-      planHelp: 'Each plan includes a daily guiding-time allowance set by the WorkCoPilot team. Your company\'s per-plan license count is enforced.',
+      planHelp: 'Each plan includes guided hours per month and a number of guided tasks per day, set by the WorkCoPilot team. Your company\'s per-plan license count is enforced.',
       peopleTitle: 'People',
       peopleHelp: 'Change a person\'s role or plan inline (allowed even when the roster is managed). Give extra minutes from the company pool. Removing detaches them and signs them out everywhere.',
       loading: 'Loading your team',
@@ -669,9 +669,18 @@ export default {
       copyAria: 'Copy to clipboard',
       copiedAria: 'Copied to clipboard',
     },
+    // The shared step blocks (StepBlocks.jsx): the terminal header, the link-out
+    // and the copy row a step carries, in the guiding console and the widget.
+    blocks: {
+      terminal: 'Terminal',
+      open: 'Open {host}',
+      copyThis: 'Copy this',
+      code: 'code',
+    },
     // The floating "Try it on your task, live" widget (LiveValidate.jsx):
     // ASK (a real task) -> LEAD (once per session, before the reveal) -> REVEAL
-    // (the product console plans it live, step by step) -> the plan that fits.
+    // (the product console plans it live, step by step, then plays the
+    // live-session preview on that plan) -> the plan that fits.
     validate: {
       launch: 'Try it on your task, live',
       launchAria: 'Try WorkCoPilot on your own task, live',
@@ -685,13 +694,18 @@ export default {
       coachS: 'Describe your own task and watch it get planned <b>live</b>, step by step.',
       // ASK
       askH: 'What are you trying to get done?',
-      askSub: 'Describe a real task. In a few seconds you will watch WorkCoPilot plan it, step by step, with the exact commands.',
+      askSub: 'Describe a real task. In a few seconds you will watch WorkCoPilot plan it, step by step, with the exact clicks, fields and commands.',
       askPh: 'e.g. Set up a VPC on AWS and lock it down, reconcile last month\'s books in Excel, or: can it guide my in-house apps?',
       tryOne: 'Or try one:',
-      chip1: 'Set up CI/CD for a Node app with GitHub Actions',
-      chip2: 'Reconcile last month\'s invoices in QuickBooks',
-      chip3: 'Set up an AWS VPC with private subnets and lock down its security groups',
+      // Six starters, at least half everyday non-coding work (calendar, books,
+      // spreadsheet, CRM), each checked against the live classifier so none
+      // comes back off-topic. Brand and product names stay as they are.
+      chip1: 'Switch my Google Calendar to week view and share it with my team',
+      chip2: 'Set up CI/CD for my Node app with GitHub Actions: build and test on every push',
+      chip3: 'Reconcile last month\'s invoices in QuickBooks',
       chip4: 'Create a monthly sales report with pivot tables in Excel',
+      chip5: 'Import leads from a spreadsheet into HubSpot and assign them to my team',
+      chip6: 'Set up an AWS VPC with private subnets and lock down its security groups',
       watchIt: 'Watch it plan my task',
       privacy: 'We use your details only to follow up about WorkCoPilot. Your task text is scrubbed of sensitive data on your device before anything is sent.',
       // LEAD (once per session): the plan is being prepared, where do we send it
@@ -713,7 +727,7 @@ export default {
       // REVEAL: the product console, live on the visitor's task
       scan1: 'Reading your goal',
       scan2: 'Checking what WorkCoPilot would see on your screen',
-      scan3: 'Planning the exact steps and commands',
+      scan3: 'Planning the exact clicks, fields and commands',
       verdict: {
         covered: 'WorkCoPilot can guide this, start to finish',
         about: 'Here is how WorkCoPilot helps',
@@ -722,10 +736,9 @@ export default {
         offtopic: 'Describe a real task to see it planned',
       },
       iCanSee: 'I can see',
+      ready: 'Before you start',
       doThisNow: 'Do this now',
       stepOf: 'Step {n} of {total}',
-      terminal: 'Terminal',
-      copy: 'Copy', copied: 'Copied', copyCmd: 'Copy command',
       exactlyHow: 'Exactly how',
       step_one: '{n} step', step_two: '{n} steps', step_other: '{n} steps',
       lockedMore_one: '{n} more step, this detailed, in a live session',
@@ -735,11 +748,30 @@ export default {
       valExact: 'Exact commands and clicks',
       valCheck: 'Checks each step worked',
       valRo: 'Read-only, never clicks for you',
+      // The live-session preview, played on the visitor's own plan. Honest about
+      // what it is: simulated here, read from the real screen in a session.
+      sim: {
+        eyebrow: 'In your live session',
+        note: 'A preview of what the guide does while you work, played on your plan. Simulated here; in a live session it reads your real screen.',
+        watching: 'Watching your screen',
+        watchingLine: 'Waiting until you have done this step',
+        stepDone: 'Done',
+        seenDone: 'Seen on your screen: done',
+        guide: 'Guide',
+        driftFallback: 'Not there yet. Come back to this step: {step}',
+        backOnTrack: 'Back on track',
+        complete: 'Task complete, confirmed on your screen',
+        completeSub: 'Every live session ends like this: the guide sees the result and confirms it.',
+      },
+      promise1: 'Corrects you the moment you drift',
+      promise2: 'One step at a time, waits for you',
+      promise3: 'Confirms when the task is done',
       // The ask: this, every day
       ctaH: 'Get guided like this, on every task',
       ctaSub: 'The exact next move, every time, in the apps you already use.',
       recommended: 'Recommended for your task',
-      hrs_one: '{n} hour of live guidance a day', hrs_two: '{n} hours of live guidance a day', hrs_other: '{n} hours of live guidance a day',
+      // Allowances read from the pricing API: guided hours per calendar month, guided tasks per day.
+      hrsMonth_one: '{n} hour of live guidance a month', hrsMonth_two: '{n} hours of live guidance a month', hrsMonth_other: '{n} hours of live guidance a month',
       tasksN_one: '{n} guided task a day', tasksN_two: '{n} guided tasks a day', tasksN_other: '{n} guided tasks a day',
       startWith: 'Start with {plan}',
       comparePlans: 'Compare all plans',
