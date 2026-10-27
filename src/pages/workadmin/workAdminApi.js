@@ -139,6 +139,10 @@ export const workAdminApi = {
   testAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/test`),
   // Make a configured provider the active/primary platform runtime.
   activateAiProvider: (id) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/activate`),
+  // VISION is chosen separately from the chat primary (owner 2026-10-27): the
+  // provider (and optionally one of its models) that READS THE SCREEN. id 'auto'
+  // clears the pick so the built-in preference order applies again.
+  setAiVision: (id, model) => request('POST', `/api/work/admin/ai/providers/${encodeURIComponent(id)}/vision`, model ? { model } : {}),
   // Remove a provider's key (active hands off to another configured one). A
   // reason is captured by the UI confirm and sent when present (logged); the
   // no-reason call stays byte-identical for backward compatibility.
@@ -149,6 +153,14 @@ export const workAdminApi = {
   // CUSTOM provider: add any OpenAI-compatible endpoint, or remove one.
   addCustomProvider: (body) => request('POST', '/api/work/admin/ai/custom', body || {}),
   removeCustomProvider: (id, reason) => request('DELETE', `/api/work/admin/ai/custom/${encodeURIComponent(id)}`, reason ? { reason } : undefined),
+
+  // Platform social sign-in apps (Google / Microsoft / Facebook) for the public
+  // sign-in buttons. PLATFORM level (one app each), superadmin-only. The secret is
+  // set-only: GET carries only { configured, clientIdMasked, tenant, setAt }.
+  // POST with empty clientId + clientSecret clears that provider. POST is behind
+  // the shared AI step-up window.
+  getSocial: () => request('GET', '/api/work/admin/social'),
+  setSocial: (provider, body) => request('POST', `/api/work/admin/social/${encodeURIComponent(provider)}`, body || {}),
 
   // Plan-heavy / watch-light: superadmin forces it ON for premium users (our model;
   // users have no control). GET readable by any admin; POST superadmin-only.

@@ -13,48 +13,57 @@ export default {
       daysAgo: '{n}d ago',
     },
 
-    // Overall picks + provider summary rows
-    vision: 'vision',
-    noPick: 'No pick available.',
-    modelCount_one: '{n} model',
-    modelCount_other: '{n} models',
-    cheapestLabel: 'Cheapest:',
-    noPricedModel: 'No priced model',
-    bestLabel: 'Best:',
-    qualitySuffix: '(quality {q}/5)',
-    visionParen: '(vision)',
+    // "Recommended now" panel (top of the page): VISION vs CHAT, three picks
+    // each, drawn from every configured key's live catalog.
+    reco: {
+      title: 'Recommended now',
+      desc: 'Which model to pick, from the live catalog behind each saved key. Vision reads the screen; chat plans and answers. One click applies a pick.',
+      visionTitle: 'Vision',
+      visionSub: 'Screen reading',
+      chatTitle: 'Chat',
+      chatSub: 'Planning and answers',
+      reliable: 'Reliable',
+      cheapest: 'Cheapest',
+      fastest: 'Fastest',
+      now: 'Now:',
+      automatic: 'Automatic (built-in order)',
+      noneYet: 'No provider yet',
+      providerDefault: 'provider default',
+      use: 'Use this',
+      inUse: 'In use',
+      noPick: 'No pick available.',
+      chatApplyNote: 'A chat pick makes that provider the chat primary; the model it answers with is the chat model pinned on its card, or the provider default.',
+    },
 
-    // Cost-effective models panel
-    costTitle: 'Cost-effective models (researched 2026-10-23)',
-    costDesc: 'Pick a provider below and paste its key to use it. Qwen and DeepSeek are reached with a single OpenRouter key.',
-    costFootnote: 'Estimates assume an active hour of screen-guidance. WorkCoPilot picks the cheapest capable model automatically and keeps a stronger model as failover. Research is refreshed periodically.',
-    recommendedCheapest: 'Recommended - cheapest',
-    avoidForVision: 'Avoid for vision',
-    per1M: 'Per 1M tokens',
-    in: 'in',
-    out: 'out',
-    estPerHour: 'Est. per active hour',
-    speed: 'Speed',
-    // Per-model copy, keyed by model id (dots replaced with underscores so the
-    // key path stays single-segment). Model/provider display names stay in code.
-    cost: {
-      'qwen-3_7-flash': { note: 'Cheapest. Reads screens accurately (verified). Reasoning auto-disabled.', priceNote: 'images free' },
-      'deepseek-v4-flash': { note: 'Cheap; can be weaker on dense documents.' },
-      'gemini-3_1-flash-lite': { note: 'Fast and reliable, direct from Google. Good failover.' },
-      'gemini-3_5-flash-lite': { note: 'Newest Gemini Flash-Lite.' },
-      'gpt-4o-mini': { note: 'Bills images at a very high token rate (~25k tokens/image) - NOT cost-effective for screen reading.' },
+    // Provider card roles (chat vs vision) and the vision summary line
+    role: {
+      primaryChat: 'Primary for chat',
+      readsScreen: 'Reads the screen',
+      chat: 'Chat',
+      vision: 'Vision',
+      chatNow: 'Primary. Answers with {model}.',
+      notChat: 'Not the chat primary.',
+      notVision: 'Not reading the screen.',
+      useForChat: 'Use for chat',
+      useForVision: 'Use for vision',
+      switchVisionModel: 'Switch model',
+      visionNow: 'Reading the screen',
+      visionModel: 'Model that reads the screen',
+    },
+    visionLine: {
+      pinned: 'Screen reading is pinned to',
+      auto: 'Screen reading is automatic: the built-in preference order picks the vision model. Pin a provider and model on a card, or use a pick above.',
+      backToAuto: 'Back to automatic',
     },
 
     // Provider card
     state: {
-      primaryLive: 'Primary - live',
       configured: 'Configured',
       notSet: 'Not set',
     },
     customBadge: 'CUSTOM',
     keyOne: 'Key',
     keysPool: 'Keys · {n} in pool (load spreads round-robin)',
-    modelLabel: 'model',
     testedOk: 'Tested OK',
     readsScreens: '· reads screens ({model})',
     noVisionFound: '· no vision model found',
@@ -68,7 +77,6 @@ export default {
     saveTestTitle: 'Save and test this key',
     addToPool: '+ Add to pool',
     addToPoolTitle: 'Add this key to the pool (load spreads across keys)',
-    makePrimary: 'Make primary',
     reTest: 'Re-test',
     clearAll: 'Clear all',
     removeProvider: 'Remove provider',
@@ -135,15 +143,10 @@ export default {
     watchOffLabel: 'Off - premium users get continuous watching',
     superadminChangeThis: 'Only a superadmin can change this.',
 
-    // Recommended models panel
-    recommendedTitle: 'Recommended models today',
-    recommendedDesc: 'The best and cheapest picks across your configured providers, to choose a model to run on. Researched automatically against each provider\'s live catalog - refreshed daily, or on demand with Refresh.',
+    // Recommendation loading / empty states (shared by Recommended now)
     loadingRecommendation: 'Loading recommendation',
     noModelsTitle: 'No models to compare yet',
     configureProviderHint: 'Configure a provider in AI Settings to see recommendations.',
-    pickCheapest: 'Cheapest',
-    pickCheapestVision: 'Cheapest that can see the screen',
-    pickBest: 'Best',
     updated: 'Updated',
 
     // Body: platform toggle + live state
