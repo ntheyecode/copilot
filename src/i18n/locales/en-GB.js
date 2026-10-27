@@ -51,11 +51,17 @@ export default deepMerge(en, {
       'SSO / OAuth', 'Compliance', 'Nginx', 'Market research',
     ],
     roi: {
+      // Patch only the Onboarding row (index 3) with UK phrasing; inherit the rest
+      // by position. The en base `roi.rows` has 5 entries (0-4) - referencing [5]
+      // produced an `undefined` hole that crashed the whole app (`undefined.t` in a
+      // render .map) for every en-GB visitor (India). filter(Boolean) drops any hole
+      // so a future base-array length change degrades gracefully instead of blanking
+      // the site (SUPREME RULE I: kill the class; SUPREME RULE VIII: never blank).
       rows: [
         en.home.roi.rows[0], en.home.roi.rows[1], en.home.roi.rows[2],
         { t: 'Onboarding', before: 'Months of shadowing before a new starter is trusted on real work.', now: 'Productive from their <em>first task</em>, in your apps, your way.' },
-        en.home.roi.rows[4], en.home.roi.rows[5],
-      ],
+        en.home.roi.rows[4],
+      ].filter(Boolean),
     },
     fields: {
       cards: [
@@ -64,7 +70,7 @@ export default deepMerge(en, {
         en.home.fields.cards[4],
         { k: 'Accounting & Office', d: 'Reconciliations, reports, spreadsheets, filings.' },
         en.home.fields.cards[6], en.home.fields.cards[7],
-      ],
+      ].filter(Boolean),
     },
     trust: {
       priv: { points: [
@@ -93,10 +99,10 @@ export default deepMerge(en, {
             { sees: 'The screen shows a customer email, a card number and a live API key', say: 'Those are PII, a card and a secret - they must never reach an AI', do: 'They are blacked out in the screenshot and swapped for placeholders in text, on your device, before anything is sent', click: 'Protect on-device', done: 'only [EMAIL], [CARD] and [API_KEY] leave your device' },
             { sees: 'You paste an error that still contains sk-live-... and an internal IP', say: 'A pasted log carries the secret and your private host', do: 'They are tokenised too, and the real values stay on your machine', click: 'Tokenise', done: 'the AI sees [[SECRET_1]] and [[IP_2]], never the real values' },
             en.home.demo.scenarios[0].steps[2],
-          ],
+          ].filter(Boolean),
         },
         en.home.demo.scenarios[1], en.home.demo.scenarios[2], en.home.demo.scenarios[3], en.home.demo.scenarios[4], en.home.demo.scenarios[5],
-      ],
+      ].filter(Boolean),
     },
   },
   login: {
