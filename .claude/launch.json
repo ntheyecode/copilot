@@ -35,6 +35,19 @@
       "url": "http://127.0.0.1:5192"
     },
     {
+      "name": "pricing-api",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--env-file=C:/Users/1/AppData/Local/Temp/claude/D--RadarOps/2a5f2853-5957-4702-937e-f9200df2e897/scratchpad/pricing-api.env", "server/index.js"],
+      "port": 4449
+    },
+    {
+      "name": "pricing-app",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["vite", "--config", "D:/RadarOps/wt-pricing/vite.verify.config.js", "--mode", "verifylocal", "--port", "5199", "--strictPort"],
+      "port": 5199,
+      "url": "http://127.0.0.1:5199"
+    },
+    {
       "name": "validate-wow",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["vite", "--config", "D:/RadarOps/wt-validate/vite.verify.config.js"],
