@@ -32,3 +32,5 @@ Translation rule: native, professional, brand voice, no em-dashes, US-English so
 
 ## Translation tool (2026-10-27)
 scripts/i18n-apply-patch.mjs <locale> <patch.json> [--dry] applies {set, delete} key patches to ONE locale file textually (EN sibling order, missing parents created, comments kept), re-imports to verify and ROLLS BACK on any mismatch. One patch per locale (keys listed above); dry-run first; commit each locale right after it verifies.
+
+Tool update: inline one-line objects (`k: { a: 1, b: 2 },`) are supported for set/delete (help steps + section subtitles use them).

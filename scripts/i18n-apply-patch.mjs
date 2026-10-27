@@ -118,9 +118,30 @@ function ensureParent(path) {
   return findBlock(path)
 }
 
+// A parent written on ONE line, `key: { a: 'x', b: 'y' },`: edit it in place.
+const inlineKeyRe = (key) => new RegExp(`([{,]\\s*)(?:'${esc(key)}'|"${esc(key)}"|${esc(key)})(\\s*:\\s*)(['"])((?:\\\\.|(?!\\3).)*)\\3`)
+function inlineSet(i, key, value, dotted) {
+  const re = inlineKeyRe(key)
+  if (re.test(lines[i])) { lines[i] = lines[i].replace(re, (m, pre, colon) => `${pre}${keyText(key)}${colon}${quote(value)}`); return `replace ${dotted} @${i + 1} (inline)` }
+  const close = lines[i].lastIndexOf('}')
+  if (close < 0) throw new Error(`${dotted}: parent is not an inline object (line ${i + 1})`)
+  const before = lines[i].slice(0, close).replace(/\s*$/, '')
+  const sep = /\{$/.test(before) ? ' ' : ', '
+  lines[i] = `${before}${sep}${keyText(key)}: ${quote(value)} ${lines[i].slice(close)}`
+  return `insert  ${dotted} @${i + 1} (inline)`
+}
+function inlineDelete(i, key, dotted) {
+  const re = new RegExp(`(?:'${esc(key)}'|"${esc(key)}"|${esc(key)})\\s*:\\s*(['"])(?:\\\\.|(?!\\1).)*\\1\\s*,?\\s*`)
+  if (!re.test(lines[i])) return `skip    ${dotted} (absent, inline)`
+  lines[i] = lines[i].replace(re, '').replace(/,\s*\}/, ' }').replace(/\{\s*,/, '{ ').replace(/,\s*,/, ',')
+  return `delete  ${dotted} @${i + 1} (inline)`
+}
+
 const actions = []
 for (const [dotted, value] of Object.entries(patch.set || {})) {
   const path = dotted.split('.'); const key = path.pop()
+  const direct = path.length ? findBlock(path) : null
+  if (direct && direct.single) { actions.push(inlineSet(direct.start, key, value, dotted)); continue }
   const parent = ensureParent(path)
   const at = childLine(parent, key)
   const indent = ' '.repeat((parent.depth + 1) * 2)
@@ -138,7 +159,8 @@ for (const [dotted, value] of Object.entries(patch.set || {})) {
 for (const dotted of patch.delete || []) {
   const path = dotted.split('.'); const key = path.pop()
   const parent = path.length ? findBlock(path) : topBlock()
-  if (!parent || parent.single) { actions.push(`skip    ${dotted} (parent absent)`); continue }
+  if (!parent) { actions.push(`skip    ${dotted} (parent absent)`); continue }
+  if (parent.single) { actions.push(inlineDelete(parent.start, key, dotted)); continue }
   const at = childLine(parent, key)
   if (at < 0) { actions.push(`skip    ${dotted} (absent)`); continue }
   const end = net(lines[at]) > 0 ? blockEnd(at, parent.depth + 2) : at
