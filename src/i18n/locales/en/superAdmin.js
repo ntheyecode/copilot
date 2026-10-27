@@ -10,6 +10,7 @@ export default {
     nav: {
       overview: 'Overview',
       companies: 'Companies',
+      notifications: 'Notifications',
       governance: 'Governance',
       users: 'Users',
       pricing: 'Pricing',
@@ -36,6 +37,7 @@ export default {
     sections: {
       overview: { title: 'Overview', sub: 'WorkCoPilot at a glance.' },
       companies: { title: 'Companies', sub: 'Tenancy: companies, company admins, users and redaction policy.' },
+      notifications: { title: 'Notifications', sub: 'Enterprise alerts: companies nearing their pool, and additional-hours requests to review.' },
       governance: { title: 'Data governance', sub: 'Per-company DLP policy: what leaves the device, block words, compliance frameworks, arm & lock.' },
       users: { title: 'Users', sub: 'Tiers, balances and granted hours.' },
       pricing: { title: 'Pricing', sub: 'Plan prices, extra-hour and image rates.' },
@@ -87,6 +89,32 @@ export default {
     appearancePanel: {
       title: 'Accent color',
       desc: 'Not everyone likes green. Pick the accent for your dashboards and the guide - it applies instantly and follows you across devices. <b>Default</b> keeps each console\'s own color: blue here, green for company admins and the guide.',
+    },
+
+    // Notifications page (src/pages/workadmin/sections/Notifications.jsx).
+    notifications: {
+      howTitle: 'How alerts work',
+      howDesc: 'Each alert is delivered in two places at once: here on this page and by email. These rules apply to every company; the threshold and whether a company can request more hours are set per company on the Companies page.',
+      feedTitle: 'Your alerts',
+      refresh: 'Refresh',
+      markAll: 'Mark all read',
+      loading: 'Loading alerts',
+      emptyTitle: 'No alerts yet',
+      emptyDetail: 'Pool-threshold and additional-hours alerts will appear here.',
+      justNow: 'just now',
+      minsAgo: '{n} min ago',
+      hoursAgo: '{n} h ago',
+      daysAgo: '{n} d ago',
+      rules: {
+        poolWhat: 'A company reaches its pool alert threshold',
+        poolWho: 'AdmireVeda (here and by email)',
+        requestWhat: 'A company admin requests more hours',
+        requestWho: 'AdmireVeda (here and by email)',
+        userWhat: 'A team member reaches their allowance threshold',
+        userWho: 'That company\'s admins (their dashboard and by email)',
+        decisionWhat: 'An hours request is approved or declined',
+        decisionWho: 'That company\'s admins (their dashboard and by email)',
+      },
     },
   },
 }

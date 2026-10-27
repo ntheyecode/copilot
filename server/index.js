@@ -1406,6 +1406,39 @@ app.post('/api/work/admin/grant-minutes', requireAuth, requireSuperAdmin, wrap((
   res.json(store.grantWorkPurchasedSeconds(userId, (Number(minutes) || 0) * 60))
 }))
 
+// ---- Enterprise billing + quota hierarchy (superadmin, per company) --------
+// AdmireVeda sets the monthly pool, task policy, overage price, timezone,
+// month-end behavior, and the request/Stripe toggles against each company.
+app.post('/api/work/admin/companies/:id/enterprise', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const out = store.setCompanyEnterprise(req.params.id, req.body || {})
+  store.recordAdminAction({ companyId: req.params.id, action: 'set_enterprise', reason: req.body && req.body.reason || '', detail: 'enterprise pool/policy updated' })
+  res.json(out)
+}))
+// Live pool + per-user consumption for a company (superadmin view).
+app.get('/api/work/admin/companies/:id/pool', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.companyPoolDashboard(req.params.id))
+}))
+// Top up (or correct) a company's LIVE pool now, in minutes (reuses the engine).
+app.post('/api/work/admin/companies/:id/pool/grant', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const minutes = Number((req.body || {}).minutes) || 0
+  res.json(store.grantCompanyPoolSeconds(req.params.id, minutes * 60))
+}))
+// Additional-hours requests from company admins: list + approve/deny.
+app.get('/api/work/admin/companies/:id/hour-requests', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json({ requests: store.listCompanyHourRequests(req.params.id) })
+}))
+app.post('/api/work/admin/companies/:id/hour-requests/:rid/decide', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  const { approve, note } = req.body || {}
+  res.json(store.decideCompanyHours(req.params.id, req.params.rid, { approve: !!approve, by: req.user && req.user.username || 'superadmin', note }))
+}))
+// Superadmin notifications inbox (pool-threshold + hour-request alerts).
+app.get('/api/work/admin/notifications', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json({ notifications: store.listSuperadminNotifications({ limit: Number((req.query || {}).limit) || 100 }), unread: store.superadminUnreadCount() })
+}))
+app.post('/api/work/admin/notifications/read', requireAuth, requireSuperAdmin, wrap((req, res) => {
+  res.json(store.markSuperadminNotificationRead((req.body || {}).id || '*'))
+}))
+
 // ---- Superadmin impersonation (support VIEW of an INDIVIDUAL user) ---------
 // A superadmin can VIEW the app as an individual user to reproduce an issue they
 // reported. This is a fully-audited support VIEW, NOT a privilege grant: the
@@ -1630,6 +1663,41 @@ app.get('/api/work/team/consumption', requireWorkAuth, requireCompanyAdmin, wrap
     byUser: (d.byUser || []).map((u) => ({ id: u.id, username: u.username, displayName: u.displayName, sessions: u.sessions })),
   })
 }))
+// ---- Enterprise quota (company admin sub-allocation + live pool) -----------
+// Live pool + per-user consumption for the company admin's own company.
+app.get('/api/work/team/pool', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.companyPoolDashboard(req.workUser.companyId))
+}))
+// Company admin: set per-group ceilings + the company-wide task policy (only
+// able to tighten below the AdmireVeda pool, which is the hard company cap).
+app.post('/api/work/team/allocation', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.setCompanyAllocation(req.workUser.companyId, req.body || {}))
+}))
+// Company admin: set one member's allocation group and/or per-user ceiling.
+app.post('/api/work/team/users/:id/allocation', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json(store.setUserAllocation(req.workUser.companyId, req.params.id, req.body || {}))
+}))
+// Company admin: request additional pooled hours (superadmin approves). List too.
+app.get('/api/work/team/hour-requests', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  res.json({ requests: store.listCompanyHourRequests(req.workUser.companyId) })
+}))
+app.post('/api/work/team/hour-requests', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  if (!req.workUser.companyId) return res.status(403).json({ error: 'No company in scope.' })
+  const { hours, note } = req.body || {}
+  res.json(store.requestCompanyHours(req.workUser.companyId, req.workUser.id, { hours, note }))
+}))
+// Company admin: dashboard notifications (75% user-ceiling alerts + request decisions).
+app.get('/api/work/team/notifications', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  res.json({ notifications: store.listNotificationsForUser(req.workUser.id, { limit: Number((req.query || {}).limit) || 50 }), unread: store.unreadNotificationCount(req.workUser.id) })
+}))
+app.post('/api/work/team/notifications/read', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+  res.json(store.markNotificationRead(req.workUser.id, (req.body || {}).id || '*'))
+}))
+
 // Company admin: view + clear the company's cross-session KNOWLEDGE BASE (the
 // generalized, de-identified tool learnings shared across the company's users).
 // requireCompanyAdmin here always has a companyId, so clearLearnings only ever

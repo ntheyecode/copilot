@@ -14,13 +14,14 @@ import {
   LayoutDashboard, Users, ShieldCheck, Cpu, LifeBuoy, ListChecks, Settings as SettingsIcon,
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
-  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen,
+  FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen, Gauge,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import AccentPicker from '../../components/AccentPicker.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
+import UsageLimits from './sections/UsageLimits.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
 import PolicyRules from './sections/PolicyRules.jsx'
 import HelpCompany from './sections/HelpCompany.jsx'
@@ -58,6 +59,7 @@ function Help({ text }) {
 const SECTIONS = [
   { id: 'overview', label: 'companyAdmin.nav.overview', icon: LayoutDashboard, title: 'companyAdmin.sections.overview.title', sub: 'companyAdmin.sections.overview.sub' },
   { id: 'team', label: 'companyAdmin.nav.team', icon: Users, title: 'companyAdmin.sections.team.title', sub: 'companyAdmin.sections.team.sub' },
+  { id: 'usage', label: 'companyAdmin.nav.usage', icon: Gauge, title: 'companyAdmin.sections.usage.title', sub: 'companyAdmin.sections.usage.sub' },
   { id: 'sso', label: 'companyAdmin.nav.sso', icon: KeyRound, title: 'companyAdmin.sections.sso.title', sub: 'companyAdmin.sections.sso.sub' },
   { id: 'ai', label: 'companyAdmin.nav.ai', icon: Cpu, title: 'companyAdmin.sections.ai.title', sub: 'companyAdmin.sections.ai.sub' },
   { id: 'billing', label: 'companyAdmin.nav.billing', icon: Receipt, title: 'companyAdmin.sections.billing.title', sub: 'companyAdmin.sections.billing.sub' },
@@ -1828,6 +1830,7 @@ export default function WorkCompanyAdmin() {
   const renderSection = () => {
     switch (active) {
       case 'team': return <TeamSection meId={viewer && viewer.id} onCompany={setCompany} />
+      case 'usage': return <UsageLimits />
       case 'sso': return <SsoSection company={company} />
       case 'ai': return <AiSection />
       case 'billing': return <BillingSection />

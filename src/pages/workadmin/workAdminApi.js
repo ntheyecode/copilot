@@ -196,6 +196,21 @@ export const workAdminApi = {
   resetUserMfa: (uid, reason) => request('POST', `/api/work/admin/users/${uid}/mfa/reset`, { reason }),
   // Add minutes to the shared company pool (server takes minutes).
   poolMinutes: (id, minutes) => request('POST', `/api/work/admin/companies/${id}/pool-minutes`, { minutes: Number(minutes) || 0 }),
+
+  // ---- Enterprise billing + quota hierarchy (superadmin, per company) --------
+  // Set the monthly pool, task policy, overage price, timezone, month-end
+  // behavior and the request/Stripe toggles. Validated + atomic server-side.
+  companyEnterprise: (id, body) => request('POST', `/api/work/admin/companies/${id}/enterprise`, body || {}),
+  // Live pool + per-user consumption (reflects the rules set above).
+  companyPool: (id) => request('GET', `/api/work/admin/companies/${id}/pool`),
+  // Top up (or correct) the live pool now, in minutes.
+  companyPoolGrant: (id, minutes) => request('POST', `/api/work/admin/companies/${id}/pool/grant`, { minutes: Number(minutes) || 0 }),
+  // Additional-hours requests from the company admin: list + approve/deny.
+  companyHourRequests: (id) => request('GET', `/api/work/admin/companies/${id}/hour-requests`),
+  decideHourRequest: (id, rid, approve, note) => request('POST', `/api/work/admin/companies/${id}/hour-requests/${rid}/decide`, { approve: !!approve, ...(note ? { note } : {}) }),
+  // Superadmin notifications inbox (pool-threshold + hour-request alerts).
+  adminNotifications: (limit) => request('GET', `/api/work/admin/notifications${limit ? `?limit=${encodeURIComponent(limit)}` : ''}`),
+  markAdminNotification: (id) => request('POST', '/api/work/admin/notifications/read', id ? { id } : {}),
   // Per-company price overrides (merged over the global pricing).
   setCompanyPricing: (id, pricing) => request('POST', `/api/work/admin/companies/${id}/pricing`, { pricing: pricing || null }),
   // Billing: the assembled statement, ledger line-item add/remove, invoice PDF.

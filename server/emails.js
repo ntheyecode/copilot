@@ -353,6 +353,33 @@ function onCompanyAccess(type, { name, adminIds, reason, at }) {
   }
 }
 
+// ---- Enterprise quota alerts (email channel; dashboard is the primary one) -
+// The company admins / owner also get an in-app notification (store), so a
+// down mailer never loses the alert (graceful degradation). These never throw.
+function companyAdminRecipients(companyId) {
+  try {
+    return (store.listCompanyUsers(companyId) || [])
+      .filter((u) => u.companyRole === 'company_admin')
+      .map((u) => ({ name: u.displayName || u.username, to: (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(u.id) : u.email }))
+      .filter((r) => r.to)
+  } catch { return [] }
+}
+async function onCompanyPoolThreshold(p) {
+  const company = p.companyName || ''
+  for (const to of OWNER_ALERT_RECIPIENTS) await sendTemplate('company_pool_threshold', to, { company, companyName: company, pct: p.pct }, {})
+}
+async function onHoursRequested(p) {
+  const company = p.companyName || ''
+  for (const to of OWNER_ALERT_RECIPIENTS) await sendTemplate('company_hours_requested', to, { company, companyName: company, hours: p.hours, byName: p.byName || '', note: p.note || '' }, {})
+}
+async function onUserCeilingThreshold(p) {
+  for (const r of companyAdminRecipients(p.companyId)) await sendTemplate('user_ceiling_threshold', r.to, { name: r.name, company: p.companyName || '', userName: p.userName || '', pct: p.pct }, {})
+}
+async function onHoursDecided(p) {
+  for (const r of companyAdminRecipients(p.companyId)) await sendTemplate('company_hours_decided', r.to, { name: r.name, company: p.companyName || '', hours: p.hours, status: p.status, note: p.note || '' }, {})
+}
+function fireAndForget(promise) { Promise.resolve(promise).catch(() => { /* already logged by sendTemplate */ }) }
+
 export function handleStoreEvent(type, payload = {}) {
   switch (type) {
     case 'ticket_created': return onTicketCreated(payload)
@@ -364,6 +391,10 @@ export function handleStoreEvent(type, payload = {}) {
     case 'password_changed': return sendPasswordChangedAsync(payload.userId)
     case 'company_disabled':
     case 'company_enabled': return onCompanyAccess(type, payload)
+    case 'company_pool_threshold': return fireAndForget(onCompanyPoolThreshold(payload))
+    case 'hours_requested': return fireAndForget(onHoursRequested(payload))
+    case 'user_ceiling_threshold': return fireAndForget(onUserCeilingThreshold(payload))
+    case 'hours_decided': return fireAndForget(onHoursDecided(payload))
     default: return undefined
   }
 }

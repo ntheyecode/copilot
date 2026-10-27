@@ -4,7 +4,7 @@
 // email for SSO), SSO config, corporate AI keys, extra hours, billing and the
 // data-redaction policy. Everything a company needs to go live lives here.
 import React, { useEffect, useState, useCallback } from 'react'
-import { Plus, Building2, ShieldCheck, Shield, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle, ShieldOff, X } from 'lucide-react'
+import { Plus, Building2, ShieldCheck, Shield, ChevronRight, ChevronDown, UserPlus, KeyRound, Check, Mail, Clock, Receipt, Copy, Trash2, AlertTriangle, ShieldOff, X, Gauge, Bell } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, Spinning, useReasonModal, ReasonModal as SharedReasonModal } from './_shared.jsx'
 import { useT } from '../../../i18n/index.jsx'
@@ -189,6 +189,151 @@ const BLANK_NEW = {
   adminSeats: 2, licenseMode: 'locked', ssoProvisioning: 'explicit',
   byTier: { basic: '', advanced: '', premium: '' },
   profile: { contactPerson: '', email: '', billingEmail: '', phone: '', address: '', city: '', state: '', country: '', postalCode: '', website: '' },
+}
+
+// Common IANA time zones offered as a datalist; the admin may type any zone and
+// the server validates it (Intl). Kept short + representative, not exhaustive.
+const TZ_SUGGEST = [
+  'America/New_York', 'America/Chicago', 'America/Denver', 'America/Los_Angeles', 'America/Sao_Paulo',
+  'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Madrid', 'Europe/Moscow',
+  'Asia/Dubai', 'Asia/Kolkata', 'Asia/Singapore', 'Asia/Shanghai', 'Asia/Tokyo', 'Asia/Seoul',
+  'Australia/Sydney', 'Pacific/Auckland', 'UTC',
+]
+
+// Enterprise billing + quota: the superadmin sets the monthly pool, task policy,
+// overage price, company time zone, month-end behavior and the request/Stripe
+// toggles for ONE company, and approves its additional-hours requests. The live
+// pool + consumption are shown so the state is actionable, never a dead end.
+function EnterprisePanel({ company, onSaved }) {
+  const t = useT()
+  const ent = company.enterprise || {}
+  const [open, setOpen] = useState(false)
+  const blank = {
+    poolHours: ent.poolMonthlySeconds ? String(ent.poolMonthlySeconds / 3600) : '',
+    monthEnd: ent.monthEnd || 'forfeit',
+    carryCapHours: ent.carryCapSeconds != null ? String(ent.carryCapSeconds / 3600) : '',
+    timezone: ent.timezone || 'America/New_York',
+    overageUsdPerHour: ent.overageUsdPerHour ? String(ent.overageUsdPerHour) : '',
+    notifyPct: ent.notifyPct || 75,
+    requestsEnabled: ent.requestsEnabled !== false,
+    stripeEnabled: !!ent.stripeEnabled,
+    taskMode: (ent.taskPolicy && ent.taskPolicy.mode) || 'unlimited',
+    taskDay: ent.taskPolicy && ent.taskPolicy.day != null ? String(ent.taskPolicy.day) : '',
+    taskWeek: ent.taskPolicy && ent.taskPolicy.week != null ? String(ent.taskPolicy.week) : '',
+    taskMonth: ent.taskPolicy && ent.taskPolicy.month != null ? String(ent.taskPolicy.month) : '',
+  }
+  const [f, setF] = useState(blank)
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState('')
+  const [ok, setOk] = useState(false)
+  const [reqs, setReqs] = useState(null)
+  const num = (v) => v.replace(/[^0-9.]/g, '')
+  const int = (v) => v.replace(/[^0-9]/g, '')
+
+  useEffect(() => { setF(blank) /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [company.id])
+  const loadReqs = useCallback(() => {
+    workAdminApi.companyHourRequests(company.id).then((d) => setReqs(d.requests || [])).catch(() => setReqs([]))
+  }, [company.id])
+  useEffect(() => { if (open) loadReqs() }, [open, loadReqs])
+
+  const save = async () => {
+    if (busy) return
+    setBusy(true); setMsg(''); setOk(false)
+    const body = {
+      poolHours: f.poolHours === '' ? 0 : Number(f.poolHours),
+      monthEnd: f.monthEnd,
+      carryCapHours: f.monthEnd === 'carryforward' ? (f.carryCapHours === '' ? null : Number(f.carryCapHours)) : null,
+      timezone: f.timezone.trim() || 'America/New_York',
+      overageUsdPerHour: f.overageUsdPerHour === '' ? 0 : Number(f.overageUsdPerHour),
+      notifyPct: Number(f.notifyPct) || 75,
+      requestsEnabled: !!f.requestsEnabled,
+      stripeEnabled: !!f.stripeEnabled,
+      taskPolicy: { mode: f.taskMode, day: f.taskDay === '' ? null : Number(f.taskDay), week: f.taskWeek === '' ? null : Number(f.taskWeek), month: f.taskMonth === '' ? null : Number(f.taskMonth) },
+    }
+    try { await workAdminApi.companyEnterprise(company.id, body); setOk(true); onSaved && onSaved() }
+    catch (e) { setMsg(e.message || t('companiesAdmin.enterprise.saveFailed')) } finally { setBusy(false) }
+  }
+  const decide = async (rid, approve) => {
+    let note = ''
+    if (!approve) { note = window.prompt(t('companiesAdmin.enterprise.denyReason')) || ''; }
+    try { await workAdminApi.decideHourRequest(company.id, rid, approve, note); loadReqs(); onSaved && onSaved() }
+    catch (e) { setMsg(e.message) }
+  }
+
+  const pending = (reqs || []).filter((r) => r.status === 'pending')
+  const usedPct = ent.poolUsedPct || 0
+
+  return (
+    <div className="co-block">
+      <button className="co-ent-head" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <Gauge size={15} /><span>{t('companiesAdmin.enterprise.title')}</span>
+        <span className="co-ent-sum">{ent.poolMonthlySeconds ? t('companiesAdmin.enterprise.poolSummary', { remaining: fmtMins(ent.poolRemainingSeconds), monthly: fmtMins(ent.poolMonthlySeconds), pct: usedPct }) : t('companiesAdmin.enterprise.noPool')}</span>
+        {pending.length ? <span className="co-ent-badge">{t('companiesAdmin.enterprise.pendingBadge', { n: pending.length })}</span> : null}
+        {open ? <ChevronDown size={15} /> : <ChevronRight size={15} />}
+      </button>
+      {open && (
+        <div className="co-ent-body">
+          {ent.poolMonthlySeconds ? (
+            <div className="co-ent-meter" aria-hidden="true"><span style={{ width: `${Math.min(100, usedPct)}%` }} className={usedPct >= 90 ? 'hot' : usedPct >= (ent.notifyPct || 75) ? 'warn' : ''} /></div>
+          ) : null}
+          <div className="wka-grid co-grid" style={{ marginBottom: 10 }}>
+            <L label={t('companiesAdmin.enterprise.poolHours')} hint={t('companiesAdmin.enterprise.poolHoursHint')}><input className="wka-input" inputMode="decimal" value={f.poolHours} onChange={(e) => setF({ ...f, poolHours: num(e.target.value) })} placeholder="10000" /></L>
+            <L label={t('companiesAdmin.enterprise.monthEnd')} hint={t('companiesAdmin.enterprise.monthEndHint')}>
+              <select className="wka-select" value={f.monthEnd} onChange={(e) => setF({ ...f, monthEnd: e.target.value })}>
+                <option value="forfeit">{t('companiesAdmin.enterprise.forfeit')}</option>
+                <option value="carryforward">{t('companiesAdmin.enterprise.carryforward')}</option>
+              </select>
+            </L>
+            {f.monthEnd === 'carryforward' ? <L label={t('companiesAdmin.enterprise.carryCap')} hint={t('companiesAdmin.enterprise.carryCapHint')}><input className="wka-input" inputMode="decimal" value={f.carryCapHours} onChange={(e) => setF({ ...f, carryCapHours: num(e.target.value) })} placeholder={t('companiesAdmin.enterprise.noCap')} /></L> : null}
+            <L label={t('companiesAdmin.enterprise.timezone')} hint={t('companiesAdmin.enterprise.timezoneHint')}>
+              <input className="wka-input" list="co-tz-list" value={f.timezone} onChange={(e) => setF({ ...f, timezone: e.target.value })} />
+              <datalist id="co-tz-list">{TZ_SUGGEST.map((z) => <option key={z} value={z} />)}</datalist>
+            </L>
+            <L label={t('companiesAdmin.enterprise.overage')} hint={t('companiesAdmin.enterprise.overageHint')}><input className="wka-input" inputMode="decimal" value={f.overageUsdPerHour} onChange={(e) => setF({ ...f, overageUsdPerHour: num(e.target.value) })} placeholder="0.00" /></L>
+            <L label={t('companiesAdmin.enterprise.notifyPct')} hint={t('companiesAdmin.enterprise.notifyPctHint')}><input className="wka-input" inputMode="numeric" value={f.notifyPct} onChange={(e) => setF({ ...f, notifyPct: int(e.target.value) })} /></L>
+          </div>
+          <div className="co-sec">{t('companiesAdmin.enterprise.taskPolicy')}</div>
+          <div className="co-inline-wrap" style={{ marginBottom: 8 }}>
+            <select className="wka-select" value={f.taskMode} onChange={(e) => setF({ ...f, taskMode: e.target.value })}>
+              <option value="unlimited">{t('companiesAdmin.enterprise.tasksUnlimited')}</option>
+              <option value="limited">{t('companiesAdmin.enterprise.tasksLimited')}</option>
+            </select>
+            {f.taskMode === 'limited' ? (
+              <>
+                <span className="co-dim">{t('companiesAdmin.enterprise.perDay')}</span><input className="wka-input co-seat-in" inputMode="numeric" value={f.taskDay} onChange={(e) => setF({ ...f, taskDay: int(e.target.value) })} />
+                <span className="co-dim">{t('companiesAdmin.enterprise.perWeek')}</span><input className="wka-input co-seat-in" inputMode="numeric" value={f.taskWeek} onChange={(e) => setF({ ...f, taskWeek: int(e.target.value) })} />
+                <span className="co-dim">{t('companiesAdmin.enterprise.perMonth')}</span><input className="wka-input co-seat-in" inputMode="numeric" value={f.taskMonth} onChange={(e) => setF({ ...f, taskMonth: int(e.target.value) })} />
+              </>
+            ) : null}
+          </div>
+          <div className="co-inline-wrap" style={{ marginBottom: 8 }}>
+            <button type="button" className={`co-toggle ${f.requestsEnabled ? 'on' : ''}`} onClick={() => setF({ ...f, requestsEnabled: !f.requestsEnabled })}>{t('companiesAdmin.enterprise.requestsToggle')} {f.requestsEnabled ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button>
+            <button type="button" className={`co-toggle ${f.stripeEnabled ? 'on' : ''}`} onClick={() => setF({ ...f, stripeEnabled: !f.stripeEnabled })}>{t('companiesAdmin.enterprise.stripeToggle')} {f.stripeEnabled ? t('companiesAdmin.on') : t('companiesAdmin.off')}</button>
+            <span className="co-dim">{t('companiesAdmin.enterprise.stripeHint')}</span>
+          </div>
+          {msg && <div className="co-msg">{msg}</div>}
+          <div className="co-inline-wrap">
+            <button type="button" className="wka-btn sm primary" disabled={busy} onClick={save}>{busy ? <Spinning /> : <Check size={14} />} {t('companiesAdmin.enterprise.save')}</button>
+            {ok && <span className="wka-saved"><Check size={14} /> {t('companiesAdmin.saved')}</span>}
+          </div>
+          {pending.length > 0 && (
+            <div style={{ marginTop: 12 }}>
+              <div className="co-block-t">{t('companiesAdmin.enterprise.requestsTitle')}</div>
+              {pending.map((r) => (
+                <div key={r.id} className="co-ent-req">
+                  <span className="co-ent-req-main">{t('companiesAdmin.enterprise.requestLine', { hours: r.hours, by: r.byName || t('companiesAdmin.enterprise.companyAdmin') })}{r.note ? <span className="co-dim"> — {r.note}</span> : null}</span>
+                  <span className="co-ent-req-act">
+                    <button className="wka-btn sm primary" onClick={() => decide(r.id, true)}>{t('companiesAdmin.enterprise.approve')}</button>
+                    <button className="wka-btn sm ghost" onClick={() => decide(r.id, false)}>{t('companiesAdmin.enterprise.deny')}</button>
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export default function Companies({ isSuperAdmin }) {
@@ -537,6 +682,9 @@ export default function Companies({ isSuperAdmin }) {
                           </div>
                         )}
 
+                        {/* Enterprise billing + quota hierarchy */}
+                        {isSuperAdmin && <EnterprisePanel company={detail.company} onSaved={() => refreshDetail(c.id)} />}
+
                         {/* People */}
                         <div className="co-block-t">{t('companiesAdmin.people.title')}</div>
                         <div className="wka-table-wrap" style={{ marginBottom: 12 }}>
@@ -699,5 +847,17 @@ const CSS = `
 .co-sso-row .wka-input,.co-sso-row .wka-select{flex:1;min-width:0}
 .co-sso-hint{font-size:11.5px;color:var(--wka-faint);margin:-4px 0 2px 130px}
 .co-sso-redirect{font-size:12px;color:var(--wka-muted);background:var(--wka-bg-2);border:1px solid var(--wka-line);border-radius:9px;padding:9px 11px;overflow-wrap:anywhere}
-@media(max-width:720px){.co-meta{margin-left:0;width:100%;white-space:normal}.co-adduser{flex-direction:column;align-items:stretch}.co-sso-row{flex-direction:column;align-items:stretch}.co-sso-row label{width:auto}.co-sso-hint{margin-left:0}}
+.co-ent-head{width:100%;display:flex;align-items:center;gap:9px;flex-wrap:wrap;background:none;border:none;cursor:pointer;font:inherit;font-weight:700;font-size:12.5px;color:var(--wka-text);padding:0}
+.co-ent-head>svg:first-child{color:var(--wka-accent);flex:none}
+.co-ent-sum{margin-left:auto;font-size:11.5px;font-weight:600;color:var(--wka-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.co-ent-badge{display:inline-flex;align-items:center;font-size:11px;font-weight:700;color:var(--wka-amber);border:1px solid color-mix(in srgb, var(--wka-amber) 40%, transparent);background:color-mix(in srgb, var(--wka-amber) 10%, transparent);border-radius:999px;padding:2px 9px;white-space:nowrap;flex:none}
+.co-ent-body{margin-top:12px;border-top:1px solid var(--wka-line);padding-top:12px}
+.co-ent-meter{height:8px;border-radius:999px;background:var(--wka-line-2);overflow:hidden;margin-bottom:12px}
+.co-ent-meter>span{display:block;height:100%;background:var(--wka-emerald);border-radius:999px;transition:width .3s}
+.co-ent-meter>span.warn{background:var(--wka-amber)}
+.co-ent-meter>span.hot{background:var(--wka-red)}
+.co-ent-req{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 0;border-top:1px dashed var(--wka-line)}
+.co-ent-req-main{flex:1 1 220px;min-width:0;font-size:12.5px;color:var(--wka-text)}
+.co-ent-req-act{display:inline-flex;gap:6px;flex:none}
+@media(max-width:720px){.co-meta{margin-left:0;width:100%;white-space:normal}.co-adduser{flex-direction:column;align-items:stretch}.co-sso-row{flex-direction:column;align-items:stretch}.co-sso-row label{width:auto}.co-sso-hint{margin-left:0}.co-ent-sum{margin-left:0;width:100%;white-space:normal}}
 `

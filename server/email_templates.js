@@ -1529,6 +1529,102 @@ The WorkCoPilot team`,
     },
     showRows: false,
   },
+
+  // ---- Enterprise quota alerts --------------------------------------------
+  company_pool_threshold: {
+    label: 'Company pool threshold reached (to AdmireVeda)',
+    category: 'billing',
+    description: 'Sent to AdmireVeda when a company has consumed the alert-threshold share of its monthly guided-hours pool.',
+    eyebrow: 'Usage alert',
+    defaultSubject: '<Company> has used <Pct>% of its monthly pool',
+    defaultHeading: 'A company is close to its monthly pool',
+    defaultBody:
+`**<Company>** has consumed **<Pct>%** of its monthly guided-hours pool.
+
+Review the company and, if appropriate, raise its monthly pool or approve an additional-hours request from the superadmin console.`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Company>', 'Company name', 'Northwind Logistics'),
+      P('<Pct>', 'Percent of the pool used', '75'),
+    ],
+    sampleData: { company: 'Northwind Logistics', pct: 75 },
+    showRows: false,
+  },
+
+  company_hours_requested: {
+    label: 'Additional-hours request (to AdmireVeda)',
+    category: 'billing',
+    description: 'Sent to AdmireVeda when a company administrator requests additional pooled hours.',
+    eyebrow: 'Hours request',
+    defaultSubject: '<Company> requested <Hours> more hours',
+    defaultHeading: 'A company requested additional hours',
+    defaultBody:
+`**<By_Name>** at **<Company>** requested **<Hours>** additional pooled guided hours.
+
+Note: <Note>
+
+Approve or decline the request from the superadmin console; approved hours are added to the company pool and billed at the company's per-hour rate.`,
+    defaultCtaLabel: null,
+    ctaUrlToken: null,
+    placeholders: [
+      P('<Company>', 'Company name', 'Northwind Logistics'),
+      P('<Hours>', 'Hours requested', '500'),
+      P('<By_Name>', 'Who requested', 'Alex Morgan'),
+      P('<Note>', 'Request note', 'End-of-quarter push'),
+    ],
+    sampleData: { company: 'Northwind Logistics', hours: 500, byName: 'Alex Morgan', note: 'End-of-quarter push' },
+    showRows: false,
+  },
+
+  user_ceiling_threshold: {
+    label: 'Team member near their allowance (to company admins)',
+    category: 'billing',
+    description: 'Sent to each company administrator when a team member reaches the alert threshold of their guided-time or task allowance.',
+    eyebrow: 'Usage alert',
+    defaultSubject: '<User_Name> has used <Pct>% of their allowance',
+    defaultHeading: 'A team member is close to their allowance',
+    defaultBody:
+`Hi <First_Name>,
+
+**<User_Name>** at **<Company>** has reached **<Pct>%** of their guided-time or task allowance.
+
+You can raise their allowance or adjust their group limits from the company console.`,
+    defaultCtaLabel: 'Open the company console',
+    ctaUrlToken: 'appUrl',
+    placeholders: [
+      P('<User_Name>', 'The team member', 'Jordan Lee'),
+      P('<Company>', 'Company name', 'Northwind Logistics'),
+      P('<Pct>', 'Percent of allowance used', '75'),
+    ],
+    sampleData: { name: 'Alex Morgan', userName: 'Jordan Lee', company: 'Northwind Logistics', pct: 75 },
+    showRows: false,
+  },
+
+  company_hours_decided: {
+    label: 'Additional-hours request decided (to company admins)',
+    category: 'billing',
+    description: 'Sent to each company administrator when AdmireVeda approves or declines an additional-hours request.',
+    eyebrow: 'Hours request',
+    defaultSubject: 'Your <Hours>-hour request was <Status>',
+    defaultHeading: 'Your additional-hours request was decided',
+    defaultBody:
+`Hi <First_Name>,
+
+Your request for **<Hours>** additional pooled hours for **<Company>** was **<Status>**.
+
+<Note>`,
+    defaultCtaLabel: 'Open the company console',
+    ctaUrlToken: 'appUrl',
+    placeholders: [
+      P('<Hours>', 'Hours requested', '500'),
+      P('<Status>', 'approved or declined', 'approved'),
+      P('<Company>', 'Company name', 'Northwind Logistics'),
+      P('<Note>', 'Decision note', 'Added to your pool now.'),
+    ],
+    sampleData: { name: 'Alex Morgan', hours: 500, status: 'approved', company: 'Northwind Logistics', note: 'Added to your pool now.' },
+    showRows: false,
+  },
 }
 
 // Finish the defs: attach global placeholders, freeze.
