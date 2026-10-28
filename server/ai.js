@@ -424,12 +424,14 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
     return openaiVision(p, cfg.apiKey, m, prompt, imgs, mediaRes)
   }
   try {
+    // NOTE: a single empty/blank read is NOT treated as a failure here. The watch
+    // loop reads many frames over a non-instant task, so an occasional unreadable
+    // frame (blur, transition, loading) is normal and the next frame recovers -
+    // forcing a model failover on one empty read would switch models on noise.
+    // Transient-empty tolerance (e.g. <=2 of 5) is a stateful WATCH-LOOP policy
+    // (see the mid-journey resilience work); one-off reads escalate an empty result
+    // to the strong backup via escalateVision's weak-result check.
     const out = await run(model)
-    // An empty/blank screen read is a failure, not an answer: some vision endpoints
-    // return '' instead of throwing, which would silently hand the watch loop
-    // nothing (no Plan B). Treat it as a retriable empty-response so it heals like
-    // every other failure (SUPREME RULE III/VI).
-    if (!String(out || '').trim()) throw httpErr(502, `${p.label} returned an empty response`)
     mark(model, false)
     return out
   } catch (e) {
@@ -450,7 +452,6 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
     notify({ scope: 'vision', reason, crossProvider: false, fromProvider: p.id, fromModel: model, toProvider: p.id, toModel: alt })
     try { visionCache.delete(`${cfg.providerId}:${String(cfg.apiKey).slice(-6)}`) } catch { /* ignore */ }
     const out = await run(alt)
-    if (!String(out || '').trim()) throw httpErr(502, `${p.label} returned an empty response`)
     mark(alt, true)
     return out
   }

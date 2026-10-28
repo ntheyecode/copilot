@@ -121,11 +121,13 @@ test('VISION: a decommissioned vision model heals to a current vision model on t
   assert.ok(switches.some((s) => s.scope === 'vision' && s.toModel === 'gpt-4o-mini'))
 })
 
-test('VISION: an empty read heals to another vision model (Plan B for screen reading)', async () => {
+// A single empty/blank read is deliberately NOT a failover trigger: the watch loop
+// tolerates transient unreadable frames (the next frame recovers), so analyseImages
+// returns the read as-is and does not switch models on one empty. (Persistent-empty
+// tolerance is a stateful watch-loop policy, tested with the mid-journey work.)
+test('VISION: a single empty read is tolerated, not a model switch', async () => {
   const { got, switches } = await visionRun({ providerId: 'openai' }, 'gpt-4o',
-    (prov, model) => model === 'gpt-4o'
-      ? jsonRes(200, { choices: [{ message: { content: '' } }] })   // empty read
-      : jsonRes(200, { choices: [{ message: { content: 'SAW ' + model } }] }))
-  assert.match(got, /SAW gpt-4o-mini/)
-  assert.ok(switches.some((s) => s.scope === 'vision'))
+    (prov, model) => jsonRes(200, { choices: [{ message: { content: model === 'gpt-4o' ? '' : 'SAW ' + model } }] }))
+  assert.equal(String(got || '').trim(), '', 'the empty read comes back empty')
+  assert.equal(switches.length, 0, 'no vision-model switch on a single empty frame')
 })
