@@ -103,3 +103,18 @@ test('completeProjectTaskForSession closes the forward-learning loop', () => {
   assert.match(fresh.learnings[0].fact, /export moved under Settings/) // the next task's expand will read this
   assert.equal(store.nextWorkProjectTask(u.id, p.id).id, fresh.tasks[1].id)  // T2 now actionable
 })
+
+test('injectWorkProjectTask preserves a supplied done-state (roped-in practice stays a real task)', () => {
+  const u = user()
+  const p = store.createWorkProject(u.id, { name: 'P', goal: 'secure cloud rollout', endState: { done: 'x' }, tasks: [
+    { title: 'Provision', doneState: 'servers ready' },
+  ] })
+  const out = store.injectWorkProjectTask(u.id, p.id, { request: 'Run the change in a staging or sandbox environment first', title: 'Stage in a sandbox before production', doneState: 'The change is shown working in staging' })
+  assert.equal(out.duplicate, false)
+  assert.equal(out.created.doneState, 'The change is shown working in staging')   // done-state preserved for rope-in
+  assert.equal(out.created.title, 'Stage in a sandbox before production')
+  // Backward compat: the free-text mid-journey inject (no title/doneState) is unchanged.
+  const out2 = store.injectWorkProjectTask(u.id, p.id, { request: 'Add a monitoring dashboard' })
+  assert.equal(out2.created.doneState, '')
+  assert.equal(out2.created.goal, 'Add a monitoring dashboard')
+})
