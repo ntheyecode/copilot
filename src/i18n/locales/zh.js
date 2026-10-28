@@ -625,6 +625,18 @@ export default {
       dismiss: '关闭',
       saw: '我看到',
     },
+    pre: {
+      title: '您想完成什么？',
+      sub: '输入或粘贴您的目标。它会变成一份清晰的清单，跟随您的屏幕一步步推进。',
+      placeholder: '构建一个 AWS VPC，包含两个公有子网、两个私有子网和一个 NAT 网关。',
+      plan: '规划步骤',
+      photo: '拍照',
+      retakePhoto: '重新拍照',
+      photoTip: '拍摄屏幕、设备或纸张',
+      helpMobile: '点击“拍照”拍摄屏幕、设备或纸张，然后由“规划步骤”读取。',
+      helpShare: '请共享<b>整个屏幕</b>（而不只是一个标签页），这样它才能在任何应用中引导您。',
+      helpFloat: '然后使用 <b>Float on top</b>，让步骤始终显示在您的工作上方。',
+    },
   },
   workProjects: {
     practices: {

@@ -4965,6 +4965,18 @@ const __base = {
       dismiss: 'Dispensar',
       saw: 'Eu vejo',
     },
+    pre: {
+      title: 'O que você quer concluir?',
+      sub: 'Digite ou cole seu objetivo. Ele vira uma lista de verificação clara que acompanha sua tela passo a passo.',
+      placeholder: 'Criar uma VPC na AWS com duas sub-redes públicas, duas privadas e um gateway NAT.',
+      plan: 'Planejar as etapas',
+      photo: 'Foto',
+      retakePhoto: 'Refazer foto',
+      photoTip: 'Tire uma foto de uma tela, um dispositivo ou um papel',
+      helpMobile: 'Toque em Foto para capturar a tela, o dispositivo ou o papel; depois, Planejar as etapas faz a leitura.',
+      helpShare: 'Compartilhe <b>a tela inteira</b> (não só uma aba) para que ele possa guiar você em qualquer aplicativo.',
+      helpFloat: 'Depois use <b>Float on top</b> para manter as etapas sobre o seu trabalho.',
+    },
   },
   workProjects: {
     page: {

@@ -27,6 +27,8 @@ import { runSpec, validateSpec } from '../../../server/compute_spec.js'
 import { clean, cleanForStore, isDlpActive } from '../../scrub.js'
 import { redactFrame, warmFrameScrub } from '../../frame_scrub.js'
 import { useTheme } from '../../theme.jsx'
+import { useSurfaceScheme } from '../../theme/useSurfaceScheme.js'
+import { useT } from '../../i18n/index.jsx'
 import { useWorkApp } from './WorkAppContext.jsx'
 import { usageTimeLeft, usageOutOfTime, usageLowNote } from './usageCopy.js'
 import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFromVideo, changed, isMobileUA, frameFromImageFile, WATCH_MAX_W, card, shell } from './lib.js'
@@ -1078,6 +1080,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
   // Light/dark for the guiding panel (same global theme as the dashboard).
   const { theme: appTheme, toggle: toggleAppTheme } = useTheme()
+  // i18n for the console copy that is keyed (the pre-plan starter; the rest of
+  // this file is still literal English and moves over wave by wave).
+  const t = useT()
 
   // Launch straight into guidance: once the session + goal are loaded and there
   // is no plan yet, plan automatically so the user lands on the step card, not a
@@ -1101,8 +1106,15 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [pipWin, setPipWin] = useState(null)
   const [pipKind, setPipKind] = useState('pip')   // 'pip' (always-on-top Document PiP) | 'popout' (separate window) for the open float
   const [floatQ, setFloatQ] = useState('')
-  const prefersDark = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : true
-  const [floatTheme, setFloatTheme] = useState(prefersDark ? 'dark' : 'light')
+  // The float follows the APP theme preference (wc_theme_mode: light | dark |
+  // heavy, heavy painting the dark palette since the float has only two), and
+  // only falls back to the OS scheme when nothing is stored. One owner for the
+  // rule: src/theme/surface_scheme.js via useSurfaceScheme(). The in-float
+  // Sun/Moon button still flips this window locally; a preference change (in
+  // the Tools menu, the Preferences panel, or another window) re-syncs it.
+  const surfaceScheme = useSurfaceScheme()
+  const [floatTheme, setFloatTheme] = useState(surfaceScheme)
+  useEffect(() => { setFloatTheme(surfaceScheme) }, [surfaceScheme])
   // Chromium (Chrome/Edge/Brave/Opera) has Document Picture-in-Picture -> a true
   // always-on-top overlay. Firefox/Safari do not, so fall back to a pop-out
   // window (a separate, movable window, just not always-on-top). Hidden on
@@ -2354,19 +2366,19 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             // Not planning yet (first frame) or screen-share was declined: the
             // goal starter + Plan button as a clean fallback.
             <div className="wc-pre">
-              <div className="wc-pre-title">What do you want to get done?</div>
-              <div className="wc-pre-sub">Type or paste your goal. It becomes a clear checklist that follows your screen step by step.</div>
-              <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical' }} placeholder="Build an AWS VPC with two public and two private subnets and a NAT gateway." />
+              <div className="wc-pre-title">{t('workGuide.pre.title')}</div>
+              <div className="wc-pre-sub">{t('workGuide.pre.sub')}</div>
+              <textarea className="input" rows={2} value={goal} onChange={(e) => setGoal(e.target.value)} style={{ width: '100%', resize: 'vertical' }} placeholder={t('workGuide.pre.placeholder')} />
               <div className="wc-caprow" style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 12 }}>
-                {isMobile && <button className="wc-tbtn wc-grow" onClick={takePhoto} disabled={busy} title="Snap a photo of a screen, a device or paper"><Camera size={14} /> {photoFrame ? 'Retake photo' : 'Photo'}</button>}
-                <button className="wc-tbtn primary wc-watch" onClick={plan} disabled={busy || !goal.trim()}><Play size={14} /> Plan the steps</button>
+                {isMobile && <button className="wc-tbtn wc-grow" onClick={takePhoto} disabled={busy} title={t('workGuide.pre.photoTip')}><Camera size={14} /> {photoFrame ? t('workGuide.pre.retakePhoto') : t('workGuide.pre.photo')}</button>}
+                <button className="wc-tbtn primary wc-watch" onClick={plan} disabled={busy || !goal.trim()}><Play size={14} /> {t('workGuide.pre.plan')}</button>
               </div>
               {err && <div style={{ color: 'var(--danger)', fontSize: 13, marginTop: 10 }}>{err}</div>}
               <div className="wc-pre-help">
                 {isMobile ? <Camera size={14} /> : <Monitor size={14} />}
                 <span>{isMobile
-                  ? 'Tap Photo to snap the screen, device or paper, then Plan reads it.'
-                  : <>Share your <b>whole screen</b> (not just a tab) so it can guide you through any app.{floatCapable ? <> Then use <b>Float on top</b> to keep the steps above your work.</> : null}</>}</span>
+                  ? t('workGuide.pre.helpMobile')
+                  : <>{t.rich('workGuide.pre.helpShare')}{floatCapable ? <> {t.rich('workGuide.pre.helpFloat')}</> : null}</>}</span>
               </div>
             </div>
           )

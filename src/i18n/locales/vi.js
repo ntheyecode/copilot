@@ -5461,6 +5461,18 @@ export default {
       dismiss: 'Đóng',
       saw: 'Tôi thấy',
     },
+    pre: {
+      title: 'Bạn muốn hoàn thành việc gì?',
+      sub: 'Nhập hoặc dán mục tiêu của bạn. Mục tiêu sẽ trở thành một danh sách kiểm tra rõ ràng, theo dõi màn hình của bạn từng bước.',
+      placeholder: 'Xây dựng một AWS VPC với hai subnet công khai, hai subnet riêng tư và một NAT gateway.',
+      plan: 'Lập kế hoạch các bước',
+      photo: 'Ảnh',
+      retakePhoto: 'Chụp lại',
+      photoTip: 'Chụp ảnh màn hình, thiết bị hoặc giấy tờ',
+      helpMobile: 'Chạm Ảnh để chụp màn hình, thiết bị hoặc giấy tờ, sau đó Lập kế hoạch các bước sẽ đọc ảnh.',
+      helpShare: 'Chia sẻ <b>toàn bộ màn hình</b> (không chỉ một thẻ) để nó có thể hướng dẫn bạn trong mọi ứng dụng.',
+      helpFloat: 'Sau đó dùng <b>Float on top</b> để giữ các bước nổi trên công việc của bạn.',
+    },
   },
   workProjects: {
     practices: {

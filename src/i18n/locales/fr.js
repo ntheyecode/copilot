@@ -4903,6 +4903,18 @@ const __base = {
       dismiss: 'Fermer',
       saw: 'Je vois',
     },
+    pre: {
+      title: 'Que voulez-vous accomplir ?',
+      sub: 'Saisissez ou collez votre objectif. Il devient une liste claire qui suit votre écran étape par étape.',
+      placeholder: 'Créer un VPC AWS avec deux sous-réseaux publics, deux sous-réseaux privés et une passerelle NAT.',
+      plan: 'Planifier les étapes',
+      photo: 'Photo',
+      retakePhoto: 'Reprendre la photo',
+      photoTip: 'Prenez en photo un écran, un appareil ou un document papier',
+      helpMobile: 'Touchez Photo pour capturer l’écran, l’appareil ou le papier, puis Planifier les étapes le lit.',
+      helpShare: 'Partagez <b>tout votre écran</b> (pas seulement un onglet) pour qu’il puisse vous guider dans n’importe quelle application.',
+      helpFloat: 'Utilisez ensuite <b>Float on top</b> pour garder les étapes au-dessus de votre travail.',
+    },
   },
   workProjects: {
     page: {

@@ -4964,6 +4964,18 @@ const __base = {
       dismiss: 'Chiudi',
       saw: 'Vedo',
     },
+    pre: {
+      title: 'Cosa vuoi portare a termine?',
+      sub: 'Scrivi o incolla il tuo obiettivo. Diventa una checklist chiara che segue il tuo schermo passo dopo passo.',
+      placeholder: 'Creare una VPC AWS con due subnet pubbliche, due private e un gateway NAT.',
+      plan: 'Pianifica i passaggi',
+      photo: 'Foto',
+      retakePhoto: 'Rifai la foto',
+      photoTip: 'Scatta una foto a uno schermo, un dispositivo o un foglio',
+      helpMobile: 'Tocca Foto per fotografare lo schermo, il dispositivo o il foglio; poi Pianifica i passaggi lo legge.',
+      helpShare: 'Condividi <b>tutto lo schermo</b> (non solo una scheda) così può guidarti in qualsiasi app.',
+      helpFloat: 'Poi usa <b>Float on top</b> per tenere i passaggi sopra il tuo lavoro.',
+    },
   },
   workProjects: {
     page: {

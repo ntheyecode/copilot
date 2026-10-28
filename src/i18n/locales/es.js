@@ -4941,6 +4941,18 @@ const __base = {
       dismiss: 'Descartar',
       saw: 'Puedo ver',
     },
+    pre: {
+      title: '¿Qué quieres conseguir?',
+      sub: 'Escribe o pega tu objetivo. Se convierte en una lista clara que sigue tu pantalla paso a paso.',
+      placeholder: 'Crear una VPC de AWS con dos subredes públicas, dos privadas y una puerta de enlace NAT.',
+      plan: 'Planificar los pasos',
+      photo: 'Foto',
+      retakePhoto: 'Repetir foto',
+      photoTip: 'Haz una foto de una pantalla, un dispositivo o un papel',
+      helpMobile: 'Toca Foto para capturar la pantalla, el dispositivo o el papel; luego Planificar los pasos lo lee.',
+      helpShare: 'Comparte <b>toda tu pantalla</b> (no solo una pestaña) para que pueda guiarte en cualquier aplicación.',
+      helpFloat: 'Después usa <b>Float on top</b> para mantener los pasos sobre tu trabajo.',
+    },
   },
   workProjects: {
     page: {

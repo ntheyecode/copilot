@@ -5365,6 +5365,18 @@ export default {
       dismiss: 'Tutup',
       saw: 'Saya melihat',
     },
+    pre: {
+      title: 'Apa yang ingin Anda selesaikan?',
+      sub: 'Ketik atau tempel tujuan Anda. Tujuan itu menjadi daftar periksa yang jelas dan mengikuti layar Anda langkah demi langkah.',
+      placeholder: 'Bangun AWS VPC dengan dua subnet publik, dua subnet privat, dan satu NAT gateway.',
+      plan: 'Rencanakan langkahnya',
+      photo: 'Foto',
+      retakePhoto: 'Ambil ulang foto',
+      photoTip: 'Ambil foto layar, perangkat, atau kertas',
+      helpMobile: 'Ketuk Foto untuk memotret layar, perangkat, atau kertas, lalu Rencanakan langkahnya membacanya.',
+      helpShare: 'Bagikan <b>seluruh layar</b> Anda (bukan hanya satu tab) agar dapat memandu Anda di aplikasi apa pun.',
+      helpFloat: 'Lalu gunakan <b>Float on top</b> agar langkah-langkah tetap berada di atas pekerjaan Anda.',
+    },
   },
   workProjects: {
     practices: {

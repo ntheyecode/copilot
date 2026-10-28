@@ -4612,6 +4612,18 @@ export default {
       dismiss: 'Schließen',
       saw: 'Ich sehe',
     },
+    pre: {
+      title: 'Was möchten Sie erledigen?',
+      sub: 'Tippen oder fügen Sie Ihr Ziel ein. Daraus wird eine klare Checkliste, die Ihrem Bildschirm Schritt für Schritt folgt.',
+      placeholder: 'Eine AWS-VPC mit zwei öffentlichen und zwei privaten Subnetzen und einem NAT-Gateway aufbauen.',
+      plan: 'Schritte planen',
+      photo: 'Foto',
+      retakePhoto: 'Foto wiederholen',
+      photoTip: 'Foto von einem Bildschirm, einem Gerät oder Papier aufnehmen',
+      helpMobile: 'Tippen Sie auf Foto, um Bildschirm, Gerät oder Papier aufzunehmen; Schritte planen liest es dann.',
+      helpShare: 'Teilen Sie Ihren <b>gesamten Bildschirm</b> (nicht nur einen Tab), damit es Sie durch jede App führen kann.',
+      helpFloat: 'Nutzen Sie dann <b>Float on top</b>, um die Schritte über Ihrer Arbeit zu halten.',
+    },
   },
   workProjects: {
     practices: {

@@ -624,6 +624,18 @@ export default {
       dismiss: '닫기',
       saw: '확인된 내용',
     },
+    pre: {
+      title: '무엇을 끝내고 싶으신가요?',
+      sub: '목표를 입력하거나 붙여 넣으세요. 화면을 따라 단계별로 진행되는 명확한 체크리스트가 됩니다.',
+      placeholder: '퍼블릭 서브넷 2개, 프라이빗 서브넷 2개, NAT 게이트웨이 1개로 AWS VPC를 구축합니다.',
+      plan: '단계 계획하기',
+      photo: '사진',
+      retakePhoto: '다시 촬영',
+      photoTip: '화면, 기기 또는 종이를 촬영합니다',
+      helpMobile: '사진을 눌러 화면, 기기 또는 종이를 촬영하면 단계 계획하기가 이를 읽습니다.',
+      helpShare: '어떤 앱에서도 안내할 수 있도록 탭 하나가 아니라 <b>전체 화면</b>을 공유하세요.',
+      helpFloat: '그런 다음 <b>Float on top</b>을 사용해 단계를 작업 위에 계속 표시하세요.',
+    },
   },
   workProjects: {
     practices: {

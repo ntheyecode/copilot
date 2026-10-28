@@ -5396,6 +5396,18 @@ export default {
       dismiss: 'Kapat',
       saw: 'Gördüğüm',
     },
+    pre: {
+      title: 'Neyi tamamlamak istiyorsunuz?',
+      sub: 'Hedefinizi yazın veya yapıştırın. Ekranınızı adım adım izleyen net bir kontrol listesine dönüşür.',
+      placeholder: 'İki genel ve iki özel alt ağ ile bir NAT ağ geçidi içeren bir AWS VPC oluştur.',
+      plan: 'Adımları planla',
+      photo: 'Fotoğraf',
+      retakePhoto: 'Yeniden çek',
+      photoTip: 'Bir ekranın, cihazın veya kağıdın fotoğrafını çekin',
+      helpMobile: 'Ekranı, cihazı veya kağıdı çekmek için Fotoğraf’a dokunun; ardından Adımları planla onu okur.',
+      helpShare: 'Herhangi bir uygulamada size rehberlik edebilmesi için yalnızca bir sekmeyi değil <b>tüm ekranınızı</b> paylaşın.',
+      helpFloat: 'Ardından adımları işinizin üstünde tutmak için <b>Float on top</b> özelliğini kullanın.',
+    },
   },
   workProjects: {
     practices: {
