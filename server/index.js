@@ -36,6 +36,7 @@ import { registerWorkImageRoutes } from './work-images.js'
 import { registerWorkCustomerRoutes } from './work_customer_routes.js'
 import { registerGuidanceDepthRoutes } from './work_depth_routes.js'
 import { registerWorkProjectRoutes } from './work_project_routes.js'
+import { registerWorkRolesRoutes } from './work_roles_routes.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerSocialRoutes, socialConfigured } from './social.js'
 import { registerOnboardingRoutes } from './onboarding.js'
@@ -1609,6 +1610,12 @@ function guardUserText(req, res, text, field, sessionId = null) {
 
 app.post('/api/work/sessions', requireWorkAuth, requireWorkSubscription, wrap((req, res) => {
   const { title, goal, scope } = req.body || {}
+  // Work-flow segregation: a company user on the worker flow does not start their
+  // own tasks; they only do what a project manager assigned. Enforced here so the
+  // missing "Start" affordance in the UI is backed by the server.
+  if (!store.userCanStartOwnTask(req.workUser.id)) {
+    return res.status(403).json({ error: 'Your tasks are assigned by your project manager. Open an assigned task to begin.', workerFlow: true })
+  }
   const g0 = guardUserText(req, res, goal, 'goal'); if (g0 === 'refused') return
   // Company free trial: a pool of 1-hour sessions shared across the company's
   // users. Consume one here; gate when the pool is used up.
@@ -3339,11 +3346,11 @@ app.post('/api/work/company/users/:id/minutes', requireWorkAuth, requireCompanyA
 app.patch('/api/work/company/users/:id', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
   const cid = req.workUser.companyId
   if (!cid) return res.status(403).json({ error: 'No company in scope.' })
-  const { companyRole, tier } = req.body || {}
+  const { companyRole, tier, workFlow } = req.body || {}
   if (companyRole !== undefined && String(req.params.id) === String(req.workUser.id)) {
     return res.status(400).json({ error: 'You cannot change your own role. Ask another company admin or support.' })
   }
-  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier }) })
+  res.json({ user: store.updateCompanyMember(cid, req.params.id, { companyRole, tier, workFlow }) })
 }))
 // Company admin: remove a member from their OWN company (detach, reversible).
 // Cannot remove yourself.
@@ -3579,6 +3586,7 @@ registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs
 registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
+registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })

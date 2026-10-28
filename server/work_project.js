@@ -17,15 +17,19 @@ export function normalizeEndState(e) {
   }
 }
 
-export function newProject({ id, workUserId, customerId = 'default', name, goal, endState = null, now = Date.now() }) {
+export function newProject({ id, workUserId, customerId = 'default', name, goal, endState = null, companyId = null, managerId = null, now = Date.now() }) {
   return {
     id,
-    workUserId,
+    workUserId,                       // creator (kept for backward-compat with per-user projects)
+    companyId: companyId || null,     // owning tenant (null = an individual's personal project)
+    managerId: managerId || null,     // the PM who manages this project (company projects)
     customerId: customerId || 'default',
     name: String(name || '').trim() || 'Untitled project',
     goal: String(goal || '').trim(),
     endState: normalizeEndState(endState),
     state: 'planning',
+    held: false,                      // a PM may hold a project (with a reason); auto-held when fully blocked
+    heldReason: null,
     createdAt: new Date(now).toISOString(),
     tasks: [],        // ordered task descriptors (the map, planned up front)
     learnings: [],    // forward-learnings ledger; each finished task appends
@@ -45,6 +49,9 @@ export function newTask({ id, title, goal, doneState = '', order = 0, dependsOn 
     state: 'pending',
     expanded: false,
     sessionId: null,
+    assigneeId: null,   // the company user doing this task (enterprise assignment)
+    assignedBy: null,   // the PM/admin who assigned or reassigned it
+    assignedAt: null,   // ISO time of the latest (re)assignment; the SLA/risk clock
     outcome: null,
     telemetry: null,   // persisted at all times (what planned/guided it, deepened, failover, duration)
     startedAt: null,

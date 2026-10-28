@@ -28,6 +28,7 @@ import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, c
 import * as customers from './work_customers.js'
 import * as proj from './work_project.js'
 import * as projInject from './work_project_inject.js'
+import * as roles from './work_roles.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -562,7 +563,8 @@ export function publicWorkUser(u) {
     // console reads this to plan richly and check on demand (no user control).
     watchLight: effectiveWatchMode(u.id) === 'light',
     companyId: u.companyId || null,
-    companyRole: u.companyRole || null,          // 'company_admin' | 'member' | null
+    companyRole: u.companyRole || null,          // member | company_admin | executive | project_manager | senior_project_manager | grc
+    workFlow: (u.companyId ? (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent') : null),  // how tasks reach a company user: worker | independent | mixed (null for individuals)
     companyName: co ? co.name : null,
     // Enterprise allocation GROUP (admin / supervisor / member) the company admin
     // governs the user by, and the per-user ceiling override (null = inherit the
@@ -2076,7 +2078,10 @@ export function workImageGenAllowed(userId) {
 //   `adminSeats` = company-admin licenses, each counted separately. 0 = unlimited.
 export const LICENSE_MODES = ['locked', 'flexible']
 export const SSO_PROVISIONING = ['explicit', 'auto']
-export const COMPANY_ROLES = ['member', 'company_admin', 'executive']
+// member / company_admin / executive (original) + the enterprise project-management
+// roles. PM / Sr PM / GRC consume a member-type seat (like executive) and are
+// validated here as the single source; capabilities live in server/work_roles.js.
+export const COMPANY_ROLES = ['member', 'company_admin', 'executive', 'project_manager', 'senior_project_manager', 'grc']
 // Seat / license counts are whole, non-negative, finite numbers. Anything else
 // (negative, NaN, Infinity, "abc", 1.5) used to slip through as 0 = unlimited or
 // as a fractional / infinite cap; now it is clamped to a sane integer. SEAT_MAX
@@ -5036,11 +5041,14 @@ export function setWorkUserPassword(workUserId, currentPassword, newPassword) {
 // OWN company. The route guards companyId; this enforces it again (defense in
 // depth) and refuses to touch an account in another company. Returns the public
 // user shape so the console can refresh the row.
-export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier } = {}) {
+export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole, tier, workFlow } = {}) {
   if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
   if (tier !== undefined && !WORK_TIERS.includes(String(tier))) throw httpErr(400, 'Bad plan.')
+  // Work flow (worker / independent / mixed) is the enterprise axis for how tasks
+  // reach this user; validated here as the single write path, admin-only.
+  if (workFlow !== undefined) u.workFlow = enumOrThrow(String(workFlow || 'independent'), ['worker', 'independent', 'mixed'], 'Work flow')
   // Strict role validation: a typo like 'admin' used to be read as 'member' and
   // silently DEMOTE a company admin.
   const finalRole = companyRole !== undefined ? normalizeCompanyRole(companyRole, u.companyRole || 'member') : (u.companyRole || 'member')
@@ -5789,9 +5797,9 @@ export function archiveWorkCustomer(companyId, id) {
 // db.workProjects (like work sessions); each task descriptor links to a work
 // session (sessionId) when its steps are expanded just-in-time.
 function _findProject(workUserId, projectId) { return (db.workProjects || []).find((p) => p && p.id === projectId && p.workUserId === workUserId) || null }
-export function createWorkProject(workUserId, { customerId = 'default', name, goal, endState = null, tasks = [] } = {}) {
+export function createWorkProject(workUserId, { customerId = 'default', name, goal, endState = null, tasks = [], companyId = null, managerId = null } = {}) {
   if (!db.workProjects) db.workProjects = []
-  const p = proj.newProject({ id: 'pr' + id(), workUserId, customerId, name, goal, endState })
+  const p = proj.newProject({ id: 'pr' + id(), workUserId, customerId, name, goal, endState, companyId, managerId })
   const input = Array.isArray(tasks) ? tasks : []
   const ids = input.map(() => 'pt' + id())
   // dependsOn may be given as 0-based indices into the input array (the engine does
@@ -5835,6 +5843,187 @@ export function linkWorkProjectTaskSession(workUserId, projectId, taskId, sessio
   const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
   const t = p.tasks.find((x) => x.id === taskId); if (!t) throw httpErr(404, 'Task not found')
   t.sessionId = sessionId || null; t.expanded = true; persist(); return t
+}
+
+// ---- Enterprise project management (flows, roles, assignment, risk) --------
+// RBAC lives in server/work_roles.js (pure, single source). These are the
+// company-scoped DATA operations over db.workProjects: every one checks the
+// acting user's companyRole + company before mutating, so segregation is
+// enforced server-side, not just hidden in the UI.
+function _companyProjects(companyId) { return (db.workProjects || []).filter((p) => p && p.companyId && String(p.companyId) === String(companyId) && p.state !== 'archived') }
+function _findCompanyProject(companyId, projectId) { return _companyProjects(companyId).find((p) => p.id === projectId) || null }
+function _actor(userId) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
+  return { id: u.id, companyId: u.companyId || null, role: u.companyRole || 'member', flow: roles.normalizeFlow(u.workFlow) }
+}
+function _logProjectEvent(companyId, ev) {
+  if (!db.workProjectLog) db.workProjectLog = []
+  db.workProjectLog.push({ at: new Date().toISOString(), companyId: companyId || null, ...ev })
+  if (db.workProjectLog.length > 20000) db.workProjectLog.splice(0, db.workProjectLog.length - 20000)
+}
+
+// A PM / Sr PM / admin creates a company project they will manage (managerId
+// defaults to the creator; only a Sr PM / admin may hand it to another PM).
+export function createCompanyProject(byUserId, { customerId = 'default', name, goal, endState = null, tasks = [], managerId = null } = {}) {
+  const a = _actor(byUserId)
+  if (!a.companyId) throw httpErr(403, 'Only a company user can create a managed project.')
+  if (!roles.canCreateProject(a.role)) throw httpErr(403, 'You do not have permission to create projects.')
+  const mgr = managerId || a.id
+  if (String(mgr) !== String(a.id) && !roles.canAssignProjectManager(a.role)) throw httpErr(403, 'You cannot assign another manager.')
+  const mu = getUser(mgr)
+  if (!mu || String(mu.companyId) !== String(a.companyId) || !roles.isPM(mu.companyRole)) throw httpErr(400, 'The manager must be a project manager in your company.')
+  const p = createWorkProject(byUserId, { customerId, name, goal, endState, tasks, companyId: a.companyId, managerId: mgr })
+  _logProjectEvent(a.companyId, { kind: 'project_created', by: a.id, projectId: p.id, managerId: mgr })
+  return p
+}
+
+// Projects a user may see: a PM sees their own; Sr PM / GRC / admin see all.
+export function listProjectsForUser(userId, { managerId = null } = {}) {
+  const a = _actor(userId)
+  if (!a.companyId) return []
+  let list = _companyProjects(a.companyId)
+  if (!roles.canSeeAllProjects(a.role)) list = list.filter((p) => roles.canViewProject(a.role, a.id, p))
+  if (managerId) list = list.filter((p) => String(p.managerId) === String(managerId))
+  return list
+}
+
+// The Worker queue: every task across the company assigned to this user.
+export function listAssignedTasks(userId, { includeDone = false } = {}) {
+  const a = _actor(userId)
+  if (!a.companyId) return []
+  const out = []
+  for (const p of _companyProjects(a.companyId)) {
+    for (const t of (p.tasks || [])) {
+      if (t.assigneeId && String(t.assigneeId) === String(a.id) && (includeDone || t.state !== 'done')) {
+        out.push({ projectId: p.id, projectName: p.name, task: t })
+      }
+    }
+  }
+  return out
+}
+
+// Whether a user may START their own task (the Start-a-task flow). Individuals
+// always can; a company user on the worker flow cannot (they only do assigned
+// tasks). Enforced in the start-task route so it is real, not a hidden button.
+export function userCanStartOwnTask(userId) {
+  const u = getUser(userId); if (!u) return false
+  if (!u.companyId) return true
+  return roles.canStartOwnTask(u.workFlow)
+}
+
+function _assertCanManage(a, p) {
+  if (!p) throw httpErr(404, 'Project not found')
+  if (!roles.canManageProject(a.role, a.id, p)) throw httpErr(403, 'You do not manage this project.')
+}
+function _assertAssignable(companyId, assigneeId) {
+  const u = getUser(assigneeId)
+  if (!u || String(u.companyId) !== String(companyId)) throw httpErr(400, 'That user is not in your company.')
+  if (!roles.canReceiveAssignment(roles.normalizeFlow(u.workFlow))) throw httpErr(400, 'That user is on an independent flow and cannot be assigned tasks. Set them to worker or mixed.')
+  return u
+}
+
+// Assign (or reassign) a task to a company user. Reassign is the same path; the
+// event is logged as a reassignment when a previous assignee existed.
+export function assignProjectTask(byUserId, projectId, taskId, assigneeId) {
+  const a = _actor(byUserId); const p = _findCompanyProject(a.companyId, projectId); _assertCanManage(a, p)
+  const t = (p.tasks || []).find((x) => x.id === taskId); if (!t) throw httpErr(404, 'Task not found')
+  _assertAssignable(a.companyId, assigneeId)
+  const from = t.assigneeId || null
+  t.assigneeId = assigneeId; t.assignedBy = a.id; t.assignedAt = new Date().toISOString()
+  persist()
+  _logProjectEvent(a.companyId, { kind: from ? 'task_reassigned' : 'task_assigned', by: a.id, projectId, taskId, from, to: assigneeId })
+  return t
+}
+export function reassignProjectTask(byUserId, projectId, taskId, newAssigneeId) {
+  return assignProjectTask(byUserId, projectId, taskId, newAssigneeId)
+}
+
+// Sr PM / admin: move a whole project to another PM (only the managing PM
+// changes; in-flight task assignees are preserved).
+export function reassignProject(byUserId, projectId, newManagerId, reason = '') {
+  const a = _actor(byUserId)
+  if (!roles.canReassignProject(a.role)) throw httpErr(403, 'Only a senior project manager can reassign a project.')
+  const p = _findCompanyProject(a.companyId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  const mu = getUser(newManagerId)
+  if (!mu || String(mu.companyId) !== String(a.companyId) || !roles.isPM(mu.companyRole)) throw httpErr(400, 'The new manager must be a project manager in your company.')
+  const from = p.managerId; p.managerId = newManagerId; persist()
+  _logProjectEvent(a.companyId, { kind: 'project_reassigned', by: a.id, projectId, from, to: newManagerId, reason: String(reason || '').slice(0, 400) })
+  return p
+}
+
+export function holdProject(byUserId, projectId, held, reason = '') {
+  const a = _actor(byUserId); const p = _findCompanyProject(a.companyId, projectId); _assertCanManage(a, p)
+  p.held = !!held; p.heldReason = held ? (String(reason || '').slice(0, 400) || null) : null; persist()
+  _logProjectEvent(a.companyId, { kind: held ? 'project_held' : 'project_resumed', by: a.id, projectId, reason: p.heldReason })
+  return p
+}
+
+// GRC / Sr PM / admin: the computed risk register across the company.
+export function companyRiskRegister(userId, { slaDays = roles.RISK_SLA_DAYS } = {}) {
+  const a = _actor(userId)
+  if (!roles.canSeeAllProjects(a.role)) throw httpErr(403, 'Not permitted.')
+  const now = Date.now(); const out = []
+  for (const p of _companyProjects(a.companyId)) {
+    if (p.held) out.push({ kind: 'project_held', projectId: p.id, projectName: p.name, managerId: p.managerId, reason: p.heldReason })
+    for (const t of (p.tasks || [])) {
+      const r = roles.taskSlaRisk(t, now, slaDays)
+      if (r) out.push({ ...r, projectId: p.id, projectName: p.name, taskTitle: t.title, managerId: p.managerId })
+      if (!t.assigneeId && t.state === 'pending' && proj.dependenciesMet(p, t)) out.push({ kind: 'unassigned_idle', projectId: p.id, projectName: p.name, taskId: t.id, taskTitle: t.title, managerId: p.managerId })
+    }
+  }
+  return out
+}
+
+// Company project status split + per-PM load (the GRC / Sr PM graphs).
+export function companyProjectStats(userId) {
+  const a = _actor(userId)
+  if (!roles.canSeeAllProjects(a.role)) throw httpErr(403, 'Not permitted.')
+  const projects = _companyProjects(a.companyId)
+  const status = { done: 0, ongoing: 0, held: 0 }
+  const byManager = {}
+  for (const p of projects) {
+    const s = p.held ? 'held' : (p.state === 'done' ? 'done' : 'ongoing')
+    status[s]++
+    const m = p.managerId || 'unassigned'
+    byManager[m] = byManager[m] || { managerId: m, projects: 0, tasks: 0, done: 0 }
+    byManager[m].projects++
+    for (const t of (p.tasks || [])) { byManager[m].tasks++; if (t.state === 'done') byManager[m].done++ }
+  }
+  return { total: projects.length, status, byManager: Object.values(byManager) }
+}
+
+// Per-user productivity across their assigned tasks (a PM reads their assignees;
+// anyone reads their own).
+export function userProductivity(byUserId, targetUserId) {
+  const a = _actor(byUserId)
+  if (String(byUserId) !== String(targetUserId) && !(roles.isPM(a.role) || roles.isCompanyAdmin(a.role))) throw httpErr(403, 'Not permitted.')
+  const tu = getUser(targetUserId); if (!tu || String(tu.companyId) !== String(a.companyId)) throw httpErr(404, 'That user is not in your company.')
+  const items = listAssignedTasks(targetUserId, { includeDone: true })
+  const counts = { assigned: items.length, notStarted: 0, inProgress: 0, completed: 0, rerun: 0 }
+  let secondsSpent = 0; const working = []
+  for (const { projectId, projectName, task } of items) {
+    if (task.state === 'pending') counts.notStarted++
+    else if (task.state === 'active') { counts.inProgress++; working.push({ projectId, projectName, taskTitle: task.title }) }
+    else if (task.state === 'done') counts.completed++
+    else if (task.state === 'rerun') counts.rerun++
+    const tele = task.telemetry || {}
+    if (typeof tele.durationMs === 'number') secondsSpent += Math.round(tele.durationMs / 1000)
+  }
+  return { userId: targetUserId, counts, secondsSpent, workingOn: working }
+}
+
+// Append-only control log: GRC / Sr PM / admin see the whole company log; a PM
+// may read the log of a specific project they manage (projectId required then).
+export function listProjectLog(userId, { projectId = null, limit = 500 } = {}) {
+  const a = _actor(userId)
+  if (!roles.canSeeAllProjects(a.role)) {
+    if (!projectId) throw httpErr(403, 'Not permitted.')
+    const p = _findCompanyProject(a.companyId, projectId)
+    if (!p || !roles.canManageProject(a.role, a.id, p)) throw httpErr(403, 'Not permitted.')
+  }
+  let list = (db.workProjectLog || []).filter((e) => String(e.companyId) === String(a.companyId))
+  if (projectId) list = list.filter((e) => String(e.projectId) === String(projectId))
+  return list.slice(-Math.max(1, Math.min(5000, limit))).reverse()
 }
 export function appendWorkProjectLearning(workUserId, projectId, fact, source = null) {
   const p = _findProject(workUserId, projectId); if (!p) return []
