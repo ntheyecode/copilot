@@ -552,34 +552,36 @@ export const WD_CSS = `
 .wd-help-nav{position:sticky;top:84px;display:flex;flex-direction:column;gap:2px}
 .wd-help-navlabel{font-size:calc(11px*var(--wc-fs,1));letter-spacing:.14em;color:var(--mut);font-weight:700;margin-bottom:8px;text-transform:uppercase}
 .wd-help-nav button{text-align:left;background:none;border:none;color:var(--mut);font:inherit;font-size:calc(14px*var(--wc-fs,1));padding:8px 11px;border-radius:9px;cursor:pointer;transition:color .15s,background .15s}
-.wd-help-nav button:hover{color:var(--tx);background:var(--chip)}
-.wd-help-nav button.on{color:var(--tx);background:var(--em-fill);box-shadow:inset 2px 0 0 var(--em)}
-.wd-help-start{margin-top:14px;display:inline-flex!important;align-items:center;gap:7px;color:var(--em)!important;border:1px solid var(--em-line)!important;justify-content:center;font-weight:600}
-.wd-help-start:hover{background:var(--em-fill)!important}
+.wd-help-nav button:hover{color:var(--tx);background:var(--line-soft)}
+.wd-help-nav button.on{color:var(--em-deep);background:var(--em-fill);font-weight:600}
+/* The one call-to-action in the help rail: the orange CTA, pill sized. */
+.wd-help-start{margin-top:14px;display:inline-flex!important;align-items:center;gap:7px;color:var(--cta-ink)!important;background:var(--cta)!important;border:none!important;border-radius:var(--r-sm)!important;justify-content:center;font-weight:600;white-space:nowrap;flex-shrink:0}
+.wd-help-start:hover{background:var(--cta-hover)!important}
 .wd-help-body{min-width:0}
-.wd-help-body h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:clamp(28px,4vw,38px);letter-spacing:-.02em}
-.wd-help-lead{color:var(--mut);font-size:calc(18px*var(--wc-fs,1));margin:10px 0 10px}
-.wd-help-body section{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px 26px;margin-bottom:16px;box-shadow:0 1px 2px rgba(17,23,38,.04),0 14px 34px -26px rgba(17,23,38,.18);scroll-margin-top:84px}
-.wd-help-body h2{font-family:"Bricolage Grotesque";font-weight:800;font-size:calc(22px*var(--wc-fs,1));letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:11px}
-.wd-help-body h2:before{content:"";width:4px;height:22px;border-radius:3px;background:var(--em);flex-shrink:0}
+.wd-help-body h1{font-family:var(--wd-display);font-weight:700;font-size:var(--fs-3xl);letter-spacing:-.015em;line-height:1.2}
+.wd-help-lead{color:var(--mut);font-size:var(--fs-lg);line-height:1.55;margin:8px 0 10px;max-width:70ch}
+/* Each help section is a white hairline card (the dashboard card recipe:
+   no outline weight, no shadow, one bold title per block). */
+.wd-help-body section{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:22px 26px;margin-bottom:var(--sp-4);box-shadow:var(--sh-0);scroll-margin-top:84px}
+.wd-help-body h2{font-family:var(--wd-display);font-weight:700;font-size:var(--fs-2xl);letter-spacing:-.01em;margin-bottom:14px;display:flex;align-items:center;gap:11px}
 .wd-help-body h3.sub{font-size:calc(15px*var(--wc-fs,1));font-weight:700;color:var(--tx);margin:16px 0 6px}
 .wd-help-body p{color:var(--mut);margin-bottom:10px}
 .wd-help-body b{color:var(--tx)}
 .wd-help-body ul,.wd-help-body ol{color:var(--mut);margin:0 0 10px;padding-left:22px;display:flex;flex-direction:column;gap:7px}
 .wd-help-body li{line-height:1.6}
-.wd-tip{display:flex;gap:9px;align-items:flex-start;background:var(--em-fill);border:1px solid var(--em-line);border-radius:12px;padding:12px 14px;color:var(--tx)!important;font-size:calc(14px*var(--wc-fs,1));margin-top:6px}
-.wd-tip svg{color:var(--em);flex-shrink:0;margin-top:3px}
+.wd-tip{display:flex;gap:9px;align-items:flex-start;background:var(--tint-green);border:1px solid transparent;border-radius:var(--r);padding:12px 14px;color:var(--tx)!important;font-size:calc(14px*var(--wc-fs,1));margin-top:6px}
+.wd-tip svg{color:var(--tint-green-ink);flex-shrink:0;margin-top:3px}
 /* Help visuals: a "how it works" illustration + inline-SVG UI mockups. The
    illustration scales to the column width (max 860) and never overflows. */
 .wd-hf-fig{margin:18px 0 22px}
-.wd-hf-img{display:block;width:100%;max-width:860px;height:auto;border-radius:16px;border:1px solid var(--line);box-shadow:var(--card-shadow)}
+.wd-hf-img{display:block;width:100%;max-width:860px;height:auto;border-radius:var(--r-lg);border:1px solid var(--line-soft);box-shadow:var(--sh-0)}
 .wd-fig{margin:14px 0 8px}
 .wd-shot{display:block;width:100%;max-width:440px;height:auto}
 .wd-figcap{margin-top:7px;font-size:calc(12px*var(--wc-fs,1));color:var(--mut);line-height:1.45;font-style:italic}
 .wd-steps{list-style:none;padding:0!important;counter-reset:wd-step;display:flex;flex-direction:column;gap:14px!important}
 .wd-steps li{position:relative;padding-left:42px;line-height:1.62;min-height:28px;display:block}
-.wd-steps li:before{counter-increment:wd-step;content:counter(wd-step);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--em-fill-2);color:var(--em);border:1px solid var(--em-line);display:inline-flex;align-items:center;justify-content:center;font-size:calc(13px*var(--wc-fs,1));font-weight:700}
-.wd-faq{border-top:1px solid var(--line);padding:16px 0}
+.wd-steps li:before{counter-increment:wd-step;content:counter(wd-step);position:absolute;left:0;top:0;width:28px;height:28px;border-radius:50%;background:var(--tint-green);color:var(--tint-green-ink);border:none;display:inline-flex;align-items:center;justify-content:center;font-size:calc(13px*var(--wc-fs,1));font-weight:700}
+.wd-faq{border-top:1px solid var(--line-soft);padding:16px 0}
 .wd-faq:first-of-type{border-top:none}
 .wd-faq b{display:block;color:var(--tx);margin-bottom:5px;font-size:calc(15px*var(--wc-fs,1))}
 .wd-faq p{margin:0}
@@ -589,12 +591,12 @@ export const WD_CSS = `
    overflows at 640. Tall captures (a menu, the answer card) get a max width so
    they read as a card, not a tower. */
 .wd-hflow{list-style:none;padding:0!important;margin:0;counter-reset:wd-hf;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px!important}
-.wd-hflow li{position:relative;min-width:0;display:flex;flex-direction:column;gap:5px;padding:16px 16px 14px;border:1px solid var(--line);border-radius:14px;background:var(--panel);line-height:1.55}
+.wd-hflow li{position:relative;min-width:0;display:flex;flex-direction:column;gap:5px;padding:16px 16px 14px;border:1px solid transparent;border-radius:var(--r);background:var(--tint-neutral);line-height:1.55}
 .wd-hflow li>b{display:block;padding-left:38px;color:var(--tx);font-size:calc(15px*var(--wc-fs,1));font-weight:700;line-height:28px;min-height:28px}
-.wd-hflow li>b:before{counter-increment:wd-hf;content:counter(wd-hf);position:absolute;left:16px;top:16px;width:28px;height:28px;border-radius:50%;background:var(--em-fill-2);color:var(--em);border:1px solid var(--em-line);display:inline-flex;align-items:center;justify-content:center;font-size:calc(13px*var(--wc-fs,1));font-weight:700}
+.wd-hflow li>b:before{counter-increment:wd-hf;content:counter(wd-hf);position:absolute;left:16px;top:16px;width:28px;height:28px;border-radius:50%;background:var(--panel);color:var(--tint-green-ink);border:none;display:inline-flex;align-items:center;justify-content:center;font-size:calc(13px*var(--wc-fs,1));font-weight:700}
 .wd-hflow li>span{color:var(--mut);font-size:calc(14px*var(--wc-fs,1))}
 .wd-hflow li>span b{color:var(--tx)}
-.wd-hflow li img{display:block;width:100%;height:auto;margin-top:10px;border:1px solid var(--line);border-radius:10px;box-shadow:var(--card-shadow)}
+.wd-hflow li img{display:block;width:100%;height:auto;margin-top:10px;border:1px solid var(--line-soft);border-radius:var(--r-sm);box-shadow:var(--sh-0)}
 .wd-hflow li img.tall{max-width:300px}
 .wd-hflow li img.mid{max-width:460px}
 @media(max-width:900px){.wd-hflow{grid-template-columns:1fr}}
