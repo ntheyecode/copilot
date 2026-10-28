@@ -10,6 +10,8 @@ import { Loading, ErrorBox, EmptyState, Spinning, useReasonModal, ReasonModal as
 import { Meter, VIZ_CSS } from './_viz.jsx'
 import CompanyConsumption from './CompanyConsumption.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './AiSourceChoice.jsx'
+import CompanyDepthPanel from './CompanyDepthPanel.jsx'
+import { DEPTH_CHOICE_CSS } from './DepthChoice.jsx'
 import { aiSetupOf, aiSourceFor } from '../../../shared/ai_source_options.js'
 import { useT } from '../../../i18n/index.jsx'
 import { OIDC_PROVIDERS, oidcIssuerExample } from '../../../shared/oidc_providers.js'
@@ -521,7 +523,7 @@ export default function Companies({ isSuperAdmin }) {
 
   return (
     <div>
-      <style>{CSS}{VIZ_CSS}{AI_SOURCE_CHOICE_CSS}</style>
+      <style>{CSS}{VIZ_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
       {reasonModal}
       {delCompany ? (
         <SharedReasonModal
@@ -683,6 +685,10 @@ export default function Companies({ isSuperAdmin }) {
                             </div>
                           </div>
                         )}
+
+                        {/* Guidance depth ceiling: what this company is granted (Standard
+                            single-task vs Deep / Projects). Their admin distributes within it. */}
+                        {isSuperAdmin && <CompanyDepthPanel company={detail.company} />}
 
                         {/* Licenses */}
                         {isSuperAdmin && lic && (

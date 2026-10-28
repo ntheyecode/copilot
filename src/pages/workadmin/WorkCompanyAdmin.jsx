@@ -15,6 +15,7 @@ import {
   Loader2, ShieldAlert, LogOut, Plus, Trash2, Check, Info, KeyRound, Lock, AlertTriangle,
   Building2, UserCog, RefreshCw, Receipt, Copy, Clock, Mail, ChevronDown, ChevronRight,
   FileText, Download, Activity, Globe, Upload, Brain, X, Blocks, Camera, BookOpen, Gauge,
+  Network, Briefcase,
 } from 'lucide-react'
 import { api } from '../../api.js'
 import { useT } from '../../i18n/index.jsx'
@@ -26,6 +27,9 @@ import BrainSecurity from './sections/BrainSecurity.jsx'
 import PolicyRules from './sections/PolicyRules.jsx'
 import HelpCompany from './sections/HelpCompany.jsx'
 import CompanyPoolCard from './sections/CompanyPoolCard.jsx'
+import GuidanceDepth from './sections/GuidanceDepth.jsx'
+import Customers from './sections/Customers.jsx'
+import { DEPTH_CHOICE_CSS } from './sections/DepthChoice.jsx'
 import { WORKADMIN_CSS } from './workadmin.css.js'
 import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, useReasonModal } from './sections/_shared.jsx'
 import { Meter, VIZ_CSS } from './sections/_viz.jsx'
@@ -58,7 +62,9 @@ function Help({ text }) {
 const SECTIONS = [
   { id: 'overview', label: 'companyAdmin.nav.overview', icon: LayoutDashboard, title: 'companyAdmin.sections.overview.title', sub: 'companyAdmin.sections.overview.sub' },
   { id: 'team', label: 'companyAdmin.nav.team', icon: Users, title: 'companyAdmin.sections.team.title', sub: 'companyAdmin.sections.team.sub' },
+  { id: 'customers', label: 'companyAdmin.nav.customers', icon: Briefcase, title: 'companyAdmin.sections.customers.title', sub: 'companyAdmin.sections.customers.sub' },
   { id: 'usage', label: 'companyAdmin.nav.usage', icon: Gauge, title: 'companyAdmin.sections.usage.title', sub: 'companyAdmin.sections.usage.sub' },
+  { id: 'depth', label: 'companyAdmin.nav.depth', icon: Network, title: 'companyAdmin.sections.depth.title', sub: 'companyAdmin.sections.depth.sub' },
   { id: 'sso', label: 'companyAdmin.nav.sso', icon: KeyRound, title: 'companyAdmin.sections.sso.title', sub: 'companyAdmin.sections.sso.sub' },
   { id: 'ai', label: 'companyAdmin.nav.ai', icon: Cpu, title: 'companyAdmin.sections.ai.title', sub: 'companyAdmin.sections.ai.sub' },
   { id: 'billing', label: 'companyAdmin.nav.billing', icon: Receipt, title: 'companyAdmin.sections.billing.title', sub: 'companyAdmin.sections.billing.sub' },
@@ -1841,7 +1847,7 @@ export default function WorkCompanyAdmin() {
   const alertsSeen = useCallback(() => setAlertBadge(0), [])
 
   const Gate = ({ icon, title, body, action }) => (
-    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}</style>
+    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
       <div className="wka-gate"><div className="box">{icon}<h2>{title}</h2><p>{body}</p>{action}</div></div>
     </div>
   )
@@ -1855,6 +1861,8 @@ export default function WorkCompanyAdmin() {
     switch (active) {
       case 'team': return <TeamSection meId={viewer && viewer.id} onCompany={setCompany} />
       case 'usage': return <UsageLimits />
+      case 'depth': return <GuidanceDepth onOpen={setActive} />
+      case 'customers': return <Customers />
       case 'sso': return <SsoSection company={company} />
       case 'ai': return <AiSection />
       case 'billing': return <BillingSection />
@@ -1874,7 +1882,7 @@ export default function WorkCompanyAdmin() {
   }
 
   return (
-    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}</style>
+    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
         <div className="wka-brand"><b>WorkCoPilot</b><span>{t('companyAdmin.shell.companyAdmin')}</span></div>
@@ -1989,5 +1997,8 @@ const WCA_CSS = `
 .wca-int-field input { width:100%; }
 .wca-int-secret { font-style:normal; margin-left:6px; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--wka-amber); }
 .wca-int-actions { display:flex; justify-content:flex-end; gap:8px; }
-.wka-btn.danger { color:var(--wka-red); }
+/* No local .wka-btn.danger override: the shared console rule (workadmin.css.js,
+   white label on the red fill) is the single source. A color-only override here
+   painted red text on the red fill, so every danger confirm in this console
+   (clear knowledge base / skills, archive customer) rendered with no legible label. */
 `

@@ -5,6 +5,12 @@
 // only (requireCompanyAdmin). Default is always returned and cannot be removed
 // (enforced in the store/work_customers layer).
 export function registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap }) {
+  // Member-readable: any company user can LIST their own company's customers (to pick
+  // one when starting a project). Read-only + tenant-scoped; individuals (no company)
+  // get an empty list. CRUD below stays company-admin only.
+  app.get('/api/work/customers', requireWorkAuth, wrap((req, res) => {
+    res.json({ customers: req.workUser.companyId ? store.listWorkCustomers(req.workUser.companyId) : [] })
+  }))
   app.get('/api/work/company/customers', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
     res.json({ customers: store.listWorkCustomers(req.workUser.companyId) })
   }))
