@@ -2268,10 +2268,29 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
         } else { console.warn(`[work] brain retrieval error: ${e.message}`) }
       }
     }
+    // Reuse a PROVEN workflow from the private brain (company templates for a
+    // company user, platform templates for a solo user - getWorkflowTemplates is
+    // tenant-routed). Deterministic match -> serve (strong) or seed (partial). This
+    // is the template rung of private-brain-first grounding (and the seed for Plan B).
+    let templateNote = ''
+    try {
+      const tmatch = work.pickWorkflowTemplate({ ...s, goal: planGoal }, store.getWorkflowTemplates(req.workUser.id))
+      if (tmatch && tmatch.template && (tmatch.tier === 'strong' || tmatch.tier === 'partial')) {
+        const tsteps = Array.isArray(tmatch.template.steps) ? tmatch.template.steps : []
+        templateNote = scrubText((tmatch.tier === 'strong'
+          ? 'A PROVEN WORKFLOW from your own private knowledge fits this goal. Follow it as the backbone, adjusting only where the live screen differs:\n'
+          : 'A SIMILAR proven workflow from your private knowledge may help. Adapt it to this goal, do not force-fit it:\n') +
+          tsteps.map((st) => `${st.n}. ${st.text}${st.validate ? ` (done when: ${st.validate})` : ''}`).join('\n')).clean
+        store.recordTemplateServed(req.workUser.id, tmatch.template.id)
+        store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'ai', text: tmatch.tier === 'strong'
+          ? 'Found a proven workflow in your private knowledge and used it as the backbone.'
+          : 'Found a similar proven workflow in your private knowledge and adapted it.' })
+      }
+    } catch (e) { console.warn(`[work] template match error: ${e.message}`) }
     const planTele = {}
     const plan = await work.workPlan(ai, call.rt, {
       tele: planTele,
-      base: store.getSystemPrompt(), mode: useMode, level: useLevel, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup, locale: readLocale(req),
+      base: store.getSystemPrompt(), mode: useMode, level: useLevel, goal: planGoal, frame: frame || null, visionModel: call.visionModel, appContext: s.appContext || '', research: (templateNote ? templateNote + '\n\n' : '') + (brainNotes ? brainNotes + '\n\n' : '') + groundedResearch, learnings: kbNotes, skills: skillNotes, strong: call.backup, locale: readLocale(req),
       // Plan-heavy when the user is in watch-light (superadmin-forced for premium):
       // each step must be fully self-contained and self-verifiable, since they
       // follow it with only light, on-demand checks instead of continuous watching.
@@ -3506,6 +3525,11 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     const summary = await work.workSummarize(ai, rr.rt, { ...s, ...scrubForAi(s, store.workUserScrubOn(req.workUser.id), req.workUser.id) })
     store.setWorkSessionSummary(req.workUser.id, req.params.id, summary)
     const ended = store.endWorkSession(req.workUser.id, req.params.id)
+    // Capture the proven workflow as a reusable template in the private brain.
+    // distill returns null unless EVERY step is confirmed done with no trailing
+    // flag, so a half-done or failed task is never captured (zero-tolerance for
+    // false templates). Best-effort: a capture failure never breaks finalize.
+    try { const rec = work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
     res.json({ ok: true, summary, session: { id: ended.id, status: ended.status, endedAt: ended.endedAt } })
   } catch (e) { sendWorkError(res, e, req) }
 })

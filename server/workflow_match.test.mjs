@@ -168,3 +168,31 @@ test('matcher picks the highest-scoring template among several candidates', () =
   assert.equal(r.template, okta)
   assert.equal(r.tier, 'strong')
 })
+
+// ---------------------------------------------------------------------------
+// pickWorkflowTemplate - the /plan reuse wrapper (builds the query env from the
+// live session the same way distill does, then matches). Round trip: a proven
+// session distills to a template, and a new matching task finds it.
+// ---------------------------------------------------------------------------
+test('pickWorkflowTemplate matches a new task to a proven template (round trip)', () => {
+  const tmpl = work.distillWorkflowTemplate(cleanSession())
+  const newSession = {
+    goal: "Deactivate a former employee's Okta account",
+    appContext: 'Okta',
+    scope: [{ q: 'Which jurisdiction?', a: 'US-CA' }, { q: 'Which software are you using?', a: 'Okta' }],
+  }
+  const m = work.pickWorkflowTemplate(newSession, [tmpl])
+  assert.ok(m.tier === 'strong' || m.tier === 'partial', `a close match should serve/seed, got ${m.tier}`)
+  assert.ok(m.template && m.template.goalSig === tmpl.goalSig)
+})
+test('pickWorkflowTemplate returns none for an unrelated goal', () => {
+  const tmpl = work.distillWorkflowTemplate(cleanSession())
+  const m = work.pickWorkflowTemplate({ goal: 'Bake a chocolate cake', appContext: 'Oven', scope: [] }, [tmpl])
+  assert.equal(m.tier, 'none')
+  assert.equal(m.template, null)
+})
+test('pickWorkflowTemplate is a safe no-op with no templates', () => {
+  const m = work.pickWorkflowTemplate({ goal: 'anything', appContext: 'X', scope: [] }, [])
+  assert.equal(m.tier, 'none')
+  assert.equal(m.template, null)
+})

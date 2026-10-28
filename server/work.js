@@ -2338,3 +2338,21 @@ export function matchWorkflowTemplate(goal, app, environment, templates) {
   }
   return { template: tier === 'none' ? null : best.template, score: best.score, tier }
 }
+
+// Thin reuse wrapper for the /plan handler (keeps index.js a one-liner, SUPREME
+// XV): build the query environment from the LIVE session exactly the way distill
+// builds a template's environment (same internal helpers = one source), then score
+// the tenant's stored templates. Returns { template, score, tier }.
+export function pickWorkflowTemplate(session, templates) {
+  const s = session || {}
+  const scope = cleanWorkflowScope(s.scope)
+  const software = softwareFromScope(scope)
+  const app = normalizeApp(software[0] || s.appContext || '') || (s.appContext || '')
+  const environment = {
+    jurisdiction: jurisdictionFromScope(scope),
+    software,
+    manual: manualFromScope(scope),
+    conventions: scope,
+  }
+  return matchWorkflowTemplate(s.goal || '', app, environment, Array.isArray(templates) ? templates : [])
+}
