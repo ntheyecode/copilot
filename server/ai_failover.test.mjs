@@ -7,7 +7,7 @@
 // superadmin incident trail is complete. fetch is stubbed per-URL.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { chat, AI_CODES } from './ai.js'
+import { chat, analyseImages, AI_CODES } from './ai.js'
 
 const jsonRes = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body })
 let chatHandler = () => jsonRes(200, { choices: [{ message: { content: 'OK' } }] })
@@ -69,4 +69,65 @@ test('a key/auth error is surfaced, never masked or failed-over (SUPREME RULE II
   assert.ok(err)
   assert.equal(err.status, 401)
   assert.equal(switches.length, 0)
+})
+
+// An EMPTY/blank model response (the provider returns 200 with no content, as
+// gpt-oss-20b does on hard/long prompts) is NOT a model-error and NOT a rate
+// limit, so it used to re-throw a bare 502 and give the user nothing - no Plan B.
+// It must now flow through the SAME ladder: heal on-key, then fail over, with the
+// incident trail showing reason 'empty' (SUPREME RULE III/VI, never silent).
+test('an empty response fails over to the next provider and returns its answer', async () => {
+  const { got, err, switches } = await run(
+    { providerId: 'groq', chatModel: 'openai/gpt-oss-20b', alternates: [{ providerId: 'openai', apiKey: 'k2' }] },
+    (prov, model) => prov === 'groq'
+      ? jsonRes(200, { choices: [{ message: { content: '' } }] })   // empty on every groq model
+      : jsonRes(200, { choices: [{ message: { content: 'OK openai ' + model } }] }))
+  assert.equal(err, undefined)                                      // (a) no throw - a working provider answered
+  assert.match(got, /OK openai/)
+  assert.ok(switches.some((s) => s.reason === 'empty'))             // (b) the empty reason is on the incident trail
+  assert.ok(switches.some((s) => s.crossProvider && s.toProvider === 'openai'))
+})
+
+test('an empty response on EVERY provider throws a crisp coded error (not a hang, not a silent "")', async () => {
+  const { got, err, switches } = await run(
+    { providerId: 'groq', chatModel: 'openai/gpt-oss-20b', alternates: [{ providerId: 'openai', apiKey: 'k2' }] },
+    () => jsonRes(200, { choices: [{ message: { content: '' } }] }))   // empty on groq AND openai
+  assert.equal(got, undefined)
+  assert.ok(err)
+  assert.equal(err.code, AI_CODES.EXHAUSTED)
+  assert.ok(switches.some((s) => s.fatal && s.code === AI_CODES.EXHAUSTED))
+})
+
+// ---- VISION failover (analyseImages) --------------------------------------
+// Screen reading must stay up too: a decommissioned or empty-returning vision
+// model heals to another vision-capable model on the SAME key (cross-provider
+// vision failover is handled one layer up). Behavior test, not just the filter.
+const IMG = 'data:image/jpeg;base64,AAAA'
+const visionRun = async (cfgIn, model, handler) => {
+  chatHandler = handler
+  const switches = []
+  const cfg = { apiKey: 'k', onSwitch: (e) => switches.push(e), ...cfgIn }
+  let got, err
+  try { got = await analyseImages(cfg, 'read this screen', [IMG], model, { mediaRes: 'low' }) } catch (e) { err = e }
+  return { got, err, switches }
+}
+
+test('VISION: a decommissioned vision model heals to a current vision model on the same key', async () => {
+  const { got, switches } = await visionRun({ providerId: 'openai' }, 'gpt-4o',
+    (prov, model) => model === 'gpt-4o'
+      ? jsonRes(404, { error: { message: 'The model gpt-4o does not exist or is not available' } })
+      : jsonRes(200, { choices: [{ message: { content: 'SAW ' + model } }] }))
+  assert.match(got, /SAW gpt-4o-mini/)
+  assert.ok(switches.some((s) => s.scope === 'vision' && s.toModel === 'gpt-4o-mini'))
+})
+
+// A single empty/blank read is deliberately NOT a failover trigger: the watch loop
+// tolerates transient unreadable frames (the next frame recovers), so analyseImages
+// returns the read as-is and does not switch models on one empty. (Persistent-empty
+// tolerance is a stateful watch-loop policy, tested with the mid-journey work.)
+test('VISION: a single empty read is tolerated, not a model switch', async () => {
+  const { got, switches } = await visionRun({ providerId: 'openai' }, 'gpt-4o',
+    (prov, model) => jsonRes(200, { choices: [{ message: { content: model === 'gpt-4o' ? '' : 'SAW ' + model } }] }))
+  assert.equal(String(got || '').trim(), '', 'the empty read comes back empty')
+  assert.equal(switches.length, 0, 'no vision-model switch on a single empty frame')
 })

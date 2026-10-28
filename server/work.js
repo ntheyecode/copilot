@@ -668,6 +668,13 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
   const system = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy + methodAnchorBlock(goal, appContext), locale)
   const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
+  // Depth telemetry (observability only; does NOT change behavior): `critiqued` =
+  // the deep self-critique pass actually ran and the model responded; `deepened` =
+  // it produced an accepted hardened plan. Distinct from `escalated` (a stronger
+  // BACKUP model was used), which stays false on the platform path where the best
+  // model is already primary - the reason the "did deep planning run" signal was
+  // previously invisible.
+  let critiqued = false, deepened = false
   if (frame && visionModel) {
     const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
     const isWeak = (r) => { const p = extractJson(r) || {}; return !(Array.isArray(p.steps) && p.steps.length) }
@@ -693,11 +700,13 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
       const critiqueCfg = (strong && strong.cfg) ? strong.cfg : cfg
       const craw = await ai.generate(critiqueCfg, critiqueSystem, critiqueUser, tele)
       const cparsed = extractJson(craw, 'steps')
+      critiqued = true   // the deep self-critique pass ran and the model responded
       // Accept the hardened plan only when it is a real, non-empty plan that did
       // not turn into a refusal and did not DROP steps; otherwise keep the draft.
       const draftLen = Array.isArray(parsed.steps) ? parsed.steps.length : 0
       if (cparsed && !cparsed.refusal && Array.isArray(cparsed.steps) && cparsed.steps.length >= draftLen && cparsed.steps.length > 0) {
         parsed = cparsed
+        deepened = true   // an accepted, hardened plan replaced the draft
         if (strong && strong.cfg) { escalated = true; reason = reason || 'deep' }
       }
     } catch { /* keep the draft on any critique failure - graceful degradation */ }
@@ -764,6 +773,8 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
     }).filter((s) => s.text),
     escalated,
     reason,
+    critiqued,
+    deepened,
     // A one-line GENERALIZED learning the model flagged (a tool's current UI/flow
     // that differs from older knowledge), for the cross-session KB. Scrubbed; the
     // caller decides whether/where to store it. Empty when nothing new.
@@ -814,7 +825,13 @@ export function workHowToSystem({ base, voice = '', mode = 'stepwise', level = '
     'and the user reference documents critically (ground in them, but flag and correct anything ' +
     'wrong or outdated). Do NOT re-plan the whole goal; stay inside this one action. If the action ' +
     'is something you must not help with (SAFETY), return {"refusal":"..."} and no steps.\n' +
-    'Return ONLY JSON: {"refusal":"<only when declining>","steps":[{"text":"...","validate":"...","url":"...","commands":["..."],"code":{"file":"...","content":"..."},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this sub-step is grounded in; empty when from general knowledge>"}]}' +
+    'LEARNING FOR NEXT TIME. If doing this action relies on something NEWER than common knowledge ' +
+    '(a tool\'s UI that moved, a renamed or relocated control, a changed step or requirement, or a ' +
+    'current best practice that supersedes an older one), add a top-level "learning": ONE generalized ' +
+    'sentence naming the app and the current fact. It must be reusable and general, never specific to ' +
+    'this person, their data, their account or their screen. Omit "learning" when nothing is newer ' +
+    'than common knowledge.\n' +
+    'Return ONLY JSON: {"refusal":"<only when declining>","learning":"<OPTIONAL generalized tool fact; omit if nothing new>","steps":[{"text":"...","validate":"...","url":"...","commands":["..."],"code":{"file":"...","content":"..."},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this sub-step is grounded in; empty when from general knowledge>"}]}' +
     SOURCE_ATTRIBUTION_RULE
 }
 export function workHowToUser({ goal, action, appContext, research = '' }) {
@@ -2320,4 +2337,22 @@ export function matchWorkflowTemplate(goal, app, environment, templates) {
     tier = 'partial'
   }
   return { template: tier === 'none' ? null : best.template, score: best.score, tier }
+}
+
+// Thin reuse wrapper for the /plan handler (keeps index.js a one-liner, SUPREME
+// XV): build the query environment from the LIVE session exactly the way distill
+// builds a template's environment (same internal helpers = one source), then score
+// the tenant's stored templates. Returns { template, score, tier }.
+export function pickWorkflowTemplate(session, templates) {
+  const s = session || {}
+  const scope = cleanWorkflowScope(s.scope)
+  const software = softwareFromScope(scope)
+  const app = normalizeApp(software[0] || s.appContext || '') || (s.appContext || '')
+  const environment = {
+    jurisdiction: jurisdictionFromScope(scope),
+    software,
+    manual: manualFromScope(scope),
+    conventions: scope,
+  }
+  return matchWorkflowTemplate(s.goal || '', app, environment, Array.isArray(templates) ? templates : [])
 }

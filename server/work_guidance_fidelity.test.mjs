@@ -11,7 +11,7 @@
 // ===========================================================================
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { workPlan, workPlanSystem, workNavigate, workNavigateSystem, workAskSystem, workWatch, workAsk, normalizeLevel } from './work.js'
+import { workPlan, workPlanSystem, workNavigate, workNavigateSystem, workAskSystem, workWatch, workAsk, workHowTo, workHowToSystem, normalizeLevel } from './work.js'
 import { isVerifyStep, hasFailureSignal } from './work_deep_plan.js'
 
 // ---- stubs ----------------------------------------------------------------
@@ -207,6 +207,8 @@ test('workPlan hardens a branchy DNS draft with a second self-critique pass', as
   assert.equal(ai.calls.length, 2, 'a branchy goal should run the draft + critique pass')
   assert.ok(out.steps.length >= 5, 'the hardened plan should carry the full round trip')
   assert.equal(out.reason, 'deep')
+  assert.equal(out.critiqued, true, 'the deep self-critique pass ran')
+  assert.equal(out.deepened, true, 'the hardened plan was accepted')
   const withBranches = out.steps.find((s) => Array.isArray(s.branches))
   assert.ok(withBranches && withBranches.branches.length === 2, 'the registrar fork should be encoded as branches')
   const withOnFail = out.steps.find((s) => Array.isArray(s.onFail))
@@ -214,11 +216,45 @@ test('workPlan hardens a branchy DNS draft with a second self-critique pass', as
   assert.ok(withOnFail.onFail[0].cause && withOnFail.onFail[0].fix, 'each onFail entry has a cause and a fix')
 })
 
+// Regression for the telemetry blind spot: on the platform path there is NO strong
+// backup (the best model is already primary), so `escalated` stays false even when
+// the deep pass ran. `critiqued`/`deepened` must still report the truth, so "did
+// deep planning happen" is observable.
+test('workPlan reports critiqued/deepened even with no strong backup', async () => {
+  const draft = JSON.stringify({ appContext: 'DNS', steps: [{ text: 'Verify the DNS TXT record', validate: 'it shows verified' }] })
+  const hardened = JSON.stringify({ appContext: 'DNS', steps: [
+    { text: 'Open your domain registrar DNS settings', validate: 'the DNS panel is open' },
+    { text: 'Verify the DNS TXT record', validate: 'it shows verified' },
+  ] })
+  const ai = textStub([draft, hardened])
+  const out = await workPlan(ai, {}, { base: 'B', goal: 'add a DNS TXT record and verify it' })   // NO strong
+  assert.equal(ai.calls.length, 2, 'the critique pass still runs without a backup model')
+  assert.equal(out.escalated, false, 'no stronger backup was used')
+  assert.equal(out.critiqued, true, 'but the deep pass ran - now observable')
+  assert.equal(out.deepened, true, 'and the hardened plan was accepted')
+})
+
 test('workPlan does NOT run the critique pass for a plain linear task', async () => {
   const ai = textStub([JSON.stringify({ appContext: 'Finder', steps: [{ text: 'Rename the file to report.pdf', validate: 'the file is renamed' }] })])
   const out = await workPlan(ai, {}, { base: 'B', goal: 'rename a file on my desktop' })
   assert.equal(ai.calls.length, 1, 'a plain linear task should not pay for a second pass')
   assert.equal(out.steps.length, 1)
+  assert.equal(out.critiqued, false, 'no critique pass on a linear task')
+  assert.equal(out.deepened, false)
+})
+
+// ---- how-to drill-down captures a learning (A2) ---------------------------
+test('workHowToSystem asks for a generalized learning', () => {
+  assert.match(workHowToSystem({ base: 'B' }), /learning/i)
+})
+test('workHowTo returns a generalized learning when the model emits one', async () => {
+  const ai = textStub([JSON.stringify({
+    learning: 'In Okta, SCIM provisioning moved under Applications > Provisioning',
+    steps: [{ text: 'Open Applications', validate: 'the app list is shown' }],
+  })])
+  const out = await workHowTo(ai, {}, { base: 'B', goal: 'set up SCIM', action: 'enable provisioning' })
+  assert.equal(out.steps.length, 1)
+  assert.match(out.learning || '', /SCIM provisioning moved/)
 })
 
 // ---- guidance strength (the user-chosen register) -------------------------
