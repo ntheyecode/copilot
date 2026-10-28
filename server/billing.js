@@ -310,7 +310,7 @@ async function handleEvent(s, store, event) {
         sendOwnerSubscriptionAlertAsync('cancellation', { user, plan, status, cycle, stripeId: subId })
         // Confirm the cancellation to the CUSTOMER (access-until shown when a paid period remains).
         const toC = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
-        if (toC) sendTemplateAsync('subscription_canceled', toC, { name: user.displayName || user.username, plan: plan ? plan[0].toUpperCase() + plan.slice(1) : 'your', accessUntil: patch.currentPeriodEnd })
+        if (toC) sendTemplateAsync('subscription_canceled', toC, { name: user.displayName || user.username, plan: plan ? plan[0].toUpperCase() + plan.slice(1) : '', accessUntil: patch.currentPeriodEnd })
       }
     } else if (status === 'past_due') {
       if (priorStatus !== 'past_due') sendOwnerSubscriptionAlertAsync('past_due', { user, plan, status, cycle, stripeId: subId })
@@ -860,7 +860,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
             sendOwnerSubscriptionAlertAsync('cancellation', { user: info.user, plan: sb.plan || null, status: 'canceled', cycle: sb.cycle || null, stripeId: info.subId })
             // Immediate admin cancel: access ends now, so no access-until date is sent.
             const toAc = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(info.user.id) : null
-            if (toAc) sendTemplateAsync('subscription_canceled', toAc, { name: info.user.displayName || info.user.username, plan: sb.plan ? sb.plan[0].toUpperCase() + sb.plan.slice(1) : 'your' })
+            if (toAc) sendTemplateAsync('subscription_canceled', toAc, { name: info.user.displayName || info.user.username, plan: sb.plan ? sb.plan[0].toUpperCase() + sb.plan.slice(1) : '' })
           }
         }
         res.json({ ok: true, atPeriodEnd, subscription: store.getSubscription(req.params.id) })

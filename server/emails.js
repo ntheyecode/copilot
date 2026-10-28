@@ -297,7 +297,7 @@ export function sendPasswordChangedAsync(userId) {
   // so the notice reflects the account as it was at the moment of the change.
   const u = store.getUser(userId); if (!u || u.ssoEmail) return
   const to = userEmail(u.id); if (!to) return
-  sendTemplateAsync('password_changed', to, { name: userName(u) })
+  sendTemplateAsync('password_changed', to, { name: userName(u), username: u.username })
 }
 
 // ---- Store-event subscriber: support tickets + account security notices ----
@@ -332,21 +332,21 @@ function onTicketCreated({ ticket: t, message }) {
   const to = userEmail(t.userId)
   if (to) sendTemplateAsync('ticket_received', to, { name: userName(u), ticketId, subject, category, message: message || '', createdAt: t.createdAt, ticketUrl: SUPPORT_URL })
   const inbox = staffInbox()
-  if (inbox) sendTemplateAsync('ticket_staff_notify', inbox, { event: 'New support ticket', name: userName(u) || t.username, username: t.username, email: to || '', company, ticketId, subject, category, message: message || '', submittedAt: t.createdAt, adminUrl: ADMIN_URL })
+  if (inbox) sendTemplateAsync('ticket_staff_notify', inbox, { event: 'New support ticket', name: userName(u) || t.username, username: t.username, email: to || '', company, ticketId, subject, category, status: t.status || 'open', message: message || '', submittedAt: t.createdAt, adminUrl: ADMIN_URL })
 }
 // Staff replied: "you have a reply" to the requester.
 function onTicketAdminReply({ ticket: t, message: m }) {
   if (!t || !m) return
   const { u, ticketId, subject } = ticketCommon(t)
   const to = userEmail(t.userId)
-  if (to) sendTemplateAsync('ticket_reply', to, { name: userName(u), ticketId, subject, reply: m.text || '', repliedBy: m.by || 'Support', repliedAt: m.at, ticketUrl: SUPPORT_URL })
+  if (to) sendTemplateAsync('ticket_reply', to, { name: userName(u), ticketId, subject, status: t.status || 'open', reply: m.text || '', repliedBy: m.by || 'Support', repliedAt: m.at, ticketUrl: SUPPORT_URL })
 }
 // Requester replied (ticket reopened): staff alert so it does not wait unseen.
 function onTicketUserReply({ ticket: t, message: m }) {
   if (!t || !m) return
   const { u, ticketId, subject, category, company } = ticketCommon(t)
   const inbox = staffInbox()
-  if (inbox) sendTemplateAsync('ticket_staff_notify', inbox, { event: 'New reply on a support ticket', name: userName(u) || t.username, username: t.username, email: userEmail(t.userId) || '', company, ticketId, subject, category, message: m.text || '', submittedAt: m.at, adminUrl: ADMIN_URL })
+  if (inbox) sendTemplateAsync('ticket_staff_notify', inbox, { event: 'New reply on a support ticket', name: userName(u) || t.username, username: t.username, email: userEmail(t.userId) || '', company, ticketId, subject, category, status: t.status || 'open', message: m.text || '', submittedAt: m.at, adminUrl: ADMIN_URL })
 }
 // Account disabled / re-enabled by an administrator: tell the owner.
 function onUserAccess(type, { userId, reason, at }) {
