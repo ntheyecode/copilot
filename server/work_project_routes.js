@@ -6,6 +6,7 @@
 // Self-contained register (SUPREME XV); thin over the tested modules + store.
 import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
+import { buildProjectReport } from './work_project_report.js'
 
 export function registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
   const denyIfNotDeep = (req, res) => {
@@ -96,5 +97,20 @@ export function registerWorkProjectRoutes(app, { store, work, ai, requireWorkAut
     if (denyIfNotDeep(req, res)) return
     const t = store.setWorkProjectTaskState(req.workUser.id, req.params.id, req.params.taskId, String((req.body || {}).state || ''))
     res.json({ task: t })
+  }))
+
+  // Generate a project report on demand: success (all completed tasks' outcomes +
+  // steps + end state), security, or error. Aggregates each task's guided session.
+  app.post('/api/work/projects/:id/report', requireWorkAuth, wrap((req, res) => {
+    if (denyIfNotDeep(req, res)) return
+    const p = store.getWorkProject(req.workUser.id, req.params.id)
+    if (!p) return res.status(404).json({ error: 'Project not found' })
+    const sessionsByTaskId = {}
+    for (const t of (p.tasks || [])) {
+      if (!t.sessionId) continue
+      const s = store.getWorkSession(req.workUser.id, t.sessionId)
+      if (s) sessionsByTaskId[t.id] = s
+    }
+    res.json({ report: buildProjectReport(p, sessionsByTaskId, String((req.body || {}).kind || 'success')) })
   }))
 }
