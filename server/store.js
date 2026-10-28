@@ -26,6 +26,8 @@ import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
 import * as customers from './work_customers.js'
+import * as proj from './work_project.js'
+import * as projInject from './work_project_inject.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -5736,6 +5738,86 @@ export function archiveWorkCustomer(companyId, id) {
   const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
   const r = customers.archiveCustomer(c.customers, id); if (r.error) throw httpErr(400, r.error)
   c.customers = r.list; persist(); return { ok: true }
+}
+
+// ---- Projects (Depth-2: Customer > Project > Task > Step) -------------------
+// Thin persistence over the pure work_project model. A project is stored in
+// db.workProjects (like work sessions); each task descriptor links to a work
+// session (sessionId) when its steps are expanded just-in-time.
+function _findProject(workUserId, projectId) { return (db.workProjects || []).find((p) => p && p.id === projectId && p.workUserId === workUserId) || null }
+export function createWorkProject(workUserId, { customerId = 'default', name, goal, endState = null, tasks = [] } = {}) {
+  if (!db.workProjects) db.workProjects = []
+  const p = proj.newProject({ id: 'pr' + id(), workUserId, customerId, name, goal, endState })
+  const input = Array.isArray(tasks) ? tasks : []
+  const ids = input.map(() => 'pt' + id())
+  // dependsOn may be given as 0-based indices into the input array (the engine does
+  // not know the generated ids yet) OR as explicit ids; remap indices to ids.
+  p.tasks = input.map((t, i) => proj.newTask({
+    id: ids[i], title: t.title, goal: t.goal, doneState: t.doneState,
+    order: t.order != null ? t.order : i + 1,
+    dependsOn: (Array.isArray(t.dependsOn) ? t.dependsOn : []).map((d) => (typeof d === 'number' ? ids[d] : d)).filter(Boolean),
+  }))
+  p.state = proj.deriveProjectState(p)
+  db.workProjects.push(p); persist(); return p
+}
+export function getWorkProject(workUserId, projectId) { return _findProject(workUserId, projectId) }
+export function listWorkProjects(workUserId, { customerId = null } = {}) {
+  let list = (db.workProjects || []).filter((p) => p && p.workUserId === workUserId && p.state !== 'archived')
+  if (customerId) list = list.filter((p) => p.customerId === customerId)
+  return list
+}
+export function addWorkProjectTask(workUserId, projectId, taskLike = {}) {
+  const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  const t = proj.newTask({ id: 'pt' + id(), title: taskLike.title, goal: taskLike.goal, doneState: taskLike.doneState, order: taskLike.order != null ? taskLike.order : p.tasks.length + 1, dependsOn: taskLike.dependsOn || [] })
+  p.tasks.push(t); p.state = proj.deriveProjectState(p); persist(); return t
+}
+// Replace the ordered task set (used by mid-journey injection after placement).
+export function setWorkProjectTasks(workUserId, projectId, tasks) {
+  const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  if (Array.isArray(tasks)) p.tasks = tasks
+  p.state = proj.deriveProjectState(p); persist(); return p
+}
+export function setWorkProjectTaskState(workUserId, projectId, taskId, to, patch = {}) {
+  const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  const t = p.tasks.find((x) => x.id === taskId); if (!t) throw httpErr(404, 'Task not found')
+  if (!proj.canTransitionTask(t.state, to)) throw httpErr(400, `A task cannot move from ${t.state} to ${to}.`)
+  Object.assign(t, patch, { state: to })
+  if (to === 'active' && !t.startedAt) t.startedAt = new Date().toISOString()
+  if (to === 'done') t.endedAt = new Date().toISOString()
+  p.state = proj.deriveProjectState(p); persist(); return t
+}
+// Link a task to its expanded work session (just-in-time step expansion).
+export function linkWorkProjectTaskSession(workUserId, projectId, taskId, sessionId) {
+  const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  const t = p.tasks.find((x) => x.id === taskId); if (!t) throw httpErr(404, 'Task not found')
+  t.sessionId = sessionId || null; t.expanded = true; persist(); return t
+}
+export function appendWorkProjectLearning(workUserId, projectId, fact, source = null) {
+  const p = _findProject(workUserId, projectId); if (!p) return []
+  p.learnings = proj.appendLearning(p, fact, source); persist(); return p.learnings
+}
+// Completed-task storage/tagging: record outcome + telemetry on the task descriptor.
+export function recordWorkProjectTaskOutcome(workUserId, projectId, taskId, { outcome = null, telemetry = null } = {}) {
+  const p = _findProject(workUserId, projectId); if (!p) return null
+  const t = p.tasks.find((x) => x.id === taskId); if (!t) return null
+  if (outcome != null) t.outcome = outcome
+  if (telemetry != null) t.telemetry = telemetry
+  persist(); return t
+}
+export function nextWorkProjectTask(workUserId, projectId) { const p = _findProject(workUserId, projectId); return p ? proj.nextActionableTask(p) : null }
+export function availableWorkProjectTasks(workUserId, projectId) { const p = _findProject(workUserId, projectId); return p ? proj.availableTasks(p) : [] }
+// Mid-journey injection: dedupe against existing tasks, else create + place by
+// dependency (zero-tolerance guard against a false/duplicate task). Returns either
+// { duplicate:true, task } (already covered) or { duplicate:false, created, placed }.
+export function injectWorkProjectTask(workUserId, projectId, { request, blocksTaskId = null, dependsOn = null } = {}) {
+  const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  const req = String(request || '').trim(); if (!req) throw httpErr(400, 'Say what to add.')
+  const dup = projInject.findSimilarTask(p, req)
+  if (dup) return { duplicate: true, task: dup }
+  const t = proj.newTask({ id: 'pt' + id(), title: req, goal: req })
+  const { tasks, placed } = projInject.placeInjectedTask(p, t, { blocksTaskId, dependsOn })
+  p.tasks = tasks; p.state = proj.deriveProjectState(p); persist()
+  return { duplicate: false, created: t, placed }
 }
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)
