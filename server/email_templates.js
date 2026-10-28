@@ -19,16 +19,28 @@
 //      result to the envelope. Nothing customer-facing is hardcoded in a way
 //      an admin cannot change.
 //
-// Body text is plain text with three small conveniences (documented in
+// Body text is plain text with a few small conveniences (documented in
 // BODY_SYNTAX_HELP so the admin UI can show them):
 //   - a blank line starts a new paragraph; a single newline is a line break
 //   - **like this** renders bold
 //   - a line starting with "> " renders as a highlighted note (used for the
 //     "if you did not request this" security lines)
+//   - a block of lines each starting with "- " renders as a bullet list
+//     (short, scannable facts instead of a paragraph)
+//   - a paragraph that is only **one-short-code** (no spaces) renders as a
+//     large code panel, for one-time codes and passwords
+//   - a line that is exactly "---" splits the body: everything above it sits
+//     before the detail rows and the button, everything below renders after
+//     the button as fine print (fallback link, sign-off, "replies are not
+//     added" notes). This is what keeps the action near the top.
 //   - a line made only of a label and tokens that all resolve empty is
 //     dropped, so "Workspace: <Company>" vanishes when there is no company
 // Bare http(s) URLs in the body become links, which is how the "if the button
 // does not work" fallback link works without any HTML in the editor.
+//
+// Structured facts (amounts, dates, references, plan names, ticket ids) live
+// in the detail-table rows (rowFields / data.rows), never in prose: a reader
+// scans a receipt, they do not read it.
 //
 // No dependencies. US English. No em-dashes anywhere (hyphens only). Never
 // throws: unknown types, missing fields and renderer errors all degrade to a
@@ -45,6 +57,7 @@ export const BRAND = Object.freeze({
   site: 'https://admireveda.com',
   appUrl: 'https://admireveda.com/work',
   billingUrl: 'https://admireveda.com/work/billing',
+  adminUrl: 'https://admireveda.com/work/admin',
   howItWorksUrl: 'https://admireveda.com/how-it-works',
   supportEmail: 'support@admireveda.com',
 })
@@ -73,7 +86,10 @@ const MONO = "ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', 
 
 export const BODY_SYNTAX_HELP =
   'Plain text. A blank line starts a new paragraph. Wrap words in **double asterisks** for bold. ' +
-  'Start a line with "> " for a highlighted note. Web links are clickable automatically. ' +
+  'Start a line with "> " for a highlighted note. Start each line of a group with "- " for a bullet list. ' +
+  'A paragraph that is only **a-single-code** (no spaces) is shown as a large code panel. ' +
+  'A line that is exactly "---" moves everything below it under the button, as fine print. ' +
+  'Web links are clickable automatically. ' +
   'Use the placeholders listed for this email, e.g. <First_Name>; a line that is only a label ' +
   'and an empty placeholder (such as "Workspace: <Company>") is left out when the value is missing.'
 
@@ -201,6 +217,7 @@ const DERIVED = {
   supportemail: () => BRAND.supportEmail,
   appurl: (d) => safeUrl(d.appUrl, BRAND.appUrl),
   billingurl: (d) => safeUrl(d.billingUrl, BRAND.billingUrl),
+  adminurl: (d) => safeUrl(d.adminUrl, BRAND.adminUrl),
   siteurl: () => BRAND.site,
   howitworksurl: () => BRAND.howItWorksUrl,
   year: () => String(new Date().getFullYear()),
@@ -266,8 +283,42 @@ export function substitute(input, data) {
 // HTML building blocks. Everything is a table; everything carries inline
 // styles; class names exist only so the dark-mode block can target them.
 // ---------------------------------------------------------------------------
-function paragraphHtml(inner, extra = '') {
-  return `<p class="p" style="margin:0 0 16px 0;font-family:${FONT};font-size:16px;line-height:26px;color:${C.ink};${extra}">${inner}</p>`
+// Two text styles: the body (16px ink) and fine print below the button
+// (14px muted) for fallback links, sign-offs and "replies are not added" notes.
+const TEXT_STYLE = {
+  body: { cls: 'p', css: `font-family:${FONT};font-size:16px;line-height:26px;color:${C.ink};` },
+  fine: { cls: 'fine', css: `font-family:${FONT};font-size:14px;line-height:22px;color:${C.muted};` },
+}
+
+function paragraphHtml(inner, extra = '', style = TEXT_STYLE.body) {
+  return `<p class="${style.cls}" style="margin:0 0 16px 0;${style.css}${extra}">${inner}</p>`
+}
+
+// Bullet list as a table (real <ul> indentation is unreliable across email
+// clients). A brand-green dot, then the text; items are already inline HTML.
+function bulletsHtml(items, style = TEXT_STYLE.body) {
+  const tr = items.map((it) => `
+    <tr>
+      <td style="padding:0 10px 6px 2px;${style.css}font-weight:700;color:${C.green};vertical-align:top;width:12px;">&bull;</td>
+      <td class="${style.cls}" style="padding:0 0 6px 0;${style.css}vertical-align:top;">${it}</td>
+    </tr>`).join('')
+  return `
+<table role="presentation" width="100%" border="0" cellpadding="0" cellspacing="0" style="margin:0 0 16px 0;">
+  ${tr}
+</table>`
+}
+
+// Large panel for a one-time code or a password: the one thing the reader
+// came for, so it is big, monospace and easy to select or copy.
+function codeHtml(code) {
+  const short = code.length <= 10
+  const size = short ? 'font-size:28px;line-height:36px;letter-spacing:6px;' : 'font-size:18px;line-height:26px;letter-spacing:0.5px;'
+  return `
+<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin:4px 0 20px 0;">
+  <tr>
+    <td class="code" style="padding:14px 22px;border:1px solid ${C.border};border-radius:10px;background:${C.surface};font-family:${MONO};${size}font-weight:700;color:${C.ink};word-break:break-all;">${esc(code)}</td>
+  </tr>
+</table>`
 }
 
 function headingHtml(text) {
@@ -348,9 +399,25 @@ function inlineHtml(text) {
   return s.replace(/\n/g, '<br>')
 }
 
-// Body text -> HTML blocks. Blank line separates paragraphs; "> " prefix
-// marks a note; everything else is a paragraph.
-export function bodyToHtml(bodyText) {
+const BULLET_RE = /^-\s+/
+const CODE_BLOCK_RE = /^\*\*(\S{4,64})\*\*$/
+const DIVIDER_RE = /^\s*---\s*$/
+
+// Split a body on the first "---" line: { above, below }. Above renders
+// before the detail rows and the button; below renders after the button.
+export function splitBody(bodyText) {
+  const lines = String(bodyText == null ? '' : bodyText).replace(/\r\n?/g, '\n').split('\n')
+  const i = lines.findIndex((l) => DIVIDER_RE.test(l))
+  if (i < 0) return { above: lines.join('\n'), below: '' }
+  return { above: lines.slice(0, i).join('\n'), below: lines.slice(i + 1).join('\n') }
+}
+
+// Body text -> HTML blocks. Blank line separates blocks; "> " lines make a
+// note; "- " lines make a bullet list; a lone **code** makes a code panel;
+// everything else is a paragraph. { fine: true } renders the smaller muted
+// style used below the button.
+export function bodyToHtml(bodyText, { fine = false } = {}) {
+  const style = fine ? TEXT_STYLE.fine : TEXT_STYLE.body
   const blocks = String(bodyText == null ? '' : bodyText).replace(/\r\n?/g, '\n').split(/\n\s*\n/)
   const out = []
   for (const raw of blocks) {
@@ -359,8 +426,12 @@ export function bodyToHtml(bodyText) {
     const lines = block.split('\n')
     if (lines.every((l) => /^>\s?/.test(l))) {
       out.push(noteHtml(inlineHtml(lines.map((l) => l.replace(/^>\s?/, '')).join('\n'))))
+    } else if (lines.every((l) => BULLET_RE.test(l))) {
+      out.push(bulletsHtml(lines.map((l) => inlineHtml(l.replace(BULLET_RE, ''))), style))
+    } else if (lines.length === 1 && CODE_BLOCK_RE.test(block.trim())) {
+      out.push(codeHtml(block.trim().match(CODE_BLOCK_RE)[1]))
     } else {
-      out.push(paragraphHtml(inlineHtml(block)))
+      out.push(paragraphHtml(inlineHtml(block), '', style))
     }
   }
   // The last paragraph should not push the CTA away; trim its bottom margin.
@@ -374,7 +445,7 @@ function bodyToText(bodyText) {
   return String(bodyText == null ? '' : bodyText)
     .replace(/\r\n?/g, '\n')
     .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .split('\n').map((l) => l.replace(/^>\s?/, '')).join('\n')
+    .split('\n').map((l) => (DIVIDER_RE.test(l) ? '' : l.replace(/^>\s?/, ''))).join('\n')
     .replace(/\n{3,}/g, '\n\n')
     .trim()
 }
@@ -387,11 +458,16 @@ function bodyToText(bodyText) {
 //   bodyHtml    already-rendered HTML for the body (see bodyToHtml)
 //   cta         { label, url, color? } or null
 //   rows        [{ label, value, strong?, mono?, href? }] or null
+//   afterHtml   already-rendered HTML placed after the button (fine print)
 //   footerNote  optional extra line in the footer (e.g. why they got this)
 //   eyebrow     optional small kicker above the H1
 //   badge       optional pill in the header (e.g. "Internal")
+//
+// Card order is fixed: eyebrow, heading, body, rows, button, after. That is
+// the hierarchy a reader scans: what happened, the facts, the one action,
+// then the small print.
 // ---------------------------------------------------------------------------
-export function renderLayout({ preheader, heading, bodyHtml, cta, rows, footerNote, eyebrow, badge, eyebrowColor } = {}) {
+export function renderLayout({ preheader, heading, bodyHtml, cta, rows, afterHtml, footerNote, eyebrow, badge, eyebrowColor } = {}) {
   const year = new Date().getFullYear()
   const title = str(heading, BRAND.product)
   const pre = str(preheader, title)
@@ -440,13 +516,15 @@ export function renderLayout({ preheader, heading, bodyHtml, cta, rows, footerNo
     body,.bg{background:#0f1419 !important;}
     .card,.details{background:#1b2129 !important;border-color:#2b3440 !important;}
     .h1,.p,.dv{color:#f3f4f6 !important;}
-    .dl,.foot{color:#9aa4b2 !important;}
+    .dl,.foot,.fine{color:#9aa4b2 !important;}
     .dl,.dv{border-color:#2b3440 !important;}
-    .note{background:#141a21 !important;color:#d1d5db !important;}
+    .note,.code{background:#141a21 !important;color:#d1d5db !important;border-color:#2b3440 !important;}
+    .code{color:#f3f4f6 !important;}
     .foot a{color:#9aa4b2 !important;}
   }
   [data-ogsc] .card,[data-ogsc] .details{background:#1b2129 !important;}
   [data-ogsc] .h1,[data-ogsc] .p,[data-ogsc] .dv{color:#f3f4f6 !important;}
+  [data-ogsc] .fine{color:#9aa4b2 !important;}
 </style>
 </head>
 <body id="body" style="margin:0;padding:0;background:${C.surface};" bgcolor="${C.surface}">
@@ -488,6 +566,7 @@ export function renderLayout({ preheader, heading, bodyHtml, cta, rows, footerNo
             ${bodyHtml || ''}
             ${rowsHtml(rows)}
             ${ctaHtml}
+            ${afterHtml || ''}
           </td>
         </tr>
 
@@ -516,7 +595,7 @@ export function renderLayout({ preheader, heading, bodyHtml, cta, rows, footerNo
 }
 
 // Plain-text twin of the envelope.
-function renderTextLayout({ heading, bodyText, cta, rows, footerNote }) {
+function renderTextLayout({ heading, bodyText, cta, rows, afterText, footerNote }) {
   const year = new Date().getFullYear()
   const parts = []
   if (str(heading)) parts.push(heading, '')
@@ -527,6 +606,7 @@ function renderTextLayout({ heading, bodyText, cta, rows, footerNote }) {
     parts.push('')
   }
   if (cta && str(cta.label) && safeUrl(cta.url)) parts.push(`${cta.label}: ${safeUrl(cta.url)}`, '')
+  if (str(afterText)) parts.push(afterText, '')
   parts.push('--')
   if (str(footerNote)) parts.push(footerNote)
   parts.push(
@@ -555,30 +635,34 @@ const GLOBAL_PLACEHOLDERS = [
 ]
 
 // Row recipes used when the caller passes flat data without a rows array.
-// fmt: 'money' | 'date' | 'datetime' | undefined. Only rows with a value show.
+// fmt: 'money' | 'date' | 'datetime' | undefined. Only rows with a value show,
+// so a recipe may list a field the backend does not pass yet (it stays
+// invisible until wired, and the template is ready the day it is).
+// cap: capitalize the first letter and turn underscores into spaces (status
+// codes such as "past_due"). suffix: appended to the value ("%").
 const R = (label, key, opts = {}) => ({ label, key, ...opts })
 
 // ---------------------------------------------------------------------------
 // EMAIL_DEFS - the editable content, with defaults an admin starts from.
 // ---------------------------------------------------------------------------
 const DEFS = {
+  // ---- Account -------------------------------------------------------------
   welcome_set_password: {
     label: 'Welcome - set your password',
     category: 'account',
     description: 'Sent when an admin creates an account; invites the person to choose a password.',
     eyebrow: 'Welcome',
     defaultSubject: 'Your WorkCoPilot account is ready',
+    defaultPreheader: 'Set your password and WorkCoPilot can start guiding you, one clear step at a time.',
     defaultHeading: 'Set your password to get started',
     defaultBody:
 `Hi <First_Name>,
 
-An account has been created for you on WorkCoPilot. Choose a password and you are in. From then on, WorkCoPilot can watch your screen as you work and guide you one clear step at a time. It never takes control.
+Your WorkCoPilot account is ready. **Choose a password** and you are in.
 
-Sign-in name: **<Username>**
-Workspace: <Company>
-Link valid for: <Expires_Label>
-
-> If you did not expect this invitation, you can safely ignore this email. Nothing changes on your account until the link is used.
+Once you sign in, WorkCoPilot can watch your screen as you work and guide you one clear step at a time. It never takes control.
+---
+> If you did not expect this invitation, you can safely ignore this email. Nothing changes until the link is used.
 
 If the button does not work, copy and paste this link into your browser:
 <Set_Link>
@@ -593,6 +677,11 @@ The WorkCoPilot team`,
       P('<Expires_Label>', 'How long the link is valid', '24 hours'),
       P('<Company>', 'Company or workspace the account belongs to', 'Northwind Logistics'),
     ],
+    rowFields: [
+      R('Sign-in name', 'username', { strong: true }),
+      R('Workspace', 'company'),
+      R('Link valid for', 'expiresLabel'),
+    ],
     defaults: { expiresLabel: '24 hours' },
     sampleData: {
       name: 'Alex Morgan',
@@ -601,7 +690,7 @@ The WorkCoPilot team`,
       expiresLabel: '24 hours',
       company: 'Northwind Logistics',
     },
-    showRows: false,
+    showRows: true,
   },
 
   welcome_sso: {
@@ -610,15 +699,15 @@ The WorkCoPilot team`,
     description: 'Sent when an admin adds an account at a company that uses single sign-on (no password to set).',
     eyebrow: 'Welcome',
     defaultSubject: 'Your WorkCoPilot account is ready',
-    defaultHeading: 'You are all set',
+    defaultPreheader: 'Sign in with your <Company> account. There is no password to set.',
+    defaultHeading: 'You are all set, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-An account has been created for you on WorkCoPilot. Your company uses single sign-on, so there is no password to set. Just sign in with your <Company> account and WorkCoPilot is ready to guide you through your work, one clear step at a time. It never takes control.
+Your WorkCoPilot account is ready. Your company uses single sign-on, so **there is no password to set**.
 
-Sign-in email: **<Email>**
-Workspace: <Company>
-
+Sign in with your <Company> account and WorkCoPilot can guide you through your work, one clear step at a time. It never takes control.
+---
 > If you did not expect this, you can safely ignore this email.
 
 Welcome aboard,
@@ -629,12 +718,16 @@ The WorkCoPilot team`,
       P('<Email>', 'The single sign-on email for the account', 'alex.morgan@northwind.com'),
       P('<Company>', 'Company or workspace the account belongs to', 'Northwind Logistics'),
     ],
+    rowFields: [
+      R('Sign-in email', 'email', { strong: true }),
+      R('Workspace', 'company'),
+    ],
     sampleData: {
       name: 'Alex Morgan',
       email: 'alex.morgan@northwind.com',
       company: 'Northwind Logistics',
     },
-    showRows: false,
+    showRows: true,
   },
 
   welcome: {
@@ -643,14 +736,19 @@ The WorkCoPilot team`,
     description: 'Sent when someone signs up for an account themselves (they already chose a password).',
     eyebrow: 'Welcome',
     defaultSubject: 'Welcome to WorkCoPilot',
+    defaultPreheader: 'Your account is ready. Open WorkCoPilot and tell it what you want to get done.',
     defaultHeading: 'Welcome aboard, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-Your WorkCoPilot account is ready. From here, WorkCoPilot can watch your screen as you work and guide you one clear step at a time, with the exact commands, code and links for whatever you are doing. It never takes control.
+Your WorkCoPilot account is ready. Here is what it does for you:
+
+- **Watches your screen** as you work and understands the task in front of you
+- **Guides you one clear step at a time**, with the exact commands, code and links you need
+- **Never takes control.** You stay in charge of every click
 
 Open WorkCoPilot whenever you are ready and tell it what you want to get done.
-
+---
 Glad to have you,
 The WorkCoPilot team`,
     defaultCtaLabel: 'Open WorkCoPilot',
@@ -660,12 +758,14 @@ The WorkCoPilot team`,
     showRows: false,
   },
 
+  // ---- Security --------------------------------------------------------------
   verify_email: {
     label: 'Verify your email - sign-up code',
     category: 'security',
     description: 'Sent during sign-up with the six-digit code that confirms the email address.',
     eyebrow: 'Verify your email',
     defaultSubject: '<Code> is your WorkCoPilot verification code',
+    defaultPreheader: 'Your verification code is <Code>. It expires in <Expires_Label>.',
     defaultHeading: 'Confirm your email address',
     defaultBody:
 `Hi <First_Name>,
@@ -674,7 +774,11 @@ Enter this code on the sign-up page to confirm your email address:
 
 **<Code>**
 
-> The code expires in <Expires_Label> and works once. If you did not create a WorkCoPilot account, you can ignore this email. Nothing happens without the code.`,
+- The code expires in **<Expires_Label>**
+- It works once
+- Nobody from WorkCoPilot will ever ask you for it
+---
+> If you did not create a WorkCoPilot account, you can ignore this email. Nothing happens without the code.`,
     defaultCtaLabel: '',
     ctaUrlToken: null,
     placeholders: [
@@ -692,13 +796,18 @@ Enter this code on the sign-up page to confirm your email address:
     description: 'Sent when someone asks to reset their password.',
     eyebrow: 'Password reset',
     defaultSubject: 'Reset your WorkCoPilot password',
+    defaultPreheader: 'Use the button inside to choose a new password. The link expires in <Expires_Label>.',
     defaultHeading: 'Choose a new password',
     defaultBody:
 `Hi <First_Name>,
 
-We received a request to reset the password on your WorkCoPilot account. Use the button below to choose a new one.
+We received a request to reset the password on your WorkCoPilot account. Use the button below to **choose a new one**.
 
-> This link expires in <Expires_Label> and can be used once. If you did not request a password reset, you can safely ignore this email. Your current password keeps working until you set a new one.
+- The link expires in **<Expires_Label>**
+- It can be used once
+- Your current password keeps working until you set a new one
+---
+> **Did not request this?** You can safely ignore this email. Your password stays as it is.
 
 If the button does not work, copy and paste this link into your browser:
 <Reset_Link>`,
@@ -723,27 +832,35 @@ If the button does not work, copy and paste this link into your browser:
     description: 'Confirmation sent after a password is changed, so the owner notices if it was not them.',
     eyebrow: 'Security notice',
     defaultSubject: 'Your WorkCoPilot password was changed',
+    defaultPreheader: 'Your password was changed on <Changed_At>. If this was not you, act now.',
     defaultHeading: 'Your password was changed',
     defaultBody:
 `Hi <First_Name>,
 
-The password on your WorkCoPilot account was changed on <Changed_At>. If you made this change, no further action is needed.
+The password on your WorkCoPilot account was changed. If you made this change, **no further action is needed**.
 
-> **Did not do this?** Reset your password right away and write to <Support_Email> so we can secure your account.
-
+> **Did not do this?** Reset your password right away, then write to <Support_Email> so we can secure your account.
+---
 Thanks for keeping your account secure.`,
     defaultCtaLabel: 'Open WorkCoPilot',
     ctaUrlToken: 'appUrl',
     placeholders: [
       P('<Changed_At>', 'When the change happened', 'October 23, 2026 at 2:14 PM EDT'),
+      P('<Username>', 'Sign-in name of the account (when available)', 'alex.morgan'),
+    ],
+    rowFields: [
+      R('Account', 'username', { mono: true }),
+      R('Changed on', 'changedAt', { fmt: 'datetime', strong: true }),
     ],
     sampleData: {
       name: 'Alex Morgan',
+      username: 'alex.morgan',
       changedAt: '2026-10-23T18:14:00Z',
     },
-    showRows: false,
+    showRows: true,
   },
 
+  // ---- Website forms -------------------------------------------------------
   contact_notify: {
     label: 'Contact form - staff notification',
     category: 'notifications',
@@ -751,9 +868,10 @@ Thanks for keeping your account secure.`,
     eyebrow: 'Contact form',
     badge: 'Internal',
     defaultSubject: 'New contact: <Name> - <Subject>',
+    defaultPreheader: '<Subject> from <Name> (<Email>). Reply within one business day.',
     defaultHeading: 'New message from <Name>',
     defaultBody:
-`Someone used the Contact Us form on admireveda.com. Their details are below, and the button opens a reply addressed to them.
+`Someone used the Contact Us form on admireveda.com. **We promise a reply within one business day.** The button opens a reply addressed to them.
 
 > **Message**
 > <Message>`,
@@ -790,18 +908,19 @@ Thanks for keeping your account secure.`,
     description: 'Sent to the person who submitted the Contact Us form.',
     eyebrow: 'Thanks for reaching out',
     defaultSubject: 'We received your message',
-    defaultHeading: 'We have your message',
+    defaultPreheader: 'A real person reads every message. Expect a reply within one business day.',
+    defaultHeading: 'We have your message, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-Thanks for getting in touch with WorkCoPilot. A real person on our team reads every message, and you will hear back from us within one business day.
+Thanks for getting in touch. **A real person on our team reads every message**, and you will hear back within one business day.
 
-In the meantime, our How it works page covers the most common questions about what WorkCoPilot does on your screen, and what it never does: <How_It_Works_Url>
-
+While you wait, the How it works page covers the most common questions: what WorkCoPilot does on your screen, and what it never does.
+---
 Warm regards,
 The WorkCoPilot team`,
-    defaultCtaLabel: 'Visit WorkCoPilot',
-    ctaUrlToken: 'siteUrl',
+    defaultCtaLabel: 'See how it works',
+    ctaUrlToken: 'howItWorksUrl',
     placeholders: [],
     sampleData: { name: 'Alex Morgan' },
     showRows: false,
@@ -814,12 +933,10 @@ The WorkCoPilot team`,
     eyebrow: 'Validate it live',
     badge: 'Internal',
     defaultSubject: 'New lead: <Name> (<Company>)',
+    defaultPreheader: '<Name> at <Company> asked: <Question>',
     defaultHeading: 'New lead: <Name>',
     defaultBody:
-`A visitor ran a live validation on the website and left their details. Fresh leads convert best within the hour.
-
-**Phone:** <Phone>
-**Country:** <Country>
+`A visitor ran a live validation on the website and left their details. **Fresh leads convert best within the hour.**
 
 > **Their question**
 > <Question>`,
@@ -838,6 +955,7 @@ The WorkCoPilot team`,
     rowFields: [
       R('Name', 'name', { strong: true }),
       R('Email', 'email'),
+      R('Phone', 'phone'),
       R('Company', 'company'),
       R('Country', 'country'),
       R('Plan interest', 'plan'),
@@ -847,6 +965,7 @@ The WorkCoPilot team`,
     sampleData: {
       name: 'Alex Morgan',
       email: 'alex.morgan@northwind.example',
+      phone: '+1 (415) 555-0172',
       company: 'Northwind Logistics',
       country: 'United States',
       question: 'How do I bulk-reassign open tickets in Zendesk without losing the SLA timers?',
@@ -863,14 +982,21 @@ The WorkCoPilot team`,
     description: 'Sent to a website visitor after they run a live validation and leave their details.',
     eyebrow: 'Thanks for trying it',
     defaultSubject: 'Thanks for trying WorkCoPilot live',
+    defaultPreheader: 'That live answer was a small taste. Here is what happens next.',
     defaultHeading: 'You saw it work. Here is what comes next.',
     defaultBody:
 `Hi <First_Name>,
 
-Thanks for putting WorkCoPilot to the test on our website. That live answer is a small taste of what it does at your desk: it watches your screen, understands the task in front of you, and guides you one clear step at a time. It never takes control, and what it sees stays protected.
+Thanks for putting WorkCoPilot to the test. That live answer is a small taste of what it does at your desk:
 
-Someone from our team will reach out shortly to answer your questions and, if it is a fit, set you up with a trial. If you would rather not wait, reply to this email and tell us what you are working on.
+- **Watches your screen** and understands the task in front of you
+- **Guides you one clear step at a time**, with the exact commands, code and links
+- **Never takes control**, and what it sees stays protected
 
+**What happens next:** someone from our team will reach out shortly to answer your questions and, if it is a fit, set you up with a trial.
+
+Would rather not wait? Reply to this email and tell us what you are working on.
+---
 Talk soon,
 The WorkCoPilot team`,
     defaultCtaLabel: 'See how it works',
@@ -883,18 +1009,20 @@ The WorkCoPilot team`,
     showRows: false,
   },
 
+  // ---- Billing ---------------------------------------------------------------
   purchase_receipt: {
     label: 'Purchase receipt',
     category: 'billing',
     description: 'Receipt for a one-off purchase of hours or image credits.',
     eyebrow: 'Receipt',
     defaultSubject: 'Your WorkCoPilot receipt - <Amount>',
-    defaultHeading: 'Thanks for your purchase',
+    defaultPreheader: 'Receipt for <Item>: <Amount> paid on <Date>. Already available in your account.',
+    defaultHeading: 'Thanks for your purchase, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-Your purchase is complete and already available in your account. The details are below; keep this email for your records.
-
+Your purchase is complete and **already available in your account**. Keep this email for your records.
+---
 Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.`,
     defaultCtaLabel: 'Open WorkCoPilot',
     ctaUrlToken: 'appUrl',
@@ -903,10 +1031,14 @@ Need an invoice with a company name or tax ID on it? Reply to this email with th
       P('<Amount>', 'Total paid, formatted with currency', '$89.00'),
       P('<Date>', 'Purchase date', 'October 23, 2026'),
       P('<Reference>', 'Payment reference', 'pi_3Q8vL2SAMPLE'),
+      P('<Card_Label>', 'Card used, e.g. "Visa ending in 4242" (when available)', 'Visa ending in 4242'),
+      P('<Receipt_Number>', 'Receipt number (when available)', '2026-0142'),
     ],
     rowFields: [
       R('Item', 'item'),
       R('Date', 'date', { fmt: 'date' }),
+      R('Paid with', 'cardLabel'),
+      R('Receipt number', 'receiptNumber', { mono: true }),
       R('Reference', 'reference', { mono: true }),
       R('Total paid', 'amount', { fmt: 'money', strong: true }),
     ],
@@ -917,6 +1049,7 @@ Need an invoice with a company name or tax ID on it? Reply to this email with th
       currency: 'usd',
       date: '2026-10-23',
       reference: 'pi_3Q8vL2SAMPLE',
+      cardLabel: 'Visa ending in 4242',
     },
     showRows: true,
   },
@@ -927,13 +1060,14 @@ Need an invoice with a company name or tax ID on it? Reply to this email with th
     description: 'Sent when a subscription or one-off payment succeeds.',
     eyebrow: 'Payment received',
     defaultSubject: 'Payment received - <Amount>',
+    defaultPreheader: '<Amount> received for <Description> on <Date>. Your service continues without interruption.',
     defaultHeading: 'Thank you, your payment went through',
     defaultBody:
 `Hi <First_Name>,
 
-We have received your payment. Your WorkCoPilot service continues without interruption, and the details are below for your records.
-
-Thanks for being a WorkCoPilot customer.`,
+We received your payment. **Your WorkCoPilot service continues without interruption.** The details are below for your records.
+---
+Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.`,
     defaultCtaLabel: 'View invoice',
     ctaUrlToken: 'invoiceUrl',
     placeholders: [
@@ -941,11 +1075,18 @@ Thanks for being a WorkCoPilot customer.`,
       P('<Amount>', 'Amount paid, formatted with currency', '$149.00'),
       P('<Date>', 'Payment date', 'October 23, 2026'),
       P('<Invoice_Url>', 'Link to the hosted invoice', 'https://admireveda.com/work/billing/invoice/SAMPLE'),
+      P('<Reference>', 'Payment reference', 'in_3Q8vL2SAMPLE'),
+      P('<Card_Label>', 'Card used, e.g. "Visa ending in 4242" (when available)', 'Visa ending in 4242'),
+      P('<Invoice_Number>', 'Invoice number (when available)', 'INV-2026-0142'),
+      P('<Next_Billing_Date>', 'Next billing date (when available)', 'November 23, 2026'),
     ],
     rowFields: [
       R('Description', 'description'),
       R('Date', 'date', { fmt: 'date' }),
+      R('Paid with', 'cardLabel'),
+      R('Invoice number', 'invoiceNumber', { mono: true }),
       R('Reference', 'reference', { mono: true }),
+      R('Next billing date', 'nextBillingDate', { fmt: 'date' }),
       R('Amount paid', 'amount', { fmt: 'money', strong: true }),
     ],
     sampleData: {
@@ -954,7 +1095,10 @@ Thanks for being a WorkCoPilot customer.`,
       amount: 149,
       currency: 'usd',
       date: '2026-10-23',
+      reference: 'in_3Q8vL2SAMPLE',
       invoiceUrl: 'https://admireveda.com/work/billing/invoice/SAMPLE',
+      cardLabel: 'Visa ending in 4242',
+      nextBillingDate: '2026-11-23',
     },
     showRows: true,
   },
@@ -967,16 +1111,23 @@ Thanks for being a WorkCoPilot customer.`,
     eyebrowColor: C.accent,
     ctaColor: C.deep,
     defaultSubject: 'Action needed: your WorkCoPilot payment did not go through',
+    defaultPreheader: 'Your <Amount> payment for <Description> did not go through. Update your card to keep your access.',
     defaultHeading: 'We could not process your payment',
     defaultBody:
 `Hi <First_Name>,
 
-Your most recent payment for **<Description>** did not go through. This usually comes down to an expired card, a spending limit, or a bank check that needs a quick confirmation.
+Your most recent payment for **<Description>** did not go through. **Your access stays on while you sort it out.**
+
+This usually comes down to one of these:
+
+- An expired or replaced card
+- A spending limit on the card
+- A bank check that needs a quick confirmation
 
 > **Reason from the processor:** <Reason>
 
-Update your payment method and we will retry right away. Your access stays on while you sort it out.
-
+Update your payment method and we will retry right away.
+---
 If you believe this is a mistake, reply to this email and we will look into it together.`,
     defaultCtaLabel: 'Update payment method',
     ctaUrlToken: 'retryUrl',
@@ -985,9 +1136,14 @@ If you believe this is a mistake, reply to this email and we will look into it t
       P('<Reason>', 'Decline reason from the processor', 'Your card was declined.'),
       P('<Amount>', 'Amount attempted, formatted with currency', '$149.00'),
       P('<Retry_Url>', 'Link to update the payment method', BRAND.billingUrl),
+      P('<Card_Label>', 'Card that was tried, e.g. "Visa ending in 4242" (when available)', 'Visa ending in 4242'),
+      P('<Next_Retry_Date>', 'When the next automatic retry happens (when available)', 'October 26, 2026'),
     ],
     rowFields: [
       R('Description', 'description'),
+      R('Attempted on', 'date', { fmt: 'date' }),
+      R('Card tried', 'cardLabel'),
+      R('Next automatic retry', 'nextRetryDate', { fmt: 'date' }),
       R('Amount due', 'amount', { fmt: 'money', strong: true }),
     ],
     defaults: { reason: 'The card issuer declined the charge.', retryUrl: BRAND.billingUrl },
@@ -997,6 +1153,8 @@ If you believe this is a mistake, reply to this email and we will look into it t
       reason: 'Your card was declined. Please contact your bank or try a different card.',
       amount: 149,
       currency: 'usd',
+      date: '2026-10-23',
+      cardLabel: 'Visa ending in 4242',
       retryUrl: BRAND.billingUrl,
     },
     showRows: true,
@@ -1008,16 +1166,13 @@ If you believe this is a mistake, reply to this email and we will look into it t
     description: 'Sent when a subscription is created, renewed, canceled or falls past due.',
     eyebrow: 'Subscription',
     defaultSubject: 'Your WorkCoPilot subscription: <Status>',
-    defaultHeading: 'Your subscription was updated',
+    defaultPreheader: 'Your <Plan> plan is <Status>. Next billing date: <Next_Billing_Date>.',
+    defaultHeading: 'Your <Plan> subscription: <Status>',
     defaultBody:
 `Hi <First_Name>,
 
-Here is the latest on your WorkCoPilot subscription.
-
-Plan: **<Plan>**
-Status: **<Status>**
-Next billing date: <Next_Billing_Date>
-
+Here is the latest on your WorkCoPilot subscription. **Nothing to do unless the status says past due.**
+---
 > If the status says **past due**, update your payment method to keep your access without interruption. If it says **canceled**, you keep access until the end of the current period and you can come back any time; your settings and history will be waiting.
 
 Questions about your plan? Just reply to this email.`,
@@ -1027,14 +1182,26 @@ Questions about your plan? Just reply to this email.`,
       P('<Status>', 'Subscription status (created, renewed, canceled, past due)', 'renewed'),
       P('<Plan>', 'Plan name', 'Advanced'),
       P('<Next_Billing_Date>', 'Next billing date', 'November 23, 2026'),
+      P('<Cycle>', 'Billing cycle (when available)', 'monthly'),
+      P('<Amount>', 'Amount per cycle, formatted with currency (when available)', '$149.00'),
+    ],
+    rowFields: [
+      R('Plan', 'plan', { strong: true }),
+      R('Status', 'status', { cap: true, strong: true }),
+      R('Billing', 'cycle', { cap: true }),
+      R('Amount', 'amount', { fmt: 'money' }),
+      R('Next billing date', 'nextBillingDate', { fmt: 'date' }),
     ],
     sampleData: {
       name: 'Alex Morgan',
       status: 'renewed',
       plan: 'Advanced',
+      cycle: 'monthly',
+      amount: 149,
+      currency: 'usd',
       nextBillingDate: '2026-11-23',
     },
-    showRows: false,
+    showRows: true,
   },
 
   subscription_changed: {
@@ -1043,13 +1210,14 @@ Questions about your plan? Just reply to this email.`,
     description: 'Sent to the customer when they upgrade or downgrade their plan. Shows the new plan, the new price, and when the change takes effect (now for an upgrade, at the next renewal for a downgrade).',
     eyebrow: 'Plan change',
     defaultSubject: 'Your WorkCoPilot plan was changed to <Plan>',
-    defaultHeading: 'Your plan was changed',
+    defaultPreheader: 'Your plan is now <Plan> at <Amount>. Takes effect: <Effective_Label>.',
+    defaultHeading: 'Your plan is now <Plan>',
     defaultBody:
 `Hi <First_Name>,
 
-Your WorkCoPilot plan has been changed. The details are below for your records.
-
-> Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.
+Your WorkCoPilot plan has been changed. **Here is what changed and when it takes effect.**
+---
+Need an invoice with a company name or tax ID on it? Reply to this email with the details and we will send one.
 
 Questions about your plan? Just reply to this email.`,
     defaultCtaLabel: 'Manage subscription',
@@ -1059,16 +1227,19 @@ Questions about your plan? Just reply to this email.`,
       P('<Cycle>', 'Billing cycle', 'monthly'),
       P('<Amount>', 'The new price, formatted with currency', '$149.00'),
       P('<Effective_Label>', 'When the change takes effect', 'Now (prorated for the rest of this period)'),
+      P('<Previous_Plan>', 'The plan they moved from (when available)', 'Basic (monthly)'),
     ],
     rowFields: [
+      R('Previous plan', 'previousPlan'),
       R('New plan', 'plan', { strong: true }),
-      R('Billing', 'cycle'),
+      R('Billing', 'cycle', { cap: true }),
       R('New price', 'amount', { fmt: 'money', strong: true }),
       R('Takes effect', 'effectiveLabel'),
     ],
     sampleData: {
       name: 'Alex Morgan',
       plan: 'Advanced (monthly)',
+      previousPlan: 'Basic (monthly)',
       cycle: 'monthly',
       amount: 149,
       currency: 'usd',
@@ -1083,28 +1254,32 @@ Questions about your plan? Just reply to this email.`,
     description: 'Sent to the customer when their subscription is canceled. Confirms they will not be charged again; shows the date access continues until when one applies (a period-end cancel).',
     eyebrow: 'Subscription canceled',
     defaultSubject: 'Your WorkCoPilot plan is canceled',
+    defaultPreheader: 'Your <Plan> plan is canceled and you will not be charged again.',
     defaultHeading: 'Your plan is canceled',
     defaultBody:
 `Hi <First_Name>,
 
-Your WorkCoPilot <Plan> plan has been canceled, and you will not be charged again.
+Your WorkCoPilot <Plan> plan has been canceled. **You will not be charged again.**
 
 > You can come back any time. Your settings and history will be waiting for you.
-
+---
 If this was not meant to happen, reply to this email and we will help right away.`,
     defaultCtaLabel: 'Reactivate my plan',
     ctaUrlToken: 'billingUrl',
     placeholders: [
       P('<Plan>', 'The plan that was canceled', 'Advanced'),
       P('<Access_Until>', 'Date access continues until (period-end cancels only)', 'November 23, 2026'),
+      P('<Canceled_At>', 'When the cancellation was recorded (when available)', 'October 23, 2026 at 2:14 PM EDT'),
     ],
     rowFields: [
       R('Plan', 'plan'),
+      R('Canceled on', 'canceledAt', { fmt: 'datetime' }),
       R('Access until', 'accessUntil', { fmt: 'date', strong: true }),
     ],
     sampleData: {
       name: 'Alex Morgan',
       plan: 'Advanced',
+      canceledAt: '2026-10-23T18:14:00Z',
       accessUntil: '2026-11-23',
     },
     showRows: true,
@@ -1117,19 +1292,12 @@ If this was not meant to happen, reply to this email and we will help right away
     eyebrow: 'Subscription',
     badge: 'Owner alert',
     defaultSubject: 'WorkCoPilot subscription <Event>: <Customer>',
-    defaultHeading: 'Subscription <Event>',
+    defaultPreheader: '<Customer> (<Customer_Email>): <Plan> <Cycle>, <Amount>, status <Status>.',
+    defaultHeading: 'Subscription <Event>: <Customer>',
     defaultBody:
 `A WorkCoPilot subscription event just occurred. The details are below.
-
-Customer: **<Customer>**
-Email: <Customer_Email>
-Plan: **<Plan>**
-Billing: <Cycle>
-Status: **<Status>**
-Amount: <Amount>
-Reference: <Reference>
-
-> This is an automated owner notification. It is sent for a new subscription, a plan change, a cancellation and the first past-due event - not on routine renewals.`,
+---
+> Automated owner notification. Sent for a new subscription, a plan change, a cancellation and the first past-due event, not on routine renewals.`,
     defaultCtaLabel: null,
     ctaUrlToken: null,
     placeholders: [
@@ -1140,16 +1308,16 @@ Reference: <Reference>
       P('<Status>', 'Subscription status', 'active'),
       P('<Amount>', 'Amount for this event, formatted with currency', '$299.00'),
       P('<Event>', 'What happened (activated, plan change, canceled, past due)', 'activated'),
-      P('<Reference>', 'Stripe reference (invoice or subscription id)', 'in_3Q8vL2SAMPLE'),
+      P('<Reference>', 'Payment processor reference (invoice or subscription id)', 'in_3Q8vL2SAMPLE'),
     ],
     rowFields: [
+      R('Event', 'event', { cap: true, strong: true }),
       R('Customer', 'customer', { strong: true }),
       R('Email', 'customerEmail'),
       R('Plan', 'plan'),
-      R('Billing', 'cycle'),
-      R('Status', 'status'),
+      R('Billing', 'cycle', { cap: true }),
+      R('Status', 'status', { cap: true }),
       R('Amount', 'amount', { fmt: 'money' }),
-      R('Event', 'event'),
       R('When', 'date', { fmt: 'datetime' }),
       R('Reference', 'reference', { mono: true }),
     ],
@@ -1168,20 +1336,26 @@ Reference: <Reference>
     showRows: true,
   },
 
+  // ---- Affiliate program -----------------------------------------------------
   affiliate_application_received: {
     label: 'Affiliate - application received',
     category: 'account',
     description: 'Sent to someone right after they apply to the affiliate program.',
     eyebrow: 'Affiliate program',
     defaultSubject: 'We received your affiliate application',
-    defaultHeading: 'Thanks for applying',
+    defaultPreheader: 'We review every application personally. You will hear from us the moment a decision is made.',
+    defaultHeading: 'Thanks for applying, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-Thank you for applying to the WorkCoPilot affiliate program. We have received your application and our team is reviewing it.
+Thank you for applying to the WorkCoPilot affiliate program. **Your application is in and our team is reviewing it.**
 
-We review every application personally to keep the program high quality, so this takes a little time. You will get another email from us the moment a decision is made. If you are approved, that email will include a link to set your password and open your affiliate dashboard.
+What happens next:
 
+- We review every application personally, to keep the program high quality
+- You will get an email the moment a decision is made
+- If you are approved, that email includes a link to set your password and open your affiliate dashboard
+---
 Thanks for wanting to partner with us,
 The WorkCoPilot team`,
     defaultCtaLabel: null,
@@ -1197,17 +1371,21 @@ The WorkCoPilot team`,
     description: 'Sent when an affiliate is approved; invites them to set a password and open their dashboard.',
     eyebrow: 'Affiliate program',
     defaultSubject: 'You are approved - welcome to the WorkCoPilot affiliate program',
-    defaultHeading: 'You are in. Set your password to start.',
+    defaultPreheader: 'You are approved. Set your password to open your affiliate dashboard and get your referral link.',
+    defaultHeading: 'You are in, <First_Name>. Set your password to start.',
     defaultBody:
 `Hi <First_Name>,
 
-Great news - your application to the WorkCoPilot affiliate program has been approved.
+Great news: **your application to the WorkCoPilot affiliate program has been approved.**
 
-Set your password below to open your affiliate dashboard, where you will find your unique referral link, your live stats, and your payout setup. You earn <Rate>% of each person's first payment when they sign up through your link, and the people you refer get a free month when they choose annual billing.
+Set your password to open your affiliate dashboard, where you will find:
 
-Sign-in name: **<Username>**
-Link valid for: <Expires_Label>
+- Your unique referral link
+- Your live stats
+- Your payout setup
 
+**How you earn:** <Rate>% of each person's first payment when they sign up through your link. The people you refer get a free month when they choose annual billing.
+---
 If the button does not work, copy and paste this link into your browser:
 <Set_Link>
 
@@ -1221,6 +1399,11 @@ The WorkCoPilot team`,
       P('<Expires_Label>', 'How long the link is valid', '24 hours'),
       P('<Rate>', 'The affiliate commission rate (percent)', '30'),
     ],
+    rowFields: [
+      R('Sign-in name', 'username', { strong: true }),
+      R('Your commission', 'rate', { suffix: '% of each first payment' }),
+      R('Link valid for', 'expiresLabel'),
+    ],
     defaults: { expiresLabel: '24 hours' },
     sampleData: {
       name: 'Jordan Lee',
@@ -1229,7 +1412,7 @@ The WorkCoPilot team`,
       expiresLabel: '24 hours',
       rate: '30',
     },
-    showRows: false,
+    showRows: true,
   },
 
   export_password_set: {
@@ -1238,16 +1421,20 @@ The WorkCoPilot team`,
     description: 'Sent to authorized recipients when a company admin sets the data-export password. Carries the password ONLY, never the archive file or a download link.',
     eyebrow: 'Data export',
     defaultSubject: 'Your WorkCoPilot data-export password',
-    defaultHeading: 'A data-export password was set',
+    defaultPreheader: 'The password for the <Company> encrypted data export. Keep it safe; it cannot be recovered.',
+    defaultHeading: 'Your data-export password',
     defaultBody:
 `Hi <First_Name>,
 
-A company administrator set the password that protects the WorkCoPilot encrypted data export for <Company>. You are listed as a recipient who is authorized to receive it.
+A company administrator set the password that protects the WorkCoPilot encrypted data export for **<Company>**. You are listed as an authorized recipient.
 
-Export password: **<Password>**
+**<Password>**
 
-> Keep this password safe. It is the ONLY way to open an encrypted export archive (.wcpx file). WorkCoPilot does not store it and cannot recover it if it is lost. This email contains the password only, never the export file itself and never a download link.
+> **Keep this password safe.** It is the only way to open an encrypted export archive (.wcpx file). WorkCoPilot does not store it and cannot recover it if it is lost.
 
+- This email contains the password only
+- It never contains the export file or a download link
+---
 If you did not expect this, contact your administrator so the password can be reset.`,
     defaultCtaLabel: null,
     ctaUrlToken: null,
@@ -1270,33 +1457,36 @@ If you did not expect this, contact your administrator so the password can be re
     description: 'Confirmation sent to the person who opened a support ticket, with the reference and what they wrote.',
     eyebrow: 'Support',
     defaultSubject: 'We received your request: <Subject> [<Ticket_Id>]',
-    defaultHeading: 'We have your request',
+    defaultPreheader: 'Request <Ticket_Id> is in. We will reply here and in your Support tab.',
+    defaultHeading: 'We have your request, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-Thanks for reaching out. Your support request is in and a member of the WorkCoPilot team will reply here and in your Support tab. Keep the reference below if you need to refer to it.
-
-Reference: **<Ticket_Id>**
-Subject: **<Subject>**
-Category: <Category>
-Opened: <Created_At>
-
+Thanks for reaching out. **Your support request is in**, and a member of the WorkCoPilot team will reply here and in your Support tab.
+---
 > **Your message**
 > <Message>
 
-You can add more detail at any time from the Support tab inside WorkCoPilot, and you will get an email as soon as we reply.
-
-The WorkCoPilot team`,
+You can add more detail at any time from the Support tab inside WorkCoPilot. Replies to this email are not added to the ticket.`,
     defaultCtaLabel: 'View my ticket',
     ctaUrlToken: 'ticketUrl',
     placeholders: [
       P('<Ticket_Id>', 'Ticket reference', 'tk8f3a2c'),
       P('<Subject>', 'Ticket subject', 'Cannot export the session report'),
       P('<Category>', 'Ticket category (feature, bug, billing, access, other)', 'bug'),
+      P('<Status>', 'Ticket status', 'open'),
       P('<Message>', 'The message they wrote when opening the ticket', 'The Download report button spins and never finishes...'),
       P('<Created_At>', 'When the ticket was opened', 'October 23, 2026 at 9:41 AM EDT'),
       P('<Ticket_Url>', 'Link to the Support tab in the app', 'https://admireveda.com/work?tab=support'),
     ],
+    rowFields: [
+      R('Reference', 'ticketId', { mono: true, strong: true }),
+      R('Subject', 'subject'),
+      R('Category', 'category', { cap: true }),
+      R('Status', 'status', { cap: true }),
+      R('Opened', 'createdAt', { fmt: 'datetime' }),
+    ],
+    defaults: { status: 'open' },
     sampleData: {
       name: 'Alex Morgan',
       ticketId: 'tk8f3a2c',
@@ -1306,7 +1496,7 @@ The WorkCoPilot team`,
       createdAt: '2026-10-23T13:41:00Z',
       ticketUrl: 'https://admireveda.com/work?tab=support',
     },
-    showRows: false,
+    showRows: true,
   },
 
   ticket_staff_notify: {
@@ -1316,9 +1506,10 @@ The WorkCoPilot team`,
     eyebrow: 'Support ticket',
     badge: 'Internal',
     defaultSubject: '<Event>: <Subject> [<Ticket_Id>] from <Username>',
+    defaultPreheader: '<Username> (<Company>): <Subject>. Category: <Category>.',
     defaultHeading: '<Event> from <Name>',
     defaultBody:
-`A WorkCoPilot user needs a reply. Details are below; the button opens the ticket in the superadmin console.
+`A WorkCoPilot user needs a reply. The button opens the ticket in the superadmin console.
 
 > **Message**
 > <Message>`,
@@ -1329,6 +1520,7 @@ The WorkCoPilot team`,
       P('<Ticket_Id>', 'Ticket reference', 'tk8f3a2c'),
       P('<Subject>', 'Ticket subject', 'Cannot export the session report'),
       P('<Category>', 'Ticket category', 'bug'),
+      P('<Status>', 'Ticket status (when available)', 'open'),
       P('<Username>', 'Sign-in name of the requester', 'alex.morgan'),
       P('<Email>', 'Requester email on file (if any)', 'alex.morgan@northwind.example'),
       P('<Company>', 'Requester company (if any)', 'Northwind Logistics'),
@@ -1337,9 +1529,10 @@ The WorkCoPilot team`,
       P('<Admin_Url>', 'Link to the ticket in the superadmin console', 'https://admireveda.com/work/admin'),
     ],
     rowFields: [
-      R('Reference', 'ticketId', { mono: true }),
-      R('Subject', 'subject', { strong: true }),
-      R('Category', 'category'),
+      R('Reference', 'ticketId', { mono: true, strong: true }),
+      R('Subject', 'subject'),
+      R('Category', 'category', { cap: true }),
+      R('Status', 'status', { cap: true }),
       R('From', 'username'),
       R('Email', 'email'),
       R('Company', 'company'),
@@ -1367,26 +1560,32 @@ The WorkCoPilot team`,
     description: 'Sent to the requester when a member of the support team replies on their ticket.',
     eyebrow: 'Support',
     defaultSubject: 'Re: <Subject> [<Ticket_Id>]',
-    defaultHeading: 'You have a reply from support',
+    defaultPreheader: '<Replied_By> replied on your request: <Subject>.',
+    defaultHeading: '<Replied_By> replied to your request',
     defaultBody:
 `Hi <First_Name>,
 
-<Replied_By> from the WorkCoPilot team replied to your request **<Subject>** (reference <Ticket_Id>).
+**<Replied_By>** from the WorkCoPilot team replied to your request.
 
 > <Reply>
-
-To continue the conversation, open the Support tab in WorkCoPilot and write back on the same ticket. Replies to this email are not added to the ticket.
-
-The WorkCoPilot team`,
-    defaultCtaLabel: 'View the reply',
+---
+To continue the conversation, open the Support tab in WorkCoPilot and write back on the same ticket. Replies to this email are not added to the ticket.`,
+    defaultCtaLabel: 'Open my ticket',
     ctaUrlToken: 'ticketUrl',
     placeholders: [
       P('<Ticket_Id>', 'Ticket reference', 'tk8f3a2c'),
       P('<Subject>', 'Ticket subject', 'Cannot export the session report'),
+      P('<Status>', 'Ticket status (when available)', 'answered'),
       P('<Reply>', 'The reply the support team wrote', 'Thanks for the details. We found the cause...'),
       P('<Replied_By>', 'Name of the staff member who replied', 'Support'),
       P('<Replied_At>', 'When the reply was posted', 'October 23, 2026 at 11:05 AM EDT'),
       P('<Ticket_Url>', 'Link to the Support tab in the app', 'https://admireveda.com/work?tab=support'),
+    ],
+    rowFields: [
+      R('Reference', 'ticketId', { mono: true, strong: true }),
+      R('Subject', 'subject'),
+      R('Status', 'status', { cap: true }),
+      R('Replied', 'repliedAt', { fmt: 'datetime' }),
     ],
     sampleData: {
       name: 'Alex Morgan',
@@ -1397,7 +1596,7 @@ The WorkCoPilot team`,
       repliedAt: '2026-10-23T15:05:00Z',
       ticketUrl: 'https://admireveda.com/work?tab=support',
     },
-    showRows: false,
+    showRows: true,
   },
 
   // ---- Account security notices --------------------------------------------
@@ -1407,17 +1606,16 @@ The WorkCoPilot team`,
     description: 'Sent to the account holder when an administrator disables their account, so they know why access stopped and whom to contact.',
     eyebrow: 'Account notice',
     defaultSubject: 'Your WorkCoPilot account has been disabled',
+    defaultPreheader: 'Your account <Username> was disabled on <Disabled_At>. Your data is kept.',
     defaultHeading: 'Your account has been disabled',
     defaultBody:
 `Hi <First_Name>,
 
-Your WorkCoPilot account (**<Username>**) was disabled by an administrator on <Disabled_At>. You have been signed out everywhere and cannot sign in until it is re-enabled. Your sessions, documents and settings are kept.
+Your WorkCoPilot account was **disabled by an administrator**. You have been signed out everywhere and cannot sign in until it is re-enabled.
 
-Reason given: <Reason>
-
-> If you believe this was a mistake, contact your administrator or write to <Support_Email>. We will let you know by email if the account is re-enabled.
-
-The WorkCoPilot team`,
+> **Your sessions, documents and settings are kept.** Nothing is deleted.
+---
+If you believe this was a mistake, contact your administrator or write to <Support_Email>. We will email you if the account is re-enabled.`,
     defaultCtaLabel: null,
     ctaUrlToken: null,
     placeholders: [
@@ -1425,13 +1623,18 @@ The WorkCoPilot team`,
       P('<Reason>', 'The reason the administrator recorded', 'Contract ended'),
       P('<Disabled_At>', 'When the account was disabled', 'October 23, 2026 at 2:14 PM EDT'),
     ],
+    rowFields: [
+      R('Account', 'username', { mono: true }),
+      R('Disabled on', 'disabledAt', { fmt: 'datetime' }),
+      R('Reason given', 'reason'),
+    ],
     sampleData: {
       name: 'Alex Morgan',
       username: 'alex.morgan',
       reason: 'Contract ended; access paused pending renewal.',
       disabledAt: '2026-10-23T18:14:00Z',
     },
-    showRows: false,
+    showRows: true,
   },
 
   account_enabled: {
@@ -1440,27 +1643,30 @@ The WorkCoPilot team`,
     description: 'Sent to the account holder when an administrator re-enables a previously disabled account.',
     eyebrow: 'Account notice',
     defaultSubject: 'Your WorkCoPilot account is active again',
-    defaultHeading: 'Welcome back - your account is active',
+    defaultPreheader: 'Your account <Username> is active again. Everything is right where you left it.',
+    defaultHeading: 'Welcome back, <First_Name>',
     defaultBody:
 `Hi <First_Name>,
 
-Your WorkCoPilot account (**<Username>**) was re-enabled by an administrator on <Enabled_At>. You can sign in again; everything you had is right where you left it.
-
-> If you did not expect this, write to <Support_Email> and we will look into it.
-
-The WorkCoPilot team`,
+Your WorkCoPilot account was **re-enabled by an administrator**. You can sign in again, and everything you had is right where you left it.
+---
+> If you did not expect this, write to <Support_Email> and we will look into it.`,
     defaultCtaLabel: 'Sign in to WorkCoPilot',
     ctaUrlToken: 'appUrl',
     placeholders: [
       P('<Username>', 'Sign-in name of the account', 'alex.morgan'),
       P('<Enabled_At>', 'When the account was re-enabled', 'October 24, 2026 at 9:02 AM EDT'),
     ],
+    rowFields: [
+      R('Account', 'username', { mono: true }),
+      R('Re-enabled on', 'enabledAt', { fmt: 'datetime' }),
+    ],
     sampleData: {
       name: 'Alex Morgan',
       username: 'alex.morgan',
       enabledAt: '2026-10-24T13:02:00Z',
     },
-    showRows: false,
+    showRows: true,
   },
 
   mfa_reset: {
@@ -1469,14 +1675,19 @@ The WorkCoPilot team`,
     description: 'Security notice sent when the two-factor authenticator on an account is reset (by an administrator or by the owner), so the owner notices if it was not them.',
     eyebrow: 'Security notice',
     defaultSubject: 'Your WorkCoPilot two-factor authenticator was reset',
+    defaultPreheader: 'Your two-factor authenticator was reset by <Reset_By> on <Reset_At>.',
     defaultHeading: 'Your authenticator was reset',
     defaultBody:
 `Hi <First_Name>,
 
-The two-factor authenticator on your WorkCoPilot account (**<Username>**) was reset by <Reset_By> on <Reset_At>. You have been signed out everywhere, and the next time you sign in you will be asked to set up a new authenticator app. Your previous codes and backup codes no longer work.
+The two-factor authenticator on your WorkCoPilot account was **reset by <Reset_By>**. Here is what that means:
+
+- You have been signed out everywhere
+- The next time you sign in, you will set up a new authenticator app
+- Your previous codes and backup codes no longer work
 
 > **Did not expect this?** Do not sign in from a device you do not trust. Write to <Support_Email> right away so we can secure your account.
-
+---
 Thanks for keeping your account secure.`,
     defaultCtaLabel: 'Sign in and re-enroll',
     ctaUrlToken: 'appUrl',
@@ -1485,13 +1696,18 @@ Thanks for keeping your account secure.`,
       P('<Reset_By>', 'Who performed the reset ("you" or "an administrator")', 'an administrator'),
       P('<Reset_At>', 'When the reset happened', 'October 23, 2026 at 2:14 PM EDT'),
     ],
+    rowFields: [
+      R('Account', 'username', { mono: true }),
+      R('Reset by', 'resetBy', { cap: true }),
+      R('Reset on', 'resetAt', { fmt: 'datetime' }),
+    ],
     sampleData: {
       name: 'Alex Morgan',
       username: 'alex.morgan',
       resetBy: 'an administrator',
       resetAt: '2026-10-23T18:14:00Z',
     },
-    showRows: false,
+    showRows: true,
   },
 
   company_disabled: {
@@ -1500,17 +1716,16 @@ Thanks for keeping your account secure.`,
     description: 'Sent to each company administrator when WorkCoPilot disables the company account, so they know why their team lost access and whom to contact.',
     eyebrow: 'Company notice',
     defaultSubject: 'The <Company> WorkCoPilot account has been disabled',
+    defaultPreheader: 'The <Company> account was disabled on <Disabled_At>. Company data is kept.',
     defaultHeading: 'Your company account has been disabled',
     defaultBody:
 `Hi <First_Name>,
 
-The WorkCoPilot company account for **<Company>** was disabled on <Disabled_At>. Everyone in the company has been signed out and cannot sign in until the account is re-enabled. Company data, sessions and settings are kept.
+The WorkCoPilot company account for **<Company>** has been disabled. Everyone in the company has been signed out and cannot sign in until the account is re-enabled.
 
-Reason given: <Reason>
-
-> If you believe this was a mistake or need to resolve it, write to <Support_Email>. We will email you when the account is re-enabled.
-
-The WorkCoPilot team`,
+> **Company data, sessions and settings are kept.** Nothing is deleted.
+---
+If you believe this was a mistake or need to resolve it, write to <Support_Email>. We will email you when the account is re-enabled.`,
     defaultCtaLabel: null,
     ctaUrlToken: null,
     placeholders: [
@@ -1518,13 +1733,18 @@ The WorkCoPilot team`,
       P('<Reason>', 'The reason recorded', 'Invoice overdue'),
       P('<Disabled_At>', 'When the company was disabled', 'October 23, 2026 at 2:14 PM EDT'),
     ],
+    rowFields: [
+      R('Company', 'company', { strong: true }),
+      R('Disabled on', 'disabledAt', { fmt: 'datetime' }),
+      R('Reason given', 'reason'),
+    ],
     sampleData: {
       name: 'Alex Morgan',
       company: 'Northwind Logistics',
       reason: 'Invoice 2026-091 overdue by 45 days.',
       disabledAt: '2026-10-23T18:14:00Z',
     },
-    showRows: false,
+    showRows: true,
   },
 
   company_enabled: {
@@ -1533,27 +1753,30 @@ The WorkCoPilot team`,
     description: 'Sent to each company administrator when a disabled company account is re-enabled.',
     eyebrow: 'Company notice',
     defaultSubject: 'The <Company> WorkCoPilot account is active again',
+    defaultPreheader: 'The <Company> account is active again. Everyone in the company can sign in.',
     defaultHeading: 'Your company account is active again',
     defaultBody:
 `Hi <First_Name>,
 
-The WorkCoPilot company account for **<Company>** was re-enabled on <Enabled_At>. Everyone in the company can sign in again; all data and settings are as they were.
-
-> If you did not expect this, write to <Support_Email>.
-
-The WorkCoPilot team`,
+The WorkCoPilot company account for **<Company>** has been re-enabled. Everyone in the company can sign in again, and all data and settings are as they were.
+---
+> If you did not expect this, write to <Support_Email>.`,
     defaultCtaLabel: 'Open WorkCoPilot',
     ctaUrlToken: 'appUrl',
     placeholders: [
       P('<Company>', 'Company name', 'Northwind Logistics'),
       P('<Enabled_At>', 'When the company was re-enabled', 'October 24, 2026 at 9:02 AM EDT'),
     ],
+    rowFields: [
+      R('Company', 'company', { strong: true }),
+      R('Re-enabled on', 'enabledAt', { fmt: 'datetime' }),
+    ],
     sampleData: {
       name: 'Alex Morgan',
       company: 'Northwind Logistics',
       enabledAt: '2026-10-24T13:02:00Z',
     },
-    showRows: false,
+    showRows: true,
   },
 
   // ---- Enterprise quota alerts --------------------------------------------
@@ -1562,20 +1785,30 @@ The WorkCoPilot team`,
     category: 'billing',
     description: 'Sent to AdmireVeda when a company has consumed the alert-threshold share of its monthly guided-hours pool.',
     eyebrow: 'Usage alert',
+    badge: 'Internal',
     defaultSubject: '<Company> has used <Pct>% of its monthly pool',
-    defaultHeading: 'A company is close to its monthly pool',
+    defaultPreheader: '<Company> has used <Pct>% of its monthly guided-hours pool. Review it before it runs out.',
+    defaultHeading: '<Company> is at <Pct>% of its monthly pool',
     defaultBody:
 `**<Company>** has consumed **<Pct>%** of its monthly guided-hours pool.
 
-Review the company and, if appropriate, raise its monthly pool or approve an additional-hours request from the superadmin console.`,
-    defaultCtaLabel: null,
-    ctaUrlToken: null,
+From the superadmin console you can:
+
+- Review the company's usage
+- Raise its monthly pool
+- Approve an additional-hours request`,
+    defaultCtaLabel: 'Open the superadmin console',
+    ctaUrlToken: 'adminUrl',
     placeholders: [
       P('<Company>', 'Company name', 'Northwind Logistics'),
       P('<Pct>', 'Percent of the pool used', '75'),
     ],
+    rowFields: [
+      R('Company', 'company', { strong: true }),
+      R('Pool used', 'pct', { suffix: '%', strong: true }),
+    ],
     sampleData: { company: 'Northwind Logistics', pct: 75 },
-    showRows: false,
+    showRows: true,
   },
 
   company_hours_requested: {
@@ -1583,24 +1816,32 @@ Review the company and, if appropriate, raise its monthly pool or approve an add
     category: 'billing',
     description: 'Sent to AdmireVeda when a company administrator requests additional pooled hours.',
     eyebrow: 'Hours request',
+    badge: 'Internal',
     defaultSubject: '<Company> requested <Hours> more hours',
-    defaultHeading: 'A company requested additional hours',
+    defaultPreheader: '<By_Name> at <Company> requested <Hours> additional pooled hours.',
+    defaultHeading: '<Company> requested <Hours> more hours',
     defaultBody:
 `**<By_Name>** at **<Company>** requested **<Hours>** additional pooled guided hours.
 
-Note: <Note>
+> **Their note**
+> <Note>
 
-Approve or decline the request from the superadmin console; approved hours are added to the company pool and billed at the company's per-hour rate.`,
-    defaultCtaLabel: null,
-    ctaUrlToken: null,
+Approve or decline the request from the superadmin console. Approved hours are added to the company pool and billed at the company's per-hour rate.`,
+    defaultCtaLabel: 'Open the superadmin console',
+    ctaUrlToken: 'adminUrl',
     placeholders: [
       P('<Company>', 'Company name', 'Northwind Logistics'),
       P('<Hours>', 'Hours requested', '500'),
       P('<By_Name>', 'Who requested', 'Alex Morgan'),
       P('<Note>', 'Request note', 'End-of-quarter push'),
     ],
+    rowFields: [
+      R('Company', 'company', { strong: true }),
+      R('Requested by', 'byName'),
+      R('Hours requested', 'hours', { strong: true }),
+    ],
     sampleData: { company: 'Northwind Logistics', hours: 500, byName: 'Alex Morgan', note: 'End-of-quarter push' },
-    showRows: false,
+    showRows: true,
   },
 
   user_ceiling_threshold: {
@@ -1609,13 +1850,14 @@ Approve or decline the request from the superadmin console; approved hours are a
     description: 'Sent to each company administrator when a team member reaches the alert threshold of their guided-time or task allowance.',
     eyebrow: 'Usage alert',
     defaultSubject: '<User_Name> has used <Pct>% of their allowance',
-    defaultHeading: 'A team member is close to their allowance',
+    defaultPreheader: '<User_Name> at <Company> has used <Pct>% of their allowance.',
+    defaultHeading: '<User_Name> is at <Pct>% of their allowance',
     defaultBody:
 `Hi <First_Name>,
 
-**<User_Name>** at **<Company>** has reached **<Pct>%** of their guided-time or task allowance.
+**<User_Name>** at <Company> has reached **<Pct>%** of their guided-time or task allowance.
 
-You can raise their allowance or adjust their group limits from the company console.`,
+From the company console you can raise their allowance or adjust their group limits.`,
     defaultCtaLabel: 'Open the company console',
     ctaUrlToken: 'appUrl',
     placeholders: [
@@ -1623,8 +1865,13 @@ You can raise their allowance or adjust their group limits from the company cons
       P('<Company>', 'Company name', 'Northwind Logistics'),
       P('<Pct>', 'Percent of allowance used', '75'),
     ],
+    rowFields: [
+      R('Team member', 'userName', { strong: true }),
+      R('Company', 'company'),
+      R('Allowance used', 'pct', { suffix: '%', strong: true }),
+    ],
     sampleData: { name: 'Alex Morgan', userName: 'Jordan Lee', company: 'Northwind Logistics', pct: 75 },
-    showRows: false,
+    showRows: true,
   },
 
   company_hours_decided: {
@@ -1633,13 +1880,14 @@ You can raise their allowance or adjust their group limits from the company cons
     description: 'Sent to each company administrator when AdmireVeda approves or declines an additional-hours request.',
     eyebrow: 'Hours request',
     defaultSubject: 'Your <Hours>-hour request was <Status>',
-    defaultHeading: 'Your additional-hours request was decided',
+    defaultPreheader: 'Your <Hours>-hour request for <Company> was <Status>.',
+    defaultHeading: 'Your <Hours>-hour request was <Status>',
     defaultBody:
 `Hi <First_Name>,
 
 Your request for **<Hours>** additional pooled hours for **<Company>** was **<Status>**.
 
-<Note>`,
+> <Note>`,
     defaultCtaLabel: 'Open the company console',
     ctaUrlToken: 'appUrl',
     placeholders: [
@@ -1648,8 +1896,13 @@ Your request for **<Hours>** additional pooled hours for **<Company>** was **<St
       P('<Company>', 'Company name', 'Northwind Logistics'),
       P('<Note>', 'Decision note', 'Added to your pool now.'),
     ],
+    rowFields: [
+      R('Company', 'company'),
+      R('Hours requested', 'hours'),
+      R('Decision', 'status', { cap: true, strong: true }),
+    ],
     sampleData: { name: 'Alex Morgan', hours: 500, status: 'approved', company: 'Northwind Logistics', note: 'Added to your pool now.' },
-    showRows: false,
+    showRows: true,
   },
 }
 
@@ -1675,6 +1928,7 @@ function enrich(def, data) {
   if (!safeUrl(d.appUrl)) d.appUrl = BRAND.appUrl
   if (!safeUrl(d.siteUrl)) d.siteUrl = BRAND.site
   if (!safeUrl(d.billingUrl)) d.billingUrl = BRAND.billingUrl
+  if (!safeUrl(d.adminUrl)) d.adminUrl = BRAND.adminUrl
   if (!safeUrl(d.howItWorksUrl)) d.howItWorksUrl = BRAND.howItWorksUrl
   if (!safeUrl(d.replyUrl) && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str(d.email))) {
     const subj = str(d.subject) ? `Re: ${str(d.subject)}` : 'Your WorkCoPilot question'
@@ -1697,15 +1951,24 @@ function buildRows(def, d) {
     else if (f.fmt === 'date') v = formatDate(v)
     else if (f.fmt === 'datetime') v = formatDate(v, { withTime: true })
     else v = (v == null || typeof v === 'object') ? '' : String(v)
-    return { label: f.label, value: str(v), strong: !!f.strong, mono: !!f.mono }
+    v = str(v)
+    if (v && f.cap) { v = v.replace(/_/g, ' '); v = v[0].toUpperCase() + v.slice(1) }
+    if (v && f.suffix) v += f.suffix
+    return { label: f.label, value: v, strong: !!f.strong, mono: !!f.mono }
   })
 }
 
-// Preheader: first body paragraph that is not the greeting, trimmed.
+// Preheader: the inbox preview line. A template's explicit defaultPreheader
+// (substituted) wins; otherwise the first body paragraph that is not the
+// greeting. Clamped to ~150 chars, which is what inboxes show.
+function clampPreheader(s) {
+  const p = String(s || '').replace(/\s+/g, ' ').trim()
+  return p.length > 150 ? p.slice(0, 147).replace(/\s+\S*$/, '') + '...' : p
+}
 function derivePreheader(bodyText, fallback) {
-  const paras = bodyToText(bodyText).split(/\n\s*\n/).map((p) => p.replace(/\n/g, ' ').trim()).filter(Boolean)
+  const paras = bodyToText(bodyText).split(/\n\s*\n/).map((p) => p.replace(/^-\s+/gm, '').replace(/\n/g, ' ').trim()).filter(Boolean)
   const pick = paras.find((p) => !/^(hi|hello|hey|dear)\b/i.test(p) && p.length > 20) || paras[0] || fallback || ''
-  return pick.length > 150 ? pick.slice(0, 147).replace(/\s+\S*$/, '') + '...' : pick
+  return clampPreheader(pick)
 }
 
 // ---------------------------------------------------------------------------
@@ -1721,11 +1984,12 @@ export function renderEmail(type, data = {}, overrides = {}) {
 
   const pick = (ov, dflt) => (ov != null && String(ov).trim() !== '' ? String(ov) : (dflt == null ? '' : String(dflt)))
 
-  let subject, heading, bodyText, cta, rows, html, text
+  let subject, heading, bodyText, preheader, cta, rows, html, text
   try {
     subject = tidyLine(substitute(pick(o.subject, def.defaultSubject), d).replace(/[\r\n]+/g, ' ')) || `A note from ${BRAND.product}`
     heading = tidyLine(substitute(pick(o.heading, def.defaultHeading), d))
     bodyText = substitute(pick(o.body, def.defaultBody), d)
+    preheader = clampPreheader(tidyLine(substitute(pick(o.preheader, def.defaultPreheader), d).replace(/[\r\n]+/g, ' ')))
 
     const ctaLabel = tidyLine(substitute(pick(o.ctaLabel, def.defaultCtaLabel), d))
     const ctaUrl = def.ctaUrlToken ? safeUrl(d[def.ctaUrlToken]) : ''
@@ -1741,29 +2005,33 @@ export function renderEmail(type, data = {}, overrides = {}) {
     rows = null
   }
 
-  const preheader = derivePreheader(bodyText, heading)
-  const bodyPlain = bodyToText(bodyText)
+  // "---" splits the body: above goes before rows + button, below after it.
+  const { above, below } = splitBody(bodyText)
+  if (!preheader) preheader = derivePreheader(above, heading)
+  const bodyPlain = bodyToText(above)
+  const afterPlain = bodyToText(below)
 
   try {
     html = renderLayout({
       preheader,
       heading,
-      bodyHtml: bodyToHtml(bodyText),
+      bodyHtml: bodyToHtml(above),
       cta,
       rows,
+      afterHtml: bodyToHtml(below, { fine: true }),
       eyebrow: def.eyebrow,
       eyebrowColor: def.eyebrowColor,
       badge: def.badge,
     })
   } catch (err) {
     try { console.error(`[email_templates] "${key}" layout failed: ${err && err.message}`) } catch { /* no console */ }
-    html = `<!DOCTYPE html><html><body style="font-family:${FONT};color:${C.ink};padding:24px;"><h1>${esc(heading || subject)}</h1><p style="white-space:pre-wrap;">${esc(bodyPlain)}</p>${cta ? `<p><a href="${esc(cta.url)}">${esc(cta.label)}</a></p>` : ''}</body></html>`
+    html = `<!DOCTYPE html><html><body style="font-family:${FONT};color:${C.ink};padding:24px;"><h1>${esc(heading || subject)}</h1><p style="white-space:pre-wrap;">${esc(bodyPlain)}</p>${cta ? `<p><a href="${esc(cta.url)}">${esc(cta.label)}</a></p>` : ''}<p style="white-space:pre-wrap;">${esc(afterPlain)}</p></body></html>`
   }
 
   try {
-    text = renderTextLayout({ heading, bodyText: bodyPlain, cta, rows })
+    text = renderTextLayout({ heading, bodyText: bodyPlain, cta, rows, afterText: afterPlain })
   } catch {
-    text = `${heading || subject}\n\n${bodyPlain}`
+    text = `${heading || subject}\n\n${bodyPlain}\n\n${afterPlain}`.trim()
   }
 
   return { subject, html, text }
