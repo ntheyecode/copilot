@@ -7,7 +7,7 @@
 // superadmin incident trail is complete. fetch is stubbed per-URL.
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { chat, AI_CODES } from './ai.js'
+import { chat, analyseImages, AI_CODES } from './ai.js'
 
 const jsonRes = (status, body) => ({ ok: status >= 200 && status < 300, status, json: async () => body })
 let chatHandler = () => jsonRes(200, { choices: [{ message: { content: 'OK' } }] })
@@ -96,4 +96,36 @@ test('an empty response on EVERY provider throws a crisp coded error (not a hang
   assert.ok(err)
   assert.equal(err.code, AI_CODES.EXHAUSTED)
   assert.ok(switches.some((s) => s.fatal && s.code === AI_CODES.EXHAUSTED))
+})
+
+// ---- VISION failover (analyseImages) --------------------------------------
+// Screen reading must stay up too: a decommissioned or empty-returning vision
+// model heals to another vision-capable model on the SAME key (cross-provider
+// vision failover is handled one layer up). Behavior test, not just the filter.
+const IMG = 'data:image/jpeg;base64,AAAA'
+const visionRun = async (cfgIn, model, handler) => {
+  chatHandler = handler
+  const switches = []
+  const cfg = { apiKey: 'k', onSwitch: (e) => switches.push(e), ...cfgIn }
+  let got, err
+  try { got = await analyseImages(cfg, 'read this screen', [IMG], model, { mediaRes: 'low' }) } catch (e) { err = e }
+  return { got, err, switches }
+}
+
+test('VISION: a decommissioned vision model heals to a current vision model on the same key', async () => {
+  const { got, switches } = await visionRun({ providerId: 'openai' }, 'gpt-4o',
+    (prov, model) => model === 'gpt-4o'
+      ? jsonRes(404, { error: { message: 'The model gpt-4o does not exist or is not available' } })
+      : jsonRes(200, { choices: [{ message: { content: 'SAW ' + model } }] }))
+  assert.match(got, /SAW gpt-4o-mini/)
+  assert.ok(switches.some((s) => s.scope === 'vision' && s.toModel === 'gpt-4o-mini'))
+})
+
+test('VISION: an empty read heals to another vision model (Plan B for screen reading)', async () => {
+  const { got, switches } = await visionRun({ providerId: 'openai' }, 'gpt-4o',
+    (prov, model) => model === 'gpt-4o'
+      ? jsonRes(200, { choices: [{ message: { content: '' } }] })   // empty read
+      : jsonRes(200, { choices: [{ message: { content: 'SAW ' + model } }] }))
+  assert.match(got, /SAW gpt-4o-mini/)
+  assert.ok(switches.some((s) => s.scope === 'vision'))
 })
