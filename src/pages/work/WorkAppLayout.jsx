@@ -8,7 +8,7 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban } from 'lucide-react'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
@@ -226,7 +226,7 @@ export default function WorkAppLayout() {
       if (cancelled) return
       import('./Dashboard.jsx'); import('./StartTask.jsx'); import('./Skills.jsx')
       import('./Help.jsx'); import('./Support.jsx'); import('./MyTasks.jsx')
-      import('./Completed.jsx'); import('./Logs.jsx')
+      import('./Completed.jsx'); import('./Logs.jsx'); import('./projects/Projects.jsx')
     }
     const idle = (typeof window !== 'undefined' && window.requestIdleCallback)
       ? window.requestIdleCallback(warm, { timeout: 1500 }) : setTimeout(warm, 400)
@@ -370,8 +370,9 @@ export default function WorkAppLayout() {
   // `workShell.nav.*` key, so they always name the section identically in every
   // language (the help route is the one deliberate exception: rail "Help", title
   // "How-to", exactly as before).
-  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support') }
-  const title = TITLES[pathname] || t('workShell.nav.dashboard')
+  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support') }
+  // A project's own view (/work/projects/:id) keeps the Projects section title.
+  const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : t('workShell.nav.dashboard'))
   const wide = /^\/work\/(help|support)$/.test(pathname)
   const initial = String((user && (user.displayName || user.username)) || '').trim().charAt(0) || '?'
   const navClass = ({ isActive }) => `wd-nav${isActive ? ' on' : ''}`
@@ -410,6 +411,7 @@ export default function WorkAppLayout() {
           <nav className="wd-navs" aria-label={t('workShell.nav.sections')}>
             <NavLink end to="/work" className={navClass} title={t('workShell.nav.dashboard')}><LayoutDashboard size={18} /> <span className="wd-nav-t">{t('workShell.nav.dashboard')}</span></NavLink>
             <NavLink to="/work/start" className={navClass} title={t('workShell.nav.start')}><Play size={18} /> <span className="wd-nav-t">{t('workShell.nav.start')}</span></NavLink>
+            <NavLink to="/work/projects" className={navClass} title={t('workShell.nav.projectsTip')}><FolderKanban size={18} /> <span className="wd-nav-t">{t('workShell.nav.projects')}</span></NavLink>
             <NavLink to="/work/tasks" className={navClass} title={t('workShell.nav.tasksTip')}><Clock size={18} /> <span className="wd-nav-t">{t('workShell.nav.tasks')}</span></NavLink>
             <NavLink to="/work/completed" className={navClass} title={t('workShell.nav.completed')}><Check size={18} /> <span className="wd-nav-t">{t('workShell.nav.completed')}</span></NavLink>
             <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>

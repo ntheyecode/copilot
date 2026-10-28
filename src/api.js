@@ -170,6 +170,20 @@ export const api = {
   workTeamSetWebSearch: (apiKey, provider, reason) => req('POST', '/api/work/team/web-search', { apiKey, provider, ...(reason ? { reason } : {}) }),
   workTeamAiRecommendation: () => req('GET', '/api/work/team/ai-recommendation'),
   workSetGoal: (id, goal) => req('POST', `/api/work/sessions/${id}/goal`, { goal: clean(goal) }),
+  // Projects (Depth-2: Premium + company users with Deep guidance). Free text
+  // (goal, name, request) is scrubbed CLIENT-SIDE like every other goal. The
+  // server answers a non-deep user with 403 { needsUpgrade } on every route;
+  // create may also answer 422 { singleTask, suggestedGoal } (one workflow, not a
+  // project), 200 { refusal } or 422 { errors } (quality gate). Callers branch on
+  // err.status + err.data (see src/pages/work/projects/projectModel.js).
+  workProjects: (customerId) => req('GET', `/api/work/projects${customerId ? `?customer=${encodeURIComponent(customerId)}` : ''}`),
+  workProject: (id) => req('GET', `/api/work/projects/${encodeURIComponent(id)}`),
+  workProjectCreate: (body) => req('POST', '/api/work/projects', { ...(body || {}), goal: clean((body && body.goal) || ''), ...(body && body.name ? { name: clean(body.name) } : {}) }),
+  workProjectExpand: (id, taskId) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/expand`, {}),
+  workProjectInject: (id, body) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/inject`, { ...(body || {}), request: clean((body && body.request) || '') }),
+  workProjectTaskState: (id, taskId, state) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/state`, { state }),
+  // Company customers ("who the work is for"): the project picker reads the list.
+  workCompanyCustomers: () => req('GET', '/api/work/company/customers'),
   // body: { goal?, frame? } (frame = downscaled data URL; when DLP is on it is
   // redacted on-device by frame_scrub before it is passed in by the component)
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),
