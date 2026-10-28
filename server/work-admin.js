@@ -481,8 +481,8 @@ export function registerWorkAdminRoutes(app, deps = {}) {
     res.json(store.setUserFreeAccess(req.params.id, !!(req.body && req.body.free)))
   }))
   app.post('/api/work/admin/users/:id/company', requireAuth, superGate, w((req, res) => {
-    const { companyId, companyRole } = req.body || {}
-    res.json(store.setUserCompany(req.params.id, companyId || null, companyRole))
+    const { companyId, companyRole, workFlow } = req.body || {}
+    res.json(store.setUserCompany(req.params.id, companyId || null, companyRole, workFlow))
   }))
 }
 

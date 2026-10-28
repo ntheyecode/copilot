@@ -2616,7 +2616,7 @@ export function resolveSsoLogin({ companyId, email } = {}) {
 // Kept for backward compatibility with any caller that expects find-or-create in
 // AUTO mode; new code uses resolveSsoLogin. Explicit companies refuse unknowns.
 export function provisionSsoUser(args = {}) { return resolveSsoLogin(args) }
-export function setUserCompany(userId, companyId, companyRole) {
+export function setUserCompany(userId, companyId, companyRole, workFlow) {
   const u = getUser(userId)
   if (!u) throw httpErr(404, 'Account not found')
   if (companyId && !(db.companies || []).some((c) => c.id === companyId)) throw httpErr(404, 'Company not found.')
@@ -2625,6 +2625,8 @@ export function setUserCompany(userId, companyId, companyRole) {
   if (companyId) assertSeatAvailable(companyId, role, u.tier, u.id)
   u.companyId = companyId || null
   u.companyRole = role
+  // Work flow (worker / independent / mixed) only applies inside a company.
+  if (workFlow !== undefined) u.workFlow = companyId ? enumOrThrow(String(workFlow || 'independent'), ['worker', 'independent', 'mixed'], 'Work flow') : null
   persist()
   return publicWorkUser(u)
 }
