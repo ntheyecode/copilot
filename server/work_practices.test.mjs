@@ -40,6 +40,13 @@ test('respects the cap and returns nothing off-topic', () => {
   assert.equal(suggestPractices({ goal: 'Plan a dinner party', tasks: [] }).length, 0)
 })
 
+test('single-task tips: the catalog matches a bare goal, capped, off-topic yields none', () => {
+  const tips = suggestPractices({ goal: 'Set up MFA and harden the server', tasks: [] }, { max: 2 })
+  assert.ok(tips.length > 0 && tips.length <= 2)
+  assert.ok(tips[0].title && tips[0].rationale)
+  assert.equal(suggestPractices({ goal: 'Plan a birthday party', tasks: [] }).length, 0)
+})
+
 test('no duplicate practice ids across matched disciplines', () => {
   const out = suggestPractices({ goal: 'Secure cloud data migration with backups', tasks: [] }, { max: 99 })
   const ids = out.map((s) => s.id)

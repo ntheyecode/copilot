@@ -35,6 +35,17 @@ export function registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap }
     const out = store.injectWorkProjectTask(req.workUser.id, p.id, { request: td.goal, title: td.title, doneState: td.doneState })
     res.json({ accepted: sug.id, ...out })
   }))
+
+  // Single-task TIPS (all tiers): grounded improvement tips for a guided session's
+  // goal, from the same catalog. Not rope-in (a single task is not a project);
+  // informational, with an upgrade nudge to Projects where a deep user could rope
+  // them in. `canRopeIn` tells the client whether to offer that.
+  app.post('/api/work/sessions/:id/practices', requireWorkAuth, wrap((req, res) => {
+    const s = store.getWorkSession(req.workUser.id, req.params.id)
+    if (!s) return res.status(404).json({ error: 'Session not found' })
+    const tips = suggestPractices({ goal: s.goal || '', tasks: [] }, { max: 2 })
+    res.json({ tips, canRopeIn: store.canUseWorkProjects(req.workUser.id) })
+  }))
 }
 
 export default { registerWorkPracticeRoutes }
