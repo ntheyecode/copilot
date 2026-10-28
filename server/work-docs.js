@@ -56,11 +56,14 @@ export function registerWorkDocsRoutes(app, deps = {}) {
     return null
   }
 
-  // Advanced-tier gate, runs after requireWorkAuth so req.workUser is set.
-  function gateAdvanced(req, res, next) {
+  // Documents-feature gate, runs after requireWorkAuth so req.workUser is set.
+  // Grounding is on for every tier now (store.TIER_FEATURES.documents), so this
+  // passes for all; it stays as the single-registry gate in case a tier is ever
+  // turned off. The per-tier COUNT cap is the paid lever, enforced on upload.
+  function gateDocuments(req, res, next) {
     const tier = store.getWorkTier(workUid(req))
     if (!store.tierAllows(tier, 'documents')) {
-      return res.status(403).json({ error: 'Upgrade to Advanced to upload documents.', upgrade: true, tier })
+      return res.status(403).json({ error: 'Document grounding is not available on your plan.', upgrade: true, tier })
     }
     next()
   }
@@ -68,8 +71,17 @@ export function registerWorkDocsRoutes(app, deps = {}) {
   // POST /api/work/docs - accept one document, extract its text, store the text.
   // Body: { name, mime, dataBase64 }. Returns { ok, doc } where doc is the
   // store.addWorkDoc result ({ id, name, size, chars, at }).
-  app.post('/api/work/docs', requireWorkAuth, gateAdvanced, async (req, res) => {
+  app.post('/api/work/docs', requireWorkAuth, gateDocuments, async (req, res) => {
     try {
+      // Per-tier count cap (the paid lever). Fail fast before any extraction so a
+      // person at the cap is told plainly rather than spending the parse.
+      const uid = workUid(req)
+      const tier = store.getWorkTier(uid)
+      const max = store.workDocsMax(tier)
+      const used = store.listWorkDocs(uid).length
+      if (used >= max) {
+        return res.status(403).json({ error: `You can ground a plan with up to ${max} document${max === 1 ? '' : 's'} on your plan. Remove one, or upgrade for more.`, capReached: true, used, max, tier, upgrade: true })
+      }
       const body = req.body || {}
       const name = typeof body.name === 'string' ? body.name.trim() : ''
       const mime = typeof body.mime === 'string' ? body.mime.trim() : ''
@@ -130,13 +142,14 @@ export function registerWorkDocsRoutes(app, deps = {}) {
   })
 
   // GET /api/work/docs - list the stored docs plus the caller's tier.
-  app.get('/api/work/docs', requireWorkAuth, gateAdvanced, wrap((req, res) => {
+  app.get('/api/work/docs', requireWorkAuth, gateDocuments, wrap((req, res) => {
     const uid = workUid(req)
-    res.json({ docs: store.listWorkDocs(uid), tier: store.getWorkTier(uid) })
+    const tier = store.getWorkTier(uid)
+    res.json({ docs: store.listWorkDocs(uid), tier, max: store.workDocsMax(tier) })
   }))
 
   // DELETE /api/work/docs/:id - remove one stored doc.
-  app.delete('/api/work/docs/:id', requireWorkAuth, gateAdvanced, wrap((req, res) => {
+  app.delete('/api/work/docs/:id', requireWorkAuth, gateDocuments, wrap((req, res) => {
     // Own content: the user may delete their own doc freely; we don't block on a
     // reason, but we capture one if given and always log the removal.
     const reason = String((req.body && req.body.reason) || (req.query && req.query.reason) || '').trim()

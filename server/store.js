@@ -3133,17 +3133,29 @@ export const WORK_TIERS = ['lite', 'basic', 'advanced', 'premium']
 // users). Keep in sync with WORK_TIERS order.
 export const TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
 // Per-tier feature gates. Lite is the entry plan: guided one step at a time,
-// NO roadmaps and NO diagrams. Diagrams stay premium-only; own-document grounding
-// stays advanced/premium.
+// NO roadmaps and NO diagrams. Diagrams stay premium-only. Own-document grounding
+// is available on EVERY tier now (grounding a plan in the person's own material
+// is core value, not a premium-only perk); the NUMBER of reference documents is
+// the paid lever instead, see WORK_DOCS_MAX_BY_TIER / workDocsMax below.
 export const TIER_FEATURES = {
-  lite: { roadmaps: false, diagrams: false, documents: false, images: false },
-  basic: { roadmaps: true, diagrams: false, documents: false, images: false },
+  lite: { roadmaps: false, diagrams: false, documents: true, images: false },
+  basic: { roadmaps: true, diagrams: false, documents: true, images: false },
   advanced: { roadmaps: true, diagrams: false, documents: true, images: false },
   premium: { roadmaps: true, diagrams: true, documents: true, images: true },
 }
 export function tierAllows(tier, feature) {
   const f = TIER_FEATURES[WORK_TIERS.includes(tier) ? tier : 'basic']
   return !!(f && f[feature])
+}
+// Per-tier cap on how many reference documents may ground a plan. The feature is
+// on for everyone (above); the count is the paid lever. ONE source of truth,
+// read by the upload route (server/work-docs.js) and surfaced to the client via
+// GET /api/work/docs so the wizard can show "used of max" and stop at the cap.
+// Every value stays at or below the storage-trim ceiling (WORK_DOCS_MAX = 25,
+// applied in addWorkDoc) so the paid lever never exceeds what is retained.
+export const WORK_DOCS_MAX_BY_TIER = { lite: 2, basic: 3, advanced: 15, premium: 25 }
+export function workDocsMax(tier) {
+  return WORK_DOCS_MAX_BY_TIER[WORK_TIERS.includes(tier) ? tier : 'basic'] || WORK_DOCS_MAX_BY_TIER.basic
 }
 export function nextTierUp(tier) {
   const i = TIER_ORDER.indexOf(tier); return (i >= 0 && i < TIER_ORDER.length - 1) ? TIER_ORDER[i + 1] : null

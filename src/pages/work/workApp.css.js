@@ -470,6 +470,12 @@ export const WD_CSS = `
 .wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:calc(12.5px*var(--wc-fs,1));color:var(--danger)}
 .wd-docs-note{margin-top:9px;font-size:calc(11.5px*var(--wc-fs,1));color:var(--mut);line-height:1.5}
+.wd-docs-cap{margin-top:7px;display:inline-flex;align-items:center;gap:5px;font-size:calc(11.5px*var(--wc-fs,1));font-weight:600;color:var(--mut)}
+.wd-docs-add.ghost{background:transparent;color:var(--tx);border:1px solid var(--line-2)}
+.wd-docs-paste{margin-top:9px}
+.wd-docs-paste textarea{width:100%;box-sizing:border-box;min-height:84px;resize:vertical;border:1px solid var(--line-2);border-radius:var(--r-sm,10px);padding:10px 12px;font:inherit;font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--tx);background:var(--panel,#fff)}
+.wd-docs-paste textarea:focus{outline:none;border-color:var(--em)}
+.wd-docs-paste-foot{margin-top:7px;display:flex;justify-content:flex-end}
 /* The ONE call-to-action: orange on every surface (brand), the only solid
    orange element on a screen. Secondary actions stay green / outline. */
 .wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:var(--cta);color:var(--cta-ink);border:none;border-radius:var(--r-sm);height:40px;padding:0 20px;font:inherit;font-weight:600;font-size:var(--fs-base);cursor:pointer;transition:background .15s,transform .15s}

@@ -281,25 +281,34 @@ function ScopeLoader({ depth, t }) {
   )
 }
 
-// Reference documents attach (reused verbatim in behaviour): desktop picks docs
-// on-device (stashed for the session), web uploads to the server. Tier-gated to
-// Advanced/Premium.
+// Reference documents attach: desktop picks docs on-device (stashed for the
+// session, nothing leaves the computer), web uploads to the server. Available on
+// EVERY tier now; the per-tier count cap (store.WORK_DOCS_MAX, surfaced as `max`
+// by GET /api/work/docs) is the paid lever and is enforced server-side on upload.
 function DocsAttach({ tier, onDesktopDocs, t }) {
   const desktop = typeof window !== 'undefined' ? window.workDesktop : null
-  const allowed = tier === 'advanced' || tier === 'premium'
   const [docs, setDocs] = useState([])
+  const [max, setMax] = useState(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [pasteText, setPasteText] = useState('')
   const inputRef = useRef(null)
 
+  // Always learn the per-tier cap (GET returns `max`); on web it also returns the
+  // persisted docs. Desktop docs are on-device only, so its own list is kept.
   useEffect(() => {
-    if (desktop || !allowed) return
     let on = true
-    api.workDocsList().then((r) => { if (on) setDocs((r && r.docs) || []) }).catch(() => {})
+    api.workDocsList().then((r) => {
+      if (!on || !r) return
+      if (typeof r.max === 'number') setMax(r.max)
+      if (!desktop) setDocs(r.docs || [])
+    }).catch(() => {})
     return () => { on = false }
-  }, [desktop, allowed])
+  }, [desktop])
 
-  const pushDesktop = (list) => { const l = list.slice(0, 8); setDocs(l); if (onDesktopDocs) onDesktopDocs(l) }
+  const atCap = max != null && docs.length >= max
+  const pushDesktop = (list) => { const l = max != null ? list.slice(0, max) : list; setDocs(l); if (onDesktopDocs) onDesktopDocs(l) }
 
   const addDesktop = async () => {
     setErr(''); setBusy(true)
@@ -311,6 +320,7 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
       if (bad.length) setErr(bad.map((b) => `${b.name}: ${b.error}`).join(' · '))
       const next = [...docs]
       for (const d of good) next.push({ name: d.name, chars: d.chars, text: clean(d.text), method: d.method, confidence: d.confidence })   // govern on-device
+      if (max != null && next.length > max) setErr(t('workStart.docsCapFull', { max }))
       pushDesktop(next)
     } catch (e) { setErr((e && e.message) || t('workStart.docsErrRead')) } finally { setBusy(false) }
   }
@@ -319,7 +329,8 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
     if (!files.length) return
     setErr(''); setBusy(true)
     try {
-      for (const f of files.slice(0, 8)) {
+      const room = max != null ? Math.max(0, max - docs.length) : files.length
+      for (const f of files.slice(0, room)) {
         if (f.size > 10 * 1024 * 1024) { setErr(t('workStart.docsErrTooLarge', { name: f.name })); continue }
         try {
           const dataBase64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.onerror = () => rej(new Error('read failed')); rd.readAsDataURL(f) })
@@ -327,7 +338,28 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
           if (r && r.doc) setDocs((d) => [...d, r.doc])
         } catch (e2) { setErr(`${f.name}: ${(e2 && e2.message) || t('workStart.docsErrUpload', { name: f.name })}`) }
       }
+      if (max != null && files.length > room) setErr(t('workStart.docsCapFull', { max }))
     } finally { setBusy(false) }
+  }
+  // Paste reference text directly, the chosen alternative to fetching a link (no
+  // SSRF, no auth-wall, no fetch-time injection). Web stores it as a text/plain
+  // document through the same pipeline so it counts against the cap; desktop
+  // keeps it on-device like any other picked doc.
+  const addPaste = async () => {
+    const text = clean(pasteText.trim())
+    if (!text) return
+    if (atCap) { setErr(t('workStart.docsCapFull', { max })); return }
+    setErr(''); setBusy(true)
+    try {
+      if (desktop) {
+        pushDesktop([...docs, { name: t('workStart.docsPasteName'), chars: text.length, text }])
+      } else {
+        const dataBase64 = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(text)))
+        const r = await api.workDocAdd({ name: t('workStart.docsPasteName'), mime: 'text/plain', dataBase64 })
+        if (r && r.doc) setDocs((d) => [...d, r.doc])
+      }
+      setPasteText(''); setPasteOpen(false)
+    } catch (e2) { setErr((e2 && e2.message) || t('workStart.docsErrUpload', { name: t('workStart.docsPasteName') })) } finally { setBusy(false) }
   }
   const remove = async (doc, i) => {
     if (desktop) { pushDesktop(docs.filter((_, k) => k !== i)); return }
@@ -335,23 +367,25 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
     setDocs((d) => d.filter((x) => x.id !== doc.id))
   }
 
-  if (!allowed) {
-    return (
-      <div className="wd-docs locked">
-        <span className="wd-docs-lead"><FileText size={14} /> {t('workStart.docsLockLead')}</span>
-        <span className="wd-docs-gate"><Zap size={12} /> {t('workStart.docsGate')}</span>
-      </div>
-    )
-  }
   return (
     <div className="wd-docs">
       <div className="wd-docs-row">
         <span className="wd-docs-lead"><FileText size={14} /> {t('workStart.docsRefLead')} <span className="wd-docs-sub">{desktop ? t('workStart.docsStayOn') : t('workStart.docsGround')}</span></span>
         {desktop
-          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>
-          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>}
+          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>
+          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>}
         <input ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple style={{ display: 'none' }} onChange={addWeb} />
+        <button type="button" className="wd-docs-add ghost" onClick={() => setPasteOpen((o) => !o)} disabled={busy || atCap}><PenLine size={14} /> {t('workStart.docsPaste')}</button>
       </div>
+      {pasteOpen && (
+        <div className="wd-docs-paste">
+          <textarea rows={4} placeholder={t('workStart.docsPastePh')} value={pasteText} onChange={(e) => setPasteText(e.target.value)} maxLength={20000} />
+          <div className="wd-docs-paste-foot">
+            <button type="button" className="wd-docs-add" onClick={addPaste} disabled={busy || !pasteText.trim() || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsPasteAdd')}</button>
+          </div>
+        </div>
+      )}
+      {max != null && <div className="wd-docs-cap">{t('workStart.docsCap', { used: docs.length, max })}{atCap && <> <Zap size={11} /> {t('workStart.docsCapUpgrade')}</>}</div>}
       {docs.length > 0 && (
         <div className="wd-docs-list">
           {docs.map((d, i) => (
@@ -386,7 +420,6 @@ export default function StartTask() {
   const [place, setPlace] = useState((draft && draft.place) || '')
   const [appName, setAppName] = useState((draft && draft.appName) || '')
   const [appUrl, setAppUrl] = useState((draft && draft.appUrl) || '')
-  const [appPath, setAppPath] = useState((draft && draft.appPath) || '')
   const [otherText, setOtherText] = useState((draft && draft.otherText) || '')
   const [advancing, setAdvancing] = useState(false)
   // Documents (step 2)
@@ -423,9 +456,9 @@ export default function StartTask() {
   // Park the draft on every change (the goal, the interview, the depth and the
   // answers). An untouched wizard stores nothing.
   useEffect(() => {
-    const touched = !!(place || appName || appUrl || appPath || otherText || docsChoice || planTitle || goal || depth || answers.length)
-    writeDraft(touched ? { step, place, appName, appUrl, appPath, otherText, docsChoice, planTitle, goal, depth, answers } : null)
-  }, [step, place, appName, appUrl, appPath, otherText, docsChoice, planTitle, goal, depth, answers])
+    const touched = !!(place || appName || appUrl || otherText || docsChoice || planTitle || goal || depth || answers.length)
+    writeDraft(touched ? { step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers } : null)
+  }, [step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers])
 
   // Where AI setup happens for THIS person: platform admins in the admin
   // console, company admins in the company console, personal accounts in the
@@ -478,12 +511,12 @@ export default function StartTask() {
   const buildContext = useCallback(() => {
     const parts = []
     if (place === 'saas') parts.push(appName ? `Working in: ${appName}${appUrl ? ` (${appUrl})` : ''} - a website or SaaS app.` : 'Working in a website or SaaS app.')
-    else if (place === 'desktop') parts.push(appName ? `Working in: ${appName} - a desktop app${appPath ? `, at ${appPath}` : ''}.` : 'Working in a desktop app.')
+    else if (place === 'desktop') parts.push(appName ? `Working in: ${appName} - a desktop app.` : 'Working in a desktop app.')
     else if (place === 'files') parts.push('Working with my own files or data.')
     else if (place === 'other' && otherText.trim()) parts.push(`Working on: ${otherText.trim()}.`)
     if (docsChoice === 'use') parts.push('Reference documents are attached to ground this.')
     return parts.join(' ')
-  }, [place, appName, appUrl, appPath, otherText, docsChoice])
+  }, [place, appName, appUrl, otherText, docsChoice])
   useEffect(() => { setTaskContext(buildContext()) }, [buildContext])
 
   const goalForPlan = (g) => {
@@ -568,7 +601,7 @@ export default function StartTask() {
   // --- Reflection / review display helpers (translated DISPLAY of the same state) ---
   const placeSummary = () => {
     if (place === 'saas') return appName ? (appUrl ? t('workStart.sumSaasUrl', { name: appName, url: appUrl }) : t('workStart.sumSaas', { name: appName })) : t('workStart.sumSaasBare')
-    if (place === 'desktop') return appName ? (appPath ? t('workStart.sumDesktopPath', { name: appName, path: appPath }) : t('workStart.sumDesktop', { name: appName })) : t('workStart.sumDesktopBare')
+    if (place === 'desktop') return appName ? t('workStart.sumDesktop', { name: appName }) : t('workStart.sumDesktopBare')
     if (place === 'files') return t('workStart.sumFiles')
     if (place === 'other' && otherText.trim()) return otherText.trim()
     return t('workStart.sumUnset')
@@ -673,15 +706,9 @@ export default function StartTask() {
             )}
             {place === 'desktop' && (
               <div className="wd-coach-fields wd-wiz-reveal">
-                <div className="wd-coach-two">
-                  <div className="wd-coach-field">
-                    <label htmlFor="wd-ctx-dapp">{t('workStart.fAppName')}</label>
-                    <input ref={firstFieldRef} id="wd-ctx-dapp" className="wd-coach-input" placeholder={t('workStart.fDeskAppPh')} value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
-                  </div>
-                  <div className="wd-coach-field">
-                    <label htmlFor="wd-ctx-path">{t('workStart.fPath')} <span style={{ fontWeight: 400, color: 'var(--mut)' }}>{t('workStart.fOptional')}</span></label>
-                    <input id="wd-ctx-path" className="wd-coach-input" placeholder={t('workStart.fPathPh')} value={appPath} onChange={(e) => setAppPath(e.target.value)} onKeyDown={onFieldKey} maxLength={200} />
-                  </div>
+                <div className="wd-coach-field">
+                  <label htmlFor="wd-ctx-dapp">{t('workStart.fAppName')}</label>
+                  <input ref={firstFieldRef} id="wd-ctx-dapp" className="wd-coach-input" placeholder={t('workStart.fDeskAppPh')} value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
                 </div>
                 <div className="wd-coach-note"><Sparkles size={13} /> {t('workStart.noteDesk')}</div>
               </div>
