@@ -34,6 +34,7 @@ import { registerWorkDocsRoutes } from './work-docs.js'
 import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
 import { registerWorkCustomerRoutes } from './work_customer_routes.js'
+import { registerKbSpaceRoutes } from './kb_spaces_routes.js'
 import { registerGuidanceDepthRoutes } from './work_depth_routes.js'
 import { registerWorkProjectRoutes } from './work_project_routes.js'
 import { registerWorkRolesRoutes } from './work_roles_routes.js'
@@ -2264,7 +2265,7 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
     // and docs before they enter the prompt. They are scrubbed on write too, so
     // this is defense in depth (and honors an armed policy's block words that may
     // post-date the stored record).
-    const kbNotes = scrubText(store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')).clean
+    const kbNotes = scrubText(store.getLearningsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '', space: (req.body && req.body.space) || s.kbSpace || null }).map((l) => `- ${l.app ? l.app + ': ' : ''}${l.fact}`).join('\n')).clean
     const skillNotes = scrubText(store.getSkillsFor(req.workUser.id, { goal: planGoal, app: s.appContext || '' }).map((sk) => `- ${sk.title}${sk.tags ? ' [' + sk.tags + ']' : ''}: ${sk.content}`).join('\n\n')).clean
     // Company Brain: the PRIMARY company grounding. It ADDS to skills/learnings
     // (never replaces them), so an empty brain never degrades the plan. A brain
@@ -3596,6 +3597,7 @@ registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requi
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
 registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
+registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
 registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })

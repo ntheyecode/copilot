@@ -1465,7 +1465,7 @@ function _learnHolder(userId) {
   return { kind: 'global', obj: db.work, field: 'globalKb', cap: GLOBAL_LEARNING_CAP }
 }
 const _normLearn = (s) => String(s || '').toLowerCase().replace(/\s+/g, ' ').trim()
-export function addLearning(userId, { app = '', fact = '', kind = 'correction' } = {}) {
+export function addLearning(userId, { app = '', fact = '', kind = 'correction', space = null } = {}) {
   const sc = _learnHolder(userId); if (!sc) return null
   const a = String(app || '').trim().slice(0, 80)
   // Same stored-text chokepoint as skills: a distilled learning is persisted and
@@ -1476,16 +1476,20 @@ export function addLearning(userId, { app = '', fact = '', kind = 'correction' }
   const kb = sc.obj[sc.field]
   const dup = kb.find((l) => _normLearn(l.app) === _normLearn(a) && _normLearn(l.fact) === _normLearn(f))
   if (dup) { dup.hits = (dup.hits || 1) + 1; dup.at = new Date().toISOString(); persistSoon(); return dup }
-  const rec = { id: 'kb' + id(), app: a, fact: f, kind: kind === 'fresh' ? 'fresh' : 'correction', at: new Date().toISOString(), hits: 1 }
+  const rec = { id: 'kb' + id(), app: a, fact: f, kind: kind === 'fresh' ? 'fresh' : 'correction', space: space || null, at: new Date().toISOString(), hits: 1 }
   kb.push(rec)
   if (kb.length > sc.cap) kb.splice(0, kb.length - sc.cap)
   persistSoon()
   return rec
 }
-export function getLearningsFor(userId, { goal = '', app = '', limit = 6 } = {}) {
+export function getLearningsFor(userId, { goal = '', app = '', limit = 6, space = null } = {}) {
   const sc = _learnHolder(userId); if (!sc) return []
-  const kb = sc.obj[sc.field]
+  let kb = sc.obj[sc.field]
   if (!Array.isArray(kb) || !kb.length) return []
+  // KB-spaces: when the person scopes grounding to a chosen collection, only that
+  // space's learnings are considered (ungrouped learnings are always eligible so a
+  // scoped plan still gets general facts).
+  if (space) kb = kb.filter((l) => !l.space || String(l.space) === String(space))
   const toks = (String(goal) + ' ' + String(app)).toLowerCase().split(/[^a-z0-9]+/).filter((t) => t.length > 2)
   return kb.map((l) => {
     const text = (l.app + ' ' + l.fact).toLowerCase()
@@ -1516,6 +1520,47 @@ export function setCompanyKbEnabled(companyId, enabled) {
   const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
   c.kbEnabled = !!enabled; persist()
   return { kbEnabled: c.kbEnabled }
+}
+
+// ---- KB SPACES: pickable company knowledge collections -----------------------
+// The company brain can be organized into named collections (e.g. Runbooks,
+// Security, Onboarding). A learning may belong to one space; at plan time a user
+// scopes grounding to a chosen space (getLearningsFor { space }). Admin-curated.
+export function listCompanyKbSpaces(companyId) {
+  const c = _company(companyId)
+  return (c && Array.isArray(c.kbSpaces)) ? c.kbSpaces.map((x) => ({ id: x.id, name: x.name, count: Array.isArray(c.kb) ? c.kb.filter((l) => l.space === x.id).length : 0 })) : []
+}
+export function addCompanyKbSpace(companyId, name) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found.')
+  const nm = String(name || '').trim().slice(0, 60); if (!nm) throw httpErr(400, 'Name the space.')
+  if (!Array.isArray(c.kbSpaces)) c.kbSpaces = []
+  if (c.kbSpaces.length >= 50) throw httpErr(400, 'You have reached the space limit.')
+  if (c.kbSpaces.some((x) => _normLearn(x.name) === _normLearn(nm))) throw httpErr(400, 'A space with that name already exists.')
+  const sp = { id: 'ks' + id(), name: nm }; c.kbSpaces.push(sp); persist(); return sp
+}
+export function renameCompanyKbSpace(companyId, spaceId, name) {
+  const c = _company(companyId); if (!c || !Array.isArray(c.kbSpaces)) throw httpErr(404, 'Space not found.')
+  const sp = c.kbSpaces.find((x) => x.id === spaceId); if (!sp) throw httpErr(404, 'Space not found.')
+  const nm = String(name || '').trim().slice(0, 60); if (!nm) throw httpErr(400, 'Name the space.')
+  sp.name = nm; persist(); return sp
+}
+export function removeCompanyKbSpace(companyId, spaceId) {
+  const c = _company(companyId); if (!c || !Array.isArray(c.kbSpaces)) return { ok: true }
+  c.kbSpaces = c.kbSpaces.filter((x) => x.id !== spaceId)
+  if (Array.isArray(c.kb)) for (const l of c.kb) if (l.space === spaceId) l.space = null   // orphans fall back to ungrouped
+  persist(); return { ok: true }
+}
+// Admin curation: move a company learning into a space (or null to ungroup).
+export function setCompanyLearningSpace(companyId, learningId, spaceId) {
+  const c = _company(companyId); if (!c || !Array.isArray(c.kb)) throw httpErr(404, 'Not found.')
+  const l = c.kb.find((x) => x.id === learningId); if (!l) throw httpErr(404, 'Learning not found.')
+  if (spaceId && !(Array.isArray(c.kbSpaces) && c.kbSpaces.some((x) => x.id === spaceId))) throw httpErr(400, 'Unknown space.')
+  l.space = spaceId || null; persist(); return { id: l.id, space: l.space }
+}
+// Member-readable: the spaces a company user may pick to scope grounding.
+export function kbSpacesForUser(userId) {
+  const u = getUser(userId); if (!u || !u.companyId) return []
+  return listCompanyKbSpaces(u.companyId)
 }
 export function getCompanyLearningsCount(companyId) { const c = _company(companyId); return c && Array.isArray(c.kb) ? c.kb.length : 0 }
 export function exportCompanyLearnings(companyId) {
