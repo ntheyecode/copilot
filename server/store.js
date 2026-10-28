@@ -27,6 +27,7 @@ import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
 import * as customers from './work_customers.js'
 import * as proj from './work_project.js'
+import * as projInject from './work_project_inject.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -5805,6 +5806,19 @@ export function recordWorkProjectTaskOutcome(workUserId, projectId, taskId, { ou
 }
 export function nextWorkProjectTask(workUserId, projectId) { const p = _findProject(workUserId, projectId); return p ? proj.nextActionableTask(p) : null }
 export function availableWorkProjectTasks(workUserId, projectId) { const p = _findProject(workUserId, projectId); return p ? proj.availableTasks(p) : [] }
+// Mid-journey injection: dedupe against existing tasks, else create + place by
+// dependency (zero-tolerance guard against a false/duplicate task). Returns either
+// { duplicate:true, task } (already covered) or { duplicate:false, created, placed }.
+export function injectWorkProjectTask(workUserId, projectId, { request, blocksTaskId = null, dependsOn = null } = {}) {
+  const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
+  const req = String(request || '').trim(); if (!req) throw httpErr(400, 'Say what to add.')
+  const dup = projInject.findSimilarTask(p, req)
+  if (dup) return { duplicate: true, task: dup }
+  const t = proj.newTask({ id: 'pt' + id(), title: req, goal: req })
+  const { tasks, placed } = projInject.placeInjectedTask(p, t, { blocksTaskId, dependsOn })
+  p.tasks = tasks; p.state = proj.deriveProjectState(p); persist()
+  return { duplicate: false, created: t, placed }
+}
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
