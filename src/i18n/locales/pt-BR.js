@@ -1,6 +1,6 @@
 // Português (Brasil) - tom simples, profissional e do dia a dia. Mesmas chaves de en.js.
 // Nunca traduzido: código, comandos, URLs/caminhos, marcas (WorkCoPilot, AdmireVeda), nomes dos planos.
-export default {
+const __base = {
   lang: { label: 'Idioma', choose: 'Escolha seu idioma' },
   languagePin: {
     title: 'Escolha seu idioma',
@@ -5583,3 +5583,500 @@ export default {
     },
   },
 }
+
+// i18n parity wave: workPm (PM/SrPM/GRC + templates), prefs, companyBrain.kbSpaces,
+// workProjects.practices, workShell.nav, workStart, companyAdmin, usersAdmin - 390 keys.
+// Appended as an additive deep-merge so existing keys are never touched.
+const __wavePatch = {
+  "companyAdmin": {
+    "roles": {
+      "projectManager": "Gerente de projeto",
+      "seniorProjectManager": "Gerente de projeto sênior",
+      "grc": "GRC (supervisão, somente leitura)"
+    },
+    "flows": {
+      "independent": "Independente",
+      "independentHelp": "Inicia as próprias tarefas. Não recebe atribuições.",
+      "worker": "Trabalhador",
+      "workerHelp": "Só faz as tarefas que um gerente de projeto atribui. Sem Iniciar uma tarefa.",
+      "mixed": "Misto",
+      "mixedHelp": "Pode receber tarefas atribuídas e iniciar as próprias."
+    },
+    "team": {
+      "flow": "Fluxo de trabalho",
+      "flowHelp": "Como as tarefas guiadas chegam a esta pessoa. Independente: inicia as próprias. Trabalhador: só faz as tarefas que um gerente de projeto atribui (sem Iniciar uma tarefa). Misto: as duas.",
+      "thFlow": "Fluxo"
+    }
+  },
+  "companyBrain": {
+    "kbSpaces": {
+      "title": "Espaços de conhecimento",
+      "desc": "Agrupe os aprendizados da sua empresa em coleções. Quando alguém inicia uma tarefa, pode basear o plano em um espaço em vez de em tudo. Os aprendizados não agrupados sempre fazem parte de \"Todo o conhecimento\".",
+      "loading": "Carregando os espaços de conhecimento",
+      "namePh": "Novo espaço, por ex. Fechamento financeiro",
+      "add": "Adicionar espaço",
+      "adding": "Adicionando",
+      "count_one": "{n} aprendizado",
+      "count_other": "{n} aprendizados",
+      "rename": "Renomear",
+      "remove": "Remover",
+      "save": "Salvar",
+      "cancel": "Cancelar",
+      "renameAria": "Novo nome para {name}",
+      "emptyTitle": "Ainda não há espaços",
+      "emptyDetail": "Adicione um espaço e depois mova aprendizados para ele. Até lá, cada tarefa se baseia em todo o conhecimento da empresa.",
+      "errName": "Dê um nome ao espaço.",
+      "errDuplicate": "Já existe um espaço com esse nome.",
+      "errSave": "Não foi possível salvar o espaço. Tente de novo.",
+      "removeTitle": "Remover espaço de conhecimento",
+      "removeMessage_one": "Remover \"{name}\"? Seu {n} aprendizado é mantido e volta a ficar não agrupado (parte de Todo o conhecimento). Ninguém mais poderá escolher este espaço ao iniciar uma tarefa.",
+      "removeMessage_other": "Remover \"{name}\"? Seus {n} aprendizados são mantidos e voltam a ficar não agrupados (parte de Todo o conhecimento). Ninguém mais poderá escolher este espaço ao iniciar uma tarefa.",
+      "removedToast": "\"{name}\" removido. Agora seus aprendizados estão não agrupados.",
+      "addedToast": "\"{name}\" adicionado.",
+      "renamedToast": "Renomeado para \"{name}\"."
+    }
+  },
+  "prefs": {
+    "title": "Preferências",
+    "sub": "Sua aparência e conforto de leitura. Cada mudança é aplicada na hora e acompanha você entre dispositivos.",
+    "open": "Preferências",
+    "close": "Fechar preferências",
+    "mode": {
+      "label": "Tema",
+      "light": "Claro",
+      "lightHint": "Calmo e branco, o padrão",
+      "dark": "Escuro",
+      "darkHint": "Pouca luz, o mesmo layout",
+      "heavy": "Forte",
+      "heavyHint": "Tipografia mais marcante, bordas mais fortes"
+    },
+    "brand": {
+      "label": "Cores da marca",
+      "current": "Padrão",
+      "combos": {
+        "meadow": "Campina",
+        "lagoon": "Lagoa",
+        "harbor": "Porto",
+        "twilight": "Crepúsculo",
+        "orchid": "Orquídea",
+        "berry": "Amora",
+        "honey": "Mel",
+        "graphite": "Grafite"
+      },
+      "comboAria": "Combinação de cores {name}",
+      "defaultTitle": "Cores padrão de cada console",
+      "defaultAria": "Cores padrão",
+      "note": "Apenas combinações sugeridas, cada uma verificada para contraste legível."
+    },
+    "a11y": {
+      "label": "Acessibilidade",
+      "textSize": "Tamanho do texto",
+      "sizes": {
+        "sm": "Pequeno",
+        "md": "Padrão",
+        "lg": "Grande",
+        "xl": "Muito grande"
+      },
+      "reducedMotion": "Reduzir movimento",
+      "reducedMotionHint": "Desativa a animação não essencial. A configuração do seu sistema é sempre respeitada.",
+      "highContrast": "Alto contraste",
+      "highContrastHint": "Texto, bordas e anéis de foco mais fortes.",
+      "largerTargets": "Áreas de clique maiores",
+      "largerTargetsHint": "Botões maiores e mais espaço entre os controles.",
+      "readableFont": "Fonte legível",
+      "readableFontHint": "Letras mais claras com espaçamento mais amplo.",
+      "on": "Ativado",
+      "off": "Desativado"
+    }
+  },
+  "usersAdmin": {
+    "create": {
+      "flowInCompany": "Fluxo de trabalho",
+      "flowHint": "(trabalhador: só tarefas atribuídas; misto: as duas)"
+    },
+    "companyEdit": {
+      "flow": "Fluxo de trabalho",
+      "flowTitle": "Como as tarefas guiadas chegam a esta pessoa: Independente inicia as próprias, Trabalhador só faz as atribuídas, Misto faz as duas."
+    }
+  },
+  "workPm": {
+    "common": {
+      "retry": "Tentar de novo",
+      "loadErr": "Parece uma falha de conexão. Nada foi perdido.",
+      "notPermittedTitle": "Não faz parte do seu papel",
+      "notPermittedBody": "Esta visão é para gerentes de projeto e papéis de supervisão. O administrador da sua empresa define os papéis.",
+      "backHome": "Voltar ao painel",
+      "unassigned": "Não atribuída",
+      "you": "você",
+      "noOne": "ninguém ainda",
+      "person": "Pessoa {id}",
+      "close": "Fechar",
+      "cancel": "Cancelar",
+      "reason": "Motivo",
+      "reasonRequired": "obrigatório",
+      "reasonNote": "Registrado no registro de controle com quem e quando.",
+      "readOnly": "Supervisão somente leitura. Aqui você vê tudo; as mudanças são feitas pelos gerentes de projeto.",
+      "peopleDenied": "Os nomes não estão disponíveis para o seu papel; as pessoas são mostradas pelo id da conta. O administrador da sua empresa pode ver o diretório completo.",
+      "all": "Todas",
+      "viewAll": "Ver tudo",
+      "count_one": "{n} tarefa",
+      "count_other": "{n} tarefas",
+      "projects_one": "{n} projeto",
+      "projects_other": "{n} projetos",
+      "ago_days_one": "há {n} dia",
+      "ago_days_other": "há {n} dias",
+      "ago_today": "hoje",
+      "assignedAgo": "Atribuída {ago}",
+      "sla": "Aguardando há {n}+ dias"
+    },
+    "status": {
+      "ongoing": "Em andamento",
+      "held": "Em pausa",
+      "done": "Concluído"
+    },
+    "bucket": {
+      "notStarted": "Não iniciada",
+      "inProgress": "Em andamento",
+      "completed": "Concluídas",
+      "rerun": "Reexecutar"
+    },
+    "queue": {
+      "heading": "Minha fila",
+      "sub": "As tarefas que um gerente de projeto atribuiu a você, em ordem. Abra uma e o WorkCoPilot a orienta na sua tela.",
+      "dashSub": "Seu trabalho atribuído vem primeiro. Abra uma tarefa para ser orientado por ela.",
+      "emptyTitle": "Nada atribuído ainda",
+      "emptyBody": "Quando um gerente de projeto atribuir uma tarefa a você, ela aparece aqui. Você será orientado passo a passo.",
+      "emptyBodyMixed": "Quando um gerente de projeto atribuir uma tarefa a você, ela aparece aqui. Até lá, inicie sua própria tarefa abaixo.",
+      "inProject": "em {project}",
+      "start": "Iniciar",
+      "continue": "Continuar",
+      "open": "Abrir",
+      "startAgain": "Iniciar de novo",
+      "planning": "Planejando os passos",
+      "showDone": "Mostrar concluídas",
+      "hideDone": "Ocultar concluídas",
+      "errStart": "Não foi possível iniciar a tarefa. Tente de novo.",
+      "refusal": "O WorkCoPilot não pode orientar esta tarefa como está escrita. Peça ao seu gerente de projeto para ajustá-la.",
+      "more_one": "mais {n} na Minha fila",
+      "more_other": "mais {n} na Minha fila",
+      "workerNote": "Sua conta faz as tarefas atribuídas por um gerente de projeto. Não há Iniciar uma tarefa."
+    },
+    "card": {
+      "progress": "{done}/{total} feitas",
+      "open": "Abrir",
+      "manager": "Responsável",
+      "assigned": "{n} atribuídas",
+      "unassigned_one": "{n} não atribuída",
+      "unassigned_other": "{n} não atribuídas",
+      "inProgress_one": "{n} em andamento",
+      "inProgress_other": "{n} em andamento",
+      "heldReason": "Em pausa: {reason}"
+    },
+    "pm": {
+      "heading": "Projetos que gerencio",
+      "sub": "Cada projeto é um mapa de tarefas. Atribua tarefas às suas pessoas, acompanhe o progresso, pause ou retome.",
+      "newProject": "Novo projeto",
+      "newShort": "Novo",
+      "emptyTitle": "Ainda não há projetos",
+      "emptyBody": "Descreva uma meta que abrange vários fluxos de trabalho. O WorkCoPilot a transforma em tarefas que você pode atribuir.",
+      "errTitle": "Não foi possível carregar seus projetos",
+      "filterAria": "Filtrar projetos por status"
+    },
+    "view": {
+      "back": "Projetos que gerencio",
+      "backOversight": "Supervisão",
+      "backSrPm": "Gerentes de projeto",
+      "notFoundTitle": "Projeto não encontrado",
+      "notFoundBody": "Pode ter sido movido para outro responsável, ou o link é de outra conta.",
+      "errTitle": "Não foi possível carregar este projeto",
+      "goal": "Meta",
+      "hold": "Pausar projeto",
+      "resume": "Retomar projeto",
+      "holdTitle": "Pausar este projeto?",
+      "holdBody": "As pessoas atribuídas mantêm suas tarefas, mas o projeto é sinalizado como em pausa em todos os painéis e no registro de riscos.",
+      "holdConfirm": "Pausar",
+      "reassign": "Mover para outro responsável",
+      "reassignTitle": "Mover este projeto para outro gerente de projeto",
+      "reassignBody": "Só muda o gerente de projeto que o gerencia. Cada tarefa mantém seu responsável atribuído e seu progresso.",
+      "reassignLabel": "Novo gerente de projeto",
+      "reassignConfirm": "Mover projeto",
+      "noManagers": "Não há outro gerente de projeto disponível na sua empresa.",
+      "tasks": "Mapa de tarefas",
+      "tasksSub": "Quem faz o quê. Atribua uma tarefa a um trabalhador ou mova-a para outra pessoa.",
+      "filterAria": "Filtrar tarefas por estado",
+      "activity": "Atividade neste projeto",
+      "activitySub": "Cada atribuição, transferência e pausa, com quem e quando.",
+      "errAction": "Não foi possível atualizar o projeto. Tente de novo.",
+      "counts": {
+        "total": "Tarefas",
+        "notStarted": "Não iniciadas",
+        "inProgress": "Em andamento",
+        "completed": "Concluídas"
+      }
+    },
+    "task": {
+      "n": "Tarefa {n}",
+      "doneState": "Está feita quando",
+      "assignee": "Atribuída a",
+      "assign": "Atribuir",
+      "reassign": "Mover",
+      "pickPerson": "Escolha uma pessoa",
+      "noPeople": "Ninguém com fluxo de trabalho trabalhador ou misto está disponível para atribuição.",
+      "assigning": "Atribuindo",
+      "errAssign": "Não foi possível atribuir a tarefa. Tente de novo.",
+      "viewPerson": "Ver a produtividade de {name}",
+      "selectAria": "Responsável por {title}"
+    },
+    "create": {
+      "eyebrow": "Novo projeto",
+      "title": "O que este projeto deve alcançar?",
+      "name": "Nome do projeto",
+      "namePh": "por ex. Migrar a equipe de vendas para o novo CRM",
+      "goal": "Meta",
+      "goalPh": "Descreva o resultado, os sistemas envolvidos e como é a conclusão.",
+      "goalHelp": "O WorkCoPilot organiza as tarefas em ordem com uma linha de chegada. Depois você atribui cada tarefa a uma pessoa.",
+      "manager": "Gerenciado por",
+      "managerHelp": "O gerente de projeto dono deste projeto. Você pode movê-lo depois.",
+      "me": "Eu",
+      "optional": "opcional",
+      "required": "obrigatório",
+      "submit": "Planejar o projeto",
+      "planning": "Traçando as tarefas",
+      "errEmpty": "Diga o que o projeto deve alcançar.",
+      "errGeneric": "Não foi possível planejar o projeto. Tente de novo.",
+      "singleTitle": "Na verdade é uma única tarefa",
+      "singleBody": "A meta inteira é um único fluxo de trabalho, então não é um projeto. Amplie a meta, ou peça a alguém para iniciá-la como uma única tarefa.",
+      "edit": "Editar a meta"
+    },
+    "prod": {
+      "title": "Produtividade",
+      "sub": "Em todas as tarefas atribuídas a esta pessoa.",
+      "assigned": "Atribuídas",
+      "notStarted": "Não iniciadas",
+      "inProgress": "Em andamento",
+      "completed": "Concluídas",
+      "rerun": "Reexecutar",
+      "time": "Tempo guiado",
+      "timeNote": "Contado apenas enquanto o WorkCoPilot está orientando ativamente.",
+      "working": "Trabalhando agora em",
+      "idle": "Não está trabalhando em nada agora.",
+      "errTitle": "Não foi possível carregar a produtividade"
+    },
+    "srpm": {
+      "heading": "Gerentes de projeto",
+      "sub": "Cada gerente de projeto, os projetos que gerencia e como cada um está. Inicie um projeto e entregue-o a um responsável, ou mova um projeto de um responsável para outro.",
+      "load": "Carga por gerente de projeto",
+      "loadSub": "Projetos gerenciados e tarefas feitas do total.",
+      "rollup": "Projetos por responsável",
+      "noManagers": "Ainda não há gerentes de projeto. O administrador da sua empresa concede o papel.",
+      "unassignedManager": "Sem responsável",
+      "people": "Pessoas",
+      "peopleSub": "Todos a quem se pode atribuir trabalho. Abra um para ver sua produtividade.",
+      "viewProd": "Produtividade",
+      "tasksDone": "{done}/{total} tarefas feitas"
+    },
+    "grc": {
+      "heading": "Supervisão",
+      "sub": "Todos os projetos da sua empresa: status, carga por gerente de projeto, riscos calculados e o registro de controle completo.",
+      "tiles": {
+        "total": "Projetos",
+        "ongoing": "Em andamento",
+        "held": "Em pausa",
+        "done": "Concluídos"
+      },
+      "statusChart": "Status",
+      "statusSub": "Parcela de todos os projetos.",
+      "loadChart": "Carga por gerente de projeto",
+      "loadSub": "Projetos gerenciados e tarefas feitas do total.",
+      "risks": "Registro de riscos",
+      "risksSub": "Calculado a partir dos dados, não inserido à mão. Tarefas aguardando há mais de {days} dias desde a atribuição, projetos em pausa e tarefas prontas sem ninguém atribuído.",
+      "noRisks": "Nenhum risco no momento.",
+      "noRisksBody": "Cada tarefa atribuída está dentro do prazo, nada está em pausa e cada tarefa pronta tem uma pessoa.",
+      "risk": {
+        "sla_breach": "Aguardando demais",
+        "project_held": "Projeto em pausa",
+        "unassigned_idle": "Pronta, ninguém atribuído",
+        "slaAction": "Peça ao responsável para falar com a pessoa atribuída ou mover a tarefa.",
+        "heldAction": "Pergunte ao responsável se o projeto pode retomar.",
+        "idleAction": "Peça ao responsável para atribuir a tarefa.",
+        "age_one": "{n} dia",
+        "age_other": "{n} dias"
+      },
+      "log": "Registro de controle",
+      "logSub": "Somente acréscimo. Cada projeto criado, tarefa atribuída ou movida, projeto transferido, pausado ou retomado.",
+      "logProject": "Projeto",
+      "logAll": "Todos os projetos",
+      "logEmpty": "Nenhum evento ainda.",
+      "th": {
+        "when": "Quando",
+        "what": "O quê",
+        "by": "Por",
+        "project": "Projeto",
+        "detail": "Detalhe"
+      },
+      "kind": {
+        "project_created": "Projeto criado",
+        "task_assigned": "Tarefa atribuída",
+        "task_reassigned": "Tarefa movida",
+        "project_reassigned": "Projeto transferido",
+        "project_held": "Projeto pausado",
+        "project_resumed": "Projeto retomado",
+        "other": "Evento"
+      },
+      "fromTo": "de {from} para {to}",
+      "to": "para {to}",
+      "more_one": "mais {n} evento",
+      "more_other": "mais {n} eventos",
+      "showMore": "Mostrar mais",
+      "errTitle": "Não foi possível carregar os dados de supervisão"
+    },
+    "templates": {
+      "heading": "Modelos de projeto",
+      "sub": "Planeje um projeto uma vez e depois atribua-o a muitas pessoas. Cada pessoa recebe a própria cópia para executar; você acompanha o progresso aqui.",
+      "subReadOnly": "Todos os modelos de projeto da sua empresa e até onde cada pessoa atribuída chegou. Somente progresso.",
+      "newTemplate": "Novo modelo",
+      "newShort": "Novo",
+      "emptyTitle": "Ainda não há modelos",
+      "emptyBody": "Descreva uma meta que abrange vários fluxos de trabalho. O WorkCoPilot a transforma em tarefas, e você atribui o mesmo mapa a quantas pessoas quiser.",
+      "errTitle": "Não foi possível carregar os modelos",
+      "tasks_one": "{n} tarefa",
+      "tasks_other": "{n} tarefas",
+      "assigned_one": "Atribuído a {n} pessoa",
+      "assigned_other": "Atribuído a {n} pessoas",
+      "notAssigned": "Ainda não atribuído",
+      "created": "Criado {date}",
+      "assign": "Atribuir",
+      "progress": "Progresso",
+      "create": {
+        "eyebrow": "Novo modelo",
+        "title": "O que cada pessoa deve alcançar?",
+        "name": "Nome do modelo",
+        "namePh": "por ex. Integrar uma nova região de vendas",
+        "goal": "Meta",
+        "goalPh": "Descreva o resultado, os sistemas envolvidos e como é a conclusão. Todas as pessoas atribuídas recebem o mesmo mapa.",
+        "goalHelp": "O WorkCoPilot organiza as tarefas em ordem com uma linha de chegada e verifica o mapa antes de salvá-lo. Depois você atribui o modelo às pessoas.",
+        "submit": "Planejar o modelo",
+        "planning": "Traçando as tarefas",
+        "errEmpty": "Diga o que o modelo deve alcançar.",
+        "errGeneric": "Não foi possível planejar o modelo. Tente de novo.",
+        "singleTitle": "Na verdade é uma única tarefa",
+        "singleBody": "A meta inteira é um único fluxo de trabalho, então não é um modelo. Amplie a meta para que abranja várias tarefas.",
+        "edit": "Editar a meta"
+      },
+      "assignTo": {
+        "eyebrow": "Atribuir modelo",
+        "title": "Quem deve executar {name}?",
+        "body": "Cada pessoa recebe o próprio projeto com todas as tarefas deste modelo. Escolha pessoas com fluxo de trabalho trabalhador ou misto.",
+        "pick": "Pessoas",
+        "selected_one": "{n} selecionada",
+        "selected_other": "{n} selecionadas",
+        "selectAll": "Selecionar tudo",
+        "clear": "Limpar",
+        "submit": "Atribuir a {n}",
+        "submitOne": "Atribuir",
+        "assigning": "Atribuindo",
+        "noPeople": "Ninguém com fluxo de trabalho trabalhador ou misto está disponível para atribuição.",
+        "errGeneric": "Não foi possível atribuir o modelo. Tente de novo.",
+        "resultTitle": "Atribuído",
+        "resultAssigned_one": "{n} pessoa recebeu o próprio projeto.",
+        "resultAssigned_other": "{n} pessoas receberam o próprio projeto.",
+        "resultSkipped_one": "{n} pessoa foi ignorada.",
+        "resultSkipped_other": "{n} pessoas foram ignoradas.",
+        "reason": {
+          "already_assigned": "já tem este modelo",
+          "not_in_company": "não está na sua empresa",
+          "other": "não foi possível atribuir"
+        },
+        "done": "Concluído",
+        "viewRollup": "Ver progresso"
+      },
+      "rollup": {
+        "back": "Modelos de projeto",
+        "notFoundTitle": "Modelo não encontrado",
+        "notFoundBody": "Pode ter sido removido, ou o link é de outra conta.",
+        "errTitle": "Não foi possível carregar este modelo",
+        "progressOnly": "Somente progresso: o que cada pessoa concluiu, nunca seu trabalho nem suas evidências.",
+        "tiles": {
+          "assigned": "Atribuído",
+          "completed": "Concluídas",
+          "inProgress": "Em andamento",
+          "notStarted": "Não iniciadas",
+          "avg": "Progresso médio"
+        },
+        "people": "Pessoas",
+        "peopleSub": "As menos completas primeiro.",
+        "th": {
+          "person": "Pessoa",
+          "progress": "Progresso",
+          "done": "Feitas",
+          "state": "Estado",
+          "assigned": "Atribuído"
+        },
+        "doneOf": "{done}/{total}",
+        "state": {
+          "completed": "Concluído",
+          "inProgress": "Em andamento",
+          "notStarted": "Não iniciado"
+        },
+        "noRuns": "Ninguém atribuído ainda.",
+        "noRunsBody": "Atribua o modelo às pessoas e o progresso delas aparece aqui."
+      }
+    }
+  },
+  "workProjects": {
+    "practices": {
+      "heading": "Vale a pena adicionar?",
+      "sub": "Práticas que projetos como este costumam incluir. Adicione uma ao mapa ou dispense.",
+      "accept": "Adicionar ao mapa",
+      "acceptAria": "Adicionar {title} ao mapa de tarefas",
+      "adding": "Adicionando",
+      "retry": "Tentar de novo",
+      "dismissAria": "Dispensar {title}",
+      "srcCatalog": "Uma prática padrão para este tipo de projeto",
+      "srcCompany": "Das práticas próprias da sua empresa",
+      "srcPlatform": "Aprendida de projetos como este",
+      "srcGeneric": "Uma prática recomendada"
+    }
+  },
+  "workShell": {
+    "nav": {
+      "queue": "Minha fila",
+      "queueTip": "Tarefas atribuídas a você por um gerente de projeto",
+      "manage": "Gestão",
+      "pm": "Projetos que gerencio",
+      "pmTip": "Projetos que você gerencia: tarefas, responsáveis, progresso",
+      "srpm": "Gerentes de projeto",
+      "srpmTip": "Cada gerente de projeto e seus projetos",
+      "grc": "Supervisão",
+      "grcTip": "Todos os projetos, riscos e o registro de controle (somente leitura)",
+      "templates": "Modelos",
+      "templatesTip": "Modelos de projeto: planeje uma vez, atribua a muitos, acompanhe o progresso"
+    }
+  },
+  "workStart": {
+    "docsCap": "{used} de {max} usados",
+    "docsCapUpgrade": "Faça upgrade para ter mais",
+    "docsCapFull": "Seu plano baseia um plano em até {max}. Remova um ou faça upgrade para ter mais.",
+    "docsPaste": "Colar texto",
+    "docsPastePh": "Cole uma especificação, um ticket ou notas para basear o plano",
+    "docsPasteAdd": "Adicionar texto",
+    "docsPasteName": "Notas coladas",
+    "spaceLead": "Basear em",
+    "spaceSub": "em qual conhecimento da empresa o plano se apoia",
+    "spaceAll": "Todo o conhecimento",
+    "spaceAria": "Conhecimento da empresa para basear o plano",
+    "spaceCount_one": "{n} aprendizado",
+    "spaceCount_other": "{n} aprendizados",
+    "spaceSummaryAll": "Todo o conhecimento da empresa",
+    "spaceSummaryOne": "Baseado em {name}"
+  }
+}
+function __mergeWave(t, s) {
+  for (const k of Object.keys(s)) {
+    const v = s[k]
+    if (v && typeof v === 'object' && !Array.isArray(v)) t[k] = __mergeWave(t[k] && typeof t[k] === 'object' ? t[k] : {}, v)
+    else t[k] = v
+  }
+  return t
+}
+export default __mergeWave(__base, __wavePatch)

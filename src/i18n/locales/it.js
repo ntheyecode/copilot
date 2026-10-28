@@ -1,6 +1,6 @@
 // Italiano - tono semplice, professionale e quotidiano. Stesse chiavi di en.js.
 // Mai tradotto: codice, comandi, URL/percorsi, marchi (WorkCoPilot, AdmireVeda), nomi dei piani.
-export default {
+const __base = {
   lang: { label: 'Lingua', choose: 'Scegli la tua lingua' },
   languagePin: {
     title: 'Scegli la tua lingua',
@@ -5582,3 +5582,500 @@ export default {
     },
   },
 }
+
+// i18n parity wave: workPm (PM/SrPM/GRC + templates), prefs, companyBrain.kbSpaces,
+// workProjects.practices, workShell.nav, workStart, companyAdmin, usersAdmin - 390 keys.
+// Appended as an additive deep-merge so existing keys are never touched.
+const __wavePatch = {
+  "companyAdmin": {
+    "roles": {
+      "projectManager": "Responsabile di progetto",
+      "seniorProjectManager": "Responsabile di progetto senior",
+      "grc": "GRC (supervisione, sola lettura)"
+    },
+    "flows": {
+      "independent": "Indipendente",
+      "independentHelp": "Avvia le proprie attività. Non riceve assegnazioni.",
+      "worker": "Lavoratore",
+      "workerHelp": "Svolge solo le attività che gli assegna un responsabile di progetto. Nessun Avvia un'attività.",
+      "mixed": "Misto",
+      "mixedHelp": "Può ricevere attività assegnate e avviare le proprie."
+    },
+    "team": {
+      "flow": "Flusso di lavoro",
+      "flowHelp": "Come arrivano le attività guidate a questa persona. Indipendente: avvia le proprie. Lavoratore: svolge solo le attività che assegna un responsabile di progetto (nessun Avvia un'attività). Misto: entrambe.",
+      "thFlow": "Flusso"
+    }
+  },
+  "companyBrain": {
+    "kbSpaces": {
+      "title": "Spazi di conoscenza",
+      "desc": "Raggruppi gli apprendimenti della sua azienda in raccolte. Quando qualcuno avvia un'attività può basare il piano su uno spazio invece che su tutto. Gli apprendimenti non raggruppati fanno sempre parte di \"Tutta la conoscenza\".",
+      "loading": "Caricamento degli spazi di conoscenza",
+      "namePh": "Nuovo spazio, p. es. Chiusura contabile",
+      "add": "Aggiungi spazio",
+      "adding": "Aggiunta",
+      "count_one": "{n} apprendimento",
+      "count_other": "{n} apprendimenti",
+      "rename": "Rinomina",
+      "remove": "Rimuovi",
+      "save": "Salva",
+      "cancel": "Annulla",
+      "renameAria": "Nuovo nome per {name}",
+      "emptyTitle": "Ancora nessuno spazio",
+      "emptyDetail": "Aggiunga uno spazio, poi vi sposti gli apprendimenti. Fino ad allora ogni attività si basa su tutta la conoscenza dell'azienda.",
+      "errName": "Dia un nome allo spazio.",
+      "errDuplicate": "Esiste già uno spazio con questo nome.",
+      "errSave": "Impossibile salvare lo spazio. Riprovi.",
+      "removeTitle": "Rimuovi spazio di conoscenza",
+      "removeMessage_one": "Rimuovere \"{name}\"? Il suo {n} apprendimento viene conservato e torna non raggruppato (parte di Tutta la conoscenza). Nessuno potrà più scegliere questo spazio avviando un'attività.",
+      "removeMessage_other": "Rimuovere \"{name}\"? I suoi {n} apprendimenti vengono conservati e tornano non raggruppati (parte di Tutta la conoscenza). Nessuno potrà più scegliere questo spazio avviando un'attività.",
+      "removedToast": "\"{name}\" rimosso. Ora i suoi apprendimenti non sono raggruppati.",
+      "addedToast": "\"{name}\" aggiunto.",
+      "renamedToast": "Rinominato in \"{name}\"."
+    }
+  },
+  "prefs": {
+    "title": "Preferenze",
+    "sub": "Il suo aspetto e comfort di lettura. Ogni modifica si applica subito e la segue tra i dispositivi.",
+    "open": "Preferenze",
+    "close": "Chiudi le preferenze",
+    "mode": {
+      "label": "Tema",
+      "light": "Chiaro",
+      "lightHint": "Calmo e bianco, il predefinito",
+      "dark": "Scuro",
+      "darkHint": "Poca luce, stesso layout",
+      "heavy": "Marcato",
+      "heavyHint": "Testo più deciso, bordi più forti"
+    },
+    "brand": {
+      "label": "Colori del marchio",
+      "current": "Predefinito",
+      "combos": {
+        "meadow": "Prato",
+        "lagoon": "Laguna",
+        "harbor": "Porto",
+        "twilight": "Crepuscolo",
+        "orchid": "Orchidea",
+        "berry": "Bacca",
+        "honey": "Miele",
+        "graphite": "Grafite"
+      },
+      "comboAria": "Combinazione di colori {name}",
+      "defaultTitle": "Colori predefiniti di ogni console",
+      "defaultAria": "Colori predefiniti",
+      "note": "Solo combinazioni suggerite, ciascuna verificata per un contrasto leggibile."
+    },
+    "a11y": {
+      "label": "Accessibilità",
+      "textSize": "Dimensione del testo",
+      "sizes": {
+        "sm": "Piccolo",
+        "md": "Predefinito",
+        "lg": "Grande",
+        "xl": "Molto grande"
+      },
+      "reducedMotion": "Riduci il movimento",
+      "reducedMotionHint": "Disattiva le animazioni non essenziali. L'impostazione del suo sistema è sempre rispettata.",
+      "highContrast": "Contrasto elevato",
+      "highContrastHint": "Testo, bordi e anelli di focus più marcati.",
+      "largerTargets": "Aree di clic più grandi",
+      "largerTargetsHint": "Pulsanti più grandi e più spazio tra i controlli.",
+      "readableFont": "Carattere leggibile",
+      "readableFontHint": "Lettere più chiare con spaziatura più ampia.",
+      "on": "Attivo",
+      "off": "Disattivo"
+    }
+  },
+  "usersAdmin": {
+    "create": {
+      "flowInCompany": "Flusso di lavoro",
+      "flowHint": "(lavoratore: solo attività assegnate; misto: entrambe)"
+    },
+    "companyEdit": {
+      "flow": "Flusso di lavoro",
+      "flowTitle": "Come arrivano le attività guidate a questa persona: Indipendente avvia le proprie, Lavoratore svolge solo quelle assegnate, Misto fa entrambe."
+    }
+  },
+  "workPm": {
+    "common": {
+      "retry": "Riprova",
+      "loadErr": "Sembra un problema di connessione. Non è andato perso nulla.",
+      "notPermittedTitle": "Non fa parte del suo ruolo",
+      "notPermittedBody": "Questa vista è per i responsabili di progetto e i ruoli di supervisione. L'amministratore della sua azienda definisce i ruoli.",
+      "backHome": "Torna alla dashboard",
+      "unassigned": "Non assegnata",
+      "you": "lei",
+      "noOne": "ancora nessuno",
+      "person": "Persona {id}",
+      "close": "Chiudi",
+      "cancel": "Annulla",
+      "reason": "Motivo",
+      "reasonRequired": "obbligatorio",
+      "reasonNote": "Registrato nel registro di controllo con chi e quando.",
+      "readOnly": "Supervisione in sola lettura. Qui può vedere tutto; le modifiche le fanno i responsabili di progetto.",
+      "peopleDenied": "I nomi non sono disponibili per il suo ruolo; le persone sono mostrate con il loro id account. L'amministratore della sua azienda può vedere l'elenco completo.",
+      "all": "Tutte",
+      "viewAll": "Vedi tutto",
+      "count_one": "{n} attività",
+      "count_other": "{n} attività",
+      "projects_one": "{n} progetto",
+      "projects_other": "{n} progetti",
+      "ago_days_one": "{n} giorno fa",
+      "ago_days_other": "{n} giorni fa",
+      "ago_today": "oggi",
+      "assignedAgo": "Assegnata {ago}",
+      "sla": "In attesa da {n}+ giorni"
+    },
+    "status": {
+      "ongoing": "In corso",
+      "held": "In pausa",
+      "done": "Completato"
+    },
+    "bucket": {
+      "notStarted": "Non iniziata",
+      "inProgress": "In corso",
+      "completed": "Completate",
+      "rerun": "Riesegui"
+    },
+    "queue": {
+      "heading": "La mia coda",
+      "sub": "Le attività che un responsabile di progetto le ha assegnato, in ordine. Ne apra una e WorkCoPilot la guida sul suo schermo.",
+      "dashSub": "Il suo lavoro assegnato viene prima. Apra un'attività per essere guidato passo passo.",
+      "emptyTitle": "Ancora niente di assegnato",
+      "emptyBody": "Quando un responsabile di progetto le assegna un'attività, compare qui. Sarà guidato passo passo.",
+      "emptyBodyMixed": "Quando un responsabile di progetto le assegna un'attività, compare qui. Fino ad allora, avvii la sua attività qui sotto.",
+      "inProject": "in {project}",
+      "start": "Avvia",
+      "continue": "Continua",
+      "open": "Apri",
+      "startAgain": "Riavvia",
+      "planning": "Pianificazione dei passaggi",
+      "showDone": "Mostra completate",
+      "hideDone": "Nascondi completate",
+      "errStart": "Impossibile avviare l'attività. Riprovi.",
+      "refusal": "WorkCoPilot non può guidare questa attività così com'è scritta. Chieda al suo responsabile di progetto di modificarla.",
+      "more_one": "{n} altra nella Mia coda",
+      "more_other": "{n} altre nella Mia coda",
+      "workerNote": "Il suo account svolge le attività assegnate da un responsabile di progetto. Non c'è Avvia un'attività."
+    },
+    "card": {
+      "progress": "{done}/{total} fatte",
+      "open": "Apri",
+      "manager": "Responsabile",
+      "assigned": "{n} assegnate",
+      "unassigned_one": "{n} non assegnata",
+      "unassigned_other": "{n} non assegnate",
+      "inProgress_one": "{n} in corso",
+      "inProgress_other": "{n} in corso",
+      "heldReason": "In pausa: {reason}"
+    },
+    "pm": {
+      "heading": "Progetti che gestisco",
+      "sub": "Ogni progetto è una mappa di attività. Assegni le attività alle sue persone, segua l'avanzamento, metta in pausa o riprenda.",
+      "newProject": "Nuovo progetto",
+      "newShort": "Nuovo",
+      "emptyTitle": "Ancora nessun progetto",
+      "emptyBody": "Descriva un obiettivo che abbraccia più flussi di lavoro. WorkCoPilot lo trasforma in attività che può assegnare.",
+      "errTitle": "Impossibile caricare i suoi progetti",
+      "filterAria": "Filtra i progetti per stato"
+    },
+    "view": {
+      "back": "Progetti che gestisco",
+      "backOversight": "Supervisione",
+      "backSrPm": "Responsabili di progetto",
+      "notFoundTitle": "Progetto non trovato",
+      "notFoundBody": "Potrebbe essere stato spostato a un altro responsabile, o il link è di un altro account.",
+      "errTitle": "Impossibile caricare questo progetto",
+      "goal": "Obiettivo",
+      "hold": "Metti in pausa",
+      "resume": "Riprendi il progetto",
+      "holdTitle": "Mettere in pausa questo progetto?",
+      "holdBody": "Le persone assegnate mantengono le loro attività, ma il progetto viene segnalato in pausa in ogni dashboard e nel registro dei rischi.",
+      "holdConfirm": "Metti in pausa",
+      "reassign": "Sposta a un altro responsabile",
+      "reassignTitle": "Sposta questo progetto a un altro responsabile di progetto",
+      "reassignBody": "Cambia solo il responsabile di progetto che lo gestisce. Ogni attività mantiene la persona assegnata e l'avanzamento.",
+      "reassignLabel": "Nuovo responsabile di progetto",
+      "reassignConfirm": "Sposta progetto",
+      "noManagers": "Nessun altro responsabile di progetto è disponibile nella sua azienda.",
+      "tasks": "Mappa delle attività",
+      "tasksSub": "Chi fa cosa. Assegni un'attività a un lavoratore o la sposti a qualcun altro.",
+      "filterAria": "Filtra le attività per stato",
+      "activity": "Cronologia di questo progetto",
+      "activitySub": "Ogni assegnazione, passaggio di consegne e pausa, con chi e quando.",
+      "errAction": "Impossibile aggiornare il progetto. Riprovi.",
+      "counts": {
+        "total": "Attività",
+        "notStarted": "Non iniziate",
+        "inProgress": "In corso",
+        "completed": "Completate"
+      }
+    },
+    "task": {
+      "n": "Attività {n}",
+      "doneState": "È fatta quando",
+      "assignee": "Assegnata a",
+      "assign": "Assegna",
+      "reassign": "Sposta",
+      "pickPerson": "Scelga una persona",
+      "noPeople": "Nessuno con flusso di lavoro lavoratore o misto è disponibile per l'assegnazione.",
+      "assigning": "Assegnazione",
+      "errAssign": "Impossibile assegnare l'attività. Riprovi.",
+      "viewPerson": "Vedi la produttività di {name}",
+      "selectAria": "Persona assegnata per {title}"
+    },
+    "create": {
+      "eyebrow": "Nuovo progetto",
+      "title": "Che cosa deve ottenere questo progetto?",
+      "name": "Nome del progetto",
+      "namePh": "p. es. Migrare il team vendite al nuovo CRM",
+      "goal": "Obiettivo",
+      "goalPh": "Descriva il risultato, i sistemi coinvolti e come appare il completamento.",
+      "goalHelp": "WorkCoPilot ordina le attività con un traguardo. Poi lei assegna ogni attività a una persona.",
+      "manager": "Gestito da",
+      "managerHelp": "Il responsabile di progetto proprietario di questo progetto. Potrà spostarlo più tardi.",
+      "me": "Io",
+      "optional": "facoltativo",
+      "required": "obbligatorio",
+      "submit": "Pianifica il progetto",
+      "planning": "Tracciamento delle attività",
+      "errEmpty": "Indichi che cosa deve ottenere il progetto.",
+      "errGeneric": "Impossibile pianificare il progetto. Riprovi.",
+      "singleTitle": "In realtà è una sola attività",
+      "singleBody": "L'intero obiettivo è un solo flusso di lavoro, quindi non è un progetto. Allarghi l'obiettivo, oppure chieda a qualcuno di avviarlo come singola attività.",
+      "edit": "Modifica l'obiettivo"
+    },
+    "prod": {
+      "title": "Produttività",
+      "sub": "Su tutte le attività assegnate a questa persona.",
+      "assigned": "Assegnate",
+      "notStarted": "Non iniziate",
+      "inProgress": "In corso",
+      "completed": "Completate",
+      "rerun": "Riesegui",
+      "time": "Tempo guidato",
+      "timeNote": "Conteggiato solo mentre WorkCoPilot sta guidando attivamente.",
+      "working": "Sta lavorando ora a",
+      "idle": "Non sta lavorando a niente in questo momento.",
+      "errTitle": "Impossibile caricare la produttività"
+    },
+    "srpm": {
+      "heading": "Responsabili di progetto",
+      "sub": "Ogni responsabile di progetto, i progetti che gestisce e come va ciascuno. Avvii un progetto e lo affidi a un responsabile, o sposti un progetto da un responsabile a un altro.",
+      "load": "Carico per responsabile di progetto",
+      "loadSub": "Progetti gestiti e attività fatte sul totale.",
+      "rollup": "Progetti per responsabile",
+      "noManagers": "Ancora nessun responsabile di progetto. L'amministratore della sua azienda concede il ruolo.",
+      "unassignedManager": "Nessun responsabile",
+      "people": "Persone",
+      "peopleSub": "Tutti coloro a cui si può assegnare lavoro. Ne apra uno per vedere la sua produttività.",
+      "viewProd": "Produttività",
+      "tasksDone": "{done}/{total} attività fatte"
+    },
+    "grc": {
+      "heading": "Supervisione",
+      "sub": "Tutti i progetti della sua azienda: stato, carico per responsabile di progetto, rischi calcolati e il registro di controllo completo.",
+      "tiles": {
+        "total": "Progetti",
+        "ongoing": "In corso",
+        "held": "In pausa",
+        "done": "Completati"
+      },
+      "statusChart": "Stato",
+      "statusSub": "Quota di tutti i progetti.",
+      "loadChart": "Carico per responsabile di progetto",
+      "loadSub": "Progetti gestiti e attività fatte sul totale.",
+      "risks": "Registro dei rischi",
+      "risksSub": "Calcolato dai dati, non inserito a mano. Attività in attesa da più di {days} giorni dall'assegnazione, progetti in pausa e attività pronte senza nessuno assegnato.",
+      "noRisks": "Nessun rischio al momento.",
+      "noRisksBody": "Ogni attività assegnata è nei tempi, niente è in pausa e ogni attività pronta ha una persona.",
+      "risk": {
+        "sla_breach": "In attesa da troppo tempo",
+        "project_held": "Progetto in pausa",
+        "unassigned_idle": "Pronta, nessuno assegnato",
+        "slaAction": "Chieda al responsabile di sentire la persona assegnata o di spostare l'attività.",
+        "heldAction": "Chieda al responsabile se il progetto può riprendere.",
+        "idleAction": "Chieda al responsabile di assegnare l'attività.",
+        "age_one": "{n} giorno",
+        "age_other": "{n} giorni"
+      },
+      "log": "Registro di controllo",
+      "logSub": "Solo in aggiunta. Ogni progetto creato, attività assegnata o spostata, progetto trasferito, messo in pausa o ripreso.",
+      "logProject": "Progetto",
+      "logAll": "Tutti i progetti",
+      "logEmpty": "Ancora nessun evento.",
+      "th": {
+        "when": "Quando",
+        "what": "Cosa",
+        "by": "Da",
+        "project": "Progetto",
+        "detail": "Dettaglio"
+      },
+      "kind": {
+        "project_created": "Progetto creato",
+        "task_assigned": "Attività assegnata",
+        "task_reassigned": "Attività spostata",
+        "project_reassigned": "Progetto trasferito",
+        "project_held": "Progetto messo in pausa",
+        "project_resumed": "Progetto ripreso",
+        "other": "Evento"
+      },
+      "fromTo": "da {from} a {to}",
+      "to": "a {to}",
+      "more_one": "{n} altro evento",
+      "more_other": "{n} altri eventi",
+      "showMore": "Mostra altro",
+      "errTitle": "Impossibile caricare i dati di supervisione"
+    },
+    "templates": {
+      "heading": "Modelli di progetto",
+      "sub": "Pianifichi un progetto una volta, poi lo assegni a molte persone. Ognuna riceve la propria copia da svolgere; lei segue l'avanzamento qui.",
+      "subReadOnly": "Tutti i modelli di progetto della sua azienda e fin dove è arrivata ogni persona assegnata. Solo avanzamento.",
+      "newTemplate": "Nuovo modello",
+      "newShort": "Nuovo",
+      "emptyTitle": "Ancora nessun modello",
+      "emptyBody": "Descriva un obiettivo che abbraccia più flussi di lavoro. WorkCoPilot lo trasforma in attività, e lei assegna la stessa mappa a quante persone vuole.",
+      "errTitle": "Impossibile caricare i modelli",
+      "tasks_one": "{n} attività",
+      "tasks_other": "{n} attività",
+      "assigned_one": "Assegnato a {n} persona",
+      "assigned_other": "Assegnato a {n} persone",
+      "notAssigned": "Non ancora assegnato",
+      "created": "Creato {date}",
+      "assign": "Assegna",
+      "progress": "Avanzamento",
+      "create": {
+        "eyebrow": "Nuovo modello",
+        "title": "Che cosa deve ottenere ogni persona?",
+        "name": "Nome del modello",
+        "namePh": "p. es. Inserire una nuova area vendite",
+        "goal": "Obiettivo",
+        "goalPh": "Descriva il risultato, i sistemi coinvolti e come appare il completamento. Tutte le persone assegnate ricevono la stessa mappa.",
+        "goalHelp": "WorkCoPilot ordina le attività con un traguardo e verifica la mappa prima di salvarla. Poi lei assegna il modello alle persone.",
+        "submit": "Pianifica il modello",
+        "planning": "Tracciamento delle attività",
+        "errEmpty": "Indichi che cosa deve ottenere il modello.",
+        "errGeneric": "Impossibile pianificare il modello. Riprovi.",
+        "singleTitle": "In realtà è una sola attività",
+        "singleBody": "L'intero obiettivo è un solo flusso di lavoro, quindi non è un modello. Allarghi l'obiettivo in modo che abbracci più attività.",
+        "edit": "Modifica l'obiettivo"
+      },
+      "assignTo": {
+        "eyebrow": "Assegna modello",
+        "title": "Chi deve svolgere {name}?",
+        "body": "Ogni persona riceve il proprio progetto con tutte le attività di questo modello. Scelga persone con flusso di lavoro lavoratore o misto.",
+        "pick": "Persone",
+        "selected_one": "{n} selezionata",
+        "selected_other": "{n} selezionate",
+        "selectAll": "Seleziona tutto",
+        "clear": "Cancella",
+        "submit": "Assegna a {n}",
+        "submitOne": "Assegna",
+        "assigning": "Assegnazione",
+        "noPeople": "Nessuno con flusso di lavoro lavoratore o misto è disponibile per l'assegnazione.",
+        "errGeneric": "Impossibile assegnare il modello. Riprovi.",
+        "resultTitle": "Assegnato",
+        "resultAssigned_one": "{n} persona ha ricevuto il proprio progetto.",
+        "resultAssigned_other": "{n} persone hanno ricevuto il proprio progetto.",
+        "resultSkipped_one": "{n} persona è stata saltata.",
+        "resultSkipped_other": "{n} persone sono state saltate.",
+        "reason": {
+          "already_assigned": "ha già questo modello",
+          "not_in_company": "non è nella sua azienda",
+          "other": "non è stato possibile assegnare"
+        },
+        "done": "Fatto",
+        "viewRollup": "Vedi avanzamento"
+      },
+      "rollup": {
+        "back": "Modelli di progetto",
+        "notFoundTitle": "Modello non trovato",
+        "notFoundBody": "Potrebbe essere stato rimosso, o il link è di un altro account.",
+        "errTitle": "Impossibile caricare questo modello",
+        "progressOnly": "Solo avanzamento: ciò che ogni persona ha completato, mai il suo lavoro né le sue prove.",
+        "tiles": {
+          "assigned": "Assegnato",
+          "completed": "Completate",
+          "inProgress": "In corso",
+          "notStarted": "Non iniziate",
+          "avg": "Avanzamento medio"
+        },
+        "people": "Persone",
+        "peopleSub": "Prima le meno complete.",
+        "th": {
+          "person": "Persona",
+          "progress": "Avanzamento",
+          "done": "Fatte",
+          "state": "Stato",
+          "assigned": "Assegnato"
+        },
+        "doneOf": "{done}/{total}",
+        "state": {
+          "completed": "Completato",
+          "inProgress": "In corso",
+          "notStarted": "Non iniziato"
+        },
+        "noRuns": "Ancora nessuno assegnato.",
+        "noRunsBody": "Assegni il modello alle persone e il loro avanzamento compare qui."
+      }
+    }
+  },
+  "workProjects": {
+    "practices": {
+      "heading": "Vale la pena aggiungere?",
+      "sub": "Pratiche che i progetti come questo di solito includono. Ne aggiunga una alla mappa o la ignori.",
+      "accept": "Aggiungi alla mappa",
+      "acceptAria": "Aggiungi {title} alla mappa delle attività",
+      "adding": "Aggiunta",
+      "retry": "Riprova",
+      "dismissAria": "Ignora {title}",
+      "srcCatalog": "Una pratica standard per questo tipo di progetto",
+      "srcCompany": "Dalle pratiche proprie della sua azienda",
+      "srcPlatform": "Appresa da progetti come questo",
+      "srcGeneric": "Una pratica consigliata"
+    }
+  },
+  "workShell": {
+    "nav": {
+      "queue": "La mia coda",
+      "queueTip": "Attività che le assegna un responsabile di progetto",
+      "manage": "Gestione",
+      "pm": "Progetti che gestisco",
+      "pmTip": "Progetti che gestisce: attività, persone assegnate, avanzamento",
+      "srpm": "Responsabili di progetto",
+      "srpmTip": "Ogni responsabile di progetto e i suoi progetti",
+      "grc": "Supervisione",
+      "grcTip": "Tutti i progetti, i rischi e il registro di controllo (sola lettura)",
+      "templates": "Modelli",
+      "templatesTip": "Modelli di progetto: pianifichi una volta, assegni a molti, segua l'avanzamento"
+    }
+  },
+  "workStart": {
+    "docsCap": "{used} di {max} usati",
+    "docsCapUpgrade": "Passi a un piano superiore per averne di più",
+    "docsCapFull": "Il suo piano basa un piano su un massimo di {max}. Ne rimuova uno o passi a un piano superiore per averne di più.",
+    "docsPaste": "Incolla testo",
+    "docsPastePh": "Incolli una specifica, un ticket o appunti per basare il piano",
+    "docsPasteAdd": "Aggiungi testo",
+    "docsPasteName": "Appunti incollati",
+    "spaceLead": "Basa su",
+    "spaceSub": "su quale conoscenza aziendale si basa il piano",
+    "spaceAll": "Tutta la conoscenza",
+    "spaceAria": "Conoscenza aziendale su cui basare il piano",
+    "spaceCount_one": "{n} apprendimento",
+    "spaceCount_other": "{n} apprendimenti",
+    "spaceSummaryAll": "Tutta la conoscenza aziendale",
+    "spaceSummaryOne": "Basato su {name}"
+  }
+}
+function __mergeWave(t, s) {
+  for (const k of Object.keys(s)) {
+    const v = s[k]
+    if (v && typeof v === 'object' && !Array.isArray(v)) t[k] = __mergeWave(t[k] && typeof t[k] === 'object' ? t[k] : {}, v)
+    else t[k] = v
+  }
+  return t
+}
+export default __mergeWave(__base, __wavePatch)
