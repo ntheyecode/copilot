@@ -291,6 +291,8 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
   const [max, setMax] = useState(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
+  const [pasteOpen, setPasteOpen] = useState(false)
+  const [pasteText, setPasteText] = useState('')
   const inputRef = useRef(null)
 
   // Always learn the per-tier cap (GET returns `max`); on web it also returns the
@@ -339,6 +341,26 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
       if (max != null && files.length > room) setErr(t('workStart.docsCapFull', { max }))
     } finally { setBusy(false) }
   }
+  // Paste reference text directly, the chosen alternative to fetching a link (no
+  // SSRF, no auth-wall, no fetch-time injection). Web stores it as a text/plain
+  // document through the same pipeline so it counts against the cap; desktop
+  // keeps it on-device like any other picked doc.
+  const addPaste = async () => {
+    const text = clean(pasteText.trim())
+    if (!text) return
+    if (atCap) { setErr(t('workStart.docsCapFull', { max })); return }
+    setErr(''); setBusy(true)
+    try {
+      if (desktop) {
+        pushDesktop([...docs, { name: t('workStart.docsPasteName'), chars: text.length, text }])
+      } else {
+        const dataBase64 = 'data:text/plain;base64,' + btoa(unescape(encodeURIComponent(text)))
+        const r = await api.workDocAdd({ name: t('workStart.docsPasteName'), mime: 'text/plain', dataBase64 })
+        if (r && r.doc) setDocs((d) => [...d, r.doc])
+      }
+      setPasteText(''); setPasteOpen(false)
+    } catch (e2) { setErr((e2 && e2.message) || t('workStart.docsErrUpload', { name: t('workStart.docsPasteName') })) } finally { setBusy(false) }
+  }
   const remove = async (doc, i) => {
     if (desktop) { pushDesktop(docs.filter((_, k) => k !== i)); return }
     try { await api.workDocDelete(doc.id) } catch { /* ignore */ }
@@ -353,7 +375,16 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
           ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>
           : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>}
         <input ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple style={{ display: 'none' }} onChange={addWeb} />
+        <button type="button" className="wd-docs-add ghost" onClick={() => setPasteOpen((o) => !o)} disabled={busy || atCap}><PenLine size={14} /> {t('workStart.docsPaste')}</button>
       </div>
+      {pasteOpen && (
+        <div className="wd-docs-paste">
+          <textarea rows={4} placeholder={t('workStart.docsPastePh')} value={pasteText} onChange={(e) => setPasteText(e.target.value)} maxLength={20000} />
+          <div className="wd-docs-paste-foot">
+            <button type="button" className="wd-docs-add" onClick={addPaste} disabled={busy || !pasteText.trim() || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsPasteAdd')}</button>
+          </div>
+        </div>
+      )}
       {max != null && <div className="wd-docs-cap">{t('workStart.docsCap', { used: docs.length, max })}{atCap && <> <Zap size={11} /> {t('workStart.docsCapUpgrade')}</>}</div>}
       {docs.length > 0 && (
         <div className="wd-docs-list">

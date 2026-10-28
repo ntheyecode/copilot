@@ -306,6 +306,11 @@ export const WD_CSS = `
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
 .wd-docs-note{margin-top:9px;font-size:11.5px;color:var(--mut);line-height:1.5}
 .wd-docs-cap{margin-top:7px;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--mut)}
+.wd-docs-add.ghost{background:transparent;color:var(--tx);border:1px solid var(--line-2)}
+.wd-docs-paste{margin-top:9px}
+.wd-docs-paste textarea{width:100%;box-sizing:border-box;min-height:84px;resize:vertical;border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;font:inherit;font-size:13px;line-height:1.5;color:var(--tx);background:var(--bg)}
+.wd-docs-paste textarea:focus{outline:none;border-color:var(--em)}
+.wd-docs-paste-foot{margin-top:7px;display:flex;justify-content:flex-end}
 .wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:var(--em);color:#fff;border:none;border-radius:10px;height:40px;padding:0 20px;font:inherit;font-weight:600;font-size:14.5px;cursor:pointer;transition:filter .15s,transform .15s}
 .wd-cta:hover:not(:disabled){filter:brightness(1.05)}
 .wd-cta:active:not(:disabled){transform:translateY(0)}
