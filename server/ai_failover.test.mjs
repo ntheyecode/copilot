@@ -70,3 +70,30 @@ test('a key/auth error is surfaced, never masked or failed-over (SUPREME RULE II
   assert.equal(err.status, 401)
   assert.equal(switches.length, 0)
 })
+
+// An EMPTY/blank model response (the provider returns 200 with no content, as
+// gpt-oss-20b does on hard/long prompts) is NOT a model-error and NOT a rate
+// limit, so it used to re-throw a bare 502 and give the user nothing - no Plan B.
+// It must now flow through the SAME ladder: heal on-key, then fail over, with the
+// incident trail showing reason 'empty' (SUPREME RULE III/VI, never silent).
+test('an empty response fails over to the next provider and returns its answer', async () => {
+  const { got, err, switches } = await run(
+    { providerId: 'groq', chatModel: 'openai/gpt-oss-20b', alternates: [{ providerId: 'openai', apiKey: 'k2' }] },
+    (prov, model) => prov === 'groq'
+      ? jsonRes(200, { choices: [{ message: { content: '' } }] })   // empty on every groq model
+      : jsonRes(200, { choices: [{ message: { content: 'OK openai ' + model } }] }))
+  assert.equal(err, undefined)                                      // (a) no throw - a working provider answered
+  assert.match(got, /OK openai/)
+  assert.ok(switches.some((s) => s.reason === 'empty'))             // (b) the empty reason is on the incident trail
+  assert.ok(switches.some((s) => s.crossProvider && s.toProvider === 'openai'))
+})
+
+test('an empty response on EVERY provider throws a crisp coded error (not a hang, not a silent "")', async () => {
+  const { got, err, switches } = await run(
+    { providerId: 'groq', chatModel: 'openai/gpt-oss-20b', alternates: [{ providerId: 'openai', apiKey: 'k2' }] },
+    () => jsonRes(200, { choices: [{ message: { content: '' } }] }))   // empty on groq AND openai
+  assert.equal(got, undefined)
+  assert.ok(err)
+  assert.equal(err.code, AI_CODES.EXHAUSTED)
+  assert.ok(switches.some((s) => s.fatal && s.code === AI_CODES.EXHAUSTED))
+})
