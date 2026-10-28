@@ -305,6 +305,7 @@ export const WD_CSS = `
 .wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
 .wd-docs-note{margin-top:9px;font-size:11.5px;color:var(--mut);line-height:1.5}
+.wd-docs-cap{margin-top:7px;display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:600;color:var(--mut)}
 .wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:var(--em);color:#fff;border:none;border-radius:10px;height:40px;padding:0 20px;font:inherit;font-weight:600;font-size:14.5px;cursor:pointer;transition:filter .15s,transform .15s}
 .wd-cta:hover:not(:disabled){filter:brightness(1.05)}
 .wd-cta:active:not(:disabled){transform:translateY(0)}

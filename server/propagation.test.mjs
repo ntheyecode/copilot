@@ -72,11 +72,19 @@ test('free images-per-day reads live pricing; tier feature gates are single-sour
   assert.equal(store.getWorkImageUsage(u.id).dailyCap, 5)      // default
   store.setWorkPricing({ imagesPerDay: { premium: 9 } })
   assert.equal(store.getWorkImageUsage(u.id).dailyCap, 9)      // reflects live
-  // Feature registry is the one source for gates (documents + images).
+  // Feature registry is the one source for gates (images stay premium-tiered).
   assert.equal(store.tierAllows('premium', 'images'), true)
   assert.equal(store.tierAllows('basic', 'images'), false)
-  assert.equal(store.tierAllows('basic', 'documents'), false)
-  assert.equal(store.tierAllows('advanced', 'documents'), true)
+  // Document grounding is now ON for EVERY tier (grounding is core value); the
+  // NUMBER of reference documents is the paid lever (workDocsMax), one source of
+  // truth read by the upload route (server/work-docs.js).
+  assert.equal(store.tierAllows('lite', 'documents'), true)
+  assert.equal(store.tierAllows('basic', 'documents'), true)
+  assert.equal(store.tierAllows('premium', 'documents'), true)
+  assert.equal(store.workDocsMax('lite'), 2)
+  assert.equal(store.workDocsMax('basic'), 3)
+  assert.equal(store.workDocsMax('premium'), 25)
+  assert.ok(store.workDocsMax('premium') > store.workDocsMax('basic'))   // count is the lever, not all-or-nothing
 })
 
 test('disabling a company removes service access for its members', () => {

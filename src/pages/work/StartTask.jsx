@@ -281,25 +281,32 @@ function ScopeLoader({ depth, t }) {
   )
 }
 
-// Reference documents attach (reused verbatim in behaviour): desktop picks docs
-// on-device (stashed for the session), web uploads to the server. Tier-gated to
-// Advanced/Premium.
+// Reference documents attach: desktop picks docs on-device (stashed for the
+// session, nothing leaves the computer), web uploads to the server. Available on
+// EVERY tier now; the per-tier count cap (store.WORK_DOCS_MAX, surfaced as `max`
+// by GET /api/work/docs) is the paid lever and is enforced server-side on upload.
 function DocsAttach({ tier, onDesktopDocs, t }) {
   const desktop = typeof window !== 'undefined' ? window.workDesktop : null
-  const allowed = tier === 'advanced' || tier === 'premium'
   const [docs, setDocs] = useState([])
+  const [max, setMax] = useState(null)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
   const inputRef = useRef(null)
 
+  // Always learn the per-tier cap (GET returns `max`); on web it also returns the
+  // persisted docs. Desktop docs are on-device only, so its own list is kept.
   useEffect(() => {
-    if (desktop || !allowed) return
     let on = true
-    api.workDocsList().then((r) => { if (on) setDocs((r && r.docs) || []) }).catch(() => {})
+    api.workDocsList().then((r) => {
+      if (!on || !r) return
+      if (typeof r.max === 'number') setMax(r.max)
+      if (!desktop) setDocs(r.docs || [])
+    }).catch(() => {})
     return () => { on = false }
-  }, [desktop, allowed])
+  }, [desktop])
 
-  const pushDesktop = (list) => { const l = list.slice(0, 8); setDocs(l); if (onDesktopDocs) onDesktopDocs(l) }
+  const atCap = max != null && docs.length >= max
+  const pushDesktop = (list) => { const l = max != null ? list.slice(0, max) : list; setDocs(l); if (onDesktopDocs) onDesktopDocs(l) }
 
   const addDesktop = async () => {
     setErr(''); setBusy(true)
@@ -311,6 +318,7 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
       if (bad.length) setErr(bad.map((b) => `${b.name}: ${b.error}`).join(' · '))
       const next = [...docs]
       for (const d of good) next.push({ name: d.name, chars: d.chars, text: clean(d.text), method: d.method, confidence: d.confidence })   // govern on-device
+      if (max != null && next.length > max) setErr(t('workStart.docsCapFull', { max }))
       pushDesktop(next)
     } catch (e) { setErr((e && e.message) || t('workStart.docsErrRead')) } finally { setBusy(false) }
   }
@@ -319,7 +327,8 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
     if (!files.length) return
     setErr(''); setBusy(true)
     try {
-      for (const f of files.slice(0, 8)) {
+      const room = max != null ? Math.max(0, max - docs.length) : files.length
+      for (const f of files.slice(0, room)) {
         if (f.size > 10 * 1024 * 1024) { setErr(t('workStart.docsErrTooLarge', { name: f.name })); continue }
         try {
           const dataBase64 = await new Promise((res, rej) => { const rd = new FileReader(); rd.onload = () => res(rd.result); rd.onerror = () => rej(new Error('read failed')); rd.readAsDataURL(f) })
@@ -327,6 +336,7 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
           if (r && r.doc) setDocs((d) => [...d, r.doc])
         } catch (e2) { setErr(`${f.name}: ${(e2 && e2.message) || t('workStart.docsErrUpload', { name: f.name })}`) }
       }
+      if (max != null && files.length > room) setErr(t('workStart.docsCapFull', { max }))
     } finally { setBusy(false) }
   }
   const remove = async (doc, i) => {
@@ -335,23 +345,16 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
     setDocs((d) => d.filter((x) => x.id !== doc.id))
   }
 
-  if (!allowed) {
-    return (
-      <div className="wd-docs locked">
-        <span className="wd-docs-lead"><FileText size={14} /> {t('workStart.docsLockLead')}</span>
-        <span className="wd-docs-gate"><Zap size={12} /> {t('workStart.docsGate')}</span>
-      </div>
-    )
-  }
   return (
     <div className="wd-docs">
       <div className="wd-docs-row">
         <span className="wd-docs-lead"><FileText size={14} /> {t('workStart.docsRefLead')} <span className="wd-docs-sub">{desktop ? t('workStart.docsStayOn') : t('workStart.docsGround')}</span></span>
         {desktop
-          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>
-          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>}
+          ? <button type="button" className="wd-docs-add" onClick={addDesktop} disabled={busy || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>
+          : <button type="button" className="wd-docs-add" onClick={() => inputRef.current && inputRef.current.click()} disabled={busy || atCap}>{busy ? <Loader2 size={13} className="spin" /> : <Plus size={14} />} {t('workStart.docsAdd')}</button>}
         <input ref={inputRef} type="file" accept=".pdf,.docx,.txt,.md,.markdown" multiple style={{ display: 'none' }} onChange={addWeb} />
       </div>
+      {max != null && <div className="wd-docs-cap">{t('workStart.docsCap', { used: docs.length, max })}{atCap && <> <Zap size={11} /> {t('workStart.docsCapUpgrade')}</>}</div>}
       {docs.length > 0 && (
         <div className="wd-docs-list">
           {docs.map((d, i) => (
