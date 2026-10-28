@@ -3277,13 +3277,24 @@ app.post('/api/work/tickets/:id/reply', requireWorkAuth, wrap((req, res) => {
 }))
 
 // ---- Company admin: manage users within your own company -----------------
-app.get('/api/work/company/users', requireWorkAuth, requireCompanyAdmin, wrap((req, res) => {
+app.get('/api/work/company/users', requireWorkAuth, wrap((req, res) => {
   const cid = req.workUser.companyId
   // Every company-scoped route refuses when no company is in scope (a superadmin
   // without a company must use /api/work/admin/companies/:id); without this the
   // list fell through to "users whose companyId is null".
   if (!cid) return res.status(403).json({ error: 'No company in scope.' })
-  res.json({ company: store.getCompany(cid), users: store.listCompanyUsers(cid) })
+  const me = store.getUser(req.workUser.id)
+  // Company admin: the full roster (unchanged). A management role (PM / Sr PM /
+  // GRC): a read-only directory subset so names resolve in their dashboards and
+  // assignment pickers. Anyone else: 403.
+  if (me && me.companyRole === 'company_admin') {
+    return res.json({ company: store.getCompany(cid), users: store.listCompanyUsers(cid) })
+  }
+  if (store.userCanReadDirectory(req.workUser.id)) {
+    const co = store.getCompany(cid)
+    return res.json({ company: co ? { id: co.id, name: co.name } : null, users: store.listCompanyDirectory(cid), directory: true })
+  }
+  return res.status(403).json({ error: 'You do not have access to the company roster.' })
 }))
 // In LOCKED license mode the company admin cannot change who holds a license
 // (add or remove people); only the superadmin can. Role/tier edits are still

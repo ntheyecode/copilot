@@ -5911,6 +5911,23 @@ export function userCanStartOwnTask(userId) {
   return roles.canStartOwnTask(u.workFlow)
 }
 
+// A management role (PM / Sr PM / GRC) or a company admin may read the company
+// DIRECTORY: a safe subset (id, name, flow, role, tier) so names resolve in the
+// dashboards and assignment pickers without exposing the admin-only user fields.
+export function userCanReadDirectory(userId) {
+  const u = getUser(userId); if (!u || !u.companyId) return false
+  return u.companyRole === 'company_admin' || roles.isPM(u.companyRole) || roles.isGRC(u.companyRole)
+}
+export function listCompanyDirectory(companyId) {
+  return (db.users || []).filter((u) => u && String(u.companyId) === String(companyId)).map((u) => ({
+    id: u.id,
+    displayName: u.displayName || u.username || null,
+    workFlow: (['worker', 'independent', 'mixed'].includes(u.workFlow) ? u.workFlow : 'independent'),
+    companyRole: u.companyRole || 'member',
+    tier: u.tier || null,
+  }))
+}
+
 // A worker running an assigned task: resolve the task they are the assignee of
 // (for just-in-time step expansion, grounded in the project ledger).
 export function getAssignedTaskForExpand(userId, projectId, taskId) {
