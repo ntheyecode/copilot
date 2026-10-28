@@ -2277,6 +2277,10 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       // follow it with only light, on-demand checks instead of continuous watching.
       thorough: store.effectiveWatchMode(req.workUser.id) === 'light',
     })
+    // Depth observability: record whether the deep self-critique pass ran and
+    // hardened the plan, so "did deep planning happen" is visible (it was not
+    // before - `escalated` only flips when a stronger backup model is used).
+    planTele.critiqued = !!plan.critiqued; planTele.deepened = !!plan.deepened
     meterCost(req.params.id, planTele.model || call.visionModel || (call.rt && call.rt.chatModel), planGoal + groundedResearch, JSON.stringify(plan.steps || []), frame ? 1 : 0, { kind: 'plan', tele: planTele })
     if (plan.refusal) {
       store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'flag', text: 'Declined: ' + plan.refusal })

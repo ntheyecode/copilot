@@ -668,6 +668,13 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
   const system = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy + methodAnchorBlock(goal, appContext), locale)
   const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
+  // Depth telemetry (observability only; does NOT change behavior): `critiqued` =
+  // the deep self-critique pass actually ran and the model responded; `deepened` =
+  // it produced an accepted hardened plan. Distinct from `escalated` (a stronger
+  // BACKUP model was used), which stays false on the platform path where the best
+  // model is already primary - the reason the "did deep planning run" signal was
+  // previously invisible.
+  let critiqued = false, deepened = false
   if (frame && visionModel) {
     const run = (c, vm) => ai.analyseImages(c, `${system}\n\n${user}`, [frame], vm)
     const isWeak = (r) => { const p = extractJson(r) || {}; return !(Array.isArray(p.steps) && p.steps.length) }
@@ -693,11 +700,13 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
       const critiqueCfg = (strong && strong.cfg) ? strong.cfg : cfg
       const craw = await ai.generate(critiqueCfg, critiqueSystem, critiqueUser, tele)
       const cparsed = extractJson(craw, 'steps')
+      critiqued = true   // the deep self-critique pass ran and the model responded
       // Accept the hardened plan only when it is a real, non-empty plan that did
       // not turn into a refusal and did not DROP steps; otherwise keep the draft.
       const draftLen = Array.isArray(parsed.steps) ? parsed.steps.length : 0
       if (cparsed && !cparsed.refusal && Array.isArray(cparsed.steps) && cparsed.steps.length >= draftLen && cparsed.steps.length > 0) {
         parsed = cparsed
+        deepened = true   // an accepted, hardened plan replaced the draft
         if (strong && strong.cfg) { escalated = true; reason = reason || 'deep' }
       }
     } catch { /* keep the draft on any critique failure - graceful degradation */ }
@@ -764,6 +773,8 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
     }).filter((s) => s.text),
     escalated,
     reason,
+    critiqued,
+    deepened,
     // A one-line GENERALIZED learning the model flagged (a tool's current UI/flow
     // that differs from older knowledge), for the cross-session KB. Scrubbed; the
     // caller decides whether/where to store it. Empty when nothing new.
