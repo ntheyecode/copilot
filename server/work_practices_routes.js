@@ -15,11 +15,17 @@ export function registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap }
   }
 
   // Grounded practice suggestions for a project's current map (model-free catalog).
+  // Phase 3: the catalog floor is re-ordered by what this company actually accepts
+  // and finishes (platform-wide behaviour as the prior), and each suggestion we
+  // return is counted as "offered" so the accept rate has a denominator.
   app.post('/api/work/projects/:id/practices', requireWorkAuth, wrap((req, res) => {
     if (denyIfNotDeep(req, res)) return
     const p = store.getWorkProject(req.workUser.id, req.params.id)
     if (!p) return res.status(404).json({ error: 'Project not found' })
-    res.json({ suggestions: suggestPractices({ goal: p.goal, tasks: p.tasks || [] }) })
+    const suggestions = store.rankPracticeSuggestions(req.workUser.id, suggestPractices({ goal: p.goal, tasks: p.tasks || [] }))
+    const companyId = store.companyIdForUser(req.workUser.id)
+    for (const s of suggestions) { try { store.recordPracticeStat(companyId, s.id, 'offered') } catch { /* best-effort */ } }
+    res.json({ suggestions })
   }))
 
   // Rope one in: re-derive deterministically, find by id, inject it (keeping its
@@ -32,7 +38,10 @@ export function registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap }
     const sug = suggestPractices({ goal: p.goal, tasks: p.tasks || [] }, { max: 99 }).find((s) => s.id === req.params.sid)
     if (!sug) return res.status(404).json({ error: 'That suggestion is no longer available.' })
     const td = sug.proposed.taskDescriptor
-    const out = store.injectWorkProjectTask(req.workUser.id, p.id, { request: td.goal, title: td.title, doneState: td.doneState })
+    const out = store.injectWorkProjectTask(req.workUser.id, p.id, { request: td.goal, title: td.title, doneState: td.doneState, practiceId: sug.id })
+    // Count the rope-in (phase-3 learning). A dedupe fold-in still counts as
+    // accepted - the person wanted it; completion is captured when the task finishes.
+    try { store.recordPracticeStat(store.companyIdForUser(req.workUser.id), sug.id, 'accepted') } catch { /* best-effort */ }
     res.json({ accepted: sug.id, ...out })
   }))
 
@@ -43,8 +52,9 @@ export function registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap }
   app.post('/api/work/sessions/:id/practices', requireWorkAuth, wrap((req, res) => {
     const s = store.getWorkSession(req.workUser.id, req.params.id)
     if (!s) return res.status(404).json({ error: 'Session not found' })
-    const tips = suggestPractices({ goal: s.goal || '', tasks: [] }, { max: 2 })
-    res.json({ tips, canRopeIn: store.canUseWorkProjects(req.workUser.id) })
+    // Rank a wider pool by this company's history, then show the best two.
+    const pool = store.rankPracticeSuggestions(req.workUser.id, suggestPractices({ goal: s.goal || '', tasks: [] }, { max: 5 }))
+    res.json({ tips: pool.slice(0, 2), canRopeIn: store.canUseWorkProjects(req.workUser.id) })
   }))
 }
 

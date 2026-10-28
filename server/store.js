@@ -29,6 +29,7 @@ import * as customers from './work_customers.js'
 import * as proj from './work_project.js'
 import * as projInject from './work_project_inject.js'
 import * as roles from './work_roles.js'
+import * as practiceStats from './practice_stats.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -298,6 +299,11 @@ const EMPTY = {
   // NEVER returned to a client (getBillingPublic strips them). enabled defaults
   // on so saving a key works at once; an operator can turn store billing off.
   billing: { secretKey: '', webhookSecret: '', priceLite: '', priceBasic: '', priceAdvanced: '', pricePremium: '', priceLiteAnnual: '', priceBasicAnnual: '', priceAdvancedAnnual: '', pricePremiumAnnual: '', publishableKey: '', enabled: true },
+  // Recommended Practices - phase 3: platform-wide outcome counters, keyed by
+  // practice id -> { offered, accepted, completed }. This is the crowd prior that
+  // ranks suggestions for a company with little history of its own (per-company
+  // counters live on the company record). Low-criticality, persistSoon-coalesced.
+  practiceStats: {},
 }
 
 function ensureDir() {
@@ -6137,7 +6143,7 @@ export function availableWorkProjectTasks(workUserId, projectId) { const p = _fi
 // Mid-journey injection: dedupe against existing tasks, else create + place by
 // dependency (zero-tolerance guard against a false/duplicate task). Returns either
 // { duplicate:true, task } (already covered) or { duplicate:false, created, placed }.
-export function injectWorkProjectTask(workUserId, projectId, { request, title = null, doneState = '', blocksTaskId = null, dependsOn = null } = {}) {
+export function injectWorkProjectTask(workUserId, projectId, { request, title = null, doneState = '', blocksTaskId = null, dependsOn = null, practiceId = null } = {}) {
   const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
   const req = String(request || '').trim(); if (!req) throw httpErr(400, 'Say what to add.')
   const dup = projInject.findSimilarTask(p, req)
@@ -6146,6 +6152,8 @@ export function injectWorkProjectTask(workUserId, projectId, { request, title = 
   // Recommended Practice keeps its screen-visible done-state); both default so
   // the free-text mid-journey path (title=goal=request, no done-state) is unchanged.
   const t = proj.newTask({ id: 'pt' + id(), title: String(title || req), goal: req, doneState })
+  // Tag a roped-in practice so completion can close the phase-3 learning loop.
+  if (practiceId) t.practiceId = String(practiceId)
   const { tasks, placed } = projInject.placeInjectedTask(p, t, { blocksTaskId, dependsOn })
   p.tasks = tasks; p.state = proj.deriveProjectState(p); persist()
   return { duplicate: false, created: t, placed }
@@ -6173,12 +6181,73 @@ export function completeProjectTaskForSession(workUserId, sessionId, { outcome =
   const hit = findProjectTaskBySession(workUserId, sessionId); if (!hit) return null
   const p = _findProjectById(hit.projectId); if (!p) return null
   const task = (p.tasks || []).find((x) => x.id === hit.task.id); if (!task) return null
+  const wasDone = task.state === 'done'
   if (task.state !== 'done' && proj.canTransitionTask(task.state, 'done')) { task.state = 'done'; task.endedAt = new Date().toISOString() }
   if (outcome != null) task.outcome = outcome
   if (telemetry != null) task.telemetry = telemetry
   if (learning) p.learnings = proj.appendLearning(p, learning, task.id)
   p.state = proj.deriveProjectState(p); persist()
+  // Phase-3 learning loop: a roped-in practice that actually gets finished counts
+  // once. Resolve the company from the project, else the acting user (solo users
+  // still feed the platform prior). Guard on the done transition so a re-call does
+  // not double-count.
+  if (!wasDone && task.state === 'done' && task.practiceId) {
+    try { recordPracticeStat(_companyIdForPractice(p, workUserId), task.practiceId, 'completed') } catch { /* stats are best-effort */ }
+  }
   return task
+}
+
+// ---- Recommended Practices: phase-3 outcome counters (store side) ------------
+// The pure scoring/ranking lives in practice_stats.js (SUPREME RULE II); the store
+// only owns the counters and feeds them in. A counter is bumped per company AND
+// in the platform aggregate, so a company with little history still ranks by the
+// crowd. companyId may be null for a solo user - only the platform aggregate moves.
+function _bumpStatMap(map, practiceId, kind) {
+  const pid = String(practiceId || ''); if (!pid) return
+  const cur = map[pid] || { ...practiceStats.EMPTY_STAT }
+  cur[kind] = (Number(cur[kind]) || 0) + 1
+  map[pid] = cur
+}
+function _companyIdForPractice(project, actingUserId) {
+  if (project && project.companyId) return project.companyId
+  const u = actingUserId ? getUser(actingUserId) : null
+  return (u && u.companyId) || null
+}
+// The LIVE company record (getCompany returns a sanitized copy; counters must
+// mutate the stored object).
+function _rawCompany(companyId) { return (db.companies || []).find((x) => x && x.id === companyId) || null }
+// Record one practice outcome. kind: 'offered' | 'accepted' | 'completed'.
+export function recordPracticeStat(companyId, practiceId, kind) {
+  if (!['offered', 'accepted', 'completed'].includes(kind)) return
+  if (!db.practiceStats || typeof db.practiceStats !== 'object') db.practiceStats = {}
+  _bumpStatMap(db.practiceStats, practiceId, kind)
+  if (companyId) {
+    const c = _rawCompany(companyId)
+    if (c) { if (!c.practiceStats || typeof c.practiceStats !== 'object') c.practiceStats = {}; _bumpStatMap(c.practiceStats, practiceId, kind) }
+  }
+  persistSoon()
+}
+export function getPlatformPracticeStats() { return JSON.parse(JSON.stringify(db.practiceStats || {})) }
+export function getCompanyPracticeStats(companyId) {
+  const c = companyId ? _rawCompany(companyId) : null
+  return c && c.practiceStats ? JSON.parse(JSON.stringify(c.practiceStats)) : {}
+}
+// Re-order a catalog suggestion list by this user's company history (with the
+// platform as the prior). Pure ranker; never adds or drops a suggestion. A user
+// with no company is ranked on the platform prior alone.
+export function rankPracticeSuggestions(userId, suggestions) {
+  const u = userId ? getUser(userId) : null
+  const companyId = (u && u.companyId) || null
+  return practiceStats.rankSuggestions(suggestions, {
+    orgStats: getCompanyPracticeStats(companyId),
+    platformStats: db.practiceStats || {},
+  })
+}
+// The company a user's practice outcomes belong to (for the route to record
+// offered/accepted without re-deriving the rule). Null for a solo user.
+export function companyIdForUser(userId) {
+  const u = userId ? getUser(userId) : null
+  return (u && u.companyId) || null
 }
 
 // ---- Vision watch tolerance (owner: "ok if we fail 2 in 5 screens") --------
