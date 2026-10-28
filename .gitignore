@@ -19,3 +19,7 @@ server/eval/results/
 .enc.key
 .db-backups/
 server/models/
+
+.claude/
+HANDOFF-CONTINUE.md
+SESSION-HANDOFF.md
