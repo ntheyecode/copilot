@@ -110,6 +110,22 @@ test('Model B tenant isolation: another company cannot see or roll up this templ
   assert.throws(() => store.assignTemplate(adminB.id, tpl.id, [mB.id]), /not found|permission/i)
 })
 
+test('L5: a plain PM reads productivity only for assignees of projects they manage', () => {
+  const co = store.createCompany({ name: uniq('Co') })
+  const pm = store.createManagedUser({ username: uniq('pm'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'project_manager', tier: 'premium' })
+  const srpm = store.createManagedUser({ username: uniq('sr'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'senior_project_manager', tier: 'premium' })
+  const m1 = store.createManagedUser({ username: uniq('m1'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'member', tier: 'premium' })
+  const m2 = store.createManagedUser({ username: uniq('m2'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'member', tier: 'premium' })
+  store.setUserCompany(m1.id, co.id, 'member', 'worker')   // worker flow = assignable
+  store.setUserCompany(m2.id, co.id, 'member', 'worker')
+  const p = store.createCompanyProject(pm.id, { name: 'P', goal: 'ship the thing end to end', tasks: [{ title: 'Do it', goal: 'Do the task', doneState: 'Done' }] })
+  store.assignProjectTask(pm.id, p.id, p.tasks[0].id, m1.id)   // m1 is PM's assignee; m2 is not
+  assert.ok(store.userProductivity(pm.id, m1.id))                             // own assignee: allowed
+  assert.throws(() => store.userProductivity(pm.id, m2.id), /assigned to a project you manage/i)  // non-assignee: denied
+  assert.ok(store.userProductivity(srpm.id, m2.id))                          // Sr PM sees anyone in-company
+  assert.ok(store.userProductivity(m1.id, m1.id))                            // self always
+})
+
 test('pre-AI gate: userCanManageProjects is true only for PM/Sr PM/admin', () => {
   const co = store.createCompany({ name: uniq('Co') })
   const pm = store.createManagedUser({ username: uniq('pm'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'project_manager', tier: 'premium' })

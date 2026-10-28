@@ -6182,8 +6182,17 @@ export function companyProjectStats(userId) {
 // anyone reads their own).
 export function userProductivity(byUserId, targetUserId) {
   const a = _actor(byUserId)
-  if (String(byUserId) !== String(targetUserId) && !(roles.isPM(a.role) || roles.isCompanyAdmin(a.role))) throw httpErr(403, 'Not permitted.')
+  const self = String(byUserId) === String(targetUserId)
+  if (!self && !(roles.isPM(a.role) || roles.isCompanyAdmin(a.role))) throw httpErr(403, 'Not permitted.')
   const tu = getUser(targetUserId); if (!tu || String(tu.companyId) !== String(a.companyId)) throw httpErr(404, 'That user is not in your company.')
+  // L5: a plain PM reads productivity ONLY for people assigned to a project THEY
+  // manage - not any company user. Sr PM / company admin (canSeeAllProjects) keep
+  // the full-company view; reading your own is always allowed.
+  if (!self && !roles.canSeeAllProjects(a.role) && !roles.isCompanyAdmin(a.role)) {
+    const mine = _companyProjects(a.companyId).filter((p) => String(p.managerId) === String(a.id))
+    const isMyAssignee = mine.some((p) => (p.tasks || []).some((t) => t && t.assigneeId && String(t.assigneeId) === String(targetUserId)))
+    if (!isMyAssignee) throw httpErr(403, 'You can only see productivity for people assigned to a project you manage.')
+  }
   const items = listAssignedTasks(targetUserId, { includeDone: true })
   const counts = { assigned: items.length, notStarted: 0, inProgress: 0, completed: 0, rerun: 0 }
   let secondsSpent = 0; const working = []
