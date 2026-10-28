@@ -1186,6 +1186,13 @@ app.post('/api/work/profile/accent', requireWorkAuth, wrap((req, res) => {
   const accent = (req.body || {}).accent
   res.json({ user: store.setWorkUserAccent(req.workUser.id, accent) })
 }))
+// Set the signed-in user's personalization: theme mode + brand combination +
+// accessibility prefs, so they follow across devices. Body: { prefs: {...} } as a
+// partial patch; returns the resolved prefs the client applies.
+app.post('/api/work/profile/prefs', requireWorkAuth, wrap((req, res) => {
+  const user = store.setWorkUserPrefs(req.workUser.id, (req.body || {}).prefs || {})
+  res.json({ prefs: { accent: user.accent || null, themeMode: user.themeMode || null, a11y: user.a11y || null } })
+}))
 // Change your own password. Verifies the current password server-side; the new
 // one is validated + bcrypt-hashed in the store. Available to any signed-in user.
 app.post('/api/work/profile/password', requireWorkAuth, wrap((req, res) => {

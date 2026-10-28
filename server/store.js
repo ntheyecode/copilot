@@ -581,9 +581,13 @@ export function publicWorkUser(u) {
     // after a version bump. The client shows a blocking consent modal when true.
     legal: u.legal ? { version: u.legal.version, at: u.legal.at } : null,
     legalRequired: !(u.legal && u.legal.version === LEGAL_VERSION),
-    // Per-user dashboard accent: a preset key (e.g. "teal") or a #rrggbb hex the
-    // client maps to the accent CSS variables; null = the surface's own default.
+    // Per-user dashboard accent: a brand-combination key the client maps to the
+    // accent CSS variables; null = the surface's own default.
     accent: u.accent || null,
+    // Per-user theme mode (light = default, dark, heavy) and accessibility prefs,
+    // applied live by the client and persisted here so they follow across devices.
+    themeMode: u.themeMode || null,
+    a11y: u.a11y || null,
     ssoBound: !!u.ssoEmail,                       // true = signs in via company SSO, no password
     // Per-tier feature gates (Lite has no roadmaps / diagrams) so the client can
     // hide what the plan does not include and keep the marketing claim honest.
@@ -4956,6 +4960,45 @@ export function setWorkUserAccent(workUserId, accent) {
   const a = accent == null ? null : String(accent).trim().toLowerCase()
   if (a && !/^#[0-9a-f]{6}$/.test(a) && !/^[a-z][a-z0-9-]{1,23}$/.test(a)) throw httpErr(400, 'Invalid accent.')
   u.accent = a || null
+  persist()
+  return publicWorkUser(u)
+}
+
+// Per-user personalization (theme mode + brand combination + accessibility), one
+// source. A partial patch: only the keys present are changed, so the client can
+// save one control at a time. Everything is validated against a closed set; the
+// free-hex brand path is gone (brand is a vetted combination KEY only). Persisted
+// so it follows the user across devices; the client also mirrors to localStorage.
+const WORK_THEME_MODES = ['light', 'dark', 'heavy']
+const WORK_TEXT_SIZES = ['sm', 'md', 'lg', 'xl']
+const WORK_A11Y_FLAGS = ['reducedMotion', 'highContrast', 'largerTargets', 'readableFont']
+export function setWorkUserPrefs(workUserId, prefs = {}) {
+  const u = getUser(workUserId)
+  if (!u) throw httpErr(404, 'Account not found')
+  const p = (prefs && typeof prefs === 'object') ? prefs : {}
+  if ('accent' in p) {
+    const a = p.accent == null ? null : String(p.accent).trim().toLowerCase()
+    if (a && !/^[a-z][a-z0-9-]{1,31}$/.test(a)) throw httpErr(400, 'Invalid brand selection.')
+    u.accent = a || null
+  }
+  if ('themeMode' in p) {
+    const m = p.themeMode == null ? null : String(p.themeMode).trim().toLowerCase()
+    if (m && !WORK_THEME_MODES.includes(m)) throw httpErr(400, 'Invalid theme mode.')
+    u.themeMode = m || null
+  }
+  if ('a11y' in p) {
+    const src = (p.a11y && typeof p.a11y === 'object') ? p.a11y : {}
+    const cur = (u.a11y && typeof u.a11y === 'object') ? { ...u.a11y } : {}
+    if ('textSize' in src) {
+      const ts = src.textSize == null ? null : String(src.textSize).trim().toLowerCase()
+      if (ts && !WORK_TEXT_SIZES.includes(ts)) throw httpErr(400, 'Invalid text size.')
+      if (ts && ts !== 'md') cur.textSize = ts; else delete cur.textSize   // md is the default, store nothing
+    }
+    for (const f of WORK_A11Y_FLAGS) {
+      if (f in src) { if (src[f]) cur[f] = true; else delete cur[f] }
+    }
+    u.a11y = Object.keys(cur).length ? cur : null
+  }
   persist()
   return publicWorkUser(u)
 }
