@@ -33,6 +33,7 @@ import { linkHost, readContextFile, parseDataFile, frameFromVideo, signatureFrom
 // The guide view (owner redesign): ONE stylesheet + small shared modules used
 // by the console AND the floating panel, so both read identically.
 import { GUIDE_CSS, gvVars } from './guideView.css.js'
+import { WD_TOKENS_CSS } from './tokens.css.js'
 import FadeSwap from './FadeSwap.jsx'
 import ReadingStrip, { readingIsProminent } from './ReadingStrip.jsx'
 import StepCard from './StepCard.jsx'
@@ -70,8 +71,8 @@ const CONSOLE_CSS = `
   .wc-ask .wc-ask-row .wc-tbtn{flex:1 1 auto;justify-content:center}
 }
 /* Deliverables panel (review -> prompts + document) */
-.wc-dl{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(5,7,14,.6);backdrop-filter:blur(4px)}
-.wc-dl-card{width:min(680px,calc(100vw - 28px));max-height:min(86vh,760px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+.wc-dl{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:18px;background:var(--scrim,rgba(14,18,32,.46))}
+.wc-dl-card{width:min(680px,calc(100vw - 28px));max-height:min(86vh,760px);display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg,18px);box-shadow:var(--sh-3,var(--shadow));overflow:hidden}
 .wc-dl-head{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
 .wc-dl-head b{display:inline-flex;align-items:center;gap:8px;font-size:16px}
 .wc-dl-head svg{color:var(--em-2)}
@@ -88,8 +89,9 @@ const CONSOLE_CSS = `
 .wc-dl-auto{display:inline-flex;align-items:center;gap:9px;font-size:13.5px;color:var(--tx);cursor:pointer;margin-bottom:12px;font-weight:500}
 .wc-dl-auto input{width:16px;height:16px;accent-color:var(--em-2);cursor:pointer}
 .wc-dl-watch{display:flex;align-items:center;gap:9px;background:var(--em-fill);border:1px solid var(--em-line);border-radius:10px;padding:9px 12px;font-size:12.5px;color:var(--tx-2);margin-bottom:12px}
-.wc-dl-watch .dot{width:9px;height:9px;border-radius:50%;background:var(--em-2);box-shadow:0 0 0 0 var(--em-2);animation:wc-dl-pulse 1.4s infinite}
-@keyframes wc-dl-pulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.5)}70%{box-shadow:0 0 0 7px rgba(56,189,248,0)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
+.wc-dl-watch .dot{width:9px;height:9px;border-radius:50%;background:var(--em-2);animation:wc-blink 1.4s ease-in-out infinite}
+/* the one "live" motion in the console: a quiet opacity blink, never a halo */
+@keyframes wc-blink{0%,100%{opacity:1}50%{opacity:.45}}
 .wc-dl-note{background:var(--warm-fill);border:1px solid var(--warm-line);color:var(--warm);border-radius:10px;padding:10px 12px;font-size:13px;margin-bottom:12px}
 .wc-dl-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
 .wc-dl-summary{font-size:14.5px;line-height:1.6;color:var(--tx);margin:0 0 16px}
@@ -97,8 +99,9 @@ const CONSOLE_CSS = `
 .wc-dl-sec h4{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut);margin:0 0 10px}
 .wc-dl-issue{display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-top:1px solid var(--line)}
 .wc-dl-issue .sev{flex-shrink:0;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;padding:3px 8px;border-radius:999px}
-.wc-dl-issue .sev.critical{color:#fff;background:#c0392b}.wc-dl-issue .sev.high{color:#fff;background:#e0742b}
-.wc-dl-issue .sev.medium{color:#7a5300;background:rgba(255,179,92,.3)}.wc-dl-issue .sev.low{color:var(--mut);background:var(--chip)}
+/* severity = soft tints with a saturated ink (never a filled red/orange block) */
+.wc-dl-issue .sev.critical{color:var(--danger);background:var(--danger-fill)}.wc-dl-issue .sev.high{color:var(--tint-amber-ink);background:var(--tint-amber)}
+.wc-dl-issue .sev.medium{color:var(--tint-blue-ink);background:var(--tint-blue)}.wc-dl-issue .sev.low{color:var(--mut);background:var(--chip)}
 .wc-dl-issue b{font-size:14px}
 .wc-dl-issue .ctrl{display:inline-block;margin-left:7px;font-size:11px;font-weight:600;color:var(--em-2)}
 .wc-dl-issue .fix{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.5}
@@ -108,44 +111,47 @@ const CONSOLE_CSS = `
 @media(max-width:640px){.wc-dl-card{width:calc(100vw - 20px);max-height:92vh}.wc-dl-actions .btn{flex:1 1 auto;justify-content:center}}
 
 /* ===================================================================
-   Guiding panel design system (Fluent / Wiz-grade). Green is the brand
-   token (--brand-500); here it is used ONLY as accent (chips, left
-   accent bars, soft fills, dots), never as body-text colour. Action
-   text is high-contrast --text; pending recedes; done is quietly struck.
-   --text-dim / --brand-50 are aliased to real tokens so they resolve
-   correctly in BOTH light and dark (they are otherwise undefined).
+   Guiding console design system = the in-product design law (minimal,
+   white, productized): hairline cards, flat brand-solid buttons, states
+   as soft tints, green only as an accent, no gradient / glow / halo.
+   Every name the console (and the shared .gv guide view inside it) reads
+   is an ALIAS of the one .wd token source (src/pages/work/tokens.css.js).
+   The console renders BARE (WorkAppLayout.guideFrame: no rail, no top bar,
+   so no .wd ancestor and no WD_CSS sheet); it therefore carries the tokens
+   itself, the documented way: the root has the wd-tokens class and the
+   console injects WD_TOKENS_CSS before this sheet. Light / Dark / Heavy and
+   the accessibility overrides then flow from that ONE place: there is no
+   per-theme block here any more (the old [data-theme='dark'] .wc copy
+   drifted from the dashboards and knew nothing about Heavy; SUPREME II).
+   The literal fallbacks only matter for a document without the token sheet.
    =================================================================== */
-/* ONE accent for the whole console: emerald, the same family the rest of the
-   site uses (hero, live, done). The old blue retune competed with the green and
-   read as a second app; a single accent keeps every primary action coherent.
-   Typography matches the site too: Bricolage Grotesque display, Figtree body,
-   JetBrains Mono code, so the console stops inheriting the desktop Segoe UI. */
-.wc{--text-dim:var(--text-muted);
-  --wc-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
-  --wc-body:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
+.wc{
+  --wc-display:var(--wd-display,"Bricolage Grotesque","Figtree",system-ui,sans-serif);
+  --wc-body:var(--wd-body,"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif);
   --wc-mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   font-family:var(--wc-body);
-  --brand-500:var(--accent,#0e9f6e);--brand-600:var(--accent-dark,#0b8259);--brand-700:var(--accent-ink,#086647);--brand-soft:var(--accent-soft,rgba(14,159,110,.12));--brand-50:var(--accent-soft,rgba(14,159,110,.12));
-  /* Semantic guiding palette (color-coded by meaning): EMERALD = the current
-     step / live action (the brightest thing), CYAN = calm context the watcher
-     can see (observation), amber = warnings (--warning, already defined). Light
-     values here; the dark overrides follow. Derived from the brand set
-     emerald #8cf5c4 / cyan #39d3ff for dark; darkened for contrast on white. */
-  --em:var(--accent,#0e9f6e);--em-2:#0a84c2;--on-em:var(--accent-contrast,#ffffff);
-  --em-soft:var(--accent-soft,rgba(14,159,110,.10));--em-ring:var(--accent-line,rgba(14,159,110,.32));--em-glow:rgba(14,159,110,.16);
-  --obs:#0a84c2;--obs-soft:rgba(10,132,194,.09);--obs-ring:rgba(10,132,194,.30);
-  /* MS-docs blue, for the inline "Open ..." hyperlinks (distinct from the green
-     accent so a link reads as a link). --wc-fs is the reader text-size multiplier
-     (set inline on .wc); guidance font-sizes below are calc(px * var(--wc-fs)). */
-  --wc-link:#0067c0;--wc-fs:1;
+  /* surfaces + text (the generic names the console and .gv rules read) */
+  --surface:var(--panel,#ffffff);--surface-2:var(--panel-2,#fbfbfd);--surface-3:var(--panel-3,#f3f5f9);
+  --border:var(--line,#e6e9f0);--border-strong:var(--line-2,#d3d8e4);
+  --text:var(--tx,#1a1f33);--text-muted:var(--mut,#5f6887);--text-faint:var(--faint,#8b92aa);--text-dim:var(--text-muted);
+  --shadow-sm:var(--sh-1,none);--shadow-md:var(--sh-2,none);
+  /* brand: --em / --em-2 / --em-solid / --on-solid / --em-deep inherit from .wd
+     untouched (so Heavy's saturated accent and the a11y shades apply). The
+     legacy names below map onto them. */
+  --brand-500:var(--em,#0e9f6e);--brand-600:var(--em-solid,#0c865c);--brand-700:var(--em-deep,#0b825a);
+  --brand-soft:var(--em-fill,rgba(14,159,110,.10));--brand-50:var(--em-fill,rgba(14,159,110,.10));
+  --em-soft:var(--em-fill,rgba(14,159,110,.10));--em-ring:var(--em-line,rgba(14,159,110,.32));
+  /* observation (what the watcher can see) = the secondary brand color, soft */
+  --obs:var(--em-2,#0a6fb3);--obs-soft:var(--tint-blue,#eaf3fc);--obs-ring:var(--info-line,rgba(10,111,179,.26));
+  /* semantic states as soft tints: done, warning, danger */
+  --success:var(--tint-green-ink,#0b825a);--success-soft:var(--tint-green,rgba(14,159,110,.12));
+  --warning:var(--warm,#b45309);--warning-soft:var(--warm-fill,#fdf4e7);
+  --danger-soft:var(--danger-fill,#fdeef0);
+  /* inline "Open ..." hyperlinks read as links: the secondary color's text shade.
+     --wc-fs is the reader text-size multiplier (set inline on .wc); guidance
+     font-sizes below are calc(px * var(--wc-fs)). */
+  --wc-link:var(--em-2-deep,#085b93);--wc-fs:1;
   font-feature-settings:"tnum" 1,"cv11" 1}
-[data-theme='dark'] .wc{--brand-500:var(--accent,#34d8a0);--brand-600:var(--accent,#12b981);--brand-700:var(--accent,#0e9f6e);--brand-soft:var(--accent-soft,rgba(52,216,160,.16));--brand-50:var(--accent-soft,rgba(52,216,160,.16));
-  --em:var(--accent,#8cf5c4);--em-2:#39d3ff;--on-em:var(--accent-contrast,#052a1d);
-  --em-soft:var(--accent-soft,rgba(140,245,196,.14));--em-ring:var(--accent-line,rgba(140,245,196,.34));--em-glow:rgba(140,245,196,.20);
-  --obs:#39d3ff;--obs-soft:rgba(57,211,255,.12);--obs-ring:rgba(57,211,255,.34);--wc-link:#6cb6ff}
-/* --em-glow has no --accent-* counterpart: derived only once a user accent is set
-   (data-accent on :root), after the dark block so it applies in both themes. */
-[data-accent] .wc{--em-glow:color-mix(in srgb,var(--accent) 18%,transparent)}
 .wc .fill{flex:1 1 auto;min-width:0}
 
 /* Header toolbar: one quiet row under a hairline. Float on top is the primary
@@ -160,14 +166,16 @@ const CONSOLE_CSS = `
 .wc-min.low{color:var(--danger);background:var(--danger-soft);border-color:transparent}
 .wc-min.low .wc-dot{background:var(--danger)}
 /* Compact toolbar button: the header + guide-bar control family */
-.wc-tbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:10px;font-size:12.5px;font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;white-space:nowrap;line-height:1;box-shadow:var(--shadow-sm);transition:background .16s,border-color .16s,color .16s,transform .1s,box-shadow .16s}
+.wc-tbtn{flex:0 0 auto;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 13px;border-radius:var(--r-sm,10px);font-size:var(--fs-sm,12.5px);font-weight:600;border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;white-space:nowrap;line-height:1;box-shadow:none;transition:background .16s,border-color .16s,color .16s,transform .1s}
 .wc-tbtn:hover:not(:disabled){border-color:var(--border-strong);background:var(--surface-2)}
 .wc-tbtn:active:not(:disabled){transform:translateY(1px)}
 .wc-tbtn:disabled{opacity:.55;cursor:default}
 .wc-tbtn svg{color:var(--text-muted);flex-shrink:0}
-.wc-tbtn.primary{background:linear-gradient(180deg,var(--brand-500),var(--brand-600));border-color:transparent;color:#fff;box-shadow:0 1px 2px rgba(0,0,0,.14)}
-.wc-tbtn.primary:hover:not(:disabled){background:var(--brand-600);filter:brightness(1.04)}
-.wc-tbtn.primary svg{color:#fff}
+/* the filled button = the flat brand-solid face (the same recipe as .wd-wz-next):
+   no gradient, no drop shadow; white-text-safe by construction (--em-solid) */
+.wc-tbtn.primary{background:var(--em-solid,var(--brand-600));border-color:transparent;color:var(--on-solid,#fff)}
+.wc-tbtn.primary:hover:not(:disabled){filter:brightness(1.06)}
+.wc-tbtn.primary svg{color:var(--on-solid,#fff)}
 .wc-tbtn.ghost{background:transparent;border-color:transparent;color:var(--text-muted);box-shadow:none}
 .wc-tbtn.ghost:hover:not(:disabled){background:var(--surface-2);color:var(--text)}
 .wc-tbtn.on{background:var(--brand-soft);border-color:transparent;color:var(--brand-600);box-shadow:none}
@@ -181,7 +189,7 @@ const CONSOLE_CSS = `
 
 /* Live status row: a single card that holds the watch state (or the action
    that starts it), the minutes, and the three live actions. */
-.wc-guidebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow-sm)}
+.wc-guidebar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;padding:9px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r,14px)}
 .wc-guidebar .wc-sp{flex:1 1 auto;min-width:4px}
 .wc-guidebar .wc-tbtn:not(.primary){box-shadow:none;background:var(--surface-2)}
 .wc-guidebar .wc-tbtn:not(.primary):hover:not(:disabled){background:var(--surface-3)}
@@ -202,7 +210,7 @@ const CONSOLE_CSS = `
 @media(max-width:640px){.wc-wl-check{flex:1 1 100%;justify-content:center}}
 
 /* Completed-task bar */
-.wc-donebar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px 14px 20px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);overflow:hidden}
+.wc-donebar{position:relative;display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px 14px 20px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);overflow:hidden}
 .wc-donebar::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--success)}
 .wc-donebar-lead{display:inline-flex;align-items:center;gap:10px;font-size:14px;font-weight:650;color:var(--text);min-width:0}
 .wc-donebar-lead svg{color:var(--success);flex-shrink:0}
@@ -218,13 +226,14 @@ const CONSOLE_CSS = `
 .wc-banner{position:relative;display:flex;align-items:center;gap:10px;border-radius:12px;padding:11px 14px;margin-bottom:12px;font-size:13.5px;line-height:1.45;overflow:hidden}
 .wc-banner svg{flex-shrink:0}
 .wc-banner .fill{flex:1}
-.wc-banner.danger{background:var(--danger);color:#fff}
+/* both banners are soft tints with a left accent bar; danger is never a filled red block */
+.wc-banner.danger{background:var(--danger-soft);color:var(--text);padding-left:17px}
+.wc-banner.danger::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--danger)}
+.wc-banner.danger svg{color:var(--danger)}
 .wc-banner.warn{background:var(--warning-soft);color:var(--text);padding-left:17px}
 .wc-banner.warn::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--warning)}
 .wc-banner.warn svg{color:var(--warning)}
 
-/* OBSERVATION = calm context the watcher can see: a cyan-tinted chip. */
-@keyframes wc-pulse{0%{box-shadow:0 0 0 0 var(--pr)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
 /* PINNED guide status strip: Pause/Resume + minutes + the live reading line,
    kept in the fixed header so they never scroll away (owner request). While a
    frame is in flight it blinks "Analyzing"; on the reply it returns to the calm
@@ -237,14 +246,13 @@ const CONSOLE_CSS = `
 .wc-plan-title{font-family:var(--wc-display);font-size:18px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.3;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .wc-plan-kicker{display:flex;align-items:center;gap:8px;margin:16px 2px 0;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
 .wc-plan-kicker+.wc-plan-title{margin-top:4px}
-.wd-modal-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
-.wd-modal{width:min(420px,calc(100vw - 36px));background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:22px;box-shadow:0 30px 70px -30px rgba(0,0,0,.5)}
+.wd-modal-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--scrim,rgba(14,18,32,.46))}
+.wd-modal{width:min(420px,calc(100vw - 36px));background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);padding:22px;box-shadow:var(--sh-3,none)}
 .wd-modal h3{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;margin:0 0 6px}
 .wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 
-/* DO THIS NOW hero: the single strongest focus on the screen */
-/* CURRENT STEP = the brightest element: emerald accent, an emerald->cyan left
-   bar, and a gentle pulsing glow (disabled under prefers-reduced-motion). */
+/* The current step is the one card on the stage (StepCard, styled by the shared
+   guideView sheet): a hairline card with a flat accent bar, no glow. */
 
 /* Mid-guiding clarification card: the plan asks for one essential input it
    cannot see. Calmer than the hero (no pulse), green-tinted fill + a left accent
@@ -341,12 +349,11 @@ const CONSOLE_CSS = `
 .wc-readbar{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin:14px 0 2px}
 .wc-readbar .wc-readbar-k{font-size:11px;font-weight:600;letter-spacing:.02em;color:var(--text-dim)}
 .wc-loading{display:flex;flex-direction:column;align-items:center;gap:20px;padding:44px 20px 40px}
-.wc-loading-orb{position:relative;width:48px;height:48px}
-.wc-loading-orb span{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid transparent;border-top-color:var(--brand-600);transform:translate(-50%,-50%);animation:wc-orb 1.1s linear infinite}
-.wc-loading-orb span:nth-child(1){width:48px;height:48px}
-.wc-loading-orb span:nth-child(2){width:34px;height:34px;opacity:.55;animation-duration:1.5s;animation-direction:reverse}
-.wc-loading-orb span:nth-child(3){width:20px;height:20px;opacity:.3;animation-duration:.85s}
-@keyframes wc-orb{to{transform:translate(-50%,-50%) rotate(360deg)}}
+/* loading: ONE quiet ring on a soft track (the three-ring orb was a flourish) */
+.wc-loading-orb{position:relative;width:36px;height:36px}
+.wc-loading-orb span{position:absolute;inset:0;border-radius:50%;border:2px solid var(--track,var(--border));border-top-color:var(--em);animation:wc-orb 1s linear infinite}
+.wc-loading-orb span:nth-child(2),.wc-loading-orb span:nth-child(3){display:none}
+@keyframes wc-orb{to{transform:rotate(360deg)}}
 .wc-loading-phases{display:flex;flex-direction:column;gap:10px;width:100%;max-width:290px}
 .wc-loading-line{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:var(--text);animation:wc-line-in .45s cubic-bezier(.2,.8,.2,1) both}
 .wc-loading-line svg{flex-shrink:0}
@@ -356,7 +363,7 @@ const CONSOLE_CSS = `
 @keyframes wc-line-in{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
 /* Share-prompt state (M7): the first thing after hand-off, before any phase. */
 .wc-share{gap:10px;text-align:center}
-.wc-share-ic{width:56px;height:56px;border-radius:16px;display:grid;place-items:center;color:var(--brand-600);background:var(--brand-soft);margin-bottom:6px}
+.wc-share-ic{width:56px;height:56px;border-radius:var(--r-lg,16px);display:grid;place-items:center;color:var(--tint-green-ink,var(--brand-600));background:var(--tint-green,var(--brand-soft));margin-bottom:6px}
 .wc-share-t{font-size:17px;font-weight:700;color:var(--text);letter-spacing:-.01em}
 .wc-share-s{font-size:14px;line-height:1.55;color:var(--text-muted);max-width:420px}
 .wc-share-s b{color:var(--text)}
@@ -364,7 +371,7 @@ const CONSOLE_CSS = `
 .wc-share-slow svg{flex-shrink:0;margin-top:2px;color:var(--warning)}
 
 /* Ask / analyse bar + answer */
-.wc-ask{margin-top:0;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:8px 8px 8px 10px;transition:border-color .16s,box-shadow .16s}
+.wc-ask{margin-top:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);padding:8px 8px 8px 10px;transition:border-color .16s,box-shadow .16s}
 .wc-ask:focus-within{border-color:var(--brand-500);box-shadow:0 0 0 3px var(--brand-soft)}
 .wc-ask .wc-ask-row{display:flex;gap:6px;align-items:flex-end;flex-wrap:wrap}
 .wc-ask-ta{flex:1;min-width:140px;resize:vertical;min-height:40px;max-height:220px;line-height:1.5;font-family:inherit;font-size:14px}
@@ -377,8 +384,8 @@ const CONSOLE_CSS = `
 .wc-ask-k{display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--brand-600)}
 
 /* Pre-plan starter + session summary */
-.wc-pre{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-md);padding:22px 22px 18px;overflow:hidden}
-.wc-pre::after{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;background:radial-gradient(640px 200px at 100% 0%,var(--brand-soft),transparent 70%)}
+/* a plain hairline card (the radial halo in the corner is gone) */
+.wc-pre{position:relative;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,18px);box-shadow:var(--shadow-sm);padding:22px 22px 18px;overflow:hidden}
 .wc-pre>*{position:relative;z-index:1}
 .wc-pre-title{font-family:var(--wc-display);font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;letter-spacing:-.02em}
 .wc-pre-sub{font-size:13px;color:var(--text-muted);margin-bottom:14px;line-height:1.5}
@@ -387,7 +394,7 @@ const CONSOLE_CSS = `
 .wc-pre-help svg{color:var(--brand-600);flex-shrink:0;margin-top:2px}
 .wc-pre-help b{color:var(--text);font-weight:650}
 @media(max-width:640px){.wc-pre{padding:18px 16px 16px;border-radius:16px}.wc-pre-title{font-size:18px}}
-.wc-sum{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:18px 20px;margin-top:16px;line-height:1.6}
+.wc-sum{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);box-shadow:var(--shadow-sm);padding:18px 20px;margin-top:16px;line-height:1.6}
 .wc-sum-title{display:inline-flex;align-items:center;gap:8px;font-family:var(--wc-display);font-weight:700;font-size:15px;letter-spacing:-.01em;margin-bottom:10px;color:var(--text)}
 .wc-sum-title svg{color:var(--brand-600)}
 
@@ -404,7 +411,7 @@ const CONSOLE_CSS = `
 .wc-make-tab{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 14px;border:none;background:transparent;color:var(--text-muted);font:inherit;font-size:13px;font-weight:600;border-radius:9px;cursor:pointer;white-space:nowrap;transition:background .16s,color .16s,box-shadow .16s}
 .wc-make-tab svg{color:currentColor;opacity:.85;flex-shrink:0}
 .wc-make-tab:hover{color:var(--text)}
-.wc-make-tab.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(0,0,0,.09),inset 0 0 0 1px var(--border)}
+.wc-make-tab.on{background:var(--surface);color:var(--text);box-shadow:inset 0 0 0 1px var(--border)}
 .wc-make-tab.on svg{opacity:1;color:var(--brand-600)}
 .wc-make-panel{margin-top:14px;display:flex;flex-direction:column;gap:12px;animation:wc-make-in .2s ease both}
 @keyframes wc-make-in{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
@@ -426,7 +433,7 @@ const CONSOLE_CSS = `
 .wc-seg{display:inline-flex;flex:0 0 auto;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:2px;gap:2px}
 .wc-seg button{border:none;background:transparent;color:var(--text-muted);font:inherit;font-size:12.5px;font-weight:600;height:28px;padding:0 11px;border-radius:8px;cursor:pointer;line-height:1;transition:background .15s,color .15s,box-shadow .15s}
 .wc-seg button:hover{color:var(--text)}
-.wc-seg button.on{color:var(--text);background:var(--surface);box-shadow:0 1px 2px rgba(0,0,0,.1),inset 0 0 0 1px var(--border)}
+.wc-seg button.on{color:var(--text);background:var(--surface);box-shadow:inset 0 0 0 1px var(--border)}
 .wc-result-paste{width:100%;resize:vertical;min-height:62px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text);font:inherit;font-size:13.5px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
 .wc-result-paste::placeholder{color:var(--text-faint)}
 .wc-result-paste:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -454,7 +461,7 @@ const CONSOLE_CSS = `
 /* COMPUTE panel field styles (inside the Make surface): the privacy line, the
    file drop / parsed preview (name, row count, typed-column chips), the "what to
    compute" field and status lines. The returned ComputeCard is a light Option-C
-   card. Palette emerald #8cf5c4 / cyan #39d3ff / amber #f5c86b / ink #0a0d12. */
+   card. Column-type chips are the soft category tints (blue / amber / neutral). */
 .wc-compute-privacy{display:flex;align-items:flex-start;gap:9px;font-size:12.5px;line-height:1.5;font-weight:600;color:var(--brand-600);background:var(--em-soft);border:1px solid var(--em-ring);border-radius:12px;padding:10px 12px}
 .wc-compute-privacy svg{flex-shrink:0;margin-top:1px;color:var(--brand-600)}
 .wc-compute-drop{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;width:100%;min-height:104px;padding:16px;border-radius:13px;border:1.5px dashed var(--border);background:var(--surface-2);color:var(--text-muted);cursor:pointer;font:inherit;text-align:center;transition:border-color .16s,background .16s,color .16s}
@@ -473,18 +480,18 @@ const CONSOLE_CSS = `
 .wc-compute-chip{display:inline-flex;align-items:center;gap:6px;max-width:100%;border:1px solid var(--border);background:var(--surface);border-radius:999px;padding:4px 10px;font-size:12px;line-height:1.3}
 .wc-compute-chip b{font-weight:600;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wc-compute-chip i{font-style:normal;font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:2px 6px;border-radius:999px}
-.wc-compute-chip.t-number i{color:#0a7fa8;background:rgba(57,211,255,.16)}
-.wc-compute-chip.t-date i{color:#8f5a07;background:rgba(245,200,107,.22)}
-.wc-compute-chip.t-string i{color:#3d4650;background:rgba(10,13,18,.07)}
+.wc-compute-chip.t-number i{color:var(--tint-blue-ink);background:var(--tint-blue)}
+.wc-compute-chip.t-date i{color:var(--tint-amber-ink);background:var(--tint-amber)}
+.wc-compute-chip.t-string i{color:var(--tint-neutral-ink);background:var(--tint-neutral)}
 .wc-compute-label{display:block;font-size:12px;font-weight:600;color:var(--text-muted);letter-spacing:.01em}
 .wc-compute-want{width:100%;resize:vertical;min-height:58px;background:var(--surface-2);border:1px solid var(--border);border-radius:11px;padding:10px 12px;color:var(--text);font:inherit;font-size:14px;line-height:1.5;outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
 .wc-compute-want::placeholder{color:var(--text-faint)}
 .wc-compute-want:focus{border-color:var(--brand-500);background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
 .wc-compute-err{display:flex;align-items:flex-start;gap:7px;font-size:13px;color:var(--danger);line-height:1.45}
 .wc-compute-err svg{flex-shrink:0;margin-top:1px}
-.wc-compute-need{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.5;color:var(--text);background:rgba(245,200,107,.14);border:1px solid rgba(245,200,107,.42);border-radius:11px;padding:10px 12px}
-.wc-compute-need svg{flex-shrink:0;margin-top:1px;color:#8f5a07}
-.wc-compute-need b{color:#8f5a07}
+.wc-compute-need{display:flex;align-items:flex-start;gap:9px;font-size:13px;line-height:1.5;color:var(--text);background:var(--tint-amber);border:1px solid var(--warm-line,transparent);border-radius:11px;padding:10px 12px}
+.wc-compute-need svg{flex-shrink:0;margin-top:1px;color:var(--warm)}
+.wc-compute-need b{color:var(--tint-amber-ink)}
 .wc-compute-load{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--text-muted)}
 @media(prefers-reduced-motion:reduce){.wc-compute-drop{transition:none}}
 
@@ -496,8 +503,8 @@ const CONSOLE_CSS = `
 .wc-plan-link{flex:0 0 auto;background:transparent;border:none;padding:2px 0;font:inherit;font-size:12px;font-weight:600;color:var(--wc-link);cursor:pointer;text-underline-offset:3px}
 .wc-plan-link:hover{text-decoration:underline}
 /* Read-only full-plan overlay: every step with a done/current/upcoming marker. */
-.wc-plan-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(5,7,14,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-.wc-plan-card{width:min(600px,100%);max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:0 24px 60px -24px rgba(0,0,0,.7);overflow:hidden}
+.wc-plan-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--scrim,rgba(14,18,32,.46))}
+.wc-plan-card{width:min(600px,100%);max-height:86vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);box-shadow:var(--sh-3,none);overflow:hidden}
 .wc-plan-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
 .wc-plan-title{font-size:15px;font-weight:700;font-family:var(--wc-display);color:var(--text)}
 .wc-plan-goal{padding:12px 16px 0}
@@ -529,7 +536,7 @@ const CONSOLE_CSS = `
    affordance are always reachable without scrolling. */
 .wc-fixedhead{flex:0 0 auto;background:var(--bg);z-index:5}
 .wc-scroll{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden}
-.wc-fixedfoot{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--border);box-shadow:0 -6px 18px -14px rgba(0,0,0,.4)}
+.wc-fixedfoot{flex:0 0 auto;background:var(--bg);border-top:1px solid var(--border)}
 .wc-shellw{max-width:820px;margin:0 auto;width:100%}
 .wc-fixedhead .wc-shellw{padding:14px 16px 0}
 .wc-scroll .wc-shellw{padding:2px 16px 26px}
@@ -543,11 +550,11 @@ const CONSOLE_CSS = `
   .wc-fixedhead .wc-shellw,.wc-fixedfoot .wc-shellw{max-width:1380px}
   .wc-fixedfoot .wc-ask{max-width:880px;margin:0 auto}
   .wc-scroll .wc-shellw.wc-stagegrid{max-width:1380px;display:grid;grid-template-columns:236px minmax(0,1fr) 256px;gap:22px;align-items:start;padding-top:14px}
-  .wc-stage{max-width:880px;width:100%;margin:0 auto;padding:4px 22px 22px;border-radius:22px;background:color-mix(in srgb,var(--surface) 72%,transparent);border:1px solid var(--border);box-shadow:var(--shadow-md),inset 0 1px 0 rgba(255,255,255,.04)}
-  [data-theme='light'] .wc-stage{box-shadow:var(--shadow-md)}
+  /* the reading stage is a plain hairline card, the same recipe as every tile */
+  .wc-stage{max-width:880px;width:100%;margin:0 auto;padding:4px 22px 22px;border-radius:var(--r-xl,22px);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-sm)}
   .wc-rail{display:flex;flex-direction:column;gap:12px;position:sticky;top:10px}
 }
-.wc-rail-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-sm);padding:12px;display:flex;flex-direction:column;gap:8px}
+.wc-rail-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);box-shadow:var(--shadow-sm);padding:12px;display:flex;flex-direction:column;gap:8px}
 .wc-rail-k{display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint);padding:2px 2px 4px}
 .wc-rail-k svg{color:var(--em)}
 .wc-rail-n{margin-left:auto;font-weight:600;letter-spacing:0;text-transform:none;color:var(--text-muted);font-variant-numeric:tabular-nums}
@@ -576,12 +583,13 @@ const CONSOLE_CSS = `
 /* #1 Header: product name + ONE calm status chip (Guiding / Paused). The
    watching state is implied by the chip, not by a separate toggle. */
 .wc-brand{display:inline-flex;align-items:center;gap:8px;min-width:0;flex:0 0 auto}
-.wc-brand-mark{width:25px;height:25px;border-radius:8px;flex:0 0 auto;display:grid;place-items:center;background:linear-gradient(135deg,var(--em),var(--em-2));color:var(--on-em);box-shadow:0 0 0 1px var(--em-ring) inset}
+/* the mark is a tinted icon tile (the .wd-ic recipe), not a gradient badge */
+.wc-brand-mark{width:25px;height:25px;border-radius:var(--r-xs,8px);flex:0 0 auto;display:grid;place-items:center;background:var(--tint-green,var(--em-soft));color:var(--tint-green-ink,var(--em))}
 .wc-brand-name{font-family:var(--wc-display);font-weight:700;font-size:14.5px;letter-spacing:-.015em;color:var(--text);white-space:nowrap}
 @media(max-width:520px){.wc-brand-name{display:none}}
 .wc-statuschip{display:inline-flex;align-items:center;gap:6px;height:25px;padding:0 11px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap;color:var(--em);background:var(--em-soft);border:1px solid var(--em-ring)}
-.wc-statuschip .wc-sdot{width:6px;height:6px;border-radius:50%;background:var(--em);--pr:var(--em-ring)}
-.wc-statuschip.live .wc-sdot{box-shadow:0 0 0 0 var(--pr);animation:wc-pulse 1.6s infinite}
+.wc-statuschip .wc-sdot{width:6px;height:6px;border-radius:50%;background:var(--em)}
+.wc-statuschip.live .wc-sdot{animation:wc-blink 1.6s ease-in-out infinite}
 .wc-statuschip.paused{color:var(--warning);background:var(--warning-soft);border-color:transparent}
 .wc-statuschip.paused .wc-sdot{background:var(--warning);animation:none}
 
@@ -591,14 +599,15 @@ const CONSOLE_CSS = `
 .wc-tbtn.pause{background:var(--surface-2);border-color:var(--border);color:var(--text)}
 .wc-tbtn.pause svg{color:var(--warning)}
 .wc-tbtn.pause:hover:not(:disabled){border-color:var(--warning);background:var(--warning-soft)}
-.wc-tbtn.resume{background:linear-gradient(180deg,var(--brand-500),var(--brand-600));border-color:transparent;color:#fff;box-shadow:0 0 0 0 var(--em-ring);animation:wc-resume 1.8s ease-in-out infinite}
-.wc-tbtn.resume svg{color:#fff}
-.wc-tbtn.resume:hover:not(:disabled){filter:brightness(1.05)}
-@keyframes wc-resume{0%,100%{box-shadow:0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 6px transparent}}
+/* Resume is the flat brand-solid button (it is the one primary move while paused);
+   the old pulsing ring was a halo */
+.wc-tbtn.resume{background:var(--em-solid,var(--brand-600));border-color:transparent;color:var(--on-solid,#fff)}
+.wc-tbtn.resume svg{color:var(--on-solid,#fff)}
+.wc-tbtn.resume:hover:not(:disabled){filter:brightness(1.06)}
 
-/* #2 + #7 Wrong-place ALERT: shown ONLY on a real mismatch (status==='wrong').
-   Amber, bold, with a restrained entry slide + a soft sustained glow so a
-   critical "you are in the wrong place" moment reads as urgent, not flat. */
+/* #2 + #7 Wrong-place ALERT: shown ONLY on a real mismatch (status==='wrong'),
+   as the amber reading strip (ReadingStrip, .gv-reading): a soft tint with an
+   amber hairline, bold where it names the mismatch. */
 
 /* #5 Copy affordance for a command/target that is not a clickable link. */
 .wc-copyrow{display:flex;align-items:center;gap:8px;margin-top:8px;padding:5px 7px 5px 11px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;max-width:100%}
@@ -616,8 +625,7 @@ const CONSOLE_CSS = `
    .wc-plan-ov backdrop), so it never reads as a second input stacked above the
    Ask footer. Elevated card, top accent, its own header + tag + close; the body
    scrolls. The inline .wc-make-panel inside it loses its outer top margin. */
-.wc-make-sheet{width:min(680px,100%);max-height:88vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:0 28px 70px -28px rgba(0,0,0,.7),0 0 0 1px var(--em-ring) inset;overflow:hidden;position:relative;animation:wc-make-in .22s cubic-bezier(.2,.8,.2,1) both}
-.wc-make-sheet::before{content:'';position:absolute;left:0;right:0;top:0;height:3px;background:linear-gradient(90deg,var(--em),var(--em-2));z-index:1}
+.wc-make-sheet{width:min(680px,100%);max-height:88vh;display:flex;flex-direction:column;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,18px);box-shadow:var(--sh-3,none);overflow:hidden;position:relative;animation:wc-make-in .22s cubic-bezier(.2,.8,.2,1) both}
 .wc-make-sheet-head{display:flex;align-items:center;gap:12px;padding:16px 16px 14px 18px;border-bottom:1px solid var(--border);flex-wrap:wrap}
 .wc-make-sheet-ic{width:34px;height:34px;border-radius:10px;flex:0 0 auto;display:grid;place-items:center;background:var(--em-soft);color:var(--em)}
 .wc-make-sheet-tt{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1 1 auto}
@@ -634,7 +642,7 @@ const CONSOLE_CSS = `
    screen reads, plan actions, view). Sectioned, two-line items, closes on Esc,
    outside click, or pick. Keeps the resting guide view down to essentials. */
 .wc-menu{position:relative;flex:0 0 auto}
-.wc-menu-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:min(320px,calc(100vw - 32px));padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 22px 56px -22px rgba(0,0,0,.6),0 0 0 1px var(--em-ring) inset;animation:wc-make-in .16s ease both}
+.wc-menu-pop{position:absolute;right:0;top:calc(100% + 6px);z-index:40;width:min(320px,calc(100vw - 32px));padding:6px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r,14px);box-shadow:var(--sh-3,none);animation:wc-make-in .16s ease both}
 .wc-menu-sec{padding:9px 10px 5px;font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase;color:var(--text-faint)}
 .wc-menu-sec:not(:first-child){margin-top:2px;border-top:1px solid var(--border);padding-top:10px}
 .wc-menu-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;padding:8px 10px;border-radius:10px;border:none;background:transparent;color:var(--text);font:inherit;cursor:pointer;transition:background .14s}
@@ -653,27 +661,16 @@ const CONSOLE_CSS = `
 .wc-made-chip svg{color:var(--brand-600)}
 @media(prefers-reduced-motion:reduce){.wc-menu-pop{animation:none}}
 
-/* ===== THE MAGIC: direct the eye to the exact next move ==================
-   The current step is unmistakable: the hero remounts with a short entrance
-   sweep when the step advances; the KEY ACTION inside it (the link to click,
-   the command to run, the value to copy) carries an emerald highlight ring and
-   a soft glow; emphasized words in the instruction get a real highlight; a
-   "Step confirmed" check pops in the moment a step is confirmed on screen; the
-   wrong-place icon pulses on entry. Reduced motion keeps every emphasis as a
-   static strong ring and only removes the movement. */
-@keyframes wc-chip-ring{0%,100%{box-shadow:0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 5px transparent}}
-/* key action emphasis inside the hero */
-@keyframes wc-key-glow{0%,100%{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 0 0 var(--em-ring)}50%{box-shadow:0 0 0 1px var(--em-ring) inset,0 0 0 4px transparent}}
-/* emphasized words / values in the instruction */
-/* step confirmed: a check that pops in, then fades */
-.wc-confirm{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--success);background:var(--success-soft);box-shadow:0 0 0 1px var(--success) inset;animation:wc-pop .5s cubic-bezier(.3,1.4,.5,1) both,wc-fade-out .5s ease 1.3s both}
+/* ===== direct the eye to the next move, without glow ======================
+   The current step is unmistakable because it is the one card on the stage;
+   a "Step confirmed" check pops in the moment a step is confirmed on screen.
+   Emphasis is a soft tint, never a glow ring (the key-action glow and the chip
+   ring keyframes are gone with the design law). */
+.wc-confirm{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--success);background:var(--success-soft);animation:wc-pop .5s cubic-bezier(.3,1.4,.5,1) both,wc-fade-out .5s ease 1.3s both}
 .wc-confirm svg{animation:wc-check-draw .45s ease .1s both}
 @keyframes wc-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}
 @keyframes wc-check-draw{from{transform:scale(0) rotate(-30deg)}to{transform:scale(1) rotate(0)}}
 @keyframes wc-fade-out{to{opacity:0;transform:translateY(-4px)}}
-/* wrong-place: the icon pulses three times on entry so it cannot be missed */
-/* DARK = first-class: deeper, more luminous hero and key-action glow on dark */
-[data-theme='dark'] .wc-make-sheet,[data-theme='dark'] .wc-menu-pop{box-shadow:0 28px 70px -28px rgba(0,0,0,.85),0 0 0 1px var(--em-ring) inset,inset 0 1px 0 rgba(255,255,255,.04)}
 @media(prefers-reduced-motion:reduce){
   .wc-confirm,.wc-confirm svg{animation:none}
 }
@@ -681,21 +678,23 @@ const CONSOLE_CSS = `
 /* Ask bar in the fixed footer: the (optional) answer sits above the row with a
    capped, scrollable height so the footer never grows to swallow the screen. */
 
-@media(prefers-reduced-motion:reduce){.wc-tbtn.resume{animation:none}.wc-statuschip.live .wc-sdot{animation:none}}
+@media(prefers-reduced-motion:reduce){.wc-statuschip.live .wc-sdot{animation:none}.wc-dl-watch .dot{animation:none}}
 
 /* TASK-COMPLETE CELEBRATION: a calm success flourish above the done bar. A
    confetti layer (pure CSS, clipped to the card, fires once) + a prominent
    "Start another task". On-brand, white in-product aesthetic, never gaudy;
    honours prefers-reduced-motion (no motion, confetti hidden). */
-.wc-celebrate{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;gap:11px;padding:26px 20px 22px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow-sm);animation:wc-cele-in .45s cubic-bezier(.2,.8,.2,1) both}
+.wc-celebrate{position:relative;overflow:hidden;display:flex;flex-direction:column;align-items:center;text-align:center;gap:11px;padding:26px 20px 22px;margin-bottom:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,18px);box-shadow:var(--shadow-sm);animation:wc-cele-in .45s cubic-bezier(.2,.8,.2,1) both}
 .wc-cele-badge{position:relative;width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:var(--success-soft);color:var(--success);flex-shrink:0}
 .wc-cele-badge svg{position:relative;z-index:1;animation:wc-check-draw .5s ease .15s both}
 .wc-cele-badge::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid var(--success);opacity:0}
 .wc-cele-go .wc-cele-badge::after{animation:wc-cele-ring 1.5s ease-out .1s}
 .wc-cele-title{font-size:19px;font-weight:800;letter-spacing:-.01em;color:var(--text);line-height:1.2}
 .wc-cele-sub{font-size:13.5px;line-height:1.5;color:var(--text-muted);max-width:430px;margin:-3px 0 3px}
-.wc-cele-btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 20px;border:1px solid transparent;border-radius:11px;background:var(--brand-600);color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;box-shadow:0 2px 10px -3px var(--brand-600);transition:filter .15s,transform .08s}
-.wc-cele-btn:hover{filter:brightness(1.06)}
+/* "Start another task" is the ONE call-to-action on the finished screen: orange,
+   like Begin guiding on the start wizard (the orange is reserved for exactly this) */
+.wc-cele-btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 20px;border:1px solid transparent;border-radius:var(--r-sm,11px);background:var(--cta,var(--brand-600));color:var(--cta-ink,#fff);font:inherit;font-size:14px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:background .15s,transform .08s}
+.wc-cele-btn:hover{background:var(--cta-hover,var(--brand-600))}
 .wc-cele-btn:active{transform:translateY(.5px)}
 .wc-cele-btn svg{flex-shrink:0}
 .wc-confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:0}
@@ -2106,8 +2105,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const offTrack = !ended && status === 'wrong' && !!String(observation || '').trim()
 
   return (
-    <div className="wc" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': `calc(var(--wc-fs-app, 1) * ${fsScale})` }}>
-      <style>{CONSOLE_CSS}{GUIDE_CSS}</style>
+    <div className="wc wd-tokens" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': `calc(var(--wc-fs-app, 1) * ${fsScale})` }}>
+      {/* The console renders outside the app shell, so it carries the ONE token
+          sheet itself (wd-tokens on the root): Light / Dark / Heavy + a11y. */}
+      <style>{WD_TOKENS_CSS}{CONSOLE_CSS}{GUIDE_CSS}</style>
       {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
           between it and the fixed Ask footer scrolls. */}
       <div className="wc-fixedhead"><div className="wc-shellw">

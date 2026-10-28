@@ -1689,9 +1689,11 @@ function SessionsSection() {
   if (state.error) return <ErrorBox error={state.error} onRetry={load} />
   if (!state.items || !state.items.length) return <EmptyState title={t('companyAdmin.sessions.noSessions')} detail={t('companyAdmin.sessions.noSessionsDetail')} />
   const items = state.items.filter((s) => filter === 'all' || (filter === 'active' ? s.status !== 'ended' : s.status === 'ended'))
+  // Status is a one-line label in the shared token colors (never a hex literal;
+  // never wraps "In / progress" when the table narrows: the wrap scrolls instead).
   const chip = (s) => s.status === 'ended'
-    ? <span style={{ fontSize: 12, fontWeight: 600, color: '#16a34a' }}><Check size={12} style={{ verticalAlign: '-1px' }} /> {t('companyAdmin.sessions.completed')}</span>
-    : <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wka-accent, #2563eb)' }}><Clock size={12} style={{ verticalAlign: '-1px' }} /> {t('companyAdmin.sessions.inProgress')}</span>
+    ? <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wka-emerald)', whiteSpace: 'nowrap' }}><Check size={12} style={{ verticalAlign: '-1px' }} /> {t('companyAdmin.sessions.completed')}</span>
+    : <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--wka-accent)', whiteSpace: 'nowrap' }}><Clock size={12} style={{ verticalAlign: '-1px' }} /> {t('companyAdmin.sessions.inProgress')}</span>
   return (
     <div className="wka-panel">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
@@ -1719,7 +1721,7 @@ function SessionsSection() {
                 <td>{s.user || t('companyAdmin.sessions.aUser')}</td>
                 <td style={{ color: 'var(--wka-muted)' }}>{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || t('companyAdmin.sessions.untitled'))}</td>
                 <td>{chip(s)}</td>
-                <td style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{s.steps ? t('companyAdmin.sessions.progressSteps', { done: s.done, steps: s.steps }) : '-'}</td>
+                <td style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{s.steps ? t('companyAdmin.sessions.progressSteps', { done: s.done, steps: s.steps }) : '-'}</td>
                 <td style={{ color: 'var(--wka-faint)', fontSize: 12, whiteSpace: 'nowrap' }}>{fmtDT(s.lastActivityAt || s.startedAt)}</td>
                 <td style={{ whiteSpace: 'nowrap' }}>
                   <a className="wka-btn sm" href={api.workComplianceUrl(s.id, true, fw)} target="_blank" rel="noopener noreferrer" title={t('companyAdmin.sessions.complianceTitle', { scope: fw ? (frameworks.find((f) => f.id === fw)?.name || t('companyAdmin.sessions.framework')) : t('companyAdmin.sessions.allFrameworks') })}><ShieldCheck size={13} /> {t('companyAdmin.sessions.compliance')}</a>
@@ -1734,7 +1736,7 @@ function SessionsSection() {
                       <button className="wka-btn sm ghost" onClick={() => { setEmailFor(null); setEmailTo('') }}>{t('companyAdmin.common.cancel')}</button>
                     </span>
                   )}
-                  {emailMsg && emailMsg.id === s.id && <span style={{ marginLeft: 8, fontSize: 12, color: emailMsg.ok ? '#16a34a' : '#b45309' }}>{emailMsg.text}</span>}
+                  {emailMsg && emailMsg.id === s.id && <span style={{ marginLeft: 8, fontSize: 12, color: emailMsg.ok ? 'var(--wka-emerald)' : 'var(--wka-amber)' }}>{emailMsg.text}</span>}
                 </td>
               </tr>
             ))}

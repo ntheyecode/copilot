@@ -23,12 +23,16 @@ export const GUIDE_CSS = `
 .gv{
   --gv-text:var(--text,#171a21);--gv-muted:var(--text-muted,#58606e);--gv-faint:var(--text-faint,#8b93a1);
   --gv-surface:var(--surface,#ffffff);--gv-surface-2:var(--surface-2,#f5f7fb);--gv-border:var(--border,#e2e6ed);--gv-border-strong:var(--border-strong,#c6cdd8);
-  --gv-accent:var(--em,#0e9f6e);--gv-accent-2:var(--em-2,#0a84c2);--gv-on-accent:var(--on-em,#ffffff);
+  --gv-accent:var(--em,#0e9f6e);--gv-accent-2:var(--em-2,#0a84c2);
+  /* the filled button face + its text: the white-text-safe solid shade when the
+     host has one (.wd --em-solid / --on-solid), else the accent itself */
+  --gv-accent-solid:var(--em-solid,var(--gv-accent));--gv-on-accent:var(--on-solid,var(--on-em,#ffffff));
   --gv-accent-soft:var(--em-soft,rgba(14,159,110,.10));--gv-accent-ring:var(--em-ring,rgba(14,159,110,.30));
   --gv-obs:var(--obs,#0a84c2);--gv-obs-soft:var(--obs-soft,rgba(10,132,194,.08));--gv-obs-ring:var(--obs-ring,rgba(10,132,194,.26));
   --gv-warn:var(--warning,#b86e00);--gv-warn-soft:var(--warning-soft,rgba(247,144,9,.12));
   --gv-good:var(--success,#107c41);--gv-good-soft:var(--success-soft,rgba(16,124,65,.12));--gv-danger:var(--danger,#c42b1c);
-  --gv-shadow:var(--shadow-md,0 6px 20px rgba(24,28,50,.08));
+  /* rest shadow only (the design-law card): the raised shade is never used here */
+  --gv-shadow:var(--sh-1,var(--shadow-sm,0 1px 2px rgba(20,24,44,.04)));
   --gv-chip-fill:color-mix(in srgb,var(--gv-accent) 9%,transparent);--gv-chip-line:color-mix(in srgb,var(--gv-accent) 34%,transparent);
   --gv-display:"Bricolage Grotesque","Figtree","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
   --gv-body:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
@@ -75,15 +79,18 @@ export const GUIDE_CSS = `
 .gv-goal>svg{flex:0 0 auto;color:var(--gv-faint);transition:transform .18s}
 .gv-goal.open>svg{transform:rotate(90deg)}
 
-/* ---- the STEP CARD: the current micro-action, front and center --------------- */
-.gv-step{position:relative;overflow:hidden;padding:18px 20px 18px 24px;border-radius:18px;background:var(--gv-surface);border:1px solid var(--gv-border);box-shadow:var(--gv-shadow),0 0 0 1px var(--gv-accent-ring) inset}
-.gv-step::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--gv-accent),var(--gv-accent-2))}
+/* ---- the STEP CARD: the current micro-action, front and center ---------------
+   A hairline card with a soft accent-tinted edge and a flat accent bar on the
+   left (no gradient, no inset ring, no raised shadow: the design law). */
+.gv-step{position:relative;overflow:hidden;padding:18px 20px 18px 24px;border-radius:18px;background:var(--gv-surface);border:1px solid var(--gv-accent-ring);box-shadow:var(--gv-shadow)}
+.gv-step::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gv-accent)}
 .gv-step-top{display:flex;align-items:center;gap:8px 10px;flex-wrap:wrap;margin-bottom:10px;min-width:0}
-.gv-step-n{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gv-on-accent);background:linear-gradient(135deg,var(--gv-accent),var(--gv-accent-2));white-space:nowrap;font-variant-numeric:tabular-nums}
+/* the step counter is a soft accent-tinted pill (the current state), not a filled gradient badge */
+.gv-step-n{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:10.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--gv-accent);background:var(--gv-accent-soft);white-space:nowrap;font-variant-numeric:tabular-nums}
 .gv-step-hint{font-size:12px;color:var(--gv-muted);min-width:0}
 .gv-step-hint-btn{display:inline-flex;align-items:center;gap:5px;font:inherit;font-size:12px;font-weight:650;color:var(--gv-accent);background:transparent;border:none;padding:0;cursor:pointer;text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
 .gv-step-hint-btn:hover{text-decoration-color:currentColor}
-.gv-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gv-good);background:var(--gv-good-soft);box-shadow:0 0 0 1px var(--gv-good) inset;animation:gv-pop .5s cubic-bezier(.3,1.4,.5,1) both}
+.gv-confirm{display:inline-flex;align-items:center;gap:5px;height:22px;padding:0 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--gv-good);background:var(--gv-good-soft);animation:gv-pop .5s cubic-bezier(.3,1.4,.5,1) both}
 .gv-step-text{font-size:calc(18px*var(--wc-fs,1));line-height:1.4;font-weight:600;color:var(--gv-text);letter-spacing:-.008em;text-wrap:pretty;overflow-wrap:anywhere}
 .gv-step-plan{display:flex;align-items:flex-start;gap:8px;margin-top:9px;font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;color:var(--gv-muted);overflow-wrap:anywhere}
 .gv-step-plan>.gv-k{color:var(--gv-accent);margin-top:3px}
@@ -105,8 +112,9 @@ export const GUIDE_CSS = `
 .gv-btn:active:not(:disabled){transform:translateY(1px)}
 .gv-btn:disabled{opacity:.5;cursor:default}
 .gv-btn:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring)}
-.gv-btn.primary{background:linear-gradient(180deg,var(--gv-accent),color-mix(in srgb,var(--gv-accent) 82%,#000));border-color:transparent;color:var(--gv-on-accent);box-shadow:0 1px 2px rgba(0,0,0,.12)}
-.gv-btn.primary:hover:not(:disabled){filter:brightness(1.05)}
+/* the primary is the flat brand-solid face (the .wd-wz-next recipe): no gradient, no drop shadow */
+.gv-btn.primary{background:var(--gv-accent-solid);border-color:transparent;color:var(--gv-on-accent)}
+.gv-btn.primary:hover:not(:disabled){filter:brightness(1.06)}
 .gv-btn.ghost{background:transparent;border-color:transparent;color:var(--gv-muted)}
 .gv-btn.ghost:hover:not(:disabled){background:var(--gv-surface-2);color:var(--gv-text);border-color:transparent}
 .gv-btn.wide{width:100%}
@@ -142,8 +150,8 @@ export const GUIDE_CSS = `
 .gv-verify-x{flex:0 0 auto;width:26px;height:26px;margin:-3px -3px 0 0;border-radius:7px;border:none;background:transparent;color:var(--gv-faint);display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
 .gv-verify-x:hover{background:var(--gv-surface);color:var(--gv-text)}
 .gv-verify-x:focus-visible{outline:none;box-shadow:0 0 0 3px var(--gv-accent-ring)}
-.gv-btn.is-ready{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 3px var(--gv-good-soft),0 0 0 4px var(--gv-good);animation:gv-ready 1.4s ease-out 1}
-@keyframes gv-ready{0%{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 0 var(--gv-good-soft),0 0 0 0 var(--gv-good)}60%{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 6px var(--gv-good-soft),0 0 0 4px var(--gv-good)}100%{box-shadow:0 1px 2px rgba(0,0,0,.12),0 0 0 3px var(--gv-good-soft),0 0 0 4px var(--gv-good)}}
+/* "looks done": a static soft ring on Mark done (a tint, not an animated glow) */
+.gv-btn.is-ready{box-shadow:0 0 0 3px var(--gv-good-soft)}
 
 /* ---- next step (one quiet line) + prev / next with a progress track ------- */
 .gv-next{display:flex;align-items:center;gap:9px;padding:8px 12px;border-radius:11px;background:var(--gv-surface-2);border:1px solid var(--gv-border);opacity:.8;min-width:0}
@@ -157,15 +165,15 @@ export const GUIDE_CSS = `
 .gv-nav-mid{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px;align-items:center}
 .gv-nav-count{font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gv-muted);white-space:nowrap;font-variant-numeric:tabular-nums}
 .gv-nav-track{width:100%;height:4px;border-radius:999px;background:var(--gv-border);overflow:hidden}
-.gv-nav-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,var(--gv-accent),var(--gv-accent-2));transition:width .35s cubic-bezier(.4,0,.2,1)}
+.gv-nav-fill{height:100%;border-radius:999px;background:var(--gv-accent);transition:width .35s cubic-bezier(.4,0,.2,1)}
 
 /* ---- the focused ANSWER (mid-task ask) -------------------------------------- */
 .gv-ask{display:flex;flex-direction:column;gap:12px}
 .gv-ask-working{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:180px;padding:28px 18px;text-align:center;border-radius:18px;background:var(--gv-surface);border:1px dashed var(--gv-border-strong)}
 .gv-ask-working-t{font-size:14px;font-weight:650;color:var(--gv-text)}
 .gv-ask-working-q{font-size:calc(13px*var(--wc-fs,1));color:var(--gv-muted);line-height:1.5;max-width:460px;overflow-wrap:anywhere}
-.gv-ask-card{position:relative;overflow:hidden;padding:18px 20px 18px 24px;border-radius:18px;background:var(--gv-surface);border:1px solid var(--gv-border);box-shadow:var(--gv-shadow),0 0 0 1px var(--gv-accent-ring) inset}
-.gv-ask-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--gv-accent),var(--gv-accent-2))}
+.gv-ask-card{position:relative;overflow:hidden;padding:18px 20px 18px 24px;border-radius:18px;background:var(--gv-surface);border:1px solid var(--gv-accent-ring);box-shadow:var(--gv-shadow)}
+.gv-ask-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--gv-accent)}
 .gv-ask-q{font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;color:var(--gv-muted);margin-top:4px;overflow-wrap:anywhere}
 .gv-ask-q b{color:var(--gv-text);font-weight:600}
 .gv-ask-body{margin-top:12px;font-size:calc(15.5px*var(--wc-fs,1));line-height:1.6;color:var(--gv-text);overflow-wrap:anywhere}
@@ -191,7 +199,6 @@ export const GUIDE_CSS = `
 .gv-swap.in{animation:gv-in .3s cubic-bezier(.2,.8,.2,1) both}
 @keyframes gv-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 @keyframes gv-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(-4px)}}
-@keyframes gv-pulse{0%{box-shadow:0 0 0 0 var(--pr)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
 @keyframes gv-bounce{0%,80%,100%{transform:scale(.55);opacity:.5}40%{transform:scale(1);opacity:1}}
 @keyframes gv-pop{0%{opacity:0;transform:scale(.6)}60%{opacity:1;transform:scale(1.08)}100%{transform:scale(1)}}
 @keyframes gv-spin{to{transform:rotate(360deg)}}
@@ -224,7 +231,7 @@ export function gvVars(c) {
   return {
     '--gv-text': c.text, '--gv-muted': c.muted, '--gv-faint': c.faint,
     '--gv-surface': c.panel, '--gv-surface-2': c.panel2, '--gv-border': c.border, '--gv-border-strong': c.borderStrong || c.border,
-    '--gv-accent': c.accent, '--gv-accent-2': c.cyan, '--gv-on-accent': c.onAccent || '#ffffff',
+    '--gv-accent': c.accent, '--gv-accent-2': c.cyan, '--gv-accent-solid': c.accentSolid || c.accent, '--gv-on-accent': c.onAccent || '#ffffff',
     '--gv-accent-soft': c.accentSoft, '--gv-accent-ring': c.accentRing,
     '--gv-obs': c.cyan, '--gv-obs-soft': c.cyanSoft, '--gv-obs-ring': c.cyanRing,
     '--gv-warn': c.warn, '--gv-warn-soft': c.warnSoft,
