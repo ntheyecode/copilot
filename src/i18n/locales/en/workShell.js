@@ -36,6 +36,16 @@ export default {
       team: 'Team',
       exec: 'Executive dashboard',
       admin: 'Admin console',
+      // Enterprise project management (role-based; src/shared/work_roles_options.js decides who sees which)
+      queue: 'My queue',
+      queueTip: 'Tasks assigned to you by a project manager',
+      manage: 'Management',
+      pm: 'Projects I manage',
+      pmTip: 'Projects you manage: tasks, assignees, progress',
+      srpm: 'Project managers',
+      srpmTip: 'Every project manager and their projects',
+      grc: 'Oversight',
+      grcTip: 'All projects, risks and the control log (read-only)',
     },
 
     // ---- Android self-update banner ----

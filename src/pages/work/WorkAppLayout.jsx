@@ -8,7 +8,8 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck } from 'lucide-react'
+import { roleViewOf } from '../../shared/work_roles_options.js'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
@@ -161,6 +162,10 @@ export default function WorkAppLayout() {
   const isCompanyAdmin = !!(user && user.companyRole === 'company_admin' && user.companyId)
   const isExecutive = !!(user && user.companyId && ['executive', 'company_admin'].includes(user.companyRole))
   const covered = isAdmin || isCompanyMember || !!(user && user.canUseService)
+  // Enterprise flow + role view: ONE derivation (src/shared/work_roles_options.js)
+  // read by the rail, the dashboard (queue vs Start), the Start page and every
+  // management page, so a role is never gated differently in two places.
+  const roleView = useMemo(() => roleViewOf(user), [user])
   const hasPlan = !!(user && !user.companyId && user.subscription && ['active', 'trialing', 'past_due', 'canceled'].includes(user.subscription.status))
 
   const [company, setCompany] = useState(null)
@@ -234,6 +239,9 @@ export default function WorkAppLayout() {
       import('./Dashboard.jsx'); import('./StartTask.jsx'); import('./Skills.jsx')
       import('./Help.jsx'); import('./Support.jsx'); import('./MyTasks.jsx')
       import('./Completed.jsx'); import('./Logs.jsx'); import('./projects/Projects.jsx')
+      if (roleView.showQueue) import('./pm/QueuePage.jsx')
+      if (roleView.showPm) import('./pm/PmDashboard.jsx')
+      if (roleView.showGrc) import('./pm/GrcDashboard.jsx')
     }
     const idle = (typeof window !== 'undefined' && window.requestIdleCallback)
       ? window.requestIdleCallback(warm, { timeout: 1500 }) : setTimeout(warm, 400)
@@ -241,7 +249,7 @@ export default function WorkAppLayout() {
       cancelled = true
       try { (typeof window !== 'undefined' && window.cancelIdleCallback) ? window.cancelIdleCallback(idle) : clearTimeout(idle) } catch { /* ignore */ }
     }
-  }, [authed])
+  }, [authed, roleView])
 
   useEffect(() => {
     if (!user || !user.companyId) { setCompany(null); return }
@@ -331,6 +339,7 @@ export default function WorkAppLayout() {
   const ctx = useMemo(() => ({
     user, sess, signOut, onOpen, showGuard,
     isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
+    roleView,
     company,
     usage, usageErr, plan, renewLabel, timeLeft, tier, planName, low, canBuyHours, upgradeHref,
     pricing, money, titleCase,
@@ -343,7 +352,7 @@ export default function WorkAppLayout() {
     desk: !!desktop,
   }), [
     user, sess, onOpen, showGuard, isAdmin, isCompanyMember, isCompanyAdmin, isExecutive, covered, hasPlan,
-    company, usage, usageErr, plan, renewLabel, timeLeft, tier, planName, low, canBuyHours, upgradeHref,
+    roleView, company, usage, usageErr, plan, renewLabel, timeLeft, tier, planName, low, canBuyHours, upgradeHref,
     pricing, aiStatus, ready, aiErr, loadAi, needsSub, gateMsg, billingOn, invoices, showBilling,
     sessions, sessLoaded, sessErr, reload, refreshUsage, buddyPref, showBuy, buyCredits, desktop,
     signOut, money, titleCase,
@@ -377,9 +386,9 @@ export default function WorkAppLayout() {
   // `workShell.nav.*` key, so they always name the section identically in every
   // language (the help route is the one deliberate exception: rail "Help", title
   // "How-to", exactly as before).
-  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support') }
-  // A project's own view (/work/projects/:id) keeps the Projects section title.
-  const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : t('workShell.nav.dashboard'))
+  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc') }
+  // A project's own view (/work/projects/:id, /work/pm/:id) keeps its section title.
+  const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : /^\/work\/pm\//.test(pathname) ? t('workShell.nav.pm') : t('workShell.nav.dashboard'))
   const wide = /^\/work\/(help|support)$/.test(pathname)
   const initial = String((user && (user.displayName || user.username)) || '').trim().charAt(0) || '?'
   const navClass = ({ isActive }) => `wd-nav${isActive ? ' on' : ''}`
@@ -417,12 +426,22 @@ export default function WorkAppLayout() {
           </Link>
           <nav className="wd-navs" aria-label={t('workShell.nav.sections')}>
             <NavLink end to="/work" className={navClass} title={t('workShell.nav.dashboard')}><LayoutDashboard size={18} /> <span className="wd-nav-t">{t('workShell.nav.dashboard')}</span></NavLink>
-            <NavLink to="/work/start" className={navClass} title={t('workShell.nav.start')}><Play size={18} /> <span className="wd-nav-t">{t('workShell.nav.start')}</span></NavLink>
-            <NavLink to="/work/projects" className={navClass} title={t('workShell.nav.projectsTip')}><FolderKanban size={18} /> <span className="wd-nav-t">{t('workShell.nav.projects')}</span></NavLink>
+            {/* Flow-based: a worker (assigned-only) has the queue and no Start / own
+                projects; independent has Start; mixed has both (roleViewOf). */}
+            {roleView.showQueue && <NavLink to="/work/queue" className={navClass} title={t('workShell.nav.queueTip')}><Inbox size={18} /> <span className="wd-nav-t">{t('workShell.nav.queue')}</span></NavLink>}
+            {roleView.canStart && <NavLink to="/work/start" className={navClass} title={t('workShell.nav.start')}><Play size={18} /> <span className="wd-nav-t">{t('workShell.nav.start')}</span></NavLink>}
+            {roleView.canStart && <NavLink to="/work/projects" className={navClass} title={t('workShell.nav.projectsTip')}><FolderKanban size={18} /> <span className="wd-nav-t">{t('workShell.nav.projects')}</span></NavLink>}
             <NavLink to="/work/tasks" className={navClass} title={t('workShell.nav.tasksTip')}><Clock size={18} /> <span className="wd-nav-t">{t('workShell.nav.tasks')}</span></NavLink>
             <NavLink to="/work/completed" className={navClass} title={t('workShell.nav.completed')}><Check size={18} /> <span className="wd-nav-t">{t('workShell.nav.completed')}</span></NavLink>
             <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>
             <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
+            {/* Role-based management section: PM / Sr PM / GRC (and the company admin). */}
+            {(roleView.showPm || roleView.showSrPm || roleView.showGrc) && (<>
+              <div className="wd-sect">{t('workShell.nav.manage')}</div><span className="wd-sect-rule" aria-hidden />
+              {roleView.showPm && <NavLink to="/work/pm" className={navClass} title={t('workShell.nav.pmTip')}><Briefcase size={18} /> <span className="wd-nav-t">{t('workShell.nav.pm')}</span></NavLink>}
+              {roleView.showSrPm && <NavLink to="/work/srpm" className={navClass} title={t('workShell.nav.srpmTip')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.srpm')}</span></NavLink>}
+              {roleView.showGrc && <NavLink to="/work/grc" className={navClass} title={t('workShell.nav.grcTip')}><ShieldCheck size={18} /> <span className="wd-nav-t">{t('workShell.nav.grc')}</span></NavLink>}
+            </>)}
             <div className="wd-sect">{t('workShell.nav.help')}</div><span className="wd-sect-rule" aria-hidden />
             <NavLink to="/work/help" className={navClass} title={t('workShell.nav.helpTip')}><BookOpen size={18} /> <span className="wd-nav-t">{t('workShell.nav.help')}</span></NavLink>
             <NavLink to="/work/support" className={navClass} title={t('workShell.nav.support')}><LifeBuoy size={18} /> <span className="wd-nav-t">{t('workShell.nav.support')}</span></NavLink>

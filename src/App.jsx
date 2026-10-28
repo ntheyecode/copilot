@@ -52,6 +52,14 @@ const WorkLogs = lazy(() => import('./pages/work/Logs.jsx'))
 // Projects (Depth-2: Premium + company users): the dashboard and one project's view.
 const Projects = lazy(() => import('./pages/work/projects/Projects.jsx'))
 const ProjectView = lazy(() => import('./pages/work/projects/ProjectView.jsx'))
+// Enterprise project management (role-based; the shell shows each only to the
+// roles src/shared/work_roles_options.js allows, the server enforces the rest):
+// the Worker queue, the PM dashboard + project view, the Sr PM roll-up, GRC oversight.
+const QueuePage = lazy(() => import('./pages/work/pm/QueuePage.jsx'))
+const PmDashboard = lazy(() => import('./pages/work/pm/PmDashboard.jsx'))
+const PmProjectView = lazy(() => import('./pages/work/pm/PmProjectView.jsx'))
+const SrPmDashboard = lazy(() => import('./pages/work/pm/SrPmDashboard.jsx'))
+const GrcDashboard = lazy(() => import('./pages/work/pm/GrcDashboard.jsx'))
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -159,6 +167,13 @@ export default function App() {
           {/* Projects: a large goal as a map of guided tasks (server-gated to Depth-2). */}
           <Route path="projects" element={<Projects />} />
           <Route path="projects/:id" element={<ProjectView />} />
+          {/* Enterprise: the Worker queue (assigned tasks), the project manager's
+              projects + one managed project, the senior PM roll-up, GRC oversight. */}
+          <Route path="queue" element={<QueuePage />} />
+          <Route path="pm" element={<PmDashboard />} />
+          <Route path="pm/:id" element={<PmProjectView />} />
+          <Route path="srpm" element={<SrPmDashboard />} />
+          <Route path="grc" element={<GrcDashboard />} />
           <Route path="session/:id" element={<Guiding />} />
         </Route>
         {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}

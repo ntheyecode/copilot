@@ -15,10 +15,23 @@ export default {
       copied: 'Copied',
       remove: 'Remove',
     },
+    // One label per company role / work flow; the ids and their order live in
+    // src/shared/work_roles_options.js (the single registry), never inline.
     roles: {
       companyAdmin: 'Company admin',
       member: 'Member',
       executive: 'Executive',
+      projectManager: 'Project manager',
+      seniorProjectManager: 'Senior project manager',
+      grc: 'GRC (oversight, read-only)',
+    },
+    flows: {
+      independent: 'Independent',
+      independentHelp: 'Starts their own tasks. Not assigned to.',
+      worker: 'Worker',
+      workerHelp: 'Only does tasks a project manager assigns. No Start a task.',
+      mixed: 'Mixed',
+      mixedHelp: 'Can be assigned tasks and can start their own.',
     },
     nav: {
       overview: 'Overview',
@@ -288,10 +301,13 @@ export default {
       optionalParen: '(optional)',
       tempPasswordPh: 'leave blank - they set it from the email',
       role: 'Role',
-      roleHelp: 'Members just use WorkCoPilot. Executives get the read-only productivity dashboard. Company admins can manage this console (a separate seat pool).',
+      roleHelp: 'Members just use WorkCoPilot. Executives get the read-only productivity dashboard. Project managers create projects and assign tasks; a senior project manager oversees every project manager; GRC has read-only oversight of all projects. Company admins can manage this console (a separate seat pool).',
       roleMember: 'Member',
       roleExecutiveLong: 'Executive (productivity dashboard, read-only)',
       roleCompanyAdmin: 'Company admin',
+      flow: 'Work flow',
+      flowHelp: 'How guided tasks reach this person. Independent: starts their own tasks. Worker: only does tasks a project manager assigns (no Start a task). Mixed: both.',
+      thFlow: 'Flow',
       plan: 'Plan',
       planHelp: 'Each plan includes guided hours per month, set by the WorkCoPilot team. Your company\'s per-plan license count is enforced.',
       peopleTitle: 'People',

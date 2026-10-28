@@ -23,7 +23,7 @@
 // Page-only styles: dash.css.js; each section carries its own stylesheet.
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Check, X, Trash2, Play, AlertTriangle, Globe, ChevronRight, Sparkles, Rocket, Compass, ArrowRight, ShieldCheck, RefreshCw, Building2, Phone, MapPin, LayoutDashboard, Zap, BarChart3, Plus } from 'lucide-react'
+import { Loader2, Check, X, Trash2, Play, AlertTriangle, Globe, ChevronRight, Sparkles, Rocket, Compass, ArrowRight, ShieldCheck, RefreshCw, Building2, Phone, MapPin, LayoutDashboard, Zap, BarChart3, Plus, Inbox } from 'lucide-react'
 import { api, friendlyError } from '../../api.js'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import WorkBilling from '../../components/WorkBilling.jsx'
@@ -38,6 +38,9 @@ import MonthGraph from './MonthGraph.jsx'
 import Outcomes from './Outcomes.jsx'
 import TaskFlow from './TaskFlow.jsx'
 import { DASH_CSS } from './dash.css.js'
+import { PJ_CSS } from './projects/projects.css.js'
+import { EP_CSS } from './pm/ep.css.js'
+import WorkerQueue from './pm/WorkerQueue.jsx'
 
 // Plans offered in the chooser, in tier order; only tiers live pricing carries.
 const PLAN_TIER_ORDER = ['lite', 'basic', 'advanced', 'premium']
@@ -55,6 +58,7 @@ export default function Dashboard() {
     sessions, sessLoaded, sessErr, reload, onOpen,
     buddyPref, setBuddyPref, showBilling, billingOn, invoices,
     canBuyHours, upgradeHref, buyCredits,
+    roleView,
   } = useWorkApp()
 
   const buddyChar = useMemo(() => resolveCharacter(buddyPref), [buddyPref])
@@ -166,10 +170,26 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* 3a. Assigned work FIRST for anyone a project manager can assign to
+          (worker or mixed flow): the queue, each row opening its guided run. A
+          pure worker has NO Start affordance at all (the server refuses a
+          self-start too); a mixed user sees the queue and then Start. */}
+      {roleView.showQueue && (
+        <section className="wd-ep" id="wd-queue" aria-label={t('workPm.queue.heading')} style={{ marginTop: 'var(--sp-6)' }}>
+          <style>{PJ_CSS}{EP_CSS}</style>
+          <div className="wd-sec">
+            <span className="wd-ic alt"><Inbox size={16} /></span>
+            <div><h2>{t('workPm.queue.heading')}</h2><p>{t('workPm.queue.dashSub')}</p></div>
+            <a className="wd-sess-all" href="/work/queue" title={t('workPm.common.viewAll')}>{t('workPm.common.viewAll')} <ArrowRight size={13} /></a>
+          </div>
+          <WorkerQueue compact canStart={roleView.canStart} />
+        </section>
+      )}
+
       {/* 3. The primary action FIRST (the center of the screen is the action,
           the plan numbers follow): the guided-task flow on a first run, else
           the Start-a-task card with the one orange call-to-action */}
-      {firstRun ? (
+      {!roleView.canStart ? null : firstRun ? (
         <TaskFlow onStart={() => navigate('/work/start')} canStart={ready} />
       ) : (
         <section className="wd-m-hero" aria-label={t('workDashboard.start.title')}>
@@ -272,7 +292,7 @@ export default function Dashboard() {
       {!needsSub && hasHistory && <MonthGraph refreshKey={usage} />}
 
       {/* 8. Resume where you left off (not on a first run: the flow above covers it) */}
-      {!firstRun && (
+      {(!firstRun || !roleView.canStart) && (
       <section className="wd-sessions" id="wd-sessions" aria-label={t('workDashboard.sessions.title')}>
         <div className="wd-sec">
           <span className="wd-ic alt"><RefreshCw size={16} /></span>

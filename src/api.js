@@ -187,6 +187,27 @@ export const api = {
   workProjectExpand: (id, taskId) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/expand`, {}),
   workProjectInject: (id, body) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/inject`, { ...(body || {}), request: clean((body && body.request) || '') }),
   workProjectTaskState: (id, taskId, state) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/state`, { state }),
+  // Enterprise project management (server/work_roles_routes.js). The server
+  // enforces every permission (PM: own projects; Sr PM / GRC / admin: all; GRC
+  // read-only; a worker cannot self-start), so the UI gating in
+  // src/shared/work_roles_options.js is UX, not the security boundary.
+  workPmProjects: (managerId) => req('GET', `/api/work/pm/projects${managerId ? `?manager=${encodeURIComponent(managerId)}` : ''}`),
+  workPmProject: (id) => req('GET', `/api/work/pm/projects/${encodeURIComponent(id)}`),
+  // -> { project } | { refusal } | 422 { singleTask } | 422 { errors } (same answers as the project engine)
+  workPmProjectCreate: (body) => req('POST', '/api/work/pm/projects', { ...(body || {}), goal: clean((body && body.goal) || ''), ...(body && body.name ? { name: clean(body.name) } : {}) }),
+  // Assign OR reassign a task (same endpoint; the server logs which it was).
+  workPmAssignTask: (id, taskId, assigneeId) => req('POST', `/api/work/pm/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/assign`, { assigneeId }),
+  workPmHoldProject: (id, held, reason) => req('POST', `/api/work/pm/projects/${encodeURIComponent(id)}/hold`, { held: !!held, reason: clean(reason || '') }),
+  // Sr PM / admin: hand a whole project to another project manager.
+  workPmReassignProject: (id, managerId, reason) => req('POST', `/api/work/pm/projects/${encodeURIComponent(id)}/reassign`, { managerId, reason: clean(reason || '') }),
+  workPmProductivity: (uid) => req('GET', `/api/work/pm/users/${encodeURIComponent(uid)}/productivity`),
+  // The Worker queue + running an assigned task (a guided session owned by the worker).
+  workMyAssigned: (includeDone) => req('GET', `/api/work/my/assigned${includeDone ? '?done=1' : ''}`),
+  workMyAssignedExpand: (projectId, taskId) => req('POST', `/api/work/my/assigned/${encodeURIComponent(projectId)}/${encodeURIComponent(taskId)}/expand`, {}),
+  // GRC / Sr PM / admin oversight (read-only data).
+  workGrcRisks: () => req('GET', '/api/work/grc/risks'),
+  workGrcStats: () => req('GET', '/api/work/grc/stats'),
+  workGrcLog: (projectId, limit) => req('GET', `/api/work/grc/log${projectId || limit ? `?${[projectId ? `project=${encodeURIComponent(projectId)}` : '', limit ? `limit=${Number(limit)}` : ''].filter(Boolean).join('&')}` : ''}`),
   // Company customers ("who the work is for"): the project picker reads the list;
   // the company console adds / renames / archives (Default is server-protected).
   workCompanyCustomers: () => req('GET', '/api/work/company/customers'),

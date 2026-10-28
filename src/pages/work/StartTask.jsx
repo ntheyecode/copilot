@@ -185,7 +185,7 @@
 //   beginNotReady -> "The final step opens once your administrator has finished AI setup."
 // =========================================================================
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 import { Loader2, Check, X, Plus, HelpCircle, ChevronLeft, Play, AlertTriangle, Zap, Sparkles, Compass, Monitor, Globe, FileText, PenLine, ArrowRight, MapPin, Target, Rocket, ListChecks, Wand2 } from 'lucide-react'
 import { api } from '../../api.js'
 import { clean } from '../../scrub.js'
@@ -369,7 +369,11 @@ function DocsAttach({ tier, onDesktopDocs, t }) {
 export default function StartTask() {
   const navigate = useNavigate()
   const t = useT()
-  const { ready, usage, plan, renewLabel, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin, canBuyHours, buyCredits, refreshUsage } = useWorkApp()
+  const { ready, usage, plan, renewLabel, showGuard, onOpen, setNeedsSub, isCompanyMember, isAdmin, isCompanyAdmin, canBuyHours, buyCredits, refreshUsage, roleView } = useWorkApp()
+  // A worker (assigned-only flow) has no Start: the shell shows no link and a
+  // typed URL lands back on the dashboard, where their queue is. The server
+  // refuses a self-start too (real segregation, not a hidden button).
+  if (roleView && !roleView.canStart) return <Navigate to="/work" replace />
   const tier = (usage && usage.tier) || 'basic'
 
   // A parked draft (see DRAFT_KEY) resumes where the person left off.

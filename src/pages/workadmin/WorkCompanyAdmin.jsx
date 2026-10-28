@@ -35,6 +35,7 @@ import { Loading, ErrorBox, EmptyState, Spinning, SavedTag, RecRow, EditToggle, 
 import { Meter, VIZ_CSS } from './sections/_viz.jsx'
 import { AiSourceChoice, AI_SOURCE_CHOICE_CSS } from './sections/AiSourceChoice.jsx'
 import { aiSetupOf } from '../../shared/ai_source_options.js'
+import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, normalizeFlow } from '../../shared/work_roles_options.js'
 import * as SSO from '../../shared/sso_guide.js'
 import { OIDC_PROVIDER_LABELS as SSO_PROVIDER_LABELS, OIDC_PROVIDER_IDS as SSO_PROVIDER_ORDER } from '../../shared/oidc_providers.js'
 
@@ -42,9 +43,11 @@ import { OIDC_PROVIDER_LABELS as SSO_PROVIDER_LABELS, OIDC_PROVIDER_IDS as SSO_P
 // sections/_shared.jsx (single source - SUPREME RULE II; the local copy was deleted).
 
 const TIERS = [{ id: 'basic', name: 'Basic' }, { id: 'advanced', name: 'Advanced' }, { id: 'premium', name: 'Premium' }]
-// User-facing role labels resolve through i18n keys (plan names Basic/Advanced/
-// Premium are brand terms and stay literal). Call sites wrap these with t().
-const ROLE_LABEL = { company_admin: 'companyAdmin.roles.companyAdmin', member: 'companyAdmin.roles.member', executive: 'companyAdmin.roles.executive' }
+// Role + work-flow labels resolve through the ONE registry (src/shared/
+// work_roles_options.js: ids, order and i18n keys), so adding a role lands in
+// one place and every select, badge and the app shell agree (SUPREME RULE II).
+// Plan names Basic/Advanced/Premium are brand terms and stay literal.
+const ROLE_LABEL = Object.fromEntries(COMPANY_ROLE_OPTIONS.map((o) => [o.id, o.labelKey]))
 // OIDC provider labels + order come from the single registry (src/shared/
 // oidc_providers.js), imported above as SSO_PROVIDER_LABELS / SSO_PROVIDER_ORDER.
 const fmtDate = (s) => { if (!s) return '-'; const d = new Date(s); return isNaN(d) ? '-' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) }
@@ -604,7 +607,8 @@ function TeamSection({ meId, onCompany }) {
   const [ok, setOk] = useState('')
   const [adding, setAdding] = useState(false)
   const [mode, setMode] = useState('email')          // 'email' (SSO) | 'password' (non-SSO)
-  const [form, setForm] = useState({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' })
+  const EMPTY_FORM = { email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic', workFlow: 'independent' }
+  const [form, setForm] = useState(EMPTY_FORM)
   const [busy, setBusy] = useState(false)
   const [rowBusy, setRowBusy] = useState('')
   const [allocFor, setAllocFor] = useState('')       // member id whose minute box is open
@@ -616,7 +620,10 @@ function TeamSection({ meId, onCompany }) {
       .then(([r, lic]) => {
         const co = r.company || null
         setCompanyLocal(co); if (onCompany) onCompany(co)
-        setMembers(lic.members || [])
+        // The license summary carries usage; the user list carries each person's
+        // work flow (worker / independent / mixed). Merge by id, ONE row per person.
+        const flowOf = new Map((r.users || []).map((u) => [String(u.id), normalizeFlow(u.workFlow)]))
+        setMembers((lic.members || []).map((m) => ({ ...m, workFlow: flowOf.get(String(m.id)) || 'independent' })))
         setPool(lic.poolSeconds || 0)
         // Default the add mode to email when SSO is connected, else password.
         setMode(co && co.sso && co.sso.connected ? 'email' : 'password')
@@ -627,6 +634,13 @@ function TeamSection({ meId, onCompany }) {
 
   const locked = !!(company && company.licenseMode === 'locked')
 
+  // The create route takes role + plan; the work flow is set through the SAME
+  // member-update route the row selects use (one writer for the flow). Create
+  // answers `user` (password account) or `{ user }` (SSO account).
+  const applyFlow = async (created) => {
+    const u = created && (created.user || created)
+    if (u && u.id && form.workFlow !== 'independent') await api.workCompanyUpdateUser(u.id, { workFlow: form.workFlow })
+  }
   const create = async () => {
     setErr(null); setOk('')
     if (mode === 'email') {
@@ -634,8 +648,9 @@ function TeamSection({ meId, onCompany }) {
       if (!email.includes('@')) { setErr(new Error(t('companyAdmin.team.errWorkEmail'))); return }
       setBusy(true)
       try {
-        await api.workCompanyCreateUser({ email, displayName: form.displayName.trim(), companyRole: form.companyRole, tier: form.tier })
-        setOk(t('companyAdmin.team.addedSso', { email })); setForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
+        const created = await api.workCompanyCreateUser({ email, displayName: form.displayName.trim(), companyRole: form.companyRole, tier: form.tier })
+        await applyFlow(created)
+        setOk(t('companyAdmin.team.addedSso', { email })); setForm(EMPTY_FORM); setAdding(false); load()
       } catch (error) { setErr(error) } finally { setBusy(false) }
     } else {
       const username = form.username.trim()
@@ -647,8 +662,9 @@ function TeamSection({ meId, onCompany }) {
         // Password is optional: leave it blank and the person sets their own via
         // the emailed set-password link (recommended). A password typed here is
         // honored, but the link is still emailed.
-        await api.workCompanyCreateUser({ username, email, ...(form.password ? { password: form.password } : {}), companyRole: form.companyRole, tier: form.tier })
-        setOk(t('companyAdmin.team.addedPassword', { username, email })); setForm({ email: '', displayName: '', username: '', password: '', companyRole: 'member', tier: 'basic' }); setAdding(false); load()
+        const created = await api.workCompanyCreateUser({ username, email, ...(form.password ? { password: form.password } : {}), companyRole: form.companyRole, tier: form.tier })
+        await applyFlow(created)
+        setOk(t('companyAdmin.team.addedPassword', { username, email })); setForm(EMPTY_FORM); setAdding(false); load()
       } catch (error) { setErr(error) } finally { setBusy(false) }
     }
   }
@@ -726,8 +742,14 @@ function TeamSection({ meId, onCompany }) {
             )}
             <div className="wka-field"><label>{t('companyAdmin.team.role')} <Help text={t('companyAdmin.team.roleHelp')} /></label>
               <select className="wka-select" value={form.companyRole} onChange={(e) => setForm({ ...form, companyRole: e.target.value })}>
-                <option value="member">{t('companyAdmin.team.roleMember')}</option><option value="executive">{t('companyAdmin.team.roleExecutiveLong')}</option><option value="company_admin">{t('companyAdmin.team.roleCompanyAdmin')}</option>
+                {COMPANY_ROLE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
               </select>
+            </div>
+            <div className="wka-field"><label>{t('companyAdmin.team.flow')} <Help text={t('companyAdmin.team.flowHelp')} /></label>
+              <select className="wka-select" value={form.workFlow} onChange={(e) => setForm({ ...form, workFlow: e.target.value })}>
+                {WORK_FLOW_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
+              </select>
+              <div style={{ fontSize: 11.5, color: 'var(--wka-faint)', marginTop: 4 }}>{t((WORK_FLOW_OPTIONS.find((o) => o.id === form.workFlow) || WORK_FLOW_OPTIONS[0]).helpKey)}</div>
             </div>
             <div className="wka-field"><label>{t('companyAdmin.team.plan')} <Help text={t('companyAdmin.team.planHelp')} /></label>
               <select className="wka-select" value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
@@ -749,7 +771,7 @@ function TeamSection({ meId, onCompany }) {
             : (
               <div className="wka-table-wrap">
                 <table className="wka-table">
-                  <thead><tr><th>{t('companyAdmin.overview.thPerson')}</th><th>{t('companyAdmin.overview.thRole')}</th><th>{t('companyAdmin.overview.thPlan')}</th><th>{t('companyAdmin.overview.thUsedToday')}</th><th>{t('companyAdmin.team.thExtra')}</th><th>{t('companyAdmin.team.th2fa')}</th><th></th></tr></thead>
+                  <thead><tr><th>{t('companyAdmin.overview.thPerson')}</th><th>{t('companyAdmin.overview.thRole')}</th><th>{t('companyAdmin.team.thFlow')}</th><th>{t('companyAdmin.overview.thPlan')}</th><th>{t('companyAdmin.overview.thUsedToday')}</th><th>{t('companyAdmin.team.thExtra')}</th><th>{t('companyAdmin.team.th2fa')}</th><th></th></tr></thead>
                   <tbody>
                     {members.map((m) => {
                       const self = String(m.id) === String(meId)
@@ -760,7 +782,13 @@ function TeamSection({ meId, onCompany }) {
                             <select className="wka-select" value={m.companyRole || 'member'} disabled={self || rowBusy === m.id}
                               title={self ? t('companyAdmin.team.cannotChangeOwnRole') : ''}
                               onChange={(e) => patchUser(m, { companyRole: e.target.value })}>
-                              <option value="member">{t('companyAdmin.team.roleMember')}</option><option value="executive">{t('companyAdmin.team.roleExecutiveShort')}</option><option value="company_admin">{t('companyAdmin.team.roleCompanyAdmin')}</option>
+                              {COMPANY_ROLE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <select className="wka-select" value={m.workFlow || 'independent'} disabled={rowBusy === m.id} title={t('companyAdmin.team.flowHelp')} aria-label={t('companyAdmin.team.flow')}
+                              onChange={(e) => patchUser(m, { workFlow: e.target.value })}>
+                              {WORK_FLOW_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
                             </select>
                           </td>
                           <td>
