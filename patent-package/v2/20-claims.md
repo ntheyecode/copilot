@@ -2,7 +2,11 @@ DRAFT — for review by a registered patent practitioner before filing. Not lega
 
 # 20: Claims (v2 DRAFT)
 
-> Package note (not part of the filed claims): lead set of 29 claims, 6 independent (claims 1, 11, 17, 22, 28 and 29). The set exceeds 20 claims and 3 independent claims, so excess-claim fees apply (see the fee worksheet; verify the fee schedule at filing); counsel may trim before filing. Changes from v1 (`04-claims.md`) follow `05-novelty-synthesis-and-claims-v2.md` §3 and §4: claim 1 recites that the visible-when-done condition is planner-generated and evaluated on the same redacted frame, and retains the verified redacted frame as the sole evidence; v1 claim 6 is split into claims 6 and 7; v1 claim 20 is split into claim 16 (browser) and claim 21 (desktop) and the browser claim does not imply exclusion of the guidance window from self-capture; claim 17 adds the limb that the policy also constrains the model's single-step instruction; v1 claim 7 (model escalation) and v1 claim 11 (consistent token) are removed, the latter being folded into claim 5. Changes of 2026-10-27 (from `docs/patent-candidates-2026-10-27.md`): new claim 10 (watch-loop transient-unreadable-frame tolerance, dependent on claim 1), which shifts the former claims 10 to 20 to 11 to 21; new independent claims 22 (method), 28 (system) and 29 (medium) for the multi-task project engine with just-in-time step expansion from a forward-learnings ledger, and dependents 23 (deterministic breakdown gate), 24 (mid-project injection), 25 (done-state as task-level verification target), 26 (project reports) and 27 (guidance depth). Claims 12 (streaming rehydration) and 18 (lock release with re-authentication) recite specification-enabled embodiments: see the drafting notes after the claim set. The Appendix contains additional candidate independent claims for a restriction response, divisional or continuation.
+> Package note (not part of the filed claims): lead set of 20 claims, 4 independent (claims 1, 9, 14 and 19). The set is at the 20-claim ceiling, so no excess-claim fee applies; the fourth independent claim (claim 19, the project-engine method) carries one excess-independent-claim fee, kept by the inventor's value priority (see the fee worksheet; verify the fee schedule at filing).
+>
+> Trim of 2026-10-28 (maximize probability-of-winning by value; from the 29-claim set): nine claims were removed and the survivors renumbered 1 to 20. Removed were the former claim 2 (observation-and-flag corrective refinement, the least distinctive method dependent, its substance already present in independent claim 1), the former claim 10 (watch-loop transient-unreadable-frame tolerance, a known consecutive-failure threshold), the former claim 12 (streaming rehydration, specification-supported only and not reduced to practice), and the former claims 24 to 29 of the project engine (mid-project injection, done-state verification target, project reports, guidance-depth entitlement, and the system and medium parallels of the project-engine method). The mature original core was retained in full: the independent method, system and medium claims with their strongest dependents (on-device OCR redaction and the OCR-unavailable downscale fallback, tokenization with volatile-only rehydration and exact-match safety, irreversible block-word removal, the prerequisite and equivalent-control handling, the evidence-retention-and-report gate, the screen-derived clarification with the free re-plan path, the destructive-operation display gate, and the browser and desktop presentation limbs). The single strongest new claim, the project-engine method (former claim 22, now claim 19), was kept with its most distinctive dependent, the deterministic zero-tolerance breakdown gate (former claim 23, now claim 20).
+>
+> Mapping (old to new): 1 to 1; 3 to 2; 4 to 3; 5 to 4; 6 to 5; 7 to 6; 8 to 7; 9 to 8; 11 to 9; 13 to 10; 14 to 11; 15 to 12; 16 to 13; 17 to 14; 18 to 15; 19 to 16; 20 to 17; 21 to 18; 22 to 19; 23 to 20. The specification, drawings (FIG. 1 to FIG. 13) and abstract are unchanged and support every removed claim, so each removed claim remains available for a later continuation or divisional (the dropped project-engine claims are noted as continuation or divisional candidates in Appendix A). Claim 15 (lock release with re-authentication) recites a specification-enabled embodiment; see the drafting notes after the claim set. The Appendix contains additional candidate independent claims for a restriction response, divisional or continuation.
 
 ---
 
@@ -30,9 +34,7 @@ advancing the current step to a subsequent step of the plan only when a second n
 
 in response to the second navigation record identifying the visible-when-done condition of the current step as satisfied, retaining the redacted second frame, as generated on the user device for the transmitting, as evidence of the current step, such that no frame other than the redacted second frame is transmitted or stored as the evidence.
 
-**2.** The method of claim 1, wherein the navigation record and the second navigation record each further comprise an observation describing content of the redacted frame from which that navigation record was generated and a flag that is non-empty when that redacted frame shows an error or an incorrect value, and wherein the corrective instruction is derived from the flag of the second navigation record.
-
-**3.** The method of claim 1, wherein generating the redacted first frame comprises:
+**2.** The method of claim 1, wherein generating the redacted first frame comprises:
 
 performing optical character recognition of the first frame on the user device to obtain a plurality of text lines each having a bounding box;
 
@@ -40,9 +42,9 @@ applying, to each text line, the policy engine and a set of detection rules, the
 
 painting an opaque region over the entire bounding box of each text line in which the policy engine detects sensitive information or a block word, and re-encoding the resulting image as the redacted first frame.
 
-**4.** The method of claim 3, further comprising, in response to the optical character recognition being unavailable on the user device, generating the redacted first frame as a downscaled copy of the first frame having a resolution at which text of the first frame is illegible, instead of transmitting the first frame at its captured resolution, wherein the resolution is selected according to a legibility criterion comprising at least one of: an estimated height of a smallest text run of the first frame falling below a threshold height after downscaling; and a recognition pass over the downscaled copy returning no text run above a confidence threshold.
+**3.** The method of claim 2, further comprising, in response to the optical character recognition being unavailable on the user device, generating the redacted first frame as a downscaled copy of the first frame having a resolution at which text of the first frame is illegible, instead of transmitting the first frame at its captured resolution, wherein the resolution is selected according to a legibility criterion comprising at least one of: an estimated height of a smallest text run of the first frame falling below a threshold height after downscaling; and a recognition pass over the downscaled copy returning no text run above a confidence threshold.
 
-**5.** The method of claim 1, further comprising:
+**4.** The method of claim 1, further comprising:
 
 replacing, on the user device and before transmission, each sensitive value detected in outbound text with a placeholder token comprising a type indicator and an index, an identical sensitive value being replaced by an identical placeholder token throughout a session;
 
@@ -52,13 +54,13 @@ receiving, at the guidance client, a response generated by the planning machine-
 
 substituting, on the user device, each placeholder token in the response with the sensitive value to which it is mapped, prior to presenting the response on the display.
 
-**6.** The method of claim 1, wherein, when a prerequisite of a step of the plan that would otherwise be the current step is absent from the redacted first frame, the navigation record identifies as the single current step a step that establishes the prerequisite, provides as the single instruction an action that establishes the prerequisite, and identifies the prerequisite that was absent.
+**5.** The method of claim 1, wherein, when a prerequisite of a step of the plan that would otherwise be the current step is absent from the redacted first frame, the navigation record identifies as the single current step a step that establishes the prerequisite, provides as the single instruction an action that establishes the prerequisite, and identifies the prerequisite that was absent.
 
-**7.** The method of claim 1, wherein, when a control named in the current step is absent from the redacted first frame and a different control that performs an equivalent function is visible in the redacted first frame, the navigation record provides as the single instruction an action directed to the different control together with an indication that the target application differs from the plan, the method further comprising at least one of: recording the indication in a session record of the task; and supplying the indication to the planning machine-learning model as an input to a regeneration of at least one remaining step of the plan.
+**6.** The method of claim 1, wherein, when a control named in the current step is absent from the redacted first frame and a different control that performs an equivalent function is visible in the redacted first frame, the navigation record provides as the single instruction an action directed to the different control together with an indication that the target application differs from the plan, the method further comprising at least one of: recording the indication in a session record of the task; and supplying the indication to the planning machine-learning model as an input to a regeneration of at least one remaining step of the plan.
 
-**8.** The method of claim 1, wherein the retaining is performed only in response to the first navigation record that identifies the visible-when-done condition of the current step as satisfied, the redacted second frame being stored in association with a timestamp of that identification and only when a screenshot-evidence setting of an egress policy applicable to the user permits retention, the method further comprising generating a session report comprising, for each step whose visible-when-done condition was identified as satisfied, the timestamp, any command or code included in the step and the stored redacted second frame as an exhibit, and comprising, for each step not identified as satisfied, only a name and a status of the step.
+**7.** The method of claim 1, wherein the retaining is performed only in response to the first navigation record that identifies the visible-when-done condition of the current step as satisfied, the redacted second frame being stored in association with a timestamp of that identification and only when a screenshot-evidence setting of an egress policy applicable to the user permits retention, the method further comprising generating a session report comprising, for each step whose visible-when-done condition was identified as satisfied, the timestamp, any command or code included in the step and the stored redacted second frame as an exhibit, and comprising, for each step not identified as satisfied, only a name and a status of the step.
 
-**9.** The method of claim 1, further comprising:
+**8.** The method of claim 1, further comprising:
 
 receiving, at the guidance client, a clarification question generated by the planning machine-learning model together with the plan, the clarification question comprising a plurality of answer options inferred from display content of a frame of the display captured by the guidance client and redacted on the user device, wherein the clarification question is withheld when an answer to the clarification question is determinable from the display content;
 
@@ -68,19 +70,7 @@ storing, in a session scope, an answer received through the answer options or th
 
 transmitting, from the guidance client to the guidance server, a plan regeneration request carrying a clarification-origin indicator, wherein the guidance server regenerates the plan from the session scope in response to the plan regeneration request without decrementing a per-task regeneration limit that is decremented by a user-initiated plan regeneration request that lacks the clarification-origin indicator.
 
-**10.** The method of claim 1, wherein frames of the display are captured repeatedly by the guidance client while the user performs the single instruction, each captured frame being redacted on the user device and transmitted to the guidance server and a navigation record being generated from each redacted frame by the machine-learning model having image-understanding capability, the method further comprising:
-
-maintaining, for a session of the task, a count of consecutive navigation records that identify neither an instruction nor an observation;
-
-in response to a navigation record that identifies neither an instruction nor an observation while the count is below a tolerance threshold, incrementing the count, leaving the current step and the presented single instruction unchanged, and withholding re-submission of the redacted frame from which that navigation record was generated to a second machine-learning model having image-understanding capability and greater capability than the machine-learning model having image-understanding capability, such that no escalation event is recorded for that redacted frame;
-
-in response to the count having reached the tolerance threshold, re-submitting to the second machine-learning model, together with the plan, a subsequently captured redacted frame whose navigation record identifies neither an instruction nor an observation, and recording the re-submission as an escalation event of the session;
-
-resetting the count in response to a navigation record that identifies an instruction or an observation; and
-
-in response to a request by the user for a deep read of a captured frame, re-submitting the redacted frame of that captured frame to the second machine-learning model when its navigation record identifies neither an instruction nor an observation, irrespective of the count.
-
-**11.** A system comprising:
+**9.** A system comprising:
 
 a guidance server; and
 
@@ -100,17 +90,15 @@ a local rehydration module configured to substitute, on the user device, each pl
 
 wherein the guidance server is configured to obtain the ordered plan from a planning machine-learning model, each step of the ordered plan comprising a visible-when-done condition generated by the planning machine-learning model together with the ordered plan and describing display content that will be present when the step has been performed, to receive the redacted frame and the ordered plan from the guidance client, to obtain from a machine-learning model having image-understanding capability a navigation record identifying each step of the ordered plan whose visible-when-done condition is shown satisfied in the redacted frame, a single current step, and the single instruction for the current step referencing content visible in the redacted frame, and to advance the current step only when a subsequently received redacted frame yields a navigation record identifying the visible-when-done condition of the current step as satisfied.
 
-**12.** The system of claim 11, wherein the local rehydration module is configured to receive the response as a sequence of partial chunks of a streamed response, to retain a tail of received text no longer than a maximum placeholder token length across a chunk boundary, to apply the substitution to the received text other than the tail as each partial chunk is received, and to release the substituted text for presentation progressively, such that a placeholder token split across two partial chunks is substituted.
+**10.** The system of claim 9, wherein the local rehydration module is configured, when a placeholder token present in the token map is absent from or altered in the response, to leave the response unmodified at that location, to present an indication that the response is incomplete at that location, and to substitute no value that is not present in the token map, the token map being consulted only by exact match.
 
-**13.** The system of claim 11, wherein the local rehydration module is configured, when a placeholder token present in the token map is absent from or altered in the response, to leave the response unmodified at that location, to present an indication that the response is incomplete at that location, and to substitute no value that is not present in the token map, the token map being consulted only by exact match.
+**11.** The system of claim 9, wherein the egress policy further specifies a plurality of block words, and wherein the on-device redaction engine and the tokenizer are each configured to remove every occurrence of each block word, from recognized text lines of captured frames and from outbound text respectively, irreversibly and without creating any placeholder token.
 
-**14.** The system of claim 11, wherein the egress policy further specifies a plurality of block words, and wherein the on-device redaction engine and the tokenizer are each configured to remove every occurrence of each block word, from recognized text lines of captured frames and from outbound text respectively, irreversibly and without creating any placeholder token.
+**12.** The system of claim 9, wherein the guidance server further comprises a security gate configured to match each command and each code block included in any step of the ordered plan against a catalog of destructive-operation patterns and to annotate a matching step with a destructive indicator and a reason, and wherein the presentation layer is configured to render, in place of the command or code block of an annotated step, a placeholder labeled with the reason, to withhold display of the command or code block until the user operates an explicit acknowledgment control, and to cause an acknowledgment event identifying the annotated step to be recorded.
 
-**15.** The system of claim 11, wherein the guidance server further comprises a security gate configured to match each command and each code block included in any step of the ordered plan against a catalog of destructive-operation patterns and to annotate a matching step with a destructive indicator and a reason, and wherein the presentation layer is configured to render, in place of the command or code block of an annotated step, a placeholder labeled with the reason, to withhold display of the command or code block until the user operates an explicit acknowledgment control, and to cause an acknowledgment event identifying the annotated step to be recorded.
+**13.** The system of claim 9, wherein the guidance client is a web application executing in a browser on the user device without installation, the frames are captured through a display-media capture interface of the browser, and the presentation layer is configured to present the single instruction in a browser-native document picture-in-picture window opened in response to a user gesture before a capture prompt of the display-media capture interface is presented, to present the single instruction in a pop-out window when the document picture-in-picture window is unavailable, and to present the single instruction within a page of the web application when the pop-out window is unavailable.
 
-**16.** The system of claim 11, wherein the guidance client is a web application executing in a browser on the user device without installation, the frames are captured through a display-media capture interface of the browser, and the presentation layer is configured to present the single instruction in a browser-native document picture-in-picture window opened in response to a user gesture before a capture prompt of the display-media capture interface is presented, to present the single instruction in a pop-out window when the document picture-in-picture window is unavailable, and to present the single instruction within a page of the web application when the pop-out window is unavailable.
-
-**17.** A non-transitory computer-readable medium storing instructions that, when executed by one or more processors of a guidance server and of a user device, cause performance of operations comprising:
+**14.** A non-transitory computer-readable medium storing instructions that, when executed by one or more processors of a guidance server and of a user device, cause performance of operations comprising:
 
 storing, for a tenant comprising a plurality of member users, an egress policy object comprising (i) for each of a plurality of categories of sensitive information, an action selected from sending, redacting, withholding and tokenizing, (ii) a set of block words, (iii) a mode selecting between redaction and tokenization, (iv) a screenshot-evidence setting indicating whether redacted frames of member displays may be retained, and (v) an armed state;
 
@@ -130,15 +118,15 @@ storing the redacted frame as evidence of a step only when the navigation record
 
 appending to an audit log, for each transmission from the user device, a record comprising a version of the egress policy object in force, the mode, a count of items removed in each category, and whether a frame was transmitted, the record excluding every sensitive value removed.
 
-**18.** The non-transitory computer-readable medium of claim 17, wherein the egress policy object further comprises a locked state, and the operations further comprise refusing every modification of the egress policy object while in the locked state, including a modification requested by a tenant administrator of the tenant, unless the modification is made through a lock-release operation that requires re-authentication of an administrator having a role hierarchically above that of the tenant administrator and that appends to the audit log an entry identifying the re-authenticated administrator, the version of the egress policy object before the modification and the version after the modification, the entry excluding every sensitive value.
+**15.** The non-transitory computer-readable medium of claim 14, wherein the egress policy object further comprises a locked state, and the operations further comprise refusing every modification of the egress policy object while in the locked state, including a modification requested by a tenant administrator of the tenant, unless the modification is made through a lock-release operation that requires re-authentication of an administrator having a role hierarchically above that of the tenant administrator and that appends to the audit log an entry identifying the re-authenticated administrator, the version of the egress policy object before the modification and the version after the modification, the entry excluding every sensitive value.
 
-**19.** The non-transitory computer-readable medium of claim 17, wherein the operations further comprise denying, to each member user of the tenant, any request to modify, disable or weaken the egress policy object on the member user's user device, re-applying the egress policy object at the guidance server to content received from the user device, and recording in the record appended to the audit log a count, per category, of any item removed by the re-applying.
+**16.** The non-transitory computer-readable medium of claim 14, wherein the operations further comprise denying, to each member user of the tenant, any request to modify, disable or weaken the egress policy object on the member user's user device, re-applying the egress policy object at the guidance server to content received from the user device, and recording in the record appended to the audit log a count, per category, of any item removed by the re-applying.
 
-**20.** The non-transitory computer-readable medium of claim 17, wherein the egress policy object further comprises a retention window, the record appended to the audit log is drawn from a closed schema having no field capable of storing a sensitive value, and the operations further comprise periodically deleting, in a single operation, each session of the tenant older than the retention window together with every redacted frame stored as evidence for the session and every record of the audit log belonging to the session.
+**17.** The non-transitory computer-readable medium of claim 14, wherein the egress policy object further comprises a retention window, the record appended to the audit log is drawn from a closed schema having no field capable of storing a sensitive value, and the operations further comprise periodically deleting, in a single operation, each session of the tenant older than the retention window together with every redacted frame stored as evidence for the session and every record of the audit log belonging to the session.
 
-**21.** The non-transitory computer-readable medium of claim 17, wherein the guidance client executes in a desktop shell on the user device, the single instruction is presented in an overlay window configured as always-on-top with a click-through mode in which pointer events pass to the target application beneath the overlay window and in which interactivity of the overlay window is restored while a pointer hovers over a control of the overlay window, and the overlay window is configured with a content-protection attribute of a window manager of the user device such that pixels of the overlay window are omitted from the frames captured by the guidance client and from screen capture by other applications executing on the user device.
+**18.** The non-transitory computer-readable medium of claim 14, wherein the guidance client executes in a desktop shell on the user device, the single instruction is presented in an overlay window configured as always-on-top with a click-through mode in which pointer events pass to the target application beneath the overlay window and in which interactivity of the overlay window is restored while a pointer hovers over a control of the overlay window, and the overlay window is configured with a content-protection attribute of a window manager of the user device such that pixels of the overlay window are omitted from the frames captured by the guidance client and from screen capture by other applications executing on the user device.
 
-**22.** A computer-implemented method of guiding a human performer through a multi-task project in one or more target applications rendered on a display of a user device, the method comprising:
+**19.** A computer-implemented method of guiding a human performer through a multi-task project in one or more target applications rendered on a display of a user device, the method comprising:
 
 receiving a project goal stated by the human performer;
 
@@ -160,7 +148,7 @@ repeating the selecting, the obtaining of an ordered plan of steps, the guiding,
 
 declaring the project complete only when every task descriptor of the project map is in the done state and the project end-state is shown satisfied.
 
-**23.** The method of claim 22, further comprising, before the storing, applying to the project map a deterministic gate that invokes no machine-learning model, the deterministic gate:
+**20.** The method of claim 19, further comprising, before the storing, applying to the project map a deterministic gate that invokes no machine-learning model, the deterministic gate:
 
 counting as real only those task descriptors that have both a task goal and a non-empty done-state;
 
@@ -172,64 +160,6 @@ rejecting the project map when any task descriptor is not real, when any depende
 
 producing, when an ordered plan of steps obtained for a single task descriptor comprises more steps than a threshold, an advisory indication only and never a division of that task descriptor into a plurality of task descriptors.
 
-**24.** The method of claim 22, further comprising:
-
-receiving, while a task descriptor of the project map is not in the done state, a further request from the human performer;
-
-computing a token-set similarity between a set of normalized word tokens of the further request and a set of normalized word tokens of the task goal of each task descriptor of the project map;
-
-when the token-set similarity of a best-matching task descriptor meets a similarity threshold, associating the further request with the best-matching task descriptor and creating no task descriptor; and
-
-otherwise creating a new task descriptor from the further request and inserting the new task descriptor into the ordered plurality of task descriptors (i) immediately before a task descriptor named in the further request as blocked by the new task descriptor, adding the new task descriptor to the dependencies of the named task descriptor and adding the dependencies of the named task descriptor to the dependencies of the new task descriptor, or (ii) immediately after the latest in the ordered plurality of one or more task descriptors named in the further request as dependencies of the new task descriptor, or (iii) after the last task descriptor of the ordered plurality that is not in the done state, wherein, when a dependency to be added by the inserting would form a cycle among the dependencies of the task descriptors, the inserting is performed under (iii) without that dependency and an indication identifying the omitted dependency is recorded and presented to the human performer.
-
-**25.** The method of claim 22, wherein the done-state of the selected task descriptor is supplied to the machine-learning model having image-understanding capability together with the ordered plan of steps, and the marking of the selected task descriptor as being in the done state is performed in response to a navigation record identifying the done-state of the selected task descriptor as satisfied by display content present in a redacted frame captured during the guiding, the at least one generalized fact appended upon the marking comprising an indication, recorded during the guiding, that a control named in a step was absent from the display and that a different control performing an equivalent function was used.
-
-**26.** The method of claim 22, further comprising generating, on request, a project report that aggregates the guiding of every task descriptor of the project map, the project report comprising at least one of: (i) for each task descriptor in the done state, the done-state of that task descriptor, the recorded outcome, and each step of its ordered plan of steps whose visible-when-done condition was identified as satisfied together with that visible-when-done condition, listed under the project end-state and its checks, and, for each task descriptor not in the done state, only a title and a state; (ii) for each task descriptor, each step of its ordered plan of steps that a deterministic security gate annotated as destructive together with a reason, and each flag raised during the guiding of that task descriptor; and (iii) each task descriptor not in the done state together with its state and each flag raised during its guiding.
-
-**27.** The method of claim 22, wherein the human performer is a member of a tenant, and the project map is obtained only when a guidance depth resolved for the human performer is a deep depth, the guidance depth being a pool depth assigned by an administrator of the tenant to a seat pool to which the human performer belongs, clamped to a tenant ceiling set by a platform operator above the administrator of the tenant, such that the administrator of the tenant cannot grant a depth exceeding the tenant ceiling, and wherein a human performer whose resolved guidance depth is not the deep depth and who states a goal comprising a plurality of workflows is offered a single-task goal and no project map.
-
-**28.** A system comprising:
-
-a guidance client configured to execute on a user device having a display on which one or more target applications are rendered, the guidance client comprising a capture module configured to capture frames of the display, an on-device redaction engine configured to redact each captured frame on the user device before the frame leaves the user device, and a presentation layer configured to present a single instruction on the display without injecting any input event into the one or more target applications; and
-
-a guidance server comprising:
-
-a map planner configured to obtain, from a planning machine-learning model and from a project goal stated by a human performer, a project map comprising an ordered plurality of task descriptors and a project end-state, each task descriptor comprising a task goal, a done-state describing display content that will be visible on the display when the task is complete, and a set of dependencies each referencing another task descriptor of the project map, the project map containing no step-level instruction;
-
-a project store configured to store the project map together with a learnings ledger of generalized facts scoped to the project;
-
-a next-task selector configured to select, as a selected task descriptor, the lowest-ordered task descriptor of the project map that is not in a done state and whose dependencies are each in the done state;
-
-a just-in-time expander configured to obtain from the planning machine-learning model, in response to the selection and not before, an ordered plan of steps for the selected task descriptor only, each step comprising an instruction and a visible-when-done condition, the just-in-time expander supplying the planning machine-learning model with the task goal of the selected task descriptor and with the contents of the learnings ledger as current verified facts; and
-
-a navigation module configured to obtain, from a machine-learning model having image-understanding capability and from each redacted frame received from the guidance client together with the ordered plan of steps, a navigation record identifying each step whose visible-when-done condition is shown satisfied in that redacted frame, a single current step and the single instruction for the current step, and to advance the current step only when a subsequently received redacted frame yields a navigation record identifying the visible-when-done condition of the current step as satisfied;
-
-wherein the guidance server is further configured to append to the learnings ledger, in association with the selected task descriptor and deduplicated by normalized comparison of fact text, at least one generalized fact derived from the obtaining of the ordered plan of steps or from the guiding of the selected task descriptor, to mark the selected task descriptor as being in the done state upon completion of the guiding and to record for it an outcome comprising a count of the steps whose visible-when-done conditions were identified as satisfied, to cause the next-task selector and the just-in-time expander to operate for each remaining task descriptor such that the ordered plan of steps for a later task descriptor is generated from generalized facts appended during earlier task descriptors of the same project, and to declare the project complete only when every task descriptor of the project map is in the done state and the project end-state is shown satisfied.
-
-**29.** A non-transitory computer-readable medium storing instructions that, when executed by one or more processors of a guidance server and of a user device having a display on which one or more target applications are rendered, cause performance of operations comprising:
-
-receiving a project goal stated by a human performer;
-
-obtaining, from a planning machine-learning model, a project map comprising an ordered plurality of task descriptors and a project end-state, each task descriptor comprising a task goal, a done-state describing display content that will be visible on the display when the task is complete, and a set of dependencies each referencing another task descriptor of the project map, the project map containing no step-level instruction;
-
-applying to the project map, before the project map is stored, a deterministic gate that invokes no machine-learning model and that rejects the project map, returning the project goal as a single task, when fewer than two task descriptors having both a task goal and a non-empty done-state and having distinct normalized labels remain, and that rejects the project map when any dependency references a task descriptor absent from the project map, when the dependencies form a cycle, or when the project end-state is empty;
-
-storing the project map that passes the deterministic gate together with a learnings ledger of generalized facts scoped to the project;
-
-selecting, as a selected task descriptor, the lowest-ordered task descriptor of the project map that is not in a done state and whose dependencies are each in the done state;
-
-in response to the selecting, and not before, obtaining from the planning machine-learning model an ordered plan of steps for the selected task descriptor only, each step comprising an instruction and a visible-when-done condition describing display content that will be present when the step has been performed, the planning machine-learning model being supplied with the task goal of the selected task descriptor and with the contents of the learnings ledger as current verified facts;
-
-guiding the human performer through the ordered plan of steps by, for each step, presenting a single instruction on the display without injecting any input event into the one or more target applications, capturing a frame of the display after the presenting, redacting the frame on the user device before the frame leaves the user device, obtaining from a machine-learning model having image-understanding capability a navigation record generated from the redacted frame and the ordered plan of steps, and advancing to a subsequent step only when the navigation record identifies the visible-when-done condition of the step as satisfied by display content present in the redacted frame;
-
-appending to the learnings ledger, in association with the selected task descriptor, at least one generalized fact derived from the obtaining of the ordered plan of steps or from the guiding, the appending being deduplicated against existing entries of the learnings ledger by normalized comparison of fact text;
-
-upon completion of the guiding for the selected task descriptor, marking the selected task descriptor as being in the done state and recording for the selected task descriptor an outcome comprising a count of the steps whose visible-when-done conditions were identified as satisfied;
-
-repeating the selecting, the obtaining of an ordered plan of steps, the guiding, the appending and the marking for each remaining task descriptor of the project map; and
-
-declaring the project complete only when every task descriptor of the project map is in the done state and the project end-state is shown satisfied.
-
 ---
 
 ## Claim support map (for the practitioner; not filed)
@@ -237,138 +167,117 @@ declaring the project complete only when every task descriptor of the project ma
 | Claim | Supporting specification paragraphs (file 10) | Drawings |
 |---|---|---|
 | 1 | [0010], [0025] to [0027], [0032] to [0033], [0036] to [0038], [0041], [0045] to [0049], [0056] | FIG. 1, 2, 3, 4 |
-| 2 | [0037] to [0038] | FIG. 2 (212, 218, 220) |
-| 3 | [0046] to [0049] | FIG. 3 (306, 308, 316, 318, 320) |
-| 4 | [0050] | FIG. 3 (338) |
-| 5 | [0048], [0052] to [0053] | FIG. 3 (312, 314, 326 to 334) |
-| 6 | [0039] | FIG. 2 (230) |
-| 7 | [0039] to [0040], [0080], [0085] | FIG. 2 (232, 234), FIG. 6 (650) |
-| 8 | [0038], [0061], [0085] | FIG. 2 (216), FIG. 4 (430), FIG. 5 (514, 526) |
-| 9 | [0065] to [0071] | FIG. 7 (702 to 726), FIG. 1 (136, 157) |
-| 10 | [0028], [0030], [0042] (last two sentences), [0108] to [0111] | FIG. 13 (1302 to 1318), FIG. 1 (172, 174) |
-| 11 | [0026] to [0031], [0033], [0045] to [0053] | FIG. 1, 3 |
-| 12 | [0052] | FIG. 3 (340) |
-| 13 | [0053] | FIG. 3 (332) |
-| 14 | [0047] to [0049] | FIG. 3 (310), FIG. 5 (510) |
-| 15 | [0034], [0064] | FIG. 1 (162), FIG. 9 (902 to 916) |
-| 16 | [0082] | FIG. 8A (802 to 814) |
-| 17 | [0057] to [0062], [0038], [0054] to [0055] | FIG. 5 (506 to 534, 538), FIG. 2 (216), FIG. 3 (336) |
-| 18 | [0059] | FIG. 5 (518, 536) |
-| 19 | [0055], [0058] | FIG. 5 (520, 524) |
-| 20 | [0062] to [0063] | FIG. 5 (516, 528, 538, 540) |
-| 21 | [0083] | FIG. 8B (820 to 834) |
-| 22 | [0015] (sixth aspect), [0090] to [0097], [0112]; the loop limb re-uses [0036] to [0041] | FIG. 10 (1002 to 1034), FIG. 2 |
-| 23 | [0092], [0102] to [0104] | FIG. 11 (1102 to 1122), FIG. 10 (1018) |
-| 24 | [0099], [0105] to [0107] | FIG. 12 (1202 to 1224), FIG. 10 (1038) |
-| 25 | [0094] (done-state as verification target), [0095] (second write path), [0097], [0039] to [0040] (indication 234) | FIG. 10 (1012, 1028, 1030, 1032), FIG. 2 (234) |
-| 26 | [0098], [0085] | FIG. 10 (1036), FIG. 1 (162) |
-| 27 | [0100] | FIG. 10 (1040) |
-| 28 | as claim 22; module names at [0091] to [0096] and [0029] | FIG. 10, FIG. 1 (122, 124, 132, 152, 154) |
-| 29 | as claims 22 and 23 | FIG. 10, FIG. 11 |
+| 2 | [0046] to [0049] | FIG. 3 (306, 308, 316, 318, 320) |
+| 3 | [0050] | FIG. 3 (338) |
+| 4 | [0048], [0052] to [0053] | FIG. 3 (312, 314, 326 to 334) |
+| 5 | [0039] | FIG. 2 (230) |
+| 6 | [0039] to [0040], [0080], [0085] | FIG. 2 (232, 234), FIG. 6 (650) |
+| 7 | [0038], [0061], [0085] | FIG. 2 (216), FIG. 4 (430), FIG. 5 (514, 526) |
+| 8 | [0065] to [0071] | FIG. 7 (702 to 726), FIG. 1 (136, 157) |
+| 9 | [0026] to [0031], [0033], [0045] to [0053] | FIG. 1, 3 |
+| 10 | [0053] | FIG. 3 (332) |
+| 11 | [0047] to [0049] | FIG. 3 (310), FIG. 5 (510) |
+| 12 | [0034], [0064] | FIG. 1 (162), FIG. 9 (902 to 916) |
+| 13 | [0082] | FIG. 8A (802 to 814) |
+| 14 | [0057] to [0062], [0038], [0054] to [0055] | FIG. 5 (506 to 534, 538), FIG. 2 (216), FIG. 3 (336) |
+| 15 | [0059] | FIG. 5 (518, 536) |
+| 16 | [0055], [0058] | FIG. 5 (520, 524) |
+| 17 | [0062] to [0063] | FIG. 5 (516, 528, 538, 540) |
+| 18 | [0083] | FIG. 8B (820 to 834) |
+| 19 | [0015] (sixth aspect), [0090] to [0097], [0112]; the loop limb re-uses [0036] to [0041] | FIG. 10 (1002 to 1034), FIG. 2 |
+| 20 | [0092], [0102] to [0104] | FIG. 11 (1102 to 1122), FIG. 10 (1018) |
 
 ## Antecedent-basis self-check (performed on this v2 set)
 
-Method: every "the" term in claims 1 to 10 was traced to an introducing "a/an" in the same claim or in the claim chain.
+Method: every "the" term in claims 1 to 8 was traced to an introducing "a/an" in the same claim or in the claim chain.
 
 | Term | Introduced in | Referenced in | Result |
 |---|---|---|---|
-| a target application, a guidance client, a user device, a display, a user-stated goal | claim 1 (preamble and first step) | 1 to 10 | OK |
-| an ordered plan, a plurality of steps, a planning machine-learning model, an instruction, a visible-when-done condition | claim 1 (obtaining) | 1, 5, 6, 7, 8, 9, 10 | OK |
-| a first frame, a redacted first frame, a policy engine, at least one recognized text region | claim 1 (capturing, generating) | 1, 3, 4, 6, 7 | OK |
-| a guidance server | claim 1 (transmitting) | 1, 9, 10 | OK |
-| a navigation record, a machine-learning model having image-understanding capability, a single current step, a single instruction | claim 1 (receiving) | 1, 2, 5, 6, 7, 10 | OK |
-| a second frame, a redacted second frame, a second navigation record, a subsequent step, a corrective instruction | claim 1 (capturing after presenting; advancing) | 1, 2, 8 | OK |
+| a target application, a guidance client, a user device, a display, a user-stated goal | claim 1 (preamble and first step) | 1 to 8 | OK |
+| an ordered plan, a plurality of steps, a planning machine-learning model, an instruction, a visible-when-done condition | claim 1 (obtaining) | 1, 4, 5, 6, 7, 8 | OK |
+| a first frame, a redacted first frame, a policy engine, at least one recognized text region | claim 1 (capturing, generating) | 1, 2, 3, 5, 6 | OK |
+| a guidance server | claim 1 (transmitting) | 1, 8 | OK |
+| a navigation record, a machine-learning model having image-understanding capability, a single current step, a single instruction | claim 1 (receiving) | 1, 4, 5, 6 | OK |
+| a second frame, a redacted second frame, a second navigation record, a subsequent step, a corrective instruction | claim 1 (capturing after presenting; advancing) | 1, 7 | OK |
 | "the evidence" | claim 1 (retaining, "as evidence of the current step") | 1 | OK; "the evidence" refers back to "evidence of the current step" |
-| an observation, a flag | claim 2 | 2 | OK |
-| optical character recognition, a plurality of text lines, a bounding box, a set of detection rules, an egress policy applicable to the user, each block word, each custom pattern | claim 3 | 3, 4 | OK; claim 4 depends on 3 |
-| a downscaled copy, a legibility criterion, a threshold height, a confidence threshold | claim 4 | 4 | OK |
-| a placeholder token, a type indicator, an index, a session, a mapping, a response | claim 5 | 5 | OK |
-| a prerequisite | claim 6 | 6 | OK |
-| a control, a different control, an indication, a session record, a regeneration | claim 7 | 7 | OK |
-| a timestamp, a screenshot-evidence setting, an egress policy applicable to the user, a session report, an exhibit | claim 8 | 8 | OK; claim 8 depends on claim 1, not claim 3, so "an egress policy applicable to the user" is introduced afresh here |
-| a clarification question, a plurality of answer options, a frame of the display captured by the guidance client and redacted on the user device, an answer, a free-text entry, a skip control, a session scope, a stated assumption, a plan regeneration request, a clarification-origin indicator, a per-task regeneration limit, a user-initiated plan regeneration request | claim 9 | 9 | OK |
-| frames of the display captured repeatedly, each captured frame, each redacted frame, a session of the task, a count, a tolerance threshold, a second machine-learning model having image-understanding capability, an escalation event, a subsequently captured redacted frame, a request by the user for a deep read | claim 10 | 10 | OK; "the presented single instruction" refers to the single instruction presented in claim 1; "the current step" is the single current step of claim 1 |
+| optical character recognition, a plurality of text lines, a bounding box, a set of detection rules, an egress policy applicable to the user, each block word, each custom pattern | claim 2 | 2, 3 | OK; claim 3 depends on 2 |
+| a downscaled copy, a legibility criterion, a threshold height, a confidence threshold | claim 3 | 3 | OK |
+| a placeholder token, a type indicator, an index, a session, a mapping, a response | claim 4 | 4 | OK |
+| a prerequisite | claim 5 | 5 | OK |
+| a control, a different control, an indication, a session record, a regeneration | claim 6 | 6 | OK |
+| a timestamp, a screenshot-evidence setting, an egress policy applicable to the user, a session report, an exhibit | claim 7 | 7 | OK; claim 7 depends on claim 1, not claim 2, so "an egress policy applicable to the user" is introduced afresh here |
+| a clarification question, a plurality of answer options, a frame of the display captured by the guidance client and redacted on the user device, an answer, a free-text entry, a skip control, a session scope, a stated assumption, a plan regeneration request, a clarification-origin indicator, a per-task regeneration limit, a user-initiated plan regeneration request | claim 8 | 8 | OK |
 
-System: claims 11 to 16.
+System: claims 9 to 13.
 
 | Term | Introduced in | Referenced in | Result |
 |---|---|---|---|
-| a guidance server, a guidance client, a user device, a display, an input device, a target application | claim 11 (preamble) | 11 to 16 | OK |
-| a capture module, frames, a policy-enforcement module, an egress policy, categories, an action | claim 11 | 11, 14, 16 | OK |
-| an on-device redaction engine, text lines, a redacted frame | claim 11 | 11, 14 | OK |
-| a tokenizer, outbound text, a placeholder token, a type indicator, a mapping, a token map | claim 11 | 11 to 14 | OK |
-| a presentation layer, a single instruction, a current step, an ordered plan | claim 11 | 11, 15, 16 | OK |
-| a local rehydration module, a response | claim 11 | 11, 12, 13 | OK |
-| a planning machine-learning model, a visible-when-done condition, a machine-learning model having image-understanding capability, a navigation record, a subsequently received redacted frame | claim 11 (wherein clause) | 11 | OK |
-| a sequence of partial chunks, a streamed response, a tail, a maximum placeholder token length, a chunk boundary | claim 12 | 12 | OK |
-| an indication | claim 13 | 13 | OK |
-| a plurality of block words | claim 14 | 14 | OK |
-| a security gate, a catalog, a destructive indicator, a reason, an annotated step, a placeholder, an explicit acknowledgment control, an acknowledgment event | claim 15 | 15 | OK |
-| a web application, a browser, a display-media capture interface, a document picture-in-picture window, a user gesture, a capture prompt, a pop-out window, a page | claim 16 | 16 | OK |
+| a guidance server, a guidance client, a user device, a display, an input device, a target application | claim 9 (preamble) | 9 to 13 | OK |
+| a capture module, frames, a policy-enforcement module, an egress policy, categories, an action | claim 9 | 9, 11, 13 | OK |
+| an on-device redaction engine, text lines, a redacted frame | claim 9 | 9, 11 | OK |
+| a tokenizer, outbound text, a placeholder token, a type indicator, a mapping, a token map | claim 9 | 9, 10, 11 | OK |
+| a presentation layer, a single instruction, a current step, an ordered plan | claim 9 | 9, 12, 13 | OK |
+| a local rehydration module, a response | claim 9 | 9, 10 | OK |
+| a planning machine-learning model, a visible-when-done condition, a machine-learning model having image-understanding capability, a navigation record, a subsequently received redacted frame | claim 9 (wherein clause) | 9 | OK |
+| an indication | claim 10 | 10 | OK |
+| a plurality of block words | claim 11 | 11 | OK |
+| a security gate, a catalog, a destructive indicator, a reason, an annotated step, a placeholder, an explicit acknowledgment control, an acknowledgment event | claim 12 | 12 | OK |
+| a web application, a browser, a display-media capture interface, a document picture-in-picture window, a user gesture, a capture prompt, a pop-out window, a page | claim 13 | 13 | OK |
 
-Medium: claims 17 to 21.
-
-| Term | Introduced in | Referenced in | Result |
-|---|---|---|---|
-| a guidance server, a user device, a tenant, member users, an egress policy object, categories, an action, a set of block words, a mode, a screenshot-evidence setting, an armed state | claim 17 (storing) | 17 to 21 | OK |
-| a guidance client | claim 17 (distributing) | 17, 19, 21 | OK |
-| a member user, frames, a display, a target application, a redacted frame, a text line | claim 17 (capturing) | 17 to 21 | OK |
-| an ordered plan, steps, a visible-when-done condition | claim 17 (transmitting) | 17 | OK |
-| a machine-learning model having image-understanding capability, a navigation record, a single current step, a single instruction | claim 17 (obtaining) | 17 | OK |
-| an instruction-shaping rule set, at least one forbid rule, a policy reason, a compliant alternative, a policy-reason instruction | claim 17 (applying) | 17 | OK |
-| a subsequently received redacted frame | claim 17 (presenting) | 17 | OK |
-| an audit log, a record, a version, a count | claim 17 (appending) | 18, 19, 20 | OK; claims 19 and 20 say "the record appended to the audit log" |
-| a locked state, a modification, a tenant administrator, a lock-release operation, an administrator having a role hierarchically above, an entry | claim 18 | 18 | OK |
-| a retention window, a closed schema, a session, a single operation | claim 20 | 20 | OK |
-| a desktop shell, an overlay window, a click-through mode, a pointer, a control of the overlay window, a content-protection attribute, a window manager, other applications | claim 21 | 21 | OK |
-
-Project engine: claims 22 to 29.
+Medium: claims 14 to 18.
 
 | Term | Introduced in | Referenced in | Result |
 |---|---|---|---|
-| a human performer, a multi-task project, one or more target applications, a display, a user device, a project goal | claim 22 (preamble, receiving) | 22 to 27 | OK |
-| a planning machine-learning model, a project map, an ordered plurality of task descriptors, a project end-state, a task goal, a done-state, a set of dependencies, a step-level instruction | claim 22 (obtaining) | 22 to 27 | OK; "the ordered plurality" in claim 24 refers to the ordered plurality of task descriptors |
-| a learnings ledger, generalized facts | claim 22 (storing) | 22, 25 | OK |
-| a selected task descriptor, a done state | claim 22 (selecting) | 22 to 27 | OK; "the done state" is the state introduced here, "the done-state" (hyphenated) is the per-task field introduced in the obtaining step; the practitioner may rename one to avoid the near-collision, for example "a completed state" |
-| an ordered plan of steps, an instruction, a visible-when-done condition, current verified facts | claim 22 (obtaining of the ordered plan) | 22 to 26 | OK |
-| a single instruction, a frame, the redacted frame, a machine-learning model having image-understanding capability, a navigation record, a subsequent step | claim 22 (guiding) | 22, 25 | OK |
-| at least one generalized fact, existing entries, normalized comparison, fact text | claim 22 (appending) | 22, 25 | OK |
-| an outcome, a count of the steps | claim 22 (marking) | 22, 26 | OK |
-| a later task descriptor, earlier task descriptors | claim 22 (repeating) | 22 | OK |
-| a deterministic gate, a label, a title, distinct real task descriptors, a threshold, an advisory indication | claim 23 | 23 | OK |
-| a further request, a set of normalized word tokens, a token-set similarity, a best-matching task descriptor, a similarity threshold, a new task descriptor, a task descriptor named in the further request, the latest, an indication identifying the omitted dependency | claim 24 | 24 | OK; "(i)", "(ii)" and "(iii)" are alternatives of one inserting step |
-| a redacted frame captured during the guiding, an indication recorded during the guiding, a control named in a step, a different control | claim 25 | 25 | OK |
-| a project report, a deterministic security gate, a reason, a flag, a title, a state | claim 26 | 26 | OK; claim 26 depends on claim 22, so the security gate is introduced afresh here rather than taken from claim 15 |
-| a tenant, a guidance depth, a deep depth, a pool depth, an administrator of the tenant, a seat pool, a tenant ceiling, a platform operator, a single-task goal | claim 27 | 27 | OK |
-| claim 28 terms (a guidance client, a capture module, an on-device redaction engine, a presentation layer, a guidance server, a map planner, a project store, a next-task selector, a just-in-time expander, a navigation module and the project-map terms) | claim 28 | 28 | OK; self-contained independent claim |
-| claim 29 terms | claim 29 | 29 | OK; self-contained independent claim; the gate limb is folded into the independent claim, so claim 29 is narrower than claim 22 and has no gate dependent |
+| a guidance server, a user device, a tenant, member users, an egress policy object, categories, an action, a set of block words, a mode, a screenshot-evidence setting, an armed state | claim 14 (storing) | 14 to 18 | OK |
+| a guidance client | claim 14 (distributing) | 14, 16, 18 | OK |
+| a member user, frames, a display, a target application, a redacted frame, a text line | claim 14 (capturing) | 14 to 18 | OK |
+| an ordered plan, steps, a visible-when-done condition | claim 14 (transmitting) | 14 | OK |
+| a machine-learning model having image-understanding capability, a navigation record, a single current step, a single instruction | claim 14 (obtaining) | 14 | OK |
+| an instruction-shaping rule set, at least one forbid rule, a policy reason, a compliant alternative, a policy-reason instruction | claim 14 (applying) | 14 | OK |
+| a subsequently received redacted frame | claim 14 (presenting) | 14 | OK |
+| an audit log, a record, a version, a count | claim 14 (appending) | 15, 16, 17 | OK; claims 16 and 17 say "the record appended to the audit log" |
+| a locked state, a modification, a tenant administrator, a lock-release operation, an administrator having a role hierarchically above, an entry | claim 15 | 15 | OK |
+| a retention window, a closed schema, a session, a single operation | claim 17 | 17 | OK |
+| a desktop shell, an overlay window, a click-through mode, a pointer, a control of the overlay window, a content-protection attribute, a window manager, other applications | claim 18 | 18 | OK |
 
-Items the practitioner may wish to revisit: (a) claim 1 recites "the first navigation record" nowhere; claim 8 uses "the first navigation record that identifies" as an ordinal description of an event, not as a reference to a previously introduced element, which is a common form but may be reworded as "the earliest navigation record"; (b) claim 7, claim 9, claim 24 and claim 26 use "at least one of" and "or" lists, which the practitioner may convert to separate dependent claims if claim count allows; (c) claim 17 recites the single instruction being "annotated ... or ... replaced", an alternative that the practitioner may wish to split; (d) claim 22 uses both "done-state" (the per-task field) and "done state" (the task state); see the table above; (e) claim 10 recites a "second machine-learning model having image-understanding capability and greater capability than" the first; the specification calls these the first model 172 and the stronger model 174, and the practitioner may prefer "a second, higher-capability machine-learning model".
+Project engine: claims 19 to 20.
 
-## Drafting notes on code support (from 05 §4 and §6; not filed)
+| Term | Introduced in | Referenced in | Result |
+|---|---|---|---|
+| a human performer, a multi-task project, one or more target applications, a display, a user device, a project goal | claim 19 (preamble, receiving) | 19, 20 | OK |
+| a planning machine-learning model, a project map, an ordered plurality of task descriptors, a project end-state, a task goal, a done-state, a set of dependencies, a step-level instruction | claim 19 (obtaining) | 19, 20 | OK |
+| a learnings ledger, generalized facts | claim 19 (storing) | 19 | OK |
+| a selected task descriptor, a done state | claim 19 (selecting) | 19, 20 | OK; "the done state" is the state introduced here, "the done-state" (hyphenated) is the per-task field introduced in the obtaining step; the practitioner may rename one to avoid the near-collision, for example "a completed state" |
+| an ordered plan of steps, an instruction, a visible-when-done condition, current verified facts | claim 19 (obtaining of the ordered plan) | 19, 20 | OK |
+| a single instruction, a frame, the redacted frame, a machine-learning model having image-understanding capability, a navigation record, a subsequent step | claim 19 (guiding) | 19 | OK |
+| at least one generalized fact, existing entries, normalized comparison, fact text | claim 19 (appending) | 19 | OK |
+| an outcome, a count of the steps | claim 19 (marking) | 19 | OK |
+| a later task descriptor, earlier task descriptors | claim 19 (repeating) | 19 | OK |
+| a deterministic gate, a label, a title, distinct real task descriptors, a threshold, an advisory indication | claim 20 | 20 | OK |
+
+Items the practitioner may wish to revisit: (a) claim 1 recites "the first navigation record" nowhere; claim 7 uses "the first navigation record that identifies" as an ordinal description of an event, not as a reference to a previously introduced element, which is a common form but may be reworded as "the earliest navigation record"; (b) claim 6 and claim 8 use "at least one of" and "or" lists, which the practitioner may convert to separate dependent claims if claim count allows; (c) claim 14 recites the single instruction being "annotated ... or ... replaced", an alternative that the practitioner may wish to split; (d) claim 19 uses both "done-state" (the per-task field) and "done state" (the task state); see the table above.
+
+## Drafting notes on code support (not filed)
 
 Reduction-to-practice legend: RTP = shipped and exercised by a server route; RTP-partial = the module exists and is unit-tested but one leg is not called from a route; constructive = the specification carries it and the inventor confirms conception. Server files are under `server/` of the WorkCoPilot repository.
 
-1. Claim 12 (streaming rehydration). The specification enables streaming rehydration at paragraph [0052] (tail buffer across chunk boundaries). The shipped rehydration operates on whole strings only. Before filing, either implement the streaming path or confirm with the inventor that the specification's description is sufficient as a constructive reduction to practice and that the inventor possessed the embodiment; do not represent it as working.
-2. Claim 18 (lock release). The specification enables the lock-release operation at paragraph [0059]. The shipped code checks only a client-supplied flag and does not perform higher-privilege re-authentication or write an audit entry. Same choice as for claim 12: implement, or rely on constructive reduction to practice with the inventor's confirmation. Expect a §103 challenge over Microsoft US 11,368,361 B2 and Oracle US 2015/0082372 A1; the claim is kept dependent on the full claim 17 combination.
-3. Claim 17 limb (instruction-shaping rule set). Confirm against the policy-rules code that the rule set is compiled from the same policy object and versioned with it; the synthesis records this as partially implemented.
-4. Claim 9 and the Appendix claim A4. The shipped clarification mechanism implements screen-derived options, free text, skip, undo and the free re-plan path; the server-side discard of a question whose answer appears in recognized frame text (paragraph [0066], second sentence) is described as "in some embodiments" and is not confirmed in code.
-5. Claim 7, downstream use of the discrepancy indication. Recording in the session record is supported; supplying the indication to re-planning or to template supersession is an embodiment. The claim uses "at least one of" so that the recorded form is enough.
-6. Claims 19 and 20. The synthesis marks server re-application (19) and the audit schema and purge (20) as "confirm"; the retention purge and audit log are described in the feature inventory as implemented, and the hash-chained audit log is implemented.
-7. Claim 10 (watch-loop tolerance). RTP. `store.js` exports VISION_EMPTY_TOLERANCE (value 2), bumpVisionEmptyStreak and resetVisionEmptyStreak (per-session consecutive counter persisted on the work session); the `/api/work/sessions/:id/watch` handler in `index.js` computes escalateOk from the manual deep flag or the streak having reached the tolerance, passes the strong backup to work.workNavigate only when escalateOk is true, and bumps or resets the streak from whether the returned record has guidance or observation text; `work.js` escalateVision performs the one-call re-submission and reports the escalation, which the handler meters and audits. The claim recites the consecutive-streak mechanism the code implements; the sliding window of paragraph [0110] is specification support only and is not claimed. The audit of every frame regardless of escalation is the existing appendWorkAudit call in the same handler.
-8. Claim 22, 28 and 29 (project engine). RTP for the map planner (`work_project_plan.js` planProjectMap, invoked by POST `/api/work/projects` in `work_project_routes.js`), the task-descriptor model and state machine (`work_project.js` newProject, newTask, canTransitionTask, dependenciesMet, nextActionableTask, availableTasks, isProjectDone, deriveProjectState, appendLearning), the store (`store.js` createWorkProject with index-to-identifier dependency remapping, setWorkProjectTaskState, linkWorkProjectTaskSession, nextWorkProjectTask, availableWorkProjectTasks), the just-in-time expansion seeded from the ledger (POST `/api/work/projects/:id/tasks/:taskId/expand`, which renders the ledger into the planning prompt and reuses work.workPlan, then creates and links the guided session), the ledger write at expansion (the same route appends plan.learning through store.appendWorkProjectLearning), and task completion (`/api/work/sessions/:id/finalize` in `index.js` calls store.completeProjectTaskForSession, which marks the task done, records outcome and telemetry through recordWorkProjectTaskOutcome, and appends any learning passed to it; commit 40fde01). Two legs are specification-supported rather than shipped: (a) the ledger write at completion from facts confirmed during the session (completeProjectTaskForSession accepts a learning argument, but the finalize route passes outcome and telemetry only, so today the ledger is fed by the planning-time learning); and (b) verification of the project end-state from a frame at project completion (isProjectDone requires only that every task is done; the end-state is carried into the report). The independent claims therefore recite the appending as "derived from the obtaining of the ordered plan of steps or from the guiding" (the first alternative is RTP) and the marking as "upon completion of the guiding" (RTP); the final limb "and the project end-state is shown satisfied" is constructive and is enabled at paragraph [0097]. If counsel prefers a strictly RTP independent claim, delete that final limb and move it to a dependent.
-9. Claim 23 (breakdown gate). RTP. `work_project_validate.js` isRealTask, shouldBeProject (distinct real count at least two after normalized-label collapse), validateBreakdown (filler, duplicate, unknown dependency, cycle by three-color depth-first search with cycle members named, empty end-state; checks run in full) and softHintTooBig (advisory only, threshold twenty); both shouldBeProject and validateBreakdown are called by POST `/api/work/projects` before store.createWorkProject, and a failing map returns the single-task fork with suggestedGoal.
-10. Claim 24 (mid-project injection). RTP. `work_project_inject.js` tokenize, jaccard, findSimilarTask (threshold 0.6 against the better of goal and title) and placeInjectedTask (before-blocker with carried upstream dependencies and the blocker gated on the new task; after the latest named dependency; frontier append; cycle probe by depth-first search with fallback to append and cycleAvoided notice; orders renumbered; inputs not mutated); `store.js` injectWorkProjectTask calls both and persists; route POST `/api/work/projects/:id/inject`. The claim's "presented to the human performer" reads on the route returning the placed descriptor with its notice to the client.
-11. Claim 25 (done-state as verification target). Constructive. The expand route creates the guided session from the task goal and does not pass the done-state to work.workNavigate; the second ledger write path (facts confirmed during the session, including the discrepancy indication) is enabled at paragraph [0095] and supported by completeProjectTaskForSession accepting a learning argument, but no route passes one today. The inventor confirms conception before signing; implement before filing if an RTP dependent is preferred.
-12. Claim 26 (project reports). RTP. `work_project_report.js` buildProjectReport produces the success, security and issues kinds from the project and its task sessions (done steps with their validate text under the end-state and checks; destructive steps with destructiveWhy and flag events; incomplete tasks with flags); route POST `/api/work/projects/:id/report`. Rendering in the unified report style and the evidence-setting gate follow the existing session-report path and are confirmed by inspection of that path rather than of this module.
-13. Claim 27 (guidance depth). RTP. `guidance_depth.js` normalizeDepth, clampDepth, resolveGuidanceDepth (company member: pool depth clamped to the company ceiling, unset pool defaults to the ceiling; individual: premium is deep) and canUseProjects; `store.js` effectiveGuidanceDepth, setCompanyGuidanceDepth, setCompanyPoolDepth and canUseWorkProjects; every project route is gated by denyIfNotDeep in `work_project_routes.js`, which returns the upgrade-or-shorten response. Weak on its own (entitlement clamping is routine); kept as a dependent only, per the candidates review.
-14. Paragraph [0101] (deepened planning) and paragraph [0079] (backbone directive). Specification support only; no claim recites them. The critique pass with the monotone acceptance rule is `work.js` workPlan (deepWorthy, PLAN_CRITIQUE_DIRECTIVE, acceptance only when the hardened plan is not a refusal and has at least as many steps as the draft; telemetry critiqued and deepened). The backbone directive is the shipped form of the serving-tier adaptation pass (`index.js` /plan with work.pickWorkflowTemplate; commit dbc7efa), which is why Appendix claim A1 now recites the backbone directive as an alternative form of the adaptation pass.
+1. Claim 15 (lock release). The specification enables the lock-release operation at paragraph [0059]. The shipped code checks only a client-supplied flag and does not perform higher-privilege re-authentication or write an audit entry. Before filing, either implement the re-authentication path or rely on constructive reduction to practice with the inventor's confirmation; do not represent it as working. Expect a §103 challenge over Microsoft US 11,368,361 B2 and Oracle US 2015/0082372 A1; the claim is kept dependent on the full claim 14 combination.
+2. Claim 14 limb (instruction-shaping rule set). Confirm against the policy-rules code that the rule set is compiled from the same policy object and versioned with it; the synthesis records this as partially implemented.
+3. Claim 8 and the Appendix claim A4. The shipped clarification mechanism implements screen-derived options, free text, skip, undo and the free re-plan path; the server-side discard of a question whose answer appears in recognized frame text (paragraph [0066], second sentence) is described as "in some embodiments" and is not confirmed in code.
+4. Claim 6, downstream use of the discrepancy indication. Recording in the session record is supported; supplying the indication to re-planning or to template supersession is an embodiment. The claim uses "at least one of" so that the recorded form is enough.
+5. Claims 16 and 17. The synthesis marks server re-application (claim 16) and the audit schema and purge (claim 17) as "confirm"; the retention purge and audit log are described in the feature inventory as implemented, and the hash-chained audit log is implemented.
+6. Claim 19 (project engine). RTP for the map planner (`work_project_plan.js` planProjectMap, invoked by POST `/api/work/projects` in `work_project_routes.js`), the task-descriptor model and state machine (`work_project.js` newProject, newTask, canTransitionTask, dependenciesMet, nextActionableTask, availableTasks, isProjectDone, deriveProjectState, appendLearning), the store (`store.js` createWorkProject with index-to-identifier dependency remapping, setWorkProjectTaskState, linkWorkProjectTaskSession, nextWorkProjectTask, availableWorkProjectTasks), the just-in-time expansion seeded from the ledger (POST `/api/work/projects/:id/tasks/:taskId/expand`, which renders the ledger into the planning prompt and reuses work.workPlan, then creates and links the guided session), the ledger write at expansion (the same route appends plan.learning through store.appendWorkProjectLearning), and task completion (`/api/work/sessions/:id/finalize` in `index.js` calls store.completeProjectTaskForSession, which marks the task done, records outcome and telemetry through recordWorkProjectTaskOutcome, and appends any learning passed to it; commit 40fde01). Two legs are specification-supported rather than shipped: (a) the ledger write at completion from facts confirmed during the session (completeProjectTaskForSession accepts a learning argument, but the finalize route passes outcome and telemetry only, so today the ledger is fed by the planning-time learning); and (b) verification of the project end-state from a frame at project completion (isProjectDone requires only that every task is done; the end-state is carried into the report). The independent claim 19 therefore recites the appending as "derived from the obtaining of the ordered plan of steps or from the guiding" (the first alternative is RTP) and the marking as "upon completion of the guiding" (RTP); the final limb "and the project end-state is shown satisfied" is constructive and is enabled at paragraph [0097]. If counsel prefers a strictly RTP independent claim, delete that final limb and move it to a dependent.
+7. Claim 20 (breakdown gate). RTP. `work_project_validate.js` isRealTask, shouldBeProject (distinct real count at least two after normalized-label collapse), validateBreakdown (filler, duplicate, unknown dependency, cycle by three-color depth-first search with cycle members named, empty end-state; checks run in full) and softHintTooBig (advisory only, threshold twenty); both shouldBeProject and validateBreakdown are called by POST `/api/work/projects` before store.createWorkProject, and a failing map returns the single-task fork with suggestedGoal.
+8. Paragraph [0101] (deepened planning) and paragraph [0079] (backbone directive). Specification support only; no claim recites them. The critique pass with the monotone acceptance rule is `work.js` workPlan (deepWorthy, PLAN_CRITIQUE_DIRECTIVE, acceptance only when the hardened plan is not a refusal and has at least as many steps as the draft; telemetry critiqued and deepened). The backbone directive is the shipped form of the serving-tier adaptation pass (`index.js` /plan with work.pickWorkflowTemplate; commit dbc7efa), which is why Appendix claim A1 now recites the backbone directive as an alternative form of the adaptation pass.
+9. Removed claims (continuation or divisional candidates). The 2026-10-28 trim removed nine claims whose subject matter the specification and drawings still support, so each remains available for a later continuation or divisional: the former claim 2 (observation-and-flag corrective refinement, specification [0037] to [0038]); the former claim 10 (watch-loop transient-unreadable-frame tolerance, RTP, specification [0108] to [0111], FIG. 13); the former claim 12 (streaming rehydration, constructive, specification [0052]); and the former claims 24 to 29 of the project engine, namely mid-project task injection (RTP, `work_project_inject.js`, specification [0105] to [0107], FIG. 12), done-state as task-level verification target (constructive, specification [0094] to [0095]), project reports (RTP, `work_project_report.js`, specification [0098]), the guidance-depth entitlement (RTP but graded weakest and §101-exposed, specification [0100]), and the system and medium parallels of the project-engine method (specification [0090] to [0097], module names at [0091] to [0096]). The project-engine removals are noted in Appendix A as continuation or divisional candidates. The deposited specification retains every supporting paragraph and figure, so no new matter is needed to present any of these claims later.
 
 ---
 
 ## Appendix: Additional candidate independent claims for restriction, divisional or continuation (not part of the lead set)
 
 > These four claims are drafted from `05-novelty-synthesis-and-claims-v2.md` §2 (IDs II-1, II-2, III-1 and IV-1). If filed in the same application they would raise the independent-claim count and the total further, incurring additional excess-claim fees and a probable restriction requirement; counsel decides whether to add them now, hold them for a divisional, or file them in a continuation. Claims A1 and A2 (Invention II) describe an arrangement that is built, unit-tested and, since 2026-10-27 (commit dbc7efa), wired into the plan and finalize routes of the server, so that it is reduced to practice; the specification (file 10, paragraphs [0072] to [0081]) enables it. Terms are self-contained within each appendix claim.
+>
+> Also available for a continuation or divisional are the project-engine claims removed in the 2026-10-28 trim: the system and medium parallels of the project-engine method (former claims 28 and 29, which claimed the same invention as the project-engine method, now claim 19, in the system and computer-readable-medium classes), and the project-engine dependents for mid-project task injection (former claim 24), done-state as the task-level verification target (former claim 25), project reports (former claim 26) and the guidance-depth entitlement (former claim 27). The specification paragraphs [0090] to [0112] and FIG. 10 to FIG. 13 support them, and Appendix B drafting note 9 records their reduction-to-practice status. They were removed from the lead set only to hold the 20-claim count and to avoid repeating one invention across statutory classes in a single application; a practitioner may present any of them in a later filing drawn from the same deposited disclosure.
 
 **A1 (II-1, method).** A computer-implemented method of generating a guidance plan for a human performer, comprising:
 

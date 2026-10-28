@@ -13,16 +13,16 @@ The dollar amounts below are the small entity amounts of the USPTO fee schedule 
 | Basic filing fee, utility, filed electronically (1.16(a)) | One application, filed through Patent Center | 70 | The small entity electronic-filing rate; the small entity paper rate is 140 and the undiscounted rate is 350. Verify current USPTO fee schedule at filing. |
 | Utility search fee (1.16(k)) | One application | 308 | Undiscounted 770. Verify current USPTO fee schedule at filing. |
 | Utility examination fee (1.16(o)) | One application | 352 | Undiscounted 880. Verify current USPTO fee schedule at filing. |
-| Each claim in excess of 20 (1.16(i)) | 29 claims filed, 9 in excess | 720 (9 at 80 each) | Undiscounted 200 each. Verify current USPTO fee schedule at filing. |
-| Each independent claim in excess of 3 (1.16(h)) | 6 independent claims filed (claims 1, 11, 17, 22, 28 and 29), 3 in excess | 720 (3 at 240 each) | Undiscounted 600 each. Verify current USPTO fee schedule at filing. |
-| Subtotal, fees due at filing | | 2,170 | Of which 1,440 is excess-claim fees. Verify current USPTO fee schedule at filing. |
+| Each claim in excess of 20 (1.16(i)) | 20 claims filed, none in excess | 0 | Undiscounted 200 each. Verify current USPTO fee schedule at filing. |
+| Each independent claim in excess of 3 (1.16(h)) | 4 independent claims filed (claims 1, 9, 14 and 19), 1 in excess | 240 (1 at 240) | Undiscounted 600 each. Verify current USPTO fee schedule at filing. |
+| Subtotal, fees due at filing | | 970 | Of which 240 is excess-claim fees (the single excess independent claim). Verify current USPTO fee schedule at filing. |
 
 ## 2. Conditional fees, each avoided or zero as filed
 
 | Fee (37 CFR) | Basis in this application | Small entity amount (USD) | Amount due as filed |
 |---|---|---|---|
 | Multiple dependent claim (1.16(j)) | None filed; every dependent claim refers to a single claim | not applicable | 0 |
-| Application size fee, each additional 50 sheets over 100 (1.16(s)) | Specification, claims and abstract render to 42 pages, plus 13 drawing sheets, 55 sheets in all, under 100 | not reached | 0 |
+| Application size fee, each additional 50 sheets over 100 (1.16(s)) | Specification, claims and abstract render to 37 pages, plus 13 drawing sheets, 50 sheets in all, under 100 | not reached | 0 |
 | Non-DOCX filing surcharge (1.16(u)) | Specification, claims and abstract are uploaded as DOCX (editable/application-body.docx), so the surcharge does not apply; it would apply if they were uploaded as PDF | 172 | 0 |
 | Surcharge for late filing fee or late oath or declaration (1.16(f)) | Filing fees paid and the signed declaration uploaded in the same submission | 68 | 0 |
 | Information Disclosure Statement fee (1.17(p)) | IDS filed with the application, within the three-month window of 37 CFR 1.97(b) | 112 | 0 |
@@ -33,18 +33,18 @@ Every amount in this table: verify current USPTO fee schedule at filing.
 
 | | USD |
 |---|---|
-| Total due at filing, small entity, as filed (29 claims, 6 independent) | 2,170 |
-| Total if trimmed to 20 claims and 3 independent claims before filing | 730 |
+| Total due at filing, small entity, as filed (20 claims, 4 independent) | 970 |
+| Total if the fourth independent claim were also dropped (20 claims, 3 independent) | 730 |
 
-Verify current USPTO fee schedule at filing. If Patent Center shows a different total, stop and find the cause before paying: the usual causes are the entity status not set to small, the specification uploaded as PDF instead of DOCX (surcharge), or a claim count in the uploaded DOCX that differs from 29 claims with 6 independent claims.
+Verify current USPTO fee schedule at filing. If Patent Center shows a different total, stop and find the cause before paying: the usual causes are the entity status not set to small, the specification uploaded as PDF instead of DOCX (surcharge), or a claim count in the uploaded DOCX that differs from 20 claims with 4 independent claims.
 
-## 4. Trimming to avoid excess-claim fees
+## 4. The one excess-claim fee, and how to remove it
 
-The claim set carries the 2026-10-27 project-engine claims (22 to 29) and the watch-loop tolerance (claim 10) in the same application so that every claim has the same effective filing date (see README-WHAT-IS-WHAT.md). The excess-claim fees are the cost of that choice. If the inventor or a practitioner prefers to file at the 20-claim, 3-independent level, the candidates for removal are the system and medium parallels of the project engine (claims 28 and 29, which repeat claim 22 in a different statutory class), the depth dependent (claim 27, graded weakest in the candidates review), and dependents that can be folded or held for a continuation. Removing six claims including claims 28 and 29 brings the set to 23 claims and 4 independent claims (240 USD excess claims plus 240 USD for one excess independent claim); removing nine claims including claims 28 and 29 and one of the three original independent groups is not recommended. The specification supports every claim either way, so a continuation can present any removed claim later.
+The set was trimmed on 2026-10-28 from 29 claims to 20, which removes the excess-claim fee on claims over 20 entirely. It keeps four independent claims (1, 9, 14 and 19), one above the three that file without fee, so a single excess-independent-claim fee of 240 USD remains. The fourth independent claim is claim 19, the project-engine method, kept for its value. To file at zero excess-claim fees, drop claim 19 and its one dependent (claim 20, the deterministic breakdown gate), which brings the set to 18 claims and 3 independent claims and removes the 240 USD fee; the project-engine subject matter is then held for a continuation or divisional, which the specification (paragraphs [0090] to [0112]) and FIG. 10 to FIG. 13 fully support. The dropped claims of the 2026-10-28 trim (the former claims 24 to 29 of the project engine, the watch-loop tolerance and two original dependents) likewise remain available for a later filing from the same deposited disclosure; see claims.md Appendix A and Appendix B drafting note 9.
 
 ## 5. If the Appendix A claims were added
 
-Not recommended at filing; shown so the cost is known. Adding the four candidate independent claims of claims.md Appendix A to the 29-claim set would make 33 claims with 10 independent claims.
+Not recommended at filing; shown so the cost is known. Adding the four candidate independent claims of claims.md Appendix A to the 20-claim set would make 24 claims with 8 independent claims.
 
 | Fee (37 CFR) | Count added | Small entity amount (USD) | Added cost |
 |---|---|---|---|

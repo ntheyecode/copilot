@@ -2,7 +2,7 @@ Prepared for Ravi Kiran Raju Yerra. Attorney review recommended before filing. N
 
 # Filing instructions: provisional application (35 U.S.C. 111(b))
 
-This package files a provisional application. A provisional application establishes a filing date for everything it discloses, costs little, is never examined and never published on its own, and expires twelve months after filing. Within those twelve months the nonprovisional application in patent-package/final/utility-with-priority is filed and claims this provisional's filing date for every claim the provisional supports. The provisional's specification is the same text as the nonprovisional's specification, with claims 1 to 29 and the abstract included, so the support is complete.
+This package files a provisional application. A provisional application establishes a filing date for everything it discloses, costs little, is never examined and never published on its own, and expires twelve months after filing. Within those twelve months the nonprovisional application in patent-package/final/utility-with-priority is filed and claims this provisional's filing date for every claim the provisional supports. The provisional's specification is the same text as the nonprovisional's specification, with claims 1 to 20 and the abstract included, so the support is complete.
 
 Applicant and filer: Ravi Kiran Raju Yerra, sole inventor, filing pro se (no attorney, no customer number), small entity. Correspondence: 604 Wexford Dr, Celina, TX 75009, USA; yerraslife@gmail.com; +1-408-718-4217.
 
@@ -10,7 +10,7 @@ Applicant and filer: Ravi Kiran Raju Yerra, sole inventor, filing pro se (no att
 
 | File | What it is | Goes to the USPTO? |
 |---|---|---|
-| specification.md and editable/specification.docx | Provisional specification: title page, the full specification (paragraphs [0001] to [0112]), claims 1 to 29 and the abstract | Yes |
+| specification.md and editable/specification.docx | Provisional specification: title page, the full specification (paragraphs [0001] to [0112]), claims 1 to 20 and the abstract | Yes |
 | drawings/drawings.pdf | FIG. 1 to FIG. 13, thirteen US-Letter sheets (editable FIG-1.svg to FIG-13.svg alongside; FIG. 8A and FIG. 8B share one sheet) | Yes |
 | provisional-cover-sheet.md | Every entry for PTO/SB/16 | Yes, as the completed PTO/SB/16 (or the provisional web ADS) |
 | fee-worksheet.md | The small entity provisional filing fee | No; used to check the Patent Center fee screen |

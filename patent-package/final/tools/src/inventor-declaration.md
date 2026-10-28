@@ -35,11 +35,11 @@ The form also prints a warning that petitioners and applicants are cautioned to 
 
 ## 3. What the inventor confirms before signing (37 CFR 1.63(c))
 
-Before signing, Ravi Kiran Raju Yerra reviews and understands the contents of the application as it will be filed: specification.md (the specification, paragraphs [0001] to [0112]), claims.md (claims 1 to 29; the appendices are not filed), abstract.md and drawings/drawings.pdf (FIG. 1 to FIG. 13). The inventor also acknowledges the duty to disclose to the USPTO all information known to be material to patentability as defined in 37 CFR 1.56; the references known at filing are listed in ids-and-references.md.
+Before signing, Ravi Kiran Raju Yerra reviews and understands the contents of the application as it will be filed: specification.md (the specification, paragraphs [0001] to [0112]), claims.md (claims 1 to 20; the appendices are not filed), abstract.md and drawings/drawings.pdf (FIG. 1 to FIG. 13). The inventor also acknowledges the duty to disclose to the USPTO all information known to be material to patentability as defined in 37 CFR 1.56; the references known at filing are listed in ids-and-references.md.
 
 Inventorship, confirmed from the applicant intake:
 
-1. Ravi Kiran Raju Yerra is the sole inventor. He alone conceived the subject matter of every claim, including the claims that recite embodiments described in the specification as "in some embodiments" or "in one embodiment" (among them claim 25 and the end-state verification limb of claims 22, 28 and 29; Appendix B of claims.md lists which legs are shipped and which are described only).
+1. Ravi Kiran Raju Yerra is the sole inventor. He alone conceived the subject matter of every claim, including the claims that recite embodiments described in the specification as "in some embodiments" or "in one embodiment" (among them the completion-time ledger write and the end-state verification limb of claim 19, and the lock-release limb of claim 15; Appendix B of claims.md lists which legs are shipped and which are described only).
 2. No other person contributed to the conception of any claim. Persons who may have assisted with implementation, testing or project management, and software tools used in drafting, are not inventors. Under the USPTO's guidance on inventorship for inventions developed with the assistance of artificial intelligence (Federal Register, February 13, 2024, and any superseding guidance), only a natural person who made a significant contribution to conception is named; drafting assistance does not create inventorship.
 3. There is no assignee and no obligation to assign. The inventor is the applicant.
 

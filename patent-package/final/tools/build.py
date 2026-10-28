@@ -29,8 +29,8 @@ CROSSREF_PRIORITY = ("This application claims the benefit of U.S. Provisional Ap
 
 # Counts that every package document quotes; the sweep checks the same numbers.
 N_FIG_SHEETS = 13          # FIG. 1 to FIG. 13 (FIG. 8A and 8B share one sheet)
-N_CLAIMS = 29
-N_INDEPENDENT = 6
+N_CLAIMS = 20
+N_INDEPENDENT = 4
 LAST_PARA = "[0112]"
 
 PKG_UTIL = os.path.join(FINAL, "utility")

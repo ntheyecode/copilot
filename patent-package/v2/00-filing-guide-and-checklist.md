@@ -10,7 +10,7 @@ Inventor: Ravi Kiran Raju Yerra. Working title: SCREEN-AWARE, READ-ONLY TASK GUI
 |---|---|---|---|
 | 00 | `v2/00-filing-guide-and-checklist.md` | `v2/editable/00-filing-guide-and-checklist.docx` | This guide: contents, filing routes, official forms, fees, drawings, checklist, open decisions |
 | 10 | `v2/10-specification.md` | `v2/editable/10-specification.docx` | Full utility specification, 89 numbered paragraphs, FIG. 1 to FIG. 9, Inventions I to IV |
-| 20 | `v2/20-claims.md` | `v2/editable/20-claims.docx` | Lead set: 20 claims, 3 independent (1, 10, 16); support map; antecedent-basis check; drafting notes; Appendix of four additional candidate independent claims |
+| 20 | `v2/20-claims.md` | `v2/editable/20-claims.docx` | Lead set: 20 claims, 4 independent (1, 9, 14, 19) after the 2026-10-28 trim; support map; antecedent-basis check; drafting notes; Appendix of four additional candidate independent claims plus the dropped project-engine claims |
 | 30 | `v2/30-abstract.md` | `v2/editable/30-abstract.docx` | Abstract, 147 words |
 | 40 | `v2/40-drawings-description.md` | `v2/editable/40-drawings-description.docx` | Figure list and per-figure description for the draftsperson |
 | 50 | `v2/50-ids-references.md` | `v2/editable/50-ids-references.docx` | IDS reference list mapped to PTO/SB/08a and SB/08b, with a separate must-pull table |
@@ -45,7 +45,7 @@ A provisional filed with file 10 as its specification preserves the date for all
 
 ## 4. Fees: verify current fees at filing
 
-Fee amounts change by rule. Use the USPTO fee schedule on the day of filing and let Patent Center compute the total. For orientation only, the v1 package recorded the following from the USPTO fee schedule as read on 2026-10-25 (undiscounted / small / micro): basic utility filing fee 350 / 140 (70 electronic) / 70; search fee 770 / 308 / 154; examination fee 880 / 352 / 176; non-DOCX specification surcharge 430 / 172 / 86; each claim over 20: 200 / 80 / 40; each independent claim over 3: 600 / 240 / 120; late declaration surcharge 170 / 68 / 34; IDS fee outside the no-fee window 280 / 112 / 56. The maximum qualifying gross income for micro entity status recorded on 2026-10-25 was 262,380 USD (effective 2026-09-15). All of these are [verify at filing]. The lead claim set (20 claims, 3 independent) incurs no excess-claim fee; adding any Appendix claim from file 20 does.
+Fee amounts change by rule. Use the USPTO fee schedule on the day of filing and let Patent Center compute the total. For orientation only, the v1 package recorded the following from the USPTO fee schedule as read on 2026-10-25 (undiscounted / small / micro): basic utility filing fee 350 / 140 (70 electronic) / 70; search fee 770 / 308 / 154; examination fee 880 / 352 / 176; non-DOCX specification surcharge 430 / 172 / 86; each claim over 20: 200 / 80 / 40; each independent claim over 3: 600 / 240 / 120; late declaration surcharge 170 / 68 / 34; IDS fee outside the no-fee window 280 / 112 / 56. The maximum qualifying gross income for micro entity status recorded on 2026-10-25 was 262,380 USD (effective 2026-09-15). All of these are [verify at filing]. The lead claim set (20 claims, 4 independent) incurs one excess-independent-claim fee for the fourth independent claim and no claims-over-20 fee; adding any Appendix claim from file 20 adds more.
 
 Micro entity status (37 CFR 1.29, gross income basis) requires all of: small entity qualification; the inventor and applicant not named on more than four prior non-provisional U.S. applications; gross income of the inventor and of the applicant in the preceding calendar year not exceeding the maximum qualifying gross income; and no assignment, grant, conveyance or obligation to an entity exceeding that limit. [PLACEHOLDER: applicant to confirm each condition, or file as small entity]
 
@@ -84,7 +84,7 @@ In Patent Center:
 2. Enter the web ADS; the title must match the specification exactly.
 3. Upload the DOCX specification, claims and abstract; review the validation report and correct any flagged formatting.
 4. Upload drawings, declaration, entity certification, power of attorney.
-5. Select entity status; confirm the fee calculator shows no excess-claim fees for the lead set.
+5. Select entity status; confirm the fee calculator shows no claims-over-20 fee and a single excess-independent-claim fee for the lead set.
 6. Review, submit, pay; save the Electronic Acknowledgement Receipt and, later, the Filing Receipt; check both for errors in inventor name, title and entity status.
 7. Record any assignment in the Assignment Center against the new application number.
 8. Calendar: 12 months from filing for foreign or PCT filing claiming priority (and for the non-provisional if a provisional was filed); three months for a no-fee IDS; watch for a Notice to File Missing Parts.

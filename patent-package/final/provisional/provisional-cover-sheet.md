@@ -41,7 +41,7 @@ Screen-Aware, Read-Only Task Guidance with On-Device Redaction and Tenant-Govern
 | Form checkbox | Entry |
 |---|---|
 | Application Data Sheet (see 37 CFR 1.76) | Unchecked (this cover sheet carries the required data; a web ADS is used only if chosen instead of this form) |
-| Specification, number of pages | Checked. 42 pages (specification with claims and abstract, as rendered from editable/specification.docx; if the document is edited before filing, recount) |
+| Specification, number of pages | Checked. 37 pages (specification with claims and abstract, as rendered from editable/specification.docx; if the document is edited before filing, recount) |
 | Drawing(s), number of sheets | Checked. 13 sheets (drawings/drawings.pdf, FIG. 1 to FIG. 13; FIG. 8A and FIG. 8B share one sheet) |
 | CD(s), number | Unchecked. None. |
 | Other (specify) | Unchecked. None. |

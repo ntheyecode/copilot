@@ -30,8 +30,8 @@ ALLOWED_ENTER = {"[ENTER PROVISIONAL APPLICATION NUMBER FROM FILING RECEIPT]", "
 PATENT_NUM = re.compile(r"US\s?\d{1,2},?\d{3},?\d{3}\s?[AB]?\d?|US\s?\d{4}/\d{7}\s?A\d|arXiv\s?\d{4}\.\d{5}")
 # Counts that the package documents quote (kept in step with tools/build.py).
 N_FIG_SHEETS = 13
-N_CLAIMS = 29
-INDEPENDENT = ["1", "11", "17", "22", "28", "29"]
+N_CLAIMS = 20
+INDEPENDENT = ["1", "9", "14", "19"]
 LAST_PARA = 112          # paragraphs [0001] to [0112]
 NUMERAL_MAX = 1399       # reference numerals run 100 to 1399 (FIG. 1 to FIG. 13 series)
 

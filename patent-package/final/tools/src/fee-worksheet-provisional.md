@@ -41,7 +41,7 @@ Verify current USPTO fee schedule at filing.
 
 ## 5. What the provisional fee does not buy
 
-The provisional fee secures a filing date for twelve months. It does not count toward the nonprovisional fees: when the nonprovisional application claiming this provisional's benefit is filed within twelve months (patent-package/final/utility-with-priority), the basic filing, search, examination and excess-claim fees of that application are due in full at that time (see that package's fee-worksheet.md, 2,170 USD small entity as recorded for 29 claims with 6 independent claims, or 730 USD if trimmed to 20 claims with 3 independent claims; verify current USPTO fee schedule at filing).
+The provisional fee secures a filing date for twelve months. It does not count toward the nonprovisional fees: when the nonprovisional application claiming this provisional's benefit is filed within twelve months (patent-package/final/utility-with-priority), the basic filing, search, examination and excess-claim fees of that application are due in full at that time (see that package's fee-worksheet.md, 970 USD small entity as recorded for 20 claims with 4 independent claims, of which 240 USD is the one excess-independent-claim fee, or 730 USD if the fourth independent claim is also dropped; verify current USPTO fee schedule at filing).
 
 ## 6. How to pay
 
