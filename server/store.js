@@ -24,6 +24,7 @@ import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
+import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -5672,6 +5673,43 @@ export function setWorkForceWatchLight(on) {
 export function effectiveWatchMode(workUserId) {
   return (getWorkForceWatchLight() && workUserTier(workUserId) === 'premium') ? 'light' : 'full'
 }
+
+// ---- Guidance depth entitlement (Standard vs Deep / Projects) --------------
+// Resolves a user's effective depth: an individual by tier (Premium = deep), a
+// company member by the pool (allocGroup) assignment clamped to the superadmin
+// company ceiling. Pure logic lives in guidance_depth.js (one source, SUPREME II).
+function companyGuidanceCeiling(c) {
+  if (!c) return 'standard'
+  return c.guidanceDepth ? normalizeDepthId(c.guidanceDepth) : (c.plan === 'premium' ? 'deep' : 'standard')
+}
+export function effectiveGuidanceDepth(workUserId) {
+  const u = getUser(workUserId)
+  if (!u) return 'standard'
+  if (u.companyId) {
+    const c = _company(u.companyId)
+    const pool = (c && c.poolDepth && u.allocGroup) ? c.poolDepth[u.allocGroup] : null
+    return resolveGuidanceDepth({ isCompanyMember: true, companyCeiling: companyGuidanceCeiling(c), poolDepth: pool })
+  }
+  return resolveGuidanceDepth({ tier: workUserTier(workUserId) })
+}
+// Projects (Depth 2) gate for a user.
+export function canUseWorkProjects(workUserId) { return canUseProjectsPure(effectiveGuidanceDepth(workUserId)) }
+// Superadmin: set the company's depth ceiling (the grant the admin distributes within).
+export function setCompanyGuidanceDepth(companyId, depth) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  c.guidanceDepth = normalizeDepthId(depth); persist()
+  return companyGuidanceCeiling(c)
+}
+// Company admin: assign a pool's (allocGroup) depth, clamped to the ceiling so a pool
+// can never exceed the superadmin grant.
+export function setCompanyPoolDepth(companyId, poolKey, depth) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  c.poolDepth = c.poolDepth || {}
+  c.poolDepth[String(poolKey)] = clampDepth(depth, companyGuidanceCeiling(c)); persist()
+  return c.poolDepth[String(poolKey)]
+}
+export function getCompanyGuidanceDepth(companyId) { return companyGuidanceCeiling(_company(companyId)) }
+export function getCompanyPoolDepths(companyId) { const c = _company(companyId); return (c && c.poolDepth) ? { ...c.poolDepth } : {} }
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
