@@ -289,7 +289,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 .wka-btn.sm { height: 28px; padding: 0 11px; font-size: calc(12px * var(--wc-fs, 1)); }
 
 /* Collapsible rule rows (PolicyRules): a list of multi-field items that render as
-   compact one-line rows by default and expand on click to edit — the scannable
+   compact one-line rows by default and expand on click to edit, the scannable
    saved-card pattern. The severity accent is the left border; the head never wraps
    its controls (toggle/kind/sev/title/trash/chevron), only the title truncates. At
    phone width the citation drops to a muted second line so nothing overflows. */
@@ -318,7 +318,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 .wka-rule-body { padding: 12px 12px 14px; border-top: 1px solid var(--wka-line); }
 @media (max-width: 640px) {
   /* Collapse gracefully: let the head wrap and push the citation onto its own
-     muted second line, flush under the title — never a horizontal scrollbar. */
+     muted second line, flush under the title, never a horizontal scrollbar. */
   .wka-rule-head { flex-wrap: wrap; row-gap: 4px; }
   .wka-rule-cite { order: 10; flex-basis: 100%; max-width: 100%; padding-left: 24px; }
 }
