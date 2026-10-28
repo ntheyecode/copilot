@@ -1149,6 +1149,7 @@ function publicCompany(c) {
   return {
     id: c.id, name: c.name, plan: c.plan || 'basic', seats: seatCount(c.seats),
     seatsByTier: c.seatsByTier || null,
+    guidanceDepth: companyGuidanceCeiling(c),   // the depth ceiling, so the superadmin card can show the current grant
     logo: c.logo || null,     // white-label logo for the company dashboard
     adminSeats: seatCount(c.adminSeats, 2),
     licenseMode: LICENSE_MODES.includes(c.licenseMode) ? c.licenseMode : 'locked',
