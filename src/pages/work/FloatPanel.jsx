@@ -244,7 +244,9 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
               <Check size={24} strokeWidth={2.6} style={{ position: 'relative', zIndex: 1 }} />
             </span>
             <div style={{ fontFamily: DISPLAY, fontSize: fs(17), fontWeight: 800, letterSpacing: '-.01em', color: c.text, lineHeight: 1.2 }}>Task complete</div>
-            <div style={{ fontSize: fs(12.5), lineHeight: 1.5, color: c.muted, maxWidth: 320 }}>{doneN ? `All ${doneN} step${doneN === 1 ? '' : 's'} done.` : 'Nicely done.'} Your report is ready in the main window.</div>
+            {/* Honest count (same rule as the console's celebration card): "All N"
+                only when every step is done, else done-of-total. */}
+            <div style={{ fontSize: fs(12.5), lineHeight: 1.5, color: c.muted, maxWidth: 320 }}>{steps.length ? (doneN === steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : `${doneN} of ${steps.length} steps done.`) : 'Nicely done.'} Your report is ready in the main window.</div>
             {onStartAnother && <button className="fp-btn" style={{ ...primary, height: 38, padding: '0 18px', fontSize: 13, fontWeight: 700 }} onClick={onStartAnother} title="Start a new task"><Plus size={15} strokeWidth={2.6} /> Start another task</button>}
           </div>
               ) : current ? (

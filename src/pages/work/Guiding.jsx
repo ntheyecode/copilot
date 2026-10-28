@@ -2294,7 +2294,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             {celebrate && <div className="wc-confetti" aria-hidden="true">{confettiNodes(confettiPieces)}</div>}
             <div className="wc-cele-badge"><Check size={26} strokeWidth={2.6} /></div>
             <div className="wc-cele-title">Task complete</div>
-            <div className="wc-cele-sub">{steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : 'Nicely done.'} Your report and audit log are ready below.</div>
+            {/* Honest count: a session can end with steps not reached (the record
+                below says "5 of 6"), so "All N steps done" is only true when every
+                step is done; otherwise the same done-of-total the record shows. */}
+            <div className="wc-cele-sub">{steps.length ? (doneCount === steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : `${doneCount} of ${steps.length} steps done.`) : 'Nicely done.'} Your report and audit log are ready below.</div>
             <button type="button" className="wc-cele-btn" onClick={goHome} title="Start a new task"><Plus size={16} strokeWidth={2.6} /> Start another task</button>
           </div>
         )}
