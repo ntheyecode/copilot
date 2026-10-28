@@ -5918,7 +5918,13 @@ export function linkWorkProjectTaskSession(workUserId, projectId, taskId, sessio
 // company-scoped DATA operations over db.workProjects: every one checks the
 // acting user's companyRole + company before mutating, so segregation is
 // enforced server-side, not just hidden in the UI.
-function _companyProjects(companyId) { return (db.workProjects || []).filter((p) => p && p.companyId && String(p.companyId) === String(companyId) && p.state !== 'archived' && !p.isTemplate) }
+// Company-wide project views. EXCLUDES templates AND per-person template RUNS
+// (p.templateId): a Model-B run is one member's private copy, surfaced to
+// oversight ONLY through templateRollup (progress, never evidence). Including
+// runs here would leak tasks[].outcome/telemetry to Sr PM / GRC / admin via
+// listProjectsForUser - the Model-B privacy constraint. Runs stay visible to
+// their OWNER through listWorkProjects (workUserId-keyed), unaffected by this.
+function _companyProjects(companyId) { return (db.workProjects || []).filter((p) => p && p.companyId && String(p.companyId) === String(companyId) && p.state !== 'archived' && !p.isTemplate && !p.templateId) }
 function _findCompanyProject(companyId, projectId) { return _companyProjects(companyId).find((p) => p.id === projectId) || null }
 function _actor(userId) {
   const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
@@ -5940,7 +5946,7 @@ export function createCompanyProject(byUserId, { customerId = 'default', name, g
   if (String(mgr) !== String(a.id) && !roles.canAssignProjectManager(a.role)) throw httpErr(403, 'You cannot assign another manager.')
   const mu = getUser(mgr)
   if (!mu || String(mu.companyId) !== String(a.companyId) || !roles.isPM(mu.companyRole)) throw httpErr(400, 'The manager must be a project manager in your company.')
-  const p = createWorkProject(byUserId, { customerId, name, goal, endState, tasks, companyId: a.companyId, managerId: mgr })
+  const p = createWorkProject(byUserId, { customerId, name: _capName(name), goal: _capGoal(goal), endState, tasks, companyId: a.companyId, managerId: mgr })
   _logProjectEvent(a.companyId, { kind: 'project_created', by: a.id, projectId: p.id, managerId: mgr })
   return p
 }
@@ -5953,13 +5959,23 @@ export function createCompanyProject(byUserId, { customerId = 'default', name, g
 function _rawProjectById(projectId) { return (db.workProjects || []).find((p) => p && p.id === projectId) || null }
 function _canManageTemplates(role) { return roles.canCreateProject(role) }
 function _canViewTemplates(role) { return roles.isPM(role) || roles.isGRC(role) || roles.isCompanyAdmin(role) }
+// Cheap, side-effect-free probe so a route can gate on role BEFORE any expensive
+// AI planning call (a plain member / worker must never reach the planner and burn
+// the company's AI budget). Covers both managed-project and template creation
+// (both require canCreateProject = PM / Sr PM / company admin).
+export function userCanManageProjects(userId) { const u = getUser(userId); return !!(u && u.companyId && roles.canCreateProject(u.companyRole || 'member')) }
+// Bounds for a stored project/template name and goal (L6: unbounded payload).
+const PROJ_NAME_MAX = 160
+const PROJ_GOAL_MAX = 4000
+const _capName = (s) => String(s || '').slice(0, PROJ_NAME_MAX)
+const _capGoal = (s) => String(s || '').slice(0, PROJ_GOAL_MAX)
 
 // Create a template (a non-runnable project map) the company can assign out.
 export function createProjectTemplate(byUserId, { customerId = 'default', name, goal, endState = null, tasks = [] } = {}) {
   const a = _actor(byUserId)
   if (!a.companyId) throw httpErr(403, 'Only a company user can create a template.')
   if (!_canManageTemplates(a.role)) throw httpErr(403, 'You do not have permission to create templates.')
-  const p = createWorkProject(byUserId, { customerId, name, goal, endState, tasks, companyId: a.companyId, managerId: a.id })
+  const p = createWorkProject(byUserId, { customerId, name: _capName(name), goal: _capGoal(goal), endState, tasks, companyId: a.companyId, managerId: a.id })
   p.isTemplate = true; p.state = 'template'; persist()
   _logProjectEvent(a.companyId, { kind: 'template_created', by: a.id, projectId: p.id })
   return p

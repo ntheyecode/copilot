@@ -7,11 +7,16 @@
 import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
 
-export function registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError }) {
+export function registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError }) {
   // Create a template. Provide `tasks` directly, or a `goal` to have the map
   // planned and gated like any project. Gated to PM/admin in the store.
-  app.post('/api/work/templates', requireWorkAuth, async (req, res) => {
+  // requireWorkSubscription enforces the legal-consent/plan gate; the role is
+  // re-checked CHEAPLY here BEFORE any AI planning call so a plain member/worker
+  // cannot burn the company's AI budget and only get 403 afterwards (M2); the
+  // goal passes the OWASP-LLM input guard before it reaches the planner (M3).
+  app.post('/api/work/templates', requireWorkAuth, requireWorkSubscription, async (req, res) => {
     try {
+      if (!store.userCanManageProjects(req.workUser.id)) return res.status(403).json({ error: 'You do not have permission to create templates.' })
       const body = req.body || {}
       const given = Array.isArray(body.tasks) ? body.tasks : null
       const goal = String(body.goal || '').trim()
@@ -20,6 +25,7 @@ export function registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, wra
       let endState = body.endState || null
       let tasks = given
       if (!tasks) {
+        if (guardUserText && guardUserText(req, res, goal, 'goal') === 'refused') return
         const rr = await resolveWorkRuntime(req, res, { needVision: false }); if (!rr) return
         const bp = await bestPlanningCall(req, rr, false); const call = bp.call
         const map = await planProjectMap(ai, call.rt, { base: store.getSystemPrompt(), goal, strong: call.backup })

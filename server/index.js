@@ -3601,9 +3601,9 @@ registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, w
 registerKbSpaceRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
 registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkProjectRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
-registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
+registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale })
 registerWorkPracticeRoutes(app, { store, requireWorkAuth, wrap })
-registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
+registerTeamProjectRoutes(app, { store, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })

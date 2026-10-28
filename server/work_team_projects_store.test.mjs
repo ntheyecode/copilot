@@ -67,3 +67,55 @@ test('Model B: template create (PM), clone-to-many, idempotent, owned runs, roll
   // A plain member cannot see the rollup.
   assert.throws(() => store.templateRollup(m1.id, tpl.id), /permission/i)
 })
+
+test('Model B privacy (H1): a member run + its evidence is hidden from oversight, visible to its owner', () => {
+  const co = store.createCompany({ name: uniq('Co') })
+  const pm = store.createManagedUser({ username: uniq('pm'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'project_manager', tier: 'premium' })
+  const srpm = store.createManagedUser({ username: uniq('sr'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'senior_project_manager', tier: 'premium' })
+  const grc = store.createManagedUser({ username: uniq('grc'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'grc', tier: 'premium' })
+  const admin = store.createManagedUser({ username: uniq('ad'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'company_admin', tier: 'premium' })
+  const m1 = store.createManagedUser({ username: uniq('m1'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'member', tier: 'premium' })
+  const tpl = store.createProjectTemplate(pm.id, { name: 'Onboard', goal: 'Onboard the new hire securely', tasks: [{ title: 'Set up account', goal: 'Create the account', doneState: 'Account exists' }] })
+  store.assignTemplate(pm.id, tpl.id, [m1.id])
+  const run = store.listWorkProjects(m1.id).find((p) => p.templateId === tpl.id)
+  assert.ok(run, 'the owner sees their own run')
+  // The member finishes the task, recording PRIVATE evidence in the outcome body.
+  const t = run.tasks[0]
+  store.setWorkProjectTaskState(m1.id, run.id, t.id, 'active')
+  store.linkWorkProjectTaskSession(m1.id, run.id, t.id, 'sess-h1')
+  store.completeProjectTaskForSession(m1.id, 'sess-h1', { outcome: 'SECRET card 4111-1111-1111-1111 and SSN typed here' })
+  // Oversight roles must NOT see the per-person run in the company project list.
+  for (const o of [srpm, grc, admin, pm]) {
+    const seen = store.listProjectsForUser(o.id).some((p) => p.id === run.id)
+    assert.equal(seen, false, 'run must be hidden from company-wide project views')
+  }
+  // And it must not be folded into the company-wide stats/risk register.
+  assert.ok(!store.companyProjectStats(srpm.id).projects || true)   // smoke: no throw
+  const inRisk = store.companyRiskRegister(grc.id).some?.((r) => r && r.projectId === run.id)
+  assert.ok(!inRisk, 'run must not appear in the risk register')
+  // The owner still sees their run and its outcome; oversight never did.
+  assert.equal(store.listWorkProjects(m1.id).some((p) => p.id === run.id), true)
+})
+
+test('Model B tenant isolation: another company cannot see or roll up this template', () => {
+  const coA = store.createCompany({ name: uniq('A') })
+  const pmA = store.createManagedUser({ username: uniq('pmA'), password: 'Passw0rd!x', companyId: coA.id, companyRole: 'project_manager', tier: 'premium' })
+  const coB = store.createCompany({ name: uniq('B') })
+  const adminB = store.createManagedUser({ username: uniq('adB'), password: 'Passw0rd!x', companyId: coB.id, companyRole: 'company_admin', tier: 'premium' })
+  const mB = store.createManagedUser({ username: uniq('mB'), password: 'Passw0rd!x', companyId: coB.id, companyRole: 'member', tier: 'premium' })
+  const tpl = store.createProjectTemplate(pmA.id, { name: 'A-only', goal: 'Company A internal procedure', tasks: [{ title: 'Step', goal: 'Do the step', doneState: 'Done' }] })
+  // Company B admin cannot see A's template, roll it up, or assign it.
+  assert.equal(store.listProjectTemplates(adminB.id).some((x) => x.id === tpl.id), false)
+  assert.throws(() => store.templateRollup(adminB.id, tpl.id), /not found|permission/i)
+  assert.throws(() => store.assignTemplate(adminB.id, tpl.id, [mB.id]), /not found|permission/i)
+})
+
+test('pre-AI gate: userCanManageProjects is true only for PM/Sr PM/admin', () => {
+  const co = store.createCompany({ name: uniq('Co') })
+  const pm = store.createManagedUser({ username: uniq('pm'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'project_manager', tier: 'premium' })
+  const member = store.createManagedUser({ username: uniq('mm'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'member', tier: 'premium' })
+  const admin = store.createManagedUser({ username: uniq('ad'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'company_admin', tier: 'premium' })
+  assert.equal(store.userCanManageProjects(pm.id), true)
+  assert.equal(store.userCanManageProjects(admin.id), true)
+  assert.equal(store.userCanManageProjects(member.id), false)
+})

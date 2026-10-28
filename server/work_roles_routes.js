@@ -6,7 +6,7 @@
 import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
 
-export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
+export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, requireWorkSubscription, guardUserText, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
   // ---- PM / Sr PM / admin: projects ----
 
   // List the projects this user may see (PM: own; Sr PM / GRC / admin: all).
@@ -25,10 +25,14 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
   // Create a managed company project: plan the map (AI) -> zero-tolerance gate ->
   // persist as a company project the PM manages. A goal is required; a Sr PM may
   // pass a managerId to hand it to another PM.
-  app.post('/api/work/pm/projects', requireWorkAuth, async (req, res) => {
+  app.post('/api/work/pm/projects', requireWorkAuth, requireWorkSubscription, async (req, res) => {
     try {
+      // Cheap role gate BEFORE the AI plan call so a member/worker cannot burn
+      // the company's AI budget (M2); goal through the OWASP-LLM guard (M3).
+      if (!store.userCanManageProjects(req.workUser.id)) return res.status(403).json({ error: 'You do not have permission to create projects.' })
       const goal = String((req.body || {}).goal || '').trim()
       if (!goal) return res.status(400).json({ error: 'Say what the project should achieve.' })
+      if (guardUserText && guardUserText(req, res, goal, 'goal') === 'refused') return
       const rr = await resolveWorkRuntime(req, res, { needVision: false }); if (!rr) return
       const bp = await bestPlanningCall(req, rr, false); const call = bp.call
       const map = await planProjectMap(ai, call.rt, { base: store.getSystemPrompt(), goal, strong: call.backup })
@@ -81,7 +85,10 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
   // A worker expands THEIR assigned task into steps just-in-time (reuses workPlan,
   // grounded in the project ledger) and runs it as an ordinary guided session owned
   // by the worker. /finalize later closes the task via completeProjectTaskForSession.
-  app.post('/api/work/my/assigned/:projectId/:taskId/expand', requireWorkAuth, async (req, res) => {
+  // requireWorkSubscription: this is the worker-flow user's ONLY path to run work
+  // (they are 403'd from POST /api/work/sessions), so the legal-consent/plan gate
+  // that applies to every role must apply here too (M4).
+  app.post('/api/work/my/assigned/:projectId/:taskId/expand', requireWorkAuth, requireWorkSubscription, async (req, res) => {
     try {
       const ctx = store.getAssignedTaskForExpand(req.workUser.id, req.params.projectId, req.params.taskId)
       if (!ctx) return res.status(404).json({ error: 'That task is not assigned to you.' })
