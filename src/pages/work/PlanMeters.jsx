@@ -66,7 +66,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
   let hoursTile
   if (plan.isAdmin) {
     hoursTile = (
-      <div className="wd-pm-tile">
+      <div className="wd-pm-tile tint-green">
         <div className="wd-pm-top"><span className="wd-pm-ic"><Clock size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.hours.label')}</span><Tip id="wd-pm-tip-hours" label={info} text={t('workDashboard.meters.tipAdmin')} /></div>
         <div className="wd-pm-body"><div className="wd-pm-main"><div className="wd-pm-value">{t('workDashboard.meters.on')}</div><div className="wd-pm-sub"><CheckCircle2 size={13} />{t('workDashboard.meters.onSub')}</div></div></div>
       </div>
@@ -74,7 +74,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
   } else if (plan.hasPlan) {
     const pct = share(plan.left, Math.max(plan.included, plan.left))
     hoursTile = (
-      <div className={`wd-pm-tile ${tone === 'ok' ? '' : tone}`}>
+      <div className={`wd-pm-tile tint-green${tone === 'ok' ? '' : ' ' + tone}`}>
         <div className="wd-pm-top"><span className={`wd-pm-ic${tone === 'ok' ? '' : ' warm'}`}><Clock size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.hours.label')}</span>
           <Tip id="wd-pm-tip-hours" label={info} text={plan.carryForward ? t('workDashboard.meters.hours.tipCarry', { included: fmtHours(plan.included, units), date: renewLabel }) : t('workDashboard.meters.hours.tip', { included: fmtHours(plan.included, units), date: renewLabel })} /></div>
         <div className="wd-pm-body">
@@ -93,7 +93,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     // individuals never have a per-day hours allowance, dailySeconds is null).
     const pct = 1 - share(plan.usedToday, plan.dailySeconds)
     hoursTile = (
-      <div className={`wd-pm-tile ${tone === 'ok' ? '' : tone}`}>
+      <div className={`wd-pm-tile tint-green${tone === 'ok' ? '' : ' ' + tone}`}>
         <div className="wd-pm-top"><span className={`wd-pm-ic${tone === 'ok' ? '' : ' warm'}`}><Clock size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.allowance.label')}</span><Tip id="wd-pm-tip-hours" label={info} text={t('workDashboard.meters.allowance.tip')} /></div>
         <div className="wd-pm-body">
           <HoursRing pct={pct} tone={tone} size={56} stroke={6} />
@@ -109,7 +109,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     // Pool-based company member with no day ceiling: the shared pool is the meter.
     const pct = plan.pool ? share(plan.pool.remainingSeconds, plan.pool.monthlySeconds) : (plan.exhausted ? 0 : 1)
     hoursTile = (
-      <div className={`wd-pm-tile ${tone === 'ok' ? '' : tone}`}>
+      <div className={`wd-pm-tile tint-green${tone === 'ok' ? '' : ' ' + tone}`}>
         <div className="wd-pm-top"><span className={`wd-pm-ic${tone === 'ok' ? '' : ' warm'}`}><Building2 size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.pool.label')}</span><Tip id="wd-pm-tip-hours" label={info} text={t('workDashboard.meters.pool.tip')} /></div>
         <div className="wd-pm-body">
           <HoursRing pct={pct} tone={tone} size={56} stroke={6} />
@@ -127,7 +127,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
   let secondTile
   if (!plan.isCompany) {
     secondTile = (
-      <div className="wd-pm-tile">
+      <div className="wd-pm-tile tint-blue">
         <div className="wd-pm-top"><span className="wd-pm-ic"><Zap size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.topup.label')}</span><Tip id="wd-pm-tip-topup" label={info} text={t('workDashboard.meters.topup.tip')} /></div>
         <div className="wd-pm-body"><div className="wd-pm-main">
           <div className="wd-pm-value">{plan.topupSeconds > 0 ? fmtDuration(plan.topupSeconds, units, true) : t('workDashboard.meters.topup.none')}</div>
@@ -140,7 +140,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     const a = plan.allowance
     const aTone = a.remaining <= 0 ? 'out' : (a.remaining <= 15 * 60 ? 'low' : 'ok')
     secondTile = (
-      <div className={`wd-pm-tile ${aTone === 'ok' ? '' : aTone}`}>
+      <div className={`wd-pm-tile tint-blue${aTone === 'ok' ? '' : ' ' + aTone}`}>
         <div className="wd-pm-top"><span className={`wd-pm-ic${aTone === 'ok' ? ' alt' : ' warm'}`}><Building2 size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.allowance.label')}</span><Tip id="wd-pm-tip-allow" label={info} text={t('workDashboard.meters.allowance.tip')} /></div>
         <div className="wd-pm-body">
           <HoursRing pct={share(a.remaining, a.limit)} tone={aTone} size={56} stroke={6} />
@@ -157,7 +157,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     // the shared pool, so this tile reads today's own usage instead of
     // repeating the pool.
     secondTile = (
-      <div className="wd-pm-tile">
+      <div className="wd-pm-tile tint-blue">
         <div className="wd-pm-top"><span className="wd-pm-ic alt"><Clock size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.today.label')}</span><Tip id="wd-pm-tip-today" label={info} text={t('workDashboard.meters.today.tip')} /></div>
         <div className="wd-pm-body"><div className="wd-pm-main">
           <div className="wd-pm-value">{fmtDuration(plan.usedToday, units, true)}</div>
@@ -169,7 +169,7 @@ export default function PlanMeters({ plan, renewLabel, companyName, canBuy, canU
     // Seat-based company member with no ceiling: the shared company hours they
     // draw from after their plan hours (shown even when zero, honestly).
     secondTile = (
-      <div className="wd-pm-tile">
+      <div className="wd-pm-tile tint-blue">
         <div className="wd-pm-top"><span className="wd-pm-ic alt"><Building2 size={15} /></span><span className="wd-pm-label">{t('workDashboard.meters.pool.label')}</span><Tip id="wd-pm-tip-pool" label={info} text={t('workDashboard.meters.pool.tip')} /></div>
         <div className="wd-pm-body"><div className="wd-pm-main">
           <div className="wd-pm-value">{fmtDuration(plan.pool ? plan.pool.remainingSeconds : plan.companyPoolSeconds, units, true)}<small>{t('workDashboard.meters.hours.left')}</small></div>

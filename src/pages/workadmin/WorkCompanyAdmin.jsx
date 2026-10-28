@@ -20,7 +20,7 @@ import {
 import { api } from '../../api.js'
 import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
-import AccentPicker from '../../components/AccentPicker.jsx'
+import PreferencesPanel from '../../components/PreferencesPanel.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
 import UsageLimits from './sections/UsageLimits.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
@@ -1770,7 +1770,7 @@ function SettingsSection({ viewer, company, onProfile }) {
       <div className="wka-panel">
         <h2>{t('companyAdmin.settings.appearance')}</h2>
         <p className="desc">{t.rich('companyAdmin.settings.appearanceDesc')}</p>
-        <AccentPicker variant="wka" />
+        <PreferencesPanel variant="wka" />
       </div>
 
       <div className="wka-panel">

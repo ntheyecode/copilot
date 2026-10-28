@@ -129,6 +129,11 @@ export const api = {
   workLogout: () => req('POST', '/api/work/logout'),
   workSetProfile: (body) => req('POST', '/api/work/profile', body || {}),
   workSetAccent: (accent) => req('POST', '/api/work/profile/accent', { accent }),
+  // Per-user preferences patch (src/theme/prefs.js): { accent?: <combination key>|null,
+  // themeMode?: 'light'|'dark'|'heavy', a11y?: { textSize?, reducedMotion?, highContrast?,
+  // largerTargets?, readableFont? } } -> { prefs }. The client works from localStorage
+  // when this endpoint is unavailable.
+  workSetPrefs: (patch) => req('POST', '/api/work/profile/prefs', { prefs: patch || {} }),
   // AI readiness (platform-allowed or own tested key, must have a vision model)
   workAi: () => req('GET', '/api/work/ai'),
   workAiKey: (body) => req('POST', '/api/work/ai/key', body || {}),

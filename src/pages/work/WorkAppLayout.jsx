@@ -8,10 +8,12 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal } from 'lucide-react'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
 import LanguagePinModal from '../../components/LanguagePinModal.jsx'
+import PreferencesPanel from '../../components/PreferencesPanel.jsx'
+import { setInProduct } from '../../theme/prefs.js'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import { readBuddyPref } from '../../components/AliveBuddy.jsx'
 import { useLocale, useT } from '../../i18n/index.jsx'
@@ -181,6 +183,11 @@ export default function WorkAppLayout() {
   // Top-bar controls
   const [railOpen, setRailOpen] = useState(true)
   const [showBuy, setShowBuy] = useState(false)
+  // Per-user Preferences (theme mode, brand colors, accessibility): a modal
+  // opened from the rail foot. The user's saved theme mode paints only while
+  // this product shell is mounted (the public site stays light).
+  const [prefsOpen, setPrefsOpen] = useState(false)
+  useEffect(() => { setInProduct(true); return () => setInProduct(false) }, [])
   // Buy top-up hours or an image bundle: a small quantity + price modal.
   const [buyErr, setBuyErr] = useState('')
   const [buyModal, setBuyModal] = useState(null)   // { kind: 'hours' | 'images' } | null
@@ -423,12 +430,11 @@ export default function WorkAppLayout() {
               <a className="wd-nav" href="/work/company" title={t('workShell.nav.team')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.team')}</span></a>
             )}
           </nav>
-          {(isExecutive || isAdmin) && (
-            <div className="wd-rail-foot">
-              {isExecutive && <a className="wd-nav foot" href="/work/exec" title={t('workShell.nav.exec')}><BarChart3 size={18} /> <span className="wd-nav-t">{t('workShell.nav.exec')}</span></a>}
-              {isAdmin && <a className="wd-nav foot" href="/work/admin" title={t('workShell.nav.admin')}><Settings size={18} /> <span className="wd-nav-t">{t('workShell.nav.admin')}</span></a>}
-            </div>
-          )}
+          <div className="wd-rail-foot">
+            {isExecutive && <a className="wd-nav foot" href="/work/exec" title={t('workShell.nav.exec')}><BarChart3 size={18} /> <span className="wd-nav-t">{t('workShell.nav.exec')}</span></a>}
+            {isAdmin && <a className="wd-nav foot" href="/work/admin" title={t('workShell.nav.admin')}><Settings size={18} /> <span className="wd-nav-t">{t('workShell.nav.admin')}</span></a>}
+            <button type="button" className={`wd-nav foot${prefsOpen ? ' on' : ''}`} onClick={() => setPrefsOpen(true)} title={t('prefs.open')} aria-haspopup="dialog" aria-expanded={prefsOpen}><SlidersHorizontal size={18} /> <span className="wd-nav-t">{t('prefs.open')}</span></button>
+          </div>
         </aside>
 
         <div className="wd-main-col">
@@ -469,6 +475,20 @@ export default function WorkAppLayout() {
         </div>
       </div>
 
+      {prefsOpen && (
+        <div className="wd-modal-ov" onClick={() => setPrefsOpen(false)}>
+          <div className="wd-modal wd-prefs" role="dialog" aria-modal="true" aria-labelledby="wd-prefs-title" onClick={(e) => e.stopPropagation()}>
+            <div className="wd-prefs-head">
+              <div>
+                <h3 id="wd-prefs-title"><SlidersHorizontal size={17} /> {t('prefs.title')}</h3>
+                <p>{t('prefs.sub')}</p>
+              </div>
+              <button type="button" className="wd-prefs-x" onClick={() => setPrefsOpen(false)} aria-label={t('prefs.close')} title={t('prefs.close')}><X size={16} /></button>
+            </div>
+            <div className="wd-prefs-body"><PreferencesPanel variant="wd" /></div>
+          </div>
+        </div>
+      )}
       {buyModal && (() => {
         const kind = buyModal.kind
         const unit = buyUnit(kind)

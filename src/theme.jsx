@@ -1,25 +1,25 @@
-import { createContext, useContext, useEffect } from 'react'
+import { createContext, useContext, useMemo } from 'react'
+import { usePrefs } from './theme/usePrefs.js'
 
+// The theme context is a thin view over the per-user preferences store
+// (src/theme/prefs.js). `theme` is the user's saved mode: 'light' (the default
+// and the owner's white law for anyone who has chosen nothing), 'dark' or
+// 'heavy'. The store writes `data-theme` on <html> only while a product shell
+// is mounted, so the public site stays light whatever the user saved.
+// `toggle` flips light <-> dark (heavy counts as a light variant, so it goes to
+// dark); the Preferences panel sets any of the three directly.
 const ThemeContext = createContext(null)
-const KEY = 'yerra-theme'
 
 export function ThemeProvider({ children }) {
-  // WorkCoPilot is WHITE-ONLY in-product (owner design law: no dark theme). Force
-  // data-theme=light regardless of any stored value, and overwrite a stale 'dark'
-  // left by the old toggle so existing users stop seeing dark global tokens leak
-  // into the admin/guide. Marketing keeps its own .wm/.wk palette (independent of
-  // data-theme), so this does not affect the public site.
-  const theme = 'light'
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', 'light')
-    try { localStorage.setItem(KEY, 'light') } catch { /* ignore */ }
-  }, [])
-
-  const noop = () => {}
-
+  const { prefs, setThemeMode } = usePrefs()
+  const theme = prefs.themeMode
+  const value = useMemo(() => ({
+    theme,
+    setTheme: (m) => setThemeMode(m),
+    toggle: () => setThemeMode(theme === 'dark' ? 'light' : 'dark'),
+  }), [theme, setThemeMode])
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: noop, toggle: noop }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   )

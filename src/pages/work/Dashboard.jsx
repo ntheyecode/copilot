@@ -160,23 +160,19 @@ export default function Dashboard() {
       </section>
 
       {isAdmin && (
-        <div className="wd-note" style={{ marginTop: 18 }}>
+        <div className="wd-note wd-gap">
           <LayoutDashboard size={16} />
           <span>{t('workDashboard.adminNote')} <a href="/work/admin">{t('workDashboard.adminNoteLink')}</a></span>
         </div>
       )}
 
-      {/* 3. Plan meters: hours this month, top-ups / allowance, open tasks, the one state */}
-      {!needsSub && (
-        <PlanMeters plan={plan} renewLabel={renewLabel} companyName={companyName}
-          canBuy={canBuyHours} canUpgrade={canUpgrade} upgradeHref={upgradeHref} onBuyHours={buyHours} />
-      )}
-
-      {/* 4. The primary action: the guided-task flow on a first run, else the hero CTA */}
+      {/* 3. The primary action FIRST (the center of the screen is the action,
+          the plan numbers follow): the guided-task flow on a first run, else
+          the Start-a-task card with the one orange call-to-action */}
       {firstRun ? (
         <TaskFlow onStart={() => navigate('/work/start')} canStart={ready} />
       ) : (
-        <section className="wd-m-hero">
+        <section className="wd-m-hero" aria-label={t('workDashboard.start.title')}>
           <span className="wd-m-hero-ic" aria-hidden><Rocket size={24} /></span>
           <div className="wd-m-hero-body">
             <span className="wd-m-hero-eyebrow">{t('workDashboard.start.eyebrow')}</span>
@@ -192,9 +188,15 @@ export default function Dashboard() {
         </section>
       )}
 
+      {/* 4. Plan meters: hours this month, top-ups / allowance, open tasks, the one state */}
+      {!needsSub && (
+        <PlanMeters plan={plan} renewLabel={renewLabel} companyName={companyName}
+          canBuy={canBuyHours} canUpgrade={canUpgrade} upgradeHref={upgradeHref} onBuyHours={buyHours} />
+      )}
+
       {/* 5. AI-setup / add-time / gate notes */}
       {gateMsg && (
-        <div className="wd-note warn" role="alert" style={{ marginTop: 18 }}>
+        <div className="wd-note warn wd-gap" role="alert">
           <AlertTriangle size={16} />
           <span>{gateMsg}</span>
         </div>

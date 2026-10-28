@@ -18,7 +18,7 @@ import { copyText } from '../../components/CopyChip.jsx'
 import { hrefForUrl } from '../../shared/links.js'
 import DownloadMenu from '../../components/DownloadMenu.jsx'
 import GuideFontControl, { useGuideFontScale } from '../../components/GuideFontScale.jsx'
-import AccentPicker from '../../components/AccentPicker.jsx'
+import PreferencesPanel from '../../components/PreferencesPanel.jsx'
 import ResultCard from '../../components/ResultCard.jsx'
 import ComposeCard from '../../components/ComposeCard.jsx'
 import ComputeCard from '../../components/ComputeCard.jsx'
@@ -2106,7 +2106,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const offTrack = !ended && status === 'wrong' && !!String(observation || '').trim()
 
   return (
-    <div className="wc" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': fsScale }}>
+    <div className="wc" style={{ ...shell, minHeight: 0, height: 'auto', flex: '1 1 auto', display: 'flex', flexDirection: 'column', overflow: 'hidden', '--wc-fs': `calc(var(--wc-fs-app, 1) * ${fsScale})` }}>
       <style>{CONSOLE_CSS}{GUIDE_CSS}</style>
       {/* FIXED HEADER (#new): the menu/title bar stays pinned; only the content
           between it and the fixed Ask footer scrolls. */}
@@ -2160,8 +2160,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   <div className="wc-menu-sec">View</div>
                   <div className="wc-menu-row"><span className="wc-menu-row-k">Text size</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
                   <div className="wc-menu-row"><span className="wc-menu-row-k">Guidance</span><GuideLevelControl level={level} onChange={setLevel} compact theme={{ border: 'var(--border)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)', accentSoft: 'var(--em-soft)' }} /></div>
-                  {/* Per-user accent: applies live everywhere (guide + dashboards) and persists. Stays open like Text size. */}
-                  <div className="wc-menu-row" style={{ display: 'block' }}><AccentPicker variant="guide" /></div>
+                  {/* Per-user preferences (theme mode, brand combination, accessibility):
+                      apply live everywhere (guide + dashboards) and persist. Stays open
+                      like Text size; the reading-size stepper above is the guide's own. */}
+                  <div className="wc-menu-row" style={{ display: 'block' }}><PreferencesPanel variant="guide" hide={['textSize']} /></div>
                   <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? 'Dark mode' : 'Light mode'}</b><small>Switch the guiding panel theme</small></span></button>
                 </div>
               )}
