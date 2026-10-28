@@ -74,6 +74,9 @@ export function registerWorkProjectRoutes(app, { store, work, ai, requireWorkAut
         goal: task.goal || task.title, learnings: ledger, strong: call.backup, locale: readLocale(req),
       })
       if (plan.refusal) return res.json({ refusal: plan.refusal })
+      // Forward-learnings ledger: a generalized tool fact surfaced while planning this
+      // task carries into the next task's expansion (the write leg of the ledger).
+      if (plan.learning) store.appendWorkProjectLearning(req.workUser.id, p.id, plan.learning, task.id)
       const session = store.createWorkSession(req.workUser.id, { goal: task.goal || task.title })
       store.setWorkSessionSteps(req.workUser.id, session.id, plan.steps)
       store.linkWorkProjectTaskSession(req.workUser.id, p.id, task.id, session.id)

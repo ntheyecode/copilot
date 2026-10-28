@@ -3544,6 +3544,16 @@ app.post('/api/work/sessions/:id/finalize', requireWorkAuth, async (req, res) =>
     // flag, so a half-done or failed task is never captured (zero-tolerance for
     // false templates). Best-effort: a capture failure never breaks finalize.
     try { const rec = work.distillWorkflowTemplate(s); if (rec) store.captureWorkflowTemplate(req.workUser.id, rec) } catch (e) { console.warn(`[work] template capture failed: ${e.message}`) }
+    // If this session is a project task, close the forward-learning loop: mark the task
+    // done, record its outcome + telemetry (completed-task storage), and keep the ledger
+    // populated for the next task. Best-effort - never breaks finalize.
+    try {
+      const doneSteps = (s.steps || []).filter((x) => x && x.status === 'done').length
+      store.completeProjectTaskForSession(req.workUser.id, req.params.id, {
+        outcome: { stepsDone: doneSteps, steps: (s.steps || []).length, summary: summary || null },
+        telemetry: { steps: (s.steps || []).length },
+      })
+    } catch (e) { console.warn(`[work] project task completion failed: ${e.message}`) }
     res.json({ ok: true, summary, session: { id: ended.id, status: ended.status, endedAt: ended.endedAt } })
   } catch (e) { sendWorkError(res, e, req) }
 })

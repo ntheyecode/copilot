@@ -84,3 +84,22 @@ test('vision empty-streak counter bumps + resets (watch-loop tolerance)', () => 
   store.resetVisionEmptyStreak(u.id, sess.id)
   assert.equal(store.bumpVisionEmptyStreak(u.id, sess.id), 1)          // reset took effect
 })
+
+test('completeProjectTaskForSession closes the forward-learning loop', () => {
+  const u = user()
+  const p = store.createWorkProject(u.id, { name: 'P', goal: 'g', endState: { done: 'x' }, tasks: [
+    { title: 'T1', doneState: 'd1' }, { title: 'T2', doneState: 'd2', dependsOn: [0] },
+  ] })
+  const t1 = p.tasks[0]
+  const sess = store.createWorkSession(u.id, { goal: 't1' })
+  store.linkWorkProjectTaskSession(u.id, p.id, t1.id, sess.id)
+  store.setWorkProjectTaskState(u.id, p.id, t1.id, 'active')
+  assert.equal(store.findProjectTaskBySession(u.id, sess.id).task.id, t1.id)
+  store.completeProjectTaskForSession(u.id, sess.id, { outcome: { stepsDone: 3 }, telemetry: { steps: 3 }, learning: 'In Tool X, the export moved under Settings' })
+  const fresh = store.getWorkProject(u.id, p.id)
+  assert.equal(fresh.tasks[0].state, 'done')                           // task marked done
+  assert.equal(fresh.tasks[0].outcome.stepsDone, 3)                    // outcome recorded
+  assert.equal(fresh.learnings.length, 1)                              // ledger populated (was empty before)
+  assert.match(fresh.learnings[0].fact, /export moved under Settings/) // the next task's expand will read this
+  assert.equal(store.nextWorkProjectTask(u.id, p.id).id, fresh.tasks[1].id)  // T2 now actionable
+})
