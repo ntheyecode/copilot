@@ -66,11 +66,13 @@ export default function WorkFullGuide() {
   const [status, setStatus] = useState('loading') // loading | ok | empty | signin | error
   const [fs, setFs] = useState(false)
   const [planOpen, setPlanOpen] = useState(false) // read-only "full plan" overlay
-  // Light/dark follows the APP theme preference (wc_theme_mode: light | dark |
-  // heavy; heavy paints the dark palette, this screen has only two), falling
-  // back to the OS scheme only when nothing is stored. One owner for the rule:
-  // src/theme/surface_scheme.js via useSurfaceScheme(). The Sun/Moon button
-  // still flips this window locally; a preference change re-syncs it.
+  // Light/dark follows the APP theme preference (light | dark | heavy; heavy
+  // paints the dark palette, this screen has only two): the mode stored on this
+  // device, else the one the server holds for the user (chosen on another
+  // device; the prefs store records it from the /api/work/me profile the auth
+  // provider loads), and the OS scheme only when nothing is chosen anywhere. One
+  // owner for the rule: src/theme/surface_scheme.js via useSurfaceScheme(). The
+  // Sun/Moon button still flips this window locally; a preference change re-syncs it.
   const surfaceScheme = useSurfaceScheme()
   const [dark, setDark] = useState(surfaceScheme === 'dark')
   useEffect(() => { setDark(surfaceScheme === 'dark') }, [surfaceScheme])

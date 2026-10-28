@@ -1,15 +1,22 @@
 // React hook: the light|dark scheme a two-palette surface (floating guide
 // panel, full-screen guide) should paint, following the user's APP theme
-// preference rather than the OS. Reads the stored preference through the
-// preferences store's own reader (src/theme/prefs.js owns the key), maps it
-// with surfaceSchemeFor(), and falls back to prefers-color-scheme only when
-// nothing is stored. Reactive on all three signals: a preference change in this
-// window (the store emits), one made in another window of the app (the
+// preference rather than the OS. Source precedence, resolved by the one rule in
+// src/theme/surface_scheme.js:
+//   1. the mode this device stored (wc_theme_mode, read through the preferences
+//      store's own reader; src/theme/prefs.js owns the key);
+//   2. the mode the server holds for the user (user.themeMode, set on another
+//      device): the prefs store records it when auth.jsx hands the signed-in user
+//      from GET /api/work/me to initPrefs(), so no surface fetches it twice. A
+//      surface that already holds its own user object may pass user.themeMode
+//      explicitly instead;
+//   3. prefers-color-scheme, only when nothing is chosen anywhere.
+// Reactive on every signal: a preference change in this window and the profile
+// (re)load (the store emits), one made in another window of the app (the
 // `storage` event, which is how the pop-out / PiP documents hear the console),
-// and an OS scheme flip while nothing is stored.
-import { useSyncExternalStore } from 'react'
-import { getStoredThemeMode, subscribe as subscribePrefs } from './prefs.js'
-import { surfaceSchemeFor } from './surface_scheme.js'
+// and an OS scheme flip while nothing is chosen.
+import { useCallback, useSyncExternalStore } from 'react'
+import { getStoredThemeMode, getServerThemeMode, subscribe as subscribePrefs } from './prefs.js'
+import { resolveSurfaceMode, surfaceSchemeFor } from './surface_scheme.js'
 
 const OS_DARK_QUERY = '(prefers-color-scheme: dark)'
 
@@ -17,8 +24,11 @@ function osDark() {
   try { return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(OS_DARK_QUERY).matches } catch { return false }
 }
 
-export function readSurfaceScheme() {
-  return surfaceSchemeFor(getStoredThemeMode(), osDark())
+// `serverMode` (optional): a server-held mode the caller already has. When
+// omitted, the one the prefs store recorded from the loaded profile is used.
+export function readSurfaceScheme(serverMode) {
+  const server = serverMode === undefined ? getServerThemeMode() : serverMode
+  return surfaceSchemeFor(resolveSurfaceMode(getStoredThemeMode(), server), osDark())
 }
 
 function subscribe(onChange) {
@@ -34,6 +44,7 @@ function subscribe(onChange) {
   }
 }
 
-export function useSurfaceScheme() {
-  return useSyncExternalStore(subscribe, readSurfaceScheme, () => 'light')
+export function useSurfaceScheme(serverMode) {
+  const read = useCallback(() => readSurfaceScheme(serverMode), [serverMode])
+  return useSyncExternalStore(subscribe, read, () => 'light')
 }

@@ -16,7 +16,9 @@
 // Persistence contract: localStorage first (instant, before the profile loads),
 // then the server via api.workSetPrefs({ accent?, themeMode?, a11y? }) ->
 // POST /api/work/profile/prefs, fire-and-forget and debounced. The server
-// value, when the profile carries one, wins at init. Defensive by design: if
+// value, when the profile carries one, wins at init; the raw server theme mode
+// is also kept (getServerThemeMode) for the two-palette surfaces, which honor
+// stored -> server -> OS (surface_scheme.js). Defensive by design: if
 // the endpoint or the profile fields are missing (server change not merged
 // yet), everything still works from localStorage, and an accent-only patch
 // falls back to the older /profile/accent endpoint.
@@ -33,6 +35,12 @@ const K_A11Y = 'wc_a11y'
 const PERSIST_DELAY_MS = 250
 
 const state = { accent: null, themeMode: 'light', a11y: { ...DEFAULT_A11Y } }
+// The theme mode the SERVER holds for the signed-in user (a choice made on any
+// device), as last handed to initPrefs(); null when the profile carries none or
+// nobody is signed in. Kept apart from state.themeMode (which defaults to
+// 'light') so a surface can tell "the user chose dark elsewhere" from "chose
+// nothing" (see getServerThemeMode / surface_scheme.js).
+let serverThemeMode = null
 let inProduct = false
 const listeners = new Set()
 let persistTimer = null
@@ -93,6 +101,12 @@ function emit() { for (const fn of listeners) { try { fn(getPrefs()) } catch { /
 // surface_scheme.js). getPrefs().themeMode cannot express that: it defaults to
 // 'light'. This is the one reader of the key; nothing else touches localStorage.
 export function getStoredThemeMode() { return readStored().mode }
+// The raw SERVER mode from the loaded profile (user.themeMode via GET
+// /api/work/me, recorded by initPrefs), or null. Second in the surfaces'
+// precedence: a device with nothing stored still honors a choice made on
+// another device instead of falling back to the OS. One reader; nothing else
+// re-fetches the profile for it.
+export function getServerThemeMode() { return serverThemeMode }
 
 let snapshot = null
 export function getPrefs() {
@@ -110,7 +124,8 @@ export function initPrefs(user) {
   let storedAccent = null
   try { storedAccent = localStorage.getItem('wc_accent') } catch { /* private mode */ }
   state.accent = (u && comboFor(u.accent)) ? u.accent : (comboFor(storedAccent) ? storedAccent : null)
-  state.themeMode = normalizeMode(u && THEME_MODES.includes(u.themeMode) ? u.themeMode : stored.mode)
+  serverThemeMode = u && THEME_MODES.includes(u.themeMode) ? u.themeMode : null
+  state.themeMode = normalizeMode(serverThemeMode || stored.mode)
   state.a11y = normalizeA11y(u && u.a11y && typeof u.a11y === 'object' ? u.a11y : stored.a11y)
   snapshot = null
   applyAll()

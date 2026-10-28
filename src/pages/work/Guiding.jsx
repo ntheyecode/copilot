@@ -1106,9 +1106,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const [pipWin, setPipWin] = useState(null)
   const [pipKind, setPipKind] = useState('pip')   // 'pip' (always-on-top Document PiP) | 'popout' (separate window) for the open float
   const [floatQ, setFloatQ] = useState('')
-  // The float follows the APP theme preference (wc_theme_mode: light | dark |
-  // heavy, heavy painting the dark palette since the float has only two), and
-  // only falls back to the OS scheme when nothing is stored. One owner for the
+  // The float follows the APP theme preference (light | dark | heavy, heavy
+  // painting the dark palette since the float has only two): the mode stored on
+  // this device, else the one the server holds for the user (chosen on another
+  // device; the prefs store records it from the loaded profile), and the OS
+  // scheme only when nothing is chosen anywhere. One owner for the
   // rule: src/theme/surface_scheme.js via useSurfaceScheme(). The in-float
   // Sun/Moon button still flips this window locally; a preference change (in
   // the Tools menu, the Preferences panel, or another window) re-syncs it.
