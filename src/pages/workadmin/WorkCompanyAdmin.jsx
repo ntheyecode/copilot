@@ -1875,7 +1875,7 @@ export default function WorkCompanyAdmin() {
   const alertsSeen = useCallback(() => setAlertBadge(0), [])
 
   const Gate = ({ icon, title, body, action }) => (
-    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
+    <div className="wka wd-tokens"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
       <div className="wka-gate"><div className="box">{icon}<h2>{title}</h2><p>{body}</p>{action}</div></div>
     </div>
   )
@@ -1910,7 +1910,7 @@ export default function WorkCompanyAdmin() {
   }
 
   return (
-    <div className="wka"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
+    <div className="wka wd-tokens"><style>{WORKADMIN_CSS}{WCA_CSS}{AI_SOURCE_CHOICE_CSS}{DEPTH_CHOICE_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
         <div className="wka-brand"><b>WorkCoPilot</b><span>{t('companyAdmin.shell.companyAdmin')}</span></div>

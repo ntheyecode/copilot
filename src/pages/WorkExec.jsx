@@ -77,7 +77,32 @@ const WX_PALETTE = {
   // colour-alone.
   depth: ['#9ad6bb', '#17a673', '#0b5e41'],
 }
-function usePalette() { return useMemo(() => WX_PALETTE, []) }
+// The chart palette READS the design tokens off the mounted `.wka wd-tokens`
+// root (so the SVG charts follow the user's brand combination and the Light /
+// Dark / Heavy mode exactly like the tiles around them), falling back to the
+// literal set above for any token that is not a plain color (a color-mix the
+// exporter could not rasterize) or before the root is mounted. The resolved
+// values are plain strings on the SVG attributes, so html2canvas exports them
+// as drawn. Validated pair: --em for time / trend, --em-2 for tasks / people.
+const PLAIN_COLOR = /^(#[0-9a-f]{3,8}|rgba?\([^)]*\)|hsla?\([^)]*\))$/i
+function usePalette() {
+  const [pal, setPal] = useState(WX_PALETTE)
+  useEffect(() => {
+    if (typeof document === 'undefined') return
+    const root = document.querySelector('.wka.wd-tokens')
+    if (!root) return
+    const cs = getComputedStyle(root)
+    const read = (name, fallback) => { const v = (cs.getPropertyValue(name) || '').trim(); return PLAIN_COLOR.test(v) ? v : fallback }
+    setPal({
+      ...WX_PALETTE,
+      text: read('--tx', WX_PALETTE.text), muted: read('--mut', WX_PALETTE.muted), faint: read('--faint', WX_PALETTE.faint),
+      border: read('--line', WX_PALETTE.border), surface: read('--panel', WX_PALETTE.surface), bg: read('--bg', WX_PALETTE.bg),
+      track: read('--track', WX_PALETTE.track),
+      brand: read('--em', WX_PALETTE.brand), brandDeep: read('--em-deep', WX_PALETTE.brandDeep), teal: read('--em-2', WX_PALETTE.teal),
+    })
+  }, [])
+  return pal
+}
 
 // ---- container measurement (crisp SVG text at the real pixel width) --------
 function useMeasure() {
@@ -284,7 +309,7 @@ function Card({ title, hint, icon: Icon, children, wide }) {
 function Shell({ company, live, children, mainRef }) {
   const companyName = (company && company.name) || 'WorkCoPilot'
   return (
-    <div className="wka">
+    <div className="wka wd-tokens">
       <style>{WORKADMIN_CSS}{WX_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
@@ -373,13 +398,13 @@ export default function WorkExec() {
     const { default: html2canvas } = await import('html2canvas')
     const node = contentRef.current
     return html2canvas(node, {
-      backgroundColor: WX_PALETTE.bg,
+      backgroundColor: pal.bg,
       scale: Math.min(2, (window.devicePixelRatio || 1) + 0.5),
       useCORS: true,
       logging: false,
       ignoreElements: (el) => el.classList && el.classList.contains('wx-noexport'),
     })
-  }, [])
+  }, [pal.bg])
 
   const triggerDownload = (url, filename) => {
     const a = document.createElement('a')
@@ -636,13 +661,14 @@ const WX_CSS = `
 
 /* live-status chip (top bar) */
 .wka .wx-livechip { gap:7px; }
-.wka .wx-dot { width:7px; height:7px; border-radius:50%; background:var(--wka-emerald); position:relative; flex:0 0 auto; }
-.wka .wx-dot::after { content:''; position:absolute; inset:-4px; border-radius:50%; background:var(--wka-emerald);
-  opacity:.4; animation:wxpulse 2s ease-out infinite; }
-.wka .wx-dot-busy::after { animation-duration:.9s; }
-.wka .wx-dot-stale, .wka .wx-dot-stale::after { background:var(--wka-amber); }
+/* The live dot pulses with a box-shadow ring (paint only, never layout
+   overflow: a scaled pseudo-element outside the box read as scrollable
+   overflow in the design gate). */
+.wka .wx-dot { width:7px; height:7px; border-radius:50%; color:var(--wka-emerald); background:currentColor; flex:0 0 auto; animation:wxpulse 2s ease-out infinite; }
+.wka .wx-dot-busy { animation-duration:.9s; }
+.wka .wx-dot-stale { color:var(--wka-amber); }
 .wka .wx-updated { color:var(--wka-faint); font-weight:500; }
-@keyframes wxpulse { 0%{ transform:scale(1); opacity:.5; } 100%{ transform:scale(2.6); opacity:0; } }
+@keyframes wxpulse { 0%{ box-shadow:0 0 0 0 color-mix(in srgb, currentColor 45%, transparent); } 100%{ box-shadow:0 0 0 7px transparent; } }
 
 /* range selector (segmented pill) + exports */
 .wka .wx-range { display:inline-flex; background:var(--wka-panel-2); border:1px solid var(--wka-line-2);
@@ -650,7 +676,7 @@ const WX_CSS = `
 .wka .wx-range-btn { border:0; background:transparent; color:var(--wka-muted); font:inherit; font-size:12.5px;
   font-weight:600; padding:6px 14px; border-radius:999px; cursor:pointer; white-space:nowrap; }
 .wka .wx-range-btn:hover { color:var(--wka-text); }
-.wka .wx-range-btn.is-active { background:var(--wka-accent); color:#fff; box-shadow:0 1px 2px var(--wka-accent-shadow); }
+.wka .wx-range-btn.is-active { background:var(--wka-solid); color:var(--wka-on-solid); box-shadow:none; }
 .wka .wx-exports { display:flex; gap:8px; flex-shrink:0; }
 
 /* Est. badge */
@@ -683,7 +709,7 @@ const WX_CSS = `
 .wka .wx-depth-track { display:flex; height:40px; border-radius:10px; overflow:hidden; gap:2px; background:var(--wka-bg); }
 .wka .wx-depth-seg { display:grid; place-items:center; min-width:3px; transition:flex-grow .6s ease; cursor:default; }
 .wka .wx-depth-seg:hover { filter:brightness(1.06); }
-.wka .wx-depth-pct { font-size:12px; font-weight:700; color:#05311c; font-variant-numeric:tabular-nums; }
+.wka .wx-depth-pct { font-size:12px; font-weight:700; color:var(--wka-accent-ink); font-variant-numeric:tabular-nums; }
 .wka .wx-depth-legend { display:flex; flex-direction:column; gap:9px; margin-top:16px; }
 .wka .wx-depth-leg { display:flex; align-items:center; gap:9px; font-size:13px; }
 .wka .wx-swatch { width:11px; height:11px; border-radius:3px; flex:0 0 auto; }

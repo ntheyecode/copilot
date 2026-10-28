@@ -3,9 +3,9 @@
 // disables the controls and explains why for a non-superadmin admin). Also the
 // support-only "Open as user" (impersonation) control for INDIVIDUAL users.
 import React, { useEffect, useState, useCallback, useMemo } from 'react'
-import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2, Eye, X } from 'lucide-react'
+import { Search, Clock, Lock, Plus, RotateCcw, Ban, UserPlus, Building2, DollarSign, ShieldOff, ShieldCheck, Trash2, Eye, X, Sparkles } from 'lucide-react'
 import { workAdminApi } from '../workAdminApi.js'
-import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal } from './_shared.jsx'
+import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal, ActionMenu } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
 import { useT } from '../../../i18n/index.jsx'
 // Company roles + work flows come from the ONE registry (ids, order, i18n
@@ -317,12 +317,12 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                 return (
                   <tr key={u.id}>
                     <td>
-                      <div style={{ fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                      <div className="wka-cell-main">
                         {u.username}
                         {u.disabled ? <span className="wka-badge disabled">{t('usersAdmin.disabledBadge')}</span> : null}
                       </div>
-                      {u.displayName ? <div style={{ fontSize: 11, color: 'var(--wka-faint)' }}>{u.displayName}</div> : null}
-                      {msg ? <div style={{ fontSize: 11, marginTop: 3, color: msg.kind === 'ok' ? 'var(--wka-emerald)' : 'var(--wka-red)' }}>{msg.text}</div> : null}
+                      {u.displayName ? <div className="wka-cell-sub">{u.displayName}</div> : null}
+                      {msg ? <div className={`wka-cell-msg ${msg.kind === 'ok' ? 'ok' : 'err'}`}>{msg.text}</div> : null}
                     </td>
                     <td>
                       {isSuperAdmin ? (
@@ -383,7 +383,7 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                     </td>
                     <td style={{ whiteSpace: 'nowrap' }}>
                       {grantFor === u.id ? (
-                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
+                        <span className="wka-row-acts">
                           <input className="wka-input" style={{ width: 70, padding: '6px 8px' }} type="number" min="0" step="0.5"
                             value={grantHours} onChange={(e) => setGrantHours(e.target.value)} aria-label={t('usersAdmin.actions.hoursAriaLabel')} />
                           <button type="button" className="wka-btn sm primary" disabled={busyId === u.id} onClick={() => applyGrant(u)}>
@@ -392,58 +392,38 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                           <button type="button" className="wka-btn sm ghost" onClick={() => { setGrantFor(null); setGrantHours('1') }}>{t('usersAdmin.actions.cancel')}</button>
                         </span>
                       ) : (
-                        <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                        /* One row of controls, never a stack: the two everyday actions
+                           stay inline, every other action (same guards, same confirm
+                           flows) sits behind one More menu so the row is as tall as a
+                           pill. Nothing was removed. */
+                        <span className="wka-row-acts">
                           {/* Individual = no company (u.companyId is null in the list payload). Company members never get this control. */}
                           {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf && (
-                            <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
+                            <button type="button" className="wka-btn sm" disabled={busyId === u.id}
                               title={t('usersAdmin.actions.openAsUserTitle')}
-                              onClick={() => openAsUser(u)}
-                              style={{ color: 'var(--wka-accent-dark)', borderColor: 'var(--wka-accent-line)', whiteSpace: 'nowrap' }}>
+                              onClick={() => openAsUser(u)}>
                               {busyId === u.id ? <Spinning /> : <Eye size={13} />} {t('usersAdmin.actions.openAsUser')}
-                            </button>
-                          )}
-                          {isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf && (
-                            <button type="button" className="wka-btn sm ghost" disabled={busyId === u.id}
-                              title={u.free ? t('usersAdmin.actions.freeAccessOnTitle') : t('usersAdmin.actions.freeAccessGrantTitle')}
-                              onClick={() => toggleFree(u)}
-                              style={{ color: u.free ? 'var(--wka-emerald)' : undefined, whiteSpace: 'nowrap' }}>
-                              {busyId === u.id ? <Spinning /> : (u.free ? t('usersAdmin.actions.freeAccessOn') : t('usersAdmin.actions.freeAccessGrant'))}
                             </button>
                           )}
                           <button type="button" className="wka-btn sm" disabled={!isSuperAdmin} title={isSuperAdmin ? t('usersAdmin.actions.grantHoursTitle') : t('usersAdmin.superadminOnly')}
                             onClick={() => { setGrantFor(u.id); setGrantHours('1') }}>
                             <Plus size={13} /> <Clock size={13} /> {t('usersAdmin.actions.grantHours')}
                           </button>
-                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? t('usersAdmin.actions.refundLastTitle') : t('usersAdmin.superadminOnly')}
-                            onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'refund' }) }}>
-                            <RotateCcw size={13} /> {t('usersAdmin.actions.refundLast')}
-                          </button>
-                          <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id} title={isSuperAdmin ? t('usersAdmin.actions.cancelSubTitle') : t('usersAdmin.superadminOnly')}
-                            onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'cancel' }) }}>
-                            <Ban size={13} /> {t('usersAdmin.actions.cancelSub')}
-                          </button>
-                          {u.role !== 'superadmin' && !isSelf && (
-                            <button type="button" className={`wka-btn sm${u.role === 'accounting' ? '' : ' ghost'}`} disabled={!isSuperAdmin || busyId === u.id} title={u.role === 'accounting' ? t('usersAdmin.actions.accountingRemoveTitle') : t('usersAdmin.actions.accountingGrantTitle')}
-                              onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.role === 'accounting' ? 'accounting-remove' : 'accounting-grant' }) }}>
-                              <DollarSign size={13} /> {u.role === 'accounting' ? t('usersAdmin.actions.accountingOn') : t('usersAdmin.actions.accounting')}
-                            </button>
-                          )}
-                          {u.role !== 'superadmin' && !isSelf && (
-                            <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
-                              title={u.disabled ? t('usersAdmin.actions.enableTitle') : t('usersAdmin.actions.disableTitle')}
-                              onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: u.disabled ? 'enable' : 'disable' }) }}
-                              style={u.disabled ? { color: 'var(--wka-emerald)' } : undefined}>
-                              {u.disabled ? <ShieldCheck size={13} /> : <ShieldOff size={13} />} {u.disabled ? t('usersAdmin.actions.enable') : t('usersAdmin.actions.disable')}
-                            </button>
-                          )}
-                          {u.role !== 'superadmin' && !isSelf && (
-                            <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin || busyId === u.id}
-                              title={t('usersAdmin.actions.deleteTitle')}
-                              onClick={() => { setCaErr(null); setConfirmAction({ user: u, mode: 'delete' }) }}
-                              style={{ color: 'var(--wka-red)' }}>
-                              <Trash2 size={13} /> {t('usersAdmin.actions.delete')}
-                            </button>
-                          )}
+                          <ActionMenu label={t('usersAdmin.actions.more', 'More')} disabled={busyId === u.id} items={[
+                            ...(isSuperAdmin && u.role !== 'superadmin' && !u.companyId && !isSelf ? [{
+                              key: 'free', icon: <Sparkles size={13} />, tone: u.free ? 'emerald' : '',
+                              label: u.free ? t('usersAdmin.actions.freeAccessOn') : t('usersAdmin.actions.freeAccessGrant'),
+                              title: u.free ? t('usersAdmin.actions.freeAccessOnTitle') : t('usersAdmin.actions.freeAccessGrantTitle'),
+                              onPick: () => toggleFree(u),
+                            }] : []),
+                            { key: 'refund', icon: <RotateCcw size={13} />, label: t('usersAdmin.actions.refundLast'), title: isSuperAdmin ? t('usersAdmin.actions.refundLastTitle') : t('usersAdmin.superadminOnly'), disabled: !isSuperAdmin, onPick: () => { setCaErr(null); setConfirmAction({ user: u, mode: 'refund' }) } },
+                            { key: 'cancel', icon: <Ban size={13} />, label: t('usersAdmin.actions.cancelSub'), title: isSuperAdmin ? t('usersAdmin.actions.cancelSubTitle') : t('usersAdmin.superadminOnly'), disabled: !isSuperAdmin, onPick: () => { setCaErr(null); setConfirmAction({ user: u, mode: 'cancel' }) } },
+                            ...(u.role !== 'superadmin' && !isSelf ? [
+                              { key: 'accounting', icon: <DollarSign size={13} />, label: u.role === 'accounting' ? t('usersAdmin.actions.accountingOn') : t('usersAdmin.actions.accounting'), title: u.role === 'accounting' ? t('usersAdmin.actions.accountingRemoveTitle') : t('usersAdmin.actions.accountingGrantTitle'), disabled: !isSuperAdmin, onPick: () => { setCaErr(null); setConfirmAction({ user: u, mode: u.role === 'accounting' ? 'accounting-remove' : 'accounting-grant' }) } },
+                              { key: 'disable', icon: u.disabled ? <ShieldCheck size={13} /> : <ShieldOff size={13} />, tone: u.disabled ? 'emerald' : '', label: u.disabled ? t('usersAdmin.actions.enable') : t('usersAdmin.actions.disable'), title: u.disabled ? t('usersAdmin.actions.enableTitle') : t('usersAdmin.actions.disableTitle'), disabled: !isSuperAdmin, onPick: () => { setCaErr(null); setConfirmAction({ user: u, mode: u.disabled ? 'enable' : 'disable' }) } },
+                              { key: 'delete', icon: <Trash2 size={13} />, tone: 'danger', label: t('usersAdmin.actions.delete'), title: t('usersAdmin.actions.deleteTitle'), disabled: !isSuperAdmin, onPick: () => { setCaErr(null); setConfirmAction({ user: u, mode: 'delete' }) } },
+                            ] : []),
+                          ]} />
                         </span>
                       )}
                     </td>

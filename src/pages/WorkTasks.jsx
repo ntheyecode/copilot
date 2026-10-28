@@ -8,6 +8,7 @@ import { useAuth } from '../auth.jsx'
 import { useLocale } from '../i18n/index.jsx'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
 import WorkShell from '../workShell.jsx'
+import SessionRow from './work/SessionRow.jsx'
 
 // ---------------------------------------------------------------------------
 // My tasks (/work/tasks) + Completed tasks (/work/completed) + the shared
@@ -19,11 +20,11 @@ import WorkShell from '../workShell.jsx'
 // two modes: `embedded` (the default whenever WorkAppContext is present) emits
 // ONLY the list body for the shell's <main>; standalone emits the full white
 // page with its own top bar, for any host that mounts it outside the shell.
-// Either way the palette + type match the dashboard (page #f5f7fb, cards #fff,
-// line #e7eaf2, ink #1b2033, muted #5c6484, green #0e9f6e; Figtree body,
-// Bricolage Grotesque display). The shell, the sessions hook and the row
-// helpers are defined ONCE here and imported by WorkLogs.jsx (single source
-// of truth: one token block, one "which label do we show for a session" rule).
+// Embedded, every block is on the shell's .wd design system (workApp.css.js
+// tokens; the shared SessionRow for every row); the ws-* token block below is
+// only for the legacy standalone host. The shell, the sessions hook and the
+// row helpers are defined ONCE here and imported by WorkLogs.jsx (single source
+// of truth: one "which label do we show for a session" rule).
 //
 // Data: api.workList() (GET /api/work/sessions) - the same call the dashboard
 // makes. A session: { id, title, goal, status ('ended' = completed), steps[]
@@ -221,10 +222,61 @@ export function useSessions() {
   return { sessions, loaded, err, reload }
 }
 
+// Are we rendered inside the app shell (WorkAppLayout)? Then every block uses
+// the shared .wd design system (tokens, cards, rows); only the legacy
+// standalone host uses the ws-* palette below. `embedded` overrides.
+export function useInShell(embedded) {
+  const inShell = !!useContext(WorkAppContext)
+  return embedded == null ? inShell : !!embedded
+}
 export function SkeletonRows({ n = 3 }) {
+  const inShell = useInShell()
+  if (inShell) {
+    return (
+      <div className="wd-sess-list" aria-hidden>
+        {Array.from({ length: n }, (_, i) => <div key={i} className="wd-skel"><i className="w1" /><i className="w2" /><i className="w3" /></div>)}
+      </div>
+    )
+  }
   return (
     <div aria-hidden>
       {Array.from({ length: n }, (_, i) => <div key={i} className="ws-skel"><i className="a" /><i className="b" /><i className="c" /></div>)}
+    </div>
+  )
+}
+// Page head (icon tile + title + count + lead): the dashboard's .wd-sec recipe
+// in the shell, the legacy ws-head outside it.
+export function PageHead({ icon, title, count, lead, inShell }) {
+  if (inShell) {
+    return (
+      <div className="wd-sec">
+        <span className="wd-ic">{icon}</span>
+        <div>
+          <h2>{title}{count != null && <span className="wd-sec-count">{count}</span>}</h2>
+          <p>{lead}</p>
+        </div>
+      </div>
+    )
+  }
+  return (
+    <div className="ws-head">
+      <span className="ic">{icon}</span>
+      <div>
+        <h1>{title}{count != null && <span className="ws-count">{count}</span>}</h1>
+        <p>{lead}</p>
+      </div>
+    </div>
+  )
+}
+// Empty state on the dashed recipe (.wd-empty in the shell, ws-empty outside).
+export function EmptyState({ icon, title, children, inShell, role }) {
+  return (
+    <div className={inShell ? 'wd-empty' : 'ws-empty'} role={role}>
+      <span className="ic">{icon}</span>
+      <div>
+        {title && <b>{title}</b>}
+        <p>{children}</p>
+      </div>
     </div>
   )
 }
@@ -232,14 +284,11 @@ export function SkeletonRows({ n = 3 }) {
 // own keys (one text, one key) rather than a duplicate under workShell.
 export function LoadError({ onRetry }) {
   const { t } = useLocale()
+  const inShell = useInShell()
   return (
-    <div className="ws-empty" role="alert">
-      <span className="ic"><AlertTriangle size={20} /></span>
-      <div>
-        <b>{t('workDashboard.sessions.loadErrTitle')}</b>
-        <p>{t('workDashboard.sessions.loadErrBodyPre')} <button type="button" className="ws-link" onClick={onRetry}>{t('workDashboard.sessions.tryAgain')}</button></p>
-      </div>
-    </div>
+    <EmptyState icon={<AlertTriangle size={20} />} title={t('workDashboard.sessions.loadErrTitle')} inShell={inShell} role="alert">
+      {t('workDashboard.sessions.loadErrBodyPre')} <button type="button" className={inShell ? 'wd-link wd-linkbtn' : 'ws-link'} onClick={onRetry}>{t('workDashboard.sessions.tryAgain')}</button>
+    </EmptyState>
   )
 }
 
@@ -263,14 +312,10 @@ export function WorkSubShell({ active, title, children, embedded }) {
     return () => { document.title = prev }
   }, [title])
   useEffect(() => { if (!isEmbedded && ready && !user) window.location.href = '/workcopilot' }, [isEmbedded, ready, user])
-  if (isEmbedded) {
-    return (
-      <div className="ws ws-embedded">
-        <style>{WS_CSS}</style>
-        {children}
-      </div>
-    )
-  }
+  // In the shell the page is a plain block on the shell's own .wd tokens: no
+  // second palette (the ws-* token block would override the design system's
+  // --line / --em / --panel and break Dark and Heavy), no second scroll region.
+  if (isEmbedded) return <div className="wd-list-page">{children}</div>
   // Desktop app: frameless window, so the custom title bar wraps every branch.
   const desktop = typeof window !== 'undefined' ? window.workDesktop : null
   const frame = (content) => desktop ? <><WorkShell authed={!!user} /><div style={{ paddingTop: 40 }}>{content}</div></> : content
@@ -304,6 +349,7 @@ export function WorkSubShell({ active, title, children, embedded }) {
 function SessionList({ mode, embedded }) {
   const isDone = mode === 'completed'
   const { t, tag } = useLocale()
+  const inShell = useInShell(embedded)
   const { sessions, loaded, err, reload } = useSessions()
   const open = useOpenSession()
   const [dlErr, setDlErr] = useState('')
@@ -313,57 +359,62 @@ function SessionList({ mode, embedded }) {
       .localeCompare(String((isDone ? a.endedAt : (a.lastActivityAt || a.startedAt)) || a.startedAt || ''))), [sessions, isDone])
   const title = isDone ? t('workShell.nav.completed') : t('workShell.nav.tasks')
   const untitled = t('workDashboard.del.untitled')
-  const startLink = (c) => <Link to="/work" className="ws-link">{c}</Link>
-  return (
-    <WorkSubShell active={isDone ? 'completed' : 'tasks'} title={title} embedded={embedded}>
-      <div className="ws-head">
-        <span className="ic">{isDone ? <CheckCircle2 size={18} /> : <ClipboardList size={18} />}</span>
-        <div>
-          <h1>{title}{loaded && !err && list.length > 0 && <span className="ws-count">{list.length}</span>}</h1>
-          <p>{isDone ? t('workShell.tasks.leadCompleted') : t('workShell.tasks.leadActive')}</p>
+  const linkCls = inShell ? 'wd-link' : 'ws-link'
+  const startLink = (c) => <Link to="/work" className={linkCls}>{c}</Link>
+  const rows = list.map((s) => {
+    const st = stepStats(s)
+    const status = statusOf(s)
+    const when = fmtDate(isDone ? (s.endedAt || s.startedAt) : (s.lastActivityAt || s.startedAt), false, tag)
+    const label = sessionLabel(s, untitled)
+    const openLabel = !isDone && status.key === 'paused' ? t('workShell.tasks.resume') : t('workShell.tasks.open')
+    const stepsText = t.rich(isDone ? 'workShell.tasks.stepsDone' : 'workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className={inShell ? 'wd-sess-done' : 'done'}>{c}</span> })
+    if (inShell) {
+      // The shared compact row (SessionRow): tinted icon tile, status chip,
+      // date, steps, a slim bar for work in progress, ghost-pill actions.
+      return (
+        <SessionRow key={s.id} state={status.key} title={label} status={t(status.labelKey, status.label)} meta={[when, stepsText]} pct={!isDone && st.total > 0 ? st.pct : undefined}>
+          <button type="button" className="wd-resume" onClick={() => open(s.id)}>{openLabel} <ArrowRight size={14} /></button>
+          {isDone && <DownloadMenu sessionId={s.id} className="wd-resume" label={t('workShell.tasks.download')} onError={setDlErr} />}
+        </SessionRow>
+      )
+    }
+    return (
+      <div key={s.id} className="ws-row" role="listitem">
+        <span className={`ws-row-ic ${status.key}`} aria-hidden><status.Icon size={15} /></span>
+        <div className="ws-row-main">
+          <div className="ws-row-t" title={label}>{label}</div>
+          <div className="ws-row-m">
+            <span className={`ws-st ${status.key}`}>{t(status.labelKey, status.label)}</span>
+            {when && <><span className="sep" aria-hidden>&middot;</span><span>{when}</span></>}
+            <span className="sep" aria-hidden>&middot;</span>
+            <span>{stepsText}</span>
+          </div>
+        </div>
+        <div className="ws-row-acts">
+          <button type="button" className="ws-btn go" onClick={() => open(s.id)}>{openLabel} <ArrowRight size={14} /></button>
+          {isDone && <DownloadMenu sessionId={s.id} className="ws-btn" label={t('workShell.tasks.download')} onError={setDlErr} />}
         </div>
       </div>
-      {dlErr && <div role="alert" style={{ display: 'flex', alignItems: 'center', gap: 8, margin: '0 0 12px', padding: '10px 13px', borderRadius: 10, background: 'var(--warm-fill, rgba(200,90,22,.07))', border: '1px solid var(--warm-line, rgba(200,90,22,.28))', color: 'var(--tx, #1b2033)', fontSize: 13.5 }}><AlertTriangle size={15} style={{ color: 'var(--warm, #c85a16)', flexShrink: 0 }} /> {dlErr}</div>}
+    )
+  })
+  return (
+    <WorkSubShell active={isDone ? 'completed' : 'tasks'} title={title} embedded={embedded}>
+      <PageHead icon={isDone ? <CheckCircle2 size={18} /> : <ClipboardList size={18} />} title={title} count={loaded && !err && list.length > 0 ? list.length : null} lead={isDone ? t('workShell.tasks.leadCompleted') : t('workShell.tasks.leadActive')} inShell={inShell} />
+      {dlErr && (inShell
+        ? <div className="wd-note warn" role="alert"><AlertTriangle size={16} /><span>{dlErr}</span></div>
+        : <div className="ws-modal-err" role="alert"><AlertTriangle size={15} /> <span>{dlErr}</span></div>)}
       {!loaded ? (
         <SkeletonRows />
       ) : err ? (
         <LoadError onRetry={reload} />
       ) : list.length === 0 ? (
-        <div className="ws-empty">
-          <span className="ic"><ClipboardList size={20} /></span>
-          <div>
-            {isDone
-              ? <><b>{t('workShell.tasks.emptyCompletedTitle')}</b><p>{t.rich('workShell.tasks.emptyCompletedBody', null, { start: startLink })}</p></>
-              : <><b>{t('workShell.tasks.emptyActiveTitle')}</b><p>{t.rich('workShell.tasks.emptyActiveBody', null, { start: startLink, completed: (c) => <Link to="/work/completed" className="ws-link">{c}</Link> })}</p></>}
-          </div>
-        </div>
+        <EmptyState icon={<ClipboardList size={20} />} title={isDone ? t('workShell.tasks.emptyCompletedTitle') : t('workShell.tasks.emptyActiveTitle')} inShell={inShell}>
+          {isDone
+            ? t.rich('workShell.tasks.emptyCompletedBody', null, { start: startLink })
+            : t.rich('workShell.tasks.emptyActiveBody', null, { start: startLink, completed: (c) => <Link to="/work/completed" className={linkCls}>{c}</Link> })}
+        </EmptyState>
       ) : (
-        <div className="ws-list" role="list" aria-label={title}>
-          {list.map((s) => {
-            const st = stepStats(s)
-            const status = statusOf(s)
-            const when = fmtDate(isDone ? (s.endedAt || s.startedAt) : (s.lastActivityAt || s.startedAt), false, tag)
-            const label = sessionLabel(s, untitled)
-            return (
-              <div key={s.id} className="ws-row" role="listitem">
-                <span className={`ws-row-ic ${status.key}`} aria-hidden><status.Icon size={15} /></span>
-                <div className="ws-row-main">
-                  <div className="ws-row-t" title={label}>{label}</div>
-                  <div className="ws-row-m">
-                    <span className={`ws-st ${status.key}`}>{t(status.labelKey, status.label)}</span>
-                    {when && <><span className="sep" aria-hidden>&middot;</span><span>{when}</span></>}
-                    <span className="sep" aria-hidden>&middot;</span>
-                    <span>{t.rich(isDone ? 'workShell.tasks.stepsDone' : 'workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="done">{c}</span> })}</span>
-                  </div>
-                </div>
-                <div className="ws-row-acts">
-                  <button type="button" className="ws-btn go" onClick={() => open(s.id)}>{!isDone && status.key === 'paused' ? t('workShell.tasks.resume') : t('workShell.tasks.open')} <ArrowRight size={14} /></button>
-                  {isDone && <DownloadMenu sessionId={s.id} className="ws-btn" label={t('workShell.tasks.download')} onError={setDlErr} />}
-                </div>
-              </div>
-            )
-          })}
-        </div>
+        <div className={inShell ? 'wd-sess-list' : 'ws-list'} role="list" aria-label={title}>{rows}</div>
       )}
     </WorkSubShell>
   )

@@ -6,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { ArrowRight, ClipboardList, Play } from 'lucide-react'
 import { useLocale } from '../../../i18n/index.jsx'
 import { sessionLabel, stepStats, fmtDate, statusOf, useOpenSession } from '../../WorkTasks.jsx'
+import SessionRow from '../SessionRow.jsx'
 import { standaloneSessions } from './projectModel.js'
 
 const MAX_ROWS = 4
@@ -33,7 +34,7 @@ export default function StandaloneTasks({ sessions, projects, loaded }) {
           <div>
             <p>{t('workProjects.standalone.empty')}</p>
           </div>
-          <Link to="/work/start" className="wd-pj-btn" style={{ marginLeft: 'auto' }}>{t('workProjects.standalone.start')} <ArrowRight size={13} /></Link>
+          <Link to="/work/start" className="wd-pj-btn">{t('workProjects.standalone.start')} <ArrowRight size={13} /></Link>
         </div>
       )}
       {rows.map((s) => {
@@ -42,14 +43,10 @@ export default function StandaloneTasks({ sessions, projects, loaded }) {
         const label = sessionLabel(s, untitled)
         const when = fmtDate(s.endedAt || s.lastActivityAt || s.startedAt, false, tag)
         return (
-          <div key={s.id} className="wd-sess">
-            <span className={`wd-sess-ic${status.key === 'ended' ? ' done' : ''}`} aria-hidden><status.Icon size={14} /></span>
-            <div className="wd-sess-main">
-              <div className="wd-sess-title" title={label}>{label}</div>
-              <div className="wd-sess-meta">{t(status.labelKey, status.label)}{when ? ` · ${when}` : ''} {'·'} {t.rich('workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="wd-sess-done">{c}</span> })}</div>
-            </div>
+          <SessionRow key={s.id} state={status.key} title={label} status={t(status.labelKey, status.label)}
+            meta={[when, t.rich('workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="wd-sess-done">{c}</span> })]}>
             <button type="button" className="wd-resume" onClick={() => open(s.id)}>{status.key === 'paused' ? t('workShell.tasks.resume') : t('workShell.tasks.open')} <ArrowRight size={13} /></button>
-          </div>
+          </SessionRow>
         )
       })}
       {solo.length > MAX_ROWS && <Link to="/work/tasks" className="wd-sess-more">{t.n('workProjects.standalone.more', solo.length - MAX_ROWS)} <ArrowRight size={13} /></Link>}
