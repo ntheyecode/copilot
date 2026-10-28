@@ -112,8 +112,8 @@ test('month end: carry forward keeps the leftover, up to the superadmin cap', ()
   store.setWorkPricing({ hoursExpiry: { mode: 'forfeit' } })
 })
 
-test('no per-day task cap: every individual tier reports the same open-task slots (4)', () => {
-  for (const tier of ['lite', 'basic', 'advanced', 'premium']) {
+test('open-task slots: Lite/Basic/Advanced capped at 4; Premium is unlimited', () => {
+  for (const tier of ['lite', 'basic', 'advanced']) {
     const u = person(tier)
     const t = store.getWorkTaskUsage(u.id)
     assert.equal(t.unlimited, false)
@@ -123,6 +123,26 @@ test('no per-day task cap: every individual tier reports the same open-task slot
     assert.equal('cap' in t, false)        // the old daily cap is gone
     assert.equal('usedToday' in t, false)
   }
+  // Premium = Depth-2 / Projects -> UNLIMITED concurrent tasks (a project runs many).
+  const p = person('premium')
+  const tp = store.getWorkTaskUsage(p.id)
+  assert.equal(tp.unlimited, true)
+  assert.equal(tp.maxOpen, null)
+})
+
+test('Premium can open more than 4 tasks at once (no tooManyOpen 409)', () => {
+  const u = person('premium')
+  const sessions = []
+  for (let i = 0; i < 6; i++) {
+    store.startWorkTask(u.id)                                      // never refused for premium
+    sessions.push(store.createWorkSession(u.id, { goal: `Proj task ${i}`, app: 'App' }))
+  }
+  const t = store.getWorkTaskUsage(u.id)
+  assert.equal(t.open, 6)
+  assert.equal(t.unlimited, true)
+  const r = store.startWorkTask(u.id)
+  assert.equal(r.unlimited, true)
+  assert.equal(r.maxOpen, null)
 })
 
 test('out of guided hours is a 402 (hours are the only usage limit, no daily cap)', () => {

@@ -3251,6 +3251,10 @@ export const WORK_MAX_OPEN_TASKS = 4
 export function workMaxOpenTasks(workUserId) {
   const u = getUser(workUserId)
   if (u && u.companyId) return WORK_TASKS_UNLIMITED
+  // Premium (Depth-2 / Projects) individuals get UNLIMITED concurrent tasks - a
+  // project runs many tasks, so the universal 4-cap would contradict the feature.
+  // Lite / Basic / Advanced keep the cap.
+  if (canUseWorkProjects(workUserId)) return WORK_TASKS_UNLIMITED
   return WORK_MAX_OPEN_TASKS
 }
 // Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
@@ -3365,7 +3369,9 @@ export function getWorkTaskUsage(workUserId) {
   // Individuals: no daily cap. Report how many of the open-task slots are in use
   // (hours are the usage limit; see getWorkUsage for the hours side).
   const open = countOpenWorkTasks(workUserId)
-  return { unlimited: false, maxOpen: WORK_MAX_OPEN_TASKS, open, remaining: Math.max(0, WORK_MAX_OPEN_TASKS - open), activeTaskId }
+  const cap = workMaxOpenTasks(workUserId)
+  if (cap === WORK_TASKS_UNLIMITED) return { unlimited: true, maxOpen: null, open, remaining: null, activeTaskId }
+  return { unlimited: false, maxOpen: cap, open, remaining: Math.max(0, cap - open), activeTaskId }
 }
 // Gate + record a new task start. Throws a coded httpErr the caller surfaces, or
 // returns the new usage on success. Company accounts are unlimited unless an
@@ -3409,15 +3415,16 @@ export function startWorkTask(workUserId) {
   }
   // 2) Too many open at once? Finish or pick one up first. A paused task counts as
   //    open (it waits under "Resume where you left off").
+  const cap = workMaxOpenTasks(workUserId)
   const open = countOpenWorkTasks(workUserId)
-  if (open >= WORK_MAX_OPEN_TASKS) {
-    const e = httpErr(409, `You already have ${WORK_MAX_OPEN_TASKS} tasks on the go. Finish or pick one up before you start another.`)
-    e.tooManyOpen = true; e.maxOpen = WORK_MAX_OPEN_TASKS; e.open = open
+  if (cap !== WORK_TASKS_UNLIMITED && open >= cap) {
+    const e = httpErr(409, `You already have ${cap} tasks on the go. Finish or pick one up before you start another.`)
+    e.tooManyOpen = true; e.maxOpen = cap; e.open = open
     throw e
   }
   const usedToday = bumpWorkTasksToday(workUserId)   // kept for the month history only; no longer a gate
   persist()
-  return { open: open + 1, maxOpen: WORK_MAX_OPEN_TASKS, unlimited: false, usedToday }
+  return { open: open + 1, maxOpen: cap === WORK_TASKS_UNLIMITED ? null : cap, unlimited: cap === WORK_TASKS_UNLIMITED, usedToday }
 }
 // A company admin's license + usage dashboard: seat pools, who holds a license,
 // the tier breakdown, the minute pool, and each person's live usage. Everything
