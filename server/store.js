@@ -30,6 +30,7 @@ import * as proj from './work_project.js'
 import * as projInject from './work_project_inject.js'
 import * as roles from './work_roles.js'
 import * as practiceStats from './practice_stats.js'
+import * as teamProj from './work_team_projects.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -5879,7 +5880,9 @@ export function createWorkProject(workUserId, { customerId = 'default', name, go
 }
 export function getWorkProject(workUserId, projectId) { return _findProject(workUserId, projectId) }
 export function listWorkProjects(workUserId, { customerId = null } = {}) {
-  let list = (db.workProjects || []).filter((p) => p && p.workUserId === workUserId && p.state !== 'archived')
+  // Templates (Model B) are not runnable projects - they never appear in a
+  // normal project list, only in the template-management views.
+  let list = (db.workProjects || []).filter((p) => p && p.workUserId === workUserId && p.state !== 'archived' && !p.isTemplate)
   if (customerId) list = list.filter((p) => p.customerId === customerId)
   return list
 }
@@ -5915,7 +5918,7 @@ export function linkWorkProjectTaskSession(workUserId, projectId, taskId, sessio
 // company-scoped DATA operations over db.workProjects: every one checks the
 // acting user's companyRole + company before mutating, so segregation is
 // enforced server-side, not just hidden in the UI.
-function _companyProjects(companyId) { return (db.workProjects || []).filter((p) => p && p.companyId && String(p.companyId) === String(companyId) && p.state !== 'archived') }
+function _companyProjects(companyId) { return (db.workProjects || []).filter((p) => p && p.companyId && String(p.companyId) === String(companyId) && p.state !== 'archived' && !p.isTemplate) }
 function _findCompanyProject(companyId, projectId) { return _companyProjects(companyId).find((p) => p.id === projectId) || null }
 function _actor(userId) {
   const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
@@ -5940,6 +5943,72 @@ export function createCompanyProject(byUserId, { customerId = 'default', name, g
   const p = createWorkProject(byUserId, { customerId, name, goal, endState, tasks, companyId: a.companyId, managerId: mgr })
   _logProjectEvent(a.companyId, { kind: 'project_created', by: a.id, projectId: p.id, managerId: mgr })
   return p
+}
+
+// ---- Team projects, Model B: clone-to-many (templates + per-person runs) -----
+// A template is a project map a PM/admin assigns to many people; each assignee
+// gets their OWN run (an ordinary single-user project they own), so the whole
+// engine carries over with no ownership refactor. The pure clone/rollup maths is
+// in work_team_projects.js (SUPREME XV); the store owns db access + RBAC.
+function _rawProjectById(projectId) { return (db.workProjects || []).find((p) => p && p.id === projectId) || null }
+function _canManageTemplates(role) { return roles.canCreateProject(role) }
+function _canViewTemplates(role) { return roles.isPM(role) || roles.isGRC(role) || roles.isCompanyAdmin(role) }
+
+// Create a template (a non-runnable project map) the company can assign out.
+export function createProjectTemplate(byUserId, { customerId = 'default', name, goal, endState = null, tasks = [] } = {}) {
+  const a = _actor(byUserId)
+  if (!a.companyId) throw httpErr(403, 'Only a company user can create a template.')
+  if (!_canManageTemplates(a.role)) throw httpErr(403, 'You do not have permission to create templates.')
+  const p = createWorkProject(byUserId, { customerId, name, goal, endState, tasks, companyId: a.companyId, managerId: a.id })
+  p.isTemplate = true; p.state = 'template'; persist()
+  _logProjectEvent(a.companyId, { kind: 'template_created', by: a.id, projectId: p.id })
+  return p
+}
+
+// Templates the actor may manage/see in their company.
+export function listProjectTemplates(byUserId) {
+  const a = _actor(byUserId)
+  if (!a.companyId || !_canViewTemplates(a.role)) return []
+  return (db.workProjects || [])
+    .filter((p) => p && p.isTemplate && String(p.companyId) === String(a.companyId) && p.state !== 'archived')
+    .map((p) => ({ id: p.id, name: p.name, goal: p.goal, customerId: p.customerId, taskCount: (p.tasks || []).length, createdAt: p.createdAt, assignedCount: _templateRuns(p.id).length }))
+}
+
+function _templateRuns(templateId) {
+  return (db.workProjects || []).filter((p) => p && !p.isTemplate && String(p.templateId || '') === String(templateId) && p.state !== 'archived')
+}
+
+// Assign a template to company members: clone a fresh run per person (idempotent -
+// a member who already has a run of this template is skipped, not duplicated).
+export function assignTemplate(byUserId, templateId, userIds = []) {
+  const a = _actor(byUserId)
+  if (!a.companyId) throw httpErr(403, 'Only a company user can assign templates.')
+  if (!_canManageTemplates(a.role)) throw httpErr(403, 'You do not have permission to assign templates.')
+  const tpl = _rawProjectById(templateId)
+  if (!tpl || !tpl.isTemplate || String(tpl.companyId) !== String(a.companyId)) throw httpErr(404, 'Template not found')
+  const seed = teamProj.templateSeedTasks(tpl.tasks || [])
+  const existing = new Set(_templateRuns(templateId).map((p) => String(p.workUserId)))
+  const assigned = []; const skipped = []
+  for (const uid of (Array.isArray(userIds) ? userIds : [])) {
+    const u = getUser(uid)
+    if (!u || String(u.companyId) !== String(a.companyId)) { skipped.push({ userId: uid, reason: 'not_in_company' }); continue }
+    if (existing.has(String(uid))) { skipped.push({ userId: uid, reason: 'already_assigned' }); continue }
+    const run = createWorkProject(uid, { customerId: tpl.customerId, name: tpl.name, goal: tpl.goal, endState: tpl.endState || null, tasks: seed, companyId: a.companyId })
+    run.templateId = templateId; run.assignedBy = a.id; run.assignedAt = new Date().toISOString(); persist()
+    existing.add(String(uid)); assigned.push({ userId: uid, projectId: run.id })
+  }
+  _logProjectEvent(a.companyId, { kind: 'template_assigned', by: a.id, templateId, assigned: assigned.length })
+  return { assigned, skipped }
+}
+
+// Admin rollup for a template: per-person progress + completion, NEVER evidence.
+export function templateRollup(byUserId, templateId) {
+  const a = _actor(byUserId)
+  if (!a.companyId || !_canViewTemplates(a.role)) throw httpErr(403, 'You do not have permission to view this.')
+  const tpl = _rawProjectById(templateId)
+  if (!tpl || !tpl.isTemplate || String(tpl.companyId) !== String(a.companyId)) throw httpErr(404, 'Template not found')
+  const nameFor = (uid) => { const u = getUser(uid); return u ? (u.displayName || u.username) : null }
+  return { template: { id: tpl.id, name: tpl.name, goal: tpl.goal, taskCount: (tpl.tasks || []).length }, ...teamProj.rollupRuns(_templateRuns(templateId), nameFor) }
 }
 
 // Projects a user may see: a PM sees their own; Sr PM / GRC / admin see all.
