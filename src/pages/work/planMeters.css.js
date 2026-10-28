@@ -24,14 +24,16 @@ export const PLAN_METERS_CSS = `
 .wd-pm-top{display:flex;align-items:center;gap:9px;min-width:0}
 .wd-pm-ic{display:inline-flex;align-items:center;justify-content:center;width:32px;height:32px;border-radius:var(--r-xs);background:var(--panel);color:var(--pm-ink);border:none;flex-shrink:0}
 .wd-pm-ic.alt,.wd-pm-ic.warm{color:var(--pm-ink)}
-.wd-pm-label{font-size:var(--fs-md);color:var(--tx-2);font-weight:600;line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1 1 auto}
+/* The label wraps to a second line when the text scale or a wider font needs
+   it; a tile never truncates its own label (design-time gate). */
+.wd-pm-label{font-size:var(--fs-md);color:var(--tx-2);font-weight:600;line-height:1.3;min-width:0;overflow-wrap:anywhere;flex:1 1 auto}
 
 /* Info affordance + tooltip (same mechanics as before: hover on the wrap,
    keyboard focus-visible on the button; one tip at a time). */
 .wd-pm-info-wrap{position:relative;flex-shrink:0;display:inline-flex}
 .wd-pm-info{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:var(--r-xs);border:none;background:transparent;color:var(--mut);cursor:help;padding:0;transition:color .15s,background .15s}
 .wd-pm-info:hover{color:var(--pm-ink);background:var(--panel)}
-.wd-pm-tip{position:absolute;z-index:20;top:calc(100% + 8px);right:0;width:max-content;max-width:min(260px,72vw);background:var(--tip-bg);color:var(--tip-tx);font-size:12px;font-weight:500;line-height:1.5;border-radius:var(--r-sm);padding:9px 11px;box-shadow:var(--sh-3);opacity:0;visibility:hidden;transform:translateY(-3px);transition:opacity .15s,transform .15s,visibility .15s;pointer-events:none;white-space:normal}
+.wd-pm-tip{position:absolute;z-index:20;top:calc(100% + 8px);right:0;width:max-content;max-width:min(260px,72vw);background:var(--tip-bg);color:var(--tip-tx);font-size:calc(12px*var(--wc-fs,1));font-weight:500;line-height:1.5;border-radius:var(--r-sm);padding:9px 11px;box-shadow:var(--sh-3);opacity:0;visibility:hidden;transform:translateY(-3px);transition:opacity .15s,transform .15s,visibility .15s;pointer-events:none;white-space:normal}
 .wd-pm-tip:after{content:"";position:absolute;bottom:100%;right:12px;border:5px solid transparent;border-bottom-color:var(--tip-bg)}
 .wd-pm-info-wrap:hover .wd-pm-tip{opacity:1;visibility:visible;transform:none}
 @supports selector(:has(a)){.wd-pm-info-wrap:has(.wd-pm-info:focus-visible) .wd-pm-tip{opacity:1;visibility:visible;transform:none}}
@@ -41,8 +43,8 @@ export const PLAN_METERS_CSS = `
 .wd-pm-body{display:flex;align-items:center;gap:14px;min-width:0}
 .wd-pm-body .wd-ring{flex-shrink:0}
 .wd-pm-main{min-width:0;flex:1 1 auto}
-.wd-pm-value{font-family:var(--wd-display);font-weight:700;font-size:28px;line-height:1.05;letter-spacing:-.015em;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wd-pm-value small{font-size:13px;font-weight:500;color:var(--mut);font-family:var(--wd-body);margin-left:4px}
+.wd-pm-value{font-family:var(--wd-display);font-weight:700;font-size:calc(28px*var(--wc-fs,1));line-height:1.05;letter-spacing:-.015em;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-pm-value small{font-size:calc(13px*var(--wc-fs,1));font-weight:500;color:var(--mut);font-family:var(--wd-body);margin-left:4px}
 .wd-pm-tile.low .wd-pm-value{color:var(--warm)}
 .wd-pm-tile.out .wd-pm-value{color:var(--danger)}
 /* Sub lines wrap rather than clip: a tile is never allowed to cut a value off,
@@ -69,7 +71,7 @@ export const PLAN_METERS_CSS = `
 .wd-pm-state-t svg{flex-shrink:0;margin-top:2px;color:var(--warm)}
 .wd-pm-state.out .wd-pm-state-t svg{color:var(--danger)}
 .wd-pm-state-acts{display:flex;gap:8px;flex-wrap:wrap;flex-shrink:0}
-.wd-pm-state-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:34px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--em);background:var(--em);color:var(--on-em);font:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;text-decoration:none;transition:filter .15s}
+.wd-pm-state-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:34px;padding:0 14px;border-radius:var(--r-pill);border:1px solid var(--em-solid);background:var(--em-solid);color:var(--on-solid);font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:600;line-height:1;cursor:pointer;text-decoration:none;transition:filter .15s}
 .wd-pm-state-act:hover{filter:brightness(1.05)}
 .wd-pm-state-act.ghost{background:var(--panel);color:var(--em-deep);border-color:transparent}
 .wd-pm-state-act.ghost:hover{box-shadow:var(--sh-2);filter:none}

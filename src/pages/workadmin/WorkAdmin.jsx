@@ -12,7 +12,7 @@ import React, { useEffect, useState, useCallback } from 'react'
 import { LayoutDashboard, Users, Tags, Cpu, ListChecks, ShieldAlert, ShieldCheck, Loader2, LifeBuoy, Building2, CreditCard, UserPlus, LogOut, LogIn, Megaphone, Mail, MailCheck, DollarSign, Share2, Wallet, UserMinus, Palette, BookOpen, Bell } from 'lucide-react'
 import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
-import AccentPicker from '../../components/AccentPicker.jsx'
+import PreferencesPanel from '../../components/PreferencesPanel.jsx'
 import Companies from './sections/Companies.jsx'
 import Governance from './sections/Governance.jsx'
 import { WORKADMIN_CSS, ensureWorkAdminFonts } from './workadmin.css.js'
@@ -73,7 +73,7 @@ function AppearanceSection() {
     <div className="wka-panel">
       <h2>{t('superAdmin.appearancePanel.title')}</h2>
       <p className="desc">{t.rich('superAdmin.appearancePanel.desc')}</p>
-      <AccentPicker variant="wka" />
+      <PreferencesPanel variant="wka" />
     </div>
   )
 }

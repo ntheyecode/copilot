@@ -153,7 +153,124 @@ Cross-cutting rules for every phase: tokens only (grep the file for `#` and `rgb
 calling it done), both widths and both theme attributes through the gate, look at the
 PNGs, no removed control or prop, US spelling, no em-dash, never a model or provider name.
 
-## 6. Proposed, not added
+## 6. Phase 2: per-user personalization (theme mode, brand combination, accessibility)
+
+Same branch, second commit. No dashboard color is hardcoded any more: every brand
+color derives from the user's chosen combination, and three preference groups apply
+live and persist per user.
+
+### Where things live (single source each)
+
+- `src/theme/accent.js`: the eight vetted **combinations** (`{ key, name, primary,
+  secondary }`) and the derivation of every shade, with a contrast guarantee by
+  construction (`ensureContrast` steps a shade darker or lighter until it reaches
+  4.5:1 against its background). Emits `--accent`, `--accent-solid` (the lightest
+  primary shade that carries white text at 4.5:1), `--accent-dark` (text on white),
+  `--accent-light` (text on the dark panel), `--accent-ink`, `--accent-soft/-line/
+  -shadow/-contrast`, and the same set for `--accent-2`. The free-hex path is gone:
+  `accentHexFor` / `applyAccent` accept a known key only.
+- `src/theme/prefs.js`: the preferences store (theme mode, accent, a11y), apply via
+  root attributes + one `--wc-fs-app` var, localStorage first, then
+  `api.workSetPrefs(patch)` (`POST /api/work/profile/prefs`) fire-and-forget; an
+  accent patch also tries the older `/profile/accent` when the new endpoint is not
+  there. `initPrefs(user)` on every auth hydration: server values win when present
+  (`user.accent`, `user.themeMode`, `user.a11y`), else storage, else defaults.
+  `setInProduct(true/false)` from the app shell scopes the theme attribute to the
+  product; the public site stays light whatever is saved.
+- `src/theme/usePrefs.js`: the React binding. `src/theme.jsx`: the old force-light
+  provider now reads the store (`toggle` flips light and dark; Light remains the
+  default for anyone who chose nothing).
+- `src/components/PreferencesPanel.jsx` (three groups) with `AccentPicker.jsx` as
+  its brand group (two-tone swatches, no color input). Mounted in the superadmin
+  Appearance section, the company console Settings, the guide's Tools menu
+  (`hide={['textSize']}`, the menu has its own reading-size stepper), and new: a
+  Preferences item in the app shell rail foot opening a modal, so ordinary users
+  reach it. Strings: `src/i18n/locales/en/prefs.js`.
+
+### Combinations (primary / secondary) and measured contrast
+
+| key | pair | solid fill + white ink | primary text on white | primary text on dark | secondary text on white | secondary text on dark |
+|---|---|---|---|---|---|---|
+| meadow (default pair) | #0e9f6e / #0a6fb3 | 4.58 | 4.82 | 5.93 | 7.17 | 4.57 |
+| lagoon | #0d9488 / #4f46e5 | 4.69 | 5.27 | 5.44 | 8.28 | 4.65 |
+| harbor | #0a84c2 / #0b7a53 | 4.78 | 5.74 | 5.00 | 7.20 | 4.59 |
+| twilight | #4f46e5 / #0d9488 | 6.29 | 8.28 | 4.65 | 5.27 | 5.44 |
+| orchid | #7c3aed / #be123c | 5.70 | 7.59 | 4.58 | 8.31 | 4.72 |
+| berry | #e11d48 / #4f46e5 | 4.70 | 6.45 | 4.54 | 8.28 | 4.65 |
+| honey | #b7791f / #475569 | 4.57 | 5.13 | 5.64 | 9.59 | 4.73 |
+| graphite | #475569 / #0a6fb3 | 7.58 | 9.59 | 4.73 | 7.17 | 4.57 |
+
+All at or above WCAG AA 4.5:1 (`contrastReport()` in accent.js prints these).
+
+### Brand-derived vs semantic tokens (workApp.css.js)
+
+Derived from the combination: `--em` (primary), `--em-solid` (white-text-safe fill,
+used by every text-bearing solid button), `--em-deep` (primary text), `--em-2`
+(secondary, the second mark color), `--em-2-deep` (secondary text), `--em-fill`,
+`--em-fill-2`, `--em-line`, `--tint-green` and `--tint-green-ink` (primary tint),
+`--tint-blue` and `--tint-blue-ink` (secondary tint). Fixed on purpose (semantic):
+`--cta` orange (the action color), `--warm` amber (warning), `--danger` red,
+`--info` blue (information notes), `--ai` violet (AI assist) with `--tint-violet`,
+`--tint-amber`, `--tint-neutral`.
+
+### Theme modes
+
+`data-theme` on `<html>`: `light` (default), `dark` (the Phase 1 dark set, now
+derived shades: `--em-deep: var(--accent-light)` etc.), `heavy` (a bolder light
+variant: `--line` #b9c0d0 / `--line-2` #8f98ae, text #0d1020, `--em` = the solid
+shade and `--em-deep` = the ink shade, 16 to 26 percent tints, 1.5px card borders,
+body weight 500 and headings 800, radii 6 to 14px, spacing steps 16 / 20 / 26 / 32).
+
+### Accessibility controls (data-a11y-* on `<html>`)
+
+- Text size sm / md / lg / xl -> `--wc-fs-app` 0.9 / 1 / 1.15 / 1.3. Every font-size
+  in the seven dashboard sheets is `calc(px * var(--wc-fs))` (156 declarations
+  converted); the shell chrome caps at 1.15 (`--wc-fs-chrome`). The guide's own
+  reading stepper multiplies on top (`calc(var(--wc-fs-app) * step)`).
+- Reduce motion: the `prefers-reduced-motion` media rules stay as the default; the
+  toggle adds `data-a11y-motion="reduce"`, which stops every animation and
+  transition under `.wd` and lights the task flow statically.
+- High contrast: `data-a11y-contrast="1"` darkens text and lines (black text, #6b7390
+  lines), gives every card a 1.5px border, underlines links, and widens focus rings to
+  3px with a halo; a dark-mode variant lightens instead.
+- Larger click targets: `data-a11y-targets="1"` raises nav items and buttons to 44px
+  (40px for the nowrap top-bar chrome), icon buttons to 44px, and opens row and tile
+  gaps.
+- Readable font: `data-a11y-font="readable"` swaps `--wd-body` and `--wd-display` to
+  Atkinson Hyperlegible when installed, else Verdana / Segoe UI, with wider letter and
+  word spacing (no new dependency).
+- Focus outlines: `.wd :focus-visible` is always on (2px accent ring), stronger under
+  high contrast.
+
+### A class fix the matrix forced
+
+The top bar collapsed its labels on viewport media queries, so a larger text size,
+the readable font or larger targets overflowed it at the same viewport. The
+collapse now runs on **container queries** against `.wd-main-col` in em of the
+chrome scale (`--wc-fs-chrome` times the readable-font and target factors), so every
+breakpoint moves with the user's settings: 61em / 53.1em / 38.5em / 28em (the only
+visible change at defaults: labels drop at a 1147px viewport instead of 1100px).
+
+### Verification
+
+Matrix on `/work` at 1280 and 640: light default, dark, heavy, light + twilight,
+dark + berry, heavy + harbor, xl text, high contrast, larger targets, reduce motion
++ readable font, every toggle on dark, every toggle on heavy (first run), the panel
+open, the panel used live (Heavy + Orchid + larger targets: attributes set, storage
+written, `/profile/prefs` called, the older accent endpoint tried as fallback), and
+the stored choice after a reload. **30 of 30 CLEAN** on the overflow gate; the
+Phase 1 pass (16) and the neighbor pages (14) rerun CLEAN. `npm run build` green,
+`npm test` 699/699. Shots: `C:\ry-work\wcp-dashboard-redesign-shots\prefs`.
+
+Not verified: the server endpoint itself (owned elsewhere; the client was exercised
+against a fixture that answers it), the profile fields `themeMode` / `a11y` arriving
+from a real `/api/work/me`, the admin consoles' Appearance panels and the guide Tools
+menu with the new panel (built, not rendered in this pass), and the floating guide
+window (its own document; preferences do not reach it yet). The dark mode is a
+deliberate departure from the earlier white-only rule, at the coordinator's request;
+Light stays the default.
+
+## 7. Proposed, not added
 
 No new dependency was needed. A tiny `clsx`-style helper would make the tile tone classes
 tidier, but string concatenation is fine at this size; not worth a package.

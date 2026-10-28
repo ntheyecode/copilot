@@ -35,9 +35,9 @@ export const TASK_FLOW_CSS = `
 @keyframes wd-tf-b5{0%,84%{background:var(--tint-neutral);color:var(--tint-neutral-ink)}88%,100%{background:var(--em);color:var(--on-em)}}
 .wd-tf-t{font-size:var(--fs-md);font-weight:700;color:var(--tx);line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .wd-tf-d{font-size:var(--fs-sm);color:var(--mut);line-height:1.45}
-.wd-tf-n{position:absolute;top:-4px;left:calc(50% + 14px);width:18px;height:18px;border-radius:50%;background:var(--panel);border:1px solid var(--line);font-size:10px;font-weight:800;color:var(--mut);display:grid;place-items:center;line-height:1}
+.wd-tf-n{position:absolute;top:-4px;left:calc(50% + 14px);width:18px;height:18px;border-radius:50%;background:var(--panel);border:1px solid var(--line);font-size:calc(10px*var(--wc-fs,1));font-weight:800;color:var(--mut);display:grid;place-items:center;line-height:1}
 .wd-tf-foot{display:flex;align-items:center;gap:12px 16px;flex-wrap:wrap;margin-top:var(--sp-5);padding-top:var(--sp-4);border-top:1px solid var(--line-soft)}
-.wd-tf-note{flex:1 1 240px;min-width:0;font-size:13px;color:var(--mut);line-height:1.5}
+.wd-tf-note{flex:1 1 240px;min-width:0;font-size:calc(13px*var(--wc-fs,1));color:var(--mut);line-height:1.5}
 /* The one orange call-to-action on the first-run screen. */
 .wd-tf-cta{flex-shrink:0;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:8px;height:42px;padding:0 20px;border-radius:var(--r-sm);border:none;background:var(--cta);color:var(--cta-ink);font-family:var(--wd-display);font-weight:700;font-size:var(--fs-base);line-height:1;cursor:pointer;transition:background .15s,transform .15s}
 .wd-tf-cta:hover:not(:disabled){background:var(--cta-hover);transform:translateY(-1px)}
@@ -57,7 +57,8 @@ export const TASK_FLOW_CSS = `
  .wd-tf-n{display:none}
  .wd-tf-cta{flex-basis:100%;width:100%}
 }
-/* Reduced motion: every beat lit, the connector fully drawn, nothing moves. */
+/* Reduced motion (the system setting, or the explicit preference toggle):
+   every beat lit, the connector fully drawn, nothing moves. */
 @media(prefers-reduced-motion:reduce){
  .wd-tf-flow::after{animation:none;width:80%}
  .wd-tf-node.beat .wd-tf-ic{animation:none;background:var(--em);color:var(--on-em)}
@@ -66,4 +67,7 @@ export const TASK_FLOW_CSS = `
 @media(prefers-reduced-motion:reduce) and (max-width:760px){
  .wd-tf-flow::after{width:2px;height:84%}
 }
+[data-a11y-motion='reduce'] .wd-tf-flow::after{animation:none;width:80%}
+[data-a11y-motion='reduce'] .wd-tf-node.beat .wd-tf-ic{animation:none;background:var(--em);color:var(--on-em)}
+@media(max-width:760px){[data-a11y-motion='reduce'] .wd-tf-flow::after{width:2px;height:84%}}
 `

@@ -29,7 +29,7 @@ export const PLAN_PILL_CSS = `
 
 /* ---- The pill ---- */
 .wd-planpill-wrap{position:relative;flex-shrink:0;display:inline-flex}
-.wd-planpill{display:inline-flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap;height:34px;padding:0 10px 0 11px;border-radius:var(--r-pill);border:1px solid var(--line);background:transparent;color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wd-planpill{display:inline-flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap;height:34px;padding:0 10px 0 11px;border-radius:var(--r-pill);border:1px solid var(--line);background:transparent;color:var(--tx-2);font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:500;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
 .wd-planpill:hover,.wd-planpill.on{border-color:var(--line-2);background:var(--line-soft);color:var(--tx)}
 .wd-pp-s{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .wd-pp-s b{font-weight:700;color:var(--tx);font-variant-numeric:tabular-nums}
@@ -47,17 +47,17 @@ export const PLAN_PILL_CSS = `
 .wd-planpop-note .t span{min-width:0;overflow-wrap:anywhere}
 @keyframes wd-pp-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .wd-planpop-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;min-width:0}
-.wd-planpop-name{font-family:var(--wd-display);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-planpop-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:none;border-radius:var(--r-pill);padding:4px 9px;margin-left:auto}
+.wd-planpop-name{font-family:var(--wd-display);font-weight:700;font-size:calc(15px*var(--wc-fs,1));letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-planpop-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:calc(10.5px*var(--wc-fs,1));font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:none;border-radius:var(--r-pill);padding:4px 9px;margin-left:auto}
 .wd-planpop-tag .wd-plan-dot{width:6px;height:6px}
 .wd-planpop-stat{padding:10px 0;border-top:1px solid var(--line-soft)}
 .wd-planpop-stat:first-of-type{border-top:0;padding-top:0}
 .wd-planpop-stat .r{display:flex;align-items:center;justify-content:space-between;gap:10px;min-width:0}
-.wd-planpop-stat .k{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--mut);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-planpop-stat .k{display:inline-flex;align-items:center;gap:6px;font-size:calc(12.5px*var(--wc-fs,1));font-weight:600;color:var(--mut);min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wd-planpop-stat .k svg{flex-shrink:0;color:var(--em-2)}
-.wd-planpop-stat .v{font-family:var(--wd-display);font-weight:700;font-size:15px;line-height:1.1;color:var(--tx);white-space:nowrap;flex-shrink:0}
-.wd-planpop-stat .v small{font-size:11.5px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
-.wd-planpop-stat .h{font-size:11.5px;color:var(--faint);margin-top:4px;line-height:1.4}
+.wd-planpop-stat .v{font-family:var(--wd-display);font-weight:700;font-size:calc(15px*var(--wc-fs,1));line-height:1.1;color:var(--tx);white-space:nowrap;flex-shrink:0}
+.wd-planpop-stat .v small{font-size:calc(11.5px*var(--wc-fs,1));font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
+.wd-planpop-stat .h{font-size:calc(11.5px*var(--wc-fs,1));color:var(--faint);margin-top:4px;line-height:1.4}
 .wd-planpop-stat .h.warm{color:var(--warm);font-weight:600}
 /* The month-hours bar under its row: the filled part is what is LEFT. */
 .wd-planpop-bar{height:6px;border-radius:999px;background:var(--em-line);margin-top:8px;overflow:hidden}
@@ -68,25 +68,27 @@ export const PLAN_PILL_CSS = `
 .wd-planpop-bar.out i{background:var(--danger)}
 .wd-planpop-pips{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0;flex-wrap:wrap}
 /* State note + action: warm for low / every slot in use, danger for exhausted. */
-.wd-planpop-note{margin-top:10px;display:flex;flex-direction:column;gap:9px;padding:10px 12px;border-radius:var(--r-sm);border:none;background:var(--tint-amber);font-size:12.5px;line-height:1.45;color:var(--tx)}
+.wd-planpop-note{margin-top:10px;display:flex;flex-direction:column;gap:9px;padding:10px 12px;border-radius:var(--r-sm);border:none;background:var(--tint-amber);font-size:calc(12.5px*var(--wc-fs,1));line-height:1.45;color:var(--tx)}
 .wd-planpop-note.out{background:var(--danger-fill)}
 .wd-planpop-note .t{display:flex;gap:8px;align-items:flex-start}
 .wd-planpop-note .t svg{flex-shrink:0;margin-top:2px;color:var(--warm)}
 .wd-planpop-note.out .t svg{color:var(--danger)}
 .wd-planpop-acts{display:flex;gap:8px;flex-wrap:wrap}
-.wd-planpop-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--em);background:var(--em);color:var(--on-em);font:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;text-decoration:none;transition:filter .15s}
+.wd-planpop-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--em-solid);background:var(--em-solid);color:var(--on-solid);font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:600;line-height:1;cursor:pointer;text-decoration:none;transition:filter .15s}
 .wd-planpop-act:hover{filter:brightness(1.05)}
 .wd-planpop-act.ghost{background:var(--panel);color:var(--em-deep);border-color:transparent}
 .wd-planpop-act.ghost:hover{box-shadow:var(--sh-2);filter:none}
 .wd-planpop-act svg{flex-shrink:0}
 
 /* Top bar collapse, widest first: the pill drops its tasks stat and keeps the
-   ring + caret so the control stays recognizable at every width. */
-@media(max-width:1100px){.wd-planpill{gap:7px;padding:0 9px 0 10px}}
-@media(max-width:860px){.wd-planpill>.wd-pp-s.tasks,.wd-planpill>.wd-pp-sep{display:none}}
+   ring + caret so the control stays recognizable at every width. Container
+   queries against the main column (workApp.css.js .wd-main-col, em = the
+   chrome text scale), so the collapse follows the space the bar actually has. */
+@container wdmain (max-width:61em){.wd-planpill{gap:7px;padding:0 9px 0 10px}}
+@container wdmain (max-width:53.1em){.wd-planpill>.wd-pp-s.tasks,.wd-planpill>.wd-pp-sep{display:none}}
 /* Floater / phone width: a 300px popover right-anchored to a pill near the
    middle of a 380px bar would run off the left edge, so it pins to the
-   viewport's side gutters under the 58px top bar instead. */
-@media(max-width:480px){.wd-planpop{position:fixed;top:66px;left:14px;right:14px;width:auto;max-width:none}}
+   viewport's side gutters under the top bar instead. */
+@container wdmain (max-width:28em){.wd-planpop{position:fixed;top:66px;left:14px;right:14px;width:auto;max-width:none}}
 @media(prefers-reduced-motion:reduce){.wd-planpop{animation:none}.wd-ring .wd-ring-fill,.wd-planpop-bar i{transition:none}}
 `

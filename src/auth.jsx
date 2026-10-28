@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
 import { api } from './api.js'
 import { setScrubEnabled, setGovPolicy } from './scrub.js'
-import { initAccent } from './theme/accent.js'
+import { initPrefs } from './theme/prefs.js'
 
 // ---------------------------------------------------------------------------
 // WorkCoPilot auth - work-only, no 2FA, no multi-product entitlement. A
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
       setUser(u)
       setScrubEnabled(!!(u && u.scrub))   // legacy on/off scrub
       setGovPolicy(u && u.govPolicy)      // armed governance policy: scrub-with-policy or on-device tokenize
-      initAccent(u && u.accent)           // per-user dashboard accent (server value, else localStorage)
+      initPrefs(u)                        // per-user accent + theme mode + accessibility (server values, else localStorage)
     } catch (e) {
       // Only a DEFINITIVE server refusal ends the session: we reached the server
       // and it said no (401 not-signed-in / 403 suspended). A transient network

@@ -19,7 +19,7 @@ export const DASH_CSS = `
 .wd-m-hero-eyebrow{display:block;font-size:var(--fs-sm);font-weight:600;color:var(--tint-green-ink);line-height:1.2;margin-bottom:4px}
 .wd-m-hero-title{font-family:var(--wd-display);font-weight:700;font-size:var(--fs-2xl);letter-spacing:-.015em;line-height:1.2;color:var(--tx)}
 .wd-m-hero-benefit{margin-top:5px;color:var(--mut);font-size:var(--fs-base);line-height:1.5;max-width:60ch}
-.wd-m-hero-cta{flex-shrink:0;white-space:nowrap;margin-left:auto;display:inline-flex;align-items:center;justify-content:center;gap:9px;height:46px;padding:0 24px;border-radius:var(--r-sm);border:none;background:var(--cta);color:var(--cta-ink);font-family:var(--wd-display);font-weight:700;font-size:15.5px;line-height:1;cursor:pointer;transition:background .15s,transform .15s}
+.wd-m-hero-cta{flex-shrink:0;white-space:nowrap;margin-left:auto;display:inline-flex;align-items:center;justify-content:center;gap:9px;height:46px;padding:0 24px;border-radius:var(--r-sm);border:none;background:var(--cta);color:var(--cta-ink);font-family:var(--wd-display);font-weight:700;font-size:calc(15.5px*var(--wc-fs,1));line-height:1;cursor:pointer;transition:background .15s,transform .15s}
 .wd-m-hero-cta:hover:not(:disabled){background:var(--cta-hover);transform:translateY(-1px)}
 .wd-m-hero-cta:active:not(:disabled){transform:none}
 .wd-m-hero-cta:disabled{opacity:.5;cursor:default;transform:none}
@@ -28,7 +28,7 @@ export const DASH_CSS = `
 .wd-m-hero-locked svg{flex-shrink:0}
 
 /* ===== "Add more guided time" note: the action under its text ============ */
-.wd-m-buy-act{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;margin-top:10px;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--em);background:var(--em);color:var(--on-em);font:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;transition:filter .15s}
+.wd-m-buy-act{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;margin-top:10px;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--em-solid);background:var(--em-solid);color:var(--on-solid);font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:600;line-height:1;cursor:pointer;transition:filter .15s}
 .wd-m-buy-act:hover{filter:brightness(1.05)}
 .wd-m-buy-act svg{flex-shrink:0}
 
@@ -41,7 +41,7 @@ export const DASH_CSS = `
 @media(max-width:640px){
  .wd-m-hero{gap:14px}
  .wd-m-hero-ic{width:46px;height:46px}
- .wd-m-hero-title{font-size:20px}
+ .wd-m-hero-title{font-size:calc(20px*var(--wc-fs,1))}
  .wd-m-hero-cta{flex-basis:100%;width:100%;margin-left:0}
 }
 @media(prefers-reduced-motion:reduce){
