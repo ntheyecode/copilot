@@ -1,101 +1,162 @@
-// The white dashboard shell + card styles (WD_CSS), moved verbatim from
-// WorkPage.jsx. Injected once by WorkAppLayout so every .wd-* page shares it.
+// The in-product design system (WD_CSS): the ONE token source for every
+// signed-in .wd-* surface (dashboard, start wizard, tasks, help) plus the
+// shell styles. Injected once by WorkAppLayout.
+//
+// Design direction (docs/dashboard-redesign-audit.md): calm, white, airy.
+// Soft neutral canvas, white or lightly TINTED cards with no hard outline,
+// generous whitespace, one bold label per block, crisp single-color icons on
+// a tinted tile, restrained shadow (depth comes from tint + space), one orange
+// call-to-action per screen. Brand: green / blue; AI assist: a calm violet.
+// Guiding color-code untouched: emerald = current, cyan = what it sees,
+// amber = warning, muted = next.
+//
+// Every color, radius, spacing step, shadow and type size below is a token.
+// Components consume tokens only; a literal in a component is the bug.
 export const WD_CSS = `
 .wd{
-  /* White-only palette (the approved dashboard spec): page #f5f7fb, cards
-     #fff, hairlines #e7eaf2, ink #1b2033, muted #5c6484, green #0e9f6e,
-     blue #0a84c2. The product dashboard is white regardless of the app's
-     theme toggle, so there is deliberately no [data-theme] override here. */
-  --ink:#f5f7fb;--ink-soft:#ffffff;
-  --panel:#ffffff;--panel-2:#ffffff;--panel-3:#f6f8fd;
-  --line:#e7eaf2;--line-2:#d5d9e6;--line-soft:#eef1f7;
-  --tx:#1b2033;--tx-2:#2b3250;--mut:#5c6484;--mut-2:#434a68;--faint:#8a90a6;
-  /* Accent tokens derive from the per-user --accent vars (src/theme/accent.js);
-     the literal is this surface's own default. --em-2 (cyan) stays the fixed
-     "observation" color so it keeps contrasting whatever accent the user picks. */
+  /* ---- Canvas + surfaces (light, the product default) ---- */
+  --bg:#f6f7fb;--ink:var(--bg);--ink-soft:#ffffff;
+  --panel:#ffffff;--panel-2:#fbfbfd;--panel-3:#f3f5f9;
+  --line:#e6e9f0;--line-2:#d3d8e4;--line-soft:#eef0f5;
+  --tx:#1a1f33;--tx-2:#2c3350;--mut:#5f6887;--mut-2:#454c6a;--faint:#8b92aa;
+  /* ---- Brand accent (green, user-themable via src/theme/accent.js) + the
+     fixed blue (--em-2) that stays the "observation" cyan whatever the accent. ---- */
   --em:var(--accent,#0e9f6e);--em-2:#0a84c2;--on-em:var(--accent-contrast,#ffffff);--em-deep:var(--accent-dark,#0b7a53);
-  --warm:#c85a16;--warm-2:#e4612f;--cta-ink:#ffffff;
-  --violet:#7a4ddb;--rose:#d23e6b;
-  --em-fill:var(--accent-soft,#eafaf3);--em-fill-2:#d9f3e7;--em-line:var(--accent-line,#bde9d5);
-  --warm-fill:rgba(200,90,22,.07);--warm-line:rgba(200,90,22,.28);
+  --em-fill:var(--accent-soft,#eaf7f0);--em-fill-2:#d7f1e4;--em-line:var(--accent-line,#bde9d5);
+  /* ---- The ONE call-to-action color: orange (brand), never an all-orange UI. ---- */
+  --cta:#c9501a;--cta-hover:#b4460f;--cta-ink:#ffffff;--cta-fill:#fdf0e8;--cta-line:rgba(201,80,26,.30);
+  /* ---- Semantic: amber warning, danger, info, AI assist ---- */
+  --warm:#b45309;--warm-2:#d97706;--warm-fill:#fdf4e7;--warm-line:rgba(180,83,9,.30);
+  --danger:#d93a4d;--danger-fill:#fdeef0;--danger-line:rgba(217,58,77,.32);
+  --info:#0a6fb3;--info-fill:#eaf3fc;--info-line:rgba(10,111,179,.26);
+  --ai:#6d4fd6;--ai-fill:#f1edfc;--ai-line:rgba(109,79,214,.26);--violet:var(--ai);--rose:var(--danger);
+  /* ---- Soft category tints (the reference's blue / green / violet chips):
+     a pale fill + a saturated ink of the same hue for the icon or label. ---- */
+  --tint-green:#eaf7f0;--tint-green-ink:#0b7a53;
+  --tint-blue:#eaf3fc;--tint-blue-ink:#0a6fb3;
+  --tint-violet:#f1edfc;--tint-violet-ink:#5b3fc4;
+  --tint-amber:#fdf4e7;--tint-amber-ink:#9a4a07;
+  --tint-neutral:#f1f3f8;--tint-neutral-ink:#454c6a;
+  /* ---- Fields, chips, tracks, tooltips, scrim ---- */
   --card-a:#ffffff;--card-b:#fbfcff;
-  --chip:#f1f3fa;--chip-line:#e2e6f1;
-  --field:#fcfdff;--track:#e7eaf2;
-  --shadow:0 22px 48px -30px rgba(30,40,80,.30);--shadow-sm:0 2px 12px rgba(30,40,80,.08);
-  --focus:var(--accent,#0e9f6e);--danger:#e23b4e;
-  --card-shadow:0 1px 2px rgba(20,24,44,.03);
-  --card-shadow-hover:0 1px 2px rgba(20,24,44,.04),0 8px 22px -16px rgba(26,31,54,.18);
-  --info:#0a6fb3;--info-fill:#e9f5fc;--info-line:rgba(10,134,194,.26);
-  --r:12px;--r-sm:9px;
-  position:relative;display:flex;min-height:100vh;background:var(--ink);color:var(--tx);overflow-x:clip;
+  --chip:#f1f3f8;--chip-line:#e2e6ee;
+  --field:#fcfdff;--track:#e6e9f0;
+  --tip-bg:#1f2437;--tip-tx:#ffffff;--scrim:rgba(14,18,32,.46);
+  --focus:var(--accent,#0e9f6e);
+  /* ---- Shadow scale: 0 none, 1 rest, 2 hover / raised, 3 popover / modal ---- */
+  --sh-0:none;
+  --sh-1:0 1px 2px rgba(20,24,44,.04);
+  --sh-2:0 1px 2px rgba(20,24,44,.04),0 10px 24px -18px rgba(26,31,54,.22);
+  --sh-3:0 22px 48px -30px rgba(30,40,80,.30);
+  --card-shadow:var(--sh-1);--card-shadow-hover:var(--sh-2);--shadow:var(--sh-3);--shadow-sm:0 2px 12px rgba(30,40,80,.08);
+  /* ---- Radius scale ---- */
+  --r-xs:8px;--r-sm:10px;--r:14px;--r-lg:18px;--r-xl:22px;--r-pill:999px;
+  /* ---- Spacing scale (4px base) ---- */
+  --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:20px;--sp-6:24px;--sp-7:32px;--sp-8:40px;
+  /* ---- Type scale ---- */
+  --fs-xs:11.5px;--fs-sm:12.5px;--fs-md:13.5px;--fs-base:14.5px;--fs-lg:16px;--fs-xl:18px;--fs-2xl:22px;--fs-3xl:26px;
   --wd-display:"Bricolage Grotesque","Figtree",system-ui,sans-serif;
-  font-family:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
+  --wd-body:"Figtree",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,Roboto,sans-serif;
+  position:relative;display:flex;min-height:100vh;background:var(--bg);color:var(--tx);overflow-x:clip;
+  font-family:var(--wd-body);font-size:15px;line-height:1.55;-webkit-font-smoothing:antialiased}
 /* The one tint with no --accent-* counterpart: derived only once a user accent is
    set (data-accent on :root), so the default stays the designed literal above. */
-[data-accent] .wd{--em-fill-2:color-mix(in srgb,var(--accent) 18%,#ffffff)}
+[data-accent] .wd{--em-fill-2:color-mix(in srgb,var(--accent) 18%,var(--panel))}
+/* ---- Dark values for the SAME tokens. The in-product ThemeProvider forces
+   data-theme=light (owner law: white in-product), so this block is dormant by
+   default; it exists so no surface ever hard-paints a light background and the
+   whole system flips correctly if a dark theme is ever enabled. ---- */
+[data-theme='dark'] .wd{
+  --bg:#0f1220;--ink-soft:#171a2c;
+  --panel:#171a2c;--panel-2:#1b1f33;--panel-3:#1f2439;
+  --line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.16);--line-soft:rgba(255,255,255,.06);
+  --tx:#e8eaf6;--tx-2:#d3d8e8;--mut:#a1a7c3;--mut-2:#b8bdd4;--faint:#767d9e;
+  --em:var(--accent,#2ec48f);--em-2:#4fb6ef;--on-em:#06281c;--em-deep:#7ae6bd;
+  --em-fill:rgba(46,196,143,.13);--em-fill-2:rgba(46,196,143,.24);--em-line:rgba(46,196,143,.38);
+  --cta:#e8763f;--cta-hover:#f28a56;--cta-ink:#1a0c05;--cta-fill:rgba(232,118,63,.14);--cta-line:rgba(232,118,63,.40);
+  --warm:#f0b35a;--warm-2:#f5c46b;--warm-fill:rgba(240,179,90,.12);--warm-line:rgba(240,179,90,.36);
+  --danger:#f0637a;--danger-fill:rgba(240,99,122,.12);--danger-line:rgba(240,99,122,.38);
+  --info:#6fb8ef;--info-fill:rgba(111,184,239,.12);--info-line:rgba(111,184,239,.34);
+  --ai:#a68cf5;--ai-fill:rgba(166,140,245,.13);--ai-line:rgba(166,140,245,.36);
+  --tint-green:rgba(46,196,143,.12);--tint-green-ink:#7ae6bd;
+  --tint-blue:rgba(111,184,239,.12);--tint-blue-ink:#8fcbf5;
+  --tint-violet:rgba(166,140,245,.13);--tint-violet-ink:#c3b2fa;
+  --tint-amber:rgba(240,179,90,.12);--tint-amber-ink:#f5c46b;
+  --tint-neutral:rgba(255,255,255,.05);--tint-neutral-ink:#c5cadc;
+  --card-a:#1b1f33;--card-b:#171a2c;
+  --chip:rgba(255,255,255,.06);--chip-line:rgba(255,255,255,.12);
+  --field:#13162a;--track:rgba(255,255,255,.10);
+  --tip-bg:#2a3048;--tip-tx:#f3f4fa;--scrim:rgba(0,0,0,.62);
+  --sh-1:0 1px 2px rgba(0,0,0,.30);
+  --sh-2:0 1px 2px rgba(0,0,0,.30),0 10px 24px -14px rgba(0,0,0,.55);
+  --sh-3:0 22px 48px -24px rgba(0,0,0,.70);--shadow-sm:0 2px 12px rgba(0,0,0,.35)}
 .wd *{box-sizing:border-box}
 .wd h1,.wd h2,.wd h3{margin:0;color:var(--tx);font-family:var(--wd-display);letter-spacing:-.01em}
 .wd p{margin:0}
-.wd :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:10px}
+.wd :focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:var(--r-sm)}
 .wd button{cursor:pointer}
 
 /* ---- Shell: left rail + slim top bar ------------------------------------
-   The rail is a white column: brand mark + stacked wordmark, then the section
-   nav. It collapses to a 64px icon strip (toggle in the top bar; automatic
-   under 900px). Every control in the top bar is nowrap + flex-shrink:0 so
-   nothing can wrap or clip; the only flexible element is the spacer. */
-.wd-rail{width:230px;flex:0 0 230px;position:sticky;top:0;height:100vh;align-self:flex-start;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 12px;gap:2px;transition:width .18s ease,flex-basis .18s ease;z-index:31;overflow:hidden}
-.wd-rail.collapsed{width:64px;flex-basis:64px;padding:14px 10px}
-.wd-brand{display:flex;align-items:center;gap:9px;padding:6px 8px 14px;min-width:0;width:100%;background:none;border:none;font:inherit;text-align:left;color:inherit;cursor:pointer}
+   The rail is a quiet white column: brand lockup, then the section nav. It
+   collapses to a 64px icon strip (toggle in the top bar; automatic under
+   900px). Every control in the top bar is nowrap + flex-shrink:0 so nothing
+   can wrap or clip; the only flexible element is the spacer. Top-bar controls
+   are GHOST pills (no outline at rest) so the bar reads as one calm strip;
+   only the time chip (tinted) and the Upgrade pill (soft accent) carry color. */
+.wd-rail{width:232px;flex:0 0 232px;position:sticky;top:0;height:100vh;align-self:flex-start;background:var(--panel);border-right:1px solid var(--line-soft);display:flex;flex-direction:column;padding:var(--sp-4) var(--sp-3);gap:2px;transition:width .18s ease,flex-basis .18s ease;z-index:31;overflow:hidden}
+.wd-rail.collapsed{width:64px;flex-basis:64px;padding:var(--sp-4) 10px}
+.wd-brand{display:flex;align-items:center;gap:10px;padding:4px 8px 18px;min-width:0;width:100%;background:none;border:none;font:inherit;text-align:left;color:inherit;cursor:pointer}
 .wd-brand .mark{display:inline-flex;align-items:center;justify-content:center;flex:0 0 26px;line-height:0}
 .wd-brand .bt{display:flex;flex-direction:column;line-height:1.12;min-width:0;overflow:hidden}
-.wd-brand .bt small{font-size:11px;font-weight:600;color:var(--mut);letter-spacing:.01em;white-space:nowrap}
+.wd-brand .bt small{font-size:var(--fs-xs);font-weight:600;color:var(--mut);letter-spacing:.01em;white-space:nowrap}
 .wd-brand .bt b{font-family:var(--wd-display);font-weight:700;font-size:15px;color:var(--tx);white-space:nowrap}
-.wd-rail.collapsed .wd-brand{padding:6px 0 14px;justify-content:center}
+.wd-rail.collapsed .wd-brand{padding:4px 0 18px;justify-content:center}
 .wd-rail.collapsed .wd-brand .bt,.wd-rail.collapsed .wd-nav-t,.wd-rail.collapsed .wd-sect{display:none}
 .wd-navs{display:flex;flex-direction:column;gap:2px}
-.wd-sect{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:14px 10px 6px;white-space:nowrap}
+.wd-sect{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);padding:16px 12px 6px;white-space:nowrap}
 .wd-sect-rule{display:none;height:1px;background:var(--line-soft);margin:10px 6px}
 .wd-rail.collapsed .wd-sect-rule{display:block}
-.wd-nav{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border-radius:var(--r-sm);border:none;background:none;color:var(--tx-2);font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;white-space:nowrap;text-decoration:none;text-align:left;transition:background .15s,color .15s}
+.wd-nav{display:flex;align-items:center;gap:11px;width:100%;padding:9px 12px;border-radius:var(--r-sm);border:none;background:none;color:var(--tx-2);font:inherit;font-size:14px;font-weight:500;cursor:pointer;white-space:nowrap;text-decoration:none;text-align:left;transition:background .15s,color .15s}
 .wd-nav:hover{background:var(--line-soft);color:var(--tx)}
-.wd-nav.on{background:var(--em-fill);color:var(--em-deep)}
-.wd-nav svg{flex:0 0 18px}
+.wd-nav.on{background:var(--em-fill);color:var(--em-deep);font-weight:600}
+.wd-nav svg{flex:0 0 18px;opacity:.9}
+.wd-nav.on svg{opacity:1}
 .wd-nav .wd-nav-t{overflow:hidden;text-overflow:ellipsis}
 .wd-rail.collapsed .wd-nav{justify-content:center;padding:9px 0}
 .wd-rail-foot{margin-top:auto;display:flex;flex-direction:column;gap:2px}
 .wd-nav.foot{color:var(--mut)}
 
 .wd-main-col{flex:1;min-width:0;display:flex;flex-direction:column}
-.wd-top{position:sticky;top:0;z-index:30;height:58px;display:flex;align-items:center;gap:12px;padding:0 24px;border-bottom:1px solid var(--line);background:var(--panel);min-width:0}
-.wd-collapse{width:30px;height:30px;border:1px solid var(--line);background:var(--panel);border-radius:8px;display:inline-flex;align-items:center;justify-content:center;color:var(--mut);cursor:pointer;flex-shrink:0;padding:0}
+.wd-top{position:sticky;top:0;z-index:30;height:60px;display:flex;align-items:center;gap:var(--sp-3);padding:0 var(--sp-6);border-bottom:1px solid var(--line-soft);background:var(--panel);min-width:0}
+.wd-collapse{width:32px;height:32px;border:1px solid transparent;background:transparent;border-radius:var(--r-xs);display:inline-flex;align-items:center;justify-content:center;color:var(--mut);cursor:pointer;flex-shrink:0;padding:0;transition:background .15s,color .15s}
 .wd-collapse:hover{background:var(--line-soft);color:var(--tx)}
-.wd-top h2{font-size:16px;font-weight:600;white-space:nowrap;flex-shrink:0;letter-spacing:-.005em}
+.wd-top h2{font-size:var(--fs-lg);font-weight:600;white-space:nowrap;flex-shrink:0;letter-spacing:-.005em}
 .wd-top-sp{flex:1 1 8px;min-width:8px}
-.wd-top-right{display:flex;align-items:center;gap:8px;flex-shrink:0;white-space:nowrap}
-/* Shared chrome for the right-cluster controls: one 32px height, pill radius,
-   nowrap + flex-shrink:0 on every one of them. */
-.wd-getapp,.wd-addtime,.wd-signout,.wd-buyhrs,.wd-upgrade,.wd-mins{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13.5px;font-weight:500;line-height:1;text-decoration:none;cursor:pointer;padding:0 13px;transition:color .15s,border-color .15s,background .15s,filter .15s}
-.wd-getapp:hover,.wd-addtime:hover,.wd-signout:hover,.wd-buyhrs:hover{border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
+.wd-top-right{display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap}
+/* Shared chrome for the right-cluster controls: one 34px height, pill radius,
+   nowrap + flex-shrink:0 on every one of them. Ghost at rest, tinted on hover. */
+.wd-getapp,.wd-addtime,.wd-signout,.wd-buyhrs,.wd-upgrade,.wd-mins{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:34px;border-radius:var(--r-pill);border:1px solid transparent;background:transparent;color:var(--tx-2);font:inherit;font-size:var(--fs-md);font-weight:500;line-height:1;text-decoration:none;cursor:pointer;padding:0 13px;transition:color .15s,border-color .15s,background .15s,filter .15s}
+.wd-getapp:hover,.wd-addtime:hover,.wd-signout:hover,.wd-buyhrs:hover{background:var(--line-soft);color:var(--tx)}
+.wd-buyhrs,.wd-addtime{border-color:var(--line)}
 /* Buy hours: the full label wide, the short one from 1100px down, icon only at 480. */
 .wd-buyhrs .short{display:none}
-.wd-getapp{position:relative;width:32px;padding:0;color:var(--mut)}
+.wd-getapp{position:relative;width:34px;padding:0;color:var(--mut)}
 /* Icon-only link: the label stays in the DOM for screen readers and the
    title tooltip carries it for everyone else. */
 .wd-getapp span{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.wd-mins{color:var(--em-deep);border-color:var(--em-line);background:var(--em-fill);font-weight:600;cursor:default}
+.wd-mins{color:var(--em-deep);background:var(--em-fill);font-weight:600;cursor:default}
 .wd-mins svg{flex-shrink:0}
-.wd-mins.low{color:var(--warm);border-color:var(--warm-line);background:var(--warm-fill)}
-.wd-mins.skel{color:transparent;min-width:104px;border-color:transparent;background:var(--track)}
-.wd-upgrade{color:#fff;background:var(--em);border-color:var(--em);font-weight:600}
-.wd-upgrade:hover{filter:brightness(1.05)}
+.wd-mins.low{color:var(--warm);background:var(--warm-fill)}
+.wd-mins.skel{color:transparent;min-width:104px;background:var(--track)}
+.wd-upgrade{color:var(--em-deep);background:var(--em-fill);font-weight:600}
+.wd-upgrade:hover{background:var(--em-fill-2)}
 .wd-addtime{font-weight:600}
 .wd-signout{color:var(--mut)}
-.wd-avatar{width:32px;height:32px;border-radius:50%;background:var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--tx-2);flex-shrink:0;text-transform:uppercase}
+.wd-avatar{width:34px;height:34px;border-radius:50%;background:var(--em-fill);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:var(--em-deep);flex-shrink:0;text-transform:uppercase}
 
-.wd-main{position:relative;z-index:2;width:100%;max-width:960px;margin:0 auto;padding:30px 26px 48px;min-width:0}
+.wd-main{position:relative;z-index:2;width:100%;max-width:1000px;margin:0 auto;padding:var(--sp-7) 28px 56px;min-width:0}
 .wd-main.wide{max-width:1120px}
-#wd-start-card,#wd-sessions,#wd-skills{scroll-margin-top:74px}
+#wd-start-card,#wd-sessions,#wd-skills{scroll-margin-top:76px}
 
 /* ---- Company co-branding strip (white-label) ---------------------------
    Sits above the greeting for company users only. Reads as
@@ -103,8 +164,8 @@ export const WD_CSS = `
    name, contact line), a hairline rule separates it from the WorkCoPilot
    mark on the right. One flat panel, 1px line, same card recipe as the rest
    of the home view; no gradients, no second accent. */
-.wd-cobrand{display:flex;align-items:center;gap:16px;min-width:0;margin-bottom:22px;padding:10px 14px 10px 12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow)}
-.wd-cobrand-logo{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;min-width:44px;max-width:168px;padding:0 6px;border-radius:11px;background:var(--card-a);border:1px solid var(--line);overflow:hidden}
+.wd-cobrand{display:flex;align-items:center;gap:16px;min-width:0;margin-bottom:var(--sp-6);padding:10px 14px 10px 12px;background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--sh-0)}
+.wd-cobrand-logo{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;height:44px;min-width:44px;max-width:168px;padding:0 6px;border-radius:11px;background:var(--panel-3);border:1px solid var(--line-soft);overflow:hidden}
 .wd-cobrand-logo img{display:block;max-height:36px;max-width:156px;width:auto;height:auto;object-fit:contain}
 .wd-cobrand-logo.mono{color:var(--em);background:var(--em-fill);border-color:var(--em-line)}
 .wd-cobrand-logo.mono b{font-family:"Bricolage Grotesque";font-weight:800;font-size:17px;letter-spacing:-.02em;line-height:1}
@@ -138,35 +199,43 @@ export const WD_CSS = `
 }
 
 /* ---- Greeting: compact. One heading, one muted status line, no hero. ---- */
-.wd-hello h1{font-family:var(--wd-display);font-weight:700;font-size:22px;line-height:1.25;letter-spacing:-.01em}
-.wd-plan{display:flex;align-items:center;gap:8px;margin-top:3px;color:var(--mut);font-size:14px}
+.wd-hello h1{font-family:var(--wd-display);font-weight:700;font-size:var(--fs-3xl);line-height:1.2;letter-spacing:-.015em}
+.wd-plan{display:flex;align-items:center;gap:8px;margin-top:5px;color:var(--mut);font-size:var(--fs-base)}
 .wd-plan-dot{width:7px;height:7px;border-radius:50%;background:var(--em);flex-shrink:0}
 .wd-plan-skel{height:14px;width:260px;max-width:70%;border-radius:7px;margin-top:8px;background:var(--track)}
 @keyframes wd-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* ---- Cards: one quiet recipe for every block on the home view ----------
-   White (or panel) face, 1px line, soft lift, an icon tile + title + muted
-   caption in the head. Matches the admin console so the two feel like one
-   product. */
-.wd-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);transition:border-color .18s,box-shadow .18s}
-.wd-card:hover{border-color:var(--line-2)}
+   A white face with a hairline (no outline weight, no shadow at rest), or a
+   soft TINTED face with no border at all (.wd-card.tint-*). Depth comes from
+   tint and whitespace, not from shadow. The head is an icon tile + title +
+   muted caption. Icon tiles are borderless: a pale fill with a saturated
+   same-hue icon, exactly the reference's category chips. */
+.wd-card{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--sh-0);transition:border-color .18s,box-shadow .18s}
+.wd-card:hover{border-color:var(--line)}
+.wd-card.tint-green{background:var(--tint-green);border-color:transparent}
+.wd-card.tint-blue{background:var(--tint-blue);border-color:transparent}
+.wd-card.tint-violet{background:var(--tint-violet);border-color:transparent}
+.wd-card.tint-neutral{background:var(--tint-neutral);border-color:transparent}
 .wd-card-head{display:flex;align-items:flex-start;gap:12px}
-.wd-card-t{display:block;font-size:14.5px;font-weight:700;color:var(--tx);line-height:1.3}
-.wd-card-c{display:block;font-size:12.5px;color:var(--mut);margin-top:2px;line-height:1.45}
-.wd-ic{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:10px;background:var(--em-fill);color:var(--em);flex-shrink:0;border:1px solid var(--em-line)}
-.wd-ic.alt{color:var(--em-2);background:color-mix(in srgb,var(--em-2) 10%,transparent);border-color:color-mix(in srgb,var(--em-2) 28%,transparent)}
-.wd-ic.warm{color:var(--warm);background:var(--warm-fill);border-color:var(--warm-line)}
+.wd-card-t{display:block;font-size:var(--fs-base);font-weight:700;color:var(--tx);line-height:1.3}
+.wd-card-c{display:block;font-size:var(--fs-sm);color:var(--mut);margin-top:2px;line-height:1.45}
+.wd-ic{display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:var(--r-sm);background:var(--tint-green);color:var(--tint-green-ink);flex-shrink:0;border:none}
+.wd-ic.alt{color:var(--tint-blue-ink);background:var(--tint-blue)}
+.wd-ic.warm{color:var(--tint-amber-ink);background:var(--tint-amber)}
+.wd-ic.ai{color:var(--tint-violet-ink);background:var(--tint-violet)}
+.wd-ic.neutral{color:var(--tint-neutral-ink);background:var(--tint-neutral)}
 .wd-link{color:var(--em-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--em-2) 40%,transparent)}
 .wd-link:hover{text-decoration-color:var(--em-2)}
 
 /* Quiet secondary rows: Buddy + Data protection + Skills share ONE white card
    separated by hairlines. Each is a compact row; the expandable ones open in
    place (Data protection -> ScrubRules, Skills -> SkillsCard body). */
-.wd-more{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);overflow:hidden}
+.wd-more{margin-top:var(--sp-5);background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);box-shadow:var(--sh-0);overflow:hidden}
 .wd-more > * + *{border-top:1px solid var(--line-soft)}
 .wd-more .wd-card{border:none;border-radius:0;box-shadow:none;background:transparent}
 .wd-more .wd-card:hover{border-color:transparent}
-.wd-more .wd-ic{width:30px;height:30px;border-radius:8px}
+.wd-more .wd-ic{width:32px;height:32px;border-radius:var(--r-xs)}
 /* Skills card body */
 .wd-sk{display:flex;flex-direction:column;gap:12px}
 .wd-sk-lead{font-size:13px;line-height:1.5;color:var(--mut);margin:0}
@@ -193,12 +262,12 @@ export const WD_CSS = `
 .wd-sk-tag{font-style:normal;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-2);background:var(--info-fill);border:1px solid var(--info-line);border-radius:999px;padding:1px 7px}
 .wd-sk-del{flex:none;width:28px;height:28px;border-radius:8px;display:grid;place-items:center;background:transparent;border:1px solid transparent;color:var(--mut);cursor:pointer;transition:color .15s,border-color .15s,background .15s}
 .wd-sk-del:hover{color:var(--danger);border-color:var(--line-2);background:var(--panel)}
-.wd-buddy{display:flex;align-items:center;gap:12px;padding:10px 14px;min-width:0;flex-wrap:wrap}
+.wd-buddy{display:flex;align-items:center;gap:12px;padding:12px 16px;min-width:0;flex-wrap:wrap}
 .wd-buddy .wd-card-t,.wd-dp .wd-card-t{font-size:14px}
 .wd-buddy .wd-card-body{min-width:0;flex:1 1 200px}
 .wd-buddy .wd-card-end{margin-left:auto;flex-shrink:0}
 .wd-dp{overflow:hidden;align-self:start}
-.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:10px 14px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s;border-radius:0}
+.wd-dp-btn{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;background:transparent;border:none;cursor:pointer;color:var(--tx);text-align:left;font:inherit;transition:background .15s;border-radius:0}
 .wd-dp-btn:hover{background:var(--line-soft)}
 .wd-dp-btn .wd-card-body{min-width:0;flex:1}
 .wd-dp-btn .wd-card-c{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -207,17 +276,18 @@ export const WD_CSS = `
 .wd-dp-body{padding:0 14px 14px;border-top:1px solid var(--line-soft);padding-top:12px;font-size:13.5px;color:var(--mut);line-height:1.55}
 
 /* Notes: info (admin access) and warning (gate message) */
-.wd-note{display:flex;gap:11px;align-items:flex-start;margin:0 0 14px;padding:12px 15px;border-radius:12px;font-size:13.5px;line-height:1.5;border:1px solid var(--info-line);background:var(--info-fill);color:var(--tx)}
+.wd-note{display:flex;gap:11px;align-items:flex-start;margin:0 0 14px;padding:12px 15px;border-radius:var(--r);font-size:var(--fs-md);line-height:1.5;border:1px solid transparent;background:var(--info-fill);color:var(--tx)}
+.wd-note.wd-gap{margin:var(--sp-5) 0 0}
 .wd-note svg{flex-shrink:0;margin-top:2px;color:var(--info)}
 .wd-note a{color:var(--info);font-weight:600;text-decoration:underline;text-underline-offset:3px}
 /* An action inside a note (e.g. "Add hours" next to the out-of-hours gate): reads as a link, no box. */
 .wd-note .wd-note-act{background:none;border:none;padding:0;margin:0;font:inherit;font-weight:600;color:var(--info);text-decoration:underline;text-underline-offset:3px;cursor:pointer;white-space:nowrap}
 .wd-note.warn .wd-note-act{color:var(--warm)}
-.wd-note.warn{border-color:var(--warm-line);background:var(--warm-fill)}
+.wd-note.warn{background:var(--warm-fill)}
 .wd-note.warn svg{color:var(--warm)}
 
-.wd-buy{margin-top:14px;display:flex;gap:13px;align-items:flex-start;border:1px solid var(--em-line);background:var(--panel);border-radius:16px;padding:16px 18px;box-shadow:var(--card-shadow)}
-.wd-buy .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
+.wd-buy{margin-top:var(--sp-5);display:flex;gap:13px;align-items:flex-start;border:1px solid transparent;background:var(--tint-green);border-radius:var(--r-lg);padding:16px 18px;box-shadow:var(--sh-0)}
+.wd-buy .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--panel);color:var(--tint-green-ink);flex-shrink:0}
 .wd-buy h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:16px;margin-bottom:5px}
 .wd-buy p{color:var(--mut);font-size:13.5px}
 .wd-buy p b{color:var(--tx)}
@@ -225,7 +295,7 @@ export const WD_CSS = `
 .wd-buy .x:hover{color:var(--tx)}
 
 /* Plan chooser (free signup needs a plan to guide) */
-.wd-sub{margin-top:14px;border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:18px 18px 16px;box-shadow:var(--card-shadow)}
+.wd-sub{margin-top:var(--sp-5);border:1px solid var(--line-soft);background:var(--panel);border-radius:var(--r-lg);padding:18px 18px 16px;box-shadow:var(--sh-0)}
 .wd-sub-head{display:flex;gap:13px;align-items:flex-start}
 .wd-sub-head .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:11px;background:var(--em-fill-2);color:var(--em);flex-shrink:0}
 .wd-sub-head h3{font-family:"Bricolage Grotesque";font-weight:700;font-size:17px;margin-bottom:5px}
@@ -235,7 +305,7 @@ export const WD_CSS = `
 .wd-sub-plan:hover{transform:translateY(-2px);border-color:var(--em)}
 .wd-sub-plan:disabled{opacity:.7;cursor:default;transform:none}
 .wd-sub-plan.pop{border-color:var(--em)}
-.wd-sub-plan .tag{position:absolute;top:-9px;right:12px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--em);color:#06281c;padding:3px 8px;border-radius:999px}
+.wd-sub-plan .tag{position:absolute;top:-9px;right:12px;font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;background:var(--em);color:var(--on-em);padding:3px 8px;border-radius:var(--r-pill)}
 .wd-sub-plan .nm{font-family:"Bricolage Grotesque";font-weight:700;font-size:15px}
 .wd-sub-plan .pr{font-family:"Bricolage Grotesque";font-weight:800;font-size:24px;line-height:1}
 .wd-sub-plan .pr i{font-style:normal;font-size:12px;font-weight:600;color:var(--mut);margin-left:2px}
@@ -245,15 +315,16 @@ export const WD_CSS = `
 .wd-sub-note{margin-top:12px;color:var(--mut);font-size:12.5px}
 @media(max-width:720px){.wd-sub-plans{grid-template-columns:1fr}}
 
-.wd-setup{margin-top:14px;border:1px solid var(--warm-line);background:var(--panel);border-radius:16px;padding:16px;box-shadow:var(--card-shadow)}
+.wd-setup{margin-top:var(--sp-5);border:1px solid transparent;background:var(--tint-amber);border-radius:var(--r-lg);padding:16px;box-shadow:var(--sh-0)}
 .wd-setup-note{display:flex;align-items:center;gap:9px;color:var(--warm);font-size:13.5px;margin-bottom:12px;font-weight:600}
 
 /* Section head: icon tile + title + caption, shared by the plan form, the
    spaces grid and the sessions list. */
-.wd-sec{display:flex;align-items:flex-start;gap:12px;margin-bottom:14px}
-.wd-sec h2{font-family:var(--wd-display);font-weight:700;font-size:17px;letter-spacing:-.01em;line-height:1.3;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
-.wd-sec p{color:var(--mut);font-size:13.5px;margin-top:2px;line-height:1.45}
-.wd-sec .wd-ic{margin-top:1px}
+.wd-sec{display:flex;align-items:flex-start;gap:12px;margin-bottom:var(--sp-4)}
+.wd-sec h2{font-family:var(--wd-display);font-weight:700;font-size:var(--fs-lg);letter-spacing:-.01em;line-height:1.3;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.wd-sec p{color:var(--mut);font-size:var(--fs-md);margin-top:2px;line-height:1.45}
+.wd-sec .wd-ic{margin-top:0}
+.wd-sec > div{min-width:0;flex:1 1 auto}
 
 /* START A TASK: the primary action card. White face, 1px line, soft lift;
    the readiness coach lives inside it beneath the head. */
@@ -272,8 +343,8 @@ export const WD_CSS = `
 .wd-nameinput::placeholder{color:var(--mut)}
 .wd-nameinput:hover{border-color:var(--line-2)}
 .wd-nameinput:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill);background:var(--panel)}
-.wd-modal-ov{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(8,14,24,.5);backdrop-filter:blur(3px)}
-.wd-modal{width:min(440px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow)}
+.wd-modal-ov{position:fixed;inset:0;z-index:80;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--scrim);backdrop-filter:blur(3px)}
+.wd-modal{width:min(440px,calc(100vw - 36px));background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r-lg);padding:22px;box-shadow:var(--sh-3)}
 .wd-modal h3{display:flex;align-items:center;gap:9px;font-family:"Bricolage Grotesque";font-weight:800;font-size:19px;margin:0 0 12px}
 .wd-modal h3 svg{color:var(--danger)}
 .wd-modal-sess{font-size:14px;font-weight:600;color:var(--tx);background:var(--chip);border:1px solid var(--chip-line);border-radius:10px;padding:9px 12px;margin-bottom:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -305,43 +376,45 @@ export const WD_CSS = `
 .wd-docs-chip button:hover{background:var(--line-2);color:var(--tx)}
 .wd-docs-err{margin-top:9px;display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--danger)}
 .wd-docs-note{margin-top:9px;font-size:11.5px;color:var(--mut);line-height:1.5}
-.wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:var(--em);color:#fff;border:none;border-radius:10px;height:40px;padding:0 20px;font:inherit;font-weight:600;font-size:14.5px;cursor:pointer;transition:filter .15s,transform .15s}
-.wd-cta:hover:not(:disabled){filter:brightness(1.05)}
+/* The ONE call-to-action: orange on every surface (brand), the only solid
+   orange element on a screen. Secondary actions stay green / outline. */
+.wd-cta{display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;background:var(--cta);color:var(--cta-ink);border:none;border-radius:var(--r-sm);height:40px;padding:0 20px;font:inherit;font-weight:600;font-size:var(--fs-base);cursor:pointer;transition:background .15s,transform .15s}
+.wd-cta:hover:not(:disabled){background:var(--cta-hover)}
 .wd-cta:active:not(:disabled){transform:translateY(0)}
 .wd-cta:disabled{opacity:.5;cursor:default;transform:none}
 
-.wd-sessions{margin-top:16px}
-.wd-sec-count{font-size:12px;color:var(--mut);font-weight:600;border:1px solid var(--line);background:var(--chip);border-radius:999px;padding:2px 9px;line-height:1.5}
-.wd-sess-list{display:flex;flex-direction:column;gap:8px}
-.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:12px 16px;box-shadow:var(--card-shadow);transition:border-color .2s}
-.wd-sess:hover{border-color:var(--line-2)}
-.wd-sess-ic{width:30px;height:30px;border-radius:8px;background:var(--info-fill);color:var(--em-2);display:inline-flex;align-items:center;justify-content:center;flex:0 0 30px}
-.wd-sess-ic.done{background:var(--em-fill);color:var(--em)}
+.wd-sessions{margin-top:var(--sp-7)}
+.wd-sec-count{font-size:12px;color:var(--mut);font-weight:600;border:1px solid var(--chip-line);background:var(--chip);border-radius:var(--r-pill);padding:2px 9px;line-height:1.5;white-space:nowrap;flex-shrink:0}
+.wd-sess-list{display:flex;flex-direction:column;gap:var(--sp-2)}
+.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);padding:12px 16px;box-shadow:var(--sh-0);transition:border-color .2s}
+.wd-sess:hover{border-color:var(--line)}
+.wd-sess-ic{width:32px;height:32px;border-radius:var(--r-xs);background:var(--tint-blue);color:var(--tint-blue-ink);display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px}
+.wd-sess-ic.done{background:var(--tint-green);color:var(--tint-green-ink)}
 .wd-sess-main{flex:1;min-width:0}
 .wd-sess-title{font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .wd-sess-meta{font-size:13px;color:var(--mut);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-sess-done{color:var(--em);font-weight:600}
+.wd-sess-done{color:var(--em-deep);font-weight:600}
 .wd-sess-bar{height:4px;background:var(--track);border-radius:3px;margin-top:8px;overflow:hidden;max-width:380px}
 .wd-sess-bar i{display:block;height:100%;border-radius:3px;background:var(--em);transition:width .4s ease}
-.wd-resume{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-weight:500;font-size:13.5px;cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s,border-color .15s}
-.wd-resume:hover{border-color:#d5d9e6;background:var(--line-soft)}
+.wd-resume{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-weight:500;font-size:var(--fs-md);cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s,border-color .15s}
+.wd-resume:hover{border-color:var(--line-2);background:var(--line-soft)}
 .wd-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:7px;border-radius:9px;flex-shrink:0;transition:color .15s,background .15s}
-.wd-del:hover{color:var(--danger);background:color-mix(in srgb,var(--danger) 12%,transparent)}
+.wd-del:hover{color:var(--danger);background:var(--danger-fill)}
 .wd-empty{border:1px dashed var(--line-2);border-radius:var(--r);padding:18px 16px;display:flex;align-items:center;gap:14px;background:var(--panel)}
-.wd-empty .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:10px;background:var(--em-fill);border:1px solid var(--em-line);color:var(--em);flex-shrink:0}
-.wd-empty b{display:block;color:var(--tx);font-size:14.5px;margin-bottom:2px}
-.wd-empty p{color:var(--mut);font-size:13.5px}
-.wd-skel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
+.wd-empty .ic{display:inline-flex;align-items:center;justify-content:center;width:38px;height:38px;border-radius:var(--r-sm);background:var(--tint-green);border:none;color:var(--tint-green-ink);flex-shrink:0}
+.wd-empty b{display:block;color:var(--tx);font-size:var(--fs-base);margin-bottom:2px}
+.wd-empty p{color:var(--mut);font-size:var(--fs-md)}
+.wd-skel{background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px}
 .wd-skel i{display:block;height:12px;border-radius:6px;background:var(--track);background-size:200% 100%;animation:wd-sh 1.3s linear infinite}
 .wd-skel i.w1{width:52%}.wd-skel i.w2{width:34%}.wd-skel i.w3{width:80%;height:5px}
 @keyframes wd-sh{0%{background-position:200% 0}100%{background-position:-200% 0}}
 /* Stat tiles: a slim 3-up (minutes left / tasks today / saved tasks). */
-.wd-stats{margin-top:16px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
-.wd-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
-.wd-stat .l{font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wd-stats{margin-top:var(--sp-4);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--sp-3)}
+.wd-stat{background:var(--tint-neutral);border:none;border-radius:var(--r);padding:14px 16px;min-width:0}
+.wd-stat .l{font-size:var(--fs-sm);color:var(--mut);display:flex;align-items:center;gap:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wd-stat .l svg{flex-shrink:0}
 .wd-stat .v{margin-top:6px;font-size:23px;font-weight:700;font-family:var(--wd-display);line-height:1.1;white-space:nowrap}
-.wd-stat .v small{font-size:13px;font-weight:500;color:var(--faint);font-family:"Figtree",system-ui,sans-serif}
+.wd-stat .v small{font-size:13px;font-weight:500;color:var(--faint);font-family:var(--wd-body)}
 .wd-stat .v.skel{height:26px;width:60%;border-radius:7px;background:var(--track)}
 
 .wd-apps{margin-top:40px}
@@ -445,7 +518,8 @@ export const WD_CSS = `
 }
 @media(max-width:760px){.wd-start{padding:18px 16px 16px}}
 @media(max-width:640px){
- .wd-main{padding:22px 16px 40px}
+ .wd-main{padding:var(--sp-5) var(--sp-4) var(--sp-8)}
+ .wd-hello h1{font-size:var(--fs-2xl)}
  /* z-index 32 > the rail's 31: at this width the plan pill's popover pins to the
     viewport gutters (planPill.css.js) and must paint over the rail, and the top
     bar is the stacking context it lives in. Wider up, the two never overlap. */
@@ -700,10 +774,10 @@ export const WD_CSS = `
 .wd-wiz-eyebrow,.wd-wiz-link,.wd-wiz-tag,.wd-wiz-depth-m,.wd-coach-eyebrow,.wd-coach-skip,.wd-coach-opt,.wd-coach-gate,.wd-coach-k,.wd-coach-reopen,.wd-cta{white-space:nowrap;flex-shrink:0}
 .wd-wiz-prog span,.wd-coach-prog span{flex-shrink:0}
 /* Quiet "View all / Session logs" link in the Resume section header + footer. */
-.wd-sess-all{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;color:var(--em-2);font-size:13px;font-weight:600;text-decoration:none;padding:2px 2px}
-.wd-sess-all:hover{color:var(--em-deep)}
+.wd-sess-all{margin-left:auto;display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;color:var(--em-deep);font-size:13px;font-weight:600;text-decoration:none;padding:6px 10px;border-radius:var(--r-pill);transition:background .15s}
+.wd-sess-all:hover{background:var(--em-fill)}
 .wd-sess-all svg{flex-shrink:0}
-.wd-sess-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-2);font-size:13px;font-weight:600;text-decoration:none;padding:6px 2px}
-.wd-sess-more:hover{color:var(--em-deep)}
+.wd-sess-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-deep);font-size:13px;font-weight:600;text-decoration:none;padding:6px 2px}
+.wd-sess-more:hover{color:var(--em)}
 @media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}.wd-coach,.wd-coach::after,.wd-coach-kind-check,.wd-coach-prog span.on,.wd-coach-adv .bar i{animation:none}}
 `

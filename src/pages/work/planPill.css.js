@@ -14,7 +14,7 @@ export const PLAN_PILL_CSS = `
 .wd-ring .wd-ring-fill{stroke:var(--em);transition:stroke-dashoffset .5s ease}
 .wd-ring.low .wd-ring-track{stroke:var(--warm-line)}
 .wd-ring.low .wd-ring-fill{stroke:var(--warm)}
-.wd-ring.out .wd-ring-track{stroke:color-mix(in srgb,var(--danger) 28%,transparent)}
+.wd-ring.out .wd-ring-track{stroke:var(--danger-line)}
 .wd-ring.out .wd-ring-fill{stroke:var(--danger)}
 
 /* ---- Task pips: one dot per task slot (open tasks of the at-once maximum, or a
@@ -29,8 +29,8 @@ export const PLAN_PILL_CSS = `
 
 /* ---- The pill ---- */
 .wd-planpill-wrap{position:relative;flex-shrink:0;display:inline-flex}
-.wd-planpill{display:inline-flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 10px 0 11px;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
-.wd-planpill:hover,.wd-planpill.on{border-color:#d5d9e6;background:var(--line-soft);color:var(--tx)}
+.wd-planpill{display:inline-flex;align-items:center;gap:9px;flex-shrink:0;white-space:nowrap;height:34px;padding:0 10px 0 11px;border-radius:var(--r-pill);border:1px solid var(--line);background:transparent;color:var(--tx-2);font:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer;transition:color .15s,border-color .15s,background .15s}
+.wd-planpill:hover,.wd-planpill.on{border-color:var(--line-2);background:var(--line-soft);color:var(--tx)}
 .wd-pp-s{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
 .wd-pp-s b{font-weight:700;color:var(--tx);font-variant-numeric:tabular-nums}
 .wd-pp-sep{width:1px;height:16px;background:var(--line);flex-shrink:0}
@@ -43,12 +43,12 @@ export const PLAN_PILL_CSS = `
 /* white-space:normal on purpose: the top bar's control cluster (.wd-top-right) is
    nowrap so the pills never wrap, and the popover inherits it; every note and
    hint inside must wrap like prose. */
-.wd-planpop{position:absolute;top:calc(100% + 8px);right:0;z-index:41;width:300px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px 15px;animation:wd-pp-pop .16s ease;text-align:left;white-space:normal}
+.wd-planpop{position:absolute;top:calc(100% + 8px);right:0;z-index:41;width:300px;max-width:calc(100vw - 28px);background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r-lg);box-shadow:var(--sh-3);padding:14px 15px;animation:wd-pp-pop .16s ease;text-align:left;white-space:normal}
 .wd-planpop-note .t span{min-width:0;overflow-wrap:anywhere}
 @keyframes wd-pp-pop{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 .wd-planpop-head{display:flex;align-items:center;gap:8px;margin-bottom:11px;min-width:0}
 .wd-planpop-name{font-family:var(--wd-display);font-weight:700;font-size:15px;letter-spacing:-.01em;line-height:1.2;color:var(--tx);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-planpop-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:1px solid var(--em-line);border-radius:999px;padding:3px 9px;margin-left:auto}
+.wd-planpop-tag{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-deep);background:var(--em-fill);border:none;border-radius:var(--r-pill);padding:4px 9px;margin-left:auto}
 .wd-planpop-tag .wd-plan-dot{width:6px;height:6px}
 .wd-planpop-stat{padding:10px 0;border-top:1px solid var(--line-soft)}
 .wd-planpop-stat:first-of-type{border-top:0;padding-top:0}
@@ -64,20 +64,20 @@ export const PLAN_PILL_CSS = `
 .wd-planpop-bar i{display:block;height:100%;border-radius:999px;background:var(--em);transition:width .5s ease}
 .wd-planpop-bar.low{background:var(--warm-line)}
 .wd-planpop-bar.low i{background:var(--warm)}
-.wd-planpop-bar.out{background:color-mix(in srgb,var(--danger) 25%,transparent)}
+.wd-planpop-bar.out{background:var(--danger-line)}
 .wd-planpop-bar.out i{background:var(--danger)}
 .wd-planpop-pips{display:flex;align-items:center;gap:10px;margin-top:8px;min-width:0;flex-wrap:wrap}
 /* State note + action: warm for low / every slot in use, danger for exhausted. */
-.wd-planpop-note{margin-top:10px;display:flex;flex-direction:column;gap:9px;padding:10px 12px;border-radius:11px;border:1px solid var(--warm-line);background:var(--warm-fill);font-size:12.5px;line-height:1.45;color:var(--tx)}
-.wd-planpop-note.out{border-color:color-mix(in srgb,var(--danger) 35%,transparent);background:color-mix(in srgb,var(--danger) 7%,transparent)}
+.wd-planpop-note{margin-top:10px;display:flex;flex-direction:column;gap:9px;padding:10px 12px;border-radius:var(--r-sm);border:none;background:var(--tint-amber);font-size:12.5px;line-height:1.45;color:var(--tx)}
+.wd-planpop-note.out{background:var(--danger-fill)}
 .wd-planpop-note .t{display:flex;gap:8px;align-items:flex-start}
 .wd-planpop-note .t svg{flex-shrink:0;margin-top:2px;color:var(--warm)}
 .wd-planpop-note.out .t svg{color:var(--danger)}
 .wd-planpop-acts{display:flex;gap:8px;flex-wrap:wrap}
-.wd-planpop-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 13px;border-radius:999px;border:1px solid var(--em);background:var(--em);color:#fff;font:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;text-decoration:none;transition:filter .15s}
+.wd-planpop-act{display:inline-flex;align-items:center;justify-content:center;gap:6px;flex-shrink:0;white-space:nowrap;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--em);background:var(--em);color:var(--on-em);font:inherit;font-size:13px;font-weight:600;line-height:1;cursor:pointer;text-decoration:none;transition:filter .15s}
 .wd-planpop-act:hover{filter:brightness(1.05)}
-.wd-planpop-act.ghost{background:var(--panel);color:var(--em-deep);border-color:var(--em-line)}
-.wd-planpop-act.ghost:hover{background:var(--em-fill);filter:none}
+.wd-planpop-act.ghost{background:var(--panel);color:var(--em-deep);border-color:transparent}
+.wd-planpop-act.ghost:hover{box-shadow:var(--sh-2);filter:none}
 .wd-planpop-act svg{flex-shrink:0}
 
 /* Top bar collapse, widest first: the pill drops its tasks stat and keeps the

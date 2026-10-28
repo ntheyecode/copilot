@@ -4,12 +4,12 @@
 // table twin. Namespaced wd-mg-*. Marks carry the dashboard's own validated
 // pair (guided time = --em, tasks = --em-2); every label wears text tokens.
 export const MONTH_GRAPH_CSS = `
-.wd-mg{margin-top:16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--card-shadow);padding:16px 18px 14px;min-width:0}
-.wd-mg-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px}
-.wd-mg-head .wd-ic{margin-top:1px}
+.wd-mg{margin-top:var(--sp-7);background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r-lg);box-shadow:var(--sh-0);padding:20px 22px 16px;min-width:0}
+.wd-mg-head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:var(--sp-3)}
+.wd-mg-head .wd-ic{margin-top:0}
 .wd-mg-head-txt{flex:1 1 240px;min-width:0}
-.wd-mg-head h2{font-family:var(--wd-display);font-weight:700;font-size:16px;letter-spacing:-.01em;line-height:1.3}
-.wd-mg-head p{color:var(--mut);font-size:13px;margin-top:3px;line-height:1.45;max-width:64ch}
+.wd-mg-head h2{font-family:var(--wd-display);font-weight:700;font-size:var(--fs-lg);letter-spacing:-.01em;line-height:1.3}
+.wd-mg-head p{color:var(--mut);font-size:var(--fs-md);margin-top:2px;line-height:1.45;max-width:64ch}
 /* Legend: always present (two series). Swatches mirror the marks: a rect for
    the columns, a dot for the task strip. */
 .wd-mg-legend{display:flex;align-items:center;gap:14px;flex-wrap:wrap;flex-shrink:0;font-size:12.5px;color:var(--mut);font-weight:600;white-space:nowrap}
@@ -39,7 +39,7 @@ export const MONTH_GRAPH_CSS = `
 .wd-mg .hit{fill:transparent;cursor:crosshair}
 .wd-mg .hit.on{fill:color-mix(in srgb,var(--em) 7%,transparent)}
 /* Readout (hover / arrow keys). Values lead, labels follow. */
-.wd-mg-tip{position:absolute;z-index:5;top:0;transform:translate(-50%,calc(-100% - 6px));pointer-events:none;background:var(--tx);color:#fff;border-radius:10px;padding:8px 11px;font-size:12px;line-height:1.45;box-shadow:var(--shadow);white-space:nowrap}
+.wd-mg-tip{position:absolute;z-index:5;top:0;transform:translate(-50%,calc(-100% - 6px));pointer-events:none;background:var(--tip-bg);color:var(--tip-tx);border-radius:var(--r-sm);padding:8px 11px;font-size:12px;line-height:1.45;box-shadow:var(--sh-3);white-space:nowrap}
 .wd-mg-tip.left{transform:translate(-8%,calc(-100% - 6px))}
 .wd-mg-tip.right{transform:translate(-92%,calc(-100% - 6px))}
 .wd-mg-tip .d{display:block;font-weight:700;margin-bottom:2px}
@@ -55,8 +55,8 @@ export const MONTH_GRAPH_CSS = `
 .wd-mg-foot{display:flex;align-items:center;gap:8px 16px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);font-size:13px;color:var(--mut)}
 .wd-mg-foot b{color:var(--tx);font-weight:700}
 .wd-mg-foot .sp{flex:1 1 8px}
-.wd-mg-tbtn{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;background:none;border:none;padding:4px 2px;color:var(--em-2);font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:8px}
-.wd-mg-tbtn:hover{color:var(--em-deep)}
+.wd-mg-tbtn{display:inline-flex;align-items:center;gap:5px;flex-shrink:0;white-space:nowrap;background:none;border:none;padding:6px 10px;color:var(--em-deep);font:inherit;font-size:13px;font-weight:600;cursor:pointer;border-radius:var(--r-pill);transition:background .15s}
+.wd-mg-tbtn:hover{background:var(--em-fill)}
 .wd-mg-tbtn svg{flex-shrink:0;transition:transform .18s}
 .wd-mg-tbtn[aria-expanded="true"] svg.ch{transform:rotate(90deg)}
 .wd-mg-table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}
@@ -69,7 +69,7 @@ export const MONTH_GRAPH_CSS = `
 .wd-mg-err{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:14px;border:1px dashed var(--line-2);border-radius:var(--r);font-size:13.5px;color:var(--mut)}
 .wd-mg-err svg{flex-shrink:0;color:var(--warm)}
 .wd-mg-err b{color:var(--tx);display:block}
-.wd-mg-skel{height:190px;border-radius:10px;background:var(--track);opacity:.55}
+.wd-mg-skel{height:190px;border-radius:var(--r-sm);background:var(--track);opacity:.55}
 
 .wd-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @media(max-width:640px){.wd-mg{padding:14px 12px 12px}}
