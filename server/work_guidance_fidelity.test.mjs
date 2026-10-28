@@ -11,7 +11,7 @@
 // ===========================================================================
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { workPlan, workPlanSystem, workNavigate, workNavigateSystem, workAskSystem, workWatch, workAsk, normalizeLevel } from './work.js'
+import { workPlan, workPlanSystem, workNavigate, workNavigateSystem, workAskSystem, workWatch, workAsk, workHowTo, workHowToSystem, normalizeLevel } from './work.js'
 import { isVerifyStep, hasFailureSignal } from './work_deep_plan.js'
 
 // ---- stubs ----------------------------------------------------------------
@@ -241,6 +241,20 @@ test('workPlan does NOT run the critique pass for a plain linear task', async ()
   assert.equal(out.steps.length, 1)
   assert.equal(out.critiqued, false, 'no critique pass on a linear task')
   assert.equal(out.deepened, false)
+})
+
+// ---- how-to drill-down captures a learning (A2) ---------------------------
+test('workHowToSystem asks for a generalized learning', () => {
+  assert.match(workHowToSystem({ base: 'B' }), /learning/i)
+})
+test('workHowTo returns a generalized learning when the model emits one', async () => {
+  const ai = textStub([JSON.stringify({
+    learning: 'In Okta, SCIM provisioning moved under Applications > Provisioning',
+    steps: [{ text: 'Open Applications', validate: 'the app list is shown' }],
+  })])
+  const out = await workHowTo(ai, {}, { base: 'B', goal: 'set up SCIM', action: 'enable provisioning' })
+  assert.equal(out.steps.length, 1)
+  assert.match(out.learning || '', /SCIM provisioning moved/)
 })
 
 // ---- guidance strength (the user-chosen register) -------------------------

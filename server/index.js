@@ -2835,6 +2835,10 @@ app.post('/api/work/sessions/:id/howto', requireWorkAuth, requireWorkSubscriptio
     let saved = out.steps
     if (idx != null) { try { saved = store.setWorkStepHowTo(req.workUser.id, req.params.id, idx, out.steps) } catch { /* step may be gone; still return the steps */ } }
     const escalated = out.escalated || call.forcedStrong
+    // Capture a generalized, de-identified learning the drill-down surfaced into the
+    // cross-session KB for next time - same as /plan. This was previously dropped
+    // (the how-to prompt never asked for it and the handler never stored it).
+    if (out.learning) store.addLearning(req.workUser.id, { app: s.appContext || '', fact: out.learning, kind: 'fresh' })
     store.appendWorkEvent(req.workUser.id, req.params.id, { kind: 'guidance', text: `How-to: ${act}` })
     res.json({ steps: saved, escalated })
   } catch (e) { sendWorkError(res, e, req) }

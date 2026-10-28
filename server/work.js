@@ -825,7 +825,13 @@ export function workHowToSystem({ base, voice = '', mode = 'stepwise', level = '
     'and the user reference documents critically (ground in them, but flag and correct anything ' +
     'wrong or outdated). Do NOT re-plan the whole goal; stay inside this one action. If the action ' +
     'is something you must not help with (SAFETY), return {"refusal":"..."} and no steps.\n' +
-    'Return ONLY JSON: {"refusal":"<only when declining>","steps":[{"text":"...","validate":"...","url":"...","commands":["..."],"code":{"file":"...","content":"..."},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this sub-step is grounded in; empty when from general knowledge>"}]}' +
+    'LEARNING FOR NEXT TIME. If doing this action relies on something NEWER than common knowledge ' +
+    '(a tool\'s UI that moved, a renamed or relocated control, a changed step or requirement, or a ' +
+    'current best practice that supersedes an older one), add a top-level "learning": ONE generalized ' +
+    'sentence naming the app and the current fact. It must be reusable and general, never specific to ' +
+    'this person, their data, their account or their screen. Omit "learning" when nothing is newer ' +
+    'than common knowledge.\n' +
+    'Return ONLY JSON: {"refusal":"<only when declining>","learning":"<OPTIONAL generalized tool fact; omit if nothing new>","steps":[{"text":"...","validate":"...","url":"...","commands":["..."],"code":{"file":"...","content":"..."},"source":"<OPTIONAL: the user\'s OWN document / Company Brain source / playbook this sub-step is grounded in; empty when from general knowledge>"}]}' +
     SOURCE_ATTRIBUTION_RULE
 }
 export function workHowToUser({ goal, action, appContext, research = '' }) {
