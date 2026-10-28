@@ -108,3 +108,23 @@ test('productivity: a PM reads an assignee; a worker cannot read another', () =>
   assert.deepEqual(store.userProductivity(w1.id, w1.id).counts.assigned, 2)   // own is allowed
   assert.throws(() => store.userProductivity(w2.id, w1.id), /not permitted/i)  // a worker cannot read another's
 })
+
+test('worker runs an assigned company task: link session + finalize closes it', () => {
+  const co = company()
+  const pm = member(co, 'project_manager'); const w = member(co, 'member', 'worker')
+  const p = store.createCompanyProject(pm.id, { name: 'P', goal: 'g', tasks: [{ title: 'A', doneState: 'd' }] })
+  store.assignProjectTask(pm.id, p.id, p.tasks[0].id, w.id)
+  const ctx = store.getAssignedTaskForExpand(w.id, p.id, p.tasks[0].id)   // worker resolves their own task
+  assert.ok(ctx && ctx.task.id === p.tasks[0].id)
+  assert.equal(store.getAssignedTaskForExpand(pm.id, p.id, p.tasks[0].id), null)   // PM is not the assignee
+  const sess = store.createWorkSession(w.id, { goal: 'A' })
+  store.linkAssignedTaskSession(w.id, p.id, p.tasks[0].id, sess.id)
+  const active = store.listProjectsForUser(pm.id)[0]
+  assert.equal(active.tasks[0].state, 'active')
+  assert.equal(active.tasks[0].sessionId, sess.id)
+  // finalize as the worker closes the COMPANY task (owner-agnostic completion)
+  store.completeProjectTaskForSession(w.id, sess.id, { outcome: { ok: true }, telemetry: { steps: 3 } })
+  const done = store.listProjectsForUser(pm.id)[0]
+  assert.equal(done.tasks[0].state, 'done')
+  assert.equal(done.tasks[0].outcome.ok, true)
+})

@@ -5911,6 +5911,25 @@ export function userCanStartOwnTask(userId) {
   return roles.canStartOwnTask(u.workFlow)
 }
 
+// A worker running an assigned task: resolve the task they are the assignee of
+// (for just-in-time step expansion, grounded in the project ledger).
+export function getAssignedTaskForExpand(userId, projectId, taskId) {
+  const u = getUser(userId); if (!u || !u.companyId) return null
+  const p = _findProjectById(projectId); if (!p || String(p.companyId) !== String(u.companyId)) return null
+  const t = (p.tasks || []).find((x) => x.id === taskId); if (!t || String(t.assigneeId) !== String(userId)) return null
+  return { task: t, ledger: (p.learnings || []).map((l) => `- ${(l && l.fact) || l}`).join('\n') }
+}
+// Link the worker's just-in-time session to their assigned task and set it active.
+export function linkAssignedTaskSession(userId, projectId, taskId, sessionId) {
+  const u = getUser(userId); if (!u) throw httpErr(404, 'Account not found')
+  const p = _findProjectById(projectId); if (!p || String(p.companyId) !== String(u.companyId)) throw httpErr(404, 'Project not found')
+  const t = (p.tasks || []).find((x) => x.id === taskId); if (!t) throw httpErr(404, 'Task not found')
+  if (String(t.assigneeId) !== String(userId)) throw httpErr(403, 'That task is not assigned to you.')
+  t.sessionId = sessionId || null; t.expanded = true
+  if (t.state === 'pending' && proj.canTransitionTask('pending', 'active')) { t.state = 'active'; if (!t.startedAt) t.startedAt = new Date().toISOString() }
+  p.state = proj.deriveProjectState(p); persist(); return t
+}
+
 function _assertCanManage(a, p) {
   if (!p) throw httpErr(404, 'Project not found')
   if (!roles.canManageProject(a.role, a.id, p)) throw httpErr(403, 'You do not manage this project.')
@@ -6053,9 +6072,14 @@ export function injectWorkProjectTask(workUserId, projectId, { request, blocksTa
   return { duplicate: false, created: t, placed }
 }
 // Find the project task whose just-in-time guided session is this one, or null.
+// Find a project by id regardless of owner (sessionId/project-id lookups where the
+// route has already authorized the caller, e.g. a worker running an assigned task).
+function _findProjectById(projectId) { return (db.workProjects || []).find((p) => p && p.id === projectId) || null }
 export function findProjectTaskBySession(workUserId, sessionId) {
+  // sessionId is unique and the session is owned by the caller, so match on it across
+  // ALL projects - this works for a per-user project AND a company project a worker
+  // is running as an assignee (where the project's creator is not the caller).
   for (const p of (db.workProjects || [])) {
-    if (!p || p.workUserId !== workUserId) continue
     const t = (p.tasks || []).find((x) => x && x.sessionId === sessionId)
     if (t) return { projectId: p.id, task: t }
   }
@@ -6064,15 +6088,18 @@ export function findProjectTaskBySession(workUserId, sessionId) {
 // Close the forward-learning loop when a project task's guided session finishes: mark
 // the task done, record its outcome + telemetry (completed-task storage), and append
 // any learning to the project ledger so the NEXT task's expansion is grounded in it.
+// Operates on the project found by sessionId (owner-agnostic) so it covers both
+// per-user projects and company projects run by an assigned worker.
 export function completeProjectTaskForSession(workUserId, sessionId, { outcome = null, telemetry = null, learning = null } = {}) {
-  const hit = findProjectTaskBySession(workUserId, sessionId)
-  if (!hit) return null
-  const { projectId, task } = hit
-  if (task.state !== 'done' && proj.canTransitionTask(task.state, 'done')) setWorkProjectTaskState(workUserId, projectId, task.id, 'done')
-  if (outcome != null || telemetry != null) recordWorkProjectTaskOutcome(workUserId, projectId, task.id, { outcome, telemetry })
-  if (learning) appendWorkProjectLearning(workUserId, projectId, learning, task.id)
-  const after = findProjectTaskBySession(workUserId, sessionId)
-  return after ? after.task : null
+  const hit = findProjectTaskBySession(workUserId, sessionId); if (!hit) return null
+  const p = _findProjectById(hit.projectId); if (!p) return null
+  const task = (p.tasks || []).find((x) => x.id === hit.task.id); if (!task) return null
+  if (task.state !== 'done' && proj.canTransitionTask(task.state, 'done')) { task.state = 'done'; task.endedAt = new Date().toISOString() }
+  if (outcome != null) task.outcome = outcome
+  if (telemetry != null) task.telemetry = telemetry
+  if (learning) p.learnings = proj.appendLearning(p, learning, task.id)
+  p.state = proj.deriveProjectState(p); persist()
+  return task
 }
 
 // ---- Vision watch tolerance (owner: "ok if we fail 2 in 5 screens") --------

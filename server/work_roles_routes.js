@@ -6,7 +6,7 @@
 import { planProjectMap } from './work_project_plan.js'
 import { validateBreakdown, shouldBeProject } from './work_project_validate.js'
 
-export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError }) {
+export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth, wrap, resolveWorkRuntime, bestPlanningCall, sendWorkError, readLocale }) {
   // ---- PM / Sr PM / admin: projects ----
 
   // List the projects this user may see (PM: own; Sr PM / GRC / admin: all).
@@ -73,10 +73,32 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
     res.json({ productivity: store.userProductivity(req.workUser.id, req.params.uid) })
   }))
 
-  // ---- Worker: the assigned-task queue ----
+  // ---- Worker: the assigned-task queue + running an assigned task ----
   app.get('/api/work/my/assigned', requireWorkAuth, wrap((req, res) => {
     res.json({ assigned: store.listAssignedTasks(req.workUser.id, { includeDone: !!req.query.done }) })
   }))
+
+  // A worker expands THEIR assigned task into steps just-in-time (reuses workPlan,
+  // grounded in the project ledger) and runs it as an ordinary guided session owned
+  // by the worker. /finalize later closes the task via completeProjectTaskForSession.
+  app.post('/api/work/my/assigned/:projectId/:taskId/expand', requireWorkAuth, async (req, res) => {
+    try {
+      const ctx = store.getAssignedTaskForExpand(req.workUser.id, req.params.projectId, req.params.taskId)
+      if (!ctx) return res.status(404).json({ error: 'That task is not assigned to you.' })
+      const rr = await resolveWorkRuntime(req, res, { needVision: false }); if (!rr) return
+      const bp = await bestPlanningCall(req, rr, false); const call = bp.call
+      const plan = await work.workPlan(ai, call.rt, {
+        base: store.getSystemPrompt(), mode: 'stepwise', level: 'medium',
+        goal: ctx.task.goal || ctx.task.title, learnings: ctx.ledger, strong: call.backup,
+        locale: readLocale ? readLocale(req) : 'en',
+      })
+      if (plan.refusal) return res.json({ refusal: plan.refusal })
+      const session = store.createWorkSession(req.workUser.id, { goal: ctx.task.goal || ctx.task.title })
+      store.setWorkSessionSteps(req.workUser.id, session.id, plan.steps)
+      store.linkAssignedTaskSession(req.workUser.id, req.params.projectId, req.params.taskId, session.id)
+      res.json({ sessionId: session.id, steps: plan.steps })
+    } catch (e) { sendWorkError(res, e, req) }
+  })
 
   // ---- GRC / Sr PM / admin: oversight ----
   app.get('/api/work/grc/risks', requireWorkAuth, wrap((req, res) => {
