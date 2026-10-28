@@ -43,7 +43,7 @@ export const WORKADMIN_CSS = WD_TOKENS_CSS + `
   --wka-tint-blue: var(--tint-blue); --wka-tint-blue-ink: var(--tint-blue-ink);
   --wka-tint-amber: var(--tint-amber); --wka-tint-amber-ink: var(--tint-amber-ink);
   --wka-tint-neutral: var(--tint-neutral); --wka-tint-neutral-ink: var(--tint-neutral-ink);
-  --wka-danger-fill: var(--danger-fill);
+  --wka-danger-fill: var(--danger-fill); --wka-danger-line: var(--danger-line);
   --wka-solid: var(--em-solid); --wka-on-solid: var(--on-solid);
   --wka-sh-3: var(--sh-3);
 
@@ -262,7 +262,10 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 .wka-select:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-select:disabled { opacity: 0.5; cursor: not-allowed; }
 /* Buttons: ghost pills (border only), one filled primary on the white-text-safe
-   solid, the danger one filled red. */
+   solid, and the destructive one a TINTED pill (danger fill + danger hairline +
+   danger ink), the same affordance as the app's delete modal and the dashboard
+   trash icon on hover: unmistakably destructive, never a loud filled red block
+   (the design law). */
 .wka-btn {
   display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
   border: 1px solid var(--wka-line-2); background: var(--wka-panel); color: var(--wka-text);
@@ -281,11 +284,17 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
 .wka-btn.ghost { background: transparent; border-color: transparent; }
 .wka-btn.ghost:hover:not(:disabled) { background: var(--wka-nav-hover); border-color: transparent; }
 .wka-btn.danger {
-  background: var(--wka-red);
-  color: var(--wka-on-solid); border: 1px solid var(--wka-red); font-weight: 600;
+  background: var(--wka-danger-fill);
+  color: var(--wka-red); border: 1px solid var(--wka-danger-line); font-weight: 600;
   box-shadow: none;
 }
-.wka-btn.danger:hover:not(:disabled) { filter: brightness(0.94); background: var(--wka-red); border-color: var(--wka-red); color: var(--wka-on-solid); }
+.wka-btn.danger svg { color: var(--wka-red); }
+.wka-btn.danger:hover:not(:disabled) { background: color-mix(in srgb, var(--wka-red) 16%, var(--wka-panel)); border-color: var(--wka-red); color: var(--wka-red); }
+.wka-btn.danger:focus-visible { outline-color: var(--wka-red); }
+/* the icon-only destructive action in a row (remove an integration): bare until
+   hovered, then the same danger tint */
+.wka-btn.ghost.danger { background: transparent; border-color: transparent; }
+.wka-btn.ghost.danger:hover:not(:disabled) { background: var(--wka-danger-fill); border-color: transparent; }
 .wka-btn.sm { height: 28px; padding: 0 11px; font-size: calc(12px * var(--wc-fs, 1)); }
 
 /* Collapsible rule rows (PolicyRules): a list of multi-field items that render as

@@ -319,12 +319,22 @@ export default function AliveBuddy({
         background: `radial-gradient(circle at 50% 40%, ${withAlpha(st.glow, 0.22)}, transparent 70%)`,
         filter: 'blur(6px)', transition: 'background 0.4s ease', pointerEvents: 'none',
       }} />
-      {/* state ring: the "responding" cue around the portrait */}
+      {/* state ring: the "responding" cue around the portrait. Two layers on
+          purpose: the OUTER ring box never transforms (its alert pulse and done
+          burst are box-shadow halos: ink overflow, which never reaches layout),
+          and the INNER layer is the only thing that spins (talk / think). A
+          spinning square's bounding box grows up to ~1.4x, and without a clip
+          it leaked into every ancestor's scrollable overflow (a host column
+          measured 40px wider than it was, enough to grow a scrollbar); the
+          outer box clips it, and the square's corners are transparent anyway.
+          Its own font-size makes the em halos scale with the portrait. */}
       {ring && (
         <span key={ring + shot} aria-hidden className={`ab-ring ab-ring-${ring}${animate ? ' ab-anim' : ''}`} style={{
-          position: 'absolute', inset: '-7%', borderRadius: '50%', pointerEvents: 'none',
+          position: 'absolute', inset: '-7%', borderRadius: '50%', overflow: 'clip', fontSize: px, pointerEvents: 'none',
           ['--rg']: st.glow, ['--rg-soft']: withAlpha(st.glow, 0.0),
-        }} />
+        }}>
+          <span className="ab-ring-spin" />
+        </span>
       )}
 
       {/* tilt + bob layer (rAF) */}
@@ -457,19 +467,23 @@ if (typeof document !== 'undefined' && !document.getElementById('ab-kf')) {
     '.ab-face.ab-anim.ab-answering .ab-hand,.ab-face.ab-anim.ab-done .ab-hand{animation:ab-wave-fast 1.1s ease-in-out infinite}',
     '@keyframes ab-wave{0%,70%,100%{transform:rotate(0)}76%{transform:rotate(-22deg)}82%{transform:rotate(16deg)}88%{transform:rotate(-16deg)}94%{transform:rotate(8deg)}}',
     '@keyframes ab-wave-fast{0%,100%{transform:rotate(-18deg)}50%{transform:rotate(16deg)}}',
-    // state rings around the portrait (photo + bot alike)
-    '.ab-ring-talk{background:conic-gradient(from 0deg,var(--rg) 0 18%,transparent 18% 32%,var(--rg) 32% 50%,transparent 50% 64%,var(--rg) 64% 82%,transparent 82%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));opacity:.85}',
-    '.ab-ring-talk.ab-anim{animation:ab-spin 2.4s linear infinite}',
-    '.ab-ring-think{border:2px dashed var(--rg);opacity:.6}',
-    '.ab-ring-think.ab-anim{animation:ab-spin 9s linear infinite}',
+    // state rings around the portrait (photo + bot alike). The outer .ab-ring
+    // box never transforms (pulse / burst are box-shadow halos in em of the
+    // portrait); only .ab-ring-spin rotates, clipped by the outer box, so the
+    // spinning square never widens the layout.
+    '.ab-ring-spin{position:absolute;inset:1px;border-radius:50%}',
+    '.ab-ring-talk .ab-ring-spin{background:conic-gradient(from 0deg,var(--rg) 0 18%,transparent 18% 32%,var(--rg) 32% 50%,transparent 50% 64%,var(--rg) 64% 82%,transparent 82%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 2.5px));opacity:.85}',
+    '.ab-ring-talk.ab-anim .ab-ring-spin{animation:ab-spin 2.4s linear infinite}',
+    '.ab-ring-think .ab-ring-spin{border:2px dashed var(--rg);opacity:.6}',
+    '.ab-ring-think.ab-anim .ab-ring-spin{animation:ab-spin 9s linear infinite}',
     '.ab-ring-alert{border:2px solid var(--rg);opacity:.85}',
     '.ab-ring-alert.ab-anim{animation:ab-ring-pulse 1s ease-in-out infinite}',
     '.ab-ring-done{border:3px solid var(--rg);opacity:0}',
     '.ab-ring-done.ab-anim{animation:ab-burst .9s cubic-bezier(.2,.8,.2,1) 1}',
     '@keyframes ab-spin{to{transform:rotate(360deg)}}',
-    '@keyframes ab-ring-pulse{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.07);opacity:.45}}',
-    '@keyframes ab-burst{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.55);opacity:0}}',
-    '@media(prefers-reduced-motion:reduce){.ab-face .ab-lid,.ab-face .ab-talk,.ab-face .ab-antenna,.ab-face .ab-hand,.ab-ring{animation:none!important}.ab-ring-done{opacity:.6}}',
+    '@keyframes ab-ring-pulse{0%,100%{box-shadow:0 0 0 0 var(--rg-soft);opacity:.85}50%{box-shadow:0 0 0 .05em var(--rg);opacity:.5}}',
+    '@keyframes ab-burst{0%{box-shadow:0 0 0 0 var(--rg);opacity:.9}100%{box-shadow:0 0 0 .3em var(--rg);opacity:0}}',
+    '@media(prefers-reduced-motion:reduce){.ab-face .ab-lid,.ab-face .ab-talk,.ab-face .ab-antenna,.ab-face .ab-hand,.ab-ring,.ab-ring-spin{animation:none!important}.ab-ring-done{opacity:.6}}',
   ].join('')
   document.head.appendChild(el)
 }

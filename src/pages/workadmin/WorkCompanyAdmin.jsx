@@ -2029,7 +2029,7 @@ const WCA_CSS = `
 .wca-int-secret { font-style:normal; margin-left:6px; font-size:10.5px; font-weight:800; letter-spacing:.06em; text-transform:uppercase; color:var(--wka-amber); }
 .wca-int-actions { display:flex; justify-content:flex-end; gap:8px; }
 /* No local .wka-btn.danger override: the shared console rule (workadmin.css.js,
-   white label on the red fill) is the single source. A color-only override here
-   painted red text on the red fill, so every danger confirm in this console
+   the tinted danger pill) is the single source. A color-only override here once
+   painted red text on a red fill, so every danger confirm in this console
    (clear knowledge base / skills, archive customer) rendered with no legible label. */
 `

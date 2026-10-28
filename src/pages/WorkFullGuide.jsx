@@ -316,14 +316,15 @@ export default function WorkFullGuide() {
 // Color-coded by meaning, one source of truth with the console + floater:
 // accent EMERALD = the current step / live action (the brightest thing),
 // cyan = calm context (goal + observation), warn AMBER = a warning that
-// interrupts. accentRing/accentGlow drive the current-step glow; cyanSoft is
-// the observation chip fill. Light values are darkened for contrast on white.
+// interrupts. accentRing is the current step's hairline; cyanSoft is the
+// observation chip fill. Light values are darkened for contrast on white.
+// Flat paints only (the design law): no gradient fill, no glow shadow.
 // codeBg/codeText/codeBorder/codeMuted describe the dark code box (dark in BOTH
 // themes, matching the console's CmdBlock/CodeBlock). `link` is the MS-docs blue
 // used for the inline "Open ..." hyperlinks.
 const THEME = {
-  dark: { onAccent: '#052a1d', good: '#54b97b', goodSoft: 'rgba(84,185,123,0.16)', bg: '#0a0d12', panel: '#11161d', panel2: '#0e131a', codeBg: '#0b0f15', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#8ea3c0', link: '#6cb6ff', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780', border: 'rgba(255,255,255,0.09)', accent: 'var(--accent, #8cf5c4)', accentSoft: 'var(--accent-soft, rgba(140,245,196,0.12))', accentRing: 'var(--accent-line, rgba(140,245,196,0.34))', accentGlow: 'var(--accent-shadow, rgba(140,245,196,0.22))', cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,0.12)', cyanRing: 'rgba(57,211,255,0.32)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,0.13)', warnRing: 'rgba(245,200,107,0.34)', danger: '#f6a3a3', dangerSoft: 'rgba(246,163,163,0.1)' },
-  light: { onAccent: '#ffffff', good: '#107c41', goodSoft: 'rgba(16,124,65,0.12)', bg: '#f5f7f9', panel: '#ffffff', panel2: '#f6f8fa', codeBg: '#0f141a', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#9aa6b8', link: '#0067c0', text: '#121821', muted: '#5a6672', faint: '#8a95a0', border: 'rgba(16,24,40,0.1)', accent: 'var(--accent, #0e9f6e)', accentSoft: 'var(--accent-soft, rgba(14,159,110,0.1))', accentRing: 'var(--accent-line, rgba(14,159,110,0.3))', accentGlow: 'var(--accent-shadow, rgba(14,159,110,0.18))', cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,0.09)', cyanRing: 'rgba(10,132,194,0.28)', warn: '#b7791f', warnSoft: 'rgba(183,121,31,0.12)', warnRing: 'rgba(183,121,31,0.3)', danger: '#b91c1c', dangerSoft: 'rgba(185,28,28,0.07)' },
+  dark: { onAccent: '#052a1d', good: '#54b97b', goodSoft: 'rgba(84,185,123,0.16)', bg: '#0a0d12', panel: '#11161d', panel2: '#0e131a', codeBg: '#0b0f15', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#8ea3c0', link: '#6cb6ff', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780', border: 'rgba(255,255,255,0.09)', accent: 'var(--accent, #8cf5c4)', accentSoft: 'var(--accent-soft, rgba(140,245,196,0.12))', accentRing: 'var(--accent-line, rgba(140,245,196,0.34))', cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,0.12)', cyanRing: 'rgba(57,211,255,0.32)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,0.13)', warnRing: 'rgba(245,200,107,0.34)', danger: '#f6a3a3', dangerSoft: 'rgba(246,163,163,0.1)', shadow: '0 1px 2px rgba(0,0,0,0.3)' },
+  light: { onAccent: '#ffffff', good: '#107c41', goodSoft: 'rgba(16,124,65,0.12)', bg: '#f5f7f9', panel: '#ffffff', panel2: '#f6f8fa', codeBg: '#0f141a', codeText: '#e6edf3', codeBorder: 'rgba(255,255,255,0.1)', codeMuted: '#9aa6b8', link: '#0067c0', text: '#121821', muted: '#5a6672', faint: '#8a95a0', border: 'rgba(16,24,40,0.1)', accent: 'var(--accent, #0e9f6e)', accentSoft: 'var(--accent-soft, rgba(14,159,110,0.1))', accentRing: 'var(--accent-line, rgba(14,159,110,0.3))', cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,0.09)', cyanRing: 'rgba(10,132,194,0.28)', warn: '#b7791f', warnSoft: 'rgba(183,121,31,0.12)', warnRing: 'rgba(183,121,31,0.3)', danger: '#b91c1c', dangerSoft: 'rgba(185,28,28,0.07)', shadow: '0 1px 2px rgba(20,24,44,0.04)' },
 }
 
 // Microsoft-Learn / Docs reading style: compact, scannable body (~13-14px), a
@@ -336,11 +337,11 @@ function styles(c, wide = true, fs = 1) {
   return {
     root: { minHeight: '100vh', background: c.bg, color: c.text, fontFamily: '"Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif', display: 'flex', flexDirection: 'column' },
     topbar: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, rowGap: 8, padding: wide ? '12px 24px' : '10px 14px', borderBottom: `1px solid ${c.border}`, background: c.panel2, flexWrap: wide ? 'nowrap' : 'wrap' },
-    dot: (col) => ({ width: 9, height: 9, borderRadius: '50%', background: col, boxShadow: `0 0 10px ${col}`, flex: '0 0 auto' }),
+    dot: (col) => ({ width: 9, height: 9, borderRadius: '50%', background: col, flex: '0 0 auto' }),
     brand: { fontFamily: '"Bricolage Grotesque", "Figtree", sans-serif', fontWeight: 700, fontSize: 16, letterSpacing: '-0.01em' },
     subtle: { fontSize: 12.5, color: c.faint, marginLeft: 4 },
     pill: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: c.muted, padding: '3px 10px', borderRadius: 999, border: `1px solid ${c.border}`, background: c.panel },
-    live: { width: 7, height: 7, borderRadius: '50%', background: c.accent, boxShadow: `0 0 8px ${c.accent}` },
+    live: { width: 7, height: 7, borderRadius: '50%', background: c.accent },
     time: { display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 13, color: c.muted, fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' },
     iconBtn: { display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 30, borderRadius: 8, background: c.panel, color: c.muted, border: `1px solid ${c.border}`, cursor: 'pointer' },
     body: { flex: 1, display: 'grid', gridTemplateColumns: wide ? 'minmax(0, 1.7fr) minmax(280px, 0.85fr)' : '1fr', gap: wide ? 22 : 14, padding: wide ? '22px 28px' : '14px 16px', alignItems: 'start' },
@@ -349,12 +350,13 @@ function styles(c, wide = true, fs = 1) {
     goalK: { fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: c.cyan },
     goalText: { marginTop: 3, fontSize: z(14), lineHeight: 1.5, color: c.text },
     nowRow: { display: 'flex', alignItems: 'flex-start', gap: 18 },
-    buddyCol: { flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: 4, alignSelf: 'center' },
-    // CURRENT STEP = the brightest element: emerald ring + an emerald->cyan left
-    // bar + a soft glow (the .wfg-now class, reduced-motion safe). Compact padding
-    // and a docs-scale semibold heading, not a banner.
-    nowCard: { position: 'relative', overflow: 'hidden', padding: '15px 18px 16px 20px', borderRadius: 14, background: c.panel, border: `1px solid ${c.accentRing}`, boxShadow: `0 6px 22px rgba(0,0,0,0.16), 0 0 0 1px ${c.accentRing} inset` },
-    nowBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accent}, ${c.cyan})` },
+    // The buddy's state ring sits 7% outside its portrait box on purpose; the
+    // column carries that overhang as padding so the row never overflows.
+    buddyCol: { flex: '0 0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '4px 12px 0', alignSelf: 'center' },
+    // The all-done card: the step card's recipe (hairline accent edge, flat
+    // accent bar on the left, rest shadow). No glow, no gradient, no inset ring.
+    nowCard: { position: 'relative', overflow: 'hidden', padding: '15px 18px 16px 20px', borderRadius: 14, background: c.panel, border: `1px solid ${c.accentRing}`, boxShadow: c.shadow },
+    nowBar: { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: c.accent },
     nowK: { display: 'inline-flex', alignItems: 'center', gap: 7, fontSize: 10.5, fontWeight: 700, letterSpacing: '0.07em', textTransform: 'uppercase', color: c.accent },
     nowText: { marginTop: 7, fontSize: z(wide ? 16 : 15), lineHeight: 1.4, fontWeight: 600, color: c.text, fontFamily: '"Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif', letterSpacing: 0 },
     guide: { marginTop: 9, fontSize: z(13.5), lineHeight: 1.55, color: c.muted },
@@ -370,7 +372,7 @@ function styles(c, wide = true, fs = 1) {
     railTitle: { fontSize: z(13.5), fontWeight: 700, color: c.text },
     railCount: { fontSize: 12, fontWeight: 600, color: c.muted, fontVariantNumeric: 'tabular-nums' },
     track: { height: 5, borderRadius: 4, background: c.border, overflow: 'hidden', marginBottom: 12 },
-    fill: { display: 'block', height: '100%', borderRadius: 4, background: `linear-gradient(90deg, ${c.accent}, ${c.cyan})`, transition: 'width 0.4s ease' },
+    fill: { display: 'block', height: '100%', borderRadius: 4, background: c.accent, transition: 'width 0.4s ease' },
     stepList: { display: 'flex', flexDirection: 'column', gap: 4, maxHeight: wide ? 'calc(100vh - 200px)' : 'none', overflowY: wide ? 'auto' : 'visible', paddingRight: 2 },
     stepRow: (now, done) => ({ display: 'flex', gap: 10, alignItems: 'flex-start', padding: '7px 10px', borderRadius: 9, background: now ? c.accentSoft : 'transparent', border: `1px solid ${now ? c.border : 'transparent'}`, opacity: done ? 0.6 : 1 }),
     stepBadge: (now, done) => ({ flex: '0 0 auto', width: 22, height: 22, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 11.5, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: done ? c.accent : now ? c.bg : c.muted, background: now ? c.accent : 'transparent', border: `1.5px solid ${done ? 'transparent' : now ? c.accent : c.border}` }),
@@ -396,11 +398,10 @@ function styles(c, wide = true, fs = 1) {
 
 if (typeof document !== 'undefined' && !document.getElementById('wfg-kf')) {
   const el = document.createElement('style'); el.id = 'wfg-kf'
+  // (the old .wfg-now breathing-glow keyframes are gone: nothing used them, and
+  // a glow is off the law anyway)
   el.textContent = GUIDE_CSS + '@keyframes wb-spin{to{transform:rotate(360deg)}}'
-    + '@keyframes wfg-now-glow{0%,100%{box-shadow:0 6px 22px rgba(0,0,0,.16),0 0 0 1px var(--gr) inset,0 10px 30px -18px var(--gg)}50%{box-shadow:0 6px 22px rgba(0,0,0,.16),0 0 0 1px var(--gr) inset,0 12px 40px -12px var(--gg)}}'
-    + '.wfg-now{animation:wfg-now-glow 2.8s ease-in-out infinite}'
     + '.wfg-link{text-decoration-color:transparent;text-underline-offset:3px;transition:text-decoration-color .15s}'
     + '.wfg-link:hover,.wfg-link:focus-visible{text-decoration:underline;text-decoration-color:currentColor}'
-    + '@media(prefers-reduced-motion:reduce){.wfg-now{animation:none}}'
   document.head.appendChild(el)
 }

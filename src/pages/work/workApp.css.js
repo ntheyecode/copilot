@@ -331,6 +331,16 @@ export const WD_CSS = WD_TOKENS_CSS + `
 .wd-modal textarea:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill)}
 .wd-modal-note{font-size:calc(11.5px*var(--wc-fs,1));color:var(--mut);margin-top:9px;line-height:1.5}
 .wd-modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:16px}
+/* The destructive confirm (delete a session, on the dashboard and the logs):
+   the shared base .btn-danger is a filled red block (and polish.css adds a glow
+   on hover). Inside the app it is the TINTED danger pill: danger fill, danger
+   hairline, danger ink, the same affordance as the console's .wka-btn.danger
+   and the trash icon's hover. Scoped to .wd so the public pages keep theirs. */
+.wd .btn-danger{background:var(--danger-fill);color:var(--danger);border-color:var(--danger-line);box-shadow:none}
+.wd .btn-danger svg{color:var(--danger)}
+.wd .btn-danger:hover:not(:disabled){filter:none;background:color-mix(in srgb,var(--danger) 16%,var(--panel));border-color:var(--danger);color:var(--danger);box-shadow:none}
+.wd .btn-danger:focus-visible{outline:2px solid var(--danger);outline-offset:2px}
+.wd .btn-danger:disabled{opacity:.45;cursor:not-allowed}
 /* Preferences modal (opened from the rail foot): pinned head, scrolling body. */
 .wd-modal.wd-prefs{width:min(600px,calc(100vw - 36px));max-height:min(88vh,780px);display:flex;flex-direction:column;padding:0;overflow:hidden}
 .wd-prefs-head{display:flex;align-items:flex-start;gap:12px;padding:20px 22px 14px;border-bottom:1px solid var(--line-soft)}

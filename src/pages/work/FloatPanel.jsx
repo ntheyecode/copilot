@@ -23,6 +23,10 @@ import AskFocus from './AskFocus.jsx'
 import GoalLine from './GoalLine.jsx'
 import { askFocused } from './askFlow.js'
 
+// A step's text for a tooltip: the key-term markers are shown by RichText in
+// the row, never as raw asterisks in a native title.
+const plainStep = (t) => String(t || '').replace(/\*\*/g, '')
+
 export default // The floating overlay shown in the Document Picture-in-Picture window. It
 // mirrors the console's live state (steps, the current step, what the watcher
 // sees, flags, the latest answer) and lets the user ask and tick steps off
@@ -53,20 +57,21 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
   //   the done check. Brand emerald #8cf5c4 / cyan #39d3ff / amber #f5c86b for
   //   dark; darkened equivalents for contrast on the white light panel.
   //   Everything here is inline because the PiP document carries none of the
-  //   app's CSS.
+  //   app's CSS. Flat paints only (the design law): the primary face and the
+  //   accent bar are the accent itself, no gradient and no glow shadow.
   const c = light
     ? { canvas: '#f3f5f9', panel: '#ffffff', panel2: '#f5f7fb', border: '#e2e6ed', borderStrong: '#c6cdd8', text: '#171a21', muted: '#58606e', faint: '#8b93a1',
-        accent: '#0e9f6e', accentHi: '#12b47e', onAccent: '#ffffff', accentSoft: 'rgba(14,159,110,.10)', accentRing: 'rgba(14,159,110,.30)', accentGlow: 'rgba(14,159,110,.20)',
+        accent: '#0e9f6e', onAccent: '#ffffff', accentSoft: 'rgba(14,159,110,.10)', accentRing: 'rgba(14,159,110,.30)',
         cyan: '#0a84c2', cyanSoft: 'rgba(10,132,194,.10)', cyanRing: 'rgba(10,132,194,.28)',
         good: '#107c41', goodSoft: 'rgba(16,124,65,.12)', warn: '#b86e00', warnSoft: 'rgba(245,200,107,.16)', warnRing: 'rgba(184,110,0,.30)', danger: '#c42b1c',
         link: '#0067c0',
-        inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)', heroShadow: '0 2px 4px rgba(14,159,110,.06), 0 14px 32px -16px rgba(14,159,110,.32)' }
+        inputBg: '#ffffff', track: '#e6eaf0', shadow: '0 1px 2px rgba(16,24,40,.05), 0 8px 24px -14px rgba(16,24,40,.25)' }
     : { canvas: '#0a0d12', panel: '#141a24', panel2: '#1b2130', border: '#28303f', borderStrong: '#3b4455', text: '#eef3f6', muted: '#9aa6ad', faint: '#6c7780',
-        accent: '#8cf5c4', accentHi: '#8cf5c4', onAccent: '#052a1d', accentSoft: 'rgba(140,245,196,.14)', accentRing: 'rgba(140,245,196,.34)', accentGlow: 'rgba(140,245,196,.22)',
+        accent: '#8cf5c4', onAccent: '#052a1d', accentSoft: 'rgba(140,245,196,.14)', accentRing: 'rgba(140,245,196,.34)',
         cyan: '#39d3ff', cyanSoft: 'rgba(57,211,255,.13)', cyanRing: 'rgba(57,211,255,.32)',
         good: '#54b97b', goodSoft: 'rgba(84,185,123,.16)', warn: '#f5c86b', warnSoft: 'rgba(245,200,107,.14)', warnRing: 'rgba(245,200,107,.34)', danger: '#ff7a6b',
         link: '#6cb6ff',
-        inputBg: '#0a0d12', track: '#28303f', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)', heroShadow: '0 2px 4px rgba(0,0,0,.3), 0 16px 36px -16px rgba(140,245,196,.3)' }
+        inputBg: '#0a0d12', track: '#28303f', shadow: '0 1px 2px rgba(0,0,0,.3), 0 10px 28px -14px rgba(0,0,0,.7)' }
 
   // Confetti for the completed-state flourish. Concrete hex (the PiP document
   // has no app CSS vars); on-brand greens with two soft accents. Computed once.
@@ -95,12 +100,11 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
   // One small-button family: icon (header), ghost (secondary), primary (the one action).
   const iconBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, width: 28, height: 28, padding: 0, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'background .15s, color .15s' }
   const ghost = { background: c.panel2, color: c.text, border: `1px solid ${c.border}`, borderRadius: 9, height: 32, padding: '0 11px', fontSize: 12.5, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', transition: 'background .15s, border-color .15s, color .15s' }
-  const primary = { background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, color: c.onAccent, border: '1px solid transparent', borderRadius: 9, height: 32, padding: '0 13px', fontSize: 12.5, fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', boxShadow: `0 1px 2px rgba(0,0,0,.12), 0 0 0 1px ${c.accentRing} inset` }
+  const primary = { background: c.accent, color: c.onAccent, border: '1px solid transparent', borderRadius: 9, height: 32, padding: '0 13px', fontSize: 12.5, fontWeight: 650, display: 'inline-flex', alignItems: 'center', gap: 6, whiteSpace: 'nowrap', boxShadow: 'none' }
   const navBtn = { background: 'transparent', color: c.muted, border: '1px solid transparent', borderRadius: 8, height: 28, padding: '0 8px', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }
   const eyebrow = { fontSize: 10, fontWeight: 800, letterSpacing: '.1em', textTransform: 'uppercase' }
-  // The current-step / answer left bar reads emerald -> cyan (the color-coded
-  // "now" accent). Flags override this to amber below.
-  const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: `linear-gradient(180deg, ${c.accent}, ${c.cyan})` }
+  // The current-step left bar: the flat accent (the color-coded "now").
+  const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: c.accent }
 
   const timeLeft = usage ? usageTimeLeft(usage) : ''
   // #1 ONE calm status chip: Guiding when live, Paused otherwise. The watching
@@ -136,8 +140,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
     <div style={wrap} ref={rootRef}>
       {/* FIXED HEADER: brand, ONE status chip, minutes, icon controls, under a hairline */}
       <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', gap: 3, minWidth: 0, paddingBottom: 10, borderBottom: `1px solid ${c.border}` }}>
-        <span style={{ width: 25, height: 25, borderRadius: 9, flexShrink: 0, display: 'grid', placeItems: 'center', background: `linear-gradient(135deg, ${c.accentHi}, ${c.accent})`, boxShadow: `0 0 0 1px ${c.accentRing} inset, 0 2px 6px -2px ${c.accentRing}` }}>
-          <Eye size={13} color="#fff" strokeWidth={2.4} />
+        <span style={{ width: 25, height: 25, borderRadius: 9, flexShrink: 0, display: 'grid', placeItems: 'center', background: c.accent }}>
+          <Eye size={13} color={c.onAccent} strokeWidth={2.4} />
         </span>
         <div style={{ flex: 1, minWidth: 0, display: 'flex', alignItems: 'center', gap: 7, paddingLeft: 6 }}>
           <strong style={{ fontFamily: DISPLAY, fontSize: 14.5, fontWeight: 700, letterSpacing: '-.015em', whiteSpace: 'nowrap' }}>WorkCoPilot</strong>
@@ -182,9 +186,10 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
           <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>Plan <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps)}</span></span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '48vh', overflowY: 'auto' }}>
             {steps.map((s, i) => { const isDone = s.status === 'done', isNow = s.status === 'current'; return (
-              <button key={i} className="fp-btn" onClick={() => onStep(i, 'current')} title={String(s.text || '')} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: '6px 7px', borderRadius: 8, border: `1px solid ${isNow ? c.accentRing : 'transparent'}`, background: isNow ? c.accentSoft : 'transparent', color: isNow ? c.text : isDone ? c.faint : c.muted, fontFamily: FONT, fontSize: fs(12), lineHeight: 1.4, fontWeight: isNow ? 650 : 500 }}>
+              <button key={i} className="fp-btn" onClick={() => onStep(i, 'current')} title={plainStep(s.text)} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: '6px 7px', borderRadius: 8, border: `1px solid ${isNow ? c.accentRing : 'transparent'}`, background: isNow ? c.accentSoft : 'transparent', color: isNow ? c.text : isDone ? c.faint : c.muted, fontFamily: FONT, fontSize: fs(12), lineHeight: 1.4, fontWeight: isNow ? 650 : 500 }}>
                 <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: 6, display: 'grid', placeItems: 'center', fontSize: 10, fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: isDone ? c.good : isNow ? c.onAccent : c.faint, background: isNow ? c.accent : isDone ? c.goodSoft : 'transparent', border: `1.5px solid ${isNow ? c.accent : isDone ? 'transparent' : c.border}` }}>{isDone ? <Check size={11} strokeWidth={2.5} /> : i + 1}</span>
-                <span className="fp-clamp" style={{ flex: 1, minWidth: 0, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}>{s.text}</span>
+                {/* the same rich step text as every other row (key terms, no raw ** markers) */}
+                <span className="fp-clamp" style={{ flex: 1, minWidth: 0, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={isNow ? c.accent : 'currentColor'} chips={false} /></span>
               </button>
             ) })}
           </div>
@@ -265,7 +270,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
                     </div>
                   )}
                   {next.map(({ step: s, index: n }) => (
-                    <div key={n} className="gv-next" title={String(s.text || '')}>
+                    <div key={n} className="gv-next" title={plainStep(s.text)}>
                       <span className="gv-k">Next</span>
                       <span className="gv-next-n">{n + 1}</span>
                       <span className="gv-next-t"><RichText text={s.text} accent="var(--gv-muted)" chips={false} /></span>

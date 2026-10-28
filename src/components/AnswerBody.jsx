@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Copy, Check, Volume2 } from 'lucide-react'
-import { scrubForRender } from '../../server/ai_language.js'
+import { scrubForRender, scrubGuidance } from '../../server/ai_language.js'
 
 // Renders an answer as plain prose, EXCEPT fenced code blocks, which become
 // real code panels with a copy button. Prose stays undecorated - no bold, no
@@ -61,12 +61,12 @@ function CodeBlock({ lang, body }) {
           if (m) {
             return (
               <div key={i} className="ab-cl speak">
-                <span className="ab-cl-code">{m[1].replace(/\s+$/, '') || ' '}</span>
+                <span className="ab-cl-code">{m[1].replace(/\s+$/, '') || ' '}</span>
                 <span className="ab-cl-say"><Volume2 size={11} /> {m[2]}</span>
               </div>
             )
           }
-          return <div key={i} className="ab-cl">{line || ' '}</div>
+          return <div key={i} className="ab-cl">{line || ' '}</div>
         })}
       </div>
     </div>
@@ -82,8 +82,25 @@ function CodeBlock({ lang, body }) {
 // stay tolerant of the older phrasings too ("could you say that again?").
 const REPEAT_RE = /^\s*(?:i\s*am\s*sorry|sorry)[,.\s]+(?:can|could)\s+you\s+(?:please\s+)?(?:repeat\s+the\s+question|repeat\s+that|say\s+that\s+again)\s*[?.]?\s*$/i
 
-export default function AnswerBody({ text }) {
+// TWO renderings of the same text, ONE switch (`spoken`):
+//   spoken=false (the default): clean PROSE for a work surface. WorkCoPilot's
+//     only consumer is the session summary (Guiding.jsx), which is read, not
+//     read aloud. The text goes through scrubGuidance (the WorkCoPilot scrubber:
+//     strips any {PAUSE} / {THINK} delivery token, never injects one, keeps
+//     fences and inline code intact); punctuation renders as plain text.
+//   spoken=true: the interview-era SPOKEN delivery - scrubForRender (which
+//     injects {PAUSE} beats), pause tokens as dot chips, sentence punctuation
+//     painted as red pause marks - for an answer read aloud under pressure.
+// Shared by both: paragraphs / bullet lists, **bold** and ==critical==
+// highlights, fenced code panels (CodeBlock) and the red repeat line above.
+// Class-killer: a work summary used to pick up the spoken decorations because
+// the only path was the spoken one; a token in the text (or three plain
+// sentences, which scrubForRender turns into a {PAUSE}) rendered as ". . . ."
+// dots and reddish stops. Prose is now the default, so no new consumer can
+// fall into the spoken path by omission.
+export default function AnswerBody({ text, spoken = false }) {
   const raw = String(text || '')
+  const cleanAI = spoken ? scrubForRender : scrubGuidance
   // Scrub once up front so a robotic refusal already collapsed to the repeat line
   // is caught here (deRefuse runs inside scrubForRender).
   const clean = cleanAI(raw).trim()
@@ -100,7 +117,7 @@ export default function AnswerBody({ text }) {
     <>
       {segs.map((s, i) => s.type === 'code'
         ? <CodeBlock key={i} lang={s.lang} body={s.body} />
-        : <ProseText key={i} body={s.body.trim()} />)}
+        : <ProseText key={i} body={s.body.trim()} spoken={spoken} cleanAI={cleanAI} />)}
     </>
   )
 }
@@ -109,15 +126,15 @@ export default function AnswerBody({ text }) {
 // which render bold + underlined + highlighted so the candidate can spot and
 // stress them at a glance. Split into paragraphs on blank lines. The ** markers
 // themselves are never shown.
-// Delivery pause cues: the model marks natural break points with {PAUSE} (or
-// {....} / {…}). We show them as a small highlighted "pause" chip so the
-// candidate sees where to slow down when reading aloud; the raw token is never
-// shown as text.
-// Colour sentence punctuation RED so the candidate SEES exactly where to pause
-// when reading aloud: a comma / semicolon / colon is a short breath, and a full
-// stop (or ? or !) is a hard stop. Pausing at these is what makes a read-out
-// answer sound spoken instead of rushed like an essay. Full stops get a slightly
-// stronger mark than commas, since the stop is longer.
+// Delivery pause cues (spoken only): the model marks natural break points with
+// {PAUSE} (or {....} / {…}). We show them as a small highlighted "pause" chip so
+// the candidate sees where to slow down when reading aloud; the raw token is
+// never shown as text.
+// Colour sentence punctuation RED (spoken only) so the candidate SEES exactly
+// where to pause when reading aloud: a comma / semicolon / colon is a short
+// breath, and a full stop (or ? or !) is a hard stop. Pausing at these is what
+// makes a read-out answer sound spoken instead of rushed like an essay. Full
+// stops get a slightly stronger mark than commas, since the stop is longer.
 function punctNodes(text, keyBase) {
   return String(text).split(/([,.;:!?]+)/).map((seg, i) => {
     if (!seg) return null
@@ -132,8 +149,9 @@ const PAUSE_TOKEN = /^\{(?:PAUSE|\.{2,}|…+)\}$/i
 // as four dots, a bold + underlined THINK, then four dots - so the candidate takes
 // a real beat before continuing (stronger than a plain {PAUSE} breath).
 const THINK_TOKEN = /^\{THINK\}$/i
+const DELIVERY_SPLIT = /(\{PAUSE\}|\{THINK\}|\{\.{2,}\}|\{…+\})/gi
 function withPauses(text, keyBase) {
-  return String(text).split(/(\{PAUSE\}|\{THINK\}|\{\.{2,}\}|\{…+\})/gi).map((chunk, i) => {
+  return String(text).split(DELIVERY_SPLIT).map((chunk, i) => {
     if (!chunk) return null
     if (THINK_TOKEN.test(chunk)) return <span key={`${keyBase}-${i}`} className="ab-think" aria-label="pause and think" title="Pause and think for a second or two before continuing">. . . . <b><u>THINK</u></b> . . . .</span>
     if (PAUSE_TOKEN.test(chunk)) return <span key={`${keyBase}-${i}`} className="ab-pause" aria-label="pause here" title="Pause / slow down here">. . . .</span>
@@ -141,31 +159,36 @@ function withPauses(text, keyBase) {
   })
 }
 
-// A chunk of prose -> **bold** words highlighted, {PAUSE} markers as dots.
-function withBold(text, keyBase) {
+// The prose path: a delivery token that survived the scrubber (one glued to a
+// word, say) is dropped, never shown; punctuation is just text.
+function plainText(text) {
+  return String(text).replace(DELIVERY_SPLIT, '').replace(/[ \t]{2,}/g, ' ').replace(/ +([.,;:])/g, '$1')
+}
+
+// A chunk of prose -> **bold** words highlighted; the rest spoken (pause chips
+// + red marks) or plain.
+function withBold(text, keyBase, spoken) {
   return String(text).split(/\*\*([^*]+?)\*\*/g).map((seg, i) => i % 2 === 1
-    ? <mark key={`${keyBase}-b${i}`} className="ab-key">{seg}</mark>
-    : <span key={`${keyBase}-s${i}`}>{withPauses(seg, `${keyBase}-${i}`)}</span>)
+    ? <mark key={`${keyBase}-b${i}`} className="ab-key">{spoken ? seg : plainText(seg)}</mark>
+    : <span key={`${keyBase}-s${i}`}>{spoken ? withPauses(seg, `${keyBase}-${i}`) : plainText(seg)}</span>)
+}
+
+// ==critical sentence== (odd indices) then **bold** words (+ pauses when spoken)
+// inside each part, so a whole key sentence highlights and bold words too.
+function renderInline(text, key, spoken) {
+  return String(text).split(/==([^=]+?)==/g).map((seg, ci) => ci % 2 === 1
+    ? <mark key={`${key}-c${ci}`} className="ab-crit">{withBold(seg, `${key}-c${ci}`, spoken)}</mark>
+    : <span key={`${key}-n${ci}`}>{withBold(seg, `${key}-n${ci}`, spoken)}</span>)
 }
 
 // Clean the AI-language tells at RENDER time (zero cost on the generation path),
-// using the SINGLE canonical scrubber shared with the server (server/ai_language.js):
+// using the canonical scrubbers shared with the server (server/ai_language.js):
 // em/en dashes -> commas, semicolons -> full stops, hard/tongue-twister words ->
 // simple spoken ones, robotic step-markers -> spoken sequencing, and tacked-on
 // value-wrap / empty restating closers stripped. So a LIVE streamed answer reads
 // exactly like a curated one. Prose only; code blocks are handled separately and
 // never reach here. One source of truth means a new tell is fixed in ONE place.
-const cleanAI = scrubForRender
-
-// ==critical sentence== (odd indices) then **bold** words + pauses inside each
-// part, so a whole key sentence highlights and bold words too.
-function renderInline(text, key) {
-  return String(text).split(/==([^=]+?)==/g).map((seg, ci) => ci % 2 === 1
-    ? <mark key={`${key}-c${ci}`} className="ab-crit">{withBold(seg, `${key}-c${ci}`)}</mark>
-    : <span key={`${key}-n${ci}`}>{withBold(seg, `${key}-n${ci}`)}</span>)
-}
-
-function ProseText({ body }) {
+function ProseText({ body, spoken, cleanAI }) {
   // Flowing speech by default, BUT real bullet lists must render as bullets. The
   // model marks a bullet with a leading -, *, or •. We group consecutive bullet
   // lines into a <ul>; everything else is prose. Within a prose block single line
@@ -190,8 +213,8 @@ function ProseText({ body }) {
   return (
     <div className="ab-text">
       {blocks.map((b, bi) => b.type === 'ul'
-        ? <ul key={bi} className="ab-ul">{b.items.map((it, ii) => <li key={ii} className="ab-li">{renderInline(it, `u${bi}-${ii}`)}</li>)}</ul>
-        : <p key={bi} className="ab-p">{renderInline(b.text, `p${bi}`)}</p>)}
+        ? <ul key={bi} className="ab-ul">{b.items.map((it, ii) => <li key={ii} className="ab-li">{renderInline(it, `u${bi}-${ii}`, spoken)}</li>)}</ul>
+        : <p key={bi} className="ab-p">{renderInline(b.text, `p${bi}`, spoken)}</p>)}
     </div>
   )
 }
