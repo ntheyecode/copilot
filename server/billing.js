@@ -30,7 +30,7 @@ const SITE = (process.env.WORK_PUBLIC_URL || 'https://admireveda.com').replace(/
 // Record a money event to the ledger + (optionally) email the account. The
 // amount is Stripe's minor unit (cents); stored as major units. Best-effort -
 // never breaks webhook handling.
-function ledgerAndEmail(store, { kind, user, amountMinor, currency, stripeId, plan, status, emailType, invoiceUrl, description }) {
+function ledgerAndEmail(store, { kind, user, amountMinor, currency, stripeId, plan, status, emailType, invoiceUrl, description, invoiceNumber, nextBillingDate, cardLabel }) {
   try {
     const amount = (Number(amountMinor) || 0) / 100
     store.recordTransaction({ kind, userId: user ? user.id : null, amount, currency: currency || 'usd', stripeId, plan: plan || null, status: status || 'succeeded', description: description || '' })
@@ -39,10 +39,19 @@ function ledgerAndEmail(store, { kind, user, amountMinor, currency, stripeId, pl
       if (to) {
         const name = user.displayName || user.username || ''
         const label = description || (plan ? `${plan} plan` : 'WorkCoPilot')
-        sendTemplateAsync(emailType, to, { name, description: label, item: label, amount, currency: currency || 'usd', date: new Date().toISOString(), reference: stripeId || '', invoiceUrl: invoiceUrl || '' })
+        // invoiceNumber / nextBillingDate / cardLabel feed the redesigned receipt
+        // detail-table rows; they stay empty (and the row hides) when not supplied.
+        sendTemplateAsync(emailType, to, { name, description: label, item: label, amount, currency: currency || 'usd', date: new Date().toISOString(), reference: stripeId || '', invoiceUrl: invoiceUrl || '', invoiceNumber: invoiceNumber || '', nextBillingDate: nextBillingDate || '', cardLabel: cardLabel || '' })
       }
     }
   } catch (e) { console.warn('[billing] ledger/email failed: ' + (e && e.message)) }
+}
+// Stripe invoice -> the next-billing-date ISO (the current line's period end), or ''.
+function invoicePeriodEndISO(inv) {
+  try {
+    const end = inv && inv.lines && inv.lines.data && inv.lines.data[0] && inv.lines.data[0].period && inv.lines.data[0].period.end
+    return end ? new Date(end * 1000).toISOString() : ''
+  } catch { return '' }
 }
 
 const looksLikeEmail = (s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(s || '').trim())
@@ -310,7 +319,7 @@ async function handleEvent(s, store, event) {
         sendOwnerSubscriptionAlertAsync('cancellation', { user, plan, status, cycle, stripeId: subId })
         // Confirm the cancellation to the CUSTOMER (access-until shown when a paid period remains).
         const toC = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(user.id) : null
-        if (toC) sendTemplateAsync('subscription_canceled', toC, { name: user.displayName || user.username, plan: plan ? plan[0].toUpperCase() + plan.slice(1) : '', accessUntil: patch.currentPeriodEnd })
+        if (toC) sendTemplateAsync('subscription_canceled', toC, { name: user.displayName || user.username, plan: plan ? plan[0].toUpperCase() + plan.slice(1) : '', accessUntil: patch.currentPeriodEnd, canceledAt: new Date().toISOString() })
       }
     } else if (status === 'past_due') {
       if (priorStatus !== 'past_due') sendOwnerSubscriptionAlertAsync('past_due', { user, plan, status, cycle, stripeId: subId })
@@ -333,7 +342,7 @@ async function handleEvent(s, store, event) {
     let user = store.findUserByStripeSubscription(subId) || store.findUserByStripeCustomer(customerId)
     if (!user && obj.metadata && obj.metadata.workUserId) user = store.getUser(obj.metadata.workUserId)
     const plan = (user && user.subscription && user.subscription.plan) || null
-    ledgerAndEmail(store, { kind: 'subscription', user, amountMinor: obj.amount_paid != null ? obj.amount_paid : obj.total, currency: obj.currency, stripeId: obj.id, plan, emailType: 'payment_success', invoiceUrl: obj.hosted_invoice_url || '', description: plan ? `${plan} plan` : 'Subscription' })
+    ledgerAndEmail(store, { kind: 'subscription', user, amountMinor: obj.amount_paid != null ? obj.amount_paid : obj.total, currency: obj.currency, stripeId: obj.id, plan, emailType: 'payment_success', invoiceUrl: obj.hosted_invoice_url || '', description: plan ? `${plan} plan` : 'Subscription', invoiceNumber: obj.number || '', nextBillingDate: invoicePeriodEndISO(obj) })
     // Affiliate commission: on the referred user's FIRST real (non-zero) payment.
     // Deduped per referred user in the store, so renewals never pay again. Using
     // amount_paid > 0 (not billing_reason) correctly handles the free-month trial,
@@ -860,7 +869,7 @@ export function registerWorkBillingRoutes(app, { store, requireWorkAuth, require
             sendOwnerSubscriptionAlertAsync('cancellation', { user: info.user, plan: sb.plan || null, status: 'canceled', cycle: sb.cycle || null, stripeId: info.subId })
             // Immediate admin cancel: access ends now, so no access-until date is sent.
             const toAc = (typeof store.effectiveUserEmail === 'function') ? store.effectiveUserEmail(info.user.id) : null
-            if (toAc) sendTemplateAsync('subscription_canceled', toAc, { name: info.user.displayName || info.user.username, plan: sb.plan ? sb.plan[0].toUpperCase() + sb.plan.slice(1) : '' })
+            if (toAc) sendTemplateAsync('subscription_canceled', toAc, { name: info.user.displayName || info.user.username, plan: sb.plan ? sb.plan[0].toUpperCase() + sb.plan.slice(1) : '', canceledAt: new Date().toISOString() })
           }
         }
         res.json({ ok: true, atPeriodEnd, subscription: store.getSubscription(req.params.id) })
