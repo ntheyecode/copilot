@@ -9,8 +9,9 @@ import { api } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
 import { Loading, ErrorBox, EmptyState, Spinning } from './_shared.jsx'
 import { Meter, pctOf, VIZ_CSS } from './_viz.jsx'
-
-const GROUPS = ['admin', 'supervisor', 'member']
+// The pool ids come from the ONE client registry (src/shared/alloc_groups.js), the
+// same list the Guidance depth section derives its pools from (SUPREME RULE II).
+import { ALLOC_GROUPS as GROUPS } from '../../../shared/alloc_groups.js'
 const fmtH = (secs) => { const h = (Number(secs) || 0) / 3600; return h >= 10 || h % 1 === 0 ? `${Math.round(h)}h` : `${h.toFixed(1)}h` }
 const secToH = (s) => (s == null ? '' : String(+(Number(s) / 3600).toFixed(3)))
 const win = (v) => ({ day: v && v.day != null ? String(v.day) : '', week: v && v.week != null ? String(v.week) : '', month: v && v.month != null ? String(v.month) : '' })

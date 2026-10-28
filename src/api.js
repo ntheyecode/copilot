@@ -182,8 +182,16 @@ export const api = {
   workProjectExpand: (id, taskId) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/expand`, {}),
   workProjectInject: (id, body) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/inject`, { ...(body || {}), request: clean((body && body.request) || '') }),
   workProjectTaskState: (id, taskId, state) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/state`, { state }),
-  // Company customers ("who the work is for"): the project picker reads the list.
+  // Company customers ("who the work is for"): the project picker reads the list;
+  // the company console adds / renames / archives (Default is server-protected).
   workCompanyCustomers: () => req('GET', '/api/work/company/customers'),
+  workCompanyAddCustomer: (name) => req('POST', '/api/work/company/customers', { name }),
+  workCompanyRenameCustomer: (id, name) => req('PATCH', `/api/work/company/customers/${encodeURIComponent(id)}`, { name }),
+  workCompanyArchiveCustomer: (id) => req('DELETE', `/api/work/company/customers/${encodeURIComponent(id)}`),
+  // Guidance depth (Standard vs Deep / Projects): the company's ceiling granted by
+  // the platform + each pool's assignment; the server clamps a pool to the ceiling.
+  workCompanyGuidanceDepth: () => req('GET', '/api/work/company/guidance-depth'),
+  workCompanySetPoolDepth: (pool, depth) => req('POST', '/api/work/company/guidance-depth/pool', { pool, depth }),
   // body: { goal?, frame? } (frame = downscaled data URL; when DLP is on it is
   // redacted on-device by frame_scrub before it is passed in by the component)
   workPlan: (id, body) => req('POST', `/api/work/sessions/${id}/plan`, { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}) }),

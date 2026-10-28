@@ -208,6 +208,9 @@ export const workAdminApi = {
   resetUserMfa: (uid, reason) => request('POST', `/api/work/admin/users/${uid}/mfa/reset`, { reason }),
   // Add minutes to the shared company pool (server takes minutes).
   poolMinutes: (id, minutes) => request('POST', `/api/work/admin/companies/${id}/pool-minutes`, { minutes: Number(minutes) || 0 }),
+  // Guidance depth CEILING for a company ('standard' | 'deep'): the grant its admin
+  // distributes within. Returns { guidanceDepth } (the saved value, confirmed back).
+  setCompanyGuidanceDepth: (id, depth) => request('POST', `/api/work/admin/companies/${encodeURIComponent(id)}/guidance-depth`, { depth }),
 
   // ---- Enterprise billing + quota hierarchy (superadmin, per company) --------
   // Set the monthly pool, task policy, overage price, timezone, month-end
