@@ -382,7 +382,6 @@ export default function StartTask() {
   const [place, setPlace] = useState((draft && draft.place) || '')
   const [appName, setAppName] = useState((draft && draft.appName) || '')
   const [appUrl, setAppUrl] = useState((draft && draft.appUrl) || '')
-  const [appPath, setAppPath] = useState((draft && draft.appPath) || '')
   const [otherText, setOtherText] = useState((draft && draft.otherText) || '')
   const [advancing, setAdvancing] = useState(false)
   // Documents (step 2)
@@ -419,9 +418,9 @@ export default function StartTask() {
   // Park the draft on every change (the goal, the interview, the depth and the
   // answers). An untouched wizard stores nothing.
   useEffect(() => {
-    const touched = !!(place || appName || appUrl || appPath || otherText || docsChoice || planTitle || goal || depth || answers.length)
-    writeDraft(touched ? { step, place, appName, appUrl, appPath, otherText, docsChoice, planTitle, goal, depth, answers } : null)
-  }, [step, place, appName, appUrl, appPath, otherText, docsChoice, planTitle, goal, depth, answers])
+    const touched = !!(place || appName || appUrl || otherText || docsChoice || planTitle || goal || depth || answers.length)
+    writeDraft(touched ? { step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers } : null)
+  }, [step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers])
 
   // Where AI setup happens for THIS person: platform admins in the admin
   // console, company admins in the company console, personal accounts in the
@@ -474,12 +473,12 @@ export default function StartTask() {
   const buildContext = useCallback(() => {
     const parts = []
     if (place === 'saas') parts.push(appName ? `Working in: ${appName}${appUrl ? ` (${appUrl})` : ''} - a website or SaaS app.` : 'Working in a website or SaaS app.')
-    else if (place === 'desktop') parts.push(appName ? `Working in: ${appName} - a desktop app${appPath ? `, at ${appPath}` : ''}.` : 'Working in a desktop app.')
+    else if (place === 'desktop') parts.push(appName ? `Working in: ${appName} - a desktop app.` : 'Working in a desktop app.')
     else if (place === 'files') parts.push('Working with my own files or data.')
     else if (place === 'other' && otherText.trim()) parts.push(`Working on: ${otherText.trim()}.`)
     if (docsChoice === 'use') parts.push('Reference documents are attached to ground this.')
     return parts.join(' ')
-  }, [place, appName, appUrl, appPath, otherText, docsChoice])
+  }, [place, appName, appUrl, otherText, docsChoice])
   useEffect(() => { setTaskContext(buildContext()) }, [buildContext])
 
   const goalForPlan = (g) => {
@@ -564,7 +563,7 @@ export default function StartTask() {
   // --- Reflection / review display helpers (translated DISPLAY of the same state) ---
   const placeSummary = () => {
     if (place === 'saas') return appName ? (appUrl ? t('workStart.sumSaasUrl', { name: appName, url: appUrl }) : t('workStart.sumSaas', { name: appName })) : t('workStart.sumSaasBare')
-    if (place === 'desktop') return appName ? (appPath ? t('workStart.sumDesktopPath', { name: appName, path: appPath }) : t('workStart.sumDesktop', { name: appName })) : t('workStart.sumDesktopBare')
+    if (place === 'desktop') return appName ? t('workStart.sumDesktop', { name: appName }) : t('workStart.sumDesktopBare')
     if (place === 'files') return t('workStart.sumFiles')
     if (place === 'other' && otherText.trim()) return otherText.trim()
     return t('workStart.sumUnset')
@@ -669,15 +668,9 @@ export default function StartTask() {
             )}
             {place === 'desktop' && (
               <div className="wd-coach-fields wd-wiz-reveal">
-                <div className="wd-coach-two">
-                  <div className="wd-coach-field">
-                    <label htmlFor="wd-ctx-dapp">{t('workStart.fAppName')}</label>
-                    <input ref={firstFieldRef} id="wd-ctx-dapp" className="wd-coach-input" placeholder={t('workStart.fDeskAppPh')} value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
-                  </div>
-                  <div className="wd-coach-field">
-                    <label htmlFor="wd-ctx-path">{t('workStart.fPath')} <span style={{ fontWeight: 400, color: 'var(--mut)' }}>{t('workStart.fOptional')}</span></label>
-                    <input id="wd-ctx-path" className="wd-coach-input" placeholder={t('workStart.fPathPh')} value={appPath} onChange={(e) => setAppPath(e.target.value)} onKeyDown={onFieldKey} maxLength={200} />
-                  </div>
+                <div className="wd-coach-field">
+                  <label htmlFor="wd-ctx-dapp">{t('workStart.fAppName')}</label>
+                  <input ref={firstFieldRef} id="wd-ctx-dapp" className="wd-coach-input" placeholder={t('workStart.fDeskAppPh')} value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
                 </div>
                 <div className="wd-coach-note"><Sparkles size={13} /> {t('workStart.noteDesk')}</div>
               </div>
