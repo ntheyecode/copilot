@@ -6080,12 +6080,15 @@ export function availableWorkProjectTasks(workUserId, projectId) { const p = _fi
 // Mid-journey injection: dedupe against existing tasks, else create + place by
 // dependency (zero-tolerance guard against a false/duplicate task). Returns either
 // { duplicate:true, task } (already covered) or { duplicate:false, created, placed }.
-export function injectWorkProjectTask(workUserId, projectId, { request, blocksTaskId = null, dependsOn = null } = {}) {
+export function injectWorkProjectTask(workUserId, projectId, { request, title = null, doneState = '', blocksTaskId = null, dependsOn = null } = {}) {
   const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
   const req = String(request || '').trim(); if (!req) throw httpErr(400, 'Say what to add.')
   const dup = projInject.findSimilarTask(p, req)
   if (dup) return { duplicate: true, task: dup }
-  const t = proj.newTask({ id: 'pt' + id(), title: req, goal: req })
+  // title/doneState let a caller inject a fully-formed task (e.g. a roped-in
+  // Recommended Practice keeps its screen-visible done-state); both default so
+  // the free-text mid-journey path (title=goal=request, no done-state) is unchanged.
+  const t = proj.newTask({ id: 'pt' + id(), title: String(title || req), goal: req, doneState })
   const { tasks, placed } = projInject.placeInjectedTask(p, t, { blocksTaskId, dependsOn })
   p.tasks = tasks; p.state = proj.deriveProjectState(p); persist()
   return { duplicate: false, created: t, placed }
