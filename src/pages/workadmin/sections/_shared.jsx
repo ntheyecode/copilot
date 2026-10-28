@@ -65,23 +65,44 @@ export function Spinning() {
 // Escape. Styles: workadmin.css.js (.wka-menu*).
 export function ActionMenu({ label, items, disabled }) {
   const [open, setOpen] = useState(false)
+  const [pos, setPos] = useState(null)
   const ref = useRef(null)
   useEffect(() => {
     if (!open) return undefined
     const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
     const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
-    document.addEventListener('mousedown', onDoc); document.addEventListener('keydown', onKey)
-    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey) }
-  }, [open])
+    // Any scroll (the table's own horizontal scroller included, which also
+    // moves when the trigger takes focus) re-places the fixed popover against
+    // its trigger, so it never drifts and never closes on its own.
+    const onScroll = () => setPos(place())
+    document.addEventListener('mousedown', onDoc); document.addEventListener('keydown', onKey); document.addEventListener('scroll', onScroll, true)
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); document.removeEventListener('scroll', onScroll, true) }
+  }, [open])   // eslint-disable-line react-hooks/exhaustive-deps
   const list = (items || []).filter(Boolean)
+  // The popover is position:fixed (placed from the trigger's rect) so the
+  // table's scroll box cannot clip it; it opens upward near the bottom edge
+  // and never past the right edge of the viewport.
+  function place() {
+    const r = ref.current ? ref.current.getBoundingClientRect() : null
+    if (!r || typeof window === 'undefined') return null
+    const w = 200, h = Math.min(list.length * 36 + 12, 300)
+    const left = Math.max(8, Math.min(r.right - w, window.innerWidth - w - 8))
+    const below = r.bottom + 4 + h <= window.innerHeight
+    return { left, top: below ? r.bottom + 4 : Math.max(8, r.top - 4 - h) }
+  }
   if (!list.length) return null
+  const toggle = () => {
+    if (open) { setOpen(false); return }
+    setPos(place())
+    setOpen(true)
+  }
   return (
     <span className="wka-menu-wrap" ref={ref}>
-      <button type="button" className="wka-btn sm ghost" aria-haspopup="menu" aria-expanded={open} disabled={disabled} onClick={() => setOpen((v) => !v)} title={label}>
+      <button type="button" className="wka-btn sm ghost" aria-haspopup="menu" aria-expanded={open} disabled={disabled} onClick={toggle} title={label}>
         <MoreHorizontal size={14} /> {label}
       </button>
       {open && (
-        <div className="wka-menu" role="menu">
+        <div className="wka-menu" role="menu" style={pos ? { position: 'fixed', top: pos.top, left: pos.left, right: 'auto', width: 200 } : undefined}>
           {list.map((it) => (
             <button key={it.key} type="button" role="menuitem" className={it.tone || ''} disabled={it.disabled} title={it.title} onClick={() => { setOpen(false); it.onPick && it.onPick() }}>
               {it.icon}{it.label}
