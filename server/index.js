@@ -33,6 +33,8 @@ import { registerWorkShotRoutes } from './work-shots.js'
 import { registerWorkDocsRoutes } from './work-docs.js'
 import { verifyResponse } from './work_verify.js'
 import { registerWorkImageRoutes } from './work-images.js'
+import { registerWorkCustomerRoutes } from './work_customer_routes.js'
+import { registerGuidanceDepthRoutes } from './work_depth_routes.js'
 import { registerSsoRoutes } from './sso.js'
 import { registerSocialRoutes, socialConfigured } from './social.js'
 import { registerOnboardingRoutes } from './onboarding.js'
@@ -3545,6 +3547,8 @@ app.get('/api/work/active', requireWorkAuth, wrap((req, res) => {
 registerWorkAdminRoutes(app, { store, work, ai, requireAuth, requireAdmin, requireSuperAdmin, wrap, resolveWorkRuntime })
 registerWorkShotRoutes(app, { store, requireWorkAuth, wrap })
 registerWorkDocsRoutes(app, { store, requireWorkAuth, wrap, extractDocText: docs.extractText })
+registerWorkCustomerRoutes(app, { store, requireWorkAuth, requireCompanyAdmin, wrap })
+registerGuidanceDepthRoutes(app, { store, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })
 registerWorkImageRoutes(app, { store, ai, requireWorkAuth, wrap, resolveWorkRuntime })
 // OIDC SSO (Google / Microsoft / Okta). Uses the gates defined above.
 registerSsoRoutes(app, { store, establishSession, requireAuth, requireWorkAuth, requireSuperAdmin, requireCompanyAdmin, wrap })

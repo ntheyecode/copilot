@@ -24,6 +24,8 @@ import bcrypt from 'bcryptjs'
 import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
+import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
+import * as customers from './work_customers.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -3249,6 +3251,10 @@ export const WORK_MAX_OPEN_TASKS = 4
 export function workMaxOpenTasks(workUserId) {
   const u = getUser(workUserId)
   if (u && u.companyId) return WORK_TASKS_UNLIMITED
+  // Premium (Depth-2 / Projects) individuals get UNLIMITED concurrent tasks - a
+  // project runs many tasks, so the universal 4-cap would contradict the feature.
+  // Lite / Basic / Advanced keep the cap.
+  if (canUseWorkProjects(workUserId)) return WORK_TASKS_UNLIMITED
   return WORK_MAX_OPEN_TASKS
 }
 // Re-plan budget PER TASK (not daily). A re-plan re-adapts the plan with new
@@ -3363,7 +3369,9 @@ export function getWorkTaskUsage(workUserId) {
   // Individuals: no daily cap. Report how many of the open-task slots are in use
   // (hours are the usage limit; see getWorkUsage for the hours side).
   const open = countOpenWorkTasks(workUserId)
-  return { unlimited: false, maxOpen: WORK_MAX_OPEN_TASKS, open, remaining: Math.max(0, WORK_MAX_OPEN_TASKS - open), activeTaskId }
+  const cap = workMaxOpenTasks(workUserId)
+  if (cap === WORK_TASKS_UNLIMITED) return { unlimited: true, maxOpen: null, open, remaining: null, activeTaskId }
+  return { unlimited: false, maxOpen: cap, open, remaining: Math.max(0, cap - open), activeTaskId }
 }
 // Gate + record a new task start. Throws a coded httpErr the caller surfaces, or
 // returns the new usage on success. Company accounts are unlimited unless an
@@ -3407,15 +3415,16 @@ export function startWorkTask(workUserId) {
   }
   // 2) Too many open at once? Finish or pick one up first. A paused task counts as
   //    open (it waits under "Resume where you left off").
+  const cap = workMaxOpenTasks(workUserId)
   const open = countOpenWorkTasks(workUserId)
-  if (open >= WORK_MAX_OPEN_TASKS) {
-    const e = httpErr(409, `You already have ${WORK_MAX_OPEN_TASKS} tasks on the go. Finish or pick one up before you start another.`)
-    e.tooManyOpen = true; e.maxOpen = WORK_MAX_OPEN_TASKS; e.open = open
+  if (cap !== WORK_TASKS_UNLIMITED && open >= cap) {
+    const e = httpErr(409, `You already have ${cap} tasks on the go. Finish or pick one up before you start another.`)
+    e.tooManyOpen = true; e.maxOpen = cap; e.open = open
     throw e
   }
   const usedToday = bumpWorkTasksToday(workUserId)   // kept for the month history only; no longer a gate
   persist()
-  return { open: open + 1, maxOpen: WORK_MAX_OPEN_TASKS, unlimited: false, usedToday }
+  return { open: open + 1, maxOpen: cap === WORK_TASKS_UNLIMITED ? null : cap, unlimited: cap === WORK_TASKS_UNLIMITED, usedToday }
 }
 // A company admin's license + usage dashboard: seat pools, who holds a license,
 // the tier breakdown, the minute pool, and each person's live usage. Everything
@@ -5671,6 +5680,62 @@ export function setWorkForceWatchLight(on) {
 // AND the user is premium; otherwise 'full'. This is not user-settable.
 export function effectiveWatchMode(workUserId) {
   return (getWorkForceWatchLight() && workUserTier(workUserId) === 'premium') ? 'light' : 'full'
+}
+
+// ---- Guidance depth entitlement (Standard vs Deep / Projects) --------------
+// Resolves a user's effective depth: an individual by tier (Premium = deep), a
+// company member by the pool (allocGroup) assignment clamped to the superadmin
+// company ceiling. Pure logic lives in guidance_depth.js (one source, SUPREME II).
+function companyGuidanceCeiling(c) {
+  if (!c) return 'standard'
+  return c.guidanceDepth ? normalizeDepthId(c.guidanceDepth) : (c.plan === 'premium' ? 'deep' : 'standard')
+}
+export function effectiveGuidanceDepth(workUserId) {
+  const u = getUser(workUserId)
+  if (!u) return 'standard'
+  if (u.companyId) {
+    const c = _company(u.companyId)
+    const pool = (c && c.poolDepth && u.allocGroup) ? c.poolDepth[u.allocGroup] : null
+    return resolveGuidanceDepth({ isCompanyMember: true, companyCeiling: companyGuidanceCeiling(c), poolDepth: pool })
+  }
+  return resolveGuidanceDepth({ tier: workUserTier(workUserId) })
+}
+// Projects (Depth 2) gate for a user.
+export function canUseWorkProjects(workUserId) { return canUseProjectsPure(effectiveGuidanceDepth(workUserId)) }
+// Superadmin: set the company's depth ceiling (the grant the admin distributes within).
+export function setCompanyGuidanceDepth(companyId, depth) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  c.guidanceDepth = normalizeDepthId(depth); persist()
+  return companyGuidanceCeiling(c)
+}
+// Company admin: assign a pool's (allocGroup) depth, clamped to the ceiling so a pool
+// can never exceed the superadmin grant.
+export function setCompanyPoolDepth(companyId, poolKey, depth) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  c.poolDepth = c.poolDepth || {}
+  c.poolDepth[String(poolKey)] = clampDepth(depth, companyGuidanceCeiling(c)); persist()
+  return c.poolDepth[String(poolKey)]
+}
+export function getCompanyGuidanceDepth(companyId) { return companyGuidanceCeiling(_company(companyId)) }
+export function getCompanyPoolDepths(companyId) { const c = _company(companyId); return (c && c.poolDepth) ? { ...c.poolDepth } : {} }
+
+// ---- Customers (enterprise: who the work is for; company-scoped) -----------
+// Thin wrappers over the pure work_customers logic; tenant-isolated by companyId.
+export function listWorkCustomers(companyId) { const c = _company(companyId); return customers.activeCustomers(c ? c.customers : []) }
+export function addWorkCustomer(companyId, name) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  const r = customers.addCustomer(c.customers, name); if (r.error) throw httpErr(400, r.error)
+  c.customers = r.list; persist(); return r.customer
+}
+export function renameWorkCustomer(companyId, id, name) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  const r = customers.renameCustomer(c.customers, id, name); if (r.error) throw httpErr(400, r.error)
+  c.customers = r.list; persist(); return r.customer
+}
+export function archiveWorkCustomer(companyId, id) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  const r = customers.archiveCustomer(c.customers, id); if (r.error) throw httpErr(400, r.error)
+  c.customers = r.list; persist(); return { ok: true }
 }
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)

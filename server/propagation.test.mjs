@@ -34,12 +34,15 @@ test('changing a tier monthly hours in pricing reflects in planGrantSeconds + an
   assert.throws(() => store.setWorkPricing({ tasksPerExtraHour: 1 }), (e) => e.status === 400)
 })
 
-test('the open-task cap is one universal number for individuals, not a per-tier pricing value', () => {
+test('open-task cap: universal 4 for regular tiers, UNLIMITED for Premium (Projects)', () => {
   const u = store.createWorkUser({ username: uniq('tsk'), password: 'Passw0rd!x' })
-  store.setWorkTier(u.id, 'basic')
-  assert.equal(store.workMaxOpenTasks(u.id), 4)         // same for every individual tier
+  for (const tier of ['lite', 'basic', 'advanced']) {
+    store.setWorkTier(u.id, tier)
+    assert.equal(store.workMaxOpenTasks(u.id), 4, tier)   // same cap for every regular individual tier
+  }
   store.setWorkTier(u.id, 'premium')
-  assert.equal(store.workMaxOpenTasks(u.id), 4)
+  assert.notEqual(store.workMaxOpenTasks(u.id), 4)        // Premium = Depth-2 / Projects -> unlimited
+  assert.equal(store.getWorkTaskUsage(u.id).unlimited, true)
   // the retired per-tier `tasks` config no longer exists or affects anything
   assert.equal('tasks' in store.getWorkPricing(), false)
 })
