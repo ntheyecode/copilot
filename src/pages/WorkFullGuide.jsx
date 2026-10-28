@@ -26,6 +26,7 @@ import GoalLine from './work/GoalLine.jsx'
 import FadeSwap from './work/FadeSwap.jsx'
 import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
 import { usageTimeLeft, usageTasksLine } from './work/usageCopy.js'
+import { useSurfaceScheme } from '../theme/useSurfaceScheme.js'
 
 const POLL_MS = 2500
 const POLL_PAUSED_MS = 6000
@@ -65,8 +66,14 @@ export default function WorkFullGuide() {
   const [status, setStatus] = useState('loading') // loading | ok | empty | signin | error
   const [fs, setFs] = useState(false)
   const [planOpen, setPlanOpen] = useState(false) // read-only "full plan" overlay
-  const prefersDark = typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)').matches : true
-  const [dark, setDark] = useState(prefersDark)
+  // Light/dark follows the APP theme preference (wc_theme_mode: light | dark |
+  // heavy; heavy paints the dark palette, this screen has only two), falling
+  // back to the OS scheme only when nothing is stored. One owner for the rule:
+  // src/theme/surface_scheme.js via useSurfaceScheme(). The Sun/Moon button
+  // still flips this window locally; a preference change re-syncs it.
+  const surfaceScheme = useSurfaceScheme()
+  const [dark, setDark] = useState(surfaceScheme === 'dark')
+  useEffect(() => { setDark(surfaceScheme === 'dark') }, [surfaceScheme])
   // One clean column on a narrow window; the roomy two-column layout on a real
   // second monitor. Tracks live so a resized web window re-flows.
   const [wide, setWide] = useState(typeof window !== 'undefined' ? window.innerWidth >= 900 : true)

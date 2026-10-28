@@ -87,6 +87,13 @@ function applyAll() {
 function emit() { for (const fn of listeners) { try { fn(getPrefs()) } catch { /* a listener must never break the others */ } } }
 
 // ---- Read -------------------------------------------------------------------
+// The raw STORED mode, or null when this device holds no choice. For surfaces
+// that need to tell "chose light" from "chose nothing" (the floating guide and
+// the full-screen guide fall back to the OS scheme only in the latter case; see
+// surface_scheme.js). getPrefs().themeMode cannot express that: it defaults to
+// 'light'. This is the one reader of the key; nothing else touches localStorage.
+export function getStoredThemeMode() { return readStored().mode }
+
 let snapshot = null
 export function getPrefs() {
   if (!snapshot) snapshot = { accent: state.accent, themeMode: state.themeMode, a11y: { ...state.a11y } }
