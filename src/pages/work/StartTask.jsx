@@ -261,7 +261,7 @@ function ScopeLoader({ depth, t }) {
     <div className="wd-wz-research" role="status" aria-live="polite">
       <div className="wd-term">
         <div className="wd-term-bar">
-          <span className="wd-term-dots"><i style={{ background: '#ff5f57' }} /><i style={{ background: '#febc2e' }} /><i style={{ background: '#28c840' }} /></span>
+          <span className="wd-term-dots"><i /><i /><i /></span>
           <span className="wd-term-title">{t('workStart.scopeTermTitle')}</span>
           <span className="wd-term-pct">{pct}%</span>
         </div>
@@ -646,7 +646,7 @@ export default function StartTask() {
       </div>
 
       {gateMsg && (
-        <div className="wd-note warn" role="alert" style={{ marginBottom: 14 }}>
+        <div className="wd-note warn wd-wz-gatenote" role="alert">
           <AlertTriangle size={16} />
           <span>{gateMsg}{gateAct === 'hours' && buyCredits && <> <button type="button" className="wd-note-act" onClick={() => buyCredits('hours')}>{t('workStart.gateOutOfHoursAct')}</button></>}</span>
         </div>
@@ -697,7 +697,7 @@ export default function StartTask() {
                     <input ref={firstFieldRef} id="wd-ctx-app" className="wd-coach-input" placeholder={t('workStart.fSaasAppPh')} value={appName} onChange={(e) => setAppName(e.target.value)} onKeyDown={onFieldKey} maxLength={80} />
                   </div>
                   <div className="wd-coach-field">
-                    <label htmlFor="wd-ctx-url">{t('workStart.fUrl')} <span style={{ fontWeight: 400, color: 'var(--mut)' }}>{t('workStart.fOptional')}</span></label>
+                    <label htmlFor="wd-ctx-url">{t('workStart.fUrl')} <span className="wd-coach-opt-l">{t('workStart.fOptional')}</span></label>
                     <input id="wd-ctx-url" className="wd-coach-input" placeholder={t('workStart.fUrlPh')} value={appUrl} onChange={(e) => setAppUrl(e.target.value)} onKeyDown={onFieldKey} maxLength={200} />
                   </div>
                 </div>
@@ -725,7 +725,7 @@ export default function StartTask() {
               left={!place ? <span className="wd-wz-hint">{t('workStart.placeHint')}</span> : null}
               right={advancing
                 ? <span className="wd-coach-adv"><Check size={14} /> {t('workStart.advancing')}<span className="bar"><i /></span></span>
-                : <button type="button" className="wd-cta" disabled={!place} onClick={() => setStep('docs')}>{t('workStart.continue')} <ArrowRight size={15} /></button>}
+                : <button type="button" className="wd-wz-next" disabled={!place} onClick={() => setStep('docs')}>{t('workStart.continue')} <ArrowRight size={15} /></button>}
             />
           </div>
         )}
@@ -753,7 +753,7 @@ export default function StartTask() {
               <div className="wd-coach-hero-k"><PenLine size={12} /> {t('workStart.goalHeroK')}</div>
               <label htmlFor="wd-name">{t('workStart.nameLabel')} <span className="req">*</span></label>
               <input id="wd-name" className="wd-nameinput" placeholder={t('workStart.namePh')} value={planTitle} onChange={(e) => setPlanTitle(e.target.value)} maxLength={80} />
-              <label htmlFor="wd-goal" style={{ marginTop: 12, display: 'block' }}>{t('workStart.goalLabel')} <span className="req">*</span></label>
+              <label htmlFor="wd-goal" className="wd-coach-goal-l">{t('workStart.goalLabel')} <span className="req">*</span></label>
               <textarea id="wd-goal" ref={goalRef} rows={3} placeholder={t('workStart.goalPh')} value={goal} onChange={(e) => setGoal(e.target.value)} />
             </div>
             {/* Visible helper text, also the Continue button's description
@@ -780,7 +780,7 @@ export default function StartTask() {
             )}
             <Foot
               left={<button type="button" className="wd-wz-link" onClick={() => setStep('place')}><ChevronLeft size={14} /> {t('workStart.addContext')}</button>}
-              right={<button type="button" className="wd-cta" disabled={!goalComplete} onClick={() => setStep('reflect')} aria-describedby="wd-wz-goal-hint">{t('workStart.continue')} <ArrowRight size={15} /></button>}
+              right={<button type="button" className="wd-wz-next" disabled={!goalComplete} onClick={() => setStep('reflect')} aria-describedby="wd-wz-goal-hint">{t('workStart.continue')} <ArrowRight size={15} /></button>}
             />
           </div>
         )}
@@ -809,7 +809,7 @@ export default function StartTask() {
             </div>
             <Foot
               left={<button type="button" className="wd-wz-link" onClick={() => setStep('goal')}><ChevronLeft size={14} /> {t('workStart.back')}</button>}
-              right={<button type="button" className="wd-cta" onClick={() => setStep('depth')}>{t('workStart.reflectContinue')} <ArrowRight size={15} /></button>}
+              right={<button type="button" className="wd-wz-next" onClick={() => setStep('depth')}>{t('workStart.reflectContinue')} <ArrowRight size={15} /></button>}
             />
           </div>
         )}
@@ -845,10 +845,10 @@ export default function StartTask() {
         {step === 'scopeerror' && (
           <div className="wd-wz-panel tight" key="scopeerror">
             <div className="wd-wiz-q">{t('workStart.scopeErrTitle')}</div>
-            <div style={{ color: 'var(--danger)', marginBottom: 6, lineHeight: 1.5 }}>{scopeErr}</div>
+            <div className="wd-wz-err">{scopeErr}</div>
             <Foot
               left={<button type="button" className="wd-wz-link" onClick={() => setStep('depth')}><ChevronLeft size={14} /> {t('workStart.scopeErrTryAgain')}</button>}
-              right={<button type="button" className="wd-cta" onClick={() => { setAnswers([]); setStep('review') }}>{t('workStart.scopeErrPlanAnyway')} <ArrowRight size={15} /></button>}
+              right={<button type="button" className="wd-wz-next" onClick={() => { setAnswers([]); setStep('review') }}>{t('workStart.scopeErrPlanAnyway')} <ArrowRight size={15} /></button>}
             />
           </div>
         )}

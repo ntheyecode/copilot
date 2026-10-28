@@ -5,16 +5,31 @@ import { api, friendlyError } from '../api.js'
 // Download-format chooser for a session: PDF report / plain-text report / audit
 // log. Fetches with the window's OWN authenticated session (api.downloadFile), so
 // it works on web AND in the desktop app (no window.open / external-browser 401).
-// Self-contained inline styles + a tiny scoped <style> for item hover, so it
-// drops into any surface (completed tasks, the guiding console) without needing
-// per-surface CSS. The trigger takes the surface's own button className so it
-// looks native there.
-let _hoverStyleInjected = false
-function ensureHoverStyle() {
-  if (_hoverStyleInjected || typeof document === 'undefined') return
-  _hoverStyleInjected = true
+// Self-contained: one scoped <style> injected once, so it drops into any surface
+// (completed tasks, the dashboard's outcomes, the guiding console). The popover
+// reads the in-product design tokens first (.wd: --panel, --line-soft, --tx,
+// --mut, --tint-green, --sh-3, --r), then the public site's global tokens, then
+// a last-resort literal for a host that defines neither, so it is themed (light,
+// dark, heavy) wherever it mounts. The trigger takes the surface's own button
+// className so it looks native there.
+let _styleInjected = false
+function ensureStyle() {
+  if (_styleInjected || typeof document === 'undefined') return
+  _styleInjected = true
   const el = document.createElement('style')
-  el.textContent = '.wc-dlmenu-item:hover,.wc-dlmenu-item:focus-visible{background:var(--surface-2,#f1f3fa);outline:none}'
+  el.textContent = [
+    '.wc-dlmenu-wrap{position:relative;display:inline-flex}',
+    '.wc-dlmenu{position:absolute;top:calc(100% + 6px);z-index:60;min-width:236px;background:var(--panel,var(--surface,#fff));border:1px solid var(--line-soft,var(--border,#e7eaf2));border-radius:var(--r,12px);box-shadow:var(--sh-3,0 18px 44px -18px rgba(16,24,40,.30));padding:6px;display:flex;flex-direction:column;gap:2px}',
+    '.wc-dlmenu.right{right:0}.wc-dlmenu.left{left:0}',
+    '.wc-dlmenu-h{font-size:calc(11.5px*var(--wc-fs,1));font-weight:600;color:var(--mut,var(--text-muted,#5c6484));padding:4px 10px 6px}',
+    '.wc-dlmenu-item{display:flex;align-items:center;gap:11px;width:100%;text-align:left;background:transparent;border:none;border-radius:var(--r-xs,8px);padding:9px 10px;cursor:pointer;font:inherit;color:var(--tx,var(--text,#1b2033))}',
+    '.wc-dlmenu-item:hover,.wc-dlmenu-item:focus-visible{background:var(--line-soft,var(--surface-2,#f1f3fa));outline:none}',
+    '.wc-dlmenu-ic{display:inline-flex;width:28px;height:28px;border-radius:var(--r-xs,8px);align-items:center;justify-content:center;flex-shrink:0;background:var(--tint-green,var(--em-fill,#eafaf3));color:var(--tint-green-ink,var(--em,#0e9f6e))}',
+    '.wc-dlmenu-tx{min-width:0;display:flex;flex-direction:column;line-height:1.3}',
+    '.wc-dlmenu-tx b{font-size:calc(13.5px*var(--wc-fs,1));font-weight:650}',
+    '.wc-dlmenu-tx small{font-size:calc(11.5px*var(--wc-fs,1));color:var(--mut,var(--text-muted,#5c6484))}',
+    '.wc-dlmenu-chev{margin-left:1px;opacity:.7;flex-shrink:0}',
+  ].join('\n')
   document.head.appendChild(el)
 }
 
@@ -22,7 +37,7 @@ export default function DownloadMenu({ sessionId, label = 'Download', className 
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState('')
   const ref = useRef(null)
-  useEffect(() => { ensureHoverStyle() }, [])
+  useEffect(() => { ensureStyle() }, [])
   useEffect(() => {
     if (!open) return undefined
     const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
@@ -43,32 +58,20 @@ export default function DownloadMenu({ sessionId, label = 'Download', className 
     finally { setBusy('') }
   }
 
-  const menuStyle = {
-    position: 'absolute', top: 'calc(100% + 6px)', [align === 'left' ? 'left' : 'right']: 0, zIndex: 60,
-    minWidth: 236, background: 'var(--surface, #fff)', border: '1px solid var(--border, #e7eaf2)',
-    borderRadius: 12, boxShadow: '0 18px 44px -18px rgba(16,24,40,.30)', padding: 6,
-    display: 'flex', flexDirection: 'column', gap: 2,
-  }
-  const itemStyle = {
-    display: 'flex', alignItems: 'center', gap: 11, width: '100%', textAlign: 'left',
-    background: 'transparent', border: 'none', borderRadius: 8, padding: '9px 10px', cursor: 'pointer',
-    font: 'inherit', color: 'var(--text, #1b2033)',
-  }
-
   return (
-    <div ref={ref} style={{ position: 'relative', display: 'inline-flex' }}>
+    <div ref={ref} className="wc-dlmenu-wrap">
       <button type="button" className={className} onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} disabled={!!busy} title="Download this session">
-        {busy ? <Loader2 size={14} className="spin" /> : <Download size={14} />} {label} <ChevronDown size={13} style={{ marginLeft: 1, opacity: 0.7 }} />
+        {busy ? <Loader2 size={14} className="spin" /> : <Download size={14} />} {label} <ChevronDown size={13} className="wc-dlmenu-chev" />
       </button>
       {open && (
-        <div role="menu" aria-label="Download format" style={menuStyle}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: '.04em', textTransform: 'uppercase', color: 'var(--text-muted, #5c6484)', padding: '4px 10px 6px' }}>Download as</div>
+        <div role="menu" aria-label="Download format" className={`wc-dlmenu ${align === 'left' ? 'left' : 'right'}`}>
+          <div className="wc-dlmenu-h">Download as</div>
           {FORMATS.map((f) => (
-            <button key={f.id} type="button" role="menuitem" className="wc-dlmenu-item" style={itemStyle} onClick={() => pick(f)}>
-              <span style={{ display: 'inline-flex', width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexShrink: 0, background: 'var(--em-fill, #eafaf3)', color: 'var(--em, #0e9f6e)' }}><f.Icon size={15} /></span>
-              <span style={{ minWidth: 0, display: 'flex', flexDirection: 'column', lineHeight: 1.3 }}>
-                <b style={{ fontSize: 13.5, fontWeight: 650 }}>{f.label}</b>
-                <small style={{ fontSize: 11.5, color: 'var(--text-muted, #5c6484)' }}>{f.hint}</small>
+            <button key={f.id} type="button" role="menuitem" className="wc-dlmenu-item" onClick={() => pick(f)}>
+              <span className="wc-dlmenu-ic"><f.Icon size={15} /></span>
+              <span className="wc-dlmenu-tx">
+                <b>{f.label}</b>
+                <small>{f.hint}</small>
               </span>
             </button>
           ))}

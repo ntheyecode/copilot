@@ -63,7 +63,7 @@ export default function Projects() {
       ) : err ? (
         <div className="wd-empty" role="alert">
           <span className="ic"><AlertTriangle size={18} /></span>
-          <div><b>{t('workProjects.list.errTitle')}</b><p>{t('workProjects.list.errBody')} <button type="button" className="wd-link" style={{ background: 'none', border: 0, padding: 0, font: 'inherit', cursor: 'pointer' }} onClick={reload}>{t('workProjects.list.retry')}</button></p></div>
+          <div><b>{t('workProjects.list.errTitle')}</b><p>{t('workProjects.list.errBody')} <button type="button" className="wd-link wd-linkbtn" onClick={reload}>{t('workProjects.list.retry')}</button></p></div>
         </div>
       ) : projects.length === 0 ? (
         <div className="wd-empty">

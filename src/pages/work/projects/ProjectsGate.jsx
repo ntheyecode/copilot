@@ -10,12 +10,12 @@ import { useT } from '../../../i18n/index.jsx'
 export default function ProjectsGate({ canUpgrade, upgradeHref, isCompanyMember }) {
   const t = useT()
   return (
-    <div className="wd-card wd-pj-gate" role="status">
+    <div className="wd-card tint-green wd-pj-gate" role="status">
       <span className="wd-ic"><Sparkles size={18} /></span>
       <div className="wd-pj-gate-body">
         <h3>{t('workProjects.gate.title')}</h3>
         <p>{t('workProjects.gate.body')}</p>
-        {isCompanyMember && !canUpgrade && <p style={{ marginTop: 6 }}>{t('workProjects.gate.company')}</p>}
+        {isCompanyMember && !canUpgrade && <p className="gap">{t('workProjects.gate.company')}</p>}
         <div className="wd-pj-gate-acts">
           {canUpgrade && <a className="wd-pj-btn primary" href={upgradeHref || '/workcopilot/pricing'}><Sparkles size={14} /> {t('workProjects.gate.upgrade')}</a>}
           <Link className="wd-pj-btn" to="/work/start"><Play size={14} /> {t('workProjects.gate.startTask')} <ArrowRight size={13} /></Link>

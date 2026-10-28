@@ -23,7 +23,7 @@
 // Page-only styles: dash.css.js; each section carries its own stylesheet.
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Loader2, Check, X, Trash2, Play, AlertTriangle, Globe, ChevronRight, Sparkles, Rocket, Compass, ArrowRight, ShieldCheck, RefreshCw, Building2, Phone, MapPin, LayoutDashboard, Zap, BarChart3, Plus, Inbox } from 'lucide-react'
+import { Loader2, X, Trash2, AlertTriangle, Globe, ChevronRight, Sparkles, Rocket, Compass, ArrowRight, ShieldCheck, RefreshCw, Building2, Phone, MapPin, LayoutDashboard, Zap, BarChart3, Plus, Inbox } from 'lucide-react'
 import { api, friendlyError } from '../../api.js'
 import { AVMark } from '../../components/AdmireVedaLogo.jsx'
 import WorkBilling from '../../components/WorkBilling.jsx'
@@ -36,6 +36,7 @@ import { useT } from '../../i18n/index.jsx'
 import PlanMeters from './PlanMeters.jsx'
 import MonthGraph from './MonthGraph.jsx'
 import Outcomes from './Outcomes.jsx'
+import SessionRow from './SessionRow.jsx'
 import TaskFlow from './TaskFlow.jsx'
 import { DASH_CSS } from './dash.css.js'
 import { PJ_CSS } from './projects/projects.css.js'
@@ -313,7 +314,7 @@ export default function Dashboard() {
             <span className="ic"><AlertTriangle size={20} /></span>
             <div>
               <b>{t('workDashboard.sessions.loadErrTitle')}</b>
-              <p>{t('workDashboard.sessions.loadErrBodyPre')} <button type="button" className="wd-link" onClick={reload} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', font: 'inherit', textDecoration: 'underline' }}>{t('workDashboard.sessions.tryAgain')}</button></p>
+              <p>{t('workDashboard.sessions.loadErrBodyPre')} <button type="button" className="wd-link wd-linkbtn" onClick={reload}>{t('workDashboard.sessions.tryAgain')}</button></p>
             </div>
           </div>
         ) : (() => {
@@ -340,16 +341,17 @@ export default function Dashboard() {
                 const pct = tot > 0 ? Math.round(done / tot * 100) : 0
                 const ended = s.status === 'ended'
                 return (
-                  <div key={s.id} className="wd-sess">
-                    <span className={`wd-sess-ic${ended ? ' done' : ''}`} aria-hidden>{ended ? <Check size={15} /> : <Play size={14} />}</span>
-                    <div className="wd-sess-main">
-                      <div className="wd-sess-title">{(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}</div>
-                      <div className="wd-sess-meta">{ended ? t('workDashboard.sessions.completed') : (cur ? t('workDashboard.sessions.stepWas', { step: cur.text }) : t('workDashboard.sessions.notStarted'))} &middot; <span className="wd-sess-done">{done}/{tot}</span> {t('workDashboard.sessions.stepsLabel')}{tot > 0 ? <> &middot; {pct}%</> : null}</div>
-                      {tot > 0 && <div className="wd-sess-bar"><i style={{ width: `${pct}%` }} /></div>}
-                    </div>
+                  <SessionRow key={s.id} state={ended ? 'ended' : (s.paused ? 'paused' : 'active')}
+                    title={(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}
+                    meta={[
+                      <span className="cur" key="m">{ended ? t('workDashboard.sessions.completed') : (cur ? t('workDashboard.sessions.stepWas', { step: cur.text }) : t('workDashboard.sessions.notStarted'))}</span>,
+                      <span key="s"><span className="wd-sess-done">{done}/{tot}</span> {t('workDashboard.sessions.stepsLabel')}</span>,
+                      tot > 0 ? `${pct}%` : null,
+                    ]}
+                    pct={tot > 0 ? pct : undefined}>
                     <button className="wd-resume" onClick={() => onOpen(s.id)}><span>{ended ? t('workDashboard.sessions.open') : t('workDashboard.sessions.resume')}</span> <ArrowRight size={14} /></button>
                     <button className="wd-del" title={t('workDashboard.sessions.delete')} aria-label={t('workDashboard.sessions.delete')} onClick={() => { setDelTarget(s); setDelReason('') }}><Trash2 size={15} /></button>
-                  </div>
+                  </SessionRow>
                 )
               })}
               <a className="wd-sess-more" href="/work/logs">{t('workDashboard.sessions.viewAllLogs')} <ArrowRight size={14} /></a>

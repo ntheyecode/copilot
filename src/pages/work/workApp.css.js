@@ -311,6 +311,8 @@ export const WD_CSS = `
 .wd-ic.neutral{color:var(--tint-neutral-ink);background:var(--tint-neutral)}
 .wd-link{color:var(--em-2);font-weight:600;text-decoration:underline;text-underline-offset:3px;text-decoration-color:color-mix(in srgb,var(--em-2) 40%,transparent)}
 .wd-link:hover{text-decoration-color:var(--em-2)}
+/* A link-styled <button> (retry inside an empty state), no box of its own. */
+.wd-linkbtn{background:none;border:none;padding:0;font:inherit;cursor:pointer}
 
 /* Quiet secondary rows: Buddy + Data protection + Skills share ONE white card
    separated by hairlines. Each is a compact row; the expandable ones open in
@@ -410,9 +412,9 @@ export const WD_CSS = `
 .wd-sec .wd-ic{margin-top:0}
 .wd-sec > div{min-width:0;flex:1 1 auto}
 
-/* START A TASK: the primary action card. White face, 1px line, soft lift;
-   the readiness coach lives inside it beneath the head. */
-.wd-start{position:relative;margin-top:22px;padding:22px 22px 18px;border-radius:16px;border:1px solid var(--line);background:var(--panel);box-shadow:var(--card-shadow)}
+/* START A TASK: the wizard page card. White face, hairline, no shadow (the
+   dashboard card recipe); the stepper lives inside it beneath the head. */
+.wd-start{position:relative;margin-top:0;padding:22px 22px 18px;border-radius:var(--r-lg);border:1px solid var(--line-soft);background:var(--panel);box-shadow:var(--sh-0)}
 .wd-start .wd-sec{margin-bottom:14px}
 .wd-start .wd-sec p{max-width:70ch}
 .wd-start .wd-coach{margin-top:2px}
@@ -485,17 +487,31 @@ export const WD_CSS = `
 
 .wd-sessions{margin-top:var(--sp-7)}
 .wd-sec-count{font-size:calc(12px*var(--wc-fs,1));color:var(--mut);font-weight:600;border:1px solid var(--chip-line);background:var(--chip);border-radius:var(--r-pill);padding:2px 9px;line-height:1.5;white-space:nowrap;flex-shrink:0}
+/* ONE compact row recipe (SessionRow.jsx owns the markup): white face,
+   hairline, tinted icon tile (blue = in progress, green = done, neutral =
+   paused), title + muted meta with an optional tinted status chip, optional
+   slim bar, ghost-pill actions. Used by the dashboard's Resume rows, My tasks,
+   Completed, Logs and the standalone tasks on Projects. */
 .wd-sess-list{display:flex;flex-direction:column;gap:var(--sp-2)}
-.wd-sess{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);padding:12px 16px;box-shadow:var(--sh-0);transition:border-color .2s}
+.wd-sess{display:flex;align-items:center;gap:12px;min-width:0;background:var(--panel);border:1px solid var(--line-soft);border-radius:var(--r);padding:12px 16px;box-shadow:var(--sh-0);transition:border-color .2s}
 .wd-sess:hover{border-color:var(--line)}
-.wd-sess-ic{width:32px;height:32px;border-radius:var(--r-xs);background:var(--tint-blue);color:var(--tint-blue-ink);display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px}
+.wd-sess-ic{width:32px;height:32px;border-radius:var(--r-xs);background:var(--tint-blue);color:var(--tint-blue-ink);display:inline-flex;align-items:center;justify-content:center;flex:0 0 32px;border:none}
 .wd-sess-ic.done{background:var(--tint-green);color:var(--tint-green-ink)}
+.wd-sess-ic.paused{background:var(--tint-neutral);color:var(--tint-neutral-ink)}
 .wd-sess-main{flex:1;min-width:0}
 .wd-sess-title{font-weight:600;font-size:calc(14px*var(--wc-fs,1));overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wd-sess-meta{font-size:calc(13px*var(--wc-fs,1));color:var(--mut);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wd-sess-meta{display:flex;align-items:center;flex-wrap:wrap;gap:3px 6px;font-size:calc(13px*var(--wc-fs,1));color:var(--mut);margin-top:3px;min-width:0;line-height:1.4}
+.wd-sess-m{display:inline-flex;align-items:center;gap:6px;min-width:0;max-width:100%}
+.wd-sess-m .cur{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.wd-sess-sep{color:var(--line-2)}
 .wd-sess-done{color:var(--em-deep);font-weight:600}
+/* Status chip: a tinted pill, no outline, never wraps. */
+.wd-sess-st{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:600;white-space:nowrap;flex-shrink:0;background:var(--tint-neutral);color:var(--tint-neutral-ink);line-height:1}
+.wd-sess-st.active{background:var(--tint-blue);color:var(--tint-blue-ink)}
+.wd-sess-st.ended{background:var(--tint-green);color:var(--tint-green-ink)}
 .wd-sess-bar{height:4px;background:var(--track);border-radius:3px;margin-top:8px;overflow:hidden;max-width:380px}
 .wd-sess-bar i{display:block;height:100%;border-radius:3px;background:var(--em);transition:width .4s ease}
+.wd-sess-acts{display:flex;align-items:center;gap:6px;flex-shrink:0;white-space:nowrap;margin-left:auto}
 .wd-resume{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 13px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-weight:500;font-size:var(--fs-md);cursor:pointer;flex-shrink:0;white-space:nowrap;transition:background .15s,border-color .15s}
 .wd-resume:hover{border-color:var(--line-2);background:var(--line-soft)}
 .wd-del{background:none;border:none;color:var(--mut);cursor:pointer;padding:7px;border-radius:9px;flex-shrink:0;transition:color .15s,background .15s}
@@ -651,17 +667,23 @@ export const WD_CSS = `
  .wd-stats{grid-template-columns:1fr}
  .wd-buddy .wd-card-end{margin-left:0;width:100%}
 }
+@media(max-width:640px){
+ /* Row actions drop under the text on a narrow screen; the pills themselves
+    never wrap or clip. */
+ .wd-sess{flex-wrap:wrap;gap:10px 12px}
+ .wd-sess-acts{flex-basis:100%;margin-left:0;padding-left:44px}
+}
 @media(max-width:480px){
- /* List rows wrap their title and meta instead of clipping them. */
- .wd-sess-title,.wd-sess-meta{white-space:normal;overflow-wrap:anywhere}
+ /* List rows wrap their title instead of clipping it. */
+ .wd-sess-title{white-space:normal;overflow-wrap:anywhere}
+ .wd-sess-acts{padding-left:0}
  .wd-resume span{display:none}
 }
 @media(prefers-reduced-motion:reduce){
  .wd *{animation-duration:.001ms!important;transition-duration:.001ms!important}
 }
-/* Scope wizard */
-/* Flat card shadow on the coach + wizard cards (white-only palette). */
-.wd-coach-kind,.wd-wiz-depth-card,.wd-coach-sample{box-shadow:var(--card-shadow)}
+/* Scope wizard: depth comes from tint and whitespace, never from shadow. */
+.wd-coach-kind,.wd-wiz-depth-card,.wd-coach-sample{box-shadow:var(--sh-0)}
 .wd-coach-opt.on{box-shadow:none}
 @media(max-width:760px){.wd-start{padding:20px 18px 20px}}
 @media(prefers-reduced-motion:reduce){.wd-card{transition:none}}
@@ -679,7 +701,7 @@ export const WD_CSS = `
 .wd-wiz-x:hover{color:var(--tx)}
 .wd-wiz-prog{display:flex;gap:6px;margin:0 26px 18px}
 .wd-wiz-prog span{height:5px;flex:1;border-radius:999px;background:var(--track);transition:background .25s}
-.wd-wiz-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2))}
+.wd-wiz-prog span.on{background:var(--em)}
 .wd-wiz-q{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:calc(21px*var(--wc-fs,1));line-height:1.3;color:var(--tx);margin-bottom:8px}
 .wd-wiz-help{display:flex;align-items:flex-start;gap:7px;font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--mut);margin-bottom:16px}
 .wd-wiz-help svg{flex-shrink:0;margin-top:2px;color:var(--em-2)}
@@ -709,11 +731,12 @@ export const WD_CSS = `
 /* First step: Quick vs Detailed interview. Two equal cards, one accent. */
 .wd-wiz-depth{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(max-width:520px){.wd-wiz-depth{grid-template-columns:1fr}}
-.wd-wiz-depth-card{position:relative;text-align:left;display:flex;flex-direction:column;gap:8px;background:var(--card-a);border:1px solid var(--line-2);border-radius:16px;padding:18px 18px 16px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);transition:border-color .16s,background .16s,transform .12s,box-shadow .16s}
-.wd-wiz-depth-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--em),var(--em-2));opacity:0;transition:opacity .16s}
-.wd-wiz-depth-card:hover{border-color:var(--em-2);background:var(--em-fill);transform:translateY(-1px);box-shadow:var(--card-shadow-hover)}
-.wd-wiz-depth-card:hover::before{opacity:1}
-.wd-wiz-depth-ic{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:var(--em-fill-2);color:var(--em)}
+/* Depth cards: the tint recipe (a soft neutral fill, no outline, no inner
+   bar); hover / focus lifts to the green tint with a quiet ring. The icon is a
+   white tile with a saturated same-hue glyph, exactly the dashboard's tiles. */
+.wd-wiz-depth-card{position:relative;text-align:left;display:flex;flex-direction:column;gap:8px;background:var(--tint-neutral);border:1px solid transparent;border-radius:var(--r-lg);padding:18px 18px 16px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;box-shadow:var(--sh-0);transition:background .16s,box-shadow .16s,transform .12s}
+.wd-wiz-depth-card:hover{background:var(--tint-green);box-shadow:0 0 0 1.5px var(--em-line);transform:translateY(-1px)}
+.wd-wiz-depth-ic{width:36px;height:36px;border-radius:var(--r-sm);display:grid;place-items:center;background:var(--panel);color:var(--tint-green-ink)}
 .wd-wiz-depth-t{font-family:"Bricolage Grotesque",sans-serif;font-weight:700;font-size:calc(17px*var(--wc-fs,1));letter-spacing:-.01em}
 .wd-wiz-depth-d{font-size:calc(13px*var(--wc-fs,1));line-height:1.5;color:var(--mut)}
 .wd-wiz-depth-m{display:inline-flex;align-items:center;gap:6px;margin-top:2px;font-size:calc(11.5px*var(--wc-fs,1));font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--em-2)}
@@ -733,6 +756,8 @@ export const WD_CSS = `
 .wd-term-bar{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--card-a);border-bottom:1px solid var(--line)}
 .wd-term-dots{display:inline-flex;gap:5px;flex-shrink:0}
 .wd-term-dots i{width:9px;height:9px;border-radius:50%;display:inline-block}
+/* Window dots: semantic tokens, not the fixed traffic-light hexes. */
+.wd-term-dots i:nth-child(1){background:var(--danger)}.wd-term-dots i:nth-child(2){background:var(--warm-2)}.wd-term-dots i:nth-child(3){background:var(--em)}
 .wd-term-title{flex:1;min-width:0;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:calc(10.5px*var(--wc-fs,1));letter-spacing:.08em;font-weight:700;color:var(--mut);text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .wd-term-pct{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:calc(11px*var(--wc-fs,1));font-weight:700;color:var(--em-deep);font-variant-numeric:tabular-nums;flex-shrink:0;white-space:nowrap}
 .wd-term-body{padding:14px 14px 12px;font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:calc(12.5px*var(--wc-fs,1));line-height:1.7;color:var(--tx-2);min-height:138px}
@@ -744,58 +769,54 @@ export const WD_CSS = `
 .wd-term-caret{display:inline-block;width:8px;height:14px;background:var(--em);margin-left:2px;vertical-align:-2px;animation:wd-term-blink 1s steps(1) infinite}
 @keyframes wd-term-blink{50%{opacity:0}}
 .wd-term-track{height:3px;background:var(--track)}
-.wd-term-fill{height:100%;background:linear-gradient(90deg,var(--em),var(--em-2));transition:width .6s cubic-bezier(.4,0,.2,1)}
+.wd-term-fill{height:100%;background:var(--em);transition:width .6s cubic-bezier(.4,0,.2,1)}
 .wd-term-foot{display:flex;align-items:center;gap:8px;margin-top:12px;font-size:calc(12.5px*var(--wc-fs,1));color:var(--mut)}
 /* ---- Pre-task readiness coach (inside .wd-start, before the goal box) ----
    Same system as the wizard: a pinned eyebrow + quiet Skip, a 3-dot progress,
    a body with a floor height (no CLS between stages), staggered .wd-wiz-reveal
    entry. Kind cards -> readiness pill rows -> coach panel (warnings by level,
    the tips checklist, the sample card with its orange CTA). */
-/* The LIVE pre-task interview is an elevated, softly glowing panel so the
-   step the user is on clearly stands out and feels interactive (owner:
-   "show the pretask box highlighted, glow, shadowed ... INTERACTIVE"). Only
-   the live coach gets this; the finished state (.wd-coach-done) stays plain. */
-.wd-coach{position:relative;display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:16px;
-  border:1px solid var(--em-line);
-  background:linear-gradient(180deg,color-mix(in srgb,var(--em-fill) 62%,#fff) 0%,var(--panel) 46%);
-  box-shadow:0 1px 2px rgba(20,24,44,.05),0 22px 46px -28px rgba(14,159,110,.42);
+/* The LIVE pre-task interview panel: the one block on the page that is
+   RAISED (the sh-2 lift from the shadow scale), on a white face with a
+   hairline. No gradient, no glowing halo: the step stands out by being the
+   only lifted card and by the whitespace around it (design-system direction).
+   The finished state (.wd-coach-done) stays plain. */
+.wd-coach{position:relative;display:flex;flex-direction:column;gap:12px;padding:18px;border-radius:var(--r-lg);
+  border:1px solid var(--line-soft);
+  background:var(--panel);
+  box-shadow:var(--sh-2);
   animation:wd-coach-in .42s cubic-bezier(.2,.8,.2,1) both}
-.wd-coach::after{content:'';position:absolute;inset:0;border-radius:16px;pointer-events:none;z-index:0;
-  animation:wd-coach-halo 3.8s ease-in-out infinite}
 .wd-coach > *{position:relative;z-index:1}
 @keyframes wd-coach-in{from{opacity:0;transform:translateY(8px) scale(.992)}to{opacity:1;transform:none}}
-@keyframes wd-coach-halo{
-  0%,100%{box-shadow:0 0 0 1px color-mix(in srgb,var(--em) 13%,transparent),0 0 0 0 transparent}
-  50%{box-shadow:0 0 0 1px color-mix(in srgb,var(--em) 26%,transparent),0 0 26px 2px color-mix(in srgb,var(--em) 13%,transparent)}}
 .wd-coach-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.wd-coach-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:calc(12px*var(--wc-fs,1));font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2)}
+.wd-coach-eyebrow{display:inline-flex;align-items:center;gap:7px;font-size:var(--fs-sm);font-weight:600;color:var(--em-2-deep)}
 .wd-coach-skip{background:none;border:none;color:var(--mut);font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:5px;padding:4px 2px;border-radius:8px;transition:color .15s}
 .wd-coach-skip:hover{color:var(--tx)}
 .wd-coach-prog{display:flex;gap:6px}
 .wd-coach-prog span{height:4px;flex:1;max-width:72px;border-radius:999px;background:var(--track);transition:background .25s}
 .wd-coach-prog span{overflow:hidden}
-.wd-coach-prog span.on{background:linear-gradient(90deg,var(--em),var(--em-2) 60%,var(--em));background-size:200% 100%;animation:wd-coach-prog 2.4s linear infinite}
-@keyframes wd-coach-prog{0%{background-position:160% 0}100%{background-position:-60% 0}}
+.wd-coach-prog span.on{background:var(--em)}
 .wd-coach-body{display:flex;flex-direction:column;gap:12px;min-height:280px}
 .wd-coach-q{font-family:var(--wd-display);font-weight:700;font-size:calc(20px*var(--wc-fs,1));line-height:1.3;color:var(--tx)}
 .wd-coach-sub{font-size:calc(13.5px*var(--wc-fs,1));line-height:1.5;color:var(--mut);margin-top:-6px}
 .wd-coach-kinds{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:4px}
 @media(max-width:760px){.wd-coach-kinds{grid-template-columns:1fr 1fr}}
 @media(max-width:480px){.wd-coach-kinds{grid-template-columns:1fr}}
-.wd-coach-kind{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--card-a);border:1px solid var(--line-2);border-radius:14px;padding:14px 14px 13px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow);transition:border-color .16s,background .16s,transform .12s,box-shadow .16s}
-.wd-coach-kind::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,var(--em),var(--em-2));opacity:0;transition:opacity .16s}
-.wd-coach-kind:hover,.wd-coach-kind.on{border-color:var(--em-2);background:var(--em-fill);transform:translateY(-1px);box-shadow:var(--card-shadow-hover)}
-.wd-coach-kind:hover::before,.wd-coach-kind.on::before{opacity:1}
-.wd-coach-kind-ic{width:32px;height:32px;border-radius:10px;display:grid;place-items:center;background:var(--em-fill-2);color:var(--em)}
+/* Kind cards: the tint recipe (neutral fill, no outline, no inner bar). The
+   chosen / hovered card turns to the green tint with a quiet ring; the icon
+   is a white tile with a same-hue glyph. */
+.wd-coach-kind{position:relative;text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--tint-neutral);border:1px solid transparent;border-radius:var(--r);padding:14px 14px 13px;color:var(--tx);font:inherit;cursor:pointer;overflow:hidden;box-shadow:var(--sh-0);transition:background .16s,box-shadow .16s,transform .12s}
+.wd-coach-kind:hover,.wd-coach-kind.on{background:var(--tint-green);box-shadow:0 0 0 1.5px var(--em-line);transform:translateY(-1px)}
+.wd-coach-kind-ic{width:32px;height:32px;border-radius:var(--r-sm);display:grid;place-items:center;background:var(--panel);color:var(--tint-green-ink)}
 .wd-coach-kind-l{font-weight:650;font-size:calc(14.5px*var(--wc-fs,1));line-height:1.3}
 .wd-coach-kind-b{font-size:calc(12.5px*var(--wc-fs,1));line-height:1.45;color:var(--mut)}
-.wd-coach-kind-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--em);color:#fff;display:grid;place-items:center;box-shadow:0 2px 8px -2px var(--em);animation:wd-coach-pop .24s cubic-bezier(.2,.9,.3,1.5) both}
+.wd-coach-kind-check{position:absolute;top:10px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--em-solid);color:var(--on-solid);display:grid;place-items:center;animation:wd-coach-pop .24s cubic-bezier(.2,.9,.3,1.5) both}
 @keyframes wd-coach-pop{from{opacity:0;transform:scale(.4)}to{opacity:1;transform:none}}
 /* Auto-advance confirmation on a choice-only step (the "flow forward" beat). */
 .wd-coach-adv{display:inline-flex;align-items:center;gap:8px;font-size:calc(13.5px*var(--wc-fs,1));font-weight:600;color:var(--em-deep);white-space:nowrap}
 .wd-coach-adv svg{color:var(--em)}
 .wd-coach-adv .bar{position:relative;width:48px;height:4px;border-radius:999px;background:var(--em-fill-2);overflow:hidden}
-.wd-coach-adv .bar i{position:absolute;inset:0;transform-origin:left;background:linear-gradient(90deg,var(--em),var(--em-2));animation:wd-coach-fill .64s linear forwards}
+.wd-coach-adv .bar i{position:absolute;inset:0;transform-origin:left;background:var(--em);animation:wd-coach-fill .64s linear forwards}
 @keyframes wd-coach-fill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 .wd-coach-foothint{font-size:calc(12.5px*var(--wc-fs,1));color:var(--mut);line-height:1.4}
 .wd-coach-qs{display:flex;flex-direction:column;gap:12px}
@@ -804,7 +825,7 @@ export const WD_CSS = `
 .wd-coach-opts{display:flex;flex-wrap:wrap;gap:7px}
 .wd-coach-opt{display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 12px;border-radius:999px;border:1px solid var(--line-2);background:var(--chip);color:var(--tx);font:inherit;font-size:calc(13px*var(--wc-fs,1));font-weight:600;cursor:pointer;transition:border-color .15s,background .15s,color .15s}
 .wd-coach-opt:hover{border-color:var(--em-2)}
-.wd-coach-opt.on{border-color:var(--em);background:var(--em-fill-2);color:var(--tx);box-shadow:0 0 14px -6px var(--em)}
+.wd-coach-opt.on{border-color:var(--em);background:var(--em-fill-2);color:var(--tx)}
 .wd-coach-opt.flag.on{border-color:var(--warm-line);background:var(--warm-fill);color:var(--warm)}
 .wd-coach-gate{display:inline-flex;align-items:center;gap:3px;font-size:calc(10px*var(--wc-fs,1));font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:var(--warm);background:var(--warm-fill);border:1px solid var(--warm-line);border-radius:999px;padding:1px 6px}
 .wd-coach-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:auto;padding-top:6px}
@@ -823,13 +844,12 @@ export const WD_CSS = `
 .wd-coach-warn.info svg{color:var(--em-2)}
 .wd-coach-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:12px}
 @media(max-width:760px){.wd-coach-grid{grid-template-columns:1fr}}
-.wd-coach-k{display:inline-flex;align-items:center;gap:6px;font-size:calc(10.5px*var(--wc-fs,1));font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2);margin-bottom:8px}
-.wd-coach-tips{padding:14px 15px;border-radius:14px;background:var(--card-a);border:1px solid var(--line)}
+.wd-coach-k{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);font-weight:600;color:var(--em-2-deep);margin-bottom:8px}
+.wd-coach-tips{padding:14px 15px;border-radius:var(--r);background:var(--panel);border:1px solid var(--line-soft)}
 .wd-coach-tips ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
 .wd-coach-tips li{display:flex;gap:8px;align-items:flex-start;font-size:calc(13px*var(--wc-fs,1));line-height:1.45;color:var(--tx)}
 .wd-coach-tips li svg{flex-shrink:0;margin-top:3px;color:var(--em)}
-.wd-coach-sample{position:relative;padding:14px 15px 13px 18px;border-radius:14px;background:var(--panel-3);border:1px solid var(--em-line);overflow:hidden;display:flex;flex-direction:column;box-shadow:inset 0 1px 0 rgba(255,255,255,.04),var(--card-shadow)}
-.wd-coach-sample::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:linear-gradient(180deg,var(--em),var(--em-2))}
+.wd-coach-sample{position:relative;padding:14px 15px 13px;border-radius:var(--r);background:var(--tint-green);border:1px solid transparent;overflow:hidden;display:flex;flex-direction:column;box-shadow:var(--sh-0)}
 .wd-coach-sample-t{margin:0 0 12px;font-size:calc(14px*var(--wc-fs,1));line-height:1.55;color:var(--tx);font-style:italic}
 .wd-coach-sample-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:auto}
 .wd-coach-sample-row .wd-cta{display:inline-flex;align-items:center;gap:7px}
@@ -843,14 +863,18 @@ export const WD_CSS = `
 @media(max-width:560px){.wd-coach-two{grid-template-columns:1fr}}
 .wd-coach-field{display:flex;flex-direction:column;gap:6px;min-width:0}
 .wd-coach-field label{font-size:calc(12.5px*var(--wc-fs,1));font-weight:600;color:var(--mut-2);letter-spacing:.01em}
+.wd-coach-opt-l{font-weight:400;color:var(--mut)}
+.wd-coach-goal-l{margin-top:12px;display:block}
 .wd-coach-input{width:100%;background:var(--field);border:1px solid var(--line);border-radius:11px;padding:10px 13px;color:var(--tx);font:inherit;font-size:calc(14.5px*var(--wc-fs,1));outline:none;transition:border-color .15s,box-shadow .15s,background .15s}
 .wd-coach-input::placeholder{color:var(--mut)}
 .wd-coach-input:hover{border-color:var(--line-2)}
 .wd-coach-input:focus{border-color:var(--em);box-shadow:0 0 0 3px var(--em-fill);background:var(--panel)}
 .wd-coach-note{display:flex;align-items:flex-start;gap:7px;font-size:calc(12px*var(--wc-fs,1));line-height:1.5;color:var(--mut)}
 .wd-coach-note svg{flex-shrink:0;margin-top:2px;color:var(--em-2)}
-.wd-coach-hero{position:relative;padding:18px 18px 16px;border-radius:16px;border:1px solid var(--em-line);background:linear-gradient(180deg,var(--em-fill),var(--panel));box-shadow:var(--card-shadow)}
-.wd-coach-hero-k{display:inline-flex;align-items:center;gap:6px;font-size:calc(10.5px*var(--wc-fs,1));font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--em-2);margin-bottom:12px}
+/* The goal box: a green-tinted, borderless card (the hero recipe), with the
+   white fields sitting on the tint. */
+.wd-coach-hero{position:relative;padding:18px 18px 16px;border-radius:var(--r-lg);border:1px solid transparent;background:var(--tint-green);box-shadow:var(--sh-0)}
+.wd-coach-hero-k{display:inline-flex;align-items:center;gap:6px;font-size:var(--fs-sm);font-weight:600;color:var(--tint-green-ink);margin-bottom:12px}
 .wd-coach-docswrap{margin-top:2px}
 .wd-coach-done .wd-coach-docswrap{margin-top:14px}
 .wd-coach-choices{display:flex;gap:10px;flex-wrap:wrap}
@@ -890,5 +914,5 @@ export const WD_CSS = `
 .wd-sess-all svg{flex-shrink:0}
 .wd-sess-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-deep);font-size:calc(13px*var(--wc-fs,1));font-weight:600;text-decoration:none;padding:6px 2px}
 .wd-sess-more:hover{color:var(--em)}
-@media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}.wd-coach,.wd-coach::after,.wd-coach-kind-check,.wd-coach-prog span.on,.wd-coach-adv .bar i{animation:none}}
+@media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}.wd-coach,.wd-coach-kind-check,.wd-coach-adv .bar i{animation:none}}
 `

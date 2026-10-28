@@ -187,6 +187,10 @@ export const api = {
   workProjectExpand: (id, taskId) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/expand`, {}),
   workProjectInject: (id, body) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/inject`, { ...(body || {}), request: clean((body && body.request) || '') }),
   workProjectTaskState: (id, taskId, state) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/tasks/${encodeURIComponent(taskId)}/state`, { state }),
+  // Recommended practices (Depth-2): grounded suggestions for a project's map,
+  // and roping one in (server dedupes + places it). 403 needsUpgrade when not deep.
+  workProjectPractices: (id) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/practices`, {}),
+  workAcceptPractice: (id, sid) => req('POST', `/api/work/projects/${encodeURIComponent(id)}/practices/${encodeURIComponent(sid)}/accept`, {}),
   // Enterprise project management (server/work_roles_routes.js). The server
   // enforces every permission (PM: own projects; Sr PM / GRC / admin: all; GRC
   // read-only; a worker cannot self-start), so the UI gating in

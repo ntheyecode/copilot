@@ -208,5 +208,21 @@ export default {
       errGeneric: 'Could not add that. Please try again.',
       dismiss: 'Dismiss',
     },
+
+    // ---- Recommended practices (plan-time suggestion cards under the map) ----
+    // Source labels are plain words; never a model or provider name.
+    practices: {
+      heading: 'Worth adding?',
+      sub: 'Practices projects like this usually include. Add one to the map or dismiss it.',
+      accept: 'Add to the map',
+      acceptAria: 'Add {title} to the task map',
+      adding: 'Adding',
+      retry: 'Try again',
+      dismissAria: 'Dismiss {title}',
+      srcCatalog: 'A standard practice for this type of project',
+      srcCompany: 'From your company\'s own practices',
+      srcPlatform: 'Learned from projects like this one',
+      srcGeneric: 'A recommended practice',
+    },
   },
 }
