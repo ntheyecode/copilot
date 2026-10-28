@@ -206,9 +206,10 @@ export function registerWorkAdminRoutes(app, deps = {}) {
         remainingSeconds: usage ? usage.remainingSeconds : 0,
         exhausted: usage ? !!usage.exhausted : false,
         sessionCount: countById.get(r.id) || 0,
-        // Tenancy so the console can show + change a user's company and role.
+        // Tenancy so the console can show + change a user's company, role and flow.
         companyId: (wu && wu.companyId) || null,
         companyRole: (wu && wu.companyRole) || null,
+        workFlow: (wu && wu.companyId) ? (['worker', 'independent', 'mixed'].includes(wu.workFlow) ? wu.workFlow : 'independent') : null,
         companyName: (wu && wu.companyName) || (wu && wu.companyId ? companyNameById.get(wu.companyId) : null) || null,
         role: r.role || 'user',
         disabled: !!(wu && wu.disabled),   // superadmin-disabled: console shows a badge + Enable label
