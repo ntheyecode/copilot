@@ -278,6 +278,17 @@ function isRateLimited(e) {
   const msg = (e?.message || '').toLowerCase()
   return status === 429 || status === 503 || /rate.?limit|quota|resource exhausted|overloaded|too many requests|try again later/.test(msg)
 }
+// EMPTY / blank model response: openaiChat (after its one in-call retry) and the
+// gemini paths throw httpErr(502, '<provider> returned an empty response'). That
+// is neither a model-error nor a rate-limit, yet it is just as RETRIABLE - a
+// different model or provider will usually answer (gpt-oss-20b is known to return
+// empty on hard/long prompts). Treated as a first-class failover trigger so an
+// empty primary never leaves the user with nothing (SUPREME III/VI). Matched by
+// the crisp 502 + the stable "empty response" phrase these call sites emit, so it
+// never catches the other 502s (misconfigured base / off-allowlist host).
+function isEmptyResponse(e) {
+  return e?.status === 502 && /empty response/i.test(e?.message || '')
+}
 // Pick a dependable current model from the live catalog. Prefers the provider's
 // STABLE "-latest" alias (which never goes stale as models are retired), then a
 // current flash/mini, and avoids previews, dated snapshots, and non-chat models.
@@ -303,7 +314,7 @@ function runChat(p, apiKey, model, system, turns) {
 function switchNotifier(cfg) {
   return typeof cfg.onSwitch === 'function' ? cfg.onSwitch : () => {}
 }
-const reasonOf = (e) => (isRateLimited(e) ? 'rate_limit' : 'retired')
+const reasonOf = (e) => (isEmptyResponse(e) ? 'empty' : isRateLimited(e) ? 'rate_limit' : 'retired')
 
 // Cross-provider text failover: when the primary key has no current model left,
 // walk the ordered alternate runtimes (OTHER providers the admin configured) and
@@ -320,7 +331,7 @@ async function failoverChat(alternates, fromP, fromModel, system, turns, notify)
       notify({ scope: 'chat', reason: 'failover', crossProvider: true, fromProvider: fromP.id, fromModel, toProvider: ap.id, toModel: m })
       return await runChat(ap, a.apiKey, m, system, turns)
     } catch (e) {
-      if (!looksLikeModelError(e) && !isRateLimited(e)) continue   // key/5xx on this alt: try the next
+      if (!looksLikeModelError(e) && !isRateLimited(e) && !isEmptyResponse(e)) continue   // key/5xx on this alt: try the next; empty heals on-key like retired/rate
       const live = await listModels(a).catch(() => [])
       const alt = pickPreferredModel(live, { avoid: m })
       if (alt && alt !== m) {
@@ -358,7 +369,7 @@ export async function chat(cfg, system, turns, tele = null) {
     mark(p.id, model, false)
     return out
   } catch (e) {
-    if (!looksLikeModelError(e) && !isRateLimited(e)) throw e   // key/other: surface, never mask
+    if (!looksLikeModelError(e) && !isRateLimited(e) && !isEmptyResponse(e)) throw e   // key/other: surface, never mask (empty flows through the ladder)
     const reason = reasonOf(e)
     // (2) another current model on the same key
     const live = await listModels(cfg).catch(() => [])
@@ -369,7 +380,7 @@ export async function chat(cfg, system, turns, tele = null) {
         const out = await runChat(p, cfg.apiKey, same, system, turns)
         mark(p.id, same, true)
         return out
-      } catch (e2) { if (!looksLikeModelError(e2) && !isRateLimited(e2)) throw e2 /* fall to cross-provider */ }
+      } catch (e2) { if (!looksLikeModelError(e2) && !isRateLimited(e2) && !isEmptyResponse(e2)) throw e2 /* fall to cross-provider */ }
     }
     // (3) the next configured provider's key
     const viaAlt = await failoverChat(cfg.alternates, p, model, system, turns, notify)
@@ -421,7 +432,7 @@ export async function analyseImages(cfg, prompt, imageDataUrls, model, opts = {}
     // routes to a current vision model on the SAME key. Cross-provider vision
     // failover is handled one layer up (escalateVision's strong backup), which is
     // why this does not walk cfg.alternates - it keeps frames on the chosen key.
-    if (!looksLikeModelError(e) && !isRateLimited(e)) throw e
+    if (!looksLikeModelError(e) && !isRateLimited(e) && !isEmptyResponse(e)) throw e
     const reason = reasonOf(e)
     const live = await listModels(cfg).catch(() => [])
     const vis = live.filter((x) => isVisionModel(p.id, x))
