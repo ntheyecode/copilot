@@ -5819,6 +5819,28 @@ export function injectWorkProjectTask(workUserId, projectId, { request, blocksTa
   p.tasks = tasks; p.state = proj.deriveProjectState(p); persist()
   return { duplicate: false, created: t, placed }
 }
+// Find the project task whose just-in-time guided session is this one, or null.
+export function findProjectTaskBySession(workUserId, sessionId) {
+  for (const p of (db.workProjects || [])) {
+    if (!p || p.workUserId !== workUserId) continue
+    const t = (p.tasks || []).find((x) => x && x.sessionId === sessionId)
+    if (t) return { projectId: p.id, task: t }
+  }
+  return null
+}
+// Close the forward-learning loop when a project task's guided session finishes: mark
+// the task done, record its outcome + telemetry (completed-task storage), and append
+// any learning to the project ledger so the NEXT task's expansion is grounded in it.
+export function completeProjectTaskForSession(workUserId, sessionId, { outcome = null, telemetry = null, learning = null } = {}) {
+  const hit = findProjectTaskBySession(workUserId, sessionId)
+  if (!hit) return null
+  const { projectId, task } = hit
+  if (task.state !== 'done' && proj.canTransitionTask(task.state, 'done')) setWorkProjectTaskState(workUserId, projectId, task.id, 'done')
+  if (outcome != null || telemetry != null) recordWorkProjectTaskOutcome(workUserId, projectId, task.id, { outcome, telemetry })
+  if (learning) appendWorkProjectLearning(workUserId, projectId, learning, task.id)
+  const after = findProjectTaskBySession(workUserId, sessionId)
+  return after ? after.task : null
+}
 
 // ---- Vision watch tolerance (owner: "ok if we fail 2 in 5 screens") --------
 // The continuous watch loop reads many frames over a non-instant task, so an
