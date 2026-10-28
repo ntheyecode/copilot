@@ -49,6 +49,9 @@ const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
 const WorkTasks = lazy(() => import('./pages/work/MyTasks.jsx'))
 const CompletedTasks = lazy(() => import('./pages/work/Completed.jsx'))
 const WorkLogs = lazy(() => import('./pages/work/Logs.jsx'))
+// Projects (Depth-2: Premium + company users): the dashboard and one project's view.
+const Projects = lazy(() => import('./pages/work/projects/Projects.jsx'))
+const ProjectView = lazy(() => import('./pages/work/projects/ProjectView.jsx'))
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -153,6 +156,9 @@ export default function App() {
           <Route path="tasks" element={<WorkTasks />} />
           <Route path="completed" element={<CompletedTasks />} />
           <Route path="logs" element={<WorkLogs />} />
+          {/* Projects: a large goal as a map of guided tasks (server-gated to Depth-2). */}
+          <Route path="projects" element={<Projects />} />
+          <Route path="projects/:id" element={<ProjectView />} />
           <Route path="session/:id" element={<Guiding />} />
         </Route>
         {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}

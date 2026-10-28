@@ -22,6 +22,8 @@ export default {
       sections: 'Sections',
       dashboard: 'Dashboard',
       start: 'Start a task',
+      projects: 'Projects',
+      projectsTip: 'Projects (large goals as a map of tasks)',
       tasks: 'My tasks',
       tasksTip: 'My tasks (in progress or paused)',
       completed: 'Completed tasks',
