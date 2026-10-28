@@ -25,6 +25,7 @@ import * as totp from './totp.js'
 import { PROVIDERS, allowAiHost } from './ai.js'
 import { COMPLIANCE_FRAMEWORKS, getFramework } from './compliance_frameworks.js'
 import { resolveGuidanceDepth, normalizeDepth as normalizeDepthId, clampDepth, canUseProjects as canUseProjectsPure } from './guidance_depth.js'
+import * as customers from './work_customers.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 // Company security-policy -> enforced guidance rules. ONE source of truth for the
 // rule schema + sanitization (SUPREME RULE II): the store validates stored rules
@@ -5710,6 +5711,25 @@ export function setCompanyPoolDepth(companyId, poolKey, depth) {
 }
 export function getCompanyGuidanceDepth(companyId) { return companyGuidanceCeiling(_company(companyId)) }
 export function getCompanyPoolDepths(companyId) { const c = _company(companyId); return (c && c.poolDepth) ? { ...c.poolDepth } : {} }
+
+// ---- Customers (enterprise: who the work is for; company-scoped) -----------
+// Thin wrappers over the pure work_customers logic; tenant-isolated by companyId.
+export function listWorkCustomers(companyId) { const c = _company(companyId); return customers.activeCustomers(c ? c.customers : []) }
+export function addWorkCustomer(companyId, name) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  const r = customers.addCustomer(c.customers, name); if (r.error) throw httpErr(400, r.error)
+  c.customers = r.list; persist(); return r.customer
+}
+export function renameWorkCustomer(companyId, id, name) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  const r = customers.renameCustomer(c.customers, id, name); if (r.error) throw httpErr(400, r.error)
+  c.customers = r.list; persist(); return r.customer
+}
+export function archiveWorkCustomer(companyId, id) {
+  const c = _company(companyId); if (!c) throw httpErr(404, 'Company not found')
+  const r = customers.archiveCustomer(c.customers, id); if (r.error) throw httpErr(400, r.error)
+  c.customers = r.list; persist(); return { ok: true }
+}
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
