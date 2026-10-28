@@ -2549,10 +2549,21 @@ app.post('/api/work/sessions/:id/watch', requireWorkAuth, requireWorkSubscriptio
     const watchGoal = scrubForAi(s, watchScrubOn, req.workUser.id).goal
     const watchLevel = work.normalizeLevel(req.body && req.body.level != null ? req.body.level : s.level)
     if (req.body && req.body.level != null && String(req.body.level) !== String(s.level || '')) store.setWorkSessionLevel(req.workUser.id, req.params.id, req.body.level)
+    // Vision tolerance: within the empty-frame tolerance we withhold the strong
+    // backup (do not spend it or raise an incident on a transient unreadable frame);
+    // only a PERSISTENT empty streak is allowed to escalate. `deep` (manual) always
+    // escalates regardless.
+    const emptyStreak = s.visionEmptyStreak || 0
+    const escalateOk = !!(req.body && req.body.deep) || emptyStreak >= store.VISION_EMPTY_TOLERANCE
     const r = await work.workNavigate(ai, call.rt, {
       base: store.getSystemPrompt(), mode: work.normalizeMode(s.mode), level: watchLevel, goal: watchGoal, steps: s.steps, currentStep: s.currentStep,
-      frame, visionModel: call.visionModel, strong: call.backup,
+      frame, visionModel: call.visionModel, strong: escalateOk ? call.backup : null,
     })
+    // Track the empty-read streak: an unreadable frame (no guidance AND no
+    // observation) is tolerated and counted; a readable one resets it.
+    const unreadable = !String(r.guidance || '').trim() && !String(r.observation || '').trim()
+    if (unreadable) store.bumpVisionEmptyStreak(req.workUser.id, req.params.id)
+    else store.resetVisionEmptyStreak(req.workUser.id, req.params.id)
     const escalated = r.escalated || call.forcedStrong
     const usedModel = call.forcedStrong ? call.visionModel : (r.escalated ? call.strongModel : rr.visionModel)
     meterCost(req.params.id, usedModel || call.visionModel, watchGoal + JSON.stringify(s.steps || []), (r.guidance || '') + (r.observation || ''), 1, { kind: 'guide', tele: { roundRobin: !!escalated, model: usedModel } })

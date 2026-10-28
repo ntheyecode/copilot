@@ -74,3 +74,13 @@ test('listWorkProjects is per-user and filterable by customer', () => {
   assert.equal(store.listWorkProjects(u.id, { customerId: 'acme' }).length, 1)
   assert.equal(store.listWorkProjects(uniq('other')).length, 0)        // isolation: unknown user sees none
 })
+
+test('vision empty-streak counter bumps + resets (watch-loop tolerance)', () => {
+  const u = user()
+  const sess = store.createWorkSession(u.id, { goal: 'g' })
+  assert.equal(store.VISION_EMPTY_TOLERANCE, 2)
+  assert.equal(store.bumpVisionEmptyStreak(u.id, sess.id), 1)
+  assert.equal(store.bumpVisionEmptyStreak(u.id, sess.id), 2)
+  store.resetVisionEmptyStreak(u.id, sess.id)
+  assert.equal(store.bumpVisionEmptyStreak(u.id, sess.id), 1)          // reset took effect
+})

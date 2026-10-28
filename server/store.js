@@ -5819,6 +5819,22 @@ export function injectWorkProjectTask(workUserId, projectId, { request, blocksTa
   p.tasks = tasks; p.state = proj.deriveProjectState(p); persist()
   return { duplicate: false, created: t, placed }
 }
+
+// ---- Vision watch tolerance (owner: "ok if we fail 2 in 5 screens") --------
+// The continuous watch loop reads many frames over a non-instant task, so an
+// occasional unreadable frame (blur, transition, loading) is normal and the next
+// frame recovers. We track consecutive empty reads per session; within tolerance we
+// do NOT spend the strong model or raise an incident - only a PERSISTENT empty
+// streak escalates.
+export const VISION_EMPTY_TOLERANCE = 2
+export function bumpVisionEmptyStreak(workUserId, sessionId) {
+  const s = findWorkSession(workUserId, sessionId); if (!s) return 0
+  s.visionEmptyStreak = (s.visionEmptyStreak || 0) + 1; persistSoon(); return s.visionEmptyStreak
+}
+export function resetVisionEmptyStreak(workUserId, sessionId) {
+  const s = findWorkSession(workUserId, sessionId); if (!s) return
+  if (s.visionEmptyStreak) { s.visionEmptyStreak = 0; persistSoon() }
+}
 export function setWorkAppContext(workUserId, sessionId, appContext) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
