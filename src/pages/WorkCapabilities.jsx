@@ -1,5 +1,5 @@
 // WorkCoPilot - "Like having the best person in the room" moved to its own page,
-// linked from the short main page. Each of the fourteen cards has its OWN clean,
+// linked from the short main page. Each of the fifteen cards has its OWN clean,
 // representative header visual (inline SVG, crisp at any size) that reflects a
 // gold-standard way of working, not a repeated mock. LIGHT theme, Option C cards
 // (via the shared WorkCard primitive), to match the rest of the site.
@@ -11,7 +11,7 @@
 // box: SVG text is sized so it never crosses a pill or frame edge.
 import React, { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor } from 'lucide-react'
+import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor, Route } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in this release" highlights (rel.*)
@@ -207,6 +207,31 @@ const VIZ = {
   ),
 }
 
+// 1b. Projects - a large goal as a MAP of tasks: the first done, the current
+// one lit, one independent task waiting to be picked up, all leading to one
+// finish line. Its labels come from the catalog (how.projects.*), so it is a
+// component rather than a VIZ entry; the card carries it as `media`.
+function ProjectsMap({ label, task, finish }) {
+  const PEND = 'rgba(10,13,18,.28)', EDGE = 'rgba(10,13,18,.16)'
+  return (
+    <Frame h={100} label={label}>
+      <path d="M46 50L92 32" stroke={EM} strokeWidth="2" strokeLinecap="round" />
+      <path d="M46 50L92 68" stroke={EDGE} strokeWidth="2" strokeLinecap="round" strokeDasharray="3 3" />
+      <path d="M110 32L156 50M110 68L156 50M174 50L212 50" stroke={EDGE} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="38" cy="50" r="10" fill={EMf} stroke={EM} strokeWidth="2" />
+      <path d="M33.5 50l3.5 3.5 6-7" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="101" cy="32" r="12" fill={EMf} stroke={EM} strokeWidth="2.4" />
+      <circle cx="101" cy="32" r="4.5" fill={EM} />
+      <circle cx="101" cy="68" r="9" fill="none" stroke={PEND} strokeWidth="2" />
+      <circle cx="165" cy="50" r="9" fill="none" stroke={PEND} strokeWidth="2" />
+      <rect x="212" y="38" width="56" height="24" rx="8" fill={CYf} stroke={CY} />
+      <path d="M220 57V43h9l-2 3.5 2 3.5h-9" stroke={CY} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <text x="249" y="54" textAnchor="middle" fill={CY} fontSize="10" fontWeight="600" fontFamily="system-ui">{finish}</text>
+      <text x="140" y="92" textAnchor="middle" fill={MUT} fontSize="10.5" fontFamily="system-ui">{task}</text>
+    </Frame>
+  )
+}
+
 // 10. The loop behind every task, shown as the BENEFIT (what you get), never
 // as the routing behind it: PLAN, PROBE, GUIDE, WATCH, CORRECT, running until
 // the work is done, with a "planned by the strongest AI for you" readout.
@@ -281,6 +306,14 @@ export default function WorkCapabilities() {
     const el = document.getElementById(id)
     if (el) el.scrollIntoView({ block: 'start' })
   }, [])
+  // Projects (Premium and company plans) sits second, right after single-task
+  // guidance: one task, then a whole goal as a map of tasks. Its copy and
+  // illustration labels are catalog strings, so the card is built here with t.
+  const cards = [...CARDS]
+  cards.splice(1, 0, {
+    media: <ProjectsMap label={t('how.projects.alt')} task={t('how.projects.vizTask')} finish={t('how.projects.vizFinish')} />,
+    icon: Route, t: t('how.projects.t'), d: t('how.projects.d'),
+  })
   return (
     <div className="wcap">
       <style>{CSS}</style>
@@ -311,14 +344,14 @@ export default function WorkCapabilities() {
 
       <section className="wcap-grid" aria-labelledby="wcap-grid-h">
         <h2 id="wcap-grid-h" className="wcap-sr">What WorkCoPilot does for you</h2>
-        {CARDS.map((b, i) => {
-          // Fourteen cards in a 3-column grid (2 columns under 1080px, 1 under
+        {cards.map((b, i) => {
+          // Fifteen cards in a 3-column grid (2 columns under 1080px, 1 under
           // 560px). Tones and texture crops cycle so no two neighbors match.
           const tones = ['', 'cyan', '', 'amber', 'cyan', '', 'cyan', 'violet', 'amber']
           const pos = ['0% 0%', '100% 0%', '50% 50%', '0% 100%', '100% 100%', '50% 0%', '0% 50%', '100% 50%', '50% 100%']
           return (
             <WorkCard key={b.t} theme="light" tone={tones[i % 9] || undefined} delay={(i % 3) * 70} texPos={pos[i % 9]}>
-              <WorkCard.Media>{VIZ[b.viz]}</WorkCard.Media>
+              <WorkCard.Media>{b.media || VIZ[b.viz]}</WorkCard.Media>
               <WorkCard.Head icon={b.icon} title={b.t} />
               <WorkCard.Body>{b.d}</WorkCard.Body>
             </WorkCard>
