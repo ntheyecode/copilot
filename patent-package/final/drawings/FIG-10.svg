@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+<title>FIG. 10 - Multi-task project engine arrangement 1000</title>
+<rect x="0" y="0" width="816" height="1056" fill="#fff"/>
+<text x="196" y="70" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1000</text>
+<line x1="192.0" y1="73.3" x2="206.0" y2="84.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 56 92 L 186 92 L 186 136 L 56 136 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="121" y="117.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">PROJECT GOAL</text>
+<text x="111" y="80" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1002</text>
+<line x1="117.7" y1="83.3" x2="125.0" y2="92.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 206 84 L 376 84 L 376 144 L 206 144 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="291" y="101.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">MAP PLANNER</text>
+<text x="291" y="111.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(planning model, once,</text>
+<text x="291" y="121.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">at workstream level;</text>
+<text x="291" y="131.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">no step-level instruction)</text>
+<text x="281" y="72" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1004</text>
+<line x1="287.7" y1="75.3" x2="295.0" y2="84.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 400 92 L 550 92 L 550 144 L 400 144 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="475" y="115.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">BREAKDOWN GATE</text>
+<text x="475" y="126.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(deterministic; FIG. 11)</text>
+<text x="465" y="80" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1018</text>
+<line x1="471.7" y1="83.3" x2="479.0" y2="92.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 590 92 L 740 92 L 740 144 L 590 144 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="110.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">PROJECT STORE</text>
+<text x="665" y="120.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(map + ledger;</text>
+<text x="665" y="130.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">task states)</text>
+<text x="655" y="80" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1020</text>
+<line x1="661.7" y1="83.3" x2="669.0" y2="92.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 186.0 114.0 L 199.0 114.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 206 114 L 197 117.6 L 197 110.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 376.0 114.0 L 393.0 114.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 400 114 L 391 117.6 L 391 110.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="388" y="106" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">proposed map</text>
+<path d="M 550.0 118.0 L 583.0 118.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 590 118 L 581 121.6 L 581 114.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="570" y="112" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">pass</text>
+<path d="M 475.0 144.0 L 475.0 163.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 475 170 L 471.4 161 L 478.6 161 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="480" y="161" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">fail</text>
+<rect x="400" y="170" width="150" height="36" rx="14" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="475" y="186" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">RETURN AS SINGLE TASK</text>
+<text x="475" y="195.6" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(suggested goal)</text>
+<path d="M 56 166 L 186 166 L 186 214 L 56 214 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="121" y="177.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">DEPTH RESOLVER</text>
+<text x="121" y="187.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(standard | deep;</text>
+<text x="121" y="197.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">pool depth clamped</text>
+<text x="121" y="207.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">to tenant ceiling)</text>
+<text x="111" y="154" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1040</text>
+<line x1="117.7" y1="157.3" x2="125.0" y2="166.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 186.0 200.0 L 260.0 200.0 L 260.0 151.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 260 144 L 263.6 153 L 256.4 153 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="190" y="214" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">deep depth required</text>
+<path d="M 340.0 144.0 L 340.0 229.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 340 236 L 336.4 227 L 343.6 227 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="334" y="206" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="end" fill="#000">task descriptors</text>
+<text x="334" y="214.4" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="end" fill="#000">+ end-state</text>
+<path d="M 56 236 L 406 236 L 406 470 L 56 470 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="64" y="250" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">PROJECT MAP (ordered; dependency-annotated; no step-level instruction)</text>
+<text x="412" y="228" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1006</text>
+<line x1="413.6" y1="231.3" x2="406.0" y2="236.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 68 260 L 360 260 L 360 406 L 68 406 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="76" y="274" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">TASK DESCRIPTOR (one of N)</text>
+<text x="76" y="286" font-family="Arial, Helvetica, sans-serif" font-size="6.5" text-anchor="start" fill="#000">state: pending | active | done | rerun; session link; outcome; telemetry</text>
+<text x="372" y="300" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1008</text>
+<line x1="369.5" y1="295.8" x2="360.0" y2="296.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 80 296 L 230 296 L 230 324 L 80 324 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="155" y="312.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">TASK GOAL</text>
+<text x="252" y="314" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1010</text>
+<line x1="249.5" y1="309.6" x2="230.0" y2="310.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 80 332 L 230 332 L 230 366 L 80 366 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="155" y="346.95" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">DONE-STATE</text>
+<text x="155" y="355.95" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">(visible when task complete)</text>
+<text x="252" y="353" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1012</text>
+<line x1="249.5" y1="348.6" x2="230.0" y2="349.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 80 374 L 230 374 L 230 400 L 80 400 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="155" y="389.45" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">DEPENDENCIES (earlier task ids)</text>
+<text x="252" y="391" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1014</text>
+<line x1="249.5" y1="386.6" x2="230.0" y2="387.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 68 418 L 360 418 L 360 458 L 68 458 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="214" y="436" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">PROJECT END-STATE</text>
+<text x="214" y="445.6" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(done sentence + checks)</text>
+<text x="88" y="484" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1016</text>
+<line x1="93.3" y1="471.3" x2="102.0" y2="458.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 56 510 L 206 510 L 206 566 L 56 566 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="131" y="531.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">MID-PROJECT</text>
+<text x="131" y="540.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">INJECTION</text>
+<text x="131" y="550.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(dedupe; place; FIG. 12)</text>
+<text x="76" y="588" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1038</text>
+<line x1="82.5" y1="575.3" x2="90.0" y2="566.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 131.0 510.0 L 131.0 477.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 131 470 L 134.6 479 L 127.4 479 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="137" y="494" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">new or folded task</text>
+<path d="M 665.0 144.0 L 665.0 229.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 665 236 L 661.4 227 L 668.6 227 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="670" y="196" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">stored map</text>
+<path d="M 590 236 L 740 236 L 740 296 L 590 296 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="253.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">NEXT-TASK SELECTOR</text>
+<text x="665" y="263.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(lowest-order pending;</text>
+<text x="665" y="273.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">all dependencies done;</text>
+<text x="665" y="283.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">ready set)</text>
+<text x="572" y="270" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1022</text>
+<line x1="574.5" y1="265.7" x2="590.0" y2="266.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 665.0 296.0 L 665.0 323.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 665 330 L 661.4 321 L 668.6 321 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 590 330 L 740 330 L 740 390 L 590 390 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="347.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">JUST-IN-TIME EXPANDER</text>
+<text x="665" y="357.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(steps of the selected</text>
+<text x="665" y="367.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">task only; planning</text>
+<text x="665" y="377.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">model + ledger)</text>
+<text x="572" y="364" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1024</text>
+<line x1="574.5" y1="359.7" x2="590.0" y2="360.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 665.0 390.0 L 665.0 423.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 665 430 L 661.4 421 L 668.6 421 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="670" y="406" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">ordered plan;</text>
+<text x="670" y="414.4" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">session linked</text>
+<path d="M 590 430 L 740 430 L 740 494 L 590 494 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="449.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">GUIDED SESSION</text>
+<text x="665" y="459.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(loop 200 of FIG. 2; one</text>
+<text x="665" y="469.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">instruction; no input injected;</text>
+<text x="665" y="479.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">verify from redacted frame)</text>
+<text x="572" y="466" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1028</text>
+<line x1="574.5" y1="461.7" x2="590.0" y2="462.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 665.0 494.0 L 665.0 523.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 665 530 L 661.4 521 L 668.6 521 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="670" y="516" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">session finalized</text>
+<path d="M 590 530 L 740 530 L 740 590 L 590 590 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="552.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">TASK COMPLETION</text>
+<text x="665" y="562.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(mark done; record</text>
+<text x="665" y="572.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">outcome + telemetry)</text>
+<text x="572" y="564" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1030</text>
+<line x1="574.5" y1="559.7" x2="590.0" y2="560.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 665.0 590.0 L 665.0 623.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 665 630 L 661.4 621 L 668.6 621 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 590 630 L 740 630 L 740 690 L 590 690 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="652.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">ALL TASKS DONE AND</text>
+<text x="665" y="662.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">END-STATE SHOWN</text>
+<text x="665" y="672.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">SATISFIED?</text>
+<text x="572" y="664" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1034</text>
+<line x1="574.5" y1="659.7" x2="590.0" y2="660.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 665.0 690.0 L 665.0 723.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 665 730 L 661.4 721 L 668.6 721 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="672" y="712" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">YES</text>
+<rect x="590" y="730" width="150" height="36" rx="16" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="665" y="751.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">PROJECT DONE</text>
+<path d="M 740.0 660.0 L 756.0 660.0 L 756.0 266.0 L 747.0 266.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 740 266 L 749 262.4 L 749 269.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="762" y="656" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">NO</text>
+<text x="758" y="470" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">next</text>
+<text x="758" y="480" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">task</text>
+<path d="M 416 330 L 536 330 L 536 386 L 416 386 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="476" y="346.95" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">CRITIQUE PASS</text>
+<text x="476" y="355.95" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">(hardened plan accepted</text>
+<text x="476" y="364.95" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">only if not a refusal and</text>
+<text x="476" y="373.95" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">at least draft's steps)</text>
+<text x="436" y="408" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1042</text>
+<line x1="442.5" y1="395.3" x2="450.0" y2="386.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 543.0 340.0 L 583.0 340.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 590 340 L 581 343.6 L 581 336.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 536 340 L 545 336.4 L 545 343.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 416 420 L 536 420 L 536 480 L 416 480 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="476" y="437.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">FORWARD-LEARNINGS</text>
+<text x="476" y="447.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">LEDGER</text>
+<text x="476" y="457.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(project-scoped;</text>
+<text x="476" y="467.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">deduplicated; bounded)</text>
+<text x="436" y="502" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1026</text>
+<line x1="442.5" y1="489.3" x2="450.0" y2="480.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 536.0 440.0 L 578.0 440.0 L 578.0 378.0 L 583.0 378.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 590 378 L 581 381.6 L 581 374.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<rect x="565.5" y="427.0" width="22.9" height="10.0" fill="#fff" stroke="none"/>
+<text x="577" y="434" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">seeds</text>
+<path d="M 416 540 L 536 540 L 536 596 L 416 596 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="476" y="560.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">LEDGER WRITE-BACK</text>
+<text x="476" y="570.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(planning learning;</text>
+<text x="476" y="580.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">confirmed facts)</text>
+<text x="436" y="618" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1032</text>
+<line x1="442.5" y1="605.3" x2="450.0" y2="596.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 590.0 575.0 L 543.0 575.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 536 575 L 545 571.4 L 545 578.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 476.0 540.0 L 476.0 487.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 476 480 L 479.6 489 L 472.4 489 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 416 720 L 536 720 L 536 784 L 416 784 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="476" y="739.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">PROJECT REPORT</text>
+<text x="476" y="749.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">GENERATOR</text>
+<text x="476" y="759.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(success | security |</text>
+<text x="476" y="769.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">issues; no model call)</text>
+<text x="436" y="806" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1036</text>
+<line x1="442.5" y1="793.3" x2="450.0" y2="784.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 590.0 748.0 L 543.0 748.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 536 748 L 545 744.4 L 545 751.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="563" y="770" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">on demand,</text>
+<text x="563" y="778.4" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">also mid-project</text>
+<text x="400" y="890" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">Each guided session is the loop of FIG. 2; the display, read from redacted frames,</text>
+<text x="400" y="902" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">remains the oracle at both tiers.</text>
+<text x="408" y="1000" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#000" font-weight="bold">FIG. 10</text>
+</svg>

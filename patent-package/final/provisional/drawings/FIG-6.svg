@@ -1,0 +1,202 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+<title>FIG. 6 - Workflow-template capture, storage and tiered-retrieval arrangement 600</title>
+<rect x="0" y="0" width="816" height="1056" fill="#fff"/>
+<text x="56" y="84" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="start" fill="#000">CAPTURE</text>
+<text x="196" y="90" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">600</text>
+<line x1="188.3" y1="93.3" x2="200.0" y2="122.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 56 100 L 186 100 L 186 148 L 56 148 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="121" y="121.75" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">COMPLETED</text>
+<text x="121" y="132.55" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">SESSION RECORD</text>
+<text x="76" y="170" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">602</text>
+<line x1="82.5" y1="157.3" x2="90.0" y2="148.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 186.0 124.0 L 209.0 124.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 216 124 L 207 127.6 L 207 120.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 216 96 L 376 96 L 376 152 L 216 152 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="296" y="117.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">CLEAN-SUCCESS PREDICATE</text>
+<text x="296" y="126.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(all steps done from screen;</text>
+<text x="296" y="136.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">final event not an open flag)</text>
+<text x="236" y="174" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">604</text>
+<line x1="242.5" y1="161.3" x2="250.0" y2="152.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 376.0 124.0 L 399.0 124.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 406 124 L 397 127.6 L 397 120.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 406 100 L 536 100 L 536 148 L 406 148 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="471" y="116.775" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">DISTILLER</text>
+<text x="471" y="126.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(deterministic;</text>
+<text x="471" y="137.175" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">no model call)</text>
+<text x="426" y="170" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">606</text>
+<line x1="432.5" y1="157.3" x2="440.0" y2="148.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 536.0 124.0 L 559.0 124.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 566 124 L 557 127.6 L 557 120.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 566 92 L 770 92 L 770 350 L 566 350 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="574" y="106" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="start" fill="#000">WORKFLOW TEMPLATE</text>
+<text x="720" y="84" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">608</text>
+<line x1="717.5" y1="84.8" x2="700.0" y2="92.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 612 116 L 758 116 L 758 150 L 612 150 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="685" y="131.125" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">GOAL SIGNATURE</text>
+<text x="685" y="140.125" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(normalized token set)</text>
+<text x="600" y="137" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">610</text>
+<line x1="602.5" y1="132.7" x2="612.0" y2="133.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 612 158 L 758 158 L 758 192 L 612 192 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="685" y="173.125" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">APPLICATION KEY</text>
+<text x="685" y="182.125" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(+ version)</text>
+<text x="600" y="179" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">612</text>
+<line x1="602.5" y1="174.7" x2="612.0" y2="175.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 612 200 L 758 200 L 758 246 L 612 246 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="685" y="216.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">ORDERED STEPS (kind, first</text>
+<text x="685" y="225.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">on-screen target,</text>
+<text x="685" y="234.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">visible-when-done)</text>
+<text x="600" y="227" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">616</text>
+<line x1="602.5" y1="222.7" x2="612.0" y2="223.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 612 254 L 758 254 L 758 288 L 612 288 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="685" y="269.125" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">SUCCESS SIGNAL</text>
+<text x="685" y="278.125" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(last visible-when-done)</text>
+<text x="600" y="275" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">618</text>
+<line x1="602.5" y1="270.7" x2="612.0" y2="271.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 612 296 L 758 296 L 758 342 L 612 342 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="685" y="312.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">ENVIRONMENT RECORD</text>
+<text x="685" y="321.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(jurisdiction, software list,</text>
+<text x="685" y="330.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">manual vs software, conventions)</text>
+<text x="600" y="323" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">614</text>
+<line x1="602.5" y1="318.7" x2="612.0" y2="319.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 566.0 258.0 L 543.0 258.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 536 258 L 545 254.4 L 545 261.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 406 230 L 536 230 L 536 286 L 406 286 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="471" y="251.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">PRE-SCRUB</text>
+<text x="471" y="260.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(emails, digit runs;</text>
+<text x="471" y="269.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">commands and code exempt)</text>
+<text x="426" y="308" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">620</text>
+<line x1="432.5" y1="295.3" x2="440.0" y2="286.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 406.0 258.0 L 383.0 258.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 376 258 L 385 254.4 L 385 261.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 216 230 L 376 230 L 376 286 L 216 286 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="296" y="251.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">POLICY SCRUB AT PERSIST</text>
+<text x="296" y="260.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(holder's stored policy;</text>
+<text x="296" y="270.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">keys preserved)</text>
+<text x="236" y="308" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">622</text>
+<line x1="242.5" y1="295.3" x2="250.0" y2="286.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<line x1="296" y1="286" x2="296" y2="316" stroke="#000" stroke-width="1.25" fill="none"/>
+<circle cx="296" cy="318" r="2.5" fill="none" stroke="#000" stroke-width="1.25"/>
+<line x1="298" y1="340" x2="310" y2="320" stroke="#000" stroke-width="1.25" fill="none"/>
+<circle cx="296" cy="342" r="2.5" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 296.0 344.0 L 296.0 353.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 296 360 L 292.4 351 L 299.6 351 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="314" y="326" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">tenant switch (capture and</text>
+<text x="314" y="336" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">retrieval disabled together)</text>
+<path d="M 56 360 L 376 360 L 376 482 L 56 482 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="64" y="374" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="start" fill="#000">HOLDER-SCOPED STORE</text>
+<text x="56" y="502" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">624</text>
+<line x1="72.7" y1="489.3" x2="78.0" y2="482.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 68 398 L 208 398 L 208 454 L 68 454 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="138" y="423.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">TENANT PRIVATE</text>
+<text x="138" y="434.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">STORE (company)</text>
+<text x="88" y="476" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">626</text>
+<line x1="94.5" y1="463.3" x2="102.0" y2="454.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 218 398 L 364 398 L 364 454 L 218 454 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="291" y="423.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">SHARED DE-IDENTIFIED</text>
+<text x="291" y="434.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">STORE (consented)</text>
+<text x="238" y="476" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">628</text>
+<line x1="244.5" y1="463.3" x2="252.0" y2="454.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 406 372 L 556 372 L 556 432 L 406 432 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="481" y="395.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">DRIFT-TRIGGERED</text>
+<text x="481" y="404.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">SUPERSEDE</text>
+<text x="481" y="414.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(one prior version retained)</text>
+<text x="578" y="406" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">650</text>
+<line x1="575.5" y1="401.6" x2="556.0" y2="402.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 406.0 402.0 L 383.0 402.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 376 402 L 385 398.4 L 385 405.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 406.0 452.0 L 412.0 452.0 M 416.0 452.0 L 422.0 452.0 M 426.0 452.0 L 432.0 452.0 M 436.0 452.0 L 442.0 452.0 M 446.0 452.0 L 452.0 452.0 M 456.0 452.0 L 462.0 452.0 M 466.0 452.0 L 472.0 452.0 M 476.0 452.0 L 482.0 452.0 M 486.0 452.0 L 492.0 452.0 M 496.0 452.0 L 502.0 452.0 M 506.0 452.0 L 512.0 452.0 M 516.0 452.0 L 522.0 452.0 M 526.0 452.0 L 532.0 452.0 M 536.0 452.0 L 542.0 452.0 M 546.0 452.0 L 552.0 452.0 M 556.0 452.0 L 556.0 458.0 M 556.0 462.0 L 556.0 468.0 M 556.0 472.0 L 556.0 478.0 M 556.0 482.0 L 556.0 488.0 M 556.0 492.0 L 550.0 492.0 M 546.0 492.0 L 540.0 492.0 M 536.0 492.0 L 530.0 492.0 M 526.0 492.0 L 520.0 492.0 M 516.0 492.0 L 510.0 492.0 M 506.0 492.0 L 500.0 492.0 M 496.0 492.0 L 490.0 492.0 M 486.0 492.0 L 480.0 492.0 M 476.0 492.0 L 470.0 492.0 M 466.0 492.0 L 460.0 492.0 M 456.0 492.0 L 450.0 492.0 M 446.0 492.0 L 440.0 492.0 M 436.0 492.0 L 430.0 492.0 M 426.0 492.0 L 420.0 492.0 M 416.0 492.0 L 410.0 492.0 M 406.0 492.0 L 406.0 486.0 M 406.0 482.0 L 406.0 476.0 M 406.0 472.0 L 406.0 466.0 M 406.0 462.0 L 406.0 456.0" stroke="#000" stroke-width="1.25" fill="none"/>
+<text x="481" y="470" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">DISCREPANCY INDICATION</text>
+<text x="481" y="479.6" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(step 234, FIG. 2)</text>
+<path d="M 481.0 452.0 L 481.0 439.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 481 432 L 484.6 441 L 477.4 441 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 690.0 350.0 L 690.0 365.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 690 372 L 686.4 363 L 693.6 363 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 610 372 L 770 372 L 770 432 L 610 432 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="690" y="395.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">CLARIFICATION PREFILL</text>
+<text x="690" y="404.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(environment record answers</text>
+<text x="690" y="414.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">scoping questions)</text>
+<text x="630" y="454" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">648</text>
+<line x1="636.5" y1="441.3" x2="644.0" y2="432.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 690.0 432.0 L 690.0 455.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 690 462 L 686.4 453 L 693.6 453 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="690" y="476" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">to FIG. 7 (card 136, handler 157)</text>
+<text x="56" y="530" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="start" fill="#000">RETRIEVAL</text>
+<path d="M 56 540 L 186 540 L 186 584 L 56 584 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="121" y="565.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">NEW GOAL</text>
+<text x="76" y="606" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">630</text>
+<line x1="82.5" y1="593.3" x2="90.0" y2="584.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 186.0 562.0 L 209.0 562.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 216 562 L 207 565.6 L 207 558.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 216 540 L 376 540 L 376 584 L 216 584 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="296" y="559.75" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">SIGNATURE</text>
+<text x="296" y="570.55" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">COMPUTATION</text>
+<text x="236" y="606" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">632</text>
+<line x1="242.5" y1="593.3" x2="250.0" y2="584.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 376.0 562.0 L 399.0 562.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 406 562 L 397 565.6 L 397 558.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 406 530 L 616 530 L 616 626 L 406 626 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="511" y="556.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">SCORER</text>
+<text x="511" y="568.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">goal similarity (Jaccard, overlap)</text>
+<text x="511" y="580.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">application similarity</text>
+<text x="511" y="592.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">environment compatibility</text>
+<text x="511" y="604.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">weighted sum (0.6 / 0.25 / 0.15)</text>
+<text x="638" y="582" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">634</text>
+<line x1="635.5" y1="577.6" x2="616.0" y2="578.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 300.0 482.0 L 300.0 512.0 L 511.0 512.0 L 511.0 523.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 511 530 L 507.4 521 L 514.6 521 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="320" y="498" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">templates in requesting user's holder store</text>
+<path d="M 511.0 626.0 L 511.0 645.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 511 652 L 507.4 643 L 514.6 643 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 434 652 L 588 652 L 616 680 L 588 708 L 434 708 L 406 680 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="511" y="677.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">TIER GATE</text>
+<text x="511" y="688.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(named floors and weights)</text>
+<text x="634" y="684" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">636</text>
+<line x1="631.5" y1="679.6" x2="616.0" y2="680.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 511.0 708.0 L 511.0 740.0 L 141.0 740.0 L 141.0 763.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 141 770 L 137.4 761 L 144.6 761 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 511.0 740.0 L 401.0 740.0 L 401.0 763.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 401 770 L 397.4 761 L 404.6 761 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 511.0 740.0 L 661.0 740.0 L 661.0 763.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 661 770 L 657.4 761 L 664.6 761 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="147" y="752" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">weighted &gt;= first floor; keys match;</text>
+<text x="147" y="761" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">no contradiction; env &gt;= env floor</text>
+<text x="407" y="761" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">weighted &gt;= second floor</text>
+<text x="667" y="761" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">otherwise</text>
+<path d="M 56 770 L 226 770 L 226 818 L 56 818 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="141" y="797.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">SERVING TIER</text>
+<text x="76" y="840" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">638</text>
+<line x1="82.5" y1="827.3" x2="90.0" y2="818.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 316 770 L 486 770 L 486 818 L 316 818 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="401" y="797.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">SEEDING TIER</text>
+<text x="336" y="840" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">640</text>
+<line x1="342.5" y1="827.3" x2="350.0" y2="818.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 576 770 L 746 770 L 746 818 L 576 818 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="661" y="792" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">WITHHOLD</text>
+<text x="661" y="801.6" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(near miss never force-fitted)</text>
+<text x="596" y="840" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">642</text>
+<line x1="602.5" y1="827.3" x2="610.0" y2="818.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 141.0 818.0 L 141.0 853.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 141 860 L 137.4 851 L 144.6 851 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 401.0 818.0 L 401.0 853.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 401 860 L 397.4 851 L 404.6 851 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 661.0 818.0 L 661.0 853.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 661 860 L 657.4 851 L 664.6 851 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 56 860 L 226 860 L 226 908 L 56 908 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="141" y="877.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">ADAPTATION PASS</text>
+<text x="141" y="886.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(single; adjust for</text>
+<text x="141" y="896.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">environment differences)</text>
+<text x="76" y="930" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">644</text>
+<line x1="82.5" y1="917.3" x2="90.0" y2="908.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 316 860 L 486 860 L 486 908 L 316 908 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="401" y="877.2" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">PLANNER SEEDING</text>
+<text x="401" y="886.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(template as context for</text>
+<text x="401" y="896.4" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">full planning pass)</text>
+<text x="336" y="930" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">646</text>
+<line x1="342.5" y1="917.3" x2="350.0" y2="908.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 576 860 L 746 860 L 746 908 L 576 908 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="661" y="881.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">PLAN WITHOUT</text>
+<text x="661" y="892.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">TEMPLATE</text>
+<text x="411" y="952" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">every resulting plan is live-verified step by step by loop 200</text>
+<text x="408" y="1000" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#000" font-weight="bold">FIG. 6</text>
+</svg>

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+<title>FIG. 2 - Observe, instruct, verify, correct and advance loop 200</title>
+<rect x="0" y="0" width="816" height="1056" fill="#fff"/>
+<text x="196" y="90" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">200</text>
+<line x1="198.5" y1="89.7" x2="230.0" y2="100.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<rect x="230" y="90" width="200" height="32" rx="16" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="109.5" font-family="Arial, Helvetica, sans-serif" font-size="10" text-anchor="middle" fill="#000">RECEIVE GOAL</text>
+<text x="452" y="110" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">202</text>
+<line x1="449.5" y1="105.6" x2="430.0" y2="106.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 122.0 L 330.0 135.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 142 L 326.4 133 L 333.6 133 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 210 142 L 450 142 L 450 190 L 210 190 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="157.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">GENERATE PLAN; EACH STEP HAS A</text>
+<text x="330" y="169.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">PLANNER-GENERATED VISIBLE-</text>
+<text x="330" y="181.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">WHEN-DONE CONDITION</text>
+<text x="188" y="170" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">204</text>
+<line x1="190.5" y1="165.6" x2="210.0" y2="166.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 190.0 L 330.0 203.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 210 L 326.4 201 L 333.6 201 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 230 210 L 430 210 L 430 242 L 230 242 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="229.5" font-family="Arial, Helvetica, sans-serif" font-size="10" text-anchor="middle" fill="#000">CAPTURE FRAME</text>
+<text x="452" y="230" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">206</text>
+<line x1="449.5" y1="225.6" x2="430.0" y2="226.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 242.0 L 330.0 255.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 262 L 326.4 253 L 333.6 253 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 210 262 L 450 262 L 450 294 L 210 294 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="281.5" font-family="Arial, Helvetica, sans-serif" font-size="10" text-anchor="middle" fill="#000">REDACT FRAME ON DEVICE</text>
+<text x="472" y="282" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">208</text>
+<line x1="469.5" y1="277.6" x2="450.0" y2="278.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 294.0 L 330.0 307.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 314 L 326.4 305 L 333.6 305 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 210 314 L 450 314 L 450 358 L 210 358 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="333.75" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">TRANSMIT REDACTED FRAME</text>
+<text x="330" y="344.55" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">AND FULL CHECKLIST</text>
+<text x="472" y="340" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">210</text>
+<line x1="469.5" y1="335.6" x2="450.0" y2="336.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 358.0 L 330.0 371.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 378 L 326.4 369 L 333.6 369 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 200 378 L 460 378 L 460 450 L 200 450 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="406.35" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">OBTAIN NAVIGATION RECORD:</text>
+<text x="330" y="417.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">completed set, current step,</text>
+<text x="330" y="427.95" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">guidance, observation, flag, done</text>
+<text x="178" y="418" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">212</text>
+<line x1="180.5" y1="413.6" x2="200.0" y2="414.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 460.0 406.0 L 513.0 406.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 520 406 L 511 409.6 L 511 402.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 520 380 L 740 380 L 740 434 L 520 434 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="630" y="398.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">IF PREREQUISITE ABSENT FROM FRAME:</text>
+<text x="630" y="409.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">CURRENT STEP := STEP THAT</text>
+<text x="630" y="420.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">ESTABLISHES THE PREREQUISITE</text>
+<text x="514" y="372" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">230</text>
+<line x1="513.8" y1="375.3" x2="520.0" y2="380.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 630.0 434.0 L 630.0 443.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 630 450 L 626.4 441 L 633.6 441 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 520 450 L 740 450 L 740 504 L 520 504 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="630" y="468.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">IF NAMED CONTROL ABSENT AND AN</text>
+<text x="630" y="479.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">EQUIVALENT CONTROL VISIBLE:</text>
+<text x="630" y="490.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">INSTRUCTION TARGETS THE EQUIVALENT</text>
+<text x="514" y="442" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">232</text>
+<line x1="513.8" y1="445.3" x2="520.0" y2="450.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 630.0 504.0 L 630.0 513.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 630 520 L 626.4 511 L 633.6 511 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 520 520 L 740 520 L 740 580 L 520 580 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="630" y="536.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">RECORD DISCREPANCY INDICATION</text>
+<text x="630" y="547.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(session record and report;</text>
+<text x="630" y="558.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">re-plan signal; template</text>
+<text x="630" y="569.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">supersede, FIG. 6)</text>
+<text x="514" y="512" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">234</text>
+<line x1="513.8" y1="515.3" x2="520.0" y2="520.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 740.0 550.0 L 746.0 550.0 M 750.0 550.0 L 756.0 550.0 M 758.0 548.0 L 758.0 542.0 M 758.0 538.0 L 758.0 532.0 M 758.0 528.0 L 758.0 522.0 M 758.0 518.0 L 758.0 512.0 M 758.0 508.0 L 758.0 502.0 M 758.0 498.0 L 758.0 492.0 M 758.0 488.0 L 758.0 482.0 M 758.0 478.0 L 758.0 472.0 M 758.0 468.0 L 758.0 462.0 M 758.0 458.0 L 758.0 452.0 M 758.0 448.0 L 758.0 442.0 M 758.0 438.0 L 758.0 432.0 M 758.0 428.0 L 758.0 422.0 M 758.0 418.0 L 758.0 412.0 M 758.0 408.0 L 758.0 402.0 M 758.0 398.0 L 758.0 392.0 M 758.0 388.0 L 758.0 382.0 M 758.0 378.0 L 758.0 372.0 M 758.0 368.0 L 758.0 362.0 M 758.0 358.0 L 758.0 352.0 M 758.0 348.0 L 758.0 342.0 M 758.0 338.0 L 758.0 332.0 M 758.0 328.0 L 758.0 322.0 M 758.0 318.0 L 758.0 312.0 M 758.0 308.0 L 758.0 302.0 M 758.0 298.0 L 758.0 292.0 M 758.0 288.0 L 758.0 282.0 M 758.0 278.0 L 758.0 272.0 M 758.0 268.0 L 758.0 262.0 M 758.0 258.0 L 758.0 252.0 M 758.0 248.0 L 758.0 242.0 M 758.0 238.0 L 758.0 232.0 M 758.0 228.0 L 758.0 222.0 M 758.0 218.0 L 758.0 212.0 M 758.0 208.0 L 758.0 202.0 M 758.0 198.0 L 758.0 192.0 M 758.0 188.0 L 758.0 182.0 M 758.0 178.0 L 758.0 172.0 M 758.0 168.0 L 758.0 166.0 M 758.0 166.0 L 754.0 166.0 M 750.0 166.0 L 744.0 166.0 M 740.0 166.0 L 734.0 166.0 M 730.0 166.0 L 724.0 166.0 M 720.0 166.0 L 714.0 166.0 M 710.0 166.0 L 704.0 166.0 M 700.0 166.0 L 694.0 166.0 M 690.0 166.0 L 684.0 166.0 M 680.0 166.0 L 674.0 166.0 M 670.0 166.0 L 664.0 166.0 M 660.0 166.0 L 654.0 166.0 M 650.0 166.0 L 644.0 166.0 M 640.0 166.0 L 634.0 166.0 M 630.0 166.0 L 624.0 166.0 M 620.0 166.0 L 614.0 166.0 M 610.0 166.0 L 604.0 166.0 M 600.0 166.0 L 594.0 166.0 M 590.0 166.0 L 584.0 166.0 M 580.0 166.0 L 574.0 166.0 M 570.0 166.0 L 564.0 166.0 M 560.0 166.0 L 554.0 166.0 M 550.0 166.0 L 544.0 166.0 M 540.0 166.0 L 534.0 166.0 M 530.0 166.0 L 524.0 166.0 M 520.0 166.0 L 514.0 166.0 M 510.0 166.0 L 504.0 166.0 M 500.0 166.0 L 494.0 166.0 M 490.0 166.0 L 484.0 166.0 M 480.0 166.0 L 474.0 166.0 M 470.0 166.0 L 464.0 166.0 M 460.0 166.0 L 457.0 166.0" stroke="#000" stroke-width="1.25" fill="none"/>
+<path d="M 450 166 L 459 162.4 L 459 169.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="604" y="160" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">re-plan signal</text>
+<path d="M 630.0 580.0 L 630.0 604.0 L 340.0 604.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 333 604 L 342 600.4 L 342 607.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 330.0 450.0 L 330.0 601.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 608 L 326.4 599 L 333.6 599 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 330 608 L 446 650 L 330 692 L 214 650 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="642.775" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">VISIBLE-WHEN-DONE</text>
+<text x="330" y="652.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">CONDITION OF INSTRUCTED</text>
+<text x="330" y="663.175" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">STEP SATISFIED IN FRAME?</text>
+<text x="356" y="702" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">214</text>
+<line x1="353.5" y1="691.1" x2="338.0" y2="684.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 214.0 650.0 L 203.0 650.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 196 650 L 205 646.4 L 205 653.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="206" y="644" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">YES</text>
+<path d="M 56 616 L 196 616 L 196 684 L 56 684 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="126" y="630.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">MARK STEP COMPLETED;</text>
+<text x="126" y="641.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">TIMESTAMP; STORE</text>
+<text x="126" y="652.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">REDACTED FRAME AS</text>
+<text x="126" y="663.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">EVIDENCE ONCE (if</text>
+<text x="126" y="674.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">policy permits)</text>
+<text x="76" y="706" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">216</text>
+<line x1="82.5" y1="693.3" x2="90.0" y2="684.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 446.0 650.0 L 513.0 650.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 520 650 L 511 653.6 L 511 646.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="483" y="644" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">NO</text>
+<path d="M 520 616 L 740 616 L 740 684 L 520 684 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="630" y="634.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">DO NOT ADVANCE;</text>
+<text x="630" y="646.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">CORRECTIVE INSTRUCTION</text>
+<text x="630" y="658.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(exact fix, make content</text>
+<text x="630" y="670.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">visible, missing prerequisite)</text>
+<text x="746" y="608" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">218</text>
+<line x1="746.2" y1="611.3" x2="740.0" y2="616.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 630.0 684.0 L 630.0 697.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 630 704 L 626.4 695 L 633.6 695 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 520 704 L 740 704 L 740 738 L 520 738 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="630" y="718.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">SURFACE FLAG</text>
+<text x="630" y="729.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(clears when back on track)</text>
+<text x="498" y="725" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">220</text>
+<line x1="500.5" y1="720.6" x2="520.0" y2="721.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 210 770 L 450 770 L 450 802 L 210 802 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="788.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">PRESENT INSTRUCTION, OBSERVATION, FLAG</text>
+<text x="204" y="762" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">222</text>
+<line x1="203.8" y1="765.3" x2="210.0" y2="770.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 126.0 684.0 L 126.0 786.0 L 203.0 786.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 210 786 L 201 789.6 L 201 782.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 630.0 738.0 L 630.0 786.0 L 457.0 786.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 450 786 L 459 782.4 L 459 789.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 330.0 802.0 L 330.0 815.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 822 L 326.4 813 L 333.6 813 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 200.0 822.0 L 206.0 822.0 M 210.0 822.0 L 216.0 822.0 M 220.0 822.0 L 226.0 822.0 M 230.0 822.0 L 236.0 822.0 M 240.0 822.0 L 246.0 822.0 M 250.0 822.0 L 256.0 822.0 M 260.0 822.0 L 266.0 822.0 M 270.0 822.0 L 276.0 822.0 M 280.0 822.0 L 286.0 822.0 M 290.0 822.0 L 296.0 822.0 M 300.0 822.0 L 306.0 822.0 M 310.0 822.0 L 316.0 822.0 M 320.0 822.0 L 326.0 822.0 M 330.0 822.0 L 336.0 822.0 M 340.0 822.0 L 346.0 822.0 M 350.0 822.0 L 356.0 822.0 M 360.0 822.0 L 366.0 822.0 M 370.0 822.0 L 376.0 822.0 M 380.0 822.0 L 386.0 822.0 M 390.0 822.0 L 396.0 822.0 M 400.0 822.0 L 406.0 822.0 M 410.0 822.0 L 416.0 822.0 M 420.0 822.0 L 426.0 822.0 M 430.0 822.0 L 436.0 822.0 M 440.0 822.0 L 446.0 822.0 M 450.0 822.0 L 456.0 822.0 M 460.0 822.0 L 460.0 828.0 M 460.0 832.0 L 460.0 838.0 M 460.0 842.0 L 460.0 848.0 M 460.0 852.0 L 460.0 858.0 M 460.0 862.0 L 460.0 866.0 M 460.0 866.0 L 458.0 866.0 M 454.0 866.0 L 448.0 866.0 M 444.0 866.0 L 438.0 866.0 M 434.0 866.0 L 428.0 866.0 M 424.0 866.0 L 418.0 866.0 M 414.0 866.0 L 408.0 866.0 M 404.0 866.0 L 398.0 866.0 M 394.0 866.0 L 388.0 866.0 M 384.0 866.0 L 378.0 866.0 M 374.0 866.0 L 368.0 866.0 M 364.0 866.0 L 358.0 866.0 M 354.0 866.0 L 348.0 866.0 M 344.0 866.0 L 338.0 866.0 M 334.0 866.0 L 328.0 866.0 M 324.0 866.0 L 318.0 866.0 M 314.0 866.0 L 308.0 866.0 M 304.0 866.0 L 298.0 866.0 M 294.0 866.0 L 288.0 866.0 M 284.0 866.0 L 278.0 866.0 M 274.0 866.0 L 268.0 866.0 M 264.0 866.0 L 258.0 866.0 M 254.0 866.0 L 248.0 866.0 M 244.0 866.0 L 238.0 866.0 M 234.0 866.0 L 228.0 866.0 M 224.0 866.0 L 218.0 866.0 M 214.0 866.0 L 208.0 866.0 M 204.0 866.0 L 200.0 866.0 M 200.0 866.0 L 200.0 864.0 M 200.0 860.0 L 200.0 854.0 M 200.0 850.0 L 200.0 844.0 M 200.0 840.0 L 200.0 834.0 M 200.0 830.0 L 200.0 824.0" stroke="#000" stroke-width="1.25" fill="none"/>
+<text x="330" y="841.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">USER PERFORMS ACTION IN THE TARGET</text>
+<text x="330" y="852.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">APPLICATION (no input injected)</text>
+<text x="482" y="848" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">224</text>
+<line x1="479.5" y1="843.6" x2="460.0" y2="844.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 866.0 L 330.0 871.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 878 L 326.4 869 L 333.6 869 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 330 878 L 410 908 L 330 938 L 250 908 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="911.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">DONE?</text>
+<text x="352" y="958" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">226</text>
+<line x1="349.5" y1="946.1" x2="338.0" y2="940.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 250.0 908.0 L 36.0 908.0 L 36.0 226.0 L 223.0 226.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 230 226 L 221 229.6 L 221 222.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="240" y="902" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">NO</text>
+<text x="40" y="560" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="start" fill="#000">next</text>
+<text x="40" y="571" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="start" fill="#000">frame</text>
+<path d="M 410.0 908.0 L 513.0 908.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 520 908 L 511 911.6 L 511 904.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="465" y="902" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">YES</text>
+<rect x="520" y="890" width="200" height="36" rx="18" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="620" y="911.5" font-family="Arial, Helvetica, sans-serif" font-size="10" text-anchor="middle" fill="#000">END: SESSION REPORT</text>
+<text x="540" y="948" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">228</text>
+<line x1="546.5" y1="935.3" x2="554.0" y2="926.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<text x="408" y="1000" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#000" font-weight="bold">FIG. 2</text>
+</svg>

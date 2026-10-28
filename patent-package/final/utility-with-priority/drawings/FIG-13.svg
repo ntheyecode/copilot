@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+<title>FIG. 13 - Transient-unreadable-frame tolerance 1300 in the watch loop</title>
+<rect x="0" y="0" width="816" height="1056" fill="#fff"/>
+<text x="236" y="90" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1300</text>
+<line x1="237.0" y1="93.3" x2="250.0" y2="100.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 250 90 L 490 90 L 490 138 L 250 138 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="111.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">FRAME CAPTURED IN WATCH LOOP</text>
+<text x="370" y="122.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(settled; redacted on device)</text>
+<text x="512" y="118" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1302</text>
+<line x1="509.5" y1="113.6" x2="490.0" y2="114.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 370.0 138.0 L 370.0 159.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 166 L 366.4 157 L 373.6 157 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 230 166 L 510 166 L 510 226 L 230 226 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="187.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">NAVIGATION RECORD FROM FIRST MODEL 172</text>
+<text x="370" y="198.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(completed set, current step, guidance,</text>
+<text x="370" y="209.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">observation, flag, done)</text>
+<text x="532" y="200" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1304</text>
+<line x1="529.5" y1="195.6" x2="510.0" y2="196.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 370.0 226.0 L 370.0 245.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 252 L 366.4 243 L 373.6 243 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 370 254 L 490 292 L 370 330 L 250 292 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="284.775" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">READABLE?</text>
+<text x="370" y="294.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(instruction or</text>
+<text x="370" y="305.175" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">observation present)</text>
+<text x="396" y="340" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1306</text>
+<line x1="393.5" y1="329.0" x2="380.0" y2="324.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 250.0 292.0 L 237.0 292.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 230 292 L 239 288.4 L 239 295.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="240" y="286" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">YES</text>
+<path d="M 80 260 L 230 260 L 230 324 L 80 324 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="155" y="279.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">RESET CONSECUTIVE</text>
+<text x="155" y="289.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">COUNT; APPLY RECORD</text>
+<text x="155" y="299.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">(verify, advance or</text>
+<text x="155" y="309.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">correct; FIG. 2)</text>
+<text x="100" y="346" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1308</text>
+<line x1="106.5" y1="333.3" x2="114.0" y2="324.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 370.0 330.0 L 370.0 351.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 358 L 366.4 349 L 373.6 349 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="376" y="350" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">NO</text>
+<path d="M 250 358 L 490 358 L 490 402 L 250 402 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="377.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">INCREMENT PER-SESSION</text>
+<text x="370" y="388.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">CONSECUTIVE COUNT</text>
+<text x="512" y="384" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1310</text>
+<line x1="509.5" y1="379.6" x2="490.0" y2="380.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 370.0 402.0 L 370.0 421.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 428 L 366.4 419 L 373.6 419 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 370 428 L 490 466 L 370 504 L 250 466 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="458.775" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">COUNT AT OR ABOVE</text>
+<text x="370" y="468.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">TOLERANCE?</text>
+<text x="370" y="479.175" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(for example two)</text>
+<text x="396" y="514" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1312</text>
+<line x1="393.5" y1="503.0" x2="380.0" y2="498.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 250.0 466.0 L 145.0 466.0 L 145.0 513.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 145 520 L 141.4 511 L 148.6 511 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="200" y="460" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">NO</text>
+<path d="M 60 520 L 230 520 L 230 616 L 60 616 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="145" y="548.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">WITHHOLD SECOND MODEL 174:</text>
+<text x="145" y="559.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">no re-submission; current</text>
+<text x="145" y="570.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">step and instruction</text>
+<text x="145" y="581.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">unchanged; no escalation</text>
+<text x="145" y="592.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">event; frame still audited</text>
+<text x="80" y="638" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1314</text>
+<line x1="86.5" y1="625.3" x2="94.0" y2="616.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 370.0 504.0 L 370.0 553.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 560 L 366.4 551 L 373.6 551 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="376" y="536" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">YES</text>
+<path d="M 250 560 L 490 560 L 490 640 L 250 640 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="586.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">SECOND MODEL 174 PERMITTED:</text>
+<text x="370" y="597.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">next unreadable frame re-submitted</text>
+<text x="370" y="608.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">with the plan for that call;</text>
+<text x="370" y="619.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">escalation event recorded</text>
+<text x="512" y="604" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1316</text>
+<line x1="509.5" y1="599.6" x2="490.0" y2="600.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 560 358 L 740 358 L 740 422 L 560 422 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="650" y="376.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">MANUAL DEEP READ</text>
+<text x="650" y="387.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(user request):</text>
+<text x="650" y="398.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">escalate regardless</text>
+<text x="650" y="409.3" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">of count</text>
+<text x="580" y="444" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1318</text>
+<line x1="586.5" y1="431.3" x2="594.0" y2="422.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 650.0 422.0 L 650.0 620.0 L 497.0 620.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 490 620 L 499 616.4 L 499 623.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="656" y="530" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">always</text>
+<path d="M 145.0 616.0 L 145.0 660.0 L 370.0 660.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370.0 640.0 L 370.0 660.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<circle cx="370" cy="660" r="2.2" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 370.0 660.0 L 370.0 673.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 680 L 366.4 671 L 373.6 671 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<rect x="270" y="680" width="200" height="36" rx="16" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="370" y="701.15" font-family="Arial, Helvetica, sans-serif" font-size="9" text-anchor="middle" fill="#000">NEXT FRAME</text>
+<path d="M 80.0 292.0 L 44.0 292.0 L 44.0 698.0 L 263.0 698.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 270 698 L 261 701.6 L 261 694.4 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 470.0 698.0 L 760.0 698.0 L 760.0 70.0 L 370.0 70.0 L 370.0 83.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 370 90 L 366.4 81 L 373.6 81 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="60" y="770" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="start" fill="#000">A one-off read outside the loop escalates immediately; a model error escalates immediately;</text>
+<text x="60" y="782" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="start" fill="#000">a successful response with no content is a retriable model failure, not an unreadable frame.</text>
+<text x="60" y="800" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="start" fill="#000">Alternative embodiment: a sliding window over the most recent frames (a first number of the</text>
+<text x="60" y="812" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="start" fill="#000">last second number of frames unreadable) in place of the consecutive count.</text>
+<text x="408" y="1000" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#000" font-weight="bold">FIG. 13</text>
+</svg>

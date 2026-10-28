@@ -1,0 +1,7 @@
+Prepared for Ravi Kiran Raju Yerra. Attorney review recommended before filing. Not legal advice.
+
+This package files the nonprovisional utility application under 35 U.S.C. 111(a) that claims the benefit of the provisional application filed from patent-package/final/provisional. It is identical to the standalone utility package except for the benefit claim. Every claim that is supported by the provisional's specification receives the provisional's filing date as its effective filing date; the specification in both packages is the same text, so every claim is supported.
+
+Exactly two values are entered by hand in this package, both copied from the provisional application's filing receipt: the provisional application number (format 63/xxx,xxx) and the provisional filing date. They appear in two places: the first paragraph of the specification ("Cross-Reference to Related Applications", in specification.md and in application-body.md and their DOCX files) and the Domestic Benefit section of the ADS (application-data-sheet.md section 7). Everything else is already filled.
+
+The deadline is absolute: this application must be filed within twelve months of the provisional filing date (35 U.S.C. 119(e)(1)). Mark that date now. If the provisional expires unfiled, the provisional's date is lost and any public disclosure in the meantime becomes prior art abroad and, after one year, in the United States as well.

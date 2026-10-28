@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="8.5in" height="11in" viewBox="0 0 816 1056">
+<title>FIG. 11 - Deterministic breakdown gate 1100</title>
+<rect x="0" y="0" width="816" height="1056" fill="#fff"/>
+<text x="196" y="90" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1100</text>
+<line x1="197.0" y1="93.3" x2="210.0" y2="100.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 210 90 L 450 90 L 450 138 L 210 138 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="111.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">PROPOSED BREAKDOWN FROM MAP</text>
+<text x="330" y="122.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">PLANNER (task descriptors + end-state)</text>
+<text x="472" y="118" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1102</text>
+<line x1="469.5" y1="113.6" x2="450.0" y2="114.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 138.0 L 330.0 159.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 166 L 326.4 157 L 333.6 157 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 210 166 L 450 166 L 450 218 L 210 218 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="183.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">REAL-TASK TEST:</text>
+<text x="330" y="194.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">aim AND non-empty done-state</text>
+<text x="330" y="205.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(both required)</text>
+<text x="188" y="196" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1104</text>
+<line x1="190.5" y1="191.6" x2="210.0" y2="192.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 218.0 L 330.0 239.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 246 L 326.4 237 L 333.6 237 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 210 246 L 450 246 L 450 298 L 210 298 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="263.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">NORMALIZE LABELS (lowercase,</text>
+<text x="330" y="274.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">trim, collapse spaces);</text>
+<text x="330" y="285.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">COLLAPSE DUPLICATES</text>
+<text x="188" y="276" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1106</text>
+<line x1="190.5" y1="271.6" x2="210.0" y2="272.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 298.0 L 330.0 317.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 324 L 326.4 315 L 333.6 315 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<path d="M 330 324 L 448 362 L 330 400 L 212 362 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="359.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">AT LEAST TWO</text>
+<text x="330" y="370.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">DISTINCT REAL TASKS?</text>
+<text x="356" y="410" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1108</text>
+<line x1="353.5" y1="399.0" x2="340.0" y2="394.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 212.0 362.0 L 187.0 362.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 180 362 L 189 358.4 L 189 365.6 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="196" y="356" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">NO</text>
+<rect x="40" y="334" width="140" height="56" rx="12" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="110" y="353.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">RETURN AS SINGLE TASK</text>
+<text x="110" y="364.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">(suggested goal);</text>
+<text x="110" y="375.8" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">NOT A PROJECT</text>
+<text x="60" y="412" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1110</text>
+<line x1="66.5" y1="399.3" x2="74.0" y2="390.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 400.0 L 330.0 419.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 426 L 326.4 417 L 333.6 417 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="336" y="418" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">YES</text>
+<path d="M 330 426 L 448 460 L 330 494 L 212 460 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="457.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">EVERY DEPENDENCY</text>
+<text x="330" y="468.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">RESOLVES?</text>
+<text x="356" y="504" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1112</text>
+<line x1="353.5" y1="493.0" x2="340.0" y2="488.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 494.0 L 330.0 519.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 526 L 326.4 517 L 333.6 517 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="336" y="516" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">YES</text>
+<path d="M 330 526 L 448 560 L 330 594 L 212 560 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="558" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">ACYCLIC? (three-color DFS;</text>
+<text x="330" y="567.6" font-family="Arial, Helvetica, sans-serif" font-size="8" text-anchor="middle" fill="#000">cycle members named)</text>
+<text x="356" y="604" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1114</text>
+<line x1="353.5" y1="593.0" x2="340.0" y2="588.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 594.0 L 330.0 619.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 626 L 326.4 617 L 333.6 617 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="336" y="616" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">YES</text>
+<path d="M 330 626 L 448 660 L 330 694 L 212 660 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="662.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">END-STATE DEFINED?</text>
+<text x="356" y="704" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1116</text>
+<line x1="353.5" y1="693.0" x2="340.0" y2="688.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 330.0 694.0 L 330.0 723.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 330 730 L 326.4 721 L 333.6 721 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="336" y="718" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="start" fill="#000">YES</text>
+<rect x="210" y="730" width="240" height="48" rx="18" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="330" y="751.875" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">ACCEPT; PERSIST AS PROJECT MAP</text>
+<text x="330" y="762.075" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(store 1020, FIG. 10)</text>
+<text x="188" y="758" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="end" fill="#000">1120</text>
+<line x1="190.5" y1="753.6" x2="210.0" y2="754.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 450.0 192.0 L 630.0 192.0 L 630.0 723.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 630 730 L 626.4 721 L 633.6 721 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="540" y="186" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">filler task: error</text>
+<path d="M 450.0 272.0 L 630.0 272.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<circle cx="630" cy="272" r="2.2" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="540" y="266" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="middle" fill="#000">duplicate: error</text>
+<path d="M 448.0 460.0 L 630.0 460.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<circle cx="630" cy="460" r="2.2" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="540" y="454" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">NO</text>
+<path d="M 448.0 560.0 L 630.0 560.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<circle cx="630" cy="560" r="2.2" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="540" y="554" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">NO</text>
+<path d="M 448.0 660.0 L 630.0 660.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<circle cx="630" cy="660" r="2.2" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="540" y="654" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">NO</text>
+<path d="M 520 730 L 740 730 L 740 794 L 520 794 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="630" y="753.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">REJECT: EVERY ERROR LISTED</text>
+<text x="630" y="764.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">(not short-circuited);</text>
+<text x="630" y="775.975" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">nothing persisted</text>
+<text x="540" y="816" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="middle" fill="#000">1118</text>
+<line x1="546.5" y1="803.3" x2="554.0" y2="794.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<path d="M 110.0 390.0 L 110.0 813.0" fill="none" stroke="#000" stroke-width="1.25"/>
+<path d="M 110 820 L 106.4 811 L 113.6 811 Z" fill="#000" stroke="none" stroke-width="1.25"/>
+<text x="116" y="600" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">later, when a</text>
+<text x="116" y="608.4" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">single task is</text>
+<text x="116" y="616.8" font-family="Arial, Helvetica, sans-serif" font-size="7" text-anchor="start" fill="#000">expanded</text>
+<path d="M 40 820 L 300 820 L 300 884 L 40 884 Z" fill="none" stroke="#000" stroke-width="1.25"/>
+<text x="170" y="839.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">ADVISORY ONLY: a single task whose</text>
+<text x="170" y="849.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">expanded plan exceeds a step threshold</text>
+<text x="170" y="859.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">yields a hint to reconsider;</text>
+<text x="170" y="869.625" font-family="Arial, Helvetica, sans-serif" font-size="7.5" text-anchor="middle" fill="#000">never an automatic split</text>
+<text x="322" y="856" font-family="Arial, Helvetica, sans-serif" font-size="13" text-anchor="start" fill="#000">1122</text>
+<line x1="319.5" y1="851.6" x2="300.0" y2="852.0" stroke="#000" stroke-width="0.6" fill="none"/>
+<text x="330" y="930" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">Over-splitting is an error; under-splitting is advisory.</text>
+<text x="330" y="942" font-family="Arial, Helvetica, sans-serif" font-size="8.5" text-anchor="middle" fill="#000">No machine-learning model is invoked by the gate.</text>
+<text x="408" y="1000" font-family="Arial, Helvetica, sans-serif" font-size="16" text-anchor="middle" fill="#000" font-weight="bold">FIG. 11</text>
+</svg>

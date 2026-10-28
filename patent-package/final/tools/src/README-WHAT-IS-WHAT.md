@@ -1,0 +1,78 @@
+Prepared for Ravi Kiran Raju Yerra. Attorney review recommended before filing. Not legal advice.
+
+# What is what: the three filing packages explained
+
+Inventor and applicant: Ravi Kiran Raju Yerra, Celina, Texas. Title: Screen-Aware, Read-Only Task Guidance with On-Device Redaction and Tenant-Governed Data Egress. Entity status: small entity. Filing: pro se through USPTO Patent Center.
+
+## Which package to file
+
+There are three packages in patent-package/final. They share the same specification, claims, abstract and drawings; they differ only in what is filed and when.
+
+1. provisional. File this now to secure the filing date at the lowest cost (small entity provisional fee 130 USD as recorded; verify at filing). It is never examined and expires in twelve months. Use it when you want the date locked immediately, for example because the product is already public, and you want up to twelve months before paying the nonprovisional fees.
+2. utility. File this if you skip the provisional and file the full nonprovisional application directly (2,170 USD small entity as recorded for 29 claims with 6 independent claims, of which 1,440 USD is excess-claim fees; verify at filing). The filing date of this application is the effective date of every claim. It is the right choice when you are ready to start examination now and do not need the twelve-month interval.
+3. utility-with-priority. File this within twelve months after the provisional, and only then. It is the utility package with a benefit claim to the provisional added, so that every claim keeps the provisional's earlier date. The only two values entered by hand are the provisional's application number and filing date, copied from the provisional filing receipt.
+
+Use either route 1 then 3, or route 2 alone. Never file both utility packages.
+
+## Provisional versus utility in one paragraph
+
+A provisional application is a date-stamp: it records what you disclosed on a given day, costs little, has no claims requirement, no declaration, no examination and no publication, and lapses after twelve months. A nonprovisional utility application is the real application: it has formal claims, a signed declaration, full fees, an IDS, examination by an examiner, publication at eighteen months, and it can issue as a patent. A provisional filed first does not delay anything the applicant controls; it buys up to twelve months to refine the claims, decide on foreign filing and spread the cost, at the price of filing twice and of a patent term that still runs from the nonprovisional filing date. If you are certain of the claims and want examination to start now, the standalone utility application saves one filing; if you want the date secured today and time to decide, the provisional followed by the utility-with-priority application is the usual route for an individual inventor.
+
+## The 2026-10-27 additions are in the one application, not in a continuation-in-part
+
+On 2026-10-27 the product gained a multi-task project engine (a goal planned once into a dependency-ordered map of tasks with screen-visible done-states, each task's steps expanded just in time from a project-scoped forward-learnings ledger, with a deterministic breakdown gate, mid-project task injection and project reports) and a watch-loop tolerance for transient unreadable frames. An earlier review drafted these as candidates for a continuation-in-part, on the assumption that a parent application was already on file. That assumption does not hold: nothing in this package has been filed. A continuation-in-part exists to add new matter to an application that already has a filing date, and the price of a continuation-in-part is that the new matter gets only its own later date while every claim that depends on it must be traced to the later disclosure. Since there is no filed parent, the right course is simply to put the new embodiments into the one specification, draw them (FIG. 10 to FIG. 13), claim them (claims 10 and 22 to 29) and regenerate all three packages from the single sources. Every claim then has the same effective filing date, the one on which the chosen package is filed, with no new-matter question and no priority split. The provisional, if that route is taken, carries the full disclosure, so the utility-with-priority application can claim the provisional's date for the new claims too. The three packages keep their meaning: the provisional is the date-stamp with the full disclosure and the claims as support; the utility is the formal standalone application; the utility-with-priority is the utility plus the 35 U.S.C. 119(e) benefit claim with only the provisional number and date entered by hand.
+
+## Package 1: provisional
+
+| Document | What it is and why it is needed | Who signs | What you enter on the official USPTO form |
+|---|---|---|---|
+| specification.md and editable/specification.docx | The provisional specification: a title page naming the inventor, the full specification (paragraphs [0001] to [0112] with the brief description of FIG. 1 to FIG. 13), claims 1 to 29 and the abstract. It is the disclosure whose date you are securing; anything not in it gets no benefit of the provisional date. | Nobody; uploaded as a document. | Nothing. Upload the DOCX after deleting the review line from its page header. |
+| drawings/drawings.pdf (with FIG-1.svg to FIG-13.svg and drawings-manifest.md) | The thirteen drawing sheets, black-and-white line art, each reference numeral drawn once per figure. Required where drawings are necessary to understand the invention. | Nobody. | Nothing. Upload the PDF under "Drawings". |
+| provisional-cover-sheet.md and its DOCX | Every entry for form PTO/SB/16, the provisional cover sheet that names the inventor, gives the title and correspondence address, counts the pages and sheets, and asserts small entity status. Without a cover sheet (or a web ADS) a provisional is incomplete. | Ravi Kiran Raju Yerra signs the cover sheet (S-signature or ink). | Copy each row into PTO/SB/16 (or the provisional web ADS); sign; upload the fillable PDF. |
+| fee-worksheet.md | The one fee due (provisional filing fee, small entity) and why no other fee applies. | Nobody. | Nothing. Compare with the Patent Center fee screen. |
+| FILING-INSTRUCTIONS.md | Step-by-step Patent Center filing for this package, the receipt to save, and the twelve-month deadline. | Nobody. | Nothing. |
+
+## Package 2: utility (standalone)
+
+| Document | What it is and why it is needed | Who signs | What you enter on the official USPTO form |
+|---|---|---|---|
+| specification.md and editable/specification.docx | The specification: title, cross-reference ("Not applicable"), federally sponsored research statement, technical field, background, summary, brief description of the drawings, and the detailed description in numbered paragraphs [0001] to [0112] with reference numerals matching FIG. 1 to FIG. 13. It is the written description that must enable and support the claims. | Nobody. | Nothing. It is part of application-body.docx. |
+| claims.md and editable/claims.docx | Claims 1 to 29 (independent claims 1, 11, 17, 22, 28 and 29), which define the legal scope of protection. Claims 1 to 21 are the original read-only guidance, privacy and governance set with the watch-loop tolerance added as claim 10; claims 22 to 29 are the project engine. Appendix A holds four candidate independent claims for a possible divisional or continuation, and Appendix B holds practitioner notes (claim support map, antecedent-basis check, code-support notes with the reduction-to-practice status of every new claim). Neither appendix is filed. | Nobody. | Nothing. Claims 1 to 29 are part of application-body.docx. |
+| abstract.md and editable/abstract.docx | The abstract, 149 words, a single-paragraph summary printed on the front page of the publication and patent. | Nobody. | Nothing. It is part of application-body.docx. |
+| application-body.md and editable/application-body.docx | The specification, claims 1 to 29 and abstract in filing order in one DOCX without the appendices. This is the file uploaded to Patent Center; filing it as DOCX avoids the non-DOCX surcharge. | Nobody. | Nothing. Upload after deleting the review line from its page header; confirm the Specification, Claims and Abstract section mapping Patent Center proposes. |
+| drawings/drawings.pdf (with FIG-1.svg to FIG-13.svg) | The thirteen drawing sheets. | Nobody. | Nothing. Upload under "Drawings". |
+| application-data-sheet.md and its DOCX | Every value for the Application Data Sheet (37 CFR 1.76): inventor name split, residence, mailing address, correspondence, title, small entity, nonprovisional utility, 13 drawing sheets, suggested figure, no publication requests, no representative, no benefit or priority claims, applicant is the inventor, no assignee. The ADS is what the USPTO uses to print the filing receipt and the publication. | Ravi Kiran Raju Yerra signs the ADS as applicant (S-signature). | Enter each row in the Patent Center web ADS (recommended) or on PTO/AIA/14, then sign. |
+| inventor-declaration.md and its DOCX | The content of PTO/AIA/01, the inventor's declaration required by 35 U.S.C. 115, in which the inventor states that he authorized the application and believes he is the original inventor, under penalty of the false-statement statute. Filing it with the application avoids a surcharge. | Ravi Kiran Raju Yerra, personally, after reading the application. | Copy the title, check "The attached application", type the legal name, sign and date on PTO/AIA/01, upload the PDF. |
+| ids-and-references.md and its DOCX | The content of the Information Disclosure Statement (PTO/SB/08a and 08b): 39 U.S. patents and publications and 21 non-patent references found in the prior-art searches (including the 2026-10-27 refresh for the project engine and the watch-loop tolerance), plus a must-pull list of items to read before they are listed or left off. Filing it discharges the duty of disclosure for what is known; within three months of filing it needs no fee. | Ravi Kiran Raju Yerra signs the IDS (S-signature). | Enter each reference in the Patent Center IDS web form or on SB/08a and 08b; upload one PDF per non-patent reference; sign. |
+| fee-worksheet.md | Itemized small entity fees due at filing (basic filing, search, examination, excess claims; 2,170 USD as recorded), the conditional fees that are zero as filed, the cost of adding the Appendix A claims, the saving from trimming to 20 claims and 3 independent claims, and later fees for budgeting. Every amount marked "verify current USPTO fee schedule at filing". | Nobody. | Nothing. Compare with the Patent Center fee screen before paying. |
+| FILING-INSTRUCTIONS.md | Step-by-step pro se filing in Patent Center: account creation and identity verification, upload order, DOCX versus PDF, fees, the receipts, the calendar, and how a provisional benefit claim would be added if the route changes. | Nobody. | Nothing. |
+
+## Package 3: utility-with-priority
+
+Identical to package 2 in every document and every entry, with three differences:
+
+| Document | Difference from package 2 | What you enter |
+|---|---|---|
+| specification.md, application-body.md and their DOCX files | The "Cross-Reference to Related Applications" paragraph reads "This application claims the benefit of U.S. Provisional Application No. [ENTER PROVISIONAL APPLICATION NUMBER FROM FILING RECEIPT], filed [ENTER PROVISIONAL FILING DATE]." | Replace the two bracketed markers with the number and date from the provisional filing receipt before uploading. |
+| application-data-sheet.md | Section 7 (Domestic Benefit) claims the benefit of the provisional under 35 U.S.C. 119(e): status Pending, continuity type "Claims benefit of provisional application", prior application number and filing date marked "[ENTER FROM PROVISIONAL FILING RECEIPT]". | Enter the same number and date in the web ADS. |
+| FILING-INSTRUCTIONS.md | Explains the benefit claim, states that these two values are the only hand entries, and stresses the twelve-month deadline from the provisional filing date and the ADS time limit for presenting the benefit claim. | Nothing. |
+
+All other files in package 3 (claims, abstract, declaration, IDS, fee worksheet, drawings) are the same as in package 2; the fees are the same 2,170 USD small entity as recorded, since the provisional fee does not count toward them.
+
+## Shared material
+
+| Item | What it is |
+|---|---|
+| patent-package/final/drawings/ | The master drawings: FIG-1.svg to FIG-13.svg, drawings.pdf (thirteen sheets), drawings-manifest.md (which numerals appear on which figure), numerals.json, previews, and the generator script. Each package carries its own copy so that each package folder is self-contained. |
+| patent-package/final/tools/ | build.py rebuilds every package from the single sources (the v2 specification, claims and abstract, and tools/src for the package documents), converts each Markdown master to DOCX with md2docx.cjs, and measures page counts; sweep.py re-runs the verification sweeps (dashes, wording, placeholders, inventor name, abstract length, reference numerals against the figures, claim numbering, DOCX validity). Edit the sources, run build.py, then sweep.py. |
+| patent-package/final/01-prior-art-search.md | The 2026-10-27 prior-art refresh for the new subject matter (two-tier just-in-time decomposition for a human performer, screen-verified guidance, forward-learnings ledgers, decomposition-granularity gates, mid-project DAG insertion, consecutive-failure tolerance), with the novelty delta and the risk read per theme. |
+
+## Decisions that remain with the inventor or a practitioner
+
+1. Route: provisional first (packages 1 then 3) or the standalone utility application (package 2).
+2. Claim count. The set is built with 29 claims and 6 independent claims, which costs 1,440 USD in excess-claim fees as recorded. A practitioner may trim to 20 claims and 3 independent claims (for example by holding the system and medium parallels of the project engine, claims 28 and 29, and the weakest dependents for a continuation) to avoid those fees; the fee worksheet shows both figures.
+3. Whether to add any Appendix A claim at filing (further fees, probable restriction) or hold them for a continuation or divisional.
+4. Whether to check the nonpublication request on the ADS (the packages leave it unchecked).
+5. The must-pull references in ids-and-references.md section 6: read them and list or omit each before the IDS is final, or supplement within three months.
+6. For claims that recite embodiments described in the specification as "in some embodiments" or "in one embodiment" (streaming rehydration, claim 12; lock release with re-authentication, claim 18; the instruction-shaping rule set limb of claim 17; the second alternative of claim 7; the done-state as task-level verification target and the completion-time ledger write, claim 25; the final limb of claims 22, 28 and 29 that the project end-state is shown satisfied), the inventor confirms that he conceived each before signing the declaration; the specification describes them, and the declaration covers every claimed invention. Appendix B of claims.md states, per claim, which legs are shipped and which are specification-supported only.
+7. Whether to retain a registered patent practitioner for examination. Filing pro se is permitted; prosecution (responding to Office actions, amending claims) is where practitioner help has the greatest effect.
