@@ -1,7 +1,7 @@
 // Shared presentational primitives for the WorkCoPilot admin sections.
 // Pure UI, no data fetching. Only react + lucide-react are imported.
 import React, { useState, useEffect, useRef, useCallback } from 'react'
-import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, XCircle, Pencil, X } from 'lucide-react'
+import { Loader2, AlertTriangle, Inbox, RefreshCw, Check, Lock, Shield, CheckCircle2, XCircle, Pencil, X, MoreHorizontal } from 'lucide-react'
 import { useT } from '../../../i18n/index.jsx'
 
 export function Loading({ label }) {
@@ -56,6 +56,41 @@ export function TierBadge({ tier }) {
 
 export function Spinning() {
   return <Loader2 size={14} className="wka-spin-inline" style={{ animation: 'wka-spin 0.8s linear infinite' }} />
+}
+
+// One "More" trigger + a popover of secondary actions for a table row, so a row
+// stays one pill tall however many actions it carries (the inline button stack
+// made the Users rows render tall). items: [{ key, icon, label, title, tone:
+// 'danger'|'emerald'|'', disabled, onPick }]. Closes on pick, outside click or
+// Escape. Styles: workadmin.css.js (.wka-menu*).
+export function ActionMenu({ label, items, disabled }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+  useEffect(() => {
+    if (!open) return undefined
+    const onDoc = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    const onKey = (e) => { if (e.key === 'Escape') setOpen(false) }
+    document.addEventListener('mousedown', onDoc); document.addEventListener('keydown', onKey)
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey) }
+  }, [open])
+  const list = (items || []).filter(Boolean)
+  if (!list.length) return null
+  return (
+    <span className="wka-menu-wrap" ref={ref}>
+      <button type="button" className="wka-btn sm ghost" aria-haspopup="menu" aria-expanded={open} disabled={disabled} onClick={() => setOpen((v) => !v)} title={label}>
+        <MoreHorizontal size={14} /> {label}
+      </button>
+      {open && (
+        <div className="wka-menu" role="menu">
+          {list.map((it) => (
+            <button key={it.key} type="button" role="menuitem" className={it.tone || ''} disabled={it.disabled} title={it.title} onClick={() => { setOpen(false); it.onPick && it.onPick() }}>
+              {it.icon}{it.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </span>
+  )
 }
 
 export function SavedTag({ show }) {

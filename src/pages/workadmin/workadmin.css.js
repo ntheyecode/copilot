@@ -6,53 +6,58 @@
 // body) are self-hosted and loaded globally in src/main.jsx, so no runtime
 // Google Fonts link is injected. This hook is kept as a no-op for its callers.
 export function ensureWorkAdminFonts() { /* fonts loaded globally in src/main.jsx */ }
+import { WD_TOKENS_CSS } from '../work/tokens.css.js'
 
-// THEME TOKENS - one token set per dashboard, scoped by a class on the .wka
-// root, so each console is styled independently and nothing bleeds across:
-//   .wka             -> base surfaces + semantic colours (shared structure)
-//   .wka (default)   -> COMPANY-ADMIN theme: brand green accent (#0e9f6e)
-//   .wka.wka-super   -> SUPERADMIN theme: deep brand blue accent (#0a84c2),
-//                       a brand gradient rule on the top bar and a cool-tinted
-//                       nav, so the operator console reads as its own surface
-//                       while staying inside the WorkCoPilot palette.
+// THEME TOKENS - the console's --wka-* set DERIVES from the in-product design
+// tokens (src/pages/work/tokens.css.js, prepended below; the root carries the
+// `wd-tokens` class), so the consoles share the dashboard's palette, brand
+// combination, Light / Dark / Heavy modes and accessibility overrides from ONE
+// source (SUPREME II). Scoping by a class on the .wka root:
+//   .wka             -> base surfaces + semantic colors (shared structure)
+//   .wka (default)   -> COMPANY-ADMIN theme: the primary (green) accent
+//   .wka.wka-super   -> SUPERADMIN theme: the secondary (blue) accent, so the
+//                       operator console reads as its own surface while staying
+//                       inside the same palette.
 // All component rules below reference ONLY these tokens (no accent literals),
 // so re-theming a dashboard is a token change, never a rule hunt.
-export const WORKADMIN_CSS = `
+export const WORKADMIN_CSS = WD_TOKENS_CSS + `
 .wka, .wka * { box-sizing: border-box; }
 .wka {
-  --wka-bg: #f6f8fb;
-  --wka-bg-2: #f6f9fc;
-  --wka-panel: #ffffff;
-  --wka-panel-2: #f7f9fc;
-  --wka-line: #e6e9ef;
-  --wka-line-2: #dfe3ea;
-  --wka-text: #111726;
-  --wka-muted: #3c4257;
-  --wka-faint: #7d8799;
-  --wka-emerald: #0e9f6e;
-  --wka-amber: #b5790f;
-  --wka-red: #c0392b;
-  --wka-radius: 12px;
-  --wka-font-body: Figtree, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  --wka-font-head: "Bricolage Grotesque", Figtree, Inter, ui-sans-serif, system-ui, sans-serif;
+  --wka-bg: var(--bg);
+  --wka-bg-2: var(--panel-2);
+  --wka-panel: var(--panel);
+  --wka-panel-2: var(--panel-3);
+  --wka-line: var(--line-soft);
+  --wka-line-2: var(--line);
+  --wka-text: var(--tx);
+  --wka-muted: var(--mut);
+  --wka-faint: var(--faint);
+  --wka-emerald: var(--em);
+  --wka-amber: var(--warm);
+  --wka-red: var(--danger);
+  --wka-radius: var(--r);
+  --wka-font-body: var(--wd-body);
+  --wka-font-head: var(--wd-display);
+  /* Soft category tints + the one filled button face, from the same source. */
+  --wka-tint-green: var(--tint-green); --wka-tint-green-ink: var(--tint-green-ink);
+  --wka-tint-blue: var(--tint-blue); --wka-tint-blue-ink: var(--tint-blue-ink);
+  --wka-tint-amber: var(--tint-amber); --wka-tint-amber-ink: var(--tint-amber-ink);
+  --wka-tint-neutral: var(--tint-neutral); --wka-tint-neutral-ink: var(--tint-neutral-ink);
+  --wka-danger-fill: var(--danger-fill);
+  --wka-solid: var(--em-solid); --wka-on-solid: var(--on-solid);
+  --wka-sh-3: var(--sh-3);
 
-  /* Company-admin theme (default): brand green. Every accent token DERIVES from
-     the per-user --accent vars (src/theme/accent.js sets them on :root when the
-     user picks an accent) with this console's own color as the fallback - so with
-     no user choice the console is exactly as designed, and a user choice recolors
-     it live. Single source: never hardcode an accent literal below this block. */
-  --wka-accent: var(--accent, #0e9f6e);
-  --wka-accent-dark: var(--accent-dark, #0b7f58);
-  --wka-accent-ink: var(--accent-ink, #085e41);
-  --wka-accent-soft: var(--accent-soft, rgba(14,159,110,0.10));
-  --wka-accent-line: var(--accent-line, rgba(14,159,110,0.35));
-  --wka-accent-shadow: var(--accent-shadow, rgba(14,159,110,0.25));
-  /* White, minimal left rail (owner design law: white everywhere in-product).
-     The nav is pure white with a hairline divider; hover is a quiet neutral
-     wash, active is the quiet accent (green here, blue under .wka-super). */
-  --wka-nav-bg: #ffffff;
-  --wka-nav-hover: #f2f4f7;
-  --wka-top-rule: linear-gradient(90deg, #0e9f6e, #0a84c2);
+  /* Company-admin theme (default): the primary accent. */
+  --wka-accent: var(--em);
+  --wka-accent-dark: var(--em-deep);
+  --wka-accent-ink: var(--em-deep);
+  --wka-accent-soft: var(--em-fill);
+  --wka-accent-line: var(--em-line);
+  --wka-accent-shadow: transparent;
+  /* The left rail is the panel face with a hairline; hover is a quiet neutral
+     wash, active is the soft accent fill (green here, blue under .wka-super). */
+  --wka-nav-bg: var(--panel);
+  --wka-nav-hover: var(--line-soft);
   --wka-cyan: var(--wka-accent);   /* legacy alias: every interactive ref adopts the dashboard accent */
 
   position: fixed;
@@ -67,27 +72,21 @@ export const WORKADMIN_CSS = `
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
-/* Superadmin theme: deep brand blue - distinct from the green company console,
-   harmonious with the brand (#0a84c2 is the site's cyan/blue). */
+/* Superadmin theme: the SECONDARY brand color (blue by default), distinct from
+   the company console's primary, from the same combination. */
 .wka.wka-super {
-  /* Blue by default; a user-picked accent (--accent) wins here too. */
-  --wka-accent: var(--accent, #0a84c2);
-  --wka-accent-dark: var(--accent-dark, #086b9e);
-  --wka-accent-ink: var(--accent-ink, #0b4f73);
-  --wka-accent-soft: var(--accent-soft, rgba(10,132,194,0.10));
-  --wka-accent-line: var(--accent-line, rgba(10,132,194,0.35));
-  --wka-accent-shadow: var(--accent-shadow, rgba(10,132,194,0.25));
-  /* Superadmin stays on a WHITE surface too - only the accent differs (brand
-     blue vs the company console's green), so the two dashboards read as the
-     same minimal white product with distinct accents, never a dark shell. */
-  --wka-bg: #f6f8fb;
-  --wka-nav-bg: #ffffff;
-  --wka-nav-hover: #f2f4f7;
-  --wka-top-rule: linear-gradient(90deg, #0a84c2, #0e9f6e);
+  --wka-accent: var(--em-2);
+  --wka-accent-dark: var(--em-2-deep);
+  --wka-accent-ink: var(--em-2-deep);
+  --wka-accent-soft: var(--tint-blue);
+  --wka-accent-line: var(--info-line);
+  --wka-solid: var(--em-2);
+  --wka-tint-green: var(--tint-blue); --wka-tint-green-ink: var(--tint-blue-ink);
 }
 .wka.wka-super .wka-brand span { color: var(--wka-accent-dark); }
 
-/* Top bar */
+/* Top bar: one calm strip on the panel face with a hairline (no gradient
+   rule); the chips are ghost pills. */
 .wka-top {
   display: flex; align-items: center; gap: 16px;
   padding: 14px 24px;
@@ -95,22 +94,19 @@ export const WORKADMIN_CSS = `
   background: var(--wka-panel);
   position: relative;
 }
-/* Brand rule: a 3px gradient across the top of the console. Token-driven so
-   each dashboard carries its own direction/colour pair. */
-.wka-top::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 3px; background: var(--wka-top-rule); }
 .wka-brand { display: flex; flex-direction: column; gap: 2px; }
-.wka-brand b { font-family: var(--wka-font-head); font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
-.wka-brand span { font-size: 11px; color: var(--wka-muted); text-transform: uppercase; letter-spacing: 1.4px; font-weight: 600; }
-.wka-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--wka-emerald); box-shadow: 0 0 12px var(--wka-emerald); }
-.wka-top-right { margin-left: auto; display: flex; align-items: center; gap: 12px; color: var(--wka-muted); font-size: 12px; }
+.wka-brand b { font-family: var(--wka-font-head); font-size: calc(16px * var(--wc-fs, 1)); font-weight: 700; letter-spacing: -0.2px; }
+.wka-brand span { font-size: calc(11px * var(--wc-fs, 1)); color: var(--wka-muted); font-weight: 600; }
+.wka-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--wka-emerald); }
+.wka-top-right { margin-left: auto; display: flex; align-items: center; gap: 8px; color: var(--wka-muted); font-size: 12px; }
 .wka-chip {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 5px 10px; border-radius: 999px;
-  border: 1px solid var(--wka-line-2); background: var(--wka-panel-2);
-  font-size: 11px; color: var(--wka-text); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 6px; flex-shrink: 0;
+  height: 28px; padding: 0 11px; border-radius: 999px;
+  border: 1px solid transparent; background: var(--wka-tint-neutral);
+  font-size: calc(12px * var(--wc-fs, 1)); font-weight: 600; color: var(--wka-tint-neutral-ink); white-space: nowrap;
 }
-.wka-chip.ok { border-color: color-mix(in srgb, var(--wka-emerald) 40%, transparent); color: var(--wka-emerald); background: color-mix(in srgb, var(--wka-emerald) 8%, transparent); font-weight: 600; }
-.wka-chip.warn { border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); color: var(--wka-amber); }
+.wka-chip.ok { color: var(--wka-tint-green-ink); background: var(--wka-tint-green); }
+.wka-chip.warn { color: var(--wka-tint-amber-ink); background: var(--wka-tint-amber); }
 
 /* Body split */
 .wka-body { flex: 1; display: flex; min-height: 0; }
@@ -147,7 +143,6 @@ export const WORKADMIN_CSS = `
 .wka-nav-item.active {
   background: var(--wka-accent-soft);
   color: var(--wka-accent-ink); border-color: transparent; font-weight: 600;
-  box-shadow: inset 3px 0 0 var(--wka-accent);
 }
 .wka-nav-item.active svg { color: var(--wka-accent); }
 .wka-nav-foot { margin-top: auto; font-size: 11px; color: var(--wka-faint); padding: 10px 13px; }
@@ -156,27 +151,29 @@ export const WORKADMIN_CSS = `
 .wka-h1 { font-family: var(--wka-font-head); font-size: 23px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.3px; color: var(--wka-text); }
 .wka-sub { color: var(--wka-muted); margin: 0 0 22px; font-size: 13px; }
 
-/* Cards */
+/* Stat tiles: the dashboard's tinted, borderless tile recipe (depth from tint
+   and whitespace, not shadow). Neutral by default; .accent is the brand tint. */
 .wka-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 26px; }
 .wka-card {
-  background: var(--wka-panel);
-  border: 1px solid var(--wka-line); border-radius: var(--wka-radius);
+  background: var(--wka-tint-neutral);
+  border: 1px solid transparent; border-radius: var(--wka-radius);
   padding: 18px 18px 16px;
-  box-shadow: 0 1px 2px rgba(26,31,54,0.05), 0 8px 22px -14px rgba(26,31,54,0.16);
+  box-shadow: none; min-width: 0;
 }
-.wka-card .k { font-size: 12px; color: var(--wka-muted); display: flex; align-items: center; gap: 8px; }
-.wka-card .k svg { color: var(--wka-accent); }
-.wka-card .v { font-family: var(--wka-font-head); font-size: 28px; font-weight: 700; margin-top: 10px; letter-spacing: -0.5px; }
-.wka-card .foot { font-size: 11px; color: var(--wka-faint); margin-top: 6px; }
-.wka-card.accent { border-color: var(--wka-accent-line); background: linear-gradient(180deg, var(--wka-accent-soft), var(--wka-panel) 70%); }
-.wka-card.accent .v { color: var(--wka-accent-dark); }
+.wka-card .k { font-size: calc(12.5px * var(--wc-fs, 1)); color: var(--wka-muted); display: flex; align-items: center; gap: 8px; }
+.wka-card .k svg { color: var(--wka-accent); flex-shrink: 0; }
+.wka-card .v { font-family: var(--wka-font-head); font-size: calc(28px * var(--wc-fs, 1)); font-weight: 700; margin-top: 10px; letter-spacing: -0.5px; }
+.wka-card .foot { font-size: calc(11.5px * var(--wc-fs, 1)); color: var(--wka-faint); margin-top: 6px; }
+.wka-card.accent { background: var(--wka-tint-green); }
+.wka-card.accent .v { color: var(--wka-tint-green-ink); }
+.wka-card.accent .k svg { color: var(--wka-tint-green-ink); }
 
-/* Panels */
+/* Panels: the white hairline card (no gradient, no shadow). */
 .wka-panel {
-  background: linear-gradient(180deg, var(--wka-accent-soft), var(--wka-panel) 76px);
+  background: var(--wka-panel);
   border: 1px solid var(--wka-line);
   border-radius: var(--wka-radius); padding: 22px; margin-bottom: 20px;
-  box-shadow: 0 1px 2px rgba(26,31,54,0.04), 0 12px 30px -18px rgba(26,31,54,0.17);
+  box-shadow: none;
 }
 .wka-panel h2 { font-family: var(--wka-font-head); font-size: 15.5px; margin: 0 0 5px; font-weight: 700; letter-spacing: -0.1px; color: var(--wka-text); }
 .wka-panel .desc { color: var(--wka-muted); font-size: 12px; margin: 0 0 16px; }
@@ -194,71 +191,102 @@ export const WORKADMIN_CSS = `
 .wka-input:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-search { flex: 1; min-width: 180px; max-width: 360px; }
 
-.wka-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--wka-line); border-radius: 12px; background: var(--wka-panel); box-shadow: 0 1px 2px rgba(26,31,54,0.04), 0 10px 26px -16px rgba(26,31,54,0.15); }
-table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 640px; }
+.wka-table-wrap { max-width: 100%; overflow-x: auto; border: 1px solid var(--wka-line); border-radius: var(--wka-radius); background: var(--wka-panel); box-shadow: none; }
+table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px * var(--wc-fs, 1)); min-width: 640px; }
 .wka-table th {
-  text-align: left; padding: 10px 14px; color: var(--wka-faint); font-weight: 600;
-  font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px;
+  text-align: left; padding: 10px 14px; color: var(--wka-muted); font-weight: 600;
+  font-size: calc(12px * var(--wc-fs, 1));
   background: var(--wka-panel-2); border-bottom: 1px solid var(--wka-line);
   white-space: nowrap; cursor: pointer; user-select: none;
 }
 .wka-table th.no-sort { cursor: default; }
 .wka-table th .arrow { color: var(--wka-accent); margin-left: 5px; }
-.wka-table td { padding: 11px 14px; border-bottom: 1px solid var(--wka-line); vertical-align: middle; }
+.wka-table td { padding: 9px 14px; border-bottom: 1px solid var(--wka-line); vertical-align: middle; }
 .wka-table tr:last-child td { border-bottom: none; }
 .wka-table tbody tr:hover { background: var(--wka-panel-2); }
 .wka-mono { font-variant-numeric: tabular-nums; }
+/* A compact row: one line of controls, never a stack. The cell's inline
+   controls stay nowrap; the rest of a row's actions live behind one "More"
+   menu (ActionMenu in sections/_shared.jsx), so a row is as tall as a pill. */
+.wka-row-acts { display: inline-flex; gap: 6px; align-items: center; white-space: nowrap; }
+.wka-cell-main { font-weight: 600; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.wka-cell-sub { font-size: calc(11.5px * var(--wc-fs, 1)); color: var(--wka-faint); white-space: nowrap; }
+.wka-cell-msg { font-size: calc(11.5px * var(--wc-fs, 1)); margin-top: 3px; }
+.wka-cell-msg.ok { color: var(--wka-emerald); }
+.wka-cell-msg.err { color: var(--wka-red); }
+.wka-cell-faint { color: var(--wka-faint); font-size: calc(12.5px * var(--wc-fs, 1)); }
+.wka-cell-amber { color: var(--wka-amber); }
+.wka-cell-emerald { color: var(--wka-emerald); }
+.wka-cell-red { color: var(--wka-red); }
+.wka-inline { display: inline-flex; gap: 6px; align-items: center; }
+.wka-inline.wrap { flex-wrap: wrap; }
+.wka-inline svg { flex-shrink: 0; }
 
-/* Badges */
+/* Action menu: one ghost "More" trigger, a popover on the sh-3 shadow. */
+.wka-menu-wrap { position: relative; display: inline-flex; }
+.wka-menu { position: absolute; right: 0; top: calc(100% + 4px); z-index: 20; min-width: 200px; background: var(--wka-panel); border: 1px solid var(--wka-line); border-radius: var(--wka-radius); box-shadow: var(--wka-sh-3); padding: 6px; display: flex; flex-direction: column; gap: 2px; }
+.wka-menu button { display: flex; align-items: center; gap: 9px; width: 100%; padding: 8px 10px; border: none; background: none; border-radius: 8px; color: var(--wka-text); font: inherit; font-size: calc(13px * var(--wc-fs, 1)); font-weight: 500; cursor: pointer; text-align: left; white-space: nowrap; }
+.wka-menu button:hover:not(:disabled) { background: var(--wka-nav-hover); }
+.wka-menu button:disabled { opacity: 0.45; cursor: not-allowed; }
+.wka-menu button svg { flex-shrink: 0; color: var(--wka-muted); }
+.wka-menu button.danger { color: var(--wka-red); }
+.wka-menu button.danger svg { color: var(--wka-red); }
+.wka-menu button.emerald { color: var(--wka-emerald); }
+
+/* Badges: tinted pills, no outline. */
 .wka-badge {
-  display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px;
-  font-size: 11px; font-weight: 600; border: 1px solid var(--wka-line-2); white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 9px; border-radius: 999px;
+  font-size: calc(11.5px * var(--wc-fs, 1)); font-weight: 600; border: 1px solid transparent; white-space: nowrap; line-height: 1;
+  background: var(--wka-tint-neutral); color: var(--wka-tint-neutral-ink);
 }
-.wka-badge.basic { color: var(--wka-muted); }
-.wka-badge.advanced { color: var(--wka-accent-dark); border-color: var(--wka-accent-line); }
-.wka-badge.premium { color: var(--wka-emerald); border-color: color-mix(in srgb, var(--wka-emerald) 40%, transparent); }
-.wka-badge.active { color: var(--wka-emerald); border-color: color-mix(in srgb, var(--wka-emerald) 40%, transparent); }
+.wka-badge.basic { color: var(--wka-tint-neutral-ink); }
+.wka-badge.advanced { color: var(--wka-tint-blue-ink); background: var(--wka-tint-blue); }
+.wka-badge.premium { color: var(--wka-tint-green-ink); background: var(--wka-tint-green); }
+.wka-badge.active { color: var(--wka-tint-green-ink); background: var(--wka-tint-green); }
 .wka-badge.ended { color: var(--wka-faint); }
-.wka-badge.paused { color: var(--wka-amber); border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); }
-.wka-badge.exhausted { color: var(--wka-red); border-color: color-mix(in srgb, var(--wka-red) 40%, transparent); }
+.wka-badge.paused { color: var(--wka-tint-amber-ink); background: var(--wka-tint-amber); }
+.wka-badge.exhausted { color: var(--wka-red); background: var(--wka-danger-fill); }
 /* Account / subscription status pills - single source so no section hand-rolls a
-   red/amber literal (replaces the inline #f6dcd9/#c0392b disabled badges). */
-.wka-badge.disabled { color: var(--wka-red); border-color: color-mix(in srgb, var(--wka-red) 40%, transparent); background: color-mix(in srgb, var(--wka-red) 8%, transparent); }
-.wka-badge.trialing { color: var(--wka-amber); border-color: color-mix(in srgb, var(--wka-amber) 40%, transparent); }
-.wka-badge.past_due { color: var(--wka-red); border-color: color-mix(in srgb, var(--wka-red) 40%, transparent); }
+   red/amber literal. */
+.wka-badge.disabled { color: var(--wka-red); background: var(--wka-danger-fill); }
+.wka-badge.trialing { color: var(--wka-tint-amber-ink); background: var(--wka-tint-amber); }
+.wka-badge.past_due { color: var(--wka-red); background: var(--wka-danger-fill); }
 .wka-badge.canceled { color: var(--wka-faint); }
-.wka-badge.comp { color: var(--wka-accent-dark); border-color: var(--wka-accent-line); }
+.wka-badge.comp { color: var(--wka-tint-blue-ink); background: var(--wka-tint-blue); }
 
 /* Controls */
 .wka-select {
-  background: var(--wka-bg); border: 1px solid var(--wka-line-2); color: var(--wka-text);
-  border-radius: 9px; padding: 7px 9px; font-size: 12px; outline: none; cursor: pointer;
+  background: var(--wka-panel); border: 1px solid var(--wka-line-2); color: var(--wka-text);
+  border-radius: 9px; padding: 6px 9px; font-size: calc(12.5px * var(--wc-fs, 1)); outline: none; cursor: pointer;
 }
 .wka-select:focus { border-color: var(--wka-accent); box-shadow: 0 0 0 3px var(--wka-accent-soft); }
 .wka-select:disabled { opacity: 0.5; cursor: not-allowed; }
+/* Buttons: ghost pills (border only), one filled primary on the white-text-safe
+   solid, the danger one filled red. */
 .wka-btn {
   display: inline-flex; align-items: center; gap: 7px; cursor: pointer;
-  border: 1px solid var(--wka-line-2); background: var(--wka-panel-2); color: var(--wka-text);
-  border-radius: 10px; padding: 9px 15px; font-size: 13px; font-weight: 550;
-  white-space: nowrap; flex-shrink: 0;
+  border: 1px solid var(--wka-line-2); background: var(--wka-panel); color: var(--wka-text);
+  border-radius: 999px; height: 36px; padding: 0 15px; font-size: calc(13px * var(--wc-fs, 1)); font-weight: 600;
+  white-space: nowrap; flex-shrink: 0; text-decoration: none; transition: background .15s, border-color .15s, color .15s;
 }
-.wka-btn:hover:not(:disabled) { border-color: var(--wka-accent); color: var(--wka-accent-dark); }
+.wka-btn:hover:not(:disabled) { background: var(--wka-nav-hover); border-color: var(--wka-line-2); color: var(--wka-text); }
 .wka-btn:disabled { opacity: 0.45; cursor: not-allowed; }
 .wka-btn.primary {
-  background: var(--wka-accent);
-  color: #ffffff; border: 1px solid var(--wka-accent); font-weight: 600;
-  box-shadow: 0 1px 2px var(--wka-accent-shadow);
+  background: var(--wka-solid);
+  color: var(--wka-on-solid); border: 1px solid var(--wka-solid); font-weight: 600;
+  box-shadow: none;
 }
 .wka-btn:focus-visible { outline: 2px solid var(--wka-accent); outline-offset: 2px; }
-.wka-btn.primary:hover:not(:disabled) { background: var(--wka-accent-dark); border-color: var(--wka-accent-dark); color: #fff; }
-.wka-btn.ghost { background: transparent; }
+.wka-btn.primary:hover:not(:disabled) { filter: brightness(1.06); background: var(--wka-solid); border-color: var(--wka-solid); color: var(--wka-on-solid); }
+.wka-btn.ghost { background: transparent; border-color: transparent; }
+.wka-btn.ghost:hover:not(:disabled) { background: var(--wka-nav-hover); border-color: transparent; }
 .wka-btn.danger {
   background: var(--wka-red);
-  color: #ffffff; border: 1px solid var(--wka-red); font-weight: 600;
-  box-shadow: 0 1px 2px rgba(192,57,43,0.25);
+  color: var(--wka-on-solid); border: 1px solid var(--wka-red); font-weight: 600;
+  box-shadow: none;
 }
-.wka-btn.danger:hover:not(:disabled) { background: #a5301f; border-color: #a5301f; color: #fff; }
-.wka-btn.sm { padding: 6px 11px; font-size: 12px; border-radius: 8px; }
+.wka-btn.danger:hover:not(:disabled) { filter: brightness(0.94); background: var(--wka-red); border-color: var(--wka-red); color: var(--wka-on-solid); }
+.wka-btn.sm { height: 28px; padding: 0 11px; font-size: calc(12px * var(--wc-fs, 1)); }
 
 /* Collapsible rule rows (PolicyRules): a list of multi-field items that render as
    compact one-line rows by default and expand on click to edit — the scannable
@@ -340,7 +368,7 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: 13px; min-w
 }
 .wka-toggle .track .knob {
   position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%;
-  background: #fff; transition: left 0.15s;
+  background: var(--wka-panel); transition: left 0.15s;
 }
 .wka-toggle.on .track { background: var(--wka-accent); }
 .wka-toggle.on .track .knob { left: 23px; }

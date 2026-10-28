@@ -192,7 +192,7 @@ export default function WorkAdmin() {
 
   if (gate === 'loading') {
     return (
-      <div className="wka wka-super">
+      <div className="wka wka-super wd-tokens">
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <Loader2 size={26} style={{ animation: 'wka-spin 0.8s linear infinite', color: 'var(--wka-accent)', marginBottom: 12 }} />
@@ -205,7 +205,7 @@ export default function WorkAdmin() {
 
   if (gate === 'denied') {
     return (
-      <div className="wka wka-super">
+      <div className="wka wka-super wd-tokens">
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <ShieldAlert size={30} />
@@ -218,7 +218,7 @@ export default function WorkAdmin() {
 
   if (gate === 'error') {
     return (
-      <div className="wka wka-super">
+      <div className="wka wka-super wd-tokens">
         <style>{WORKADMIN_CSS}</style>
         <div className="wka-gate"><div className="box">
           <ShieldAlert size={30} style={{ color: 'var(--wka-red)' }} />
@@ -231,7 +231,7 @@ export default function WorkAdmin() {
   }
 
   return (
-    <div className="wka wka-super">
+    <div className="wka wka-super wd-tokens">
       <style>{WORKADMIN_CSS}{WA_CSS}</style>
 
       <header className="wka-top">
