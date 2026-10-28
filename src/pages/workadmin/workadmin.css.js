@@ -323,6 +323,25 @@ table.wka-table { width: 100%; border-collapse: collapse; font-size: calc(13px *
   .wka-rule-cite { order: 10; flex-basis: 100%; max-width: 100%; padding-left: 24px; }
 }
 
+/* Knowledge spaces (sections/KbSpaces.jsx): one row per space. The name is
+   the only flexible column (it truncates); the count badge and the row actions
+   stay nowrap. At phone width the actions drop to their own line under the
+   name, flush with it, never past the edge. */
+.wka-kbs-add { margin-bottom: 14px; }
+.wka-kbs-add .wka-kbs-name { flex: 1 1 220px; min-width: 0; max-width: 420px; }
+.wka-kbs-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wka-kbs-row {
+  display: flex; align-items: center; gap: 10px; min-width: 0; flex-wrap: wrap;
+  padding: 9px 12px; border: 1px solid var(--wka-line); border-radius: 10px; background: var(--wka-panel);
+}
+.wka-kbs-ic { width: 28px; height: 28px; border-radius: 8px; display: inline-grid; place-items: center; flex-shrink: 0; background: var(--wka-tint-green); color: var(--wka-tint-green-ink); }
+.wka-kbs-nm { flex: 1 1 120px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; font-size: calc(13.5px * var(--wc-fs, 1)); }
+.wka-kbs-edit { flex: 1 1 160px; min-width: 0; padding: 6px 10px; font-size: calc(13px * var(--wc-fs, 1)); }
+.wka-kbs-row .wka-row-acts { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 640px) {
+  .wka-kbs-row .wka-row-acts { flex-basis: 100%; margin-left: 0; padding-left: 38px; }
+}
+
 /* Forms */
 .wka-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
 .wka-field { display: flex; flex-direction: column; gap: 6px; }

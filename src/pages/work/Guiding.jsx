@@ -1359,8 +1359,12 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       // injected into the plan for this call only (never stored on the server).
       let docsText = ''
       try { if (window.workDesktop) docsText = sessionStorage.getItem('wd_docs_' + sessionId) || '' } catch { /* ignore */ }
+      // The knowledge space picked on the Start page (StartTask.SPACE_KEY): the
+      // server grounds the plan in that collection; absent = all knowledge.
+      let space = ''
+      try { space = sessionStorage.getItem('wd_space_' + sessionId) || '' } catch { /* ignore */ }
       const r = await waitFor(
-        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, level, ...(docsText ? { docsText } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
+        api.workPlan(sessionId, { goal: goal.trim(), frame, mode, level, ...(docsText ? { docsText } : {}), ...(space ? { space } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
         'Planning is taking longer than expected. Press Plan the steps to try again.')
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       // Company-policy findings on the plan surface immediately as cited flags, so

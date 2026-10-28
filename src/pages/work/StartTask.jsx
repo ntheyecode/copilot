@@ -192,6 +192,12 @@ import { clean } from '../../scrub.js'
 import { useWorkApp } from './WorkAppContext.jsx'
 import { useT } from '../../i18n/index.jsx'
 import { WIZ_CSS } from './wizard.css.js'
+import KbSpacePicker, { spaceSummary, cachedSpaces } from './KbSpacePicker.jsx'
+
+// Per-session hand-off of the chosen knowledge space to the guiding console
+// (Guiding.plan reads it into the /plan body as `space`), the same mechanism as
+// the on-device documents stash (wd_docs_<id>). Tab-scoped; absent = all knowledge.
+export const SPACE_KEY = (sessionId) => 'wd_space_' + sessionId
 
 function tierRank(t) { const m = { lite: 0, basic: 1, advanced: 2, premium: 3 }; return m[t] != null ? m[t] : 1 }
 
@@ -425,6 +431,8 @@ export default function StartTask() {
   // Documents (step 2)
   const [docsChoice, setDocsChoice] = useState((draft && draft.docsChoice) || '')   // use | skip
   const [deskDocs, setDeskDocs] = useState([])
+  // Knowledge space to ground the plan in ('' = all knowledge; optional, parked).
+  const [space, setSpace] = useState((draft && typeof draft.space === 'string') ? draft.space : '')
   // Goal (step 3)
   const [planTitle, setPlanTitle] = useState((draft && draft.planTitle) || '')
   const [goal, setGoal] = useState((draft && draft.goal) || '')
@@ -456,9 +464,9 @@ export default function StartTask() {
   // Park the draft on every change (the goal, the interview, the depth and the
   // answers). An untouched wizard stores nothing.
   useEffect(() => {
-    const touched = !!(place || appName || appUrl || otherText || docsChoice || planTitle || goal || depth || answers.length)
-    writeDraft(touched ? { step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers } : null)
-  }, [step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers])
+    const touched = !!(place || appName || appUrl || otherText || docsChoice || planTitle || goal || depth || answers.length || space)
+    writeDraft(touched ? { step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers, space } : null)
+  }, [step, place, appName, appUrl, otherText, docsChoice, planTitle, goal, depth, answers, space])
 
   // Where AI setup happens for THIS person: platform admins in the admin
   // console, company admins in the company console, personal accounts in the
@@ -592,6 +600,8 @@ export default function StartTask() {
       if (window.workDesktop && deskDocs.length) {
         try { sessionStorage.setItem('wd_docs_' + r.session.id, deskDocs.map((d) => `# ${d.name}\n${d.text}`).join('\n\n').slice(0, 8000)) } catch { /* ignore */ }
       }
+      // The chosen knowledge space rides along the same way (every host).
+      try { if (space) sessionStorage.setItem(SPACE_KEY(r.session.id), space); else sessionStorage.removeItem(SPACE_KEY(r.session.id)) } catch { /* ignore */ }
       writeDraft(null)   // the plan exists now; the parked draft has done its job
       showGuard(r.guard)
       onOpen(r.session.id, r.guard)
@@ -607,10 +617,11 @@ export default function StartTask() {
     return t('workStart.sumUnset')
   }
   const docsSummary = () => {
-    if (deskDocs.length === 1) return t('workStart.docsOne')
-    if (deskDocs.length > 1) return t('workStart.docsMany', { n: deskDocs.length })
-    if (docsChoice === 'use') return t('workStart.docsAttached')
-    return t('workStart.docsNone')
+    const base = deskDocs.length === 1 ? t('workStart.docsOne')
+      : deskDocs.length > 1 ? t('workStart.docsMany', { n: deskDocs.length })
+        : docsChoice === 'use' ? t('workStart.docsAttached') : t('workStart.docsNone')
+    // A picked knowledge space is named next to the documents; "all" stays quiet.
+    return space && cachedSpaces().length ? `${base} · ${spaceSummary(t, cachedSpaces(), space)}` : base
   }
   const answerFor = (id) => { const a = answers.find((x) => x.id === id); return a ? a.a : null }
   const labelForValue = (list, v) => { const o = list.find((x) => x.v === v); return o ? t('workStart.' + o.l) : v }
@@ -735,7 +746,12 @@ export default function StartTask() {
           <div className="wd-wz-panel" key="docs">
             <div className="wd-coach-q wd-wiz-reveal">{t('workStart.docsQ')}</div>
             <div className="wd-coach-sub wd-wiz-reveal" style={{ '--d': '40ms' }}>{t('workStart.docsSub')}</div>
-            <div className="wd-coach-docswrap wd-wiz-reveal" style={{ '--d': '80ms' }}><DocsAttach tier={tier} onDesktopDocs={setDeskDocs} t={t} /></div>
+            <div className="wd-coach-docswrap wd-wiz-reveal" style={{ '--d': '80ms' }}>
+              <DocsAttach tier={tier} onDesktopDocs={setDeskDocs} t={t} />
+              {/* Optional: which company knowledge grounds the plan. Renders
+                  nothing when the company has no spaces. */}
+              <KbSpacePicker value={space} onChange={setSpace} />
+            </div>
             <div className="wd-coach-choices wd-wiz-reveal" style={{ '--d': '120ms' }}>
               <button type="button" className={`wd-coach-choice primary${docsChoice === 'use' ? ' on' : ''}`} onClick={() => { setDocsChoice('use'); setStep('goal') }}><FileText size={15} /> {t('workStart.docsUse')}</button>
               <button type="button" className="wd-coach-choice" onClick={() => { setDocsChoice('skip'); setStep('goal') }}>{t('workStart.docsSkip')}</button>

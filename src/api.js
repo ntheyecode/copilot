@@ -212,6 +212,26 @@ export const api = {
   workGrcRisks: () => req('GET', '/api/work/grc/risks'),
   workGrcStats: () => req('GET', '/api/work/grc/stats'),
   workGrcLog: (projectId, limit) => req('GET', `/api/work/grc/log${projectId || limit ? `?${[projectId ? `project=${encodeURIComponent(projectId)}` : '', limit ? `limit=${Number(limit)}` : ''].filter(Boolean).join('&')}` : ''}`),
+  // Project templates (team projects, Model B): a template is a planned task map
+  // a PM / Sr PM / company admin assigns to many people, each getting their own
+  // project. GRC reads the list + roll-up. The roll-up is PROGRESS ONLY (never
+  // evidence); the server decides who may call what.
+  //   create -> { template } | { refusal } | 422 { singleTask } | 422 { errors }
+  workTemplates: () => req('GET', '/api/work/templates'),
+  workTemplateCreate: (body) => req('POST', '/api/work/templates', { ...(body || {}), ...(body && body.goal != null ? { goal: clean(body.goal) } : {}), ...(body && body.name ? { name: clean(body.name) } : {}) }),
+  // -> { assigned: [{ userId, projectId }], skipped: [{ userId, reason }] }
+  workTemplateAssign: (id, userIds) => req('POST', `/api/work/templates/${encodeURIComponent(id)}/assign`, { userIds: Array.isArray(userIds) ? userIds : [] }),
+  workTemplateRollup: (id) => req('GET', `/api/work/templates/${encodeURIComponent(id)}/rollup`),
+  // Knowledge spaces: pickable collections of the company's learnings. Every
+  // member reads the list (the Start picker); a company admin manages them. A
+  // space id goes into the /plan body as `space`; absent = all knowledge.
+  workKbSpaces: () => req('GET', '/api/work/kb-spaces'),
+  workCompanyKbSpaces: () => req('GET', '/api/work/company/kb-spaces'),
+  workCompanyKbSpaceCreate: (name) => req('POST', '/api/work/company/kb-spaces', { name: clean(name || '') }),
+  workCompanyKbSpaceRename: (id, name) => req('PATCH', `/api/work/company/kb-spaces/${encodeURIComponent(id)}`, { name: clean(name || '') }),
+  // Removing a space ungroups its learnings (server rule); the reason is logged.
+  workCompanyKbSpaceDelete: (id, reason) => req('DELETE', `/api/work/company/kb-spaces/${encodeURIComponent(id)}`, { reason: clean(reason || '') }),
+  workCompanyLearningSpace: (learningId, space) => req('POST', `/api/work/company/learnings/${encodeURIComponent(learningId)}/space`, { space: space || null }),
   // Company customers ("who the work is for"): the project picker reads the list;
   // the company console adds / renames / archives (Default is server-protected).
   workCompanyCustomers: () => req('GET', '/api/work/company/customers'),

@@ -60,6 +60,9 @@ const PmDashboard = lazy(() => import('./pages/work/pm/PmDashboard.jsx'))
 const PmProjectView = lazy(() => import('./pages/work/pm/PmProjectView.jsx'))
 const SrPmDashboard = lazy(() => import('./pages/work/pm/SrPmDashboard.jsx'))
 const GrcDashboard = lazy(() => import('./pages/work/pm/GrcDashboard.jsx'))
+// Project templates (Model B): the list + one template's progress roll-up.
+const TemplatesPage = lazy(() => import('./pages/work/pm/TemplatesPage.jsx'))
+const TemplateRollup = lazy(() => import('./pages/work/pm/TemplateRollup.jsx'))
 import { useAuth } from './auth.jsx'
 
 // main.jsx already wraps ThemeProvider + AuthProvider + BrowserRouter, so App
@@ -174,6 +177,8 @@ export default function App() {
           <Route path="pm/:id" element={<PmProjectView />} />
           <Route path="srpm" element={<SrPmDashboard />} />
           <Route path="grc" element={<GrcDashboard />} />
+          <Route path="templates" element={<TemplatesPage />} />
+          <Route path="templates/:id" element={<TemplateRollup />} />
           <Route path="session/:id" element={<Guiding />} />
         </Route>
         {/* Chrome-free buddy window the desktop shell loads (workcopilot/main.js). */}

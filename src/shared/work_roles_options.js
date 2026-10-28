@@ -90,6 +90,10 @@ export function roleViewOf(user) {
     showGrc: grc || srpm || admin,             // /work/grc  (oversight, read-only for GRC)
     canCreate: company && canCreateProject(role),
     canAssign: company && canAssignTask(role),
+    // Project templates (Model B): PM / Sr PM / admin manage them; GRC reads
+    // the list and the progress roll-up (the server gates the same way).
+    showTemplates: pm || admin || grc,          // /work/templates (+ /:id roll-up)
+    canManageTemplates: pm || admin,           // New template, Assign
     canReassignProject: company && canReassignProject(role),
     canAssignManager: company && canAssignProjectManager(role),
     seesAll: company && canSeeAllProjects(role),

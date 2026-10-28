@@ -79,6 +79,23 @@ export const WIZ_CSS = `
 .wd-wz-ans .q{color:var(--mut)}
 .wd-wz-ans .a{font-weight:600}
 
+/* Knowledge-space picker (KbSpacePicker.jsx) under the documents block: a
+   lead like the docs row, then pill options that wrap as WHOLE pills (never a
+   pill's text; a long space name ellipsizes inside its pill). The chosen pill
+   wears the brand tint; no outline, no glow. */
+.wd-wz-space{margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:9px;min-width:0}
+.wd-wz-space-lead{display:inline-flex;align-items:center;gap:7px;font-size:calc(13.5px*var(--wc-fs,1));font-weight:600;color:var(--tx-2);min-width:0;flex-wrap:wrap}
+.wd-wz-space-lead svg{color:var(--em-2);flex-shrink:0}
+.wd-wz-space-sub{color:var(--mut);font-weight:500;font-size:calc(12px*var(--wc-fs,1))}
+.wd-wz-space-opts{display:flex;align-items:center;gap:6px;flex-wrap:wrap;min-width:0}
+.wd-wz-space-opt{display:inline-flex;align-items:center;gap:6px;height:30px;max-width:100%;padding:0 11px;border-radius:var(--r-pill);border:1px solid var(--line);background:var(--panel);color:var(--tx-2);font:inherit;font-size:var(--fs-sm);font-weight:600;cursor:pointer;white-space:nowrap;flex-shrink:0;min-width:0;transition:background .15s,border-color .15s,color .15s}
+.wd-wz-space-opt:hover{border-color:var(--line-2);background:var(--line-soft)}
+.wd-wz-space-opt.on{background:var(--em-fill);border-color:var(--em-line);color:var(--em-deep)}
+.wd-wz-space-opt svg{flex-shrink:0}
+.wd-wz-space-opt .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+.wd-wz-space-opt b{font-weight:700;font-variant-numeric:tabular-nums;color:var(--mut);font-size:var(--fs-xs)}
+.wd-wz-space-opt.on b{color:var(--em-deep)}
+
 /* The research terminal sits flush in the panel (ScopeLoader renders the term +
    foot directly, no modal padding wrapper). */
 .wd-wz-research{display:flex;flex-direction:column;gap:2px}

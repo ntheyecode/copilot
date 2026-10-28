@@ -169,11 +169,39 @@ export const EP_CSS = `
 .wd-ep-modal-body{display:flex;flex-direction:column;gap:14px}
 .wd-ep-modal-body p{font-size:13.5px;color:var(--mut);line-height:1.55}
 
-@media(max-width:900px){.wd-ep-grid,.wd-ep-two{grid-template-columns:1fr}}
+/* ---- Project templates (TemplatesPage / AssignTemplate / TemplateRollup) ----
+   Cards reuse .wd-pj-card; the foot keeps Assign + Progress on one line and
+   wraps whole controls at phone width. The people checklist is its own
+   scroller (never the page); a row is one line, the name truncates. */
+.wd-ep-tiles.five{grid-template-columns:repeat(5,minmax(0,1fr))}
+.wd-ep-tpl-foot{flex-wrap:wrap;gap:8px 10px}
+.wd-ep-tpl-foot .wd-pj-card-open{margin-left:auto}
+.wd-ep-pick-tools{display:flex;align-items:center;gap:4px 8px;flex-wrap:wrap;font-size:12.5px;color:var(--mut);min-width:0}
+.wd-ep-pick-tools b{color:var(--tx);font-weight:700;font-variant-numeric:tabular-nums}
+.wd-ep-pick-tools .sp{flex:1 1 auto}
+.wd-ep-people-pick{display:flex;flex-direction:column;gap:2px;max-height:300px;overflow:auto;border:1px solid var(--line-soft);border-radius:var(--r);padding:6px;background:var(--panel)}
+.wd-ep-pick{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-xs);cursor:pointer;min-width:0;transition:background .15s}
+.wd-ep-pick:hover{background:var(--line-soft)}
+.wd-ep-pick.on{background:var(--em-fill)}
+.wd-ep-pick input{width:16px;height:16px;flex-shrink:0;margin:0;accent-color:var(--em)}
+.wd-ep-pick .nm{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:13.5px;color:var(--tx)}
+.wd-ep-pick small{color:var(--mut);font-size:11.5px;white-space:nowrap;flex-shrink:0}
+.wd-ep-who{display:flex;flex-wrap:wrap;gap:6px}
+/* Roll-up table (the control-log recipe): the progress column carries a bar +
+   percent, the name truncates in its column. */
+.wd-ep-runs{min-width:560px}
+.wd-ep-runs td.pct{min-width:170px;width:34%}
+.wd-ep-run-nm{display:block;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;color:var(--tx)}
+.wd-ep-runbar{display:flex;align-items:center;gap:10px;min-width:0}
+.wd-ep-runbar .wd-pj-bar{min-width:80px}
+.wd-ep-runbar b{font-size:12.5px;font-weight:700;color:var(--tx-2);font-variant-numeric:tabular-nums;white-space:nowrap;min-width:38px;text-align:right}
+
+@media(max-width:900px){.wd-ep-grid,.wd-ep-two{grid-template-columns:1fr}.wd-ep-tiles.five{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:640px){
  .wd-ep-head-act .full{display:none}
  .wd-ep-head-act .short{display:inline}
- .wd-ep-tiles{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wd-ep-tiles,.wd-ep-tiles.five{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .wd-ep-tpl-foot .wd-pj-card-open{margin-left:0}
  .wd-ep-task{flex-wrap:wrap}
  .wd-ep-task-acts{flex-basis:100%;justify-content:flex-start;padding-left:42px}
  .wd-ep-task-acts .wd-pj-select{max-width:100%;flex:1 1 140px}

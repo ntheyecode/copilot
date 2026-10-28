@@ -8,7 +8,7 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate } from 'lucide-react'
 import { roleViewOf } from '../../shared/work_roles_options.js'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
@@ -242,6 +242,7 @@ export default function WorkAppLayout() {
       if (roleView.showQueue) import('./pm/QueuePage.jsx')
       if (roleView.showPm) import('./pm/PmDashboard.jsx')
       if (roleView.showGrc) import('./pm/GrcDashboard.jsx')
+      if (roleView.showTemplates) import('./pm/TemplatesPage.jsx')
     }
     const idle = (typeof window !== 'undefined' && window.requestIdleCallback)
       ? window.requestIdleCallback(warm, { timeout: 1500 }) : setTimeout(warm, 400)
@@ -386,9 +387,9 @@ export default function WorkAppLayout() {
   // `workShell.nav.*` key, so they always name the section identically in every
   // language (the help route is the one deliberate exception: rail "Help", title
   // "How-to", exactly as before).
-  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc') }
-  // A project's own view (/work/projects/:id, /work/pm/:id) keeps its section title.
-  const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : /^\/work\/pm\//.test(pathname) ? t('workShell.nav.pm') : t('workShell.nav.dashboard'))
+  const TITLES = { '/work': t('workShell.nav.dashboard'), '/work/start': t('workShell.nav.start'), '/work/projects': t('workShell.nav.projects'), '/work/tasks': t('workShell.nav.tasks'), '/work/completed': t('workShell.nav.completed'), '/work/logs': t('workShell.nav.logs'), '/work/skills': t('workShell.nav.skills'), '/work/help': t('workShell.nav.howto'), '/work/support': t('workShell.nav.support'), '/work/queue': t('workShell.nav.queue'), '/work/pm': t('workShell.nav.pm'), '/work/srpm': t('workShell.nav.srpm'), '/work/grc': t('workShell.nav.grc'), '/work/templates': t('workShell.nav.templates') }
+  // A project's own view (/work/projects/:id, /work/pm/:id, /work/templates/:id) keeps its section title.
+  const title = TITLES[pathname] || (/^\/work\/projects\//.test(pathname) ? t('workShell.nav.projects') : /^\/work\/pm\//.test(pathname) ? t('workShell.nav.pm') : /^\/work\/templates\//.test(pathname) ? t('workShell.nav.templates') : t('workShell.nav.dashboard'))
   const wide = /^\/work\/(help|support)$/.test(pathname)
   const initial = String((user && (user.displayName || user.username)) || '').trim().charAt(0) || '?'
   const navClass = ({ isActive }) => `wd-nav${isActive ? ' on' : ''}`
@@ -436,9 +437,10 @@ export default function WorkAppLayout() {
             <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>
             <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
             {/* Role-based management section: PM / Sr PM / GRC (and the company admin). */}
-            {(roleView.showPm || roleView.showSrPm || roleView.showGrc) && (<>
+            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates) && (<>
               <div className="wd-sect">{t('workShell.nav.manage')}</div><span className="wd-sect-rule" aria-hidden />
               {roleView.showPm && <NavLink to="/work/pm" className={navClass} title={t('workShell.nav.pmTip')}><Briefcase size={18} /> <span className="wd-nav-t">{t('workShell.nav.pm')}</span></NavLink>}
+              {roleView.showTemplates && <NavLink to="/work/templates" className={navClass} title={t('workShell.nav.templatesTip')}><LayoutTemplate size={18} /> <span className="wd-nav-t">{t('workShell.nav.templates')}</span></NavLink>}
               {roleView.showSrPm && <NavLink to="/work/srpm" className={navClass} title={t('workShell.nav.srpmTip')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.srpm')}</span></NavLink>}
               {roleView.showGrc && <NavLink to="/work/grc" className={navClass} title={t('workShell.nav.grcTip')}><ShieldCheck size={18} /> <span className="wd-nav-t">{t('workShell.nav.grc')}</span></NavLink>}
             </>)}

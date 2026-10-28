@@ -58,6 +58,12 @@ test('roleViewOf: management surfaces per role', () => {
   assert.deepEqual([adm.showPm, adm.showSrPm, adm.showGrc, adm.canCreate], [true, true, true, true])
   const member = client.roleViewOf({ companyId: 'c', companyRole: 'member', workFlow: 'independent' })
   assert.deepEqual([member.showPm, member.showSrPm, member.showGrc], [false, false, false])
+  // Templates: managers + admin manage, GRC only reads, a member sees nothing.
+  assert.deepEqual([pm.showTemplates, pm.canManageTemplates], [true, true])
+  assert.deepEqual([sr.showTemplates, sr.canManageTemplates], [true, true])
+  assert.deepEqual([adm.showTemplates, adm.canManageTemplates], [true, true])
+  assert.deepEqual([grc.showTemplates, grc.canManageTemplates], [true, false])
+  assert.deepEqual([member.showTemplates, member.canManageTemplates], [false, false])
 })
 
 test('roleViewOf: an individual (no company) is plain self-serve with nothing enterprise', () => {

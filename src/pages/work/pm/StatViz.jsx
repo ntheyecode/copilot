@@ -8,10 +8,11 @@
 import { useT } from '../../../i18n/index.jsx'
 import { pctOf } from './pmModel.js'
 
-// tiles: [{ key, label, value, sub?, tone: 'green'|'blue'|'amber'|'' }]
+// tiles: [{ key, label, value, sub?, tone: 'green'|'blue'|'amber'|'' }]. Four
+// across by default; five tiles ask for the five-column grid (ep.css.js .five).
 export function StatTiles({ tiles, ariaLabel }) {
   return (
-    <div className="wd-ep-tiles" role="group" aria-label={ariaLabel}>
+    <div className={`wd-ep-tiles${tiles.length === 5 ? ' five' : ''}`} role="group" aria-label={ariaLabel}>
       {tiles.map((x) => (
         <div key={x.key} className={`wd-ep-tile${x.tone ? ' ' + x.tone : ''}`}>
           <span className="wd-ep-tile-v">{x.value}</span>

@@ -22,6 +22,7 @@ import { useT } from '../../i18n/index.jsx'
 import SupportTickets from '../../components/SupportTickets.jsx'
 import PreferencesPanel from '../../components/PreferencesPanel.jsx'
 import CompanyBrain from './sections/CompanyBrain.jsx'
+import KbSpaces from './sections/KbSpaces.jsx'
 import UsageLimits from './sections/UsageLimits.jsx'
 import BrainSecurity from './sections/BrainSecurity.jsx'
 import PolicyRules from './sections/PolicyRules.jsx'
@@ -1897,7 +1898,7 @@ export default function WorkCompanyAdmin() {
       case 'ai': return <AiSection />
       case 'billing': return <BillingSection />
       case 'governance': return (<><ReportShotsCard company={company} onCompany={setCompany} /><GovernanceSection companyId={viewer && viewer.companyId} /></>)
-      case 'brain': return <CompanyBrain />
+      case 'brain': return (<><KbSpaces /><CompanyBrain /></>)
       case 'brainsecurity': return <BrainSecurity />
       case 'sessions': return <SessionsSection />
       case 'tickets': return <SupportTickets mode="user" />

@@ -46,6 +46,8 @@ export default {
       srpmTip: 'Every project manager and their projects',
       grc: 'Oversight',
       grcTip: 'All projects, risks and the control log (read-only)',
+      templates: 'Templates',
+      templatesTip: 'Project templates: plan once, assign to many, follow progress',
     },
 
     // ---- Android self-update banner ----
