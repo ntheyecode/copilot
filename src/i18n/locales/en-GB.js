@@ -87,7 +87,7 @@ export default deepMerge(en, {
         lite: ['Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
         basic: ['Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
-        premium: ['Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
+        premium: ['Everything in Advanced', 'Projects: a large goal as a map of tasks', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
       },
     },
     demo: {

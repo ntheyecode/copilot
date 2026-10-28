@@ -1097,7 +1097,7 @@ export default {
         lite: ['Step-by-step guidance', 'Exact commands, code & links', 'Privacy & security built in'],
         basic: ['Everything in Lite', 'Roadmaps included', 'Floating guide + session write-up'],
         advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
-        premium: ['Everything in Advanced', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
+        premium: ['Everything in Advanced', 'Projects: a large goal as a map of tasks', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
       },
       trustStripe: 'Secure checkout, powered by Stripe',
       trustCancel: 'Cancel anytime, no contract',
@@ -1535,6 +1535,16 @@ export default {
     bandH2: 'A guide at your side, on the real screen.',
     bandP: 'Nothing to learn and nothing to switch to. It reads the app you are in and tells you the exact next move there, then checks that it worked.',
     bandAlt: 'A professional at a laptop with a soft glowing guide panel beside the screen',
+    // The Projects card (Premium and company plans): a large goal is run as a
+    // planned map of tasks with a finish line, one task guided at a time. The
+    // viz* strings sit inside the card illustration, so they stay very short.
+    projects: {
+      t: 'Big goals, as a map of tasks',
+      d: 'A large goal becomes a planned map of tasks with a finish line, each guided on your screen in turn and each learning from the last, on Premium and company plans.',
+      alt: 'Illustration: a map of five tasks, the first done, the second in progress, two waiting, leading to a finish line',
+      vizTask: 'task 2 of 5',
+      vizFinish: 'finish',
+    },
   },
 
   // /workcopilot/use-cases
@@ -1679,7 +1689,7 @@ export default {
       lite: { value: 'A guide for the occasional task, with the full hand-holding.', highlight: 'Step-by-step, start to finish' },
       basic: { value: 'A guide at your side most working days.', highlight: 'Roadmaps and session write-ups' },
       advanced: { value: 'Deep guided time, grounded in your own documents.', highlight: 'Upload your own documents' },
-      premium: { value: 'The most guided time, generated visuals, first in the queue.', highlight: 'Generated visuals on demand' },
+      premium: { value: 'The most guided time, generated visuals, first in the queue.', highlight: 'Projects: a large goal as a map of guided tasks' },
       enterprise: { value: 'SSO, company policy, seat pools and a DPA.', highlight: 'Dedicated contact' },
     },
     entLines: ['Seat pools, your size', 'Guided hours sized to your team', 'SSO, company policy and a DPA'],
@@ -1701,6 +1711,7 @@ export default {
       roadmaps: 'Roadmaps',
       upload: 'Upload your own reference documents',
       visuals: 'Generated visuals and diagrams',
+      projects: 'Projects: a large goal as a map of guided tasks',
       securityRows: ['On-device redaction, read-only, encrypted at rest', 'Security-first checked answers'],
       enterpriseRows: ['SSO (OIDC) and team provisioning', 'Company redaction policy, audit log and DPA', 'Per-company AI keys, or bring your own', 'On-prem deployment, on request', 'Dedicated contact'],
     },

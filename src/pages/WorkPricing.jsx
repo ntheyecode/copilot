@@ -174,6 +174,9 @@ export default function WorkPricing() {
     { k: mx('roadmaps'), v: [false, true, true, true, true] },
     { k: mx('upload'), v: [false, false, true, true, true] },
     { k: mx('visuals'), v: [false, false, false, true, true] },
+    // Projects (a large goal run as a planned map of guided tasks) is a Premium
+    // capability; company teams have it through Enterprise.
+    { k: mx('projects'), v: [false, false, false, true, true] },
     { g: mx('groups.security') },
     ...(mx('securityRows') || []).map((k) => ({ k, v: ALL })),
     { g: mx('groups.enterprise') },
