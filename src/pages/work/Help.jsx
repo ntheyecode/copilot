@@ -4,6 +4,10 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Play, ShieldCheck, Printer, Sparkles, Zap, AppWindow } from 'lucide-react'
+import { useWorkApp } from './WorkAppContext.jsx'
+// Role-aware help for every dashboard (own module; the entries + their
+// screenshots live in help/DashboardsHelp.jsx, gated by the viewer's role).
+import DashboardsHelp, { dashboardHelpFor } from './help/DashboardsHelp.jsx'
 
 function HelpFlow() {
   return (
@@ -77,13 +81,16 @@ const HELP_SECTIONS = [
   { id: 'safe', t: 'Safety & acceptable use' },
   { id: 'faq', t: 'FAQ' },
 ]
-function HelpDocs({ onStart }) {
+function HelpDocs({ onStart, roleView }) {
   const desktop = typeof window !== 'undefined' ? !!window.workDesktop : false
   // In the desktop app, lead with desktop-specific guidance + its own security
-  // and safety FAQ, then the shared how-to.
+  // and safety FAQ, then the shared how-to. The per-dashboard how-tos (role
+  // gated) sit right after the main flow, before the deeper guide.
+  const dash = dashboardHelpFor(roleView).map((s) => ({ id: s.id, t: s.t }))
+  const base = [HELP_SECTIONS[0], ...dash, ...HELP_SECTIONS.slice(1)]
   const sections = desktop
-    ? [{ id: 'desktop', t: 'The desktop app' }, { id: 'desktopsec', t: 'Security & safety (desktop)' }, { id: 'desktopfaq', t: 'Desktop FAQ' }, ...HELP_SECTIONS]
-    : HELP_SECTIONS
+    ? [{ id: 'desktop', t: 'The desktop app' }, { id: 'desktopsec', t: 'Security & safety (desktop)' }, { id: 'desktopfaq', t: 'Desktop FAQ' }, ...base]
+    : base
   const [active, setActive] = useState(sections[0].id)
   const navRef = useRef(null)
   const jump = (id) => { setActive(id); const el = document.getElementById('help-' + id); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }) }
@@ -120,13 +127,13 @@ function HelpDocs({ onStart }) {
     }, { rootMargin: '-82px 0px -62% 0px', threshold: 0 })
     els.forEach((el) => obs.observe(el))
     return () => obs.disconnect()
-  }, [])   // eslint-disable-line
+  }, [sections.length])   // eslint-disable-line
   return (
     <div className="wd-help">
       <aside className="wd-help-nav" ref={navRef} aria-label="How-to guide sections">
         <div className="wd-help-navlabel">How-to guide</div>
         {sections.map((s) => <button key={s.id} className={active === s.id ? 'on' : ''} aria-current={active === s.id ? 'true' : undefined} onClick={() => jump(s.id)}>{s.t}</button>)}
-        <button className="wd-help-start" onClick={onStart}><Play size={13} /> Start a task</button>
+        {(!roleView || roleView.canStart) && <button className="wd-help-start" onClick={onStart}><Play size={13} /> Start a task</button>}
       </aside>
       <div className="wd-help-body">
         <h1>{desktop ? 'How to use the WorkCoPilot desktop app' : 'How to use WorkCoPilot'}</h1>
@@ -148,6 +155,9 @@ function HelpDocs({ onStart }) {
               <img className="mid" src="/help/user/answer.png" width="684" height="968" loading="lazy" decoding="async" alt="The Answer card: the result, a confidence meter, how I got it, verify by, the security check and company policy flags." /></li>
           </ol>
         </section>
+
+        {/* Every dashboard, with how-tos and screenshots; only the surfaces this role can open. */}
+        <DashboardsHelp roleView={roleView} />
 
         {desktop && (<>
           <section id="help-desktop"><h2>The desktop app</h2>
@@ -289,7 +299,7 @@ function HelpDocs({ onStart }) {
           <div className="wd-faq"><b>What does it do with my screen?</b><p>Frames are downscaled and read only to guide the task. An unchanged screen is not sent at all.</p></div>
         </section>
 
-        <div className="wd-help-cta"><button className="wd-cta" onClick={onStart}><Play size={16} /> Start a task</button></div>
+        {(!roleView || roleView.canStart) && <div className="wd-help-cta"><button className="wd-cta" onClick={onStart}><Play size={16} /> Start a task</button></div>}
       </div>
     </div>
   )
@@ -301,5 +311,6 @@ function HelpDocs({ onStart }) {
 // routes to the dedicated Start-a-task page.
 export default function Help() {
   const navigate = useNavigate()
-  return <HelpDocs onStart={() => navigate('/work/start')} />
+  const { roleView } = useWorkApp()
+  return <HelpDocs roleView={roleView} onStart={() => navigate('/work/start')} />
 }

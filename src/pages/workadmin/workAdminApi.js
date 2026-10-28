@@ -240,7 +240,9 @@ export const workAdminApi = {
   createUser: (body) => request('POST', '/api/work/admin/users', body),
   userScrub: (id, enabled) => request('POST', `/api/work/admin/users/${id}/scrub`, { enabled: !!enabled }),
   userFreeAccess: (id, free) => request('POST', `/api/work/admin/users/${id}/access`, { free: !!free }),
-  userCompany: (id, companyId, companyRole) => request('POST', `/api/work/admin/users/${id}/company`, { companyId, companyRole }),
+  // Set (or clear) a user's company, their company role and their work flow
+  // (worker / independent / mixed); the server validates both against its registry.
+  userCompany: (id, companyId, companyRole, workFlow) => request('POST', `/api/work/admin/users/${id}/company`, { companyId, companyRole, ...(workFlow ? { workFlow } : {}) }),
   // Support tool (superadmin): open the dashboard AS an individual user. The
   // server switches this browser session to that user, audits who/when, and
   // 400s for company members (owner rule: company impersonation is excluded).

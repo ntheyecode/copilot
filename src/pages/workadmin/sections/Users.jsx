@@ -8,6 +8,9 @@ import { workAdminApi } from '../workAdminApi.js'
 import { Loading, ErrorBox, EmptyState, TierBadge, Spinning, ReasonModal } from './_shared.jsx'
 import { hmFromSeconds } from '../workadmin.css.js'
 import { useT } from '../../../i18n/index.jsx'
+// Company roles + work flows come from the ONE registry (ids, order, i18n
+// keys), shared with the company console and the app shell (SUPREME RULE II).
+import { COMPANY_ROLE_OPTIONS, WORK_FLOW_OPTIONS, roleLabelKey, normalizeFlow } from '../../../shared/work_roles_options.js'
 
 const COLUMNS = [
   { key: 'username', labelKey: 'columns.user', sortable: true },
@@ -25,7 +28,7 @@ const COLUMNS = [
   { key: 'mfa', labelKey: 'columns.mfa', sortable: false },
   { key: 'actions', labelKey: null, sortable: false },
 ]
-const EMPTY_NEW = { username: '', email: '', password: '', companyId: '', companyRole: 'member', tier: 'basic', free: false }
+const EMPTY_NEW = { username: '', email: '', password: '', companyId: '', companyRole: 'member', workFlow: 'independent', tier: 'basic', free: false }
 
 export default function UsersSection({ isSuperAdmin, viewer }) {
   const t = useT()
@@ -69,14 +72,18 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
     try {
       // When an email is given, the person is emailed a set-password link (even
       // if a password was also set here), so they choose their own credential.
-      await workAdminApi.createUser({
+      const created = await workAdminApi.createUser({
         username, ...(nu.password ? { password: nu.password } : {}), ...(email ? { email } : {}),
         companyId: nu.companyId || null,
         companyRole: nu.companyId ? nu.companyRole : undefined,
         tier: nu.tier, free: !!nu.free,
       })
-      const roleWord = nu.companyRole === 'company_admin' ? t('usersAdmin.createMsg.roleCompanyAdmin') : nu.companyRole === 'executive' ? t('usersAdmin.createMsg.roleExecutive') : t('usersAdmin.createMsg.roleMember')
-      const companySuffix = nu.companyId ? ` (${roleWord})` : ''
+      // The create route takes role + tier; the work flow is set through the
+      // same set-company endpoint the row editor uses (one writer for the flow).
+      const cid = created && created.id
+      if (cid && nu.companyId && normalizeFlow(nu.workFlow) !== 'independent') await workAdminApi.userCompany(cid, nu.companyId, nu.companyRole, nu.workFlow)
+      const roleWord = t(roleLabelKey(nu.companyRole)).toLowerCase()
+      const companySuffix = nu.companyId ? ` (${roleWord}, ${t(WORK_FLOW_OPTIONS.find((o) => o.id === normalizeFlow(nu.workFlow)).labelKey).toLowerCase()})` : ''
       const emailSuffix = email ? ` ${t('usersAdmin.createMsg.setPasswordEmailed', { email })}` : ''
       setCreateMsg({ kind: 'ok', text: t('usersAdmin.createMsg.created', { username, companySuffix, emailSuffix }) })
       setNu(EMPTY_NEW)
@@ -87,10 +94,10 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
   }
 
   // Associate a user with a company (or clear it), and set their company role.
-  const applyCompany = async (user, companyId, companyRole) => {
+  const applyCompany = async (user, companyId, companyRole, workFlow) => {
     setBusyId(user.id)
     try {
-      await workAdminApi.userCompany(user.id, companyId || null, companyId ? companyRole : null)
+      await workAdminApi.userCompany(user.id, companyId || null, companyId ? companyRole : null, companyId ? normalizeFlow(workFlow) : null)
       setMsg(user.id, 'ok', companyId ? t('usersAdmin.toasts.movedTo', { name: (state.companies.find((c) => c.id === companyId) || {}).name || t('usersAdmin.toasts.companyFallback') }) : t('usersAdmin.toasts.removedFromCompany'))
       setCompanyFor(null)
       await load()
@@ -257,9 +264,12 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
             </div>
             <div className="wka-field"><label>{t('usersAdmin.create.roleInCompany')}</label>
               <select className="wka-select" value={nu.companyRole} disabled={!nu.companyId} onChange={(e) => setNu((f) => ({ ...f, companyRole: e.target.value }))}>
-                <option value="member">{t('usersAdmin.create.roleMember')}</option>
-                <option value="company_admin">{t('usersAdmin.create.roleCompanyAdmin')}</option>
-                <option value="executive">{t('usersAdmin.create.roleExecutiveLong')}</option>
+                {COMPANY_ROLE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
+              </select>
+            </div>
+            <div className="wka-field"><label>{t('usersAdmin.create.flowInCompany')} <span style={{ fontWeight: 400, color: 'var(--wka-faint)' }}>{t('usersAdmin.create.flowHint')}</span></label>
+              <select className="wka-select" value={nu.workFlow} disabled={!nu.companyId} onChange={(e) => setNu((f) => ({ ...f, workFlow: e.target.value }))} aria-label={t('usersAdmin.create.flowInCompany')}>
+                {WORK_FLOW_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
               </select>
             </div>
             <div className="wka-field"><label>{t('usersAdmin.create.tier')}</label>
@@ -329,13 +339,14 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                             <option value="">{t('usersAdmin.companyEdit.noCompany')}</option>
                             {state.companies.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                           </select>
-                          <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 190 }}>
-                            <option value="member">{t('usersAdmin.companyEdit.member')}</option>
-                            <option value="company_admin">{t('usersAdmin.companyEdit.companyAdmin')}</option>
-                            <option value="executive">{t('usersAdmin.companyEdit.executiveReadOnly')}</option>
+                          <select className="wka-select" defaultValue={u.companyRole || 'member'} id={`cr-${u.id}`} style={{ maxWidth: 190 }} aria-label={t('usersAdmin.create.roleInCompany')}>
+                            {COMPANY_ROLE_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
+                          </select>
+                          <select className="wka-select" defaultValue={normalizeFlow(u.workFlow)} id={`wf-${u.id}`} style={{ maxWidth: 150 }} aria-label={t('usersAdmin.companyEdit.flow')} title={t('usersAdmin.companyEdit.flowTitle')}>
+                            {WORK_FLOW_OPTIONS.map((o) => <option key={o.id} value={o.id}>{t(o.labelKey)}</option>)}
                           </select>
                           <button type="button" className="wka-btn sm primary" disabled={busyId === u.id}
-                            onClick={() => { const cid = document.getElementById(`co-${u.id}`).value; const cr = document.getElementById(`cr-${u.id}`).value; applyCompany(u, cid, cr) }}>
+                            onClick={() => { const cid = document.getElementById(`co-${u.id}`).value; const cr = document.getElementById(`cr-${u.id}`).value; const wf = document.getElementById(`wf-${u.id}`).value; applyCompany(u, cid, cr, wf) }}>
                             {busyId === u.id ? <Spinning /> : t('usersAdmin.companyEdit.save')}
                           </button>
                           <button type="button" className="wka-btn sm ghost" onClick={() => setCompanyFor(null)}>{t('usersAdmin.companyEdit.cancel')}</button>
@@ -346,7 +357,10 @@ export default function UsersSection({ isSuperAdmin, viewer }) {
                             <span style={{ display: 'inline-flex', gap: 6, alignItems: 'center' }}>
                               <Building2 size={13} style={{ color: 'var(--wka-faint)' }} />
                               <span style={{ fontWeight: 600 }}>{u.companyName}</span>
-                              {u.companyRole === 'company_admin' ? <span className="wka-badge active">{t('usersAdmin.companyRole.admin')}</span> : u.companyRole === 'executive' ? <span className="wka-badge active">{t('usersAdmin.companyRole.executive')}</span> : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{t('usersAdmin.companyRole.member')}</span>}
+                              {u.companyRole && u.companyRole !== 'member'
+                                ? <span className="wka-badge active">{t(roleLabelKey(u.companyRole))}</span>
+                                : <span style={{ color: 'var(--wka-faint)', fontSize: 12 }}>{t('usersAdmin.companyRole.member')}</span>}
+                              {u.workFlow && normalizeFlow(u.workFlow) !== 'independent' ? <span className="wka-badge" title={t('usersAdmin.companyEdit.flowTitle')}>{t(WORK_FLOW_OPTIONS.find((o) => o.id === normalizeFlow(u.workFlow)).labelKey)}</span> : null}
                             </span>
                           ) : <span style={{ color: 'var(--wka-faint)', fontSize: 13 }}>{t('usersAdmin.individual')}</span>}
                           <button type="button" className="wka-btn sm ghost" disabled={!isSuperAdmin} title={isSuperAdmin ? t('usersAdmin.changeCompanyTitle') : t('usersAdmin.superadminOnly')} onClick={() => setCompanyFor(u.id)}>{t('usersAdmin.change')}</button>

@@ -43,9 +43,10 @@ export default {
       company: 'Company (optional)',
       noCompanyOption: 'No company (individual user)',
       roleInCompany: 'Role in company',
-      roleMember: 'Member',
-      roleCompanyAdmin: 'Company admin',
-      roleExecutiveLong: 'Executive (productivity dashboard, read-only)',
+      // Role / flow option labels live in companyAdmin.roles.* / companyAdmin.flows.*
+      // (one label per id, read through src/shared/work_roles_options.js).
+      flowInCompany: 'Work flow',
+      flowHint: '(worker: assigned tasks only; mixed: both)',
       tier: 'Tier',
       freeCheckbox: 'Free (comped) access, no Stripe needed',
       submit: 'Create user',
@@ -61,9 +62,6 @@ export default {
       created: 'Created {username}{companySuffix}.{emailSuffix}',
       setPasswordEmailed: 'A set-password link was emailed to {email}.',
       couldNotCreate: 'Could not create the user.',
-      roleCompanyAdmin: 'company admin',
-      roleExecutive: 'executive',
-      roleMember: 'member',
     },
 
     // Empty states
@@ -80,9 +78,8 @@ export default {
     planLeftTitle: 'Included plan hours left this month. It renews on the 1st; purchased hours are counted separately.',
     companyEdit: {
       noCompany: 'No company',
-      member: 'Member',
-      companyAdmin: 'Company admin',
-      executiveReadOnly: 'Executive (read-only)',
+      flow: 'Work flow',
+      flowTitle: 'How guided tasks reach this person: Independent starts their own, Worker only does assigned tasks, Mixed does both.',
       save: 'Save',
       cancel: 'Cancel',
     },

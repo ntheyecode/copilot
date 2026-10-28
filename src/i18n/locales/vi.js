@@ -3536,9 +3536,6 @@ export default {
       company: 'Công ty (không bắt buộc)',
       noCompanyOption: 'Không có công ty (người dùng cá nhân)',
       roleInCompany: 'Vai trò trong công ty',
-      roleMember: 'Thành viên',
-      roleCompanyAdmin: 'Quản trị viên công ty',
-      roleExecutiveLong: 'Lãnh đạo (bảng điều khiển năng suất, chỉ đọc)',
       tier: 'Bậc',
       freeCheckbox: 'Truy cập miễn phí (được tặng), không cần Stripe',
       submit: 'Tạo người dùng',
@@ -3553,9 +3550,6 @@ export default {
       created: 'Đã tạo {username}{companySuffix}.{emailSuffix}',
       setPasswordEmailed: 'Đã gửi liên kết đặt mật khẩu đến {email}.',
       couldNotCreate: 'Không thể tạo người dùng.',
-      roleCompanyAdmin: 'quản trị viên công ty',
-      roleExecutive: 'lãnh đạo',
-      roleMember: 'thành viên',
     },
 
     empty: {
@@ -3569,9 +3563,6 @@ export default {
     planLeftTitle: 'Số giờ bao gồm trong gói còn lại tháng này. Làm mới vào ngày 1; giờ đã mua được tính riêng.',
     companyEdit: {
       noCompany: 'Không có công ty',
-      member: 'Thành viên',
-      companyAdmin: 'Quản trị viên công ty',
-      executiveReadOnly: 'Lãnh đạo (chỉ đọc)',
       save: 'Lưu',
       cancel: 'Hủy',
     },
