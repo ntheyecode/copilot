@@ -344,6 +344,7 @@ export default function Dashboard() {
                   <SessionRow key={s.id} state={ended ? 'ended' : (s.paused ? 'paused' : 'active')}
                     title={(s.title && !/^Session \d/.test(s.title)) ? s.title : (s.goal || s.title)}
                     overview={s.overview}
+                    projectName={s.projectName}
                     meta={[
                       <span className="cur" key="m">{ended ? t('workDashboard.sessions.completed') : (cur ? t('workDashboard.sessions.stepWas', { step: cur.text }) : t('workDashboard.sessions.notStarted'))}</span>,
                       <span key="s"><span className="wd-sess-done">{done}/{tot}</span> {t('workDashboard.sessions.stepsLabel')}</span>,

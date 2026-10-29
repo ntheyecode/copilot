@@ -2424,7 +2424,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wc-plan-kicker"><Check size={11} /> Finished task</div>
             <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
             {/* What this task was, in full, so the finished record reads on its own. */}
-            <TaskOverview overview={sess.overview} className="wc-plan-ovw" />
+            <TaskOverview overview={sess.overview} projectName={sess.projectName} className="wc-plan-ovw" />
           </>
         )}
         {sess && steps.length > 0 && ended && (
@@ -2472,7 +2472,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
               {/* The task's full overview (what you will do, what done looks
                   like) under the goal line: the resume / open read, quiet body
                   text so the step card below stays the hero. */}
-              <TaskOverview overview={sess.overview} />
+              <TaskOverview overview={sess.overview} projectName={sess.projectName} />
               <FadeSwap k={view}>
                 {focused ? (
                   <AskFocus ask={askState} steps={askState.planChanged ? applyResume(sess, askState).steps : steps} stepText={cur ? cur.step.text : ''} busy={busy}

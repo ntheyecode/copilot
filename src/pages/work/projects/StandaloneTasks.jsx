@@ -43,7 +43,7 @@ export default function StandaloneTasks({ sessions, projects, loaded }) {
         const label = sessionLabel(s, untitled)
         const when = fmtDate(s.endedAt || s.lastActivityAt || s.startedAt, false, tag)
         return (
-          <SessionRow key={s.id} state={status.key} title={label} overview={s.overview} status={t(status.labelKey, status.label)}
+          <SessionRow key={s.id} state={status.key} title={label} overview={s.overview} projectName={s.projectName} status={t(status.labelKey, status.label)}
             meta={[when, t.rich('workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="wd-sess-done">{c}</span> })]}>
             <button type="button" className="wd-resume" onClick={() => open(s.id)}>{status.key === 'paused' ? t('workShell.tasks.resume') : t('workShell.tasks.open')} <ArrowRight size={13} /></button>
           </SessionRow>

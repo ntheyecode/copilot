@@ -372,7 +372,7 @@ function SessionList({ mode, embedded }) {
       // The shared compact row (SessionRow): tinted icon tile, status chip,
       // date, steps, a slim bar for work in progress, ghost-pill actions.
       return (
-        <SessionRow key={s.id} state={status.key} title={label} overview={s.overview} status={t(status.labelKey, status.label)} meta={[when, stepsText]} pct={!isDone && st.total > 0 ? st.pct : undefined}>
+        <SessionRow key={s.id} state={status.key} title={label} overview={s.overview} projectName={s.projectName} status={t(status.labelKey, status.label)} meta={[when, stepsText]} pct={!isDone && st.total > 0 ? st.pct : undefined}>
           <button type="button" className="wd-resume" onClick={() => open(s.id)}>{openLabel} <ArrowRight size={14} /></button>
           {isDone && <DownloadMenu sessionId={s.id} className="wd-resume" label={t('workShell.tasks.download')} onError={setDlErr} />}
         </SessionRow>

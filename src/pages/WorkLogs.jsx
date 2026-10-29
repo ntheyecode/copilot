@@ -64,7 +64,7 @@ export default function WorkLogs({ embedded } = {}) {
     )
     if (inShell) {
       return (
-        <SessionRow key={s.id} state={status.key} title={label(s)} overview={s.overview} status={t(status.labelKey, status.label)}
+        <SessionRow key={s.id} state={status.key} title={label(s)} overview={s.overview} projectName={s.projectName} status={t(status.labelKey, status.label)}
           meta={[
             when ? t(ended ? 'workShell.logs.completedOn' : 'workShell.logs.startedOn', { when }) : null,
             t.rich('workShell.tasks.steps', { done: st.done, total: st.total }, { n: (c) => <span className="wd-sess-done">{c}</span> }),
