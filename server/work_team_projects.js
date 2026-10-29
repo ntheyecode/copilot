@@ -23,6 +23,7 @@ export function templateSeedTasks(templateTasks) {
     title: (t && t.title) || '',
     goal: (t && t.goal) || '',
     doneState: (t && t.doneState) || '',
+    overview: (t && t.overview) || '',
     order: t && t.order != null ? t.order : i + 1,
     dependsOn: (Array.isArray(t && t.dependsOn) ? t.dependsOn : [])
       .map((d) => indexOfId.has(String(d)) ? indexOfId.get(String(d)) : null)

@@ -38,12 +38,16 @@ export function newProject({ id, workUserId, customerId = 'default', name, goal,
 
 // A task descriptor in the project map. Steps are NOT here - they are expanded
 // just-in-time into a work session (sessionId) when the task becomes active.
-export function newTask({ id, title, goal, doneState = '', order = 0, dependsOn = [] }) {
+export function newTask({ id, title, goal, doneState = '', order = 0, dependsOn = [], overview = '' }) {
   return {
     id,
     title: String(title || '').trim(),
     goal: String(goal || '').trim() || String(title || '').trim(),
     doneState: String(doneState || '').trim(),
+    // A rich, readable "what you'll do in this task" overview (bold/==highlight==/
+    // *italic* markers), shown when resuming or scanning. Derived if the planner
+    // did not supply one (see store.deriveTaskOverview).
+    overview: String(overview || '').trim(),
     order: Number(order) || 0,
     dependsOn: Array.isArray(dependsOn) ? dependsOn.filter(Boolean) : [],
     state: 'pending',

@@ -665,7 +665,11 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
     'anticipate the common branch and the common error inline, and end each step with a clear ' +
     'self-check the user can confirm without you watching. Err toward more detail per step.'
   ) : ''
-  const system = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy + methodAnchorBlock(goal, appContext), locale)
+  // A rich, readable "what you'll be doing" overview, produced by the SAME plan
+  // call (no extra request). It is shown when a task is resumed or scanned, so a
+  // person understands the task at a glance. Emphasis markers make it scannable.
+  const OVERVIEW_DIRECTIVE = '\n\n---\nTASK OVERVIEW\nAlso include a top-level "overview": a 3 to 5 sentence, plain-language description of WHAT THE USER WILL DO in this task and what being done looks like - written from the plan you just made, not echoing their words. Use **bold** on the main action and the key nouns, wrap the final outcome / done-condition in ==double equals==, and use *italics* for a caveat or dependency. Write it in the user\'s language. Be specific and concrete; no filler, no restating the obvious.'
+  const system = withLocale(workPlanSystem({ base, voice, mode, level }) + heavy + methodAnchorBlock(goal, appContext) + OVERVIEW_DIRECTIVE, locale)
   const user = workPlanUser({ goal, appContext, research, learnings, skills })
   let raw, escalated = false, reason = ''
   // Depth telemetry (observability only; does NOT change behavior): `critiqued` =
@@ -685,6 +689,9 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
   // preferKey 'steps' so a stray leading object cannot shadow the real plan; a
   // pure {"refusal":...} reply still parses (it is the only/first object).
   let parsed = extractJson(raw, 'steps') || {}
+  // Capture the overview from the FIRST parse (the deep-critique pass below can
+  // replace `parsed` with a steps-only hardening that omits it).
+  let planOverview = scrubGuidance(String((parsed && parsed.overview) || '').trim()).slice(0, 1000)
   // DEEP PLANNING (plan the forks, failures and loops ONCE, now). When the goal
   // genuinely branches or can fail (cross-system handoff, verification, sign-in,
   // install, configure), run a second text-only self-critique pass that hardens
@@ -741,6 +748,7 @@ export async function workPlan(ai, cfg, { base, voice = '', mode = 'stepwise', l
   const refusal = scrubGuidance(String(parsed.refusal || '').trim())
   return {
     refusal: refusal || null,
+    overview: refusal ? '' : planOverview,
     appContext: scrubGuidance(String(parsed.appContext || appContext || '').trim()) || null,
     clarify: refusal ? null : cleanClarify(parsed.clarify),
     steps: refusal ? [] : steps.map((s) => {

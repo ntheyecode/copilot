@@ -5873,6 +5873,19 @@ export function archiveWorkCustomer(companyId, id) {
 // db.workProjects (like work sessions); each task descriptor links to a work
 // session (sessionId) when its steps are expanded just-in-time.
 function _findProject(workUserId, projectId) { return (db.workProjects || []).find((p) => p && p.id === projectId && p.workUserId === workUserId) || null }
+// Fallback "what you'll do" overview, composed from the task's own fields with
+// emphasis markers, for tasks the planner did not give an overview (a manual
+// mid-journey add, or an older task). The UI renders **bold**/==highlight==/*italic*.
+export function deriveTaskOverview(taskLike = {}, projectName = '') {
+  const goal = String((taskLike && (taskLike.goal || taskLike.title)) || '').trim()
+  const done = String((taskLike && taskLike.doneState) || '').trim()
+  if (!goal) return ''
+  const parts = []
+  if (projectName) parts.push(`Part of the project **${String(projectName).trim()}**.`)
+  parts.push(`**${goal}**.`)
+  if (done) parts.push(`This task is ==done when ${done}==.`)
+  return parts.join(' ')
+}
 export function createWorkProject(workUserId, { customerId = 'default', name, goal, endState = null, tasks = [], companyId = null, managerId = null } = {}) {
   if (!db.workProjects) db.workProjects = []
   const p = proj.newProject({ id: 'pr' + id(), workUserId, customerId, name, goal, endState, companyId, managerId })
@@ -5882,6 +5895,7 @@ export function createWorkProject(workUserId, { customerId = 'default', name, go
   // not know the generated ids yet) OR as explicit ids; remap indices to ids.
   p.tasks = input.map((t, i) => proj.newTask({
     id: ids[i], title: t.title, goal: t.goal, doneState: t.doneState,
+    overview: t.overview || deriveTaskOverview(t, name),
     order: t.order != null ? t.order : i + 1,
     dependsOn: (Array.isArray(t.dependsOn) ? t.dependsOn : []).map((d) => (typeof d === 'number' ? ids[d] : d)).filter(Boolean),
   }))
@@ -5898,7 +5912,7 @@ export function listWorkProjects(workUserId, { customerId = null } = {}) {
 }
 export function addWorkProjectTask(workUserId, projectId, taskLike = {}) {
   const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
-  const t = proj.newTask({ id: 'pt' + id(), title: taskLike.title, goal: taskLike.goal, doneState: taskLike.doneState, order: taskLike.order != null ? taskLike.order : p.tasks.length + 1, dependsOn: taskLike.dependsOn || [] })
+  const t = proj.newTask({ id: 'pt' + id(), title: taskLike.title, goal: taskLike.goal, doneState: taskLike.doneState, overview: taskLike.overview || deriveTaskOverview(taskLike, p.name), order: taskLike.order != null ? taskLike.order : p.tasks.length + 1, dependsOn: taskLike.dependsOn || [] })
   p.tasks.push(t); p.state = proj.deriveProjectState(p); persist(); return t
 }
 // Replace the ordered task set (used by mid-journey injection after placement).
@@ -6271,7 +6285,7 @@ export function injectWorkProjectTask(workUserId, projectId, { request, title = 
   // title/doneState let a caller inject a fully-formed task (e.g. a roped-in
   // Recommended Practice keeps its screen-visible done-state); both default so
   // the free-text mid-journey path (title=goal=request, no done-state) is unchanged.
-  const t = proj.newTask({ id: 'pt' + id(), title: String(title || req), goal: req, doneState })
+  const t = proj.newTask({ id: 'pt' + id(), title: String(title || req), goal: req, doneState, overview: deriveTaskOverview({ goal: req, doneState }, p.name) })
   // Tag a roped-in practice so completion can close the phase-3 learning loop.
   if (practiceId) t.practiceId = String(practiceId)
   const { tasks, placed } = projInject.placeInjectedTask(p, t, { blocksTaskId, dependsOn })
@@ -6401,6 +6415,17 @@ export function setWorkSessionSummary(workUserId, sessionId, summary) {
   const s = findWorkSession(workUserId, sessionId)
   if (!s) throw httpErr(404, 'Session not found')
   s.summary = summary || null
+  persist()
+  return s
+}
+// The rich "what you'll be doing" overview for a session, set from the plan (the
+// planner returns it; a fallback is composed from the goal). Shown when the task
+// is resumed or scanned. Never throws into the plan response path.
+export function setWorkSessionOverview(workUserId, sessionId, overview) {
+  const s = findWorkSession(workUserId, sessionId)
+  if (!s) return null
+  const ov = String(overview || '').trim() || (s.goal ? `**${String(s.goal).trim()}**.` : '')
+  s.overview = ov || null
   persist()
   return s
 }

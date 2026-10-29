@@ -102,6 +102,7 @@ export function registerWorkRolesRoutes(app, { store, work, ai, requireWorkAuth,
       if (plan.refusal) return res.json({ refusal: plan.refusal })
       const session = store.createWorkSession(req.workUser.id, { goal: ctx.task.goal || ctx.task.title })
       store.setWorkSessionSteps(req.workUser.id, session.id, plan.steps)
+      try { store.setWorkSessionOverview(req.workUser.id, session.id, (ctx.task && ctx.task.overview) || plan.overview) } catch { /* best-effort */ }
       store.linkAssignedTaskSession(req.workUser.id, req.params.projectId, req.params.taskId, session.id)
       res.json({ sessionId: session.id, steps: plan.steps })
     } catch (e) { sendWorkError(res, e, req) }

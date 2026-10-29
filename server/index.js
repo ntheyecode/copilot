@@ -2340,6 +2340,9 @@ app.post('/api/work/sessions/:id/plan', requireWorkAuth, requireWorkSubscription
       : 'Planned by the best model available on your key.' })
     if (keepProgress && doneSteps.length) store.replanKeepingProgress(req.workUser.id, req.params.id, plan.steps)
     else store.setWorkSessionSteps(req.workUser.id, req.params.id, plan.steps)
+    // Store the rich "what you'll be doing" overview from the plan (or a derived
+    // fallback) so a resumed/scanned session shows a clear description.
+    try { store.setWorkSessionOverview(req.workUser.id, req.params.id, plan.overview) } catch { /* never block the plan response */ }
     // Count the re-plan against this task's budget (only after it actually
     // produced a plan, so a refusal/failure never burns a re-plan).
     if (isReplan && !fromClarify) store.bumpWorkReplan(req.workUser.id, req.params.id)

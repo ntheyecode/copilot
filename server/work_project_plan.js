@@ -31,7 +31,12 @@ export function planProjectMapSystem({ base }) {
     'nothing extra.\n' +
     'Give the project a short "name". If the goal is one you must not help with (SAFETY), return ' +
     '{"refusal":"one short sentence"} and no tasks.\n' +
-    'Return ONLY JSON: {"refusal":"<only when declining>","name":"<short project name>","endState":{"done":"<one sentence>","checks":["<concrete check>"]},"tasks":[{"title":"<short>","goal":"<what this task achieves>","doneState":"<visible when done>","dependsOn":[<indices>]}]}'
+    'TASK OVERVIEW. For EACH task also give an "overview": a 3 to 5 sentence, plain-language description ' +
+    'of WHAT THE PERSON WILL DO in that task and what being done looks like (so someone opening it later ' +
+    'understands it at a glance). Use **bold** on the main action and key nouns, wrap the final outcome / ' +
+    'done-condition in ==double equals==, and use *italics* for a caveat or dependency. Write it in the ' +
+    'goal\'s language; be specific and concrete, no filler.\n' +
+    'Return ONLY JSON: {"refusal":"<only when declining>","name":"<short project name>","endState":{"done":"<one sentence>","checks":["<concrete check>"]},"tasks":[{"title":"<short>","goal":"<what this task achieves>","doneState":"<visible when done>","overview":"<3-5 sentences with **bold**, ==highlight==, *italics*>","dependsOn":[<indices>]}]}'
 }
 
 export function planProjectMapUser({ goal, appContext = '', research = '', learnings = '' }) {
@@ -60,6 +65,7 @@ export async function planProjectMap(ai, cfg, { base, goal, appContext = '', res
     title: S(t && t.title, 160),
     goal: S(t && t.goal, 400) || S(t && t.title, 160),
     doneState: S(t && t.doneState, 300),
+    overview: S(t && t.overview, 1000),
     // dependsOn: keep only valid 0-based indices that point BACKWARD (acyclic by construction);
     // the final cycle/validity gate is validateBreakdown in the caller.
     dependsOn: Array.isArray(t && t.dependsOn) ? t.dependsOn.map((d) => Number(d)).filter((d) => Number.isInteger(d) && d >= 0) : [],
