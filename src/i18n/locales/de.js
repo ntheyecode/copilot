@@ -604,6 +604,16 @@ export default {
       note: 'Eine Unternehmensrichtlinie, einmal festgelegt. Ihr SOC sieht wer und welche Art, nie die Werte.',
       ctaTeam: 'Über Ihr Team sprechen',
       ctaEnt: 'Alle Unternehmenskontrollen ansehen',
+      run: {
+        h3: 'Gebaut für die Art, wie ein Unternehmen wirklich arbeitet.',
+        sub: 'Rollen, Warteschlangen, Vorlagen und ein gemeinsames Gehirn, jede Regel auf dem Server durchgesetzt, nie nur in der UI.',
+        cards: [
+          { t: 'Rollen und Arbeitsabläufe', d: 'Projektmanager weisen zu und weisen neu zu. Senior-PMs verteilen ganze Projekte zwischen Managern neu. GRC beobachtet nur lesend, mit einem Risikoregister für Arbeit, die ins Stocken gerät. Jede Person arbeitet aus einer Warteschlange, eigenständig oder beides.', chips: ['Projektmanager', 'Senior-PM', 'GRC-Aufsicht', 'Mitarbeiter', 'Eigenständig', 'Gemischt'] },
+          { t: 'Ein Verfahren, viele Personen', d: 'Machen Sie aus einem Projekt eine Vorlage und weisen Sie sie einem ganzen Team auf einmal zu. Jede Person erhält ihren eigenen Durchlauf; Sie sehen eine Zusammenfassung, wer fertig ist und wie weit, nie die Rohsitzung einer Person.', chips: ['Einarbeitung', 'SOPs', 'Compliance-Übungen'] },
+          { t: 'Ein Unternehmensgehirn, das wächst', d: 'Ein Workflow, den eine Person bewährt, wird beim nächsten Mal allen bereitgestellt. Ordnen Sie ihn in Wissensräume, wählen Sie bei der Planung den richtigen, und jeder Eintrag durchläuft zuerst eine richtlinienbewusste Bereinigung.', chips: ['Wissensräume', 'Beim Eintrag bereinigt'] },
+          { t: 'Bewährte Praktiken, eingebunden', d: 'Bei einem Projekt schlägt es die bewährten Praktiken für diese Art von Arbeit vor. Fügen Sie eine hinzu, und sie wird zu einer echten Aufgabe. Die Vorschläge verbessern sich daraus, was Ihre Organisation annimmt und abschließt.', chips: ['Vorschlagen', 'Zur Karte hinzufügen', 'Lernt aus Annahme'] },
+        ],
+      },
     },
     fields: {
       eyebrow: 'Viele Fachgebiete. Ein Werkzeug.',
@@ -649,10 +659,37 @@ export default {
       ctaShow: 'Datenschutz in Aktion sehen',
       ctaPaper: 'Sicherheits- und Datenschutzpapier (PDF)',
     },
+    prove: {
+      eyebrow: 'Nachweis und Compliance',
+      h2: 'Jede Aufgabe endet mit <em>Nachweis</em>, nicht mit einem Versprechen.',
+      sub: 'Was getan wurde, auf dem Bildschirm bestätigt, während es geschah, dokumentiert und versiegelt, sodass jeder prüfen kann, dass es echt ist.',
+      points: [
+        { t: 'Aufgabenbericht', d: 'Bestätigte Schritte mit ihrer Anleitung, das Ergebnis und bereinigte Meilenstein-Screenshots. Er meldet „5 von 6 erledigt", wenn das die Wahrheit ist.' },
+        { t: 'Audit-Protokoll', d: 'Eine mit Zeitstempel versehene Aufzeichnung jedes Schritts und jeder Sendung, für jede Sitzung aufbewahrt.' },
+        { t: 'Echtheitssiegel', d: 'Jeder Bericht wird mit SHA-256 und HMAC versiegelt. Jeder kann an einem öffentlichen Prüf-Endpunkt bestätigen, dass er echt ist.' },
+        { t: 'Compliance, pro Aufgabe', d: 'Ein optionaler Bericht ordnet die Arbeit {n} Rahmenwerken zu. Nachweise, die Ihr Programm unterstützen, nie eine Zertifizierungsbehauptung.' },
+      ],
+      log: {
+        title: 'Audit-Protokoll',
+        task: 'Den Produktions-API-Schlüssel rotieren',
+        lines: [
+          { at: '14:02:11', k: 'Schritt 3 von 5', m: 'auf dem Bildschirm geprüft', s: 'ok' },
+          { at: '14:02:40', k: 'Schritt 4 von 5', m: 'falscher Wert erkannt, korrigiert', s: 'warn' },
+          { at: '14:05:02', k: 'Schritt 5 von 5', m: 'auf dem Bildschirm geprüft', s: 'ok' },
+          { at: '14:05:09', k: 'Bericht', m: '4 Meilenstein-Aufnahmen, auf dem Gerät bereinigt', s: 'info' },
+          { at: '14:05:10', k: 'Siegel', m: 'SHA-256 + HMAC angewendet', s: 'seal' },
+          { at: '14:05:10', k: 'prüfen', m: 'echt', s: 'ok' },
+        ],
+        sealed: 'Versiegelter Bericht',
+      },
+      frameworksLbl: 'Zugeordnet zu {n} Rahmenwerken',
+      more: '+{n} weitere',
+      cta: 'Die Compliance-Abdeckung ansehen',
+    },
     pricing: {
       eyebrow: 'Preise',
       h2: 'Einfache Tarife. Echte geführte Zeit.',
-      sub: 'Jeden Monat Stunden an Expertenanleitung. KI inklusive.',
+      sub: 'Jeden Monat Stunden an Expertenanleitung. Mehrere Aufgaben gleichzeitig offen. KI inklusive.',
       billingAria: 'Abrechnungszeitraum',
       monthly: 'Monatlich',
       annual: 'Jährlich',
@@ -665,9 +702,9 @@ export default {
       choose: '{plan} wählen',
       extraHour: 'Zusätzliche Stunde {price}',
       feats: {
-        lite: ['Schritt-für-Schritt-Anleitung', 'Genaue Befehle, Code und Links', 'Datenschutz und Sicherheit eingebaut'],
+        lite: ['Schritt-für-Schritt-Anleitung', 'Genaue Befehle, Code und Links', 'Ihre eigenen Dokumente als Kontext', 'Datenschutz und Sicherheit eingebaut'],
         basic: ['Alles aus Lite', 'Roadmaps inklusive', 'Schwebende Anleitung + Sitzungsbericht'],
-        advanced: ['Alles aus Basic', 'Eigene Dokumente hochladen', 'Visuelle Beispiele, wo sie helfen', 'Bevorzugte Anleitung'],
+        advanced: ['Alles aus Basic', 'Mehr Dokumentenkontext pro Aufgabe', 'Visuelle Beispiele, wo sie helfen', 'Bevorzugte Anleitung'],
         premium: [
           'Alles aus Advanced',
           'Projekte: ein großes Ziel als Aufgabenkarte',
@@ -684,7 +721,17 @@ export default {
     },
     enterprise: {
       stripAria: 'Unternehmenskontrollen',
-      chips: ['SSO (OIDC)', 'MFA verpflichtend', 'Unbegrenzte Nutzer', 'Ihre SOPs und Playbooks', 'Audit-Protokolle', 'SOC / SIEM-Weiterleitung', 'AVV', 'On-Premise auf Anfrage'],
+      chips: ['SSO (OIDC)', 'MFA verpflichtend', 'Platz- und Stunden-Pools', 'Ihre eigenen KI-Schlüssel', 'DLP-Regeln auf dem Gerät', 'Verschlüsselung im Ruhezustand', 'Audit-Protokolle', 'SOC / SIEM-Weiterleitung', 'MSI je Rechner', 'AVV', 'On-Premise auf Anfrage'],
+    },
+    everywhere: {
+      eyebrow: 'Ihres, überall',
+      h2: 'Eine Anleitung. <em>Jeder Bildschirm</em>, jede Sprache, auf Ihre Art.',
+      sub: 'Dieselbe Anleitung auf dem Desktop, auf Android und im Web, in der Sprache und im Look, die Sie wählen, geräteübergreifend gespeichert.',
+      cards: [
+        { t: 'Jede Plattform', d: 'Eine signierte Windows-App mit einem rechnerweiten MSI für das stille IT-Rollout, eine Android-App und das Web. Auf dem Desktop läuft OCR auf dem Gerät, sodass Bilder und Diagramme lokal gelesen werden. UI-Verbesserungen erreichen jede App ohne Neuinstallation.', chips: ['Windows', 'Enterprise-MSI', 'Android', 'Web', 'OCR auf dem Gerät'] },
+        { t: 'Ihre Sprache', d: 'Das ganze Produkt und jede E-Mail, die es versendet, in {n} Sprachen plus amerikanischem und britischem Englisch. Wählen Sie sie bei der ersten Anmeldung und ändern Sie sie jederzeit.', chips: [] },
+        { t: 'Ihr Look, gespeichert', d: 'Hell, Dunkel oder Heavy. Kontrastgeprüfte Markenakzente. Größerer Text, reduzierte Bewegung, hoher Kontrast, größere Ziele und eine gut lesbare Schrift. Einmal einstellen, live angewendet, geräteübergreifend gespeichert.', chips: ['Hell', 'Dunkel', 'Heavy', 'Barrierefreiheit'] },
+      ],
     },
     final: {
       h2: 'Schluss mit Raten. Fertig werden.',
@@ -2254,6 +2301,8 @@ export default {
       forms: 'Formulare',
       notifications: 'Benachrichtigungen',
       support: 'Support',
+      bug: 'Support-Ticket-Benachrichtigungen',
+      projects: 'Projekte und Aufgabenzuweisung',
     },
     resetConfirm: 'Diese E-Mail auf ihren eingebauten Standard zurücksetzen? Ihr eigener Wortlaut wird entfernt.',
     subject: 'Betreff',
