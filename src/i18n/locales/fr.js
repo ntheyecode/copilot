@@ -297,6 +297,16 @@ const __base = {
       note: 'Lecture seule par conception : il guide vos équipes et ne clique, ne tape et n\'exécute jamais rien à leur place.',
       ctaTeam: 'Parlons de votre équipe',
       ctaEnt: 'Voir les contrôles entreprise',
+      run: {
+        h3: 'Conçu pour le fonctionnement réel d\'une entreprise.',
+        sub: 'Des rôles, des files, des modèles et un cerveau partagé, chaque règle appliquée sur le serveur, jamais seulement dans l\'interface.',
+        cards: [
+          { t: 'Rôles et flux de travail', d: 'Les chefs de projet attribuent et réattribuent. Les chefs de projet senior rééquilibrent des projets entiers entre les chefs. GRC observe en lecture seule, avec un registre des risques pour le travail qui s\'enlise. Chaque personne travaille depuis une file, de façon indépendante, ou les deux.', chips: ['Chef de projet', 'Chef de projet senior', 'Supervision GRC', 'Travailleur', 'Indépendant', 'Mixte'] },
+          { t: 'Une procédure, plusieurs personnes', d: 'Transformez un projet en modèle et attribuez-le à toute une équipe d\'un coup. Chaque personne a sa propre exécution ; vous voyez un récapitulatif de qui a terminé et jusqu\'où, jamais la session brute de quiconque.', chips: ['Onboarding', 'Procédures (SOP)', 'Exercices de conformité'] },
+          { t: 'Un cerveau d\'entreprise qui se cumule', d: 'Un flux de travail qu\'une personne a prouvé est servi à tous la fois suivante. Organisez-le en espaces de connaissances, choisissez le bon au moment de planifier, et chaque entrée passe d\'abord par un nettoyage sensible aux politiques.', chips: ['Espaces de connaissances', 'Nettoyé à l\'entrée'] },
+          { t: 'Des pratiques éprouvées, intégrées', d: 'Sur un projet, il suggère les pratiques éprouvées pour ce type de travail. Ajoutez-en une et elle devient une vraie tâche. Les suggestions s\'améliorent à partir de ce que votre organisation accepte et termine.', chips: ['Suggérer', 'Ajouter à la carte', 'Apprend de l\'acceptation'] },
+        ],
+      },
     },
     fields: {
       eyebrow: 'Tous les domaines · un seul outil',
@@ -345,7 +355,7 @@ const __base = {
     pricing: {
       eyebrow: 'Tarifs',
       h2: 'Des offres simples. Du vrai temps guidé.',
-      sub: 'Des heures de guidage expert chaque mois. IA incluse.',
+      sub: 'Des heures de guidage expert chaque mois. Plusieurs tâches ouvertes à la fois. IA incluse.',
       billingAria: 'Période de facturation',
       monthly: 'Mensuel',
       annual: 'Annuel',
@@ -361,6 +371,7 @@ const __base = {
         lite: [
           'Guidage pas à pas',
           'Commandes, code et liens exacts',
+          'Vos propres documents comme contexte',
           'Confidentialité et sécurité intégrées',
         ],
         basic: [
@@ -368,7 +379,7 @@ const __base = {
           'Feuilles de route incluses',
           'Guide flottant + compte rendu de session',
         ],
-        advanced: ['Tout Basic', 'Importez vos propres documents', 'Exemples visuels quand ils aident', 'Accompagnement prioritaire'],
+        advanced: ['Tout Basic', 'Plus de contexte documentaire par tâche', 'Exemples visuels quand ils aident', 'Accompagnement prioritaire'],
         premium: [
           'Tout ce qui est inclus dans Advanced',
           'Projets : un grand objectif sous forme de carte de tâches',
@@ -388,12 +399,52 @@ const __base = {
       chips: [
         'SSO (OIDC)',
         'MFA obligatoire',
-        'Utilisateurs illimités',
-        'Vos procédures et playbooks',
+        'Pools de sièges et d\'heures',
+        'Vos propres clés IA',
+        'Règles DLP sur l\'appareil',
+        'Chiffrement au repos',
         'Journaux d\'audit',
         'Relais SOC / SIEM',
+        'MSI par machine',
         'DPA',
         'Sur site sur demande',
+      ],
+    },
+    prove: {
+      eyebrow: 'Preuve et conformité',
+      h2: 'Chaque tâche se termine par une <em>preuve</em>, pas par une promesse.',
+      sub: 'Ce qui a été fait, confirmé à l\'écran au fur et à mesure, rédigé et scellé pour que chacun puisse en vérifier l\'authenticité.',
+      frameworksLbl: 'Mappé sur {n} référentiels',
+      more: '+{n} de plus',
+      cta: 'Voir la couverture de conformité',
+      points: [
+        { t: 'Rapport de tâche', d: 'Les étapes confirmées avec leur mode d\'emploi, le résultat et des captures d\'écran des jalons, expurgées. Il indique « 5 sur 6 faites » quand c\'est la vérité.' },
+        { t: 'Journal d\'audit', d: 'Un enregistrement horodaté de chaque étape et de chaque envoi, conservé pour chaque session.' },
+        { t: 'Sceau d\'authenticité', d: 'Chaque rapport est scellé avec SHA-256 et HMAC. Chacun peut confirmer son authenticité sur un point de vérification public.' },
+        { t: 'Conformité, par tâche', d: 'Un rapport optionnel mappe le travail sur {n} référentiels. Des preuves qui appuient votre programme, jamais une revendication de certification.' },
+      ],
+      log: {
+        title: 'Journal d\'audit',
+        task: 'Faire tourner la clé d\'API de production',
+        sealed: 'Rapport scellé',
+        lines: [
+          { at: '14:02:11', k: 'étape 3 sur 5', m: 'vérifié à l\'écran', s: 'ok' },
+          { at: '14:02:40', k: 'étape 4 sur 5', m: 'mauvaise valeur détectée, corrigée', s: 'warn' },
+          { at: '14:05:02', k: 'étape 5 sur 5', m: 'vérifié à l\'écran', s: 'ok' },
+          { at: '14:05:09', k: 'rapport', m: '4 captures de jalons, expurgées sur l\'appareil', s: 'info' },
+          { at: '14:05:10', k: 'sceau', m: 'SHA-256 + HMAC appliqués', s: 'seal' },
+          { at: '14:05:10', k: 'vérifier', m: 'authentique', s: 'ok' },
+        ],
+      },
+    },
+    everywhere: {
+      eyebrow: 'À vous, partout',
+      h2: 'Un seul guide. <em>Chaque écran</em>, chaque langue, à votre façon.',
+      sub: 'Le même guide sur ordinateur, Android et le web, dans la langue et l\'apparence que vous choisissez, mémorisées sur tous vos appareils.',
+      cards: [
+        { t: 'Toutes les plateformes', d: 'Une app Windows signée, avec un MSI par machine pour un déploiement IT silencieux, une app Android et le web. Sur ordinateur, l\'OCR s\'exécute sur l\'appareil, donc les images et les diagrammes sont lus en local. Les améliorations de l\'interface arrivent sur toutes les apps sans réinstallation.', chips: ['Windows', 'MSI entreprise', 'Android', 'Web', 'OCR sur l\'appareil'] },
+        { t: 'Votre langue', d: 'Tout le produit et chaque e-mail qu\'il envoie, en {n} langues plus l\'anglais américain et britannique. Choisissez-la à la première connexion et changez-en quand vous voulez.', chips: [] },
+        { t: 'Votre apparence, mémorisée', d: 'Clair, Sombre ou Appuyé. Des accents de marque au contraste testé. Texte plus grand, mouvement réduit, contraste élevé, cibles plus grandes et une police lisible. Réglé une fois, appliqué en direct, conservé sur tous vos appareils.', chips: ['Clair', 'Sombre', 'Appuyé', 'Accessibilité'] },
       ],
     },
     final: {
@@ -2252,6 +2303,8 @@ const __base = {
       forms: "Formulaires",
       notifications: "Notifications",
       support: "Assistance",
+      bug: "Alertes de tickets d'assistance",
+      projects: "Projets et attribution des tâches",
     },
     resetConfirm: "Réinitialiser cet e-mail à son modèle par défaut intégré ? Votre texte personnalisé sera supprimé.",
     subject: "Objet",
