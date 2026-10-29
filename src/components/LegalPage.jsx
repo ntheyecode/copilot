@@ -8,38 +8,59 @@
 // HONESTY CONTRACT (owner-enforced): templates only. The template notice is
 // rendered by default on every page that uses this layout. No certifications, no
 // invented addresses or jurisdictions, no model/provider/cost/mechanism detail.
-import React, { useEffect } from 'react'
+//
+// i18n: the chrome this component owns (hero meta, template notice, ownership
+// line, hidden glance heading, TOC title, related-pages buttons) reads from the
+// `legalShared` namespace (src/i18n/locales/en/legalShared.js). The legal entity
+// and the two mailboxes stay constants here and are interpolated, never translated.
+import React from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowLeft, ArrowRight, FileText, Mail } from 'lucide-react'
+import { ArrowRight, FileText, Mail } from 'lucide-react'
 import SiteHeader from './SiteHeader.jsx'
 import SiteFooter from './SiteFooter.jsx'
 import WorkCard from './WorkCard.jsx'   // shared, site-wide premium card primitive
 import useSeo from '../useSeo.js'      // per-route title / description / canonical (audit WEB-01)
+import { useT, interpolate, renderRich } from '../i18n/index.jsx'
 
 // Single source of truth for identity + contacts across every legal page.
 export const LEGAL_ENTITY = 'COE Security LLC'
-export const OWNERSHIP_LINE = 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.'
 export const LEGAL_CONTACT = 'support@coesecurity.com'      // security, legal, privacy, DPA
 export const SUPPORT_CONTACT = 'support@admireveda.com'     // product support, billing
-export const TEMPLATE_NOTICE = 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.'
 
 // Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
 // Google Fonts link is injected here.
 
-// Two-column "name / how" rows, identical to the Privacy page vocabulary.
-export function Items({ items }) {
-  return (
-    <ul className="wlx-list">
-      {items.map(([name, how]) => (
-        <li key={name}><span className="wlx-name">{name}</span><span className="wlx-how">{how}</span></li>
-      ))}
-    </ul>
-  )
-}
-
 // A clearly-marked fill-in-later value. Never invent the real value.
 export function Placeholder({ children }) {
   return <span className="wlx-ph">[{children}]</span>
+}
+
+// Inline tags every legal page can use inside a keyed string: <ph>..</ph> renders
+// the Placeholder chip (so "to be confirmed with counsel" markers are keyed copy,
+// not JSX scattered through the pages). Pages add their own link renderers:
+//   t.rich('dpaPage.scope.p1', null, legalTags({ terms: (c) => <a href="/workcopilot/terms">{c}</a> }))
+const LEGAL_TAGS = { ph: (c) => <Placeholder>{c}</Placeholder> }
+export function legalTags(extra) { return extra ? { ...LEGAL_TAGS, ...extra } : LEGAL_TAGS }
+
+// Two-column "name / how" rows, identical to the Privacy page vocabulary.
+// `items` is a translated list of { name, how } - or a [name, how] tuple when a
+// page builds a row around its own JSX (a mailto link). A string `how` (or name)
+// is interpolated with `vars` ({entity}, {contact}, {support}) and rendered
+// through the i18n rich parser with legalTags(tags), so <ph>, <a> and <b> inside
+// a keyed row become elements. ONE renderer for every legal page: a keyed row
+// never needs a per-page wrapper (SUPREME RULE II).
+export function Items({ items, vars, tags }) {
+  const tagMap = legalTags(tags)
+  return (
+    <ul className="wlx-list">
+      {items.map((it, i) => {
+        const [name, how] = Array.isArray(it) ? it : [it.name, it.how]
+        const nm = typeof name === 'string' ? interpolate(name, vars) : name
+        const hw = typeof how === 'string' ? renderRich(interpolate(how, vars), tagMap) : how
+        return <li key={typeof nm === 'string' ? nm : i}><span className="wlx-name">{nm}</span><span className="wlx-how">{hw}</span></li>
+      })}
+    </ul>
+  )
 }
 
 // A plain data table in the legal vocabulary (used by the DPA data-lifecycle
@@ -79,6 +100,7 @@ export function DataTable({ caption, columns, rows, showCaption = false }) {
 // tree, visible focus rings, and no text below AA contrast.
 export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro, lastUpdated, tagline, seo, glance = [], sections, links = [], contact = LEGAL_CONTACT }) {
   const nav = useNavigate()
+  const t = useT()
   useSeo(seo || {})
   return (
     <div className="wlx">
@@ -91,19 +113,19 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
         <h1>{title}</h1>
         <p>{intro}</p>
         <div className="wlx-meta">
-          <span><b>Last updated</b> {lastUpdated}</span>
+          <span><b>{t('legalShared.lastUpdated')}</b> {lastUpdated}</span>
           <span className="wlx-sep" aria-hidden="true" />
           <span>{tagline}</span>
         </div>
         <div className="wlx-template" role="note">
-          <b>Template.</b> {TEMPLATE_NOTICE}
+          <b>{t('legalShared.templateLabel')}</b> {t('legalShared.templateNotice')}
         </div>
-        <div className="wlx-owner">{OWNERSHIP_LINE}</div>
+        <div className="wlx-owner">{t('legalShared.ownership', { entity: LEGAL_ENTITY })}</div>
       </section>
 
       {glance.length > 0 && (
         <section className="wlx-block" aria-labelledby="wlx-glance-h">
-          <h2 id="wlx-glance-h" className="wlx-sr">At a glance</h2>
+          <h2 id="wlx-glance-h" className="wlx-sr">{t('legalShared.glanceH2')}</h2>
           <div className="wlx-glance">
             {glance.map((g, i) => {
               const Ic = g.icon
@@ -120,7 +142,7 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
 
       <section className="wlx-block wlx-doc">
         <nav className="wlx-toc" aria-labelledby="wlx-toc-h">
-          <div className="wlx-toct" id="wlx-toc-h">On this page</div>
+          <div className="wlx-toct" id="wlx-toc-h">{t('legalShared.tocTitle')}</div>
           <ol>
             {sections.map((s, i) => <li key={s.id}><a href={'#' + s.id}><span className="wlx-n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>{s.title}</a></li>)}
           </ol>
@@ -136,7 +158,7 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
         </article>
       </section>
 
-      <section className="wlx-cta" aria-label="Related pages">
+      <section className="wlx-cta" aria-label={t('legalShared.relatedPages')}>
         {links.map((l, i) => {
           const Ic = l.icon
           const cls = 'wlx-btn' + (i === 0 ? '' : ' alt')
@@ -144,8 +166,8 @@ export default function LegalPage({ icon: Icon = FileText, eyebrow, title, intro
             ? <a key={l.label} className={cls} href={l.href}>{Ic && <Ic size={15} aria-hidden="true" />} {l.label}</a>
             : <button key={l.label} className={cls} onClick={() => nav(l.to)}>{Ic && <Ic size={15} aria-hidden="true" />} {l.label}</button>
         })}
-        <a className="wlx-btn alt" href={'mailto:' + contact}><Mail size={15} aria-hidden="true" /> Contact</a>
-        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
+        <a className="wlx-btn alt" href={'mailto:' + contact}><Mail size={15} aria-hidden="true" /> {t('legalShared.contact')}</a>
+        <button className="wlx-btn alt" onClick={() => nav('/workcopilot')}>{t('legalShared.back')} <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
       </main>
       <SiteFooter />
