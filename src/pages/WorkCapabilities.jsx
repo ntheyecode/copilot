@@ -9,7 +9,7 @@
 // feature card is a headline, one line and three short points. No caveats in
 // cards, no mechanism talk, no code-looking strips. Keep every label inside its
 // box: SVG text is sized so it never crosses a pill or frame edge.
-import React, { useEffect } from 'react'
+import React, { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MonitorPlay, TerminalSquare, Compass, ShieldCheck, AppWindow, Globe2, FileText, ScanEye, ArrowRight, Trophy, RefreshCw, ListChecks, Lock, Layers, Building2, Monitor, Route } from 'lucide-react'
 import SiteHeader from '../components/SiteHeader.jsx'
@@ -19,7 +19,7 @@ import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console: watch -> step -> correct -> confirm
 import { DifferenceStrip } from '../components/NotAChatBox.jsx'   // the three things a chat box does not do
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys) + the how.* / guide.* strings
+import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys) + the howItWorks.* / how.* / guide.* strings
 
 // Viz palette on brand tokens: the frame surface and inks follow the page theme
 // (light or dark), the accents are the brand emerald / cyan.
@@ -38,10 +38,16 @@ function Frame({ children, h = 92, label }) {
     </svg>
   )
 }
-const VIZ = {
+// Built per render from the translator: every alt label and every short label
+// drawn inside an illustration is a howItWorks.viz.* catalog string, so the
+// cards read in the visitor's language. The commands, network ranges and the
+// prompt glyph are code and stay literal.
+function makeViz(t) {
+  const v = (k) => t(`howItWorks.viz.${k}`)
+  return {
   // 1. Guided, step by step - a stepper: done, current (glow), pending.
   steps: (
-    <Frame label="Illustration: a four-step progress line with step one done, step two in progress and the rest pending">
+    <Frame label={v('steps.alt')}>
       <line x1="64" y1="46" x2="140" y2="46" stroke={EM} strokeWidth="2" />
       <line x1="140" y1="46" x2="216" y2="46" stroke="rgba(10,13,18,.16)" strokeWidth="2" />
       <circle cx="64" cy="46" r="11" fill={EMf} stroke={EM} strokeWidth="2" />
@@ -49,34 +55,35 @@ const VIZ = {
       <circle cx="140" cy="46" r="13" fill={EMf} stroke={EM} strokeWidth="2.4" />
       <circle cx="140" cy="46" r="5" fill={EM} />
       <circle cx="216" cy="46" r="10" fill="none" stroke="rgba(10,13,18,.28)" strokeWidth="2" />
-      <text x="140" y="80" textAnchor="middle" fill={MUT} fontSize="11" fontFamily="system-ui">step 2 of 4</text>
+      <text x="140" y="80" textAnchor="middle" fill={MUT} fontSize="11" fontFamily="system-ui">{v('steps.caption')}</text>
     </Frame>
   ),
   // 2. The exact how - a terminal with a copy tick.
   command: (
-    <Frame label="Illustration: a terminal showing an exact command with a Copied confirmation">
+    <Frame label={v('command.alt')}>
       <rect x="20" y="20" width="240" height="52" rx="9" fill={PANEL2} stroke={LINE} />
       <circle cx="33" cy="33" r="3" fill="#e5574f" /><circle cx="44" cy="33" r="3" fill={AM} /><circle cx="55" cy="33" r="3" fill={EM} />
       <text x="20" y="58" fill={TXT} fontSize="13" fontFamily="ui-monospace,Consolas,monospace"><tspan x="30" fill={EM}>$</tspan><tspan dx="6" fill={TXT}>aws ec2 create-vpc</tspan></text>
       <rect x="196" y="44" width="56" height="18" rx="9" fill={EMf} />
       <path d="M205 53l3 3 5-6" stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="217" y="57" fill={EM} fontSize="10.5" fontFamily="system-ui">Copied</text>
+      <text x="217" y="57" fill={EM} fontSize="10.5" fontFamily="system-ui">{v('command.copied')}</text>
     </Frame>
   ),
-  // 3. Starts from zero - open, sign in, done.
+  // 3. Starts from zero - open, sign in, done. Each pill is [label, x, width];
+  // the label is centered in its pill.
   zero: (
-    <Frame label="Illustration: three steps in a row, Open, Sign in, then Done">
-      {[['Open', 24], ['Sign in', 110]].map(([t, x]) => (
-        <g key={t}><rect x={x} y="34" width={t === 'Open' ? 62 : 70} height="26" rx="8" fill={PANEL} stroke={LINE} /><text x={x + (t === 'Open' ? 31 : 35)} y="51" textAnchor="middle" fill={TXT} fontSize="12" fontFamily="system-ui">{t}</text></g>
+    <Frame label={v('zero.alt')}>
+      {[[v('zero.open'), 24, 62], [v('zero.signIn'), 110, 70]].map(([label, x, w]) => (
+        <g key={x}><rect x={x} y="34" width={w} height="26" rx="8" fill={PANEL} stroke={LINE} /><text x={x + w / 2} y="51" textAnchor="middle" fill={TXT} fontSize="12" fontFamily="system-ui">{label}</text></g>
       ))}
       <path d="M90 47h12M188 47h10" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M100 43l4 4-4 4M196 43l4 4-4 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="208" y="34" width="60" height="26" rx="8" fill={EMf} stroke={EM} />
-      <path d="M217 47l4 4 7-8" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="244" y="51" textAnchor="middle" fill={EM} fontSize="12" fontFamily="system-ui">Done</text>
+      <path d="M217 47l4 4 7-8" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="244" y="51" textAnchor="middle" fill={EM} fontSize="12" fontFamily="system-ui">{v('zero.done')}</text>
     </Frame>
   ),
   // 4. Catches and corrects - a risky value becomes least privilege.
   fix: (
-    <Frame label="Illustration: a risky open network range crossed out and replaced by a corrected, narrower one">
+    <Frame label={v('fix.alt')}>
       <rect x="18" y="34" width="96" height="26" rx="7" fill={RDf} stroke="rgba(216,58,48,.4)" />
       <text x="66" y="51" textAnchor="middle" fill={RD} fontSize="12.5" fontFamily="ui-monospace,monospace" style={{ textDecoration: 'line-through' }}>0.0.0.0/0</text>
       <path d="M122 47h18" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M136 43l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
@@ -86,7 +93,7 @@ const VIZ = {
   ),
   // 5. Any app - browser, desktop window, terminal tiles.
   apps: (
-    <Frame label="Illustration: three app windows side by side, a web page, a desktop app and a terminal">
+    <Frame label={v('apps.alt')}>
       {[[24, CY, 'web'], [108, EM, 'app'], [192, AM, 'cli']].map(([x, col, kind]) => (
         <g key={kind}>
           <rect x={x} y="24" width="64" height="44" rx="8" fill={PANEL} stroke={LINE} />
@@ -97,34 +104,34 @@ const VIZ = {
           {kind === 'cli' && <text x={x + 9} y="52" fill={col} fontSize="11" fontFamily="ui-monospace,monospace">{'>_'}</text>}
         </g>
       ))}
-      <text x="140" y="84" textAnchor="middle" fill={MUT} fontSize="10.5" fontFamily="system-ui">web  ·  desktop  ·  terminal</text>
+      <text x="140" y="84" textAnchor="middle" fill={MUT} fontSize="10.5" fontFamily="system-ui">{v('apps.caption')}</text>
     </Frame>
   ),
   // 6. Grounded - your document is read on-device and checked against best practice.
   grounded: (
-    <Frame label="Illustration: a document read on the device, with an arrow to a Best practice check mark">
+    <Frame label={v('grounded.alt')}>
       <rect x="28" y="20" width="60" height="56" rx="6" fill={PANEL} stroke={LINE} />
       {[30, 40, 50, 60].map((y) => <rect key={y} x="36" y={y} width={y === 60 ? 28 : 44} height="4" rx="2" fill="rgba(10,13,18,.16)" />)}
       <line x1="28" y1="48" x2="88" y2="48" stroke={CY} strokeWidth="2" opacity=".85" />
-      <text x="58" y="88" textAnchor="middle" fill={MUT} fontSize="10" fontFamily="system-ui">read on-device</text>
+      <text x="58" y="88" textAnchor="middle" fill={MUT} fontSize="10" fontFamily="system-ui">{v('grounded.read')}</text>
       <path d="M118 48h20" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M134 44l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="150" y="30" width="112" height="36" rx="9" fill={EMf} stroke={EM} />
       <circle cx="170" cy="48" r="10" fill="rgba(16,162,113,.16)" /><path d="M165 48l4 4 6-8" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="186" y="52" fill={EM} fontSize="11.5" fontFamily="system-ui">Best practice</text>
+      <text x="186" y="52" fill={EM} fontSize="11.5" fontFamily="system-ui">{v('grounded.best')}</text>
     </Frame>
   ),
   // 7. A record you keep - a clean report PDF.
   record: (
-    <Frame label="Illustration: a finished PDF report with a completion check mark">
+    <Frame label={v('record.alt')}>
       <rect x="92" y="18" width="96" height="60" rx="7" fill={PANEL} stroke={LINE} />
       {[[30, 60], [40, 78], [50, 46], [60, 70]].map(([y, w]) => <rect key={y} x="104" y={y} width={w} height="5" rx="2.5" fill="rgba(10,13,18,.16)" />)}
-      <rect x="150" y="26" width="30" height="16" rx="4" fill={RDf} /><text x="165" y="38" textAnchor="middle" fill={RD} fontSize="9.5" fontWeight="700" fontFamily="system-ui">PDF</text>
+      <rect x="150" y="26" width="30" height="16" rx="4" fill={RDf} /><text x="165" y="38" textAnchor="middle" fill={RD} fontSize="9.5" fontWeight="700" fontFamily="system-ui">{v('record.pdf')}</text>
       <circle cx="188" cy="74" r="12" fill={SURF} stroke={EM} strokeWidth="2" /><path d="M183 74l3 3 6-7" stroke={EM} strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </Frame>
   ),
   // 8. Review and generate - a diagram is scanned, an issue found, a fix generated.
   review: (
-    <Frame label="Illustration: a diagram being inspected, one box flagged, with an arrow to a generated fix">
+    <Frame label={v('review.alt')}>
       <line x1="60" y1="36" x2="60" y2="60" stroke={LINE} strokeWidth="2" /><line x1="60" y1="36" x2="108" y2="36" stroke={LINE} strokeWidth="2" />
       <rect x="36" y="24" width="48" height="24" rx="6" fill={PANEL} stroke={LINE} />
       <rect x="92" y="24" width="48" height="24" rx="6" fill={RDf} stroke="rgba(216,58,48,.5)" />
@@ -132,55 +139,56 @@ const VIZ = {
       <circle cx="116" cy="36" r="15" fill="none" stroke={AM} strokeWidth="2" /><line x1="127" y1="47" x2="134" y2="54" stroke={AM} strokeWidth="2.4" strokeLinecap="round" />
       <path d="M168 50h20" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M184 46l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="198" y="34" width="64" height="32" rx="8" fill={CYf} stroke={CY} />
-      <path d="M222 42l-4 8h6l-4 8" stroke={CY} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="236" y="54" fill={CY} fontSize="11" fontFamily="system-ui">fix</text>
+      <path d="M222 42l-4 8h6l-4 8" stroke={CY} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="236" y="54" fill={CY} fontSize="11" fontFamily="system-ui">{v('review.fix')}</text>
     </Frame>
   ),
   // 9. Stays current - "last time" a control sat in one place, "this time" it has
   // moved and the step already points at the new spot, with a readout that the
   // learning was carried forward. Benefit only: never the mechanism behind it.
   learns: (
-    <Frame h={100} label="Illustration: two app windows, Last time with a control in one place and This time with the control moved and already found, over a readout saying learned, carried forward">
-      {[[22, 'last time', false], [150, 'this time', true]].map(([x, t, now]) => (
-        <g key={t}>
+    <Frame h={100} label={v('learns.alt')}>
+      {[[22, v('learns.lastTime'), false], [150, v('learns.thisTime'), true]].map(([x, caption, now]) => (
+        <g key={x}>
           <rect x={x} y="18" width="108" height="48" rx="8" fill={PANEL} stroke={LINE} />
           <rect x={x} y="18" width="108" height="12" rx="8" fill="rgba(10,13,18,.05)" />
           <rect x={x + 8} y="36" width="34" height="4" rx="2" fill="rgba(10,13,18,.14)" />
           <rect x={x + 8} y="46" width="24" height="4" rx="2" fill="rgba(10,13,18,.1)" />
           {now
-            ? <><rect x={x + 54} y="38" width="44" height="16" rx="6" fill={EMf} stroke={EM} strokeWidth="1.6" /><path d={`M${x + 61} 46l3 3 5-6`} stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x={x + 72} y="50" fill={EM} fontSize="9" fontFamily="system-ui">found</text></>
+            ? <><rect x={x + 54} y="38" width="44" height="16" rx="6" fill={EMf} stroke={EM} strokeWidth="1.6" /><path d={`M${x + 61} 46l3 3 5-6`} stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x={x + 72} y="50" fill={EM} fontSize="9" fontFamily="system-ui">{v('learns.found')}</text></>
             : <rect x={x + 54} y="36" width="44" height="16" rx="6" fill="none" stroke="rgba(10,13,18,.28)" strokeWidth="1.4" strokeDasharray="3 2" />}
-          <text x={x + 54} y="78" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{t}</text>
+          <text x={x + 54} y="78" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{caption}</text>
         </g>
       ))}
       <path d="M132 42h14" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M142 38l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-      <text x="140" y="95" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace">learned <tspan fill={EM}>·</tspan> carried forward</text>
+      <text x="140" y="95" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="ui-monospace,monospace">{v('learns.learned')} <tspan fill={EM}>·</tspan> {v('learns.carried')}</text>
     </Frame>
   ),
   // 11. Pre-task coach: a quick readiness check, then Quick or Detailed.
   coach: (
-    <Frame label="Illustration: a short readiness check with three ticks, then a choice between a quick and a detailed interview">
-      {[['Kind', 24], ['Ready?', 100], ['Sample', 180]].map(([t, x], i) => (
-        <g key={t}><rect x={x} y="22" width={i === 1 ? 64 : 62} height="22" rx="7" fill={EMf} stroke={EM} /><path d={`M${x + 9} 33l3 3 5-6`} stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x={x + 22} y="37" fill={EM} fontSize="10.5" fontFamily="system-ui">{t}</text></g>
+    <Frame label={v('coach.alt')}>
+      {[[v('coach.kind'), 24], [v('coach.ready'), 100], [v('coach.sample'), 180]].map(([label, x], i) => (
+        <g key={x}><rect x={x} y="22" width={i === 1 ? 64 : 62} height="22" rx="7" fill={EMf} stroke={EM} /><path d={`M${x + 9} 33l3 3 5-6`} stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x={x + 22} y="37" fill={EM} fontSize="10.5" fontFamily="system-ui">{label}</text></g>
       ))}
-      <rect x="40" y="58" width="92" height="22" rx="11" fill={PANEL} stroke={LINE} /><text x="86" y="73" textAnchor="middle" fill={TXT} fontSize="11" fontFamily="system-ui">Quick</text>
-      <rect x="148" y="58" width="92" height="22" rx="11" fill={CYf} stroke={CY} /><text x="194" y="73" textAnchor="middle" fill={CY} fontSize="11" fontWeight="600" fontFamily="system-ui">Detailed</text>
+      <rect x="40" y="58" width="92" height="22" rx="11" fill={PANEL} stroke={LINE} /><text x="86" y="73" textAnchor="middle" fill={TXT} fontSize="11" fontFamily="system-ui">{v('coach.quick')}</text>
+      <rect x="148" y="58" width="92" height="22" rx="11" fill={CYf} stroke={CY} /><text x="194" y="73" textAnchor="middle" fill={CY} fontSize="11" fontWeight="600" fontFamily="system-ui">{v('coach.detailed')}</text>
     </Frame>
   ),
-  // 12. Security: a redacted field, a code check, an authenticator.
+  // 12. Security: a redacted field, a code check, an authenticator. The
+  // [REDACTED] token is what the product itself prints, so it stays literal.
   shield: (
-    <Frame label="Illustration: a form field shown as REDACTED, a code check with a tick, and an authenticator lock">
+    <Frame label={v('shield.alt')}>
       <rect x="20" y="24" width="112" height="20" rx="6" fill="#0a0d12" /><text x="76" y="38" textAnchor="middle" fill="#8cf5c4" fontSize="10" fontWeight="700" fontFamily="ui-monospace,monospace" letterSpacing="1">[REDACTED]</text>
-      <rect x="20" y="52" width="112" height="22" rx="7" fill={EMf} stroke={EM} /><text x="30" y="67" fill={EM} fontSize="10.5" fontFamily="ui-monospace,monospace">code checked</text><path d="M114 63l3 3 5-6" stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="20" y="52" width="112" height="22" rx="7" fill={EMf} stroke={EM} /><text x="30" y="67" fill={EM} fontSize="10.5" fontFamily="ui-monospace,monospace">{v('shield.codeChecked')}</text><path d="M114 63l3 3 5-6" stroke={EM} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="150" y="26" width="110" height="48" rx="9" fill={PANEL} stroke={LINE} />
-      <rect x="194" y="44" width="22" height="18" rx="4" fill={CYf} stroke={CY} strokeWidth="1.6" /><path d="M198 44v-5a7 7 0 0 1 14 0v5" stroke={CY} strokeWidth="1.6" fill="none" /><text x="205" y="80" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">authenticator required</text>
+      <rect x="194" y="44" width="22" height="18" rx="4" fill={CYf} stroke={CY} strokeWidth="1.6" /><path d="M198 44v-5a7 7 0 0 1 14 0v5" stroke={CY} strokeWidth="1.6" fill="none" /><text x="205" y="80" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{v('shield.authenticator')}</text>
     </Frame>
   ),
   // 13. Skills: a playbook feeding the plan.
   skills: (
-    <Frame label="Illustration: a playbook document with an arrow into a plan that now follows it">
+    <Frame label={v('skills.alt')}>
       <rect x="30" y="20" width="64" height="56" rx="6" fill={PANEL} stroke={LINE} />
       {[30, 40, 50, 60].map((y) => <rect key={y} x="38" y={y} width={y === 60 ? 26 : 48} height="4" rx="2" fill={LINE} />)}
-      <text x="62" y="88" textAnchor="middle" fill={MUT} fontSize="10" fontFamily="system-ui">your playbook</text>
+      <text x="62" y="88" textAnchor="middle" fill={MUT} fontSize="10" fontFamily="system-ui">{v('skills.playbook')}</text>
       <path d="M118 48h22" stroke={MUT} strokeWidth="2" strokeLinecap="round" /><path d="M136 44l5 4-5 4" stroke={MUT} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="156" y="22" width="104" height="52" rx="9" fill={EMf} stroke={EM} />
       {[34, 46, 58].map((y, i) => <g key={y}><circle cx="170" cy={y} r="4.5" fill={i < 2 ? EM : 'none'} stroke={EM} strokeWidth="1.6" /><rect x="180" y={y - 2.5} width={i === 1 ? 64 : 48} height="5" rx="2.5" fill={EM} opacity={i === 2 ? '.35' : '.7'} /></g>)}
@@ -188,23 +196,24 @@ const VIZ = {
   ),
   // 14. Enterprise: alerts relayed to a SOC, SSO, a sealed report.
   enterprise: (
-    <Frame label="Illustration: a security alert relayed to a SOC console, a single sign-on badge and a sealed report">
+    <Frame label={v('enterprise.alt')}>
       <rect x="18" y="26" width="92" height="46" rx="9" fill={PANEL} stroke="rgba(201,130,26,.5)" /><rect x="18" y="26" width="4" height="46" rx="2" fill={AM} /><rect x="30" y="36" width="56" height="6" rx="3" fill={AM} opacity=".8" /><rect x="30" y="48" width="70" height="5" rx="2.5" fill={LINE} /><rect x="30" y="58" width="44" height="5" rx="2.5" fill={LINE} />
       <path d="M114 49h22" stroke={CY} strokeWidth="2" strokeDasharray="3 3" strokeLinecap="round" /><path d="M132 45l5 4-5 4" stroke={CY} strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
       <rect x="142" y="26" width="60" height="46" rx="9" fill={PANEL} stroke={LINE} />{[36, 48, 60].map((y, i) => <rect key={y} x="150" y={y} width="44" height="5" rx="2.5" fill={i === 1 ? CY : LINE} opacity={i === 1 ? '.8' : '1'} />)}
-      <text x="172" y="86" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">your SOC</text>
-      <rect x="214" y="26" width="48" height="20" rx="10" fill={EMf} stroke={EM} /><text x="238" y="40" textAnchor="middle" fill={EM} fontSize="9.5" fontWeight="700" fontFamily="system-ui">SSO</text>
-      <rect x="214" y="52" width="48" height="20" rx="6" fill={PANEL} stroke={LINE} /><circle cx="226" cy="62" r="5" fill={EMf} stroke={EM} strokeWidth="1.5" /><path d="M223.5 62l1.8 1.8 3.2-3.6" stroke={EM} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="246" y="65.5" textAnchor="middle" fill={TXT} fontSize="8.5" fontFamily="system-ui">sealed</text>
+      <text x="172" y="86" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{v('enterprise.soc')}</text>
+      <rect x="214" y="26" width="48" height="20" rx="10" fill={EMf} stroke={EM} /><text x="238" y="40" textAnchor="middle" fill={EM} fontSize="9.5" fontWeight="700" fontFamily="system-ui">{v('enterprise.sso')}</text>
+      <rect x="214" y="52" width="48" height="20" rx="6" fill={PANEL} stroke={LINE} /><circle cx="226" cy="62" r="5" fill={EMf} stroke={EM} strokeWidth="1.5" /><path d="M223.5 62l1.8 1.8 3.2-3.6" stroke={EM} strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" /><text x="246" y="65.5" textAnchor="middle" fill={TXT} fontSize="8.5" fontFamily="system-ui">{v('enterprise.sealed')}</text>
     </Frame>
   ),
   // 15. Desktop, web, mobile.
   anywhere: (
-    <Frame label="Illustration: a desktop overlay, a browser window and a phone side by side">
-      <rect x="22" y="22" width="90" height="56" rx="8" fill={PANEL} stroke={LINE} /><rect x="60" y="30" width="44" height="30" rx="6" fill={EMf} stroke={EM} /><text x="67" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">desktop overlay</text>
-      <rect x="124" y="22" width="90" height="56" rx="8" fill={PANEL} stroke={LINE} /><rect x="124" y="22" width="90" height="12" rx="8" fill={LINE} opacity=".6" /><rect x="162" y="40" width="44" height="30" rx="6" fill={CYf} stroke={CY} /><text x="169" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">browser</text>
-      <rect x="232" y="18" width="30" height="60" rx="7" fill={PANEL} stroke={LINE} /><rect x="238" y="26" width="18" height="40" rx="3" fill={EMf} /><text x="247" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">phone</text>
+    <Frame label={v('anywhere.alt')}>
+      <rect x="22" y="22" width="90" height="56" rx="8" fill={PANEL} stroke={LINE} /><rect x="60" y="30" width="44" height="30" rx="6" fill={EMf} stroke={EM} /><text x="67" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{v('anywhere.desktop')}</text>
+      <rect x="124" y="22" width="90" height="56" rx="8" fill={PANEL} stroke={LINE} /><rect x="124" y="22" width="90" height="12" rx="8" fill={LINE} opacity=".6" /><rect x="162" y="40" width="44" height="30" rx="6" fill={CYf} stroke={CY} /><text x="169" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{v('anywhere.browser')}</text>
+      <rect x="232" y="18" width="30" height="60" rx="7" fill={PANEL} stroke={LINE} /><rect x="238" y="26" width="18" height="40" rx="3" fill={EMf} /><text x="247" y="88" textAnchor="middle" fill={MUT} fontSize="9.5" fontFamily="system-ui">{v('anywhere.phone')}</text>
     </Frame>
   ),
+  }
 }
 
 // 1b. Projects - a large goal as a MAP of tasks: the first done, the current
@@ -238,26 +247,21 @@ function ProjectsMap({ label, task, finish }) {
 // Real HTML rows, not SVG text: five captioned rows need to wrap cleanly at
 // 640px and must never cross a pill edge (the old SVG version let its label
 // cross the pill border, which the owner saw live as text overlapping boxes).
-// Each label pill is nowrap + no-shrink; only the caption wraps.
-const LOOP = [
-  ['Plan', 'the strongest AI available to you plans the whole task'],
-  ['Probe', 'asks a question when it needs more, a tap or a quick answer'],
-  ['Guide', 'the exact next step, on your screen'],
-  // Continuous by default; the optional on-demand check is the user's call.
-  ['Watch', 'checks that each step really worked, and double-checks any step the moment you ask'],
-  ['Correct', 'fixes a wrong turn the moment it happens'],
-]
+// Each label pill is nowrap + no-shrink; only the caption wraps. The five rows
+// (label + caption) are one catalog array, howItWorks.feature.loop.rows.
 function BestLoop() {
+  const t = useT()
+  const rows = t('howItWorks.feature.loop.rows')
   return (
-    <div className="wcap-loop" role="group" aria-label="How every task runs: plan, probe, guide, watch, correct, repeating until the task is done">
+    <div className="wcap-loop" role="group" aria-label={t('howItWorks.feature.loop.aria')}>
       <ol className="wcap-loop-rows">
-        {LOOP.map(([k, v]) => (
-          <li key={k}><span className="wcap-loop-k">{k}</span><span className="wcap-loop-v">{v}</span></li>
+        {rows.map((r) => (
+          <li key={r.k}><span className="wcap-loop-k">{r.k}</span><span className="wcap-loop-v">{r.v}</span></li>
         ))}
       </ol>
       <div className="wcap-loop-foot">
-        <span className="wcap-loop-again"><RefreshCw size={12} aria-hidden="true" /> repeats until the task is done</span>
-        <span className="wcap-loop-ok"><ShieldCheck size={13} aria-hidden="true" /> Planned by the strongest AI for you</span>
+        <span className="wcap-loop-again"><RefreshCw size={12} aria-hidden="true" /> {t('howItWorks.feature.loop.again')}</span>
+        <span className="wcap-loop-ok"><ShieldCheck size={13} aria-hidden="true" /> {t('howItWorks.feature.loop.ok')}</span>
       </div>
     </div>
   )
@@ -266,23 +270,26 @@ function BestLoop() {
 // One benefit-first sentence per card. The visual carries the "how"; the line
 // carries the payoff. Claims stay scoped: WorkCoPilot guides you through work on
 // screen in the apps you use; it is not a writing or document engine.
-const CARDS = [
+// The copy (t, d) is the catalog array howItWorks.cards, joined to this meta
+// by position (same order, same length); only the illustration key and icon
+// live here.
+const CARD_META = [
   // Depth is the user's pick (simplest to technical), so the same task reads
   // right for a beginner or an expert. Stated as the benefit, never the setting.
-  { viz: 'steps', icon: MonitorPlay, t: 'Guided, step by step', d: 'The exact next move on your screen, explained at the depth you choose, from simplest to technical, and checked before you go on.' },
-  { viz: 'command', icon: TerminalSquare, t: 'The exact how, every time', d: 'The precise click, command or setting, copy-ready, always the proven best way.' },
-  { viz: 'zero', icon: Compass, t: 'Starts from zero', d: 'Opens the right page, signs you in and takes you to the exact spot.' },
-  { viz: 'fix', icon: ShieldCheck, t: 'Catches and corrects mistakes', d: 'Spots a wrong turn the moment it happens and shows the fix, even when a button has moved.' },
-  { viz: 'apps', icon: AppWindow, t: 'Any app, not just the browser', d: 'Web apps, desktop apps, on-prem consoles and your own tools: it reads whatever is on screen.' },
-  { viz: 'grounded', icon: Globe2, t: 'Grounded in the best, and in your world', d: 'Steps follow current best practice and, on Advanced and Premium, your own documents, read on your computer.' },
-  { viz: 'record', icon: FileText, t: 'A record you keep', d: 'Finish with a clean, picture-rich write-up of what you did, ready to share or repeat.' },
-  { viz: 'review', icon: ScanEye, t: 'Review and generate', d: 'Show it a diagram or design. It finds the real issues and gives you a ready prompt to fix them.' },
-  { viz: 'learns', icon: RefreshCw, t: 'Stays current, learns your tools', d: 'Learns how your tools work today, kept private to your company, so guidance never goes stale.' },
-  { viz: 'coach', icon: ListChecks, t: 'A better task before you spend one', d: 'A 30-second coach checks you are ready and shapes the task, so the plan fits what you know.' },
-  { viz: 'skills', icon: Layers, t: 'Teach it your skills', d: 'Paste a playbook or SOP and guidance follows your tools, standards and terminology, kept private.' },
-  { viz: 'shield', icon: Lock, t: 'Protected by default', d: 'Data redacted on your device, code checked before it runs, an authenticator on every account, a full audit log.' },
-  { viz: 'enterprise', icon: Building2, t: 'Built for companies', d: 'Security alerts to your SIEM, company SSO, sealed compliance reports across 18 frameworks and an executive ROI dashboard.' },
-  { viz: 'anywhere', icon: Monitor, t: 'Desktop, web and mobile', d: 'A desktop overlay hidden from screen shares, the browser with nothing to install, or your phone camera. It guides, never acts for you.' },
+  { viz: 'steps', icon: MonitorPlay },
+  { viz: 'command', icon: TerminalSquare },
+  { viz: 'zero', icon: Compass },
+  { viz: 'fix', icon: ShieldCheck },
+  { viz: 'apps', icon: AppWindow },
+  { viz: 'grounded', icon: Globe2 },
+  { viz: 'record', icon: FileText },
+  { viz: 'review', icon: ScanEye },
+  { viz: 'learns', icon: RefreshCw },
+  { viz: 'coach', icon: ListChecks },
+  { viz: 'skills', icon: Layers },
+  { viz: 'shield', icon: Lock },
+  { viz: 'enterprise', icon: Building2 },
+  { viz: 'anywhere', icon: Monitor },
 ]
 
 // Accessibility (WEB-08): one <main>, a single H1, visually hidden H2s over the
@@ -306,10 +313,12 @@ export default function WorkCapabilities() {
     const el = document.getElementById(id)
     if (el) el.scrollIntoView({ block: 'start' })
   }, [])
+  // The illustrations carry catalog labels, so they are built per translator.
+  const VIZ = useMemo(() => makeViz(t), [t])
   // Projects (Premium and company plans) sits second, right after single-task
   // guidance: one task, then a whole goal as a map of tasks. Its copy and
   // illustration labels are catalog strings, so the card is built here with t.
-  const cards = [...CARDS]
+  const cards = t('howItWorks.cards').map((c, i) => ({ ...CARD_META[i], ...c }))
   cards.splice(1, 0, {
     media: <ProjectsMap label={t('how.projects.alt')} task={t('how.projects.vizTask')} finish={t('how.projects.vizFinish')} />,
     icon: Route, t: t('how.projects.t'), d: t('how.projects.d'),
@@ -320,9 +329,9 @@ export default function WorkCapabilities() {
       <SiteHeader current="how" />
       <main id="main">
       <section className="wcap-hero">
-        <h1>Like having the best person<br />in the room, every time.</h1>
+        <h1>{t('howItWorks.hero.h1a')}<br />{t('howItWorks.hero.h1b')}</h1>
         {/* AEO: a direct, quotable one-sentence answer to "what does WorkCoPilot do?" */}
-        <p>WorkCoPilot watches your screen, shows the exact next step in the app you are in, checks it worked, and keeps going until the job is done.</p>
+        <p>{t('howItWorks.hero.p')}</p>
       </section>
 
       {/* WATCH IT WORK: the live guide console on a healthcare-admin task next to
@@ -343,7 +352,7 @@ export default function WorkCapabilities() {
       </section>
 
       <section className="wcap-grid" aria-labelledby="wcap-grid-h">
-        <h2 id="wcap-grid-h" className="wcap-sr">What WorkCoPilot does for you</h2>
+        <h2 id="wcap-grid-h" className="wcap-sr">{t('howItWorks.gridH2')}</h2>
         {cards.map((b, i) => {
           // Fifteen cards in a 3-column grid (2 columns under 1080px, 1 under
           // 560px). Tones and texture crops cycle so no two neighbors match.
@@ -368,21 +377,17 @@ export default function WorkCapabilities() {
           model name, never the routing. The old mono "goal -> plan -> guide"
           proof strip repeated the visual as a code trace, so it is gone. */}
       <section className="wcap-feature" id="best-model" aria-labelledby="wcap-feat-h">
-        <h2 id="wcap-feat-h" className="wcap-sr">How your plan is made</h2>
+        <h2 id="wcap-feat-h" className="wcap-sr">{t('howItWorks.feature.h2')}</h2>
         <WorkCard theme="light" tone="violet" delay={0} texPos="100% 0%">
           <div className="wcap-feat-in">
             <div className="wcap-feat-media">
               <BestLoop />
-              <p className="wcap-loop-line">It keeps your whole task in context and keeps going, improving as it learns, until the work is done.</p>
+              <p className="wcap-loop-line">{t('howItWorks.feature.line')}</p>
             </div>
             <div className="wcap-feat-copy">
-              <WorkCard.Head align="start" icon={Trophy} eyebrow="The strongest AI available to you" title="Your plan comes from the strongest AI available to you." />
-              <WorkCard.Body>Set the goal. The strongest AI on your key plans it, and live guidance keeps pace with your screen, step by step.</WorkCard.Body>
-              <WorkCard.Points items={[
-                'Chosen, not guessed: always the strongest option actually available to you right now.',
-                'Your data boundary holds: every call stays on your own or your company\'s key.',
-                'Honest log: every task records what planned it and any change made mid-task.',
-              ]} />
+              <WorkCard.Head align="start" icon={Trophy} eyebrow={t('howItWorks.feature.eyebrow')} title={t('howItWorks.feature.title')} />
+              <WorkCard.Body>{t('howItWorks.feature.body')}</WorkCard.Body>
+              <WorkCard.Points items={t('howItWorks.feature.points')} />
             </div>
           </div>
         </WorkCard>
@@ -405,10 +410,10 @@ export default function WorkCapabilities() {
         </WorkCard>
       </section>
 
-      <section className="wcap-cta" aria-label="Next steps">
-        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden="true" /></button>
-        <a className="wcap-btn alt" href="/workcopilot/enterprise">Enterprise features</a>
-        <a className="wcap-btn alt" href="/demo">See a 60-second demo</a>
+      <section className="wcap-cta" aria-label={t('howItWorks.cta.aria')}>
+        <button className="wcap-btn" onClick={() => nav('/workcopilot')}>{t('howItWorks.cta.start')} <ArrowRight size={15} aria-hidden="true" /></button>
+        <a className="wcap-btn alt" href="/workcopilot/enterprise">{t('howItWorks.cta.enterprise')}</a>
+        <a className="wcap-btn alt" href="/demo">{t('howItWorks.cta.demo')}</a>
       </section>
       <ReleaseNote groups={['global']} />
       </main>

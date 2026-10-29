@@ -32,6 +32,20 @@ import { revealOnScroll } from '../reveal.js'              // the ONE scroll-rev
 // chip row is a labeled nav, decorative icons and mock-window dots are hidden,
 // the mock progress bar defers to its "Step X of N" text, reveals respect
 // prefers-reduced-motion, and the badge/accent greens meet AA contrast.
+
+// The eight cases' non-copy meta (anchor id, icon, tone, the step shown as
+// happening now), in page order; the copy is useCases.cases, same order.
+const CASE_META = [
+  { id: 'config', icon: ServerCog, tone: 'a', active: 1 },
+  { id: 'build', icon: Blocks, tone: 'b', active: 1 },
+  { id: 'ai', icon: Sparkles, tone: 'c', active: 1 },
+  { id: 'product', icon: Rocket, tone: 'd', active: 1 },
+  { id: 'marketing', icon: Megaphone, tone: 'e', active: 1 },
+  { id: 'office', icon: Calculator, tone: 'a', active: 1 },
+  { id: 'legal', icon: Scale, tone: 'b', active: 1 },
+  { id: 'general', icon: Compass, tone: 'c', active: 1 },
+]
+
 export default function WorkUseCases() {
   const nav = useNavigate()
   const rootRef = useRef(null)
@@ -47,105 +61,10 @@ export default function WorkUseCases() {
 
   // Each case: a short category label (eyebrow + chip), a result-led outcome
   // headline, ONE benefit line, the real jobs it covers, and a light guided
-  // card (goal + 3 steps + the one step now + how you know it worked).
-  const cases = [
-    {
-      id: 'config', icon: ServerCog, tone: 'a', tag: 'Setup & configuration',
-      outcome: 'Set it up right, locked down',
-      benefit: 'Every setting named and checked live, so your infrastructure is actually secure, not just looks it.',
-      can: ['Configure a firewall', 'Harden a Linux server', 'Set up IDS / IPS rules', 'Wire a CI/CD pipeline'],
-      guide: {
-        goal: 'Harden a production Linux server', active: 1,
-        plan: ['Create a non-root sudo user', 'Lock down SSH and the firewall', 'Turn on auto security updates'],
-        now: 'Default-deny the firewall, allow only ports 22 and 443, then confirm from a second session before you log out.',
-        done: 'only 22 and 443 are open and a password login is refused',
-      },
-    },
-    {
-      id: 'build', icon: Blocks, tone: 'b', tag: 'Build & implement',
-      outcome: 'Empty folder to running system',
-      benefit: 'The exact commands and code, in order, with the mistakes that usually cost hours caught early.',
-      can: ['Scaffold a new app or service', 'Connect two systems with an API', 'Build a data pipeline', 'Deploy to the cloud'],
-      guide: {
-        goal: 'Add Stripe payment webhooks', active: 1,
-        plan: ['Add the raw-body webhook route', 'Verify every event, make it idempotent', 'Replay test events, then go live'],
-        now: 'Verify the signature before trusting the event, and skip any event id you have already seen so retries never double-charge.',
-        done: 'a replayed event is accepted once and ignored the second time',
-      },
-    },
-    {
-      id: 'ai', icon: Sparkles, tone: 'c', tag: 'AI & automation',
-      outcome: 'Automations that actually run',
-      benefit: 'Each node, setting and connection guided, so the agent or assistant works instead of silently stalling.',
-      can: ['Build an n8n workflow', 'Stand up a RAG assistant', 'Automate a repeat task', 'Wire AI into your tools'],
-      guide: {
-        goal: 'Ship a RAG assistant that cites sources', active: 1,
-        plan: ['Chunk, embed and index your docs', 'Retrieve before you generate', 'Test answers, then deploy'],
-        now: 'Retrieve the top matching chunks, pass only those as context, and have it cite the source or say "I do not know".',
-        done: 'answers quote the right document and refuse when the answer is not there',
-      },
-    },
-    {
-      id: 'product', icon: Rocket, tone: 'd', tag: 'Product & innovation',
-      outcome: 'From idea to shipped',
-      benefit: 'Guided through tools you have never opened, with everything pointed at the result you want.',
-      can: ['Prototype a new feature', 'Spin up a landing page', 'Run a quick experiment', 'Ship a first version'],
-      guide: {
-        goal: 'Ship and track a landing page today', active: 1,
-        plan: ['Build the page, write the copy', 'Connect your domain', 'Publish and prove tracking fires'],
-        now: 'Add the analytics snippet, set a conversion on the signup button, then confirm a test signup lands in real time.',
-        done: 'the live URL loads and a test signup shows up as a conversion',
-      },
-    },
-    {
-      id: 'marketing', icon: Megaphone, tone: 'e', tag: 'Marketing & growth',
-      outcome: 'Launch, then read the numbers',
-      benefit: 'Walked through the ad manager and analytics, with every number explained in plain words.',
-      can: ['Launch an ad campaign', 'Set up conversion tracking', 'Read a traffic report', 'Plan a launch'],
-      guide: {
-        goal: 'Launch a Google Ads search campaign', active: 1,
-        plan: ['Install the tag, import the conversion', 'Set budget, keywords, tracking', 'Submit for review, go live'],
-        now: 'Use exact and phrase-match keywords, not broad, set a daily cap and a target cost per action, then add three ads.',
-        done: 'the campaign reads Eligible and the conversion shows Recording',
-      },
-    },
-    {
-      id: 'office', icon: Calculator, tone: 'a', tag: 'Accounting & office',
-      outcome: 'Books closed, filings done',
-      benefit: 'Shown exactly what to enter, with whatever does not add up flagged on the spot.',
-      can: ['Reconcile a bank statement', 'Build a financial report', 'Create and send invoices', 'Prepare a filing'],
-      guide: {
-        goal: 'Reconcile the month to the penny', active: 1,
-        plan: ['Import the statement, lock the opening balance', 'Match everything, hunt the variance', 'Lock the period, export the report'],
-        now: 'Auto-match deposits, clear each withdrawal, and when it will not tie out compare the uncleared dates and amounts.',
-        done: 'the cleared balance equals the statement to the cent',
-      },
-    },
-    {
-      id: 'legal', icon: Scale, tone: 'b', tag: 'Compliance & filings',
-      outcome: 'Compliance tasks, done clean',
-      benefit: 'Forms, checklists and filings completed step by step, with a clean record of what was done.',
-      can: ['Complete a compliance checklist', 'Fill a regulatory form', 'Submit a filing in the portal', 'Keep an audit trail'],
-      guide: {
-        goal: 'Submit a quarterly compliance filing', active: 1,
-        plan: ['Open the portal, start the return', 'Fill each field, attach evidence', 'Validate and submit'],
-        now: 'Fill each required field from your records and attach exactly the evidence the form asks for, nothing missing.',
-        done: 'the portal accepts the filing and returns a confirmation number',
-      },
-    },
-    {
-      id: 'general', icon: Compass, tone: 'c', tag: 'Everyday tasks',
-      outcome: 'Stuck on a screen? Get to done',
-      benefit: 'A new tool, a form you cannot finish, an error you do not understand: point it at the screen and get walked through.',
-      can: ['Learn a new tool fast', 'Fix a confusing error', 'Fill a tricky form', 'Get unstuck on a task'],
-      guide: {
-        goal: 'Decode and fix a cryptic error', active: 1,
-        plan: ['Reproduce the error reliably', 'Find the real cause, not the symptom', 'Fix it, confirm it is gone'],
-        now: 'Paste the whole error: it reads the full stack, names the real cause, and points to the file and line to change.',
-        done: 'the task finishes with a clean log and no error',
-      },
-    },
-  ]
+  // card (goal + 3 steps + the one step now + how you know it worked). The
+  // copy is the catalog array useCases.cases, joined to CASE_META by position
+  // (same order, same length); `active` marks the step shown as happening now.
+  const cases = t('useCases.cases').map((c, i) => ({ ...CASE_META[i], ...c, guide: { ...c.guide, active: CASE_META[i].active } }))
 
   return (
     <div className="uc" ref={rootRef}>
@@ -157,10 +76,10 @@ export default function WorkUseCases() {
       <main id="main">
       <section className="uc-hero">
         <div className="uc-wrap">
-          <div className="uc-badge" data-reveal>Use cases</div>
-          <h1 data-reveal>Find the job that looks like yours.<br /><em>Then finish it, guided.</em></h1>
-          <p data-reveal>Pick the work below that matches your day. WorkCoPilot guides each step on your screen, from the first click to done.</p>
-          <nav className="uc-chips" data-reveal aria-label="Jump to a use case">
+          <div className="uc-badge" data-reveal>{t('useCases.hero.badge')}</div>
+          <h1 data-reveal>{t('useCases.hero.h1a')}<br />{t.rich('useCases.hero.h1b')}</h1>
+          <p data-reveal>{t('useCases.hero.p')}</p>
+          <nav className="uc-chips" data-reveal aria-label={t('useCases.hero.chipsAria')}>
             {cases.map((c) => <a key={c.id} href={`#${c.id}`} className="uc-chip"><c.icon size={14} aria-hidden="true" /> {c.tag}</a>)}
           </nav>
         </div>
@@ -191,10 +110,10 @@ export default function WorkUseCases() {
               <h2 id={`${c.id}-h`}>{c.outcome}</h2>
               <p>{c.benefit}</p>
               <ul className="uc-can">{c.can.map((x) => <li key={x}><Check size={15} aria-hidden="true" /> {x}</li>)}</ul>
-              <button className="uc-cta" onClick={go} aria-label={`Guide me on ${c.tag}`}>Guide me on this <ArrowRight size={15} aria-hidden="true" /></button>
+              <button className="uc-cta" onClick={go} aria-label={t('useCases.case.ctaAria', { tag: c.tag })}>{t('useCases.case.cta')} <ArrowRight size={15} aria-hidden="true" /></button>
             </div>
             <div className="uc-case-graphic" data-reveal>
-              <MiniGuide g={c.guide} tag={c.tag} />
+              <MiniGuide g={c.guide} short={c.short} />
             </div>
           </div>
         </section>
@@ -203,9 +122,9 @@ export default function WorkUseCases() {
       <section className="uc-final" aria-labelledby="uc-final-h">
         <div className="uc-wrap" data-reveal>
           <AVMark size={44} />
-          <h2 id="uc-final-h">Your task is next.</h2>
-          <p>Bring anything on your screen. WorkCoPilot takes it from the first step to done.</p>
-          <button className="uc-cta big" onClick={go}>Get started <ArrowRight size={18} aria-hidden="true" /></button>
+          <h2 id="uc-final-h">{t('useCases.final.h2')}</h2>
+          <p>{t('useCases.final.p')}</p>
+          <button className="uc-cta big" onClick={go}>{t('useCases.final.cta')} <ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </section>
       <ReleaseNote groups={['global']} />
@@ -221,36 +140,39 @@ export default function WorkUseCases() {
 // Goal (what you want), a short three-step plan with the done step ticked and
 // the next step waiting, and the ONE step happening now expanded with a single
 // plain how-line plus how you know it worked. No terminal, no nested how-list.
-function MiniGuide({ g, tag }) {
+// `short` is the one-word badge for the case (useCases.cases[i].short); the
+// chrome strings are useCases.mini.*. The product name stays as it is.
+function MiniGuide({ g, short }) {
+  const t = useT()
   const plan = g.plan
   const active = Math.min(Math.max(g.active || 0, 0), plan.length - 1)
   const total = plan.length
   return (
-    <div className="uc-mini" role="group" aria-label={`Example guided session: ${g.goal}`}>
+    <div className="uc-mini" role="group" aria-label={t('useCases.mini.aria', { goal: g.goal })}>
       <div className="uc-mini-head">
         <span className="d r" aria-hidden="true" /><span className="d y" aria-hidden="true" /><span className="d g" aria-hidden="true" />
         <b>WorkCoPilot</b>
-        <span className="uc-mini-live"><i aria-hidden="true" /> watching</span>
-        <span className="uc-mini-tag">{tag.split(' ')[0]}</span>
+        <span className="uc-mini-live"><i aria-hidden="true" /> {t('useCases.mini.watching')}</span>
+        <span className="uc-mini-tag">{short}</span>
       </div>
-      <div className="uc-mini-goal"><span>YOU WANT</span> {g.goal}</div>
+      <div className="uc-mini-goal"><span>{t('useCases.mini.youWant')}</span> {g.goal}</div>
       <div className="uc-mini-prog">
-        <span className="uc-mini-pc">Step {active + 1} of {total}</span>
+        <span className="uc-mini-pc">{t('useCases.mini.stepOf', { n: active + 1, total })}</span>
         <div className="uc-mini-bar" aria-hidden="true"><i style={{ width: `${Math.round(((active + 1) / total) * 100)}%` }} /></div>
       </div>
       <ol className="uc-plan">
         {plan.map((title, i) => {
           if (i < active) return (
-            <li className="done" key={i}><span className="pn ok" aria-hidden="true"><Check size={12} aria-hidden="true" /></span><span className="uc-sr">Done: </span><span className="pt">{title}</span></li>
+            <li className="done" key={i}><span className="pn ok" aria-hidden="true"><Check size={12} aria-hidden="true" /></span><span className="uc-sr">{t('useCases.mini.srDone')}</span><span className="pt">{title}</span></li>
           )
           if (i > active) return (
-            <li className="next" key={i}><span className="pn play" aria-hidden="true"><Play size={9} aria-hidden="true" /></span><span className="uc-sr">Next: </span><span className="pt">{title}</span></li>
+            <li className="next" key={i}><span className="pn play" aria-hidden="true"><Play size={9} aria-hidden="true" /></span><span className="uc-sr">{t('useCases.mini.srNext')}</span><span className="pt">{title}</span></li>
           )
           return (
             <li className="active" key={i} aria-current="step">
               <span className="pn cur" aria-hidden="true">{i + 1}</span>
               <div className="pbody">
-                <div className="uc-mini-label">DOING NOW</div>
+                <div className="uc-mini-label">{t('useCases.mini.doingNow')}</div>
                 <div className="uc-mini-step">{title}</div>
                 <div className="uc-mini-now">{g.now}</div>
               </div>
@@ -258,7 +180,7 @@ function MiniGuide({ g, tag }) {
           )
         })}
       </ol>
-      <div className="uc-mini-done"><Check size={13} aria-hidden="true" /> done when {g.done}</div>
+      <div className="uc-mini-done"><Check size={13} aria-hidden="true" /> {t('useCases.mini.doneWhen', { done: g.done })}</div>
     </div>
   )
 }

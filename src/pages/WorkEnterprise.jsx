@@ -35,13 +35,15 @@ import ReleaseNote from '../components/ReleaseNote.jsx'   // localized "new in t
 import SiteHeader from '../components/SiteHeader.jsx'
 import GuideConsole from '../components/GuideConsole.jsx'   // the live guide console on an HR task grounded in the company SOP
 import useSeo from '../useSeo.js'
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys) + enterprise.* / guide.*
+import { useT, renderRich } from '../i18n/index.jsx'   // localized <title>/description (seo.* keys) + enterprisePage.* / enterprise.* / guide.*
 
-// The SOC / SIEM relay targets. Names only (no third-party logos).
+// The SOC / SIEM relay targets. Product and protocol names only (no third-party
+// logos), so they are not translated.
 const SIEM_TARGETS = ['Splunk', 'Microsoft Sentinel', 'IBM QRadar', 'Elastic', 'Datadog', 'Sumo Logic', 'Google Chronicle', 'PagerDuty', 'Opsgenie', 'Slack', 'Microsoft Teams', 'ServiceNow', 'Webhook', 'Syslog / CEF']
 
-// What a company can upload. Names only; every one goes through the admin.
-const KNOWLEDGE_KINDS = ['SOPs', 'Runbooks', 'Playbooks', 'App walkthroughs', 'Policies', 'Data dictionaries', 'Process maps', 'Checklists', 'Templates', 'Skills exported from any AI']
+// The brand highlight inside a display heading: <hl>..</hl> in the catalog
+// string renders as the gradient span.
+const HL = { hl: (c) => <span className="wen-hl">{c}</span> }
 
 // Hero graphic: the LEARNING LOOP. Your documents (left) flow into a shielded
 // company tenant (center), which grounds the hand-holding on a member's screen
@@ -49,6 +51,7 @@ const KNOWLEDGE_KINDS = ['SOPs', 'Runbooks', 'Playbooks', 'App walkthroughs', 'P
 // A dashed loop returns from the screen to the tenant: knowledge grows,
 // guidance sharpens. Every color is a page token so it reads on light and dark.
 function LoopArt() {
+  const t = useT()   // the drawn labels (enterprisePage.art.*) read in the visitor's language
   return (
     <svg className="wen-art" viewBox="0 0 480 320" fill="none" aria-hidden="true" focusable="false">
       <defs>
@@ -65,11 +68,11 @@ function LoopArt() {
 
       {/* YOUR KNOWLEDGE: three document cards */}
       {[
-        { y: 56, label: 'SOP' },
-        { y: 118, label: 'PLAYBOOK' },
-        { y: 180, label: 'APP GUIDE' },
+        { y: 56, label: t('enterprisePage.art.sop') },
+        { y: 118, label: t('enterprisePage.art.playbook') },
+        { y: 180, label: t('enterprisePage.art.appGuide') },
       ].map((d, i) => (
-        <g key={d.label} transform={`translate(${26 + i * 8} ${d.y})`}>
+        <g key={d.y} transform={`translate(${26 + i * 8} ${d.y})`}>
           <rect x="0" y="0" width="112" height="52" rx="11" fill="var(--panel)" stroke="var(--line-2)" />
           <rect x="0" y="0" width="112" height="3" rx="1.5" fill="url(#wenBar)" />
           <rect x="12" y="14" width="40" height="7" rx="3.5" fill="var(--em)" opacity=".85" />
@@ -90,7 +93,7 @@ function LoopArt() {
         <path d="M56 22 L80 31 V54 C80 70 68 80 56 86 C44 80 32 70 32 54 V31 Z" fill="var(--em-fill)" stroke="var(--em)" strokeWidth="1.6" />
         <rect x="48" y="50" width="16" height="13" rx="3" fill="var(--em)" />
         <path d="M51 50v-4a5 5 0 0 1 10 0v4" stroke="var(--em)" strokeWidth="2" strokeLinecap="round" fill="none" />
-        <text x="56" y="102" textAnchor="middle" fontFamily="JetBrains Mono, ui-monospace, monospace" fontSize="7.5" fontWeight="700" fill="var(--em)" letterSpacing=".12em">YOUR TENANT</text>
+        <text x="56" y="102" textAnchor="middle" fontFamily="JetBrains Mono, ui-monospace, monospace" fontSize="7.5" fontWeight="700" fill="var(--em)" letterSpacing=".12em">{t('enterprisePage.art.tenant')}</text>
       </g>
       {/* tenant -> screen */}
       <path d="M326 160h34" stroke="var(--em)" strokeWidth="2" strokeLinecap="round" markerEnd="url(#wenHeadEm)" />
@@ -121,14 +124,14 @@ function LoopArt() {
         <rect x="0" y="0" width="118" height="34" rx="10" fill="var(--panel)" stroke="var(--amber-line)" />
         <rect x="0" y="0" width="4" height="34" rx="2" fill="var(--amber)" />
         <circle cx="20" cy="17" r="7" fill="var(--amber-soft)" stroke="var(--amber)" strokeWidth="1.5" /><path d="M20 13v5" stroke="var(--amber)" strokeWidth="1.7" strokeLinecap="round" /><circle cx="20" cy="21.3" r="1" fill="var(--amber)" />
-        <text x="34" y="15" fontFamily="Figtree, system-ui, sans-serif" fontSize="8.5" fontWeight="700" fill="var(--tx)">Wrong field. Corrected.</text>
+        <text x="34" y="15" fontFamily="Figtree, system-ui, sans-serif" fontSize="8.5" fontWeight="700" fill="var(--tx)">{t('enterprisePage.art.corrected')}</text>
         <rect x="34" y="21" width="62" height="5" rx="2.5" fill="var(--line-2)" />
       </g>
       <path d="M352 58c6 8 8 14 14 20" stroke="var(--amber)" strokeWidth="1.5" strokeDasharray="3 3.5" strokeLinecap="round" />
 
       {/* the loop back: knowledge grows, guidance sharpens */}
       <path d="M418 272c-40 32 -120 34 -156 8" stroke="var(--em)" strokeWidth="1.8" strokeDasharray="4 5" strokeLinecap="round" markerEnd="url(#wenHeadEm)" />
-      <text x="342" y="304" textAnchor="middle" fontFamily="JetBrains Mono, ui-monospace, monospace" fontSize="7.5" fontWeight="700" fill="var(--em)" letterSpacing=".12em">GETS SHARPER</text>
+      <text x="342" y="304" textAnchor="middle" fontFamily="JetBrains Mono, ui-monospace, monospace" fontSize="7.5" fontWeight="700" fill="var(--em)" letterSpacing=".12em">{t('enterprisePage.art.sharper')}</text>
       <path d="M186 258l2.4 6.4 6.4 2.4-6.4 2.4-2.4 6.4-2.4-6.4-6.4-2.4 6.4-2.4z" fill="var(--cyan)" opacity=".55" />
       <path d="M458 290l1.8 4.8 4.8 1.8-4.8 1.8-1.8 4.8-1.8-4.8-4.8-1.8 4.8-1.8z" fill="var(--cta)" opacity=".7" />
     </svg>
@@ -159,16 +162,37 @@ function Group({ id, kicker, title, lead, children, aside }) {
   )
 }
 
-// The learning loop: four steps, in order. Copy is guarantees only.
-const LOOP = [
-  { icon: UploadCloud, k: '01', t: 'Upload your knowledge', d: 'Your admin loads SOPs, playbooks, app guides and policies once. Every member inherits them.' },
-  { icon: Target, k: '02', t: 'Every step is grounded in it', d: 'Steps use your app names, your fields, your approval chain. Not a generic how-to.' },
-  { icon: Hand, k: '03', t: 'It hand-holds, on the real screen', d: 'It points at the exact next step in your apps and corrects a wrong turn live. Read-only: it never clicks or types for anyone.' },
-  { icon: RefreshCw, k: '04', t: 'It gets sharper as you add', d: 'Add a playbook or fix an SOP, and the next session reflects it. For your company only.' },
+// The learning loop: four steps, in order. Copy is guarantees only and lives in
+// the catalog (enterprisePage.learn.steps, joined by position); the icon and
+// the step number stay here.
+const LOOP_META = [
+  { icon: UploadCloud, k: '01' },
+  { icon: Target, k: '02' },
+  { icon: Hand, k: '03' },
+  { icon: RefreshCw, k: '04' },
+]
+
+// The feature groups, in page order. Each group's kicker / title / lead and its
+// features (t, d) are the catalog object enterprisePage.groups.<id>; the icons
+// and the two toned cards are joined to the features by position. The
+// governance group ends with the shared residency card (residency.*), and the
+// alerts group carries the SIEM destination chips as its aside.
+const GROUP_META = [
+  { id: 'security', icons: [ScanEye, FileText, ShieldCheck, Database, Lock, EyeOff] },
+  // PRIME: the company's own written policy, enforced as the guide works.
+  // Honesty: it flags and cites, never rewrites or deletes the model's text;
+  // controls and evidence that support the program, never "makes you compliant".
+  { id: 'governance', icons: [ScrollText, ListChecks, Scale, Users, History, KeyRound], tones: { 0: 'prime' }, residency: true },
+  { id: 'alerts', icons: [Bell, ShieldCheck, Radio, Lock, Globe], tones: { 0: 'amber' }, siem: true },
+  { id: 'identity', icons: [KeyRound, Sparkles, Users] },
+  { id: 'compliance', icons: [Scale, ShieldCheck, FileText] },
+  { id: 'exec', icons: [BarChart3, Palette, Building2, Receipt] },
+  { id: 'platform', icons: [Monitor, Globe, Smartphone, Bot] },
 ]
 
 export default function WorkEnterprise() {
   const t = useT()
+  const steps = t('enterprisePage.learn.steps').map((s, i) => ({ ...LOOP_META[i], ...s }))
   useSeo({
     title: t('seo.enterprise.title'),
     description: t('seo.enterprise.description'),
@@ -184,18 +208,15 @@ export default function WorkEnterprise() {
       <section className="wen-hero">
         <div className="wen-wrap wen-hero-in">
           <div>
-            <div className="wen-eyebrow"><Building2 size={14} /> For enterprises &amp; teams</div>
-            <h1>Hand-holding for every step. <span className="wen-hl">Trained on how your company works.</span></h1>
-            <p className="wen-sub">It watches each person's screen and walks them through the exact next step in your own apps, correcting a wrong turn as it happens. Upload your SOPs and playbooks, and every step follows the way your company actually works. Read-only by design: it never clicks or types for your people.</p>
+            <div className="wen-eyebrow"><Building2 size={14} /> {t('enterprisePage.hero.eyebrow')}</div>
+            <h1>{t.rich('enterprisePage.hero.h1', null, HL)}</h1>
+            <p className="wen-sub">{t('enterprisePage.hero.sub')}</p>
             <div className="wen-ctas">
-              <a className="wen-cta" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={16} /></a>
-              <a className="wen-cta alt" href="#learn">See how it learns your company <ArrowRight size={15} /></a>
+              <a className="wen-cta" href="/workcopilot/contact">{t('enterprisePage.cta.quote')} <ArrowRight size={16} /></a>
+              <a className="wen-cta alt" href="#learn">{t('enterprisePage.hero.ctaLearn')} <ArrowRight size={15} /></a>
             </div>
-            <ul className="wen-proof" aria-label="At a glance">
-              <li><Check size={14} /> Watches the screen and hand-holds through each exact step</li>
-              <li><Check size={14} /> Catches a wrong turn and corrects it in real time</li>
-              <li><Check size={14} /> Grounded in your playbooks, private to your tenant</li>
-              <li><Check size={14} /> Checks every step against your own written security policy</li>
+            <ul className="wen-proof" aria-label={t('enterprisePage.hero.proofAria')}>
+              {t('enterprisePage.hero.proof').map((p) => <li key={p}><Check size={14} /> {p}</li>)}
             </ul>
           </div>
           <LoopArt />
@@ -206,13 +227,13 @@ export default function WorkEnterprise() {
         {/* THE KILLER FEATURE: it learns your enterprise */}
         <section className="wen-kill" id="learn">
           <div className="wen-kill-head">
-            <div className="wen-eyebrow warm"><Sparkles size={14} /> The difference</div>
-            <h2>It learns <span className="wen-hl">your</span> enterprise. Your apps, your data, your playbooks.</h2>
-            <p className="wen-lead">Generic assistants know the world. WorkCoPilot knows your company: your apps, your fields, your approvals, your names. Upload once, and every on-screen step speaks your language, sharper as your knowledge grows.</p>
+            <div className="wen-eyebrow warm"><Sparkles size={14} /> {t('enterprisePage.learn.eyebrow')}</div>
+            <h2>{t.rich('enterprisePage.learn.h2', null, HL)}</h2>
+            <p className="wen-lead">{t('enterprisePage.learn.lead')}</p>
           </div>
 
-          <ol className="wen-loop" aria-label="How WorkCoPilot learns your company">
-            {LOOP.map((s) => (
+          <ol className="wen-loop" aria-label={t('enterprisePage.learn.loopAria')}>
+            {steps.map((s) => (
               <li key={s.k} className="wen-loop-step">
                 <div className="wen-loop-top"><span className="wen-loop-ic"><s.icon size={18} /></span><span className="wen-loop-k">{s.k}</span></div>
                 <b>{s.t}</b>
@@ -240,120 +261,71 @@ export default function WorkEnterprise() {
           </div>
 
           {/* Before / after: the same step, generic vs grounded in your company */}
-          <div className="wen-ba" aria-label="The same step, with and without your company knowledge">
+          <div className="wen-ba" aria-label={t('enterprisePage.ba.aria')}>
             <div className="wen-ba-col generic">
-              <div className="wen-ba-tag"><X size={13} /> Without your knowledge</div>
-              <p className="wen-ba-q">"Create the change request."</p>
-              <p className="wen-ba-a">Open your ticketing system, create a new change request, fill the required fields, attach the approval, submit.</p>
-              <div className="wen-ba-foot">Correct, but your people still have to know which system, which fields, which approval.</div>
+              <div className="wen-ba-tag"><X size={13} /> {t('enterprisePage.ba.without.tag')}</div>
+              <p className="wen-ba-q">{t('enterprisePage.ba.q')}</p>
+              <p className="wen-ba-a">{t('enterprisePage.ba.without.a')}</p>
+              <div className="wen-ba-foot">{t('enterprisePage.ba.without.foot')}</div>
             </div>
             <div className="wen-ba-arrow" aria-hidden><ArrowRight size={18} /></div>
             <div className="wen-ba-col yours">
-              <div className="wen-ba-tag"><Check size={13} /> Grounded in your company</div>
-              <p className="wen-ba-q">"Create the change request."</p>
-              <p className="wen-ba-a">In ServiceNow: <b>Change &gt; Create New &gt; Standard</b>. Set <b>Assignment group</b> to <b>Platform-Ops</b>, template <b>CHG-STD-07</b>, attach the CAB approval, Submit. From your <b>Change Playbook, section 3.2</b>.</p>
-              <div className="wen-ba-foot"><Hand size={13} /> It hand-holds through each click and flags the wrong template before it is submitted.</div>
+              <div className="wen-ba-tag"><Check size={13} /> {t('enterprisePage.ba.with.tag')}</div>
+              <p className="wen-ba-q">{t('enterprisePage.ba.q')}</p>
+              <p className="wen-ba-a">{t.rich('enterprisePage.ba.with.a')}</p>
+              <div className="wen-ba-foot"><Hand size={13} /> {t('enterprisePage.ba.with.foot')}</div>
             </div>
           </div>
-          <p className="wen-ba-note">Illustrative example. Your steps come from your own uploaded knowledge and apps.</p>
+          <p className="wen-ba-note">{t('enterprisePage.ba.note')}</p>
 
-          {/* Trust: private, tenant-scoped, admin-controlled */}
+          {/* Trust: private, tenant-scoped, admin-controlled. The four cards are
+              the catalog array enterprisePage.trust.items, icons by position. */}
           <div className="wen-trust">
             <div className="wen-trust-head">
               <span className="wen-trust-ic"><Lock size={18} /></span>
               <div>
-                <b>Private to your tenant. Controlled by your admin.</b>
-                <p>Your knowledge makes your own people better, and nobody else's.</p>
+                <b>{t('enterprisePage.trust.title')}</b>
+                <p>{t('enterprisePage.trust.sub')}</p>
               </div>
             </div>
             <ul className="wen-trust-grid">
-              <li><span className="wen-tick"><ShieldCheck size={15} /></span><div><b>Stays inside your company</b><span>Guides your own members only. Never trains a shared model or reaches another company.</span></div></li>
-              <li><span className="wen-tick"><Download size={15} /></span><div><b>You keep the copy</b><span>View what is loaded and download your knowledge any time.</span></div></li>
-              <li><span className="wen-tick"><RefreshCw size={15} /></span><div><b>Re-upload or replace</b><span>Merge in new material or swap the whole set.</span></div></li>
-              <li><span className="wen-tick"><Trash2 size={15} /></span><div><b>Clear it when you choose</b><span>Clearing needs a reason, logged with who, what, when and why.</span></div></li>
+              {t('enterprisePage.trust.items').map((it, i) => {
+                const Icon = [ShieldCheck, Download, RefreshCw, Trash2][i] || ShieldCheck
+                return <li key={it.t}><span className="wen-tick"><Icon size={15} /></span><div><b>{it.t}</b><span>{it.d}</span></div></li>
+              })}
             </ul>
           </div>
 
-          <div className="wen-kinds" aria-label="What you can upload">
-            <span className="wen-kinds-k"><BookOpen size={13} /> Bring</span>
-            {KNOWLEDGE_KINDS.map((k) => <span key={k} className="wen-chip">{k}</span>)}
+          {/* What a company can upload. Names only; every one goes through the admin. */}
+          <div className="wen-kinds" aria-label={t('enterprisePage.kinds.aria')}>
+            <span className="wen-kinds-k"><BookOpen size={13} /> {t('enterprisePage.kinds.label')}</span>
+            {t('enterprisePage.kinds.items').map((k) => <span key={k} className="wen-chip">{k}</span>)}
           </div>
         </section>
 
-        <Group id="security" kicker="Security & privacy" title="Nothing sensitive leaves a device unprotected."
-          lead="Protection is on from the first second and enforced for everyone. Sensitive values are masked before anything is sent.">
-          <Feature icon={ScanEye} title="On-device redaction, on by default">Personal data, keys, card numbers and IDs are masked on the device and shown as <code>[REDACTED]</code>. On for everyone, locked by policy.</Feature>
-          <Feature icon={FileText} title="Per-session audit log">Every session logs what was sent, read, filtered and flagged. Pull it any time.</Feature>
-          <Feature icon={ShieldCheck} title="Built-in SAST and dependency check">Code in a session is scanned for weaknesses and its dependencies checked against the OSV database before you run it.</Feature>
-          <Feature icon={Database} title="Encryption at rest">Session artifacts and company data are encrypted at rest, with keys you can rotate.</Feature>
-          <Feature icon={Lock} title="Mandatory MFA (TOTP)">Every account uses an authenticator. Password, SSO and social sign-in all pass the same second factor.</Feature>
-          <Feature icon={EyeOff} title="Hidden from screen shares">The desktop overlay stays out of screen shares and recordings by default.</Feature>
-        </Group>
-
-        <Group id="governance" kicker="Governance / DLP" title="One company policy. Every member inherits it."
-          lead="Your written security policy becomes the rules every step is checked against. You decide what may leave a device, how long records are kept, and who may remove what.">
-          {/* PRIME: the company's own written policy, enforced as the guide works.
-              Honesty: it flags and cites, never rewrites or deletes the model's text;
-              controls and evidence that support the program, never "makes you compliant". */}
-          <Feature icon={ScrollText} title="Your written security policy, enforced as it guides" tone="prime">Paste your company's own security policy and your admin arms its rules. Every step, result and document is then checked against them on the server: a prohibited or skipped-required step is flagged inline and cited to your policy by name and section (for example <code>Acceptable Use Policy §4.2</code>), with the compliant alternative beside it and a line in the audit log. It flags and cites, it never rewrites your text.</Feature>
-          <Feature icon={ListChecks} title="Custom scrub rules">Add your own patterns and words to redact or block. Members cannot weaken them.</Feature>
-          <Feature icon={Scale} title="Retention windows">Set how long session records and documents are kept. Expiry is automatic.</Feature>
-          <Feature icon={Users} title="Member oversight">Admins can pull the report and audit log of any member session, live or complete.</Feature>
-          <Feature icon={History} title="Accountable destructive actions">Deleting or clearing anything requires a reason, logged with who, what, when and why.</Feature>
-          <Feature icon={KeyRound} title="Per-company AI keys, or bring your own">Route through your company's own keys or bring your own. Nothing is shared across companies.</Feature>
-          <Feature icon={Globe} title={t('residency.title')}>{t('residency.ent')}</Feature>
-        </Group>
-
-        <Group id="alerts" kicker="Security alerts & SOC" title="Know the moment sensitive data is entered. Relay it to your SOC."
-          lead="When a member enters PII or PHI, it is masked on their device and your admin is told who, where and what kind, never the values. Relay those alerts into the SIEM, SOAR and chat tools you already run."
-          aside={(
-            <div className="wen-chips" aria-label="Supported destinations">
-              {SIEM_TARGETS.map((t) => <span key={t} className="wen-chip cyan"><Radio size={12} /> {t}</span>)}
-            </div>
-          )}>
-          <Feature icon={Bell} title="Who, where, what, when" tone="amber">Each alert names the member, the task, and the kind and count of data (for example email x1, card x1). The values are never stored or sent.</Feature>
-          <Feature icon={ShieldCheck} title="Redacted before submission">Proof the protection worked: values were masked on the device before anything reached the platform.</Feature>
-          <Feature icon={Radio} title="Automatic relay">New alerts reach every enabled connector as they happen, with per-connector delivery status.</Feature>
-          <Feature icon={Lock} title="Write-only secrets">Tokens are stored write-only and can be rotated. The console never shows them back.</Feature>
-          <Feature icon={Globe} title="Generic Webhook and Syslog / CEF">Anything not on the list connects through a signed webhook or a Syslog / CEF stream.</Feature>
-        </Group>
-
-        <Group id="identity" kicker="Identity" title="Sign in the way your company already does."
-          lead="Invite-only provisioning, company single sign-on with your identity provider, and an authenticator on every path.">
-          <Feature icon={KeyRound} title="Company SSO (OIDC)">Fourteen identity providers including Google, Microsoft Entra, Okta, Auth0 and Ping. Members are invited, never self-served.</Feature>
-          <Feature icon={Sparkles} title="Email-domain auto-detect">Type a company email and WorkCoPilot routes straight to your single sign-on.</Feature>
-          <Feature icon={Users} title="Social sign-in">Individuals continue with Google, Microsoft or Facebook, then set up their authenticator.</Feature>
-        </Group>
-
-        <Group id="compliance" kicker="Compliance evidence & reporting" title="Evidence your auditors can work with."
-          lead="Reports that support your compliance program, mapped to the frameworks you answer to and sealed so they can be verified.">
-          <Feature icon={Scale} title="Mapped to 18 frameworks">Per-task evidence reports map the controls exercised in a session to eighteen frameworks. Evidence that supports your program; not a certification.</Feature>
-          <Feature icon={ShieldCheck} title="Authenticity seal">Every report carries a verifiable seal, so a recipient can confirm it is genuine and unaltered.</Feature>
-          <Feature icon={FileText} title="Big-4-grade session reports">Cover, contents, charts, the confirmed steps and the outcome, with scrubbed milestone screenshots as evidence.</Feature>
-        </Group>
-
-        <Group id="exec" kicker="Executive & commercial" title="Run it like a company product."
-          lead="An executive view of productivity, your brand on the product, and billing that matches how companies buy.">
-          <Feature icon={BarChart3} title="Executive ROI dashboard">A productivity dashboard of tasks, time, and an illustrative view of time and cost saved. Export to PDF, image or CSV.</Feature>
-          <Feature icon={Palette} title="White-label branding">Your company name and logo on the product your people use.</Feature>
-          <Feature icon={Building2} title="Unlimited seats, one admin console">Unlimited seats and tasks, managed from one central admin console.</Feature>
-          <Feature icon={Receipt} title="Per-company pricing and billing">Separate user and admin seat pools, a company minute pool, your pricing, and statements with downloadable invoices.</Feature>
-        </Group>
-
-        <Group id="platform" kicker="Platform" title="Desktop, web and mobile. Hand-holding, not automation."
-          lead="Your people use it where they work. It guides their hands step by step; it never acts for them and never generates content for them.">
-          <Feature icon={Monitor} title="Desktop overlay">A see-through overlay that stays on top of the app you are in, hidden from screen shares.</Feature>
-          <Feature icon={Globe} title="Web">Nothing to install. Sign in, share a screen, and a floating window keeps the steps above your work.</Feature>
-          <Feature icon={Smartphone} title="Mobile">Point your phone's camera at a screen, a device or paper and follow the steps.</Feature>
-          <Feature icon={Bot} title="No content generation">When a task needs a document or image, it hands you a ready prompt for your own AI. It never produces the content itself.</Feature>
-        </Group>
+        {GROUP_META.map((g) => {
+          const base = `enterprisePage.groups.${g.id}`
+          return (
+            <Group key={g.id} id={g.id} kicker={t(`${base}.kicker`)} title={t(`${base}.title`)} lead={t(`${base}.lead`)}
+              aside={g.siem ? (
+                <div className="wen-chips" aria-label={t(`${base}.destinationsAria`)}>
+                  {SIEM_TARGETS.map((name) => <span key={name} className="wen-chip cyan"><Radio size={12} /> {name}</span>)}
+                </div>
+              ) : undefined}>
+              {t(`${base}.features`).map((f, i) => (
+                <Feature key={f.t} icon={g.icons[i]} title={f.t} tone={g.tones ? g.tones[i] : undefined}>{renderRich(f.d)}</Feature>
+              ))}
+              {g.residency ? <Feature icon={Globe} title={t('residency.title')}>{t('residency.ent')}</Feature> : null}
+            </Group>
+          )
+        })}
 
         <section className="wen-final">
-          <h2>Give your people a hand that knows your company.</h2>
-          <p>A named owner for your rollout, a DPA, and on-prem options on request.</p>
+          <h2>{t('enterprisePage.final.h2')}</h2>
+          <p>{t('enterprisePage.final.p')}</p>
           <div className="wen-ctas center">
-            <a className="wen-cta big" href="/workcopilot/contact">Get an enterprise quote <ArrowRight size={17} /></a>
-            <a className="wen-cta alt" href="/workcopilot/dpa">Read the DPA <ArrowRight size={15} /></a>
+            <a className="wen-cta big" href="/workcopilot/contact">{t('enterprisePage.cta.quote')} <ArrowRight size={17} /></a>
+            <a className="wen-cta alt" href="/workcopilot/dpa">{t('enterprisePage.cta.dpa')} <ArrowRight size={15} /></a>
           </div>
         </section>
       <ReleaseNote groups={['enterprise']} />
