@@ -272,6 +272,8 @@ company-scoped (solo users have no brain):
 | `GET /api/work/brain/inventory` | company admin (superadmin passes) | `stats` (chunks, active sources, dims, on-disk bytes, resident flag) + a per-source listing. |
 | `DELETE /api/work/brain/sources/:id` | company admin | Remove one source's chunks (reason required, >= 3 chars; audit-logged). |
 | `POST /api/work/brain/clear` | company admin | Remove every source (reason required; audit-logged). |
+| `POST /api/work/brain/query` | company user | Read-only retrieval: `{ q, topK? }` -> top matching SCRUBBED chunks with provenance (`source` + `revision`) and a relevance `score`. See section 9. |
+| `POST /api/work/brain/reembed` | company admin | Rebuild the tenant's vectors under a different catalog model `{ model, batchSize? }`, with NO re-upload. Audit-logged. See section 10. |
 
 Key-custody routes are documented in `docs/company-brain-security.md`.
 
@@ -307,7 +309,141 @@ elapsed (see the security doc).
 
 ---
 
-## 8. Related documents
+## 9. Query interface (read-only, company-scoped)
+
+`POST /api/work/brain/query` (`server/brain_query.js`, orchestration; the route in
+`server/index.js` is thin) lets a company user query their OWN tenant's brain
+without exporting it. It reuses the one embedder and the one hybrid retriever
+(`retrieveForGoal`) - there is no parallel retrieval path - and returns only
+already-scrubbed chunk text plus provenance and a relevance score.
+
+Request: `{ q: string, topK?: number }`. `topK` is clamped to `[1, 20]` (default
+6). Response:
+
+```
+{
+  matched: boolean,            // true when at least one source matched
+  topK: number,                // the effective (clamped) topK
+  semanticSearchReady: boolean,// false when the on-device embedder is not serving
+  hits: [ { text, score, source: { sourceId, title, revision } } ],
+  note?: string,               // present when matched === false (stated no-match)
+  semanticNote?: string        // present when semanticSearchReady === false
+}
+```
+
+What it returns and what it never returns:
+- `text` is the already-scrubbed chunk text. `source` carries the provenance
+  (`sourceId`, `title`, `revision`). `score` is the fused relevance (higher is
+  closer). It returns NO vectors, NO content/chunk hashes, NO raw screens or
+  secrets, and NO chat AI provider/model name.
+- Company scope: the only tenant read is `req.workUser.companyId`.
+
+Never a silent empty (SUPREME RULE III):
+- A LOCKED customer-held brain returns HTTP 423 with code `BRAIN_LOCKED` and a
+  message telling the caller to unlock it (the store throws `BRAIN_LOCKED` from
+  `loadTenant`; the module maps it).
+- An EMPTY brain (no active source) returns HTTP 409 `BRAIN_EMPTY`.
+- An empty query returns HTTP 400 `BAD_QUERY`.
+- A genuine no-match returns HTTP 200 with `matched:false` and a stated `note`
+  (nothing is fabricated). This is honest, not silent.
+- When the on-device embedding model is not serving, the request still succeeds in
+  keyword-only mode and says so in `semanticNote` (honest degradation, never a
+  silent drop).
+
+## 10. Re-embedding under a larger or newer model
+
+The store keeps the scrubbed chunk TEXT, not only vectors (`texts.sealed`), so a
+tenant's vectors can be rebuilt by a different embedding model with NO re-upload.
+
+- **Model catalog (single source of truth):** `server/brain_model.js`
+  `EMBED_MODELS` lists the available models; all are the standard, open bge family
+  (so the one bge query prefix is valid for every one). `EMBED` is the default pin,
+  derived from the catalog but kept as the canonical 4-field public shape
+  (`{ id, rev, dim, quant }`) the desktop and the manifest rely on. The larger
+  entries today are `bge-base-en-v1.5` (dim 768) and `bge-large-en-v1.5` (dim
+  1024). An unknown model name is a STATED error, never a silent default.
+- **Dimension-aware store:** `server/brain_store.js` now carries each tenant's own
+  `dim` (read from its manifest; default 384 for every existing tenant, so legacy
+  tenants load byte-identically). Scoring, persistence, and the query-vector guard
+  all use the tenant's dim. A query vector of the wrong dim throws rather than
+  scoring past the end.
+- **Model-aware retrieval:** `retrieveForGoal` embeds the query under the SAME
+  model the tenant's passages were embedded with (resolved from the active
+  sources' `embeddingModelVersion`, default `EMBED`), so query and passage vectors
+  always share one space and one dim. `buildManifest` reports the tenant's ACTUAL
+  pinned model (still normalized to the 4-field shape).
+- **Atomic swap:** `server/brain_reembed.js` `reembedTenant` reads the chunk text
+  (`brainStore.listChunksWithText`), embeds it in batches under the target model
+  (`embedPassagesWith`), recomputes each `chunkHash`, and calls
+  `brainStore.reembed`, which replaces every vector + the tenant `dim` + each
+  source's pinned model, and re-seals any re-scrubbed text, in ONE persist. It is
+  all-or-nothing: `reembed` asserts exactly one new vector per resident chunk
+  (never silently truncates), so an abort or crash mid-run leaves the OLD vectors
+  intact. Re-running simply redoes the work from the unchanged source; that is the
+  resumability guarantee (there is deliberately no half-swapped, mixed-dim state on
+  disk). Progress is surfaced per batch via an `onProgress` callback and an
+  `AbortSignal` is honored before the swap.
+- **Optional policy re-scrub:** when a new `policy` is supplied, each chunk's
+  stored (already-scrubbed) text is re-scrubbed under it before embedding (which
+  can only redact MORE), the re-scrubbed text is re-sealed, and the policy version
+  is bumped. When omitted, the text and policy version are preserved.
+- **Route:** `POST /api/work/brain/reembed` (company admin) runs it synchronously
+  and returns `{ ok, chunks, sources, dim, model:{name,id,rev,dim}, policyVersion,
+  batches }`. The embedding-model identifier here is a neutral, standard id of the
+  same kind already in the manifest (for portability); it is NOT the chat AI
+  provider/model. For a very large corpus this should move to a background job with
+  streamed progress (the function already supports `onProgress`/`signal`); the
+  synchronous route is the V1.
+
+Known follow-up (flagged, not degraded): the executive export
+(`readSealedBlobsForExport` -> `customer_export.js`) reports `dim` as the default
+384 because it copies sealed bytes without the DEK and cannot read the encrypted
+manifest's true dim. After a non-default-dim re-embed the archive's `dim` header
+would read 384 while the vectors are larger. Wiring the real dim through (the
+exporter holds the DEK during a password export) is a small follow-up; the export
+flow itself is unchanged by this work.
+
+## 11. External-platform query access (token design - NOT YET WIRED)
+
+Requirement: a company-scoped, admin-issued, hashed, revocable, read-only
+(`brain:query`) API token so another platform can call `POST /api/work/brain/query`
+without a browser session.
+
+Decision for THIS pass: the query endpoint is wired under SESSION auth only
+(`requireWorkAuth` + company scope). The token is DESIGNED here but NOT built,
+because a clean persistent home for the hashed tokens is not available right now:
+`server/store.js` is being actively split by another session and billing is adding
+to it (growing it is off limits per the no-monolith rule), and this task must not
+create or touch db files. Half-building the security-sensitive path would be worse
+than deferring it. The query route is structured so the token branch is a single
+insertion (see the AUTH NOTE comment above `POST /api/work/brain/query`).
+
+Proposed design (for review):
+- **Shape:** an opaque token `wcpq_<base64url(32 random bytes)>`. Only a SHA-256
+  hash of the token is stored (tokens are high-entropy, so a fast hash is the right
+  primitive, as for GitHub-style PATs; no KDF needed). The plaintext is shown once
+  at issue and never again.
+- **Record (per company):** `{ id, name, hash, scope: 'brain:query', createdBy,
+  createdAt, lastUsedAt, expiresAt?, revokedAt? }`. Scope is fixed to `brain:query`
+  (read-only); the token can never ingest, export, or administer.
+- **Issue / list / revoke:** company-admin routes
+  (`POST/GET/DELETE /api/work/brain/tokens`), audit-logged like the other admin
+  brain actions. Revoke sets `revokedAt` (the hash stays, so a leaked token keeps
+  failing).
+- **Check on the query route:** before `requireWorkAuth`, a small middleware reads
+  `Authorization: Bearer wcpq_...`, hashes it, looks up the record, rejects when
+  missing / revoked / expired, sets `req.workUser = { companyId }` (company scope
+  only), and updates `lastUsedAt`. Everything else in `brain_query.js` is unchanged
+  (it is already company-scoped and read-only).
+- **Persistence home (the open choice for the owner):** either (a) a dedicated
+  small `server/brain_token_store.js` with its own atomic-write sealed file under
+  `DATA_DIR/brain/` (keeps `store.js` untouched, matches the no-monolith rule), or
+  (b) company-record accessors added to `store.js` AFTER its split settles. (a) is
+  recommended.
+- **Rate limiting / abuse:** a per-token request cap is advisable since this path
+  has no session; out of scope for the first cut.
+
+## 12. Related documents
 
 - `docs/company-brain-security.md` - envelope encryption, platform vs
   customer-held key custody, the honest security ceiling, and the custody routes.

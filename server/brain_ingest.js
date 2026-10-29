@@ -13,7 +13,7 @@
 // one store (brain_store.js). This module adds no parallel copy of any of them.
 
 import { brainStore } from './brain_store.js'
-import { EMBED, contentHashOf, chunkHashOf, policyVersionOf } from './brain_model.js'
+import { EMBED, contentHashOf, chunkHashOf, policyVersionOf, resolveEmbedModelByVersion, publicEmbedModel } from './brain_model.js'
 import { embedPassages } from './brain_embed.js'
 import { scrubSensitive, scrubWithPolicy } from './work-scrub.js'
 import { chunkCode, detectLanguage } from './brain_code_chunk.js'
@@ -282,7 +282,14 @@ export async function buildManifest(companyId, { since } = {}) {
     : (Number.isFinite(Number(since)) ? Number(since) : 0)
   const policyVersion = (sources.find((s) => s.policyVersion) || {}).policyVersion || ''
 
-  return { cursor, sources, model: EMBED, policyVersion }
+  // Report the tenant's ACTUAL pinned model (it may have been re-embedded by a
+  // larger model), resolved from the sources' embeddingModelVersion; default to
+  // the pinned EMBED when none is recorded. A client re-embeds when this differs
+  // from what it holds.
+  const modelVersion = (sources.find((s) => s.embeddingModelVersion) || {}).embeddingModelVersion
+  const model = publicEmbedModel(resolveEmbedModelByVersion(modelVersion) || EMBED)
+
+  return { cursor, sources, model, policyVersion }
 }
 
 export default { chunkText, ingestSource, buildManifest }
