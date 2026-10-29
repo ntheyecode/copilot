@@ -3,7 +3,7 @@
 // en/*.js partial into the English base, so this file owns its namespace.
 // LEGAL COPY: extracted verbatim from the page (honesty contract, owner-enforced).
 // Never reworded here; a change of substance is a change to the terms themselves.
-// Interpolations: {entity} = the legal entity (COE Security LLC), {support} = the
+// Interpolations: {entity} = the legal entity (AdmireVeda), {support} = the
 // product-support mailbox; both stay constants in the page, never translated.
 // Inline tags render via t.rich() / Items with the page's own hrefs: <a>, <privacy>,
 // <dpa>, <disclaimer>, <aup>, <refund> are links; <ph> is a clearly-marked
@@ -44,7 +44,7 @@ export default {
       contact: 'Contact',
     },
     parties: {
-      p1: 'These terms are an agreement between you (or the organization you represent) and {entity} (“we”, “us”). WorkCoPilot is offered by AdmireVeda, a product of {entity}, which is the legal entity behind the service.',
+      p1: 'These terms are an agreement between you (or the organization you represent) and {entity} (“we”, “us”). WorkCoPilot is offered by {entity}, the legal entity behind the service.',
       p2: 'By creating an account or using WorkCoPilot, you accept these terms. If you use it on behalf of a company, you confirm you are allowed to bind that company. If you do not agree, do not use the service.',
     },
     service: {

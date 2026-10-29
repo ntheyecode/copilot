@@ -59,4 +59,4 @@ legal advice. Compliance frameworks are supported as policy presets, not
 certifications.
 
 Contact: https://admireveda.com/workcopilot/contact
-Maker: AdmireVeda, a product of COE Security LLC.
+Maker: AdmireVeda.

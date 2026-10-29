@@ -64,7 +64,7 @@ export default function SiteFooter({ dark = true }) {
         </div>
       </div>
       <div className="sf-bottom">
-        <span>&copy; {new Date().getFullYear()} COE Security LLC. {t('footer.ownership')}</span>
+        <span>&copy; {new Date().getFullYear()} AdmireVeda. {t('footer.ownership')}</span>
         <span className="sf-bottom-r">
           <button type="button" className="sf-cookie" onClick={openPreferences}>{t('footer.cookiePrefs')}</button>
           <span className="sf-note">{t('footer.note')}</span>

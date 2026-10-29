@@ -19,8 +19,8 @@ test('a stamp carries hash, signature, timestamp, issuer and contacts', () => {
   assert.ok(att.issuedAt && !Number.isNaN(Date.parse(att.issuedAt)))
   assert.equal(att.issuer, mod.REPORT_ISSUER)
   assert.equal(att.alg, 'HMAC-SHA256')
-  assert.ok(mod.REPORT_CONTACTS.includes('compliance@coesecurity.com'))
   assert.ok(mod.REPORT_CONTACTS.includes('compliance@admireveda.com'))
+  assert.ok(!mod.REPORT_CONTACTS.some((c) => /coesecurity/i.test(c)), 'report contacts are on admireveda.com, not coesecurity.com')
 })
 
 test('verifyReport accepts an untouched stamp', () => {
@@ -45,5 +45,5 @@ test('attestationText footer includes the issuer, hash and contacts', () => {
   const txt = mod.attestationText(att)
   assert.ok(txt.includes(att.hash))
   assert.ok(txt.includes('AdmireVeda'))
-  assert.ok(txt.includes('compliance@coesecurity.com'))
+  assert.ok(txt.includes('compliance@admireveda.com'))
 })

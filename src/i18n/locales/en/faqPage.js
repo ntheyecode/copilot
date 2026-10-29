@@ -54,7 +54,7 @@ export default {
         items: [
           { q: 'What is WorkCoPilot?',
             a: 'WorkCoPilot watches your screen and tells you the exact next click, command, setting or code for the task in front of you, catches a wrong move, and keeps you on the correct step until the job is done.',
-            d: 'Made by AdmireVeda, a product of COE Security LLC.',
+            d: 'Made by AdmireVeda.',
             links: ['How it works', '60-second demo'] },
           { q: 'How is it different from a chatbot or a general AI assistant?',
             a: 'A chatbot answers from memory and cannot see where you are. WorkCoPilot reads your real screen, gives the next move for the tool you are actually in, confirms each step worked, and corrects you when a tool has changed.',

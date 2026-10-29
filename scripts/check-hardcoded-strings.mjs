@@ -35,7 +35,7 @@ const TEXT_ALLOW = new Set(
 
 // A literal is "ignorable" when it carries no translatable language: brand and
 // product names, single technical tokens, numbers/symbols, or ALL-CAPS acronyms.
-const BRAND = /^(WorkCoPilot|AdmireVeda|COE Security(?: LLC)?|Stripe|Tavily|PCI|TikTok|Instagram|YouTube|Facebook|LinkedIn|OpenAI|Anthropic|Google|Microsoft|X \(Twitter\)|Twitter)$/
+const BRAND = /^(WorkCoPilot|AdmireVeda|Stripe|Tavily|PCI|TikTok|Instagram|YouTube|Facebook|LinkedIn|OpenAI|Anthropic|Google|Microsoft|X \(Twitter\)|Twitter)$/
 function ignorable(s) {
   const t = s.trim()
   if (!t) return true

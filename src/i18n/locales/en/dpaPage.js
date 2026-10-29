@@ -3,7 +3,7 @@
 // partial into the English base, so this file owns its namespace.
 // LEGAL COPY: extracted verbatim from the page (honesty contract, owner-enforced).
 // Never reworded here; a change of substance is a change to the addendum itself.
-// Interpolations: {entity} = the legal entity (COE Security LLC), {contact} = the
+// Interpolations: {entity} = the legal entity (AdmireVeda), {contact} = the
 // legal/privacy mailbox; both stay constants in the page, never translated.
 // Inline tags render via t.rich() / Items with the page's own hrefs: <a>, <terms>,
 // <privacy> are links; <ph> is a clearly-marked fill-in-later placeholder (never

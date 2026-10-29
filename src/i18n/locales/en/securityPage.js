@@ -8,7 +8,7 @@
 //    canonical registry (server/compliance_frameworks.js), never typed here.
 //  - the demo screen's fixture VALUES (NorthWind Ops, example emails, card and
 //    key samples, the raw -> token examples): format examples, not language.
-//  - brand / product / legal names: WorkCoPilot, AdmireVeda, COE Security LLC.
+//  - brand / product / legal names: WorkCoPilot, AdmireVeda.
 //  - tech tokens kept in Latin everywhere: SAST, OSV, SSO, AES-256-GCM, PDF, DPA.
 // The redaction-sweep heading/body and the read-only line reuse the shared
 // `security.*` keys; the data-residency line reuses `residency.*`.
@@ -79,9 +79,9 @@ export default {
     },
     contact: {
       // <b> lead clause; <a> wraps the security mailbox (kept verbatim)
-      issue: '<b>Found a security issue?</b> Email <a>support@coesecurity.com</a> (security, privacy, compliance, signed DPA). Give us time to confirm and fix before public disclosure; good-faith research is welcome.',
-      // <a> wraps the support mailbox; brand + legal names kept verbatim
-      help: 'Product help and billing: <a>support@admireveda.com</a>. WorkCoPilot, by AdmireVeda, is a product of COE Security LLC.',
+      issue: '<b>Found a security issue?</b> Email <a>support@admireveda.com</a> (security, privacy, compliance, signed DPA). Give us time to confirm and fix before public disclosure; good-faith research is welcome.',
+      // <a> wraps the support mailbox; brand names kept verbatim
+      help: 'Product help and billing: <a>support@admireveda.com</a>. WorkCoPilot, a product of AdmireVeda.',
     },
     cta: {
       aria: 'Next steps',

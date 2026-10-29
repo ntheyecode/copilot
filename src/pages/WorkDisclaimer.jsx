@@ -4,7 +4,7 @@
 // security checks are a backstop, not a promise; the product supports compliance
 // but does not confer it. Plain language, no dense legalese, no invented entity
 // jurisdictions. The legal entity is named per the owner's ownership hierarchy
-// (COE Security LLC -> AdmireVeda -> WorkCoPilot). Same light design language as
+// (AdmireVeda -> WorkCoPilot). Same light design language as
 // WorkSecurity (.wsx-*).
 // i18n: every visible string comes from the `disclaimerPage` namespace
 // (src/i18n/locales/en/disclaimerPage.js); the legal entity, the two mailboxes
@@ -19,9 +19,9 @@ import useSeo from '../useSeo.js'                  // per-route title / descript
 import { useT, interpolate } from '../i18n/index.jsx'
 
 const LAST_UPDATED = '2026-10-22'
-const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
+const CONTACT = 'support@admireveda.com'          // security, legal, privacy, DPA
 const SUPPORT = 'support@admireveda.com'           // product support, billing
-const ENTITY = 'COE Security LLC'
+const ENTITY = 'AdmireVeda'
 
 // Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
 // Google Fonts link is injected here.

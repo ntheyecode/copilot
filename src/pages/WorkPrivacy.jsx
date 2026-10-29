@@ -1,7 +1,7 @@
 // WorkCoPilot - Privacy Policy (public, plain-language disclosure).
 // HONESTY CONTRACT (owner-enforced): every line states a real, shipped behavior.
 // No "certified", no "you are compliant", no invented addresses, retention
-// periods, officers or third-party lists. The legal entity (COE Security LLC) is
+// periods, officers or third-party lists. The legal entity (AdmireVeda) is
 // named as controller, per the owner's ownership hierarchy. Where something is
 // user-controlled (deletion, or a configurable retention window), it is SAID, not implied.
 // States guarantees, not mechanisms (docs/business-rules.md).
@@ -20,9 +20,9 @@ import useSeo from '../useSeo.js'                  // per-route title / descript
 import { useT, interpolate } from '../i18n/index.jsx'
 
 const LAST_UPDATED = '2026-10-23'
-const CONTACT = 'support@coesecurity.com'          // security, legal, privacy, DPA
+const CONTACT = 'support@admireveda.com'          // security, legal, privacy, DPA
 const SUPPORT = 'support@admireveda.com'           // product support, billing
-const ENTITY = 'COE Security LLC'
+const ENTITY = 'AdmireVeda'
 
 // Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime
 // Google Fonts link is injected here.

@@ -173,7 +173,7 @@ if (!SANCTIONS_OFF && SANCTIONED_COUNTRIES.size) {
     res.status(451)
     if (req.path.startsWith('/api/')) return res.json({ error: 'This service is not available in your location.', code: 'unavailable_legal' })
     res.setHeader('Content-Type', 'text/html; charset=utf-8')
-    return res.send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unavailable</title></head><body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:40rem;margin:12vh auto;padding:0 1.25rem;color:#1a1a1a"><h1 style="font-size:1.4rem;margin:0 0 .6rem">WorkCoPilot is not available in your location</h1><p style="color:#555;line-height:1.6;margin:0">For legal and regulatory reasons, WorkCoPilot (AdmireVeda / COE Security LLC) cannot be offered in your country. If you believe this is a mistake, contact support@admireveda.com.</p></body></html>')
+    return res.send('<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Unavailable</title></head><body style="font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:40rem;margin:12vh auto;padding:0 1.25rem;color:#1a1a1a"><h1 style="font-size:1.4rem;margin:0 0 .6rem">WorkCoPilot is not available in your location</h1><p style="color:#555;line-height:1.6;margin:0">For legal and regulatory reasons, WorkCoPilot (AdmireVeda) cannot be offered in your country. If you believe this is a mistake, contact support@admireveda.com.</p></body></html>')
   })
 }
 
@@ -3052,7 +3052,7 @@ app.post('/api/work/sessions/:id/compliance/email', requireWorkAuth, async (req,
     const fw = framework && evidence.focus ? '-' + evidence.focus.id : ''
     await sendMail(store.getSmtpSendConfig(), {
       to, subject: `${label}: ${s.goal ? String(s.goal).slice(0, 80) : 'WorkCoPilot task'}`,
-      text: `Attached is the ${label.toLowerCase()} for the task "${s.goal || ''}" run by ${member}.\n\nThe report carries an authenticity seal (SHA-256 hash + signature) from ${REPORT_CONTACTS ? 'AdmireVeda / COE Security LLC' : ''}. Questions: ${REPORT_CONTACTS.join(' or ')}.\n\nSent ${new Date().toISOString()}.`,
+      text: `Attached is the ${label.toLowerCase()} for the task "${s.goal || ''}" run by ${member}.\n\nThe report carries an authenticity seal (SHA-256 hash + signature) from ${REPORT_CONTACTS ? 'AdmireVeda' : ''}. Questions: ${REPORT_CONTACTS.join(' or ')}.\n\nSent ${new Date().toISOString()}.`,
       attachment: { filename: `workcopilot-compliance${fw}-${String(s.startedAt || '').slice(0, 10) || 'session'}.pdf`, content: pdf, contentType: 'application/pdf' },
     })
     res.json({ ok: true, to })

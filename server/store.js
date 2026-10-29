@@ -3973,7 +3973,7 @@ export function smtpConfigured() { const c = getSmtpSendConfig(); return !!(c &&
 // Where internal notifications go (Contact Us, new leads) and whether the
 // product sends a thank-you to the person who submitted. Defaults to the
 // business inbox so nothing is silently dropped before it is configured.
-const NOTIFY_DEFAULT = { contactTo: 'ravi.yerra@coesecurity.com', leadTo: 'ravi.yerra@coesecurity.com', thankYou: true }
+const NOTIFY_DEFAULT = { contactTo: 'ravi.yerra@admireveda.com', leadTo: 'ravi.yerra@admireveda.com', thankYou: true }
 export function getNotifySettings() {
   const n = (db.work && db.work.notify) || {}
   return {

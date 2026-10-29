@@ -451,7 +451,7 @@ function EnterpriseDeployCard() {
           <>
             <div style={{ display: 'flex', gap: 10, alignItems: 'center', flexWrap: 'wrap', marginBottom: 14 }}>
               <a className="wka-btn primary" href="/api/work/app/msi" download><Download size={14} /> {t('companyAdmin.deploy.downloadMsi')}</a>
-              <span className="wka-badge active">{msi.version ? `v${msi.version} · ` : ''}COE Security LLC</span>
+              <span className="wka-badge active">{msi.version ? `v${msi.version} · ` : ''}AdmireVeda</span>
             </div>
             <label style={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase', color: 'var(--wka-faint)' }}>{t('companyAdmin.deploy.silentInstall')}</label>
             <div style={{ display: 'flex', gap: 8, alignItems: 'stretch', marginTop: 6, maxWidth: 560 }}>

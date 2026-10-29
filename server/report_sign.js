@@ -7,7 +7,7 @@
 //   * a SHA-256 hash of the report's canonical content (what it asserts),
 //   * an HMAC-SHA256 authenticity signature over that hash + timestamp + issuer,
 //   * the issue date and timestamp,
-//   * the issuer: AdmireVeda / COE Security LLC.
+//   * the issuer: AdmireVeda.
 // A third party verifies a report by POSTing the stamp to
 // /api/work/reports/verify, which re-computes the signature with the same
 // server-held key. Tampering with the content changes the hash; tampering with
@@ -30,10 +30,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const DATA_DIR = process.env.WORK_DATA_DIR || path.join(__dirname, 'data')
 const KEY_FILE = path.join(DATA_DIR, '.report-sign.key')
 
-export const REPORT_ISSUER = 'AdmireVeda / COE Security LLC'
+export const REPORT_ISSUER = 'AdmireVeda'
 // Where to reach the issuers about a report (compliance questions, verification,
 // disputes). Shown on every report.
-export const REPORT_CONTACTS = ['compliance@coesecurity.com', 'compliance@admireveda.com']
+export const REPORT_CONTACTS = ['compliance@admireveda.com']
 
 function loadKey() {
   const env = process.env.WORK_REPORT_SIGN_KEY

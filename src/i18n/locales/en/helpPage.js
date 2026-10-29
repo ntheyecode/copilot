@@ -108,7 +108,7 @@ export default {
         '<b>Hidden from screen shares.</b> The overlay is content-protected by default, so it stays out of Zoom / Teams / Meet shares and recordings. Toggle it with <b>On share</b> or Ctrl+Shift+Alt+S when you want it visible.',
         '<b>Your documents stay on your computer.</b> Files you add are read on your device. The raw file is never uploaded, and the text is not stored on our servers - it is used only to plan that session.',
         "<b>Least data leaves.</b> To guide you, downscaled screen frames and the governed text go to the AI service (ours, or your company's own key). When governance is on, sensitive values are stripped or tokenized <b>before</b> anything is sent, and rebuilt on your device.",
-        '<b>Signed & updated safely.</b> The app is code-signed (COE Security) and updates are delivered over HTTPS.',
+        '<b>Signed & updated safely.</b> The app is code-signed and updates are delivered over HTTPS.',
       ],
       tip: 'These are controls and audit evidence that support your compliance (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA). They do not, by themselves, make you certified.',
     },

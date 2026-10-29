@@ -3,7 +3,7 @@
 // en/*.js partial into the English base, so this file owns its namespace.
 // LEGAL COPY: extracted verbatim from the page (honesty contract, owner-enforced).
 // Never reworded here; a change of substance is a change to the disclaimer itself.
-// Interpolations: {entity} = the legal entity (COE Security LLC), {support} = the
+// Interpolations: {entity} = the legal entity (AdmireVeda), {support} = the
 // product-support mailbox; both stay constants in the page, never translated.
 // <a>/<security>/<privacy> link tags render via t.rich() with the page's own hrefs;
 // <b> renders bold. Lists (items[], glance.cards[]) translate as units.
@@ -21,7 +21,7 @@ export default {
       tagline: 'Plain-language terms, written to be read',
       templateLabel: 'Template.',
       templateNotice: 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.',
-      ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
+      ownership: 'WorkCoPilot, a product of AdmireVeda.',
     },
     glance: {
       h2: 'At a glance',
@@ -76,7 +76,7 @@ export default {
       p2: 'Those controls do not make you compliant, and we do not claim that the product is certified against any framework. Compliance is achieved and held by your organization, working with its own auditors and advisers. See the <security>Security page</security> for how the controls map to common frameworks, and the <privacy>Privacy Policy</privacy> for how your data is handled.',
     },
     warranty: {
-      p1: 'WorkCoPilot is offered by AdmireVeda, a product of {entity}, which is the legal entity behind the service. In this section, “we” means {entity}, AdmireVeda and WorkCoPilot together.',
+      p1: 'WorkCoPilot is offered by {entity}, the legal entity behind the service. In this section, “we” means {entity} and WorkCoPilot together.',
       p2: 'WorkCoPilot is provided as is and as available. To the extent the law allows, we make no warranty, express or implied, about the guidance, including that it is accurate, complete, current, fit for a particular purpose, or free of errors.',
       p3: 'To the extent the law allows, we are not liable for loss or damage arising from actions you take, or do not take, based on the guidance, including lost data, lost revenue, downtime, or costs of recovery. You act on the guidance at your own discretion, and you remain responsible for the outcome in your systems.',
       p4: 'Nothing on this page limits rights that cannot be limited under the law that applies to you.',

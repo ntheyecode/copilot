@@ -70,7 +70,7 @@ async function translateEmailMessage(msg, langCode, type) {
     'You are a professional localizer for transactional product emails. ' +
     `Translate the user-visible text into ${langName} (language code ${langCode}). ` +
     'Follow these rules exactly:\n' +
-    '- Preserve VERBATIM, never translate or change: URLs and links, one-time codes, reference ids, numbers and amounts, email addresses, and proper names (people, and product/company names such as WorkCoPilot, AdmireVeda, COE Security LLC).\n' +
+    '- Preserve VERBATIM, never translate or change: URLs and links, one-time codes, reference ids, numbers and amounts, email addresses, and proper names (people, and product/company names such as WorkCoPilot and AdmireVeda).\n' +
     '- For the html value, translate ONLY the human-readable text. Keep every HTML tag, attribute, href, class, style and entity exactly as written.\n' +
     '- Keep the meaning; keep it natural and professional. Do not add or remove information. Use hyphens, never em dashes.\n' +
     '- Return ONLY a JSON object with exactly these keys: "subject", "text", "html". Each value is the translated string; return an empty string for an empty input field.'
@@ -105,7 +105,7 @@ const looksLikeEmail = (s) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(s || '').
 // (comma / space / semicolon separated). Invalid entries are dropped, and an
 // empty / all-invalid override falls back to the defaults so alerts are never
 // silently addressed to nobody.
-const OWNER_ALERT_DEFAULTS = ['ravi.yerra@coesecurity.com', 'yerraslife@gmail.com']
+const OWNER_ALERT_DEFAULTS = ['ravi.yerra@admireveda.com', 'yerraslife@gmail.com']
 export const OWNER_ALERT_RECIPIENTS = Object.freeze((() => {
   const raw = String(process.env.OWNER_ALERT_EMAILS || '').trim()
   const parsed = raw ? raw.split(/[,;\s]+/).map((x) => x.trim()).filter(Boolean).filter(looksLikeEmail) : []

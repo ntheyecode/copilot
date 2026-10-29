@@ -23,8 +23,8 @@ import useSeo from '../useSeo.js'      // per-route title / description / canoni
 import { useT, interpolate, renderRich } from '../i18n/index.jsx'
 
 // Single source of truth for identity + contacts across every legal page.
-export const LEGAL_ENTITY = 'COE Security LLC'
-export const LEGAL_CONTACT = 'support@coesecurity.com'      // security, legal, privacy, DPA
+export const LEGAL_ENTITY = 'AdmireVeda'
+export const LEGAL_CONTACT = 'support@admireveda.com'      // security, legal, privacy, DPA
 export const SUPPORT_CONTACT = 'support@admireveda.com'     // product support, billing
 
 // Brand fonts are self-hosted and loaded globally in src/main.jsx; no runtime

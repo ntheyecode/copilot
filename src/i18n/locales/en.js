@@ -4,7 +4,7 @@
 //   <b> <em> <a>      inline rich text, rendered with t.rich() (never innerHTML)
 //   key_one/_other    plural forms, picked by t.n(key, n)
 // Never translated anywhere: code, commands, URLs/paths, brand names
-// (WorkCoPilot, AdmireVeda, COE Security LLC), plan names (Lite/Basic/Advanced/Premium).
+// (WorkCoPilot, AdmireVeda), plan names (Lite/Basic/Advanced/Premium).
 export default {
   // Company-admin dashboard (src/pages/workadmin/WorkCompanyAdmin.jsx). English
   // base only; a later wave fills other locales and the workadmin/sections/*.
@@ -833,7 +833,7 @@ export default {
     disclaimer: 'Disclaimer',
     contact: 'Contact',
     sales: 'Sales and enterprise',
-    ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
+    ownership: 'WorkCoPilot, a product of AdmireVeda.',
     note: 'Lawful, legitimate work only. Guidance, not professional advice.',
     cookiePrefs: 'Cookie preferences',
     cookiePolicy: 'Cookie Policy',

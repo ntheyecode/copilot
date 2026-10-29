@@ -370,7 +370,7 @@ const GREY_FILL = '#8b929c'     // n/a chip fill
 const GREY_TINT = '#eceef1'
 const GAP_RED = '#9b3b3b'       // framework "gap" status (honest: never softened)
 const WHITE = '#ffffff'
-const REPORT_ISSUER_LINE = 'AdmireVeda / COE Security LLC'
+const REPORT_ISSUER_LINE = 'AdmireVeda'
 
 const CTRL_STATUS = {
   satisfied: { label: 'SATISFIED', fill: ACCENT, tint: TINT, long: 'Satisfied' },

@@ -3,7 +3,7 @@
 // en/*.js partial into the English base, so this file owns its namespace.
 // LEGAL COPY: extracted verbatim from the page (honesty contract, owner-enforced).
 // Never reworded here; a change of substance is a change to the policy itself.
-// Interpolations: {entity} = the legal entity (COE Security LLC), {contact} and
+// Interpolations: {entity} = the legal entity (AdmireVeda), {contact} and
 // {support} = the two mailboxes; all three stay constants in the page, never
 // translated. <a>...</a> and named link tags render via t.rich() with the page's
 // own hrefs; <b> renders bold. Lists (items[], glance.cards[]) translate as units.
@@ -21,7 +21,7 @@ export default {
       tagline: 'Plain-language disclosure of what the product does today',
       templateLabel: 'Template.',
       templateNotice: 'This is a template provided for transparency and is being finalized with legal counsel; it is not yet a binding agreement.',
-      ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
+      ownership: 'WorkCoPilot, a product of AdmireVeda.',
     },
     glance: {
       h2: 'At a glance',
@@ -52,7 +52,7 @@ export default {
     },
     about: {
       p1: 'This policy covers WorkCoPilot: the web app, the desktop app and the mobile app. It describes how the product treats your data when you sign in, run a guided session, and review your reports.',
-      p2: '<b>Who is responsible.</b> WorkCoPilot is offered by AdmireVeda, a product of {entity}. {entity} is the legal entity and the controller of the account, sign-in and billing details described below. For the content of your guided sessions, your organization decides what is shared and {entity} acts on its behalf as described in the <a>Data Processing Addendum</a>.',
+      p2: '<b>Who is responsible.</b> WorkCoPilot is offered by {entity}, the legal entity and the controller of the account, sign-in and billing details described below. For the content of your guided sessions, your organization decides what is shared and {entity} acts on its behalf as described in the <a>Data Processing Addendum</a>.',
       p3: 'It is written to be read, not to impress. Where a behavior is under your control, or where we have not finished something, we say so. The <a>Security page</a> shows the full data flow, step by step, with before-and-after examples of the on-device protection.',
       note: 'This page is a plain-language disclosure of how the product works. It is not legal advice and it is not a substitute for your own legal review of how WorkCoPilot fits your obligations.',
     },

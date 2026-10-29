@@ -25,7 +25,7 @@ import { useT } from '../i18n/index.jsx'           // every visible string reads
 import enFaq from '../i18n/locales/en/faqPage.js'  // the ENGLISH partial: anchors + question count derive from it (stable across translations)
 
 const SUPPORT = 'support@admireveda.com'           // product help, billing
-const LEGAL = 'support@coesecurity.com'            // privacy, legal, security
+const LEGAL = 'support@admireveda.com'            // privacy, legal, security
 const SALES = 'sales@admireveda.com'
 const CONTACT_VARS = { support: SUPPORT, legal: LEGAL, sales: SALES }   // {support} {legal} {sales} in the catalog strings
 

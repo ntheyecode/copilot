@@ -204,7 +204,7 @@ export default function WorkSecurity() {
 
       <section className="wsx-block wsx-contact" id="report">
         <ul className="wsx-facts">
-          <li><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('securityPage.contact.issue', null, { a: (c) => <a href="mailto:support@coesecurity.com">{c}</a> })}</span></li>
+          <li><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('securityPage.contact.issue', null, { a: (c) => <a href="mailto:support@admireveda.com">{c}</a> })}</span></li>
           <li><Building2 size={14} aria-hidden="true" /><span>{t.rich('securityPage.contact.help', null, { a: (c) => <a href="mailto:support@admireveda.com">{c}</a> })}</span></li>
         </ul>
       </section>

@@ -6,7 +6,7 @@
 //   1. THE ENVELOPE (fixed, designed once): renderLayout() produces the branded
 //      HTML chrome - header band with the wordmark, white card, H1, body,
 //      bulletproof CTA button, optional label/value rows, footer with
-//      AdmireVeda / COE Security LLC and the year. Table layout, inline CSS,
+//      AdmireVeda and the year. Table layout, inline CSS,
 //      VML button for Outlook, light-first with dark-mode rules layered on.
 //      Admins do not edit this; it is what keeps every email looking like the
 //      same product.
@@ -52,7 +52,7 @@
 // ---------------------------------------------------------------------------
 export const BRAND = Object.freeze({
   product: 'WorkCoPilot',
-  company: 'AdmireVeda / COE Security LLC',
+  company: 'AdmireVeda',
   companyShort: 'AdmireVeda',
   site: 'https://admireveda.com',
   appUrl: 'https://admireveda.com/work',

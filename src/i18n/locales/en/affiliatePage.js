@@ -4,7 +4,7 @@
 // Interpolations: {rate} = the commission as "30%", {amount} = a formatted USD
 // amount, {name} / {email} = the applicant's own values, {date} = a formatted
 // date, {n} / {count} = numbers. <b> / <em> inline marks render via t.rich.
-// Never translated: WorkCoPilot, AdmireVeda, COE Security LLC, Stripe, social
+// Never translated: WorkCoPilot, AdmireVeda, Stripe, social
 // network names (TikTok, Instagram, YouTube, X (Twitter), Facebook, LinkedIn).
 export default {
   affiliatePage: {
@@ -29,7 +29,7 @@ export default {
     },
     loading: 'Loading the affiliate program',
     footer: {
-      copyright: 'COE Security LLC · WorkCoPilot by AdmireVeda',
+      copyright: 'WorkCoPilot by AdmireVeda',
       terms: 'Terms',
       privacy: 'Privacy',
       support: 'Support',
