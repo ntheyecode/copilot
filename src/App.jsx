@@ -45,6 +45,9 @@ const WorkFullGuide = lazy(() => import('./pages/WorkFullGuide.jsx'))
 const WorkAdmin = lazy(() => import('./pages/workadmin/WorkAdmin.jsx'))
 const WorkCompanyAdmin = lazy(() => import('./pages/workadmin/WorkCompanyAdmin.jsx'))
 const WorkExec = lazy(() => import('./pages/WorkExec.jsx'))
+// Teach studio: record + author guided workflows (trainer grant or company admin).
+// Standalone .wka console like the exec dashboard; self-gates on roleView.showTeach.
+const TeachStudio = lazy(() => import('./pages/work/teach/TeachStudio.jsx'))
 // Standalone white sub-pages of the dashboard (same tokens, own white sub-shell).
 const WorkTasks = lazy(() => import('./pages/work/MyTasks.jsx'))
 const CompletedTasks = lazy(() => import('./pages/work/Completed.jsx'))
@@ -190,6 +193,7 @@ export default function App() {
         {/* Company-admin console (own-company scope, /api/work/* + /api/work/team/*). Self-gates on company_admin. */}
         <Route path="/work/company" element={<WorkCompanyAdmin />} />
         <Route path="/work/exec" element={<WorkExec />} />
+        <Route path="/work/teach" element={<TeachStudio />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
