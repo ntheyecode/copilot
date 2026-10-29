@@ -560,7 +560,7 @@ export default {
     disclaimer: 'Miễn trừ trách nhiệm',
     contact: 'Liên hệ',
     sales: 'Kinh doanh và doanh nghiệp',
-    ownership: 'WorkCoPilot, của AdmireVeda, một sản phẩm của COE Security LLC.',
+    ownership: 'WorkCoPilot, một sản phẩm của AdmireVeda.',
     note: 'Chỉ dành cho công việc hợp pháp, chính đáng. Đây là hướng dẫn, không phải tư vấn chuyên môn.',
     cookiePrefs: 'Tùy chọn cookie',
     cookiePolicy: 'Chính sách cookie',
@@ -7205,7 +7205,7 @@ export default {
     },
     loading: 'Đang tải chương trình affiliate',
     footer: {
-      copyright: 'COE Security LLC · WorkCoPilot by AdmireVeda',
+      copyright: 'WorkCoPilot by AdmireVeda',
       terms: 'Điều khoản',
       privacy: 'Quyền riêng tư',
       support: 'Hỗ trợ',
@@ -8264,7 +8264,7 @@ export default {
       tagline: 'Điều khoản bằng ngôn ngữ dễ hiểu, viết ra để được đọc',
       templateLabel: 'Mẫu.',
       templateNotice: 'Đây là một mẫu được cung cấp nhằm minh bạch và đang được hoàn thiện cùng cố vấn pháp lý; nó chưa phải là một thỏa thuận ràng buộc.',
-      ownership: 'WorkCoPilot, của AdmireVeda, một sản phẩm của COE Security LLC.',
+      ownership: 'WorkCoPilot, một sản phẩm của AdmireVeda.',
     },
     glance: {
       h2: 'Tổng quan nhanh',
@@ -8354,7 +8354,7 @@ export default {
       p2: 'Những biện pháp kiểm soát đó không làm bạn tuân thủ, và chúng tôi không tuyên bố rằng sản phẩm được chứng nhận theo bất kỳ khuôn khổ nào. Việc tuân thủ do tổ chức của bạn đạt được và nắm giữ, phối hợp với các kiểm toán viên và cố vấn của riêng mình. Xem <security>trang Bảo mật</security> để biết các biện pháp kiểm soát ánh xạ đến các khuôn khổ phổ biến như thế nào, và <privacy>Chính sách Quyền riêng tư</privacy> để biết dữ liệu của bạn được xử lý ra sao.',
     },
     warranty: {
-      p1: 'WorkCoPilot được cung cấp bởi AdmireVeda, một sản phẩm của {entity}, là pháp nhân đứng sau dịch vụ. Trong phần này, “chúng tôi” có nghĩa là {entity}, AdmireVeda và WorkCoPilot cùng nhau.',
+      p1: 'WorkCoPilot được cung cấp bởi {entity}, pháp nhân đứng sau dịch vụ. Trong phần này, “chúng tôi” có nghĩa là {entity} và WorkCoPilot cùng nhau.',
       p2: 'WorkCoPilot được cung cấp nguyên trạng và theo mức khả dụng. Trong phạm vi pháp luật cho phép, chúng tôi không đưa ra bảo đảm nào, dù rõ ràng hay ngụ ý, về hướng dẫn, bao gồm việc nó chính xác, đầy đủ, cập nhật, phù hợp cho một mục đích cụ thể, hay không có lỗi.',
       p3: 'Trong phạm vi pháp luật cho phép, chúng tôi không chịu trách nhiệm về tổn thất hay thiệt hại phát sinh từ những hành động bạn thực hiện, hoặc không thực hiện, dựa trên hướng dẫn, bao gồm mất dữ liệu, mất doanh thu, thời gian ngừng hoạt động, hay chi phí khôi phục. Bạn hành động theo hướng dẫn theo quyết định của riêng mình, và bạn vẫn chịu trách nhiệm về kết quả trong hệ thống của bạn.',
       p4: 'Không điều gì trên trang này giới hạn các quyền không thể bị giới hạn theo pháp luật áp dụng cho bạn.',
@@ -9077,7 +9077,7 @@ export default {
           {
             q: 'WorkCoPilot là gì?',
             a: 'WorkCoPilot theo dõi màn hình của bạn và cho bạn biết cú nhấp, lệnh, thiết lập hay đoạn mã tiếp theo chính xác cho công việc trước mắt, phát hiện một bước đi sai, và giữ bạn ở đúng bước cho đến khi hoàn thành.',
-            d: 'Được tạo bởi AdmireVeda, một sản phẩm của COE Security LLC.',
+            d: 'Được phát triển bởi AdmireVeda.',
             links: ['Cách hoạt động', 'Bản demo 60 giây'],
           },
           {
@@ -9910,7 +9910,7 @@ export default {
         '<b>Ẩn khỏi các phiên chia sẻ màn hình.</b> Lớp phủ được bảo vệ nội dung theo mặc định, nên nó không xuất hiện trong các phiên chia sẻ và bản ghi của Zoom / Teams / Meet. Bật/tắt bằng <b>Khi chia sẻ</b> hoặc Ctrl+Shift+Alt+S khi bạn muốn nó hiển thị.',
         '<b>Tài liệu của bạn ở lại trên máy tính của bạn.</b> Các tệp bạn thêm được đọc trên thiết bị của bạn. Tệp gốc không bao giờ được tải lên, và văn bản không được lưu trên máy chủ của chúng tôi, nó chỉ được dùng để lập kế hoạch cho phiên đó.',
         '<b>Dữ liệu rời đi tối thiểu.</b> Để hướng dẫn bạn, các khung hình màn hình đã thu nhỏ và văn bản đã quản trị được gửi tới dịch vụ AI (của chúng tôi, hoặc khóa riêng của công ty bạn). Khi quản trị được bật, các giá trị nhạy cảm được loại bỏ hoặc mã hóa bằng token <b>trước khi</b> bất cứ thứ gì được gửi đi, và được dựng lại trên thiết bị của bạn.',
-        '<b>Được ký và cập nhật an toàn.</b> Ứng dụng được ký mã (COE Security) và các bản cập nhật được phân phối qua HTTPS.',
+        '<b>Được ký và cập nhật an toàn.</b> Ứng dụng được ký mã và các bản cập nhật được phân phối qua HTTPS.',
       ],
       tip: 'Đây là các biện pháp kiểm soát và bằng chứng kiểm toán hỗ trợ việc tuân thủ của bạn (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA). Tự chúng không làm bạn được chứng nhận.',
     },
@@ -10246,7 +10246,7 @@ export default {
     lastUpdated: 'Cập nhật lần cuối',
     templateLabel: 'Mẫu.',
     templateNotice: 'Đây là một mẫu được cung cấp nhằm minh bạch và đang được hoàn thiện cùng cố vấn pháp lý; nó chưa phải là một thỏa thuận ràng buộc.',
-    ownership: 'WorkCoPilot, bởi AdmireVeda, một sản phẩm của {entity}.',
+    ownership: 'WorkCoPilot, một sản phẩm của {entity}.',
     glanceH2: 'Nhìn tổng quan',
     tocTitle: 'Trên trang này',
     relatedPages: 'Trang liên quan',
@@ -10269,7 +10269,7 @@ export default {
       tagline: 'Công bố bằng ngôn ngữ dễ hiểu về những gì sản phẩm làm hôm nay',
       templateLabel: 'Mẫu.',
       templateNotice: 'Đây là một mẫu được cung cấp nhằm minh bạch và đang được hoàn thiện cùng cố vấn pháp lý; nó chưa phải là một thỏa thuận ràng buộc.',
-      ownership: 'WorkCoPilot, bởi AdmireVeda, một sản phẩm của COE Security LLC.',
+      ownership: 'WorkCoPilot, một sản phẩm của AdmireVeda.',
     },
     glance: {
       h2: 'Nhìn tổng quan',
@@ -10312,7 +10312,7 @@ export default {
     },
     about: {
       p1: 'Chính sách này bao trùm WorkCoPilot: ứng dụng web, ứng dụng máy tính và ứng dụng di động. Nó mô tả cách sản phẩm xử lý dữ liệu của bạn khi bạn đăng nhập, chạy một phiên có hướng dẫn, và xem lại các báo cáo của bạn.',
-      p2: '<b>Ai chịu trách nhiệm.</b> WorkCoPilot được cung cấp bởi AdmireVeda, một sản phẩm của {entity}. {entity} là pháp nhân và là đơn vị kiểm soát các thông tin về tài khoản, đăng nhập và thanh toán được mô tả bên dưới. Đối với nội dung các phiên có hướng dẫn của bạn, tổ chức của bạn quyết định những gì được chia sẻ và {entity} hành động thay mặt tổ chức như được mô tả trong <a>Phụ lục Xử lý Dữ liệu</a>.',
+      p2: '<b>Ai chịu trách nhiệm.</b> WorkCoPilot được cung cấp bởi {entity}, pháp nhân đồng thời là đơn vị kiểm soát các thông tin về tài khoản, đăng nhập và thanh toán được mô tả bên dưới. Đối với nội dung các phiên có hướng dẫn của bạn, tổ chức của bạn quyết định những gì được chia sẻ và {entity} hành động thay mặt tổ chức như được mô tả trong <a>Phụ lục Xử lý Dữ liệu</a>.',
       p3: 'Nó được viết để đọc, không phải để gây ấn tượng. Ở chỗ nào một hành vi nằm trong tầm kiểm soát của bạn, hoặc chỗ nào chúng tôi chưa hoàn thiện, chúng tôi nói rõ. <a>Trang Bảo mật</a> cho thấy toàn bộ luồng dữ liệu, từng bước một, với các ví dụ trước và sau của việc bảo vệ ngay trên thiết bị.',
       note: 'Trang này là một công bố bằng ngôn ngữ dễ hiểu về cách sản phẩm hoạt động. Nó không phải là tư vấn pháp lý và không thay thế cho việc bạn tự rà soát pháp lý xem WorkCoPilot phù hợp với nghĩa vụ của bạn như thế nào.',
     },
@@ -11097,7 +11097,7 @@ export default {
       contact: 'Liên hệ',
     },
     parties: {
-      p1: 'Các điều khoản này là một thỏa thuận giữa bạn (hoặc tổ chức bạn đại diện) và {entity} (“chúng tôi”). WorkCoPilot do AdmireVeda cung cấp, một sản phẩm của {entity}, là pháp nhân đứng sau dịch vụ.',
+      p1: 'Các điều khoản này là một thỏa thuận giữa bạn (hoặc tổ chức bạn đại diện) và {entity} (“chúng tôi”). WorkCoPilot được cung cấp bởi {entity}, pháp nhân đứng sau dịch vụ.',
       p2: 'Bằng việc tạo tài khoản hoặc sử dụng WorkCoPilot, bạn chấp thuận các điều khoản này. Nếu bạn sử dụng thay mặt cho một công ty, bạn xác nhận rằng bạn được phép ràng buộc công ty đó. Nếu bạn không đồng ý, vui lòng không sử dụng dịch vụ.',
     },
     service: {
@@ -11344,8 +11344,8 @@ export default {
       honest: 'Chúng tôi cung cấp các kiểm soát và bằng chứng. Chúng tôi không tuyên bố chứng nhận theo bất kỳ khung nào; tổ chức của bạn chịu trách nhiệm tuân thủ cùng với kiểm toán viên của mình.',
     },
     contact: {
-      issue: '<b>Phát hiện lỗi bảo mật?</b> Gửi email tới <a>support@coesecurity.com</a> (bảo mật, quyền riêng tư, tuân thủ, DPA đã ký). Hãy cho chúng tôi thời gian xác nhận và khắc phục trước khi công bố; chúng tôi hoan nghênh nghiên cứu thiện chí.',
-      help: 'Hỗ trợ sản phẩm và thanh toán: <a>support@admireveda.com</a>. WorkCoPilot, của AdmireVeda, là sản phẩm của COE Security LLC.',
+      issue: '<b>Phát hiện lỗi bảo mật?</b> Gửi email tới <a>support@admireveda.com</a> (bảo mật, quyền riêng tư, tuân thủ, DPA đã ký). Hãy cho chúng tôi thời gian xác nhận và khắc phục trước khi công bố; chúng tôi hoan nghênh nghiên cứu thiện chí.',
+      help: 'Hỗ trợ sản phẩm và thanh toán: <a>support@admireveda.com</a>. WorkCoPilot, một sản phẩm của AdmireVeda.',
     },
     cta: {
       aria: 'Các bước tiếp theo',

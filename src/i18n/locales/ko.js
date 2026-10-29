@@ -4,7 +4,7 @@
 //   <b> <em> <a>      t.rich()로 렌더링되는 인라인 리치 텍스트 (innerHTML 아님)
 //   key_one/_other    복수형 (한국어는 복수형이 없어 모두 같은 형태)
 // 어디서도 번역하지 않음: 코드, 명령어, URL/경로, 브랜드명
-// (WorkCoPilot, AdmireVeda, COE Security LLC), 요금제명 (Lite/Basic/Advanced/Premium).
+// (WorkCoPilot, AdmireVeda), 요금제명 (Lite/Basic/Advanced/Premium).
 export default {
   taskOverview: {
     showMore: '더 보기',
@@ -1196,7 +1196,7 @@ export default {
     disclaimer: '면책 조항',
     contact: '문의',
     sales: '영업 및 엔터프라이즈',
-    ownership: 'WorkCoPilot, AdmireVeda 제공, COE Security LLC의 제품입니다.',
+    ownership: 'WorkCoPilot은 AdmireVeda의 제품입니다.',
     note: '합법적이고 정당한 업무에만 사용. 안내일 뿐 전문적인 조언이 아닙니다.',
     cookiePrefs: '쿠키 환경설정',
     cookiePolicy: '쿠키 정책',
@@ -7085,7 +7085,7 @@ export default {
     },
     loading: '제휴 프로그램을 불러오는 중',
     footer: {
-      copyright: 'COE Security LLC · AdmireVeda의 WorkCoPilot',
+      copyright: 'AdmireVeda의 WorkCoPilot',
       terms: '약관',
       privacy: '개인정보',
       support: '지원',
@@ -8140,7 +8140,7 @@ export default {
       tagline: '읽히기 위해 쓴, 쉬운 말로 된 약관',
       templateLabel: '템플릿.',
       templateNotice: '이것은 투명성을 위해 제공되는 템플릿이며 법률 자문을 받아 최종 확정 중입니다. 아직 구속력 있는 계약이 아닙니다.',
-      ownership: 'WorkCoPilot, AdmireVeda 제공, COE Security LLC의 제품.',
+      ownership: 'WorkCoPilot은 AdmireVeda의 제품입니다.',
     },
     glance: {
       h2: '한눈에 보기',
@@ -8230,7 +8230,7 @@ export default {
       p2: '그러한 통제가 당신을 규정 준수 상태로 만들지는 않으며, 당사는 제품이 어떤 프레임워크에 대해 인증되었다고 주장하지 않습니다. 규정 준수는 당신의 조직이 자체 감사인 및 자문과 협력하여 달성하고 유지합니다. 통제가 일반적인 프레임워크에 어떻게 매핑되는지는 <security>보안 페이지</security>를, 당신의 데이터가 어떻게 처리되는지는 <privacy>개인정보 처리방침</privacy>을 참조하세요.',
     },
     warranty: {
-      p1: 'WorkCoPilot은 서비스의 배후 법인인 {entity}의 제품 AdmireVeda가 제공합니다. 이 섹션에서 "당사"는 {entity}, AdmireVeda, WorkCoPilot을 함께 의미합니다.',
+      p1: 'WorkCoPilot은 서비스의 배후 법인인 {entity}가 제공합니다. 이 섹션에서 "당사"는 {entity}와 WorkCoPilot을 함께 의미합니다.',
       p2: 'WorkCoPilot은 있는 그대로, 이용 가능한 상태로 제공됩니다. 법이 허용하는 범위에서, 당사는 안내가 정확하거나, 완전하거나, 최신이거나, 특정 목적에 적합하거나, 오류가 없다는 것을 포함해 명시적이든 묵시적이든 어떠한 보증도 하지 않습니다.',
       p3: '법이 허용하는 범위에서, 당사는 안내에 근거하여 당신이 취하거나 취하지 않은 행동으로 발생하는 손실이나 손해에 대해, 손실된 데이터, 손실된 수익, 다운타임, 복구 비용을 포함하여 책임지지 않습니다. 당신은 자신의 재량으로 안내에 따라 행동하며, 당신 시스템에서의 결과에 대한 책임은 당신에게 있습니다.',
       p4: '이 페이지의 어떤 내용도 당신에게 적용되는 법에 따라 제한할 수 없는 권리를 제한하지 않습니다.',
@@ -8942,7 +8942,7 @@ export default {
           {
             q: 'WorkCoPilot이란 무엇인가요?',
             a: 'WorkCoPilot은 당신의 화면을 지켜보고 눈앞의 작업에 필요한 정확한 다음 클릭, 명령어, 설정, 코드를 알려 주며, 잘못된 동작을 잡아내고, 일이 끝날 때까지 올바른 단계를 유지해 줍니다.',
-            d: 'AdmireVeda 제작, COE Security LLC의 제품.',
+            d: 'AdmireVeda가 만들었습니다.',
             links: ['작동 방식', '60초 데모'],
           },
           {
@@ -9768,7 +9768,7 @@ export default {
         '<b>화면 공유에서 숨김.</b> 오버레이는 기본적으로 콘텐츠 보호되어, Zoom / Teams / Meet 공유와 녹화에서 제외됩니다. 보이게 하고 싶을 때 <b>공유 시</b>나 Ctrl+Shift+Alt+S로 전환하세요.',
         '<b>당신의 문서는 당신의 컴퓨터에 머뭅니다.</b> 추가한 파일은 당신의 기기에서 읽힙니다. 원본 파일은 결코 업로드되지 않고, 텍스트는 당사 서버에 저장되지 않습니다 - 그 세션을 계획하는 데만 사용됩니다.',
         '<b>최소한의 데이터만 나갑니다.</b> 당신을 안내하기 위해 크기가 축소된 화면 프레임과 관리 대상 텍스트가 AI 서비스(당사의 것, 또는 당신 회사 자체 키)로 갑니다. 거버넌스가 켜지면 민감한 값은 무언가 전송되기 <b>전에</b> 제거되거나 토큰화되고, 당신의 기기에서 재구성됩니다.',
-        '<b>안전하게 서명되고 업데이트됨.</b> 앱은 코드 서명되어 있고(COE Security) 업데이트는 HTTPS로 전달됩니다.',
+        '<b>안전하게 서명되고 업데이트됩니다.</b> 앱은 코드 서명되어 있으며 업데이트는 HTTPS로 전달됩니다.',
       ],
       tip: '이는 당신의 규정 준수(GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA)를 뒷받침하는 통제와 감사 증거입니다. 그 자체로 당신을 인증 상태로 만들지는 않습니다.',
     },
@@ -10104,7 +10104,7 @@ export default {
     lastUpdated: '마지막 업데이트',
     templateLabel: '템플릿.',
     templateNotice: '이것은 투명성을 위해 제공되는 템플릿이며 법률 자문을 받아 최종 확정 중입니다. 아직 구속력 있는 계약이 아닙니다.',
-    ownership: 'WorkCoPilot, AdmireVeda 제공, {entity}의 제품.',
+    ownership: 'WorkCoPilot은 {entity}의 제품입니다.',
     glanceH2: '한눈에 보기',
     tocTitle: '이 페이지에서',
     relatedPages: '관련 페이지',
@@ -10127,7 +10127,7 @@ export default {
       tagline: '제품이 오늘 수행하는 바를 쉬운 말로 공개',
       templateLabel: '템플릿.',
       templateNotice: '이것은 투명성을 위해 제공되는 템플릿이며 법률 자문을 받아 최종 확정 중입니다. 아직 구속력 있는 계약이 아닙니다.',
-      ownership: 'WorkCoPilot, AdmireVeda 제공, COE Security LLC의 제품.',
+      ownership: 'WorkCoPilot은 AdmireVeda의 제품입니다.',
     },
     glance: {
       h2: '한눈에 보기',
@@ -10170,7 +10170,7 @@ export default {
     },
     about: {
       p1: '이 정책은 WorkCoPilot을 다룹니다: 웹 앱, 데스크톱 앱, 모바일 앱. 당신이 로그인하고, 안내 세션을 실행하고, 보고서를 검토할 때 제품이 당신의 데이터를 어떻게 다루는지 설명합니다.',
-      p2: '<b>누가 책임지는지.</b> WorkCoPilot은 {entity}의 제품 AdmireVeda가 제공합니다. {entity}는 법인이며 아래에 설명된 계정, 로그인, 결제 세부 정보의 컨트롤러입니다. 안내 세션의 내용에 대해서는 당신의 조직이 무엇을 공유할지 결정하고 {entity}는 <a>데이터 처리 부속서</a>에 설명된 대로 조직을 대신하여 행동합니다.',
+      p2: '<b>누가 책임지는지.</b> WorkCoPilot은 법인이자 아래에 설명된 계정, 로그인, 결제 세부 정보의 컨트롤러인 {entity}가 제공합니다. 안내 세션의 내용에 대해서는 당신의 조직이 무엇을 공유할지 결정하고 {entity}는 <a>데이터 처리 부속서</a>에 설명된 대로 조직을 대신하여 행동합니다.',
       p3: '이 페이지는 깊은 인상을 주기 위해서가 아니라 읽히기 위해 쓰였습니다. 동작이 당신의 통제 아래 있거나 우리가 무언가를 아직 끝내지 못한 경우, 그렇게 밝힙니다. <a>보안 페이지</a>는 기기 내 보호의 전후 예시와 함께 전체 데이터 흐름을 단계별로 보여 줍니다.',
       note: '이 페이지는 제품이 어떻게 작동하는지 쉬운 말로 공개한 것입니다. 법률 조언이 아니며, WorkCoPilot이 당신의 의무에 어떻게 맞는지에 대한 당신 본인의 법률 검토를 대신하지 않습니다.',
     },
@@ -10946,7 +10946,7 @@ export default {
       contact: '문의',
     },
     parties: {
-      p1: '이 약관은 당신(또는 당신이 대표하는 조직)과 {entity}("당사") 간의 계약입니다. WorkCoPilot은 서비스의 배후 법인인 {entity}의 제품 AdmireVeda가 제공합니다.',
+      p1: '이 약관은 당신(또는 당신이 대표하는 조직)과 {entity}("당사") 간의 계약입니다. WorkCoPilot은 서비스의 배후 법인인 {entity}가 제공합니다.',
       p2: '계정을 만들거나 WorkCoPilot을 사용함으로써 당신은 이 약관을 수락합니다. 회사를 대신해 사용하는 경우, 그 회사를 구속할 권한이 있음을 확인하는 것입니다. 동의하지 않으면 서비스를 사용하지 마세요.',
     },
     service: {
@@ -11185,8 +11185,8 @@ export default {
       honest: '저희는 제어 기능과 증적을 제공합니다. 어떤 프레임워크에 대해서도 인증을 받았다고 주장하지 않으며, 컴플라이언스는 고객 조직이 감사인과 함께 유지합니다.',
     },
     contact: {
-      issue: '<b>보안 문제를 발견하셨나요?</b> <a>support@coesecurity.com</a>으로 이메일을 보내 주세요 (보안, 개인정보 보호, 컴플라이언스, DPA 체결). 공개하기 전에 확인하고 수정할 시간을 주시면 감사하겠습니다. 선의의 보안 연구를 환영합니다.',
-      help: '제품 지원 및 결제 문의: <a>support@admireveda.com</a>. AdmireVeda의 WorkCoPilot은 COE Security LLC의 제품입니다.',
+      issue: '<b>보안 문제를 발견하셨나요?</b> <a>support@admireveda.com</a>으로 이메일을 보내 주세요 (보안, 개인정보 보호, 컴플라이언스, DPA 체결). 공개하기 전에 확인하고 수정할 시간을 주시면 감사하겠습니다. 선의의 보안 연구를 환영합니다.',
+      help: '제품 지원 및 결제 문의: <a>support@admireveda.com</a>. WorkCoPilot은 AdmireVeda의 제품입니다.',
     },
     cta: {
       aria: '다음 단계',

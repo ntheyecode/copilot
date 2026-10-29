@@ -560,7 +560,7 @@ export default {
     disclaimer: 'Penafian',
     contact: 'Kontak',
     sales: 'Penjualan dan perusahaan',
-    ownership: 'WorkCoPilot, oleh AdmireVeda, produk dari COE Security LLC.',
+    ownership: 'WorkCoPilot, produk dari AdmireVeda.',
     note: 'Hanya untuk pekerjaan yang sah dan legal. Ini panduan, bukan nasihat profesional.',
     cookiePrefs: 'Preferensi cookie',
     cookiePolicy: 'Kebijakan Cookie',
@@ -7201,7 +7201,7 @@ export default {
     },
     loading: 'Memuat program afiliasi',
     footer: {
-      copyright: 'COE Security LLC · WorkCoPilot oleh AdmireVeda',
+      copyright: 'WorkCoPilot oleh AdmireVeda',
       terms: 'Ketentuan',
       privacy: 'Privasi',
       support: 'Dukungan',
@@ -8260,7 +8260,7 @@ export default {
       tagline: 'Ketentuan berbahasa sederhana, ditulis untuk dibaca',
       templateLabel: 'Templat.',
       templateNotice: 'Ini adalah templat yang disediakan demi transparansi dan sedang diselesaikan bersama penasihat hukum; ini belum menjadi perjanjian yang mengikat.',
-      ownership: 'WorkCoPilot, oleh AdmireVeda, produk dari COE Security LLC.',
+      ownership: 'WorkCoPilot, produk dari AdmireVeda.',
     },
     glance: {
       h2: 'Sekilas',
@@ -8350,7 +8350,7 @@ export default {
       p2: 'Kontrol tersebut tidak membuat Anda patuh, dan kami tidak mengeklaim bahwa produk ini bersertifikat terhadap kerangka kerja mana pun. Kepatuhan dicapai dan dipegang oleh organisasi Anda, bekerja sama dengan auditor dan penasihatnya sendiri. Lihat <security>halaman Keamanan</security> untuk bagaimana kontrol dipetakan ke kerangka kerja umum, dan <privacy>Kebijakan Privasi</privacy> untuk bagaimana data Anda ditangani.',
     },
     warranty: {
-      p1: 'WorkCoPilot ditawarkan oleh AdmireVeda, produk dari {entity}, yang merupakan badan hukum di balik layanan ini. Pada bagian ini, "kami" berarti {entity}, AdmireVeda, dan WorkCoPilot bersama-sama.',
+      p1: 'WorkCoPilot ditawarkan oleh {entity}, badan hukum di balik layanan ini. Pada bagian ini, "kami" berarti {entity} dan WorkCoPilot bersama-sama.',
       p2: 'WorkCoPilot disediakan sebagaimana adanya dan sebagaimana tersedia. Sejauh diizinkan hukum, kami tidak memberikan garansi, tersurat maupun tersirat, tentang panduan, termasuk bahwa panduan itu akurat, lengkap, terkini, sesuai untuk tujuan tertentu, atau bebas dari kesalahan.',
       p3: 'Sejauh diizinkan hukum, kami tidak bertanggung jawab atas kehilangan atau kerusakan yang timbul dari tindakan yang Anda ambil, atau tidak Anda ambil, berdasarkan panduan, termasuk data yang hilang, pendapatan yang hilang, waktu henti, atau biaya pemulihan. Anda bertindak atas panduan menurut kebijaksanaan Anda sendiri, dan Anda tetap bertanggung jawab atas hasilnya pada sistem Anda.',
       p4: 'Tidak ada hal di halaman ini yang membatasi hak-hak yang tidak dapat dibatasi berdasarkan hukum yang berlaku bagi Anda.',
@@ -9073,7 +9073,7 @@ export default {
           {
             q: 'Apa itu WorkCoPilot?',
             a: 'WorkCoPilot mengamati layar Anda dan memberi tahu klik, perintah, pengaturan, atau kode berikutnya yang tepat untuk tugas di hadapan Anda, menangkap langkah yang keliru, dan menjaga Anda tetap pada langkah yang benar hingga pekerjaan selesai.',
-            d: 'Dibuat oleh AdmireVeda, produk dari COE Security LLC.',
+            d: 'Dibuat oleh AdmireVeda.',
             links: ['Cara kerjanya', 'Demo 60 detik'],
           },
           {
@@ -9906,7 +9906,7 @@ export default {
         '<b>Tersembunyi dari berbagi layar.</b> Overlay dilindungi konten secara bawaan, sehingga tetap tidak muncul di berbagi dan rekaman Zoom / Teams / Meet. Alihkan dengan <b>Saat berbagi</b> atau Ctrl+Shift+Alt+S ketika Anda ingin menampilkannya.',
         '<b>Dokumen Anda tetap di komputer Anda.</b> Berkas yang Anda tambahkan dibaca di perangkat Anda. Berkas mentah tidak pernah diunggah, dan teksnya tidak disimpan di server kami - teks hanya digunakan untuk merencanakan sesi itu.',
         '<b>Data yang keluar seminimal mungkin.</b> Untuk memandu Anda, bingkai layar yang diperkecil dan teks yang diatur dikirim ke layanan AI (milik kami, atau kunci perusahaan Anda sendiri). Ketika tata kelola aktif, nilai sensitif dihapus atau ditokenisasi <b>sebelum</b> apa pun dikirim, dan disusun ulang di perangkat Anda.',
-        '<b>Ditandatangani & diperbarui dengan aman.</b> Aplikasi ditandatangani kode (COE Security) dan pembaruan dikirim melalui HTTPS.',
+        '<b>Ditandatangani & diperbarui dengan aman.</b> Aplikasi ditandatangani kode dan pembaruan dikirim melalui HTTPS.',
       ],
       tip: 'Ini adalah kontrol dan bukti audit yang mendukung kepatuhan Anda (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA). Dengan sendirinya, ini tidak membuat Anda bersertifikat.',
     },
@@ -10242,7 +10242,7 @@ export default {
     lastUpdated: 'Terakhir diperbarui',
     templateLabel: 'Templat.',
     templateNotice: 'Ini adalah templat yang disediakan demi transparansi dan sedang diselesaikan bersama penasihat hukum; ini belum menjadi perjanjian yang mengikat.',
-    ownership: 'WorkCoPilot, oleh AdmireVeda, produk dari {entity}.',
+    ownership: 'WorkCoPilot, produk dari {entity}.',
     glanceH2: 'Sekilas',
     tocTitle: 'Di halaman ini',
     relatedPages: 'Halaman terkait',
@@ -10265,7 +10265,7 @@ export default {
       tagline: 'Pengungkapan berbahasa sederhana tentang apa yang dilakukan produk saat ini',
       templateLabel: 'Templat.',
       templateNotice: 'Ini adalah templat yang disediakan demi transparansi dan sedang diselesaikan bersama penasihat hukum; ini belum menjadi perjanjian yang mengikat.',
-      ownership: 'WorkCoPilot, oleh AdmireVeda, produk dari COE Security LLC.',
+      ownership: 'WorkCoPilot, produk dari AdmireVeda.',
     },
     glance: {
       h2: 'Sekilas',
@@ -10308,7 +10308,7 @@ export default {
     },
     about: {
       p1: 'Kebijakan ini mencakup WorkCoPilot: aplikasi web, aplikasi desktop, dan aplikasi mobile. Kebijakan ini menjelaskan bagaimana produk memperlakukan data Anda ketika Anda masuk, menjalankan sesi berpandu, dan meninjau laporan Anda.',
-      p2: '<b>Siapa yang bertanggung jawab.</b> WorkCoPilot ditawarkan oleh AdmireVeda, produk dari {entity}. {entity} adalah badan hukum dan pengendali detail akun, masuk, dan penagihan yang dijelaskan di bawah. Untuk konten sesi berpandu Anda, organisasi Anda memutuskan apa yang dibagikan dan {entity} bertindak atas namanya sebagaimana dijelaskan dalam <a>Adendum Pemrosesan Data</a>.',
+      p2: '<b>Siapa yang bertanggung jawab.</b> WorkCoPilot ditawarkan oleh {entity}, badan hukum sekaligus pengendali detail akun, masuk, dan penagihan yang dijelaskan di bawah. Untuk konten sesi berpandu Anda, organisasi Anda memutuskan apa yang dibagikan dan {entity} bertindak atas namanya sebagaimana dijelaskan dalam <a>Adendum Pemrosesan Data</a>.',
       p3: 'Kebijakan ini ditulis untuk dibaca, bukan untuk mengesankan. Jika suatu perilaku berada dalam kendali Anda, atau jika kami belum menyelesaikan sesuatu, kami menyatakannya. <a>Halaman Keamanan</a> menampilkan alur data lengkap, langkah demi langkah, dengan contoh sebelum-dan-sesudah dari perlindungan di perangkat.',
       note: 'Halaman ini adalah pengungkapan berbahasa sederhana tentang cara kerja produk. Ini bukan nasihat hukum dan bukan pengganti tinjauan hukum Anda sendiri tentang bagaimana WorkCoPilot sesuai dengan kewajiban Anda.',
     },
@@ -11093,7 +11093,7 @@ export default {
       contact: 'Kontak',
     },
     parties: {
-      p1: 'Ketentuan ini adalah perjanjian antara Anda (atau organisasi yang Anda wakili) dan {entity} ("kami"). WorkCoPilot ditawarkan oleh AdmireVeda, produk dari {entity}, yang merupakan badan hukum di balik layanan ini.',
+      p1: 'Ketentuan ini adalah perjanjian antara Anda (atau organisasi yang Anda wakili) dan {entity} ("kami"). WorkCoPilot ditawarkan oleh {entity}, badan hukum di balik layanan ini.',
       p2: 'Dengan membuat akun atau menggunakan WorkCoPilot, Anda menerima ketentuan ini. Jika Anda menggunakannya atas nama suatu perusahaan, Anda menegaskan bahwa Anda diizinkan untuk mengikat perusahaan tersebut. Jika Anda tidak setuju, jangan gunakan layanan ini.',
     },
     service: {
@@ -11340,8 +11340,8 @@ export default {
       honest: 'Kami menyediakan kontrol dan buktinya. Kami tidak mengklaim sertifikasi terhadap kerangka kerja mana pun; organisasi Anda memegang kepatuhan bersama auditornya.',
     },
     contact: {
-      issue: '<b>Menemukan masalah keamanan?</b> Kirim email ke <a>support@coesecurity.com</a> (keamanan, privasi, kepatuhan, DPA yang ditandatangani). Beri kami waktu untuk memastikan dan memperbaiki sebelum pengungkapan publik; riset dengan iktikad baik kami sambut.',
-      help: 'Bantuan produk dan penagihan: <a>support@admireveda.com</a>. WorkCoPilot, oleh AdmireVeda, adalah produk dari COE Security LLC.',
+      issue: '<b>Menemukan masalah keamanan?</b> Kirim email ke <a>support@admireveda.com</a> (keamanan, privasi, kepatuhan, DPA yang ditandatangani). Beri kami waktu untuk memastikan dan memperbaiki sebelum pengungkapan publik; riset dengan iktikad baik kami sambut.',
+      help: 'Bantuan produk dan penagihan: <a>support@admireveda.com</a>. WorkCoPilot, produk dari AdmireVeda.',
     },
     cta: {
       aria: 'Langkah berikutnya',

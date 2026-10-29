@@ -4,7 +4,7 @@
 //   <b> <em> <a>      内联富文本,由 t.rich() 渲染(绝不使用 innerHTML)
 //   key_one/_other    复数形式,由 t.n(key, n) 选择
 // 任何地方都不翻译: 代码、命令、URL/路径、品牌名
-// (WorkCoPilot、AdmireVeda、COE Security LLC)、套餐名 (Lite/Basic/Advanced/Premium)。
+// (WorkCoPilot、AdmireVeda）、套餐名 (Lite/Basic/Advanced/Premium)。
 // 中文没有复数变化,_one/_two/_other 均给出相同的自然表达。
 export default {
   taskOverview: {
@@ -1197,7 +1197,7 @@ export default {
     disclaimer: '免责声明',
     contact: '联系方式',
     sales: '销售与企业',
-    ownership: 'WorkCoPilot,由 AdmireVeda 出品,COE Security LLC 的产品。',
+    ownership: 'WorkCoPilot，AdmireVeda 出品。',
     note: '仅限合法、正当的工作。提供引导,而非专业咨询。',
     cookiePrefs: 'Cookie 偏好设置',
     cookiePolicy: 'Cookie 政策',
@@ -7058,7 +7058,7 @@ export default {
     },
     loading: '正在加载推广计划',
     footer: {
-      copyright: 'COE Security LLC · WorkCoPilot by AdmireVeda',
+      copyright: 'WorkCoPilot by AdmireVeda',
       terms: '条款',
       privacy: '隐私',
       support: '支持',
@@ -8104,7 +8104,7 @@ export default {
       tagline: '通俗易懂、便于阅读的条款',
       templateLabel: '模板。',
       templateNotice: '这是为透明起见提供的模板，正由法律顾问最终定稿；目前尚非具有约束力的协议。',
-      ownership: 'WorkCoPilot，由 AdmireVeda 提供，COE Security LLC 的产品。',
+      ownership: 'WorkCoPilot，AdmireVeda 出品。',
     },
     glance: {
       h2: '概览',
@@ -8194,7 +8194,7 @@ export default {
       p2: '这些控制措施并不会使您达成合规，我们也不声称本产品已通过任何框架的认证。合规由贵组织会同其自身的审计师和顾问来达成和保持。有关这些控制措施如何映射到常见框架，请参阅<security>安全页面</security>；有关您数据的处理方式，请参阅<privacy>隐私政策</privacy>。',
     },
     warranty: {
-      p1: 'WorkCoPilot 由 AdmireVeda 提供，是 {entity} 的产品，而 {entity} 是本服务背后的法律实体。在本节中，“我们”指该实体、AdmireVeda 和 WorkCoPilot 的统称。',
+      p1: 'WorkCoPilot 由本服务背后的法律实体 {entity} 提供。在本节中，“我们”指 {entity} 和 WorkCoPilot 的统称。',
       p2: 'WorkCoPilot 按“现状”和“现有可用”方式提供。在法律允许的范围内，我们不就该指导作出任何明示或默示的保证，包括其准确、完整、最新、适用于特定目的或无错误。',
       p3: '在法律允许的范围内，对于您基于该指导采取或未采取行动所产生的损失或损害，包括数据丢失、收入损失、停机或恢复成本，我们概不负责。您自行决定依照该指导行事，并对您系统中的结果负责。',
       p4: '本页面的任何内容均不限制依据适用于您的法律不可被限制的权利。',
@@ -8901,7 +8901,7 @@ export default {
           {
             q: 'WorkCoPilot 是什么？',
             a: 'WorkCoPilot 观察您的屏幕，为您眼前的任务告诉您准确的下一次点击、命令、设置或代码，发现走错，并让您保持在正确的步骤上直至任务完成。',
-            d: '由 AdmireVeda 打造，是 COE Security LLC 的产品。',
+            d: '由 AdmireVeda 打造。',
             links: ['它如何运作', '60 秒演示'],
           },
           {
@@ -9727,7 +9727,7 @@ export default {
         '<b>从屏幕共享中隐藏。</b> 悬浮窗默认受内容保护,因此它不会出现在 Zoom / Teams / Meet 的共享和录制中。想让它可见时,可用 <b>共享时可见</b> 或 Ctrl+Shift+Alt+S 切换。',
         '<b>您的文档保留在您的计算机上。</b> 您添加的文件在您的设备上读取。原始文件绝不会上传,文本也不会存储在我们的服务器上,仅用于规划该次会话。',
         '<b>发送的数据最少。</b> 为引导您,缩小后的屏幕帧和经过治理的文本会发送给 AI 服务(我们的,或您公司自己的密钥)。治理开启时,敏感值会在任何内容发送 <b>之前</b> 被剥离或令牌化,并在您的设备上重建。',
-        '<b>已签名并安全更新。</b> 应用经过代码签名(COE Security),更新通过 HTTPS 传输。',
+        '<b>已签名并安全更新。</b> 应用经过代码签名，更新通过 HTTPS 传输。',
       ],
       tip: '这些是支持您合规工作(GDPR、HIPAA、PCI-DSS、SOC 2、ISO 27001、CCPA)的控制措施和审计证据。它们本身并不能使您获得认证。',
     },
@@ -10063,7 +10063,7 @@ export default {
     lastUpdated: '最近更新',
     templateLabel: '模板。',
     templateNotice: '这是为透明起见提供的模板，正在与法律顾问共同敲定；它尚未成为具有约束力的协议。',
-    ownership: 'WorkCoPilot，由 AdmireVeda 提供，是 {entity} 的产品。',
+    ownership: 'WorkCoPilot，{entity} 出品。',
     glanceH2: '概览',
     tocTitle: '本页内容',
     relatedPages: '相关页面',
@@ -10086,7 +10086,7 @@ export default {
       tagline: '对本产品当前功能的通俗语言披露',
       templateLabel: '模板。',
       templateNotice: '这是为透明度而提供的模板,正在与法律顾问共同敲定;它尚未构成具有约束力的协议。',
-      ownership: 'WorkCoPilot,由 AdmireVeda 提供,COE Security LLC 的产品。',
+      ownership: 'WorkCoPilot，AdmireVeda 出品。',
     },
     glance: {
       h2: '一览',
@@ -10129,7 +10129,7 @@ export default {
     },
     about: {
       p1: '本政策涵盖 WorkCoPilot:网页应用、桌面应用和移动应用。它描述了在您登录、运行引导会话以及查看报告时,产品如何处理您的数据。',
-      p2: '<b>谁负责。</b> WorkCoPilot 由 AdmireVeda 提供,是 {entity} 的产品。{entity} 是法律实体,也是下文所述账户、登录和账单信息的控制者。对于您引导会话的内容,由您的组织决定共享什么,{entity} 则按 <a>数据处理附录</a> 所述代表其行事。',
+      p2: '<b>谁负责。</b> WorkCoPilot 由 {entity} 提供，该实体是法律实体，也是下文所述账户、登录和账单信息的控制者。对于您引导会话的内容，由您的组织决定共享什么，{entity} 则按 <a>数据处理附录</a> 所述代表其行事。',
       p3: '它是为阅读而写,而非为了给人留下深刻印象。凡某项行为由您掌控,或凡我们尚未完成某事,我们都会如实说明。<a>安全页面</a> 逐步展示完整的数据流,并附带设备端保护的前后对比示例。',
       note: '本页是对产品工作方式的通俗语言披露。它不构成法律建议,也不能替代您自己对 WorkCoPilot 如何契合您义务的法律审查。',
     },
@@ -10905,7 +10905,7 @@ export default {
       contact: '联系方式',
     },
     parties: {
-      p1: '本条款是您（或您所代表的组织）与 {entity}（“我们”）之间的协议。WorkCoPilot 由 AdmireVeda 提供，是 {entity} 的产品，该实体是本服务背后的法律实体。',
+      p1: '本条款是您（或您所代表的组织）与 {entity}（“我们”）之间的协议。WorkCoPilot 由 {entity} 提供，该实体是本服务背后的法律实体。',
       p2: '创建账户或使用 WorkCoPilot，即表示您接受本条款。如果您代表公司使用，即确认您有权约束该公司。如果您不同意，请勿使用本服务。',
     },
     service: {
@@ -11140,8 +11140,8 @@ export default {
       honest: '我们提供管控措施和证据，但不声称已通过任何框架的认证；合规责任由贵组织与其审计方共同承担。',
     },
     contact: {
-      issue: '<b>发现了安全问题？</b> 请发送邮件至 <a>support@coesecurity.com</a>（安全、隐私、合规、签署 DPA）。请在公开披露前给我们时间确认并修复；我们欢迎善意的安全研究。',
-      help: '产品支持与账单事宜：<a>support@admireveda.com</a>。WorkCoPilot 由 AdmireVeda 推出，是 COE Security LLC 的产品。',
+      issue: '<b>发现了安全问题？</b> 请发送邮件至 <a>support@admireveda.com</a>（安全、隐私、合规、签署 DPA）。请在公开披露前给我们时间确认并修复；我们欢迎善意的安全研究。',
+      help: '产品支持与账单事宜：<a>support@admireveda.com</a>。WorkCoPilot，AdmireVeda 出品。',
     },
     cta: {
       aria: '后续步骤',

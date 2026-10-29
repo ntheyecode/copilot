@@ -4,7 +4,7 @@
 //   <b> <em> <a>      t.rich() で描画されるインラインリッチテキスト（innerHTML では描画しない）
 //   key_one/_other    複数形。t.n(key, n) で選択される
 // どのロケールでも翻訳しないもの: コード、コマンド、URL/パス、ブランド名
-// (WorkCoPilot, AdmireVeda, COE Security LLC)、プラン名 (Lite/Basic/Advanced/Premium)。
+// (WorkCoPilot, AdmireVeda)、プラン名 (Lite/Basic/Advanced/Premium)。
 export default {
   taskOverview: {
     showMore: 'さらに表示',
@@ -1196,7 +1196,7 @@ export default {
     disclaimer: '免責事項',
     contact: 'お問い合わせ',
     sales: '営業・エンタープライズ',
-    ownership: 'WorkCoPilot（AdmireVeda 提供、COE Security LLC の製品）。',
+    ownership: 'WorkCoPilot は AdmireVeda の製品です。',
     note: '適法かつ正当な業務のみ。ガイドであり、専門的な助言ではありません。',
     cookiePrefs: 'Cookie 設定',
     cookiePolicy: 'Cookie ポリシー',
@@ -7085,7 +7085,7 @@ export default {
     },
     loading: 'アフィリエイトプログラムを読み込み中',
     footer: {
-      copyright: 'COE Security LLC · WorkCoPilot by AdmireVeda',
+      copyright: 'WorkCoPilot by AdmireVeda',
       terms: '規約',
       privacy: 'プライバシー',
       support: 'サポート',
@@ -8140,7 +8140,7 @@ export default {
       tagline: '読まれることを前提に書かれた、わかりやすい言葉の規約',
       templateLabel: 'テンプレート。',
       templateNotice: 'これは透明性のために提供するテンプレートであり、法律顧問とともに最終化を進めています。まだ拘束力のある合意ではありません。',
-      ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
+      ownership: 'WorkCoPilot は AdmireVeda の製品です。',
     },
     glance: {
       h2: 'ひと目で',
@@ -8230,7 +8230,7 @@ export default {
       p2: 'これらの統制は、あなたを準拠状態にするものではなく、当社は製品がいずれかのフレームワークに対して認証されているとは主張しません。コンプライアンスは、あなたの組織が自社の監査人や助言者とともに達成し、維持するものです。統制が一般的なフレームワークにどう対応するかは<security>セキュリティページ</security>を、データの取り扱いは<privacy>プライバシーポリシー</privacy>をご覧ください。',
     },
     warranty: {
-      p1: 'WorkCoPilot は、サービスの運営主体である {entity} の製品 AdmireVeda によって提供されます。本セクションにおいて「当社」とは、{entity}、AdmireVeda、WorkCoPilot をまとめて指します。',
+      p1: 'WorkCoPilot は、サービスの運営主体である法人 {entity} が提供しています。本セクションにおいて「当社」とは、{entity} と WorkCoPilot をまとめて指します。',
       p2: 'WorkCoPilot は、現状のまま、利用可能な範囲で提供されます。法律が認める範囲で、当社は案内について、正確性・完全性・最新性・特定目的への適合性・無誤りを含め、明示・黙示を問わずいかなる保証も行いません。',
       p3: '法律が認める範囲で、当社は、案内に基づいてあなたが取った行動、または取らなかった行動から生じる損失または損害（データの喪失、収益の損失、ダウンタイム、復旧費用を含む）について責任を負いません。案内への対応はあなたの裁量で行い、あなたのシステムでの結果については引き続きあなたが責任を負います。',
       p4: 'このページのいかなる内容も、あなたに適用される法律のもとで制限できない権利を制限するものではありません。',
@@ -8953,7 +8953,7 @@ export default {
           {
             q: 'WorkCoPilot とは?',
             a: 'WorkCoPilot は画面を見て、目の前のタスクに必要な次の正確なクリック・コマンド・設定・コードを伝え、誤った操作を捉え、仕事が終わるまで正しいステップにとどめます。',
-            d: 'AdmireVeda 製、COE Security LLC の製品です。',
+            d: 'AdmireVeda が開発・提供しています。',
             links: ['仕組み', '60 秒のデモ'],
           },
           {
@@ -9779,7 +9779,7 @@ export default {
         '<b>画面共有から隠れる。</b> オーバーレイは既定でコンテンツ保護されているため、Zoom / Teams / Meet の共有や録画に映りません。表示したいときは<b>共有時</b>または Ctrl+Shift+Alt+S で切り替えます。',
         '<b>ドキュメントはあなたのコンピューターにとどまる。</b> 追加したファイルはお使いのデバイス上で読み取られます。生のファイルがアップロードされることはなく、テキストも当社のサーバーに保存されません。そのセッションの計画にのみ使われます。',
         '<b>出るデータは最小限。</b> 案内のために、縮小された画面フレームと統制されたテキストが AI サービス（当社、またはあなたの会社自身のキー）に送られます。ガバナンスがオンの場合、機微な値は何かが送信される<b>前に</b>除去またはトークン化され、あなたのデバイス上で再構成されます。',
-        '<b>安全に署名・更新。</b> アプリはコード署名されており（COE Security）、更新は HTTPS 経由で配信されます。',
+        '<b>安全に署名・更新。</b> アプリはコード署名されており、更新は HTTPS 経由で配信されます。',
       ],
       tip: 'これらは、あなたのコンプライアンス（GDPR・HIPAA・PCI-DSS・SOC 2・ISO 27001・CCPA）を支える統制と監査証拠です。これら自体が、あなたを認証された状態にするものではありません。',
     },
@@ -10115,7 +10115,7 @@ export default {
     lastUpdated: '最終更新',
     templateLabel: 'テンプレート。',
     templateNotice: 'これは透明性のために提供するテンプレートであり、法律顧問とともに最終化を進めています。まだ拘束力のある合意ではありません。',
-    ownership: 'WorkCoPilot, by AdmireVeda, a product of {entity}.',
+    ownership: 'WorkCoPilot は {entity} の製品です。',
     glanceH2: 'ひと目で',
     tocTitle: 'このページの内容',
     relatedPages: '関連ページ',
@@ -10138,7 +10138,7 @@ export default {
       tagline: '製品が現在行っていることを、わかりやすい言葉で開示します',
       templateLabel: 'テンプレート。',
       templateNotice: 'これは透明性のために提供するテンプレートであり、法律顧問とともに最終化を進めています。まだ拘束力のある合意ではありません。',
-      ownership: 'WorkCoPilot, by AdmireVeda, a product of COE Security LLC.',
+      ownership: 'WorkCoPilot は AdmireVeda の製品です。',
     },
     glance: {
       h2: 'ひと目で',
@@ -10181,7 +10181,7 @@ export default {
     },
     about: {
       p1: '本ポリシーは WorkCoPilot（ウェブアプリ、デスクトップアプリ、モバイルアプリ）を対象とします。サインイン、ガイド付きセッションの実行、レポートの確認の際に、製品があなたのデータをどう扱うかを記載します。',
-      p2: '<b>責任の所在。</b> WorkCoPilot は、{entity} の製品 AdmireVeda によって提供されます。{entity} が法人であり、以下に記載するアカウント・サインイン・請求の情報の管理者です。ガイド付きセッションの内容については、あなたの組織が何を共有するかを決定し、<a>データ処理補遺</a>に記載のとおり {entity} がそれに代わって行動します。',
+      p2: '<b>責任の所在。</b> WorkCoPilot は、法人であり、以下に記載するアカウント・サインイン・請求の情報の管理者である {entity} が提供しています。ガイド付きセッションの内容については、あなたの組織が何を共有するかを決定し、<a>データ処理補遺</a>に記載のとおり {entity} がその組織に代わって行動します。',
       p3: 'これは、印象づけるためではなく、読まれるために書かれています。ある挙動があなたの管理下にある場合、または何かをまだ完了していない場合は、その旨を記します。<a>セキュリティページ</a>には、完全なデータの流れがステップごとに、デバイス上での保護の前後の例とともに示されています。',
       note: 'このページは、製品がどう動くかをわかりやすい言葉で開示するものです。法的助言ではなく、WorkCoPilot があなたの義務にどう適合するかについての、ご自身の法務レビューに代わるものでもありません。',
     },
@@ -10957,7 +10957,7 @@ export default {
       contact: 'お問い合わせ',
     },
     parties: {
-      p1: '本規約は、あなた（またはあなたが代表する組織）と {entity}（「当社」）との間の合意です。WorkCoPilot は、サービスの運営主体である {entity} の製品 AdmireVeda によって提供されます。',
+      p1: '本規約は、あなた（またはあなたが代表する組織）と {entity}（「当社」）との間の合意です。WorkCoPilot は、サービスの運営主体である法人 {entity} が提供しています。',
       p2: 'アカウントを作成するか WorkCoPilot を利用することで、本規約に同意したものとします。会社に代わって利用する場合は、その会社を拘束する権限があることを確認したものとします。同意しない場合は、本サービスを利用しないでください。',
     },
     service: {
@@ -11200,8 +11200,8 @@ export default {
       honest: '当社は管理機能と証跡を提供します。いかなるフレームワークに対しても認証取得を主張するものではありません。コンプライアンスは、お客様の組織が監査人とともに維持するものです。',
     },
     contact: {
-      issue: '<b>セキュリティ上の問題を見つけましたか？</b> <a>support@coesecurity.com</a> までメールでお知らせください（セキュリティ、プライバシー、コンプライアンス、DPA の締結）。公開前に確認と修正を行う時間をいただければ幸いです。善意の調査研究を歓迎します。',
-      help: '製品サポートと請求について: <a>support@admireveda.com</a>。AdmireVeda の WorkCoPilot は COE Security LLC の製品です。',
+      issue: '<b>セキュリティ上の問題を見つけましたか？</b> <a>support@admireveda.com</a> までメールでお知らせください（セキュリティ、プライバシー、コンプライアンス、DPA の締結）。公開前に確認と修正を行う時間をいただければ幸いです。善意の調査研究を歓迎します。',
+      help: '製品サポートと請求について: <a>support@admireveda.com</a>。WorkCoPilot は AdmireVeda の製品です。',
     },
     cta: {
       aria: '次のステップ',

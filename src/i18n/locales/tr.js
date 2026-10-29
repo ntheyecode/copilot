@@ -560,7 +560,7 @@ export default {
     disclaimer: 'Sorumluluk Reddi',
     contact: 'İletişim',
     sales: 'Satış ve kurumsal',
-    ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünüdür.',
+    ownership: 'WorkCoPilot, bir AdmireVeda ürünüdür.',
     note: 'Yalnızca yasal ve meşru işler için. Rehberliktir, profesyonel danışmanlık değildir.',
     cookiePrefs: 'Çerez tercihleri',
     cookiePolicy: 'Çerez Politikası',
@@ -7209,7 +7209,7 @@ export default {
     },
     loading: 'İş ortaklığı programı yükleniyor',
     footer: {
-      copyright: 'COE Security LLC · AdmireVeda tarafından WorkCoPilot',
+      copyright: 'AdmireVeda tarafından WorkCoPilot',
       terms: 'Şartlar',
       privacy: 'Gizlilik',
       support: 'Destek',
@@ -8268,7 +8268,7 @@ export default {
       tagline: 'Okunmak için yazılmış, sade dilde şartlar',
       templateLabel: 'Şablon.',
       templateNotice: 'Bu, şeffaflık için sağlanan bir şablondur ve hukuk danışmanıyla son hâli verilmektedir; henüz bağlayıcı bir sözleşme değildir.',
-      ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünüdür.',
+      ownership: 'WorkCoPilot, bir AdmireVeda ürünüdür.',
     },
     glance: {
       h2: 'Bir bakışta',
@@ -8358,7 +8358,7 @@ export default {
       p2: "Bu denetimler sizi uyumlu hâle getirmez ve ürünün herhangi bir çerçeveye göre sertifikalı olduğunu iddia etmiyoruz. Uyumluluk, kuruluşunuz tarafından kendi denetçileri ve danışmanlarıyla birlikte sağlanır ve sürdürülür. Denetimlerin yaygın çerçevelerle nasıl eşleştiğini görmek için <security>Güvenlik sayfası</security>'na, verilerinizin nasıl işlendiği için <privacy>Gizlilik Politikası</privacy>'na bakın.",
     },
     warranty: {
-      p1: 'WorkCoPilot, hizmetin arkasındaki tüzel kişi olan {entity}\'nin bir ürünü olan AdmireVeda tarafından sunulur. Bu bölümde "biz", {entity}, AdmireVeda ve WorkCoPilot\'u birlikte ifade eder.',
+      p1: 'WorkCoPilot, hizmetin arkasındaki tüzel kişi olan {entity} tarafından sunulur. Bu bölümde "biz", {entity} ve WorkCoPilot\'u birlikte ifade eder.',
       p2: 'WorkCoPilot olduğu gibi ve mevcut olduğu şekliyle sunulur. Yasanın izin verdiği ölçüde, rehberliğin doğru, eksiksiz, güncel, belirli bir amaca uygun ya da hatasız olduğu dahil olmak üzere, açık veya örtük hiçbir garanti vermeyiz.',
       p3: 'Yasanın izin verdiği ölçüde, rehberliğe dayanarak yaptığınız ya da yapmadığınız eylemlerden kaynaklanan kayıp veya zararlardan (kaybedilen veriler, kaybedilen gelir, kesinti süresi ya da kurtarma maliyetleri dahil) sorumlu değiliz. Rehberliğe kendi takdirinizle göre hareket edersiniz ve sistemlerinizdeki sonuçtan sorumlu olmaya devam edersiniz.',
       p4: 'Bu sayfadaki hiçbir ifade, size uygulanan yasa kapsamında sınırlandırılamayacak hakları sınırlamaz.',
@@ -9081,7 +9081,7 @@ export default {
           {
             q: 'WorkCoPilot nedir?',
             a: 'WorkCoPilot ekranınızı izler ve önünüzdeki görev için bir sonraki tam tıklamayı, komutu, ayarı veya kodu söyler, yanlış bir hareketi yakalar ve iş bitene kadar sizi doğru adımda tutar.',
-            d: "AdmireVeda tarafından, COE Security LLC'nin bir ürünü olarak yapılmıştır.",
+            d: "AdmireVeda tarafından geliştirilmiştir.",
             links: ['Nasıl çalışır', '60 saniyelik tanıtım'],
           },
           {
@@ -9914,7 +9914,7 @@ export default {
         '<b>Ekran paylaşımlarından gizli.</b> Katman varsayılan olarak içerik korumalıdır, dolayısıyla Zoom / Teams / Meet paylaşımlarının ve kayıtların dışında kalır. Görünür olmasını istediğinizde <b>Paylaşımda</b> ile veya Ctrl+Shift+Alt+S ile değiştirin.',
         '<b>Belgeleriniz bilgisayarınızda kalır.</b> Eklediğiniz dosyalar cihazınızda okunur. Ham dosya asla yüklenmez ve metin sunucularımızda saklanmaz; yalnızca o oturumu planlamak için kullanılır.',
         '<b>En az veri çıkar.</b> Size rehberlik etmek için küçültülmüş ekran kareleri ve yönetilen metin, yapay zeka servisine (bizimki ya da şirketinizin kendi anahtarı) gider. Yönetişim açıkken, hassas değerler herhangi bir şey gönderilmeden <b>önce</b> ayıklanır veya tokenleştirilir ve cihazınızda yeniden oluşturulur.',
-        '<b>İmzalı ve güvenli şekilde güncellenir.</b> Uygulama kod imzalıdır (COE Security) ve güncellemeler HTTPS üzerinden iletilir.',
+        '<b>İmzalı ve güvenli şekilde güncellenir.</b> Uygulama kod imzalıdır ve güncellemeler HTTPS üzerinden iletilir.',
       ],
       tip: 'Bunlar, uyumluluğunuzu (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA) destekleyen denetimler ve denetim kanıtlarıdır. Tek başlarına sizi sertifikalı yapmazlar.',
     },
@@ -10250,7 +10250,7 @@ export default {
     lastUpdated: 'Son güncelleme',
     templateLabel: 'Şablon.',
     templateNotice: 'Bu, şeffaflık için sunulan bir şablondur ve hukuk danışmanıyla sonuçlandırılmaktadır; henüz bağlayıcı bir anlaşma değildir.',
-    ownership: 'WorkCoPilot, AdmireVeda tarafından, bir {entity} ürünü.',
+    ownership: 'WorkCoPilot, bir {entity} ürünüdür.',
     glanceH2: 'Kısaca',
     tocTitle: 'Bu sayfada',
     relatedPages: 'İlgili sayfalar',
@@ -10273,7 +10273,7 @@ export default {
       tagline: 'Ürünün bugün yaptığının sade dilde açıklaması',
       templateLabel: 'Şablon.',
       templateNotice: 'Bu, şeffaflık için sunulan bir şablondur ve hukuk danışmanıyla sonuçlandırılmaktadır; henüz bağlayıcı bir anlaşma değildir.',
-      ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünü.',
+      ownership: 'WorkCoPilot, bir AdmireVeda ürünüdür.',
     },
     glance: {
       h2: 'Kısaca',
@@ -10316,7 +10316,7 @@ export default {
     },
     about: {
       p1: "Bu politika WorkCoPilot'u kapsar: web uygulaması, masaüstü uygulaması ve mobil uygulama. Oturum açtığınızda, rehberli bir oturum yürüttüğünüzde ve raporlarınızı incelediğinizde ürünün verilerinizi nasıl ele aldığını açıklar.",
-      p2: "<b>Kim sorumludur.</b> WorkCoPilot, {entity} ürünü olan AdmireVeda tarafından sunulur. {entity} yasal tüzel kişidir ve aşağıda açıklanan hesap, oturum açma ve faturalama bilgilerinin veri sorumlusudur. Rehberli oturumlarınızın içeriği için neyin paylaşılacağına kuruluşunuz karar verir ve {entity} onun adına, <a>Veri İşleme Eki</a>'nde açıklandığı şekilde hareket eder.",
+      p2: '<b>Kim sorumludur.</b> WorkCoPilot, aşağıda açıklanan hesap, oturum açma ve faturalama bilgilerinin tüzel kişisi ve veri sorumlusu olan {entity} tarafından sunulur. Rehberli oturumlarınızın içeriği için neyin paylaşılacağına kuruluşunuz karar verir ve {entity} onun adına, <a>Veri İşleme Eki</a>\'nde açıklandığı şekilde hareket eder.',
       p3: 'Etkilemek için değil, okunmak için yazılmıştır. Bir davranış sizin denetiminizde olduğunda ya da bir şeyi henüz tamamlamadığımızda, bunu söyleriz. <a>Güvenlik sayfası</a>, tam veri akışını adım adım, cihazdaki korumanın öncesi-sonrası örnekleriyle gösterir.',
       note: "Bu sayfa, ürünün nasıl çalıştığının sade dilde bir açıklamasıdır. Hukuki tavsiye değildir ve WorkCoPilot'un yükümlülüklerinize nasıl uyduğuna dair kendi hukuki incelemenizin yerini tutmaz.",
     },
@@ -11101,7 +11101,7 @@ export default {
       contact: 'İletişim',
     },
     parties: {
-      p1: 'Bu şartlar, sizinle (ya da temsil ettiğiniz kuruluşla) {entity} (“biz”, “bize”) arasında bir anlaşmadır. WorkCoPilot, hizmetin arkasındaki yasal tüzel kişi olan {entity} ürünü olan AdmireVeda tarafından sunulur.',
+      p1: 'Bu şartlar, sizinle (ya da temsil ettiğiniz kuruluşla) {entity} (“biz”, “bize”) arasında bir anlaşmadır. WorkCoPilot, hizmetin arkasındaki tüzel kişi olan {entity} tarafından sunulur.',
       p2: "Bir hesap oluşturarak ya da WorkCoPilot'u kullanarak bu şartları kabul edersiniz. Onu bir şirket adına kullanıyorsanız, o şirketi bağlamaya yetkili olduğunuzu teyit edersiniz. Kabul etmiyorsanız hizmeti kullanmayın.",
     },
     service: {
@@ -11344,8 +11344,8 @@ export default {
       honest: 'Denetimleri ve kanıtları biz sağlarız. Herhangi bir çerçeveye karşı sertifikasyon iddia etmiyoruz; uyumluluğu kuruluşunuz, denetçileriyle birlikte üstlenir.',
     },
     contact: {
-      issue: '<b>Bir güvenlik sorunu mu buldunuz?</b> <a>support@coesecurity.com</a> adresine e-posta gönderin (güvenlik, gizlilik, uyumluluk, imzalı DPA). Kamuya açıklamadan önce doğrulamamız ve düzeltmemiz için bize zaman tanıyın; iyi niyetli araştırmalara açığız.',
-      help: "Ürün yardımı ve faturalama: <a>support@admireveda.com</a>. AdmireVeda'nın WorkCoPilot'u, COE Security LLC'nin bir ürünüdür.",
+      issue: '<b>Bir güvenlik sorunu mu buldunuz?</b> <a>support@admireveda.com</a> adresine e-posta gönderin (güvenlik, gizlilik, uyumluluk, imzalı DPA). Kamuya açıklamadan önce doğrulamamız ve düzeltmemiz için bize zaman tanıyın; iyi niyetli araştırmalara açığız.',
+      help: 'Ürün yardımı ve faturalama: <a>support@admireveda.com</a>. WorkCoPilot, bir AdmireVeda ürünüdür.',
     },
     cta: {
       aria: 'Sonraki adımlar',
