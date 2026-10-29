@@ -8,7 +8,7 @@
 // the dashboard overview and the start-a-task wizard live in their own pages.
 import { useEffect, useState, useCallback, useMemo, Suspense } from 'react'
 import { Outlet, NavLink, Link, useNavigate, useLocation } from 'react-router-dom'
-import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate } from 'lucide-react'
+import { Loader2, Check, X, Plus, LogOut, Monitor, Eye, Menu as MenuIcon, Zap, LayoutDashboard, BookOpen, Sparkles, Clock, ArrowRight, LifeBuoy, Users, FileText, Download, AlertTriangle, Play, Blocks, BarChart3, Settings, FolderKanban, SlidersHorizontal, Inbox, Briefcase, ShieldCheck, LayoutTemplate, GraduationCap } from 'lucide-react'
 import { roleViewOf } from '../../shared/work_roles_options.js'
 import { api } from '../../api.js'
 import WorkShell from '../../workShell.jsx'
@@ -436,9 +436,13 @@ export default function WorkAppLayout() {
             <NavLink to="/work/completed" className={navClass} title={t('workShell.nav.completed')}><Check size={18} /> <span className="wd-nav-t">{t('workShell.nav.completed')}</span></NavLink>
             <NavLink to="/work/logs" className={navClass} title={t('workShell.nav.logs')}><FileText size={18} /> <span className="wd-nav-t">{t('workShell.nav.logs')}</span></NavLink>
             <NavLink to="/work/skills" className={navClass} title={t('workShell.nav.skills')}><Blocks size={18} /> <span className="wd-nav-t">{t('workShell.nav.skills')}</span></NavLink>
-            {/* Role-based management section: PM / Sr PM / GRC (and the company admin). */}
-            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates) && (<>
+            {/* Role-based management section: PM / Sr PM / GRC, the Teach studio
+                (trainer grant or company admin), and the company admin. */}
+            {(roleView.showPm || roleView.showSrPm || roleView.showGrc || roleView.showTemplates || roleView.showTeach) && (<>
               <div className="wd-sect">{t('workShell.nav.manage')}</div><span className="wd-sect-rule" aria-hidden />
+              {/* Teach is a standalone .wka console (own route, full navigation) like
+                  the exec dashboard, so it is a plain anchor, not a NavLink. */}
+              {roleView.showTeach && <a className="wd-nav" href="/work/teach" title={t('workShell.nav.teachTip')}><GraduationCap size={18} /> <span className="wd-nav-t">{t('workShell.nav.teach')}</span></a>}
               {roleView.showPm && <NavLink to="/work/pm" className={navClass} title={t('workShell.nav.pmTip')}><Briefcase size={18} /> <span className="wd-nav-t">{t('workShell.nav.pm')}</span></NavLink>}
               {roleView.showTemplates && <NavLink to="/work/templates" className={navClass} title={t('workShell.nav.templatesTip')}><LayoutTemplate size={18} /> <span className="wd-nav-t">{t('workShell.nav.templates')}</span></NavLink>}
               {roleView.showSrPm && <NavLink to="/work/srpm" className={navClass} title={t('workShell.nav.srpmTip')}><Users size={18} /> <span className="wd-nav-t">{t('workShell.nav.srpm')}</span></NavLink>}

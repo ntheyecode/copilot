@@ -37,6 +37,9 @@ import { api, friendlyError } from '../api.js'
 import { useT } from '../i18n/index.jsx'
 import { WORKADMIN_CSS, ensureWorkAdminFonts } from './workadmin/workadmin.css.js'
 import { Loading, ErrorBox, EmptyState } from './workadmin/sections/_shared.jsx'
+import { EXEC_DRILL_CSS } from './exec/exec.css.js'
+import { ProjectsDrilldown, PerformersDrilldown } from './exec/ExecDrilldowns.jsx'
+import BrainExportPanel from './exec/BrainExportPanel.jsx'
 
 const RANGES = [7, 30, 90]
 const POLL_MS = 45000
@@ -318,7 +321,7 @@ function Shell({ company, live, children, mainRef }) {
   const companyName = (company && company.name) || 'WorkCoPilot'
   return (
     <div className="wka wd-tokens">
-      <style>{WORKADMIN_CSS}{WX_CSS}</style>
+      <style>{WORKADMIN_CSS}{WX_CSS}{EXEC_DRILL_CSS}</style>
       <header className="wka-top">
         <span className="wka-dot" aria-hidden="true" />
         <div className="wka-brand"><b>WorkCoPilot</b><span>{t('execPage.brand.executive')}</span></div>
@@ -340,6 +343,7 @@ export default function WorkExec() {
   const t = useT()
   const [days, setDays] = useState(30)
   const [data, setData] = useState(null)
+  const [overview, setOverview] = useState(null)   // { projects, performers } drill-down data (same gated endpoint)
   const [err, setErr] = useState('')
   const [errStatus, setErrStatus] = useState(0)   // HTTP status of the blocking error (403 = not in a company's scope)
   const [me, setMe] = useState(null)                // the signed-in user (best effort; decides which way out to offer)
@@ -367,8 +371,11 @@ export default function WorkExec() {
     inFlight.current = true
     if (spin) setRefreshing(true)
     try {
-      const r = await api.workExecProductivity(days)
-      setData(r); setErr(''); setErrStatus(0); setStale(false)
+      // The overview carries the existing productivity payload PLUS the projects
+      // and performers drill-downs, from ONE gated call (no-degrade: every datum,
+      // chart and export the page had is preserved via r.productivity).
+      const r = await api.workExecOverview(days)
+      setData(r.productivity || r); setOverview(r); setErr(''); setErrStatus(0); setStale(false)
     } catch (e) {
       // Keep the last good data on a transient poll failure; only hard-error
       // when we have nothing to show.
@@ -637,11 +644,24 @@ export default function WorkExec() {
           </>
         )}
 
+        {/* Detailed drill-downs (projects + performers on both axes). They ride
+            along in the CSV-adjacent image/PDF exports and handle their own empty
+            states, so they appear whether or not any task was completed. */}
+        {overview && <ProjectsDrilldown projects={overview.projects} />}
+        {overview && <PerformersDrilldown performers={overview.performers} />}
+
         <footer className="wx-foot">
           <Info size={13} />
           <span>{t('execPage.foot', { assume: assumeText.charAt(0).toLowerCase() + assumeText.slice(1) })}</span>
         </footer>
       </div>
+      {/* Executive-only Company Brain export. Kept OUTSIDE the export capture
+          (it is an action panel, not a report) and gated strictly on the
+          executive role (the exec dashboard also admits a company admin, but the
+          brain download is executive-only and the server enforces it). */}
+      {me && me.companyRole === 'executive' && (
+        <div className="wx-content wx-noexport"><BrainExportPanel /></div>
+      )}
     </Shell>
   )
 }
