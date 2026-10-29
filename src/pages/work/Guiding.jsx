@@ -724,12 +724,13 @@ const CONSOLE_CSS = `
 // defensive: renders NOTHING when there is no source (general knowledge, or an
 // older session without the field), so it never claims grounding falsely.
 function SourceChip({ source }) {
+  const t = useT()
   const label = String(source || '').trim()
   if (!label) return null
   return (
-    <div className="wc-source" title={`Grounded in your material: ${label}`}>
+    <div className="wc-source" title={t('guideConsole.source.tip', { label })}>
       <BookOpen size={11} strokeWidth={2.5} aria-hidden="true" />
-      <span className="wc-source-k">Grounded in your documents</span>
+      <span className="wc-source-k">{t('guideConsole.source.label')}</span>
       <span className="wc-source-src">{label}</span>
     </div>
   )
@@ -738,12 +739,13 @@ function SourceChip({ source }) {
 // asks the server to break that one action into detailed sub-steps. It shows a
 // spinner while it loads and flips to "Hide how" once the detail is open.
 function HowButton({ open, loading, onClick }) {
+  const t = useT()
   return (
     <button className="btn btn-ghost btn-sm" onClick={onClick} disabled={loading}
-      title="Break this one action into detailed, copy-ready steps"
+      title={t('guideConsole.how.tip')}
       style={{ marginTop: 8, display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 12.5 }}>
       {loading ? <Loader2 size={13} className="spin" /> : <HelpCircle size={13} />}
-      {open ? 'Hide how' : 'How?'}
+      {open ? t('guideConsole.how.hide') : t('guideConsole.how.open')}
       {!loading && <ChevronRight size={12} style={{ transform: open ? 'rotate(90deg)' : 'none', transition: 'transform .15s' }} />}
     </button>
   )
@@ -754,22 +756,23 @@ function HowButton({ open, loading, onClick }) {
 // reads as the detail of that one step. Also carries the loading, declined and
 // could-not-load states so a How? expansion never silently fails or crashes.
 function HowDetail({ entry, onRetry }) {
+  const t = useT()
   if (!entry || !entry.open) return null
   const wrap = { marginTop: 10, marginLeft: 2, paddingLeft: 12, borderLeft: '2px solid var(--brand-500)', display: 'flex', flexDirection: 'column', gap: 8, fontSize: 'calc(13.5px * var(--wc-fs, 1))', lineHeight: 1.5 }
   if (entry.loading) {
-    return <div style={{ ...wrap, flexDirection: 'row', alignItems: 'center', gap: 7, color: 'var(--text-dim)', fontSize: 13 }}><Loader2 size={14} className="spin" /> Working out the detailed steps...</div>
+    return <div style={{ ...wrap, flexDirection: 'row', alignItems: 'center', gap: 7, color: 'var(--text-dim)', fontSize: 13 }}><Loader2 size={14} className="spin" /> {t('guideConsole.how.loading')}</div>
   }
   if (entry.error) {
-    return <div style={{ ...wrap, flexDirection: 'row', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-dim)' }}><span>Could not load the detailed steps, try again.</span><button className="btn btn-outline btn-sm" onClick={onRetry}>Try again</button></div>
+    return <div style={{ ...wrap, flexDirection: 'row', alignItems: 'center', gap: 10, fontSize: 13, color: 'var(--text-dim)' }}><span>{t('guideConsole.how.error')}</span><button className="btn btn-outline btn-sm" onClick={onRetry}>{t('guideConsole.how.retry')}</button></div>
   }
   if (entry.refusal) {
     return <div style={{ ...wrap, color: 'var(--text-dim)', fontSize: 13 }}>{entry.refusal}</div>
   }
   const sub = entry.steps || []
-  if (!sub.length) return <div style={{ ...wrap, color: 'var(--text-dim)', fontSize: 13 }}>No extra detail was needed for this one.</div>
+  if (!sub.length) return <div style={{ ...wrap, color: 'var(--text-dim)', fontSize: 13 }}>{t('guideConsole.how.none')}</div>
   return (
     <div style={wrap}>
-      <div style={{ fontSize: 10.5, color: 'var(--text-dim)', letterSpacing: 0.3, fontWeight: 600 }}>HOW TO DO THIS</div>
+      <div style={{ fontSize: 10.5, color: 'var(--text-dim)', letterSpacing: 0.3, fontWeight: 600 }}>{t('guideConsole.how.heading')}</div>
       {sub.map((ss, j) => (
         <div key={j} style={{ ...card, padding: '9px 11px', background: 'var(--surface)' }}>
           <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
@@ -783,7 +786,7 @@ function HowDetail({ entry, onRetry }) {
                   {ss.code && ss.code.content && <CodeBlock file={ss.code.file} content={ss.code.content} />}
                 </DestructiveGate>
               )}
-              {ss.validate && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}><Eye size={11} style={{ verticalAlign: -1 }} /> done when: {ss.validate}</div>}
+              {ss.validate && <div style={{ fontSize: 11, color: 'var(--text-dim)', marginTop: 6 }}><Eye size={11} style={{ verticalAlign: -1 }} /> {t('guideConsole.how.doneWhen', { text: ss.validate })}</div>}
             </div>
           </div>
         </div>
@@ -798,6 +801,7 @@ function HowDetail({ entry, onRetry }) {
 // diagrams, configs) the person snaps each page, then Finish builds the review
 // and the prompts they take to their own LLM / diagram tool.
 function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
+  const t = useT()
   const [frames, setFrames] = useState([])
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState('')
@@ -828,13 +832,13 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
   }, [autoOn, result])   // eslint-disable-line
   const snap = () => {
     setErr('')
-    try { const f = grabFrame && grabFrame(); if (f) setFrames((xs) => [...xs, f].slice(0, 8)); else setErr('Put the page on screen first, and start sharing your screen.') }
-    catch { setErr('Could not capture the screen.') }
+    try { const f = grabFrame && grabFrame(); if (f) setFrames((xs) => [...xs, f].slice(0, 8)); else setErr(t('guideConsole.deliver.errNoPage')) }
+    catch { setErr(t('guideConsole.deliver.errCapture')) }
   }
   const build = async () => {
     setBusy(true); setErr('')
-    try { const r = await api.workDeliverables(sessionId, frames); if (r && r.deliverables) setResult(r); else setErr('No result came back. Try again.') }
-    catch (e) { setErr(friendlyError(e, 'Could not build this. Try again.')) }
+    try { const r = await api.workDeliverables(sessionId, frames); if (r && r.deliverables) setResult(r); else setErr(t('guideConsole.deliver.errNoResult')) }
+    catch (e) { setErr(friendlyError(e, t('guideConsole.deliver.errBuild'))) }
     finally { setBusy(false) }
   }
   const copy = async (which, text) => { try { await navigator.clipboard.writeText(text || ''); setCopied(which); setTimeout(() => setCopied(''), 1500) } catch { /* clipboard blocked */ } }
@@ -853,33 +857,33 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
   return (
     <div className="wc-dl" onClick={onClose}>
       <div className="wc-dl-card" onClick={(e) => e.stopPropagation()}>
-        <div className="wc-dl-head"><b><Sparkles size={15} /> Review &amp; generation prompts</b><button className="wc-dl-x" onClick={onClose} aria-label="Close">&times;</button></div>
+        <div className="wc-dl-head"><b><Sparkles size={15} /> {t('guideConsole.deliver.title')}</b><button className="wc-dl-x" onClick={onClose} aria-label={t('guideConsole.deliver.close')}>&times;</button></div>
         {!d ? (
           <div className="wc-dl-body">
-            <p className="wc-dl-lead">Put each page you want reviewed on screen and tap <b>Snap</b>. Add as many as you need, then <b>Finish</b>. I will find the issues and build you two prompts to generate the corrected design in your own tools.</p>
-            <label className="wc-dl-auto"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} /> Auto-capture: snap each page as I settle on it</label>
-            {autoOn && <div className="wc-dl-watch"><span className="dot" /> Watching the shared screen. Open each page and hold still a moment; I capture it, then you move to the next.</div>}
+            <p className="wc-dl-lead">{t.rich('guideConsole.deliver.lead')}</p>
+            <label className="wc-dl-auto"><input type="checkbox" checked={autoOn} onChange={(e) => setAutoOn(e.target.checked)} /> {t('guideConsole.deliver.auto')}</label>
+            {autoOn && <div className="wc-dl-watch"><span className="dot" /> {t('guideConsole.deliver.watching')}</div>}
             <div className="wc-dl-thumbs">
-              {frames.map((f, i) => <div key={i} className="wc-dl-thumb"><img src={f} alt={'page ' + (i + 1)} /><span>{i + 1}</span><button onClick={() => setFrames(frames.filter((_, j) => j !== i))} aria-label="Remove">&times;</button></div>)}
-              {!frames.length && <div className="wc-dl-empty">No pages captured yet</div>}
+              {frames.map((f, i) => <div key={i} className="wc-dl-thumb"><img src={f} alt={t('guideConsole.deliver.pageAlt', { n: i + 1 })} /><span>{i + 1}</span><button onClick={() => setFrames(frames.filter((_, j) => j !== i))} aria-label={t('guideConsole.deliver.remove')}>&times;</button></div>)}
+              {!frames.length && <div className="wc-dl-empty">{t('guideConsole.deliver.empty')}</div>}
             </div>
             {err && <div className="wc-dl-err">{err}</div>}
             <div className="wc-dl-actions">
-              <button className="btn btn-outline" onClick={snap} disabled={busy}><Camera size={15} /> Snap{frames.length ? ' (' + frames.length + ')' : ''}</button>
-              <button className="btn btn-primary" onClick={build} disabled={busy || !frames.length}>{busy ? <Loader2 size={15} className="spin" /> : null} Finish &amp; build</button>
+              <button className="btn btn-outline" onClick={snap} disabled={busy}><Camera size={15} /> {frames.length ? t('guideConsole.deliver.snapCount', { n: frames.length }) : t('guideConsole.deliver.snap')}</button>
+              <button className="btn btn-primary" onClick={build} disabled={busy || !frames.length}>{busy ? <Loader2 size={15} className="spin" /> : null} {t('guideConsole.deliver.finish')}</button>
             </div>
           </div>
         ) : (
           <div className="wc-dl-body">
             {d.needMore && <div className="wc-dl-note">{d.needMore}</div>}
             {d.summary && <p className="wc-dl-summary">{d.summary}</p>}
-            {d.architecture && d.architecture.length > 0 && <div className="wc-dl-sec"><h4>Architecture issues</h4>{d.architecture.map((a, i) => <Issue key={i} a={a} />)}</div>}
-            {d.security && d.security.length > 0 && <div className="wc-dl-sec"><h4>Security issues</h4>{d.security.map((a, i) => <Issue key={i} a={a} />)}</div>}
-            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 1: current design, problems marked</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p1', d.promptIssues)}>{copied === 'p1' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptIssues}</pre></div>
-            <div className="wc-dl-prompt"><div className="ph"><b>Prompt 2: recommended corrected design</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? 'Copied' : 'Copy'}</button></div><pre>{d.promptTarget}</pre></div>
+            {d.architecture && d.architecture.length > 0 && <div className="wc-dl-sec"><h4>{t('guideConsole.deliver.archIssues')}</h4>{d.architecture.map((a, i) => <Issue key={i} a={a} />)}</div>}
+            {d.security && d.security.length > 0 && <div className="wc-dl-sec"><h4>{t('guideConsole.deliver.secIssues')}</h4>{d.security.map((a, i) => <Issue key={i} a={a} />)}</div>}
+            <div className="wc-dl-prompt"><div className="ph"><b>{t('guideConsole.deliver.prompt1')}</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p1', d.promptIssues)}>{copied === 'p1' ? t('guideConsole.deliver.copied') : t('guideConsole.deliver.copy')}</button></div><pre>{d.promptIssues}</pre></div>
+            <div className="wc-dl-prompt"><div className="ph"><b>{t('guideConsole.deliver.prompt2')}</b><button className="btn btn-ghost btn-sm" onClick={() => copy('p2', d.promptTarget)}>{copied === 'p2' ? t('guideConsole.deliver.copied') : t('guideConsole.deliver.copy')}</button></div><pre>{d.promptTarget}</pre></div>
             <div className="wc-dl-actions">
-              <button className="btn btn-outline" onClick={() => setResult(null)}>Capture more</button>
-              <button className="btn btn-primary" onClick={async () => { try { await api.downloadFile(api.workDeliverablesPdfUrl(sessionId, true), `workcopilot-${sessionId}-review.pdf`) } catch (e) { setErr(friendlyError(e, 'Could not download the review PDF. Please try again.')) } }}><Download size={15} /> Download review PDF</button>
+              <button className="btn btn-outline" onClick={() => setResult(null)}>{t('guideConsole.deliver.captureMore')}</button>
+              <button className="btn btn-primary" onClick={async () => { try { await api.downloadFile(api.workDeliverablesPdfUrl(sessionId, true), `workcopilot-${sessionId}-review.pdf`) } catch (e) { setErr(friendlyError(e, t('guideConsole.deliver.errPdf'))) } }}><Download size={15} /> {t('guideConsole.deliver.downloadPdf')}</button>
             </div>
           </div>
         )}
@@ -895,22 +899,23 @@ function DeliverablesPanel({ sessionId, grabFrame, videoRef, onClose }) {
 // was left open), the card says so and tells them what to do.
 const SHARE_WAIT_HINT_MS = 20000
 function SharePrompt({ source }) {
+  const t = useT()
   const [slow, setSlow] = useState(false)
   useEffect(() => { const id = setTimeout(() => setSlow(true), SHARE_WAIT_HINT_MS); return () => clearTimeout(id) }, [])
   const screen = source === 'screen'
   return (
     <div className="wc-loading wc-share" role="status" aria-live="polite">
       <div className="wc-share-ic">{screen ? <Monitor size={26} /> : <Camera size={26} />}</div>
-      <div className="wc-share-t">{screen ? 'Share your screen to start' : 'Allow the camera to start'}</div>
+      <div className="wc-share-t">{screen ? t('guideConsole.share.titleScreen') : t('guideConsole.share.titleCamera')}</div>
       <div className="wc-share-s">
         {screen
-          ? <>In the browser prompt, choose your <b>whole screen</b> (not just a tab) so WorkCoPilot can guide you through any app. Planning begins the moment you share.</>
-          : <>Choose <b>Allow</b> in the browser prompt. Planning begins the moment the camera is on.</>}
+          ? t.rich('guideConsole.share.bodyScreen')
+          : t.rich('guideConsole.share.bodyCamera')}
       </div>
       {slow && (
         <div className="wc-share-slow" role="alert">
           <AlertTriangle size={14} />
-          <span>Still waiting for the {screen ? 'share' : 'camera'} prompt. If you do not see it, look for a browser dialog behind this window. Cancelling it brings you back here, where <b>Plan the steps</b> asks again.</span>
+          <span>{screen ? t.rich('guideConsole.share.slowScreen') : t.rich('guideConsole.share.slowCamera')}</span>
         </div>
       )}
     </div>
@@ -922,7 +927,8 @@ function SharePrompt({ source }) {
 // mounts only once the plan request is actually in flight (never while the
 // share prompt is still open), so its ticks never run ahead of reality.
 function PlanningLoader() {
-  const PHASES = ['Understanding your goal', 'Thinking', 'Preparing the plan', 'Thinking deep', 'Working with multimodal vision', 'Writing your steps']
+  const t = useT()
+  const PHASES = t('guideConsole.planning.phases')   // the translated ARRAY (lists translate as units)
   const [i, setI] = useState(0)
   useEffect(() => {
     const id = setInterval(() => setI((n) => (n < PHASES.length - 1 ? n + 1 : n)), 1600)
@@ -1082,8 +1088,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
   // Light/dark for the guiding panel (same global theme as the dashboard).
   const { theme: appTheme, toggle: toggleAppTheme } = useTheme()
-  // i18n for the console copy that is keyed (the pre-plan starter; the rest of
-  // this file is still literal English and moves over wave by wave).
+  // i18n: every user-facing string on the console is keyed. The pre-plan starter
+  // keeps its earlier workGuide.pre.* keys (one source of truth); everything else
+  // lives under guideConsole.* (src/i18n/locales/en/guideConsole.js). Engine
+  // text (steps, observation, guidance, flags, answers, summary) is never keyed.
   const t = useT()
 
   // Launch straight into guidance: once the session + goal are loaded and there
@@ -1161,8 +1169,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       try { w = window.open('', 'workcopilot_float', `width=${floatW},height=${floatH},left=${Math.max(0, availW - floatW - 24)},top=8,menubar=no,toolbar=no,location=no,status=no,resizable=yes`) } catch { w = null }
       if (!w) {
         setErr(pipSupported
-          ? 'The floating window was refused by your browser settings, and the pop-out was blocked too. Allow pop-ups for this site, or keep following the steps right here.'
-          : 'Your browser blocked the floating window. Allow pop-ups for this site, or use Chrome, Edge, Brave or Opera for a true always-on-top overlay. The steps keep working right here.')
+          ? t('guideConsole.float.errRefusedBoth')
+          : t('guideConsole.float.errBlocked'))
         return
       }
       try { w.document.title = 'WorkCoPilot' } catch {}
@@ -1209,7 +1217,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       : `width=${Math.round(sc.availWidth || 1280)},height=${Math.round(sc.availHeight || 800)},left=0,top=0,menubar=no,toolbar=no,location=no,status=no,resizable=yes`
     let w = null
     try { w = window.open('/work/guide', 'workcopilot_fullguide', feats) } catch { w = null }
-    if (!w) { setErr('Your browser blocked the guidance window. Allow pop-ups for this site, then open it again.'); return }
+    if (!w) { setErr(t('guideConsole.fullGuide.errBlocked')); return }
     try { w.focus() } catch {}
     if (target) { try { w.addEventListener('load', () => { try { w.document.documentElement.requestFullscreen({ screen: target }) } catch { /* the page has its own Full screen button */ } }) } catch {} }
     setGuideWin(w)
@@ -1256,8 +1264,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.session) setPaused(!!r.session.paused)
     } catch (e) {
       setLoadErr(e && e.status === 404
-        ? 'This session no longer exists. It may have been deleted, or finished on another device.'
-        : ((e && e.message) || 'Could not load this session. Check your connection and try again.'))
+        ? t('guideConsole.load.gone')
+        : ((e && e.message) || t('guideConsole.load.failed')))
     }
   }, [sessionId])
   useEffect(() => { refresh() }, [refresh])
@@ -1318,7 +1326,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       photoFrameRef.current = null; setPhotoFrame(null)   // a live stream supersedes a one-shot photo
       setCapturing(true)
       return true
-    } catch (e) { setErr(friendlyError(e, 'Could not start capture. Allow screen or camera access.')); return false }
+    } catch (e) { setErr(friendlyError(e, t('guideConsole.err.capture'))); return false }
   }
 
   // Desktop multi-monitor: when the watched monitor is switched (the picker or
@@ -1355,7 +1363,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     if (!file) return
     stopCapture()   // a snapshot and a live stream are mutually exclusive; the photo wins
     try { const f = await frameFromImageFile(file); photoFrameRef.current = f; setPhotoFrame(f) }
-    catch { setErr('Could not read that photo. Try again.') }
+    catch { setErr(t('guideConsole.err.photo')) }
   }
   const clearPhoto = () => { photoFrameRef.current = null; setPhotoFrame(null) }
 
@@ -1381,14 +1389,16 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       try { space = sessionStorage.getItem('wd_space_' + sessionId) || '' } catch { /* ignore */ }
       const r = await waitFor(
         api.workPlan(sessionId, { goal: goal.trim(), frame, mode, level, ...(docsText ? { docsText } : {}), ...(space ? { space } : {}), ...(o.reason ? { reason: o.reason } : {}), ...(o.keepProgress ? { keepProgress: true } : {}), ...(o.fromClarify ? { fromClarify: true } : {}) }),
-        'Planning is taking longer than expected. Press Plan the steps to try again.')
+        t('guideConsole.err.planSlow'))
       noteStrong(r); setSess(r.session); setGuidance(''); setHowTo({})
       // Company-policy findings on the plan surface immediately as cited flags, so
       // the person sees which company rule a step breaks and the compliant fix.
       if (r.policy && Array.isArray(r.policy.findings) && r.policy.findings.length) {
         setFlags(r.policy.findings.slice(0, 4).map((f, i) => ({
           t: Date.now() + i,
-          text: `Company policy, ${f.kind === 'forbid' ? 'prohibited' : 'required'}: ${f.title}${f.doc ? ` (per ${f.doc}${f.section ? `, ${f.section}` : ''})` : ''}${f.guidance ? `. ${f.guidance}` : ''}`,
+          text: t('guideConsole.policy.flag', { kind: f.kind === 'forbid' ? t('guideConsole.policy.prohibited') : t('guideConsole.policy.required'), title: f.title })
+            + (f.doc ? t('guideConsole.policy.per', { doc: `${f.doc}${f.section ? `, ${f.section}` : ''}` }) : '')
+            + (f.guidance ? `. ${f.guidance}` : ''),
         })))
       }
       // The plan needs one essential input it cannot read off the screen (a
@@ -1406,7 +1416,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         setTimeout(() => { startWatching() }, 150)
       }
     } catch (e) {
-      setErr(friendlyError(e, 'Could not build the plan'))
+      setErr(friendlyError(e, t('guideConsole.err.plan')))
       if (e && e.timedOut) refresh()   // pick up a plan that landed after we stopped waiting
     } finally { setBusy(false) }
   }
@@ -1428,7 +1438,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setBusy(false)
       await plan({ fromClarify: true })
     } catch (e) {
-      setErr(friendlyError(e, 'Could not save your answer'))
+      setErr(friendlyError(e, t('guideConsole.err.clarifySave')))
       setBusy(false)
     }
   }
@@ -1446,7 +1456,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setClarifyDone(null); setClarifyText('')
       setClarify(last)
     } catch (e) {
-      setErr(friendlyError(e, 'Could not change the answer'))
+      setErr(friendlyError(e, t('guideConsole.err.clarifyChange')))
     } finally { setBusy(false) }
   }
 
@@ -1464,7 +1474,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       setClarifyDone({ question: clarify.question, skipped: true })   // "Skipped." strip with Answer it
       setClarify(null); setClarifyText('')
     } catch (e) {
-      setErr(friendlyError(e, 'Could not skip the question'))
+      setErr(friendlyError(e, t('guideConsole.err.clarifySkip')))
     } finally { setBusy(false) }
   }
 
@@ -1511,7 +1521,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.done) { setWatching(false); if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null } }
     } catch (e) {
       // A vision/runtime error should stop the loop and say why, not spin silently.
-      setErr(friendlyError(e, 'Watch failed')); setWatching(false)
+      setErr(friendlyError(e, t('guideConsole.err.watch'))); setWatching(false)
       if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null }
     } finally { busyTickRef.current = false; setAnalyzing(false) }
   }, [sessionId])
@@ -1545,7 +1555,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (r.steps) setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s)
       if (r.observation) setObservation(r.observation)
       setFlags(r.flag ? [{ t: Date.now(), text: r.flag }] : [])
-    } catch (e) { setErr(friendlyError(e, 'Could not refresh the screen')) } finally { setBusy(false); setAnalyzing(false) }
+    } catch (e) { setErr(friendlyError(e, t('guideConsole.err.refresh'))) } finally { setBusy(false); setAnalyzing(false) }
   }
   // OPTIONAL "Verify on my screen" (owner: "a live verify button, if at all the
   // user wants to use it"): ONE frame, ONE read, NOTHING applied. Works with the
@@ -1619,7 +1629,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       else startWatching()
     } catch (e) {
       setPaused(!np)   // revert the optimistic toggle
-      setErr(friendlyError(e, np ? 'Could not pause. Please try again.' : 'Could not resume. Please try again.'))
+      setErr(friendlyError(e, np ? t('guideConsole.err.pause') : t('guideConsole.err.resume')))
     }
   }
   // Desktop: hiding or killing the buddy means "pause and save my progress". The
@@ -1770,7 +1780,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const frame = await prepFrame(capturing ? grabFrame() : (photoFrameRef.current || null))
       const r = await api.workAsk(sessionId, withLevel({ question: q, frame, ...(kind === 'stuck' ? { stuck: true } : {}) }))
       noteStrong(r); receiveReply(r); if (typeof qText !== 'string') setQuestion('')
-    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not answer')) } finally { setBusy(false) }
+    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, t('guideConsole.err.ask'))) } finally { setBusy(false) }
   }
 
   // Add context MID-TASK: a typed note, a text document, and/or an uploaded image
@@ -1792,7 +1802,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       // A re-plan from the new context is applied on Continue (askFlow contract).
       receiveReply(r)
       setQuestion('')
-    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not add that')) } finally { setBusy(false) }
+    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, t('guideConsole.err.addContext'))) } finally { setBusy(false) }
   }
   // Attach handler shared by the console + float: read the file, then send it with
   // whatever note is typed. Surfaces an inline error for an unreadable/unsupported
@@ -1834,7 +1844,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           setFlags(w.flag ? [{ t: Date.now(), text: w.flag }] : [])
         } catch { /* the answer already showed; a nav refresh failure is non-fatal */ }
       }
-    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not analyze the screen')) } finally { setBusy(false) }
+    } catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, t('guideConsole.err.analyze'))) } finally { setBusy(false) }
   }
 
   // Research = user-triggered web lookup, then a current answer. Only runs when
@@ -1845,7 +1855,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     dispatchAsk({ type: 'begin', question: q, kind: 'research' })
     setBusy(true); setErr('')
     try { const r = await api.workResearch(sessionId, q, withLevel()); receiveReply({ answer: r.answer, planChanged: false }) }
-    catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, 'Could not research')) } finally { setBusy(false) }
+    catch (e) { dispatchAsk({ type: 'fail' }); setErr(friendlyError(e, t('guideConsole.err.research'))) } finally { setBusy(false) }
   }
 
   // Get the RESULT: hand back the actual answer for the goal, not the next step.
@@ -1869,12 +1879,12 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const body = {}
       if (frame) body.frame = frame
       if (pasteData.trim()) body.docsText = pasteData
-      const r = await waitFor(api.workResult(sessionId, body), 'Getting the result is taking longer than expected. Try again.')
+      const r = await waitFor(api.workResult(sessionId, body), t('guideConsole.answer.slow'))
       noteStrong(r)
       if (r && r.result) { setResultOut(r.result); setResultSec(r.security || null); setResultPol(r.policy || null) }
-      else setResultErr('No result came back. Try again.')
+      else setResultErr(t('guideConsole.answer.none'))
     } catch (e) {
-      setResultErr((e && e.message) || 'Could not get the result')
+      setResultErr((e && e.message) || t('guideConsole.answer.failed'))
       if (e && e.timedOut) refresh()
     } finally { setResultBusy(false) }
   }
@@ -1888,7 +1898,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // surfaced by ComposeCard. Nothing is auto-filled; it is read-only.
   const compose = async (forceScreen) => {
     const want = composeWant.trim()
-    if (!want) { setComposeErr('Tell me what to write first.'); return }
+    if (!want) { setComposeErr(t('guideConsole.write.needWant')); return }
     if (outOfMinutes()) return
     setComposeBusy(true); setComposeErr(''); setComposeOut(null); setComposeSec(null); setComposePol(null)
     try {
@@ -1903,12 +1913,12 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       if (composeFormat) body.format = composeFormat
       if (composeSrc.trim()) body.docsText = composeSrc
       if (frame) body.frame = frame
-      const r = await waitFor(api.workCompose(sessionId, body), 'Writing this is taking longer than expected. Try again.')
+      const r = await waitFor(api.workCompose(sessionId, body), t('guideConsole.write.slow'))
       noteStrong(r)
       if (r && r.compose) { setComposeOut(r.compose); setComposeSec(r.security || null); setComposePol(r.policy || null) }
-      else setComposeErr('Nothing came back. Try again.')
+      else setComposeErr(t('guideConsole.write.none'))
     } catch (e) {
-      setComposeErr((e && e.message) || 'Could not write this')
+      setComposeErr((e && e.message) || t('guideConsole.write.failed'))
       if (e && e.timedOut) refresh()
     } finally { setComposeBusy(false) }
   }
@@ -1926,13 +1936,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       const res = await parseDataFile(file)
       if (res.error) { setComputeErr(res.error); return }
       if (!res.rowCount || !res.schema.length) {
-        setComputeErr('That file has no rows to compute on. Check it has a header row and at least one row of values.')
+        setComputeErr(t('guideConsole.compute.noRows'))
         return
       }
       computeRowsRef.current = res.rows
       setComputeFile({ name: res.name, rowCount: res.rowCount, schema: res.schema })
     } catch {
-      setComputeErr('That file could not be read. Attach a .csv, .xlsx or .xls file.')
+      setComputeErr(t('guideConsole.compute.unreadable'))
     } finally { setComputeParsing(false) }
   }
 
@@ -1945,32 +1955,32 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const compute = async () => {
     const rows = computeRowsRef.current
     const file = computeFile
-    if (!file || !rows) { setComputeErr('Attach a CSV or Excel file first.'); return }
+    if (!file || !rows) { setComputeErr(t('guideConsole.compute.needFile')); return }
     const want = computeWant.trim()
-    if (!want) { setComputeErr('Tell me what to compute first.'); return }
+    if (!want) { setComputeErr(t('guideConsole.compute.needWant')); return }
     if (outOfMinutes()) return
     setComputeBusy(true); setComputeErr(''); setComputeNeed(''); setComputeOut(null)
     try {
       // ONLY the schema + row count leave the device. The rows stay here.
       const r = await waitFor(
         api.workCompute(sessionId, { want, schema: file.schema, rowCount: file.rowCount }),
-        'Planning the computation is taking longer than expected. Try again.',
+        t('guideConsole.compute.slow'),
       )
       noteStrong(r)
       if (!r || r.ok === false || (r && r.need && String(r.need).trim())) {
-        setComputeNeed((r && (String(r.need || '').trim() || String(r.caveat || '').trim())) || 'The file does not have the columns this needs. Pick a file that has them, or ask for something the columns cover.')
+        setComputeNeed((r && (String(r.need || '').trim() || String(r.caveat || '').trim())) || t('guideConsole.compute.needDefault'))
         return
       }
       const spec = r.spec
       const v = validateSpec(spec, file.schema)   // re-check locally before running
       if (!v.ok) {
-        setComputeErr('The returned plan did not pass the local safety check (' + (v.errors[0] || 'invalid plan') + '). Try rewording what to compute.')
+        setComputeErr(t('guideConsole.compute.unsafe', { reason: v.errors[0] || t('guideConsole.compute.invalidPlan') }))
         return
       }
       const out = runSpec(spec, rows)   // LOCAL, full rows, on device
       setComputeOut({ result: out, explanation: r.explanation || '', caveat: r.caveat || '', spec })
     } catch (e) {
-      setComputeErr((e && e.message) || 'Could not compute this')
+      setComputeErr((e && e.message) || t('guideConsole.compute.failed'))
       if (e && e.timedOut) refresh()
     } finally { setComputeBusy(false) }
   }
@@ -1991,14 +2001,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     let frame = null
     if (st === 'done') { try { const f = grabFrame(); if (f) frame = await prepFrame(f) } catch { /* evidence is best-effort */ } }
     try { const r = await api.workStep(sessionId, i, st, frame); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
-    catch (e) { setErr(friendlyError(e, 'Could not update that step. Please try again.')) }
+    catch (e) { setErr(friendlyError(e, t('guideConsole.err.step'))) }
   }
   // Robust download (web + desktop app): fetch with the window's own authenticated
   // session and save via a blob, instead of window.open / <a download> which could
   // fail to download in the desktop app (signed-out external browser / partition).
   const downloadDoc = async (url, filename) => {
     try { await api.downloadFile(url, filename) }
-    catch (e) { setErr(friendlyError(e, 'Could not download that file. Please try again.')) }
+    catch (e) { setErr(friendlyError(e, t('guideConsole.err.download'))) }
   }
   // Prev / Next navigation of the current step (moves the pointer, does not mark
   // done). Shared by the main card header and the floating overlay.
@@ -2010,7 +2020,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     if (target < 0 || target >= steps.length) return
     setErr('')
     try { const r = await api.workCurrentStep(sessionId, target); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
-    catch (e) { setErr(friendlyError(e, 'Could not move to that step. Please try again.')) }
+    catch (e) { setErr(friendlyError(e, t('guideConsole.err.nav'))) }
   }
   // Jump straight to a step from the maximized view's plan mini-map (the same
   // current-step call navStep makes; moves the pointer, never marks done).
@@ -2018,7 +2028,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
     if (i < 0 || i >= steps.length) return
     setErr('')
     try { const r = await api.workCurrentStep(sessionId, i); setSess((s) => s ? { ...s, steps: r.steps, currentStep: r.index } : s) }
-    catch (e) { setErr(friendlyError(e, 'Could not move to that step. Please try again.')) }
+    catch (e) { setErr(friendlyError(e, t('guideConsole.err.nav'))) }
   }
 
   // "How?" drill-down: expand one action (a plan step or the live guidance) into
@@ -2073,17 +2083,17 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const finalize = async () => {
     setBusy(true)
     try { const r = await api.workFinalize(sessionId); setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture() }
-    catch (e) { setErr(friendlyError(e, 'Could not finalize')) } finally { setBusy(false) }
+    catch (e) { setErr(friendlyError(e, t('guideConsole.err.finalize'))) } finally { setBusy(false) }
   }
   // End flow: show a finishing animation, run finalize, then a completion message
   // with a clear "Back to plan" navigation.
   const endSession = async () => {
     setEndState('finishing')
     try {
-      const r = await waitFor(api.workFinalize(sessionId), 'Finishing is taking longer than expected. Your session is saved; press End again in a moment.')
+      const r = await waitFor(api.workFinalize(sessionId), t('guideConsole.end.slow'))
       setSess((s) => s ? { ...s, status: 'ended', summary: r.summary } : s); stopCapture(); setEndState('done')
     } catch (e) {
-      setErr(friendlyError(e, 'Could not finalize')); setEndState(null)
+      setErr(friendlyError(e, t('guideConsole.err.finalize'))); setEndState(null)
       if (e && e.timedOut) refresh()
     }
   }
@@ -2111,14 +2121,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   // source of truth). It never says "Ready" while the share prompt is open or
   // the first plan is being built (QA M7).
   const chip = paused
-    ? { label: 'Paused', title: 'Paused. Resume to keep guiding.' }
+    ? { label: t('guideConsole.chip.paused'), title: t('guideConsole.chip.pausedTip') }
     : live
-      ? { label: 'Guiding', title: 'Guiding live from your screen' }
+      ? { label: t('guideConsole.chip.guiding'), title: t('guideConsole.chip.guidingTip') }
       : sharePrompt
-        ? { label: source === 'screen' ? 'Share screen' : 'Camera', title: source === 'screen' ? 'Waiting for you to share your screen' : 'Waiting for camera access' }
+        ? { label: source === 'screen' ? t('guideConsole.chip.shareScreen') : t('guideConsole.chip.camera'), title: source === 'screen' ? t('guideConsole.chip.shareScreenTip') : t('guideConsole.chip.cameraTip') }
         : (busy && steps.length === 0)
-          ? { label: 'Planning', title: 'Building your plan from your goal and screen' }
-          : { label: 'Ready', title: 'Ready. Start watching to go live.' }
+          ? { label: t('guideConsole.chip.planning'), title: t('guideConsole.chip.planningTip') }
+          : { label: t('guideConsole.chip.ready'), title: t('guideConsole.chip.readyTip') }
   // #2 Wrong-place gate: the mismatch signal the watch response carries (the
   // server sets status='wrong' when it raises a flag, index.js). The prominent
   // alert shows ONLY on a real mismatch and hides when the screen is correct.
@@ -2138,10 +2148,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           {/* Back appears once you Pause (a deliberate, paused exit), on a finished task,
               and whenever there is no loaded session yet (loading or failed), so the
               console can never trap the user. */}
-          {(paused || ended || !sess) && <button className="wc-ib" onClick={leaveToPlan} title={ended ? 'Back to your plans' : (!sess ? 'Back to your plans' : 'Back to planning. Your paused session waits under Pick up where you left off.')} aria-label="Back to plan"><ChevronLeft size={17} /></button>}
+          {(paused || ended || !sess) && <button className="wc-ib" onClick={leaveToPlan} title={ended ? t('guideConsole.top.backPlans') : (!sess ? t('guideConsole.top.backPlans') : t('guideConsole.top.backPaused'))} aria-label={t('guideConsole.top.backAria')}><ChevronLeft size={17} /></button>}
           {/* Theme toggle lives in the Tools menu while guiding; it stays here on
               the loading / error / goal / finished screens where there is no menu. */}
-          {!(sess && !ended) && <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'} aria-label="Toggle light or dark mode">{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>}
+          {!(sess && !ended) && <button className="wc-ib" onClick={toggleAppTheme} title={appTheme === 'light' ? t('guideConsole.top.switchDark') : t('guideConsole.top.switchLight')} aria-label={t('guideConsole.top.themeAria')}>{appTheme === 'light' ? <Moon size={16} /> : <Sun size={16} />}</button>}
           {/* #1 Product name + ONE calm status chip (Guiding when live, Paused
               when paused). The watching state is implied here, not in a toggle. */}
           <span className="wc-brand">
@@ -2156,41 +2166,42 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <span style={{ flex: 1 }} />
           {/* Float on top is the core web feature: a labeled, filled button, not a bare icon. */}
           {floatCapable && sess && !ended && (pipWin
-            ? <button className="wc-tbtn on" title={floatIsPip ? 'Bring the steps back into this window' : 'Close the pop-out window'} aria-label="Unfloat" onClick={closeFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{floatIsPip ? 'Unfloat' : 'Close pop-out'}</span></button>
-            : <button className="wc-tbtn primary" title={pipSupported ? 'Float the steps in a small always-on-top window so you can work underneath' : 'Pop the steps out into their own window'} aria-label="Float on top" onClick={openFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{pipSupported ? 'Float on top' : 'Pop out'}</span></button>)}
+            ? <button className="wc-tbtn on" title={floatIsPip ? t('guideConsole.float.unfloatTip') : t('guideConsole.float.closePopOutTip')} aria-label={t('guideConsole.float.unfloat')} onClick={closeFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{floatIsPip ? t('guideConsole.float.unfloat') : t('guideConsole.float.closePopOut')}</span></button>
+            : <button className="wc-tbtn primary" title={pipSupported ? t('guideConsole.float.floatTip') : t('guideConsole.float.popOutTip')} aria-label={t('guideConsole.float.floatOnTop')} onClick={openFloat}><PictureInPicture2 size={15} /> <span className="wc-lbl">{pipSupported ? t('guideConsole.float.floatOnTop') : t('guideConsole.float.popOut')}</span></button>)}
           {/* TOOLS: one dropdown for everything that need not sit on screen.
               Make something opens a focused modal; the rest run their existing
               handlers. Pause/Resume, Float and End stay as the visible essentials. */}
           {sess && !ended && (
             <div className="wc-menu" ref={menuRef}>
-              <button className={`wc-tbtn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen} title="Tools: make a deliverable, read the screen, re-plan, full guide, text size, theme"><MenuIcon size={15} /> <span className="wc-lbl">Tools</span></button>
+              <button className={`wc-tbtn${menuOpen ? ' on' : ''}`} onClick={() => setMenuOpen((v) => !v)} aria-haspopup="menu" aria-expanded={menuOpen} title={t('guideConsole.tools.tip')}><MenuIcon size={15} /> <span className="wc-lbl">{t('guideConsole.tools.label')}</span></button>
               {menuOpen && (
-                <div className="wc-menu-pop" role="menu" aria-label="Tools">
-                  <div className="wc-menu-sec">Make something</div>
-                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('answer'))}><Sparkles size={15} /><span><b>Answer</b><small>Get the actual answer, with how I got it</small></span></button>
-                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('write'))}><PenLine size={15} /><span><b>Write</b><small>Code, or a ready prompt for your own AI</small></span></button>
-                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('compute'))}><Calculator size={15} /><span><b>Compute</b><small>Crunch a CSV or Excel file, on your device</small></span></button>
-                  <div className="wc-menu-sec">Screen</div>
-                  {!watchLight && <button role="menuitem" className="wc-menu-item" disabled={busy || paused} onClick={fromMenu(refreshScreen)}><ScanLine size={15} /><span><b>Read my screen</b><small>Verify this step now and move on</small></span></button>}
-                  <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => analyze(question, true))}><Zap size={15} /><span><b>Deep pass</b><small>A closer look at this screen, woven into your steps</small></span></button>
-                  {isMobile && <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(takePhoto)}><Camera size={15} /><span><b>{photoFrame ? 'Retake photo' : 'Photo'}</b><small>Snap a screen, device or paper</small></span></button>}
-                  <div className="wc-menu-sec">Plan</div>
-                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => setPlanOpen(true))}><FileText size={15} /><span><b>View full plan</b><small>Every step, done and upcoming</small></span></button>
-                  <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) })}><RefreshCw size={15} /><span><b>Re-plan</b><small>Give a reason, keep or reset progress</small></span></button>
-                  {!isMobile && <button role="menuitem" className="wc-menu-item" onClick={fromMenu(openFullGuide)}><Monitor size={15} /><span><b>Full guide</b><small>Clean, full-screen guidance on your other monitor</small></span></button>}
-                  <div className="wc-menu-sec">View</div>
-                  <div className="wc-menu-row"><span className="wc-menu-row-k">Text size</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
-                  <div className="wc-menu-row"><span className="wc-menu-row-k">Guidance</span><GuideLevelControl level={level} onChange={setLevel} compact theme={{ border: 'var(--border)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)', accentSoft: 'var(--em-soft)' }} /></div>
+                <div className="wc-menu-pop" role="menu" aria-label={t('guideConsole.tools.label')}>
+                  <div className="wc-menu-sec">{t('guideConsole.tools.secMake')}</div>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('answer'))}><Sparkles size={15} /><span><b>{t('guideConsole.tools.answer')}</b><small>{t('guideConsole.tools.answerSub')}</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('write'))}><PenLine size={15} /><span><b>{t('guideConsole.tools.write')}</b><small>{t('guideConsole.tools.writeSub')}</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => pickMaker('compute'))}><Calculator size={15} /><span><b>{t('guideConsole.tools.compute')}</b><small>{t('guideConsole.tools.computeSub')}</small></span></button>
+                  <div className="wc-menu-sec">{t('guideConsole.tools.secScreen')}</div>
+                  {!watchLight && <button role="menuitem" className="wc-menu-item" disabled={busy || paused} onClick={fromMenu(refreshScreen)}><ScanLine size={15} /><span><b>{t('guideConsole.tools.readScreen')}</b><small>{t('guideConsole.tools.readScreenSub')}</small></span></button>}
+                  <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => analyze(question, true))}><Zap size={15} /><span><b>{t('guideConsole.tools.deep')}</b><small>{t('guideConsole.tools.deepSub')}</small></span></button>
+                  {/* Photo / Retake photo reuse the pre-plan starter's keys (one source of truth for the same button). */}
+                  {isMobile && <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(takePhoto)}><Camera size={15} /><span><b>{photoFrame ? t('workGuide.pre.retakePhoto') : t('workGuide.pre.photo')}</b><small>{t('guideConsole.tools.photoSub')}</small></span></button>}
+                  <div className="wc-menu-sec">{t('guideConsole.tools.secPlan')}</div>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(() => setPlanOpen(true))}><FileText size={15} /><span><b>{t('guideConsole.tools.viewFullPlan')}</b><small>{t('guideConsole.tools.viewFullPlanSub')}</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" disabled={busy} onClick={fromMenu(() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) })}><RefreshCw size={15} /><span><b>{t('guideConsole.tools.replan')}</b><small>{t('guideConsole.tools.replanSub')}</small></span></button>
+                  {!isMobile && <button role="menuitem" className="wc-menu-item" onClick={fromMenu(openFullGuide)}><Monitor size={15} /><span><b>{t('guideConsole.tools.fullGuide')}</b><small>{t('guideConsole.tools.fullGuideSub')}</small></span></button>}
+                  <div className="wc-menu-sec">{t('guideConsole.tools.secView')}</div>
+                  <div className="wc-menu-row"><span className="wc-menu-row-k">{t('guideConsole.tools.textSize')}</span><GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax} theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} /></div>
+                  <div className="wc-menu-row"><span className="wc-menu-row-k">{t('guideConsole.tools.guidance')}</span><GuideLevelControl level={level} onChange={setLevel} compact theme={{ border: 'var(--border)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)', accentSoft: 'var(--em-soft)' }} /></div>
                   {/* Per-user preferences (theme mode, brand combination, accessibility):
                       apply live everywhere (guide + dashboards) and persist. Stays open
                       like Text size; the reading-size stepper above is the guide's own. */}
                   <div className="wc-menu-row" style={{ display: 'block' }}><PreferencesPanel variant="guide" hide={['textSize']} /></div>
-                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? 'Dark mode' : 'Light mode'}</b><small>Switch the guiding panel theme</small></span></button>
+                  <button role="menuitem" className="wc-menu-item" onClick={fromMenu(toggleAppTheme)}>{appTheme === 'light' ? <Moon size={15} /> : <Sun size={15} />}<span><b>{appTheme === 'light' ? t('guideConsole.tools.darkMode') : t('guideConsole.tools.lightMode')}</b><small>{t('guideConsole.tools.themeSub')}</small></span></button>
                 </div>
               )}
             </div>
           )}
-          {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title="End the session and build a summary">End</button>}
+          {sess && !ended && <button className="wc-tbtn quiet" onClick={endSession} disabled={busy} title={t('guideConsole.end.tip')}>{t('guideConsole.end.label')}</button>}
         </div>
         {/* PINNED guide status strip (owner request): Pause/Resume and the live
             "what the screen is reading" line stay stuck to the top bar instead of
@@ -2201,14 +2212,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <div className="wc-guidehead">
             <div className="wc-gh-controls">
               {watchLight
-                ? <span className="wc-live-pill lite" title="Plan-heavy mode. Your steps are richer and self-contained. Use Check my progress for an on-demand read."><Compass size={12} /> Plan-heavy mode</span>
+                ? <span className="wc-live-pill lite" title={t('guideConsole.watchLight.pillTip')}><Compass size={12} /> {t('guideConsole.watchLight.pill')}</span>
                 : paused
-                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title="Resume guiding - watching resumes and the clock runs again"><Play size={15} /> Resume</button>
+                  ? <button className="wc-tbtn resume wc-watch" onClick={togglePause} title={t('guideConsole.pause.resumeTip')}><Play size={15} /> {t('guideConsole.pause.resume')}</button>
                   : watching
-                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title="Pause guiding - stop watching and stop the clock"><Square size={13} /> Pause</button>
-                    : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? 'Share your whole screen so the steps update as you work' : 'Start the camera so the steps update as you work'}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
-              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={`${usage.tier} plan, hours renew ${usage.resetLabel}`}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
-              {strongUsed && <span className="wc-strong"><Zap size={11} /> deeper read</span>}
+                    ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title={t('guideConsole.pause.pauseTip')}><Square size={13} /> {t('guideConsole.pause.pause')}</button>
+                    : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? t('guideConsole.watch.screenTip') : t('guideConsole.watch.cameraTip')}><Eye size={15} /> {source === 'screen' ? t('guideConsole.watch.screen') : t('guideConsole.watch.camera')}</button>}
+              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={t('guideConsole.usage.tip', { tier: usage.tier, reset: usage.resetLabel })}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
+              {strongUsed && <span className="wc-strong"><Zap size={11} /> {t('guideConsole.usage.deeperRead')}</span>}
             </div>
           </div>
         )}
@@ -2222,9 +2233,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
       {(() => { const rails = !!(sess && steps.length > 0 && !ended); const ci = rails ? steps.findIndex((s) => s.status === 'current') : -1; return (
       <div className="wc-scroll"><div className={`wc-shellw${rails ? ' wc-stagegrid' : ''}`}>
         {rails && (
-          <aside className="wc-rail wc-rail-l" aria-label="Plan">
+          <aside className="wc-rail wc-rail-l" aria-label={t('guideConsole.rail.plan')}>
             <div className="wc-rail-card">
-              <div className="wc-rail-k"><FileText size={12} /> Plan <span className="wc-rail-n">{progressText(steps)}</span></div>
+              <div className="wc-rail-k"><FileText size={12} /> {t('guideConsole.rail.plan')} <span className="wc-rail-n">{progressText(steps)}</span></div>
               <div className="wc-mm">
                 {steps.map((s, i) => { const mk = planMarker(s, i, steps); return (
                   <button key={i} type="button" className={`wc-mm-row ${mk}`} onClick={() => jumpStep(i)} title={String(s.text || '')} aria-current={mk === 'current' ? 'step' : undefined}>
@@ -2234,11 +2245,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 ) })}
               </div>
               <div className="wc-rail-row">
-                <button className="wc-nav-btn" disabled={ci <= 0} onClick={() => navStep(-1)} title="Previous step"><ChevronLeft size={14} /> Prev</button>
-                <button className="wc-nav-btn" disabled={ci < 0 || ci >= steps.length - 1 || (steps[ci] && steps[ci].status !== 'done')} onClick={() => navStep(1)} title="Next step">Next <ChevronRight size={14} /></button>
+                <button className="wc-nav-btn" disabled={ci <= 0} onClick={() => navStep(-1)} title={t('guideConsole.rail.prevTip')}><ChevronLeft size={14} /> {t('guideConsole.nav.prev')}</button>
+                <button className="wc-nav-btn" disabled={ci < 0 || ci >= steps.length - 1 || (steps[ci] && steps[ci].status !== 'done')} onClick={() => navStep(1)} title={t('guideConsole.rail.nextTip')}>{t('guideConsole.nav.next')} <ChevronRight size={14} /></button>
               </div>
-              <button type="button" className="wc-rail-btn" onClick={() => setPlanOpen(true)}><FileText size={14} /> View full plan</button>
-              <button type="button" className="wc-rail-btn" disabled={busy} onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }}><RefreshCw size={14} /> Re-plan</button>
+              <button type="button" className="wc-rail-btn" onClick={() => setPlanOpen(true)}><FileText size={14} /> {t('guideConsole.plan.viewFull')}</button>
+              <button type="button" className="wc-rail-btn" disabled={busy} onClick={() => { setReplanReason(''); setReplanScope('here'); setReplanOpen(true) }}><RefreshCw size={14} /> {t('guideConsole.replan.title')}</button>
             </div>
           </aside>
         )}
@@ -2247,30 +2258,30 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         {replanOpen && (
           <div className="wd-modal-ov" onClick={() => setReplanOpen(false)}>
             <div className="wd-modal" onClick={(e) => e.stopPropagation()} style={{ width: 'min(460px,calc(100vw - 36px))' }}>
-              <h3 style={{ color: 'var(--text)' }}><RefreshCw size={17} /> Re-plan</h3>
-              <p style={{ fontSize: 12.5, color: 'var(--text-dim)', margin: '0 0 10px', lineHeight: 1.5 }}>Re-plan adapts the steps to new information. Your <b style={{ color: 'var(--text)' }}>original request stays exactly as you asked it</b> &mdash; if the goal itself has changed, start a new task.</p>
+              <h3 style={{ color: 'var(--text)' }}><RefreshCw size={17} /> {t('guideConsole.replan.title')}</h3>
+              <p style={{ fontSize: 12.5, color: 'var(--text-dim)', margin: '0 0 10px', lineHeight: 1.5 }}>{t.rich('guideConsole.replan.lead', null, { b: (c) => <b style={{ color: 'var(--text)' }}>{c}</b> })}</p>
               {replanInfo && !replanInfo.unlimited && (
                 <div style={{ fontSize: 12.5, fontWeight: 600, color: replanInfo.remaining <= 0 ? 'var(--danger, #c0392b)' : (replanInfo.remaining <= 2 ? 'var(--warn, #b8860b)' : 'var(--text-dim)'), margin: '0 0 10px' }}>
                   {replanInfo.remaining <= 0
-                    ? `No re-plans left for this task (used all ${replanInfo.cap}). Start a new task to plan afresh.`
-                    : `${replanInfo.remaining} of ${replanInfo.cap} re-plans left for this task.`}
+                    ? t('guideConsole.replan.noneLeft', { cap: replanInfo.cap })
+                    : t('guideConsole.replan.left', { remaining: replanInfo.remaining, cap: replanInfo.cap })}
                 </div>
               )}
-              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', margin: '2px 0 7px' }}>What's new? <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>(what changed, what to add or fix &mdash; not a new goal)</span></label>
-              <textarea rows={3} autoFocus value={replanReason} onChange={(e) => setReplanReason(e.target.value)} placeholder="e.g. the UI changed, add a firewall rule step, skip the VPN part" style={{ width: '100%', resize: 'vertical', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 11, color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }} />
+              <label style={{ display: 'block', fontSize: 13, fontWeight: 600, color: 'var(--text-dim)', margin: '2px 0 7px' }}>{t('guideConsole.replan.whatNew')} <span style={{ color: 'var(--text-faint)', fontWeight: 400 }}>{t('guideConsole.replan.whatNewHint')}</span></label>
+              <textarea rows={3} autoFocus value={replanReason} onChange={(e) => setReplanReason(e.target.value)} placeholder={t('guideConsole.replan.placeholder')} style={{ width: '100%', resize: 'vertical', background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, padding: 11, color: 'var(--text)', font: 'inherit', fontSize: 14, outline: 'none' }} />
               <div style={{ display: 'flex', gap: 8, marginTop: 14 }}>
                 <button type="button" onClick={() => setReplanScope('here')} style={{ flex: 1, textAlign: 'left', padding: '11px 13px', borderRadius: 11, cursor: 'pointer', background: replanScope === 'here' ? 'var(--brand-soft)' : 'var(--surface-2)', border: `1px solid ${replanScope === 'here' ? 'var(--brand-600)' : 'var(--border)'}`, color: 'var(--text)' }}>
-                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>Continue from here</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>Keep what's done, re-plan the rest</div>
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>{t('guideConsole.replan.hereTitle')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>{t('guideConsole.replan.hereSub')}</div>
                 </button>
                 <button type="button" onClick={() => setReplanScope('start')} style={{ flex: 1, textAlign: 'left', padding: '11px 13px', borderRadius: 11, cursor: 'pointer', background: replanScope === 'start' ? 'var(--brand-soft)' : 'var(--surface-2)', border: `1px solid ${replanScope === 'start' ? 'var(--brand-600)' : 'var(--border)'}`, color: 'var(--text)' }}>
-                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>From the start</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>Rebuild the whole plan</div>
+                  <div style={{ fontWeight: 700, fontSize: 13.5 }}>{t('guideConsole.replan.startTitle')}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-dim)', marginTop: 2 }}>{t('guideConsole.replan.startSub')}</div>
                 </button>
               </div>
               <div className="wd-modal-btns">
-                <button className="btn btn-ghost" onClick={() => setReplanOpen(false)}>Cancel</button>
-                <button className="btn btn-primary" onClick={confirmReplan} disabled={busy || !!(replanInfo && !replanInfo.unlimited && replanInfo.remaining <= 0)}><RefreshCw size={15} /> Re-plan</button>
+                <button className="btn btn-ghost" onClick={() => setReplanOpen(false)}>{t('guideConsole.replan.cancel')}</button>
+                <button className="btn btn-primary" onClick={confirmReplan} disabled={busy || !!(replanInfo && !replanInfo.unlimited && replanInfo.remaining <= 0)}><RefreshCw size={15} /> {t('guideConsole.replan.title')}</button>
               </div>
             </div>
           </div>
@@ -2280,19 +2291,19 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wd-modal" onClick={(e) => e.stopPropagation()}>
               {endState === 'finishing' ? (
                 <>
-                  <h3 style={{ color: 'var(--text)' }}><Loader2 size={17} className="spin" /> Wrapping up…</h3>
-                  <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>Finishing the current step and writing your summary. One moment.</p>
+                  <h3 style={{ color: 'var(--text)' }}><Loader2 size={17} className="spin" /> {t('guideConsole.end.wrapping')}</h3>
+                  <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>{t('guideConsole.end.finishing')}</p>
                 </>
               ) : (
                 <>
-                  <h3 style={{ color: 'var(--text)' }}><Check size={18} style={{ color: 'var(--success)' }} /> Session complete</h3>
+                  <h3 style={{ color: 'var(--text)' }}><Check size={18} style={{ color: 'var(--success)' }} /> {t('guideConsole.end.complete')}</h3>
                   {sess && sess.summary
-                    ? <p style={{ color: 'var(--text)', fontSize: 14, lineHeight: 1.55, margin: '2px 0 0', maxHeight: 180, overflow: 'auto' }}>{(() => { const t = String(sess.summary).replace(/\s+/g, ' ').trim(); return t.length > 360 ? t.slice(0, 360) + '…' : t })()}</p>
-                    : <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>Your session is saved.</p>}
-                  <p style={{ color: 'var(--text-dim)', fontSize: 12, margin: '10px 0 0' }}>The full report, prompts and audit log are under <b>Pick up where you left off</b>.</p>
+                    ? <p style={{ color: 'var(--text)', fontSize: 14, lineHeight: 1.55, margin: '2px 0 0', maxHeight: 180, overflow: 'auto' }}>{(() => { const s = String(sess.summary).replace(/\s+/g, ' ').trim(); return s.length > 360 ? s.slice(0, 360) + '…' : s })()}</p>
+                    : <p style={{ color: 'var(--text-dim)', fontSize: 14, margin: '2px 0 0' }}>{t('guideConsole.end.saved')}</p>}
+                  <p style={{ color: 'var(--text-dim)', fontSize: 12, margin: '10px 0 0' }}>{t.rich('guideConsole.end.where')}</p>
                   <div className="wd-modal-btns">
-                    <button className="btn btn-ghost" onClick={() => setEndState(null)}>Stay here</button>
-                    <button className="btn btn-primary" onClick={() => { setEndState(null); goHome() }}><Check size={15} /> OK, back to plan</button>
+                    <button className="btn btn-ghost" onClick={() => setEndState(null)}>{t('guideConsole.end.stay')}</button>
+                    <button className="btn btn-primary" onClick={() => { setEndState(null); goHome() }}><Check size={15} /> {t('guideConsole.end.backToPlan')}</button>
                   </div>
                 </>
               )}
@@ -2309,23 +2320,23 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <div className={`wc-celebrate${celebrate ? ' wc-cele-go' : ''}`} role="status" aria-live="polite">
             {celebrate && <div className="wc-confetti" aria-hidden="true">{confettiNodes(confettiPieces)}</div>}
             <div className="wc-cele-badge"><Check size={26} strokeWidth={2.6} /></div>
-            <div className="wc-cele-title">Task complete</div>
+            <div className="wc-cele-title">{t('guideConsole.complete.title')}</div>
             {/* Honest count: a session can end with steps not reached (the record
                 below says "5 of 6"), so "All N steps done" is only true when every
                 step is done; otherwise the same done-of-total the record shows. */}
-            <div className="wc-cele-sub">{steps.length ? (doneCount === steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : `${doneCount} of ${steps.length} steps done.`) : 'Nicely done.'} Your report and audit log are ready below.</div>
-            <button type="button" className="wc-cele-btn" onClick={goHome} title="Start a new task"><Plus size={16} strokeWidth={2.6} /> Start another task</button>
+            <div className="wc-cele-sub">{steps.length ? (doneCount === steps.length ? t.n('guideConsole.complete.allDone', steps.length) : t('guideConsole.complete.someDone', { done: doneCount, total: steps.length })) : t('guideConsole.complete.nicely')} {t('guideConsole.complete.report')}</div>
+            <button type="button" className="wc-cele-btn" onClick={goHome} title={t('guideConsole.complete.startAnotherTip')}><Plus size={16} strokeWidth={2.6} /> {t('guideConsole.complete.startAnother')}</button>
           </div>
         )}
 
         {/* Completed task: the export + deliverable actions the user asked to keep off the live screen. */}
         {ended && (
           <div className="wc-donebar">
-            <span className="wc-donebar-lead"><span className="wc-done-ic"><Check size={15} strokeWidth={2.5} /></span><span>Completed<small>{steps.length ? `${doneCount} of ${steps.length} steps done. ` : ''}Download what you need.</small></span></span>
+            <span className="wc-donebar-lead"><span className="wc-done-ic"><Check size={15} strokeWidth={2.5} /></span><span>{t('guideConsole.done.completed')}<small>{steps.length ? t('guideConsole.done.count', { done: doneCount, total: steps.length }) + ' ' : ''}{t('guideConsole.done.downloadHint')}</small></span></span>
             <div className="wc-donebar-actions">
-              <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> Review &amp; prompts</button>
-              <DownloadMenu sessionId={sessionId} className="wc-chip-btn" label="Download" onError={(m) => setErr(m)} />
-              <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> Print</button>
+              <button className="wc-chip-btn" onClick={() => setDeliverOpen(true)}><FileText size={14} /> {t('guideConsole.done.review')}</button>
+              <DownloadMenu sessionId={sessionId} className="wc-chip-btn" label={t('guideConsole.done.downloadLabel')} onError={(m) => setErr(m)} />
+              <button className="wc-chip-btn" onClick={() => window.open(api.workReportUrl(sessionId, false), '_blank')}><Printer size={14} /> {t('guideConsole.done.print')}</button>
             </div>
           </div>
         )}
@@ -2338,18 +2349,18 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         {usage && !usage.exhausted && usage.remainingSeconds <= 900 && !dismissedLow && (
           <div className="wc-banner warn">
             <AlertTriangle size={16} /> <span className="fill">{usageLowNote(usage)}</span>
-            <button className="wc-tbtn ghost" onClick={() => setDismissedLow(true)}>Dismiss</button>
+            <button className="wc-tbtn ghost" onClick={() => setDismissedLow(true)}>{t('guideConsole.banner.dismiss')}</button>
           </div>
         )}
 
         {!sess && loadErr ? (
           // The session could not be loaded: say why and offer the two real exits.
           <div className="wc-pre" role="alert">
-            <div className="wc-pre-title">Could not open this session</div>
+            <div className="wc-pre-title">{t('guideConsole.load.title')}</div>
             <div className="wc-pre-sub">{loadErr}</div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
-              <button className="wc-tbtn primary" onClick={() => { setLoadErr(''); refresh() }}><RefreshCw size={14} /> Try again</button>
-              <button className="wc-tbtn" onClick={leaveToPlan}><ChevronLeft size={14} /> Back to plans</button>
+              <button className="wc-tbtn primary" onClick={() => { setLoadErr(''); refresh() }}><RefreshCw size={14} /> {t('guideConsole.load.retry')}</button>
+              <button className="wc-tbtn" onClick={leaveToPlan}><ChevronLeft size={14} /> {t('guideConsole.load.back')}</button>
             </div>
           </div>
         ) : !sess ? (
@@ -2358,7 +2369,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           // dead end). Back is in the toolbar above the whole time.
           <div className="wc-loading" aria-busy="true">
             <div className="wc-loading-orb"><span /><span /><span /></div>
-            <div className="wc-loading-line on"><Loader2 size={14} className="spin" /><span>Opening your session…</span></div>
+            <div className="wc-loading-line on"><Loader2 size={14} className="spin" /><span>{t('guideConsole.load.opening')}</span></div>
           </div>
         ) : steps.length === 0 ? (
           busy ? (
@@ -2398,8 +2409,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 {err && <div style={{ color: 'var(--danger)', fontSize: 13, width: '100%', lineHeight: 1.45 }}>{err}</div>}
                 {photoFrame && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, width: '100%' }}>
-                    <img src={photoFrame} alt="Captured photo" style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
-                    <button className="wc-tbtn ghost" onClick={clearPhoto} title="Remove this photo"><X size={14} /> Clear photo</button>
+                    <img src={photoFrame} alt={t('guideConsole.photo.alt')} style={{ width: 72, height: 54, objectFit: 'cover', borderRadius: 8, border: '1px solid var(--border)' }} />
+                    <button className="wc-tbtn ghost" onClick={clearPhoto} title={t('guideConsole.photo.removeTip')}><X size={14} /> {t('guideConsole.photo.clear')}</button>
                   </div>
                 )}
               </div>
@@ -2411,9 +2422,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             {watchLight && (
               <div className="wc-wl">
                 <Compass size={16} className="wc-wl-ic" />
-                <span className="wc-wl-sub">Your plan is richer and self-contained, and WorkCoPilot is not watching the whole time. Check your progress whenever you want a fresh read.</span>
+                <span className="wc-wl-sub">{t('guideConsole.watchLight.sub')}</span>
                 <span className="wc-sp" />
-                <button type="button" className="wc-tbtn primary wc-wl-check" onClick={refreshScreen} disabled={busy || paused} title="Read the screen once, right now, and update your steps"><ScanLine size={15} /> Check my progress</button>
+                <button type="button" className="wc-tbtn primary wc-wl-check" onClick={refreshScreen} disabled={busy || paused} title={t('guideConsole.watchLight.checkTip')}><ScanLine size={15} /> {t('guideConsole.watchLight.check')}</button>
               </div>
             )}
           </>
@@ -2421,7 +2432,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         {/* Finished task: the kicker + title head the read-only record. */}
         {ended && sess && steps.length > 0 && (sess.title || sess.goal) && (
           <>
-            <div className="wc-plan-kicker"><Check size={11} /> Finished task</div>
+            <div className="wc-plan-kicker"><Check size={11} /> {t('guideConsole.record.kicker')}</div>
             <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
             {/* What this task was, in full, so the finished record reads on its own. */}
             <TaskOverview overview={sess.overview} projectName={sess.projectName} className="wc-plan-ovw" />
@@ -2429,7 +2440,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         )}
         {sess && steps.length > 0 && ended && (
           <div className="wc-readbar">
-            <span className="wc-readbar-k">Text size</span>
+            <span className="wc-readbar-k">{t('guideConsole.tools.textSize')}</span>
             <GuideFontControl scale={fsScale} dec={fsDec} inc={fsInc} reset={fsReset} atMin={fsAtMin} atMax={fsAtMax}
               theme={{ border: 'var(--border)', text: 'var(--text)', muted: 'var(--text-muted)', panel: 'var(--surface)', accent: 'var(--em)' }} />
           </div>
@@ -2445,7 +2456,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           style={source === 'camera' && capturing
             ? { display: 'block', width: '100%', maxWidth: 360, margin: '12px auto 0', borderRadius: 12, background: '#000', aspectRatio: '4 / 3', objectFit: 'cover' }
             : { display: 'none' }} />
-        {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>Live camera. Aim it at what you need help with.</div>}
+        {source === 'camera' && capturing && <div style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-dim)', marginTop: 4 }}>{t('guideConsole.camera.live')}</div>}
 
         {/* ONE SCREEN AT A TIME (owner direction). The guide view is a sequence
             of single focused screens with a hide/show fade between them: the
@@ -2486,8 +2497,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           // the text box and Skip. Never a forced choice.
           const isChoice = clarify.kind === 'choice' && Array.isArray(clarify.options) && clarify.options.length > 0
           return (
-            <div className="wc-clarify" role="group" aria-label="Quick question">
-              <div className="wc-clarify-head"><HelpCircle size={13} strokeWidth={2.5} /> Quick question</div>
+            <div className="wc-clarify" role="group" aria-label={t('guideConsole.clarify.title')}>
+              <div className="wc-clarify-head"><HelpCircle size={13} strokeWidth={2.5} /> {t('guideConsole.clarify.title')}</div>
               <div className="wc-clarify-q">{clarify.question}</div>
               {isChoice && (
                 <div className="wc-clarify-chips">
@@ -2497,29 +2508,29 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 </div>
               )}
               <form className={`wc-clarify-form${isChoice ? ' other' : ''}`} onSubmit={(e) => { e.preventDefault(); submitClarify(clarifyText) }}>
-                {isChoice && <span className="wc-clarify-other-k">Other</span>}
-                <input className="wc-clarify-input" type="text" value={clarifyText} onChange={(e) => setClarifyText(e.target.value)} placeholder={isChoice ? 'Type your own answer' : 'Type your answer'} aria-label={isChoice ? `Other answer for: ${clarify.question}` : clarify.question} disabled={busy} />
-                <button type="submit" className={`wc-clarify-send${isChoice ? ' quiet' : ''}`} disabled={busy || !clarifyText.trim()}>Send</button>
+                {isChoice && <span className="wc-clarify-other-k">{t('guideConsole.clarify.other')}</span>}
+                <input className="wc-clarify-input" type="text" value={clarifyText} onChange={(e) => setClarifyText(e.target.value)} placeholder={isChoice ? t('guideConsole.clarify.phOther') : t('guideConsole.clarify.ph')} aria-label={isChoice ? t('guideConsole.clarify.otherAria', { q: clarify.question }) : clarify.question} disabled={busy} />
+                <button type="submit" className={`wc-clarify-send${isChoice ? ' quiet' : ''}`} disabled={busy || !clarifyText.trim()}>{t('guideConsole.clarify.send')}</button>
               </form>
               <div className="wc-clarify-foot">
-                <span className="wc-clarify-hint">This refines your next steps.</span>
-                <button type="button" className="wc-clarify-skip" disabled={busy} onClick={skipClarify} title="Skip this question. The guide proceeds on a safe assumption.">Not sure? Skip and I will proceed on a safe assumption.</button>
+                <span className="wc-clarify-hint">{t('guideConsole.clarify.hint')}</span>
+                <button type="button" className="wc-clarify-skip" disabled={busy} onClick={skipClarify} title={t('guideConsole.clarify.skipTip')}>{t('guideConsole.clarify.skip')}</button>
               </div>
             </div>
           )
         })()}
                   </>
                 ) : done ? (
-                  <div className="wc-alldone"><Check size={16} strokeWidth={2.5} /> Every step is confirmed on screen. End and summarize when you are ready.</div>
+                  <div className="wc-alldone"><Check size={16} strokeWidth={2.5} /> {t('guideConsole.allDone')}</div>
                 ) : cur ? (
                   <>
                     {prominent && reading}
                     <StepCard step={cur.step} index={ci} total={steps.length} guidance={guidance} confirmN={confirmN} busy={busy}
                       hint={paused
-                        ? <span className="gv-step-hint">Paused. Resume to keep this live.</span>
+                        ? <span className="gv-step-hint">{t('guideConsole.hint.paused')}</span>
                         : watchLight
-                          ? <span className="gv-step-hint">Plan-heavy mode. Tap Check my progress for a fresh read.</span>
-                          : !watching && <button type="button" className="gv-step-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? 'Watch my screen' : 'Watch the camera'} to keep this live <ArrowRight size={11} /></button>}
+                          ? <span className="gv-step-hint">{t('guideConsole.hint.watchLight')}</span>
+                          : !watching && <button type="button" className="gv-step-hint-btn" onClick={startWatching} disabled={busy}>{source === 'screen' ? t('guideConsole.hint.watchScreen') : t('guideConsole.hint.watchCamera')} <ArrowRight size={11} /></button>}
                       onDone={() => { clearVerdict(); setStep(ci, 'done') }}
                       doneReady={!!(stepVerdict && stepVerdict.kind === VERIFY_DONE)}
                       notice={<VerifyVerdict verdict={stepVerdict} verifying={verifying} onRetry={verifyStep} onDismiss={clearVerdict} />}
@@ -2537,35 +2548,38 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <Check size={13} strokeWidth={2.5} />
             <span className="wc-clarify-done-t">
               {clarifyDone.skipped
-                ? 'Skipped. I will proceed on a safe assumption.'
-                : <>You chose: <b>{clarifyDone.answer}</b>.</>}
+                ? t('guideConsole.clarify.skipped')
+                /* the answer is the user's own text: it is rendered as the <b> node's
+                   content (not interpolated into the string) so it can never be
+                   parsed as inline markup */
+                : t.rich('guideConsole.clarify.chose', null, { b: () => <b>{clarifyDone.answer}</b> })}
             </span>
-            <button type="button" className="wc-clarify-undo" disabled={busy} onClick={undoClarify} title={clarifyDone.skipped ? 'Answer this question now' : 'Change your answer'}>{clarifyDone.skipped ? 'Answer it' : 'Change'}</button>
+            <button type="button" className="wc-clarify-undo" disabled={busy} onClick={undoClarify} title={clarifyDone.skipped ? t('guideConsole.clarify.answerTip') : t('guideConsole.clarify.changeTip')}>{clarifyDone.skipped ? t('guideConsole.clarify.answerIt') : t('guideConsole.clarify.change')}</button>
           </div>
         )}
 
                     {steps.length > 1 && (
                       <div className="gv-nav">
-                        <button type="button" className="gv-nav-btn" disabled={ci <= 0} onClick={() => navStep(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
+                        <button type="button" className="gv-nav-btn" disabled={ci <= 0} onClick={() => navStep(-1)} title={t('guideConsole.nav.prevTip')}><ChevronLeft size={15} /> {t('guideConsole.nav.prev')}</button>
                         <div className="gv-nav-mid">
-                          <span className="gv-nav-count">Step {ci + 1} of {steps.length}</span>
+                          <span className="gv-nav-count">{t('guideConsole.nav.count', { n: ci + 1, total: steps.length })}</span>
                           <div className="gv-nav-track"><div className="gv-nav-fill" style={{ width: `${((ci + 1) / steps.length) * 100}%` }} /></div>
                         </div>
-                        <button type="button" className="gv-nav-btn" disabled={ci >= steps.length - 1 || cur.step.status !== 'done'} onClick={() => navStep(1)} title={cur.step.status !== 'done' ? 'Finish this step first. It advances on its own when done.' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
+                        <button type="button" className="gv-nav-btn" disabled={ci >= steps.length - 1 || cur.step.status !== 'done'} onClick={() => navStep(1)} title={cur.step.status !== 'done' ? t('guideConsole.nav.finishFirst') : t('guideConsole.nav.nextTip')}>{t('guideConsole.nav.next')} <ChevronRight size={15} /></button>
                       </div>
                     )}
                     {/* the ONE step after this one, as a single quiet line, plus the full plan */}
                     {win[1] && (
                       <div className="gv-next" title={String(win[1].step.text || '')}>
-                        <span className="gv-k">Next</span>
+                        <span className="gv-k">{t('guideConsole.nextUp')}</span>
                         <span className="gv-next-n">{win[1].index + 1}</span>
                         <span className="gv-next-t"><RichText text={win[1].step.text} accent="var(--gv-muted)" chips={false} /></span>
                       </div>
                     )}
                     {steps.length > 1 && (
                       <div className="wc-plan-bar">
-                        <span className="wc-plan-prog">{doneCount} of {steps.length} done</span>
-                        <button type="button" className="wc-plan-link" onClick={() => setPlanOpen(true)}>View full plan</button>
+                        <span className="wc-plan-prog">{t('guideConsole.plan.doneOf', { done: doneCount, total: steps.length })}</span>
+                        <button type="button" className="wc-plan-link" onClick={() => setPlanOpen(true)}>{t('guideConsole.plan.viewFull')}</button>
                       </div>
                     )}
                   </>
@@ -2578,7 +2592,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         {/* The finished task: a calm, read-only record of every step. */}
         {ended && steps.length > 0 && (
           <div className="wc-steps ro">
-            <div className="wc-record-head"><Check size={13} strokeWidth={2.5} /> What was done. {doneCount} of {steps.length} steps</div>
+            <div className="wc-record-head"><Check size={13} strokeWidth={2.5} /> {t('guideConsole.record.head', { done: doneCount, total: steps.length })}</div>
             {ended && steps.map((s, i) => {
               const isDone = s.status === 'done'
               const tone = isDone ? 'done' : 'skipped'
@@ -2600,8 +2614,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                         {s.code && s.code.content && <CodeBlock file={s.code.file} content={s.code.content} />}
                       </DestructiveGate>
                     )}
-                    {isDone && s.doneAt && <div className="wc-step-doneat"><Check size={11} /> Done {(() => { try { return new Date(s.doneAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } catch { return '' } })()}</div>}
-                    {!isDone && <div className="wc-step-tag">Not reached</div>}
+                    {isDone && s.doneAt && <div className="wc-step-doneat"><Check size={11} /> {t('guideConsole.record.doneAt', { time: (() => { try { return new Date(s.doneAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) } catch { return '' } })() })}</div>}
+                    {!isDone && <div className="wc-step-tag">{t('guideConsole.record.notReached')}</div>}
                   </div>
                 </div>
               )
@@ -2613,14 +2627,14 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             upcoming marker and the goal at the top. This is the whole plan the
             window summarizes; it is NOT the session report. */}
         {planOpen && steps.length > 0 && (
-          <div className="wc-plan-ov" onClick={() => setPlanOpen(false)} role="dialog" aria-modal="true" aria-label="Full plan">
+          <div className="wc-plan-ov" onClick={() => setPlanOpen(false)} role="dialog" aria-modal="true" aria-label={t('guideConsole.plan.full')}>
             <div className="wc-plan-card" onClick={(e) => e.stopPropagation()}>
               <div className="wc-plan-head">
-                <span className="wc-plan-title">Full plan</span>
-                <button className="wc-ib" onClick={() => setPlanOpen(false)} title="Close" aria-label="Close full plan"><X size={16} /></button>
+                <span className="wc-plan-title">{t('guideConsole.plan.full')}</span>
+                <button className="wc-ib" onClick={() => setPlanOpen(false)} title={t('guideConsole.plan.close')} aria-label={t('guideConsole.plan.closeAria')}><X size={16} /></button>
               </div>
-              {sess?.goal && <div className="wc-plan-goal"><span className="wc-plan-goal-k">Your goal</span><div className="wc-plan-goal-t">{sess.goal}</div></div>}
-              <div className="wc-plan-count">{progressText(steps) || `${doneCount} of ${steps.length} done`}</div>
+              {sess?.goal && <div className="wc-plan-goal"><span className="wc-plan-goal-k">{t('guideConsole.plan.yourGoal')}</span><div className="wc-plan-goal-t">{sess.goal}</div></div>}
+              <div className="wc-plan-count">{progressText(steps) || t('guideConsole.plan.doneOf', { done: doneCount, total: steps.length })}</div>
               <div className="wc-plan-list">
                 {steps.map((s, i) => {
                   const mk = planMarker(s, i, steps)
@@ -2628,7 +2642,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                     <div key={i} className={`wc-plan-row ${mk}`}>
                       <span className="wc-plan-badge">{mk === 'done' ? <Check size={13} strokeWidth={2.5} /> : i + 1}</span>
                       <span className="wc-plan-txt"><RichText text={s.text} /></span>
-                      {mk === 'current' && <span className="wc-plan-tag">Now</span>}
+                      {mk === 'current' && <span className="wc-plan-tag">{t('guideConsole.plan.now')}</span>}
                       <SourceChip source={s.source} />
                     </div>
                   )
@@ -2649,13 +2663,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             modal. At rest this section renders nothing unless a deliverable is
             ready, in which case small chips reopen it. Engine/handlers unchanged. */}
         {!ended && (maker || resultOut || composeOut || computeOut) && (
-          <section className="wc-make" aria-label="Make something from this task">
+          <section className="wc-make" aria-label={t('guideConsole.make.aria')}>
             {(resultOut || composeOut || computeOut) && !maker && (
               <div className="wc-made-chips">
-                <span className="wc-make-kicker">Ready</span>
-                {resultOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('answer')}><Sparkles size={13} /> Answer <ChevronRight size={13} /></button>}
-                {composeOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('write')}><PenLine size={13} /> Document <ChevronRight size={13} /></button>}
-                {computeOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('compute')}><Calculator size={13} /> Computed result <ChevronRight size={13} /></button>}
+                <span className="wc-make-kicker">{t('guideConsole.make.ready')}</span>
+                {resultOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('answer')}><Sparkles size={13} /> {t('guideConsole.make.answer')} <ChevronRight size={13} /></button>}
+                {composeOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('write')}><PenLine size={13} /> {t('guideConsole.make.document')} <ChevronRight size={13} /></button>}
+                {computeOut && <button type="button" className="wc-made-chip" onClick={() => pickMaker('compute')}><Calculator size={13} /> {t('guideConsole.make.computed')} <ChevronRight size={13} /></button>}
               </div>
             )}
 
@@ -2666,20 +2680,20 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 the X closes it via pickMaker (which keeps composeOpen/computeOpen
                 truthful). The three panels inside are unchanged. */}
             {maker && (
-              <div className="wc-plan-ov" onClick={() => pickMaker(maker)} role="dialog" aria-modal="true" aria-label={maker === 'answer' ? 'Get the answer' : maker === 'write' ? 'Write a deliverable' : 'Compute from a file'}>
+              <div className="wc-plan-ov" onClick={() => pickMaker(maker)} role="dialog" aria-modal="true" aria-label={maker === 'answer' ? t('guideConsole.make.titleAnswer') : maker === 'write' ? t('guideConsole.make.titleWrite') : t('guideConsole.make.titleCompute')}>
                 <div className="wc-make-sheet" onClick={(e) => e.stopPropagation()}>
                   <div className="wc-make-sheet-head">
                     <span className="wc-make-sheet-ic">{maker === 'answer' ? <Sparkles size={16} /> : maker === 'write' ? <PenLine size={16} /> : <Calculator size={16} />}</span>
                     <div className="wc-make-sheet-tt">
-                      <span className="wc-make-sheet-title">{maker === 'answer' ? 'Get the answer' : maker === 'write' ? 'Write a deliverable' : 'Compute from a file'}</span>
-                      <span className="wc-make-sheet-tag">Deliverable tool</span>
+                      <span className="wc-make-sheet-title">{maker === 'answer' ? t('guideConsole.make.titleAnswer') : maker === 'write' ? t('guideConsole.make.titleWrite') : t('guideConsole.make.titleCompute')}</span>
+                      <span className="wc-make-sheet-tag">{t('guideConsole.make.tag')}</span>
                     </div>
-                    <div className="wc-make-tabs wc-make-sheet-tabs" role="tablist" aria-label="What to make">
-                      <button type="button" role="tab" aria-selected={maker === 'answer'} className={`wc-make-tab${maker === 'answer' ? ' on' : ''}`} onClick={() => maker !== 'answer' && pickMaker('answer')}><Sparkles size={14} /> Answer</button>
-                      <button type="button" role="tab" aria-selected={maker === 'write'} className={`wc-make-tab${maker === 'write' ? ' on' : ''}`} onClick={() => maker !== 'write' && pickMaker('write')}><PenLine size={14} /> Write</button>
-                      <button type="button" role="tab" aria-selected={maker === 'compute'} className={`wc-make-tab${maker === 'compute' ? ' on' : ''}`} onClick={() => maker !== 'compute' && pickMaker('compute')}><Calculator size={14} /> Compute</button>
+                    <div className="wc-make-tabs wc-make-sheet-tabs" role="tablist" aria-label={t('guideConsole.make.whatToMake')}>
+                      <button type="button" role="tab" aria-selected={maker === 'answer'} className={`wc-make-tab${maker === 'answer' ? ' on' : ''}`} onClick={() => maker !== 'answer' && pickMaker('answer')}><Sparkles size={14} /> {t('guideConsole.make.answer')}</button>
+                      <button type="button" role="tab" aria-selected={maker === 'write'} className={`wc-make-tab${maker === 'write' ? ' on' : ''}`} onClick={() => maker !== 'write' && pickMaker('write')}><PenLine size={14} /> {t('guideConsole.make.write')}</button>
+                      <button type="button" role="tab" aria-selected={maker === 'compute'} className={`wc-make-tab${maker === 'compute' ? ' on' : ''}`} onClick={() => maker !== 'compute' && pickMaker('compute')}><Calculator size={14} /> {t('guideConsole.make.compute')}</button>
                     </div>
-                    <button className="wc-ib" onClick={() => pickMaker(maker)} title="Close" aria-label="Close deliverable tool"><X size={16} /></button>
+                    <button className="wc-ib" onClick={() => pickMaker(maker)} title={t('guideConsole.make.close')} aria-label={t('guideConsole.make.closeAria')}><X size={16} /></button>
                   </div>
                   <div className="wc-make-sheet-body">
 
@@ -2688,23 +2702,23 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             {maker === 'answer' && (
               <div className="wc-make-panel" role="tabpanel">
                 <div className="wc-make-ctl">
-                  <div className="wc-seg" role="tablist" aria-label="What do you want">
-                    {[['steps', 'Steps'], ['result', 'Result'], ['both', 'Both']].map(([v, label]) => (
+                  <div className="wc-seg" role="tablist" aria-label={t('guideConsole.answer.scopeAria')}>
+                    {[['steps', t('guideConsole.answer.scopeSteps')], ['result', t('guideConsole.answer.scopeResult')], ['both', t('guideConsole.answer.scopeBoth')]].map(([v, label]) => (
                       <button key={v} type="button" role="tab" aria-selected={scope === v} className={scope === v ? 'on' : ''} onClick={() => setScope(v)}>{label}</button>
                     ))}
                   </div>
-                  <span className="wc-result-lead">{scope === 'steps' ? 'Guide me step by step' : 'Get the actual answer, with how I got it'}</span>
+                  <span className="wc-result-lead">{scope === 'steps' ? t('guideConsole.answer.leadSteps') : t('guideConsole.tools.answerSub')}</span>
                   <span className="wc-sp" />
-                  <button className={`wc-ib${pasteOpen ? ' on' : ''}`} onClick={() => setPasteOpen((v) => !v)} disabled={resultBusy} title="Paste data to compute from: a table, numbers, a log, any text" aria-label="Paste data"><ClipboardCopy size={16} /></button>
-                  <button className="wc-ib" onClick={() => getResult(true)} disabled={resultBusy} title={source === 'camera' ? 'Snap a photo and compute the result from it' : 'Read the screen and compute the result from it'} aria-label="Compute from the screen">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
-                  <button className="wc-tbtn primary" onClick={() => getResult(false)} disabled={resultBusy} title="Compute the result for your goal, using any pasted data and the screen if you are sharing it">{resultBusy ? <Loader2 size={14} className="spin" /> : <Sparkles size={15} />} Get the result</button>
+                  <button className={`wc-ib${pasteOpen ? ' on' : ''}`} onClick={() => setPasteOpen((v) => !v)} disabled={resultBusy} title={t('guideConsole.answer.pasteTip')} aria-label={t('guideConsole.answer.pasteAria')}><ClipboardCopy size={16} /></button>
+                  <button className="wc-ib" onClick={() => getResult(true)} disabled={resultBusy} title={source === 'camera' ? t('guideConsole.answer.fromCameraTip') : t('guideConsole.answer.fromScreenTip')} aria-label={t('guideConsole.answer.fromScreenAria')}>{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+                  <button className="wc-tbtn primary" onClick={() => getResult(false)} disabled={resultBusy} title={t('guideConsole.answer.getTip')}>{resultBusy ? <Loader2 size={14} className="spin" /> : <Sparkles size={15} />} {t('guideConsole.answer.get')}</button>
                 </div>
                 {pasteOpen && (
-                  <textarea className="wc-result-paste" rows={3} value={pasteData} onChange={(e) => setPasteData(e.target.value)} placeholder="Paste the data to work from here: a table, numbers, a log, a config, or any text. Leave empty to compute from your goal and screen." />
+                  <textarea className="wc-result-paste" rows={3} value={pasteData} onChange={(e) => setPasteData(e.target.value)} placeholder={t('guideConsole.answer.pastePh')} />
                 )}
                 {resultErr && <div className="wc-result-err"><AlertTriangle size={14} /> {resultErr}</div>}
                 {resultBusy && !resultOut && (
-                  <div className="wc-result-load"><Loader2 size={15} className="spin" /> Working out the result{pasteData.trim() ? ' from your data' : ''}…</div>
+                  <div className="wc-result-load"><Loader2 size={15} className="spin" /> {pasteData.trim() ? t('guideConsole.answer.workingData') : t('guideConsole.answer.working')}</div>
                 )}
               </div>
             )}
@@ -2713,33 +2727,33 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 table or code), ready to copy. Nothing is auto-filled. */}
             {maker === 'write' && (
               <div className="wc-make-panel" role="tabpanel">
-                <label className="wc-compose-label" htmlFor="wc-compose-want">What do you need? (I give you code, or a ready-to-use prompt for your own AI)</label>
+                <label className="wc-compose-label" htmlFor="wc-compose-want">{t('guideConsole.write.label')}</label>
                 <textarea id="wc-compose-want" className="wc-compose-want" rows={2} value={composeWant} onChange={(e) => setComposeWant(e.target.value)}
-                  placeholder="For example: a SQL query for last month's refunds, or a prompt to draft a vendor follow-up email in your own AI (attach your old thread to it)."
+                  placeholder={t('guideConsole.write.ph')}
                   onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); compose(false) } }} />
                 <div className="wc-make-ctl">
                   <label className="wc-compose-fmt">
-                    <span>Format</span>
+                    <span>{t('guideConsole.write.format')}</span>
                     <select value={composeFormat} onChange={(e) => setComposeFormat(e.target.value)}>
-                      <option value="">Auto</option>
-                      <option value="prompt">Prompt for your AI</option>
-                      <option value="code">Code</option>
-                      <option value="table">Table</option>
-                      <option value="bullets">Bullets</option>
-                      <option value="outline">Outline</option>
+                      <option value="">{t('guideConsole.write.fmtAuto')}</option>
+                      <option value="prompt">{t('guideConsole.write.fmtPrompt')}</option>
+                      <option value="code">{t('guideConsole.write.fmtCode')}</option>
+                      <option value="table">{t('guideConsole.write.fmtTable')}</option>
+                      <option value="bullets">{t('guideConsole.write.fmtBullets')}</option>
+                      <option value="outline">{t('guideConsole.write.fmtOutline')}</option>
                     </select>
                   </label>
-                  <button type="button" className={`wc-ib${composeSrcOpen ? ' on' : ''}`} onClick={() => setComposeSrcOpen((v) => !v)} disabled={composeBusy} title="Paste source text to write from: an email, a table, numbers, a log, any text" aria-label="Paste source text"><ClipboardCopy size={16} /></button>
-                  <button type="button" className="wc-ib" onClick={() => compose(true)} disabled={composeBusy} title={source === 'camera' ? 'Snap a photo and write from what it shows' : 'Read the screen and write from what it shows'} aria-label="Write from the screen">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+                  <button type="button" className={`wc-ib${composeSrcOpen ? ' on' : ''}`} onClick={() => setComposeSrcOpen((v) => !v)} disabled={composeBusy} title={t('guideConsole.write.pasteTip')} aria-label={t('guideConsole.write.pasteAria')}><ClipboardCopy size={16} /></button>
+                  <button type="button" className="wc-ib" onClick={() => compose(true)} disabled={composeBusy} title={source === 'camera' ? t('guideConsole.write.fromCameraTip') : t('guideConsole.write.fromScreenTip')} aria-label={t('guideConsole.write.fromScreenAria')}>{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
                   <span className="wc-sp" />
-                  <button type="button" className="wc-tbtn primary" onClick={() => compose(false)} disabled={composeBusy} title="Write the document for your goal, using any pasted source and the screen if you are sharing it">{composeBusy ? <Loader2 size={14} className="spin" /> : <PenLine size={15} />} Compose</button>
+                  <button type="button" className="wc-tbtn primary" onClick={() => compose(false)} disabled={composeBusy} title={t('guideConsole.write.composeTip')}>{composeBusy ? <Loader2 size={14} className="spin" /> : <PenLine size={15} />} {t('guideConsole.write.compose')}</button>
                 </div>
                 {composeSrcOpen && (
-                  <textarea className="wc-compose-src" rows={3} value={composeSrc} onChange={(e) => setComposeSrc(e.target.value)} placeholder="Paste the source to write from here: an email thread, a table, notes, a clause, or any text. Leave empty to write from your goal and screen." />
+                  <textarea className="wc-compose-src" rows={3} value={composeSrc} onChange={(e) => setComposeSrc(e.target.value)} placeholder={t('guideConsole.write.srcPh')} />
                 )}
                 {composeErr && <div className="wc-compose-err"><AlertTriangle size={14} /> {composeErr}</div>}
                 {composeBusy && !composeOut && (
-                  <div className="wc-compose-load"><Loader2 size={15} className="spin" /> Writing{composeSrc.trim() ? ' from your source' : ''}…</div>
+                  <div className="wc-compose-load"><Loader2 size={15} className="spin" /> {composeSrc.trim() ? t('guideConsole.write.workingSrc') : t('guideConsole.write.working')}</div>
                 )}
               </div>
             )}
@@ -2754,7 +2768,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                     the code: only { want, schema, rowCount } is ever sent. */}
                 <div className="wc-compute-privacy">
                   <ShieldCheck size={15} />
-                  <span>Your file is read on your device. Only the column names and types are sent, your data never leaves your machine.</span>
+                  <span>{t('guideConsole.compute.privacy')}</span>
                 </div>
 
                 <input ref={computeFileRef} type="file" accept=".csv,.xlsx,.xls" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onComputeFile(f); e.target.value = '' }} />
@@ -2762,13 +2776,13 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 {!computeFile && !computeParsing && (
                   <button type="button" className="wc-compute-drop" onClick={() => computeFileRef.current && computeFileRef.current.click()}>
                     <Upload size={20} />
-                    <span className="wc-compute-drop-t">Choose a CSV or Excel file</span>
-                    <span className="wc-compute-drop-s">.csv, .xlsx or .xls, read right here on your device</span>
+                    <span className="wc-compute-drop-t">{t('guideConsole.compute.choose')}</span>
+                    <span className="wc-compute-drop-s">{t('guideConsole.compute.chooseSub')}</span>
                   </button>
                 )}
 
                 {computeParsing && (
-                  <div className="wc-compute-load"><Loader2 size={15} className="spin" /> Reading your file on this device…</div>
+                  <div className="wc-compute-load"><Loader2 size={15} className="spin" /> {t('guideConsole.compute.reading')}</div>
                 )}
 
                 {computeFile && (
@@ -2776,8 +2790,9 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                     <div className="wc-compute-file">
                       <div className="wc-compute-file-head">
                         <span className="wc-compute-file-name"><FileSpreadsheet size={15} /> {computeFile.name}</span>
-                        <span className="wc-compute-file-meta">{computeFile.rowCount.toLocaleString()} {computeFile.rowCount === 1 ? 'row' : 'rows'} · {computeFile.schema.length} {computeFile.schema.length === 1 ? 'column' : 'columns'}</span>
-                        <button type="button" className="wc-compute-change" onClick={() => computeFileRef.current && computeFileRef.current.click()} title="Choose a different file">Change</button>
+                        {/* the plural picks on the raw count; the shown number keeps its locale formatting */}
+                        <span className="wc-compute-file-meta">{t('guideConsole.compute.meta', { rows: t.n('guideConsole.compute.rows', computeFile.rowCount, { count: computeFile.rowCount.toLocaleString() }), cols: t.n('guideConsole.compute.cols', computeFile.schema.length, { count: computeFile.schema.length }) })}</span>
+                        <button type="button" className="wc-compute-change" onClick={() => computeFileRef.current && computeFileRef.current.click()} title={t('guideConsole.compute.changeTip')}>{t('guideConsole.compute.change')}</button>
                       </div>
                       <div className="wc-compute-chips">
                         {computeFile.schema.map((col, i) => (
@@ -2786,23 +2801,23 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                       </div>
                     </div>
 
-                    <label className="wc-compute-label" htmlFor="wc-compute-want">What should I compute?</label>
+                    <label className="wc-compute-label" htmlFor="wc-compute-want">{t('guideConsole.compute.label')}</label>
                     <textarea id="wc-compute-want" className="wc-compute-want" rows={2} value={computeWant} onChange={(e) => setComputeWant(e.target.value)}
-                      placeholder="For example: total revenue by region, the average order value, how many orders over $500, or the top 10 customers by spend."
+                      placeholder={t('guideConsole.compute.ph')}
                       onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); compute() } }} />
                     <div className="wc-make-ctl">
                       <span className="wc-sp" />
-                      <button type="button" className="wc-tbtn primary" onClick={compute} disabled={computeBusy}>{computeBusy ? <Loader2 size={14} className="spin" /> : <Calculator size={15} />} Compute</button>
+                      <button type="button" className="wc-tbtn primary" onClick={compute} disabled={computeBusy}>{computeBusy ? <Loader2 size={14} className="spin" /> : <Calculator size={15} />} {t('guideConsole.compute.run')}</button>
                     </div>
                   </>
                 )}
 
                 {computeErr && <div className="wc-compute-err"><AlertTriangle size={14} /> {computeErr}</div>}
                 {computeNeed && (
-                  <div className="wc-compute-need"><AlertTriangle size={15} /><span><b>I need:</b> {computeNeed}</span></div>
+                  <div className="wc-compute-need"><AlertTriangle size={15} /><span>{t.rich('guideConsole.compute.need', { text: computeNeed })}</span></div>
                 )}
                 {computeBusy && !computeOut && (
-                  <div className="wc-compute-load"><Loader2 size={15} className="spin" /> Planning the computation. Only the column names and types are sent…</div>
+                  <div className="wc-compute-load"><Loader2 size={15} className="spin" /> {t('guideConsole.compute.planning')}</div>
                 )}
               </div>
             )}
@@ -2814,20 +2829,20 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                       <div className="wc-made">
                         <ResultCard result={resultOut} security={resultSec} policy={resultPol} />
                         <SourceChip source={resultOut.source} />
-                        <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null); setResultPol(null) }} title="Clear this result"><X size={14} /> Clear result</button>
+                        <button className="wc-tbtn ghost" onClick={() => { setResultOut(null); setResultSec(null); setResultPol(null) }} title={t('guideConsole.made.clearResultTip')}><X size={14} /> {t('guideConsole.made.clearResult')}</button>
                       </div>
                     )}
                     {maker === 'write' && composeOut && (
                       <div className="wc-made">
                         <ComposeCard compose={composeOut} security={composeSec} policy={composePol} />
                         <SourceChip source={composeOut.source} />
-                        <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null); setComposePol(null) }} title="Clear this document"><X size={14} /> Clear document</button>
+                        <button type="button" className="wc-tbtn ghost" onClick={() => { setComposeOut(null); setComposeSec(null); setComposePol(null) }} title={t('guideConsole.made.clearDocTip')}><X size={14} /> {t('guideConsole.made.clearDoc')}</button>
                       </div>
                     )}
                     {maker === 'compute' && computeOut && (
                       <div className="wc-made">
                         <ComputeCard result={computeOut.result} explanation={computeOut.explanation} caveat={computeOut.caveat} spec={computeOut.spec} fileName={computeFile && computeFile.name} />
-                        <button type="button" className="wc-tbtn ghost" onClick={clearCompute} title="Clear this result and file"><X size={14} /> Clear result</button>
+                        <button type="button" className="wc-tbtn ghost" onClick={clearCompute} title={t('guideConsole.made.clearComputeTip')}><X size={14} /> {t('guideConsole.made.clearResult')}</button>
                       </div>
                     )}
                   </div>
@@ -2839,38 +2854,38 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
         {ended && sess.summary && (
           <div className="wc-sum">
-            <div className="wc-sum-title"><FileText size={15} /> Session summary</div>
+            <div className="wc-sum-title"><FileText size={15} /> {t('guideConsole.summary.title')}</div>
             <AnswerBody text={sess.summary} />
           </div>
         )}
         </div>
         {rails && (
-          <aside className="wc-rail wc-rail-r" aria-label="Controls">
+          <aside className="wc-rail wc-rail-r" aria-label={t('guideConsole.rail.controls')}>
             <div className="wc-rail-card">
               <div className="wc-rail-status">
                 <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={chip.title}><span className="wc-sdot" />{chip.label}</span>
                 {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
               </div>
               {watchLight
-                ? <button type="button" className="wc-tbtn primary wc-rail-wide" onClick={refreshScreen} disabled={busy || paused}><ScanLine size={15} /> Check my progress</button>
+                ? <button type="button" className="wc-tbtn primary wc-rail-wide" onClick={refreshScreen} disabled={busy || paused}><ScanLine size={15} /> {t('guideConsole.watchLight.check')}</button>
                 : paused
-                  ? <button className="wc-tbtn resume wc-rail-wide" onClick={togglePause}><Play size={15} /> Resume</button>
+                  ? <button className="wc-tbtn resume wc-rail-wide" onClick={togglePause}><Play size={15} /> {t('guideConsole.pause.resume')}</button>
                   : watching
-                    ? <button className="wc-tbtn pause wc-rail-wide" onClick={togglePause}><Square size={13} /> Pause</button>
-                    : <button className="wc-tbtn primary wc-rail-wide" onClick={startWatching} disabled={busy}><Eye size={15} /> {source === 'screen' ? 'Watch my screen' : 'Watch the camera'}</button>}
+                    ? <button className="wc-tbtn pause wc-rail-wide" onClick={togglePause}><Square size={13} /> {t('guideConsole.pause.pause')}</button>
+                    : <button className="wc-tbtn primary wc-rail-wide" onClick={startWatching} disabled={busy}><Eye size={15} /> {source === 'screen' ? t('guideConsole.watch.screen') : t('guideConsole.watch.camera')}</button>}
             </div>
             <div className="wc-rail-card">
-              <div className="wc-rail-k"><Sparkles size={12} /> Make something</div>
-              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('answer')}><Sparkles size={14} /> Answer</button>
-              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('write')}><PenLine size={14} /> Write</button>
-              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('compute')}><Calculator size={14} /> Compute</button>
+              <div className="wc-rail-k"><Sparkles size={12} /> {t('guideConsole.tools.secMake')}</div>
+              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('answer')}><Sparkles size={14} /> {t('guideConsole.tools.answer')}</button>
+              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('write')}><PenLine size={14} /> {t('guideConsole.tools.write')}</button>
+              <button type="button" className="wc-rail-btn" onClick={() => pickMaker('compute')}><Calculator size={14} /> {t('guideConsole.tools.compute')}</button>
             </div>
             <div className="wc-rail-card">
-              <div className="wc-rail-k"><ScanLine size={12} /> Screen</div>
-              {!watchLight && <button type="button" className="wc-rail-btn" disabled={busy || paused} onClick={refreshScreen}><ScanLine size={14} /> Read my screen</button>}
-              <button type="button" className="wc-rail-btn" disabled={busy} onClick={() => analyze(question, true)}><Zap size={14} /> Deep pass</button>
-              {!isMobile && <button type="button" className="wc-rail-btn" onClick={openFullGuide}><Monitor size={14} /> Full guide</button>}
-              <button type="button" className="wc-rail-btn quiet" disabled={busy} onClick={endSession}>End session</button>
+              <div className="wc-rail-k"><ScanLine size={12} /> {t('guideConsole.tools.secScreen')}</div>
+              {!watchLight && <button type="button" className="wc-rail-btn" disabled={busy || paused} onClick={refreshScreen}><ScanLine size={14} /> {t('guideConsole.tools.readScreen')}</button>}
+              <button type="button" className="wc-rail-btn" disabled={busy} onClick={() => analyze(question, true)}><Zap size={14} /> {t('guideConsole.tools.deep')}</button>
+              {!isMobile && <button type="button" className="wc-rail-btn" onClick={openFullGuide}><Monitor size={14} /> {t('guideConsole.tools.fullGuide')}</button>}
+              <button type="button" className="wc-rail-btn quiet" disabled={busy} onClick={endSession}>{t('guideConsole.end.session')}</button>
             </div>
           </aside>
         )}
@@ -2887,11 +2902,11 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <div className="wc-ask">
             <div className="wc-ask-row wc-askrow">
               <input ref={contextFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) attachContext(f, question); e.target.value = '' }} />
-              <textarea ref={askBoxRef} className="input wc-ask-ta" rows={1} placeholder={askState.phase === ASK_OFFER ? 'Tell me what is in the way' : askFocused(askState) ? 'Ask a follow-up' : source === 'camera' ? 'Ask about what the camera sees' : 'Ask anything, paste an error, or attach a screenshot or document for the next move'} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
-              <button className="wc-ib" onClick={() => contextFileRef.current && contextFileRef.current.click()} disabled={busy} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={16} /></button>
-              <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? 'Snap a photo and read it now' : 'Read the screen right now'} aria-label="Read the screen now">{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
-              <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title="Look up the latest on the web, then answer" aria-label="Research on the web"><Globe size={16} /></button>
-              <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} Ask</button>
+              <textarea ref={askBoxRef} className="input wc-ask-ta" rows={1} placeholder={askState.phase === ASK_OFFER ? t('guideConsole.ask.phStuck') : askFocused(askState) ? t('guideConsole.ask.phFollowUp') : source === 'camera' ? t('guideConsole.ask.phCamera') : t('guideConsole.ask.ph')} value={question} onChange={(e) => setQuestion(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); ask() } }} onPaste={(e) => { const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); attachContext(f, question); return } } } }} />
+              <button className="wc-ib" onClick={() => contextFileRef.current && contextFileRef.current.click()} disabled={busy} title={t('guideConsole.ask.attachTip')} aria-label={t('guideConsole.ask.attachAria')}><Paperclip size={16} /></button>
+              <button className="wc-ib" onClick={() => analyze(question)} disabled={busy} title={source === 'camera' ? t('guideConsole.ask.readCameraTip') : t('guideConsole.ask.readScreenTip')} aria-label={t('guideConsole.ask.readAria')}>{source === 'camera' ? <Camera size={16} /> : <ScanLine size={16} />}</button>
+              <button className="wc-ib" onClick={() => doResearch(question)} disabled={busy} title={t('guideConsole.ask.researchTip')} aria-label={t('guideConsole.ask.researchAria')}><Globe size={16} /></button>
+              <button className="wc-tbtn primary" onClick={ask} disabled={busy}>{busy ? <Loader2 size={14} className="spin" /> : <ArrowRight size={16} />} {t('guideConsole.ask.send')}</button>
             </div>
           </div>
         </div></div>

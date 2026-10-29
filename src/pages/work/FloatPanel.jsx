@@ -8,6 +8,7 @@
 import { useEffect, useRef, useState, useMemo } from 'react'
 import { Loader2, Check, X, Plus, Eye, Square, Play, AlertTriangle, Menu as MenuIcon, Sun, Moon, ScanLine, Zap, Globe, ChevronRight, ChevronLeft, ArrowRight, Paperclip } from 'lucide-react'
 import RichText from '../../components/RichText.jsx'
+import { useT } from '../../i18n/index.jsx'
 import GuideFontControl from '../../components/GuideFontScale.jsx'
 import GuideLevelControl from '../../components/GuideLevel.jsx'
 import { stepWindow, progressText } from '../../shared/step_window.js'
@@ -35,6 +36,10 @@ export default // The floating overlay shown in the Document Picture-in-Picture 
 // PiP window is a separate document with none of the app's CSS.
 function FloatPanel({ steps, watching, observation, guidance, flags, ask, onContinue, onDismissOffer, level, onLevel, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, title, overview, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onVerify, verifying = false, verdict = null, onVerdictDismiss, onEnd, onClose, onStartAnother }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
+  // i18n: every label / tooltip / placeholder on the panel is keyed under
+  // floatPanel.* (src/i18n/locales/en/floatPanel.js). The React context reaches
+  // this portal in the PiP document, so the translator is the console's own.
+  const t = useT()
   const current = steps.find((s) => s.status === 'current')
   // Completed = every step done, or the session was ended. Drives the floater's
   // task-complete celebration + "Start another task" (mirrors the in-software
@@ -112,8 +117,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
   // state is implied by this chip, not by a separate "Live / Not watching" label.
   const liveFP = watching && !paused
   const status = liveFP
-    ? { label: 'Guiding', color: c.accent, soft: c.accentSoft }
-    : { label: 'Paused', color: c.warn, soft: c.warnSoft }
+    ? { label: t('floatPanel.status.guiding'), color: c.accent, soft: c.accentSoft }
+    : { label: t('floatPanel.status.paused'), color: c.warn, soft: c.warnSoft }
   const doneN = steps.filter((s) => s.status === 'done').length
   // MAXIMIZED float: when the PiP / pop-out window is wide, use the space - a
   // left plan mini-map rail beside a centered reading column instead of one
@@ -154,10 +159,10 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
         </div>
         {/* Pause/Resume now lives in the prominent control below (#2); the header
             stays a clean row of secondary icons so the status cluster is calm. */}
-        <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title="Deep pass: take a closer look at this one frame and weave it back into the steps, then carry on at normal speed."><Zap size={15} /></button>
-        <button className="fp-btn" style={iconBtn} onClick={onToggleTheme} title={light ? 'Switch to dark' : 'Switch to light'}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
-        <button className="fp-btn" style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title="Dim the panel to cut glare (for true see-through, use the desktop app)">{Math.round(dim * 100)}%</button>
-        <button className="fp-btn" style={iconBtn} onClick={onClose} title="Close the floating window"><X size={16} /></button>
+        <button className="fp-btn" style={iconBtn} onClick={onDeep} disabled={busy} title={t('floatPanel.deepTip')}><Zap size={15} /></button>
+        <button className="fp-btn" style={iconBtn} onClick={onToggleTheme} title={light ? t('floatPanel.switchDark') : t('floatPanel.switchLight')}>{light ? <Moon size={15} /> : <Sun size={15} />}</button>
+        <button className="fp-btn" style={{ ...iconBtn, width: 'auto', padding: '0 7px', gap: 4, fontSize: 11, fontWeight: 700, letterSpacing: '.02em', fontVariantNumeric: 'tabular-nums', color: dim < 1 ? c.accent : c.muted, background: dim < 1 ? c.accentSoft : 'transparent' }} onClick={cycleDim} title={t('floatPanel.dimTip')}>{Math.round(dim * 100)}%</button>
+        <button className="fp-btn" style={iconBtn} onClick={onClose} title={t('floatPanel.closeTip')}><X size={16} /></button>
       </div>
 
       {/* PINNED: Pause/Resume + the live reading/analyzing line stay above the
@@ -166,16 +171,16 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
       <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 7, padding: '2px 0 0' }}>
         <div style={{ display: 'flex', gap: 7 }}>
           {paused
-            ? <button className="fp-btn fp-pulse" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> Resume</button>
+            ? <button className="fp-btn fp-pulse" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onPause}><Play size={15} /> {t('floatPanel.resume')}</button>
             : watching
-              ? <button className="fp-btn" style={{ ...ghost, flex: 1, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> Pause</button>
-              : <button className="fp-btn" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> Watch my screen</button>}
+              ? <button className="fp-btn" style={{ ...ghost, flex: 1, justifyContent: 'center', height: 40, fontSize: 13, color: c.warn, borderColor: c.warnRing, background: c.warnSoft }} onClick={onPause}><Square size={13} /> {t('floatPanel.pause')}</button>
+              : <button className="fp-btn" style={{ ...primary, flex: 1, justifyContent: 'center', height: 40, fontSize: 13.5 }} onClick={onWatch}><Eye size={15} /> {t('floatPanel.watchScreen')}</button>}
           {/* End is now always visible in the floater (owner: End button was not
               reachable here) - ends the task and builds the summary, same as the
               console's End. Close (X, top-right) only pops the steps back. */}
-          <button className="fp-btn" style={{ ...ghost, flexShrink: 0, justifyContent: 'center', height: 40, padding: '0 15px', fontSize: 13, fontWeight: 650, color: c.danger, borderColor: c.border }} onClick={onEnd} title="End this task and build a summary">End</button>
+          <button className="fp-btn" style={{ ...ghost, flexShrink: 0, justifyContent: 'center', height: 40, padding: '0 15px', fontSize: 13, fontWeight: 650, color: c.danger, borderColor: c.border }} onClick={onEnd} title={t('floatPanel.endTip')}>{t('floatPanel.end')}</button>
         </div>
-        {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>Share your whole screen so the steps update as you work.</div>}
+        {!watching && !paused && <div style={{ fontSize: fs(12), color: c.faint, textAlign: 'center', lineHeight: 1.45, padding: '0 6px' }}>{t('floatPanel.shareHint')}</div>}
       </div>
 
       {/* SCROLL REGION: everything between the fixed header and the fixed Ask
@@ -183,8 +188,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
           plan mini-map rail sits on the left and the column is centered/boxed. */}
       <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: wide ? 'grid' : 'flex', gridTemplateColumns: wide ? '220px minmax(0,1fr)' : undefined, flexDirection: 'column', gap: wide ? 16 : 9, alignItems: wide ? 'start' : undefined }}>
       {wide && steps.length > 0 && (
-        <aside style={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 8, ...card, padding: 10 }} aria-label="Plan">
-          <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>Plan <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps)}</span></span>
+        <aside style={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 8, ...card, padding: 10 }} aria-label={t('floatPanel.plan')}>
+          <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>{t('floatPanel.plan')} <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps)}</span></span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '48vh', overflowY: 'auto' }}>
             {steps.map((s, i) => { const isDone = s.status === 'done', isNow = s.status === 'current'; return (
               <button key={i} className="fp-btn" onClick={() => onStep(i, 'current')} title={plainStep(s.text)} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: '6px 7px', borderRadius: 8, border: `1px solid ${isNow ? c.accentRing : 'transparent'}`, background: isNow ? c.accentSoft : 'transparent', color: isNow ? c.text : isDone ? c.faint : c.muted, fontFamily: FONT, fontSize: fs(12), lineHeight: 1.4, fontWeight: isNow ? 650 : 500 }}>
@@ -194,7 +199,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
               </button>
             ) })}
           </div>
-          <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 32 }} onClick={() => setStepsOpen(true)} title="View the full plan"><MenuIcon size={14} /> Full plan</button>
+          <button className="fp-btn" style={{ ...ghost, justifyContent: 'center', height: 32 }} onClick={() => setStepsOpen(true)} title={t('floatPanel.viewFullPlanTip')}><MenuIcon size={14} /> {t('floatPanel.fullPlan')}</button>
         </aside>
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 9, width: '100%', maxWidth: wide ? 680 : undefined, margin: wide ? '0 auto' : undefined, ...(wide ? { background: c.panel, border: `1px solid ${c.border}`, borderRadius: 16, padding: 14, boxShadow: c.shadow } : {}) }}>
@@ -246,19 +251,19 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
               {celebrate && <span className="fp-cele-ring" style={{ position: 'absolute', inset: -5, borderRadius: '50%', border: `2px solid ${c.good}`, opacity: 0.45 }} aria-hidden="true" />}
               <Check size={24} strokeWidth={2.6} style={{ position: 'relative', zIndex: 1 }} />
             </span>
-            <div style={{ fontFamily: DISPLAY, fontSize: fs(17), fontWeight: 800, letterSpacing: '-.01em', color: c.text, lineHeight: 1.2 }}>Task complete</div>
+            <div style={{ fontFamily: DISPLAY, fontSize: fs(17), fontWeight: 800, letterSpacing: '-.01em', color: c.text, lineHeight: 1.2 }}>{t('floatPanel.complete.title')}</div>
             {/* Honest count (same rule as the console's celebration card): "All N"
                 only when every step is done, else done-of-total. */}
-            <div style={{ fontSize: fs(12.5), lineHeight: 1.5, color: c.muted, maxWidth: 320 }}>{steps.length ? (doneN === steps.length ? `All ${steps.length} step${steps.length === 1 ? '' : 's'} done.` : `${doneN} of ${steps.length} steps done.`) : 'Nicely done.'} Your report is ready in the main window.</div>
-            {onStartAnother && <button className="fp-btn" style={{ ...primary, height: 38, padding: '0 18px', fontSize: 13, fontWeight: 700 }} onClick={onStartAnother} title="Start a new task"><Plus size={15} strokeWidth={2.6} /> Start another task</button>}
+            <div style={{ fontSize: fs(12.5), lineHeight: 1.5, color: c.muted, maxWidth: 320 }}>{steps.length ? (doneN === steps.length ? t.n('floatPanel.complete.allDone', steps.length) : t('floatPanel.complete.someDone', { done: doneN, total: steps.length })) : t('floatPanel.complete.nicely')} {t('floatPanel.complete.report')}</div>
+            {onStartAnother && <button className="fp-btn" style={{ ...primary, height: 38, padding: '0 18px', fontSize: 13, fontWeight: 700 }} onClick={onStartAnother} title={t('floatPanel.complete.startAnotherTip')}><Plus size={15} strokeWidth={2.6} /> {t('floatPanel.complete.startAnother')}</button>}
           </div>
               ) : current ? (
                 <>
                   {prominent && reading}
                   <StepCard step={current} index={idx} total={steps.length} guidance={guidance} confirmN={fpConfirm} busy={busy}
                     hint={paused
-                      ? <span className="gv-step-hint">Paused. Resume to keep this live.</span>
-                      : !watching && <span className="gv-step-hint">Watch my screen to keep this live</span>}
+                      ? <span className="gv-step-hint">{t('floatPanel.hint.paused')}</span>
+                      : !watching && <span className="gv-step-hint">{t('floatPanel.hint.watch')}</span>}
                     onDone={() => { if (onVerdictDismiss) onVerdictDismiss(); onStep(idx, 'done') }}
                     doneReady={!!(stepVerdict && stepVerdict.kind === VERIFY_DONE)}
                     notice={onVerify ? <VerifyVerdict verdict={stepVerdict} verifying={verifying} onRetry={onVerify} onDismiss={onVerdictDismiss} /> : null}
@@ -266,24 +271,24 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
                   {!prominent && reading}
                   {steps.length > 1 && onNav && (
                     <div className="gv-nav">
-                      <button type="button" className="gv-nav-btn" disabled={idx <= 0} onClick={() => onNav(-1)} title="Go to the previous step"><ChevronLeft size={15} /> Prev</button>
+                      <button type="button" className="gv-nav-btn" disabled={idx <= 0} onClick={() => onNav(-1)} title={t('floatPanel.nav.prevTip')}><ChevronLeft size={15} /> {t('floatPanel.nav.prev')}</button>
                       <div className="gv-nav-mid">
-                        <span className="gv-nav-count">Step {idx + 1} of {steps.length}</span>
+                        <span className="gv-nav-count">{t('floatPanel.nav.count', { n: idx + 1, total: steps.length })}</span>
                         <div className="gv-nav-track"><div className="gv-nav-fill" style={{ width: `${((idx + 1) / steps.length) * 100}%` }} /></div>
                       </div>
-                      <button type="button" className="gv-nav-btn" disabled={idx >= steps.length - 1 || current.status !== 'done'} onClick={() => onNav(1)} title={current.status !== 'done' ? 'Finish this step first. It advances on its own when done.' : 'Go to the next step'}>Next <ChevronRight size={15} /></button>
+                      <button type="button" className="gv-nav-btn" disabled={idx >= steps.length - 1 || current.status !== 'done'} onClick={() => onNav(1)} title={current.status !== 'done' ? t('floatPanel.nav.finishFirst') : t('floatPanel.nav.nextTip')}>{t('floatPanel.nav.next')} <ChevronRight size={15} /></button>
                     </div>
                   )}
                   {next.map(({ step: s, index: n }) => (
                     <div key={n} className="gv-next" title={plainStep(s.text)}>
-                      <span className="gv-k">Next</span>
+                      <span className="gv-k">{t('floatPanel.nextUp')}</span>
                       <span className="gv-next-n">{n + 1}</span>
                       <span className="gv-next-t"><RichText text={s.text} accent="var(--gv-muted)" chips={false} /></span>
                     </div>
                   ))}
                 </>
               ) : (
-          <div style={{ ...card, color: c.muted, fontSize: fs(13), textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>Plan your steps in the main window, then they appear here.</div>
+          <div style={{ ...card, color: c.muted, fontSize: fs(13), textAlign: 'center', padding: '18px 14px', borderStyle: 'dashed', boxShadow: 'none', lineHeight: 1.5 }}>{t('floatPanel.empty')}</div>
               )}
             </FadeSwap>
           )
@@ -299,11 +304,11 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
           <div style={{ display: 'flex', flexDirection: 'column', gap: stepsOpen ? 7 : 0 }}>
             <button className="fp-btn" onClick={() => setStepsOpen((o) => !o)}
               style={{ ...ghost, width: '100%', justifyContent: 'space-between', height: 36, background: stepsOpen ? c.panel2 : 'transparent', borderColor: stepsOpen ? c.border : 'transparent', color: c.muted }}
-              title={stepsOpen ? 'Hide the full plan' : 'View the full plan'}>
+              title={stepsOpen ? t('floatPanel.hideFullPlanTip') : t('floatPanel.viewFullPlanTip')}>
               <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8, minWidth: 0 }}>
                 <MenuIcon size={14} style={{ color: c.faint, flexShrink: 0 }} />
-                <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>View full plan</span>
-                <span style={{ fontSize: 11.5, fontWeight: 700, color: c.text, fontVariantNumeric: 'tabular-nums' }}>{doneN} of {steps.length} done</span>
+                <span style={{ ...eyebrow, fontSize: 10.5, letterSpacing: '.08em', color: c.faint }}>{t('floatPanel.viewFullPlan')}</span>
+                <span style={{ fontSize: 11.5, fontWeight: 700, color: c.text, fontVariantNumeric: 'tabular-nums' }}>{t('floatPanel.doneOf', { done: doneN, total: steps.length })}</span>
               </span>
               <ChevronRight size={16} style={{ color: c.faint, flexShrink: 0, transition: 'transform .18s cubic-bezier(.4,0,.2,1)', transform: stepsOpen ? 'rotate(90deg)' : 'none' }} />
             </button>
@@ -318,10 +323,10 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
                       {isNow && <span style={{ ...accentBar, width: 3 }} />}
                       <button className="fp-btn" style={{ flexShrink: 0, width: 22, height: 22, borderRadius: 7, display: 'grid', placeItems: 'center', padding: 0, marginTop: 1,
                         border: `1.5px solid ${isDone ? 'transparent' : isNow ? c.accent : c.borderStrong}`, background: isDone ? c.goodSoft : 'transparent', color: isDone ? c.good : isNow ? c.accent : c.faint }}
-                        onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? 'Mark not done' : 'Mark done'}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
+                        onClick={() => onStep(i, isDone ? 'current' : 'done')} title={isDone ? t('floatPanel.markNotDone') : t('floatPanel.markDone')}>{isDone ? <Check size={14} strokeWidth={2.5} /> : <span style={{ fontSize: 10.5, fontWeight: 700, lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>{i + 1}</span>}</button>
                       {isNow
                         ? <span style={{ flex: 1, minWidth: 0, fontSize: fs(13), lineHeight: 1.45, color: c.text, fontWeight: 650, overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></span>
-                        : <button onClick={() => onStep(i, 'current')} title="Jump to this step" style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, fontFamily: FONT, fontSize: fs(13), lineHeight: 1.45, color: isDone ? c.faint : c.muted, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></button>}
+                        : <button onClick={() => onStep(i, 'current')} title={t('floatPanel.jumpTip')} style={{ flex: 1, minWidth: 0, textAlign: 'left', background: 'transparent', border: 'none', padding: 0, fontFamily: FONT, fontSize: fs(13), lineHeight: 1.45, color: isDone ? c.faint : c.muted, fontWeight: 500, textDecoration: isDone ? 'line-through' : 'none', overflowWrap: 'anywhere' }}><RichText text={s.text} accent={c.accent} /></button>}
                     </div>
                   )
                 })}
@@ -340,16 +345,16 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
         {onAddContext && <input ref={floatFileRef} type="file" accept="image/*,.txt,.md,.markdown,.csv,.tsv,.json,.log,.yml,.yaml,.xml,.html,.htm" style={{ display: 'none' }} onChange={(e) => { const f = e.target.files && e.target.files[0]; if (f) onAddContext(f); e.target.value = '' }} />}
         <input
           style={{ width: '100%', height: 40, background: c.inputBg, color: c.text, border: `1px solid ${c.borderStrong}`, borderRadius: 11, padding: '0 13px', outline: 'none', fontSize: 13.5, fontFamily: FONT, boxShadow: light ? '0 1px 2px rgba(16,24,40,.04) inset' : 'none' }}
-          placeholder="Ask, say what to analyze, or attach a screenshot or document" value={floatQ}
+          placeholder={t('floatPanel.askPlaceholder')} value={floatQ}
           onChange={(e) => setFloatQ(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && floatQ.trim()) onAsk(floatQ.trim()) }}
           onPaste={(e) => { if (!onAddContext) return; const items = e.clipboardData && e.clipboardData.items; if (!items) return; for (const it of items) { if (it.type && it.type.startsWith('image/')) { const f = it.getAsFile(); if (f) { e.preventDefault(); onAddContext(f); return } } } }}
         />
         <div style={{ display: 'flex', gap: 6, marginTop: 9 }}>
-          <button className="fp-btn" style={{ ...primary, flex: 1.25, minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : <><ArrowRight size={14} style={{ flexShrink: 0 }} /> Ask</>}</button>
-          {onAddContext && <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy} onClick={() => floatFileRef.current && floatFileRef.current.click()} title="Attach a screenshot, photo, or document. It is considered and your steps update if needed." aria-label="Attach a screenshot or document"><Paperclip size={14} style={{ flexShrink: 0 }} /></button>}
-          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title="Screenshot now and analyze. Type a focus above, or leave blank for a full read."><ScanLine size={14} style={{ flexShrink: 0 }} /> Analyze</button>
-          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={onResearch} title="Look up the latest on the web, then answer (only when you tap it)."><Globe size={14} style={{ flexShrink: 0 }} /> Research</button>
+          <button className="fp-btn" style={{ ...primary, flex: 1.25, minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy || !floatQ.trim()} onClick={() => floatQ.trim() && onAsk(floatQ.trim())}>{busy ? <Loader2 size={13} className="spin" /> : <><ArrowRight size={14} style={{ flexShrink: 0 }} /> {t('floatPanel.ask')}</>}</button>
+          {onAddContext && <button className="fp-btn" style={{ ...ghost, flex: '0 0 auto', minWidth: 0, padding: '0 10px', justifyContent: 'center' }} disabled={busy} onClick={() => floatFileRef.current && floatFileRef.current.click()} title={t('floatPanel.attachTip')} aria-label={t('floatPanel.attachAria')}><Paperclip size={14} style={{ flexShrink: 0 }} /></button>}
+          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={() => onAnalyze(floatQ.trim())} title={t('floatPanel.analyzeTip')}><ScanLine size={14} style={{ flexShrink: 0 }} /> {t('floatPanel.analyze')}</button>
+          <button className="fp-btn" style={{ ...ghost, flex: 1, minWidth: 0, padding: '0 9px', justifyContent: 'center' }} disabled={busy} onClick={onResearch} title={t('floatPanel.researchTip')}><Globe size={14} style={{ flexShrink: 0 }} /> {t('floatPanel.research')}</button>
         </div>
         {err && <div style={{ marginTop: 9, display: 'flex', gap: 7, alignItems: 'flex-start', fontSize: 12, color: c.danger, lineHeight: 1.45 }}><AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 2 }} /> <span style={{ overflowWrap: 'anywhere' }}>{err}</span></div>}
       </div>
