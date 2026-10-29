@@ -11256,4 +11256,119 @@ export default {
     allStepsDone: '{total} adımın tümü tamam',
     stepProgress: '{total} adımdan {current}. adım · {done} tamam',
   },
+  securityPage: {
+    seo: {
+      title: "Güvenlik ve Gizlilik - AdmireVeda'dan WorkCoPilot",
+      description: 'WorkCoPilot verilerinizi nasıl korur: hassas değerler herhangi bir şey gönderilmeden önce cihazınızda maskelenir veya tokenize edilir, kod siz çalıştırmadan önce denetlenir, her hesapta bir kimlik doğrulayıcı, oturum başına bir denetim günlüğü, beklemede şifreleme ve raporladığınız çerçevelerle eşlenmiş uyumluluk kanıtları.',
+    },
+    pdfNewTab: ' (PDF, yeni sekmede açılır)',
+    hero: {
+      eyebrow: 'Tasarımdan gizli',
+      h1: 'Sırlarınız cihazınızdan asla ayrılmaz.',
+      p: 'Hassas veriler, herhangi bir şey gönderilmeden önce kendi cihazınızda ayıklanır. AI görevinizin biçimini görür, sırlarınızı asla.',
+      paper: 'Güvenlik ve Gizlilik raporu',
+      enterprise: 'Kurumsal denetimler',
+    },
+    guaranteesAria: 'Neler korunuyor',
+    guarantees: [
+      {
+        t: 'Cihazınızda maskeleme',
+        d: 'Hassas değerler, herhangi bir şey gönderilmeden önce ekran görüntülerinde karartılır ve metinde tokenize edilir.',
+      },
+      {
+        t: 'Kod siz çalıştırmadan önce denetlenir',
+        d: 'Yerleşik SAST ve OSV güvenlik açığı veritabanına karşı canlı bağımlılık denetimi.',
+      },
+      {
+        t: 'Her hesapta kimlik doğrulayıcı',
+        d: "Parola, şirket SSO'su ve sosyal oturum açma, hepsi aynı ikinci faktörden geçer.",
+      },
+      {
+        t: 'Her oturum için denetim günlüğü',
+        d: 'Ne gönderildi, ekranınızdan ne okundu, ne denetlendi, filtrelendi ve işaretlendi.',
+      },
+      {
+        t: 'Beklemede şifreli',
+        d: 'Saklanan anahtarlar, sırlar ve rapor ekran görüntüleri AES-256-GCM ile şifrelenir.',
+      },
+      {
+        t: 'Sizin sınırınız, sizin anahtarlarınız',
+        d: 'Şirketinizin veya kendi AI anahtarlarınızla ya da şirket içi altyapıda çalışır. Salt okunur: yol gösterir, sistemlerinizi asla değiştirmez.',
+      },
+    ],
+    proof: {
+      inText: 'Metinde',
+      aria: 'Metinde aynı koruma: her hassas değer bir token olur, gerçek değer cihazınızda kalır',
+      end: 'Yanıt cihazınızda yeniden oluşturulur. Yerleşik dedektörlerin üzerine kendi sözcüklerinizi ve kalıplarınızı ekleyin.',
+    },
+    handling: {
+      h2: 'Verileriniz nasıl işlenir',
+      sub: 'Ürünün bugün yaptıkları. Bir uyumluluk iddiası değildir.',
+      groups: [
+        {
+          title: 'Cihazınızdan ayrılanlar',
+          items: [
+            'Küçültülmüş ekran kareleri, hassas satırlar önceden karartılmış',
+            'Metniniz, hassas değerler önceden token ile değiştirilmiş',
+            'Ekli belgelerden denetimli metin, asla dosyanın kendisi değil (masaüstü uygulaması)',
+          ],
+        },
+        {
+          title: 'Sakladıklarımız',
+          items: [
+            'Maskelenmiş kilometre taşı ekran görüntüleriyle bir oturum raporu (kapatabilirsiniz)',
+            'Oturum başına bir denetim günlüğü, neyin iletildiğini kaydeder',
+            'Yeniden açıp inceleyebilmeniz için oturum geçmişiniz',
+          ],
+        },
+        {
+          title: 'Asla saklanmayanlar',
+          items: ['Kaynak belgeleriniz', 'Ham ekran kareleri', 'Gerçek hassas değerler, AI onları asla görmez'],
+        },
+      ],
+    },
+    facts: {
+      aria: 'Saklama ve veri konumu',
+      retention: '<b>Siz silene kadar saklanır.</b> Herhangi bir oturumu istediğiniz zaman silin; yöneticiler kendi üyelerini inceler. Otomatik bir saklama süresi, eski oturumları zamanlanmış olarak temizleyebilir.',
+    },
+    compliance: {
+      h2: 'Raporladığınız çerçeveler için kanıt',
+      sub: 'Yöneticiniz şirket başına bir politika etkinleştirir ve kilitler. Her oturum günlüğe kaydedilir ve raporlanabilir. Onay işaretli ön ayarlar etkinleştirilmeye hazır gelir.',
+      groups: {
+        privacy: 'Gizlilik',
+        standards: 'Standartlar',
+        sector: 'Sektör',
+      },
+      frameworksAria: '{group} çerçeveleri',
+      presetSr: 'Ön ayar ürünle birlikte gelir: ',
+      honest: 'Denetimleri ve kanıtları biz sağlarız. Herhangi bir çerçeveye karşı sertifikasyon iddia etmiyoruz; uyumluluğu kuruluşunuz, denetçileriyle birlikte üstlenir.',
+    },
+    contact: {
+      issue: '<b>Bir güvenlik sorunu mu buldunuz?</b> <a>support@coesecurity.com</a> adresine e-posta gönderin (güvenlik, gizlilik, uyumluluk, imzalı DPA). Kamuya açıklamadan önce doğrulamamız ve düzeltmemiz için bize zaman tanıyın; iyi niyetli araştırmalara açığız.',
+      help: "Ürün yardımı ve faturalama: <a>support@admireveda.com</a>. AdmireVeda'nın WorkCoPilot'u, COE Security LLC'nin bir ürünüdür.",
+    },
+    cta: {
+      aria: 'Sonraki adımlar',
+      paper: 'Güvenlik ve Gizlilik raporunu okuyun',
+      back: "WorkCoPilot'a geri dön",
+    },
+    mock: {
+      beforeAria: 'Koruma öncesi uygulama ekranı, hassas değerler görünür',
+      afterAria: 'Cihaz üzerinde koruma sonrası uygulama ekranı, hassas değerler karartılmış',
+      nav: ['Panel', 'Müşteriler', 'Faturalama', 'Entegrasyonlar', 'Ayarlar'],
+      crumbRoot: 'Entegrasyonlar',
+      crumbLeaf: 'Ödeme ağ geçidi',
+      cardTitle: 'Bağlantı ayrıntıları',
+      fields: [
+        'Fatura e-postası',
+        'Telefon',
+        'Kayıtlı kart',
+        'API anahtarı',
+        'Vergi numarası',
+        'Webhook sunucusu',
+        'Plan',
+        'Durum',
+      ],
+    },
+  },
 }

@@ -11248,4 +11248,123 @@ export default {
     allStepsDone: 'Semua {total} langkah selesai',
     stepProgress: 'Langkah {current} dari {total} · {done} selesai',
   },
+  securityPage: {
+    seo: {
+      title: 'Keamanan dan Privasi - WorkCoPilot oleh AdmireVeda',
+      description: 'Cara WorkCoPilot melindungi data Anda: nilai sensitif disamarkan atau ditokenisasi di perangkat Anda sebelum apa pun dikirim, kode diperiksa sebelum Anda menjalankannya, autentikator di setiap akun, log audit per sesi, enkripsi saat tersimpan, dan bukti kepatuhan yang dipetakan ke kerangka kerja yang Anda laporkan.',
+    },
+    pdfNewTab: ' (PDF, terbuka di tab baru)',
+    hero: {
+      eyebrow: 'Privat sejak dirancang',
+      h1: 'Rahasia Anda tidak pernah meninggalkan perangkat Anda.',
+      p: 'Data sensitif dihapus di perangkat Anda sendiri sebelum apa pun dikirim. AI hanya melihat bentuk tugas Anda, tidak pernah rahasianya.',
+      paper: 'Dokumen Keamanan & Privasi',
+      enterprise: 'Kontrol enterprise',
+    },
+    guaranteesAria: 'Apa yang dilindungi',
+    guarantees: [
+      {
+        t: 'Penyamaran di perangkat Anda',
+        d: 'Nilai sensitif dihitamkan di tangkapan layar dan ditokenisasi di teks sebelum apa pun dikirim.',
+      },
+      {
+        t: 'Kode diperiksa sebelum Anda menjalankannya',
+        d: 'SAST bawaan ditambah pemeriksaan dependensi langsung terhadap basis data kerentanan OSV.',
+      },
+      {
+        t: 'Autentikator di setiap akun',
+        d: 'Kata sandi, SSO perusahaan, dan login sosial semuanya melewati faktor kedua yang sama.',
+      },
+      {
+        t: 'Log audit untuk setiap sesi',
+        d: 'Apa yang dikirim, apa yang dibaca dari layar Anda, apa yang diperiksa, disaring, dan ditandai.',
+      },
+      {
+        t: 'Terenkripsi saat tersimpan',
+        d: 'Kunci, rahasia, dan tangkapan layar laporan yang tersimpan dienkripsi dengan AES-256-GCM.',
+      },
+      {
+        t: 'Batas Anda, kunci Anda',
+        d: 'Berjalan dengan kunci AI perusahaan Anda atau milik Anda sendiri, atau on-premise. Hanya-baca: ia memandu, tidak pernah mengubah sistem Anda.',
+      },
+    ],
+    proof: {
+      inText: 'Dalam teks',
+      aria: 'Perlindungan yang sama dalam teks: setiap nilai sensitif menjadi token, nilai aslinya tetap di perangkat Anda',
+      end: 'Jawaban dibangun kembali di perangkat Anda. Tambahkan kata dan pola Anda sendiri di atas detektor bawaan.',
+    },
+    handling: {
+      h2: 'Cara data Anda ditangani',
+      sub: 'Apa yang dilakukan produk saat ini. Bukan klaim kepatuhan.',
+      groups: [
+        {
+          title: 'Apa yang meninggalkan perangkat Anda',
+          items: [
+            'Bingkai layar berukuran kecil, baris sensitif sudah dihitamkan',
+            'Teks Anda, nilai sensitif sudah diganti dengan token',
+            'Teks terkendali dari dokumen terlampir, tidak pernah filenya (aplikasi desktop)',
+          ],
+        },
+        {
+          title: 'Apa yang kami simpan',
+          items: [
+            'Satu laporan sesi, dengan tangkapan layar tonggak yang sudah disamarkan (Anda dapat menonaktifkannya)',
+            'Satu log audit per sesi, mencatat apa yang dikirimkan',
+            'Riwayat sesi Anda, agar Anda dapat membuka dan meninjaunya kembali',
+          ],
+        },
+        {
+          title: 'Apa yang tidak pernah disimpan',
+          items: [
+            'Dokumen sumber Anda',
+            'Bingkai layar mentah',
+            'Nilai sensitif yang asli, AI tidak pernah melihatnya',
+          ],
+        },
+      ],
+    },
+    facts: {
+      aria: 'Retensi dan residensi data',
+      retention: '<b>Disimpan sampai Anda menghapusnya.</b> Hapus sesi mana pun kapan saja; admin meninjau anggotanya sendiri. Jendela retensi otomatis dapat membersihkan sesi lama sesuai jadwal.',
+    },
+    compliance: {
+      h2: 'Bukti untuk kerangka kerja yang Anda laporkan',
+      sub: 'Admin Anda mengaktifkan satu kebijakan per perusahaan dan menguncinya. Setiap sesi dicatat dan dapat dilaporkan. Preset bertanda centang siap diaktifkan sejak awal.',
+      groups: {
+        privacy: 'Privasi',
+        standards: 'Standar',
+        sector: 'Sektor',
+      },
+      frameworksAria: 'Kerangka kerja {group}',
+      presetSr: 'Preset disertakan dengan produk: ',
+      honest: 'Kami menyediakan kontrol dan buktinya. Kami tidak mengklaim sertifikasi terhadap kerangka kerja mana pun; organisasi Anda memegang kepatuhan bersama auditornya.',
+    },
+    contact: {
+      issue: '<b>Menemukan masalah keamanan?</b> Kirim email ke <a>support@coesecurity.com</a> (keamanan, privasi, kepatuhan, DPA yang ditandatangani). Beri kami waktu untuk memastikan dan memperbaiki sebelum pengungkapan publik; riset dengan iktikad baik kami sambut.',
+      help: 'Bantuan produk dan penagihan: <a>support@admireveda.com</a>. WorkCoPilot, oleh AdmireVeda, adalah produk dari COE Security LLC.',
+    },
+    cta: {
+      aria: 'Langkah berikutnya',
+      paper: 'Baca dokumen Keamanan & Privasi',
+      back: 'Kembali ke WorkCoPilot',
+    },
+    mock: {
+      beforeAria: 'Layar aplikasi sebelum perlindungan, menampilkan nilai sensitif',
+      afterAria: 'Layar aplikasi setelah perlindungan di perangkat, dengan nilai sensitif dihitamkan',
+      nav: ['Dasbor', 'Pelanggan', 'Penagihan', 'Integrasi', 'Pengaturan'],
+      crumbRoot: 'Integrasi',
+      crumbLeaf: 'Gateway pembayaran',
+      cardTitle: 'Detail koneksi',
+      fields: [
+        'Email penagihan',
+        'Telepon',
+        'Kartu tersimpan',
+        'Kunci API',
+        'ID pajak',
+        'Host webhook',
+        'Paket',
+        'Status',
+      ],
+    },
+  },
 }

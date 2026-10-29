@@ -11252,4 +11252,123 @@ export default {
     allStepsDone: 'Đã hoàn thành tất cả {total} bước',
     stepProgress: 'Bước {current} trên {total} · {done} đã hoàn thành',
   },
+  securityPage: {
+    seo: {
+      title: 'Bảo mật và Quyền riêng tư - WorkCoPilot của AdmireVeda',
+      description: 'Cách WorkCoPilot bảo vệ dữ liệu của bạn: giá trị nhạy cảm được che hoặc thay bằng token ngay trên thiết bị của bạn trước khi gửi đi, mã được kiểm tra trước khi bạn chạy, trình xác thực trên mọi tài khoản, nhật ký kiểm tra cho từng phiên, mã hóa khi lưu trữ, và bằng chứng tuân thủ được ánh xạ tới các khung mà bạn phải báo cáo.',
+    },
+    pdfNewTab: ' (PDF, mở trong tab mới)',
+    hero: {
+      eyebrow: 'Riêng tư từ thiết kế',
+      h1: 'Bí mật của bạn không bao giờ rời khỏi thiết bị.',
+      p: 'Dữ liệu nhạy cảm được loại bỏ ngay trên thiết bị của bạn trước khi gửi đi. AI chỉ thấy hình dạng công việc của bạn, không bao giờ thấy bí mật.',
+      paper: 'Tài liệu Bảo mật & Quyền riêng tư',
+      enterprise: 'Kiểm soát doanh nghiệp',
+    },
+    guaranteesAria: 'Những gì được bảo vệ',
+    guarantees: [
+      {
+        t: 'Che dữ liệu trên thiết bị của bạn',
+        d: 'Giá trị nhạy cảm được bôi đen trong ảnh chụp màn hình và thay bằng token trong văn bản trước khi gửi đi.',
+      },
+      {
+        t: 'Mã được kiểm tra trước khi bạn chạy',
+        d: 'SAST tích hợp sẵn cùng kiểm tra phụ thuộc trực tiếp đối chiếu với cơ sở dữ liệu lỗ hổng OSV.',
+      },
+      {
+        t: 'Trình xác thực trên mọi tài khoản',
+        d: 'Mật khẩu, SSO công ty và đăng nhập mạng xã hội đều qua cùng một yếu tố xác thực thứ hai.',
+      },
+      {
+        t: 'Nhật ký kiểm tra cho mọi phiên',
+        d: 'Những gì đã gửi, những gì đã đọc từ màn hình của bạn, những gì đã kiểm tra, lọc và gắn cờ.',
+      },
+      {
+        t: 'Mã hóa khi lưu trữ',
+        d: 'Khóa, bí mật và ảnh chụp màn hình báo cáo được lưu trữ đều được mã hóa bằng AES-256-GCM.',
+      },
+      {
+        t: 'Ranh giới của bạn, khóa của bạn',
+        d: 'Chạy bằng khóa AI của công ty bạn hoặc của chính bạn, hoặc tại chỗ. Chỉ đọc: nó hướng dẫn, không bao giờ thay đổi hệ thống của bạn.',
+      },
+    ],
+    proof: {
+      inText: 'Trong văn bản',
+      aria: 'Cùng một lớp bảo vệ trong văn bản: mỗi giá trị nhạy cảm trở thành một token, giá trị thật vẫn ở trên thiết bị của bạn',
+      end: 'Câu trả lời được dựng lại trên thiết bị của bạn. Thêm từ ngữ và mẫu của riêng bạn bên cạnh các bộ phát hiện có sẵn.',
+    },
+    handling: {
+      h2: 'Dữ liệu của bạn được xử lý như thế nào',
+      sub: 'Những gì sản phẩm làm hôm nay. Không phải tuyên bố tuân thủ.',
+      groups: [
+        {
+          title: 'Những gì rời khỏi thiết bị của bạn',
+          items: [
+            'Khung hình màn hình thu nhỏ, các dòng nhạy cảm đã được bôi đen',
+            'Văn bản của bạn, giá trị nhạy cảm đã được thay bằng token',
+            'Văn bản đã kiểm soát từ tài liệu đính kèm, không bao giờ là tệp gốc (ứng dụng máy tính)',
+          ],
+        },
+        {
+          title: 'Những gì chúng tôi lưu trữ',
+          items: [
+            'Một báo cáo phiên, kèm ảnh chụp màn hình các mốc đã được che (bạn có thể tắt)',
+            'Một nhật ký kiểm tra cho mỗi phiên, ghi lại những gì đã truyền đi',
+            'Lịch sử phiên của bạn, để bạn có thể mở lại và xem xét',
+          ],
+        },
+        {
+          title: 'Những gì không bao giờ được lưu trữ',
+          items: [
+            'Tài liệu nguồn của bạn',
+            'Khung hình màn hình thô',
+            'Giá trị nhạy cảm thật, AI không bao giờ thấy chúng',
+          ],
+        },
+      ],
+    },
+    facts: {
+      aria: 'Lưu giữ và vị trí dữ liệu',
+      retention: '<b>Được giữ cho đến khi bạn xóa.</b> Xóa bất kỳ phiên nào bất cứ lúc nào; quản trị viên xem xét thành viên của chính họ. Một khoảng thời gian lưu giữ tự động có thể dọn các phiên cũ theo lịch.',
+    },
+    compliance: {
+      h2: 'Bằng chứng cho các khung mà bạn phải báo cáo',
+      sub: 'Quản trị viên của bạn kích hoạt một chính sách cho mỗi công ty và khóa lại. Mọi phiên đều được ghi nhật ký và có thể báo cáo. Các cấu hình sẵn có dấu tích đã sẵn sàng để kích hoạt.',
+      groups: {
+        privacy: 'Quyền riêng tư',
+        standards: 'Tiêu chuẩn',
+        sector: 'Ngành',
+      },
+      frameworksAria: 'Các khung {group}',
+      presetSr: 'Cấu hình sẵn đi kèm sản phẩm: ',
+      honest: 'Chúng tôi cung cấp các kiểm soát và bằng chứng. Chúng tôi không tuyên bố chứng nhận theo bất kỳ khung nào; tổ chức của bạn chịu trách nhiệm tuân thủ cùng với kiểm toán viên của mình.',
+    },
+    contact: {
+      issue: '<b>Phát hiện lỗi bảo mật?</b> Gửi email tới <a>support@coesecurity.com</a> (bảo mật, quyền riêng tư, tuân thủ, DPA đã ký). Hãy cho chúng tôi thời gian xác nhận và khắc phục trước khi công bố; chúng tôi hoan nghênh nghiên cứu thiện chí.',
+      help: 'Hỗ trợ sản phẩm và thanh toán: <a>support@admireveda.com</a>. WorkCoPilot, của AdmireVeda, là sản phẩm của COE Security LLC.',
+    },
+    cta: {
+      aria: 'Các bước tiếp theo',
+      paper: 'Đọc tài liệu Bảo mật & Quyền riêng tư',
+      back: 'Quay lại WorkCoPilot',
+    },
+    mock: {
+      beforeAria: 'Màn hình ứng dụng trước khi bảo vệ, hiển thị giá trị nhạy cảm',
+      afterAria: 'Màn hình ứng dụng sau khi bảo vệ trên thiết bị, giá trị nhạy cảm đã được bôi đen',
+      nav: ['Bảng điều khiển', 'Khách hàng', 'Thanh toán', 'Tích hợp', 'Cài đặt'],
+      crumbRoot: 'Tích hợp',
+      crumbLeaf: 'Cổng thanh toán',
+      cardTitle: 'Chi tiết kết nối',
+      fields: [
+        'Email thanh toán',
+        'Điện thoại',
+        'Thẻ đã lưu',
+        'Khóa API',
+        'Mã số thuế',
+        'Máy chủ webhook',
+        'Gói',
+        'Trạng thái',
+      ],
+    },
+  },
 }

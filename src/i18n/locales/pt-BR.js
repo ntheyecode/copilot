@@ -11271,4 +11271,123 @@ export default {
     allStepsDone: 'Todos os {total} passos concluídos',
     stepProgress: 'Passo {current} de {total} · {done} concluídos',
   },
+  securityPage: {
+    seo: {
+      title: 'Segurança e privacidade - WorkCoPilot da AdmireVeda',
+      description: 'Como o WorkCoPilot protege seus dados: valores sensíveis ocultados ou tokenizados no seu dispositivo antes de qualquer envio, código verificado antes de você executá-lo, autenticador em todas as contas, registro de auditoria por sessão, criptografia em repouso e evidências de conformidade mapeadas para os frameworks aos quais você presta contas.',
+    },
+    pdfNewTab: ' (PDF, abre em uma nova aba)',
+    hero: {
+      eyebrow: 'Privado por padrão',
+      h1: 'Seus segredos nunca saem do seu dispositivo.',
+      p: 'Os dados sensíveis são removidos no seu próprio dispositivo antes de qualquer envio. A AI vê a forma da sua tarefa, nunca os segredos.',
+      paper: 'Documento de segurança e privacidade',
+      enterprise: 'Controles corporativos',
+    },
+    guaranteesAria: 'O que está protegido',
+    guarantees: [
+      {
+        t: 'Ocultação no seu dispositivo',
+        d: 'Valores sensíveis são tarjados nas capturas de tela e tokenizados no texto antes de qualquer envio.',
+      },
+      {
+        t: 'Código verificado antes de você executá-lo',
+        d: 'SAST integrado e verificação de dependências em tempo real contra o banco de vulnerabilidades OSV.',
+      },
+      {
+        t: 'Autenticador em todas as contas',
+        d: 'Senha, SSO corporativo e login social passam todos pelo mesmo segundo fator.',
+      },
+      {
+        t: 'Registro de auditoria de cada sessão',
+        d: 'O que foi enviado, o que foi lido da sua tela, o que foi verificado, filtrado e sinalizado.',
+      },
+      {
+        t: 'Criptografado em repouso',
+        d: 'Chaves, segredos e capturas de tela de relatórios armazenados são criptografados com AES-256-GCM.',
+      },
+      {
+        t: 'Seu perímetro, suas chaves',
+        d: 'Funciona com as chaves de AI da sua empresa ou com as suas, ou on-premises. Somente leitura: ele orienta, nunca altera seus sistemas.',
+      },
+    ],
+    proof: {
+      inText: 'Em texto',
+      aria: 'A mesma proteção em texto: cada valor sensível vira um token, e o valor real fica no seu dispositivo',
+      end: 'A resposta é reconstruída no seu dispositivo. Adicione suas próprias palavras e padrões aos detectores integrados.',
+    },
+    handling: {
+      h2: 'Como seus dados são tratados',
+      sub: 'O que o produto faz hoje. Não é uma declaração de conformidade.',
+      groups: [
+        {
+          title: 'O que sai do seu dispositivo',
+          items: [
+            'Quadros de tela em tamanho reduzido, com as linhas sensíveis já tarjadas',
+            'Seu texto, com os valores sensíveis já substituídos por tokens',
+            'Texto governado dos documentos anexados, nunca o arquivo (app para desktop)',
+          ],
+        },
+        {
+          title: 'O que armazenamos',
+          items: [
+            'Um relatório por sessão, com capturas de tela dos marcos já ocultadas (você pode desativar)',
+            'Um registro de auditoria por sessão, com o que foi transmitido',
+            'Seu histórico de sessões, para você reabrir e revisar',
+          ],
+        },
+        {
+          title: 'O que nunca é armazenado',
+          items: [
+            'Seus documentos originais',
+            'Quadros de tela sem tratamento',
+            'Os valores sensíveis reais: a AI nunca os vê',
+          ],
+        },
+      ],
+    },
+    facts: {
+      aria: 'Retenção e residência dos dados',
+      retention: '<b>Mantido até você excluir.</b> Exclua qualquer sessão a qualquer momento; os administradores revisam os próprios membros. Uma janela de retenção automática pode eliminar sessões antigas de forma programada.',
+    },
+    compliance: {
+      h2: 'Evidências para os frameworks aos quais você presta contas',
+      sub: 'Seu administrador ativa uma política por empresa e a bloqueia. Cada sessão é registrada e pode gerar relatório. Os presets marcados com um sinal de confirmação já vêm prontos para ativar.',
+      groups: {
+        privacy: 'Privacidade',
+        standards: 'Normas',
+        sector: 'Setor',
+      },
+      frameworksAria: 'Frameworks de {group}',
+      presetSr: 'Preset incluído no produto: ',
+      honest: 'Nós fornecemos os controles e as evidências. Não alegamos certificação em nenhum framework; a conformidade é mantida pela sua organização junto aos seus auditores.',
+    },
+    contact: {
+      issue: '<b>Encontrou um problema de segurança?</b> Escreva para <a>support@coesecurity.com</a> (segurança, privacidade, conformidade, DPA assinado). Dê-nos tempo para confirmar e corrigir antes da divulgação pública; pesquisas de boa-fé são bem-vindas.',
+      help: 'Suporte ao produto e cobrança: <a>support@admireveda.com</a>. O WorkCoPilot, da AdmireVeda, é um produto da COE Security LLC.',
+    },
+    cta: {
+      aria: 'Próximos passos',
+      paper: 'Ler o documento de segurança e privacidade',
+      back: 'Voltar ao WorkCoPilot',
+    },
+    mock: {
+      beforeAria: 'Tela do app antes da proteção, mostrando valores sensíveis',
+      afterAria: 'Tela do app após a proteção no dispositivo, com os valores sensíveis tarjados',
+      nav: ['Painel', 'Clientes', 'Cobrança', 'Integrações', 'Configurações'],
+      crumbRoot: 'Integrações',
+      crumbLeaf: 'Gateway de pagamento',
+      cardTitle: 'Detalhes da conexão',
+      fields: [
+        'E-mail de cobrança',
+        'Telefone',
+        'Cartão cadastrado',
+        'Chave de API',
+        'CNPJ/CPF',
+        'Host do webhook',
+        'Plano',
+        'Status',
+      ],
+    },
+  },
 }

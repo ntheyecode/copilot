@@ -11264,4 +11264,123 @@ export default {
     allStepsDone: 'Alle {total} Schritte erledigt',
     stepProgress: 'Schritt {current} von {total} · {done} erledigt',
   },
+  securityPage: {
+    seo: {
+      title: 'Sicherheit und Datenschutz - WorkCoPilot von AdmireVeda',
+      description: 'So schützt WorkCoPilot Ihre Daten: Sensible Werte werden auf Ihrem Gerät geschwärzt oder tokenisiert, bevor etwas gesendet wird, Code wird geprüft, bevor Sie ihn ausführen, ein Authenticator auf jedem Konto, ein Audit-Protokoll pro Sitzung, Verschlüsselung im Ruhezustand und Compliance-Nachweise, zugeordnet zu den Frameworks, an die Sie berichten.',
+    },
+    pdfNewTab: ' (PDF, öffnet in einem neuen Tab)',
+    hero: {
+      eyebrow: 'Datenschutz durch Design',
+      h1: 'Ihre Geheimnisse verlassen Ihr Gerät nie.',
+      p: 'Sensible Daten werden auf Ihrem eigenen Gerät entfernt, bevor etwas gesendet wird. Die AI sieht die Struktur Ihrer Aufgabe, nie die Geheimnisse.',
+      paper: 'Whitepaper zu Sicherheit & Datenschutz',
+      enterprise: 'Enterprise-Kontrollen',
+    },
+    guaranteesAria: 'Was geschützt wird',
+    guarantees: [
+      {
+        t: 'Schwärzung auf Ihrem Gerät',
+        d: 'Sensible Werte werden in Screenshots geschwärzt und im Text tokenisiert, bevor etwas gesendet wird.',
+      },
+      {
+        t: 'Code geprüft, bevor Sie ihn ausführen',
+        d: 'Integriertes SAST plus eine Live-Prüfung der Abhängigkeiten gegen die OSV-Schwachstellendatenbank.',
+      },
+      {
+        t: 'Authenticator auf jedem Konto',
+        d: 'Passwort, Unternehmens-SSO und Social-Login durchlaufen alle denselben zweiten Faktor.',
+      },
+      {
+        t: 'Audit-Protokoll für jede Sitzung',
+        d: 'Was gesendet wurde, was von Ihrem Bildschirm gelesen wurde, was geprüft, gefiltert und markiert wurde.',
+      },
+      {
+        t: 'Verschlüsselt im Ruhezustand',
+        d: 'Gespeicherte Schlüssel, Geheimnisse und Berichts-Screenshots werden mit AES-256-GCM verschlüsselt.',
+      },
+      {
+        t: 'Ihre Grenze, Ihre Schlüssel',
+        d: 'Läuft mit den AI-Schlüsseln Ihres Unternehmens oder Ihren eigenen, oder on-premises. Nur lesend: es leitet an, es verändert Ihre Systeme nie.',
+      },
+    ],
+    proof: {
+      inText: 'Im Text',
+      aria: 'Derselbe Schutz im Text: Jeder sensible Wert wird zu einem Token, der echte Wert bleibt auf Ihrem Gerät',
+      end: 'Antwort auf Ihrem Gerät wiederhergestellt. Ergänzen Sie die integrierten Detektoren um eigene Wörter und Muster.',
+    },
+    handling: {
+      h2: 'So werden Ihre Daten verarbeitet',
+      sub: 'Was das Produkt heute tut. Keine Compliance-Aussage.',
+      groups: [
+        {
+          title: 'Was Ihr Gerät verlässt',
+          items: [
+            'Verkleinerte Bildschirmaufnahmen, sensible Zeilen bereits geschwärzt',
+            'Ihr Text, sensible Werte bereits durch Token ersetzt',
+            'Kontrollierter Text aus angehängten Dokumenten, nie die Datei (Desktop-App)',
+          ],
+        },
+        {
+          title: 'Was wir speichern',
+          items: [
+            'Ein Sitzungsbericht mit geschwärzten Meilenstein-Screenshots (Sie können ihn abschalten)',
+            'Ein Audit-Protokoll pro Sitzung, das festhält, was übertragen wurde',
+            'Ihr Sitzungsverlauf, damit Sie ihn erneut öffnen und prüfen können',
+          ],
+        },
+        {
+          title: 'Was nie gespeichert wird',
+          items: [
+            'Ihre Quelldokumente',
+            'Rohe Bildschirmaufnahmen',
+            'Die echten sensiblen Werte, die AI sieht sie nie',
+          ],
+        },
+      ],
+    },
+    facts: {
+      aria: 'Aufbewahrung und Datenstandort',
+      retention: '<b>Aufbewahrt, bis Sie es löschen.</b> Löschen Sie jede Sitzung jederzeit; Admins prüfen ihre eigenen Mitglieder. Ein automatisches Aufbewahrungsfenster kann ältere Sitzungen nach Zeitplan bereinigen.',
+    },
+    compliance: {
+      h2: 'Nachweise für die Frameworks, an die Sie berichten',
+      sub: 'Ihr Admin aktiviert eine Richtlinie pro Unternehmen und sperrt sie. Jede Sitzung wird protokolliert und ist berichtsfähig. Mit einem Häkchen markierte Vorlagen sind sofort einsatzbereit.',
+      groups: {
+        privacy: 'Datenschutz',
+        standards: 'Standards',
+        sector: 'Branche',
+      },
+      frameworksAria: '{group}-Frameworks',
+      presetSr: 'Vorlage wird mit dem Produkt ausgeliefert: ',
+      honest: 'Wir stellen die Kontrollen und die Nachweise bereit. Wir beanspruchen keine Zertifizierung nach irgendeinem Framework; Ihre Organisation verantwortet die Compliance gemeinsam mit ihren Prüfern.',
+    },
+    contact: {
+      issue: '<b>Ein Sicherheitsproblem gefunden?</b> Schreiben Sie an <a>support@coesecurity.com</a> (Sicherheit, Datenschutz, Compliance, unterzeichnete DPA). Geben Sie uns Zeit zur Bestätigung und Behebung vor einer Veröffentlichung; Forschung in gutem Glauben ist willkommen.',
+      help: 'Produkthilfe und Abrechnung: <a>support@admireveda.com</a>. WorkCoPilot von AdmireVeda ist ein Produkt der COE Security LLC.',
+    },
+    cta: {
+      aria: 'Nächste Schritte',
+      paper: 'Whitepaper zu Sicherheit & Datenschutz lesen',
+      back: 'Zurück zu WorkCoPilot',
+    },
+    mock: {
+      beforeAria: 'App-Bildschirm vor dem Schutz, mit sichtbaren sensiblen Werten',
+      afterAria: 'App-Bildschirm nach dem Schutz auf dem Gerät, sensible Werte geschwärzt',
+      nav: ['Dashboard', 'Kunden', 'Abrechnung', 'Integrationen', 'Einstellungen'],
+      crumbRoot: 'Integrationen',
+      crumbLeaf: 'Zahlungs-Gateway',
+      cardTitle: 'Verbindungsdetails',
+      fields: [
+        'Rechnungs-E-Mail',
+        'Telefon',
+        'Hinterlegte Karte',
+        'API-Schlüssel',
+        'Steuernummer',
+        'Webhook-Host',
+        'Tarif',
+        'Status',
+      ],
+    },
+  },
 }
