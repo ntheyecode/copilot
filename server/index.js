@@ -61,8 +61,10 @@ import { brainStore, configureBrainStore } from './brain_store.js'
 import { buildCompanyArchive } from './customer_export.js'
 import { retrieveForGoal } from './brain_retrieve.js'
 import { buildManifest } from './brain_ingest.js'
-import { EMBED, policyVersionOf } from './brain_model.js'
+import { EMBED, EMBED_MODELS, policyVersionOf } from './brain_model.js'
 import { embedderReady } from './brain_embed.js'
+import { queryBrain, BrainQueryError } from './brain_query.js'
+import { reembedTenant, ReembedError } from './brain_reembed.js'
 import { securityReview } from './security_gate.js'
 import { enforceRules, extractRulesAI, extractRulesHeuristic, ruleSummary } from './policy_rules.js'
 import { COMPLIANCE_PRESETS, COMPLIANCE_LABELS } from './compliance-presets.js'
@@ -2034,6 +2036,50 @@ app.post('/api/work/brain/clear', requireWorkAuth, requireCompanyAdmin, wrap(asy
   for (const s of sources) { const r = await brainStore.delete(cid, { sourceId: s.sourceId }); chunks += r.removed }
   store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_clear', reason, detail: `cleared ${sources.length} source(s), ${chunks} chunk(s)` })
   res.json({ cleared: sources.length, chunks })
+}))
+
+// ---- Company Brain: read-only QUERY interface (Wave 4) -----------------------
+// Any company user may query their OWN tenant's brain: top matching scrubbed
+// chunks with provenance (source + revision) and a relevance score. Company-scoped
+// (only req.workUser.companyId), reuses the one embedder + hybrid retriever, and
+// returns NO vectors, hashes, raw content, or AI provider/model names. A locked or
+// empty brain, or a bad query, returns a STATED error (never a silent empty).
+// AUTH NOTE (auditor): session auth only. The admin-issued, hashed, revocable
+// `brain:query` API token for external-platform access is DESIGNED in
+// docs/company-brain.md, not wired here (store.js is mid-split and db files are off
+// limits this pass). To add it later, insert a token-auth branch BEFORE this line
+// that sets req.workUser.companyId from the token's company, then revoke/scope check.
+app.post('/api/work/brain/query', requireWorkAuth, wrap(async (req, res) => {
+  const cid = req.workUser.companyId
+  if (!cid) return res.status(403).json({ error: 'The Company Brain is for company accounts.' })
+  const b = req.body || {}
+  try {
+    res.json(await queryBrain(cid, { q: b.q, topK: b.topK }))
+  } catch (e) {
+    if (e instanceof BrainQueryError) return res.status(e.status || 400).json({ error: e.message, code: e.code })
+    throw e
+  }
+}))
+
+// ---- Company Brain: re-embed under a larger/newer model (company admin) -------
+// Rebuilds the tenant's vectors with a different catalog model WITHOUT re-upload
+// (the store keeps the scrubbed text). Atomic: on any failure the brain is left
+// unchanged. Synchronous for now; for a very large corpus this should move to a
+// background job with streamed progress (see docs/company-brain.md "Re-embedding").
+app.post('/api/work/brain/reembed', requireWorkAuth, requireCompanyAdmin, wrap(async (req, res) => {
+  const cid = req.workUser.companyId; if (!cid) return res.status(403).json({ error: 'No company in scope.' })
+  const b = req.body || {}
+  if (!b.model) {
+    return res.status(400).json({ error: `Choose a target embedding model. Available: ${Object.keys(EMBED_MODELS).join(', ')}.`, models: Object.keys(EMBED_MODELS) })
+  }
+  try {
+    const out = await reembedTenant(cid, { model: b.model, batchSize: b.batchSize })
+    store.recordAdminAction({ userId: req.workUser.id, companyId: cid, action: 'brain_reembed', reason: 'rebuild brain vectors under a new embedding model', detail: `model ${out.model.name}, dim ${out.dim}, ${out.chunks} chunk(s)` })
+    res.json({ ok: true, ...out })
+  } catch (e) {
+    if (e instanceof ReembedError) return res.status(e.status || 400).json({ error: e.message, code: e.code })
+    throw e
+  }
 }))
 
 // ---- Company Brain: customer-held-key custody (enable / unlock / lock / rotate) -------
