@@ -5934,7 +5934,10 @@ export function setWorkProjectTaskState(workUserId, projectId, taskId, to, patch
 export function linkWorkProjectTaskSession(workUserId, projectId, taskId, sessionId) {
   const p = _findProject(workUserId, projectId); if (!p) throw httpErr(404, 'Project not found')
   const t = p.tasks.find((x) => x.id === taskId); if (!t) throw httpErr(404, 'Task not found')
-  t.sessionId = sessionId || null; t.expanded = true; persist(); return t
+  t.sessionId = sessionId || null; t.expanded = true
+  // Stamp the session with its project so the console and session rows can name it.
+  const s = findWorkSession(workUserId, sessionId); if (s) { s.projectId = p.id; s.projectName = p.name || null }
+  persist(); return t
 }
 
 // ---- Enterprise project management (flows, roles, assignment, risk) --------
@@ -6122,6 +6125,8 @@ export function linkAssignedTaskSession(userId, projectId, taskId, sessionId) {
   if (String(t.assigneeId) !== String(userId)) throw httpErr(403, 'That task is not assigned to you.')
   t.sessionId = sessionId || null; t.expanded = true
   if (t.state === 'pending' && proj.canTransitionTask('pending', 'active')) { t.state = 'active'; if (!t.startedAt) t.startedAt = new Date().toISOString() }
+  // Stamp the session with its project so the console and session rows can name it.
+  const s = findWorkSession(userId, sessionId); if (s) { s.projectId = p.id; s.projectName = p.name || null }
   p.state = proj.deriveProjectState(p); persist(); return t
 }
 
