@@ -84,9 +84,9 @@ export default deepMerge(en, {
       trustCancel: 'Cancel any time, no contract',
       feats: {
         // Daily-task line comes from the live pricing config (en.js tasksLine), not from here.
-        lite: ['Step-by-step on any task', 'Exact commands, code & links', 'Data privacy & security built in'],
+        lite: ['Step-by-step on any task', 'Exact commands, code & links', 'Your own documents as context', 'Data privacy & security built in'],
         basic: ['Step-by-step on any task', 'Exact commands, code & links', 'Roadmaps included', 'Floating guide + session write-up'],
-        advanced: ['Everything in Basic', 'Upload your own documents', 'Visual examples where they help', 'Priority guidance'],
+        advanced: ['Everything in Basic', 'More document context per task', 'Visual examples where they help', 'Priority guidance'],
         premium: ['Everything in Advanced', 'Projects: a large goal as a map of tasks', 'Generated visuals on demand', 'Highest-fidelity guidance', 'First in line, always'],
       },
     },
