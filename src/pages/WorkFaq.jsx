@@ -21,210 +21,135 @@ import SiteFooter from '../components/SiteFooter.jsx'
 import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive (also loads the brand fonts)
 import useSeo, { useJsonLd } from '../useSeo.js'   // per-route title/description/canonical (WEB-01) + safe JSON-LD
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'           // every visible string reads from the catalog (faqPage.* + seo.faq.*)
+import enFaq from '../i18n/locales/en/faqPage.js'  // the ENGLISH partial: anchors + question count derive from it (stable across translations)
 
 const SUPPORT = 'support@admireveda.com'           // product help, billing
 const LEGAL = 'support@coesecurity.com'            // privacy, legal, security
 const SALES = 'sales@admireveda.com'
+const CONTACT_VARS = { support: SUPPORT, legal: LEGAL, sales: SALES }   // {support} {legal} {sales} in the catalog strings
 
-// Each item: q = the question as people ask it; a = the direct, quotable
-// answer (one or two sentences); d = an optional one-line detail; links =
-// related pages (rendered as chips, kept out of the structured-data text so the
-// JSON-LD stays plain text).
+// The COPY (group title; per question q = the question as people ask it, a = the
+// direct, quotable answer, d = an optional one-line detail, links = chip labels)
+// lives in the catalog under faqPage.groups.<id> (src/i18n/locales/en/faqPage.js
+// is the English source). Code keeps what must never translate: the group id
+// (also its anchor), its number, and each question's related-page hrefs, in
+// question order (links[i] = hrefs of question i). The chips are kept out of the
+// structured-data text so the JSON-LD stays plain text.
 const GROUPS = [
-  {
-    id: 'what', n: '01', title: 'What it is',
-    items: [
-      { q: 'What is WorkCoPilot?',
-        a: 'WorkCoPilot watches your screen and tells you the exact next click, command, setting or code for the task in front of you, catches a wrong move, and keeps you on the correct step until the job is done.',
-        d: 'Made by AdmireVeda, a product of COE Security LLC.',
-        links: [{ label: 'How it works', href: '/workcopilot/how-it-works' }, { label: '60-second demo', href: '/demo' }] },
-      { q: 'How is it different from a chatbot or a general AI assistant?',
-        a: 'A chatbot answers from memory and cannot see where you are. WorkCoPilot reads your real screen, gives the next move for the tool you are actually in, confirms each step worked, and corrects you when a tool has changed.',
-        d: 'You can still ask it questions along the way.' },
-      { q: 'Does it do the work for me, or change anything in my systems?',
-        a: 'No. WorkCoPilot is read-only by design: it watches and guides, and never clicks, types or runs anything. You make every change yourself.',
-        d: 'That is what makes it safe on production consoles, finance systems and regulated environments.',
-        links: [{ label: 'Security', href: '/workcopilot/security' }] },
-      { q: 'What is it not built for?',
-        a: 'Reading or writing long documents for you, or deep analysis. WorkCoPilot is built for doing: filing, configuring, fixing, setting up, building, step by step on screen. Code is the exception; it writes and corrects code as part of the task.',
-        d: 'It also supports lawful work only and declines anything illegal or harmful.',
-        links: [{ label: 'Acceptable Use Policy', href: '/workcopilot/acceptable-use' }] },
-    ],
-  },
-  {
-    id: 'how', n: '02', title: 'How it works',
-    items: [
-      { q: 'How does a task go?',
-        a: 'Say what you want to get done. WorkCoPilot plans it, then guides you one step at a time on your own screen, with copy-ready text where that helps, and checks each step worked before moving on.',
-        d: 'You finish with a write-up of exactly what you did.' },
-      { q: 'What happens when I make a mistake?',
-        a: 'It spots the wrong turn the moment it happens, says why, and shows the fix. Risky values such as an open network range, an over-broad permission or a hard-coded secret are flagged before you save.' },
-      { q: 'Can I paste an error or attach a screenshot or document mid-task?',
-        a: 'Yes. Paste an error, a response, a screenshot or a document and the next steps adjust to it.',
-        d: 'Advanced and Premium can also upload reference documents to ground the steps; on the desktop app the file never leaves your device.',
-        links: [{ label: 'Compare plans', href: '/workcopilot/pricing' }] },
-      { q: 'Do I get a record of what I did?',
-        a: 'Yes. Every session ends with a clean write-up of what you did, redacted milestone screenshots, and an audit log of what was sent. Share it, repeat it, or keep it.',
-        d: 'Milestone screenshots can be turned off by you or your company admin.' },
-    ],
-  },
-  {
-    id: 'platforms', n: '03', title: 'Platforms and install',
-    items: [
-      { q: 'Do I need to install anything?',
-        a: 'No. WorkCoPilot runs in your browser and floats over your work, so it guides you even on locked-down machines and virtual desktops.',
-        d: 'A Windows desktop app adds a see-through overlay, hides from screen shares by default, and can run a full-screen guide on a second monitor. Browser, desktop and mobile come on one subscription.' },
-      { q: 'Does it work with desktop apps, terminals and on-prem consoles, not just websites?',
-        a: 'Yes. If it is on your screen, it can guide you through it: web apps, installed desktop apps, terminals, on-prem consoles at a local address, and your own custom tools.' },
-      { q: 'Can I use it from my phone?',
-        a: 'The browser version works on any device today. The Android app, which lets you point your camera at a screen or a device and get guided on the go, is coming soon.' },
-      { q: 'Which languages does it support?',
-        a: 'Sixteen languages, chosen automatically for your region. Switch anytime; your choice is remembered.' },
-    ],
-  },
-  {
-    id: 'security', n: '04', title: 'Security and privacy',
-    items: [
-      { q: 'What actually leaves my device?',
-        a: 'With data protection on, personal data, health data, secrets, keys and card numbers are stripped or tokenized on your own device before anything is sent. Only what is needed to guide the current step leaves.',
-        d: 'What leaves is a reduced screen frame with sensitive lines blacked out, and text with sensitive values replaced by tokens. The real values stay with you.',
-        links: [{ label: 'See the protection in action', href: '/workcopilot/security' }, { label: 'Privacy Policy', href: '/workcopilot/privacy' }] },
-      { q: 'Can I control what counts as sensitive?',
-        a: 'Yes. Add your own words and patterns to redact, tokenize or block on top of the built-in detectors. A company admin can lock the policy for every member, and compliance presets are one click to arm.',
-        links: [{ label: 'Security', href: '/workcopilot/security' }] },
-      { q: 'Can I use my own AI key so data stays inside my boundary?',
-        a: 'Yes. Run WorkCoPilot on your own or your company\'s AI key and every call stays on that key, inside your own provider relationship, with nothing silently rerouted.',
-        d: 'Keys are encrypted at rest. For per-company keys and team provisioning, ask about Enterprise.',
-        links: [{ label: 'Enterprise', href: '/workcopilot/enterprise' }, { label: 'DPA', href: '/workcopilot/dpa' }] },
-      { q: 'Are the commands and code it gives me safe to run?',
-        a: 'Yes. Every command, snippet and fix is written the secure way and checked for injection, hard-coded secrets, over-broad access and known-vulnerable libraries before it reaches you.' },
-      { q: 'Can someone manipulate it through my screen or a task?',
-        a: 'No. Whatever is on your screen or typed into a task is treated as information about the work, never as instructions. Attempts to make it break its rules or reach data that is not yours are declined and recorded for your administrator.' },
-      { q: 'Do you use cookies?',
-        a: 'One strictly necessary sign-in cookie. Non-essential storage stays off until you allow it, and rejecting is as easy as accepting. Change your choice anytime from the footer.',
-        links: [{ label: 'Cookie Policy', href: '/workcopilot/cookie-policy' }] },
-    ],
-  },
-  {
-    id: 'pricing', n: '05', title: 'Pricing and billing',
-    items: [
-      { q: 'How much does it cost?',
-        a: 'Four self-service plans, Lite, Basic, Advanced and Premium, each with guided major tasks and hours of live guidance, plus a custom-priced Enterprise plan. Current prices are side by side on the pricing page.',
-        d: 'Billed monthly; annual billing at a discount may be offered at checkout. Checkout is by Stripe, and we never see your card number.',
-        links: [{ label: 'See pricing', href: '/workcopilot/pricing' }] },
-      { q: 'What counts as a task?',
-        a: 'A task is a major task: one goal, guided end to end through every sub-step it takes. Security and privacy come with every plan, never as an upsell.',
-        d: 'Basic adds roadmaps, the floating guide and the session write-up; Advanced adds document uploads and more hours; Premium adds generated visuals and priority in the guidance queue.',
-        links: [{ label: 'Compare plans', href: '/workcopilot/pricing' }] },
-      { q: 'What if I run out of hours?',
-        a: 'Top up an extra hour whenever you need it. An extra hour adds one more task, and purchased time never expires.',
-        d: 'Your daily hours reset each evening, US Eastern time. Pause anytime and come back where you left off.',
-        links: [{ label: 'Top-up rates', href: '/workcopilot/pricing' }] },
-      { q: 'Can I cancel anytime?',
-        a: 'Yes. Cancel yourself from the billing portal, no contract and no call. Your plan stays active until the end of the period you paid for, and your sessions stay until you delete them.',
-        links: [{ label: 'Refund and cancellation policy', href: '/workcopilot/refund' }] },
-      { q: 'Can I upgrade or downgrade?',
-        a: 'Yes, anytime. An upgrade applies right away with prorated credit; a downgrade takes effect at your next renewal. Invoices are in your dashboard.' },
-      { q: 'Is there a plan for teams and companies?',
-        a: 'Yes. Enterprise adds seat pools, SSO, a company-wide locked data policy, a finance dashboard for billing, a signed DPA and a priority SLA.',
-        d: `Write to ${SALES} and we reply within one business day.`,
-        links: [{ label: 'Enterprise', href: '/workcopilot/enterprise' }, { label: 'Contact sales', href: `mailto:${SALES}?subject=WorkCoPilot%20Enterprise` }] },
-    ],
-  },
-  {
-    id: 'current', n: '06', title: 'Staying current',
-    items: [
-      { q: 'Does it get outdated like other AI tools?',
-        a: 'No. WorkCoPilot reads what is on your screen today, researches the latest official documentation live, and learns the current way your tools work for next time. When a button moves or a menu is renamed, it finds the new control instead of pointing at something that is gone.' },
-      { q: 'Does it learn from my team\'s work, and what does it never keep?',
-        a: 'For a company account, what it learns about how your tools currently work stays in a private knowledge base only your members benefit from. Learnings are generalized and de-identified: never personal data, secrets, screen images or document content.',
-        d: 'Individual accounts contribute de-identified learnings to a shared platform knowledge base.',
-        links: [{ label: 'Privacy Policy', href: '/workcopilot/privacy' }, { label: 'DPA', href: '/workcopilot/dpa' }] },
-      { q: 'Which AI is behind it?',
-        a: 'Each task is planned with the strongest AI available on the key in use, never a retired one. We do not publish vendor or model names, and if anything had to change mid-task to keep you going, the task log says so.',
-        links: [{ label: 'How your plan is made', href: '/workcopilot/how-it-works#best-model' }] },
-    ],
-  },
-  {
-    id: 'who', n: '07', title: 'Who it is for',
-    items: [
-      { q: 'Who is WorkCoPilot for?',
-        a: 'Anyone who has to get real work done on a screen: engineers, IT and security teams, admins, founders, operations, finance and compliance staff, and everyday users. It is strongest on operational, technical, administrative and hands-on work, and on code.',
-        d: 'It guides work across many professional fields, and the steps read as if an expert in that field wrote them.',
-        links: [{ label: 'Fields', href: '/workcopilot/fields' }, { label: 'Use cases', href: '/workcopilot/use-cases' }] },
-      { q: 'Do I need to be technical?',
-        a: 'No. It starts from zero: opens the right page, walks you to the exact spot and spells out every click, so a non-technical person can finish a technical task.',
-        d: 'Ask for fuller steps that also explain why, and you learn as you go.' },
-      { q: 'What does it do for a company?',
-        a: 'Lean teams take on specialist work in-house, finish faster, keep every change documented, and spend less on contractors and implementation partners.',
-        d: 'Admins set and lock the data policy, review member sessions and audit logs, and the company knowledge base grows with every task completed.',
-        links: [{ label: 'Enterprise', href: '/workcopilot/enterprise' }] },
-    ],
-  },
-  {
-    id: 'compliance', n: '08', title: 'Data and compliance',
-    items: [
-      { q: 'Is it compliant with GDPR, HIPAA, SOC 2 and similar frameworks?',
-        a: 'WorkCoPilot is compliance-ready: it gives you the controls and audit evidence that support your own compliance work, with one-click presets for GDPR, HIPAA, PCI DSS, SOC 2 and ISO 27001. We do not claim a certification.',
-        links: [{ label: 'Compliance readiness', href: '/workcopilot/security' }] },
-      { q: 'What do you store, and for how long?',
-        a: 'A per-session report, an audit log and your session history, encrypted at rest, until you or your admin delete them or a retention window purges them. Raw screen frames, uploaded source documents and real sensitive values are not stored.',
-        links: [{ label: 'Privacy Policy', href: '/workcopilot/privacy' }] },
-      { q: 'Can I delete my data?',
-        a: 'Yes. Delete any session anytime, which removes its report, screenshots and audit log together. Account data is deleted on request, subject to any legal duty to keep a record.' },
-      { q: 'Is there a DPA, and who are your sub-processors?',
-        a: 'A summary DPA is public and a signed DPA is available on request. Guidance is produced by a major AI provider, payments by Stripe, hosting by a cloud provider; the current list with entity names is available on request.',
-        d: `Write to ${LEGAL} with your company name and the contact who will sign.`,
-        links: [{ label: 'Read the DPA', href: '/workcopilot/dpa' }, { label: 'Sub-processors', href: '/workcopilot/dpa#subprocessors' }] },
-      { q: 'Can a company admin see what members did?',
-        a: 'Yes. Admins can review their own members\' session reports and audit logs, set and lock the data policy, and delete member sessions. Members cannot change a locked policy.' },
-    ],
-  },
-  {
-    id: 'start', n: '09', title: 'Getting started and support',
-    items: [
-      { q: 'How do I get started?',
-        a: 'Sign in at admireveda.com, pick a plan, say what you want to get done, and it starts guiding you on your screen. Nothing to install.',
-        links: [{ label: 'Get started', href: '/workcopilot' }, { label: 'See pricing', href: '/workcopilot/pricing' }] },
-      { q: 'Is there a demo I can watch without signing up?',
-        a: 'Yes. A 60-second scripted demo shows the guidance on a real-looking task, no sign-in needed.',
-        links: [{ label: 'See the 60-second demo', href: '/demo' }] },
-      { q: 'How do I get support?',
-        a: `Email ${SUPPORT} for product help and billing, ${LEGAL} for privacy, legal or security, and ${SALES} for Enterprise. We reply within one business day.`,
-        links: [{ label: 'Email support', href: `mailto:${SUPPORT}` }] },
-    ],
-  },
+  { id: 'what', n: '01', links: [
+    ['/workcopilot/how-it-works', '/demo'],
+    [],
+    ['/workcopilot/security'],
+    ['/workcopilot/acceptable-use'],
+  ] },
+  { id: 'how', n: '02', links: [
+    [],
+    [],
+    ['/workcopilot/pricing'],
+    [],
+  ] },
+  { id: 'platforms', n: '03', links: [[], [], [], []] },
+  { id: 'security', n: '04', links: [
+    ['/workcopilot/security', '/workcopilot/privacy'],
+    ['/workcopilot/security'],
+    ['/workcopilot/enterprise', '/workcopilot/dpa'],
+    [],
+    [],
+    ['/workcopilot/cookie-policy'],
+  ] },
+  { id: 'pricing', n: '05', links: [
+    ['/workcopilot/pricing'],
+    ['/workcopilot/pricing'],
+    ['/workcopilot/pricing'],
+    ['/workcopilot/refund'],
+    [],
+    ['/workcopilot/enterprise', `mailto:${SALES}?subject=WorkCoPilot%20Enterprise`],
+  ] },
+  { id: 'current', n: '06', links: [
+    [],
+    ['/workcopilot/privacy', '/workcopilot/dpa'],
+    ['/workcopilot/how-it-works#best-model'],
+  ] },
+  { id: 'who', n: '07', links: [
+    ['/workcopilot/fields', '/workcopilot/use-cases'],
+    [],
+    ['/workcopilot/enterprise'],
+  ] },
+  { id: 'compliance', n: '08', links: [
+    ['/workcopilot/security'],
+    ['/workcopilot/privacy'],
+    [],
+    ['/workcopilot/dpa', '/workcopilot/dpa#subprocessors'],
+    [],
+  ] },
+  { id: 'start', n: '09', links: [
+    ['/workcopilot', '/workcopilot/pricing'],
+    ['/demo'],
+    [`mailto:${SUPPORT}`],
+  ] },
 ]
 
-// Stable anchors from the question text (lowercase, words joined by hyphens).
+// Stable anchors from the ENGLISH question text (lowercase, words joined by
+// hyphens), so a deep link someone shared keeps working in every language.
 function slug(s) {
   return String(s).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
-// Global question numbers (Q01..), assigned once over the FULL list so a filter
-// never renumbers an anchor someone has already shared.
-const NUMBERED = GROUPS.map((g) => ({ ...g, items: g.items.map((it) => ({ ...it, id: slug(it.q) })) }))
+// The static skeleton: per question its index (the catalog key), its anchor id,
+// whether it has a detail line, and its hrefs. Global question numbers (Q01..)
+// are assigned once over the FULL list so a filter never renumbers an anchor
+// someone has already shared.
+const NUMBERED = GROUPS.map((g) => {
+  const items = (enFaq.faqPage.groups[g.id] || {}).items || []
+  return { ...g, items: items.map((it, i) => ({ i, id: slug(it.q), hasD: !!it.d, hasLinks: Array.isArray(it.links) && it.links.length > 0, hrefs: g.links[i] || [] })) }
+})
 let _n = 0
 for (const g of NUMBERED) for (const it of g.items) it.num = String(++_n).padStart(2, '0')
 const TOTAL = _n
 const ALL_IDS = NUMBERED.flatMap((g) => g.items.map((it) => it.id))
 
-// FAQPage structured data, generated from the same data as the visible Q&As.
-// Plain text only (the direct answer + the detail), links left out.
-const FAQ_LD = JSON.stringify({
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: NUMBERED.flatMap((g) => g.items.map((it) => ({
-    '@type': 'Question',
-    name: it.q,
-    acceptedAnswer: { '@type': 'Answer', text: `${it.a} ${it.d || ''}`.trim() },
-  }))),
-}).replace(/</g, '\\u003c')
+// Resolve the skeleton against the active locale: titles, questions, answers,
+// details and chip labels, with the contact addresses filled in. The same data
+// drives the visible Q&As AND the FAQPage JSON-LD, so they can never drift.
+function localize(t) {
+  return NUMBERED.map((g) => ({
+    ...g,
+    title: t(`faqPage.groups.${g.id}.title`),
+    items: g.items.map((it) => {
+      // d and links are optional per question: only read the keys the English
+      // source defines (hasD / hasLinks), so no "missing key" noise in dev.
+      const base = `faqPage.groups.${g.id}.items.${it.i}`
+      const labels = it.hasLinks ? t(`${base}.links`) : []
+      return {
+        ...it,
+        q: t(`${base}.q`, CONTACT_VARS),
+        a: t(`${base}.a`, CONTACT_VARS),
+        d: it.hasD ? t(`${base}.d`, CONTACT_VARS) : undefined,
+        links: Array.isArray(labels) ? labels.map((label, j) => ({ label, href: it.hrefs[j] })) : [],
+      }
+    }),
+  }))
+}
 
-const GLANCE = [
-  { icon: ScanEye, tone: 'ok', eyebrow: 'Read-only', title: 'It guides. You stay in control.', body: 'Exact next step on your own screen. It never clicks, types or runs anything.' },
-  { icon: Lock, tone: 'cyan', eyebrow: 'Private by design', title: 'Sensitive data never leaves in clear', body: 'Personal data, secrets and keys are stripped or tokenized on your device before anything is sent.' },
-  { icon: RefreshCw, tone: 'violet', eyebrow: 'Stays current', title: 'Learns your tools as they change', body: 'Reads the screen you have today and researches the latest docs, not a stale training cutoff.' },
+// FAQPage structured data from the localized Q&As. Plain text only (the direct
+// answer + the detail), links left out.
+function faqJsonLd(groups) {
+  return JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: groups.flatMap((g) => g.items.map((it) => ({
+      '@type': 'Question',
+      name: it.q,
+      acceptedAnswer: { '@type': 'Answer', text: `${it.a} ${it.d || ''}`.trim() },
+    }))),
+  }).replace(/</g, '\\u003c')
+}
+
+// The three glance cards: icon + tone here, copy in faqPage.glance (same order).
+const GLANCE_META = [
+  { icon: ScanEye, tone: 'ok' },
+  { icon: Lock, tone: 'cyan' },
+  { icon: RefreshCw, tone: 'violet' },
 ]
 
 // Accessibility (WEB-08): one <main>, a single H1, an H2 per group, an H3 per
@@ -242,7 +167,12 @@ export default function WorkFaq() {
     description: t('seo.faq.description'),
     path: '/workcopilot/faq',
   })
-  useJsonLd(FAQ_LD)   // FAQPage structured data, injected safely (textContent, no HTML sink)
+  // The localized Q&As (per active language) and the FAQPage structured data
+  // built from the SAME data, injected safely (textContent, no HTML sink).
+  const all = useMemo(() => localize(t), [t])
+  const faqLd = useMemo(() => faqJsonLd(all), [all])
+  useJsonLd(faqLd)
+  const glance = t('faqPage.glance')
   // Deep links like /workcopilot/faq#how-much-does-it-cost: open that row, then
   // scroll once mounted (the browser's own hash jump fires before React renders).
   useEffect(() => {
@@ -263,10 +193,10 @@ export default function WorkFaq() {
 
   const needle = query.trim().toLowerCase()
   const groups = useMemo(() => {
-    if (!needle) return NUMBERED
+    if (!needle) return all
     const hit = (it) => `${it.q} ${it.a} ${it.d || ''}`.toLowerCase().includes(needle)
-    return NUMBERED.map((g) => ({ ...g, items: g.items.filter(hit) })).filter((g) => g.items.length)
-  }, [needle])
+    return all.map((g) => ({ ...g, items: g.items.filter(hit) })).filter((g) => g.items.length)
+  }, [all, needle])
   const shown = groups.reduce((n, g) => n + g.items.length, 0)
 
   return (
@@ -276,24 +206,25 @@ export default function WorkFaq() {
 
       <main id="main">
         <section className="wfq-hero">
-          <div className="wfq-eyebrow"><CircleHelp size={14} aria-hidden="true" /> FAQ &middot; WorkCoPilot</div>
-          <h1>Straight answers, before you start.</h1>
-          <p>What it is, what leaves your device, what it costs. Pick a question, get the point.</p>
+          <div className="wfq-eyebrow"><CircleHelp size={14} aria-hidden="true" /> {t('faqPage.eyebrow')}</div>
+          <h1>{t('faqPage.h1')}</h1>
+          <p>{t('faqPage.lead')}</p>
           <form className="wfq-search" role="search" onSubmit={(e) => e.preventDefault()}>
-            <label htmlFor="wfq-q" className="wfq-sr">Search the questions</label>
+            <label htmlFor="wfq-q" className="wfq-sr">{t('faqPage.searchLabel')}</label>
             <Search size={16} aria-hidden="true" />
-            <input id="wfq-q" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search: install, price, HIPAA, own key" autoComplete="off" />
+            <input id="wfq-q" type="search" value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('faqPage.searchPlaceholder')} autoComplete="off" />
             <output className="wfq-count" htmlFor="wfq-q" aria-live="polite">{shown} / {TOTAL}</output>
           </form>
         </section>
 
         <section className="wfq-block" aria-labelledby="wfq-glance-h">
-          <h2 id="wfq-glance-h" className="wfq-sr">The three things to know</h2>
+          <h2 id="wfq-glance-h" className="wfq-sr">{t('faqPage.glanceH2')}</h2>
           <div className="wfq-glance">
-            {GLANCE.map((g, i) => {
-              const Ic = g.icon
+            {GLANCE_META.map((m, i) => {
+              const Ic = m.icon
+              const g = (Array.isArray(glance) && glance[i]) || {}
               return (
-                <WorkCard key={g.eyebrow} theme="light" tone={g.tone} delay={i * 70} texPos={['0% 0%', '50% 50%', '100% 100%'][i]} className="wfq-gcard">
+                <WorkCard key={i} theme="light" tone={m.tone} delay={i * 70} texPos={['0% 0%', '50% 50%', '100% 100%'][i]} className="wfq-gcard">
                   <WorkCard.Head icon={Ic} eyebrow={g.eyebrow} title={g.title} />
                   <WorkCard.Body>{g.body}</WorkCard.Body>
                 </WorkCard>
@@ -304,9 +235,9 @@ export default function WorkFaq() {
 
         <section className="wfq-block wfq-doc">
           <nav className="wfq-rail" aria-labelledby="wfq-rail-h">
-            <div className="wfq-railt" id="wfq-rail-h">Sections</div>
+            <div className="wfq-railt" id="wfq-rail-h">{t('faqPage.sections')}</div>
             <ol>
-              {NUMBERED.map((g) => {
+              {all.map((g) => {
                 const live = groups.find((x) => x.id === g.id)
                 const count = live ? live.items.length : 0
                 return (
@@ -314,20 +245,20 @@ export default function WorkFaq() {
                     <a href={'#' + g.id} aria-disabled={count ? undefined : 'true'}>
                       <span className="wfq-n" aria-hidden="true">{g.n}</span>
                       <span className="wfq-railname">{g.title}</span>
-                      <span className="wfq-railc" aria-label={`${count} answers`}>{count}</span>
+                      <span className="wfq-railc" aria-label={t('faqPage.answersCount', { n: count })}>{count}</span>
                     </a>
                   </li>
                 )
               })}
             </ol>
-            <button type="button" className="wfq-all" onClick={toggleAll} aria-pressed={allOpen}>{allOpen ? 'Collapse all' : 'Expand all'}</button>
+            <button type="button" className="wfq-all" onClick={toggleAll} aria-pressed={allOpen}>{allOpen ? t('faqPage.collapseAll') : t('faqPage.expandAll')}</button>
           </nav>
 
           <div className="wfq-art">
             {groups.length === 0 && (
               <div className="wfq-empty" role="status">
-                <p>No answer matches <b>{query}</b> yet.</p>
-                <p>Try a shorter word, or <a href={'mailto:' + SUPPORT + '?subject=WorkCoPilot%20question'}>ask us directly</a>.</p>
+                <p>{t.rich('faqPage.emptyNoMatch', { query })}</p>
+                <p>{t.rich('faqPage.emptyTry', null, { a: (c) => <a href={'mailto:' + SUPPORT + '?subject=WorkCoPilot%20question'}>{c}</a> })}</p>
               </div>
             )}
             {groups.map((g) => (
@@ -340,14 +271,14 @@ export default function WorkFaq() {
                   return (
                     <article className={'wfq-qa' + (isOpen ? ' on' : '')} id={it.id} key={it.id}>
                       <div className="wfq-qhead">
-                        <div className="wfq-qnum" aria-hidden="true">Q{it.num}</div>
+                        <div className="wfq-qnum" aria-hidden="true">{t('faqPage.qNum', { num: it.num })}</div>
                         <h3>
                           <button type="button" className="wfq-qbtn" aria-expanded={isOpen} aria-controls={panelId} onClick={() => toggle(it.id)}>
                             <span className="wfq-qtext">{it.q}</span>
                             <ChevronDown size={18} aria-hidden="true" className="wfq-chev" />
                           </button>
                         </h3>
-                        <a className="wfq-anchor" href={'#' + it.id} aria-label={`Link to this question: ${it.q}`}><Link2 size={13} aria-hidden="true" /></a>
+                        <a className="wfq-anchor" href={'#' + it.id} aria-label={t('faqPage.linkToQuestion', { q: it.q })}><Link2 size={13} aria-hidden="true" /></a>
                       </div>
                       <div className="wfq-qbody" id={panelId} hidden={!isOpen}>
                         <p className="wfq-lead">{it.a}</p>
@@ -368,17 +299,17 @@ export default function WorkFaq() {
           </div>
         </section>
 
-        <section className="wfq-cta" aria-label="Still have a question">
+        <section className="wfq-cta" aria-label={t('faqPage.ctaAria')}>
           <div className="wfq-cta-in">
             <div className="wfq-cta-copy">
-              <div className="wfq-eyebrow"><LifeBuoy size={14} aria-hidden="true" /> Still have a question?</div>
-              <h2>Ask us, or start and see for yourself.</h2>
-              <p>Product and billing: {SUPPORT}. Privacy, legal, security: {LEGAL}.</p>
+              <div className="wfq-eyebrow"><LifeBuoy size={14} aria-hidden="true" /> {t('faqPage.ctaEyebrow')}</div>
+              <h2>{t('faqPage.ctaH2')}</h2>
+              <p>{t('faqPage.ctaP', CONTACT_VARS)}</p>
             </div>
             <div className="wfq-cta-btns">
-              <button className="wfq-btn" onClick={() => nav('/workcopilot')}>Get started <ArrowRight size={15} aria-hidden="true" /></button>
-              <a className="wfq-btn alt" href="/demo">60-second demo</a>
-              <a className="wfq-btn alt" href={'mailto:' + SUPPORT + '?subject=WorkCoPilot%20question'}><Mail size={15} aria-hidden="true" /> Email support</a>
+              <button className="wfq-btn" onClick={() => nav('/workcopilot')}>{t('faqPage.getStarted')} <ArrowRight size={15} aria-hidden="true" /></button>
+              <a className="wfq-btn alt" href="/demo">{t('faqPage.demoBtn')}</a>
+              <a className="wfq-btn alt" href={'mailto:' + SUPPORT + '?subject=WorkCoPilot%20question'}><Mail size={15} aria-hidden="true" /> {t('faqPage.emailSupport')}</a>
             </div>
           </div>
         </section>

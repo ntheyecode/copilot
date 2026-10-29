@@ -11,9 +11,12 @@ import useSeo from '../useSeo.js'   // per-route title / description / canonical
 import { useT } from '../i18n/index.jsx'   // localized <title>/description (seo.* keys) + benchmark.* strings
 import { shouldRevealAtOnce } from '../reveal.js'   // reduced motion / crawler: no count-up, final value at once
 
-const DOMAIN_LABEL = { dev: 'Dev / data', finance: 'Spreadsheet / finance', cross: 'Cross-profession', security: 'Security / code review' }
+// Domain labels and the CI range wording come from the catalog (benchmarkPage.*);
+// an unknown domain id falls back to the id itself so a new domain is never blank.
+const DOMAIN_IDS = ['dev', 'finance', 'cross', 'security']
+const domainLabel = (t, d) => (DOMAIN_IDS.includes(d) ? t(`benchmarkPage.domains.${d}`) : d)
 const pct = (x) => `${Math.round((Number(x) || 0) * 100)}%`
-const ci = (a) => `${pct(a[0])} to ${pct(a[1])}`   // CI range, no dash
+const ci = (t, a) => t('benchmarkPage.ciRange', { lo: pct(a[0]), hi: pct(a[1]) })   // CI range, no dash
 const fmtDate = (s) => { try { return new Date(s).toLocaleString() } catch { return '' } }
 
 // The headline pass rate counts up from 0 to its real value once (about a
@@ -90,6 +93,7 @@ function CiFigure({ t }) {
 // to FIT its card at every width: the domain name wraps, the three number
 // columns stay on one line and right-align, so the card never grows a scrollbar.
 function ModelScore({ title, summary }) {
+  const t = useT()
   if (!summary || !summary.overall) return null
   const o = summary.overall
   const rate = Math.max(0, Math.min(1, Number(o.rate) || 0))
@@ -98,17 +102,17 @@ function ModelScore({ title, summary }) {
       <h3 className="wbm-card-h">{title}</h3>
       <div className="wbm-big"><CountUp value={rate} format={pct} /></div>
       <div className="wbm-bar" aria-hidden="true"><span style={{ width: `${rate * 100}%` }} /></div>
-      <p className="wbm-meta">{o.pass}/{o.n} correct &middot; 95% CI {ci(o.ci95)}{o.aiGradedCount ? ` · ${o.aiGradedCount} AI-graded` : ''}</p>
+      <p className="wbm-meta">{t('benchmarkPage.meta', { pass: o.pass, n: o.n, ci: ci(t, o.ci95) })}{o.aiGradedCount ? t('benchmarkPage.aiGraded', { n: o.aiGradedCount }) : ''}</p>
       <table className="wbm-table">
-        <caption className="wbm-sr">{title}: result correctness by domain</caption>
-        <thead><tr><th scope="col">Domain</th><th scope="col" className="wbm-num">Correct</th><th scope="col" className="wbm-num">Rate</th><th scope="col" className="wbm-num">95% CI</th></tr></thead>
+        <caption className="wbm-sr">{t('benchmarkPage.tableCaption', { title })}</caption>
+        <thead><tr><th scope="col">{t('benchmarkPage.colDomain')}</th><th scope="col" className="wbm-num">{t('benchmarkPage.colCorrect')}</th><th scope="col" className="wbm-num">{t('benchmarkPage.colRate')}</th><th scope="col" className="wbm-num">{t('benchmarkPage.colCi')}</th></tr></thead>
         <tbody>
           {Object.entries(summary.domains || {}).map(([d, v]) => (
             <tr key={d}>
-              <th scope="row">{DOMAIN_LABEL[d] || d}</th>
+              <th scope="row">{domainLabel(t, d)}</th>
               <td className="wbm-num">{v.pass}/{v.n}</td>
               <td className="wbm-num">{pct(v.rate)}</td>
-              <td className="wbm-num">{ci(v.ci95)}</td>
+              <td className="wbm-num">{ci(t, v.ci95)}</td>
             </tr>
           ))}
         </tbody>
@@ -143,37 +147,37 @@ export default function WorkBenchmark() {
       <SiteHeader />
 
       <main className="wbm-main" id="main">
-        <div className="wbm-eyebrow"><FlaskConical size={13} aria-hidden="true" /> Accuracy benchmark</div>
-        <h1>How accurate is WorkCoPilot?</h1>
-        <p className="wbm-lead">One measure: given a task with a known-correct answer, does WorkCoPilot return it. Real pass rates, with sample size and 95% confidence interval. Nothing rounded up.</p>
+        <div className="wbm-eyebrow"><FlaskConical size={13} aria-hidden="true" /> {t('benchmarkPage.eyebrow')}</div>
+        <h1>{t('benchmarkPage.h1')}</h1>
+        <p className="wbm-lead">{t('benchmarkPage.lead')}</p>
 
-        <ul className="wbm-chips" aria-label="How these numbers stay honest">
-          <li><Check size={14} aria-hidden="true" /> Graded mechanically where possible</li>
-          <li><Check size={14} aria-hidden="true" /> A held-out set kept private</li>
-          <li><Check size={14} aria-hidden="true" /> Per tier, never a model name</li>
+        <ul className="wbm-chips" aria-label={t('benchmarkPage.chipsAria')}>
+          {(t('benchmarkPage.chips') || []).map((c, i) => (
+            <li key={i}><Check size={14} aria-hidden="true" /> {c}</li>
+          ))}
         </ul>
 
         {pending ? (
           <div className="wbm-pending" role="status">
             <BarChart3 size={18} aria-hidden="true" />
             <div>
-              <b>First public run pending.</b>
-              <p>The benchmark is built and tested. Numbers land here once a public run is recorded.</p>
+              <b>{t('benchmarkPage.pendingTitle')}</b>
+              <p>{t('benchmarkPage.pendingP')}</p>
             </div>
           </div>
         ) : (
           <>
-            <h2 className="wbm-sr">Results by AI tier</h2>
+            <h2 className="wbm-sr">{t('benchmarkPage.resultsH2')}</h2>
             <div className="wbm-grid">
-              <ModelScore title="Higher-capability tier" summary={data.models && data.models.strong && data.models.strong.summary} />
-              <ModelScore title="Speed-optimized tier" summary={data.models && data.models.fast && data.models.fast.summary} />
+              <ModelScore title={t('benchmarkPage.tierStrong')} summary={data.models && data.models.strong && data.models.strong.summary} />
+              <ModelScore title={t('benchmarkPage.tierFast')} summary={data.models && data.models.fast && data.models.fast.summary} />
             </div>
-            <p className="wbm-when">Last run {fmtDate(data.at)}.</p>
+            <p className="wbm-when">{t('benchmarkPage.lastRun', { when: fmtDate(data.at) })}</p>
             {Array.isArray(data.sampleTasks) && data.sampleTasks.length ? (
               <div className="wbm-sample">
-                <h2>Sample tasks</h2>
-                <p className="wbm-dim">A public sample. Held-out tasks are scored but never shown.</p>
-                <ul>{data.sampleTasks.map((t, i) => <li key={i}><span className="wbm-tag">{DOMAIN_LABEL[t.domain] || t.domain}</span> {t.prompt}</li>)}</ul>
+                <h2>{t('benchmarkPage.sampleH2')}</h2>
+                <p className="wbm-dim">{t('benchmarkPage.sampleP')}</p>
+                <ul>{data.sampleTasks.map((task, i) => <li key={i}><span className="wbm-tag">{domainLabel(t, task.domain)}</span> {task.prompt}</li>)}</ul>
               </div>
             ) : null}
           </>
@@ -182,31 +186,30 @@ export default function WorkBenchmark() {
         <ScoreFlow t={t} />
 
         <section className="wbm-method">
-          <h2>How we measure</h2>
+          <h2>{t('benchmarkPage.methodH2')}</h2>
           <div className="wbm-mgrid">
-            <div className="wbm-m"><b>Result correctness</b><span>Each task runs through the product, then is graded against a known-correct reference.</span></div>
-            <div className="wbm-m"><b>Verified first</b><span>Mechanical checks where an answer allows it. An AI judge only otherwise, flagged, with a human spot-check each run.</span></div>
-            <div className="wbm-m"><b>Four domains</b><span>Dev and data, spreadsheet and finance, a cross-profession mix, security and code review.</span></div>
-            <div className="wbm-m"><b>Honest numbers</b><span>Pass rates with sample sizes and 95% CIs. A private held-out set resists overfitting.</span></div>
+            {(t('benchmarkPage.method') || []).map((m, i) => (
+              <div className="wbm-m" key={i}><b>{m.t}</b><span>{m.d}</span></div>
+            ))}
           </div>
           <CiFigure t={t} />
-          <div className="wbm-note"><ShieldCheck size={14} aria-hidden="true" /> <span>We would rather publish a true, smaller number with its confidence interval than a round one without. Thin domains are labeled.</span></div>
+          <div className="wbm-note"><ShieldCheck size={14} aria-hidden="true" /> <span>{t('benchmarkPage.note')}</span></div>
         </section>
 
         <section className="wbm-cta">
           <div>
-            <h2>See what it does, then what it costs</h2>
-            <p>WorkCoPilot guides people through real work to a finished result.</p>
+            <h2>{t('benchmarkPage.ctaH2')}</h2>
+            <p>{t('benchmarkPage.ctaP')}</p>
           </div>
           <div className="wbm-ctabtns">
-            <a className="wbm-btn" href="/workcopilot/pricing">See pricing <ArrowRight size={16} aria-hidden="true" /></a>
-            <a className="wbm-btn alt" href="/workcopilot/how-it-works">How it works</a>
+            <a className="wbm-btn" href="/workcopilot/pricing">{t('benchmarkPage.seePricing')} <ArrowRight size={16} aria-hidden="true" /></a>
+            <a className="wbm-btn alt" href="/workcopilot/how-it-works">{t('benchmarkPage.howItWorks')}</a>
           </div>
         </section>
 
-        <nav className="wbm-links" aria-label="Related pages">
-          <a className="wbm-link" href="/workcopilot/security"><Lock size={13} aria-hidden="true" /> Security &amp; data handling</a>
-          <a className="wbm-link" href="/">Back to home</a>
+        <nav className="wbm-links" aria-label={t('benchmarkPage.relatedAria')}>
+          <a className="wbm-link" href="/workcopilot/security"><Lock size={13} aria-hidden="true" /> {t('benchmarkPage.securityLink')}</a>
+          <a className="wbm-link" href="/">{t('benchmarkPage.backHome')}</a>
         </nav>
       </main>
       <SiteFooter />

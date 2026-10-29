@@ -38,6 +38,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { LOCALES } from '../src/i18n/locales.js'   // single source for hreflang tags + ?lang codes
 import en from '../src/i18n/locales/en.js'          // source of truth for localized marketing meta (seo.*, login.meta)
+import enFields from '../src/i18n/locales/en/fieldsPage.js'   // the Fields roster (fieldsPage.families) - what WorkFields.jsx renders
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
 const argv = process.argv.slice(2)
@@ -51,19 +52,15 @@ const MARKER = '<!-- prerendered-by: scripts/prerender-marketing.mjs (prerender-
 
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-// ---- derive the Fields numbers from the page source (single source of truth) ----
+// ---- derive the Fields numbers from the roster's single source of truth ----
+// WorkFields.jsx builds FIELD_FAMILIES from the English catalog partial
+// (fieldsPage.families: title + items per group), so the prerender reads the
+// same object instead of regex-parsing the page source (which stopped carrying
+// the names when the page was internationalized).
 function readFields() {
-  const f = path.join(SRC_PAGES, 'WorkFields.jsx')
   try {
-    const src = fs.readFileSync(f, 'utf8')
-    const block = src.slice(src.indexOf('export const FIELD_FAMILIES'), src.indexOf('export const FIELD_TOTAL'))
-    const fams = []
-    const re = /\{\s*k:\s*'([^']+)'[\s\S]*?items:\s*\[([^\]]*)\]/g
-    let m
-    while ((m = re.exec(block))) {
-      const items = [...m[2].matchAll(/'([^']+)'/g)].map((x) => x[1])
-      fams.push({ k: m[1], items })
-    }
+    const families = (enFields && enFields.fieldsPage && enFields.fieldsPage.families) || {}
+    const fams = Object.values(families).map((f) => ({ k: f.title, items: Array.isArray(f.items) ? f.items : [] }))
     const total = fams.reduce((n, x) => n + x.items.length, 0)
     if (fams.length >= 3 && total >= 10) return { fams, total }
   } catch { /* fall through */ }

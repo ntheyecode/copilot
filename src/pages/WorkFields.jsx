@@ -11,8 +11,10 @@
 // audit, paralegal research) are intentionally left off. Source code is the
 // exception that stays, because code is a strength.
 //
-// FIELD_FAMILIES is the ONE place the roster lives in the renderer. WorkPage and
-// the FAQ import FIELD_TOTAL / FIELD_FAMILIES.length for their numbers, so the
+// The roster (group titles and field names) lives in ONE place: the English
+// catalog partial src/i18n/locales/en/fieldsPage.js (fieldsPage.families).
+// FIELD_FAMILIES below joins it with the per-group icon/tone meta, and WorkPage
+// and the FAQ import FIELD_TOTAL / FIELD_FAMILIES.length for their numbers, so the
 // pages can never drift (SUPREME RULE II: single source of truth). FIELD_TOTAL
 // is DERIVED from the list, never typed. Benefit-only copy: names the work,
 // never the method behind the guidance.
@@ -26,86 +28,35 @@ import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium
 import FieldVignettes from '../components/FieldVignettes.jsx'   // real-screen photographs per field, each opening its guided session below
 import GuideShowcase from '../components/GuideShowcase.jsx'     // pick a field, watch the guide console on that work
 import useSeo from '../useSeo.js'
-import { useT } from '../i18n/index.jsx'           // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'           // every visible string reads from the catalog (fieldsPage.* + seo.fields.*)
+import enFields from '../i18n/locales/en/fieldsPage.js'   // the ENGLISH partial: roster ids, counts and anchors derive from it
 import SiteHeader from '../components/SiteHeader.jsx'
 import SiteFooter from '../components/SiteFooter.jsx'
 
-export const FIELD_FAMILIES = [
-  { k: 'Software & engineering', ic: Code2, tone: '', wide: true,
-    d: 'Ship code, set up the stack, keep it running.',
-    items: [
-      'Developer', 'Frontend & accessibility', 'Mobile development', 'Game development', 'Embedded / firmware',
-      'Database', 'SDET', 'QA', 'DevOps', 'SRE', 'Network engineering', 'Sysadmin / IT ops', 'Blockchain development',
-      'Backend & API development', 'Full-stack web development', 'Software architecture', 'Cloud architecture',
-      'Platform engineering', 'Release management', 'ERP & CRM administration', 'Low-code & RPA automation',
-    ] },
-  { k: 'Security & resilience', ic: ShieldCheck, tone: 'cyan', wide: true,
-    d: 'Test it, break in, contain it, respond.',
-    items: [
-      'Penetration testing', 'Network pentest', 'Mobile pentest', 'API security', 'Cloud security', 'DevSecOps',
-      'Incident response', 'Application security', 'Security operations (SOC)', 'Vulnerability management',
-      'Identity & access management', 'Digital forensics', 'Malware triage', 'Red team operations',
-    ] },
-  { k: 'Data, AI & ML', ic: BrainCircuit, tone: 'violet',
-    d: 'Build the pipeline, train the model, read the dashboard.',
-    items: [
-      'Data engineering', 'Data analytics', 'MLOps', 'Data science', 'Machine learning engineering',
-      'AI & prompt engineering', 'Analytics engineering', 'Business intelligence', 'Geospatial & GIS',
-    ] },
-  { k: 'Product, project & design', ic: Kanban, tone: 'amber',
-    d: 'Plan the work, run the board, design the screens.',
-    items: [
-      'Product management', 'Project management', 'Agile / scrum', 'UX design', 'Program management',
-      'Technical program management', 'PMO & portfolio management', 'Change management',
-      'User research', 'UI & visual design', 'Design systems', 'Product analytics',
-    ] },
-  { k: 'OT, IoT & physical systems', ic: Cpu, tone: 'cyan',
-    d: 'Where the software meets the machine.',
-    items: [
-      'OT / ICS', 'IoT', 'Robotics', 'Aviation operations',
-      'Mechanical engineering', 'Electrical engineering', 'Civil & structural engineering', 'Construction management',
-      'CAD & BIM design', 'Manufacturing & quality engineering', 'Energy & utilities operations',
-      'Facilities & building systems', 'Environmental health & safety',
-    ] },
-  { k: 'Finance & accounting', ic: Landmark, tone: 'ok',
-    d: 'Books, payroll, invoices and filings, in your own tools.',
-    items: [
-      'Bookkeeping & accounting', 'Invoicing & billing', 'Accounts payable & receivable', 'Payroll',
-      'Tax filing & returns', 'Treasury & cash management', 'Banking operations', 'Expense & reconciliation',
-      'Insurance claims processing',
-    ] },
-  { k: 'Business operations', ic: Briefcase, tone: 'amber',
-    d: 'The daily work that keeps a company moving.',
-    items: [
-      'Sales', 'HR & recruiting', 'Customer support', 'Procurement & vendor', 'Supply chain & operations',
-      'Account management', 'Customer success', 'Sales operations & RevOps', 'Office & executive administration',
-      'Event planning', 'Real estate & property management', 'Retail & store operations',
-      'Hospitality & restaurant management', 'Logistics & transportation', 'Government & public administration',
-    ] },
-  { k: 'Content & marketing', ic: Megaphone, tone: 'pink',
-    d: 'Make it, publish it, reach the right people.',
-    items: [
-      'Marketing & growth', 'Content & copywriting', 'SEO', 'Social media', 'Video & media',
-      'Translation & localization', 'Graphic & brand design', 'Email & lifecycle marketing',
-      'Paid media & advertising', 'Product marketing', 'Audio & podcast production',
-    ] },
-  { k: 'Healthcare', ic: HeartPulse, tone: 'pink',
-    d: 'Charting, coding and care workflows, step by step.',
-    items: [
-      'Physician practice', 'Registered nursing', 'Nurse practitioner', 'Pharmacy', 'Physical & occupational therapy',
-      'Radiology & imaging', 'Medical laboratory science', 'Medical coding & billing', 'Clinical research coordination',
-      'Health information management', 'Dental hygiene & practice', 'Paramedic & EMS', 'Dietetics & nutrition',
-      'Behavioral health & counseling', 'Public health',
-    ] },
-  { k: 'Education', ic: GraduationCap, tone: 'violet',
-    d: 'Set up the class, the records, and the lessons.',
-    items: [
-      'K-12 teaching', 'University teaching & lecturing', 'School administration', 'Academic advising',
-      'Registrar & student records', 'Special education', 'Librarian & information science',
-      'Admissions & enrollment', 'E-learning development', 'Corporate training & L&D', 'Early childhood education',
-      'Language teaching (ESL)', 'School counseling',
-    ] },
+// Per group of work: the stable id (the catalog key under fieldsPage.families.<id>),
+// its icon, card tone and whether it spans two columns. The NAMES (title, body,
+// field tags) live in the catalog; the English partial is imported here so the
+// roster, its counts and the group anchors derive from one place. Order = page order.
+const FAMILY_META = [
+  { id: 'software', ic: Code2, tone: '', wide: true },
+  { id: 'security', ic: ShieldCheck, tone: 'cyan', wide: true },
+  { id: 'data', ic: BrainCircuit, tone: 'violet' },
+  { id: 'product', ic: Kanban, tone: 'amber' },
+  { id: 'physical', ic: Cpu, tone: 'cyan' },
+  { id: 'finance', ic: Landmark, tone: 'ok' },
+  { id: 'operations', ic: Briefcase, tone: 'amber' },
+  { id: 'marketing', ic: Megaphone, tone: 'pink' },
+  { id: 'healthcare', ic: HeartPulse, tone: 'pink' },
+  { id: 'education', ic: GraduationCap, tone: 'violet' },
 ]
+// The roster as consumers know it: k = English title (the anchor slug and the
+// React key derive from it, so a deep link never moves with a translation),
+// items = the English field names (their COUNT is what the page and the home
+// strip show). Display text is read from the active locale at render time.
+export const FIELD_FAMILIES = FAMILY_META.map((m) => {
+  const en = enFields.fieldsPage.families[m.id] || { title: m.id, d: '', items: [] }
+  return { ...m, k: en.title, d: en.d, items: en.items }
+})
 export const FIELD_TOTAL = FIELD_FAMILIES.reduce((n, f) => n + f.items.length, 0)   // derived; never typed
 
 // Texture crops so the reused cards never read as one repeated tile.
@@ -134,20 +85,20 @@ export default function WorkFields() {
       <SiteHeader current="fields" />
 
       <section className="wfl-hero">
-        <div className="wfl-eyebrow"><Shapes size={14} aria-hidden /> Work we guide</div>
-        <h1>Find your work. We guide it <em>step by step.</em></h1>
-        <p>WorkCoPilot walks you through doing real tasks in the tools you already use, one step at a time. These are the groups of work it is strong in.</p>
-        <p className="wfl-note">Our strength is doing and finishing tasks on screen. Long-document review and deep analysis are not what it is for.</p>
+        <div className="wfl-eyebrow"><Shapes size={14} aria-hidden /> {t('fieldsPage.eyebrow')}</div>
+        <h1>{t.rich('fieldsPage.h1')}</h1>
+        <p>{t('fieldsPage.lead')}</p>
+        <p className="wfl-note">{t('fieldsPage.note')}</p>
         <div className="wfl-cta-row">
-          <button className="wfl-btn" onClick={() => nav('/workcopilot')}>Start guiding me <ArrowRight size={15} aria-hidden /></button>
-          <a className="wfl-btn alt" href="/workcopilot/use-cases">See the use cases</a>
+          <button className="wfl-btn" onClick={() => nav('/workcopilot')}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
+          <a className="wfl-btn alt" href="/workcopilot/use-cases">{t('fieldsPage.useCasesBtn')}</a>
         </div>
       </section>
 
-      <nav className="wfl-jumps" aria-label="Jump to a group of work">
+      <nav className="wfl-jumps" aria-label={t('fieldsPage.jumpsAria')}>
         {FIELD_FAMILIES.map((f) => (
           <a key={f.k} className="wfl-jump" href={`#${slug(f.k)}`}>
-            <f.ic size={14} aria-hidden /> {f.k}
+            <f.ic size={14} aria-hidden /> {t(`fieldsPage.families.${f.id}.title`)}
           </a>
         ))}
       </nav>
@@ -163,17 +114,21 @@ export default function WorkFields() {
         <FieldVignettes to="/workcopilot/fields" className="wfl-fv" />
       </section>
 
-      <section className="wfl-grid" aria-label="Groups of work and the fields in each">
-        {FIELD_FAMILIES.map((f, i) => (
-          <WorkCard key={f.k} theme="light" tone={f.tone || undefined} delay={i * 45}
-            className={f.wide ? 'wfl-wide' : ''} texPos={TEX[i % TEX.length]} style={{ scrollMarginTop: 24 }} id={slug(f.k)}>
-            <WorkCard.Head icon={f.ic} eyebrow={`${f.items.length} ${f.items.length === 1 ? 'field' : 'fields'}`} title={f.k} align="start" />
-            <WorkCard.Body>{f.d}</WorkCard.Body>
-            <ul className="wfl-tags" aria-label={`${f.k} fields`}>
-              {f.items.map((tag, j) => <li key={tag} className="wfl-tag" style={{ '--i': j }}>{tag}</li>)}
-            </ul>
-          </WorkCard>
-        ))}
+      <section className="wfl-grid" aria-label={t('fieldsPage.gridAria')}>
+        {FIELD_FAMILIES.map((f, i) => {
+          const title = t(`fieldsPage.families.${f.id}.title`)
+          const tags = t(`fieldsPage.families.${f.id}.items`)
+          return (
+            <WorkCard key={f.k} theme="light" tone={f.tone || undefined} delay={i * 45}
+              className={f.wide ? 'wfl-wide' : ''} texPos={TEX[i % TEX.length]} style={{ scrollMarginTop: 24 }} id={slug(f.k)}>
+              <WorkCard.Head icon={f.ic} eyebrow={t.n('fieldsPage.fieldCount', f.items.length)} title={title} align="start" />
+              <WorkCard.Body>{t(`fieldsPage.families.${f.id}.d`)}</WorkCard.Body>
+              <ul className="wfl-tags" aria-label={t('fieldsPage.tagsAria', { family: title })}>
+                {(Array.isArray(tags) ? tags : f.items).map((tag, j) => <li key={f.items[j] || tag} className="wfl-tag" style={{ '--i': j }}>{tag}</li>)}
+              </ul>
+            </WorkCard>
+          )
+        })}
       </section>
 
       {/* PICK A FIELD: the shared showcase, the target of the vignette links. */}
@@ -187,11 +142,11 @@ export default function WorkFields() {
 
       <section className="wfl-cta">
         <div className="wfl-cta-card">
-          <h2>Your work is probably in here.</h2>
-          <p>Pick it on screen and WorkCoPilot takes you through it, one step at a time.</p>
+          <h2>{t('fieldsPage.ctaH2')}</h2>
+          <p>{t('fieldsPage.ctaP')}</p>
           <div className="wfl-cta-row">
-            <button className="wfl-btn" onClick={() => nav('/workcopilot')}>Start guiding me <ArrowRight size={15} aria-hidden /></button>
-            <a className="wfl-btn alt" href="/workcopilot/pricing">See pricing</a>
+            <button className="wfl-btn" onClick={() => nav('/workcopilot')}>{t('fieldsPage.startBtn')} <ArrowRight size={15} aria-hidden /></button>
+            <a className="wfl-btn alt" href="/workcopilot/pricing">{t('fieldsPage.pricingBtn')}</a>
           </div>
         </div>
       </section>

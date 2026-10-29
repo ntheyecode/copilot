@@ -18,60 +18,27 @@ import { useT } from '../i18n/index.jsx'                   // localized <title>/
 // The visual language matches the marketing live demo (dark card, exact
 // commands, DO THIS NOW, HOLD ON correction, step checklist, done).
 
-const GOAL = 'Set up a private network (VPC) on AWS'
-
-// One real walkthrough. A step is either a normal DO THIS NOW (step + how +
-// optional exact command) or a HOLD ON correction (fix.say + fix.do).
-// Each "how" sub-step is { do, tip }: the exact action, plus the precise where /
-// label / value underneath it - so the demo shows the real DEPTH the product
-// gives (not a one-line hint). A `key` word in a `do` is emphasised.
-const STEPS = [
-  {
-    sees: 'You are in the VPC dashboard',
-    step: 'Create the VPC',
-    how: [
-      { do: 'Click **Create VPC**', tip: 'Top-right of the VPC dashboard' },
-      { do: 'Choose **VPC only** and name it', tip: 'e.g. prod-vpc, something meaningful' },
-      { do: 'Set the IPv4 CIDR to **10.0.0.0/16**', tip: 'Leave IPv6 off unless you need it' },
-      { do: 'Click **Create VPC** to finish', tip: 'It appears in the list within a second' },
-    ],
-    cmd: '$ aws ec2 create-vpc --cidr-block 10.0.0.0/16',
-    done: 'the VPC is listed',
-  },
-  {
-    sees: 'You typed CIDR 10.0.0.0/24',
-    fix: {
-      say: 'A /24 is only 256 addresses, too small to grow into later.',
-      do: 'Change the CIDR to 10.0.0.0/16 before you create it.',
-    },
-    done: 'the range reads 10.0.0.0/16',
-  },
-  {
-    sees: 'The VPC has no path to the internet',
-    step: 'Attach an internet gateway',
-    how: [
-      { do: 'Open **Internet gateways** → **Create**', tip: 'Left nav, under Virtual private cloud' },
-      { do: 'Name it, then click **Create**', tip: 'e.g. prod-igw' },
-      { do: 'Select it → **Actions** → **Attach to VPC**', tip: 'It has to be Detached to attach' },
-      { do: 'Pick your VPC and click **Attach**', tip: 'Status flips to Attached' },
-    ],
-    done: 'the gateway shows Attached',
-  },
-  {
-    sees: 'Traffic still has nowhere to go',
-    step: 'Route outbound traffic to the gateway',
-    how: [
-      { do: "Open your VPC's **route table**", tip: 'Route tables → the one tied to your VPC' },
-      { do: 'Click **Edit routes** → **Add route**', tip: 'Opens the editable route list' },
-      { do: 'Set the destination to **0.0.0.0/0**', tip: 'That means all outbound IPv4 traffic' },
-      { do: 'Target your **internet gateway**, then **Save**', tip: 'Pick the igw-… you just attached' },
-    ],
-    cmd: '$ aws ec2 create-route --route-table-id rtb-0a1b --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0c2d',
-    done: '0.0.0.0/0 points at the igw',
-  },
+// The copy of the walkthrough (goal, every step, the closing write-up) lives in
+// the catalog under demoPage.* (src/i18n/locales/en/demoPage.js is the English
+// source). A step is either a normal DO THIS NOW (step + how + optional exact
+// command) or a HOLD ON correction (fix.say + fix.do). Each "how" sub-step is
+// { do, tip }: the exact action, plus the precise where / label / value underneath
+// it - so the demo shows the real DEPTH the product gives (not a one-line hint).
+// A **key** word in a "do" is emphasized. The exact shell command per step is
+// code, not copy, so it stays here by step index (null = no terminal on that step).
+const STEP_CMDS = [
+  '$ aws ec2 create-vpc --cidr-block 10.0.0.0/16',
+  null,
+  null,
+  '$ aws ec2 create-route --route-table-id rtb-0a1b --destination-cidr-block 0.0.0.0/0 --gateway-id igw-0c2d',
 ]
+// The steps as the player walks them: catalog copy joined with the per-step command.
+function useSteps(t) {
+  const steps = t('demoPage.steps')
+  return Array.isArray(steps) ? steps.map((st, i) => ({ ...st, cmd: STEP_CMDS[i] || null })) : []
+}
 
-// Emphasise **bold** spans inside a "do" (the exact button, menu or value).
+// Emphasize **bold** spans inside a "do" (the exact button, menu or value).
 function demoRich(text) {
   const s = String(text || '')
   const out = []
@@ -86,12 +53,13 @@ function demoRich(text) {
   return out
 }
 
-// The write-up it hands you at the end (the record you keep).
-const WRITEUP = [
-  'Created a VPC with a /16 range (10.0.0.0/16) so it has room to grow.',
-  'Caught a too-small /24 CIDR before it was created and corrected it.',
-  'Attached an internet gateway and confirmed it shows Attached.',
-  'Added a 0.0.0.0/0 route to the gateway so traffic can get out.',
+// The four co-pilot loop cards: icon + color class here, copy in demoPage.caps
+// (same order).
+const CAP_META = [
+  { cls: 'watch', icon: ScanEye },
+  { cls: 'guide', icon: Compass },
+  { cls: 'correct', icon: Wand2 },
+  { cls: 'fix', icon: Bug },
 ]
 
 // Accessibility (WEB-08): one <main>, a single H1, the shared labeled site nav
@@ -113,6 +81,7 @@ export default function WorkDemo() {
   // Fonts are self-hosted and loaded globally in src/main.jsx.
 
   const start = () => nav('/workcopilot')
+  const caps = t('demoPage.caps')   // [{ t, d }] in CAP_META order
 
   return (
     <div className="wkd">
@@ -127,48 +96,39 @@ export default function WorkDemo() {
       <main id="main">
       <section className="wkd-hero">
         <div className="wkd-wrap wkd-hero-in">
-          <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> A real session, start to finish</div>
-          <h1>Watch it guide one real task, step by step.</h1>
+          <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> {t('demoPage.heroBadge')}</div>
+          <h1>{t('demoPage.h1')}</h1>
           <p className="wkd-lead">
-            It reads your screen, calls the next move, and catches a mistake before it costs you.
+            {t('demoPage.lead')}
           </p>
           <DemoPlayer />
           <div className="wkd-herocta">
-            <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={17} aria-hidden="true" /></button>
-            <span className="wkd-note">Takes about a minute to watch. Free to try.</span>
+            <button className="wkd-cta big" onClick={start}>{t('demoPage.startFree')} <ArrowRight size={17} aria-hidden="true" /></button>
+            <span className="wkd-note">{t('demoPage.heroNote')}</span>
           </div>
         </div>
       </section>
 
       <section className="wkd-loop" aria-labelledby="wkd-loop-h">
         <div className="wkd-wrap wkd-loop-in">
-          <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> A live co-pilot, not a how-to page</div>
-          <h2 id="wkd-loop-h">It does not just tell you. It walks every step with you.</h2>
+          <div className="wkd-badge"><Sparkles size={13} aria-hidden="true" /> {t('demoPage.loopBadge')}</div>
+          <h2 id="wkd-loop-h">{t('demoPage.loopH2')}</h2>
 
           <div className="wkd-loop-grid">
-            <div className="wkd-cap watch">
-              <span className="ic" aria-hidden="true"><ScanEye size={20} /></span>
-              <b>Watches</b>
-              <p>Sees what is on your screen and keeps pace with you.</p>
-            </div>
-            <div className="wkd-cap guide">
-              <span className="ic" aria-hidden="true"><Compass size={20} /></span>
-              <b>Guides</b>
-              <p>Points to the exact click, command or value, one step at a time.</p>
-            </div>
-            <div className="wkd-cap correct">
-              <span className="ic" aria-hidden="true"><Wand2 size={20} /></span>
-              <b>Corrects</b>
-              <p>Catches a wrong move the moment it happens and puts you back on track.</p>
-            </div>
-            <div className="wkd-cap fix">
-              <span className="ic" aria-hidden="true"><Bug size={20} /></span>
-              <b>Fixes</b>
-              <p>Debugs the error in front of you and gets you unstuck.</p>
-            </div>
+            {CAP_META.map((m, i) => {
+              const c = (Array.isArray(caps) && caps[i]) || {}
+              const Ic = m.icon
+              return (
+                <div className={`wkd-cap ${m.cls}`} key={m.cls}>
+                  <span className="ic" aria-hidden="true"><Ic size={20} /></span>
+                  <b>{c.t}</b>
+                  <p>{c.d}</p>
+                </div>
+              )
+            })}
           </div>
 
-          <p className="wkd-grounded"><Award size={15} aria-hidden="true" /> Grounded in what is really on your screen. No guessing, no invented steps.</p>
+          <p className="wkd-grounded"><Award size={15} aria-hidden="true" /> {t('demoPage.grounded')}</p>
         </div>
       </section>
 
@@ -186,9 +146,9 @@ export default function WorkDemo() {
       <section className="wkd-final" aria-labelledby="wkd-final-h">
         <div className="wkd-wrap wkd-final-in">
           <AVMark size={44} id="avd" />
-          <h2 id="wkd-final-h">Now bring your own task.</h2>
-          <p>WorkCoPilot takes it from the first step to done, and hands you the write-up.</p>
-          <button className="wkd-cta big" onClick={start}>Start free <ArrowRight size={18} aria-hidden="true" /></button>
+          <h2 id="wkd-final-h">{t('demoPage.finalH2')}</h2>
+          <p>{t('demoPage.finalP')}</p>
+          <button className="wkd-cta big" onClick={start}>{t('demoPage.startFree')} <ArrowRight size={18} aria-hidden="true" /></button>
         </div>
       </section>
       </main>
@@ -206,6 +166,10 @@ export default function WorkDemo() {
 //   'step'  - walk STEPS one at a time (si), catching/correcting a mistake
 //   'done'  - the write-up you keep
 function DemoPlayer() {
+  const t = useT()
+  const GOAL = t('demoPage.goal')
+  const STEPS = useSteps(t)
+  const WRITEUP = t('demoPage.writeup') || []
   const [stage, setStage] = useState('type')
   const [typed, setTyped] = useState('')
   const [si, setSi] = useState(0)        // current step index
@@ -272,22 +236,22 @@ function DemoPlayer() {
 
   return (
     <div className="wkd-stage-wrap">
-      <div className="wkd-demo" role="region" aria-label="Scripted demo of one guided session. It plays automatically and can be replayed at the end." aria-live="off">
+      <div className="wkd-demo" role="region" aria-label={t('demoPage.playerAria')} aria-live="off">
         <div className="wkd-demo-head">
           <span className="dot r" aria-hidden="true" /><span className="dot y" aria-hidden="true" /><span className="dot g" aria-hidden="true" />
           <b>WorkCoPilot</b>
-          {stage !== 'done' && <span className="wkd-live" title="reading your screen"><i aria-hidden="true" /> watching</span>}
-          <span className="wkd-tag">Cloud</span>
+          {stage !== 'done' && <span className="wkd-live" title={t('demoPage.watchingTitle')}><i aria-hidden="true" /> {t('demoPage.watching')}</span>}
+          <span className="wkd-tag">{t('demoPage.tag')}</span>
         </div>
 
-        <div className="wkd-demo-goal"><span className="k">GOAL</span> {typed}{stage === 'type' && <span className="caret" />}</div>
+        <div className="wkd-demo-goal"><span className="k">{t('demoPage.goalLabel')}</span> {typed}{stage === 'type' && <span className="caret" />}</div>
 
         {/* The stage area fills the card and centers its screen, so the fixed
             height never leaves an empty gap below short stages (the write-up). */}
         <div className="wkd-stagearea">
         {stage === 'plan' && (
           <div className="wkd-plan">
-            <div className="wkd-plan-head"><ScanEye size={13} aria-hidden="true" /> Reading your screen, here is the plan</div>
+            <div className="wkd-plan-head"><ScanEye size={13} aria-hidden="true" /> {t('demoPage.planHead')}</div>
             <ol>
               {STEPS.map((st, i) => (
                 <li key={i} className={i < planShown ? 'in' : ''}>{st.step || st.done}</li>
@@ -298,11 +262,11 @@ function DemoPlayer() {
 
         {stage === 'step' && (
           <div className="wkd-demo-body">
-            <div className="wkd-sees" key={'see' + si}><span className="seek"><ScanEye size={12} aria-hidden="true" /> I can see</span> {s.sees}</div>
+            <div className="wkd-sees" key={'see' + si}><span className="seek"><ScanEye size={12} aria-hidden="true" /> {t('demoPage.sees')}</span> {s.sees}</div>
 
             {s.cmd && !isFix && (
               <div className="wkd-term" key={'tm' + si}>
-                <div className="wkd-term-h">TERMINAL <CopyChip text={s.cmd} /></div>
+                <div className="wkd-term-h">{t('demoPage.terminal')} <CopyChip text={s.cmd} /></div>
                 <code>{s.cmd}</code>
               </div>
             )}
@@ -314,18 +278,18 @@ function DemoPlayer() {
             <div className="wkd-guide">
               {isFix ? (
                 <div className="wkd-fix" key={'fx' + si}>
-                  <div className="wkd-fix-h"><AlertTriangle size={13} aria-hidden="true" /> HOLD ON <span className="no">Step {si + 1} of {tot}</span></div>
+                  <div className="wkd-fix-h"><AlertTriangle size={13} aria-hidden="true" /> {t('demoPage.holdOn')} <span className="no">{t('demoPage.stepOf', { n: si + 1, total: tot })}</span></div>
                   <div className="wkd-fix-say">{s.fix.say}</div>
                   <div className="wkd-fix-do"><ArrowRight size={13} aria-hidden="true" /> {s.fix.do}</div>
                 </div>
               ) : (
                 <>
                   <div className="wkd-now">
-                    <div className="wkd-now-lbl">DO THIS NOW <span className="no">Step {si + 1} of {tot}</span></div>
+                    <div className="wkd-now-lbl">{t('demoPage.doThisNow')} <span className="no">{t('demoPage.stepOf', { n: si + 1, total: tot })}</span></div>
                     <div className="wkd-now-step" key={'ns' + si}>{s.step}</div>
                   </div>
                   <div className="wkd-how" key={'hw' + si}>
-                    <div className="wkd-how-lbl">EXACTLY HOW <span className="wkd-how-cnt">{s.how.length} steps</span></div>
+                    <div className="wkd-how-lbl">{t('demoPage.exactlyHow')} <span className="wkd-how-cnt">{t('demoPage.howCount', { n: s.how.length })}</span></div>
                     <ol className="wkd-how-list">
                       {s.how.map((h, k) => (
                         <li key={k} style={{ animationDelay: `${90 + k * 85}ms` }}>
@@ -342,22 +306,22 @@ function DemoPlayer() {
               )}
             </div>
 
-            <div className="wkd-done-when" key={'dw' + si}><Check size={13} aria-hidden="true" /> done when {s.done}</div>
+            <div className="wkd-done-when" key={'dw' + si}><Check size={13} aria-hidden="true" /> {t('demoPage.doneWhen', { what: s.done })}</div>
           </div>
         )}
 
         {stage === 'done' && (
           <div className="wkd-wrapup">
-            <div className="wkd-wrapup-h"><FileText size={15} aria-hidden="true" /> Session write-up</div>
-            <div className="wkd-wrapup-sub">A clean record of exactly what you did, ready to keep, share or repeat.</div>
+            <div className="wkd-wrapup-h"><FileText size={15} aria-hidden="true" /> {t('demoPage.wrapupH')}</div>
+            <div className="wkd-wrapup-sub">{t('demoPage.wrapupSub')}</div>
             <ul>
               {WRITEUP.map((w, i) => (
                 <li key={i} style={{ animationDelay: `${120 + i * 140}ms` }}><Check size={14} aria-hidden="true" /> {w}</li>
               ))}
             </ul>
             <div className="wkd-wrapup-foot">
-              <span className="wkd-badge-done"><Check size={13} aria-hidden="true" /> Task complete</span>
-              <button className="wkd-replay" onClick={run} aria-label="Replay the demo">Replay</button>
+              <span className="wkd-badge-done"><Check size={13} aria-hidden="true" /> {t('demoPage.taskComplete')}</span>
+              <button className="wkd-replay" onClick={run} aria-label={t('demoPage.replayAria')}>{t('demoPage.replay')}</button>
             </div>
           </div>
         )}
