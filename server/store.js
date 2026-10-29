@@ -3698,6 +3698,7 @@ export function allocateCompanyPoolToUser(companyId, targetUserId, seconds) {
   c.poolSeconds -= want
   u.purchasedSeconds = Math.max(0, (u.purchasedSeconds || 0) + want)
   persist()
+  emitStoreEvent('work_hours_granted', { userId: u.id, minutes: Math.round(want / 60) })
   return { ok: true, poolSeconds: c.poolSeconds, user: publicWorkUser(u) }
 }
 
@@ -5111,6 +5112,7 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   if (!adminCompanyId) throw httpErr(403, 'No company in scope.')
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
+  const _prevRole = u.companyRole || 'member'; const _prevFlow = u.workFlow || null
   if (tier !== undefined && !WORK_TIERS.includes(String(tier))) throw httpErr(400, 'Bad plan.')
   // Work flow (worker / independent / mixed) is the enterprise axis for how tasks
   // reach this user; validated here as the single write path, admin-only.
@@ -5128,6 +5130,11 @@ export function updateCompanyMember(adminCompanyId, targetUserId, { companyRole,
   u.companyRole = finalRole
   if (tier !== undefined) u.tier = finalTier
   persist()
+  // Tell the member when their role or work flow actually changed (what they can
+  // do is different now - e.g. made a project manager, or switched to worker flow).
+  if (finalRole !== _prevRole || (workFlow !== undefined && (u.workFlow || null) !== _prevFlow)) {
+    emitStoreEvent('work_access_changed', { userId: u.id, role: u.companyRole || 'member', flow: u.workFlow || 'independent', companyId: adminCompanyId })
+  }
   return publicWorkUser(u)
 }
 // Company admin: remove a member from the company. We DETACH (set companyId/role
@@ -5139,6 +5146,9 @@ export function removeCompanyMember(adminCompanyId, targetUserId, { reason = '',
   const u = getUser(targetUserId)
   if (!u || String(u.companyId) !== String(adminCompanyId)) throw httpErr(404, 'That user is not in your company.')
   const wasRole = u.companyRole || 'member'
+  const _coName = (getCompany(adminCompanyId) || {}).name || ''
+  // Tell the person their company access ended (before the epoch bump signs them out).
+  emitStoreEvent('work_member_removed', { userId: u.id, companyName: _coName })
   u.companyId = null
   u.companyRole = null
   bumpSessionEpoch(u.id)
@@ -6125,6 +6135,8 @@ export function assignProjectTask(byUserId, projectId, taskId, assigneeId) {
   // Notify the assignee by email (best-effort, async, localized). Never notify a
   // person who assigned a task to themselves.
   if (String(assigneeId) !== String(a.id)) emitStoreEvent('work_task_assigned', { assigneeId, byId: a.id, projectId, projectName: p.name, taskTitle: t.title || t.goal || '', reassigned: !!from })
+  // On a reassignment, tell the person it was taken off (unless it was theirs or the actor's).
+  if (from && String(from) !== String(assigneeId) && String(from) !== String(a.id)) emitStoreEvent('work_task_unassigned', { assigneeId: from, byId: a.id, projectId, projectName: p.name, taskTitle: t.title || t.goal || '' })
   return t
 }
 export function reassignProjectTask(byUserId, projectId, taskId, newAssigneeId) {
@@ -6142,6 +6154,7 @@ export function reassignProject(byUserId, projectId, newManagerId, reason = '') 
   const from = p.managerId; p.managerId = newManagerId; persist()
   _logProjectEvent(a.companyId, { kind: 'project_reassigned', by: a.id, projectId, from, to: newManagerId, reason: String(reason || '').slice(0, 400) })
   if (String(newManagerId) !== String(a.id)) emitStoreEvent('work_project_assigned', { managerId: newManagerId, byId: a.id, projectId, projectName: p.name, reassigned: true })
+  if (from && String(from) !== String(newManagerId) && String(from) !== String(a.id)) emitStoreEvent('work_project_unassigned', { managerId: from, byId: a.id, projectId, projectName: p.name })
   return p
 }
 
@@ -6149,6 +6162,11 @@ export function holdProject(byUserId, projectId, held, reason = '') {
   const a = _actor(byUserId); const p = _findCompanyProject(a.companyId, projectId); _assertCanManage(a, p)
   p.held = !!held; p.heldReason = held ? (String(reason || '').slice(0, 400) || null) : null; persist()
   _logProjectEvent(a.companyId, { kind: held ? 'project_held' : 'project_resumed', by: a.id, projectId, reason: p.heldReason })
+  // Tell everyone with a task on this project that it was paused / resumed.
+  const kind = held ? 'work_project_held' : 'work_project_resumed'
+  for (const uid of [...new Set((p.tasks || []).map((x) => x.assigneeId).filter(Boolean))]) {
+    if (String(uid) !== String(a.id)) emitStoreEvent(kind, { userId: uid, byId: a.id, projectId, projectName: p.name, reason: p.heldReason || '' })
+  }
   return p
 }
 
@@ -6295,6 +6313,11 @@ export function completeProjectTaskForSession(workUserId, sessionId, { outcome =
   // not double-count.
   if (!wasDone && task.state === 'done' && task.practiceId) {
     try { recordPracticeStat(_companyIdForPractice(p, workUserId), task.practiceId, 'completed') } catch { /* stats are best-effort */ }
+  }
+  // Tell the project's manager that an assigned task was completed (on the done
+  // transition only, and not when the manager finished their own task).
+  if (!wasDone && task.state === 'done' && p.companyId && task.assigneeId && p.managerId && String(p.managerId) !== String(workUserId)) {
+    emitStoreEvent('work_task_completed', { managerId: p.managerId, assigneeId: workUserId, projectId: p.id, projectName: p.name, taskTitle: task.title || task.goal || '' })
   }
   return task
 }

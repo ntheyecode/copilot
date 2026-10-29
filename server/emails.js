@@ -431,12 +431,55 @@ function onWorkTemplateAssigned(p) {
     templateName: p.templateName || 'a procedure', url: `${APP_BASE}/work`,
   })
 }
+const _byName = (id, fallback) => { const b = id ? store.getUser(id) : null; return (b && userName(b)) || fallback }
+const ROLE_LABELS = { project_manager: 'Project manager', senior_project_manager: 'Senior project manager', grc: 'GRC (read-only oversight)', company_admin: 'Company admin', executive: 'Executive', member: 'Member' }
+const FLOW_LABELS = { worker: 'Worker', independent: 'Independent', mixed: 'Mixed' }
+function onWorkTaskUnassigned(p) {
+  const u = store.getUser(p.assigneeId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_task_unassigned', to, { name: userName(u), byName: _byName(p.byId, 'A project manager'), taskTitle: p.taskTitle || 'a task', projectName: p.projectName || 'a project', url: `${APP_BASE}/work/queue` })
+}
+function onWorkTaskCompleted(p) {
+  const u = store.getUser(p.managerId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_task_completed', to, { name: userName(u), doerName: _byName(p.assigneeId, 'Someone'), taskTitle: p.taskTitle || 'a task', projectName: p.projectName || 'a project', url: `${APP_BASE}/work/pm` })
+}
+function onWorkProjectUnassigned(p) {
+  const u = store.getUser(p.managerId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_project_unassigned', to, { name: userName(u), byName: _byName(p.byId, 'A senior project manager'), projectName: p.projectName || 'a project', url: `${APP_BASE}/work/pm` })
+}
+function onWorkProjectHeld(p) {
+  const u = store.getUser(p.userId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_project_held', to, { name: userName(u), byName: _byName(p.byId, 'A project manager'), projectName: p.projectName || 'a project', reason: p.reason || 'No reason was given.', url: `${APP_BASE}/work` })
+}
+function onWorkProjectResumed(p) {
+  const u = store.getUser(p.userId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_project_resumed', to, { name: userName(u), byName: _byName(p.byId, 'A project manager'), projectName: p.projectName || 'a project', url: `${APP_BASE}/work` })
+}
+function onWorkAccessChanged(p) {
+  const u = store.getUser(p.userId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_access_changed', to, { name: userName(u), role: ROLE_LABELS[p.role] || 'Member', flow: FLOW_LABELS[p.flow] || 'Independent', url: `${APP_BASE}/work` })
+}
+function onWorkHoursGranted(p) {
+  const u = store.getUser(p.userId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_hours_granted', to, { name: userName(u), minutes: String(p.minutes || 0), url: `${APP_BASE}/work` })
+}
+function onWorkMemberRemoved(p) {
+  const u = store.getUser(p.userId); if (!u) return; const to = userEmail(u.id); if (!to) return
+  sendTemplateAsync('work_member_removed', to, { name: userName(u), orgName: p.companyName || 'your company' })
+}
 
 export function handleStoreEvent(type, payload = {}) {
   switch (type) {
     case 'work_task_assigned': return onWorkTaskAssigned(payload)
+    case 'work_task_unassigned': return onWorkTaskUnassigned(payload)
+    case 'work_task_completed': return onWorkTaskCompleted(payload)
     case 'work_project_assigned': return onWorkProjectAssigned(payload)
+    case 'work_project_unassigned': return onWorkProjectUnassigned(payload)
+    case 'work_project_held': return onWorkProjectHeld(payload)
+    case 'work_project_resumed': return onWorkProjectResumed(payload)
     case 'work_template_assigned': return onWorkTemplateAssigned(payload)
+    case 'work_access_changed': return onWorkAccessChanged(payload)
+    case 'work_hours_granted': return onWorkHoursGranted(payload)
+    case 'work_member_removed': return onWorkMemberRemoved(payload)
     case 'ticket_created': return onTicketCreated(payload)
     case 'ticket_admin_reply': return onTicketAdminReply(payload)
     case 'ticket_user_reply': return onTicketUserReply(payload)

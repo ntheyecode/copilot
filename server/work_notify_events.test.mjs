@@ -55,4 +55,41 @@ test('assignment events fire for task / project / template, not to the actor', (
   const p2 = store.createCompanyProject(pm.id, { name: 'Solo', goal: 'a project the PM runs alone end to end', tasks: [{ title: 'T', goal: 'Do it', doneState: 'Done' }] })
   store.assignProjectTask(pm.id, p2.id, p2.tasks[0].id, pm.id)
   assert.equal(events.length, before, 'no event when the actor assigns to themselves / is their own manager')
+
+  // --- the full set of notification types ---
+  // Task reassigned away from the old holder -> work_task_unassigned to m1.
+  const m2 = store.createManagedUser({ username: uniq('m2'), password: 'Passw0rd!x', companyId: co.id, companyRole: 'member', tier: 'premium' })
+  store.setUserCompany(m2.id, co.id, 'member', 'worker')
+  store.assignProjectTask(pm2.id, p.id, p.tasks[0].id, m2.id)   // was m1
+  let u = last('work_task_unassigned'); assert.ok(u && String(u.payload.assigneeId) === String(m1.id), 'old assignee notified of unassignment')
+
+  // Task completed -> work_task_completed to the project manager (pm2). The
+  // project is owned by its creator (srpm); drive state via the owner, then the
+  // assignee finalizes (owner-agnostic by sessionId, as the worker-run path does).
+  store.setWorkProjectTaskState(srpm.id, p.id, p.tasks[0].id, 'active')
+  store.linkWorkProjectTaskSession(srpm.id, p.id, p.tasks[0].id, 'sess-done-1')
+  store.completeProjectTaskForSession(m2.id, 'sess-done-1', { outcome: 'done' })
+  u = last('work_task_completed'); assert.ok(u && String(u.payload.managerId) === String(pm2.id) && String(u.payload.assigneeId) === String(m2.id), 'manager notified a task was completed')
+
+  // Project reassignment already notified the old PM earlier -> work_project_unassigned.
+  u = last('work_project_unassigned'); assert.ok(u && String(u.payload.managerId) === String(pm.id), 'old PM notified a project moved away')
+
+  // Hold / resume -> work_project_held / resumed to the assignee (m2).
+  store.holdProject(pm2.id, p.id, true, 'waiting on access')
+  u = last('work_project_held'); assert.ok(u && String(u.payload.userId) === String(m2.id) && u.payload.reason, 'assignee notified of hold with reason')
+  store.holdProject(pm2.id, p.id, false)
+  u = last('work_project_resumed'); assert.ok(u && String(u.payload.userId) === String(m2.id), 'assignee notified of resume')
+
+  // Role / flow change -> work_access_changed to the member.
+  store.updateCompanyMember(co.id, m1.id, { companyRole: 'project_manager' })
+  u = last('work_access_changed'); assert.ok(u && String(u.payload.userId) === String(m1.id) && u.payload.role === 'project_manager', 'member notified their access changed')
+
+  // Hours granted -> work_hours_granted to the member.
+  store.grantCompanyPoolSeconds(co.id, 3600)
+  store.allocateCompanyPoolToUser(co.id, m2.id, 1800)
+  u = last('work_hours_granted'); assert.ok(u && String(u.payload.userId) === String(m2.id) && u.payload.minutes === 30, 'member notified of granted hours')
+
+  // Removed from the company -> work_member_removed to the person.
+  store.removeCompanyMember(co.id, m2.id, { reason: 'left the team', byUserId: srpm.id })
+  u = last('work_member_removed'); assert.ok(u && String(u.payload.userId) === String(m2.id), 'removed member notified')
 })

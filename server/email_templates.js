@@ -731,6 +731,227 @@ If the button does not work, copy and paste this link into your browser:
       P('<Url>', 'Link to the member work area', 'https://admireveda.com/work'),
     ],
   },
+  work_task_unassigned: {
+    label: 'Task reassigned away from a member',
+    category: 'projects',
+    description: 'Sent to a person when a task they held is reassigned to someone else.',
+    eyebrow: 'Task reassigned',
+    defaultSubject: 'A task was moved off your list: <Task_Title>',
+    defaultPreheader: '<By_Name> reassigned a task in <Project_Name> to someone else. Nothing more to do here.',
+    defaultHeading: 'A task was reassigned',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** reassigned this task in **<Project_Name>** to someone else:
+
+> <Task_Title>
+
+You no longer need to work on it. Your queue shows what is still yours.
+---
+You are receiving this because you are on a WorkCoPilot team.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open my queue',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Task_Title>', 'The task that moved', 'Reconcile the October vendor statement'),
+      P('<Project_Name>', 'The project', 'Month-end close'),
+      P('<By_Name>', 'Who reassigned it', 'Priya Natarajan'),
+      P('<Url>', 'Link to the assignee queue', 'https://admireveda.com/work/queue'),
+    ],
+  },
+  work_task_completed: {
+    label: 'Task completed (to the manager)',
+    category: 'projects',
+    description: 'Sent to a project manager when a person completes a task assigned to them.',
+    eyebrow: 'Task completed',
+    defaultSubject: '<Doer_Name> completed a task in <Project_Name>',
+    defaultPreheader: '<Doer_Name> finished <Task_Title>. Open the project to see where it stands.',
+    defaultHeading: 'A task was completed',
+    defaultBody:
+`Hi <First_Name>,
+
+**<Doer_Name>** completed a task you assigned in **<Project_Name>**:
+
+> <Task_Title>
+
+Open the project to see progress, what is left, and anything waiting too long.
+---
+You are receiving this because you manage this project.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open the project',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Doer_Name>', 'Who completed the task', 'Marcus Webb'),
+      P('<Task_Title>', 'The task completed', 'Import the CSV into the ledger'),
+      P('<Project_Name>', 'The project', 'Month-end close'),
+      P('<Url>', 'Link to the project-manager dashboard', 'https://admireveda.com/work/pm'),
+    ],
+  },
+  work_project_unassigned: {
+    label: 'Project moved to another manager',
+    category: 'projects',
+    description: 'Sent to a project manager when their project is reassigned to a different manager.',
+    eyebrow: 'Project reassigned',
+    defaultSubject: '<Project_Name> was moved to another manager',
+    defaultPreheader: '<By_Name> reassigned <Project_Name> to a different project manager.',
+    defaultHeading: 'A project was reassigned',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** moved **<Project_Name>** to a different project manager. You no longer manage it.
+
+Your other projects are unchanged and still in your dashboard.
+---
+You are receiving this because you manage projects on a WorkCoPilot team.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open my projects',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Project_Name>', 'The project moved', 'Customer portal launch'),
+      P('<By_Name>', 'Who reassigned it', 'Dev Sharma'),
+      P('<Url>', 'Link to the project-manager dashboard', 'https://admireveda.com/work/pm'),
+    ],
+  },
+  work_project_held: {
+    label: 'Project paused (to the team)',
+    category: 'projects',
+    description: 'Sent to everyone with a task on a project when a manager puts it on hold.',
+    eyebrow: 'Project paused',
+    defaultSubject: 'A project you are on was paused: <Project_Name>',
+    defaultPreheader: '<By_Name> put <Project_Name> on hold. You can pause your tasks on it for now.',
+    defaultHeading: 'A project was put on hold',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** put **<Project_Name>** on hold.
+
+> <Reason>
+
+You can pause your tasks on it for now. We will let you know when it resumes.
+---
+You are receiving this because you have a task on this project.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open my work',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Project_Name>', 'The project', 'Customer portal launch'),
+      P('<By_Name>', 'Who paused it', 'Dev Sharma'),
+      P('<Reason>', 'The reason given, if any', 'Waiting on vendor access'),
+      P('<Url>', 'Link to the member work area', 'https://admireveda.com/work'),
+    ],
+  },
+  work_project_resumed: {
+    label: 'Project resumed (to the team)',
+    category: 'projects',
+    description: 'Sent to everyone with a task on a project when a manager resumes it after a hold.',
+    eyebrow: 'Project resumed',
+    defaultSubject: 'A project you are on resumed: <Project_Name>',
+    defaultPreheader: '<By_Name> resumed <Project_Name>. You can pick your tasks back up.',
+    defaultHeading: 'A project resumed',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** resumed **<Project_Name>**. You can pick your tasks on it back up.
+
+Your queue shows what is yours to do.
+---
+You are receiving this because you have a task on this project.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open my work',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Project_Name>', 'The project', 'Customer portal launch'),
+      P('<By_Name>', 'Who resumed it', 'Dev Sharma'),
+      P('<Url>', 'Link to the member work area', 'https://admireveda.com/work'),
+    ],
+  },
+  // ---- Account & access ----------------------------------------------------
+  work_access_changed: {
+    label: 'Role or work flow changed',
+    category: 'account',
+    description: 'Sent to a member when an admin changes their management role or work flow (what they can do changes).',
+    eyebrow: 'Access updated',
+    defaultSubject: 'Your WorkCoPilot access was updated',
+    defaultPreheader: 'Your role is now <Role> and your work flow is <Flow>. Here is what that means.',
+    defaultHeading: 'Your access was updated',
+    defaultBody:
+`Hi <First_Name>,
+
+Your company admin updated your access.
+
+- Role: **<Role>**
+- Work flow: **<Flow>**
+
+Your role sets what you can manage; your work flow sets how work reaches you (start your own tasks, work from an assigned queue, or both). Open WorkCoPilot to see the difference.
+---
+You are receiving this because your access on a WorkCoPilot team changed.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open WorkCoPilot',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Role>', 'Their new role, in plain words', 'Project manager'),
+      P('<Flow>', 'Their new work flow', 'Mixed'),
+      P('<Url>', 'Link to the work area', 'https://admireveda.com/work'),
+    ],
+  },
+  work_hours_granted: {
+    label: 'Hours granted by an admin',
+    category: 'account',
+    description: 'Sent to a member when a company admin allocates more guided hours to them.',
+    eyebrow: 'More hours',
+    defaultSubject: 'Your admin added more WorkCoPilot hours',
+    defaultPreheader: 'You have <Minutes> more minutes of guided time. Ready when you are.',
+    defaultHeading: 'You were given more hours',
+    defaultBody:
+`Hi <First_Name>,
+
+Your company admin added **<Minutes> minutes** of guided time to your account. It is ready to use now.
+
+Guided time is counted only while WorkCoPilot is actively guiding you.
+---
+You are receiving this because your company allocated time to you.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Start a task',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Minutes>', 'Minutes granted', '240'),
+      P('<Url>', 'Link to the work area', 'https://admireveda.com/work'),
+    ],
+  },
+  work_member_removed: {
+    label: 'Removed from a company',
+    category: 'account',
+    description: 'Sent to a person when a company admin removes them from the company.',
+    eyebrow: 'Access ended',
+    defaultSubject: 'Your access to <Org_Name> on WorkCoPilot has ended',
+    defaultPreheader: 'Your company access to <Org_Name> was removed. Your own account and history remain.',
+    defaultHeading: 'Your company access ended',
+    defaultBody:
+`Hi <First_Name>,
+
+Your access to **<Org_Name>** on WorkCoPilot has been removed by a company admin. You have been signed out of that company.
+
+Your own account and your personal history are not deleted. If you think this was a mistake, contact your company admin.
+---
+You are receiving this because your company access changed.`,
+    placeholders: [
+      P('<Org_Name>', 'The company they were removed from', 'Acme Logistics'),
+    ],
+  },
   // ---- Account -------------------------------------------------------------
   welcome_set_password: {
     label: 'Welcome - set your password',
