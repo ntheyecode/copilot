@@ -1,13 +1,15 @@
 // WorkCoPilot - public Contact Us page. Captures name/email/subject/message,
 // POSTs to /api/work/contact (which emails the business + a thank-you to the
 // submitter). Clean, branded, honest - no claims, just a way to reach us.
+// i18n: every visible string comes from the `contactPage` namespace
+// (src/i18n/locales/en/contactPage.js); <title>/description keep seo.contact.*.
 import React, { useState } from 'react'
 import { Mail, Send, Check, Loader2, Building2 } from 'lucide-react'
 import { api } from '../api.js'
 import SiteHeader from '../components/SiteHeader.jsx'   // shared top nav (one link list, mobile disclosure menu)
 import SiteFooter from '../components/SiteFooter.jsx'
 import useSeo from '../useSeo.js'                        // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'                 // localized <title>/description (seo.* keys)
+import { useT } from '../i18n/index.jsx'                 // localized <title>/description (seo.* keys) + page copy (contactPage.*)
 
 export default function WorkContact() {
   const t = useT()
@@ -25,10 +27,10 @@ export default function WorkContact() {
   const submit = async (e) => {
     if (e) e.preventDefault()
     if (busy) return
-    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) { setErr('Please add your name, email and a message.'); return }
+    if (!form.name.trim() || !form.email.trim() || !form.message.trim()) { setErr(t('contactPage.errors.required')); return }
     setBusy(true); setErr('')
     try { await api.workContact(form); setDone(true) }
-    catch (error) { setErr((error && error.message) || 'Could not send your message. Please try again.') }
+    catch (error) { setErr((error && error.message) || t('contactPage.errors.sendFailed')) }
     finally { setBusy(false) }
   }
 
@@ -39,29 +41,29 @@ export default function WorkContact() {
 
       <main className="wct-main" id="main">
         <div className="wct-head">
-          <div className="wct-eyebrow"><Mail size={14} /> Contact us</div>
-          <h1>Talk to us.</h1>
-          <p>Questions about WorkCoPilot, a demo for your team, security or compliance, or anything else. Send a note and we will get back to you.</p>
+          <div className="wct-eyebrow"><Mail size={14} /> {t('contactPage.eyebrow')}</div>
+          <h1>{t('contactPage.h1')}</h1>
+          <p>{t('contactPage.lead')}</p>
         </div>
 
         {done ? (
           <div className="wct-card wct-ok">
             <div className="wct-ok-ic"><Check size={26} /></div>
-            <h2>Thank you, {form.name.split(' ')[0] || 'there'}.</h2>
-            <p>Your message is on its way to our team, and a confirmation is heading to <b>{form.email}</b>. We will be in touch shortly.</p>
-            <a className="wct-btn ghost" href="/">Back to home</a>
+            <h2>{t('contactPage.done.thanks', { name: form.name.split(' ')[0] || t('contactPage.done.thereFallback') })}</h2>
+            <p>{t.rich('contactPage.done.body', { email: form.email })}</p>
+            <a className="wct-btn ghost" href="/">{t('contactPage.done.backHome')}</a>
           </div>
         ) : (
           <form className="wct-card" onSubmit={submit}>
             <div className="wct-grid">
-              <div className="wct-field"><label htmlFor="wct-name">Your name</label><input id="wct-name" name="name" autoComplete="name" value={form.name} maxLength={120} onChange={(e) => set('name', e.target.value)} placeholder="Alex Morgan" /></div>
-              <div className="wct-field"><label htmlFor="wct-email">Email</label><input id="wct-email" name="email" type="email" autoComplete="email" value={form.email} maxLength={160} onChange={(e) => set('email', e.target.value)} placeholder="you@company.com" /></div>
+              <div className="wct-field"><label htmlFor="wct-name">{t('contactPage.form.nameLabel')}</label><input id="wct-name" name="name" autoComplete="name" value={form.name} maxLength={120} onChange={(e) => set('name', e.target.value)} placeholder={t('contactPage.form.namePlaceholder')} /></div>
+              <div className="wct-field"><label htmlFor="wct-email">{t('contactPage.form.emailLabel')}</label><input id="wct-email" name="email" type="email" autoComplete="email" value={form.email} maxLength={160} onChange={(e) => set('email', e.target.value)} placeholder={t('contactPage.form.emailPlaceholder')} /></div>
             </div>
-            <div className="wct-field"><label htmlFor="wct-subject">Subject <span className="opt">(optional)</span></label><input id="wct-subject" name="subject" value={form.subject} maxLength={200} onChange={(e) => set('subject', e.target.value)} placeholder="How can we help?" /></div>
-            <div className="wct-field"><label htmlFor="wct-message">Message</label><textarea id="wct-message" name="message" rows={6} value={form.message} maxLength={4000} onChange={(e) => set('message', e.target.value)} placeholder="Tell us a bit about what you are looking for." /></div>
+            <div className="wct-field"><label htmlFor="wct-subject">{t('contactPage.form.subjectLabel')} <span className="opt">{t('contactPage.form.optional')}</span></label><input id="wct-subject" name="subject" value={form.subject} maxLength={200} onChange={(e) => set('subject', e.target.value)} placeholder={t('contactPage.form.subjectPlaceholder')} /></div>
+            <div className="wct-field"><label htmlFor="wct-message">{t('contactPage.form.messageLabel')}</label><textarea id="wct-message" name="message" rows={6} value={form.message} maxLength={4000} onChange={(e) => set('message', e.target.value)} placeholder={t('contactPage.form.messagePlaceholder')} /></div>
             {err && <div className="wct-err">{err}</div>}
-            <button className="wct-btn" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wct-spin" /> : <Send size={16} />} Send message</button>
-            <p className="wct-note"><Building2 size={13} /> For enterprise, security or compliance questions, mention it above and the right team will reply.</p>
+            <button className="wct-btn" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wct-spin" /> : <Send size={16} />} {t('contactPage.form.send')}</button>
+            <p className="wct-note"><Building2 size={13} /> {t('contactPage.form.note')}</p>
           </form>
         )}
       </main>
