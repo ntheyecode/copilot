@@ -291,6 +291,16 @@ const __base = {
       note: 'Sola lettura per progettazione: guida le tue persone e non clicca, digita o esegue mai nulla al posto loro.',
       ctaTeam: 'Parliamo del tuo team',
       ctaEnt: 'Vedi i controlli per le aziende',
+      run: {
+        h3: 'Progettato per come funziona davvero un\'azienda.',
+        sub: 'Ruoli, code, modelli e un cervello condiviso, con ogni regola applicata sul server, mai solo nell\'interfaccia.',
+        cards: [
+          { t: 'Ruoli e flussi di lavoro', d: 'I responsabili di progetto assegnano e riassegnano. I responsabili di progetto senior riequilibrano interi progetti tra i responsabili. GRC osserva in sola lettura, con un registro dei rischi per il lavoro che si blocca. Ogni persona lavora da una coda, in autonomia, o entrambe.', chips: ['Responsabile di progetto', 'Responsabile di progetto senior', 'Supervisione GRC', 'Lavoratore', 'Indipendente', 'Misto'] },
+          { t: 'Una procedura, molte persone', d: 'Trasforma un progetto in un modello e assegnalo a un intero team in una volta sola. Ogni persona ha la propria esecuzione; vedi un riepilogo di chi ha finito e fin dove, mai la sessione grezza di nessuno.', chips: ['Onboarding', 'Procedure (SOP)', 'Esercitazioni di conformità'] },
+          { t: 'Un cervello aziendale che si accumula', d: 'Un flusso di lavoro che una persona ha dimostrato viene servito a tutti la volta successiva. Organizzalo in spazi di conoscenza, scegli quello giusto in fase di pianificazione, e ogni voce passa prima per una ripulitura consapevole delle policy.', chips: ['Spazi di conoscenza', 'Ripulito all\'ingresso'] },
+          { t: 'Pratiche collaudate, integrate', d: 'Su un progetto suggerisce le pratiche collaudate per quel tipo di lavoro. Aggiungine una e diventa un\'attività reale. I suggerimenti migliorano in base a ciò che la tua organizzazione accetta e completa.', chips: ['Suggerisci', 'Aggiungi alla mappa', 'Impara da ciò che accetti'] },
+        ],
+      },
     },
     fields: {
       eyebrow: 'Ogni settore · uno strumento',
@@ -339,7 +349,7 @@ const __base = {
     pricing: {
       eyebrow: 'Prezzi',
       h2: 'Piani semplici. Tempo guidato vero.',
-      sub: 'Ore di guida esperta ogni mese. IA inclusa.',
+      sub: 'Ore di guida esperta ogni mese. Più attività aperte contemporaneamente. IA inclusa.',
       billingAria: 'Periodo di fatturazione',
       monthly: 'Mensile',
       annual: 'Annuale',
@@ -355,6 +365,7 @@ const __base = {
         lite: [
           'Guida passo dopo passo',
           'Comandi, codice e link esatti',
+          'I tuoi documenti come contesto',
           'Privacy e sicurezza integrate',
         ],
         basic: [
@@ -362,7 +373,7 @@ const __base = {
           'Roadmap incluse',
           'Guida fluttuante + resoconto della sessione',
         ],
-        advanced: ['Tutto di Basic', 'Carica i tuoi documenti', 'Esempi visivi dove servono', 'Guida prioritaria'],
+        advanced: ['Tutto di Basic', 'Più contesto documentale per attività', 'Esempi visivi dove servono', 'Guida prioritaria'],
         premium: [
           'Tutto ciò che è incluso in Advanced',
           'Progetti: un grande obiettivo come mappa di attività',
@@ -382,12 +393,52 @@ const __base = {
       chips: [
         'SSO (OIDC)',
         'MFA obbligatoria',
-        'Utenti illimitati',
-        'Le tue procedure e i tuoi playbook',
+        'Pool di postazioni e ore',
+        'Le tue chiavi IA',
+        'Regole DLP sul dispositivo',
+        'Crittografia a riposo',
         'Log di audit',
         'Inoltro a SOC / SIEM',
+        'MSI per macchina',
         'DPA',
         'On-premise su richiesta',
+      ],
+    },
+    prove: {
+      eyebrow: 'Prove e conformità',
+      h2: 'Ogni attività finisce con una <em>prova</em>, non con una promessa.',
+      sub: 'Ciò che è stato fatto, confermato sullo schermo mentre accadeva, documentato e sigillato perché chiunque possa verificarne l\'autenticità.',
+      frameworksLbl: 'Mappato su {n} framework',
+      more: '+{n} altri',
+      cta: 'Vedi la copertura di conformità',
+      points: [
+        { t: 'Report dell\'attività', d: 'I passaggi confermati con le relative istruzioni, l\'esito e screenshot delle tappe, ripuliti. Indica "5 di 6 completati" quando è la verità.' },
+        { t: 'Log di audit', d: 'Una registrazione con marca temporale di ogni passaggio e ogni invio, conservata per ogni sessione.' },
+        { t: 'Sigillo di autenticità', d: 'Ogni report è sigillato con SHA-256 e HMAC. Chiunque può confermarne l\'autenticità su un endpoint di verifica pubblico.' },
+        { t: 'Conformità, per attività', d: 'Un report opzionale mappa il lavoro su {n} framework. Prove a supporto del tuo programma, mai una dichiarazione di certificazione.' },
+      ],
+      log: {
+        title: 'Log di audit',
+        task: 'Ruotare la chiave API di produzione',
+        sealed: 'Report sigillato',
+        lines: [
+          { at: '14:02:11', k: 'passaggio 3 di 5', m: 'verificato sullo schermo', s: 'ok' },
+          { at: '14:02:40', k: 'passaggio 4 di 5', m: 'valore errato rilevato e corretto', s: 'warn' },
+          { at: '14:05:02', k: 'passaggio 5 di 5', m: 'verificato sullo schermo', s: 'ok' },
+          { at: '14:05:09', k: 'report', m: '4 screenshot delle tappe, ripuliti sul dispositivo', s: 'info' },
+          { at: '14:05:10', k: 'sigillo', m: 'SHA-256 + HMAC applicati', s: 'seal' },
+          { at: '14:05:10', k: 'verifica', m: 'autentico', s: 'ok' },
+        ],
+      },
+    },
+    everywhere: {
+      eyebrow: 'Tuo, ovunque',
+      h2: 'Una sola guida. <em>Ogni schermo</em>, ogni lingua, a modo tuo.',
+      sub: 'La stessa guida su desktop, Android e web, nella lingua e nell\'aspetto che scegli, ricordati su tutti i tuoi dispositivi.',
+      cards: [
+        { t: 'Ogni piattaforma', d: 'Un\'app Windows firmata, con un MSI per macchina per un rollout IT silenzioso, un\'app Android e il web. Su desktop l\'OCR gira sul dispositivo, così immagini e diagrammi vengono letti in locale. I miglioramenti dell\'interfaccia arrivano a ogni app senza reinstallare.', chips: ['Windows', 'MSI aziendale', 'Android', 'Web', 'OCR sul dispositivo'] },
+        { t: 'La tua lingua', d: 'L\'intero prodotto e ogni email che invia, in {n} lingue più inglese americano e britannico. Sceglila al primo accesso e cambiala quando vuoi.', chips: [] },
+        { t: 'Il tuo aspetto, ricordato', d: 'Chiaro, Scuro o Marcato. Accenti del brand con contrasto testato. Testo più grande, movimento ridotto, contrasto elevato, bersagli più grandi e un carattere leggibile. Imposti una volta, applicato in diretta, mantenuto su tutti i tuoi dispositivi.', chips: ['Chiaro', 'Scuro', 'Marcato', 'Accessibilità'] },
       ],
     },
     final: {
@@ -3289,6 +3340,8 @@ const __base = {
       forms: 'Moduli',
       notifications: 'Notifiche',
       support: 'Assistenza',
+      bug: 'Avvisi dei ticket di assistenza',
+      projects: 'Progetti e assegnazione delle attività',
     },
     resetConfirm: 'Ripristinare questa email al suo valore predefinito integrato? Il tuo testo personalizzato verrà rimosso.',
     subject: 'Oggetto',

@@ -297,6 +297,16 @@ const __base = {
       note: 'Solo lectura por diseño: guía a tu gente y nunca hace clic, escribe ni ejecuta nada por ellos.',
       ctaTeam: 'Hablemos de tu equipo',
       ctaEnt: 'Ver los controles para empresas',
+      run: {
+        h3: 'Diseñado para cómo funciona una empresa de verdad.',
+        sub: 'Roles, colas, plantillas y un cerebro compartido, con cada regla aplicada en el servidor, nunca solo en la interfaz.',
+        cards: [
+          { t: 'Roles y flujos de trabajo', d: 'Los jefes de proyecto asignan y reasignan. Los jefes de proyecto sénior reequilibran proyectos enteros entre varios jefes. GRC observa en solo lectura, con un registro de riesgos para el trabajo que se estanca. Cada persona trabaja desde una cola, de forma independiente, o ambas.', chips: ['Jefe de proyecto', 'Jefe de proyecto sénior', 'Supervisión GRC', 'Trabajador', 'Independiente', 'Mixto'] },
+          { t: 'Un procedimiento, muchas personas', d: 'Convierte un proyecto en una plantilla y asígnalo a todo un equipo a la vez. Cada persona tiene su propia ejecución; tú ves un resumen de quién terminó y hasta dónde llegó, nunca la sesión en bruto de nadie.', chips: ['Onboarding', 'Procedimientos (SOP)', 'Simulacros de cumplimiento'] },
+          { t: 'Un cerebro de empresa que se acumula', d: 'Un flujo de trabajo que una persona demuestra se le sirve a todos la próxima vez. Organízalo en espacios de conocimiento, elige el adecuado al planificar y cada entrada pasa primero por una limpieza con conciencia de las políticas.', chips: ['Espacios de conocimiento', 'Limpiado al entrar'] },
+          { t: 'Prácticas probadas, incorporadas', d: 'En un proyecto sugiere las prácticas probadas para ese tipo de trabajo. Añade una y se convierte en una tarea real. Las sugerencias mejoran con lo que tu organización acepta y completa.', chips: ['Sugerir', 'Añadir al mapa', 'Aprende de lo aceptado'] },
+        ],
+      },
     },
     fields: {
       eyebrow: 'Todas las áreas · una herramienta',
@@ -345,7 +355,7 @@ const __base = {
     pricing: {
       eyebrow: 'Precios',
       h2: 'Planes sencillos. Tiempo guiado real.',
-      sub: 'Horas de guía experta cada mes. IA incluida.',
+      sub: 'Horas de guía experta cada mes. Varias tareas abiertas a la vez. IA incluida.',
       billingAria: 'Periodo de facturación',
       monthly: 'Mensual',
       annual: 'Anual',
@@ -361,6 +371,7 @@ const __base = {
         lite: [
           'Guía paso a paso',
           'Comandos, código y enlaces exactos',
+          'Tus propios documentos como contexto',
           'Privacidad y seguridad incluidas',
         ],
         basic: [
@@ -368,7 +379,7 @@ const __base = {
           'Hojas de ruta incluidas',
           'Guía flotante + resumen de la sesión',
         ],
-        advanced: ['Todo lo de Basic', 'Sube tus propios documentos', 'Ejemplos visuales cuando ayudan', 'Guía prioritaria'],
+        advanced: ['Todo lo de Basic', 'Más contexto de documentos por tarea', 'Ejemplos visuales cuando ayudan', 'Guía prioritaria'],
         premium: [
           'Todo lo de Advanced',
           'Proyectos: un objetivo grande como mapa de tareas',
@@ -388,12 +399,52 @@ const __base = {
       chips: [
         'SSO (OIDC)',
         'MFA obligatorio',
-        'Usuarios ilimitados',
-        'Tus procedimientos y manuales',
+        'Bolsas de puestos y horas',
+        'Tus propias claves de IA',
+        'Reglas de DLP en el dispositivo',
+        'Cifrado en reposo',
         'Registros de auditoría',
         'Envío a SOC / SIEM',
+        'MSI por máquina',
         'DPA',
         'On-premise bajo petición',
+      ],
+    },
+    prove: {
+      eyebrow: 'Pruebas y cumplimiento',
+      h2: 'Cada tarea termina con una <em>prueba</em>, no con una promesa.',
+      sub: 'Lo que se hizo, confirmado en pantalla a medida que ocurría, documentado y sellado para que cualquiera pueda comprobar que es auténtico.',
+      frameworksLbl: 'Se asigna a {n} marcos',
+      more: '+{n} más',
+      cta: 'Ver la cobertura de cumplimiento',
+      points: [
+        { t: 'Informe de tarea', d: 'Pasos confirmados con su guía, el resultado y capturas de los hitos, limpiadas. Informa "5 de 6 hechos" cuando esa es la verdad.' },
+        { t: 'Registro de auditoría', d: 'Un registro con marca de tiempo de cada paso y cada envío, guardado para cada sesión.' },
+        { t: 'Sello de autenticidad', d: 'Cada informe se sella con SHA-256 y HMAC. Cualquiera puede confirmar que es auténtico en un punto de verificación público.' },
+        { t: 'Cumplimiento, por tarea', d: 'Un informe opcional asigna el trabajo a {n} marcos. Evidencia que respalda tu programa, nunca una declaración de certificación.' },
+      ],
+      log: {
+        title: 'Registro de auditoría',
+        task: 'Rotar la clave de API de producción',
+        sealed: 'Informe sellado',
+        lines: [
+          { at: '14:02:11', k: 'paso 3 de 5', m: 'verificado en pantalla', s: 'ok' },
+          { at: '14:02:40', k: 'paso 4 de 5', m: 'valor incorrecto detectado y corregido', s: 'warn' },
+          { at: '14:05:02', k: 'paso 5 de 5', m: 'verificado en pantalla', s: 'ok' },
+          { at: '14:05:09', k: 'informe', m: '4 capturas de hitos, limpiadas en el dispositivo', s: 'info' },
+          { at: '14:05:10', k: 'sello', m: 'SHA-256 + HMAC aplicados', s: 'seal' },
+          { at: '14:05:10', k: 'verificar', m: 'auténtico', s: 'ok' },
+        ],
+      },
+    },
+    everywhere: {
+      eyebrow: 'Tuyo, en todas partes',
+      h2: 'Una sola guía. <em>Cada pantalla</em>, cada idioma, a tu manera.',
+      sub: 'La misma guía en escritorio, Android y la web, en el idioma y el aspecto que elijas, recordados en todos tus dispositivos.',
+      cards: [
+        { t: 'Todas las plataformas', d: 'Una app de Windows firmada, con un MSI por máquina para un despliegue de TI silencioso, una app de Android y la web. En escritorio, el OCR se ejecuta en el dispositivo, así que las imágenes y los diagramas se leen en local. Las mejoras de la interfaz llegan a todas las apps sin reinstalar.', chips: ['Windows', 'MSI para empresas', 'Android', 'Web', 'OCR en el dispositivo'] },
+        { t: 'Tu idioma', d: 'Todo el producto y cada correo que envía, en {n} idiomas más inglés de EE. UU. y británico. Elígelo al iniciar sesión por primera vez y cámbialo cuando quieras.', chips: [] },
+        { t: 'Tu aspecto, recordado', d: 'Claro, Oscuro o Intenso. Acentos de marca con contraste probado. Texto más grande, menos movimiento, alto contraste, objetivos más grandes y una tipografía legible. Se configura una vez, se aplica en vivo y se mantiene en todos tus dispositivos.', chips: ['Claro', 'Oscuro', 'Intenso', 'Accesibilidad'] },
       ],
     },
     final: {
@@ -3283,6 +3334,8 @@ const __base = {
       forms: 'Formularios',
       notifications: 'Notificaciones',
       support: 'Soporte',
+      bug: 'Avisos de tickets de soporte',
+      projects: 'Proyectos y asignación de tareas',
     },
     resetConfirm: '¿Restablecer este email a su valor integrado por defecto? Se quitará tu texto personalizado.',
     subject: 'Asunto',
