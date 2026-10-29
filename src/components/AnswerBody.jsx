@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Copy, Check, Volume2 } from 'lucide-react'
 import { scrubForRender, scrubGuidance } from '../../server/ai_language.js'
+import { useT } from '../i18n/index.jsx'
 
 // Renders an answer as plain prose, EXCEPT fenced code blocks, which become
 // real code panels with a copy button. Prose stays undecorated - no bold, no
@@ -37,6 +38,7 @@ function codeForCopy(body) {
 }
 
 function CodeBlock({ lang, body }) {
+  const t = useT()
   const [copied, setCopied] = useState(false)
   const copy = async () => {
     const selected = String(window.getSelection?.() || '').trim()
@@ -51,7 +53,7 @@ function CodeBlock({ lang, body }) {
     <div className="ab-code">
       <div className="ab-code-bar">
         <span>{lang || 'code'}</span>
-        <button className="ab-copy" onClick={copy} title="Copy the highlighted text, or the clean code if nothing is selected">
+        <button className="ab-copy" onClick={copy} title={t('answerBody.copyCodeTip')}>
           {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
@@ -150,11 +152,11 @@ const PAUSE_TOKEN = /^\{(?:PAUSE|\.{2,}|…+)\}$/i
 // a real beat before continuing (stronger than a plain {PAUSE} breath).
 const THINK_TOKEN = /^\{THINK\}$/i
 const DELIVERY_SPLIT = /(\{PAUSE\}|\{THINK\}|\{\.{2,}\}|\{…+\})/gi
-function withPauses(text, keyBase) {
+function withPauses(text, keyBase, t) {
   return String(text).split(DELIVERY_SPLIT).map((chunk, i) => {
     if (!chunk) return null
-    if (THINK_TOKEN.test(chunk)) return <span key={`${keyBase}-${i}`} className="ab-think" aria-label="pause and think" title="Pause and think for a second or two before continuing">. . . . <b><u>THINK</u></b> . . . .</span>
-    if (PAUSE_TOKEN.test(chunk)) return <span key={`${keyBase}-${i}`} className="ab-pause" aria-label="pause here" title="Pause / slow down here">. . . .</span>
+    if (THINK_TOKEN.test(chunk)) return <span key={`${keyBase}-${i}`} className="ab-think" aria-label={t('answerBody.thinkAria')} title={t('answerBody.thinkTip')}>. . . . <b><u>THINK</u></b> . . . .</span>
+    if (PAUSE_TOKEN.test(chunk)) return <span key={`${keyBase}-${i}`} className="ab-pause" aria-label={t('answerBody.pauseAria')} title={t('answerBody.pauseTip')}>. . . .</span>
     return <span key={`${keyBase}-${i}`}>{punctNodes(chunk, `${keyBase}-${i}`)}</span>
   })
 }
@@ -167,18 +169,18 @@ function plainText(text) {
 
 // A chunk of prose -> **bold** words highlighted; the rest spoken (pause chips
 // + red marks) or plain.
-function withBold(text, keyBase, spoken) {
+function withBold(text, keyBase, spoken, t) {
   return String(text).split(/\*\*([^*]+?)\*\*/g).map((seg, i) => i % 2 === 1
     ? <mark key={`${keyBase}-b${i}`} className="ab-key">{spoken ? seg : plainText(seg)}</mark>
-    : <span key={`${keyBase}-s${i}`}>{spoken ? withPauses(seg, `${keyBase}-${i}`) : plainText(seg)}</span>)
+    : <span key={`${keyBase}-s${i}`}>{spoken ? withPauses(seg, `${keyBase}-${i}`, t) : plainText(seg)}</span>)
 }
 
 // ==critical sentence== (odd indices) then **bold** words (+ pauses when spoken)
 // inside each part, so a whole key sentence highlights and bold words too.
-function renderInline(text, key, spoken) {
+function renderInline(text, key, spoken, t) {
   return String(text).split(/==([^=]+?)==/g).map((seg, ci) => ci % 2 === 1
-    ? <mark key={`${key}-c${ci}`} className="ab-crit">{withBold(seg, `${key}-c${ci}`, spoken)}</mark>
-    : <span key={`${key}-n${ci}`}>{withBold(seg, `${key}-n${ci}`, spoken)}</span>)
+    ? <mark key={`${key}-c${ci}`} className="ab-crit">{withBold(seg, `${key}-c${ci}`, spoken, t)}</mark>
+    : <span key={`${key}-n${ci}`}>{withBold(seg, `${key}-n${ci}`, spoken, t)}</span>)
 }
 
 // Clean the AI-language tells at RENDER time (zero cost on the generation path),
@@ -189,6 +191,7 @@ function renderInline(text, key, spoken) {
 // exactly like a curated one. Prose only; code blocks are handled separately and
 // never reach here. One source of truth means a new tell is fixed in ONE place.
 function ProseText({ body, spoken, cleanAI }) {
+  const t = useT()
   // Flowing speech by default, BUT real bullet lists must render as bullets. The
   // model marks a bullet with a leading -, *, or •. We group consecutive bullet
   // lines into a <ul>; everything else is prose. Within a prose block single line
@@ -213,8 +216,8 @@ function ProseText({ body, spoken, cleanAI }) {
   return (
     <div className="ab-text">
       {blocks.map((b, bi) => b.type === 'ul'
-        ? <ul key={bi} className="ab-ul">{b.items.map((it, ii) => <li key={ii} className="ab-li">{renderInline(it, `u${bi}-${ii}`, spoken)}</li>)}</ul>
-        : <p key={bi} className="ab-p">{renderInline(b.text, `p${bi}`, spoken)}</p>)}
+        ? <ul key={bi} className="ab-ul">{b.items.map((it, ii) => <li key={ii} className="ab-li">{renderInline(it, `u${bi}-${ii}`, spoken, t)}</li>)}</ul>
+        : <p key={bi} className="ab-p">{renderInline(b.text, `p${bi}`, spoken, t)}</p>)}
     </div>
   )
 }

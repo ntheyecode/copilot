@@ -15,39 +15,47 @@ import { planView, fmtDuration } from './planModel.js'
 
 const UNITS = { h: 'h', min: 'min' }
 
+// Each function takes the i18n translator `t` as a parameter and returns the
+// keyed string, keeping the planView / fmtDuration number logic here and passing
+// the formatted values as interpolation vars. The English copy lives in
+// src/i18n/locales/en/usageCopy.js (the `usage` namespace). Pure, no React: every
+// caller (Guiding.jsx, FloatPanel.jsx, WorkFullGuide.jsx) passes its own useT().
+
 // "58 h left" / "35 min left" / "No time left". Compact (whole hours past 10).
-export function usageTimeLeft(usage) {
+export function usageTimeLeft(usage, t) {
   if (!usage) return ''
   const plan = planView(usage)
   if (!plan) return ''
-  if (plan.exhausted) return 'No time left'
-  return `${fmtDuration(plan.remainingSeconds, UNITS, true)} left`
+  if (plan.exhausted) return t('usage.noTime')
+  return t('usage.timeLeft', { time: fmtDuration(plan.remainingSeconds, UNITS, true) })
 }
 
 // "1 of 4 tasks open" (individuals: the at-once slots) or "2 of 3 tasks" (a
 // company ceiling), or '' when no limit applies (unlimited / unknown).
-export function usageTasksLine(usage) {
+export function usageTasksLine(usage, t) {
   const plan = planView(usage)
-  const t = plan && plan.tasks
-  if (!t || t.unlimited || t.max == null) return ''
-  return t.mode === 'open' ? `${t.used} of ${t.max} tasks open` : `${t.used} of ${t.max} tasks`
+  const slots = plan && plan.tasks
+  if (!slots || slots.unlimited || slots.max == null) return ''
+  return slots.mode === 'open'
+    ? t('usage.tasksOpen', { used: slots.used, max: slots.max })
+    : t('usage.tasks', { used: slots.used, max: slots.max })
 }
 
 // What to do when the plan hours are gone. A company member (the usage snapshot
 // carries an `enterprise` block) asks their admin, since they cannot buy; an
 // individual buys top-up hours or waits for the renewal.
-export function usageOutOfTime(usage) {
+export function usageOutOfTime(usage, t) {
   const when = (usage && usage.resetLabel) || 'the 1st'
   const isCompanyMember = !!(usage && usage.enterprise)
   return isCompanyMember
-    ? `You have used your plan hours for this month. They renew on ${when}. Ask your administrator if you need more before then.`
-    : `You have used your plan hours for this month. Buy top-up hours to keep going, or they renew on ${when}.`
+    ? t('usage.outCompany', { when })
+    : t('usage.outIndividual', { when })
 }
 
 // The low-hours line shown while guiding. `time` is the compact time left.
-export function usageLowNote(usage) {
+export function usageLowNote(usage, t) {
   if (!usage) return ''
   const plan = planView(usage)
   if (!plan) return ''
-  return `About ${fmtDuration(plan.remainingSeconds, UNITS)} of guided time left this month. You can pause anytime, or add top-up hours to keep going.`
+  return t('usage.lowNote', { time: fmtDuration(plan.remainingSeconds, UNITS) })
 }

@@ -112,7 +112,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
   // The current-step left bar: the flat accent (the color-coded "now").
   const accentBar = { position: 'absolute', left: 0, top: 0, bottom: 0, width: 4, background: c.accent }
 
-  const timeLeft = usage ? usageTimeLeft(usage) : ''
+  const timeLeft = usage ? usageTimeLeft(usage, t) : ''
   // #1 ONE calm status chip: Guiding when live, Paused otherwise. The watching
   // state is implied by this chip, not by a separate "Live / Not watching" label.
   const liveFP = watching && !paused
@@ -189,7 +189,7 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
       <div style={{ flex: '1 1 auto', minHeight: 0, overflowY: 'auto', overflowX: 'hidden', display: wide ? 'grid' : 'flex', gridTemplateColumns: wide ? '220px minmax(0,1fr)' : undefined, flexDirection: 'column', gap: wide ? 16 : 9, alignItems: wide ? 'start' : undefined }}>
       {wide && steps.length > 0 && (
         <aside style={{ position: 'sticky', top: 0, display: 'flex', flexDirection: 'column', gap: 8, ...card, padding: 10 }} aria-label={t('floatPanel.plan')}>
-          <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>{t('floatPanel.plan')} <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps)}</span></span>
+          <span style={{ ...eyebrow, fontSize: 9.5, letterSpacing: '.1em', color: c.faint, display: 'flex', alignItems: 'center', gap: 6, padding: '2px 2px 4px' }}>{t('floatPanel.plan')} <span style={{ marginLeft: 'auto', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: c.muted }}>{progressText(steps, t)}</span></span>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: '48vh', overflowY: 'auto' }}>
             {steps.map((s, i) => { const isDone = s.status === 'done', isNow = s.status === 'current'; return (
               <button key={i} className="fp-btn" onClick={() => onStep(i, 'current')} title={plainStep(s.text)} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', width: '100%', textAlign: 'left', padding: '6px 7px', borderRadius: 8, border: `1px solid ${isNow ? c.accentRing : 'transparent'}`, background: isNow ? c.accentSoft : 'transparent', color: isNow ? c.text : isDone ? c.faint : c.muted, fontFamily: FONT, fontSize: fs(12), lineHeight: 1.4, fontWeight: isNow ? 650 : 500 }}>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { Loader2, Sparkles, ArrowRight, MessageCircleQuestion, ListChecks, LifeBuoy } from 'lucide-react'
 import RichText from '../../components/RichText.jsx'
 import { ASK_OFFER, ASK_ASKING, ASK_ANSWERED, ASK_RESUMING, STUCK_DEFAULT_QUESTION } from './askFlow.js'
+import { useT } from '../../i18n/index.jsx'
 
 // The FOCUS SCREENS: exactly one of them owns the view while the step card is
 // hidden (one screen at a time, hide and show with a fade):
@@ -24,6 +25,7 @@ import { ASK_OFFER, ASK_ASKING, ASK_ANSWERED, ASK_RESUMING, STUCK_DEFAULT_QUESTI
 //   onFollowUp   focus the ask box for another question
 //   renderAnswer optional (text) => node for a host with a richer renderer
 export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onContinue, onFollowUp, renderAnswer, busy = false }) {
+  const t = useT()
   const continueRef = useRef(null)
   const boxRef = useRef(null)
   const [draft, setDraft] = useState('')
@@ -37,15 +39,15 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
     return (
       <div className="gv-ask">
         <section className="gv-ask-card gv-offer" aria-labelledby="gv-offer-h" role="dialog">
-          <span className="gv-k" style={{ color: 'var(--gv-accent)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><LifeBuoy size={12} aria-hidden="true" /> A quick check-in</span>
-          <h2 id="gv-offer-h" className="gv-offer-h">Stuck? Any issues?</h2>
+          <span className="gv-k" style={{ color: 'var(--gv-accent)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><LifeBuoy size={12} aria-hidden="true" /> {t('askFocus.checkIn')}</span>
+          <h2 id="gv-offer-h" className="gv-offer-h">{t('askFocus.stuckTitle')}</h2>
           <p className="gv-offer-p">This step has been open for a while{stepText ? <>: <b><RichText text={stepText} accent="var(--gv-accent)" chips={false} /></b>.</> : '.'} Tell me what is in the way, or I can explain it another way.</p>
           <form className="gv-offer-form" onSubmit={(e) => { e.preventDefault(); send(draft) }}>
-            <input ref={boxRef} className="gv-offer-input" type="text" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="For example: the Verify button is grey" aria-label="What is in the way" disabled={busy} />
+            <input ref={boxRef} className="gv-offer-input" type="text" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder={t('askFocus.inWayPlaceholder')} aria-label={t('askFocus.inWayAria')} disabled={busy} />
             <button type="submit" className="gv-btn primary" disabled={busy}><ArrowRight size={15} strokeWidth={2.6} aria-hidden="true" /> {draft.trim() ? 'Send' : 'Explain this step again'}</button>
           </form>
           <div className="gv-ask-actions" style={{ marginTop: 10 }}>
-            <button type="button" className="gv-btn ghost" onClick={onDismiss} disabled={busy}>I am fine, keep going</button>
+            <button type="button" className="gv-btn ghost" onClick={onDismiss} disabled={busy}>{t('askFocus.fine')}</button>
           </div>
         </section>
       </div>
@@ -72,18 +74,18 @@ export default function AskFocus({ ask, steps, stepText, onAsk, onDismiss, onCon
     <div className="gv-ask">
       <section className="gv-ask-card" aria-labelledby="gv-ask-h">
         <span className="gv-k" style={{ color: 'var(--gv-accent)', display: 'inline-flex', alignItems: 'center', gap: 6 }}><Sparkles size={12} aria-hidden="true" /> {label}</span>
-        {showQ && <div className="gv-ask-q">You asked: <b>{ask.question}</b></div>}
+        {showQ && <div className="gv-ask-q">{t('askFocus.youAsked')} <b>{ask.question}</b></div>}
         <h2 id="gv-ask-h" className="gv-ask-body" style={{ fontWeight: 500, margin: '12px 0 0' }}>
           {renderAnswer ? renderAnswer(ask.answer) : <RichText text={ask.answer} accent="var(--gv-accent)" links />}
         </h2>
         {ask.planChanged && (
-          <div className="gv-ask-plan"><ListChecks size={15} aria-hidden="true" /><span><b>Your plan was updated.</b> Continue picks up at step {at != null ? at + 1 : ''}{resumeStep ? <>: <RichText text={resumeStep.text} accent="var(--gv-accent)" chips={false} /></> : '.'}</span></div>
+          <div className="gv-ask-plan"><ListChecks size={15} aria-hidden="true" /><span><b>{t('askFocus.planUpdated')}</b> Continue picks up at step {at != null ? at + 1 : ''}{resumeStep ? <>: <RichText text={resumeStep.text} accent="var(--gv-accent)" chips={false} /></> : '.'}</span></div>
         )}
         <div className="gv-ask-actions">
           <button ref={continueRef} type="button" className="gv-btn primary" onClick={onContinue} disabled={ask.phase === ASK_RESUMING}>
             <ArrowRight size={16} strokeWidth={2.6} aria-hidden="true" /> {ask.planChanged ? 'Continue with the updated plan' : ask.kind === 'stuck' ? 'Got it, back to the step' : 'Continue guiding'}
           </button>
-          {onFollowUp && <button type="button" className="gv-btn ghost" onClick={onFollowUp}><MessageCircleQuestion size={15} aria-hidden="true" /> Ask a follow-up</button>}
+          {onFollowUp && <button type="button" className="gv-btn ghost" onClick={onFollowUp}><MessageCircleQuestion size={15} aria-hidden="true" /> {t('askFocus.followUp')}</button>}
           {!ask.planChanged && resumeStep && <span className="gv-ask-sub">Back to step {at + 1}.</span>}
         </div>
       </section>

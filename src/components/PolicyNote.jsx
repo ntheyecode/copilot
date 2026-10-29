@@ -1,5 +1,6 @@
 import React from 'react'
 import { BadgeCheck, ShieldAlert, Ban, CircleAlert } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'
 
 // PolicyNote - the in-app COMPANY-POLICY check for generated guidance. Renders only
 // when a `policy` object is passed, which the server attaches to /plan, /result and
@@ -16,6 +17,7 @@ import { BadgeCheck, ShieldAlert, Ban, CircleAlert } from 'lucide-react'
 //
 // Nested inside a WorkCard, so it inherits the card's --wc-* tokens.
 export default function PolicyNote({ policy }) {
+  const t = useT()
   if (!policy || !Array.isArray(policy.findings)) return null
   ensureAssets()
   const findings = policy.findings
@@ -47,7 +49,7 @@ export default function PolicyNote({ policy }) {
           })}
         </ul>
       ) : (
-        <p className="pn-clean">This guidance was checked against your company security policy and nothing was flagged.</p>
+        <p className="pn-clean">{t('policyNote.cleanBody')}</p>
       )}
     </div>
   )

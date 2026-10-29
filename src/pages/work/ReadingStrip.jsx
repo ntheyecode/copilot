@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Eye, AlertTriangle, ChevronDown } from 'lucide-react'
 import RichText from '../../components/RichText.jsx'
+import { useT } from '../../i18n/index.jsx'
 
 // The observation, used WISELY: the hero of the view is the step, not a
 // recitation of what is on screen. So this is a quiet "I can see" glance, one
@@ -19,6 +20,7 @@ export function readingIsProminent({ offTrack, flag, observation }) {
 }
 
 export default function ReadingStrip({ watching, analyzing, offTrack, observation, flag, source = 'screen' }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const obs = String(observation || '').trim()
   const fl = String(flag || '').trim()
@@ -32,7 +34,7 @@ export default function ReadingStrip({ watching, analyzing, offTrack, observatio
           <span className="gv-reading-ic" aria-hidden="true"><AlertTriangle size={14} strokeWidth={2.4} /></span>
           <span className="gv-reading-t">
             {offTrack
-              ? <><b>Not the right place yet.</b> {obs && <RichText text={obs} accent="var(--gv-warn)" chips={false} />}</>
+              ? <><b>{t('readingStrip.notRightPlace')}</b> {obs && <RichText text={obs} accent="var(--gv-warn)" chips={false} />}</>
               : <RichText text={fl} accent="var(--gv-warn)" />}
           </span>
         </div>

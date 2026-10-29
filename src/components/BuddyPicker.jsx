@@ -9,6 +9,7 @@
 import React from 'react'
 import { Shuffle } from 'lucide-react'
 import AliveBuddy, { CHARACTERS, writeBuddyPref, CHARACTER_LABELS as LABELS } from './AliveBuddy.jsx'
+import { useT } from '../i18n/index.jsx'
 
 // Product green (the #0e9f6e family used across the light surfaces), NOT the old
 // neon emerald of the dark buddy. SWATCH = white chip with a soft hairline; the
@@ -22,11 +23,12 @@ const ICON_OFF = '#6b7280'
 // `pref` is the saved preference (a character key or 'surprise'); `onPick(pref)`
 // receives the new preference. `size` sizes each swatch.
 export default function BuddyPicker({ pref = 'bot', onPick, size = 34 }) {
+  const t = useT()
   const pick = (p) => { writeBuddyPref(p); try { onPick && onPick(p) } catch { /* ignore */ } }
   const s = size
   const options = [...CHARACTERS, 'surprise']
   return (
-    <div role="radiogroup" aria-label="Choose your buddy" style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
+    <div role="radiogroup" aria-label={t('buddyPicker.groupAria')} style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
       {options.map((p) => {
         const on = pref === p
         const isSurprise = p === 'surprise'

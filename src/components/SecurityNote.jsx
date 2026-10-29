@@ -1,5 +1,6 @@
 import React from 'react'
 import { ShieldCheck, ShieldAlert, AlertTriangle, PackageSearch } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'
 
 // SecurityNote - the in-app security check for a CODE result or composition.
 // It renders ONLY when a `security` object is passed, which the server attaches
@@ -15,6 +16,7 @@ import { ShieldCheck, ShieldAlert, AlertTriangle, PackageSearch } from 'lucide-r
 //
 // Nested inside a WorkCard, so it inherits the card's --wc-* tokens.
 export default function SecurityNote({ security }) {
+  const t = useT()
   if (!security) return null
   ensureAssets()
   const codeIssues = Array.isArray(security.codeIssues) ? security.codeIssues : []
@@ -58,11 +60,11 @@ export default function SecurityNote({ security }) {
       ) : null}
 
       {!hasFindings ? (
-        <p className="sn-clean">No dangerous commands and no known-vulnerable libraries were found in this code.</p>
+        <p className="sn-clean">{t('securityNote.cleanBody')}</p>
       ) : null}
 
       {security.checkedDeps === false ? (
-        <p className="sn-note">The vulnerability database could not be reached, so library versions were not checked this time.</p>
+        <p className="sn-note">{t('securityNote.dbUnreachable')}</p>
       ) : null}
     </div>
   )

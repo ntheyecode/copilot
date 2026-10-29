@@ -65,11 +65,14 @@ export function stepProgress(steps, size = WINDOW_SIZE) {
 // The progress sentence itself, in plain words (no em dashes). Examples:
 //   "Step 7 of 20 · 6 done"   (middle dot separator, house style)
 //   "All 20 steps done"
-export function progressText(steps, size = WINDOW_SIZE) {
+// `t` is the i18n translator, passed in as a parameter so this module stays pure
+// (no React import): callers (console, floater, full guide) each hand it their
+// own useT() result. The number logic stays here; only the words come from t.
+export function progressText(steps, t, size = WINDOW_SIZE) {
   const { total, done, currentNumber, allDone } = stepProgress(steps, size)
   if (total === 0) return ''
-  if (allDone) return `All ${total} steps done`
-  return `Step ${currentNumber} of ${total} · ${done} done`
+  if (allDone) return t('usage.allStepsDone', { total })
+  return t('usage.stepProgress', { current: currentNumber, total, done })
 }
 
 // A compact status marker for the full-plan list: 'done' | 'current' | 'upcoming'.

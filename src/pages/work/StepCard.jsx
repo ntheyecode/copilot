@@ -2,6 +2,7 @@ import { Check, CheckCircle2, ArrowRight } from 'lucide-react'
 import RichText from '../../components/RichText.jsx'
 import { StepLink, CmdBlock, CodeBlock } from '../../components/StepBlocks.jsx'
 import DestructiveGate from './DestructiveGate.jsx'
+import { useT } from '../../i18n/index.jsx'
 
 // THE STEP CARD: the current micro-step, front and center, in the same clean
 // card style as the task-planning wizard. One thing to do (the live guidance,
@@ -18,11 +19,12 @@ import DestructiveGate from './DestructiveGate.jsx'
 export default function StepCard({
   step, index, total, guidance, confirmN = 0, hint, onDone, doneLabel = 'Mark done', busy = false, extra, actions, notice, doneReady = false,
 }) {
+  const t = useT()
   if (!step) return null
   const g = String(guidance || '').trim()
-  const t = String(step.text || '').trim()
-  const headline = g || t
-  const showPlanLine = !!(g && t && g !== t)
+  const txt = String(step.text || '').trim()
+  const headline = g || txt
+  const showPlanLine = !!(g && txt && g !== txt)
   const n = Number.isInteger(index) ? index + 1 : null
   return (
     <section className="gv-step" aria-labelledby={`gv-step-h-${n || 0}`}>
@@ -32,11 +34,11 @@ export default function StepCard({
         {hint}
       </div>
       <h2 id={`gv-step-h-${n || 0}`} className="gv-step-text" style={{ margin: 0 }}><RichText text={headline} accent="var(--gv-accent)" /></h2>
-      {showPlanLine && <div className="gv-step-plan"><span className="gv-k">Plan</span><span><RichText text={t} accent="var(--gv-accent)" /></span></div>}
+      {showPlanLine && <div className="gv-step-plan"><span className="gv-k">{t('stepCard.plan')}</span><span><RichText text={txt} accent="var(--gv-accent)" /></span></div>}
       {step.validate && (
         <div className="gv-step-when">
           <CheckCircle2 size={14} strokeWidth={2.2} aria-hidden="true" />
-          <span><b>Done when</b> <RichText text={step.validate} accent="var(--gv-accent)" /></span>
+          <span><b>{t('stepCard.doneWhen')}</b> <RichText text={step.validate} accent="var(--gv-accent)" /></span>
         </div>
       )}
       {step.url && <StepLink url={step.url} />}
@@ -49,7 +51,7 @@ export default function StepCard({
       {extra}
       {notice}
       <div className="gv-step-actions">
-        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title="Mark this step done and move to the next"><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
+        {onDone && <button type="button" className={`gv-btn primary${doneReady ? ' is-ready' : ''}`} onClick={onDone} disabled={busy} title={t('stepCard.markDoneTip')}><Check size={16} strokeWidth={2.6} aria-hidden="true" /> {doneLabel}</button>}
         {actions}
       </div>
     </section>

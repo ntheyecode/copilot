@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Download, ChevronDown, FileText, AlignLeft, ScrollText, Loader2 } from 'lucide-react'
 import { api, friendlyError } from '../api.js'
+import { useT } from '../i18n/index.jsx'
 
 // Download-format chooser for a session: PDF report / plain-text report / audit
 // log. Fetches with the window's OWN authenticated session (api.downloadFile), so
@@ -34,6 +35,7 @@ function ensureStyle() {
 }
 
 export default function DownloadMenu({ sessionId, label = 'Download', className = '', align = 'right', onError }) {
+  const t = useT()
   const [open, setOpen] = useState(false)
   const [busy, setBusy] = useState('')
   const ref = useRef(null)
@@ -60,12 +62,12 @@ export default function DownloadMenu({ sessionId, label = 'Download', className 
 
   return (
     <div ref={ref} className="wc-dlmenu-wrap">
-      <button type="button" className={className} onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} disabled={!!busy} title="Download this session">
+      <button type="button" className={className} onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open} disabled={!!busy} title={t('downloadMenu.triggerTip')}>
         {busy ? <Loader2 size={14} className="spin" /> : <Download size={14} />} {label} <ChevronDown size={13} className="wc-dlmenu-chev" />
       </button>
       {open && (
-        <div role="menu" aria-label="Download format" className={`wc-dlmenu ${align === 'left' ? 'left' : 'right'}`}>
-          <div className="wc-dlmenu-h">Download as</div>
+        <div role="menu" aria-label={t('downloadMenu.menuAria')} className={`wc-dlmenu ${align === 'left' ? 'left' : 'right'}`}>
+          <div className="wc-dlmenu-h">{t('downloadMenu.heading')}</div>
           {FORMATS.map((f) => (
             <button key={f.id} type="button" role="menuitem" className="wc-dlmenu-item" onClick={() => pick(f)}>
               <span className="wc-dlmenu-ic"><f.Icon size={15} /></span>

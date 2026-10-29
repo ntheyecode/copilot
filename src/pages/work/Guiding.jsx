@@ -1068,7 +1068,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
   const applyUsage = (u) => { setUsage(u); if (u && u.remainingSeconds > 900) setDismissedLow(false) }   // re-arm the warning after buying more
   const refreshUsage = useCallback(async () => { try { applyUsage(await api.workUsage()) } catch {} }, [])
   useEffect(() => { refreshUsage() }, [refreshUsage])
-  const outOfMinutes = () => { if (usage && usage.exhausted) { setErr(usageOutOfTime(usage)); return true } return false }
+  const outOfMinutes = () => { if (usage && usage.exhausted) { setErr(usageOutOfTime(usage, t)); return true } return false }
 
   // Plan-heavy, watch-light: FORCED by us for Premium users (both company and
   // regular), never chosen here. The flag rides on the user profile loaded from
@@ -2218,7 +2218,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                   : watching
                     ? <button className="wc-tbtn pause wc-watch" onClick={togglePause} title={t('guideConsole.pause.pauseTip')}><Square size={13} /> {t('guideConsole.pause.pause')}</button>
                     : <button className="wc-tbtn primary wc-watch" onClick={startWatching} disabled={busy} title={source === 'screen' ? t('guideConsole.watch.screenTip') : t('guideConsole.watch.cameraTip')}><Eye size={15} /> {source === 'screen' ? t('guideConsole.watch.screen') : t('guideConsole.watch.camera')}</button>}
-              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={t('guideConsole.usage.tip', { tier: usage.tier, reset: usage.resetLabel })}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
+              {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`} title={t('guideConsole.usage.tip', { tier: usage.tier, reset: usage.resetLabel })}><span className="wc-dot" /> {usageTimeLeft(usage, t)}</span>}
               {strongUsed && <span className="wc-strong"><Zap size={11} /> {t('guideConsole.usage.deeperRead')}</span>}
             </div>
           </div>
@@ -2235,7 +2235,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
         {rails && (
           <aside className="wc-rail wc-rail-l" aria-label={t('guideConsole.rail.plan')}>
             <div className="wc-rail-card">
-              <div className="wc-rail-k"><FileText size={12} /> {t('guideConsole.rail.plan')} <span className="wc-rail-n">{progressText(steps)}</span></div>
+              <div className="wc-rail-k"><FileText size={12} /> {t('guideConsole.rail.plan')} <span className="wc-rail-n">{progressText(steps, t)}</span></div>
               <div className="wc-mm">
                 {steps.map((s, i) => { const mk = planMarker(s, i, steps); return (
                   <button key={i} type="button" className={`wc-mm-row ${mk}`} onClick={() => jumpStep(i)} title={String(s.text || '')} aria-current={mk === 'current' ? 'step' : undefined}>
@@ -2343,12 +2343,12 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
 
         {usage && usage.exhausted && (
           <div className="wc-banner danger">
-            <AlertTriangle size={16} /> <span className="fill">{usageOutOfTime(usage)}</span>
+            <AlertTriangle size={16} /> <span className="fill">{usageOutOfTime(usage, t)}</span>
           </div>
         )}
         {usage && !usage.exhausted && usage.remainingSeconds <= 900 && !dismissedLow && (
           <div className="wc-banner warn">
-            <AlertTriangle size={16} /> <span className="fill">{usageLowNote(usage)}</span>
+            <AlertTriangle size={16} /> <span className="fill">{usageLowNote(usage, t)}</span>
             <button className="wc-tbtn ghost" onClick={() => setDismissedLow(true)}>{t('guideConsole.banner.dismiss')}</button>
           </div>
         )}
@@ -2634,7 +2634,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
                 <button className="wc-ib" onClick={() => setPlanOpen(false)} title={t('guideConsole.plan.close')} aria-label={t('guideConsole.plan.closeAria')}><X size={16} /></button>
               </div>
               {sess?.goal && <div className="wc-plan-goal"><span className="wc-plan-goal-k">{t('guideConsole.plan.yourGoal')}</span><div className="wc-plan-goal-t">{sess.goal}</div></div>}
-              <div className="wc-plan-count">{progressText(steps) || t('guideConsole.plan.doneOf', { done: doneCount, total: steps.length })}</div>
+              <div className="wc-plan-count">{progressText(steps, t) || t('guideConsole.plan.doneOf', { done: doneCount, total: steps.length })}</div>
               <div className="wc-plan-list">
                 {steps.map((s, i) => {
                   const mk = planMarker(s, i, steps)
@@ -2864,7 +2864,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
             <div className="wc-rail-card">
               <div className="wc-rail-status">
                 <span className={`wc-statuschip${live ? ' live' : ''}${paused ? ' paused' : ''}`} title={chip.title}><span className="wc-sdot" />{chip.label}</span>
-                {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {usageTimeLeft(usage)}</span>}
+                {usage && <span className={`wc-min${usage.exhausted ? ' low' : ''}`}><span className="wc-dot" /> {usageTimeLeft(usage, t)}</span>}
               </div>
               {watchLight
                 ? <button type="button" className="wc-tbtn primary wc-rail-wide" onClick={refreshScreen} disabled={busy || paused}><ScanLine size={15} /> {t('guideConsole.watchLight.check')}</button>
