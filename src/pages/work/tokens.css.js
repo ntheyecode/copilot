@@ -40,7 +40,7 @@ export const WD_TOKENS_CSS = `
   /* ---- Soft category tints: a pale fill + a saturated ink of the same hue.
      Brand tints derive from the combination; violet / amber / neutral are
      semantic and stay fixed on purpose. ---- */
-  --tint-green:color-mix(in srgb,var(--em) 12%,var(--panel));--tint-green-ink:var(--em-deep);
+  --tint-green:color-mix(in srgb,var(--em) 12%,var(--panel));--tint-green-ink:color-mix(in srgb,var(--em-deep) 80%,#0c1222 20%);
   --tint-blue:color-mix(in srgb,var(--em-2) 12%,var(--panel));--tint-blue-ink:var(--em-2-deep);
   --tint-violet:#f1edfc;--tint-violet-ink:#5b3fc4;
   --tint-amber:#fdf4e7;--tint-amber-ink:#9a4a07;
