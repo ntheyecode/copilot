@@ -1,6 +1,11 @@
 // Deutsch - einfach, professionell, alltagsnah. Gleiche Schlüssel wie en.js.
 // Nie übersetzt: Code, Befehle, URLs/Pfade, Marken (WorkCoPilot, AdmireVeda), Tarifnamen.
 export default {
+  taskOverview: {
+    showMore: 'Mehr anzeigen',
+    showLess: 'Weniger anzeigen',
+    projectChip: 'Projekt: {name}',
+  },
   prefs: {
     title: 'Einstellungen',
     sub: 'Ihr Erscheinungsbild und Lesekomfort. Jede Änderung wirkt sofort und folgt Ihnen über alle Geräte.',

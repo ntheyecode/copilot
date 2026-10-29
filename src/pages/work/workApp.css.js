@@ -2,6 +2,10 @@
 // shell and shared component styles for every signed-in .wd-* surface
 // (dashboard, start wizard, tasks, help). Injected once by WorkAppLayout.
 import { WD_TOKENS_CSS } from './tokens.css.js'
+// The task-overview block (TaskOverview.jsx) is its own small sheet, appended
+// at the end so every .wd surface carries it (SUPREME XV: a module, not more
+// lines here).
+import { OVERVIEW_CSS } from './taskOverview.css.js'
 //
 // Design direction (docs/dashboard-redesign-audit.md): calm, white, airy.
 // Soft neutral canvas, white or lightly TINTED cards with no hard outline,
@@ -818,4 +822,4 @@ export const WD_CSS = WD_TOKENS_CSS + `
 .wd-sess-more{display:inline-flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;white-space:nowrap;align-self:flex-start;margin-top:2px;color:var(--em-deep);font-size:calc(13px*var(--wc-fs,1));font-weight:600;text-decoration:none;padding:6px 2px}
 .wd-sess-more:hover{color:var(--em)}
 @media(prefers-reduced-motion:reduce){.wd-wiz-reveal,.wd-term-line{animation:none}.wd-term-caret{animation:none}.wd-term-fill{transition:none}.wd-coach-kind,.wd-coach-opt{transition:none}.wd-coach,.wd-coach-kind-check,.wd-coach-adv .bar i{animation:none}}
-`
+` + OVERVIEW_CSS

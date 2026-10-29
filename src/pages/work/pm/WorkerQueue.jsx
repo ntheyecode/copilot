@@ -16,6 +16,8 @@ import { queueAction, sortQueue, taskSlaDays, daysSince } from './pmModel.js'
 import { RISK_SLA_DAYS } from '../../../shared/work_roles_options.js'
 import { useAssigned } from './usePm.js'
 import { agoText } from './TaskAssignRow.jsx'
+import TaskOverview from '../TaskOverview.jsx'
+import { hasOverview } from '../../../shared/overview_markup.js'
 
 const ICON = { pending: Play, active: Play, done: Check, rerun: RotateCcw }
 
@@ -42,13 +44,18 @@ function QueueRow({ item, onOpen, onChanged }) {
   }
   const label = action === 'continue' ? t('workPm.queue.continue') : action === 'open' ? t('workPm.queue.open') : action === 'startAgain' ? t('workPm.queue.startAgain') : t('workPm.queue.start')
   const visual = task.state === 'active' ? 'active' : task.state === 'done' ? 'done' : task.state === 'rerun' ? 'rerun' : 'pending'
+  const withOverview = hasOverview(task.overview)
   return (
     <div className={`wd-card wd-ep-q ${visual}`}>
       <span className={`wd-pj-task-ic ${visual}`} aria-hidden><Icon size={15} /></span>
       <div className="wd-ep-q-main">
         <div className="wd-ep-q-t">{task.title}</div>
+        {/* What this task is, in two lines (Show more for the rest), with the
+            project as a chip. The project is named exactly ONCE on the row: on
+            the chip when the overview renders, in the meta line otherwise. */}
+        <TaskOverview overview={task.overview} projectName={item.projectName} clamp={2} />
         <div className="wd-ep-q-m">
-          <span className="proj">{t('workPm.queue.inProject', { project: item.projectName })}</span>
+          {!withOverview && <span className="proj">{t('workPm.queue.inProject', { project: item.projectName })}</span>}
           <span className={`wd-pj-chip ${visual}`}>{t(`workProjects.taskState.${visual}`)}</span>
           {ago != null && <span>{t('workPm.common.assignedAgo', { ago: agoText(t, ago) })}</span>}
           {sla != null && <span className="wd-pj-chip sla"><Clock size={11} /> {t('workPm.common.sla', { n: RISK_SLA_DAYS })}</span>}

@@ -1,6 +1,11 @@
 // Bahasa Indonesia - sederhana, profesional, bahasa sehari-hari. Kunci sama dengan en.js.
 // Tidak pernah diterjemahkan: kode, perintah, URL/path, merek (WorkCoPilot, AdmireVeda), nama paket.
 export default {
+  taskOverview: {
+    showMore: 'Tampilkan lebih banyak',
+    showLess: 'Tampilkan lebih sedikit',
+    projectChip: 'Proyek: {name}',
+  },
   prefs: {
     title: 'Preferensi',
     sub: 'Tampilan dan kenyamanan membaca Anda. Setiap perubahan langsung berlaku dan mengikuti Anda di semua perangkat.',

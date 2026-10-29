@@ -7,6 +7,11 @@
 // (WorkCoPilot、AdmireVeda、COE Security LLC)、套餐名 (Lite/Basic/Advanced/Premium)。
 // 中文没有复数变化,_one/_two/_other 均给出相同的自然表达。
 export default {
+  taskOverview: {
+    showMore: '显示更多',
+    showLess: '收起',
+    projectChip: '项目：{name}',
+  },
   prefs: {
     title: '偏好设置',
     sub: '您的外观与阅读舒适度设置。每项更改即时生效，并在各设备间保持一致。',

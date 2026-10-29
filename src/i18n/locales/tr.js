@@ -1,6 +1,11 @@
 // Türkçe - sade, profesyonel, günlük bir dil. en.js ile aynı anahtarlar.
 // Asla çevrilmez: kod, komutlar, URL/yollar, markalar (WorkCoPilot, AdmireVeda), plan adları.
 export default {
+  taskOverview: {
+    showMore: 'Daha fazla göster',
+    showLess: 'Daha az göster',
+    projectChip: 'Proje: {name}',
+  },
   prefs: {
     title: 'Tercihler',
     sub: 'Görünümünüz ve okuma konforunuz. Her değişiklik anında uygulanır ve tüm cihazlarınızda sizinle gelir.',

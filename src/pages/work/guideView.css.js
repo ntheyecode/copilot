@@ -19,6 +19,11 @@
 // (step, or the stuck check-in, or the focused answer, then back); a mid-task
 // ask takes the screen with a focused answer and a Continue to rope back in.
 // No stack of alert cards. Minimal, white, productized. No em dashes.
+//
+// The task-overview block (TaskOverview.jsx, under the goal line on every
+// guiding host) rides along at the end, so the floater and the full guide,
+// which carry no app CSS, style it from the --gv-* tokens.
+import { OVERVIEW_CSS } from './taskOverview.css.js'
 export const GUIDE_CSS = `
 .gv{
   --gv-text:var(--text,#171a21);--gv-muted:var(--text-muted,#58606e);--gv-faint:var(--text-faint,#8b93a1);
@@ -222,7 +227,7 @@ export const GUIDE_CSS = `
   .gv-swap.out,.gv-swap.in,.gv-confirm,.gv-ana i,.gv-spin,.gv-verify,.gv-btn.is-ready{animation:none}
   .gv-swap.out{opacity:0}
 }
-`
+` + OVERVIEW_CSS
 
 // Map a host palette (the floater's `c`, the full guide's THEME entry) onto the
 // --gv-* tokens as inline style vars, for a document without the app CSS.
