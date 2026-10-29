@@ -398,8 +398,45 @@ async function onHoursDecided(p) {
 }
 function fireAndForget(promise) { Promise.resolve(promise).catch(() => { /* already logged by sendTemplate */ }) }
 
+// ---- Enterprise project/task assignment notifications ---------------------
+// A member is told when a PM gives them a task, a PM is told when a project is
+// handed to them, and a person is told when a procedure (template) is assigned.
+// Recipients are resolved synchronously; delivery is async + localized. The
+// store never emits these to the actor themselves (no self-notification).
+function onWorkTaskAssigned(p) {
+  const u = store.getUser(p.assigneeId); if (!u) return
+  const to = userEmail(u.id); if (!to) return
+  const by = p.byId ? store.getUser(p.byId) : null
+  sendTemplateAsync('work_task_assigned', to, {
+    name: userName(u), byName: (by && userName(by)) || 'A project manager',
+    taskTitle: p.taskTitle || 'a task', projectName: p.projectName || 'a project',
+    url: `${APP_BASE}/work/queue`,
+  })
+}
+function onWorkProjectAssigned(p) {
+  const u = store.getUser(p.managerId); if (!u) return
+  const to = userEmail(u.id); if (!to) return
+  const by = p.byId ? store.getUser(p.byId) : null
+  sendTemplateAsync('work_project_assigned', to, {
+    name: userName(u), byName: (by && userName(by)) || 'A senior project manager',
+    projectName: p.projectName || 'a project', url: `${APP_BASE}/work/pm`,
+  })
+}
+function onWorkTemplateAssigned(p) {
+  const u = store.getUser(p.userId); if (!u) return
+  const to = userEmail(u.id); if (!to) return
+  const by = p.byId ? store.getUser(p.byId) : null
+  sendTemplateAsync('work_template_assigned', to, {
+    name: userName(u), byName: (by && userName(by)) || 'Your team',
+    templateName: p.templateName || 'a procedure', url: `${APP_BASE}/work`,
+  })
+}
+
 export function handleStoreEvent(type, payload = {}) {
   switch (type) {
+    case 'work_task_assigned': return onWorkTaskAssigned(payload)
+    case 'work_project_assigned': return onWorkProjectAssigned(payload)
+    case 'work_template_assigned': return onWorkTemplateAssigned(payload)
     case 'ticket_created': return onTicketCreated(payload)
     case 'ticket_admin_reply': return onTicketAdminReply(payload)
     case 'ticket_user_reply': return onTicketUserReply(payload)

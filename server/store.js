@@ -5948,6 +5948,8 @@ export function createCompanyProject(byUserId, { customerId = 'default', name, g
   if (!mu || String(mu.companyId) !== String(a.companyId) || !roles.isPM(mu.companyRole)) throw httpErr(400, 'The manager must be a project manager in your company.')
   const p = createWorkProject(byUserId, { customerId, name: _capName(name), goal: _capGoal(goal), endState, tasks, companyId: a.companyId, managerId: mgr })
   _logProjectEvent(a.companyId, { kind: 'project_created', by: a.id, projectId: p.id, managerId: mgr })
+  // When a Sr PM / admin hands the project to a DIFFERENT PM, tell that PM.
+  if (String(mgr) !== String(a.id)) emitStoreEvent('work_project_assigned', { managerId: mgr, byId: a.id, projectId: p.id, projectName: p.name, reassigned: false })
   return p
 }
 
@@ -6012,6 +6014,8 @@ export function assignTemplate(byUserId, templateId, userIds = []) {
     const run = createWorkProject(uid, { customerId: tpl.customerId, name: tpl.name, goal: tpl.goal, endState: tpl.endState || null, tasks: seed, companyId: a.companyId })
     run.templateId = templateId; run.assignedBy = a.id; run.assignedAt = new Date().toISOString(); persist()
     existing.add(String(uid)); assigned.push({ userId: uid, projectId: run.id })
+    // Tell each newly-assigned person their procedure is ready (not the assigner).
+    if (String(uid) !== String(a.id)) emitStoreEvent('work_template_assigned', { userId: uid, byId: a.id, templateName: tpl.name, projectId: run.id })
   }
   _logProjectEvent(a.companyId, { kind: 'template_assigned', by: a.id, templateId, assigned: assigned.length })
   return { assigned, skipped }
@@ -6118,6 +6122,9 @@ export function assignProjectTask(byUserId, projectId, taskId, assigneeId) {
   t.assigneeId = assigneeId; t.assignedBy = a.id; t.assignedAt = new Date().toISOString()
   persist()
   _logProjectEvent(a.companyId, { kind: from ? 'task_reassigned' : 'task_assigned', by: a.id, projectId, taskId, from, to: assigneeId })
+  // Notify the assignee by email (best-effort, async, localized). Never notify a
+  // person who assigned a task to themselves.
+  if (String(assigneeId) !== String(a.id)) emitStoreEvent('work_task_assigned', { assigneeId, byId: a.id, projectId, projectName: p.name, taskTitle: t.title || t.goal || '', reassigned: !!from })
   return t
 }
 export function reassignProjectTask(byUserId, projectId, taskId, newAssigneeId) {
@@ -6134,6 +6141,7 @@ export function reassignProject(byUserId, projectId, newManagerId, reason = '') 
   if (!mu || String(mu.companyId) !== String(a.companyId) || !roles.isPM(mu.companyRole)) throw httpErr(400, 'The new manager must be a project manager in your company.')
   const from = p.managerId; p.managerId = newManagerId; persist()
   _logProjectEvent(a.companyId, { kind: 'project_reassigned', by: a.id, projectId, from, to: newManagerId, reason: String(reason || '').slice(0, 400) })
+  if (String(newManagerId) !== String(a.id)) emitStoreEvent('work_project_assigned', { managerId: newManagerId, byId: a.id, projectId, projectName: p.name, reassigned: true })
   return p
 }
 

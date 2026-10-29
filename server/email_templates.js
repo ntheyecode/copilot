@@ -646,6 +646,91 @@ const R = (label, key, opts = {}) => ({ label, key, ...opts })
 // EMAIL_DEFS - the editable content, with defaults an admin starts from.
 // ---------------------------------------------------------------------------
 const DEFS = {
+  // ---- Projects & tasks (enterprise assignment notifications) --------------
+  work_task_assigned: {
+    label: 'Task assigned to a member',
+    category: 'projects',
+    description: 'Sent to a person when a project manager assigns (or reassigns) a task to them.',
+    eyebrow: 'Task assigned',
+    defaultSubject: 'A task was assigned to you: <Task_Title>',
+    defaultPreheader: '<By_Name> assigned you a task in <Project_Name>. Open your queue to start it.',
+    defaultHeading: 'You have a new task',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** assigned you a task in the project **<Project_Name>**:
+
+> <Task_Title>
+
+Open WorkCoPilot and start it from your queue when you are ready. It will guide you through it, one clear step at a time.
+---
+You are receiving this because you are on a WorkCoPilot team. You can change your language and preferences in your account.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open my queue',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Task_Title>', 'The task that was assigned', 'Reconcile the October vendor statement'),
+      P('<Project_Name>', 'The project the task belongs to', 'Month-end close'),
+      P('<By_Name>', 'Who assigned the task', 'Priya Natarajan'),
+      P('<Url>', 'Link to the assignee queue', 'https://admireveda.com/work/queue'),
+    ],
+  },
+  work_project_assigned: {
+    label: 'Project assigned to a manager',
+    category: 'projects',
+    description: 'Sent to a project manager when a senior PM or admin makes them the manager of a project (new or reassigned).',
+    eyebrow: 'Project assigned',
+    defaultSubject: 'You are now managing <Project_Name>',
+    defaultPreheader: '<By_Name> made you the manager of <Project_Name>. Open it to plan and assign the work.',
+    defaultHeading: 'A project was assigned to you',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** made you the project manager of **<Project_Name>**.
+
+Open it in WorkCoPilot to review the plan, break it into tasks and assign your team. You will see its status, who is doing what, and anything waiting too long.
+---
+You are receiving this because you manage projects on a WorkCoPilot team.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open the project',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Project_Name>', 'The project assigned to them', 'Customer portal launch'),
+      P('<By_Name>', 'Who assigned the project', 'Dev Sharma'),
+      P('<Url>', 'Link to the project-manager dashboard', 'https://admireveda.com/work/pm'),
+    ],
+  },
+  work_template_assigned: {
+    label: 'Procedure assigned to a member',
+    category: 'projects',
+    description: 'Sent to a person when a manager assigns them a team procedure (a template), creating their own run of it.',
+    eyebrow: 'Procedure assigned',
+    defaultSubject: 'A procedure was assigned to you: <Template_Name>',
+    defaultPreheader: '<By_Name> assigned you the procedure <Template_Name>. Your own copy is ready.',
+    defaultHeading: 'You have a procedure to complete',
+    defaultBody:
+`Hi <First_Name>,
+
+**<By_Name>** assigned you the procedure **<Template_Name>**.
+
+Your own copy is ready in WorkCoPilot. Work through it at your pace; it will guide you one step at a time, and your progress is yours.
+---
+You are receiving this because you are on a WorkCoPilot team.
+
+If the button does not work, copy and paste this link into your browser:
+<Url>`,
+    defaultCtaLabel: 'Open my work',
+    ctaUrlToken: 'url',
+    placeholders: [
+      P('<Template_Name>', 'The procedure assigned', 'New hire security onboarding'),
+      P('<By_Name>', 'Who assigned it', 'Priya Natarajan'),
+      P('<Url>', 'Link to the member work area', 'https://admireveda.com/work'),
+    ],
+  },
   // ---- Account -------------------------------------------------------------
   welcome_set_password: {
     label: 'Welcome - set your password',
