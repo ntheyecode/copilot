@@ -32,6 +32,13 @@ export default function EmailTemplates({ isSuperAdmin }) {
 
   const byCat = {}
   for (const tpl of templates) { (byCat[tpl.category] = byCat[tpl.category] || []).push(tpl) }
+  // Show the groups in a deliberate order (what fires for what), with any
+  // unlisted category falling in afterwards, so a new category is never hidden.
+  const CAT_ORDER = ['projects', 'account', 'security', 'billing', 'support', 'bug', 'notifications', 'forms']
+  const cats = Object.keys(byCat).sort((a, b) => {
+    const ia = CAT_ORDER.indexOf(a), ib = CAT_ORDER.indexOf(b)
+    return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib) || a.localeCompare(b)
+  })
   const current = templates.find((x) => x.type === sel) || null
   const catLabel = (cat) => (t.has(`emailTemplatesAdmin.category.${cat}`) ? t(`emailTemplatesAdmin.category.${cat}`) : cat)
 
@@ -44,7 +51,7 @@ export default function EmailTemplates({ isSuperAdmin }) {
         <p className="desc">{t.rich('emailTemplatesAdmin.desc')}</p>
         <div className="wmt-wrap">
           <nav className="wmt-list">
-            {Object.keys(byCat).map((cat) => (
+            {cats.map((cat) => (
               <div key={cat} className="wmt-group">
                 <div className="wmt-group-h">{catLabel(cat)}</div>
                 {byCat[cat].map((tpl) => (

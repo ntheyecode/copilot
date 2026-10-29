@@ -12,14 +12,18 @@ export default {
     edited: 'edited',
     selectTemplate: 'Select a template.',
 
-    // Email category headings, keyed by the category code
+    // Email category headings, keyed by the category code. Each heading names the
+    // action the set of emails belongs to, so an operator sees at a glance which
+    // emails fire for what.
     category: {
-      account: 'Account',
-      security: 'Security',
-      billing: 'Billing',
-      forms: 'Forms',
-      notifications: 'Notifications',
-      support: 'Support',
+      projects: 'Projects & task assignment',
+      account: 'Account & onboarding',
+      security: 'Security & access',
+      billing: 'Billing & payments',
+      support: 'Support replies',
+      bug: 'Support ticket alerts',
+      notifications: 'Internal & company alerts',
+      forms: 'Lead & contact replies',
     },
 
     // Editor
