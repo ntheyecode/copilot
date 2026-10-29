@@ -1,0 +1,18 @@
+{
+  "_comment": "Baseline for check-hardcoded-strings.mjs. 'text' = literals that carry no translatable language (brand wordmark tokens rendered as split styled spans, and format-example placeholders that must stay verbatim). 'files' = .jsx surfaces intentionally not treated as a translation surface. SHRINK this list by keying a string; never grow it to dodge the gate (SUPREME RULE V).",
+  "text": [
+    "Work",
+    "CoPilot",
+    "Admire",
+    "Veda",
+    "WorkCoPilot by AdmireVeda",
+    "name@company.com",
+    "example.com",
+    "https://example.com",
+    "acme.com",
+    "alex@yourcompany.com",
+    "https://api.together.xyz/v1",
+    "meta-llama/Llama-3.3-70B-Instruct-Turbo"
+  ],
+  "files": []
+}
