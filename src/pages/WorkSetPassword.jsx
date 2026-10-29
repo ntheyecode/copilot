@@ -1,17 +1,19 @@
 // WorkCoPilot - set / reset password. The emailed link lands here with a
 // one-time token. Validates the token, lets the person choose a password, then
 // sends them to sign in. Used for both "welcome, set your password" and
-// "forgot password" (same token purpose).
+// "forgot password" (same token purpose). Strings: setPasswordPage namespace.
 import React, { useEffect, useState } from 'react'
 import { KeyRound, Check, Loader2, ArrowRight, AlertTriangle, Eye, EyeOff, ShieldCheck, Lock } from 'lucide-react'
 import { api } from '../api.js'
 import { AVMark } from '../components/AdmireVedaLogo.jsx'
+import { useT } from '../i18n/index.jsx'
 
 function getToken() {
   try { return new URLSearchParams(window.location.search).get('token') || '' } catch { return '' }
 }
 
 export default function WorkSetPassword() {
+  const t = useT()
   const [token] = useState(getToken)
   const [state, setState] = useState({ loading: true, valid: false, username: '', error: '' })
   const [pw, setPw] = useState('')
@@ -22,20 +24,21 @@ export default function WorkSetPassword() {
   const [err, setErr] = useState('')
 
   useEffect(() => {
-    if (!token) { setState({ loading: false, valid: false, username: '', error: 'This link is missing its token.' }); return }
+    if (!token) { setState({ loading: false, valid: false, username: '', error: t('setPasswordPage.errors.missingToken') }); return }
     api.workPasswordToken(token)
       .then((r) => setState({ loading: false, valid: !!r.valid, username: r.username || '', error: '' }))
-      .catch((e) => setState({ loading: false, valid: false, username: '', error: (e && e.message) || 'This link is invalid or has expired.' }))
+      .catch((e) => setState({ loading: false, valid: false, username: '', error: (e && e.message) || t('setPasswordPage.errors.invalid') }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token])
 
   const submit = async (e) => {
     if (e) e.preventDefault()
     if (busy) return
-    if (pw.length < 6) { setErr('Choose a password of at least 6 characters.'); return }
-    if (pw !== pw2) { setErr('The two passwords do not match.'); return }
+    if (pw.length < 6) { setErr(t('setPasswordPage.errors.tooShort')); return }
+    if (pw !== pw2) { setErr(t('setPasswordPage.errors.mismatch')); return }
     setBusy(true); setErr('')
     try { await api.workPasswordSet(token, pw); setDone(true) }
-    catch (error) { setErr((error && error.message) || 'Could not set your password. The link may have expired.') }
+    catch (error) { setErr((error && error.message) || t('setPasswordPage.errors.setFailed')) }
     finally { setBusy(false) }
   }
 
@@ -43,45 +46,45 @@ export default function WorkSetPassword() {
     <div className="wsp-root">
       <style>{CSS}</style>
       <div className="wsp-card">
-        <a className="wsp-brand" href="/"><AVMark size={20} id="avsp" /> Work<i>CoPilot</i> <span className="wsp-by">by AdmireVeda</span></a>
+        <a className="wsp-brand" href="/"><AVMark size={20} id="avsp" /> Work<i>CoPilot</i> <span className="wsp-by">{t('setPasswordPage.byBrand')}</span></a>
         {state.loading ? (
-          <div className="wsp-center"><Loader2 size={26} className="wsp-spin" /><p>Checking your link...</p></div>
+          <div className="wsp-center"><Loader2 size={26} className="wsp-spin" /><p>{t('setPasswordPage.checking')}</p></div>
         ) : done ? (
           <div className="wsp-center">
             <div className="wsp-ok"><Check size={26} /></div>
-            <h1>Password set</h1>
-            <p>Your password is ready. Sign in to get started.</p>
-            <a className="wsp-btn" href="/workcopilot">Sign in <ArrowRight size={15} /></a>
+            <h1>{t('setPasswordPage.done.title')}</h1>
+            <p>{t('setPasswordPage.done.body')}</p>
+            <a className="wsp-btn" href="/workcopilot">{t('setPasswordPage.done.signIn')} <ArrowRight size={15} /></a>
           </div>
         ) : !state.valid ? (
           <div className="wsp-center">
             <div className="wsp-bad"><AlertTriangle size={24} /></div>
-            <h1>Link expired</h1>
-            <p>{state.error || 'This link is invalid or has expired.'}</p>
-            <a className="wsp-btn ghost" href="/workcopilot">Go to sign in</a>
+            <h1>{t('setPasswordPage.expired.title')}</h1>
+            <p>{state.error || t('setPasswordPage.errors.invalid')}</p>
+            <a className="wsp-btn ghost" href="/workcopilot">{t('setPasswordPage.expired.goToSignIn')}</a>
           </div>
         ) : (
           <form onSubmit={submit}>
             <div className="wsp-ic"><KeyRound size={22} /></div>
-            <h1>Set your password</h1>
-            <p>{state.username ? <>for <b>{state.username}</b></> : 'Choose a password to finish setting up your account.'}</p>
+            <h1>{t('setPasswordPage.form.title')}</h1>
+            <p>{state.username ? t.rich('setPasswordPage.form.forUser', { name: state.username }) : t('setPasswordPage.form.chooseBody')}</p>
             <div className="wsp-field">
-              <label>New password</label>
+              <label>{t('setPasswordPage.form.newLabel')}</label>
               <div className="wsp-pw">
-                <input type={show ? 'text' : 'password'} value={pw} onChange={(e) => { setErr(''); setPw(e.target.value) }} autoFocus placeholder="At least 6 characters" />
-                <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? 'Hide' : 'Show'}>{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
+                <input type={show ? 'text' : 'password'} value={pw} onChange={(e) => { setErr(''); setPw(e.target.value) }} autoFocus placeholder={t('setPasswordPage.form.newPlaceholder')} />
+                <button type="button" onClick={() => setShow((s) => !s)} aria-label={show ? t('setPasswordPage.form.hide') : t('setPasswordPage.form.show')}>{show ? <EyeOff size={16} /> : <Eye size={16} />}</button>
               </div>
             </div>
             <div className="wsp-field">
-              <label>Confirm password</label>
-              <input type={show ? 'text' : 'password'} value={pw2} onChange={(e) => { setErr(''); setPw2(e.target.value) }} placeholder="Re-enter it" />
+              <label>{t('setPasswordPage.form.confirmLabel')}</label>
+              <input type={show ? 'text' : 'password'} value={pw2} onChange={(e) => { setErr(''); setPw2(e.target.value) }} placeholder={t('setPasswordPage.form.confirmPlaceholder')} />
             </div>
             {err && <div className="wsp-err">{err}</div>}
-            <button className="wsp-btn" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wsp-spin" /> : <Check size={16} />} Set password</button>
-            <p className="wsp-secure"><Lock size={13} aria-hidden="true" /> Your password is encrypted and stored securely. We never see it in plain text.</p>
+            <button className="wsp-btn" type="submit" disabled={busy}>{busy ? <Loader2 size={16} className="wsp-spin" /> : <Check size={16} />} {t('setPasswordPage.form.submit')}</button>
+            <p className="wsp-secure"><Lock size={13} aria-hidden="true" /> {t('setPasswordPage.form.secure')}</p>
           </form>
         )}
-        <div className="wsp-foot"><ShieldCheck size={13} aria-hidden="true" /> Enterprise-grade security · AdmireVeda WorkCoPilot</div>
+        <div className="wsp-foot"><ShieldCheck size={13} aria-hidden="true" /> {t('setPasswordPage.foot')}</div>
       </div>
     </div>
   )

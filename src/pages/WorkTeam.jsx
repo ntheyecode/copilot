@@ -1,14 +1,17 @@
 import { useEffect, useState, useCallback } from 'react'
 import { api } from '../api.js'
 import { Plus, Loader2, Users, ShieldCheck, User as UserIcon, Check, FileText, Trash2, KeyRound, Globe } from 'lucide-react'
+import { useT } from '../i18n/index.jsx'
 
 // Company-admin Team page. A company admin sees the users in their own company
 // and can add a new one. Backend:
 //   api.workCompanyUsers()       -> { company, users }
 //   api.workCompanyCreateUser()  -> { username, password, companyRole, tier }
 // Rendered inside WorkPage's Home as the "Team" tab, only for company admins.
+// Every user-facing string comes from the teamPage i18n namespace; plan names
+// (Basic / Advanced / Premium) are product names and stay as-is.
 
-const ROLE_LABEL = { company_admin: 'Company admin', member: 'Member' }
+const ROLE_KEY = { company_admin: 'teamPage.roles.companyAdmin', member: 'teamPage.roles.member' }
 const TIERS = [
   { id: 'basic', name: 'Basic' },
   { id: 'advanced', name: 'Advanced' },
@@ -18,6 +21,7 @@ const fmt = (s) => { try { return new Date(s).toLocaleDateString() } catch { ret
 const fmtDT = (s) => { try { return new Date(s).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) } catch { return '' } }
 
 export default function WorkTeam() {
+  const t = useT()
   const [company, setCompany] = useState(null)
   const [users, setUsers] = useState(null)
   const [view, setView] = useState('list')   // list | new
@@ -33,23 +37,23 @@ export default function WorkTeam() {
   const [aiForm, setAiForm] = useState({ providerId: '', apiKey: '' })
   const loadAi = useCallback(() => { api.workTeamAi().then((c) => setAiCompany(c || null)).catch(() => {}) }, [])
   useEffect(() => { if (view === 'ai') loadAi() }, [view, loadAi])
-  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk('Your AI keys are saved. WorkCoPilot now runs on them.'); setAiForm({ providerId: '', apiKey: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not save keys.') } finally { setBusy(false) } }
-  const clearOwnKeys = async () => { setBusy(true); setErr(''); try { await api.workTeamSetAiKeys({ apiKey: '' }); loadAi() } catch (e) { setErr(e.message || 'Could not clear keys.') } finally { setBusy(false) } }
+  const saveOwnKeys = async () => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetAiKeys(aiForm); setOk(t('teamPage.ok.keysSaved')); setAiForm({ providerId: '', apiKey: '' }); loadAi() } catch (e) { setErr(e.message || t('teamPage.errors.saveKeys')) } finally { setBusy(false) } }
+  const clearOwnKeys = async () => { setBusy(true); setErr(''); try { await api.workTeamSetAiKeys({ apiKey: '' }); loadAi() } catch (e) { setErr(e.message || t('teamPage.errors.clearKeys')) } finally { setBusy(false) } }
   // Company's own web-search (Tavily) key.
   const [wsKey, setWsKey] = useState('')
-  const saveWebSearch = async (clear) => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetWebSearch(clear ? '' : wsKey.trim(), 'tavily'); setOk(clear ? 'Web-search key removed.' : 'Web-search key saved.'); setWsKey(''); loadAi() } catch (e) { setErr(e.message || 'Could not save the web-search key.') } finally { setBusy(false) } }
+  const saveWebSearch = async (clear) => { setBusy(true); setErr(''); setOk(''); try { await api.workTeamSetWebSearch(clear ? '' : wsKey.trim(), 'tavily'); setOk(clear ? t('teamPage.ok.webSearchRemoved') : t('teamPage.ok.webSearchSaved')); setWsKey(''); loadAi() } catch (e) { setErr(e.message || t('teamPage.errors.saveWebSearch')) } finally { setBusy(false) } }
 
   const load = useCallback(() => {
     api.workCompanyUsers()
       .then((r) => { setCompany(r.company || null); setUsers(r.users || []) })
-      .catch((e) => { setErr(e.message || 'Could not load your team.'); setUsers([]) })
-  }, [])
+      .catch((e) => { setErr(e.message || t('teamPage.errors.loadTeam')); setUsers([]) })
+  }, [t])
   useEffect(() => { load() }, [load])
 
   const create = async () => {
     if (busy) return
     const username = form.username.trim()
-    if (!username || !form.password) { setErr('Enter a username and a password.'); return }
+    if (!username || !form.password) { setErr(t('teamPage.errors.needUserPass')); return }
     setBusy(true); setErr(''); setOk('')
     try {
       await api.workCompanyCreateUser({
@@ -58,11 +62,11 @@ export default function WorkTeam() {
         companyRole: form.companyRole === 'company_admin' ? 'company_admin' : 'member',
         tier: form.tier,
       })
-      setOk(`Added ${username}.`)
+      setOk(t('teamPage.ok.added', { name: username }))
       setForm({ username: '', password: '', companyRole: 'member', tier: 'basic' })
       load()
       setView('list')
-    } catch (e) { setErr(e.message || 'Could not add that user.') } finally { setBusy(false) }
+    } catch (e) { setErr(e.message || t('teamPage.errors.addUser')) } finally { setBusy(false) }
   }
 
   return (
@@ -73,20 +77,20 @@ export default function WorkTeam() {
         <>
           <div className="wt-head">
             <div>
-              <h2><Users size={20} /> Your team{company && company.name ? ` · ${company.name}` : ''}</h2>
-              <p>Add people to your company and set what they can do. New users sign in with the username and password you set here.</p>
+              <h2><Users size={20} /> {t('teamPage.list.title')}{company && company.name ? ` · ${company.name}` : ''}</h2>
+              <p>{t('teamPage.list.sub')}</p>
             </div>
             <div className="wt-headacts">
-              <button className="wt-btn" onClick={() => setView('ai')}><KeyRound size={15} /> AI keys</button>
-              <button className="wt-btn" onClick={() => setView('activity')}><FileText size={15} /> User activity</button>
-              <button className="wt-btn primary" onClick={() => { setErr(''); setOk(''); setView('new') }}><Plus size={15} /> Add user</button>
+              <button className="wt-btn" onClick={() => setView('ai')}><KeyRound size={15} /> {t('teamPage.list.aiKeys')}</button>
+              <button className="wt-btn" onClick={() => setView('activity')}><FileText size={15} /> {t('teamPage.list.activity')}</button>
+              <button className="wt-btn primary" onClick={() => { setErr(''); setOk(''); setView('new') }}><Plus size={15} /> {t('teamPage.list.addUser')}</button>
             </div>
           </div>
 
           {ok && <div className="wt-ok"><Check size={14} /> {ok}</div>}
 
-          {users == null ? <div className="wt-empty"><Loader2 size={18} className="spin" /> Loading your team...</div>
-            : users.length === 0 ? <div className="wt-empty">No users yet. Add your first teammate to get started.</div>
+          {users == null ? <div className="wt-empty"><Loader2 size={18} className="spin" /> {t('teamPage.list.loading')}</div>
+            : users.length === 0 ? <div className="wt-empty">{t('teamPage.list.empty')}</div>
               : (
                 <ul className="wt-list">
                   {users.map((u) => (
@@ -95,9 +99,9 @@ export default function WorkTeam() {
                       <span className="wt-name"><span className="wt-dname">{u.displayName || u.username}</span><span className="wt-uname">{u.username}</span></span>
                       <span className={`wt-role r-${u.companyRole || 'member'}`}>
                         {u.companyRole === 'company_admin' ? <ShieldCheck size={12} /> : <UserIcon size={12} />}
-                        {ROLE_LABEL[u.companyRole] || 'Member'}
+                        {t(ROLE_KEY[u.companyRole] || ROLE_KEY.member)}
                       </span>
-                      <span className="wt-when">Added {fmt(u.createdAt)}</span>
+                      <span className="wt-when">{t('teamPage.list.addedOn', { date: fmt(u.createdAt) })}</span>
                     </li>
                   ))}
                 </ul>
@@ -110,21 +114,21 @@ export default function WorkTeam() {
         <>
           <div className="wt-head">
             <div>
-              <h2><FileText size={20} /> User activity</h2>
-              <p>Session deletions across your company: who deleted it, when, why, and what it was about.</p>
+              <h2><FileText size={20} /> {t('teamPage.activity.title')}</h2>
+              <p>{t('teamPage.activity.sub')}</p>
             </div>
-            <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
+            <button className="wt-btn" onClick={() => setView('list')}>{t('teamPage.activity.back')}</button>
           </div>
-          {activity == null ? <div className="wt-empty"><Loader2 size={18} className="spin" /> Loading activity…</div>
-            : activity.length === 0 ? <div className="wt-empty">No activity yet. Session deletions will appear here.</div>
+          {activity == null ? <div className="wt-empty"><Loader2 size={18} className="spin" /> {t('teamPage.activity.loading')}</div>
+            : activity.length === 0 ? <div className="wt-empty">{t('teamPage.activity.empty')}</div>
               : (
                 <ul className="wt-acts">
                   {activity.map((a) => (
                     <li key={a.id}>
                       <span className="wt-act-ic"><Trash2 size={14} /></span>
                       <div className="wt-act-main">
-                        <div className="wt-act-top"><b>{a.displayName || a.username || 'A user'}</b> deleted a session</div>
-                        <div className="wt-act-sess">{(a.title && !/^Session \d/.test(a.title)) ? a.title : (a.goal || 'Untitled session')}{a.stepsTotal ? ` · ${a.stepsDone}/${a.stepsTotal} steps` : ''}{a.status ? ` · ${a.status}` : ''}</div>
+                        <div className="wt-act-top">{t.rich('teamPage.activity.deleted', { name: a.displayName || a.username || t('teamPage.activity.someone') })}</div>
+                        <div className="wt-act-sess">{(a.title && !/^Session \d/.test(a.title)) ? a.title : (a.goal || t('teamPage.activity.untitled'))}{a.stepsTotal ? ` · ${t('teamPage.activity.steps', { done: a.stepsDone, total: a.stepsTotal })}` : ''}{a.status ? ` · ${a.status}` : ''}</div>
                         {a.reason && <div className="wt-act-reason">&ldquo;{a.reason}&rdquo;</div>}
                       </div>
                       <span className="wt-when">{fmtDT(a.at)}</span>
@@ -140,49 +144,49 @@ export default function WorkTeam() {
         <>
           <div className="wt-head">
             <div>
-              <h2><KeyRound size={20} /> AI keys</h2>
-              <p>By default WorkCoPilot runs on the keys we set for your company. You can switch to your <b>own</b> provider keys here, and then your usage is billed on your account, not ours.</p>
+              <h2><KeyRound size={20} /> {t('teamPage.ai.title')}</h2>
+              <p>{t.rich('teamPage.ai.sub')}</p>
             </div>
-            <button className="wt-btn" onClick={() => setView('list')}>Back to team</button>
+            <button className="wt-btn" onClick={() => setView('list')}>{t('teamPage.ai.back')}</button>
           </div>
           {aiCompany && (
             <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--tx,#1b2033)', border: '1px solid var(--line,#e7eaf2)' }}>
               {aiCompany.companyAi
-                ? <span>Current: key {aiCompany.companyAi.keyMasked} · {aiCompany.companyAi.owner === 'company' ? 'your own key' : 'set up for you by WorkCoPilot'}</span>
-                : <span>No keys set yet. Your company is on the platform AI.</span>}
+                ? <span>{t('teamPage.ai.current', { key: aiCompany.companyAi.keyMasked, owner: aiCompany.companyAi.owner === 'company' ? t('teamPage.ai.ownerCompany') : t('teamPage.ai.ownerPlatform') })}</span>
+                : <span>{t('teamPage.ai.none')}</span>}
             </div>
           )}
           <div className="wt-form" style={{ maxWidth: 560 }}>
-            <label className="wt-label">Provider
-              <input value={aiForm.providerId} placeholder="Your provider" onChange={(e) => setAiForm({ ...aiForm, providerId: e.target.value })} />
+            <label className="wt-label">{t('teamPage.ai.providerLabel')}
+              <input value={aiForm.providerId} placeholder={t('teamPage.ai.providerPlaceholder')} onChange={(e) => setAiForm({ ...aiForm, providerId: e.target.value })} />
             </label>
-            <label className="wt-label">API key
-              <input value={aiForm.apiKey} placeholder="Paste your provider API key" onChange={(e) => setAiForm({ ...aiForm, apiKey: e.target.value })} />
+            <label className="wt-label">{t('teamPage.ai.keyLabel')}
+              <input value={aiForm.apiKey} placeholder={t('teamPage.ai.keyPlaceholder')} onChange={(e) => setAiForm({ ...aiForm, apiKey: e.target.value })} />
             </label>
             {err && <div className="wt-err">{err}</div>}
             {ok && <div className="wt-ok"><Check size={14} /> {ok}</div>}
             <div className="wt-actions">
-              {aiCompany && aiCompany.companyAi && aiCompany.companyAi.owner === 'company' && <button className="wt-btn" disabled={busy} onClick={clearOwnKeys}>Remove my keys</button>}
-              <button className="wt-btn primary" disabled={busy || !aiForm.apiKey.trim()} onClick={saveOwnKeys}>{busy ? <Loader2 size={15} className="spin" /> : 'Use my keys'}</button>
+              {aiCompany && aiCompany.companyAi && aiCompany.companyAi.owner === 'company' && <button className="wt-btn" disabled={busy} onClick={clearOwnKeys}>{t('teamPage.ai.remove')}</button>}
+              <button className="wt-btn primary" disabled={busy || !aiForm.apiKey.trim()} onClick={saveOwnKeys}>{busy ? <Loader2 size={15} className="spin" /> : t('teamPage.ai.use')}</button>
             </div>
           </div>
 
           <div className="wt-form" style={{ maxWidth: 560, marginTop: 26 }}>
-            <h2 style={{ fontSize: 17 }}><Globe size={18} /> Live web learning</h2>
-            <p className="wt-form-sub">When set, your company&rsquo;s live web learning runs on your own Tavily key (your data boundary and billing). Guidance is grounded in the latest web sources.</p>
+            <h2 style={{ fontSize: 17 }}><Globe size={18} /> {t('teamPage.ai.webTitle')}</h2>
+            <p className="wt-form-sub">{t('teamPage.ai.webSub')}</p>
             {aiCompany && (
               <div className="wt-ok" style={{ background: 'var(--panel,#fff)', color: 'var(--tx,#1b2033)', border: '1px solid var(--line,#e7eaf2)' }}>
                 {aiCompany.webSearchConfigured
-                  ? <span>Current: <b>{(aiCompany.webSearch && aiCompany.webSearch.provider) || 'tavily'}</b> · key {aiCompany.webSearch && aiCompany.webSearch.keyMasked}</span>
-                  : <span>No web-search key set. Live web learning is off for your company.</span>}
+                  ? <span>{t.rich('teamPage.ai.webCurrent', { provider: (aiCompany.webSearch && aiCompany.webSearch.provider) || 'tavily', key: aiCompany.webSearch && aiCompany.webSearch.keyMasked })}</span>
+                  : <span>{t('teamPage.ai.webNone')}</span>}
               </div>
             )}
-            <label className="wt-label">Tavily API key
-              <input type="password" autoComplete="new-password" value={wsKey} placeholder="Paste your Tavily key" onChange={(e) => setWsKey(e.target.value)} />
+            <label className="wt-label">{t('teamPage.ai.webKeyLabel')}
+              <input type="password" autoComplete="new-password" value={wsKey} placeholder={t('teamPage.ai.webKeyPlaceholder')} onChange={(e) => setWsKey(e.target.value)} />
             </label>
             <div className="wt-actions">
-              {aiCompany && aiCompany.webSearchConfigured && <button className="wt-btn" disabled={busy} onClick={() => saveWebSearch(true)}>Remove key</button>}
-              <button className="wt-btn primary" disabled={busy || !wsKey.trim()} onClick={() => saveWebSearch(false)}>{busy ? <Loader2 size={15} className="spin" /> : 'Save key'}</button>
+              {aiCompany && aiCompany.webSearchConfigured && <button className="wt-btn" disabled={busy} onClick={() => saveWebSearch(true)}>{t('teamPage.ai.webRemove')}</button>}
+              <button className="wt-btn primary" disabled={busy || !wsKey.trim()} onClick={() => saveWebSearch(false)}>{busy ? <Loader2 size={15} className="spin" /> : t('teamPage.ai.webSave')}</button>
             </div>
           </div>
         </>
@@ -190,29 +194,29 @@ export default function WorkTeam() {
 
       {view === 'new' && (
         <div className="wt-form">
-          <h2>Add a user</h2>
-          <p className="wt-form-sub">They join {company && company.name ? company.name : 'your company'} right away.</p>
-          <label className="wt-label">Username
-            <input value={form.username} maxLength={60} autoComplete="off" placeholder="e.g. alex" onChange={(e) => setForm({ ...form, username: e.target.value })} />
+          <h2>{t('teamPage.add.title')}</h2>
+          <p className="wt-form-sub">{t('teamPage.add.sub', { company: company && company.name ? company.name : t('teamPage.add.yourCompany') })}</p>
+          <label className="wt-label">{t('teamPage.add.usernameLabel')}
+            <input value={form.username} maxLength={60} autoComplete="off" placeholder={t('teamPage.add.usernamePlaceholder')} onChange={(e) => setForm({ ...form, username: e.target.value })} />
           </label>
-          <label className="wt-label">Temporary password
-            <input type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder="Set a password to share with them" onChange={(e) => setForm({ ...form, password: e.target.value })} />
+          <label className="wt-label">{t('teamPage.add.passwordLabel')}
+            <input type="text" value={form.password} maxLength={120} autoComplete="new-password" placeholder={t('teamPage.add.passwordPlaceholder')} onChange={(e) => setForm({ ...form, password: e.target.value })} />
           </label>
-          <label className="wt-label">Role
+          <label className="wt-label">{t('teamPage.add.roleLabel')}
             <select value={form.companyRole} onChange={(e) => setForm({ ...form, companyRole: e.target.value })}>
-              <option value="member">Member</option>
-              <option value="company_admin">Company admin</option>
+              <option value="member">{t('teamPage.roles.member')}</option>
+              <option value="company_admin">{t('teamPage.roles.companyAdmin')}</option>
             </select>
           </label>
-          <label className="wt-label">Plan
+          <label className="wt-label">{t('teamPage.add.planLabel')}
             <select value={form.tier} onChange={(e) => setForm({ ...form, tier: e.target.value })}>
-              {TIERS.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}
+              {TIERS.map((tier) => <option key={tier.id} value={tier.id}>{tier.name}</option>)}
             </select>
           </label>
           {err && <div className="wt-err">{err}</div>}
           <div className="wt-actions">
-            <button className="wt-btn" onClick={() => { setErr(''); setView('list') }}>Cancel</button>
-            <button className="wt-btn primary" disabled={busy} onClick={create}>{busy ? <Loader2 size={15} className="spin" /> : 'Add user'}</button>
+            <button className="wt-btn" onClick={() => { setErr(''); setView('list') }}>{t('teamPage.add.cancel')}</button>
+            <button className="wt-btn primary" disabled={busy} onClick={create}>{busy ? <Loader2 size={15} className="spin" /> : t('teamPage.add.submit')}</button>
           </div>
         </div>
       )}

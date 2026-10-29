@@ -11,6 +11,7 @@
 // (`--wc-fs` or an inline calc) on the guidance container so headings, body and
 // code boxes scale together and cleanly.
 import { useCallback, useEffect, useState } from 'react'
+import { useT } from '../i18n/index.jsx'
 
 // ONE shared key for every guidance surface.
 export const GUIDE_FS_KEY = 'wc-guide-fontscale'
@@ -70,13 +71,15 @@ export function useGuideFontScale() {
 // `theme` with { border, text, muted, panel, accent } (plain colors OR CSS var
 // strings), so it looks native on both the dark full-screen guide and the
 // light/dark console. Real <button>s, so it is keyboard-accessible; no motion.
+// Labels (title / aria-label) come from the guideFontScale i18n namespace.
 export default function GuideFontControl({ scale, dec, inc, reset, atMin, atMax, theme }) {
-  const t = theme || {}
-  const border = t.border || 'var(--border)'
-  const text = t.text || 'var(--text)'
-  const muted = t.muted || 'var(--text-muted)'
-  const panel = t.panel || 'transparent'
-  const accent = t.accent || 'var(--em)'
+  const t = useT()
+  const th = theme || {}
+  const border = th.border || 'var(--border)'
+  const text = th.text || 'var(--text)'
+  const muted = th.muted || 'var(--text-muted)'
+  const panel = th.panel || 'transparent'
+  const accent = th.accent || 'var(--em)'
   const btn = (extra) => ({
     display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
     minWidth: 26, height: 26, padding: '0 6px', border: 'none', borderRadius: 6,
@@ -86,18 +89,18 @@ export default function GuideFontControl({ scale, dec, inc, reset, atMin, atMax,
   return (
     <div
       role="group"
-      aria-label="Text size"
+      aria-label={t('guideFontScale.groupAria')}
       style={{
         display: 'inline-flex', alignItems: 'center', gap: 1, flex: '0 0 auto',
         border: `1px solid ${border}`, borderRadius: 8, padding: 2, background: panel,
       }}
     >
-      <button type="button" onClick={dec} disabled={atMin} aria-label="Smaller text"
-        title="Smaller text" style={btn({ fontSize: 11, opacity: atMin ? 0.4 : 1, cursor: atMin ? 'default' : 'pointer' })}>A<span aria-hidden style={{ fontSize: 9, marginLeft: 1 }}>-</span></button>
-      <button type="button" onClick={reset} aria-label="Reset text size" title="Reset text size"
+      <button type="button" onClick={dec} disabled={atMin} aria-label={t('guideFontScale.smaller')}
+        title={t('guideFontScale.smaller')} style={btn({ fontSize: 11, opacity: atMin ? 0.4 : 1, cursor: atMin ? 'default' : 'pointer' })}>A<span aria-hidden style={{ fontSize: 9, marginLeft: 1 }}>-</span></button>
+      <button type="button" onClick={reset} aria-label={t('guideFontScale.reset')} title={t('guideFontScale.reset')}
         style={btn({ fontSize: 13, color: Math.abs((scale || 1) - 1) < 0.001 ? accent : muted })}>A</button>
-      <button type="button" onClick={inc} disabled={atMax} aria-label="Larger text"
-        title="Larger text" style={btn({ fontSize: 15, color: text, opacity: atMax ? 0.4 : 1, cursor: atMax ? 'default' : 'pointer' })}>A<span aria-hidden style={{ fontSize: 11, marginLeft: 1 }}>+</span></button>
+      <button type="button" onClick={inc} disabled={atMax} aria-label={t('guideFontScale.larger')}
+        title={t('guideFontScale.larger')} style={btn({ fontSize: 15, color: text, opacity: atMax ? 0.4 : 1, cursor: atMax ? 'default' : 'pointer' })}>A<span aria-hidden style={{ fontSize: 11, marginLeft: 1 }}>+</span></button>
     </div>
   )
 }
