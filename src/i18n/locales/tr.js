@@ -117,8 +117,8 @@ export default {
       hideDone: 'Tamamlananları gizle',
       errStart: 'Görev başlatılamadı. Lütfen tekrar deneyin.',
       refusal: 'WorkCoPilot bu görevi yazıldığı haliyle yönlendiremiyor. Proje yöneticinizden düzeltmesini isteyin.',
-      more_one: 'Kuyruğum\'da {n} tane daha',
-      more_other: 'Kuyruğum\'da {n} tane daha',
+      more_one: "Kuyruğum'da {n} tane daha",
+      more_other: "Kuyruğum'da {n} tane daha",
       workerNote: 'Hesabınız, bir proje yöneticisinin atadığı görevleri yapar. Görev başlat yoktur.',
     },
     card: {
@@ -191,7 +191,7 @@ export default {
       eyebrow: 'Yeni proje',
       title: 'Bu proje neyi başarmalı?',
       name: 'Proje adı',
-      namePh: 'ör. Satış ekibini yeni CRM\'e taşı',
+      namePh: "ör. Satış ekibini yeni CRM'e taşı",
       goal: 'Hedef',
       goalPh: 'Sonucu, ilgili sistemleri ve işin bitmiş halinin nasıl göründüğünü anlatın.',
       goalHelp: 'WorkCoPilot görevleri sırayla ve bir bitiş çizgisiyle haritalar. Ardından her görevi bir kişiye atarsınız.',
@@ -383,7 +383,10 @@ export default {
       },
     },
   },
-  lang: { label: 'Dil', choose: 'Dilinizi seçin' },
+  lang: {
+    label: 'Dil',
+    choose: 'Dilinizi seçin',
+  },
   languagePin: {
     title: 'Dilinizi seçin',
     intro: 'Bu, WorkCoPilot uygulaması ve size gönderdiğimiz e-postalar için dilinizi belirler.',
@@ -392,13 +395,23 @@ export default {
     saving: 'Kaydediliyor...',
     error: 'Diliniz kaydedilemedi. Lütfen tekrar deneyin.',
   },
-
   widgets: {
-    copy: { copy: 'Kopyala', copied: 'Kopyalandı', copyCommand: 'Komutu kopyala', copyAria: 'Panoya kopyala', copiedAria: 'Panoya kopyalandı' },
-    blocks: { terminal: 'Terminal', open: '{host} adresini aç', copyThis: 'Bunu kopyala', code: 'kod' },
+    copy: {
+      copy: 'Kopyala',
+      copied: 'Kopyalandı',
+      copyCommand: 'Komutu kopyala',
+      copyAria: 'Panoya kopyala',
+      copiedAria: 'Panoya kopyalandı',
+    },
+    blocks: {
+      terminal: 'Terminal',
+      open: '{host} adresini aç',
+      copyThis: 'Bunu kopyala',
+      code: 'kod',
+    },
     validate: {
       launch: 'Kendi görevinizde canlı deneyin',
-      launchAria: 'WorkCoPilot\'u kendi görevinizde canlı deneyin',
+      launchAria: "WorkCoPilot'u kendi görevinizde canlı deneyin",
       title: 'Görevinize nasıl yol gösterdiğini izleyin',
       live: 'CANLI',
       watching: 'İzliyor',
@@ -407,28 +420,32 @@ export default {
       dismiss: 'Kapat',
       coachB: 'WorkCoPilot size uygun mu?',
       coachS: 'Kendi görevinizi anlatın ve adım adım <b>canlı</b> planlanışını izleyin.',
-      // ASK
       askH: 'Neyi halletmeye çalışıyorsunuz?',
-      askSub: 'Gerçek bir görev anlatın. Birkaç saniye içinde WorkCoPilot\'un onu adım adım, tam tıklamalar, alanlar ve komutlarla planlayışını izleyeceksiniz.',
-      askPh: 'örn. AWS\'de bir VPC kurup güvenli hale getirmek, geçen ayın hesaplarını Excel\'de mutabakata sokmak veya: şirket içi uygulamalarımda bana yol gösterebilir mi?',
+      askSub: "Gerçek bir görev anlatın. Birkaç saniye içinde WorkCoPilot'un onu adım adım, tam tıklamalar, alanlar ve komutlarla planlayışını izleyeceksiniz.",
+      askPh: "örn. AWS'de bir VPC kurup güvenli hale getirmek, geçen ayın hesaplarını Excel'de mutabakata sokmak veya: şirket içi uygulamalarımda bana yol gösterebilir mi?",
       tryOne: 'Ya da birini deneyin:',
-      chip1: 'Google Takvim\'imi hafta görünümüne alıp ekibimle paylaşmak',
-      chip2: 'GitHub Actions ile Node uygulamama CI/CD kurmak: her push\'ta derleme ve test',
-      chip3: 'Geçen ayın faturalarını QuickBooks\'ta mutabakata sokmak',
-      chip4: 'Excel\'de pivot tablolarla aylık satış raporu hazırlamak',
-      chip5: 'Bir tablodan HubSpot\'a lead aktarıp ekibime atamak',
-      chip6: 'AWS\'de özel alt ağlarla bir VPC kurup güvenlik gruplarını sıkılaştırmak',
+      chip1: "Google Takvim'imi hafta görünümüne alıp ekibimle paylaşmak",
+      chip2: "GitHub Actions ile Node uygulamama CI/CD kurmak: her push'ta derleme ve test",
+      chip3: "Geçen ayın faturalarını QuickBooks'ta mutabakata sokmak",
+      chip4: "Excel'de pivot tablolarla aylık satış raporu hazırlamak",
+      chip5: "Bir tablodan HubSpot'a lead aktarıp ekibime atamak",
+      chip6: "AWS'de özel alt ağlarla bir VPC kurup güvenlik gruplarını sıkılaştırmak",
       watchIt: 'Görevimi planlamasını izle',
       privacy: 'Bilgilerinizi yalnızca WorkCoPilot hakkında sizinle iletişime geçmek için kullanırız. Görev metniniz, hiçbir şey gönderilmeden önce cihazınızda hassas verilerden temizlenir.',
-      // LEAD (once per session): the plan is being prepared, where do we send it
       prepH: 'Canlı planınız hazırlanıyor',
       leadIntro: 'Tam sürümü nereye gönderelim, söyleyin; sonra <b>canlı</b> olarak nasıl açıldığını izleyin.',
-      firstName: 'Ad', firstNamePh: 'Ayşe',
-      lastName: 'Soyad', lastNamePh: 'Yılmaz',
-      workEmail: 'İş e-postası', workEmailPh: 'ayse@sirket.com',
-      phone: 'Telefon', phonePh: '+90 5xx 000 00 00',
-      country: 'Ülke', countryPh: 'Ülkenizi seçin',
-      company: 'Şirket', companyPh: 'Şirket adı',
+      firstName: 'Ad',
+      firstNamePh: 'Ayşe',
+      lastName: 'Soyad',
+      lastNamePh: 'Yılmaz',
+      workEmail: 'İş e-postası',
+      workEmailPh: 'ayse@sirket.com',
+      phone: 'Telefon',
+      phonePh: '+90 5xx 000 00 00',
+      country: 'Ülke',
+      countryPh: 'Ülkenizi seçin',
+      company: 'Şirket',
+      companyPh: 'Şirket adı',
       required: 'Zorunlu',
       validEmail: 'Geçerli bir e-posta girin',
       validPhone: 'Geçerli bir telefon girin',
@@ -436,9 +453,8 @@ export default {
       saving: 'Kaydediliyor…',
       reveal: 'Planımı göster',
       editTask: 'Görevimi düzenle',
-      // REVEAL: the product console, live on the visitor's task
       scan1: 'Hedefiniz okunuyor',
-      scan2: 'WorkCoPilot\'un ekranınızda ne göreceği kontrol ediliyor',
+      scan2: "WorkCoPilot'un ekranınızda ne göreceği kontrol ediliyor",
       scan3: 'Tam tıklamalar, alanlar ve komutlar planlanıyor',
       verdict: {
         covered: 'WorkCoPilot bunda baştan sona yol gösterebilir',
@@ -452,7 +468,9 @@ export default {
       stepOf: 'Adım {n} / {total}',
       ready: 'Başlamadan önce',
       exactlyHow: 'Tam olarak nasıl',
-      step_one: '{n} adım', step_two: '{n} adım', step_other: '{n} adım',
+      step_one: '{n} adım',
+      step_two: '{n} adım',
+      step_other: '{n} adım',
       lockedMore_one: 'Canlı oturumda, aynı ayrıntıda {n} adım daha',
       lockedMore_two: 'Canlı oturumda, her biri aynı ayrıntıda {n} adım daha',
       lockedMore_other: 'Canlı oturumda, her biri aynı ayrıntıda {n} adım daha',
@@ -476,11 +494,12 @@ export default {
       promise1: 'Yoldan saptığınız anda düzeltir',
       promise2: 'Her seferinde tek adım, sizi bekler',
       promise3: 'Görev bitince doğrular',
-      // The ask: this, every day
       ctaH: 'Her görevde böyle yol gösterilsin',
       ctaSub: 'Tam olarak bir sonraki hamle, her seferinde, zaten kullandığınız uygulamalarda.',
       recommended: 'Göreviniz için önerilen',
-      hrsMonth_one: 'Ayda {n} saat canlı rehberlik', hrsMonth_two: 'Ayda {n} saat canlı rehberlik', hrsMonth_other: 'Ayda {n} saat canlı rehberlik',
+      hrsMonth_one: 'Ayda {n} saat canlı rehberlik',
+      hrsMonth_two: 'Ayda {n} saat canlı rehberlik',
+      hrsMonth_other: 'Ayda {n} saat canlı rehberlik',
       startWith: '{plan} ile başla',
       comparePlans: 'Tüm planları karşılaştır',
       trustCancel: 'Sözleşme yok, istediğiniz zaman iptal edin',
@@ -493,7 +512,6 @@ export default {
       unreachable: 'Canlı kontrole ulaşılamadı. Lütfen tekrar deneyin.',
     },
   },
-
   common: {
     signIn: 'Giriş yap',
     getStarted: 'Hemen başla',
@@ -511,7 +529,6 @@ export default {
     perMonth: '/ay',
     perYear: '/yıl',
   },
-
   nav: {
     home: 'AdmireVeda WorkCoPilot, ana sayfa',
     main: 'Ana menü',
@@ -525,7 +542,6 @@ export default {
     openMenu: 'Menüyü aç',
     closeMenu: 'Menüyü kapat',
   },
-
   footer: {
     aria: 'Site alt bilgisi',
     tag: 'Her ekranda uzmanınız. Ekranınızı izleyen ve bir sonraki adımı tam olarak söyleyen, yalnızca okuyan bir rehber; her uygulamada, verileriniz cihazınızda korunarak.',
@@ -546,12 +562,11 @@ export default {
     sales: 'Satış ve kurumsal',
     ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünüdür.',
     note: 'Yalnızca yasal ve meşru işler için. Rehberliktir, profesyonel danışmanlık değildir.',
-    cookiePrefs: "Çerez tercihleri",
-    cookiePolicy: "Çerez Politikası",
-    subprocessors: "Alt işleyenler",
-    accessibility: "Erişilebilirlik",
+    cookiePrefs: 'Çerez tercihleri',
+    cookiePolicy: 'Çerez Politikası',
+    subprocessors: 'Alt işleyenler',
+    accessibility: 'Erişilebilirlik',
   },
-
   home: {
     meta: {
       title: 'AdmireVeda WorkCoPilot - Her ekranda uzmanınız',
@@ -572,7 +587,10 @@ export default {
         s: 'Hassas veriler hiçbir şey gönderilmeden önce makinenizde temizlenir.',
       },
     ],
-    cta: { start: 'Bana yol göster', demo: '60 saniyelik demoyu izle' },
+    cta: {
+      start: 'Bana yol göster',
+      demo: '60 saniyelik demoyu izle',
+    },
     cuesAria: 'Güvenebilecekleriniz',
     cues: [
       'Zaten kullandığınız uygulamalarda çalışır',
@@ -604,7 +622,7 @@ export default {
       'Salesforce',
       'E-posta kampanyaları',
       'Shopify',
-      'Python ve API\'ler',
+      "Python ve API'ler",
       'Envanter',
       'SSO / OAuth',
       'Uyum',
@@ -677,10 +695,26 @@ export default {
         h3: 'Bir şirketin gerçekte nasıl çalıştığına göre tasarlandı.',
         sub: 'Roller, kuyruklar, şablonlar ve ortak bir beyin; her kural yalnızca arayüzde değil, sunucuda uygulanır.',
         cards: [
-          { t: 'Roller ve çalışma akışları', d: 'Proje yöneticileri atar ve yeniden atar. Kıdemli PM\'ler tüm projeleri yöneticiler arasında yeniden dengeler. GRC yalnızca okuyarak izler, tıkanan işler için bir risk kaydıyla. Herkes bir kuyruktan, bağımsız olarak veya her ikisiyle çalışır.', chips: ['Proje yöneticisi', 'Kıdemli PM', 'GRC gözetimi', 'Çalışan', 'Bağımsız', 'Karma'] },
-          { t: 'Tek prosedür, çok kişi', d: 'Bir projeyi şablona dönüştürün ve tüm bir ekibe aynı anda atayın. Herkes kendi çalışmasını alır; kimin bitirdiğinin ve ne kadar ilerlediğinin bir özetini görürsünüz, asla kimsenin ham oturumunu değil.', chips: ['İşe alıştırma', 'SOP\'ler', 'Uyum tatbikatları'] },
-          { t: 'Büyüyen bir şirket beyni', d: 'Bir kişinin kanıtladığı bir iş akışı, sonraki sefer herkese sunulur. Bunu bilgi alanlarına düzenleyin, planlama sırasında doğrusunu seçin ve her giriş önce politika farkında bir temizlemeden geçer.', chips: ['Bilgi alanları', 'Girişte temizlenir'] },
-          { t: 'Kanıtlanmış uygulamalar, işe dahil', d: 'Bir projede, o tür işler için kanıtlanmış uygulamaları önerir. Birini ekleyin, gerçek bir göreve dönüşür. Öneriler, kuruluşunuzun kabul ettiği ve tamamladığı şeylerden öğrenerek gelişir.', chips: ['Öner', 'Haritaya ekle', 'Kabulden öğrenir'] },
+          {
+            t: 'Roller ve çalışma akışları',
+            d: "Proje yöneticileri atar ve yeniden atar. Kıdemli PM'ler tüm projeleri yöneticiler arasında yeniden dengeler. GRC yalnızca okuyarak izler, tıkanan işler için bir risk kaydıyla. Herkes bir kuyruktan, bağımsız olarak veya her ikisiyle çalışır.",
+            chips: ['Proje yöneticisi', 'Kıdemli PM', 'GRC gözetimi', 'Çalışan', 'Bağımsız', 'Karma'],
+          },
+          {
+            t: 'Tek prosedür, çok kişi',
+            d: 'Bir projeyi şablona dönüştürün ve tüm bir ekibe aynı anda atayın. Herkes kendi çalışmasını alır; kimin bitirdiğinin ve ne kadar ilerlediğinin bir özetini görürsünüz, asla kimsenin ham oturumunu değil.',
+            chips: ['İşe alıştırma', "SOP'ler", 'Uyum tatbikatları'],
+          },
+          {
+            t: 'Büyüyen bir şirket beyni',
+            d: 'Bir kişinin kanıtladığı bir iş akışı, sonraki sefer herkese sunulur. Bunu bilgi alanlarına düzenleyin, planlama sırasında doğrusunu seçin ve her giriş önce politika farkında bir temizlemeden geçer.',
+            chips: ['Bilgi alanları', 'Girişte temizlenir'],
+          },
+          {
+            t: 'Kanıtlanmış uygulamalar, işe dahil',
+            d: 'Bir projede, o tür işler için kanıtlanmış uygulamaları önerir. Birini ekleyin, gerçek bir göreve dönüşür. Öneriler, kuruluşunuzun kabul ettiği ve tamamladığı şeylerden öğrenerek gelişir.',
+            chips: ['Öner', 'Haritaya ekle', 'Kabulden öğrenir'],
+          },
         ],
       },
     },
@@ -690,14 +724,38 @@ export default {
       sub: 'Teknik olsun olmasın, tüm şirketinizin kullanabileceği tek bir yardımcı pilot. {families} ana gruptaki {total} profesyonel alanda işe yol gösterir ve adımlar o alandaki bir uzman yazmış gibi okunur. Bir alan seçin ve başlayın.',
       statsAria: 'Kapsam bir bakışta',
       cards: [
-        { k: 'Teknik Kurulum ve Yapılandırma', d: 'Güvenlik duvarları, IDS/IPS, bulut, DevOps, altyapı.' },
-        { k: 'Oluştur ve Uygula', d: 'Hatlar, entegrasyonlar, uçtan uca kurulumlar.' },
-        { k: 'Yapay Zekâ ve Otomasyon', d: 'Ajanlar, RAG, kurumsal yapay zekâ, otomatik iş akışları.' },
-        { k: 'Ürün ve İnovasyon', d: 'Yepyeni bir fikri prototipleyin, geliştirin ve yayınlayın.' },
-        { k: 'Pazarlama ve Büyüme', d: 'Kampanyalar, analitik, lansmanlar, erişim.' },
-        { k: 'Muhasebe ve Ofis', d: 'Mutabakatlar, raporlar, tablolar, beyanlar.' },
-        { k: 'Hukuk ve Uyum', d: 'İncelemeler, formlar, süreçler, uyum kontrolleri.' },
-        { k: 'Diğer her şey', d: 'Bir ekrandaysa, size yol gösterilir.' },
+        {
+          k: 'Teknik Kurulum ve Yapılandırma',
+          d: 'Güvenlik duvarları, IDS/IPS, bulut, DevOps, altyapı.',
+        },
+        {
+          k: 'Oluştur ve Uygula',
+          d: 'Hatlar, entegrasyonlar, uçtan uca kurulumlar.',
+        },
+        {
+          k: 'Yapay Zekâ ve Otomasyon',
+          d: 'Ajanlar, RAG, kurumsal yapay zekâ, otomatik iş akışları.',
+        },
+        {
+          k: 'Ürün ve İnovasyon',
+          d: 'Yepyeni bir fikri prototipleyin, geliştirin ve yayınlayın.',
+        },
+        {
+          k: 'Pazarlama ve Büyüme',
+          d: 'Kampanyalar, analitik, lansmanlar, erişim.',
+        },
+        {
+          k: 'Muhasebe ve Ofis',
+          d: 'Mutabakatlar, raporlar, tablolar, beyanlar.',
+        },
+        {
+          k: 'Hukuk ve Uyum',
+          d: 'İncelemeler, formlar, süreçler, uyum kontrolleri.',
+        },
+        {
+          k: 'Diğer her şey',
+          d: 'Bir ekrandaysa, size yol gösterilir.',
+        },
       ],
       exploreAll: 'Tüm kullanım alanlarını ayrıntılı keşfedin',
       browseAll: 'veya {total} alanın tamamına göz atın',
@@ -733,21 +791,63 @@ export default {
       h2: 'Her görev bir vaatle değil, <em>kanıtla</em> biter.',
       sub: 'Ne yapıldığı, olurken ekranda doğrulanır, yazılır ve mühürlenir; böylece herkes gerçek olduğunu kontrol edebilir.',
       points: [
-        { t: 'Görev raporu', d: 'Yöntemleriyle birlikte doğrulanmış adımlar, sonuç ve temizlenmiş kilometre taşı ekran görüntüleri. Gerçek buysa "6 adımdan 5\'i tamam" diye bildirir.' },
-        { t: 'Denetim günlüğü', d: 'Her adımın ve her gönderimin zaman damgalı kaydı, her oturum için saklanır.' },
-        { t: 'Özgünlük mührü', d: 'Her rapor SHA-256 ve HMAC ile mühürlenir. Herkes herkese açık bir doğrulama ucunda gerçek olduğunu teyit edebilir.' },
-        { t: 'Görev başına uyum', d: 'İsteğe bağlı bir rapor, işi {n} çerçeveyle eşler. Programınızı destekleyen kanıt, asla bir sertifika iddiası değil.' },
+        {
+          t: 'Görev raporu',
+          d: 'Yöntemleriyle birlikte doğrulanmış adımlar, sonuç ve temizlenmiş kilometre taşı ekran görüntüleri. Gerçek buysa "6 adımdan 5\'i tamam" diye bildirir.',
+        },
+        {
+          t: 'Denetim günlüğü',
+          d: 'Her adımın ve her gönderimin zaman damgalı kaydı, her oturum için saklanır.',
+        },
+        {
+          t: 'Özgünlük mührü',
+          d: 'Her rapor SHA-256 ve HMAC ile mühürlenir. Herkes herkese açık bir doğrulama ucunda gerçek olduğunu teyit edebilir.',
+        },
+        {
+          t: 'Görev başına uyum',
+          d: 'İsteğe bağlı bir rapor, işi {n} çerçeveyle eşler. Programınızı destekleyen kanıt, asla bir sertifika iddiası değil.',
+        },
       ],
       log: {
         title: 'Denetim günlüğü',
         task: 'Üretim API anahtarını değiştir',
         lines: [
-          { at: '14:02:11', k: 'adım 3 / 5', m: 'ekranda doğrulandı', s: 'ok' },
-          { at: '14:02:40', k: 'adım 4 / 5', m: 'yanlış değer yakalandı, düzeltildi', s: 'warn' },
-          { at: '14:05:02', k: 'adım 5 / 5', m: 'ekranda doğrulandı', s: 'ok' },
-          { at: '14:05:09', k: 'rapor', m: '4 kilometre taşı görüntüsü, cihazda temizlendi', s: 'info' },
-          { at: '14:05:10', k: 'mühür', m: 'SHA-256 + HMAC uygulandı', s: 'seal' },
-          { at: '14:05:10', k: 'doğrulama', m: 'gerçek', s: 'ok' },
+          {
+            at: '14:02:11',
+            k: 'adım 3 / 5',
+            m: 'ekranda doğrulandı',
+            s: 'ok',
+          },
+          {
+            at: '14:02:40',
+            k: 'adım 4 / 5',
+            m: 'yanlış değer yakalandı, düzeltildi',
+            s: 'warn',
+          },
+          {
+            at: '14:05:02',
+            k: 'adım 5 / 5',
+            m: 'ekranda doğrulandı',
+            s: 'ok',
+          },
+          {
+            at: '14:05:09',
+            k: 'rapor',
+            m: '4 kilometre taşı görüntüsü, cihazda temizlendi',
+            s: 'info',
+          },
+          {
+            at: '14:05:10',
+            k: 'mühür',
+            m: 'SHA-256 + HMAC uygulandı',
+            s: 'seal',
+          },
+          {
+            at: '14:05:10',
+            k: 'doğrulama',
+            m: 'gerçek',
+            s: 'ok',
+          },
         ],
         sealed: 'Mühürlenmiş rapor',
       },
@@ -777,14 +877,15 @@ export default {
           'Bağlam olarak kendi belgeleriniz',
           'Gizlilik ve güvenlik dâhili',
         ],
-        basic: [
-          'Lite\'taki her şey',
-          'Yol haritaları dâhil',
-          'Yüzen rehber + oturum raporu',
+        basic: ["Lite'taki her şey", 'Yol haritaları dâhil', 'Yüzen rehber + oturum raporu'],
+        advanced: [
+          "Basic'teki her şey",
+          'Görev başına daha fazla belge bağlamı',
+          'Yardımcı olduğu yerde görsel örnekler',
+          'Öncelikli rehberlik',
         ],
-        advanced: ['Basic\'teki her şey', 'Görev başına daha fazla belge bağlamı', 'Yardımcı olduğu yerde görsel örnekler', 'Öncelikli rehberlik'],
         premium: [
-          'Advanced\'deki her şey',
+          "Advanced'deki her şey",
           'Projeler: görevlerden oluşan bir harita olarak büyük hedef',
           'İsteğe bağlı oluşturulan görseller',
           'En yüksek doğrulukta rehberlik',
@@ -816,20 +917,45 @@ export default {
     everywhere: {
       eyebrow: 'Her yerde sizinle',
       h2: 'Tek rehber. <em>Her ekran</em>, her dil, sizin tarzınızda.',
-      sub: 'Masaüstünde, Android\'de ve web\'de aynı rehber; seçtiğiniz dilde ve görünümde, tüm cihazlarınızda hatırlanır.',
+      sub: "Masaüstünde, Android'de ve web'de aynı rehber; seçtiğiniz dilde ve görünümde, tüm cihazlarınızda hatırlanır.",
       cards: [
-        { t: 'Her platform', d: 'Sessiz BT dağıtımı için makine başına MSI içeren imzalı bir Windows uygulaması, bir Android uygulaması ve web. Masaüstünde OCR cihazda çalışır, böylece görseller ve diyagramlar yerel olarak okunur. Arayüz iyileştirmeleri yeniden kurulum gerektirmeden her uygulamaya ulaşır.', chips: ['Windows', 'Enterprise MSI', 'Android', 'Web', 'Cihazda OCR'] },
-        { t: 'Diliniz', d: 'Tüm ürün ve gönderdiği her e-posta, {n} dilde ve ayrıca Amerikan ve İngiliz İngilizcesinde. İlk girişte seçin ve istediğiniz zaman değiştirin.', chips: [] },
-        { t: 'Görünümünüz, hatırlanır', d: 'Açık, Koyu veya Heavy. Kontrast testinden geçmiş marka vurguları. Daha büyük metin, azaltılmış hareket, yüksek kontrast, daha büyük hedefler ve okunaklı bir yazı tipi. Bir kez ayarlayın, anında uygulanır, tüm cihazlarınızda saklanır.', chips: ['Açık', 'Koyu', 'Heavy', 'Erişilebilirlik'] },
+        {
+          t: 'Her platform',
+          d: 'Sessiz BT dağıtımı için makine başına MSI içeren imzalı bir Windows uygulaması, bir Android uygulaması ve web. Masaüstünde OCR cihazda çalışır, böylece görseller ve diyagramlar yerel olarak okunur. Arayüz iyileştirmeleri yeniden kurulum gerektirmeden her uygulamaya ulaşır.',
+          chips: ['Windows', 'Enterprise MSI', 'Android', 'Web', 'Cihazda OCR'],
+        },
+        {
+          t: 'Diliniz',
+          d: 'Tüm ürün ve gönderdiği her e-posta, {n} dilde ve ayrıca Amerikan ve İngiliz İngilizcesinde. İlk girişte seçin ve istediğiniz zaman değiştirin.',
+          chips: [],
+        },
+        {
+          t: 'Görünümünüz, hatırlanır',
+          d: 'Açık, Koyu veya Heavy. Kontrast testinden geçmiş marka vurguları. Daha büyük metin, azaltılmış hareket, yüksek kontrast, daha büyük hedefler ve okunaklı bir yazı tipi. Bir kez ayarlayın, anında uygulanır, tüm cihazlarınızda saklanır.',
+          chips: ['Açık', 'Koyu', 'Heavy', 'Erişilebilirlik'],
+        },
       ],
     },
     final: {
       h2: 'Tahmin etmeyi bırakın. Yönlendirilmeye başlayın.',
       p: 'Her görevi getirin. WorkCoPilot ilk adımdan bitişe kadar götürür.',
       useYourWay: 'Kendi tarzınızla kullanın',
-      browser: { rec: 'Kurulum yok', b: 'Tarayıcıda kullanın', i: 'Kurulacak bir şey yok', title: 'WorkCoPilot doğrudan tarayıcınızda çalışır; indirme yok, kurulum yok. Giriş yapın ve başlayın.' },
-      windows: { b: 'Windows uygulaması', i: 'Masaüstü katmanı', aria: 'Windows masaüstü uygulamasını indirin', title: 'Çalıştığınız uygulamanın üzerinde duran yüzen bir pencere' },
-      android: { b: 'Android uygulaması', i: 'Telefon ve kamera' },
+      browser: {
+        rec: 'Kurulum yok',
+        b: 'Tarayıcıda kullanın',
+        i: 'Kurulacak bir şey yok',
+        title: 'WorkCoPilot doğrudan tarayıcınızda çalışır; indirme yok, kurulum yok. Giriş yapın ve başlayın.',
+      },
+      windows: {
+        b: 'Windows uygulaması',
+        i: 'Masaüstü katmanı',
+        aria: 'Windows masaüstü uygulamasını indirin',
+        title: 'Çalıştığınız uygulamanın üzerinde duran yüzen bir pencere',
+      },
+      android: {
+        b: 'Android uygulaması',
+        i: 'Telefon ve kamera',
+      },
       note2: '<b>İstediğiniz gibi giriş yapın.</b> Google, Microsoft veya Facebook ile devam edin ya da bir hesap oluşturun. Bir şirket ekibinde misiniz? İş e-postanızı yazın, şirketinizin tek oturum açma sistemine yönlendirilirsiniz. Her hesap bir doğrulayıcı uygulamayla korunur. <a>Kurumsal girişi görün</a>.',
     },
     disclaimer: '<b>Sorumlu kullanım.</b> WorkCoPilot yalnızca yasal ve meşru işleri destekler. Silah veya kitlesel zarar araçları yapmaya, kötü amaçlı yazılım ya da istismar kodu oluşturmaya, size ait olmayan sistem veya hesaplara girmeye ya da yasa dışı veya zararlı herhangi bir şey yapmaya yardımcı olmaz. Bu tür istekler reddedilir.',
@@ -847,63 +973,227 @@ export default {
       promptLbl: 'YAPAY ZEKÂNIZ İÇİN PROMPT',
       beforeAfter: 'ÖNCE → SONRA',
       vulnFixed: 'AÇIK → DÜZELTİLDİ',
-      tagBefore: 'önce', tagAfter: 'sonra', tagVuln: 'açık', tagFixed: 'düzeltildi',
+      tagBefore: 'önce',
+      tagAfter: 'sonra',
+      tagVuln: 'açık',
+      tagFixed: 'düzeltildi',
       scenarios: [
         {
-          tag: 'Tasarımı gereği gizli', app: 'Fatura konsolu', goal: 'Müşteri verisi sızdırmadan bir fatura entegrasyonu kurmak',
+          tag: 'Tasarımı gereği gizli',
+          app: 'Fatura konsolu',
+          goal: 'Müşteri verisi sızdırmadan bir fatura entegrasyonu kurmak',
           steps: [
-            { sees: 'ekranda bir müşteri e-postası, bir kart numarası ve canlı bir API anahtarı var', say: 'Bunlar kişisel veri, kart ve sır; asla bir yapay zekâya ulaşmamalı', do: 'Hiçbir şey gönderilmeden önce cihazınızda ekran görüntüsünde karartılır ve metinde yer tutucularla değiştirilir', click: 'Cihazda koru', done: 'cihazınızdan yalnızca [EMAIL], [CARD] ve [API_KEY] çıkar' },
-            { sees: 'hâlâ sk-live-... ve bir iç IP içeren bir hata yapıştırıyorsunuz', say: 'Yapıştırılan günlük, sırrı ve özel sunucunuzu taşıyor', do: 'Onlar da jetonlanır, gerçek değerler makinenizde kalır', click: 'Jetonla', done: 'yapay zekâ [[SECRET_1]] ve [[IP_2]] görür, gerçek değerleri asla' },
-            { sees: 'yanıt yer tutuculara atıfla geri geliyor', step: 'Yanıtı yerel olarak yeniden kurun', how: ['Gerçek değerler cihazınızda geri yüklenir', 'Tam ve kullanılabilir yanıtı alırsınız', 'Hassas hiçbir şey iletilmedi'], click: 'Yeniden kur', done: 'gerçek yanıtı siz alırsınız; yapay zekâ hiç görmedi' },
+            {
+              sees: 'ekranda bir müşteri e-postası, bir kart numarası ve canlı bir API anahtarı var',
+              say: 'Bunlar kişisel veri, kart ve sır; asla bir yapay zekâya ulaşmamalı',
+              do: 'Hiçbir şey gönderilmeden önce cihazınızda ekran görüntüsünde karartılır ve metinde yer tutucularla değiştirilir',
+              click: 'Cihazda koru',
+              done: 'cihazınızdan yalnızca [EMAIL], [CARD] ve [API_KEY] çıkar',
+            },
+            {
+              sees: 'hâlâ sk-live-... ve bir iç IP içeren bir hata yapıştırıyorsunuz',
+              say: 'Yapıştırılan günlük, sırrı ve özel sunucunuzu taşıyor',
+              do: 'Onlar da jetonlanır, gerçek değerler makinenizde kalır',
+              click: 'Jetonla',
+              done: 'yapay zekâ [[SECRET_1]] ve [[IP_2]] görür, gerçek değerleri asla',
+            },
+            {
+              sees: 'yanıt yer tutuculara atıfla geri geliyor',
+              step: 'Yanıtı yerel olarak yeniden kurun',
+              how: [
+                'Gerçek değerler cihazınızda geri yüklenir',
+                'Tam ve kullanılabilir yanıtı alırsınız',
+                'Hassas hiçbir şey iletilmedi',
+              ],
+              click: 'Yeniden kur',
+              done: 'gerçek yanıtı siz alırsınız; yapay zekâ hiç görmedi',
+            },
           ],
         },
         {
-          tag: 'Ajan tabanlı üretken yapay zekâ', app: 'Ajan geliştirme', goal: 'Araç çağıran bir RAG ajanı oluşturmak',
+          tag: 'Ajan tabanlı üretken yapay zekâ',
+          app: 'Ajan geliştirme',
+          goal: 'Araç çağıran bir RAG ajanı oluşturmak',
           steps: [
-            { sees: 'boş bir ajan projesi açık', step: 'Vektör deposunu oluşturun ve belgelerinizi gömün', how: ['Bir vektör deposu seçin (pgvector veya Chroma)', 'Belgelerinizi örtüşmeli ~800 jetonluk parçalara bölün', 'Parçaları gömün ve yükleyin'], click: 'Koleksiyon oluştur', done: 'koleksiyon vektörlerinizi içerir' },
-            { sees: 'getirme işlemi belgelerin tamamını döndürüyor', say: 'Tüm belgeleri döndürmek bağlam penceresini taşırır ve yanıtı gömer', do: 'Tüm dosyaları değil, puan eşiğiyle en iyi eşleşen parçaları döndürün', click: 'Top-k ayarla', done: 'getirme odaklı parçalar döndürür' },
-            { sees: 'araçlar tanımlı ama ajan serbest yanıt veriyor', step: 'Araç çağırma döngüsünü bağlayın', how: ['Araçları modele bağlayın', 'Düşün, aracı çağır, gözlemle döngüsünü ekleyin', 'Model nihai yanıt verdiğinde durun'], click: 'Araçları bağla', done: 'ajan araçlarınızı gerçekten çağırır' },
-            { sees: 'kullanıcı metni sistem istemine ekleniyor', say: 'Bu bir prompt enjeksiyon açığı: bir kullanıcı talimatlarınızı geçersiz kılabilir', do: 'Kullanıcı girdisini sistem isteminde değil kullanıcı turunda tutun ve araç argümanlarını izin listesine alın', click: 'Rolleri ayır', done: 'kullanıcı metni sistem istemini ele geçiremez' },
-            { sees: 'kendi yapay zekânıza yapıştırabileceğiniz bir başlangıç istiyorsunuz', step: 'Yığınınıza göre ayarlanmış, kullanıma hazır bir prompt kopyalayın', how: ['Vektör deponuz ve modelinizle sınırlı', 'Güvenlik ve gizlilik gömülü: yer tutucular, asla gerçek sırlar değil', 'Yapay zekânıza yapıştırın ve belgelerinizi ekleyin'], click: 'Prompt\'u kopyala', done: 'yapay zekânıza yapıştırmaya hazır bir prompt\'unuz var' },
+            {
+              sees: 'boş bir ajan projesi açık',
+              step: 'Vektör deposunu oluşturun ve belgelerinizi gömün',
+              how: [
+                'Bir vektör deposu seçin (pgvector veya Chroma)',
+                'Belgelerinizi örtüşmeli ~800 jetonluk parçalara bölün',
+                'Parçaları gömün ve yükleyin',
+              ],
+              click: 'Koleksiyon oluştur',
+              done: 'koleksiyon vektörlerinizi içerir',
+            },
+            {
+              sees: 'getirme işlemi belgelerin tamamını döndürüyor',
+              say: 'Tüm belgeleri döndürmek bağlam penceresini taşırır ve yanıtı gömer',
+              do: 'Tüm dosyaları değil, puan eşiğiyle en iyi eşleşen parçaları döndürün',
+              click: 'Top-k ayarla',
+              done: 'getirme odaklı parçalar döndürür',
+            },
+            {
+              sees: 'araçlar tanımlı ama ajan serbest yanıt veriyor',
+              step: 'Araç çağırma döngüsünü bağlayın',
+              how: [
+                'Araçları modele bağlayın',
+                'Düşün, aracı çağır, gözlemle döngüsünü ekleyin',
+                'Model nihai yanıt verdiğinde durun',
+              ],
+              click: 'Araçları bağla',
+              done: 'ajan araçlarınızı gerçekten çağırır',
+            },
+            {
+              sees: 'kullanıcı metni sistem istemine ekleniyor',
+              say: 'Bu bir prompt enjeksiyon açığı: bir kullanıcı talimatlarınızı geçersiz kılabilir',
+              do: 'Kullanıcı girdisini sistem isteminde değil kullanıcı turunda tutun ve araç argümanlarını izin listesine alın',
+              click: 'Rolleri ayır',
+              done: 'kullanıcı metni sistem istemini ele geçiremez',
+            },
+            {
+              sees: 'kendi yapay zekânıza yapıştırabileceğiniz bir başlangıç istiyorsunuz',
+              step: 'Yığınınıza göre ayarlanmış, kullanıma hazır bir prompt kopyalayın',
+              how: [
+                'Vektör deponuz ve modelinizle sınırlı',
+                'Güvenlik ve gizlilik gömülü: yer tutucular, asla gerçek sırlar değil',
+                'Yapay zekânıza yapıştırın ve belgelerinizi ekleyin',
+              ],
+              click: "Prompt'u kopyala",
+              done: "yapay zekânıza yapıştırmaya hazır bir prompt'unuz var",
+            },
           ],
         },
         {
-          tag: 'API sızma testi', app: 'Burp Suite', goal: 'Sipariş API\'nizi Burp Suite ile sızma testinden geçirmek',
+          tag: 'API sızma testi',
+          app: 'Burp Suite',
+          goal: "Sipariş API'nizi Burp Suite ile sızma testinden geçirmek",
           steps: [
-            { sees: 'Burp, Proxy sekmesinde açık', step: 'Uygulamanızı Burp üzerinden yönlendirin', how: ['Proxy\'yi, sonra Proxy settings\'i açın', 'Tarayıcı proxy\'nizi 127.0.0.1:8080 adresine yönlendirin', 'HTTPS\'ye güvenilmesi için Burp CA sertifikasını kurun'], click: 'Proxy settings', done: 'istekler HTTP history\'de görünür' },
-            { sees: 'bir GET /api/orders/1024 yakalandı', step: 'Repeater\'a gönderin', how: ['HTTP history\'deki isteğe sağ tıklayın', '"Send to Repeater" seçin', 'Repeater sekmesini açın'], click: 'Send to Repeater', done: 'istek Repeater\'a yüklendi' },
-            { sees: 'sipariş kimliği yolda ve 1024 size ait', say: 'Kimliği başka bir kullanıcının siparişiyle değiştirmek IDOR\'u, yani bozuk nesne düzeyinde yetkilendirmeyi test eder', do: 'Repeater\'da 1024\'ü 1025 yapıp gönderin; başkasının siparişiyle dönen 200 gerçek bir bulgudur', click: 'Gönder', done: '403 (güvenli) ya da kaydedilmiş bir bulgu alırsınız' },
-            { sees: 'bir hata yanıtı tam bir yığın izi sızdırıyor', say: 'Yığın izi saldırgana çerçevenizi, sürümlerinizi ve dosya yollarınızı verir', do: 'Bilgi sızıntısı bulgusu olarak kaydedin ve genel hata yanıtları önerin', click: 'Bulguyu kaydet', done: 'bulgu belgelendi' },
+            {
+              sees: 'Burp, Proxy sekmesinde açık',
+              step: 'Uygulamanızı Burp üzerinden yönlendirin',
+              how: [
+                "Proxy'yi, sonra Proxy settings'i açın",
+                "Tarayıcı proxy'nizi 127.0.0.1:8080 adresine yönlendirin",
+                "HTTPS'ye güvenilmesi için Burp CA sertifikasını kurun",
+              ],
+              click: 'Proxy settings',
+              done: "istekler HTTP history'de görünür",
+            },
+            {
+              sees: 'bir GET /api/orders/1024 yakalandı',
+              step: "Repeater'a gönderin",
+              how: ["HTTP history'deki isteğe sağ tıklayın", '"Send to Repeater" seçin', 'Repeater sekmesini açın'],
+              click: 'Send to Repeater',
+              done: "istek Repeater'a yüklendi",
+            },
+            {
+              sees: 'sipariş kimliği yolda ve 1024 size ait',
+              say: "Kimliği başka bir kullanıcının siparişiyle değiştirmek IDOR'u, yani bozuk nesne düzeyinde yetkilendirmeyi test eder",
+              do: "Repeater'da 1024'ü 1025 yapıp gönderin; başkasının siparişiyle dönen 200 gerçek bir bulgudur",
+              click: 'Gönder',
+              done: '403 (güvenli) ya da kaydedilmiş bir bulgu alırsınız',
+            },
+            {
+              sees: 'bir hata yanıtı tam bir yığın izi sızdırıyor',
+              say: 'Yığın izi saldırgana çerçevenizi, sürümlerinizi ve dosya yollarınızı verir',
+              do: 'Bilgi sızıntısı bulgusu olarak kaydedin ve genel hata yanıtları önerin',
+              click: 'Bulguyu kaydet',
+              done: 'bulgu belgelendi',
+            },
           ],
         },
         {
-          tag: 'ServiceNow yöneticisi', app: 'ServiceNow', goal: 'Bir ServiceNow katalog öğesi yayınlamak ve kimlerin görebileceğini kısıtlamak',
+          tag: 'ServiceNow yöneticisi',
+          app: 'ServiceNow',
+          goal: 'Bir ServiceNow katalog öğesi yayınlamak ve kimlerin görebileceğini kısıtlamak',
           steps: [
-            { sees: 'yeni bir Business Rule her tabloda, her işlemde çalışacak şekilde ayarlanmış', say: 'Koşulsuz genel bir Business Rule tüm kayıtlarda tetiklenir ve tüm örneği yavaşlatabilir', do: 'Tek tabloyla sınırlayın ve yalnızca gerektiğinde çalışması için bir koşul ekleyin', click: 'Kuralı sınırla', done: 'kural yalnızca gerektiği yerde çalışır' },
-            { sees: 'tablo ACL\'si boş bir rolle okuma izni veriyor, yani herkes okuyabilir', say: 'Bir ACL\'de boş rol, giriş yapan her kullanıcının bu kayıtları okuyabilmesi demektir', do: 'Yalnızca doğru grubun görebilmesi için belirli bir rol zorunlu kılın', click: 'ACL\'yi kısıtla', done: 'kayıtları yalnızca catalog_viewer okuyabilir' },
-            { sees: 'bir katalog değişkeni bir çalışanın kimlik numarasını düz metin alanında topluyor', say: 'Bu, okunabilir bir değişkende duran kişisel veridir ve asla bir yapay zekâya ulaşmamalı', do: 'Hiçbir şey gönderilmeden önce cihazınızda maskelenir ve yer tutucuyla değiştirilir', click: 'Cihazda koru', done: 'cihazınızdan yalnızca [SSN] çıkar, gerçek değer asla' },
+            {
+              sees: 'yeni bir Business Rule her tabloda, her işlemde çalışacak şekilde ayarlanmış',
+              say: 'Koşulsuz genel bir Business Rule tüm kayıtlarda tetiklenir ve tüm örneği yavaşlatabilir',
+              do: 'Tek tabloyla sınırlayın ve yalnızca gerektiğinde çalışması için bir koşul ekleyin',
+              click: 'Kuralı sınırla',
+              done: 'kural yalnızca gerektiği yerde çalışır',
+            },
+            {
+              sees: "tablo ACL'si boş bir rolle okuma izni veriyor, yani herkes okuyabilir",
+              say: "Bir ACL'de boş rol, giriş yapan her kullanıcının bu kayıtları okuyabilmesi demektir",
+              do: 'Yalnızca doğru grubun görebilmesi için belirli bir rol zorunlu kılın',
+              click: "ACL'yi kısıtla",
+              done: 'kayıtları yalnızca catalog_viewer okuyabilir',
+            },
+            {
+              sees: 'bir katalog değişkeni bir çalışanın kimlik numarasını düz metin alanında topluyor',
+              say: 'Bu, okunabilir bir değişkende duran kişisel veridir ve asla bir yapay zekâya ulaşmamalı',
+              do: 'Hiçbir şey gönderilmeden önce cihazınızda maskelenir ve yer tutucuyla değiştirilir',
+              click: 'Cihazda koru',
+              done: 'cihazınızdan yalnızca [SSN] çıkar, gerçek değer asla',
+            },
           ],
         },
         {
-          tag: 'Salesforce geliştirme', app: 'Salesforce Apex', goal: 'Güvenlik veya governor limit hatası olmadan bir Apex tetikleyicisi yayınlamak',
+          tag: 'Salesforce geliştirme',
+          app: 'Salesforce Apex',
+          goal: 'Güvenlik veya governor limit hatası olmadan bir Apex tetikleyicisi yayınlamak',
           steps: [
-            { sees: 'bir SOQL sorgusu tetikleyici kayıtları üzerindeki for döngüsünün içinde', say: 'Döngü içinde sorgulamak SOQL governor limitine takılır ve toplu yüklemede başarısız olur', do: 'Sorguyu döngüden çıkarın ve bir map üzerinden çalışın; toplu hale getirin', click: 'Toplu hale getir', done: 'tek sorgu tüm toplu işi karşılar' },
-            { sees: 'sorgu, kullanıcı erişimini uygulamadan alanları okuyor', say: 'Alan düzeyinde güvenlik olmadan tetikleyici, kullanıcının göremediği alanları açığa çıkarabilir', do: 'FLS ve paylaşımın uygulanması için WITH SECURITY_ENFORCED ekleyin', click: 'FLS uygula', done: 'sorgu kullanıcı erişimine saygı gösterir' },
-            { sees: 'Apex sınıfına bir API anahtarı gömülmüş', say: 'Apex kaynağındaki bir sır her dağıtımda ve meta veri geçmişinde sızar', do: 'Anahtarın kodda hiç bulunmaması için bir Named Credential\'a taşıyın', click: 'Named Credential kullan', done: 'kodda sır kalmadı' },
+            {
+              sees: 'bir SOQL sorgusu tetikleyici kayıtları üzerindeki for döngüsünün içinde',
+              say: 'Döngü içinde sorgulamak SOQL governor limitine takılır ve toplu yüklemede başarısız olur',
+              do: 'Sorguyu döngüden çıkarın ve bir map üzerinden çalışın; toplu hale getirin',
+              click: 'Toplu hale getir',
+              done: 'tek sorgu tüm toplu işi karşılar',
+            },
+            {
+              sees: 'sorgu, kullanıcı erişimini uygulamadan alanları okuyor',
+              say: 'Alan düzeyinde güvenlik olmadan tetikleyici, kullanıcının göremediği alanları açığa çıkarabilir',
+              do: 'FLS ve paylaşımın uygulanması için WITH SECURITY_ENFORCED ekleyin',
+              click: 'FLS uygula',
+              done: 'sorgu kullanıcı erişimine saygı gösterir',
+            },
+            {
+              sees: 'Apex sınıfına bir API anahtarı gömülmüş',
+              say: 'Apex kaynağındaki bir sır her dağıtımda ve meta veri geçmişinde sızar',
+              do: "Anahtarın kodda hiç bulunmaması için bir Named Credential'a taşıyın",
+              click: 'Named Credential kullan',
+              done: 'kodda sır kalmadı',
+            },
           ],
         },
         {
-          tag: 'Bulut güvenliği', app: 'AWS IAM', goal: 'Joker karakterli bir IAM politikasını en az yetkiyle değiştirmek',
+          tag: 'Bulut güvenliği',
+          app: 'AWS IAM',
+          goal: 'Joker karakterli bir IAM politikasını en az yetkiyle değiştirmek',
           steps: [
-            { sees: 'rol, Resource "*" üzerinde Action "*" veriyor', say: 'Bu tam yönetici yetkisi; sızan tek bir anahtar tüm hesabı ele geçirir', do: 'Tam olarak bu uygulamanın yaptığı eylemlerle, kendi kaynaklarıyla sınırlayın', click: 'Politikayı düzenle', done: 'politika tek bir bucket ile sınırlı' },
-            { sees: 'CloudTrail, rolün SQS\'yi de çağırdığını gösteriyor', step: 'Yalnızca gerçekten kullandıklarını ekleyin', how: ['CloudTrail\'i açın, olayları bu role göre filtreleyin', 'Gerçekten yaptığı farklı API çağrılarını listeleyin', 'Tam olarak bunları verin; varsayıma dayalı hiçbir şey vermeyin'], click: 'sqs:SendMessage ekle', done: 'her gerçek çağrıya izin verildi, fazlasına değil' },
-            { sees: 'Access Analyzer bucket\'ı herkese açık olarak işaretliyor', say: 'Bucket politikası hâlâ joker bir principal\'a izin veriyor, yani herkes okuyabilir', do: 'Verilere yalnızca bu rolün ulaşması için Principal "*" ifadesini kaldırın', click: 'Bucket politikasını düzelt', done: 'Access Analyzer yeşile döner' },
+            {
+              sees: 'rol, Resource "*" üzerinde Action "*" veriyor',
+              say: 'Bu tam yönetici yetkisi; sızan tek bir anahtar tüm hesabı ele geçirir',
+              do: 'Tam olarak bu uygulamanın yaptığı eylemlerle, kendi kaynaklarıyla sınırlayın',
+              click: 'Politikayı düzenle',
+              done: 'politika tek bir bucket ile sınırlı',
+            },
+            {
+              sees: "CloudTrail, rolün SQS'yi de çağırdığını gösteriyor",
+              step: 'Yalnızca gerçekten kullandıklarını ekleyin',
+              how: [
+                "CloudTrail'i açın, olayları bu role göre filtreleyin",
+                'Gerçekten yaptığı farklı API çağrılarını listeleyin',
+                'Tam olarak bunları verin; varsayıma dayalı hiçbir şey vermeyin',
+              ],
+              click: 'sqs:SendMessage ekle',
+              done: 'her gerçek çağrıya izin verildi, fazlasına değil',
+            },
+            {
+              sees: "Access Analyzer bucket'ı herkese açık olarak işaretliyor",
+              say: "Bucket politikası hâlâ joker bir principal'a izin veriyor, yani herkes okuyabilir",
+              do: 'Verilere yalnızca bu rolün ulaşması için Principal "*" ifadesini kaldırın',
+              click: 'Bucket politikasını düzelt',
+              done: 'Access Analyzer yeşile döner',
+            },
           ],
         },
       ],
     },
   },
-
   login: {
     meta: {
       title: 'Hesap oluşturun veya giriş yapın - AdmireVeda WorkCoPilot',
@@ -918,13 +1208,13 @@ export default {
       see: 'Görüyorum',
       seeText: 'Tedarikçiler sekmesi açık ve form boş',
       doThisNow: 'Şimdi bunu yapın',
-      s1: 'Finans\'ı, sonra Tedarikçiler\'i açın',
-      s2: 'Yeni tedarikçi\'ye tıklayın',
+      s1: "Finans'ı, sonra Tedarikçiler'i açın",
+      s2: "Yeni tedarikçi'ye tıklayın",
       s3: 'Ödeme koşullarını <b>Net 30</b> yapın, sonra vergi numarasını girin',
       s4: 'İmzalı W-9 formunu ekleyin',
       s5: 'Onaya gönderin',
       warnB: 'Yanlış sekme. Yakaladım.',
-      warnS: 'Müşteriler\'i açtınız. Tedarikçiler\'e geri dönün.',
+      warnS: "Müşteriler'i açtınız. Tedarikçiler'e geri dönün.",
       learnB: 'El kitabınızı biliyor',
       learnS: 'Net 30, şirketinize özel Finans prosedürünüzden geliyor.',
     },
@@ -933,9 +1223,18 @@ export default {
     pitchP: 'WorkCoPilot ekranınızı izler, bir sonraki adımı tam olarak söyler ve yanlış bir adımı size pahalıya patlamadan yakalar. Şirketler için kendi uygulamalarınızı ve el kitaplarınızı gizli şekilde öğrenir.',
     proofAria: 'Ne alırsınız',
     proof: [
-      { b: 'Tasarımı gereği yalnızca okur', s: 'Sizin yerinize asla tıklamaz, yazmaz ya da bir şey çalıştırmaz.' },
-      { b: 'Cihazınızda gizli', s: 'Hassas değerler hiçbir şey çıkmadan önce temizlenir.' },
-      { b: 'Bitirdiğinizde belgelenir', s: 'Onaylanan her adımın temiz bir kaydı.' },
+      {
+        b: 'Tasarımı gereği yalnızca okur',
+        s: 'Sizin yerinize asla tıklamaz, yazmaz ya da bir şey çalıştırmaz.',
+      },
+      {
+        b: 'Cihazınızda gizli',
+        s: 'Hassas değerler hiçbir şey çıkmadan önce temizlenir.',
+      },
+      {
+        b: 'Bitirdiğinizde belgelenir',
+        s: 'Onaylanan her adımın temiz bir kaydı.',
+      },
     ],
     plan: {
       aria: '{plan} planına başlıyorsunuz',
@@ -948,7 +1247,11 @@ export default {
       priceAnnual: '{price}/ay, yıllık faturalandırılır ({total}/yıl)',
       priceMonthly: '{price}/ay, aylık faturalandırılır',
     },
-    tabs: { aria: 'Nasıl devam etmek istersiniz?', social: 'Sosyal', email: 'E-posta ve SSO' },
+    tabs: {
+      aria: 'Nasıl devam etmek istersiniz?',
+      social: 'Sosyal',
+      email: 'E-posta ve SSO',
+    },
     social: {
       google: 'Google ile devam et',
       microsoft: 'Microsoft ile devam et',
@@ -957,7 +1260,10 @@ export default {
       checking: 'Kullanılabilirlik kontrol ediliyor',
       hint: 'Hızlı ve güvenli. Yalnızca adınızı ve e-postanızı kullanırız.',
     },
-    ssoEntry: { q: 'Bir şirket hesabının parçası mısınız?', btn: 'Şirket SSO ile devam et' },
+    ssoEntry: {
+      q: 'Bir şirket hesabının parçası mısınız?',
+      btn: 'Şirket SSO ile devam et',
+    },
     ssoStep: {
       aria: 'Kurumsal tek oturum açma',
       back: 'Geri',
@@ -968,15 +1274,18 @@ export default {
       note: 'Şirket hesabı üyeleri için. Kimin giriş yapabileceğini şirketiniz belirler.',
     },
     switch: {
-      toCreate: 'WorkCoPilot\'ta yeni misiniz? <a>Hesap oluşturun</a>',
+      toCreate: "WorkCoPilot'ta yeni misiniz? <a>Hesap oluşturun</a>",
       toLogin: 'Zaten hesabınız var mı? <a>Giriş yapın</a>',
     },
-    finishing: { h1: 'Girişiniz tamamlanıyor', p: 'Hesabınızı doğrularken bir saniye bekleyin.' },
+    finishing: {
+      h1: 'Girişiniz tamamlanıyor',
+      p: 'Hesabınızı doğrularken bir saniye bekleyin.',
+    },
     profile: {
       h1: 'Profilinizi tamamlayın',
       sub: 'Neredeyse bitti. Adınız hesabınızı tamamlar, ardından doğrulayıcı uygulamanızı kurarsınız.',
       aria: 'Profilinizi tamamlayın',
-      consent: 'Devam ederek <terms>Şartlar</terms>\'ı ve <privacy>Gizlilik Politikası</privacy>\'nı kabul etmiş olursunuz.',
+      consent: "Devam ederek <terms>Şartlar</terms>'ı ve <privacy>Gizlilik Politikası</privacy>'nı kabul etmiş olursunuz.",
     },
     heading: {
       createPlan: '{plan} planına başlamak için hesabınızı oluşturun',
@@ -1016,20 +1325,20 @@ export default {
       password: 'Parola',
       passwordNewPh: 'bir parola seçin (en az 6 karakter)',
       passwordPh: 'parolanız',
-      improve: 'WorkCoPilot\'u geliştirmek için eklediğiniz beceriler ve içerikler, hizmeti iyileştirmek amacıyla kimliksizleştirilmiş biçimde kullanılabilir. Kişisel verileriniz önce cihazınızda temizlenir. Şirket hesapları muaftır: şirket bilgisi gizli kalır. <a>Daha fazla bilgi</a>.',
+      improve: "WorkCoPilot'u geliştirmek için eklediğiniz beceriler ve içerikler, hizmeti iyileştirmek amacıyla kimliksizleştirilmiş biçimde kullanılabilir. Kişisel verileriniz önce cihazınızda temizlenir. Şirket hesapları muaftır: şirket bilgisi gizli kalır. <a>Daha fazla bilgi</a>.",
       working: 'İşleniyor, lütfen bekleyin.',
       openingCheckout: 'Güvenli ödeme açılıyor',
       createContinue: 'Hesap oluştur ve devam et',
       create: 'Hesap oluştur',
       loginContinue: 'Giriş yap ve devam et',
       login: 'Giriş yap',
-      consent: 'Hesap oluşturarak <terms>Şartlar</terms>\'ı ve <privacy>Gizlilik Politikası</privacy>\'nı kabul etmiş olursunuz.',
+      consent: "Hesap oluşturarak <terms>Şartlar</terms>'ı ve <privacy>Gizlilik Politikası</privacy>'nı kabul etmiş olursunuz.",
       next: 'Sırada: {plan} için güvenli ödeme. Siz tamamlayana kadar hiçbir ücret alınmaz.',
       forgotSent: 'Bu kullanıcı adı veya e-posta için bir hesap varsa sıfırlama bağlantısı yolda.',
       forgot: 'Parolanızı mı unuttunuz?',
       forgotPrompt: 'Kullanıcı adınızı veya e-postanızı girin, size bir sıfırlama bağlantısı gönderelim:',
     },
-    newWeb: 'WorkCoPilot\'ta yeni misiniz? <a>Hesabınızı admireveda.com adresinde oluşturun</a>',
+    newWeb: "WorkCoPilot'ta yeni misiniz? <a>Hesabınızı admireveda.com adresinde oluşturun</a>",
     legal: 'Yalnızca yasal ve meşru işler için. Zararlı veya yasa dışı istekler reddedilir.',
     mfa: {
       sixDigit: '6 haneli kod',
@@ -1062,8 +1371,8 @@ export default {
       setupEyebrow: 'Zorunlu güvenlik adımı',
       setupH: 'İki adımlı doğrulamayı kurun',
       setupP: 'İki adımlı doğrulama, parolanız çalınsa bile hesabınızı korur. Yaklaşık bir dakika sürer ve devam etmek için zorunludur.',
-      s1H: '1. Microsoft Authenticator\'ı yükleyin',
-      s1P: 'App Store ve Google Play\'de ücretsizdir. Standart herhangi bir doğrulayıcı uygulaması da çalışır.',
+      s1H: "1. Microsoft Authenticator'ı yükleyin",
+      s1P: "App Store ve Google Play'de ücretsizdir. Standart herhangi bir doğrulayıcı uygulaması da çalışır.",
       s2H: '2. Bu QR kodu uygulamada tarayın',
       s2P: 'Uygulamada hesap ekleyin, iş veya diğer hesabı seçin ve kamerayı buraya tutun.',
       qrAlt: '{acct} için QR kodu',
@@ -1128,19 +1437,14 @@ export default {
         tag: 'Finans operasyonları',
         app: 'Tedarikçi ödeme sistemi',
         goal: 'Northwind faturasını ödeme için onaylayın',
-        nav: [
-          'Gelen kutusu',
-          'Faturalar',
-          'Tedarikçiler',
-          'Raporlar',
-        ],
+        nav: ['Gelen kutusu', 'Faturalar', 'Tedarikçiler', 'Raporlar'],
         steps: [
           {
             tab: 1,
             see: 'Fatura kuyruğu açık, bekleyen kalemler var',
-            do: 'Northwind Trading\'in 4471 numaralı faturasını açın',
+            do: "Northwind Trading'in 4471 numaralı faturasını açın",
             where: 'Faturalar sekmesi, kuyruğun ilk satırı',
-            target: '4471\'i aç',
+            target: "4471'i aç",
             wrong: 'Tarihe göre sırala',
             done: '4471 numaralı fatura açık ve tutar satın alma siparişiyle eşleşiyor',
           },
@@ -1148,17 +1452,17 @@ export default {
             tab: 1,
             see: '4471 numaralı fatura açık. Tutar ve sipariş numarası eşleşiyor',
             do: 'Onay rotasını Finans lideri olarak ayarlayın',
-            where: 'Durum\'un yanındaki açılır menü, Tedarikçiler menüsü değil',
+            where: "Durum'un yanındaki açılır menü, Tedarikçiler menüsü değil",
             target: 'Rota: Finans lideri',
             wrong: 'Tedarikçiler',
             drift: 'Tedarikçiler menüsünü açtınız',
-            correct: 'O menü değil: Durum\'un yanındaki açılır menü.',
+            correct: "O menü değil: Durum'un yanındaki açılır menü.",
             done: 'Rota, Finans lideri olarak görünüyor',
           },
           {
             tab: 1,
             see: 'Rota ayarlandı, doldurulacak bir şey kalmadı',
-            do: 'Onayla\'ya tıklayın, sonra iletişim kutusunda tutarı doğrulayın',
+            do: "Onayla'ya tıklayın, sonra iletişim kutusunda tutarı doğrulayın",
             where: 'Sağ üst, yeşil düğme',
             target: 'Onayla',
             wrong: 'Taslağı kaydet',
@@ -1171,12 +1475,7 @@ export default {
         tag: 'Lojistik',
         app: 'Taşıyıcı portalı',
         goal: '8820 numaralı sipariş için taşıyıcıyı ayırtın ve etiketleri yazdırın',
-        nav: [
-          'Siparişler',
-          'Gönderiler',
-          'Taşıyıcılar',
-          'İadeler',
-        ],
+        nav: ['Siparişler', 'Gönderiler', 'Taşıyıcılar', 'İadeler'],
         steps: [
           {
             tab: 1,
@@ -1191,10 +1490,10 @@ export default {
             tab: 1,
             see: 'Taslak gönderi açık',
             do: 'Ekspres değil, 2 günlük Kara hizmetini seçin',
-            where: 'Taşıyıcı\'nın yanındaki hizmet açılır menüsü',
+            where: "Taşıyıcı'nın yanındaki hizmet açılır menüsü",
             target: 'Kara, 2 gün',
             wrong: 'Ekspres',
-            drift: 'Ertesi gün Ekspres\'i seçtiniz',
+            drift: "Ertesi gün Ekspres'i seçtiniz",
             correct: 'O hizmet değil: 2 günlük Kara teslim tarihini karşılar ve daha ucuzdur.',
             done: 'Hizmet, Kara 2 gün olarak görünüyor',
           },
@@ -1214,17 +1513,12 @@ export default {
         tag: 'Sağlık yönetimi',
         app: 'Klinik randevu sistemi',
         goal: 'Kontrol randevusunu oluşturun ve ziyaret öncesi formları gönderin',
-        nav: [
-          'Bugün',
-          'Takvim',
-          'Hastalar',
-          'Formlar',
-        ],
+        nav: ['Bugün', 'Takvim', 'Hastalar', 'Formlar'],
         steps: [
           {
             tab: 1,
             see: 'Bugünün listesi açık ve 14:30 randevusu az önce bitti',
-            do: 'Takvim\'i açın ve gelecek salıyı seçin',
+            do: "Takvim'i açın ve gelecek salıyı seçin",
             where: 'Takvim sekmesi, hafta görünümü',
             target: 'Gelecek salı',
             wrong: 'Gün listesini yazdır',
@@ -1234,11 +1528,11 @@ export default {
             tab: 1,
             see: 'Salı öğleden sonra boş saatler var',
             do: 'Kontrol, 20 dakika, Dr. Lin ile seçeneğini seçin',
-            where: 'Bugün\'ün yanındaki açılır menü, Hastalar menüsü değil',
+            where: "Bugün'ün yanındaki açılır menü, Hastalar menüsü değil",
             target: 'Kontrol, 20 dk',
             wrong: 'Hastalar',
             drift: 'Hastalar menüsünü açtınız',
-            correct: 'O menü değil: Bugün\'ün yanındaki açılır menü.',
+            correct: "O menü değil: Bugün'ün yanındaki açılır menü.",
             done: 'Ziyaret türü Kontrol, 20 dk olarak görünüyor',
           },
           {
@@ -1257,16 +1551,11 @@ export default {
         tag: 'Perakende',
         app: 'Mağaza arka ofisi',
         goal: 'Hafta sonu kampanyasını her kasada kurun',
-        nav: [
-          'Satışlar',
-          'Ürünler',
-          'Kampanyalar',
-          'Personel',
-        ],
+        nav: ['Satışlar', 'Ürünler', 'Kampanyalar', 'Personel'],
         steps: [
           {
             tab: 2,
-            see: 'Arka ofis Satışlar\'da açık',
+            see: "Arka ofis Satışlar'da açık",
             do: 'Hafta Sonu 15 adında yeni bir kampanya oluşturun',
             where: 'Kampanyalar sekmesi, Yeni kampanya',
             target: 'Yeni kampanya',
@@ -1277,11 +1566,11 @@ export default {
             tab: 2,
             see: 'Taslak açık, henüz tarih yok',
             do: 'Yalnızca cumartesi ve pazar geçerli olacak şekilde ayarlayın',
-            where: 'Etkin\'in yanındaki tarih seçici, Personel menüsü değil',
+            where: "Etkin'in yanındaki tarih seçici, Personel menüsü değil",
             target: 'Cmt ile Paz',
             wrong: 'Personel',
             drift: 'Personel çizelgesini açtınız',
-            correct: 'O menü değil: tarihler Etkin\'in yanında.',
+            correct: "O menü değil: tarihler Etkin'in yanında.",
             done: 'Kampanya cumartesiden pazara görünüyor',
           },
           {
@@ -1299,18 +1588,13 @@ export default {
       hr: {
         tag: 'İK',
         app: 'İK sistemi',
-        goal: 'Pazartesi başlayan Priya\'nın işe alıştırmasını yapın',
-        nav: [
-          'Kişiler',
-          'İşe alıştırma',
-          'Bordro',
-          'Belgeler',
-        ],
+        goal: "Pazartesi başlayan Priya'nın işe alıştırmasını yapın",
+        nav: ['Kişiler', 'İşe alıştırma', 'Bordro', 'Belgeler'],
         steps: [
           {
             tab: 1,
             see: 'İşe alıştırma panosu açık, bir yeni çalışan var',
-            do: 'Priya\'nın kaydını açın ve başlangıç tarihini pazartesi olarak ayarlayın',
+            do: "Priya'nın kaydını açın ve başlangıç tarihini pazartesi olarak ayarlayın",
             where: 'İşe alıştırma sekmesi, onun kartı',
             target: 'Başlangıç: Pazartesi',
             wrong: 'Arşivle',
@@ -1320,11 +1604,11 @@ export default {
             tab: 1,
             see: 'Kaydı açık',
             do: 'Mühendislik işe alıştırma kontrol listesini atayın',
-            where: 'Ekip\'in yanındaki açılır menü, Bordro menüsü değil',
+            where: "Ekip'in yanındaki açılır menü, Bordro menüsü değil",
             target: 'Mühendislik kontrol listesi',
             wrong: 'Bordro',
-            drift: 'Bordro\'yu açtınız',
-            correct: 'O menü değil: kontrol listesi Ekip\'in yanındaki açılır menüde.',
+            drift: "Bordro'yu açtınız",
+            correct: "O menü değil: kontrol listesi Ekip'in yanındaki açılır menüde.",
             done: 'Kontrol listesi Mühendislik görünüyor',
           },
           {
@@ -1342,13 +1626,8 @@ export default {
       engineering: {
         tag: 'Mühendislik',
         app: 'Sürüm hattı',
-        goal: 'Hotfix\'i sürüm hattından geçirip yayınlayın',
-        nav: [
-          'Depolar',
-          'Hatlar',
-          'Sürümler',
-          'Ayarlar',
-        ],
+        goal: "Hotfix'i sürüm hattından geçirip yayınlayın",
+        nav: ['Depolar', 'Hatlar', 'Sürümler', 'Ayarlar'],
         steps: [
           {
             tab: 1,
@@ -1356,42 +1635,37 @@ export default {
             do: 'Sürüm hattını hotfix dalında çalıştırın',
             where: 'Hatlar sekmesi, Hattı çalıştır',
             target: 'Çalıştır: hotfix',
-            wrong: 'YAML\'ı düzenle',
+            wrong: "YAML'ı düzenle",
             done: 'Çalıştırma hotfix dalında kuyruğa alındı',
           },
           {
             tab: 1,
             see: 'Çalıştırma bir hedef ortam istiyor',
-            do: 'Önce staging\'i seçin, production\'ı değil',
-            where: 'Çalıştır\'ın yanındaki ortam açılır menüsü',
+            do: "Önce staging'i seçin, production'ı değil",
+            where: "Çalıştır'ın yanındaki ortam açılır menüsü",
             target: 'staging',
             wrong: 'production',
-            drift: 'production\'ı seçtiniz',
-            correct: 'O değil: önce staging. Smoke testi production\'ın kapısıdır.',
+            drift: "production'ı seçtiniz",
+            correct: "O değil: önce staging. Smoke testi production'ın kapısıdır.",
             done: 'Ortam staging görünüyor ve smoke testi geçti',
           },
           {
             tab: 2,
             see: 'Staging yeşil',
-            do: 'Aynı derlemeyi production\'a yükseltin',
+            do: "Aynı derlemeyi production'a yükseltin",
             where: 'Sürümler sekmesi, Yükselt',
-            target: 'Production\'a yükselt',
+            target: "Production'a yükselt",
             wrong: 'Yeniden derle',
             done: 'Production hotfix derlemesini gösteriyor ve sağlık kontrolleri geçiyor',
           },
         ],
-        complete: 'Hotfix production\'da, kontroller yeşil. Her adım ekranda onaylandı.',
+        complete: "Hotfix production'da, kontroller yeşil. Her adım ekranda onaylandı.",
       },
       support: {
         tag: 'Destek',
         app: 'Yardım masası',
         goal: '5190 numaralı bileti doğru öncelikle üst kademeye iletin',
-        nav: [
-          'Kuyruk',
-          'Biletler',
-          'Müşteriler',
-          'Raporlar',
-        ],
+        nav: ['Kuyruk', 'Biletler', 'Müşteriler', 'Raporlar'],
         steps: [
           {
             tab: 1,
@@ -1406,11 +1680,11 @@ export default {
             tab: 1,
             see: 'Öncelik ayarlandı',
             do: 'Ödemeler ekibine atayın',
-            where: 'Atanan\'ın yanındaki açılır menü, Müşteriler menüsü değil',
+            where: "Atanan'ın yanındaki açılır menü, Müşteriler menüsü değil",
             target: 'Ata: Ödemeler',
             wrong: 'Müşteriler',
             drift: 'Müşteriler listesini açtınız',
-            correct: 'O menü değil: Atanan\'ın yanındaki açılır menü.',
+            correct: "O menü değil: Atanan'ın yanındaki açılır menü.",
             done: 'Atanan, Ödemeler ekibi görünüyor',
           },
           {
@@ -1429,17 +1703,12 @@ export default {
         tag: 'Finans',
         app: 'Ödeme portalı',
         goal: 'Yeni tedarikçiyi ödeme portalında tanımlayın',
-        nav: [
-          'Finans',
-          'Tedarikçiler',
-          'Müşteriler',
-          'Onaylar',
-        ],
+        nav: ['Finans', 'Tedarikçiler', 'Müşteriler', 'Onaylar'],
         steps: [
           {
             tab: 1,
             see: 'Tedarikçiler sekmesi açık ve form boş',
-            do: 'Yeni tedarikçi\'ye tıklayın ve yasal unvanı girin',
+            do: "Yeni tedarikçi'ye tıklayın ve yasal unvanı girin",
             where: 'Tedarikçiler sekmesi, sağ üst',
             target: 'Yeni tedarikçi',
             wrong: 'İçe aktar',
@@ -1452,14 +1721,14 @@ export default {
             where: 'Koşullar açılır menüsü, Müşteriler sekmesi değil',
             target: 'Net 30',
             wrong: 'Müşteriler',
-            drift: 'Müşteriler\'i açtınız',
-            correct: 'Yanlış sekme: Tedarikçiler\'e dönün, sonra Koşullar\'ı Net 30 yapın.',
+            drift: "Müşteriler'i açtınız",
+            correct: "Yanlış sekme: Tedarikçiler'e dönün, sonra Koşullar'ı Net 30 yapın.",
             done: 'Koşullar Net 30 görünüyor ve vergi numarası kaydedildi',
           },
           {
             tab: 3,
             see: 'Koşullar ve vergi numarası girildi',
-            do: 'İmzalı W-9\'u ekleyin ve onaya gönderin',
+            do: "İmzalı W-9'u ekleyin ve onaya gönderin",
             where: 'Onaylar, Gönder',
             target: 'Onaya gönder',
             wrong: 'Vazgeç',
@@ -1478,7 +1747,7 @@ export default {
     chatTitle: 'Bir sohbet kutusu',
     chatYou: 'Siz',
     chatAsk: 'Tedarikçi ödeme sistemimizde Northwind faturasını nasıl onaylarım?',
-    chatAnswer: 'Tedarikçi ödeme sisteminizi açın, faturayı kuyrukta bulun, satın alma siparişiyle karşılaştırın, doğru onay rotasını seçin, sonra Onayla\'ya tıklayın.',
+    chatAnswer: "Tedarikçi ödeme sisteminizi açın, faturayı kuyrukta bulun, satın alma siparişiyle karşılaştırın, doğru onay rotasını seçin, sonra Onayla'ya tıklayın.",
     chatTail: 'Bir yanıt. Sonra kendi başınızasınız.',
     guideTail: 'Gerçek ekranınızda. Yoldan çıkınca düzeltilir. Bitince onaylanır.',
     three: [
@@ -1517,6 +1786,206 @@ export default {
     showcaseEyebrow: 'Bir alan seçin',
     showcaseH2: 'Sizinkine benzeyen işi nasıl yönlendirdiğini izleyin.',
     showcaseSub: 'Yedi alan, tek biçim: izler, adım adım götürür, yanlış adımı düzeltir ve bitişi onaylar.',
+    hero: {
+      badge: 'Kullanım senaryoları',
+      h1a: 'İşinize benzeyen görevi bulun.',
+      h1b: '<em>Sonra rehberlikle tamamlayın.</em>',
+      p: 'Aşağıdan gününüze uyan işi seçin. WorkCoPilot ilk tıklamadan tamamlanana kadar her adımda ekranınızda size yol gösterir.',
+      chipsAria: 'Bir kullanım senaryosuna geçin',
+    },
+    cases: [
+      {
+        tag: 'Kurulum ve yapılandırma',
+        short: 'Kurulum',
+        outcome: 'Doğru kurun, sıkıca kilitleyin',
+        benefit: 'Her ayar adıyla belirtilir ve canlı olarak denetlenir; böylece altyapınız gerçekten güvenli olur, yalnızca öyle görünmez.',
+        can: [
+          'Bir güvenlik duvarı yapılandırın',
+          'Bir Linux sunucusunu sağlamlaştırın',
+          'IDS / IPS kurallarını ayarlayın',
+          'Bir CI/CD hattı kurun',
+        ],
+        guide: {
+          goal: 'Bir üretim Linux sunucusunu sağlamlaştırın',
+          plan: [
+            'Root olmayan bir sudo kullanıcısı oluşturun',
+            "SSH'yi ve güvenlik duvarını kilitleyin",
+            'Otomatik güvenlik güncellemelerini açın',
+          ],
+          now: 'Güvenlik duvarını varsayılan olarak reddet şeklinde ayarlayın, yalnızca 22 ve 443 numaralı bağlantı noktalarına izin verin, sonra oturumu kapatmadan önce ikinci bir oturumdan doğrulayın.',
+          done: 'yalnızca 22 ve 443 açık ve parolayla giriş reddediliyor',
+        },
+      },
+      {
+        tag: 'Geliştirme ve uygulama',
+        short: 'Geliştirme',
+        outcome: 'Boş klasörden çalışan bir sisteme',
+        benefit: 'Tam olarak hangi komutlar ve kod, doğru sırayla; genellikle saatlere mal olan hatalar erkenden yakalanır.',
+        can: [
+          'Yeni bir uygulama veya servis iskeleti oluşturun',
+          'İki sistemi bir API ile bağlayın',
+          'Bir veri hattı kurun',
+          'Buluta dağıtın',
+        ],
+        guide: {
+          goal: "Stripe ödeme webhook'larını ekleyin",
+          plan: [
+            'Ham gövdeli webhook rotasını ekleyin',
+            'Her olayı doğrulayın, işlemi idempotent yapın',
+            'Test olaylarını yeniden oynatın, sonra canlıya geçin',
+          ],
+          now: 'Olaya güvenmeden önce imzayı doğrulayın ve daha önce gördüğünüz her olay kimliğini atlayın; böylece yeniden denemeler asla iki kez ücret yansıtmaz.',
+          done: 'yeniden oynatılan bir olay bir kez kabul edilir, ikinci kez yok sayılır',
+        },
+      },
+      {
+        tag: 'Yapay zeka ve otomasyon',
+        short: 'Yapay zeka',
+        outcome: 'Gerçekten çalışan otomasyonlar',
+        benefit: 'Her düğüm, ayar ve bağlantı için rehberlik; böylece aracı veya asistan sessizce takılmak yerine çalışır.',
+        can: [
+          'Bir n8n iş akışı oluşturun',
+          'Bir RAG asistanı kurun',
+          'Yinelenen bir görevi otomatikleştirin',
+          'Yapay zekayı araçlarınıza bağlayın',
+        ],
+        guide: {
+          goal: 'Kaynak gösteren bir RAG asistanı yayına alın',
+          plan: [
+            'Belgelerinizi parçalara ayırın, gömün ve dizinleyin',
+            'Üretmeden önce ilgili parçaları getirin',
+            'Yanıtları test edin, sonra dağıtın',
+          ],
+          now: 'En iyi eşleşen parçaları getirin, bağlam olarak yalnızca onları verin ve kaynağı göstermesini ya da "Bilmiyorum" demesini sağlayın.',
+          done: 'yanıtlar doğru belgeden alıntı yapar ve yanıt orada yoksa cevap vermeyi reddeder',
+        },
+      },
+      {
+        tag: 'Ürün ve inovasyon',
+        short: 'Ürün',
+        outcome: 'Fikirden yayına',
+        benefit: 'Hiç açmadığınız araçlarda rehberlik; her şey istediğiniz sonuca yönlendirilir.',
+        can: [
+          'Yeni bir özelliğin prototipini oluşturun',
+          'Bir açılış sayfası hazırlayın',
+          'Hızlı bir deney yürütün',
+          'İlk sürümü yayına alın',
+        ],
+        guide: {
+          goal: 'Bugün bir açılış sayfası yayına alın ve ölçümleyin',
+          plan: [
+            'Sayfayı oluşturun, metni yazın',
+            'Alan adınızı bağlayın',
+            'Yayınlayın ve ölçümlemenin çalıştığını kanıtlayın',
+          ],
+          now: 'Analitik kod parçacığını ekleyin, kayıt düğmesine bir dönüşüm tanımlayın, sonra bir test kaydının gerçek zamanlı olarak geldiğini doğrulayın.',
+          done: 'canlı URL yükleniyor ve bir test kaydı dönüşüm olarak görünüyor',
+        },
+      },
+      {
+        tag: 'Pazarlama ve büyüme',
+        short: 'Pazarlama',
+        outcome: 'Başlatın, sonra rakamları okuyun',
+        benefit: 'Reklam yöneticisi ve analitikte adım adım rehberlik; her rakam sade bir dille açıklanır.',
+        can: [
+          'Bir reklam kampanyası başlatın',
+          'Dönüşüm ölçümlemesi kurun',
+          'Bir trafik raporunu okuyun',
+          'Bir lansman planlayın',
+        ],
+        guide: {
+          goal: 'Bir Google Ads arama kampanyası başlatın',
+          plan: [
+            'Etiketi kurun, dönüşümü içe aktarın',
+            'Bütçe, anahtar kelimeler ve ölçümlemeyi ayarlayın',
+            'İncelemeye gönderin, canlıya geçin',
+          ],
+          now: 'Geniş değil, tam ve sıralı eşleme anahtar kelimeleri kullanın, günlük bir üst sınır ve eylem başına hedef maliyet belirleyin, sonra üç reklam ekleyin.',
+          done: 'kampanya Uygun görünüyor ve dönüşüm Kaydediyor durumunda',
+        },
+      },
+      {
+        tag: 'Muhasebe ve ofis',
+        short: 'Muhasebe',
+        outcome: 'Defterler kapandı, bildirimler tamam',
+        benefit: 'Tam olarak ne gireceğiniz gösterilir; tutmayan her şey anında işaretlenir.',
+        can: [
+          'Bir banka ekstresini mutabakatla eşleştirin',
+          'Bir finansal rapor oluşturun',
+          'Fatura oluşturun ve gönderin',
+          'Bir bildirim hazırlayın',
+        ],
+        guide: {
+          goal: 'Ayı kuruşu kuruşuna mutabık kılın',
+          plan: [
+            'Ekstreyi içe aktarın, açılış bakiyesini kilitleyin',
+            'Her şeyi eşleştirin, farkı araştırın',
+            'Dönemi kilitleyin, raporu dışa aktarın',
+          ],
+          now: 'Yatırmaları otomatik eşleştirin, her çekimi mutabık işaretleyin ve tutmadığında mutabık olmayan tarih ve tutarları karşılaştırın.',
+          done: 'mutabık bakiye ekstreyle kuruşu kuruşuna eşit',
+        },
+      },
+      {
+        tag: 'Uyumluluk ve bildirimler',
+        short: 'Uyumluluk',
+        outcome: 'Uyumluluk görevleri, temizce tamamlanır',
+        benefit: 'Formlar, kontrol listeleri ve bildirimler adım adım tamamlanır; yapılanların temiz bir kaydı tutulur.',
+        can: [
+          'Bir uyumluluk kontrol listesini tamamlayın',
+          'Bir düzenleyici formu doldurun',
+          'Portalda bir bildirim gönderin',
+          'Bir denetim izi tutun',
+        ],
+        guide: {
+          goal: 'Üç aylık bir uyumluluk bildirimi gönderin',
+          plan: ['Portalı açın, beyanı başlatın', 'Her alanı doldurun, kanıt ekleyin', 'Doğrulayın ve gönderin'],
+          now: 'Her zorunlu alanı kayıtlarınızdan doldurun ve formun istediği kanıtı eksiksiz, tam olarak ekleyin.',
+          done: 'portal bildirimi kabul ediyor ve bir onay numarası veriyor',
+        },
+      },
+      {
+        tag: 'Günlük görevler',
+        short: 'Günlük',
+        outcome: 'Bir ekranda mı takıldınız? Tamamlayın',
+        benefit: 'Yeni bir araç, bitiremediğiniz bir form, anlamadığınız bir hata: ekrana yöneltin ve adım adım yol gösterilsin.',
+        can: [
+          'Yeni bir aracı hızla öğrenin',
+          'Kafa karıştıran bir hatayı giderin',
+          'Zorlu bir formu doldurun',
+          'Takıldığınız bir görevde yolunuza devam edin',
+        ],
+        guide: {
+          goal: 'Anlaşılması güç bir hatayı çözün ve giderin',
+          plan: [
+            'Hatayı güvenilir biçimde yeniden oluşturun',
+            'Belirtiyi değil, gerçek nedeni bulun',
+            'Giderin, ortadan kalktığını doğrulayın',
+          ],
+          now: 'Hatanın tamamını yapıştırın: yığının tamamını okur, gerçek nedeni adlandırır ve değiştirilecek dosya ile satırı gösterir.',
+          done: 'görev temiz bir günlükle ve hatasız tamamlanıyor',
+        },
+      },
+    ],
+    case: {
+      cta: 'Bu konuda bana rehberlik et',
+      ctaAria: '{tag} konusunda bana rehberlik et',
+    },
+    mini: {
+      aria: 'Örnek rehberli oturum: {goal}',
+      watching: 'izliyor',
+      youWant: 'İSTEDİĞİNİZ',
+      stepOf: 'Adım {n} / {total}',
+      srDone: 'Tamamlandı: ',
+      srNext: 'Sıradaki: ',
+      doingNow: 'ŞİMDİ YAPILIYOR',
+      doneWhen: 'şu olduğunda tamam: {done}',
+    },
+    final: {
+      h2: 'Sıradaki göreviniz.',
+      p: 'Ekranınızdaki her şeyi getirin. WorkCoPilot onu ilk adımdan tamamlanana kadar götürür.',
+      cta: 'Başlayın',
+    },
   },
   fieldsPage: {
     vignettesEyebrow: 'Birçok alan, tek rehber',
@@ -1553,13 +2022,221 @@ export default {
       },
       engineering: {
         cap: 'Mühendislik',
-        job: 'Hotfix\'i yayınlayın',
+        job: "Hotfix'i yayınlayın",
         alt: 'Bir sürüm sırasında ultra geniş monitör başında bir yazılım mühendisi',
       },
       support: {
         cap: 'Destek',
         job: 'Bileti üst kademeye iletin',
         alt: 'Kulaklıkla bilet kuyruğunu yöneten bir destek temsilcisi',
+      },
+    },
+    eyebrow: 'Rehberlik ettiğimiz işler',
+    h1: 'İşinizi bulun. <em>Adım adım</em> rehberlik edelim.',
+    lead: 'WorkCoPilot, halihazırda kullandığınız araçlarda gerçek görevleri yaparken size adım adım yol gösterir. İşte güçlü olduğu iş grupları.',
+    note: 'Gücümüz, görevleri ekranda yapıp bitirmektir. Uzun belge incelemesi ve derinlemesine analiz, amacı değildir.',
+    startBtn: 'Bana rehberliğe başla',
+    useCasesBtn: 'Kullanım senaryolarını görün',
+    jumpsAria: 'Bir iş grubuna geçin',
+    gridAria: 'İş grupları ve her birindeki alanlar',
+    fieldCount_one: '{n} alan',
+    fieldCount_other: '{n} alan',
+    tagsAria: '{family} alanları',
+    ctaH2: 'İşiniz büyük olasılıkla burada.',
+    ctaP: 'Ekranda seçin, WorkCoPilot sizi adım adım içinden geçirsin.',
+    pricingBtn: 'Fiyatlandırmayı görün',
+    families: {
+      software: {
+        title: 'Yazılım ve mühendislik',
+        d: 'Kodu yayına alın, yığını kurun, çalışır tutun.',
+        items: [
+          'Geliştirici',
+          'Önyüz ve erişilebilirlik',
+          'Mobil geliştirme',
+          'Oyun geliştirme',
+          'Gömülü / donanım yazılımı',
+          'Veritabanı',
+          'SDET',
+          'Kalite güvence (QA)',
+          'DevOps',
+          'SRE',
+          'Ağ mühendisliği',
+          'Sistem yöneticisi / BT operasyonları',
+          'Blok zinciri geliştirme',
+          'Arka uç ve API geliştirme',
+          'Tam yığın web geliştirme',
+          'Yazılım mimarisi',
+          'Bulut mimarisi',
+          'Platform mühendisliği',
+          'Sürüm yönetimi',
+          'ERP ve CRM yönetimi',
+          'Az kodlu ve RPA otomasyonu',
+        ],
+      },
+      security: {
+        title: 'Güvenlik ve dayanıklılık',
+        d: 'Test edin, sızın, sınırlayın, müdahale edin.',
+        items: [
+          'Sızma testi',
+          'Ağ sızma testi',
+          'Mobil sızma testi',
+          'API güvenliği',
+          'Bulut güvenliği',
+          'DevSecOps',
+          'Olay müdahalesi',
+          'Uygulama güvenliği',
+          'Güvenlik operasyonları (SOC)',
+          'Zafiyet yönetimi',
+          'Kimlik ve erişim yönetimi',
+          'Dijital adli bilişim',
+          'Zararlı yazılım triyajı',
+          'Kırmızı takım operasyonları',
+        ],
+      },
+      data: {
+        title: 'Veri, yapay zeka ve makine öğrenmesi',
+        d: 'Veri hattını kurun, modeli eğitin, panoyu okuyun.',
+        items: [
+          'Veri mühendisliği',
+          'Veri analitiği',
+          'MLOps',
+          'Veri bilimi',
+          'Makine öğrenmesi mühendisliği',
+          'Yapay zeka ve komut mühendisliği',
+          'Analitik mühendisliği',
+          'İş zekası',
+          'Coğrafi veri ve CBS',
+        ],
+      },
+      product: {
+        title: 'Ürün, proje ve tasarım',
+        d: 'İşi planlayın, panoyu yönetin, ekranları tasarlayın.',
+        items: [
+          'Ürün yönetimi',
+          'Proje yönetimi',
+          'Çevik / scrum',
+          'Kullanıcı deneyimi (UX) tasarımı',
+          'Program yönetimi',
+          'Teknik program yönetimi',
+          'PMO ve portföy yönetimi',
+          'Değişim yönetimi',
+          'Kullanıcı araştırması',
+          'Arayüz ve görsel tasarım',
+          'Tasarım sistemleri',
+          'Ürün analitiği',
+        ],
+      },
+      physical: {
+        title: 'OT, IoT ve fiziksel sistemler',
+        d: 'Yazılımın makineyle buluştuğu yer.',
+        items: [
+          'OT / ICS',
+          'IoT',
+          'Robotik',
+          'Havacılık operasyonları',
+          'Makine mühendisliği',
+          'Elektrik mühendisliği',
+          'İnşaat ve yapı mühendisliği',
+          'İnşaat yönetimi',
+          'CAD ve BIM tasarımı',
+          'Üretim ve kalite mühendisliği',
+          'Enerji ve altyapı operasyonları',
+          'Tesis ve bina sistemleri',
+          'Çevre, sağlık ve güvenlik',
+        ],
+      },
+      finance: {
+        title: 'Finans ve muhasebe',
+        d: 'Defterler, bordro, faturalar ve bildirimler, kendi araçlarınızda.',
+        items: [
+          'Defter tutma ve muhasebe',
+          'Faturalama ve tahsilat',
+          'Borç ve alacak hesapları',
+          'Bordro',
+          'Vergi bildirimi ve beyannameleri',
+          'Hazine ve nakit yönetimi',
+          'Bankacılık operasyonları',
+          'Gider ve mutabakat',
+          'Sigorta hasar işlemleri',
+        ],
+      },
+      operations: {
+        title: 'İş operasyonları',
+        d: 'Bir şirketi ayakta tutan günlük işler.',
+        items: [
+          'Satış',
+          'İK ve işe alım',
+          'Müşteri desteği',
+          'Satın alma ve tedarikçi',
+          'Tedarik zinciri ve operasyonlar',
+          'Müşteri ilişkileri yönetimi',
+          'Müşteri başarısı',
+          'Satış operasyonları ve RevOps',
+          'Ofis ve üst yönetim asistanlığı',
+          'Etkinlik planlama',
+          'Gayrimenkul ve mülk yönetimi',
+          'Perakende ve mağaza operasyonları',
+          'Konaklama ve restoran yönetimi',
+          'Lojistik ve ulaştırma',
+          'Kamu ve kamu yönetimi',
+        ],
+      },
+      marketing: {
+        title: 'İçerik ve pazarlama',
+        d: 'Üretin, yayınlayın, doğru kişilere ulaşın.',
+        items: [
+          'Pazarlama ve büyüme',
+          'İçerik ve metin yazarlığı',
+          'SEO',
+          'Sosyal medya',
+          'Video ve medya',
+          'Çeviri ve yerelleştirme',
+          'Grafik ve marka tasarımı',
+          'E-posta ve yaşam döngüsü pazarlaması',
+          'Ücretli medya ve reklamcılık',
+          'Ürün pazarlaması',
+          'Ses ve podcast prodüksiyonu',
+        ],
+      },
+      healthcare: {
+        title: 'Sağlık',
+        d: 'Hasta kaydı, kodlama ve bakım iş akışları, adım adım.',
+        items: [
+          'Hekim muayenehanesi',
+          'Diplomalı hemşirelik',
+          'Uzman hemşire',
+          'Eczane',
+          'Fizik tedavi ve ergoterapi',
+          'Radyoloji ve görüntüleme',
+          'Tıbbi laboratuvar bilimi',
+          'Tıbbi kodlama ve faturalama',
+          'Klinik araştırma koordinasyonu',
+          'Sağlık bilgi yönetimi',
+          'Diş hijyeni ve muayenehanesi',
+          'Paramedik ve acil sağlık hizmetleri',
+          'Diyetetik ve beslenme',
+          'Davranışsal sağlık ve danışmanlık',
+          'Halk sağlığı',
+        ],
+      },
+      education: {
+        title: 'Eğitim',
+        d: 'Sınıfı, kayıtları ve dersleri hazırlayın.',
+        items: [
+          'K-12 öğretmenliği',
+          'Üniversite öğretimi ve akademisyenlik',
+          'Okul yönetimi',
+          'Akademik danışmanlık',
+          'Öğrenci işleri ve kayıtları',
+          'Özel eğitim',
+          'Kütüphanecilik ve bilgi bilimi',
+          'Kabul ve kayıt',
+          'E-öğrenme geliştirme',
+          'Kurumsal eğitim ve öğrenme-gelişim',
+          'Erken çocukluk eğitimi',
+          'Dil öğretimi (yabancı dil olarak İngilizce)',
+          'Okul rehberliği',
+        ],
       },
     },
   },
@@ -1662,7 +2339,7 @@ export default {
     noteExtra: 'Yoğun bir ay mı? İhtiyaç duyduğunuzda bir saat ekleyin. Satın alınan süre asla sona ermez.',
     listPrices: 'Liste fiyatları gösteriliyor: güncel fiyatlar yüklenemedi.',
     rangeVal: '{lo} ile {hi} arası',
-    statHoursSub: 'Lite\'tan Premium\'a her planda dâhil',
+    statHoursSub: "Lite'tan Premium'a her planda dâhil",
     statCarrySub: 'bu ay kullanmadığınız, gelecek ay sizindir',
     statResetSub: 'her ayın birinde yeni bir havuz',
     valueConsoleEyebrow: 'Bir saat nasıl görünür',
@@ -1750,7 +2427,7 @@ export default {
         },
         {
           t: 'Ekipler',
-          d: 'Lite\'tan Premium\'a planlar tek kullanıcılıdır. Koltuk havuzları, SSO ve DPA için bizimle Enterprise\'ı konuşun.',
+          d: "Lite'tan Premium'a planlar tek kullanıcılıdır. Koltuk havuzları, SSO ve DPA için bizimle Enterprise'ı konuşun.",
         },
       ],
     },
@@ -1758,65 +2435,117 @@ export default {
     ctaRefund: 'İade politikası',
     ctaDemo: '60 saniyelik demoyu izle',
   },
-
-  // Per-route <title> + meta description for the MARKETING pages (see en.js seo).
   residency: {
-    title: "Kurumsal için veri yerleşimi",
+    title: 'Kurumsal için veri yerleşimi',
     ent: "Kurumsal ve şirket müşterilerinin verilerini kendi bölgelerinde tutmak için her türlü makul çabayı gösteriyoruz - Avrupa verileri Avrupa'da, Hindistan verileri Hindistan'da, ABD verileri ABD'de - kurumsal katılım sürecinin bir parçası olarak. Yönetilen verilerin kendi sınırınız içinde kalması için WorkCoPilot'u kendi yapay zeka anahtarlarınızla veya yerinde (on-prem) çalıştırın.",
     sec: "Kurumsal ve şirket müşterilerinin verilerini kendi bölgelerinde tutmak için her türlü makul çabayı gösteriyoruz - Avrupa verileri Avrupa'da, Hindistan verileri Hindistan'da, ABD verileri ABD'de - kurumsal katılım sürecinin bir parçası olarak. Şirketler ayrıca yönetilen verilerin kendi sınırları içinde kalması için WorkCoPilot'u kendi yapay zeka anahtarlarıyla veya yerinde (on-prem) çalıştırabilir.",
   },
   seo: {
-    'how-it-works': { title: "Nasıl çalışır - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un yaptığı her şey: ekranınızda adım adım rehberlik, tam komut veya tıklama, sıfırdan başlayarak, hataları yakalayıp düzelterek, her uygulamada, kendi belgelerinize dayanarak, sizde kalan bir kayıt, araçlarınızı öğrenerek güncel kalma, görev öncesi koç, kendi becerileriniz, SAST ile cihazda maskeleme ve canlı bağımlılık denetimi, şirket kontrolleri ve erişebildiğiniz en güçlü yapay zekadan planlar." },
-    'use-cases': { title: "Kullanım senaryoları - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un ayrıntılı olarak yönlendirdiği işler: teknik kurulum, yapılar ve entegrasyonlar, yapay zeka ve otomasyon, ürün, pazarlama, muhasebe ve ofis işleri, hukuk ve uyum, ve her ekranda günlük çalışma." },
-    fields: { title: "Kapsadığımız alanlar - {total} profesyonel alan - WorkCoPilot by AdmireVeda", description: "WorkCoPilot, {families} aileye yayılan {total} profesyonel alanda çalışmayı yönlendirir; yazılım ve güvenlikten finans, operasyon, pazarlama, sağlık ve eğitime kadar. Tüm şirketinizin kullanabileceği tek bir araç." },
+    'how-it-works': {
+      title: 'Nasıl çalışır - WorkCoPilot by AdmireVeda',
+      description: "WorkCoPilot'un yaptığı her şey: ekranınızda adım adım rehberlik, tam komut veya tıklama, sıfırdan başlayarak, hataları yakalayıp düzelterek, her uygulamada, kendi belgelerinize dayanarak, sizde kalan bir kayıt, araçlarınızı öğrenerek güncel kalma, görev öncesi koç, kendi becerileriniz, SAST ile cihazda maskeleme ve canlı bağımlılık denetimi, şirket kontrolleri ve erişebildiğiniz en güçlü yapay zekadan planlar.",
+    },
+    'use-cases': {
+      title: 'Kullanım senaryoları - WorkCoPilot by AdmireVeda',
+      description: "WorkCoPilot'un ayrıntılı olarak yönlendirdiği işler: teknik kurulum, yapılar ve entegrasyonlar, yapay zeka ve otomasyon, ürün, pazarlama, muhasebe ve ofis işleri, hukuk ve uyum, ve her ekranda günlük çalışma.",
+    },
+    fields: {
+      title: 'Kapsadığımız alanlar - {total} profesyonel alan - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot, {families} aileye yayılan {total} profesyonel alanda çalışmayı yönlendirir; yazılım ve güvenlikten finans, operasyon, pazarlama, sağlık ve eğitime kadar. Tüm şirketinizin kullanabileceği tek bir araç.',
+    },
     pricing: {
       title: 'Fiyatlandırma - WorkCoPilot by AdmireVeda',
       description: 'WorkCoPilot planları yan yana: Lite, Basic, Advanced ve Premium; her ay canlı rehberlik saatleri, belge yükleme, üretilen görseller, her planda güvenlik ile ek saat ve iptal koşulları. Enterprise özeldir.',
     },
-    faq: { title: "Sıkça sorulan sorular - WorkCoPilot by AdmireVeda", description: "WorkCoPilot hakkında net yanıtlar: nedir, adım adım rehberlik nasıl çalışır, platformlar ve kurulum, cihazınızdan ne çıkar, fiyatlar ve faturalama, araçlarınızı öğrenerek nasıl güncel kalır, kimler için, veri ve uyum, ve nasıl başlanır." },
-    contact: { title: "İletişim - WorkCoPilot by AdmireVeda", description: "Ürün, ekibiniz için bir demo, güvenlik veya uyum ya da başka bir konu için WorkCoPilot ekibiyle iletişime geçin. Bize yazın, size geri dönelim." },
-    enterprise: { title: "Kurumsal özellikler - WorkCoPilot by AdmireVeda", description: "WorkCoPilot şirketinizi öğrenir: prosedürlerinizi, kılavuzlarınızı ve verilerinizi yükleyin; şirketinizin çalışma biçimine göre kişilerinize kendi ekranlarında her tam adımda eşlik etsin. Kuruluşunuza özel. Ayrıca cihazda maskeleme, denetim günlükleri, DLP yönetimi, SIEM uyarıları, SSO, uyum kanıt raporları, yönetim için ROI, beyaz etiket ve şirket bazında faturalama." },
-    demo: { title: "60 saniyelik demo - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un gerçek bir görevi baştan sona yönlendirmesini izleyin: ekranı okur, bir sonraki tam adımı ve komutu verir, çalıştığını kontrol eder, maliyetli olmadan bir hatayı yakalar ve size raporu teslim eder." },
-    benchmark: { title: "Doğruluk kıyaslaması - WorkCoPilot by AdmireVeda", description: "WorkCoPilot'un ne kadar doğru olduğu, dürüstçe ölçülmüş: yanıtı bilinen görevlerde sonuç doğruluğu, alan ve yapay zeka katmanı bazında, örneklem boyutları ve %95 güven aralıklarıyla, ayrıca yöntem." },
+    faq: {
+      title: 'Sıkça sorulan sorular - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot hakkında net yanıtlar: nedir, adım adım rehberlik nasıl çalışır, platformlar ve kurulum, cihazınızdan ne çıkar, fiyatlar ve faturalama, araçlarınızı öğrenerek nasıl güncel kalır, kimler için, veri ve uyum, ve nasıl başlanır.',
+    },
+    contact: {
+      title: 'İletişim - WorkCoPilot by AdmireVeda',
+      description: 'Ürün, ekibiniz için bir demo, güvenlik veya uyum ya da başka bir konu için WorkCoPilot ekibiyle iletişime geçin. Bize yazın, size geri dönelim.',
+    },
+    enterprise: {
+      title: 'Kurumsal özellikler - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot şirketinizi öğrenir: prosedürlerinizi, kılavuzlarınızı ve verilerinizi yükleyin; şirketinizin çalışma biçimine göre kişilerinize kendi ekranlarında her tam adımda eşlik etsin. Kuruluşunuza özel. Ayrıca cihazda maskeleme, denetim günlükleri, DLP yönetimi, SIEM uyarıları, SSO, uyum kanıt raporları, yönetim için ROI, beyaz etiket ve şirket bazında faturalama.',
+    },
+    demo: {
+      title: '60 saniyelik demo - WorkCoPilot by AdmireVeda',
+      description: "WorkCoPilot'un gerçek bir görevi baştan sona yönlendirmesini izleyin: ekranı okur, bir sonraki tam adımı ve komutu verir, çalıştığını kontrol eder, maliyetli olmadan bir hatayı yakalar ve size raporu teslim eder.",
+    },
+    benchmark: {
+      title: 'Doğruluk kıyaslaması - WorkCoPilot by AdmireVeda',
+      description: "WorkCoPilot'un ne kadar doğru olduğu, dürüstçe ölçülmüş: yanıtı bilinen görevlerde sonuç doğruluğu, alan ve yapay zeka katmanı bazında, örneklem boyutları ve %95 güven aralıklarıyla, ayrıca yöntem.",
+    },
   },
-
-  // Cookie / storage consent banner (see en.js consent).
   consent: {
-    aria: "Çerez ve gizlilik seçimleri",
-    title: "Gizlilik seçimleriniz",
-    body: "Oturumunuzu açık tutmak için kesinlikle gerekli bir çerez kullanırız. İzninizle işlevsel depolamayı ve yönlendirme atfını da açarız. Bunu istediğiniz zaman değiştirebilirsiniz.",
-    acceptAll: "Tümünü kabul et",
-    rejectAll: "Gerekli olmayanları reddet",
-    manage: "Tercihleri yönet",
-    save: "Seçimleri kaydet",
-    back: "Geri",
-    close: "Kapat",
-    reopen: "Çerez tercihleri",
-    manageTitle: "Tercihlerinizi yönetin",
-    manageBody: "Hangi kategorilere izin vereceğinizi seçin. Site ve oturum açma çalışmaya devam etsin diye kesinlikle gerekli depolama her zaman açıktır.",
-    alwaysOn: "Her zaman açık",
-    on: "Açık",
-    off: "Kapalı",
-    necessaryT: "Kesinlikle gerekli",
-    necessaryD: "Sizi oturumda tutan ve siteyi çalıştıran tek bir oturum açma çerezi. Kapatılamaz.",
-    functionalT: "İşlevsel",
-    functionalD: "Bu cihazda dilinizi, temanızı ve diğer tercihlerinizi hatırlar. Siteler arası izleme yok.",
-    analyticsT: "Analitik ve atıf",
-    analyticsD: "Sizi yönlendiren iş ortağını kredilendirmemizi sağlar (birinci taraf yönlendirme çerezi). İzin verene kadar kapalıdır ve sizi profillemek için asla kullanılmaz.",
-    learn: "<a>Çerez Politikamızı</a> ve <p>Gizlilik Politikamızı</p> okuyun.",
+    aria: 'Çerez ve gizlilik seçimleri',
+    title: 'Gizlilik seçimleriniz',
+    body: 'Oturumunuzu açık tutmak için kesinlikle gerekli bir çerez kullanırız. İzninizle işlevsel depolamayı ve yönlendirme atfını da açarız. Bunu istediğiniz zaman değiştirebilirsiniz.',
+    acceptAll: 'Tümünü kabul et',
+    rejectAll: 'Gerekli olmayanları reddet',
+    manage: 'Tercihleri yönet',
+    save: 'Seçimleri kaydet',
+    back: 'Geri',
+    close: 'Kapat',
+    reopen: 'Çerez tercihleri',
+    manageTitle: 'Tercihlerinizi yönetin',
+    manageBody: 'Hangi kategorilere izin vereceğinizi seçin. Site ve oturum açma çalışmaya devam etsin diye kesinlikle gerekli depolama her zaman açıktır.',
+    alwaysOn: 'Her zaman açık',
+    on: 'Açık',
+    off: 'Kapalı',
+    necessaryT: 'Kesinlikle gerekli',
+    necessaryD: 'Sizi oturumda tutan ve siteyi çalıştıran tek bir oturum açma çerezi. Kapatılamaz.',
+    functionalT: 'İşlevsel',
+    functionalD: 'Bu cihazda dilinizi, temanızı ve diğer tercihlerinizi hatırlar. Siteler arası izleme yok.',
+    analyticsT: 'Analitik ve atıf',
+    analyticsD: 'Sizi yönlendiren iş ortağını kredilendirmemizi sağlar (birinci taraf yönlendirme çerezi). İzin verene kadar kapalıdır ve sizi profillemek için asla kullanılmaz.',
+    learn: '<a>Çerez Politikamızı</a> ve <p>Gizlilik Politikamızı</p> okuyun.',
   },
-
-  // "New in this release" highlights (see en.js rel).
   rel: {
-    title: "Bu sürümde yeni",
-    sub: "Bugün, her planda.",
-    global: { eyebrow: "Varsayılan olarak küresel", h: "16 dilde çalışır, bölgenize göre seçilir", line: "Site ve ürün 16 dil konuşur, bölgenize göre otomatik seçilir.", points: ["Site ve ürün 16 dil konuşur.", "Doğru dil bölgenize göre otomatik seçilir: İngilizcenin iş dili olduğu Hindistan, ABD ve Birleşik Krallık gibi yerlerde İngilizce, başka yerlerde yerel meslek dili.", "Dili istediğiniz zaman değiştirebilirsiniz ve seçiminiz hatırlanır."] },
-    privacy: { eyebrow: "Gizli ve uyumlu", h: "GDPR ve CCPA’ya göre tasarlandı, tasarım gereği gizli", points: ["Cihazda maskeleme: kişisel veriler, sağlık verileri, sırlar ve anahtarlar, bir şey gönderilmeden önce kendi cihazınızda kaldırılır veya tokenlaştırılır.", "Tasarım gereği salt okunur: WorkCoPilot yol gösterir ve sizin yerinize asla tıklamaz, yazmaz veya çalıştırmaz.", "Size ait bir çerez onayı kontrolü: zorunlu olmayan depolamayı tek tıkla kabul edin veya reddedin ve istediğiniz zaman değiştirin.", "GDPR ve CCPA ile uyumlu. Şirketler için bir Veri İşleme Ek Sözleşmesi mevcuttur."] },
-    billing: { eyebrow: "Self servis faturalama", h: "Planınızı kendiniz, istediğiniz zaman değiştirin", points: ["İstediğiniz zaman yükseltin; hemen geçerli olur ve önceden ödediğiniz için orantılı kredi verilir.", "İstediğiniz zaman düşürün; bir sonraki yenilemede geçerli olur.", "İstediğiniz zaman kendiniz iptal edin, sözleşme yok.", "Aylık faturalarınızı panonuzda görün; satın aldığınız ek saatler asla sona ermez."] },
-    enterprise: { eyebrow: "Şirket kontrolleri", h: "Yöneticilerinizin bir kez belirlediği yönetişim", points: ["Şirket yöneticileri, cihazdan neyin çıkabileceğini herkes için bir kez belirleyen bir veri kaybını önleme politikası tanımlar.", "Şirket bazında kontroller ve platformu eğitmek için asla kullanılmayan özel şirket bilgisi.", "Faturalama ve harcama için finans panosu olan bir muhasebe rolü.", "Kimlik sağlayıcınız üzerinden çoklu oturum açma ve hukuk ekibinizin imzalayabileceği bir DPA."] },
+    title: 'Bu sürümde yeni',
+    sub: 'Bugün, her planda.',
+    global: {
+      eyebrow: 'Varsayılan olarak küresel',
+      h: '16 dilde çalışır, bölgenize göre seçilir',
+      line: 'Site ve ürün 16 dil konuşur, bölgenize göre otomatik seçilir.',
+      points: [
+        'Site ve ürün 16 dil konuşur.',
+        'Doğru dil bölgenize göre otomatik seçilir: İngilizcenin iş dili olduğu Hindistan, ABD ve Birleşik Krallık gibi yerlerde İngilizce, başka yerlerde yerel meslek dili.',
+        'Dili istediğiniz zaman değiştirebilirsiniz ve seçiminiz hatırlanır.',
+      ],
+    },
+    privacy: {
+      eyebrow: 'Gizli ve uyumlu',
+      h: 'GDPR ve CCPA’ya göre tasarlandı, tasarım gereği gizli',
+      points: [
+        'Cihazda maskeleme: kişisel veriler, sağlık verileri, sırlar ve anahtarlar, bir şey gönderilmeden önce kendi cihazınızda kaldırılır veya tokenlaştırılır.',
+        'Tasarım gereği salt okunur: WorkCoPilot yol gösterir ve sizin yerinize asla tıklamaz, yazmaz veya çalıştırmaz.',
+        'Size ait bir çerez onayı kontrolü: zorunlu olmayan depolamayı tek tıkla kabul edin veya reddedin ve istediğiniz zaman değiştirin.',
+        'GDPR ve CCPA ile uyumlu. Şirketler için bir Veri İşleme Ek Sözleşmesi mevcuttur.',
+      ],
+    },
+    billing: {
+      eyebrow: 'Self servis faturalama',
+      h: 'Planınızı kendiniz, istediğiniz zaman değiştirin',
+      points: [
+        'İstediğiniz zaman yükseltin; hemen geçerli olur ve önceden ödediğiniz için orantılı kredi verilir.',
+        'İstediğiniz zaman düşürün; bir sonraki yenilemede geçerli olur.',
+        'İstediğiniz zaman kendiniz iptal edin, sözleşme yok.',
+        'Aylık faturalarınızı panonuzda görün; satın aldığınız ek saatler asla sona ermez.',
+      ],
+    },
+    enterprise: {
+      eyebrow: 'Şirket kontrolleri',
+      h: 'Yöneticilerinizin bir kez belirlediği yönetişim',
+      points: [
+        'Şirket yöneticileri, cihazdan neyin çıkabileceğini herkes için bir kez belirleyen bir veri kaybını önleme politikası tanımlar.',
+        'Şirket bazında kontroller ve platformu eğitmek için asla kullanılmayan özel şirket bilgisi.',
+        'Faturalama ve harcama için finans panosu olan bir muhasebe rolü.',
+        'Kimlik sağlayıcınız üzerinden çoklu oturum açma ve hukuk ekibinizin imzalayabileceği bir DPA.',
+      ],
+    },
   },
-
-  // Şirket yöneticisi panosu (companyAdmin namespace).
   companyAdmin: {
     flows: {
       independent: 'Bağımsız',
@@ -1922,22 +2651,70 @@ export default {
       customers: 'Müşteriler',
     },
     sections: {
-      usage: { title: 'Kullanım ve limitler', sub: 'Ortak saat havuzunuz, kişi ve grup başına limitler ve ek saat talepleri.' },
-      overview: { title: 'Genel bakış', sub: 'Şirketinize bir bakışta: kişiler, koltuklar, yapay zeka tüketimi ve plan.' },
-      team: { title: 'Ekip', sub: 'Kişi ekleyin, rolünü ve planını belirleyin, kaldırın. Değişiklikler hemen geçerli olur.' },
-      sso: { title: 'Çoklu oturum açma (SSO)', sub: 'Kişilerinizin kimlik sağlayıcınızla (Google, Microsoft veya Okta) giriş yapmasını sağlayın.' },
-      ai: { title: 'Yapay zeka anahtarları', sub: 'WorkCoPilot’u kendi şirket yapay zeka anahtarlarınızla çalıştırın; böylece kullanım kendi sağlayıcı hesabınıza faturalanır.' },
-      billing: { title: 'Faturalama', sub: 'Plan ücretleriniz ve ek kalemler. WorkCoPilot ekibi tarafından belirlenir.' },
-      governance: { title: 'Veri yönetişimi (DLP)', sub: 'Hangi hassas verilerin cihazdan çıkabileceğine siz karar verin. Uyumunuzu destekleyen kontroller ve kanıtlar.' },
-      brain: { title: 'Şirket Beyni', sub: 'Şirketinizin özel bilgi deposunda ne var. Belgeler masaüstü uygulamasından eklenir, önce cihazda ayıklanır; burada onları görebilir ve dilediğinizi kaldırabilirsiniz.' },
-      brainsecurity: { title: 'Özel şifreleme ve veri dışa aktarma', sub: 'Şirket Beyni’nizin anahtarını kendiniz elinizde tutun (bir parola ifadesi ve tek seferlik bir kurtarma ifadesi - arka kapı yok) ve şirket verilerinizin eksiksiz, parola ile şifrelenmiş bir kopyasını istediğiniz zaman alın.' },
-      alerts: { title: 'Güvenlik uyarıları', sub: 'Kişilerinizden biri hassas veri (PII / PHI) girdiğinde, herhangi bir şey gönderilmeden önce cihazında maskelenir ve size kim, nerede ve hangi türde olduğu bildirilir - değerlerin kendisi asla değil.' },
-      integrations: { title: 'SOC / SIEM entegrasyonları', sub: 'Güvenlik uyarılarını SIEM, SOAR, sohbet ve gözlemlenebilirlik araçlarınıza otomatik olarak iletin. Yalnızca uyarı meta verileri gönderilir - maskelenenin türü ve sayısı ile kim ve nerede - değerler asla.' },
-      sessions: { title: 'Üye oturumları', sub: 'Kişilerinizin yürüttüğü her oturum - tamamlanmış veya devam eden. Herhangi biri için raporu ya da denetim günlüğünü alın.' },
-      tickets: { title: 'Destek', sub: 'Bir talep açın ve WorkCoPilot ekibiyle konuşun.' },
-      help: { title: 'Yardım', sub: 'Şirket konsolunuzu ekran ekran nasıl yöneteceğiniz.' },
-      activity: { title: 'Etkinlik', sub: 'Şirketinizde olup bitenlerin kaydı.' },
-      settings: { title: 'Ayarlar ve profil', sub: 'Profiliniz, parolanız ve şirket bilgileriniz.' },
+      usage: {
+        title: 'Kullanım ve limitler',
+        sub: 'Ortak saat havuzunuz, kişi ve grup başına limitler ve ek saat talepleri.',
+      },
+      overview: {
+        title: 'Genel bakış',
+        sub: 'Şirketinize bir bakışta: kişiler, koltuklar, yapay zeka tüketimi ve plan.',
+      },
+      team: {
+        title: 'Ekip',
+        sub: 'Kişi ekleyin, rolünü ve planını belirleyin, kaldırın. Değişiklikler hemen geçerli olur.',
+      },
+      sso: {
+        title: 'Çoklu oturum açma (SSO)',
+        sub: 'Kişilerinizin kimlik sağlayıcınızla (Google, Microsoft veya Okta) giriş yapmasını sağlayın.',
+      },
+      ai: {
+        title: 'Yapay zeka anahtarları',
+        sub: 'WorkCoPilot’u kendi şirket yapay zeka anahtarlarınızla çalıştırın; böylece kullanım kendi sağlayıcı hesabınıza faturalanır.',
+      },
+      billing: {
+        title: 'Faturalama',
+        sub: 'Plan ücretleriniz ve ek kalemler. WorkCoPilot ekibi tarafından belirlenir.',
+      },
+      governance: {
+        title: 'Veri yönetişimi (DLP)',
+        sub: 'Hangi hassas verilerin cihazdan çıkabileceğine siz karar verin. Uyumunuzu destekleyen kontroller ve kanıtlar.',
+      },
+      brain: {
+        title: 'Şirket Beyni',
+        sub: 'Şirketinizin özel bilgi deposunda ne var. Belgeler masaüstü uygulamasından eklenir, önce cihazda ayıklanır; burada onları görebilir ve dilediğinizi kaldırabilirsiniz.',
+      },
+      brainsecurity: {
+        title: 'Özel şifreleme ve veri dışa aktarma',
+        sub: 'Şirket Beyni’nizin anahtarını kendiniz elinizde tutun (bir parola ifadesi ve tek seferlik bir kurtarma ifadesi - arka kapı yok) ve şirket verilerinizin eksiksiz, parola ile şifrelenmiş bir kopyasını istediğiniz zaman alın.',
+      },
+      alerts: {
+        title: 'Güvenlik uyarıları',
+        sub: 'Kişilerinizden biri hassas veri (PII / PHI) girdiğinde, herhangi bir şey gönderilmeden önce cihazında maskelenir ve size kim, nerede ve hangi türde olduğu bildirilir - değerlerin kendisi asla değil.',
+      },
+      integrations: {
+        title: 'SOC / SIEM entegrasyonları',
+        sub: 'Güvenlik uyarılarını SIEM, SOAR, sohbet ve gözlemlenebilirlik araçlarınıza otomatik olarak iletin. Yalnızca uyarı meta verileri gönderilir - maskelenenin türü ve sayısı ile kim ve nerede - değerler asla.',
+      },
+      sessions: {
+        title: 'Üye oturumları',
+        sub: 'Kişilerinizin yürüttüğü her oturum - tamamlanmış veya devam eden. Herhangi biri için raporu ya da denetim günlüğünü alın.',
+      },
+      tickets: {
+        title: 'Destek',
+        sub: 'Bir talep açın ve WorkCoPilot ekibiyle konuşun.',
+      },
+      help: {
+        title: 'Yardım',
+        sub: 'Şirket konsolunuzu ekran ekran nasıl yöneteceğiniz.',
+      },
+      activity: {
+        title: 'Etkinlik',
+        sub: 'Şirketinizde olup bitenlerin kaydı.',
+      },
+      settings: {
+        title: 'Ayarlar ve profil',
+        sub: 'Profiliniz, parolanız ve şirket bilgileriniz.',
+      },
       depth: {
         title: 'Rehberlik derinliği',
         sub: 'WorkCoPilot ekibinin şirketinize tanıdığı derinlik ve bunu her kişi havuzuna nasıl atadığınız.',
@@ -2502,7 +3279,6 @@ export default {
       emptyDetail: 'Ekibinizin çalıştığı müşterileri ekleyin; projeler daha sonra onlara etiketlenebilir.',
     },
   },
-
   accentPicker: {
     label: 'Vurgu rengi',
     customName: 'Özel {hex}',
@@ -2524,7 +3300,6 @@ export default {
     defaultTitle: 'Varsayılan - her konsol kendi rengini korur',
     defaultAria: 'Varsayılan vurgu',
   },
-
   shared: {
     loading: 'Yükleniyor',
     errorGeneric: 'Bir şeyler ters gitti.',
@@ -2560,8 +3335,8 @@ export default {
     stepUpLabel: 'Sosyal oturum açma uygulamasını kaydetme',
     title: 'Sosyal oturum açma (platform uygulamaları)',
     desc: 'Herkese açık oturum açma sayfasındaki <b>Şununla oturum aç</b> düğmelerinin arkasındaki Google, Microsoft ve Facebook uygulamaları. Bunlar <b>platform düzeyindedir</b>: sağlayıcı başına tek uygulama olup tüm müşteriler ve şirketler tarafından kullanılır. Şirket başına ayarlar değildir. Gizli anahtarlar sunucu tarafında saklanır ve bir daha gösterilmez.',
-    callbackLabel: 'Her sağlayıcıda kaydedilecek yönlendirme URL\'si',
-    callbackHint: 'Bu URL\'yi her sağlayıcının uygulamasında yetkili yönlendirme (callback) URI\'si olarak aynen ekleyin. İstemci kimliği ve gizli anahtar buraya kaydedilene kadar o sağlayıcı ile oturum açma kapalı kalır.',
+    callbackLabel: "Her sağlayıcıda kaydedilecek yönlendirme URL'si",
+    callbackHint: "Bu URL'yi her sağlayıcının uygulamasında yetkili yönlendirme (callback) URI'si olarak aynen ekleyin. İstemci kimliği ve gizli anahtar buraya kaydedilene kadar o sağlayıcı ile oturum açma kapalı kalır.",
     copy: 'Kopyala',
     copied: 'Kopyalandı',
     appsTitle: 'Sağlayıcı uygulamaları',
@@ -2586,7 +3361,7 @@ export default {
     providers: {
       google: {
         label: 'Google',
-        blurb: 'Google Cloud Console\'dan, Web application türünde OAuth 2.0 istemcisi.',
+        blurb: "Google Cloud Console'dan, Web application türünde OAuth 2.0 istemcisi.",
         idHint: 'xxxx.apps.googleusercontent.com',
         where: 'Google OAuth istemcisi nerede oluşturulur',
       },
@@ -2604,12 +3379,10 @@ export default {
       },
     },
   },
-
   helpShared: {
     flowLabel: 'Ana akış',
     open: '{label} aç',
   },
-
   overviewAdmin: {
     loading: 'Genel bakış yükleniyor',
     users: 'WorkCoPilot kullanıcıları',
@@ -2631,7 +3404,6 @@ export default {
     byTierTitle: 'Katmana göre kullanıcılar',
     byTierDesc: '{total} WorkCoPilot kullanıcısının şu anda katmanlara nasıl dağıldığı.',
   },
-
   heroAdmin: {
     loading: 'Hero metni yükleniyor',
     heading: 'Ana sayfa hero',
@@ -2665,7 +3437,6 @@ export default {
     needLine: 'Başlığı ve alt metni olan en az bir satır ekleyin.',
     close: 'Kapat',
   },
-
   claimsAdmin: {
     loadingClaims: 'İddialar yükleniyor',
     checkingAccess: 'Erişim denetleniyor',
@@ -2694,7 +3465,6 @@ export default {
     noEvidence: 'kod kanıtı yok',
     authenticity: 'Özgünlük: {alg} mührü, özet {hash}..., verildi {issuedAt}. İndirilen rapor tümüyle imzalanmıştır.',
   },
-
   companyBrain: {
     kbSpaces: {
       title: 'Bilgi alanları',
@@ -2779,7 +3549,6 @@ export default {
     current: 'Geçerli',
     aboveGrant: 'Yetkinin üzerinde',
   },
-
   supportTickets: {
     cat: {
       feature: 'Özellik isteği',
@@ -2840,7 +3609,6 @@ export default {
       confirm: 'Talebi sil',
     },
   },
-
   emailAdmin: {
     checkingAccess: 'Erişim denetleniyor',
     gateLabel: 'SMTP ayarları',
@@ -2897,7 +3665,6 @@ export default {
       failed: 'Test e-postası gönderilemedi.',
     },
   },
-
   emailTemplatesAdmin: {
     loading: 'E-posta şablonları yükleniyor',
     title: 'E-posta şablonları',
@@ -2944,7 +3711,6 @@ export default {
     thankYouCheckbox: 'İletişim ve potansiyel müşteri formlarını gönderen kişilere bir teşekkür e-postası gönder',
     cancel: 'İptal',
   },
-
   cancelledAdmin: {
     loading: 'İptal eden aboneler yükleniyor',
     columns: {
@@ -2981,7 +3747,6 @@ export default {
     canceledBadge: 'İptal edildi',
     individual: 'Bireysel',
   },
-
   incidentsAdmin: {
     loading: 'Olaylar yükleniyor',
     kind: {
@@ -3018,7 +3783,6 @@ export default {
       deleteConfirm: 'Olayı sil',
     },
   },
-
   leadsAdmin: {
     loadingLeads: 'Potansiyel müşteriler yükleniyor',
     source: {
@@ -3124,7 +3888,7 @@ export default {
     errors: {
       email: 'Geçerli bir e-posta adresi girin.',
       password: 'En az 8 karakterlik bir parola seçin.',
-      legal: 'Lütfen Hizmet Şartları\'nı ve Gizlilik Politikası\'nı kabul edin.',
+      legal: "Lütfen Hizmet Şartları'nı ve Gizlilik Politikası'nı kabul edin.",
       exists: 'Bu e-posta ile bir hesap zaten var.',
       existsCta: 'Planınıza devam etmek için oturum açın',
       generic: 'Bir şeyler ters gitti. Lütfen tekrar deneyin.',
@@ -3175,7 +3939,7 @@ export default {
       already: {
         h1: 'Zaten etkin bir planınız var',
         p: 'Başka bir ödeme gerekmiyor.',
-        open: 'WorkCoPilot\'u aç',
+        open: "WorkCoPilot'u aç",
         manage: 'Aboneliği yönet',
       },
       billingOff: {
@@ -3184,7 +3948,7 @@ export default {
       },
     },
     welcome: {
-      h1: 'WorkCoPilot\'a hoş geldiniz',
+      h1: "WorkCoPilot'a hoş geldiniz",
       p: 'Hesabınız hazır.',
       cta: 'Başlayın',
       opening: 'WorkCoPilot açılıyor',
@@ -3198,7 +3962,6 @@ export default {
       help: 'Yardım',
     },
   },
-
   policyRules: {
     heading: 'Güvenlik uygulama kuralları',
     desc: 'Yazılı güvenlik politikanızı yükleyin; WorkCoPilot bunu <b>yol gösterirken</b> uyguladığı kurallara dönüştürür, <b>yasaklı</b> bir uygulamayı kullanan ya da <b>zorunlu</b> olanı atlayan her adımı işaretler ve politikanızı adıyla anar. Bu, yukarıdaki veri işleme kurallarının üstüne, <i>rehberliğin nasıl yazıldığını</i> yönetir.',
@@ -3258,7 +4021,6 @@ export default {
     addRuleByHand: 'Elle kural ekle',
     fromLabel: 'Kaynak:',
   },
-
   governanceAdmin: {
     actions: {
       send: 'Olduğu gibi gönder',
@@ -3352,7 +4114,6 @@ export default {
       cancel: 'İptal',
     },
   },
-
   pricingAdmin: {
     loading: 'Fiyatlandırma yükleniyor',
     superadminNote: 'Fiyatlandırmayı düzenlemek süper yönetici erişimi gerektirir. Aşağıdaki değerler sizin için salt okunurdur.',
@@ -3389,7 +4150,7 @@ export default {
       },
       monthlyHours: {
         title: 'Katman başına aylık dahil saatler',
-        desc: 'Her katmanın takvim ayı başına kaç saat gerçek rehberli süre içerdiği. Her kişinin ayın 1\'inde (ABD Doğu saati) yenilenen tek bir aylık havuzu vardır. Buradaki bir değişiklik, mevcut bakiyeye göre fark olarak ve asla sıfırın altına inmeden, her kişinin canlı havuzuna anında yansır. Havuzun ötesindeki saatler, aşağıdaki katman başına ücretle satın alınan saatlerden gelir. Kesirli saatlere izin verilir (örn. 37,5).',
+        desc: "Her katmanın takvim ayı başına kaç saat gerçek rehberli süre içerdiği. Her kişinin ayın 1'inde (ABD Doğu saati) yenilenen tek bir aylık havuzu vardır. Buradaki bir değişiklik, mevcut bakiyeye göre fark olarak ve asla sıfırın altına inmeden, her kişinin canlı havuzuna anında yansır. Havuzun ötesindeki saatler, aşağıdaki katman başına ücretle satın alınan saatlerden gelir. Kesirli saatlere izin verilir (örn. 37,5).",
         hint: 'ay başına saat',
       },
       monthEnd: {
@@ -3429,10 +4190,9 @@ export default {
       currency: 'Para birimi',
       save: 'Fiyatlandırmayı kaydet',
       cancel: 'İptal',
-      invalid: 'Fiyatlar sıfır veya daha fazla, aylık saatler 0 ile 744 arasında, görevler ve yeniden planlamalar 1000\'e kadar tam sayı, devir tavanı 0 ile 100000 arasında ve toplu minimum en az 1 olmalıdır.',
+      invalid: "Fiyatlar sıfır veya daha fazla, aylık saatler 0 ile 744 arasında, görevler ve yeniden planlamalar 1000'e kadar tam sayı, devir tavanı 0 ile 100000 arasında ve toplu minimum en az 1 olmalıdır.",
     },
   },
-
   sessionsAdmin: {
     loadingSession: 'Oturum yükleniyor',
     loadingSessions: 'Oturumlar yükleniyor',
@@ -3488,7 +4248,6 @@ export default {
     deleteConfirm: 'Oturumu sil',
     untitled: 'Başlıksız',
   },
-
   subscribersAdmin: {
     loading: 'Aboneler yükleniyor',
     columns: {
@@ -3553,7 +4312,6 @@ export default {
     },
     individual: 'Bireysel',
   },
-
   superAdmin: {
     notifications: {
       howTitle: 'Uyarılar nasıl çalışır',
@@ -3605,32 +4363,98 @@ export default {
       appearance: 'Görünüm',
     },
     sections: {
-      notifications: { title: 'Bildirimler', sub: 'Kurumsal uyarılar: havuzu tükenmek üzere olan şirketler ve incelenecek ek saat talepleri.' },
-      overview: { title: 'Genel bakış', sub: 'WorkCoPilot’a bir bakışta.' },
-      companies: { title: 'Şirketler', sub: 'Kiracılık: şirketler, şirket yöneticileri, kullanıcılar ve maskeleme politikası.' },
-      governance: { title: 'Veri yönetişimi', sub: 'Şirket başına DLP politikası: cihazdan ne çıkar, engellenen kelimeler, uyum çerçeveleri, devreye al ve kilitle.' },
-      users: { title: 'Kullanıcılar', sub: 'Katmanlar, bakiyeler ve verilen saatler.' },
-      pricing: { title: 'Fiyatlandırma', sub: 'Plan fiyatları, aylık dahil saatler, günlük rehberli görevler, ek saat ve görsel ücretleri.' },
-      billing: { title: 'Faturalama', sub: 'Stripe anahtarları, plan fiyat kimlikleri ve webhook uç noktası.' },
-      finance: { title: 'Finans', sub: 'Tüm işlemler, hafta/ay/çeyrek/yıl bazında gelir, MRR ve geri ödemeler.' },
-      subscribers: { title: 'Aboneler', sub: 'Ödeme yapan her abone ve işlemleri: plan, durum, döngü, MRR, yaşam boyu ödenen ve bugünkü etkinlik.' },
-      cancelled: { title: 'İptal eden aboneler', sub: 'Kaybedilen abonelikler: kim, ne zaman, neden iptal etti ve ayrılmadan önce getirdikleri yaşam boyu gelir.' },
-      email: { title: 'SMTP Ayarları (E-posta / SES)', sub: 'Raporları teslim etmek için giden e-posta. MFA korumalı. SES SMTP kimlik bilgilerinizi girin ve bir test gönderin.' },
-      'email-templates': { title: 'E-posta Şablonları', sub: 'Ürünün gönderdiği her e-posta - ifadeyi, yer tutucuları düzenleyin ve önizleyin. Hiçbir şey sabit değil.' },
-      ai: { title: 'Yapay zeka yapılandırması', sub: 'WorkCoPilot kullanıcıları için platform yapay zekası.' },
+      notifications: {
+        title: 'Bildirimler',
+        sub: 'Kurumsal uyarılar: havuzu tükenmek üzere olan şirketler ve incelenecek ek saat talepleri.',
+      },
+      overview: {
+        title: 'Genel bakış',
+        sub: 'WorkCoPilot’a bir bakışta.',
+      },
+      companies: {
+        title: 'Şirketler',
+        sub: 'Kiracılık: şirketler, şirket yöneticileri, kullanıcılar ve maskeleme politikası.',
+      },
+      governance: {
+        title: 'Veri yönetişimi',
+        sub: 'Şirket başına DLP politikası: cihazdan ne çıkar, engellenen kelimeler, uyum çerçeveleri, devreye al ve kilitle.',
+      },
+      users: {
+        title: 'Kullanıcılar',
+        sub: 'Katmanlar, bakiyeler ve verilen saatler.',
+      },
+      pricing: {
+        title: 'Fiyatlandırma',
+        sub: 'Plan fiyatları, aylık dahil saatler, günlük rehberli görevler, ek saat ve görsel ücretleri.',
+      },
+      billing: {
+        title: 'Faturalama',
+        sub: 'Stripe anahtarları, plan fiyat kimlikleri ve webhook uç noktası.',
+      },
+      finance: {
+        title: 'Finans',
+        sub: 'Tüm işlemler, hafta/ay/çeyrek/yıl bazında gelir, MRR ve geri ödemeler.',
+      },
+      subscribers: {
+        title: 'Aboneler',
+        sub: 'Ödeme yapan her abone ve işlemleri: plan, durum, döngü, MRR, yaşam boyu ödenen ve bugünkü etkinlik.',
+      },
+      cancelled: {
+        title: 'İptal eden aboneler',
+        sub: 'Kaybedilen abonelikler: kim, ne zaman, neden iptal etti ve ayrılmadan önce getirdikleri yaşam boyu gelir.',
+      },
+      email: {
+        title: 'SMTP Ayarları (E-posta / SES)',
+        sub: 'Raporları teslim etmek için giden e-posta. MFA korumalı. SES SMTP kimlik bilgilerinizi girin ve bir test gönderin.',
+      },
+      'email-templates': {
+        title: 'E-posta Şablonları',
+        sub: 'Ürünün gönderdiği her e-posta - ifadeyi, yer tutucuları düzenleyin ve önizleyin. Hiçbir şey sabit değil.',
+      },
+      ai: {
+        title: 'Yapay zeka yapılandırması',
+        sub: 'WorkCoPilot kullanıcıları için platform yapay zekası.',
+      },
       social: {
         title: 'Sosyal oturum açma',
         sub: 'Herkese açık oturum açma düğmelerinin arkasındaki platform Google, Microsoft ve Facebook uygulamaları. Her biri için tek uygulama, tüm müşterilere hizmet eder.',
       },
-      sessions: { title: 'Oturumlar', sub: 'Kullanıcılar genelinde son rehberli oturumlar.' },
-      leads: { title: 'Potansiyel müşteriler', sub: 'Demo veya giriş sayfasında canlı doğrulama yürüten herkes - en yeniler önce.' },
-      hero: { title: 'Ana sayfa hero', sub: 'Genel ana sayfadaki dönüşümlü başlık ve alt metin. Süper yönetici düzenler; diğer yöneticiler görüntüler.' },
-      tickets: { title: 'Destek talepleri', sub: 'Kullanıcılardan özellik istekleri, hatalar, faturalama ve erişim sorunları.' },
-      help: { title: 'Yardım', sub: 'Yönetim konsolunu ekran ekran nasıl yöneteceğiniz.' },
-      incidents: { title: 'Sistem olayları', sub: 'Kullanıcıların gördüğü "sistem meşgul" mesajının ardındaki gerçek nedenler - yapay zeka kotası, anahtarlar, 5xx, zaman aşımları. Kullanıcılar bunları asla görmez.' },
-      affiliates: { title: 'İş ortaklığı programı', sub: 'İş ortaklarını onaylayın, komisyon oranları belirleyin, yönlendirmeleri izleyin ve Stripe Connect ödemeleri yapın.' },
-      claims: { title: 'İş iddiaları', sub: 'Genel her iddia, onu destekleyen dosya ve kodla eşleştirilmiş, bir dürüstlük durumuyla. MFA korumalı; imzalı bir rapor indirin.' },
-      appearance: { title: 'Görünüm', sub: 'Panolar ve rehber için vurgu renginiz. Size özeldir; cihazlar arasında sizi izler.' },
+      sessions: {
+        title: 'Oturumlar',
+        sub: 'Kullanıcılar genelinde son rehberli oturumlar.',
+      },
+      leads: {
+        title: 'Potansiyel müşteriler',
+        sub: 'Demo veya giriş sayfasında canlı doğrulama yürüten herkes - en yeniler önce.',
+      },
+      hero: {
+        title: 'Ana sayfa hero',
+        sub: 'Genel ana sayfadaki dönüşümlü başlık ve alt metin. Süper yönetici düzenler; diğer yöneticiler görüntüler.',
+      },
+      tickets: {
+        title: 'Destek talepleri',
+        sub: 'Kullanıcılardan özellik istekleri, hatalar, faturalama ve erişim sorunları.',
+      },
+      help: {
+        title: 'Yardım',
+        sub: 'Yönetim konsolunu ekran ekran nasıl yöneteceğiniz.',
+      },
+      incidents: {
+        title: 'Sistem olayları',
+        sub: 'Kullanıcıların gördüğü "sistem meşgul" mesajının ardındaki gerçek nedenler - yapay zeka kotası, anahtarlar, 5xx, zaman aşımları. Kullanıcılar bunları asla görmez.',
+      },
+      affiliates: {
+        title: 'İş ortaklığı programı',
+        sub: 'İş ortaklarını onaylayın, komisyon oranları belirleyin, yönlendirmeleri izleyin ve Stripe Connect ödemeleri yapın.',
+      },
+      claims: {
+        title: 'İş iddiaları',
+        sub: 'Genel her iddia, onu destekleyen dosya ve kodla eşleştirilmiş, bir dürüstlük durumuyla. MFA korumalı; imzalı bir rapor indirin.',
+      },
+      appearance: {
+        title: 'Görünüm',
+        sub: 'Panolar ve rehber için vurgu renginiz. Size özeldir; cihazlar arasında sizi izler.',
+      },
     },
     gate: {
       checkingTitle: 'Erişim denetleniyor',
@@ -3655,7 +4479,6 @@ export default {
       desc: 'Herkes yeşili sevmez. Panolarınız ve rehber için vurgu rengini seçin - anında uygulanır ve cihazlar arasında sizi izler. <b>Varsayılan</b>, her konsolun kendi rengini korur: burada mavi, şirket yöneticileri ve rehber için yeşil.',
     },
   },
-
   billingAdmin: {
     loading: 'Faturalama yapılandırması yükleniyor',
     stepUpLabel: 'Faturalama anahtarları kaydediliyor',
@@ -3773,7 +4596,6 @@ export default {
       notReadyDetail: 'Bir secret key ve üç fiyat kimliğinin tümü ayarlanana (ve faturalama açık olana) kadar hizmet ücretli duvar olmadan çalışır.',
     },
   },
-
   aiConfig: {
     time: {
       justNow: 'az önce',
@@ -3970,7 +4792,6 @@ export default {
       unselected: 'Yapay zekayı hazırlamak için birini seçin',
     },
   },
-
   financeAdmin: {
     loading: 'Finans yükleniyor',
     kinds: {
@@ -4118,7 +4939,6 @@ export default {
       thisAccount: 'bu hesap',
     },
   },
-
   companiesAdmin: {
     enterprise: {
       title: 'Kurumsal havuz ve kotalar',
@@ -4135,7 +4955,7 @@ export default {
       carryCapHint: 'Birikebilecek en yüksek miktar. Sınır olmaması için boş bırakın.',
       noCap: 'Sınırsız',
       timezone: 'Şirket saat dilimi',
-      timezoneHint: 'Günlük kotalar yerel saatle 23.59\'da, haftalık Pazartesi ve aylık ayın 1\'inde sıfırlanır.',
+      timezoneHint: "Günlük kotalar yerel saatle 23.59'da, haftalık Pazartesi ve aylık ayın 1'inde sıfırlanır.",
       overage: 'Saat başı fiyat ($)',
       overageHint: 'Onaylanan her ek saat için şirkete faturalanır.',
       notifyPct: 'Uyarı eşiği (%)',
@@ -4438,7 +5258,7 @@ export default {
       title: 'Rehberlik derinliği',
       titleSub: 'bu şirkete tanınan derinlik',
       desc: 'Bu şirket için üst sınır. Şirketin yöneticisi her havuza bu yetkiye kadar bir derinlik atar, hiçbir zaman bunun üzerine çıkamaz.',
-      unknown: 'Geçerli yetki henüz şirket ayrıntılarında bildirilmiyor. Ayarlamak için Standart veya Derin\'i seçin; kaydedilen değer burada doğrulanır.',
+      unknown: "Geçerli yetki henüz şirket ayrıntılarında bildirilmiyor. Ayarlamak için Standart veya Derin'i seçin; kaydedilen değer burada doğrulanır.",
       granted: 'Tanınan: {depth}',
       saveFailed: 'Rehberlik derinliği kaydedilemedi.',
     },
@@ -4455,18 +5275,17 @@ export default {
       openUsage: 'Kullanım ve limitleri aç',
       requestHours: 'Saat iste',
       none: 'AdmireVeda şirketiniz için henüz aylık bir saat havuzu belirlemedi. O zamana kadar ekibiniz plan saatlerini ve ortak dakika havuzunu kullanır.',
-      askSupport: 'AdmireVeda\'ya sor',
+      askSupport: "AdmireVeda'ya sor",
     },
     seats: {
       meterAria: '{total} koltuktan {used} kullanımda',
     },
     usedTodayCeiling: 'Bugün kullanılan rehberli süre, bu kişinin kendi günlük tavanına göre.',
     usage: {
-      ofLimit: 'aylık limitinin %{pct}\'i',
-      ofPool: 'şirket havuzunun %{pct}\'i',
+      ofLimit: "aylık limitinin %{pct}'i",
+      ofPool: "şirket havuzunun %{pct}'i",
     },
   },
-
   usersAdmin: {
     loading: 'Kullanıcılar yükleniyor',
     columns: {
@@ -4523,7 +5342,7 @@ export default {
     },
     disabledBadge: 'Devre dışı',
     exhausted: 'tükendi',
-    planLeftTitle: 'Bu ay kalan dahil plan saatleri. Ayın 1\'inde yenilenir; satın alınan saatler ayrı sayılır.',
+    planLeftTitle: "Bu ay kalan dahil plan saatleri. Ayın 1'inde yenilenir; satın alınan saatler ayrı sayılır.",
     companyEdit: {
       flow: 'Çalışma akışı',
       flowTitle: 'Rehberli görevlerin bu kişiye nasıl ulaştığı: Bağımsız kendininkini başlatır, Uygulayıcı yalnızca atanan görevleri yapar, Karma ikisini de yapar.',
@@ -4620,7 +5439,6 @@ export default {
       defaultConfirm: 'Onayla',
     },
   },
-
   helpCompany: {
     flow: {
       signin: 'Giriş yap',
@@ -4638,9 +5456,18 @@ export default {
       title: 'Giriş yap',
       lead: 'Bu konsolu şirket yöneticisi hesabınız açar. Üyeler bunun yerine rehbere varır.',
       steps: {
-        emailSso: { t: 'E-posta ve SSO sekmesi', d: 'Giriş sayfasında E-posta ve SSO sekmesini seçin.' },
-        account: { t: 'Yönetici hesabınız', d: 'Kullanıcı adı ve parola, ardından MFA açıksa kod.' },
-        console: { t: 'Şirket konsolu', d: 'Buraya gelirsiniz. Üyeler kendi panolarını görür.' },
+        emailSso: {
+          t: 'E-posta ve SSO sekmesi',
+          d: 'Giriş sayfasında E-posta ve SSO sekmesini seçin.',
+        },
+        account: {
+          t: 'Yönetici hesabınız',
+          d: 'Kullanıcı adı ve parola, ardından MFA açıksa kod.',
+        },
+        console: {
+          t: 'Şirket konsolu',
+          d: 'Buraya gelirsiniz. Üyeler kendi panolarını görür.',
+        },
       },
       shot: {
         alt: 'WorkCoPilot giriş sayfası, Sosyal ve E-posta ve SSO sekmeleriyle.',
@@ -4652,10 +5479,22 @@ export default {
       title: 'Genel bakış',
       lead: 'Şirketinize bir bakışta ve bir kez yapılacak iki şey.',
       steps: {
-        cards: { t: 'Kartları okuyun', d: 'Göstergeleriyle lisanslar ve yönetici koltukları, dakika havuzu, rehberli oturumlar ve bu ayki saat havuzunuz.' },
-        authorize: { t: 'Yetkilendirmeyi onaylayın', d: 'Tek tıklama. Kimin ve ne zaman beyan ettiğini kaydeder.' },
-        retention: { t: 'Veri saklamayı ayarlayın', d: 'Düzenleyin, günleri seçin, Saklamayı kaydet. 0 her şeyi tutar.' },
-        backup: { t: 'Bilgi tabanını yedekleyin', d: 'İstediğiniz zaman bir JSON anlık görüntüsü indirin. Daha sonra geri yükleyin.' },
+        cards: {
+          t: 'Kartları okuyun',
+          d: 'Göstergeleriyle lisanslar ve yönetici koltukları, dakika havuzu, rehberli oturumlar ve bu ayki saat havuzunuz.',
+        },
+        authorize: {
+          t: 'Yetkilendirmeyi onaylayın',
+          d: 'Tek tıklama. Kimin ve ne zaman beyan ettiğini kaydeder.',
+        },
+        retention: {
+          t: 'Veri saklamayı ayarlayın',
+          d: 'Düzenleyin, günleri seçin, Saklamayı kaydet. 0 her şeyi tutar.',
+        },
+        backup: {
+          t: 'Bilgi tabanını yedekleyin',
+          d: 'İstediğiniz zaman bir JSON anlık görüntüsü indirin. Daha sonra geri yükleyin.',
+        },
       },
       shot: {
         alt: 'Şirket yöneticisi genel bakışı: koltuk göstergeli lisans kartları, bu ayki saat havuzu, yetkilendirme onayı, veri saklama ve bilgi tabanı.',
@@ -4667,10 +5506,22 @@ export default {
       title: 'Ekip',
       lead: 'Kişi ekleyin, rolünü ve planını belirleyin ve onlara dakika verin.',
       steps: {
-        add: { t: 'Kişi ekle', d: 'İş e-postasıyla (SSO) veya kullanıcı adı ve parolayla. Bir parola belirleme bağlantısı alırlar.' },
-        roleplan: { t: 'Rol ve plan', d: 'Üye, Üst düzey yönetici veya Şirket yöneticisi. İkisini de istediğiniz zaman satır içinde değiştirin.' },
-        minutes: { t: 'Dakika ver', d: 'Saat simgesi, dakikaları şirket havuzundan bir kişiye taşır.' },
-        managed: { t: 'Yönetilen kadro', d: 'WorkCoPilot lisanslarınızı yönettiğinde, kişi ekleme veya kaldırma Destek üzerinden yapılır.' },
+        add: {
+          t: 'Kişi ekle',
+          d: 'İş e-postasıyla (SSO) veya kullanıcı adı ve parolayla. Bir parola belirleme bağlantısı alırlar.',
+        },
+        roleplan: {
+          t: 'Rol ve plan',
+          d: 'Üye, Üst düzey yönetici veya Şirket yöneticisi. İkisini de istediğiniz zaman satır içinde değiştirin.',
+        },
+        minutes: {
+          t: 'Dakika ver',
+          d: 'Saat simgesi, dakikaları şirket havuzundan bir kişiye taşır.',
+        },
+        managed: {
+          t: 'Yönetilen kadro',
+          d: 'WorkCoPilot lisanslarınızı yönettiğinde, kişi ekleme veya kaldırma Destek üzerinden yapılır.',
+        },
       },
       shot: {
         alt: 'Ekip: rol ve plan seçicileri, bugünkü kullanım, ek dakikalar ve 2FA durumuyla Kişiler tablosu.',
@@ -4682,9 +5533,18 @@ export default {
       title: 'Yapay zeka anahtarları',
       lead: 'Platform yapay zekasıyla veya kendi sağlayıcı hesabınızla çalışın.',
       steps: {
-        current: { t: 'Mevcut yapay zeka', d: 'Varsayılan olarak platform yapay zekası. Kurulacak bir şey yok.' },
-        ownKeys: { t: 'Kendi anahtarlarınızı kullanın', d: 'Sağlayıcıyı seçin, API anahtarını yapıştırın, Anahtarlarımı kullan. Kullanım hesabınıza faturalanır.' },
-        webLearning: { t: 'Canlı web öğrenimi', d: 'Web araştırmasının kendi anahtarınızla çalışması için isteğe bağlı Tavily anahtarı.' },
+        current: {
+          t: 'Mevcut yapay zeka',
+          d: 'Varsayılan olarak platform yapay zekası. Kurulacak bir şey yok.',
+        },
+        ownKeys: {
+          t: 'Kendi anahtarlarınızı kullanın',
+          d: 'Sağlayıcıyı seçin, API anahtarını yapıştırın, Anahtarlarımı kullan. Kullanım hesabınıza faturalanır.',
+        },
+        webLearning: {
+          t: 'Canlı web öğrenimi',
+          d: 'Web araştırmasının kendi anahtarınızla çalışması için isteğe bağlı Tavily anahtarı.',
+        },
       },
       shot: {
         alt: 'Yapay zeka anahtarları: Mevcut yapay zeka kartı, Kendi anahtarlarınızı kullanın formu ve Canlı web öğrenimi anahtarı.',
@@ -4696,10 +5556,22 @@ export default {
       title: 'Veri yönetişimi',
       lead: 'Bir cihazdan neyin çıkabileceği ve her planın izlemesi gereken güvenlik uygulamaları.',
       steps: {
-        edit: { t: 'Düzenle', d: 'Kayıtlı politikayı açar. Varsayılanları yüklemek için çerçeveler seçin.' },
-        categories: { t: 'Kategoriler ve kelimeler', d: 'Kategori başına: gönder, maskele, gönderme veya tokenlaştır. Asla çıkmayacak kelimeler ekleyin.' },
-        rules: { t: 'Güvenlik uygulama kuralları', d: 'Yazılı politikanızı yapıştırın veya yükleyin, Kuralları çıkar, her birini gözden geçirin. Elle de kural ekleyin.' },
-        arm: { t: 'Devreye al ve kaydet', d: 'Devrede’yi işaretleyin, Politikayı kaydet. Kurallar her çağrıda uygulanır ve politikanızı adıyla anar.' },
+        edit: {
+          t: 'Düzenle',
+          d: 'Kayıtlı politikayı açar. Varsayılanları yüklemek için çerçeveler seçin.',
+        },
+        categories: {
+          t: 'Kategoriler ve kelimeler',
+          d: 'Kategori başına: gönder, maskele, gönderme veya tokenlaştır. Asla çıkmayacak kelimeler ekleyin.',
+        },
+        rules: {
+          t: 'Güvenlik uygulama kuralları',
+          d: 'Yazılı politikanızı yapıştırın veya yükleyin, Kuralları çıkar, her birini gözden geçirin. Elle de kural ekleyin.',
+        },
+        arm: {
+          t: 'Devreye al ve kaydet',
+          d: 'Devrede’yi işaretleyin, Politikayı kaydet. Kurallar her çağrıda uygulanır ve politikanızı adıyla anar.',
+        },
       },
       shots: {
         saved: {
@@ -4725,9 +5597,18 @@ export default {
       title: 'Faturalama',
       lead: 'Ekstreniz, kalem kalem.',
       steps: {
-        plan: { t: 'Plan ücretleri', d: 'Elinizdeki lisanslardan hesaplanır.' },
-        extras: { t: 'Ek kalemler', d: 'WorkCoPilot ekibinin hesabınıza kaydettiği öğeler.' },
-        change: { t: 'Her şeyi değiştirin', d: 'Lisans eklemek veya plan değiştirmek için bir Destek talebi açın.' },
+        plan: {
+          t: 'Plan ücretleri',
+          d: 'Elinizdeki lisanslardan hesaplanır.',
+        },
+        extras: {
+          t: 'Ek kalemler',
+          d: 'WorkCoPilot ekibinin hesabınıza kaydettiği öğeler.',
+        },
+        change: {
+          t: 'Her şeyi değiştirin',
+          d: 'Lisans eklemek veya plan değiştirmek için bir Destek talebi açın.',
+        },
       },
       shot: {
         alt: 'Faturalama: şirket için ekstre ve ücret kalemleri.',
@@ -4739,8 +5620,14 @@ export default {
       title: 'Güvenlik uyarıları',
       lead: 'Bir cihazda hassas veri maskelendiğinde bunu duyarsınız. Değerleri asla.',
       steps: {
-        see: { t: 'Ne görürsünüz', d: 'Kim, nerede ve hangi tür veri maskelendi.' },
-        relay: { t: 'İletin', d: 'SOC / SIEM aynı meta verileri kendi araçlarınıza gönderir.' },
+        see: {
+          t: 'Ne görürsünüz',
+          d: 'Kim, nerede ve hangi tür veri maskelendi.',
+        },
+        relay: {
+          t: 'İletin',
+          d: 'SOC / SIEM aynı meta verileri kendi araçlarınıza gönderir.',
+        },
       },
       shot: {
         alt: 'Şirket için güvenlik uyarıları listesi.',
@@ -4748,7 +5635,6 @@ export default {
       },
     },
   },
-
   helpSuper: {
     flow: {
       signin: 'Giriş yap',
@@ -4766,9 +5652,18 @@ export default {
       title: 'Giriş yap',
       lead: 'Bu konsolu bir AdmireVeda yönetici hesabı açar.',
       steps: {
-        emailSso: { t: 'E-posta ve SSO sekmesi', d: 'Giriş sayfasında E-posta ve SSO sekmesini seçin.' },
-        account: { t: 'Yönetici hesabınız', d: 'Kullanıcı adı ve parola, ardından MFA açıksa kod.' },
-        console: { t: 'Yönetim konsolu', d: '/work/admin’i açın. Şirket yöneticileri kendi konsollarına varır.' },
+        emailSso: {
+          t: 'E-posta ve SSO sekmesi',
+          d: 'Giriş sayfasında E-posta ve SSO sekmesini seçin.',
+        },
+        account: {
+          t: 'Yönetici hesabınız',
+          d: 'Kullanıcı adı ve parola, ardından MFA açıksa kod.',
+        },
+        console: {
+          t: 'Yönetim konsolu',
+          d: '/work/admin’i açın. Şirket yöneticileri kendi konsollarına varır.',
+        },
       },
       shot: {
         alt: 'WorkCoPilot giriş sayfası, Sosyal ve E-posta ve SSO sekmeleriyle.',
@@ -4780,10 +5675,22 @@ export default {
       title: 'Genel bakış',
       lead: 'Ürüne bir bakışta.',
       steps: {
-        users: { t: 'Kullanıcılar', d: 'WorkCoPilot’taki herkes, katmana göre ayrılmış.' },
-        active: { t: 'Şu anda etkin', d: 'Son beş dakikada kime yol gösteriliyor.' },
-        sessions: { t: 'Oturumlar', d: 'Bugün başlatılan ve tüm zamanlar.' },
-        platformAi: { t: 'Platform yapay zekası', d: 'Açık veya kapalı. Kapalı, kullanıcıların kendi anahtarlarıyla çalıştığı anlamına gelir.' },
+        users: {
+          t: 'Kullanıcılar',
+          d: 'WorkCoPilot’taki herkes, katmana göre ayrılmış.',
+        },
+        active: {
+          t: 'Şu anda etkin',
+          d: 'Son beş dakikada kime yol gösteriliyor.',
+        },
+        sessions: {
+          t: 'Oturumlar',
+          d: 'Bugün başlatılan ve tüm zamanlar.',
+        },
+        platformAi: {
+          t: 'Platform yapay zekası',
+          d: 'Açık veya kapalı. Kapalı, kullanıcıların kendi anahtarlarıyla çalıştığı anlamına gelir.',
+        },
       },
       shot: {
         alt: 'Yönetici genel bakış kartları: kullanıcılar, şu an etkin, bugünkü oturumlar, toplam oturum, satın alınan saatler ve platform yapay zekası, katmana göre kullanıcı çubuğuyla.',
@@ -4795,9 +5702,18 @@ export default {
       title: 'Şirketler',
       lead: 'Her kiracı, yöneticileri, kişileri ve politikası.',
       steps: {
-        new: { t: 'Yeni şirket', d: 'Ad, plan ve lisanslar. Sonraki her şey ona göre sınırlandırılır.' },
-        expand: { t: 'Bir satırı genişlet', d: 'Yöneticiler, kullanıcılar, SSO, yapay zeka kaynağı, karartma, koltuk göstergeleri ve kimin tükettiğiyle birlikte Enterprise havuzu, hepsi tek yerde.' },
-        admin: { t: 'Yöneticisini ekle', d: 'İlk şirket yöneticisi gerisini kendi konsolundan yürütür.' },
+        new: {
+          t: 'Yeni şirket',
+          d: 'Ad, plan ve lisanslar. Sonraki her şey ona göre sınırlandırılır.',
+        },
+        expand: {
+          t: 'Bir satırı genişlet',
+          d: 'Yöneticiler, kullanıcılar, SSO, yapay zeka kaynağı, karartma, koltuk göstergeleri ve kimin tükettiğiyle birlikte Enterprise havuzu, hepsi tek yerde.',
+        },
+        admin: {
+          t: 'Yöneticisini ekle',
+          d: 'İlk şirket yöneticisi gerisini kendi konsolundan yürütür.',
+        },
       },
       shot: {
         alt: 'Şirketler: Yeni şirket düğmesiyle liste ve kullanıcıları, yöneticileri, yapay zekayı ve maskeleme durumunu gösteren bir şirket satırı.',
@@ -4809,10 +5725,22 @@ export default {
       title: 'Kullanıcılar',
       lead: 'Her kullanıcı için katmanlar, bakiyeler ve verilen saatler.',
       steps: {
-        search: { t: 'Ara', d: 'Kullanıcı adına göre.' },
-        tier: { t: 'Katman', d: 'Satır içinde değiştirin.' },
-        companyRole: { t: 'Şirket ve rol', d: 'Değiştir, bir kullanıcıyı bir şirkete taşır veya rolünü belirler.' },
-        hours: { t: 'Saatler ve erişim', d: 'Satın alınmış saat tanımlayın veya bir bireye ücretsiz Premium erişim verin. Kalan plan saatleri, bu ay hâlâ açık olan dahil saatleri gösterir.' },
+        search: {
+          t: 'Ara',
+          d: 'Kullanıcı adına göre.',
+        },
+        tier: {
+          t: 'Katman',
+          d: 'Satır içinde değiştirin.',
+        },
+        companyRole: {
+          t: 'Şirket ve rol',
+          d: 'Değiştir, bir kullanıcıyı bir şirkete taşır veya rolünü belirler.',
+        },
+        hours: {
+          t: 'Saatler ve erişim',
+          d: 'Satın alınmış saat tanımlayın veya bir bireye ücretsiz Premium erişim verin. Kalan plan saatleri, bu ay hâlâ açık olan dahil saatleri gösterir.',
+        },
       },
       shot: {
         alt: 'Kullanıcı tablosu: katman seçici, Değiştir düğmesiyle şirket ve rol, bugün kullanılan, bu ay kalan plan saatleri, satın alınan bakiye ve oturumlar.',
@@ -4824,9 +5752,18 @@ export default {
       title: 'Fiyatlandırma',
       lead: 'Her katmanın maliyeti ve içerdikleri: aylık rehberli saatler ve günlük rehberli görevler.',
       steps: {
-        edit: { t: 'Düzenle', d: 'Her değeri değişime açar.' },
-        perTier: { t: 'Katman başına', d: 'Aylık fiyat, aylık dahil saatler, günlük görevler, yeniden planlamalar, ek saat ve görsel ücretleri ve ay sonunda kullanılmayan saatlere ne olacağı.' },
-        save: { t: 'Kaydet', d: 'Fiyatlar yeni satın almalara hemen uygulanır. Dahil saatlerdeki bir değişiklik her kişinin canlı aylık bakiyesine anında yansır.' },
+        edit: {
+          t: 'Düzenle',
+          d: 'Her değeri değişime açar.',
+        },
+        perTier: {
+          t: 'Katman başına',
+          d: 'Aylık fiyat, aylık dahil saatler, günlük görevler, yeniden planlamalar, ek saat ve görsel ücretleri ve ay sonunda kullanılmayan saatlere ne olacağı.',
+        },
+        save: {
+          t: 'Kaydet',
+          d: 'Fiyatlar yeni satın almalara hemen uygulanır. Dahil saatlerdeki bir değişiklik her kişinin canlı aylık bakiyesine anında yansır.',
+        },
       },
       shot: {
         alt: 'Fiyatlandırma: para birimi, katman başına fiyat, aylık saatler, günlük görevler, yeniden planlamalar, ek saat ve görsel ücretleri, ay sonu kuralı ve planlara bir bakış çubukları.',
@@ -4838,9 +5775,18 @@ export default {
       title: 'Yapay zeka yapılandırması',
       lead: 'Kullanıcıların kendi anahtarları olmadığında üzerinde çalıştıkları platform yapay zekası.',
       steps: {
-        providers: { t: 'Sağlayıcılar ve anahtarlar', d: 'Bir sağlayıcı anahtarı ekleyin, test edin, sohbet ve görü modellerini seçin.' },
-        platformAi: { t: 'Platform yapay zekası', d: 'Anahtarı olmayan kullanıcıların kapsanması için açın.' },
-        webSearch: { t: 'Web arama', d: 'Canlı web öğrenimi için bir arama anahtarı.' },
+        providers: {
+          t: 'Sağlayıcılar ve anahtarlar',
+          d: 'Bir sağlayıcı anahtarı ekleyin, test edin, sohbet ve görü modellerini seçin.',
+        },
+        platformAi: {
+          t: 'Platform yapay zekası',
+          d: 'Anahtarı olmayan kullanıcıların kapsanması için açın.',
+        },
+        webSearch: {
+          t: 'Web arama',
+          d: 'Canlı web öğrenimi için bir arama anahtarı.',
+        },
       },
       shot: {
         alt: 'Yapay zeka yapılandırması: uygun maliyetli modeller, yapay zeka sağlayıcıları ve anahtarları ve web arama.',
@@ -4848,7 +5794,6 @@ export default {
       },
     },
   },
-
   affiliatesAdmin: {
     cancel: 'İptal',
     done: 'Bitti',
@@ -5039,7 +5984,6 @@ export default {
       suspendMessage: '{name} kişisini askıya alın. Yeni yönlendirmeler kredilendirilmeyi durdurur ve panoları hesabın beklemede olduğunu gösterir. Daha sonra yeniden etkinleştirebilirsiniz.',
     },
   },
-
   brainSecurity: {
     strength: {
       tooShort: 'Çok kısa',
@@ -5202,7 +6146,6 @@ export default {
       exportDesc: 'Şirketinizin verilerinin eksiksiz, parola ile şifrelenmiş bir kopyasını istediğiniz zaman alın. Parolayı kimin alabileceğine karar verin, belirleyin, sonra indirin.',
     },
   },
-
   workDashboard: {
     cobrand: {
       aria: '{company}, WorkCoPilot ile çalışır',
@@ -5210,7 +6153,6 @@ export default {
       poweredBy: 'çalıştıran',
       exec: 'Yönetici panosu',
     },
-
     hello: 'Merhaba {name}',
     plan: {
       admin: 'Yönetici erişimi, rehberlik açık',
@@ -5265,7 +6207,7 @@ export default {
       tasks: {
         labelOpen: 'Açık görevler',
         label: 'Görevler',
-        tipOpen: 'Aynı anda en fazla {max} görev açık olabilir (çalışan veya duraklatılmış). Yer açmak için birini bitirin veya Görevlerim\'den devam ettirin. Tek kullanım sınırı saatlerinizdir.',
+        tipOpen: "Aynı anda en fazla {max} görev açık olabilir (çalışan veya duraklatılmış). Yer açmak için birini bitirin veya Görevlerim'den devam ettirin. Tek kullanım sınırı saatlerinizdir.",
         tipLimit: 'Şirketinizin başlatmanıza izin verdiği rehberli görev sayısı. Sıfırlanma: {reset}.',
         tipUnlimited: 'İhtiyacınız kadar rehberli görev başlatabilirsiniz.',
         unlimited: 'Sınırsız',
@@ -5341,8 +6283,6 @@ export default {
       note: 'Süre yalnızca WorkCoPilot sizi aktif olarak yönlendirirken sayılır.',
       cta: 'İlk görevinizi başlatın',
     },
-
-
     start: {
       eyebrow: 'Siz hazır olduğunuzda',
       title: 'Görev başlat',
@@ -5350,13 +6290,11 @@ export default {
       cta: 'Görev başlat',
       locked: 'Rehberliğe başlamak için yapay zeka kurulumunu tamamlayın. Sonraki adım yukarıdaki notta.',
     },
-
     adminNote: 'Yönetici erişiminiz var, bu yüzden canlı rehberlik sizin için açık.',
     adminNoteLink: 'Yönetici konsolunu aç',
-
     sub: {
       title: 'Başlamak için bir plan seçin',
-      leadMonth: 'Canlı rehberliği açmak için bir plan seçin. Her plan, ayın 1\'inde yenilenen aylık rehberli saatler içerir. İstediğiniz zaman değiştirin veya iptal edin.',
+      leadMonth: "Canlı rehberliği açmak için bir plan seçin. Her plan, ayın 1'inde yenilenen aylık rehberli saatler içerir. İstediğiniz zaman değiştirin veya iptal edin.",
       popular: 'En popüler',
       perMonth: '/ay',
       hours_one: '{n} saatlik günlük dakika',
@@ -5368,7 +6306,6 @@ export default {
       demoPre: 'Abone olmaya hazır değil misiniz?',
       demoLink: 'Demoda tam olarak nasıl çalıştığını görün',
     },
-
     buy: {
       titleOut: 'Bugünlük süreniz doldu',
       title: 'Daha fazla rehberlik süresi ekle',
@@ -5376,7 +6313,6 @@ export default {
       buy: 'Saat satın al',
       dismiss: 'Kapat',
     },
-
     ai: {
       checkFailPre: 'Yapay zeka durumunuz şu anda kontrol edilemedi.',
       retry: 'Tekrar dene',
@@ -5387,7 +6323,6 @@ export default {
       member: 'Çalışma alanınız hazırlanıyor. Başlayabilmeniz için yöneticinizin yapay zeka kurulumunu tamamlaması gerekiyor, lütfen kısa süre sonra tekrar bakın.',
       solo: 'WorkCoPilot hesabınız için hazırlanıyor. Lütfen kısa süre sonra tekrar bakın ya da sorun sürerse destekle iletişime geçin.',
     },
-
     sessions: {
       title: 'Kaldığınız yerden devam edin',
       sub: 'Tam kaldığınız yerden devam edin. Geçmişiniz kendi sayfasında.',
@@ -5411,7 +6346,6 @@ export default {
       delete: 'Oturumu sil',
       viewAllLogs: 'Tümünü gör / Oturum günlükleri',
     },
-
     buddy: {
       title: 'Yardımcınız',
       caption: 'Sonraki adımı ekranınızda gösterir.',
@@ -5426,7 +6360,6 @@ export default {
       bodyCompanyAdminPost: ', Veri Yönetişimi bölümünde. Yerleşik korumalar her zaman geçerlidir.',
       bodyCompany: 'Şirketiniz, ekipteki herkes için veri koruma kurallarını yönetir. Yerleşik korumalar, yani e-postalar, anahtarlar, kart numaraları, kimlik numaraları, IP adresleri ve daha fazlası, herhangi bir şey gönderilmeden önce her zaman cihazınızda uygulanır.',
     },
-
     del: {
       title: 'Bu oturum silinsin mi?',
       untitled: 'Adsız oturum',
@@ -5531,8 +6464,8 @@ export default {
       empty: 'Henüz bağımsız görev yok. Tek iş akışı olan bir hedef buradan görev olarak başlar.',
       viewAll: 'Tümünü gör',
       start: 'Görev başlat',
-      more_one: 'Görevlerim\'de {n} tane daha',
-      more_other: 'Görevlerim\'de {n} tane daha',
+      more_one: "Görevlerim'de {n} tane daha",
+      more_other: "Görevlerim'de {n} tane daha",
     },
     create: {
       eyebrow: 'Yeni proje',
@@ -5563,7 +6496,7 @@ export default {
       edit: 'Hedefi düzenle',
       refusalTitle: 'WorkCoPilot bunu planlayamıyor',
       upgradeTitle: 'Projeler bir Premium özelliğidir',
-      upgradeBody: 'Bu hedef birden çok göreve yayılıyor. Rehberli proje olarak çalıştırmak için Premium\'a yükseltin ya da şimdi başlayabileceğiniz tek bir göreve indirin.',
+      upgradeBody: "Bu hedef birden çok göreve yayılıyor. Rehberli proje olarak çalıştırmak için Premium'a yükseltin ya da şimdi başlayabileceğiniz tek bir göreve indirin.",
       upgradeCta: 'Premium planlarını gör',
       upgradeCompany: 'Proje çalıştırabilmeleri için yöneticinizden ekibinize Derin rehberlik tanımasını isteyin.',
       shortenTitle: 'Ya da tek göreve indirin',
@@ -5655,7 +6588,6 @@ export default {
       dismiss: 'Kapat',
     },
   },
-
   workStart: {
     docsCap: '{max} içinden {used} kullanıldı',
     docsCapUpgrade: 'Daha fazlası için yükseltin',
@@ -5687,7 +6619,6 @@ export default {
     knowTask: 'Görevimi biliyorum',
     back: 'Geri',
     continue: 'Devam',
-
     notReadyTitle: 'Yapay zeka kurulumu henüz tamamlanmadı',
     notReady: 'Bunu şimdi doldurun. Yöneticiniz yapay zeka kurulumunu tamamlayınca son adım açılır.',
     parkedNote: 'Planınız burada saklı ve girdiğiniz hiçbir şey kaybolmaz.',
@@ -5703,7 +6634,6 @@ export default {
     openFull: '{max} görevden {max} tanesi açık. Başka birini başlatmadan önce birini bitirin veya devam ettirin.',
     capLeft: 'Bugün {cap} görevden {remaining} tanesi kaldı. {reset} saatinde sıfırlanır.',
     capLeftOne: 'Bugün {cap} görevden {remaining} tanesi kaldı. {reset} saatinde sıfırlanır.',
-
     placeQ: 'Nerede çalışıyorsunuz?',
     placeSub: 'İsteğe bağlı. Adımları doğru yere göre uyarlamaya yardımcı olur. İstediğiniz an doğrudan görevinize geçebilirsiniz.',
     placeSaasLabel: 'Web sitesi veya SaaS uygulaması',
@@ -5728,7 +6658,6 @@ export default {
     noteDesk: 'Bunu adımları keskinleştirmek için kullanırız.',
     placeHint: 'Nerede çalıştığınızı seçin ya da “Görevimi biliyorum” ile geçin.',
     advancing: 'Anlaşıldı. Bir sonraki adım açılıyor',
-
     docsQ: 'Belge veya veri var mı?',
     docsSub: 'Planı dayandırmak için bir spesifikasyon, dışa aktarma ya da diyagram ekleyin veya geçin.',
     docsUse: 'Bunları planın temeli olarak kullan',
@@ -5747,7 +6676,6 @@ export default {
     docsErrRead: 'Belgeler okunamadı',
     docsErrTooLarge: '{name}: çok büyük (en fazla 10 MB)',
     docsErrUpload: '{name}: yükleme başarısız',
-
     goalHeroK: 'Göreviniz',
     goalQ: 'Görevinizi yazın',
     goalSub: 'Ona bir ad verin, sonra “tamamlandı”nın neye benzediğini anlatın. Ne kadar net olursa o kadar iyi.',
@@ -5758,7 +6686,6 @@ export default {
     goalReadyHint: 'WorkCoPilot bunu planlar, sonra sizi adım adım yönlendirir.',
     continueHint: 'Devam etmek için bir plan adı ve hedefinizi ekleyin.',
     addContext: 'Önce çalışma alanı bağlamını ekleyin',
-
     reflectQ: 'İşte anladıklarım',
     reflectSub: 'Doğru görünüyor mu? Planlamadan önce dilediğinizi düzeltin.',
     reflectWorkplace: 'Nerede çalışıyorsunuz',
@@ -5779,7 +6706,6 @@ export default {
     docsMany: '{n} belge eklendi',
     docsAttached: 'Planın temeli olarak eklendi',
     goalEmpty: 'Henüz yazılmadı',
-
     depthQ: 'Planlamadan önce ne kadar sorayım?',
     depthHelp: 'Şimdi birkaç soru her adımı daha isabetli yapar. Ayrıntıyı sonra ekleyebilirsiniz.',
     depthQuickT: 'Hızlı',
@@ -5788,7 +6714,6 @@ export default {
     depthDetailedT: 'Ayrıntılı',
     depthDetailedD: 'Ortamınız, kısıtlarınız ve hedefiniz hakkında daha dolu bir görüşme. Daha isabetli, daha size göre adımlar.',
     depthDetailedM: 'Daha çok soru',
-
     scopeStageReading: 'hedefiniz okunuyor',
     scopeStageResearch: 'görev araştırılıyor',
     scopeStageDetailed: 'ayrıntılı bir görüşme hazırlanıyor',
@@ -5796,7 +6721,6 @@ export default {
     scopeStageChecking: 'önce ne sorulacağına bakılıyor',
     scopeTermTitle: 'kapsam : workcopilot',
     scopeFoot: 'Planınızı isabetli kılacak birkaç soruyu yazıyorum. Bir saniye.',
-
     envQ: 'Bu iş nerede yapılıyor?',
     envHelp: 'Bunu gerçekte nerede yapacaksınız? Emin değilseniz “Emin değilim ya da karışık”ı seçin, ekranınızdan anlarım.',
     envWebsite: 'Bir web sitesi veya web uygulaması',
@@ -5839,7 +6763,6 @@ export default {
     scopeErrGeneric: 'Bu kapsanamadı.',
     scopeErrTryAgain: 'Tekrar dene',
     scopeErrPlanAnyway: 'Yine de devam et',
-
     reviewQ: 'Başlamaya hazır',
     reviewSub: 'Plan kurulumunuza kısa bir bakış. Doğru görününce başlayın.',
     reviewPlan: 'Plan',
@@ -6034,5 +6957,4303 @@ export default {
       cta: 'Kabul et ve devam et',
       signOut: 'Bunun yerine çıkış yap',
     },
+  },
+  acceptableUsePage: {
+    seo: {
+      title: "Kabul Edilebilir Kullanım Politikası - AdmireVeda'dan WorkCoPilot",
+      description: "WorkCoPilot'un nerede kullanılabileceği, nelerden sorumlu olduğunuz ve nelerin sınır dışı olduğu: yalnızca yasal ve yetkili kullanım, yetkisiz erişim yok, zarar yok ve endişelerin nasıl bildirileceği.",
+    },
+    hero: {
+      eyebrow: 'Kabul Edilebilir Kullanım Politikası',
+      title: "WorkCoPilot'u doğru şekilde kullanmak",
+      intro: 'WorkCoPilot size kendi ekranınızda yol gösterir. Bu politika, nerede kullanılabileceğini, nelerden sorumlu olduğunuzu ve nelerin sınır dışı olduğunu belirtir.',
+      tagline: 'Sade dilde politika, taslak şablon',
+    },
+    glance: [
+      {
+        eyebrow: 'Yetkili',
+        title: 'Yalnızca kullanabileceğiniz şeyler üzerinde',
+        body: "WorkCoPilot'u yalnızca kullanmaya yetkili olduğunuz sistemler, hesaplar ve veriler üzerinde kullanın ve kuruluşunuzun onayını yürürlükte tutun.",
+      },
+      {
+        eyebrow: 'Sorumlu',
+        title: 'Paylaştıklarınızdan siz sorumlusunuz',
+        body: "WorkCoPilot'un önüne koyduğunuz ekranları ve verileri kullanma yetkisinden siz sorumlusunuz.",
+      },
+      {
+        eyebrow: 'Yasak',
+        title: 'Yasa dışı veya zararlı iş yok',
+        body: 'Yasayı çiğnemek, başkalarına zarar vermek ya da aşmanıza izin verilmeyen denetimleri aşmak için kullanmayın.',
+      },
+    ],
+    sections: {
+      purpose: 'Bu politikanın amacı',
+      authorized: 'Yalnızca yasal ve yetkili kullanım',
+      responsibility: 'Yetkiden siz sorumlusunuz',
+      prohibited: 'Yasak kullanımlar',
+      security: 'Güvenlik testi ve hassas işler',
+      enforcement: 'Uygulama',
+      report: 'Bir endişeyi bildirme',
+    },
+    purpose: {
+      p1: "Bu politika, WorkCoPilot ile neler yapıp yapamayacağınızı açıklar. <a>Hizmet Şartları</a>'nın bir parçasıdır. WorkCoPilot size kendi ekranınızda işleri adım adım yaptırır; bu nedenle en önemli kural basittir: onu yasalara uygun biçimde ve yalnızca yetkili olduğunuz yerlerde kullanın.",
+    },
+    authorized: {
+      items: [
+        {
+          name: 'Yasal',
+          how: "WorkCoPilot'u yalnızca yasal amaçlarla ve size ve kuruluşunuza uygulanan yasa ve düzenlemelere uygun olarak kullanın.",
+        },
+        {
+          name: 'Yetkili',
+          how: 'Onu yalnızca siz ya da kuruluşunuzun erişmeye ve böyle bir araçla kullanmaya yetkili olduğu sistemler, uygulamalar, hesaplar ve veriler üzerinde kullanın.',
+        },
+        {
+          name: 'İşvereninizin kuralları',
+          how: 'İşvereninizin ve müşterilerinizin politikalarına ve içinde çalıştığınız araçların şartlarına uyun. Bir politika, bir sistemde asistan kullanmayı yasaklıyorsa orada kullanmayın.',
+        },
+        {
+          name: 'Kuruluş yetkisi',
+          how: 'Şirket hesapları için bir şirket yöneticisi, kuruluşun kendi sistemlerinde WorkCoPilot kullanımına yetki verdiğini üründe onaylar. Kimin, ne zaman onayladığını kanıt olarak kaydederiz. Bu onay, aşağıda açıklanan her kullanıcının sorumluluğunun yerini tutmaz.',
+        },
+      ],
+    },
+    responsibility: {
+      p1: 'Ekranınızdaki içeriği ve yazdığınız ya da eklediğiniz şeyleri hizmetle paylaşmanıza izin verildiğinden emin olmaktan siz sorumlusunuz. Bir sisteme tarayıcı veya cihaz erişiminiz olması, tek başına o sistemi bir asistanla kullanmaya yetkili olduğunuz anlamına gelmez.',
+      items: [
+        {
+          name: 'Paylaştığınız sistemler',
+          how: 'Bir ekranı paylaşmadan önce, o sistemi kullanma ve içeriğini hizmete gösterme hakkınız olduğunu doğrulayın.',
+        },
+        {
+          name: 'Başkalarının verileri',
+          how: "İşlemeye yetkili olmadığınız sürece, başka kişilere ait veya üçüncü bir tarafa ait verileri göndermeyin. Gizlilik Politikası, WorkCoPilot'un tasarlandığı veri kategorilerini açıklar.",
+        },
+        {
+          name: 'Üyeleriniz',
+          how: 'Şirket yöneticileri, ekledikleri kişilerden ve üyeleri için belirleyip kilitledikleri veri politikasından sorumludur.',
+        },
+        {
+          name: 'Ne zaman paylaşacağınızı seçmek',
+          how: 'Ekranınızı ne zaman ve hangi ekranı paylaşacağınızı siz seçersiniz. İşlemeye yetkili olmadığınız materyali içeren bir ekranı paylaşmayın.',
+        },
+      ],
+    },
+    prohibited: {
+      p1: "WorkCoPilot'u şunlar için kullanmamalısınız:",
+      items: [
+        {
+          name: 'Yasayı çiğnemek',
+          how: 'Yasa dışı herhangi bir şey yapmak veya başkasının yapmasına yardım etmek.',
+        },
+        {
+          name: 'İzinsiz erişim',
+          how: 'Erişmeye yetkili olmadığınız bir sisteme, hesaba veya veriye erişim sağlamak ya da sağlamaya çalışmak veya aşmanıza izin verilmeyen bir güvenlik denetimini aşmak.',
+        },
+        {
+          name: 'Zarar vermek',
+          how: 'Zararlı yazılım oluşturmak veya yaymak, saldırı ya da sızma yürütmek, dolandırıcılık yapmak, başkalarını taciz etmek, dolandırmak veya aldatmak ya da başka zararlı veya kötüye kullanım niteliğindeki işleri yürütmek.',
+        },
+        {
+          name: 'İşleyemeyeceğiniz şeyleri işlemek',
+          how: 'İşlemeye yetkili olmadığınız ya da yasanın veya bir sözleşmenin paylaşmanızı yasakladığı verileri göndermek.',
+        },
+        {
+          name: 'Hizmeti kötüye kullanmak',
+          how: 'Hizmeti yoklamak, aşırı yüklemek veya aksatmak; limitleri, plan haklarını ya da korumaları aşmaya çalışmak; girişinizi başkalarıyla paylaşmak veya hizmeti yeniden satmak.',
+        },
+        {
+          name: 'Yanlış tanıtmak',
+          how: 'Rehberliği bizim profesyonel tavsiyemizmiş gibi sunmak ya da kim olduğunuzu veya neye yetkili olduğunuzu yanlış belirtmek.',
+        },
+        {
+          name: 'Kopyalamak veya tersine mühendislik yapmak',
+          how: 'Yasanın bunu kısıtlamamıza izin vermediği durumlar dışında, hizmeti kopyalamak, iç bileşenlerini çıkarmak ya da ondan rakip bir hizmet oluşturmak.',
+        },
+      ],
+    },
+    security: {
+      p1: 'İşiniz güvenlik testi, düzenlemeye tabi veri, güvenlik açısından kritik sistemler veya benzeri hassas faaliyetler içeriyorsa, ilgili sistemlerin sahibinden yazılı yetkiye sahip olmanız ve bu yetkinin kapsamında kalmanız gerekir. WorkCoPilot size ekranınızda yol gösterir. Sizin yerinize hareket etmez ve yetkisiz bir eylemi yetkili hâle getirmez.',
+      p2: 'Önerilen bir adım silebilecek, üzerine yazabilecek, ödeme yapabilecek, gönderebilecek ya da başka bir şekilde geri alınması güç olabilecekse, WorkCoPilot bunu işaretler; böylece bilinçli olarak onaylayabilirsiniz. Karar ve bunun sorumluluğu sizde kalır.',
+    },
+    enforcement: {
+      p1: 'Kullanım bu politikayı ihlal ederse, hizmeti veya diğer müşterileri riske atarsa ya da yasa gereği zorunluysa; erişimi uyarabilir, kısıtlayabilir, askıya alabilir veya sonlandırabiliriz. Makul olduğu durumlarda önce size haber verir ve nedenini açıklarız. Yasanın gerektirdiği durumlarda bilgileri saklayabilir ve paylaşabiliriz.',
+      p2: "Şirket yöneticileri, kendi üyelerinin oturumlarını ve raporlarını inceleyebilir ve bir üyenin erişimini, Gizlilik Politikası'nda açıklandığı gibi sonlandırabilir.",
+    },
+    report: {
+      p1: 'Hizmetin kötüye kullanıldığını düşünüyorsanız ya da bir güvenlik sorunu bulduysanız <contact>{contact}</contact> adresine yazın. Ürün yardımı için <support>{support}</support> adresine yazın.',
+      note: '<b>Dürüst çerçeve.</b> Bu sayfa bir şablondur. Uygulamayı amaçladığımız kuralları belirtir ve kendi hukuki incelemenizin yerini tutmaz.',
+    },
+    links: {
+      terms: 'Hizmet Şartları',
+      privacy: 'Gizlilik Politikası',
+      disclaimer: 'Sorumluluk Reddi',
+    },
+  },
+  accessibilityPage: {
+    seo: {
+      title: "Erişilebilirlik Beyanı - AdmireVeda'dan WorkCoPilot",
+      description: "WorkCoPilot'un erişilebilirliğe yaklaşımı: hedefimiz olarak WCAG 2.1 AA, klavye ve ekran okuyucu desteği, görünür odak, AA kontrastı, azaltılmış hareket desteği ve yeniden akış, dürüstçe belirtilen bilinen sınırlamalar ve bir engelin nasıl bildirileceği.",
+    },
+    hero: {
+      eyebrow: 'Erişilebilirlik',
+      title: 'Erişilebilirlik beyanı',
+      intro: 'Erişilebilir yazılıma bağlılığımız, yöneldiğimiz standart, bugün yerleşik olarak neler bulunduğu, hâlâ nerede çalıştığımız ve bize nasıl ulaşabileceğiniz.',
+      tagline: 'Ürünün bugün ne yaptığına dair sade dilde beyan',
+    },
+    glance: [
+      {
+        eyebrow: 'Hedefimiz',
+        title: 'WCAG 2.1 AA düzeyi',
+        body: 'Herkese açık siteyi ve ürünü WCAG 2.1 AA başarı ölçütlerine doğru geliştiriyor ve bir erişilebilirlik kusurunu giderilmesi gereken bir hata olarak görüyoruz.',
+      },
+      {
+        eyebrow: 'Yerleşik',
+        title: 'Klavye ve ekran okuyucu dostu',
+        body: 'Görünür odak halkaları, sayfa başına bir ana bölge ve tek bir H1, etiketli denetimler ve azaltılmış hareket tercihlerine destek.',
+      },
+      {
+        eyebrow: 'Bize söyleyin',
+        title: 'Bir engeli bildirin',
+        body: 'Bir şeyi yardımcı teknolojiyle kullanmak zorsa bize yazın; yardımcı olur ve düzeltiriz.',
+      },
+    ],
+    sections: {
+      commitment: 'Bağlılığımız',
+      standard: 'Hedeflediğimiz standart',
+      measures: 'Bugün yerleşik olarak neler var',
+      limitations: 'Bilinen sınırlamalar',
+      feedback: 'Geri bildirim ve yardım',
+    },
+    commitment: {
+      p1: "WorkCoPilot'u herkesin kullanabilmesini istiyoruz; yalnızca klavye, ekran okuyucu, büyütme ya da başka yardımcı teknolojiler kullanan kişiler de buna dahil. Erişilebilirlik, ürünü tasarlama ve gözden geçirme biçimimizin bir parçasıdır, sonradan akla gelen bir şey değil; bir engeli, yerinde bırakılacak bilinen bir sınırlama olarak değil, giderilmesi gereken bir kusur olarak görürüz.",
+    },
+    standard: {
+      p1: "<b>Web İçeriği Erişilebilirlik Kılavuzu (WCAG) 2.1, AA düzeyi</b>'ne doğru geliştiriyoruz. Bu, tasarımımıza ve incelemelerimize yön veren hedefimizdir. Resmi bir sertifika iddia etmiyor ve üçüncü taraf bir denetim yayımlamadık; henüz tam olarak uyumlu olmadığımız yerlerde bunu aşağıda belirtir ve farkı kapatmak için çalışırız.",
+    },
+    measures: {
+      items: [
+        {
+          name: 'Klavye erişimi',
+          how: 'Etkileşimli denetimlere klavyeyle erişilebilir ve bunlar klavyeyle kullanılabilir; odak çerçevesini kaldırmayız. Odaklanabilen her denetim görünür bir odak halkası gösterir.',
+        },
+        {
+          name: 'Ekran okuyucular için yapı',
+          how: "Her sayfanın bir ana bölgesi ve tek bir H1'i vardır; başlıklar sıralıdır, böylece yardımcı teknoloji yapıda gezinebilir. Dekoratif simgeler erişilebilirlik ağacından gizlenir.",
+        },
+        {
+          name: 'Etiketler ve adlar',
+          how: 'Düğmelerin, bağlantıların, form alanlarının ve anahtarların erişilebilir adları vardır ve durum (örneğin bir anahtarın açık ya da kapalı olması) yardımcı teknolojiye sunulur.',
+        },
+        {
+          name: 'Kontrast',
+          how: 'Metin ve temel arayüz, hem açık hem koyu temada AA kontrastını karşılayacak biçimde tasarlanmıştır.',
+        },
+        {
+          name: 'Hareket',
+          how: 'Animasyonlu ve paralaks efektler, işletim sisteminizdeki veya tarayıcınızdaki "hareketi azalt" ayarına uyar.',
+        },
+        {
+          name: 'Yeniden boyutlandırma ve yeniden akış',
+          how: 'Yerleşimler, yatay kaydırma çubuğu olmadan dar ve yakınlaştırılmış görünüm alanlarına yeniden akar; böylece metni büyütüp sayfayı yine de okuyabilirsiniz.',
+        },
+      ],
+    },
+    limitations: {
+      p1: 'Henüz tam olarak uyumlu olmadığımız yerler konusunda dürüstüz. Ürün size başka uygulamalar arasında yol gösterdiği için ekranınızda görünenlerin bir kısmı, denetlemediğimiz yazılımlar tarafından üretilir ve bunların erişilebilirliği erişimimizin dışındadır.',
+      items: [
+        {
+          name: 'Üçüncü taraf ve gömülü içerik',
+          how: 'Rehberlik aldığınız uygulamalar ve gömülü üçüncü taraf içerikleri, kendi erişilebilirliklerine uyar; bunu garanti edemeyiz.',
+        },
+        {
+          name: 'Devam eden çalışma',
+          how: 'Bazı eski ekranlar henüz bir erişilebilirlik incelemesini tamamlamadı. En son resmi incelememizin tarihi <ph>daha sonra teyit edilecek</ph>; alanlar incelendikçe bu beyanı güncelleriz.',
+        },
+      ],
+    },
+    feedback: {
+      p1: 'Bir erişilebilirlik engeliyle karşılaşırsanız ya da bilgiye farklı bir biçimde ihtiyaç duyarsanız bize söyleyin. Lütfen sayfayı, ne yapmaya çalıştığınızı ve kullandığınız yardımcı teknoloji ile tarayıcıyı ekleyin; böylece sorunu yeniden oluşturup giderebiliriz.',
+      accessibility: 'Erişilebilirlik geri bildirimi',
+      support: 'Ürün desteği',
+      expect: {
+        name: 'Ne beklemelisiniz',
+        how: 'Bildirimleri teyit eder, bu arada görevi tamamlamanın bir yolu üzerinde sizinle çalışır ve bir düzeltmeyi önceliklendiririz.',
+      },
+    },
+    links: {
+      privacy: 'Gizlilik Politikası',
+      terms: 'Hizmet Şartları',
+      contact: 'İletişim',
+    },
+  },
+  affiliatePage: {
+    seo: {
+      title: 'WorkCoPilot İş Ortaklığı Programı - AdmireVeda ile Ortak Olun',
+      description: "WorkCoPilot'u önerin ve yönlendirdiğiniz her kişinin ilk ödemesinden pay kazanın; ödemeler Stripe üzerinden yapılır. Başvurular ekibimiz tarafından incelenir.",
+    },
+    errors: {
+      loadProgram: 'Program ayrıntıları yüklenemedi.',
+      loadDashboard: 'İş ortağı panonuz yüklenemedi.',
+      refreshStripe: 'Stripe durumunuz yenilenemedi: {reason}',
+      refreshStripeFallback: 'lütfen tekrar deneyin.',
+    },
+    connect: {
+      complete: 'Stripe kurulumu tamamlandı. Ödeme aktarımları hesabınızda etkin.',
+      expired: 'Stripe kurulum bağlantınızın süresi doldu veya kesintiye uğradı. Aşağıdan kaldığınız yerden devam edebilirsiniz.',
+      pending: 'Stripe, bilgilerinizi doğrulamayı henüz tamamlamadı. Kurulumu aşağıdan sürdürebilirsiniz.',
+    },
+    nav: {
+      homeAria: 'AdmireVeda ana sayfası',
+      back: "WorkCoPilot'a dön",
+    },
+    loading: 'İş ortaklığı programı yükleniyor',
+    footer: {
+      copyright: 'COE Security LLC · AdmireVeda tarafından WorkCoPilot',
+      terms: 'Şartlar',
+      privacy: 'Gizlilik',
+      support: 'Destek',
+    },
+    hero: {
+      eyebrow: 'İş ortaklığı programı',
+      h1: "WorkCoPilot'u önerin. <em>Her referanstan {rate} kazanın.</em>",
+      lead: 'İnsanları zaten daha iyi çalışmalarını sağlayan araçlara yönlendiriyorsunuz. Bunu kazanca dönüştürün: <b>yönlendirdiğiniz her kişinin ilk ödemesinin {rate} kadarını</b> kazanın, Stripe üzerinden otomatik olarak gönderilir. Yönlendirdiğiniz kişiler yıllık faturalamayı seçtiğinde <b>bir ay ücretsiz</b> kazanır.',
+      apply: 'İş ortağı olmak için başvurun',
+      see: 'Ne önereceğinizi görün',
+      trustAria: 'Program güvenceleri',
+      trust1: 'Başvuru yaklaşık 2 dakika',
+      trust2: 'Bir kişi tarafından incelenir',
+      trust3: 'Otomatik Stripe ödeme aktarımları',
+      imgAlt: "WorkCoPilot'u paylaşan çeşitli içerik üreticileri, yükselen bir büyüme oku ve madeni paralar",
+      chipEarn: 'Her ilk ödemenin <b>{rate} kadarını kazanın</b>',
+      chipGift: 'Kitleniz için <b>ücretsiz ay</b>',
+    },
+    glance: {
+      aria: 'Bir bakışta program',
+      rate: 'her referansın ilk ödemesinden',
+      stripe: 'hesabınıza otomatik ödeme aktarımları',
+      month: '1 ay',
+      monthSub: 'yönlendirdiğiniz herkese, yıllık faturalamada ücretsiz',
+      min: '2 dk',
+      minSub: 'başvurmak için; tek ihtiyacımız ad ve e-posta',
+    },
+    boosters: {
+      kicker: 'İş ortakları neden katılıyor',
+      title: 'Siz kazanırsınız. Kitleniz tasarruf eder. Herkes kazanır.',
+      sub: 'Öneri yalnızca sizin için değil, yönlendirdiğiniz kişiler için de iyi olacak şekilde kurulmuş bir program.',
+      money: {
+        t: 'Zaten yaptığınız yönlendirmeler için gerçek para',
+        d: 'Yönlendirdiğiniz her kişinin ilk ödemesinin {rate} kadarı, ödeme gerçekleşir gerçekleşmez hesabınıza geçer.',
+      },
+      gift: {
+        t: 'Kitleniz için bir hediye, satış konuşması değil',
+        d: 'Bağlantınız üzerinden kaydolan herkes yıllık faturalamada bir ay ücretsiz kazanır. Onlara bir fırsat sunuyorsunuz.',
+      },
+      stripe: {
+        t: 'Otomatik Stripe ödeme aktarımları',
+        d: 'Stripe hesabınızı bir kez bağlayın. Kazançlarınız size aktarılır; banka bilgilerinizi hiçbir zaman görmeyiz.',
+      },
+      review: {
+        t: 'Az engel, insan eliyle inceleme',
+        d: 'Başvuru yaklaşık iki dakika. Her başvuruyu bir kişi okur ve kararı size e-postayla iletir.',
+      },
+    },
+    flow: {
+      kicker: 'Nasıl çalışır',
+      title: 'Başvurudan ödeme aktarımına beş adım.',
+      apply: {
+        t: 'Başvurun',
+        d: 'Aşağıdaki kısa formu doldurun. Hemen gelen kutunuza bir onay gelir.',
+      },
+      review: {
+        t: 'İnceleriz',
+        d: 'Bir kişi, kitleniz ve sosyal kanallarınız dahil her başvuruyu okur.',
+      },
+      approved: {
+        t: 'Onaylandı',
+        d: 'Onay e-postanızda parolanızı belirlemeniz ve panonuzu açmanız için bir bağlantı bulunur.',
+      },
+      share: {
+        t: 'Bağlantınızı paylaşın',
+        d: 'Kişisel referans bağlantınız ve kodunuz hazır. Kitlenizin sizi dinlediği her yerde paylaşın.',
+      },
+      earn: {
+        t: 'Kazanın',
+        d: 'Her referansın ilk ödemesinin {rate} kadarını alırsınız. Onlar yıllık faturalamada bir ay ücretsiz kazanır.',
+      },
+    },
+    audience: {
+      kicker: 'Kimin için',
+      title: 'Ekranda işi olan herkes.',
+      sub: 'WorkCoPilot, insanlara herhangi bir araçta, herhangi bir süreçte adım adım yol gösterir. Kitleniz klavye başında takılıp kalıyorsa, önerebileceğiniz gerçek bir şeyiniz var demektir.',
+      teamsAlt: 'Dizüstü bilgisayar başında zorlu bir sorunu birlikte çözen iki iş arkadaşı',
+      teamsT: 'Ekipler ve küçük şirketler',
+      teamsD: 'Şirket içinde yürütülen uzmanlık işleri, tam olarak bir sonraki adıma kadar rehberlikle.',
+      soloAlt: 'Dizüstü bilgisayar başında karmaşık bir görevi tamamlayan bir profesyonel',
+      soloT: 'Bireyler ve öğrenenler',
+      soloD: 'Doğru tıklama, komut veya ayarla saniyeler içinde yolunuza devam.',
+    },
+    applySec: {
+      kicker: 'Başvurun',
+      title: 'Şimdi iki dakika. İstediğiniz sürece sizin olan bir referans bağlantısı.',
+      sub: 'Tek ihtiyacımız ad ve e-posta. Geri kalanı daha hızlı evet dememize yardımcı olur. Hemen bir onay e-postası alırsınız ve karar verir vermez size e-posta göndeririz.',
+      rulesK: 'İnce ayrıntılar, sade bir dille',
+      rule1: 'Komisyon, <b>yönlendirilen kişinin ilk ödemesinin {rate} kadarıdır</b>. Yenilemeler ve sonraki satın almalar komisyon kazandırmaz.',
+      rule2: 'Ödeme aktarımları, bekleyen bakiyeniz panonuzda gösterilen program alt sınırına ulaştığında <b>Stripe</b> üzerinden gönderilir.',
+      rule3: 'Bir referans, kişi bağlantınız üzerinden kaydolup ödeme yaptığında sayılır.',
+      rule4: 'Yalnızca dürüst tanıtım: spam yok, yanıltıcı iddialar yok, ücretli aramada WorkCoPilot veya AdmireVeda adlarına teklif verme yok.',
+      closedTitle: 'İş ortağı başvuruları şu anda kapalı.',
+      closedBody: 'Şu anda yeni iş ortağı almıyoruz. Daha sonra tekrar bakın veya aklınızda bir iş birliği varsa <a>bizimle iletişime geçin</a>.',
+    },
+    perk: {
+      aria: 'Siz ne kazanırsınız ve referanslarınız ne kazanır',
+      youEarn: 'Siz kazanırsınız',
+      youEarnSub: 'yönlendirdiğiniz her kişinin ilk ödemesinden, Stripe üzerinden aktarılır.',
+      theyGet: 'Onlar kazanır',
+      freeMonth: 'Bir ay ücretsiz',
+      theyGetSub: 'bağlantınız üzerinden kaydolup yıllık faturalamayı seçtiklerinde.',
+    },
+    form: {
+      errName: 'Lütfen adınızı ekleyin.',
+      errEmail: 'Lütfen geçerli bir e-posta adresi ekleyin.',
+      errDuplicate: 'Bu e-posta için zaten bir başvuru var. Sizinle iletişime geçeceğiz.',
+      errSend: 'Başvurunuz gönderilemedi. Lütfen tekrar deneyin.',
+      doneTitle: 'Başvuru alındı.',
+      thereFallback: 'değerli kullanıcı',
+      doneBody: 'Teşekkürler, {name}. <b>{email}</b> adresine bir onay e-postası gönderdik. Her başvuruyu inceliyoruz ve karar verir vermez size bir e-posta gelecek. Onaylanırsa, bu e-postada parolanızı belirlemeniz ve panonuzu açmanız için bir bağlantı bulunur.',
+      nextAria: 'Bundan sonra ne olacak',
+      nextNow: '<b>Şimdi:</b> gelen kutunuzda bir onay var.',
+      nextReview: '<b>Sıradaki:</b> bir kişi başvurunuzu inceler.',
+      nextApproved: '<b>Onaylanırsa:</b> e-postadan parolanızı belirleyin ve panonuzu açın.',
+      backHome: "WorkCoPilot'a dön",
+      headTitle: 'İş ortağı başvurunuz',
+      headSub: 'Yaklaşık iki dakika. Tek ihtiyacımız ad ve e-posta; geri kalan her şey daha hızlı evet dememize yardımcı olur.',
+      signedInAs: '<b>{email}</b> olarak oturum açtınız. Bu hesapla başvurabilirsiniz; onaylandığında iş ortağı panonuz bu hesabın altında yer alır.',
+      secContact: 'İletişim',
+      nameLabel: 'Adınız',
+      namePlaceholder: 'Alex Morgan',
+      emailLabel: 'E-posta',
+      emailPlaceholder: 'you@yourdomain.com',
+      phoneLabel: 'Telefon',
+      phonePlaceholder: '+1 555 123 4567',
+      websiteLabel: 'Web sitesi',
+      websitePlaceholder: 'https://yoursite.com',
+      optional: '(isteğe bağlı)',
+      secSocial: 'Sosyal medya',
+      socialOptional: '(isteğe bağlı, ama iş ortaklarını böyle değerlendiriyoruz)',
+      socialAdded: ' - {n} eklendi',
+      socials: {
+        tiktok: '@yourhandle',
+        instagram: '@yourhandle',
+        youtube: '@kanal veya kanal bağlantısı',
+        twitter: '@yourhandle',
+        facebook: 'Sayfa adı veya bağlantısı',
+        linkedin: 'Profil veya şirket sayfası bağlantısı',
+        otherLabel: 'Diğer',
+        other: 'Bülten, podcast, Discord, blog...',
+      },
+      secAudience: 'Kitleniz',
+      audienceLabel: 'Kitleniz kim?',
+      audiencePlaceholder: 'Örneğin: küçük şirketlerdeki BT yöneticileri, bootcamp öğrencileri, finans ekipleri',
+      notesLabel: 'Başka bir şey',
+      notesPlaceholder: "WorkCoPilot'u nasıl paylaşmayı planladığınız veya bilmemiz gereken her şey.",
+      send: 'Başvurumu gönder',
+      fine: "Başvurarak WorkCoPilot'u dürüstçe tanıtmayı kabul edersiniz. Bu bilgileri yalnızca başvurunuzu incelemek ve programı yürütmek için kullanırız. Hemen bir onay e-postası, incelediğimizde ise bir karar e-postası alırsınız.",
+    },
+    dash: {
+      eyebrow: 'İş ortağı panosu',
+      welcome: 'Tekrar hoş geldiniz, <em>{name}.</em>',
+      welcomeAnon: '<em>İş ortağı</em> panonuz.',
+      lead: 'Her referansın ilk ödemesinin <b>{rate}</b> kadarını kazanırsınız. Bağlantınızı paylaşın; bu sayfa hesabı tutar.',
+      onHold: 'Beklemede',
+      approved: 'Onaylı iş ortağı',
+      holdNote: '<b>İş ortağı hesabınız beklemede.</b> Duraklatıldığı sürece yeni referanslar hesabınıza işlenmez. Kazandığınız bakiye kayıtlarda kalır. Sorularınız varsa <a>support@admireveda.com</a> adresine yazın.',
+      linkK: 'Referans bağlantınız',
+      linkD: 'Bu bağlantı üzerinden kaydolup ilk ödemesini yapan herkes, size o ödemenin {rate} kadarını kazandırır.',
+      linkAria: 'Referans bağlantınız',
+      copied: 'Kopyalandı',
+      copy: 'Bağlantıyı kopyala',
+      statsAria: 'Rakamlarınız',
+      clicks: 'Tıklamalar',
+      clicksHint: 'bağlantınız üzerinden gelen ziyaretler',
+      conversions: 'Dönüşümler',
+      conversionsHint: 'ödeme yapan referanslar',
+      earned: 'Kazanılan',
+      earnedHint: 'hesaba geçen komisyon',
+      pending: 'Bekleyen',
+      pendingHintMin: '{amount} tutarına ulaşınca aktarılır',
+      pendingHint: 'ödeme aktarımı bekliyor',
+      paid: 'Ödendi',
+      paidHint: 'Stripe hesabınıza gönderildi',
+      payoutsK: 'Ödeme aktarımları',
+      payoutsActive: 'Ödeme aktarımları etkin (Stripe)',
+      payoutsConnectedMin: 'Stripe hesabınız bağlı. Bekleyen bakiyeniz {amount} tutarına ulaştığında WorkCoPilot ekibi ödeme aktarımlarını gerçekleştirir; her aktarım Ödendi toplamında ve Stripe panonuzda görünür.',
+      payoutsConnected: 'Stripe hesabınız bağlı. WorkCoPilot ekibi ödeme aktarımlarını gerçekleştirir; her aktarım Ödendi toplamında ve Stripe panonuzda görünür.',
+      payoutsReview: 'Stripe, hesap bilgilerinizi hâlâ inceliyor; bu nedenle inceleme bitene kadar bir ödeme aktarımı bekletilebilir.',
+      finishPayouts: 'Ödeme aktarımı kurulumunu tamamlayın',
+      setupPayouts: 'Ödeme aktarımlarını kurun',
+      resumeBody: 'Stripe kurulumunu başlattınız ama henüz tamamlanmadı. Kazançlarınızın aktarılabilmesi için kaldığınız yerden devam edin.',
+      connectBody: 'Komisyonunuzu almak için bir Stripe hesabı bağlayın. Kimlik ve banka bilgilerini Stripe yönetir; biz hiçbir zaman görmeyiz.',
+      errNoLink: 'Stripe bir kurulum bağlantısı döndürmedi. Lütfen birazdan tekrar deneyin.',
+      errStart: 'Stripe kurulumu başlatılamadı. Lütfen tekrar deneyin.',
+      errCheck: 'Stripe durumunuz denetlenemedi.',
+      resumeStripe: 'Stripe kurulumuna devam et',
+      setupStripe: 'Stripe ile kurun',
+      alreadyFinished: 'Zaten tamamladım',
+      rateK: 'Oranınız',
+      rateSub: 'her referansın ilk ödemesinden',
+      rateRule1: 'Yönlendirilen kişinin ilk ödemesi gerçekleştiğinde hesaba geçer.',
+      rateRule2: 'Yenilemeler ve sonraki satın almalar komisyon kazandırmaz.',
+      rateRule3: 'Ödeme iade edilir veya geri alınırsa geçersiz sayılır.',
+      referrals: 'Referanslar',
+      referralCount_one: '{n} referans',
+      referralCount_other: '{n} referans',
+      emptyTitle: 'Henüz referans yok.',
+      emptyBody: 'Yukarıdaki bağlantınızı paylaşın. Biri bu bağlantı üzerinden kaydolup ilk ödemesini yaptığında, referans komisyonunuzla birlikte burada görünür.',
+      thUser: 'Yönlendirilen kullanıcı',
+      thPayment: 'İlk ödemesi',
+      thRate: 'Oran',
+      thCommission: 'Komisyonunuz',
+      thStatus: 'Durum',
+      thDate: 'Tarih',
+      paidOnTitle: '{date} tarihinde ödendi',
+      paidOn: '{date} tarihinde ödendi',
+      statusPaid: 'Ödendi',
+      statusVoid: 'Geçersiz',
+      statusEarned: 'Kazanıldı',
+    },
+  },
+  answerBody: {
+    copyCodeTip: 'Vurgulanan metni ya da hiçbir şey seçili değilse temiz kodu kopyalayın',
+    thinkAria: 'durup düşün',
+    thinkTip: 'Devam etmeden önce bir iki saniye durup düşünün',
+    pauseAria: 'burada duraklat',
+    pauseTip: 'Burada duraklayın / yavaşlayın',
+  },
+  askFocus: {
+    checkIn: 'Kısa bir durum kontrolü',
+    stuckTitle: 'Takıldınız mı? Sorun var mı?',
+    inWayPlaceholder: 'Örneğin: Doğrula düğmesi gri',
+    inWayAria: 'Önünüzde ne engel var',
+    fine: 'İyiyim, devam et',
+    youAsked: 'Sorduğunuz:',
+    planUpdated: 'Planınız güncellendi.',
+    followUp: 'Bir takip sorusu sorun',
+  },
+  benchmarkPage: {
+    eyebrow: 'Doğruluk kıyaslaması',
+    h1: 'WorkCoPilot ne kadar doğru?',
+    lead: 'Tek bir ölçü: doğru yanıtı bilinen bir görev verildiğinde, WorkCoPilot onu döndürüyor mu. Örneklem büyüklüğü ve %95 güven aralığıyla birlikte gerçek başarı oranları. Hiçbir şey yukarı yuvarlanmadı.',
+    chipsAria: 'Bu rakamlar nasıl dürüst kalıyor',
+    chips: [
+      'Mümkün olduğunda mekanik olarak notlandırıldı',
+      'Gizli tutulan bir ayrık küme',
+      'Katman başına, asla bir model adı değil',
+    ],
+    pendingTitle: 'İlk herkese açık çalıştırma bekleniyor.',
+    pendingP: 'Kıyaslama oluşturuldu ve test edildi. Herkese açık bir çalıştırma kaydedilince rakamlar buraya gelir.',
+    resultsH2: 'Yapay zeka katmanına göre sonuçlar',
+    tierStrong: 'Daha yüksek yetenekli katman',
+    tierFast: 'Hız odaklı katman',
+    lastRun: 'Son çalıştırma {when}.',
+    sampleH2: 'Örnek görevler',
+    sampleP: 'Herkese açık bir örnek. Ayrık tutulan görevler puanlanır ama asla gösterilmez.',
+    meta: '{pass}/{n} doğru · %95 GA {ci}',
+    aiGraded: ' · {n} yapay zekayla notlandırıldı',
+    ciRange: '{lo} ila {hi}',
+    tableCaption: '{title}: alana göre sonuç doğruluğu',
+    colDomain: 'Alan',
+    colCorrect: 'Doğru',
+    colRate: 'Oran',
+    colCi: '%95 GA',
+    domains: {
+      dev: 'Geliştirme / veri',
+      finance: 'E-tablo / finans',
+      cross: 'Meslekler arası',
+      security: 'Güvenlik / kod incelemesi',
+    },
+    methodH2: 'Nasıl ölçüyoruz',
+    method: [
+      {
+        t: 'Sonuç doğruluğu',
+        d: 'Her görev üründen geçirilir, sonra doğru olduğu bilinen bir referansa göre notlandırılır.',
+      },
+      {
+        t: 'Önce doğrulama',
+        d: 'Yanıtın izin verdiği yerde mekanik denetimler. Yalnızca başka durumda bir yapay zeka hakemi devreye girer, işaretlenir ve her çalıştırmada insan denetimiyle örneklenir.',
+      },
+      {
+        t: 'Dört alan',
+        d: 'Geliştirme ve veri, e-tablo ve finans, meslekler arası bir karışım, güvenlik ve kod incelemesi.',
+      },
+      {
+        t: 'Dürüst rakamlar',
+        d: 'Örneklem büyüklükleri ve %95 güven aralıklarıyla başarı oranları. Gizli ayrık bir küme aşırı uyuma direnir.',
+      },
+    ],
+    note: 'Yuvarlanmış ama güven aralığı olmayan bir rakam yerine, güven aralığıyla birlikte doğru ve daha küçük bir rakam yayınlamayı tercih ederiz. Örneklemi zayıf alanlar etiketlenir.',
+    ctaH2: 'Ne yaptığını, sonra neye mal olduğunu görün',
+    ctaP: 'WorkCoPilot, insanlara gerçek işlerde tamamlanmış bir sonuca kadar yol gösterir.',
+    seePricing: 'Fiyatlandırmayı görün',
+    howItWorks: 'Nasıl çalışır',
+    relatedAria: 'İlgili sayfalar',
+    securityLink: 'Güvenlik ve veri işleme',
+    backHome: 'Ana sayfaya dön',
+  },
+  billingWidget: {
+    aria: 'Faturalama ve abonelik',
+    status: {
+      active: 'Etkin',
+      trialing: 'Deneme',
+      past_due: 'Gecikmiş',
+      canceled: 'İptal edildi',
+      none: 'Etkin plan yok',
+    },
+    invStatus: {
+      paid: 'Ödendi',
+      open: 'Açık',
+      draft: 'Taslak',
+      void: 'Geçersiz',
+      uncollectible: 'Tahsil edilemez',
+    },
+    errors: {
+      portalOpen: 'Faturalama açılamadı. Lütfen tekrar deneyin.',
+      portalUnavailable: 'Faturalama şu anda kullanılamıyor.',
+      change: "Planınız şu anda değiştirilemedi. Lütfen tekrar deneyin veya Faturalamayı yönet'i kullanın.",
+    },
+    head: {
+      title: 'Faturalama ve plan',
+      sub: 'Aboneliğinizi, ödeme yönteminizi ve faturalarınızı yönetin. Değişiklikler Stripe üzerinden güvenli şekilde yürütülür.',
+      manage: 'Faturalamayı yönet',
+    },
+    settingUp: 'Faturalama kuruluyor. Plan ayrıntılarınız ve faturalarınız, hazır olduğunda burada görünecek.',
+    pastDue: {
+      title: 'Son ödemeniz gerçekleşmedi.',
+      body: 'Erişiminizi sürdürmek için ödeme yönteminizi güncelleyin. Siz bunu düzeltirken planınız etkin kalır.',
+      fix: 'Ödemeyi düzelt',
+    },
+    canceledNote: {
+      canceled: 'Planınız iptal edildi.',
+      scheduled: 'Planınız iptal edilmek üzere ayarlandı.',
+      access: '<b>{date}</b> tarihine kadar tam erişiminiz sürer. O tarihten önce istediğiniz zaman yeniden bir plan seçebilirsiniz.',
+    },
+    current: {
+      noPlan: 'Plan yok',
+      perYear: 'yıl',
+      perMonth: 'ay',
+      hoursPerMonth_one: 'ayda {n} saat',
+      hoursPerMonth_other: 'ayda {n} saat',
+      accessUntil: 'Erişim bitişi',
+      trialEnds: 'Deneme bitişi',
+      renews: 'Yenilenir',
+    },
+    cycle: {
+      annual: 'Yıllık',
+      monthly: 'Aylık',
+      annualLower: 'yıllık',
+      monthlyLower: 'aylık',
+      perYr: 'yıl',
+      perMo: 'ay',
+    },
+    result: {
+      now: 'Artık {plan} ({cycle}) planındasınız. Değişiklik hemen geçerlidir.',
+      scheduledOn: '{plan} ({cycle}) planına geçişiniz {date} tarihine planlandı. O tarihe kadar mevcut planınız devam eder.',
+      scheduledPeriodEnd: '{plan} ({cycle}) planına geçişiniz mevcut döneminizin sonuna planlandı. O tarihe kadar mevcut planınız devam eder.',
+    },
+    comingOnline: 'Uygulama içi plan değişiklikleri kısa süre içinde devreye giriyor. Bu arada planınızı <a>Faturalamayı yönet</a> üzerinden değiştirebilirsiniz.',
+    change: {
+      title: 'Planınızı değiştirin',
+      cycleAria: 'Faturalama dönemi',
+      current: 'Mevcut',
+      contactUs: 'Bize ulaşın',
+      hoursGuided_one: 'ayda {n} saat rehberli süre',
+      hoursGuided_other: 'ayda {n} saat rehberli süre',
+      yourPlan: 'Planınız',
+      upgrade: 'Yükselt',
+      downgrade: 'Düşür',
+      switchAnnual: 'Yıllığa geç',
+      switchMonthly: 'Aylığa geç',
+      note: 'Düşürmeler bir sonraki yenilemenizde geçerli olur; yükseltmeler, oransal kredi ile hemen uygulanır.',
+      cancel: 'Planı iptal et',
+    },
+    noPlanYet: 'Henüz bir planınız yok. Rehberliği açmak için yukarıdaki plan seçicisinden bir plan başlatın, sonra buradan yönetin.',
+    invoices: {
+      title: 'Faturalar',
+      paymentMethod: 'Ödeme yöntemi',
+      loading: 'Faturalar yükleniyor...',
+      empty: 'Henüz fatura yok. İlk ödemenizden sonra burada görünürler.',
+      view: 'Görüntüle',
+      pdf: 'PDF',
+    },
+    trust: {
+      badge: 'Stripe ile güvende',
+      text: 'PCI uyumlu ödeme · kart bilgileriniz sunucularımızda hiçbir zaman saklanmaz.',
+    },
+    confirm: {
+      aria: 'Plan değişikliğini onayla',
+      upgradeTo: '{plan} planına yükselt',
+      changeTo: '{plan} planına geç',
+      upNote: 'Bu yükseltme hemen geçerli olur. Stripe mevcut döneminizi oranlar; böylece şimdi yalnızca aradaki fark için ücretlendirilirsiniz.',
+      downNote: 'Bu değişiklik mevcut faturalama döneminizin sonunda geçerli olur. O zamana kadar mevcut planınız ve kapsadığı saatler sizde kalır, bugün yeni bir ücret alınmaz.',
+      fine: 'Kesin tutarı ve zamanlamayı bir sonraki ekranda onaylanmış olarak göreceksiniz. İstediğiniz zaman yeniden değiştirebilir veya iptal edebilirsiniz.',
+      notNow: 'Şimdi değil',
+      confirmUpgrade: 'Yükseltmeyi onayla',
+      confirmChange: 'Değişikliği onayla',
+    },
+    cancelModal: {
+      aria: 'Planı iptal et',
+      title: 'Planınızı iptal edelim mi?',
+      noteDate: 'Planınız etkin kalır ve mevcut faturalama döneminizin sonuna (<b>{date}</b>) kadar tam erişiminiz sürer. Tekrar ücretlendirilmezsiniz. İstediğiniz zaman yeniden bir plan seçebilirsiniz.',
+      note: 'Planınız etkin kalır ve mevcut faturalama döneminizin sonuna kadar tam erişiminiz sürer. Tekrar ücretlendirilmezsiniz. İstediğiniz zaman yeniden bir plan seçebilirsiniz.',
+      fine: 'İptal işlemi, onaylayıp kesin bitiş tarihinizi görebileceğiniz güvenli Stripe portalında tamamlanır.',
+      keep: 'Planımı sürdür',
+      continue: 'İptale devam et',
+    },
+  },
+  buddyPage: {
+    allDone: 'Tüm adımlar tamam',
+    gettingReady: 'Hazırlanıyor',
+    allSet: 'Her şey hazır. Bitirmek için tam pencereyi açın.',
+    watching: 'Sıradaki hamle için ekranınız izleniyor',
+    progressDone: '{total} / {total}',
+    progressStep: 'Adım {n} / {total}',
+    noTimeLeft: 'Kalan süre yok',
+    calm: {
+      completed: 'Oturum tamamlandı. Özetiniz ana pencerede hazır.',
+      loading: 'Uyanıp bağlanıyor',
+      error: 'Sunucuya ulaşılamıyor. Yeniden deneniyor.',
+      signin: "Ana pencerede WorkCoPilot'a giriş yapın; adımlarınız burada görünür.",
+      empty: "Henüz etkin görev yok. Başlatmak için WorkCoPilot'u açın.",
+    },
+    pickBuddy: 'Yardımcınızı seçin',
+    stepConfirmed: 'Adım onaylandı',
+    openWorkCoPilot: "WorkCoPilot'u aç",
+    controls: {
+      closePicker: 'Yardımcı seçiciyi kapat',
+      changeBuddy: 'Yardımcıyı değiştir',
+      showBuddy: 'Yardımcıyı göster',
+      textOnly: 'Yalnızca metin',
+      resumeMotion: 'Yardımcı hareketini sürdür',
+      freezeMotion: 'Yardımcı hareketini dondur',
+      resumeGuidance: 'Rehberliği sürdür',
+      pauseGuidance: 'Rehberliği duraklat',
+      openGuide: 'Tam kılavuzu aç',
+      openWindow: 'Tam pencereyi aç',
+      hideTitle: 'Yardımcıyı gizle (duraklatır ve ilerlemenizi kaydeder)',
+      hide: 'Yardımcıyı gizle',
+      close: 'Yardımcıyı kapat',
+    },
+  },
+  buddyPicker: {
+    groupAria: 'Yardımcınızı seçin',
+  },
+  composeCard: {
+    emptyBody: 'Hiçbir belge dönmedi.',
+    basedOn: 'Neye dayandırdığım',
+  },
+  computeCard: {
+    cmp: {
+      eq: 'eşittir',
+      ne: 'eşit değildir',
+      gt: 'büyüktür',
+      gte: 'en az',
+      lt: 'küçüktür',
+      lte: 'en fazla',
+      contains: 'içerir',
+      in: 'şunlardan biridir',
+    },
+    fn: {
+      sum: 'toplam',
+      avg: 'ortalama',
+      min: 'en küçük',
+      max: 'en büyük',
+      count: 'sayı',
+      countDistinct: 'benzersiz sayı',
+    },
+    spec: {
+      and: 've',
+      countRows: 'satır sayısı',
+      countRowsAs: '"{as}" olarak satır sayısı',
+      fnOfCol: '{col} sütununun {fn} değeri',
+      fnOfColAs: '{col} sütununun {fn} değeri, "{as}" olarak',
+      filter: 'Yalnızca {where} olan satırları tut.',
+      derive: '{expr} olarak hesaplanan bir "{as}" sütunu ekle.',
+      select: 'Şu sütunları tut: {cols}.',
+      group: '{by} ölçütüne göre grupla, sonra {aggs} değerlerini al.',
+      wholeTable: 'tüm tablo',
+      sort: '{by} ölçütüne göre sırala ({dir}).',
+      highToLow: 'yüksekten düşüğe',
+      lowToHigh: 'düşükten yükseğe',
+      limit_one: 'İlk {n} satırı al.',
+      limit_other: 'İlk {n} satırı al.',
+      returnCount: 'Satır sayısını döndür.',
+      returnFn: '{col} sütununun {fn} değerini döndür.',
+      returnTable: 'Ortaya çıkan tabloyu döndür.',
+    },
+    copy: 'Kopyala',
+    copied: 'Kopyalandı',
+    copyCsv: 'CSV olarak kopyala',
+    downloadCsv: 'CSV indir',
+    eyebrow: 'Cihazınızda hesaplandı',
+    kindNumber: 'Sayı',
+    kindTable: 'Tablo',
+    titleNumber: 'Sayı',
+    titleTable: 'Tablo',
+    emptyTable: 'Hiçbir satır eşleşmedi, bu yüzden tablo boş.',
+    truncated: "Toplam {total} sonuç satırından ilk {shown} tanesi gösteriliyor. Tamamı için CSV'yi indirin.",
+    howK: 'Nasıl hesaplandı',
+    runAcross_one: 'Cihazınızda {count} satır üzerinde çalıştırıldı.',
+    runAcross_other: 'Cihazınızda {count} satır üzerinde çalıştırıldı.',
+    privacy: 'Cihazınızda çalıştırıldı. Verileriniz cihazınızdan hiç çıkmadı.',
+  },
+  contactPage: {
+    eyebrow: 'Bize ulaşın',
+    h1: 'Bizimle konuşun.',
+    lead: 'WorkCoPilot hakkında sorular, ekibiniz için bir demo, güvenlik veya uyumluluk ya da başka herhangi bir konu. Bir not gönderin, size geri döneriz.',
+    errors: {
+      required: 'Lütfen adınızı, e-postanızı ve bir mesaj ekleyin.',
+      sendFailed: 'Mesajınız gönderilemedi. Lütfen tekrar deneyin.',
+    },
+    form: {
+      nameLabel: 'Adınız',
+      namePlaceholder: 'Alex Morgan',
+      emailLabel: 'E-posta',
+      emailPlaceholder: 'siz@sirket.com',
+      subjectLabel: 'Konu',
+      optional: '(isteğe bağlı)',
+      subjectPlaceholder: 'Nasıl yardımcı olabiliriz?',
+      messageLabel: 'Mesaj',
+      messagePlaceholder: 'Aradığınız şey hakkında bize biraz bilgi verin.',
+      send: 'Mesaj gönder',
+      note: 'Kurumsal, güvenlik veya uyumluluk soruları için bunu yukarıda belirtin, doğru ekip yanıtlasın.',
+    },
+    done: {
+      thanks: 'Teşekkürler, {name}.',
+      thereFallback: 'merhaba',
+      body: 'Mesajınız ekibimize ulaşmak üzere yolda ve bir onay <b>{email}</b> adresine gidiyor. Kısa süre içinde sizinle iletişime geçeceğiz.',
+      backHome: 'Ana sayfaya dön',
+    },
+  },
+  cookiePolicyPage: {
+    seo: {
+      title: "Çerez Politikası - AdmireVeda'dan WorkCoPilot",
+      description: "WorkCoPilot'un kullandığı her çerez ve tarayıcı depolama anahtarı: kesinlikle gerekli tek bir oturum açma çerezi, bir onay kaydı, onaya bağlı bir yönlendirme çerezi ve birinci taraf işlevsel depolama. Reklam veya siteler arası izleme yok ve seçimlerinizi nasıl yöneteceğiniz.",
+    },
+    hero: {
+      eyebrow: 'Çerez Politikası',
+      title: 'Çerezler ve tarayıcı depolaması',
+      intro: "WorkCoPilot'un tam olarak hangi çerezleri ve tarayıcı depolamasını kullandığı, her birinin ne işe yaradığı, ne kadar sürdüğü ve bunları nasıl denetlediğiniz.",
+      tagline: 'Ürünün bugün ne yaptığına dair sade dilde açıklama',
+    },
+    glance: [
+      {
+        eyebrow: 'Neyi ayarlarız',
+        title: 'Varsayılan olarak tek bir gerekli çerez',
+        body: 'Onayınız olmadan yalnızca kesinlikle gerekli bir oturum açma çerezi ayarlanır. Bir yönlendirme çerezi yalnızca ilişkilendirmeye izin verirseniz ayarlanır.',
+      },
+      {
+        eyebrow: 'Sizin denetiminiz',
+        title: 'Seçimlerinizi istediğiniz zaman değiştirin',
+        body: 'İşlevsel ve ilişkilendirme depolamasını istediğiniz zaman açıp kapatmak için alt bilgideki "Çerez tercihleri"ni ya da bu sayfayı kullanın.',
+      },
+      {
+        eyebrow: 'İzleme yok',
+        title: 'Reklam veya siteler arası izleme yok',
+        body: 'Reklam çerezleri, üçüncü taraf izleyiciler veya siteler arası profilleme kullanmayız. İşlevsel depolama kendi cihazınızda kalır.',
+      },
+    ],
+    sections: {
+      about: 'Çerezler ve depolama hakkında',
+      what: 'Neleri kullanırız',
+      categories: 'Üç kategori',
+      manage: 'Seçimlerinizi yönetme',
+      consent: 'Onay ve yönlendirmeler',
+      changes: 'Bu politikadaki değişiklikler',
+      contact: 'İletişim',
+    },
+    table: {
+      caption: 'WorkCoPilot tarafından kullanılan çerezler ve tarayıcı depolaması',
+      columns: ['Ad', 'Tür', 'Kategori', 'Amaç', 'Ömür'],
+      rows: [
+        {
+          kind: 'Çerez',
+          category: 'Kesinlikle gerekli',
+          purpose: 'Oturumunuzu açık ve oturumu çalışır tutar.',
+          lifetime: 'Oturum',
+        },
+        {
+          kind: 'Çerez',
+          category: 'Kesinlikle gerekli (onay kaydı)',
+          purpose: 'Çerez seçimlerinizi hatırlar; böylece bunlara uyabiliriz. İlişkilendirmeye izin verilip verilmediğini bilmek için sunucu tarafından da okunur.',
+          lifetime: '~1 yıl',
+        },
+        {
+          kind: 'Çerez',
+          category: 'Analitik ve ilişkilendirme',
+          purpose: 'Sizi yönlendiren bir ortağa pay verir. Yalnızca ilişkilendirmeye izin verdikten sonra ayarlanır.',
+          lifetime: '180 güne kadar',
+        },
+        {
+          kind: 'Yerel depolama',
+          category: 'Kesinlikle gerekli (onay kaydı)',
+          purpose: 'Bu cihazdaki kategori bazlı seçimlerinizin tam kaydı.',
+          lifetime: 'Temizlenene kadar',
+        },
+        {
+          kind: 'Yerel depolama',
+          category: 'İşlevsel',
+          purpose: 'Seçtiğiniz dili hatırlar.',
+          lifetime: 'Temizlenene kadar',
+        },
+        {
+          kind: 'Yerel depolama',
+          category: 'İşlevsel',
+          purpose: 'Açık veya koyu modu hatırlar.',
+          lifetime: 'Temizlenene kadar',
+        },
+        {
+          name: 'Tercih anahtarları',
+          kind: 'Yerel depolama',
+          category: 'İşlevsel',
+          purpose: "Rehber yazı tipi boyutu, ekrandaki yardımcı, widget'ın açık/kapalı durumu ve gördüğünüz bildirimler gibi küçük tercihleri hatırlar.",
+          lifetime: 'Temizlenene kadar',
+        },
+        {
+          name: 'Potansiyel müşteri / koç anahtarları',
+          kind: 'Yerel depolama',
+          category: 'İşlevsel',
+          purpose: '"Canlı doğrula" potansiyel müşteri ve anonim kimliği ile koç işaretlerini hatırlar; böylece widget sizi yeniden sormaz.',
+          lifetime: 'Temizlenene kadar',
+        },
+        {
+          kind: 'Oturum depolaması',
+          category: 'İlişkilendirme için tutulur',
+          purpose: 'Siz ilişkilendirmeye karar verene kadar bu sekme için bir yönlendirme kodu tutar. Yalnızca izin verirseniz affref çerezine yükseltilir; aksi hâlde atılır.',
+          lifetime: 'Sekme kapanana kadar',
+        },
+      ],
+    },
+    about: {
+      p1: 'Çerez, bir sitenin tarayıcınızda sakladığı küçük bir dosyadır. "Yerel depolama" ve "oturum depolaması", küçük değerleri kendi cihazınızda tutmaya yarayan benzer tarayıcı mekanizmalarıdır. Bu sayfa, WorkCoPilot\'un kullandığı her çerezi ve depolama anahtarını, her birinin ne işe yaradığını ve ne kadar sürdüğünü listeler.',
+      p2: 'Bunları üç kategoriye ayırırız: <b>kesinlikle gerekli</b> (her zaman açık, çünkü oturum açma ve site bunlar olmadan çalışamaz), <b>işlevsel</b> (bu cihazdaki tercihlerinizi hatırlar) ve <b>analitik ve ilişkilendirme</b> (sizi yönlendiren bir ortağa pay verir). İşlevsel ve ilişkilendirme depolaması, siz izin verene kadar kapalı kalır.',
+    },
+    what: {
+      p1: 'Bu tam listedir. Değişirse, yukarıdaki "Son güncelleme" tarihi de onunla birlikte değişir.',
+    },
+    categories: {
+      items: [
+        {
+          name: 'Kesinlikle gerekli',
+          how: 'Oturum açma çerezi ve onay seçimlerinizin kaydı. Bunlar her zaman açıktır; bunlar olmadan oturum açamaz ya da seçimlerinizi hatırlayamazdık. GDPR ve benzeri yasalar kapsamında onaydan muaftır.',
+        },
+        {
+          name: 'İşlevsel',
+          how: 'Dil, tema ve küçük arayüz durumu gibi tercihleri hatırlayan birinci taraf tarayıcı depolaması. Cihazınızda kalır, paylaşılmaz ve sizi profillemek için kullanılmaz.',
+        },
+        {
+          name: 'Analitik ve ilişkilendirme',
+          how: 'Sizi buraya yönlendiren bir ortağa pay veren tek bir birinci taraf yönlendirme çerezi (affref). Siz izin verene kadar kapalıdır, yalnızca kısa bir yönlendirme kodu taşır ve asla reklam ya da siteler arası izleme için kullanılmaz.',
+        },
+      ],
+    },
+    manage: {
+      items: [
+        {
+          name: 'Bu sitede',
+          how: 'İşlevsel ve ilişkilendirme depolamasını istediğiniz zaman açıp kapatmak için aşağıdaki düğmeyi ya da alt bilgideki "Çerez tercihleri" bağlantısını kullanın. Reddetmek, kabul etmek kadar kolaydır.',
+        },
+        {
+          name: 'Tarayıcınızda',
+          how: 'Çerezleri ve site verilerini tarayıcı ayarlarınızdan da temizleyebilir ya da engelleyebilirsiniz. Kesinlikle gerekli çerezi engellemek, oturumunuzun açık kalmasını durdurur.',
+        },
+        {
+          name: 'Reddetmenin etkisi',
+          how: 'İlişkilendirmeyi reddederseniz, yönlendirme çerezi ayarlanmaz ve mevcut olan kaldırılır. İşlevsel depolamayı reddederseniz, bu tercihleri bu cihazda saklamayız.',
+        },
+      ],
+      button: 'Çerez tercihlerini aç',
+    },
+    consent: {
+      p1: "Bir ortak yönlendirme bağlantısından geldiğinizde, yönlendirme kodu sayfa adresinde taşınır ve siz karar verene kadar yalnızca mevcut tarayıcı sekmesi için tutulur. Yönlendirme çerezini yalnızca ilişkilendirmeye izin verdikten sonra ayarlarız. Bu, katılmayı seçen kişiler için yönlendirmeleri çalışır tutarken, seçim yapmamış hiç kimse için gerekli olmayan bir çerez ayarlamaz. Yönlendirme verilerinin nasıl işlendiği için <a>Gizlilik Politikası</a>'na bakın.",
+    },
+    changes: {
+      p1: 'Bir çerezi ya da depolama anahtarını eklersek, kaldırırsak veya değiştirirsek, bu sayfayı ve "Son güncelleme" tarihini güncelleriz. Bir değişiklik gerekli olmayan bir kategoriyi etkilediğinde, onayınızı yeniden isteriz.',
+    },
+    contact: {
+      legal: 'Gizlilik ve hukuk soruları',
+      support: 'Ürün desteği',
+    },
+    links: {
+      privacy: 'Gizlilik Politikası',
+      subprocessors: 'Alt İşleyiciler',
+      terms: 'Hizmet Şartları',
+      dpa: 'DPA',
+    },
+  },
+  dashboardsHelp: {
+    home: {
+      title: 'Panonuz',
+      lead: 'Pano sizin ana sayfanızdır: bir bakışta planınız (bu ayki saatler, ek paketler veya şirket havuzunuz, açık görevler), sıradaki yapılacak tek şey ve kaldığınız yer.',
+      shot: {
+        alt: 'Pano: çalışma alanı şeridi, karşılama, atanmış görevlerin bulunduğu Sıram bölümü, Görev başlat kartı ve plan göstergeleri.',
+        caption: 'Pano. Bir proje yöneticisi size görev atayabildiğinde atanmış işler (Sıram) önce gelir; turuncu Görev başlat kartı sizin kendi işinizdir.',
+      },
+      howTo: 'Nasıl yapılır',
+      steps: [
+        '<b>Planınızı okuyun.</b> Üç kutu bu ay kalan saatleri, varsa ek paket veya şirket havuzunu ve açık görev yuvalarınızı gösterir. Üstteki zaman rozeti, azalmadan önce kehribar rengine döner.',
+        "<b>Kaldığınız yerden devam edin.</b> <b>Kaldığınız yerden devam edin</b> altında bir görevde <b>Devam et</b>'e basarak rehberli görünümü bulunduğunuz adımdan yeniden açın.",
+        "<b>Zaman ekleyin.</b> Ek paket saatleri satın almak (bireysel kullanıcılar) için üstteki <b>Zaman ekle</b>'ye basın ya da yöneticinize başvurun (şirket kullanıcıları).",
+      ],
+    },
+    start: {
+      title: 'Görev başlat',
+      lead: 'Görev başlat, kendi sözcüklerinizle yazdığınız bir hedefi ekranınızdaki rehberli adımlara dönüştürür. Tek bir akış: nerede çalıştığınız, belgeler, hedefiniz, nasıl anlaşıldığı, derinlik, birkaç soru ve ardından Rehberliğe başla.',
+      shot: {
+        alt: 'Görev başlat kutusu: bir plan adı, hedef ve Bana rehberliğe başla düğmesi.',
+        caption: 'İstediğiniz sonucu anlatın. Bir talebi, bir gereksinimi veya bir hata mesajını hedef olarak yapıştırın.',
+      },
+      howTo: 'Görev nasıl başlatılır',
+      steps: [
+        "Kenar çubuğundaki <b>Görev başlat</b>'a (ya da panodaki turuncu karta) basın.",
+        'Nerede çalıştığınızı söyleyin (bir web sitesi, bir masaüstü uygulaması, kendi dosyalarınız), varsa belgeler ekleyin ve hedefi yazın.',
+        "<b>Nasıl anladığım</b>'ı gözden geçirin, hızlı ya da ayrıntılıyı seçin, birkaç soruyu yanıtlayın, sonra <b>Rehberliğe başla</b>'ya basın. Herhangi bir uygulamada size rehberlik edebilmesi için tüm ekranınızın paylaşımına izin verin.",
+      ],
+    },
+    projects: {
+      title: 'Projeler',
+      lead: 'Proje, bir bitiş çizgisiyle birlikte görevlerden oluşan bir harita olarak yürütülen büyük bir hedeftir. WorkCoPilot haritayı baştan planlar, her göreve sırayla ekranınızda rehberlik eder ve bir görevde öğrendiklerinizi bir sonrakine taşır.',
+      shot: {
+        alt: 'Projeler sayfası: durum, ilerleme ve sıradakini gösteren proje kartları ve Yeni proje düğmesi.',
+        caption: 'Projeleriniz. Her kart durumunu, ilerlemesini ve sıradaki görevi gösterir.',
+      },
+      howTo: 'Planlayıcıyla nasıl proje oluşturulur',
+      steps: [
+        "<b>Projeler</b>'i açın ve <b>Yeni proje</b>'ye basın.",
+        "İsteğe bağlı olarak bir ad verin ve sonucu, ilgili sistemleri ve tamamlanmanın neye benzediğini anlatın. <b>Projeyi planla</b>'ya basın.",
+        'WorkCoPilot görevleri bir bitiş çizgisiyle sırayla haritalar ve planı denetler. Hedef aslında tek bir iş akışıysa bunu söyler ve bunun yerine tek bir görev olarak başlatmayı önerir.',
+        "Projeyi açın, ilk görevde <b>Başlat</b>'a basın. Bir görev, beklediği görevler tamamlandığında açılır; <b>Bu projeye ekle</b>, yeni işi haritada ait olduğu yere yerleştirir.",
+      ],
+    },
+    guide: {
+      title: 'Rehberli görünüm',
+      lead: 'Rehberli görünüm, bir görevin yürüdüğü yerdir: her seferinde tek bir adım, tam olarak ekranınızda ne varsa ona göre yeniden yazılır; komut veya kod kopyalamaya hazırdır. O okur, siz uygularsınız; sizin yerinize asla tıklamaz veya yazmaz.',
+      shot: {
+        alt: 'Şimdi, şunu yapın kartı: mevcut adım, Kopyala düğmesiyle terminal komutu ve nasıl yapılacağı.',
+        caption: 'Şimdi, şunu yapın: mevcut adım ve tam komutu. Tamamlanan adımlar, tamamlandığı görüldükçe işaretlenir.',
+      },
+      howTo: 'Bir görev nasıl adım adım tamamlanır',
+      steps: [
+        "<b>Şimdi, şunu yapın</b>'ı izleyin. Ekranınız değiştiğinde sonraki adım kendiliğinden görünür; yanlış bir hareket belirtilir ve düzeltilir.",
+        "Takıldınız mı? Ekranda ne olduğuna dair doğrudan bir yanıt için <b>Sor</b>'a, zor bir adıma daha yakından bakmak için <b>Derin inceleme</b>'ye ya da adımları şu anda ekranda olandan yeniden oluşturmak için <b>Yeniden planla</b>'ya basın.",
+        "Yanıtla, Yaz ve Hesapla, tüm plan, yazı boyutu ve tema için <b>Araçlar</b>'ı açın. <b>Üstte yüzdür</b>, rehberi işinizin üzerinde tutar.",
+        "Ara verirken saati dondurmak için <b>Duraklat</b>'a; döndüğünüzde <b>Devam et</b>'e basın. Bitirmek için son adımı tamamlandı olarak işaretleyin.",
+      ],
+    },
+    reports: {
+      title: 'Raporlar',
+      lead: 'Tamamlanan her görev temiz bir kayda dönüşür: neyin başarıldığı, tam komutlarıyla birlikte onaylanan her adım, uyarılar ve sorularınız ile yanıtlarınız; kanıt olarak temizlenmiş kilometre taşı ekran görüntüleriyle.',
+      shot: {
+        alt: 'Yanıt kartı: sonuç, bir güven göstergesi, nasıl ulaşıldığı, nasıl doğrulanacağı ve politika işaretleri.',
+        caption: 'Bir görevdeki Yanıt kartı. Rapor, görevin tamamının onaylanan adımlarını ve sonuçlarını toplar.',
+      },
+      howTo: 'Rapor nasıl alınır',
+      steps: [
+        "Görevi <b>Tamamlanan görevler</b>'den veya <b>Oturum günlükleri</b>'nden açın.",
+        "<b>İndir</b>'e basın ve <b>PDF raporu</b>'nu, düz <b>metin raporu</b>'nu ya da tam <b>denetim günlüğü</b>'nü seçin; <b>Yazdır</b> kağıt bir kopya verir.",
+        'Komutlar ve kod yalnızca gerçekten tamamladığınız adımlar için görünür ve her ekran görüntüsü, yakalanmadan önce cihazınızda maskelenmiştir.',
+      ],
+    },
+    queue: {
+      title: 'Sıram',
+      lead: 'Sıram, bir proje yöneticisinin size atadığı görevleri sırayla listeler: önce devam edenler, sonra yapılacaklar.',
+      leadWorker: 'Hesabınız yalnızca atanan görevleri yapar, dolayısıyla Görev başlat yoktur; sıra sizin ana sayfanızdır.',
+      leadMixed: 'Kendi görevlerinizi de başlatabilirsiniz; atanan işler yalnızca önce gelir.',
+      shot: {
+        alt: 'Sıram: her atanan görev, projesi, durum rozeti, ne zaman atandığı ve bir Başlat veya Devam et düğmesiyle.',
+        caption: 'Sıram. Her satır projeyi, durumu ve ne zaman atandığını belirtir. Beş günden fazla bekleyen bir görevde Bekliyor rozeti görünür.',
+      },
+      howTo: 'Atanmış bir görev nasıl yürütülür',
+      steps: [
+        "<b>Sıram</b>'ı (ya da panonuzun üstündeki sıra bölümünü) açın.",
+        "Bir görevde <b>Başlat</b>'a basın. WorkCoPilot, adımlarını projenin halihazırda öğrendiklerine dayanarak tam zamanında planlar ve rehberli görünümü açar.",
+        "Herhangi bir görevdeki gibi ekranınızdaki adımları izleyin. Proje yöneticisi görevin <b>Devam ediyor</b>'a, siz bitirdiğinizde ise <b>Tamamlandı</b>'ya geçtiğini görür.",
+        "Daha önce başlattığınız bir görevi yeniden açmak için <b>Devam et</b>'e basın. <b>Tamamlananları göster</b>, bitirdiklerinizi listeler.",
+      ],
+    },
+    pm: {
+      title: 'Yönettiğim projeler',
+      lead: 'Yönettiğim projeler, proje yöneticisinin panosudur: yönettiğiniz her proje, durumu (sürüyor, beklemede, tamamlandı), ilerlemesi ve ne kadarının atanmış olduğuyla birlikte.',
+      shot: {
+        alt: 'Yönettiğim projeler: durum filtreleri ve ilerleme, atanmış, devam eden ve atanmamış sayılarıyla proje kartları.',
+        caption: 'Yönettiğim projeler. Duruma göre filtreleyin; her kart ilerlemeyi ve atama tablosunu gösterir.',
+      },
+      howTo: 'Planlayıcıyla nasıl proje oluşturulur',
+      steps: [
+        "<b>Yeni proje</b>'ye basın. İsteğe bağlı olarak bir ad verin ve sonucu, ilgili sistemleri ve tamamlanmanın neye benzediğini anlatın.",
+        "<b>Projeyi planla</b>'ya basın. WorkCoPilot görevleri bir bitiş çizgisiyle sırayla haritalar ve planı denetler; aslında tek bir görev olan bir hedef, daha geniş bir hedef için geri gönderilir.",
+        'Proje, her görevi atanmamış halde açılır. Her görevi bir kişiye atayın (sonraki bölüm).',
+      ],
+      shotNew: {
+        alt: 'Yeni proje penceresi: proje adı, hedef ve Projeyi planla.',
+        caption: 'Yeni proje: planlayıcının ihtiyaç duyduğu tek şey hedeftir.',
+      },
+    },
+    pmProject: {
+      title: 'Yönetilen bir proje',
+      lead: 'Yönetilen bir proje; her görevin durumu ve atanan kişisiyle görev haritasını, sayıları (başlanmadı, devam ediyor, tamamlandı), projenin etkinlik günlüğünü ve yöneticinin eylemlerini gösterir.',
+      shot: {
+        alt: 'Yönetilen bir proje: durum ve yönetici rozetleri, Projeyi beklet, dört sayı kutusu, görev filtreleri ve atanan kişi ile atama denetimini içeren görev satırları.',
+        caption: 'Yönetilen bir proje. Her görev satırı, kimin yaptığını ve ne zaman atandığını gösterir; sağdaki denetim onu atar veya taşır.',
+      },
+      assign: {
+        h: 'Bir görev bir kişiye nasıl atanır',
+        steps: [
+          "Görevi haritada bulun (atanmamış işleri görmek için <b>Başlanmadı</b>'ya göre filtreleyin; sayı kutusundaki <b>2 atanmamış</b> rozeti kaç tane olduğunu söyler).",
+          'Satırın <b>Bir kişi seçin</b> listesinden kişiyi seçin. Yalnızca çalışan veya karma akıştaki kişiler sunulur.',
+          "<b>Ata</b>'ya basın. Görev hemen o kişinin sırasında görünür ve atama, kim ve ne zaman bilgisiyle denetim günlüğüne yazılır.",
+        ],
+      },
+      move: {
+        h: 'Bir görev bir kişiden diğerine nasıl taşınır',
+        steps: [
+          "Zaten bir atanan kişisi olan bir görevde, yeni kişiyi seçin ve <b>Taşı</b>'ya basın.",
+          'Görev, ilerlemesini ve rehberli oturumunu korur; eski kişinin sırasından çıkar ve yenisine iner. Günlük, kimden kime olduğunu kaydeder.',
+        ],
+      },
+      hold: {
+        h: 'Bir proje nasıl bekletilir ve sürdürülür',
+        steps: [
+          "<b>Projeyi beklet</b>'e basın, nedeni yazın (zorunlu) ve onaylayın. Proje her panoda ve risk kayıt defterinde Beklemede olarak işaretlenir; kişiler görevlerini korur.",
+          "Devam edebileceği zaman <b>Projeyi sürdür</b>'e basın. Her iki eylem de kaydedilir.",
+        ],
+      },
+      shotHold: {
+        alt: 'Zorunlu bir neden alanıyla Projeyi beklet penceresi.',
+        caption: 'Projeyi beklet: bir neden zorunludur ve denetim günlüğünde tutulur.',
+      },
+      productivity: {
+        h: 'Bir kişinin üretkenliği nasıl okunur',
+        steps: [
+          'Herhangi bir görev satırında bir atanan kişinin adına tıklayın.',
+          'Panel, kendisine atanmış her görevdeki sayılarını (atanmış, başlanmadı, devam ediyor, tamamlandı), harcanan rehberli süreyi ve şu anda üzerinde çalıştığı işi gösterir.',
+        ],
+      },
+      shotPerson: {
+        alt: 'Bir kişiye ait üretkenlik paneli: dört sayı kutusu, rehberli süre ve üzerinde çalıştıkları görev.',
+        caption: 'Kendisine atanmış görevlerden derlenen, tek bir kişiye ait üretkenlik.',
+      },
+    },
+    srpm: {
+      title: 'Proje yöneticileri',
+      lead: 'Proje yöneticileri, kıdemli proje yöneticisinin toplu görünümüdür: her proje yöneticisi, yönettikleri projeler ve her birinin durumu, yönetici başına yük ve iş atanabilecek kişiler.',
+      shot: {
+        alt: 'Proje yöneticileri: durum kutuları, proje yöneticisi başına yük çubukları, yöneticiye göre gruplanmış projeler ve bir Taşı eylemi ve kişi listesi.',
+        caption: 'Proje yöneticileri. Projeler, sahibi olan yöneticiye göre gruplanır; Taşı, bir projeyi başka bir yöneticiye devreder.',
+      },
+      move: {
+        h: 'Bir proje tümüyle başka bir proje yöneticisine nasıl taşınır',
+        steps: [
+          "Proje kartında <b>Taşı</b>'ya (ya da projenin içinde <b>Başka bir yöneticiye taşı</b>'ya) basın.",
+          "Yeni proje yöneticisini seçin, nedeni yazın (zorunlu) ve <b>Projeyi taşı</b>'ya basın.",
+          'Yalnızca yöneten proje yöneticisi değişir. Her görev, atanan kişisini ve ilerlemesini korur; devir denetim günlüğündedir.',
+        ],
+      },
+      shotMove: {
+        alt: 'Projeyi taşı penceresi: proje, yeni proje yöneticisi listesi ve zorunlu bir neden.',
+        caption: 'Projeyi taşı: yeni yöneticiyi seçin, nedeni belirtin.',
+      },
+      start: {
+        h: 'Bir proje nasıl başlatılır ve bir yöneticiye nasıl devredilir',
+        steps: [
+          "<b>Yeni proje</b>'ye basın, hedefi anlatın ve <b>Yöneten</b> altında kimin yöneteceğini seçin.",
+          "<b>Projeyi planla</b>'ya basın. Proje, atamaya hazır olarak o yöneticinin Yönettiğim projeler sayfasına iner.",
+          "Sayılarını ve süresini görmek için bir yöneticinin veya bir kişinin yanındaki <b>Üretkenlik</b>'i açın.",
+        ],
+      },
+    },
+    grc: {
+      title: 'Gözetim',
+      lead: 'Gözetim, şirketteki her projenin salt okunur görünümüdür: durum, proje yöneticisi başına yük, hesaplanan risk kayıt defteri ve tam denetim günlüğü.',
+      leadReadOnly: 'Rolünüz her şeyi görür ve hiçbir şeyi değiştirmez; eylemde bulunan proje yöneticileridir.',
+      shot: {
+        alt: 'Gözetim: durum kutuları, durum payı çubuğu, proje yöneticisi başına yük ve risk kayıt defteri.',
+        caption: 'Gözetim. Grafikler, proje yöneticilerinin çalıştığı verinin aynısından okur.',
+      },
+      risks: {
+        h: 'Risk kayıt defteri nasıl okunur',
+        lead: 'Riskler verilerden hesaplanır, asla elle girilmez ve en uzun bekleyenler önce gelecek şekilde sıralanır. Her satır projeyi, görevi, yöneticiyi ve önerilen eylemi belirtir.',
+        items: [
+          '<b>Çok uzun süre bekliyor</b>: beş günden fazla önce atanmış ve başlanmamış bir görev. Yöneticiden atanan kişiyle görüşmesini veya görevi taşımasını isteyin.',
+          '<b>Hazır, kimse atanmamış</b>: bağımlılıkları tamamlanmış ama kimsenin üzerine almadığı bir görev. Yöneticiden bunu atamasını isteyin.',
+          '<b>Proje beklemede</b>: bir yöneticinin, nedeniyle birlikte beklettiği bir proje. Devam edip edemeyeceğini sorun.',
+        ],
+      },
+      shotRisks: {
+        alt: 'Risk kayıt defteri: gün cinsinden yaşıyla Çok uzun süre bekliyor satırları, bir Hazır kimse atanmamış satırı ve bir Proje beklemede satırı; her biri önerilen bir eylem ve bir Aç bağlantısıyla.',
+        caption: 'Risk kayıt defteri. Aç, projeye gider; eylemi proje yöneticisi gerçekleştirir.',
+      },
+      log: {
+        h: 'Denetim günlüğü nasıl okunur',
+        steps: [
+          "<b>Denetim günlüğü</b>'ne ilerleyin. Oluşturulan her proje, atanan veya taşınan her görev, devredilen, bekletilen veya sürdürülen her proje; ne zaman, ne, kim tarafından ve ayrıntısıyla (kimden kime, nedeni) bir satırdır.",
+          '<b>Proje</b> listesiyle projeye göre filtreleyin; <b>Daha fazla göster</b>, daha eski satırları açar. Günlük yalnızca ekleme yapılabilir niteliktedir.',
+        ],
+      },
+    },
+    admin: {
+      title: 'Akışlar ve roller',
+      lead: 'Şirket konsolunda, Ekip bölümünde, kişi başına iki şey belirlersiniz: <b>iş akışları</b> (rehberli görevlerin kendilerine nasıl ulaştığı) ve <b>rolleri</b> (neyi yönettikleri). Değişiklikler hemen geçerli olur.',
+      shot: {
+        alt: 'Şirket konsolu Ekip sayfası: Rol ve İş akışı seçimleriyle Kişi ekle formu ve her satırda bir Rol ve bir Akış seçimiyle kişi tablosu.',
+        caption: 'Ekip. Oluşturma sırasında Rol ve İş akışı, ayrıca kişi başına satır içinde.',
+      },
+      howTo: 'Bir kişinin akışı ve rolü nasıl belirlenir',
+      steps: [
+        "Şirket konsolunu açın ve <b>Ekip</b>'e basın.",
+        "Yeni bir kişi için <b>Kişi ekle</b>'ye basın ve eklemeden önce <b>Rol</b> ve <b>İş akışı</b>'nı seçin. Mevcut bir kişi için satırındaki <b>Rol</b> veya <b>Akış</b> seçimini değiştirin.",
+        'Akışlar: <b>Bağımsız</b> kendi görevlerini başlatır ve kendisine asla görev atanmaz; <b>Çalışan</b> yalnızca bir proje yöneticisinin atadığı görevleri yapar (Görev başlat yok); <b>Karma</b> her ikisini de yapar.',
+        'Roller: <b>Proje yöneticisi</b> proje oluşturur ve görev atar; <b>Kıdemli proje yöneticisi</b> her yöneticiyi gözetir ve projeleri aralarında taşıyabilir; <b>GRC</b>, tüm projeler üzerinde salt okunur gözetime sahiptir.',
+      ],
+    },
+  },
+  demoPage: {
+    heroBadge: 'Baştan sona gerçek bir oturum',
+    h1: 'Gerçek bir görevi adım adım nasıl yönlendirdiğini izleyin.',
+    lead: 'Ekranınızı okur, sıradaki hamleyi söyler ve bir hatayı size pahalıya mal olmadan yakalar.',
+    startFree: 'Ücretsiz başlayın',
+    heroNote: 'İzlemesi yaklaşık bir dakika sürer. Denemesi ücretsiz.',
+    loopBadge: 'Bir nasıl yapılır sayfası değil, canlı bir yardımcı pilot',
+    loopH2: 'Size yalnızca anlatmaz. Her adımı sizinle birlikte yürür.',
+    caps: [
+      {
+        t: 'İzler',
+        d: 'Ekranınızda ne olduğunu görür ve sizinle aynı hızda ilerler.',
+      },
+      {
+        t: 'Yönlendirir',
+        d: 'Tam olarak hangi tıklama, komut veya değeri, her seferinde tek adımda gösterir.',
+      },
+      {
+        t: 'Düzeltir',
+        d: 'Yanlış bir hamleyi olduğu anda yakalar ve sizi yeniden doğru yola koyar.',
+      },
+      {
+        t: 'Giderir',
+        d: 'Hatayı gözünüzün önünde ayıklar ve takıldığınız yerden çıkarır.',
+      },
+    ],
+    grounded: 'Gerçekte ekranınızda olana dayanır. Tahmin yok, uydurma adım yok.',
+    finalH2: 'Şimdi kendi görevinizi getirin.',
+    finalP: 'WorkCoPilot onu ilk adımdan tamamlanana kadar götürür ve özetini size verir.',
+    playerAria: 'Bir rehberli oturumun betimli demosu. Otomatik oynar ve sonunda yeniden oynatılabilir.',
+    watchingTitle: 'ekranınızı okuyor',
+    watching: 'izliyor',
+    tag: 'Bulut',
+    goalLabel: 'HEDEF',
+    goal: 'AWS üzerinde özel bir ağ (VPC) kurun',
+    planHead: 'Ekranınızı okudum, işte plan',
+    sees: 'Görebildiğim',
+    terminal: 'TERMİNAL',
+    holdOn: 'BİR DAKİKA',
+    doThisNow: 'ŞİMDİ BUNU YAPIN',
+    exactlyHow: 'TAM OLARAK NASIL',
+    stepOf: 'Adım {n} / {total}',
+    howCount: '{n} adım',
+    doneWhen: 'şu olduğunda tamam: {what}',
+    wrapupH: 'Oturum özeti',
+    wrapupSub: 'Tam olarak ne yaptığınızın temiz bir kaydı; saklamaya, paylaşmaya veya yinelemeye hazır.',
+    taskComplete: 'Görev tamamlandı',
+    replay: 'Yeniden oynat',
+    replayAria: 'Demoyu yeniden oynat',
+    steps: [
+      {
+        sees: 'VPC panosundasınız',
+        step: "VPC'yi oluşturun",
+        how: [
+          {
+            do: "**Create VPC**'ye tıklayın",
+            tip: 'VPC panosunun sağ üstünde',
+          },
+          {
+            do: "**VPC only**'yi seçin ve adlandırın",
+            tip: 'örn. prod-vpc, anlamlı bir şey',
+          },
+          {
+            do: 'IPv4 CIDR değerini **10.0.0.0/16** olarak ayarlayın',
+            tip: "İhtiyacınız yoksa IPv6'yı kapalı bırakın",
+          },
+          {
+            do: "Bitirmek için **Create VPC**'ye tıklayın",
+            tip: 'Bir saniye içinde listede belirir',
+          },
+        ],
+        done: 'VPC listede yer alıyor',
+      },
+      {
+        sees: 'CIDR değerini 10.0.0.0/24 olarak girdiniz',
+        fix: {
+          say: 'Bir /24 yalnızca 256 adrestir, sonradan büyümek için fazla küçük.',
+          do: 'Oluşturmadan önce CIDR değerini 10.0.0.0/16 olarak değiştirin.',
+        },
+        done: 'aralık 10.0.0.0/16 görünüyor',
+      },
+      {
+        sees: "VPC'nin internete giden bir yolu yok",
+        step: 'Bir internet ağ geçidi bağlayın',
+        how: [
+          {
+            do: '**Internet gateways** → **Create** yolunu açın',
+            tip: 'Sol menüde, Virtual private cloud altında',
+          },
+          {
+            do: "Adlandırın, sonra **Create**'e tıklayın",
+            tip: 'örn. prod-igw',
+          },
+          {
+            do: 'Seçin → **Actions** → **Attach to VPC**',
+            tip: 'Bağlamak için Detached durumunda olmalı',
+          },
+          {
+            do: "VPC'nizi seçin ve **Attach**'e tıklayın",
+            tip: 'Durum Attached olarak değişir',
+          },
+        ],
+        done: 'ağ geçidi Attached gösteriyor',
+      },
+      {
+        sees: 'Trafiğin hâlâ gidecek bir yeri yok',
+        step: 'Giden trafiği ağ geçidine yönlendirin',
+        how: [
+          {
+            do: "VPC'nizin **route table**'ını açın",
+            tip: "Route tables → VPC'nize bağlı olan",
+          },
+          {
+            do: "**Edit routes** → **Add route**'a tıklayın",
+            tip: 'Düzenlenebilir rota listesini açar',
+          },
+          {
+            do: 'Hedefi **0.0.0.0/0** olarak ayarlayın',
+            tip: 'Bu, tüm giden IPv4 trafiği demektir',
+          },
+          {
+            do: "**internet gateway**'inizi hedef gösterin, sonra **Save**",
+            tip: 'Az önce bağladığınız igw-… olanı seçin',
+          },
+        ],
+        done: "0.0.0.0/0 igw'yi işaret ediyor",
+      },
+    ],
+    writeup: [
+      'Büyümeye yer kalması için /16 aralığına (10.0.0.0/16) sahip bir VPC oluşturdu.',
+      'Fazla küçük bir /24 CIDR değerini oluşturulmadan önce yakaladı ve düzeltti.',
+      'Bir internet ağ geçidi bağladı ve Attached gösterdiğini doğruladı.',
+      'Trafiğin dışarı çıkabilmesi için ağ geçidine bir 0.0.0.0/0 rotası ekledi.',
+    ],
+  },
+  destructiveGate: {
+    label: 'Geri alınamaz adım.',
+    reveal: 'Anladım, komutu göster',
+  },
+  disclaimerPage: {
+    seo: {
+      title: "Sorumluluk Reddi - AdmireVeda'dan WorkCoPilot",
+      description: "WorkCoPilot'un ne olduğu ve ne olmadığı: profesyonel tavsiye değil, pratik rehberlik; neyi çalıştıracağınıza siz karar verirsiniz diye salt okunur; en iyi çaba doğruluğu; bir güvenlik ağı olarak güvenlik denetimleri ve sorumluluğun sınırları.",
+    },
+    hero: {
+      eyebrow: 'Sorumluluk Reddi · WorkCoPilot',
+      h1: 'WorkCoPilot nedir ve ne değildir',
+      lead: 'WorkCoPilot, işinizi yapabilmeniz için kendi ekranınızda pratik, adım adım rehberlik sunar. Sizin yerinize hareket etmez, profesyonel tavsiye değildir ve yanılabilir. Bu sayfa, nerede durduğunuzu bilmeniz için bu sınırları sade bir dille ortaya koyar.',
+      lastUpdated: 'Son güncelleme',
+      tagline: 'Okunmak için yazılmış, sade dilde şartlar',
+      templateLabel: 'Şablon.',
+      templateNotice: 'Bu, şeffaflık için sağlanan bir şablondur ve hukuk danışmanıyla son hâli verilmektedir; henüz bağlayıcı bir sözleşme değildir.',
+      ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünüdür.',
+    },
+    glance: {
+      h2: 'Bir bakışta',
+      cards: [
+        {
+          eyebrow: 'Rehberlik',
+          title: 'Profesyonel tavsiye değil, pratik yardım',
+          body: 'WorkCoPilot size kendi ekranınızda mantıklı bir sonraki adımı gösterir. Hukuki, finansal, tıbbi, vergisel veya başka bir profesyonel tavsiye değildir.',
+        },
+        {
+          eyebrow: 'Sizin elinizde',
+          title: 'Neyi çalıştıracağınıza siz karar verirsiniz',
+          body: 'Salt okunurdur. Sizin yerinize asla bir şeye tıklamaz, yazmaz veya çalıştırmaz. Geri alınması güç adımlar, siz harekete geçmeden önce onaylamanız için işaretlenir.',
+        },
+        {
+          eyebrow: 'Doğruluk',
+          title: 'Güvenmeden önce doğrulayın',
+          body: 'Rehberlik en iyi çabayla sunulur. Yapay zeka yanılabilir veya güncelliğini yitirmiş olabilir ve yerleşik güvenlik denetimleri bir söz değil, bir güvenlik ağıdır.',
+        },
+      ],
+    },
+    toc: {
+      title: 'Bu sayfada',
+    },
+    sections: {
+      advice: 'Profesyonel tavsiye değil, rehberlik',
+      control: 'Kontrol ve sorumluluk sizde',
+      accuracy: 'Doğruluk ve yapay zekanın sınırları',
+      checks: 'Güvenlik denetimleri bir güvenlik ağıdır',
+      compliance: 'Uyumluluk',
+      warranty: 'Garanti yok ve sorumluluğun sınırlandırılması',
+      contact: 'İletişim',
+    },
+    advice: {
+      p1: 'WorkCoPilot, harekete geçmenize yardımcı olacak pratik rehberlik sunar: sırada neye bakacağınız, neye tıklayacağınız, bir ayarın ne anlama geldiği, bir komutun genellikle nasıl yazıldığı. Bir çalışma yardımcısıdır.',
+      p2: 'Hukuki, finansal, tıbbi, vergisel, muhasebe, mühendislik veya başka bir profesyonel tavsiye değildir ve onu kullanmanız bizimle profesyonel bir ilişki oluşturmaz. Bir adım paraya, sağlığa, hukuki yükümlülüklere, güvenliğe ya da düzenlemeye tabi işlere dokunuyorsa, güvenmeden önce kendi gereksinimlerinizle ve nitelikli bir uzmanla karşılaştırarak doğrulayın.',
+      note: "Bu sayfa, ürünün sınırlarının sade dilde bir beyanıdır. WorkCoPilot'un durumunuza nasıl uyduğuna dair kendi hukuki incelemenizin yerini tutmaz.",
+    },
+    control: {
+      lead: 'WorkCoPilot tasarımı gereği salt okunurdur. Ekranınızı izler (hassas değerler cihazınızda gizlenir) ve sırada ne yapacağını size söyler. Sizin yerinize asla bir şeye tıklamaz, yazmaz, göndermez ya da çalıştırmaz.',
+      items: [
+        {
+          name: 'Neyi çalıştıracağınıza siz karar verirsiniz',
+          how: 'Sistemlerinizdeki her eylem sizindir. Bir adımı izlemek, değiştirmek ya da durdurmak sizin tercihinizdir.',
+        },
+        {
+          name: 'Geri alınması güç adımlar işaretlenir',
+          how: 'Önerilen bir adım silebilecek, üzerine yazabilecek, ödeme yapabilecek, gönderebilecek ya da başka bir şekilde geri alınması güç olabilecekse, WorkCoPilot bunu işaretler; böylece harekete geçmeden önce bilinçli olarak onaylayabilirsiniz.',
+        },
+        {
+          name: 'Sizin sistemleriniz, sizin kurallarınız',
+          how: 'Doğru izinlere sahip olmaktan, işvereninizin ve müşterilerinizin politikalarına uymaktan ve kullandığınız araçların şartlarına bağlı kalmaktan sorumlu olmaya devam edersiniz.',
+        },
+        {
+          name: 'Hesaplarınız',
+          how: 'Giriş bilgilerinizi güvende tutmaktan ve hesabınız altında yapılanlardan siz sorumlusunuz.',
+        },
+      ],
+    },
+    accuracy: {
+      lead: 'Rehberlik, yapay zeka yardımıyla üretilir ve en iyi çabayla sunulur. Yapay zeka bir ekranı yanlış okuyabilir, bağlamı kaçırabilir, değişmiş bir araç hakkında güncelliğini yitirmiş olabilir ya da yalnızca yanılabilir. Yanılırken kendinden emin görünebilir.',
+      items: [
+        {
+          name: 'Güvenmeden önce doğrulayın',
+          how: 'Önemli olan her şeyi, aracın kendi belgeleriyle, kendi kayıtlarınızla ya da sistemi bilen bir kişiyle karşılaştırarak kontrol edin.',
+        },
+        {
+          name: 'Ekranlar okunur, kusursuzca anlaşılmaz',
+          how: 'WorkCoPilot ekranınızı, gizleme sonrasında cihazınızda okur. Küçük metinler, alışılmadık yerleşimler ve gizlenmiş değerler yanlış bir okumaya yol açabilir.',
+        },
+        {
+          name: 'Araçlar değişir',
+          how: 'Menüler, komutlar ve varsayılanlar yer değiştirir. Geçen ay doğru olan bir adım bugün doğru olmayabilir.',
+        },
+        {
+          name: 'Bize söyleyin',
+          how: 'Rehberlik yanlış ya da güvensizdiyse, inceleyebilmemiz için {support} adresine yazın.',
+        },
+      ],
+    },
+    checks: {
+      p1: 'WorkCoPilot, komutları, kodu ve betikleri varsayılan olarak güvenli şekilde yazar ve bunları size vermeden önce enjeksiyon, açığa çıkmış gizli bilgiler ve aşırı geniş izinler gibi yaygın sorunlar için denetler. Önerdiği bağımlılıklara da bakar.',
+      p2: 'Bu denetimler yararlı bir güvenlik ağıdır. Bir komutun, betiğin ya da bağımlılığın güvenli, doğru veya ortamınıza uygun olduğunun garantisi değildir. Çalıştırdığınız şeyi gözden geçirin, güvenli olduğu yerlerde test edin ve kendi güvenlik denetimlerinizi yürürlükte tutun.',
+    },
+    compliance: {
+      p1: 'WorkCoPilot, uyumluluk çalışmanızı destekleyen denetimler ve denetim kanıtları sağlar: cihazda gizleme ve belirteçleme, salt okunur çalışma, yöneticilerin devreye alıp kilitlediği şirkete özel veri politikaları ve oturum başına raporlar ile denetim günlükleri.',
+      p2: "Bu denetimler sizi uyumlu hâle getirmez ve ürünün herhangi bir çerçeveye göre sertifikalı olduğunu iddia etmiyoruz. Uyumluluk, kuruluşunuz tarafından kendi denetçileri ve danışmanlarıyla birlikte sağlanır ve sürdürülür. Denetimlerin yaygın çerçevelerle nasıl eşleştiğini görmek için <security>Güvenlik sayfası</security>'na, verilerinizin nasıl işlendiği için <privacy>Gizlilik Politikası</privacy>'na bakın.",
+    },
+    warranty: {
+      p1: 'WorkCoPilot, hizmetin arkasındaki tüzel kişi olan {entity}\'nin bir ürünü olan AdmireVeda tarafından sunulur. Bu bölümde "biz", {entity}, AdmireVeda ve WorkCoPilot\'u birlikte ifade eder.',
+      p2: 'WorkCoPilot olduğu gibi ve mevcut olduğu şekliyle sunulur. Yasanın izin verdiği ölçüde, rehberliğin doğru, eksiksiz, güncel, belirli bir amaca uygun ya da hatasız olduğu dahil olmak üzere, açık veya örtük hiçbir garanti vermeyiz.',
+      p3: 'Yasanın izin verdiği ölçüde, rehberliğe dayanarak yaptığınız ya da yapmadığınız eylemlerden kaynaklanan kayıp veya zararlardan (kaybedilen veriler, kaybedilen gelir, kesinti süresi ya da kurtarma maliyetleri dahil) sorumlu değiliz. Rehberliğe kendi takdirinizle göre hareket edersiniz ve sistemlerinizdeki sonuçtan sorumlu olmaya devam edersiniz.',
+      p4: 'Bu sayfadaki hiçbir ifade, size uygulanan yasa kapsamında sınırlandırılamayacak hakları sınırlamaz.',
+      note: '<b>Bu neden burada.</b> Bir sayfa dolusu ağır hukuki dil yazmak kolay olurdu. Biz açık olmayı tercih ediyoruz: WorkCoPilot, sizin yerinize asla hareket etmeyen bir rehberdir ve karar ile sorumluluk sizde kalır.',
+    },
+    contact: {
+      inquiries: 'Hukuk, gizlilik ve güvenlik soruları:',
+      support: 'Ürün desteği ve faturalama:',
+    },
+    cta: {
+      ariaLabel: 'İlgili sayfalar',
+      privacy: 'Gizlilik Politikası',
+      terms: 'Şartlar',
+      security: 'Güvenlik',
+      contact: 'İletişim',
+      back: "WorkCoPilot'a dön",
+    },
+  },
+  downloadMenu: {
+    triggerTip: 'Bu oturumu indir',
+    menuAria: 'İndirme biçimi',
+    heading: 'Şu olarak indir',
+  },
+  dpaPage: {
+    seo: {
+      title: "Veri İşleme Ek Sözleşmesi - AdmireVeda'dan WorkCoPilot",
+      description: "WorkCoPilot DPA özeti: veri sorumlusu ve veri işleyen rolleri, veri kategorileri, veri türüne göre tam veri yaşam döngüsü, güvenlik önlemleri, alt işleyiciler, saklama ve silme ve imzalı bir DPA'nın nasıl talep edileceği.",
+    },
+    hero: {
+      eyebrow: 'Veri İşleme Ek Sözleşmesi',
+      title: 'WorkCoPilot sizin için veriyi nasıl işler',
+      intro: 'Kimin neye karar verdiğinin, hangi verilerin ilgili olduğunun, yürürlükteki güvenlik önlemlerinin ve kuruluşunuz için imzalı bir ek sözleşmeyi nasıl edineceğinizin bir özeti.',
+      tagline: 'Özet biçim, taslak şablon',
+    },
+    glance: [
+      {
+        eyebrow: 'Roller',
+        title: 'Siz denetlersiniz, biz işleriz',
+        body: 'Oturumlarınızın içeriği için siz veri sorumlususunuz ve {entity}, talimatlarınıza göre hareket eden veri işleyendir.',
+      },
+      {
+        eyebrow: 'Veri sınırı',
+        title: 'Kendi yapay zeka anahtarınız sizde kalır',
+        body: "Bir şirket ya da kullanıcı WorkCoPilot'u kendi yapay zeka anahtarıyla çalıştırabilir; bu da yönetilen veriyi kendi sağlayıcı sınırının içinde tutar.",
+      },
+      {
+        eyebrow: 'Saklama',
+        title: 'Ne kadar tutulacağını siz belirlersiniz',
+        body: 'Saklama, platform yöneticisi veya şirketiniz tarafından yapılandırılabilir ve oturumlar istediğiniz zaman silinebilir.',
+      },
+    ],
+    sections: {
+      scope: 'Kapsam ve bunun nasıl okunacağı',
+      roles: 'Veri sorumlusu ve veri işleyen rolleri',
+      data: 'Veri kategorileri ve amaç',
+      boundary: 'Veri sınırı ve kendi yapay zeka anahtarınız',
+      safeguards: 'Güvenlik önlemleri ve güvenlik tedbirleri',
+      lifecycle: 'Veri yaşam döngüsü',
+      subprocessors: 'Alt işleyiciler',
+      retention: 'Saklama ve silme',
+      rights: 'Yardım, olaylar ve denetimler',
+      transfers: 'Uluslararası aktarımlar',
+      request: 'İmzalı bir DPA talep edin',
+    },
+    scope: {
+      p1: "Bu, WorkCoPilot için özet biçiminde bir Veri İşleme Ek Sözleşmesi'dir. Hizmeti kullanan müşteriler adına kişisel verileri nasıl ele aldığımızı açıklar. <terms>Hizmet Şartları</terms> ve <privacy>Gizlilik Politikası</privacy> ile birlikte okunmak üzere hazırlanmıştır. Kuruluşunuz için imzalı bir sürüm talep üzerine edinilebilir (son bölüme bakın).",
+    },
+    roles: {
+      items: [
+        {
+          name: 'Veri sorumlusu olarak müşteri',
+          how: 'Rehberli oturumların içeriği için (ekran içeriği, yazılan metin, eklenen belgeler ve bunlardan üretilen raporlar), işleme amaçlarına ve araçlarına müşteri karar verir ve veri sorumlusudur.',
+        },
+        {
+          name: 'Veri işleyen olarak {entity}',
+          how: '{entity}, bu içeriği yalnızca hizmeti sağlamak için, müşterinin belgelenmiş talimatları doğrultusunda işler; bunlar Şartlar, bu ek sözleşme ve müşteri ile yöneticilerinin seçtiği ayarlardır.',
+        },
+        {
+          name: 'Kendi rolümüz',
+          how: "İlişkiyi yürütmek için gereken hesap, oturum açma ve faturalama bilgileri için, Gizlilik Politikası'nda açıklandığı gibi bağımsız bir veri sorumlusu olarak hareket ederiz.",
+        },
+      ],
+    },
+    data: {
+      items: [
+        {
+          name: 'Hesap verileri',
+          how: 'Müşterinin kullanıcılarının ve yöneticilerinin adları veya e-posta adresleri ve rol bilgileri.',
+        },
+        {
+          name: 'Oturum içeriği',
+          how: 'Rehberli bir oturum sırasında bir kullanıcının ekranında olanlar ve yazdıkları veya yapıştırdıkları ile eklenen belgelerden metin. Hassas değerler, bir şey gönderilmeden önce kullanıcının cihazında ayıklanır veya belirteçlenir.',
+        },
+        {
+          name: 'Oturum kayıtları',
+          how: 'Oturum başına raporlar ve denetim günlükleri ile kullanıcının oturum geçmişi.',
+        },
+        {
+          name: 'Kullanım verileri',
+          how: 'Bir planın kullanım hakkının uygulanabilmesi için rehberli dakikalar ve oturum sayıları.',
+        },
+        {
+          name: 'Genelleştirilmiş çıkarımlar',
+          how: 'Rehberliği güncel tutmak için, bir aracın ya da görevin şu anda nasıl çalıştığına dair genelleştirilmiş, kimliksizleştirilmiş çıkarımlar (örneğin bir ayarın yeni bir menüye taşındığı) saklanabilir. Bunlar kişisel veri, gizli bilgi, ekran görüntüsü ya da belge içeriği içermez. Bir şirket için, o şirketin kendi bilgi tabanında tutulur ve yalnızca o şirketin üyeleri için kullanılır; bireysel kullanıcılar için, hizmeti iyileştirmek üzere platform bilgi tabanında tutulur.',
+        },
+        {
+          name: 'Veri sahipleri',
+          how: "Müşterinin çalışanları, yüklenicileri ve diğer yetkili kullanıcıları ile Kabul Edilebilir Kullanım Politikası'nın sınırları içinde müşterinin paylaşmayı seçtiği ekranlarda verileri görünen tüm kişiler.",
+        },
+        {
+          name: 'Amaç',
+          how: 'Müşteri için rehberli iş hizmetini sağlamak, güvenli kılmak ve desteklemek ve müşterinin planını ve ayarlarını uygulamak.',
+        },
+      ],
+      note: 'Müşteriler, işlemeye yetkili olmadıkları verileri göndermemelidir. Gizlilik Politikası, hizmetin tasarlandığı veri kategorilerini listeler.',
+    },
+    boundary: {
+      p1: "Varsayılan olarak rehberlik, platformun kendi düzenlemelerini kullanan bir yapay zeka sağlayıcısı tarafından üretilir. Bir şirket ya da bireysel bir kullanıcı, bunun yerine WorkCoPilot'u kendi yapay zeka anahtarıyla çalıştırabilir. Bu durumda yönetilen veri, müşterinin kendi sağlayıcı ilişkisinin içinde işlenir, o sağlayıcının şartlarına tabidir ve sessizce başka bir yere yönlendirilmez.",
+      p2: 'Müşteri, getirdiği herhangi bir sağlayıcı anahtarının şartlarından ve ayarlarından sorumlu olmaya devam eder.',
+    },
+    safeguards: {
+      items: [
+        {
+          name: 'Göndermeden önce koruma',
+          how: 'Kişisel veri, sağlık verisi, gizli bilgiler ve anahtarlar gibi hassas değerler, bir şey gönderilmeden önce kullanıcının cihazında ayıklanır veya belirteçlenir ve müşteriler kendi sözcük ve örüntülerini ekleyebilir. Bu, cihazdan ayrılanı azaltan bir güvenlik önlemidir; müşterinin kendi yetki ve veri azaltma yükümlülüklerinin yerini tutmaz.',
+        },
+        {
+          name: 'Salt okunur',
+          how: 'Hizmet, müşterinin sistemlerinde asla bir şeye tıklamaz, yazmaz veya çalıştırmaz.',
+        },
+        {
+          name: 'Beklemede şifreleme',
+          how: 'Saklanan anahtarlar, gizli bilgiler ve rapor artefaktları beklemede AES-256-GCM ile şifrelenir.',
+        },
+        {
+          name: 'Aktarım sırasında şifreleme',
+          how: 'Cihazlar ile hizmet arasındaki trafik TLS ile korunur.',
+        },
+        {
+          name: 'Erişim denetimleri',
+          how: 'Rol tabanlı erişim. Şirket yöneticileri üyeleri için veri politikasını belirler ve kilitler ve kendi üyelerinin oturumlarını inceler.',
+        },
+        {
+          name: 'Denetim günlüğü',
+          how: 'Her oturumun, neyin iletildiğine dair bir denetim günlüğü vardır; bu, kullanıcıya ve şirket hesapları için yöneticilerine açıktır.',
+        },
+        {
+          name: 'Sertifika değil, kanıt',
+          how: 'Bu denetimler müşterilere kendi uyumluluk çalışmalarını destekleyen kanıt sağlar. Bir müşteriyi uyumlu hâle getirmezler ve burada bir sertifika iddia etmiyoruz.',
+        },
+      ],
+    },
+    lifecycle: {
+      p1: 'Bu tablo, her veri türünü ortaya çıktığı andan yok olduğu ana kadar izler: nerede tutulduğu, ne kadar kaldığı ve onu neyin kaldırdığı.',
+      caption: 'Veri türüne göre veri yaşam döngüsü: nerede saklandığı, ne kadar tutulduğu ve nasıl silindiği',
+      columns: ['Veri türü', 'Nerede saklandığı', 'Saklama', 'Silme'],
+      rows: [
+        [
+          'Ekran kareleri',
+          'Kullanıcının cihazında okunur. Hassas bir değer içeren her satır cihazda karartılır, ardından mevcut adıma rehberlik etmek için küçültülmüş bir kare gönderilir. Ham kareler, saklanan kaynak materyal olarak tutulmaz.',
+          'Saklanmaz. Bir kare, ait olduğu adım için kullanılır ve ardından atılır. Etkinleştirilmişse, gizlenmiş kilometre taşı ekran görüntüleri oturum raporunun içinde yer alır ve onun saklama süresine uyar.',
+          'Ham kareler için silinecek bir şey yok. Kilometre taşı ekran görüntüleri, oturum raporuyla birlikte kaldırılır.',
+        ],
+        [
+          'Komutlar ve yazılan ya da yapıştırılan metin',
+          'Hassas değerler, bir şey gönderilmeden önce cihazda belirteçlerle değiştirilir. Gerçek değerler cihazda kalır ve yanıt orada yeniden oluşturulur. Yönetilen metin, iletilenler olarak oturumun denetim günlüğüne kaydedilir.',
+          'Oturumla birlikte tutulur: kullanıcı ya da bir yönetici silene kadar ya da yapılandırılmış otomatik saklama süresi onu temizleyene kadar.',
+          'Oturum silindiğinde kaldırılır.',
+        ],
+        [
+          'Oturum raporu',
+          'Hizmet tarafından, oturum başına bir tane saklanır. Gizlenmiş kilometre taşı ekran görüntüleri dahil rapor artefaktları, beklemede AES-256-GCM ile şifrelenir.',
+          'Yapılandırılabilir. Varsayılan olarak bir oturum, kullanıcı ya da bir yönetici silene kadar kalır; otomatik bir süre, seçilen bir gün sayısından daha eski oturumları temizleyebilir.',
+          'Bir oturumu silmek; raporu, kilometre taşı ekran görüntülerini ve denetim günlüğünü tek bir işlemde birlikte kaldırır.',
+        ],
+        [
+          'Anahtarlar ve gizli bilgiler',
+          'Bir müşterinin getirdiği yapay zeka anahtarları ile hizmetin kendi saklanan anahtarları ve gizli bilgileri, beklemede AES-256-GCM ile şifrelenir. Ekranlarda ya da metinde algılanan gizli bilgiler cihazda ayıklanır ve bizim tarafımızdan asla gönderilmez veya saklanmaz.',
+          'Yapılandırılmış bir anahtar, kullanımda olduğu sürece tutulur.',
+          'Müşteri anahtarı kaldırdığında veya değiştirdiğinde ya da hesap silindiğinde kaldırılır.',
+        ],
+        [
+          'Denetim günlüğü',
+          'Oturumuyla birlikte saklanır. Oturum sırasında neyin iletildiğini kaydeder; böylece kullanıcı ve şirket hesapları için yöneticileri, cihazdan tam olarak neyin ayrıldığını görebilir.',
+          'Ait olduğu oturumla aynı: silinene kadar ya da yapılandırılmış otomatik süre oturumu temizleyene kadar.',
+          'Oturumla birlikte kaldırılır. Bir oturumu silmek, denetim günlüğünü rapor ve ekran görüntüleriyle birlikte kaldırır.',
+        ],
+        [
+          'Genelleştirilmiş çıkarımlar',
+          'Şirket hesapları: o şirketin kendi bilgi tabanında, yalnızca üyeleri için kullanılır. Bireysel hesaplar: platform bilgi tabanında. Araçların ve görevlerin şu anda nasıl çalıştığına dair genelleştirilmiş, kimliksizleştirilmiş olguları tutarlar ve kişisel veri, gizli bilgi, ekran görüntüsü veya belge içeriği içermezler.',
+          'Rehberliğe yararlı oldukları sürece tutulur ve araçlar değiştikçe değiştirilir. Oturum içeriği olmadıkları için bir oturumu silmek onları etkilemez.',
+          'Bir şirketin bilgi tabanı, şirket hesabıyla birlikte kaldırılır. Daha erken temizlenmesi için aşağıdaki iletişim adresine yazın.',
+        ],
+        [
+          'Hesap ve faturalama bilgileri',
+          'Hesap bilgileri hizmet tarafından tutulur. Ödeme bilgileri biz değil, Stripe ile girilir ve Stripe tarafından tutulur.',
+          'Hesabın ömrü boyunca ve sonrasında yalnızca bir kayıt tutma yasal yükümlülüğünün gerektirdiği süre kadar.',
+          'Hesap sona erdikten sonra talep üzerine, bu yasal yükümlülüğe tabi olarak silinir.',
+        ],
+      ],
+      note: '<b>Bu nedir.</b> Ürünün bugün veriyi nasıl ele aldığına dair bir açıklama. Saklama süresi veya kilometre taşı ekran görüntüleri gibi müşterinin denetiminde olan bir şey söz konusu olduğunda, müşterinin kendi ayarları belirler.',
+    },
+    subprocessors: {
+      p1: 'Müşteri, hizmeti sağlamak için gereken alt işleyiciler için genel yetki verir. Bugün bunlar şöyledir:',
+      items: [
+        {
+          name: 'Yapay zeka işleme',
+          how: 'Rehberlik, büyük bir yapay zeka sağlayıcısı tarafından o sağlayıcının kendi şartları kapsamında üretilir. Ona yalnızca, hassas değerleri halihazırda cihazda ayıklanmış veya belirteçlenmiş yönetilen içerik ulaşır. Müşterinin kendi anahtarıyla çalıştığı durumda, o sağlayıcı ilişkisi müşteriye aittir ve bu listenin dışında kalır.',
+        },
+        {
+          name: 'Ödemeler',
+          how: 'Stripe ödemeleri işler ve ödeme bilgilerini tutar. Kart numaralarını almayız.',
+        },
+        {
+          name: 'Barındırma',
+          how: 'Hizmeti çalıştıran ve oturum kayıtlarını bizim adımıza saklayan bulut barındırma sağlayıcısı.',
+        },
+      ],
+      p2: 'Varlık adları ve her birinin oynadığı rol ile birlikte güncel liste talep üzerine edinilebilir. Müşterilere, makul bir itirazda bulunabilmeleri için listedeki önemli değişiklikler hakkında bildirimde bulunuruz ve alt işleyicilerimizin müşteri verilerini ele alışından sorumlu olmaya devam ederiz.',
+      note: "<b>Listeyi isteyin.</b> Güncel alt işleyici listesini ya da kuruluşunuz için imzalı bir Veri İşleme Ek Sözleşmesi'ni almak için <a>{contact}</a> adresine yazın.",
+    },
+    retention: {
+      items: [
+        {
+          name: 'Yapılandırılabilir',
+          how: 'Saklama, platform yöneticisi ve şirket hesapları için şirket tarafından belirlenir. Otomatik bir süre, seçilen bir gün sayısından daha eski oturumları temizleyebilir.',
+        },
+        {
+          name: 'Talep üzerine',
+          how: 'Bir kullanıcı ya da şirket yöneticisi oturumları istediği zaman silebilir. Bir oturumu silmek; oturum kaydını, kilometre taşı ekran görüntülerini ve denetim günlüğünü birlikte kaldırır.',
+        },
+        {
+          name: 'Tutulmaz',
+          how: 'Yüklenen kaynak belgeler ve ham ekran kareleri, saklanan kaynak materyal olarak tutulmaz.',
+        },
+        {
+          name: 'Çıkarımlar',
+          how: 'Araçların nasıl çalıştığına dair genelleştirilmiş, kimliksizleştirilmiş çıkarımlar oturum içeriği değildir ve bir oturumu silmekle kaldırılmaz. Bir şirketin bilgi tabanı, şirket hesabıyla birlikte ya da talep üzerine daha erken kaldırılır.',
+        },
+        {
+          name: 'Sona erme durumunda',
+          how: 'Sözleşme sona erdikten sonra talep üzerine, bir kayıt tutma yasal yükümlülüğüne tabi olarak müşteri içeriğini sileriz veya iade ederiz.',
+        },
+      ],
+    },
+    rights: {
+      items: [
+        {
+          name: 'Veri sahibi talepleri',
+          how: 'Müşterinin erişim, düzeltme, silme ve dışa aktarma taleplerine yanıt vermesine yardımcı oluruz ve müşteri içeriği hakkında aldığımız bir talebi iletiriz.',
+        },
+        {
+          name: 'Olay bildirimi',
+          how: 'Müşterinin içeriğini etkileyen bir kişisel veri olayını teyit ettikten sonra, <ph>bildirim süresi, hukuk danışmanıyla teyit edilecek</ph> içinde, gereksiz gecikme olmadan müşteriye haber veririz.',
+        },
+        {
+          name: 'Kanıt ve denetimler',
+          how: 'Müşterinin bu ek sözleşmeye uyulduğunu kontrol edebilmesi için denetimlerimiz hakkında makul bilgi sağlarız; önce belgeleri ve oturum başına denetim günlüklerini kullanırız.',
+        },
+        {
+          name: 'Talimatlar',
+          how: 'Bir talimatın bize uygulanan yasayı ihlal edeceğine inanıyorsak müşteriye bunu söyleriz.',
+        },
+      ],
+    },
+    transfers: {
+      p1: 'Müşteri kişisel verileri sınır ötesine aktarıldığında, aktarım mekanizması <ph>aktarım mekanizması ve işleme konumları, hukuk danışmanıyla teyit edilecek</ph> olacaktır. Yürürlüğe konmamış bir mekanizmayı uydurmaz ya da ima etmeyiz.',
+    },
+    request: {
+      p1: 'Kuruluşunuz için imzalı bir Veri İşleme Ek Sözleşmesi almak ya da bir güvenlik, gizlilik veya hukuk sorusu sormak için <a>{contact}</a> adresine yazın. Lütfen şirket adınızı, imzalayacak iletişim kişisini ve hukuk ekibinizin incelememizi istediği özel şartları ekleyin.',
+      note: '<b>Dürüst çerçeve.</b> Bu sayfa bir özet şablonudur. İmzalı ek sözleşme, bir kez edinilebilir olduğunda bağlayıcı belgedir.',
+    },
+    links: {
+      privacy: 'Gizlilik Politikası',
+      terms: 'Hizmet Şartları',
+      security: 'Güvenlik',
+    },
+  },
+  enterprisePage: {
+    art: {
+      sop: 'SOP',
+      playbook: 'OYUN KİTABI',
+      appGuide: 'UYGULAMA REHBERİ',
+      tenant: 'SİZİN ALANINIZ',
+      corrected: 'Yanlış alan. Düzeltildi.',
+      sharper: 'DAHA DA KESKİNLEŞİR',
+    },
+    hero: {
+      eyebrow: 'Kurumlar ve ekipler için',
+      h1: 'Her adımda elinizden tutar. <hl>Şirketinizin nasıl çalıştığına göre eğitilir.</hl>',
+      sub: "Her kişinin ekranını izler ve kendi uygulamalarınızda tam olarak sıradaki adımda onlara yol gösterir, yanlış bir dönüşü olduğu anda düzeltir. SOP'larınızı ve oyun kitaplarınızı yükleyin; her adım şirketinizin gerçekte çalıştığı biçimi izlesin. Tasarım gereği salt okunurdur: insanlarınız yerine asla tıklamaz ya da yazmaz.",
+      ctaLearn: 'Şirketinizi nasıl öğrendiğini görün',
+      proofAria: 'Kısaca',
+      proof: [
+        'Ekranı izler ve her adımda elinizden tutar',
+        'Yanlış bir dönüşü yakalar ve gerçek zamanlı düzeltir',
+        'Oyun kitaplarınıza dayanır, alanınıza özeldir',
+        'Her adımı kendi yazılı güvenlik politikanıza göre denetler',
+      ],
+    },
+    cta: {
+      quote: 'Kurumsal teklif alın',
+      dpa: "DPA'yı okuyun",
+    },
+    learn: {
+      eyebrow: 'Fark',
+      h2: '<hl>Sizin</hl> kurumunuzu öğrenir. Uygulamalarınızı, verilerinizi, oyun kitaplarınızı.',
+      lead: 'Genel asistanlar dünyayı bilir. WorkCoPilot ise şirketinizi bilir: uygulamalarınızı, alanlarınızı, onay zincirinizi, isimlerinizi. Bir kez yükleyin; ekrandaki her adım sizin dilinizden konuşsun, bilginiz arttıkça daha da keskinleşsin.',
+      loopAria: 'WorkCoPilot şirketinizi nasıl öğrenir',
+      steps: [
+        {
+          t: 'Bilginizi yükleyin',
+          d: "Yöneticiniz SOP'ları, oyun kitaplarını, uygulama rehberlerini ve politikaları bir kez yükler. Her üye bunları devralır.",
+        },
+        {
+          t: 'Her adım buna dayanır',
+          d: 'Adımlar sizin uygulama adlarınızı, alanlarınızı, onay zincirinizi kullanır. Genel bir nasıl-yapılır değildir.',
+        },
+        {
+          t: 'Gerçek ekranda, elinizden tutarak yol gösterir',
+          d: 'Uygulamalarınızda tam olarak sıradaki adımı gösterir ve yanlış bir dönüşü canlı düzeltir. Salt okunurdur: kimse yerine asla tıklamaz ya da yazmaz.',
+        },
+        {
+          t: 'Siz ekledikçe daha da keskinleşir',
+          d: "Bir oyun kitabı ekleyin ya da bir SOP'u düzeltin; sonraki oturum bunu yansıtsın. Yalnızca sizin şirketiniz için.",
+        },
+      ],
+    },
+    ba: {
+      aria: 'Şirket bilginizle ve onsuz aynı adım',
+      q: '"Değişiklik talebini oluştur."',
+      without: {
+        tag: 'Bilginiz olmadan',
+        a: 'Biletleme sisteminizi açın, yeni bir değişiklik talebi oluşturun, zorunlu alanları doldurun, onayı ekleyin, gönderin.',
+        foot: 'Doğru, ama insanlarınızın yine de hangi sistem, hangi alanlar, hangi onay olduğunu bilmesi gerekir.',
+      },
+      with: {
+        tag: 'Şirketinize dayalı',
+        a: "ServiceNow'da: <b>Change > Create New > Standard</b>. <b>Assignment group</b> alanını <b>Platform-Ops</b> yapın, şablon <b>CHG-STD-07</b>, CAB onayını ekleyin, Submit. <b>Değişiklik Oyun Kitabı, bölüm 3.2</b>'den.",
+        foot: 'Her tıklamada elinizden tutar ve yanlış şablonu gönderilmeden önce işaretler.',
+      },
+      note: 'Açıklayıcı örnek. Adımlarınız kendi yüklediğiniz bilgiden ve uygulamalardan gelir.',
+    },
+    trust: {
+      title: 'Alanınıza özel. Yöneticiniz tarafından denetlenir.',
+      sub: 'Bilginiz yalnızca kendi insanlarınızı daha iyi yapar, başka kimseyi değil.',
+      items: [
+        {
+          t: 'Şirketinizin içinde kalır',
+          d: 'Yalnızca kendi üyelerinize rehberlik eder. Asla paylaşılan bir modeli eğitmez ya da başka bir şirkete ulaşmaz.',
+        },
+        {
+          t: 'Kopya sizde kalır',
+          d: 'Neyin yüklü olduğunu görün ve bilginizi istediğiniz zaman indirin.',
+        },
+        {
+          t: 'Yeniden yükleyin ya da değiştirin',
+          d: 'Yeni materyali birleştirin ya da tüm seti değiştirin.',
+        },
+        {
+          t: 'Dilediğinizde temizleyin',
+          d: 'Temizleme bir gerekçe ister; kim, ne, ne zaman ve neden bilgisiyle kaydedilir.',
+        },
+      ],
+    },
+    kinds: {
+      aria: 'Neler yükleyebilirsiniz',
+      label: 'Getirin',
+      items: [
+        "SOP'lar",
+        'Çalıştırma kılavuzları',
+        'Oyun kitapları',
+        'Uygulama anlatımları',
+        'Politikalar',
+        'Veri sözlükleri',
+        'Süreç haritaları',
+        'Kontrol listeleri',
+        'Şablonlar',
+        'Herhangi bir yapay zekadan dışa aktarılan beceriler',
+      ],
+    },
+    groups: {
+      security: {
+        kicker: 'Güvenlik ve gizlilik',
+        title: 'Hassas hiçbir şey bir cihazdan korumasız ayrılmaz.',
+        lead: 'Koruma ilk saniyeden itibaren açıktır ve herkes için zorunlu kılınır. Hassas değerler, herhangi bir şey gönderilmeden önce maskelenir.',
+        features: [
+          {
+            t: 'Cihazda maskeleme, varsayılan olarak açık',
+            d: 'Kişisel veriler, anahtarlar, kart numaraları ve kimlikler cihazda maskelenir ve <code>[REDACTED]</code> olarak gösterilir. Herkes için açık, politikayla kilitli.',
+          },
+          {
+            t: 'Oturum başına denetim günlüğü',
+            d: 'Her oturum; neyin gönderildiğini, okunduğunu, filtrelendiğini ve işaretlendiğini günlüğe kaydeder. İstediğiniz zaman çekin.',
+          },
+          {
+            t: 'Yerleşik SAST ve bağımlılık denetimi',
+            d: 'Bir oturumdaki kod, siz çalıştırmadan önce zayıflıklar için taranır ve bağımlılıkları OSV veritabanına göre denetlenir.',
+          },
+          {
+            t: 'Beklemede şifreleme',
+            d: 'Oturum eserleri ve şirket verileri beklemede, döndürebileceğiniz anahtarlarla şifrelenir.',
+          },
+          {
+            t: 'Zorunlu MFA (TOTP)',
+            d: 'Her hesap bir kimlik doğrulayıcı kullanır. Parola, SSO ve sosyal oturum açmanın hepsi aynı ikinci faktörden geçer.',
+          },
+          {
+            t: 'Ekran paylaşımlarından gizli',
+            d: 'Masaüstü katmanı, varsayılan olarak ekran paylaşımlarının ve kayıtların dışında kalır.',
+          },
+        ],
+      },
+      governance: {
+        kicker: 'Yönetişim / DLP',
+        title: 'Tek bir şirket politikası. Her üye onu devralır.',
+        lead: 'Yazılı güvenlik politikanız, her adımın karşısında denetlendiği kurallara dönüşür. Bir cihazdan neyin çıkabileceğine, kayıtların ne kadar tutulacağına ve kimin neyi kaldırabileceğine siz karar verirsiniz.',
+        features: [
+          {
+            t: 'Yazılı güvenlik politikanız, rehberlik ederken zorunlu kılınır',
+            d: 'Şirketinizin kendi güvenlik politikasını yapıştırın; yöneticiniz kurallarını devreye alsın. Ardından her adım, sonuç ve belge sunucuda bunlara göre denetlenir: yasak ya da atlanmış-zorunlu bir adım satır içinde işaretlenir ve politikanıza ada ve bölüme göre atıfla gösterilir (örneğin <code>Acceptable Use Policy §4.2</code>), yanında uyumlu alternatifiyle ve denetim günlüğüne bir satırla birlikte. İşaretler ve atıf verir, metninizi asla yeniden yazmaz.',
+          },
+          {
+            t: 'Özel temizleme kuralları',
+            d: 'Maskelemek ya da engellemek için kendi desenlerinizi ve sözcüklerinizi ekleyin. Üyeler bunları zayıflatamaz.',
+          },
+          {
+            t: 'Saklama süreleri',
+            d: 'Oturum kayıtlarının ve belgelerin ne kadar tutulacağını belirleyin. Sona erme otomatiktir.',
+          },
+          {
+            t: 'Üye gözetimi',
+            d: 'Yöneticiler herhangi bir üye oturumunun raporunu ve denetim günlüğünü, canlı ya da tamamlanmış olarak çekebilir.',
+          },
+          {
+            t: 'Hesap verebilir geri alınamaz işlemler',
+            d: 'Herhangi bir şeyi silmek ya da temizlemek bir gerekçe ister; kim, ne, ne zaman ve neden bilgisiyle kaydedilir.',
+          },
+          {
+            t: 'Şirket başına yapay zeka anahtarları ya da kendi anahtarınız',
+            d: 'Şirketinizin kendi anahtarları üzerinden yönlendirin ya da kendi anahtarınızı getirin. Hiçbir şey şirketler arasında paylaşılmaz.',
+          },
+        ],
+      },
+      alerts: {
+        kicker: 'Güvenlik uyarıları ve SOC',
+        title: "Hassas veri girildiği anı öğrenin. SOC'nize iletin.",
+        lead: 'Bir üye PII ya da PHI girdiğinde, bu değer cihazında maskelenir ve yöneticinize kim, nerede ve ne tür olduğu bildirilir, asla değerlerin kendisi değil. Bu uyarıları halihazırda kullandığınız SIEM, SOAR ve sohbet araçlarına iletin.',
+        destinationsAria: 'Desteklenen hedefler',
+        features: [
+          {
+            t: 'Kim, nerede, ne, ne zaman',
+            d: 'Her uyarı üyeyi, görevi ve verinin türü ile sayısını adlandırır (örneğin e-posta x1, kart x1). Değerler asla saklanmaz ya da gönderilmez.',
+          },
+          {
+            t: 'Gönderimden önce maskelenir',
+            d: 'Korumanın işe yaradığının kanıtı: değerler, herhangi bir şey platforma ulaşmadan önce cihazda maskelendi.',
+          },
+          {
+            t: 'Otomatik iletim',
+            d: 'Yeni uyarılar oluştukça etkinleştirilen her bağlayıcıya ulaşır, bağlayıcı başına teslim durumuyla birlikte.',
+          },
+          {
+            t: 'Yalnızca-yazılır gizli bilgiler',
+            d: 'Belirteçler yalnızca-yazılır olarak saklanır ve döndürülebilir. Konsol bunları asla geri göstermez.',
+          },
+          {
+            t: 'Genel Webhook ve Syslog / CEF',
+            d: 'Listede olmayan her şey imzalı bir webhook ya da bir Syslog / CEF akışı üzerinden bağlanır.',
+          },
+        ],
+      },
+      identity: {
+        kicker: 'Kimlik',
+        title: 'Şirketinizin zaten yaptığı biçimde oturum açın.',
+        lead: 'Yalnızca davetle sağlama, kimlik sağlayıcınızla şirket tekil oturum açma ve her yolda bir kimlik doğrulayıcı.',
+        features: [
+          {
+            t: 'Şirket SSO (OIDC)',
+            d: 'Google, Microsoft Entra, Okta, Auth0 ve Ping dahil on dört kimlik sağlayıcı. Üyeler davet edilir, asla kendi kendine kaydolmaz.',
+          },
+          {
+            t: 'E-posta alan adı otomatik algılama',
+            d: 'Bir şirket e-postası yazın; WorkCoPilot sizi doğrudan tekil oturum açmanıza yönlendirsin.',
+          },
+          {
+            t: 'Sosyal oturum açma',
+            d: 'Bireyler Google, Microsoft ya da Facebook ile devam eder, sonra kimlik doğrulayıcılarını kurar.',
+          },
+        ],
+      },
+      compliance: {
+        kicker: 'Uyumluluk kanıtı ve raporlama',
+        title: 'Denetçilerinizin kullanabileceği kanıt.',
+        lead: 'Uyumluluk programınızı destekleyen, yanıt verdiğiniz çerçevelere eşlenmiş ve doğrulanabilmesi için mühürlenmiş raporlar.',
+        features: [
+          {
+            t: '18 çerçeveye eşlenmiş',
+            d: 'Görev başına kanıt raporları, bir oturumda uygulanan denetimleri on sekiz çerçeveye eşler. Programınızı destekleyen kanıttır; bir sertifika değildir.',
+          },
+          {
+            t: 'Gerçeklik mührü',
+            d: 'Her rapor doğrulanabilir bir mühür taşır; böylece bir alıcı raporun gerçek ve değiştirilmemiş olduğunu teyit edebilir.',
+          },
+          {
+            t: 'Big-4 düzeyinde oturum raporları',
+            d: 'Kapak, içindekiler, grafikler, onaylanan adımlar ve sonuç; kanıt olarak temizlenmiş kilometre taşı ekran görüntüleriyle.',
+          },
+        ],
+      },
+      exec: {
+        kicker: 'Yönetici ve ticari',
+        title: 'Onu bir şirket ürünü gibi yönetin.',
+        lead: 'Üretkenliğe yönetici bakışı, üründe kendi markanız ve şirketlerin satın alma biçimine uyan faturalama.',
+        features: [
+          {
+            t: 'Yönetici ROI panosu',
+            d: 'Görevler, zaman ve tasarruf edilen zaman ile maliyetin açıklayıcı bir görünümünden oluşan bir üretkenlik panosu. PDF, görüntü ya da CSV olarak dışa aktarın.',
+          },
+          {
+            t: 'Beyaz etiket markalama',
+            d: 'İnsanlarınızın kullandığı üründe şirket adınız ve logonuz.',
+          },
+          {
+            t: 'Sınırsız koltuk, tek bir yönetici konsolu',
+            d: 'Tek bir merkezi yönetici konsolundan yönetilen sınırsız koltuk ve görev.',
+          },
+          {
+            t: 'Şirket başına fiyatlandırma ve faturalama',
+            d: 'Ayrı kullanıcı ve yönetici koltuk havuzları, bir şirket dakika havuzu, sizin fiyatlandırmanız ve indirilebilir faturalar içeren ekstreler.',
+          },
+        ],
+      },
+      platform: {
+        kicker: 'Platform',
+        title: 'Masaüstü, web ve mobil. Otomasyon değil, elinizden tutma.',
+        lead: 'İnsanlarınız onu çalıştıkları yerde kullanır. Ellerine adım adım rehberlik eder; onlar yerine asla hareket etmez ve onlar için asla içerik üretmez.',
+        features: [
+          {
+            t: 'Masaüstü katmanı',
+            d: 'İçinde bulunduğunuz uygulamanın üstünde kalan, ekran paylaşımlarından gizli, şeffaf bir katman.',
+          },
+          {
+            t: 'Web',
+            d: 'Kurulacak bir şey yok. Oturum açın, bir ekran paylaşın; yüzen bir pencere adımları işinizin üstünde tutsun.',
+          },
+          {
+            t: 'Mobil',
+            d: 'Telefonunuzun kamerasını bir ekrana, bir cihaza ya da kağıda tutun ve adımları izleyin.',
+          },
+          {
+            t: 'İçerik üretimi yok',
+            d: 'Bir görev bir belge ya da görsel gerektirdiğinde, kendi yapay zekanız için hazır bir komut verir. İçeriğin kendisini asla üretmez.',
+          },
+        ],
+      },
+    },
+    final: {
+      h2: 'İnsanlarınıza şirketinizi bilen bir el verin.',
+      p: 'Dağıtımınız için adı belli bir sorumlu, bir DPA ve talep üzerine şirket içi (on-prem) seçenekler.',
+    },
+  },
+  errorBoundary: {
+    title: 'Bir şeyler ters gitti',
+    body: 'Bu sayfa yüklenirken beklenmeyen bir hatayla karşılaştık. Lütfen yeniden denemek için sayfayı yenileyin.',
+    reload: 'Yenile',
+  },
+  execPage: {
+    brand: {
+      executive: 'Yönetici',
+    },
+    fmt: {
+      hours: '{v} sa',
+      minutes: '{v} dk',
+      rangeDays: '{n}g',
+    },
+    errors: {
+      load: 'Verimlilik yüklenemedi.',
+    },
+    scope: {
+      title: 'Bu görünüm şirket hesapları içindir',
+      body: 'Yönetici görünümü, bir şirket ekibinin tamamladığı işi, bunun temsil ettiği zamanı ve emeğin nereye gittiğini gösterir. Bir şirket hesabının yöneticileri ve şirket yöneticileri için açılır.',
+    },
+    loading: 'Verimlilik yükleniyor',
+    live: {
+      staleTitle: 'Son geçerli okuma gösteriliyor; yeniden deneniyor',
+      liveTitle: 'Canlı, her 45 saniyede bir yenilenir',
+      reconnecting: 'Yeniden bağlanıyor',
+      live: 'Canlı',
+      updated: '{time} güncellendi',
+    },
+    pdf: {
+      title: '{company} - Verimlilik',
+      sub: 'Son {days} gün  |  {date} tarihinde oluşturuldu',
+    },
+    head: {
+      title: 'Verimlilik',
+      sub: 'Ekibinizin tamamladığı iş, bunun temsil ettiği zaman ve değer ve son {days} günde emeğin nereye gittiği. <b>Tah.</b> ile işaretli rakamlar varsayımsal verimlilik tahminleridir, ölçülmüş gerçek değerler değildir.',
+      rangeAria: 'Tarih aralığı',
+      pdf: 'PDF',
+      image: 'Görsel',
+      csv: 'CSV',
+    },
+    assume: 'Adım başına yaklaşık {min} dk manuel emek, {rate}/saat üzerinden tahmin edildi. Varsayımsaldır, ölçülmüş gerçek bir rakam değildir.',
+    empty: {
+      title: 'Henüz tamamlanmış görev yok',
+      detail_one: 'Ekibiniz çalıştıkça verimlilik burada görünür. Bu görünüm, {count} üye genelinde son {days} günü kapsar.',
+      detail_other: 'Ekibiniz çalıştıkça verimlilik burada görünür. Bu görünüm, {count} üye genelinde son {days} günü kapsar.',
+    },
+    est: 'Tah.',
+    estTitle: 'Varsayımsal tahmin, gerçek bir rakam değil',
+    kpi: {
+      tasksCompleted: 'Tamamlanan görevler',
+      inProgressNow: 'şu anda {count} sürüyor',
+      timeSaved: 'Kazanılan zaman',
+      vsByHand: 'elle yapmaya kıyasla',
+      valueDelivered: 'Sağlanan değer',
+      notACost: 'verimlilik değeri, maliyet değil',
+      effectiveness: 'Etkililik',
+      fullyCompleted: '%{count} tamamen bitirildi',
+      avgSteps: 'Görev başına ort. adım',
+      taskDepth: 'görev derinliği',
+      avgTime: 'Görev başına ort. süre',
+      activeMinutes: 'etkin dakika',
+      members: 'Ekip üyeleri',
+      inThisCompany: 'bu şirkette',
+      inProgress: 'Sürüyor',
+      activeNow: 'şu anda etkin',
+    },
+    charts: {
+      trendTitle: 'Tamamlama eğilimi',
+      trendHint: 'Son {days} günde günlük tamamlanan görevler.',
+      trendAria: 'Tamamlama eğilimi',
+      trendEmpty: 'Bu aralıkta henüz tamamlanmış görev yok.',
+      trendTip: '{count} tamamlandı',
+      typesTitle: 'Tamamlanan görev türleri',
+      typesHint: 'Ekibinizin tamamladığı iş türleri, kategoriye göre.',
+      typesEmpty: 'Henüz görev türü yok.',
+      depthTitle: 'Görev derinliği',
+      depthHint: 'Tamamlanan işin emeğe göre payı, hızlıdan derine.',
+      depthEmpty: 'Profillenecek tamamlanmış görev henüz yok.',
+      depthQuick: 'Hızlı',
+      depthQuickSub: '1 ila 3 adım',
+      depthStandard: 'Standart',
+      depthStandardSub: '4 ila 7 adım',
+      depthDeep: 'Derin',
+      depthDeepSub: '8+ adım',
+      depthTipLabel: '{label} ({sub})',
+      depthTip: '{count} görev, %{pct}',
+      contributorsTitle: 'Başı çeken katkıcılar',
+      contributorsHint: 'Bu aralıkta en çok görev tamamlayan kişiler.',
+      contributorsEmpty: 'Henüz katkıcı yok.',
+      barsEmpty: 'Henüz gösterilecek bir şey yok.',
+      barsTip: '{count} {unit}',
+      tasksUnit: 'görev',
+      impactTitle: 'Tahmini etki',
+      impactHint: 'Varsayımsal verimlilik değeri, ölçülmüş bir rakam veya maliyet değil.',
+    },
+    table: {
+      summary: 'Rakamları görün',
+      captionSummary: 'Özet, son {days} gün',
+      members: 'Üyeler',
+      tasksCompleted: 'Tamamlanan görevler',
+      tasksInProgress: 'Süren görevler',
+      avgSteps: 'Görev başına ort. adım',
+      avgTime: 'Görev başına ort. süre',
+      effectiveness: 'Etkililik',
+      fullyCompleted: 'Tamamen bitirildi',
+      timeSavedEst: 'Kazanılan zaman (tah.)',
+      valueDeliveredEst: 'Sağlanan değer (tah.)',
+      captionTypes: 'Görev türleri',
+      captionContributors: 'Başı çeken katkıcılar',
+      noData: 'Veri yok',
+    },
+    foot: 'Kazanılan zaman ve sağlanan değer, kendi verimliliğiniz için varsayımsal tahminlerdir, {assume}',
+  },
+  faqPage: {
+    eyebrow: 'SSS · WorkCoPilot',
+    h1: 'Başlamadan önce net yanıtlar.',
+    lead: 'Ne olduğu, cihazınızdan ne çıktığı, ne kadara mal olduğu. Bir soru seçin, özünü öğrenin.',
+    searchLabel: 'Soruları arayın',
+    searchPlaceholder: 'Arayın: kurulum, fiyat, HIPAA, kendi anahtarım',
+    glanceH2: 'Bilinmesi gereken üç şey',
+    glance: [
+      {
+        eyebrow: 'Salt okunur',
+        title: 'Rehberlik eder. Denetim sizde kalır.',
+        body: 'Kendi ekranınızda bir sonraki tam adım. Asla tıklamaz, yazmaz veya bir şey çalıştırmaz.',
+      },
+      {
+        eyebrow: 'Tasarım gereği gizli',
+        title: 'Hassas veriler asla açık biçimde çıkmaz',
+        body: 'Kişisel veriler, sırlar ve anahtarlar, herhangi bir şey gönderilmeden önce cihazınızda ayıklanır veya tokenleştirilir.',
+      },
+      {
+        eyebrow: 'Güncel kalır',
+        title: 'Araçlarınızı değiştikçe öğrenir',
+        body: 'Bugün sahip olduğunuz ekranı okur ve bayat bir eğitim kesim tarihini değil, en güncel belgeleri araştırır.',
+      },
+    ],
+    sections: 'Bölümler',
+    answersCount: '{n} yanıt',
+    collapseAll: 'Tümünü daralt',
+    expandAll: 'Tümünü genişlet',
+    emptyNoMatch: 'Henüz <b>{query}</b> ile eşleşen bir yanıt yok.',
+    emptyTry: 'Daha kısa bir sözcük deneyin ya da <a>bize doğrudan sorun</a>.',
+    qNum: 'S{num}',
+    linkToQuestion: 'Bu soruya bağlantı: {q}',
+    ctaAria: 'Hâlâ bir sorunuz mu var',
+    ctaEyebrow: 'Hâlâ bir sorunuz mu var?',
+    ctaH2: 'Bize sorun ya da başlayıp kendiniz görün.',
+    ctaP: 'Ürün ve faturalama: {support}. Gizlilik, hukuk, güvenlik: {legal}.',
+    getStarted: 'Başlayın',
+    demoBtn: '60 saniyelik tanıtım',
+    emailSupport: 'E-posta desteği',
+    groups: {
+      what: {
+        title: 'Ne olduğu',
+        items: [
+          {
+            q: 'WorkCoPilot nedir?',
+            a: 'WorkCoPilot ekranınızı izler ve önünüzdeki görev için bir sonraki tam tıklamayı, komutu, ayarı veya kodu söyler, yanlış bir hareketi yakalar ve iş bitene kadar sizi doğru adımda tutar.',
+            d: "AdmireVeda tarafından, COE Security LLC'nin bir ürünü olarak yapılmıştır.",
+            links: ['Nasıl çalışır', '60 saniyelik tanıtım'],
+          },
+          {
+            q: 'Bir sohbet botundan veya genel bir yapay zeka asistanından ne farkı var?',
+            a: 'Bir sohbet botu hafızasından yanıtlar ve nerede olduğunuzu göremez. WorkCoPilot gerçek ekranınızı okur, tam olarak içinde bulunduğunuz araç için bir sonraki hareketi verir, her adımın işe yaradığını onaylar ve bir araç değiştiğinde sizi düzeltir.',
+            d: 'Yol boyunca yine de ona sorular sorabilirsiniz.',
+          },
+          {
+            q: 'İşi benim yerime mi yapar, yoksa sistemlerimde bir şey mi değiştirir?',
+            a: 'Hayır. WorkCoPilot tasarım gereği salt okunurdur: izler ve rehberlik eder, asla tıklamaz, yazmaz veya bir şey çalıştırmaz. Her değişikliği siz yaparsınız.',
+            d: 'Onu üretim konsollarında, finans sistemlerinde ve düzenlemeye tabi ortamlarda güvenli kılan budur.',
+            links: ['Güvenlik'],
+          },
+          {
+            q: 'Ne için tasarlanmamıştır?',
+            a: 'Sizin yerinize uzun belgeler okumak veya yazmak ya da derinlemesine analiz. WorkCoPilot yapmak için tasarlanmıştır: dosyalama, yapılandırma, düzeltme, kurma, geliştirme; ekranda adım adım. Kod istisnadır; görevin bir parçası olarak kod yazar ve düzeltir.',
+            d: 'Ayrıca yalnızca yasal işleri destekler ve yasa dışı ya da zararlı her şeyi reddeder.',
+            links: ['Kabul Edilebilir Kullanım Politikası'],
+          },
+        ],
+      },
+      how: {
+        title: 'Nasıl çalışır',
+        items: [
+          {
+            q: 'Bir görev nasıl ilerler?',
+            a: 'Ne yapmak istediğinizi söyleyin. WorkCoPilot onu planlar, sonra kendi ekranınızda her seferinde tek adım size rehberlik eder; yardımcı olduğu yerde kopyalamaya hazır metinle ve ilerlemeden önce her adımın işe yaradığını denetler.',
+            d: 'Tam olarak ne yaptığınızın bir özetiyle bitirirsiniz.',
+          },
+          {
+            q: 'Bir hata yaptığımda ne olur?',
+            a: 'Yanlış dönüşü olduğu anda fark eder, nedenini söyler ve düzeltmeyi gösterir. Açık bir ağ aralığı, fazla geniş bir izin veya sabit kodlanmış bir sır gibi riskli değerler, kaydetmeden önce işaretlenir.',
+          },
+          {
+            q: 'Görev sırasında bir hata yapıştırabilir ya da bir ekran görüntüsü veya belge ekleyebilir miyim?',
+            a: 'Evet. Bir hatayı, bir yanıtı, bir ekran görüntüsünü veya bir belgeyi yapıştırın, sonraki adımlar ona göre ayarlanır.',
+            d: 'Advanced ve Premium, adımları dayandırmak için referans belgeleri de yükleyebilir; masaüstü uygulamasında dosya cihazınızdan asla çıkmaz.',
+            links: ['Planları karşılaştırın'],
+          },
+          {
+            q: 'Ne yaptığımın bir kaydını alıyor muyum?',
+            a: 'Evet. Her oturum, ne yaptığınızın temiz bir özeti, maskelenmiş kilometre taşı ekran görüntüleri ve neyin gönderildiğine dair bir denetim günlüğüyle biter. Paylaşın, yineleyin ya da saklayın.',
+            d: 'Kilometre taşı ekran görüntüleri sizin veya şirket yöneticinizin tarafından kapatılabilir.',
+          },
+        ],
+      },
+      platforms: {
+        title: 'Platformlar ve kurulum',
+        items: [
+          {
+            q: 'Bir şey kurmam gerekiyor mu?',
+            a: 'Hayır. WorkCoPilot tarayıcınızda çalışır ve işinizin üstünde yüzer, böylece kısıtlı makinelerde ve sanal masaüstlerinde bile size rehberlik eder.',
+            d: 'Bir Windows masaüstü uygulaması görünürlüklü bir katman ekler, varsayılan olarak ekran paylaşımlarından gizlenir ve ikinci bir ekranda tam ekran rehber çalıştırabilir. Tarayıcı, masaüstü ve mobil tek bir abonelikle gelir.',
+          },
+          {
+            q: 'Yalnızca web siteleriyle değil, masaüstü uygulamaları, terminaller ve yerel konsollarla da çalışır mı?',
+            a: 'Evet. Ekranınızdaysa, onun içinde size rehberlik edebilir: web uygulamaları, kurulu masaüstü uygulamaları, terminaller, yerel bir adresteki yerel konsollar ve kendi özel araçlarınız.',
+          },
+          {
+            q: 'Telefonumdan kullanabilir miyim?',
+            a: 'Tarayıcı sürümü bugün her cihazda çalışır. Kameranızı bir ekrana veya bir cihaza doğrultup hareket halindeyken rehberlik almanızı sağlayan Android uygulaması yakında geliyor.',
+          },
+          {
+            q: 'Hangi dilleri destekliyor?',
+            a: 'Bölgeniz için otomatik olarak seçilen on altı dil. İstediğiniz zaman değiştirin; seçiminiz hatırlanır.',
+          },
+        ],
+      },
+      security: {
+        title: 'Güvenlik ve gizlilik',
+        items: [
+          {
+            q: 'Cihazımdan tam olarak ne çıkar?',
+            a: 'Veri koruma açıkken, kişisel veriler, sağlık verileri, sırlar, anahtarlar ve kart numaraları, herhangi bir şey gönderilmeden önce kendi cihazınızda ayıklanır veya tokenleştirilir. Yalnızca mevcut adıma rehberlik etmek için gereken şey çıkar.',
+            d: 'Çıkan şey, hassas satırları karartılmış küçültülmüş bir ekran karesi ve hassas değerleri tokenlerle değiştirilmiş metindir. Gerçek değerler sizde kalır.',
+            links: ['Korumayı iş başında görün', 'Gizlilik Politikası'],
+          },
+          {
+            q: 'Neyin hassas sayılacağını denetleyebilir miyim?',
+            a: 'Evet. Yerleşik algılayıcıların üzerine, maskelenecek, tokenleştirilecek veya engellenecek kendi sözcüklerinizi ve desenlerinizi ekleyin. Bir şirket yöneticisi politikayı her üye için kilitleyebilir ve uyumluluk hazır ayarları tek tıkla devreye alınır.',
+            links: ['Güvenlik'],
+          },
+          {
+            q: 'Verilerin sınırlarım içinde kalması için kendi yapay zeka anahtarımı kullanabilir miyim?',
+            a: "Evet. WorkCoPilot'u kendi ya da şirketinizin yapay zeka anahtarıyla çalıştırın; her çağrı, sizin kendi sağlayıcı ilişkiniz içinde, o anahtarda kalır ve hiçbir şey sessizce yeniden yönlendirilmez.",
+            d: 'Anahtarlar beklemede şifrelenir. Şirket başına anahtarlar ve ekip hazırlığı için Enterprise hakkında bilgi alın.',
+            links: ['Enterprise', 'DPA'],
+          },
+          {
+            q: 'Bana verdiği komutlar ve kodu çalıştırmak güvenli mi?',
+            a: 'Evet. Her komut, kod parçacığı ve düzeltme güvenli biçimde yazılır ve size ulaşmadan önce enjeksiyon, sabit kodlanmış sırlar, fazla geniş erişim ve bilinen zafiyetli kütüphaneler açısından denetlenir.',
+          },
+          {
+            q: 'Birisi onu ekranım ya da bir görev üzerinden yönlendirebilir mi?',
+            a: 'Hayır. Ekranınızda olan ya da bir göreve yazılan her şey, işe dair bilgi olarak ele alınır, asla talimat olarak değil. Kurallarını çiğnemesini ya da size ait olmayan verilere ulaşmasını sağlama girişimleri reddedilir ve yöneticiniz için kaydedilir.',
+          },
+          {
+            q: 'Çerez kullanıyor musunuz?',
+            a: 'Yalnızca kesinlikle gerekli bir oturum açma çerezi. Zorunlu olmayan depolama, siz izin verene kadar kapalı kalır ve reddetmek kabul etmek kadar kolaydır. Seçiminizi istediğiniz zaman alt bilgiden değiştirin.',
+            links: ['Çerez Politikası'],
+          },
+        ],
+      },
+      pricing: {
+        title: 'Fiyatlandırma ve faturalama',
+        items: [
+          {
+            q: 'Ne kadara mal oluyor?',
+            a: 'Her biri rehberli büyük görevler ve saatlerce canlı rehberlik içeren dört self servis plan (Lite, Basic, Advanced ve Premium) ve özel fiyatlı bir Enterprise planı. Güncel fiyatlar fiyatlandırma sayfasında yan yanadır.',
+            d: 'Aylık faturalandırılır; ödeme sırasında indirimli yıllık faturalama sunulabilir. Ödeme Stripe ile yapılır ve kart numaranızı asla görmeyiz.',
+            links: ['Fiyatlandırmayı görün'],
+          },
+          {
+            q: 'Görev olarak ne sayılır?',
+            a: 'Görev, büyük bir görevdir: tek bir hedef, aldığı her alt adım boyunca baştan sona rehberlik edilir. Güvenlik ve gizlilik her planla gelir, asla bir ek satış olarak değil.',
+            d: 'Basic; yol haritalarını, yüzen rehberi ve oturum özetini ekler; Advanced belge yüklemelerini ve daha fazla saati ekler; Premium ise oluşturulan görselleri ve rehberlik sırasında önceliği ekler.',
+            links: ['Planları karşılaştırın'],
+          },
+          {
+            q: 'Saatlerim biterse ne olur?',
+            a: 'Gerektiğinde fazladan bir saat ekleyin. Fazladan bir saat bir görev daha ekler ve satın alınan süre asla sona ermez.',
+            d: 'Günlük saatleriniz her akşam, ABD Doğu Saati ile sıfırlanır. İstediğiniz zaman duraklatın ve kaldığınız yerden geri dönün.',
+            links: ['Ek paket ücretleri'],
+          },
+          {
+            q: 'İstediğim zaman iptal edebilir miyim?',
+            a: 'Evet. Faturalama portalından kendiniz iptal edin, sözleşme yok, telefon yok. Planınız ödediğiniz dönemin sonuna kadar etkin kalır ve oturumlarınız siz silene kadar durur.',
+            links: ['İade ve iptal politikası'],
+          },
+          {
+            q: 'Yükseltme veya düşürme yapabilir miyim?',
+            a: 'Evet, istediğiniz zaman. Bir yükseltme, orantılı krediyle hemen uygulanır; bir düşürme, bir sonraki yenilemenizde geçerli olur. Faturalar panonuzdadır.',
+          },
+          {
+            q: 'Ekipler ve şirketler için bir plan var mı?',
+            a: "Evet. Enterprise; koltuk havuzlarını, SSO'yu, şirket genelinde kilitli bir veri politikasını, faturalama için bir finans panosunu, imzalı bir DPA'yı ve öncelikli bir SLA'yı ekler.",
+            d: '{sales} adresine yazın, bir iş günü içinde yanıtlıyoruz.',
+            links: ['Enterprise', 'Satışla iletişime geçin'],
+          },
+        ],
+      },
+      current: {
+        title: 'Güncel kalma',
+        items: [
+          {
+            q: 'Diğer yapay zeka araçları gibi eskiyor mu?',
+            a: 'Hayır. WorkCoPilot bugün ekranınızda ne varsa onu okur, en güncel resmi belgeleri canlı araştırır ve araçlarınızın şu anda çalıştığı güncel yolu bir sonraki sefer için öğrenir. Bir düğme yer değiştirdiğinde ya da bir menü yeniden adlandırıldığında, artık olmayan bir şeyi işaret etmek yerine yeni denetimi bulur.',
+          },
+          {
+            q: 'Ekibimin işinden öğreniyor mu ve asla neyi saklamıyor?',
+            a: 'Bir şirket hesabı için, araçlarınızın şu anda nasıl çalıştığına dair öğrendikleri, yalnızca üyelerinizin yararlandığı özel bir bilgi tabanında kalır. Öğrenilenler genelleştirilir ve kimliksizleştirilir: asla kişisel veri, sırlar, ekran görüntüleri veya belge içeriği değildir.',
+            d: 'Bireysel hesaplar, paylaşılan bir platform bilgi tabanına kimliksizleştirilmiş öğrenilenlerle katkıda bulunur.',
+            links: ['Gizlilik Politikası', 'DPA'],
+          },
+          {
+            q: 'Arkasında hangi yapay zeka var?',
+            a: 'Her görev, kullanılan anahtarda bulunan en güçlü yapay zeka ile planlanır, asla kullanımdan kaldırılmış bir modelle değil. Sağlayıcı veya model adlarını yayınlamayız ve sizi ilerletmek için görev sırasında herhangi bir şeyin değişmesi gerektiyse, görev günlüğü bunu belirtir.',
+            links: ['Planınız nasıl oluşturulur'],
+          },
+        ],
+      },
+      who: {
+        title: 'Kimler için',
+        items: [
+          {
+            q: 'WorkCoPilot kimler için?',
+            a: 'Ekranda gerçek iş yapması gereken herkes için: mühendisler, BT ve güvenlik ekipleri, yöneticiler, kurucular, operasyon, finans ve uyumluluk çalışanları ve günlük kullanıcılar. En güçlü olduğu alan operasyonel, teknik, idari ve uygulamalı işler ve koddur.',
+            d: 'Birçok mesleki alanda işlere rehberlik eder ve adımlar, o alanda bir uzmanın yazdığı gibi okunur.',
+            links: ['Alanlar', 'Kullanım senaryoları'],
+          },
+          {
+            q: 'Teknik biri olmam gerekiyor mu?',
+            a: 'Hayır. Sıfırdan başlar: doğru sayfayı açar, sizi tam noktaya götürür ve her tıklamayı açıkça anlatır, böylece teknik olmayan bir kişi teknik bir görevi bitirebilir.',
+            d: 'Nedenini de açıklayan daha ayrıntılı adımlar isteyin, ilerledikçe öğrenin.',
+          },
+          {
+            q: 'Bir şirket için ne yapar?',
+            a: 'Yalın ekipler uzmanlık gerektiren işleri kurum içinde üstlenir, daha hızlı bitirir, her değişikliği belgeli tutar ve yüklenicilere ve uygulama ortaklarına daha az harcar.',
+            d: 'Yöneticiler veri politikasını belirler ve kilitler, üye oturumlarını ve denetim günlüklerini inceler ve şirket bilgi tabanı tamamlanan her görevle büyür.',
+            links: ['Enterprise'],
+          },
+        ],
+      },
+      compliance: {
+        title: 'Veri ve uyumluluk',
+        items: [
+          {
+            q: 'GDPR, HIPAA, SOC 2 ve benzeri çerçevelerle uyumlu mu?',
+            a: 'WorkCoPilot uyumluluğa hazırdır: kendi uyumluluk çalışmanızı destekleyen denetimleri ve denetim kanıtlarını, GDPR, HIPAA, PCI DSS, SOC 2 ve ISO 27001 için tek tıkla hazır ayarlarla size verir. Bir sertifika iddiasında bulunmuyoruz.',
+            links: ['Uyumluluk hazırlığı'],
+          },
+          {
+            q: 'Ne saklıyorsunuz ve ne kadar süreyle?',
+            a: 'Oturum başına bir rapor, bir denetim günlüğü ve oturum geçmişiniz; beklemede şifrelenmiş olarak, siz veya yöneticiniz silene ya da bir saklama penceresi temizleyene kadar saklanır. Ham ekran kareleri, yüklenen kaynak belgeler ve gerçek hassas değerler saklanmaz.',
+            links: ['Gizlilik Politikası'],
+          },
+          {
+            q: 'Verilerimi silebilir miyim?',
+            a: 'Evet. Herhangi bir oturumu istediğiniz zaman silin; bu, raporunu, ekran görüntülerini ve denetim günlüğünü birlikte kaldırır. Hesap verileri, bir kayıt tutmaya ilişkin herhangi bir yasal yükümlülüğe tabi olarak, istek üzerine silinir.',
+          },
+          {
+            q: 'Bir DPA var mı ve alt işleyicileriniz kimler?',
+            a: 'Özet bir DPA herkese açıktır ve imzalı bir DPA istek üzerine sunulur. Rehberlik büyük bir yapay zeka sağlayıcısı tarafından, ödemeler Stripe tarafından, barındırma bir bulut sağlayıcısı tarafından üretilir; tüzel kişi adlarıyla güncel liste istek üzerine sunulur.',
+            d: 'Şirket adınız ve imzalayacak kişiyle {legal} adresine yazın.',
+            links: ["DPA'yı okuyun", 'Alt işleyiciler'],
+          },
+          {
+            q: 'Bir şirket yöneticisi üyelerin ne yaptığını görebilir mi?',
+            a: 'Evet. Yöneticiler kendi üyelerinin oturum raporlarını ve denetim günlüklerini inceleyebilir, veri politikasını belirleyip kilitleyebilir ve üye oturumlarını silebilir. Üyeler kilitli bir politikayı değiştiremez.',
+          },
+        ],
+      },
+      start: {
+        title: 'Başlarken ve destek',
+        items: [
+          {
+            q: 'Nasıl başlarım?',
+            a: 'admireveda.com adresinde oturum açın, bir plan seçin, ne yapmak istediğinizi söyleyin, ekranınızda size rehberlik etmeye başlasın. Kurulacak bir şey yok.',
+            links: ['Başlayın', 'Fiyatlandırmayı görün'],
+          },
+          {
+            q: 'Kaydolmadan izleyebileceğim bir tanıtım var mı?',
+            a: 'Evet. 60 saniyelik senaryolu bir tanıtım, rehberliği gerçekçi görünen bir görevde gösterir, oturum açmaya gerek yok.',
+            links: ['60 saniyelik tanıtımı görün'],
+          },
+          {
+            q: 'Nasıl destek alırım?',
+            a: 'Ürün yardımı ve faturalama için {support}, gizlilik, hukuk veya güvenlik için {legal} ve Enterprise için {sales} adresine e-posta gönderin. Bir iş günü içinde yanıtlıyoruz.',
+            links: ['E-posta desteği'],
+          },
+        ],
+      },
+    },
+  },
+  floatPanel: {
+    status: {
+      guiding: 'Rehberlik ediyor',
+      paused: 'Duraklatıldı',
+    },
+    deepTip: 'Derin geçiş: bu tek kareye daha yakından bakar ve adımlara geri işler, sonra normal hızda devam eder.',
+    switchDark: 'Koyuya geç',
+    switchLight: 'Açığa geç',
+    dimTip: 'Parlamayı azaltmak için paneli karart (gerçek şeffaflık için masaüstü uygulamayı kullanın)',
+    closeTip: 'Yüzen pencereyi kapat',
+    resume: 'Devam et',
+    pause: 'Duraklat',
+    watchScreen: 'Ekranımı izle',
+    end: 'Bitir',
+    endTip: 'Bu görevi bitir ve bir özet oluştur',
+    shareHint: 'Adımlar siz çalışırken güncellensin diye tüm ekranınızı paylaşın.',
+    plan: 'Plan',
+    fullPlan: 'Tam plan',
+    viewFullPlan: 'Tam planı görüntüle',
+    viewFullPlanTip: 'Tam planı görüntüle',
+    hideFullPlanTip: 'Tam planı gizle',
+    doneOf: '{total} adımdan {done} tamam',
+    markDone: 'Tamamlandı işaretle',
+    markNotDone: 'Tamamlanmadı işaretle',
+    jumpTip: 'Bu adıma geç',
+    complete: {
+      title: 'Görev tamamlandı',
+      allDone_one: '{n} adımın tümü tamam.',
+      allDone_other: '{n} adımın tümü tamam.',
+      someDone: '{total} adımdan {done} tamam.',
+      nicely: 'Güzel iş.',
+      report: 'Raporunuz ana pencerede hazır.',
+      startAnother: 'Başka bir görev başlat',
+      startAnotherTip: 'Yeni bir görev başlat',
+    },
+    hint: {
+      paused: 'Duraklatıldı. Bunu canlı tutmak için devam edin.',
+      watch: 'Bunu canlı tutmak için ekranımı izle',
+    },
+    nav: {
+      prev: 'Önceki',
+      prevTip: 'Önceki adıma git',
+      next: 'Sonraki',
+      nextTip: 'Sonraki adıma git',
+      finishFirst: 'Önce bu adımı bitirin. Tamamlandığında kendiliğinden ilerler.',
+      count: '{total} adımdan {n}. adım',
+    },
+    nextUp: 'Sıradaki',
+    empty: 'Adımlarınızı ana pencerede planlayın; sonra burada görünürler.',
+    askPlaceholder: 'Sorun, neyi inceleyeceğinizi söyleyin ya da bir ekran görüntüsü veya belge ekleyin',
+    ask: 'Sor',
+    attachTip: 'Bir ekran görüntüsü, fotoğraf ya da belge ekleyin. Dikkate alınır ve gerekirse adımlarınız güncellenir.',
+    attachAria: 'Bir ekran görüntüsü ya da belge ekle',
+    analyze: 'İncele',
+    analyzeTip: 'Şimdi ekran görüntüsü al ve incele. Yukarıya bir odak yazın ya da tam bir okuma için boş bırakın.',
+    research: 'Araştır',
+    researchTip: "Web'de en güncel bilgiyi ara, sonra yanıtla (yalnızca dokunduğunuzda).",
+  },
+  fullGuide: {
+    copied: 'Kopyalandı',
+    subtitle: 'Tam ekran rehberlik',
+    paused: 'Duraklatıldı',
+    live: 'Canlı',
+    tasksTip: 'Şu anda açık görevler, aynı anda açık tutabileceğiniz en yüksek sayıdan',
+    themeTip: 'Açık ya da koyu',
+    themeAria: 'Açık ya da koyuyu değiştir',
+    fullScreenAria: 'Tam ekranı aç/kapat',
+    allDone: 'Tüm adımlar tamam',
+    allDoneBody: 'Her adım onaylandı. Bitirip özetinizi almak için ana pencereye dönün.',
+    pausedHint: 'Ana pencerede duraklatıldı.',
+    liveHint: 'Canlı. Ana pencerede ya da yüzen pencerede tamamlandı işaretleyin.',
+    roadmap: 'Yol haritası',
+    viewFullPlan: 'Tam planı görüntüle',
+    planDialogAria: 'Tam plan',
+    fullPlan: 'Tam plan',
+    closeTip: 'Kapat',
+    closeAria: 'Tam planı kapat',
+    yourGoal: 'Hedefiniz',
+    now: 'Şimdi',
+  },
+  guideConsole: {
+    source: {
+      label: 'Belgelerinize dayalı',
+      tip: 'Materyalinize dayalı: {label}',
+    },
+    how: {
+      open: 'Nasıl?',
+      hide: "Nasıl'ı gizle",
+      tip: 'Bu tek eylemi ayrıntılı, kopyalamaya hazır adımlara bölün',
+      loading: 'Ayrıntılı adımlar hazırlanıyor...',
+      error: 'Ayrıntılı adımlar yüklenemedi, tekrar deneyin.',
+      retry: 'Tekrar dene',
+      none: 'Bunun için ek ayrıntı gerekmedi.',
+      heading: 'BU NASIL YAPILIR',
+      doneWhen: 'şu olduğunda tamam: {text}',
+    },
+    deliver: {
+      title: 'İnceleme ve üretim komutları',
+      close: 'Kapat',
+      lead: "İncelenmesini istediğiniz her sayfayı ekrana getirin ve <b>Yakala</b>'ya dokunun. İstediğiniz kadar ekleyin, sonra <b>Bitir</b>'e dokunun. Sorunları bulur ve düzeltilmiş tasarımı kendi araçlarınızda üretmeniz için size iki komut hazırlarım.",
+      auto: 'Otomatik yakalama: her sayfaya yerleştikçe onu yakala',
+      watching: 'Paylaşılan ekran izleniyor. Her sayfayı açın ve bir an sabit tutun; ben yakalarım, sonra siz bir sonrakine geçersiniz.',
+      pageAlt: 'sayfa {n}',
+      remove: 'Kaldır',
+      empty: 'Henüz sayfa yakalanmadı',
+      snap: 'Yakala',
+      snapCount: 'Yakala ({n})',
+      finish: 'Bitir ve oluştur',
+      archIssues: 'Mimari sorunlar',
+      secIssues: 'Güvenlik sorunları',
+      prompt1: 'Komut 1: mevcut tasarım, sorunlar işaretli',
+      prompt2: 'Komut 2: önerilen düzeltilmiş tasarım',
+      copy: 'Kopyala',
+      copied: 'Kopyalandı',
+      captureMore: 'Daha fazla yakala',
+      downloadPdf: "İnceleme PDF'ini indir",
+      errNoPage: 'Önce sayfayı ekrana getirin ve ekran paylaşımını başlatın.',
+      errCapture: 'Ekran yakalanamadı.',
+      errNoResult: 'Sonuç dönmedi. Tekrar deneyin.',
+      errBuild: 'Bu oluşturulamadı. Tekrar deneyin.',
+      errPdf: "İnceleme PDF'i indirilemedi. Lütfen tekrar deneyin.",
+    },
+    share: {
+      titleScreen: 'Başlamak için ekranınızı paylaşın',
+      titleCamera: 'Başlamak için kameraya izin verin',
+      bodyScreen: 'Tarayıcı isteminde yalnızca bir sekmeyi değil, <b>tüm ekranınızı</b> seçin; böylece WorkCoPilot size herhangi bir uygulamada yol gösterebilir. Paylaştığınız an planlama başlar.',
+      bodyCamera: "Tarayıcı isteminde <b>İzin Ver</b>'i seçin. Kamera açıldığı an planlama başlar.",
+      slowScreen: 'Paylaşım istemi hâlâ bekleniyor. Görmüyorsanız, bu pencerenin arkasındaki bir tarayıcı iletişim kutusuna bakın. İptal etmek sizi buraya geri getirir; burada <b>Adımları planla</b> yeniden sorar.',
+      slowCamera: 'Kamera istemi hâlâ bekleniyor. Görmüyorsanız, bu pencerenin arkasındaki bir tarayıcı iletişim kutusuna bakın. İptal etmek sizi buraya geri getirir; burada <b>Adımları planla</b> yeniden sorar.',
+    },
+    planning: {
+      phases: [
+        'Hedefiniz anlaşılıyor',
+        'Düşünülüyor',
+        'Plan hazırlanıyor',
+        'Derinlemesine düşünülüyor',
+        'Çok kipli görüyle çalışılıyor',
+        'Adımlarınız yazılıyor',
+      ],
+    },
+    load: {
+      gone: 'Bu oturum artık mevcut değil. Silinmiş veya başka bir cihazda tamamlanmış olabilir.',
+      failed: 'Bu oturum yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin.',
+      title: 'Bu oturum açılamadı',
+      retry: 'Tekrar dene',
+      back: 'Planlara dön',
+      opening: 'Oturumunuz açılıyor…',
+    },
+    err: {
+      capture: 'Yakalama başlatılamadı. Ekran veya kamera erişimine izin verin.',
+      photo: 'Bu fotoğraf okunamadı. Tekrar deneyin.',
+      planSlow: "Planlama beklenenden uzun sürüyor. Tekrar denemek için Adımları planla'ya basın.",
+      plan: 'Plan oluşturulamadı',
+      clarifySave: 'Yanıtınız kaydedilemedi',
+      clarifyChange: 'Yanıt değiştirilemedi',
+      clarifySkip: 'Soru atlanamadı',
+      watch: 'İzleme başarısız oldu',
+      refresh: 'Ekran yenilenemedi',
+      pause: 'Duraklatılamadı. Lütfen tekrar deneyin.',
+      resume: 'Devam ettirilemedi. Lütfen tekrar deneyin.',
+      ask: 'Yanıtlanamadı',
+      addContext: 'Bu eklenemedi',
+      analyze: 'Ekran analiz edilemedi',
+      research: 'Araştırma yapılamadı',
+      step: 'Bu adım güncellenemedi. Lütfen tekrar deneyin.',
+      download: 'Bu dosya indirilemedi. Lütfen tekrar deneyin.',
+      nav: 'Bu adıma geçilemedi. Lütfen tekrar deneyin.',
+      finalize: 'Sonuçlandırılamadı',
+    },
+    policy: {
+      flag: 'Şirket politikası, {kind}: {title}',
+      prohibited: 'yasak',
+      required: 'zorunlu',
+      per: ' ({doc} uyarınca)',
+    },
+    float: {
+      floatOnTop: 'Üstte yüzdür',
+      popOut: 'Ayrı pencereye çıkar',
+      floatTip: 'Adımları, altında çalışabilmeniz için her zaman üstte kalan küçük bir pencerede yüzdürün',
+      popOutTip: 'Adımları kendi penceresine çıkarın',
+      unfloat: 'Yüzdürmeyi kapat',
+      closePopOut: 'Ayrı pencereyi kapat',
+      unfloatTip: 'Adımları bu pencereye geri getir',
+      closePopOutTip: 'Ayrı pencereyi kapat',
+      errRefusedBoth: 'Yüzen pencere tarayıcı ayarlarınız tarafından reddedildi ve ayrı pencere de engellendi. Bu site için açılır pencerelere izin verin ya da adımları tam buradan takip etmeyi sürdürün.',
+      errBlocked: 'Tarayıcınız yüzen pencereyi engelledi. Bu site için açılır pencerelere izin verin ya da gerçek bir her-zaman-üstte katmanı için Chrome, Edge, Brave veya Opera kullanın. Adımlar tam burada çalışmayı sürdürür.',
+    },
+    fullGuide: {
+      errBlocked: 'Tarayıcınız rehberlik penceresini engelledi. Bu site için açılır pencerelere izin verin, sonra yeniden açın.',
+    },
+    chip: {
+      paused: 'Duraklatıldı',
+      pausedTip: 'Duraklatıldı. Rehberliği sürdürmek için devam ettirin.',
+      guiding: 'Rehberlik ediliyor',
+      guidingTip: 'Ekranınızdan canlı rehberlik ediliyor',
+      shareScreen: 'Ekranı paylaş',
+      shareScreenTip: 'Ekranınızı paylaşmanız bekleniyor',
+      camera: 'Kamera',
+      cameraTip: 'Kamera erişimi bekleniyor',
+      planning: 'Planlanıyor',
+      planningTip: 'Hedefiniz ve ekranınızdan planınız oluşturuluyor',
+      ready: 'Hazır',
+      readyTip: 'Hazır. Canlıya geçmek için izlemeyi başlatın.',
+    },
+    top: {
+      backPlans: 'Planlarınıza dön',
+      backPaused: 'Planlamaya dön. Duraklatılan oturumunuz Kaldığınız yerden devam edin altında bekliyor.',
+      backAria: 'Plana dön',
+      switchDark: 'Koyu moda geç',
+      switchLight: 'Açık moda geç',
+      themeAria: 'Açık veya koyu modu değiştir',
+    },
+    tools: {
+      label: 'Araçlar',
+      tip: 'Araçlar: bir çıktı oluşturun, ekranı okuyun, yeniden planlayın, tam rehber, yazı boyutu, tema',
+      secMake: 'Bir şey oluştur',
+      secScreen: 'Ekran',
+      secPlan: 'Plan',
+      secView: 'Görünüm',
+      answer: 'Yanıt',
+      answerSub: 'Gerçek yanıtı, nasıl ulaştığımla birlikte alın',
+      write: 'Yaz',
+      writeSub: 'Kod veya kendi yapay zekanız için hazır bir komut',
+      compute: 'Hesapla',
+      computeSub: 'Bir CSV veya Excel dosyasını cihazınızda işleyin',
+      readScreen: 'Ekranımı oku',
+      readScreenSub: 'Bu adımı şimdi doğrulayın ve devam edin',
+      deep: 'Derin geçiş',
+      deepSub: 'Bu ekrana daha yakından bakış, adımlarınıza işlenir',
+      photoSub: 'Bir ekranı, cihazı veya kâğıdı yakala',
+      viewFullPlan: 'Tüm planı gör',
+      viewFullPlanSub: 'Tamamlanan ve yaklaşan her adım',
+      replan: 'Yeniden planla',
+      replanSub: 'Bir neden belirtin, ilerlemeyi koruyun veya sıfırlayın',
+      fullGuide: 'Tam rehber',
+      fullGuideSub: 'Diğer monitörünüzde sade, tam ekran rehberlik',
+      textSize: 'Yazı boyutu',
+      guidance: 'Rehberlik',
+      darkMode: 'Koyu mod',
+      lightMode: 'Açık mod',
+      themeSub: 'Rehberlik panelinin temasını değiştir',
+    },
+    end: {
+      label: 'Bitir',
+      tip: 'Oturumu bitir ve bir özet oluştur',
+      session: 'Oturumu bitir',
+      slow: "Tamamlama beklenenden uzun sürüyor. Oturumunuz kaydedildi; birazdan yeniden Bitir'e basın.",
+      wrapping: 'Toparlanıyor…',
+      finishing: 'Mevcut adım tamamlanıyor ve özetiniz yazılıyor. Bir dakika.',
+      complete: 'Oturum tamamlandı',
+      saved: 'Oturumunuz kaydedildi.',
+      where: 'Tam rapor, komutlar ve denetim günlüğü <b>Kaldığınız yerden devam edin</b> altında.',
+      stay: 'Burada kal',
+      backToPlan: 'Tamam, plana dön',
+    },
+    pause: {
+      pause: 'Duraklat',
+      pauseTip: 'Rehberliği duraklat; izlemeyi durdur ve sayacı durdur',
+      resume: 'Devam et',
+      resumeTip: 'Rehberliğe devam et; izleme sürer ve sayaç yeniden işler',
+    },
+    watch: {
+      screen: 'Ekranımı izle',
+      camera: 'Kamerayı izle',
+      screenTip: 'Çalışırken adımların güncellenmesi için tüm ekranınızı paylaşın',
+      cameraTip: 'Çalışırken adımların güncellenmesi için kamerayı başlatın',
+    },
+    watchLight: {
+      pill: 'Plan ağırlıklı mod',
+      pillTip: "Plan ağırlıklı mod. Adımlarınız daha zengin ve kendi kendine yeterli. İsteğe bağlı bir okuma için İlerlememi kontrol et'i kullanın.",
+      sub: 'Planınız daha zengin ve kendi kendine yeterli; WorkCoPilot sürekli izlemiyor. Yeni bir okuma istediğinizde ilerlemenizi kontrol edin.',
+      check: 'İlerlememi kontrol et',
+      checkTip: 'Ekranı şimdi bir kez okuyun ve adımlarınızı güncelleyin',
+    },
+    usage: {
+      tip: '{tier} plan, saatler {reset} tarihinde yenilenir',
+      deeperRead: 'daha derin okuma',
+    },
+    rail: {
+      plan: 'Plan',
+      controls: 'Denetimler',
+      prevTip: 'Önceki adım',
+      nextTip: 'Sonraki adım',
+    },
+    replan: {
+      title: 'Yeniden planla',
+      lead: 'Yeniden planlama, adımları yeni bilgilere uyarlar. <b>Özgün isteğiniz tam olarak sorduğunuz gibi kalır</b>; hedefin kendisi değiştiyse yeni bir görev başlatın.',
+      noneLeft: 'Bu görev için yeniden planlama hakkı kalmadı (tümü kullanıldı: {cap}). Baştan planlamak için yeni bir görev başlatın.',
+      left: 'Bu görev için {cap} yeniden planlamadan {remaining} tanesi kaldı.',
+      whatNew: 'Yeni olan ne?',
+      whatNewHint: '(ne değişti, ne eklenecek veya düzeltilecek; yeni bir hedef değil)',
+      placeholder: 'örn. arayüz değişti, bir güvenlik duvarı kuralı adımı ekle, VPN kısmını atla',
+      hereTitle: 'Buradan devam et',
+      hereSub: 'Yapılanları koru, kalanını yeniden planla',
+      startTitle: 'Baştan',
+      startSub: 'Tüm planı yeniden oluştur',
+      cancel: 'İptal',
+    },
+    complete: {
+      title: 'Görev tamamlandı',
+      allDone_one: '{n} adımın tümü tamamlandı.',
+      allDone_other: '{n} adımın tümü tamamlandı.',
+      someDone: '{total} adımdan {done} tanesi tamamlandı.',
+      nicely: 'Güzel iş.',
+      report: 'Raporunuz ve denetim günlüğünüz aşağıda hazır.',
+      startAnother: 'Başka bir görev başlat',
+      startAnotherTip: 'Yeni bir görev başlat',
+    },
+    done: {
+      completed: 'Tamamlandı',
+      count: '{total} adımdan {done} tanesi tamamlandı.',
+      downloadHint: 'İhtiyacınız olanı indirin.',
+      review: 'İnceleme ve komutlar',
+      downloadLabel: 'İndir',
+      print: 'Yazdır',
+    },
+    banner: {
+      dismiss: 'Kapat',
+    },
+    photo: {
+      alt: 'Yakalanan fotoğraf',
+      removeTip: 'Bu fotoğrafı kaldır',
+      clear: 'Fotoğrafı temizle',
+    },
+    camera: {
+      live: 'Canlı kamera. Yardıma ihtiyacınız olan şeye doğrultun.',
+    },
+    record: {
+      kicker: 'Tamamlanan görev',
+      head: 'Ne yapıldı. {total} adımdan {done} tanesi',
+      doneAt: '{time} tarihinde tamamlandı',
+      notReached: 'Ulaşılmadı',
+    },
+    clarify: {
+      title: 'Hızlı bir soru',
+      other: 'Diğer',
+      phOther: 'Kendi yanıtınızı yazın',
+      ph: 'Yanıtınızı yazın',
+      otherAria: 'Şunun için diğer yanıt: {q}',
+      send: 'Gönder',
+      hint: 'Bu, sonraki adımlarınızı iyileştirir.',
+      skip: 'Emin değil misiniz? Atlayın, güvenli bir varsayımla devam ederim.',
+      skipTip: 'Bu soruyu atlayın. Rehber güvenli bir varsayımla devam eder.',
+      skipped: 'Atlandı. Güvenli bir varsayımla devam edeceğim.',
+      chose: 'Seçiminiz: <b>{answer}</b>.',
+      answerIt: 'Yanıtla',
+      answerTip: 'Bu soruyu şimdi yanıtlayın',
+      change: 'Değiştir',
+      changeTip: 'Yanıtınızı değiştirin',
+    },
+    allDone: 'Her adım ekranda doğrulandı. Hazır olduğunuzda bitirin ve özetleyin.',
+    hint: {
+      paused: 'Duraklatıldı. Canlı tutmak için devam ettirin.',
+      watchLight: "Plan ağırlıklı mod. Yeni bir okuma için İlerlememi kontrol et'e dokunun.",
+      watchScreen: 'Canlı tutmak için ekranımı izle',
+      watchCamera: 'Canlı tutmak için kamerayı izle',
+    },
+    nav: {
+      prev: 'Önceki',
+      prevTip: 'Önceki adıma git',
+      next: 'Sonraki',
+      nextTip: 'Sonraki adıma git',
+      finishFirst: 'Önce bu adımı tamamlayın. Tamamlandığında kendiliğinden ilerler.',
+      count: 'Adım {n} / {total}',
+    },
+    nextUp: 'Sıradaki',
+    plan: {
+      doneOf: '{total} adımdan {done} tamamlandı',
+      viewFull: 'Tüm planı gör',
+      full: 'Tüm plan',
+      close: 'Kapat',
+      closeAria: 'Tüm planı kapat',
+      yourGoal: 'Hedefiniz',
+      now: 'Şimdi',
+    },
+    make: {
+      aria: 'Bu görevden bir şey oluştur',
+      ready: 'Hazır',
+      answer: 'Yanıt',
+      write: 'Yaz',
+      compute: 'Hesapla',
+      document: 'Belge',
+      computed: 'Hesaplanan sonuç',
+      titleAnswer: 'Yanıtı al',
+      titleWrite: 'Bir çıktı yaz',
+      titleCompute: 'Bir dosyadan hesapla',
+      tag: 'Çıktı aracı',
+      whatToMake: 'Ne oluşturulacak',
+      close: 'Kapat',
+      closeAria: 'Çıktı aracını kapat',
+    },
+    answer: {
+      scopeAria: 'Ne istiyorsunuz',
+      scopeSteps: 'Adımlar',
+      scopeResult: 'Sonuç',
+      scopeBoth: 'İkisi de',
+      leadSteps: 'Bana adım adım rehberlik et',
+      pasteTip: 'Hesaplama yapılacak veriyi yapıştırın: bir tablo, sayılar, bir günlük, herhangi bir metin',
+      pasteAria: 'Veri yapıştır',
+      fromCameraTip: 'Bir fotoğraf çekin ve sonucu ondan hesaplayın',
+      fromScreenTip: 'Ekranı okuyun ve sonucu ondan hesaplayın',
+      fromScreenAria: 'Ekrandan hesapla',
+      getTip: 'Hedefiniz için sonucu hesaplayın; yapıştırdığınız veriyi ve paylaşıyorsanız ekranı kullanın',
+      get: 'Sonucu al',
+      pastePh: 'Üzerinde çalışılacak veriyi buraya yapıştırın: bir tablo, sayılar, bir günlük, bir yapılandırma veya herhangi bir metin. Hedefinizden ve ekranınızdan hesaplamak için boş bırakın.',
+      working: 'Sonuç hesaplanıyor…',
+      workingData: 'Sonuç verinizden hesaplanıyor…',
+      slow: 'Sonucu almak beklenenden uzun sürüyor. Tekrar deneyin.',
+      none: 'Sonuç dönmedi. Tekrar deneyin.',
+      failed: 'Sonuç alınamadı',
+    },
+    write: {
+      label: 'Neye ihtiyacınız var? (Size kod ya da kendi yapay zekanız için kullanıma hazır bir komut veririm)',
+      ph: 'Örneğin: geçen ayın iadeleri için bir SQL sorgusu ya da kendi yapay zekanızda bir tedarikçi takip e-postası taslağı hazırlamak için bir komut (eski yazışmanızı ekleyin).',
+      format: 'Biçim',
+      fmtAuto: 'Otomatik',
+      fmtPrompt: 'Yapay zekanız için komut',
+      fmtCode: 'Kod',
+      fmtTable: 'Tablo',
+      fmtBullets: 'Madde işaretleri',
+      fmtOutline: 'Ana hatlar',
+      pasteTip: 'Yazılacak kaynak metni yapıştırın: bir e-posta, bir tablo, sayılar, bir günlük, herhangi bir metin',
+      pasteAria: 'Kaynak metni yapıştır',
+      fromCameraTip: 'Bir fotoğraf çekin ve gösterdiğinden yazın',
+      fromScreenTip: 'Ekranı okuyun ve gösterdiğinden yazın',
+      fromScreenAria: 'Ekrandan yaz',
+      composeTip: 'Hedefiniz için belgeyi yazın; yapıştırdığınız kaynağı ve paylaşıyorsanız ekranı kullanın',
+      compose: 'Oluştur',
+      srcPh: 'Yazılacak kaynağı buraya yapıştırın: bir e-posta dizisi, bir tablo, notlar, bir madde veya herhangi bir metin. Hedefinizden ve ekranınızdan yazmak için boş bırakın.',
+      working: 'Yazılıyor…',
+      workingSrc: 'Kaynağınızdan yazılıyor…',
+      needWant: 'Önce ne yazacağımı söyleyin.',
+      slow: 'Bunu yazmak beklenenden uzun sürüyor. Tekrar deneyin.',
+      none: 'Hiçbir şey dönmedi. Tekrar deneyin.',
+      failed: 'Bu yazılamadı',
+    },
+    compute: {
+      privacy: 'Dosyanız cihazınızda okunur. Yalnızca sütun adları ve türleri gönderilir; verileriniz makinenizden asla çıkmaz.',
+      choose: 'Bir CSV veya Excel dosyası seçin',
+      chooseSub: '.csv, .xlsx veya .xls, tam burada cihazınızda okunur',
+      reading: 'Dosyanız bu cihazda okunuyor…',
+      rows_one: '{count} satır',
+      rows_other: '{count} satır',
+      cols_one: '{count} sütun',
+      cols_other: '{count} sütun',
+      meta: '{rows} · {cols}',
+      change: 'Değiştir',
+      changeTip: 'Farklı bir dosya seçin',
+      label: 'Ne hesaplamalıyım?',
+      ph: 'Örneğin: bölgeye göre toplam gelir, ortalama sipariş değeri, 500 doların üzerindeki kaç sipariş olduğu ya da harcamaya göre ilk 10 müşteri.',
+      run: 'Hesapla',
+      need: '<b>İhtiyacım olan:</b> {text}',
+      planning: 'Hesaplama planlanıyor. Yalnızca sütun adları ve türleri gönderiliyor…',
+      noRows: 'Bu dosyada hesaplanacak satır yok. Bir başlık satırı ve en az bir değer satırı olduğundan emin olun.',
+      unreadable: 'Bu dosya okunamadı. Bir .csv, .xlsx veya .xls dosyası ekleyin.',
+      needFile: 'Önce bir CSV veya Excel dosyası ekleyin.',
+      needWant: 'Önce ne hesaplayacağımı söyleyin.',
+      slow: 'Hesaplamayı planlamak beklenenden uzun sürüyor. Tekrar deneyin.',
+      needDefault: 'Dosyada bunun gerektirdiği sütunlar yok. Bu sütunlara sahip bir dosya seçin ya da sütunların kapsadığı bir şey isteyin.',
+      unsafe: 'Dönen plan yerel güvenlik denetimini geçemedi ({reason}). Ne hesaplanacağını yeniden ifade etmeyi deneyin.',
+      invalidPlan: 'geçersiz plan',
+      failed: 'Bu hesaplanamadı',
+    },
+    made: {
+      clearResult: 'Sonucu temizle',
+      clearResultTip: 'Bu sonucu temizle',
+      clearDoc: 'Belgeyi temizle',
+      clearDocTip: 'Bu belgeyi temizle',
+      clearComputeTip: 'Bu sonucu ve dosyayı temizle',
+    },
+    summary: {
+      title: 'Oturum özeti',
+    },
+    ask: {
+      ph: 'Her şeyi sorun, bir hata yapıştırın ya da sonraki hamle için bir ekran görüntüsü veya belge ekleyin',
+      phStuck: 'Neyin engel olduğunu söyleyin',
+      phFollowUp: 'Bir takip sorusu sorun',
+      phCamera: 'Kameranın gördüğü şey hakkında sorun',
+      attachTip: 'Bir ekran görüntüsü, fotoğraf veya belge ekleyin. Dikkate alınır ve gerekirse adımlarınız güncellenir.',
+      attachAria: 'Bir ekran görüntüsü veya belge ekle',
+      readScreenTip: 'Ekranı şimdi oku',
+      readCameraTip: 'Bir fotoğraf çek ve şimdi oku',
+      readAria: 'Ekranı şimdi oku',
+      researchTip: "Web'de en güncel bilgiyi araştır, sonra yanıtla",
+      researchAria: "Web'de araştır",
+      send: 'Sor',
+    },
+  },
+  guideFontScale: {
+    groupAria: 'Yazı boyutu',
+    smaller: 'Daha küçük yazı',
+    reset: 'Yazı boyutunu sıfırla',
+    larger: 'Daha büyük yazı',
+  },
+  guideLevel: {
+    groupAria: 'Rehberlik gücü',
+  },
+  helpPage: {
+    nav: {
+      aria: 'Nasıl yapılır kılavuzu bölümleri',
+      label: 'Nasıl yapılır kılavuzu',
+      flow: 'Ekranda',
+      start: 'Başlarken',
+      how: 'Rehberlik nasıl çalışır',
+      styles: 'Rehber biçimleri',
+      ask: 'Sor, Çözümle ve Araştır',
+      deep: 'Derin inceleme',
+      float: 'Yüzen katman',
+      where: 'Masaüstü, mobil ve tarayıcı',
+      time: 'Süreniz ve duraklatma',
+      record: 'Kayıt tutma',
+      safe: 'Güvenlik ve kabul edilebilir kullanım',
+      faq: 'SSS',
+      desktop: 'Masaüstü uygulaması',
+      desktopsec: 'Güvenlik ve emniyet (masaüstü)',
+      desktopfaq: 'Masaüstü SSS',
+    },
+    startTask: 'Görev başlat',
+    title: 'WorkCoPilot nasıl kullanılır',
+    titleDesktop: 'WorkCoPilot masaüstü uygulaması nasıl kullanılır',
+    lead: 'Ekranınızı izleyen, bir sonraki tam hareketi her seferinde tek adımda söyleyen, yanlış bir hareketi yakalayıp düzelten ve iş bitene kadar sizi doğru adımda tutan bir uzman. İşte yaptığı her şey ve ondan en iyi şekilde nasıl yararlanılacağı.',
+    flowAlt: 'WorkCoPilot dört adımda nasıl çalışır: 1) Hedefinizi söyleyin. 2) Ekranınızda gösterdiği bir sonraki tam hareketi izleyin: tıklama, komut veya kod. 3) Yanlış bir hareketi yakalar ve düzeltir. 4) Bir denetim izi ve temiz bir raporla, tamamlanana kadar devam edin.',
+    guideShot: {
+      aria: 'Rehber kartı, kullanılacak tam komut veya kodla birlikte mevcut adımı ve bir Tamamlandı düğmesi gösterir.',
+      nowDoThis: 'ŞİMDİ, ŞUNU YAPIN',
+      stepOf: 'Adım 2 / 9',
+      stepTitle: "Developer Console'da Apex sınıfını oluşturun",
+      terminal: 'TERMİNAL',
+      markDone: 'Tamamlandı',
+      hideHow: 'Nasıl yapılacağını gizle',
+      caption: 'Rehber kartı: her seferinde tek adım, tam komut veya kod ve bir Tamamlandı düğmesiyle.',
+    },
+    redactShot: {
+      aria: 'Ekrandaki hassas değerler, herhangi bir şey gönderilmeden önce cihazınızda REDACTED ile değiştirilir.',
+      account: 'Hesap: Acme Corp',
+      email: 'E-posta',
+      apiKey: 'API anahtarı',
+      note: 'Cihazınızda maskelendi, yalnızca temizlenmiş metin gönderilir.',
+      caption: 'Yönetişim açık: hassas değerler, cihazınızdan ayrılmadan önce cihazınızda temizlenir.',
+    },
+    flow: {
+      h2: 'Ekranda: ana akış',
+      lead: 'Hedefinizden yanıta dört ekran. Bu kılavuzdaki her şey bunların üzerine kurulur.',
+      steps: {
+        start: {
+          t: 'Görev başlat',
+          d: "Planı adlandırın, hedefi kendi sözcüklerinizle yazın, <b>Bana rehberliğe başla</b>'ya basın.",
+          alt: 'Panodaki Görev başlat kutusu: bir plan adı, hedef ve Bana rehberliğe başla düğmesi.',
+        },
+        follow: {
+          t: "Şimdi, şunu yapın'ı izleyin",
+          d: 'Her seferinde tek adım, tam komut ve bir Kopyala düğmesiyle. Plan solda durur; tamamlanan adımlar, tamamlandığı görüldükçe işaretlenir.',
+          alt: 'Rehber konsolundaki Şimdi, şunu yapın kartı: mevcut adım, Kopyala düğmesiyle terminal komutu ve nasıl yapılacağı.',
+        },
+        tools: {
+          t: "Araçlar'ı açın",
+          d: 'Bir şey oluşturun (Yanıtla, Yaz, Hesapla), ekranı okuyun, Derin inceleme, yeniden planla, tüm kılavuz, yazı boyutu ve tema.',
+          alt: 'Araçlar menüsü: Yanıtla, Yaz, Hesapla, Ekranımı oku, Derin inceleme, Tüm planı görüntüle, Yeniden planla, Tam kılavuz, yazı boyutu, vurgu rengi ve koyu mod.',
+        },
+        answer: {
+          t: 'Yanıtı alın',
+          d: 'Araçlar, sonra <b>Yanıtla</b>, sonra <b>Sonucu al</b>. Kart; sonucu, güvenini, nasıl ulaştığını, nasıl doğrulanacağını ve varsa şirket politikası işaretlerini verir.',
+          alt: 'Yanıt kartı: sonuç, bir güven göstergesi, nasıl ulaştığım, şu şekilde doğrula, güvenlik denetimi ve şirket politikası işaretleri.',
+        },
+      },
+    },
+    desktop: {
+      h2: 'Masaüstü uygulaması',
+      lead: 'Masaüstü uygulaması, üzerinde çalıştığınız her şeyin üstünde yüzen sessiz bir katmandır. <b>Salt okunur</b> çalışır: bir sonraki hareketi gösterir, sizin yerinize asla tıklamaz, yazmaz veya bir şey çalıştırmaz.',
+      modesH: 'İki mod',
+      modes: [
+        '<b>Planlama</b>: hedefinizi belirlemek, hızlı kapsam sorularını yanıtlamak ve belge eklemek için normal, yeniden boyutlandırılabilir bir pencere (tam ekrana genişletin). Burada diğer pencerelerin üzerinde durmaz.',
+        '<b>Rehberlik</b>: bir plan başladığında, altında çalışabilmeniz için görünürlük ve arkaya tıklama özellikleriyle işinizin üstünde yüzen kompakt bir katmana dönüşür.',
+        '<b>Dost</b>: simge durumuna küçültün, mevcut adımı görünür tutan küçük bir karta küçülür. Dilediğiniz zaman geri getirin.',
+      ],
+      titleBarH: 'Başlık çubuğu (oturum açtıktan sonra)',
+      titleBar: [
+        '<b>Üstte</b>: pencereyi her şeyin üzerinde tutun.',
+        '<b>Gizli / Paylaşımda</b>: pencereyi ekran paylaşımlarından ve kayıtlardan gizleyin (varsayılan olarak açık) ya da göstermek istediğinizde ortaya çıkarın.',
+        '<b>Görünürlük</b>: arkadaki işin görünmesi için pencerenin saydamlığını değiştirin.',
+        '<b>Arkaya tıklama</b> (rehberlik sırasında): tıklamalarınızın doğrudan alttaki uygulamaya geçmesini sağlayın. Başlık çubuğunun kendisi yine de tıklamaları alır, böylece oradan (ya da Ctrl+Shift+Alt+W ile) her zaman yeniden kapatabilirsiniz.',
+        '<b>Dost</b>: dost kartına küçültün.',
+      ],
+      shortcutsH: 'Klavye kısayolları',
+      shortcuts: [
+        '<b>Ctrl+Shift+Alt+H</b> gizle / göster · <b>Ctrl+Shift+Alt+S</b> paylaşımdan gizle · <b>Ctrl+Shift+Alt+T</b> üstte',
+        '<b>Ctrl+Shift+Alt+O</b> görünürlük · <b>Ctrl+Shift+Alt+W</b> arkaya tıklama · <b>Ctrl+Shift+Alt+B</b> dost · <b>Ctrl+Shift+Alt+M</b> ekran seç',
+      ],
+      docsH: 'Kendi belgeleriniz ve diyagramlarınız',
+      docs: "Hedef kartında, planı kendi malzemenize dayandırmak için <b>Belge ekle</b>'yi kullanın: PDF, Word, metin ve <b>diyagramlar veya ekran görüntüleri</b> (cihazınızda okunur). Dosya makinenizde kalır; planlamak için yalnızca çıkarılan, yönetilen metin kullanılır.",
+    },
+    desktopsec: {
+      h2: 'Güvenlik ve emniyet (masaüstü)',
+      items: [
+        '<b>Tasarım gereği salt okunur.</b> Asla tıklamaz, yazmaz, komut çalıştırmaz veya herhangi bir şeyi değiştirmez. Her eylemin denetimi sizde kalır.',
+        '<b>Ekran paylaşımlarından gizli.</b> Katman varsayılan olarak içerik korumalıdır, dolayısıyla Zoom / Teams / Meet paylaşımlarının ve kayıtların dışında kalır. Görünür olmasını istediğinizde <b>Paylaşımda</b> ile veya Ctrl+Shift+Alt+S ile değiştirin.',
+        '<b>Belgeleriniz bilgisayarınızda kalır.</b> Eklediğiniz dosyalar cihazınızda okunur. Ham dosya asla yüklenmez ve metin sunucularımızda saklanmaz; yalnızca o oturumu planlamak için kullanılır.',
+        '<b>En az veri çıkar.</b> Size rehberlik etmek için küçültülmüş ekran kareleri ve yönetilen metin, yapay zeka servisine (bizimki ya da şirketinizin kendi anahtarı) gider. Yönetişim açıkken, hassas değerler herhangi bir şey gönderilmeden <b>önce</b> ayıklanır veya tokenleştirilir ve cihazınızda yeniden oluşturulur.',
+        '<b>İmzalı ve güvenli şekilde güncellenir.</b> Uygulama kod imzalıdır (COE Security) ve güncellemeler HTTPS üzerinden iletilir.',
+      ],
+      tip: 'Bunlar, uyumluluğunuzu (GDPR, HIPAA, PCI-DSS, SOC 2, ISO 27001, CCPA) destekleyen denetimler ve denetim kanıtlarıdır. Tek başlarına sizi sertifikalı yapmazlar.',
+    },
+    desktopfaq: {
+      h2: 'Masaüstü SSS',
+      items: [
+        {
+          q: 'Bir görüşmedeki kişiler katmanı görebilir mi?',
+          a: "Hayır, gizliyken (varsayılan) göremezler. Ekran yakalama ve kayıttan hariç tutulur. Kasıtlı olarak göstermek isterseniz Ctrl+Shift+Alt+S'ye veya Paylaşımda düğmesine basın.",
+        },
+        {
+          q: 'Diyagramım veya belgem yükleniyor mu?',
+          a: 'Hayır. Masaüstü uygulamasında dosya bilgisayarınızda okunur. Planlamak için yalnızca yönetilen metin gönderilir ve sunucularımızda saklanmaz.',
+        },
+        {
+          q: 'Makinemde bir şeyler yapar mı?',
+          a: 'Asla. Salt okunurdur. Ekranı okur ve bir sonraki adımı söyler; her eylemi siz gerçekleştirirsiniz.',
+        },
+        {
+          q: 'Onu nasıl yoldan çekerim?',
+          a: "Rehberlik sırasında Görünürlük ve Arkaya tıklama'yı kullanın, Dost kartına küçültün ya da tamamen gizlemek için Ctrl+Shift+Alt+H'ye basın. Simge durumundayken çalışmayı sürdürür.",
+        },
+        {
+          q: "Arkaya tıklama'yı açtım ve artık WorkCoPilot'a tıklayamıyorum.",
+          a: "Bu, Arkaya tıklama'nın işini yapmasıdır: tıklamalarınız alttaki uygulamaya gider. Fareyi, her zaman tıklamaları alan WorkCoPilot başlık çubuğunun üzerine getirip oradan Arkaya tıklama'ya basın ya da Ctrl+Shift+Alt+W'ye basın.",
+        },
+        {
+          q: "WorkCoPilot'a ulaşamadığını söylüyor.",
+          a: "Uygulamanın WorkCoPilot sunucusuna bağlanması gerekir. İnternetinizi, VPN'inizi veya proxy'nizi denetleyin. Pencere kendiliğinden yeniden dener ve sunucu yanıt verir vermez konsolu açar; Şimdi yeniden dene ve Kapat her zaman oradadır.",
+        },
+        {
+          q: 'Kendini güncelliyor mu?',
+          a: 'Evet. Başlatıldığında HTTPS üzerinden imzalı bir güncelleme olup olmadığını denetler ve bir sonraki yeniden başlatmada kurar.',
+        },
+      ],
+    },
+    start: {
+      h2: 'Başlarken',
+      steps: [
+        "<b>Pano</b>'da, yapmak istediğinizi <b>Hedefiniz</b>'e yazın ya da başlamak için bir alan seçin. Bir talebin tamamını, bir gereksinimi veya bir hata mesajını yapıştırabilirsiniz.",
+        "<b>Bana rehberliğe başla</b>'ya basın. WorkCoPilot hedefi okur, görevi planlar ve ekranınızı okumak için izin ister.",
+        'Ekran paylaşımına izin verin. Yalnızca bu sekmede değil, diğer uygulamalarda da size rehberlik edebilmesi için <b>tüm ekranınızı</b> seçin.',
+        '<b>ŞİMDİ BUNU YAPIN</b> adımını izleyin. Ekranınız değiştikçe sonraki adım kendiliğinden görünür.',
+      ],
+      tip: 'Yalnızca ilk kez: panodaki kutudan yapay zekanızı ayarlayın. Ekranınızı okuyan odur. Ondan sonra kendiliğinden çalışır.',
+    },
+    how: {
+      h2: 'Rehberlik nasıl çalışır',
+      lead: 'WorkCoPilot ekranınızı okur ve bir sonraki tam hareketi söyler. Sizin yerinize tıklamaz veya yazmaz, böylece denetim baştan sona sizde kalır. En baştan başlar; doğru sayfayı açar ve oturum açar, hiçbir şeyi varsaymaz.',
+      seeH: 'Gördükleriniz',
+      see: [
+        '<b>ŞİMDİ BUNU YAPIN</b>, mevcut adımı tam olarak şu anda ekranınızda ne varsa ona göre yeniden yazılmış biçimde gösterir.',
+        'Tam <b>komutlar, kod ve bağlantılar</b> kopyalamaya hazır gelir; her biri sayfada ve yüzen pencerede çalışan bir Kopyala düğmesiyle.',
+        '<b>Kontrol listesi</b> planın tamamını gösterir. Tamamlanan adımlar, tamamlandığı görüldükçe kendiliğinden işaretlenir.',
+      ],
+      keepH: 'Nasıl ayak uydurur',
+      keep: "Küçültülmüş karelerle izler ve yalnızca ekran gerçekten değiştiğinde yakından bakar, böylece boşta duran bir ekran neredeyse hiçbir şey kullanmaz. Yanlış bir dönüş yaptığınızı gördüğünde bunu söyler ve adımı düzeltir. Adımları şu anda ekranda olandan yeniden oluşturmak için istediğiniz zaman <b>Yeniden planla</b>'ya basabilirsiniz.",
+    },
+    styles: {
+      h2: 'Rehber biçimleri',
+      lead: '<b>Rehber biçimi</b> menüsünden size uyan derinliği seçin. Görev sırasında biçimleri değiştirebilirsiniz.',
+      items: [
+        '<b>Adım adım</b>: her seferinde tam komutuyla tek bir eylem, her biri bir sonrakinden önce onaylanır.',
+        '<b>Yeni başlayana özel</b>: her şey açıkça anlatılır, her tıklama ve tuş vuruşu, teknik terimler sade sözcüklerle açıklanır.',
+        '<b>Mimar düzeyi</b>: tasarım, ödünleşimler ve en iyi uygulamalar; nedenini isteyen deneyimli biri için yazılır.',
+        '<b>Sorun çözme</b>: birlikte hata ayıklayın: hatayı okuyun, her seferinde tek bir fikri deneyin ve nedeni daraltın.',
+      ],
+    },
+    ask: {
+      h2: 'Sor, Çözümle ve Araştır',
+      lead: 'Bir görevin herhangi bir noktasında, yerinizi kaybetmeden yapabileceğiniz üç şey:',
+      items: [
+        '<b>Sor</b>: ekranda ne olduğuna dair bir soru yazın ve görebildiklerine dayanan doğrudan bir yanıt alın.',
+        '<b>Çözümle</b> (mobilde <b>Fotoğraf</b> denir): şimdi tek bir ekran görüntüsü alır ve onu hedefinize göre okur. İlgilendiğiniz bölüme yönlendirmek için bir odak notu ekleyin.',
+        "<b>Araştır</b>: en güncel bilgiyi web'de arar, sonra yanıtlar. Yalnızca dokunduğunuzda çalışır, böylece arkanızdan hiçbir şey olmaz.",
+      ],
+    },
+    deep: {
+      h2: 'Derin inceleme',
+      body: "Zor bir yere mi geldiniz? <b>Derin inceleme</b>'ye dokunun. O tek ekran görüntüsünü daha fazla akıl yürütmeyle çalıştırır, sonucu adımlarınıza geri katar, sonra normal hızda devam eder. Kapatmanız gereken bir mod değil, tek seferlik bir güçlendirmedir. Bir adım zorlaştığında WorkCoPilot bunu kendiliğinden de yapar, böylece nadiren istemeniz gerekir.",
+      tip: "Bir adım belirsizse, bir hata tanıdık değilse ya da ekran beklediğinizle eşleşmiyorsa Derin inceleme'ye başvurun.",
+    },
+    float: {
+      h2: 'Yüzen katman',
+      p1: "Rehberi, her zaman üstte duran küçük bir pencereye çıkarmak için <b>Üstte yüzdür</b>'e dokunun, böylece çalışırken sekme değiştirmezsiniz. Serbestçe taşıyın ve yeniden boyutlandırın. Açık veya koyuya geçmek için güneş ve ay simgelerini, yoldan çekilmesi için karartmak üzere yüzde denetimini kullanın.",
+      p2: "Chrome, Edge, Brave ve Opera'da yüzen pencere her uygulamanın üstünde durur. Firefox ve Safari'de bunun yerine ayrı bir açılır pencere olarak açılır ve onu yine istediğiniz yere taşıyabilirsiniz.",
+      tip: 'Yüzen pencereyi kullanırken WorkCoPilot sekmesini açık tutun. Arka planda durabilir, sorun değil.',
+    },
+    where: {
+      h2: 'Masaüstü, mobil ve tarayıcı',
+      lead: "WorkCoPilot'u çalıştırmanın her yolu tek bir abonelikte yer alır. O ana hangisi uyuyorsa onu kullanın.",
+      items: [
+        '<b>Tarayıcı</b>: kurulacak bir şey yok, kısıtlı makinelerde bile çalışır. Herhangi bir uygulamada rehberlik almak için tüm ekranınızı paylaşın. Şu anda bunu kullanıyorsunuz.',
+        '<b>Masaüstü uygulaması</b>: görünürlük ve arkaya tıklama özellikleriyle gerçek bir katman; kendini ekran paylaşımlarından gizler, böylece görüşmedeki kişiler onu görmez.',
+        "<b>Mobil uygulama</b>: telefon kameranızı bir ekrana, bir cihaza veya kağıda doğrultun ve rehberlik alın. Kameranın gördüğü hakkında soru sormak için <b>Fotoğraf</b>'a dokunun ya da canlı olarak izlemesine izin verin.",
+      ],
+    },
+    time: {
+      h2: 'Süreniz ve duraklatma',
+      lead: 'Planınız size her gün saatlerce canlı rehberlik verir; yalnızca etkin biçimde rehberlik ederken sayılır, boştayken asla. Üstteki <b>kalan dk</b> rozeti bugün ne kadar süre kaldığını gösterir ve azalmadan önce sizi uyarmak için kehribar rengine döner.',
+      items: [
+        "Ara verirken ya da başka işler yaparken saati ve oturumunuzu dondurmak için <b>Duraklat</b>'a, döndüğünüzde <b>Devam et</b>'e dokunun.",
+        "Günlük dakikalar <b>23:59 ABD Doğu Saati</b>'nde sıfırlanır.",
+        'Satın alınan ek paket süresi asla sona ermez ve yalnızca günlük dakikalarınız bittikten sonra kullanılır.',
+        "Şimdi daha fazlası mı gerekiyor? Panonun üstündeki <b>Zaman ekle</b>'yi kullanın.",
+      ],
+    },
+    record: {
+      h2: 'Kayıt tutma',
+      body: "Her oturum temiz bir kayıt olarak saklanabilir: görev, neyin başarıldığı, tam komutları ve koduyla onaylanan her adım, varsa uyarılar ve sorularınız ile yanıtlarınız. Biçimi seçmek için <b>İndir</b>'i kullanın: bir <b>PDF raporu</b>, düz bir <b>metin raporu</b> ya da tam <b>denetim günlüğü</b>; kağıt bir kopya için <b>Yazdır</b>. Komutlar ve kod yalnızca gerçekten tamamladığınız adımlar için görünür ve rapor, kanıt olarak en fazla beş <b>temizlenmiş kilometre taşı ekran görüntüsü</b> içerir.",
+      tip: 'Rapor, bir sonraki sefer için bir çalışma kılavuzu olarak ya da aynı görevi yapması gereken bir ekip arkadaşınıza vermek için kullanışlıdır. Her ekran görüntüsü yakalanmadan önce cihazınızda maskelenir; yalnızca temizlenmiş görüntü saklanır.',
+    },
+    safe: {
+      h2: 'Güvenlik ve kabul edilebilir kullanım',
+      p1: 'WorkCoPilot yalnızca yasal, meşru işleri destekler. Silah veya kitlesel zarar araçları geliştirmeye, zararlı yazılım ya da istismar kodu oluşturmaya, sahibi olmadığınız sistem veya hesaplara girmeye ya da yasa dışı herhangi bir şeye yardım etmez. Bu tür istekler, hedefi belirlerken reddedilir.',
+      p2: 'Size rehberlik etmek için ekranınızı okur ve sizin yerinize asla eylemde bulunmaz. Adınıza hiçbir şeye tıklamaz, yazmaz veya göndermez, böylece her eyleme siz karar verirsiniz.',
+    },
+    faq: {
+      h2: 'SSS',
+      items: [
+        {
+          q: 'Bir şey kurmam gerekiyor mu?',
+          a: 'Hayır. Tarayıcınızda çalışır. Masaüstü veya mobil uygulamayı yalnızca ek katman ya da kamera özelliklerini istiyorsanız kurun.',
+        },
+        {
+          q: 'Görüşmedeki kişiler katmanı görecek mi?',
+          a: 'Tarayıcıda tüm ekranınızı paylaşırsanız, evet. Masaüstü uygulaması kendini ekran paylaşımlarından gizler.',
+        },
+        {
+          q: 'Teknik olmayan işler için çalışır mı?',
+          a: 'Evet. Finans, pazarlama, hukuk, ofis, ürün; ekranda gerçekleşen her şey.',
+        },
+        {
+          q: 'Adımlar ekranım için yanlışsa ne olur?',
+          a: "Ekranınızı yeniden okur ve siz ilerledikçe düzeltir. Yeni bir ekran görüntüsü almak, mevcut adımı doğrulamak ve devam etmek için istediğiniz zaman <b>Ekranımı oku</b>'ya ya da adımları yeniden oluşturmak için <b>Yeniden planla</b>'ya basın.",
+        },
+        {
+          q: 'Benim yerime yazar veya tıklar mı?',
+          a: 'Hayır. Yalnızca okur ve rehberlik eder. Her eylemin denetimi sizde kalır.',
+        },
+        {
+          q: 'Ekranımla ne yapar?',
+          a: 'Kareler küçültülür ve yalnızca göreve rehberlik etmek için okunur. Değişmeyen bir ekran hiç gönderilmez.',
+        },
+      ],
+    },
+  },
+  howItWorks: {
+    hero: {
+      h1a: 'Her seferinde odadaki en iyi kişiye',
+      h1b: 'sahip olmak gibi.',
+      p: 'WorkCoPilot ekranınızı izler, içinde bulunduğunuz uygulamada tam olarak sıradaki adımı gösterir, işe yaradığını denetler ve iş bitene kadar devam eder.',
+    },
+    viz: {
+      steps: {
+        alt: 'Resim: dört adımlı bir ilerleme çizgisi; birinci adım bitmiş, ikinci adım sürüyor ve geri kalanı bekliyor',
+        caption: '4 adımdan 2.',
+      },
+      command: {
+        alt: 'Resim: tam bir komutu Kopyalandı onayıyla gösteren bir terminal',
+        copied: 'Kopyalandı',
+      },
+      zero: {
+        alt: 'Resim: art arda üç adım; Aç, Giriş yap, sonra Tamam',
+        open: 'Aç',
+        signIn: 'Giriş yap',
+        done: 'Tamam',
+      },
+      fix: {
+        alt: 'Resim: riskli, açık bir ağ aralığının üstü çizilmiş ve yerine düzeltilmiş, daha dar bir aralık konmuş',
+      },
+      apps: {
+        alt: 'Resim: yan yana üç uygulama penceresi; bir web sayfası, bir masaüstü uygulaması ve bir terminal',
+        caption: 'web  ·  masaüstü  ·  terminal',
+      },
+      grounded: {
+        alt: 'Resim: cihazda okunan bir belge ve bundan bir En iyi uygulama onay işaretine giden bir ok',
+        read: 'cihazda okundu',
+        best: 'En iyi uygulama',
+      },
+      record: {
+        alt: 'Resim: tamamlanma onay işaretiyle biten bir PDF rapor',
+        pdf: 'PDF',
+      },
+      review: {
+        alt: 'Resim: incelenen bir diyagram, bir kutu işaretlenmiş ve üretilmiş bir düzeltmeye giden bir ok',
+        fix: 'düzeltme',
+      },
+      learns: {
+        alt: 'Resim: iki uygulama penceresi; Geçen sefer bir denetim bir yerdeyken, Bu sefer denetim taşınmış ve çoktan bulunmuş; altında öğrenildi, ileriye taşındı yazan bir gösterge',
+        lastTime: 'geçen sefer',
+        thisTime: 'bu sefer',
+        found: 'bulundu',
+        learned: 'öğrenildi',
+        carried: 'ileriye taşındı',
+      },
+      coach: {
+        alt: 'Resim: üç onaylı kısa bir hazırlık kontrolü, ardından hızlı ve ayrıntılı bir görüşme arasında bir seçim',
+        kind: 'Tür',
+        ready: 'Hazır mısınız?',
+        sample: 'Örnek',
+        quick: 'Hızlı',
+        detailed: 'Ayrıntılı',
+      },
+      shield: {
+        alt: 'Resim: GİZLENDİ olarak gösterilen bir form alanı, onaylı bir kod denetimi ve bir kimlik doğrulayıcı kilidi',
+        codeChecked: 'kod denetlendi',
+        authenticator: 'kimlik doğrulayıcı gerekli',
+      },
+      skills: {
+        alt: 'Resim: bir kılavuz belgesinden, artık onu izleyen bir plana giden bir ok',
+        playbook: 'kılavuzunuz',
+      },
+      enterprise: {
+        alt: 'Resim: bir SOC konsoluna iletilen bir güvenlik uyarısı, bir çoklu oturum açma rozeti ve mühürlü bir rapor',
+        soc: "SOC'unuz",
+        sso: 'SSO',
+        sealed: 'mühürlü',
+      },
+      anywhere: {
+        alt: 'Resim: yan yana bir masaüstü katmanı, bir tarayıcı penceresi ve bir telefon',
+        desktop: 'masaüstü katmanı',
+        browser: 'tarayıcı',
+        phone: 'telefon',
+      },
+    },
+    gridH2: 'WorkCoPilot sizin için ne yapar',
+    cards: [
+      {
+        t: 'Adım adım rehberlik',
+        d: 'Ekranınızdaki tam sıradaki hamle; en basitten tekniğe kadar seçtiğiniz derinlikte açıklanır ve devam etmeden önce denetlenir.',
+      },
+      {
+        t: 'Tam olarak nasıl, her seferinde',
+        d: 'Kesin tıklama, komut veya ayar; kopyalamaya hazır, her zaman kanıtlanmış en iyi yolla.',
+      },
+      {
+        t: 'Sıfırdan başlar',
+        d: 'Doğru sayfayı açar, sizi oturum açtırır ve tam noktaya götürür.',
+      },
+      {
+        t: 'Hataları yakalar ve düzeltir',
+        d: 'Yanlış bir dönüşü olduğu anda fark eder ve düzeltmeyi gösterir, bir düğme yer değiştirmiş olsa bile.',
+      },
+      {
+        t: 'Yalnızca tarayıcı değil, her uygulama',
+        d: 'Web uygulamaları, masaüstü uygulamaları, şirket içi konsollar ve kendi araçlarınız: ekranda ne varsa onu okur.',
+      },
+      {
+        t: 'En iyilere ve kendi dünyanıza dayanır',
+        d: 'Adımlar güncel en iyi uygulamayı ve Advanced ile Premium planlarında bilgisayarınızda okunan kendi belgelerinizi izler.',
+      },
+      {
+        t: 'Saklayacağınız bir kayıt',
+        d: 'Ne yaptığınızın temiz, görsel açısından zengin bir özetiyle bitirin; paylaşmaya veya yinelemeye hazır.',
+      },
+      {
+        t: 'İncele ve üret',
+        d: 'Ona bir diyagram veya tasarım gösterin. Gerçek sorunları bulur ve bunları düzeltmeniz için hazır bir komut verir.',
+      },
+      {
+        t: 'Güncel kalır, araçlarınızı öğrenir',
+        d: 'Araçlarınızın bugün nasıl çalıştığını öğrenir, şirketinize özel gizli tutulur; böylece rehberlik asla eskimez.',
+      },
+      {
+        t: 'Bir görevi harcamadan önce daha iyi bir görev',
+        d: '30 saniyelik bir koç, hazır olduğunuzu denetler ve görevi biçimlendirir; böylece plan, bildiklerinize uyar.',
+      },
+      {
+        t: 'Ona becerilerinizi öğretin',
+        d: 'Bir kılavuz veya SOP yapıştırın; rehberlik araçlarınızı, standartlarınızı ve terminolojinizi izler, gizli tutulur.',
+      },
+      {
+        t: 'Varsayılan olarak korumalı',
+        d: 'Veriler cihazınızda gizlenir, kod çalışmadan önce denetlenir, her hesapta bir kimlik doğrulayıcı ve tam bir denetim günlüğü bulunur.',
+      },
+      {
+        t: 'Şirketler için tasarlandı',
+        d: "SIEM'inize güvenlik uyarıları, şirket SSO'su, 18 çerçevede mühürlü uyumluluk raporları ve bir yönetici yatırım getirisi panosu.",
+      },
+      {
+        t: 'Masaüstü, web ve mobil',
+        d: 'Ekran paylaşımlarından gizli bir masaüstü katmanı, kurulum gerektirmeyen tarayıcı veya telefon kameranız. Yol gösterir, sizin yerinize hiçbir zaman harekete geçmez.',
+      },
+    ],
+    feature: {
+      h2: 'Planınız nasıl oluşturulur',
+      loop: {
+        aria: 'Her görevin nasıl çalıştığı: planla, yokla, yönlendir, izle, düzelt; görev tamamlanana kadar yinelenir',
+        rows: [
+          {
+            k: 'Planla',
+            v: 'size açık olan en güçlü yapay zeka görevin tamamını planlar',
+          },
+          {
+            k: 'Yokla',
+            v: 'daha fazlasına ihtiyaç duyduğunda bir soru sorar, bir dokunuş veya hızlı bir yanıt',
+          },
+          {
+            k: 'Yönlendir',
+            v: 'ekranınızdaki tam sıradaki adım',
+          },
+          {
+            k: 'İzle',
+            v: 'her adımın gerçekten işe yaradığını denetler ve istediğiniz anda herhangi bir adımı yeniden denetler',
+          },
+          {
+            k: 'Düzelt',
+            v: 'yanlış bir dönüşü olduğu anda düzeltir',
+          },
+        ],
+        again: 'görev tamamlanana kadar yinelenir',
+        ok: 'Size açık en güçlü yapay zeka tarafından planlandı',
+      },
+      line: 'Görevinizin tamamını bağlamda tutar ve iş bitene kadar, öğrendikçe gelişerek devam eder.',
+      eyebrow: 'Size açık en güçlü yapay zeka',
+      title: 'Planınız, size açık en güçlü yapay zekadan gelir.',
+      body: 'Hedefi belirleyin. Anahtarınızdaki en güçlü yapay zeka onu planlar ve canlı rehberlik ekranınızla adım adım aynı hızda ilerler.',
+      points: [
+        'Tahmin değil, seçim: her zaman şu anda size gerçekten açık olan en güçlü seçenek.',
+        'Veri sınırınız korunur: her çağrı kendi anahtarınızda veya şirketinizin anahtarında kalır.',
+        'Dürüst günlük: her görev, onu neyin planladığını ve görev sırasında yapılan her değişikliği kaydeder.',
+      ],
+    },
+    cta: {
+      aria: 'Sonraki adımlar',
+      start: 'Başlayın',
+      enterprise: 'Kurumsal özellikler',
+      demo: '60 saniyelik bir demo izleyin',
+    },
+  },
+  legalShared: {
+    lastUpdated: 'Son güncelleme',
+    templateLabel: 'Şablon.',
+    templateNotice: 'Bu, şeffaflık için sunulan bir şablondur ve hukuk danışmanıyla sonuçlandırılmaktadır; henüz bağlayıcı bir anlaşma değildir.',
+    ownership: 'WorkCoPilot, AdmireVeda tarafından, bir {entity} ürünü.',
+    glanceH2: 'Kısaca',
+    tocTitle: 'Bu sayfada',
+    relatedPages: 'İlgili sayfalar',
+    contact: 'İletişim',
+    back: "WorkCoPilot'a dön",
+  },
+  policyNote: {
+    cleanBody: 'Bu rehberlik şirket güvenlik politikanıza göre denetlendi ve hiçbir şey işaretlenmedi.',
+  },
+  privacyPage: {
+    seo: {
+      title: 'Privacy Policy - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot neyi toplar, cihazda maskeleme sonrası cihazınızdan ne ayrılır, ne ve ne kadar süre saklanır (rehberliği güncel tutan kimliksizleştirilmiş öğrenimler dahil), nasıl korunur, hangi üçüncü taraflar devrede ve hak ve seçimleriniz nelerdir.',
+    },
+    hero: {
+      eyebrow: 'Gizlilik Politikası · WorkCoPilot',
+      h1: 'WorkCoPilot verilerinizi nasıl ele alır',
+      lead: 'WorkCoPilot sizi kendi ekranınızda yaptığınız işte yönlendirir. Tasarım gereği salt okunurdur ve hassas veriler, herhangi bir şey gönderilmeden önce kendi cihazınızda ayıklanır ya da belirteçlenir. Bu sayfa sade bir dille; neyi topladığımızı, cihazınızdan neyin ayrıldığını, neyi sakladığımızı ve sahip olduğunuz seçimleri anlatır.',
+      lastUpdated: 'Son güncelleme',
+      tagline: 'Ürünün bugün yaptığının sade dilde açıklaması',
+      templateLabel: 'Şablon.',
+      templateNotice: 'Bu, şeffaflık için sunulan bir şablondur ve hukuk danışmanıyla sonuçlandırılmaktadır; henüz bağlayıcı bir anlaşma değildir.',
+      ownership: 'WorkCoPilot, AdmireVeda tarafından, bir COE Security LLC ürünü.',
+    },
+    glance: {
+      h2: 'Kısaca',
+      cards: [
+        {
+          eyebrow: 'Cihazınızda',
+          title: 'Hassas değerler asla açık biçimde ayrılmaz',
+          body: 'PII, PHI ve gizli bilgiler; ekran metninde ve yazılan metinde, herhangi bir istek gönderilmeden önce kendi cihazınızda ayıklanır ya da belirteçlenir. Yanıt cihazınızda yeniden oluşturulur.',
+        },
+        {
+          eyebrow: 'Ne ayrılır',
+          title: 'Yalnızca adımda yol göstermek için gerekenler',
+          body: 'Küçültülmüş ekran kareleri ve yönetilen metin. Masaüstü uygulamada belgeler yerel olarak okunur ve yalnızca yönetilen metin gönderilir.',
+        },
+        {
+          eyebrow: 'Ne saklarız',
+          title: 'Siz silene kadar oturumun bir kaydı',
+          body: 'Oturum başına bir rapor, denetim günlüğü ve oturum geçmişiniz. Saklanan anahtarlar, gizli bilgiler ve rapor eserleri beklemede şifrelenir. Veriler siz ya da yöneticiniz silene kadar ya da yapılandırılmış bir saklama süresi eski oturumları zamanlı biçimde temizleyene kadar tutulur.',
+        },
+      ],
+    },
+    toc: {
+      title: 'Bu sayfada',
+    },
+    sections: {
+      about: 'Bu politika hakkında',
+      collect: 'Neyi topluyoruz',
+      categories: 'Veri kategorileri',
+      leaves: 'Cihazınızdan ne ayrılır',
+      store: 'Neyi ve ne kadar süre saklıyoruz',
+      protect: 'Nasıl korunur',
+      cookies: 'Çerezler ve depolama',
+      third: 'Üçüncü taraflar',
+      bases: 'İşleme için yasal dayanaklar',
+      transfers: 'Uluslararası veri aktarımları',
+      choices: 'Seçimleriniz ve haklarınız',
+      california: 'California gizlilik hakları',
+      changes: 'Bu politikadaki değişiklikler',
+      contact: 'İletişim',
+    },
+    about: {
+      p1: "Bu politika WorkCoPilot'u kapsar: web uygulaması, masaüstü uygulaması ve mobil uygulama. Oturum açtığınızda, rehberli bir oturum yürüttüğünüzde ve raporlarınızı incelediğinizde ürünün verilerinizi nasıl ele aldığını açıklar.",
+      p2: "<b>Kim sorumludur.</b> WorkCoPilot, {entity} ürünü olan AdmireVeda tarafından sunulur. {entity} yasal tüzel kişidir ve aşağıda açıklanan hesap, oturum açma ve faturalama bilgilerinin veri sorumlusudur. Rehberli oturumlarınızın içeriği için neyin paylaşılacağına kuruluşunuz karar verir ve {entity} onun adına, <a>Veri İşleme Eki</a>'nde açıklandığı şekilde hareket eder.",
+      p3: 'Etkilemek için değil, okunmak için yazılmıştır. Bir davranış sizin denetiminizde olduğunda ya da bir şeyi henüz tamamlamadığımızda, bunu söyleriz. <a>Güvenlik sayfası</a>, tam veri akışını adım adım, cihazdaki korumanın öncesi-sonrası örnekleriyle gösterir.',
+      note: "Bu sayfa, ürünün nasıl çalıştığının sade dilde bir açıklamasıdır. Hukuki tavsiye değildir ve WorkCoPilot'un yükümlülüklerinize nasıl uyduğuna dair kendi hukuki incelemenizin yerini tutmaz.",
+    },
+    collect: {
+      lead: 'WorkCoPilot küçük bir veri kümesiyle çalışır ve bunun çoğu cihazınızda kalır.',
+      items: [
+        {
+          name: 'Hesap bilgileri',
+          how: 'Hesabınızın oturum açma bilgileri, örneğin e-posta adresiniz. Bunlar sizin tarafınızdan, şirket yöneticiniz tarafından ya da şirketiniz kurumsal tekil oturum açma kullandığında kimlik sağlayıcınız tarafından verilir.',
+        },
+        {
+          name: 'Bir oturum sırasında ekranınız ve metniniz',
+          how: 'WorkCoPilot size rehberlik ederken ekranınızda olanlar ve yazdığınız ya da yapıştırdığınız şeyler. Ekran kareleri cihazınızda okunur ve hassas değerler, herhangi bir şey gönderilmeden önce orada maskelenir ya da belirteçlenir.',
+        },
+        {
+          name: 'Eklediğiniz belgeler',
+          how: 'Masaüstü uygulamada, eklenen belgeler makinenizde yerel olarak okunur. Yalnızca yönetilen (maskelenmiş ya da belirteçlenmiş) metin gönderilir, asla dosyanın kendisi değil.',
+        },
+        {
+          name: 'Oturum kayıtları',
+          how: 'Her oturum için bir rapor, her oturum için bir denetim günlüğü ve oturum geçmişiniz; böylece geçmiş işleri yeniden açıp inceleyebilirsiniz.',
+        },
+        {
+          name: 'Kullanım',
+          how: 'Kullandığınız rehberli dakikalar; böylece planınızın hakkı uygulanabilir.',
+        },
+        {
+          name: 'Araçlar hakkında öğrendikleri',
+          how: 'Rehberliği güncel tutmak için WorkCoPilot, bir aracın ya da görevin şu anda nasıl çalıştığına dair genelleştirilmiş, kimliksizleştirilmiş öğrenimleri saklayabilir; örneğin bir ayarın artık nerede olduğu gibi. Bunlar hiçbir kişisel veri, gizli bilgi, ekran görüntüsü ya da belge içeriği barındırmaz. Bir şirket hesabı için o şirketin kendi bilgi tabanında tutulur ve yalnızca üyelerine fayda sağlar; bireysel hesaplar için ise hizmeti herkes için iyileştirmek üzere platform bilgi tabanımızda tutulur.',
+        },
+        {
+          name: 'Faturalama',
+          how: 'Ödeme bilgileri, faturalama sağlayıcımız Stripe ile girilir ve onda tutulur. Biz, aboneliğinizi yürütmek için gerekeni, örneğin planınızı ve durumunu alırız.',
+        },
+      ],
+    },
+    categories: {
+      lead: 'WorkCoPilot, günlük çalışma ekranları ve metinleri için tasarlanmıştır. Aşağıdaki veri türleri için kullanın ve ardından gelen sınırlara uyun.',
+      designedH: 'Ne için tasarlandığı',
+      designed: [
+        {
+          name: 'Çalışma ekranları ve metni',
+          how: 'Üzerinde çalıştığınız ve kullanmaya yetkili olduğunuz iş uygulamaları, konsollar, biletler, panolar, elektronik tablolar, belgeler, kod ve komutlar.',
+        },
+        {
+          name: 'Tesadüfi kişisel veriler',
+          how: 'Bu işin seyrinde ortaya çıkan isimler, iş e-posta adresleri, tanımlayıcılar ve benzeri bilgiler.',
+        },
+        {
+          name: 'Hesap ve faturalama bilgileri',
+          how: 'Yukarıda açıklandığı gibi oturum açma bilgileri, plan ve kullanım.',
+        },
+      ],
+      notSubmitH: 'Ne gönderilmemeli',
+      notSubmit: 'İşlemeye yetkili olmadığınız veriyi, paylaşma hakkınız olmayan başkalarına ait veriyi ya da kuruluşunuzun veya yasanın böyle bir hizmetle paylaşmanızı yasakladığı veriyi göndermeyin. İşiniz düzenlemeye tabi veri içeriyorsa, önce kuruluşunuzun bu kullanımı onayladığından emin olun. <a>Kabul Edilebilir Kullanım Politikası</a> kuralları ayrıntısıyla ortaya koyar.',
+      sensitiveH: 'Hassas veriler korunmuş kalır',
+      sensitive: 'Kişisel veriler, sağlık verileri, gizli bilgiler, anahtarlar ve kart numaraları gibi hassas veriler, herhangi bir şey gönderilmeden önce kendi cihazınızda ayıklanır ya da belirteçlenir ve siz veya şirket yöneticiniz kendi sözcüklerinizi ve desenlerinizi ekleyebilir. Bu bir güvencedir ve yalnızca izniniz olanı paylaşma yükümlülüğünüzün yerini tutmaz.',
+    },
+    leaves: {
+      lead: 'Herhangi bir şey gönderilmeden önce PII, PHI ve gizli bilgiler, hem ekranınızdan okunan metinde hem de yazdığınız metinde kendi cihazınızda ayıklanır ya da belirteçlenir. Gerçek değerler cihazınızda kalır ve tam yanıt orada yeniden oluşturulur. Yapay zeka gerçek hassas değerleri asla görmez.',
+      items: [
+        {
+          name: 'Küçültülmüş ekran kareleri',
+          how: 'Gönderilmeden önce boyutu küçültülür. Hassas bir değer taşıyan her satır, kare gönderilmeden önce cihazınızda karartılır.',
+        },
+        {
+          name: 'Yönetilen metin',
+          how: 'Yazdığınız ya da yapıştırdığınız metin; hassas değerleri cihazınızda zaten belirteçlerle değiştirilmiş olarak.',
+        },
+        {
+          name: 'Belgelerden yönetilen metin',
+          how: 'Masaüstü uygulamada, eklenen bir belgeden yerel olarak çıkarılan metin; maskeleme ve belirteçlemeden sonra. Dosyanın kendisi gönderilmez.',
+        },
+        {
+          name: 'Sizin yerinize hiçbir şey yapılmaz',
+          how: 'WorkCoPilot salt okunurdur. Sizin adınıza asla tıklamaz, yazmaz ya da bir kayıt sistemini değiştirmez; bu yüzden gönderdiği hiçbir şey sistemlerinizde işlem yapamaz.',
+        },
+      ],
+    },
+    store: {
+      lead: 'Her oturumun bir kaydını saklarız, başka bir şey değil. Kaynak materyaliniz tutulmaz.',
+      notStoredH: 'Saklanmaz',
+      notStored: [
+        {
+          name: 'Yüklenen kaynak belgeler',
+          how: 'Eklediğiniz dosyalar saklanan kaynak materyal olarak tutulmaz.',
+        },
+        {
+          name: 'Ham ekran kareleri',
+          how: 'Kareler yalnızca mevcut adıma rehberlik etmek için kullanılır ve saklanan kaynak materyal olarak tutulmaz.',
+        },
+        {
+          name: 'Gerçek hassas değerler',
+          how: 'Herhangi bir şey gönderilmeden önce cihazınızda ayıklanır ya da belirteçlenir; bu nedenle saklamamız için bize ait değildir.',
+        },
+      ],
+      storedH: 'Saklanır',
+      stored: [
+        {
+          name: 'Oturum raporu',
+          how: 'Oturum başına bir tane. Yakalanmadan önce cihazınızda maskelenen kilometre taşı ekran görüntüleri içerebilir. Kilometre taşı ekran görüntüleri varsayılan olarak açıktır ve siz veya şirket yöneticiniz bunları kapatabilir.',
+        },
+        {
+          name: 'Denetim günlüğü',
+          how: 'Oturum başına bir tane; neyin iletildiğini kaydeder; böylece cihazınızdan tam olarak neyin ayrıldığını görebilirsiniz.',
+        },
+        {
+          name: 'Oturum geçmişi',
+          how: 'Geçmiş oturumlarınızın listesi.',
+        },
+        {
+          name: 'Oturum açma oturumu',
+          how: 'Oturumunuzu açık tutmak için bir oturum çerezi kullanılır.',
+        },
+        {
+          name: 'Genelleştirilmiş öğrenimler',
+          how: 'Araçların ve görevlerin şu anda nasıl çalıştığına dair kimliksizleştirilmiş gerçekler; gelecekteki rehberliğin güncel kalması için saklanır. Hiçbir kişisel veri, gizli bilgi, ekran ya da belge içeriği barındırmazlar ve tek bir oturuma bağlı değildirler; bu yüzden bir oturumu silmek onları değiştirmez. Bir şirketin öğrenimleri o şirketin bilgi tabanı içinde kalır ve şirket hesabıyla birlikte ya da talep üzerine daha önce kaldırılır.',
+        },
+      ],
+      howLongH: 'Ne kadar süre',
+      howLong: 'Varsayılan olarak veriler, otomatik silme olmaksızın, siz ya da şirket yöneticiniz silene kadar tutulur. Belirli bir gün sayısından eski oturumların zamanlı biçimde temizlenmesi için otomatik bir saklama süresi yapılandırılabilir. Her iki durumda da siz ve yöneticiniz bir oturumu istediğiniz zaman silebilirsiniz.',
+    },
+    protect: {
+      items: [
+        {
+          name: 'Önce cihazda maskeleme',
+          how: 'Ana koruma, hassas değerlerin herhangi bir istek gönderilmeden önce cihazınızda kaldırılması ya da belirteçlenmesidir. Yerleşik algılayıcılar e-posta, telefon numarası, kart numarası, SSN, anahtar ve özel sunucu gibi değerleri kapsar ve siz veya yöneticiniz kendi sözcüklerinizi ve desenlerinizi ekleyebilir.',
+        },
+        {
+          name: 'Beklemede şifreleme',
+          how: 'Saklanan anahtarlar, gizli bilgiler ve kilometre taşı ekran görüntüleri dahil rapor eserleri, beklemede AES-256-GCM ile şifrelenir.',
+        },
+        {
+          name: 'Tasarım gereği salt okunur',
+          how: 'WorkCoPilot rehberlik eder. Sistemlerinizde asla bir şey çalıştırmaz; bu yüzden bir kayıt sistemini değiştiremez.',
+        },
+        {
+          name: 'Rol tabanlı denetim',
+          how: 'Şirket yöneticileri üyeleri için veri politikasını belirler ve kilitler ve kendi üyelerinin oturumlarını inceler.',
+        },
+      ],
+    },
+    cookies: {
+      p1: 'WorkCoPilot, kesinlikle gerekli bir oturum açma çerezi ve onayınızla, birinci taraf bir yönlendirme çerezi ve işlevsel tarayıcı depolaması (örneğin diliniz ve temanız) kullanır. Hiçbir reklam çerezi ve siteler arası izleme kullanmaz.',
+      p2: "Her çerezin ve depolama anahtarının amacı ve ömrüyle birlikte tam liste <a>Çerez Politikası</a>'ndadır. İşlevsel ve ilişkilendirme depolamasını, alt bilgideki <b>Çerez tercihleri</b> bağlantısından istediğiniz zaman açıp kapatabilirsiniz ve zorunlu olmayan depolamayı reddetmek, onu kabul etmek kadar kolaydır.",
+    },
+    third: {
+      lead: 'Bunlar, hizmeti sağlamada yer alan üçüncü taraflardır. <a>Alt İşleyiciler</a> sayfası her birinin oynadığı rolü listeler.',
+      items: [
+        {
+          name: 'Yapay zeka sağlayıcısı',
+          how: "Rehberlik bir yapay zeka sağlayıcısı tarafından üretilir. Varsayılan olarak platformun anahtarları üzerinde çalışır. Şirketiniz ya da siz, WorkCoPilot'u bunun yerine kendi yapay zeka anahtarlarınız üzerinde çalıştırabilirsiniz; bu da yönetilen veriyi kendi sağlayıcı sınırınız içinde tutar. Kullanılan belirli model son kullanıcılara gösterilmez.",
+        },
+        {
+          name: 'Stripe',
+          how: 'Faturalama ve ödeme bilgileri Stripe tarafından ele alınır.',
+        },
+        {
+          name: 'Kimlik sağlayıcınız',
+          how: 'Şirketiniz kurumsal tekil oturum açma kullandığında, kimlik sağlayıcınız sizi doğrular.',
+        },
+      ],
+    },
+    bases: {
+      lead: 'Veri koruma hukukunun (örneğin AB/BK GDPR) geçerli olduğu yerlerde, kişisel verilerinizi işlemek için bu yasal dayanaklara güveniriz.',
+      items: [
+        {
+          name: 'Sözleşmemizi ifa etmek',
+          how: 'Kaydolduğunuz hizmeti size vermek için (hesabınız, oturum açmanız, rehberli oturumları yürütmek ve faturalama) bunu yapmak için gereken veriyi işleriz.',
+        },
+        {
+          name: 'Meşru menfaatler',
+          how: 'Hizmeti güvende tutmak, kötüye kullanımı önlemek ve kimliksizleştirilmiş öğrenimlerle rehberliği güncel tutmak için; haklarınız ve özgürlükleriniz karşısında dengelenerek.',
+        },
+        {
+          name: 'Onay',
+          how: 'Yönlendirme çerezi gibi zorunlu olmayan depolama için, istediğiniz zaman Çerez tercihlerinden geri çekebileceğiniz onayınıza güveniriz.',
+        },
+        {
+          name: 'Yasal yükümlülük',
+          how: 'Yasanın belirli kayıtları tutmamızı gerektirdiği yerlerde (örneğin vergi ya da muhasebe için), bu yükümlülüğü karşılamak üzere veri işleriz.',
+        },
+      ],
+    },
+    transfers: {
+      p1: 'Biz ve alt işleyicilerimiz verileri, bulunduğunuz ülkeden başka ülkelerde işleyebilir. Kişisel verilerin sınır ötesine aktarıldığı yerlerde, bu aktarım için uygun bir güvenceye güveniriz; örneğin ilgili standart sözleşme hükümleri ya da yeterlilik kararı olan bir ülkeye yapılan bir aktarım gibi, ilgili taraflara uygulandığı şekilde.',
+      p2: '<subs>Alt İşleyiciler</subs> sayfası ve <dpa>Veri İşleme Eki</dpa>, kimin yer aldığını ve şirket hesapları için aktarımların nasıl ele alındığını açıklar.',
+    },
+    choices: {
+      lead: 'Yasanın size verdiği her yerde, kişisel verileriniz üzerinde bu haklara sahipsiniz. Üründeki araçları kullanabilir ya da bize yazabilirsiniz; yardımcı oluruz.',
+      rights: [
+        {
+          name: 'Erişim',
+          how: 'Sizin hakkınızda hangi kişisel verileri tuttuğumuzu sorun ve bir kopyasını alın. Oturum raporlarınız ve geçmişiniz üründe size açıktır.',
+        },
+        {
+          name: 'Düzeltme',
+          how: 'Yanlış ya da eksik kişisel verileri düzeltmemizi isteyin. Kendi hesap bilgilerinizi güncelleyebilir ya da bizden isteyebilirsiniz.',
+        },
+        {
+          name: 'Silme',
+          how: 'Kişisel verilerinizi silmemizi isteyin. Kendi oturumlarınızı istediğiniz zaman silebilirsiniz ve yasanın gerektirdiği herhangi bir kayıt tutma yükümlülüğü saklı kalmak üzere, talep üzerine hesap verilerinizi sileriz.',
+        },
+        {
+          name: 'Dışa aktarma',
+          how: 'Verilerinizi başka yere taşıyabileceğiniz taşınabilir bir biçimde isteyin.',
+        },
+        {
+          name: 'İtiraz ve kısıtlama',
+          how: 'Yasanın size bu hakkı verdiği yerlerde işlemeyi kısıtlamamızı ya da durdurmamızı isteyin.',
+        },
+        {
+          name: 'Şirket hesapları',
+          how: 'Hesabınız şirketiniz tarafından yönetiliyorsa bazı talepler, şirketinizin verilerini ve ayarlarını denetleyen şirket yöneticiniz üzerinden gider.',
+        },
+      ],
+      yourChoicesH: 'Seçimleriniz',
+      yourChoices: [
+        {
+          name: 'Oturumları silin',
+          how: 'Oturumlarınızın herhangi birini istediğiniz zaman silebilirsiniz. Bir oturumu silmek onu kaldırır.',
+        },
+        {
+          name: 'Şirket verileri',
+          how: 'Şirket yöneticileri; üye oturumlarını silmek ve üye raporları ile denetim günlüklerini incelemek dahil, şirketlerinin verilerini yönetir.',
+        },
+        {
+          name: 'Kilometre taşı ekran görüntüleri',
+          how: 'Varsayılan olarak açık. Siz ya da şirket yöneticiniz bunları kapatabilir.',
+        },
+        {
+          name: 'Kendi yapay zeka anahtarlarınız',
+          how: "Siz ya da şirketiniz, yönetilen verinin sınırınız içinde kalması için WorkCoPilot'u kendi yapay zeka anahtarlarınız üzerinde çalıştırabilir.",
+        },
+        {
+          name: 'Hassas sayılan nedir',
+          how: 'Yerleşik algılayıcılara ek olarak, siz ya da şirket yöneticiniz maskelemek, belirteçlemek ya da engellemek için özel sözcükler ve desenler ekleyebilir.',
+        },
+        {
+          name: 'Sorular ya da talepler',
+          how: 'Gizlilik talepleri için {contact} adresine yazın. Ürün yardımı ya da faturalama için {support} adresine yazın.',
+        },
+      ],
+    },
+    california: {
+      lead: 'Bir California sakiniyseniz, CPRA ile değiştirilen California Tüketici Gizliliği Yasası size belirli haklar verir. California sakinleri için bu haklara uyarız.',
+      items: [
+        {
+          name: 'Bilme ve erişim hakkı',
+          how: 'Sizin hakkınızda topladığımız kişisel bilgilerin kategorilerini ve belirli parçalarını ve bunun bir kopyasını isteyin.',
+        },
+        {
+          name: 'Silme hakkı',
+          how: 'Yasanın tutmamızı gerektirdiği herhangi bir kayıt saklı kalmak üzere, kişisel bilgilerinizin silinmesini isteyin.',
+        },
+        {
+          name: 'Düzeltme hakkı',
+          how: 'Yanlış kişisel bilgilerin düzeltilmesini isteyin.',
+        },
+        {
+          name: 'Satış ve paylaşım',
+          how: 'Kişisel bilgilerinizi satmayız ve bağlamlar arası davranışsal reklamcılık için paylaşmayız. Bu konuda vazgeçilecek bir şey yoktur; yine de yönlendirme çerezini Çerez tercihlerinden reddedebilirsiniz.',
+        },
+        {
+          name: 'Hassas bilgiler',
+          how: 'Sizin hakkınızda özellikler çıkarmak için hassas kişisel bilgileri kullanmayız. Cihazda maskeleme, hassas değerlerin en baştan cihazınızdan ayrılmasını önler.',
+        },
+        {
+          name: 'Ayrımcılık yapılmaması',
+          how: 'Bu haklardan herhangi birini kullandığınız için size karşı ayrımcılık yapmayız.',
+        },
+        {
+          name: 'Nasıl kullanılır',
+          how: '{contact} adresine yazın. Talebinizi doğrular ve yasanın izin verdiği süre içinde yanıtlarız. Yasanın izin verdiği yerlerde yetkili bir vekil sizin adınıza hareket edebilir.',
+        },
+      ],
+    },
+    changes: {
+      p1: 'Bu sayfa değiştiğinde, en üstteki "Son güncelleme" tarihi de onunla değişir. Bir değişiklik verilerinizin ele alınış biçimi açısından önemliyse, neyin değiştiğini sade bir dille söyleriz.',
+    },
+    contact: {
+      inquiries: 'Gizlilik, hukuk ve güvenlik soruları:',
+      support: 'Ürün desteği ve faturalama:',
+      note: '<b>Dürüst çerçeveleme.</b> WorkCoPilot, gizlilik ve uyumluluk çalışmanızı destekleyen denetimler ve denetim kanıtı sağlar. Bir kuruluşu kendi başına uyumlu hale getirmez ve burada bir sertifika iddiasında bulunmayız. Kuruluşunuz, kendi danışmanlarıyla birlikte, ürünün yükümlülüklerinize nasıl uyacağına karar verir.',
+    },
+    cta: {
+      ariaLabel: 'İlgili sayfalar',
+      flow: 'Tam veri akışını görün',
+      terms: 'Şartlar',
+      dpa: 'DPA',
+      cookie: 'Çerez Politikası',
+      disclaimer: 'Sorumluluk Reddi',
+      contact: 'İletişim',
+      back: "WorkCoPilot'a dön",
+    },
+  },
+  readingStrip: {
+    notRightPlace: 'Henüz doğru yer değil.',
+  },
+  refundPage: {
+    seo: {
+      title: "İade ve İptal Politikası - AdmireVeda'dan WorkCoPilot",
+      description: 'WorkCoPilot aboneliklerinin Stripe üzerinden nasıl faturalandırıldığı, faturalama portalından kendiniz nasıl iptal edeceğiniz, bir planın ne zaman sona erdiği ve iade taleplerinin nasıl ele alındığı.',
+    },
+    hero: {
+      eyebrow: 'İade ve İptal',
+      title: 'Faturalama, iptal ve iadeler',
+      intro: 'Aboneliklerin nasıl faturalandırıldığı, kendi başınıza nasıl iptal edebileceğiniz ve iade taleplerinin nasıl ele alındığı.',
+      tagline: 'Sade dilde politika, taslak şablon',
+    },
+    glance: [
+      {
+        eyebrow: 'Ödeme yapmadan önce',
+        title: 'Şartlar önceden gösterilir',
+        body: 'Plan, fiyat, faturalama dönemi ve kullanım hakkı ödemeden önce gösterilir; böylece neyi kabul ettiğinizi bilirsiniz.',
+      },
+      {
+        eyebrow: 'Kendiniz iptal edin',
+        title: 'Faturalama portalında self servis',
+        body: 'Kimseyle iletişime geçmeye gerek kalmadan faturalama portalından istediğiniz zaman iptal edin.',
+      },
+      {
+        eyebrow: 'Faturalama',
+        title: 'Ödemeler Stripe üzerinden yürür',
+        body: 'Ödemeleri ve faturaları Stripe yürütür. Faturalama sorularınız için ürün destek ekibimize yazın.',
+      },
+    ],
+    sections: {
+      terms: 'Ödemeden önce gösterilen abonelik şartları',
+      billing: 'Faturalama nasıl işler',
+      cancel: 'Aboneliğinizi iptal etme',
+      refunds: 'İade politikası',
+      contact: 'İletişim',
+    },
+    terms: {
+      p1: 'Ödeme yapmadan önce ödeme ekranı, seçtiğiniz planı, fiyatı, aylık mı yoksa yıllık mı faturalandırılacağını ve beraberinde gelen kullanım hakkını gösterir. Onaylamadan önce bu ayrıntıları gözden geçirin. Gereken yerlerde vergiler eklenir ve ödeme ekranında gösterilir.',
+      p2: 'Abonelikler, siz iptal edene kadar her faturalama döneminin sonunda otomatik olarak yenilenir. Bu şartlar, <a>Hizmet Şartları</a> ile birlikte geçerlidir.',
+    },
+    billing: {
+      items: [
+        {
+          name: 'Ödeme sağlayıcısı',
+          how: 'Ödemeler Stripe tarafından işlenir. Kart ve ödeme bilgileri biz değil, Stripe ile girilir ve Stripe tarafından tutulur.',
+        },
+        {
+          name: 'Faturalar',
+          how: 'Faturalarınız hesabınızdan ve faturalama portalından erişilebilir.',
+        },
+        {
+          name: 'Plan değişiklikleri',
+          how: 'Planlar arasında geçiş yapabilirsiniz. Fiyat veya kullanım hakkındaki değişiklikler, değişikliği yaparken size gösterildiği şekilde yürürlüğe girer.',
+        },
+        {
+          name: 'Başarısız ödemeler',
+          how: 'Bir ödeme başarısız olursa, sorun çözülene kadar ücretli özellikleri kısıtlayabiliriz. Ödeme yönteminizi faturalama portalında güncelleyin.',
+        },
+        {
+          name: 'Şirket hesapları',
+          how: 'Bir kuruluşun kendi sözleşmesi veya fiyatlandırması olduğunda, nasıl faturalandırılacağını o sözleşme belirler.',
+        },
+      ],
+    },
+    cancel: {
+      items: [
+        {
+          name: 'Self servis',
+          how: 'Faturalama portalını hesabınızdan açın ve aboneliğinizi istediğiniz zaman kendiniz iptal edin.',
+        },
+        {
+          name: 'Ne zaman sona erer',
+          how: 'İptal ettikten sonra planınız, halihazırda ödemesini yaptığınız dönemin sonuna kadar etkin kalır. Ardından yenilenmeyi durdurur.',
+        },
+        {
+          name: 'Verileriniz',
+          how: "İptal etmek, oturumlarınızı tek başına silmez. Bunları istediğiniz zaman silebilirsiniz ve hesabınız için saklama ayarları yine geçerlidir. Gizlilik Politikası'na ve Veri İşleme Ek Sözleşmesi'ne bakın.",
+        },
+      ],
+    },
+    refunds: {
+      items: [
+        {
+          name: 'Talep süresi',
+          how: 'Bir ücretin ardından <ph>iade süresi, hukuk danışmanıyla teyit edilecek</ph> içinde, aşağıdaki faturalama adresine yazarak iade talep edin.',
+        },
+        {
+          name: 'Neyi değerlendiririz',
+          how: 'Her talebi iyi niyetle değerlendiririz; buna yinelenen veya hatalı ücretler, tanımlandığı gibi çalışmayan bir plan ve dönemin ne kadarının kullanıldığı dahildir.',
+        },
+        {
+          name: 'Halihazırda kullanılan',
+          how: 'Bir dönemde halihazırda kullanılan rehberli dakikalar genellikle iade edilmez.',
+        },
+        {
+          name: 'Yıllık planlar',
+          how: 'Yıllık planlar aynı süre kapsamında ele alınır. Kısmi dönem uygulaması <ph>hukuk danışmanıyla teyit edilecek</ph>.',
+        },
+        {
+          name: 'Nasıl ödenir',
+          how: 'Onaylanan iadeler, Stripe üzerinden orijinal ödeme yöntemine geri döner. Zamanlama, bankanıza veya kart kuruluşunuza bağlıdır.',
+        },
+        {
+          name: 'Haklarınız',
+          how: 'Buradaki hiçbir şey, size uygulanan yasa kapsamında sahip olduğunuz hakları sınırlamaz.',
+        },
+      ],
+    },
+    contact: {
+      billing: 'Faturalama ve iadeler',
+      legal: 'Hukuk ve gizlilik soruları',
+      note: '<b>Dürüst çerçeve.</b> Bu sayfa bir şablondur. Belirli süreler ve tutarlar işaretlenmiştir ve bu politika yürürlüğe girmeden önce teyit edilecektir.',
+    },
+    links: {
+      terms: 'Hizmet Şartları',
+      privacy: 'Gizlilik Politikası',
+      aup: 'Kabul Edilebilir Kullanım',
+    },
+  },
+  resultCard: {
+    emptyBody: 'Sonuç metni gelmedi.',
+    need: 'İhtiyacım olan:',
+    howIGotIt: 'Bunu nasıl elde ettim',
+    verifyBy: 'Şununla doğrulayın',
+  },
+  scrubRules: {
+    builtin: [
+      'E-postalar',
+      'Telefon numaraları',
+      'Kart numaraları',
+      "SSN'ler",
+      "IBAN'lar",
+      'API anahtarları ve tokenler',
+      'IP adresleri',
+      'Özel ana bilgisayarlar',
+    ],
+    errors: {
+      load: 'Kurallarınız yüklenemedi',
+      save: 'Kaydedilemedi',
+      unavailable: 'Kullanılamıyor',
+    },
+    loading: 'Veri koruma kurallarınız yükleniyor…',
+    retry: 'Yeniden dene',
+    title: 'Veri koruma kurallarınız',
+    lead: 'Bunlar herhangi bir şey gönderilmeden önce <b>cihazınızda</b> çalışır. Her zaman korunanların üzerine kendi hassas terimlerinizi veya desenlerinizi ekleyin.',
+    alwaysProtected: 'Her zaman korunur',
+    custom: {
+      title: 'Özel kurallarınız',
+      empty: 'Henüz yok. Bir terim (bir proje kod adı gibi) ya da bir /regex/ ekleyin.',
+      labelPlaceholder: 'Etiket (ör. Project Orion)',
+      patternPlaceholder: 'Eşleşme: bir sözcük/ifade ya da /regex/',
+      redact: 'Maskele',
+      tokenize: 'Tokenleştir',
+      block: 'Engelle',
+      remove: 'Kaldır',
+      add: 'Kural ekle',
+    },
+    blockWords: {
+      title: 'Engellenecek sözcükler',
+      hint: '(her satıra bir tane, her zaman kaldırılır, asla gönderilmez)',
+      placeholder: 'Acme Confidential\nProject Orion',
+    },
+    saving: 'Kaydediliyor',
+    save: 'Kurallarımı kaydet',
+    saved: 'Kaydedildi, tüm oturumlarınızda açık',
+  },
+  securityNote: {
+    cleanBody: 'Bu kodda tehlikeli komut ve bilinen zafiyetli kütüphane bulunmadı.',
+    dbUnreachable: 'Zafiyet veritabanına ulaşılamadı, bu nedenle kütüphane sürümleri bu sefer denetlenmedi.',
+  },
+  setPasswordPage: {
+    byBrand: 'AdmireVeda tarafından',
+    errors: {
+      missingToken: 'Bu bağlantıda token eksik.',
+      invalid: 'Bu bağlantı geçersiz ya da süresi dolmuş.',
+      tooShort: 'En az 6 karakterlik bir parola seçin.',
+      mismatch: 'İki parola eşleşmiyor.',
+      setFailed: 'Parolanız belirlenemedi. Bağlantının süresi dolmuş olabilir.',
+    },
+    checking: 'Bağlantınız denetleniyor...',
+    done: {
+      title: 'Parola belirlendi',
+      body: 'Parolanız hazır. Başlamak için oturum açın.',
+      signIn: 'Oturum aç',
+    },
+    expired: {
+      title: 'Bağlantının süresi doldu',
+      goToSignIn: 'Oturum açmaya git',
+    },
+    form: {
+      title: 'Parolanızı belirleyin',
+      forUser: '<b>{name}</b> için',
+      chooseBody: 'Hesabınızı kurmayı bitirmek için bir parola seçin.',
+      newLabel: 'Yeni parola',
+      newPlaceholder: 'En az 6 karakter',
+      hide: 'Gizle',
+      show: 'Göster',
+      confirmLabel: 'Parolayı onayla',
+      confirmPlaceholder: 'Yeniden girin',
+      submit: 'Parolayı belirle',
+      secure: 'Parolanız şifrelenir ve güvenli biçimde saklanır. Onu asla açık metin olarak görmeyiz.',
+    },
+    foot: 'Kurumsal düzeyde güvenlik · AdmireVeda WorkCoPilot',
+  },
+  shellBar: {
+    toolbarAria: 'Katman denetimleri',
+    onTop: 'Üstte',
+    onTopTip: "WorkCoPilot'u diğer pencerelerin üstünde tut (Ctrl+Shift+Alt+T)",
+    seeThroughTip: 'Şeffaf: arkadaki işin görünmesine izin ver (Ctrl+Shift+Alt+O)',
+    clickBehind: 'Arkaya tıkla',
+    buddy: 'Dost',
+    buddyTip: 'Dost kartına küçült (Ctrl+Shift+Alt+B)',
+    minimize: 'Simge durumuna küçült',
+    close: 'Kapat',
+  },
+  skillsPage: {
+    sectionAria: 'Beceriler',
+    title: 'Beceriler',
+    toggleAria: 'Beceriler. {subtitle}',
+    subtitle: {
+      notLoaded: 'İşin nasıl yapılmasını istediğinizi öğretin',
+      empty: 'Herhangi bir yapay zekadan bir kılavuz, SOP veya beceri ekleyin',
+      count_one: '{n} beceri planlarınıza rehberlik ediyor',
+      count_other: '{n} beceri planlarınıza rehberlik ediyor',
+    },
+    lead: "Beceriler, WorkCoPilot'a işin nasıl yapılmasını istediğinizi (ya da kuruluşunuzun istediğini) öğretir, böylece rehberlik araçlarınız, standartlarınız ve terminolojinizle uyumlu olur. Bir kılavuz, bir SOP ya da herhangi bir yapay zekadan dışa aktarılmış bir beceri yapıştırın.",
+    note: {
+      company: '<b>Şirketinize özel.</b> Bu beceriler yalnızca şirketinizin çalışanlarına rehberlik eder. Platformu eğitmek için asla kullanılmaz ve yöneticiniz bunları istediği zaman indirebilir veya yeniden yükleyebilir.',
+      global: "<b>Herkese yardımcı olur.</b> Eklediğiniz beceriler, tüm kullanıcılar için WorkCoPilot'u geliştirmek amacıyla kimliksizleştirilmiş biçimde kullanılabilir; saklanmadan önce kişisel veriler kaldırılır. Kaydolurken bunu kabul ettiniz. Şirket hesapları muaftır.",
+    },
+    form: {
+      titlePlaceholder: "Başlık, örneğin: Pull request'leri nasıl incelediğimiz",
+      titleAria: 'Beceri başlığı',
+      contentPlaceholder: 'Bir kılavuz, SOP ya da herhangi bir yapay zekadan bir beceri yapıştırın. Adımlar, kurallar, araçlar, adlandırma, yapılması ve yapılmaması gerekenler. Ne kadar belirli olursa, rehberlik o kadar iyi olur.',
+      contentAria: 'Beceri içeriği',
+      tagsPlaceholder: 'Etiketler, virgülle ayrılmış (isteğe bağlı)',
+      tagsAria: 'Etiketler',
+      add: 'Beceri ekle',
+    },
+    errors: {
+      load: 'Becerileriniz yüklenemedi.',
+      needTitle: 'Beceriye bir başlık verin.',
+      needContent: "Kılavuzun, SOP'un ya da becerinin kendisini yapıştırın (en az birkaç cümle).",
+      add: 'O beceri eklenemedi.',
+      remove: 'O beceri kaldırılamadı.',
+    },
+    loading: 'Becerileriniz yükleniyor…',
+    emptyList: 'Henüz beceri yok. Eklediğiniz ilki, planlarınızı hemen şekillendirmeye başlar.',
+    item: {
+      chars: '{n} karakter',
+      removeTitle: 'Bu beceriyi kaldır',
+      removeAria: '{title} becerisini kaldır',
+    },
+  },
+  stepCard: {
+    plan: 'Plan',
+    doneWhen: 'Şu olunca tamam',
+    markDoneTip: 'Bu adımı tamamlandı olarak işaretleyip sonrakine geç',
+  },
+  subprocessorsPage: {
+    seo: {
+      title: "Alt İşleyiciler - AdmireVeda'dan WorkCoPilot",
+      description: "WorkCoPilot'u sağlamaya yardımcı olan alt işleyiciler ve her birinin oynadığı rol: ödemeler için Stripe, rehberlik için bir yapay zeka model sağlayıcısı (ya da kendi anahtarlarınız), bulut barındırma, e-posta gönderimi ve şirket oturum açması için kendi kimlik sağlayıcınız. Alt işleyiciler yalnızca yönetilen verileri görür.",
+    },
+    hero: {
+      eyebrow: 'Alt İşleyiciler',
+      title: 'WorkCoPilot için veriyi kim işler',
+      intro: "WorkCoPilot'u sağlamaya yardımcı olan üçüncü taraflar, her birinin oynadığı rol ve her birinin ilgili olduğu veriler.",
+      tagline: 'Sade dilde açıklama, DPA ile birlikte okunur',
+    },
+    glance: [
+      {
+        eyebrow: 'Önce cihazınızda',
+        title: 'Alt işleyiciler yalnızca yönetilen veriyi görür',
+        body: 'Hassas değerler, bir şey gönderilmeden önce cihazınızda gizlenir veya belirteçlenir; böylece bir alt işleyici asla gerçek gizli bilgileri ya da kişisel veriyi (PII) almaz.',
+      },
+      {
+        eyebrow: 'Ödemeler',
+        title: 'Faturalamayı Stripe yürütür',
+        body: 'Kart ve ödeme bilgileri Stripe ile girilir ve Stripe tarafından tutulur. Biz yalnızca aboneliğinizi yürütmek için gerekli olanı alırız.',
+      },
+      {
+        eyebrow: 'Sizin seçeneğiniz',
+        title: 'Kendi yapay zeka anahtarlarınızı getirin',
+        body: "Siz ya da şirketiniz WorkCoPilot'u kendi yapay zeka anahtarlarınızla çalıştırabilir; böylece yönetilen veri kendi sağlayıcı sınırınızın içinde kalır.",
+      },
+    ],
+    sections: {
+      about: 'Bu liste hakkında',
+      list: 'Mevcut alt işleyiciler',
+      keys: 'Kendi anahtarlarınızla çalıştırma',
+      changes: 'Değişiklikler ve bildirim',
+      contact: 'İletişim',
+    },
+    table: {
+      caption: 'Alt işleyiciler ve her birinin oynadığı rol',
+      columns: ['Rol', 'Sağlayıcı', 'Amaç', 'İlgili veri'],
+      rows: [
+        {
+          role: 'Ödemeler',
+          purpose: 'Abonelik faturalaması, faturalar ve iş ortağı ödeme aktarımları.',
+          data: 'Faturalama iletişim bilgileri ve plan durumu. Kart ve ödeme bilgileri biz değil, Stripe tarafından tutulur.',
+        },
+        {
+          role: 'Yapay zeka rehberliği',
+          provider: 'Yapay zeka model sağlayıcısı - yapılandırılabilir ya da kendi anahtarınız',
+          purpose: 'Bir adımın yönetilen metnini rehberliğe dönüştürür.',
+          data: 'Yönetilen (gizlenmiş veya belirteçlenmiş) metin ve küçültülmüş ekran kareleri. Asla gerçek gizli bilgiler, kişisel veri (PII) ya da kaynak dosyalarınız değil.',
+        },
+        {
+          role: 'Bulut barındırma',
+          provider: 'bulut barındırma ve altyapı sağlayıcısı',
+          purpose: 'Hizmeti çalıştırır ve oturum kayıtlarınızı, beklemede şifrelenmiş olarak saklar.',
+          data: 'Hesap bilgileri ve oturum başına raporlar, denetim günlükleri ve geçmiş (beklemede şifrelenmiş).',
+        },
+        {
+          role: 'E-posta gönderimi',
+          provider: 'işlemsel e-posta sağlayıcısı',
+          purpose: 'Hesap, güvenlik ve faturalama e-postalarını gönderir.',
+          data: 'E-posta adresiniz ve mesajın içeriği.',
+        },
+        {
+          role: 'Şirket oturum açması',
+          provider: 'Seçtiğiniz kimlik sağlayıcısı',
+          purpose: 'Şirket üyelerinin kimliğini kurumsal tekli oturum açma (SSO) ile doğrular.',
+          data: 'Yalnızca kimlik doğrulama. Biz seçmeyiz; şirketiniz tarafından seçilir ve denetlenir.',
+        },
+      ],
+    },
+    about: {
+      p1: "Alt işleyici, WorkCoPilot'u sağlamak için bizim adımıza veri işleyen üçüncü bir taraftır. Bu sayfa, bu alt işleyicilerin oynadığı rolleri ve her birinin ilgili olduğu verileri listeler; böylece ürüne güvenmeden önce zincirde kimin yer aldığını görebilirsiniz.",
+      p2: "Bu, <dpa>Veri İşleme Ek Sözleşmesi</dpa>'ni ve <privacy>Gizlilik Politikası</privacy>'nı tamamlar. Belirli bir satıcıyı herkese açık olarak adlandırmadığımız yerlerde, uydurma bir ad yerine açıkça işaretlenmiş bir yer tutucuyla rol listelenir; hesabınız için geçerli olduğunda belirli satıcıları DPA'nız adlandırır.",
+    },
+    list: {
+      note: 'Hassas değerler, bir şey cihazdan ayrılmadan önce cihazınızda gizlendiği veya belirteçlendiği için, rehberliği işleyen alt işleyiciler yalnızca yönetilen metni alır, asla gerçek değerleri değil.',
+    },
+    keys: {
+      p1: "Siz ya da şirketiniz WorkCoPilot'u kendi yapay zeka anahtarlarınızla çalıştırabilir. Bu modda rehberlik için yönetilen veri kendi sağlayıcı sınırınızın içinde kalır ve yukarıdaki yapay zeka sağlayıcısı rolünü bizimki yerine kendi hesabınız üstlenir. Şirket dağıtımları ayrıca talep üzerine şirket içinde (on-prem) de çalıştırılabilir.",
+    },
+    changes: {
+      items: [
+        {
+          name: 'Güncellemeler',
+          how: 'Bir alt işleyici eklediğimizde, kaldırdığımızda veya değiştirdiğimizde, bu sayfayı ve yukarıdaki "Son güncelleme" tarihini güncelleriz.',
+        },
+        {
+          name: 'Önceden bildirim',
+          how: 'İmzalı bir sözleşmenin öngördüğü yerlerde, kurumsal müşteriler yeni alt işleyicilerden önceden haberdar edilmeyi talep edebilir; böylece itiraz edebilirler. Hesabınız için belirli bildirim süresi sözleşmenizde belirlenir <ph>hukuk danışmanıyla teyit edilecek</ph>.',
+        },
+        {
+          name: 'İtirazlar',
+          how: 'İmzalı bir sözleşmeniz varsa ve makul veri koruması gerekçeleriyle yeni bir alt işleyiciye itiraz ediyorsanız, aşağıdaki adresi kullanarak bizimle iletişime geçin; sizinle iyi niyetle çalışırız.',
+        },
+      ],
+    },
+    contact: {
+      legal: 'Gizlilik, hukuk ve alt işleyici soruları',
+      support: 'Ürün desteği',
+    },
+    links: {
+      dpa: 'Veri İşleme Ek Sözleşmesi',
+      privacy: 'Gizlilik Politikası',
+      terms: 'Hizmet Şartları',
+    },
+  },
+  teamPage: {
+    roles: {
+      companyAdmin: 'Şirket yöneticisi',
+      member: 'Üye',
+    },
+    errors: {
+      saveKeys: 'Anahtarlar kaydedilemedi.',
+      clearKeys: 'Anahtarlar temizlenemedi.',
+      saveWebSearch: 'Web arama anahtarı kaydedilemedi.',
+      loadTeam: 'Ekibiniz yüklenemedi.',
+      needUserPass: 'Bir kullanıcı adı ve bir parola girin.',
+      addUser: 'O kullanıcı eklenemedi.',
+    },
+    ok: {
+      keysSaved: 'Yapay zeka anahtarlarınız kaydedildi. WorkCoPilot artık onlarla çalışıyor.',
+      webSearchRemoved: 'Web arama anahtarı kaldırıldı.',
+      webSearchSaved: 'Web arama anahtarı kaydedildi.',
+      added: '{name} eklendi.',
+    },
+    list: {
+      title: 'Ekibiniz',
+      sub: 'Şirketinize kişi ekleyin ve neler yapabileceklerini belirleyin. Yeni kullanıcılar, burada belirlediğiniz kullanıcı adı ve parolayla giriş yapar.',
+      aiKeys: 'Yapay zeka anahtarları',
+      activity: 'Kullanıcı etkinliği',
+      addUser: 'Kullanıcı ekle',
+      loading: 'Ekibiniz yükleniyor...',
+      empty: 'Henüz kullanıcı yok. Başlamak için ilk ekip arkadaşınızı ekleyin.',
+      addedOn: '{date} eklendi',
+    },
+    activity: {
+      title: 'Kullanıcı etkinliği',
+      sub: 'Şirketiniz genelinde oturum silmeleri: kim sildi, ne zaman, neden ve neyle ilgiliydi.',
+      back: 'Ekibe dön',
+      loading: 'Etkinlik yükleniyor…',
+      empty: 'Henüz etkinlik yok. Oturum silmeleri burada görünecek.',
+      deleted: '<b>{name}</b> bir oturumu sildi',
+      someone: 'Bir kullanıcı',
+      untitled: 'Başlıksız oturum',
+      steps: '{done}/{total} adım',
+    },
+    ai: {
+      title: 'Yapay zeka anahtarları',
+      sub: 'Varsayılan olarak WorkCoPilot, şirketiniz için belirlediğimiz anahtarlarla çalışır. Buradan <b>kendi</b> sağlayıcı anahtarlarınıza geçebilirsiniz; o zaman kullanımınız bizim hesabımıza değil, sizin hesabınıza faturalandırılır.',
+      back: 'Ekibe dön',
+      current: 'Mevcut: anahtar {key} · {owner}',
+      ownerCompany: 'kendi anahtarınız',
+      ownerPlatform: 'WorkCoPilot tarafından sizin için ayarlandı',
+      none: 'Henüz anahtar ayarlanmadı. Şirketiniz platform yapay zekasını kullanıyor.',
+      providerLabel: 'Sağlayıcı',
+      providerPlaceholder: 'Sağlayıcınız',
+      keyLabel: 'API anahtarı',
+      keyPlaceholder: 'Sağlayıcı API anahtarınızı yapıştırın',
+      remove: 'Anahtarlarımı kaldır',
+      use: 'Anahtarlarımı kullan',
+      webTitle: 'Canlı web öğrenmesi',
+      webSub: 'Ayarlandığında, şirketinizin canlı web öğrenmesi kendi Tavily anahtarınızla çalışır (veri sınırınız ve faturalamanız). Rehberlik en güncel web kaynaklarına dayanır.',
+      webCurrent: 'Mevcut: <b>{provider}</b> · anahtar {key}',
+      webNone: 'Web arama anahtarı ayarlanmadı. Şirketiniz için canlı web öğrenmesi kapalı.',
+      webKeyLabel: 'Tavily API anahtarı',
+      webKeyPlaceholder: 'Tavily anahtarınızı yapıştırın',
+      webRemove: 'Anahtarı kaldır',
+      webSave: 'Anahtarı kaydet',
+    },
+    add: {
+      title: 'Kullanıcı ekle',
+      sub: '{company} şirketine hemen katılırlar.',
+      yourCompany: 'şirketiniz',
+      usernameLabel: 'Kullanıcı adı',
+      usernamePlaceholder: 'örn. alex',
+      passwordLabel: 'Geçici parola',
+      passwordPlaceholder: 'Onlarla paylaşmak için bir parola belirleyin',
+      roleLabel: 'Rol',
+      planLabel: 'Plan',
+      cancel: 'İptal',
+      submit: 'Kullanıcı ekle',
+    },
+  },
+  termsPage: {
+    seo: {
+      title: 'Terms of Service - WorkCoPilot by AdmireVeda',
+      description: 'WorkCoPilot kullanımına ilişkin sade dilde şartlar: salt okunur hizmet, kabul edilebilir kullanım, hesaplar, abonelikler ve faturalama, mülkiyet, garantiler, sorumluluk ve fesih.',
+    },
+    hero: {
+      eyebrow: 'Hizmet Şartları',
+      title: 'WorkCoPilot kullanımına ilişkin şartlar',
+      intro: "Bu şartlar, WorkCoPilot'u nasıl kullanabileceğinizi, bizden ne bekleyebileceğinizi ve sorumluluğun nerede olduğunu ortaya koyar. Okunmak için yazılmıştır ve kendileriyle gelen politikalara işaret eder.",
+      tagline: 'Sade dilde şartlar, şablon taslağı',
+    },
+    glance: [
+      {
+        eyebrow: 'Hizmet',
+        title: 'Ekranınızda salt okunur bir rehber',
+        body: 'WorkCoPilot pratik, adım adım rehberlik verir. Sizin yerinize asla tıklamaz, yazmaz ya da bir şey çalıştırmaz.',
+      },
+      {
+        eyebrow: 'Sizin tarafınız',
+        title: 'Yalnızca yetkili, yasal kullanım',
+        body: "Paylaştığınız sistem ve verileri kullanma hakkına sahip olmaktan ve Kabul Edilebilir Kullanım Politikası'na uymaktan siz sorumlusunuz.",
+      },
+      {
+        eyebrow: 'Sınırlar',
+        title: 'Rehberlik, profesyonel tavsiye değil',
+        body: 'Güvenmeden önce önemli olanı doğrulayın. Sorumluluk aşağıda belirtildiği şekilde sınırlıdır.',
+      },
+    ],
+    sections: {
+      parties: 'Taraflar ve kabul',
+      service: 'Hizmet',
+      aup: 'Kabul edilebilir kullanım',
+      accounts: 'Hesaplar',
+      billing: 'Abonelikler ve faturalama',
+      ip: 'Mülkiyet ve içeriğiniz',
+      improvement: 'Eklediğiniz beceri ve içerikle hizmeti iyileştirme',
+      warranty: 'Rehberlik, garantiler ve sorumluluk reddi',
+      liability: 'Sorumluluğun sınırlandırılması',
+      termination: 'Fesih',
+      law: 'Geçerli hukuk',
+      changes: 'Bu şartlardaki değişiklikler',
+      contact: 'İletişim',
+    },
+    parties: {
+      p1: 'Bu şartlar, sizinle (ya da temsil ettiğiniz kuruluşla) {entity} (“biz”, “bize”) arasında bir anlaşmadır. WorkCoPilot, hizmetin arkasındaki yasal tüzel kişi olan {entity} ürünü olan AdmireVeda tarafından sunulur.',
+      p2: "Bir hesap oluşturarak ya da WorkCoPilot'u kullanarak bu şartları kabul edersiniz. Onu bir şirket adına kullanıyorsanız, o şirketi bağlamaya yetkili olduğunuzu teyit edersiniz. Kabul etmiyorsanız hizmeti kullanmayın.",
+    },
+    service: {
+      p1: 'WorkCoPilot, iş için ekran farkındalıklı bir rehberdir. Kendi ekranınızda bir sonraki adımı görmenize yardımcı olur. Web uygulaması, masaüstü uygulaması ve mobil uygulama olarak sunulur ve özellikleri planınıza bağlıdır.',
+      items: [
+        {
+          name: 'Salt okunur',
+          how: 'WorkCoPilot sistemlerinizde asla bir şeyi tıklamaz, yazmaz, göndermez ya da değiştirmez. Her eylem sizindir.',
+        },
+        {
+          name: 'Göndermeden önce koruma',
+          how: 'Hassas değerler, herhangi bir şey gönderilmeden önce kendi cihazınızda ayıklanır ya da belirteçlenir. Gizlilik Politikası neyin toplandığını ve neyin tutulduğunu açıklar.',
+        },
+        {
+          name: 'Hizmetteki değişiklikler',
+          how: 'Özellikleri iyileştirebilir, değiştirebilir ya da kaldırabiliriz. Bir değişiklik ücretli bir planı önemli ölçüde azalttığında, size önceden haber veririz.',
+        },
+      ],
+      p2: "Hizmetin verilerinizle nasıl çalıştığının parçasını oluşturan <privacy>Gizlilik Politikası</privacy>'na, <dpa>Veri İşleme Eki</dpa>'ne ve <disclaimer>Sorumluluk Reddi</disclaimer>'ne bakın.",
+    },
+    aup: {
+      p1: "WorkCoPilot'u yasal biçimde ve yalnızca kullanmaya yetkili olduğunuz sistem ve verilerde kullanmalısınız. <a>Kabul Edilebilir Kullanım Politikası</a>, neye izin verildiğini ve neye verilmediğini ortaya koyar ve bu şartların bir parçasıdır.",
+      p2: 'Kullanım bu politikayı ihlal ederse, hizmeti ya da diğer müşterileri riske atarsa veya yasa gerektirirse erişimi askıya alabilir ya da kısıtlayabiliriz.',
+    },
+    accounts: {
+      items: [
+        {
+          name: 'Doğru bilgiler',
+          how: 'Doğru hesap bilgileri verin ve güncel tutun.',
+        },
+        {
+          name: 'Oturum açmayı güvende tutun',
+          how: 'Oturum açma bilgilerinizden ve hesabınız altında yapılanlardan siz sorumlusunuz. Kötüye kullanımdan şüpheleniyorsanız aşağıdaki destek adresinden bize hemen bildirin.',
+        },
+        {
+          name: 'Şirket hesapları',
+          how: 'Bir yönetici bir şirket için hesap oluşturduğunda ya da yönettiğinde, o şirket üyelerinden, listeden ve belirlediği veri politikasından sorumludur.',
+        },
+        {
+          name: 'Tekil oturum açma',
+          how: 'Şirketiniz kurumsal tekil oturum açma kullandığında, erişim şirketinizin kimlik sağlayıcısını ve kurallarını izler.',
+        },
+      ],
+    },
+    billing: {
+      p1: 'Ücretli planlar aboneliktir. Plan, fiyat, faturalama dönemi ve hak, ödeme yapmadan önce gösterilir. Ödemeler, faturalama sağlayıcımız Stripe tarafından ele alınır. İptal ve iadeler, bu şartların bir parçası olan <a>İade ve İptal</a> sayfasında ele alınmaktadır.',
+      p2: 'Vergiler uygulanabilir ve gerektiği yerde ödeme sırasında gösterilir. Bir ödeme başarısız olursa, sorun çözülene kadar ücretli özelliklere erişimi kısıtlayabiliriz.',
+      p3: 'Faturalama soruları: <a>{support}</a>',
+    },
+    ip: {
+      items: [
+        {
+          name: 'Hizmetimiz',
+          how: "WorkCoPilot; yazılımı, tasarımı, belgeleri ve markası dahil, {entity}'ye ve lisans verenlerine aittir. Aboneliğiniz süresince, bu şartlar kapsamında onu kullanmak için sınırlı, münhasır olmayan, devredilemez bir hak edinirsiniz.",
+        },
+        {
+          name: 'İçeriğiniz',
+          how: 'Hizmetle paylaştığınız şeyler (ekran içeriği, yazılan metin ve eklenen belgeler gibi) ve sizin için üretilen oturum raporları üzerindeki haklarınızı korursunuz.',
+        },
+        {
+          name: 'Onunla ne yapabiliriz',
+          how: "İçeriğinizi yalnızca hizmeti size sunmak ve güvenli ve çalışır tutmak için, Gizlilik Politikası ve Veri İşleme Eki'nde açıklandığı şekilde kullanırız.",
+        },
+        {
+          name: 'Kendi yapay zeka anahtarınız',
+          how: "Siz ya da şirketiniz WorkCoPilot'u kendi yapay zeka anahtarınızda çalıştırdığınızda, o veri kendi sağlayıcı ilişkiniz içinde kalır ve o sağlayıcının şartlarına tabidir.",
+        },
+        {
+          name: 'Geri bildirim',
+          how: 'Bize fikir ya da öneri gönderirseniz, bunları size karşı hiçbir yükümlülük olmaksızın hizmeti iyileştirmek için kullanabiliriz.',
+        },
+      ],
+      p1: "Yasanın bunu kısıtlamamıza izin vermediği ölçüde hariç olmak üzere; WorkCoPilot'u kopyalamamalı, yeniden satmamalı, tersine mühendislik yapmamalı ya da ondan rakip bir hizmet oluşturmamalısınız.",
+    },
+    improvement: {
+      p1: "WorkCoPilot'un rehberliğinin çalışma biçiminizle uyumlu olması için beceriler (oyun kitapları, SOP'lar ve talimatlar; diğer yapay zeka araçlarından dışa aktarılanlar dahil) ekleyebilirsiniz. Bu bölüm, o içeriğin nasıl kullanılabileceğini açıklar ve bireysel bir hesap oluşturduğunuzda size gösterilir.",
+      items: [
+        {
+          name: 'Bireysel hesaplar',
+          how: "WorkCoPilot'u iyileştirmek için, eklediğiniz beceri ve içerik, hizmeti herkes için geliştirmek üzere kimliksizleştirilmiş biçimde kullanılabilir. Kişisel veriler, herhangi bir şey gönderilmeden önce cihazınızda ayıklanır ve kimliksizleştirilmiş içerik asla size atfedilmez.",
+        },
+        {
+          name: 'Şirket hesapları muaftır',
+          how: 'Bir şirket hesabı altında eklenen beceri ve bilgi, o şirkete özel kalır. Yalnızca o şirketin üyelerine rehberlik eder ve asla başkası için platformu eğitmek ya da iyileştirmek için kullanılmaz. Şirket yöneticileri bunları istedikleri zaman indirebilir, yeniden yükleyebilir ya da temizleyebilir.',
+        },
+        {
+          name: 'Denetiminiz',
+          how: 'Eklediğiniz bir beceriyi istediğiniz zaman panonuzdan kaldırabilirsiniz. Kaldırma, o noktadan itibaren kullanımını durdurur; ondan zaten türetilmiş kimliksizleştirilmiş iyileştirmeler size kadar izlenemez ya da geri alınamaz.',
+        },
+        {
+          name: 'İşiniz üzerinde eğitim yapılmaz',
+          how: "Bu yalnızca bilerek eklediğiniz beceri ve içeriği kapsar. Ekranlarınız, yazdığınız görevler, sorularınız ve oturum raporlarınız, Gizlilik Politikası'nda açıklandığı gibi yalnızca hizmeti size sunmak için kullanılır.",
+        },
+      ],
+    },
+    warranty: {
+      p1: 'WorkCoPilot pratik rehberlik verir. Hukuki, finansal, tıbbi, vergisel, muhasebe, mühendislik ya da diğer profesyonel tavsiye değildir ve onu kullanmak bizimle profesyonel bir ilişki oluşturmaz. Rehberlik elden gelenin en iyisidir ve yanlış ya da güncelliğini yitirmiş olabilir. Güvenmeden önce önemli olan her şeyi doğrulayın. <a>Sorumluluk Reddi</a> bunu sade bir dille açıklar.',
+      p2: 'Yasanın izin verdiği ölçüde, hizmet olduğu gibi ve mevcut haliyle sunulur ve doğruluk, eksiksizlik, belirli bir amaca uygunluk ya da kesintisiz veya hatasız çalışma dahil, açık ya da zımni hiçbir garanti vermeyiz.',
+      p3: 'WorkCoPilot, kendi uyumluluk çalışmanızı destekleyen denetimler ve kanıt sağlar. Sizi uyumlu hale getirmez ve herhangi bir çerçeveye göre sertifikalı olduğunu iddia etmeyiz.',
+    },
+    liability: {
+      p1: 'Yasanın izin verdiği ölçüde; hizmeti kullanmanızdan ya da rehberliğine dayanarak yaptığınız veya yapmadığınız eylemlerden doğan dolaylı, arızi, özel, sonuçsal ya da cezai zararlardan veya kaybedilen veri, gelir, kâr veya itibar kaybından sorumlu değiliz.',
+      p2: 'Yasanın izin verdiği ölçüde, hizmete ilişkin tüm talepler için toplam sorumluluğumuz, talebe yol açan olaydan önceki <ph>12 ayda, danışman tarafından teyit edilecek</ph> hizmet için bize ödediğiniz tutarla sınırlıdır.',
+      p3: 'Bu şartlardaki hiçbir şey, yasayla sınırlandırılamayacak sorumluluğu ya da feragat edilemeyecek haklarınızı sınırlamaz.',
+    },
+    termination: {
+      items: [
+        {
+          name: 'Sizin tarafınızdan',
+          how: "WorkCoPilot'u kullanmayı istediğiniz zaman bırakabilir ya da aboneliğinizi iptal edebilirsiniz. İptal, İade ve İptal sayfasını izler.",
+        },
+        {
+          name: 'Bizim tarafımızdan',
+          how: "Bu şartların ya da Kabul Edilebilir Kullanım Politikası'nın önemli bir ihlali için, ödeme yapılmaması için ya da yasanın gerektirdiği yerde erişimi askıya alabilir veya sonlandırabiliriz. Makul olduğu yerde önce bildirimde bulunuruz.",
+        },
+        {
+          name: 'Sonrasında ne olur',
+          how: "Verileriniz, talep üzerine silme ve hesabınızın saklama ayarları altında silme dahil, Gizlilik Politikası ve Veri İşleme Eki'nde belirtildiği şekilde ele alınır.",
+        },
+        {
+          name: 'Yürürlükte kalanlar',
+          how: 'Mülkiyet, sorumluluk reddi, sorumluluğun sınırlandırılması ve geçerli hukuk gibi nitelikleri gereği devam etmesi gereken bölümler, fesihten sonra da yürürlükte kalır.',
+        },
+      ],
+    },
+    law: {
+      p1: 'Bu şartlar, kanunlar ihtilafı kurallarına bakılmaksızın <ph>geçerli hukuk eyaleti, danışmanla teyit edilecek</ph> hukukuna tabidir. Uyuşmazlıklar, size uygulanan yasa aksini gerektirmedikçe <ph>yargı yeri, danışmanla teyit edilecek</ph> mahkemelerinde görülecektir.',
+    },
+    changes: {
+      p1: 'Bu şartlar değiştiğinde, en üstteki “Son güncelleme” tarihi de onlarla değişir. Bir değişiklik haklarınız ya da yükümlülükleriniz açısından önemliyse, neyin değiştiğini sade bir dille söyler ve ücretli müşteriler için yürürlüğe girmeden önce bildirimde bulunuruz. Bundan sonra hizmeti kullanmaya devam etmeniz, güncellenen şartları kabul ettiğiniz anlamına gelir.',
+    },
+    contact: {
+      legal: 'Hukuk, gizlilik ve güvenlik',
+      support: 'Ürün desteği ve faturalama',
+      note: '<b>Dürüst çerçeveleme.</b> Bu sayfa bir şablondur. Amaçlanan şartları açıklar ve kendi hukuki incelemenizin yerini tutmaz.',
+    },
+    links: {
+      aup: 'Kabul Edilebilir Kullanım',
+      privacy: 'Gizlilik Politikası',
+      refund: 'İade ve İptal',
+      dpa: 'Veri İşleme Eki',
+    },
+  },
+  usage: {
+    noTime: 'Süre kalmadı',
+    timeLeft: '{time} kaldı',
+    tasksOpen: '{max} görevden {used} tanesi açık',
+    tasks: '{max} görevden {used} tanesi',
+    outCompany: 'Bu ay için plan saatlerinizi kullandınız. {when} tarihinde yenilenir. Ondan önce daha fazlasına ihtiyacınız varsa yöneticinize sorun.',
+    outIndividual: 'Bu ay için plan saatlerinizi kullandınız. Devam etmek için ek saat satın alın ya da {when} tarihinde yenilenir.',
+    lowNote: 'Bu ay yaklaşık {time} rehberli süre kaldı. İstediğiniz zaman duraklatabilir ya da devam etmek için ek saat ekleyebilirsiniz.',
+    allStepsDone: '{total} adımın tümü tamam',
+    stepProgress: '{total} adımdan {current}. adım · {done} tamam',
   },
 }
