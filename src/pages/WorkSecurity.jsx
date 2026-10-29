@@ -12,6 +12,12 @@
 // "certified", never "you are compliant": we provide controls and evidence,
 // the customer holds compliance. Anchors #data-handling and #compliance are
 // linked from other pages and must stay.
+//
+// SINGLE SOURCE OF TRUTH (SUPREME RULE II): the compliance roll-call and the
+// "ships ready to arm" ticks are read from the canonical registry
+// (server/compliance_frameworks.js), the SAME data WorkMarketing.jsx uses, so
+// the set and the preset marks can never drift from the product again. Framework
+// NAMES stay verbatim across locales; every other string is keyed (securityPage.*).
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ShieldCheck, Lock, ScanEye, FileText, ArrowRight, Globe, BadgeCheck, Building2, Send, Database, EyeOff, KeyRound, FileSearch, ScrollText, Hand, Code2 } from 'lucide-react'
@@ -20,46 +26,44 @@ import SiteHeader from '../components/SiteHeader.jsx'
 import WorkCard from '../components/WorkCard.jsx'   // shared, site-wide premium card primitive
 import RedactionSweep from '../components/RedactionSweep.jsx'   // "watch it protect": the on-device sweep over the after screen
 import useSeo from '../useSeo.js'                  // per-route title / description / canonical (WEB-01)
-import { useT } from '../i18n/index.jsx'           // localized data-residency note (residency.* keys) + security.* strings
+import { useT } from '../i18n/index.jsx'           // every visible string comes from the catalog (securityPage.*, security.*, residency.*)
+import { COMPLIANCE_FRAMEWORKS } from '../../server/compliance_frameworks.js'   // canonical registry (pure data), single source for the roll-call + presets
 
-// The guarantees, one line each. Every claim maps to a shipped capability.
-const GUARANTEES = [
-  { icon: ScanEye, t: 'Redaction on your device', d: 'Sensitive values are blacked out in screenshots and tokenized in text before anything is sent.' },
-  { icon: Code2, t: 'Code checked before you run it', d: 'Built-in SAST plus a live dependency check against the OSV vulnerability database.' },
-  { icon: KeyRound, t: 'Authenticator on every account', d: 'Password, company SSO and social sign-in all pass the same second factor.' },
-  { icon: ScrollText, t: 'Audit log for every session', d: 'What was sent, what was read from your screen, what was checked, filtered and flagged.' },
-  { icon: Lock, t: 'Encrypted at rest', d: 'Stored keys, secrets and report screenshots are encrypted with AES-256-GCM.' },
-  { icon: Hand, t: 'Your boundary, your keys', d: 'Run on your company\'s or your own AI keys, or on-prem. Read-only: it guides, it never changes your systems.' },
-]
+// The guarantees: fixed icon per row; the text is keyed (securityPage.guarantees).
+const GUARANTEE_ICONS = [ScanEye, Code2, KeyRound, ScrollText, Lock, Hand]
 
 // A representative integration screen. `redacted` swaps each sensitive value for
 // an on-device mask, exactly what the frame redactor does before a frame is sent.
-const FIELDS = [
-  { k: 'Billing email', v: 'jm@northwind.com', s: true },
-  { k: 'Phone', v: '+1 (312) 555-0148', s: true },
-  { k: 'Card on file', v: '4539 1488 0343 6467', s: true },
-  { k: 'API key', v: 'AKIA3F7Q9ZLM2XR8KD1', s: true },
-  { k: 'Tax ID', v: '84-3920117', s: true },
-  { k: 'Webhook host', v: '10.20.14.7', s: true },
-  { k: 'Plan', v: 'Business', s: false },
-  { k: 'Status', v: 'Connected', s: false, ok: true },
+// The VALUES are fixture format-examples (kept verbatim); the labels are keyed.
+const FIELD_VALUES = [
+  { v: 'jm@northwind.com', s: true },
+  { v: '+1 (312) 555-0148', s: true },
+  { v: '4539 1488 0343 6467', s: true },
+  { v: 'AKIA3F7Q9ZLM2XR8KD1', s: true },
+  { v: '84-3920117', s: true },
+  { v: '10.20.14.7', s: true },
+  { v: 'Business', s: false },
+  { v: 'Connected', s: false, ok: true },
 ]
 function ScreenMock({ redacted }) {
+  const t = useT()
+  const nav = t('securityPage.mock.nav')            // array, index 3 (Integrations) is the active item
+  const labels = t('securityPage.mock.fields')      // array, index-aligned with FIELD_VALUES
   return (
-    <div className="wsx-screen" role="img" aria-label={redacted ? 'App screen after on-device protection, with sensitive values blacked out' : 'App screen before protection, showing sensitive values'}>
+    <div className="wsx-screen" role="img" aria-label={redacted ? t('securityPage.mock.afterAria') : t('securityPage.mock.beforeAria')}>
       <div className="wsx-side">
         <div className="wsx-brand"><span className="wsx-dot" /> NorthWind Ops</div>
-        {['Dashboard', 'Customers', 'Billing', 'Integrations', 'Settings'].map((n) => (
-          <div key={n} className={'wsx-nav' + (n === 'Integrations' ? ' on' : '')}>{n}</div>
+        {nav.map((n, i) => (
+          <div key={i} className={'wsx-nav' + (i === 3 ? ' on' : '')}>{n}</div>
         ))}
       </div>
       <div className="wsx-main">
-        <div className="wsx-crumb">Integrations <span>/</span> <b>Payment gateway</b></div>
+        <div className="wsx-crumb">{t('securityPage.mock.crumbRoot')} <span>/</span> <b>{t('securityPage.mock.crumbLeaf')}</b></div>
         <div className="wsx-card">
-          <div className="wsx-ctitle">Connection details</div>
-          {FIELDS.map((f, i) => (
-            <div className="wsx-row" key={f.k}>
-              <span className="wsx-key">{f.k}</span>
+          <div className="wsx-ctitle">{t('securityPage.mock.cardTitle')}</div>
+          {FIELD_VALUES.map((f, i) => (
+            <div className="wsx-row" key={i}>
+              <span className="wsx-key">{labels[i]}</span>
               {f.s && redacted
                 /* the mask sits OVER the value, so the sweep can reveal it row by
                    row (RedactionSweep drives data-sweep; --i staggers the rows) */
@@ -73,35 +77,24 @@ function ScreenMock({ redacted }) {
   )
 }
 
-// What leaves, what we keep, what we never keep. Short, true, and in the order
-// a reviewer asks. Retention is stated plainly below the lists.
-const HANDLING = [
-  { id: 'leaves', icon: Send, tone: 'cyan', title: 'What leaves your device', items: [
-    'Reduced-size screen frames, sensitive lines already blacked out',
-    'Your text, sensitive values already replaced by tokens',
-    'Governed text from attached documents, never the file (desktop app)',
-  ] },
-  { id: 'stored', icon: Database, tone: '', title: 'What we store', items: [
-    'One session report, with redacted milestone screenshots (you can turn it off)',
-    'One audit log per session, recording what was transmitted',
-    'Your session history, so you can reopen and review',
-  ] },
-  { id: 'never', icon: EyeOff, tone: 'ok', title: 'What is never stored', items: [
-    'Your source documents',
-    'Raw screen frames',
-    'The real sensitive values, the AI never sees them',
-  ] },
+// What leaves, what we keep, what we never keep: fixed icon/tone per card; the
+// title and items are keyed (securityPage.handling.groups), index-aligned.
+const HANDLING_META = [
+  { id: 'leaves', icon: Send, tone: 'cyan' },
+  { id: 'stored', icon: Database, tone: '' },
+  { id: 'never', icon: EyeOff, tone: 'ok' },
 ]
 
-// Compliance mapping as a roll-call. Presets that ship with the product are
-// marked so a buyer sees what is one click to arm. HONESTY: readiness and
-// evidence, not certification.
-const FRAMEWORKS = [
-  { id: 'privacy', label: 'Privacy', items: ['GDPR (EU)', 'UK GDPR / DPA 2018', 'CCPA / CPRA', 'PIPEDA', 'LGPD', 'Australia Privacy Act', 'POPIA', 'DPDP Act (India)'] },
-  { id: 'standards', label: 'Standards', items: ['SOC 2', 'ISO/IEC 27001', 'ISO/IEC 27701', 'NIST SP 800-53', 'NIST CSF', 'CIS Controls'] },
-  { id: 'sector', label: 'Sector', items: ['HIPAA', 'HITECH', 'PCI DSS', 'SOX', 'GLBA', 'FERPA', 'FedRAMP (readiness)'] },
-]
-const PRESETS = ['GDPR (EU)', 'UK GDPR / DPA 2018', 'CCPA / CPRA', 'DPDP Act (India)', 'HIPAA', 'PCI DSS']
+// Which of the registry's categories falls under each display group. Privacy and
+// the sector groups are named; everything else (attestations, management systems,
+// security frameworks, government, secure development) reads as a Standard, so a
+// newly added framework is never silently dropped from the roll-call.
+const SECTOR_CATEGORIES = ['Healthcare', 'Payments', 'Financial reporting', 'Financial privacy']
+function groupOf(category) {
+  if (category === 'Privacy') return 'privacy'
+  if (SECTOR_CATEGORIES.includes(category)) return 'sector'
+  return 'standards'
+}
 
 // Accessibility (WEB-08): one <main>, a single H1 then H2 per block (cards are
 // H3), the two mock screens are labeled images, decorative icons are hidden,
@@ -110,10 +103,15 @@ export default function WorkSecurity() {
   const nav = useNavigate()
   const t = useT()
   useSeo({
-    title: 'Security and Privacy - WorkCoPilot by AdmireVeda',
-    description: 'How WorkCoPilot protects your data: sensitive values redacted or tokenized on your device before anything is sent, code checked before you run it, an authenticator on every account, a per-session audit log, encryption at rest, and compliance evidence mapped to the frameworks you report to.',
+    title: t('securityPage.seo.title'),
+    description: t('securityPage.seo.description'),
     path: '/workcopilot/security',
   })
+  const complianceGroups = ['privacy', 'standards', 'sector'].map((id) => ({
+    id,
+    label: t(`securityPage.compliance.groups.${id}`),
+    items: COMPLIANCE_FRAMEWORKS.filter((f) => groupOf(f.category) === id),
+  }))
   return (
     <div className="wsx">
       <style>{CSS}</style>
@@ -121,22 +119,22 @@ export default function WorkSecurity() {
 
       <main id="main">
       <section className="wsx-hero">
-        <div className="wsx-eyebrow"><Lock size={14} aria-hidden="true" /> Private by design</div>
-        <h1>Your secrets never leave your device.</h1>
-        <p>Sensitive data is stripped on your own device before anything is sent. The AI sees the shape of your task, never the secrets.</p>
+        <div className="wsx-eyebrow"><Lock size={14} aria-hidden="true" /> {t('securityPage.hero.eyebrow')}</div>
+        <h1>{t('securityPage.hero.h1')}</h1>
+        <p>{t('securityPage.hero.p')}</p>
         <div className="wsx-acts">
-          <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> Security &amp; Privacy paper<span className="wsx-sr"> (PDF, opens in a new tab)</span></a>
-          <a className="wsx-btn alt" href="/workcopilot/enterprise">Enterprise controls <ArrowRight size={15} aria-hidden="true" /></a>
+          <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> {t('securityPage.hero.paper')}<span className="wsx-sr">{t('securityPage.pdfNewTab')}</span></a>
+          <a className="wsx-btn alt" href="/workcopilot/enterprise">{t('securityPage.hero.enterprise')} <ArrowRight size={15} aria-hidden="true" /></a>
         </div>
       </section>
 
       <section className="wsx-block" aria-labelledby="wsx-g">
-        <h2 id="wsx-g" className="wsx-sr">What is protected</h2>
+        <h2 id="wsx-g" className="wsx-sr">{t('securityPage.guaranteesAria')}</h2>
         <ul className="wsx-grid">
-          {GUARANTEES.map((g) => {
-            const Ic = g.icon
+          {t('securityPage.guarantees').map((g, i) => {
+            const Ic = GUARANTEE_ICONS[i] || ShieldCheck
             return (
-              <li key={g.t} className="wsx-g">
+              <li key={i} className="wsx-g">
                 <span className="wsx-gi"><Ic size={17} aria-hidden="true" /></span>
                 <div className="wsx-gt"><b>{g.t}</b><span>{g.d}</span></div>
               </li>
@@ -153,14 +151,15 @@ export default function WorkSecurity() {
           before={<WorkCard theme="light" tone="danger" delay={0} texPos="0% 0%"><ScreenMock redacted={false} /></WorkCard>}
           after={<WorkCard theme="light" tone="ok" delay={90} texPos="100% 0%"><ScreenMock redacted /></WorkCard>}
         />
-        <div className="wsx-proof" aria-label="The same protection in text: each sensitive value becomes a token, the real value stays on your device">
-          <span className="wsx-pk">In text</span>
+        <div className="wsx-proof" aria-label={t('securityPage.proof.aria')}>
+          <span className="wsx-pk">{t('securityPage.proof.inText')}</span>
           {/* each raw -> token swap is one unbreakable unit (design gate: a
-              pair never splits across lines; on a phone the units stack) */}
+              pair never splits across lines; on a phone the units stack). The
+              raw values and tokens are fixture format-examples, kept verbatim. */}
           <span className="wsx-swap"><span className="wsx-raw">ops@northwind-trading.com</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[EMAIL_3]]</span></span>
           <span className="wsx-swap"><span className="wsx-raw">sk-live-4eC39Hq…</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[SECRET_2]]</span></span>
           <span className="wsx-swap"><span className="wsx-raw">4539 1488 0343 6467</span><span className="wsx-arr" aria-hidden="true">&rarr;</span><span className="wsx-tok">[[CARD_1]]</span></span>
-          <span className="wsx-pe">Answer rebuilt on your device. Add your own words and patterns on top of the built-in detectors.</span>
+          <span className="wsx-pe">{t('securityPage.proof.end')}</span>
         </div>
         {/* Read-only by design: the one line a security reviewer asks about first. */}
         <div className="wsx-ro">
@@ -170,46 +169,49 @@ export default function WorkSecurity() {
       </section>
 
       <section className="wsx-block" id="data-handling">
-        <div className="wsx-bhead"><span className="wsx-bi"><FileSearch size={16} aria-hidden="true" /></span><div><h2>How your data is handled</h2><p>What the product does today. Not a compliance claim.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><FileSearch size={16} aria-hidden="true" /></span><div><h2>{t('securityPage.handling.h2')}</h2><p>{t('securityPage.handling.sub')}</p></div></div>
         <div className="wsx-hgrid">
-          {HANDLING.map((g, i) => (
-            <WorkCard key={g.id} theme="light" tone={g.tone || undefined} delay={i * 70} className="wsx-hcard">
-              <WorkCard.Head icon={g.icon} title={g.title} />
-              <WorkCard.Points items={g.items} />
-            </WorkCard>
-          ))}
+          {t('securityPage.handling.groups').map((g, i) => {
+            const m = HANDLING_META[i] || {}
+            return (
+              <WorkCard key={m.id || i} theme="light" tone={m.tone || undefined} delay={i * 70} className="wsx-hcard">
+                <WorkCard.Head icon={m.icon} title={g.title} />
+                <WorkCard.Points items={g.items} />
+              </WorkCard>
+            )
+          })}
         </div>
-        <ul className="wsx-facts" aria-label="Retention and residency">
-          <li><ShieldCheck size={14} aria-hidden="true" /><span><b>Kept until you delete it.</b> Delete any session at any time; admins review their own members. An automatic retention window can purge older sessions on a schedule.</span></li>
+        <ul className="wsx-facts" aria-label={t('securityPage.facts.aria')}>
+          <li><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('securityPage.facts.retention')}</span></li>
           <li><Globe size={14} aria-hidden="true" /><span><b>{t('residency.title')}.</b> {t('residency.sec')}</span></li>
         </ul>
       </section>
 
       <section className="wsx-block" id="compliance">
-        <div className="wsx-bhead"><span className="wsx-bi"><BadgeCheck size={16} aria-hidden="true" /></span><div><h2>Evidence for the frameworks you report to</h2><p>Your admin arms a policy per company and locks it. Every session is logged and reportable. Presets marked with a tick ship ready to arm.</p></div></div>
+        <div className="wsx-bhead"><span className="wsx-bi"><BadgeCheck size={16} aria-hidden="true" /></span><div><h2>{t('securityPage.compliance.h2')}</h2><p>{t('securityPage.compliance.sub')}</p></div></div>
         <div className="wsx-fw">
-          {FRAMEWORKS.map((g) => (
+          {complianceGroups.map((g) => (
             <div className="wsx-fwrow" key={g.id}>
               <span className="wsx-fwl">{g.label}</span>
-              <ul className="wsx-call" aria-label={g.label + ' frameworks'}>
-                {g.items.map((n) => <li key={n} className={'wsx-cchip' + (PRESETS.includes(n) ? ' preset' : '')}>{PRESETS.includes(n) && <><BadgeCheck size={12} aria-hidden="true" /><span className="wsx-sr">Preset ships with the product: </span></>}{n}</li>)}
+              <ul className="wsx-call" aria-label={t('securityPage.compliance.frameworksAria', { group: g.label })}>
+                {g.items.map((f) => <li key={f.id} className={'wsx-cchip' + (f.preset ? ' preset' : '')}>{f.preset && <><BadgeCheck size={12} aria-hidden="true" /><span className="wsx-sr">{t('securityPage.compliance.presetSr')}</span></>}{f.name}</li>)}
               </ul>
             </div>
           ))}
         </div>
-        <p className="wsx-honest">We provide the controls and the evidence. We do not claim certification against any framework; your organization holds compliance with its auditors.</p>
+        <p className="wsx-honest">{t('securityPage.compliance.honest')}</p>
       </section>
 
       <section className="wsx-block wsx-contact" id="report">
         <ul className="wsx-facts">
-          <li><ShieldCheck size={14} aria-hidden="true" /><span><b>Found a security issue?</b> Email <a href="mailto:support@coesecurity.com">support@coesecurity.com</a> (security, privacy, compliance, signed DPA). Give us time to confirm and fix before public disclosure; good-faith research is welcome.</span></li>
-          <li><Building2 size={14} aria-hidden="true" /><span>Product help and billing: <a href="mailto:support@admireveda.com">support@admireveda.com</a>. WorkCoPilot, by AdmireVeda, is a product of COE Security LLC.</span></li>
+          <li><ShieldCheck size={14} aria-hidden="true" /><span>{t.rich('securityPage.contact.issue', null, { a: (c) => <a href="mailto:support@coesecurity.com">{c}</a> })}</span></li>
+          <li><Building2 size={14} aria-hidden="true" /><span>{t.rich('securityPage.contact.help', null, { a: (c) => <a href="mailto:support@admireveda.com">{c}</a> })}</span></li>
         </ul>
       </section>
 
-      <section className="wsx-cta" aria-label="Next steps">
-        <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> Read the Security &amp; Privacy paper<span className="wsx-sr"> (PDF, opens in a new tab)</span></a>
-        <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>Back to WorkCoPilot <ArrowRight size={15} aria-hidden="true" /></button>
+      <section className="wsx-cta" aria-label={t('securityPage.cta.aria')}>
+        <a className="wsx-btn" href="/api/work/security-paper.pdf" target="_blank" rel="noopener noreferrer"><FileText size={16} aria-hidden="true" /> {t('securityPage.cta.paper')}<span className="wsx-sr">{t('securityPage.pdfNewTab')}</span></a>
+        <button className="wsx-btn alt" onClick={() => nav('/workcopilot')}>{t('securityPage.cta.back')} <ArrowRight size={15} aria-hidden="true" /></button>
       </section>
       </main>
       <SiteFooter />

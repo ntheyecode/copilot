@@ -17,14 +17,20 @@
 // store.getWorkComplianceEvidence: access-mfa, data-minimization, audit-trail,
 // encryption-at-rest, secure-output, human-in-loop, retention,
 // execution-evidence.
+//
+// `preset: true` marks a framework that ALSO ships as a one-click armable DLP
+// policy preset (server/compliance-presets.js COMPLIANCE_PRESETS). It is the
+// single source the /security page reads to tick "ships ready to arm", so that
+// mark can never drift from the real preset set again; work_compliance.test.mjs
+// asserts the two stay in sync.
 // ---------------------------------------------------------------------------
 
 export const COMPLIANCE_FRAMEWORKS = [
   // ---- Security attestations / management systems ----
-  { id: 'soc2', name: 'SOC 2 (Type I / II)', region: 'Global', category: 'Security attestation',
+  { id: 'soc2', name: 'SOC 2 (Type I / II)', region: 'Global', category: 'Security attestation', preset: true,
     controls: ['access-mfa', 'data-minimization', 'audit-trail', 'encryption-at-rest', 'secure-output', 'human-in-loop', 'retention', 'execution-evidence'],
     support: 'Role-based policy control, withheld secrets, encryption at rest and a full per-session audit trail give evidence across the Security, Confidentiality and Availability criteria.' },
-  { id: 'iso27001', name: 'ISO/IEC 27001', region: 'Global', category: 'Security management',
+  { id: 'iso27001', name: 'ISO/IEC 27001', region: 'Global', category: 'Security management', preset: true,
     controls: ['access-mfa', 'data-minimization', 'audit-trail', 'encryption-at-rest', 'secure-output', 'human-in-loop', 'retention', 'execution-evidence'],
     support: 'Maps to Annex A controls for access, cryptography, logging, secure development and information handling, with per-session evidence.' },
   { id: 'iso27701', name: 'ISO/IEC 27701', region: 'Global', category: 'Privacy management',
@@ -54,13 +60,13 @@ export const COMPLIANCE_FRAMEWORKS = [
     support: 'Every command and code block is reviewed by a mandatory security gate for injection, hard-coded secrets and least privilege before it reaches the operator.' },
 
   // ---- Privacy / data protection ----
-  { id: 'gdpr', name: 'GDPR (EU)', region: 'EU', category: 'Privacy',
+  { id: 'gdpr', name: 'GDPR (EU)', region: 'EU', category: 'Privacy', preset: true,
     controls: ['data-minimization', 'encryption-at-rest', 'audit-trail', 'retention', 'access-mfa', 'human-in-loop'],
     support: 'Personal data is tokenized on the device before anything is sent (data minimization, Art.5/25), encrypted at rest (Art.32), retained to a set window (Art.5(1)(e)) and logged (Art.30).' },
-  { id: 'ukdpa', name: 'UK GDPR / DPA 2018', region: 'UK', category: 'Privacy',
+  { id: 'ukdpa', name: 'UK GDPR / DPA 2018', region: 'UK', category: 'Privacy', preset: true,
     controls: ['data-minimization', 'encryption-at-rest', 'audit-trail', 'retention', 'access-mfa'],
     support: 'The same on-device minimization, encryption, retention and audit evidence support the UK GDPR and Data Protection Act 2018 duties.' },
-  { id: 'ccpa', name: 'CCPA / CPRA', region: 'California', category: 'Privacy',
+  { id: 'ccpa', name: 'CCPA / CPRA', region: 'California', category: 'Privacy', preset: true,
     controls: ['data-minimization', 'retention', 'audit-trail', 'access-mfa'],
     support: 'Data minimization on the device, a set retention window and per-session logs support the CCPA/CPRA minimization, retention and accountability expectations.' },
   { id: 'lgpd', name: 'LGPD (Brazil)', region: 'Brazil', category: 'Privacy',
@@ -78,12 +84,12 @@ export const COMPLIANCE_FRAMEWORKS = [
   { id: 'popia', name: 'POPIA (South Africa)', region: 'South Africa', category: 'Privacy',
     controls: ['data-minimization', 'encryption-at-rest', 'audit-trail', 'retention', 'access-mfa'],
     support: 'Personal information is redacted or tokenized on the device, encrypted at rest and logged per session, supporting the POPIA conditions for lawful, minimal and secure processing.' },
-  { id: 'dpdp', name: 'DPDP Act (India)', region: 'India', category: 'Privacy',
+  { id: 'dpdp', name: 'DPDP Act (India)', region: 'India', category: 'Privacy', preset: true,
     controls: ['data-minimization', 'encryption-at-rest', 'audit-trail', 'retention', 'access-mfa'],
     support: 'Digital personal data is minimized on the device, encrypted at rest, retained to a set window and logged, supporting the DPDP Act duties of a data fiduciary.' },
 
   // ---- Healthcare ----
-  { id: 'hipaa', name: 'HIPAA', region: 'US Health', category: 'Healthcare',
+  { id: 'hipaa', name: 'HIPAA', region: 'US Health', category: 'Healthcare', preset: true,
     controls: ['data-minimization', 'encryption-at-rest', 'access-mfa', 'audit-trail', 'retention', 'human-in-loop'],
     support: 'PHI is stripped or tokenized on the device so it never reaches the AI, access is MFA-gated, evidence is encrypted at rest, and every send is logged - supporting the Privacy and Security Rule safeguards.' },
   { id: 'hitech', name: 'HITECH', region: 'US Health', category: 'Healthcare',
@@ -91,7 +97,7 @@ export const COMPLIANCE_FRAMEWORKS = [
     support: 'Per-member session logs record exactly what left each device, supporting the audit-trail and accounting expectations HITECH strengthened.' },
 
   // ---- Payments / finance ----
-  { id: 'pcidss', name: 'PCI DSS', region: 'Global', category: 'Payments',
+  { id: 'pcidss', name: 'PCI DSS', region: 'Global', category: 'Payments', preset: true,
     controls: ['data-minimization', 'encryption-at-rest', 'access-mfa', 'audit-trail', 'secure-output', 'retention'],
     support: 'Cardholder data (PAN) is masked or tokenized on the device before anything is sent, access is MFA-gated, evidence is encrypted, and output is security-reviewed - supporting the data-protection and access requirements.' },
   { id: 'sox', name: 'SOX', region: 'US', category: 'Financial reporting',

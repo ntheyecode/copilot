@@ -8,6 +8,8 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import { fileURLToPath } from 'node:url'
+import { COMPLIANCE_FRAMEWORKS } from './compliance_frameworks.js'
+import { COMPLIANCE_PRESETS } from './compliance-presets.js'
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const storePath = 'file://' + path.join(here, 'store.js').replace(/\\/g, '/')
@@ -17,6 +19,29 @@ const store = await import(storePath)
 
 const u = store.createWorkUser({ username: 'compuser', password: 'Passw0rd!x' })
 store.setWorkTier(u.id, 'advanced')
+
+// SINGLE SOURCE OF TRUTH (SUPREME RULE II): the /security page ticks a framework
+// as "ships ready to arm" from the registry's `preset` flag. That flag must stay
+// in lockstep with the real armable DLP presets (COMPLIANCE_PRESETS). Some preset
+// keys are regional aliases of a framework already covered (eu -> gdpr, us_ca ->
+// ccpa); the rest map one-to-one. A new preset key, or a stray flag, fails here.
+const PRESET_KEY_TO_FRAMEWORK = {
+  hipaa: 'hipaa', gdpr: 'gdpr', pci: 'pcidss', soc2: 'soc2', iso27001: 'iso27001',
+  ccpa: 'ccpa', india_dpdp: 'dpdp', uk: 'ukdpa',
+  eu: 'gdpr', us_ca: 'ccpa',
+}
+test('registry preset flags stay in sync with the armable DLP presets (no drift)', () => {
+  const ids = new Set(COMPLIANCE_FRAMEWORKS.map((f) => f.id))
+  const expected = new Set()
+  for (const key of Object.keys(COMPLIANCE_PRESETS)) {
+    const fwId = PRESET_KEY_TO_FRAMEWORK[key]
+    assert.ok(fwId, `preset key "${key}" has no framework mapping - add it to PRESET_KEY_TO_FRAMEWORK and the registry`)
+    assert.ok(ids.has(fwId), `preset key "${key}" maps to unknown framework "${fwId}"`)
+    expected.add(fwId)
+  }
+  const flagged = new Set(COMPLIANCE_FRAMEWORKS.filter((f) => f.preset).map((f) => f.id))
+  assert.deepEqual([...flagged].sort(), [...expected].sort(), 'registry preset:true set must equal the frameworks that ship as armable presets')
+})
 
 test('returns a controls catalog, posture tally and evidence block', () => {
   const s = store.createWorkSession(u.id, { goal: 'harden an API' })

@@ -13,10 +13,8 @@
     "alex@yourcompany.com",
     "https://api.together.xyz/v1",
     "meta-llama/Llama-3.3-70B-Instruct-Turbo",
-    "common"
+    "common",
+    "NorthWind Ops"
   ],
-  "_filesNote": "src/pages/WorkSecurity.jsx is a TEMPORARY baseline entry: it still has ~24 unkeyed strings but was being edited by a separate task when the gate went live. REMOVE it the moment that page is keyed + translated (the Security addendum). Do not add other files here.",
-  "files": [
-    "src/pages/WorkSecurity.jsx"
-  ]
+  "files": []
 }
