@@ -41,6 +41,7 @@ import ReadingStrip, { readingIsProminent } from './ReadingStrip.jsx'
 import StepCard from './StepCard.jsx'
 import AskFocus from './AskFocus.jsx'
 import GoalLine from './GoalLine.jsx'
+import TaskOverview from './TaskOverview.jsx'
 import DestructiveGate from './DestructiveGate.jsx'
 import { askReducer, initialAsk, askFocused, normalizeAskResponse, applyResume, ASK_OFFER, ASK_ANSWERED } from './askFlow.js'
 import useStuck from './useStuck.js'
@@ -248,6 +249,7 @@ const CONSOLE_CSS = `
 .wc-plan-title{font-family:var(--wc-display);font-size:18px;font-weight:700;color:var(--text);margin:14px 2px 0;line-height:1.3;letter-spacing:-.015em;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .wc-plan-kicker{display:flex;align-items:center;gap:8px;margin:16px 2px 0;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--text-faint)}
 .wc-plan-kicker+.wc-plan-title{margin-top:4px}
+.wc-plan-ovw{margin:8px 2px 4px}
 .wd-modal-ov{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:20px;background:var(--scrim,rgba(14,18,32,.46))}
 .wd-modal{width:min(420px,calc(100vw - 36px));background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg,16px);padding:22px;box-shadow:var(--sh-3,none)}
 .wd-modal h3{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;margin:0 0 6px}
@@ -2421,6 +2423,8 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           <>
             <div className="wc-plan-kicker"><Check size={11} /> Finished task</div>
             <div className="wc-plan-title" title={sess.title || sess.goal || ''}>{(sess.title && !/^Session \d/.test(sess.title)) ? sess.title : (sess.goal || '')}</div>
+            {/* What this task was, in full, so the finished record reads on its own. */}
+            <TaskOverview overview={sess.overview} className="wc-plan-ovw" />
           </>
         )}
         {sess && steps.length > 0 && ended && (
@@ -2465,6 +2469,10 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           return (
             <div className="gv" style={{ marginTop: 12 }}>
               <GoalLine title={sess.title} goal={sess.goal} />
+              {/* The task's full overview (what you will do, what done looks
+                  like) under the goal line: the resume / open read, quiet body
+                  text so the step card below stays the hero. */}
+              <TaskOverview overview={sess.overview} />
               <FadeSwap k={view}>
                 {focused ? (
                   <AskFocus ask={askState} steps={askState.planChanged ? applyResume(sess, askState).steps : steps} stepText={cur ? cur.step.text : ''} busy={busy}
@@ -2894,7 +2902,7 @@ function Console({ sessionId, watchLight = false, onBack, onGuard }) {
           steps={steps} watching={watching} observation={observation} guidance={guidance}
           flags={flags} ask={askState} onContinue={resumeGuiding} onDismissOffer={dismissOffer} busy={busy} analyzing={analyzing} err={err}
           level={level} onLevel={setLevel}
-          done={done} ended={ended} celebrate={celebrate} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal} title={sess && sess.title}
+          done={done} ended={ended} celebrate={celebrate} floatQ={floatQ} setFloatQ={setFloatQ} goal={goal} title={sess && sess.title} overview={sess && sess.overview}
           fontScale={{ scale: fsScale, dec: fsDec, inc: fsInc, reset: fsReset, atMin: fsAtMin, atMax: fsAtMax }}
           theme={floatTheme} onToggleTheme={() => setFloatTheme((t) => t === 'light' ? 'dark' : 'light')}
           usage={usage} paused={paused} onPause={togglePause}

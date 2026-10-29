@@ -11,6 +11,7 @@ import { useT } from '../../../i18n/index.jsx'
 import { visualState, taskActions, blockers, ACTION_TO_STATE } from './projectModel.js'
 import TaskMenu from './TaskMenu.jsx'
 import TelemetryReadout from './TelemetryReadout.jsx'
+import TaskOverview from '../TaskOverview.jsx'
 
 const ICON = { pending: Circle, locked: Lock, active: Play, done: Check, rerun: RotateCcw }
 
@@ -56,6 +57,9 @@ export default function TaskCard({ project, task, index, onOpen, onChanged }) {
           <span className="wd-pj-task-t">{task.title}</span>
           <span className={`wd-pj-chip ${v}`} title={v === 'locked' ? t('workProjects.task.lockedTip') : undefined}><Icon size={11} /> {t(`workProjects.taskState.${v}`)}</span>
         </div>
+        {/* The task's overview (two lines, Show more for the rest) sits right
+            under the title; the goal and done-state lines stay as they were. */}
+        <TaskOverview overview={task.overview} clamp={2} />
         {task.goal && task.goal !== task.title && <div className="wd-pj-task-d">{task.goal}</div>}
         {task.doneState && <div className="wd-pj-task-d"><b>{t('workProjects.task.doneState')}:</b> {task.doneState}</div>}
         {waits.length > 0 && (

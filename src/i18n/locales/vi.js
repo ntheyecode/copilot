@@ -1,6 +1,11 @@
 // Tiếng Việt - đơn giản, chuyên nghiệp, gần gũi đời thường. Cùng bộ khóa với en.js.
 // Không bao giờ dịch: mã, lệnh, URL/đường dẫn, thương hiệu (WorkCoPilot, AdmireVeda), tên gói.
 export default {
+  taskOverview: {
+    showMore: 'Hiện thêm',
+    showLess: 'Thu gọn',
+    projectChip: 'Dự án: {name}',
+  },
   prefs: {
     title: 'Tùy chọn',
     sub: 'Giao diện và sự dễ đọc của bạn. Mọi thay đổi áp dụng ngay và theo bạn trên mọi thiết bị.',

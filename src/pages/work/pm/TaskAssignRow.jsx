@@ -10,6 +10,7 @@ import { api, friendlyError } from '../../../api.js'
 import { useT } from '../../../i18n/index.jsx'
 import { taskBucket, taskSlaDays, daysSince } from './pmModel.js'
 import { RISK_SLA_DAYS } from '../../../shared/work_roles_options.js'
+import TaskOverview from '../TaskOverview.jsx'
 
 const ICON = { notStarted: Circle, inProgress: Play, completed: Check }
 
@@ -49,6 +50,9 @@ export default function TaskAssignRow({ project, task, index, canManage, people,
           <span className={`wd-pj-chip ${visual}`}><Icon size={11} /> {task.state === 'rerun' ? t('workPm.bucket.rerun') : t(`workPm.bucket.${bucket}`)}</span>
           {sla != null && <span className="wd-pj-chip sla" title={t('workPm.grc.risk.slaAction')}><Clock size={11} /> {t('workPm.common.sla', { n: RISK_SLA_DAYS })}</span>}
         </div>
+        {/* The task's overview: a two-line preview in the map; Show more opens
+            the full text in place (this row IS the task's detail on this page). */}
+        <TaskOverview overview={task.overview} clamp={2} />
         {task.doneState && <div className="wd-ep-task-d"><b style={{ color: 'var(--tx-2)', fontWeight: 600 }}>{t('workPm.task.doneState')}:</b> {task.doneState}</div>}
         <div className="wd-ep-task-who">
           <span>{t('workPm.task.assignee')}:</span>

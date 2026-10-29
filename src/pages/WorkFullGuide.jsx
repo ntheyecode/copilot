@@ -23,6 +23,7 @@ import { GUIDE_CSS, gvVars } from './work/guideView.css.js'
 import StepCard from './work/StepCard.jsx'
 import ReadingStrip, { readingIsProminent } from './work/ReadingStrip.jsx'
 import GoalLine from './work/GoalLine.jsx'
+import TaskOverview from './work/TaskOverview.jsx'
 import FadeSwap from './work/FadeSwap.jsx'
 import { stepWindow, progressText, planMarker } from '../shared/step_window.js'
 import { usageTimeLeft, usageTasksLine } from './work/usageCopy.js'
@@ -225,6 +226,8 @@ export default function WorkFullGuide() {
               return (
                 <div className="gv" style={{ ...gvVars(c), '--wc-fs': scale }}>
                   <GoalLine title={session.title} goal={session.goal} />
+                  {/* The task's full overview under the goal (read-only guide: room to read it). */}
+                  <TaskOverview overview={session.overview} />
                   <div style={S.nowRow}>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <FadeSwap k={allDone ? 'done' : 'step:' + curIdx}>

@@ -1,6 +1,11 @@
 // Italiano - tono semplice, professionale e quotidiano. Stesse chiavi di en.js.
 // Mai tradotto: codice, comandi, URL/percorsi, marchi (WorkCoPilot, AdmireVeda), nomi dei piani.
 const __base = {
+  taskOverview: {
+    showMore: 'Mostra altro',
+    showLess: 'Mostra meno',
+    projectChip: 'Progetto: {name}',
+  },
   lang: { label: 'Lingua', choose: 'Scegli la tua lingua' },
   languagePin: {
     title: 'Scegli la tua lingua',

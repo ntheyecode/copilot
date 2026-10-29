@@ -6,6 +6,11 @@
 // 어디서도 번역하지 않음: 코드, 명령어, URL/경로, 브랜드명
 // (WorkCoPilot, AdmireVeda, COE Security LLC), 요금제명 (Lite/Basic/Advanced/Premium).
 export default {
+  taskOverview: {
+    showMore: '더 보기',
+    showLess: '간략히 보기',
+    projectChip: '프로젝트: {name}',
+  },
   prefs: {
     title: '환경 설정',
     sub: '화면 모양과 읽기 편의 설정입니다. 모든 변경 사항은 즉시 적용되며 여러 기기에서 유지됩니다.',

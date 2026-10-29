@@ -21,6 +21,7 @@ import { VerifyButton, VerifyVerdict } from './VerifyStep.jsx'
 import { verdictForStep, VERIFY_DONE } from './verifyFlow.js'
 import AskFocus from './AskFocus.jsx'
 import GoalLine from './GoalLine.jsx'
+import TaskOverview from './TaskOverview.jsx'
 import { askFocused } from './askFlow.js'
 
 // A step's text for a tooltip: the key-term markers are shown by RichText in
@@ -32,7 +33,7 @@ export default // The floating overlay shown in the Document Picture-in-Picture 
 // sees, flags, the latest answer) and lets the user ask and tick steps off
 // without leaving the app they are working in. Styles are inline because the
 // PiP window is a separate document with none of the app's CSS.
-function FloatPanel({ steps, watching, observation, guidance, flags, ask, onContinue, onDismissOffer, level, onLevel, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, title, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onVerify, verifying = false, verdict = null, onVerdictDismiss, onEnd, onClose, onStartAnother }) {
+function FloatPanel({ steps, watching, observation, guidance, flags, ask, onContinue, onDismissOffer, level, onLevel, busy, analyzing, err, done, ended = false, celebrate = false, floatQ, setFloatQ, goal, title, overview, fontScale, theme = 'dark', onToggleTheme, usage, paused, onPause, onDeep, onResearch, onAsk, onAnalyze, onAddContext, onStep, onNav, onWatch, onVerify, verifying = false, verdict = null, onVerdictDismiss, onEnd, onClose, onStartAnother }) {
   const floatFileRef = useRef(null)   // hidden file input for mid-task attachments in the float
   const current = steps.find((s) => s.status === 'current')
   // Completed = every step done, or the session was ended. Drives the floater's
@@ -219,6 +220,8 @@ function FloatPanel({ steps, watching, observation, guidance, flags, ask, onCont
           the stuck check-in, or the focused answer, with a fade between. */}
       <div className="gv" style={gvVars(c)}>
         {steps.length > 0 && <GoalLine title={title} goal={goal} />}
+        {/* The overview in the tight floater: two lines, Show more for the rest. */}
+        {steps.length > 0 && <TaskOverview overview={overview} clamp={2} />}
         {(() => {
           const focused = askFocused(ask)
           const idx = current ? steps.indexOf(current) : -1

@@ -1,6 +1,11 @@
 // Français - ton simple, professionnel et courant. Mêmes clés que en.js.
 // Jamais traduit : code, commandes, URL/chemins, marques (WorkCoPilot, AdmireVeda), noms des offres.
 const __base = {
+  taskOverview: {
+    showMore: 'Afficher plus',
+    showLess: 'Afficher moins',
+    projectChip: 'Projet : {name}',
+  },
   lang: { label: 'Langue', choose: 'Choisissez votre langue' },
   languagePin: {
     title: 'Choisissez votre langue',

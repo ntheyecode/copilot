@@ -6,6 +6,11 @@
 // どのロケールでも翻訳しないもの: コード、コマンド、URL/パス、ブランド名
 // (WorkCoPilot, AdmireVeda, COE Security LLC)、プラン名 (Lite/Basic/Advanced/Premium)。
 export default {
+  taskOverview: {
+    showMore: 'さらに表示',
+    showLess: '表示を減らす',
+    projectChip: 'プロジェクト: {name}',
+  },
   prefs: {
     title: '環境設定',
     sub: '見た目と読みやすさの設定です。変更はすぐに適用され、デバイス間で引き継がれます。',

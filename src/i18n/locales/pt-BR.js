@@ -1,6 +1,11 @@
 // Português (Brasil) - tom simples, profissional e do dia a dia. Mesmas chaves de en.js.
 // Nunca traduzido: código, comandos, URLs/caminhos, marcas (WorkCoPilot, AdmireVeda), nomes dos planos.
 const __base = {
+  taskOverview: {
+    showMore: 'Mostrar mais',
+    showLess: 'Mostrar menos',
+    projectChip: 'Projeto: {name}',
+  },
   lang: { label: 'Idioma', choose: 'Escolha seu idioma' },
   languagePin: {
     title: 'Escolha seu idioma',
